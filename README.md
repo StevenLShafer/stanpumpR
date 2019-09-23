@@ -1,0 +1,25 @@
+# stanpumpR
+stanpumpR, and PK/PD simulation program
+Copyright 2019 Steven L. Shafer, steven.shafer@stanford.edu. 
+All Rights Reserved
+
+stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
+
+STANPUMP, a portmanteau of "Stanford" and "Pump", was developed in the Stanski/Shafer laboratory at Stanford University from 1987 through 1997. STANPUMP was one of many programs developed to control the delivery of intravenous anesthetics using pharmacokinetic principles. At that time there was an active exchange of concepts and algorithms among the authors. Significant contributors to this effort were Schüttler and Schwilden at the University of Bonn (CATIA), Ausems and Hug as the University of Leiden (TIAC), Reves and Alvis at the University of Alabama (CACI), Jacobs and Reves at Duke University (CACI II), Coetzee and Pina at Stellenbosch University (STELPUMP), and De Smet and Struys at the University of Ghent (RUGLOOP). This history was recently reviewed by Struys and colleagues: The History of Target-Controlled Infusion. Anesth Analg. 2016;122:56-69. 
+
+STANPUMP was placed in the public domain. The STANPUMP pharmacokinetic engine was incorporated into many of the commerially available target controlled infusion devices, where it is still used today.
+
+stanpumpR uses very little of the original STANPUMP code. However, conceptually it is identical: an open-source program to make complex pharmacokinetic algorithms available to support patient care, teaching, and research. However, stanpumpR does not control drug administration. It is simply a web-based simulator that uses the Shiny package in R to simulate the expected concentration of intravenous anesthetics from any dosing regimen.
+
+It is hoped that stanpumpR will encourage device manufacturers to develop the next generation of drug delivery systems and anesthesia information management systems. Companies seeking to develop such systems should contact Dr. Shafer to request written permission to incorporate stanpumpR into their products. The request should also seek permission to assert patent or other intellectual property rights to code derived, in part, from stanpumpR. Without written permission, stanpumpR cannot be incorporated into commercially available systems.
+
+stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encourage to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible.
+
+Near-term future developments in stanpumpR will include
+1. Oral opioids
+2. Improved models of pediatric pharmacokinetics 
+3. Improved models of drug interaction
+4. Incorporation of continuously varying covariates (e.g., PK models that vary with temperature). 
+
+Steven L. Shafer, MD
+September 2019
