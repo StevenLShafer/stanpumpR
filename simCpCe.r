@@ -35,18 +35,31 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$Dose[use] <- dose$Dose[use] / 60
     
     # Identify bolus doses
-    dose$Bolus <- !(grepl("min", dose$Units) | grepl("hr", dose$Units))
+    dose$Bolus <- !(grepl("min", dose$Units) | grepl("hr", dose$Units) | grepl("po", dose$Units))
+    
+    # Identify PO doses
+    dose$PO <- grepl("po", dose$Units)
     
     events <- events[,c(1,2)]
     
     pkSets <- PK$PK
     pkEvents <- PK$pkEvents
+
+    # cat("All Events:\n")
+    # print(events)
     
     events$Event <- gsub(" ","", events$Event)
     events <- events[events$Event %in% pkEvents,]
+    # cat("Retained Events:\n")
+    # print(events)
     if (length(pkEvents) == 1 | nrow(events) == 0)
     {
-      results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$awake)
+      if (sum(dose$PO) == 0)
+      {
+        results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
+      } else {
+        results <- advanceClosedFormPO(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
+      }
     } else {
       # Process Events
       defaultEvent <- data.frame(
@@ -59,14 +72,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       events <- events[events$Time < maximum,] 
       events <- rbind(events, events[nrow(events),])
       events$Time[nrow(events)] <- maximum
-      results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, PK$awake)
+      results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, PK$emerge)
     }
     
-  print(str(results))
-
-  results$Drug <- PK$drug
-  
   names(results) <- c("Time", "Plasma","Effect Site", "Recovery")
+  # print(str(results))
   maxCp <- max(results$Plasma)
   maxCe <- max(results$"Effect Site")
   if (maxCp == 0)
@@ -77,16 +87,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     results$CeNormCe <- 0
     
   } else {
-    results$CpNormCp <- results$Cp            / maxCp * 100
+    results$CpNormCp <- results$Plasma        / maxCp * 100
     results$CeNormCp <- results$"Effect Site" / maxCp * 100
-    results$CpNormCe <- results$Cp            / maxCe * 100
+    results$CpNormCe <- results$Plasma        / maxCe * 100
     results$CeNormCe <- results$"Effect Site" / maxCe * 100
-  }
-  if (PK$MEAC == 0)
-  {
-    results$MEAC <- NA
-  } else {
-    results$MEAC <- results$"Effect Site" / PK$MEAC
   }
 
   # Calculate equispaced output
@@ -99,28 +103,45 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       y = results$"Effect Site",
       xout = xout
       )$y,
+    Time = xout,
+    Recovery = approx(
+      x = results$Time,
+      y = results$Recovery,
+      xout = xout
+    )$y,
     stringsAsFactors = FALSE
     )
+
   equiSpace$Ce[1] <- 0  # Approx tends to make it a very small negative number
   if (PK$MEAC == 0)
   {
-    equiSpace$MEAC <- 0
+    equiSpace$MEAC <- NA
   } else {
     equiSpace$MEAC <- equiSpace$Ce / PK$MEAC * 100
   }
+  max <- data.frame(
+    Drug = PK$drug,
+    Recovery = max(results$Recovery),
+    Cp = max(results$Plasma),
+    Ce = max(results$"Effect Site"),
+    stringsAsFactors = FALSE
+    )
+#  print(str(max))
+  results$Recovery <- NULL
   results <- results %>% gather("Site","Y",-Time)
   results$Drug <- PK$drug
   results <- results[,c(4,1,2,3)]
+#  print(results)
   # Structure of results
   # Four columns: Drug, Time, Site, Y
-  # 8 Sites: Plasma, Effect Site, Recovery, CpNormCp, CeNormCp, CpNormCE, CeNormCe, and MEAC
+  # 7 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCE, CeNormCe, and MEAC
   # These will be subset in simulation plot as needed. 
+  
   return(
     list(
       results = results,
       equiSpace = equiSpace,
-      max =   results %>% group_by(Drug, Site) %>% summarize(Max = max(Y))
-
+      max =   max
     )
   )
 }

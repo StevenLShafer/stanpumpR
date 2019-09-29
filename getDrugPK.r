@@ -5,18 +5,14 @@ getDrugPK <- function(
   weight = 70,
   height = 170,
   age = 50,
-  sex = "woman"
+  sex = "woman",
+  drugDefaults
 )
 {
-  cat("In getDrugPK\n")
+#  cat("In getDrugPK\n")
   X <- eval(call(drug, weight, height, age, sex))
   tPeak <- X$tPeak 
-  MEAC <- X$MEAC 
-  typical <- X$typical 
-  upperTypical <- X$upperTypical 
-  lowerTypical <- X$lowerTypical 
-  reference <- X$reference
-  
+
   events <- names(X$PK)
   for (event in events)
   {
@@ -26,7 +22,16 @@ getDrugPK <- function(
     cl1 <- X$PK[[event]]$cl1 
     cl2 <- X$PK[[event]]$cl2 
     cl3 <- X$PK[[event]]$cl3
-    
+    if (is.null(X$PK[[event]]$ka))
+    {
+      ka <- 0
+      bioavailability <- 0
+    } else {
+      ka <- X$PK[[event]]$ka
+      bioavailability <- X$PK[[event]]$bioavailability
+    }
+    lambda5 <- ka
+      
     k10 <- cl1 / v1
     k12 <- cl2 / v1
     k13 <- cl3 / v1
@@ -41,9 +46,15 @@ getDrugPK <- function(
     p_coef_bolus_1 <- 0
     p_coef_bolus_2 <- 0
     p_coef_bolus_3 <- 0
+    
     p_coef_infusion_1 <- 0
     p_coef_infusion_2 <- 0
     p_coef_infusion_3 <- 0
+    
+    p_coef_po_1 <- 0
+    p_coef_po_2 <- 0
+    p_coef_po_3 <- 0
+    p_coef_po_4 <- 0
     
     e_coef_bolus_1 <- 0
     e_coef_bolus_2 <- 0
@@ -53,6 +64,11 @@ getDrugPK <- function(
     e_coef_infusion_2 <- 0
     e_coef_infusion_3 <- 0
     e_coef_infusion_4 <- 0
+    e_coef_po_1 <- 0
+    e_coef_po_2 <- 0
+    e_coef_po_3 <- 0
+    e_coef_po_4 <- 0
+    e_coef_po_5 <- 0
     
     if (k31 > 0)
     {
@@ -115,6 +131,27 @@ getDrugPK <- function(
       e_coef_infusion_4 <- e_coef_bolus_4 / lambda_4
     }
     
+    # cat("ka: ", ka, "\n")
+    if (ka > 0)
+    {
+      # cat("bioavailability: ", bioavailability, "\n")
+      p_coef_po_1 <- p_coef_bolus_1 / (ka - lambda_1) * ka * bioavailability
+      p_coef_po_2 <- p_coef_bolus_2 / (ka - lambda_2) * ka * bioavailability
+      p_coef_po_3 <- p_coef_bolus_3 / (ka - lambda_3) * ka * bioavailability
+      p_coef_po_4 <- - p_coef_po_1 - p_coef_po_2 - p_coef_po_3
+      
+      e_coef_po_1 <- e_coef_bolus_1 / (ka - lambda_1) * ka * bioavailability
+      e_coef_po_2 <- e_coef_bolus_2 / (ka - lambda_2) * ka * bioavailability
+      e_coef_po_3 <- e_coef_bolus_3 / (ka - lambda_3) * ka * bioavailability
+      e_coef_po_4 <- e_coef_bolus_4 / (ka - lambda_4) * ka * bioavailability
+      e_coef_po_5 <- - e_coef_po_1 - e_coef_po_2 - e_coef_po_3 - e_coef_po_4
+      
+      # cat("p_coef_po_1", p_coef_po_1, "\n")
+      # cat("p_coef_po_2", p_coef_po_2, "\n")
+      # cat("p_coef_po_3", p_coef_po_3, "\n")
+      # cat("p_coef_po_4", p_coef_po_4, "\n")
+    }
+
     # Vd Peak Effect
     if (tPeak == 0)
     {
@@ -138,6 +175,8 @@ getDrugPK <- function(
         k13 = k13,
         k21 = k21,
         k31 = k31,
+        ka = ka,
+        bioavailability = bioavailability,
         lambda_1 = lambda_1,
         lambda_2 = lambda_2,
         lambda_3 = lambda_3,
@@ -147,48 +186,60 @@ getDrugPK <- function(
         p_coef_bolus_2 = p_coef_bolus_2,
         p_coef_bolus_3 = p_coef_bolus_3,
         
+        p_coef_infusion_1 = p_coef_infusion_1,
+        p_coef_infusion_2 = p_coef_infusion_2,
+        p_coef_infusion_3 = p_coef_infusion_3,
+        
+        p_coef_po_1 = p_coef_po_1,
+        p_coef_po_2 = p_coef_po_2,
+        p_coef_po_3 = p_coef_po_3,
+        p_coef_po_4 = p_coef_po_4,
+        
+        
         e_coef_bolus_1 = e_coef_bolus_1,
         e_coef_bolus_2 = e_coef_bolus_2,
         e_coef_bolus_3 = e_coef_bolus_3,
         e_coef_bolus_4 = e_coef_bolus_4,
         
-        p_coef_infusion_1 = p_coef_infusion_1,
-        p_coef_infusion_2 = p_coef_infusion_2,
-        p_coef_infusion_3 = p_coef_infusion_3,
-        
         e_coef_infusion_1 = e_coef_infusion_1,
         e_coef_infusion_2 = e_coef_infusion_2,
         e_coef_infusion_3 = e_coef_infusion_3,
-        e_coef_infusion_4 = e_coef_infusion_4
+        e_coef_infusion_4 = e_coef_infusion_4,
+        
+        e_coef_po_1 = e_coef_po_1,
+        e_coef_po_2 = e_coef_po_2,
+        e_coef_po_3 = e_coef_po_3,
+        e_coef_po_4 = e_coef_po_4,
+        e_coef_po_5 = e_coef_po_5
       )
     )
   }
   
   PK <- sapply(events, function(x) list(get0(x)))
+  thisDrug <- which(drugDefaults$Drug == drug)
+  #  cat("Leaving getDrugPK\n")
 
-  cat("Leaving getDrugPK\n")
-  
-  
   return(
     list(
       drug = drug,
       PK = PK,
-      reference = reference,
       tPeak = tPeak,
-      MEAC = MEAC,
+      pkEvents = events,
+      reference = "Not Available",
       weight = weight,
       height = height,
       age = age,
       sex = sex,
-      typical = typical,
-      pkEvents = events,
-      upperTypical = upperTypical,
-      lowerTypical = lowerTypical,
-      Concentration.Units = drugDefaults$Concentration.Units[drugDefaults$Drug == drug],
-      Bolus.Units         = drugDefaults$Bolus.Units[drugDefaults$Drug == drug],
-      Infusion.Units      = drugDefaults$Infusion.Units[drugDefaults$Drug == drug],
-      awake               = drugDefaults$Awake[drugDefaults$Drug == drug]
+      upperTypical        = drugDefaults$Upper[thisDrug],
+      lowerTypical        = drugDefaults$Lower[thisDrug],
+      typical             = drugDefaults$Typical[thisDrug],
+      MEAC                = drugDefaults$MEAC[thisDrug],
+      Concentration.Units = drugDefaults$Concentration.Units[thisDrug],
+      Bolus.Units         = drugDefaults$Bolus.Units[thisDrug],
+      Infusion.Units      = drugDefaults$Infusion.Units[thisDrug],
+      Units               = drugDefaults$Units[thisDrug],
+      Default.Units       = drugDefaults$Default.Units[thisDrug],
+      emerge              = drugDefaults$Emerge[thisDrug]
     )
   )
 }
-

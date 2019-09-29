@@ -9,16 +9,17 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
   # Now, process dose table for each drug
   for (i in 1:length(drugs))
   {
-    cat("in processdoseTable, processing ",names(drugs)[i],"\n")
+#    cat("in processdoseTable, processing ",names(drugs)[i],"\n")
     tempDT <- DT[DT$Drug == names(drugs)[i],]
-    cat("ET$Event",ET$Event,"\n")
-    cat("drugs[[i]]$pkEvents",drugs[[i]]$pkEvents,"\n")
+#    cat("ET$Event",ET$Event,"\n")
+#    cat("drugs[[i]]$pkEvents",drugs[[i]]$pkEvents,"\n")
     tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[i]]$pkEvents,]
     
     if (!sameTable(tempDT, drugs[[i]]$DT) |
         plotMaximum != prior$plotMaximum
         | (length(drugs[[i]]$pkEvents) > 1 & 
-           !sameTable(drugs[[i]]$ET, tempET)
+           !sameTable(drugs[[i]]$ET, tempET) |
+        (plotRecovery & !prior$plotRecovery)
         )
       )
     {
@@ -26,10 +27,9 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
       {
         drugs[[i]]$DT        <- NULL
         drugs[[i]]$ET        <- NULL
-        drugs[[i]]$CpCe      <- NULL
+        drugs[[i]]$results   <- NULL
         drugs[[i]]$equiSpace <- NULL
-        drugs[[i]]$maxCp     <- 1
-        drugs[[i]]$maxCe     <- 1
+        drugs[[i]]$max       <- NULL
       } else {
         X <- simCpCe(
           tempDT,

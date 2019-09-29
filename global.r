@@ -28,8 +28,10 @@ library(purrr)
 library(data.table)
 library(stringi)
 library(png)
+library(jsonlite)
 # library(ggplotify)
-library(facetscales)
+#library(facetscales)
+library(tidyr)
 
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 # cat("isShinyLocal",isShinyLocal,"\n")
@@ -86,6 +88,9 @@ source("advanceState.r")
 source("calculateCe.r")
 source("convertState.r")
 source("recoveryCalc.r")
+source("advanceClosedFormPO.r")
+source("advanceStatePO.r")
+
 
 #source("new_aes.r")
 
@@ -93,12 +98,12 @@ source("recoveryCalc.r")
 #CANCEL <- readPNG("cancel.png", native=TRUE)
 enableBookmarking(store = "url")
 
-eventDefaults <- read.xlsx("Event Defaults.xlsx")
-drugDefaults <- read.xlsx("Drug Defaults.xlsx")
-drugList <- drugDefaults$Drug
-colorList <- drugDefaults$Color
+eventDefaults_global <- read.xlsx("Event Defaults.xlsx")
+
+drugDefaults_global <-read.xlsx("Drug Defaults.xlsx")
+
 # Load individual drug routines
-for (drug in drugList)
+for (drug in drugDefaults_global$Drug)
 {
   source(paste0(drug,".r"))
 }
@@ -135,9 +140,9 @@ resolution <- 100
 
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
-bolusUnits <- c("mg","mcg", "mg/kg","mcg/kg")
+bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")
 infusionUnits <- c("mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr")
-units <- c(bolusUnits, infusionUnits)
+allUnits <- c(bolusUnits, infusionUnits)
 
 
 maxtimes <- data.frame(
@@ -145,21 +150,6 @@ maxtimes <- data.frame(
   steps = c( 1,  5, 10, 15,  15,  30,  30,  60,  60,  60, 120, 120, 240,  240, 240,  480,   480,  720, 720, 1440)
 )
 
-Events <- c(
-  "Start",
-  "Timeout",
-  "Induction",
-  "Intubation",
-  "Extubation",
-  "Emergence",
-  "CPB Start",
-  "CPB End",
-  "Clamp On",
-  "Clamp Off",
-  "Tourniquet On",
-  "Tourniquet Off",
-  "Other"
-)
 
 x <- system.time({
   havingIP <- function() {

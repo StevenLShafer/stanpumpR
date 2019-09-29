@@ -1,5 +1,5 @@
 # Create the handsontable that has the dosing information
-createHOT <- function(doseTable)
+createHOT <- function(doseTable,drugDefaults)
 {
   HOT <- rhandsontable(
     doseTable,
@@ -14,7 +14,7 @@ createHOT <- function(doseTable)
     hot_col(
       col = "Drug",
       type = "dropdown",
-      source = drugList,
+      source = drugDefaults$Drug,
       strict = TRUE,
       halign = "htLeft",
       valign = "vtMiddle",
@@ -47,8 +47,25 @@ createHOT <- function(doseTable)
     hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
     hot_rows(rowHeights = 10) %>%
     hot_cols(colWidths = c(120,70,70,120))
-  HOT$sizingPolicy$viewer$padding <- 20 # no effect
-  HOT$sizingPolicy$browser$padding <- 20 # no effect
-  HOT$sizingPolicy$viewer$defaultHeight <- 80 # no effect
+  
+  # Set units on a per drug basis
+  for (i in 1:nrow(doseTable))
+   {
+    cell <- list(row = i - 1, col = 3)
+    if (doseTable$Drug[i] != "")
+      {
+        cell$source <- unlist(drugDefaults$Units[drugDefaults$Drug == doseTable$Drug[i]])
+      } else {
+        cell$source <- c("select","drug","first")
+      }
+    if (length(cell$source) == 1)
+    {
+      cell$readOnly <- TRUE
+    } else {
+      cell$readOnly <- FALSE
+    }
+    HOT$x$cell <- c(HOT$x$cell, list(cell))
+  }
+  #########################
   return(HOT)
 }

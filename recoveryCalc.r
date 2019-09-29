@@ -10,7 +10,7 @@ recoveryCalc <-   function(
   return (
     optimize(
       function (t, state, lambda, target) { (target - sum(state * exp(-lambda * t)))^2 }, 
-      c(0,120),
+      c(0,1440),
       state = state,
       lambda = lambda,
       target = target,

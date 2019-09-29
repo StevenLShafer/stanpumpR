@@ -230,7 +230,7 @@ ui <- function(request) {
       h4(textOutput(outputId = 'optionFlag'))
     ),
     conditionalPanel(
-      condition = "output.optionFlag == 'Graph Options'",
+      condition = "output.optionFlag != 'Graph Options1'",
       fluidRow(
         column( # Column 1, Simulation Mode
           width = 2,
@@ -292,13 +292,13 @@ ui <- function(request) {
             options = list(container = "body")
           )
         ),
-        # Select MEAC, Select Interaction
+        # Select MEAC, Select Interaction, events, and time to emergence
         column(
           width = 1,
           checkboxGroupInput(
             inputId = "addedPlots",
             label = "Additional Plots",
-            choices = c("MEAC", "Interaction", "Events", "Recovery"),
+            choices = c("MEAC", "Interaction", "Events", "Time to Emergence"),
           ),
           bsTooltip(
             id = "addedPlots", 
@@ -322,6 +322,7 @@ ui <- function(request) {
             placement = "top", 
             options = list(container = "body")
           ),
+          # Add Conditional Panel here - this goes away Time to Emergence appears as an added plot
           checkboxInput(
             inputId = "logY",
             label = "Log Y axis",
@@ -342,6 +343,12 @@ ui <- function(request) {
           actionButton(
             inputId = "setTarget",
             label = "Suggest",
+            icon=icon("fas fa-syringe"),
+            width = NULL
+          ),
+          actionButton(
+            inputId = "editDrugs",
+            label = "Edit Drugs",
             icon=icon("fas fa-syringe"),
             width = NULL
           )

@@ -23,8 +23,15 @@ scales_y <- list(
 )
 print(scales_y)
 
-ggplot(mydf) +
+X <- ggplot(mydf) +
   geom_point(aes(x = Subject, y = Value)) +
-  facet_grid_sc(rows = vars(Magnitude), scales = c("free_y", list(y = scales_y)))
+  facet_grid_sc(rows = vars(Magnitude), scales = "free_y")
 
-                
+Y <- ggplot_build(X)
+str(Y$scales)
+
+layer_scales(Y)
+layer_scales(X)
+plot(X)
+str(X$facet$super)
+unlist(X$scales$scales)

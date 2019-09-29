@@ -1,5 +1,5 @@
 # Closed form, multiple PK sets
-advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, target)
+advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emerge)
 {
   ##############################
   # Begin closed form approach #
@@ -165,10 +165,42 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, targ
     print(pkLine)
   }
   Ce <- calculateCe(Cp, ke0, dt, L)
+  
+  if (plotRecovery)
+  {
+    # Note that I am looking at plasma, not effect site.
+    # This is for reasons of speed. I abandoned move forward e_state variables in the interest of
+    # speed, and because I would have to take them through the transformation when the PK changes.
+    # That seems computationally hazardous
+    recovery <- sapply(
+      1:L, 
+      function(i) 
+        (
+          recoveryCalc(
+            c(
+              p_state_1[i], 
+              p_state_2[i], 
+              p_state_3[i],
+              0
+            ),
+            c(
+              lambda_1[i],
+              lambda_2[i],
+              lambda_3[i],
+              0
+            ),
+            emerge)
+        )
+    )
+  } else {
+    recovery <- rep(0, L)
+  }
+
   results <- data.frame(
     Time = timeLine,
     Cp = Cp,
-    Ce = Ce
+    Ce = Ce,
+    Recovery = recovery
   )
   return(results)
 }

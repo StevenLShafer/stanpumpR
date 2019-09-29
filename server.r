@@ -24,6 +24,15 @@ server <- function(input, output, session)
     options(error = NULL)
   })
   
+  # Make drugs and events local to session
+  drugDefaults <- drugDefaults_global
+  originalUnits <- drugDefaults$Units
+  drugDefaults$Units <- strsplit(drugDefaults$Units, ",")
+  drugList <- drugDefaults$Drug
+  colorList <- drugDefaults$Color
+  
+  eventDefaults <- eventDefaults_global
+  
   # Prior data
   prior                    <- NULL
   prior$age                <- 0
@@ -41,9 +50,9 @@ server <- function(input, output, session)
   prior$caption            <- ""
   prior$typical            <- "Range"
   prior$logY               <- FALSE
-  prior$DT                 <- NULL
+  prior$DT                 <- NULL # Used to determine of replot flag needs to be set, e.g., sameTable(DT, prior$DT) 
+                                   # Set to DT after processDoseTable
   prior$ET                 <- NULL
-  prior$current$DT         <- NULL
   prior$referenceTime      <- "none"
   prior$plotMEAC           <- FALSE
   prior$plotInteraction    <- FALSE
@@ -52,8 +61,11 @@ server <- function(input, output, session)
   prior$plotRecovery       <- FALSE
   prior$holdPlot           <- FALSE
   prior$DrugTimeUnits      <- ""
-  clickNote <- "Click a plot to add  doses, double click any plot to add drugs."
-  plot <- NULL
+
+  clickNote                <- "Click a plot to add  doses, double click any plot to add drugs."
+  plot                     <- NULL
+  current                  <- NULL
+  current$DT               <- NULL # Dose Table that agrees with handsontable  
   
   ##########################################################
   # Code to save state in url and then restore from url
@@ -100,7 +112,10 @@ server <- function(input, output, session)
       "editEvents",
       "editEventsOK",
       "sendSlide",
-      "recipient"
+      "recipient",
+      "drugEditsOK",
+      "editDrugsHTML",
+      "editDrugs"
       )) 
 
   observe({
@@ -110,7 +125,7 @@ server <- function(input, output, session)
   })
   
   onBookmark(function(state) {  # 
-    state$values$DT <- prior$current$DT
+    state$values$DT <- current$DT
     state$values$ET <- prior$ET
   })
   
@@ -121,8 +136,8 @@ server <- function(input, output, session)
   
   onRestored(function(state) {
     doseTable <- as.data.frame(state$values$DT, stringsAsFactors=FALSE)
-    prior$current$DT <<- doseTable
-    output$doseTableHTML <<- renderRHandsontable({createHOT(doseTable)})
+    current$DT <<- doseTable
+    output$doseTableHTML <<- renderRHandsontable({createHOT(doseTable, drugDefaults)})
     prior$ET <<- as.data.frame(state$values$ET, stringsAsFactors=FALSE)
     if (nrow(prior$ET) == 0)
     {
@@ -137,7 +152,7 @@ server <- function(input, output, session)
   
   ######################################################################
   # Initialization
-  if (is.null(prior$current$DT))
+  if (is.null(current$DT))
   {
     doseTable <- data.frame(
       Drug = c("propofol","fentanyl","remifentanil","rocuronium",""),
@@ -147,18 +162,28 @@ server <- function(input, output, session)
       stringsAsFactors = FALSE
     )
     doseTableNewRow <-  doseTable[5,]
+    
+    # doseTable <- data.frame(
+    #   Drug = c("oxycodone",""),
+    #   Time = c("0", ""),
+    #   Dose = c("10", ""),
+    #   Units = c("mg po",""),
+    #   stringsAsFactors = FALSE
+    # )
     if (FALSE)
     {
       doseTable <- data.frame(
         Drug = drugDefaults$Drug,
-        Time = as.character(0),
+        Time = "0",
         Dose = "1",
         Units = drugDefaults$Bolus.Units,
         stringsAsFactors = FALSE
       )
     }
-    output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
-    prior$current$DT <- doseTable
+    isolate({
+      output$doseTableHTML <- renderRHandsontable({createHOT(doseTable, drugDefaults)})
+      current$DT <- doseTable
+    })
   }
  
   if (is.null(prior$ET))
@@ -181,67 +206,137 @@ server <- function(input, output, session)
   allResults <- NULL
   plotResults <- NULL
   PK_set <- FALSE
+  
+  newDrugDefaultsFlag <- reactiveVal(FALSE)
 
   # Initialize drug table (PK for each drug)
-  drugs <- vector("list", length = length(drugList))
-  names(drugs) <- drugList
+  drugs <- vector("list", length = nrow(drugDefaults))
+  names(drugs) <- drugDefaults$Drug
   for (i in 1:length(drugs))
   {
-    drugs[[i]]$Color <- colorList[i]
+    drugs[[i]]$Color <- drugDefaults$Color[i]
   } 
   
   output$PlotSimulation <- renderPlot({introductionPlot})
   output$optionFlag <- renderText("")
   
   ########################################################################
-  # Dose Table Loop
+  # Dose Table Loop                                                      #
+  ########################################################################
   observe(
     {
     req(input$doseTableHTML)
-    doseTable <- hot_to_r(input$doseTableHTML)
+    cat("Beginning of doseTable Loop\n")
+    isolate({
+      doseTable <- hot_to_r(input$doseTableHTML)
+    })
+    cat("Current$DT")
+    print(current$DT)
+    cat("Dose Table extracted from input$doseTableHTML\n")
+    print(doseTable)
 
     if (nrow(doseTable) == 0)
     {
+      cat("nrow(doseTable) == 0\n")
       doseTable <- rbind(doseTableNewRow)
-      output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
-    }
-    
-    row <- input$doseTableHTML_select$select$r
-    column <- input$doseTableHTML_select$select$c
-    if (is.null(row) | is.null(column))
-    {
-      prior$current$DT <<- doseTable
+      isolate({
+        output$doseTableHTML <<- renderRHandsontable({createHOT(doseTable, drugDefaults)})
+      })
+      current$DT <<- doseTable
       return()
     }
-    # validate time
-    if (column == 2)
+    
+    if (sameTable(doseTable, current$DT))
     {
-      if (is.na(doseTable$Time[row])) doseTable$Time[row] <- ""
-      x = as.character(validateTime(doseTable$Time[row]))
-      cat("x = ",x,"\n")
-      if (doseTable$Time[row] != x)
+      cat("The doseTable matched the current$DT\n")
+      if (doseTable$Drug[nrow(doseTable)] != "" )
       {
-        doseTable$Time[row] <- x
-        output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
+        cat("Adding another row\n")
+        doseTable <- rbind(doseTable, doseTableNewRow)
+        isolate({
+          current$DT <<- doseTable
+          output$doseTableHTML <<- renderRHandsontable({createHOT(doseTable, drugDefaults)})
+        })
       }
+      return()
     }
-      # validate dose
-    if (column == 3)
+    isolate({
+    row <- input$doseTableHTML_select$select$r
+    column <- input$doseTableHTML_select$select$c
+    })
+    
+    cat("Row", row,"Column", column,"\n")
+
+    if (is.null(row) | is.null(column))
     {
-      if (is.na(doseTable$Dose[row])) doseTable$Dose[row] <- ""
-      x = as.character(validateDose(doseTable$Dose[row]))
-      if (doseTable$Dose[row] != x)
+      cat("Either the row or column is null\n")
+      current$DT <<- doseTable
+      return()
+    }
+    
+    thisDrug <- which(doseTable$Drug[row] == drugDefaults$Drug)
+
+    switch(
+      column,
       {
-        doseTable$Dose[row] <- x
-        output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
+        # Xolumn 1 = drug
+        cat("Value of Drug: ", doseTable$Drug[row], "\n")
+        if (doseTable$Drug[row] != current$DT$Drug[row])
+        {
+          cell <- list(row = row - 1, col = 3)
+          if (doseTable$Drug[row] == "")
+          {
+            cat("setting row ", row, "to blank\n")
+            doseTable$Time[row] <- ""
+            doseTable$Dose[row] <- ""
+            doseTable$Units[row] <- ""
+          } else {
+            cat("Setting row ", row, "to initial zeros\n")
+            doseTable$Time[row] <- "0"
+            doseTable$Dose[row] <- "0"
+            cat("drugDefaults$Default.Units[thisDrug]", 
+                drugDefaults$Default.Units[thisDrug], "\n")
+            doseTable$Units[row] <- drugDefaults$Default.Units[thisDrug]
+            cat("This is what the doseTable should look like\n")
+            print(doseTable)
+          }
+        }
+      },
+      {
+        # Column 2 = Time 
+        cat("Value of Time:", doseTable$Time[row],"\n")
+        if (is.na(doseTable$Time[row])) doseTable$Time[row] <- ""
+        x = as.character(validateTime(doseTable$Time[row]))
+        if (doseTable$Time[row] != x)
+        {
+          doseTable$Time[row] <- x
+        }
+      },
+      {
+        # Column 3 = Dose
+        cat("Value of Dose:", doseTable$Dose[row],"\n")
+        if (is.na(doseTable$Dose[row])) doseTable$Dose[row] <- ""
+        x = as.character(validateDose(doseTable$Dose[row]))
+        if (doseTable$Dose[row] != x)
+        {
+          doseTable$Dose[row] <- x
+        }
       }
-    }
-    if (doseTable$Drug[nrow(doseTable)] != "" )
-    {
-      doseTable <- rbind(doseTable, doseTableNewRow)
-      output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
-    }
-    prior$current$DT <<- doseTable
+    )
+    cat("\nEnd of the loop\n")
+    cat("Here is the desired doseTable\n")
+    print(doseTable)
+    cat("calling renderRHandsontable\n")
+    isolate({
+      current$DT <<- doseTable
+      output$doseTableHTML <<- renderRHandsontable({createHOT(doseTable, drugDefaults)})
+    })
+    isolate({
+      test <- hot_to_r(input$doseTableHTML)
+      })
+    cat("Value of input$doseTableHTML\n")
+    print(test)
+    cat("\nExiting loop\n")
     },
     priority = 1
   )
@@ -285,7 +380,8 @@ server <- function(input, output, session)
         sex         != prior$sex        |
         weightUnit  != prior$weightUnit |
         heightUnit  != prior$heightUnit |
-        ageUnit     != prior$ageUnit
+        ageUnit     != prior$ageUnit    |
+        newDrugDefaultsFlag()
         )
       {
         PK_set <<- TRUE
@@ -300,7 +396,8 @@ server <- function(input, output, session)
                 weight = input$weight * as.numeric(input$weightUnit),
                 height = input$height * as.numeric(input$heightUnit),
                 age = input$age    * as.numeric(input$ageUnit),
-                sex = input$sex
+                sex = input$sex,
+                drugDefaults = drugDefaults
                 )
             )
           drugs[[i]]$DT <<- NULL # Remove old dose table, if any
@@ -309,7 +406,24 @@ server <- function(input, output, session)
           drugs[[i]]$maxCp <<- 1
           drugs[[i]]$maxCe <<- 1
           drugs[[i]]$recovery <<- 1
-          }
+        }
+        # plotTable <- as.data.frame(
+        #   cbind(
+        #     map_chr(drugs, "drug"),
+        #     map_chr(drugs, "typical"),
+        #     map_chr(drugs, "lowerTypical"),
+        #     map_chr(drugs, "upperTypical"),
+        #     map_chr(drugs, "MEAC"),
+        #     map_chr(drugs, "tPeak")
+        #   ),stringsAsFactors = FALSE)
+        # names(plotTable) <- c("Drug","typical", "lowerTypical","upperTypical", "MEAC","tPeak")
+        # plotTable$Typical <- as.numeric(plotTable$typical)
+        # plotTable$Lower <- as.numeric(plotTable$lowerTypical)
+        # plotTable$Upper <- as.numeric(plotTable$upperTypical)
+        # plotTable$MEAC  <- as.numeric(plotTable$MEAC)
+        # plotTable$tPeak  <- as.numeric(plotTable$tPeak)
+        # write.xlsx(plotTable[,c("Drug","Lower","Upper","Typical","MEAC","tPeak")],file="PlotTable.xlsx")
+        
         # cat("****** Time to set up drug PK *********\n")
         # print(x)
         # cat("\n")
@@ -324,7 +438,7 @@ server <- function(input, output, session)
     
     #######################################################################
     # Has the dose table changed?                                         #
-    DT <- prior$current$DT
+    DT <- current$DT
     DT$Drug    <- as.character(DT$Drug)
     DT$Units   <- as.character(DT$Units)
     DT$Dose    <- as.numeric(DT$Dose)
@@ -421,6 +535,8 @@ server <- function(input, output, session)
     if (!sameTable(DT, prior$DT)) {
       cat("plotting because doseTable changed\n")
       replotFlag <- TRUE
+    } else {
+      cat("doseTable remains unchanged\n")
     }
     if (!sameTable(ET, prior$ET)) {
       cat("plotting because eventTable changed\n")
@@ -431,11 +547,11 @@ server <- function(input, output, session)
       cat("plotting because plotMaximum changed to ", plotMaximum, "\n")
       replotFlag <- TRUE
     }
-    plotRecovery           <- "Recovery"    %in% input$addedPlots
+    plotRecovery           <- "Time to Emergence"    %in% input$addedPlots
     if (plotRecovery != prior$plotRecovery) {
       if (plotRecovery == TRUE)
       {
-        cat("plotting because plotRecover changed to TRUE\n")
+        cat("plotting because plotRecovery changed to TRUE\n")
         replotFlag <- TRUE
       }
     }
@@ -482,6 +598,7 @@ server <- function(input, output, session)
     typical                <- input$typical
     logY                   <- input$logY
     referenceTime          <- input$referenceTime
+    if (plotRecovery) logY <- FALSE
 
     if(replotFlag                                          |
         plasmaLinetype         != prior$plasmaLinetype     |
@@ -497,7 +614,6 @@ server <- function(input, output, session)
         plotCost               != prior$plotCost           |
         plotEvents             != prior$plotEvents         |
         plotRecovery           != prior$plotRecovery
-       
     )
     {
       cat('****************** SIMULATION PLOT CALLED BY ********************\n')
@@ -515,6 +631,8 @@ server <- function(input, output, session)
       if (plotCost               != prior$plotCost) cat("New plot triggered by plotCost != prior$plotCost\n")
       if (plotEvents             != prior$plotEvents) cat("New plot triggered by plotEvents != prior$plotEvents\n")
       if (plotRecovery           != prior$plotRecovery) cat("New plot triggered by ploRecovery != prior$plotRecovery\n")
+      if (newDrugDefaultsFlag() )  cat("New plot triggered new Drug Defaults\n")
+      
       cat("\n")
 
       if (normalization != prior$normalization)
@@ -523,7 +641,6 @@ server <- function(input, output, session)
         plasmaLinetype <- X$plasmaLinetype
         effectsiteLinetype <- X$effectsiteLinetype
       }
-      cat("Creating plot now\n")
       output$PlotSimulation <- renderPlot({
         simulationFlag <- FALSE
         X <- simulationPlot(
@@ -544,7 +661,8 @@ server <- function(input, output, session)
           typical = typical,
           logY = logY,
           drugs = drugs,
-          events = ET
+          events = ET,
+          eventDefaults = eventDefaults
         )
         if (is.null(X))
         {
@@ -570,7 +688,10 @@ server <- function(input, output, session)
         prior$plotCost            <<- plotCost
         prior$plotEvents          <<- plotEvents
         prior$plotRecovery        <<- plotRecovery
-        
+        isolate({
+          newDrugDefaultsFlag(FALSE)
+        })
+  
           if (is.null(plotObject))
           {
             output$optionFlag <- renderText("")
@@ -578,7 +699,6 @@ server <- function(input, output, session)
             output$plotInfo <- renderText("")
             return(nothingtoPlot)
           } else {
-            cat("Something to plot!\n")
             output$optionFlag <- renderText("Graph Options")
             output$plotInfo <- renderText(clickNote)
             return(plotObject)
@@ -689,7 +809,7 @@ processNormalization <- observeEvent(
         recipient = input$recipient,
         title = input$title, 
         plotObject = plotObject, 
-        DT <- prior$current$DT,
+        DT <- current$DT,
         allResults = allResults, 
         plotResults = plotResults,
         isShinyLocal = isShinyLocal,
@@ -818,7 +938,12 @@ xy_str <- function(e) {
   } else {
     time = paste(time, "minutes")
   }
-  paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs[[i]]$equiSpace$Ce[j], 2), " ", x[2])
+  returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs[[i]]$equiSpace$Ce[j], 2), " ", x[2])
+  if (prior$plotRecovery)
+  {
+    returnText <- paste0(returnText,", Recovery in ",round(drugs[[i]]$equiSpace$Recovery[j], 1), " minutes")
+  }
+  return(returnText)
 }
 
 # Click and Double Click Control ##########################################################
@@ -828,7 +953,7 @@ xy_str <- function(e) {
 observeEvent(
   input$plot_click,
   {
-    cat("in click routine\n")
+    # cat("in click routine\n")
     x <- imgDrugTime(input$plot_click)
     prior$DrugTimeUnits <<- x
     
@@ -845,7 +970,7 @@ observeEvent(
 observeEvent(
   input$plot_dblclick,
   {
-    cat("in double click routine\n")
+    # cat("in double click routine\n")
     x <- imgDrugTime(input$plot_dblclick)
     prior$DrugTimeUnits <<- x
     
@@ -861,11 +986,11 @@ observeEvent(
 # Get the time, drug, and units from the image
 imgDrugTime <- function(e = "")
 {
-  cat("in imgDrugTime\n")
+  # cat("in imgDrugTime\n")
   plottedDrugs <- unique(allResults$Drug)
   plottedAll   <- unique(as.character(plotResults$Drug))
-  cat("plottedDrugs", plottedDrugs,"\n")
-  cat("plottedAll", plottedAll,"\n")
+#  cat("plottedDrugs", plottedDrugs,"\n")
+#  cat("plottedAll", plottedAll,"\n")
 
   # Get Time
   if (is.null(e$x) | is.null(e) | length(plottedDrugs) == 0)
@@ -875,13 +1000,13 @@ imgDrugTime <- function(e = "")
       time <- 0
     } else {
       time <- prior$plotMaximum
-      cat("time is plotMaximum: ", time, "\n")
+#      cat("time is plotMaximum: ", time, "\n")
     }
   } else {
     i <- which(plottedDrugs[1] == drugList)
     j <- which.min(abs(e$x - drugs[[i]]$equiSpace$Time))
     time <- round(drugs[[i]]$equiSpace$Time[j], 1)
-    cat("Time from x axis = ",time,"\n")
+#    cat("Time from x axis = ",time,"\n")
   }
   if (input$referenceTime == "none") 
   {
@@ -892,7 +1017,7 @@ imgDrugTime <- function(e = "")
 
   if(is.null(e) | length(plottedDrugs) == 0) 
   {
-    cat("Retuning because length(plottedDrugs = 0\n")
+#    cat("Retuning because length(plottedDrugs = 0\n")
     return(
       list(
         drug = "propofol", 
@@ -903,11 +1028,11 @@ imgDrugTime <- function(e = "")
 #  whichDrugs <- which(unlist(lapply(drugs,function(x) {if (is.null(x$DT)) FALSE else TRUE})))
 
   # Get Drug
-  cat("e$coords_img$y = ", e$coords_img$y,"\n")
+  # cat("e$coords_img$y = ", e$coords_img$y,"\n")
   drugY <- c(170 + 1:(length(plottedAll)-1) * (1000- 170 - 200)/length(plottedAll),1001)
-  cat("drugY = ", drugY, "\n")
+  # cat("drugY = ", drugY, "\n")
   drug <- plottedAll[e$coords_img$y < drugY][1]
-  cat("drug from drugY = ", drug, "\n")
+  # cat("drug from drugY = ", drug, "\n")
   if (!is.null(e$panelvar1))
   {
     drug <-  unlist(
@@ -915,7 +1040,7 @@ imgDrugTime <- function(e = "")
       gsub("\n"," ", e$panelvar1)
       ," "))[1]
     str(drug)
-    cat("drug from panelvar1",drug, "\n")
+#    cat("drug from panelvar1",drug, "\n")
   }
   if (drug %in% c("% MEAC", "p no response"))
     drug <- drug <- tail(plottedDrugs,1)
@@ -948,8 +1073,8 @@ clickPopupDrug <- function(
   drug <- x$drug
   time <- x$time
   units <- x$units
-  i <- which(drug == drugList)
-  units <- c(drugDefaults$Bolus.Units[i], drugDefaults$Infusion.Units[i])
+  thisDrug <- which(drug == drugList)
+  units <- unlist(drugDefaults$Units[thisDrug])
   showModal(
     modalDialog(
     title = paste("Enter a new dose for ", drug),
@@ -970,7 +1095,7 @@ clickPopupDrug <- function(
     radioButtons(
       inputId = "clickUnits",
       label = "Units",
-      choices = c(units[1], units[2]),
+      choices = units,
       inline = TRUE
     ), 
     actionButton(
@@ -1023,7 +1148,7 @@ observeEvent(
       removeModal()
       if (clickTime != "" & clickDose != "")
       {
-        doseTable <- prior$current$DT
+        doseTable <- current$DT
         i <- which(doseTable$Drug == "")[1]
         doseTable$Drug[i] <- prior$DrugTimeUnits$drug
         doseTable$Time[i] <- clickTime
@@ -1033,8 +1158,8 @@ observeEvent(
         {
           doseTable <- rbind(doseTable, doseTableNewRow)
         }
-        output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
-        prior$current$DT <<- doseTable
+        output$doseTableHTML <- renderRHandsontable({createHOT(doseTable, drugDefaults)})
+        current$DT <<- doseTable
       }
     } else {
       clickPopupDrug(
@@ -1050,7 +1175,7 @@ observeEvent(
   input$editDoses, 
   {
     removeModal()
-    tempTable <-  prior$current$DT[prior$current$DT$Drug ==  prior$DrugTimeUnits$drug,]
+    tempTable <-  current$DT[current$DT$Drug ==  prior$DrugTimeUnits$drug,]
     tempTable$Delete <- FALSE 
     tempTableHOT <- rhandsontable(
       tempTable[,c("Delete","Time","Dose","Units")],
@@ -1125,15 +1250,15 @@ observeEvent(
     DT$Drug <- prior$DrugTimeUnits$drug
     doseTable <- rbind(
       DT[!DT$Delete,c("Drug","Time","Dose","Units")],
-      prior$current$DT[prior$current$DT$Drug != prior$DrugTimeUnits$drug,]
+      current$DT[current$DT$Drug != prior$DrugTimeUnits$drug,]
     )
     for (i in 1:nrow(doseTable))
     {
       doseTable$Time[i] <- validateTime(doseTable$Time[i])
       doseTable$Dose[i] <- validateDose(doseTable$Dose[i]) # should work for target too
     }
-    prior$current$DT <<- doseTable
-    output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
+    current$DT <<- doseTable
+    output$doseTableHTML <- renderRHandsontable({createHOT(doseTable, drugDefaults)})
   }
 )
 
@@ -1404,7 +1529,7 @@ observeEvent(
       removeModal()
       if (clickTime != "" & clickDose != "")
       {
-        doseTable <- prior$current$DT
+        doseTable <- current$DT
         i <- which(doseTable$Drug == "")[1]
         doseTable$Drug[i] <- input$dblclickDrug
         doseTable$Time[i] <- clickTime
@@ -1414,8 +1539,8 @@ observeEvent(
         {
           doseTable <- rbind(doseTable, doseTableNewRow)
         }
-        output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
-        prior$current$DT <<- doseTable
+        output$doseTableHTML <- renderRHandsontable({createHOT(doseTable, drugDefaults)})
+        current$DT <<- doseTable
       }
     } else {
       dblclickPopupDrug(
@@ -1430,10 +1555,10 @@ observeEvent(
   input$dblclickDelete, 
   {
     removeModal()
-    doseTable <- prior$current$DT
+    doseTable <- current$DT
     doseTable <- doseTable[doseTable$Drug != prior$DrugTimeUnits$drug,]
-    output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
-    prior$current$DT <<- doseTable
+    output$doseTableHTML <- renderRHandsontable({createHOT(doseTable, drugDefaults)})
+    current$DT <<- doseTable
   }
 )
 
@@ -1673,16 +1798,187 @@ observeEvent(
     testTable$Time <- testTable$Time + offsetTime
     # print(str(testTable))
     
-    doseTable <- prior$current$DT
+    doseTable <- current$DT
     doseTable <- doseTable[doseTable$Drug != input$targetDrug,]
     # print(str(doseTable))
     
     doseTable <- rbind(testTable[,c("Drug","Time","Dose","Units")], doseTable)
-    output$doseTableHTML <- renderRHandsontable({createHOT(doseTable)})
-    prior$current$DT <<- doseTable
+    output$doseTableHTML <- renderRHandsontable({createHOT(doseTable, drugDefaults)})
+    current$DT <<- doseTable
   }
 )
 
+observeEvent(
+  input$editDrugs,
+  {
+    x <- drugDefaults
+    x$Units <- originalUnits
+    drugsHOT <- rhandsontable(
+      x,
+      overflow = 'visible',
+      rowHeaders = NULL,
+      height = 220,
+      selectCallback = TRUE
+    ) %>%
+    hot_col(
+        col = 1,
+        type="autocomplete",
+        halign = "htRight",
+        allowInvalid = TRUE,
+        strict = FALSE,
+        readOnly = TRUE
+      ) %>%
+      hot_col(
+        col = 2,
+        type = "dropdown",
+        source = c("mcg","ng"),
+        strict = TRUE,
+        halign = "htLeft",
+        valign = "vtMiddle",
+        allowInvalid=FALSE
+      ) %>%
+      hot_col(
+        col = 3,
+        type = "dropdown",
+        source = bolusUnits,
+        strict = TRUE,
+        halign = "htLeft",
+        valign = "vtMiddle",
+        allowInvalid=FALSE
+      ) %>%
+      hot_col(
+        col = 4,
+        type = "dropdown",
+        source = infusionUnits,
+        strict = TRUE,
+        halign = "htLeft",
+        valign = "vtMiddle",
+        allowInvalid=FALSE
+      ) %>%
+      hot_col(
+        col = 5,
+        type = "dropdown",
+        source = allUnits,
+        strict = TRUE,
+        halign = "htLeft",
+        valign = "vtMiddle",
+        allowInvalid=FALSE
+      ) %>%
+      hot_col(
+        col = 6,
+        type = "autocomplete",
+        strict = FALSE,
+        allowInvalid = TRUE,
+        halign = "htLeft",
+      ) %>%
+      hot_col(
+        col = 7,
+        type = "autocomplete",
+        halign = "htRight",
+        allowInvalid = TRUE,
+        strict = FALSE
+      ) %>%
+      hot_col(
+        col = 8,
+        type = "autocomplete",
+        halign = "htRight",
+        allowInvalid = TRUE,
+        strict = FALSE
+      ) %>%
+      hot_col(
+        col = 9,
+        type = "autocomplete",
+        halign = "htRight",
+        allowInvalid = TRUE,
+        strict = FALSE
+      ) %>%
+      hot_col(
+        col = 10,
+        type = "autocomplete",
+        halign = "htRight",
+        allowInvalid = TRUE,
+        strict = FALSE
+      ) %>%
+      hot_col(
+        col = 11,
+        type = "autocomplete",
+        halign = "htRight",
+        allowInvalid = TRUE,
+        strict = FALSE
+      ) %>%
+      hot_col(
+        col = 12,
+        type = "autocomplete",
+        halign = "htRight",
+        allowInvalid = TRUE,
+        strict = FALSE
+      ) %>%
+      hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+      hot_rows(rowHeights = 10)
+    output$editDrugsHTML <- renderRHandsontable(drugsHOT)
+    showModal(
+      modalDialog(
+        title = paste("Edit Drug Defaults"),
+        tags$div(
+          HTML(paste(tags$span(style="color:red; font-weight:bold ",
+                               "This is primarily intended for stanpumpR collaborators. ",
+                               "If you believe some drug defaults are incorrect, please contact ",
+                               "steven.shafer@stanford.edu. ",
+                               "Also, you can easily break your session by entering crazy things. ",
+                               "If so, just reload your session. "), sep = ""))
+        ),
+        rHandsontableOutput(outputId = "editDrugsHTML"),
+        actionButton(
+          inputId = "drugEditsOK", 
+          label = "OK",
+          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
+        ),
+        tags$button(
+          type = "button", 
+          class = "btn btn-warning",
+          `data-dismiss` = "modal", 
+          "Cancel"
+        ),
+        footer = NULL,
+        easyClose = TRUE,
+        fade=TRUE,
+        size="l"
+      )
+    )
+  }
+)
+
+
+# Evaluate target concentration
+observeEvent(
+  input$drugEditsOK, 
+  {
+    removeModal()
+    newDrugDefaults <- hot_to_r(input$editDrugsHTML)
+    newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
+    newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
+    newDrugDefaults$Bolus.Units          <- as.character(newDrugDefaults$Bolus.Units)
+    newDrugDefaults$Infusion.Units       <- as.character(newDrugDefaults$Infusion.Units)
+    newDrugDefaults$Default.Units        <- as.character(newDrugDefaults$Default.Units)
+    newDrugDefaults$Units                <- as.character(newDrugDefaults$Units)
+    newDrugDefaults$Color                <- as.character(newDrugDefaults$Color)
+    newDrugDefaults$Lower                <- as.numeric(newDrugDefaults$Lower)
+    newDrugDefaults$Upper                <- as.numeric(newDrugDefaults$Upper)
+    newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
+    newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
+    newDrugDefaults$Emerge               <- as.numeric(newDrugDefaults$Emerge)
+    drugDefaults <<- newDrugDefaults
+    originalUnits <<- drugDefaults$Units
+    drugDefaults$Units <<- strsplit(drugDefaults$Units, ",")
+    drugList <<- drugDefaults$Drug
+    colorList <<- drugDefaults$Color
+    for (i in 1:length(drugs))
+    {
+      drugs[[i]]$Color <<- drugDefaults$Color[i]
+    } 
+    newDrugDefaultsFlag(TRUE)
+  }
+  )
 }
 
 #shinyApp(ui, server)

@@ -36,7 +36,6 @@ dexmedetomidine <- function(weight, height, age, sex)
     )
     events <- c("default")
   } else {
-    temperature <- 37 # Temperature excluded for now
     v3 <- 1
     cl3 <- 0
     # Before cardiopulmonary bypass: 
@@ -54,7 +53,7 @@ dexmedetomidine <- function(weight, height, age, sex)
     )
     
     # During cardiopulmonary bypass: 
-    v1 <- 115 * (weight / 70) * (temperature / 37) ^ (-1.6)  # liters
+    v1 <- 115 * (weight / 70) * (37 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
     cl2 <- 2980 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -66,11 +65,83 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
+    v1 <- 115 * (weight / 70) * (36 / 37) ^ (-1.6)  # liters
+    v2 <- 144 * (weight / 70) # liters
+    cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    cl2 <- 2980 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    CPB36 <- list(
+      v1 = v1,
+      v2 = v2,
+      v3 = v3,
+      cl1 = cl1,
+      cl2 = cl2,
+      cl3 = cl3
+    )
+    v1 <- 115 * (weight / 70) * (35 / 37) ^ (-1.6)  # liters
+    v2 <- 144 * (weight / 70) # liters
+    cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    cl2 <- 2980 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    CPB35 <- list(
+      v1 = v1,
+      v2 = v2,
+      v3 = v3,
+      cl1 = cl1,
+      cl2 = cl2,
+      cl3 = cl3
+    )
+    v1 <- 115 * (weight / 70) * (34 / 37) ^ (-1.6)  # liters
+    v2 <- 144 * (weight / 70) # liters
+    cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    cl2 <- 2980 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    CPB34 <- list(
+      v1 = v1,
+      v2 = v2,
+      v3 = v3,
+      cl1 = cl1,
+      cl2 = cl2,
+      cl3 = cl3
+    )
+    v1 <- 115 * (weight / 70) * (33 / 37) ^ (-1.6)  # liters
+    v2 <- 144 * (weight / 70) # liters
+    cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    cl2 <- 2980 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    CPB33 <- list(
+      v1 = v1,
+      v2 = v2,
+      v3 = v3,
+      cl1 = cl1,
+      cl2 = cl2,
+      cl3 = cl3
+    )
+    v1 <- 115 * (weight / 70) * (32 / 37) ^ (-1.6)  # liters
+    v2 <- 144 * (weight / 70) # liters
+    cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    cl2 <- 2980 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    CPB32 <- list(
+      v1 = v1,
+      v2 = v2,
+      v3 = v3,
+      cl1 = cl1,
+      cl2 = cl2,
+      cl3 = cl3
+    )
+    v1 <- 115 * (weight / 70) * (31 / 37) ^ (-1.6)  # liters
+    v2 <- 144 * (weight / 70) # liters
+    cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    cl2 <- 2980 * (weight / 70) ^ 0.75 / 1000 # (L / min)
+    CPB31 <- list(
+      v1 = v1,
+      v2 = v2,
+      v3 = v3,
+      cl1 = cl1,
+      cl2 = cl2,
+      cl3 = cl3
+    )
     
     # After cardiopulmonary bypass: 
     v1 <-  155 * (weight / 70) # liters
     v2 <-  105 * (weight / 70) # liters
-    cl1 <- 623 * (weight / 70) ^ 0.75 * (age / (1.77 + age)) / 1000 # (L / min)
+    cl1 <- 623 * (weight / 70) ^ 0.75 * (age * 365) / (1.77 + age * 365) / 1000 # (L / min)
     cl2 <- 209 * (weight / 70) ^ 0.75 / 1000 # (L / min)
     CPBEnd <- list(
       v1 = v1,
@@ -80,7 +151,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    events <- c("default", "CPBStart","CPBEnd")
+    events <- c("default", "CPBStart","CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd")
     
     tPeak <- 2 # Just a guess
     typical <- 10 #Clin Pharmacol Ther. 1995 Jul;58(1):35-43.
@@ -91,8 +162,9 @@ dexmedetomidine <- function(weight, height, age, sex)
   }
 
   PK <- sapply(events, function(x) list(get0(x)))
-  cat("Here is the structure of PK")
-  print(str(PK))
+  
+  # cat("Here is the structure of PK")
+  # print(str(PK))
   
   return(
     list(
