@@ -1,16 +1,17 @@
 # Create the handsontable that has the dosing information
 createHOT <- function(doseTable,drugDefaults)
 {
+  .rowNamesDF(doseTable, make.names=TRUE) <- 1:nrow(doseTable) 
   HOT <- rhandsontable(
     doseTable,
     overflow = 'visible',
     rowHeaders = NULL,
-    #      width = 550,
-    height = 220,
-    selectCallback = TRUE
+    #width = 550,
+    height = 400,
+    selectCallback = FALSE
     #    highlightCol = TRUE, 
     #    highlightRow = TRUE
-  ) %>%
+    ) %>%
     hot_col(
       col = "Drug",
       type = "dropdown",
@@ -56,7 +57,7 @@ createHOT <- function(doseTable,drugDefaults)
       {
         cell$source <- unlist(drugDefaults$Units[drugDefaults$Drug == doseTable$Drug[i]])
       } else {
-        cell$source <- c("select","drug","first")
+        cell$source <- c("")
       }
     if (length(cell$source) == 1)
     {
@@ -65,6 +66,11 @@ createHOT <- function(doseTable,drugDefaults)
       cell$readOnly <- FALSE
     }
     HOT$x$cell <- c(HOT$x$cell, list(cell))
+    
+    # Must disable contect menu because inset rows / delete rows reproducibly crashes
+    # hot_to_r with  Error in .rowNamesDF<-: invalid 'row.names' length. Same error for
+    # both insert and delete row functions
+    HOT$x$contextMenu <- NULL #= list(items = c("row_above", "row_below"))
   }
   #########################
   return(HOT)

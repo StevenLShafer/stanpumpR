@@ -35,10 +35,16 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$Dose[use] <- dose$Dose[use] / 60
     
     # Identify bolus doses
-    dose$Bolus <- !(grepl("min", dose$Units) | grepl("hr", dose$Units) | grepl("po", dose$Units))
+    dose$Bolus <- !(grepl("min", dose$Units) | 
+                      grepl("hr", dose$Units) | 
+                      grepl("PO", dose$Units) |
+                      grepl("IM", dose$Units) |
+                      grepl("IN", dose$Units))
     
     # Identify PO doses
-    dose$PO <- grepl("po", dose$Units)
+    dose$PO <- grepl("PO", dose$Units)
+    dose$IM <- grepl("IM", dose$Units)
+    dose$IN <- grepl("IN", dose$Units)
     
     events <- events[,c(1,2)]
     
@@ -54,11 +60,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # print(events)
     if (length(pkEvents) == 1 | nrow(events) == 0)
     {
-      if (sum(dose$PO) == 0)
+      if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
       {
         results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
       } else {
-        results <- advanceClosedFormPO(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
+        results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
       }
     } else {
       # Process Events

@@ -1,5 +1,5 @@
 #Advance a single state variable over time
-advanceStatePO <- function(l, bolus, infusion, po, L)
+advanceStatePO <- function(l, bolus, infusion, PO, IM, IN, L)
 {
   Z <- lapply(
     1:L, 
@@ -8,13 +8,15 @@ advanceStatePO <- function(l, bolus, infusion, po, L)
         l = l[i],
         bolus = bolus[i],
         infusion = infusion[i],
-        po = po[i]
+        PO = PO[i],
+        IM = IM[i],
+        IN = IN[i]
       )
     )
   )
   return(
     Reduce(
-      function(state, Z) {state * Z$l +  Z$bolus + Z$infusion + Z$po}, 
+      function(state, Z) {state * Z$l +  Z$bolus + Z$infusion + Z$PO + Z$IM + Z$IN}, 
       Z,
       init = 0,
       accumulate = TRUE

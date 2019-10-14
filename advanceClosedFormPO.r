@@ -8,8 +8,18 @@ advanceClosedFormPO <- function(dose, pkSet, maximum, plotRecovery, emerge)
   # Modified to include PO and IV delivery     #
   ##############################################
   
+  dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag
   # Create timeline 
-  timeLine <- sort(unique(c(0, dose$Time, dose$Time[dose$Bolus] - .01, maximum)))
+  timeLine <- sort(
+    unique(
+      c(
+        0, 
+        dose$Time, 
+        dose$Time - .01, # run until just before next dose
+        maximum
+        )
+      )
+    )
   timeLine <- timeLine[timeLine >=0]
   
   # Fill in gaps using exponentially decreasing amounts

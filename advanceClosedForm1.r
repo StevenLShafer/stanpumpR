@@ -5,6 +5,10 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # Begin closed form approach #
   ##############################
   
+  cat("Starting advanceClosedForm1\n")
+  cat("Dose Table\n")
+  print(dose)
+
   # Create timeline 
   timeLine <- sort(unique(c(0, dose$Time, events$Time, events$Time - 0.01, dose$Time[dose$Bolus] - 0.01, maximum)))
   timeLine <- timeLine[timeLine >=0]
@@ -21,6 +25,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   }
   timeLine <- sort(unique(timeLine))
   L <- length(timeLine)
+  doseNA <- rep(0, L)
   
   # Create bolusLine and infusionLine
   bolusLine <- infusionLine <- pkLine <- dt <- rate <- rep(0, L)
@@ -46,6 +51,14 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     pkLine[i] <- events$Event[tail(which(events$Time <= timeLine[i]),1)]    
   }
   
+  cat("bolusLine\n")
+  print(bolusLine)
+  cat("InfusionLine\n")
+  print(infusionLine)
+  cat("rate\n")
+  print(rate)
+  cat("\n")
+  
   # Set up time varying parameters
   parameters <-   as.data.frame(
     cbind(
@@ -55,16 +68,16 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       k13 = map_dbl(pkSets, "k13"),
       k21 = map_dbl(pkSets, "k21"),
       k31 = map_dbl(pkSets, "k31"),
-      ke0 = map_dbl(pkSets, "lambda_4"),
+      ke0 = map_dbl(pkSets, "ke0"),
       lambda_1 = map_dbl(pkSets, "lambda_1"),
       lambda_2 = map_dbl(pkSets, "lambda_2"),
       lambda_3 = map_dbl(pkSets, "lambda_3"),
-      p_coef_bolus_1 = map_dbl(pkSets, "p_coef_bolus_1"),
-      p_coef_bolus_2 = map_dbl(pkSets, "p_coef_bolus_2"),
-      p_coef_bolus_3 = map_dbl(pkSets, "p_coef_bolus_3"),
-      p_coef_infusion_1 = map_dbl(pkSets, "p_coef_infusion_1"),
-      p_coef_infusion_2 = map_dbl(pkSets, "p_coef_infusion_2"),
-      p_coef_infusion_3 = map_dbl(pkSets, "p_coef_infusion_3")
+      p_coef_bolus_l1 = map_dbl(pkSets, "p_coef_bolus_l1"),
+      p_coef_bolus_l2 = map_dbl(pkSets, "p_coef_bolus_l2"),
+      p_coef_bolus_l3 = map_dbl(pkSets, "p_coef_bolus_l3"),
+      p_coef_infusion_l1 = map_dbl(pkSets, "p_coef_infusion_l1"),
+      p_coef_infusion_l2 = map_dbl(pkSets, "p_coef_infusion_l2"),
+      p_coef_infusion_l3 = map_dbl(pkSets, "p_coef_infusion_l3")
     ),stringsAsFactors = FALSE)
   
   #Set up time varying parameters
@@ -95,47 +108,59 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   lambda_2   <- parameters[pkLine, "lambda_2"]
   lambda_3   <- parameters[pkLine, "lambda_3"]
   
-  p_coef_bolus_1   <- parameters[pkLine, "p_coef_bolus_1"]
-  p_coef_bolus_2   <- parameters[pkLine, "p_coef_bolus_2"]
-  p_coef_bolus_3   <- parameters[pkLine, "p_coef_bolus_3"]
+  cat("lambda_1:\n")
+  print(lambda_1)
+  cat("\n")
+  
+  p_coef_bolus_l1   <- parameters[pkLine, "p_coef_bolus_l1"]
+  p_coef_bolus_l2   <- parameters[pkLine, "p_coef_bolus_l2"]
+  p_coef_bolus_l3   <- parameters[pkLine, "p_coef_bolus_l3"]
+  
   
   infusionpkLine <- c(pkLine[1],pkLine[1:(L-1)]) # the prior parameters are used to move the infusion forward
-  p_coef_infusion_1   <- parameters[infusionpkLine, "p_coef_infusion_1"]
-  p_coef_infusion_2   <- parameters[infusionpkLine, "p_coef_infusion_2"]
-  p_coef_infusion_3   <- parameters[infusionpkLine, "p_coef_infusion_3"]
+  p_coef_infusion_l1   <- parameters[infusionpkLine, "p_coef_infusion_l1"]
+  p_coef_infusion_l2   <- parameters[infusionpkLine, "p_coef_infusion_l2"]
+  p_coef_infusion_l3   <- parameters[infusionpkLine, "p_coef_infusion_l3"]
+  
+  cat("p_coef_infusion_l1:\n")
+  print(p_coef_infusion_l1)
+  cat("\n")
+  
+  
   
   # Vectorize calculations
-  l1 <- exp(-lambda_1 * dt)
-  l2 <- exp(-lambda_2 * dt)
-  l3 <- exp(-lambda_3 * dt)
+  l1_dt <- exp(-lambda_1 * dt)
+  l2_dt <- exp(-lambda_2 * dt)
+  l3_dt <- exp(-lambda_3 * dt)
   
-  pbolus1 <- p_coef_bolus_1 * bolusLine
-  pbolus2 <- p_coef_bolus_2 * bolusLine
-  pbolus3 <- p_coef_bolus_3 * bolusLine
-  pinfusion1 <- p_coef_infusion_1 * rate * (1 - l1)        
-  pinfusion2 <- p_coef_infusion_2 * rate * (1 - l2)        
-  pinfusion3 <- p_coef_infusion_3 * rate * (1 - l3)        
+  p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
+  p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
+  p_bolus_l3 <- p_coef_bolus_l3 * bolusLine
   
-  p_state_1 <- p_state_2 <- p_state_3 <- rep(0, L)
+  p_infusion_l1 <- p_coef_infusion_l1 * rate * (1 - l1_dt)        
+  p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)        
+  p_infusion_l3 <- p_coef_infusion_l3 * rate * (1 - l3_dt)        
+  
+  p_state_l1 <- p_state_l2 <- p_state_l3 <- rep(0, L)
   
   for (i in 1:(nrow(events)-1))
   {
     times <- which(timeLine >= events$Time[i] & timeLine <= events$Time[i+1])
-    p_state_1[times] <- advanceState(l1[times], pbolus1[times], pinfusion1[times], p_state_1[times[1]],length(times))
-    p_state_2[times] <- advanceState(l2[times], pbolus2[times], pinfusion2[times], p_state_2[times[1]],length(times))
-    p_state_3[times] <- advanceState(l3[times], pbolus3[times], pinfusion3[times], p_state_3[times[1]],length(times))
+    p_state_l1[times] <- advanceState(l1_dt[times], p_bolus_l1[times], p_infusion_l1[times], p_state_l1[times[1]],length(times))
+    p_state_l2[times] <- advanceState(l2_dt[times], p_bolus_l2[times], p_infusion_l2[times], p_state_l2[times[1]],length(times))
+    p_state_l3[times] <- advanceState(l3_dt[times], p_bolus_l3[times], p_infusion_l3[times], p_state_l3[times[1]],length(times))
     now <- which(timeLine == events$Time[i+1])
     if (now < L)
     {
       # Reverse Bolus Dose (It will go in when the next PK starts)
-      p_state_1[now] <- p_state_1[now] - pbolus1[now]
-      p_state_2[now] <- p_state_2[now] - pbolus2[now]
-      p_state_3[now] <- p_state_3[now] - pbolus3[now]
+      p_state_l1[now] <- p_state_l1[now] - p_bolus_l1[now]
+      p_state_l2[now] <- p_state_l2[now] - p_bolus_l2[now]
+      p_state_l3[now] <- p_state_l3[now] - p_bolus_l3[now]
       
       # Convert state variables
       oldPK <- as.list(parameters[events$Event[i],])
       newPK <- as.list(parameters[events$Event[i+1],])
-      oldState <- c(p_state_1[now], p_state_2[now], p_state_3[now])
+      oldState <- c(p_state_l1[now], p_state_l2[now], p_state_l3[now])
       newState <- convertState(oldState, oldPK, newPK)
       
       cat("oldState\n")
@@ -143,20 +168,21 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       cat("newState\n")
       print(newState)
 
-      p_state_1[now] <- newState[1]
-      p_state_2[now] <- newState[2]
-      p_state_3[now] <- newState[3]
+      p_state_l1[now] <- newState[1]
+      p_state_l2[now] <- newState[2]
+      p_state_l3[now] <- newState[3]
       
       # Infusion was processed with prior PK, so infusion is now 0
-      pinfusion1[now] <- pinfusion2[now] <- pinfusion3[now] <- 0
+      p_infusion_l1[now] <- p_infusion_l2[now] <- p_infusion_l3[now] <- 0
       
       # No decrement in time either
-      l1[now] <- l2[now] <- l3[now] <- 1 
+      l1_dt[now] <- l2_dt[now] <- l3_dt[now] <- 1 
     }
   }
   
+  
   # Wrap up, calculate Ce
-  Cp <- p_state_1 + p_state_2 + p_state_3
+  Cp <- p_state_l1 + p_state_l2 + p_state_l3
   if (sum(is.na(Cp)) + sum(is.nan(Cp)) > 0)
   {
     cat("Problem with calculation of Cp\n")
@@ -165,6 +191,18 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     print(pkLine)
   }
   Ce <- calculateCe(Cp, ke0, dt, L)
+  
+  temp <- data.frame(
+    Time = round(timeLine, 2),
+    State1 = round(p_state_l1, 2),
+    State2 = round(p_state_l2, 2),
+    State3 = round(p_state_l3, 2),
+    Cp  = round(Cp, 2),
+    Ce  = round(Ce, 2)
+  )
+  cat("Results of advanceClosedForm1\n")
+  print(temp)
+  cat("\n")
   
   if (plotRecovery)
   {
@@ -178,9 +216,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
         (
           recoveryCalc(
             c(
-              p_state_1[i], 
-              p_state_2[i], 
-              p_state_3[i],
+              p_state_l1[i], 
+              p_state_l2[i], 
+              p_state_l3[i],
               0
             ),
             c(

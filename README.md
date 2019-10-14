@@ -11,15 +11,15 @@ STANPUMP was placed in the public domain. The STANPUMP pharmacokinetic engine wa
 
 stanpumpR uses very little of the original STANPUMP code. However, conceptually it is identical: an open-source program to make complex pharmacokinetic algorithms available to support patient care, teaching, and research. However, stanpumpR does not control drug administration. It is simply a web-based simulator that uses the Shiny package in R to simulate the expected concentration of intravenous anesthetics from any dosing regimen.
 
-It is hoped that stanpumpR will encourage device manufacturers to develop the next generation of drug delivery systems and anesthesia information management systems. Companies seeking to develop such systems should contact Dr. Shafer to request written permission to incorporate stanpumpR into their products. The request should also seek permission to assert patent or other intellectual property rights to code derived, in part, from stanpumpR. Without written permission, stanpumpR cannot be incorporated into commercially available systems.
+It is hoped that stanpumpR will encourage device manufacturers to develop the next generation of drug delivery systems and anesthesia information management systems. Companies seeking to develop such systems should contact Dr. Shafer to request written permission to incorporate stanpumpR into their products. The request should also seek permission to assert patent or other intellectual property rights to code derived, in part, from stanpumpR. Without written permission, stanpumpR must not be incorporated into commercially available systems.
 
 stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encourage to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible.
 
 Near-term future developments in stanpumpR will include
-1. Oral opioids
+1. Oral opioids. StanpumpR is programmed for PO, IM, and IN delivery. Need to get good PK for the opioids. Note that only first order absorption pk is currently supported.
 2. Improved models of pediatric pharmacokinetics 
 3. Improved models of drug interaction
-4. Incorporation of continuously varying covariates (e.g., PK models that vary with temperature). 
+4. PK changes with pregnancy, CYP2D6, and renal function. Added to the UI, but no models with these are yet in the program.
 
 Steven L. Shafer, MD
-September 2019
+October 2019

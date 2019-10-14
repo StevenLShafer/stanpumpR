@@ -24,14 +24,27 @@ hydromorphone <- function(weight, height, age, sex)
   cl2 <- v1 * k12
   cl3 <- v1 * k13
   
+  ka_PO <- 0.01 # Selected to get the right Cmax with the Lamminsalo PK to match the mandema curves
+  bioavailability_PO <- 0.6 # Seems to be the most consistent number (0.6 is most consistent, but levels seem high)
+
   default <- list(
     v1 = v1,
     v2 = v2,
     v3 = v3,
     cl1 = cl1,
     cl2 = cl2,
-    cl3 = cl3
+    cl3 = cl3,
+    ka_PO = ka_PO,
+    bioavailability_PO = bioavailability_PO,
+    tlag_PO = 0,
+    ka_IM = ka_PO,
+    bioavailability_IM = bioavailability_PO,
+    tlag_IM = 90,
+    ka_IN = ka_PO,
+    bioavailability_IN = bioavailability_PO,
+    tlag_IN = 180
   )
+  
   
   events <- c("default")
   PK <- sapply(events, function(x) list(get0(x)))

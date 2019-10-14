@@ -52,7 +52,8 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl3 = cl3
     )
     
-    # During cardiopulmonary bypass: 
+    # During cardiopulmonary bypass ************************************************
+    # 37 degrees 
     v1 <- 115 * (weight / 70) * (37 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -65,6 +66,8 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
+    
+    # 36 degrees
     v1 <- 115 * (weight / 70) * (36 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -77,6 +80,8 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
+    
+    # 35 degrees
     v1 <- 115 * (weight / 70) * (35 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -89,6 +94,8 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
+    
+    # 34 degrees
     v1 <- 115 * (weight / 70) * (34 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -101,6 +108,8 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
+
+    # 33 degrees
     v1 <- 115 * (weight / 70) * (33 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -113,6 +122,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
+    # 32 degrees
     v1 <- 115 * (weight / 70) * (32 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -125,6 +135,8 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
+    
+    # 31 degrees
     v1 <- 115 * (weight / 70) * (31 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)

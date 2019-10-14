@@ -14,7 +14,7 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
   # Fill in gaps using exponentially decreasing amounts
   gapStart <- timeLine[1:length(timeLine)-1]
   gapEnd   <- timeLine[2:length(timeLine)]
-  start <- min(0.693/pkSet$lambda_4 / 4, 1)
+  start <- min(0.693/pkSet$ke0 / 4, 1)
   newTimes <- c(exp(log(start)+0:40 * log(1440/start)/41))
   for (i in 1:length(gapEnd))
   {
@@ -23,6 +23,7 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
   }
   timeLine <- sort(unique(timeLine))
   L <- length(timeLine)
+  doseNA <- rep(0, L)
   
   # Create bolusLine and infusionLine
   bolusLine <- infusionLine <- dt <- rate <- rep(0, L)
@@ -51,57 +52,59 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
     pkSet,
     {
       # Vectorize calculations
-      l1 <- exp(-lambda_1 * dt)
-      l2 <- exp(-lambda_2 * dt)
-      l3 <- exp(-lambda_3 * dt)
+      l1_dt <- exp(-lambda_1 * dt)
+      l2_dt <- exp(-lambda_2 * dt)
+      l3_dt <- exp(-lambda_3 * dt)
       
-      pbolus1 <- p_coef_bolus_1 * bolusLine
-      pbolus2 <- p_coef_bolus_2 * bolusLine
-      pbolus3 <- p_coef_bolus_3 * bolusLine
-      pinfusion1 <- p_coef_infusion_1 * rate * (1 - l1)        
-      pinfusion2 <- p_coef_infusion_2 * rate * (1 - l2)        
-      pinfusion3 <- p_coef_infusion_3 * rate * (1 - l3)        
+      p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
+      p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
+      p_bolus_l3 <- p_coef_bolus_l3 * bolusLine
       
-      p_state_1 <- advanceState(l1, pbolus1, pinfusion1, 0, L)
-      p_state_2 <- advanceState(l2, pbolus2, pinfusion2, 0, L)
-      p_state_3 <- advanceState(l3, pbolus3, pinfusion3, 0, L)
+      p_infusion_l1 <- p_coef_infusion_l1 * rate * (1 - l1_dt)        
+      p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)        
+      p_infusion_l3 <- p_coef_infusion_l3 * rate * (1 - l3_dt)        
       
-      
+      p_state_l1 <- advanceState(l1_dt, p_bolus_l1, p_infusion_l1, 0, L)
+      p_state_l2 <- advanceState(l2_dt, p_bolus_l2, p_infusion_l2, 0, L)
+      p_state_l3 <- advanceState(l3_dt, p_bolus_l3, p_infusion_l3, 0, L)
+
       # Wrap up, calculate Ce
-      Cp <- p_state_1 + p_state_2 + p_state_3
-      Ce <- calculateCe(Cp, rep(pkSet$lambda_4, L), dt, L)
+      Cp <- p_state_l1 + p_state_l2 + p_state_l3
+      Ce <- calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
       
       if (plotRecovery)
       {
-        l4 <- exp(-lambda_4 * dt)
-        ebolus1 <- e_coef_bolus_1 * bolusLine
-        ebolus2 <- e_coef_bolus_2 * bolusLine
-        ebolus3 <- e_coef_bolus_3 * bolusLine
-        ebolus4 <- e_coef_bolus_4 * bolusLine
-        einfusion1 <- e_coef_infusion_1 * rate * (1 - l1)        
-        einfusion2 <- e_coef_infusion_2 * rate * (1 - l2)        
-        einfusion3 <- e_coef_infusion_3 * rate * (1 - l3)        
-        einfusion4 <- e_coef_infusion_4 * rate * (1 - l4)        
-        e_state_1 <- advanceState(l1, ebolus1, einfusion1, 0, L)
-        e_state_2 <- advanceState(l2, ebolus2, einfusion2, 0, L)
-        e_state_3 <- advanceState(l3, ebolus3, einfusion3, 0, L)
-        e_state_4 <- advanceState(l4, ebolus4, einfusion4, 0, L)
+        ke0_dt <- exp(-ke0 * dt)
+        e_bolus_l1  <- e_coef_bolus_l1  * bolusLine
+        e_bolus_l2  <- e_coef_bolus_l2  * bolusLine
+        e_bolus_l3  <- e_coef_bolus_l3  * bolusLine
+        e_bolus_ke0 <- e_coef_bolus_ke0 * bolusLine
+        
+        e_infusion_l1  <- e_coef_infusion_l1  * rate * (1 - l1_dt)        
+        e_infusion_l2  <- e_coef_infusion_l2  * rate * (1 - l2_dt)        
+        e_infusion_l3  <- e_coef_infusion_l3  * rate * (1 - l3_dt)        
+        e_infusion_ke0 <- e_coef_infusion_ke0 * rate * (1 - ke0_dt)
+        
+        e_state_l1  <- advanceState(l1_dt,  e_bolus_l1,  e_infusion_l1,  0, L)
+        e_state_l2  <- advanceState(l2_dt,  e_bolus_l2,  e_infusion_l2,  0, L)
+        e_state_l3  <- advanceState(l3_dt,  e_bolus_l3,  e_infusion_l3,  0, L)
+        e_state_ke0 <- advanceState(ke0_dt, e_bolus_ke0, e_infusion_ke0, 0, L)
         recovery <- sapply(
           1:L, 
           function(i) 
           (
             recoveryCalc(
               c(
-                e_state_1[i], 
-                e_state_2[i], 
-                e_state_3[i],
-                e_state_4[i]
+                e_state_l1[i], 
+                e_state_l2[i], 
+                e_state_l3[i],
+                e_state_ke0[i]
               ),
               c(
                 lambda_1,
                 lambda_2,
                 lambda_3,
-                lambda_4
+                ke0
               ),
               emerge)
           )

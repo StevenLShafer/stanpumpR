@@ -46,7 +46,7 @@ simulationPlot <- function(
   # plotResults is created in the following steps
   # 1. allResults is created. The structure of allResults is
   
-  cat("Entering simulationPlot\n")
+  cat("\nEntering simulationPlot\n")
   plotTable <- as.data.frame(
     cbind(
       map_chr(drugs, "drug"),

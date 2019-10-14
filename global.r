@@ -32,6 +32,13 @@ library(jsonlite)
 # library(ggplotify)
 #library(facetscales)
 library(tidyr)
+library(dqshiny)
+
+
+# tell shiny to log all reactivity
+library(reactlog)
+options(shiny.reactlog = TRUE)
+# shiny::reactlogShow()
 
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 # cat("isShinyLocal",isShinyLocal,"\n")
@@ -88,7 +95,8 @@ source("advanceState.r")
 source("calculateCe.r")
 source("convertState.r")
 source("recoveryCalc.r")
-source("advanceClosedFormPO.r")
+#source("advanceClosedFormPO.r")
+source("advanceClosedFormPO_IM_IN.r")
 source("advanceStatePO.r")
 
 
@@ -122,7 +130,7 @@ defaultWeight <- 60   # Kg
 defaultWeightUnit <- 1  # Kg
 defaultHeight <- 66    # Centimeters
 defaultHeightUnit <- 2.56  # Inches
-defaultSex <- "woman"
+defaultSex <- "female"
 
 # defaultAge <- NULL
 # defaultAgeUnit <- character(0)
@@ -142,7 +150,11 @@ resolution <- 100
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")
 infusionUnits <- c("mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr")
-allUnits <- c(bolusUnits, infusionUnits)
+poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
+inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
+imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
+
+allUnits <- c(bolusUnits, infusionUnits, poUnits, inUnits, imUnits)
 
 
 maxtimes <- data.frame(
