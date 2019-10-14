@@ -229,6 +229,9 @@ ui <- function(request) {
                 '
               ) # end of HTML
               ), # end of tags$style
+            # Note to Dean: Here is where the handsontable is output. My guess is that this is where
+            # you would replace the existing "rHandsontableOutput()" function with JavaScript code that
+            # will process and validate the table. 
             rHandsontableOutput(outputId = "doseTableHTML"),
             bsTooltip(
               id = "doseTableHTML",
@@ -261,8 +264,8 @@ ui <- function(request) {
                 id = "plot_hover",
                 delay = 500,
                 delayType = "debounce",
-                clip = TRUE,
-                nullOutside = TRUE
+                clip = FALSE,
+                nullOutside = FALSE
               )
             ), # End of plotOutput
             uiOutput("hover_info")

@@ -1,10 +1,23 @@
 # stanpumpR  ------------------------
 
-# isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
-# if (isShinyLocal) {
-#   setwd("c:/google drive/projects/stanpumpR")
-# }
-# 
+##################################################################################
+# Note to Dean:                                                                  #
+# I think the easiest way to explain the rhandsontable is to annotate the code.  # 
+# You will find all of the annotations beginning with "Note to Dean."            #
+# There are three programs with such note: server.r, ui.r, and createHOT.r.      #
+# createHOT is the code that creates the hands on table ("HOT").                 #
+# Most of the code is in server.r (this program).                                #
+# The handsontable  has the dose, hence the name "doseTable."                    #
+# To limit interaction with the browser, for the most part the server            #
+# code uses "prior$DT" and "current$DT" for the dose table. Obviously,           #
+# "current$DT" should reflect the current contents of the dose table.            #
+# "prior$DT" reflects the dose table when the graph was last created.            #
+# I use it to figure out what drugs, if any, need to be updated.                 #
+#                                                                                #
+# You will find a "Note to Dean" everwhere that I referene or validate           #
+# The handsontable in the code below.                                            #
+##################################################################################
+
 source("global.r")
 
 # server function ----------------------------------------------------------------------------------
@@ -144,13 +157,36 @@ server <- function(input, output, session)
   current$DT <- doseTable
   prior$DT <- current$DT
   
+  ##################################################################################
+  # Note to Dean:                                                                  #
+  # This is the initialization of the handsontable. I doubt there is any need to   #
+  # try and move this to JavaScript. The cat() command is for debugging when I'm   #
+  # in RStudio. The "outputComments()" function gives me a running commentary when #
+  # running on the shiny server. The reason for this is that I found the log file  #
+  # on the shiny server to be practically useless. Thus, while the program is      #
+  # still in development, I have a running log on the bottom of the screen.        #
+  # Few people even notice it, because it is below the visible screen so  you have #
+  # to scroll to see the running log.                                              #
+  ##################################################################################
+  
   cat("setting up output$doseTableHTML\n")
   outputComments("Setting up doseTableHTML.")
   output$doseTableHTML <- renderRHandsontable({createHOT(current$DT, drugDefaults)})
   cat("Done with setting up doseTableHTML\n")
   outputComments("Done setting up doseTableHTML.")
   
-  # Note that it isn't set up until it appears in the UI
+  ##################################################################################
+  # Note to Dean:                                                                  #
+  # The command below tests to see if the handsontable exists. It always fails.    #
+  # The reason, of course, is that this command comes so soon after the above      #
+  # command that the browser has yet to set up the table. In fact, it may be that  #
+  # The browser doesn't even try until we get to the end of the server routine.    #
+  # I thought it was interesting to test, though, because it does show the         #
+  # disconnect between sending the handsontable to the browser, as above, and      #
+  # being able to read the contents, which the code below documents aren't         #
+  # there. The command is isolated because I don't want to trigger any reactive    #
+  # result just for reading the table.                                             #
+  ##################################################################################
   
   isolate(
     {
@@ -360,6 +396,15 @@ server <- function(input, output, session)
     updatedDoseTableFlag(TRUE) # Force call to simulatePlot()
   })
   
+  ##################################################################################
+  # Note to Dean:                                                                  #
+  # The code below is the validation loop that I would like to move into           #
+  # JavaScript in the browser. The commente "dose table loop" is a note to self    #
+  # explaining why the need to check the time and not process a dose for 3 seconds #
+  # after the last update. Hopefully, all of that will go away.                    #
+  # doseTableHTML is the handsontable                                              #
+  ##################################################################################
+  
   #########################################################################
   # Dose Table Loop                                                       #
   # Logic has been a challenge, because I want to check each entry for    #
@@ -377,15 +422,36 @@ server <- function(input, output, session)
       outputComments(paste0("Is input$doseTableHTML NULL? ", is.null(input$doseTableHTML), "."))
       req(input$doseTableHTML)
       outputComments("Requirements for doseTable Loop are met.")
+      
+      # Note to Dean: The req() statement above is probably not necessary. I recently
+      # changed this from observe() to observeEvent(), since it should only
+      # be called when the doseTableHTML changes. 
 
       # Get time to prevent continuous looping 
       time <- as.numeric(Sys.time())
       delta <- time - prior$timeDT
       prior$timeDT <<- time
+      # Note to Dean: The above code is for the timing, to prevent the endless loop
+      # from occurring. This should not be necessary when it is all running within
+      # the browser.
 
-      # Set updateFlag to FALSE. Onlyh update if the table has changed
+      # Set updateFlag to FALSE. Only update if the table has changed
       updateFlag <- FALSE
-  
+      
+      # Note to Dean: I use updateFlag to determine if I need to rewrite the table
+      # in the browser. If someone enters "25" as the dose, the validation will return
+      # "25", so the browser is identical to the contents of current$DT. There is no
+      # reason to update the browser with a new doseTableHTML. However, if someone 
+      # enters "25x" as the dose, the validation routine will strip off the x and return
+      # "25". If that happens, then I want to update the browser to reflect that 
+      # the dose is 25. Thus, I set updateFlag to TRUE, and a new handsontable is
+      # generated and sent to the browser.
+   
+      
+      # Note to Dean: because of the issues with communication to/from the browser, I
+      # created a "refresh" button to force a refresh to get things back in sync. My
+      # hope is that by putting the handsontable validation entirely in JavaScript, I 
+      # can eliminate the refresh button entirely.
       
       # If refresh button has been pushed, erase prior dose table to refresh entirely from UI
       if (!is.null(input$Refresh) & input$Refresh != prior$Refresh)
@@ -394,6 +460,8 @@ server <- function(input, output, session)
         outputComments("Forced Refresh of DoseTable")
         current$DT$Dose <<- "" # Just set it to blank. It will be updated shortly
         updatedDoseTableFlag(TRUE)     # Gets set back to FALSE in simulationPlot, not here
+        # Note to Dean: updatedDoseTableFlag is a reactive variable which will force 
+        # recalculation of the plots, based on an updated dosetable.
       } else {
         # Check for looping. Return if less than 
         if (delta < 3) 
@@ -409,8 +477,16 @@ server <- function(input, output, session)
 
       # This is the function that sometimes gets a doseTable that doesn't match the UI
       # Unclear how to fix this.
+      # Note to Dean: If the doseTable is validated in JavaScript, then this command
+      # should always return the current doseTable. The problem has been that this
+      # next command does not return the current doseTable if I've just pushed a new
+      # table to the UI.
       doseTable <- hot_to_r(input$doseTableHTML)
       
+      # Note to Dean: I want the dose table to always have a blank line at the end,
+      # making it easy to add new doses. This next code checks to see if the last line
+      # is blank. If it isn't blank, then a blank line is appended to the bottom of the
+      # doseTable
       # Add a blank line if necessary
       if (nrow(doseTable) == 0 || doseTable$Drug[nrow(doseTable)] != "")
       {
@@ -419,9 +495,15 @@ server <- function(input, output, session)
         updateFlag <- TRUE
       }
       
+      # Note to Dean: This is more debugging code. 
       cat("Dose Table extracted from hot_to_r(input$doseTableHTML)\n")
       print(doseTable)
       
+      # Note to Dean: sameTable() is a routine I wrote to simply validate if two 
+      # dataframes are identical. The code is pretty obvious, and I'm surprised that
+      # R doesn't have something ready coded for this funciton. If the doseTable 
+      # extracted from the handsontable is the same as current$DT, then there 
+      # is nothing to do. 
       # Return if nothing has changed
       if (sameTable(doseTable, current$DT))
       {
@@ -430,6 +512,15 @@ server <- function(input, output, session)
         outputComments("No change in doseTable. Exiting.")
         return()
       }
+      
+      # Note to Dean: I originally allowed the doseTable to shrink, based on the built in
+      # "delete row" selection in handsontable. However, there is a problem in this routine.
+      # If you delete several rows, it generates an error related to the row number. This
+      # has been reported several times. It isn't clear if this is an error in handontable.js, or
+      # in rHandsontable. However, because it isn't reliable, I turned off the abilityh to 
+      # remove rows from the handsontable. I would like to turn it back on if possible. 
+      # However, I didn't feel like tracking down the error. 
+      # If the doseTable shrinks, then that should be the only issue. 
 
       # Step 1: Did doseTable shrink? 
       if (nrow(doseTable) < nrow(current$DT))
@@ -442,9 +533,18 @@ server <- function(input, output, session)
         return()
       }
       
+      # Note to Dean: I originally used sameTable to determine what had actually changed
+      # However, it proved to be easier just to loop through everything and validate
+      # every entry in the doseTable. These tables are never very big. In most cases it
+      # is less than a dozen rows, with just four fields in each row. Thus, validating 
+      # every entry is easier than trying to figure out which entry changed and only
+      # validating that entry.
+      
       # Step 2: Dose table has changed. Loop through everything
       for (row in 1:nrow(doseTable))
       {
+        # Note to Dean: doseTable$Drug[row] is the name of the drug. If the name is
+        # blank, then the rest of the row needs to be blank also.
         if (doseTable$Drug[row] == "")
         {
           if (doseTable$Time[row] != "" || doseTable$Dose[row] != "" || doseTable$Units[row] != "")
@@ -455,8 +555,19 @@ server <- function(input, output, session)
             doseTable$Units[row] <- ""
           }
         } else {
+          # Note to Dean: If the name is not blank, then I identify which row of the 
+          # drugDefaults corresponds to this drug. That information will be used
+          # to assign the dose unit choices. Also, the select table for the dose
+          # is assigned in createHOT. I've noted the code for you. 
+          
           thisDrug <- which (drugDefaults$Drug == doseTable$Drug[row])
           # Column 1: Drug
+          # Note to Dean: if someone changes the drug, then I zero out everything
+          # in the row. The reason is that every drug has unique dose units. 
+          # The dose of, say, propofol is completely different units  from the dose 
+          # of fentany. 
+          # The code below looks for a change in the drug name, and zeros out
+          # the dose and changes the units if the name changes.
           if (doseTable$Drug[row] != current$DT$Drug[row])
           {
             cat("Setting row ", row, "to initial zeros and default units\n")
@@ -465,6 +576,13 @@ server <- function(input, output, session)
             doseTable$Dose[row] <- "0"
             doseTable$Units[row] <- drugDefaults$Default.Units[thisDrug]
           }
+          
+          # Note to Dean: this is the time validation. The routine validateTime() 
+          # will need to be implemented in JavaScript, as well as in the Server. 
+          # Hopefully the results will be the same. You can find the routine in 
+          # validateTime.r. Note that I try to make sense of whatever the user
+          # enters, rather than insist on a specific format.
+          
           # Column 2: Time
           if (is.na(doseTable$Time[row])) doseTable$Time[row] <- ""
           x <- as.character(validateTime(doseTable$Time[row]))
@@ -473,6 +591,12 @@ server <- function(input, output, session)
             updateFlag <- TRUE
             doseTable$Time <- x
           }
+          
+          # Note to Dean: this is the Dose validation. The routine validateDose() 
+          # will need to be implemented in JavaScript, as well as in the Server. 
+          # Hopefully the results will be the same. You can find the routine in 
+          # validateTime.r. Note that I try to make sense of whatever the user
+          # enters, rather than insist on a specific format.
           
           # Column 3: Dose
           if (is.na(doseTable$Dose[row])) doseTable$Dose[row] <- ""
@@ -1024,6 +1148,11 @@ observeEvent(
   {
     cat("hovering\n")
     hover <- input$plot_hover
+    if (is.null(hover$panelvar1))
+    {
+      output$hover_info <- NULL
+      return()
+    }
     text <- xy_str(hover)
     output$hover_info <- renderUI({
       style <- paste0("position:absolute; padding:0; margin:0; z-index:100; font-size: 10px; background-color: rgba(245, 245, 245, 0.85); ",
