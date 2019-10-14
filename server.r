@@ -610,6 +610,9 @@ server <- function(input, output, session)
       }
       cat("\nEnd of the loop\n")
       # Don't update table if nothing has changed
+      # Note to Dean: As mentioned, I only update the table is something visible has 
+      # changed, such as the person entering "25x" and my changing that to just "25". If
+      # there is no visible change, then I don't update the table.
       if (updateFlag)
         output$doseTableHTML <- renderRHandsontable(createHOT(doseTable, drugDefaults))
       current$DT <<- doseTable
@@ -1417,6 +1420,10 @@ clickPopupDrug <- function(
 # When OK button is pressed, attempt to load the data set. If successful,
 # remove the modal. If not show another modal, but this time with a failure
 # message.
+# Note to Dean: The event below allows users to enter a new dose by clicking on the graph.
+# This is another way in which the table can be changed. I don't think this needs to be 
+# edited, but it explains why there will always be some updating of the doseTable from the 
+# server. 
 observeEvent(
   input$clickOKDrug, 
   {
@@ -1462,6 +1469,11 @@ observeEvent(
     }
   }
 )
+
+# Note to Dean: The event below allows users to edit previous doses. This is yet another way 
+# in which the table can be changed. I don't think this needs to be 
+# edited, but it explains why there will always be some updating of the doseTable from the 
+# server. 
 
 # Edit prior drug doses
 observeEvent(
@@ -1927,6 +1939,9 @@ observeEvent(
   }
 )
 
+# Note to Dean: The program can also calculate the dose necessary to reach a given
+# target concentration. This is yet another way the server may update the dose table.
+# This does not need to change. 
 
 # Evaluate target concentration
 observeEvent(
