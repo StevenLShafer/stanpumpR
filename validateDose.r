@@ -7,7 +7,7 @@ validateDose <- function(x)
   # cat("dose to validate",x,"\n")
   # cat(str(x))
   # cat("\n")
-  # Remove everything except digits, colon, and decimal point
+  # Remove everything except digits, and decimal point
   x <- gsub("[^[:digit:].]","",x)
   if (x == "") return("")
   # Remove second instance of a decimal point

@@ -1,0 +1,22 @@
+Event,Color
+Start,blue
+Timeout,blue
+Induction,green
+Intubation,green
+Extubation,green
+Emergence,green
+End,blue
+CPB Start,#FF40FF
+CPB36,#d232f2
+CPB35,#a828e8
+CPB34,#7e1ede
+CPB33,#5414d4
+CPB32,#2a0aca
+CPB31,#181CAE
+CPB End,brown
+Clamp On,red
+Clamp Off,brown
+Tourniquet On,red
+Tourniquet Off,brown
+Other,orange
+Add Events,black

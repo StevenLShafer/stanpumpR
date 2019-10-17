@@ -77,7 +77,7 @@ source("lbmJames.r")
 source("modelInteraction.r")
 source("nextSlide.r")
 source("processdoseTable.r")
-source("sameTable.r")
+#source("sameTable.r")
 source("sendError.r")
 source("sendSlide.r")
 source("setLinetypes.r")
@@ -106,9 +106,9 @@ source("advanceStatePO.r")
 #CANCEL <- readPNG("cancel.png", native=TRUE)
 enableBookmarking(store = "url")
 
-eventDefaults_global <- read.xlsx("Event Defaults.xlsx")
+eventDefaults_global <- read.csv("Event Defaults.csv", stringsAsFactors = FALSE)
 
-drugDefaults_global <-read.xlsx("Drug Defaults.xlsx")
+drugDefaults_global <-read.csv("Drug Defaults.csv", stringsAsFactors = FALSE)
 
 # Load individual drug routines
 for (drug in drugDefaults_global$Drug)

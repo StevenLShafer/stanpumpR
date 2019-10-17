@@ -15,10 +15,10 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
 #    cat("drugs[[i]]$pkEvents",drugs[[i]]$pkEvents,"\n")
     tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[i]]$pkEvents,]
     
-    if (!sameTable(tempDT, drugs[[i]]$DT) |
+    if (!isTRUE(all_equal(tempDT, drugs[[i]]$DT)) |
         plotMaximum != prior$plotMaximum
         | (length(drugs[[i]]$pkEvents) > 1 & 
-           !sameTable(drugs[[i]]$ET, tempET) |
+           !isTRUE(all_equal(drugs[[i]]$ET, tempET)) |
         (plotRecovery & !prior$plotRecovery)
         )
       )
