@@ -589,7 +589,7 @@ server <- function(input, output, session)
           if (x != doseTable$Time[row])
           {
             updateFlag <- TRUE
-            doseTable$Time <- x
+            doseTable$Time[row] <- x
           }
           
           # Note to Dean: this is the Dose validation. The routine validateDose() 
@@ -1448,8 +1448,8 @@ observeEvent(
 
       if (clickTime != "" && clickDose != "")
       {
-        i <- which(doseTable$Drug == "")[1]
         doseTable <- current$DT
+        i <- which(doseTable$Drug == "")[1]
         doseTable$Drug[i] <- prior$DrugTimeUnits$drug
         doseTable$Time[i] <- clickTime
         doseTable$Dose[i] <- clickDose
