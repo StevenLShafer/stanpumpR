@@ -1,6 +1,6 @@
 # UI for stanpumpR
 
-source("global.r")
+source("global.R")
 
 #enableBookmarking(store = "url")
 
@@ -39,14 +39,14 @@ ui <- function(request) {
         width=4,
         HTML('<input type="text" id="client_time" name="client_time" style="display: none;"> '
              ), # end of HTML
-        
+
         tags$script('
    $(function() {
     var time_now = new Date()
     $("input#client_time").val(time_now.toLocaleTimeString())
-  });    
+  });
 '), # end of tags$script
-        
+
         fluidRow(  # start of fluid row within this column
           h4("Patient Covariates"),
           style = "border-style: solid; border-color: white;  border-radius: 5px;",
@@ -65,9 +65,9 @@ ui <- function(request) {
                   max = 110
                 ),
                 bsTooltip(
-                  id = "age", 
+                  id = "age",
                   title = "Enter  age and select years or months",
-                  placement = "top", 
+                  placement = "top",
                   options = list(container = "body")
                 )
               ), # end of cancel-margin div
@@ -92,9 +92,9 @@ ui <- function(request) {
                 min = 5
               ),
               bsTooltip(
-                id = "weight", 
+                id = "weight",
                 title = "Enter weight and select kilograms or pounds",
-                placement = "top", 
+                placement = "top",
                 options = list(container = "body")
               )
             ), # End of class cancel-margin div
@@ -116,9 +116,9 @@ ui <- function(request) {
                 min = 20
               ),
               bsTooltip(
-                id = "height", 
+                id = "height",
                 title = "Enter height and select centimeters or inches",
-                placement = "right", 
+                placement = "right",
                 options = list(container = "body")
               )
             ), # end of cancel-margin div
@@ -155,9 +155,9 @@ ui <- function(request) {
                 selected = FALSE
               ),
               bsTooltip(
-                id = "pregnant", 
+                id = "pregnant",
                 title = "Not imkplemented yet",
-                placement = "right", 
+                placement = "right",
                 options = list(container = "body")
               )
             ),
@@ -170,9 +170,9 @@ ui <- function(request) {
               selected = "typical"
             ),
             bsTooltip(
-              id = "cyp2d6", 
+              id = "cyp2d6",
               title = "Not imkplemented yet",
-              placement = "right", 
+              placement = "right",
               options = list(container = "body")
             ),
             radioButtons(
@@ -184,9 +184,9 @@ ui <- function(request) {
               selected = "normal"
             ),
             bsTooltip(
-              id = "renal", 
+              id = "renal",
               title = "Not imkplemented yet",
-              placement = "right", 
+              placement = "right",
               options = list(container = "body")
             )
           )
@@ -194,7 +194,7 @@ ui <- function(request) {
         fluidRow(
           h4("Dose Table"),
           style = "border-style: solid; border-color: white;  border-radius: 5px; height: 450px; ",
-          
+
           column(
             width=12,
             fluidRow(
@@ -231,7 +231,7 @@ ui <- function(request) {
               ), # end of tags$style
             # Note to Dean: Here is where the handsontable is output. My guess is that this is where
             # you would replace the existing "rHandsontableOutput()" function with JavaScript code that
-            # will process and validate the table. 
+            # will process and validate the table.
             rHandsontableOutput(outputId = "doseTableHTML"),
             bsTooltip(
               id = "doseTableHTML",
@@ -283,9 +283,9 @@ ui <- function(request) {
               value = paste("Simulation on",Sys.time())
             ),
             bsTooltip(
-              id = "title", 
+              id = "title",
               title = "Enter a title for your simulation",
-              placement = "top", 
+              placement = "top",
               options = list(container = "body")
             ),
             textInput(
@@ -295,9 +295,9 @@ ui <- function(request) {
               placeholder = "Enter figure caption"
             ),
             bsTooltip(
-              id = "caption", 
+              id = "caption",
               title = "Text to appear below your simulation",
-              placement = "bottom", 
+              placement = "bottom",
               options = list(container = "body")
             ),
             div(
@@ -327,9 +327,9 @@ ui <- function(request) {
               inline = FALSE
             ),
             bsTooltip(
-              id = "typical", 
+              id = "typical",
               title = "Show typical clinical values",
-              placement = "top", 
+              placement = "top",
               options = list(container = "body")
             ),
             radioButtons(
@@ -340,9 +340,9 @@ ui <- function(request) {
               inline = FALSE
             ),
             bsTooltip(
-              id = "normalization", 
+              id = "normalization",
               title = "Normalization can help show relationships",
-              placement = "top", 
+              placement = "top",
               options = list(container = "body")
             )
           ),
@@ -355,9 +355,9 @@ ui <- function(request) {
               choices = c("MEAC", "Interaction", "Events", "Time to Emergence"),
             ),
             bsTooltip(
-              id = "addedPlots", 
+              id = "addedPlots",
               title = "MEAC normalizes each opioid to the minimum effective analgesic concentration, a measure of opioid potency. Interation shows the opioid hypnotic interaction. It is very preliminary.",
-              placement = "top", 
+              placement = "top",
               options = list(container = "body")
             ),
 #            conditionalPanel(
@@ -369,13 +369,13 @@ ui <- function(request) {
               ),
               # Add Conditional Panel here - this goes away Time to Emergence appears as an added plot
               bsTooltip(
-                id = "logY", 
+                id = "logY",
                 title = "Plot Y axis on a log scale",
-                placement = "top", 
+                placement = "top",
                 options = list(container = "body")
               )
  #           ) # End conditional Panel
-            
+
           ),
           # Column 5, Simulation Mode
           column(
@@ -387,9 +387,9 @@ ui <- function(request) {
               selected = 60
             ),
             bsTooltip(
-              id = "maximum", 
+              id = "maximum",
               title = "Maximum time. Axis will automatically expand as you enter more doses, unless maximum is set to 10 minutes",
-              placement = "top", 
+              placement = "top",
               options = list(container = "body")
             ),
             uiOutput( # Width = 1
@@ -407,9 +407,9 @@ ui <- function(request) {
                   label = "Email slide to:"
                 ),
                 bsTooltip(
-                  id = "recipient", 
+                  id = "recipient",
                   title = "Enter a valid e-mail address",
-                  placement = "top", 
+                  placement = "top",
                   options = list(container = "body")
                 )
               ),
@@ -419,11 +419,11 @@ ui <- function(request) {
               )
             ), # End of fluid row
             imageOutput(
-              outputId = "sentPlot", 
+              outputId = "sentPlot",
               height = "100px",
               width = "166px"
               )
-          ) # end columnn 
+          ) # end columnn
         ) # end fluidRow
       ) # End of right hand colunn
     ), # end of first fluid row

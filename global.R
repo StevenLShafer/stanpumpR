@@ -52,55 +52,55 @@ if (!isShinyLocal) {
   setwd("c:/google drive/projects/stanpumpR")
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.",appFiles)]
-  
-  source("havingIP.r")
+
+  source("havingIP.R")
   if (havingIP() & ping("google.com")) internetConnected <- TRUE
   library(rsconnect)
-  options(shiny.reactlog=TRUE) 
+  options(shiny.reactlog=TRUE)
 }
 config <- config::get()
 
 # Load stanpumpR routines
-source("bsa.r")
-source("CE.r")
-source("clockTimeToDelta.r")
-source("closest.r")
-source("createHOT.r")
-source("cube.r")
-source("deltaToClockTime.r")
-source("deployActive.r")
-source("deployTest.r")
-source("getDrugPK.r")
-source("getLogs.r")
-source("hourMinute.r")
-source("lbmJames.r")
-source("modelInteraction.r")
-source("nextSlide.r")
-source("processdoseTable.r")
-#source("sameTable.r")
-source("sendError.r")
-source("sendSlide.r")
-source("setLinetypes.r")
-source("setxLabels.r")
-source("simCpCe.r")
-source("simulationPlot.r")
-source("staticPlot.r")
-source("tPeakError.r")
-source("validateDose.r")
-source("validateTime.r")
-source("writeFooter.r")
-source("advanceClosedForm0.r")
-source("advanceClosedForm1.r")
-source("advanceState.r")
-source("calculateCe.r")
-source("convertState.r")
-source("recoveryCalc.r")
-#source("advanceClosedFormPO.r")
-source("advanceClosedFormPO_IM_IN.r")
-source("advanceStatePO.r")
+source("bsa.R")
+source("CE.R")
+source("clockTimeToDelta.R")
+source("closest.R")
+source("createHOT.R")
+source("cube.R")
+source("deltaToClockTime.R")
+source("deployActive.R")
+source("deployTest.R")
+source("getDrugPK.R")
+source("getLogs.R")
+source("hourMinute.R")
+source("lbmJames.R")
+source("modelInteraction.R")
+source("nextSlide.R")
+source("processdoseTable.R")
+#source("sameTable.R")
+source("sendError.R")
+source("sendSlide.R")
+source("setLinetypes.R")
+source("setxLabels.R")
+source("simCpCe.R")
+source("simulationPlot.R")
+source("staticPlot.R")
+source("tPeakError.R")
+source("validateDose.R")
+source("validateTime.R")
+source("writeFooter.R")
+source("advanceClosedForm0.R")
+source("advanceClosedForm1.R")
+source("advanceState.R")
+source("calculateCe.R")
+source("convertState.R")
+source("recoveryCalc.R")
+#source("advanceClosedFormPO.R")
+source("advanceClosedFormPO_IM_IN.R")
+source("advanceStatePO.R")
 
 
-#source("new_aes.r")
+#source("new_aes.R")
 
 # Load other files
 #CANCEL <- readPNG("cancel.png", native=TRUE)
@@ -113,7 +113,7 @@ drugDefaults_global <-read.csv("Drug Defaults.csv", stringsAsFactors = FALSE)
 # Load individual drug routines
 for (drug in drugDefaults_global$Drug)
 {
-  source(paste0(drug,".r"))
+  source(paste0(drug,".R"))
 }
 
 facetFont <-      c(  20,   18,   18,   16,   14,   14,   14,   13,   13,   12,   11,   10,    9,    9,   8,  8)
@@ -207,7 +207,7 @@ introductionPlot <- staticPlot(
   paste("Welcome to stanpumpR",
         "an R adaption of the \"STANPUMP\" TCI software",
         "for teaching pharmacokinetics,",
-        "guiding clinical care,", 
+        "guiding clinical care,",
         "and informing clinical research.",
         sep = "\n")
   )
@@ -227,5 +227,5 @@ nothingtoPlot <- staticPlot(
     sep = "\n"
     )
   )
-    
+
 
