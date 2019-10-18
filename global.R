@@ -66,6 +66,7 @@ for (file in list.files("helpers", pattern = "\\.R$")) {
 enableBookmarking(store = "url")
 
 eventDefaults_global <- read.csv("data/Event Defaults.csv", stringsAsFactors = FALSE)
+eventDefaults <- eventDefaults_global
 
 drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FALSE, na.strings = "")
 
@@ -190,3 +191,15 @@ nothingtoPlot <- staticPlot(
 )
 
 
+originalUnits <- drugDefaults_global$Units
+drugDefaults_global$Units <- strsplit(drugDefaults_global$Units, ",")
+
+blanks <- rep("", 6)
+doseTableInit <- data.frame(
+  Drug = c("propofol","fentanyl","remifentanil","rocuronium", blanks),
+  Time = c(as.character(rep(0,4)), blanks),
+  Dose = c(as.character(rep(0,4)), blanks),
+  Units = c("mg","mcg","mcg/kg/min","mg", blanks),
+  stringsAsFactors = FALSE
+)
+doseTableNewRow <-  doseTableInit[5, ]
