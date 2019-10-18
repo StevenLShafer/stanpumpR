@@ -57,9 +57,11 @@ function(input, output, session)
   cat("*                       Initializing                                 *\n")
   cat("**********************************************************************\n")
 
+  main_plot <- reactiveVal(introductionPlot)
   output$PlotSimulation <- renderPlot({
-   introductionPlot
+    main_plot()
   })
+
   outputComments("Initializing")
   # Make drugs and events local to session
   cat("Setting drugDefaults and eventDefaults\n")
@@ -744,7 +746,7 @@ function(input, output, session)
       {
       outputComments("Dose table is empty in main loop.")
       output$optionFlag <- renderText("")
-      output$PlotSimulation <- renderPlot(nothingtoPlot)
+      main_plot(nothingtoPlot)
       return()
     }
     DT <- DT[order(DT$Drug, DT$Time), ]
@@ -924,67 +926,64 @@ function(input, output, session)
           input$sex
           )
       }
-      output$PlotSimulation <- renderPlot({
-        simulationFlag <- FALSE
-        X <- simulationPlot(
-          xBreaks = xBreaks,
-          xLabels = xLabels,
-          xAxisLabel = xAxisLabel,
-          plasmaLinetype = plasmaLinetype,
-          effectsiteLinetype = effectsiteLinetype,
-          normalization = normalization,
-          plotMEAC = plotMEAC,
-          plotInteraction = plotInteraction,
-          plotCost = plotCost,
-          plotEvents = plotEvents,
-          plotRecovery = plotRecovery,
-          title = title,
-          caption = caption,
-          aspect = aspect,
-          typical = typical,
-          logY = logY,
-          drugs = drugs,
-          events = ET,
-          eventDefaults = eventDefaults
-        )
-        if (is.null(X))
-        {
-          plotObject <<- NULL
-          allResults <<- NULL
-          plotResults <<- NULL
-        } else {
-          plotObject <<- X$plotObject
-          allResults <<- X$allResults
-          plotResults <<- X$plotResults
-        }
-        prior$plasmaLinetype      <<- plasmaLinetype
-        prior$effectsiteLinetype  <<- effectsiteLinetype
-        prior$normalization       <<- normalization
-        prior$title               <<- title
-        prior$typical             <<- typical
-        prior$logY                <<- logY
-        prior$plotMaximum         <<- plotMaximum
-        prior$referenceTime       <<- referenceTime
-        prior$plotMEAC            <<- plotMEAC
-        prior$plotInteraction     <<- plotInteraction
-        prior$plotCost            <<- plotCost
-        prior$plotEvents          <<- plotEvents
-        prior$plotRecovery        <<- plotRecovery
-        isolate({
-          newDrugDefaultsFlag(FALSE)
-          updatedDoseTableFlag(FALSE)
-        })
+      simulationFlag <- FALSE
+      X <- simulationPlot(
+        xBreaks = xBreaks,
+        xLabels = xLabels,
+        xAxisLabel = xAxisLabel,
+        plasmaLinetype = plasmaLinetype,
+        effectsiteLinetype = effectsiteLinetype,
+        normalization = normalization,
+        plotMEAC = plotMEAC,
+        plotInteraction = plotInteraction,
+        plotCost = plotCost,
+        plotEvents = plotEvents,
+        plotRecovery = plotRecovery,
+        title = title,
+        caption = caption,
+        aspect = aspect,
+        typical = typical,
+        logY = logY,
+        drugs = drugs,
+        events = ET,
+        eventDefaults = eventDefaults
+      )
+      if (is.null(X))
+      {
+        plotObject <<- NULL
+        allResults <<- NULL
+        plotResults <<- NULL
+      } else {
+        plotObject <<- X$plotObject
+        allResults <<- X$allResults
+        plotResults <<- X$plotResults
+      }
+      prior$plasmaLinetype      <<- plasmaLinetype
+      prior$effectsiteLinetype  <<- effectsiteLinetype
+      prior$normalization       <<- normalization
+      prior$title               <<- title
+      prior$typical             <<- typical
+      prior$logY                <<- logY
+      prior$plotMaximum         <<- plotMaximum
+      prior$referenceTime       <<- referenceTime
+      prior$plotMEAC            <<- plotMEAC
+      prior$plotInteraction     <<- plotInteraction
+      prior$plotCost            <<- plotCost
+      prior$plotEvents          <<- plotEvents
+      prior$plotRecovery        <<- plotRecovery
 
-          if (is.null(plotObject))
-          {
-            output$optionFlag <- renderText("")
-            cat("Null plot after calling simulation Plot()\n")
-            return(nothingtoPlot)
-          } else {
-            output$optionFlag <- renderText("Graph Options")
-            return(plotObject)
-          }
-        })
+      newDrugDefaultsFlag(FALSE)
+      updatedDoseTableFlag(FALSE)
+
+      if (is.null(plotObject))
+      {
+        output$optionFlag <- renderText("")
+        cat("Null plot after calling simulation Plot()\n")
+        main_plot(nothingtoPlot)
+      } else {
+        output$optionFlag <- renderText("Graph Options")
+        main_plot(plotObject)
+      }
     } else {
         cat("Nothing flagged to make new plot\n\n")
       }
