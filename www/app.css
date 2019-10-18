@@ -1,0 +1,8 @@
+#logSection {
+  background-color: transparent;
+  color: black;
+  border-style: solid;
+  font-size:10px;
+  overflow-y:scroll;
+  max-height: 100px;
+}
