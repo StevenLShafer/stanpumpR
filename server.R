@@ -18,8 +18,6 @@
 # The handsontable in the code below.                                            #
 ##################################################################################
 
-source("global.R")
-
 # server function ----------------------------------------------------------------------------------
 server <- function(input, output, session)
 {
@@ -726,7 +724,7 @@ server <- function(input, output, session)
         # plotTable$Upper <- as.numeric(plotTable$upperTypical)
         # plotTable$MEAC  <- as.numeric(plotTable$MEAC)
         # plotTable$tPeak  <- as.numeric(plotTable$tPeak)
-        # write.xlsx(plotTable[,c("Drug","Lower","Upper","Typical","MEAC","tPeak")],file="PlotTable.xlsx")
+        # write.xlsx(plotTable[,c("Drug","Lower","Upper","Typical","MEAC","tPeak")],file="data/PlotTable.xlsx")
 
         # cat("****** Time to set up drug PK *********\n")
         # print(x)
