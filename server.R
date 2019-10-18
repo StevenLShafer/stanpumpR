@@ -35,22 +35,17 @@ function(input, output, session)
     options(error = NULL)
   })
 
-  commentsLog <- "Comments Log\n"
+  initLogMsg <- "Comments Log"
+  commentsLog <- reactiveVal(initLogMsg)
 
-  outputComments <- function(text)
-  {
-    commentsLog <<- paste0(commentsLog, "<br>", text)
-    output$plotInfo <- renderUI({
-      wellPanel(
-        style = "background-color: transparent;
-        color: black;
-        border-style: solid;
-        font-size:10px;
-        overflow-y:scroll;
-        max-height: 100px;",
-        HTML(commentsLog)
-      )
-    })
+  # Write out logs to the log section
+  output$logContent <- renderUI({
+    shinyjs::delay(0, shinyjs::js$scrollLogger())
+    HTML(commentsLog())
+  })
+
+  outputComments <- function(text) {
+    isolate(commentsLog(paste0(commentsLog(), "<br>", text)))
   }
 
   #############################################################################
@@ -1022,7 +1017,6 @@ function(input, output, session)
             return(nothingtoPlot)
           } else {
             output$optionFlag <- renderText("Graph Options")
-#            output$plotInfo <- renderText(clickNote)
             return(plotObject)
           }
         })
@@ -2292,10 +2286,9 @@ observeEvent(
       drugs[[i]]$Color <<- drugDefaults$Color[i]
     }
     newDrugDefaultsFlag(TRUE)
-  }
-  )
+  })
 
 
-cat("Reached the end of Server()\n\n")
-outputComments("Reached the end of server()")
+  cat("Reached the end of Server()\n\n")
+  outputComments("Reached the end of server()")
 }

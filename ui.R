@@ -2,7 +2,6 @@
 
 # UI ------------------------------------------------------
 function(request) {
-  useShinyjs()
   dashboardPage(
     dashboardHeader(
       title = config$title
@@ -18,6 +17,12 @@ function(request) {
     ),
 
     dashboardBody(
+      useShinyjs(),
+      extendShinyjs(
+        script = "www/shinyjs-funcs.js",
+        functions = c("scrollLogger")
+      ),
+      tags$head(tags$link(href = "app.css", rel = "stylesheet")),
       style = "max-height: 95vh; overflow-y: auto;" ,
       tags$style(
         HTML(
@@ -423,7 +428,13 @@ function(request) {
         ) # End of right hand colunn
       ), # end of first fluid row
       fluidRow(
-        uiOutput("plotInfo")
+        column(
+          12,
+          wellPanel(
+            id = "logSection",
+            uiOutput("logContent")
+          )
+        )
       )
 
     ) # end dashboardBody
