@@ -108,7 +108,7 @@ enableBookmarking(store = "url")
 
 eventDefaults_global <- read.csv("Event Defaults.csv", stringsAsFactors = FALSE)
 
-drugDefaults_global <-read.csv("Drug Defaults.csv", stringsAsFactors = FALSE)
+drugDefaults_global <- read.csv("Drug Defaults.csv", stringsAsFactors = FALSE, na.strings = "")
 
 # Load individual drug routines
 for (drug in drugDefaults_global$Drug)
