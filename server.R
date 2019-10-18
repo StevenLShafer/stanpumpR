@@ -19,7 +19,7 @@
 ##################################################################################
 
 # server function ----------------------------------------------------------------------------------
-server <- function(input, output, session)
+function(input, output, session)
 {
 
   options(error = function ()
@@ -537,7 +537,7 @@ server <- function(input, output, session)
       # October 17, 2019: sameTable replaced with isTRUE(all_equal())
 
       # Step 2: Dose table has changed. Loop through everything
-      for (row in 1:nrow(DT))
+      for (row in seq_len(nrow(DT)))
       {
         # Note to Dean: DT$Drug[row] is the name of the drug. If the name is
         # blank, then the rest of the row needs to be blank also.
@@ -1566,7 +1566,7 @@ observeEvent(
       current$DT[!TT$Delete,c("Drug","Time","Dose","Units")],
       current$DT[current$DT$Drug != prior$DrugTimeUnits$drug,]
     )
-    for (i in 1:nrow(doseTable))
+    for (i in seq_len(nrow(doseTable)))
     {
       current$DT$Time[i] <<- validateTime(current$DT$Time[i])
       current$DT$Dose[i] <<- validateDose(current$DT$Dose[i]) # should work for target too
@@ -1963,7 +1963,7 @@ observeEvent(
     targetTable$Target <- as.character(targetTable$Target)
     print(str(targetTable))
     # Process and clean up targetTable
-    for (i in 1:nrow(targetTable))
+    for (i in seq_len(nrow(targetTable)))
     {
       targetTable$Time[i] <- validateTime(targetTable$Time[i])
       targetTable$Target[i] <- validateDose(targetTable$Target[i]) # should work for target too
@@ -2299,5 +2299,3 @@ observeEvent(
 cat("Reached the end of Server()\n\n")
 outputComments("Reached the end of server()")
 }
-
-#shinyApp(ui, server)

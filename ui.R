@@ -1,15 +1,13 @@
 # UI for stanpumpR
 
-#enableBookmarking(store = "url")
-
 # UI ------------------------------------------------------
-ui <- function(request) {
+function(request) {
   useShinyjs()
   dashboardPage(
   dashboardHeader(
-    title = "f"
+    title = config$title
     # Dropdown menu for messages
-    ),
+  ),
   dashboardSidebar(
       collapsed = TRUE,
       width = "200px",

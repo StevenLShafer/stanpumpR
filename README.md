@@ -1,5 +1,5 @@
-
 # stanpumpR
+
 stanpumpR, and PK/PD simulation program
 Copyright 2019 Steven L. Shafer, steven.shafer@stanford.edu. 
 All Rights Reserved
@@ -21,6 +21,13 @@ Near-term future developments in stanpumpR will include
 2. Improved models of pediatric pharmacokinetics 
 3. Improved models of drug interaction
 4. PK changes with pregnancy, CYP2D6, and renal function. Added to the UI, but no models with these are yet in the program.
+
+### Setting up locallys
+
+1. Clone/download this repository to your local machine
+2. Open the `stanpumpR.Rproj` file in RStudio
+3. Install all packages that are loaded in `global.R`
+4. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
 
 Steven L. Shafer, MD
 October 2019

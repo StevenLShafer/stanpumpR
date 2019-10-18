@@ -1,6 +1,3 @@
-# Global
-remove(list = ls())
-
 # Load Libraries
 library(shiny)
 library(shinyjs)
@@ -49,7 +46,6 @@ if (!isShinyLocal) {
 } else {
   Sys.unsetenv("R_CONFIG_ACTIVE") # Running on laptop
   internetConnected <- FALSE
-  setwd("c:/google drive/projects/stanpumpR")
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.",appFiles)]
 
@@ -61,33 +57,9 @@ if (!isShinyLocal) {
 config <- config::get()
 
 # Load stanpumpR routines
-source("helpers/advanceClosedForm0.R")
-source("helpers/advanceClosedForm1.R")
-source("helpers/advanceClosedFormPO_IM_IN.R")
-source("helpers/advanceState.R")
-source("helpers/advanceStatePO.R")
-source("helpers/calculateCe.R")
-source("helpers/CE.R")
-source("helpers/clockTimeToDelta.R")
-source("helpers/convertState.R")
-source("helpers/createHOT.R")
-source("helpers/cube.R")
-source("helpers/deltaToClockTime.R")
-source("helpers/getDrugPK.R")
-source("helpers/hourMinute.R")
-source("helpers/lbmJames.R")
-source("helpers/modelInteraction.R")
-source("helpers/processdoseTable.R")
-source("helpers/recoveryCalc.R")
-source("helpers/sendError.R")
-source("helpers/sendSlide.R")
-source("helpers/setLinetypes.R")
-source("helpers/simCpCe.R")
-source("helpers/simulationPlot.R")
-source("helpers/staticPlot.R")
-source("helpers/tPeakError.R")
-source("helpers/validateDose.R")
-source("helpers/validateTime.R")
+for (file in list.files("helpers", pattern = "\\.R$")) {
+  source(file.path("helpers", file), local = TRUE)
+}
 
 # Load other files
 #CANCEL <- readPNG("www/cancel.png", native=TRUE)
@@ -186,18 +158,20 @@ theme_update(legend.key = element_rect(fill = "white"))
 theme_update(aspect.ratio = 0.6)
 theme_update(plot.title = element_text(size = rel(1.5)))
 theme_update(legend.text = element_text(size = rel(0.9)))
-theme_update(legend.position="right")
+theme_update(legend.position = "right")
 theme_update(legend.key = element_blank())
 
 
 introductionPlot <- staticPlot(
-  paste("Welcome to stanpumpR",
-        "an R adaption of the \"STANPUMP\" TCI software",
-        "for teaching pharmacokinetics,",
-        "guiding clinical care,",
-        "and informing clinical research.",
-        sep = "\n")
+  paste(
+    "Welcome to stanpumpR",
+    "an R adaption of the \"STANPUMP\" TCI software",
+    "for teaching pharmacokinetics,",
+    "guiding clinical care,",
+    "and informing clinical research.",
+    sep = "\n"
   )
+)
 
 nothingtoPlot <- staticPlot(
   paste(
@@ -212,7 +186,7 @@ nothingtoPlot <- staticPlot(
     "by clicking on the plot. You can enter new drugs",
     "by double clicking on any plot.",
     sep = "\n"
-    )
   )
+)
 
 
