@@ -1,6 +1,3 @@
-# Global
-remove(list = ls())
-
 # Load Libraries
 library(shiny)
 library(shinyjs)
@@ -49,71 +46,34 @@ if (!isShinyLocal) {
 } else {
   Sys.unsetenv("R_CONFIG_ACTIVE") # Running on laptop
   internetConnected <- FALSE
-  setwd("c:/google drive/projects/stanpumpR")
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.",appFiles)]
-  
-  source("havingIP.r")
-  if (havingIP() & ping("google.com")) internetConnected <- TRUE
+
+  source("helpers/havingIP.R")
+  if (havingIP() && ping("google.com")) internetConnected <- TRUE
   library(rsconnect)
-  options(shiny.reactlog=TRUE) 
+  options(shiny.reactlog=TRUE)
 }
 config <- config::get()
 
 # Load stanpumpR routines
-source("bsa.r")
-source("CE.r")
-source("clockTimeToDelta.r")
-source("closest.r")
-source("createHOT.r")
-source("cube.r")
-source("deltaToClockTime.r")
-source("deployActive.r")
-source("deployTest.r")
-source("getDrugPK.r")
-source("getLogs.r")
-source("hourMinute.r")
-source("lbmJames.r")
-source("modelInteraction.r")
-source("nextSlide.r")
-source("processdoseTable.r")
-#source("sameTable.r")
-source("sendError.r")
-source("sendSlide.r")
-source("setLinetypes.r")
-source("setxLabels.r")
-source("simCpCe.r")
-source("simulationPlot.r")
-source("staticPlot.r")
-source("tPeakError.r")
-source("validateDose.r")
-source("validateTime.r")
-source("writeFooter.r")
-source("advanceClosedForm0.r")
-source("advanceClosedForm1.r")
-source("advanceState.r")
-source("calculateCe.r")
-source("convertState.r")
-source("recoveryCalc.r")
-#source("advanceClosedFormPO.r")
-source("advanceClosedFormPO_IM_IN.r")
-source("advanceStatePO.r")
-
-
-#source("new_aes.r")
+for (file in list.files("helpers", pattern = "\\.R$")) {
+  source(file.path("helpers", file), local = TRUE)
+}
 
 # Load other files
-#CANCEL <- readPNG("cancel.png", native=TRUE)
+#CANCEL <- readPNG("www/cancel.png", native=TRUE)
 enableBookmarking(store = "url")
 
-eventDefaults_global <- read.csv("Event Defaults.csv", stringsAsFactors = FALSE)
+eventDefaults_global <- read.csv("data/Event Defaults.csv", stringsAsFactors = FALSE)
+eventDefaults <- eventDefaults_global
 
-drugDefaults_global <-read.csv("Drug Defaults.csv", stringsAsFactors = FALSE)
+drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FALSE, na.strings = "")
 
 # Load individual drug routines
 for (drug in drugDefaults_global$Drug)
 {
-  source(paste0(drug,".r"))
+  source(file.path("data", "drugs", paste0(drug, ".R")))
 }
 
 facetFont <-      c(  20,   18,   18,   16,   14,   14,   14,   13,   13,   12,   11,   10,    9,    9,   8,  8)
@@ -199,18 +159,20 @@ theme_update(legend.key = element_rect(fill = "white"))
 theme_update(aspect.ratio = 0.6)
 theme_update(plot.title = element_text(size = rel(1.5)))
 theme_update(legend.text = element_text(size = rel(0.9)))
-theme_update(legend.position="right")
+theme_update(legend.position = "right")
 theme_update(legend.key = element_blank())
 
 
 introductionPlot <- staticPlot(
-  paste("Welcome to stanpumpR",
-        "an R adaption of the \"STANPUMP\" TCI software",
-        "for teaching pharmacokinetics,",
-        "guiding clinical care,", 
-        "and informing clinical research.",
-        sep = "\n")
+  paste(
+    "Welcome to stanpumpR",
+    "an R adaption of the \"STANPUMP\" TCI software",
+    "for teaching pharmacokinetics,",
+    "guiding clinical care,",
+    "and informing clinical research.",
+    sep = "\n"
   )
+)
 
 nothingtoPlot <- staticPlot(
   paste(
@@ -225,7 +187,19 @@ nothingtoPlot <- staticPlot(
     "by clicking on the plot. You can enter new drugs",
     "by double clicking on any plot.",
     sep = "\n"
-    )
   )
-    
+)
 
+
+originalUnits <- drugDefaults_global$Units
+drugDefaults_global$Units <- strsplit(drugDefaults_global$Units, ",")
+
+blanks <- rep("", 6)
+doseTableInit <- data.frame(
+  Drug = c("propofol","fentanyl","remifentanil","rocuronium", blanks),
+  Time = c(as.character(rep(0,4)), blanks),
+  Dose = c(as.character(rep(0,4)), blanks),
+  Units = c("mg","mcg","mcg/kg/min","mg", blanks),
+  stringsAsFactors = FALSE
+)
+doseTableNewRow <-  doseTableInit[5, ]

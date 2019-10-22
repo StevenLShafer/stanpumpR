@@ -8,6 +8,7 @@ havingIP <- function() {
   validIP <- "((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
   any(grep(validIP, ipmessage))
 }
+
 ping <- function(x, stderr = FALSE, stdout = FALSE, ...){
   pingvec <- system2("ping", x,
                      stderr = FALSE,
