@@ -1,6 +1,6 @@
 # stanpumpR
 
-stanpumpR, and PK/PD simulation program
+stanpumpR, a PK/PD simulation program
 Copyright 2019 Steven L. Shafer, steven.shafer@stanford.edu. 
 All Rights Reserved
 
