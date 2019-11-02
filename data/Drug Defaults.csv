@@ -14,6 +14,6 @@ midazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.04,0.12,0.1,0,0.04
 etomidate,mcg,mg,mg/kg/min,mg,"mg,mg/kg/min",#FFCC00,0.4,0.8,0.5,0,0.4
 lidocaine,mcg,mg,mg/hr,mg,"mg,mg/hr",#B7AE7F,0.5,1.5,1,0,0.5
 rocuronium,mcg,mg,mg/kg/hr,mg,"mg,mg/kg/hr",#F9423A,1,2.2,1.5,0,1
-naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#404040,0,0,0,0,1
+naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/kg,mg,mg/kg,mcg/min,mcg/kg/min,mg/min,mg/kg/min",#404040,0,0,0,0,1
 oxytocin,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#008F7D,0.05,0.2,0.1,0,0.05
 oxycodone,ng,,,mg PO,mg PO,#032FED,10,20,14,12,10

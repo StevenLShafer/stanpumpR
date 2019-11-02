@@ -18,7 +18,8 @@ simulationPlot <- function(
   logY = FALSE,
   drugs,
   events,
-  eventDefaults
+  eventDefaults,
+  drugDefaults
   )
 
 # xBreaks = c(0:6*10)
@@ -33,20 +34,21 @@ simulationPlot <- function(
 # load("drugs.rData")
 
 {
-  
+  DEBUG <- FALSE
   # Notes on what happens below
-  # The time courses for ggplot are held in plotResults 
+  # The time courses for ggplot are held in plotResults
   # "Drug","Time","Y","Site","Wrap", "Label"
   # Drug determines the color
   # Y is the value plotted
   # Site determines the linetype
   # Wrap determines the facet that the data will be plotted
   # Label is used for events. Otherwise, it is blank.
-  
+
   # plotResults is created in the following steps
   # 1. allResults is created. The structure of allResults is
-  
-  cat("\nEntering simulationPlot\n")
+
+  cat("\n")
+  cat("Entering simulationPlot\n")
   plotTable <- as.data.frame(
     cbind(
       map_chr(drugs, "drug"),
@@ -58,14 +60,11 @@ simulationPlot <- function(
       map_chr(drugs, "MEAC"),
       map_chr(drugs, "emerge")
       ),stringsAsFactors = FALSE)
-
   names(plotTable) <- c("Drug","drugColor","Concentration.Units", "typical", "lowerTypical","upperTypical", "MEAC", "emerge")
-  
   allResults    <- map_dfr(drugs, "results")
-  # Structure of allResults
   # Four columns: Drug, Time, Site, Y
   # 8 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCe, CeNormCe
-  
+
   plotTable <- plotTable[plotTable$Drug %in% allResults$Drug,]
   plotTable$typical <- as.numeric(plotTable$typical)
   plotTable$lowerTypical <- as.numeric(plotTable$lowerTypical)
@@ -75,20 +74,21 @@ simulationPlot <- function(
   plotTable$alpha <- 0.2
   allMax <- map_dfr(drugs, "max")
   allMax <- allMax[allMax$Drug %in% plotTable$Drug,]
+
   CROWS <- match(plotTable$Drug, allMax$Drug)
-  plotTable$MaxCp <- allMax$Cp[CROWS]  
+  plotTable$MaxCp <- allMax$Cp[CROWS]
   plotTable$MaxCe <- allMax$Ce[CROWS]
   plotTable$MaxRecovery <- allMax$Recovery[CROWS]
-  
+
   allEquispace  <- map_dfr(drugs, "equiSpace")
   allEquispace <- allEquispace[allEquispace$Drug %in% plotTable$Drug,]
-  
-  if (nrow(allResults) == 0) 
+
+  if (nrow(allResults) == 0)
   {
     cat("Returning Null, nrow(allResults) == 0\n")
     return(NULL)
   }
-  
+
   # Remove unnecessary rows from allResults and process normalization
   switch(
     normalization,
@@ -114,11 +114,11 @@ simulationPlot <- function(
       plotMEAC <- FALSE
       plotInteraction <- FALSE
     }
-  )  
-  
+  )
+
   if (!plotRecovery)
     allResults <- allResults[allResults$Site != "Recovery",]
-  
+
   if (plasmaLinetype == "blank")
   {
     #   cat ("removing plasma concentrations\n")
@@ -132,10 +132,10 @@ simulationPlot <- function(
     effectsiteLinetype <- NULL
     plotTable$MaxCe <- 0
   }
-  
+
   allResults$Wrap <- ""
   allResults$Label <- ""
-  
+
   minimum <- min(xBreaks)
   maximum <- max(xBreaks)
   plotTable$xmin <- minimum
@@ -150,9 +150,9 @@ simulationPlot <- function(
     "none" = {
       plotTable$Wrap <- paste0(
                           plotTable$Drug,
-                          facetSeperator[nplotTable + addPlots], 
+                          facetSeperator[nplotTable + addPlots],
                           "(",
-                          plotTable$Concentration.Units, 
+                          plotTable$Concentration.Units,
                           "/ml)")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical
@@ -160,7 +160,7 @@ simulationPlot <- function(
     },
     "Peak plasma" = {
       plotTable$Wrap <- paste0(
-                          plotTable$Drug, 
+                          plotTable$Drug,
                           facetSeperator[nplotTable + addPlots],
                           "(% Peak Cp)")
       plotTable$ymin <- 0
@@ -178,11 +178,10 @@ simulationPlot <- function(
     }
   )
   allResults$Wrap <- plotTable$Wrap[match(allResults$Drug, plotTable$Drug)]
-
   plotResults <- allResults[,c("Drug","Time","Y","Site","Wrap", "Label")]
-  
+
   # add MEAC and Interaction
-  
+
   if (plotMEAC | plotInteraction)
   {
   # Need this table both for plotMEAC and for Interaction
@@ -207,7 +206,7 @@ simulationPlot <- function(
 
       # Add data for plot
       plotResults <- rbind(plotResults, resultsMEAC[,names(plotResults)])
-      
+
       # Add plot to plotTable
       newplotTable <- plotTable[1,]
       newplotTable$Drug <- "total opioid"
@@ -219,13 +218,14 @@ simulationPlot <- function(
       newplotTable$Wrap <- "% MEAC"
       # don't care about MEAC, maxCp, or maxCe
       plotTable <- rbind(plotTable, newplotTable)
-      
+
       if (length(opioids) > 1)
       {
         # Add in the total MEAC
         plotResults <- rbind(plotResults, totalMEAC)
       }
     }
+
     # Interaction plot
     PropCe <- allEquispace$Ce[allEquispace$Drug == "propofol"]
     if (length(opioids) > 0 & length(PropCe) > 0 & plotInteraction)
@@ -240,10 +240,10 @@ simulationPlot <- function(
         Wrap = "p\nresponse",
         Label = ""
         )
-      
+
       # Add data for plot
       plotResults <- rbind(plotResults, resultsInteraction)
-      
+
       #Add plot to plotTable
       newplotTable <- plotTable[1,]
       newplotTable$Drug <- "p response"
@@ -268,7 +268,7 @@ simulationPlot <- function(
           )
         plotResults <- rbind(plotResults, resultsInteractionPropofol)
       }
-      
+
       # Add in opioid data
       if (min(x$pNRopioid) < 1)
       {
@@ -281,7 +281,7 @@ simulationPlot <- function(
           Label = ""
         )
         plotResults <- rbind(plotResults, resultsInteractionOpioid)
-        
+
         # Add plot to plotTable
         newplotTable <- plotTable[1,]
         newplotTable$Drug <- "Total Opioid"
@@ -320,12 +320,12 @@ simulationPlot <- function(
       Label = events$Event
     )
   }
-  
+
     # Add data for plot
     plotResults <- rbind(plotResults, resultsEvents)
-    
+
     #Add Plot to PlotTable
-    
+
     newplotTable <- plotTable[1,]
     newplotTable$Drug <- "Events"
     newplotTable$drugColor <- "white"
@@ -351,14 +351,19 @@ simulationPlot <- function(
       ymax = 1
     )
   }
-  
+
   ##################################################
   linetypes <- c(plasmaLinetype,effectsiteLinetype, "blank", "dotted")
   plotResults$Site <- factor(plotResults$Site,levels=c("Plasma","Effect Site", "Events", "Recovery"),ordered=TRUE)
   plotResults <- plotResults[!is.na(plotResults$Y),]
-  
+
+
   # Convert $Drug and $Wrap to factors to preserve order from plotTable
-  
+
+  drugFactors <- c(drugDefaults$Drug, "Recovery")
+  plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
+  plotTable <- plotTable[order(plotTable$Factor),]
+
   drugFactors <- c(plotTable$Drug, "Recovery")
   wrapFactors <- plotTable$Wrap
   drugColors <-  c(plotTable$drugColor, "black")
@@ -375,13 +380,13 @@ simulationPlot <- function(
 
   plotObject <- ggplot() +
   geom_line(
-    data = subset(plotResults, Wrap != "Events"), 
+    data = subset(plotResults, Wrap != "Events"),
     aes(
-      x = Time, 
+      x = Time,
       y = Y,
-      color = Drug, 
+      color = Drug,
       linetype = Site
-      ), 
+      ),
     size=1
     )
 
@@ -404,7 +409,7 @@ simulationPlot <- function(
   } else {
     plotObject <- plotObject + scale_y_continuous(limits=c(0, NA))
   }
-  
+
   nFacets <- length(unique(plotResults$Wrap))
   plotObject <- plotObject + labs(
       title = title,
@@ -421,16 +426,16 @@ simulationPlot <- function(
       plotObject <-
         plotObject +
       geom_rect(
-        data=plotTable, 
+        data=plotTable,
         aes(
-          xmin=xmin, 
-          xmax=xmax, 
-          ymin=ymin, 
-          ymax=ymax, 
-          fill=Drug, 
+          xmin=xmin,
+          xmax=xmax,
+          ymin=ymin,
+          ymax=ymax,
+          fill=Drug,
           alpha = Drug
         ),
-        inherit.aes=FALSE, 
+        inherit.aes=FALSE,
         show.legend=FALSE
       )
     },
@@ -438,41 +443,41 @@ simulationPlot <- function(
       plotObject <-
         plotObject +
         geom_rect(
-          data=plotTable, 
+          data=plotTable,
           mapping=aes(
-            xmin=xmin, 
-            xmax=xmax, 
-            ymin=typical*0.95, 
-            ymax=typical*1.05, 
-            fill=Drug 
-          ), 
+            xmin=xmin,
+            xmax=xmax,
+            ymin=typical*0.95,
+            ymax=typical*1.05,
+            fill=Drug
+          ),
           alpha = 0.35,
-          size=1, 
-          inherit.aes=FALSE, 
+          size=1,
+          inherit.aes=FALSE,
           show.legend=FALSE
         )
     }
   )
-  
+
   # Plot events moved to end because the color scheme will change
   if (plotEvents)
   {
     plotObject <- plotObject +
       geom_rect(
-        data = Blank, 
+        data = Blank,
         aes(
-          xmin = xmin, 
-          xmax = xmax, 
-          ymin = ymin, 
+          xmin = xmin,
+          xmax = xmax,
+          ymin = ymin,
           ymax = ymax
         ),
-        color="white", 
+        color="white",
         fill = "white",
-        alpha = 1, 
-        inherit.aes = FALSE, 
+        alpha = 1,
+        inherit.aes = FALSE,
         show.legend = FALSE
       )
-    
+
     plotLabels <- subset(plotResults, Label != "")
     crows <- match(plotLabels$Label, eventDefaults$Event)
     plotLabels$Color <- eventDefaults$Color[crows]
@@ -480,7 +485,7 @@ simulationPlot <- function(
     if (nrow(plotLabels) > 0)
       for (i in 1:nrow(plotLabels))
       {
-        plotObject <- plotObject + 
+        plotObject <- plotObject +
         geom_label(
           data = plotLabels[i,],
             mapping = aes(
@@ -493,7 +498,7 @@ simulationPlot <- function(
           hjust = 0,
           alpha = 0.25,
           show.legend = FALSE,
-          inherit.aes=FALSE, 
+          inherit.aes=FALSE,
           label.padding = unit(0.25,"mm"),
           fontface = "bold"
           )
@@ -532,7 +537,7 @@ simulationPlot <- function(
   # Add in Process plotRecovery
   if (plotRecovery)
   {
-    
+
     x <- ggplot_build(plotObject)
     recovery <- allEquispace[,c("Drug","Time","Recovery")]
     recovery$Wrap <- ""
@@ -552,7 +557,7 @@ simulationPlot <- function(
       {
         labels <- as.numeric(x$layout$panel_params[[i]]$y.labels)
         nLabels <- length(labels) - 1 # Subtract 1 because 0 is always included
-        end <- start + nLabels 
+        end <- start + nLabels
         recoveryLabels$Drug[start:end] <- as.character(plotTable$Drug[i])
         recoveryLabels$y[start:end] <- labels
         recoveryLabels$Wrap[start:end] <- as.character(plotTable$Wrap[i])
@@ -575,48 +580,48 @@ simulationPlot <- function(
       x = maximum,
       Wrap <- as.character(plotTable$Wrap),
       stringsAsFactors = FALSE
-    ) 
-    
+    )
+
     recoveryLabels$Wrap  <- factor(recoveryLabels$Wrap, levels=wrapFactors, ordered = TRUE)
     recovery$Wrap  <- factor(recovery$Wrap, levels=wrapFactors, ordered = TRUE)
     arrows$Wrap    <- factor(arrows$Wrap, levels=wrapFactors, ordered = TRUE)
 
-    plotObject <-  plotObject + 
+    plotObject <-  plotObject +
       geom_text(
-        data=recoveryLabels, 
+        data=recoveryLabels,
         mapping=aes(
-          x=x, 
+          x=x,
           y=y,
           label = new
         ),
         color = "black",
-        inherit.aes=FALSE, 
+        inherit.aes=FALSE,
         show.legend=FALSE,
         hjust = 1.1,
         vjust = -.05,
         size = labelFont[nFacets] * 0.2 # font size to mm
       ) +
       geom_text(
-        data=arrows, 
+        data=arrows,
         mapping=aes(
-          x=x, 
+          x=x,
           y=y,
           label = new
         ),
         color = "black",
-        inherit.aes=FALSE, 
+        inherit.aes=FALSE,
         show.legend=FALSE,
         hjust = -.05,
         vjust = 0.5,
         size = labelFont[nFacets] * 0.2 # font size to mm
       ) +
-      
+
       geom_rect(
         data=plotTable,
         mapping=aes(
           xmin=xmin,
           xmax=xmax,
-          ymin=0, 
+          ymin=0,
           ymax=emerge
         ),
         fill = "grey",
@@ -628,7 +633,7 @@ simulationPlot <- function(
      geom_line(
        data = recovery,
        aes(
-         x = Time, 
+         x = Time,
          y = Recovery
         ),
        show.legend = FALSE,

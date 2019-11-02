@@ -6,8 +6,8 @@ deployTest <- function()
   deployApp(
     appDir = "c:/google drive/projects/stanpumpR",
     appFiles = appFiles,
-    forceUpdate = TRUE, 
-    account="steveshafer", 
+    forceUpdate = TRUE,
+    account="steveshafer",
     appName = "stanpumpR_test"
   )
 }

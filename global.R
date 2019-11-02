@@ -30,13 +30,12 @@ library(jsonlite)
 #library(facetscales)
 library(tidyr)
 library(dqshiny)
+library(shinyWidgets)
 
 
 # tell shiny to log all reactivity
 library(reactlog)
-options(shiny.reactlog = TRUE)
-# shiny::reactlogShow()
-
+options(warn = 2)
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 # cat("isShinyLocal",isShinyLocal,"\n")
 
@@ -48,11 +47,14 @@ if (!isShinyLocal) {
   internetConnected <- FALSE
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.",appFiles)]
+  appFiles <- c(appFiles, "helpers","data","www")
 
   source("helpers/havingIP.R")
   if (havingIP() && ping("google.com")) internetConnected <- TRUE
   library(rsconnect)
   options(shiny.reactlog=TRUE)
+  source("misc/deployActive.R")
+  source("misc/deployTest.R")
 }
 config <- config::get()
 
@@ -165,11 +167,7 @@ theme_update(legend.key = element_blank())
 
 introductionPlot <- staticPlot(
   paste(
-    "Welcome to stanpumpR",
-    "an R adaption of the \"STANPUMP\" TCI software",
-    "for teaching pharmacokinetics,",
-    "guiding clinical care,",
-    "and informing clinical research.",
+    "Initializing your session.",
     sep = "\n"
   )
 )
@@ -203,3 +201,6 @@ doseTableInit <- data.frame(
   stringsAsFactors = FALSE
 )
 doseTableNewRow <-  doseTableInit[5, ]
+
+`%then%` <- shiny:::`%OR%`
+

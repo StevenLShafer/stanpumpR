@@ -17,10 +17,36 @@
 # You will find a "Note to Dean" everwhere that I referene or validate           #
 # The handsontable in the code below.                                            #
 ##################################################################################
-
 # server function ----------------------------------------------------------------------------------
 function(input, output, session)
 {
+
+  showModal(
+    modalDialog(
+      title = "Welcome to stanpumpR",
+      p(
+        "stanpumpR, derived from the original STANPUMP program developed at
+        Stanford University,  performs pharmacokinetic simulations
+        based on mathematical models published in the peer-reviewed
+        literature. stanpumpR is intended to help clinicians and investigators
+        better understand the mathematical implications of published models.
+        stanpumpR is only an advisory program. How these models are applied to
+        individual patients is a matter of clinical judgment by the healthcare
+        provider."
+      ),
+      tags$button(
+        type = "button",
+        class = "btn btn-warning",
+        `data-dismiss` = "modal",
+        "OK"
+      ),
+      footer = NULL,
+      easyClose = TRUE,
+      fade=TRUE,
+      size="s"
+    )
+  )
+
 
   options(error = function ()
   {
@@ -43,10 +69,26 @@ function(input, output, session)
     HTML(commentsLog())
   })
   outputComments <- function(text, echo = TRUE) {
-    if (echo) {
-      cat(text, "\n")
+    if (is.na(echo)) return()
+    if (is.data.frame((text)))
+    {
+      con <- textConnection("outputString","w",local=TRUE)
+      capture.output(print(text, digits = 3), file = con, type="output", split = FALSE)
+      close(con)
+      if (echo)
+      {
+        for (line in outputString) cat(line, "\n")
+      }
+      isolate(
+        for (line in outputString) commentsLog(paste0(commentsLog(), "<br>", line))
+      )
+    } else {
+      if (echo)
+      {
+        cat(text, "\n")
+      }
+      isolate(commentsLog(paste0(commentsLog(), "<br>", text)))
     }
-    isolate(commentsLog(paste0(commentsLog(), "<br>", text)))
   }
 
   #############################################################################
@@ -58,9 +100,23 @@ function(input, output, session)
   cat("**********************************************************************\n")
 
   main_plot <- reactiveVal(introductionPlot)
+
   output$PlotSimulation <- renderPlot({
     main_plot()
   })
+
+  # observe({
+  #     if (sum(grepl("Time to Emergence",input$addedPlots)) > 0)
+  #     {
+  #       cat("turning off logY\n")
+  #       hideElement("logY")
+  #     } else {
+  #       cat("turning on logY\n")
+  #       showElement("logY")
+  #     }
+  #   }
+  # )
+
 
   outputComments("Initializing")
   # Make drugs and events local to session
@@ -71,40 +127,45 @@ function(input, output, session)
 
   cat("Initializing prior and current\n")
 
-  # Prior data
-  prior                    <- NULL
-  prior$age                <- 0
-  prior$weight             <- 0
-  prior$height             <- 0
-  prior$sex                <- 0
-  prior$ageUnit            <- 0
-  prior$heightUnit         <- ""
-  prior$weightUnit         <- ""
-  prior$plotMaximum        <- 60
-  prior$plasmaLinetype     <- "blank"
-  prior$effectsiteLinetype <- "solid"
-  prior$normalization      <- "none"
-  prior$title              <- 0
-  prior$caption            <- ""
-  prior$typical            <- "Range"
-  prior$logY               <- FALSE
-  prior$DT                 <- NULL # Used to determine of replot flag needs to be set, e.g., sameTable(DT, prior$DT)
-                                   # Set to DT after processDoseTable. Note that the NULL assignment is assumed without
-                                   # being explicit, as done here. This is mostly to help keep inventory of the prior
-                                   # variables
-  prior$ET                 <- NULL # Used to determine if plot needs to be set.
-  prior$referenceTime      <- "none"
-  prior$plotMEAC           <- FALSE
-  prior$plotInteraction    <- FALSE
-  prior$plotCost           <- FALSE
-  prior$plotEvents         <- FALSE
-  prior$plotRecovery       <- FALSE
-  prior$holdPlot           <- FALSE
-  prior$DrugTimeUnits      <- ""
-  prior$timeDT             <- 0
-  prior$Refresh            <- 0 # Used to see if the refresh button has been clicked
-  prior$RefreshFlag        <- FALSE # Used to force simulationPlot to update with refresh button
-  prior$referenceTime      <- "none"
+  prior <- reactiveValues()
+
+  isolate(
+    {
+      # Prior data
+      prior$age                <- 0
+      prior$weight             <- 0
+      prior$height             <- 0
+      prior$sex                <- 0
+      prior$ageUnit            <- 0
+      prior$heightUnit         <- ""
+      prior$weightUnit         <- ""
+      prior$plotMaximum        <- 60
+      prior$plasmaLinetype     <- "blank"
+      prior$effectsiteLinetype <- "solid"
+      prior$normalization      <- "none"
+      prior$title              <- 0
+      prior$caption            <- ""
+      prior$typical            <- "Range"
+      prior$logY               <- FALSE
+      prior$DT                 <- NULL # Used to determine of replot flag needs to be set, e.g., sameTable(DT, prior$DT)
+      # Set to DT after processDoseTable. Note that the NULL assignment is assumed without
+      # being explicit, as done here. This is mostly to help keep inventory of the prior
+      # variables
+      prior$ET                 <- NULL # Used to determine if plot needs to be set.
+      prior$referenceTime      <- "none"
+      prior$plotMEAC           <- FALSE
+      prior$plotInteraction    <- FALSE
+      prior$plotCost           <- FALSE
+      prior$plotEvents         <- FALSE
+      prior$plotRecovery       <- FALSE
+      prior$holdPlot           <- FALSE
+      prior$DrugTimeUnits      <- ""
+      prior$timeDT             <- 0
+      prior$Refresh            <- 0 # Used to see if the refresh button has been clicked
+      prior$RefreshFlag        <- FALSE # Used to force simulationPlot to update with refresh button
+      prior$referenceTime      <- "none"
+    }
+  )
 
 
   # This always runs, because on restore it fully restarts server()
@@ -136,17 +197,14 @@ function(input, output, session)
   #   Units = drugDefaults$Bolus.Units,
   #   stringsAsFactors = FALSE
   # )
-
-  prior$DT <- doseTableInit
-  cat("prior$DT at the end of initialization\n")
-  print(prior$DT)
-
-  ##################################################################################
-  # Note to Dean:                                                                  #
-  # As you suggested, I am setting up doseTable as a reactive variable. The is     #
-  # Where it is initialized.                                                       #
-  ##################################################################################
   doseTable <- reactiveVal(doseTableInit)
+  isolate(
+    {
+      prior$DT <- doseTable()
+      outputComments("prior$DT at the end of initialization")
+      outputComments(prior$DT)
+    }
+  )
 
   # Routine to output doseTableHTML from doseTable
   ##################################################################################
@@ -164,50 +222,75 @@ function(input, output, session)
   # Everyplace else I just set doseTable, which is now a reactive variable.        #
   ##################################################################################
 
-  output$doseTableHTML <- renderRHandsontable({
-    outputComments("Setting up doseTableHTML.")
-    createHOT(doseTable(), drugDefaults)
+  isolate({
+    output$doseTableHTML <- renderRHandsontable({
+      outputComments("Setting up doseTableHTML.")
+      createHOT(doseTable(), drugDefaults)
+    })
   })
 
   # End Initialize current$DT
 
   # Initialize prior$ET
-  outputComments("Initializing prior$ET")
-  if (is.null(prior$ET))
-  {
-    # This creates a NULL Table
-    eventTable <- data.frame(
-      Time = 0,
-      Event = "CPBStart",
-      Fill = "blue",
-      stringsAsFactors = FALSE
-    )
-    eventTable <- eventTable[FALSE,]
-    prior$ET <- eventTable
-  }
-  eventTable <- reactiveVal(
-    prior$ET
+  isolate(
+    {
+      outputComments("Initializing prior$ET")
+      if (is.null(prior$ET))
+      {
+        # This creates a NULL Table
+        prior$ET <- data.frame(
+          Time = 0,
+          Event = "",
+          Fill = "",
+          stringsAsFactors = FALSE
+        )[FALSE,]
+      }
+      eventTable <- reactiveVal(
+        prior$ET
+      )
+      cat ("Done with prior$ET\n")
+    }
   )
-
-  cat ("Done with prior$ET\n")
 
 
   # Finishing Setup
   outputComments("Completing setup")
-  plotObject <- NULL
-  allResults <- NULL
-  plotResults <- NULL
-  PK_set <- FALSE
+  plotObjectReactive  <- reactiveVal(NULL)
+  allResultsReactive  <- reactiveVal(NULL)
+  plotResultsReactive <- reactiveVal(NULL)
+  PK_set <- reactiveVal(FALSE)
 
   # Initialize drug table (PK for each drug)
-  drugs <- vector("list", length = nrow(drugDefaults))
-  names(drugs) <- drugDefaults$Drug
-  for (i in 1:length(drugs))
-  {
-    drugs[[i]]$Color <- drugDefaults$Color[i]
+  outputComments("Initializing Drugs")
+  drugs <- reactiveValues()
+  for (i in 1:nrow(drugDefaults)) {
+    drug <- drugDefaults$Drug[i]
+    drugs[[drug]] <- NULL
+    isolate({drugs[[drug]]$Color <- drugDefaults$Color[i]})
   }
+  isolate({cat("Unique names",names(drugs),"\n")})
 
-
+  # x <- vector("list", length = nrow(drugDefaults))
+  # names(x) <- drugDefaults$Drug
+  # print(x)
+  # drugs <- reactiveValues()
+  # isolate({
+  # for (drug in drugDefaults$Drug)
+  # {
+  #   drugs[[drug]]$color <- "red"
+  #   # textString <- paste0("drugs[['",drugDefaults$Drug[i], "']]$color <- '",drugDefaults$Color[i],"'")
+  #   # cat(textString, "\n")
+  #   # eval(parse(text=textString))
+  # }
+  # })
+  # cat("Drugs have been assigned")
+  # print(str(drugs))
+  #
+  # for (i in 1:length(drugs))
+  # {
+  #   drugs[[i]]$Color <- drugDefaults$Color[i]
+  # }
+  #
   newDrugDefaultsFlag <- reactiveVal(FALSE)
   updatedDoseTableFlag <- reactiveVal(FALSE) # Forces a new plot
 
@@ -218,7 +301,7 @@ function(input, output, session)
   output$getReferenceTime <- renderUI({
     outputComments("Getting reference time from client.")
     time <- input$client_time
-    outputComments(paste("Reference time from client:", time))
+    outputComments(paste("Reference time from client:", time), echo = TRUE)
 
     time <- gsub("[^[:digit:]:. APM]","",time) # Get rid of strange formatting characters
     x <- unlist(strsplit(time, " "))
@@ -230,7 +313,7 @@ function(input, output, session)
     HH   <- floor(time / 60)
     MM   <- time %% 60
     start <- sprintf("%02d:%02d",HH,MM)
-    prior$referenceTime <<- start
+    prior$referenceTime <- start
     column(
       width = 4,
       selectInput(
@@ -278,57 +361,56 @@ function(input, output, session)
 
   ##########################################################
   # Code to save state in url and then restore from url
-  setBookmarkExclude(
-    c(
-      "doseTableHTML",
-      "doseTableHTML_select",
-      "setTarget",
-      "targetDrug",
-      "targetDrug-selectized",
-      "targetEndTime",
-      "targetOK",
-      "plot_click",
-      "plot_dblclick",
-      "plot_hover",
-      "sidebarCollapsed",
-      "sidebarItemExpanded",
-      "simType",
-      "effectsiteLinetype-selectized",
-      "maximum-selectized",
-      "plasmaLinetype-selectized",
-      "referenceTime-selectized",
-      "targetTableHTML",
-      "targetTableHTML_select",
-      "tempTableHTML_select",
-      "tempTableHTML",
-      "clickDose",
-      "clickEvent",
-      "clickEvent-selectized",
-      "clickOKDrug",
-      "clickOKEvent",
-      "clickTimeDrug",
-      "clickTimeEvent",
-      "clickUnits",
-      "dblclickDrug",
-      "dblclickDrug-selectized",
-      "dblclickTime",
-      "dblclickDose",
-      "dblclickUnits",
-      "dblclickOK",
-      "dblclickDelete",
-      "editDoses",
-      "editDosesOK",
-      "editEvents",
-      "editEventsOK",
-      "sendSlide",
-      "recipient",
-      "drugEditsOK",
-      "editDrugsHTML",
-      "editDrugsHTML_select",
-      "editDrugs",
-      "newEmerge",
-      "hoverInfo"
-      ))
+  bookmarksToExclude <- c(
+    "doseTableHTML",
+    "doseTableHTML_select",
+    "setTarget",
+    "targetDrug",
+    "targetDrug-selectized",
+    "targetEndTime",
+    "targetOK",
+    "plot_click",
+    "plot_dblclick",
+    "plot_hover",
+    "sidebarCollapsed",
+    "sidebarItemExpanded",
+    "simType",
+    "effectsiteLinetype-selectized",
+    "maximum-selectized",
+    "plasmaLinetype-selectized",
+    "referenceTime-selectized",
+    "targetTableHTML",
+    "targetTableHTML_select",
+    "tempTableHTML_select",
+    "tempTableHTML",
+    "clickDose",
+    "clickEvent",
+    "clickEvent-selectized",
+    "clickOKDrug",
+    "clickOKEvent",
+    "clickTimeDrug",
+    "clickTimeEvent",
+    "clickUnits",
+    "dblclickDrug",
+    "dblclickDrug-selectized",
+    "dblclickTime",
+    "dblclickDose",
+    "dblclickUnits",
+    "dblclickOK",
+    "dblclickDelete",
+    "editDoses",
+    "editDosesOK",
+    "editEvents",
+    "editEventsOK",
+    "sendSlide",
+    "recipient",
+    "drugEditsOK",
+    "editDrugsHTML",
+    "editDrugsHTML_select",
+    "editDrugs",
+    "newEmerge",
+    "hoverInfo"
+  )
 
   observe({
     # Trigger this observer every time an input changes
@@ -339,31 +421,40 @@ function(input, output, session)
   onBookmark(function(state) {  #
     state$values$DT <- current$DT
     state$values$ET <- prior$ET
+    excludeDelay <- names(input)[grep("delay", names(input))]
+    setBookmarkExclude(c(bookmarksToExclude, excludeDelay))
   })
 
-  onBookmarked(function(url) {  # Without this, the session$doBookmark actually displays it
-    updateQueryString(url)
-    prior$url <<- url
-  })
+  onBookmarked(
+    function(url) # Without this, the session$doBookmark actually displays it
+    {
+      updateQueryString(url)
+      prior$url <- url
+    }
+  )
 
   onRestored(function(state) {
-    cat("***************************************************************************\n")
-    cat("*                       Restoring Session from URL                        *\n")
-    cat("***************************************************************************\n")
-    prior$DT   <<- as.data.frame(state$values$DT, stringsAsFactors=FALSE)
-    doseTable(prior$DT)
-    current$DT <- prior$DT
-    current$DT$Dose <- "" # Force an update
-    cat("prior$DT after restoring state\n")
-    print(prior$DT)
-
-    prior$ET <<- as.data.frame(base64_dec(state$values$ET), stringsAsFactors=FALSE)
-    cat("prior$ET after restoring state\n")
-    print(prior$ET)
-    eventTable <<- reactiveVal(prior$ET)
-
-    # This next line should not be necessaruy because
-    # doseTable and eventTable are both reactive
+    outputComments("***************************************************************************\n")
+    outputComments("*                       Restoring Session from URL                        *\n")
+    outputComments("***************************************************************************\n")
+    isolate({
+      prior$DT   <- as.data.frame(state$values$DT, stringsAsFactors=FALSE)
+      doseTable(prior$DT)
+      current$DT <- prior$DT
+      prior$ET <- as.data.frame(state$values$ET, stringsAsFactors=FALSE)
+      if (ncol(prior$ET) == 0)
+      {
+        prior$ET <- data.frame(
+          Time = 0,
+          Event = "",
+          Fill = "",
+          stringsAsFactors = FALSE
+        )[FALSE,]
+      }
+      outputComments("prior$ET after restoring state\n")
+      outputComments(prior$ET)
+      eventTable(prior$ET)
+    })
   })
 
   ##################################################################################
@@ -389,10 +480,16 @@ function(input, output, session)
       input$doseTableHTML
     },
     {
-      outputComments("Starting dose Table Loop")
-      outputComments(paste0("Is input$doseTableHTML NULL? ", is.null(input$doseTableHTML), "."))
+      DEBUG <- TRUE
+      outputComments("Starting dose Table Loop", echo = DEBUG)
+      outputComments(paste0("Is input$doseTableHTML NULL? ", is.null(input$doseTableHTML), "."), echo = DEBUG)
       req(input$doseTableHTML)
-      outputComments("Requirements for doseTable Loop are met.")
+      outputComments("Requirements for doseTable Loop are met.", echo = DEBUG)
+      if (is.null(input$doseTableHTML$changes$source))
+      {
+        outputComments("input$doseTableHTML$changes$source != 'edit'")
+        return()
+      }
 
       # Note to Dean: The req() statement above is probably not necessary. I recently
       # changed this from observe() to observeEvent(), since it should only
@@ -401,7 +498,7 @@ function(input, output, session)
       # Get time to prevent continuous looping
       time <- as.numeric(Sys.time())
       delta <- time - prior$timeDT
-      prior$timeDT <<- time
+      prior$timeDT <- time
       # Note to Dean: The above code is for the timing, to prevent the endless loop
       # from occurring. This should not be necessary when it is all running within
       # the browser.
@@ -427,7 +524,7 @@ function(input, output, session)
       # If refresh button has been pushed, erase prior dose table to refresh entirely from UI
       if (!is.null(input$Refresh) & input$Refresh != prior$Refresh)
       {
-        outputComments("Forced Refresh of DoseTable")
+        outputComments("Forced Refresh of DoseTable", echo = DEBUG)
         current$DT$Dose <- "" # Just set it to blank. It will be updated shortly
         updatedDoseTableFlag(TRUE)     # Gets set back to FALSE in simulationPlot, not here
         # Note to Dean: updatedDoseTableFlag is a reactive variable which will force
@@ -436,7 +533,7 @@ function(input, output, session)
         # Check for looping. Return if less than than 3
         if (delta < 3) # Note to Dean: Set this to 0 to let it enter the infinite update loop
         {
-          outputComments(paste0("Exiting doseTable Loop to break bounce, delta = ",round(delta,2)))
+          outputComments(paste0("Exiting doseTable Loop to break bounce, delta = ",round(delta,2)), echo = DEBUG)
           return()
         }
       }
@@ -457,24 +554,24 @@ function(input, output, session)
       # Add a blank line if necessary
       if (nrow(DT) == 0 || DT$Drug[nrow(DT)] != "")
       {
-        cat("Adding a line to doseTable\n")
+        outputComments("Adding a line to doseTable\n", echo = DEBUG)
         DT <- rbind(DT, doseTableNewRow)
         updateFlag <- TRUE
       }
 
       # Note to Dean: This is more debugging code.
-      cat("Dose Table extracted from hot_to_r(input$doseTableHTML)\n")
-      print(DT)
+      outputComments("Dose Table ('DT') extracted from hot_to_r(input$doseTableHTML)", echo = DEBUG)
+      outputComments(DT, echo = DEBUG)
 
-      cat("Current DT\n")
-      print(current$DT)
+      outputComments("Current DT", echo = DEBUG)
+      outputComments(current$DT, echo = DEBUG)
 
       # Note to Dean:
       # October 17, 2019: sameTable replaced with isTRUE(all_equal())
       # Return if nothing has changed
       if (isTRUE(all_equal(DT, current$DT)))
       {
-        outputComments("No change in doseTable. Exiting.")
+        outputComments("No change in doseTable. Exiting.", echo = DEBUG)
         return()
       }
 
@@ -490,7 +587,7 @@ function(input, output, session)
       # Step 1: Did doseTable shrink?
       if (nrow(DT) < nrow(current$DT))
       {
-        outputComments("DoseTable shrunk. Nothing to do other than update DT")
+        outputComments("DoseTable shrunk. Nothing to do other than update DT", DEBUG)
         doseTable(DT)
         current$DT <- DT
         return()
@@ -534,13 +631,13 @@ function(input, output, session)
           # the dose and changes the units if the name changes.
           if (DT$Drug[row] != current$DT$Drug[row])
           {
-            cat("Row is: ", row, "\n")
-            cat("DT\n")
-            print(DT[row,])
-            cat("current$DT\n")
-            print(current$DT[row,])
+            outputComments(paste("Row is: ", row), echo = DEBUG)
+            outputComments("DT", echo = DEBUG)
+            outputComments(DT[row,], echo = DEBUG)
+            outputComments("current$DT", echo = DEBUG)
+            outputComments(current$DT[row,], echo = DEBUG)
 
-            cat("Setting row ", row, "to initial zeros and default units\n")
+            outputComments(paste("Setting row", row, "to initial zeros and default units"), echo = DEBUG)
             updateFlag <- TRUE
             DT$Time[row]  <- "0"
             DT$Dose[row]  <- "0"
@@ -579,7 +676,7 @@ function(input, output, session)
         }
       }
       if (!isTRUE(all_equal(DT, current$DT))) updateFlag <- TRUE
-      cat("\udpdateFlag at end of the loop: ", updateFlag, "\n")
+      outputComments(paste("updateFlag at end of the loop:", updateFlag), echo = DEBUG)
       # Don't update table if nothing has changed
       # Note to Dean: As mentioned, I only update the table is something visible has
       # changed, such as the person entering "25x" and my changing that to just "25". If
@@ -589,7 +686,7 @@ function(input, output, session)
         doseTable(DT)
         current$DT <- DT
       }
-      outputComments("Existing doseTable Loop")
+      outputComments("Existing doseTable Loop", echo = DEBUG)
     }
   )
 
@@ -597,17 +694,19 @@ function(input, output, session)
   ####################################################################################
   ## Main Observation Loop
   observe({
-    outputComments("Starting Main Observation Loop")
-    outputComments(paste0("input$sex: ", input$sex,"."), echo = FALSE)
-    outputComments(paste0("input$age: ", input$age,"."), echo = FALSE)
-    outputComments(paste0("input$ageUnit: ", input$ageUnit,"."), echo = FALSE)
-    outputComments(paste0("input$weight: ", input$weight,"."), echo = FALSE)
-    outputComments(paste0("input$weightUnit: ", input$weightUnit,"."), echo = FALSE)
-    outputComments(paste0("input$height: ", input$height,"."), echo = FALSE)
-    outputComments(paste0("input$heightUnit: ", input$heightUnit,"."), echo = FALSE)
-    outputComments(paste0("input$maximum: ", input$maximum,"."), echo = FALSE)
+    DEBUG <- TRUE
+    outputComments("\n\n*********************************************************")
+    outputComments("Starting Main Observation Loop\n")
+    #    outputComments(paste0("input$sex: ", input$sex,"."), echo = FALSE)
+    #    outputComments(paste0("input$age: ", input$age,"."), echo = FALSE)
+    #    outputComments(paste0("input$ageUnit: ", input$ageUnit,"."), echo = FALSE)
+    #    outputComments(paste0("input$weight: ", input$weight,"."), echo = FALSE)
+    #    outputComments(paste0("input$weightUnit: ", input$weightUnit,"."), echo = FALSE)
+    #    outputComments(paste0("input$height: ", input$height,"."), echo = FALSE)
+    #    outputComments(paste0("input$heightUnit: ", input$heightUnit,"."), echo = FALSE)
+    #    outputComments(paste0("input$maximum: ", input$maximum,"."), echo = FALSE)
     outputComments(paste0("Is doseTableHTML NULL? ", is.null(input$doseTableHTML), "."), echo = FALSE)
-    outputComments(paste0("input$referenceTime: ", input$referenceTime,"."), echo = FALSE)
+    #    outputComments(paste0("input$referenceTime: ", input$referenceTime,"."), echo = FALSE)
     outputComments(paste0("Is input$referenceTime NULL? ", is.null(input$referenceTime), "."), echo = FALSE)
 
     req(
@@ -619,12 +718,18 @@ function(input, output, session)
       input$height,
       input$heightUnit,
       input$maximum
-      )
-    outputComments("Main loop requirements are met.")
+    )
+    outputComments("Main loop requirements are met.", echo = DEBUG)
     if (
       is.numeric(input$age)             &&
       is.numeric(input$weight)          &&
-      is.numeric(input$height)
+      is.numeric(input$height)          &&
+      input$age > 0                     &&
+      input$age <= 110                  &&
+      input$weight > 1                  &&
+      input$weight < 500                &&
+      input$height > 10                 &&
+      input$height < 200
       )
 
       {
@@ -652,73 +757,54 @@ function(input, output, session)
         updatedDoseTableFlag()
         )
       {
-        PK_set <<- TRUE
+        PK_set(TRUE)
         recalculatePKFlag <- TRUE
-        for (i in 1:length(drugs))
+        for (i in 1:nrow(drugDefaults))
           {
-            cat("Getting PK for ", names(drugs)[i],"\n")
-            drugs[[i]] <<- modifyList(
-              drugs[[i]],
+          drug <- drugDefaults$Drug[i]
+          outputComments(paste("Getting PK for", drug), echo = DEBUG)
+            drugs[[drug]] <- modifyList(
+              drugs[[drug]],
               getDrugPK(
-                drug = names(drugs)[i],
+                drug = drug,
                 weight = input$weight * as.numeric(input$weightUnit),
                 height = input$height * as.numeric(input$heightUnit),
                 age = input$age    * as.numeric(input$ageUnit),
                 sex = input$sex,
-                drugDefaults = drugDefaults
+                drugDefaults = drugDefaults[i,]
                 )
             )
-          drugs[[i]]$DT <<- NULL # Remove old dose table, if any
-          drugs[[i]]$CpCe <<- NULL # Remove old simulations results, if any
-          drugs[[i]]$equiSpace <<- NULL # Ditto
-          drugs[[i]]$maxCp <<- 1
-          drugs[[i]]$maxCe <<- 1
-          drugs[[i]]$recovery <<- 1
+          drugs[[drug]]$DT <- NULL # Remove old dose table, if any
+          drugs[[drug]]$CpCe <- NULL # Remove old simulations results, if any
+          drugs[[drug]]$equiSpace <- NULL # Ditto
+          drugs[[drug]]$maxCp <- 1
+          drugs[[drug]]$maxCe <- 1
+          drugs[[drug]]$recovery <- 1
         }
-        # plotTable <- as.data.frame(
-        #   cbind(
-        #     map_chr(drugs, "drug"),
-        #     map_chr(drugs, "typical"),
-        #     map_chr(drugs, "lowerTypical"),
-        #     map_chr(drugs, "upperTypical"),
-        #     map_chr(drugs, "MEAC"),
-        #     map_chr(drugs, "tPeak")
-        #   ),stringsAsFactors = FALSE)
-        # names(plotTable) <- c("Drug","typical", "lowerTypical","upperTypical", "MEAC","tPeak")
-        # plotTable$Typical <- as.numeric(plotTable$typical)
-        # plotTable$Lower <- as.numeric(plotTable$lowerTypical)
-        # plotTable$Upper <- as.numeric(plotTable$upperTypical)
-        # plotTable$MEAC  <- as.numeric(plotTable$MEAC)
-        # plotTable$tPeak  <- as.numeric(plotTable$tPeak)
-        # write.xlsx(plotTable[,c("Drug","Lower","Upper","Typical","MEAC","tPeak")],file="data/PlotTable.xlsx")
-
-        # cat("****** Time to set up drug PK *********\n")
-        # print(x)
-        # cat("\n")
-        prior$weight      <<- weight
-        prior$height      <<- height
-        prior$age         <<- age
-        prior$sex         <<- sex
-        prior$weightUnit  <<- weightUnit
-        prior$heightUnit  <<- heightUnit
-        prior$ageUnit     <<- ageUnit
+        prior$weight      <- weight
+        prior$height      <- height
+        prior$age         <- age
+        prior$sex         <- sex
+        prior$weightUnit  <- weightUnit
+        prior$heightUnit  <- heightUnit
+        prior$ageUnit     <- ageUnit
       }
 
     #######################################################################
     # Has the dose table changed?                                         #
     #######################################################################
     DT <- doseTable()   # Here is where the reactivity is forced
-    print("doseTable() in simulation plot\n")
-    print(doseTable())
+    outputComments("doseTable() in simulation plot", echo = DEBUG)
+    outputComments(DT, DEBUG)
     DT$Drug    <- as.character(DT$Drug)
     DT$Units   <- as.character(DT$Units)
     DT$Dose    <- as.numeric(DT$Dose)
     DT$Time    <- as.character(DT$Time)  # Stored as factors... Arrgh.....
     DT <- DT[DT$Drug != "" & !is.na(DT$Dose) & DT$Time != "" & DT$Units != "",]
-    cat("Contents of DT in simulationPlot()\n")
-    print(DT)
-    cat("Contents of prior$DT in simulationPlot()\n")
-    print(prior$DT)
+    outputComments("Contents of DT in main observe()", echo = DEBUG)
+    outputComments(DT, echo = DEBUG)
+    outputComments("Contents of prior$DT in main Observe()", echo = DEBUG)
+    outputComments(prior$DT, echo = DEBUG)
 
     # Remove blank values of DT
     if (is.null(input$referenceTime))
@@ -744,9 +830,9 @@ function(input, output, session)
     }
     if (nrow(DT) == 0)
       {
-      outputComments("Dose table is empty in main loop.")
+      outputComments("Dose table is empty in main loop.", echo = DEBUG)
       output$optionFlag <- renderText("")
-      main_plot(nothingtoPlot)
+      main_plot(nothingtoPlot)  # reactiveVal
       return()
     }
     DT <- DT[order(DT$Drug, DT$Time), ]
@@ -789,28 +875,28 @@ function(input, output, session)
     }
     if (prior$RefreshFlag)
     {
-      outputComments("Plotting because RefreshFlag requested")
-      prior$RefreshFlag <<- FALSE
+      outputComments("Plotting because RefreshFlag requested", echo = DEBUG)
+      prior$RefreshFlag <- FALSE
       replotFlag <- TRUE
     }
     if (recalculatePKFlag)
     {
-      cat("plotting because recalculatePKFlag is TRUE\n")
+      outputComments("Plotting because recalculatePKFlag is TRUE\n", echo = DEBUG)
       replotFlag <- TRUE
     }
     if (!isTRUE(all_equal(DT, prior$DT))) {
-      outputComments("plotting becasue doseTable changed.")
+      outputComments("Plotting because doseTable changed.", echo = DEBUG)
       replotFlag <- TRUE
     } else {
-      cat("doseTable remains unchanged in simulationPlot()\n")
+      outputComments("doseTable remains unchanged in main observe()", echo = DEBUG)
     }
     if (!isTRUE(all_equal(ET, prior$ET))) {
-      outputComments("plotting because eventTable changed.")
+      outputComments("Plotting because eventTable changed.", echo = DEBUG)
       replotFlag <- TRUE
     }
 
     if (plotMaximum != prior$plotMaximum) {
-      cat("plotting because plotMaximum changed to ", plotMaximum, "\n")
+      outputComments(paste("Plotting because plotMaximum changed to ", plotMaximum), echo = DEBUG)
       replotFlag <- TRUE
     }
     plotRecovery           <- "Time to Emergence"    %in% input$addedPlots
@@ -818,13 +904,14 @@ function(input, output, session)
     {
       if (plotRecovery == TRUE)
       {
-        cat("plotting because plotRecovery changed to TRUE\n")
+        outputComments("Plotting because plotRecovery changed to TRUE", echo = DEBUG)
         replotFlag <- TRUE
       }
     }
 
     if (replotFlag)
     {
+      outputComments("calling processdoseTable", echo = DEBUG)
       x <- processdoseTable(
         DT,
         ET,
@@ -833,25 +920,26 @@ function(input, output, session)
         prior,
         plotRecovery
       )
-      drugs     <<- x$drugs
+#      drugs     <- x$drugs
+      outputComments("Completed processdoseTable", echo = DEBUG)
 
       # Setting prior$DT
-      cat("Setting prior$DT in simulationPlot()\n")
-      print(prior$DT)
-      prior$DT  <<- DT
-      prior$ET  <<- ET
-      prior$plotMaximum <<- plotMaximum
+      outputComments("Setting prior$DT in main observe()", echo = DEBUG)
+      outputComments(prior$DT, echo = DEBUG)
+      prior$DT  <- DT
+      prior$ET  <- ET
+      prior$plotMaximum <- plotMaximum
     }
     if (length(input$plasmaLinetype) == 0 ||
         length(input$effectsiteLinetype) == 0
     )
     {
-      cat("Waiting for line types to exist before making figure\n")
+      outputComments("Waiting for line types to exist before making figure", echo = DEBUG)
       return()
     }
-    if (!PK_set)
+    if (!PK_set())
     {
-      cat("Can't plot - PK aren't yet set\n")
+      outputComments("Can't plot - PK aren't yet set", echo = DEBUG)
       return()
     }
 
@@ -886,25 +974,25 @@ function(input, output, session)
         plotRecovery           != prior$plotRecovery
     )
     {
-      cat('****************** SIMULATION PLOT CALLED BY ********************\n')
+      outputComments('****************** SIMULATION PLOT CALLED BY ********************', echo = DEBUG)
       if (replotFlag)          cat("New plot triggered by replotFlag\n")
-      if (plasmaLinetype         != prior$plasmaLinetype) cat("New plot triggered by plasmaLinetype != prior$plasmaLinetype\n")
-      if (effectsiteLinetype     != prior$effectsiteLinetype) cat("New plot triggered by effectsiteLinetype != prior$effectsiteLinetype\n")
-      if (normalization          != prior$normalization) cat("New plot triggered by normalization != prior$normalization\n")
-      if (title                  != prior$title) cat("New plot triggered by title != prior$title\n")
-      if (caption                != prior$caption) cat("New plot triggered by caption != prior$caption\n")
-      if (typical                != prior$typical) cat("New plot triggered by typical != prior$typical\n")
-      if (logY                   != prior$logY) cat("New plot triggered by logY != prior$logY\n")
-      if (referenceTime          != prior$referenceTime) cat("New plot triggered by referenceTime != prior$referenceTime\n")
-      if (plotMEAC               != prior$plotMEAC) cat("New plot triggered by plotMEAC != prior$plotMEAC\n")
-      if (plotInteraction        != prior$plotInteraction) cat("New plot triggered by plotInteraction != prior$plotInteraction\n")
-      if (plotCost               != prior$plotCost) cat("New plot triggered by plotCost != prior$plotCost\n")
-      if (plotEvents             != prior$plotEvents) cat("New plot triggered by plotEvents != prior$plotEvents\n")
-      if (plotRecovery           != prior$plotRecovery) cat("New plot triggered by ploRecovery != prior$plotRecovery\n")
-      if (newDrugDefaultsFlag() )  cat("New plot triggered new Drug Defaults\n")
-      if (updatedDoseTableFlag() ) cat("New plot triggered new Dose Table\n")
+      if (plasmaLinetype         != prior$plasmaLinetype) outputComments("New plot triggered by plasmaLinetype != prior$plasmaLinetype")
+      if (effectsiteLinetype     != prior$effectsiteLinetype) outputComments("New plot triggered by effectsiteLinetype != prior$effectsiteLinetype")
+      if (normalization          != prior$normalization) outputComments("New plot triggered by normalization != prior$normalization")
+      if (title                  != prior$title) outputComments("New plot triggered by title != prior$title")
+      if (caption                != prior$caption) outputComments("New plot triggered by caption != prior$caption")
+      if (typical                != prior$typical) outputComments("New plot triggered by typical != prior$typical")
+      if (logY                   != prior$logY) outputComments("New plot triggered by logY != prior$logY")
+      if (referenceTime          != prior$referenceTime) outputComments("New plot triggered by referenceTime != prior$referenceTime")
+      if (plotMEAC               != prior$plotMEAC) outputComments("New plot triggered by plotMEAC != prior$plotMEAC")
+      if (plotInteraction        != prior$plotInteraction) outputComments("New plot triggered by plotInteraction != prior$plotInteraction")
+      if (plotCost               != prior$plotCost) outputComments("New plot triggered by plotCost != prior$plotCost")
+      if (plotEvents             != prior$plotEvents) outputComments("New plot triggered by plotEvents != prior$plotEvents")
+      if (plotRecovery           != prior$plotRecovery) outputComments("New plot triggered by ploRecovery != prior$plotRecovery")
+      if (newDrugDefaultsFlag() )  outputComments("New plot triggered new Drug Defaults")
+      if (updatedDoseTableFlag() ) outputComments("New plot triggered new Dose Table")
 
-      cat("\n")
+      outputComments(" ")
 
       if (normalization != prior$normalization)
        {
@@ -912,10 +1000,11 @@ function(input, output, session)
         plasmaLinetype <- X$plasmaLinetype
         effectsiteLinetype <- X$effectsiteLinetype
       }
-      if (caption == "")
+      if (caption != "")
       {
-        prior$caption <<- ""
-        caption <- paste0(
+        printCaption <- caption
+      } else {
+        printCaption <- paste0(
           "Age: ",
           round(input$age * as.numeric(input$ageUnit), 1),
           " years, weight: ",
@@ -940,62 +1029,64 @@ function(input, output, session)
         plotEvents = plotEvents,
         plotRecovery = plotRecovery,
         title = title,
-        caption = caption,
+        caption = printCaption,
         aspect = aspect,
         typical = typical,
         logY = logY,
-        drugs = drugs,
+        drugs = reactiveValuesToList(drugs),
         events = ET,
-        eventDefaults = eventDefaults
+        eventDefaults = eventDefaults,
+        drugDefaults = drugDefaults
       )
       if (is.null(X))
       {
-        plotObject <<- NULL
-        allResults <<- NULL
-        plotResults <<- NULL
+        plotObjectReactive(NULL)
+        allResultsReactive(NULL)
+        plotResultsReactive(NULL)
       } else {
-        plotObject <<- X$plotObject
-        allResults <<- X$allResults
-        plotResults <<- X$plotResults
+        plotObjectReactive(X$plotObject)
+        allResultsReactive(X$allResults)
+        plotResultsReactive(X$plotResults)
       }
-      prior$plasmaLinetype      <<- plasmaLinetype
-      prior$effectsiteLinetype  <<- effectsiteLinetype
-      prior$normalization       <<- normalization
-      prior$title               <<- title
-      prior$typical             <<- typical
-      prior$logY                <<- logY
-      prior$plotMaximum         <<- plotMaximum
-      prior$referenceTime       <<- referenceTime
-      prior$plotMEAC            <<- plotMEAC
-      prior$plotInteraction     <<- plotInteraction
-      prior$plotCost            <<- plotCost
-      prior$plotEvents          <<- plotEvents
-      prior$plotRecovery        <<- plotRecovery
+      prior$plasmaLinetype      <- plasmaLinetype
+      prior$effectsiteLinetype  <- effectsiteLinetype
+      prior$normalization       <- normalization
+      prior$title               <- title
+      prior$typical             <- typical
+      prior$logY                <- logY
+      prior$plotMaximum         <- plotMaximum
+      prior$referenceTime       <- referenceTime
+      prior$plotMEAC            <- plotMEAC
+      prior$plotInteraction     <- plotInteraction
+      prior$plotCost            <- plotCost
+      prior$plotEvents          <- plotEvents
+      prior$plotRecovery        <- plotRecovery
+      prior$caption             <- caption
 
       newDrugDefaultsFlag(FALSE)
       updatedDoseTableFlag(FALSE)
 
-      if (is.null(plotObject))
+      if (is.null(plotObjectReactive()))
       {
         output$optionFlag <- renderText("")
-        cat("Null plot after calling simulation Plot()\n")
-        main_plot(nothingtoPlot)
+        outputComments("Null plot after calling simulation Plot()", echo = DEBUG)
+        main_plot(nothingtoPlot) # reactiveVal
       } else {
         output$optionFlag <- renderText("Graph Options")
-        main_plot(plotObject)
+        main_plot(plotObjectReactive()) # reactiveVal
       }
     } else {
-        cat("Nothing flagged to make new plot\n\n")
+      outputComments("Nothing flagged to make new plot", echo = DEBUG)
       }
     } else {
-      cat("Test for numeric covariates failed\n")
-      cat("input$sex = ",input$sex,"\n")
-      cat("input$ageUnit = ",input$ageUnit, is.numeric(input$ageUnit),typeof(input$ageUnit), "\n")
-      cat("input$weightUnit = ",input$weightUnit,is.numeric(input$weightUnit),"\n")
-      cat("input$heightUnit = ",input$heightUnit,is.numeric(input$heightUnit),"\n")
+      outputComments("Test for numeric covariates failed", echo = DEBUG)
+      outputComments(paste("input$sex =",input$sex), echo = DEBUG)
+      outputComments(paste("input$ageUnit =",input$ageUnit, is.numeric(input$ageUnit),typeof(input$ageUnit)), echo = DEBUG)
+      outputComments(paste("input$weightUnit =",input$weightUnit,is.numeric(input$weightUnit)), echo = DEBUG)
+      outputComments(paste("input$heightUnit =",input$heightUnit,is.numeric(input$heightUnit)), echo = DEBUG)
       return(NULL)
     }
-    outputComments("Exiting main observation loop.")
+    outputComments("Exiting main observation loop.", echo = DEBUG)
   },
   priority = -1
   )
@@ -1040,8 +1131,8 @@ processNormalization <- observeEvent(
   {
     #cat("Inside observeEvent for Linetypes\n")
     X <- setLinetypes(input$normalization)
-    prior$plasmaLinetype <<- X$plasmaLinetype
-    prior$effectsiteLinetype <<- X$effectsiteLinetype
+    prior$plasmaLinetype <- X$plasmaLinetype
+    prior$effectsiteLinetype <- X$effectsiteLinetype
     output$Linetype <- renderUI({
     div(
       selectInput(
@@ -1092,13 +1183,13 @@ processNormalization <- observeEvent(
       # output$EmailButton <- renderUI({
       #       p("Processing slide")
       # })
-      cat("input$sendSlide",input$sendSlide,'\n')
+      outputComments(paste("input$sendSlide",input$sendSlide), echo = DEBUG)
       img <- sendSlide(
         prior = prior,
         recipient = input$recipient,
-        plotObject = plotObject,
-        allResults = allResults,
-        plotResults = plotResults,
+        plotObject = plotObjectReactive(),
+        allResults = allResultsReactive(),
+        plotResults = plotResultsReactive(),
         isShinyLocal = isShinyLocal,
         slide = as.numeric(input$sendSlide),
         drugs
@@ -1117,7 +1208,6 @@ processNormalization <- observeEvent(
 observeEvent(
   input$plot_hover,
   {
-    cat("hovering\n")
     hover <- input$plot_hover
     if (is.null(hover$panelvar1))
     {
@@ -1146,17 +1236,21 @@ observeEvent(
 
 # Display Time, CE, or total opioid
 xy_str <- function(e) {
+  DEBUG <- FALSE
   if(is.null(e)) return(NULL)
   if(is.null(e$panelvar1)) return(NULL)
-  # cat("e$panelvar1 = ", e$panelvar1, "\n")
+  outputComments("In xy_str", echo = DEBUG)
+  outputComments(paste("e$panelvar1 = ", e$panelvar1), echo = DEBUG)
   yaxis <- gsub("\n"," ", e$panelvar1)
+  allResults <- allResultsReactive()
+  plotResults <- plotResultsReactive()
   if (yaxis == "% MEAC")
   {
     TO <- plotResults$Drug == "total opioid"
     if (sum(TO) == 0)
     {
       TO <- plotResults$Wrap == "% MEAC"
-      cat("Elements found in search of plotResults$Wrap", sum(TO), "\n")
+      outputComments(paste("Elements found in search of plotResults$Wrap", sum(TO)), echo = DEBUG)
     }
       j <- which.min(abs(e$x - plotResults$Time[TO]))
       return(
@@ -1178,25 +1272,27 @@ xy_str <- function(e) {
   }
 
   x <- unlist(strsplit(yaxis," "))
+  drug <- x[1]
+  outputComments(paste("Drug identified in xy_str() is",drug), echo = DEBUG)
   i <- which(x[1] == drugList)
-  j <- which.min(abs(e$x - drugs[[i]]$equiSpace$Time))
+  j <- which.min(abs(e$x - drugs[[drug]]$equiSpace$Time))
   x[2] <- substr(x[2],2,10)
   x[2] <- substr(x[2],1,nchar(x[2])-1)
   # cat("in xy_str()\n")
   # cat("i = ", i, "\n")
   # cat("j = ",j,"\n")
-  # cat(str(drugs[[i]]$equiSpace$Time), "\n")
-  time <- round(drugs[[i]]$equiSpace$Time[j], 1)
+  # cat(str(drugs[[drug]]$equiSpace$Time), "\n")
+  time <- round(drugs[[drug]]$equiSpace$Time[j], 1)
   if (input$referenceTime != "none")
   {
     time <- deltaToClockTime(input$referenceTime, time)
   } else {
     time = paste(time, "minutes")
   }
-  returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs[[i]]$equiSpace$Ce[j], 2), " ", x[2])
+  returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
   if (prior$plotRecovery)
   {
-    returnText <- paste0(returnText,", Emergence in ",round(drugs[[i]]$equiSpace$Recovery[j], 1), " minutes")
+    returnText <- paste0(returnText,", Emergence in ",round(drugs[[drug]]$equiSpace$Recovery[j], 1), " minutes")
   }
   return(returnText)
 }
@@ -1208,9 +1304,11 @@ xy_str <- function(e) {
 observeEvent(
   input$plot_click,
   {
-    # cat("in click routine\n")
+    DEBUG <- FALSE
+    outputComments("in click()", echo = DEBUG)
     x <- imgDrugTime(input$plot_click)
-    prior$DrugTimeUnits <<- x
+    outputComments("in click(), returning from imgDrugTime()", echo = DEBUG)
+    prior$DrugTimeUnits <- x
 
     if (x$drug == "Events")
     {
@@ -1225,9 +1323,10 @@ observeEvent(
 observeEvent(
   input$plot_dblclick,
   {
-    # cat("in double click routine\n")
+    DEBUG <- FALSE
+    outputComments("in double click routine\n", echo = DEBUG)
     x <- imgDrugTime(input$plot_dblclick)
-    prior$DrugTimeUnits <<- x
+    prior$DrugTimeUnits <- x
 
     if (x$drug == "Events")
     {
@@ -1241,11 +1340,14 @@ observeEvent(
 # Get the time, drug, and units from the image
 imgDrugTime <- function(e = "")
 {
-  # cat("in imgDrugTime\n")
+  DEBUG <- TRUE
+  outputComments("in imgDrugTime()", echo=DEBUG)
+  allResults <- allResultsReactive()
+  plotResults <- plotResultsReactive()
   plottedDrugs <- unique(allResults$Drug)
   plottedAll   <- unique(as.character(plotResults$Drug))
-#  cat("plottedDrugs", plottedDrugs,"\n")
-#  cat("plottedAll", plottedAll,"\n")
+  outputComments(paste("plottedDrugs", plottedDrugs), echo=DEBUG)
+  outputComments(paste("plottedAll", plottedAll), echo=DEBUG)
 
   # Get Time
   if (is.null(e$x) || is.null(e) || length(plottedDrugs) == 0)
@@ -1255,12 +1357,14 @@ imgDrugTime <- function(e = "")
       time <- 0
     } else {
       time <- prior$plotMaximum
-#      cat("time is plotMaximum: ", time, "\n")
+      outputComments(paste("time is plotMaximum:", time), echo = DEBUG)
     }
   } else {
     i <- which(plottedDrugs[1] == drugList)
-    j <- which.min(abs(e$x - drugs[[i]]$equiSpace$Time))
-    time <- round(drugs[[i]]$equiSpace$Time[j], 1)
+    drug <- plottedDrugs[1]
+    outputComments(paste("Drug in imgDrugTime() is", drug), echo = DEBUG)
+    j <- which.min(abs(e$x - drugs[[drug]]$equiSpace$Time))
+    time <- round(drugs[[drug]]$equiSpace$Time[j], 1)
 #    cat("Time from x axis = ",time,"\n")
   }
   if (input$referenceTime == "none")
@@ -1272,7 +1376,7 @@ imgDrugTime <- function(e = "")
 
   if(is.null(e) || length(plottedDrugs) == 0)
   {
-#    cat("Retuning because length(plottedDrugs = 0\n")
+  echoComments("Retuning because length(plottedDrugs = 0", echo = DEBUG)
     return(
       list(
         drug = "propofol",
@@ -1294,8 +1398,7 @@ imgDrugTime <- function(e = "")
       strsplit(
       gsub("\n"," ", e$panelvar1)
       ," "))[1]
-    str(drug)
-#    cat("drug from panelvar1",drug, "\n")
+    outputComments(paste("drug from panelvar1",drug), echo = DEBUG)
   }
   if (drug %in% c("% MEAC", "p no response"))
     drug <- drug <- tail(plottedDrugs,1)
@@ -1308,6 +1411,7 @@ imgDrugTime <- function(e = "")
     i <- which(drug == drugList)
     units <- c(drugDefaults$Bolus.Units[i], drugDefaults$Infusion.Units[i])
   }
+  outputComments("Exiting imgDrugTime()", echo = DEBUG)
   return(
     list(
       drug=drug,
@@ -1330,6 +1434,7 @@ clickPopupDrug <- function(
   units <- x$units
   thisDrug <- which(drug == drugList)
   units <- unlist(drugDefaults$Units[thisDrug])
+  selectedUnits <- drugDefaults$Default.Units[thisDrug]
   emerge <- drugDefaults$Emerge[thisDrug]
   showModal(
     modalDialog(
@@ -1352,6 +1457,7 @@ clickPopupDrug <- function(
       inputId = "clickUnits",
       label = "Units",
       choices = units,
+      selected = selectedUnits,
       inline = TRUE
     ),
     numericInput(
@@ -1867,7 +1973,7 @@ observeEvent(
          title = paste("Enter Target Effect Site Concentrations"),
          tags$div(
            HTML(paste(tags$span(style="color:red; font-weight:bold ",
-           "Enter time and target concentration below. Decreasing targets are not yet supported, and will be removed. Doses are found with non-linear regression, which takes a moment to calculate. The suggestion will be close to ideal, but better algorithms may exist."), sep = ""))
+           "Enter time and target concentration below. Decreasing targets are not yet supported, and will be removed. Doses are found with non-linear regression, which takes a moment to calculate. The suggestion will be good, but better algorithms may exist."), sep = ""))
          ),
          selectInput(
            inputId = "targetDrug",
@@ -1880,14 +1986,18 @@ observeEvent(
            label = "End Time",
            value = ""
          ),
-       actionButton(
-         inputId = "targetOK",
-         label = "OK",
-         style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
+       conditionalPanel(
+         condition = "input.targetEndTime != ''",
+         actionButton(
+           inputId = "targetOK",
+           label = "OK",
+           style="color: #fff; background-color: #337ab7; border-color: #2e6da4; float: left; margin: 0px 5px 5px 5px;"
+         )
        ),
        tags$button(
          type = "button",
          class = "btn btn-warning",
+         style = "margin: 0px 5px 5px 5px;",
          `data-dismiss` = "modal",
          "Cancel"
        ),
@@ -1908,11 +2018,12 @@ observeEvent(
 observeEvent(
   input$targetOK,
   {
+    DEBUG <- TRUE
     removeModal()
     endTime <- validateTime(input$targetEndTime)
     if ((endTime) == "")
     {
-      cat("No endtime\n")
+      outputComments("No endtime", echo = DEBUG)
       return()
     }
     targetTable <- hot_to_r(input$targetTableHTML)
@@ -1930,8 +2041,8 @@ observeEvent(
     targetTable$Target    <- as.numeric(targetTable$Target)
     targetTable$Time    <- as.character(targetTable$Time)  # Stored as factors... Arrgh.....
     targetTable <- targetTable[!is.na(targetTable$Target) & targetTable$Time != "",]
-    cat("structure of targetTable\n")
-    # print(str(targetTable))
+    outputComments("structure of targetTable", echo = DEBUG)
+    outputComments(targetTable, echo=DEBUG)
     # # Remove blank values of targetTable
     if (input$referenceTime == "none")
     {
@@ -1948,16 +2059,16 @@ observeEvent(
       targetTable$Time    <- clockTimeToDelta(referenceTime, targetTable$Time)
       endTime <- clockTimeToDelta(referenceTime, endTime)
     }
-    # cat("End Time = ", endTime, "\n")
-    # cat("structure of targetTable after processing time\n")
-    # print(str(targetTable))
+    outputComments(paste("End Time =", endTime), echo = DEBUG)
+    outputComments("Structure of targetTable after processing time", echo = DEBUG)
+    outputComments(targetTable, echo = DEBUG)
     targetTable <- targetTable[
         !is.na(targetTable$Target) &
         !is.na(targetTable$Time), ]
     targetTable <- targetTable[targetTable$Time < endTime,]
     if (nrow(targetTable) == 0)
     {
-      cat("Target table is empty\n")
+      outputComments("Target table is empty", echo = DEBUG)
       return()
     }
     targetTable <- targetTable[order(targetTable$Time), ]
@@ -1976,14 +2087,17 @@ observeEvent(
 
     # print(str(targetTable))
     #
-    # cat("Ready to search for the target dose\n")
-    drug <- which(input$targetDrug == drugList)
+    outputComments("Ready to search for the target dose", echo = DEBUG)
+    drug <- drugList[which(input$targetDrug == drugList)]
+
+    outputComments(paste("Drug is", drug), echo = DEBUG)
 
     infusionT1 <- round(c(targetTable$Time + drugs[[drug]]$tPeak, endTime), 0)
     infusionT2 <- round(infusionT1[1:(length(infusionT1)-1)] +
                         (infusionT1[2:(length(infusionT1))] - infusionT1[1:(length(infusionT1)-1)]) / 5
                     ,0)
 
+    outputComments(paste("Drug is", drug), echo = DEBUG)
     testTable <- data.frame(
       Time = c(targetTable$Time[],infusionT1, infusionT2),
       Dose = 1,
@@ -1993,11 +2107,11 @@ observeEvent(
     testTable <- testTable[order(testTable$Time),]
     testTable$Dose[nrow(testTable)] <- 0
 
-    # cat("Structure of testTable\n")
-    # print(str(testTable))
+    outputComments("Structure of testTable", echo = DEBUG)
+    outputComments(testTable, echo = DEBUG)
     ET <- eventTable()
-    cat("In Target, ET = \n")
-    print(ET)
+    outputComments("In Target, ET =", echo = DEBUG)
+    outputComments(ET, echo = DEBUG)
     results <- simCpCe(
       testTable,
       ET,
@@ -2050,7 +2164,7 @@ observeEvent(
                        })
       return(sum((ce-target)^2))
     }
-    # cat("About to run nlm\n")
+    outputComments("About to run nlm", echo = DEBUG)
     testTable$Dose <- nlm(
       obj,
       testTable$Dose,
@@ -2072,6 +2186,7 @@ observeEvent(
     testTable$Time <- testTable$Time + offsetTime
     # print(str(testTable))
 
+    outputComments("Setting current$DT", echo = DEBUG)
     current$DT <- current$DT[current$DT$Drug != input$targetDrug,]
     # print(str(doseTable))
 
@@ -2244,13 +2359,40 @@ observeEvent(
     drugDefaults$Units <<- strsplit(drugDefaults$Units, ",")
     drugList <<- drugDefaults$Drug
     colorList <<- drugDefaults$Color
-    for (i in 1:length(drugs))
+    for (i in 1:nrow(drugDefaults))
     {
-      drugs[[i]]$Color <<- drugDefaults$Color[i]
+      drug <- drugDefaults[i]
+      drugs[[drug]]$Color <- drugDefaults$Color[i]
     }
     newDrugDefaultsFlag(TRUE)
   })
+### modalDialog ###
+observeEvent(input$age, {
+  if(!is.na(input$age) && (input$age > 110 | input$age <= 0)) {
+    showModal(modalDialog(
+      title = NULL,
+      "Age must be between 0 and 110."
+    ))
+  }
+})
 
+observeEvent(input$weight, {
+  if(!is.na(input$weight) && (input$weight > 500 | input$weight <= 1)) {
+    showModal(modalDialog(
+      title = NULL,
+      "Weight must be between 1 and 500"
+    ))
+  }
+})
+
+observeEvent(input$height, {
+  if(!is.na(input$height) && (input$height > 200 | input$height <= 10)) {
+    showModal(modalDialog(
+      title = NULL,
+      "Height must be between 1 and 200"
+    ))
+  }
+})
 
   outputComments("Reached the end of server()")
 }

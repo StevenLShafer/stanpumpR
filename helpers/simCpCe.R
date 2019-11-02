@@ -5,6 +5,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # pK <- PK
     # maximum <- max
     # Convert all doses to base units
+#  cat("in simCpCe\n")
     switch(
       PK$Concentration.Units,  # Units (per ml)
       mcg = {                  # 1 mcg/ml = 1000 mg/L
@@ -18,42 +19,50 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         ng_Conv  <- 1000
       }
     )
-    
+
     use <- grep("mg",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / mg_Conv
     use <- grep("mcg",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / mcg_Conv
     use <- grep("ng",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / ng_Conv
-    
+
     # Convert dose per kg  to absolute dose
     use <- grep("kg",dose$Units)
     dose$Dose[use] <- dose$Dose[use] * PK$weight
-    
+
     # Convert dose per hour to dose per minute
     use <- grep("hr",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / 60
-    
+
+#    cat("Completed conversion of dose units\n")
+
     # Identify bolus doses
-    dose$Bolus <- !(grepl("min", dose$Units) | 
-                      grepl("hr", dose$Units) | 
+    dose$Bolus <- !(grepl("min", dose$Units) |
+                      grepl("hr", dose$Units) |
                       grepl("PO", dose$Units) |
                       grepl("IM", dose$Units) |
                       grepl("IN", dose$Units))
-    
+
+#    cat("Bolus Doses identified\n")
+
     # Identify PO doses
     dose$PO <- grepl("PO", dose$Units)
     dose$IM <- grepl("IM", dose$Units)
     dose$IN <- grepl("IN", dose$Units)
-    
+
+    # cat("Other Doses identified\n")
+    # cat("starting on events\n")
+#    print(str(events))
     events <- events[,c(1,2)]
-    
+#    cat("Did that process OK?\n")
+
     pkSets <- PK$PK
     pkEvents <- PK$pkEvents
 
-    # cat("All Events:\n")
-    # print(events)
-    
+#    cat("All Events:\n")
+#    print(events)
+
     events$Event <- gsub(" ","", events$Event)
     events <- events[events$Event %in% pkEvents,]
     # cat("Retained Events:\n")
@@ -62,6 +71,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     {
       if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
       {
+ #       cat("calling advancedClosedForm0\n")
+
         results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
       } else {
         results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
@@ -75,12 +86,12 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       )
       if (events$Time[1] > 0)
         events <- rbind(defaultEvent,events)
-      events <- events[events$Time < maximum,] 
+      events <- events[events$Time < maximum,]
       events <- rbind(events, events[nrow(events),])
       events$Time[nrow(events)] <- maximum
       results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, PK$emerge)
     }
-    
+
   names(results) <- c("Time", "Plasma","Effect Site", "Recovery")
   # print(str(results))
   maxCp <- max(results$Plasma)
@@ -91,7 +102,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     results$CeNormCp <- 0
     results$CpNormCe <- 0
     results$CeNormCe <- 0
-    
+
   } else {
     results$CpNormCp <- results$Plasma        / maxCp * 100
     results$CeNormCp <- results$"Effect Site" / maxCp * 100
@@ -121,7 +132,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   equiSpace$Ce[1] <- 0  # Approx tends to make it a very small negative number
   if (PK$MEAC == 0)
   {
-    equiSpace$MEAC <- NA
+    equiSpace$MEAC <- 0
   } else {
     equiSpace$MEAC <- equiSpace$Ce / PK$MEAC * 100
   }
@@ -141,8 +152,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   # Structure of results
   # Four columns: Drug, Time, Site, Y
   # 7 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCE, CeNormCe, and MEAC
-  # These will be subset in simulation plot as needed. 
-  
+  # These will be subset in simulation plot as needed.
+
   return(
     list(
       results = results,

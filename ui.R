@@ -4,11 +4,20 @@
 function(request) {
   dashboardPage(
     dashboardHeader(
-      title = config$title
-      # Dropdown menu for messages
+      title = config$title,
+      tags$li(
+        class = "dropdown",
+        tags$a(
+          href = "https://steveshafer.shinyapps.io/stanpumpR_HelpPage",
+          class = "my_class",
+          "Examples and Help",
+          target="_blank"
+        )
+      )
     ),
     dashboardSidebar(
       collapsed = TRUE,
+      disable = TRUE,
       width = "200px",
       sidebarMenu(
         id = "simType",
@@ -22,17 +31,33 @@ function(request) {
         script = "www/shinyjs-funcs.js",
         functions = c("scrollLogger")
       ),
+      tags$head(
+        tags$style(
+          HTML(
+            ".my_class {
+              font-weight: bold;
+              color:white;
+              }"
+          )
+        )
+      ),
+      tags$style(
+        HTML(
+          "input:invalid {
+            background-color: #FFCCCC;
+            }"
+        )
+      ),
       tags$head(tags$link(href = "app.css", rel = "stylesheet")),
       style = "max-height: 95vh; overflow-y: auto;" ,
       tags$style(
         HTML(
           '.form-first-row {
-          height: 100px;
-      }
-        .cancel-margin > .form-group {
-        margin: 0;
-        }
-        '
+              height: 100px;
+            }
+           .cancel-margin > .form-group {
+              margin: 0;
+            }'
         )
       ), # End of tags$style
       fluidRow(
@@ -60,8 +85,7 @@ function(request) {
                     inputId = "age",
                     label = "Age",
                     value = defaultAge,
-                    step = 1,
-                    min = 1,
+                    min = 0,
                     max = 110
                   ),
                   bsTooltip(
@@ -88,8 +112,8 @@ function(request) {
                   inputId = "weight",
                   label = "Weight",
                   value = defaultWeight,
-                  step = 1,
-                  min = 5
+                  min = 1,
+                  max = 500
                 ),
                 bsTooltip(
                   id = "weight",
@@ -112,8 +136,8 @@ function(request) {
                   inputId = "height",
                   label = "Height",
                   value = defaultHeight,
-                  step = 1,
-                  min = 20
+                  min = 10,
+                  max = 200
                 ),
                 bsTooltip(
                   id = "height",
@@ -360,22 +384,20 @@ function(request) {
                 placement = "top",
                 options = list(container = "body")
               ),
-              #            conditionalPanel(
-              #              condition = "output.addedPlots[1] != 'Time to Emergence'",
-              checkboxInput(
-                inputId = "logY",
-                label = "Log Y axis",
-                value = FALSE
-              ),
-              # Add Conditional Panel here - this goes away Time to Emergence appears as an added plot
-              bsTooltip(
-                id = "logY",
-                title = "Plot Y axis on a log scale",
-                placement = "top",
-                options = list(container = "body")
+              conditionalPanel(
+                condition = "!input.addedPlots.includes('Time to Emergence')",
+                checkboxInput(
+                  inputId = "logY",
+                  label = "Log Y axis",
+                  value = FALSE
+                ),
+                bsTooltip(
+                  id = "logY",
+                  title = "Plot Y axis on a log scale",
+                  placement = "top",
+                  options = list(container = "body")
+                )
               )
-              #           ) # End conditional Panel
-
             ),
             # Column 5, Simulation Mode
             column(

@@ -4,15 +4,14 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   ##############################
   # Begin closed form approach #
   ##############################
-  
-  cat("Starting advanceClosedForm1\n")
-  cat("Dose Table\n")
-  print(dose)
 
-  # Create timeline 
+  #cat("Starting advanceClosedForm1\n")
+  #cat("Dose Table\n")
+
+  # Create timeline
   timeLine <- sort(unique(c(0, dose$Time, events$Time, events$Time - 0.01, dose$Time[dose$Bolus] - 0.01, maximum)))
   timeLine <- timeLine[timeLine >=0]
-  
+
   # Fill in gaps using exponentially decreasing amounts
   gapStart <- timeLine[1:length(timeLine)-1]
   gapEnd   <- timeLine[2:length(timeLine)]
@@ -26,7 +25,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   timeLine <- sort(unique(timeLine))
   L <- length(timeLine)
   doseNA <- rep(0, L)
-  
+
   # Create bolusLine and infusionLine
   bolusLine <- infusionLine <- pkLine <- dt <- rate <- rep(0, L)
   for (i in 1:L)
@@ -48,17 +47,17 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       dt[i] <- timeLine[i] - timeLine[i-1]
       rate[i] <- infusionLine[i-1]
     }
-    pkLine[i] <- events$Event[tail(which(events$Time <= timeLine[i]),1)]    
+    pkLine[i] <- events$Event[tail(which(events$Time <= timeLine[i]),1)]
   }
-  
-  cat("bolusLine\n")
-  print(bolusLine)
-  cat("InfusionLine\n")
-  print(infusionLine)
-  cat("rate\n")
-  print(rate)
-  cat("\n")
-  
+
+  # cat("bolusLine\n")
+  # print(bolusLine)
+  # cat("InfusionLine\n")
+  # print(infusionLine)
+  # cat("rate\n")
+  # print(rate)
+  # cat("\n")
+  #
   # Set up time varying parameters
   parameters <-   as.data.frame(
     cbind(
@@ -79,10 +78,10 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       p_coef_infusion_l2 = map_dbl(pkSets, "p_coef_infusion_l2"),
       p_coef_infusion_l3 = map_dbl(pkSets, "p_coef_infusion_l3")
     ),stringsAsFactors = FALSE)
-  
+
   #Set up time varying parameters
   parameters$k <- parameters$k10 + parameters$k12 + parameters$k13
-  
+
   if (sum(parameters$k21) == 0)
   {
     parameters$v2 <- 0
@@ -95,7 +94,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   } else {
     parameters$v3 <- parameters$v1 * parameters$k13 / parameters$k31
   }
-  
+
   v1  <- parameters[pkLine,"v1"]
   k10 <- parameters[pkLine,"k10"]
   k12 <- parameters[pkLine,"k12"]
@@ -107,42 +106,42 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   lambda_1   <- parameters[pkLine, "lambda_1"]
   lambda_2   <- parameters[pkLine, "lambda_2"]
   lambda_3   <- parameters[pkLine, "lambda_3"]
-  
-  cat("lambda_1:\n")
-  print(lambda_1)
-  cat("\n")
-  
+
+  # cat("lambda_1:\n")
+  # print(lambda_1)
+  # cat("\n")
+
   p_coef_bolus_l1   <- parameters[pkLine, "p_coef_bolus_l1"]
   p_coef_bolus_l2   <- parameters[pkLine, "p_coef_bolus_l2"]
   p_coef_bolus_l3   <- parameters[pkLine, "p_coef_bolus_l3"]
-  
-  
+
+
   infusionpkLine <- c(pkLine[1],pkLine[1:(L-1)]) # the prior parameters are used to move the infusion forward
   p_coef_infusion_l1   <- parameters[infusionpkLine, "p_coef_infusion_l1"]
   p_coef_infusion_l2   <- parameters[infusionpkLine, "p_coef_infusion_l2"]
   p_coef_infusion_l3   <- parameters[infusionpkLine, "p_coef_infusion_l3"]
-  
-  cat("p_coef_infusion_l1:\n")
-  print(p_coef_infusion_l1)
-  cat("\n")
-  
-  
-  
+
+  # cat("p_coef_infusion_l1:\n")
+  # print(p_coef_infusion_l1)
+  # cat("\n")
+
+
+
   # Vectorize calculations
   l1_dt <- exp(-lambda_1 * dt)
   l2_dt <- exp(-lambda_2 * dt)
   l3_dt <- exp(-lambda_3 * dt)
-  
+
   p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
   p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
   p_bolus_l3 <- p_coef_bolus_l3 * bolusLine
-  
-  p_infusion_l1 <- p_coef_infusion_l1 * rate * (1 - l1_dt)        
-  p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)        
-  p_infusion_l3 <- p_coef_infusion_l3 * rate * (1 - l3_dt)        
-  
+
+  p_infusion_l1 <- p_coef_infusion_l1 * rate * (1 - l1_dt)
+  p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)
+  p_infusion_l3 <- p_coef_infusion_l3 * rate * (1 - l3_dt)
+
   p_state_l1 <- p_state_l2 <- p_state_l3 <- rep(0, L)
-  
+
   for (i in 1:(nrow(events)-1))
   {
     times <- which(timeLine >= events$Time[i] & timeLine <= events$Time[i+1])
@@ -156,31 +155,31 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       p_state_l1[now] <- p_state_l1[now] - p_bolus_l1[now]
       p_state_l2[now] <- p_state_l2[now] - p_bolus_l2[now]
       p_state_l3[now] <- p_state_l3[now] - p_bolus_l3[now]
-      
+
       # Convert state variables
       oldPK <- as.list(parameters[events$Event[i],])
       newPK <- as.list(parameters[events$Event[i+1],])
       oldState <- c(p_state_l1[now], p_state_l2[now], p_state_l3[now])
       newState <- convertState(oldState, oldPK, newPK)
-      
-      cat("oldState\n")
-      print(oldState)
-      cat("newState\n")
-      print(newState)
+
+      # cat("oldState\n")
+      # print(oldState)
+      # cat("newState\n")
+      # print(newState)
 
       p_state_l1[now] <- newState[1]
       p_state_l2[now] <- newState[2]
       p_state_l3[now] <- newState[3]
-      
+
       # Infusion was processed with prior PK, so infusion is now 0
       p_infusion_l1[now] <- p_infusion_l2[now] <- p_infusion_l3[now] <- 0
-      
+
       # No decrement in time either
-      l1_dt[now] <- l2_dt[now] <- l3_dt[now] <- 1 
+      l1_dt[now] <- l2_dt[now] <- l3_dt[now] <- 1
     }
   }
-  
-  
+
+
   # Wrap up, calculate Ce
   Cp <- p_state_l1 + p_state_l2 + p_state_l3
   if (sum(is.na(Cp)) + sum(is.nan(Cp)) > 0)
@@ -191,7 +190,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     print(pkLine)
   }
   Ce <- calculateCe(Cp, ke0, dt, L)
-  
+
   temp <- data.frame(
     Time = round(timeLine, 2),
     State1 = round(p_state_l1, 2),
@@ -200,10 +199,10 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     Cp  = round(Cp, 2),
     Ce  = round(Ce, 2)
   )
-  cat("Results of advanceClosedForm1\n")
-  print(temp)
-  cat("\n")
-  
+  # cat("Results of advanceClosedForm1\n")
+  # print(temp)
+  # cat("\n")
+
   if (plotRecovery)
   {
     # Note that I am looking at plasma, not effect site.
@@ -211,13 +210,13 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     # speed, and because I would have to take them through the transformation when the PK changes.
     # That seems computationally hazardous
     recovery <- sapply(
-      1:L, 
-      function(i) 
+      1:L,
+      function(i)
         (
           recoveryCalc(
             c(
-              p_state_l1[i], 
-              p_state_l2[i], 
+              p_state_l1[i],
+              p_state_l2[i],
               p_state_l3[i],
               0
             ),
