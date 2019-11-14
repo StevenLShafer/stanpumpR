@@ -41,13 +41,13 @@ function(request) {
           )
         )
       ),
-      tags$style(
-        HTML(
-          "input:invalid {
-            background-color: #FFCCCC;
-            }"
-        )
-      ),
+      # tags$style(
+      #   HTML(
+      #     "input:invalid {
+      #       background-color: #FFCCCC;
+      #       }"
+      #   )
+      # ),
       tags$head(tags$link(href = "app.css", rel = "stylesheet")),
       style = "max-height: 95vh; overflow-y: auto;" ,
       tags$style(
@@ -71,6 +71,8 @@ function(request) {
     var time_now = new Date()
     $("input#client_time").val(time_now.toLocaleTimeString())
   });'), # end of tags$script
+          # Load javascript function
+
 
           fluidRow(  # start of fluid row within this column
             h4("Patient Covariates"),
@@ -256,6 +258,7 @@ function(request) {
               # Note to Dean: Here is where the handsontable is output. My guess is that this is where
               # you would replace the existing "rHandsontableOutput()" function with JavaScript code that
               # will process and validate the table.
+              tags$script(src = "hot_funs.js"),
               rHandsontableOutput(outputId = "doseTableHTML"),
               bsTooltip(
                 id = "doseTableHTML",

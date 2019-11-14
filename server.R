@@ -475,220 +475,260 @@ function(input, output, session)
   # server, because the table gets written to the UI, and then loaded     #
   # from the UI.                                                          #
   #########################################################################
-  observeEvent(
-    {
-      input$doseTableHTML
-    },
-    {
-      DEBUG <- TRUE
-      outputComments("Starting dose Table Loop", echo = DEBUG)
-      outputComments(paste0("Is input$doseTableHTML NULL? ", is.null(input$doseTableHTML), "."), echo = DEBUG)
-      req(input$doseTableHTML)
-      outputComments("Requirements for doseTable Loop are met.", echo = DEBUG)
-      if (is.null(input$doseTableHTML$changes$source))
-      {
-        outputComments("input$doseTableHTML$changes$source != 'edit'")
-        return()
-      }
-
-      # Note to Dean: The req() statement above is probably not necessary. I recently
-      # changed this from observe() to observeEvent(), since it should only
-      # be called when the doseTableHTML changes.
-
-      # Get time to prevent continuous looping
-      time <- as.numeric(Sys.time())
-      delta <- time - prior$timeDT
-      prior$timeDT <- time
-      # Note to Dean: The above code is for the timing, to prevent the endless loop
-      # from occurring. This should not be necessary when it is all running within
-      # the browser.
-
-      # Set updateFlag to FALSE. Only update if the table has changed
-      updateFlag <- FALSE
-
-      # Note to Dean: I use updateFlag to determine if I need to rewrite the table
-      # in the browser. If someone enters "25" as the dose, the validation will return
-      # "25", so the browser is identical to the contents of current$DT. There is no
-      # reason to update the browser with a new doseTableHTML. However, if someone
-      # enters "25x" as the dose, the validation routine will strip off the x and return
-      # "25". If that happens, then I want to update the browser to reflect that
-      # the dose is 25. Thus, I set updateFlag to TRUE, and a new handsontable is
-      # generated and sent to the browser.
 
 
-      # Note to Dean: because of the issues with communication to/from the browser, I
-      # created a "refresh" button to force a refresh to get things back in sync. My
-      # hope is that by putting the handsontable validation entirely in JavaScript, I
-      # can eliminate the refresh button entirely.
+  observeEvent(input$doseTableHTML, {
+    data <- input$doseTableHTML
 
-      # If refresh button has been pushed, erase prior dose table to refresh entirely from UI
-      if (!is.null(input$Refresh) & input$Refresh != prior$Refresh)
-      {
-        outputComments("Forced Refresh of DoseTable", echo = DEBUG)
-        current$DT$Dose <- "" # Just set it to blank. It will be updated shortly
-        updatedDoseTableFlag(TRUE)     # Gets set back to FALSE in simulationPlot, not here
-        # Note to Dean: updatedDoseTableFlag is a reactive variable which will force
-        # recalculation of the plots, based on an updated dosetable.
+    if (is.null(data$changes$source)) {
+      if ("changes" %in% names(data) &&
+          "event" %in% names(data$changes) &&
+          data$changes$event %in% c("afterCreateRow", "afterRemoveRow")) {
+        # If we get here because a row was added or removed, keep going
       } else {
-        # Check for looping. Return if less than than 3
-        if (delta < 3) # Note to Dean: Set this to 0 to let it enter the infinite update loop
-        {
-          outputComments(paste0("Exiting doseTable Loop to break bounce, delta = ",round(delta,2)), echo = DEBUG)
-          return()
-        }
-      }
-
-      # This is the function that sometimes gets a doseTable that doesn't match the UI
-      # Unclear how to fix this.
-      # Note to Dean: If the doseTable is validated in JavaScript, then this command
-      # should always return the current DT The problem has been that this
-      # next command does not return the current DT if I've just pushed a new
-      # table to the UI.
-
-      DT <- hot_to_r(input$doseTableHTML)
-
-      # Note to Dean: I want the dose table to always have a blank line at the end,
-      # making it easy to add new doses. This next code checks to see if the last line
-      # is blank. If it isn't blank, then a blank line is appended to the bottom of the
-      # doseTable
-      # Add a blank line if necessary
-      if (nrow(DT) == 0 || DT$Drug[nrow(DT)] != "")
-      {
-        outputComments("Adding a line to doseTable\n", echo = DEBUG)
-        DT <- rbind(DT, doseTableNewRow)
-        updateFlag <- TRUE
-      }
-
-      # Note to Dean: This is more debugging code.
-      outputComments("Dose Table ('DT') extracted from hot_to_r(input$doseTableHTML)", echo = DEBUG)
-      outputComments(DT, echo = DEBUG)
-
-      outputComments("Current DT", echo = DEBUG)
-      outputComments(current$DT, echo = DEBUG)
-
-      # Note to Dean:
-      # October 17, 2019: sameTable replaced with isTRUE(all_equal())
-      # Return if nothing has changed
-      if (isTRUE(all_equal(DT, current$DT)))
-      {
-        outputComments("No change in doseTable. Exiting.", echo = DEBUG)
         return()
       }
-
-      # Note to Dean: I originally allowed the doseTable to shrink, based on the built in
-      # "delete row" selection in handsontable. However, there is a problem in this routine.
-      # If you delete several rows, it generates an error related to the row number. This
-      # has been reported several times. It isn't clear if this is an error in handontable.js, or
-      # in rHandsontable. However, because it isn't reliable, I turned off the abilityh to
-      # remove rows from the handsontable. I would like to turn it back on if possible.
-      # However, I didn't feel like tracking down the error.
-      # If the doseTable shrinks, then that should be the only issue.
-
-      # Step 1: Did doseTable shrink?
-      if (nrow(DT) < nrow(current$DT))
-      {
-        outputComments("DoseTable shrunk. Nothing to do other than update DT", DEBUG)
-        doseTable(DT)
-        current$DT <- DT
-        return()
-      }
-
-      # Note to Dean: I originally used sameTable to determine what had actually changed
-      # However, it proved to be easier just to loop through everything and validate
-      # every entry in the doseTable. These tables are never very big. In most cases it
-      # is less than a dozen rows, with just four fields in each row. Thus, validating
-      # every entry is easier than trying to figure out which entry changed and only
-      # validating that entry.
-      # October 17, 2019: sameTable replaced with isTRUE(all_equal())
-
-      # Step 2: Dose table has changed. Loop through everything
-      for (row in seq_len(nrow(DT)))
-      {
-        # Note to Dean: DT$Drug[row] is the name of the drug. If the name is
-        # blank, then the rest of the row needs to be blank also.
-        if (DT$Drug[row] == "")
-        {
-          if (DT$Time[row] != "" || DT$Dose[row] != "" || DT$Units[row] != "")
-          {
-            updateFlag <- TRUE
-            DT$Time[row]  <- ""
-            DT$Dose[row]  <- ""
-            DT$Units[row] <- ""
-          }
-        } else {
-          # Note to Dean: If the name is not blank, then I identify which row of the
-          # drugDefaults corresponds to this drug. That information will be used
-          # to assign the dose unit choices. Also, the select table for the dose
-          # is assigned in createHOT. I've noted the code for you.
-
-          thisDrug <- which (drugDefaults$Drug == DT$Drug[row])
-          # Column 1: Drug
-          # Note to Dean: if someone changes the drug, then I zero out everything
-          # in the row. The reason is that every drug has unique dose units.
-          # The dose of, say, propofol is completely different units  from the dose
-          # of fentany.
-          # The code below looks for a change in the drug name, and zeros out
-          # the dose and changes the units if the name changes.
-          if (DT$Drug[row] != current$DT$Drug[row])
-          {
-            outputComments(paste("Row is: ", row), echo = DEBUG)
-            outputComments("DT", echo = DEBUG)
-            outputComments(DT[row,], echo = DEBUG)
-            outputComments("current$DT", echo = DEBUG)
-            outputComments(current$DT[row,], echo = DEBUG)
-
-            outputComments(paste("Setting row", row, "to initial zeros and default units"), echo = DEBUG)
-            updateFlag <- TRUE
-            DT$Time[row]  <- "0"
-            DT$Dose[row]  <- "0"
-            DT$Units[row] <- drugDefaults$Default.Units[thisDrug]
-          }
-
-          # Note to Dean: this is the time validation. The routine validateTime()
-          # will need to be implemented in JavaScript, as well as in the Server.
-          # Hopefully the results will be the same. You can find the routine in
-          # validateTime.r. Note that I try to make sense of whatever the user
-          # enters, rather than insist on a specific format.
-
-          # Column 2: Time
-          if (is.na(DT$Time[row])) DT$Time[row] <- ""
-          x <- as.character(validateTime(DT$Time[row]))
-          if (x != DT$Time[row])
-          {
-            updateFlag <- TRUE
-            DT$Time[row] <- x
-          }
-
-          # Note to Dean: this is the Dose validation. The routine validateDose()
-          # will need to be implemented in JavaScript, as well as in the Server.
-          # Hopefully the results will be the same. You can find the routine in
-          # validateTime.r. Note that I try to make sense of whatever the user
-          # enters, rather than insist on a specific format.
-
-          # Column 3: Dose
-          if (is.na(DT$Dose[row])) DT$Dose[row] <- ""
-          x <- as.character(validateDose(DT$Dose[row]))
-          if (x != DT$Dose[row])
-          {
-            updateFlag <- TRUE
-            DT$Dose[row] <- x
-          }
-        }
-      }
-      if (!isTRUE(all_equal(DT, current$DT))) updateFlag <- TRUE
-      outputComments(paste("updateFlag at end of the loop:", updateFlag), echo = DEBUG)
-      # Don't update table if nothing has changed
-      # Note to Dean: As mentioned, I only update the table is something visible has
-      # changed, such as the person entering "25x" and my changing that to just "25". If
-      # there is no visible change, then I don't update the table.
-      if (updateFlag)
-      {
-        doseTable(DT)
-        current$DT <- DT
-      }
-      outputComments("Existing doseTable Loop", echo = DEBUG)
     }
-  )
+
+    if ("changes" %in% names(data) &&
+        "source" %in% names(data$changes) &&
+        data$changes$source == "edit") {
+      return(NULL)
+    }
+
+    # Because of a bug in hot_to_r(), we can't use it directly. We need to manually change
+    # the row names for it to work
+    nrows <- length(data$data)
+    data$params$rRowHeaders <- as.character(seq.int(nrows))
+    data <- hot_to_r(data)
+
+    # make sure that table has changed before updating doseTable reactive
+    if( !identical(doseTable(), data) ) {
+      # Convert NA values to empty (when a new row gets added using the javascript API,
+      # the new row gets NA values and having NA as well as "" values leads to issues later on)
+      data[is.na(data)] <- ""
+      doseTable(data)
+    }
+  })
+
+
+
+
+
+  # observeEvent(
+  #   {
+  #     input$doseTableHTML
+  #   },
+  #   {
+  #     DEBUG <- TRUE
+  #     outputComments("Starting dose Table Loop", echo = DEBUG)
+  #     outputComments(paste0("Is input$doseTableHTML NULL? ", is.null(input$doseTableHTML), "."), echo = DEBUG)
+  #     req(input$doseTableHTML)
+  #     outputComments("Requirements for doseTable Loop are met.", echo = DEBUG)
+  #     if (is.null(input$doseTableHTML$changes$source))
+  #     {
+  #       outputComments("input$doseTableHTML$changes$source != 'edit'")
+  #       return()
+  #     }
+  #
+  #     # Note to Dean: The req() statement above is probably not necessary. I recently
+  #     # changed this from observe() to observeEvent(), since it should only
+  #     # be called when the doseTableHTML changes.
+  #
+  #     # Get time to prevent continuous looping
+  #     time <- as.numeric(Sys.time())
+  #     delta <- time - prior$timeDT
+  #     prior$timeDT <- time
+  #     # Note to Dean: The above code is for the timing, to prevent the endless loop
+  #     # from occurring. This should not be necessary when it is all running within
+  #     # the browser.
+  #
+  #     # Set updateFlag to FALSE. Only update if the table has changed
+  #     updateFlag <- FALSE
+  #
+  #     # Note to Dean: I use updateFlag to determine if I need to rewrite the table
+  #     # in the browser. If someone enters "25" as the dose, the validation will return
+  #     # "25", so the browser is identical to the contents of current$DT. There is no
+  #     # reason to update the browser with a new doseTableHTML. However, if someone
+  #     # enters "25x" as the dose, the validation routine will strip off the x and return
+  #     # "25". If that happens, then I want to update the browser to reflect that
+  #     # the dose is 25. Thus, I set updateFlag to TRUE, and a new handsontable is
+  #     # generated and sent to the browser.
+  #
+  #
+  #     # Note to Dean: because of the issues with communication to/from the browser, I
+  #     # created a "refresh" button to force a refresh to get things back in sync. My
+  #     # hope is that by putting the handsontable validation entirely in JavaScript, I
+  #     # can eliminate the refresh button entirely.
+  #
+  #     # If refresh button has been pushed, erase prior dose table to refresh entirely from UI
+  #     if (!is.null(input$Refresh) & input$Refresh != prior$Refresh)
+  #     {
+  #       outputComments("Forced Refresh of DoseTable", echo = DEBUG)
+  #       current$DT$Dose <- "" # Just set it to blank. It will be updated shortly
+  #       updatedDoseTableFlag(TRUE)     # Gets set back to FALSE in simulationPlot, not here
+  #       # Note to Dean: updatedDoseTableFlag is a reactive variable which will force
+  #       # recalculation of the plots, based on an updated dosetable.
+  #     } else {
+  #       # Check for looping. Return if less than than 3
+  #       if (delta < 3) # Note to Dean: Set this to 0 to let it enter the infinite update loop
+  #       {
+  #         outputComments(paste0("Exiting doseTable Loop to break bounce, delta = ",round(delta,2)), echo = DEBUG)
+  #         return()
+  #       }
+  #     }
+  #
+  #     # This is the function that sometimes gets a doseTable that doesn't match the UI
+  #     # Unclear how to fix this.
+  #     # Note to Dean: If the doseTable is validated in JavaScript, then this command
+  #     # should always return the current DT The problem has been that this
+  #     # next command does not return the current DT if I've just pushed a new
+  #     # table to the UI.
+  #
+  #     DT <- hot_to_r(input$doseTableHTML)
+  #
+  #     # Note to Dean: I want the dose table to always have a blank line at the end,
+  #     # making it easy to add new doses. This next code checks to see if the last line
+  #     # is blank. If it isn't blank, then a blank line is appended to the bottom of the
+  #     # doseTable
+  #     # Add a blank line if necessary
+  #     if (nrow(DT) == 0 || DT$Drug[nrow(DT)] != "")
+  #     {
+  #       outputComments("Adding a line to doseTable\n", echo = DEBUG)
+  #       DT <- rbind(DT, doseTableNewRow)
+  #       updateFlag <- TRUE
+  #     }
+  #
+  #     # Note to Dean: This is more debugging code.
+  #     outputComments("Dose Table ('DT') extracted from hot_to_r(input$doseTableHTML)", echo = DEBUG)
+  #     outputComments(DT, echo = DEBUG)
+  #
+  #     outputComments("Current DT", echo = DEBUG)
+  #     outputComments(current$DT, echo = DEBUG)
+  #
+  #     # Note to Dean:
+  #     # October 17, 2019: sameTable replaced with isTRUE(all_equal())
+  #     # Return if nothing has changed
+  #     if (isTRUE(all_equal(DT, current$DT)))
+  #     {
+  #       outputComments("No change in doseTable. Exiting.", echo = DEBUG)
+  #       return()
+  #     }
+  #
+  #     # Note to Dean: I originally allowed the doseTable to shrink, based on the built in
+  #     # "delete row" selection in handsontable. However, there is a problem in this routine.
+  #     # If you delete several rows, it generates an error related to the row number. This
+  #     # has been reported several times. It isn't clear if this is an error in handontable.js, or
+  #     # in rHandsontable. However, because it isn't reliable, I turned off the abilityh to
+  #     # remove rows from the handsontable. I would like to turn it back on if possible.
+  #     # However, I didn't feel like tracking down the error.
+  #     # If the doseTable shrinks, then that should be the only issue.
+  #
+  #     # Step 1: Did doseTable shrink?
+  #     if (nrow(DT) < nrow(current$DT))
+  #     {
+  #       outputComments("DoseTable shrunk. Nothing to do other than update DT", DEBUG)
+  #       doseTable(DT)
+  #       current$DT <- DT
+  #       return()
+  #     }
+  #
+  #     # Note to Dean: I originally used sameTable to determine what had actually changed
+  #     # However, it proved to be easier just to loop through everything and validate
+  #     # every entry in the doseTable. These tables are never very big. In most cases it
+  #     # is less than a dozen rows, with just four fields in each row. Thus, validating
+  #     # every entry is easier than trying to figure out which entry changed and only
+  #     # validating that entry.
+  #     # October 17, 2019: sameTable replaced with isTRUE(all_equal())
+  #
+  #     # Step 2: Dose table has changed. Loop through everything
+  #     for (row in seq_len(nrow(DT)))
+  #     {
+  #       # Note to Dean: DT$Drug[row] is the name of the drug. If the name is
+  #       # blank, then the rest of the row needs to be blank also.
+  #       if (DT$Drug[row] == "")
+  #       {
+  #         if (DT$Time[row] != "" || DT$Dose[row] != "" || DT$Units[row] != "")
+  #         {
+  #           updateFlag <- TRUE
+  #           DT$Time[row]  <- ""
+  #           DT$Dose[row]  <- ""
+  #           DT$Units[row] <- ""
+  #         }
+  #       } else {
+  #         # Note to Dean: If the name is not blank, then I identify which row of the
+  #         # drugDefaults corresponds to this drug. That information will be used
+  #         # to assign the dose unit choices. Also, the select table for the dose
+  #         # is assigned in createHOT. I've noted the code for you.
+  #
+  #         thisDrug <- which (drugDefaults$Drug == DT$Drug[row])
+  #         # Column 1: Drug
+  #         # Note to Dean: if someone changes the drug, then I zero out everything
+  #         # in the row. The reason is that every drug has unique dose units.
+  #         # The dose of, say, propofol is completely different units  from the dose
+  #         # of fentany.
+  #         # The code below looks for a change in the drug name, and zeros out
+  #         # the dose and changes the units if the name changes.
+  #         if (DT$Drug[row] != current$DT$Drug[row])
+  #         {
+  #           outputComments(paste("Row is: ", row), echo = DEBUG)
+  #           outputComments("DT", echo = DEBUG)
+  #           outputComments(DT[row,], echo = DEBUG)
+  #           outputComments("current$DT", echo = DEBUG)
+  #           outputComments(current$DT[row,], echo = DEBUG)
+  #
+  #           outputComments(paste("Setting row", row, "to initial zeros and default units"), echo = DEBUG)
+  #           updateFlag <- TRUE
+  #           DT$Time[row]  <- "0"
+  #           DT$Dose[row]  <- "0"
+  #           DT$Units[row] <- drugDefaults$Default.Units[thisDrug]
+  #         }
+  #
+  #         # Note to Dean: this is the time validation. The routine validateTime()
+  #         # will need to be implemented in JavaScript, as well as in the Server.
+  #         # Hopefully the results will be the same. You can find the routine in
+  #         # validateTime.r. Note that I try to make sense of whatever the user
+  #         # enters, rather than insist on a specific format.
+  #
+  #         # Column 2: Time
+  #         if (is.na(DT$Time[row])) DT$Time[row] <- ""
+  #         x <- as.character(validateTime(DT$Time[row]))
+  #         if (x != DT$Time[row])
+  #         {
+  #           updateFlag <- TRUE
+  #           DT$Time[row] <- x
+  #         }
+  #
+  #         # Note to Dean: this is the Dose validation. The routine validateDose()
+  #         # will need to be implemented in JavaScript, as well as in the Server.
+  #         # Hopefully the results will be the same. You can find the routine in
+  #         # validateTime.r. Note that I try to make sense of whatever the user
+  #         # enters, rather than insist on a specific format.
+  #
+  #         # Column 3: Dose
+  #         if (is.na(DT$Dose[row])) DT$Dose[row] <- ""
+  #         x <- as.character(validateDose(DT$Dose[row]))
+  #         if (x != DT$Dose[row])
+  #         {
+  #           updateFlag <- TRUE
+  #           DT$Dose[row] <- x
+  #         }
+  #       }
+  #     }
+  #     if (!isTRUE(all_equal(DT, current$DT))) updateFlag <- TRUE
+  #     outputComments(paste("updateFlag at end of the loop:", updateFlag), echo = DEBUG)
+  #     # Don't update table if nothing has changed
+  #     # Note to Dean: As mentioned, I only update the table is something visible has
+  #     # changed, such as the person entering "25x" and my changing that to just "25". If
+  #     # there is no visible change, then I don't update the table.
+  #     if (updateFlag)
+  #     {
+  #       doseTable(DT)
+  #       current$DT <- DT
+  #     }
+  #     outputComments("Existing doseTable Loop", echo = DEBUG)
+  #   }
+  # )
 
 
   ####################################################################################
@@ -1180,6 +1220,7 @@ processNormalization <- observeEvent(
   observeEvent(
     input$sendSlide,
     {
+      DEBUG <- FALSE
       # output$EmailButton <- renderUI({
       #       p("Processing slide")
       # })
@@ -2354,6 +2395,7 @@ observeEvent(
     newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
     newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
     newDrugDefaults$Emerge               <- as.numeric(newDrugDefaults$Emerge)
+
     drugDefaults <<- newDrugDefaults
     originalUnits <<- drugDefaults$Units
     drugDefaults$Units <<- strsplit(drugDefaults$Units, ",")
@@ -2361,7 +2403,7 @@ observeEvent(
     colorList <<- drugDefaults$Color
     for (i in 1:nrow(drugDefaults))
     {
-      drug <- drugDefaults[i]
+      drug <- drugDefaults$Drug[i]
       drugs[[drug]]$Color <- drugDefaults$Color[i]
     }
     newDrugDefaultsFlag(TRUE)

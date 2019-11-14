@@ -7,7 +7,7 @@
 processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
 {
   # Now, process dose table for each drug
-  cat("Entering processdoseTable()\n")
+  # cat("Entering processdoseTable()\n")
   drugList <- names(drugs)
   for (i in 1:length(drugList))
   {
@@ -33,7 +33,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
       # cat("Seems not\n")
       if (nrow(tempDT) == 0 ) # Delete anything that should be deleted
       {
-        cat("starting to set everything to NULL\n")
+        # cat("starting to set everything to NULL\n")
         drugs[[drug]]$DT        <- NULL
         drugs[[drug]]$ET        <- NULL
         drugs[[drug]]$results   <- NULL

@@ -5,6 +5,11 @@ validateTime <- function(x)
   if (length(x) > 1) {
     stop("validateTime can only accept single items, not vectors.")
   }
+  # cat("x = ",x,"\n")
+  # cat("is.null(x)"     , is.null(x),"\n")
+  # cat("is.na(x)"       , is.na(x),"\n")
+  # cat("is.numeric(x)"   , is.numeric(x),"\n")
+  # cat("is.character(x)", is.character(x),"\n")
   if (is.null(x) || is.na(x) || is.nan(x)) {
     x <- ""
   }
@@ -14,7 +19,7 @@ validateTime <- function(x)
   # Remove everything except digits, colons, and decimal points
   x <- gsub("[^0-9:.]","",x)
   if (x == "") {
-    return("0")
+    return("")
   }
   # Remove all decimal points and colons except the first ones
   parts <- strsplit(x, "\\.")[[1]]
@@ -26,7 +31,7 @@ validateTime <- function(x)
     x <- paste(parts[1], paste(parts[-1], collapse = ""), sep = ":")
   }
   if (x == ".:" || x == ":.") {
-    return("0")
+    return("") #TODO do you really want to return "0" here?
   }
 
   # If there is a period, remove colon and return

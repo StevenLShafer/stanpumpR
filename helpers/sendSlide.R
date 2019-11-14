@@ -2,36 +2,39 @@
 sendSlide <- function(
   prior,
   recipient,
-  plotObject, 
-  allResults, 
-  plotResults, 
+  plotObject,
+  allResults,
+  plotResults,
   isShinyLocal,
   slide,
   drugs
 )
 {
-  title = prior$title 
+  title = prior$title
   DT <- prior$DT
   url <- prior$url
-  
+
   if (!file.exists("Slides")) dir.create("Slides")
-  cat("In function sendSlide()\n")
+  # cat("In function sendSlide()\n")
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
   DATE <- format(Sys.Date(), "%m/%d/%y")
-  PPTX <- read_pptx("Template.pptx")
+  PPTX <- read_pptx("misc/Template.pptx")
   MASTER <- "Office Theme"
-  
+
   PPTX <- add_slide(PPTX, layout = "Title and Content", master = MASTER)
   PPTX <- ph_with(PPTX, title, location = ph_location_type("title"))
   PPTX <- ph_with(PPTX, dml(code = print(plotObject)), location = ph_location_type("body"))
-  
+
   PPTX <- ph_with(PPTX, DATE, location = ph_location_type ("dt"))
   PPTX <- ph_with(PPTX, slide, location = ph_location_type ("sldNum"))
   PPTX <- ph_with(PPTX, "From StanpumpR", location = ph_location_type ("ftr"))
   pptxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".pptx")
+  # cat("Saving PPTX\n")
   print(PPTX, target = pptxfileName)
   xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
   pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
+  # cat("starting ggxport\n")
+
   ggexport(
     plotObject + labs(title = "", caption = NULL, x = NULL, y = NULL) +
       theme(strip.text.y = element_text(
@@ -43,18 +46,20 @@ sendSlide <- function(
               size = 4),
             legend.background = element_blank(),
             legend.box.background = element_blank(),
-            legend.key = element_blank(), 
+            legend.key = element_blank(),
             legend.text=element_text(size=4),
             legend.title = element_text(color="darkblue", size=6, face="bold")
       ),
-    filename = pngfileName, 
-    resolution = 72, 
-    height = 144, 
-    width = 240, 
+    filename = pngfileName,
+    resolution = 72,
+    height = 144,
+    width = 240,
     pointsize = 4,
     verbose = FALSE
     )
   pngfileName <- gsub(".png","001.png",pngfileName) #Weird!
+
+  # cat("Fixing units for export\n")
 
   if (prior$ageUnit == "1")
   {
@@ -62,26 +67,27 @@ sendSlide <- function(
   } else {
     ageUnit <- "months"
   }
-  
+
   if (prior$weightUnit == "1")
   {
     weightUnit <- "kilograms"
   } else {
     weightUnit <- "pounds"
   }
-  
+
   if (prior$heightUnit == "1")
   {
     heightUnit <- "cms"
   } else {
     heightUnit <- "inches"
   }
-  
-  wb <- createWorkbook("Fred")
+
+  # cat("Creating workbook\n")
+  wb <- createWorkbook("SLS")
   covariates <- data.frame(
     Covariate = c(
       "Age",
-      "Age Unit", 
+      "Age Unit",
       "Weight",
       "Weight Unit",
       "Height",
@@ -98,24 +104,32 @@ sendSlide <- function(
       prior$sex
     ),
     stringsAsFactors = FALSE)
+  # cat("Writing covariates\n")
   addWorksheet(wb, "Covariates")
   writeData(wb, sheet = 1, covariates)
-  
+
+  # cat("Writing dose table\n")
   addWorksheet(wb, "Dose Table")
   writeData(wb, sheet = 2, DT)
-  
+
+  # cat("Writing simulation results\n")
   addWorksheet(wb, "Simulation Results")
   writeData(wb, sheet = 3, allResults)
-  
+
+  # cat("Writing results for plotting\n")
   addWorksheet(wb, "Results for Plotting")
   writeData(wb, sheet = 4, plotResults)
-  
+
+  # cat("Writing out PK parameters\n")
   # Write out PK parametes
   sheet = 5
   for (drug in sort(unique(as.character(DT$Drug))))
   {
+    cat("Drug = ", drug, "\n")
     thisDrug <- which(drugDefaults_global$Drug == drug)
-    pkSets <- drugs[[thisDrug]]$PK
+    cat("thisDrug = ", thisDrug, "\n")
+
+    pkSets <- drugs[[drug]]$PK
     parameters <-   as.data.frame(
       cbind(
         v1 = map_dbl(pkSets, "v1"),
@@ -189,6 +203,7 @@ sendSlide <- function(
     writeData(wb, sheet = sheet, parameters, rowNames=TRUE)
     sheet <- sheet + 1
   }
+  # cat("Saving workbook\n")
   saveWorkbook(wb, xlsxfileName, overwrite = TRUE)
   bodyText <- paste0(
     "<html><head><style><!-- p 	{margin:0in;	font-size:12.0pt;	font-family:\"Times New Roman\",\"serif\"	} --></style>",
@@ -196,8 +211,8 @@ sendSlide <- function(
     "<p>&nbsp;</p>",
     "<p>Dear ",gsub("@", " at ",as.character(recipient)),":<p>&nbsp;</p>",
     "<p>Here is the simulation you requested from stanpumpR on",Sys.Date(),".</p><p>&nbsp;</p>",
-    "<p>The simulation is for a ",prior$age / prior$ageUnit, " ", ageUnit, "-old ",prior$sex, 
-    " weighing ", prior$weight / prior$weightUnit, " ",weightUnit, 
+    "<p>The simulation is for a ",prior$age / prior$ageUnit, " ", ageUnit, "-old ",prior$sex,
+    " weighing ", prior$weight / prior$weightUnit, " ",weightUnit,
     " and ", prior$height / prior$heightUnit, " ", heightUnit, "tall.</p><p>&nbsp;</p>",
     "<p>You should be able to reload the file from ",
     "<a href=\"",url,"\">stanpumpR</a>.</p><p>&nbsp;</p>",
@@ -217,8 +232,9 @@ sendSlide <- function(
      "</p><p>&nbsp;</p>",
     "</div></body></html>"
   )
-  
-  
+
+  # cat("Sending email\n")
+
   email <- send.mail(
     from = "stanpumpR@gmail.com",
     to = recipient,
@@ -226,13 +242,13 @@ sendSlide <- function(
     body = bodyText,
     html = TRUE,
     smtp = list(
-      host.name = "smtp.gmail.com", 
+      host.name = "smtp.gmail.com",
       port = 465,
       user.name = "stanpumpR@gmail.com",
       passwd = config$password,
       ssl = TRUE),
     attach.files = c(
-      pptxfileName, 
+      pptxfileName,
       xlsxfileName
     ),
     authenticate = TRUE,

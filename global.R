@@ -47,7 +47,7 @@ if (!isShinyLocal) {
   internetConnected <- FALSE
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.",appFiles)]
-  appFiles <- c(appFiles, "helpers","data","www")
+  appFiles <- c(appFiles, "helpers","data","www", "misc")
 
   source("helpers/havingIP.R")
   if (havingIP() && ping("google.com")) internetConnected <- TRUE
