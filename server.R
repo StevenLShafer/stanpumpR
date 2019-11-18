@@ -1,23 +1,11 @@
-# stanpumpR  ------------------------
+####################################################
+# stanpumpR                                        #
+# Copyright, 2019, Steven L. Shafer, MD            #
+# May be freely distributed, modified, or adapted  #
+# in derivative works for non-commercial purposes. #
+####################################################
 
-##################################################################################
-# Note to Dean:                                                                  #
-# I think the easiest way to explain the rhandsontable is to annotate the code.  #
-# You will find all of the annotations beginning with "Note to Dean."            #
-# There are three programs with such note: server.r, ui.r, and createHOT.r.      #
-# createHOT is the code that creates the hands on table ("HOT").                 #
-# Most of the code is in server.r (this program).                                #
-# The handsontable  has the dose, hence the name "doseTable."                    #
-# To limit interaction with the browser, for the most part the server            #
-# code uses "prior$DT" and "current$DT" for the dose table. Obviously,           #
-# "current$DT" should reflect the current contents of the dose table.            #
-# "prior$DT" reflects the dose table when the graph was last created.            #
-# I use it to figure out what drugs, if any, need to be updated.                 #
-#                                                                                #
-# You will find a "Note to Dean" everwhere that I referene or validate           #
-# The handsontable in the code below.                                            #
-##################################################################################
-# server function ----------------------------------------------------------------------------------
+# server ##########################################
 function(input, output, session)
 {
 
@@ -31,7 +19,7 @@ function(input, output, session)
         literature. stanpumpR is intended to help clinicians and investigators
         better understand the mathematical implications of published models.
         stanpumpR is only an advisory program. How these models are applied to
-        individual patients is a matter of clinical judgment by the healthcare
+        individual patients is a matter of clinical judgment by the health care
         provider."
       ),
       tags$button(
@@ -95,9 +83,9 @@ function(input, output, session)
   #                           Initialization                                  #
   #############################################################################
 
-  cat("**********************************************************************\n")
-  cat("*                       Initializing                                 *\n")
-  cat("**********************************************************************\n")
+  outputComments("**********************************************************************")
+  outputComments("*                       Initializing                                 *")
+  outputComments("**********************************************************************")
 
   main_plot <- reactiveVal(introductionPlot)
 
@@ -105,27 +93,13 @@ function(input, output, session)
     main_plot()
   })
 
-  # observe({
-  #     if (sum(grepl("Time to Emergence",input$addedPlots)) > 0)
-  #     {
-  #       cat("turning off logY\n")
-  #       hideElement("logY")
-  #     } else {
-  #       cat("turning on logY\n")
-  #       showElement("logY")
-  #     }
-  #   }
-  # )
-
-
-  outputComments("Initializing")
   # Make drugs and events local to session
   cat("Setting drugDefaults and eventDefaults\n")
   drugDefaults <- drugDefaults_global
   drugList <- drugDefaults$Drug
   colorList <- drugDefaults$Color
 
-  cat("Initializing prior and current\n")
+  outputComments("Initializing prior and current")
 
   prior <- reactiveValues()
 
@@ -207,21 +181,6 @@ function(input, output, session)
   )
 
   # Routine to output doseTableHTML from doseTable
-  ##################################################################################
-  # Note to Dean:                                                                  #
-  # This is the initialization of the handsontable. I doubt there is any need to   #
-  # try and move this to JavaScript. The cat() command is for debugging when I'm   #
-  # in RStudio. The "outputComments()" function gives me a running commentary when #
-  # running on the shiny server. The reason for this is that I found the log file  #
-  # on the shiny server to be practically useless. Thus, while the program is      #
-  # still in development, I have a running log on the bottom of the screen.        #
-  # Few people even notice it, because it is below the visible screen so  you have #
-  # to scroll to see the running log.                                              #
-  #
-  # October 17, 2019: As requested, this is where output$doseTableHTML is called.  #
-  # Everyplace else I just set doseTable, which is now a reactive variable.        #
-  ##################################################################################
-
   isolate({
     output$doseTableHTML <- renderRHandsontable({
       outputComments("Setting up doseTableHTML.")
@@ -270,31 +229,10 @@ function(input, output, session)
   }
   isolate({cat("Unique names",names(drugs),"\n")})
 
-  # x <- vector("list", length = nrow(drugDefaults))
-  # names(x) <- drugDefaults$Drug
-  # print(x)
-  # drugs <- reactiveValues()
-  # isolate({
-  # for (drug in drugDefaults$Drug)
-  # {
-  #   drugs[[drug]]$color <- "red"
-  #   # textString <- paste0("drugs[['",drugDefaults$Drug[i], "']]$color <- '",drugDefaults$Color[i],"'")
-  #   # cat(textString, "\n")
-  #   # eval(parse(text=textString))
-  # }
-  # })
-  # cat("Drugs have been assigned")
-  # print(str(drugs))
-  #
-  # for (i in 1:length(drugs))
-  # {
-  #   drugs[[i]]$Color <- drugDefaults$Color[i]
-  # }
-  #
   newDrugDefaultsFlag <- reactiveVal(FALSE)
   updatedDoseTableFlag <- reactiveVal(FALSE) # Forces a new plot
 
-  cat("Setup Complete \n")
+  outputComments("Setup Complete")
 
 
   # Get reference time from client
@@ -434,11 +372,13 @@ function(input, output, session)
   )
 
   onRestored(function(state) {
-    outputComments("***************************************************************************\n")
-    outputComments("*                       Restoring Session from URL                        *\n")
-    outputComments("***************************************************************************\n")
+    outputComments("***************************************************************************")
+    outputComments("*                       Restoring Session from URL                        *")
+    outputComments("***************************************************************************")
     isolate({
       prior$DT   <- as.data.frame(state$values$DT, stringsAsFactors=FALSE)
+      outputComments("Prior$DT:")
+      outputComments(prior$DT)
       doseTable(prior$DT)
       current$DT <- prior$DT
       prior$ET <- as.data.frame(state$values$ET, stringsAsFactors=FALSE)
@@ -451,31 +391,16 @@ function(input, output, session)
           stringsAsFactors = FALSE
         )[FALSE,]
       }
-      outputComments("prior$ET after restoring state\n")
+      outputComments("prior$ET after restoring state")
       outputComments(prior$ET)
       eventTable(prior$ET)
     })
   })
 
-  ##################################################################################
-  # Note to Dean:                                                                  #
-  # The code below is the validation loop that I would like to move into           #
-  # JavaScript in the browser. The commente "dose table loop" is a note to self    #
-  # explaining why the need to check the time and not process a dose for 3 seconds #
-  # after the last update. Hopefully, all of that will go away.                    #
-  # doseTableHTML is the handsontable                                              #
-  ##################################################################################
 
-  #########################################################################
-  # Dose Table Loop                                                       #
-  # Logic has been a challenge, because I want to check each entry for    #
-  # validity. Part of the intent is to be very forgiving of typographical #
-  # errors. Also, need to format the units for each drug individually.    #
-  # Finally, there can be significant "bounce" between the UI and the     #
-  # server, because the table gets written to the UI, and then loaded     #
-  # from the UI.                                                          #
-  #########################################################################
-
+  ######################
+  ## Dose Table Loop  ##
+  ######################
 
   observeEvent(input$doseTableHTML, {
     data <- input$doseTableHTML
@@ -507,236 +432,21 @@ function(input, output, session)
       # Convert NA values to empty (when a new row gets added using the javascript API,
       # the new row gets NA values and having NA as well as "" values leads to issues later on)
       data[is.na(data)] <- ""
+      current$DT <- data
       doseTable(data)
     }
   })
 
 
 
+  ###########################
+  ## Main Observation Loop ##
+  ###########################
 
-
-  # observeEvent(
-  #   {
-  #     input$doseTableHTML
-  #   },
-  #   {
-  #     DEBUG <- TRUE
-  #     outputComments("Starting dose Table Loop", echo = DEBUG)
-  #     outputComments(paste0("Is input$doseTableHTML NULL? ", is.null(input$doseTableHTML), "."), echo = DEBUG)
-  #     req(input$doseTableHTML)
-  #     outputComments("Requirements for doseTable Loop are met.", echo = DEBUG)
-  #     if (is.null(input$doseTableHTML$changes$source))
-  #     {
-  #       outputComments("input$doseTableHTML$changes$source != 'edit'")
-  #       return()
-  #     }
-  #
-  #     # Note to Dean: The req() statement above is probably not necessary. I recently
-  #     # changed this from observe() to observeEvent(), since it should only
-  #     # be called when the doseTableHTML changes.
-  #
-  #     # Get time to prevent continuous looping
-  #     time <- as.numeric(Sys.time())
-  #     delta <- time - prior$timeDT
-  #     prior$timeDT <- time
-  #     # Note to Dean: The above code is for the timing, to prevent the endless loop
-  #     # from occurring. This should not be necessary when it is all running within
-  #     # the browser.
-  #
-  #     # Set updateFlag to FALSE. Only update if the table has changed
-  #     updateFlag <- FALSE
-  #
-  #     # Note to Dean: I use updateFlag to determine if I need to rewrite the table
-  #     # in the browser. If someone enters "25" as the dose, the validation will return
-  #     # "25", so the browser is identical to the contents of current$DT. There is no
-  #     # reason to update the browser with a new doseTableHTML. However, if someone
-  #     # enters "25x" as the dose, the validation routine will strip off the x and return
-  #     # "25". If that happens, then I want to update the browser to reflect that
-  #     # the dose is 25. Thus, I set updateFlag to TRUE, and a new handsontable is
-  #     # generated and sent to the browser.
-  #
-  #
-  #     # Note to Dean: because of the issues with communication to/from the browser, I
-  #     # created a "refresh" button to force a refresh to get things back in sync. My
-  #     # hope is that by putting the handsontable validation entirely in JavaScript, I
-  #     # can eliminate the refresh button entirely.
-  #
-  #     # If refresh button has been pushed, erase prior dose table to refresh entirely from UI
-  #     if (!is.null(input$Refresh) & input$Refresh != prior$Refresh)
-  #     {
-  #       outputComments("Forced Refresh of DoseTable", echo = DEBUG)
-  #       current$DT$Dose <- "" # Just set it to blank. It will be updated shortly
-  #       updatedDoseTableFlag(TRUE)     # Gets set back to FALSE in simulationPlot, not here
-  #       # Note to Dean: updatedDoseTableFlag is a reactive variable which will force
-  #       # recalculation of the plots, based on an updated dosetable.
-  #     } else {
-  #       # Check for looping. Return if less than than 3
-  #       if (delta < 3) # Note to Dean: Set this to 0 to let it enter the infinite update loop
-  #       {
-  #         outputComments(paste0("Exiting doseTable Loop to break bounce, delta = ",round(delta,2)), echo = DEBUG)
-  #         return()
-  #       }
-  #     }
-  #
-  #     # This is the function that sometimes gets a doseTable that doesn't match the UI
-  #     # Unclear how to fix this.
-  #     # Note to Dean: If the doseTable is validated in JavaScript, then this command
-  #     # should always return the current DT The problem has been that this
-  #     # next command does not return the current DT if I've just pushed a new
-  #     # table to the UI.
-  #
-  #     DT <- hot_to_r(input$doseTableHTML)
-  #
-  #     # Note to Dean: I want the dose table to always have a blank line at the end,
-  #     # making it easy to add new doses. This next code checks to see if the last line
-  #     # is blank. If it isn't blank, then a blank line is appended to the bottom of the
-  #     # doseTable
-  #     # Add a blank line if necessary
-  #     if (nrow(DT) == 0 || DT$Drug[nrow(DT)] != "")
-  #     {
-  #       outputComments("Adding a line to doseTable\n", echo = DEBUG)
-  #       DT <- rbind(DT, doseTableNewRow)
-  #       updateFlag <- TRUE
-  #     }
-  #
-  #     # Note to Dean: This is more debugging code.
-  #     outputComments("Dose Table ('DT') extracted from hot_to_r(input$doseTableHTML)", echo = DEBUG)
-  #     outputComments(DT, echo = DEBUG)
-  #
-  #     outputComments("Current DT", echo = DEBUG)
-  #     outputComments(current$DT, echo = DEBUG)
-  #
-  #     # Note to Dean:
-  #     # October 17, 2019: sameTable replaced with isTRUE(all_equal())
-  #     # Return if nothing has changed
-  #     if (isTRUE(all_equal(DT, current$DT)))
-  #     {
-  #       outputComments("No change in doseTable. Exiting.", echo = DEBUG)
-  #       return()
-  #     }
-  #
-  #     # Note to Dean: I originally allowed the doseTable to shrink, based on the built in
-  #     # "delete row" selection in handsontable. However, there is a problem in this routine.
-  #     # If you delete several rows, it generates an error related to the row number. This
-  #     # has been reported several times. It isn't clear if this is an error in handontable.js, or
-  #     # in rHandsontable. However, because it isn't reliable, I turned off the abilityh to
-  #     # remove rows from the handsontable. I would like to turn it back on if possible.
-  #     # However, I didn't feel like tracking down the error.
-  #     # If the doseTable shrinks, then that should be the only issue.
-  #
-  #     # Step 1: Did doseTable shrink?
-  #     if (nrow(DT) < nrow(current$DT))
-  #     {
-  #       outputComments("DoseTable shrunk. Nothing to do other than update DT", DEBUG)
-  #       doseTable(DT)
-  #       current$DT <- DT
-  #       return()
-  #     }
-  #
-  #     # Note to Dean: I originally used sameTable to determine what had actually changed
-  #     # However, it proved to be easier just to loop through everything and validate
-  #     # every entry in the doseTable. These tables are never very big. In most cases it
-  #     # is less than a dozen rows, with just four fields in each row. Thus, validating
-  #     # every entry is easier than trying to figure out which entry changed and only
-  #     # validating that entry.
-  #     # October 17, 2019: sameTable replaced with isTRUE(all_equal())
-  #
-  #     # Step 2: Dose table has changed. Loop through everything
-  #     for (row in seq_len(nrow(DT)))
-  #     {
-  #       # Note to Dean: DT$Drug[row] is the name of the drug. If the name is
-  #       # blank, then the rest of the row needs to be blank also.
-  #       if (DT$Drug[row] == "")
-  #       {
-  #         if (DT$Time[row] != "" || DT$Dose[row] != "" || DT$Units[row] != "")
-  #         {
-  #           updateFlag <- TRUE
-  #           DT$Time[row]  <- ""
-  #           DT$Dose[row]  <- ""
-  #           DT$Units[row] <- ""
-  #         }
-  #       } else {
-  #         # Note to Dean: If the name is not blank, then I identify which row of the
-  #         # drugDefaults corresponds to this drug. That information will be used
-  #         # to assign the dose unit choices. Also, the select table for the dose
-  #         # is assigned in createHOT. I've noted the code for you.
-  #
-  #         thisDrug <- which (drugDefaults$Drug == DT$Drug[row])
-  #         # Column 1: Drug
-  #         # Note to Dean: if someone changes the drug, then I zero out everything
-  #         # in the row. The reason is that every drug has unique dose units.
-  #         # The dose of, say, propofol is completely different units  from the dose
-  #         # of fentany.
-  #         # The code below looks for a change in the drug name, and zeros out
-  #         # the dose and changes the units if the name changes.
-  #         if (DT$Drug[row] != current$DT$Drug[row])
-  #         {
-  #           outputComments(paste("Row is: ", row), echo = DEBUG)
-  #           outputComments("DT", echo = DEBUG)
-  #           outputComments(DT[row,], echo = DEBUG)
-  #           outputComments("current$DT", echo = DEBUG)
-  #           outputComments(current$DT[row,], echo = DEBUG)
-  #
-  #           outputComments(paste("Setting row", row, "to initial zeros and default units"), echo = DEBUG)
-  #           updateFlag <- TRUE
-  #           DT$Time[row]  <- "0"
-  #           DT$Dose[row]  <- "0"
-  #           DT$Units[row] <- drugDefaults$Default.Units[thisDrug]
-  #         }
-  #
-  #         # Note to Dean: this is the time validation. The routine validateTime()
-  #         # will need to be implemented in JavaScript, as well as in the Server.
-  #         # Hopefully the results will be the same. You can find the routine in
-  #         # validateTime.r. Note that I try to make sense of whatever the user
-  #         # enters, rather than insist on a specific format.
-  #
-  #         # Column 2: Time
-  #         if (is.na(DT$Time[row])) DT$Time[row] <- ""
-  #         x <- as.character(validateTime(DT$Time[row]))
-  #         if (x != DT$Time[row])
-  #         {
-  #           updateFlag <- TRUE
-  #           DT$Time[row] <- x
-  #         }
-  #
-  #         # Note to Dean: this is the Dose validation. The routine validateDose()
-  #         # will need to be implemented in JavaScript, as well as in the Server.
-  #         # Hopefully the results will be the same. You can find the routine in
-  #         # validateTime.r. Note that I try to make sense of whatever the user
-  #         # enters, rather than insist on a specific format.
-  #
-  #         # Column 3: Dose
-  #         if (is.na(DT$Dose[row])) DT$Dose[row] <- ""
-  #         x <- as.character(validateDose(DT$Dose[row]))
-  #         if (x != DT$Dose[row])
-  #         {
-  #           updateFlag <- TRUE
-  #           DT$Dose[row] <- x
-  #         }
-  #       }
-  #     }
-  #     if (!isTRUE(all_equal(DT, current$DT))) updateFlag <- TRUE
-  #     outputComments(paste("updateFlag at end of the loop:", updateFlag), echo = DEBUG)
-  #     # Don't update table if nothing has changed
-  #     # Note to Dean: As mentioned, I only update the table is something visible has
-  #     # changed, such as the person entering "25x" and my changing that to just "25". If
-  #     # there is no visible change, then I don't update the table.
-  #     if (updateFlag)
-  #     {
-  #       doseTable(DT)
-  #       current$DT <- DT
-  #     }
-  #     outputComments("Existing doseTable Loop", echo = DEBUG)
-  #   }
-  # )
-
-
-  ####################################################################################
-  ## Main Observation Loop
   observe({
     DEBUG <- TRUE
-    outputComments("\n\n*********************************************************")
-    outputComments("Starting Main Observation Loop\n")
+    outputComments("\n*********************************************************")
+    outputComments("Starting Main Observation Loop")
     #    outputComments(paste0("input$sex: ", input$sex,"."), echo = FALSE)
     #    outputComments(paste0("input$age: ", input$age,"."), echo = FALSE)
     #    outputComments(paste0("input$ageUnit: ", input$ageUnit,"."), echo = FALSE)
@@ -1583,10 +1293,6 @@ observeEvent(
   }
 )
 
-# Note to Dean: The event below allows users to edit previous doses. This is yet another way
-# in which the table can be changed. I don't think this needs to be
-# edited, but it explains why there will always be some updating of the doseTable from the
-# server.
 
 # Edit prior drug doses
 observeEvent(
@@ -1859,7 +1565,7 @@ observeEvent(
 )
 
 
-############################### Double Click Response ################################
+# Double Click Response ################################
 dblclickPopupDrug <- function(
   failed = "",
   x
@@ -1890,7 +1596,6 @@ dblclickPopupDrug <- function(
         inputId = "dblclickDose",
         label = "Dose",
         placeholder = "Enter dose"
-
       ),
       radioButtons(
         inputId = "dblclickUnits",
@@ -1975,64 +1680,92 @@ observeEvent(
   }
 )
 
-################################################### Target Drug Dosing (TCI Like) ###########################################
+# Target Drug Dosing (TCI Like) ###########################################
 # Event to trigger calculation to set doses for a target
 observeEvent(
   input$setTarget,
   {
-     targetTable <-  data.frame(
-       Time = rep("",6),
-       Target = rep("", 6)
-     )
-     targetHOT <- rhandsontable(
-         targetTable,
-         overflow = 'visible',
-         rowHeaders = NULL,
-         height = 220,
-         selectCallback = TRUE
-       ) %>%
-       hot_col(
-         col = "Time",
-         type="autocomplete",
-         halign = "htRight",
-         allowInvalid = TRUE,
-         strict = FALSE
-       ) %>%
-       hot_col(
-         col = "Target",
-         type = "autocomplete",
-         halign = "htRight",
-         allowInvalid = TRUE,
-         strict = FALSE
-       ) %>%
-       hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
-       hot_rows(rowHeights = 10) %>%
-       hot_cols(colWidths = c(70,70))
-     output$targetTableHTML <- renderRHandsontable(targetHOT)
-     showModal(
-       modalDialog(
-         title = paste("Enter Target Effect Site Concentrations"),
-         tags$div(
-           HTML(paste(tags$span(style="color:red; font-weight:bold ",
-           "Enter time and target concentration below. Decreasing targets are not yet supported, and will be removed. Doses are found with non-linear regression, which takes a moment to calculate. The suggestion will be good, but better algorithms may exist."), sep = ""))
-         ),
-         selectInput(
-           inputId = "targetDrug",
-           label = "Drug",
-           choices = drugList
-         ),
-         rHandsontableOutput(outputId = "targetTableHTML"),
-         textInput(
-           inputId = "targetEndTime",
-           label = "End Time",
-           value = ""
-         ),
-       conditionalPanel(
-         condition = "input.targetEndTime != ''",
-         actionButton(
-           inputId = "targetOK",
-           label = "OK",
-           style="color: #fff; background-color: #337ab7; border-color: #2e6da4; float: left; margin: 0px 5px 5px 5px;"
+    targetTable <-  data.frame(
+      Time = rep("",6),
+      Target = rep("", 6)
+    )
+    targetHOT <- rhandsontable(
+        targetTable,
+        overflow = 'visible',
+        rowHeaders = NULL,
+        height = 220,
+        selectCallback = TRUE
+    ) %>%
+    hot_col(
+      col = "Time",
+      type="autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = "Target",
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_context_menu(
+      allowRowEdit = TRUE,
+      allowColEdit = FALSE
+    ) %>%
+    hot_rows(
+      rowHeights = 10
+    ) %>%
+    hot_cols(
+      colWidths = c(70,70)
+    )
+    output$targetTableHTML <- renderRHandsontable(targetHOT)
+    showModal(
+      modalDialog(
+        title = paste("Enter Target Effect Site Concentrations"),
+        tags$div(
+          HTML(
+            paste(
+              tags$span(
+                style="
+                  color:red; font-weight:bold ",
+                "Enter time and target concentration below.
+                Decreasing targets are not yet supported,
+                and will be removed. Doses are found with
+                non-linear regression, which takes a moment
+                to calculate. The suggestion will be good,
+                but better algorithms likely exist."
+              ),
+              sep = ""
+            )
+          )
+        ),
+        selectInput(
+          inputId = "targetDrug",
+          label = "Drug",
+          choices = drugList
+        ),
+        rHandsontableOutput(
+          outputId = "targetTableHTML"
+        ),
+        textInput(
+          inputId = "targetEndTime",
+          label = "End Time",
+          value = ""
+        ),
+        conditionalPanel(
+          condition = "input.targetEndTime != ''",
+          actionButton(
+            inputId = "targetOK",
+            label = "OK",
+            style = "
+              color: #fff;
+              background-color: #337ab7;
+              border-color: #2e6da4;
+              float: left;
+              margin: 0px 5px 5px 5px;
+           "
          )
        ),
        tags$button(
@@ -2050,10 +1783,6 @@ observeEvent(
     )
   }
 )
-
-# Note to Dean: The program can also calculate the dose necessary to reach a given
-# target concentration. This is yet another way the server may update the dose table.
-# This does not need to change.
 
 # Evaluate target concentration
 observeEvent(
@@ -2195,16 +1924,30 @@ observeEvent(
         Dose = Dose,
         Units = Units
       )
-      ce <- simCpCe(DT, ET, PK, endTime, plotRecovery = FALSE)$equiSpace[,c("Time","Ce")]
-      target <- sapply(results$Time,
-                       function(x) {
-                         targetTable$Target[
-                           which(targetTable$Time == max(
-                             targetTable$Time[targetTable$Time <= x])
-                           )]
-                       })
+      ce <- simCpCe(
+        DT,
+        ET,
+        PK,
+        endTime,
+        plotRecovery = FALSE
+      )$equiSpace[,c("Time","Ce")]
+
+      target <- sapply(
+        results$Time,
+        function(x)
+        {
+          targetTable$Target[
+            which(
+              targetTable$Time == max(
+                targetTable$Time[targetTable$Time <= x]
+              )
+            )
+          ]
+        }
+      )
       return(sum((ce-target)^2))
     }
+
     outputComments("About to run nlm", echo = DEBUG)
     testTable$Dose <- nlm(
       obj,
@@ -2217,7 +1960,15 @@ observeEvent(
 
     testTable$Dose[testTable$Dose < 0] <- 0
     testTable$Dose <- signif(testTable$Dose,3)
-    results <- simCpCe(testTable,ET, drugs[[drug]],endTime, plotRecovery = FALSE)$equiSpace[,c("Time","Ce")]
+    results <- simCpCe(
+      testTable,
+      ET,
+      drugs[[drug]],
+      endTime,
+      plotRecovery = FALSE
+    )$equiSpace[,c("Time","Ce")]
+
+    # Interim plot
     # plot <- ggplot(results,aes(x=Time, y=Ce)) +
     #   geom_line() +
     #   labs(title="After nlm")
@@ -2231,7 +1982,10 @@ observeEvent(
     current$DT <- current$DT[current$DT$Drug != input$targetDrug,]
     # print(str(doseTable))
 
-    current$DT <- rbind(testTable[,c("Drug","Time","Dose","Units")], current$DT)
+    current$DT <- rbind(
+      testTable[,c("Drug","Time","Dose","Units")],
+      current$DT
+    )
     doseTable(current$DT)
   }
 )
@@ -2348,14 +2102,19 @@ observeEvent(
       modalDialog(
         title = paste("Edit Drug Defaults"),
         tags$div(
-          HTML(paste(tags$span(style="color:red; font-weight:bold ",
-                               "This is primarily intended for stanpumpR collaborators. ",
-                               "If you believe some drug defaults are incorrect, please contact ",
-                               "steven.shafer@stanford.edu. ",
-                               "Also, you can easily break your session by entering crazy things. ",
-                               "If so, just reload your session. "), sep = ""))
+          HTML(
+            paste(
+              tags$span(
+                style="color:red; font-weight:bold ",
+                      "This is primarily intended for stanpumpR collaborators. ",
+                      "If you believe some drug defaults are incorrect, please contact ",
+                      "steven.shafer@stanford.edu. ",
+                      "Also, you can easily break your session by entering crazy things. ",
+                      "If so, just reload your session. "), sep = ""))
         ),
-        rHandsontableOutput(outputId = "editDrugsHTML"),
+        rHandsontableOutput(
+          outputId = "editDrugsHTML"
+        ),
         actionButton(
           inputId = "drugEditsOK",
           label = "OK",
@@ -2375,7 +2134,6 @@ observeEvent(
     )
   }
 )
-
 
 # Evaluate target concentration
 observeEvent(
@@ -2407,34 +2165,53 @@ observeEvent(
       drugs[[drug]]$Color <- drugDefaults$Color[i]
     }
     newDrugDefaultsFlag(TRUE)
-  })
+  }
+)
 ### modalDialog ###
-observeEvent(input$age, {
-  if(!is.na(input$age) && (input$age > 110 | input$age <= 0)) {
-    showModal(modalDialog(
-      title = NULL,
-      "Age must be between 0 and 110."
-    ))
+observeEvent(
+  input$age,
+  {
+    if(!is.na(input$age) && (input$age > 110 | input$age <= 0))
+    {
+      showModal(
+        modalDialog(
+          title = NULL,
+          "Age must be between 0 and 110."
+        )
+      )
+    }
   }
-})
+)
 
-observeEvent(input$weight, {
-  if(!is.na(input$weight) && (input$weight > 500 | input$weight <= 1)) {
-    showModal(modalDialog(
-      title = NULL,
-      "Weight must be between 1 and 500"
-    ))
+observeEvent(
+  input$weight,
+  {
+    if(!is.na(input$weight) && (input$weight > 500 | input$weight <= 1))
+    {
+      showModal(
+        modalDialog(
+          title = NULL,
+          "Weight must be between 1 and 500"
+        )
+      )
+    }
   }
-})
+)
 
-observeEvent(input$height, {
-  if(!is.na(input$height) && (input$height > 200 | input$height <= 10)) {
-    showModal(modalDialog(
-      title = NULL,
-      "Height must be between 1 and 200"
-    ))
+observeEvent(
+  input$height,
+  {
+    if(!is.na(input$height) && (input$height > 200 | input$height <= 10))
+    {
+      showModal(
+        modalDialog(
+        title = NULL,
+        "Height must be between 1 and 200"
+        )
+      )
+    }
   }
-})
+)
 
   outputComments("Reached the end of server()")
 }
