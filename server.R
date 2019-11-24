@@ -222,12 +222,16 @@ function(input, output, session)
   # Initialize drug table (PK for each drug)
   outputComments("Initializing Drugs")
   drugs <- reactiveValues()
-  for (i in 1:nrow(drugDefaults)) {
-    drug <- drugDefaults$Drug[i]
-    drugs[[drug]] <- NULL
-    isolate({drugs[[drug]]$Color <- drugDefaults$Color[i]})
-  }
-  isolate({cat("Unique names",names(drugs),"\n")})
+  isolate({
+    for (i in 1:nrow(drugDefaults)) {
+      drug <- drugDefaults$Drug[i]
+      drugs[[drug]] <- NULL
+      drugs[[drug]]$Color <- drugDefaults$Color[i]
+      drugs[[drug]]$endCe <- drugDefaults$endCe[i]
+      drugs[[drug]]$endCeText <- drugDefaults$endCeText[i]
+    }
+    cat("Unique names",names(drugs),"\n")
+  })
 
   newDrugDefaultsFlag <- reactiveVal(FALSE)
   updatedDoseTableFlag <- reactiveVal(FALSE) # Forces a new plot
@@ -346,7 +350,7 @@ function(input, output, session)
     "editDrugsHTML",
     "editDrugsHTML_select",
     "editDrugs",
-    "newEmerge",
+    "newEndCe",
     "hoverInfo"
   )
 
@@ -649,7 +653,7 @@ function(input, output, session)
       outputComments(paste("Plotting because plotMaximum changed to ", plotMaximum), echo = DEBUG)
       replotFlag <- TRUE
     }
-    plotRecovery           <- "Time to Emergence"    %in% input$addedPlots
+    plotRecovery           <- "Time Until"    %in% input$addedPlots
     if (plotRecovery != prior$plotRecovery)
     {
       if (plotRecovery == TRUE)
@@ -1043,7 +1047,7 @@ xy_str <- function(e) {
   returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
   if (prior$plotRecovery)
   {
-    returnText <- paste0(returnText,", Emergence in ",round(drugs[[drug]]$equiSpace$Recovery[j], 1), " minutes")
+    returnText <- paste0(returnText,", Time until ",drugDefaults$endCeText[i], " ",round(drugs[[drug]]$equiSpace$Recovery[j], 1), " minutes")
   }
   return(returnText)
 }
@@ -1186,7 +1190,8 @@ clickPopupDrug <- function(
   thisDrug <- which(drug == drugList)
   units <- unlist(drugDefaults$Units[thisDrug])
   selectedUnits <- drugDefaults$Default.Units[thisDrug]
-  emerge <- drugDefaults$Emerge[thisDrug]
+  endCe <- drugDefaults$endCe[thisDrug]
+  endCeText <- drugDefaults$endCeText[thisDrug]
   showModal(
     modalDialog(
     title = paste("Enter a new dose for ", drug),
@@ -1212,9 +1217,9 @@ clickPopupDrug <- function(
       inline = TRUE
     ),
     numericInput(
-      inputId = "newEmerge",
-      label = "Set emergence concentration",
-      value = emerge,
+      inputId = "newEndCe",
+      label = paste("Set", endCeText, "concentration"),
+      value = endCe,
       min = 0,
       max = 1000
     ),
@@ -1265,9 +1270,9 @@ observeEvent(
     {
       removeModal()
       thisDrug <- which(drugDefaults$Drug == prior$DrugTimeUnits$drug)
-      if (drugDefaults$Emerge[thisDrug] != input$newEmerge)
+      if (drugDefaults$endCe[thisDrug] != input$newEndCe)
       {
-        drugDefaults$Emerge[thisDrug] <<- input$newEmerge
+        drugDefaults$endCe[thisDrug] <<- input$newEndCe
         newDrugDefaultsFlag(TRUE)
       }
 
@@ -2095,6 +2100,13 @@ observeEvent(
         allowInvalid = TRUE,
         strict = FALSE
       ) %>%
+      hot_col(
+        col = 13,
+        type = "autocomplete",
+        halign = "htRight",
+        allowInvalid = TRUE,
+        strict = FALSE
+      ) %>%
       hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
       hot_rows(rowHeights = 10)
     output$editDrugsHTML <- renderRHandsontable(drugsHOT)
@@ -2152,7 +2164,8 @@ observeEvent(
     newDrugDefaults$Upper                <- as.numeric(newDrugDefaults$Upper)
     newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
     newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
-    newDrugDefaults$Emerge               <- as.numeric(newDrugDefaults$Emerge)
+    newDrugDefaults$endCe                <- as.numeric(newDrugDefaults$endCe)
+    newDrugDefaults$endCeText            <- as.character(newDrugDefaults$endCeText)
 
     drugDefaults <<- newDrugDefaults
     originalUnits <<- drugDefaults$Units
@@ -2163,6 +2176,8 @@ observeEvent(
     {
       drug <- drugDefaults$Drug[i]
       drugs[[drug]]$Color <- drugDefaults$Color[i]
+      drugs[[drug]]$endCe <- drugDefaults$endCe[i]
+      drugs[[drug]]$endCeText <- drugDefaults$endCeText[i]
     }
     newDrugDefaultsFlag(TRUE)
   }

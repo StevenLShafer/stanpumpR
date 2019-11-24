@@ -379,7 +379,8 @@ function(request) {
               checkboxGroupInput(
                 inputId = "addedPlots",
                 label = "Additional Plots",
-                choices = c("MEAC", "Interaction", "Events", "Time to Emergence"),
+                choiceNames = c("MEAC", "Interaction", "Events", "Time until ___"),
+                choiceValues = c("MEAC", "Interaction", "Events", "Time Until")
               ),
               bsTooltip(
                 id = "addedPlots",
@@ -388,7 +389,7 @@ function(request) {
                 options = list(container = "body")
               ),
               conditionalPanel(
-                condition = "!input.addedPlots.includes('Time to Emergence')",
+                condition = "!input.addedPlots.includes('Time Until')",
                 checkboxInput(
                   inputId = "logY",
                   label = "Log Y axis",

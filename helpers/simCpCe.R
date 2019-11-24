@@ -73,9 +73,9 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       {
  #       cat("calling advancedClosedForm0\n")
 
-        results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
+        results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
       } else {
-        results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, PK$emerge)
+        results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
       }
     } else {
       # Process Events
@@ -89,7 +89,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       events <- events[events$Time < maximum,]
       events <- rbind(events, events[nrow(events),])
       events$Time[nrow(events)] <- maximum
-      results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, PK$emerge)
+      results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, PK$endCe)
     }
 
   names(results) <- c("Time", "Plasma","Effect Site", "Recovery")

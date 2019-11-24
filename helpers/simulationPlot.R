@@ -34,7 +34,7 @@ simulationPlot <- function(
 # load("drugs.rData")
 
 {
-  DEBUG <- FALSE
+  DEBUG <- TRUE
   # Notes on what happens below
   # The time courses for ggplot are held in plotResults
   # "Drug","Time","Y","Site","Wrap", "Label"
@@ -47,8 +47,11 @@ simulationPlot <- function(
   # plotResults is created in the following steps
   # 1. allResults is created. The structure of allResults is
 
-  cat("\n")
-  cat("Entering simulationPlot\n")
+  if (DEBUG)
+    {
+    cat("\n")
+    cat("Entering simulationPlot\n")
+  }
   plotTable <- as.data.frame(
     cbind(
       map_chr(drugs, "drug"),
@@ -58,9 +61,13 @@ simulationPlot <- function(
       map_chr(drugs, "lowerTypical"),
       map_chr(drugs, "upperTypical"),
       map_chr(drugs, "MEAC"),
-      map_chr(drugs, "emerge")
+      map_chr(drugs, "endCe"),
+      map_chr(drugs, "endCeText")
+
       ),stringsAsFactors = FALSE)
-  names(plotTable) <- c("Drug","drugColor","Concentration.Units", "typical", "lowerTypical","upperTypical", "MEAC", "emerge")
+
+  if (DEBUG) cat("plotTable Created\n")
+  names(plotTable) <- c("Drug","drugColor","Concentration.Units", "typical", "lowerTypical","upperTypical", "MEAC", "endCe", "endCeText")
   allResults    <- map_dfr(drugs, "results")
   # Four columns: Drug, Time, Site, Y
   # 8 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCe, CeNormCe
@@ -70,7 +77,7 @@ simulationPlot <- function(
   plotTable$lowerTypical <- as.numeric(plotTable$lowerTypical)
   plotTable$upperTypical <- as.numeric(plotTable$upperTypical)
   plotTable$MEAC  <- as.numeric(plotTable$MEAC)
-  plotTable$emerge <- as.numeric(plotTable$emerge)
+  plotTable$endCe <- as.numeric(plotTable$endCe)
   plotTable$alpha <- 0.2
   allMax <- map_dfr(drugs, "max")
   allMax <- allMax[allMax$Drug %in% plotTable$Drug,]
@@ -575,8 +582,8 @@ simulationPlot <- function(
 
     arrows <- data.frame(
       Drug = plotTable$Drug,
-      y = plotTable$emerge,
-      new = paste0(sprintf('\u2190'), "emerge"),
+      y = plotTable$endCe,
+      new = paste0(sprintf('\u2190'), plotTable$endCeText),
       x = maximum,
       Wrap <- as.character(plotTable$Wrap),
       stringsAsFactors = FALSE
@@ -622,7 +629,7 @@ simulationPlot <- function(
           xmin=xmin,
           xmax=xmax,
           ymin=0,
-          ymax=emerge
+          ymax=endCe
         ),
         fill = "grey",
         alpha = 0.2,
@@ -644,6 +651,6 @@ simulationPlot <- function(
   }
 
 #  plotObject
-  cat("Exiting simulationPlot\n")
+  if (DEBUG) cat("Exiting simulationPlot\n")
   return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults))
 }
