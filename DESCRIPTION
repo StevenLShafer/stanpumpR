@@ -1,0 +1,17 @@
+Package: stanpumpR
+Title: stanpumpR, and PK/PD simulation program
+Version: 0.0.0.1
+Authors@R:
+    person(given = "Steven",
+           family = "Shafer,
+           role = c("aut", "cre"),
+           email = "steven.shafer@stanford.edu",
+           comment = structure("YOUR-ORCID-ID", .Names = "ORCID"))
+Description: stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
+License: MIT + file LICENSE
+Suggests:
+    testthat
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1
