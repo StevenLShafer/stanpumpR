@@ -10,7 +10,6 @@ getDrugPK <- function(
 )
 {
   DEBUG <- FALSE
-#  cat("In getDrugPK\n")
   X <- eval(call(drug, weight, height, age, sex))
   tPeak <- X$tPeak
 
@@ -106,6 +105,7 @@ getDrugPK <- function(
     } else {
       customFunction <- X$PK[[event]]$customFunction
     }
+
 
     k10 <- cl1 / v1
     k12 <- cl2 / v1
@@ -235,7 +235,6 @@ getDrugPK <- function(
       e_coef_infusion_ke0 <- e_coef_bolus_ke0 / ke0
     }
 
-    # cat("ka PO: ", ka_PO, "\n")
     if (ka_PO > 0)
     {
       p_coef_PO_l1   <- p_coef_bolus_l1 / (ka_PO - lambda_1) * ka_PO * bioavailability_PO

@@ -3,20 +3,41 @@ oxytocin <- function(weight, height, age, sex)
   # Units **************
   # Time: Minutes
   # Volume: Liters
-  
-  tPeak <- 1 # guess
-  MEAC <- 0
-  typical <-  0.1
-  upperTypical <- 0.05
-  lowerTypical <- 0.2
-  reference <- "190912-135448" # Initial Eisenach Data
-  v1	= 10.1 # l
-  v2	= 7.03 # l
-  v3 <- 1    # l
-  cl1	= 0.974 # l/min
-  cl2 = 0.204 # l/min
-  cl3 <- 0 # l.min
-  
+
+  if (weight > 1)
+  {
+    # Human
+
+    tPeak <- 5 # guess
+    MEAC <- 0
+    typical <-  0.1
+    upperTypical <- 0.05
+    lowerTypical <- 0.2
+    reference <- "190912-135448" # Initial Eisenach Data
+    v1	<- 10.1 # l
+    v2	<- 7.03 # l
+    v3  <- 1    # l
+    cl1	<- 0.974 # l/min
+    cl2 <- 0.204 # l/min
+    cl3 <- 0     # l.min
+  } else {
+    # Rat
+    tPeak <- 5 # guess
+    MEAC <- 0
+    typical <-  0.1
+    upperTypical <- 0.05
+    lowerTypical <- 0.2
+    # V1 = 0.10 L, V2 = 0.02 L, CL1 = 0.017 L/min, and CL2 = 0.000524
+    reference <- "Tanaka et al" # Paper using LC/MS Assay
+    # V1 = 0.10 L, V2 = 0.02 L, CL1 = 0.017 L/min, and CL2 = 0.000524
+    v1	<- 0.10 # l
+    v2	<- 0.02 # l
+    v3  <- 1    # l
+    cl1	<- 0.017    # l/min
+    cl2 <- 0.000524 # l/min
+    cl3 <- 0        # l.min
+  }
+
   default <- list(
     v1 = v1,
     v2 = v2,
@@ -25,18 +46,18 @@ oxytocin <- function(weight, height, age, sex)
     cl2 = cl2,
     cl3 = cl3
   )
-  
+
   events <- c("default")
   PK <- sapply(events, function(x) list(get0(x)))
-  
+
   return(
     list(
-      PK = PK, 
-      tPeak = tPeak, 
-      MEAC = MEAC, 
-      typical = typical, 
-      upperTypical = upperTypical, 
-      lowerTypical = lowerTypical, 
+      PK = PK,
+      tPeak = tPeak,
+      MEAC = MEAC,
+      typical = typical,
+      upperTypical = upperTypical,
+      lowerTypical = lowerTypical,
       reference = reference
     )
   )

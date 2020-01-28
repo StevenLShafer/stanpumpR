@@ -3,6 +3,7 @@ propofol <- function(weight = 70, height = 171, age = 50, sex = "male")
   # Units **************
   # Time: Minutes
   # Volume: Liters
+  #cat("Starting Propofol.R\n")
 
 
   # Schnider
@@ -17,11 +18,8 @@ propofol <- function(weight = 70, height = 171, age = 50, sex = "male")
   )
 
 
-
-
-
   # Eleveld
-  # Pharmacokinetic–pharmacodynamic model for propofol for broad application
+  # Pharmacokinetic / pharmacodynamic model for propofol for broad application
   # in anaesthesia and sedation
   # BJA 2018;120:942-959
 
@@ -135,13 +133,13 @@ propofol <- function(weight = 70, height = 171, age = 50, sex = "male")
 
   # Al-sallami FFM
   BMI <-  weight / (height / 100)^2
-  if (sex == "man")
+  if (sex == "male")
   {
-    FFM <- 0.88 + ((1 - 0.88) / (1 + (age / 13.4)^(-12.7))) *
+    FFM <- (0.88 + ((1 - 0.88) / (1 + (age / 13.4)^(-12.7)))) *
       42.92 * weight / (30.93 + BMI)
     M1F2 <- 1
   } else {
-    FFM <- 1.11 + ((1 - 1.11) / (1 + (age/7.1)^(-1.1))) *
+    FFM <- (1.11 + ((1 - 1.11) / (1 + (age/7.1)^(-1.1)))) *
       37.99 * weight / (35.98 + BMI)
     M1F2 <- 2
   }
@@ -200,8 +198,18 @@ propofol <- function(weight = 70, height = 171, age = 50, sex = "male")
   M6   <- (V3 / RV3)^0.75 * KQ3 * DQ3
   CL3   <- exp(THETA[6]) * M6
 
+  default <- list(
+    v1 = V1,
+    v2 = V2,
+    v3 = V3,
+    cl1 = CL1,
+    cl2 = CL2,
+    cl3 = CL3
+  )
+
   events <- c("default")
   PK <- sapply(events, function(x) list(get0(x)))
+  print(str(PK))
 
   tPeak <- 1.600 # Anesthesiology 90:1502-1516, 1999
   # typical <- 3
@@ -209,6 +217,8 @@ propofol <- function(weight = 70, height = 171, age = 50, sex = "male")
   # lowerTypical <- 2.5
   # MEAC <- 0
   reference <- "Anesthesiology 1998"
+  #cat("Exiting Propofol.R\n")
+
 
   return(
     list(

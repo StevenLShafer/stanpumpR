@@ -114,7 +114,7 @@ function(request) {
                   inputId = "weight",
                   label = "Weight",
                   value = defaultWeight,
-                  min = 1,
+                  min = 0.1,
                   max = 500
                 ),
                 bsTooltip(

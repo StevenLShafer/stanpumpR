@@ -2201,12 +2201,12 @@ observeEvent(
 observeEvent(
   input$weight,
   {
-    if(!is.na(input$weight) && (input$weight > 500 | input$weight <= 1))
+    if(!is.na(input$weight) && (input$weight > 500 | input$weight <= 0.1))
     {
       showModal(
         modalDialog(
           title = NULL,
-          "Weight must be between 1 and 500"
+          "Weight must be between 0.1 and 500"
         )
       )
     }
