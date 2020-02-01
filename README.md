@@ -1,12 +1,14 @@
 # stanpumpR
 
+[![Build Status](https://travis-ci.com/StevenLShafer/stanpumpR.svg?branch=master)](https://travis-ci.com/StevenLShafer/stanpumpR)
+
 stanpumpR, a PK/PD simulation program
-Copyright 2019 Steven L. Shafer, steven.shafer@stanford.edu. 
+Copyright 2019 Steven L. Shafer, steven.shafer@stanford.edu.
 All Rights Reserved
 
 stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
 
-STANPUMP, a portmanteau of "Stanford" and "Pump", was developed in the Stanski/Shafer laboratory at Stanford University from 1987 through 1997. STANPUMP was one of many programs developed to control the delivery of intravenous anesthetics using pharmacokinetic principles. At that time there was an active exchange of concepts and algorithms among the authors. Significant contributors to this effort were Schüttler and Schwilden at the University of Bonn (CATIA), Ausems and Hug as the University of Leiden (TIAC), Reves and Alvis at the University of Alabama (CACI), Jacobs and Reves at Duke University (CACI II), Coetzee and Pina at Stellenbosch University (STELPUMP), and De Smet and Struys at the University of Ghent (RUGLOOP). This history was recently reviewed by Struys and colleagues: The History of Target-Controlled Infusion. Anesth Analg. 2016;122:56-69. 
+STANPUMP, a portmanteau of "Stanford" and "Pump", was developed in the Stanski/Shafer laboratory at Stanford University from 1987 through 1997. STANPUMP was one of many programs developed to control the delivery of intravenous anesthetics using pharmacokinetic principles. At that time there was an active exchange of concepts and algorithms among the authors. Significant contributors to this effort were Schüttler and Schwilden at the University of Bonn (CATIA), Ausems and Hug as the University of Leiden (TIAC), Reves and Alvis at the University of Alabama (CACI), Jacobs and Reves at Duke University (CACI II), Coetzee and Pina at Stellenbosch University (STELPUMP), and De Smet and Struys at the University of Ghent (RUGLOOP). This history was recently reviewed by Struys and colleagues: The History of Target-Controlled Infusion. Anesth Analg. 2016;122:56-69.
 
 STANPUMP was placed in the public domain. The STANPUMP pharmacokinetic engine was incorporated into many of the commerially available target controlled infusion devices, where it is still used today.
 
@@ -18,7 +20,7 @@ stanpumpR is a collaborative research project. Individuals interested in adding 
 
 Near-term future developments in stanpumpR will include
 1. Oral opioids. StanpumpR is programmed for PO, IM, and IN delivery. Need to get good PK for the opioids. Note that only first order absorption pk is currently supported.
-2. Improved models of pediatric pharmacokinetics 
+2. Improved models of pediatric pharmacokinetics
 3. Improved models of drug interaction
 4. PK changes with pregnancy, CYP2D6, and renal function. These have been added to the UI, but no models with these are yet in the program.
 5. Create of help and example pages.
