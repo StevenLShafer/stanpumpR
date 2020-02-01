@@ -1,3 +1,5 @@
+.DS_Store
+
 config.yml
 /ignore
 /Slides
@@ -43,3 +45,4 @@ vignettes/*.pdf
 
 # Log file
 log.txt
+.Rproj.user
