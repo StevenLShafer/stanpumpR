@@ -6,7 +6,7 @@ Authors@R:
            family = "Shafer,
            role = c("aut", "cre"),
            email = "steven.shafer@stanford.edu",
-           comment = structure("YOUR-ORCID-ID", .Names = "ORCID"))
+           comment = structure("0000-0002-0289-7793", .Names = "ORCID"))
 Description: stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
 License: MIT + file LICENSE
 Suggests:
