@@ -29,6 +29,7 @@ Imports:
   R.utils,
   randomcoloR,
   RColorBrewer,
+  reactlog,
   rhandsontable,
   rvg,
   shiny,
