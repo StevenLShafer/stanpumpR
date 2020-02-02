@@ -398,7 +398,7 @@ simulationPlot <- function(
     )
 
   plotObject <- plotObject +
-    coord_cartesian(xlim = c(min(xBreaks), max(xBreaks)), clip="off") +
+    coord_cartesian(xlim = c(min(xBreaks), max(xBreaks))) +
     scale_x_continuous(expand = c(0,0), breaks = xBreaks, labels = xLabels) +
     scale_color_manual(values=drugColors) +
     scale_fill_manual(values=drugColors)  +
