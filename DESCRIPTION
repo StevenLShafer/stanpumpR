@@ -43,6 +43,8 @@ Suggests:
     devtools,
     rsconnect,
     testthat,
+Depends:
+  R (>= 3.6)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
