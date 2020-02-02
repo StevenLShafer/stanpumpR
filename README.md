@@ -28,9 +28,10 @@ Near-term future developments in stanpumpR will include
 ### Setting up locallys
 
 1. Clone/download this repository to your local machine
-2. Open the `stanpumpR.Rproj` file in RStudio
-3. Install all packages that are loaded in `global.R`
-4. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
+1. Open the `stanpumpR.Rproj` file in RStudio
+1. Install the devtools package via `install.packages("devtools")`.
+1. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
+1. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
 
 Steven L. Shafer, MD
 November 2019
