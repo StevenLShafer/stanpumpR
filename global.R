@@ -3,6 +3,7 @@ library(shiny)
 library(shinyjs)
 library(shinydashboard)
 library(shinyBS)
+library(httr)
 library(ggpubr)
 library(mailR)
 library(ggplot2)
@@ -50,7 +51,7 @@ if (!isShinyLocal) {
   appFiles <- c(appFiles, "helpers","data","www", "misc")
 
   source("helpers/havingIP.R")
-  if (havingIP() && ping("google.com")) internetConnected <- TRUE
+  if (havingIP() && ping("https://www.google.com")) internetConnected <- TRUE
   library(rsconnect)
   options(shiny.reactlog=TRUE)
   source("misc/deployActive.R")

@@ -9,9 +9,7 @@ havingIP <- function() {
   any(grep(validIP, ipmessage))
 }
 
-ping <- function(x, stderr = FALSE, stdout = FALSE, ...){
-  pingvec <- system2("ping", x,
-                     stderr = FALSE,
-                     stdout = FALSE,...)
-  if (pingvec == 0) TRUE else FALSE
+ping <- function(url){
+  result <- httr::GET(url)
+  httr::status_code(result) == 200
 }

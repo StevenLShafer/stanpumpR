@@ -19,6 +19,7 @@ Imports:
   ggplot2  (>= 3.2),
   ggpubr,
   grid,
+  httr,
   jpeg,
   jsonlite,
   mailR,
