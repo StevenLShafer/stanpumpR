@@ -102,7 +102,7 @@ function(request) {
                     inputId = "ageUnit",
                     label = NULL,
                     choiceNames = c("years","months"),
-                    choiceValues = c(1,0.08333333),
+                    choiceValues = c(UNIT_YEAR, UNIT_MONTH),
                     inline = TRUE,
                     selected = defaultAgeUnit
                   )
@@ -128,7 +128,7 @@ function(request) {
                 inputId = "weightUnit",
                 label = NULL,
                 choiceNames = c("kg", "lb"),
-                choiceValues = c(1,0.453592),
+                choiceValues = c(UNIT_KG, UNIT_LB),
                 inline = TRUE,
                 selected = defaultWeightUnit
               ),
@@ -152,7 +152,7 @@ function(request) {
                 inputId = "heightUnit",
                 label = NULL,
                 choiceNames = c("cms","inches"),
-                choiceValues = c(1, 2.56),
+                choiceValues = c(UNIT_CM, UNIT_INCH),
                 inline = TRUE,
                 selected = defaultHeightUnit
               )

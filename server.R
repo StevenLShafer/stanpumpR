@@ -784,7 +784,7 @@ function(input, output, session)
         plotRecovery = plotRecovery,
         title = title,
         caption = printCaption,
-        aspect = aspect,
+        aspect = ASPECT,
         typical = typical,
         logY = logY,
         drugs = reactiveValuesToList(drugs),

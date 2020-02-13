@@ -1,13 +1,13 @@
-# Deploy stanpumpR to the shiny server 
-deployActive <- function()
+# Deploy stanpumpR to the shiny server
+deployActive <- function(appFiles)
 {
-  setwd("c:/google drive/projects/stanpumpR")
-  library(rsconnect)
-  deployApp(
-    forceUpdate = TRUE, 
-    appDir = "c:/google drive/projects/stanpumpR",
+  dir <- "c:/google drive/projects/stanpumpR"
+  setwd(dir)
+  rsconnect::deployApp(
+    appDir = dir,
     appFiles = appFiles,
-    account="steveshafer", 
+    forceUpdate = TRUE,
+    account = "steveshafer",
     appName = "stanpumpR"
-    )
+  )
 }
