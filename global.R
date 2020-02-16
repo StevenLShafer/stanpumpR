@@ -33,27 +33,26 @@ library(tidyr)
 library(dqshiny)
 library(shinyWidgets)
 
-
-# tell shiny to log all reactivity
-library(reactlog)
 options(warn = 2)
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 # cat("isShinyLocal",isShinyLocal,"\n")
+
+source("helpers/havingIP.R", local = TRUE)
 
 if (!isShinyLocal) {
   Sys.setenv(R_CONFIG_ACTIVE = "production")  # Running on Shinyapps
   internetConnected <- TRUE
 } else {
   Sys.unsetenv("R_CONFIG_ACTIVE") # Running on laptop
-  internetConnected <- FALSE
-  appFiles <- dir()
-  appFiles <- appFiles[grepl("\\.",appFiles)]
-  appFiles <- c(appFiles, "helpers","data","www", "misc")
+  internetConnected <- checkConnection()
 
-  source("helpers/havingIP.R")
-  if (havingIP() && ping("https://www.google.com")) internetConnected <- TRUE
-  library(rsconnect)
-  options(shiny.reactlog=TRUE)
+  # tell shiny to log all reactivity
+  library(reactlog)
+  options(shiny.reactlog = TRUE)
+
+  appFiles <- dir()
+  appFiles <- appFiles[grepl("\\.", appFiles)]
+  appFiles <- c(appFiles, "helpers","data","www", "misc")
   source("misc/deployActive.R")
   source("misc/deployTest.R")
 }
@@ -76,7 +75,7 @@ drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FAL
 # Load individual drug routines
 for (drug in drugDefaults_global$Drug)
 {
-  source(file.path("data", "drugs", paste0(drug, ".R")))
+  source(file.path("data", "drugs", paste0(drug, ".R")), local = TRUE)
 }
 
 facetFont <-      c(  20,   18,   18,   16,   14,   14,   14,   13,   13,   12,   11,   10,    9,    9,   8,  8)
@@ -85,14 +84,20 @@ facetSeperator <- c( " ",  "\n", "\n", "\n", "\n", "\n", "\n", "\n", "\n", "\n",
 facetAngle <-     c( 270,  270,  180,  180,  180,  180,  180,  180,  180,  180,  180,  180,  180,  180,  180, 180)
 facetSpacing <-   c(2.25,    2,  1.75,  1.5,    1,    1,  0.8,  0.7,  0.6,  0.6,  0.5,  0.5,  0.4,  0.3,  0.3, 0.2)
 
+UNIT_YEAR <- 1
+UNIT_MONTH <- 1/12
+UNIT_KG <- 1
+UNIT_LB <- 0.453592
+UNIT_CM <- 1
+UNIT_INCH <- 2.56
 
-#default variables
-defaultAge <- 50      # Years
-defaultAgeUnit <- 1   # Year
-defaultWeight <- 60   # Kg
-defaultWeightUnit <- 1  # Kg
-defaultHeight <- 66    # Centimeters
-defaultHeightUnit <- 2.56  # Inches
+# default variables
+defaultAge <- 50
+defaultAgeUnit <- UNIT_YEAR
+defaultWeight <- 60
+defaultWeightUnit <- UNIT_KG
+defaultHeight <- 66
+defaultHeightUnit <- UNIT_INCH
 defaultSex <- "female"
 
 # defaultAge <- NULL
@@ -104,10 +109,10 @@ defaultSex <- "female"
 # defaultSex <- character(0)
 
 # Default aspect ratio
-aspect <- 0.6
+ASPECT <- 0.6
 
 # Resolution for linear interpolation
-resolution <- 100
+RESOLUTION <- 100
 
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
@@ -148,30 +153,25 @@ print(x)
 cat("\n")
 
 # Setup Theme
-theme_update(panel.background = element_rect(fill = "white", color = "white"))
-theme_update(legend.box.background = element_rect(fill = "white", color = "white"))
-theme_update(panel.grid.major.y = element_line(color = "lightgrey"))
-theme_update(panel.grid.major.x = element_line(color = "lightgrey"))
-theme_update(axis.ticks = element_line(color = "lightgrey"))
-theme_update(axis.ticks.length = unit(.25, "cm"))
-theme_update(axis.title = element_text(size = rel(1.5)))
-theme_update(axis.text = element_text(size = rel(1.2)))
-theme_update(axis.line = element_line(size = 1, color = "black"))
-theme_update(axis.title = element_text(size = rel(1.5)))
-theme_update(legend.key = element_rect(fill = "white"))
-theme_update(aspect.ratio = 0.6)
-theme_update(plot.title = element_text(size = rel(1.5)))
-theme_update(legend.text = element_text(size = rel(0.9)))
-theme_update(legend.position = "right")
-theme_update(legend.key = element_blank())
-
-
-introductionPlot <- staticPlot(
-  paste(
-    "Initializing your session.",
-    sep = "\n"
-  )
+theme_update(
+  panel.background = element_rect(fill = "white", color = "white"),
+  legend.box.background = element_rect(fill = "white", color = "white"),
+  panel.grid.major.y = element_line(color = "lightgrey"),
+  panel.grid.major.x = element_line(color = "lightgrey"),
+  axis.ticks = element_line(color = "lightgrey"),
+  axis.ticks.length = unit(.25, "cm"),
+  axis.title = element_text(size = rel(1.5)),
+  axis.text = element_text(size = rel(1.2)),
+  axis.line = element_line(size = 1, color = "black"),
+  aspect.ratio = 0.6,
+  plot.title = element_text(size = rel(1.5)),
+  legend.text = element_text(size = rel(0.9)),
+  legend.position = "right",
+  legend.key = element_blank()
 )
+
+
+introductionPlot <- staticPlot("Initializing your session.")
 
 nothingtoPlot <- staticPlot(
   paste(

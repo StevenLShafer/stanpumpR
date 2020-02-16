@@ -111,7 +111,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   }
 
   # Calculate equispaced output
-  xout <- seq(from = 0, to = maximum, length.out = resolution)
+  xout <- seq(from = 0, to = maximum, length.out = RESOLUTION)
   equiSpace <- data.frame(
     Drug = PK$drug,
     Time = xout,
