@@ -2,7 +2,7 @@
 advanceState <- function(l, bolus, infusion, start, L)
 {
   Z <- lapply(
-    1:L, 
+    1:L,
     function(i) (
       list(
         l = l[i],
@@ -13,7 +13,7 @@ advanceState <- function(l, bolus, infusion, start, L)
   )
   return(
     Reduce(
-      function(state, Z) {state * Z$l +  Z$bolus + Z$infusion}, 
+      function(state, Z) {state * Z$l +  Z$bolus + Z$infusion},
       Z,
       init = start,
       accumulate = TRUE
