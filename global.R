@@ -1,6 +1,6 @@
 # Load Libraries
 source(file.path("R", "global", "packages.R"), local = TRUE)
-source(file.path("R", "global", "variables.R"), local = TRUE)
+source(file.path("R", "globalVariables.R"), local = TRUE)
 
 options(warn = 2)
 
