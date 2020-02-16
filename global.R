@@ -37,7 +37,7 @@ options(warn = 2)
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 # cat("isShinyLocal",isShinyLocal,"\n")
 
-source("helpers/havingIP.R", local = TRUE)
+source("R/havingIP.R", local = TRUE)
 
 if (!isShinyLocal) {
   Sys.setenv(R_CONFIG_ACTIVE = "production")  # Running on Shinyapps
@@ -52,15 +52,15 @@ if (!isShinyLocal) {
 
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.", appFiles)]
-  appFiles <- c(appFiles, "helpers","data","www", "misc")
+  appFiles <- c(appFiles, "R","data","www", "misc")
   source("misc/deployActive.R")
   source("misc/deployTest.R")
 }
 config <- config::get()
 
 # Load stanpumpR routines
-for (file in list.files("helpers", pattern = "\\.R$")) {
-  source(file.path("helpers", file), local = TRUE)
+for (file in list.files("R", pattern = "\\.R$")) {
+  source(file.path("R", file), local = TRUE)
 }
 
 # Load other files
