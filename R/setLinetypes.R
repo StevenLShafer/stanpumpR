@@ -28,5 +28,3 @@ setLinetypes <- function(normalization = "none")
   )
   return(list(plasmaLinetype = plasmaLinetype, effectsiteLinetype = effectsiteLinetype))
 }
-
-

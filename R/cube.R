@@ -1,5 +1,5 @@
 # Solve the cubic equation required to convert k10, k12, k13, k21, and k31
-# to 3 exponents 
+# to 3 exponents
 cube <- function(k10, k12, k13, k21, k31)
 {
   toradian <- asin(1.0) * 2.0 / 180.0	# pi/180
@@ -10,7 +10,7 @@ cube <- function(k10, k12, k13, k21, k31)
     a0 <- k10 * k21 * k31
     a1 <- k10 * k31 + k21 * k31 + k21 * k13 + k10 * k21 + k31 * k12
     a2 <- k10 + k12 + k13 + k21 + k31
-    
+
     # now transform to x^3 + px + q <- 0
     p <- a1 - (a2 * a2 / 3.0)
     q <- (2 * a2 * a2 * a2 / 27.0) - (a1 * a2 / 3.0) + a0
@@ -42,7 +42,7 @@ cube <- function(k10, k12, k13, k21, k31)
       root3 <- 0
     }
   }
-  
+
   # sort - nothing fancy is needed
   roots <- sort(c(root1, root2, root3),decreasing=TRUE)
   return(roots)

@@ -7,28 +7,28 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   # time variant model (ClosedForm1)           #
   # Modified to include PO and IV delivery     #
   ##############################################
-  
+
   cat("Structure of pkSet\n")
   print(str(pkSet))
 
-  # Add tlag_ to PO, IM, and IN dose times  
+  # Add tlag_ to PO, IM, and IN dose times
   dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
   dose$Time[dose$IM] <- dose$Time[dose$IM] + pkSet$tlag_IM
   dose$Time[dose$IN] <- dose$Time[dose$IN] + pkSet$tlag_IN
-  
-  # Create timeline 
+
+  # Create timeline
   timeLine <- sort(
     unique(
       c(
-        0, 
-        dose$Time, 
+        0,
+        dose$Time,
         dose$Time - .01, # run until just before next dose
         maximum
         )
       )
     )
   timeLine <- timeLine[timeLine >=0]
-  
+
   # Fill in gaps using exponentially decreasing amounts
   gapStart <- timeLine[1:length(timeLine)-1]
   gapEnd   <- timeLine[2:length(timeLine)]
@@ -42,7 +42,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   timeLine <- sort(unique(timeLine))
   L <- length(timeLine)
   doseNA <- rep(0, L)
-  
+
   # Create bolusLine and infusionLine
   bolusLine <- infusionLine <- poLine <- imLine <- inLine<- dt <- rate <- doseNA
   for (i in 1:L)
@@ -70,7 +70,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   }
   # cat("poLine\n")
   # print(poLine)
-  
+
   results <- with (
     pkSet,
     {
@@ -85,21 +85,21 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
       p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
       p_bolus_l3 <- p_coef_bolus_l3 * bolusLine
-      
-      p_infusion_l1 <- p_coef_infusion_l1 * rate * (1 - l1_dt)        
-      p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)        
+
+      p_infusion_l1 <- p_coef_infusion_l1 * rate * (1 - l1_dt)
+      p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)
       p_infusion_l3 <- p_coef_infusion_l3 * rate * (1 - l3_dt)
-      
+
       # cat("p_coef_PO_1", p_coef_PO_1, "\n")
       # cat("p_coef_PO_2", p_coef_PO_2, "\n")
       # cat("p_coef_PO_3", p_coef_PO_3, "\n")
       # cat("p_coef_PO_4", p_coef_PO_4, "\n")
-      
+
       p_PO_l1 <- p_coef_PO_l1 * poLine
       p_PO_l2 <- p_coef_PO_l2 * poLine
       p_PO_l3 <- p_coef_PO_l3 * poLine
       p_PO_ka <- p_coef_PO_ka * poLine
-      
+
       p_IM_l1 <- p_coef_IM_l1 * imLine
       p_IM_l2 <- p_coef_IM_l2 * imLine
       p_IM_l3 <- p_coef_IM_l3 * imLine
@@ -109,7 +109,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_IN_l2 <- p_coef_IN_l2 * inLine
       p_IN_l3 <- p_coef_IN_l3 * inLine
       p_IN_ka <- p_coef_IN_ka * inLine
-      
+
       # cat("ppo1\n")
       # print(ppo1)
       # cat("ppo2\n")
@@ -127,7 +127,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_state_ka_PO <- advanceStatePO(ka_PO_dt, doseNA,     doseNA,        p_PO_ka,    doseNA,     doseNA,  L)
       p_state_ka_IM <- advanceStatePO(ka_IM_dt, doseNA,     doseNA,        doseNA,     p_IM_ka,    doseNA,  L)
       p_state_ka_IN <- advanceStatePO(ka_IN_dt, doseNA,     doseNA,        doseNA,     doseNA,     p_IN_ka, L)
-      
+
 
       # Wrap up, calculate Ce
       # cat("p_state_1\n")
@@ -140,7 +140,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       # print(p_state_4)
       Cp <- p_state_l1 + p_state_l2 + p_state_l3 + p_state_ka_PO + p_state_ka_IM + p_state_ka_IN
       Ce <- calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
-      
+
       if (plotRecovery)
       {
         ke0_dt <- exp(-ke0 * dt)
@@ -148,30 +148,30 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
         e_bolus_l2  <- e_coef_bolus_l2  * bolusLine
         e_bolus_l3  <- e_coef_bolus_l3  * bolusLine
         e_bolus_ke0 <- e_coef_bolus_ke0 * bolusLine
-        
-        e_infusion_l1  <- e_coef_infusion_l1  * rate * (1 - l1_dt)        
-        e_infusion_l2  <- e_coef_infusion_l2  * rate * (1 - l2_dt)        
-        e_infusion_l3  <- e_coef_infusion_l3  * rate * (1 - l3_dt)        
+
+        e_infusion_l1  <- e_coef_infusion_l1  * rate * (1 - l1_dt)
+        e_infusion_l2  <- e_coef_infusion_l2  * rate * (1 - l2_dt)
+        e_infusion_l3  <- e_coef_infusion_l3  * rate * (1 - l3_dt)
         e_infusion_ke0 <- e_coef_infusion_ke0 * rate * (1 - ke0_dt)
-        
+
         e_PO_l1  <- e_coef_PO_l1  * poLine
         e_PO_l2  <- e_coef_PO_l2  * poLine
         e_PO_l3  <- e_coef_PO_l3  * poLine
         e_PO_ke0 <- e_coef_PO_ke0 * poLine
         e_PO_ka  <- e_coef_PO_ka  * poLine
-        
+
         e_IM_l1  <- e_coef_IM_l1  * imLine
         e_IM_l2  <- e_coef_IM_l2  * imLine
         e_IM_l3  <- e_coef_IM_l3  * imLine
         e_IM_ke0 <- e_coef_IM_ke0 * imLine
         e_IM_ka  <- e_coef_IM_ka  * imLine
-        
+
         e_IN_l1  <- e_coef_IN_l1  * inLine
         e_IN_l2  <- e_coef_IN_l2  * inLine
         e_IN_l3  <- e_coef_IN_l3  * inLine
         e_IN_ke0 <- e_coef_IN_ke0 * inLine
         e_IN_ka  <- e_coef_IN_ka  * inLine
-        
+
         e_state_l1     <- advanceStatePO(l1_dt,    e_bolus_l1,  e_infusion_l1,  e_PO_l1,  e_IM_l1,  e_IN_l1,  L)
         e_state_l2     <- advanceStatePO(l2_dt,    e_bolus_l2,  e_infusion_l2,  e_PO_l2,  e_IM_l2,  e_IN_l2,  L)
         e_state_l3     <- advanceStatePO(l3_dt,    e_bolus_l3,  e_infusion_l3,  e_PO_l3,  e_IM_l3,  e_IN_l3,  L)
@@ -179,15 +179,15 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
         e_state_ka_PO  <- advanceStatePO(ka_PO_dt, doseNA,      doseNA,         e_PO_ka,  doseNA,   doseNA,   L)
         e_state_ka_IM  <- advanceStatePO(ka_IM_dt, doseNA,      doseNA,         doseNA,   e_IM_ka,  doseNA,   L)
         e_state_ka_IN  <- advanceStatePO(ka_IN_dt, doseNA,      doseNA,         doseNA,   doseNA,   e_IN_ka,  L)
-        
+
         recovery <- sapply(
-          1:L, 
-          function(i) 
+          1:L,
+          function(i)
           (
             recoveryCalc(
               c(
-                e_state_l1[i], 
-                e_state_l2[i], 
+                e_state_l1[i],
+                e_state_l2[i],
                 e_state_l3[i],
                 e_state_ke0[i],
                 e_state_ka_PO[i],

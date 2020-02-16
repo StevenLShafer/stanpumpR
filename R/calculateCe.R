@@ -6,7 +6,7 @@ calculateCe <- function(Cp, ke0, dt, L)
   {
     y0 = Cp[i-1]
     y1 = Cp[i]
-    
+
     if (y0 <= y1 || y0 == 0 || y1 == 0)
     {
       k = (y1-y0)/dt[i]

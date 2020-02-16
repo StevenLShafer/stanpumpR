@@ -5,33 +5,33 @@ convertState <- function(oldState, oldPK, newPK)
   {
     return(state = oldState) # In a one compartment model, state variable doesn't change
   }
-  
+
   if (oldPK$lambda_3 == 0)
   {
     a1 <- (oldState[1] + oldState[2]) * oldPK$v1
-    
+
     a2 <- (
-      oldState[1] / (oldPK$k21 - oldPK$lambda_1) * oldPK$k21 + 
+      oldState[1] / (oldPK$k21 - oldPK$lambda_1) * oldPK$k21 +
       oldState[2] / (oldPK$k21 - oldPK$lambda_2) * oldPK$k21
     ) * oldPK$v2
-    f1 <- newPK$k21 / (newPK$k21 - newPK$lambda_1) 
-    f2 <- newPK$k21 / (newPK$k21 - newPK$lambda_2) 
+    f1 <- newPK$k21 / (newPK$k21 - newPK$lambda_1)
+    f2 <- newPK$k21 / (newPK$k21 - newPK$lambda_2)
     newState2 = (a2 / newPK$v2 -a1 / newPK$v1 * f1) / (f2 - f1)
     newState1 = a1 / newPK$v1 - newState2
     return(state = c(newState1, newState2, 0))
   }
-  
+
   a1 <- (oldState[1] + oldState[2] + oldState[3]) * oldPK$v1
-  
+
   a2 <- (
-    oldState[1] / (oldPK$k21 - oldPK$lambda_1) * oldPK$k21 + 
-    oldState[2] / (oldPK$k21 - oldPK$lambda_2) * oldPK$k21 + 
+    oldState[1] / (oldPK$k21 - oldPK$lambda_1) * oldPK$k21 +
+    oldState[2] / (oldPK$k21 - oldPK$lambda_2) * oldPK$k21 +
     oldState[3] / (oldPK$k21 - oldPK$lambda_3) * oldPK$k21
     ) * oldPK$v2
 
   a3 <- (
-    oldState[1] / (oldPK$k31 - oldPK$lambda_1) * oldPK$k31 + 
-    oldState[2] / (oldPK$k31 - oldPK$lambda_2) * oldPK$k31 + 
+    oldState[1] / (oldPK$k31 - oldPK$lambda_1) * oldPK$k31 +
+    oldState[2] / (oldPK$k31 - oldPK$lambda_2) * oldPK$k31 +
     oldState[3] / (oldPK$k31 - oldPK$lambda_3) * oldPK$k31
     ) * (oldPK$v1 * oldPK$k13 / oldPK$k31) # oldPK$v3
 
@@ -53,7 +53,7 @@ convertState <- function(oldState, oldPK, newPK)
   f14 = (f10 - a2) / (f11 - f2)
   f15 = a1 / newPK$v1 - f9 - f14 + f7 * f14
   f16 = 1 + f13 - f7 * f13 - f8
-  
+
   newState3 = f15 / f16
   newState2 = newState3 * f13 + f14
   newState1 = a1 / newPK$v1 - newState2 - newState3

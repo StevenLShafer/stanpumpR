@@ -11,5 +11,5 @@ clockTimeToDelta <- function(reference, x)
   x[x < 0] <- x[x < 0] + 1440 # Wrap around midnight
   return(x)
 }
-# test with 
+# test with
 # clockTimeToDelta("08:00", c("7", "09:00","10:15", "06:00"))
