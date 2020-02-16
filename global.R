@@ -48,9 +48,9 @@ if (!isShinyLocal) {
   internetConnected <- FALSE
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.",appFiles)]
-  appFiles <- c(appFiles, "R","data","www", "misc")
+  appFiles <- c(appFiles, "helpers","data","www", "misc")
 
-  source("R/havingIP.R")
+  source("helpers/havingIP.R")
   if (havingIP() && ping("https://www.google.com")) internetConnected <- TRUE
   library(rsconnect)
   options(shiny.reactlog=TRUE)
@@ -60,8 +60,8 @@ if (!isShinyLocal) {
 config <- config::get()
 
 # Load stanpumpR routines
-for (file in list.files("R", pattern = "\\.R$")) {
-  source(file.path("R", file), local = TRUE)
+for (file in list.files("helpers", pattern = "\\.R$")) {
+  source(file.path("helpers", file), local = TRUE)
 }
 
 # Load other files
