@@ -1,3 +1,5 @@
+library(tidyr)
+
 # simulate plasma and effect site concentration from time 0 to maximum
 simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   {
@@ -111,7 +113,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   }
 
   # Calculate equispaced output
-  xout <- seq(from = 0, to = maximum, length.out = resolution)
+  xout <- seq(from = 0, to = maximum, length.out = RESOLUTION)
   equiSpace <- data.frame(
     Drug = PK$drug,
     Time = xout,
@@ -145,7 +147,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     )
 #  print(str(max))
   results$Recovery <- NULL
-  results <- results %>% gather("Site","Y",-Time)
+  results <- results %>% tidyr::gather("Site","Y",-Time)
   results$Drug <- PK$drug
   results <- results[,c(4,1,2,3)]
 #  print(results)

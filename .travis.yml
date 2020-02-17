@@ -1,2 +1,5 @@
 language: r
+cache: packages
 warnings_are_errors: false
+apt_packages:
+  - libv8-dev

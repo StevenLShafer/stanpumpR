@@ -7,28 +7,28 @@ modelInteraction <- function(propofol, opioid)
   steepnessRemi <- 0.72
   steepnessProp <- 6.9
   preopioidIntensity <- 0.83  # Laryngoscopy
-  
-  # normalize all opioid to remi equivalents 
+
+  # normalize all opioid to remi equivalents
   remiMEAC <- 1  # Yes, this makes it pretty easy, but still necessary
   opioid <- opioid * remiMEAC # Convert opioid to remi equivalents
-  
+
   opioid <- opioid^steepnessRemi
   propofol <- propofol^steepnessProp
-  
+
   # Both drugs together
-  postopioidIntensity <- preopioidIntensity * 
+  postopioidIntensity <- preopioidIntensity *
     (1 - opioid / (opioid + (ce50Remi * preopioidIntensity)^steepnessRemi))
   pNR <- 1 - propofol / (propofol + (ce50Prop * postopioidIntensity)^steepnessProp)
-  
+
   # propofol only
   pNRpropofol <- 1 - propofol / (propofol + (ce50Prop * preopioidIntensity)^steepnessProp)
-  
+
   # opioid only (have to have some propofol, or they will respond, based on the model)
-  pNRopioid <- 1 
-  
+  pNRopioid <- 1
+
   return(
     list(
-      pNR = pNR, 
+      pNR = pNR,
       pNRpropofol = pNRpropofol,
       pNRopioid = pNRopioid
     )

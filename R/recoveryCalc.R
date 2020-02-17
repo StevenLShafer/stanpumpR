@@ -1,15 +1,15 @@
-# Calculate recovery time from current effect site concentration to target concentration 
+# Calculate recovery time from current effect site concentration to target concentration
 # using regression. Note: optimize() is twice as fast as uniroot()
 recoveryCalc <-   function(
-  state, 
-  lambda, 
+  state,
+  lambda,
   target
   )
 {
   if (target >= sum(state)) return(0)
   return (
     optimize(
-      function (t, state, lambda, target) { (target - sum(state * exp(-lambda * t)))^2 }, 
+      function (t, state, lambda, target) { (target - sum(state * exp(-lambda * t)))^2 },
       c(0,1440),
       state = state,
       lambda = lambda,
@@ -18,4 +18,3 @@ recoveryCalc <-   function(
     )$minimum
   )
 }
-

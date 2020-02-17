@@ -1,7 +1,7 @@
 # sendError: function to send me an error message whenever Shiny crashes
 sendError <- function(
   url,
-  errorMessage 
+  errorMessage
 )
 {
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
@@ -10,8 +10,8 @@ sendError <- function(
     "<body><div>",
     "<p>&nbsp;</p>",
     "<p>Dear Steve:<p>&nbsp;</p>",
-    "<p>I have some bad news. An error was encountered with stanpumpR.", 
-    "The error is:</p>", 
+    "<p>I have some bad news. An error was encountered with stanpumpR.",
+    "The error is:</p>",
     "<p>", errorMessage, "</p><p>&nbsp;</p>",
     "<p>You should be able to reload the file from ",
     "<a href=\"",url,"\">stanpumpR</a>.</p><p>&nbsp;</p>",
@@ -26,7 +26,7 @@ sendError <- function(
     body = bodyText,
     html = TRUE,
     smtp = list(
-      host.name = "smtp.gmail.com", 
+      host.name = "smtp.gmail.com",
       port = 465,
       user.name = "stanpumpR@gmail.com",
       passwd = config$password,
@@ -36,4 +36,3 @@ sendError <- function(
   )
   return()
 }
-
