@@ -1376,11 +1376,19 @@ observeEvent(
   {
     removeModal()
     TT <- hot_to_r(input$tempTableHTML)
+    cat("In ObserveEvent for editDosesOK\n")
     TT$Drug <- prior$DrugTimeUnits$drug
+    cat("TT:\n")
+    print(TT)
+    cat("current$DT:\n")
+    print(current$DT)
     current$DT <- rbind(
       current$DT[!TT$Delete,c("Drug","Time","Dose","Units")],
       current$DT[current$DT$Drug != prior$DrugTimeUnits$drug,]
     )
+    cat("current$DT after update:\n")
+    print(current$DT)
+
     for (i in seq_len(nrow(doseTable())))
     {
       current$DT$Time[i] <- validateTime(current$DT$Time[i])

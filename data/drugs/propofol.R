@@ -209,7 +209,7 @@ propofol <- function(weight = 70, height = 171, age = 50, sex = "male")
 
   events <- c("default")
   PK <- sapply(events, function(x) list(get0(x)))
-  print(str(PK))
+  # print(str(PK))
 
   tPeak <- 1.600 # Anesthesiology 90:1502-1516, 1999
   # typical <- 3
