@@ -20,7 +20,7 @@ function(input, output, session)
         better understand the mathematical implications of published models.
         stanpumpR is only an advisory program. How these models are applied to
         individual patients is a matter of clinical judgment by the health care
-        provider. Hello - this is a file change."
+        provider."
       ),
       tags$button(
         type = "button",
@@ -459,9 +459,9 @@ function(input, output, session)
     #    outputComments(paste0("input$height: ", input$height,"."), echo = FALSE)
     #    outputComments(paste0("input$heightUnit: ", input$heightUnit,"."), echo = FALSE)
     #    outputComments(paste0("input$maximum: ", input$maximum,"."), echo = FALSE)
-    outputComments(paste0("Is doseTableHTML NULL? ", is.null(input$doseTableHTML), "."), echo = FALSE)
+    #    outputComments(paste0("Is doseTableHTML NULL? ", is.null(input$doseTableHTML), "."), echo = FALSE)
     #    outputComments(paste0("input$referenceTime: ", input$referenceTime,"."), echo = FALSE)
-    outputComments(paste0("Is input$referenceTime NULL? ", is.null(input$referenceTime), "."), echo = FALSE)
+    #    outputComments(paste0("Is input$referenceTime NULL? ", is.null(input$referenceTime), "."), echo = FALSE)
 
     req(
       input$sex,
@@ -511,6 +511,7 @@ function(input, output, session)
         updatedDoseTableFlag()
         )
       {
+        outputComments("Something changed requiring a full dose calculation.", echo = DEBUG)
         PK_set(TRUE)
         recalculatePKFlag <- TRUE
         for (i in 1:nrow(drugDefaults))
@@ -679,16 +680,16 @@ function(input, output, session)
 
       # Setting prior$DT
       outputComments("Setting prior$DT in main observe()", echo = DEBUG)
-      outputComments(prior$DT, echo = DEBUG)
       prior$DT  <- DT
       prior$ET  <- ET
+      outputComments(prior$DT, echo = DEBUG)
       prior$plotMaximum <- plotMaximum
     }
     if (length(input$plasmaLinetype) == 0 ||
         length(input$effectsiteLinetype) == 0
     )
     {
-      outputComments("Waiting for line types to exist before making figure", echo = DEBUG)
+      outputComments("Waiting for line types to exist before making figure.", echo = DEBUG)
       return()
     }
     if (!PK_set())
@@ -1095,7 +1096,7 @@ observeEvent(
 # Get the time, drug, and units from the image
 imgDrugTime <- function(e = "")
 {
-  DEBUG <- TRUE
+  DEBUG <- FALSE
   outputComments("in imgDrugTime()", echo=DEBUG)
   allResults <- allResultsReactive()
   plotResults <- plotResultsReactive()
@@ -1383,16 +1384,26 @@ observeEvent(
     cat("current$DT:\n")
     print(current$DT)
     current$DT <- rbind(
-      current$DT[!TT$Delete,c("Drug","Time","Dose","Units")],
+      TT[!TT$Delete,c("Drug","Time","Dose","Units")],
       current$DT[current$DT$Drug != prior$DrugTimeUnits$drug,]
     )
+
+    # Sort by time, by drug, but put blanks at the bottom
+    print(unique(current$DT$Time))
+    current$DT$Time[current$DT$Time == ""] <- "zzzzz"
+    current$DT <- current$DT[order(current$DT$Time, current$DT$Drug),]
+    current$DT$Time[current$DT$Time == "zzzzz"] <- ""
+
     cat("current$DT after update:\n")
     print(current$DT)
 
-    for (i in seq_len(nrow(doseTable())))
+    for (i in 1:nrow(current$DT))
     {
-      current$DT$Time[i] <- validateTime(current$DT$Time[i])
-      current$DT$Dose[i] <- validateDose(current$DT$Dose[i]) # should work for target too
+      if (current$DT$Drug[i] > "")
+      {
+        current$DT$Time[i] <- validateTime(current$DT$Time[i])
+        current$DT$Dose[i] <- validateDose(current$DT$Dose[i]) # should work for target too
+      }
     }
     doseTable(current$DT) # Set reactive doseTable
   }

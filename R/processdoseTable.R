@@ -15,7 +15,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
     # cat("drug = ",drug,"\n")
     tempDT <- DT[DT$Drug == drug,]
     # cat("Structure of tempDT\n")
-    print(str(tempDT))
+    # print(str(tempDT))
     # cat("ET$Event",ET$Event,"\n")
     # cat("drugs[[drug]]$pkEvents",drugs[[drug]]$pkEvents,"\n")
     tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[drug]]$pkEvents,]
