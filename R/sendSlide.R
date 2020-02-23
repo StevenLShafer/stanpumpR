@@ -12,6 +12,8 @@ sendSlide <- function(
   email_password
 )
 {
+  outputComments(paste("Sending email to", recipient))
+
   if (missing(email_username) || is.null(email_username)) {
     stop("email username missing")
   }
