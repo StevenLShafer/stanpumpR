@@ -948,8 +948,10 @@ processNormalization <- observeEvent(
         plotResults = plotResultsReactive(),
         isShinyLocal = isShinyLocal,
         slide = as.numeric(input$sendSlide),
-        drugs
-        )
+        drugs,
+        email_username = config$email_username,
+        email_password = config$email_password
+      )
       output$sentPlot <- renderImage(
         list(src = img)
         )

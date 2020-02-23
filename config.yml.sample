@@ -1,2 +1,4 @@
 default:
   title: "stanpumpR"
+  email_username: "<gmail username>"
+  email_password: "<gmail password>"
