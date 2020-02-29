@@ -1,11 +1,11 @@
 # deploy stanpumpR to the test site (stanpumpR_test)
-deployTest <- function(appFiles)
+deployTest <- function(appFiles1 = appFiles)
 {
-  dir <- "c:/google drive/projects/stanpumpR"
+  dir <- "g:/projects/stanpumpR"
   setwd(dir)
   rsconnect::deployApp(
     appDir = dir,
-    appFiles = appFiles,
+    appFiles = appFiles1,
     forceUpdate = TRUE,
     account = "steveshafer",
     appName = "stanpumpR_test"

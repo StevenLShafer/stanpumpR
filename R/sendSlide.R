@@ -12,7 +12,8 @@ sendSlide <- function(
   email_password
 )
 {
-  outputComments(paste("Sending email to", recipient))
+  DEBUG <- TRUE
+  outputComments(paste("Sending email to", recipient), echo = DEBUG)
 
   if (missing(email_username) || is.null(email_username)) {
     stop("email username missing")
@@ -24,8 +25,9 @@ sendSlide <- function(
   DT <- prior$DT
   url <- prior$url
 
+  outputComments("In function sendSlide()", echo = DEBUG)
+
   if (!file.exists("Slides")) dir.create("Slides")
-  # cat("In function sendSlide()\n")
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
   DATE <- format(Sys.Date(), "%m/%d/%y")
   PPTX <- read_pptx("misc/Template.pptx")
@@ -39,12 +41,13 @@ sendSlide <- function(
   PPTX <- ph_with(PPTX, slide, location = ph_location_type ("sldNum"))
   PPTX <- ph_with(PPTX, "From StanpumpR", location = ph_location_type ("ftr"))
   pptxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".pptx")
-  # cat("Saving PPTX\n")
+
+  outputComments("Saving PPTX", echo = DEBUG)
   print(PPTX, target = pptxfileName)
   xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
   pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
-  # cat("starting ggxport\n")
 
+  outputComments("Starting ggexport()", echo = DEBUG)
   ggexport(
     plotObject + labs(title = "", caption = NULL, x = NULL, y = NULL) +
       theme(strip.text.y = element_text(
@@ -69,8 +72,7 @@ sendSlide <- function(
     )
   pngfileName <- gsub(".png","001.png",pngfileName) #Weird!
 
-  # cat("Fixing units for export\n")
-
+  outputComments("Fixing Units for export", echo = DEBUG)
   if (prior$ageUnit == "1")
   {
     ageUnit <- "years"
@@ -92,7 +94,7 @@ sendSlide <- function(
     heightUnit <- "inches"
   }
 
-  # cat("Creating workbook\n")
+  outputComments("Creating workbook", echo = DEBUG)
   wb <- createWorkbook("SLS")
   covariates <- data.frame(
     Covariate = c(
@@ -114,24 +116,23 @@ sendSlide <- function(
       prior$sex
     ),
     stringsAsFactors = FALSE)
-  # cat("Writing covariates\n")
+  outputComments("Writing covariates", echo = DEBUG)
   addWorksheet(wb, "Covariates")
   writeData(wb, sheet = 1, covariates)
 
-  # cat("Writing dose table\n")
+  outputComments("Writing dose table", echo = DEBUG)
   addWorksheet(wb, "Dose Table")
   writeData(wb, sheet = 2, DT)
 
-  # cat("Writing simulation results\n")
+  outputComments("Writing simulation results", echo = DEBUG)
   addWorksheet(wb, "Simulation Results")
   writeData(wb, sheet = 3, allResults)
 
-  # cat("Writing results for plotting\n")
+  outputComments("Writing results for plotting", echo = DEBUG)
   addWorksheet(wb, "Results for Plotting")
   writeData(wb, sheet = 4, plotResults)
 
-  # cat("Writing out PK parameters\n")
-  # Write out PK parametes
+  outputComments("Writing PK parameters", echo = DEBUG)
   sheet = 5
   for (drug in sort(unique(as.character(DT$Drug))))
   {
@@ -213,8 +214,10 @@ sendSlide <- function(
     writeData(wb, sheet = sheet, parameters, rowNames=TRUE)
     sheet <- sheet + 1
   }
-  # cat("Saving workbook\n")
+  outputComments("Saving Workbook", echo = DEBUG)
   saveWorkbook(wb, xlsxfileName, overwrite = TRUE)
+
+  outputComments("Creating e-mail", echo = DEBUG)
   bodyText <- paste0(
     "<html><head><style><!-- p 	{margin:0in;	font-size:12.0pt;	font-family:\"Times New Roman\",\"serif\"	} --></style>",
     "<body><div>",
@@ -243,8 +246,7 @@ sendSlide <- function(
     "</div></body></html>"
   )
 
-  # cat("Sending email\n")
-
+  outputComments("Sending email", echo = DEBUG)
   email <- send.mail(
     from = email_username,
     to = recipient,
@@ -264,5 +266,6 @@ sendSlide <- function(
     authenticate = TRUE,
     send = internetConnected # Only send from server
   )
+  outputComments("Leaving sendMail()", echo = DEBUG)
   return(pngfileName)
 }

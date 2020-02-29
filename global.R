@@ -23,8 +23,8 @@ if (!isShinyLocal) {
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.", appFiles)]
   appFiles <- c(appFiles, "R","data","www", "misc")
-  source("misc/deployActive.R")
-  source("misc/deployTest.R")
+  source("scripts/deployActive.R")
+  source("scripts/deployTest.R")
 }
 config <- config::get()
 
@@ -126,7 +126,7 @@ doseTableNewRow <-  doseTableInit[5, ]
 outputComments <- function(text, echo = TRUE) {
   isolate({
 
-    # If this is calle within a shiny app, try to get the active session
+    # If this is called within a shiny app, try to get the active session
     # and write to the session's logger
     commentsLog <- function(x) invisible(NULL)
     session <- getDefaultReactiveDomain()
