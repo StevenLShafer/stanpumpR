@@ -22,7 +22,7 @@ if (!isShinyLocal) {
 
   appFiles <- dir()
   appFiles <- appFiles[grepl("\\.", appFiles)]
-  appFiles <- c(appFiles, "R","data","www", "misc")
+  appFiles <- c(appFiles, "R","data","www") #, "misc")
   source("misc/deployActive.R")
   source("misc/deployTest.R")
 }

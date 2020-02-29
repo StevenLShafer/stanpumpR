@@ -35,7 +35,6 @@ function(input, output, session)
     )
   )
 
-
   options(error = function ()
   {
     x <- geterrmessage()
@@ -935,7 +934,7 @@ processNormalization <- observeEvent(
   observeEvent(
     input$sendSlide,
     {
-      DEBUG <- FALSE
+      DEBUG <- TRUE
       # output$EmailButton <- renderUI({
       #       p("Processing slide")
       # })
