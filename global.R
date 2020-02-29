@@ -123,3 +123,37 @@ doseTableNewRow <-  doseTableInit[5, ]
 
 `%then%` <- shiny:::`%OR%`
 
+outputComments <- function(text, echo = TRUE) {
+  isolate({
+
+    # If this is calle within a shiny app, try to get the active session
+    # and write to the session's logger
+    commentsLog <- function(x) invisible(NULL)
+    session <- getDefaultReactiveDomain()
+    if (!is.null(session) &&
+        is.environment(session$userData) &&
+        is.reactive(session$userData$commentsLog))
+    {
+      commentsLog <- session$userData$commentsLog
+    }
+
+    if (is.na(echo)) return()
+    if (is.data.frame((text)))
+    {
+      con <- textConnection("outputString","w",local=TRUE)
+      capture.output(print(text, digits = 3), file = con, type="output", split = FALSE)
+      close(con)
+      if (echo)
+      {
+        for (line in outputString) cat(line, "\n")
+      }
+      for (line in outputString) commentsLog(paste0(commentsLog(), "<br>", line))
+    } else {
+      if (echo)
+      {
+        cat(text, "\n")
+      }
+      commentsLog(paste0(commentsLog(), "<br>", text))
+    }
+  })
+}
