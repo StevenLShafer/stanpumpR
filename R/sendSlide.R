@@ -7,10 +7,20 @@ sendSlide <- function(
   plotResults,
   isShinyLocal,
   slide,
-  drugs
+  drugs,
+  email_username,
+  email_password
 )
 {
   DEBUG <- TRUE
+  outputComments(paste("Sending email to", recipient), echo = DEBUG)
+
+  if (missing(email_username) || is.null(email_username)) {
+    stop("email username missing")
+  }
+  if (missing(email_password) || is.null(email_password)) {
+    stop("email password missing")
+  }
   title = prior$title
   DT <- prior$DT
   url <- prior$url
@@ -238,7 +248,7 @@ sendSlide <- function(
 
   outputComments("Sending email", echo = DEBUG)
   email <- send.mail(
-    from = "stanpumpR@gmail.com",
+    from = email_username,
     to = recipient,
     subject = title,
     body = bodyText,
@@ -246,8 +256,8 @@ sendSlide <- function(
     smtp = list(
       host.name = "smtp.gmail.com",
       port = 465,
-      user.name = "stanpumpR@gmail.com",
-      passwd = config$password,
+      user.name = email_username,
+      passwd = email_password,
       ssl = TRUE),
     attach.files = c(
       pptxfileName,

@@ -25,7 +25,7 @@ Near-term future developments in stanpumpR will include
 4. PK changes with pregnancy, CYP2D6, and renal function. These have been added to the UI, but no models with these are yet in the program.
 5. Create of help and example pages.
 
-### Setting up locallys
+### Setting up locally
 
 1. Clone/download this repository to your local machine
 1. Open the `stanpumpR.Rproj` file in RStudio
