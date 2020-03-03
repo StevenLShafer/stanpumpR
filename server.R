@@ -536,98 +536,80 @@ function(input, output, session)
   )
 
   # email address --------------------------------------
-  output$EmailButton <- renderUI({
-    if (input$recipient == "") return(p(""))
+  observe({
+    if (input$recipient == "") {
+      hideElement("sendSlideButton")
+      hideElement("sendSlideError")
+      return()
+    }
+
     regex_email <- "^\\w+([-+.']\\w+)*@\\w+([-.]\\w+)*\\.\\w{2,}([-.]\\w+)*$"
-    if (nchar(input$recipient) == attr(regexpr(regex_email, input$recipient, perl=FALSE),"match.length"))
-    {
+    if (nchar(input$recipient) == attr(regexpr(regex_email, input$recipient, perl=FALSE),"match.length")) {
       cat("Address is OK\n")
-      return(
-        div(
-          style = "padding-top: 25px;",
-          actionButton(
-            inputId = "sendSlide",
-            label = "GO!",
-            icon=icon("far fa-envelope")
-          ),
-          bsTooltip(
-            id = "sendSlide",
-            title = "Click ONCE to send slide",
-            placement = "top",
-            options = list(container = "body")
-          )
-        )
-      )
-    }  else {
-      cat("Address is Not OK\n")
-      return(
-        div(
-          style = "padding-top: 25px;",
-          "Check address"
-          )
-        )
+      hideElement("sendSlideError")
+      showElement("sendSlideButton")
+    } else {
+      hideElement("sendSlideButton")
+      showElement("sendSlideError")
     }
   })
 
-processNormalization <- observeEvent(
-  input$normalization,
-  priority=10,
-  {
-    #cat("Inside observeEvent for Linetypes\n")
-    X <- setLinetypes(input$normalization)
-    prior$plasmaLinetype <- X$plasmaLinetype
-    prior$effectsiteLinetype <- X$effectsiteLinetype
-    output$Linetype <- renderUI({
-    div(
-      selectInput(
-        inputId = "plasmaLinetype",
-        label = "Plasma",
-        selected = prior$plasmaLinetype,
-        choices = c("solid",
-                    "dashed",
-                    "longdash",
-                    "dotted",
-                    "dotdash",
-                    "twodash",
-                    "blank")
-      ),
-      bsTooltip(
-        id = "plasmaLinetype",
-        title = "Line type for plasma concentrations",
-        placement = "top",
-        options = list(container = "body")
-      ),
-      selectInput(
-        inputId = "effectsiteLinetype",
-        label = "Effect site",
-        selected = prior$effectsiteLinetype,
-        choices = c("solid",
-                    "dashed",
-                    "longdash",
-                    "dotted",
-                    "dotdash",
-                    "twodash",
-                    "blank")
-      ),
-      bsTooltip(
-        id = "effectsiteLinetype",
-        title = "Line type for effect site concentrations",
-        placement = "bottom",
-        options = list(container = "body")
-      )
-    )
-    })
-  }
-)
+  observeEvent(
+    input$normalization,
+    priority=10,
+    {
+      #cat("Inside observeEvent for Linetypes\n")
+      X <- setLinetypes(input$normalization)
+      prior$plasmaLinetype <- X$plasmaLinetype
+      prior$effectsiteLinetype <- X$effectsiteLinetype
+      output$Linetype <- renderUI({
+        div(
+          selectInput(
+            inputId = "plasmaLinetype",
+            label = "Plasma",
+            selected = prior$plasmaLinetype,
+            choices = c("solid",
+                        "dashed",
+                        "longdash",
+                        "dotted",
+                        "dotdash",
+                        "twodash",
+                        "blank")
+          ),
+          bsTooltip(
+            id = "plasmaLinetype",
+            title = "Line type for plasma concentrations",
+            placement = "top",
+            options = list(container = "body")
+          ),
+          selectInput(
+            inputId = "effectsiteLinetype",
+            label = "Effect site",
+            selected = prior$effectsiteLinetype,
+            choices = c("solid",
+                        "dashed",
+                        "longdash",
+                        "dotted",
+                        "dotdash",
+                        "twodash",
+                        "blank")
+          ),
+          bsTooltip(
+            id = "effectsiteLinetype",
+            title = "Line type for effect site concentrations",
+            placement = "bottom",
+            options = list(container = "body")
+          )
+        )
+      })
+    }
+  )
 
   # Send Slide -----------------------------
   observeEvent(
     input$sendSlide,
     {
       DEBUG <- TRUE
-      # output$EmailButton <- renderUI({
-      #       p("Processing slide")
-      # })
       outputComments(paste("input$sendSlide",input$sendSlide), echo = DEBUG)
       img <- sendSlide(
         prior = prior,
@@ -651,35 +633,35 @@ processNormalization <- observeEvent(
   )
 
 
-# Hover control ############################################################
-observeEvent(
-  input$plot_hover,
-  {
-    hover <- input$plot_hover
-    if (is.null(hover$panelvar1))
+  # Hover control ############################################################
+  observeEvent(
+    input$plot_hover,
     {
-      output$hover_info <- NULL
-      return()
-    }
-    text <- xy_str(hover)
-    output$hover_info <- renderUI({
-      style <- paste0("position:absolute; padding:0; margin:0; z-index:100; font-size: 10px; background-color: rgba(245, 245, 245, 0.85); ",
-                      "left:", hover$coords_css$x+25, "px; top:", hover$coords_css$y+10, "px;")
+      hover <- input$plot_hover
+      if (is.null(hover$panelvar1))
+      {
+        output$hover_info <- NULL
+        return()
+      }
+      text <- xy_str(hover)
+      output$hover_info <- renderUI({
+        style <- paste0("position:absolute; padding:0; margin:0; z-index:100; font-size: 10px; background-color: rgba(245, 245, 245, 0.85); ",
+                        "left:", hover$coords_css$x+25, "px; top:", hover$coords_css$y+10, "px;")
 
-      # actual tooltip created as wellPanel
-      wellPanel(
-        style = style,
-        HTML(
-          gsub(
-            ",",
-            "<br>",
-            text
+        # actual tooltip created as wellPanel
+        wellPanel(
+          style = style,
+          HTML(
+            gsub(
+              ",",
+              "<br>",
+              text
+            )
           )
         )
-      )
-    })
-  }
-)
+      })
+    }
+  )
 
 # Display Time, CE, or total opioid
 xy_str <- function(e) {

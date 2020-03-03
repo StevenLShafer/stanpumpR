@@ -414,7 +414,26 @@ function(request) {
                 ),
                 column(
                   width = 3,
-                  uiOutput("EmailButton")
+                  div(
+                    id = "sendSlideButton",
+                    style = "padding-top: 25px;",
+                    actionButton(
+                      inputId = "sendSlide",
+                      label = "GO!",
+                      icon = icon("far fa-envelope")
+                    ),
+                    bsTooltip(
+                      id = "sendSlide",
+                      title = "Click ONCE to send slide",
+                      placement = "top",
+                      options = list(container = "body")
+                    )
+                  ),
+                  div(
+                    id = "sendSlideError",
+                    style = "padding-top: 25px;",
+                    "Check address"
+                  )
                 )
               ), # End of fluid row
               imageOutput(
