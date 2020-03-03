@@ -103,10 +103,10 @@ getInitialDrugs <- function() {
 }
 
 # This is not a pure function - it's given a reactiveValues and modifies it
-recalculatePK <- function(drugs, drugDefaults, age, weight, height, sex, DEBUG = FALSE) {
+recalculatePK <- function(drugs, drugDefaults, age, weight, height, sex) {
   for (idx in seq(nrow(drugDefaults))) {
     drug <- drugDefaults$Drug[idx]
-    outputComments("Getting PK for", drug, echo = DEBUG)
+    outputComments("Getting PK for", drug)
     drugs[[drug]] <- modifyList(
       drugs[[drug]],
       getDrugPK(

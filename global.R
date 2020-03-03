@@ -130,7 +130,11 @@ eventTableInit <- data.frame(
 
 `%then%` <- shiny:::`%OR%`
 
-outputComments <- function(..., echo = TRUE, sep = " ") {
+outputComments <- function(
+  ...,
+  echo = getOption("ECHO_OUTPUT_COMMENTS", TRUE),
+  sep = " ")
+{
   isolate({
     argslist <- list(...)
     if (length(argslist) == 1) {

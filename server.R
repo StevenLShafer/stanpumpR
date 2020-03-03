@@ -220,9 +220,12 @@ function(input, output, session)
 
   observe({
     DEBUG <- TRUE
+    prevEcho <- options("ECHO_OUTPUT_COMMENTS" = DEBUG)
+    on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
+
     outputComments("\n*********************************************************")
     outputComments("Starting Main Observation Loop")
-    on.exit(outputComments("Exiting main observation loop.", echo = DEBUG))
+    on.exit(outputComments("Exiting main observation loop.", echo = DEBUG), add = TRUE)
     #    outputComments(paste0("input$sex: ", input$sex,"."), echo = FALSE)
     #    outputComments(paste0("input$age: ", input$age,"."), echo = FALSE)
     #    outputComments(paste0("input$ageUnit: ", input$ageUnit,"."), echo = FALSE)
@@ -236,16 +239,16 @@ function(input, output, session)
     #    outputComments(paste0("Is input$referenceTime NULL? ", is.null(input$referenceTime), "."), echo = FALSE)
 
     req(input$age, input$weight, input$height)
-    outputComments("Main loop requirements are met.", echo = DEBUG)
+    outputComments("Main loop requirements are met.")
 
     errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
     test_covariates <- checkNumericCovariates(input$age, input$weight, input$height, errorFxn)
     if (!test_covariates) {
-      outputComments("Test for numeric covariates failed", echo = DEBUG)
-      outputComments("input$sex =", input$sex, echo = DEBUG)
-      outputComments("input$ageUnit =", input$ageUnit, is.numeric(input$ageUnit),typeof(input$ageUnit), echo = DEBUG)
-      outputComments("input$weightUnit =", input$weightUnit,is.numeric(input$weightUnit), echo = DEBUG)
-      outputComments("input$heightUnit =", input$heightUnit,is.numeric(input$heightUnit), echo = DEBUG)
+      outputComments("Test for numeric covariates failed")
+      outputComments("input$sex =", input$sex)
+      outputComments("input$ageUnit =", input$ageUnit, is.numeric(input$ageUnit),typeof(input$ageUnit))
+      outputComments("input$weightUnit =", input$weightUnit,is.numeric(input$weightUnit))
+      outputComments("input$heightUnit =", input$heightUnit,is.numeric(input$heightUnit))
       return()
     }
 
@@ -270,14 +273,13 @@ function(input, output, session)
       updatedDoseTableFlag()
 
     if (recalculatePKFlag) {
-      outputComments("Something changed requiring a full dose calculation.", echo = DEBUG)
+      outputComments("Something changed requiring a full dose calculation.")
       recalculatePK(
         drugs, drugDefaults,
         age = age,
         weight = weight,
         height = height,
-        sex = sex,
-        DEBUG = DEBUG
+        sex = sex
       )
       prior$weight      <- weight
       prior$height      <- height
@@ -292,17 +294,17 @@ function(input, output, session)
     # Has the dose table changed?                                         #
     #######################################################################
     DT <- doseTable()   # Here is where the reactivity is forced
-    outputComments("doseTable() in simulation plot", echo = DEBUG)
-    outputComments(DT, echo = DEBUG)
+    outputComments("doseTable() in simulation plot")
+    outputComments(DT)
     DT$Drug    <- as.character(DT$Drug)
     DT$Units   <- as.character(DT$Units)
     DT$Dose    <- as.numeric(DT$Dose)
     DT$Time    <- as.character(DT$Time)  # Stored as factors... Arrgh.....
     DT <- DT[DT$Drug != "" & !is.na(DT$Dose) & DT$Time != "" & DT$Units != "",]
-    outputComments("Contents of DT in main observe()", echo = DEBUG)
-    outputComments(DT, echo = DEBUG)
-    outputComments("Contents of prior$DT in main Observe()", echo = DEBUG)
-    outputComments(prior$DT, echo = DEBUG)
+    outputComments("Contents of DT in main observe()")
+    outputComments(DT)
+    outputComments("Contents of prior$DT in main Observe()")
+    outputComments(prior$DT)
 
     # Remove blank values of DT
     if (is.null(input$referenceTime))
@@ -328,7 +330,7 @@ function(input, output, session)
     }
     if (nrow(DT) == 0)
     {
-      outputComments("Dose table is empty in main loop.", echo = DEBUG)
+      outputComments("Dose table is empty in main loop.")
       output$optionFlag <- renderText("")
       main_plot(nothingtoPlot)  # reactiveVal
       return()
@@ -373,28 +375,28 @@ function(input, output, session)
     }
     if (prior$RefreshFlag)
     {
-      outputComments("Plotting because RefreshFlag requested", echo = DEBUG)
+      outputComments("Plotting because RefreshFlag requested")
       prior$RefreshFlag <- FALSE
       replotFlag <- TRUE
     }
     if (recalculatePKFlag)
     {
-      outputComments("Plotting because recalculatePKFlag is TRUE\n", echo = DEBUG)
+      outputComments("Plotting because recalculatePKFlag is TRUE\n")
       replotFlag <- TRUE
     }
     if (!isTRUE(all_equal(DT, prior$DT))) {
-      outputComments("Plotting because doseTable changed.", echo = DEBUG)
+      outputComments("Plotting because doseTable changed.")
       replotFlag <- TRUE
     } else {
-      outputComments("doseTable remains unchanged in main observe()", echo = DEBUG)
+      outputComments("doseTable remains unchanged in main observe()")
     }
     if (!isTRUE(all_equal(ET, prior$ET))) {
-      outputComments("Plotting because eventTable changed.", echo = DEBUG)
+      outputComments("Plotting because eventTable changed.")
       replotFlag <- TRUE
     }
 
     if (plotMaximum != prior$plotMaximum) {
-      outputComments(paste("Plotting because plotMaximum changed to ", plotMaximum), echo = DEBUG)
+      outputComments(paste("Plotting because plotMaximum changed to ", plotMaximum))
       replotFlag <- TRUE
     }
     plotRecovery           <- "Time Until"    %in% input$addedPlots
@@ -402,14 +404,14 @@ function(input, output, session)
     {
       if (plotRecovery == TRUE)
       {
-        outputComments("Plotting because plotRecovery changed to TRUE", echo = DEBUG)
+        outputComments("Plotting because plotRecovery changed to TRUE")
         replotFlag <- TRUE
       }
     }
 
     if (replotFlag)
     {
-      outputComments("calling processdoseTable", echo = DEBUG)
+      outputComments("calling processdoseTable")
       x <- processdoseTable(
         DT,
         ET,
@@ -419,20 +421,20 @@ function(input, output, session)
         plotRecovery
       )
       #      drugs     <- x$drugs
-      outputComments("Completed processdoseTable", echo = DEBUG)
+      outputComments("Completed processdoseTable")
 
       # Setting prior$DT
-      outputComments("Setting prior$DT in main observe()", echo = DEBUG)
+      outputComments("Setting prior$DT in main observe()")
       prior$DT  <- DT
       prior$ET  <- ET
-      outputComments(prior$DT, echo = DEBUG)
+      outputComments(prior$DT)
       prior$plotMaximum <- plotMaximum
     }
     if (length(input$plasmaLinetype) == 0 ||
         length(input$effectsiteLinetype) == 0
     )
     {
-      outputComments("Waiting for line types to exist before making figure.", echo = DEBUG)
+      outputComments("Waiting for line types to exist before making figure.")
       return()
     }
 
@@ -467,7 +469,7 @@ function(input, output, session)
        plotRecovery           != prior$plotRecovery
     )
     {
-      outputComments('****************** SIMULATION PLOT CALLED BY ********************', echo = DEBUG)
+      outputComments('****************** SIMULATION PLOT CALLED BY ********************')
       if (replotFlag)          cat("New plot triggered by replotFlag\n")
       if (plasmaLinetype         != prior$plasmaLinetype) outputComments("New plot triggered by plasmaLinetype != prior$plasmaLinetype")
       if (effectsiteLinetype     != prior$effectsiteLinetype) outputComments("New plot triggered by effectsiteLinetype != prior$effectsiteLinetype")
@@ -562,14 +564,14 @@ function(input, output, session)
       if (is.null(plotObjectReactive()))
       {
         output$optionFlag <- renderText("")
-        outputComments("Null plot after calling simulation Plot()", echo = DEBUG)
+        outputComments("Null plot after calling simulation Plot()")
         main_plot(nothingtoPlot) # reactiveVal
       } else {
         output$optionFlag <- renderText("Graph Options")
         main_plot(plotObjectReactive()) # reactiveVal
       }
     } else {
-      outputComments("Nothing flagged to make new plot", echo = DEBUG)
+      outputComments("Nothing flagged to make new plot")
     }
   },
   priority = -1
