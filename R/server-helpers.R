@@ -82,8 +82,6 @@ getInitialValues <- function() {
     holdPlot           = FALSE,
     DrugTimeUnits      = "",
     timeDT             = 0,
-    Refresh            = 0, # Used to see if the refresh button has been clicked
-    RefreshFlag        = FALSE, # Used to force simulationPlot to update with refresh button
     referenceTime      = "none"
   )
 }
@@ -125,4 +123,13 @@ recalculatePK <- function(drugs, drugDefaults, age, weight, height, sex) {
     drugs[[drug]]$maxCe <- 1
     drugs[[drug]]$recovery <- 1
   }
+}
+
+cleanDT <- function(DT) {
+  DT$Drug    <- as.character(DT$Drug)
+  DT$Units   <- as.character(DT$Units)
+  DT$Dose    <- as.numeric(DT$Dose)
+  DT$Time    <- as.character(DT$Time)  # Stored as factors... Arrgh.....
+  DT <- DT[DT$Drug != "" & !is.na(DT$Dose) & DT$Time != "" & DT$Units != "", ]
+  DT
 }

@@ -226,13 +226,6 @@ function(request) {
                     placement = "right",
                     options = list(container = "body")
                   )
-                ),
-                column(
-                  width = 4,
-                  actionButton(
-                    inputId = "Refresh",
-                    label = "Refresh"
-                  )
                 )
               ), # end of fluid row
               # Note to Dean: Here is where the handsontable is output. My guess is that this is where

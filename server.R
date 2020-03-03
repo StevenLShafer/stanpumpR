@@ -296,42 +296,25 @@ function(input, output, session)
     DT <- doseTable()   # Here is where the reactivity is forced
     outputComments("doseTable() in simulation plot")
     outputComments(DT)
-    DT$Drug    <- as.character(DT$Drug)
-    DT$Units   <- as.character(DT$Units)
-    DT$Dose    <- as.numeric(DT$Dose)
-    DT$Time    <- as.character(DT$Time)  # Stored as factors... Arrgh.....
-    DT <- DT[DT$Drug != "" & !is.na(DT$Dose) & DT$Time != "" & DT$Units != "",]
+    DT <- cleanDT(DT)
     outputComments("Contents of DT in main observe()")
     outputComments(DT)
     outputComments("Contents of prior$DT in main Observe()")
     outputComments(prior$DT)
 
     # Remove blank values of DT
-    if (is.null(input$referenceTime))
-    {
-      referenceTime <- "none"
-    } else {
-      referenceTime <- input$referenceTime
-    }
-    if (referenceTime == "none")
-    {
-      DT$Time <- as.numeric(DT$Time)
-    } else {
-      DT$Time    <- clockTimeToDelta(referenceTime, DT$Time)
-    }
+    referenceTime <- input$referenceTime
+    DT$Time <- clockTimeToDelta(referenceTime, DT$Time)
     DT <- DT[
       DT$Drug  != "" &
         DT$Units != "" &
         !is.na(DT$Dose) &
         !is.na(DT$Time), ]
-    if (input$maximum == 10)
-    {
-      DT <- DT[DT$Time <= 10,]
+    if (input$maximum == 10) {
+      DT <- DT[DT$Time <= 10, ]
     }
-    if (nrow(DT) == 0)
-    {
+    if (nrow(DT) == 0) {
       outputComments("Dose table is empty in main loop.")
-      output$optionFlag <- renderText("")
       main_plot(nothingtoPlot)  # reactiveVal
       return()
     }
@@ -340,48 +323,31 @@ function(input, output, session)
     #######################################################################
     # Has the event table changed?
     ET <- eventTable()
-    ET$Time    <- as.character(ET$Time)
-    if (referenceTime == "none")
-    {
-      ET$Time <- as.numeric(ET$Time)
-    } else {
-      ET$Time    <- clockTimeToDelta(referenceTime, ET$Time)
-    }
-    if (input$maximum == 10)
-    {
-      ET <- ET[ET$Time <= 10,]
+    ET$Time <- as.character(ET$Time)
+    ET$Time <- clockTimeToDelta(referenceTime, ET$Time)
+    if (input$maximum == 10) {
+      ET <- ET[ET$Time <= 10, ]
     }
 
     # Adjust maximum to include dose times
     plotMaximum <- as.numeric(input$maximum)
     steps <- maxtimes$steps[maxtimes$times == input$maximum]
-    maxTime <- max(as.numeric(DT$Time), as.numeric(ET$Time), na.rm=TRUE)
+    maxTime <- max(as.numeric(DT$Time), as.numeric(ET$Time), na.rm = TRUE)
 
-    if (input$maximum != 10 && (maxTime + 29) >= plotMaximum)
-    {
+    if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
       steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
       plotMaximum <- ceiling((maxTime + 30)/steps) * steps
     }
 
     xBreaks <- 0:(plotMaximum/steps) * steps
-    if (referenceTime == "none")
-    {
-      xLabels <- xBreaks
+    xLabels <- deltaToClockTime(referenceTime, xBreaks)
+    if (referenceTime == "none") {
       xAxisLabel <- "Time (Minutes)"
-    } else
-    {
-      xLabels <- deltaToClockTime(referenceTime, xBreaks)
+    } else {
       xAxisLabel <- "Time"
     }
-    if (prior$RefreshFlag)
-    {
-      outputComments("Plotting because RefreshFlag requested")
-      prior$RefreshFlag <- FALSE
-      replotFlag <- TRUE
-    }
-    if (recalculatePKFlag)
-    {
-      outputComments("Plotting because recalculatePKFlag is TRUE\n")
+    if (recalculatePKFlag) {
+      outputComments("Plotting because recalculatePKFlag is TRUE")
       replotFlag <- TRUE
     }
     if (!isTRUE(all_equal(DT, prior$DT))) {
@@ -396,21 +362,16 @@ function(input, output, session)
     }
 
     if (plotMaximum != prior$plotMaximum) {
-      outputComments(paste("Plotting because plotMaximum changed to ", plotMaximum))
+      outputComments("Plotting because plotMaximum changed to ", plotMaximum)
       replotFlag <- TRUE
     }
-    plotRecovery           <- "Time Until"    %in% input$addedPlots
-    if (plotRecovery != prior$plotRecovery)
-    {
-      if (plotRecovery == TRUE)
-      {
-        outputComments("Plotting because plotRecovery changed to TRUE")
-        replotFlag <- TRUE
-      }
+    plotRecovery <- "Time Until" %in% input$addedPlots
+    if (plotRecovery && !prior$plotRecovery) {
+      outputComments("Plotting because plotRecovery changed to TRUE")
+      replotFlag <- TRUE
     }
 
-    if (replotFlag)
-    {
+    if (replotFlag) {
       outputComments("calling processdoseTable")
       x <- processdoseTable(
         DT,
@@ -431,8 +392,7 @@ function(input, output, session)
       prior$plotMaximum <- plotMaximum
     }
     if (length(input$plasmaLinetype) == 0 ||
-        length(input$effectsiteLinetype) == 0
-    )
+        length(input$effectsiteLinetype) == 0)
     {
       outputComments("Waiting for line types to exist before making figure.")
       return()
@@ -453,7 +413,7 @@ function(input, output, session)
     logY                   <- input$logY
     if (plotRecovery) logY <- FALSE
 
-    if(replotFlag                                          ||
+    if(replotFlag                                         ||
        plasmaLinetype         != prior$plasmaLinetype     ||
        effectsiteLinetype     != prior$effectsiteLinetype ||
        normalization          != prior$normalization      ||
@@ -563,11 +523,9 @@ function(input, output, session)
 
       if (is.null(plotObjectReactive()))
       {
-        output$optionFlag <- renderText("")
         outputComments("Null plot after calling simulation Plot()")
         main_plot(nothingtoPlot) # reactiveVal
       } else {
-        output$optionFlag <- renderText("Graph Options")
         main_plot(plotObjectReactive()) # reactiveVal
       }
     } else {

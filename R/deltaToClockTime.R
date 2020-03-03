@@ -1,7 +1,10 @@
 # Convert delta time (x) from the reference time to an actual clock time
 deltaToClockTime <- function(reference, x)
 {
-  start <-unlist(strsplit(reference, ":")) # Remove the colon
+  if (reference == "none") {
+    return(as.numeric(x))
+  }
+  start <- unlist(strsplit(reference, ":")) # Remove the colon
   startHours <- as.numeric(start[1])
   startMinute <- as.numeric(start[2])
   start <- startHours * 60 + startMinute
