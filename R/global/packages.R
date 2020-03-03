@@ -1,3 +1,4 @@
+suppressWarnings(suppressPackageStartupMessages({
 library(shiny)
 library(shinyjs)
 library(shinydashboard)
@@ -32,3 +33,4 @@ library(tidyr)
 library(dqshiny)
 library(shinyWidgets)
 library(glue)
+}))

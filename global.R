@@ -43,29 +43,12 @@ eventDefaults <- eventDefaults_global
 drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FALSE, na.strings = "")
 
 # Load individual drug routines
-for (drug in drugDefaults_global$Drug)
-{
+for (drug in drugDefaults_global$Drug) {
   source(file.path("data", "drugs", paste0(drug, ".R")), local = TRUE)
 }
 
 
-x <- system.time({
-  havingIP <- function() {
-    if (.Platform$OS.type == "windows") {
-      ipmessage <- system("ipconfig", intern = TRUE)
-    } else {
-      ipmessage <- system("ifconfig", intern = TRUE)
-    }
-    validIP <- "((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
-    any(grep(validIP, ipmessage))
-  }
-  ping <- function(x, stderr = FALSE, stdout = FALSE, ...){
-    pingvec <- system2("ping", x,
-                       stderr = FALSE,
-                       stdout = FALSE,...)
-    if (pingvec == 0) TRUE else FALSE
-  }
-})
+x <- system.time({ checkConnection() })
 cat("Time to determine if it has an internet connection\n")
 print(x)
 cat("\n")
@@ -107,9 +90,13 @@ nothingtoPlot <- staticPlot(
   )
 )
 
-
-originalUnits <- drugDefaults_global$Units
-drugDefaults_global$Units <- strsplit(drugDefaults_global$Units, ",")
+drugUnitsExpand <- function(units) {
+  strsplit(units, ",")
+}
+drugUnitsSimplify <- function(units) {
+  unlist(lapply(units, paste, collapse = ","))
+}
+drugDefaults_global$Units <- drugUnitsExpand(drugDefaults_global$Units)
 
 blanks <- rep("", 6)
 doseTableInit <- data.frame(

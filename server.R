@@ -50,9 +50,10 @@ function(input, output, session)
 
   # Make drugs and events local to session
   cat("Setting drugDefaults and eventDefaults\n")
-  drugDefaults <- drugDefaults_global
-  drugList <- drugDefaults$Drug
-  colorList <- drugDefaults$Color
+  drugDefaults <- reactiveVal(drugDefaults_global)
+  drugList <- reactive({
+    drugDefaults()$Drug
+  })
 
   outputComments("Initializing prior and current")
 
@@ -81,10 +82,10 @@ function(input, output, session)
   # )
 
   # current$DT <- data.frame(
-  #   Drug = drugDefaults$Drug,
+  #   Drug = drugDefaults()$Drug,
   #   Time = "0",
   #   Dose = "1",
-  #   Units = drugDefaults$Bolus.Units,
+  #   Units = drugDefaults()$Bolus.Units,
   #   stringsAsFactors = FALSE
   # )
   doseTable <- reactiveVal(doseTableInit)
@@ -95,7 +96,7 @@ function(input, output, session)
   # Routine to output doseTableHTML from doseTable
   output$doseTableHTML <- renderRHandsontable({
     outputComments("Rendering doseTableHTML.")
-    createHOT(doseTable(), drugDefaults)
+    createHOT(doseTable(), drugDefaults())
   })
 
   # End Initialize current$DT
@@ -115,7 +116,6 @@ function(input, output, session)
     cat("Unique names", names(drugs), "\n")
   })
 
-  newDrugDefaultsFlag <- reactiveVal(FALSE)
   updatedDoseTableFlag <- reactiveVal(FALSE) # Forces a new plot
 
   outputComments("Setup Complete")
@@ -269,13 +269,14 @@ function(input, output, session)
       height      != prior$height     ||
       age         != prior$age        ||
       sex         != prior$sex        ||
-      newDrugDefaultsFlag()           ||
+     # newDrugDefaultsFlag()  ||  #TODO this is equivalent to when drugDefaults() updates
       updatedDoseTableFlag()
 
     if (recalculatePKFlag) {
       outputComments("Something changed requiring a full dose calculation.")
       recalculatePK(
-        drugs, drugDefaults,
+        drugs,
+        drugDefaults(),
         age = age,
         weight = weight,
         height = height,
@@ -444,7 +445,6 @@ function(input, output, session)
       if (plotCost               != prior$plotCost) outputComments("New plot triggered by plotCost != prior$plotCost")
       if (plotEvents             != prior$plotEvents) outputComments("New plot triggered by plotEvents != prior$plotEvents")
       if (plotRecovery           != prior$plotRecovery) outputComments("New plot triggered by ploRecovery != prior$plotRecovery")
-      if (newDrugDefaultsFlag() )  outputComments("New plot triggered new Drug Defaults")
       if (updatedDoseTableFlag() ) outputComments("New plot triggered new Dose Table")
 
       outputComments(" ")
@@ -491,7 +491,7 @@ function(input, output, session)
         drugs = reactiveValuesToList(drugs),
         events = ET,
         eventDefaults = eventDefaults,
-        drugDefaults = drugDefaults
+        drugDefaults = drugDefaults()
       )
       if (is.null(X))
       {
@@ -518,7 +518,6 @@ function(input, output, session)
       prior$plotRecovery        <- plotRecovery
       prior$caption             <- caption
 
-      newDrugDefaultsFlag(FALSE)
       updatedDoseTableFlag(FALSE)
 
       if (is.null(plotObjectReactive()))
@@ -703,7 +702,7 @@ xy_str <- function(e) {
   x <- unlist(strsplit(yaxis," "))
   drug <- x[1]
   outputComments(paste("Drug identified in xy_str() is",drug), echo = DEBUG)
-  i <- which(x[1] == drugList)
+  i <- which(x[1] == drugList())
   j <- which.min(abs(e$x - drugs[[drug]]$equiSpace$Time))
   x[2] <- substr(x[2],2,10)
   x[2] <- substr(x[2],1,nchar(x[2])-1)
@@ -721,7 +720,7 @@ xy_str <- function(e) {
   returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
   if (prior$plotRecovery)
   {
-    returnText <- paste0(returnText,", Time until ",drugDefaults$endCeText[i], " ",round(drugs[[drug]]$equiSpace$Recovery[j], 1), " minutes")
+    returnText <- paste0(returnText,", Time until ",drugDefaults()$endCeText[i], " ",round(drugs[[drug]]$equiSpace$Recovery[j], 1), " minutes")
   }
   return(returnText)
 }
@@ -789,7 +788,7 @@ imgDrugTime <- function(e = "")
       outputComments(paste("time is plotMaximum:", time), echo = DEBUG)
     }
   } else {
-    i <- which(plottedDrugs[1] == drugList)
+    i <- which(plottedDrugs[1] == drugList())
     drug <- plottedDrugs[1]
     outputComments(paste("Drug in imgDrugTime() is", drug), echo = DEBUG)
     j <- which.min(abs(e$x - drugs[[drug]]$equiSpace$Time))
@@ -837,8 +836,8 @@ imgDrugTime <- function(e = "")
   {
     units <- c("","")
   } else {
-    i <- which(drug == drugList)
-    units <- c(drugDefaults$Bolus.Units[i], drugDefaults$Infusion.Units[i])
+    i <- which(drug == drugList())
+    units <- c(drugDefaults()$Bolus.Units[i], drugDefaults()$Infusion.Units[i])
   }
   outputComments("Exiting imgDrugTime()", echo = DEBUG)
   return(
@@ -861,11 +860,11 @@ clickPopupDrug <- function(
   drug <- x$drug
   time <- x$time
   units <- x$units
-  thisDrug <- which(drug == drugList)
-  units <- unlist(drugDefaults$Units[thisDrug])
-  selectedUnits <- drugDefaults$Default.Units[thisDrug]
-  endCe <- drugDefaults$endCe[thisDrug]
-  endCeText <- drugDefaults$endCeText[thisDrug]
+  thisDrug <- which(drug == drugList())
+  units <- unlist(drugDefaults()$Units[thisDrug])
+  selectedUnits <- drugDefaults()$Default.Units[thisDrug]
+  endCe <- drugDefaults()$endCe[thisDrug]
+  endCeText <- drugDefaults()$endCeText[thisDrug]
   showModal(
     modalDialog(
     title = paste("Enter a new dose for ", drug),
@@ -928,46 +927,38 @@ clickPopupDrug <- function(
 # This is another way in which the table can be changed. I don't think this needs to be
 # edited, but it explains why there will always be some updating of the doseTable from the
 # server.
-observeEvent(
-  input$clickOKDrug,
-  {
+observeEvent(input$clickOKDrug, {
     # Check that data object exists and is data frame.
     modelOK <- TRUE
     clickTime <- validateTime(input$clickTimeDrug)
     clickDose <- validateDose(input$clickDose)
-    if (clickTime == "" & clickDose != "")
-    {
-      modelOK <- FALSE
-      failed = "Missing time"
-    }
-    if (modelOK)
-    {
-      removeModal()
-      thisDrug <- which(drugDefaults$Drug == prior$DrugTimeUnits$drug)
-      if (drugDefaults$endCe[thisDrug] != input$newEndCe)
-      {
-        drugDefaults$endCe[thisDrug] <<- input$newEndCe
-        newDrugDefaultsFlag(TRUE)
-      }
-
-      if (clickTime != "" && clickDose != "")
-      {
-        i <- which(current$DT$Drug == "")[1]
-        current$DT$Drug[i]  <- prior$DrugTimeUnits$drug
-        current$DT$Time[i]  <- clickTime
-        current$DT$Dose[i]  <- clickDose
-        current$DT$Units[i] <- input$clickUnits
-        if (current$DT$Drug[nrow(current$DT)] != "" )
-        {
-          current$DT <- rbind(current$DT, doseTableNewRow)
-        }
-        doseTable(current$DT)
-      }
-    } else {
+    if (clickTime == "" && clickDose != "") {
+      # This should technically never happen because validation will return 0
       clickPopupDrug(
-        failed,
+        "Missing time",
         prior$DrugTimeUnits
       )
+      return()
+    }
+
+    removeModal()
+    thisDrug <- which(drugDefaults()$Drug == prior$DrugTimeUnits$drug)
+    if (drugDefaults()$endCe[thisDrug] != input$newEndCe) {
+      newDrugDefaults <- drugDefaults()
+      newDrugDefaults$endCe[thisDrug] <- input$newEndCe
+      drugDefaults(newDrugDefaults)
+    }
+
+    if (clickTime != "" && clickDose != "") {
+      idx <- which(current$DT$Drug == "")[1]
+      current$DT$Drug[idx]  <- prior$DrugTimeUnits$drug
+      current$DT$Time[idx]  <- clickTime
+      current$DT$Dose[idx]  <- clickDose
+      current$DT$Units[idx] <- input$clickUnits
+      if (current$DT$Drug[nrow(current$DT)] != "" ) {
+        current$DT <- rbind(current$DT, doseTableNewRow)
+      }
+      doseTable(current$DT)
     }
   }
 )
@@ -1270,7 +1261,7 @@ dblclickPopupDrug <- function(
 {
   drug <- x$drug
   time <- x$time
-  units <- sort(unique(unlist(drugDefaults$Units)))
+  units <- sort(unique(unlist(drugDefaults()$Units)))
   showModal(
     modalDialog(
       title = paste("Select a drug and enter dose and time"),
@@ -1281,7 +1272,7 @@ dblclickPopupDrug <- function(
       selectInput(
         inputId = "dblclickDrug",
         label = "Drug",
-        choices = drugList,
+        choices = drugList(),
         selected = drug
       ),
       textInput(
@@ -1298,7 +1289,7 @@ dblclickPopupDrug <- function(
         inputId = "dblclickUnits",
         label = "Units",
         choices = c(units),
-        selected = drugDefaults$Bolus.Units[i],
+        selected = drugDefaults()$Bolus.Units[i],
         inline = TRUE
       ),
       actionButton(
@@ -1441,7 +1432,7 @@ observeEvent(
         selectInput(
           inputId = "targetDrug",
           label = "Drug",
-          choices = drugList
+          choices = drugList()
         ),
         rHandsontableOutput(
           outputId = "targetTableHTML"
@@ -1555,7 +1546,7 @@ observeEvent(
     # print(str(targetTable))
     #
     outputComments("Ready to search for the target dose", echo = DEBUG)
-    drug <- drugList[which(input$targetDrug == drugList)]
+    drug <- drugList()[which(input$targetDrug == drugList())]
 
     outputComments(paste("Drug is", drug), echo = DEBUG)
 
@@ -1687,162 +1678,163 @@ observeEvent(
   }
 )
 
-observeEvent(
-  input$editDrugs,
-  {
-    x <- drugDefaults
-    x$Units <- originalUnits
-    drugsHOT <- rhandsontable(
-      x,
-      overflow = 'visible',
-      rowHeaders = NULL,
-      height = 220,
-      selectCallback = TRUE
+editDrugsTrigger <- makeReactiveTrigger()
+observeEvent(input$editDrugs, {
+  editDrugsTrigger$trigger()
+  showModal(
+    modalDialog(
+      title = paste("Edit Drug Defaults"),
+      tags$div(
+        HTML(
+          paste(
+            tags$span(
+              style="color:red; font-weight:bold ",
+              "This is primarily intended for stanpumpR collaborators. ",
+              "If you believe some drug defaults are incorrect, please contact ",
+              "steven.shafer@stanford.edu. ",
+              "Also, you can easily break your session by entering crazy things. ",
+              "If so, just reload your session. "), sep = ""))
+      ),
+      rHandsontableOutput(
+        outputId = "editDrugsHTML"
+      ),
+      actionButton(
+        inputId = "drugEditsOK",
+        label = "OK",
+        style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
+      ),
+      tags$button(
+        type = "button",
+        class = "btn btn-warning",
+        `data-dismiss` = "modal",
+        "Cancel"
+      ),
+      footer = NULL,
+      easyClose = TRUE,
+      fade=TRUE,
+      size="l"
+    )
+  )
+})
+
+output$editDrugsHTML <- renderRHandsontable({
+  editDrugsTrigger$depend()
+  x <- drugDefaults()
+  x$Units <- drugUnitsSimplify(x$Units)
+  drugsHOT <- rhandsontable(
+    x,
+    overflow = 'visible',
+    rowHeaders = NULL,
+    height = 220,
+    selectCallback = TRUE
+  ) %>%
+    hot_col(
+      col = 1,
+      type="autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE,
+      readOnly = TRUE
     ) %>%
     hot_col(
-        col = 1,
-        type="autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE,
-        readOnly = TRUE
-      ) %>%
-      hot_col(
-        col = 2,
-        type = "dropdown",
-        source = c("mcg","ng"),
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_col(
-        col = 3,
-        type = "dropdown",
-        source = bolusUnits,
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_col(
-        col = 4,
-        type = "dropdown",
-        source = infusionUnits,
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_col(
-        col = 5,
-        type = "dropdown",
-        source = allUnits,
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_col(
-        col = 6,
-        type = "autocomplete",
-        strict = FALSE,
-        allowInvalid = TRUE,
-        halign = "htLeft",
-      ) %>%
-      hot_col(
-        col = 7,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 8,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 9,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 10,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 11,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 12,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 13,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
-      hot_rows(rowHeights = 10)
-    output$editDrugsHTML <- renderRHandsontable(drugsHOT)
-    showModal(
-      modalDialog(
-        title = paste("Edit Drug Defaults"),
-        tags$div(
-          HTML(
-            paste(
-              tags$span(
-                style="color:red; font-weight:bold ",
-                      "This is primarily intended for stanpumpR collaborators. ",
-                      "If you believe some drug defaults are incorrect, please contact ",
-                      "steven.shafer@stanford.edu. ",
-                      "Also, you can easily break your session by entering crazy things. ",
-                      "If so, just reload your session. "), sep = ""))
-        ),
-        rHandsontableOutput(
-          outputId = "editDrugsHTML"
-        ),
-        actionButton(
-          inputId = "drugEditsOK",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-        ),
-        tags$button(
-          type = "button",
-          class = "btn btn-warning",
-          `data-dismiss` = "modal",
-          "Cancel"
-        ),
-        footer = NULL,
-        easyClose = TRUE,
-        fade=TRUE,
-        size="l"
-      )
-    )
-  }
-)
+      col = 2,
+      type = "dropdown",
+      source = c("mcg","ng"),
+      strict = TRUE,
+      halign = "htLeft",
+      valign = "vtMiddle",
+      allowInvalid=FALSE
+    ) %>%
+    hot_col(
+      col = 3,
+      type = "dropdown",
+      source = bolusUnits,
+      strict = TRUE,
+      halign = "htLeft",
+      valign = "vtMiddle",
+      allowInvalid=FALSE
+    ) %>%
+    hot_col(
+      col = 4,
+      type = "dropdown",
+      source = infusionUnits,
+      strict = TRUE,
+      halign = "htLeft",
+      valign = "vtMiddle",
+      allowInvalid=FALSE
+    ) %>%
+    hot_col(
+      col = 5,
+      type = "dropdown",
+      source = allUnits,
+      strict = TRUE,
+      halign = "htLeft",
+      valign = "vtMiddle",
+      allowInvalid=FALSE
+    ) %>%
+    hot_col(
+      col = 6,
+      type = "autocomplete",
+      strict = FALSE,
+      allowInvalid = TRUE,
+      halign = "htLeft",
+    ) %>%
+    hot_col(
+      col = 7,
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = 8,
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = 9,
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = 10,
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = 11,
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = 12,
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = 13,
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+    hot_rows(rowHeights = 10)
+  drugsHOT
+})
 
 # Evaluate target concentration
-observeEvent(
-  input$drugEditsOK,
-  {
+observeEvent(input$drugEditsOK, {
     removeModal()
     newDrugDefaults <- hot_to_r(input$editDrugsHTML)
     newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
@@ -1859,19 +1851,15 @@ observeEvent(
     newDrugDefaults$endCe                <- as.numeric(newDrugDefaults$endCe)
     newDrugDefaults$endCeText            <- as.character(newDrugDefaults$endCeText)
 
-    drugDefaults <<- newDrugDefaults
-    originalUnits <<- drugDefaults$Units
-    drugDefaults$Units <<- strsplit(drugDefaults$Units, ",")
-    drugList <<- drugDefaults$Drug
-    colorList <<- drugDefaults$Color
-    for (i in 1:nrow(drugDefaults))
-    {
-      drug <- drugDefaults$Drug[i]
-      drugs[[drug]]$Color <- drugDefaults$Color[i]
-      drugs[[drug]]$endCe <- drugDefaults$endCe[i]
-      drugs[[drug]]$endCeText <- drugDefaults$endCeText[i]
+    newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
+    drugDefaults(newDrugDefaults)
+
+    for (idx in seq(nrow(drugDefaults()))) {
+      drug <- drugDefaults()$Drug[idx]
+      drugs[[drug]]$Color <- drugDefaults()$Color[idx]
+      drugs[[drug]]$endCe <- drugDefaults()$endCe[idx]
+      drugs[[drug]]$endCeText <- drugDefaults()$endCeText[idx]
     }
-    newDrugDefaultsFlag(TRUE)
   }
 )
 
