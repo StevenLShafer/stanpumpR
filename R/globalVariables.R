@@ -12,6 +12,13 @@ UNIT_LB <- 0.453592
 UNIT_CM <- 1
 UNIT_INCH <- 2.56
 
+MIN_AGE <- 0
+MAX_AGE <- 110
+MIN_WEIGHT <- 0.1
+MAX_WEIGHT <- 500
+MIN_HEIGHT <- 10
+MAX_HEIGHT <- 200
+
 # default variables
 defaultAge <- 50
 defaultAgeUnit <- UNIT_YEAR

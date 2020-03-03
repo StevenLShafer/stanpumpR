@@ -46,8 +46,8 @@ function(request) {
                     inputId = "age",
                     label = "Age",
                     value = defaultAge,
-                    min = 0,
-                    max = 110
+                    min = MIN_AGE,
+                    max = MAX_AGE
                   ),
                   bsTooltip(
                     id = "age",
@@ -73,8 +73,8 @@ function(request) {
                   inputId = "weight",
                   label = "Weight",
                   value = defaultWeight,
-                  min = 0.1,
-                  max = 500
+                  min = MIN_WEIGHT,
+                  max = MAX_WEIGHT
                 ),
                 bsTooltip(
                   id = "weight",
@@ -97,8 +97,8 @@ function(request) {
                   inputId = "height",
                   label = "Height",
                   value = defaultHeight,
-                  min = 10,
-                  max = 200
+                  min = MIN_HEIGHT,
+                  max = MAX_HEIGHT
                 ),
                 bsTooltip(
                   id = "height",

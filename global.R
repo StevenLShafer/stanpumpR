@@ -130,13 +130,13 @@ eventTableInit <- data.frame(
 
 `%then%` <- shiny:::`%OR%`
 
-outputComments <- function(..., echo = TRUE) {
+outputComments <- function(..., echo = TRUE, sep = " ") {
   isolate({
     argslist <- list(...)
     if (length(argslist) == 1) {
       text <- argslist[[1]]
     } else {
-      text <- paste(argslist, collapse = "")
+      text <- paste(argslist, collapse = sep)
     }
 
     # If this is called within a shiny app, try to get the active session
@@ -170,3 +170,54 @@ outputComments <- function(..., echo = TRUE) {
     }
   })
 }
+
+bookmarksToExclude <- c(
+  "doseTableHTML",
+  "doseTableHTML_select",
+  "setTarget",
+  "targetDrug",
+  "targetDrug-selectized",
+  "targetEndTime",
+  "targetOK",
+  "plot_click",
+  "plot_dblclick",
+  "plot_hover",
+  "sidebarCollapsed",
+  "sidebarItemExpanded",
+  "simType",
+  "effectsiteLinetype-selectized",
+  "maximum-selectized",
+  "plasmaLinetype-selectized",
+  "referenceTime-selectized",
+  "targetTableHTML",
+  "targetTableHTML_select",
+  "tempTableHTML_select",
+  "tempTableHTML",
+  "clickDose",
+  "clickEvent",
+  "clickEvent-selectized",
+  "clickOKDrug",
+  "clickOKEvent",
+  "clickTimeDrug",
+  "clickTimeEvent",
+  "clickUnits",
+  "dblclickDrug",
+  "dblclickDrug-selectized",
+  "dblclickTime",
+  "dblclickDose",
+  "dblclickUnits",
+  "dblclickOK",
+  "dblclickDelete",
+  "editDoses",
+  "editDosesOK",
+  "editEvents",
+  "editEventsOK",
+  "sendSlide",
+  "recipient",
+  "drugEditsOK",
+  "editDrugsHTML",
+  "editDrugsHTML_select",
+  "editDrugs",
+  "newEndCe",
+  "hoverInfo"
+)

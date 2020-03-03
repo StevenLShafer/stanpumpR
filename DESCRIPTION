@@ -16,6 +16,7 @@ Imports:
   dqshiny,
   DT,
   egg,
+  glue,
   ggplot2  (>= 3.2),
   ggpubr,
   grid,
