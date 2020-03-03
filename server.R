@@ -9,40 +9,14 @@
 function(input, output, session)
 {
 
-  showModal(
-    modalDialog(
-      title = "Welcome to stanpumpR",
-      p(
-        "stanpumpR, derived from the original STANPUMP program developed at
-        Stanford University,  performs pharmacokinetic simulations
-        based on mathematical models published in the peer-reviewed
-        literature. stanpumpR is intended to help clinicians and investigators
-        better understand the mathematical implications of published models.
-        stanpumpR is only an advisory program. How these models are applied to
-        individual patients is a matter of clinical judgment by the health care
-        provider."
-      ),
-      tags$button(
-        type = "button",
-        class = "btn btn-warning",
-        `data-dismiss` = "modal",
-        "OK"
-      ),
-      footer = NULL,
-      easyClose = TRUE,
-      fade=TRUE,
-      size="s"
-    )
-  )
+  showIntroModal()
 
-  options(error = function ()
-  {
+  options(error = function() {
     x <- geterrmessage()
-    if (!isShinyLocal)
-    {
+    if (!isShinyLocal) {
       cat("Error detected in stanpumpR\n")
-      cat(x,"\n")
-      cat("URL: ", prior$url,"\n")
+      cat(x, "\n")
+      cat("URL: ", prior$url, "\n")
       sendError(url = prior$url, errorMessage = x)
     }
     options(error = NULL)
@@ -52,18 +26,20 @@ function(input, output, session)
   initLogMsg <- "Comments Log"
   commentsLog <- reactiveVal(initLogMsg)
   output$logContent <- renderUI({
-    shinyjs::delay(0, shinyjs::js$scrollLogger())
     HTML(commentsLog())
   })
+  # Register the comments log with this user's session, to use outside the server
   session$userData$commentsLog <- commentsLog
 
   #############################################################################
   #                           Initialization                                  #
   #############################################################################
 
-  outputComments("**********************************************************************")
-  outputComments("*                       Initializing                                 *")
-  outputComments("**********************************************************************")
+  outputComments(
+    "**********************************************************************\n",
+    "*                       Initializing                                 *\n",
+    "**********************************************************************"
+  )
 
   main_plot <- reactiveVal(introductionPlot)
 
@@ -79,46 +55,40 @@ function(input, output, session)
 
   outputComments("Initializing prior and current")
 
-  prior <- reactiveValues()
-
-  isolate(
-    {
-      # Prior data
-      prior$age                <- 0
-      prior$weight             <- 0
-      prior$height             <- 0
-      prior$sex                <- 0
-      prior$ageUnit            <- 0
-      prior$heightUnit         <- ""
-      prior$weightUnit         <- ""
-      prior$plotMaximum        <- 60
-      prior$plasmaLinetype     <- "blank"
-      prior$effectsiteLinetype <- "solid"
-      prior$normalization      <- "none"
-      prior$title              <- 0
-      prior$caption            <- ""
-      prior$typical            <- "Range"
-      prior$logY               <- FALSE
-      prior$DT                 <- NULL # Used to determine of replot flag needs to be set, e.g., sameTable(DT, prior$DT)
-      # Set to DT after processDoseTable. Note that the NULL assignment is assumed without
-      # being explicit, as done here. This is mostly to help keep inventory of the prior
-      # variables
-      prior$ET                 <- NULL # Used to determine if plot needs to be set.
-      prior$referenceTime      <- "none"
-      prior$plotMEAC           <- FALSE
-      prior$plotInteraction    <- FALSE
-      prior$plotCost           <- FALSE
-      prior$plotEvents         <- FALSE
-      prior$plotRecovery       <- FALSE
-      prior$holdPlot           <- FALSE
-      prior$DrugTimeUnits      <- ""
-      prior$timeDT             <- 0
-      prior$Refresh            <- 0 # Used to see if the refresh button has been clicked
-      prior$RefreshFlag        <- FALSE # Used to force simulationPlot to update with refresh button
-      prior$referenceTime      <- "none"
-    }
+  prior <- reactiveValues(
+    age                = 0,
+    weight             = 0,
+    height             = 0,
+    sex                = 0,
+    ageUnit            = 0,
+    heightUnit         = "",
+    weightUnit         = "",
+    plotMaximum        = 60,
+    plasmaLinetype     = "blank",
+    effectsiteLinetype = "solid",
+    normalization      = "none",
+    title              = 0,
+    caption            = "",
+    typical            = "Range",
+    logY               = FALSE,
+    DT                 = doseTableInit, # Used to determine of replot flag needs to be set, e.g., sameTable(DT, DT)
+    # Set to DT after processDoseTable. Note that the NULL assignment is assumed without
+    # being explicit, as done here. This is mostly to help keep inventory of the prior
+    # variables
+    ET                 = eventTableInit, # Used to determine if plot needs to be set.
+    referenceTime      = "none",
+    plotMEAC           = FALSE,
+    plotInteraction    = FALSE,
+    plotCost           = FALSE,
+    plotEvents         = FALSE,
+    plotRecovery       = FALSE,
+    holdPlot           = FALSE,
+    DrugTimeUnits      = "",
+    timeDT             = 0,
+    Refresh            = 0, # Used to see if the refresh button has been clicked
+    RefreshFlag        = FALSE, # Used to force simulationPlot to update with refresh button
+    referenceTime      = "none"
   )
-
 
   # This always runs, because on restore it fully restarts server()
   current <- reactiveValues(
@@ -150,45 +120,19 @@ function(input, output, session)
   #   stringsAsFactors = FALSE
   # )
   doseTable <- reactiveVal(doseTableInit)
-  isolate(
-    {
-      prior$DT <- doseTable()
-      outputComments("prior$DT at the end of initialization")
-      outputComments(prior$DT)
-    }
-  )
+
+  outputComments("prior$DT at the end of initialization")
+  outputComments(isolate(prior$DT))
 
   # Routine to output doseTableHTML from doseTable
-  isolate({
-    output$doseTableHTML <- renderRHandsontable({
-      outputComments("Setting up doseTableHTML.")
-      createHOT(doseTable(), drugDefaults)
-    })
+  output$doseTableHTML <- renderRHandsontable({
+    outputComments("Rendering doseTableHTML.")
+    createHOT(doseTable(), drugDefaults)
   })
 
   # End Initialize current$DT
 
-  # Initialize prior$ET
-  isolate(
-    {
-      outputComments("Initializing prior$ET")
-      if (is.null(prior$ET))
-      {
-        # This creates a NULL Table
-        prior$ET <- data.frame(
-          Time = 0,
-          Event = "",
-          Fill = "",
-          stringsAsFactors = FALSE
-        )[FALSE,]
-      }
-      eventTable <- reactiveVal(
-        prior$ET
-      )
-      cat ("Done with prior$ET\n")
-    }
-  )
-
+  eventTable <- reactiveVal(eventTableInit)
 
   # Finishing Setup
   outputComments("Completing setup")
@@ -201,14 +145,14 @@ function(input, output, session)
   outputComments("Initializing Drugs")
   drugs <- reactiveValues()
   isolate({
-    for (i in 1:nrow(drugDefaults)) {
-      drug <- drugDefaults$Drug[i]
+    for (idx in seq(nrow(drugDefaults))) {
+      drug <- drugDefaults$Drug[idx]
       drugs[[drug]] <- NULL
-      drugs[[drug]]$Color <- drugDefaults$Color[i]
-      drugs[[drug]]$endCe <- drugDefaults$endCe[i]
-      drugs[[drug]]$endCeText <- drugDefaults$endCeText[i]
+      drugs[[drug]]$Color <- drugDefaults$Color[idx]
+      drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
+      drugs[[drug]]$endCeText <- drugDefaults$endCeText[idx]
     }
-    cat("Unique names",names(drugs),"\n")
+    cat("Unique names", names(drugs), "\n")
   })
 
   newDrugDefaultsFlag <- reactiveVal(FALSE)
@@ -216,68 +160,14 @@ function(input, output, session)
 
   outputComments("Setup Complete")
 
-
   # Get reference time from client
-  output$getReferenceTime <- renderUI({
-    outputComments("Getting reference time from client.")
+  observeEvent(input$client_time, {
     time <- input$client_time
     outputComments(paste("Reference time from client:", time), echo = TRUE)
-
-    time <- gsub("[^[:digit:]:. APM]","",time) # Get rid of strange formatting characters
-    x <- unlist(strsplit(time, " "))
-    if (length(x) == 1) x <- c(x, "AM") # European time doesn't use PM
-    y <- unlist(strsplit(x[1],":"))
-    time <- (as.numeric(y[1]) + 12 * (x[2] == "PM")) * 60 + as.numeric(y[2]) - 60
-    if (time < 0) time <- time + 1440
-    time <- floor(time / 15) * 15
-    HH   <- floor(time / 60)
-    MM   <- time %% 60
-    start <- sprintf("%02d:%02d",HH,MM)
+    start <- getReferenceTime(time)
     prior$referenceTime <- start
-    column(
-      width = 4,
-      selectInput(
-        inputId = "referenceTime",
-        label = NULL, #"Reference Time",
-        selected = start,
-        choices = c(
-          "none",
-          "06:00","06:15","06:30","06:45",
-          "07:00","07:15","07:30","07:45",
-          "08:00","08:15","08:30","08:45",
-          "09:00","09:15","09:30","09:45",
-          "10:00","10:15","10:30","10:45",
-          "11:00","11:15","11:30","11:45",
-          "12:00","12:15","12:30","12:45",
-          "13:00","13:15","13:30","13:45",
-          "14:00","14:15","14:30","14:45",
-          "15:00","15:15","15:30","15:45",
-          "16:00","16:15","16:30","16:45",
-          "17:00","17:15","17:30","17:45",
-          "18:00","18:15","18:30","18:45",
-          "19:00","19:15","19:30","19:45",
-          "20:00","20:15","20:30","20:45",
-          "21:00","21:15","21:30","21:45",
-          "22:00","22:15","22:30","22:45",
-          "23:00","23:15","23:30","23:45",
-          "00:00","00:15","00:30","00:45",
-          "01:00","01:15","01:30","01:45",
-          "02:00","02:15","02:30","02:45",
-          "03:00","03:15","03:30","03:45",
-          "04:00","04:15","04:30","04:45",
-          "05:00","05:15","05:30","05:45"
-        )
-      ),
-      bsTooltip(
-        id = "referenceTime",
-        title = 'Time is selected based on your local time. Select "none" for absolute time.',
-        placement = "right",
-        options = list(container = "body")
-      )
-    )
-  }
-  )
-
+    updateSelectInput(session, "referenceTime", selected = start)
+  }, ignoreNULL = TRUE, once = TRUE)
 
   ##########################################################
   # Code to save state in url and then restore from url
@@ -338,45 +228,38 @@ function(input, output, session)
     session$doBookmark()
   })
 
-  onBookmark(function(state) {  #
+  # This gets called before bookmarking to prepare values that need to be saved
+  onBookmark(function(state) {
     state$values$DT <- current$DT
     state$values$ET <- prior$ET
-    excludeDelay <- names(input)[grep("delay", names(input))]
-    setBookmarkExclude(c(bookmarksToExclude, excludeDelay))
+    setBookmarkExclude(bookmarksToExclude)
   })
 
-  onBookmarked(
-    function(url) # Without this, the session$doBookmark actually displays it
-    {
-      updateQueryString(url)
-      prior$url <- url
-    }
-  )
+  # This gets called after bookmarking is completed
+  onBookmarked(function(url) {
+    updateQueryString(url)
+    prior$url <- url
+  })
 
   onRestored(function(state) {
-    outputComments("***************************************************************************")
-    outputComments("*                       Restoring Session from URL                        *")
-    outputComments("***************************************************************************")
-    isolate({
-      prior$DT   <- as.data.frame(state$values$DT, stringsAsFactors=FALSE)
-      outputComments("Prior$DT:")
-      outputComments(prior$DT)
-      doseTable(prior$DT)
-      current$DT <- prior$DT
-      prior$ET <- as.data.frame(state$values$ET, stringsAsFactors=FALSE)
-      if (ncol(prior$ET) == 0)
-      {
-        prior$ET <- data.frame(
-          Time = 0,
-          Event = "",
-          Fill = "",
-          stringsAsFactors = FALSE
-        )[FALSE,]
-      }
-      outputComments("prior$ET after restoring state")
-      outputComments(prior$ET)
-      eventTable(prior$ET)
-    })
+    outputComments(
+      "***************************************************************************\n",
+      "*                       Restoring Session from URL                        *\n",
+      "***************************************************************************"
+    )
+    prior$DT <- as.data.frame(state$values$DT, stringsAsFactors=FALSE)
+    outputComments("Prior$DT:")
+    outputComments(prior$DT)
+    doseTable(prior$DT)
+    current$DT <- prior$DT
+    prior$ET <- as.data.frame(state$values$ET, stringsAsFactors=FALSE)
+    if (ncol(prior$ET) == 0)
+    {
+      prior$ET <- eventTableInit
+    }
+    outputComments("prior$ET after restoring state")
+    outputComments(prior$ET)
+    eventTable(prior$ET)
   })
 
 
@@ -528,7 +411,7 @@ function(input, output, session)
     #######################################################################
     DT <- doseTable()   # Here is where the reactivity is forced
     outputComments("doseTable() in simulation plot", echo = DEBUG)
-    outputComments(DT, DEBUG)
+    outputComments(DT, echo = DEBUG)
     DT$Drug    <- as.character(DT$Drug)
     DT$Units   <- as.character(DT$Units)
     DT$Dose    <- as.numeric(DT$Dose)

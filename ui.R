@@ -9,9 +9,9 @@ function(request) {
         class = "dropdown",
         tags$a(
           href = "https://steveshafer.shinyapps.io/stanpumpR_HelpPage",
-          class = "my_class",
+          id = "help_link",
           "Examples and Help",
-          target="_blank"
+          target = "_blank"
         )
       )
     ),
@@ -27,53 +27,12 @@ function(request) {
 
     dashboardBody(
       useShinyjs(),
-      extendShinyjs(
-        script = "www/shinyjs-funcs.js",
-        functions = c("scrollLogger")
-      ),
-      tags$head(
-        tags$style(
-          HTML(
-            ".my_class {
-              font-weight: bold;
-              color:white;
-              }"
-          )
-        )
-      ),
-      # tags$style(
-      #   HTML(
-      #     "input:invalid {
-      #       background-color: #FFCCCC;
-      #       }"
-      #   )
-      # ),
+      tags$script(src = "app.js"),
       tags$head(tags$link(href = "app.css", rel = "stylesheet")),
       style = "max-height: 95vh; overflow-y: auto;" ,
-      tags$style(
-        HTML(
-          '.form-first-row {
-              height: 100px;
-            }
-           .cancel-margin > .form-group {
-              margin: 0;
-            }'
-        )
-      ), # End of tags$style
       fluidRow(
         column(
           width=4,
-          HTML('<input type="text" id="client_time" name="client_time" style="display: none;"> '
-          ), # end of HTML
-
-          tags$script('
-   $(function() {
-    var time_now = new Date()
-    $("input#client_time").val(time_now.toLocaleTimeString())
-  });'), # end of tags$script
-          # Load javascript function
-
-
           fluidRow(  # start of fluid row within this column
             h4("Patient Covariates"),
             style = "border-style: solid; border-color: white;  border-radius: 5px;",
@@ -228,33 +187,54 @@ function(request) {
                   width = 4,
                   h5("Reference Time")
                 ),
-                uiOutput( # Width = 1
-                  outputId = "getReferenceTime"
+                column(
+                  width = 4,
+                  selectInput(
+                    inputId = "referenceTime",
+                    label = NULL,
+                    choices = c(
+                      "none",
+                      "06:00","06:15","06:30","06:45",
+                      "07:00","07:15","07:30","07:45",
+                      "08:00","08:15","08:30","08:45",
+                      "09:00","09:15","09:30","09:45",
+                      "10:00","10:15","10:30","10:45",
+                      "11:00","11:15","11:30","11:45",
+                      "12:00","12:15","12:30","12:45",
+                      "13:00","13:15","13:30","13:45",
+                      "14:00","14:15","14:30","14:45",
+                      "15:00","15:15","15:30","15:45",
+                      "16:00","16:15","16:30","16:45",
+                      "17:00","17:15","17:30","17:45",
+                      "18:00","18:15","18:30","18:45",
+                      "19:00","19:15","19:30","19:45",
+                      "20:00","20:15","20:30","20:45",
+                      "21:00","21:15","21:30","21:45",
+                      "22:00","22:15","22:30","22:45",
+                      "23:00","23:15","23:30","23:45",
+                      "00:00","00:15","00:30","00:45",
+                      "01:00","01:15","01:30","01:45",
+                      "02:00","02:15","02:30","02:45",
+                      "03:00","03:15","03:30","03:45",
+                      "04:00","04:15","04:30","04:45",
+                      "05:00","05:15","05:30","05:45"
+                    )
+                  ),
+                  bsTooltip(
+                    id = "referenceTime",
+                    title = 'Time is selected based on your local time. Select "none" for absolute time.',
+                    placement = "right",
+                    options = list(container = "body")
+                  )
                 ),
                 column(
-                  width=1,
+                  width = 4,
                   actionButton(
                     inputId = "Refresh",
-                    label = "Refresh",
-                    width = NULL
+                    label = "Refresh"
                   )
                 )
               ), # end of fluid row
-              tags$style(
-                HTML(
-                  '.ht_master table.htCore > tbody td {
-                position: relative;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                padding-right: 10px;
-                }
-                .htAutocompleteArrow {
-                position: absolute;
-                right: 0;
-                }
-                '
-                ) # end of HTML
-              ), # end of tags$style
               # Note to Dean: Here is where the handsontable is output. My guess is that this is where
               # you would replace the existing "rHandsontableOutput()" function with JavaScript code that
               # will process and validate the table.

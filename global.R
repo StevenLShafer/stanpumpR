@@ -121,10 +121,23 @@ doseTableInit <- data.frame(
 )
 doseTableNewRow <-  doseTableInit[5, ]
 
+eventTableInit <- data.frame(
+  Time = 0,
+  Event = "",
+  Fill = "",
+  stringsAsFactors = FALSE
+)[FALSE, ]
+
 `%then%` <- shiny:::`%OR%`
 
-outputComments <- function(text, echo = TRUE) {
+outputComments <- function(..., echo = TRUE) {
   isolate({
+    argslist <- list(...)
+    if (length(argslist) == 1) {
+      text <- argslist[[1]]
+    } else {
+      text <- paste(argslist, collapse = "")
+    }
 
     # If this is called within a shiny app, try to get the active session
     # and write to the session's logger
