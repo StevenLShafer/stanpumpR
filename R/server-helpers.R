@@ -99,24 +99,12 @@ getInitialValues <- function() {
   )
 }
 
-getInitialDrugs <- function() {
-  drugs <- reactiveValues()
-  isolate(
-    for (idx in seq(nrow(drugDefaults_global))) {
-      drug <- drugDefaults_global$Drug[idx]
-      drugs[[drug]] <- NULL
-      drugs[[drug]]$Color <- drugDefaults_global$Color[idx]
-      drugs[[drug]]$endCe <- drugDefaults_global$endCe[idx]
-      drugs[[drug]]$endCeText <- drugDefaults_global$endCeText[idx]
-    }
-  )
-  drugs
-}
-
-# This is not a pure function - it's given a reactiveValues and modifies it
 recalculatePK <- function(drugs, drugDefaults, age, weight, height, sex) {
   for (idx in seq(nrow(drugDefaults))) {
     drug <- drugDefaults$Drug[idx]
+    drugs[[drug]]$Color <- drugDefaults$Color[idx]
+    drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
+    drugs[[drug]]$endCeText <- drugDefaults$endCeText[idx]
     outputComments("Getting PK for", drug)
     drugs[[drug]] <- modifyList(
       drugs[[drug]],
@@ -130,12 +118,10 @@ recalculatePK <- function(drugs, drugDefaults, age, weight, height, sex) {
       )
     )
     drugs[[drug]]$DT <- NULL # Remove old dose table, if any
-    drugs[[drug]]$CpCe <- NULL # Remove old simulations results, if any
     drugs[[drug]]$equiSpace <- NULL # Ditto
-    drugs[[drug]]$maxCp <- 1
-    drugs[[drug]]$maxCe <- 1
-    drugs[[drug]]$recovery <- 1
   }
+
+  drugs
 }
 
 cleanDT <- function(DT) {
