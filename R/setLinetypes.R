@@ -1,30 +1,22 @@
 # Set line types for different types of plots
+
+lineType <- function(plasmaLinetype, effectsiteLinetype) {
+  list(plasmaLinetype = plasmaLinetype, effectsiteLinetype = effectsiteLinetype)
+}
+
 setLinetypes <- function(normalization = "none")
 {
-  plasmaLinetype     <- "blank"
-  effectsiteLinetype <- "solid"
-  switch(
+  result <- switch(
     normalization,
-    "Peak plasma" = {
-      plasmaLinetype     <- "solid"
-      effectsiteLinetype <- "blank"
-    },
-    "Peak effect site" = {
-      plasmaLinetype     <- "blank"
-      effectsiteLinetype <- "solid"
-    },
-    "MEAC" = {
-      plasmaLinetype     <- "blank"
-      effectsiteLinetype <- "solid"
-    },
-    "none" = {
-      plasmaLinetype     <- "blank"
-      effectsiteLinetype <- "solid"
-    },
-    "none" = {
-      plasmaLinetype     <- "blank"
-      effectsiteLinetype <- "solid"
-    }
+    "Peak plasma" = lineType("solid","blank"),
+    "Peak effect site" = lineType("blank","solid"),
+    "MEAC" = lineType("blank","solid"),
+    "none" = lineType("blank","solid")
   )
-  return(list(plasmaLinetype = plasmaLinetype, effectsiteLinetype = effectsiteLinetype))
+
+  if (is.null(result)) {
+    result <- lineType("blank", "solid")
+  }
+
+  return(result)
 }
