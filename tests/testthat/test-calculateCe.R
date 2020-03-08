@@ -13,5 +13,5 @@ test_that("it returns the correct array", {
                   11.62843, 13.36164, 15.06278, 16.68619, 18.20415,
                   19.61008, 20.91533, 22.14102, 23.30932, 24.43790, 25.15763)
 
-  expect_equal(round(actual,5), round(expectedCe,5))
+  expect_equal_rounded(actual, expectedCe)
 })
