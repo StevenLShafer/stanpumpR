@@ -44,8 +44,10 @@ Imports:
   tidyr,
 Suggests:
     devtools,
+    here,
     rsconnect,
     testthat,
+    yaml,
 Depends:
   R (>= 3.6)
 Encoding: UTF-8
