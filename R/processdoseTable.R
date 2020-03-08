@@ -60,5 +60,5 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
     }
   }
   # cat("Exiting processdoseTable()\n")
-  return()
+  drugs
 }

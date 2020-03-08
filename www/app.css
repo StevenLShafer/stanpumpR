@@ -1,3 +1,8 @@
+#help_link {
+  font-weight: bold;
+  color: white;
+}
+
 #logSection {
   background-color: transparent;
   color: black;
@@ -5,4 +10,22 @@
   font-size:10px;
   overflow-y:scroll;
   max-height: 100px;
+}
+
+.form-first-row {
+  height: 100px;
+}
+.cancel-margin > .form-group {
+  margin: 0;
+}
+
+.ht_master table.htCore > tbody td {
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+.htAutocompleteArrow {
+  position: absolute;
+  right: 0;
 }

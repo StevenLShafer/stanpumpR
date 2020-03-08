@@ -43,29 +43,12 @@ eventDefaults <- eventDefaults_global
 drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FALSE, na.strings = "")
 
 # Load individual drug routines
-for (drug in drugDefaults_global$Drug)
-{
+for (drug in drugDefaults_global$Drug) {
   source(file.path("data", "drugs", paste0(drug, ".R")), local = TRUE)
 }
 
 
-x <- system.time({
-  havingIP <- function() {
-    if (.Platform$OS.type == "windows") {
-      ipmessage <- system("ipconfig", intern = TRUE)
-    } else {
-      ipmessage <- system("ifconfig", intern = TRUE)
-    }
-    validIP <- "((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)[.]){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
-    any(grep(validIP, ipmessage))
-  }
-  ping <- function(x, stderr = FALSE, stdout = FALSE, ...){
-    pingvec <- system2("ping", x,
-                       stderr = FALSE,
-                       stdout = FALSE,...)
-    if (pingvec == 0) TRUE else FALSE
-  }
-})
+x <- system.time({ checkConnection() })
 cat("Time to determine if it has an internet connection\n")
 print(x)
 cat("\n")
@@ -107,9 +90,13 @@ nothingtoPlot <- staticPlot(
   )
 )
 
-
-originalUnits <- drugDefaults_global$Units
-drugDefaults_global$Units <- strsplit(drugDefaults_global$Units, ",")
+drugUnitsExpand <- function(units) {
+  strsplit(units, ",")
+}
+drugUnitsSimplify <- function(units) {
+  unlist(lapply(units, paste, collapse = ","))
+}
+drugDefaults_global$Units <- drugUnitsExpand(drugDefaults_global$Units)
 
 blanks <- rep("", 6)
 doseTableInit <- data.frame(
@@ -121,10 +108,27 @@ doseTableInit <- data.frame(
 )
 doseTableNewRow <-  doseTableInit[5, ]
 
+eventTableInit <- data.frame(
+  Time = 0,
+  Event = "",
+  Fill = "",
+  stringsAsFactors = FALSE
+)[FALSE, ]
+
 `%then%` <- shiny:::`%OR%`
 
-outputComments <- function(text, echo = TRUE) {
+outputComments <- function(
+  ...,
+  echo = getOption("ECHO_OUTPUT_COMMENTS", TRUE),
+  sep = " ")
+{
   isolate({
+    argslist <- list(...)
+    if (length(argslist) == 1) {
+      text <- argslist[[1]]
+    } else {
+      text <- paste(argslist, collapse = sep)
+    }
 
     # If this is called within a shiny app, try to get the active session
     # and write to the session's logger
@@ -157,3 +161,54 @@ outputComments <- function(text, echo = TRUE) {
     }
   })
 }
+
+bookmarksToExclude <- c(
+  "doseTableHTML",
+  "doseTableHTML_select",
+  "setTarget",
+  "targetDrug",
+  "targetDrug-selectized",
+  "targetEndTime",
+  "targetOK",
+  "plot_click",
+  "plot_dblclick",
+  "plot_hover",
+  "sidebarCollapsed",
+  "sidebarItemExpanded",
+  "simType",
+  "effectsiteLinetype-selectized",
+  "maximum-selectized",
+  "plasmaLinetype-selectized",
+  "referenceTime-selectized",
+  "targetTableHTML",
+  "targetTableHTML_select",
+  "tempTableHTML_select",
+  "tempTableHTML",
+  "clickDose",
+  "clickEvent",
+  "clickEvent-selectized",
+  "clickOKDrug",
+  "clickOKEvent",
+  "clickTimeDrug",
+  "clickTimeEvent",
+  "clickUnits",
+  "dblclickDrug",
+  "dblclickDrug-selectized",
+  "dblclickTime",
+  "dblclickDose",
+  "dblclickUnits",
+  "dblclickOK",
+  "dblclickDelete",
+  "editDoses",
+  "editDosesOK",
+  "editEvents",
+  "editEventsOK",
+  "sendSlide",
+  "recipient",
+  "drugEditsOK",
+  "editDrugsHTML",
+  "editDrugsHTML_select",
+  "editDrugs",
+  "newEndCe",
+  "hoverInfo"
+)

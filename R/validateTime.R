@@ -50,3 +50,17 @@ validateTime <- function(x)
   return(x)
 
 }
+
+getReferenceTime <- function(time) {
+  time <- gsub("[^[:digit:]:. APM]","",time) # Get rid of strange formatting characters
+  x <- unlist(strsplit(time, " "))
+  if (length(x) == 1) x <- c(x, "AM") # European time doesn't use PM
+  y <- unlist(strsplit(x[1],":"))
+  time <- (as.numeric(y[1]) + 12 * (x[2] == "PM")) * 60 + as.numeric(y[2]) - 60
+  if (time < 0) time <- time + 1440
+  time <- floor(time / 15) * 15
+  HH   <- floor(time / 60)
+  MM   <- time %% 60
+  start <- sprintf("%02d:%02d",HH,MM)
+  start
+}
