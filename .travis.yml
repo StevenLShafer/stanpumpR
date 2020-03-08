@@ -3,3 +3,9 @@ cache: packages
 warnings_are_errors: false
 apt_packages:
   - libv8-dev
+
+deploy:
+  - provider: script
+    script: R -f scripts/deploy.R
+    on:
+      branch: master
