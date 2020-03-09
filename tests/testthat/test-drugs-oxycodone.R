@@ -21,7 +21,7 @@ test_that("returns the correct calculations", {
         cl3 = 0,
         ka_PO = 0.06,
         bioavailability_PO = 0.5,
-        0
+        tlag_PO = 0
       )
     ),
     tPeak = 60,
