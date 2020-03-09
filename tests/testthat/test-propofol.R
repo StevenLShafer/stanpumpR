@@ -3,7 +3,7 @@ library(here)
 
 source(here('data', 'drugs', 'propofol.R'))
 
-test_that("propofol does the correct calculations for male", {
+test_that("returns the correct calculations for male", {
   weight <- 70
   height <- 171
   age <- 50
@@ -28,7 +28,7 @@ test_that("propofol does the correct calculations for male", {
   expect_equal_rounded(actual, expected)
 })
 
-test_that("propofol does the correct calculations for female", {
+test_that("returns the correct calculations for female", {
   weight <- 55
   height <- 160
   age <- 50
