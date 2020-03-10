@@ -14,10 +14,12 @@ function(input, output, session)
   options(error = function() {
     x <- geterrmessage()
     if (!isShinyLocal) {
-      cat("Error detected in stanpumpR\n")
-      cat(x, "\n")
-      cat("URL: ", prior$url, "\n")
-      sendError(url = prior$url, errorMessage = x)
+      isolate({
+        cat("Error detected in stanpumpR\n")
+        cat(x, "\n")
+        cat("URL: ", prior$url, "\n")
+        sendError(url = prior$url, errorMessage = x)
+      })
     }
     options(error = NULL)
   })
@@ -49,7 +51,7 @@ function(input, output, session)
   })
 
   # Make drugs and events local to session
-  cat("Setting drugDefaults and eventDefaults\n")
+  cat("Setting drugDefaults\n")
   drugDefaults <- reactiveVal(drugDefaults_global)
   drugList <- reactive({
     drugDefaults()$Drug
@@ -59,13 +61,8 @@ function(input, output, session)
 
   prior <- getInitialValues()
 
-  # This always runs, because on restore it fully restarts server()
-  current <- reactiveValues(
-    DT = doseTableInit
-  )
-
   # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
-  # current$DT <- data.frame(
+  # doseTableInit <- data.frame(
   #   Drug = c("dexmedetomidine",""),
   #   Time = c("0",""),
   #   Dose = c("1",""),
@@ -73,7 +70,7 @@ function(input, output, session)
   #   stringsAsFactors = FALSE
   # )
 
-  # current$DT <- data.frame(
+  # doseTableInit <- data.frame(
   #   Drug = c("hydromorphone"),
   #   Time = as.character(0:6*240),
   #   Dose = c("1"),
@@ -81,13 +78,19 @@ function(input, output, session)
   #   stringsAsFactors = FALSE
   # )
 
-  # current$DT <- data.frame(
+  # doseTableInit <- data.frame(
   #   Drug = drugDefaults()$Drug,
   #   Time = "0",
   #   Dose = "1",
   #   Units = drugDefaults()$Bolus.Units,
   #   stringsAsFactors = FALSE
   # )
+
+  # This always runs, because on restore it fully restarts server()
+  current <- reactiveValues(
+    DT = doseTableInit
+  )
+
   doseTable <- reactiveVal(doseTableInit)
 
   outputComments("prior$DT at the end of initialization")
@@ -465,9 +468,9 @@ function(input, output, session)
 
       if (normalization != prior$normalization)
       {
-        X <- setLinetypes(normalization)
-        plasmaLinetype <- X$plasmaLinetype
-        effectsiteLinetype <- X$effectsiteLinetype
+        linetypes <- setLinetypes(normalization)
+        plasmaLinetype <- linetypes$plasmaLinetype
+        effectsiteLinetype <- linetypes$effectsiteLinetype
       }
       if (caption != "")
       {
@@ -485,7 +488,11 @@ function(input, output, session)
         )
       }
       simulationFlag <- FALSE
-      X <- simulationPlot(
+      simplot_return <- simulationPlot(
+        drugs = drugs(),
+        events = ET,
+        drugDefaults = drugDefaults(),
+        eventDefaults = eventDefaults,
         xBreaks = xBreaks,
         xLabels = xLabels,
         xAxisLabel = xAxisLabel,
@@ -501,21 +508,18 @@ function(input, output, session)
         caption = printCaption,
         aspect = ASPECT,
         typical = typical,
-        logY = logY,
-        drugs = drugs(),
-        events = ET,
-        eventDefaults = eventDefaults,
-        drugDefaults = drugDefaults()
+        logY = logY
       )
-      if (is.null(X))
+
+      if (is.null(simplot_return))
       {
         plotObjectReactive(NULL)
         allResultsReactive(NULL)
         plotResultsReactive(NULL)
       } else {
-        plotObjectReactive(X$plotObject)
-        allResultsReactive(X$allResults)
-        plotResultsReactive(X$plotResults)
+        plotObjectReactive(simplot_return$plotObject)
+        allResultsReactive(simplot_return$allResults)
+        plotResultsReactive(simplot_return$plotResults)
       }
       prior$plasmaLinetype      <- plasmaLinetype
       prior$effectsiteLinetype  <- effectsiteLinetype
@@ -570,9 +574,9 @@ function(input, output, session)
     priority=10,
     {
       #cat("Inside observeEvent for Linetypes\n")
-      X <- setLinetypes(input$normalization)
-      prior$plasmaLinetype <- X$plasmaLinetype
-      prior$effectsiteLinetype <- X$effectsiteLinetype
+      linetypes <- setLinetypes(input$normalization)
+      prior$plasmaLinetype <- linetypes$plasmaLinetype
+      prior$effectsiteLinetype <- linetypes$effectsiteLinetype
       output$Linetype <- renderUI({
         div(
           selectInput(
@@ -1323,7 +1327,7 @@ dblclickPopupDrug <- function(
       footer = NULL,
       easyClose = TRUE,
       fade=TRUE,
-      size="s"
+      size="m"
     )
   )
 }
