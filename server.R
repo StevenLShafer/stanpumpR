@@ -374,11 +374,11 @@ function(input, output, session)
     if (printCaption == "") {
       printCaption <- paste0(
         "Age: ",
-        round(input$age * as.numeric(input$ageUnit), 1),
+        round(age(), 1),
         " years, weight: ",
-        round(input$weight * as.numeric(input$weightUnit), 2),
+        round(weight(), 2),
         " kg, height: ",
-        round(input$height * as.numeric(input$heightUnit), 2),
+        round(height(), 2),
         " cm, sex: ",
         input$sex
       )
