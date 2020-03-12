@@ -14,7 +14,11 @@ if (!isShinyLocal) {
   internetConnected <- TRUE
 } else {
   Sys.unsetenv("R_CONFIG_ACTIVE") # Running on laptop
-  internetConnected <- checkConnection()
+  internetConnected <- FALSE
+  x <- system.time({ internetConnected <- checkConnection() })
+  cat("Time to determine if it has an internet connection\n")
+  print(x)
+  cat("\n")
 
   # tell shiny to log all reactivity
   library(reactlog)
@@ -45,12 +49,6 @@ drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FAL
 for (drug in drugDefaults_global$Drug) {
   source(file.path("data", "drugs", paste0(drug, ".R")), local = TRUE)
 }
-
-
-x <- system.time({ checkConnection() })
-cat("Time to determine if it has an internet connection\n")
-print(x)
-cat("\n")
 
 # Setup Theme
 theme_update(
