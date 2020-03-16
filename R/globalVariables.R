@@ -1,3 +1,4 @@
+library(here)
 
 facetFont <-      c(  20,   18,   18,   16,   14,   14,   14,   13,   13,   12,   11,   10,    9,    9,   8,  8)
 labelFont <-      c(  16,   15,   14,   13,   12,   11,   9,    8,    8,    7,    6,    6,    5,    5,   5,  5)
@@ -57,3 +58,15 @@ maxtimes <- data.frame(
   times = c(10, 30, 60, 90, 120, 180, 240, 300, 360, 480, 600, 720, 1440, 1680, 1920, 2880, 4320, 5760,7200, 1000000 ),
   steps = c( 1,  5, 10, 15,  15,  30,  30,  60,  60,  60, 120, 120, 240,  240, 240,  480,   480,  720, 720, 1440)
 )
+
+eventDefaults <- read.csv(here("data", "Event Defaults.csv"), stringsAsFactors = FALSE)
+
+drugUnitsExpand <- function(units) {
+  strsplit(units, ",")
+}
+
+drugDefaults_global <- (function() {
+  drugDefaults <- read.csv(here("data", "Drug Defaults.csv"), stringsAsFactors = FALSE, na.strings = "")
+  drugDefaults$Units <- drugUnitsExpand(drugDefaults$Units)
+  drugDefaults
+})()

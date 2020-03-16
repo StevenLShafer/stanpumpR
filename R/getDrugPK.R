@@ -1,11 +1,11 @@
 # Get the pharmacokinetic and pharmacodynamic value for a drug based on
 # patient covariates
 getDrugPK <- function(
-  drug = "propofol",
-  weight = 70,
-  height = 170,
-  age = 50,
-  sex = "male",
+  drug,
+  weight,
+  height,
+  age,
+  sex,
   drugDefaults
 )
 {
