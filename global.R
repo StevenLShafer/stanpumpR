@@ -41,10 +41,9 @@ for (file in list.files("R", pattern = "\\.R$")) {
 #CANCEL <- readPNG("www/cancel.png", native=TRUE)
 enableBookmarking(store = "url")
 
-eventDefaults_global <- read.csv("data/Event Defaults.csv", stringsAsFactors = FALSE)
-eventDefaults <- eventDefaults_global
-
-drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FALSE, na.strings = "")
+drugUnitsSimplify <- function(units) {
+  unlist(lapply(units, paste, collapse = ","))
+}
 
 # Load individual drug routines
 for (drug in drugDefaults_global$Drug) {
@@ -87,14 +86,6 @@ nothingtoPlot <- staticPlot(
     sep = "\n"
   )
 )
-
-drugUnitsExpand <- function(units) {
-  strsplit(units, ",")
-}
-drugUnitsSimplify <- function(units) {
-  unlist(lapply(units, paste, collapse = ","))
-}
-drugDefaults_global$Units <- drugUnitsExpand(drugDefaults_global$Units)
 
 blanks <- rep("", 6)
 doseTableInit <- data.frame(

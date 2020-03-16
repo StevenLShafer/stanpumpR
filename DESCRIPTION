@@ -20,6 +20,7 @@ Imports:
   ggplot2  (>= 3.2),
   ggpubr,
   grid,
+  here,
   httr,
   jpeg,
   jsonlite,
@@ -44,7 +45,6 @@ Imports:
   tidyr,
 Suggests:
     devtools,
-    here,
     rsconnect,
     testthat,
     yaml,
