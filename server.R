@@ -70,9 +70,8 @@ function(input, output, session)
 
   outputComments("Initializing prior and current")
 
-  #TODO try to remove prior altogether.
-  # The only values that are used for prior are: ET, DT
-  prior <- getInitialValues()
+  DT <- reactiveVal(doseTableInit)
+  ET <- reactiveVal(eventTableInit)
 
   # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
   # doseTableInit <- data.frame(
@@ -149,7 +148,7 @@ function(input, output, session)
   # This gets called before bookmarking to prepare values that need to be saved
   onBookmark(function(state) {
     state$values$DT <- current$DT
-    state$values$ET <- prior$ET
+    state$values$ET <- ET()
     setBookmarkExclude(bookmarksToExclude)
   })
 
@@ -166,18 +165,18 @@ function(input, output, session)
       "***************************************************************************",
       sep = ""
     )
-    prior$DT <- as.data.frame(state$values$DT, stringsAsFactors = FALSE)
-    outputComments("Prior$DT:")
-    outputComments(prior$DT)
-    doseTable(prior$DT)
-    current$DT <- prior$DT
-    prior$ET <- as.data.frame(state$values$ET, stringsAsFactors = FALSE)
-    if (ncol(prior$ET) == 0) {
-      prior$ET <- eventTableInit
+    DT(as.data.frame(state$values$DT, stringsAsFactors = FALSE))
+    outputComments("DT:")
+    outputComments(DT())
+    doseTable(DT())
+    current$DT <- DT()
+    ET(as.data.frame(state$values$ET, stringsAsFactors = FALSE))
+    if (ncol(ET()) == 0) {
+      ET(eventTableInit)
     }
-    outputComments("prior$ET after restoring state")
-    outputComments(prior$ET)
-    eventTable(prior$ET)
+    outputComments("ET after restoring state")
+    outputComments(ET())
+    eventTable(ET())
   })
 
 
@@ -501,7 +500,7 @@ function(input, output, session)
 
       values <- list(
         title = input$title,
-        DT = prior$DT,
+        DT = DT(),
         url = url(),
         ageUnit = ageUnit(),
         weightUnit = weightUnit(),

@@ -64,41 +64,6 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
   success
 }
 
-getInitialValues <- function() {
-  reactiveValues(
-    age                = 0,
-    weight             = 0,
-    height             = 0,
-    sex                = 0,
-    ageUnit            = 0,
-    heightUnit         = "",
-    weightUnit         = "",
-    plotMaximum        = 60,
-    plasmaLinetype     = "blank",
-    effectsiteLinetype = "solid",
-    normalization      = "none",
-    title              = 0,
-    caption            = "",
-    typical            = "Range",
-    logY               = FALSE,
-    DT                 = doseTableInit, # Used to determine of replot flag needs to be set, e.g., sameTable(DT, DT)
-    # Set to DT after processDoseTable. Note that the NULL assignment is assumed without
-    # being explicit, as done here. This is mostly to help keep inventory of the prior
-    # variables
-    ET                 = eventTableInit, # Used to determine if plot needs to be set.
-    referenceTime      = "none",
-    plotMEAC           = FALSE,
-    plotInteraction    = FALSE,
-    plotCost           = FALSE,
-    plotEvents         = FALSE,
-    plotRecovery       = FALSE,
-    holdPlot           = FALSE,
-    DrugTimeUnits      = "",
-    timeDT             = 0,
-    referenceTime      = "none"
-  )
-}
-
 recalculatePK <- function(drugs, drugDefaults, age, weight, height, sex) {
   for (idx in seq(nrow(drugDefaults))) {
     drug <- drugDefaults$Drug[idx]
