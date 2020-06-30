@@ -71,7 +71,7 @@ function(input, output, session)
   outputComments("Initializing prior and current")
 
   #TODO try to remove prior altogether.
-  # The only values that are used for prior are: DrugTimeUnits, url, ET, DT
+  # The only values that are used for prior are: url, ET, DT
   prior <- getInitialValues()
 
   # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
@@ -132,6 +132,8 @@ function(input, output, session)
     start <- getReferenceTime(time)
     updateSelectInput(session, "referenceTime", selected = start)
   }, ignoreNULL = TRUE, once = TRUE)
+
+  DrugTimeUnits <- reactiveVal("")
 
   ##########################################################
   # Code to save state in url and then restore from url
@@ -622,7 +624,7 @@ observeEvent(
     outputComments("in click()", echo = DEBUG)
     x <- imgDrugTime(input$plot_click)
     outputComments("in click(), returning from imgDrugTime()", echo = DEBUG)
-    prior$DrugTimeUnits <- x
+    DrugTimeUnits(x)
 
     if (x$drug == "Events")
     {
@@ -640,7 +642,7 @@ observeEvent(
     DEBUG <- FALSE
     outputComments("in double click routine\n", echo = DEBUG)
     x <- imgDrugTime(input$plot_dblclick)
-    prior$DrugTimeUnits <- x
+    DrugTimeUnits(x)
 
     if (x$drug == "Events")
     {
@@ -822,13 +824,13 @@ observeEvent(input$clickOKDrug, {
       # This should technically never happen because validation will return 0
       clickPopupDrug(
         "Missing time",
-        prior$DrugTimeUnits
+        DrugTimeUnits()
       )
       return()
     }
 
     removeModal()
-    thisDrug <- which(drugDefaults()$Drug == prior$DrugTimeUnits$drug)
+    thisDrug <- which(drugDefaults()$Drug == DrugTimeUnits()$drug)
     if (drugDefaults()$endCe[thisDrug] != input$newEndCe) {
       newDrugDefaults <- drugDefaults()
       newDrugDefaults$endCe[thisDrug] <- input$newEndCe
@@ -837,7 +839,7 @@ observeEvent(input$clickOKDrug, {
 
     if (clickTime != "" && clickDose != "") {
       idx <- which(current$DT$Drug == "")[1]
-      current$DT$Drug[idx]  <- prior$DrugTimeUnits$drug
+      current$DT$Drug[idx]  <- DrugTimeUnits()$drug
       current$DT$Time[idx]  <- clickTime
       current$DT$Dose[idx]  <- clickDose
       current$DT$Units[idx] <- input$clickUnits
@@ -851,91 +853,96 @@ observeEvent(input$clickOKDrug, {
 
 
 # Edit prior drug doses
-observeEvent(
-  input$editDoses,
-  {
-    removeModal()
-    tempTable <-  current$DT[current$DT$Drug ==  prior$DrugTimeUnits$drug,]
-    tempTable$Delete <- FALSE
-    tempTableHOT <- rhandsontable(
-      tempTable[,c("Delete","Time","Dose","Units")],
-      overflow = 'visible',
-      rowHeaders = NULL,
-      height = 220,
-      selectCallback = TRUE
-    ) %>%
-      hot_col(
-        col = "Delete",
-        type="checkbox",
-        halign = "htRight",
-        allowInvalid = FALSE,
-        strict = TRUE
-      ) %>%
-      hot_col(
-        col = "Time",
-        type="autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = "Dose",
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = "Units",
-        type = "dropdown",
-        source = units,
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
-      hot_rows(rowHeights = 10) %>%
-      hot_cols(colWidths = c(50,55,55,90))
-    output$tempTableHTML <- renderRHandsontable(tempTableHOT)
-    showModal(
-      modalDialog(
-        title = paste("Edit", prior$DrugTimeUnits$drug,"doses:"),
-        rHandsontableOutput(outputId = "tempTableHTML"),
-        actionButton(
-          inputId = "editDosesOK",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-        ),
-        tags$button(
-          type = "button",
-          class = "btn btn-warning",
-          `data-dismiss` = "modal",
-          "Cancel"
-        ),
-        footer = NULL,
-        easyClose = TRUE,
-        fade=TRUE,
-        size="s"
-      )
+observeEvent(input$editDoses, {
+  showModal(
+    modalDialog(
+      title = paste("Edit", DrugTimeUnits()$drug,"doses:"),
+      rHandsontableOutput(outputId = "editPriorDosesTable"),
+      actionButton(
+        inputId = "editDosesOK",
+        label = "OK",
+        style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
+      ),
+      tags$button(
+        type = "button",
+        class = "btn btn-warning",
+        `data-dismiss` = "modal",
+        "Cancel"
+      ),
+      footer = NULL,
+      easyClose = TRUE,
+      fade=TRUE,
+      size="s"
     )
-  }
-)
+  )
+})
+
+output$editPriorDosesTable <- renderRHandsontable({
+  editPriorDosesTable <- current$DT[current$DT$Drug == DrugTimeUnits()$drug, ]
+  possibleUnits <- drugDefaults() %>%
+    dplyr::filter(Drug == DrugTimeUnits()$drug) %>%
+    dplyr::pull("Units") %>%
+    unlist()
+  editPriorDosesTable$Delete <- FALSE
+
+  editPriorDosesTableHOT <- rhandsontable(
+    editPriorDosesTable[ , c("Delete","Time","Dose","Units")],
+    overflow = 'visible',
+    rowHeaders = NULL,
+    height = 220,
+    selectCallback = TRUE
+  ) %>%
+    hot_col(
+      col = "Delete",
+      type = "checkbox",
+      halign = "htRight",
+      allowInvalid = FALSE,
+      strict = TRUE
+    ) %>%
+    hot_col(
+      col = "Time",
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = "Dose",
+      type = "autocomplete",
+      halign = "htRight",
+      allowInvalid = TRUE,
+      strict = FALSE
+    ) %>%
+    hot_col(
+      col = "Units",
+      type = "dropdown",
+      source = possibleUnits,
+      strict = TRUE,
+      halign = "htLeft",
+      valign = "vtMiddle",
+      allowInvalid = FALSE
+    ) %>%
+    hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+    hot_rows(rowHeights = 10) %>%
+    hot_cols(colWidths = c(50,55,55,90))
+
+  editPriorDosesTableHOT
+})
 
 observeEvent(
   input$editDosesOK,
   {
     removeModal()
-    TT <- hot_to_r(input$tempTableHTML)
+    TT <- hot_to_r(input$editPriorDosesTable)
     cat("In ObserveEvent for editDosesOK\n")
-    TT$Drug <- prior$DrugTimeUnits$drug
+    TT$Drug <- DrugTimeUnits()$drug
     cat("TT:\n")
     print(TT)
     cat("current$DT:\n")
     print(current$DT)
     current$DT <- rbind(
       TT[!TT$Delete,c("Drug","Time","Dose","Units")],
-      current$DT[current$DT$Drug != prior$DrugTimeUnits$drug,]
+      current$DT[current$DT$Drug != DrugTimeUnits()$drug,]
     )
 
     # Sort by time, by drug, but put blanks at the bottom
@@ -1047,7 +1054,7 @@ observeEvent(
     } else {
       clickPopupEvent(
         failed = failed,
-        prior$DrugTimeUnits
+        DrugTimeUnits()
       )
     }
   }
@@ -1233,7 +1240,7 @@ observeEvent(
     } else {
       dblclickPopupDrug(
         failed = failed,
-        prior$DrugTimeUnits
+        DrugTimeUnits()
       )
     }
   }
@@ -1243,7 +1250,7 @@ observeEvent(
   input$dblclickDelete,
   {
     removeModal()
-    current$DT <- current$DT[current$DT$Drug != prior$DrugTimeUnits$drug,]
+    current$DT <- current$DT[current$DT$Drug != DrugTimeUnits()$drug,]
     doseTable(current$DT)
   }
 )
