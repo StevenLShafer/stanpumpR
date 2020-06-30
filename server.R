@@ -17,8 +17,8 @@ function(input, output, session)
       isolate({
         cat("Error detected in stanpumpR\n")
         cat(msg, "\n")
-        cat("URL: ", prior$url, "\n")
-        sendError(url = prior$url, errorMessage = msg)
+        cat("URL: ", url(), "\n")
+        sendError(url = url(), errorMessage = msg)
       })
     }
     options(error = NULL)
@@ -71,7 +71,7 @@ function(input, output, session)
   outputComments("Initializing prior and current")
 
   #TODO try to remove prior altogether.
-  # The only values that are used for prior are: url, ET, DT
+  # The only values that are used for prior are: ET, DT
   prior <- getInitialValues()
 
   # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
@@ -138,6 +138,8 @@ function(input, output, session)
   ##########################################################
   # Code to save state in url and then restore from url
 
+  url <- reactiveVal("")
+
   observe({
     # Trigger this observer every time an input changes
     reactiveValuesToList(input)
@@ -154,7 +156,7 @@ function(input, output, session)
   # This gets called after bookmarking is completed
   onBookmarked(function(url) {
     updateQueryString(url)
-    prior$url <- url
+    url(url)
   })
 
   onRestored(function(state) {
@@ -497,9 +499,20 @@ function(input, output, session)
       DEBUG <- TRUE
       outputComments(paste("input$sendSlide",input$sendSlide), echo = DEBUG)
 
-      #TODO sendSlide expects prior to have a bunch of values it doesn't have
+      values <- list(
+        title = input$title,
+        DT = prior$DT,
+        url = url(),
+        ageUnit = ageUnit(),
+        weightUnit = weightUnit(),
+        heightUnit = heightUnit(),
+        age = age(),
+        weight = weight(),
+        height = height(),
+        sex = input$sex
+      )
       img <- sendSlide(
-        prior = prior,
+        prior = values,
         recipient = input$recipient,
         plotObject = plotObjectReactive(),
         allResults = allResultsReactive(),
