@@ -511,14 +511,14 @@ function(input, output, session)
         sex = input$sex
       )
       img <- sendSlide(
-        prior = values,
+        values = values,
         recipient = input$recipient,
         plotObject = plotObjectReactive(),
         allResults = allResultsReactive(),
         plotResults = plotResultsReactive(),
         isShinyLocal = isShinyLocal,
         slide = as.numeric(input$sendSlide),
-        drugs(),
+        drugs = drugs(),
         email_username = config$email_username,
         email_password = config$email_password
       )
