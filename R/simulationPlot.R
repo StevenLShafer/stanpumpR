@@ -1,5 +1,9 @@
 # Simulation Plot
 simulationPlot <- function(
+  drugs,
+  events,
+  drugDefaults,
+  eventDefaults,
   xBreaks = c(0:6*10),
   xLabels = c(0:6*10),
   xAxisLabel = "Time (Minutes)",
@@ -15,11 +19,7 @@ simulationPlot <- function(
   caption = "Default Caption",
   aspect = 0.6,
   typical = c("Mid"),
-  logY = FALSE,
-  drugs,
-  events,
-  eventDefaults,
-  drugDefaults
+  logY = FALSE
   )
 
 # xBreaks = c(0:6*10)

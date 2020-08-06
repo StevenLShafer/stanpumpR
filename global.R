@@ -41,8 +41,7 @@ for (file in list.files("R", pattern = "\\.R$")) {
 #CANCEL <- readPNG("www/cancel.png", native=TRUE)
 enableBookmarking(store = "url")
 
-eventDefaults_global <- read.csv("data/Event Defaults.csv", stringsAsFactors = FALSE)
-eventDefaults <- eventDefaults_global
+eventDefaults <- read.csv("data/Event Defaults.csv", stringsAsFactors = FALSE)
 
 drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FALSE, na.strings = "")
 
@@ -180,8 +179,8 @@ bookmarksToExclude <- c(
   "referenceTime-selectized",
   "targetTableHTML",
   "targetTableHTML_select",
-  "tempTableHTML_select",
-  "tempTableHTML",
+  "editPriorDosesTable_select",
+  "editPriorDosesTable",
   "clickDose",
   "clickEvent",
   "clickEvent-selectized",
