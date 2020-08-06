@@ -13,7 +13,6 @@ Imports:
   config,
   data.table,
   dplyr,
-  dqshiny,
   DT,
   egg,
   glue,
