@@ -22,9 +22,9 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
     # cat("Structure of tempET\n")
     # print(str(tempET))
 
-    if (!isTRUE(all_equal(tempDT, drugs[[drug]]$DT)) |
-        (length(drugs[[drug]]$pkEvents) > 1 &
-           !isTRUE(all_equal(drugs[[drug]]$ET, tempET)))
+    if (!identical(tempDT, drugs[[drug]]$DT) |
+         (length(drugs[[drug]]$pkEvents) > 1 &
+          !identical(drugs[[drug]]$ET, tempET))
       )
     {
       # cat("Seems not\n")

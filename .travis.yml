@@ -3,6 +3,12 @@ cache: packages
 warnings_are_errors: false
 apt_packages:
   - libv8-dev
+  - r-cran-rjava
+
+before_install:
+  - sudo $(which R) CMD javareconf
+
+sudo: required
 
 deploy:
   - provider: script
