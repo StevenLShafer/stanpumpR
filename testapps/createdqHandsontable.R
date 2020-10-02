@@ -1,7 +1,6 @@
 # Create the handsontable that has the dosing information
 library(shiny)
 library(openxlsx)
-library(dqshiny)
 library(shinyjs)
 library(shinydashboard)
 library(shinyBS)
@@ -25,21 +24,21 @@ doseTable <- data.frame(
 createdqHandsontable <- function(doseTable,drugDefaults)
 {
   dq_render_handsontable(
-    "doseTableHTML", 
+    "doseTableHTML",
     doseTable,
     # filters = c(
-    #   "Auto", 
-    #   "Text", 
-    #   "Text", 
+    #   "Auto",
+    #   "Text",
+    #   "Text",
     #   "Auto"
-    # ), 
+    # ),
     sorting = FALSE,
     horizontal_scroll = FALSE,
     page_size = NULL,
     # c(
-    #   17L, 
-    #   5L, 
-    #   500L, 
+    #   17L,
+    #   5L,
+    #   500L,
     #   1000L
     # ),
     table_param(
@@ -79,7 +78,7 @@ createdqHandsontable <- function(doseTable,drugDefaults)
          halign = "htLeft",
          valign = "vtMiddle",
          allowInvalid=FALSE
-       )   
+       )
     )
   )
 }

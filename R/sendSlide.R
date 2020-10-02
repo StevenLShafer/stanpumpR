@@ -1,6 +1,6 @@
 # Send a copy of the current plot to the designated recipient
 sendSlide <- function(
-  prior,
+  values,
   recipient,
   plotObject,
   allResults,
@@ -23,9 +23,9 @@ sendSlide <- function(
   if (missing(email_password) || is.null(email_password)) {
     stop("email password missing")
   }
-  title = prior$title
-  DT <- prior$DT
-  url <- prior$url
+  title = values$title
+  DT <- values$DT
+  url <- values$url
 
   outputComments("In function sendSlide()")
 
@@ -75,21 +75,21 @@ sendSlide <- function(
   pngfileName <- gsub(".png","001.png",pngfileName) #Weird!
 
   outputComments("Fixing Units for export")
-  if (prior$ageUnit == "1")
+  if (values$ageUnit == "1")
   {
     ageUnit <- "years"
   } else {
     ageUnit <- "months"
   }
 
-  if (prior$weightUnit == "1")
+  if (values$weightUnit == "1")
   {
     weightUnit <- "kilograms"
   } else {
     weightUnit <- "pounds"
   }
 
-  if (prior$heightUnit == "1")
+  if (values$heightUnit == "1")
   {
     heightUnit <- "cms"
   } else {
@@ -109,13 +109,13 @@ sendSlide <- function(
       "Sex"
     ),
     Value = c(
-      prior$age / prior$ageUnit,
+      values$age / values$ageUnit,
       ageUnit,
-      prior$weight / prior$weightUnit,
+      values$weight / values$weightUnit,
       weightUnit,
-      prior$height / prior$heightUnit,
+      values$height / values$heightUnit,
       heightUnit,
-      prior$sex
+      values$sex
     ),
     stringsAsFactors = FALSE)
   outputComments("Writing covariates")
@@ -226,9 +226,9 @@ sendSlide <- function(
     "<p>&nbsp;</p>",
     "<p>Dear ",gsub("@", " at ",as.character(recipient)),":<p>&nbsp;</p>",
     "<p>Here is the simulation you requested from stanpumpR on",Sys.Date(),".</p><p>&nbsp;</p>",
-    "<p>The simulation is for a ",prior$age / prior$ageUnit, " ", ageUnit, "-old ",prior$sex,
-    " weighing ", prior$weight / prior$weightUnit, " ",weightUnit,
-    " and ", prior$height / prior$heightUnit, " ", heightUnit, "tall.</p><p>&nbsp;</p>",
+    "<p>The simulation is for a ",values$age / values$ageUnit, " ", ageUnit, "-old ",values$sex,
+    " weighing ", values$weight / values$weightUnit, " ",weightUnit,
+    " and ", values$height / values$heightUnit, " ", heightUnit, "tall.</p><p>&nbsp;</p>",
     "<p>You should be able to reload the file from ",
     "<a href=\"",url,"\">stanpumpR</a>.</p><p>&nbsp;</p>",
     "<p>If you have any questions or suggestions, please just reply to this e-mail. This is an early release of stanpumpR. ",

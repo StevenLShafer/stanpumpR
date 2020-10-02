@@ -33,5 +33,10 @@ Near-term future developments in stanpumpR will include
 1. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
 1. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
 
+#### Running tests
+1. Install the devtools package via `install.packages("devtools")`.
+1. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
+1. Run the tests via `devtools::test()`
+
 Steven L. Shafer, MD
 November 2019

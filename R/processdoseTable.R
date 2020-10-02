@@ -4,7 +4,7 @@
 # table.
 # If there has been no changed in the dose table for a specific drug
 # then it is skipped.
-processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
+processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
 {
   # Now, process dose table for each drug
   # cat("Entering processdoseTable()\n")
@@ -22,12 +22,9 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, prior, plotRecovery)
     # cat("Structure of tempET\n")
     # print(str(tempET))
 
-    if (!isTRUE(all_equal(tempDT, drugs[[drug]]$DT)) |
-        plotMaximum != prior$plotMaximum
-        | (length(drugs[[drug]]$pkEvents) > 1 &
-           !isTRUE(all_equal(drugs[[drug]]$ET, tempET)) |
-        (plotRecovery & !prior$plotRecovery)
-        )
+    if (!identical(tempDT, drugs[[drug]]$DT) |
+         (length(drugs[[drug]]$pkEvents) > 1 &
+          !identical(drugs[[drug]]$ET, tempET))
       )
     {
       # cat("Seems not\n")

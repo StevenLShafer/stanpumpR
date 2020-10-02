@@ -1,4 +1,4 @@
-propofol <- function(weight = 70, height = 171, age = 50, sex = "male")
+propofol <- function(weight, height, age, sex)
 {
   # Units **************
   # Time: Minutes
