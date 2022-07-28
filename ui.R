@@ -1,7 +1,7 @@
 # UI for stanpumpR
 
 # UI ------------------------------------------------------
-function(request) {
+ui <- function(request) {
   dashboardPage(
     dashboardHeader(
       title = config$title,

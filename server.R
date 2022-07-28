@@ -6,9 +6,8 @@
 ####################################################
 
 # server ##########################################
-function(input, output, session)
+server <- function(input, output, session)
 {
-
   showIntroModal()
 
   options(error = function() {

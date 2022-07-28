@@ -1,8 +1,6 @@
 context("oxycodone")
 library(here)
 
-source(here('data', 'drugs', 'oxycodone.R'))
-
 test_that("returns the correct calculations", {
   weight <- 70
   height <- 171

@@ -42,14 +42,65 @@ Imports:
   stringi,
   tidyr,
 Suggests:
-    devtools,
-    here,
-    rsconnect,
-    testthat,
-    yaml,
+  devtools,
+  here,
+  rsconnect,
+  testthat,
+  yaml,
 Depends:
   R (>= 4.0)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.2.1
+Collate:
+  drugDefaults.R
+  sendSlide.R
+  CE.R
+  advanceClosedForm0.R
+  advanceClosedForm1.R
+  advanceClosedFormPO_IM_IN.R
+  advanceState.R
+  advanceStatePO.R
+  calculateCe.R
+  clockTimeToDelta.R
+  convertState.R
+  createHOT.R
+  cube.R
+  deltaToClockTime.R
+  drugs_alfentanil.R
+  drugs_dexmedetomidine.R
+  drugs_etomidate.R
+  drugs_fentanyl.R
+  drugs_hydromorphone.R
+  drugs_ketamine.R
+  drugs_lidocaine.R
+  drugs_methadone.R
+  drugs_midazolam.R
+  drugs_morphine.R
+  drugs_naloxone.R
+  drugs_oxycodone.R
+  drugs_oxytocin.R
+  drugs_pethidine.R
+  drugs_propofol.R
+  drugs_remifentanil.R
+  drugs_rocuronium.R
+  drugs_sufentanil.R
+  getDrugPK.R
+  globalVariables.R
+  havingIP.R
+  hourMinute.R
+  lbmJames.R
+  modelInteraction.R
+  packages.R
+  processdoseTable.R
+  recoveryCalc.R
+  sendError.R
+  server-helpers.R
+  setLinetypes.R
+  simCpCe.R
+  simulationPlot.R
+  tPeakError.R
+  utils.R
+  validateDose.R
+  validateTime.R

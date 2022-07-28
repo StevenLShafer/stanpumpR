@@ -1,8 +1,7 @@
 context("propofol")
 library(here)
 
-source(here('data', 'drugs', 'propofol.R'))
-
+#
 test_that("returns the correct calculations for male", {
   weight <- 70
   height <- 171

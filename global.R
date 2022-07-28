@@ -1,54 +1,15 @@
-# Load Libraries
-source(file.path("R", "global", "packages.R"), local = TRUE)
-source(file.path("R", "globalVariables.R"), local = TRUE)
+library(shiny)
+library(ggplot2)
 
 options(warn = 2)
 
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
-# cat("isShinyLocal",isShinyLocal,"\n")
 
-source("R/havingIP.R", local = TRUE)
-
-if (!isShinyLocal) {
-  Sys.setenv(R_CONFIG_ACTIVE = "production")  # Running on Shinyapps
-  internetConnected <- TRUE
-} else {
-  Sys.unsetenv("R_CONFIG_ACTIVE") # Running on laptop
-  internetConnected <- FALSE
-  x <- system.time({ internetConnected <- checkConnection() })
-  cat("Time to determine if it has an internet connection\n")
-  print(x)
-  cat("\n")
-
-  # tell shiny to log all reactivity
-  library(reactlog)
-  options(shiny.reactlog = TRUE)
-
-  appFiles <- dir()
-  appFiles <- appFiles[grepl("\\.", appFiles)]
-  appFiles <- c(appFiles, "R","data","www", "misc")
-  source("scripts/deployActive.R")
-  source("scripts/deployTest.R")
-}
 config <- config::get()
-
-# Load stanpumpR routines
-for (file in list.files("R", pattern = "\\.R$")) {
-  source(file.path("R", file), local = TRUE)
-}
 
 # Load other files
 #CANCEL <- readPNG("www/cancel.png", native=TRUE)
 enableBookmarking(store = "url")
-
-eventDefaults <- read.csv("data/Event Defaults.csv", stringsAsFactors = FALSE)
-
-drugDefaults_global <- read.csv("data/Drug Defaults.csv", stringsAsFactors = FALSE, na.strings = "")
-
-# Load individual drug routines
-for (drug in drugDefaults_global$Drug) {
-  source(file.path("data", "drugs", paste0(drug, ".R")), local = TRUE)
-}
 
 # Setup Theme
 theme_update(
@@ -68,33 +29,6 @@ theme_update(
   legend.key = element_blank()
 )
 
-
-introductionPlot <- staticPlot("Initializing your session.")
-
-nothingtoPlot <- staticPlot(
-  paste(
-    "Welcome to stanpumpR.",
-    "",
-    "Please enter the drugs in the table to the left.",
-    "Use the pull down menu to select each drug.",
-    "Drugs and doses can be entered in any order",
-    "Set the units in the last column.",
-    "",
-    "After plots appear here, you can enter new doses",
-    "by clicking on the plot. You can enter new drugs",
-    "by double clicking on any plot.",
-    sep = "\n"
-  )
-)
-
-drugUnitsExpand <- function(units) {
-  strsplit(units, ",")
-}
-drugUnitsSimplify <- function(units) {
-  unlist(lapply(units, paste, collapse = ","))
-}
-drugDefaults_global$Units <- drugUnitsExpand(drugDefaults_global$Units)
-
 blanks <- rep("", 6)
 doseTableInit <- data.frame(
   Drug = c("propofol","fentanyl","remifentanil","rocuronium", blanks),
@@ -111,8 +45,6 @@ eventTableInit <- data.frame(
   Fill = "",
   stringsAsFactors = FALSE
 )[FALSE, ]
-
-`%then%` <- shiny:::`%OR%`
 
 outputComments <- function(
   ...,

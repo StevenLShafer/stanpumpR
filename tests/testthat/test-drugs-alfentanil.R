@@ -1,8 +1,6 @@
 context("alfentanil")
 library(here)
 
-source(here('data', 'drugs', 'alfentanil.R'))
-
 test_that("returns the correct calculations", {
   weight <- 70
   height <- 171

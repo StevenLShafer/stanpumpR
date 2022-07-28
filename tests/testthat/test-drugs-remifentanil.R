@@ -1,8 +1,6 @@
 context("remifentanil")
 library(here)
 
-source(here('data', 'drugs', 'remifentanil.R'))
-
 calculateBMI <- function(weight, height) {
   weight / (height / 100) ^ 2
 }
