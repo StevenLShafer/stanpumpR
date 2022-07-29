@@ -31,13 +31,13 @@ theme_update(
 
 blanks <- rep("", 6)
 doseTableInit <- data.frame(
-  Drug = c("propofol","fentanyl","remifentanil","rocuronium", blanks),
-  Time = c(as.character(rep(0,4)), blanks),
-  Dose = c(as.character(rep(0,4)), blanks),
-  Units = c("mg","mcg","mcg/kg/min","mg", blanks),
+  Drug = c("propofol","propofol","fentanyl","remifentanil","remifentanil","rocuronium", blanks),
+  Time = c(as.character(rep(0,6)), blanks),
+  Dose = c(as.character(rep(0,6)), blanks),
+  Units = c("mg","mcg/kg/min","mcg","mcg","mcg/kg/min","mg", blanks),
   stringsAsFactors = FALSE
 )
-doseTableNewRow <-  doseTableInit[5, ]
+doseTableNewRow <-  doseTableInit[7, ]
 
 eventTableInit <- data.frame(
   Time = 0,
