@@ -46,3 +46,4 @@ vignettes/*.pdf
 # Log file
 log.txt
 .Rproj.user
+inst/doc

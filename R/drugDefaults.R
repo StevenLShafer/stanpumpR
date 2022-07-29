@@ -2,7 +2,11 @@ drugUnitsSimplify <- function(units) {
   unlist(lapply(units, paste, collapse = ","))
 }
 
-# Return the drug defaults table, with expansion applied
+#' Return the stanpumpR drug defaults table, with expansion applied
+#'
+#' @examples
+#' getDrugDefaultsGlobal()
+#'
 #' @export
 getDrugDefaultsGlobal <- function()
 {
@@ -18,7 +22,11 @@ getDrugDefaultsGlobal <- function()
   drugDefaultsDataset
 }
 
-# Return the drug defaults for a single drug, with expansion applied
+#' Returns the stanpumpR drug defaults table for a single drug
+#'
+#' @examples
+#' getDrugDefaults('remifentanil')
+#'
 #' @export
 getDrugDefaults <- function(drug)
 {

@@ -42,11 +42,13 @@ Imports:
   stringi,
   tidyr,
 Suggests:
-  devtools,
-  here,
-  rsconnect,
-  testthat,
-  yaml,
+    devtools,
+    here,
+    knitr,
+    rmarkdown,
+    rsconnect,
+    testthat,
+    yaml
 Depends:
   R (>= 4.0)
 Encoding: UTF-8
@@ -104,3 +106,4 @@ Collate:
   utils.R
   validateDose.R
   validateTime.R
+VignetteBuilder: knitr
