@@ -62,7 +62,8 @@ server <- function(input, output, session)
 
   # Make drugs and events local to session
   cat("Setting drugDefaults\n")
-  drugDefaults <- reactiveVal(drugDefaults_global)
+  drugDefaultsSource <- getDrugDefaultsGlobal()
+  drugDefaults <- reactiveVal(drugDefaultsSource)
   drugList <- reactive({
     drugDefaults()$Drug
   })
