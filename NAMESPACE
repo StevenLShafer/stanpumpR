@@ -3,3 +3,4 @@
 export(getDrugDefaults)
 export(getDrugDefaultsGlobal)
 export(getDrugPK)
+export(simCpCe)
