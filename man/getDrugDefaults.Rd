@@ -6,10 +6,12 @@
 \usage{
 getDrugDefaults(drug)
 }
+\arguments{
+\item{drug}{The drug in question}
+}
+\value{
+A subsetted data.frame from getDrugDefaultsGlobal()
+}
 \description{
 Returns the stanpumpR drug defaults table for a single drug
-}
-\examples{
-getDrugDefaults('remifentanil')
-
 }

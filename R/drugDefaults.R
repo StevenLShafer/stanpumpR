@@ -4,8 +4,7 @@ drugUnitsSimplify <- function(units) {
 
 #' Return the stanpumpR drug defaults table, with expansion applied
 #'
-#' @examples
-#' getDrugDefaultsGlobal()
+#' @returns A data.frame containing concentrations and bolus units, suggested colors and plasma/effect levels for drug effect endpoints
 #'
 #' @export
 getDrugDefaultsGlobal <- function()
@@ -24,8 +23,9 @@ getDrugDefaultsGlobal <- function()
 
 #' Returns the stanpumpR drug defaults table for a single drug
 #'
-#' @examples
-#' getDrugDefaults('remifentanil')
+#' @param drug The drug in question
+#'
+#' @returns A subsetted data.frame from getDrugDefaultsGlobal()
 #'
 #' @export
 getDrugDefaults <- function(drug)

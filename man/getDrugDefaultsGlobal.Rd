@@ -6,10 +6,9 @@
 \usage{
 getDrugDefaultsGlobal()
 }
+\value{
+A data.frame containing concentrations and bolus units, suggested colors and plasma/effect levels for drug effect endpoints
+}
 \description{
 Return the stanpumpR drug defaults table, with expansion applied
-}
-\examples{
-getDrugDefaultsGlobal()
-
 }

@@ -7,20 +7,19 @@
 simCpCe(dose, events, PK, maximum, plotRecovery)
 }
 \arguments{
+\item{dose}{table of individual doses}
+
+\item{events}{table of events}
+
 \item{PK}{PK parameters from \code{getDrugPK(drug)}}
 
 \item{maximum}{maximum length of simulation in minutes}
 
 \item{plotRecovery}{(current broken, leave set to FALSE) should recovery parameters be calculated?}
-
-\item{doseTable}{table of individual doses}
-
-\item{eventTable}{table of events}
+}
+\value{
+a list of data frames with the output of the a single drug simulation
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
-}
-\examples{
-simCpCe(doseTable, eventTable, PK, maximum, plotRecovery)
-
 }

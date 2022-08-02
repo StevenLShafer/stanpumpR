@@ -5,14 +5,13 @@ library(tidyr)
 #'
 #' See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
 #'
-#' @param doseTable table of individual doses
-#' @param eventTable table of events
+#' @param dose table of individual doses
+#' @param events table of events
 #' @param PK PK parameters from \code{getDrugPK(drug)}
 #' @param maximum maximum length of simulation in minutes
 #' @param plotRecovery (current broken, leave set to FALSE) should recovery parameters be calculated?
 #'
-#' @examples
-#' simCpCe(doseTable, eventTable, PK, maximum, plotRecovery)
+#' @returns a list of data frames with the output of the a single drug simulation
 #'
 #' @export
 simCpCe <- function(dose, events, PK, maximum, plotRecovery)
