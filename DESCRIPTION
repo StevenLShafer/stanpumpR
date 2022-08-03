@@ -107,4 +107,5 @@ Collate:
   validateDose.R
   validateTime.R
   simulateDrugsWithCovariates.R
+  stanpumpR-package.R
 VignetteBuilder: knitr

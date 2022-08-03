@@ -43,9 +43,10 @@ Near-term future developments in stanpumpR will include
 1. Run the tests via `devtools::test()`
 
 #### Using stanpumpR as a library
-1. Loading this repository with devtools will enable you to access the internal functions from your own code
-- `library(devtools)`
-- `load_all("RELATIVE_PATH_TO_STANPUMPR_HERE")`
+A limited number of functions have been exported for use by your own code. To install:
+
+1. `library(devtools)`
+1. `devtools::install(build_vignettes = TRUE)`
 
 Steven L. Shafer, MD
 November 2019
