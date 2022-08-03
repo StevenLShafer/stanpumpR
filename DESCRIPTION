@@ -106,4 +106,5 @@ Collate:
   utils.R
   validateDose.R
   validateTime.R
+  simulateDrugsWithCovariates.R
 VignetteBuilder: knitr
