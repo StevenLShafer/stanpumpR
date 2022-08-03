@@ -3,7 +3,7 @@ title: "Single drug plasma and effect size concentration calculation with stanpu
 output: rmarkdown::html_vignette
 author: Alexander Clarke
 vignette: >
-  %\VignetteIndexEntry{stanpumpR-single-PK}
+  %\VignetteIndexEntry{Single drug plasma and effect size concentration calculation with stanpumpR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
