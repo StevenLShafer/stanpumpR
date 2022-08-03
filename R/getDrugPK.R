@@ -7,7 +7,7 @@
 #' @param weight weight in kg
 #' @param height height in cm
 #' @param age age in years
-#' @param sex (string: "female" or "male")
+#' @param sex sex as string: "female" or "male"
 #' @param drugDefaults output from \code{getDrugDefaults(drug)}
 #'
 #' @examples

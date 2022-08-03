@@ -23,7 +23,7 @@ getDrugPK(
 
 \item{age}{age in years}
 
-\item{sex}{(string: "female" or "male")}
+\item{sex}{sex as string: "female" or "male"}
 
 \item{drugDefaults}{output from \code{getDrugDefaults(drug)}}
 }
