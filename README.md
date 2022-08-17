@@ -1,6 +1,6 @@
 # stanpumpR
 
-[![Build Status](https://travis-ci.com/StevenLShafer/stanpumpR.svg?branch=master)](https://travis-ci.com/StevenLShafer/stanpumpR)
+![](../../workflows/R-CMD-check/badge.svg)
 
 stanpumpR, a PK/PD simulation program
 Copyright 2019 Steven L. Shafer, steven.shafer@stanford.edu.
