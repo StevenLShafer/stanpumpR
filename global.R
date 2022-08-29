@@ -108,7 +108,6 @@ bookmarksToExclude <- c(
   "effectsiteLinetype-selectized",
   "maximum-selectized",
   "plasmaLinetype-selectized",
-  "referenceTime-selectized",
   "targetTableHTML",
   "targetTableHTML_select",
   "editPriorDosesTable_select",
