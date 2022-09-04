@@ -1,5 +1,26 @@
-# Get the pharmacokinetic and pharmacodynamic value for a drug based on
-# patient covariates
+#' Get the pharmacokinetic and pharmacodynamic values for a drug based on
+#' patient covariates
+#'
+#' See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
+#'
+#' @param drug name of drug (string)
+#' @param weight weight in kg
+#' @param height height in cm
+#' @param age age in years
+#' @param sex sex as string: "female" or "male"
+#' @param drugDefaults output from \code{getDrugDefaults(drug)}
+#'
+#' @examples
+#' PK <- stanpumpR::getDrugPK(
+#'   drug = "remifentanil",
+#'   weight = 70,
+#'   height = 170,
+#'   age = 50,
+#'   sex = "male",
+#'   stanpumpR::getDrugDefaults('remifentanil')
+#' )
+#'
+#' @export
 getDrugPK <- function(
   drug = "propofol",
   weight = 70,

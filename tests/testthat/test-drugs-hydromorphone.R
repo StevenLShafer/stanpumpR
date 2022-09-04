@@ -1,8 +1,6 @@
 context("hydromorphone")
 library(here)
 
-source(here('data', 'drugs', 'hydromorphone.R'))
-
 test_that("returns the correct calculations", {
   weight <- 70
   height <- 171

@@ -1,0 +1,68 @@
+---
+title: "Multiple drug plasma and effect size concentration calculation with stanpumpR"
+output: rmarkdown::html_vignette
+author: Alexander Clarke
+vignette: >
+  %\VignetteIndexEntry{Multiple drug plasma and effect size concentration calculation with stanpumpR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(stanpumpR)
+library(ggplot2)
+```
+
+Define the parameters of the analysis:
+
+```{r}
+weight = 70
+height = 170
+age = 50
+sex = "male"
+maximum = 60
+plotRecovery <- FALSE
+```
+
+Initialize the drug administration events table. Each row represent either a bolus or a change in the infusion rate.
+
+```{r}
+doseTable <- data.frame(
+  Drug = c("remifentanil", "remifentanil", "remifentanil","propofol","propofol","propofol"),
+  Time = c(0, 0, 40, 0, 0, 30),
+  Dose = c(60, 0.15, 0, 200, 150, 0),
+  Units = c("mcg", "mcg/kg/min", "mcg/kg/min", "mg", "mcg/kg/min", "mcg/kg/min")
+)
+```
+
+Initialize an empty events table. The table is used by the Shiny app interface for stanpumpR to display events on the plot.
+
+```{r}
+eventTable <- data.frame(Time = double(), Event = character(), Fill = character())
+```
+
+Calculate the predicted drug concentrations using simulateDrugsWithCovariates:
+
+```{r}
+output <- stanpumpR::simulateDrugsWithCovariates(doseTable, eventTable, weight, height, age, sex, maximum, plotRecovery)
+```
+
+Plot the output:
+
+```{r}
+for (drug in output) {
+  results <- drug['results']$results
+  cpce <- results[results$Site == "Plasma" | results$Site == "Effect Site", ]
+  f <- ggplot() +
+    geom_line(data = cpce, aes(x=Time, y=Y, group=Site, color=Site)) +
+    xlab('time (minutes)') + ylab(paste0(drug$Drug,' concentration (', drug$Concentration.Units, ')'))
+  print(f)
+}
+```

@@ -6,9 +6,8 @@
 ####################################################
 
 # server ##########################################
-function(input, output, session)
+server <- function(input, output, session)
 {
-
   showIntroModal()
 
   options(error = function() {
@@ -63,7 +62,8 @@ function(input, output, session)
 
   # Make drugs and events local to session
   cat("Setting drugDefaults\n")
-  drugDefaults <- reactiveVal(drugDefaults_global)
+  drugDefaultsSource <- getDrugDefaultsGlobal()
+  drugDefaults <- reactiveVal(drugDefaultsSource)
   drugList <- reactive({
     drugDefaults()$Drug
   })
@@ -125,11 +125,17 @@ function(input, output, session)
   outputComments("Setup Complete")
 
   # Get reference time from client
+  # The reference time is passed from app.js on event shiny:connected
   observeEvent(input$client_time, {
     time <- input$client_time
     outputComments(paste("Reference time from client:", time), echo = TRUE)
     start <- getReferenceTime(time)
-    updateSelectInput(session, "referenceTime", selected = start)
+    outputComments(paste("Calculated reference time:", start), echo = TRUE)
+    ## This enables restoration of existing time when a bookmark is used or state is restored
+    if (input$referenceTime == 'none' | input$referenceTime == '')
+    {
+      updateNumericInput(session, "referenceTime", value = start)
+    }
   }, ignoreNULL = TRUE, once = TRUE)
 
   DrugTimeUnits <- reactiveVal("")

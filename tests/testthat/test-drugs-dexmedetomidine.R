@@ -1,8 +1,6 @@
 context("dexmedetomidine")
 library(here)
 
-source(here('data', 'drugs', 'dexmedetomidine.R'))
-
 test_that("returns the correct calculations for age less than or equal to 1", {
   weight <- 70
   height <- 171

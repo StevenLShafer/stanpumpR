@@ -1,8 +1,6 @@
 context("pethidine")
 library(here)
 
-source(here('data', 'drugs', 'pethidine.R'))
-
 test_that("returns the correct calculations", {
   weight <- 70
   height <- 171

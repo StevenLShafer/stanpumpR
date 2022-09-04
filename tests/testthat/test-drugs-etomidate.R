@@ -1,8 +1,6 @@
 context("etomidate")
 library(here)
 
-source(here('data', 'drugs', 'etomidate.R'))
-
 test_that("returns the correct calculations", {
   weight <- 70
   height <- 171

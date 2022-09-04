@@ -1,8 +1,6 @@
 context("midazolam")
 library(here)
 
-source(here('data', 'drugs', 'midazolam.R'))
-
 test_that("returns the correct calculations", {
   weight <- 70
   height <- 171

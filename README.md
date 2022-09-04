@@ -1,6 +1,6 @@
 # stanpumpR
 
-[![Build Status](https://travis-ci.com/StevenLShafer/stanpumpR.svg?branch=master)](https://travis-ci.com/StevenLShafer/stanpumpR)
+![](../../workflows/R-CMD-check/badge.svg)
 
 stanpumpR, a PK/PD simulation program
 Copyright 2019 Steven L. Shafer, steven.shafer@stanford.edu.
@@ -19,6 +19,7 @@ It is hoped that stanpumpR will encourage device manufacturers to develop the ne
 stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encourage to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible.
 
 Near-term future developments in stanpumpR will include
+
 1. Oral opioids. StanpumpR is programmed for PO, IM, and IN delivery. Need to get good PK for the opioids. Note that only first order absorption pk is currently supported.
 2. Improved models of pediatric pharmacokinetics
 3. Improved models of drug interaction
@@ -32,11 +33,20 @@ Near-term future developments in stanpumpR will include
 1. Install the devtools package via `install.packages("devtools")`.
 1. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
 1. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
+1. Run the app from the RStudio Console:
+- `library(shiny)`
+- `runApp()`
 
 #### Running tests
 1. Install the devtools package via `install.packages("devtools")`.
 1. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
 1. Run the tests via `devtools::test()`
+
+#### Using stanpumpR as a library
+A limited number of functions have been exported for use by your own code. To install:
+
+1. `library(devtools)`
+1. `devtools::install(build_vignettes = TRUE)`
 
 Steven L. Shafer, MD
 November 2019

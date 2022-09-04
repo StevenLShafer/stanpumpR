@@ -1,8 +1,6 @@
 context("rocuronium")
 library(here)
 
-source(here('data', 'drugs', 'rocuronium.R'))
-
 test_that("returns the correct calculations", {
   weight <- 70
   height <- 171

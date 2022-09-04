@@ -1,7 +1,6 @@
 context("oxytocin")
 library(here)
 
-source(here('data', 'drugs', 'oxytocin.R'))
 
 test_that("returns the correct calculations if weight is > 1", {
   weight <- 70

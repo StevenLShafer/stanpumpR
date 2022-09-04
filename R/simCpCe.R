@@ -1,6 +1,19 @@
 library(tidyr)
 
-# simulate plasma and effect site concentration from time 0 to maximum
+# TODO Fix plotRecovery
+#' Simulate plasma and effect site concentration from time 0 to maximum
+#'
+#' See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
+#'
+#' @param dose table of individual doses
+#' @param events table of events
+#' @param PK PK parameters from \code{getDrugPK(drug)}
+#' @param maximum maximum length of simulation in minutes
+#' @param plotRecovery (current broken, leave set to FALSE) should recovery parameters be calculated?
+#'
+#' @returns a list of data frames with the output of the a single drug simulation
+#'
+#' @export
 simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   {
     # dose <- doseTable
@@ -147,7 +160,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     )
 #  print(str(max))
   results$Recovery <- NULL
-  results <- results %>% tidyr::gather("Site","Y",-Time)
+  results <- tidyr::gather(results,"Site","Y",-Time)
   results$Drug <- PK$drug
   results <- results[,c(4,1,2,3)]
 #  print(results)
