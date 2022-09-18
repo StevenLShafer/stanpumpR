@@ -8,7 +8,14 @@
 # server ##########################################
 server <- function(input, output, session)
 {
-  showIntroModal()
+  initialLoad <- reactiveVal(TRUE)
+
+  observeEvent('', {
+    if (initialLoad() == TRUE) {
+      showIntroModal()
+    }
+    initialLoad(FALSE)
+  }, ignoreNULL=FALSE, ignoreInit = FALSE, once = TRUE)
 
   options(error = function() {
     msg <- geterrmessage()
@@ -162,6 +169,10 @@ server <- function(input, output, session)
   onBookmarked(function(url) {
     updateQueryString(url)
     url(url)
+  })
+
+  onRestore(function(state) {
+    initialLoad(FALSE)
   })
 
   onRestored(function(state) {
