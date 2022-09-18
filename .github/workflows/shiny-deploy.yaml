@@ -34,7 +34,6 @@ jobs:
           ACCOUNT: ${{ secrets.RSCONNECT_USER }}
           SERVER: ${{ secrets.RSCONNECT_SERVER }}
         run: |
-          devtools::install_deps(dependencies = TRUE)
           rsconnect::setAccountInfo("${{ secrets.RSCONNECT_USER }}", "${{ secrets.RSCONNECT_TOKEN }}", "${{ secrets.RSCONNECT_SECRET }}")
           rsconnect::deployApp(appName = "${{ env.APPNAME }}", account = "${{ env.ACCOUNT }}", server = "${{ env.SERVER }}")
         shell: Rscript {0}
