@@ -25,8 +25,9 @@ jobs:
 
       - name: Install Ubuntu packages
         run: |
-            sudo apt-get update
-            sudo apt-get install curl libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libfontconfig1-dev -y
+          sudo apt-get update
+          sudo apt-get install curl libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libfontconfig1-dev r-cran-rjava default-jdk default-jre -y
+          sudo R CMD javareconf
 
       - name: Install devtools and rsconnect
         run: |
