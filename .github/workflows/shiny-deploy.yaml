@@ -34,6 +34,7 @@ jobs:
           ACCOUNT: ${{ secrets.RSCONNECT_USER }}
           SERVER: ${{ secrets.RSCONNECT_SERVER }}
         run: |
+          library(yaml)
           shinyConfig <- list(
             default = list(
               title = 'stanpumpR',
