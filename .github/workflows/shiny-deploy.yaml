@@ -23,10 +23,10 @@ jobs:
 
       - uses: r-lib/actions/setup-renv@v2
 
-      - name: Install curl Ubuntu packages
+      - name: Install Ubuntu packages
         run: |
             sudo apt-get update
-            sudo apt-get install curl libcurl4-openssl-dev -y
+            sudo apt-get install curl libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libfontconfig1-dev -y
 
       - name: Install devtools and rsconnect
         run: |
