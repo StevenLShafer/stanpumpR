@@ -41,14 +41,14 @@ Imports:
   splines,
   stringi,
   tidyr,
+  yaml
 Suggests:
     devtools,
     here,
     knitr,
     rmarkdown,
     rsconnect,
-    testthat,
-    yaml
+    testthat
 Depends:
   R (>= 4.0)
 Encoding: UTF-8
