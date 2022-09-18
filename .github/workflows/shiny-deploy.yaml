@@ -28,8 +28,10 @@ jobs:
             sudo apt-get update
             sudo apt-get install curl libcurl4-openssl-dev -y
 
-      - name: Install rsconnect
-        run: install.packages("rsconnect")
+      - name: Install devtools and rsconnect
+        run: |
+          install.packages("devtools")
+          install.packages("rsconnect")
         shell: Rscript {0}
 
       - name: Authorize and deploy app
@@ -39,6 +41,7 @@ jobs:
           ACCOUNT: ${{ secrets.RSCONNECT_USER }}
           SERVER: ${{ secrets.RSCONNECT_SERVER }}
         run: |
+          devtools::install_deps(dependencies = TRUE)
           rsconnect::setAccountInfo("${{ secrets.RSCONNECT_USER }}", "${{ secrets.RSCONNECT_TOKEN }}", "${{ secrets.RSCONNECT_SECRET }}")
           rsconnect::deployApp(appName = "${{ env.APPNAME }}", account = "${{ env.ACCOUNT }}", server = "${{ env.SERVER }}")
         shell: Rscript {0}
