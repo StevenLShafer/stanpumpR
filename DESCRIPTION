@@ -90,7 +90,6 @@ Collate:
   drugs_sufentanil.R
   getDrugPK.R
   globalVariables.R
-  havingIP.R
   hourMinute.R
   lbmJames.R
   modelInteraction.R
@@ -103,7 +102,6 @@ Collate:
   simCpCe.R
   simulationPlot.R
   tPeakError.R
-  utils.R
   validateDose.R
   validateTime.R
   simulateDrugsWithCovariates.R
