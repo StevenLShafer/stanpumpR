@@ -102,6 +102,7 @@ Collate:
   simCpCe.R
   simulationPlot.R
   tPeakError.R
+  utils.R
   validateDose.R
   validateTime.R
   simulateDrugsWithCovariates.R
