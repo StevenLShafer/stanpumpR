@@ -46,15 +46,15 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
     success <- FALSE
   }
   if (!age %btwn% c(MIN_AGE, MAX_AGE)) {
-    msg <- glue("Age must be between {MIN_AGE} and {MAX_AGE}")
+    msg <- glue::glue("Age must be between {MIN_AGE} and {MAX_AGE}")
     success <- FALSE
   }
   if (!weight %btwn% c(MIN_WEIGHT, MAX_WEIGHT)) {
-    msg <- glue("Weight must be between {MIN_WEIGHT} and {MAX_WEIGHT}")
+    msg <- glue::glue("Weight must be between {MIN_WEIGHT} and {MAX_WEIGHT}")
     success <- FALSE
   }
   if (!height %btwn% c(MIN_HEIGHT, MAX_HEIGHT)) {
-    msg <- glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
+    msg <-glue::glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
     success <- FALSE
   }
 
