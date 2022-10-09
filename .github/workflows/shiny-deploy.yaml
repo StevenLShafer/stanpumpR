@@ -30,9 +30,7 @@ jobs:
       - name: Authorize and deploy app
         env:
           # Provide your app name, account name, and server to be deployed below
-          APPNAME: ${{ secrets.RSCONNECT_APPNAME }}
-          ACCOUNT: ${{ secrets.RSCONNECT_USER }}
-          SERVER: ${{ secrets.RSCONNECT_SERVER }}
+          SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
         run: |
           library(yaml)
           shinyConfig <- list(
@@ -43,6 +41,6 @@ jobs:
             )
           )
           write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
-          rsconnect::setAccountInfo("${{ secrets.RSCONNECT_USER }}", "${{ secrets.RSCONNECT_TOKEN }}", "${{ secrets.RSCONNECT_SECRET }}")
-          rsconnect::deployApp(appName = "${{ env.APPNAME }}", account = "${{ env.ACCOUNT }}", server = "${{ env.SERVER }}")
+          rsconnect::setAccountInfo("${{ secrets.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
+          rsconnect::deployApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ secrets.ACCOUNT }}")
         shell: Rscript {0}
