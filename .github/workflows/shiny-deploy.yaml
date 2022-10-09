@@ -1,0 +1,48 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# see https://www.tidyverse.org/blog/2022/06/actions-2-0-0/ for info on setup-r-dependencies@v2
+on:
+  push:
+    branches: [master, production]
+  workflow_dispatch:
+
+name: shiny-deploy
+
+jobs:
+  shiny-deploy:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache-version: 2
+          extra-packages: |
+            any::rsconnect
+
+      - name: Authorize and deploy app
+        env:
+          # Provide your app name, account name, and server to be deployed below
+          APPNAME: ${{ secrets.RSCONNECT_APPNAME }}
+          ACCOUNT: ${{ secrets.RSCONNECT_USER }}
+          SERVER: ${{ secrets.RSCONNECT_SERVER }}
+        run: |
+          library(yaml)
+          shinyConfig <- list(
+            default = list(
+              title = 'stanpumpR',
+              email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
+              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}"
+            )
+          )
+          write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
+          rsconnect::setAccountInfo("${{ secrets.RSCONNECT_USER }}", "${{ secrets.RSCONNECT_TOKEN }}", "${{ secrets.RSCONNECT_SECRET }}")
+          rsconnect::deployApp(appName = "${{ env.APPNAME }}", account = "${{ env.ACCOUNT }}", server = "${{ env.SERVER }}")
+        shell: Rscript {0}
