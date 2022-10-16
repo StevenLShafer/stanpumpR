@@ -143,7 +143,7 @@ propofol <- function(weight, height, age, sex)
       37.99 * weight / (35.98 + BMI)
     M1F2 <- 2
   }
-  FFMReference <- 0.88 + ((1 - 0.88) / (1 + (35 / 13.4)^(-12.7))) *
+  FFMReference <- (0.88 + ((1 - 0.88) / (1 + (35 / 13.4)^(-12.7)))) *
     42.92 *70 / (30.93 + 70 / 1.7^2)
   NFFM <- FFM/FFMReference
 

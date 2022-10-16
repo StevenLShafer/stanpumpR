@@ -14,10 +14,10 @@ test_that("returns the correct calculations for male", {
       default = list(
         v1 = 6.283078,
         v2 = 20.17078,
-        v3 = 1009.366,
+        v3 = 137.4287,
         cl1 = 1.551355,
         cl2 = 1.516118,
-        cl3 = 2.988497
+        cl3 = 0.6698454
       )
     ),
     tPeak = 1.6,
@@ -39,10 +39,10 @@ test_that("returns the correct calculations for female", {
       default = list(
         v1 = 5.772932,
         v2 = 15.84847,
-        v3 = 677.9842,
+        v3 = 92.30994,
         cl1 = 1.519402,
         cl2 = 1.265265,
-        cl3 = 2.217334
+        cl3 = 0.4969959
       )
     ),
     tPeak = 1.6,
