@@ -536,6 +536,7 @@ server <- function(input, output, session)
         isShinyLocal = isShinyLocal,
         slide = as.numeric(input$sendSlide),
         drugs = drugs(),
+        drugDefaults = drugDefaults(),
         email_username = config$email_username,
         email_password = config$email_password
       )

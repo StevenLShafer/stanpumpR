@@ -8,6 +8,7 @@ sendSlide <- function(
   isShinyLocal,
   slide,
   drugs,
+  drugDefaults,
   email_username,
   email_password
 )
@@ -23,6 +24,34 @@ sendSlide <- function(
   if (missing(email_password) || is.null(email_password)) {
     stop("email password missing")
   }
+
+  emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults)
+
+  outputComments("Sending email")
+  email <- send.mail(
+    from = email_username,
+    to = recipient,
+    subject = emailData$title,
+    body = emailData$bodyText,
+    html = TRUE,
+    smtp = list(
+      host.name = "smtp.gmail.com",
+      port = 465,
+      user.name = email_username,
+      passwd = email_password,
+      ssl = TRUE),
+    attach.files = c(
+      emailData$pptxfileName,
+      emailData$xlsxfileName
+    ),
+    authenticate = TRUE,
+    send = internetConnected # Only send from server
+  )
+  outputComments("Leaving sendMail()")
+  return(emailData$pngfileName)
+}
+
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults) {
   title = values$title
   DT <- values$DT
   url <- values$url
@@ -52,13 +81,9 @@ sendSlide <- function(
   outputComments("Starting ggexport()")
   ggexport(
     plotObject + labs(title = "", caption = NULL, x = NULL, y = NULL) +
-      theme(strip.text.y = element_text(
-              size = 6,
-              angle = 180),
-            axis.text.y = element_text(
-              size = 6),
-            axis.text.x = element_text(
-              size = 4),
+      theme(strip.text.y = element_text(size = 6, angle = 180),
+            axis.text.y = element_text(size = 6),
+            axis.text.x = element_text(size = 4),
             legend.background = element_blank(),
             legend.box.background = element_blank(),
             legend.key = element_blank(),
@@ -139,7 +164,7 @@ sendSlide <- function(
   for (drug in sort(unique(as.character(DT$Drug))))
   {
     cat("Drug = ", drug, "\n")
-    thisDrug <- which(drugDefaults_global$Drug == drug)
+    thisDrug <- which(drugDefaults$Drug == drug)
     cat("thisDrug = ", thisDrug, "\n")
 
     pkSets <- drugs[[drug]]$PK
@@ -220,7 +245,20 @@ sendSlide <- function(
   saveWorkbook(wb, xlsxfileName, overwrite = TRUE)
 
   outputComments("Creating e-mail")
-  bodyText <- paste0(
+  bodyText <- generateBodyText(recipient, values, ageUnit, weightUnit, heightUnit, url)
+
+  return(list(
+    title = title,
+    bodyText = ,
+    pptxfileName = pptxfileName,
+    xlsxfileName = xlsxfileName,
+    pngfileName = pngfileName,
+    )
+  )
+}
+
+ generateBodyText <- function(recipient, values, ageUnit, weightUnit, heightUnit, url){
+  return(paste0(
     "<html><head><style><!-- p 	{margin:0in;	font-size:12.0pt;	font-family:\"Times New Roman\",\"serif\"	} --></style>",
     "<body><div>",
     "<p>&nbsp;</p>",
@@ -228,7 +266,7 @@ sendSlide <- function(
     "<p>Here is the simulation you requested from stanpumpR on",Sys.Date(),".</p><p>&nbsp;</p>",
     "<p>The simulation is for a ",values$age / values$ageUnit, " ", ageUnit, "-old ",values$sex,
     " weighing ", values$weight / values$weightUnit, " ",weightUnit,
-    " and ", values$height / values$heightUnit, " ", heightUnit, "tall.</p><p>&nbsp;</p>",
+    " and ", values$height / values$heightUnit, " ", heightUnit, " tall.</p><p>&nbsp;</p>",
     "<p>You should be able to reload the file from ",
     "<a href=\"",url,"\">stanpumpR</a>.</p><p>&nbsp;</p>",
     "<p>If you have any questions or suggestions, please just reply to this e-mail. This is an early release of stanpumpR. ",
@@ -246,28 +284,5 @@ sendSlide <- function(
     "If you are interested in collaborating on stanpumpR, please contact me at steven.shafer@stanford.edu",
      "</p><p>&nbsp;</p>",
     "</div></body></html>"
-  )
-
-  outputComments("Sending email")
-  email <- send.mail(
-    from = email_username,
-    to = recipient,
-    subject = title,
-    body = bodyText,
-    html = TRUE,
-    smtp = list(
-      host.name = "smtp.gmail.com",
-      port = 465,
-      user.name = email_username,
-      passwd = email_password,
-      ssl = TRUE),
-    attach.files = c(
-      pptxfileName,
-      xlsxfileName
-    ),
-    authenticate = TRUE,
-    send = internetConnected # Only send from server
-  )
-  outputComments("Leaving sendMail()")
-  return(pngfileName)
-}
+  ))
+ }
