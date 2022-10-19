@@ -44,8 +44,7 @@ sendSlide <- function(
       emailData$pptxfileName,
       emailData$xlsxfileName
     ),
-    authenticate = TRUE,
-    send = internetConnected # Only send from server
+    authenticate = TRUE
   )
   outputComments("Leaving sendMail()")
   return(emailData$pngfileName)
@@ -249,10 +248,10 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   return(list(
     title = title,
-    bodyText = ,
+    bodyText = bodyText,
     pptxfileName = pptxfileName,
     xlsxfileName = xlsxfileName,
-    pngfileName = pngfileName,
+    pngfileName = pngfileName
     )
   )
 }
