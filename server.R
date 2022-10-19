@@ -541,11 +541,9 @@ server <- function(input, output, session)
         email_password = config$email_password
       )
       output$sentPlot <- renderImage(
-        list(src = img)
-        )
-      # Plot(
-      #   plotObject + labs(title=paste("Image sent to",input$recipient))
-      # )
+        list(src = img),
+        deleteFile = FALSE
+      )
     }
   )
 
