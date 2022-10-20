@@ -549,7 +549,7 @@ server <- function(input, output, session)
       )
       output$sentPlot <- renderImage(
         list(src = img),
-        deleteFile = FALSE
+        deleteFile = TRUE
       )
     }
   )
