@@ -46,6 +46,8 @@ sendSlide <- function(
     ),
     authenticate = TRUE
   )
+  unlink(emailData$pptxfileName)
+  unlink(emailData$xlsxfileName)
   outputComments("Leaving sendMail()")
   return(emailData$pngfileName)
 }
