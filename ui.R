@@ -129,7 +129,7 @@ ui <- function(request) {
                 selected = defaultSex
               ),
               #            ), # end of class: form-first-row div
-              conditionalPanel(
+              disabled(conditionalPanel(
                 condition = "input.age && input.ageUnit && input.ageUnit == 1 && input.age > 11 & input.age < 60 && input.sex == 'female'",
                 radioButtons(
                   inputId = "pregnant",
@@ -141,39 +141,39 @@ ui <- function(request) {
                 ),
                 bsTooltip(
                   id = "pregnant",
-                  title = "Not imkplemented yet",
+                  title = "Not implemented yet",
                   placement = "right",
                   options = list(container = "body")
                 )
-              ),
-              radioButtons(
+              )),
+              disabled(radioButtons(
                 inputId = "cyp2d6",
                 label = "CYP 2D6",
                 choiceNames = c("Rapid","Typical", "Slow"),
                 choiceValues = c("rapid","typical", "slow"),
-                inline = TRUE,
+                inline = FALSE,
                 selected = "typical"
               ),
               bsTooltip(
                 id = "cyp2d6",
-                title = "Not imkplemented yet",
+                title = "Not implemented yet",
                 placement = "right",
                 options = list(container = "body")
-              ),
-              radioButtons(
+              )),
+              disabled(radioButtons(
                 inputId = "renal",
                 label = "Renal Function",
                 choiceNames = c("Normal","Impaired", "ESRD"),
                 choiceValues = c("normal","impaired", "ESRD"),
-                inline = TRUE,
+                inline = FALSE,
                 selected = "normal"
               ),
               bsTooltip(
                 id = "renal",
-                title = "Not imkplemented yet",
+                title = "Not implemented yet",
                 placement = "right",
                 options = list(container = "body")
-              )
+              ))
             )
           ), # fluidrow within column
           fluidRow(
