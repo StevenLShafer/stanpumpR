@@ -237,25 +237,32 @@ server <- function(input, output, session)
   })
 
   weightUnit <- reactive({
+    req(input$weightUnit)
     as.numeric(input$weightUnit)
   })
   heightUnit <- reactive({
+    req(input$heightUnit)
     as.numeric(input$heightUnit)
   })
   ageUnit <- reactive({
+    req(input$ageUnit)
     as.numeric(input$ageUnit)
   })
   weight <- reactive({
+    req(input$weight)
     input$weight * weightUnit()
   })
   height <- reactive({
+    req(input$height)
     input$height * heightUnit()
   })
   age <- reactive({
+    req(input$age)
     input$age * ageUnit()
   })
 
   testCovariates <- reactive({
+    req(weight(), height(), age())
     errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
     checkNumericCovariates(age(), weight(), height(), errorFxn)
   })
