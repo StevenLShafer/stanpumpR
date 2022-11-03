@@ -16,8 +16,8 @@ jobs:
       SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
     steps:
       - uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: r-lib/actions/setup-pandoc@v2
 
