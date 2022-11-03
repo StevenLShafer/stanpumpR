@@ -1,7 +1,7 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # see https://www.tidyverse.org/blog/2022/06/actions-2-0-0/ for info on setup-r-dependencies@v2
 on:
-  pull_request:
+  pull_request_target:
     branches: [main, master]
   workflow_dispatch:
 
@@ -16,6 +16,8 @@ jobs:
       SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
     steps:
       - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: r-lib/actions/setup-pandoc@v2
 
