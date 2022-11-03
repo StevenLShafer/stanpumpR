@@ -2,7 +2,7 @@
 # see https://www.tidyverse.org/blog/2022/06/actions-2-0-0/ for info on setup-r-dependencies@v2
 on:
   push:
-    branches: [production]
+    branches: [main, master]
   workflow_dispatch:
 
 name: Deployment Production
