@@ -1,22 +1,20 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # see https://www.tidyverse.org/blog/2022/06/actions-2-0-0/ for info on setup-r-dependencies@v2
 on:
-  push:
-    branches: [master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
 
-name: Deployment Staging
+name: Deployment Test
 
 jobs:
-  deployment-staging:
+  deployment-test:
     runs-on: ubuntu-latest
-    environment: staging
+    environment: test
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
     steps:
-      - uses: actions/checkout@v2
-
       - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r@v2
