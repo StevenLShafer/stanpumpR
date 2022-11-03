@@ -52,5 +52,7 @@ A limited number of functions have been exported for use by your own code. To in
 
 When code is merged into the default branch, it will automatically be deployed to production. Pull Requests can be deployed to a test environment for testing.
 
+test deploy to test environment
+
 Steven L. Shafer, MD
 November 2019
