@@ -16,7 +16,7 @@ Imports:
   DT,
   egg,
   glue,
-  ggplot2  (>= 3.2),
+  ggplot2  (>= 3.4),
   ggpubr,
   grid,
   httr,
