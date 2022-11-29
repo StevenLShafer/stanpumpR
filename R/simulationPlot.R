@@ -394,7 +394,7 @@ simulationPlot <- function(
       color = Drug,
       linetype = Site
       ),
-    size=1
+    linewidth=1
     )
 
   plotObject <- plotObject +
