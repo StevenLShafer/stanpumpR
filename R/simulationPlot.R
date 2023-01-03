@@ -459,7 +459,7 @@ simulationPlot <- function(
             fill=Drug
           ),
           alpha = 0.35,
-          size=1,
+          linewidth=1,
           inherit.aes=FALSE,
           show.legend=FALSE
         )
@@ -633,7 +633,7 @@ simulationPlot <- function(
         ),
         fill = "grey",
         alpha = 0.2,
-        size=0,
+        linewidth=0,
         inherit.aes=FALSE,
         show.legend=FALSE
       ) +
@@ -646,7 +646,7 @@ simulationPlot <- function(
        show.legend = FALSE,
        color = "black",
        linetype = "solid",
-       size = 0.5
+       linewidth = 0.5
      )
   }
 
