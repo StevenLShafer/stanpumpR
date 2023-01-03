@@ -21,7 +21,7 @@ theme_update(
   axis.ticks.length = unit(.25, "cm"),
   axis.title = element_text(size = rel(1.5)),
   axis.text = element_text(size = rel(1.2)),
-  axis.line = element_line(size = 1, color = "black"),
+  axis.line = element_line(linewidth = 1, color = "black"),
   aspect.ratio = 0.6,
   plot.title = element_text(size = rel(1.5)),
   legend.text = element_text(size = rel(0.9)),
