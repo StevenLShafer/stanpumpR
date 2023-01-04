@@ -57,11 +57,11 @@ simulationPlot <- function(
       map_chr(drugs, "drug"),
       map_chr(drugs, "Color"),
       map_chr(drugs, "Concentration.Units"),
-      map_chr(drugs, "typical"),
-      map_chr(drugs, "lowerTypical"),
-      map_chr(drugs, "upperTypical"),
-      map_chr(drugs, "MEAC"),
-      map_chr(drugs, "endCe"),
+      map_chr(drugs, \(x) as.character(pluck(x, "typical"))),
+      map_chr(drugs, \(x) as.character(pluck(x, "lowerTypical"))),
+      map_chr(drugs, \(x) as.character(pluck(x, "upperTypical"))),
+      map_chr(drugs, \(x) as.character(pluck(x, "MEAC"))),
+      map_chr(drugs, \(x) as.character(pluck(x, "endCe"))),
       map_chr(drugs, "endCeText")
 
       ),stringsAsFactors = FALSE)
