@@ -10,8 +10,9 @@ name: Deployment Production
 jobs:
   deployment-production:
     runs-on: ubuntu-latest
-    environment: production
-    url: https://stanpumpr.io
+    environment: 
+      name: production
+      url: https://stanpumpr.io
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
