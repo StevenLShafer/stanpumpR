@@ -10,8 +10,9 @@ name: Deployment Test
 jobs:
   deployment-test:
     runs-on: ubuntu-latest
-    environment: test
-    url: https://steveshafer.shinyapps.io/stanpumpR_test
+    environment: 
+      name: test
+      url: https://steveshafer.shinyapps.io/stanpumpR_test
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
