@@ -1,6 +1,6 @@
 ####################################################
 # stanpumpR                                        #
-# Copyright, 2019, Steven L. Shafer, MD            #
+# Copyright, 2023, Steven L. Shafer, MD            #
 # May be freely distributed, modified, or adapted  #
 # in derivative works for non-commercial purposes. #
 ####################################################
