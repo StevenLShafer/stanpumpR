@@ -362,7 +362,7 @@ server <- function(input, output, session)
   })
 
   linetypes <- reactive({
-    linetypes <- setLinetypes(input$normalization)
+    linetypes <- setLinetypes(input$normalization,input$plasmaLinetype,input$effectsiteLinetype)
     linetypes
   })
 
@@ -465,55 +465,6 @@ server <- function(input, output, session)
       showElement("sendSlideError")
     }
   })
-
-  observeEvent(
-    input$normalization,
-    priority=10,
-    {
-      #cat("Inside observeEvent for Linetypes\n")
-      linetypes <- linetypes()
-      output$Linetype <- renderUI({
-        div(
-          selectInput(
-            inputId = "plasmaLinetype",
-            label = "Plasma",
-            selected = linetypes()$plasmaLinetype,
-            choices = c("solid",
-                        "dashed",
-                        "longdash",
-                        "dotted",
-                        "dotdash",
-                        "twodash",
-                        "blank")
-          ),
-          bsTooltip(
-            id = "plasmaLinetype",
-            title = "Line type for plasma concentrations",
-            placement = "top",
-            options = list(container = "body")
-          ),
-          selectInput(
-            inputId = "effectsiteLinetype",
-            label = "Effect site",
-            selected = linetypes()$effectsiteLinetype,
-            choices = c("solid",
-                        "dashed",
-                        "longdash",
-                        "dotted",
-                        "dotdash",
-                        "twodash",
-                        "blank")
-          ),
-          bsTooltip(
-            id = "effectsiteLinetype",
-            title = "Line type for effect site concentrations",
-            placement = "bottom",
-            options = list(container = "body")
-          )
-        )
-      })
-    }
-  )
 
   # Send Slide -----------------------------
   observeEvent(

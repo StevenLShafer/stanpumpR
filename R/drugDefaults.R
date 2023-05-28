@@ -1,3 +1,6 @@
+drugUnitsExpand <- function(units) {
+  strsplit(units, ",")
+}
 drugUnitsSimplify <- function(units) {
   unlist(lapply(units, paste, collapse = ","))
 }

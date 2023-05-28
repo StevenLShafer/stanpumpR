@@ -159,7 +159,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     stringsAsFactors = FALSE
     )
 #  print(str(max))
-  results$Recovery <- NULL
+#  results$Recovery <- NULL
   results <- tidyr::gather(results,"Site","Y",-Time)
   results$Drug <- PK$drug
   results <- results[,c(4,1,2,3)]

@@ -385,9 +385,15 @@ simulationPlot <- function(
   # Begin plotting                                                                 #
   ##################################################################################
 
+  data <- subset(plotResults, Wrap != "Events")
+
+  if (logY) {
+    data <- data[data$Y>0,]
+  }
+
   plotObject <- ggplot() +
   geom_line(
-    data = subset(plotResults, Wrap != "Events"),
+    data = data,
     aes(
       x = Time,
       y = Y,
@@ -562,7 +568,8 @@ simulationPlot <- function(
       USE <- recovery$Drug == as.character(plotTable$Drug[i])
       if (plotTable$MaxRecovery[i] > 0)
       {
-        labels <- as.numeric(x$layout$panel_params[[i]]$y.labels)
+#        labels <- as.numeric(x$layout$panel_params[[i]]$y.labels)
+        labels <- as.numeric(na.omit(x$layout$panel_params[[i]]$y$get_labels()))
         nLabels <- length(labels) - 1 # Subtract 1 because 0 is always included
         end <- start + nLabels
         recoveryLabels$Drug[start:end] <- as.character(plotTable$Drug[i])

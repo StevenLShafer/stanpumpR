@@ -5,7 +5,10 @@ options(warn = 2)
 
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 
-config <- config::get()
+# email with gmail needs 2FA now?
+# config <- config::get()
+
+config <- list(title="stanpumpR")
 
 # Load other files
 #CANCEL <- readPNG("www/cancel.png", native=TRUE)

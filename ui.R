@@ -357,8 +357,41 @@ ui <- function(request) {
                 placement = "top",
                 options = list(container = "body")
               ),
-              uiOutput( # Width = 1
-                outputId = "Linetype"
+              selectInput(
+                inputId = "plasmaLinetype",
+                label = "Plasma",
+                selected = "dashed",
+                choices = c("solid",
+                            "dashed",
+                            "longdash",
+                            "dotted",
+                            "dotdash",
+                            "twodash",
+                            "blank")
+              ),
+              bsTooltip(
+                id = "plasmaLinetype",
+                title = "Line type for plasma concentrations",
+                placement = "top",
+                options = list(container = "body")
+              ),
+              selectInput(
+                inputId = "effectsiteLinetype",
+                label = "Effect site",
+                selected = "solid",
+                choices = c("solid",
+                            "dashed",
+                            "longdash",
+                            "dotted",
+                            "dotdash",
+                            "twodash",
+                            "blank")
+              ),
+              bsTooltip(
+                id = "effectsiteLinetype",
+                title = "Line type for effect site concentrations",
+                placement = "bottom",
+                options = list(container = "body")
               )
             ),
             column(
