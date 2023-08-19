@@ -105,6 +105,7 @@ Collate:
   setLinetypes.R
   simCpCe.R
   simulationPlot.R
+  suggest.R
   tPeakError.R
   utils.R
   validateDose.R
