@@ -1,5 +1,3 @@
-context("sendSlide")
-
 test_that("it generates the email body", {
   recipient <- "test-name@test-domain.com"
   values <- list(

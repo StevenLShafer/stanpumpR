@@ -1,7 +1,3 @@
-context("propofol")
-library(here)
-
-#
 test_that("returns the correct calculations for male", {
   weight <- 70
   height <- 171

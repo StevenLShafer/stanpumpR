@@ -13,6 +13,7 @@ sendSlide <- function(
   email_password
 )
 {
+  tryCatchLog({
   prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
   on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
 
@@ -29,14 +30,14 @@ sendSlide <- function(
 
   outputComments("Sending email")
   email <- send.mail(
-    from = email_username,
+    from = paste0("stanpumpR <", email_username, ">"),
     to = recipient,
     subject = emailData$title,
     body = emailData$bodyText,
     html = TRUE,
     smtp = list(
       host.name = "smtp.gmail.com",
-      port = 465,
+      port = 587,
       user.name = email_username,
       passwd = email_password,
       ssl = TRUE),
@@ -49,6 +50,7 @@ sendSlide <- function(
   unlink(emailData$pptxfileName)
   unlink(emailData$xlsxfileName)
   outputComments("Leaving sendMail()")
+  })
   return(emailData$pngfileName)
 }
 
@@ -142,8 +144,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       values$height / values$heightUnit,
       heightUnit,
       values$sex
-    ),
-    stringsAsFactors = FALSE)
+    ))
   outputComments("Writing covariates")
   addWorksheet(wb, "Covariates")
   writeData(wb, sheet = 1, covariates)
@@ -236,7 +237,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
         e_coef_IN_l3 = map_dbl(pkSets, "e_coef_IN_l3"),
         e_coef_IN_ke0 = map_dbl(pkSets, "e_coef_IN_ke0"),
         e_coef_IN_ka = map_dbl(pkSets, "e_coef_IN_ka")
-      ),stringsAsFactors = FALSE)
+      ))
     parameters <- t(parameters)
     addWorksheet(wb, paste(drug,"PK"))
     writeData(wb, sheet = sheet, parameters, rowNames=TRUE)
@@ -264,7 +265,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     "<body><div>",
     "<p>&nbsp;</p>",
     "<p>Dear ",gsub("@", " at ",as.character(recipient)),":<p>&nbsp;</p>",
-    "<p>Here is the simulation you requested from stanpumpR on",Sys.Date(),".</p><p>&nbsp;</p>",
+    "<p>Here is the simulation you requested from stanpumpR on ",Sys.Date(),".</p><p>&nbsp;</p>",
     "<p>The simulation is for a ",values$age / values$ageUnit, " ", ageUnit, "-old ",values$sex,
     " weighing ", values$weight / values$weightUnit, " ",weightUnit,
     " and ", values$height / values$heightUnit, " ", heightUnit, " tall.</p><p>&nbsp;</p>",
@@ -272,15 +273,12 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     "<a href=\"",url,"\">stanpumpR</a>.</p><p>&nbsp;</p>",
     "<p>If you have any questions or suggestions, please just reply to this e-mail. This is an early release of stanpumpR. ",
     "If you encounter any errors or crashes, please also contact me at steven.shafer@stanford.edu.</p><p>&nbsp;</p>",
-    "<p>stanpumpR is an open-source program. You can get the code from ",
-    "<a href=\"https://www.github.net/StevenLShafer/stanpumpR\">GitHub</a>.</p><p>&nbsp;</p>",
-    "<p>for using stanpumpR.</p><p>&nbsp;</p>",
     "<p>Thank you for using stanpumpR.</p><p>&nbsp;</p>",
     "<p>Sincerely,</p><p>&nbsp;</p>",
-    "<p>Steve Shafer</p>",
-    "<p>PS: stanpumpR is an open-source program. The code is freely availabel at  ",
-    "<a href=\"https://www.github.net/StevenLShafer/stanpumpR\">GitHub</a>.",
-    "Collaborators are particularly needed to \"own\" individeual drug libraries and keep the library up-to-date with the ",
+    "<p>Steve Shafer</p><p>&nbsp;</p>",
+    "<p>PS: stanpumpR is an open-source program. The code is freely available at  ",
+    "<a href=\"https://www.github.net/StevenLShafer/stanpumpR\">GitHub</a>.</p>",
+    "<p>Collaborators are particularly needed to \"own\" individual drug libraries and keep the library up-to-date with the ",
     "pharmacokinetic literature. ",
     "If you are interested in collaborating on stanpumpR, please contact me at steven.shafer@stanford.edu",
      "</p><p>&nbsp;</p>",

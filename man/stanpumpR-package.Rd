@@ -4,7 +4,7 @@
 \name{stanpumpR-package}
 \alias{stanpumpR}
 \alias{stanpumpR-package}
-\title{stanpumpR: stanpumpR, and PK/PD simulation program}
+\title{stanpumpR: stanpumpR, a PK/PD simulation program}
 \description{
 stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
 }

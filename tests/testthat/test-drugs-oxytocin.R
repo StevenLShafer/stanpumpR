@@ -1,7 +1,3 @@
-context("oxytocin")
-library(here)
-
-
 test_that("returns the correct calculations if weight is > 1", {
   weight <- 70
   height <- 171

@@ -1,6 +1,3 @@
-context("hydromorphone")
-library(here)
-
 test_that("returns the correct calculations", {
   weight <- 70
   height <- 171

@@ -1,6 +1,3 @@
-
-context("expect_equal_rounded")
-
 test_that("works for whole numbers", {
   expect_success(expect_equal_rounded(1, 1))
 })

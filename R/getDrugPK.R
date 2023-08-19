@@ -30,7 +30,6 @@ getDrugPK <- function(
   drugDefaults
 )
 {
-  DEBUG <- FALSE
   X <- eval(call(drug, weight, height, age, sex))
   tPeak <- X$tPeak
 

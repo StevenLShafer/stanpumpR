@@ -77,7 +77,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       p_coef_infusion_l1 = map_dbl(pkSets, "p_coef_infusion_l1"),
       p_coef_infusion_l2 = map_dbl(pkSets, "p_coef_infusion_l2"),
       p_coef_infusion_l3 = map_dbl(pkSets, "p_coef_infusion_l3")
-    ),stringsAsFactors = FALSE)
+    ))
 
   #Set up time varying parameters
   parameters$k <- parameters$k10 + parameters$k12 + parameters$k13
