@@ -36,7 +36,7 @@ simulationPlot <- function(
 {
   # Notes on what happens below
   # The time courses for ggplot are held in plotResults
-  # "Drug","Time","Y","Site","Wrap", "Label"
+  # "Drug","Time","Y","Site","Wrap","Label"
   # Drug determines the color
   # Y is the value plotted
   # Site determines the linetype
@@ -215,7 +215,7 @@ simulationPlot <- function(
 
   # Step B1: create plotResults
 
-  plotResults <- allResults[,c("Drug","Time","Y","Site","Wrap", "Label")]
+  plotResults <- allResults[,c("Drug","Time","Y","Site","Wrap","Label")]
 
   # Step B2 and D5: add MEAC and Interaction
 
@@ -334,7 +334,7 @@ simulationPlot <- function(
     }
   }
 
-  # Step B4 and D7: add Interaction
+  # Step B4 and D7: add Events
 
   if (plotEvents)
   {
@@ -348,25 +348,25 @@ simulationPlot <- function(
         Wrap = "Events",
         Label = ""
       )
-  } else {
-    resultsEvents <- data.frame(
-      Drug = "Events",
-      Time = events$Time,
-      Y =   0.875 - ((1:nrow(events) - 1) %% 4)/4,
-      Site = "Events",
-      Wrap = "Events",
-      Label = events$Event
-    )
-  }
+    } else {
+      resultsEvents <- data.frame(
+        Drug = "Events",
+        Time = events$Time,
+        Y =   0.875 - ((1:nrow(events) - 1) %% 4)/4,
+        Site = "Events",
+        Wrap = "Events",
+        Label = events$Event
+      )
+    }
 
     # Add data for plot
     plotResults <- rbind(plotResults, resultsEvents)
 
-    #Add Plot to PlotTable
+    # Add Plot to PlotTable
 
     newplotTable <- plotTable[1,]
     newplotTable$Drug <- "Events"
-    newplotTable$drugColor <- "white"
+    newplotTable$drugColor <- "green"
     newplotTable$Concentration.Units <- ""
     newplotTable$y <- 0
     newplotTable$ymin <- 0
@@ -381,12 +381,12 @@ simulationPlot <- function(
 
   ##################################################
 
-  plotResults$Site <- factor(plotResults$Site,levels=c("Plasma","Effect Site", "Events", "Recovery"),ordered=TRUE)
+  plotResults$Site <- factor(plotResults$Site,levels=c("Plasma", "Effect Site", "Events", "Recovery"), ordered=TRUE)
   plotResults <- plotResults[!is.na(plotResults$Y),]
 
   # Convert $Drug and $Wrap to factors to preserve order from plotTable
 
-  drugFactors <- c(drugDefaults$Drug, "Events", "Recovery")
+  drugFactors <- c(drugDefaults$Drug, "total opioid", "p response", "Recovery", "Events")
   plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
   plotTable <- plotTable[order(plotTable$Factor),]
 
