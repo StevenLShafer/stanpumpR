@@ -362,7 +362,7 @@ ui <- function(request) {
               selectInput(
                 inputId = "plasmaLinetype",
                 label = "Plasma",
-                selected = "dashed",
+                selected = "blank",
                 choices = c("solid",
                             "dashed",
                             "longdash",
