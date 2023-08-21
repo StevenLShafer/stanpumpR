@@ -504,7 +504,7 @@ server <- function(input, output, session)
 
       values <- list(
         title = input$title,
-        DT = DT(),
+        DT = doseTableClean(),
         url = url(),
         ageUnit = ageUnit(),
         weightUnit = weightUnit(),
