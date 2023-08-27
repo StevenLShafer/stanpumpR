@@ -15,10 +15,10 @@ d <- data.frame(Drug="oliceridine",
           Default.Units="mg",
           Units="mg,mcg/kg/min",
           Color="#FF00CC",
-          Lower=27.4-3.5*1.96,
-          Upper=27.4+3.5*1.96,
+          Lower=27.9-4.9*1.96,
+          Upper=27.9+4.9*1.96,
           Typical=27.4,
-          MEAC=27.4, # TODO
+          MEAC=27.9,
           endCe=27.4,
           endCeText="ventilation")
 

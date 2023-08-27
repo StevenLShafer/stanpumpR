@@ -253,6 +253,8 @@ simulationPlot <- function(
       newplotTable$ymin <- 80
       newplotTable$ymax <- 200
       newplotTable$Wrap <- "% MEAC"
+      newplotTable$endCe <- 0
+      newplotTable$endCeText <- ""
       # don't care about MEAC, maxCp, or maxCe
       plotTable <- rbind(plotTable, newplotTable)
 
