@@ -600,7 +600,8 @@ xy_str <- function(e) {
 
   if (yaxis == "Events")
   {
-    return("Click to enter events, double click to edit events.")
+#    return("Click to enter events, double click to edit events.")
+    return("Click to enter events.")
   }
 
   x <- unlist(strsplit(yaxis," "))
@@ -708,7 +709,7 @@ imgDrugTime <- function(e = "")
 
   if(is.null(e) || length(plottedDrugs) == 0)
   {
-  echoComments("Retuning because length(plottedDrugs = 0", echo = DEBUG)
+  echoComments("Returning because length(plottedDrugs = 0", echo = DEBUG)
     return(
       list(
         drug = "propofol",
