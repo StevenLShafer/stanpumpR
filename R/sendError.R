@@ -9,7 +9,7 @@ sendError <- function(
     "<html><head><style><!-- p 	{margin:0in;	font-size:12.0pt;	font-family:\"Times New Roman\",\"serif\"	} --></style>",
     "<body><div>",
     "<p>&nbsp;</p>",
-    "<p>Dear Erik:<p>&nbsp;</p>",
+    "<p>Dear ",config$maintainer_name,":<p>&nbsp;</p>",
     "<p>I have some bad news. An error was encountered with stanpumpR.</p>",
     "<p>The error is:</p>",
     "<p>", errorMessage, "</p><p>&nbsp;</p>",
@@ -21,7 +21,7 @@ sendError <- function(
   )
   email <- send.mail(
     from = config$email_username,
-    to = "e.olofsen@weggetjes.nl",
+    to = config$maintainer_email,
     subject = "Error on Shiny Server",
     body = bodyText,
     html = TRUE,

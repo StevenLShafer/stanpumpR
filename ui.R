@@ -8,7 +8,7 @@ ui <- function(request) {
       tags$li(
         class = "dropdown",
         tags$a(
-          href = "https://weggetjes.nl/stanpumpR/stanpumpR_HelpPage.html",
+          href = config$help_link,
           id = "help_link",
           "Examples and Help",
           target = "_blank"
@@ -330,7 +330,7 @@ ui <- function(request) {
                 options = list(container = "body")
               ),
               conditionalPanel(
-                condition = "!input.addedPlots.includes('Time Until')",
+                condition = "!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('Events') || input.addedPlots.includes('Interaction'))",
                 checkboxInput(
                   inputId = "logY",
                   label = "Log Y axis",

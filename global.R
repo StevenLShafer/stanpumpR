@@ -4,12 +4,12 @@ library(jsonlite)
 
 options(warn = 2)
 
-DEBUG <- TRUE
-
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 
 # email with gmail needs 2FA now?
 config <- config::get()
+
+DEBUG <- config$debug
 
 # Load other files
 #CANCEL <- readPNG("www/cancel.png", native=TRUE)

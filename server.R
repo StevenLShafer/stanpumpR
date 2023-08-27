@@ -416,7 +416,7 @@ server <- function(input, output, session)
     title                  <- input$title
     typical                <- input$typical
     logY                   <- input$logY
-    if (plotRecovery()) logY <- FALSE
+    if (plotRecovery() || plotEvents || plotInteraction) logY <- FALSE
 
     plasmaLinetype <- linetypes()$plasmaLinetype
     effectsiteLinetype <- linetypes()$effectsiteLinetype
