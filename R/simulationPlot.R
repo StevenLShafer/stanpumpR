@@ -366,13 +366,15 @@ simulationPlot <- function(
 
     newplotTable <- plotTable[1,]
     newplotTable$Drug <- "Events"
-    newplotTable$drugColor <- "green"
+    newplotTable$drugColor <- "white"
     newplotTable$Concentration.Units <- ""
     newplotTable$y <- 0
     newplotTable$ymin <- 0
     newplotTable$ymax <- 1
     newplotTable$Wrap <- "Events"
     newplotTable$alpha <- 1
+    newplotTable$endCe <- 0
+    newplotTable$endCeText <- ""
     plotTable <- rbind(plotTable, newplotTable)
 
   }
@@ -626,7 +628,7 @@ simulationPlot <- function(
     arrows <- data.frame(
       Drug = plotTable$Drug,
       y = plotTable$endCe,
-      new = paste0(sprintf('\u2190'), plotTable$endCeText),
+      new = ifelse(nchar(plotTable$endCeText)>0,paste0(sprintf('\u2190'), plotTable$endCeText),""),
       x = maximum,
       Wrap <- as.character(plotTable$Wrap)
     )
