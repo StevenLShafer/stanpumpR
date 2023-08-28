@@ -1,6 +1,3 @@
-library(pkgload)
-library(here)
-
 outputComments <<- function(..., echo) {
 ## just silence
 ## print(paste("outputComments:", ...))
@@ -9,8 +6,6 @@ outputComments <<- function(..., echo) {
 DEBUG <<- FALSE
 
 test_that("simulationPlot yields desired objects", {
-
-load_all(here())
 
 doseTable <- data.frame(
   Drug = drugDefaults_global$Drug[1],
