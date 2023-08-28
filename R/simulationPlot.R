@@ -62,15 +62,15 @@ simulationPlot <- function(
 
   plotTable <- as.data.frame(
     cbind(
-      map_chr(drugs, "drug"),
-      map_chr(drugs, "Color"),
-      map_chr(drugs, "Concentration.Units"),
-      map_chr(drugs, \(x) as.character(pluck(x, "typical"))),
-      map_chr(drugs, \(x) as.character(pluck(x, "lowerTypical"))),
-      map_chr(drugs, \(x) as.character(pluck(x, "upperTypical"))),
-      map_chr(drugs, \(x) as.character(pluck(x, "MEAC"))),
-      map_chr(drugs, \(x) as.character(pluck(x, "endCe"))),
-      map_chr(drugs, "endCeText")
+      purrr::map_chr(drugs, "drug"),
+      purrr::map_chr(drugs, "Color"),
+      purrr::map_chr(drugs, "Concentration.Units"),
+      purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "typical"))),
+      purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "lowerTypical"))),
+      purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "upperTypical"))),
+      purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "MEAC"))),
+      purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "endCe"))),
+      purrr::map_chr(drugs, "endCeText")
       )
   )
 
@@ -82,7 +82,7 @@ simulationPlot <- function(
 
   # Step C1: create allResults from `drugs`
 
-  allResults <- map_dfr(drugs, "results")
+  allResults <- purrr::map_dfr(drugs, "results")
 
   # Four columns: Drug, Time, Site, Y
   # 8 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCe, CeNormCe
@@ -96,7 +96,7 @@ simulationPlot <- function(
   plotTable$MEAC  <- as.numeric(plotTable$MEAC)
   plotTable$endCe <- as.numeric(plotTable$endCe)
   plotTable$alpha <- 0.2
-  allMax <- map_dfr(drugs, "max")
+  allMax <- purrr::map_dfr(drugs, "max")
   allMax <- allMax[allMax$Drug %in% plotTable$Drug,]
 
   CROWS <- match(plotTable$Drug, allMax$Drug)
@@ -106,7 +106,7 @@ simulationPlot <- function(
 
   # Step E1: create allEquispace
 
-  allEquispace  <- map_dfr(drugs, "equiSpace")
+  allEquispace  <- purrr::map_dfr(drugs, "equiSpace")
   allEquispace <- allEquispace[allEquispace$Drug %in% plotTable$Drug,]
 
   # Step C2: check and clean and extend allResults
