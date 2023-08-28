@@ -3,6 +3,6 @@ default:
   email_username: "<gmail username>"
   email_password: "<gmail password>"
   maintainer_name: "<maintainer name>"
-  maintainer_email "<maintainer email>"
+  maintainer_email: "<maintainer email>"
   help_link: "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
   debug: FALSE
