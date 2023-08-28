@@ -10,12 +10,12 @@ name: Deployment Test
 jobs:
   deployment-test:
     runs-on: ubuntu-latest
-    environment: 
+    environment:
       name: test
       url: https://steveshafer.shinyapps.io/stanpumpR_test
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
+      SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}_test
     steps:
       - uses: actions/checkout@v2
         with:
@@ -37,7 +37,7 @@ jobs:
       - name: Authorize and deploy app
         env:
           # Provide your app name, account name, and server to be deployed below
-          SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
+          SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}_test
         run: |
           library(yaml)
           shinyConfig <- list(
