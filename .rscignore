@@ -1,0 +1,13 @@
+..Rcheck
+.github
+config.yml.sample
+cran-comments.md
+data-raw
+doc
+man
+misc
+stanpumpR.Rcheck
+stanpumpR_0.0.0.1.tar.gz
+tests
+vignettes
+Original Stanpump
