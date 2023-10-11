@@ -1,3 +1,5 @@
+library(lubridate)
+
 ## tests should possibly be added for invalid times
 
 ## tests for validateTime

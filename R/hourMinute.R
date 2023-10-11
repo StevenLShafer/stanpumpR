@@ -2,7 +2,7 @@
 # Used only in clockTimeToDelta
 hourMinute <- function(x)
 {
-    px <- lubridate:parse_date_time(x, "HM", quiet=TRUE)
-    if (!is.na(px)) px <- 60*lubridate::hour(px) + lubridate::minute(px)
+    px <- parse_date_time(x, "HM", quiet=TRUE)
+    if (!is.na(px)) px <- 60*hour(px) + minute(px)
     return(px)
 }
