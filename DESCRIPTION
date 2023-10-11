@@ -38,7 +38,6 @@ Imports:
   shinyBS,
   shinydashboard,
   shinyjs,
-  shinyWidgets,
   splines,
   stringi,
   tidyr,
