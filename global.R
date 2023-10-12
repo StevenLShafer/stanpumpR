@@ -9,6 +9,11 @@ isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 # email with gmail needs 2FA now?
 config <- config::get()
 
+if (is.null(config$maintainer_name)) config$maintainer_name <- "Steve"
+if (is.null(config$maintainer_email)) config$maintainer_email <- "stanpumpR@gmail.com"
+if (is.null(config$help_link)) config$help_link <- "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
+if (is.null(config$debug)) config$debug <- FALSE
+
 DEBUG <- config$debug
 
 # Load other files
