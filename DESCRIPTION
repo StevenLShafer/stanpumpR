@@ -11,6 +11,7 @@ Description: stanpumpR is open-source software for pharmacokinetic / pharmacodyn
 License: MIT + file LICENSE
 Imports:
   config,
+  cpp11,
   data.table,
   dplyr,
   DT,
@@ -30,6 +31,7 @@ Imports:
   purrr,
   R.utils,
   randomcoloR,
+  Rcppeigen,
   RColorBrewer,
   reactlog,
   rhandsontable,
