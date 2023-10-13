@@ -10,13 +10,12 @@ name: Deployment Test
 jobs:
   deployment-test:
     runs-on: ubuntu-latest
-#    environment:
-#      name: test
-#      url: https://steveshafer.shinyapps.io/stanpumpR_test
-#      url: "${{ secrets.SHINY_SERVER }}"
-#    env:
-#      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }} #?
-#      SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}_test
+    environment: 
+      name: test
+      url: https://steveshafer.shinyapps.io/stanpumpR_test
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -36,23 +35,19 @@ jobs:
             any::rsconnect
 
       - name: Authorize and deploy app
-#        env:
+        env:
           # Provide your app name, account name, and server to be deployed below
-#          SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}_test
+          SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}
         run: |
           library(yaml)
           shinyConfig <- list(
             default = list(
-              title = "${{ vars.SHINY_APP_TITLE }}",
-              email_username = "${{ vars.SHINY_CONFIG_EMAIL_USERNAME }}",
-              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
-              maintainer_name = "${{ vars.SHINY_MAINTAINER_NAME }}",
-              maintainer_email = "${{ vars.SHINY_MAINTAINER_EMAIL }}",
-              help_link = "${{ vars.SHINY_HELP_LINK }}",
-              debug = "${{ vars.SHINY_DEBUG }}"
+              title = 'stanpumpR',
+              email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
+              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}"
             )
           )
           write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
-          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
-          rsconnect::deployApp(appName = "${{ vars.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}", forceUpdate = TRUE)
+          rsconnect::setAccountInfo("${{ secrets.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
+          rsconnect::deployApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ secrets.SHINY_ACCOUNT }}", forceUpdate = TRUE)
         shell: Rscript {0}
