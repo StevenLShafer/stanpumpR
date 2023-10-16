@@ -1,5 +1,3 @@
-context("lbmJames")
-
 test_that("it returns the correct value for male", {
   weight <- 70
   height <- 171

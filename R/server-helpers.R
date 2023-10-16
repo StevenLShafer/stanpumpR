@@ -64,9 +64,12 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
   success
 }
 
-recalculatePK <- function(drugs, drugDefaults, age, weight, height, sex) {
-  for (idx in seq(nrow(drugDefaults))) {
-    drug <- drugDefaults$Drug[idx]
+recalculatePK <- function(drugs, drugDefaults, doseTable,
+                          age, weight, height, sex) {
+#  for (idx in seq(nrow(drugDefaults))) {
+#    drug <- drugDefaults$Drug[idx]
+  for (drug in unique(doseTable$Drug)) {
+    idx <- which(drugDefaults$Drug==drug)
     drugs[[drug]]$Color <- drugDefaults$Color[idx]
     drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
     drugs[[drug]]$endCeText <- drugDefaults$endCeText[idx]

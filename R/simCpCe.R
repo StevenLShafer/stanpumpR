@@ -86,7 +86,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     {
       if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
       {
- #       cat("calling advancedClosedForm0\n")
+ #       cat("calling advanceClosedForm0\n")
 
         results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
       } else {
@@ -96,8 +96,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       # Process Events
       defaultEvent <- data.frame(
         Time = 0,
-        Event = "default",
-        stringsAsFactors = FALSE
+        Event = "default"
       )
       if (events$Time[1] > 0)
         events <- rbind(defaultEvent,events)
@@ -140,8 +139,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       x = results$Time,
       y = results$Recovery,
       xout = xout
-    )$y,
-    stringsAsFactors = FALSE
+    )$y
     )
 
   equiSpace$Ce[1] <- 0  # Approx tends to make it a very small negative number
@@ -155,11 +153,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     Drug = PK$drug,
     Recovery = max(results$Recovery),
     Cp = max(results$Plasma),
-    Ce = max(results$"Effect Site"),
-    stringsAsFactors = FALSE
+    Ce = max(results$"Effect Site")
     )
 #  print(str(max))
-  results$Recovery <- NULL
+  if (!plotRecovery) results$Recovery <- NULL
   results <- tidyr::gather(results,"Site","Y",-Time)
   results$Drug <- PK$drug
   results <- results[,c(4,1,2,3)]

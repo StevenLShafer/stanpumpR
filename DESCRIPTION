@@ -1,5 +1,5 @@
 Package: stanpumpR
-Title: stanpumpR, and PK/PD simulation program
+Title: stanpumpR, a PK/PD simulation program
 Version: 0.0.0.1
 Authors@R:
     c(person(given = "Steven",
@@ -11,6 +11,7 @@ Description: stanpumpR is open-source software for pharmacokinetic / pharmacodyn
 License: MIT + file LICENSE
 Imports:
   config,
+  cpp11,
   data.table,
   dplyr,
   DT,
@@ -22,6 +23,7 @@ Imports:
   httr,
   jpeg,
   jsonlite,
+  lubridate,
   mailR,
   officer,
   openxlsx,
@@ -30,6 +32,7 @@ Imports:
   R.utils,
   randomcoloR,
   RColorBrewer,
+  RcppEigen,
   reactlog,
   rhandsontable,
   rvg,
@@ -37,10 +40,11 @@ Imports:
   shinyBS,
   shinydashboard,
   shinyjs,
-  shinyWidgets,
   splines,
   stringi,
   tidyr,
+  tryCatchLog,
+  waiter,
   yaml
 Suggests:
     devtools,
@@ -54,9 +58,9 @@ Depends:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Collate:
-  drugDefaults.R
+  drugAndEventDefaults.R
   sendSlide.R
   CE.R
   advanceClosedForm0.R
@@ -81,6 +85,7 @@ Collate:
   drugs_midazolam.R
   drugs_morphine.R
   drugs_naloxone.R
+  drugs_oliceridine.R
   drugs_oxycodone.R
   drugs_oxytocin.R
   drugs_pethidine.R
@@ -101,6 +106,7 @@ Collate:
   setLinetypes.R
   simCpCe.R
   simulationPlot.R
+  suggest.R
   tPeakError.R
   utils.R
   validateDose.R

@@ -2,12 +2,9 @@
 deltaToClockTime <- function(reference, x)
 {
   if (reference == "none") {
-    return(as.numeric(x))
+      return(as.numeric(x))
   }
-  start <- unlist(strsplit(reference, ":")) # Remove the colon
-  startHours <- as.numeric(start[1])
-  startMinute <- as.numeric(start[2])
-  start <- startHours * 60 + startMinute
+  start <- hourMinute(reference)
   x <- x + start
   xHours <- floor(x/60)
   xMinutes <- round(x-xHours * 60, 0)

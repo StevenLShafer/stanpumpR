@@ -1,17 +1,16 @@
 # Convert clock times (x) to difference from the reference time
 clockTimeToDelta <- function(reference, x) {
   if (reference == "none") {
-    return(as.numeric(x))
+    FIX <- grepl(":",x)
+    x[FIX] <- as.numeric(unlist(lapply(x[FIX],FUN = hourMinute)))
+    x <- as.numeric(x)
+    return(x)
   }
-  start <- unlist(strsplit(reference, ":")) # Remove the colon
-  startHours <- as.numeric(start[1])
-  startMinute <- as.numeric(start[2])
-  start <- startHours * 60 + startMinute
+  start <- hourMinute(reference)
+  if (is.na(start)) return(NA)
   FIX <- grepl(":",x)
   x[FIX] <- as.numeric(unlist(lapply(x[FIX],FUN = hourMinute))) - start
   x <- as.numeric(x)
   x[x < 0] <- x[x < 0] + 1440 # Wrap around midnight
   x
 }
-# test with
-# clockTimeToDelta("08:00", c("7", "09:00","10:15", "06:00"))

@@ -1,5 +1,3 @@
-context("calculateCe")
-
 test_that("it returns the correct array", {
   L <- 26
   Cp <- c(1:L)

@@ -8,7 +8,7 @@ ui <- function(request) {
       tags$li(
         class = "dropdown",
         tags$a(
-          href = "https://steveshafer.shinyapps.io/stanpumpR_HelpPage",
+          href = config$help_link,
           id = "help_link",
           "Examples and Help",
           target = "_blank"
@@ -27,6 +27,7 @@ ui <- function(request) {
 
     dashboardBody(
       useShinyjs(),
+      useWaiter(),
       tags$script(src = "app.js"),
       tags$head(tags$link(href = "app.css", rel = "stylesheet")),
       style = "max-height: 95vh; overflow-y: auto;" ,
@@ -197,6 +198,7 @@ ui <- function(request) {
               # Note to Dean: Here is where the handsontable is output. My guess is that this is where
               # you would replace the existing "rHandsontableOutput()" function with JavaScript code that
               # will process and validate the table.
+              tags$script(HTML(js_drug_defaults)),
               tags$script(src = "hot_funs.js"),
               rHandsontableOutput(outputId = "doseTableHTML"),
               bsTooltip(
@@ -246,7 +248,7 @@ ui <- function(request) {
               textInput(
                 inputId = "title",
                 label = "Title",
-                value = paste("Simulation on",Sys.time())
+                value = paste("Simulation on",format(Sys.time()))
               ),
               bsTooltip(
                 id = "title",
@@ -323,12 +325,12 @@ ui <- function(request) {
               ),
               bsTooltip(
                 id = "addedPlots",
-                title = "MEAC normalizes each opioid to the minimum effective analgesic concentration, a measure of opioid potency. Interation shows the opioid hypnotic interaction. It is very preliminary.",
+                title = "MEAC normalizes each opioid to the minimum effective analgesic concentration, a measure of opioid potency. Interaction shows the opioid hypnotic interaction. It is very preliminary.",
                 placement = "top",
                 options = list(container = "body")
               ),
               conditionalPanel(
-                condition = "!input.addedPlots.includes('Time Until')",
+                condition = "!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('Events') || input.addedPlots.includes('Interaction'))",
                 checkboxInput(
                   inputId = "logY",
                   label = "Log Y axis",
@@ -357,8 +359,41 @@ ui <- function(request) {
                 placement = "top",
                 options = list(container = "body")
               ),
-              uiOutput( # Width = 1
-                outputId = "Linetype"
+              selectInput(
+                inputId = "plasmaLinetype",
+                label = "Plasma",
+                selected = "blank",
+                choices = c("solid",
+                            "dashed",
+                            "longdash",
+                            "dotted",
+                            "dotdash",
+                            "twodash",
+                            "blank")
+              ),
+              bsTooltip(
+                id = "plasmaLinetype",
+                title = "Line type for plasma concentrations",
+                placement = "top",
+                options = list(container = "body")
+              ),
+              selectInput(
+                inputId = "effectsiteLinetype",
+                label = "Effect site",
+                selected = "solid",
+                choices = c("solid",
+                            "dashed",
+                            "longdash",
+                            "dotted",
+                            "dotdash",
+                            "twodash",
+                            "blank")
+              ),
+              bsTooltip(
+                id = "effectsiteLinetype",
+                title = "Line type for effect site concentrations",
+                placement = "bottom",
+                options = list(container = "body")
               )
             ),
             column(

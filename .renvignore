@@ -1,0 +1,10 @@
+..Rcheck/
+.github/
+data-raw/
+doc/
+man/
+misc/
+stanpumpR.Rcheck/
+tests/
+vignettes/
+/*.tar.gz

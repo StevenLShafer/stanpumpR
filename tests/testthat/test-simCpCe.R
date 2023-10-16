@@ -1,6 +1,3 @@
-
-context("simCpCe")
-
 test_that("it returns the correct array", {
   dose <- data.frame(
     Drug = "remifentanil",

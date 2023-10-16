@@ -1,5 +1,3 @@
-context("advanceClosedForm0")
-
 test_that("it returns the correct array", {
   dose <- list(
     Drug = "remifentanil",

@@ -1,11 +1,20 @@
 library(shiny)
 library(ggplot2)
+library(jsonlite)
 
 options(warn = 2)
 
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 
+# email with gmail needs 2FA now?
 config <- config::get()
+
+if (is.null(config$maintainer_name)) config$maintainer_name <- "Steve"
+if (is.null(config$maintainer_email)) config$maintainer_email <- "stanpumpR@gmail.com"
+if (is.null(config$help_link)) config$help_link <- "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
+if (is.null(config$debug)) config$debug <- FALSE
+
+DEBUG <- config$debug
 
 # Load other files
 #CANCEL <- readPNG("www/cancel.png", native=TRUE)
@@ -29,22 +38,25 @@ theme_update(
   legend.key = element_blank()
 )
 
+e <- new.env()
+load("data/sysdata.rda", envir=e)
+js_drug_defaults <- paste0("var drug_defaults=",toJSON(rlang::env_get(e, "drugDefaults_global")))
+rm(e)
+
 blanks <- rep("", 6)
 doseTableInit <- data.frame(
   Drug = c("propofol","propofol","fentanyl","remifentanil","remifentanil","rocuronium", blanks),
   Time = c(as.character(rep(0,6)), blanks),
   Dose = c(as.character(rep(0,6)), blanks),
-  Units = c("mg","mcg/kg/min","mcg","mcg","mcg/kg/min","mg", blanks),
-  stringsAsFactors = FALSE
+  Units = c("mg","mcg/kg/min","mcg","mcg","mcg/kg/min","mg", blanks)
 )
 doseTableNewRow <-  doseTableInit[7, ]
 
 eventTableInit <- data.frame(
-  Time = 0,
-  Event = "",
-  Fill = "",
-  stringsAsFactors = FALSE
-)[FALSE, ]
+  Time = numeric(0),
+  Event = character(0),
+  Fill = character(0)
+)
 
 outputComments <- function(
   ...,

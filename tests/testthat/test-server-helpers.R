@@ -1,5 +1,3 @@
-context("server helpers")
-
 test_that("checkNumericCovariates correctly identifies out of bounds input", {
   expect_true(checkNumericCovariates(21, 70, 170))
   expect_false(checkNumericCovariates(0, 0, 0))
