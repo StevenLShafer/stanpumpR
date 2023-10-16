@@ -47,5 +47,5 @@ jobs:
           )
           write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
           rsconnect::setAccountInfo("${{ secrets.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
-          rsconnect::deployApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ secrets.SHINY_ACCOUNT }}")
+          rsconnect::deployApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ secrets.SHINY_ACCOUNT }}", forceUpdate = TRUE)
         shell: Rscript {0}
