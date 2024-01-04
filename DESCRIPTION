@@ -91,7 +91,6 @@ Collate:
   hourMinute.R
   lbmJames.R
   modelInteraction.R
-  packages.R
   processdoseTable.R
   recoveryCalc.R
   sendError.R
