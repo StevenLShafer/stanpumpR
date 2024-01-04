@@ -1,3 +1,4 @@
+library(lubridate)
 # Separate hour from minute in hh:ss format. Return number of minutes
 # Used only in clockTimeToDelta
 hourMinute <- function(x)
