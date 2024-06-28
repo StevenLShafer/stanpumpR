@@ -38,10 +38,7 @@ theme_update(
   legend.key = element_blank()
 )
 
-e <- new.env()
-load("data/sysdata.rda", envir=e)
 js_drug_defaults <- paste0("var drug_defaults=",toJSON(stanpumpR::drugDefaults_global))
-rm(e)
 
 blanks <- rep("", 6)
 doseTableInit <- data.frame(
