@@ -34,8 +34,8 @@ Near-term future developments in stanpumpR will include
 1. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
 1. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
 1. Run the app from the RStudio Console:
-- `library(shiny)`
-- `runApp()`
+- `pkgload::load_all()`
+- `run_app()`
 
 #### Running tests
 1. Install the devtools package via `install.packages("devtools")`.
