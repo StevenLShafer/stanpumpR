@@ -10,42 +10,44 @@ Authors@R:
 Description: stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
 License: MIT + file LICENSE
 Imports:
-  config,
-  cpp11,
-  data.table,
-  dplyr,
-  DT,
-  egg,
-  glue,
-  ggplot2  (>= 3.4),
-  ggpubr,
-  grid,
-  httr,
-  jpeg,
-  jsonlite,
-  lubridate,
-  mailR,
-  officer,
-  openxlsx,
-  png,
-  purrr,
-  R.utils,
-  randomcoloR,
-  RColorBrewer,
-  RcppEigen,
-  reactlog,
-  rhandsontable,
-  rvg,
-  shiny,
-  shinyBS,
-  shinydashboard,
-  shinyjs,
-  splines,
-  stringi,
-  tidyr,
-  tryCatchLog,
-  waiter,
-  yaml
+    config,
+    cpp11,
+    data.table,
+    dplyr,
+    DT,
+    egg,
+    glue,
+    ggplot2 (>= 3.4),
+    ggpubr,
+    grid,
+    httr,
+    jpeg,
+    jsonlite,
+    lubridate,
+    mailR,
+    officer,
+    openxlsx,
+    png,
+    purrr,
+    R.utils,
+    randomcoloR,
+    RColorBrewer,
+    RcppEigen,
+    reactlog,
+    rhandsontable,
+    rvg,
+    shiny,
+    shinyBS,
+    shinydashboard,
+    shinyjs,
+    splines,
+    stringi,
+    tidyr,
+    tryCatchLog,
+    waiter,
+    yaml,
+    pkgload,
+    magrittr
 Suggests:
     devtools,
     here,
@@ -58,8 +60,12 @@ Depends:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Collate:
+  app.R
+  ui.R
+  server.R
+  global.R
   drugAndEventDefaults.R
   sendSlide.R
   CE.R
