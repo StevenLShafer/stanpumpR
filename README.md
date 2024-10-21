@@ -3,7 +3,7 @@
 ![](../../workflows/R-CMD-check/badge.svg)
 
 stanpumpR, a PK/PD simulation program
-Copyright 2019 Steven L. Shafer, steven.shafer@stanford.edu.
+Copyright 2019-2024 Steven L. Shafer, steven.shafer@stanford.edu.
 All Rights Reserved
 
 stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
