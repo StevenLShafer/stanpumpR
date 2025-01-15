@@ -49,12 +49,6 @@ ui <- function(request) {
                     value = defaultAge,
                     min = MIN_AGE,
                     max = MAX_AGE
-                  ),
-                  bsTooltip(
-                    id = "age",
-                    title = "Enter  age and select years or months",
-                    placement = "top",
-                    options = list(container = "body")
                   )
                 ), # end of cancel-margin div
                 div( #style = "font-size: 10px;",
@@ -76,12 +70,6 @@ ui <- function(request) {
                   value = defaultWeight,
                   min = MIN_WEIGHT,
                   max = MAX_WEIGHT
-                ),
-                bsTooltip(
-                  id = "weight",
-                  title = "Enter weight and select kilograms or pounds",
-                  placement = "top",
-                  options = list(container = "body")
                 )
               ), # End of class cancel-margin div
               radioButtons(
@@ -100,12 +88,6 @@ ui <- function(request) {
                   value = defaultHeight,
                   min = MIN_HEIGHT,
                   max = MAX_HEIGHT
-                ),
-                bsTooltip(
-                  id = "height",
-                  title = "Enter height and select centimeters or inches",
-                  placement = "right",
-                  options = list(container = "body")
                 )
               ), # end of cancel-margin div
               radioButtons(
@@ -139,12 +121,6 @@ ui <- function(request) {
                   choiceValues = c(TRUE, FALSE),
                   inline = TRUE,
                   selected = FALSE
-                ),
-                bsTooltip(
-                  id = "pregnant",
-                  title = "Not implemented yet",
-                  placement = "right",
-                  options = list(container = "body")
                 )
               )),
               disabled(radioButtons(
@@ -154,12 +130,6 @@ ui <- function(request) {
                 choiceValues = c("rapid","typical", "slow"),
                 inline = FALSE,
                 selected = "typical"
-              ),
-              bsTooltip(
-                id = "cyp2d6",
-                title = "Not implemented yet",
-                placement = "right",
-                options = list(container = "body")
               )),
               disabled(radioButtons(
                 inputId = "renal",
@@ -168,12 +138,6 @@ ui <- function(request) {
                 choiceValues = c("normal","impaired", "ESRD"),
                 inline = FALSE,
                 selected = "normal"
-              ),
-              bsTooltip(
-                id = "renal",
-                title = "Not implemented yet",
-                placement = "right",
-                options = list(container = "body")
               ))
             )
           ), # fluidrow within column
@@ -186,13 +150,7 @@ ui <- function(request) {
               fluidRow(
                 column(
                   width = 4,
-                  textInput("referenceTime", "Reference Time", placeholder = "HH:MM"),
-                  bsTooltip(
-                    id = "referenceTime",
-                    title = 'Time is selected based on your local time. Select "none" for absolute time.',
-                    placement = "right",
-                    options = list(container = "body")
-                  )
+                  textInput("referenceTime", "Reference Time", placeholder = "HH:MM")
                 )
               ), # end of fluid row
               # Note to Dean: Here is where the handsontable is output. My guess is that this is where
@@ -200,13 +158,7 @@ ui <- function(request) {
               # will process and validate the table.
               tags$script(HTML(js_drug_defaults)),
               tags$script(src = "hot_funs.js"),
-              rHandsontableOutput(outputId = "doseTableHTML"),
-              bsTooltip(
-                id = "doseTableHTML",
-                title = "Enter the drug and the units by typing or by using the pull down menu. Clock times are entered as HH:MM.",
-                placement = "right",
-                options = list(container = "body")
-              )
+              rHandsontableOutput(outputId = "doseTableHTML")
             ) # End of column
           ) # end of second fluid row in width 5 column
         ), # end of width 5 column
@@ -250,23 +202,11 @@ ui <- function(request) {
                 label = "Title",
                 value = paste("Simulation on",format(Sys.time()))
               ),
-              bsTooltip(
-                id = "title",
-                title = "Enter a title for your simulation",
-                placement = "top",
-                options = list(container = "body")
-              ),
               textInput(
                 inputId = "caption",
                 label = "Caption",
                 value = "",
                 placeholder = "Enter figure caption"
-              ),
-              bsTooltip(
-                id = "caption",
-                title = "Text to appear below your simulation",
-                placement = "bottom",
-                options = list(container = "body")
               ),
               div(
                 style = "padding-bottom: 10px;",
@@ -294,24 +234,12 @@ ui <- function(request) {
                 selected = "Range",
                 inline = FALSE
               ),
-              bsTooltip(
-                id = "typical",
-                title = "Show typical clinical values",
-                placement = "top",
-                options = list(container = "body")
-              ),
               radioButtons(
                 inputId = "normalization",
                 label = "Normalize to:",
                 choices = c("none","Peak plasma", "Peak effect site"),
                 selected = "none",
                 inline = FALSE
-              ),
-              bsTooltip(
-                id = "normalization",
-                title = "Normalization can help show relationships",
-                placement = "top",
-                options = list(container = "body")
               )
             ),
             # Select MEAC, Select Interaction, events, and time to emergence
@@ -323,24 +251,12 @@ ui <- function(request) {
                 choiceNames = c("MEAC", "Interaction", "Events", "Time until ___"),
                 choiceValues = c("MEAC", "Interaction", "Events", "Time Until")
               ),
-              bsTooltip(
-                id = "addedPlots",
-                title = "MEAC normalizes each opioid to the minimum effective analgesic concentration, a measure of opioid potency. Interaction shows the opioid hypnotic interaction. It is very preliminary.",
-                placement = "top",
-                options = list(container = "body")
-              ),
               conditionalPanel(
                 condition = "!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('Events') || input.addedPlots.includes('Interaction'))",
                 checkboxInput(
                   inputId = "logY",
                   label = "Log Y axis",
                   value = FALSE
-                ),
-                bsTooltip(
-                  id = "logY",
-                  title = "Plot Y axis on a log scale",
-                  placement = "top",
-                  options = list(container = "body")
                 )
               )
             ),
@@ -352,12 +268,6 @@ ui <- function(request) {
                 label = "Max Time",
                 choices = maxtimes$times,
                 selected = 60
-              ),
-              bsTooltip(
-                id = "maximum",
-                title = "Maximum time. Axis will automatically expand as you enter more doses, unless maximum is set to 10 minutes",
-                placement = "top",
-                options = list(container = "body")
               ),
               selectInput(
                 inputId = "plasmaLinetype",
@@ -371,12 +281,6 @@ ui <- function(request) {
                             "twodash",
                             "blank")
               ),
-              bsTooltip(
-                id = "plasmaLinetype",
-                title = "Line type for plasma concentrations",
-                placement = "top",
-                options = list(container = "body")
-              ),
               selectInput(
                 inputId = "effectsiteLinetype",
                 label = "Effect site",
@@ -388,12 +292,6 @@ ui <- function(request) {
                             "dotdash",
                             "twodash",
                             "blank")
-              ),
-              bsTooltip(
-                id = "effectsiteLinetype",
-                title = "Line type for effect site concentrations",
-                placement = "bottom",
-                options = list(container = "body")
               )
             ),
             column(
@@ -405,12 +303,6 @@ ui <- function(request) {
                   textInput(
                     inputId = "recipient",
                     label = "Email slide to:"
-                  ),
-                  bsTooltip(
-                    id = "recipient",
-                    title = "Enter a valid e-mail address",
-                    placement = "top",
-                    options = list(container = "body")
                   )
                 ),
                 column(
@@ -422,12 +314,6 @@ ui <- function(request) {
                       inputId = "sendSlide",
                       label = "GO!",
                       icon = icon("far fa-envelope")
-                    ),
-                    bsTooltip(
-                      id = "sendSlide",
-                      title = "Click ONCE to send slide",
-                      placement = "top",
-                      options = list(container = "body")
                     )
                   ),
                   div(
@@ -455,7 +341,6 @@ ui <- function(request) {
           )
         )
       )
-
     ) # end dashboardBody
   ) # end dashboardPage
 }
