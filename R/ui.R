@@ -1,6 +1,7 @@
 # UI for stanpumpR
 
 # UI ------------------------------------------------------
+
 ui <- function(request) {
   dashboardPage(
     dashboardHeader(
