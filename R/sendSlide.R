@@ -64,7 +64,9 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   if (!file.exists("Slides")) dir.create("Slides")
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
   DATE <- format(Sys.Date(), "%m/%d/%y")
+  outputComments("reading Template.pptx")
   PPTX <- read_pptx("misc/Template.pptx")
+  outputComments("Template.pptx loaded")
   MASTER <- "Office Theme"
 
   PPTX <- add_slide(PPTX, layout = "Title and Content", master = MASTER)
