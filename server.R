@@ -24,7 +24,6 @@ server <- function(input, output, session)
         cat("Error detected in stanpumpR\n")
         cat(msg, "\n")
         cat("URL: ", url(), "\n")
-        sendError(url = url(), errorMessage = msg)
       })
     }
     options(error = NULL)
