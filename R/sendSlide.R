@@ -1,3 +1,7 @@
+library(openxlsx)
+library(officer) # word and xls
+library(rvg) # vector graphics for word xls
+
 # Send a copy of the current plot to the designated recipient
 sendSlide <- function(
   values,
