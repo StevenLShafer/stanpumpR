@@ -300,6 +300,24 @@ ui <- function(request) {
               fluidRow(
                 column(
                   width = 9,
+                  downloadButton(
+                      "downloadPPTX",
+                      label = "Download PPTX",
+                      icon = icon("far fa-file-powerpoint")
+                  ),
+                  downloadButton(
+                      "downloadXLSX",
+                      label = "Download XLSX",
+                      icon = icon("far fa-file-excel")
+                  ),
+                  downloadButton(
+                    "downloadPNG",
+                    label = "Download PNG",
+                    icon = icon("far fa-file-image")
+                  )
+                ),
+                column(
+                  width = 9,
                   textInput(
                     inputId = "recipient",
                     label = "Email slide to:"
