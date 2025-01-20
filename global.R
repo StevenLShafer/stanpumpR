@@ -154,3 +154,13 @@ bookmarksToExclude <- c(
   "newEndCe",
   "hoverInfo"
 )
+
+# shinylive workaround
+# downloadButton() does not work in Chromium-based browsers
+# Workaround for Chromium Issue 468227
+# https://github.com/posit-dev/r-shinylive/issues/74
+downloadButton <- function(...) {
+  tag <- shiny::downloadButton(...)
+  tag$attribs$download <- NULL
+  tag
+}
