@@ -1,6 +1,6 @@
 Package: stanpumpR
 Title: stanpumpR, a PK/PD simulation program
-Version: 0.0.0.1
+Version: 0.0.1.9000
 Authors@R:
     c(person(given = "Steven",
            family = "Shafer",
@@ -11,17 +11,13 @@ Description: stanpumpR is open-source software for pharmacokinetic / pharmacodyn
 License: MIT + file LICENSE
 Imports:
   config,
-  cpp11,
-  data.table,
   dplyr,
-  DT,
-  egg,
   glue,
   ggplot2  (>= 3.4),
   ggpubr,
   grid,
+  htmlwidgets,
   httr,
-  jpeg,
   jsonlite,
   lubridate,
   mailR,
@@ -29,19 +25,12 @@ Imports:
   openxlsx,
   png,
   purrr,
-  R.utils,
-  randomcoloR,
-  RColorBrewer,
-  RcppEigen,
-  reactlog,
   rhandsontable,
   rvg,
   shiny,
   shinyBS,
   shinydashboard,
   shinyjs,
-  splines,
-  stringi,
   tidyr,
   tryCatchLog,
   waiter,
@@ -58,7 +47,7 @@ Depends:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 Collate:
   drugAndEventDefaults.R
   sendSlide.R

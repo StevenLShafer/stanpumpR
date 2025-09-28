@@ -1380,7 +1380,7 @@ observeEvent(
   input$targetOK,
   {
     removeModal()
-    waiter_show()
+    waiter::waiter_show()
     endTime <- validateTime(input$targetEndTime)
     if ((endTime) == "")
     {
@@ -1419,7 +1419,7 @@ observeEvent(
       testTable[,c("Drug","Time","Dose","Units")],
       current$DT
     )
-    waiter_hide()
+    waiter::waiter_hide()
     doseTable(current$DT)
   }
 )
