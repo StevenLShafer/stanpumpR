@@ -19,7 +19,7 @@ sendError <- function(
     "<p>The Shiny Server Gnome</p>",
     "</div></body></html>"
   )
-  email <- send.mail(
+  email <- mailR::send.mail(
     from = config$email_username,
     to = config$maintainer_email,
     subject = "Error on Shiny Server",

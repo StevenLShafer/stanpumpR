@@ -29,7 +29,7 @@ sendSlide <- function(
   emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults)
 
   outputComments("Sending email")
-  email <- send.mail(
+  email <- mailR::send.mail(
     from = paste0("stanpumpR <", email_username, ">"),
     to = recipient,
     subject = emailData$title,
@@ -71,7 +71,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   PPTX <- add_slide(PPTX, layout = "Title and Content", master = MASTER)
   PPTX <- ph_with(PPTX, title, location = ph_location_type("title"))
-  PPTX <- ph_with(PPTX, dml(code = print(plotObject)), location = ph_location_type("body"))
+  PPTX <- ph_with(PPTX, rvg::dml(code = print(plotObject)), location = ph_location_type("body"))
 
   PPTX <- ph_with(PPTX, DATE, location = ph_location_type ("dt"))
   PPTX <- ph_with(PPTX, slide, location = ph_location_type ("sldNum"))
@@ -84,7 +84,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
 
   outputComments("Starting ggexport()")
-  ggexport(
+  ggpubr::ggexport(
     plotObject + labs(title = "", caption = NULL, x = NULL, y = NULL) +
       theme(strip.text.y = element_text(size = 6, angle = 180),
             axis.text.y = element_text(size = 6),
