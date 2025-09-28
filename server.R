@@ -734,7 +734,7 @@ imgDrugTime <- function(e = "")
     outputComments(paste("drug from panelvar1",drug), echo = DEBUG)
   }
   if (drug %in% c("% MEAC", "p no response"))
-    drug <- drug <- tail(plottedDrugs,1)
+    drug <- drug <- utils::tail(plottedDrugs,1)
 
   # Get Units
   if (drug == "Events")

@@ -20,6 +20,7 @@ Imports:
   httr,
   jsonlite,
   lubridate,
+  magrittr,
   mailR,
   officer,
   openxlsx,
@@ -33,6 +34,7 @@ Imports:
   shinyjs,
   tidyr,
   tryCatchLog,
+  utils,
   waiter,
   yaml
 Suggests:
