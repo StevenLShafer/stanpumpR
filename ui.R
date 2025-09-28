@@ -27,7 +27,7 @@ ui <- function(request) {
 
     dashboardBody(
       useShinyjs(),
-      useWaiter(),
+      waiter::useWaiter(),
       tags$script(src = "app.js"),
       tags$head(tags$link(href = "app.css", rel = "stylesheet")),
       style = "max-height: 95vh; overflow-y: auto;" ,
@@ -50,7 +50,7 @@ ui <- function(request) {
                     min = MIN_AGE,
                     max = MAX_AGE
                   ),
-                  bsTooltip(
+                  shinyBS::bsTooltip(
                     id = "age",
                     title = "Enter  age and select years or months",
                     placement = "top",
@@ -77,7 +77,7 @@ ui <- function(request) {
                   min = MIN_WEIGHT,
                   max = MAX_WEIGHT
                 ),
-                bsTooltip(
+                shinyBS::bsTooltip(
                   id = "weight",
                   title = "Enter weight and select kilograms or pounds",
                   placement = "top",
@@ -101,7 +101,7 @@ ui <- function(request) {
                   min = MIN_HEIGHT,
                   max = MAX_HEIGHT
                 ),
-                bsTooltip(
+                shinyBS::bsTooltip(
                   id = "height",
                   title = "Enter height and select centimeters or inches",
                   placement = "right",
@@ -140,7 +140,7 @@ ui <- function(request) {
                   inline = TRUE,
                   selected = FALSE
                 ),
-                bsTooltip(
+                shinyBS::bsTooltip(
                   id = "pregnant",
                   title = "Not implemented yet",
                   placement = "right",
@@ -155,7 +155,7 @@ ui <- function(request) {
                 inline = FALSE,
                 selected = "typical"
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "cyp2d6",
                 title = "Not implemented yet",
                 placement = "right",
@@ -169,7 +169,7 @@ ui <- function(request) {
                 inline = FALSE,
                 selected = "normal"
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "renal",
                 title = "Not implemented yet",
                 placement = "right",
@@ -187,7 +187,7 @@ ui <- function(request) {
                 column(
                   width = 4,
                   textInput("referenceTime", "Reference Time", placeholder = "HH:MM"),
-                  bsTooltip(
+                  shinyBS::bsTooltip(
                     id = "referenceTime",
                     title = 'Time is selected based on your local time. Select "none" for absolute time.',
                     placement = "right",
@@ -201,7 +201,7 @@ ui <- function(request) {
               tags$script(HTML(js_drug_defaults)),
               tags$script(src = "hot_funs.js"),
               rHandsontableOutput(outputId = "doseTableHTML"),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "doseTableHTML",
                 title = "Enter the drug and the units by typing or by using the pull down menu. Clock times are entered as HH:MM.",
                 placement = "right",
@@ -250,7 +250,7 @@ ui <- function(request) {
                 label = "Title",
                 value = paste("Simulation on",format(Sys.time()))
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "title",
                 title = "Enter a title for your simulation",
                 placement = "top",
@@ -262,7 +262,7 @@ ui <- function(request) {
                 value = "",
                 placeholder = "Enter figure caption"
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "caption",
                 title = "Text to appear below your simulation",
                 placement = "bottom",
@@ -294,7 +294,7 @@ ui <- function(request) {
                 selected = "Range",
                 inline = FALSE
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "typical",
                 title = "Show typical clinical values",
                 placement = "top",
@@ -307,7 +307,7 @@ ui <- function(request) {
                 selected = "none",
                 inline = FALSE
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "normalization",
                 title = "Normalization can help show relationships",
                 placement = "top",
@@ -323,7 +323,7 @@ ui <- function(request) {
                 choiceNames = c("MEAC", "Interaction", "Events", "Time until ___"),
                 choiceValues = c("MEAC", "Interaction", "Events", "Time Until")
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "addedPlots",
                 title = "MEAC normalizes each opioid to the minimum effective analgesic concentration, a measure of opioid potency. Interaction shows the opioid hypnotic interaction. It is very preliminary.",
                 placement = "top",
@@ -336,7 +336,7 @@ ui <- function(request) {
                   label = "Log Y axis",
                   value = FALSE
                 ),
-                bsTooltip(
+                shinyBS::bsTooltip(
                   id = "logY",
                   title = "Plot Y axis on a log scale",
                   placement = "top",
@@ -353,7 +353,7 @@ ui <- function(request) {
                 choices = maxtimes$times,
                 selected = 60
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "maximum",
                 title = "Maximum time. Axis will automatically expand as you enter more doses, unless maximum is set to 10 minutes",
                 placement = "top",
@@ -371,7 +371,7 @@ ui <- function(request) {
                             "twodash",
                             "blank")
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "plasmaLinetype",
                 title = "Line type for plasma concentrations",
                 placement = "top",
@@ -389,7 +389,7 @@ ui <- function(request) {
                             "twodash",
                             "blank")
               ),
-              bsTooltip(
+              shinyBS::bsTooltip(
                 id = "effectsiteLinetype",
                 title = "Line type for effect site concentrations",
                 placement = "bottom",
@@ -406,7 +406,7 @@ ui <- function(request) {
                     inputId = "recipient",
                     label = "Email slide to:"
                   ),
-                  bsTooltip(
+                  shinyBS::bsTooltip(
                     id = "recipient",
                     title = "Enter a valid e-mail address",
                     placement = "top",
@@ -423,7 +423,7 @@ ui <- function(request) {
                       label = "GO!",
                       icon = icon("far fa-envelope")
                     ),
-                    bsTooltip(
+                    shinyBS::bsTooltip(
                       id = "sendSlide",
                       title = "Click ONCE to send slide",
                       placement = "top",
