@@ -53,9 +53,9 @@ validateTime <- function(x)
 
 getReferenceTime <- function(time) {
   time <- gsub("[^[:digit:]:. APM]","",time) # Get rid of strange formatting characters
-  time <- parse_date_time(time, c("HMSOp","HMOp","HMS","HM"), quiet=TRUE)
+  time <- lubridate::parse_date_time(time, c("HMSOp","HMOp","HMS","HM"), quiet=TRUE)
   if (is.na(time)) return(NA)
-  time <- 60*hour(time) + minute(time)
+  time <- 60*lubridate::hour(time) + lubridate::minute(time)
   time <- floor(time / 15) * 15
   HH   <- floor(time / 60)
   MM   <- time %% 60

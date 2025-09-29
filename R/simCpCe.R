@@ -1,5 +1,3 @@
-library(tidyr)
-
 # TODO Fix plotRecovery
 #' Simulate plasma and effect site concentration from time 0 to maximum
 #'
@@ -129,13 +127,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   equiSpace <- data.frame(
     Drug = PK$drug,
     Time = xout,
-    Ce = approx(
+    Ce = stats::approx(
       x = results$Time,
       y = results$"Effect Site",
       xout = xout
       )$y,
     Time = xout,
-    Recovery = approx(
+    Recovery = stats::approx(
       x = results$Time,
       y = results$Recovery,
       xout = xout

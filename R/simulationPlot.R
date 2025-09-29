@@ -222,7 +222,9 @@ simulationPlot <- function(
   if (plotMEAC | plotInteraction)
   {
   # Need this table both for plotMEAC and for Interaction
-    X <- allEquispace %>% group_by(Time) %>% summarize(SUM = mean(MEAC)*n())
+    X <- allEquispace %>%
+      dplyr::group_by(Time) %>%
+      dplyr::summarize(SUM = mean(MEAC)*n())
     totalMEAC <- data.frame(
       Drug = "total opioid",
       Time = X$Time,
@@ -418,27 +420,27 @@ simulationPlot <- function(
     data <- data[data$Y>0,]
   }
 
-  plotObject <- ggplot() +
-  geom_line(
-    data = data,
-    aes(
-      x = Time,
-      y = Y,
-      color = Drug,
-      linetype = Site
+  plotObject <- ggplot2::ggplot() +
+    ggplot2::geom_line(
+      data = data,
+      ggplot2::aes(
+        x = Time,
+        y = Y,
+        color = Drug,
+        linetype = Site
       ),
-    linewidth=1
+      linewidth=1
     )
 
   # Step A2: add scales to plotObject
 
   plotObject <- plotObject +
-    coord_cartesian(xlim = c(min(xBreaks), max(xBreaks)), clip="off") +
-    scale_x_continuous(expand = c(0,0), breaks = xBreaks, labels = xLabels) +
-    scale_color_manual(values=drugColors) +
-    scale_fill_manual(values=drugColors)  +
-    scale_alpha_manual(values = c(plotTable$alpha, 0.5)) +
-    scale_linetype_manual(values=linetypes)
+    ggplot2::coord_cartesian(xlim = c(min(xBreaks), max(xBreaks)), clip="off") +
+    ggplot2::scale_x_continuous(expand = c(0,0), breaks = xBreaks, labels = xLabels) +
+    ggplot2::scale_color_manual(values=drugColors) +
+    ggplot2::scale_fill_manual(values=drugColors)  +
+    ggplot2::scale_alpha_manual(values = c(plotTable$alpha, 0.5)) +
+    ggplot2::scale_linetype_manual(values=linetypes)
 
   # Step A3: handle logarithmic Y axis
 
@@ -449,21 +451,21 @@ simulationPlot <- function(
 #    lower <- min(upper / 10000, min(plotResults$Y[plotResults$Time > minimum + (maximum - minimum)/2]))
 #    cat("lower", upper,"\n")
 #    plotObject <- plotObject + scale_y_log10(limits=c(lower,upper))
-    plotObject <- plotObject + scale_y_log10()
+    plotObject <- plotObject + ggplot2::scale_y_log10()
   } else {
-    plotObject <- plotObject + scale_y_continuous(limits=c(0, NA))
+    plotObject <- plotObject + ggplot2::scale_y_continuous(limits=c(0, NA))
   }
 
   # Step A3: labs and themes
 
   nFacets <- length(unique(plotResults$Wrap))
-  plotObject <- plotObject + labs(
+  plotObject <- plotObject + ggplot2::labs(
       title = title,
       x = xAxisLabel,
       caption = caption) +
-    theme(aspect.ratio = aspect/nFacets) +
-    theme(legend.text=element_text(size=12)) +
-    theme(legend.title = element_text(color="darkblue", size=13, face="bold"))
+    ggplot2::theme(aspect.ratio = aspect/nFacets) +
+    ggplot2::theme(legend.text = ggplot2::element_text(size=12)) +
+    ggplot2::theme(legend.title = ggplot2::element_text(color="darkblue", size=13, face="bold"))
 
   # Step A4: add typical values
 
@@ -472,9 +474,9 @@ simulationPlot <- function(
     "Range" = {
       plotObject <-
         plotObject +
-      geom_rect(
+        ggplot2::geom_rect(
         data=plotTable,
-        aes(
+        ggplot2::aes(
           xmin=xmin,
           xmax=xmax,
           ymin=ymin,
@@ -489,9 +491,9 @@ simulationPlot <- function(
     "Mid" = {
       plotObject <-
         plotObject +
-        geom_rect(
+        ggplot2::geom_rect(
           data=plotTable,
-          mapping=aes(
+          mapping=ggplot2::aes(
             xmin=xmin,
             xmax=xmax,
             ymin=typical*0.95,
@@ -511,9 +513,9 @@ simulationPlot <- function(
   if (plotEvents)
   {
     plotObject <- plotObject +
-      geom_rect(
+      ggplot2::geom_rect(
         data = subset(plotResults, Wrap == "Events"),
-        aes(
+        ggplot2::aes(
           xmin = 0, # xmin,
           xmax = maximum, # xmax,
           ymin = 0, # ymin,
@@ -534,9 +536,9 @@ simulationPlot <- function(
       for (i in 1:nrow(plotLabels))
       {
         plotObject <- plotObject +
-        geom_label(
+          ggplot2::geom_label(
           data = plotLabels[i,],
-            mapping = aes(
+            mapping = ggplot2::aes(
               x = Time,
               y = Y,
               label = Label
@@ -547,7 +549,7 @@ simulationPlot <- function(
           alpha = 0.25,
           show.legend = FALSE,
           inherit.aes=FALSE,
-          label.padding = unit(0.25,"mm"),
+          label.padding = grid::unit(0.25,"mm"),
           fontface = "bold"
           )
       }
@@ -560,7 +562,7 @@ simulationPlot <- function(
   # if (plotEvents) scales_y$Events <- scale_y_continuous(labels = NULL)
 #  print(scales_y)
   plotObject <- plotObject +
-    facet_grid(
+    ggplot2::facet_grid(
       Wrap ~ .,
 #      ncol = 1,
       scales="free_y",
@@ -569,15 +571,15 @@ simulationPlot <- function(
       shrink=FALSE
 #      scales = list(y = scales_y)
       ) +
-    ylab(NULL) +
-    theme(strip.background = element_blank(),
+    ggplot2::ylab(NULL) +
+    ggplot2::theme(strip.background = ggplot2::element_blank(),
           strip.placement = "outside",
-          strip.text.y = element_text(
+          strip.text.y = ggplot2::element_text(
             size = facetFont[nFacets],
             angle = facetAngle[nFacets]),
-          axis.text.y = element_text(
+          axis.text.y = ggplot2::element_text(
             size = labelFont[nFacets]),
-          panel.spacing = unit(facetSpacing[nFacets], "lines"),
+          panel.spacing = grid::unit(facetSpacing[nFacets], "lines"),
           legend.background = element_blank(),
           legend.box.background = element_blank(),
           legend.key = element_blank()
@@ -588,7 +590,7 @@ simulationPlot <- function(
   if (plotRecovery)
   {
 
-    x <- ggplot_build(plotObject)
+    x <- ggplot2::ggplot_build(plotObject)
     recovery <- allEquispace[,c("Drug","Time","Recovery")]
     recovery$Wrap <- ""
     recoveryLabels <- data.frame(
@@ -605,7 +607,7 @@ simulationPlot <- function(
       if (plotTable$MaxRecovery[i] > 0)
       {
 #        labels <- as.numeric(x$layout$panel_params[[i]]$y.labels)
-        labels <- as.numeric(na.omit(x$layout$panel_params[[i]]$y$get_labels()))
+        labels <- as.numeric(stats::na.omit(x$layout$panel_params[[i]]$y$get_labels()))
         nLabels <- length(labels) - 1 # Subtract 1 because 0 is always included
         end <- start + nLabels
         recoveryLabels$Drug[start:end] <- as.character(plotTable$Drug[i])
@@ -642,9 +644,9 @@ simulationPlot <- function(
     # Step A7: finish plotObject
 
     plotObject <- plotObject +
-      geom_text(
+      ggplot2::geom_text(
         data=recoveryLabels,
-        mapping=aes(
+        mapping=ggplot2::aes(
           x=x,
           y=y,
           label = new
@@ -656,9 +658,9 @@ simulationPlot <- function(
         vjust = -.05,
         size = labelFont[nFacets] * 0.2 # font size to mm
       ) +
-      geom_text(
+      ggplot2::geom_text(
         data=arrows,
-        mapping=aes(
+        mapping=ggplot2::aes(
           x=x,
           y=y,
           label = new
@@ -670,9 +672,9 @@ simulationPlot <- function(
         vjust = 0.5,
         size = labelFont[nFacets] * 0.2 # font size to mm
       ) +
-      geom_rect(
+      ggplot2::geom_rect(
         data=plotTable,
-        mapping=aes(
+        mapping=ggplot2::aes(
           xmin=xmin,
           xmax=xmax,
           ymin=0,
@@ -684,9 +686,9 @@ simulationPlot <- function(
         inherit.aes=FALSE,
         show.legend=FALSE
       ) +
-     geom_line(
+      ggplot2::geom_line(
        data = recovery,
-       aes(
+       ggplot2::aes(
          x = Time,
          y = Recovery
         ),

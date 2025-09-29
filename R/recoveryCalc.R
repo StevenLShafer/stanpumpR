@@ -8,7 +8,7 @@ recoveryCalc <-   function(
 {
   if (target >= sum(state)) return(0)
   return (
-    optimize(
+    stats::optimize(
       function (t, state, lambda, target) { (target - sum(state * exp(-lambda * t)))^2 },
       c(0,1440),
       state = state,

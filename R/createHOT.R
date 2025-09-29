@@ -1,14 +1,14 @@
 createHOT <- function(doseTable,drugDefaults)
 {
   rownames(doseTable) <- 1:nrow(doseTable)
-  HOT <- rhandsontable(
+  HOT <- rhandsontable::rhandsontable(
     doseTable,
     overflow = 'visible',
     rowHeaders = NULL,
     height = 400,
     selectCallback = FALSE
   ) %>%
-    hot_col(
+    rhandsontable::hot_col(
       col = "Drug",
       type = "dropdown",
       source = drugDefaults$Drug,
@@ -17,17 +17,17 @@ createHOT <- function(doseTable,drugDefaults)
       valign = "vtMiddle",
       allowInvalid = FALSE
     ) %>%
-    hot_col(
+    rhandsontable::hot_col(
       col = "Time",
       halign = "htRight"
     ) %>%
-    hot_col(
+    rhandsontable::hot_col(
       col = "Dose",
       type = "numeric",
       halign = "htRight",
       validator = "function(value, callback) {callback(true)}"
     ) %>%
-    hot_col(
+    rhandsontable::hot_col(
       col = "Units",
       type = "dropdown",
       source = list(""),
@@ -36,9 +36,9 @@ createHOT <- function(doseTable,drugDefaults)
       valign = "vtMiddle",
       allowInvalid=FALSE
     ) %>%
-    hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
-    hot_rows(rowHeights = 10) %>%
-    hot_cols(colWidths = c(120, 70, 70, 120))
+    rhandsontable::hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+    rhandsontable::hot_rows(rowHeights = 10) %>%
+    rhandsontable::hot_cols(colWidths = c(120, 70, 70, 120))
 
   # Set units on a per drug basis
   for (i in 1:nrow(doseTable))
@@ -54,7 +54,7 @@ createHOT <- function(doseTable,drugDefaults)
   }
 
   HOT <- htmlwidgets::onRender(HOT,
-"
+                               "
 function(el, x) {
 
   var hot = this.hot;
