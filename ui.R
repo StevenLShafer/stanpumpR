@@ -2,8 +2,8 @@
 
 # UI ------------------------------------------------------
 ui <- function(request) {
-  dashboardPage(
-    dashboardHeader(
+  shinydashboard::dashboardPage(
+    shinydashboard::dashboardHeader(
       title = config$title,
       tags$li(
         class = "dropdown",
@@ -15,18 +15,18 @@ ui <- function(request) {
         )
       )
     ),
-    dashboardSidebar(
+    shinydashboard::dashboardSidebar(
       collapsed = TRUE,
       disable = TRUE,
       width = "200px",
-      sidebarMenu(
+      shinydashboard::sidebarMenu(
         id = "simType",
-        menuItem("stanpumpR", tabName = "SimulationMode", selected = TRUE)
+        shinydashboard::menuItem("stanpumpR", tabName = "SimulationMode", selected = TRUE)
       )
     ),
 
-    dashboardBody(
-      useShinyjs(),
+    shinydashboard::dashboardBody(
+      shinyjs::useShinyjs(),
       waiter::useWaiter(),
       tags$script(src = "app.js"),
       tags$head(tags$link(href = "app.css", rel = "stylesheet")),
@@ -130,7 +130,7 @@ ui <- function(request) {
                 selected = defaultSex
               ),
               #            ), # end of class: form-first-row div
-              disabled(conditionalPanel(
+              shinyjs::disabled(conditionalPanel(
                 condition = "input.age && input.ageUnit && input.ageUnit == 1 && input.age > 11 & input.age < 60 && input.sex == 'female'",
                 radioButtons(
                   inputId = "pregnant",
@@ -147,7 +147,7 @@ ui <- function(request) {
                   options = list(container = "body")
                 )
               )),
-              disabled(radioButtons(
+              shinyjs::disabled(radioButtons(
                 inputId = "cyp2d6",
                 label = "CYP 2D6",
                 choiceNames = c("Rapid","Typical", "Slow"),
@@ -161,7 +161,7 @@ ui <- function(request) {
                 placement = "right",
                 options = list(container = "body")
               )),
-              disabled(radioButtons(
+              shinyjs::disabled(radioButtons(
                 inputId = "renal",
                 label = "Renal Function",
                 choiceNames = c("Normal","Impaired", "ESRD"),

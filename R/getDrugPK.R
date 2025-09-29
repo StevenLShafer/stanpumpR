@@ -224,13 +224,14 @@ getDrugPK <- function(
     # find ke0 from tPeak
     if (tPeak > 0)
     {
-      ke0 <- optimize(tPeakError, c(0,200),tPeak,
-                           p_coef_bolus_l1,
-                           p_coef_bolus_l2,
-                           p_coef_bolus_l3,
-                           lambda_1,
-                           lambda_2,
-                           lambda_3
+      ke0 <- stats::optimize(
+        tPeakError, c(0,200),tPeak,
+        p_coef_bolus_l1,
+        p_coef_bolus_l2,
+        p_coef_bolus_l3,
+        lambda_1,
+        lambda_2,
+        lambda_3
       )$minimum
     } else {
       ke0 <- 0

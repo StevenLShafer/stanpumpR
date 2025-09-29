@@ -47,7 +47,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       dt[i] <- timeLine[i] - timeLine[i-1]
       rate[i] <- infusionLine[i-1]
     }
-    pkLine[i] <- events$Event[tail(which(events$Time <= timeLine[i]),1)]
+    pkLine[i] <- events$Event[utils::tail(which(events$Time <= timeLine[i]),1)]
   }
 
   # cat("bolusLine\n")
@@ -61,22 +61,22 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # Set up time varying parameters
   parameters <-   as.data.frame(
     cbind(
-      v1  = map_dbl(pkSets, "v1"),
-      k10 = map_dbl(pkSets, "k10"),
-      k12 = map_dbl(pkSets, "k12"),
-      k13 = map_dbl(pkSets, "k13"),
-      k21 = map_dbl(pkSets, "k21"),
-      k31 = map_dbl(pkSets, "k31"),
-      ke0 = map_dbl(pkSets, "ke0"),
-      lambda_1 = map_dbl(pkSets, "lambda_1"),
-      lambda_2 = map_dbl(pkSets, "lambda_2"),
-      lambda_3 = map_dbl(pkSets, "lambda_3"),
-      p_coef_bolus_l1 = map_dbl(pkSets, "p_coef_bolus_l1"),
-      p_coef_bolus_l2 = map_dbl(pkSets, "p_coef_bolus_l2"),
-      p_coef_bolus_l3 = map_dbl(pkSets, "p_coef_bolus_l3"),
-      p_coef_infusion_l1 = map_dbl(pkSets, "p_coef_infusion_l1"),
-      p_coef_infusion_l2 = map_dbl(pkSets, "p_coef_infusion_l2"),
-      p_coef_infusion_l3 = map_dbl(pkSets, "p_coef_infusion_l3")
+      v1  = purrr::map_dbl(pkSets, "v1"),
+      k10 = purrr::map_dbl(pkSets, "k10"),
+      k12 = purrr::map_dbl(pkSets, "k12"),
+      k13 = purrr::map_dbl(pkSets, "k13"),
+      k21 = purrr::map_dbl(pkSets, "k21"),
+      k31 = purrr::map_dbl(pkSets, "k31"),
+      ke0 = purrr::map_dbl(pkSets, "ke0"),
+      lambda_1 = purrr::map_dbl(pkSets, "lambda_1"),
+      lambda_2 = purrr::map_dbl(pkSets, "lambda_2"),
+      lambda_3 = purrr::map_dbl(pkSets, "lambda_3"),
+      p_coef_bolus_l1 = purrr::map_dbl(pkSets, "p_coef_bolus_l1"),
+      p_coef_bolus_l2 = purrr::map_dbl(pkSets, "p_coef_bolus_l2"),
+      p_coef_bolus_l3 = purrr::map_dbl(pkSets, "p_coef_bolus_l3"),
+      p_coef_infusion_l1 = purrr::map_dbl(pkSets, "p_coef_infusion_l1"),
+      p_coef_infusion_l2 = purrr::map_dbl(pkSets, "p_coef_infusion_l2"),
+      p_coef_infusion_l3 = purrr::map_dbl(pkSets, "p_coef_infusion_l3")
     ))
 
   #Set up time varying parameters

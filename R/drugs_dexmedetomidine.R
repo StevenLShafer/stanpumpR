@@ -3,7 +3,7 @@ dexmedetomidine <- function(weight, height, age, sex)
   # Units **************
   # Time: Minutes
   # Volume: Liters
-  
+
   if (age > 1)
   {
     v1  <- 8.0574
@@ -12,20 +12,20 @@ dexmedetomidine <- function(weight, height, age, sex)
     k13 <- 0.247
     k21 <- 0.163
     k31 <- 0.0112
-    
+
     tPeak <- 10 # Just a guess
     typical <- 10 #Clin Pharmacol Ther. 1995 Jul;58(1):35-43.
     upperTypical <- 0.4
     lowerTypical <- 0.8
     MEAC <- 0
     reference <- "Barry Dyck, Check reference and numbers"
-    
+
     v2 <- v1 * k12 / k21
     v3 <- v1 * k13 / k31
     cl1 <- v1 * k10
     cl2 <- v1 * k12
     cl3 <- v1 * k13
-    
+
     default <- list(
       v1 = v1,
       v2 = v2,
@@ -38,7 +38,7 @@ dexmedetomidine <- function(weight, height, age, sex)
   } else {
     v3 <- 1
     cl3 <- 0
-    # Before cardiopulmonary bypass: 
+    # Before cardiopulmonary bypass:
     v1 <- 132   * (weight / 70) # liters
     v2 <- 78.9  * (weight / 70) # liters
     cl1 <- 1240 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -51,9 +51,9 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    
+
     # During cardiopulmonary bypass ************************************************
-    # 37 degrees 
+    # 37 degrees
     v1 <- 115 * (weight / 70) * (37 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
     cl1 <- 74.1 * (weight / 70) ^ 0.75 / 1000 # (L / min)
@@ -66,7 +66,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    
+
     # 36 degrees
     v1 <- 115 * (weight / 70) * (36 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
@@ -80,7 +80,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    
+
     # 35 degrees
     v1 <- 115 * (weight / 70) * (35 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
@@ -94,7 +94,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    
+
     # 34 degrees
     v1 <- 115 * (weight / 70) * (34 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
@@ -135,7 +135,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    
+
     # 31 degrees
     v1 <- 115 * (weight / 70) * (31 / 37) ^ (-1.6)  # liters
     v2 <- 144 * (weight / 70) # liters
@@ -149,8 +149,8 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    
-    # After cardiopulmonary bypass: 
+
+    # After cardiopulmonary bypass:
     v1 <-  155 * (weight / 70) # liters
     v2 <-  105 * (weight / 70) # liters
     cl1 <- 623 * (weight / 70) ^ 0.75 * (age * 365) / (1.77 + age * 365) / 1000 # (L / min)
@@ -164,7 +164,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl3 = cl3
     )
     events <- c("default", "CPBStart","CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd")
-    
+
     tPeak <- 2 # Just a guess
     typical <- 10 #Clin Pharmacol Ther. 1995 Jul;58(1):35-43.
     upperTypical <- 0.4
@@ -174,18 +174,18 @@ dexmedetomidine <- function(weight, height, age, sex)
   }
 
   PK <- sapply(events, function(x) list(get0(x)))
-  
+
   # cat("Here is the structure of PK")
-  # print(str(PK))
-  
+  # print(utils::str(PK))
+
   return(
     list(
-      PK = PK, 
-      tPeak = tPeak, 
-      MEAC = MEAC, 
-      typical = typical, 
-      upperTypical = upperTypical, 
-      lowerTypical = lowerTypical, 
+      PK = PK,
+      tPeak = tPeak,
+      MEAC = MEAC,
+      typical = typical,
+      upperTypical = upperTypical,
+      lowerTypical = lowerTypical,
       reference = reference
     )
   )

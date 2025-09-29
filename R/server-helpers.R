@@ -1,21 +1,21 @@
 makeReactiveTrigger <- function() {
-  rv <- reactiveValues(a = 0)
+  rv <- shiny::reactiveValues(a = 0)
   list(
     depend = function() {
       rv$a
       invisible()
     },
     trigger = function() {
-      rv$a <- isolate(rv$a + 1)
+      rv$a <- shiny::isolate(rv$a + 1)
     }
   )
 }
 
 showIntroModal <- function() {
-  showModal(
-    modalDialog(
+  shiny::showModal(
+    shiny::modalDialog(
       title = "Welcome to stanpumpR",
-      p(
+      shiny::p(
         "stanpumpR, derived from the original STANPUMP program developed at
         Stanford University,  performs pharmacokinetic simulations
         based on mathematical models published in the peer-reviewed
@@ -25,7 +25,7 @@ showIntroModal <- function() {
         individual patients is a matter of clinical judgment by the health care
         provider."
       ),
-      tags$button(
+      shiny::tags$button(
         type = "button",
         class = "btn btn-warning",
         `data-dismiss` = "modal",
@@ -74,7 +74,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
     drugs[[drug]]$endCeText <- drugDefaults$endCeText[idx]
     outputComments("Getting PK for", drug)
-    drugs[[drug]] <- modifyList(
+    drugs[[drug]] <- utils::modifyList(
       drugs[[drug]],
       getDrugPK(
         drug = drug,

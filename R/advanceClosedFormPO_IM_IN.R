@@ -9,7 +9,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   ##############################################
 
   cat("Structure of pkSet\n")
-  print(str(pkSet))
+  print(utils::str(pkSet))
 
   # Add tlag_ to PO, IM, and IN dose times
   dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
@@ -24,9 +24,9 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
         dose$Time,
         dose$Time - .01, # run until just before next dose
         maximum
-        )
       )
     )
+  )
   timeLine <- timeLine[timeLine >=0]
 
   # Fill in gaps using exponentially decreasing amounts
@@ -183,28 +183,28 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
         recovery <- sapply(
           1:L,
           function(i)
-          (
-            recoveryCalc(
-              c(
-                e_state_l1[i],
-                e_state_l2[i],
-                e_state_l3[i],
-                e_state_ke0[i],
-                e_state_ka_PO[i],
-                e_state_ka_IM[i],
-                e_state_ka_IN[i]
-              ),
-              c(
-                lambda_1,
-                lambda_2,
-                lambda_3,
-                ke0,
-                ka_PO,
-                ka_IM,
-                ka_IN
-              ),
-              emerge)
-          )
+            (
+              recoveryCalc(
+                c(
+                  e_state_l1[i],
+                  e_state_l2[i],
+                  e_state_l3[i],
+                  e_state_ke0[i],
+                  e_state_ka_PO[i],
+                  e_state_ka_IM[i],
+                  e_state_ka_IN[i]
+                ),
+                c(
+                  lambda_1,
+                  lambda_2,
+                  lambda_3,
+                  ke0,
+                  ka_PO,
+                  ka_IM,
+                  ka_IN
+                ),
+                emerge)
+            )
         )
       } else {
         recovery <- doseNA

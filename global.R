@@ -19,21 +19,21 @@ DEBUG <- config$debug
 enableBookmarking(store = "url")
 
 # Setup Theme
-theme_update(
-  panel.background = element_rect(fill = "white", color = "white"),
-  legend.box.background = element_rect(fill = "white", color = "white"),
-  panel.grid.major.y = element_line(color = "lightgrey"),
-  panel.grid.major.x = element_line(color = "lightgrey"),
-  axis.ticks = element_line(color = "lightgrey"),
-  axis.ticks.length = unit(.25, "cm"),
-  axis.title = element_text(size = rel(1.5)),
-  axis.text = element_text(size = rel(1.2)),
-  axis.line = element_line(linewidth = 1, color = "black"),
+ggplot2::theme_update(
+  panel.background = ggplot2::element_rect(fill = "white", color = "white"),
+  legend.box.background = ggplot2::element_rect(fill = "white", color = "white"),
+  panel.grid.major.y = ggplot2::element_line(color = "lightgrey"),
+  panel.grid.major.x = ggplot2::element_line(color = "lightgrey"),
+  axis.ticks = ggplot2::element_line(color = "lightgrey"),
+  axis.ticks.length = grid::unit(.25, "cm"),
+  axis.title = ggplot2::element_text(size = ggplot2::rel(1.5)),
+  axis.text = ggplot2::element_text(size = ggplot2::rel(1.2)),
+  axis.line = ggplot2::element_line(linewidth = 1, color = "black"),
   aspect.ratio = 0.6,
-  plot.title = element_text(size = rel(1.5)),
-  legend.text = element_text(size = rel(0.9)),
+  plot.title = ggplot2::element_text(size = ggplot2::rel(1.5)),
+  legend.text = ggplot2::element_text(size = ggplot2::rel(0.9)),
   legend.position = "right",
-  legend.key = element_blank()
+  legend.key = ggplot2::element_blank()
 )
 
 e <- new.env()

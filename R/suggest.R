@@ -150,7 +150,7 @@ suggest <- function(
     }
 
     outputComments("About to run nlm", echo = DEBUG)
-    testTable$Dose <- nlm(
+    testTable$Dose <- stats::nlm(
       obj,
       testTable$Dose,
       testTable$Time,

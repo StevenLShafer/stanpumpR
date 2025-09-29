@@ -478,19 +478,19 @@ server <- function(input, output, session)
   # email address --------------------------------------
   observe({
     if (input$recipient == "") {
-      hideElement("sendSlideButton")
-      hideElement("sendSlideError")
+      shinyjs::hideElement("sendSlideButton")
+      shinyjs::hideElement("sendSlideError")
       return()
     }
 
     regex_email <- "^\\w+([-+.']\\w+)*@\\w+([-.]\\w+)*\\.\\w{2,}([-.]\\w+)*$"
     if (nchar(input$recipient) == attr(regexpr(regex_email, input$recipient, perl=FALSE),"match.length")) {
       cat("Address is OK\n")
-      hideElement("sendSlideError")
-      showElement("sendSlideButton")
+      shinyjs::hideElement("sendSlideError")
+      shinyjs::showElement("sendSlideButton")
     } else {
-      hideElement("sendSlideButton")
-      showElement("sendSlideError")
+      shinyjs::hideElement("sendSlideButton")
+      shinyjs::showElement("sendSlideError")
     }
   })
 
@@ -499,7 +499,7 @@ server <- function(input, output, session)
     input$sendSlide,
     {
       DEBUG <- TRUE
-      disable("sendSlideButton")
+      shinyjs::disable("sendSlideButton")
       outputComments(paste("input$sendSlide",input$sendSlide), echo = DEBUG)
 
       values <- list(
@@ -531,7 +531,7 @@ server <- function(input, output, session)
         list(src = img),
         deleteFile = TRUE
       )
-      enable("sendSlideButton")
+      shinyjs::enable("sendSlideButton")
     }
   )
 
