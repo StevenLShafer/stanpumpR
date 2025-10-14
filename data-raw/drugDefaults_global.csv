@@ -1,4 +1,4 @@
-Drug,Concentration Units,Bolus Units,Infusion Units,Default Units,Units,Color,Lower,Upper,Typical,MEAC,endCe,endCeText
+Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lower,Upper,Typical,MEAC,endCe,endCeText
 propofol,mcg,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min,mg/kg/hr",#FFCC00,2.5,4,3,0,1,emergence
 remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1,ventilation
 fentanyl,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr",#0491E2,0.48,1.2,0.72,0.6,0.6,ventilation
@@ -17,3 +17,5 @@ rocuronium,mcg,mg,mg/kg/hr,mg,"mg,mg/kg/hr",#F9423A,1,2.2,1.5,0,1,reversable
 naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/kg,mg,mg/kg,mcg/min,mcg/kg/min,mg/min,mg/kg/min",#404040,0,0,0,0,1,no effect
 oxytocin,ng,mcg,mcg/min,mcg,"mcg,mg,mg/kg,mcg/min",#008F7D,0.05,0.2,0.1,0,0.05,no effect
 oxycodone,ng,,,mg PO,mg PO,#032FED,10,20,14,12,10,ventilation
+oliceridine,ng,mg,mcg/kg/min,mg,"mg,mcg/kg/min",#FF00CC,18.296,37.504,27.4,27.9,27.4,ventilation
+remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.3,0.6,0.2,0,0.2,wakefulness
