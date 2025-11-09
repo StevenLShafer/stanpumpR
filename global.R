@@ -1,5 +1,3 @@
-remove(list=ls())
-
 options(warn = 1)
 
 isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
