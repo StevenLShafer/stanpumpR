@@ -1,6 +1,5 @@
 library(shiny)
 library(ggplot2)
-library(jsonlite)
 
 remove(list=ls())
 
@@ -42,7 +41,7 @@ theme_update(
 
 e <- new.env()
 load("data/sysdata.rda", envir=e)
-js_drug_defaults <- paste0("var drug_defaults=",toJSON(rlang::env_get(e, "drugDefaults_global")))
+js_drug_defaults <- paste0("var drug_defaults=",jsonlite::toJSON(rlang::env_get(e, "drugDefaults_global")))
 rm(e)
 
 blanks <- rep("", 6)

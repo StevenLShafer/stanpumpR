@@ -1,6 +1,14 @@
 # UI for stanpumpR
 
 # UI ------------------------------------------------------
+
+library(shinydashboard)
+library(shinyjs)
+library(waiter)
+library(shinyBS)
+library(rhandsontable)
+library(lubridate)
+
 ui <- function(request) {
   dashboardPage(
     dashboardHeader(
