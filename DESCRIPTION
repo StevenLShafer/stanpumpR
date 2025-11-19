@@ -15,29 +15,23 @@ Imports:
   data.table,
   dplyr,
   DT,
-  egg,
   glue,
   ggplot2  (>= 3.4),
   ggpubr,
-  grid,
   httr,
   jpeg,
   jsonlite,
   lubridate,
-  mailR,
   officer,
   openxlsx,
   png,
   purrr,
   R.utils,
-  randomcoloR,
-  RColorBrewer,
   RcppEigen,
   reactlog,
   rhandsontable,
   rvg,
   shiny,
-  shinyBS,
   shinydashboard,
   shinyjs,
   splines,
@@ -101,7 +95,6 @@ Collate:
   packages.R
   processdoseTable.R
   recoveryCalc.R
-  sendError.R
   server-helpers.R
   setLinetypes.R
   simCpCe.R

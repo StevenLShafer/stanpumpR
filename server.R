@@ -24,7 +24,6 @@ server <- function(input, output, session)
         cat("Error detected in stanpumpR\n")
         cat(msg, "\n")
         cat("URL: ", url(), "\n")
-        sendError(url = url(), errorMessage = msg)
       })
     }
     options(error = NULL)
@@ -532,6 +531,102 @@ server <- function(input, output, session)
         deleteFile = TRUE
       )
       enable("sendSlideButton")
+    }
+  )
+
+  output$downloadPPTX <- downloadHandler(
+    filename = function() {
+      paste0("stanpumpR-report-", format(Sys.time(), format = "%y%m%d-%H%M%S"), ".pptx")
+    },
+    content = function(file) {
+      values <- list(
+        title = input$title,
+        DT = doseTableClean(),
+        url = url(),
+        ageUnit = ageUnit(),
+        weightUnit = weightUnit(),
+        heightUnit = heightUnit(),
+        age = age(),
+        weight = weight(),
+        height = height(),
+        sex = sex()
+      )
+      generatePPTX(
+        values = values,
+        recipient = input$recipient,
+        plotObject = plotObjectReactive(),
+        allResults = allResultsReactive(),
+        plotResults = plotResultsReactive(),
+        isShinyLocal = isShinyLocal,
+        slide = as.numeric(input$sendSlide),
+        drugs = drugs(),
+        drugDefaults = drugDefaults(),
+        file = file
+      )
+    }
+  )
+
+  output$downloadXLSX <- downloadHandler(
+    filename = function() {
+      paste0("stanpumpR-report-", format(Sys.time(), format = "%y%m%d-%H%M%S"), ".xlsx")
+    },
+    content = function(file) {
+      values <- list(
+        title = input$title,
+        DT = doseTableClean(),
+        url = url(),
+        ageUnit = ageUnit(),
+        weightUnit = weightUnit(),
+        heightUnit = heightUnit(),
+        age = age(),
+        weight = weight(),
+        height = height(),
+        sex = sex()
+      )
+      generateXLSX(
+        values = values,
+        recipient = input$recipient,
+        plotObject = plotObjectReactive(),
+        allResults = allResultsReactive(),
+        plotResults = plotResultsReactive(),
+        isShinyLocal = isShinyLocal,
+        slide = as.numeric(input$sendSlide),
+        drugs = drugs(),
+        drugDefaults = drugDefaults(),
+        file = file
+      )
+    }
+  )
+
+  output$downloadPNG <- downloadHandler(
+    filename = function() {
+      paste0("stanpumpR-report-", format(Sys.time(), format = "%y%m%d-%H%M%S"), ".png")
+    },
+    content = function(file) {
+      values <- list(
+        title = input$title,
+        DT = doseTableClean(),
+        url = url(),
+        ageUnit = ageUnit(),
+        weightUnit = weightUnit(),
+        heightUnit = heightUnit(),
+        age = age(),
+        weight = weight(),
+        height = height(),
+        sex = sex()
+      )
+      generatePNG(
+        values = values,
+        recipient = input$recipient,
+        plotObject = plotObjectReactive(),
+        allResults = allResultsReactive(),
+        plotResults = plotResultsReactive(),
+        isShinyLocal = isShinyLocal,
+        slide = as.numeric(input$sendSlide),
+        drugs = drugs(),
+        drugDefaults = drugDefaults(),
+        file = file
+      )
     }
   )
 
