@@ -82,6 +82,7 @@ Collate:
   drugs_pethidine.R
   drugs_propofol.R
   drugs_remifentanil.R
+  drugs_remimazolam.R
   drugs_rocuronium.R
   drugs_sufentanil.R
   getDrugPK.R
