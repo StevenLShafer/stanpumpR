@@ -1,4 +1,4 @@
-.DS_Store
+  .DS_Store
 
 config.yml
 /ignore
@@ -52,3 +52,6 @@ log.txt
 inst/doc
 /doc/
 /Meta/
+
+# GitHub Actions secrets
+.secrets
