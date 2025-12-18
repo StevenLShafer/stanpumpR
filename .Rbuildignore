@@ -11,3 +11,4 @@
 ^\.rscignore$
 ^Slides$
 ^Original Stanpump$
+^\.secrets$

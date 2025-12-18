@@ -52,3 +52,6 @@ log.txt
 inst/doc
 /doc/
 /Meta/
+
+# GitHub Actions secrets
+.secrets
