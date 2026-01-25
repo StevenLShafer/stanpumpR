@@ -12,3 +12,7 @@ $(document).on('shiny:value', function(event) {
     }, 0);
   }
 });
+
+$(document).on('shown.bs.modal', function() {
+  $('.modal-body .modal-focusme:eq(0)').focus();
+});

@@ -786,7 +786,7 @@ clickPopupDrug <- function(
       inputId = "clickDose",
       label = "Dose",
       placeholder = "Enter dose"
-    ),
+    ) |> modalFocus(),
     radioButtons(
       inputId = "clickUnits",
       label = "Units",
