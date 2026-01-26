@@ -47,3 +47,15 @@ jobs:
           rsconnect::setAccountInfo("${{ secrets.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
           rsconnect::deployApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ secrets.SHINY_ACCOUNT }}", forceUpdate = TRUE)
         shell: Rscript {0}
+
+      - name: Comment PR with deployment URL
+        if: github.event.pull_request.number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `**Preview Deployment**\n\nThis PR has been deployed to: https://${{ secrets.SHINY_ACCOUNT }}.shinyapps.io/${{ env.SHINY_APP_NAME }}/\n\n_This deployment will be automatically cleaned up when the PR is closed._`
+            })
