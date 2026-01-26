@@ -8,7 +8,7 @@ DEBUG <<- FALSE
 test_that("simulationPlot yields desired objects", {
 
 doseTable <- data.frame(
-  Drug = drugDefaults_global$Drug[1],
+  Drug = getDrugDefaultsGlobal(FALSE)$Drug[1],
   Time = 0,
   Dose = 1,
   Units = "mg"
@@ -33,7 +33,7 @@ plotEvents <- TRUE
 
 newDrugs <- recalculatePK(
   NULL,
-  drugDefaults_global,
+  getDrugDefaultsGlobal(FALSE),
   doseTable,
   age, weight, height, sex
 )
@@ -49,8 +49,8 @@ drugs <- processdoseTable(
 p <- simulationPlot(
   drugs = drugs,
   events = eventTable,
-  drugDefaults = drugDefaults_global,
-  eventDefaults = eventDefaults,
+  drugDefaults = getDrugDefaultsGlobal(FALSE),
+  eventDefaults = getEventDefaults(),
   plotEvents = plotEvents,
   plotRecovery = plotRecovery
 )

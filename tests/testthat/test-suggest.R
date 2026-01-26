@@ -9,7 +9,7 @@ DEBUG <<- FALSE
 
 test_that("suggest yields a table with the appropriate columns", {
 
-drugList <- drugDefaults_global$Drug
+drugList <- getDrugDefaultsGlobal(FALSE)$Drug
 
 input <- list(referenceTime="none", targetDrug="propofol")
 
@@ -31,7 +31,7 @@ plotRecovery <- FALSE
 
 newDrugs <- recalculatePK(
   NULL,
-  drugDefaults_global,
+  getDrugDefaultsGlobal(FALSE),
   doseTable,
   age, weight, height, sex
 )

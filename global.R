@@ -34,10 +34,7 @@ ggplot2::theme_update(
   legend.key = ggplot2::element_blank()
 )
 
-e <- new.env()
-load("data/sysdata.rda", envir=e)
-js_drug_defaults <- paste0("var drug_defaults=",jsonlite::toJSON(rlang::env_get(e, "drugDefaults_global")))
-rm(e)
+js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(stanpumpR::getDrugDefaultsGlobal()))
 
 blanks <- rep("", 6)
 doseTableInit <- data.frame(

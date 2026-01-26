@@ -5,23 +5,29 @@ drugUnitsSimplify <- function(units) {
   unlist(lapply(units, paste, collapse = ","))
 }
 
-#' Return the stanpumpR drug defaults table, with expansion applied
+#' Return the stanpumpR drug defaults table
 #'
+#' @param expand If `TRUE`, the list in the Units column is expanded. Otherwise,
+#' the Units column contains comma-separated strings.
 #' @returns A data.frame containing concentrations and bolus units, suggested colors and plasma/effect levels for drug effect endpoints
 #'
 #' @export
-getDrugDefaultsGlobal <- function()
+getDrugDefaultsGlobal <- function(expand = TRUE)
 {
-  if (exists("drugDefaults_global") == FALSE) {
-    # Annoying, Shiny's autoload won't load sysdata.rda, only .R files!
-    # So, when loaded as a package, sysdata.rda will load but not when
-    # the Shiny app is executed using runApp()
-    load('data/sysdata.rda')
+  drugDefaultsDataset <- read.csv(
+    system.file("extdata", "drugDefaults_global.csv", package = "stanpumpR"),
+    na.strings = ""
+  )
+  if (expand) {
+    drugDefaultsDataset$Units <- drugUnitsExpand(drugDefaultsDataset$Units)
   }
-
-  drugDefaultsDataset <- drugDefaults_global
-  drugDefaultsDataset$Units <- strsplit(drugDefaultsDataset$Units, ",")
   drugDefaultsDataset
+}
+
+getEventDefaults <- function() {
+  read.csv(
+    system.file("extdata", "eventDefaults.csv", package = "stanpumpR")
+  )
 }
 
 #' Returns the stanpumpR drug defaults table for a single drug
@@ -33,22 +39,11 @@ getDrugDefaultsGlobal <- function()
 #' @export
 getDrugDefaults <- function(drug)
 {
-  drugDefaults_global <- getDrugDefaultsGlobal();
+  drugDefaults_global <- getDrugDefaultsGlobal()
   drugDefaults_global[drugDefaults_global$Drug == drug, ]
 }
 
-# TODO: to different R file
-
 getDrugAndEventDefaultsGlobal <- function()
 {
-  if (!exists("drugDefaults_global") || !exists("eventDefaults")) {
-    # Annoying, Shiny's autoload won't load sysdata.rda, only .R files!
-    # So, when loaded as a package, sysdata.rda will load but not when
-    # the Shiny app is executed using runApp()
-    load('data/sysdata.rda')
-  }
-
-  drugDefaultsDataset <- drugDefaults_global
-  drugDefaultsDataset$Units <- strsplit(drugDefaultsDataset$Units, ",")
-  list(drugDefaultsDataset=drugDefaultsDataset, eventDefaults=eventDefaults)
+  list(drugDefaultsDataset = getDrugDefaultsGlobal(), eventDefaults = getEventDefaults())
 }
