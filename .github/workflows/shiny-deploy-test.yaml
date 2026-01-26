@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
+      SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,8 +43,8 @@ jobs:
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
-          rsconnect::setAccountInfo("${{ secrets.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
-          rsconnect::deployApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ secrets.SHINY_ACCOUNT }}", forceUpdate = TRUE)
+          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
+          rsconnect::deployApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}", forceUpdate = TRUE)
         shell: Rscript {0}
 
       - name: Comment PR with deployment URL
@@ -56,5 +56,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `**Preview Deployment**\n\nThis PR has been deployed to: https://${{ secrets.SHINY_ACCOUNT }}.shinyapps.io/${{ env.SHINY_APP_NAME }}/\n\n_This deployment will be automatically cleaned up when the PR is closed._`
+              body: `**Preview Deployment**\n\nThis PR has been deployed to: https://${{ vars.SHINY_ACCOUNT }}.shinyapps.io/${{ env.SHINY_APP_NAME }}/\n\n_This deployment will be automatically cleaned up when the PR is closed._`
             })
