@@ -32,6 +32,7 @@ jobs:
           cache-version: 2
           extra-packages: |
             any::rsconnect
+            local::.
 
       - name: Authorize and deploy app
         run: |
