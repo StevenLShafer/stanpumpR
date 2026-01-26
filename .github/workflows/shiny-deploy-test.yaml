@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,8 +34,6 @@ jobs:
             any::rsconnect
 
       - name: Authorize and deploy app
-        env:
-          SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
         run: |
           shinyConfig <- list(
             default = list(
