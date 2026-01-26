@@ -13,14 +13,12 @@ jobs:
         with:
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          packages: rsconnect
-
       - name: Delete app
         env:
           SHINY_APP_NAME: ${{ secrets.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
         run: |
+          install.packages("rsconnect")
           rsconnect::setAccountInfo("${{ secrets.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
           rsconnect::terminateApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ secrets.SHINY_ACCOUNT }}")
+          rsconnect::purgeApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ secrets.SHINY_ACCOUNT }}")
         shell: Rscript {0}
