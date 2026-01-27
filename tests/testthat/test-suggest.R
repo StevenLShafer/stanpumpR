@@ -1,65 +1,59 @@
-## TODO factors -> strings
-
-outputComments <<- function(..., echo) {
-## just silence
-## print(paste("outputComments:", ...))
-}
-
-DEBUG <<- FALSE
-
 test_that("suggest yields a table with the appropriate columns", {
 
-drugList <- drugDefaults_global$Drug
+  local_mocked_bindings(outputComments = function(..., echo) {})
+  .sprglobals$DEBUG <- FALSE
 
-input <- list(referenceTime="none", targetDrug="propofol")
+  drugList <- drugDefaults_global$Drug
 
-doseTable <- data.frame(Drug=input$targetDrug,Time=0,Dose=0,Units="mg")
+  input <- list(referenceTime="none", targetDrug="propofol")
 
-eventTable <- data.frame(
-  Time = 0,
-  Event = "Event",
-  Fill = "black"
-)
+  doseTable <- data.frame(Drug=input$targetDrug,Time=0,Dose=0,Units="mg")
 
-age <- 50
-weight <- 60
-height <- 66*2.54
-sex <- "female"
+  eventTable <- data.frame(
+    Time = 0,
+    Event = "Event",
+    Fill = "black"
+  )
 
-plotMaximum <- 60
-plotRecovery <- FALSE
+  age <- 50
+  weight <- 60
+  height <- 66*2.54
+  sex <- "female"
 
-newDrugs <- recalculatePK(
-  NULL,
-  drugDefaults_global,
-  doseTable,
-  age, weight, height, sex
-)
+  plotMaximum <- 60
+  plotRecovery <- FALSE
 
-drugs <- processdoseTable(
-  doseTable,
-  eventTable,
-  newDrugs,
-  plotMaximum,
-  plotRecovery
-)
+  newDrugs <- recalculatePK(
+    NULL,
+    drugDefaults_global,
+    doseTable,
+    age, weight, height, sex
+  )
 
-targetTable <- data.frame(
-    Time = c("2","20",rep("",4)),
-    Target = c("2","2",rep("",4))
-)
+  drugs <- processdoseTable(
+    doseTable,
+    eventTable,
+    newDrugs,
+    plotMaximum,
+    plotRecovery
+  )
 
-endTime <- 60
+  targetTable <- data.frame(
+      Time = c("2","20",rep("",4)),
+      Target = c("2","2",rep("",4))
+  )
 
-testTable <- suggest(input$targetDrug,
-                     targetTable,
-                     endTime,
-                     drugs,
-                     drugList,
-                     eventTable,
-                     input$referenceTime,
-                     DEBUG=FALSE)
+  endTime <- 60
 
-expect_equal(names(testTable), c("Time", "Dose", "Units", "resultTime", "Drug"))
+  testTable <- suggest(input$targetDrug,
+                       targetTable,
+                       endTime,
+                       drugs,
+                       drugList,
+                       eventTable,
+                       input$referenceTime,
+                       DEBUG=FALSE)
+
+  expect_equal(names(testTable), c("Time", "Dose", "Units", "resultTime", "Drug"))
 
 })

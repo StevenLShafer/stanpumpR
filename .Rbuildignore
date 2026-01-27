@@ -12,3 +12,7 @@
 ^Slides$
 ^Original Stanpump$
 ^\.secrets$
+^app\.R$
+^config\.yml$
+^config\.yml\.sample$
+^rsconnect$
