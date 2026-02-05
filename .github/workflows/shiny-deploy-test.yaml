@@ -26,26 +26,31 @@ jobs:
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
-        env:
-          PKG_INCLUDE_LINKINGTO: "true"
         with:
-          cache-version: 2
-          extra-packages: |
+          packages: |
+            any::remotes
             any::rsconnect
-            local::.
+
+      - name: Install stanpumpR from GitHub
+        run: |
+          pkg_ref <- paste0("${{ github.repository }}@", "${{ github.event.pull_request.head.sha || github.sha }}")
+          remotes::install_github(pkg_ref, upgrade = "never", force = TRUE)
+        shell: Rscript {0}
 
       - name: Authorize and deploy app
         run: |
           shinyConfig <- list(
             default = list(
-              title = 'stanpumpR',
               email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
               email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}"
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
           rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
-          rsconnect::deployApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}", forceUpdate = TRUE)
+          rsconnect::deployApp(
+            appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}",
+            appDir = ".", appFiles = c("app.R", "config.yml"), forceUpdate = TRUE
+          )
         shell: Rscript {0}
 
       - name: Comment PR with deployment URL

@@ -1,6 +1,6 @@
 Package: stanpumpR
 Title: stanpumpR, a PK/PD simulation program
-Version: 0.0.1.9000
+Version: 0.0.1.9001
 Authors@R:
     c(person(given = "Steven",
            family = "Shafer",
@@ -90,7 +90,6 @@ Collate:
   hourMinute.R
   lbmJames.R
   modelInteraction.R
-  packages.R
   processdoseTable.R
   recoveryCalc.R
   sendError.R
@@ -105,4 +104,9 @@ Collate:
   validateTime.R
   simulateDrugsWithCovariates.R
   stanpumpR-package.R
+  zzz.R
+  app_globals.R
+  app_ui.R
+  app_server.R
+  app_run.R
 VignetteBuilder: knitr

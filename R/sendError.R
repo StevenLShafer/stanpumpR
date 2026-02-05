@@ -4,6 +4,8 @@ sendError <- function(
   errorMessage
 )
 {
+  config <- .sprglobals$config
+
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
   bodyText <- paste0(
     "<html><head><style><!-- p 	{margin:0in;	font-size:12.0pt;	font-family:\"Times New Roman\",\"serif\"	} --></style>",

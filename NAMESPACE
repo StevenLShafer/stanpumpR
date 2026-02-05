@@ -3,6 +3,7 @@
 export(getDrugDefaults)
 export(getDrugDefaultsGlobal)
 export(getDrugPK)
+export(run_app)
 export(simCpCe)
 export(simulateDrugsWithCovariates)
 importFrom(magrittr,"%>%")

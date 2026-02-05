@@ -12,13 +12,6 @@ drugUnitsSimplify <- function(units) {
 #' @export
 getDrugDefaultsGlobal <- function()
 {
-  if (exists("drugDefaults_global") == FALSE) {
-    # Annoying, Shiny's autoload won't load sysdata.rda, only .R files!
-    # So, when loaded as a package, sysdata.rda will load but not when
-    # the Shiny app is executed using runApp()
-    load('data/sysdata.rda')
-  }
-
   drugDefaultsDataset <- drugDefaults_global
   drugDefaultsDataset$Units <- strsplit(drugDefaultsDataset$Units, ",")
   drugDefaultsDataset
@@ -41,13 +34,6 @@ getDrugDefaults <- function(drug)
 
 getDrugAndEventDefaultsGlobal <- function()
 {
-  if (!exists("drugDefaults_global") || !exists("eventDefaults")) {
-    # Annoying, Shiny's autoload won't load sysdata.rda, only .R files!
-    # So, when loaded as a package, sysdata.rda will load but not when
-    # the Shiny app is executed using runApp()
-    load('data/sysdata.rda')
-  }
-
   drugDefaultsDataset <- drugDefaults_global
   drugDefaultsDataset$Units <- strsplit(drugDefaultsDataset$Units, ",")
   list(drugDefaultsDataset=drugDefaultsDataset, eventDefaults=eventDefaults)

@@ -65,7 +65,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
   DATE <- format(Sys.Date(), "%m/%d/%y")
   outputComments("reading Template.pptx")
-  PPTX <- officer::read_pptx("misc/Template.pptx")
+  PPTX <- officer::read_pptx(system.file("extdata", "Template.pptx", package = "stanpumpR"))
   outputComments("Template.pptx loaded")
   MASTER <- "Office Theme"
 

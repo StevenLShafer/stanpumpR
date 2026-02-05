@@ -34,6 +34,8 @@ simulationPlot <- function(
 # load("drugs.rData")
 
 {
+  DEBUG <- .sprglobals$DEBUG
+
   # Notes on what happens below
   # The time courses for ggplot are held in plotResults
   # "Drug","Time","Y","Site","Wrap","Label"
