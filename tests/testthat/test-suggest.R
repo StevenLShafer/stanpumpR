@@ -3,7 +3,7 @@ test_that("suggest yields a table with the appropriate columns", {
   local_mocked_bindings(outputComments = function(..., echo) {})
   .sprglobals$DEBUG <- FALSE
 
-  drugList <- drugDefaults_global$Drug
+  drugList <- getDrugDefaultsGlobal(FALSE)$Drug
 
   input <- list(referenceTime="none", targetDrug="propofol")
 
@@ -25,7 +25,7 @@ test_that("suggest yields a table with the appropriate columns", {
 
   newDrugs <- recalculatePK(
     NULL,
-    drugDefaults_global,
+    getDrugDefaultsGlobal(FALSE),
     doseTable,
     age, weight, height, sex
   )
@@ -55,5 +55,4 @@ test_that("suggest yields a table with the appropriate columns", {
                        DEBUG=FALSE)
 
   expect_equal(names(testTable), c("Time", "Dose", "Units", "resultTime", "Drug"))
-
 })
