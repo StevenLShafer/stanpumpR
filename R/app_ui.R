@@ -2,7 +2,7 @@
 
 # UI ------------------------------------------------------
 app_ui <- function() {
-  js_drug_defaults <- paste0("var drug_defaults=",jsonlite::toJSON(stanpumpR::drugDefaults_global))
+  js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(stanpumpR::getDrugDefaultsGlobal()))
   config <- .sprglobals$config
 
   function(request) {

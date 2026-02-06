@@ -2,13 +2,17 @@
 % Please edit documentation in R/drugAndEventDefaults.R
 \name{getDrugDefaultsGlobal}
 \alias{getDrugDefaultsGlobal}
-\title{Return the stanpumpR drug defaults table, with expansion applied}
+\title{Return the stanpumpR drug defaults table}
 \usage{
-getDrugDefaultsGlobal()
+getDrugDefaultsGlobal(expand = TRUE)
+}
+\arguments{
+\item{expand}{If \code{TRUE}, the list in the Units column is expanded. Otherwise,
+the Units column contains comma-separated strings.}
 }
 \value{
 A data.frame containing concentrations and bolus units, suggested colors and plasma/effect levels for drug effect endpoints
 }
 \description{
-Return the stanpumpR drug defaults table, with expansion applied
+Return the stanpumpR drug defaults table
 }

@@ -177,7 +177,7 @@ function getDrugUnits(drug) {
 
   if (drug_default.length === 0) { return ''; }
 
-  return drug_default[0].Units.split(',');
+  return drug_default[0].Units;
 }
 
 function setUnitDropdown(hot, row, column, source) {

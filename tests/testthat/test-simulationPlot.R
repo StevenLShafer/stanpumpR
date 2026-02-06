@@ -4,7 +4,7 @@ test_that("simulationPlot yields desired objects", {
   .sprglobals$DEBUG <- FALSE
 
   doseTable <- data.frame(
-    Drug = drugDefaults_global$Drug[1],
+    Drug = getDrugDefaultsGlobal(FALSE)$Drug[1],
     Time = 0,
     Dose = 1,
     Units = "mg"
@@ -29,7 +29,7 @@ test_that("simulationPlot yields desired objects", {
 
   newDrugs <- recalculatePK(
     NULL,
-    drugDefaults_global,
+    getDrugDefaultsGlobal(FALSE),
     doseTable,
     age, weight, height, sex
   )
@@ -45,13 +45,11 @@ test_that("simulationPlot yields desired objects", {
   p <- simulationPlot(
     drugs = drugs,
     events = eventTable,
-    drugDefaults = drugDefaults_global,
-    eventDefaults = eventDefaults,
+    drugDefaults = getDrugDefaultsGlobal(FALSE),
+    eventDefaults = getEventDefaults(),
     plotEvents = plotEvents,
     plotRecovery = plotRecovery
   )
 
   expect_equal(names(p), c("plotObject","allResults","plotResults"))
-
 })
-
