@@ -281,7 +281,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     "<p>Sincerely,</p><p>&nbsp;</p>",
     "<p>Steve Shafer</p><p>&nbsp;</p>",
     "<p>PS: stanpumpR is an open-source program. The code is freely available at  ",
-    "<a href=\"https://www.github.net/StevenLShafer/stanpumpR\">GitHub</a>.</p>",
+    "<a href=\"https://www.github.com/StevenLShafer/stanpumpR\">GitHub</a>.</p>",
     "<p>Collaborators are particularly needed to \"own\" individual drug libraries and keep the library up-to-date with the ",
     "pharmacokinetic literature. ",
     "If you are interested in collaborating on stanpumpR, please contact me at steven.shafer@stanford.edu",
