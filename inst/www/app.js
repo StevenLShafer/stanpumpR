@@ -12,3 +12,8 @@ $(document).on('shiny:value', function(event) {
     }, 0);
   }
 });
+
+// When a modal opens, auto-focus on the first element that wants focus
+$(document).on('shown.bs.modal', function() {
+  $('.modal-body .modal-focusme:eq(0)').focus();
+});

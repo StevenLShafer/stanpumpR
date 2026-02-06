@@ -788,7 +788,7 @@ app_server <- function(input, output, session) {
           inputId = "clickDose",
           label = "Dose",
           placeholder = "Enter dose"
-        ),
+        ) |> modalFocus(),
         radioButtons(
           inputId = "clickUnits",
           label = "Units",
