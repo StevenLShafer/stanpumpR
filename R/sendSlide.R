@@ -89,9 +89,9 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
         plot.title = ggplot2::element_text(size=14, face="bold")
       ),
     filename = pngfileName,
-    resolution = 150,  # Higher resolution for better quality
+    resolution = 150,
     height = png_height,
-    width = 800,  # Wider for better readability
+    width = 800,
     pointsize = 4,
     verbose = FALSE
   )
