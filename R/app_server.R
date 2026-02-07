@@ -70,6 +70,20 @@ app_server <- function(input, output, session) {
     if (DEBUG) print("In output$PlotSimulation")
     req(main_plot(), cancelOutput = TRUE)
     main_plot()
+  }, height = function() calcPlotHeight())
+
+  calcPlotHeight <- reactive({
+    if (DEBUG) print("In calcPlotHeight")
+    numPlots() * 120 + 50
+  })
+
+  numPlots <- reactive({
+    req(doseTableClean())
+
+    num_drugs <- sum(unique(doseTableClean()$Drug) != "")
+    num_additional <- length(input$addedPlots)
+    total_plots <- num_drugs + num_additional
+    total_plots
   })
 
   # Make drugs and events local to session
