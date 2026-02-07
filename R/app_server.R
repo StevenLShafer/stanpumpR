@@ -74,16 +74,7 @@ app_server <- function(input, output, session) {
 
   calcPlotHeight <- reactive({
     if (DEBUG) print("In calcPlotHeight")
-    numPlots() * 120 + 50
-  })
-
-  numPlots <- reactive({
-    req(doseTableClean())
-
-    num_drugs <- length(unique(doseTableClean()$Drug))
-    num_additional <- length(input$addedPlots)
-    total_plots <- num_drugs + num_additional
-    total_plots
+    nFacets() * 120 + 50
   })
 
   # Make drugs and events local to session
@@ -472,7 +463,6 @@ app_server <- function(input, output, session) {
       plotRecovery = plotRecovery(),
       title = title,
       caption = printCaption,
-      aspect = ASPECT,
       typical = typical,
       logY = logY
     )
@@ -489,6 +479,10 @@ app_server <- function(input, output, session) {
 
   plotResultsReactive <- reactive({
     simulationPlotRetval()$plotResults
+  })
+
+  nFacets <- reactive({
+    simulationPlotRetval()$nFacets
   })
 
   # email address --------------------------------------
