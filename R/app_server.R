@@ -72,15 +72,6 @@ app_server <- function(input, output, session) {
     main_plot()
   })
 
-  numPlots <- reactive({
-    req(doseTableClean())
-
-    num_drugs <- length(unique(doseTableClean()$Drug))
-    num_additional <- length(input$addedPlots)
-    total_plots <- num_drugs + num_additional
-    total_plots
-  })
-
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
   drugAndEventDefaultsSource <- getDrugAndEventDefaultsGlobal()
@@ -467,7 +458,6 @@ app_server <- function(input, output, session) {
       plotRecovery = plotRecovery(),
       title = title,
       caption = printCaption,
-      aspect = ASPECT,
       typical = typical,
       logY = logY
     )
@@ -484,6 +474,10 @@ app_server <- function(input, output, session) {
 
   plotResultsReactive <- reactive({
     simulationPlotRetval()$plotResults
+  })
+
+  nFacets <- reactive({
+    simulationPlotRetval()$nFacets
   })
 
   # email address --------------------------------------

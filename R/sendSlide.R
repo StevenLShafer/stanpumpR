@@ -71,7 +71,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   MASTER <- "Office Theme"
 
   # Remove the fixed aspect ratio and let it be determined by the dimensions we set
-  plotObjectForPPTX <- plotObject + ggplot2::theme(aspect.ratio = NULL)
+  plotObjectForPPTX <- plotObject + ggplot2::theme(aspect.ratio = aspect)
 
   PPTX <- officer::add_slide(PPTX, layout = "Blank", master = MASTER)
 
