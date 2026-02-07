@@ -3,6 +3,10 @@
   color: white;
 }
 
+.main-header .logo {
+  overflow-y: auto;
+}
+
 #logSection {
   background-color: transparent;
   color: black;
