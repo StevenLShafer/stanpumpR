@@ -43,12 +43,11 @@ sendSlide <- function(
       passwd = email_password,
       ssl = TRUE),
     attach.files = c(
-      emailData$pptxfileName,
+      emailData$pngfileName,
       emailData$xlsxfileName
     ),
     authenticate = TRUE
   )
-  unlink(emailData$pptxfileName)
   unlink(emailData$xlsxfileName)
   outputComments("Leaving sendMail()")
   })
@@ -65,79 +64,34 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   if (!file.exists("Slides")) dir.create("Slides")
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
   DATE <- format(Sys.Date(), "%m/%d/%y")
-  outputComments("reading Template.pptx")
-  PPTX <- officer::read_pptx(system.file("extdata", "Template.pptx", package = "stanpumpR"))
-  outputComments("Template.pptx loaded")
-  MASTER <- "Office Theme"
-
-  # Remove the fixed aspect ratio and let it be determined by the dimensions we set
-  plotObjectForPPTX <- plotObject + ggplot2::theme(aspect.ratio = aspect)
-
-  PPTX <- officer::add_slide(PPTX, layout = "Blank", master = MASTER)
-
-  # Add title
-  PPTX <- officer::ph_with(
-    PPTX,
-    title,
-    location = officer::ph_location(
-      left = 0.5,
-      top = 0.3,
-      width = 9,
-      height = 0.6
-    )
-  )
-
-  # Calculate dynamic height
-  base_height <- 1.5
-  height_per_plot <- 1.0
-  plot_height <- base_height + (numPlots * height_per_plot)
-  plot_height <- min(plot_height, 6.5)  # Max for standard slide
-
-  # Add plot with dynamic dimensions and NO fixed aspect ratio
-  PPTX <- officer::ph_with(
-    PPTX,
-    rvg::dml(code = print(plotObjectForPPTX), bg = "transparent"),
-    location = officer::ph_location(
-      left = 0.5,
-      top = 1.0,
-      width = 9,
-      height = plot_height
-    )
-  )
-
-  # Add footer elements
-  PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location(left = 0.5, top = 7.2, width = 2, height = 0.3))
-  PPTX <- officer::ph_with(PPTX, slide, location = officer::ph_location(left = 8.5, top = 7.2, width = 1, height = 0.3))
-  PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location(left = 4, top = 7.2, width = 2, height = 0.3))
-
-  PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location_type ("dt"))
-  PPTX <- officer::ph_with(PPTX, slide, location = officer::ph_location_type ("sldNum"))
-  PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location_type ("ftr"))
-  pptxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".pptx")
-
-  outputComments("Saving PPTX")
-  print(PPTX, target = pptxfileName)
   xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
   pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
 
   outputComments("Starting ggexport()")
+
+  png_base_height <- 50
+  png_height_per_plot <- 120
+  png_height <- png_base_height + (numPlots * png_height_per_plot)
+
   ggpubr::ggexport(
     plotObject +
-      ggplot2::labs(title = "", caption = NULL, x = NULL, y = NULL) +
+      ggplot2::labs(title = title, caption = NULL) +
       ggplot2::theme(
-        strip.text.y = ggplot2::element_text(size = 6, angle = 180),
-        axis.text.y = ggplot2::element_text(size = 6),
-        axis.text.x = ggplot2::element_text(size = 4),
+        strip.text.y = ggplot2::element_text(size = 10, angle = 180),
+        axis.text.y = ggplot2::element_text(size = 10),
+        axis.text.x = ggplot2::element_text(size = 8),
+        axis.title.x = ggplot2::element_text(size = 12),
         legend.background = ggplot2::element_blank(),
         legend.box.background = ggplot2::element_blank(),
         legend.key = ggplot2::element_blank(),
-        legend.text = ggplot2::element_text(size=4),
-        legend.title = ggplot2::element_text(color="darkblue", size=6, face="bold")
+        legend.text = ggplot2::element_text(size=8),
+        legend.title = ggplot2::element_text(color="darkblue", size=10, face="bold"),
+        plot.title = ggplot2::element_text(size=14, face="bold")
       ),
     filename = pngfileName,
-    resolution = 72,
-    height = numPlots * 35 + 15,
-    width = 240,
+    resolution = 150,  # Higher resolution for better quality
+    height = png_height,
+    width = 800,  # Wider for better readability
     pointsize = 4,
     verbose = FALSE
   )
@@ -293,7 +247,6 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   return(list(
     title = title,
     bodyText = bodyText,
-    pptxfileName = pptxfileName,
     xlsxfileName = xlsxfileName,
     pngfileName = pngfileName
     )

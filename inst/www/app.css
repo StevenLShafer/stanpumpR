@@ -29,3 +29,7 @@
   position: absolute;
   right: 0;
 }
+
+#sentPlot > img {
+  height: 100%;
+}

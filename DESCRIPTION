@@ -22,7 +22,6 @@ Imports:
   lubridate,
   magrittr,
   mailR,
-  officer,
   openxlsx,
   png,
   purrr,
