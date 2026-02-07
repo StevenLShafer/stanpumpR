@@ -80,7 +80,7 @@ app_server <- function(input, output, session) {
   numPlots <- reactive({
     req(doseTableClean())
 
-    num_drugs <- sum(unique(doseTableClean()$Drug) != "")
+    num_drugs <- length(unique(doseTableClean()$Drug))
     num_additional <- length(input$addedPlots)
     total_plots <- num_drugs + num_additional
     total_plots
