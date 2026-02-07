@@ -72,6 +72,11 @@ app_server <- function(input, output, session) {
     main_plot()
   })
 
+  calcPlotHeight <- reactive({
+    if (DEBUG) print("In calcPlotHeight")
+    numPlots() * 120 + 50
+  })
+
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
   drugAndEventDefaultsSource <- getDrugAndEventDefaultsGlobal()
@@ -559,7 +564,7 @@ app_server <- function(input, output, session) {
           HTML(
             gsub(
               ",",
-              "<br>",
+              "<br>aa",
               text
             )
           )

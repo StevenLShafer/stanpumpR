@@ -99,7 +99,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       ),
     filename = pngfileName,
     resolution = 72,
-    height = 144,
+    height = 35*numplots + 15,
     width = 240,
     pointsize = 4,
     verbose = FALSE
