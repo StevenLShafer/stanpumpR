@@ -72,9 +72,13 @@ app_server <- function(input, output, session) {
     main_plot()
   })
 
-  calcPlotHeight <- reactive({
-    if (DEBUG) print("In calcPlotHeight")
-    numPlots() * 120 + 50
+  numPlots <- reactive({
+    req(doseTableClean())
+
+    num_drugs <- length(unique(doseTableClean()$Drug))
+    num_additional <- length(input$addedPlots)
+    total_plots <- num_drugs + num_additional
+    total_plots
   })
 
   # Make drugs and events local to session
@@ -527,6 +531,7 @@ app_server <- function(input, output, session) {
         plotObject = plotObjectReactive(),
         allResults = allResultsReactive(),
         plotResults = plotResultsReactive(),
+        numPlots = numPlots(),
         isShinyLocal = isShinyLocal,
         slide = as.numeric(input$sendSlide),
         drugs = drugs(),
@@ -564,7 +569,7 @@ app_server <- function(input, output, session) {
           HTML(
             gsub(
               ",",
-              "<br>aa",
+              "<br>",
               text
             )
           )

@@ -465,7 +465,6 @@ simulationPlot <- function(
       title = title,
       x = xAxisLabel,
       caption = caption) +
-    ggplot2::theme(aspect.ratio = aspect/nFacets) +
     ggplot2::theme(legend.text = ggplot2::element_text(size=12)) +
     ggplot2::theme(legend.title = ggplot2::element_text(color="darkblue", size=13, face="bold"))
 

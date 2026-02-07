@@ -5,6 +5,7 @@ sendSlide <- function(
   plotObject,
   allResults,
   plotResults,
+  numPlots,
   isShinyLocal,
   slide,
   drugs,
@@ -26,7 +27,7 @@ sendSlide <- function(
     stop("email password missing")
   }
 
-  emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults)
+  emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, numPlots, slide, drugs, drugDefaults)
 
   outputComments("Sending email")
   email <- mailR::send.mail(
@@ -54,7 +55,7 @@ sendSlide <- function(
   return(emailData$pngfileName)
 }
 
-generateEmail <- function(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults) {
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, numPlots, slide, drugs, drugDefaults) {
   title = values$title
   DT <- values$DT
   url <- values$url
@@ -69,9 +70,45 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   outputComments("Template.pptx loaded")
   MASTER <- "Office Theme"
 
-  PPTX <- officer::add_slide(PPTX, layout = "Title and Content", master = MASTER)
-  PPTX <- officer::ph_with(PPTX, title, location = officer::ph_location_type("title"))
-  PPTX <- officer::ph_with(PPTX, rvg::dml(code = print(plotObject)), location = officer::ph_location_type("body"))
+  # Remove the fixed aspect ratio and let it be determined by the dimensions we set
+  plotObjectForPPTX <- plotObject + ggplot2::theme(aspect.ratio = NULL)
+
+  PPTX <- officer::add_slide(PPTX, layout = "Blank", master = MASTER)
+
+  # Add title
+  PPTX <- officer::ph_with(
+    PPTX,
+    title,
+    location = officer::ph_location(
+      left = 0.5,
+      top = 0.3,
+      width = 9,
+      height = 0.6
+    )
+  )
+
+  # Calculate dynamic height
+  base_height <- 1.5
+  height_per_plot <- 1.0
+  plot_height <- base_height + (numPlots * height_per_plot)
+  plot_height <- min(plot_height, 6.5)  # Max for standard slide
+
+  # Add plot with dynamic dimensions and NO fixed aspect ratio
+  PPTX <- officer::ph_with(
+    PPTX,
+    rvg::dml(code = print(plotObjectForPPTX), bg = "transparent"),
+    location = officer::ph_location(
+      left = 0.5,
+      top = 1.0,
+      width = 9,
+      height = plot_height
+    )
+  )
+
+  # Add footer elements
+  PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location(left = 0.5, top = 7.2, width = 2, height = 0.3))
+  PPTX <- officer::ph_with(PPTX, slide, location = officer::ph_location(left = 8.5, top = 7.2, width = 1, height = 0.3))
+  PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location(left = 4, top = 7.2, width = 2, height = 0.3))
 
   PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location_type ("dt"))
   PPTX <- officer::ph_with(PPTX, slide, location = officer::ph_location_type ("sldNum"))
@@ -99,7 +136,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       ),
     filename = pngfileName,
     resolution = 72,
-    height = 35*numplots + 15,
+    height = numPlots * 35 + 15,
     width = 240,
     pointsize = 4,
     verbose = FALSE
