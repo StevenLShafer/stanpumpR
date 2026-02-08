@@ -52,7 +52,7 @@ jobs:
           shinyConfig <- list(
             default = list(
               title = "PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}",
-              title_width: 600,
+              title_width = 600,
               email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
               email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}"
             )
