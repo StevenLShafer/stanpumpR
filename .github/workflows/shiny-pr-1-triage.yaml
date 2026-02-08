@@ -1,0 +1,42 @@
+# When a PR is opened, either add a "DEPLOY" label if the PR came from
+# this repo, or if it came from a fork then add a comment telling maintainers
+# that they need to add this label manually to trigger a deployment. This is
+# done for security reasons, so that other people can't trigger PRs that steal
+# GitHub secrets (they would be able to access the shinyapps.io and gmail accounts)
+
+name: Shiny PR 1 Triage
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+  workflow_dispatch:
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Label internal PR
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.MY_PAT }}
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['DEPLOY']
+            });
+      - name: Comment on fork PR
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "**Fork detected**\n\nFor security reasons, a maintainer must add the `DEPLOY` label to deploy this PR.\n\n*Remember that any future commits added to the PR will re-deploy the app, so only do this if you trust the author.*"
+            });
