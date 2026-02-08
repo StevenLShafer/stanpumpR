@@ -217,33 +217,31 @@ app_ui <- function() {
           ), # end of width 5 column
           column(
             width=8,
-            fillPage(
-              div(
-                style = "position:relative",
-                # Start of plot Output
-                plotOutput(
-                  outputId = "PlotSimulation",
-                  width="100%",
-                  height="500px",
-                  click = clickOpts(
-                    id = "plot_click",
-                    clip = FALSE
-                  ),
-                  dblclick = dblclickOpts(
-                    id = "plot_dblclick",
-                    clip=FALSE
-                  ),
-                  hover = hoverOpts(
-                    id = "plot_hover",
-                    delay = 500,
-                    delayType = "debounce",
-                    clip = FALSE,
-                    nullOutside = FALSE
-                  )
-                ), # End of plotOutput
-                uiOutput("hover_info")
-              ) # End of div
-            ), # End of fillPage
+            div(
+              id = "main_plot_outer",
+              # Start of plot Output
+              plotOutput(
+                outputId = "PlotSimulation",
+                width="100%",
+                height="auto",
+                click = clickOpts(
+                  id = "plot_click",
+                  clip = FALSE
+                ),
+                dblclick = dblclickOpts(
+                  id = "plot_dblclick",
+                  clip=FALSE
+                ),
+                hover = hoverOpts(
+                  id = "plot_hover",
+                  delay = 500,
+                  delayType = "debounce",
+                  clip = FALSE,
+                  nullOutside = FALSE
+                )
+              ), # End of plotOutput
+              uiOutput("hover_info")
+            ), # End of div
             ############################################################################
             fluidRow(
               style = "border-style: solid; border-color: white;  border-radius: 5px; height: 300px",

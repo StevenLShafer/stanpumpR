@@ -51,5 +51,5 @@ test_that("simulationPlot yields desired objects", {
     plotRecovery = plotRecovery
   )
 
-  expect_equal(names(p), c("plotObject","allResults","plotResults"))
+  expect_equal(names(p), c("plotObject","allResults","plotResults","nFacets"))
 })
