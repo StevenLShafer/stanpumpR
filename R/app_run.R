@@ -43,7 +43,6 @@ run_app <- function(config_file = "config.yml") {
     axis.title = ggplot2::element_text(size = ggplot2::rel(1.5)),
     axis.text = ggplot2::element_text(size = ggplot2::rel(1.2)),
     axis.line = ggplot2::element_line(linewidth = 1, color = "black"),
-    aspect.ratio = 0.6,
     plot.title = ggplot2::element_text(size = ggplot2::rel(1.5)),
     legend.text = ggplot2::element_text(size = ggplot2::rel(0.9)),
     legend.position = "right",

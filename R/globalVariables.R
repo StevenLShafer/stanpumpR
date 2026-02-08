@@ -36,9 +36,6 @@ defaultSex <- "female"
 # defaultHeightUnit <- character(0)
 # defaultSex <- character(0)
 
-# Default aspect ratio
-ASPECT <- 0.6
-
 # Resolution for linear interpolation
 RESOLUTION <- 100
 

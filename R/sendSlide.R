@@ -1,60 +1,60 @@
 # Send a copy of the current plot to the designated recipient
 sendSlide <- function(
-  values,
-  recipient,
-  plotObject,
-  allResults,
-  plotResults,
-  isShinyLocal,
-  slide,
-  drugs,
-  drugDefaults,
-  email_username,
-  email_password
+    values,
+    recipient,
+    plotObject,
+    allResults,
+    plotResults,
+    numPlots,
+    isShinyLocal,
+    slide,
+    drugs,
+    drugDefaults,
+    email_username,
+    email_password
 )
 {
   tryCatchLog::tryCatchLog({
-  prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
-  on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
+    prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
+    on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
 
-  outputComments(paste("Sending email to", recipient))
+    outputComments(paste("Sending email to", recipient))
 
-  if (missing(email_username) || is.null(email_username)) {
-    stop("email username missing")
-  }
-  if (missing(email_password) || is.null(email_password)) {
-    stop("email password missing")
-  }
+    if (missing(email_username) || is.null(email_username)) {
+      stop("email username missing")
+    }
+    if (missing(email_password) || is.null(email_password)) {
+      stop("email password missing")
+    }
 
-  emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults)
+    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, numPlots, slide, drugs, drugDefaults)
 
-  outputComments("Sending email")
-  email <- mailR::send.mail(
-    from = paste0("stanpumpR <", email_username, ">"),
-    to = recipient,
-    subject = emailData$title,
-    body = emailData$bodyText,
-    html = TRUE,
-    smtp = list(
-      host.name = "smtp.gmail.com",
-      port = 587,
-      user.name = email_username,
-      passwd = email_password,
-      ssl = TRUE),
-    attach.files = c(
-      emailData$pptxfileName,
-      emailData$xlsxfileName
-    ),
-    authenticate = TRUE
-  )
-  unlink(emailData$pptxfileName)
-  unlink(emailData$xlsxfileName)
-  outputComments("Leaving sendMail()")
+    outputComments("Sending email")
+    email <- mailR::send.mail(
+      from = paste0("stanpumpR <", email_username, ">"),
+      to = recipient,
+      subject = emailData$title,
+      body = emailData$bodyText,
+      html = TRUE,
+      smtp = list(
+        host.name = "smtp.gmail.com",
+        port = 587,
+        user.name = email_username,
+        passwd = email_password,
+        ssl = TRUE),
+      attach.files = c(
+        emailData$pngfileName,
+        emailData$xlsxfileName
+      ),
+      authenticate = TRUE
+    )
+    unlink(emailData$xlsxfileName)
+    outputComments("Leaving sendMail()")
   })
   return(emailData$pngfileName)
 }
 
-generateEmail <- function(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults) {
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, numPlots, slide, drugs, drugDefaults) {
   title = values$title
   DT <- values$DT
   url <- values$url
@@ -64,43 +64,34 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   if (!file.exists("Slides")) dir.create("Slides")
   TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
   DATE <- format(Sys.Date(), "%m/%d/%y")
-  outputComments("reading Template.pptx")
-  PPTX <- officer::read_pptx(system.file("extdata", "Template.pptx", package = "stanpumpR"))
-  outputComments("Template.pptx loaded")
-  MASTER <- "Office Theme"
-
-  PPTX <- officer::add_slide(PPTX, layout = "Title and Content", master = MASTER)
-  PPTX <- officer::ph_with(PPTX, title, location = officer::ph_location_type("title"))
-  PPTX <- officer::ph_with(PPTX, rvg::dml(code = print(plotObject)), location = officer::ph_location_type("body"))
-
-  PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location_type ("dt"))
-  PPTX <- officer::ph_with(PPTX, slide, location = officer::ph_location_type ("sldNum"))
-  PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location_type ("ftr"))
-  pptxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".pptx")
-
-  outputComments("Saving PPTX")
-  print(PPTX, target = pptxfileName)
   xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
   pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
 
   outputComments("Starting ggexport()")
+
+  png_base_height <- 50
+  png_height_per_plot <- 120
+  png_height <- png_base_height + (numPlots * png_height_per_plot)
+
   ggpubr::ggexport(
     plotObject +
-      ggplot2::labs(title = "", caption = NULL, x = NULL, y = NULL) +
+      ggplot2::labs(title = title, caption = NULL) +
       ggplot2::theme(
-        strip.text.y = ggplot2::element_text(size = 6, angle = 180),
-        axis.text.y = ggplot2::element_text(size = 6),
-        axis.text.x = ggplot2::element_text(size = 4),
+        strip.text.y = ggplot2::element_text(size = 10, angle = 180),
+        axis.text.y = ggplot2::element_text(size = 10),
+        axis.text.x = ggplot2::element_text(size = 8),
+        axis.title.x = ggplot2::element_text(size = 12),
         legend.background = ggplot2::element_blank(),
         legend.box.background = ggplot2::element_blank(),
         legend.key = ggplot2::element_blank(),
-        legend.text = ggplot2::element_text(size=4),
-        legend.title = ggplot2::element_text(color="darkblue", size=6, face="bold")
+        legend.text = ggplot2::element_text(size=8),
+        legend.title = ggplot2::element_text(color="darkblue", size=10, face="bold"),
+        plot.title = ggplot2::element_text(size=14, face="bold")
       ),
     filename = pngfileName,
-    resolution = 72,
-    height = 144,
-    width = 240,
+    resolution = 150,
+    height = png_height,
+    width = 800,
     pointsize = 4,
     verbose = FALSE
   )
@@ -256,14 +247,13 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   return(list(
     title = title,
     bodyText = bodyText,
-    pptxfileName = pptxfileName,
     xlsxfileName = xlsxfileName,
     pngfileName = pngfileName
-    )
+  )
   )
 }
 
- generateBodyText <- function(recipient, values, ageUnit, weightUnit, heightUnit, url){
+generateBodyText <- function(recipient, values, ageUnit, weightUnit, heightUnit, url){
   return(paste0(
     "<html><head><style><!-- p 	{margin:0in;	font-size:12.0pt;	font-family:\"Times New Roman\",\"serif\"	} --></style>",
     "<body><div>",
@@ -285,7 +275,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     "<p>Collaborators are particularly needed to \"own\" individual drug libraries and keep the library up-to-date with the ",
     "pharmacokinetic literature. ",
     "If you are interested in collaborating on stanpumpR, please contact me at steven.shafer@stanford.edu",
-     "</p><p>&nbsp;</p>",
+    "</p><p>&nbsp;</p>",
     "</div></body></html>"
   ))
- }
+}

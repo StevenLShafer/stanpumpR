@@ -458,7 +458,6 @@ app_server <- function(input, output, session) {
       plotRecovery = plotRecovery(),
       title = title,
       caption = printCaption,
-      aspect = ASPECT,
       typical = typical,
       logY = logY
     )
@@ -475,6 +474,10 @@ app_server <- function(input, output, session) {
 
   plotResultsReactive <- reactive({
     simulationPlotRetval()$plotResults
+  })
+
+  nFacets <- reactive({
+    simulationPlotRetval()$nFacets
   })
 
   # email address --------------------------------------
@@ -522,6 +525,7 @@ app_server <- function(input, output, session) {
         plotObject = plotObjectReactive(),
         allResults = allResultsReactive(),
         plotResults = plotResultsReactive(),
+        numPlots = nFacets(),
         isShinyLocal = isShinyLocal,
         slide = as.numeric(input$sendSlide),
         drugs = drugs(),
