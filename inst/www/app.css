@@ -5,6 +5,7 @@
 
 .main-header .logo {
   overflow-y: auto;
+  text-align: left;
 }
 
 #logSection {
