@@ -9,7 +9,7 @@ app_ui <- function() {
     shinydashboard::dashboardPage(
       shinydashboard::dashboardHeader(
         title = config$title,
-        titleWidth = 500,
+        titleWidth = config$title_width,
         tags$li(
           class = "dropdown",
           tags$a(
