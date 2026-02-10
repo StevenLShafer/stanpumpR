@@ -453,11 +453,15 @@ app_ui <- function() {
         ), # end of first fluid row
         fluidRow(
           column(
-            12,
+            6,
             wellPanel(
               id = "logSection",
               uiOutput("logContent")
             )
+          ),
+          column(
+            6,
+           verbatimTextOutput("profiling")
           )
         )
 

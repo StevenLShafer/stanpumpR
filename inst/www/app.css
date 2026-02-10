@@ -7,13 +7,13 @@
   overflow-y: auto;
 }
 
-#logSection {
+#logSection, #profiling {
   background-color: transparent;
-  color: black;
   border-style: solid;
-  font-size:10px;
-  overflow-y:scroll;
-  max-height: 100px;
+  color: black;
+  font-size: 10px;
+  overflow-y: scroll;
+  height: 100px;
 }
 
 .form-first-row {
