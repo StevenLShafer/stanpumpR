@@ -41,7 +41,7 @@ app_server <- function(input, output, session) {
   # Register the comments log with this user's session, to use outside the server
   session$userData$commentsLog <- commentsLog
 
-  profileRecords <- reactiveVal(data.frame(name = character(0), sec = numeric(0), time = character(0)))
+  profileRecords <- reactiveVal(data.frame(name = character(0), ms = numeric(0), time = character(0)))
 
   profileCode <- function(expr, name, threshold = 0.025) {
     start_time <- proc.time()[["elapsed"]]
@@ -49,7 +49,7 @@ app_server <- function(input, output, session) {
     end_time <- proc.time()[["elapsed"]]
     elapsed_time <- end_time - start_time
     if (elapsed_time > threshold) {
-      new_row <- data.frame(name = name, sec = round(elapsed_time, 3), time = format(Sys.time(), "%H:%M:%S"))
+      new_row <- data.frame(name = name, ms = round(elapsed_time, 3)*1000, time = format(Sys.time(), "%H:%M:%S"))
       isolate(profileRecords(rbind(new_row, profileRecords())))
     }
     value
@@ -62,9 +62,7 @@ app_server <- function(input, output, session) {
       return("No profiling records yet.")
     }
     paste(
-      apply(records, 1, function(row) {
-        paste0("[", row["time"], "] ", row["name"], " (", row["sec"], " sec)")
-      }),
+      sprintf("[%s] %s (%d ms)", records$time, records$name, records$ms),
       collapse = "\n"
     )
   })
