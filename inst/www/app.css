@@ -33,3 +33,9 @@
   position: absolute;
   right: 0;
 }
+
+#main_plot_outer {
+  max-height: 550px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}

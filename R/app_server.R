@@ -70,6 +70,11 @@ app_server <- function(input, output, session) {
     if (DEBUG) print("In output$PlotSimulation")
     req(main_plot(), cancelOutput = TRUE)
     main_plot()
+  }, height = function() calcPlotHeight())
+
+  calcPlotHeight <- reactive({
+    if (DEBUG) print("In calcPlotHeight")
+    nFacets() * 120 + 50
   })
 
   # Make drugs and events local to session
@@ -458,7 +463,6 @@ app_server <- function(input, output, session) {
       plotRecovery = plotRecovery(),
       title = title,
       caption = printCaption,
-      aspect = ASPECT,
       typical = typical,
       logY = logY
     )
@@ -475,6 +479,10 @@ app_server <- function(input, output, session) {
 
   plotResultsReactive <- reactive({
     simulationPlotRetval()$plotResults
+  })
+
+  nFacets <- reactive({
+    simulationPlotRetval()$nFacets
   })
 
   # email address --------------------------------------
