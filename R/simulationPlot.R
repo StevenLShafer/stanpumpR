@@ -33,8 +33,6 @@ simulationPlot <- function(
 # load("drugs.rData")
 
 {
-  DEBUG <- .sprglobals$DEBUG
-
   # Notes on what happens below
   # The time courses for ggplot are held in plotResults
   # "Drug","Time","Y","Site","Wrap","Label"
@@ -53,11 +51,7 @@ simulationPlot <- function(
 
 # browser()
 
-  if (DEBUG)
-    {
-    cat("\n")
-    cat("Entering simulationPlot\n")
-  }
+  outputComments("\nEntering simulationPlot", level = DEBUG_LEVEL_VERBOSE)
 
   # Step D1: create plotTable from `drugs`
 
@@ -79,7 +73,7 @@ simulationPlot <- function(
                         "typical", "lowerTypical", "upperTypical",
                         "MEAC", "endCe", "endCeText")
 
-  if (DEBUG) cat("plotTable created\n")
+  outputComments("plotTable created", level = DEBUG_LEVEL_VERBOSE)
 
   # Step C1: create allResults from `drugs`
 
@@ -701,6 +695,6 @@ simulationPlot <- function(
   }
 
 #  plotObject
-  if (DEBUG) cat("Exiting simulationPlot\n\n")
+  outputComments("Exiting simulationPlot\n", level = DEBUG_LEVEL_VERBOSE)
   return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, nFacets = nFacets))
 }

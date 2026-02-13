@@ -1,7 +1,7 @@
 test_that("suggest yields a table with the appropriate columns", {
 
-  local_mocked_bindings(outputComments = function(..., echo) {})
-  .sprglobals$DEBUG <- FALSE
+  local_mocked_bindings(outputComments = function(...) {})
+  .sprglobals$DEBUG <- DEBUG_LEVEL_OFF
 
   drugList <- getDrugDefaultsGlobal(FALSE)$Drug
 
@@ -51,8 +51,7 @@ test_that("suggest yields a table with the appropriate columns", {
                        drugs,
                        drugList,
                        eventTable,
-                       input$referenceTime,
-                       DEBUG=FALSE)
+                       input$referenceTime)
 
   expect_equal(names(testTable), c("Time", "Dose", "Units", "resultTime", "Drug"))
 })
