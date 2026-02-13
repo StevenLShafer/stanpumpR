@@ -45,6 +45,9 @@ app_server <- function(input, output, session) {
   profileRecords <- reactiveVal(data.frame(name = character(0), ms = numeric(0), time = character(0)))
 
   profileCode <- function(expr, name, threshold = 0.025) {
+    if (.sprglobals$DEBUG == DEBUG_LEVEL_OFF) {
+      return(force(expr))
+    }
     start_time <- proc.time()[["elapsed"]]
     value <- force(expr)
     end_time <- proc.time()[["elapsed"]]
