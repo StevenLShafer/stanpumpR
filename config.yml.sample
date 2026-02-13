@@ -5,4 +5,4 @@ default:
   maintainer_name: "<maintainer name>"
   maintainer_email: "<maintainer email>"
   help_link: "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
-  debug: FALSE
+  debug: 2   # 0 = off, 1 = normal, 2 = verbose

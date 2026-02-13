@@ -17,7 +17,7 @@ sendSlide <- function(
   prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
   on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
 
-  outputComments(paste("Sending email to", recipient))
+  outputComments("Sending email to", recipient)
 
   if (missing(email_username) || is.null(email_username)) {
     stop("email username missing")

@@ -7,7 +7,6 @@
 
 app_server <- function(input, output, session) {
   config <- .sprglobals$config
-  DEBUG <- .sprglobals$DEBUG
   isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 
   initialLoad <- reactiveVal(TRUE)
@@ -34,6 +33,9 @@ app_server <- function(input, output, session) {
 
   # Write out logs to the log section
   initLogMsg <- "Comments Log"
+  if (.sprglobals$DEBUG > DEBUG_LEVEL_OFF) {
+    shinyjs::show("logSection")
+  }
   commentsLog <- reactiveVal(initLogMsg)
   output$logContent <- renderUI({
     HTML(commentsLog())
@@ -53,7 +55,7 @@ app_server <- function(input, output, session) {
   )
 
   main_plot <- reactive({
-    if (DEBUG) print("In main_plot")
+    outputComments("In main_plot", level = DEBUG_LEVEL_VERBOSE)
     #    tryCatchLog({
     tryCatch({
       if (is.null(doseTableClean()) | is.null(drugs()) || is.null(plotObjectReactive())) {
@@ -67,13 +69,13 @@ app_server <- function(input, output, session) {
   })
 
   output$PlotSimulation <- renderPlot({
-    if (DEBUG) print("In output$PlotSimulation")
+    outputComments("In output$PlotSimulation", level = DEBUG_LEVEL_VERBOSE)
     req(main_plot(), cancelOutput = TRUE)
     main_plot()
   }, height = function() calcPlotHeight())
 
   calcPlotHeight <- reactive({
-    if (DEBUG) print("In calcPlotHeight")
+    outputComments("In calcPlotHeight", level = DEBUG_LEVEL_VERBOSE)
     nFacets() * 120 + 50
   })
 
@@ -138,23 +140,16 @@ app_server <- function(input, output, session) {
 
   eventTable <- reactiveVal(eventTableInit)
 
-  #  # Initialize drug table (PK for each drug)
-  #  outputComments("Initializing Drugs")
-  #  drugs <- reactiveVal(NULL)
-  #  isolate({
-  #    cat("Unique names", names(drugs()), "\n")
-  #  })
-
   outputComments("Setup Complete")
 
   # Get reference time from client
   # The reference time is passed from app.js on event shiny:connected
   observeEvent(input$client_time, {
-    if (DEBUG) print("In observeEvent(input$client_time,...")
+    outputComments("In observeEvent(input$client_time,...", level = DEBUG_LEVEL_VERBOSE)
     time <- input$client_time
-    outputComments(paste("Reference time from client:", time), echo = TRUE)
+    outputComments("Reference time from client:", time)
     start <- getReferenceTime(time)
-    outputComments(paste("Calculated reference time:", start), echo = TRUE)
+    outputComments("Calculated reference time:", start)
     ## This enables restoration of existing time when a bookmark is used or state is restored
     if (input$referenceTime == 'none' | input$referenceTime == '')
     {
@@ -219,7 +214,7 @@ app_server <- function(input, output, session) {
   ######################
 
   observeEvent(input$doseTableHTML, {
-    if (DEBUG) print("In observeEvent(input$doseTableHTML,...")
+    outputComments("In observeEvent(input$doseTableHTML,...", level = DEBUG_LEVEL_VERBOSE)
     data <- input$doseTableHTML
 
     if (is.null(data$changes$source)) {
@@ -284,7 +279,7 @@ app_server <- function(input, output, session) {
   })
 
   testCovariates <- reactive({
-    if (DEBUG) print("In testCovariates")
+    outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
     req(weight(), height(), age(), sex())
     errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
     checkNumericCovariates(age(), weight(), height(), errorFxn)
@@ -292,7 +287,7 @@ app_server <- function(input, output, session) {
 
   # see if drugs can be a regular reactive instead of observe({
   drugs <- reactive({
-    if (DEBUG) print("In drugs")
+    outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
     req(testCovariates(), doseTableClean())
 
     newDrugs <- NULL
@@ -322,7 +317,7 @@ app_server <- function(input, output, session) {
   ###########################
 
   doseTableClean <- reactive({
-    if (DEBUG) print("In doseTableClean")
+    outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
     DT <- cleanDT(doseTable())
     DT$Time <- clockTimeToDelta(input$referenceTime, DT$Time)
     DT <- DT[
@@ -343,7 +338,7 @@ app_server <- function(input, output, session) {
   })
 
   eventTableClean <- reactive({
-    if (DEBUG) print("In eventTableClean")
+    outputComments("In eventTableClean", level = DEBUG_LEVEL_VERBOSE)
     ET <- eventTable()
     if (length(ET$Time) > 0) {
       ET$Time <- as.character(ET$Time)
@@ -396,7 +391,7 @@ app_server <- function(input, output, session) {
   })
 
   simulationPlotRetval <- reactive({
-    if (DEBUG) print("In simulationPlotRetval")
+    outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
     req(doseTableClean(), testCovariates(),
         length(input$plasmaLinetype) > 0, length(input$effectsiteLinetype) > 0)
 
@@ -508,9 +503,8 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$sendSlide,
     {
-      DEBUG <- TRUE
       shinyjs::disable("sendSlideButton")
-      outputComments(paste("input$sendSlide",input$sendSlide), echo = DEBUG)
+      outputComments("input$sendSlide",input$sendSlide)
 
       values <- list(
         title = input$title,
@@ -578,11 +572,10 @@ app_server <- function(input, output, session) {
 
   # Display Time, CE, or total opioid
   xy_str <- function(e) {
-    DEBUG <- FALSE
     if(is.null(e)) return()
     if(is.null(e$panelvar1)) return()
-    outputComments("In xy_str", echo = DEBUG)
-    outputComments(paste("e$panelvar1 = ", e$panelvar1), echo = DEBUG)
+    outputComments("In xy_str")
+    outputComments("e$panelvar1 = ", e$panelvar1)
     yaxis <- gsub("\n"," ", e$panelvar1)
     #  allResults <- allResultsReactive() # not used
     plotResults <- plotResultsReactive()
@@ -592,7 +585,7 @@ app_server <- function(input, output, session) {
       if (sum(TO) == 0)
       {
         TO <- plotResults$Wrap == "% MEAC"
-        outputComments(paste("Elements found in search of plotResults$Wrap", sum(TO)), echo = DEBUG)
+        outputComments("Elements found in search of plotResults$Wrap", sum(TO))
       }
       j <- which.min(abs(e$x - plotResults$Time[TO]))
       return(
@@ -616,7 +609,7 @@ app_server <- function(input, output, session) {
 
     x <- unlist(strsplit(yaxis," "))
     drug <- x[1]
-    outputComments(paste("Drug identified in xy_str() is",drug), echo = DEBUG)
+    outputComments("Drug identified in xy_str() is", drug)
     i <- which(x[1] == drugList())
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
@@ -647,10 +640,9 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$plot_click,
     {
-      DEBUG <- FALSE
-      outputComments("in click()", echo = DEBUG)
+      outputComments("in click()")
       x <- imgDrugTime(input$plot_click)
-      outputComments("in click(), returning from imgDrugTime()", echo = DEBUG)
+      outputComments("in click(), returning from imgDrugTime()")
       DrugTimeUnits(x)
 
       if (x$drug == "Events")
@@ -666,8 +658,7 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$plot_dblclick,
     {
-      DEBUG <- FALSE
-      outputComments("in double click routine\n", echo = DEBUG)
+      outputComments("in double click routine")
       x <- imgDrugTime(input$plot_dblclick)
       DrugTimeUnits(x)
 
@@ -683,14 +674,13 @@ app_server <- function(input, output, session) {
   # Get the time, drug, and units from the image
   imgDrugTime <- function(e = "")
   {
-    DEBUG <- FALSE
-    outputComments("in imgDrugTime()", echo=DEBUG)
+    outputComments("in imgDrugTime()")
     allResults <- allResultsReactive()
     plotResults <- plotResultsReactive()
     plottedDrugs <- unique(allResults$Drug)
     plottedAll   <- unique(as.character(plotResults$Drug))
-    outputComments(paste("plottedDrugs", plottedDrugs), echo=DEBUG)
-    outputComments(paste("plottedAll", plottedAll), echo=DEBUG)
+    outputComments("plottedDrugs", plottedDrugs)
+    outputComments("plottedAll", plottedAll)
 
     # Get Time
     if (is.null(e$x) || is.null(e) || length(plottedDrugs) == 0)
@@ -700,12 +690,12 @@ app_server <- function(input, output, session) {
         time <- 0
       } else {
         time <- plotMaximum()
-        outputComments(paste("time is plotMaximum:", time), echo = DEBUG)
+        outputComments("time is plotMaximum:", time)
       }
     } else {
       i <- which(plottedDrugs[1] == drugList())
       drug <- plottedDrugs[1]
-      outputComments(paste("Drug in imgDrugTime() is", drug), echo = DEBUG)
+      outputComments("Drug in imgDrugTime() is", drug)
       j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
       time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
       #    cat("Time from x axis = ",time,"\n")
@@ -719,7 +709,7 @@ app_server <- function(input, output, session) {
 
     if(is.null(e) || length(plottedDrugs) == 0)
     {
-      echoComments("Returning because length(plottedDrugs = 0", echo = DEBUG)
+      echoComments("Returning because length(plottedDrugs = 0")
       return(
         list(
           drug = "propofol",
@@ -741,7 +731,7 @@ app_server <- function(input, output, session) {
         strsplit(
           gsub("\n"," ", e$panelvar1)
           ," "))[1]
-      outputComments(paste("drug from panelvar1",drug), echo = DEBUG)
+      outputComments("drug from panelvar1", drug)
     }
     if (drug %in% c("% MEAC", "p no response"))
       drug <- drug <- utils::tail(plottedDrugs,1)
@@ -754,7 +744,7 @@ app_server <- function(input, output, session) {
       i <- which(drug == drugList())
       units <- c(drugDefaults()$Bolus.Units[i], drugDefaults()$Infusion.Units[i])
     }
-    outputComments("Exiting imgDrugTime()", echo = DEBUG)
+    outputComments("Exiting imgDrugTime()")
     return(
       list(
         drug=drug,
@@ -1394,7 +1384,7 @@ app_server <- function(input, output, session) {
       endTime <- validateTime(input$targetEndTime)
       if ((endTime) == "")
       {
-        outputComments("No endtime", echo = DEBUG)
+        outputComments("No endtime")
         return()
       }
       targetTable <- hot_to_r(input$targetTableHTML)
@@ -1414,14 +1404,13 @@ app_server <- function(input, output, session) {
                              drugs(),
                              drugList(),
                              eventTable(),
-                             input$referenceTime,
-                             DEBUG=TRUE)
+                             input$referenceTime)
 
       })
 
       if (is.null(testTable)) return()
 
-      outputComments("Setting current$DT", echo = DEBUG)
+      outputComments("Setting current$DT")
       current$DT <- current$DT[current$DT$Drug != input$targetDrug,]
       # print(str(doseTable))
 

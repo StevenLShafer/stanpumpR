@@ -35,7 +35,6 @@ app_ui <- function() {
         waiter::useWaiter(),
         tags$script(src = "stanpumpr-assets/app.js"),
         tags$head(tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")),
-        style = "max-height: 95vh; overflow-y: auto;" ,
         fluidRow(
           column(
             width=4,
@@ -452,10 +451,10 @@ app_ui <- function() {
         fluidRow(
           column(
             12,
-            wellPanel(
+            div(
               id = "logSection",
               uiOutput("logContent")
-            )
+            ) |> shinyjs::hidden()
           )
         )
 

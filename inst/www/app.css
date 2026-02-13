@@ -8,12 +8,13 @@
 }
 
 #logSection {
-  background-color: transparent;
-  color: black;
-  border-style: solid;
-  font-size:10px;
-  overflow-y:scroll;
+  background-color: #FAFAFA;
+  font-size: 10px;
+  overflow-y: scroll;
   max-height: 100px;
+  padding: 20px;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
 }
 
 .form-first-row {
