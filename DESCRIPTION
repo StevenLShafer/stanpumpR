@@ -96,6 +96,7 @@ Collate:
   sendError.R
   server-helpers.R
   setLinetypes.R
+  shiny-utils.R
   simCpCe.R
   simulationPlot.R
   suggest.R

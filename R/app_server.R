@@ -44,16 +44,19 @@ app_server <- function(input, output, session) {
 
   profileRecords <- reactiveVal(data.frame(name = character(0), ms = numeric(0), time = character(0)))
 
-  profileCode <- function(expr, name, threshold = 0.025) {
+  profileCode <- function(expr, name, threshold = NULL) {
     if (.sprglobals$DEBUG == DEBUG_LEVEL_OFF) {
       return(force(expr))
+    }
+    if (is.null(threshold)) {
+      threshold <- isolate(input$profiler_threshold)
     }
     start_time <- proc.time()[["elapsed"]]
     value <- force(expr)
     end_time <- proc.time()[["elapsed"]]
-    elapsed_time <- end_time - start_time
+    elapsed_time <- (end_time - start_time) * 1000
     if (elapsed_time > threshold) {
-      new_row <- data.frame(name = name, ms = round(elapsed_time, 3)*1000, time = format(Sys.time(), "%H:%M:%S"))
+      new_row <- data.frame(name = name, ms = round(elapsed_time, 3), time = format(Sys.time(), "%H:%M:%S"))
       isolate(profileRecords(rbind(profileRecords(), new_row)))
     }
     value

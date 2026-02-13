@@ -53,3 +53,25 @@
   font-weight: bold;
   margin-top: 5px;
 }
+
+.inline_ui {
+  display: inline-block;
+  vertical-align: middle;
+  margin-bottom: 0;
+}
+
+#profiler_threshold {
+  height: 20px;
+  padding: 0 5px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.no-spinners ::-webkit-outer-spin-button,
+.no-spinners ::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spinners [type=number] {
+  -moz-appearance: textfield;
+}
