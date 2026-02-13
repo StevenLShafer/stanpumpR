@@ -32,16 +32,44 @@ app_server <- function(input, output, session) {
   })
 
   # Write out logs to the log section
-  initLogMsg <- "Comments Log"
   if (.sprglobals$DEBUG > DEBUG_LEVEL_OFF) {
-    shinyjs::show("logSection")
+    shinyjs::show("debug_area")
   }
-  commentsLog <- reactiveVal(initLogMsg)
-  output$logContent <- renderUI({
-    HTML(commentsLog())
+  commentsLog <- reactiveVal("")
+  output$logContent <- renderText({
+    commentsLog()
   })
   # Register the comments log with this user's session, to use outside the server
   session$userData$commentsLog <- commentsLog
+
+  profileRecords <- reactiveVal(data.frame(name = character(0), ms = numeric(0), time = character(0)))
+
+  profileCode <- function(expr, name, threshold = 0.025) {
+    if (.sprglobals$DEBUG == DEBUG_LEVEL_OFF) {
+      return(force(expr))
+    }
+    start_time <- proc.time()[["elapsed"]]
+    value <- force(expr)
+    end_time <- proc.time()[["elapsed"]]
+    elapsed_time <- end_time - start_time
+    if (elapsed_time > threshold) {
+      new_row <- data.frame(name = name, ms = round(elapsed_time, 3)*1000, time = format(Sys.time(), "%H:%M:%S"))
+      isolate(profileRecords(rbind(profileRecords(), new_row)))
+    }
+    value
+  }
+
+  output$profiling <- renderText({
+    outputComments("In output$profiling", level = DEBUG_LEVEL_VERBOSE)
+    records <- profileRecords()
+    if (nrow(records) == 0) {
+      return("No profiling records yet.")
+    }
+    paste(
+      sprintf("[%s] %s (%d ms)", records$time, records$name, records$ms),
+      collapse = "\n"
+    )
+  })
 
   #############################################################################
   #                           Initialization                                  #
@@ -132,8 +160,11 @@ app_server <- function(input, output, session) {
 
   # Routine to output doseTableHTML from doseTable
   output$doseTableHTML <- renderRHandsontable({
+  profileCode({
     outputComments("Rendering doseTableHTML")
+
     createHOT(doseTable(), drugDefaults())
+  }, name = "createHOT() from doseTableHTML")
   })
 
   # End Initialize current$DT
@@ -165,29 +196,38 @@ app_server <- function(input, output, session) {
   url <- reactiveVal("")
 
   observe({
+  profileCode({
     # Trigger this observer every time an input changes
     reactiveValuesToList(input)
     session$doBookmark()
+  }, name = "doBookmark observer")
   })
 
   # This gets called before bookmarking to prepare values that need to be saved
   onBookmark(function(state) {
-    state$values$DT <- current$DT
-    state$values$ET <- ET()
-    setBookmarkExclude(bookmarksToExclude)
+    profileCode({
+      state$values$DT <- current$DT
+      state$values$ET <- ET()
+      setBookmarkExclude(bookmarksToExclude)
+    }, name = "onBookmark()")
   })
 
   # This gets called after bookmarking is completed
   onBookmarked(function(url) {
-    updateQueryString(url)
-    url(url)
+    profileCode({
+      updateQueryString(url)
+      url(url)
+    }, name = "onBookmarked()")
   })
 
   onRestore(function(state) {
+  profileCode({
     initialLoad(FALSE)
+  }, name = "onRestore()")
   })
 
   onRestored(function(state) {
+  profileCode({
     outputComments(
       "***************************************************************************\n",
       "*                       Restoring Session from URL                        *\n",
@@ -206,6 +246,7 @@ app_server <- function(input, output, session) {
     outputComments("ET after restoring state")
     outputComments(ET())
     eventTable(ET())
+  }, name = "onRestored()")
   })
 
 
@@ -214,6 +255,7 @@ app_server <- function(input, output, session) {
   ######################
 
   observeEvent(input$doseTableHTML, {
+  profileCode({
     outputComments("In observeEvent(input$doseTableHTML,...", level = DEBUG_LEVEL_VERBOSE)
     data <- input$doseTableHTML
 
@@ -237,7 +279,7 @@ app_server <- function(input, output, session) {
     # the row names for it to work
     nrows <- length(data$data)
     data$params$rRowHeaders <- as.character(seq.int(nrows))
-    data <- hot_to_r(data)
+    data <- hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
 
     # make sure that table has changed before updating doseTable reactive
     if ( !identical(doseTable(), data) ) {
@@ -247,6 +289,7 @@ app_server <- function(input, output, session) {
       current$DT <- data
       doseTable(data)
     }
+  }, name = "input$doseTableHTML observer")
   })
 
   weightUnit <- reactive({
@@ -279,14 +322,17 @@ app_server <- function(input, output, session) {
   })
 
   testCovariates <- reactive({
+  profileCode({
     outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
     req(weight(), height(), age(), sex())
     errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
     checkNumericCovariates(age(), weight(), height(), errorFxn)
+  }, name = "testCovariates() reactive")
   })
 
   # see if drugs can be a regular reactive instead of observe({
   drugs <- reactive({
+  profileCode({
     outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
     req(testCovariates(), doseTableClean())
 
@@ -300,7 +346,7 @@ app_server <- function(input, output, session) {
       weight = weight(),
       height = height(),
       sex = sex()
-    )
+    ) |> profileCode("recalculatePK() in drugs()")
 
     newDrugs <- processdoseTable(
       doseTableClean(),
@@ -308,8 +354,9 @@ app_server <- function(input, output, session) {
       newDrugs,
       plotMaximum(),
       plotRecovery()
-    )
+    ) |> profileCode("processdoseTable() in drugs()")
     newDrugs
+  }, name = "drugs() reactive")
   })
 
   ###########################
@@ -317,6 +364,7 @@ app_server <- function(input, output, session) {
   ###########################
 
   doseTableClean <- reactive({
+  profileCode({
     outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
     DT <- cleanDT(doseTable())
     DT$Time <- clockTimeToDelta(input$referenceTime, DT$Time)
@@ -335,9 +383,11 @@ app_server <- function(input, output, session) {
     }
 
     DT
+  }, name = "doseTableClean() reactive")
   })
 
   eventTableClean <- reactive({
+  profileCode({
     outputComments("In eventTableClean", level = DEBUG_LEVEL_VERBOSE)
     ET <- eventTable()
     if (length(ET$Time) > 0) {
@@ -348,9 +398,11 @@ app_server <- function(input, output, session) {
       }
     }
     ET
+  }, name = "eventTableClean() reactive")
   })
 
   plotMaximum <- reactive({
+  profileCode({
     req(doseTableClean())
 
     plotMaximum <- as.numeric(input$maximum)
@@ -364,9 +416,11 @@ app_server <- function(input, output, session) {
       plotMaximum <- ceiling((maxTime + 30)/steps) * steps
     }
     plotMaximum
+  }, name = "plotMaximum() reactive")
   })
 
   steps <- reactive({
+  profileCode({
     req(doseTableClean())
 
     plotMaximum <- as.numeric(input$maximum)
@@ -379,6 +433,7 @@ app_server <- function(input, output, session) {
       steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
     }
     steps
+  }, name = "steps() reactive")
   })
 
   plotRecovery <- reactive({
@@ -391,6 +446,7 @@ app_server <- function(input, output, session) {
   })
 
   simulationPlotRetval <- reactive({
+  profileCode({
     outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
     req(doseTableClean(), testCovariates(),
         length(input$plasmaLinetype) > 0, length(input$effectsiteLinetype) > 0)
@@ -461,6 +517,7 @@ app_server <- function(input, output, session) {
       typical = typical,
       logY = logY
     )
+  }, name = "simulationPlotRetval() reactive")
   })
   #  })
 
@@ -530,7 +587,7 @@ app_server <- function(input, output, session) {
         drugDefaults = drugDefaults(),
         email_username = config$email_username,
         email_password = config$email_password
-      )
+      ) |> profileCode("sendSlide()")
       output$sentPlot <- renderImage(
         list(src = img),
         deleteFile = TRUE
@@ -550,7 +607,7 @@ app_server <- function(input, output, session) {
         output$hover_info <- NULL
         return()
       }
-      text <- xy_str(hover)
+      text <- xy_str(hover) |> profileCode("xy_str() in input$plot_hover")
       output$hover_info <- renderUI({
         style <- paste0("position:absolute; padding:0; margin:0; z-index:100; font-size: 10px; background-color: rgba(245, 245, 245, 0.85); ",
                         "left:", hover$coords_css$x+25, "px; top:", hover$coords_css$y+10, "px;")
@@ -640,8 +697,9 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$plot_click,
     {
+    profileCode({
       outputComments("in click()")
-      x <- imgDrugTime(input$plot_click)
+      x <- imgDrugTime(input$plot_click) |> profileCode("imgDrugTime() in input$plot_click")
       outputComments("in click(), returning from imgDrugTime()")
       DrugTimeUnits(x)
 
@@ -651,13 +709,14 @@ app_server <- function(input, output, session) {
       } else {
         clickPopupDrug(failed = "", x)
       }
-    }
-  )
+    }, name = "input$plot_click observer")
+  })
 
   # Response to double click
   observeEvent(
     input$plot_dblclick,
     {
+    profileCode({
       outputComments("in double click routine")
       x <- imgDrugTime(input$plot_dblclick)
       DrugTimeUnits(x)
@@ -668,8 +727,8 @@ app_server <- function(input, output, session) {
       } else {
         dblclickPopupDrug(failed = "", x)
       }
-    }
-  )
+    }, name = "input$plot_dblclick observer")
+  })
 
   # Get the time, drug, and units from the image
   imgDrugTime <- function(e = "")
@@ -833,6 +892,7 @@ app_server <- function(input, output, session) {
   # edited, but it explains why there will always be some updating of the doseTable from the
   # server.
   observeEvent(input$clickOKDrug, {
+  profileCode({
     # Check that data object exists and is data frame.
     modelOK <- TRUE
     clickTime <- validateTime(input$clickTimeDrug)
@@ -865,9 +925,8 @@ app_server <- function(input, output, session) {
       }
       doseTable(current$DT)
     }
-  }
-  )
-
+  }, name = "input$clickOKDrug observer")
+  })
 
   # Edit prior drug doses
   observeEvent(input$editDoses, {
@@ -895,6 +954,7 @@ app_server <- function(input, output, session) {
   })
 
   output$editPriorDosesTable <- renderRHandsontable({
+  profileCode({
     editPriorDosesTable <- current$DT[current$DT$Drug == DrugTimeUnits()$drug, ]
     possibleUnits <- drugDefaults() %>%
       dplyr::filter(Drug == DrugTimeUnits()$drug) %>%
@@ -944,11 +1004,13 @@ app_server <- function(input, output, session) {
       hot_cols(colWidths = c(50,55,55,90))
 
     editPriorDosesTableHOT
+  }, name = "output$editPriorDosesTable")
   })
 
   observeEvent(
     input$editDosesOK,
     {
+    profileCode({
       removeModal()
       TT <- hot_to_r(input$editPriorDosesTable)
       cat("In ObserveEvent for editDosesOK\n")
@@ -980,8 +1042,8 @@ app_server <- function(input, output, session) {
         }
       }
       doseTable(current$DT) # Set reactive doseTable
-    }
-  )
+    }, name = "input$editDosesOK observer")
+  })
 
   # Single Click - Events
   clickPopupEvent <- function(
@@ -1034,6 +1096,7 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$clickOKEvent,
     {
+    profileCode({
       # Check that data object exists and is data frame.
       modelOK <- TRUE
       clickTime <- validateTime(input$clickTimeEvent)
@@ -1073,13 +1136,14 @@ app_server <- function(input, output, session) {
           DrugTimeUnits()
         )
       }
-    }
-  )
+    }, name = "input$clickOKEvent observer")
+    })
 
   # Edit prior drug doses
   observeEvent(
     input$editEvents,
     {
+    profileCode({
       removeModal()
       tempTable <-  eventTable()
       tempTable <- tempTable[,c("Time", "Event")]
@@ -1139,12 +1203,13 @@ app_server <- function(input, output, session) {
           size="s"
         )
       )
-    }
-  )
+    }, name = "input$editEvents observer")
+    })
 
   observeEvent(
     input$editEventsOK,
     {
+    profileCode({
       removeModal()
       ET <- hot_to_r(input$tempTableHTML)
       ET <- ET[!ET$Delete,c("Time","Event")]
@@ -1152,8 +1217,8 @@ app_server <- function(input, output, session) {
       ET$Fill <- eventDefaults()$Color[CROWS]
       ET <- ET[order(ET$Time,ET$Event),]
       eventTable(ET)
-    }
-  )
+    }, name = "input$editEventsOK observer")
+  })
 
 
   # Double Click Response ################################
@@ -1222,6 +1287,7 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$dblclickOK,
     {
+    profileCode({
       # Check that data object exists and is data frame.
       modelOK <- TRUE
       clickTime <- validateTime(input$dblclickTime)
@@ -1259,23 +1325,25 @@ app_server <- function(input, output, session) {
           DrugTimeUnits()
         )
       }
-    }
-  )
+    }, name = "input$dblclickOK observer")
+  })
 
   observeEvent(
     input$dblclickDelete,
     {
+    profileCode({
       removeModal()
       current$DT <- current$DT[current$DT$Drug != DrugTimeUnits()$drug,]
       doseTable(current$DT)
-    }
-  )
+    }, name = "input$dblclickDelete observer")
+  })
 
   # Target Drug Dosing (TCI Like) ###########################################
   # Event to trigger calculation to set doses for a target
   observeEvent(
     input$setTarget,
     {
+    profileCode({
       targetTable <-  data.frame(
         Time = rep("",6),
         Target = rep("", 6)
@@ -1372,13 +1440,14 @@ app_server <- function(input, output, session) {
           size="s"
         )
       )
-    }
-  )
+    }, name = "input$setTarget observer")
+  })
 
   # Evaluate target concentration
   observeEvent(
     input$targetOK,
     {
+    profileCode({
       removeModal()
       waiter::waiter_show()
       endTime <- validateTime(input$targetEndTime)
@@ -1420,8 +1489,8 @@ app_server <- function(input, output, session) {
       )
       waiter::waiter_hide()
       doseTable(current$DT)
-    }
-  )
+    }, name = "input$targetOK observer")
+  })
 
   editDrugsTrigger <- makeReactiveTrigger()
   observeEvent(input$editDrugs, {
@@ -1463,6 +1532,7 @@ app_server <- function(input, output, session) {
   })
 
   output$editDrugsHTML <- renderRHandsontable({
+  profileCode({
     editDrugsTrigger$depend()
     x <- drugDefaults()
     x$Units <- drugUnitsSimplify(x$Units)
@@ -1576,10 +1646,12 @@ app_server <- function(input, output, session) {
       hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) # %>%
     #    hot_rows(rowHeights = 10) # interferes with cell selection -> other occasions?
     drugsHOT
+  }, name = "output$editDrugsHTML")
   })
 
   # Evaluate target concentration
   observeEvent(input$drugEditsOK, {
+  profileCode({
     removeModal()
     newDrugDefaults <- hot_to_r(input$editDrugsHTML)
     newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
@@ -1598,8 +1670,8 @@ app_server <- function(input, output, session) {
 
     newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
     drugDefaults(newDrugDefaults)
-  }
-  )
+  }, name = "input$drugEditsOK observer")
+  })
 
   outputComments("Reached the end of server()")
 }

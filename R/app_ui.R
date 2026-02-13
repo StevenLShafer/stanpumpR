@@ -449,14 +449,18 @@ app_ui <- function() {
           ) # End of right hand colunn
         ), # end of first fluid row
         fluidRow(
+          id = "debug_area",
           column(
-            12,
-            div(
-              id = "logSection",
-              uiOutput("logContent")
-            ) |> shinyjs::hidden()
+            6,
+            div("Log", class = "debug_section_head"),
+            verbatimTextOutput("logContent")
+          ),
+          column(
+            6,
+            div("Profiler", class = "debug_section_head"),
+            verbatimTextOutput("profiling")
           )
-        )
+        ) |> shinyjs::hidden()
 
       ) # end dashboardBody
     ) # end dashboardPage
