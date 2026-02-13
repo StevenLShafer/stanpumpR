@@ -452,10 +452,12 @@ app_ui <- function() {
           id = "debug_area",
           column(
             6,
+            h4("Comments log"),
             uiOutput("logContent")
           ),
           column(
             6,
+            h4("Profiler"),
            verbatimTextOutput("profiling")
           )
         ) |> shinyjs::hidden()

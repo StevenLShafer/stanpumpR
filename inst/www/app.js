@@ -5,9 +5,9 @@ $(document).on('shiny:connected', function(event) {
 
 
 $(document).on('shiny:value', function(event) {
-  if (event.target.id === 'logContent') {
+  if (event.target.id === 'logContent' || event.target.id === 'profiling') {
     setTimeout(function() {
-      var $logger = $('#logContent');
+      var $logger = $('#' + event.target.id);
       $logger.scrollTop($logger[0].scrollHeight);
     }, 0);
   }

@@ -32,11 +32,10 @@ app_server <- function(input, output, session) {
   })
 
   # Write out logs to the log section
-  initLogMsg <- "Comments Log"
   if (.sprglobals$DEBUG > DEBUG_LEVEL_OFF) {
     shinyjs::show("debug_area")
   }
-  commentsLog <- reactiveVal(initLogMsg)
+  commentsLog <- reactiveVal("")
   output$logContent <- renderUI({
     HTML(commentsLog())
   })
@@ -52,7 +51,7 @@ app_server <- function(input, output, session) {
     elapsed_time <- end_time - start_time
     if (elapsed_time > threshold) {
       new_row <- data.frame(name = name, ms = round(elapsed_time, 3)*1000, time = format(Sys.time(), "%H:%M:%S"))
-      isolate(profileRecords(rbind(new_row, profileRecords())))
+      isolate(profileRecords(rbind(profileRecords(), new_row)))
     }
     value
   }
