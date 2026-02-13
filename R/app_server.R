@@ -36,8 +36,8 @@ app_server <- function(input, output, session) {
     shinyjs::show("debug_area")
   }
   commentsLog <- reactiveVal("")
-  output$logContent <- renderUI({
-    HTML(commentsLog())
+  output$logContent <- renderText({
+    commentsLog()
   })
   # Register the comments log with this user's session, to use outside the server
   session$userData$commentsLog <- commentsLog

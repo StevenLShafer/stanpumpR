@@ -100,13 +100,13 @@ outputComments <- function(
       {
         for (line in outputString) cat(line, "\n")
       }
-      for (line in outputString) commentsLog(paste0(commentsLog(), "<br>", line))
+      for (line in outputString) commentsLog(paste0(commentsLog(), "\n", line))
     } else {
       if (echo)
       {
         cat(text, "\n")
       }
-      commentsLog(paste0(commentsLog(), "<br>", text))
+      commentsLog(paste0(commentsLog(), "\n", text))
     }
   })
 }

@@ -7,16 +7,6 @@
   overflow-y: auto;
 }
 
-#logContent, #profiling {
-  background-color: #FAFAFA;
-  font-size: 10px;
-  overflow-y: scroll;
-  height: 100px;
-  padding: 5px 15px;
-  border: 1px solid #e3e3e3;
-  border-radius: 4px;
-}
-
 .form-first-row {
   height: 100px;
 }
@@ -39,4 +29,27 @@
   max-height: 550px;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+#debug_area {
+  background: #444;
+  color: #eee;
+}
+
+#logContent, #profiling {
+  margin-top: 5px;
+  background-color: #555;
+  color: #eee;
+  font-size: 10px;
+  overflow-y: scroll;
+  height: 150px;
+  padding: 5px 15px;
+  border: 1px solid #999;
+  border-radius: 4px;
+}
+
+.debug_section_head {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 5px;
 }

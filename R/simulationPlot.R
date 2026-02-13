@@ -51,7 +51,7 @@ simulationPlot <- function(
 
 # browser()
 
-  outputComments("\nEntering simulationPlot", level = DEBUG_LEVEL_VERBOSE)
+  outputComments("Entering simulationPlot", level = DEBUG_LEVEL_VERBOSE)
 
   # Step D1: create plotTable from `drugs`
 
@@ -695,6 +695,6 @@ simulationPlot <- function(
   }
 
 #  plotObject
-  outputComments("Exiting simulationPlot\n", level = DEBUG_LEVEL_VERBOSE)
+  outputComments("Exiting simulationPlot", level = DEBUG_LEVEL_VERBOSE)
   return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, nFacets = nFacets))
 }
