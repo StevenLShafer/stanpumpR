@@ -65,9 +65,12 @@ bookmarksToExclude <- c(
 
 outputComments <- function(
     ...,
+    level = DEBUG_LEVEL_NORMAL,
     echo = getOption("ECHO_OUTPUT_COMMENTS", TRUE),
     sep = " ")
 {
+  if (.sprglobals$DEBUG < level) return()
+
   isolate({
     argslist <- list(...)
     if (length(argslist) == 1) {

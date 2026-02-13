@@ -54,7 +54,8 @@ jobs:
               title = "PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}",
               title_width = 600,
               email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
-              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}"
+              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
+              debug = 1
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")

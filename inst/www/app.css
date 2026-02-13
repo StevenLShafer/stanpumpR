@@ -7,13 +7,14 @@
   overflow-y: auto;
 }
 
-#logSection, #profiling {
-  background-color: transparent;
-  border-style: solid;
-  color: black;
+#logContent, #profiling {
+  background-color: #FAFAFA;
   font-size: 10px;
   overflow-y: scroll;
   height: 100px;
+  padding: 20px;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
 }
 
 .form-first-row {
@@ -32,4 +33,10 @@
 .htAutocompleteArrow {
   position: absolute;
   right: 0;
+}
+
+#main_plot_outer {
+  max-height: 550px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }

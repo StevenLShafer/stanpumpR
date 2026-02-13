@@ -42,7 +42,8 @@ jobs:
           shinyConfig <- list(
             default = list(
               email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
-              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}"
+              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
+              debug = 0
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")

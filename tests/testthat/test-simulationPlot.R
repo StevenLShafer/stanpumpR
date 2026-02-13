@@ -1,7 +1,7 @@
 test_that("simulationPlot yields desired objects", {
 
-  local_mocked_bindings(outputComments = function(..., echo) {})
-  .sprglobals$DEBUG <- FALSE
+  local_mocked_bindings(outputComments = function(...) {})
+  .sprglobals$DEBUG <- DEBUG_LEVEL_OFF
 
   doseTable <- data.frame(
     Drug = getDrugDefaultsGlobal(FALSE)$Drug[1],
@@ -51,5 +51,5 @@ test_that("simulationPlot yields desired objects", {
     plotRecovery = plotRecovery
   )
 
-  expect_equal(names(p), c("plotObject","allResults","plotResults"))
+  expect_equal(names(p), c("plotObject","allResults","plotResults","nFacets"))
 })

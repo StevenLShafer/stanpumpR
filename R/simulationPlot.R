@@ -17,7 +17,7 @@ simulationPlot <- function(
   plotRecovery = FALSE,
   title = "Default Title",
   caption = "Default Caption",
-  aspect = 0.6,
+  aspect = 0.15,
   typical = c("Mid"),
   logY = FALSE
   )
@@ -28,14 +28,11 @@ simulationPlot <- function(
 # normalization = c("none")
 # title = "Default Title"
 # caption = "Default Caption"
-# aspect = 0.6
 # typical = c("Mid")
 # logY = FALSE
 # load("drugs.rData")
 
 {
-  DEBUG <- .sprglobals$DEBUG
-
   # Notes on what happens below
   # The time courses for ggplot are held in plotResults
   # "Drug","Time","Y","Site","Wrap","Label"
@@ -54,11 +51,7 @@ simulationPlot <- function(
 
 # browser()
 
-  if (DEBUG)
-    {
-    cat("\n")
-    cat("Entering simulationPlot\n")
-  }
+  outputComments("\nEntering simulationPlot", level = DEBUG_LEVEL_VERBOSE)
 
   # Step D1: create plotTable from `drugs`
 
@@ -80,7 +73,7 @@ simulationPlot <- function(
                         "typical", "lowerTypical", "upperTypical",
                         "MEAC", "endCe", "endCeText")
 
-  if (DEBUG) cat("plotTable created\n")
+  outputComments("plotTable created", level = DEBUG_LEVEL_VERBOSE)
 
   # Step C1: create allResults from `drugs`
 
@@ -465,7 +458,7 @@ simulationPlot <- function(
       title = title,
       x = xAxisLabel,
       caption = caption) +
-    ggplot2::theme(aspect.ratio = aspect/nFacets) +
+    ggplot2::theme(aspect.ratio = aspect) +
     ggplot2::theme(legend.text = ggplot2::element_text(size=12)) +
     ggplot2::theme(legend.title = ggplot2::element_text(color="darkblue", size=13, face="bold"))
 
@@ -702,6 +695,6 @@ simulationPlot <- function(
   }
 
 #  plotObject
-  if (DEBUG) cat("Exiting simulationPlot\n\n")
-  return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults))
+  outputComments("Exiting simulationPlot\n", level = DEBUG_LEVEL_VERBOSE)
+  return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, nFacets = nFacets))
 }

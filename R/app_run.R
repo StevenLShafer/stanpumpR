@@ -28,9 +28,8 @@ run_app <- function(config_file = "config.yml") {
   if (is.null(config$maintainer_name)) config$maintainer_name <- "Steve"
   if (is.null(config$maintainer_email)) config$maintainer_email <- "stanpumpR@gmail.com"
   if (is.null(config$help_link)) config$help_link <- "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
-  if (is.null(config$debug)) config$debug <- FALSE
+  if (is.null(config$debug)) config$debug <- DEBUG_LEVEL_OFF
   .sprglobals$config <- config
-
   .sprglobals$DEBUG <- config$debug
 
   ggplot2::theme_update(
@@ -43,7 +42,6 @@ run_app <- function(config_file = "config.yml") {
     axis.title = ggplot2::element_text(size = ggplot2::rel(1.5)),
     axis.text = ggplot2::element_text(size = ggplot2::rel(1.2)),
     axis.line = ggplot2::element_line(linewidth = 1, color = "black"),
-    aspect.ratio = 0.6,
     plot.title = ggplot2::element_text(size = ggplot2::rel(1.5)),
     legend.text = ggplot2::element_text(size = ggplot2::rel(0.9)),
     legend.position = "right",

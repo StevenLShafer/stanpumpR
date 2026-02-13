@@ -36,9 +36,6 @@ defaultSex <- "female"
 # defaultHeightUnit <- character(0)
 # defaultSex <- character(0)
 
-# Default aspect ratio
-ASPECT <- 0.6
-
 # Resolution for linear interpolation
 RESOLUTION <- 100
 
@@ -57,3 +54,7 @@ maxtimes <- data.frame(
   times = c(10, 30, 60, 90, 120, 180, 240, 300, 360, 480, 600, 720, 1440, 1680, 1920, 2880, 4320, 5760,7200, 1000000 ),
   steps = c( 1,  5, 10, 15,  15,  30,  30,  60,  60,  60, 120, 120, 240,  240, 240,  480,   480,  720, 720, 1440)
 )
+
+DEBUG_LEVEL_OFF <- 0
+DEBUG_LEVEL_NORMAL <- 1
+DEBUG_LEVEL_VERBOSE <- 2

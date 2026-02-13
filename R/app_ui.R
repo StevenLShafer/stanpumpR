@@ -35,7 +35,6 @@ app_ui <- function() {
         waiter::useWaiter(),
         tags$script(src = "stanpumpr-assets/app.js"),
         tags$head(tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")),
-        style = "max-height: 95vh; overflow-y: auto;" ,
         fluidRow(
           column(
             width=4,
@@ -217,33 +216,31 @@ app_ui <- function() {
           ), # end of width 5 column
           column(
             width=8,
-            fillPage(
-              div(
-                style = "position:relative",
-                # Start of plot Output
-                plotOutput(
-                  outputId = "PlotSimulation",
-                  width="100%",
-                  height="500px",
-                  click = clickOpts(
-                    id = "plot_click",
-                    clip = FALSE
-                  ),
-                  dblclick = dblclickOpts(
-                    id = "plot_dblclick",
-                    clip=FALSE
-                  ),
-                  hover = hoverOpts(
-                    id = "plot_hover",
-                    delay = 500,
-                    delayType = "debounce",
-                    clip = FALSE,
-                    nullOutside = FALSE
-                  )
-                ), # End of plotOutput
-                uiOutput("hover_info")
-              ) # End of div
-            ), # End of fillPage
+            div(
+              id = "main_plot_outer",
+              # Start of plot Output
+              plotOutput(
+                outputId = "PlotSimulation",
+                width="100%",
+                height="auto",
+                click = clickOpts(
+                  id = "plot_click",
+                  clip = FALSE
+                ),
+                dblclick = dblclickOpts(
+                  id = "plot_dblclick",
+                  clip=FALSE
+                ),
+                hover = hoverOpts(
+                  id = "plot_hover",
+                  delay = 500,
+                  delayType = "debounce",
+                  clip = FALSE,
+                  nullOutside = FALSE
+                )
+              ), # End of plotOutput
+              uiOutput("hover_info")
+            ), # End of div
             ############################################################################
             fluidRow(
               style = "border-style: solid; border-color: white;  border-radius: 5px; height: 300px",
@@ -452,18 +449,16 @@ app_ui <- function() {
           ) # End of right hand colunn
         ), # end of first fluid row
         fluidRow(
+          id = "debug_area",
           column(
             6,
-            wellPanel(
-              id = "logSection",
-              uiOutput("logContent")
-            )
+            uiOutput("logContent")
           ),
           column(
             6,
            verbatimTextOutput("profiling")
           )
-        )
+        ) |> shinyjs::hidden()
 
       ) # end dashboardBody
     ) # end dashboardPage
