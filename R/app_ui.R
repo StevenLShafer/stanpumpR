@@ -453,11 +453,20 @@ app_ui <- function() {
           column(
             6,
             div("Log", class = "debug_section_head"),
+            div(HTML("&nbsp;")),
             verbatimTextOutput("logContent")
           ),
           column(
             6,
             div("Profiler", class = "debug_section_head"),
+            div(
+              "Only show functions taking longer than", HTML("&nbsp;"),
+              numericInput("profiler_threshold", NULL, min = 0, max = 1000,
+                           value = 100, width = "40px", updateOn = "blur") |>
+                inlineUI() |>
+                attachClass("no-spinners"),
+              HTML("&nbsp;"), "milliseconds"
+            ),
             verbatimTextOutput("profiling")
           )
         ) |> shinyjs::hidden()
