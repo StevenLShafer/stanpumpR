@@ -453,7 +453,13 @@ app_ui <- function() {
           column(
             6,
             div("Log", class = "debug_section_head"),
-            div(HTML("&nbsp;")),
+            div(
+              "Debug level", HTML("&nbsp;"),
+              selectInput("debug_level", NULL, width = 100, selectize = FALSE,
+                          choices = c("Normal" = DEBUG_LEVEL_NORMAL,
+                                      "Verbose" = DEBUG_LEVEL_VERBOSE)) |>
+                inlineUI()
+            ),
             verbatimTextOutput("logContent")
           ),
           column(
@@ -462,7 +468,7 @@ app_ui <- function() {
             div(
               "Only show functions taking longer than", HTML("&nbsp;"),
               numericInput("profiler_threshold", NULL, min = 0, max = 1000,
-                           value = 100, width = "40px", updateOn = "blur") |>
+                           value = 100, width = 40, updateOn = "blur") |>
                 inlineUI() |>
                 attachClass("no-spinners"),
               HTML("&nbsp;"), "milliseconds"

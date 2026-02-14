@@ -29,13 +29,14 @@ Near-term future developments in stanpumpR will include
 ### Setting up locally
 
 1. Clone/download this repository to your local machine
-1. Open the `stanpumpR.Rproj` file in RStudio
-1. Install the devtools package via `install.packages("devtools")`.
-1. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
-1. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
-1. Run the app from the RStudio Console:
-- `devtools::load_all(".")`
-- `run_app()`
+2. Open the `stanpumpR.Rproj` file in RStudio
+3. Install the devtools package via `install.packages("devtools")`.
+4. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
+5. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
+6. Run the app from the RStudio Console:
+    - `devtools::load_all(".")`
+    - `run_app()`
+7. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `&debug=1` to the URL.
 
 #### Running tests
 1. Install the devtools package via `install.packages("devtools")`.

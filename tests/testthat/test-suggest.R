@@ -1,7 +1,6 @@
 test_that("suggest yields a table with the appropriate columns", {
 
   local_mocked_bindings(outputComments = function(...) {})
-  .sprglobals$DEBUG <- DEBUG_LEVEL_OFF
 
   drugList <- getDrugDefaultsGlobal(FALSE)$Drug
 

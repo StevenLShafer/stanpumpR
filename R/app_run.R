@@ -30,7 +30,6 @@ run_app <- function(config_file = "config.yml") {
   if (is.null(config$help_link)) config$help_link <- "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
   if (is.null(config$debug)) config$debug <- DEBUG_LEVEL_OFF
   .sprglobals$config <- config
-  .sprglobals$DEBUG <- config$debug
 
   ggplot2::theme_update(
     panel.background = ggplot2::element_rect(fill = "white", color = "white"),

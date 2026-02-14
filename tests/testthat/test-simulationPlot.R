@@ -1,7 +1,6 @@
 test_that("simulationPlot yields desired objects", {
 
   local_mocked_bindings(outputComments = function(...) {})
-  .sprglobals$DEBUG <- DEBUG_LEVEL_OFF
 
   doseTable <- data.frame(
     Drug = getDrugDefaultsGlobal(FALSE)$Drug[1],
