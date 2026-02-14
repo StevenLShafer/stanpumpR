@@ -60,7 +60,8 @@ bookmarksToExclude <- c(
   "editDrugsHTML_select",
   "editDrugs",
   "newEndCe",
-  "hoverInfo"
+  "hoverInfo",
+  "debug_level"
 )
 
 outputComments <- function(
@@ -69,9 +70,16 @@ outputComments <- function(
     echo = getOption("ECHO_OUTPUT_COMMENTS", TRUE),
     sep = " ")
 {
-  if (.sprglobals$DEBUG < level) return()
-
   isolate({
+    session <- getDefaultReactiveDomain()
+
+    if (!is.null(session) &&
+        is.environment(session$userData) &&
+        is.reactive(session$userData$debug) &&
+        session$userData$debug() < level) {
+      return()
+    }
+
     argslist <- list(...)
     if (length(argslist) == 1) {
       text <- argslist[[1]]
@@ -82,7 +90,6 @@ outputComments <- function(
     # If this is called within a shiny app, try to get the active session
     # and write to the session's logger
     commentsLog <- function(x) invisible(NULL)
-    session <- getDefaultReactiveDomain()
     if (!is.null(session) &&
         is.environment(session$userData) &&
         is.reactive(session$userData$commentsLog))

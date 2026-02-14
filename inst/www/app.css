@@ -37,7 +37,7 @@
 }
 
 #logContent, #profiling {
-  margin-top: 5px;
+  margin-top: 8px;
   background-color: #555;
   color: #eee;
   font-size: 10px;
@@ -60,11 +60,10 @@
   margin-bottom: 0;
 }
 
-#profiler_threshold {
+#profiler_threshold, #debug_level {
   height: 20px;
   padding: 0 5px;
   font-size: 14px;
-  text-align: center;
 }
 
 .no-spinners ::-webkit-outer-spin-button,

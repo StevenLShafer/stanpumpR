@@ -31,10 +31,22 @@ app_server <- function(input, output, session) {
     options(error = NULL)
   })
 
+  session$userData$debug <- reactiveVal(config$debug)
+  observeEvent(input$debug_level, ignoreInit = TRUE, {
+    session$userData$debug(input$debug_level)
+  })
+  observe({
+    query <- parseQueryString(session$clientData$url_search)
+    if (!is.null(query[["debug"]])) {
+      session$userData$debug(as.numeric(query[["debug"]]))
+    }
+  })
+
   # Write out logs to the log section
-  if (.sprglobals$DEBUG > DEBUG_LEVEL_OFF) {
-    shinyjs::show("debug_area")
-  }
+  observeEvent(session$userData$debug(), {
+    shinyjs::toggle("debug_area", condition = (session$userData$debug() > DEBUG_LEVEL_OFF))
+    updateSelectInput(session, "debug_level", selected = session$userData$debug())
+  })
   commentsLog <- reactiveVal("")
   output$logContent <- renderText({
     commentsLog()
@@ -45,7 +57,7 @@ app_server <- function(input, output, session) {
   profileRecords <- reactiveVal(data.frame(name = character(0), ms = numeric(0), time = character(0)))
 
   profileCode <- function(expr, name, threshold = NULL) {
-    if (.sprglobals$DEBUG == DEBUG_LEVEL_OFF) {
+    if (isolate(session$userData$debug()) == DEBUG_LEVEL_OFF) {
       return(force(expr))
     }
     if (is.null(threshold)) {
