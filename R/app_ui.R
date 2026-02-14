@@ -183,7 +183,7 @@ app_ui <- function() {
             ), # fluidrow within column
             fluidRow(
               h4("Dose Table"),
-              style = "border-style: solid; border-color: white;  border-radius: 5px; height: 450px; ",
+              style = "border-style: solid; border-color: white;  border-radius: 5px; height: 450px; overflow-y: auto;",
 
               column(
                 width=12,
