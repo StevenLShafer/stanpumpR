@@ -31,6 +31,11 @@
   overflow-y: auto;
 }
 
+#doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
+  height: auto !important;
+  overflow-x: hidden;
+}
+
 #debug_area {
   background: #444;
   color: #eee;
