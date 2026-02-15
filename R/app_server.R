@@ -846,6 +846,7 @@ app_server <- function(input, output, session) {
     endCeText <- drugDefaults()$endCeText[thisDrug]
     showModal(
       modalDialog(
+        `data-submit-btn` = "clickOKDrug",
         title = paste("Enter a new dose for ", drug),
         if (failed != "")
           tags$div(
@@ -947,7 +948,7 @@ app_server <- function(input, output, session) {
   observeEvent(input$editDoses, {
     showModal(
       modalDialog(
-        title = paste("Edit", DrugTimeUnits()$drug,"doses:"),
+        title = paste("Edit", DrugTimeUnits()$drug, "doses:"),
         rHandsontableOutput(outputId = "editPriorDosesTable"),
         actionButton(
           inputId = "editDosesOK",
@@ -1069,6 +1070,7 @@ app_server <- function(input, output, session) {
     time <- x$time
     showModal(
       modalDialog(
+        `data-submit-btn` = "clickOKEvent",
         title = paste("Enter a new event"),
         if (failed != "")
           tags$div(
@@ -1247,6 +1249,7 @@ app_server <- function(input, output, session) {
     units <- sort(unique(unlist(drugDefaults()$Units)))
     showModal(
       modalDialog(
+        `data-submit-btn` = "dblclickOK",
         title = paste("Select a drug and enter dose and time"),
         if (failed != "")
           tags$div(
@@ -1397,6 +1400,7 @@ app_server <- function(input, output, session) {
       output$targetTableHTML <- renderRHandsontable(targetHOT)
       showModal(
         modalDialog(
+          `data-submit-btn` = "targetOK",
           title = paste("Enter Target Effect Site Concentrations"),
           tags$div(
             HTML(
