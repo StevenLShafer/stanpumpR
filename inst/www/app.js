@@ -24,8 +24,7 @@ $(document).on('shown.bs.modal', function() {
 $(document).on('keyup', '.modal-body input, .modal-body textarea', function(e) {
   if (e.key === 'Enter') {
     // ignore if Enter is pressed in a selectize or rhandsontable input
-    if ($(this).closest('.selectize-input').length > 0) return;
-    if ($(this).closest('.rhandsontable').length > 0) return;
+    if ($(this).closest('.selectize-input, .rhandsontable').length > 0) return;
 
     e.preventDefault();
     let modal = $(this).closest('.modal-body');
