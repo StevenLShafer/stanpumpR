@@ -1,6 +1,11 @@
 $(document).on('shiny:connected', function(event) {
   var timeNow = new Date().toLocaleTimeString();
   Shiny.setInputValue("client_time", timeNow);
+
+  if (!getCookie('intro_shown')) {
+    setCookie('intro_shown', 'true', 7);
+    Shiny.setInputValue('show_intro_modal', true, {priority: 'event'});
+  }
 });
 
 
@@ -32,3 +37,14 @@ $(document).on('keyup', '.modal-body input, .modal-body textarea', function(e) {
     if (submitBtn) $('#' + submitBtn).click();
   }
 });
+
+function getCookie(name) {
+  let match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? match[2] : null;
+}
+
+function setCookie(name, value, days) {
+  let date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/';
+}
