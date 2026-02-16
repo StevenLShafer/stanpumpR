@@ -14,7 +14,6 @@ Imports:
   dplyr,
   glue,
   ggplot2  (>= 3.4),
-  ggpubr,
   grid,
   htmltools,
   htmlwidgets,
