@@ -590,24 +590,30 @@ app_server <- function(input, output, session) {
         height = height(),
         sex = sex()
       )
-      img <- sendSlide(
-        values = values,
-        recipient = input$recipient,
-        plotObject = plotObjectReactive(),
-        allResults = allResultsReactive(),
-        plotResults = plotResultsReactive(),
-        isShinyLocal = isShinyLocal,
-        slide = as.numeric(input$sendSlide),
-        drugs = drugs(),
-        drugDefaults = drugDefaults(),
-        email_username = config$email_username,
-        email_password = config$email_password
-      ) |> profileCode("sendSlide()")
-      output$sentPlot <- renderImage(
-        list(src = img),
-        deleteFile = TRUE
-      )
+
+      shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")
+      emailRetval <-
+        sendSlide(
+          values = values,
+          recipient = input$recipient,
+          plotObject = plotObjectReactive(),
+          allResults = allResultsReactive(),
+          plotResults = plotResultsReactive(),
+          isShinyLocal = isShinyLocal,
+          slide = as.numeric(input$sendSlide),
+          drugs = drugs(),
+          drugDefaults = drugDefaults(),
+          email_username = config$email_username,
+          email_password = config$email_password
+        ) |> profileCode("sendSlide()")
+      shinycssloaders::hidePageSpinner()
       shinyjs::enable("sendSlideButton")
+
+      if (isTRUE(emailRetval)) {
+        shinyalert::shinyalert("Email sent", type = "success", closeOnClickOutside = TRUE)
+      } else {
+        shinyalert::shinyalert("Error sending email", emailRetval, type = "error", closeOnClickOutside = TRUE)
+      }
     }
   )
 
