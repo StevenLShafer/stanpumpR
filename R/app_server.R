@@ -599,6 +599,7 @@ app_server <- function(input, output, session) {
           plotObject = plotObjectReactive(),
           allResults = allResultsReactive(),
           plotResults = plotResultsReactive(),
+          numPlots = nFacets(),
           isShinyLocal = isShinyLocal,
           slide = as.numeric(input$sendSlide),
           drugs = drugs(),

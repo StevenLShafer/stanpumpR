@@ -5,6 +5,7 @@ sendSlide <- function(
   plotObject,
   allResults,
   plotResults,
+  numPlots,
   isShinyLocal,
   slide,
   drugs,
@@ -26,7 +27,7 @@ sendSlide <- function(
       stop("email password missing")
     }
 
-    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults)
+    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, numPlots, slide, drugs, drugDefaults)
 
     outputComments("Sending email")
     email <- mailR::send.mail(
@@ -43,11 +44,13 @@ sendSlide <- function(
         ssl = TRUE),
       attach.files = c(
         emailData$pptxfileName,
+        emailData$pngfileName,
         emailData$xlsxfileName
       ),
       authenticate = TRUE
     )
     unlink(emailData$pptxfileName)
+    unlink(emailData$pngfileName)
     unlink(emailData$xlsxfileName)
     outputComments("Leaving sendMail()")
     return(TRUE)
@@ -56,7 +59,7 @@ sendSlide <- function(
   })
 }
 
-generateEmail <- function(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults) {
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, numPlots, slide, drugs, drugDefaults) {
   title = values$title
   DT <- values$DT
   url <- values$url
@@ -82,31 +85,36 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   outputComments("Saving PPTX")
   print(PPTX, target = pptxfileName)
-  xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
-  pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
 
-  outputComments("Starting ggexport()")
-  ggpubr::ggexport(
+  xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
+
+  outputComments("Creating PNG file")
+
+  png_base_height <- 50
+  png_height_per_plot <- 120
+  png_height <- png_base_height + (numPlots * png_height_per_plot)
+  pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
+  ggplot2::ggsave(
     plotObject +
-      ggplot2::labs(title = "", caption = NULL, x = NULL, y = NULL) +
+      ggplot2::labs(title = title, caption = NULL) +
       ggplot2::theme(
         strip.text.y = ggplot2::element_text(size = 6, angle = 180),
         axis.text.y = ggplot2::element_text(size = 6),
-        axis.text.x = ggplot2::element_text(size = 4),
+        axis.text.x = ggplot2::element_text(size = 8),
+        axis.title.x = ggplot2::element_text(size = 12),
         legend.background = ggplot2::element_blank(),
         legend.box.background = ggplot2::element_blank(),
         legend.key = ggplot2::element_blank(),
-        legend.text = ggplot2::element_text(size=4),
-        legend.title = ggplot2::element_text(color="darkblue", size=6, face="bold")
+        legend.text = ggplot2::element_text(size=8),
+        legend.title = ggplot2::element_text(color="darkblue", size=10, face="bold"),
+        plot.title = ggplot2::element_text(size=14, face="bold")
       ),
     filename = pngfileName,
-    resolution = 72,
-    height = 144,
-    width = 240,
-    pointsize = 4,
-    verbose = FALSE
+    dpi = 150,
+    height = png_height,
+    width = 800,
+    units = "px"
   )
-  pngfileName <- gsub(".png","001.png",pngfileName) #Weird!
 
   outputComments("Fixing Units for export")
   if (values$ageUnit == "1")
