@@ -9,14 +9,9 @@ app_server <- function(input, output, session) {
   config <- .sprglobals$config
   isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 
-  initialLoad <- reactiveVal(TRUE)
-
-  observeEvent('', {
-    if (initialLoad() == TRUE) {
-      showIntroModal()
-    }
-    initialLoad(FALSE)
-  }, ignoreNULL=FALSE, ignoreInit = FALSE, once = TRUE)
+  observeEvent(input$show_intro_modal, {
+    showIntroModal()
+  }, once = TRUE)
 
   options(error = function() {
     msg <- geterrmessage()
@@ -233,12 +228,6 @@ app_server <- function(input, output, session) {
       updateQueryString(url)
       url(url)
     }, name = "onBookmarked()")
-  })
-
-  onRestore(function(state) {
-  profileCode({
-    initialLoad(FALSE)
-  }, name = "onRestore()")
   })
 
   onRestored(function(state) {
