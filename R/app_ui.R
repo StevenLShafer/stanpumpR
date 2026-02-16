@@ -438,11 +438,6 @@ app_ui <- function() {
                       "Check address"
                     )
                   )
-                ), # End of fluid row
-                imageOutput(
-                  outputId = "sentPlot",
-                  height = "100px",
-                  width = "166px"
                 )
               ) # end columnn
             ) # end fluidRow

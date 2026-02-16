@@ -14,44 +14,46 @@ sendSlide <- function(
 )
 {
   tryCatchLog::tryCatchLog({
-  prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
-  on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
+    prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
+    on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
 
-  outputComments("Sending email to", recipient)
+    outputComments("Sending email to", recipient)
 
-  if (missing(email_username) || is.null(email_username)) {
-    stop("email username missing")
-  }
-  if (missing(email_password) || is.null(email_password)) {
-    stop("email password missing")
-  }
+    if (missing(email_username) || is.null(email_username)) {
+      stop("email username missing")
+    }
+    if (missing(email_password) || is.null(email_password)) {
+      stop("email password missing")
+    }
 
-  emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults)
+    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults)
 
-  outputComments("Sending email")
-  email <- mailR::send.mail(
-    from = paste0("stanpumpR <", email_username, ">"),
-    to = recipient,
-    subject = emailData$title,
-    body = emailData$bodyText,
-    html = TRUE,
-    smtp = list(
-      host.name = "smtp.gmail.com",
-      port = 587,
-      user.name = email_username,
-      passwd = email_password,
-      ssl = TRUE),
-    attach.files = c(
-      emailData$pptxfileName,
-      emailData$xlsxfileName
-    ),
-    authenticate = TRUE
-  )
-  unlink(emailData$pptxfileName)
-  unlink(emailData$xlsxfileName)
-  outputComments("Leaving sendMail()")
+    outputComments("Sending email")
+    email <- mailR::send.mail(
+      from = paste0("stanpumpR <", email_username, ">"),
+      to = recipient,
+      subject = emailData$title,
+      body = emailData$bodyText,
+      html = TRUE,
+      smtp = list(
+        host.name = "smtp.gmail.com",
+        port = 587,
+        user.name = email_username,
+        passwd = email_password,
+        ssl = TRUE),
+      attach.files = c(
+        emailData$pptxfileName,
+        emailData$xlsxfileName
+      ),
+      authenticate = TRUE
+    )
+    unlink(emailData$pptxfileName)
+    unlink(emailData$xlsxfileName)
+    outputComments("Leaving sendMail()")
+    return(TRUE)
+  }, error = function(e) {
+    return(e$message)
   })
-  return(emailData$pngfileName)
 }
 
 generateEmail <- function(values, recipient, plotObject, allResults, plotResults, slide, drugs, drugDefaults) {
