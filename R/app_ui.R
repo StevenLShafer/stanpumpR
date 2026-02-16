@@ -238,7 +238,7 @@ app_ui <- function() {
                   clip = FALSE,
                   nullOutside = FALSE
                 )
-              ), # End of plotOutput
+              ) |> shinycssloaders::withSpinner(hide.ui = FALSE), # End of plotOutput
               uiOutput("hover_info")
             ), # End of div
             ############################################################################
