@@ -186,17 +186,24 @@ app_server <- function(input, output, session) {
   # Get reference time from client
   # The reference time is passed from app.js on event shiny:connected
   observeEvent(input$client_time, {
+    if (input$referenceTime != '') {
+      return()
+    }
     outputComments("In observeEvent(input$client_time,...", level = DEBUG_LEVEL_VERBOSE)
     time <- input$client_time
     outputComments("Reference time from client:", time)
     start <- getReferenceTime(time)
     outputComments("Calculated reference time:", start)
-    ## This enables restoration of existing time when a bookmark is used or state is restored
-    if (input$referenceTime == 'none' | input$referenceTime == '')
-    {
-      updateNumericInput(session, "referenceTime", value = start)
-    }
+    updateNumericInput(session, "referenceTime", value = start)
   }, ignoreNULL = TRUE, once = TRUE)
+
+  referenceTime <- reactive({
+    if (input$timeMode == "relative") {
+      "none"
+    } else {
+      input$referenceTime
+    }
+  })
 
   DrugTimeUnits <- reactiveVal("")
 
@@ -371,7 +378,7 @@ app_server <- function(input, output, session) {
   profileCode({
     outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
     DT <- cleanDT(doseTable())
-    DT$Time <- clockTimeToDelta(input$referenceTime, DT$Time)
+    DT$Time <- clockTimeToDelta(referenceTime(), DT$Time)
     DT <- DT[
       DT$Drug  != "" &
         DT$Units != "" &
@@ -396,7 +403,7 @@ app_server <- function(input, output, session) {
     ET <- eventTable()
     if (length(ET$Time) > 0) {
       ET$Time <- as.character(ET$Time)
-      ET$Time <- clockTimeToDelta(input$referenceTime, ET$Time)
+      ET$Time <- clockTimeToDelta(referenceTime(), ET$Time)
       if (input$maximum == 10) {
         ET <- ET[ET$Time <= 10, ]
       }
@@ -459,9 +466,8 @@ app_server <- function(input, output, session) {
     ET <- eventTableClean()
 
     xBreaks <- 0:(plotMaximum()/steps()) * steps()
-    referenceTime <- input$referenceTime
-    xLabels <- deltaToClockTime(referenceTime, xBreaks)
-    if (referenceTime == "none") {
+    xLabels <- deltaToClockTime(referenceTime(), xBreaks)
+    if (referenceTime() == "none") {
       xAxisLabel <- "Time (Minutes)"
     } else {
       xAxisLabel <- "Time"
@@ -687,11 +693,11 @@ app_server <- function(input, output, session) {
     # cat("j = ",j,"\n")
     # cat(str(drugs()[[drug]]$equiSpace$Time), "\n")
     time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
-    if (input$referenceTime != "none")
+    if (referenceTime() == "none")
     {
-      time <- deltaToClockTime(input$referenceTime, time)
-    } else {
       time = paste(time, "minutes")
+    } else {
+      time <- deltaToClockTime(referenceTime(), time)
     }
     returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs()[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
     if (plotRecovery())
@@ -770,11 +776,11 @@ app_server <- function(input, output, session) {
       time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
       #    cat("Time from x axis = ",time,"\n")
     }
-    if (input$referenceTime == "none")
+    if (referenceTime() == "none")
     {
       time <- as.character(time)
     } else {
-      time <- deltaToClockTime(input$referenceTime, time)
+      time <- deltaToClockTime(referenceTime(), time)
     }
 
     if(is.null(e) || length(plottedDrugs) == 0)
@@ -1113,14 +1119,13 @@ app_server <- function(input, output, session) {
       # Check that data object exists and is data frame.
       modelOK <- TRUE
       clickTime <- validateTime(input$clickTimeEvent)
-      if (input$referenceTime == "none")
+      if (referenceTime() == "none")
       {
         clickTime <- as.numeric(clickTime)
       } else {
-        referenceTime <- input$referenceTime
         if (nchar(clickTime) == 5)
         {
-          clickTime <- clockTimeToDelta(referenceTime, clickTime)
+          clickTime <- clockTimeToDelta(referenceTime(), clickTime)
         } else {
           clickTime <- as.numeric(clickTime)
         }
@@ -1488,7 +1493,7 @@ app_server <- function(input, output, session) {
                              drugs(),
                              drugList(),
                              eventTable(),
-                             input$referenceTime)
+                             referenceTime())
 
       })
 
