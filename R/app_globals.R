@@ -61,7 +61,9 @@ bookmarksToExclude <- c(
   "editDrugs",
   "newEndCe",
   "hoverInfo",
-  "debug_level"
+  "debug_level",
+  "show_intro_modal",
+  "client_time"
 )
 
 outputComments <- function(
