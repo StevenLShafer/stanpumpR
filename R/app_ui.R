@@ -190,11 +190,12 @@ app_ui <- function() {
                 fluidRow(
                   column(
                     width = 6,
-                    selectInput(
+                    radioButtons(
                       "timeMode",
                       "Time Display Mode",
                       c("Actual time" = "clock",
-                        "Elapsed minutes" = "relative")
+                        "Elapsed minutes" = "relative"),
+                      inline = TRUE
                     )
                   ),
                   column(

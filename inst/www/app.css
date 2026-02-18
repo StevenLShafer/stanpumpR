@@ -25,6 +25,10 @@
   right: 0;
 }
 
+.radio-inline+.radio-inline {
+  margin-left: 20px;
+}
+
 #main_plot_outer {
   max-height: 550px;
   overflow-x: hidden;
