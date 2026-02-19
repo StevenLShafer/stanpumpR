@@ -403,11 +403,9 @@ app_server <- function(input, output, session) {
     if (input$timeMode != "relative") return()
 
     dt <- doseTable()
-    for (i in seq_len(nrow(dt))) {
-      time <- dt$Time[i]
-      if (time != "" && !is.na(time)) {
-        dt$Time[i] <- clockTimeToDelta(input$referenceTime, time)
-      }
+    to_update <- (dt$Time != "" & !is.na(dt$Time) & grepl(":", dt$Time))
+    if (any(to_update)) {
+      dt$Time[to_update] <- clockTimeToDelta(input$referenceTime, dt$Time[to_update])
     }
     doseTable(dt)
   }, ignoreInit = TRUE)
