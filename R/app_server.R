@@ -160,11 +160,11 @@ app_server <- function(input, output, session) {
 
   # Routine to output doseTableHTML from doseTable
   output$doseTableHTML <- renderRHandsontable({
-  profileCode({
-    outputComments("Rendering doseTableHTML")
+    profileCode({
+      outputComments("Rendering doseTableHTML")
 
-    createHOT(doseTable(), drugDefaults())
-  }, name = "createHOT() from doseTableHTML")
+      createHOT(doseTable(), drugDefaults())
+    }, name = "createHOT() from doseTableHTML")
   })
 
   eventTable <- reactiveVal(eventTableInit)
@@ -201,11 +201,11 @@ app_server <- function(input, output, session) {
   url <- reactiveVal("")
 
   observe({
-  profileCode({
-    # Trigger this observer every time an input changes
-    reactiveValuesToList(input)
-    session$doBookmark()
-  }, name = "doBookmark observer")
+    profileCode({
+      # Trigger this observer every time an input changes
+      reactiveValuesToList(input)
+      session$doBookmark()
+    }, name = "doBookmark observer")
   })
 
   # This gets called before bookmarking to prepare values that need to be saved
@@ -226,25 +226,25 @@ app_server <- function(input, output, session) {
   })
 
   onRestored(function(state) {
-  profileCode({
-    outputComments(
-      "***************************************************************************\n",
-      "*                       Restoring Session from URL                        *\n",
-      "***************************************************************************",
-      sep = ""
-    )
-    DT <- as.data.frame(state$values$DT)
-    doseTable(DT)
-    outputComments("doseTable:")
-    outputComments(DT)
-    ET <- as.data.frame(state$values$ET)
-    if (ncol(ET) == 0) {
-      ET <- eventTableInit
-    }
-    eventTable(ET)
-    outputComments("eventTable:")
-    outputComments(ET)
-  }, name = "onRestored()")
+    profileCode({
+      outputComments(
+        "***************************************************************************\n",
+        "*                       Restoring Session from URL                        *\n",
+        "***************************************************************************",
+        sep = ""
+      )
+      DT <- as.data.frame(state$values$DT)
+      doseTable(DT)
+      outputComments("doseTable:")
+      outputComments(DT)
+      ET <- as.data.frame(state$values$ET)
+      if (ncol(ET) == 0) {
+        ET <- eventTableInit
+      }
+      eventTable(ET)
+      outputComments("eventTable:")
+      outputComments(ET)
+    }, name = "onRestored()")
   })
 
 
@@ -253,40 +253,40 @@ app_server <- function(input, output, session) {
   ######################
 
   observeEvent(input$doseTableHTML, {
-  profileCode({
-    outputComments("In observeEvent(input$doseTableHTML,...", level = DEBUG_LEVEL_VERBOSE)
-    data <- input$doseTableHTML
+    profileCode({
+      outputComments("In observeEvent(input$doseTableHTML,...", level = DEBUG_LEVEL_VERBOSE)
+      data <- input$doseTableHTML
 
-    if (is.null(data$changes$source)) {
+      if (is.null(data$changes$source)) {
+        if ("changes" %in% names(data) &&
+            "event" %in% names(data$changes) &&
+            data$changes$event %in% c("afterCreateRow", "afterRemoveRow")) {
+          # If we get here because a row was added or removed, keep going
+        } else {
+          return()
+        }
+      }
+
       if ("changes" %in% names(data) &&
-          "event" %in% names(data$changes) &&
-          data$changes$event %in% c("afterCreateRow", "afterRemoveRow")) {
-        # If we get here because a row was added or removed, keep going
-      } else {
+          "source" %in% names(data$changes) &&
+          data$changes$source == "edit") {
         return()
       }
-    }
 
-    if ("changes" %in% names(data) &&
-        "source" %in% names(data$changes) &&
-        data$changes$source == "edit") {
-      return()
-    }
+      # Because of a bug in hot_to_r(), we can't use it directly. We need to manually change
+      # the row names for it to work
+      nrows <- length(data$data)
+      data$params$rRowHeaders <- as.character(seq.int(nrows))
+      data <- hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
 
-    # Because of a bug in hot_to_r(), we can't use it directly. We need to manually change
-    # the row names for it to work
-    nrows <- length(data$data)
-    data$params$rRowHeaders <- as.character(seq.int(nrows))
-    data <- hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
-
-    # make sure that table has changed before updating doseTable reactive
-    if ( !identical(doseTable(), data) ) {
-      # Convert NA values to empty (when a new row gets added using the javascript API,
-      # the new row gets NA values and having NA as well as "" values leads to issues later on)
-      data[is.na(data)] <- ""
-      doseTable(data)
-    }
-  }, name = "input$doseTableHTML observer")
+      # make sure that table has changed before updating doseTable reactive
+      if ( !identical(doseTable(), data) ) {
+        # Convert NA values to empty (when a new row gets added using the javascript API,
+        # the new row gets NA values and having NA as well as "" values leads to issues later on)
+        data[is.na(data)] <- ""
+        doseTable(data)
+      }
+    }, name = "input$doseTableHTML observer")
   })
 
   weightUnit <- reactive({
@@ -319,41 +319,41 @@ app_server <- function(input, output, session) {
   })
 
   testCovariates <- reactive({
-  profileCode({
-    outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
-    req(weight(), height(), age(), sex())
-    errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
-    checkNumericCovariates(age(), weight(), height(), errorFxn)
-  }, name = "testCovariates() reactive")
+    profileCode({
+      outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
+      req(weight(), height(), age(), sex())
+      errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
+      checkNumericCovariates(age(), weight(), height(), errorFxn)
+    }, name = "testCovariates() reactive")
   })
 
   # see if drugs can be a regular reactive instead of observe({
   drugs <- reactive({
-  profileCode({
-    outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
-    req(testCovariates(), doseTableClean())
+    profileCode({
+      outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
+      req(testCovariates(), doseTableClean())
 
-    newDrugs <- NULL
+      newDrugs <- NULL
 
-    newDrugs <- recalculatePK(
-      newDrugs,
-      drugDefaults(),
-      doseTableClean(),
-      age = age(),
-      weight = weight(),
-      height = height(),
-      sex = sex()
-    ) |> profileCode("recalculatePK() in drugs()")
+      newDrugs <- recalculatePK(
+        newDrugs,
+        drugDefaults(),
+        doseTableClean(),
+        age = age(),
+        weight = weight(),
+        height = height(),
+        sex = sex()
+      ) |> profileCode("recalculatePK() in drugs()")
 
-    newDrugs <- processdoseTable(
-      doseTableClean(),
-      eventTableClean(),
-      newDrugs,
-      plotMaximum(),
-      plotRecovery()
-    ) |> profileCode("processdoseTable() in drugs()")
-    newDrugs
-  }, name = "drugs() reactive")
+      newDrugs <- processdoseTable(
+        doseTableClean(),
+        eventTableClean(),
+        newDrugs,
+        plotMaximum(),
+        plotRecovery()
+      ) |> profileCode("processdoseTable() in drugs()")
+      newDrugs
+    }, name = "drugs() reactive")
   })
 
   ###########################
@@ -361,76 +361,90 @@ app_server <- function(input, output, session) {
   ###########################
 
   doseTableClean <- reactive({
-  profileCode({
-    outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
-    DT <- cleanDT(doseTable())
-    DT$Time <- clockTimeToDelta(referenceTime(), DT$Time)
-    DT <- DT[
-      DT$Drug  != "" &
-        DT$Units != "" &
-        !is.na(DT$Dose) &
-        !is.na(DT$Time), ]
-    if (input$maximum == 10) {
-      DT <- DT[DT$Time <= 10, ]
-    }
-    if (nrow(DT) == 0) {
-      DT <- NULL
-    } else {
-      DT <- DT[order(DT$Drug, DT$Time), ]
-    }
+    profileCode({
+      outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
+      DT <- cleanDT(doseTable())
+      DT$Time <- clockTimeToDelta(referenceTime(), DT$Time)
+      DT <- DT[
+        DT$Drug  != "" &
+          DT$Units != "" &
+          !is.na(DT$Dose) &
+          !is.na(DT$Time), ]
+      if (input$maximum == 10) {
+        DT <- DT[DT$Time <= 10, ]
+      }
+      if (nrow(DT) == 0) {
+        DT <- NULL
+      } else {
+        DT <- DT[order(DT$Drug, DT$Time), ]
+      }
 
-    DT
-  }, name = "doseTableClean() reactive")
+      DT
+    }, name = "doseTableClean() reactive")
   })
 
   eventTableClean <- reactive({
-  profileCode({
-    outputComments("In eventTableClean", level = DEBUG_LEVEL_VERBOSE)
-    ET <- eventTable()
-    if (length(ET$Time) > 0) {
-      ET$Time <- as.character(ET$Time)
-      ET$Time <- clockTimeToDelta(referenceTime(), ET$Time)
-      if (input$maximum == 10) {
-        ET <- ET[ET$Time <= 10, ]
+    profileCode({
+      outputComments("In eventTableClean", level = DEBUG_LEVEL_VERBOSE)
+      ET <- eventTable()
+      if (length(ET$Time) > 0) {
+        ET$Time <- as.character(ET$Time)
+        ET$Time <- clockTimeToDelta(referenceTime(), ET$Time)
+        if (input$maximum == 10) {
+          ET <- ET[ET$Time <= 10, ]
+        }
       }
-    }
-    ET
-  }, name = "eventTableClean() reactive")
+      ET
+    }, name = "eventTableClean() reactive")
   })
 
-  plotMaximum <- reactive({
-  profileCode({
-    req(doseTableClean())
+  # When switching to relative time, convert any clock times (HH:MM) to minutes
+  observeEvent(input$timeMode, {
+    if (input$timeMode != "relative") return()
 
-    plotMaximum <- as.numeric(input$maximum)
-    steps <- maxtimes$steps[maxtimes$times == input$maximum]
-    maxTime <- max(as.numeric(doseTableClean()$Time),
-                   as.numeric(eventTableClean()$Time),
-                   na.rm = TRUE)
-
-    if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
-      steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
-      plotMaximum <- ceiling((maxTime + 30)/steps) * steps
+    dt <- doseTable()
+    for (i in seq_len(nrow(dt))) {
+      time <- dt$Time[i]
+      if (time != "" && !is.na(time)) {
+        dt$Time[i] <- clockTimeToDelta(input$referenceTime, time)
+      }
     }
-    plotMaximum
-  }, name = "plotMaximum() reactive")
+    doseTable(dt)
+  }, ignoreInit = TRUE)
+
+  plotMaximum <- reactive({
+    profileCode({
+      req(doseTableClean())
+
+      plotMaximum <- as.numeric(input$maximum)
+      steps <- maxtimes$steps[maxtimes$times == input$maximum]
+      maxTime <- max(as.numeric(doseTableClean()$Time),
+                     as.numeric(eventTableClean()$Time),
+                     na.rm = TRUE)
+
+      if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
+        steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
+        plotMaximum <- ceiling((maxTime + 30)/steps) * steps
+      }
+      plotMaximum
+    }, name = "plotMaximum() reactive")
   })
 
   steps <- reactive({
-  profileCode({
-    req(doseTableClean())
+    profileCode({
+      req(doseTableClean())
 
-    plotMaximum <- as.numeric(input$maximum)
-    steps <- maxtimes$steps[maxtimes$times == input$maximum]
-    maxTime <- max(as.numeric(doseTableClean()$Time),
-                   as.numeric(eventTableClean()$Time),
-                   na.rm = TRUE)
+      plotMaximum <- as.numeric(input$maximum)
+      steps <- maxtimes$steps[maxtimes$times == input$maximum]
+      maxTime <- max(as.numeric(doseTableClean()$Time),
+                     as.numeric(eventTableClean()$Time),
+                     na.rm = TRUE)
 
-    if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
-      steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
-    }
-    steps
-  }, name = "steps() reactive")
+      if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
+        steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
+      }
+      steps
+    }, name = "steps() reactive")
   })
 
   plotRecovery <- reactive({
@@ -443,77 +457,77 @@ app_server <- function(input, output, session) {
   })
 
   simulationPlotRetval <- reactive({
-  profileCode({
-    outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
-    req(doseTableClean(), testCovariates(),
-        length(input$plasmaLinetype) > 0, length(input$effectsiteLinetype) > 0)
+    profileCode({
+      outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
+      req(doseTableClean(), testCovariates(),
+          length(input$plasmaLinetype) > 0, length(input$effectsiteLinetype) > 0)
 
-    DT <- doseTableClean()
-    ET <- eventTableClean()
+      DT <- doseTableClean()
+      ET <- eventTableClean()
 
-    xBreaks <- 0:(plotMaximum()/steps()) * steps()
-    xLabels <- deltaToClockTime(referenceTime(), xBreaks)
-    if (referenceTime() == "none") {
-      xAxisLabel <- "Time (Minutes)"
-    } else {
-      xAxisLabel <- "Time"
-      updateNumericInput(session, "referenceTime", value = xLabels[1])
-    }
+      xBreaks <- 0:(plotMaximum()/steps()) * steps()
+      xLabels <- deltaToClockTime(referenceTime(), xBreaks)
+      if (referenceTime() == "none") {
+        xAxisLabel <- "Time (Minutes)"
+      } else {
+        xAxisLabel <- "Time"
+        updateNumericInput(session, "referenceTime", value = xLabels[1])
+      }
 
-    plotMEAC               <- "MEAC"        %in% input$addedPlots
-    plotInteraction        <- "Interaction" %in% input$addedPlots
-    plotCost               <- "Cost"        %in% input$addedPlots
-    plotEvents             <- "Events"      %in% input$addedPlots
-    plasmaLinetype         <- input$plasmaLinetype
-    effectsiteLinetype     <- input$effectsiteLinetype
-    normalization          <- input$normalization
-    title                  <- input$title
-    typical                <- input$typical
-    logY                   <- input$logY
-    if (plotRecovery() || plotEvents || plotInteraction) logY <- FALSE
+      plotMEAC               <- "MEAC"        %in% input$addedPlots
+      plotInteraction        <- "Interaction" %in% input$addedPlots
+      plotCost               <- "Cost"        %in% input$addedPlots
+      plotEvents             <- "Events"      %in% input$addedPlots
+      plasmaLinetype         <- input$plasmaLinetype
+      effectsiteLinetype     <- input$effectsiteLinetype
+      normalization          <- input$normalization
+      title                  <- input$title
+      typical                <- input$typical
+      logY                   <- input$logY
+      if (plotRecovery() || plotEvents || plotInteraction) logY <- FALSE
 
-    plasmaLinetype <- linetypes()$plasmaLinetype
-    effectsiteLinetype <- linetypes()$effectsiteLinetype
+      plasmaLinetype <- linetypes()$plasmaLinetype
+      effectsiteLinetype <- linetypes()$effectsiteLinetype
 
-    printCaption <- input$caption
-    if (printCaption == "") {
-      printCaption <- paste0(
-        "Age: ",
-        round(age(), 1),
-        " years, weight: ",
-        round(weight(), 2),
-        " kg, height: ",
-        round(height(), 2),
-        " cm, sex: ",
-        sex()
+      printCaption <- input$caption
+      if (printCaption == "") {
+        printCaption <- paste0(
+          "Age: ",
+          round(age(), 1),
+          " years, weight: ",
+          round(weight(), 2),
+          " kg, height: ",
+          round(height(), 2),
+          " cm, sex: ",
+          sex()
+        )
+      }
+
+      # try tryCatchLog if something goes wrong here for a better traceback
+
+      #    tryCatchLog({
+      simulationPlot(
+        drugs = drugs(),
+        events = ET,
+        drugDefaults = drugDefaults(),
+        eventDefaults = eventDefaults(),
+        xBreaks = xBreaks,
+        xLabels = xLabels,
+        xAxisLabel = xAxisLabel,
+        plasmaLinetype = plasmaLinetype,
+        effectsiteLinetype = effectsiteLinetype,
+        normalization = normalization,
+        plotMEAC = plotMEAC,
+        plotInteraction = plotInteraction,
+        plotCost = plotCost,
+        plotEvents = plotEvents,
+        plotRecovery = plotRecovery(),
+        title = title,
+        caption = printCaption,
+        typical = typical,
+        logY = logY
       )
-    }
-
-    # try tryCatchLog if something goes wrong here for a better traceback
-
-    #    tryCatchLog({
-    simulationPlot(
-      drugs = drugs(),
-      events = ET,
-      drugDefaults = drugDefaults(),
-      eventDefaults = eventDefaults(),
-      xBreaks = xBreaks,
-      xLabels = xLabels,
-      xAxisLabel = xAxisLabel,
-      plasmaLinetype = plasmaLinetype,
-      effectsiteLinetype = effectsiteLinetype,
-      normalization = normalization,
-      plotMEAC = plotMEAC,
-      plotInteraction = plotInteraction,
-      plotCost = plotCost,
-      plotEvents = plotEvents,
-      plotRecovery = plotRecovery(),
-      title = title,
-      caption = printCaption,
-      typical = typical,
-      logY = logY
-    )
-  }, name = "simulationPlotRetval() reactive")
+    }, name = "simulationPlotRetval() reactive")
   })
   #  })
 
@@ -700,38 +714,38 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$plot_click,
     {
-    profileCode({
-      outputComments("in click()")
-      x <- imgDrugTime(input$plot_click) |> profileCode("imgDrugTime() in input$plot_click")
-      outputComments("in click(), returning from imgDrugTime()")
-      DrugTimeUnits(x)
+      profileCode({
+        outputComments("in click()")
+        x <- imgDrugTime(input$plot_click) |> profileCode("imgDrugTime() in input$plot_click")
+        outputComments("in click(), returning from imgDrugTime()")
+        DrugTimeUnits(x)
 
-      if (x$drug == "Events")
-      {
-        clickPopupEvent(failed = "", x)
-      } else {
-        clickPopupDrug(failed = "", x)
-      }
-    }, name = "input$plot_click observer")
-  })
+        if (x$drug == "Events")
+        {
+          clickPopupEvent(failed = "", x)
+        } else {
+          clickPopupDrug(failed = "", x)
+        }
+      }, name = "input$plot_click observer")
+    })
 
   # Response to double click
   observeEvent(
     input$plot_dblclick,
     {
-    profileCode({
-      outputComments("in double click routine")
-      x <- imgDrugTime(input$plot_dblclick)
-      DrugTimeUnits(x)
+      profileCode({
+        outputComments("in double click routine")
+        x <- imgDrugTime(input$plot_dblclick)
+        DrugTimeUnits(x)
 
-      if (x$drug == "Events")
-      {
-        clickPopupEvent(failed = "", x)
-      } else {
-        dblclickPopupDrug(failed = "", x)
-      }
-    }, name = "input$plot_dblclick observer")
-  })
+        if (x$drug == "Events")
+        {
+          clickPopupEvent(failed = "", x)
+        } else {
+          dblclickPopupDrug(failed = "", x)
+        }
+      }, name = "input$plot_dblclick observer")
+    })
 
   # Get the time, drug, and units from the image
   imgDrugTime <- function(e = "")
@@ -896,41 +910,41 @@ app_server <- function(input, output, session) {
   # edited, but it explains why there will always be some updating of the doseTable from the
   # server.
   observeEvent(input$clickOKDrug, {
-  profileCode({
-    # Check that data object exists and is data frame.
-    modelOK <- TRUE
-    clickTime <- validateTime(input$clickTimeDrug)
-    clickDose <- validateDose(input$clickDose)
-    if (clickTime == "" && clickDose != "") {
-      # This should technically never happen because validation will return 0
-      clickPopupDrug(
-        "Missing time",
-        DrugTimeUnits()
-      )
-      return()
-    }
-
-    removeModal()
-    thisDrug <- which(drugDefaults()$Drug == DrugTimeUnits()$drug)
-    if (drugDefaults()$endCe[thisDrug] != input$newEndCe) {
-      newDrugDefaults <- drugDefaults()
-      newDrugDefaults$endCe[thisDrug] <- input$newEndCe
-      drugDefaults(newDrugDefaults)
-    }
-
-    if (clickTime != "" && clickDose != "") {
-      dt <- doseTable()
-      idx <- which(dt$Drug == "")[1]
-      dt$Drug[idx]  <- DrugTimeUnits()$drug
-      dt$Time[idx]  <- clickTime
-      dt$Dose[idx]  <- clickDose
-      dt$Units[idx] <- input$clickUnits
-      if (dt$Drug[nrow(dt)] != "" ) {
-        dt <- rbind(dt, doseTableNewRow)
+    profileCode({
+      # Check that data object exists and is data frame.
+      modelOK <- TRUE
+      clickTime <- validateTime(input$clickTimeDrug)
+      clickDose <- validateDose(input$clickDose)
+      if (clickTime == "" && clickDose != "") {
+        # This should technically never happen because validation will return 0
+        clickPopupDrug(
+          "Missing time",
+          DrugTimeUnits()
+        )
+        return()
       }
-      doseTable(dt)
-    }
-  }, name = "input$clickOKDrug observer")
+
+      removeModal()
+      thisDrug <- which(drugDefaults()$Drug == DrugTimeUnits()$drug)
+      if (drugDefaults()$endCe[thisDrug] != input$newEndCe) {
+        newDrugDefaults <- drugDefaults()
+        newDrugDefaults$endCe[thisDrug] <- input$newEndCe
+        drugDefaults(newDrugDefaults)
+      }
+
+      if (clickTime != "" && clickDose != "") {
+        dt <- doseTable()
+        idx <- which(dt$Drug == "")[1]
+        dt$Drug[idx]  <- DrugTimeUnits()$drug
+        dt$Time[idx]  <- clickTime
+        dt$Dose[idx]  <- clickDose
+        dt$Units[idx] <- input$clickUnits
+        if (dt$Drug[nrow(dt)] != "" ) {
+          dt <- rbind(dt, doseTableNewRow)
+        }
+        doseTable(dt)
+      }
+    }, name = "input$clickOKDrug observer")
   })
 
   # Edit prior drug doses
@@ -959,98 +973,98 @@ app_server <- function(input, output, session) {
   })
 
   output$editPriorDosesTable <- renderRHandsontable({
-  profileCode({
-    dt <- doseTable()
-    editPriorDosesTable <- dt[dt$Drug == DrugTimeUnits()$drug, ]
-    possibleUnits <- drugDefaults() %>%
-      dplyr::filter(Drug == DrugTimeUnits()$drug) %>%
-      dplyr::pull("Units") %>%
-      unlist()
-    editPriorDosesTable$Delete <- FALSE
+    profileCode({
+      dt <- doseTable()
+      editPriorDosesTable <- dt[dt$Drug == DrugTimeUnits()$drug, ]
+      possibleUnits <- drugDefaults() %>%
+        dplyr::filter(Drug == DrugTimeUnits()$drug) %>%
+        dplyr::pull("Units") %>%
+        unlist()
+      editPriorDosesTable$Delete <- FALSE
 
-    editPriorDosesTableHOT <- rhandsontable(
-      editPriorDosesTable[ , c("Delete","Time","Dose","Units")],
-      overflow = 'visible',
-      rowHeaders = NULL,
-      height = 220,
-      selectCallback = TRUE
-    ) %>%
-      hot_col(
-        col = "Delete",
-        type = "checkbox",
-        halign = "htRight",
-        allowInvalid = FALSE,
-        strict = TRUE
+      editPriorDosesTableHOT <- rhandsontable(
+        editPriorDosesTable[ , c("Delete","Time","Dose","Units")],
+        overflow = 'visible',
+        rowHeaders = NULL,
+        height = 220,
+        selectCallback = TRUE
       ) %>%
-      hot_col(
-        col = "Time",
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = "Dose",
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = "Units",
-        type = "dropdown",
-        source = possibleUnits,
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid = FALSE
-      ) %>%
-      hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
-      hot_rows(rowHeights = 10) %>%
-      hot_cols(colWidths = c(50,55,55,90))
+        hot_col(
+          col = "Delete",
+          type = "checkbox",
+          halign = "htRight",
+          allowInvalid = FALSE,
+          strict = TRUE
+        ) %>%
+        hot_col(
+          col = "Time",
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_col(
+          col = "Dose",
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_col(
+          col = "Units",
+          type = "dropdown",
+          source = possibleUnits,
+          strict = TRUE,
+          halign = "htLeft",
+          valign = "vtMiddle",
+          allowInvalid = FALSE
+        ) %>%
+        hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+        hot_rows(rowHeights = 10) %>%
+        hot_cols(colWidths = c(50,55,55,90))
 
-    editPriorDosesTableHOT
-  }, name = "output$editPriorDosesTable")
+      editPriorDosesTableHOT
+    }, name = "output$editPriorDosesTable")
   })
 
   observeEvent(
     input$editDosesOK,
     {
-    profileCode({
-      removeModal()
-      TT <- hot_to_r(input$editPriorDosesTable)
-      cat("In ObserveEvent for editDosesOK\n")
-      TT$Drug <- DrugTimeUnits()$drug
-      cat("TT:\n")
-      print(TT)
-      cat("doseTable:\n")
-      print(doseTable())
-      dt <- doseTable()
-      dt <- rbind(
-        TT[!TT$Delete,c("Drug","Time","Dose","Units")],
-        dt[dt$Drug != DrugTimeUnits()$drug,]
-      )
+      profileCode({
+        removeModal()
+        TT <- hot_to_r(input$editPriorDosesTable)
+        cat("In ObserveEvent for editDosesOK\n")
+        TT$Drug <- DrugTimeUnits()$drug
+        cat("TT:\n")
+        print(TT)
+        cat("doseTable:\n")
+        print(doseTable())
+        dt <- doseTable()
+        dt <- rbind(
+          TT[!TT$Delete,c("Drug","Time","Dose","Units")],
+          dt[dt$Drug != DrugTimeUnits()$drug,]
+        )
 
-      # Sort by time, by drug, but put blanks at the bottom
-      print(unique(dt$Time))
-      dt$Time[dt$Time == ""] <- "zzzzz"
-      dt <- dt[order(dt$Time, dt$Drug),]
-      dt$Time[dt$Time == "zzzzz"] <- ""
+        # Sort by time, by drug, but put blanks at the bottom
+        print(unique(dt$Time))
+        dt$Time[dt$Time == ""] <- "zzzzz"
+        dt <- dt[order(dt$Time, dt$Drug),]
+        dt$Time[dt$Time == "zzzzz"] <- ""
 
-      cat("doseTable after update:\n")
-      print(dt)
+        cat("doseTable after update:\n")
+        print(dt)
 
-      for (i in 1:nrow(dt))
-      {
-        if (dt$Drug[i] > "")
+        for (i in 1:nrow(dt))
         {
-          dt$Time[i] <- validateTime(dt$Time[i])
-          dt$Dose[i] <- validateDose(dt$Dose[i]) # should work for target too
+          if (dt$Drug[i] > "")
+          {
+            dt$Time[i] <- validateTime(dt$Time[i])
+            dt$Dose[i] <- validateDose(dt$Dose[i]) # should work for target too
+          }
         }
-      }
-      doseTable(dt)
-    }, name = "input$editDosesOK observer")
-  })
+        doseTable(dt)
+      }, name = "input$editDosesOK observer")
+    })
 
   # Single Click - Events
   clickPopupEvent <- function(
@@ -1104,128 +1118,128 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$clickOKEvent,
     {
-    profileCode({
-      # Check that data object exists and is data frame.
-      modelOK <- TRUE
-      clickTime <- validateTime(input$clickTimeEvent)
-      if (referenceTime() == "none")
-      {
-        clickTime <- as.numeric(clickTime)
-      } else {
-        if (nchar(clickTime) == 5)
+      profileCode({
+        # Check that data object exists and is data frame.
+        modelOK <- TRUE
+        clickTime <- validateTime(input$clickTimeEvent)
+        if (referenceTime() == "none")
         {
-          clickTime <- clockTimeToDelta(referenceTime(), clickTime)
-        } else {
           clickTime <- as.numeric(clickTime)
+        } else {
+          if (nchar(clickTime) == 5)
+          {
+            clickTime <- clockTimeToDelta(referenceTime(), clickTime)
+          } else {
+            clickTime <- as.numeric(clickTime)
+          }
         }
-      }
 
-      clickEvent <- input$clickEvent
-      if (clickTime == "")
-      {
-        modelOK <- FALSE
-        failed = "Missing time"
-      }
-      if (modelOK)
-      {
-        ET <- eventTable()
-        ET <- data.frame(
-          Time  = c(ET$Time, clickTime),
-          Event = c(ET$Event, clickEvent),
-          Fill = c(ET$Fill, eventDefaults()$Color[clickEvent == eventDefaults()$Event])
-        )
-        ET <- ET[order(ET$Time,ET$Event),]
-        eventTable(ET)
-        removeModal()
-      } else {
-        clickPopupEvent(
-          failed = failed,
-          DrugTimeUnits()
-        )
-      }
-    }, name = "input$clickOKEvent observer")
+        clickEvent <- input$clickEvent
+        if (clickTime == "")
+        {
+          modelOK <- FALSE
+          failed = "Missing time"
+        }
+        if (modelOK)
+        {
+          ET <- eventTable()
+          ET <- data.frame(
+            Time  = c(ET$Time, clickTime),
+            Event = c(ET$Event, clickEvent),
+            Fill = c(ET$Fill, eventDefaults()$Color[clickEvent == eventDefaults()$Event])
+          )
+          ET <- ET[order(ET$Time,ET$Event),]
+          eventTable(ET)
+          removeModal()
+        } else {
+          clickPopupEvent(
+            failed = failed,
+            DrugTimeUnits()
+          )
+        }
+      }, name = "input$clickOKEvent observer")
     })
 
   # Edit prior drug doses
   observeEvent(
     input$editEvents,
     {
-    profileCode({
-      removeModal()
-      tempTable <-  eventTable()
-      tempTable <- tempTable[,c("Time", "Event")]
-      tempTable$Delete <- FALSE
-      tempTableHOT <- rhandsontable(
-        tempTable[,c("Delete","Time","Event")],
-        overflow = 'visible',
-        rowHeaders = NULL,
-        height = 220,
-        selectCallback = TRUE
-      ) %>%
-        hot_col(
-          col = "Delete",
-          type="checkbox",
-          halign = "htRight",
-          allowInvalid = FALSE,
-          strict = TRUE
+      profileCode({
+        removeModal()
+        tempTable <-  eventTable()
+        tempTable <- tempTable[,c("Time", "Event")]
+        tempTable$Delete <- FALSE
+        tempTableHOT <- rhandsontable(
+          tempTable[,c("Delete","Time","Event")],
+          overflow = 'visible',
+          rowHeaders = NULL,
+          height = 220,
+          selectCallback = TRUE
         ) %>%
-        hot_col(
-          col = "Time",
-          type="autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
-        ) %>%
-        hot_col(
-          col = "Event",
-          type = "dropdown",
-          source = eventDefaults()$Event,
-          strict = TRUE,
-          halign = "htLeft",
-          valign = "vtMiddle",
-          allowInvalid=FALSE
-        ) %>%
-        hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
-        hot_rows(rowHeights = 10) %>%
-        hot_cols(colWidths = c(50,55,90))
-      output$tempTableHTML <- renderRHandsontable(tempTableHOT)
-      showModal(
-        modalDialog(
-          title = paste("Edit Events"),
-          rHandsontableOutput(outputId = "tempTableHTML"),
-          actionButton(
-            inputId = "editEventsOK",
-            label = "OK",
-            style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-          ),
-          tags$button(
-            type = "button",
-            class = "btn btn-warning",
-            `data-dismiss` = "modal",
-            "Cancel"
-          ),
-          footer = NULL,
-          easyClose = TRUE,
-          fade=TRUE,
-          size="s"
+          hot_col(
+            col = "Delete",
+            type="checkbox",
+            halign = "htRight",
+            allowInvalid = FALSE,
+            strict = TRUE
+          ) %>%
+          hot_col(
+            col = "Time",
+            type="autocomplete",
+            halign = "htRight",
+            allowInvalid = TRUE,
+            strict = FALSE
+          ) %>%
+          hot_col(
+            col = "Event",
+            type = "dropdown",
+            source = eventDefaults()$Event,
+            strict = TRUE,
+            halign = "htLeft",
+            valign = "vtMiddle",
+            allowInvalid=FALSE
+          ) %>%
+          hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+          hot_rows(rowHeights = 10) %>%
+          hot_cols(colWidths = c(50,55,90))
+        output$tempTableHTML <- renderRHandsontable(tempTableHOT)
+        showModal(
+          modalDialog(
+            title = paste("Edit Events"),
+            rHandsontableOutput(outputId = "tempTableHTML"),
+            actionButton(
+              inputId = "editEventsOK",
+              label = "OK",
+              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
+            ),
+            tags$button(
+              type = "button",
+              class = "btn btn-warning",
+              `data-dismiss` = "modal",
+              "Cancel"
+            ),
+            footer = NULL,
+            easyClose = TRUE,
+            fade=TRUE,
+            size="s"
+          )
         )
-      )
-    }, name = "input$editEvents observer")
+      }, name = "input$editEvents observer")
     })
 
   observeEvent(
     input$editEventsOK,
     {
-    profileCode({
-      removeModal()
-      ET <- hot_to_r(input$tempTableHTML)
-      ET <- ET[!ET$Delete,c("Time","Event")]
-      CROWS <- match(ET$Event, eventDefaults()$Event)
-      ET$Fill <- eventDefaults()$Color[CROWS]
-      ET <- ET[order(ET$Time,ET$Event),]
-      eventTable(ET)
-    }, name = "input$editEventsOK observer")
-  })
+      profileCode({
+        removeModal()
+        ET <- hot_to_r(input$tempTableHTML)
+        ET <- ET[!ET$Delete,c("Time","Event")]
+        CROWS <- match(ET$Event, eventDefaults()$Event)
+        ET$Fill <- eventDefaults()$Color[CROWS]
+        ET <- ET[order(ET$Time,ET$Event),]
+        eventTable(ET)
+      }, name = "input$editEventsOK observer")
+    })
 
 
   # Double Click Response ################################
@@ -1295,213 +1309,213 @@ app_server <- function(input, output, session) {
   observeEvent(
     input$dblclickOK,
     {
-    profileCode({
-      # Check that data object exists and is data frame.
-      modelOK <- TRUE
-      clickTime <- validateTime(input$dblclickTime)
-      clickDose <- validateDose(input$dblclickDose)
-      if (clickTime == "")
-      {
-        modelOK <- FALSE
-        failed = "Missing time"
-      } else {
-        if (clickDose == "")
+      profileCode({
+        # Check that data object exists and is data frame.
+        modelOK <- TRUE
+        clickTime <- validateTime(input$dblclickTime)
+        clickDose <- validateDose(input$dblclickDose)
+        if (clickTime == "")
         {
           modelOK <- FALSE
-          failed = "Missing dose"
-        }
-      }
-      if (modelOK)
-      {
-        removeModal()
-        if (clickTime != "" && clickDose != "")
-        {
-          dt <- doseTable()
-          i <- which(dt$Drug == "")[1]
-          dt$Drug[i]  <- input$dblclickDrug
-          dt$Time[i]  <- clickTime
-          dt$Dose[i]  <- clickDose
-          dt$Units[i] <- input$dblclickUnits
-          if (dt$Drug[nrow(dt)] != "" )
+          failed = "Missing time"
+        } else {
+          if (clickDose == "")
           {
-            dt <- rbind(dt, doseTableNewRow)
+            modelOK <- FALSE
+            failed = "Missing dose"
           }
-          doseTable(dt)
         }
-      } else {
-        dblclickPopupDrug(
-          failed = failed,
-          DrugTimeUnits()
-        )
-      }
-    }, name = "input$dblclickOK observer")
-  })
+        if (modelOK)
+        {
+          removeModal()
+          if (clickTime != "" && clickDose != "")
+          {
+            dt <- doseTable()
+            i <- which(dt$Drug == "")[1]
+            dt$Drug[i]  <- input$dblclickDrug
+            dt$Time[i]  <- clickTime
+            dt$Dose[i]  <- clickDose
+            dt$Units[i] <- input$dblclickUnits
+            if (dt$Drug[nrow(dt)] != "" )
+            {
+              dt <- rbind(dt, doseTableNewRow)
+            }
+            doseTable(dt)
+          }
+        } else {
+          dblclickPopupDrug(
+            failed = failed,
+            DrugTimeUnits()
+          )
+        }
+      }, name = "input$dblclickOK observer")
+    })
 
   observeEvent(
     input$dblclickDelete,
     {
-    profileCode({
-      removeModal()
-      dt <- doseTable()
-      dt <- dt[dt$Drug != DrugTimeUnits()$drug,]
-      doseTable(dt)
-    }, name = "input$dblclickDelete observer")
-  })
+      profileCode({
+        removeModal()
+        dt <- doseTable()
+        dt <- dt[dt$Drug != DrugTimeUnits()$drug,]
+        doseTable(dt)
+      }, name = "input$dblclickDelete observer")
+    })
 
   # Target Drug Dosing (TCI Like) ###########################################
   # Event to trigger calculation to set doses for a target
   observeEvent(
     input$setTarget,
     {
-    profileCode({
-      targetTable <-  data.frame(
-        Time = rep("",6),
-        Target = rep("", 6)
-      )
-      targetHOT <- rhandsontable(
-        targetTable,
-        overflow = 'visible',
-        rowHeaders = NULL,
-        height = 220,
-        selectCallback = TRUE
-      ) %>%
-        hot_col(
-          col = "Time",
-          type="autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
-        ) %>%
-        hot_col(
-          col = "Target",
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
-        ) %>%
-        hot_context_menu(
-          allowRowEdit = TRUE,
-          allowColEdit = FALSE
-        ) %>%
-        hot_rows(
-          rowHeights = 10
-        ) %>%
-        hot_cols(
-          colWidths = c(70,70)
+      profileCode({
+        targetTable <-  data.frame(
+          Time = rep("",6),
+          Target = rep("", 6)
         )
-      output$targetTableHTML <- renderRHandsontable(targetHOT)
-      showModal(
-        modalDialog(
-          `data-submit-btn` = "targetOK",
-          title = paste("Enter Target Effect Site Concentrations"),
-          tags$div(
-            HTML(
-              paste(
-                tags$span(
-                  style="
+        targetHOT <- rhandsontable(
+          targetTable,
+          overflow = 'visible',
+          rowHeaders = NULL,
+          height = 220,
+          selectCallback = TRUE
+        ) %>%
+          hot_col(
+            col = "Time",
+            type="autocomplete",
+            halign = "htRight",
+            allowInvalid = TRUE,
+            strict = FALSE
+          ) %>%
+          hot_col(
+            col = "Target",
+            type = "autocomplete",
+            halign = "htRight",
+            allowInvalid = TRUE,
+            strict = FALSE
+          ) %>%
+          hot_context_menu(
+            allowRowEdit = TRUE,
+            allowColEdit = FALSE
+          ) %>%
+          hot_rows(
+            rowHeights = 10
+          ) %>%
+          hot_cols(
+            colWidths = c(70,70)
+          )
+        output$targetTableHTML <- renderRHandsontable(targetHOT)
+        showModal(
+          modalDialog(
+            `data-submit-btn` = "targetOK",
+            title = paste("Enter Target Effect Site Concentrations"),
+            tags$div(
+              HTML(
+                paste(
+                  tags$span(
+                    style="
                   color:red; font-weight:bold ",
-                  "Enter time and target concentration below.
+                    "Enter time and target concentration below.
                 Decreasing targets are not yet supported,
                 and will be removed. Doses are found with
                 non-linear regression, which takes a moment
                 to calculate. The suggestion will be good,
                 but better algorithms likely exist."
-                ),
-                sep = ""
+                  ),
+                  sep = ""
+                )
               )
-            )
-          ),
-          selectInput(
-            inputId = "targetDrug",
-            label = "Drug",
-            choices = drugList()
-          ),
-          rHandsontableOutput(
-            outputId = "targetTableHTML"
-          ),
-          textInput(
-            inputId = "targetEndTime",
-            label = "End Time",
-            value = ""
-          ),
-          conditionalPanel(
-            condition = "input.targetEndTime != ''",
-            actionButton(
-              inputId = "targetOK",
-              label = "OK",
-              style = "
+            ),
+            selectInput(
+              inputId = "targetDrug",
+              label = "Drug",
+              choices = drugList()
+            ),
+            rHandsontableOutput(
+              outputId = "targetTableHTML"
+            ),
+            textInput(
+              inputId = "targetEndTime",
+              label = "End Time",
+              value = ""
+            ),
+            conditionalPanel(
+              condition = "input.targetEndTime != ''",
+              actionButton(
+                inputId = "targetOK",
+                label = "OK",
+                style = "
               color: #fff;
               background-color: #337ab7;
               border-color: #2e6da4;
               float: left;
               margin: 0px 5px 5px 5px;
            "
-            )
-          ),
-          tags$button(
-            type = "button",
-            class = "btn btn-warning",
-            style = "margin: 0px 5px 5px 5px;",
-            `data-dismiss` = "modal",
-            "Cancel"
-          ),
-          footer = NULL,
-          easyClose = TRUE,
-          fade=TRUE,
-          size="s"
+              )
+            ),
+            tags$button(
+              type = "button",
+              class = "btn btn-warning",
+              style = "margin: 0px 5px 5px 5px;",
+              `data-dismiss` = "modal",
+              "Cancel"
+            ),
+            footer = NULL,
+            easyClose = TRUE,
+            fade=TRUE,
+            size="s"
+          )
         )
-      )
-    }, name = "input$setTarget observer")
-  })
+      }, name = "input$setTarget observer")
+    })
 
   # Evaluate target concentration
   observeEvent(
     input$targetOK,
     {
-    profileCode({
-      removeModal()
-      waiter::waiter_show()
-      endTime <- validateTime(input$targetEndTime)
-      if ((endTime) == "")
-      {
-        outputComments("No endtime")
-        return()
-      }
-      targetTable <- hot_to_r(input$targetTableHTML)
-
-      tryCatchLog({
-
-        if (!any(doseTable()$Drug==input$targetDrug)) {
-          outputComments("Updating doseTable for new drug")
-          doseTable(rbind(doseTable(),
-                          data.frame(Drug=input$targetDrug,Time="0",Dose="0",Units="mg")))
-          outputComments(doseTable())
+      profileCode({
+        removeModal()
+        waiter::waiter_show()
+        endTime <- validateTime(input$targetEndTime)
+        if ((endTime) == "")
+        {
+          outputComments("No endtime")
+          return()
         }
+        targetTable <- hot_to_r(input$targetTableHTML)
 
-        testTable <- suggest(input$targetDrug,
-                             targetTable,
-                             endTime,
-                             drugs(),
-                             drugList(),
-                             eventTable(),
-                             referenceTime())
+        tryCatchLog({
 
-      })
+          if (!any(doseTable()$Drug==input$targetDrug)) {
+            outputComments("Updating doseTable for new drug")
+            doseTable(rbind(doseTable(),
+                            data.frame(Drug=input$targetDrug,Time="0",Dose="0",Units="mg")))
+            outputComments(doseTable())
+          }
 
-      if (is.null(testTable)) return()
+          testTable <- suggest(input$targetDrug,
+                               targetTable,
+                               endTime,
+                               drugs(),
+                               drugList(),
+                               eventTable(),
+                               referenceTime())
 
-      outputComments("Setting doseTable")
-      dt <- doseTable()
-      dt <- dt[dt$Drug != input$targetDrug,]
+        })
 
-      dt <- rbind(
-        testTable[,c("Drug","Time","Dose","Units")],
-        dt
-      )
-      waiter::waiter_hide()
-      doseTable(dt)
-    }, name = "input$targetOK observer")
-  })
+        if (is.null(testTable)) return()
+
+        outputComments("Setting doseTable")
+        dt <- doseTable()
+        dt <- dt[dt$Drug != input$targetDrug,]
+
+        dt <- rbind(
+          testTable[,c("Drug","Time","Dose","Units")],
+          dt
+        )
+        waiter::waiter_hide()
+        doseTable(dt)
+      }, name = "input$targetOK observer")
+    })
 
   editDrugsTrigger <- makeReactiveTrigger()
   observeEvent(input$editDrugs, {
@@ -1543,145 +1557,145 @@ app_server <- function(input, output, session) {
   })
 
   output$editDrugsHTML <- renderRHandsontable({
-  profileCode({
-    editDrugsTrigger$depend()
-    x <- drugDefaults()
-    x$Units <- drugUnitsSimplify(x$Units)
-    drugsHOT <- rhandsontable(
-      x,
-      overflow = 'visible',
-      rowHeaders = NULL,
-      height = 220,
-      selectCallback = TRUE
-    ) %>%
-      hot_col(
-        col = 1,
-        type="autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE,
-        readOnly = TRUE
+    profileCode({
+      editDrugsTrigger$depend()
+      x <- drugDefaults()
+      x$Units <- drugUnitsSimplify(x$Units)
+      drugsHOT <- rhandsontable(
+        x,
+        overflow = 'visible',
+        rowHeaders = NULL,
+        height = 220,
+        selectCallback = TRUE
       ) %>%
-      hot_col(
-        col = 2,
-        type = "dropdown",
-        source = c("mcg","ng"),
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_col(
-        col = 3,
-        type = "dropdown",
-        source = bolusUnits,
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_col(
-        col = 4,
-        type = "dropdown",
-        source = infusionUnits,
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_col(
-        col = 5,
-        type = "dropdown",
-        source = allUnits,
-        strict = TRUE,
-        halign = "htLeft",
-        valign = "vtMiddle",
-        allowInvalid=FALSE
-      ) %>%
-      hot_col(
-        col = 6,
-        type = "autocomplete",
-        strict = FALSE,
-        allowInvalid = TRUE,
-        halign = "htLeft",
-      ) %>%
-      hot_col(
-        col = 7,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 8,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 9,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 10,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 11,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 12,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_col(
-        col = 13,
-        type = "autocomplete",
-        halign = "htRight",
-        allowInvalid = TRUE,
-        strict = FALSE
-      ) %>%
-      hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) # %>%
-    #    hot_rows(rowHeights = 10) # interferes with cell selection -> other occasions?
-    drugsHOT
-  }, name = "output$editDrugsHTML")
+        hot_col(
+          col = 1,
+          type="autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE,
+          readOnly = TRUE
+        ) %>%
+        hot_col(
+          col = 2,
+          type = "dropdown",
+          source = c("mcg","ng"),
+          strict = TRUE,
+          halign = "htLeft",
+          valign = "vtMiddle",
+          allowInvalid=FALSE
+        ) %>%
+        hot_col(
+          col = 3,
+          type = "dropdown",
+          source = bolusUnits,
+          strict = TRUE,
+          halign = "htLeft",
+          valign = "vtMiddle",
+          allowInvalid=FALSE
+        ) %>%
+        hot_col(
+          col = 4,
+          type = "dropdown",
+          source = infusionUnits,
+          strict = TRUE,
+          halign = "htLeft",
+          valign = "vtMiddle",
+          allowInvalid=FALSE
+        ) %>%
+        hot_col(
+          col = 5,
+          type = "dropdown",
+          source = allUnits,
+          strict = TRUE,
+          halign = "htLeft",
+          valign = "vtMiddle",
+          allowInvalid=FALSE
+        ) %>%
+        hot_col(
+          col = 6,
+          type = "autocomplete",
+          strict = FALSE,
+          allowInvalid = TRUE,
+          halign = "htLeft",
+        ) %>%
+        hot_col(
+          col = 7,
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_col(
+          col = 8,
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_col(
+          col = 9,
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_col(
+          col = 10,
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_col(
+          col = 11,
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_col(
+          col = 12,
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_col(
+          col = 13,
+          type = "autocomplete",
+          halign = "htRight",
+          allowInvalid = TRUE,
+          strict = FALSE
+        ) %>%
+        hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) # %>%
+      #    hot_rows(rowHeights = 10) # interferes with cell selection -> other occasions?
+      drugsHOT
+    }, name = "output$editDrugsHTML")
   })
 
   # Evaluate target concentration
   observeEvent(input$drugEditsOK, {
-  profileCode({
-    removeModal()
-    newDrugDefaults <- hot_to_r(input$editDrugsHTML)
-    newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
-    newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
-    newDrugDefaults$Bolus.Units          <- as.character(newDrugDefaults$Bolus.Units)
-    newDrugDefaults$Infusion.Units       <- as.character(newDrugDefaults$Infusion.Units)
-    newDrugDefaults$Default.Units        <- as.character(newDrugDefaults$Default.Units)
-    newDrugDefaults$Units                <- as.character(newDrugDefaults$Units)
-    newDrugDefaults$Color                <- as.character(newDrugDefaults$Color)
-    newDrugDefaults$Lower                <- as.numeric(newDrugDefaults$Lower)
-    newDrugDefaults$Upper                <- as.numeric(newDrugDefaults$Upper)
-    newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
-    newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
-    newDrugDefaults$endCe                <- as.numeric(newDrugDefaults$endCe)
-    newDrugDefaults$endCeText            <- as.character(newDrugDefaults$endCeText)
+    profileCode({
+      removeModal()
+      newDrugDefaults <- hot_to_r(input$editDrugsHTML)
+      newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
+      newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
+      newDrugDefaults$Bolus.Units          <- as.character(newDrugDefaults$Bolus.Units)
+      newDrugDefaults$Infusion.Units       <- as.character(newDrugDefaults$Infusion.Units)
+      newDrugDefaults$Default.Units        <- as.character(newDrugDefaults$Default.Units)
+      newDrugDefaults$Units                <- as.character(newDrugDefaults$Units)
+      newDrugDefaults$Color                <- as.character(newDrugDefaults$Color)
+      newDrugDefaults$Lower                <- as.numeric(newDrugDefaults$Lower)
+      newDrugDefaults$Upper                <- as.numeric(newDrugDefaults$Upper)
+      newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
+      newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
+      newDrugDefaults$endCe                <- as.numeric(newDrugDefaults$endCe)
+      newDrugDefaults$endCeText            <- as.character(newDrugDefaults$endCeText)
 
-    newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
-    drugDefaults(newDrugDefaults)
-  }, name = "input$drugEditsOK observer")
+      newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
+      drugDefaults(newDrugDefaults)
+    }, name = "input$drugEditsOK observer")
   })
 
   outputComments("Reached the end of server()")
