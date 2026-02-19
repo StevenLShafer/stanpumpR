@@ -49,8 +49,6 @@ simulationPlot <- function(
   # D: plotTable
   # E: allEquispace
 
-# browser()
-
   outputComments("Entering simulationPlot", level = DEBUG_LEVEL_VERBOSE)
 
   # Step D1: create plotTable from `drugs`
