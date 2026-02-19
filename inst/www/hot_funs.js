@@ -92,6 +92,11 @@ function changeHot(changes, source) {
   }
 }
 
+function getTimeMode() {
+  var timeMode = $('input[name="timeMode"]:checked').val();
+  return timeMode || 'clock'; // default to clock if not found
+}
+
 // https://stackoverflow.com/questions/8140612/remove-all-dots-except-the-first-one-from-a-string
 function removeExtraDecimal(x) {
   return x.replace( /^([^.]*\.)(.*)$/, function ( a, b, c ) {
@@ -109,8 +114,60 @@ function cleanNumeric(x) {
   return x.replace(/[^\d.]/g, '');
 }
 
-function cleanTime(x) {
-  return x.replace(/[^\d.:]/g, '');
+function cleanTime(value) {
+  if (!value) return value;
+
+  let timeMode = getTimeMode();
+  let str = String(value);
+
+  if (timeMode === 'relative') {
+    // Allow only digits and decimal point
+    str = str.replace(/[^0-9.]/g, '');
+
+    // Keep only first decimal point
+    let firstDot = str.indexOf('.');
+    if (firstDot !== -1) {
+      let beforeDot = str.substring(0, firstDot);
+      let afterDot = str.substring(firstDot + 1).replace(/\./g, '');
+      str = beforeDot + '.' + afterDot;
+    }
+
+    // Remove leading zeros (except for decimals like 0.5)
+    if (str.length > 1 && str[0] === '0' && str[1] !== '.') {
+      str = str.replace(/^0+/, '') || '0';
+    }
+
+  } else {
+    // Clock mode: allow only digits and colon
+    str = str.replace(/[^0-9:]/g, '');
+
+    // Keep only first colon
+    let firstColon = str.indexOf(':');
+    if (firstColon !== -1) {
+      let beforeColon = str.substring(0, firstColon);
+      let afterColon = str.substring(firstColon + 1).replace(/:/g, '');
+      str = beforeColon + ':' + afterColon;
+    }
+
+    // Limit HH to 2 digits, MM to 2 digits
+    if (firstColon !== -1) {
+      let parts = str.split(':');
+      if (parts[0].length > 2) {
+        parts[0] = parts[0].substring(0, 2);
+      }
+      if (parts[1] && parts[1].length > 2) {
+        parts[1] = parts[1].substring(0, 2);
+      }
+      str = parts.join(':');
+    } else {
+      // No colon yet, limit to reasonable length
+      if (str.length > 4) {
+        str = str.substring(0, 4);
+      }
+    }
+  }
+
+  return str;
 }
 
 function validateDose(dose) {
@@ -199,4 +256,59 @@ function validateUnit(unit, drug) {
   if (default_unit.length === 0) { return ''; }
 
   return default_unit[0]['Default.Units'];
+}
+
+// When a Time cell is changed, clean the input from any illegal characters
+function beforeChangeHot(changes, source) {
+  if (!changes) return;
+
+  changes.forEach(function(change) {
+    let row = change[0];
+    let col = change[1];
+    let newVal = change[3];
+
+    // Column 1 is Time
+    if (col === 1 && newVal !== null && newVal !== '') {
+      change[3] = cleanTime(newVal);
+    }
+  });
+}
+
+// Don't allow user to type illegal characters into the Time column
+function beforeKeyDownHot(event) {
+  let hot = this;
+  let selected = hot.getSelected();
+
+  if (!selected || selected.length === 0) return;
+
+  let row = selected[0][0];
+  let col = selected[0][1];
+
+  if (col !== 1) return;  // Only Time column
+
+  let key = event.key;
+
+  // Allow special/control keys
+  if (key.length > 1 || event.ctrlKey || event.metaKey || event.altKey) {
+    return;
+  }
+
+  let timeMode = getTimeMode();
+
+  // Block anything that's not in the allowed set
+  if (timeMode === 'relative') {
+    // Allow only: 0-9 and .
+    if (!/^[0-9.]$/.test(key)) {
+      event.stopImmediatePropagation();
+      event.preventDefault();
+      return false;
+    }
+  } else {
+    // Allow only: 0-9 and :
+    if (!/^[0-9:]$/.test(key)) {
+      event.stopImmediatePropagation();
+      event.preventDefault();
+      return false;
+    }
+  }
 }
