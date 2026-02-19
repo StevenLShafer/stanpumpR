@@ -131,11 +131,6 @@ app_server <- function(input, output, session) {
     drugAndEventDefaults()[[1]]$Drug
   })
 
-  outputComments("Initializing prior and current")
-
-  DT <- reactiveVal(doseTableInit)
-  ET <- reactiveVal(eventTableInit)
-
   # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
   # doseTableInit <- data.frame(
   #   Drug = c("dexmedetomidine",""),
@@ -161,11 +156,6 @@ app_server <- function(input, output, session) {
   #   stringsAsFactors = FALSE
   # )
 
-  # This always runs, because on restore it fully restarts server()
-  current <- reactiveValues(
-    DT = doseTableInit
-  )
-
   doseTable <- reactiveVal(doseTableInit)
 
   # Routine to output doseTableHTML from doseTable
@@ -176,8 +166,6 @@ app_server <- function(input, output, session) {
     createHOT(doseTable(), drugDefaults())
   }, name = "createHOT() from doseTableHTML")
   })
-
-  # End Initialize current$DT
 
   eventTable <- reactiveVal(eventTableInit)
 
@@ -216,8 +204,8 @@ app_server <- function(input, output, session) {
   # This gets called before bookmarking to prepare values that need to be saved
   onBookmark(function(state) {
     profileCode({
-      state$values$DT <- current$DT
-      state$values$ET <- ET()
+      state$values$DT <- doseTable()
+      state$values$ET <- eventTable()
       setBookmarkExclude(bookmarksToExclude)
     }, name = "onBookmark()")
   })
@@ -238,18 +226,17 @@ app_server <- function(input, output, session) {
       "***************************************************************************",
       sep = ""
     )
-    DT(as.data.frame(state$values$DT))
-    outputComments("DT:")
-    outputComments(DT())
-    doseTable(DT())
-    current$DT <- DT()
-    ET(as.data.frame(state$values$ET))
-    if (ncol(ET()) == 0) {
-      ET(eventTableInit)
+    DT <- as.data.frame(state$values$DT)
+    doseTable(DT)
+    outputComments("doseTable:")
+    outputComments(DT)
+    ET <- as.data.frame(state$values$ET)
+    if (ncol(ET) == 0) {
+      ET <- eventTableInit
     }
-    outputComments("ET after restoring state")
-    outputComments(ET())
-    eventTable(ET())
+    eventTable(ET)
+    outputComments("eventTable:")
+    outputComments(ET)
   }, name = "onRestored()")
   })
 
@@ -290,7 +277,6 @@ app_server <- function(input, output, session) {
       # Convert NA values to empty (when a new row gets added using the javascript API,
       # the new row gets NA values and having NA as well as "" values leads to issues later on)
       data[is.na(data)] <- ""
-      current$DT <- data
       doseTable(data)
     }
   }, name = "input$doseTableHTML observer")
@@ -927,15 +913,16 @@ app_server <- function(input, output, session) {
     }
 
     if (clickTime != "" && clickDose != "") {
-      idx <- which(current$DT$Drug == "")[1]
-      current$DT$Drug[idx]  <- DrugTimeUnits()$drug
-      current$DT$Time[idx]  <- clickTime
-      current$DT$Dose[idx]  <- clickDose
-      current$DT$Units[idx] <- input$clickUnits
-      if (current$DT$Drug[nrow(current$DT)] != "" ) {
-        current$DT <- rbind(current$DT, doseTableNewRow)
+      dt <- doseTable()
+      idx <- which(dt$Drug == "")[1]
+      dt$Drug[idx]  <- DrugTimeUnits()$drug
+      dt$Time[idx]  <- clickTime
+      dt$Dose[idx]  <- clickDose
+      dt$Units[idx] <- input$clickUnits
+      if (dt$Drug[nrow(dt)] != "" ) {
+        dt <- rbind(dt, doseTableNewRow)
       }
-      doseTable(current$DT)
+      doseTable(dt)
     }
   }, name = "input$clickOKDrug observer")
   })
@@ -967,7 +954,8 @@ app_server <- function(input, output, session) {
 
   output$editPriorDosesTable <- renderRHandsontable({
   profileCode({
-    editPriorDosesTable <- current$DT[current$DT$Drug == DrugTimeUnits()$drug, ]
+    dt <- doseTable()
+    editPriorDosesTable <- dt[dt$Drug == DrugTimeUnits()$drug, ]
     possibleUnits <- drugDefaults() %>%
       dplyr::filter(Drug == DrugTimeUnits()$drug) %>%
       dplyr::pull("Units") %>%
@@ -1029,31 +1017,32 @@ app_server <- function(input, output, session) {
       TT$Drug <- DrugTimeUnits()$drug
       cat("TT:\n")
       print(TT)
-      cat("current$DT:\n")
-      print(current$DT)
-      current$DT <- rbind(
+      cat("doseTable:\n")
+      print(doseTable())
+      dt <- doseTable()
+      dt <- rbind(
         TT[!TT$Delete,c("Drug","Time","Dose","Units")],
-        current$DT[current$DT$Drug != DrugTimeUnits()$drug,]
+        dt[dt$Drug != DrugTimeUnits()$drug,]
       )
 
       # Sort by time, by drug, but put blanks at the bottom
-      print(unique(current$DT$Time))
-      current$DT$Time[current$DT$Time == ""] <- "zzzzz"
-      current$DT <- current$DT[order(current$DT$Time, current$DT$Drug),]
-      current$DT$Time[current$DT$Time == "zzzzz"] <- ""
+      print(unique(dt$Time))
+      dt$Time[dt$Time == ""] <- "zzzzz"
+      dt <- dt[order(dt$Time, dt$Drug),]
+      dt$Time[dt$Time == "zzzzz"] <- ""
 
-      cat("current$DT after update:\n")
-      print(current$DT)
+      cat("doseTable after update:\n")
+      print(dt)
 
-      for (i in 1:nrow(current$DT))
+      for (i in 1:nrow(dt))
       {
-        if (current$DT$Drug[i] > "")
+        if (dt$Drug[i] > "")
         {
-          current$DT$Time[i] <- validateTime(current$DT$Time[i])
-          current$DT$Dose[i] <- validateDose(current$DT$Dose[i]) # should work for target too
+          dt$Time[i] <- validateTime(dt$Time[i])
+          dt$Dose[i] <- validateDose(dt$Dose[i]) # should work for target too
         }
       }
-      doseTable(current$DT) # Set reactive doseTable
+      doseTable(dt)
     }, name = "input$editDosesOK observer")
   })
 
@@ -1322,16 +1311,17 @@ app_server <- function(input, output, session) {
         removeModal()
         if (clickTime != "" && clickDose != "")
         {
-          i <- which(current$DT$Drug == "")[1]
-          current$DT$Drug[i]  <- input$dblclickDrug
-          current$DT$Time[i]  <- clickTime
-          current$DT$Dose[i]  <- clickDose
-          current$DT$Units[i] <- input$dblclickUnits
-          if (current$DT$Drug[nrow(current$DT)] != "" )
+          dt <- doseTable()
+          i <- which(dt$Drug == "")[1]
+          dt$Drug[i]  <- input$dblclickDrug
+          dt$Time[i]  <- clickTime
+          dt$Dose[i]  <- clickDose
+          dt$Units[i] <- input$dblclickUnits
+          if (dt$Drug[nrow(dt)] != "" )
           {
-            current$DT <- rbind(current$DT, doseTableNewRow)
+            dt <- rbind(dt, doseTableNewRow)
           }
-          doseTable(current$DT) # Call reactive variable
+          doseTable(dt)
         }
       } else {
         dblclickPopupDrug(
@@ -1347,8 +1337,9 @@ app_server <- function(input, output, session) {
     {
     profileCode({
       removeModal()
-      current$DT <- current$DT[current$DT$Drug != DrugTimeUnits()$drug,]
-      doseTable(current$DT)
+      dt <- doseTable()
+      dt <- dt[dt$Drug != DrugTimeUnits()$drug,]
+      doseTable(dt)
     }, name = "input$dblclickDelete observer")
   })
 
@@ -1494,16 +1485,16 @@ app_server <- function(input, output, session) {
 
       if (is.null(testTable)) return()
 
-      outputComments("Setting current$DT")
-      current$DT <- current$DT[current$DT$Drug != input$targetDrug,]
-      # print(str(doseTable))
+      outputComments("Setting doseTable")
+      dt <- doseTable()
+      dt <- dt[dt$Drug != input$targetDrug,]
 
-      current$DT <- rbind(
+      dt <- rbind(
         testTable[,c("Drug","Time","Dose","Units")],
-        current$DT
+        dt
       )
       waiter::waiter_hide()
-      doseTable(current$DT)
+      doseTable(dt)
     }, name = "input$targetOK observer")
   })
 
