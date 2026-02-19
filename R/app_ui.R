@@ -216,9 +216,7 @@ app_ui <- function() {
                     options = list(container = "body")
                   )
                 ), # end of fluid row
-                # Note to Dean: Here is where the handsontable is output. My guess is that this is where
-                # you would replace the existing "rHandsontableOutput()" function with JavaScript code that
-                # will process and validate the table.
+                actionButton("dosetable_apply", "Apply Changes", class = "btn-primary"),
                 tags$script(HTML(js_drug_defaults)),
                 tags$script(src = "stanpumpr-assets/hot_funs.js"),
                 rHandsontableOutput(outputId = "doseTableHTML"),

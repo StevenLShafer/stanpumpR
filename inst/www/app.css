@@ -83,3 +83,15 @@
 .no-spinners [type=number] {
   -moz-appearance: textfield;
 }
+
+#dosetable_apply {
+  width: 100%;
+  margin: -5px 0 10px;
+  color: white;
+}
+
+#dosetable_apply[disabled] {
+  background: #b7c0c9;
+  border-color: #ccc;
+  color: #444;
+}

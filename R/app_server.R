@@ -252,6 +252,25 @@ app_server <- function(input, output, session) {
   ## Dose Table Loop  ##
   ######################
 
+  # This is used to hold the current state of the table as the user edits it
+  # without applying it, to allow the user to make many successive edits quickly
+  doseTableDraft <- reactiveVal()
+
+  observeEvent(doseTable(), {
+    doseTableDraft(doseTable())
+  })
+
+  observe({
+    shinyjs::toggleState(
+      "dosetable_apply",
+      condition = !identicalTable(doseTableDraft(), doseTable())
+    )
+  })
+
+  observeEvent(input$dosetable_apply, {
+    doseTable(doseTableDraft())
+  })
+
   observeEvent(input$doseTableHTML, {
     profileCode({
       outputComments("In observeEvent(input$doseTableHTML,...", level = DEBUG_LEVEL_VERBOSE)
@@ -280,11 +299,11 @@ app_server <- function(input, output, session) {
       data <- hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
 
       # make sure that table has changed before updating doseTable reactive
-      if ( !identical(doseTable(), data) ) {
+      if ( !identicalTable(doseTableDraft(), data) ) {
         # Convert NA values to empty (when a new row gets added using the javascript API,
         # the new row gets NA values and having NA as well as "" values leads to issues later on)
         data[is.na(data)] <- ""
-        doseTable(data)
+        doseTableDraft(data)
       }
     }, name = "input$doseTableHTML observer")
   })
