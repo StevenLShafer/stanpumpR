@@ -189,14 +189,31 @@ app_ui <- function() {
                 width=12,
                 fluidRow(
                   column(
-                    width = 4,
-                    textInput("referenceTime", "Reference Time", placeholder = "HH:MM"),
-                    shinyBS::bsTooltip(
-                      id = "referenceTime",
-                      title = 'Time is selected based on your local time. Select "none" for absolute time.',
-                      placement = "right",
-                      options = list(container = "body")
+                    width = 6,
+                    radioButtons(
+                      "timeMode",
+                      "Time Display Mode",
+                      c("Actual time" = "clock",
+                        "Elapsed minutes" = "relative"),
+                      inline = TRUE
                     )
+                  ),
+                  column(
+                    width = 6,
+                    conditionalPanel(
+                      "input.timeMode == 'clock'",
+                      textInput(
+                        inputId = "referenceTime",
+                        label = "Procedure start time",
+                        placeholder = "HH:MM"
+                      )
+                    )
+                  ),
+                  shinyBS::bsTooltip(
+                    id = "referenceTime",
+                    title = 'Default time is selected based on your local time',
+                    placement = "right",
+                    options = list(container = "body")
                   )
                 ), # end of fluid row
                 # Note to Dean: Here is where the handsontable is output. My guess is that this is where

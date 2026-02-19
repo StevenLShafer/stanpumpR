@@ -58,7 +58,11 @@ function(el, x) {
 
   var hot = this.hot;
   // do this to avoid adding duplicate callbacks on re-render
+  hot.removeHook('beforeKeyDown', beforeKeyDownHot);
+  hot.removeHook('beforeChange', beforeChangeHot);
   hot.removeHook('afterChange', changeHot);
+  hot.addHook('beforeKeyDown', beforeKeyDownHot);
+  hot.addHook('beforeChange', beforeChangeHot);
   hot.addHook('afterChange', changeHot);
 }
 "
