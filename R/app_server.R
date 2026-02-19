@@ -263,7 +263,7 @@ app_server <- function(input, output, session) {
   observe({
     shinyjs::toggleState(
       "dosetable_apply",
-      condition = !identical(doseTableDraft(), doseTable())
+      condition = !identicalTable(doseTableDraft(), doseTable())
     )
   })
 
@@ -299,7 +299,7 @@ app_server <- function(input, output, session) {
       data <- hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
 
       # make sure that table has changed before updating doseTable reactive
-      if ( !identical(doseTable(), data) ) {
+      if ( !identicalTable(doseTableDraft(), data) ) {
         # Convert NA values to empty (when a new row gets added using the javascript API,
         # the new row gets NA values and having NA as well as "" values leads to issues later on)
         data[is.na(data)] <- ""
