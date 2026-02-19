@@ -1009,23 +1009,15 @@ app_server <- function(input, output, session) {
         hot_col(
           col = "Delete",
           type = "checkbox",
-          halign = "htRight",
-          allowInvalid = FALSE,
-          strict = TRUE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = "Time",
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = "Dose",
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = "Units",
@@ -1196,16 +1188,12 @@ app_server <- function(input, output, session) {
           hot_col(
             col = "Delete",
             type="checkbox",
-            halign = "htRight",
-            allowInvalid = FALSE,
-            strict = TRUE
+            halign = "htRight"
           ) %>%
           hot_col(
             col = "Time",
-            type="autocomplete",
             halign = "htRight",
-            allowInvalid = TRUE,
-            strict = FALSE
+            format = "0"
           ) %>%
           hot_col(
             col = "Event",
@@ -1219,11 +1207,11 @@ app_server <- function(input, output, session) {
           hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
           hot_rows(rowHeights = 10) %>%
           hot_cols(colWidths = c(50,55,90))
-        output$tempTableHTML <- renderRHandsontable(tempTableHOT)
+        output$editEventsTableHTML <- renderRHandsontable(tempTableHOT)
         showModal(
           modalDialog(
             title = paste("Edit Events"),
-            rHandsontableOutput(outputId = "tempTableHTML"),
+            rHandsontableOutput(outputId = "editEventsTableHTML"),
             actionButton(
               inputId = "editEventsOK",
               label = "OK",
@@ -1249,7 +1237,7 @@ app_server <- function(input, output, session) {
     {
       profileCode({
         removeModal()
-        ET <- hot_to_r(input$tempTableHTML)
+        ET <- hot_to_r(input$editEventsTableHTML)
         ET <- ET[!ET$Delete,c("Time","Event")]
         CROWS <- match(ET$Event, eventDefaults()$Event)
         ET$Fill <- eventDefaults()$Color[CROWS]
@@ -1398,17 +1386,11 @@ app_server <- function(input, output, session) {
         ) %>%
           hot_col(
             col = "Time",
-            type="autocomplete",
-            halign = "htRight",
-            allowInvalid = TRUE,
-            strict = FALSE
+            halign = "htRight"
           ) %>%
           hot_col(
             col = "Target",
-            type = "autocomplete",
-            halign = "htRight",
-            allowInvalid = TRUE,
-            strict = FALSE
+            halign = "htRight"
           ) %>%
           hot_context_menu(
             allowRowEdit = TRUE,
@@ -1587,10 +1569,7 @@ app_server <- function(input, output, session) {
       ) %>%
         hot_col(
           col = 1,
-          type="autocomplete",
           halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE,
           readOnly = TRUE
         ) %>%
         hot_col(
@@ -1631,59 +1610,35 @@ app_server <- function(input, output, session) {
         ) %>%
         hot_col(
           col = 6,
-          type = "autocomplete",
-          strict = FALSE,
-          allowInvalid = TRUE,
-          halign = "htLeft",
+          halign = "htLeft"
         ) %>%
         hot_col(
           col = 7,
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = 8,
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = 9,
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = 10,
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = 11,
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = 12,
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_col(
           col = 13,
-          type = "autocomplete",
-          halign = "htRight",
-          allowInvalid = TRUE,
-          strict = FALSE
+          halign = "htRight"
         ) %>%
         hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) # %>%
       #    hot_rows(rowHeights = 10) # interferes with cell selection -> other occasions?

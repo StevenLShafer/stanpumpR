@@ -290,14 +290,14 @@ app_ui <- function() {
                   actionButton(
                     inputId = "setTarget",
                     label = "Suggest",
-                    icon=icon("fas fa-syringe"),
+                    icon=icon("fas fa-wand-magic-sparkles"),
                     width = NULL
                   )
                 ),
                 actionButton(
                   inputId = "editDrugs",
                   label = "Edit Drugs",
-                  icon=icon("fas fa-syringe"),
+                  icon=icon("fas fa-pencil"),
                   width = NULL
                 )
               ), # End of column
