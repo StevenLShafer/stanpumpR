@@ -881,12 +881,11 @@ app_server <- function(input, output, session) {
           label = "Dose",
           placeholder = "Enter dose"
         ) |> modalFocus(),
-        radioButtons(
+        selectInput(
           inputId = "clickUnits",
           label = "Units",
           choices = units,
-          selected = selectedUnits,
-          inline = TRUE
+          selected = selectedUnits
         ),
         numericInput(
           inputId = "newEndCe",
@@ -1279,13 +1278,12 @@ app_server <- function(input, output, session) {
           inputId = "dblclickDose",
           label = "Dose",
           placeholder = "Enter dose"
-        ),
-        radioButtons(
+        ) |> modalFocus(),
+        selectInput(
           inputId = "dblclickUnits",
           label = "Units",
-          choices = c(units),
-          #selected = drugDefaults()$Bolus.Units[i],
-          inline = TRUE
+          choices = units
+          #selected = drugDefaults()$Bolus.Units[i]
         ),
         actionButton(
           inputId = "dblclickOK",
