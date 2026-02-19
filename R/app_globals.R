@@ -63,7 +63,8 @@ bookmarksToExclude <- c(
   "hoverInfo",
   "debug_level",
   "show_intro_modal",
-  "client_time"
+  "client_time",
+  "dosetable_apply"
 )
 
 outputComments <- function(
