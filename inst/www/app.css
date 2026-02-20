@@ -40,6 +40,14 @@
   overflow-x: hidden;
 }
 
+.handsontableEditor .handsontable td {
+  background: #f0f0f0;
+}
+
+.handsontable.listbox tr:hover td, .handsontable.listbox tr td.current {
+  background: #ddd;
+}
+
 #debug_area {
   background: #444;
   color: #eee;
