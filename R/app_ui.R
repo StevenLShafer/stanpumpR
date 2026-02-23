@@ -42,7 +42,7 @@ app_ui <- function() {
               h4("Patient Covariates"),
               style = "border-style: solid; border-color: white;  border-radius: 5px;",
               column(
-                width = 4,
+                width = 6,
                 div(
                   class = "form-first-row",
                   div( # Age ************************************
@@ -53,7 +53,12 @@ app_ui <- function() {
                       value = defaultAge,
                       min = MIN_AGE,
                       max = MAX_AGE
-                    ),
+                    ) |>
+                      inputWithChoices(
+                        c("years" = UNIT_YEAR, "months" = UNIT_MONTH),
+                        inputId = "ageUnit",
+                        selected = defaultAgeUnit
+                      ),
                     shinyBS::bsTooltip(
                       id = "age",
                       title = "Enter  age and select years or months",
@@ -61,16 +66,6 @@ app_ui <- function() {
                       options = list(container = "body")
                     )
                   ), # end of cancel-margin div
-                  div( #style = "font-size: 10px;",
-                    radioButtons(
-                      inputId = "ageUnit",
-                      label = NULL,
-                      choiceNames = c("years","months"),
-                      choiceValues = c(UNIT_YEAR, UNIT_MONTH),
-                      inline = TRUE,
-                      selected = defaultAgeUnit
-                    )
-                  )
                 ), # end of form-first-row div
                 div( # weight *****************************************
                   class = "cancel-margin",
