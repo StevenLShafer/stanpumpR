@@ -15,11 +15,11 @@ inlineUI <- function(tag) {
 #' the ID will be a concatenation of the provided input's ID together with "Choice".
 #' @param selected Which initial choice is selected
 inputWithChoices <- function(tag, choices, inputId = NULL, selected = NULL) {
-  input <- tag$children[[2]]
+  input <- tag$children[[2]]  # WARNING in the future, if shiny changes internals, this can break
   input <- htmltools::tagAppendAttributes(input, class = "main-input")
 
   if (is.null(inputId)) {
-    inputId <- paste0(tag$children[[2]]$attribs$id, "Choice")
+    inputId <- paste0(input$attribs$id, "Choice")
   }
 
   input_group <- htmltools::tags$div(
