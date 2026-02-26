@@ -7,24 +7,10 @@
 
 app_server <- function(input, output, session) {
   config <- .sprglobals$config
-  isShinyLocal <- Sys.getenv('SHINY_PORT') == ""
 
   observeEvent(input$show_intro_modal, {
     showIntroModal()
   }, once = TRUE)
-
-  options(error = function() {
-    msg <- geterrmessage()
-    if (!isShinyLocal) {
-      isolate({
-        cat("Error detected in stanpumpR\n")
-        cat(msg, "\n")
-        cat("URL: ", url(), "\n")
-        sendError(url = url(), errorMessage = msg)
-      })
-    }
-    options(error = NULL)
-  })
 
   session$userData$debug <- reactiveVal(config$debug)
   observeEvent(input$debug_level, ignoreInit = TRUE, {
@@ -612,7 +598,6 @@ app_server <- function(input, output, session) {
           allResults = allResultsReactive(),
           plotResults = plotResultsReactive(),
           numPlots = nFacets(),
-          isShinyLocal = isShinyLocal,
           slide = as.numeric(input$sendSlide),
           drugs = drugs(),
           drugDefaults = drugDefaults(),
