@@ -25,8 +25,6 @@ run_app <- function(config_file = "config.yml") {
 
   config <- config::get(file = config_file)
   if (is.null(config$title)) config$title <- "stanpumpR"
-  if (is.null(config$maintainer_name)) config$maintainer_name <- "Steve"
-  if (is.null(config$maintainer_email)) config$maintainer_email <- "stanpumpR@gmail.com"
   if (is.null(config$help_link)) config$help_link <- "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
   if (is.null(config$debug)) config$debug <- DEBUG_LEVEL_OFF
   .sprglobals$config <- config
