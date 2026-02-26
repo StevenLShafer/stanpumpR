@@ -28,14 +28,6 @@ defaultHeight <- 66
 defaultHeightUnit <- UNIT_INCH
 defaultSex <- "female"
 
-# defaultAge <- NULL
-# defaultAgeUnit <- character(0)
-# defaultWeight <- NULL
-# defaultWeightUnit <- character(0)
-# defaultHeight <- NULL
-# defaultHeightUnit <- character(0)
-# defaultSex <- character(0)
-
 # Resolution for linear interpolation
 RESOLUTION <- 100
 
