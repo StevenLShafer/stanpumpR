@@ -7,13 +7,6 @@
   overflow-y: auto;
 }
 
-.form-first-row {
-  height: 100px;
-}
-.cancel-margin > .form-group {
-  margin: 0;
-}
-
 .ht_master table.htCore > tbody td {
   position: relative;
   overflow: hidden;
@@ -102,4 +95,79 @@
   background: #b7c0c9;
   border-color: #ccc;
   color: #444;
+}
+
+.input-with-choices {
+  margin-left: 4px;
+}
+.input-with-choices .main-input {
+  left: -4px;
+  border-radius: 4px !important;
+}
+.input-with-choices .input-group-btn {
+  font-size: 1.4rem;
+}
+.input-with-choices .input-group-btn .form-group {
+  margin-bottom: 0;
+}
+.input-with-choices .input-group-btn .radio-inline {
+  padding: 0;
+  margin: 0;
+  margin-left: -3px;
+}
+.input-with-choices .input-group-btn .radio-inline:first-child {
+  margin-left: 0;
+}
+
+.input-with-choices .input-group-btn input[type="radio"] {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.input-with-choices .input-group-btn input[type="radio"]:checked + span {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: #ffffff;
+  box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
+}
+
+.input-with-choices .input-group-btn .radio-inline span {
+  display: inline-block;
+  padding: 6px 12px 5px 12px;
+  background: #ffffff;
+  border: 1px solid #ced4da;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.input-with-choices .input-group-btn .radio-inline:first-child span {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+.input-with-choices .input-group-btn .radio-inline:last-child span {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.input-with-choices .input-group-btn input[type="radio"]:focus + span {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.input-with-choices .input-group-btn .radio-inline span:hover {
+  background-color: #f8f9fa;
+  border-color: #b8c2cc;
+  color: #0056b3;
+}
+
+.input-with-choices .input-group-btn input[type="radio"]:checked + span:hover {
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+
+.input-with-choices .input-group-btn .radio-inline span:active {
+  background-color: #dae0e5;
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
 }

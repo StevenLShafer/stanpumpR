@@ -42,89 +42,64 @@ app_ui <- function() {
               h4("Patient Covariates"),
               style = "border-style: solid; border-color: white;  border-radius: 5px;",
               column(
-                width = 4,
-                div(
-                  class = "form-first-row",
-                  div( # Age ************************************
-                    class = "cancel-margin",
-                    numericInput(
-                      inputId = "age",
-                      label = "Age",
-                      value = defaultAge,
-                      min = MIN_AGE,
-                      max = MAX_AGE
-                    ),
-                    shinyBS::bsTooltip(
-                      id = "age",
-                      title = "Enter  age and select years or months",
-                      placement = "top",
-                      options = list(container = "body")
-                    )
-                  ), # end of cancel-margin div
-                  div( #style = "font-size: 10px;",
-                    radioButtons(
-                      inputId = "ageUnit",
-                      label = NULL,
-                      choiceNames = c("years","months"),
-                      choiceValues = c(UNIT_YEAR, UNIT_MONTH),
-                      inline = TRUE,
-                      selected = defaultAgeUnit
-                    )
-                  )
-                ), # end of form-first-row div
-                div( # weight *****************************************
-                  class = "cancel-margin",
-                  numericInput(
-                    inputId = "weight",
-                    label = "Weight",
-                    value = defaultWeight,
-                    min = MIN_WEIGHT,
-                    max = MAX_WEIGHT
+                width = 6,
+                numericInput(
+                  inputId = "age",
+                  label = "Age",
+                  value = defaultAge,
+                  min = MIN_AGE,
+                  max = MAX_AGE
+                ) |>
+                  inputWithChoices(
+                    c("yr" = UNIT_YEAR, "mo" = UNIT_MONTH),
+                    inputId = "ageUnit",
+                    selected = defaultAgeUnit
                   ),
-                  shinyBS::bsTooltip(
-                    id = "weight",
-                    title = "Enter weight and select kilograms or pounds",
-                    placement = "top",
-                    options = list(container = "body")
-                  )
-                ), # End of class cancel-margin div
-                radioButtons(
-                  inputId = "weightUnit",
-                  label = NULL,
-                  choiceNames = c("kg", "lb"),
-                  choiceValues = c(UNIT_KG, UNIT_LB),
-                  inline = TRUE,
-                  selected = defaultWeightUnit
+                shinyBS::bsTooltip(
+                  id = "age",
+                  title = "Enter age and select years or months",
+                  placement = "top",
+                  options = list(container = "body")
                 ),
-                div( # Height ********************************************
-                  class = "cancel-margin",
-                  numericInput(
-                    inputId = "height",
-                    label = "Height",
-                    value = defaultHeight,
-                    min = MIN_HEIGHT,
-                    max = MAX_HEIGHT
+                numericInput(
+                  inputId = "weight",
+                  label = "Weight",
+                  value = defaultWeight,
+                  min = MIN_WEIGHT,
+                  max = MAX_WEIGHT
+                ) |>
+                  inputWithChoices(
+                    c("kg" = UNIT_KG, "lb" = UNIT_LB),
+                    inputId = "weightUnit",
+                    selected = defaultWeightUnit
                   ),
-                  shinyBS::bsTooltip(
-                    id = "height",
-                    title = "Enter height and select centimeters or inches",
-                    placement = "right",
-                    options = list(container = "body")
-                  )
-                ), # end of cancel-margin div
-                radioButtons(
-                  inputId = "heightUnit",
-                  label = NULL,
-                  choiceNames = c("cms","inches"),
-                  choiceValues = c(UNIT_CM, UNIT_INCH),
-                  inline = TRUE,
-                  selected = defaultHeightUnit
+                shinyBS::bsTooltip(
+                  id = "weight",
+                  title = "Enter weight and select kilograms or pounds",
+                  placement = "top",
+                  options = list(container = "body")
+                ),
+                numericInput(
+                  inputId = "height",
+                  label = "Height",
+                  value = defaultHeight,
+                  min = MIN_HEIGHT,
+                  max = MAX_HEIGHT
+                ) |>
+                  inputWithChoices(
+                    c("in" = UNIT_INCH, "cm" = UNIT_CM),
+                    inputId = "heightUnit",
+                    selected = defaultHeightUnit
+                  ),
+                shinyBS::bsTooltip(
+                  id = "height",
+                  title = "Enter height and select centimeters or inches",
+                  placement = "right",
+                  options = list(container = "body")
                 )
               ), # end of column
               column(
                 width = 6,
-                # div(
-                #   class = "form-first-row",
                 radioButtons(
                   inputId = "sex",
                   label = "Sex",
@@ -133,7 +108,6 @@ app_ui <- function() {
                   inline = TRUE,
                   selected = defaultSex
                 ),
-                #            ), # end of class: form-first-row div
                 shinyjs::disabled(conditionalPanel(
                   condition = "input.age && input.ageUnit && input.ageUnit == 1 && input.age > 11 & input.age < 60 && input.sex == 'female'",
                   radioButtons(

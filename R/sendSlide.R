@@ -6,7 +6,6 @@ sendSlide <- function(
   allResults,
   plotResults,
   numPlots,
-  isShinyLocal,
   slide,
   drugs,
   drugDefaults,

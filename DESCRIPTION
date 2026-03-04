@@ -94,7 +94,6 @@ Collate:
   modelInteraction.R
   processdoseTable.R
   recoveryCalc.R
-  sendError.R
   server-helpers.R
   setLinetypes.R
   shiny-utils.R
