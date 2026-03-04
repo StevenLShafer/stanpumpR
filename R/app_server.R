@@ -1001,6 +1001,7 @@ app_server <- function(input, output, session) {
         ) %>%
         hot_col(
           col = "Dose",
+          type = "numeric",
           halign = "htRight"
         ) %>%
         hot_col(
@@ -1014,7 +1015,8 @@ app_server <- function(input, output, session) {
         ) %>%
         hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
         hot_rows(rowHeights = 10) %>%
-        hot_cols(colWidths = c(50,55,55,90))
+        hot_cols(colWidths = c(50,55,55,90)) %>%
+        addHotHooks(filterKeys = TRUE, sanitize = TRUE)
 
       editPriorDosesTableHOT
     }, name = "output$editPriorDosesTable")
@@ -1176,8 +1178,7 @@ app_server <- function(input, output, session) {
           ) %>%
           hot_col(
             col = "Time",
-            halign = "htRight",
-            format = "0"
+            halign = "htRight"
           ) %>%
           hot_col(
             col = "Event",
@@ -1186,11 +1187,12 @@ app_server <- function(input, output, session) {
             strict = TRUE,
             halign = "htLeft",
             valign = "vtMiddle",
-            allowInvalid=FALSE
+            allowInvalid = FALSE
           ) %>%
           hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
           hot_rows(rowHeights = 10) %>%
           hot_cols(colWidths = c(50,55,90))
+
         output$editEventsTableHTML <- renderRHandsontable(tempTableHOT)
         showModal(
           modalDialog(
@@ -1373,6 +1375,7 @@ app_server <- function(input, output, session) {
           ) %>%
           hot_col(
             col = "Target",
+            type = "numeric",
             halign = "htRight"
           ) %>%
           hot_context_menu(
@@ -1384,7 +1387,9 @@ app_server <- function(input, output, session) {
           ) %>%
           hot_cols(
             colWidths = c(70,70)
-          )
+          ) %>%
+          addHotHooks(filterKeys = TRUE, sanitize = TRUE)
+
         output$targetTableHTML <- renderRHandsontable(targetHOT)
         showModal(
           modalDialog(

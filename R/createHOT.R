@@ -24,8 +24,7 @@ createHOT <- function(doseTable,drugDefaults)
     rhandsontable::hot_col(
       col = "Dose",
       type = "numeric",
-      halign = "htRight",
-      validator = "function(value, callback) {callback(true)}"
+      halign = "htRight"
     ) %>%
     rhandsontable::hot_col(
       col = "Units",
@@ -52,20 +51,7 @@ createHOT <- function(doseTable,drugDefaults)
     HOT$x$cell <- c(HOT$x$cell, list(cell))
   }
 
-  HOT <- htmlwidgets::onRender(HOT,
-                               "
-function(el, x) {
+  HOT <- addHotHooks(HOT, filterKeys = TRUE, sanitize = TRUE, afterChange = "hookDoseTableUpdate")
 
-  var hot = this.hot;
-  // do this to avoid adding duplicate callbacks on re-render
-  hot.removeHook('beforeKeyDown', beforeKeyDownHot);
-  hot.removeHook('beforeChange', beforeChangeHot);
-  hot.removeHook('afterChange', changeHot);
-  hot.addHook('beforeKeyDown', beforeKeyDownHot);
-  hot.addHook('beforeChange', beforeChangeHot);
-  hot.addHook('afterChange', changeHot);
-}
-"
-  )
   return(HOT)
 }
