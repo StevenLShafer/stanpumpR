@@ -19,6 +19,7 @@ run_app <- function(config_file = "config.yml") {
     library(png)
     library(tidyr)
     library(lubridate)
+    library(bslib)
   }))
 
   options(warn = 1)

@@ -1,100 +1,47 @@
-#help_link {
-  font-weight: bold;
-  color: white;
+.bslib-sidebar-content {
+  background-color: #f8f9fa;
+  padding: 1rem !important;
 }
 
-.main-header .logo {
-  overflow-y: auto;
+.handsontable {
+  font-family: inherit;
+  font-size: 13px;
 }
 
 .ht_master table.htCore > tbody td {
-  position: relative;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 10px;
-}
-.htAutocompleteArrow {
-  position: absolute;
-  right: 0;
-}
-
-.radio-inline+.radio-inline {
-  margin-left: 20px;
-}
-
-#main_plot_outer {
-  max-height: 550px;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-#doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
-  height: auto !important;
-  overflow-x: hidden;
-}
-
-.handsontableEditor .handsontable td {
-  background: #f0f0f0;
-}
-
-.handsontable.listbox tr:hover td, .handsontable.listbox tr td.current {
-  background: #ddd;
-}
-
-#debug_area {
-  background: #444;
-  color: #eee;
+  padding: 8px;
+  border-color: #eee;
 }
 
 #logContent, #profiling {
-  margin-top: 8px;
-  background-color: #555;
-  color: #eee;
-  font-size: 10px;
-  overflow-y: scroll;
-  height: 150px;
-  padding: 5px 15px;
-  border: 1px solid #999;
+  background-color: #212529;
+  color: #00ff41;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  }
+
+#hover_info {
+  position: absolute;
+  z-index: 100;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ddd;
+  padding: 10px;
   border-radius: 4px;
+  pointer-events: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.debug_section_head {
-  font-size: 18px;
-  font-weight: bold;
-  margin-top: 5px;
-}
-
-.inline_ui {
-  display: inline-block;
-  vertical-align: middle;
-  margin-bottom: 0;
-}
-
-#profiler_threshold, #debug_level {
-  height: 20px;
-  padding: 0 5px;
-  font-size: 14px;
-}
-
-.no-spinners ::-webkit-outer-spin-button,
-.no-spinners ::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.no-spinners [type=number] {
-  -moz-appearance: textfield;
-}
-
-#dosetable_apply {
-  width: 100%;
-  margin: -5px 0 10px;
+.btn-check:checked + .btn-outline-primary {
+  background-color: var(--bs-primary);
   color: white;
 }
 
-#dosetable_apply[disabled] {
-  background: #b7c0c9;
-  border-color: #ccc;
-  color: #444;
+.input-with-choices .input-group-btn .radio-inline span {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  background: #eee;
+  border: 1px solid #ccc;
 }
 
 .input-with-choices {
