@@ -24,9 +24,7 @@ run_app <- function(config_file = "config.yml") {
   options(warn = 1)
 
   config <- config::get(file = config_file)
-  if (is.null(config$title)) config$title <- "stanpumpR"
-  if (is.null(config$help_link)) config$help_link <- "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
-  if (is.null(config$debug)) config$debug <- DEBUG_LEVEL_OFF
+  config <- c(config, DEFAULT_CONFIG[!names(DEFAULT_CONFIG) %in% names(config)])
   .sprglobals$config <- config
 
   ggplot2::theme_update(
