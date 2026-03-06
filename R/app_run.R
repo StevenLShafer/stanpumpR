@@ -24,7 +24,7 @@ run_app <- function(config_file = "config.yml") {
   options(warn = 1)
 
   config <- config::get(file = config_file)
-  config <- c(config, DEFAULT_CONFIG[!DEFAULT_CONFIG %in% config])
+  config <- c(config, DEFAULT_CONFIG[!names(DEFAULT_CONFIG) %in% names(config)])
   .sprglobals$config <- config
 
   ggplot2::theme_update(
