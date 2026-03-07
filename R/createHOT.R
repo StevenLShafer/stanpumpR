@@ -10,7 +10,7 @@ createHOT <- function(doseTable,drugDefaults)
   ) %>%
     rhandsontable::hot_col(
       col = "Drug",
-      type = "dropdown",
+      type = "autocomplete",
       source = drugDefaults$Drug,
       strict = TRUE,
       halign = "htLeft",
@@ -51,7 +51,12 @@ createHOT <- function(doseTable,drugDefaults)
     HOT$x$cell <- c(HOT$x$cell, list(cell))
   }
 
-  HOT <- addHotHooks(HOT, filterKeys = TRUE, sanitize = TRUE, afterChange = "hookDoseTableUpdate")
+  HOT <- addHotHooks(
+    HOT, filterKeys = TRUE, sanitize = TRUE,
+    afterChange = "hookDoseTableUpdate",
+    afterBeginEditing = "hookSelectAllDrugText",  # pressing Enter in a drug cell
+    afterSelectionEnd = "hookSelectAllDrugText"   # clicking into a drug cell with mouse
+  )
 
   return(HOT)
 }

@@ -29,7 +29,6 @@
 }
 
 #doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
-  height: auto !important;
   overflow-x: hidden;
 }
 
