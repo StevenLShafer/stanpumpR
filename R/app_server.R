@@ -403,16 +403,19 @@ app_server <- function(input, output, session) {
     }, name = "eventTableClean() reactive")
   })
 
-  # When switching to relative time, convert any clock times (HH:MM) to minutes
-  observeEvent(input$timeMode, {
-    if (input$timeMode != "relative") return()
 
-    dt <- doseTable()
-    to_update <- (dt$Time != "" & !is.na(dt$Time) & grepl(":", dt$Time))
-    if (any(to_update)) {
-      dt$Time[to_update] <- clockTimeToDelta(input$referenceTime, dt$Time[to_update])
+  observeEvent(input$timeMode, {
+    doseTable(doseTableDraft())
+
+    # When switching to relative time, convert any clock times (HH:MM) to minutes
+    if (input$timeMode == "relative") {
+      dt <- doseTable()
+      to_update <- (dt$Time != "" & !is.na(dt$Time) & grepl(":", dt$Time))
+      if (any(to_update)) {
+        dt$Time[to_update] <- clockTimeToDelta(input$referenceTime, dt$Time[to_update])
+      }
+      doseTable(dt)
     }
-    doseTable(dt)
   }, ignoreInit = TRUE)
 
   plotMaximum <- reactive({
