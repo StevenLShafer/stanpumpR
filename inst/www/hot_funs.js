@@ -235,7 +235,7 @@ function validateTime(time) {
 function hookDoseTableUpdate(changes, source) {
   if (!changes || !isUserEditSource(source)) return;
 
-  var hot = this;
+  let hot = this;
   let timeCol = findColByHeader(hot, "Time");
   let doseCol = findColByHeader(hot, "Dose");
   let drugCol = findColByHeader(hot, "Drug");
@@ -345,4 +345,16 @@ function validateUnit(unit, drug) {
   if (default_unit.length === 0) { return ''; }
 
   return default_unit[0]['Default.Units'];
+}
+
+// When clicking on a drug cell, select all the text so that it's easier to replace
+function hookSelectAllDrugText(row, col) {
+  let hot = this;
+  let drugCol = findColByHeader(hot, "Drug");
+  if (drugCol === null || drugCol !== col) return;
+
+  let textarea = hot.getActiveEditor().TEXTAREA;
+  if (textarea && typeof textarea.select === "function") {
+    textarea.select();
+  }
 }
