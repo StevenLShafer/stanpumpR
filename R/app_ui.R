@@ -40,7 +40,7 @@ app_ui <- function() {
             numericInput("height", "Height", value = defaultHeight) |>
               inputWithChoices(c("in" = UNIT_INCH, "cm" = UNIT_CM), inputId = "heightUnit", selected = defaultHeightUnit),
 
-            radioGroupButtons(
+            shinyWidgets::radioGroupButtons(
               inputId = "sex", label = "Sex",
               choices = c("Male" = "male", "Female" = "female"),
               justified = TRUE, selected = defaultSex
@@ -60,7 +60,7 @@ app_ui <- function() {
           accordion_panel(
             "Dose Table",
             icon = icon("tablets"),
-            radioGroupButtons(
+            shinyWidgets::radioGroupButtons(
               "timeMode", "Time Display",
               c("Clock" = "clock", "Elapsed" = "relative"),
               size = "sm", justified = TRUE
