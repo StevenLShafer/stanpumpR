@@ -10,7 +10,7 @@ createHOT <- function(doseTable,drugDefaults)
   ) %>%
     rhandsontable::hot_col(
       col = "Drug",
-      type = "dropdown",
+      type = "autocomplete",
       source = drugDefaults$Drug,
       strict = TRUE,
       halign = "htLeft",
