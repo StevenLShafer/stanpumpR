@@ -1,48 +1,42 @@
-# UI for stanpumpR
-
-# UI ------------------------------------------------------
 app_ui <- function() {
   js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(stanpumpR::getDrugDefaultsGlobal()))
   config <- .sprglobals$config
 
+  stanpumpr_theme <- bslib::bs_theme(
+    version = 5,
+    bootswatch = "flatly",
+    primary = "#2c3e50",
+    secondary = "#7b8a8b",
+    base_font = bslib::font_google("Inter"),
+    heading_font = bslib::font_google("Public Sans")
+  )
+
   function(request) {
-    shinydashboard::dashboardPage(
-      shinydashboard::dashboardHeader(
-        title = config$title,
-        titleWidth = config$title_width,
-        tags$li(
-          class = "dropdown",
-          tags$a(
-            href = config$help_link,
-            id = "help_link",
-            "Examples and Help",
-            target = "_blank"
-          )
-        )
-      ),
-      shinydashboard::dashboardSidebar(
-        collapsed = TRUE,
-        disable = TRUE,
-        width = "200px",
-        shinydashboard::sidebarMenu(
-          id = "simType",
-          shinydashboard::menuItem("stanpumpR", tabName = "SimulationMode", selected = TRUE)
-        )
+    bslib::page_navbar(
+      title = config$title,
+      theme = stanpumpr_theme,
+
+      header = tags$head(
+        shinyjs::useShinyjs(),
+        tags$script(src = "stanpumpr-assets/app.js"),
+        tags$script(HTML(js_drug_defaults)),
+        tags$script(src = "stanpumpr-assets/hot_funs.js"),
+        tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")
       ),
 
-      shinydashboard::dashboardBody(
-        shinyjs::useShinyjs(),
-        waiter::useWaiter(),
-        tags$script(src = "stanpumpr-assets/app.js"),
-        tags$head(tags$link(href = "stanpumpr-assets/app.css", rel = "stylesheet")),
-        fluidRow(
-          column(
-            width=4,
-            fluidRow(  # start of fluid row within this column
-              h4("Patient Covariates"),
-              style = "border-style: solid; border-color: white;  border-radius: 5px;",
-              column(
-                width = 6,
+      bslib::nav_panel(
+        "Simulator",
+        icon = icon("chart-line"),
+        bslib::layout_sidebar(
+          sidebar = bslib::sidebar(
+            width = 300,
+            bslib::accordion(
+              open = FALSE,
+
+              bslib::accordion_panel(
+                "Patient Profile",
+                icon = icon("user-injured"),
+
                 numericInput(
                   inputId = "age",
                   label = "Age",
@@ -54,13 +48,9 @@ app_ui <- function() {
                     c("yr" = UNIT_YEAR, "mo" = UNIT_MONTH),
                     inputId = "ageUnit",
                     selected = defaultAgeUnit
-                  ),
-                shinyBS::bsTooltip(
-                  id = "age",
-                  title = "Enter age and select years or months",
-                  placement = "top",
-                  options = list(container = "body")
-                ),
+                  ) |>
+                  inputWithInlineLabel(),
+
                 numericInput(
                   inputId = "weight",
                   label = "Weight",
@@ -72,13 +62,9 @@ app_ui <- function() {
                     c("kg" = UNIT_KG, "lb" = UNIT_LB),
                     inputId = "weightUnit",
                     selected = defaultWeightUnit
-                  ),
-                shinyBS::bsTooltip(
-                  id = "weight",
-                  title = "Enter weight and select kilograms or pounds",
-                  placement = "top",
-                  options = list(container = "body")
-                ),
+                  ) |>
+                  inputWithInlineLabel(),
+
                 numericInput(
                   inputId = "height",
                   label = "Height",
@@ -90,265 +76,71 @@ app_ui <- function() {
                     c("in" = UNIT_INCH, "cm" = UNIT_CM),
                     inputId = "heightUnit",
                     selected = defaultHeightUnit
-                  ),
-                shinyBS::bsTooltip(
-                  id = "height",
-                  title = "Enter height and select centimeters or inches",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ), # end of column
-              column(
-                width = 6,
-                radioButtons(
-                  inputId = "sex",
-                  label = "Sex",
-                  choiceNames = c("Male","Female"),
-                  choiceValues = c("male","female"),
-                  inline = TRUE,
+                  ) |>
+                  inputWithInlineLabel(),
+
+                shinyWidgets::radioGroupButtons(
+                  inputId = "sex", label = "Sex",
+                  choiceNames = list(span(icon("mars"), "Male"), span(icon("venus"), "Female")),
+                  choiceValues = c("make", "female"),
+                  justified = TRUE,
                   selected = defaultSex
-                ),
-                shinyjs::disabled(conditionalPanel(
+                ) |> inputWithInlineLabel(),
+
+                conditionalPanel(
                   condition = "input.age && input.ageUnit && input.ageUnit == 1 && input.age > 11 & input.age < 60 && input.sex == 'female'",
-                  radioButtons(
+                  shinyWidgets::radioGroupButtons(
                     inputId = "pregnant",
                     label = "Pregnant",
-                    choiceNames = c("Yes","No"),
+                    choiceNames = list(
+                      span(icon("check"), "Yes"),
+                      span(icon("xmark"), "No")
+                    ),
                     choiceValues = c(TRUE, FALSE),
-                    inline = TRUE,
+                    justified = TRUE,
                     selected = FALSE
-                  ),
-                  shinyBS::bsTooltip(
-                    id = "pregnant",
-                    title = "Not implemented yet",
-                    placement = "right",
-                    options = list(container = "body")
-                  )
-                )),
-                shinyjs::disabled(radioButtons(
+                  ) |>
+                    inputWithInlineLabel() |>
+                    shinyjs::disabled()
+                ),
+
+                selectInput(
                   inputId = "cyp2d6",
                   label = "CYP 2D6",
-                  choiceNames = c("Rapid","Typical", "Slow"),
-                  choiceValues = c("rapid","typical", "slow"),
-                  inline = FALSE,
+                  c("Rapid" = "rapid", "Typical" = "typical", "Slow" = "slow"),
                   selected = "typical"
-                ),
-                shinyBS::bsTooltip(
-                  id = "cyp2d6",
-                  title = "Not implemented yet",
-                  placement = "right",
-                  options = list(container = "body")
-                )),
-                shinyjs::disabled(radioButtons(
+                ) |>
+                  shinyjs::disabled(),
+
+                selectInput(
                   inputId = "renal",
                   label = "Renal Function",
-                  choiceNames = c("Normal","Impaired", "ESRD"),
-                  choiceValues = c("normal","impaired", "ESRD"),
-                  inline = FALSE,
+                  c("Normal" = "normal", "Impaired" = "impaired", "ESRD" = "ESRD"),
                   selected = "normal"
-                ),
-                shinyBS::bsTooltip(
-                  id = "renal",
-                  title = "Not implemented yet",
-                  placement = "right",
-                  options = list(container = "body")
-                ))
-              )
-            ), # fluidrow within column
-            fluidRow(
-              h4("Dose Table"),
-              style = "border-style: solid; border-color: white;  border-radius: 5px; height: 450px; overflow-y: auto; padding-bottom: 10px;",
-
-              column(
-                width=12,
-                fluidRow(
-                  column(
-                    width = 6,
-                    radioButtons(
-                      "timeMode",
-                      "Time Display Mode",
-                      c("Actual time" = "clock",
-                        "Elapsed minutes" = "relative"),
-                      inline = TRUE
-                    )
-                  ),
-                  column(
-                    width = 6,
-                    conditionalPanel(
-                      "input.timeMode == 'clock'",
-                      textInput(
-                        inputId = "referenceTime",
-                        label = "Procedure start time",
-                        placeholder = "HH:MM"
-                      )
-                    )
-                  ),
-                  shinyBS::bsTooltip(
-                    id = "referenceTime",
-                    title = 'Default time is selected based on your local time',
-                    placement = "right",
-                    options = list(container = "body")
-                  )
-                ), # end of fluid row
-                actionButton("dosetable_apply", "Apply Changes", class = "btn-primary"),
-                tags$script(HTML(js_drug_defaults)),
-                tags$script(src = "stanpumpr-assets/hot_funs.js"),
-                rHandsontableOutput(outputId = "doseTableHTML"),
-                shinyBS::bsTooltip(
-                  id = "doseTableHTML",
-                  title = "Enter the drug and the units by typing or by using the pull down menu. Clock times are entered as HH:MM.",
-                  placement = "right",
-                  options = list(container = "body")
-                )
-              ) # End of column
-            ) # end of second fluid row in width 5 column
-          ), # end of width 5 column
-          column(
-            width=8,
-            div(
-              id = "main_plot_outer",
-              # Start of plot Output
-              plotOutput(
-                outputId = "PlotSimulation",
-                width="100%",
-                height="auto",
-                click = clickOpts(
-                  id = "plot_click",
-                  clip = FALSE
-                ),
-                dblclick = dblclickOpts(
-                  id = "plot_dblclick",
-                  clip=FALSE
-                ),
-                hover = hoverOpts(
-                  id = "plot_hover",
-                  delay = 500,
-                  delayType = "debounce",
-                  clip = FALSE,
-                  nullOutside = FALSE
-                )
-              ) |> shinycssloaders::withSpinner(hide.ui = FALSE), # End of plotOutput
-              uiOutput("hover_info")
-            ), # End of div
-            ############################################################################
-            fluidRow(
-              style = "border-style: solid; border-color: white;  border-radius: 5px; height: 300px",
-              h4("Graph Options"),
-              column( # Column 1, Simulation Mode
-                width = 2,
-                textInput(
-                  inputId = "title",
-                  label = "Title",
-                  value = paste("Simulation on",format(Sys.time()))
-                ),
-                shinyBS::bsTooltip(
-                  id = "title",
-                  title = "Enter a title for your simulation",
-                  placement = "top",
-                  options = list(container = "body")
-                ),
-                textInput(
-                  inputId = "caption",
-                  label = "Caption",
-                  value = "",
-                  placeholder = "Enter figure caption"
-                ),
-                shinyBS::bsTooltip(
-                  id = "caption",
-                  title = "Text to appear below your simulation",
-                  placement = "bottom",
-                  options = list(container = "body")
-                ),
-                div(
-                  style = "padding-bottom: 10px;",
-                  actionButton(
-                    inputId = "setTarget",
-                    label = "Suggest",
-                    icon=icon("fas fa-wand-magic-sparkles"),
-                    width = NULL
-                  )
-                ),
-                actionButton(
-                  inputId = "editDrugs",
-                  label = "Edit Drugs",
-                  icon=icon("fas fa-pencil"),
-                  width = NULL
-                )
-              ), # End of column
-              # Column 2, Simulation Mode
-              column(
-                width = 2,
-                radioButtons(
-                  inputId = "typical",
-                  label = "Show typical:",
-                  choices = c("none","Mid", "Range"),
-                  selected = "Range",
-                  inline = FALSE
-                ),
-                shinyBS::bsTooltip(
-                  id = "typical",
-                  title = "Show typical clinical values",
-                  placement = "top",
-                  options = list(container = "body")
-                ),
-                radioButtons(
-                  inputId = "normalization",
-                  label = "Normalize to:",
-                  choices = c("none","Peak plasma", "Peak effect site"),
-                  selected = "none",
-                  inline = FALSE
-                ),
-                shinyBS::bsTooltip(
-                  id = "normalization",
-                  title = "Normalization can help show relationships",
-                  placement = "top",
-                  options = list(container = "body")
-                )
+                ) |>
+                  shinyjs::disabled()
               ),
-              # Select MEAC, Select Interaction, events, and time to emergence
-              column(
-                width = 2,
-                checkboxGroupInput(
-                  inputId = "addedPlots",
-                  label = "Additional Plots",
-                  choiceNames = c("MEAC", "Interaction", "Events", "Time until ___"),
-                  choiceValues = c("MEAC", "Interaction", "Events", "Time Until")
-                ),
-                shinyBS::bsTooltip(
-                  id = "addedPlots",
-                  title = "MEAC normalizes each opioid to the minimum effective analgesic concentration, a measure of opioid potency. Interaction shows the opioid hypnotic interaction. It is very preliminary.",
-                  placement = "top",
-                  options = list(container = "body")
-                ),
+
+              bslib::accordion_panel(
+                "Graph Options",
+                icon = icon("sliders"),
+                textInput("title", "Title", paste("Simulation on", format(Sys.time()))),
+                textInput("caption", "Caption", "", placeholder = "Enter figure caption"),
+                selectInput("typical", "Show typical:", c("none","Mid", "Range"), selected = "Range"),
+                selectInput("normalization", "Normalize to:", c("none","Peak plasma", "Peak effect site")),
                 conditionalPanel(
                   condition = "!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('Events') || input.addedPlots.includes('Interaction'))",
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",
                     value = FALSE
-                  ),
-                  shinyBS::bsTooltip(
-                    id = "logY",
-                    title = "Plot Y axis on a log scale",
-                    placement = "top",
-                    options = list(container = "body")
                   )
-                )
-              ),
-              # Column 5, Simulation Mode
-              column(
-                width = 2,
+                ),
                 selectInput(
                   inputId = "maximum",
                   label = "Max Time",
                   choices = maxtimes$times,
                   selected = 60
-                ),
-                shinyBS::bsTooltip(
-                  id = "maximum",
-                  title = "Maximum time. Axis will automatically expand as you enter more doses, unless maximum is set to 10 minutes",
-                  placement = "top",
-                  options = list(container = "body")
                 ),
                 selectInput(
                   inputId = "plasmaLinetype",
@@ -362,12 +154,6 @@ app_ui <- function() {
                               "twodash",
                               "blank")
                 ),
-                shinyBS::bsTooltip(
-                  id = "plasmaLinetype",
-                  title = "Line type for plasma concentrations",
-                  placement = "top",
-                  options = list(container = "body")
-                ),
                 selectInput(
                   inputId = "effectsiteLinetype",
                   label = "Effect site",
@@ -379,89 +165,139 @@ app_ui <- function() {
                               "dotdash",
                               "twodash",
                               "blank")
-                ),
-                shinyBS::bsTooltip(
-                  id = "effectsiteLinetype",
-                  title = "Line type for effect site concentrations",
-                  placement = "bottom",
-                  options = list(container = "body")
                 )
               ),
-              column(
-                offset = 0,
-                width = 4,
-                fluidRow(
-                  column(
-                    width = 9,
-                    textInput(
-                      inputId = "recipient",
-                      label = "Email slide to:"
-                    ),
-                    shinyBS::bsTooltip(
-                      id = "recipient",
-                      title = "Enter a valid e-mail address",
-                      placement = "top",
-                      options = list(container = "body")
-                    )
-                  ),
-                  column(
-                    width = 3,
-                    div(
-                      id = "sendSlideButton",
-                      style = "padding-top: 25px;",
-                      actionButton(
-                        inputId = "sendSlide",
-                        label = "GO!",
-                        icon = icon("far fa-envelope")
-                      ),
-                      shinyBS::bsTooltip(
-                        id = "sendSlide",
-                        title = "Click ONCE to send slide",
-                        placement = "top",
-                        options = list(container = "body")
-                      )
-                    ),
-                    div(
-                      id = "sendSlideError",
-                      style = "padding-top: 25px;",
-                      "Check address"
-                    )
-                  )
-                )
-              ) # end columnn
-            ) # end fluidRow
-          ) # End of right hand colunn
-        ), # end of first fluid row
-        fluidRow(
-          id = "debug_area",
-          column(
-            6,
-            div("Log", class = "debug_section_head"),
-            div(
-              "Debug level", HTML("&nbsp;"),
-              selectInput("debug_level", NULL, width = 100, selectize = FALSE,
-                          choices = c("Normal" = DEBUG_LEVEL_NORMAL,
-                                      "Verbose" = DEBUG_LEVEL_VERBOSE)) |>
-                inlineUI()
-            ),
-            verbatimTextOutput("logContent")
-          ),
-          column(
-            6,
-            div("Profiler", class = "debug_section_head"),
-            div(
-              "Only show functions taking longer than", HTML("&nbsp;"),
-              numericInput("profiler_threshold", NULL, min = 0, max = 1000,
-                           value = 100, width = 40, updateOn = "blur") |>
-                inlineUI() |>
-                attachClass("no-spinners"),
-              HTML("&nbsp;"), "milliseconds"
-            ),
-            verbatimTextOutput("profiling")
-          )
-        ) |> shinyjs::hidden()
 
-      ) # end dashboardBody
-    ) # end dashboardPage
+              bslib::accordion_panel(
+                "Additional Plots",
+                icon = icon("chart-line"),
+                checkboxGroupInput(
+                  inputId = "addedPlots",
+                  label = "Additional Plots",
+                  choiceNames = c("MEAC", "Interaction", "Events", "Time until ___"),
+                  choiceValues = c("MEAC", "Interaction", "Events", "Time Until")
+                )
+              ),
+
+              bslib::accordion_panel(
+                "Email Slide",
+                icon = icon("envelope"),
+                textInput("recipient", NULL, "", placeholder = "Enter email..."),
+                actionButton("sendSlide", "Send", class = "btn-primary"),
+                div(
+                  id = "sendSlideError",
+                  "Check address"
+                )
+              )
+            ),
+
+            actionButton("setTarget", "Suggest Dosing", class = "btn-outline-primary", icon = icon("fas fa-wand-magic-sparkles")),
+            actionButton("editDrugs", "Modify Drug Library", class = "btn-outline-primary", icon = icon("fas fa-pencil"))
+          ),
+
+          bslib::layout_columns(
+            style = "grid-template-columns: 1fr 450px;",
+
+            bslib::card(
+              plotOutput(
+                outputId = "PlotSimulation",
+                width = "100%",
+                height = "auto",
+                click = clickOpts(
+                  id = "plot_click",
+                  clip = FALSE
+                ),
+                dblclick = dblclickOpts(
+                  id = "plot_dblclick",
+                  clip = FALSE
+                ),
+                hover = hoverOpts(
+                  id = "plot_hover",
+                  delay = 500,
+                  delayType = "debounce",
+                  clip = FALSE,
+                  nullOutside = FALSE
+                )
+              ) |>
+                shinycssloaders::withSpinner(hide.ui = FALSE) |>
+                bslib::as_fill_carrier(),  # TODO this is a temporary hack until shinycssloaders v > 1.1.0 is released
+              uiOutput("hover_info"),
+
+              bslib::card_footer(
+                class = "small text-muted",
+                "Hover for precise concentration. Click to add new dose or edit existing doses for a specific drug. Double click to delete."
+              )
+            ),
+
+            bslib::card(
+              bslib::card_header(icon("syringe"), "Doses"),
+
+              bslib::layout_columns(
+                selectInput(
+                  "timeMode",
+                  "Time Display",
+                  c("Actual time" = "clock",
+                    "Elapsed minutes" = "relative")
+                ),
+                conditionalPanel(
+                  "input.timeMode == 'clock'",
+                  textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                )
+              ),
+
+              rhandsontable::rHandsontableOutput("doseTableHTML"),
+
+              bslib::card_footer(
+                actionButton("dosetable_apply", "Apply Changes", class = "my-0 btn-primary btn-lg", icon = icon("circle-check")),
+              )
+            )
+          ),
+
+          bslib::accordion(
+            id = "debug_area",
+            open = FALSE,
+            bslib::accordion_panel(
+              "Debug Section",
+              icon = icon("terminal"),
+              bslib::layout_columns(
+                div(
+                  div("Log", class = "debug_section_head"),
+                  div(
+                    "Debug level", HTML("&nbsp;"),
+                    selectInput("debug_level", NULL, width = 100, selectize = FALSE,
+                                choices = c("Normal" = DEBUG_LEVEL_NORMAL,
+                                            "Verbose" = DEBUG_LEVEL_VERBOSE)) |>
+                      inlineUI()
+                  ),
+                  verbatimTextOutput("logContent")
+                ),
+                div(
+                  div("Profiler", class = "debug_section_head"),
+                  div(
+                    "Only show functions taking longer than", HTML("&nbsp;"),
+                    numericInput("profiler_threshold", NULL, min = 0, max = 1000,
+                                 value = 100, width = 40, updateOn = "blur") |>
+                      inlineUI() |>
+                      attachClass("no-spinners"),
+                    HTML("&nbsp;"), "milliseconds"
+                  ),
+                  verbatimTextOutput("profiling")
+                )
+              )
+            )
+          ) |> shinyjs::hidden()
+        )
+      ),
+
+      bslib::nav_spacer(),
+      bslib::nav_item(
+        tags$a(
+          icon("circle-info"),
+          "Examples and Help",
+          href = config$help_link,
+          target = "_blank"
+        )
+      )
+    )
   }
 }
