@@ -82,7 +82,7 @@ app_ui <- function() {
                 shinyWidgets::radioGroupButtons(
                   inputId = "sex", label = "Sex",
                   choiceNames = list(span(icon("mars"), "Male"), span(icon("venus"), "Female")),
-                  choiceValues = c("make", "female"),
+                  choiceValues = c("male", "female"),
                   justified = TRUE,
                   selected = defaultSex
                 ) |> inputWithInlineLabel(),
