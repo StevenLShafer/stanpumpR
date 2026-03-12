@@ -35,6 +35,7 @@ Imports:
   shinycssloaders,
   shinydashboard,
   shinyjs,
+  shinyWidgets,
   tidyr,
   tryCatchLog,
   utils,
