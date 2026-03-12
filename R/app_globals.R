@@ -64,7 +64,10 @@ bookmarksToExclude <- c(
   "debug_level",
   "show_intro_modal",
   "client_time",
-  "dosetable_apply"
+  "dosetable_apply",
+  "debug_area",
+  "HandsontableCopyPaste",
+  "shinyalert"
 )
 
 outputComments <- function(

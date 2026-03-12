@@ -6,7 +6,8 @@ createHOT <- function(doseTable,drugDefaults)
     overflow = 'visible',
     rowHeaders = NULL,
     selectCallback = FALSE,
-    renderAllRows = TRUE
+    renderAllRows = TRUE,
+    height = 500
   ) %>%
     rhandsontable::hot_col(
       col = "Drug",
@@ -36,7 +37,7 @@ createHOT <- function(doseTable,drugDefaults)
       allowInvalid = FALSE
     ) %>%
     rhandsontable::hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
-    rhandsontable::hot_cols(colWidths = c(120, 70, 70, 120))
+    rhandsontable::hot_cols(colWidths = c(120, 60, 60, 120))
 
   # Set units on a per drug basis
   for (i in 1:nrow(doseTable))
