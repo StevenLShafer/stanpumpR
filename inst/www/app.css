@@ -1,6 +1,6 @@
 #help_link {
-  font-weight: bold;
-  color: white;
+font-weight: bold;
+color: white;
 }
 
 .main-header .logo {
@@ -23,13 +23,13 @@
 }
 
 #main_plot_outer {
-  max-height: 550px;
-  overflow-x: hidden;
-  overflow-y: auto;
+max-height: 550px;
+overflow-x: hidden;
+overflow-y: auto;
 }
 
 #doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
-  overflow-x: hidden;
+overflow-x: hidden;
 }
 
 .handsontableEditor .handsontable td {
@@ -46,27 +46,23 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   width: 0 !important;
 }
 
-#debug_area {
-  background: #444;
-  color: #eee;
+.accordion-button {
+  background: #f8f8f8;
 }
 
 #logContent, #profiling {
-  margin-top: 8px;
-  background-color: #555;
+margin-top: 8px;
+background-color: #555;
   color: #eee;
   font-size: 10px;
-  overflow-y: scroll;
-  height: 150px;
-  padding: 5px 15px;
-  border: 1px solid #999;
-  border-radius: 4px;
+overflow-y: scroll;
+height: 150px;
+padding: 5px 15px;
 }
 
 .debug_section_head {
   font-size: 18px;
   font-weight: bold;
-  margin-top: 5px;
 }
 
 .inline_ui {
@@ -76,9 +72,9 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
 }
 
 #profiler_threshold, #debug_level {
-  height: 20px;
-  padding: 0 5px;
-  font-size: 14px;
+height: 20px;
+padding: 0 5px;
+font-size: 14px;
 }
 
 .no-spinners ::-webkit-outer-spin-button,
@@ -91,16 +87,16 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
 }
 
 #dosetable_apply {
-  width: 100%;
-  margin: -5px 0 10px;
-  color: white;
+width: 100%;
+margin: -5px 0 10px;
+color: white;
 }
 
 #dosetable_apply[disabled] {
-  background: #b7c0c9;
+background: #b7c0c9;
   border-color: #ccc;
   color: #444;
-}
+  }
 
 .input-with-choices {
   margin-left: 4px;
@@ -130,18 +126,18 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
 
 .input-with-choices .input-group-btn input[type="radio"]:checked + span {
   background-color: #2c3e50;
-  border-color: #2c3e50;
-  color: #ffffff;
-  box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
+    border-color: #2c3e50;
+    color: #ffffff;
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
 }
 
 .input-with-choices .input-group-btn .radio-inline span {
   display: inline-block;
   padding: 6px 12px 5px 12px;
   background: #ffffff;
-  border: 1px solid #ced4da;
+    border: 1px solid #ced4da;
   color: #495057;
-  cursor: pointer;
+    cursor: pointer;
   transition: all 0.15s ease-in-out;
 }
 
@@ -156,21 +152,21 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
 
 .input-with-choices .input-group-btn input[type="radio"]:focus + span {
   border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .input-with-choices .input-group-btn .radio-inline span:hover {
   background-color: #f8f9fa;
-  border-color: #b8c2cc;
-  color: #0056b3;
+    border-color: #b8c2cc;
+    color: #0056b3;
 }
 
 .input-with-choices .input-group-btn input[type="radio"]:checked + span:hover {
   background-color: #0069d9;
-  border-color: #0062cc;
+    border-color: #0062cc;
 }
 
 .input-with-choices .input-group-btn .radio-inline span:active {
   background-color: #dae0e5;
-  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
 }
