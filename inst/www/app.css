@@ -40,6 +40,12 @@
   background: #ddd;
 }
 
+/* fix a bug where inside a fillable container, the input goes to the end of
+the screen https://github.com/handsontable/handsontable/issues/3815 */
+.handsontable textarea {
+  width: 0 !important;
+}
+
 #debug_area {
   background: #444;
   color: #eee;
