@@ -199,6 +199,7 @@ app_ui <- function() {
             style = "grid-template-columns: 1fr 450px;",
 
             bslib::card(
+              class = "overflow-hidden",
               plotOutput(
                 outputId = "PlotSimulation",
                 width = "100%",
@@ -244,11 +245,11 @@ app_ui <- function() {
                   textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
                 )
               ),
-
+              br(),
               rhandsontable::rHandsontableOutput("doseTableHTML"),
 
               bslib::card_footer(
-                actionButton("dosetable_apply", "Apply Changes", class = "my-0 btn-primary btn-lg", icon = icon("circle-check")),
+                actionButton("dosetable_apply", "Apply Changes", class = "my-0 btn-primary btn-lg", icon = icon("circle-check"))
               )
             )
           ),
