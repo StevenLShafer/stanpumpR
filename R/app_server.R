@@ -991,7 +991,8 @@ app_server <- function(input, output, session) {
         overflow = 'visible',
         rowHeaders = NULL,
         height = 220,
-        selectCallback = TRUE
+        selectCallback = TRUE,
+        stretchH = "all"
       ) %>%
         hot_col(
           col = "Delete",
@@ -1172,7 +1173,8 @@ app_server <- function(input, output, session) {
           overflow = 'visible',
           rowHeaders = NULL,
           height = 220,
-          selectCallback = TRUE
+          selectCallback = TRUE,
+          stretchH = "all"
         ) %>%
           hot_col(
             col = "Delete",
