@@ -182,12 +182,8 @@ app_ui <- function() {
               bslib::accordion_panel(
                 "Email Slide",
                 icon = icon("envelope"),
-                textInput("recipient", NULL, "", placeholder = "Enter email..."),
-                actionButton("sendSlide", "Send", class = "btn-primary"),
-                div(
-                  id = "sendSlideError",
-                  "Check address"
-                )
+                textInput("recipient", NULL, "", placeholder = "Enter email address"),
+                actionButton("sendSlide", "Send", class = "btn-primary")
               )
             ),
 

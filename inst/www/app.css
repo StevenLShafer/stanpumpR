@@ -7,6 +7,11 @@ color: white;
   overflow-y: auto;
 }
 
+.btn.disabled {
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
 .ht_master table.htCore > tbody td {
   position: relative;
   overflow: hidden;

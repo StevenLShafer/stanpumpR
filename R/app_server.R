@@ -553,30 +553,14 @@ app_server <- function(input, output, session) {
     simulationPlotRetval()$nFacets
   })
 
-  # email address --------------------------------------
-  observeEvent(input$recipient, {
-    if (input$recipient == "") {
-      shinyjs::hideElement("sendSlideButton")
-      shinyjs::hideElement("sendSlideError")
-      return()
-    }
-
-    regex_email <- "^\\w+([-+.']\\w+)*@\\w+([-.]\\w+)*\\.\\w{2,}([-.]\\w+)*$"
-    if (nchar(input$recipient) == attr(regexpr(regex_email, input$recipient, perl=FALSE),"match.length")) {
-      cat("Address is OK\n")
-      shinyjs::hideElement("sendSlideError")
-      shinyjs::showElement("sendSlideButton")
-    } else {
-      shinyjs::hideElement("sendSlideButton")
-      shinyjs::showElement("sendSlideError")
-    }
+  observe({
+    shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
   })
 
   # Send Slide -----------------------------
   observeEvent(
     input$sendSlide,
     {
-      shinyjs::disable("sendSlideButton")
       outputComments("input$sendSlide",input$sendSlide)
 
       values <- list(
@@ -608,7 +592,6 @@ app_server <- function(input, output, session) {
           email_password = config$email_password
         ) |> profileCode("sendSlide()")
       shinycssloaders::hidePageSpinner()
-      shinyjs::enable("sendSlideButton")
 
       if (isTRUE(emailRetval)) {
         shinyalert::shinyalert("Email sent", type = "success", closeOnClickOutside = TRUE)
