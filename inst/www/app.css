@@ -98,12 +98,12 @@ background: #b7c0c9;
   color: #444;
   }
 
-.input-with-choices {
-  margin-left: 4px;
-}
-.input-with-choices .main-input {
+.input-with-choices .main-choices-input {
   left: -4px;
   border-radius: 4px !important;
+}
+.input-with-choices .input-group-btn {
+  margin-top: 1px;
 }
 .input-with-choices .input-group-btn .form-group {
   margin-bottom: 0;
@@ -151,12 +151,12 @@ background: #b7c0c9;
 }
 
 .input-with-choices .input-group-btn input[type="radio"]:focus + span {
-  border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  border-color: #00264e;
+    box-shadow: 0 0 0 0.2rem rgba(0, 40, 75, 0.25);
 }
 
 .input-with-choices .input-group-btn .radio-inline span:hover {
-  background-color: #f8f9fa;
+  background-color: #f4f8fb;
     border-color: #b8c2cc;
     color: #0056b3;
 }

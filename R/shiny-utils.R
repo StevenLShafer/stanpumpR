@@ -37,7 +37,7 @@ addHotHooks <- function(hot, filterKeys = TRUE, sanitize = TRUE, ...) {
 #' @param selected Which initial choice is selected
 inputWithChoices <- function(tag, choices, inputId = NULL, selected = NULL) {
   input <- tag$children[[2]]  # WARNING in the future, if shiny changes internals, this can break
-  input <- htmltools::tagAppendAttributes(input, class = "main-input")
+  input <- htmltools::tagAppendAttributes(input, class = "main-choices-input")
 
   if (is.null(inputId)) {
     inputId <- paste0(input$attribs$id, "Choice")
@@ -63,13 +63,13 @@ inputWithInlineLabel <- function(tag) {
     .input-inline-label {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 1.25rem;
       margin-bottom: 1rem;
     }
     .input-inline-label .form-group {
       margin-bottom: 0;
     }
-    .input-inline-label .main-input {
+    .input-inline-label .main-inline-input {
       flex: 1;
       min-width: 0;
     }
@@ -93,7 +93,7 @@ inputWithInlineLabel <- function(tag) {
   tag <- div(
     class = "input-inline-label",
     first_label,
-    div(tag, class = "main-input")
+    div(tag, class = "main-inline-input")
   )
   htmltools::attachDependencies(tag, dep)
 }
