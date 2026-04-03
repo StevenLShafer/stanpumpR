@@ -3,8 +3,13 @@ font-weight: bold;
 color: white;
 }
 
-.main-header .logo {
+.navbar-header .title-long {
+  max-width: 600px;
+  display: inline-block;
+  white-space: normal;
   overflow-y: auto;
+  max-height: 1.5em;
+  vertical-align: middle;
 }
 
 .btn.disabled {

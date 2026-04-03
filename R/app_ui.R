@@ -13,7 +13,7 @@ app_ui <- function() {
 
   function(request) {
     bslib::page_navbar(
-      title = config$title,
+      title = span(config$title, class = if (config$long_title) "title-long"),
       theme = stanpumpr_theme,
 
       header = tags$head(
@@ -173,7 +173,7 @@ app_ui <- function() {
                 icon = icon("chart-line"),
                 checkboxGroupInput(
                   inputId = "addedPlots",
-                  label = "Additional Plots",
+                  label = NULL,
                   choiceNames = c("MEAC", "Interaction", "Events", "Time until ___"),
                   choiceValues = c("MEAC", "Interaction", "Events", "Time Until")
                 )
