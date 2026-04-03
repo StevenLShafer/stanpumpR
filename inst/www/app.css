@@ -1,46 +1,11 @@
-.navbar-header .title-long {
-  max-width: 600px;
-  display: inline-block;
-  white-space: normal;
-  overflow-y: auto;
-  max-height: 1.5em;
-  vertical-align: middle;
-}
-
 .btn.disabled {
   cursor: not-allowed;
   pointer-events: auto;
 }
 
-.ht_master table.htCore > tbody td {
-  position: relative;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 10px;
-}
-.htAutocompleteArrow {
-  position: absolute;
-  right: 0;
-}
-
-.radio-inline+.radio-inline {
-  margin-left: 20px;
-}
-
-#main_plot_outer {
-max-height: 550px;
-overflow-x: hidden;
-overflow-y: auto;
-}
-
-#doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
-overflow-x: hidden;
-}
-
 .handsontableEditor .handsontable td {
   background: #f0f0f0;
 }
-
 .handsontable.listbox tr:hover td, .handsontable.listbox tr td.current {
   background: #ddd;
 }
@@ -55,33 +20,6 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   background: #f8f8f8;
 }
 
-#logContent, #profiling {
-margin-top: 8px;
-background-color: #555;
-  color: #eee;
-  font-size: 10px;
-overflow-y: scroll;
-height: 150px;
-padding: 5px 15px;
-}
-
-.debug_section_head {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.inline_ui {
-  display: inline-block;
-  vertical-align: middle;
-  margin-bottom: 0;
-}
-
-#profiler_threshold, #debug_level {
-height: 20px;
-padding: 0 5px;
-font-size: 14px;
-}
-
 .no-spinners ::-webkit-outer-spin-button,
 .no-spinners ::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -91,10 +29,29 @@ font-size: 14px;
   -moz-appearance: textfield;
 }
 
+.inline_ui {
+  display: inline-block;
+  vertical-align: middle;
+  margin-bottom: 0;
+}
+
+.navbar-header .title-long {
+  max-width: 600px;
+  display: inline-block;
+  white-space: normal;
+  overflow-y: auto;
+  max-height: 1.5em;
+  vertical-align: middle;
+}
+
+#doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
+  overflow-x: hidden;
+}
+
 #dosetable_apply {
-width: 100%;
-margin: -5px 0 10px;
-color: white;
+  width: 100%;
+  margin: -5px 0 10px;
+  color: white;
 }
 
 #dosetable_apply[disabled] {
@@ -105,4 +62,25 @@ color: white;
 
 #editPriorDosesTable {
   font-size: 0.8em;
+}
+
+.debug_section_head {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#logContent, #profiling {
+  margin-top: 8px;
+  background-color: #555;
+  color: #eee;
+  font-size: 10px;
+  overflow-y: scroll;
+  height: 150px;
+  padding: 5px 15px;
+}
+
+#profiler_threshold, #debug_level {
+  height: 20px;
+  padding: 0 5px;
+  font-size: 14px;
 }
