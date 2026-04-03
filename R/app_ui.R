@@ -48,8 +48,7 @@ app_ui <- function() {
                     c("yr" = UNIT_YEAR, "mo" = UNIT_MONTH),
                     inputId = "ageUnit",
                     selected = defaultAgeUnit
-                  ) |>
-                  inputWithInlineLabel(),
+                  ),
 
                 numericInput(
                   inputId = "weight",
@@ -62,8 +61,7 @@ app_ui <- function() {
                     c("kg" = UNIT_KG, "lb" = UNIT_LB),
                     inputId = "weightUnit",
                     selected = defaultWeightUnit
-                  ) |>
-                  inputWithInlineLabel(),
+                  ),
 
                 numericInput(
                   inputId = "height",
@@ -76,8 +74,7 @@ app_ui <- function() {
                     c("in" = UNIT_INCH, "cm" = UNIT_CM),
                     inputId = "heightUnit",
                     selected = defaultHeightUnit
-                  ) |>
-                  inputWithInlineLabel(),
+                  ),
 
                 shinyWidgets::radioGroupButtons(
                   inputId = "sex", label = "Sex",
@@ -85,7 +82,7 @@ app_ui <- function() {
                   choiceValues = c("male", "female"),
                   justified = TRUE,
                   selected = defaultSex
-                ) |> inputWithInlineLabel(),
+                ),
 
                 conditionalPanel(
                   condition = "input.age && input.ageUnit && input.ageUnit == 1 && input.age > 11 & input.age < 60 && input.sex == 'female'",
@@ -100,7 +97,6 @@ app_ui <- function() {
                     justified = TRUE,
                     selected = FALSE
                   ) |>
-                    inputWithInlineLabel() |>
                     shinyjs::disabled()
                 ),
 
