@@ -8,3 +8,8 @@ identicalTable <- function(x, y) {
   rownames(y) <- NULL
   identical(x, y)
 }
+
+isEmailValid <- function(email) {
+  regex_email <- "^\\w+([-+.']\\w+)*@\\w+([-.]\\w+)*\\.\\w{2,}([-.]\\w+)*$"
+  nchar(email) == attr(regexpr(regex_email, email, perl = FALSE), "match.length")
+}

@@ -26,7 +26,7 @@ function findColByHeader(hot, headerName) {
 }
 
 function getTimeMode() {
-  var timeMode = $('input[name="timeMode"]:checked').val();
+  var timeMode = $("#timeMode").val();
   return timeMode || 'clock'; // default to clock if not found
 }
 

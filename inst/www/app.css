@@ -1,78 +1,23 @@
-#help_link {
-  font-weight: bold;
-  color: white;
-}
-
-.main-header .logo {
-  overflow-y: auto;
-}
-
-.ht_master table.htCore > tbody td {
-  position: relative;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 10px;
-}
-.htAutocompleteArrow {
-  position: absolute;
-  right: 0;
-}
-
-.radio-inline+.radio-inline {
-  margin-left: 20px;
-}
-
-#main_plot_outer {
-  max-height: 550px;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-#doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
-  overflow-x: hidden;
+.btn.disabled {
+  cursor: not-allowed;
+  pointer-events: auto;
 }
 
 .handsontableEditor .handsontable td {
   background: #f0f0f0;
 }
-
 .handsontable.listbox tr:hover td, .handsontable.listbox tr td.current {
   background: #ddd;
 }
 
-#debug_area {
-  background: #444;
-  color: #eee;
+/* fix a bug where inside a fillable container, the input goes to the end of
+the screen https://github.com/handsontable/handsontable/issues/3815 */
+.handsontable textarea {
+  width: 0 !important;
 }
 
-#logContent, #profiling {
-  margin-top: 8px;
-  background-color: #555;
-  color: #eee;
-  font-size: 10px;
-  overflow-y: scroll;
-  height: 150px;
-  padding: 5px 15px;
-  border: 1px solid #999;
-  border-radius: 4px;
-}
-
-.debug_section_head {
-  font-size: 18px;
-  font-weight: bold;
-  margin-top: 5px;
-}
-
-.inline_ui {
-  display: inline-block;
-  vertical-align: middle;
-  margin-bottom: 0;
-}
-
-#profiler_threshold, #debug_level {
-  height: 20px;
-  padding: 0 5px;
-  font-size: 14px;
+.accordion-button {
+  background: #f8f8f8;
 }
 
 .no-spinners ::-webkit-outer-spin-button,
@@ -82,6 +27,25 @@
 }
 .no-spinners [type=number] {
   -moz-appearance: textfield;
+}
+
+.inline_ui {
+  display: inline-block;
+  vertical-align: middle;
+  margin-bottom: 0;
+}
+
+.navbar-header .title-long {
+  max-width: 600px;
+  display: inline-block;
+  white-space: normal;
+  overflow-y: auto;
+  max-height: 1.5em;
+  vertical-align: middle;
+}
+
+#doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
+  overflow-x: hidden;
 }
 
 #dosetable_apply {
@@ -96,77 +60,27 @@
   color: #444;
 }
 
-.input-with-choices {
-  margin-left: 4px;
-}
-.input-with-choices .main-input {
-  left: -4px;
-  border-radius: 4px !important;
-}
-.input-with-choices .input-group-btn {
-  font-size: 1.4rem;
-}
-.input-with-choices .input-group-btn .form-group {
-  margin-bottom: 0;
-}
-.input-with-choices .input-group-btn .radio-inline {
-  padding: 0;
-  margin: 0;
-  margin-left: -3px;
-}
-.input-with-choices .input-group-btn .radio-inline:first-child {
-  margin-left: 0;
+#editPriorDosesTable {
+  font-size: 0.8em;
 }
 
-.input-with-choices .input-group-btn input[type="radio"] {
-  position: absolute;
-  width: 0;
-  height: 0;
+.debug_section_head {
+  font-size: 18px;
+  font-weight: bold;
 }
 
-.input-with-choices .input-group-btn input[type="radio"]:checked + span {
-  background-color: #007bff;
-  border-color: #007bff;
-  color: #ffffff;
-  box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
+#logContent, #profiling {
+  margin-top: 8px;
+  background-color: #555;
+  color: #eee;
+  font-size: 10px;
+  overflow-y: scroll;
+  height: 150px;
+  padding: 5px 15px;
 }
 
-.input-with-choices .input-group-btn .radio-inline span {
-  display: inline-block;
-  padding: 6px 12px 5px 12px;
-  background: #ffffff;
-  border: 1px solid #ced4da;
-  color: #495057;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-}
-
-.input-with-choices .input-group-btn .radio-inline:first-child span {
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-}
-.input-with-choices .input-group-btn .radio-inline:last-child span {
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-}
-
-.input-with-choices .input-group-btn input[type="radio"]:focus + span {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.input-with-choices .input-group-btn .radio-inline span:hover {
-  background-color: #f8f9fa;
-  border-color: #b8c2cc;
-  color: #0056b3;
-}
-
-.input-with-choices .input-group-btn input[type="radio"]:checked + span:hover {
-  background-color: #0069d9;
-  border-color: #0062cc;
-}
-
-.input-with-choices .input-group-btn .radio-inline span:active {
-  background-color: #dae0e5;
-  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+#profiler_threshold, #debug_level {
+  height: 20px;
+  padding: 0 5px;
+  font-size: 14px;
 }

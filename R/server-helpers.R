@@ -28,7 +28,7 @@ showIntroModal <- function() {
       shiny::tags$button(
         type = "button",
         class = "btn btn-warning",
-        `data-dismiss` = "modal",
+        `data-bs-dismiss` = "modal",
         "OK"
       ),
       footer = NULL,
@@ -66,8 +66,8 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
 
 recalculatePK <- function(drugs, drugDefaults, doseTable,
                           age, weight, height, sex) {
-#  for (idx in seq(nrow(drugDefaults))) {
-#    drug <- drugDefaults$Drug[idx]
+  #  for (idx in seq(nrow(drugDefaults))) {
+  #    drug <- drugDefaults$Drug[idx]
   for (drug in unique(doseTable$Drug)) {
     idx <- which(drugDefaults$Drug==drug)
     drugs[[drug]]$Color <- drugDefaults$Color[idx]

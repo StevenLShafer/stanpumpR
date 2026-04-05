@@ -54,5 +54,6 @@ DEBUG_LEVEL_VERBOSE <- 2
 DEFAULT_CONFIG <- list(
   title = "stanpumpR",
   help_link = "https://steveshafer.shinyapps.io/stanpumpR_HelpPage",
-  debug = DEBUG_LEVEL_OFF
+  debug = DEBUG_LEVEL_OFF,
+  long_title = FALSE
 )

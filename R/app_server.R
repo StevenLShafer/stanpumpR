@@ -100,7 +100,7 @@ app_server <- function(input, output, session) {
 
   calcPlotHeight <- reactive({
     outputComments("In calcPlotHeight", level = DEBUG_LEVEL_VERBOSE)
-    nFacets() * 120 + 50
+    nFacets() * 140 + 50
   })
 
   # Make drugs and events local to session
@@ -553,30 +553,14 @@ app_server <- function(input, output, session) {
     simulationPlotRetval()$nFacets
   })
 
-  # email address --------------------------------------
   observe({
-    if (input$recipient == "") {
-      shinyjs::hideElement("sendSlideButton")
-      shinyjs::hideElement("sendSlideError")
-      return()
-    }
-
-    regex_email <- "^\\w+([-+.']\\w+)*@\\w+([-.]\\w+)*\\.\\w{2,}([-.]\\w+)*$"
-    if (nchar(input$recipient) == attr(regexpr(regex_email, input$recipient, perl=FALSE),"match.length")) {
-      cat("Address is OK\n")
-      shinyjs::hideElement("sendSlideError")
-      shinyjs::showElement("sendSlideButton")
-    } else {
-      shinyjs::hideElement("sendSlideButton")
-      shinyjs::showElement("sendSlideError")
-    }
+    shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
   })
 
   # Send Slide -----------------------------
   observeEvent(
     input$sendSlide,
     {
-      shinyjs::disable("sendSlideButton")
       outputComments("input$sendSlide",input$sendSlide)
 
       values <- list(
@@ -608,7 +592,6 @@ app_server <- function(input, output, session) {
           email_password = config$email_password
         ) |> profileCode("sendSlide()")
       shinycssloaders::hidePageSpinner()
-      shinyjs::enable("sendSlideButton")
 
       if (isTRUE(emailRetval)) {
         shinyalert::shinyalert("Email sent", type = "success", closeOnClickOutside = TRUE)
@@ -890,7 +873,7 @@ app_server <- function(input, output, session) {
         tags$button(
           type = "button",
           class = "btn btn-warning",
-          `data-dismiss` = "modal",
+          `data-bs-dismiss` = "modal",
           "Cancel"
         ),
         actionButton(
@@ -965,7 +948,7 @@ app_server <- function(input, output, session) {
         tags$button(
           type = "button",
           class = "btn btn-warning",
-          `data-dismiss` = "modal",
+          `data-bs-dismiss` = "modal",
           "Cancel"
         ),
         footer = NULL,
@@ -991,7 +974,8 @@ app_server <- function(input, output, session) {
         overflow = 'visible',
         rowHeaders = NULL,
         height = 220,
-        selectCallback = TRUE
+        selectCallback = TRUE,
+        stretchH = "all"
       ) %>%
         hot_col(
           col = "Delete",
@@ -1097,7 +1081,7 @@ app_server <- function(input, output, session) {
         tags$button(
           type = "button",
           class = "btn btn-warning",
-          `data-dismiss` = "modal",
+          `data-bs-dismiss` = "modal",
           "Cancel"
         ),
         actionButton(
@@ -1172,7 +1156,8 @@ app_server <- function(input, output, session) {
           overflow = 'visible',
           rowHeaders = NULL,
           height = 220,
-          selectCallback = TRUE
+          selectCallback = TRUE,
+          stretchH = "all"
         ) %>%
           hot_col(
             col = "Delete",
@@ -1209,7 +1194,7 @@ app_server <- function(input, output, session) {
             tags$button(
               type = "button",
               class = "btn btn-warning",
-              `data-dismiss` = "modal",
+              `data-bs-dismiss` = "modal",
               "Cancel"
             ),
             footer = NULL,
@@ -1283,7 +1268,7 @@ app_server <- function(input, output, session) {
         tags$button(
           type = "button",
           class = "btn btn-warning",
-          `data-dismiss` = "modal",
+          `data-bs-dismiss` = "modal",
           "Cancel"
         ),
         actionButton(
@@ -1446,7 +1431,7 @@ app_server <- function(input, output, session) {
               type = "button",
               class = "btn btn-warning",
               style = "margin: 0px 5px 5px 5px;",
-              `data-dismiss` = "modal",
+              `data-bs-dismiss` = "modal",
               "Cancel"
             ),
             footer = NULL,
@@ -1464,7 +1449,7 @@ app_server <- function(input, output, session) {
     {
       profileCode({
         removeModal()
-        waiter::waiter_show()
+        shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Calculating doses...")
         endTime <- validateTime(input$targetEndTime)
         if ((endTime) == "")
         {
@@ -1502,7 +1487,7 @@ app_server <- function(input, output, session) {
           testTable[,c("Drug","Time","Dose","Units")],
           dt
         )
-        waiter::waiter_hide()
+        shinycssloaders::hidePageSpinner()
         doseTable(dt)
       }, name = "input$targetOK observer")
     })
@@ -1535,7 +1520,7 @@ app_server <- function(input, output, session) {
         tags$button(
           type = "button",
           class = "btn btn-warning",
-          `data-dismiss` = "modal",
+          `data-bs-dismiss` = "modal",
           "Cancel"
         ),
         footer = NULL,

@@ -1,15 +1,18 @@
 Package: stanpumpR
 Title: stanpumpR, a PK/PD simulation program
-Version: 0.0.1.9001
+Version: 0.0.1.9002
 Authors@R:
     c(person(given = "Steven",
            family = "Shafer",
            role = c("aut", "cre"),
            email = "steven.shafer@stanford.edu",
-           comment = structure("0000-0002-0289-7793", .Names = "ORCID")))
+           comment = structure("0000-0002-0289-7793", .Names = "ORCID")),
+      person("Dean", "Attali", email = "daattali@gmail.com", role = "aut",
+             comment = c(ORCID="0000-0002-5645-3493")))
 Description: stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
 License: MIT + file LICENSE
 Imports:
+  bslib,
   config,
   dplyr,
   glue,
@@ -34,6 +37,7 @@ Imports:
   shinycssloaders,
   shinydashboard,
   shinyjs,
+  shinyWidgets,
   tidyr,
   tryCatchLog,
   utils,
