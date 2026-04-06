@@ -60,6 +60,13 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   color: #444;
 }
 
+#dosetable_undo[disabled],
+#dosetable_redo[disabled] {
+  background: #ddd;
+  border-color: #eee;
+  color: #777;
+}
+
 #editPriorDosesTable {
   font-size: 0.8em;
 }

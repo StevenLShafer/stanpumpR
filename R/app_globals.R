@@ -65,6 +65,8 @@ bookmarksToExclude <- c(
   "show_intro_modal",
   "client_time",
   "dosetable_apply",
+  "dosetable_undo",
+  "dosetable_redo",
   "debug_area",
   "HandsontableCopyPaste",
   "shinyalert"

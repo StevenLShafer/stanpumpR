@@ -35,8 +35,10 @@ createHOT <- function(doseTable,drugDefaults)
       halign = "htLeft",
       valign = "vtMiddle",
       allowInvalid = FALSE
-    ) %>%
-    rhandsontable::hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE)
+    )
+
+  # Disable context menu options that aren't relevant
+  HOT$x$contextMenu$items <- HOT$x$contextMenu$items[grepl("row", names(HOT$x$contextMenu$items))]
 
   # Set units on a per drug basis
   for (i in 1:nrow(doseTable))
