@@ -254,6 +254,7 @@ app_server <- function(input, output, session) {
   })
 
   observeEvent(input$dosetable_apply, {
+    shinyjs::disable("dosetable_apply")
     doseTable(doseTableDraft())
   })
 
