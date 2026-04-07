@@ -253,6 +253,9 @@ function hookDoseTableUpdate(changes, source) {
   if (changes.length === 1 && changes[0][1] === drugCol) {
     drugchange = true;
   }
+
+  let allChanges = [];
+
   rows.forEach(function(row) {
     let rowdata = hot.getDataAtRow(row);
     // if everything in row is empty then exit
@@ -281,22 +284,15 @@ function hookDoseTableUpdate(changes, source) {
     setUnitDropdown(hot, row, unitsCol, units);
     hot.setCellMeta(row, unitsCol, 'readOnly', false);
 
-    setTimeout(function() {
-      // if user provides a unit then use this instead of drug default
-      //   should we warn user that not default?
-        unit = unit !== '' ? unit : validateUnit(unit, drug);
-        hot.setDataAtCell(
-          [
-            [row, timeCol, time],
-            [row, doseCol, dose],
-            [row, unitsCol, unit]
-          ],
-          null,
-          null,
-          'calculate'  // avoid infinite loop by using custom source
-        );
-    }, 0);
+    unit = unit !== '' ? unit : validateUnit(unit, drug);
+    allChanges.push([row, timeCol, time]);
+    allChanges.push([row, doseCol, dose]);
+    allChanges.push([row, unitsCol, unit]);
   });
+
+  if (allChanges.length > 0) {
+    hot.setDataAtCell(allChanges, 'calculate');
+  }
 }
 
 function getDrugUnits(drug) {
