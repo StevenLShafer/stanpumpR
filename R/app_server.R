@@ -270,12 +270,16 @@ app_server <- function(input, output, session) {
   })
 
   observeEvent(input$dosetable_undo, {
+    req(length(doseTableUndo()) > 0)
+
     doseTableRedo( c(doseTableRedo(), list(doseTableDraft())) )
     doseTableDraft( utils::tail(doseTableUndo(), 1)[[1]] )
     doseTableUndo( head(doseTableUndo(), -1) )
   })
 
   observeEvent(input$dosetable_redo, {
+    req(length(doseTableRedo()) > 0)
+
     doseTableUndo( c(doseTableUndo(), list(doseTableDraft())) )
     doseTableDraft( utils::tail(doseTableRedo(), 1)[[1]] )
     doseTableRedo( head(doseTableRedo(), -1) )
