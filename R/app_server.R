@@ -310,12 +310,14 @@ app_server <- function(input, output, session) {
 
       # make sure that table has changed before updating doseTable reactive
       if ( !identicalTable(doseTableDraft(), data) ) {
-        # Convert NA values to empty (when a new row gets added using the javascript API,
-        # the new row gets NA values and having NA as well as "" values leads to issues later on)
-        data[is.na(data)] <- ""
-
         doseTableUndo( c(doseTableUndo(), list(doseTableDraft())) )
         doseTableRedo(list())
+
+        # add empty row at the bottom if needed
+        if (nzchar(tail(data, 1)$Drug)) {
+          data[nrow(data) + 1, ] <- ""
+        }
+
         doseTableDraft(data)
       }
     }, name = "input$doseTableHTML observer")

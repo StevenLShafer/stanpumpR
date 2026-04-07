@@ -295,24 +295,8 @@ function hookDoseTableUpdate(changes, source) {
           null,
           'calculate'  // avoid infinite loop by using custom source
         );
-        addEmptyRowIfNeeded(hot);
     }, 0);
   });
-}
-
-// add new row for user input
-function addEmptyRowIfNeeded(hot) {
-  var rows = hot.countRows();
-  // only add if non-empty drug name on last row
-  var rowdata = hot.getDataAtRow(rows - 1);
-  let drugCol = findColByHeader(hot, "Drug");
-  if (rowdata[drugCol] === null || rowdata[drugCol] === '') { return; }
-  hot.alter(
-    'insert_row',
-    rows,      // last row
-    1,         // one row
-    'manual'   // define our own source to avoid infinite loop
-  );
 }
 
 function getDrugUnits(drug) {
