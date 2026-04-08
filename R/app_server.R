@@ -146,10 +146,12 @@ app_server <- function(input, output, session) {
 
   # Routine to output doseTableHTML from doseTable
   output$doseTableHTML <- renderRHandsontable({
+    req(doseTableDraft())
+
     profileCode({
       outputComments("Rendering doseTableHTML")
 
-      createHOT(doseTable(), drugDefaults())
+      createHOT(doseTableDraft(), drugDefaults())
     }, name = "createHOT() from doseTableHTML")
   })
 
@@ -242,6 +244,9 @@ app_server <- function(input, output, session) {
   # without applying it, to allow the user to make many successive edits quickly
   doseTableDraft <- reactiveVal()
 
+  doseTableUndo <- reactiveVal(list())
+  doseTableRedo <- reactiveVal(list())
+
   observeEvent(doseTable(), {
     doseTableDraft(doseTable())
   })
@@ -253,9 +258,32 @@ app_server <- function(input, output, session) {
     )
   })
 
+  observe({
+    shinyjs::toggleState("dosetable_undo", condition = length(doseTableUndo()) > 0)
+    shinyjs::toggleState("dosetable_redo", condition = length(doseTableRedo()) > 0)
+  })
+
   observeEvent(input$dosetable_apply, {
     shinyjs::disable("dosetable_apply")
     doseTable(doseTableDraft())
+    doseTableUndo(list())
+    doseTableRedo(list())
+  })
+
+  observeEvent(input$dosetable_undo, {
+    req(length(doseTableUndo()) > 0)
+
+    doseTableRedo( c(doseTableRedo(), list(doseTableDraft())) )
+    doseTableDraft( utils::tail(doseTableUndo(), 1)[[1]] )
+    doseTableUndo( head(doseTableUndo(), -1) )
+  })
+
+  observeEvent(input$dosetable_redo, {
+    req(length(doseTableRedo()) > 0)
+
+    doseTableUndo( c(doseTableUndo(), list(doseTableDraft())) )
+    doseTableDraft( utils::tail(doseTableRedo(), 1)[[1]] )
+    doseTableRedo( head(doseTableRedo(), -1) )
   })
 
   observeEvent(input$doseTableHTML, {
@@ -287,9 +315,14 @@ app_server <- function(input, output, session) {
 
       # make sure that table has changed before updating doseTable reactive
       if ( !identicalTable(doseTableDraft(), data) ) {
-        # Convert NA values to empty (when a new row gets added using the javascript API,
-        # the new row gets NA values and having NA as well as "" values leads to issues later on)
-        data[is.na(data)] <- ""
+        doseTableUndo( c(doseTableUndo(), list(doseTableDraft())) )
+        doseTableRedo(list())
+
+        # add empty row at the bottom if needed
+        if (nzchar(tail(data, 1)$Drug)) {
+          data[nrow(data) + 1, ] <- ""
+        }
+
         doseTableDraft(data)
       }
     }, name = "input$doseTableHTML observer")
@@ -407,6 +440,8 @@ app_server <- function(input, output, session) {
 
   observeEvent(input$timeMode, {
     doseTable(doseTableDraft())
+    doseTableUndo(list())
+    doseTableRedo(list())
 
     # When switching to relative time, convert any clock times (HH:MM) to minutes
     if (input$timeMode == "relative") {
@@ -930,6 +965,7 @@ app_server <- function(input, output, session) {
         if (dt$Drug[nrow(dt)] != "" ) {
           dt <- rbind(dt, doseTableNewRow)
         }
+
         doseTable(dt)
       }
     }, name = "input$clickOKDrug observer")

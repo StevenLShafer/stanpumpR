@@ -241,7 +241,13 @@ app_ui <- function() {
               rhandsontable::rHandsontableOutput("doseTableHTML"),
 
               bslib::card_footer(
-                actionButton("dosetable_apply", "Apply Changes", class = "my-0 btn-primary btn-lg", icon = icon("circle-check"))
+                div(
+                  class = "d-grid",
+                  style = "grid-template-columns: 1fr auto auto; gap: 0.25rem",
+                  actionButton("dosetable_apply", "Apply Changes", icon = icon("circle-check"), class = "btn-primary my-0 btn-lg"),
+                  actionButton("dosetable_undo", NULL, icon = icon("undo"), title = "Undo", class = "my-0 btn-lg btn-outline-primary"),
+                  actionButton("dosetable_redo", NULL, icon = icon("redo"), title = "Redo", class = "my-0 btn-lg btn-outline-primary")
+                )
               )
             )
           ),
