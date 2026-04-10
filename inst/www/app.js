@@ -1,14 +1,30 @@
 $(document).on('shiny:connected', function(event) {
+  // Send shiny the current local time
   var timeNow = new Date().toLocaleTimeString();
   Shiny.setInputValue("client_time", timeNow);
 
+  // determine if to show the intro modal based on last time it was shown
   if (!getCookie('intro_shown')) {
     setCookie('intro_shown', 'true', 7);
     Shiny.setInputValue('show_intro_modal', true, {priority: 'event'});
   }
+
+  // send shiny the width of the plot section
+  const plotBox = document.getElementById('plotContainer');
+  let plotBoxTimeout = null;
+  const ro = new ResizeObserver(entries => {
+    for (let entry of entries) {
+      const newWidth = entry.contentRect.width;
+      clearTimeout(plotBoxTimeout);
+      plotBoxTimeout = setTimeout(function() {
+        Shiny.setInputValue('plotWidth', newWidth);
+      }, 100);
+    }
+  });
+  ro.observe(plotBox);
 });
 
-
+// auto-scroll to the bottom of the logs
 $(document).on('shiny:value', function(event) {
   if (event.target.id === 'logContent' || event.target.id === 'profiling') {
     setTimeout(function() {
@@ -48,3 +64,4 @@ function setCookie(name, value, days) {
   date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
   document.cookie = name + '=' + value + '; expires=' + date.toUTCString() + '; path=/';
 }
+

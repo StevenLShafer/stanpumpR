@@ -122,19 +122,11 @@ app_ui <- function() {
                 icon = icon("sliders"),
                 textInput("title", "Title", paste("Simulation on", format(Sys.time()))),
                 textInput("caption", "Caption", "", placeholder = "Enter figure caption"),
-                selectInput("typical", "Show typical:", c("none","Mid", "Range"), selected = "Range"),
-                selectInput("normalization", "Normalize to:", c("none","Peak plasma", "Peak effect site")),
-                conditionalPanel(
-                  condition = "!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('Events') || input.addedPlots.includes('Interaction'))",
-                  checkboxInput(
-                    inputId = "logY",
-                    label = "Log Y axis",
-                    value = FALSE
-                  )
-                ),
+                selectInput("typical", "Show typical", c("none","Mid", "Range"), selected = "Range"),
+                selectInput("normalization", "Normalize to", c("none","Peak plasma", "Peak effect site")),
                 selectInput(
                   inputId = "maximum",
-                  label = "Max Time",
+                  label = "Max time (minutes)",
                   choices = maxtimes$times,
                   selected = 60
                 ),
@@ -161,7 +153,16 @@ app_ui <- function() {
                               "dotdash",
                               "twodash",
                               "blank")
-                )
+                ),
+                sliderInput("yaxisHeight", "Y axis height", 100, 350, 150, ticks = FALSE),
+                conditionalPanel(
+                  condition = "!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('Events') || input.addedPlots.includes('Interaction'))",
+                  checkboxInput(
+                    inputId = "logY",
+                    label = "Log Y axis",
+                    value = FALSE
+                  )
+                ),
               ),
 
               bslib::accordion_panel(
@@ -191,6 +192,7 @@ app_ui <- function() {
             style = "grid-template-columns: 1fr 450px;",
 
             bslib::card(
+              id = "plotContainer",
               class = "overflow-hidden",
               plotOutput(
                 outputId = "PlotSimulation",
