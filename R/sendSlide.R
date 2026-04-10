@@ -5,7 +5,8 @@ sendSlide <- function(
   plotObject,
   allResults,
   plotResults,
-  numPlots,
+  height,
+  width,
   slide,
   drugs,
   drugDefaults,
@@ -26,7 +27,7 @@ sendSlide <- function(
       stop("email password missing")
     }
 
-    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, numPlots, slide, drugs, drugDefaults)
+    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults)
 
     outputComments("Sending email")
     email <- mailR::send.mail(
@@ -58,7 +59,7 @@ sendSlide <- function(
   })
 }
 
-generateEmail <- function(values, recipient, plotObject, allResults, plotResults, numPlots, slide, drugs, drugDefaults) {
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults) {
   title = values$title
   DT <- values$DT
   url <- values$url
@@ -89,9 +90,6 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   outputComments("Creating PNG file")
 
-  png_base_height <- 50
-  png_height_per_plot <- 120
-  png_height <- png_base_height + (numPlots * png_height_per_plot)
   pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
   ggplot2::ggsave(
     plotObject +
@@ -110,8 +108,8 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       ),
     filename = pngfileName,
     dpi = 150,
-    height = png_height,
-    width = 800,
+    height = height,
+    width = width,
     units = "px"
   )
 

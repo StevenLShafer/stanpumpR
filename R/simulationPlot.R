@@ -17,9 +17,10 @@ simulationPlot <- function(
   plotRecovery = FALSE,
   title = "Default Title",
   caption = "Default Caption",
-  aspect = 0.15,
   typical = c("Mid"),
-  logY = FALSE
+  logY = FALSE,
+  yAxisHeight = 150,
+  width = 800
   )
 
 # xBreaks = c(0:6*10)
@@ -452,6 +453,9 @@ simulationPlot <- function(
   # Step A3: labs and themes
 
   nFacets <- length(unique(plotResults$Wrap))
+  width <- width - 200 # roughly account for legend and Y axis labels
+  aspect <- yAxisHeight / width
+  height <- yAxisHeight * nFacets + 50
   plotObject <- plotObject + ggplot2::labs(
       title = title,
       x = xAxisLabel,
@@ -694,5 +698,5 @@ simulationPlot <- function(
 
 #  plotObject
   outputComments("Exiting simulationPlot", level = DEBUG_LEVEL_VERBOSE)
-  return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, nFacets = nFacets))
+  return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, plotHeight = height))
 }
