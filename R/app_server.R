@@ -564,7 +564,6 @@ app_server <- function(input, output, session) {
         caption = printCaption,
         typical = typical,
         logY = logY,
-        yAxisHeight = input$yaxisHeight,
         width = input$plotWidth
       )
     }, name = "simulationPlotRetval() reactive")

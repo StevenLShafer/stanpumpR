@@ -154,7 +154,6 @@ app_ui <- function() {
                               "twodash",
                               "blank")
                 ),
-                sliderInput("yaxisHeight", "Y axis height", 100, 350, 150, ticks = FALSE),
                 conditionalPanel(
                   condition = "!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('Events') || input.addedPlots.includes('Interaction'))",
                   checkboxInput(
