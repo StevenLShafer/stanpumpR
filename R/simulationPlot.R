@@ -561,7 +561,7 @@ simulationPlot <- function(
       strip.background = ggplot2::element_blank(),
       strip.placement = "outside",
       strip.text.y = ggplot2::element_text(
-        size = 20,
+        size = 18,
         angle = 270
       ),
       axis.text.y = ggplot2::element_text(size = 16),
