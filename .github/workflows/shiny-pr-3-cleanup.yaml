@@ -7,7 +7,7 @@ on:
 
 jobs:
   cleanup-pr:
-    runs-on: ubuntu-24.02
+    runs-on: ubuntu-24.04
     if: contains(github.event.pull_request.labels.*.name, 'DEPLOY')
     permissions:
       pull-requests: write
