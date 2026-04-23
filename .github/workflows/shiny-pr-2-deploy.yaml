@@ -15,7 +15,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.action == 'labeled' && github.event.label.name == 'DEPLOY') ||
       (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'DEPLOY'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
@@ -34,6 +34,9 @@ jobs:
           r-version: '4.4.0'
           use-public-rspm: true
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpng-dev
+
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -45,10 +48,13 @@ jobs:
         run: |
           pkg_ref <- paste0("${{ github.event.pull_request.head.repo.full_name }}@", "${{ github.event.pull_request.head.sha }}")
           remotes::install_github(pkg_ref, upgrade = "never", force = TRUE)
+          find.package("stanpumpR")  # force a failure so that the GHA won't continue if package didn't install
         shell: Rscript {0}
 
       - name: Install fs version 2.0.1
-        run: remotes::install_version("fs", version = "2.0.1", upgrade = "never", force = TRUE)
+        run: |
+          remotes::install_version("fs", version = "2.0.1", upgrade = "never", force = TRUE)
+          stopifnot(utils::packageVersion("fs") == "2.0.1")
         shell: Rscript {0}
 
       - name: Authorize and deploy app
