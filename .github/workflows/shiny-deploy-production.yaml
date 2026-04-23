@@ -31,14 +31,14 @@ jobs:
             any::remotes
             any::rsconnect
 
+      - name: Install fs version 2.0.1
+        run: remotes::install_version("fs", version = "2.0.1", upgrade = "never", force = TRUE)
+        shell: Rscript {0}
+
       - name: Install stanpumpR from GitHub
         run: |
           pkg_ref <- "${{ github.repository }}"
           remotes::install_github(pkg_ref, upgrade = "never", force = TRUE)
-        shell: Rscript {0}
-
-      - name: Install fs version 2.0.1
-        run: remotes::install_version("fs", version = "2.0.1", upgrade = "never", force = TRUE)
         shell: Rscript {0}
 
       - name: Authorize and deploy app
