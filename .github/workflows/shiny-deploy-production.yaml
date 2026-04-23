@@ -9,7 +9,7 @@ name: Deployment Production
 
 jobs:
   deployment-production:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: production
       url: https://stanpumpr.io
@@ -25,20 +25,26 @@ jobs:
           r-version: '4.4.0'
           use-public-rspm: true
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpng-dev
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           packages: |
             any::remotes
             any::rsconnect
 
-      - name: Install fs version 2.0.1
-        run: remotes::install_version("fs", version = "2.0.1", upgrade = "never", force = TRUE)
-        shell: Rscript {0}
-
       - name: Install stanpumpR from GitHub
         run: |
           pkg_ref <- "${{ github.repository }}"
           remotes::install_github(pkg_ref, upgrade = "never", force = TRUE)
+          find.package("stanpumpR")  # force a failure so that the GHA won't continue if package didn't install
+        shell: Rscript {0}
+
+      - name: Install fs version 2.0.1
+        run: |
+          remotes::install_version("fs", version = "2.0.1", upgrade = "never", force = TRUE)
+          stopifnot(utils::packageVersion("fs") == "2.0.1")
         shell: Rscript {0}
 
       - name: Authorize and deploy app
