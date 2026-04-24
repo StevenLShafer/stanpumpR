@@ -96,12 +96,7 @@ app_server <- function(input, output, session) {
     outputComments("In output$PlotSimulation", level = DEBUG_LEVEL_VERBOSE)
     req(main_plot(), cancelOutput = TRUE)
     main_plot()
-  }, height = function() calcPlotHeight())
-
-  calcPlotHeight <- reactive({
-    outputComments("In calcPlotHeight", level = DEBUG_LEVEL_VERBOSE)
-    nFacets() * 140 + 50
-  })
+  }, height = function() plotHeight())
 
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
@@ -499,6 +494,7 @@ app_server <- function(input, output, session) {
   })
 
   simulationPlotRetval <- reactive({
+    req(input$plotWidth)
     profileCode({
       outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
       req(doseTableClean(), testCovariates(),
@@ -567,7 +563,9 @@ app_server <- function(input, output, session) {
         title = title,
         caption = printCaption,
         typical = typical,
-        logY = logY
+        logY = logY,
+        yAxisHeight = input$yaxisHeight,
+        width = input$plotWidth
       )
     }, name = "simulationPlotRetval() reactive")
   })
@@ -585,8 +583,8 @@ app_server <- function(input, output, session) {
     simulationPlotRetval()$plotResults
   })
 
-  nFacets <- reactive({
-    simulationPlotRetval()$nFacets
+  plotHeight <- reactive({
+    simulationPlotRetval()$plotHeight
   })
 
   observe({
@@ -620,7 +618,8 @@ app_server <- function(input, output, session) {
           plotObject = plotObjectReactive(),
           allResults = allResultsReactive(),
           plotResults = plotResultsReactive(),
-          numPlots = nFacets(),
+          height = plotHeight(),
+          width = input$plotWidth,
           slide = as.numeric(input$sendSlide),
           drugs = drugs(),
           drugDefaults = drugDefaults(),

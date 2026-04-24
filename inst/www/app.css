@@ -71,6 +71,24 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   font-size: 0.8em;
 }
 
+.irs:has(~ #yaxisHeight) .irs :not(.irs-line) {
+  display: none;
+}
+.irs:has(~ #yaxisHeight) .irs .irs-min,
+.irs:has(~ #yaxisHeight) .irs .irs-max {
+  display: block;
+  visibility: visible !important;
+  font-size: 0;
+}
+.irs:has(~ #yaxisHeight) .irs .irs-min::after {
+  content: 'Short';
+  font-size: 10px;
+}
+.irs:has(~ #yaxisHeight) .irs .irs-max::after {
+  content: 'Tall';
+  font-size: 10px;
+}
+
 .debug_section_head {
   font-size: 18px;
   font-weight: bold;

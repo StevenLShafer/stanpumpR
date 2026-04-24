@@ -17,9 +17,10 @@ simulationPlot <- function(
   plotRecovery = FALSE,
   title = "Default Title",
   caption = "Default Caption",
-  aspect = 0.15,
   typical = c("Mid"),
-  logY = FALSE
+  logY = FALSE,
+  yAxisHeight = 150,
+  width = 800
   )
 
 # xBreaks = c(0:6*10)
@@ -174,8 +175,7 @@ simulationPlot <- function(
     "none" = {
       plotTable$Wrap <- paste0(
                           plotTable$Drug,
-                          facetSeparator[nplotTable + addPlots],
-                          "(",
+                          "\n(",
                           plotTable$Concentration.Units,
                           "/ml)")
       plotTable$ymin <- plotTable$lowerTypical
@@ -185,8 +185,7 @@ simulationPlot <- function(
     "Peak plasma" = {
       plotTable$Wrap <- paste0(
                           plotTable$Drug,
-                          facetSeparator[nplotTable + addPlots],
-                          "(% Peak Cp)")
+                          "\n(% Peak Cp)")
       plotTable$ymin <- 0
       plotTable$ymax <- 0
       plotTable$y    <- 0
@@ -194,8 +193,7 @@ simulationPlot <- function(
     "Peak effect site" = {
       plotTable$Wrap <- paste0(
                           plotTable$Drug,
-                          facetSeparator[nplotTable + addPlots],
-                          "(% Peak Ce)")
+                          "\n(% Peak Ce)")
       plotTable$ymin <- 0
       plotTable$ymax <- 0
       plotTable$y    <- 0
@@ -452,6 +450,9 @@ simulationPlot <- function(
   # Step A3: labs and themes
 
   nFacets <- length(unique(plotResults$Wrap))
+  width <- width - 200 # roughly account for legend and Y axis labels
+  aspect <- yAxisHeight / width
+  height <- yAxisHeight * nFacets + 50
   plotObject <- plotObject + ggplot2::labs(
       title = title,
       x = xAxisLabel,
@@ -568,11 +569,11 @@ simulationPlot <- function(
     ggplot2::theme(strip.background = ggplot2::element_blank(),
           strip.placement = "outside",
           strip.text.y = ggplot2::element_text(
-            size = facetFont[nFacets],
-            angle = facetAngle[nFacets]),
-          axis.text.y = ggplot2::element_text(
-            size = labelFont[nFacets]),
-          panel.spacing = grid::unit(facetSpacing[nFacets], "lines"),
+            size = 18,
+            angle = 270
+          ),
+          axis.text.y = ggplot2::element_text(size = 15),
+          panel.spacing = grid::unit(2, "lines"),
           legend.background = element_blank(),
           legend.box.background = element_blank(),
           legend.key = element_blank()
@@ -649,7 +650,7 @@ simulationPlot <- function(
         show.legend=FALSE,
         hjust = 1.1,
         vjust = -.05,
-        size = labelFont[nFacets] * 0.2 # font size to mm
+        size = 3 # font size to mm
       ) +
       ggplot2::geom_text(
         data=arrows,
@@ -663,7 +664,7 @@ simulationPlot <- function(
         show.legend=FALSE,
         hjust = -.05,
         vjust = 0.5,
-        size = labelFont[nFacets] * 0.2 # font size to mm
+        size = 3 # font size to mm
       ) +
       ggplot2::geom_rect(
         data=plotTable,
@@ -694,5 +695,5 @@ simulationPlot <- function(
 
 #  plotObject
   outputComments("Exiting simulationPlot", level = DEBUG_LEVEL_VERBOSE)
-  return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, nFacets = nFacets))
+  return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, plotHeight = height))
 }
