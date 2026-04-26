@@ -638,34 +638,18 @@ app_server <- function(input, output, session) {
 
 
   # Hover control ############################################################
-  observeEvent(
-    input$plot_hover,
-    {
-      hover <- input$plot_hover
-      if (is.null(hover$panelvar1))
-      {
-        output$hover_info <- NULL
-        return()
-      }
-      text <- xy_str(hover) |> profileCode("xy_str() in input$plot_hover")
-      output$hover_info <- renderUI({
-        style <- paste0("position:absolute; padding:0; margin:0; z-index:100; font-size: 10px; background-color: rgba(245, 245, 245, 0.85); ",
-                        "left:", hover$coords_css$x+25, "px; top:", hover$coords_css$y+10, "px;")
-
-        # actual tooltip created as wellPanel
-        wellPanel(
-          style = style,
-          HTML(
-            gsub(
-              ",",
-              "<br>",
-              text
-            )
-          )
-        )
-      })
-    }
-  )
+  output$hover_info <- renderUI({
+    hover <- input$plot_hover
+    req(hover, hover$panelvar1)
+    text <- xy_str(hover) |> profileCode("xy_str() in input$plot_hover")
+    req(text)
+    style <- paste0("left:", hover$coords_css$x + 10, "px; top:", hover$coords_css$y + 10, "px;")
+    div(
+      id = "hover_info_box",
+      style = style,
+      HTML(gsub(",", "<br>", text))
+    )
+  })
 
   # Display Time, CE, or total opioid
   xy_str <- function(e) {

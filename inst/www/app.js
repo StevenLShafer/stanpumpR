@@ -41,7 +41,7 @@ $(document).on('shiny:value', function(event) {
   }
   if (event.target.id === 'hover_info') {
     setTimeout(function() {
-      let tooltip = document.querySelector('#hover_info .well');
+      let tooltip = document.querySelector('#hover_info_box');
       if (tooltip) {
         tooltip.style.position = 'fixed';
         tooltip.style.left = (lastMouseX + 15) + 'px';
