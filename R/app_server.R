@@ -857,7 +857,7 @@ app_server <- function(input, output, session) {
 
   #################################### Single Click Response ##################################
 
-  drugBeingEdited <- reactiveVal(NULL)
+  editDosesTrigger <- makeReactiveTrigger()
 
   addEditDrugPopup <- function(drug, time) {
     showModal(
@@ -893,7 +893,7 @@ app_server <- function(input, output, session) {
         footer = NULL,
         easyClose = TRUE,
         fade = TRUE,
-        size = "s"
+        size = "m"
       )
     )
   }
@@ -925,8 +925,6 @@ app_server <- function(input, output, session) {
 
   observeEvent(input$addDoseBtn, {
     profileCode({
-      # Check that data object exists and is data frame.
-      modelOK <- TRUE
       addDoseTime <- validateTime(input$addDoseTime)
       addDoseAmount <- validateDose(input$addDoseAmount)
       removeModal()
@@ -953,19 +951,24 @@ app_server <- function(input, output, session) {
 
   # Edit prior drug doses
   observeEvent(input$editDosesBtn, {
-    drugBeingEdited(input$addDoseDrug)
+    editDosesTrigger$trigger()
+    dt <- doseTable()
+    drugsWithDoses <- unique(dt$Drug[dt$Drug != "" & dt$Dose != ""])
+    selectedDrug <- if (input$addDoseDrug %in% drugsWithDoses) input$addDoseDrug else drugsWithDoses[1]
     showModal(
       modalDialog(
-        title = paste("Edit", drugBeingEdited(), "doses:"),
-        rHandsontableOutput(outputId = "editPriorDosesTable"),
-        actionButton(
-          inputId = "editDosesOK",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
+        title = "Edit doses",
+        selectInput(
+          inputId = "editDosesDrug",
+          label = "Drug",
+          choices = drugsWithDoses,
+          selected = selectedDrug
         ),
+        rHandsontableOutput(outputId = "editPriorDosesTable"),
+        actionButton("editDosesOK", "OK", class = "btn-primary"),
         tags$button(
           type = "button",
-          class = "btn btn-warning",
+          class = "btn btn-outline",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
@@ -979,10 +982,12 @@ app_server <- function(input, output, session) {
 
   output$editPriorDosesTable <- renderRHandsontable({
     profileCode({
+      editDosesTrigger$depend()
       dt <- doseTable()
-      editPriorDosesTable <- dt[dt$Drug == input$addDoseDrug, ]
+      req(input$editDosesDrug)
+      editPriorDosesTable <- dt[dt$Drug == input$editDosesDrug, ]
       possibleUnits <- drugDefaults() %>%
-        dplyr::filter(Drug == input$addDoseDrug) %>%
+        dplyr::filter(Drug == input$editDosesDrug) %>%
         dplyr::pull("Units") %>%
         unlist()
       editPriorDosesTable$Delete <- FALSE
@@ -1034,7 +1039,7 @@ app_server <- function(input, output, session) {
         removeModal()
         TT <- hot_to_r(input$editPriorDosesTable)
         cat("In ObserveEvent for editDosesOK\n")
-        TT$Drug <- DrugTimeUnits()$drug
+        TT$Drug <- input$editDosesDrug
         cat("TT:\n")
         print(TT)
         cat("doseTable:\n")
@@ -1042,7 +1047,7 @@ app_server <- function(input, output, session) {
         dt <- doseTable()
         dt <- rbind(
           TT[!TT$Delete,c("Drug","Time","Dose","Units")],
-          dt[dt$Drug != DrugTimeUnits()$drug,]
+          dt[dt$Drug != input$editDosesDrug,]
         )
 
         # Sort by time, by drug, but put blanks at the bottom
