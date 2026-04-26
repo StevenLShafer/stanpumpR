@@ -1,4 +1,4 @@
-# Validate time. Time can be entered either as a scaler, or as HHSS, or as HH:SS.
+# Validate time. Time can be entered either as a scalar, or as HHSS, or as HH:SS.
 # Routine designed to accept pretty much anything and not return an error.
 validateTime <- function(x)
 {

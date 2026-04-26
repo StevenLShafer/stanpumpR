@@ -748,7 +748,7 @@ app_server <- function(input, output, session) {
         {
           clickPopupEvent(failed = "", x)
         } else {
-          clickPopupDrug(failed = "", x)
+          addEditDrugPopup(x$drug, x$time)
         }
       }, name = "input$plot_click observer")
     })
@@ -857,126 +857,106 @@ app_server <- function(input, output, session) {
 
   #################################### Single Click Response ##################################
 
-  # Primary response
-  clickPopupDrug <- function(
-    failed = "",
-    x
-  )
-  {
-    drug <- x$drug
-    time <- x$time
-    units <- x$units
-    thisDrug <- which(drug == drugList())
-    units <- unlist(drugDefaults()$Units[thisDrug])
-    selectedUnits <- drugDefaults()$Default.Units[thisDrug]
-    endCe <- drugDefaults()$endCe[thisDrug]
-    endCeText <- drugDefaults()$endCeText[thisDrug]
+  drugBeingEdited <- reactiveVal(NULL)
+
+  addEditDrugPopup <- function(drug, time) {
     showModal(
       modalDialog(
-        `data-submit-btn` = "clickOKDrug",
-        title = paste("Enter a new dose for ", drug),
-        if (failed != "")
-          tags$div(
-            HTML(paste(tags$span(style="color:red; font-weight:bold ", failed), sep = ""))
-          ),
+        `data-submit-btn` = "addDoseBtn",
+        title = "Add a dose",
+        selectInput(
+          inputId = "addDoseDrug",
+          label = "Drug",
+          choices = drugList(),
+          selected = drug
+        ),
         textInput(
-          inputId = "clickTimeDrug",
+          inputId = "addDoseTime",
           label = "Time",
           value = time
         ),
         textInput(
-          inputId = "clickDose",
+          inputId = "addDoseAmount",
           label = "Dose",
           placeholder = "Enter dose"
         ) |> modalFocus(),
-        selectInput(
-          inputId = "clickUnits",
-          label = "Units",
-          choices = units,
-          selected = selectedUnits
-        ),
-        numericInput(
-          inputId = "newEndCe",
-          label = paste("Set", endCeText, "concentration"),
-          value = endCe,
-          min = 0,
-          max = 1000
-        ),
-        actionButton(
-          inputId = "clickOKDrug",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-        ),
+        uiOutput("addDoseUnitsUI"),
+        uiOutput("addDoseThresholdUI"),
+        actionButton("addDoseBtn", "Add", class = "btn-primary"),
+        actionButton("editDosesBtn", "Edit prior doses", class = "btn-secondary"),
         tags$button(
           type = "button",
-          class = "btn btn-warning",
+          class = "btn btn-outline",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
-        actionButton(
-          inputId = "editDoses",
-          label = paste("Edit prior doses"),
-          style="color: #fff; background-color: #00C000; border-color: ##008000"
-        ),
         footer = NULL,
         easyClose = TRUE,
-        fade=TRUE,
-        size="s"
+        fade = TRUE,
+        size = "s"
       )
     )
   }
 
-  # When OK button is pressed, attempt to load the data set. If successful,
-  # remove the modal. If not show another modal, but this time with a failure
-  # message.
-  # Note to Dean: The event below allows users to enter a new dose by clicking on the graph.
-  # This is another way in which the table can be changed. I don't think this needs to be
-  # edited, but it explains why there will always be some updating of the doseTable from the
-  # server.
-  observeEvent(input$clickOKDrug, {
+  output$addDoseUnitsUI <- renderUI({
+    req(input$addDoseDrug)
+    thisDrug <- which(input$addDoseDrug == drugDefaults()$Drug)
+    units <- unlist(drugDefaults()$Units[thisDrug])
+    selectedUnits <- drugDefaults()$Default.Units[thisDrug]
+    selectInput(
+      inputId = "clickUnits",
+      label = "Units",
+      choices = units,
+      selected = selectedUnits
+    )
+  })
+
+  output$addDoseThresholdUI <- renderUI({
+    req(input$addDoseDrug)
+    thisDrug <- which(input$addDoseDrug == drugDefaults()$Drug)
+    numericInput(
+      inputId = "newEndCe",
+      label = paste("Set", drugDefaults()$endCeText[thisDrug], "concentration"),
+      value = drugDefaults()$endCe[thisDrug],
+      min = 0,
+      max = 1000
+    )
+  })
+
+  observeEvent(input$addDoseBtn, {
     profileCode({
       # Check that data object exists and is data frame.
       modelOK <- TRUE
-      clickTime <- validateTime(input$clickTimeDrug)
-      clickDose <- validateDose(input$clickDose)
-      if (clickTime == "" && clickDose != "") {
-        # This should technically never happen because validation will return 0
-        clickPopupDrug(
-          "Missing time",
-          DrugTimeUnits()
-        )
-        return()
-      }
-
+      addDoseTime <- validateTime(input$addDoseTime)
+      addDoseAmount <- validateDose(input$addDoseAmount)
       removeModal()
-      thisDrug <- which(drugDefaults()$Drug == DrugTimeUnits()$drug)
-      if (drugDefaults()$endCe[thisDrug] != input$newEndCe) {
+      thisDrug <- which(drugDefaults()$Drug == input$addDoseDrug)
+      if (!is.null(input$newEndCe) && drugDefaults()$endCe[thisDrug] != input$newEndCe) {
         newDrugDefaults <- drugDefaults()
         newDrugDefaults$endCe[thisDrug] <- input$newEndCe
         drugDefaults(newDrugDefaults)
       }
 
-      if (clickTime != "" && clickDose != "") {
-        dt <- doseTable()
-        idx <- which(dt$Drug == "")[1]
-        dt$Drug[idx]  <- DrugTimeUnits()$drug
-        dt$Time[idx]  <- clickTime
-        dt$Dose[idx]  <- clickDose
-        dt$Units[idx] <- input$clickUnits
-        if (dt$Drug[nrow(dt)] != "" ) {
-          dt <- rbind(dt, doseTableNewRow)
-        }
-
-        doseTable(dt)
+      dt <- doseTable()
+      idx <- which(dt$Drug == "")[1]
+      dt$Drug[idx]  <- input$addDoseDrug
+      dt$Time[idx]  <- addDoseTime
+      dt$Dose[idx]  <- addDoseAmount
+      dt$Units[idx] <- input$clickUnits
+      if (dt$Drug[nrow(dt)] != "" ) {
+        dt <- rbind(dt, doseTableNewRow)
       }
-    }, name = "input$clickOKDrug observer")
+
+      doseTable(dt)
+    }, name = "input$addDoseBtn observer")
   })
 
   # Edit prior drug doses
-  observeEvent(input$editDoses, {
+  observeEvent(input$editDosesBtn, {
+    drugBeingEdited(input$addDoseDrug)
     showModal(
       modalDialog(
-        title = paste("Edit", DrugTimeUnits()$drug, "doses:"),
+        title = paste("Edit", drugBeingEdited(), "doses:"),
         rHandsontableOutput(outputId = "editPriorDosesTable"),
         actionButton(
           inputId = "editDosesOK",
@@ -1000,9 +980,9 @@ app_server <- function(input, output, session) {
   output$editPriorDosesTable <- renderRHandsontable({
     profileCode({
       dt <- doseTable()
-      editPriorDosesTable <- dt[dt$Drug == DrugTimeUnits()$drug, ]
+      editPriorDosesTable <- dt[dt$Drug == input$addDoseDrug, ]
       possibleUnits <- drugDefaults() %>%
-        dplyr::filter(Drug == DrugTimeUnits()$drug) %>%
+        dplyr::filter(Drug == input$addDoseDrug) %>%
         dplyr::pull("Units") %>%
         unlist()
       editPriorDosesTable$Delete <- FALSE
