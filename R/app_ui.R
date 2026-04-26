@@ -198,14 +198,8 @@ app_ui <- function() {
                 outputId = "PlotSimulation",
                 width = "100%",
                 height = "auto",
-                click = clickOpts(
-                  id = "plot_click",
-                  clip = FALSE
-                ),
-                dblclick = dblclickOpts(
-                  id = "plot_dblclick",
-                  clip = FALSE
-                ),
+                click = clickOpts("plot_click"),
+                dblclick = dblclickOpts("plot_dblclick"),
                 hover = hoverOpts(
                   id = "plot_hover",
                   delay = 500,

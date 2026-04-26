@@ -771,8 +771,8 @@ app_server <- function(input, output, session) {
       }, name = "input$plot_dblclick observer")
     })
 
-  # Get the time, drug, and units from the image
-  imgDrugTime <- function(e = "")
+  # Get the time, drug, and units from the image mouse event
+  imgDrugTime <- function(e)
   {
     outputComments("in imgDrugTime()")
     allResults <- allResultsReactive()
@@ -796,7 +796,6 @@ app_server <- function(input, output, session) {
       i <- which(plottedDrugs[1] == drugList())
       drug <- plottedDrugs[1]
       outputComments("Drug in imgDrugTime() is", drug)
-      if (is.null(drugs()[[drug]])) return(list(drug = drug, time = "0", units = c("", "")))
       j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
       time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
       #    cat("Time from x axis = ",time,"\n")
@@ -821,19 +820,8 @@ app_server <- function(input, output, session) {
     #  whichDrugs <- which(unlist(lapply(drugs(),function(x) {if (is.null(x$DT)) FALSE else TRUE})))
 
     # Get Drug
-    # cat("e$coords_img$y = ", e$coords_img$y,"\n")
-    drugY <- c(170 + 1:(length(plottedAll)-1) * (1000- 170 - 200)/length(plottedAll),1001)
-    # cat("drugY = ", drugY, "\n")
-    drug <- plottedAll[e$coords_img$y < drugY][1]
-    # cat("drug from drugY = ", drug, "\n")
-    if (!is.null(e$panelvar1))
-    {
-      drug <-  unlist(
-        strsplit(
-          gsub("\n"," ", e$panelvar1)
-          ," "))[1]
-      outputComments("drug from panelvar1", drug)
-    }
+    drug <- unlist(strsplit(gsub("\n", " ", e$panelvar1), " "))[1]
+    outputComments("drug from panelvar1", drug)
     if (drug %in% c("% MEAC", "p no response"))
       drug <- drug <- utils::tail(plottedDrugs,1)
 
