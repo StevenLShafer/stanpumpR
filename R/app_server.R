@@ -708,6 +708,7 @@ app_server <- function(input, output, session) {
     drug <- x[1]
     outputComments("Drug identified in xy_str() is", drug)
     i <- which(x[1] == drugList())
+    if (is.null(drugs()[[drug]])) return()
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
@@ -765,7 +766,7 @@ app_server <- function(input, output, session) {
         {
           clickPopupEvent(failed = "", x)
         } else {
-          dblclickPopupDrug(failed = "", x)
+          deleteDrugPrompt(x$drug)
         }
       }, name = "input$plot_dblclick observer")
     })
@@ -795,6 +796,7 @@ app_server <- function(input, output, session) {
       i <- which(plottedDrugs[1] == drugList())
       drug <- plottedDrugs[1]
       outputComments("Drug in imgDrugTime() is", drug)
+      if (is.null(drugs()[[drug]])) return(list(drug = drug, time = "0", units = c("", "")))
       j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
       time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
       #    cat("Time from x axis = ",time,"\n")
@@ -1257,124 +1259,43 @@ app_server <- function(input, output, session) {
     })
 
 
-  # Double Click Response ################################
-  dblclickPopupDrug <- function(
-    failed = "",
-    x
-  )
-  {
-    drug <- x$drug
-    time <- x$time
-    units <- sort(unique(unlist(drugDefaults()$Units)))
-    showModal(
-      modalDialog(
-        `data-submit-btn` = "dblclickOK",
-        title = paste("Select a drug and enter dose and time"),
-        if (failed != "")
-          tags$div(
-            HTML(paste(tags$span(style="color:red; font-weight:bold ", failed), sep = ""))
-          ),
-        selectInput(
-          inputId = "dblclickDrug",
-          label = "Drug",
-          choices = drugList(),
-          selected = drug
-        ),
-        textInput(
-          inputId = "dblclickTime",
-          label = "Time",
-          value = time
-        ),
-        textInput(
-          inputId = "dblclickDose",
-          label = "Dose",
-          placeholder = "Enter dose"
-        ) |> modalFocus(),
-        selectInput(
-          inputId = "dblclickUnits",
-          label = "Units",
-          choices = units
-          #selected = drugDefaults()$Bolus.Units[i]
-        ),
-        actionButton(
-          inputId = "dblclickOK",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-        ),
-        tags$button(
-          type = "button",
-          class = "btn btn-warning",
-          `data-bs-dismiss` = "modal",
-          "Cancel"
-        ),
-        actionButton(
-          inputId = "dblclickDelete",
-          label = paste("Delete ",drug),
-          style="color: #fff; background-color: #00C000; border-color: ##008000"
-        ),
-        footer = NULL,
-        easyClose = TRUE,
-        fade=TRUE,
-        size="m"
-      )
-    )
+  deleteDrugDoses <- function(drug) {
+    dt <- doseTable()
+    dt <- dt[dt$Drug != drug, ]
+    doseTable(dt)
   }
 
-  observeEvent(
-    input$dblclickOK,
-    {
-      profileCode({
-        # Check that data object exists and is data frame.
-        modelOK <- TRUE
-        clickTime <- validateTime(input$dblclickTime)
-        clickDose <- validateDose(input$dblclickDose)
-        if (clickTime == "")
-        {
-          modelOK <- FALSE
-          failed = "Missing time"
-        } else {
-          if (clickDose == "")
-          {
-            modelOK <- FALSE
-            failed = "Missing dose"
-          }
-        }
-        if (modelOK)
-        {
-          removeModal()
-          if (clickTime != "" && clickDose != "")
-          {
-            dt <- doseTable()
-            i <- which(dt$Drug == "")[1]
-            dt$Drug[i]  <- input$dblclickDrug
-            dt$Time[i]  <- clickTime
-            dt$Dose[i]  <- clickDose
-            dt$Units[i] <- input$dblclickUnits
-            if (dt$Drug[nrow(dt)] != "" )
-            {
-              dt <- rbind(dt, doseTableNewRow)
-            }
-            doseTable(dt)
-          }
-        } else {
-          dblclickPopupDrug(
-            failed = failed,
-            DrugTimeUnits()
-          )
-        }
-      }, name = "input$dblclickOK observer")
-    })
+  deleteDrugPrompt <- function(drug) {
+    hasNonZeroDoses <- drugHasNonZeroDoses(doseTable(), drug)
 
-  observeEvent(
-    input$dblclickDelete,
-    {
-      profileCode({
-        removeModal()
-        dt <- doseTable()
-        dt <- dt[dt$Drug != DrugTimeUnits()$drug,]
-        doseTable(dt)
-      }, name = "input$dblclickDelete observer")
-    })
+    if (hasNonZeroDoses) {
+      showModal(
+        modalDialog(
+          title = paste("Delete", drug, "doses?"),
+          HTML(sprintf("Are you sure you want to delete all doses for <strong>%s</strong>?", drug)),
+          br(), br(),
+          actionButton("confirmDeleteDrug", "Yes", class = "btn-primary"),
+          tags$button(
+            type = "button",
+            class = "btn btn-outline",
+            `data-bs-dismiss` = "modal",
+            "Cancel"
+          ),
+          footer = NULL,
+          easyClose = TRUE,
+          fade = TRUE,
+          size = "m"
+        )
+      )
+    } else {
+      deleteDrugDoses(drug)
+    }
+  }
+
+  observeEvent(input$confirmDeleteDrug, {
+    removeModal()
+    deleteDrugDoses(DrugTimeUnits()$drug)
+  })
 
   # Target Drug Dosing (TCI Like) ###########################################
   # Event to trigger calculation to set doses for a target
