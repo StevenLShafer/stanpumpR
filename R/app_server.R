@@ -904,7 +904,7 @@ app_server <- function(input, output, session) {
     units <- unlist(drugDefaults()$Units[thisDrug])
     selectedUnits <- drugDefaults()$Default.Units[thisDrug]
     selectInput(
-      inputId = "clickUnits",
+      inputId = "addDoseUnits",
       label = "Units",
       choices = units,
       selected = selectedUnits
@@ -940,7 +940,7 @@ app_server <- function(input, output, session) {
       dt$Drug[idx]  <- input$addDoseDrug
       dt$Time[idx]  <- addDoseTime
       dt$Dose[idx]  <- addDoseAmount
-      dt$Units[idx] <- input$clickUnits
+      dt$Units[idx] <- input$addDoseUnits
       if (dt$Drug[nrow(dt)] != "" ) {
         dt <- rbind(dt, doseTableNewRow)
       }
