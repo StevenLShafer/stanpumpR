@@ -198,14 +198,8 @@ app_ui <- function() {
                 outputId = "PlotSimulation",
                 width = "100%",
                 height = "auto",
-                click = clickOpts(
-                  id = "plot_click",
-                  clip = FALSE
-                ),
-                dblclick = dblclickOpts(
-                  id = "plot_dblclick",
-                  clip = FALSE
-                ),
+                click = clickOpts("plot_click"),
+                dblclick = dblclickOpts("plot_dblclick"),
                 hover = hoverOpts(
                   id = "plot_hover",
                   delay = 500,
@@ -220,7 +214,7 @@ app_ui <- function() {
 
               bslib::card_footer(
                 class = "small text-muted",
-                "Hover for precise concentration. Click to add new dose or edit existing doses for a specific drug. Double click to delete."
+                "Hover for precise concentration. Click to add new dose or edit existing doses for a drug. Double click to delete a drug."
               )
             ),
 

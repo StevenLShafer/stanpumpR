@@ -638,34 +638,18 @@ app_server <- function(input, output, session) {
 
 
   # Hover control ############################################################
-  observeEvent(
-    input$plot_hover,
-    {
-      hover <- input$plot_hover
-      if (is.null(hover$panelvar1))
-      {
-        output$hover_info <- NULL
-        return()
-      }
-      text <- xy_str(hover) |> profileCode("xy_str() in input$plot_hover")
-      output$hover_info <- renderUI({
-        style <- paste0("position:absolute; padding:0; margin:0; z-index:100; font-size: 10px; background-color: rgba(245, 245, 245, 0.85); ",
-                        "left:", hover$coords_css$x+25, "px; top:", hover$coords_css$y+10, "px;")
-
-        # actual tooltip created as wellPanel
-        wellPanel(
-          style = style,
-          HTML(
-            gsub(
-              ",",
-              "<br>",
-              text
-            )
-          )
-        )
-      })
-    }
-  )
+  output$hover_info <- renderUI({
+    hover <- input$plot_hover
+    req(hover, hover$panelvar1)
+    text <- xy_str(hover) |> profileCode("xy_str() in input$plot_hover")
+    req(text)
+    style <- paste0("left:", hover$coords_css$x + 10, "px; top:", hover$coords_css$y + 10, "px;")
+    div(
+      id = "hover_info_box",
+      style = style,
+      HTML(gsub(",", "<br>", text))
+    )
+  })
 
   # Display Time, CE, or total opioid
   xy_str <- function(e) {
@@ -708,6 +692,7 @@ app_server <- function(input, output, session) {
     drug <- x[1]
     outputComments("Drug identified in xy_str() is", drug)
     i <- which(x[1] == drugList())
+    if (is.null(drugs()[[drug]])) return()
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
@@ -747,7 +732,7 @@ app_server <- function(input, output, session) {
         {
           clickPopupEvent(failed = "", x)
         } else {
-          clickPopupDrug(failed = "", x)
+          addEditDrugPopup(x$drug, x$time)
         }
       }, name = "input$plot_click observer")
     })
@@ -765,13 +750,13 @@ app_server <- function(input, output, session) {
         {
           clickPopupEvent(failed = "", x)
         } else {
-          dblclickPopupDrug(failed = "", x)
+          deleteDrugPrompt(x$drug)
         }
       }, name = "input$plot_dblclick observer")
     })
 
-  # Get the time, drug, and units from the image
-  imgDrugTime <- function(e = "")
+  # Get the time, drug, and units from the image mouse event
+  imgDrugTime <- function(e)
   {
     outputComments("in imgDrugTime()")
     allResults <- allResultsReactive()
@@ -819,19 +804,8 @@ app_server <- function(input, output, session) {
     #  whichDrugs <- which(unlist(lapply(drugs(),function(x) {if (is.null(x$DT)) FALSE else TRUE})))
 
     # Get Drug
-    # cat("e$coords_img$y = ", e$coords_img$y,"\n")
-    drugY <- c(170 + 1:(length(plottedAll)-1) * (1000- 170 - 200)/length(plottedAll),1001)
-    # cat("drugY = ", drugY, "\n")
-    drug <- plottedAll[e$coords_img$y < drugY][1]
-    # cat("drug from drugY = ", drug, "\n")
-    if (!is.null(e$panelvar1))
-    {
-      drug <-  unlist(
-        strsplit(
-          gsub("\n"," ", e$panelvar1)
-          ," "))[1]
-      outputComments("drug from panelvar1", drug)
-    }
+    drug <- unlist(strsplit(gsub("\n", " ", e$panelvar1), " "))[1]
+    outputComments("drug from panelvar1", drug)
     if (drug %in% c("% MEAC", "p no response"))
       drug <- drug <- utils::tail(plottedDrugs,1)
 
@@ -855,135 +829,118 @@ app_server <- function(input, output, session) {
 
   #################################### Single Click Response ##################################
 
-  # Primary response
-  clickPopupDrug <- function(
-    failed = "",
-    x
-  )
-  {
-    drug <- x$drug
-    time <- x$time
-    units <- x$units
-    thisDrug <- which(drug == drugList())
-    units <- unlist(drugDefaults()$Units[thisDrug])
-    selectedUnits <- drugDefaults()$Default.Units[thisDrug]
-    endCe <- drugDefaults()$endCe[thisDrug]
-    endCeText <- drugDefaults()$endCeText[thisDrug]
+  editDosesTrigger <- makeReactiveTrigger()
+
+  addEditDrugPopup <- function(drug, time) {
     showModal(
       modalDialog(
-        `data-submit-btn` = "clickOKDrug",
-        title = paste("Enter a new dose for ", drug),
-        if (failed != "")
-          tags$div(
-            HTML(paste(tags$span(style="color:red; font-weight:bold ", failed), sep = ""))
-          ),
+        `data-submit-btn` = "addDoseBtn",
+        title = "Add a dose",
+        selectInput(
+          inputId = "addDoseDrug",
+          label = "Drug",
+          choices = drugList(),
+          selected = drug
+        ),
         textInput(
-          inputId = "clickTimeDrug",
+          inputId = "addDoseTime",
           label = "Time",
           value = time
         ),
         textInput(
-          inputId = "clickDose",
+          inputId = "addDoseAmount",
           label = "Dose",
           placeholder = "Enter dose"
         ) |> modalFocus(),
-        selectInput(
-          inputId = "clickUnits",
-          label = "Units",
-          choices = units,
-          selected = selectedUnits
-        ),
-        numericInput(
-          inputId = "newEndCe",
-          label = paste("Set", endCeText, "concentration"),
-          value = endCe,
-          min = 0,
-          max = 1000
-        ),
-        actionButton(
-          inputId = "clickOKDrug",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-        ),
+        uiOutput("addDoseUnitsUI"),
+        uiOutput("addDoseThresholdUI"),
+        actionButton("addDoseBtn", "Add", class = "btn-primary"),
+        actionButton("editDosesBtn", "Edit prior doses", class = "btn-secondary"),
         tags$button(
           type = "button",
-          class = "btn btn-warning",
+          class = "btn btn-outline",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
-        actionButton(
-          inputId = "editDoses",
-          label = paste("Edit prior doses"),
-          style="color: #fff; background-color: #00C000; border-color: ##008000"
-        ),
         footer = NULL,
         easyClose = TRUE,
-        fade=TRUE,
-        size="s"
+        fade = TRUE,
+        size = "m"
       )
     )
   }
 
-  # When OK button is pressed, attempt to load the data set. If successful,
-  # remove the modal. If not show another modal, but this time with a failure
-  # message.
-  # Note to Dean: The event below allows users to enter a new dose by clicking on the graph.
-  # This is another way in which the table can be changed. I don't think this needs to be
-  # edited, but it explains why there will always be some updating of the doseTable from the
-  # server.
-  observeEvent(input$clickOKDrug, {
-    profileCode({
-      # Check that data object exists and is data frame.
-      modelOK <- TRUE
-      clickTime <- validateTime(input$clickTimeDrug)
-      clickDose <- validateDose(input$clickDose)
-      if (clickTime == "" && clickDose != "") {
-        # This should technically never happen because validation will return 0
-        clickPopupDrug(
-          "Missing time",
-          DrugTimeUnits()
-        )
-        return()
-      }
+  output$addDoseUnitsUI <- renderUI({
+    req(input$addDoseDrug)
+    thisDrug <- which(input$addDoseDrug == drugDefaults()$Drug)
+    units <- unlist(drugDefaults()$Units[thisDrug])
+    selectedUnits <- drugDefaults()$Default.Units[thisDrug]
+    selectInput(
+      inputId = "addDoseUnits",
+      label = "Units",
+      choices = units,
+      selected = selectedUnits
+    )
+  })
 
+  output$addDoseThresholdUI <- renderUI({
+    req(input$addDoseDrug)
+    thisDrug <- which(input$addDoseDrug == drugDefaults()$Drug)
+    numericInput(
+      inputId = "newEndCe",
+      label = paste("Set", drugDefaults()$endCeText[thisDrug], "concentration"),
+      value = drugDefaults()$endCe[thisDrug],
+      min = 0,
+      max = 1000
+    )
+  })
+
+  observeEvent(input$addDoseBtn, {
+    profileCode({
+      addDoseTime <- validateTime(input$addDoseTime)
+      addDoseAmount <- validateDose(input$addDoseAmount)
       removeModal()
-      thisDrug <- which(drugDefaults()$Drug == DrugTimeUnits()$drug)
-      if (drugDefaults()$endCe[thisDrug] != input$newEndCe) {
+      thisDrug <- which(drugDefaults()$Drug == input$addDoseDrug)
+      if (!is.null(input$newEndCe) && drugDefaults()$endCe[thisDrug] != input$newEndCe) {
         newDrugDefaults <- drugDefaults()
         newDrugDefaults$endCe[thisDrug] <- input$newEndCe
         drugDefaults(newDrugDefaults)
       }
 
-      if (clickTime != "" && clickDose != "") {
-        dt <- doseTable()
-        idx <- which(dt$Drug == "")[1]
-        dt$Drug[idx]  <- DrugTimeUnits()$drug
-        dt$Time[idx]  <- clickTime
-        dt$Dose[idx]  <- clickDose
-        dt$Units[idx] <- input$clickUnits
-        if (dt$Drug[nrow(dt)] != "" ) {
-          dt <- rbind(dt, doseTableNewRow)
-        }
-
-        doseTable(dt)
+      dt <- doseTable()
+      idx <- which(dt$Drug == "")[1]
+      dt$Drug[idx]  <- input$addDoseDrug
+      dt$Time[idx]  <- addDoseTime
+      dt$Dose[idx]  <- addDoseAmount
+      dt$Units[idx] <- input$addDoseUnits
+      if (dt$Drug[nrow(dt)] != "" ) {
+        dt <- rbind(dt, doseTableNewRow)
       }
-    }, name = "input$clickOKDrug observer")
+
+      doseTable(dt)
+    }, name = "input$addDoseBtn observer")
   })
 
   # Edit prior drug doses
-  observeEvent(input$editDoses, {
+  observeEvent(input$editDosesBtn, {
+    editDosesTrigger$trigger()
+    dt <- doseTable()
+    drugsWithDoses <- unique(dt$Drug[dt$Drug != "" & dt$Dose != ""])
+    selectedDrug <- if (input$addDoseDrug %in% drugsWithDoses) input$addDoseDrug else drugsWithDoses[1]
     showModal(
       modalDialog(
-        title = paste("Edit", DrugTimeUnits()$drug, "doses:"),
-        rHandsontableOutput(outputId = "editPriorDosesTable"),
-        actionButton(
-          inputId = "editDosesOK",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
+        title = "Edit doses",
+        selectInput(
+          inputId = "editDosesDrug",
+          label = "Drug",
+          choices = drugsWithDoses,
+          selected = selectedDrug
         ),
+        rHandsontableOutput(outputId = "editPriorDosesTable"),
+        actionButton("editDosesOK", "OK", class = "btn-primary"),
         tags$button(
           type = "button",
-          class = "btn btn-warning",
+          class = "btn btn-outline",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
@@ -997,10 +954,12 @@ app_server <- function(input, output, session) {
 
   output$editPriorDosesTable <- renderRHandsontable({
     profileCode({
+      editDosesTrigger$depend()
       dt <- doseTable()
-      editPriorDosesTable <- dt[dt$Drug == DrugTimeUnits()$drug, ]
+      req(input$editDosesDrug)
+      editPriorDosesTable <- dt[dt$Drug == input$editDosesDrug, ]
       possibleUnits <- drugDefaults() %>%
-        dplyr::filter(Drug == DrugTimeUnits()$drug) %>%
+        dplyr::filter(Drug == input$editDosesDrug) %>%
         dplyr::pull("Units") %>%
         unlist()
       editPriorDosesTable$Delete <- FALSE
@@ -1052,7 +1011,7 @@ app_server <- function(input, output, session) {
         removeModal()
         TT <- hot_to_r(input$editPriorDosesTable)
         cat("In ObserveEvent for editDosesOK\n")
-        TT$Drug <- DrugTimeUnits()$drug
+        TT$Drug <- input$editDosesDrug
         cat("TT:\n")
         print(TT)
         cat("doseTable:\n")
@@ -1060,7 +1019,7 @@ app_server <- function(input, output, session) {
         dt <- doseTable()
         dt <- rbind(
           TT[!TT$Delete,c("Drug","Time","Dose","Units")],
-          dt[dt$Drug != DrugTimeUnits()$drug,]
+          dt[dt$Drug != input$editDosesDrug,]
         )
 
         # Sort by time, by drug, but put blanks at the bottom
@@ -1257,124 +1216,43 @@ app_server <- function(input, output, session) {
     })
 
 
-  # Double Click Response ################################
-  dblclickPopupDrug <- function(
-    failed = "",
-    x
-  )
-  {
-    drug <- x$drug
-    time <- x$time
-    units <- sort(unique(unlist(drugDefaults()$Units)))
-    showModal(
-      modalDialog(
-        `data-submit-btn` = "dblclickOK",
-        title = paste("Select a drug and enter dose and time"),
-        if (failed != "")
-          tags$div(
-            HTML(paste(tags$span(style="color:red; font-weight:bold ", failed), sep = ""))
-          ),
-        selectInput(
-          inputId = "dblclickDrug",
-          label = "Drug",
-          choices = drugList(),
-          selected = drug
-        ),
-        textInput(
-          inputId = "dblclickTime",
-          label = "Time",
-          value = time
-        ),
-        textInput(
-          inputId = "dblclickDose",
-          label = "Dose",
-          placeholder = "Enter dose"
-        ) |> modalFocus(),
-        selectInput(
-          inputId = "dblclickUnits",
-          label = "Units",
-          choices = units
-          #selected = drugDefaults()$Bolus.Units[i]
-        ),
-        actionButton(
-          inputId = "dblclickOK",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-        ),
-        tags$button(
-          type = "button",
-          class = "btn btn-warning",
-          `data-bs-dismiss` = "modal",
-          "Cancel"
-        ),
-        actionButton(
-          inputId = "dblclickDelete",
-          label = paste("Delete ",drug),
-          style="color: #fff; background-color: #00C000; border-color: ##008000"
-        ),
-        footer = NULL,
-        easyClose = TRUE,
-        fade=TRUE,
-        size="m"
-      )
-    )
+  deleteDrugDoses <- function(drug) {
+    dt <- doseTable()
+    dt <- dt[dt$Drug != drug, ]
+    doseTable(dt)
   }
 
-  observeEvent(
-    input$dblclickOK,
-    {
-      profileCode({
-        # Check that data object exists and is data frame.
-        modelOK <- TRUE
-        clickTime <- validateTime(input$dblclickTime)
-        clickDose <- validateDose(input$dblclickDose)
-        if (clickTime == "")
-        {
-          modelOK <- FALSE
-          failed = "Missing time"
-        } else {
-          if (clickDose == "")
-          {
-            modelOK <- FALSE
-            failed = "Missing dose"
-          }
-        }
-        if (modelOK)
-        {
-          removeModal()
-          if (clickTime != "" && clickDose != "")
-          {
-            dt <- doseTable()
-            i <- which(dt$Drug == "")[1]
-            dt$Drug[i]  <- input$dblclickDrug
-            dt$Time[i]  <- clickTime
-            dt$Dose[i]  <- clickDose
-            dt$Units[i] <- input$dblclickUnits
-            if (dt$Drug[nrow(dt)] != "" )
-            {
-              dt <- rbind(dt, doseTableNewRow)
-            }
-            doseTable(dt)
-          }
-        } else {
-          dblclickPopupDrug(
-            failed = failed,
-            DrugTimeUnits()
-          )
-        }
-      }, name = "input$dblclickOK observer")
-    })
+  deleteDrugPrompt <- function(drug) {
+    hasNonZeroDoses <- drugHasNonZeroDoses(doseTable(), drug)
 
-  observeEvent(
-    input$dblclickDelete,
-    {
-      profileCode({
-        removeModal()
-        dt <- doseTable()
-        dt <- dt[dt$Drug != DrugTimeUnits()$drug,]
-        doseTable(dt)
-      }, name = "input$dblclickDelete observer")
-    })
+    if (hasNonZeroDoses) {
+      showModal(
+        modalDialog(
+          title = paste("Delete", drug, "doses?"),
+          HTML(sprintf("Are you sure you want to delete all doses for <strong>%s</strong>?", drug)),
+          br(), br(),
+          actionButton("confirmDeleteDrug", "Yes", class = "btn-primary"),
+          tags$button(
+            type = "button",
+            class = "btn btn-outline",
+            `data-bs-dismiss` = "modal",
+            "Cancel"
+          ),
+          footer = NULL,
+          easyClose = TRUE,
+          fade = TRUE,
+          size = "m"
+        )
+      )
+    } else {
+      deleteDrugDoses(drug)
+    }
+  }
+
+  observeEvent(input$confirmDeleteDrug, {
+    removeModal()
+    deleteDrugDoses(DrugTimeUnits()$drug)
+  })
 
   # Target Drug Dosing (TCI Like) ###########################################
   # Event to trigger calculation to set doses for a target

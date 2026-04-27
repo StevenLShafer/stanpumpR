@@ -24,12 +24,29 @@ $(document).on('shiny:connected', function(event) {
   ro.observe(plotBox);
 });
 
-// auto-scroll to the bottom of the logs
+// Track mouse position so hover tooltip can be positioned correctly when scrolled
+let lastMouseX = 0, lastMouseY = 0;
+$(document).on('mousemove', function(e) {
+  lastMouseX = e.clientX;
+  lastMouseY = e.clientY;
+});
+
+// auto-scroll to the bottom of the logs, and fix hover tooltip scroll position
 $(document).on('shiny:value', function(event) {
   if (event.target.id === 'logContent' || event.target.id === 'profiling') {
     setTimeout(function() {
       var $logger = $('#' + event.target.id);
       $logger.scrollTop($logger[0].scrollHeight);
+    }, 0);
+  }
+  if (event.target.id === 'hover_info') {
+    setTimeout(function() {
+      let tooltip = document.querySelector('#hover_info_box');
+      if (tooltip) {
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = (lastMouseX + 15) + 'px';
+        tooltip.style.top = (lastMouseY + 10) + 'px';
+      }
     }, 0);
   }
 });

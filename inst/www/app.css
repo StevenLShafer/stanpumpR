@@ -109,3 +109,13 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   padding: 0 5px;
   font-size: 14px;
 }
+
+#hover_info_box {
+  padding: 5px 10px;
+  margin: 0;
+  z-index: 100;
+  font-size: 12px;
+  border: 1px solid #999;
+  border-radius: 5px;
+  background-color: rgba(245, 245, 245, 0.85);
+}

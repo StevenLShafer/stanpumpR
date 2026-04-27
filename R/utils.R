@@ -13,3 +13,8 @@ isEmailValid <- function(email) {
   regex_email <- "^\\w+([-+.']\\w+)*@\\w+([-.]\\w+)*\\.\\w{2,}([-.]\\w+)*$"
   nchar(email) == attr(regexpr(regex_email, email, perl = FALSE), "match.length")
 }
+
+drugHasNonZeroDoses <- function(dt, drug) {
+  drugDoses <- dt[dt$Drug == drug & dt$Dose != "", ]
+  any(suppressWarnings(as.numeric(drugDoses$Dose)) != 0, na.rm = TRUE)
+}
