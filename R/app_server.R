@@ -442,7 +442,8 @@ app_server <- function(input, output, session) {
     }
   }, ignoreInit = TRUE)
 
-  plotMaximum <- reactive({
+
+  plotInfo <- reactive({
     profileCode({
       req(doseTableClean())
 
@@ -456,26 +457,13 @@ app_server <- function(input, output, session) {
         steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
         plotMaximum <- ceiling((maxTime + 30)/steps) * steps
       }
-      plotMaximum
-    }, name = "plotMaximum() reactive")
+      list(plotMaximum = plotMaximum, steps = steps)
+    }, name = "plotInfo() reactive")
   })
 
-  steps <- reactive({
-    profileCode({
-      req(doseTableClean())
+  plotMaximum <- reactive(plotInfo()$plotMaximum)
+  steps       <- reactive(plotInfo()$steps)
 
-      plotMaximum <- as.numeric(input$maximum)
-      steps <- maxtimes$steps[maxtimes$times == input$maximum]
-      maxTime <- max(as.numeric(doseTableClean()$Time),
-                     as.numeric(eventTableClean()$Time),
-                     na.rm = TRUE)
-
-      if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
-        steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
-      }
-      steps
-    }, name = "steps() reactive")
-  })
 
   plotRecovery <- reactive({
     "Time Until" %in% input$addedPlots
