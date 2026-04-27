@@ -1138,6 +1138,13 @@ app_server <- function(input, output, session) {
     })
 
   # Edit prior drug doses
+  editEventsHOT <- reactiveVal(NULL)
+
+  output$editEventsTableHTML <- renderRHandsontable({
+    req(editEventsHOT())
+    editEventsHOT()
+  })
+
   observeEvent(
     input$editEvents,
     {
@@ -1176,7 +1183,8 @@ app_server <- function(input, output, session) {
           hot_rows(rowHeights = 10) %>%
           hot_cols(colWidths = c(50,55,90))
 
-        output$editEventsTableHTML <- renderRHandsontable(tempTableHOT)
+        editEventsHOT(NULL)
+        editEventsHOT(tempTableHOT)
         showModal(
           modalDialog(
             title = paste("Edit Events"),
@@ -1256,6 +1264,13 @@ app_server <- function(input, output, session) {
 
   # Target Drug Dosing (TCI Like) ###########################################
   # Event to trigger calculation to set doses for a target
+  targetHOTVal <- reactiveVal(NULL)
+
+  output$targetTableHTML <- renderRHandsontable({
+    req(targetHOTVal())
+    targetHOTVal()
+  })
+
   observeEvent(
     input$setTarget,
     {
@@ -1292,7 +1307,8 @@ app_server <- function(input, output, session) {
           ) %>%
           addHotHooks(filterKeys = TRUE, sanitize = TRUE)
 
-        output$targetTableHTML <- renderRHandsontable(targetHOT)
+        targetHOTVal(NULL)
+        targetHOTVal(targetHOT)
         showModal(
           modalDialog(
             `data-submit-btn` = "targetOK",
