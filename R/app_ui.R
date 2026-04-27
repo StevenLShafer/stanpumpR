@@ -156,7 +156,7 @@ app_ui <- function() {
                 ),
                 sliderInput("yaxisHeight", "Y axis height", 150, 350, 200, ticks = FALSE),
                 conditionalPanel(
-                  condition = "!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('Events') || input.addedPlots.includes('Interaction'))",
+                  condition = sprintf("!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('%s') || input.addedPlots.includes('Interaction'))", DRUG_NAME_EVENTS),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",
@@ -171,8 +171,8 @@ app_ui <- function() {
                 checkboxGroupInput(
                   inputId = "addedPlots",
                   label = NULL,
-                  choiceNames = c("MEAC", "Interaction", "Events", "Time until ___"),
-                  choiceValues = c("MEAC", "Interaction", "Events", "Time Until")
+                  choiceNames = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time until ___"),
+                  choiceValues = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time Until")
                 )
               ),
 

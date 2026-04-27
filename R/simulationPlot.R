@@ -336,20 +336,20 @@ simulationPlot <- function(
     if (nrow(events) == 0)
     {
       resultsEvents <- data.frame(
-        Drug = "Events",
+        Drug = DRUG_NAME_EVENTS,
         Time = 0,
         Y = 0.875,
-        Site = "Events",
-        Wrap = "Events",
+        Site = DRUG_NAME_EVENTS,
+        Wrap = DRUG_NAME_EVENTS,
         Label = ""
       )
     } else {
       resultsEvents <- data.frame(
-        Drug = "Events",
+        Drug = DRUG_NAME_EVENTS,
         Time = events$Time,
         Y =   0.875 - ((1:nrow(events) - 1) %% 4)/4,
-        Site = "Events",
-        Wrap = "Events",
+        Site = DRUG_NAME_EVENTS,
+        Wrap = DRUG_NAME_EVENTS,
         Label = events$Event
       )
     }
@@ -360,13 +360,13 @@ simulationPlot <- function(
     # Add Plot to PlotTable
 
     newplotTable <- plotTable[1,]
-    newplotTable$Drug <- "Events"
+    newplotTable$Drug <- DRUG_NAME_EVENTS
     newplotTable$drugColor <- "white"
     newplotTable$Concentration.Units <- ""
     newplotTable$y <- 0
     newplotTable$ymin <- 0
     newplotTable$ymax <- 1
-    newplotTable$Wrap <- "Events"
+    newplotTable$Wrap <- DRUG_NAME_EVENTS
     newplotTable$alpha <- 1
     newplotTable$endCe <- 0
     newplotTable$endCeText <- ""
@@ -378,12 +378,12 @@ simulationPlot <- function(
 
   ##################################################
 
-  plotResults$Site <- factor(plotResults$Site,levels=c("Plasma", "Effect Site", "Events", "Recovery"), ordered=TRUE)
+  plotResults$Site <- factor(plotResults$Site,levels=c("Plasma", "Effect Site", DRUG_NAME_EVENTS, "Recovery"), ordered=TRUE)
   plotResults <- plotResults[!is.na(plotResults$Y),]
 
   # Convert $Drug and $Wrap to factors to preserve order from plotTable
 
-  drugFactors <- c(drugDefaults$Drug, "total opioid", "p response", "Recovery", "Events")
+  drugFactors <- c(drugDefaults$Drug, "total opioid", "p response", "Recovery", DRUG_NAME_EVENTS)
   plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
   plotTable <- plotTable[order(plotTable$Factor),]
 
@@ -405,7 +405,7 @@ simulationPlot <- function(
 
   # Step A1: create plotObject with lines from `plotResults`
 
-  data <- subset(plotResults, Wrap != "Events")
+  data <- subset(plotResults, Wrap != DRUG_NAME_EVENTS)
 
   if (logY) {
     data <- data[data$Y>0,]
@@ -508,7 +508,7 @@ simulationPlot <- function(
   {
     plotObject <- plotObject +
       ggplot2::geom_rect(
-        data = subset(plotResults, Wrap == "Events"),
+        data = subset(plotResults, Wrap == DRUG_NAME_EVENTS),
         ggplot2::aes(
           xmin = 0, # xmin,
           xmax = maximum, # xmax,

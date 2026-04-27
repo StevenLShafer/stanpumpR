@@ -495,7 +495,7 @@ app_server <- function(input, output, session) {
       plotMEAC               <- "MEAC"        %in% input$addedPlots
       plotInteraction        <- "Interaction" %in% input$addedPlots
       plotCost               <- "Cost"        %in% input$addedPlots
-      plotEvents             <- "Events"      %in% input$addedPlots
+      plotEvents             <- DRUG_NAME_EVENTS      %in% input$addedPlots
       plasmaLinetype         <- input$plasmaLinetype
       effectsiteLinetype     <- input$effectsiteLinetype
       normalization          <- input$normalization
@@ -662,7 +662,7 @@ app_server <- function(input, output, session) {
       )
     }
 
-    if (yaxis == "Events")
+    if (yaxis == DRUG_NAME_EVENTS)
     {
       #    return("Click to enter events, double click to edit events.")
       return("Click to enter events.")
@@ -704,7 +704,7 @@ app_server <- function(input, output, session) {
         outputComments("in click(), returning from imgDrugTime()")
         DrugTimeUnits(x)
 
-        if (x$drug == "Events")
+        if (x$drug == DRUG_NAME_EVENTS)
         {
           clickPopupEvent(failed = "", x)
         } else {
@@ -722,7 +722,7 @@ app_server <- function(input, output, session) {
         x <- imgDrugTime(input$plot_dblclick)
         DrugTimeUnits(x)
 
-        if (x$drug == "Events")
+        if (x$drug == DRUG_NAME_EVENTS)
         {
           clickPopupEvent(failed = "", x)
         } else {
@@ -785,7 +785,7 @@ app_server <- function(input, output, session) {
       drug <- utils::tail(plottedDrugs,1)
 
     # Get Units
-    if (drug == "Events")
+    if (drug == DRUG_NAME_EVENTS)
     {
       units <- c("","")
     } else {
