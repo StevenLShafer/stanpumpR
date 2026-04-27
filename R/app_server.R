@@ -82,7 +82,7 @@ app_server <- function(input, output, session) {
     outputComments("In main_plot", level = DEBUG_LEVEL_VERBOSE)
     #    tryCatchLog({
     tryCatch({
-      if (is.null(doseTableClean()) | is.null(drugs()) || is.null(plotObjectReactive())) {
+      if (is.null(doseTableClean()) || is.null(drugs()) || is.null(plotObjectReactive())) {
         #        nothingtoPlot
       } else {
         plotObjectReactive()
@@ -100,17 +100,10 @@ app_server <- function(input, output, session) {
 
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
-  drugAndEventDefaultsSource <- getDrugAndEventDefaultsGlobal()
-  drugAndEventDefaults <- reactive(drugAndEventDefaultsSource)
-  drugDefaults <- reactiveVal({
-    isolate(drugAndEventDefaults()[[1]])
-  })
-  eventDefaults <- reactiveVal({
-    isolate(drugAndEventDefaults()[[2]])
-  })
-  drugList <- reactive({
-    drugAndEventDefaults()[[1]]$Drug
-  })
+  drugAndEventDefaults <- getDrugAndEventDefaultsGlobal()
+  drugDefaults <- reactiveVal(drugAndEventDefaults[[1]])
+  eventDefaults <- reactiveVal(drugAndEventDefaults[[2]])
+  drugList <- drugAndEventDefaults[[1]]$Drug
 
   # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
   # doseTableInit <- data.frame(
@@ -449,7 +442,8 @@ app_server <- function(input, output, session) {
     }
   }, ignoreInit = TRUE)
 
-  plotMaximum <- reactive({
+
+  plotInfo <- reactive({
     profileCode({
       req(doseTableClean())
 
@@ -463,34 +457,20 @@ app_server <- function(input, output, session) {
         steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
         plotMaximum <- ceiling((maxTime + 30)/steps) * steps
       }
-      plotMaximum
-    }, name = "plotMaximum() reactive")
+      list(plotMaximum = plotMaximum, steps = steps)
+    }, name = "plotInfo() reactive")
   })
 
-  steps <- reactive({
-    profileCode({
-      req(doseTableClean())
+  plotMaximum <- reactive(plotInfo()$plotMaximum)
+  steps       <- reactive(plotInfo()$steps)
 
-      plotMaximum <- as.numeric(input$maximum)
-      steps <- maxtimes$steps[maxtimes$times == input$maximum]
-      maxTime <- max(as.numeric(doseTableClean()$Time),
-                     as.numeric(eventTableClean()$Time),
-                     na.rm = TRUE)
-
-      if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
-        steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
-      }
-      steps
-    }, name = "steps() reactive")
-  })
 
   plotRecovery <- reactive({
     "Time Until" %in% input$addedPlots
   })
 
   linetypes <- reactive({
-    linetypes <- setLinetypes(input$normalization,input$plasmaLinetype,input$effectsiteLinetype)
-    linetypes
+    setLinetypes(input$normalization,input$plasmaLinetype,input$effectsiteLinetype)
   })
 
   simulationPlotRetval <- reactive({
@@ -515,7 +495,7 @@ app_server <- function(input, output, session) {
       plotMEAC               <- "MEAC"        %in% input$addedPlots
       plotInteraction        <- "Interaction" %in% input$addedPlots
       plotCost               <- "Cost"        %in% input$addedPlots
-      plotEvents             <- "Events"      %in% input$addedPlots
+      plotEvents             <- DRUG_NAME_EVENTS      %in% input$addedPlots
       plasmaLinetype         <- input$plasmaLinetype
       effectsiteLinetype     <- input$effectsiteLinetype
       normalization          <- input$normalization
@@ -643,10 +623,8 @@ app_server <- function(input, output, session) {
     req(hover, hover$panelvar1)
     text <- xy_str(hover) |> profileCode("xy_str() in input$plot_hover")
     req(text)
-    style <- paste0("left:", hover$coords_css$x + 10, "px; top:", hover$coords_css$y + 10, "px;")
     div(
       id = "hover_info_box",
-      style = style,
       HTML(gsub(",", "<br>", text))
     )
   })
@@ -658,7 +636,7 @@ app_server <- function(input, output, session) {
     outputComments("In xy_str")
     outputComments("e$panelvar1 = ", e$panelvar1)
     yaxis <- gsub("\n"," ", e$panelvar1)
-    #  allResults <- allResultsReactive() # not used
+
     plotResults <- plotResultsReactive()
     if (yaxis == "% MEAC")
     {
@@ -682,7 +660,7 @@ app_server <- function(input, output, session) {
       )
     }
 
-    if (yaxis == "Events")
+    if (yaxis == DRUG_NAME_EVENTS)
     {
       #    return("Click to enter events, double click to edit events.")
       return("Click to enter events.")
@@ -691,15 +669,11 @@ app_server <- function(input, output, session) {
     x <- unlist(strsplit(yaxis," "))
     drug <- x[1]
     outputComments("Drug identified in xy_str() is", drug)
-    i <- which(x[1] == drugList())
+    i <- which(x[1] == drugList)
     if (is.null(drugs()[[drug]])) return()
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
-    # cat("in xy_str()\n")
-    # cat("i = ", i, "\n")
-    # cat("j = ",j,"\n")
-    # cat(str(drugs()[[drug]]$equiSpace$Time), "\n")
     time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
     if (referenceTime() == "none")
     {
@@ -728,7 +702,7 @@ app_server <- function(input, output, session) {
         outputComments("in click(), returning from imgDrugTime()")
         DrugTimeUnits(x)
 
-        if (x$drug == "Events")
+        if (x$drug == DRUG_NAME_EVENTS)
         {
           clickPopupEvent(failed = "", x)
         } else {
@@ -746,7 +720,7 @@ app_server <- function(input, output, session) {
         x <- imgDrugTime(input$plot_dblclick)
         DrugTimeUnits(x)
 
-        if (x$drug == "Events")
+        if (x$drug == DRUG_NAME_EVENTS)
         {
           clickPopupEvent(failed = "", x)
         } else {
@@ -777,12 +751,11 @@ app_server <- function(input, output, session) {
         outputComments("time is plotMaximum:", time)
       }
     } else {
-      i <- which(plottedDrugs[1] == drugList())
+      i <- which(plottedDrugs[1] == drugList)
       drug <- plottedDrugs[1]
       outputComments("Drug in imgDrugTime() is", drug)
       j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
       time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
-      #    cat("Time from x axis = ",time,"\n")
     }
     if (referenceTime() == "none")
     {
@@ -807,14 +780,14 @@ app_server <- function(input, output, session) {
     drug <- unlist(strsplit(gsub("\n", " ", e$panelvar1), " "))[1]
     outputComments("drug from panelvar1", drug)
     if (drug %in% c("% MEAC", "p no response"))
-      drug <- drug <- utils::tail(plottedDrugs,1)
+      drug <- utils::tail(plottedDrugs,1)
 
     # Get Units
-    if (drug == "Events")
+    if (drug == DRUG_NAME_EVENTS)
     {
       units <- c("","")
     } else {
-      i <- which(drug == drugList())
+      i <- which(drug == drugList)
       units <- c(drugDefaults()$Bolus.Units[i], drugDefaults()$Infusion.Units[i])
     }
     outputComments("Exiting imgDrugTime()")
@@ -839,7 +812,7 @@ app_server <- function(input, output, session) {
         selectInput(
           inputId = "addDoseDrug",
           label = "Drug",
-          choices = drugList(),
+          choices = drugList,
           selected = drug
         ),
         textInput(
@@ -969,7 +942,6 @@ app_server <- function(input, output, session) {
         overflow = 'visible',
         rowHeaders = NULL,
         height = 220,
-        selectCallback = TRUE,
         stretchH = "all"
       ) %>%
         hot_col(
@@ -995,7 +967,7 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid = FALSE
         ) %>%
-        hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+        hot_table(contextMenu = FALSE) %>%
         hot_rows(rowHeights = 10) %>%
         hot_cols(colWidths = c(50,55,55,90)) %>%
         addHotHooks(filterKeys = TRUE, sanitize = TRUE)
@@ -1010,12 +982,12 @@ app_server <- function(input, output, session) {
       profileCode({
         removeModal()
         TT <- hot_to_r(input$editPriorDosesTable)
-        cat("In ObserveEvent for editDosesOK\n")
+        outputComments("In ObserveEvent for editDosesOK")
         TT$Drug <- input$editDosesDrug
-        cat("TT:\n")
-        print(TT)
-        cat("doseTable:\n")
-        print(doseTable())
+        outputComments("TT:")
+        outputComments(TT)
+        outputComments("doseTable:")
+        outputComments(doseTable())
         dt <- doseTable()
         dt <- rbind(
           TT[!TT$Delete,c("Drug","Time","Dose","Units")],
@@ -1023,13 +995,13 @@ app_server <- function(input, output, session) {
         )
 
         # Sort by time, by drug, but put blanks at the bottom
-        print(unique(dt$Time))
+        outputComments(toString(unique(dt$Time)))
         dt$Time[dt$Time == ""] <- "zzzzz"
         dt <- dt[order(dt$Time, dt$Drug),]
         dt$Time[dt$Time == "zzzzz"] <- ""
 
-        cat("doseTable after update:\n")
-        print(dt)
+        outputComments("doseTable after update:")
+        outputComments(dt)
 
         for (i in 1:nrow(dt))
         {
@@ -1138,6 +1110,13 @@ app_server <- function(input, output, session) {
     })
 
   # Edit prior drug doses
+  editEventsHOT <- reactiveVal(NULL)
+
+  output$editEventsTableHTML <- renderRHandsontable({
+    req(editEventsHOT())
+    editEventsHOT()
+  })
+
   observeEvent(
     input$editEvents,
     {
@@ -1151,7 +1130,6 @@ app_server <- function(input, output, session) {
           overflow = 'visible',
           rowHeaders = NULL,
           height = 220,
-          selectCallback = TRUE,
           stretchH = "all"
         ) %>%
           hot_col(
@@ -1176,7 +1154,8 @@ app_server <- function(input, output, session) {
           hot_rows(rowHeights = 10) %>%
           hot_cols(colWidths = c(50,55,90))
 
-        output$editEventsTableHTML <- renderRHandsontable(tempTableHOT)
+        editEventsHOT(NULL)  # force re-render even if table data is identical
+        editEventsHOT(tempTableHOT)
         showModal(
           modalDialog(
             title = paste("Edit Events"),
@@ -1256,6 +1235,13 @@ app_server <- function(input, output, session) {
 
   # Target Drug Dosing (TCI Like) ###########################################
   # Event to trigger calculation to set doses for a target
+  targetHOTVal <- reactiveVal(NULL)
+
+  output$targetTableHTML <- renderRHandsontable({
+    req(targetHOTVal())
+    targetHOTVal()
+  })
+
   observeEvent(
     input$setTarget,
     {
@@ -1268,8 +1254,7 @@ app_server <- function(input, output, session) {
           targetTable,
           overflow = 'visible',
           rowHeaders = NULL,
-          height = 220,
-          selectCallback = TRUE
+          height = 220
         ) %>%
           hot_col(
             col = "Time",
@@ -1292,7 +1277,8 @@ app_server <- function(input, output, session) {
           ) %>%
           addHotHooks(filterKeys = TRUE, sanitize = TRUE)
 
-        output$targetTableHTML <- renderRHandsontable(targetHOT)
+        targetHOTVal(NULL)
+        targetHOTVal(targetHOT)
         showModal(
           modalDialog(
             `data-submit-btn` = "targetOK",
@@ -1317,7 +1303,7 @@ app_server <- function(input, output, session) {
             selectInput(
               inputId = "targetDrug",
               label = "Drug",
-              choices = drugList()
+              choices = drugList
             ),
             rHandsontableOutput(
               outputId = "targetTableHTML"
@@ -1385,7 +1371,7 @@ app_server <- function(input, output, session) {
                                targetTable,
                                endTime,
                                drugs(),
-                               drugList(),
+                               drugList,
                                eventTable(),
                                referenceTime())
 
@@ -1454,8 +1440,7 @@ app_server <- function(input, output, session) {
         x,
         overflow = 'visible',
         rowHeaders = NULL,
-        height = 220,
-        selectCallback = TRUE
+        height = 220
       ) %>%
         hot_col(
           col = 1,

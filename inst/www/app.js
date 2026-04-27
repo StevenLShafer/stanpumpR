@@ -43,8 +43,7 @@ $(document).on('shiny:value', function(event) {
     setTimeout(function() {
       let tooltip = document.querySelector('#hover_info_box');
       if (tooltip) {
-        tooltip.style.position = 'fixed';
-        tooltip.style.left = (lastMouseX + 15) + 'px';
+        tooltip.style.left = (lastMouseX + 10) + 'px';
         tooltip.style.top = (lastMouseY + 10) + 'px';
       }
     }, 0);
