@@ -100,17 +100,10 @@ app_server <- function(input, output, session) {
 
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
-  drugAndEventDefaultsSource <- getDrugAndEventDefaultsGlobal()
-  drugAndEventDefaults <- reactive(drugAndEventDefaultsSource)
-  drugDefaults <- reactiveVal({
-    isolate(drugAndEventDefaults()[[1]])
-  })
-  eventDefaults <- reactiveVal({
-    isolate(drugAndEventDefaults()[[2]])
-  })
-  drugList <- reactive({
-    drugAndEventDefaults()[[1]]$Drug
-  })
+  drugAndEventDefaults <- getDrugAndEventDefaultsGlobal()
+  drugDefaults <- reactiveVal(drugAndEventDefaults[[1]])
+  eventDefaults <- reactiveVal(drugAndEventDefaults[[2]])
+  drugList <- drugAndEventDefaults[[1]]$Drug
 
   # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
   # doseTableInit <- data.frame(
@@ -691,7 +684,7 @@ app_server <- function(input, output, session) {
     x <- unlist(strsplit(yaxis," "))
     drug <- x[1]
     outputComments("Drug identified in xy_str() is", drug)
-    i <- which(x[1] == drugList())
+    i <- which(x[1] == drugList)
     if (is.null(drugs()[[drug]])) return()
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
@@ -777,7 +770,7 @@ app_server <- function(input, output, session) {
         outputComments("time is plotMaximum:", time)
       }
     } else {
-      i <- which(plottedDrugs[1] == drugList())
+      i <- which(plottedDrugs[1] == drugList)
       drug <- plottedDrugs[1]
       outputComments("Drug in imgDrugTime() is", drug)
       j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
@@ -814,7 +807,7 @@ app_server <- function(input, output, session) {
     {
       units <- c("","")
     } else {
-      i <- which(drug == drugList())
+      i <- which(drug == drugList)
       units <- c(drugDefaults()$Bolus.Units[i], drugDefaults()$Infusion.Units[i])
     }
     outputComments("Exiting imgDrugTime()")
@@ -839,7 +832,7 @@ app_server <- function(input, output, session) {
         selectInput(
           inputId = "addDoseDrug",
           label = "Drug",
-          choices = drugList(),
+          choices = drugList,
           selected = drug
         ),
         textInput(
@@ -1333,7 +1326,7 @@ app_server <- function(input, output, session) {
             selectInput(
               inputId = "targetDrug",
               label = "Drug",
-              choices = drugList()
+              choices = drugList
             ),
             rHandsontableOutput(
               outputId = "targetTableHTML"
@@ -1401,7 +1394,7 @@ app_server <- function(input, output, session) {
                                targetTable,
                                endTime,
                                drugs(),
-                               drugList(),
+                               drugList,
                                eventTable(),
                                referenceTime())
 
