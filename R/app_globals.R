@@ -15,7 +15,6 @@ eventTableInit <- data.frame(
 
 bookmarksToExclude <- c(
   "doseTableHTML",
-  "doseTableHTML_select",
   "setTarget",
   "targetDrug",
   "targetDrug-selectized",
@@ -31,8 +30,6 @@ bookmarksToExclude <- c(
   "maximum-selectized",
   "plasmaLinetype-selectized",
   "targetTableHTML",
-  "targetTableHTML_select",
-  "editPriorDosesTable_select",
   "editPriorDosesTable",
   "addDoseDrug",
   "addDoseAmount",
@@ -53,7 +50,6 @@ bookmarksToExclude <- c(
   "recipient",
   "drugEditsOK",
   "editDrugsHTML",
-  "editDrugsHTML_select",
   "editDrugs",
   "newEndCe",
   "hoverInfo",

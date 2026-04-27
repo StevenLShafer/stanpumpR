@@ -944,7 +944,6 @@ app_server <- function(input, output, session) {
         overflow = 'visible',
         rowHeaders = NULL,
         height = 220,
-        selectCallback = TRUE,
         stretchH = "all"
       ) %>%
         hot_col(
@@ -970,7 +969,7 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid = FALSE
         ) %>%
-        hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+        hot_table(contextMenu = FALSE) %>%
         hot_rows(rowHeights = 10) %>%
         hot_cols(colWidths = c(50,55,55,90)) %>%
         addHotHooks(filterKeys = TRUE, sanitize = TRUE)
@@ -1133,7 +1132,6 @@ app_server <- function(input, output, session) {
           overflow = 'visible',
           rowHeaders = NULL,
           height = 220,
-          selectCallback = TRUE,
           stretchH = "all"
         ) %>%
           hot_col(
@@ -1258,8 +1256,7 @@ app_server <- function(input, output, session) {
           targetTable,
           overflow = 'visible',
           rowHeaders = NULL,
-          height = 220,
-          selectCallback = TRUE
+          height = 220
         ) %>%
           hot_col(
             col = "Time",
@@ -1445,8 +1442,7 @@ app_server <- function(input, output, session) {
         x,
         overflow = 'visible',
         rowHeaders = NULL,
-        height = 220,
-        selectCallback = TRUE
+        height = 220
       ) %>%
         hot_col(
           col = 1,

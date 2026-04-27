@@ -5,7 +5,6 @@ createHOT <- function(doseTable,drugDefaults)
     doseTable,
     `overflow-y` = 'scroll',
     rowHeaders = NULL,
-    selectCallback = FALSE,
     renderAllRows = TRUE,
     stretchH = "all"
   ) %>%
