@@ -995,7 +995,7 @@ app_server <- function(input, output, session) {
         )
 
         # Sort by time, by drug, but put blanks at the bottom
-        outputComments(unique(dt$Time))
+        outputComments(toString(unique(dt$Time)))
         dt$Time[dt$Time == ""] <- "zzzzz"
         dt <- dt[order(dt$Time, dt$Drug),]
         dt$Time[dt$Time == "zzzzz"] <- ""
