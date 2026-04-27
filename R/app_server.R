@@ -623,10 +623,8 @@ app_server <- function(input, output, session) {
     req(hover, hover$panelvar1)
     text <- xy_str(hover) |> profileCode("xy_str() in input$plot_hover")
     req(text)
-    style <- paste0("left:", hover$coords_css$x + 10, "px; top:", hover$coords_css$y + 10, "px;")
     div(
       id = "hover_info_box",
-      style = style,
       HTML(gsub(",", "<br>", text))
     )
   })
