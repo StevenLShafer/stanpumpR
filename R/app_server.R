@@ -82,7 +82,7 @@ app_server <- function(input, output, session) {
     outputComments("In main_plot", level = DEBUG_LEVEL_VERBOSE)
     #    tryCatchLog({
     tryCatch({
-      if (is.null(doseTableClean()) | is.null(drugs()) || is.null(plotObjectReactive())) {
+      if (is.null(doseTableClean()) || is.null(drugs()) || is.null(plotObjectReactive())) {
         #        nothingtoPlot
       } else {
         plotObjectReactive()
@@ -482,8 +482,7 @@ app_server <- function(input, output, session) {
   })
 
   linetypes <- reactive({
-    linetypes <- setLinetypes(input$normalization,input$plasmaLinetype,input$effectsiteLinetype)
-    linetypes
+    setLinetypes(input$normalization,input$plasmaLinetype,input$effectsiteLinetype)
   })
 
   simulationPlotRetval <- reactive({
@@ -651,7 +650,7 @@ app_server <- function(input, output, session) {
     outputComments("In xy_str")
     outputComments("e$panelvar1 = ", e$panelvar1)
     yaxis <- gsub("\n"," ", e$panelvar1)
-    #  allResults <- allResultsReactive() # not used
+
     plotResults <- plotResultsReactive()
     if (yaxis == "% MEAC")
     {
@@ -689,10 +688,6 @@ app_server <- function(input, output, session) {
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
-    # cat("in xy_str()\n")
-    # cat("i = ", i, "\n")
-    # cat("j = ",j,"\n")
-    # cat(str(drugs()[[drug]]$equiSpace$Time), "\n")
     time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
     if (referenceTime() == "none")
     {
@@ -775,7 +770,6 @@ app_server <- function(input, output, session) {
       outputComments("Drug in imgDrugTime() is", drug)
       j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
       time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
-      #    cat("Time from x axis = ",time,"\n")
     }
     if (referenceTime() == "none")
     {
@@ -800,7 +794,7 @@ app_server <- function(input, output, session) {
     drug <- unlist(strsplit(gsub("\n", " ", e$panelvar1), " "))[1]
     outputComments("drug from panelvar1", drug)
     if (drug %in% c("% MEAC", "p no response"))
-      drug <- drug <- utils::tail(plottedDrugs,1)
+      drug <- utils::tail(plottedDrugs,1)
 
     # Get Units
     if (drug == "Events")
@@ -1003,12 +997,12 @@ app_server <- function(input, output, session) {
       profileCode({
         removeModal()
         TT <- hot_to_r(input$editPriorDosesTable)
-        cat("In ObserveEvent for editDosesOK\n")
+        outputComments("In ObserveEvent for editDosesOK")
         TT$Drug <- input$editDosesDrug
-        cat("TT:\n")
-        print(TT)
-        cat("doseTable:\n")
-        print(doseTable())
+        outputComments("TT:")
+        outputComments(TT)
+        outputComments("doseTable:")
+        outputComments(doseTable())
         dt <- doseTable()
         dt <- rbind(
           TT[!TT$Delete,c("Drug","Time","Dose","Units")],
@@ -1016,13 +1010,13 @@ app_server <- function(input, output, session) {
         )
 
         # Sort by time, by drug, but put blanks at the bottom
-        print(unique(dt$Time))
+        outputComments(unique(dt$Time))
         dt$Time[dt$Time == ""] <- "zzzzz"
         dt <- dt[order(dt$Time, dt$Drug),]
         dt$Time[dt$Time == "zzzzz"] <- ""
 
-        cat("doseTable after update:\n")
-        print(dt)
+        outputComments("doseTable after update:")
+        outputComments(dt)
 
         for (i in 1:nrow(dt))
         {
