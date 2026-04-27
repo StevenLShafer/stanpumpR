@@ -58,6 +58,8 @@ bookmarksToExclude <- c(
   "newEndCe",
   "hoverInfo",
   "debug_level",
+  "profiler_threshold",
+  "plotWidth",
   "show_intro_modal",
   "client_time",
   "dosetable_apply",

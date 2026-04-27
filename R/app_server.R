@@ -1158,7 +1158,7 @@ app_server <- function(input, output, session) {
           hot_rows(rowHeights = 10) %>%
           hot_cols(colWidths = c(50,55,90))
 
-        editEventsHOT(NULL)
+        editEventsHOT(NULL)  # force re-render even if table data is identical
         editEventsHOT(tempTableHOT)
         showModal(
           modalDialog(
