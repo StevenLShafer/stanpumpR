@@ -4098,10 +4098,10 @@
     },
     "shinyjs": {
       "Package": "shinyjs",
-      "Version": "2.0.0",
+      "Version": "2.1.1",
       "Source": "Repository",
       "Title": "Easily Improve the User Experience of Your Shiny Apps in Seconds",
-      "Authors@R": "person(\"Dean\", \"Attali\", email = \"daattali@gmail.com\", role = c(\"aut\", \"cre\"))",
+      "Authors@R": "person(\"Dean\", \"Attali\",  email = \"daattali@gmail.com\", role = c(\"aut\", \"cre\"), comment= c(ORCID=\"0000-0002-5645-3493\"))",
       "Description": "Perform common useful JavaScript operations in Shiny apps that will greatly improve your apps without having to know any JavaScript. Examples include: hiding an element, disabling an input, resetting an input back to its original value, delaying code execution by a few seconds, and many more useful functions for both the end user and the developer. 'shinyjs' can also be used to easily call your own custom JavaScript functions from R.",
       "URL": "https://deanattali.com/shinyjs/",
       "BugReports": "https://github.com/daattali/shinyjs/issues",
@@ -4110,11 +4110,11 @@
       ],
       "Imports": [
         "digest (>= 0.6.8)",
-        "htmltools (>= 0.2.9)",
         "jsonlite",
         "shiny (>= 1.0.0)"
       ],
       "Suggests": [
+        "htmltools (>= 0.2.9)",
         "knitr (>= 1.7)",
         "rmarkdown",
         "shinyAce",
@@ -4122,15 +4122,50 @@
         "testthat (>= 0.9.1)"
       ],
       "License": "MIT + file LICENSE",
-      "SystemRequirements": "pandoc with https support",
-      "LazyData": "true",
       "VignetteBuilder": "knitr",
-      "RoxygenNote": "7.1.0",
-      "NeedsCompilation": "no",
-      "Author": "Dean Attali [aut, cre]",
+      "Roxygen": "list(markdown = TRUE)",
+      "RoxygenNote": "7.3.3",
+      "Encoding": "UTF-8",
+      "Author": "Dean Attali [aut, cre] (ORCID: <https://orcid.org/0000-0002-5645-3493>)",
       "Maintainer": "Dean Attali <daattali@gmail.com>",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
+      "Repository": "CRAN"
+    },
+    "shinytip": {
+      "Package": "shinytip",
+      "Version": "0.1.0",
+      "Source": "GitHub",
+      "Title": "Simple Flexible Tooltips for 'Shiny' Apps",
+      "Authors@R": "c( person(\"Dean\", \"Attali\", email = \"daattali@gmail.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID=\"0000-0002-5645-3493\") ), person(\"Claudio\", \"Holanda\", role = \"aut\", comment = \"Author of balloon.css\" ))",
+      "Description": "Tooltips can be added to any 'Shiny' input and almost any element. Tooltips can be customized through a variety of options such as tooltip position, colour, size, and animation. Works in Rmd/qmd documents as well. Based on the 'balloon.css' project.",
+      "URL": "https://github.com/daattali/shinytip, https://daattali.com/shiny/shinytip-demo/",
+      "BugReports": "https://github.com/daattali/shinytip/issues",
+      "Depends": [
+        "R (>= 3.1.0)"
+      ],
+      "Imports": [
+        "htmltools (>= 0.3.5)",
+        "shiny (>= 1.0.0)"
+      ],
+      "Suggests": [
+        "colourpicker",
+        "shinyalert",
+        "shinycssloaders",
+        "shinydisconnect",
+        "testthat (>= 3.0.0)"
+      ],
+      "License": "MIT + file LICENSE",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.2.3",
+      "Roxygen": "list(markdown = TRUE)",
+      "Config/testthat/edition": "3",
+      "Author": "Dean Attali [aut, cre] (ORCID: <https://orcid.org/0000-0002-5645-3493>), Claudio Holanda [aut] (Author of balloon.css)",
+      "Maintainer": "Dean Attali <daattali@gmail.com>",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "daattali",
+      "RemoteRepo": "shinytip",
+      "RemoteRef": "master",
+      "RemoteSha": "d1efdba8b2f037cf97883a702facb25fc22690c3"
     },
     "snowflakeauth": {
       "Package": "snowflakeauth",
