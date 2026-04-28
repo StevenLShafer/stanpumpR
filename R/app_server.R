@@ -706,7 +706,7 @@ app_server <- function(input, output, session) {
         {
           clickPopupEvent(failed = "", x)
         } else {
-          addEditDrugPopup(x$drug, x$time)
+          addDrugPopup(x$drug, x$time)
         }
       }, name = "input$plot_click observer")
     })
@@ -724,7 +724,7 @@ app_server <- function(input, output, session) {
         {
           clickPopupEvent(failed = "", x)
         } else {
-          deleteDrugPrompt(x$drug)
+          modifyDrugPopup(x$drug)
         }
       }, name = "input$plot_dblclick observer")
     })
@@ -802,9 +802,8 @@ app_server <- function(input, output, session) {
 
   #################################### Single Click Response ##################################
 
-  editDosesTrigger <- makeReactiveTrigger()
 
-  addEditDrugPopup <- function(drug, time) {
+  addDrugPopup <- function(drug, time) {
     showModal(
       modalDialog(
         `data-submit-btn` = "addDoseBtn",
@@ -828,17 +827,16 @@ app_server <- function(input, output, session) {
         uiOutput("addDoseUnitsUI"),
         uiOutput("addDoseThresholdUI"),
         actionButton("addDoseBtn", "Add", class = "btn-primary"),
-        actionButton("editDosesBtn", "Edit prior doses", class = "btn-secondary"),
         tags$button(
           type = "button",
-          class = "btn btn-outline",
+          class = "btn btn-outline float-right",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
         footer = NULL,
         easyClose = TRUE,
         fade = TRUE,
-        size = "m"
+        size = "s"
       )
     )
   }
@@ -894,45 +892,67 @@ app_server <- function(input, output, session) {
     }, name = "input$addDoseBtn observer")
   })
 
-  # Edit prior drug doses
-  observeEvent(input$editDosesBtn, {
-    editDosesTrigger$trigger()
-    dt <- doseTable()
-    drugsWithDoses <- unique(dt$Drug[dt$Drug != "" & dt$Dose != ""])
-    selectedDrug <- if (input$addDoseDrug %in% drugsWithDoses) input$addDoseDrug else drugsWithDoses[1]
+  modifyDrugPopup <- function(drug) {
     showModal(
       modalDialog(
-        title = "Edit doses",
-        selectInput(
-          inputId = "editDosesDrug",
-          label = "Drug",
-          choices = drugsWithDoses,
-          selected = selectedDrug
-        ),
-        rHandsontableOutput(outputId = "editPriorDosesTable"),
-        actionButton("editDosesOK", "OK", class = "btn-primary"),
+        title = paste("Edit", drug, "doses"),
+        rHandsontableOutput("editPriorDosesTable"),
+        actionButton("editDosesOK", "Edit", class = "btn-primary"),
+        actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-light"),
         tags$button(
           type = "button",
-          class = "btn btn-outline",
+          class = "btn btn-outline float-right",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade=TRUE,
-        size="s"
+        fade = TRUE,
+        size = "s"
       )
     )
+  }
+
+  observeEvent(input$deleteAllDosesBtn, {
+    drug <- DrugTimeUnits()$drug
+    removeModal()
+    if (drugHasNonZeroDoses(doseTable(), drug)) {
+      showModal(
+        modalDialog(
+          title = paste("Delete", drug, "doses?"),
+          HTML(sprintf("Are you sure you want to delete all doses for <strong>%s</strong>?", drug)),
+          br(), br(),
+          actionButton("confirmDeleteAllDoses", "Yes", class = "btn-primary"),
+          tags$button(
+            type = "button",
+            class = "btn btn-outline float-right",
+            `data-bs-dismiss` = "modal",
+            "Cancel"
+          ),
+          footer = NULL,
+          easyClose = TRUE,
+          fade = TRUE,
+          size = "m"
+        )
+      )
+    } else {
+      deleteDrugDoses(drug)
+    }
+  })
+
+  observeEvent(input$confirmDeleteAllDoses, {
+    removeModal()
+    deleteDrugDoses(DrugTimeUnits()$drug)
   })
 
   output$editPriorDosesTable <- renderRHandsontable({
     profileCode({
-      editDosesTrigger$depend()
       dt <- doseTable()
-      req(input$editDosesDrug)
-      editPriorDosesTable <- dt[dt$Drug == input$editDosesDrug, ]
+      drug <- DrugTimeUnits()$drug
+      req(drug)
+      editPriorDosesTable <- dt[dt$Drug == drug, ]
       possibleUnits <- drugDefaults() %>%
-        dplyr::filter(Drug == input$editDosesDrug) %>%
+        dplyr::filter(Drug == drug) %>%
         dplyr::pull("Units") %>%
         unlist()
       editPriorDosesTable$Delete <- FALSE
@@ -983,7 +1003,7 @@ app_server <- function(input, output, session) {
         removeModal()
         TT <- hot_to_r(input$editPriorDosesTable)
         outputComments("In ObserveEvent for editDosesOK")
-        TT$Drug <- input$editDosesDrug
+        TT$Drug <- DrugTimeUnits()$drug
         outputComments("TT:")
         outputComments(TT)
         outputComments("doseTable:")
@@ -991,7 +1011,7 @@ app_server <- function(input, output, session) {
         dt <- doseTable()
         dt <- rbind(
           TT[!TT$Delete,c("Drug","Time","Dose","Units")],
-          dt[dt$Drug != input$editDosesDrug,]
+          dt[dt$Drug != DrugTimeUnits()$drug,]
         )
 
         # Sort by time, by drug, but put blanks at the bottom
@@ -1047,7 +1067,7 @@ app_server <- function(input, output, session) {
         ),
         tags$button(
           type = "button",
-          class = "btn btn-warning",
+          class = "btn btn-warning float-right",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
@@ -1167,7 +1187,7 @@ app_server <- function(input, output, session) {
             ),
             tags$button(
               type = "button",
-              class = "btn btn-warning",
+              class = "btn btn-warning float-right",
               `data-bs-dismiss` = "modal",
               "Cancel"
             ),
@@ -1201,37 +1221,6 @@ app_server <- function(input, output, session) {
     doseTable(dt)
   }
 
-  deleteDrugPrompt <- function(drug) {
-    hasNonZeroDoses <- drugHasNonZeroDoses(doseTable(), drug)
-
-    if (hasNonZeroDoses) {
-      showModal(
-        modalDialog(
-          title = paste("Delete", drug, "doses?"),
-          HTML(sprintf("Are you sure you want to delete all doses for <strong>%s</strong>?", drug)),
-          br(), br(),
-          actionButton("confirmDeleteDrug", "Yes", class = "btn-primary"),
-          tags$button(
-            type = "button",
-            class = "btn btn-outline",
-            `data-bs-dismiss` = "modal",
-            "Cancel"
-          ),
-          footer = NULL,
-          easyClose = TRUE,
-          fade = TRUE,
-          size = "m"
-        )
-      )
-    } else {
-      deleteDrugDoses(drug)
-    }
-  }
-
-  observeEvent(input$confirmDeleteDrug, {
-    removeModal()
-    deleteDrugDoses(DrugTimeUnits()$drug)
-  })
 
   # Target Drug Dosing (TCI Like) ###########################################
   # Event to trigger calculation to set doses for a target
@@ -1329,7 +1318,7 @@ app_server <- function(input, output, session) {
             ),
             tags$button(
               type = "button",
-              class = "btn btn-warning",
+              class = "btn btn-warning float-right",
               style = "margin: 0px 5px 5px 5px;",
               `data-bs-dismiss` = "modal",
               "Cancel"
@@ -1419,7 +1408,7 @@ app_server <- function(input, output, session) {
         ),
         tags$button(
           type = "button",
-          class = "btn btn-warning",
+          class = "btn btn-warning float-right",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
