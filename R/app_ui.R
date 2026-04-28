@@ -171,7 +171,7 @@ app_ui <- function() {
                 checkboxGroupInput(
                   inputId = "addedPlots",
                   label = NULL,
-                  choiceNames = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time until ___"),
+                  choiceNames = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time until threshold"),
                   choiceValues = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time Until")
                 )
               ),
