@@ -50,6 +50,7 @@ Suggests:
     remotes,
     rmarkdown,
     rsconnect,
+    shinydisconnect,
     testthat
 Depends:
   R (>= 4.1)
