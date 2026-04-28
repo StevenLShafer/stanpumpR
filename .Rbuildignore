@@ -1,3 +1,5 @@
+^renv$
+^renv\.lock$
 ^stanpumpR\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
