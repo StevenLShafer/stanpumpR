@@ -26,7 +26,6 @@ app_ui <- function() {
 
       bslib::nav_panel(
         "Simulator",
-        as.character(packageVersion('shinyjs')),
         icon = icon("chart-line"),
         bslib::layout_sidebar(
           sidebar = bslib::sidebar(
