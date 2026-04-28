@@ -27,31 +27,65 @@ Near-term future developments in stanpumpR will include
 5. Create of help and example pages.
 
 ### Setting up locally
-
+  
 1. Clone/download this repository to your local machine
 2. Open the `stanpumpR.Rproj` file in RStudio
 3. Install the devtools package via `install.packages("devtools")`.
 4. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
 5. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
 6. Run the app from the RStudio Console:
-    - `devtools::load_all(".")`
-    - `run_app()`
+  - `devtools::load_all(".")`
+- `run_app()`
 7. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `&debug=1` to the URL.
 
 #### Running tests
+
 1. Install the devtools package via `install.packages("devtools")`.
-1. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
-1. Run the tests via `devtools::test()`
+2. Install all package dependencies via `devtools::install_deps(dependencies = TRUE)`
+3. Run the tests via `devtools::test()`
 
 #### Using stanpumpR as a library
-A limited number of functions have been exported for use by your own code. To install:
 
+A limited number of functions have been exported for use by your own code. To install:
+  
 1. `library(devtools)`
-1. `devtools::install(build_vignettes = TRUE)`
+2. `devtools::install(build_vignettes = TRUE)`
 
 ### Environments
 
 When code is merged into the default branch, it will automatically be deployed to production. Pull Requests are automatically deployed to a test environment for testing.
+
+### Dependency management ({renv})
+
+This project uses [{renv}](https://rstudio.github.io/renv/) to lock R package versions. This is mainly done so that we can take control of package versions for the production shiny app, which is a major step towards a stable app. The `renv.lock` file is committed to the repo and is used to ensure the deployed app uses the exact same package versions as those tested locally.
+
+**First-time setup** — after cloning, restore the locked packages:
+
+```r
+renv::restore()
+```
+
+**Adding a new package** — add it to `DESCRIPTION` first, then install and snapshot:
+
+```r
+renv::install("pkgname")   # install into the renv library
+renv::snapshot()           # update renv.lock
+# commit both DESCRIPTION and renv.lock
+```
+
+**Updating an existing package:**
+
+```r
+renv::update("pkgname")
+renv::snapshot()
+# commit renv.lock
+```
+
+**After pulling changes** that include `renv.lock` updates:
+
+```r
+renv::restore()
+```
 
 Steven L. Shafer, MD
 November 2019
