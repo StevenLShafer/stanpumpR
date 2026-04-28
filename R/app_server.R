@@ -828,7 +828,7 @@ app_server <- function(input, output, session) {
         actionButton("addDoseBtn", "Add", class = "btn-primary"),
         tags$button(
           type = "button",
-          class = "btn btn-outline float-right",
+          class = "btn float-right",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
@@ -880,10 +880,10 @@ app_server <- function(input, output, session) {
         title = paste("Edit", drug, "doses"),
         rHandsontableOutput("editPriorDosesTable"),
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
-        actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-light"),
+        actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
         tags$button(
           type = "button",
-          class = "btn btn-outline float-right",
+          class = "btn float-right",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
@@ -907,7 +907,7 @@ app_server <- function(input, output, session) {
           actionButton("confirmDeleteAllDoses", "Yes", class = "btn-primary"),
           tags$button(
             type = "button",
-            class = "btn btn-outline float-right",
+            class = "btn float-right",
             `data-bs-dismiss` = "modal",
             "Cancel"
           ),
