@@ -897,7 +897,7 @@ app_server <- function(input, output, session) {
       modalDialog(
         title = paste("Edit", drug, "doses"),
         rHandsontableOutput("editPriorDosesTable"),
-        actionButton("editDosesOK", "Edit", class = "btn-primary"),
+        actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-light"),
         tags$button(
           type = "button",
@@ -951,6 +951,7 @@ app_server <- function(input, output, session) {
       drug <- DrugTimeUnits()$drug
       req(drug)
       editPriorDosesTable <- dt[dt$Drug == drug, ]
+      req(nrow(editPriorDosesTable) > 0)
       possibleUnits <- drugDefaults() %>%
         dplyr::filter(Drug == drug) %>%
         dplyr::pull("Units") %>%
