@@ -37,6 +37,7 @@ Imports:
   shinycssloaders,
   shinydashboard,
   shinyjs,
+  shinytip,
   shinyWidgets,
   tidyr,
   tryCatchLog,
@@ -51,6 +52,8 @@ Suggests:
     rmarkdown,
     rsconnect,
     testthat
+Remotes:
+  daattali/shinytip
 Depends:
   R (>= 4.1)
 Encoding: UTF-8

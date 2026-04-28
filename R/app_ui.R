@@ -222,12 +222,12 @@ app_ui <- function() {
               bslib::card_header(icon("syringe"), "Doses"),
 
               bslib::layout_columns(
-                selectInput(
+                shinytip::tip_input(selectInput(
                   "timeMode",
                   "Time Display",
                   c("Actual time" = "clock",
                     "Elapsed minutes" = "relative")
-                ),
+                ),"sdfds",position='right'),
                 conditionalPanel(
                   "input.timeMode == 'clock'",
                   textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
