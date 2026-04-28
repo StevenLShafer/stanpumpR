@@ -50,7 +50,6 @@ bookmarksToExclude <- c(
   "drugEditsOK",
   "editDrugsHTML",
   "editDrugs",
-  "newEndCe",
   "hoverInfo",
   "debug_level",
   "profiler_threshold",

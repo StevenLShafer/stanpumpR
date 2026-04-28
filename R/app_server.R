@@ -825,7 +825,6 @@ app_server <- function(input, output, session) {
           placeholder = "Enter dose"
         ) |> modalFocus(),
         uiOutput("addDoseUnitsUI"),
-        uiOutput("addDoseThresholdUI"),
         actionButton("addDoseBtn", "Add", class = "btn-primary"),
         tags$button(
           type = "button",
@@ -854,29 +853,12 @@ app_server <- function(input, output, session) {
     )
   })
 
-  output$addDoseThresholdUI <- renderUI({
-    req(input$addDoseDrug)
-    thisDrug <- which(input$addDoseDrug == drugDefaults()$Drug)
-    numericInput(
-      inputId = "newEndCe",
-      label = paste("Set", drugDefaults()$endCeText[thisDrug], "concentration"),
-      value = drugDefaults()$endCe[thisDrug],
-      min = 0,
-      max = 1000
-    )
-  })
-
   observeEvent(input$addDoseBtn, {
     profileCode({
       addDoseTime <- validateTime(input$addDoseTime)
       addDoseAmount <- validateDose(input$addDoseAmount)
       removeModal()
       thisDrug <- which(drugDefaults()$Drug == input$addDoseDrug)
-      if (!is.null(input$newEndCe) && drugDefaults()$endCe[thisDrug] != input$newEndCe) {
-        newDrugDefaults <- drugDefaults()
-        newDrugDefaults$endCe[thisDrug] <- input$newEndCe
-        drugDefaults(newDrugDefaults)
-      }
 
       dt <- doseTable()
       idx <- which(dt$Drug == "")[1]
