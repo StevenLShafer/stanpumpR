@@ -625,7 +625,11 @@ app_server <- function(input, output, session) {
     req(text)
     div(
       id = "hover_info_box",
-      HTML(gsub(",", "<br>", text))
+      tagList(
+        lapply(strsplit(text, ",")[[1]], function(part) {
+          tagList(htmltools::htmlEscape(part), tags$br())
+        })
+      )
     )
   })
 
