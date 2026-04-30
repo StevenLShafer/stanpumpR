@@ -1491,8 +1491,7 @@ app_server <- function(input, output, session) {
           col = 13,
           halign = "htRight"
         ) %>%
-        hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) # %>%
-      #    hot_rows(rowHeights = 10) # interferes with cell selection -> other occasions?
+        hot_table(contextMenu = FALSE)
       drugsHOT
     }, name = "output$editDrugsHTML")
   })
