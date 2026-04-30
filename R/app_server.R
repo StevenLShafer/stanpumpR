@@ -1374,28 +1374,19 @@ app_server <- function(input, output, session) {
     showModal(
       modalDialog(
         title = paste("Edit Drug Defaults"),
-        tags$div(
-          HTML(
-            paste(
-              tags$span(
-                style="color:red; font-weight:bold ",
-                "This is primarily intended for stanpumpR collaborators. ",
-                "If you believe some drug defaults are incorrect, please contact ",
-                "steven.shafer@stanford.edu. ",
-                "Also, you can easily break your session by entering crazy things. ",
-                "If so, just reload your session. "), sep = ""))
+        div(
+          class = "fw-bold text-danger",
+          "This is primarily intended for stanpumpR collaborators. If you believe some drug defaults are incorrect, please contact",
+          tags$a("steven.shafer@stanford.edu", href = "mailto:steven.shafer@stanford.edu"),
+          ". Also, you can easily break your session by entering crazy things. If so, just reload your session."
         ),
-        rHandsontableOutput(
-          outputId = "editDrugsHTML"
-        ),
-        actionButton(
-          inputId = "drugEditsOK",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-        ),
+        br(),
+        shinycssloaders::withSpinner(rHandsontableOutput("editDrugsHTML", height = 350)),
+        br(),
+        actionButton("drugEditsOK", "Apply", class = "btn-primary"),
         tags$button(
           type = "button",
-          class = "btn btn-warning float-right",
+          class = "btn float-right",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
@@ -1416,7 +1407,7 @@ app_server <- function(input, output, session) {
         x,
         overflow = 'visible',
         rowHeaders = NULL,
-        height = 220
+        height = 350
       ) %>%
         hot_col(
           col = 1,
