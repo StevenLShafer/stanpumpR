@@ -100,10 +100,9 @@ app_server <- function(input, output, session) {
 
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
-  drugAndEventDefaults <- getDrugAndEventDefaultsGlobal()
-  drugDefaults <- reactiveVal(drugAndEventDefaults[[1]])
-  eventDefaults <- reactiveVal(drugAndEventDefaults[[2]])
-  drugList <- drugAndEventDefaults[[1]]$Drug
+  drugDefaults <- reactiveVal(getDrugDefaultsGlobal())
+  eventDefaults <- reactiveVal(getEventDefaults())
+  drugList <- getDrugDefaultsGlobal()$Drug
 
   # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
   # doseTableInit <- data.frame(
@@ -354,7 +353,6 @@ app_server <- function(input, output, session) {
     }, name = "testCovariates() reactive")
   })
 
-  # see if drugs can be a regular reactive instead of observe({
   drugs <- reactive({
     profileCode({
       outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
@@ -625,7 +623,11 @@ app_server <- function(input, output, session) {
     req(text)
     div(
       id = "hover_info_box",
-      HTML(gsub(",", "<br>", text))
+      tagList(
+        lapply(strsplit(text, ",")[[1]], function(part) {
+          tagList(htmltools::htmlEscape(part), tags$br())
+        })
+      )
     )
   })
 
@@ -1208,7 +1210,8 @@ app_server <- function(input, output, session) {
       showModal(
         modalDialog(
           title = paste("Delete", drug, "doses?"),
-          HTML(sprintf("Are you sure you want to delete all doses for <strong>%s</strong>?", drug)),
+          "Are you sure you want to delete all doses for",
+          tags$strong(drug, .noWS = "after"), "?",
           br(), br(),
           actionButton("confirmDeleteDrug", "Yes", class = "btn-primary"),
           tags$button(
