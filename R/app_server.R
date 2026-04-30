@@ -464,7 +464,7 @@ app_server <- function(input, output, session) {
 
 
   plotRecovery <- reactive({
-    "Time Until" %in% input$addedPlots
+    input$showThreshold
   })
 
   linetypes <- reactive({
