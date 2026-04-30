@@ -804,6 +804,10 @@ app_server <- function(input, output, session) {
 
 
   addDrugPopup <- function(drug, time) {
+    thisDrug     <- which(drug == drugDefaults()$Drug)
+    initialUnits <- unlist(drugDefaults()$Units[thisDrug])
+    selectedUnit <- drugDefaults()$Default.Units[thisDrug]
+
     showModal(
       modalDialog(
         `data-submit-btn` = "addDoseBtn",
@@ -824,7 +828,12 @@ app_server <- function(input, output, session) {
           label = "Dose",
           placeholder = "Enter dose"
         ) |> modalFocus(),
-        uiOutput("addDoseUnitsUI"),
+        selectInput(
+          inputId = "addDoseUnits",
+          label = "Units",
+          choices = initialUnits,
+          selected = selectedUnit
+        ),
         actionButton("addDoseBtn", "Add", class = "btn-primary"),
         tags$button(
           type = "button",
@@ -840,17 +849,12 @@ app_server <- function(input, output, session) {
     )
   }
 
-  output$addDoseUnitsUI <- renderUI({
+  observeEvent(input$addDoseDrug, {
     req(input$addDoseDrug)
-    thisDrug <- which(input$addDoseDrug == drugDefaults()$Drug)
-    units <- unlist(drugDefaults()$Units[thisDrug])
-    selectedUnits <- drugDefaults()$Default.Units[thisDrug]
-    selectInput(
-      inputId = "addDoseUnits",
-      label = "Units",
-      choices = units,
-      selected = selectedUnits
-    )
+    thisDrug     <- which(input$addDoseDrug == drugDefaults()$Drug)
+    units        <- unlist(drugDefaults()$Units[thisDrug])
+    selectedUnit <- drugDefaults()$Default.Units[thisDrug]
+    updateSelectInput(session, "addDoseUnits", choices = units, selected = selectedUnit)
   })
 
   observeEvent(input$addDoseBtn, {
