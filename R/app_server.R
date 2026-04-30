@@ -1403,6 +1403,8 @@ app_server <- function(input, output, session) {
       editDrugsTrigger$depend()
       x <- drugDefaults()
       x$Units <- drugUnitsSimplify(x$Units)
+      # endCe / endCeText are managed via the Drug Thresholds modal
+      x <- x[, !names(x) %in% c("endCe", "endCeText")]
       drugsHOT <- rhandsontable(
         x,
         overflow = 'visible',
@@ -1450,38 +1452,12 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid=FALSE
         ) %>%
-        hot_col(
-          col = 6,
-          halign = "htLeft"
-        ) %>%
-        hot_col(
-          col = 7,
-          halign = "htRight"
-        ) %>%
-        hot_col(
-          col = 8,
-          halign = "htRight"
-        ) %>%
-        hot_col(
-          col = 9,
-          halign = "htRight"
-        ) %>%
-        hot_col(
-          col = 10,
-          halign = "htRight"
-        ) %>%
-        hot_col(
-          col = 11,
-          halign = "htRight"
-        ) %>%
-        hot_col(
-          col = 12,
-          halign = "htRight"
-        ) %>%
-        hot_col(
-          col = 13,
-          halign = "htRight"
-        ) %>%
+        hot_col(col = 6,  halign = "htLeft") %>%
+        hot_col(col = 7,  halign = "htRight") %>%
+        hot_col(col = 8,  halign = "htRight") %>%
+        hot_col(col = 9,  halign = "htRight") %>%
+        hot_col(col = 10, halign = "htRight") %>%
+        hot_col(col = 11, halign = "htRight") %>%
         hot_table(contextMenu = FALSE)
       drugsHOT
     }, name = "output$editDrugsHTML")
@@ -1491,6 +1467,7 @@ app_server <- function(input, output, session) {
   observeEvent(input$drugEditsOK, {
     profileCode({
       removeModal()
+      current      <- drugDefaults()
       newDrugDefaults <- hot_to_r(input$editDrugsHTML)
       newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
       newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
@@ -1503,12 +1480,57 @@ app_server <- function(input, output, session) {
       newDrugDefaults$Upper                <- as.numeric(newDrugDefaults$Upper)
       newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
       newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
-      newDrugDefaults$endCe                <- as.numeric(newDrugDefaults$endCe)
-      newDrugDefaults$endCeText            <- as.character(newDrugDefaults$endCeText)
+
+      # endCe / endCeText are not in the table; restore from current values
+      newDrugDefaults$endCe     <- current$endCe[match(newDrugDefaults$Drug, current$Drug)]
+      newDrugDefaults$endCeText <- current$endCeText[match(newDrugDefaults$Drug, current$Drug)]
 
       newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
       drugDefaults(newDrugDefaults)
     }, name = "input$drugEditsOK observer")
+  })
+
+  drugThresholdsTrigger <- makeReactiveTrigger()
+
+  observeEvent(input$editThresholds, {
+    drugThresholdsTrigger$trigger()
+    showModal(
+      modalDialog(
+        title = "Drug Thresholds",
+        p("Set the threshold concentration for each drug."),
+        br(),
+        shinycssloaders::withSpinner(rHandsontableOutput("editThresholdsTable", height = 350)),
+        br(),
+        actionButton("thresholdEditsOK", "Apply", class = "btn-primary"),
+        tags$button(
+          type = "button",
+          class = "btn float-right",
+          `data-bs-dismiss` = "modal",
+          "Cancel"
+        ),
+        footer = NULL,
+        easyClose = TRUE,
+        size = "s"
+      )
+    )
+  })
+
+  output$editThresholdsTable <- renderRHandsontable({
+    drugThresholdsTrigger$depend()
+    x <- drugDefaults()[, c("Drug", "endCe")]
+    names(x)[2] <- "Threshold"
+    rhandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
+      hot_col(col = 1, halign = "htLeft", readOnly = TRUE) %>%
+      hot_col(col = 2, halign = "htRight", type = "numeric") %>%
+      hot_table(contextMenu = FALSE)
+  })
+
+  observeEvent(input$thresholdEditsOK, {
+    removeModal()
+    tt <- hot_to_r(input$editThresholdsTable)
+    newDrugDefaults <- drugDefaults()
+    newDrugDefaults$endCe <- as.numeric(tt$Threshold)[match(newDrugDefaults$Drug, tt$Drug)]
+    drugDefaults(newDrugDefaults)
   })
 
   outputComments("Reached the end of server()")
