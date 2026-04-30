@@ -122,8 +122,8 @@ app_ui <- function() {
                 icon = icon("sliders"),
                 textInput("title", "Title", paste("Simulation on", format(Sys.time()))),
                 textInput("caption", "Caption", "", placeholder = "Enter figure caption"),
-                selectInput("typical", "Show typical", c("none","Mid", "Range"), selected = "Range"),
-                selectInput("normalization", "Normalize to", c("none","Peak plasma", "Peak effect site")),
+                selectInput("typical", "Show typical", c("<none>" = "none","Mid", "Range"), selected = "Range"),
+                selectInput("normalization", "Normalize to", c("<none>" = "none","Peak plasma", "Peak effect site")),
                 selectInput(
                   inputId = "maximum",
                   label = "Max time (minutes)",
@@ -132,27 +132,31 @@ app_ui <- function() {
                 ),
                 selectInput(
                   inputId = "plasmaLinetype",
-                  label = "Plasma",
+                  label = "Plasma line",
                   selected = "blank",
-                  choices = c("solid",
-                              "dashed",
-                              "longdash",
-                              "dotted",
-                              "dotdash",
-                              "twodash",
-                              "blank")
+                  choices = c(
+                    "<none>" = "blank",
+                    "solid",
+                    "dashed",
+                    "longdash",
+                    "dotted",
+                    "dotdash",
+                    "twodash"
+                  )
                 ),
                 selectInput(
                   inputId = "effectsiteLinetype",
-                  label = "Effect site",
+                  label = "Effect site line",
                   selected = "solid",
-                  choices = c("solid",
-                              "dashed",
-                              "longdash",
-                              "dotted",
-                              "dotdash",
-                              "twodash",
-                              "blank")
+                  choices = c(
+                    "<none>" = "blank",
+                    "solid",
+                    "dashed",
+                    "longdash",
+                    "dotted",
+                    "dotdash",
+                    "twodash"
+                  )
                 ),
                 sliderInput("yaxisHeight", "Y axis height", 150, 350, 200, ticks = FALSE),
                 checkboxInput(
