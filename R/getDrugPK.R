@@ -30,6 +30,8 @@ getDrugPK <- function(
   drugDefaults
 )
 {
+  drugList <- getDrugDefaultsGlobal()$Drug
+  if (!drug %in% drugList) stop("Unknown drug: ", drug)
   X <- eval(call(drug, weight, height, age, sex))
   tPeak <- X$tPeak
 

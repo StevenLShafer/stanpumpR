@@ -25,6 +25,7 @@ Imports:
   lubridate,
   magrittr,
   mailR,
+  memoise,
   officer,
   openxlsx,
   png,
