@@ -127,7 +127,7 @@ app_ui <- function() {
                 selectInput(
                   inputId = "maximum",
                   label = "Max time (minutes)",
-                  choices = maxtimes$times,
+                  choices = setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
                   selected = 60
                 ),
                 selectInput(
