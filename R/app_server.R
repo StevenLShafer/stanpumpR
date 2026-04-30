@@ -1210,7 +1210,8 @@ app_server <- function(input, output, session) {
       showModal(
         modalDialog(
           title = paste("Delete", drug, "doses?"),
-          HTML(sprintf("Are you sure you want to delete all doses for <strong>%s</strong>?", drug)),
+          "Are you sure you want to delete all doses for",
+          tags$strong(drug, .noWS = "after"), "?",
           br(), br(),
           actionButton("confirmDeleteDrug", "Yes", class = "btn-primary"),
           tags$button(
