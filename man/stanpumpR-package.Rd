@@ -11,5 +11,10 @@ stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulati
 \author{
 \strong{Maintainer}: Steven Shafer \email{steven.shafer@stanford.edu} (\href{https://orcid.org/0000-0002-0289-7793}{ORCID})
 
+Authors:
+\itemize{
+  \item Dean Attali \email{daattali@gmail.com} (\href{https://orcid.org/0000-0002-5645-3493}{ORCID})
+}
+
 }
 \keyword{internal}

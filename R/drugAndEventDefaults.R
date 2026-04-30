@@ -10,9 +10,10 @@ drugUnitsSimplify <- function(units) {
 #' @param expand If `TRUE`, the list in the Units column is expanded. Otherwise,
 #' the Units column contains comma-separated strings.
 #' @returns A data.frame containing concentrations and bolus units, suggested colors and plasma/effect levels for drug effect endpoints
+#' @details The function is memoised so that the file is only read once per session.
 #'
 #' @export
-getDrugDefaultsGlobal <- function(expand = TRUE)
+getDrugDefaultsGlobal <- memoise::memoise(function(expand = TRUE)
 {
   drugDefaultsDataset <- read.csv(
     system.file("extdata", "drugDefaults_global.csv", package = "stanpumpR"),
@@ -24,7 +25,7 @@ getDrugDefaultsGlobal <- function(expand = TRUE)
   }
 
   drugDefaultsDataset
-}
+})
 
 getEventDefaults <- function() {
   read.csv(
@@ -43,9 +44,4 @@ getDrugDefaults <- function(drug)
 {
   drugDefaults_global <- getDrugDefaultsGlobal()
   drugDefaults_global[drugDefaults_global$Drug == drug, ]
-}
-
-getDrugAndEventDefaultsGlobal <- function()
-{
-  list(drugDefaultsDataset = getDrugDefaultsGlobal(), eventDefaults = getEventDefaults())
 }

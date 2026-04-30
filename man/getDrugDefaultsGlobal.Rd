@@ -16,3 +16,6 @@ A data.frame containing concentrations and bolus units, suggested colors and pla
 \description{
 Return the stanpumpR drug defaults table
 }
+\details{
+The function is memoised so that the file is only read once per session.
+}
