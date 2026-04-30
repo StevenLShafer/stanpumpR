@@ -171,7 +171,7 @@ app_ui <- function() {
                 checkboxGroupInput(
                   inputId = "addedPlots",
                   label = NULL,
-                  choiceNames = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time until ___"),
+                  choiceNames = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time until threshold"),
                   choiceValues = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time Until")
                 )
               ),
@@ -214,7 +214,7 @@ app_ui <- function() {
 
               bslib::card_footer(
                 class = "small text-muted",
-                "Hover for precise concentration. Click to add new dose or edit existing doses for a drug. Double click to delete a drug."
+                "Hover for precise concentration. Click to add new dose. Double click to edit or delete a drug's doses."
               )
             ),
 
