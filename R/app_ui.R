@@ -192,8 +192,9 @@ app_ui <- function() {
               )
             ),
 
-            actionButton("setTarget", "Suggest Dosing", class = "btn-outline-primary", icon = icon("fas fa-wand-magic-sparkles")),
-            actionButton("editDrugs", "Drug Library", class = "btn-outline-primary", icon = icon("fas fa-pencil"))
+            actionButton("setTarget", "Suggest Dosing", class = "btn-outline-primary", icon = icon("fas fa-prescription")),
+            actionButton("editDrugs", "Drug Library", class = "btn-outline-primary", icon = icon("fas fa-capsules")),
+            actionButton("editThresholds", "Drug Thresholds", class = "btn-outline-primary", icon = icon("fas fa-bullseye"))
           ),
 
           bslib::layout_columns(
