@@ -908,7 +908,8 @@ app_server <- function(input, output, session) {
       showModal(
         modalDialog(
           title = paste("Delete", drug, "doses?"),
-          HTML(sprintf("Are you sure you want to delete all doses for <strong>%s</strong>?", drug)),
+          "Are you sure you want to delete all doses for",
+          tags$strong(drug, .noWS = "after"), "?",
           br(), br(),
           actionButton("confirmDeleteAllDoses", "Yes", class = "btn-primary"),
           tags$button(
@@ -1037,7 +1038,8 @@ app_server <- function(input, output, session) {
         title = paste("Enter a new event"),
         if (failed != "")
           tags$div(
-            HTML(paste(tags$span(style="color:red; font-weight:bold ", failed), sep = ""))
+            class = "fw-bold text-danger",
+            failed
           ),
         textInput(
           inputId = "clickTimeEvent",
@@ -1259,22 +1261,9 @@ app_server <- function(input, output, session) {
           modalDialog(
             `data-submit-btn` = "targetOK",
             title = paste("Enter Target Effect Site Concentrations"),
-            tags$div(
-              HTML(
-                paste(
-                  tags$span(
-                    style="
-                  color:red; font-weight:bold ",
-                    "Enter time and target concentration below.
-                Decreasing targets are not yet supported,
-                and will be removed. Doses are found with
-                non-linear regression, which takes a moment
-                to calculate. The suggestion will be good,
-                but better algorithms likely exist."
-                  ),
-                  sep = ""
-                )
-              )
+            div(
+              class = "fw-bold text-danger",
+              "Enter time and target concentration below. Decreasing targets are not yet supported, and will be removed. Doses are found with non-linear regression, which takes a moment to calculate. The suggestion will be good, but better algorithms likely exist."
             ),
             selectInput(
               inputId = "targetDrug",
