@@ -122,41 +122,50 @@ app_ui <- function() {
                 icon = icon("sliders"),
                 textInput("title", "Title", paste("Simulation on", format(Sys.time()))),
                 textInput("caption", "Caption", "", placeholder = "Enter figure caption"),
-                selectInput("typical", "Show typical", c("none","Mid", "Range"), selected = "Range"),
-                selectInput("normalization", "Normalize to", c("none","Peak plasma", "Peak effect site")),
+                selectInput("typical", "Show typical", c("<none>" = "none","Mid", "Range"), selected = "Range"),
+                selectInput("normalization", "Normalize to", c("<none>" = "none","Peak plasma", "Peak effect site")),
                 selectInput(
                   inputId = "maximum",
                   label = "Max time (minutes)",
-                  choices = maxtimes$times,
+                  choices = setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
                   selected = 60
                 ),
                 selectInput(
                   inputId = "plasmaLinetype",
-                  label = "Plasma",
+                  label = "Plasma line",
                   selected = "blank",
-                  choices = c("solid",
-                              "dashed",
-                              "longdash",
-                              "dotted",
-                              "dotdash",
-                              "twodash",
-                              "blank")
+                  choices = c(
+                    "<none>" = "blank",
+                    "solid",
+                    "dashed",
+                    "longdash",
+                    "dotted",
+                    "dotdash",
+                    "twodash"
+                  )
                 ),
                 selectInput(
                   inputId = "effectsiteLinetype",
-                  label = "Effect site",
+                  label = "Effect site line",
                   selected = "solid",
-                  choices = c("solid",
-                              "dashed",
-                              "longdash",
-                              "dotted",
-                              "dotdash",
-                              "twodash",
-                              "blank")
+                  choices = c(
+                    "<none>" = "blank",
+                    "solid",
+                    "dashed",
+                    "longdash",
+                    "dotted",
+                    "dotdash",
+                    "twodash"
+                  )
                 ),
                 sliderInput("yaxisHeight", "Y axis height", 150, 350, 200, ticks = FALSE),
+                checkboxInput(
+                  "showThreshold",
+                  "Time until threshold",
+                  value = FALSE
+                ),
                 conditionalPanel(
-                  condition = sprintf("!(input.addedPlots.includes('Time Until') || input.addedPlots.includes('%s') || input.addedPlots.includes('Interaction'))", DRUG_NAME_EVENTS),
+                  condition = sprintf("!(input.showThreshold || input.addedPlots.includes('%s') || input.addedPlots.includes('Interaction'))", DRUG_NAME_EVENTS),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",
@@ -171,8 +180,7 @@ app_ui <- function() {
                 checkboxGroupInput(
                   inputId = "addedPlots",
                   label = NULL,
-                  choiceNames = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time until threshold"),
-                  choiceValues = c("MEAC", "Interaction", DRUG_NAME_EVENTS, "Time Until")
+                  choices = c("MEAC", "Interaction", DRUG_NAME_EVENTS)
                 )
               ),
 
@@ -185,7 +193,7 @@ app_ui <- function() {
             ),
 
             actionButton("setTarget", "Suggest Dosing", class = "btn-outline-primary", icon = icon("fas fa-wand-magic-sparkles")),
-            actionButton("editDrugs", "Modify Drug Library", class = "btn-outline-primary", icon = icon("fas fa-pencil"))
+            actionButton("editDrugs", "Drug Library", class = "btn-outline-primary", icon = icon("fas fa-pencil"))
           ),
 
           bslib::layout_columns(
