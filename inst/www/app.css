@@ -121,8 +121,31 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   background-color: rgba(245, 245, 245, 0.85);
 }
 
+/* Make the small modal a little wider, it's too small */
 @media (min-width: 576px) {
  .modal-sm {
    --bs-modal-width: 350px;
  }
+}
+
+.linetype-btns .shiny-input-container {
+  display: block;
+  width: 100%;
+}
+.linetype-btns .btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.linetype-btns .btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+.linetype-btns svg {
+  display: block;
 }

@@ -2,6 +2,57 @@ app_ui <- function() {
   js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(stanpumpR::getDrugDefaultsGlobal()))
   config <- .sprglobals$config
 
+  # Helper: wraps SVG body content in a titled 20×14 SVG element.
+  linetypeSVG <- function(content, label) {
+    HTML(paste0('<svg width="20" height="14"><title>', label, "</title>", content, "</svg>"))
+  }
+
+  linetypeChoiceNames <- list(
+    # none: ✕
+    linetypeSVG(paste0(
+      '<line x1="4"  y1="2" x2="16" y2="12" stroke="currentColor" stroke-width="2"/>',
+      '<line x1="16" y1="2" x2="4"  y2="12" stroke="currentColor" stroke-width="2"/>'
+    ), "none"),
+    # solid: full-width line with vertical end caps
+    # vector-effect="non-scaling-stroke" keeps stroke widths constant while
+    # preserveAspectRatio="none" lets the horizontal line stretch freely
+    HTML(paste0(
+      '<svg width="100%" height="14" viewBox="0 0 100 14" preserveAspectRatio="none">',
+      '<title>solid</title>',
+      '<line x1="1"  y1="7"  x2="99" y2="7"  stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/>',
+      '<line x1="1"  y1="4"  x2="1"  y2="10" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/>',
+      '<line x1="99" y1="4"  x2="99" y2="10" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/>',
+      '</svg>'
+    )),
+    # dashed: one centred dash
+    linetypeSVG(
+      '<line x1="4" y1="7" x2="16" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+      "dashed"
+    ),
+    # longdash: one long dash
+    linetypeSVG(
+      '<line x1="2" y1="7" x2="18" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+      "longdash"
+    ),
+    # dotted: row of round dots
+    linetypeSVG(
+      '<line x1="1" y1="7" x2="19" y2="7" stroke="currentColor" stroke-width="2.5" stroke-dasharray="0.1,3.9" stroke-linecap="round"/>',
+      "dotted"
+    ),
+    # dotdash: one dot then one dash
+    linetypeSVG(paste0(
+      '<circle cx="4" cy="7" r="1.5" fill="currentColor"/>',
+      '<line x1="9" y1="7" x2="18" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+    ), "dotdash"),
+    # twodash: two equal dashes
+    linetypeSVG(paste0(
+      '<line x1="2"  y1="7" x2="8"  y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+      '<line x1="12" y1="7" x2="18" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+    ), "twodash")
+  )
+  linetypeChoiceValues <- c("blank", "solid", "dashed", "longdash", "dotted", "dotdash", "twodash")
+
+
   stanpumpr_theme <- bslib::bs_theme(
     version = 5,
     bootswatch = "flatly",
