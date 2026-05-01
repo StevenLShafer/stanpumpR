@@ -1065,7 +1065,7 @@ app_server <- function(input, output, session) {
         actionButton(
           inputId = "editEvents",
           label = paste("Edit prior events"),
-          style="color: #fff; background-color: #00C000; border-color: ##008000"
+          style="color: #fff; background-color: #00C000; border-color: #008000"
         ),
         footer = NULL,
         easyClose = TRUE,
