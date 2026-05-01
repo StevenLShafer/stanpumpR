@@ -104,31 +104,6 @@ app_server <- function(input, output, session) {
   eventDefaults <- reactiveVal(getEventDefaults())
   drugList <- getDrugDefaultsGlobal()$Drug
 
-  # Examples below are for debugging specific PK advance routines (e.g., advanceClosedForm0())
-  # doseTableInit <- data.frame(
-  #   Drug = c("dexmedetomidine",""),
-  #   Time = c("0",""),
-  #   Dose = c("1",""),
-  #   Units = c("mcg",""),
-  #   stringsAsFactors = FALSE
-  # )
-
-  # doseTableInit <- data.frame(
-  #   Drug = c("hydromorphone"),
-  #   Time = as.character(0:6*240),
-  #   Dose = c("1"),
-  #   Units = c("mg PO"),
-  #   stringsAsFactors = FALSE
-  # )
-
-  # doseTableInit <- data.frame(
-  #   Drug = drugDefaults()$Drug,
-  #   Time = "0",
-  #   Dose = "1",
-  #   Units = drugDefaults()$Bolus.Units,
-  #   stringsAsFactors = FALSE
-  # )
-
   doseTable <- reactiveVal(doseTableInit)
 
   # Routine to output doseTableHTML from doseTable
