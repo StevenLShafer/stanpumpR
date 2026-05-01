@@ -14,6 +14,11 @@ eventTableInit <- data.frame(
 )
 
 bookmarksToExclude <- c(
+  "editThresholds",
+  "plotContainer_full_screen",
+  "thresholdEditsOK",
+  "editThresholdsTable",
+  "editEventsTableHTML",
   "doseTableHTML",
   "setTarget",
   "targetDrug",

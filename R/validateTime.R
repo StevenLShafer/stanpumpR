@@ -31,9 +31,6 @@ validateTime <- function(x)
 
   # If there is a period, remove colon and return
   if (as.numeric(regexpr("[.]", x) > -1)) return (gsub("[^[:digit:].]","",x))
-  colonPosition <- as.numeric(regexpr("[:]", x))
-#  if (colonPosition == -1 & nchar(x) >= 4) # No colon, 4 or more characters means the colon was omitted
-#    x <- paste0(substr(x,1,2),":",substr(x,3,4))
   # If there is a colon, ensure HH:MM format
   colonPosition <- as.numeric(regexpr("[:]", x))
   if (colonPosition > -1)

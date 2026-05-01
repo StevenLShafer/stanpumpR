@@ -6,6 +6,8 @@ inlineUI <- function(tag) {
   attachClass(tag, "inline_ui")
 }
 
+nbsp <- shiny::HTML("&nbsp;", .noWS = "outside")
+
 addHotHooks <- function(hot, filterKeys = TRUE, sanitize = TRUE, ...) {
   hooks <- list(...)
 
