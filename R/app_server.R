@@ -668,7 +668,6 @@ app_server <- function(input, output, session) {
 
   # Click and Double Click Control ##########################################################
   # get date and time from image
-  ignoreAddedPlotClickUntil <- reactiveVal(NULL)
 
   # Response to single click
   observeEvent(
@@ -681,10 +680,6 @@ app_server <- function(input, output, session) {
         DrugTimeUnits(x)
 
         if (x$drug %in% c("MEAC", "Interaction")) {
-          ignoreUntil <- ignoreAddedPlotClickUntil()
-          if (!is.null(ignoreUntil) && Sys.time() < ignoreUntil) {
-            return()
-          }
           showRemoveAddedPlotModal(x$drug)
         } else if (x$drug == DRUG_NAME_EVENTS) {
           showAddEventModal(x$time)
@@ -705,7 +700,6 @@ app_server <- function(input, output, session) {
 
         if (x$drug %in% c("MEAC", "Interaction"))
         {
-          ignoreAddedPlotClickUntil(Sys.time() + 1)
           return()
         } else if (x$drug == DRUG_NAME_EVENTS)
         {
