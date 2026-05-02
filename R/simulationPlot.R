@@ -623,7 +623,7 @@ simulationPlot <- function(
     arrows <- data.frame(
       Drug = plotTable$Drug,
       y = plotTable$endCe,
-      new = ifelse(plotTable$endCe>0,paste0(sprintf('\u2190'), "Threshold"),""),
+      new = "\u2190 Threshold",
       x = maximum,
       Wrap <- as.character(plotTable$Wrap)
     )

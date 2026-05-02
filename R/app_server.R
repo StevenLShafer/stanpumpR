@@ -661,7 +661,7 @@ app_server <- function(input, output, session) {
     returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs()[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
     if (plotRecovery())
     {
-      returnText <- paste0(returnText,", Time until Threshold ",round(drugs()[[drug]]$equiSpace$Recovery[j], 1), " minutes")
+      returnText <- paste0(returnText,", Time until threshold: ",round(drugs()[[drug]]$equiSpace$Recovery[j], 1), " minutes")
     }
     return(returnText)
   }
