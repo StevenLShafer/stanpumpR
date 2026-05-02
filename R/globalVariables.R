@@ -40,7 +40,9 @@ maxtimes <- data.frame(
   steps = c( 1,  5, 10, 15,  15,  30,  30,  60,  60,  60, 120, 120, 240,  240, 240,  480,   480,  720, 720, 1440)
 )
 
-DRUG_NAME_EVENTS <- "Events"
+PLOT_NAME_EVENTS      <- "Events"
+PLOT_NAME_MEAC        <- "MEAC"
+PLOT_NAME_INTERACTION <- "Interaction"
 
 DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1

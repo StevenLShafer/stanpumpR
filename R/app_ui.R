@@ -165,7 +165,7 @@ app_ui <- function() {
                   value = FALSE
                 ),
                 conditionalPanel(
-                  condition = sprintf("!(input.showThreshold || input.addedPlots.includes('%s') || input.addedPlots.includes('Interaction'))", DRUG_NAME_EVENTS),
+                  condition = sprintf("!(input.showThreshold || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_NAME_EVENTS, PLOT_NAME_INTERACTION),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",
@@ -180,7 +180,7 @@ app_ui <- function() {
                 checkboxGroupInput(
                   inputId = "addedPlots",
                   label = NULL,
-                  choices = c("MEAC", "Interaction", DRUG_NAME_EVENTS)
+                  choices = c(PLOT_NAME_MEAC, PLOT_NAME_INTERACTION, PLOT_NAME_EVENTS)
                 )
               ),
 
