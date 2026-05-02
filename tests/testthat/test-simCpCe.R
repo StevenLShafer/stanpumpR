@@ -11,7 +11,6 @@ test_that("it returns the correct array", {
   PK <- list(
     Color = "#0000C0",
     endCe = 1,
-    endCeText = "ventilation",
     drug = "remifentanil",
     PK = list(
       default = list(

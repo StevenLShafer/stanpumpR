@@ -661,7 +661,7 @@ app_server <- function(input, output, session) {
     returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs()[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
     if (plotRecovery())
     {
-      returnText <- paste0(returnText,", Time until ",drugDefaults()$endCeText[i], " ",round(drugs()[[drug]]$equiSpace$Recovery[j], 1), " minutes")
+      returnText <- paste0(returnText,", Time until Threshold ",round(drugs()[[drug]]$equiSpace$Recovery[j], 1), " minutes")
     }
     return(returnText)
   }
@@ -1362,8 +1362,8 @@ app_server <- function(input, output, session) {
       editDrugsTrigger$depend()
       x <- drugDefaults()
       x$Units <- drugUnitsSimplify(x$Units)
-      # endCe / endCeText are managed via the Drug Thresholds modal
-      x <- x[, !names(x) %in% c("endCe", "endCeText")]
+      # endCe is managed via the Drug Thresholds modal
+      x <- x[, !names(x) == "endCe"]
       drugsHOT <- rhandsontable(
         x,
         overflow = 'visible',
@@ -1440,9 +1440,8 @@ app_server <- function(input, output, session) {
       newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
       newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
 
-      # endCe / endCeText are not in the table; restore from current values
+      # endCe is not in the table; restore from current values
       newDrugDefaults$endCe     <- current$endCe[match(newDrugDefaults$Drug, current$Drug)]
-      newDrugDefaults$endCeText <- current$endCeText[match(newDrugDefaults$Drug, current$Drug)]
 
       newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
       drugDefaults(newDrugDefaults)

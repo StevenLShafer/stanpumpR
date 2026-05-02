@@ -63,14 +63,13 @@ simulationPlot <- function(
       purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "lowerTypical"))),
       purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "upperTypical"))),
       purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "MEAC"))),
-      purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "endCe"))),
-      purrr::map_chr(drugs, "endCeText")
+      purrr::map_chr(drugs, \(x) as.character(purrr::pluck(x, "endCe")))
       )
   )
 
   names(plotTable) <- c("Drug", "drugColor", "Concentration.Units",
                         "typical", "lowerTypical", "upperTypical",
-                        "MEAC", "endCe", "endCeText")
+                        "MEAC", "endCe")
 
   outputComments("plotTable created", level = DEBUG_LEVEL_VERBOSE)
 
@@ -247,7 +246,6 @@ simulationPlot <- function(
       newplotTable$ymax <- 200
       newplotTable$Wrap <- "% MEAC"
       newplotTable$endCe <- 0
-      newplotTable$endCeText <- ""
       # don't care about MEAC, maxCp, or maxCe
       plotTable <- rbind(plotTable, newplotTable)
 
@@ -369,7 +367,6 @@ simulationPlot <- function(
     newplotTable$Wrap <- DRUG_NAME_EVENTS
     newplotTable$alpha <- 1
     newplotTable$endCe <- 0
-    newplotTable$endCeText <- ""
     plotTable <- rbind(plotTable, newplotTable)
 
   }
@@ -626,7 +623,7 @@ simulationPlot <- function(
     arrows <- data.frame(
       Drug = plotTable$Drug,
       y = plotTable$endCe,
-      new = ifelse(nchar(plotTable$endCeText)>0,paste0(sprintf('\u2190'), plotTable$endCeText),""),
+      new = ifelse(plotTable$endCe>0,paste0(sprintf('\u2190'), "Threshold"),""),
       x = maximum,
       Wrap <- as.character(plotTable$Wrap)
     )
