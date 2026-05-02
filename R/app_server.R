@@ -1099,9 +1099,9 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid = FALSE
         ) %>%
-        hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
+        hot_table(contextMenu = FALSE) %>%
         hot_rows(rowHeights = 10) %>%
-        hot_cols(colWidths = c(50,55,90))
+        hot_cols(colWidths = c(60,65,100))
 
       editEventsHOT(NULL)  # force re-render even if table data is identical
       editEventsHOT(tempTableHOT)
