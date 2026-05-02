@@ -29,7 +29,6 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output[[drug]]$Concentration.Units <- drugDefaults$Concentration.Units
     output[[drug]]$Color               <- drugDefaults$Color
     output[[drug]]$endCe               <- drugDefaults$endCe
-    output[[drug]]$endCeText           <- drugDefaults$endCeText
 
     output[[drug]]$DT                  <- currentDT
     output[[drug]]$ET                  <- events

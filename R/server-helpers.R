@@ -71,7 +71,6 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     idx <- which(drugDefaults$Drug==drug)
     drugs[[drug]]$Color <- drugDefaults$Color[idx]
     drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
-    drugs[[drug]]$endCeText <- drugDefaults$endCeText[idx]
     outputComments("Getting PK for", drug)
     drugs[[drug]] <- utils::modifyList(
       drugs[[drug]],
