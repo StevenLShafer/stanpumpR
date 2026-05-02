@@ -49,6 +49,7 @@ bookmarksToExclude <- c(
   "confirmDeleteAllDoses",
   "deleteAllEventsBtn",
   "confirmDeleteAllEvents",
+  "confirmRemoveAddedPlot",
   "editDosesOK",
   "editEvents",
   "editEventsOK",

@@ -668,6 +668,7 @@ app_server <- function(input, output, session) {
 
   # Click and Double Click Control ##########################################################
   # get date and time from image
+  ignoreAddedPlotClickUntil <- reactiveVal(NULL)
 
   # Response to single click
   observeEvent(
@@ -679,7 +680,13 @@ app_server <- function(input, output, session) {
         outputComments("in click(), returning from imgDrugTime()")
         DrugTimeUnits(x)
 
-        if (x$drug == DRUG_NAME_EVENTS) {
+        if (x$drug %in% c("MEAC", "Interaction")) {
+          ignoreUntil <- ignoreAddedPlotClickUntil()
+          if (!is.null(ignoreUntil) && Sys.time() < ignoreUntil) {
+            return()
+          }
+          showRemoveAddedPlotModal(x$drug)
+        } else if (x$drug == DRUG_NAME_EVENTS) {
           showAddEventModal(x$time)
         } else {
           showAddDrugModal(x$drug, x$time)
@@ -696,7 +703,11 @@ app_server <- function(input, output, session) {
         x <- imgDrugTime(input$plot_dblclick)
         DrugTimeUnits(x)
 
-        if (x$drug == DRUG_NAME_EVENTS)
+        if (x$drug %in% c("MEAC", "Interaction"))
+        {
+          ignoreAddedPlotClickUntil(Sys.time() + 1)
+          return()
+        } else if (x$drug == DRUG_NAME_EVENTS)
         {
           showEditEventsModal()
         } else {
@@ -753,13 +764,18 @@ app_server <- function(input, output, session) {
     #  whichDrugs <- which(unlist(lapply(drugs(),function(x) {if (is.null(x$DT)) FALSE else TRUE})))
 
     # Get Drug
-    drug <- unlist(strsplit(gsub("\n", " ", e$panelvar1), " "))[1]
+    yaxis <- gsub("\n", " ", e$panelvar1)
+    if (yaxis == "% MEAC") {
+      drug <- "MEAC"
+    } else if (yaxis == "p response") {
+      drug <- "Interaction"
+    } else {
+      drug <- unlist(strsplit(yaxis, " "))[1]
+    }
     outputComments("drug from panelvar1", drug)
-    if (drug %in% c("% MEAC", "p no response"))
-      drug <- utils::tail(plottedDrugs,1)
 
     # Get Units
-    if (drug == DRUG_NAME_EVENTS)
+    if (drug %in% c(DRUG_NAME_EVENTS, "MEAC", "Interaction"))
     {
       units <- c("","")
     } else {
@@ -775,6 +791,42 @@ app_server <- function(input, output, session) {
       )
     )
   }
+
+  removeAddedPlot <- reactiveVal(NULL)
+
+  showRemoveAddedPlotModal <- function(plot) {
+    removeAddedPlot(plot)
+    showModal(
+      modalDialog(
+        title = paste("Remove", plot, "plot?"),
+        paste("Do you want to remove the", plot, "plot?"),
+        br(), br(),
+        actionButton("confirmRemoveAddedPlot", "Remove", class = "btn-primary"),
+        tags$button(
+          type = "button",
+          class = "btn float-right",
+          `data-bs-dismiss` = "modal",
+          "Cancel"
+        ),
+        footer = NULL,
+        easyClose = TRUE,
+        fade = TRUE,
+        size = "s"
+      )
+    )
+  }
+
+  observeEvent(input$confirmRemoveAddedPlot, {
+    plot <- removeAddedPlot()
+    req(plot)
+    updateCheckboxGroupInput(
+      session,
+      "addedPlots",
+      selected = setdiff(input$addedPlots, plot)
+    )
+    removeModal()
+    removeAddedPlot(NULL)
+  })
 
   #################################### Single Click Response ##################################
 
