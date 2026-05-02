@@ -25,7 +25,7 @@ validateTime <- function(x)
   if (length(parts) > 1) {
     x <- paste(parts[1], paste(parts[-1], collapse = ""), sep = ":")
   }
-  if (x == ".:" || x == ":.") {
+  if (x == ".:" || x == ":." || x == ".") {
     return("0")
   }
 
