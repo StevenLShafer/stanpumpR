@@ -792,16 +792,13 @@ app_server <- function(input, output, session) {
     )
   }
 
-  removeAddedPlot <- reactiveVal(NULL)
-
   showRemoveAddedPlotModal <- function(plot) {
-    removeAddedPlot(plot)
     showModal(
       modalDialog(
         title = paste("Remove", plot, "plot?"),
         paste("Do you want to remove the", plot, "plot?"),
         br(), br(),
-        actionButton("confirmRemoveAddedPlot", "Remove", class = "btn-primary"),
+        actionButton(paste0("confirmRemove", plot), "Remove", class = "btn-primary"),
         tags$button(
           type = "button",
           class = "btn float-right",
@@ -816,16 +813,18 @@ app_server <- function(input, output, session) {
     )
   }
 
-  observeEvent(input$confirmRemoveAddedPlot, {
-    plot <- removeAddedPlot()
-    req(plot)
-    updateCheckboxGroupInput(
-      session,
-      "addedPlots",
-      selected = setdiff(input$addedPlots, plot)
-    )
+  observeEvent(input$confirmRemoveMEAC, {
     removeModal()
-    removeAddedPlot(NULL)
+    updateCheckboxGroupInput(session, "addedPlots",
+      selected = setdiff(input$addedPlots, "MEAC")
+    )
+  })
+
+  observeEvent(input$confirmRemoveInteraction, {
+    removeModal()
+    updateCheckboxGroupInput(session, "addedPlots",
+      selected = setdiff(input$addedPlots, "Interaction")
+    )
   })
 
   #################################### Single Click Response ##################################
