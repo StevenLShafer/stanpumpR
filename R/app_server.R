@@ -801,7 +801,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade = TRUE,
         size = "s"
       )
     )
@@ -864,7 +863,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade = TRUE,
         size = "s"
       )
     )
@@ -914,7 +912,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade = TRUE,
         size = "s"
       )
     )
@@ -939,7 +936,6 @@ app_server <- function(input, output, session) {
           ),
           footer = NULL,
           easyClose = TRUE,
-          fade = TRUE,
           size = "m"
         )
       )
@@ -1169,7 +1165,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade = TRUE,
         size = "s"
       )
     )
@@ -1192,7 +1187,6 @@ app_server <- function(input, output, session) {
           ),
           footer = NULL,
           easyClose = TRUE,
-          fade = TRUE,
           size = "m"
         )
       )
@@ -1316,7 +1310,6 @@ app_server <- function(input, output, session) {
             ),
             footer = NULL,
             easyClose = TRUE,
-            fade=TRUE,
             size="s"
           )
         )
@@ -1396,7 +1389,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade=TRUE,
         size="l"
       )
     )

@@ -33,7 +33,6 @@ showIntroModal <- function() {
       ),
       footer = NULL,
       easyClose = TRUE,
-      fade = TRUE,
       size = "m"
     )
   )
