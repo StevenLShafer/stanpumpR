@@ -679,7 +679,9 @@ app_server <- function(input, output, session) {
         outputComments("in click(), returning from imgDrugTime()")
         DrugTimeUnits(x)
 
-        if (x$drug == DRUG_NAME_EVENTS) {
+        if (x$drug %in% c("MEAC", "Interaction")) {
+          showRemoveAddedPlotModal(x$drug)
+        } else if (x$drug == DRUG_NAME_EVENTS) {
           showAddEventModal(x$time)
         } else {
           showAddDrugModal(x$drug, x$time)
@@ -696,7 +698,10 @@ app_server <- function(input, output, session) {
         x <- imgDrugTime(input$plot_dblclick)
         DrugTimeUnits(x)
 
-        if (x$drug == DRUG_NAME_EVENTS)
+        if (x$drug %in% c("MEAC", "Interaction"))
+        {
+          return()
+        } else if (x$drug == DRUG_NAME_EVENTS)
         {
           showEditEventsModal()
         } else {
@@ -753,13 +758,18 @@ app_server <- function(input, output, session) {
     #  whichDrugs <- which(unlist(lapply(drugs(),function(x) {if (is.null(x$DT)) FALSE else TRUE})))
 
     # Get Drug
-    drug <- unlist(strsplit(gsub("\n", " ", e$panelvar1), " "))[1]
+    yaxis <- gsub("\n", " ", e$panelvar1)
+    if (yaxis == "% MEAC") {
+      drug <- "MEAC"
+    } else if (yaxis == "p response") {
+      drug <- "Interaction"
+    } else {
+      drug <- unlist(strsplit(yaxis, " "))[1]
+    }
     outputComments("drug from panelvar1", drug)
-    if (drug %in% c("% MEAC", "p no response"))
-      drug <- utils::tail(plottedDrugs,1)
 
     # Get Units
-    if (drug == DRUG_NAME_EVENTS)
+    if (drug %in% c(DRUG_NAME_EVENTS, "MEAC", "Interaction"))
     {
       units <- c("","")
     } else {
@@ -775,6 +785,40 @@ app_server <- function(input, output, session) {
       )
     )
   }
+
+  showRemoveAddedPlotModal <- function(plot) {
+    showModal(
+      modalDialog(
+        title = paste("Remove", plot, "plot?"),
+        paste("Do you want to remove the", plot, "plot?"),
+        br(), br(),
+        actionButton(paste0("confirmRemove", plot), "Remove", class = "btn-primary"),
+        tags$button(
+          type = "button",
+          class = "btn float-right",
+          `data-bs-dismiss` = "modal",
+          "Cancel"
+        ),
+        footer = NULL,
+        easyClose = TRUE,
+        size = "s"
+      )
+    )
+  }
+
+  observeEvent(input$confirmRemoveMEAC, {
+    removeModal()
+    updateCheckboxGroupInput(session, "addedPlots",
+      selected = setdiff(input$addedPlots, "MEAC")
+    )
+  })
+
+  observeEvent(input$confirmRemoveInteraction, {
+    removeModal()
+    updateCheckboxGroupInput(session, "addedPlots",
+      selected = setdiff(input$addedPlots, "Interaction")
+    )
+  })
 
   #################################### Single Click Response ##################################
 
@@ -819,7 +863,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade = TRUE,
         size = "s"
       )
     )
@@ -869,7 +912,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade = TRUE,
         size = "s"
       )
     )
@@ -894,7 +936,6 @@ app_server <- function(input, output, session) {
           ),
           footer = NULL,
           easyClose = TRUE,
-          fade = TRUE,
           size = "m"
         )
       )
@@ -1124,7 +1165,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade = TRUE,
         size = "s"
       )
     )
@@ -1147,7 +1187,6 @@ app_server <- function(input, output, session) {
           ),
           footer = NULL,
           easyClose = TRUE,
-          fade = TRUE,
           size = "m"
         )
       )
@@ -1271,7 +1310,6 @@ app_server <- function(input, output, session) {
             ),
             footer = NULL,
             easyClose = TRUE,
-            fade=TRUE,
             size="s"
           )
         )
@@ -1351,7 +1389,6 @@ app_server <- function(input, output, session) {
         ),
         footer = NULL,
         easyClose = TRUE,
-        fade=TRUE,
         size="l"
       )
     )
