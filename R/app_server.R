@@ -1363,7 +1363,7 @@ app_server <- function(input, output, session) {
       x <- drugDefaults()
       x$Units <- drugUnitsSimplify(x$Units)
       # endCe is managed via the Drug Thresholds modal
-      x <- x[, !names(x) == "endCe"]
+      x <- x[, !names(x) %in% "endCe"]
       drugsHOT <- rhandsontable(
         x,
         overflow = 'visible',
