@@ -16,6 +16,10 @@ test_that("'HH:MM' gets parsed correctly", {
     expect_equal(validateTime("08:80"),"09:20")
 })
 
+test_that("A single period returns 0", {
+    expect_equal(validateTime("."), "0")
+})
+
 ## tests for getReferenceTime
 
 test_that("'HH:MM:SS AM' gets parsed correctly", {
