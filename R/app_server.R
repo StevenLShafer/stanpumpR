@@ -428,6 +428,7 @@ app_server <- function(input, output, session) {
 
       if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
         steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
+        if (is.na(steps)) steps <- tail(maxtimes$steps, 1)
         plotMaximum <- ceiling((maxTime + 30)/steps) * steps
       }
       list(plotMaximum = plotMaximum, steps = steps)
@@ -639,8 +640,7 @@ app_server <- function(input, output, session) {
 
     if (yaxis == DRUG_NAME_EVENTS)
     {
-      #    return("Click to enter events, double click to edit events.")
-      return("Click to enter events.")
+      return("Click to enter events, Double click to edit events")
     }
 
     x <- unlist(strsplit(yaxis," "))
@@ -679,11 +679,10 @@ app_server <- function(input, output, session) {
         outputComments("in click(), returning from imgDrugTime()")
         DrugTimeUnits(x)
 
-        if (x$drug == DRUG_NAME_EVENTS)
-        {
-          clickPopupEvent(failed = "", x)
+        if (x$drug == DRUG_NAME_EVENTS) {
+          showAddEventModal(x$time)
         } else {
-          addDrugPopup(x$drug, x$time)
+          showAddDrugModal(x$drug, x$time)
         }
       }, name = "input$plot_click observer")
     })
@@ -699,9 +698,9 @@ app_server <- function(input, output, session) {
 
         if (x$drug == DRUG_NAME_EVENTS)
         {
-          clickPopupEvent(failed = "", x)
+          showEditEventsModal()
         } else {
-          modifyDrugPopup(x$drug)
+          showEditDrugModal(x$drug)
         }
       }, name = "input$plot_dblclick observer")
     })
@@ -780,7 +779,7 @@ app_server <- function(input, output, session) {
   #################################### Single Click Response ##################################
 
 
-  addDrugPopup <- function(drug, time) {
+  showAddDrugModal <- function(drug, time) {
     thisDrug     <- which(drug == drugDefaults()$Drug)
     initialUnits <- unlist(drugDefaults()$Units[thisDrug])
     selectedUnit <- drugDefaults()$Default.Units[thisDrug]
@@ -855,7 +854,7 @@ app_server <- function(input, output, session) {
     }, name = "input$addDoseBtn observer")
   })
 
-  modifyDrugPopup <- function(drug) {
+  showEditDrugModal <- function(drug) {
     showModal(
       modalDialog(
         title = paste("Edit", drug, "doses"),
@@ -1000,62 +999,39 @@ app_server <- function(input, output, session) {
       }, name = "input$editDosesOK observer")
     })
 
-  # Single Click - Events
-  clickPopupEvent <- function(
-    failed = "",
-    x
-  )
-  {
-    time <- x$time
+  showAddEventModal <- function(time) {
     showModal(
       modalDialog(
-        `data-submit-btn` = "clickOKEvent",
+        `data-submit-btn` = "addEventBtn",
         title = paste("Enter a new event"),
-        if (failed != "")
-          tags$div(
-            class = "fw-bold text-danger",
-            failed
-          ),
         textInput(
           inputId = "clickTimeEvent",
           label = "Time",
           value = time
-        ),
+        ) |> modalFocus(),
         selectInput(
           inputId = "clickEvent",
           label = "Event",
           choices = eventDefaults()$Event
         ),
-        actionButton(
-          inputId = "clickOKEvent",
-          label = "OK",
-          style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-        ),
+        actionButton("addEventBtn", "Add", class = "btn-primary"),
         tags$button(
           type = "button",
-          class = "btn btn-warning float-right",
+          class = "btn float-right",
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
-        actionButton(
-          inputId = "editEvents",
-          label = paste("Edit prior events"),
-          style="color: #fff; background-color: #00C000; border-color: #008000"
-        ),
         footer = NULL,
         easyClose = TRUE,
-        fade=TRUE,
-        size="s"
+        size = "s"
       )
     )
   }
 
   observeEvent(
-    input$clickOKEvent,
+    input$addEventBtn,
     {
       profileCode({
-        # Check that data object exists and is data frame.
-        modelOK <- TRUE
         clickTime <- validateTime(input$clickTimeEvent)
         if (referenceTime() == "none")
         {
@@ -1070,29 +1046,16 @@ app_server <- function(input, output, session) {
         }
 
         clickEvent <- input$clickEvent
-        if (clickTime == "")
-        {
-          modelOK <- FALSE
-          failed = "Missing time"
-        }
-        if (modelOK)
-        {
-          ET <- eventTable()
-          ET <- data.frame(
-            Time  = c(ET$Time, clickTime),
-            Event = c(ET$Event, clickEvent),
-            Fill = c(ET$Fill, eventDefaults()$Color[clickEvent == eventDefaults()$Event])
-          )
-          ET <- ET[order(ET$Time,ET$Event),]
-          eventTable(ET)
-          removeModal()
-        } else {
-          clickPopupEvent(
-            failed = failed,
-            DrugTimeUnits()
-          )
-        }
-      }, name = "input$clickOKEvent observer")
+        ET <- eventTable()
+        ET <- data.frame(
+          Time  = c(ET$Time, clickTime),
+          Event = c(ET$Event, clickEvent),
+          Fill = c(ET$Fill, eventDefaults()$Color[clickEvent == eventDefaults()$Event])
+        )
+        ET <- ET[order(ET$Time,ET$Event),]
+        eventTable(ET)
+        removeModal()
+      }, name = "input$addEventBtn observer")
     })
 
   # Edit prior drug doses
@@ -1103,68 +1066,100 @@ app_server <- function(input, output, session) {
     editEventsHOT()
   })
 
-  observeEvent(
-    input$editEvents,
-    {
-      profileCode({
-        removeModal()
-        tempTable <-  eventTable()
-        tempTable <- tempTable[,c("Time", "Event")]
-        tempTable$Delete <- FALSE
-        tempTableHOT <- rhandsontable(
-          tempTable[,c("Delete","Time","Event")],
-          overflow = 'visible',
-          rowHeaders = NULL,
-          height = 220,
-          stretchH = "all"
-        ) %>%
-          hot_col(
-            col = "Delete",
-            type="checkbox",
-            halign = "htRight"
-          ) %>%
-          hot_col(
-            col = "Time",
-            halign = "htRight"
-          ) %>%
-          hot_col(
-            col = "Event",
-            type = "dropdown",
-            source = eventDefaults()$Event,
-            strict = TRUE,
-            halign = "htLeft",
-            valign = "vtMiddle",
-            allowInvalid = FALSE
-          ) %>%
-          hot_context_menu(allowRowEdit = TRUE, allowColEdit = FALSE) %>%
-          hot_rows(rowHeights = 10) %>%
-          hot_cols(colWidths = c(50,55,90))
+  showEditEventsModal <- function()
+  {
+    tempTable <- eventTable()
+    hasEvents <- nrow(tempTable) > 0
 
-        editEventsHOT(NULL)  # force re-render even if table data is identical
-        editEventsHOT(tempTableHOT)
-        showModal(
-          modalDialog(
-            title = paste("Edit Events"),
-            rHandsontableOutput(outputId = "editEventsTableHTML"),
-            actionButton(
-              inputId = "editEventsOK",
-              label = "OK",
-              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
-            ),
-            tags$button(
-              type = "button",
-              class = "btn btn-warning float-right",
-              `data-bs-dismiss` = "modal",
-              "Cancel"
-            ),
-            footer = NULL,
-            easyClose = TRUE,
-            fade=TRUE,
-            size="s"
-          )
+    if (hasEvents) {
+      tempTable <- tempTable[,c("Time", "Event")]
+      tempTable$Delete <- FALSE
+      tempTableHOT <- rhandsontable(
+        tempTable[,c("Delete","Time","Event")],
+        overflow = 'visible',
+        rowHeaders = NULL,
+        height = 220,
+        stretchH = "all"
+      ) %>%
+        hot_col(
+          col = "Delete",
+          type="checkbox",
+          halign = "htRight"
+        ) %>%
+        hot_col(
+          col = "Time",
+          halign = "htRight"
+        ) %>%
+        hot_col(
+          col = "Event",
+          type = "dropdown",
+          source = eventDefaults()$Event,
+          strict = TRUE,
+          halign = "htLeft",
+          valign = "vtMiddle",
+          allowInvalid = FALSE
+        ) %>%
+        hot_table(contextMenu = FALSE) %>%
+        hot_rows(rowHeights = 10) %>%
+        hot_cols(colWidths = c(60,65,100))
+
+      editEventsHOT(NULL)  # force re-render even if table data is identical
+      editEventsHOT(tempTableHOT)
+    }
+
+    showModal(
+      modalDialog(
+        title = "Edit Events",
+        if (hasEvents)
+          rHandsontableOutput(outputId = "editEventsTableHTML")
+        else
+          tags$p("There are no events yet."),
+        if (hasEvents) actionButton("editEventsOK", "Apply", class = "btn-primary"),
+        if (hasEvents) actionButton("deleteAllEventsBtn", "Delete All Events", class = "btn-outline-danger"),
+        tags$button(
+          type = "button",
+          class = "btn float-right",
+          `data-bs-dismiss` = "modal",
+          "Cancel"
+        ),
+        footer = NULL,
+        easyClose = TRUE,
+        fade = TRUE,
+        size = "s"
+      )
+    )
+  }
+
+  observeEvent(input$deleteAllEventsBtn, {
+    removeModal()
+    if (nrow(eventTable()) > 0) {
+      showModal(
+        modalDialog(
+          title = "Delete all events?",
+          "Are you sure you want to delete all events?",
+          br(), br(),
+          actionButton("confirmDeleteAllEvents", "Yes", class = "btn-primary"),
+          tags$button(
+            type = "button",
+            class = "btn float-right",
+            `data-bs-dismiss` = "modal",
+            "Cancel"
+          ),
+          footer = NULL,
+          easyClose = TRUE,
+          fade = TRUE,
+          size = "m"
         )
-      }, name = "input$editEvents observer")
-    })
+      )
+    } else {
+      eventTable(eventTableInit)
+    }
+  })
+
+  observeEvent(input$confirmDeleteAllEvents, {
+    removeModal()
+    eventTable(eventTableInit)
+  })
 
   observeEvent(
     input$editEventsOK,
