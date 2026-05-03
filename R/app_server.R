@@ -594,7 +594,6 @@ app_server <- function(input, output, session) {
   # Hover control ############################################################
   output$hover_info <- renderUI({
     hover <- input$plot_hover
-    req(hover, hover$panelvar1)
     text <- xy_str(hover) |> profileCode("xy_str() in input$plot_hover")
     req(text)
     div(
@@ -609,10 +608,10 @@ app_server <- function(input, output, session) {
 
   # Display Time, CE, or total opioid
   xy_str <- function(e) {
-    if(is.null(e)) return()
-    if(is.null(e$panelvar1)) return()
+    if (is.null(e$panelvar1)) return()
     outputComments("In xy_str")
     outputComments("e$panelvar1 = ", e$panelvar1)
+
     yaxis <- gsub("\n"," ", e$panelvar1)
 
     plotResults <- plotResultsReactive()
@@ -646,8 +645,6 @@ app_server <- function(input, output, session) {
     x <- unlist(strsplit(yaxis," "))
     drug <- x[1]
     outputComments("Drug identified in xy_str() is", drug)
-    i <- which(x[1] == drugList)
-    if (is.null(drugs()[[drug]])) return()
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
@@ -721,41 +718,16 @@ app_server <- function(input, output, session) {
     outputComments("plottedDrugs", plottedDrugs)
     outputComments("plottedAll", plottedAll)
 
-    # Get Time
-    if (is.null(e$x) || is.null(e) || length(plottedDrugs) == 0)
-    {
-      if (e$coords_img$x < 300)
-      {
-        time <- 0
-      } else {
-        time <- plotMaximum()
-        outputComments("time is plotMaximum:", time)
-      }
-    } else {
-      i <- which(plottedDrugs[1] == drugList)
-      drug <- plottedDrugs[1]
-      outputComments("Drug in imgDrugTime() is", drug)
-      j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
-      time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
-    }
+    firstDrug <- plottedDrugs[1]
+    j <- which.min(abs(e$x - drugs()[[firstDrug]]$equiSpace$Time))
+    time <- round(drugs()[[firstDrug]]$equiSpace$Time[j], 1)
+
     if (referenceTime() == "none")
     {
       time <- as.character(time)
     } else {
       time <- deltaToClockTime(referenceTime(), time)
     }
-
-    if(is.null(e) || length(plottedDrugs) == 0)
-    {
-      echoComments("Returning because length(plottedDrugs = 0")
-      return(
-        list(
-          drug = "propofol",
-          time = time,
-          units = c("mg", "mcg/kg/min")))
-    }
-
-    #  whichDrugs <- which(unlist(lapply(drugs(),function(x) {if (is.null(x$DT)) FALSE else TRUE})))
 
     # Get Drug
     yaxis <- gsub("\n", " ", e$panelvar1)
@@ -779,7 +751,7 @@ app_server <- function(input, output, session) {
     outputComments("Exiting imgDrugTime()")
     return(
       list(
-        drug=drug,
+        drug = drug,
         time = time,
         units = units
       )
