@@ -466,10 +466,10 @@ app_server <- function(input, output, session) {
         updateNumericInput(session, "referenceTime", value = xLabels[1])
       }
 
-      plotMEAC               <- PLOT_NAME_MEAC        %in% input$addedPlots
-      plotInteraction        <- PLOT_NAME_INTERACTION %in% input$addedPlots
+      plotMEAC               <- PLOT_ID_MEAC        %in% input$addedPlots
+      plotInteraction        <- PLOT_ID_INTERACTION %in% input$addedPlots
       plotCost               <- "Cost"                %in% input$addedPlots
-      plotEvents             <- PLOT_NAME_EVENTS      %in% input$addedPlots
+      plotEvents             <- PLOT_ID_EVENTS      %in% input$addedPlots
       plasmaLinetype         <- input$plasmaLinetype
       effectsiteLinetype     <- input$effectsiteLinetype
       normalization          <- input$normalization
@@ -598,22 +598,22 @@ app_server <- function(input, output, session) {
     yaxis <- gsub("\n"," ", e$panelvar1)
 
     plotResults <- plotResultsReactive()
-    if (yaxis == "% MEAC")
+    if (yaxis == PLOT_NAME_MEAC)
     {
       TO <- plotResults$Drug == "total opioid"
       if (sum(TO) == 0)
       {
-        TO <- plotResults$Wrap == "% MEAC"
+        TO <- plotResults$Wrap == PLOT_NAME_MEAC
         outputComments("Elements found in search of plotResults$Wrap", sum(TO))
       }
       j <- which.min(abs(e$x - plotResults$Time[TO]))
       return(
-        paste0("Time: ", round(plotResults$Time[TO][j], 1), " minutes, ", plotResults$Drug[TO][j], ": ", signif(plotResults$Y[TO][j], 2), " % MEAC")
+        paste0("Time: ", round(plotResults$Time[TO][j], 1), " minutes, ", plotResults$Drug[TO][j], ": ", signif(plotResults$Y[TO][j], 2), " ", PLOT_NAME_MEAC)
       )
     }
-    if (yaxis == "p response")
+    if (yaxis == PLOT_NAME_INTERACTION)
     {
-      TO <- plotResults$Drug == "p response"
+      TO <- plotResults$Drug == PLOT_NAME_INTERACTION
       j <- which.min(abs(e$x - plotResults$Time[TO]))
       return(
         paste0("Time: ", round(plotResults$Time[TO][j], 1), " minutes, P (response): ", signif(plotResults$Y[TO][j], 2))
@@ -628,6 +628,7 @@ app_server <- function(input, output, session) {
     x <- unlist(strsplit(yaxis," "))
     drug <- x[1]
     outputComments("Drug identified in xy_str() is", drug)
+
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
@@ -659,9 +660,9 @@ app_server <- function(input, output, session) {
         outputComments("in click(), returning from imgDrugTime()")
         DrugTimeUnits(x)
 
-        if (x$drug %in% c(PLOT_NAME_MEAC, PLOT_NAME_INTERACTION)) {
+        if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION)) {
           showRemoveAddedPlotModal(x$drug)
-        } else if (x$drug == PLOT_NAME_EVENTS) {
+        } else if (x$drug == PLOT_ID_EVENTS) {
           showAddEventModal(x$time)
         } else {
           showAddDrugModal(x$drug, x$time)
@@ -678,10 +679,10 @@ app_server <- function(input, output, session) {
         x <- imgDrugTime(input$plot_dblclick)
         DrugTimeUnits(x)
 
-        if (x$drug %in% c(PLOT_NAME_MEAC, PLOT_NAME_INTERACTION))
+        if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION))
         {
           return()
-        } else if (x$drug == PLOT_NAME_EVENTS)
+        } else if (x$drug == PLOT_ID_EVENTS)
         {
           showEditEventsModal()
         } else {
@@ -714,17 +715,19 @@ app_server <- function(input, output, session) {
 
     # Get Drug
     yaxis <- gsub("\n", " ", e$panelvar1)
-    if (yaxis == "% MEAC") {
-      drug <- PLOT_NAME_MEAC
-    } else if (yaxis == "p response") {
-      drug <- PLOT_NAME_INTERACTION
+    if (yaxis == PLOT_NAME_MEAC) {
+      drug <- PLOT_ID_MEAC
+    } else if (yaxis == PLOT_NAME_INTERACTION) {
+      drug <- PLOT_ID_INTERACTION
+    } else if (yaxis == PLOT_NAME_EVENTS) {
+      drug <- PLOT_ID_EVENTS
     } else {
       drug <- unlist(strsplit(yaxis, " "))[1]
     }
     outputComments("drug from panelvar1", drug)
 
     # Get Units
-    if (drug %in% c(PLOT_NAME_EVENTS, PLOT_NAME_MEAC, PLOT_NAME_INTERACTION))
+    if (drug %in% c(PLOT_ID_EVENTS, PLOT_ID_MEAC, PLOT_ID_INTERACTION))
     {
       units <- c("","")
     } else {
@@ -764,14 +767,14 @@ app_server <- function(input, output, session) {
   observeEvent(input$confirmRemoveMEAC, {
     removeModal()
     updateCheckboxGroupInput(session, "addedPlots",
-      selected = setdiff(input$addedPlots, PLOT_NAME_MEAC)
+      selected = setdiff(input$addedPlots, PLOT_ID_MEAC)
     )
   })
 
   observeEvent(input$confirmRemoveInteraction, {
     removeModal()
     updateCheckboxGroupInput(session, "addedPlots",
-      selected = setdiff(input$addedPlots, PLOT_NAME_INTERACTION)
+      selected = setdiff(input$addedPlots, PLOT_ID_INTERACTION)
     )
   })
 
