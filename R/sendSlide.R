@@ -60,7 +60,7 @@ sendSlide <- function(
 }
 
 generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults) {
-  title = values$title
+  title <- paste("stanpumpR simulation on", format(Sys.time()))
   DT <- values$DT
   url <- values$url
 
@@ -93,7 +93,6 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
   ggplot2::ggsave(
     plotObject +
-      ggplot2::labs(title = title, caption = NULL) +
       ggplot2::theme(
         strip.text.y = ggplot2::element_text(size = 6, angle = 180),
         axis.text.y = ggplot2::element_text(size = 6),
@@ -103,8 +102,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
         legend.box.background = ggplot2::element_blank(),
         legend.key = ggplot2::element_blank(),
         legend.text = ggplot2::element_text(size=8),
-        legend.title = ggplot2::element_text(color="darkblue", size=10, face="bold"),
-        plot.title = ggplot2::element_text(size=14, face="bold")
+        legend.title = ggplot2::element_text(color="darkblue", size=10, face="bold")
       ),
     filename = pngfileName,
     dpi = 150,
@@ -258,7 +256,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   openxlsx::saveWorkbook(wb, xlsxfileName, overwrite = TRUE)
 
   outputComments("Creating e-mail")
-  bodyText <- generateBodyText(recipient, values, ageUnit, weightUnit, heightUnit, url)
+  bodyText <- generateBodyText(recipient, values, ageUnit, weightUnit, heightUnit, url, values$comments)
 
   return(list(
     title = title,
@@ -270,16 +268,17 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   )
 }
 
- generateBodyText <- function(recipient, values, ageUnit, weightUnit, heightUnit, url){
+ generateBodyText <- function(recipient, values, ageUnit, weightUnit, heightUnit, url, comments = ""){
   return(paste0(
     "<html><head><style><!-- p 	{margin:0in;	font-size:12.0pt;	font-family:\"Times New Roman\",\"serif\"	} --></style>",
     "<body><div>",
     "<p>&nbsp;</p>",
     "<p>Dear ",gsub("@", " at ",as.character(recipient)),":<p>&nbsp;</p>",
-    "<p>Here is the simulation you requested from stanpumpR on ",Sys.Date(),".</p><p>&nbsp;</p>",
+    "<p>Here is the simulation you requested from stanpumpR on ", Sys.Date(),".</p><p>&nbsp;</p>",
     "<p>The simulation is for a ",values$age / values$ageUnit, " ", ageUnit, "-old ",values$sex,
     " weighing ", values$weight / values$weightUnit, " ",weightUnit,
     " and ", values$height / values$heightUnit, " ", heightUnit, " tall.</p><p>&nbsp;</p>",
+    if (nchar(trimws(comments)) > 0) paste0("<p>Additional comments: ", htmltools::htmlEscape(comments), "</p><p>&nbsp;</p>") else "",
     "<p>You should be able to reload the file from ",
     "<a href=\"",url,"\">stanpumpR</a>.</p><p>&nbsp;</p>",
     "<p>If you have any questions or suggestions, please just reply to this e-mail. This is an early release of stanpumpR. ",

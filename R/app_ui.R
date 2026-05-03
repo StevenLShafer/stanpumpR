@@ -120,8 +120,6 @@ app_ui <- function() {
               bslib::accordion_panel(
                 "Graph Options",
                 icon = icon("sliders"),
-                textInput("title", "Title", paste("Simulation on", format(Sys.time()))),
-                textInput("caption", "Caption", "", placeholder = "Enter figure caption"),
                 selectInput("typical", "Show typical", c("<none>" = "none","Mid", "Range"), selected = "Range"),
                 selectInput("normalization", "Normalize to", c("<none>" = "none","Peak plasma", "Peak effect site")),
                 selectInput(
@@ -191,6 +189,7 @@ app_ui <- function() {
                 "Email Slide",
                 icon = icon("envelope"),
                 textInput("recipient", NULL, "", placeholder = "Enter email address"),
+                textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
                 actionButton("sendSlide", "Send", class = "btn-primary")
               )
             ),
