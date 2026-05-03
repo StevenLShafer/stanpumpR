@@ -598,29 +598,29 @@ app_server <- function(input, output, session) {
     yaxis <- gsub("\n"," ", e$panelvar1)
 
     plotResults <- plotResultsReactive()
-    if (yaxis == "% MEAC")
+    if (yaxis == PLOT_NAME_MEAC)
     {
       TO <- plotResults$Drug == "total opioid"
       if (sum(TO) == 0)
       {
-        TO <- plotResults$Wrap == "% MEAC"
+        TO <- plotResults$Wrap == PLOT_NAME_MEAC
         outputComments("Elements found in search of plotResults$Wrap", sum(TO))
       }
       j <- which.min(abs(e$x - plotResults$Time[TO]))
       return(
-        paste0("Time: ", round(plotResults$Time[TO][j], 1), " minutes, ", plotResults$Drug[TO][j], ": ", signif(plotResults$Y[TO][j], 2), " % MEAC")
+        paste0("Time: ", round(plotResults$Time[TO][j], 1), " minutes, ", plotResults$Drug[TO][j], ": ", signif(plotResults$Y[TO][j], 2), " ", PLOT_NAME_MEAC)
       )
     }
-    if (yaxis == "p response")
+    if (yaxis == PLOT_NAME_INTERACTION)
     {
-      TO <- plotResults$Drug == "p response"
+      TO <- plotResults$Drug == PLOT_NAME_INTERACTION
       j <- which.min(abs(e$x - plotResults$Time[TO]))
       return(
         paste0("Time: ", round(plotResults$Time[TO][j], 1), " minutes, P (response): ", signif(plotResults$Y[TO][j], 2))
       )
     }
 
-    if (yaxis == PLOT_ID_EVENTS)
+    if (yaxis == PLOT_NAME_EVENTS)
     {
       return("Click to enter events, Double click to edit events")
     }
@@ -628,6 +628,7 @@ app_server <- function(input, output, session) {
     x <- unlist(strsplit(yaxis," "))
     drug <- x[1]
     outputComments("Drug identified in xy_str() is", drug)
+
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
@@ -714,10 +715,12 @@ app_server <- function(input, output, session) {
 
     # Get Drug
     yaxis <- gsub("\n", " ", e$panelvar1)
-    if (yaxis == "% MEAC") {
+    if (yaxis == PLOT_NAME_MEAC) {
       drug <- PLOT_ID_MEAC
-    } else if (yaxis == "p response") {
+    } else if (yaxis == PLOT_NAME_INTERACTION) {
       drug <- PLOT_ID_INTERACTION
+    } else if (yaxis == PLOT_NAME_EVENTS) {
+      drug <- PLOT_ID_EVENTS
     } else {
       drug <- unlist(strsplit(yaxis, " "))[1]
     }

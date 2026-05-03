@@ -207,7 +207,7 @@ simulationPlot <- function(
       Time = X$Time,
       Y = X$SUM,
       Site = "Effect Site",
-      Wrap = "% MEAC",
+      Wrap = PLOT_NAME_MEAC,
       Label = ""
       )
     opioids <- plotTable$Drug[plotTable$MEAC > 0]
@@ -217,7 +217,7 @@ simulationPlot <- function(
       resultsMEAC <- allEquispace[!is.na(allEquispace$MEAC),c("Drug","Time","MEAC")]
       names(resultsMEAC)[3] <- "Y"
       resultsMEAC$Site = "Effect Site"
-      resultsMEAC$Wrap <- "% MEAC"
+      resultsMEAC$Wrap <- PLOT_NAME_MEAC
       resultsMEAC$Label <- ""
 
       # Add data for plot
@@ -231,7 +231,7 @@ simulationPlot <- function(
       newplotTable$y <- 120
       newplotTable$ymin <- 80
       newplotTable$ymax <- 200
-      newplotTable$Wrap <- "% MEAC"
+      newplotTable$Wrap <- PLOT_NAME_MEAC
       newplotTable$endCe <- 0
       # don't care about MEAC, maxCp, or maxCe
       plotTable <- rbind(plotTable, newplotTable)
@@ -251,11 +251,11 @@ simulationPlot <- function(
       Time <- allEquispace$Time[allEquispace$Drug == plotTable$Drug[1]]
       x <- modelInteraction(PropCe, totalMEAC$Y)
       resultsInteraction <- data.frame(
-        Drug = "p response",
+        Drug = PLOT_NAME_INTERACTION,
         Time = Time,
         Y = x$pNR,
         Site = "Effect Site",
-        Wrap = "p\nresponse",
+        Wrap = PLOT_NAME_INTERACTION,
         Label = ""
         )
 
@@ -264,13 +264,13 @@ simulationPlot <- function(
 
       #Add plot to plotTable
       newplotTable <- plotTable[1,]
-      newplotTable$Drug <- "p response"
+      newplotTable$Drug <- PLOT_NAME_INTERACTION
       newplotTable$drugColor <- "blue"
       newplotTable$Concentration.Units <- ""
       newplotTable$y <- 0
       newplotTable$ymin <- 0
       newplotTable$ymax <- 0
-      newplotTable$Wrap <- "p\nresponse"
+      newplotTable$Wrap <- PLOT_NAME_INTERACTION
       plotTable <- rbind(plotTable, newplotTable)
 
       # Add in propofol data
@@ -281,7 +281,7 @@ simulationPlot <- function(
           Time = Time,
           Y = x$pNRprop,
           Site = "Effect Site",
-          Wrap = "p\nresponse",
+          Wrap = PLOT_NAME_INTERACTION,
           Label = ""
           )
         plotResults <- rbind(plotResults, resultsInteractionPropofol)
@@ -295,7 +295,7 @@ simulationPlot <- function(
           Time = Time,
           Y = x$pNRopioid,
           Site = "Effect Site",
-          Wrap = "p\nresponse",
+          Wrap = PLOT_NAME_INTERACTION,
           Label = ""
         )
         plotResults <- rbind(plotResults, resultsInteractionOpioid)
@@ -308,7 +308,7 @@ simulationPlot <- function(
         newplotTable$y <- 0
         newplotTable$ymin <- 0
         newplotTable$ymax <- 0
-        newplotTable$Wrap <- "p\nresponse"
+        newplotTable$Wrap <- PLOT_NAME_INTERACTION
         plotTable <- rbind(plotTable, newplotTable)
       }
     }
@@ -321,20 +321,20 @@ simulationPlot <- function(
     if (nrow(events) == 0)
     {
       resultsEvents <- data.frame(
-        Drug = PLOT_ID_EVENTS,
+        Drug = PLOT_NAME_EVENTS,
         Time = 0,
         Y = 0.875,
         Site = PLOT_ID_EVENTS,
-        Wrap = PLOT_ID_EVENTS,
+        Wrap = PLOT_NAME_EVENTS,
         Label = ""
       )
     } else {
       resultsEvents <- data.frame(
-        Drug = PLOT_ID_EVENTS,
+        Drug = PLOT_NAME_EVENTS,
         Time = events$Time,
         Y =   0.875 - ((1:nrow(events) - 1) %% 4)/4,
         Site = PLOT_ID_EVENTS,
-        Wrap = PLOT_ID_EVENTS,
+        Wrap = PLOT_NAME_EVENTS,
         Label = events$Event
       )
     }
@@ -351,7 +351,7 @@ simulationPlot <- function(
     newplotTable$y <- 0
     newplotTable$ymin <- 0
     newplotTable$ymax <- 1
-    newplotTable$Wrap <- PLOT_ID_EVENTS
+    newplotTable$Wrap <- PLOT_NAME_EVENTS
     newplotTable$alpha <- 1
     newplotTable$endCe <- 0
     plotTable <- rbind(plotTable, newplotTable)
@@ -367,7 +367,7 @@ simulationPlot <- function(
 
   # Convert $Drug and $Wrap to factors to preserve order from plotTable
 
-  drugFactors <- c(drugDefaults$Drug, "total opioid", "p response", "Recovery", PLOT_ID_EVENTS)
+  drugFactors <- c(drugDefaults$Drug, "total opioid", PLOT_NAME_INTERACTION, "Recovery", PLOT_NAME_EVENTS)
   plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
   plotTable <- plotTable[order(plotTable$Factor),]
 
@@ -389,7 +389,7 @@ simulationPlot <- function(
 
   # Step A1: create plotObject with lines from `plotResults`
 
-  data <- subset(plotResults, Wrap != PLOT_ID_EVENTS)
+  data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS)
 
   if (logY) {
     data <- data[data$Y>0,]
@@ -489,7 +489,7 @@ simulationPlot <- function(
   {
     plotObject <- plotObject +
       ggplot2::geom_rect(
-        data = subset(plotResults, Wrap == PLOT_ID_EVENTS),
+        data = subset(plotResults, Wrap == PLOT_NAME_EVENTS),
         ggplot2::aes(
           xmin = 0, # xmin,
           xmax = maximum, # xmax,

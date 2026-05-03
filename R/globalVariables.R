@@ -43,6 +43,9 @@ maxtimes <- data.frame(
 PLOT_ID_EVENTS      <- "Events"
 PLOT_ID_MEAC        <- "MEAC"
 PLOT_ID_INTERACTION <- "Interaction"
+PLOT_NAME_EVENTS      <- "Events"
+PLOT_NAME_MEAC        <- "% MEAC"
+PLOT_NAME_INTERACTION <- "p response"
 
 DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
