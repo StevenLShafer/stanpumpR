@@ -159,10 +159,13 @@ app_ui <- function() {
                   )
                 ),
                 sliderInput("yaxisHeight", "Y axis height", 150, 350, 200, ticks = FALSE),
-                checkboxInput(
-                  "showThreshold",
-                  "Time until threshold",
-                  value = FALSE
+                conditionalPanel(
+                  condition = "input.normalization === 'none'",
+                  checkboxInput(
+                    "showThreshold",
+                    "Time until threshold",
+                    value = FALSE
+                  )
                 ),
                 conditionalPanel(
                   condition = sprintf("!(input.showThreshold || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_NAME_EVENTS, PLOT_NAME_INTERACTION),
