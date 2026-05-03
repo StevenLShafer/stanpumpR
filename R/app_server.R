@@ -629,6 +629,10 @@ app_server <- function(input, output, session) {
     drug <- x[1]
     outputComments("Drug identified in xy_str() is", drug)
 
+    # if the panel's drug was just removed, drugs()[[drug]] will be NULL until
+    # the plot re-renders
+    if (!drug %in% names(drugs())) return(NULL)
+
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
