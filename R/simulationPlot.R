@@ -15,24 +15,11 @@ simulationPlot <- function(
   plotCost = FALSE,
   plotEvents = FALSE,
   plotRecovery = FALSE,
-  title = "Default Title",
-  caption = "Default Caption",
   typical = c("Mid"),
   logY = FALSE,
   yAxisHeight = 150,
   width = 800
   )
-
-# xBreaks = c(0:6*10)
-# plasmaLinetype = "solid"
-# effectsiteLinetype = "dashed"
-# normalization = c("none")
-# title = "Default Title"
-# caption = "Default Caption"
-# typical = c("Mid")
-# logY = FALSE
-# load("drugs.rData")
-
 {
   # Notes on what happens below
   # The time courses for ggplot are held in plotResults
@@ -450,10 +437,7 @@ simulationPlot <- function(
   width <- width - 200 # roughly account for legend and Y axis labels
   aspect <- yAxisHeight / width
   height <- yAxisHeight * nFacets + 50
-  plotObject <- plotObject + ggplot2::labs(
-      title = title,
-      x = xAxisLabel,
-      caption = caption) +
+  plotObject <- plotObject + ggplot2::labs(x = xAxisLabel) +
     ggplot2::theme(aspect.ratio = aspect) +
     ggplot2::theme(legend.text = ggplot2::element_text(size=12)) +
     ggplot2::theme(legend.title = ggplot2::element_text(color="darkblue", size=13, face="bold"))

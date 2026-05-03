@@ -473,27 +473,12 @@ app_server <- function(input, output, session) {
       plasmaLinetype         <- input$plasmaLinetype
       effectsiteLinetype     <- input$effectsiteLinetype
       normalization          <- input$normalization
-      title                  <- input$title
       typical                <- input$typical
       logY                   <- input$logY
       if (plotRecovery() || plotEvents || plotInteraction) logY <- FALSE
 
       plasmaLinetype <- linetypes()$plasmaLinetype
       effectsiteLinetype <- linetypes()$effectsiteLinetype
-
-      printCaption <- input$caption
-      if (printCaption == "") {
-        printCaption <- paste0(
-          "Age: ",
-          round(age(), 1),
-          " years, weight: ",
-          round(weight(), 2),
-          " kg, height: ",
-          round(height(), 2),
-          " cm, sex: ",
-          sex()
-        )
-      }
 
       # try tryCatchLog if something goes wrong here for a better traceback
 
@@ -514,8 +499,6 @@ app_server <- function(input, output, session) {
         plotCost = plotCost,
         plotEvents = plotEvents,
         plotRecovery = plotRecovery(),
-        title = title,
-        caption = printCaption,
         typical = typical,
         logY = logY,
         yAxisHeight = input$yaxisHeight,
@@ -552,7 +535,7 @@ app_server <- function(input, output, session) {
       outputComments("input$sendSlide",input$sendSlide)
 
       values <- list(
-        title = input$title,
+        comments = input$emailComments,
         DT = doseTableClean(),
         url = url(),
         ageUnit = ageUnit(),
