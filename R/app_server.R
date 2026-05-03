@@ -1465,7 +1465,7 @@ app_server <- function(input, output, session) {
       modalDialog(
         title = "Drug Thresholds",
         p("Set the threshold concentration for each drug."),
-        br(),
+        checkboxInput("showThresholdModal", "Show time until threshold", value = input$showThreshold),
         shinycssloaders::withSpinner(rHandsontableOutput("editThresholdsTable", height = 350)),
         br(),
         actionButton("thresholdEditsOK", "Apply", class = "btn-primary"),
@@ -1498,6 +1498,7 @@ app_server <- function(input, output, session) {
     newDrugDefaults <- drugDefaults()
     newDrugDefaults$endCe <- as.numeric(tt$Threshold)[match(newDrugDefaults$Drug, tt$Drug)]
     drugDefaults(newDrugDefaults)
+    updateCheckboxInput(session, "showThreshold", value = input$showThresholdModal)
   })
 
   outputComments("Reached the end of server()")

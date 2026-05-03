@@ -18,6 +18,7 @@ bookmarksToExclude <- c(
   "plotContainer_full_screen",
   "thresholdEditsOK",
   "editThresholdsTable",
+  "showThresholdModal",
   "editEventsTableHTML",
   "doseTableHTML",
   "setTarget",
