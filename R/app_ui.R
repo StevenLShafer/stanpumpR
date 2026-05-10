@@ -30,6 +30,7 @@ app_ui <- function() {
         bslib::layout_sidebar(
           sidebar = bslib::sidebar(
             width = 300,
+            resizable = FALSE,
             bslib::accordion(
               open = FALSE,
 
