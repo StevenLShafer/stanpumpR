@@ -1,6 +1,6 @@
 Package: stanpumpR
 Title: stanpumpR, a PK/PD simulation program
-Version: 0.0.1.9002
+Version: 0.0.2
 Authors@R:
     c(person(given = "Steven",
            family = "Shafer",

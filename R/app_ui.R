@@ -128,33 +128,15 @@ app_ui <- function() {
                   choices = setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
                   selected = 60
                 ),
-                selectInput(
+                lineTypeSelector(
                   inputId = "plasmaLinetype",
                   label = "Plasma line",
-                  selected = "blank",
-                  choices = c(
-                    "<none>" = "blank",
-                    "solid",
-                    "dashed",
-                    "longdash",
-                    "dotted",
-                    "dotdash",
-                    "twodash"
-                  )
+                  selected = "blank"
                 ),
-                selectInput(
+                lineTypeSelector(
                   inputId = "effectsiteLinetype",
                   label = "Effect site line",
-                  selected = "solid",
-                  choices = c(
-                    "<none>" = "blank",
-                    "solid",
-                    "dashed",
-                    "longdash",
-                    "dotted",
-                    "dotdash",
-                    "twodash"
-                  )
+                  selected = "solid"
                 ),
                 sliderInput("yaxisHeight", "Y axis height", 150, 350, 200, ticks = FALSE),
                 conditionalPanel(
