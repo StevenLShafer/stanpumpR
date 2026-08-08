@@ -11,11 +11,24 @@ on:
 
 jobs:
   deployment-pr:
+    # A fork PR is deployed only when a maintainer explicitly adds the DEPLOY
+    # label (the `labeled` event), which pins the exact reviewed head.sha. New
+    # commits pushed afterwards (`synchronize`) must NOT silently re-deploy with
+    # secrets from an untrusted fork, so `synchronize` auto-deploy is restricted
+    # to same-repo (trusted) PRs. To redeploy a fork PR's new commits, a
+    # maintainer re-adds the DEPLOY label, forcing a fresh review.
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event.action == 'labeled' && github.event.label.name == 'DEPLOY') ||
-      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'DEPLOY'))
+      (github.event.action == 'synchronize' &&
+       contains(github.event.pull_request.labels.*.name, 'DEPLOY') &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
+    # Ties this secret-bearing job to a GitHub Environment. Configure required
+    # reviewers for the `pr-preview` environment in repo Settings > Environments
+    # to add a manual approval gate before deploy secrets are exposed.
+    environment:
+      name: pr-preview
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
