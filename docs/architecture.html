@@ -1,0 +1,689 @@
+<title>stanpumpR — Architecture Map</title>
+<style>
+  :root {
+    --paper:        #f6f7f8;
+    --surface:      #ffffff;
+    --surface-2:    #eef1f3;
+    --ink:          #1c262e;
+    --ink-soft:     #47555f;
+    --ink-faint:    #6d7a84;
+    --line:         #dbe0e4;
+    --line-strong:  #c3ccd2;
+    /* domain accents: plasma curve = teal, effect-site curve = amber */
+    --plasma:       #0e7c74;
+    --plasma-soft:  #d6ebe9;
+    --effect:       #b9770b;
+    --effect-soft:  #f3e6cd;
+    --slate:        #2c3e50;   /* the app's own bootswatch primary */
+    --danger:       #a23b3b;
+    --radius:       10px;
+    --radius-sm:    6px;
+    --maxw:         960px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:       #12181d;
+      --surface:     #1a2229;
+      --surface-2:   #212b33;
+      --ink:         #e6ebee;
+      --ink-soft:    #aab6bd;
+      --ink-faint:   #7d8b94;
+      --line:        #2b363e;
+      --line-strong: #3a4750;
+      --plasma:      #35b3a8;
+      --plasma-soft: #12302e;
+      --effect:      #e0a63d;
+      --effect-soft: #34290f;
+      --slate:       #7d96ad;
+      --danger:      #d1706f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#12181d; --surface:#1a2229; --surface-2:#212b33;
+    --ink:#e6ebee; --ink-soft:#aab6bd; --ink-faint:#7d8b94;
+    --line:#2b363e; --line-strong:#3a4750;
+    --plasma:#35b3a8; --plasma-soft:#12302e; --effect:#e0a63d; --effect-soft:#34290f;
+    --slate:#7d96ad; --danger:#d1706f;
+  }
+  :root[data-theme="light"] {
+    --paper:#f6f7f8; --surface:#ffffff; --surface-2:#eef1f3;
+    --ink:#1c262e; --ink-soft:#47555f; --ink-faint:#6d7a84;
+    --line:#dbe0e4; --line-strong:#c3ccd2;
+    --plasma:#0e7c74; --plasma-soft:#d6ebe9; --effect:#b9770b; --effect-soft:#f3e6cd;
+    --slate:#2c3e50; --danger:#a23b3b;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  /* ---- Header ---- */
+  header {
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(120% 140% at 12% -20%, var(--plasma-soft) 0%, transparent 55%),
+      var(--surface);
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--plasma);
+    font-weight: 600;
+  }
+  h1 {
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1.05;
+    margin: 14px 0 10px;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  h1 .lede-mono { font-family: var(--mono); font-weight: 600; }
+  .dek {
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0 0 26px;
+    text-wrap: pretty;
+  }
+  header .wrap { padding-top: 46px; padding-bottom: 40px; }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .fact { background: var(--surface); padding: 14px 16px; }
+  .fact dt {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px;
+  }
+  .fact dd { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .fact dd span { font-weight: 400; color: var(--ink-soft); }
+
+  /* ---- Sections ---- */
+  section { padding: 52px 0; border-bottom: 1px solid var(--line); }
+  .sec-label {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink-faint); font-weight: 600;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .sec-label::before {
+    content: ""; width: 22px; height: 2px; background: var(--plasma); display: inline-block;
+  }
+  h2 {
+    font-size: clamp(23px, 3.4vw, 30px); margin: 0 0 12px;
+    letter-spacing: -0.015em; text-wrap: balance;
+  }
+  .sec-intro { color: var(--ink-soft); max-width: 66ch; margin: 0 0 30px; font-size: 16px; }
+  h3 { font-size: 17px; margin: 0 0 4px; letter-spacing: -0.01em; }
+
+  code, .file, .fn {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--surface-2);
+    padding: 1.5px 6px;
+    border-radius: 4px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .fn { color: var(--plasma); background: var(--plasma-soft); }
+  p { text-wrap: pretty; }
+  a { color: var(--plasma); }
+
+  /* ---- Pipeline diagram ---- */
+  .pipe { display: flex; flex-direction: column; gap: 0; }
+  .stage {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--stage-c, var(--slate));
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    z-index: 1;
+  }
+  .stage + .connector { height: 26px; display: flex; justify-content: center; align-items: center; }
+  .connector::before {
+    content: ""; width: 2px; height: 100%; background: var(--line-strong);
+  }
+  .connector .arrow {
+    position: absolute; width: 9px; height: 9px; border-right: 2px solid var(--line-strong);
+    border-bottom: 2px solid var(--line-strong); transform: translateY(-4px) rotate(45deg);
+  }
+  .stage-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .stage-num {
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    color: var(--stage-c, var(--slate));
+    border: 1px solid currentColor; border-radius: 5px; padding: 1px 6px; flex: none;
+  }
+  .stage h3 { margin: 0; }
+  .stage-files { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  .stage p { margin: 8px 0 0; color: var(--ink-soft); font-size: 14.5px; }
+  .stage .reactives { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font-family: var(--mono); font-size: 11.5px; padding: 2px 8px; border-radius: 20px;
+    background: var(--surface-2); color: var(--ink-soft); border: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .chip.r { color: var(--plasma); border-color: var(--plasma-soft); background: var(--plasma-soft); }
+
+  /* ---- Component catalog ---- */
+  .layers { display: flex; flex-direction: column; gap: 16px; }
+  .layer {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--surface); overflow: hidden;
+  }
+  .layer-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 18px; background: var(--surface-2); border-bottom: 1px solid var(--line);
+  }
+  .layer-head .tag {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: #fff; background: var(--lc, var(--slate)); padding: 3px 9px; border-radius: 20px; font-weight: 600;
+    flex: none;
+  }
+  .layer-head h3 { margin: 0; font-size: 16px; }
+  .layer-head .role { margin-left: auto; color: var(--ink-faint); font-size: 13px; }
+  .layer-body { padding: 6px 18px 16px; }
+  .frow {
+    display: grid; grid-template-columns: 210px 1fr; gap: 4px 18px;
+    padding: 10px 0; border-bottom: 1px dashed var(--line);
+  }
+  .frow:last-child { border-bottom: 0; }
+  .frow .fname { font-family: var(--mono); font-size: 13px; color: var(--ink); font-weight: 600; }
+  .frow .fdesc { color: var(--ink-soft); font-size: 14px; }
+  @media (max-width: 620px) { .frow { grid-template-columns: 1fr; gap: 2px; } }
+
+  /* ---- generic cards ---- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .card {
+    border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+    padding: 16px 18px;
+  }
+  .card h3 { color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .card .k { font-family: var(--mono); font-size: 11px; color: var(--effect); text-transform: uppercase; letter-spacing:.08em; }
+  .card p { margin: 6px 0 0; font-size: 14px; color: var(--ink-soft); }
+  .card .files { margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* ---- engine steps ---- */
+  .engine { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px){ .engine { grid-template-columns: 1fr; } }
+  .ecol { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow:hidden; }
+  .ecol-head { padding: 12px 16px; font-weight: 700; font-size: 14px; display:flex; align-items:center; gap:8px;
+    border-bottom: 1px solid var(--line); }
+  .ecol-head .dot { width: 9px; height: 9px; border-radius: 50%; flex:none; }
+  .estep { padding: 12px 16px; border-bottom: 1px dashed var(--line); }
+  .estep:last-child { border-bottom: 0; }
+  .estep .lbl { font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--ink); }
+  .estep .txt { font-size: 13.5px; color: var(--ink-soft); margin-top: 3px; }
+  .estep .out { font-family: var(--mono); font-size: 11.5px; color: var(--plasma); margin-top: 5px; }
+
+  .note {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--effect-soft); border: 1px solid var(--effect);
+    border-radius: var(--radius); padding: 14px 16px; margin-top: 26px;
+  }
+  .note .mk { font-family: var(--mono); font-weight: 700; color: var(--effect); font-size: 13px; flex: none; }
+  .note p { margin: 0; font-size: 14px; color: var(--ink); }
+
+  footer { padding: 34px 0 60px; color: var(--ink-faint); font-size: 13px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  footer code { font-size: 12px; }
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Architecture Map · R / Shiny package</div>
+    <h1><span class="lede-mono">stanpumpR</span> — a reactive PK/PD anesthetic simulator</h1>
+    <p class="dek">
+      A Shiny web app that turns a table of drug doses plus a patient's covariates into
+      predicted plasma and effect-site concentration curves — using closed-form
+      pharmacokinetic solutions rather than a numeric ODE solver. Packaged as a standard
+      R package with a golem-style <code>ui / server / run</code> split.
+    </p>
+    <dl class="facts">
+      <div class="fact"><dt>Language</dt><dd>R <span>≥ 4.1</span></dd></div>
+      <div class="fact"><dt>Framework</dt><dd>Shiny <span>+ bslib 5</span></dd></div>
+      <div class="fact"><dt>Structure</dt><dd>R package <span>~60 files</span></dd></div>
+      <div class="fact"><dt>Drug library</dt><dd>23 drugs <span>data-as-code</span></dd></div>
+      <div class="fact"><dt>Deps lock</dt><dd>renv <span>renv.lock</span></dd></div>
+      <div class="fact"><dt>Deploy</dt><dd>shinyapps <span>on merge</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ======================= PIPELINE ======================= -->
+<section id="pipeline">
+  <div class="wrap">
+    <div class="sec-label">The request → render pipeline</div>
+    <h2>One reactive chain, dose table to plot</h2>
+    <p class="sec-intro">
+      Every edit — a covariate, a dose cell, a graph option — invalidates a link in a single
+      dependency chain inside <code>app_server.R</code>. Shiny re-runs only the downstream
+      reactives. The heavy computation lives in the last two stages.
+    </p>
+
+    <div class="pipe">
+
+      <div class="stage" style="--stage-c: var(--slate)">
+        <div class="stage-top">
+          <span class="stage-num">01</span>
+          <h3>Inputs</h3>
+          <div class="stage-files"><span class="file">app_ui.R</span></div>
+        </div>
+        <p>
+          <code>bslib::page_navbar</code> sidebar collects patient profile (age, weight, height,
+          sex), graph options, and added plots; a <code>rhandsontable</code> holds the editable
+          dose table; a second grid holds events. Clicks on the plot itself add or edit doses.
+        </p>
+        <div class="reactives">
+          <span class="chip">input$age / weight / height / sex</span>
+          <span class="chip">input$doseTableHTML</span>
+          <span class="chip">input$maximum</span>
+          <span class="chip">plot_click / plot_dblclick</span>
+        </div>
+      </div>
+      <div class="connector"><span class="arrow"></span></div>
+
+      <div class="stage" style="--stage-c: var(--slate)">
+        <div class="stage-top">
+          <span class="stage-num">02</span>
+          <h3>Normalize &amp; validate</h3>
+          <div class="stage-files"><span class="file">server-helpers.R</span><span class="file">validate*.R</span></div>
+        </div>
+        <p>
+          Raw inputs become clean reactive state. <span class="fn">cleanDT()</span> coerces the
+          dose grid and drops blank rows; clock times convert to elapsed minutes;
+          <span class="fn">checkNumericCovariates()</span> guards the patient values. A
+          draft / undo / redo stack buffers table edits before <code>Apply</code>.
+        </p>
+        <div class="reactives">
+          <span class="chip r">doseTableClean()</span>
+          <span class="chip r">eventTableClean()</span>
+          <span class="chip r">testCovariates()</span>
+          <span class="chip r">weight() / height() / age() / sex()</span>
+        </div>
+      </div>
+      <div class="connector"><span class="arrow"></span></div>
+
+      <div class="stage" style="--stage-c: var(--plasma)">
+        <div class="stage-top">
+          <span class="stage-num">03</span>
+          <h3>Resolve pharmacokinetics</h3>
+          <div class="stage-files"><span class="file">server-helpers.R</span><span class="file">getDrugPK.R</span></div>
+        </div>
+        <p>
+          <span class="fn">recalculatePK()</span> walks the drugs named in the dose table and,
+          per drug, calls <span class="fn">getDrugPK()</span> to turn the patient's covariates
+          into a full set of rate constants, eigenvalues, and closed-form coefficients. Results
+          are cached on a per-drug list and only recomputed when covariates change.
+        </p>
+        <div class="reactives">
+          <span class="chip r">drugs()  ·  step A</span>
+          <span class="chip">getDrugDefaults()</span>
+        </div>
+      </div>
+      <div class="connector"><span class="arrow"></span></div>
+
+      <div class="stage" style="--stage-c: var(--plasma)">
+        <div class="stage-top">
+          <span class="stage-num">04</span>
+          <h3>Simulate concentrations</h3>
+          <div class="stage-files"><span class="file">processdoseTable.R</span><span class="file">simCpCe.R</span></div>
+        </div>
+        <p>
+          <span class="fn">processdoseTable()</span> diffs each drug's doses against the cached
+          result and re-simulates only what changed — calling <span class="fn">simCpCe()</span>,
+          which converts dose units, classifies bolus / infusion / oral routes, and dispatches to
+          the right closed-form solver. Output is a tidy time × site table per drug.
+        </p>
+        <div class="reactives">
+          <span class="chip r">drugs()  ·  step B</span>
+          <span class="chip">results · equiSpace · max</span>
+        </div>
+      </div>
+      <div class="connector"><span class="arrow"></span></div>
+
+      <div class="stage" style="--stage-c: var(--effect)">
+        <div class="stage-top">
+          <span class="stage-num">05</span>
+          <h3>Assemble the plot</h3>
+          <div class="stage-files"><span class="file">simulationPlot.R</span></div>
+        </div>
+        <p>
+          <span class="fn">simulationPlot()</span> stitches every drug's curves into one
+          <code>ggplot2</code> object — plasma vs effect-site linetypes, per-drug colors,
+          normalization, log axis, and optional MEAC / drug-interaction / events facets. Returns
+          <code>plotObject</code> plus the underlying <code>allResults</code> / <code>plotResults</code> tables.
+        </p>
+        <div class="reactives">
+          <span class="chip r">simulationPlotRetval()</span>
+          <span class="chip">plotObject · plotHeight</span>
+        </div>
+      </div>
+      <div class="connector"><span class="arrow"></span></div>
+
+      <div class="stage" style="--stage-c: var(--effect)">
+        <div class="stage-top">
+          <span class="stage-num">06</span>
+          <h3>Render &amp; interact</h3>
+          <div class="stage-files"><span class="file">app_server.R</span></div>
+        </div>
+        <p>
+          <code>output$PlotSimulation</code> draws the plot; hover reports precise concentrations,
+          click adds a dose, double-click edits a drug. The same result tables feed the
+          <code>Suggest Dosing</code> solver and the emailed PowerPoint slide.
+        </p>
+        <div class="reactives">
+          <span class="chip">output$PlotSimulation</span>
+          <span class="chip">output$hover_info</span>
+          <span class="chip">URL bookmarking</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note">
+      <span class="mk">WHY IT'S FAST</span>
+      <p>
+        Both <span class="fn">recalculatePK()</span> and <span class="fn">processdoseTable()</span>
+        mutate a persistent per-drug list and skip any drug whose inputs are unchanged. Combined
+        with closed-form solutions (no ODE integration), a dose edit re-simulates just the one drug
+        it touched.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= ENGINE ======================= -->
+<section id="engine">
+  <div class="wrap">
+    <div class="sec-label">The computational core</div>
+    <h2>Closed-form three-compartment kinetics</h2>
+    <p class="sec-intro">
+      stanpumpR never numerically integrates. Each drug is a mammillary 3-compartment model with an
+      effect-site link; the disposition is solved analytically once per patient, then evaluated at
+      every time point as a sum of exponentials.
+    </p>
+
+    <div class="engine">
+      <div class="ecol">
+        <div class="ecol-head"><span class="dot" style="background:var(--plasma)"></span>A · Parameterize the patient — <span class="fn">getDrugPK.R</span></div>
+        <div class="estep">
+          <div class="lbl">drug function → V/Cl</div>
+          <div class="txt"><code>eval(call(drug, weight, height, age, sex))</code> runs the drug's own covariate model (e.g. Eleveld / Kim for remifentanil) to yield <code>v1..v3</code>, <code>cl1..cl3</code>, <code>tPeak</code>, <code>MEAC</code>.</div>
+        </div>
+        <div class="estep">
+          <div class="lbl">micro rate constants</div>
+          <div class="txt">Volumes &amp; clearances become <code>k10, k12, k13, k21, k31</code>.</div>
+        </div>
+        <div class="estep">
+          <div class="lbl">cube() → eigenvalues</div>
+          <div class="txt"><span class="fn">cube()</span> solves the characteristic cubic for the disposition rates.</div>
+          <div class="out">→ lambda_1, lambda_2, lambda_3</div>
+        </div>
+        <div class="estep">
+          <div class="lbl">effect-site link</div>
+          <div class="txt"><span class="fn">tPeakError()</span> + <code>optimize()</code> back-solve <code>ke0</code> from the drug's time-to-peak-effect.</div>
+          <div class="out">→ ke0</div>
+        </div>
+        <div class="estep">
+          <div class="lbl">closed-form coefficients</div>
+          <div class="txt">Per route — bolus, infusion, PO, IM, IN — precompute the exponential coefficients for plasma &amp; effect site.</div>
+          <div class="out">→ p_coef_* / e_coef_*</div>
+        </div>
+      </div>
+
+      <div class="ecol">
+        <div class="ecol-head"><span class="dot" style="background:var(--effect)"></span>B · Advance the doses — <span class="fn">simCpCe.R</span></div>
+        <div class="estep">
+          <div class="lbl">unit conversion</div>
+          <div class="txt">mg / mcg / ng, per-kg, and per-hour doses are all reduced to base units against the drug's concentration unit.</div>
+        </div>
+        <div class="estep">
+          <div class="lbl">route classification</div>
+          <div class="txt">Each dose flagged <code>Bolus</code>, infusion, or <code>PO / IM / IN</code>.</div>
+        </div>
+        <div class="estep">
+          <div class="lbl">solver dispatch</div>
+          <div class="txt">
+            IV, no events → <span class="fn">advanceClosedForm0()</span><br>
+            oral / IM / IN → <span class="fn">advanceClosedFormPO_IM_IN()</span><br>
+            time-varying PK events → <span class="fn">advanceClosedForm1()</span>
+          </div>
+        </div>
+        <div class="estep">
+          <div class="lbl">superposition</div>
+          <div class="txt">Each dose's contribution is summed over the exponential basis at every step; <span class="fn">convertState.R</span> carries state across PK-event boundaries.</div>
+          <div class="out">→ Time · Plasma · Effect Site · Recovery</div>
+        </div>
+        <div class="estep">
+          <div class="lbl">resample &amp; normalize</div>
+          <div class="txt">Curves are interpolated to an even grid (<code>equiSpace</code>), normalized to peak Cp/Ce, and scaled against MEAC.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cards" style="margin-top:16px">
+      <div class="card">
+        <span class="k">multi-drug library API</span>
+        <h3>simulateDrugsWithCovariates</h3>
+        <p>The exported, Shiny-free entry point: loops drugs, calls <code>getDrugPK</code> → <code>simCpCe</code>, and returns per-drug results. What the vignettes and tests drive.</p>
+        <div class="files"><span class="file">simulateDrugsWithCovariates.R</span></div>
+      </div>
+      <div class="card">
+        <span class="k">pharmacodynamics</span>
+        <h3>Drug interaction surface</h3>
+        <p><span class="fn">modelInteraction()</span> computes a propofol × opioid response surface for the optional interaction facet.</p>
+        <div class="files"><span class="file">modelInteraction.R</span><span class="file">CE.R</span><span class="file">calculateCe.R</span></div>
+      </div>
+      <div class="card">
+        <span class="k">covariate helpers</span>
+        <h3>Body-size &amp; recovery</h3>
+        <p><span class="fn">lbmJames()</span> lean body mass; <span class="fn">recoveryCalc()</span> time-to-threshold; <span class="fn">setLinetypes()</span> plasma/effect styling.</p>
+        <div class="files"><span class="file">lbmJames.R</span><span class="file">recoveryCalc.R</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= DRUG LIBRARY ======================= -->
+<section id="drugs">
+  <div class="wrap">
+    <div class="sec-label">Drug library — data as code</div>
+    <h2>One function per drug, one CSV for defaults</h2>
+    <p class="sec-intro">
+      Adding a drug means adding one <code>drugs_&lt;name&gt;.R</code> file and one row in the
+      defaults CSV — the pattern the project is explicitly built to let outside investigators
+      contribute to.
+    </p>
+    <div class="cards">
+      <div class="card">
+        <span class="k">the model · 23 files</span>
+        <h3>drugs_*.R</h3>
+        <p>
+          Each exports a function <code>drug(weight, height, age, sex)</code> returning
+          compartment <code>PK</code>, <code>tPeak</code>, and <code>MEAC</code>. Bodies encode the
+          published covariate models — often branching on BMI or sex (propofol, remifentanil,
+          dexmedetomidine…). Called by name via <code>eval(call(drug, …))</code>.
+        </p>
+      </div>
+      <div class="card">
+        <span class="k">the metadata</span>
+        <h3>drugDefaults_global.csv</h3>
+        <p>
+          Colors, concentration &amp; dose units, typical ranges, MEAC, and emergence thresholds.
+          Loaded once via memoised <span class="fn">getDrugDefaultsGlobal()</span>;
+          <span class="fn">getDrugDefaults(drug)</span> subsets one row.
+        </p>
+        <div class="files"><span class="file">drugAndEventDefaults.R</span><span class="file">inst/extdata/</span></div>
+      </div>
+      <div class="card">
+        <span class="k">events</span>
+        <h3>eventDefaults.csv</h3>
+        <p>
+          Named clinical events (e.g. surgical stimulus) that can switch a drug to alternate PK
+          mid-simulation, driving <span class="fn">advanceClosedForm1()</span>.
+        </p>
+        <div class="files"><span class="file">drugAndEventDefaults.R</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= COMPONENT CATALOG ======================= -->
+<section id="catalog">
+  <div class="wrap">
+    <div class="sec-label">Component catalog</div>
+    <h2>The <code>R/</code> tree by responsibility</h2>
+    <p class="sec-intro">
+      Files are flat in <code>R/</code> and wired together by the package <code>Collate</code>
+      order in <code>DESCRIPTION</code>. Grouped here by the job they do.
+    </p>
+
+    <div class="layers">
+
+      <div class="layer" style="--lc: var(--slate)">
+        <div class="layer-head"><span class="tag">Shell</span><h3>App bootstrap &amp; framework</h3><span class="role">entry + wiring</span></div>
+        <div class="layer-body">
+          <div class="frow"><span class="fname">app.R</span><span class="fdesc">One line: <code>stanpumpR::run_app()</code> — the deploy entry point.</span></div>
+          <div class="frow"><span class="fname">app_run.R</span><span class="fdesc">Loads libraries, merges <code>config.yml</code> with defaults, sets the ggplot theme, mounts assets, launches <code>shinyApp()</code> with URL bookmarking.</span></div>
+          <div class="frow"><span class="fname">app_ui.R</span><span class="fdesc">The entire bslib UI — navbar, sidebar accordions, dose/event grids, plot card, debug panel.</span></div>
+          <div class="frow"><span class="fname">app_server.R</span><span class="fdesc">The 46 KB reactive heart — every reactive, observer, output, and modal.</span></div>
+          <div class="frow"><span class="fname">app_globals.R</span><span class="fdesc">Initial tables, bookmark exclusion list, and the <span class="fn">outputComments()</span> logger.</span></div>
+          <div class="frow"><span class="fname">globalVariables.R · zzz.R · stanpumpR-package.R</span><span class="fdesc">Package plumbing and NSE variable declarations.</span></div>
+        </div>
+      </div>
+
+      <div class="layer" style="--lc: var(--slate)">
+        <div class="layer-head"><span class="tag">Reactive glue</span><h3>Server helpers &amp; UI widgets</h3><span class="role">state + inputs</span></div>
+        <div class="layer-body">
+          <div class="frow"><span class="fname">server-helpers.R</span><span class="fdesc"><span class="fn">recalculatePK</span>, <span class="fn">cleanDT</span>, <span class="fn">checkNumericCovariates</span>, reactive triggers, intro modal.</span></div>
+          <div class="frow"><span class="fname">shiny-utils.R</span><span class="fdesc">UI builders — <span class="fn">inputWithChoices</span>, <span class="fn">addHotHooks</span>, inline-input helpers.</span></div>
+          <div class="frow"><span class="fname">createHOT.R</span><span class="fdesc">Builds the <code>rhandsontable</code> dose grid from the current table + drug colors.</span></div>
+          <div class="frow"><span class="fname">processdoseTable.R</span><span class="fdesc">Per-drug diff-and-simulate driver (pipeline step 04).</span></div>
+          <div class="frow"><span class="fname">validateDose.R · validateTime.R</span><span class="fdesc">Input guards for dose amounts and clock/elapsed times.</span></div>
+        </div>
+      </div>
+
+      <div class="layer" style="--lc: var(--plasma)">
+        <div class="layer-head"><span class="tag">PK/PD engine</span><h3>The math core</h3><span class="role">closed-form solver</span></div>
+        <div class="layer-body">
+          <div class="frow"><span class="fname">getDrugPK.R</span><span class="fdesc">Covariates → rate constants, eigenvalues, and per-route coefficients.</span></div>
+          <div class="frow"><span class="fname">cube.R</span><span class="fdesc">Solves the disposition cubic for lambda_1..3.</span></div>
+          <div class="frow"><span class="fname">simCpCe.R</span><span class="fdesc">Single-drug simulation: units → route → solver dispatch.</span></div>
+          <div class="frow"><span class="fname">advanceClosedForm0 / 1 / PO_IM_IN.R</span><span class="fdesc">The three closed-form solvers (IV, event-varying, extravascular).</span></div>
+          <div class="frow"><span class="fname">advanceState.R · advanceStatePO.R · convertState.R</span><span class="fdesc">Carry compartment state across dose &amp; event boundaries.</span></div>
+          <div class="frow"><span class="fname">CE.R · calculateCe.R · tPeakError.R</span><span class="fdesc">Effect-site concentration and <code>ke0</code> fitting.</span></div>
+          <div class="frow"><span class="fname">modelInteraction.R · recoveryCalc.R · lbmJames.R</span><span class="fdesc">Interaction surface, recovery thresholds, body-size scaling.</span></div>
+          <div class="frow"><span class="fname">simulateDrugsWithCovariates.R</span><span class="fdesc">Exported multi-drug convenience API (no Shiny).</span></div>
+        </div>
+      </div>
+
+      <div class="layer" style="--lc: var(--effect)">
+        <div class="layer-head"><span class="tag">Output</span><h3>Plot, dosing advisor &amp; export</h3><span class="role">present + share</span></div>
+        <div class="layer-body">
+          <div class="frow"><span class="fname">simulationPlot.R</span><span class="fdesc">Assembles the composite <code>ggplot2</code> figure and its data tables.</span></div>
+          <div class="frow"><span class="fname">setLinetypes.R</span><span class="fdesc">Maps normalization + user choices to plasma/effect linetypes.</span></div>
+          <div class="frow"><span class="fname">suggest.R</span><span class="fdesc">"Suggest Dosing" — optimizes a regimen to hit a target effect-site concentration.</span></div>
+          <div class="frow"><span class="fname">sendSlide.R</span><span class="fdesc">Renders an <code>officer</code> PowerPoint slide from <code>Template.pptx</code> and emails it via <code>mailR</code>.</span></div>
+        </div>
+      </div>
+
+      <div class="layer" style="--lc: var(--ink-faint)">
+        <div class="layer-head"><span class="tag">Util</span><h3>Time &amp; misc</h3><span class="role">shared</span></div>
+        <div class="layer-body">
+          <div class="frow"><span class="fname">clockTimeToDelta.R · deltaToClockTime.R · hourMinute.R</span><span class="fdesc">Convert between wall-clock procedure times and elapsed minutes.</span></div>
+          <div class="frow"><span class="fname">utils.R · drugAndEventDefaults.R</span><span class="fdesc">Small shared helpers and the memoised defaults loaders.</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ======================= FEATURES + INFRA ======================= -->
+<section id="aux" style="border-bottom:0">
+  <div class="wrap">
+    <div class="sec-label">Around the core</div>
+    <h2>Features, assets &amp; infrastructure</h2>
+
+    <div class="cards">
+      <div class="card">
+        <span class="k">feature</span>
+        <h3>Suggest Dosing</h3>
+        <p>Given a target drug and end time, <span class="fn">suggest()</span> optimizes bolus + infusion amounts to reach and hold a target concentration.</p>
+        <div class="files"><span class="file">suggest.R</span></div>
+      </div>
+      <div class="card">
+        <span class="k">feature</span>
+        <h3>Email a slide</h3>
+        <p>Builds a branded PPTX from the current simulation and mails it — plot, dose table, and a URL that reconstructs the exact state.</p>
+        <div class="files"><span class="file">sendSlide.R</span><span class="file">Template.pptx</span></div>
+      </div>
+      <div class="card">
+        <span class="k">feature</span>
+        <h3>Editors &amp; modals</h3>
+        <p>In-app Drug Library and Drug Thresholds editors, plus click-to-add-dose / double-click-to-edit driven from plot coordinates.</p>
+        <div class="files"><span class="file">app_server.R</span></div>
+      </div>
+      <div class="card">
+        <span class="k">state</span>
+        <h3>URL bookmarking</h3>
+        <p>Shiny <code>enableBookmarking="url"</code> encodes inputs into a shareable link; <code>bookmarksToExclude</code> keeps transient UI state out.</p>
+        <div class="files"><span class="file">app_globals.R</span></div>
+      </div>
+      <div class="card">
+        <span class="k">observability</span>
+        <h3>Debug &amp; profiler</h3>
+        <p><code>&amp;debug=1</code> reveals a live log (<span class="fn">outputComments</span>) and a per-reactive profiler (<span class="fn">profileCode</span>).</p>
+        <div class="files"><span class="file">app_globals.R</span><span class="file">app_server.R</span></div>
+      </div>
+      <div class="card">
+        <span class="k">front-end assets</span>
+        <h3>www/</h3>
+        <p><code>app.css</code>, <code>app.js</code>, and <code>hot_funs.js</code> — Handsontable copy/paste hooks and drug-default injection into the client.</p>
+        <div class="files"><span class="file">inst/www/</span></div>
+      </div>
+      <div class="card">
+        <span class="k">config</span>
+        <h3>config.yml</h3>
+        <p>Environment-specific title, help link, and debug flag, merged over <code>DEFAULT_CONFIG</code> at launch.</p>
+        <div class="files"><span class="file">config.yml</span><span class="file">app_run.R</span></div>
+      </div>
+      <div class="card">
+        <span class="k">reproducibility</span>
+        <h3>renv</h3>
+        <p><code>renv.lock</code> pins exact package versions so production matches local. Deps declared in <code>DESCRIPTION</code>.</p>
+        <div class="files"><span class="file">renv.lock</span><span class="file">DESCRIPTION</span></div>
+      </div>
+      <div class="card">
+        <span class="k">tests · CI</span>
+        <h3>testthat</h3>
+        <p>~40 test files under <code>tests/testthat/</code> — one per drug plus PK, plotting, and helper suites. R-CMD-check runs via GitHub Actions.</p>
+        <div class="files"><span class="file">tests/testthat/</span><span class="file">.github/</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>stanpumpR · PK/PD simulation · Steven L. Shafer</span>
+    <span>Map generated from <code>master</code> — entry point <code>app.R → run_app()</code></span>
+  </div>
+</footer>
