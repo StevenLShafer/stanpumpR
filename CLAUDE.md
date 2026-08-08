@@ -67,8 +67,12 @@ the `drugs_*.R` file, a CSV row, a `Collate:` entry in `DESCRIPTION`, and a
 
 ## Conventions
 
-- Files are flat in `R/`; load order is the explicit `Collate:` list in `DESCRIPTION` — add
-  new files there.
+- Files are flat in `R/`; load order is the explicit `Collate:` list in `DESCRIPTION`. Because a
+  `Collate:` field is present, **every** file in `R/` must be listed there — an omitted file makes
+  `R CMD build` fail (not just warn). Add new files to `Collate:`, or run `devtools::document()`.
+- **Comments:** favor generous commenting — explain intent and derivation, not only mechanics. For
+  non-obvious, imported, or AI-drafted code, add a **provenance** header recording where it came
+  from (which tool/model or human), the date, and whether it has been run/verified.
 - Use `outputComments(...)` (not `cat`/`print`) for debug logging; wrap costly reactives in
   `profileCode(...)`.
 - New user-facing inputs that should NOT be bookmarked go in `bookmarksToExclude`
