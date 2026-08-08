@@ -24,6 +24,10 @@ defaultSex <- "female"
 # Resolution for linear interpolation
 RESOLUTION <- 100
 
+# Max number of slides a single session may email, to limit abuse of the
+# shared sending account (the app is unauthenticated and public).
+EMAIL_SESSION_LIMIT <- 25
+
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")

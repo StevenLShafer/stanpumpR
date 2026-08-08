@@ -106,6 +106,10 @@ app_server <- function(input, output, session) {
 
   doseTable <- reactiveVal(doseTableInit)
 
+  # Number of emails sent this session (see EMAIL_SESSION_LIMIT); guards the
+  # unauthenticated send handler against being used as a mail relay.
+  emailSendCount <- reactiveVal(0)
+
   # Routine to output doseTableHTML from doseTable
   output$doseTableHTML <- renderRHandsontable({
     req(doseTableDraft())
@@ -533,6 +537,29 @@ app_server <- function(input, output, session) {
     input$sendSlide,
     {
       outputComments("input$sendSlide",input$sendSlide)
+
+      # Server-side guard: the send button's disabled state is enforced only in
+      # the browser and can be bypassed by sending the event over the WebSocket,
+      # so the recipient MUST be validated here before any mail is sent.
+      if (!isTRUE(isEmailValid(input$recipient))) {
+        shinyalert::shinyalert(
+          "Invalid email address",
+          "Please enter a valid recipient email address.",
+          type = "error", closeOnClickOutside = TRUE
+        )
+        return()
+      }
+
+      # Per-session cap to prevent the shared account being used as a relay.
+      if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
+        shinyalert::shinyalert(
+          "Send limit reached",
+          "This session has reached its email limit. Please reload the page to send more.",
+          type = "error", closeOnClickOutside = TRUE
+        )
+        return()
+      }
+      emailSendCount(emailSendCount() + 1)
 
       values <- list(
         comments = input$emailComments,
