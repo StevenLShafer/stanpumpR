@@ -96,6 +96,7 @@ Collate:
   getDrugPK.R
   globalVariables.R
   hourMinute.R
+  ig_absorption.R
   lbmJames.R
   modelInteraction.R
   processdoseTable.R
