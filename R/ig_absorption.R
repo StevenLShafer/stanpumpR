@@ -1,4 +1,13 @@
 # -----------------------------------------------------------------------------
+# Provenance
+# ----------
+# Drafted by Claude Chat (claude.ai), 2026-08-07. Not authored by Claude Code.
+# The underlying mathematics was verified numerically by the authoring model
+# against adaptive quadrature (see STATUS below), but this R transcription has
+# NOT itself been executed end-to-end. Run the verification block at the bottom
+# before relying on any of it. Not yet exported or wired into the simulation
+# engine as of this writing.
+# -----------------------------------------------------------------------------
 # Closed-form convolution of an Inverse Gaussian absorption density with a
 # sum-of-exponentials disposition function.
 #
