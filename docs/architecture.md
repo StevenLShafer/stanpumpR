@@ -11,8 +11,8 @@ package with a golem-style `ui / server / run` split; the entry point is
 
 | | |
 |---|---|
-| Language | R (≥ 4.1) |
-| Framework | Shiny + bslib 5 |
+| Language | R — developed/deployed on 4.6.1 (min declared ≥ 4.1) |
+| Framework | Shiny + bslib (Bootstrap 5) |
 | Structure | R package, ~60 files in `R/` |
 | Drug library | 23 drugs, data-as-code |
 | Deps lock | renv (`renv.lock`) |
@@ -108,6 +108,8 @@ Files are flat in `R/` and wired by the `Collate:` order in `DESCRIPTION`.
 `advanceState.R`, `advanceStatePO.R`, `convertState.R`, `CE.R`, `calculateCe.R`,
 `tPeakError.R`, `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R`,
 `simulateDrugsWithCovariates.R`.
+*Experimental (tracked, not yet integrated):* `ig_absorption.R` — a closed-form Inverse
+Gaussian absorption model; not exported or wired into the engine (see its provenance header).
 
 **Output — plot, dosing advisor & export**
 `simulationPlot.R`, `setLinetypes.R`, `suggest.R` (target-controlled dosing optimizer),
