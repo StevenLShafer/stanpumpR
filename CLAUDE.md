@@ -25,6 +25,10 @@ devtools::test()   # testthat suite
 Requires a `config.yml` (copy from `config.yml.sample`). Package versions are pinned with
 **renv** — after pulling `renv.lock` changes run `renv::restore()`.
 
+Developed and deployed on **R 4.6.1** with current CRAN package versions (all CRAN, no GitHub
+pins). `DESCRIPTION` still declares the minimum as `R (>= 4.1)`, but CI only exercises the
+current release and one prior (~4.5), so treat 4.6.x as the supported line.
+
 ## The reactive pipeline (all in `R/app_server.R`)
 
 One dependency chain; Shiny re-runs only what an edit invalidates:
@@ -51,6 +55,8 @@ unchanged drugs** — preserve that diffing behavior when editing them.
   - `advanceClosedFormPO_IM_IN.R` (oral / IM / intranasal)
 - `simulateDrugsWithCovariates.R` — exported, Shiny-free multi-drug API (used by vignettes/tests).
 - `modelInteraction.R` — propofol × opioid response surface for the interaction facet.
+- `ig_absorption.R` — **experimental, not yet integrated.** Closed-form Inverse Gaussian
+  absorption model (WIP); not exported or wired into the engine. See its provenance header.
 
 ## Drug library — data as code
 
