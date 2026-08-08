@@ -48,7 +48,11 @@ jobs:
           use-public-rspm: true
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libpng-dev
+        # renv restores the full lockfile (incl. dev deps like gert -> libgit2,
+        # rJava -> JDK, systemfonts/ragg -> cairo/freetype). Install the system
+        # libraries these load against so the restore doesn't fail when a package
+        # has no prebuilt binary. Mirrors the R-CMD-check workflow's system deps.
+        run: sudo apt-get update && sudo apt-get install -y cmake default-jdk libcairo2-dev libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libgit2-dev libpng-dev libx11-dev
 
       - uses: r-lib/actions/setup-renv@v2
 
