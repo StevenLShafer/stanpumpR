@@ -44,7 +44,7 @@ inputWithChoices <- function(tag, choices, inputId = NULL, selected = NULL) {
   border-radius: 4px !important;
 }
 .input-with-choices .input-group-btn .shiny-input-radiogroup .shiny-options-group {
-  margin-top: 0;
+  margin-top: 10px;
 }
 .input-with-choices .input-group-btn .form-group {
   margin-bottom: 0;
