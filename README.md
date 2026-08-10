@@ -27,7 +27,9 @@ Near-term future developments in stanpumpR will include
 5. Create of help and example pages.
 
 ### Setting up locally
-  
+
+Requires R 4.6.x (developed and deployed on 4.6.1). CI exercises the current release and one prior (~4.5); `DESCRIPTION` still declares the minimum as `R (>= 4.1)`, but 4.6.x is the supported line.
+
 1. Clone/download this repository to your local machine
 2. Open the `stanpumpR.Rproj` file in RStudio
 3. Run `renv::restore()` to install all the necessary packages
