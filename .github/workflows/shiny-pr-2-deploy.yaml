@@ -37,6 +37,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          # This job only runs for fork PRs that a maintainer has explicitly
+          # labeled DEPLOY (see the `if:` above), not arbitrary forks
+          allow-unsafe-pr-checkout: true
 
       - name: Setup pandoc
         uses: r-lib/actions/setup-pandoc@v2
