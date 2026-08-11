@@ -19,3 +19,8 @@
 ^config\.yml\.sample$
 ^rsconnect$
 ^\.claude$
+^CLAUDE\.md$
+^GEMINI\.md$
+^AGENTS\.md$
+^\.agents$
+
