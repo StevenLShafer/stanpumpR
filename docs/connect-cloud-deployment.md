@@ -47,8 +47,10 @@ Never place variable values in GitHub, `config.yml`, `.Renviron`, `manifest.json
   deployment.
 - Configure the custom domain in Connect Cloud; TLS certificates are managed by the platform.
 - Keep production debug disabled and URL debug activation disabled.
-- Use server-side bookmarks. Connect Cloud supports Shiny bookmarkable state, but bookmark
-  retention and access should be verified as part of the production acceptance test.
+- The app defaults to URL bookmarking, which works on every host. Connect Cloud also supports
+  disk-backed Shiny bookmarkable state, so you may optionally set `bookmark_mode: server` here to
+  keep saved state off the URL; if you do, verify bookmark retention and restore as part of the
+  production acceptance test. (Do not use `server` on shinyapps.io, which lacks state storage.)
 - Review content visibility and authentication before making the application public.
 
 ## Acceptance test

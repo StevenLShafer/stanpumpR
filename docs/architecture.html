@@ -645,7 +645,7 @@
       <div class="card">
         <span class="k">state</span>
         <h3>Saved simulations</h3>
-        <p>Opaque server-side bookmark IDs are the secure default; URL-embedded state is an explicit non-clinical option. <code>bookmarksToExclude</code> keeps transient UI state out.</p>
+        <p>URL bookmarking is the default so saved state is a shareable link that works on hosts without server-side storage; opaque server-stored IDs are available where the host supports them (e.g. Posit Connect Cloud). The URL carries no confidential data &mdash; <code>bookmarksToExclude</code> drops recipient/comments/exact age and transient UI state, ages 90+ are normalized, and restored state is decoded as JSON and re-validated server-side.</p>
         <div class="files"><span class="file">app_globals.R</span></div>
       </div>
       <div class="card">

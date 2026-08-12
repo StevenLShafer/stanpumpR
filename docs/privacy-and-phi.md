@@ -26,8 +26,12 @@ deployment and mail systems are operated with safeguards appropriate for possibl
 
 ## Storage and transmission
 
-- Server bookmarks use opaque IDs and exclude recipient, comments, exact age, and transient
-  UI/debug fields. Dose, event, and normalized simulation data remain in saved state.
+- Bookmarks (URL by default, or opaque server-stored IDs where a host supports them) exclude
+  recipient, comments, exact age, and transient UI/debug fields; ages 90+ are normalized to 89
+  before persistence. Dose, event, and normalized simulation data remain in saved state. Because
+  the excluded and normalized fields never enter saved state, the URL contains no confidential
+  data. Restored URL state is decoded as JSON (no `unserialize`/`eval`) and re-validated
+  server-side.
 - Local bookmark directories are excluded from Git, package builds, and deployment bundles.
 - Email exports use a private temporary directory and are deleted on success or failure. The mail
   provider may retain sent messages and attachments under its own policies.

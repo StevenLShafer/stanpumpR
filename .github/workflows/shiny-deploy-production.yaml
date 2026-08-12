@@ -54,7 +54,12 @@ jobs:
           shinyConfig <- list(
             default = list(
               email_enabled = FALSE,
-              bookmark_mode = "server",
+              # shinyapps.io does not support disk-backed ("server") bookmarks;
+              # URL bookmarking is required there. The URL carries no PHI
+              # (recipient/comments/exact age excluded; age >= 90 normalized) and
+              # restored state is re-validated server-side. Use "server" only on
+              # a host with state storage (e.g. Posit Connect Cloud).
+              bookmark_mode = "url",
               allow_url_debug = FALSE,
               debug = 0
             )

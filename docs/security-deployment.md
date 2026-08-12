@@ -5,8 +5,15 @@ therefore treat all Shiny inputs and saved-state links as untrusted and potentia
 
 ## Secure defaults
 
-- `bookmark_mode: server` stores simulation state on the server and places only an opaque ID
-  in the URL. Use `disable` where sharing is unnecessary. Do not use `url` for clinical data.
+- `bookmark_mode: url` (the default) encodes saved-simulation state directly in a shareable
+  link and works on hosts without server-side state storage (e.g. shinyapps.io, which errors
+  with "server is not configured for saving sessions to disk" under `server`). The URL carries no
+  confidential data: recipient, comments, and exact age are excluded from bookmarks and ages
+  90+ are normalized to 89 before persistence. Restored URL state is decoded as JSON by Shiny
+  (no `unserialize`/`eval`) and re-validated by the server-side validators below, so a crafted
+  link cannot inject code or unknown drugs. Use `server` (opaque server-stored IDs) only on a
+  host that supports disk-backed bookmarks such as Posit Connect Cloud; use `disable` where
+  saved-state sharing is unnecessary.
 - `allow_url_debug: false` prevents users from enabling diagnostic output through the URL.
 - `email_enabled: false` disables sending while leaving the email panel visible with a deployment
   status notice and PHI warning. If email is enabled, use an approved SMTP relay. Recipient

@@ -17,6 +17,14 @@ test_that("dose tables are validated at the server trust boundary", {
   malicious$Drug <- "<img src=x onerror=alert(1)>"
   expect_error(validateDoseTableInput(malicious), "unknown drug")
 
+  # A crafted URL bookmark could place an arbitrary string in the Drug column.
+  # The drug name is the only value later turned into code (eval(call(drug,...))
+  # in getDrugPK.R). Rejecting anything outside the drug allowlist here (and in
+  # doseTableClean(), which gates that sink) blocks URL-borne code injection.
+  injection <- valid
+  injection$Drug <- "system('echo pwned'); propofol"
+  expect_error(validateDoseTableInput(injection), "unknown drug")
+
   malicious <- valid
   malicious$Time <- "0<script>"
   expect_error(validateDoseTableInput(malicious), "invalid time")

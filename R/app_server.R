@@ -170,8 +170,9 @@ app_server <- function(input, output, session) {
     profileCode({
       state$values$DT <- doseTable()
       state$values$ET <- eventTable()
-      # Store only the normalized display value. Exact ages above 89 are not
-      # retained in server bookmarks.
+      # Store only the normalized display value. Exact ages above 89 are never
+      # retained in bookmarks (URL or server), so the saved link carries no
+      # identifying age.
       state$values$simulationAge <- normalizeSimulationAge(age()) / ageUnit()
       setBookmarkExclude(bookmarksToExclude)
     }, name = "onBookmark()")

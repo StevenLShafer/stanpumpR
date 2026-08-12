@@ -8,7 +8,12 @@ are in `connect-cloud-deployment.md`.
 
 - Added server validation for covariates, dose/event/target tables, drugs, routes, units, finite
   values, row counts, text lengths, simulation duration, plot dimensions, and restored bookmarks.
-- Made opaque server bookmarks the secure default and restricted production/URL debugging.
+- Defaulted to URL bookmarking (works on hosts without disk-backed state, e.g. shinyapps.io);
+  kept confidential data out of the URL (recipient/comments/exact age excluded, ages 90+
+  normalized) and re-validated restored state server-side. Shiny decodes URL state as JSON via
+  `safeFromJSON` (no `unserialize`/`eval`), and `validateDoseTableInput` gates the sole
+  `eval(call(drug,...))` sink, so a crafted link cannot inject code. `server` remains available
+  for hosts with state storage (Posit Connect Cloud). Restricted production/URL debugging.
 - Replaced vulnerable Handsontable 6.2.2 assets with 10.0.0 and documented licensing.
 - Added defense-in-depth CSP and documented required hosting-layer security headers.
 - Pinned GitHub Actions, pinned production installation, and isolated preview credentials.

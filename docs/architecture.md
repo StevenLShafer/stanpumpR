@@ -124,7 +124,7 @@ Gaussian absorption model; not exported or wired into the engine (see its proven
 - **Suggest Dosing** (`suggest.R`) — optimizes bolus + infusion to reach/hold a target concentration.
 - **Email a slide** (`sendSlide.R`) — branded PPTX of the current simulation plus a URL that reconstructs the state.
 - **Editors & modals** — in-app Drug Library and Drug Thresholds editors; click-to-add-dose / double-click-to-edit from plot coordinates.
-- **Saved simulations** — opaque server-side bookmarking is the secure default; URL-embedded state remains available only as an explicit non-clinical configuration choice. `bookmarksToExclude` keeps transient UI state out of saved state.
+- **Saved simulations** — URL bookmarking is the default so saved state is a shareable link that works on hosts without server-side storage (e.g. shinyapps.io); opaque server-side bookmarking is available where the host supports it (e.g. Posit Connect Cloud). The URL carries no confidential data (`bookmarksToExclude` drops recipient/comments/exact age and transient UI state; ages 90+ are normalized), and restored state is decoded as JSON and re-validated server-side.
 - **Debug & profiler** — the live log (`outputComments`) and per-reactive profiler (`profileCode`) are disabled in production. URL activation requires the explicit `allow_url_debug` configuration flag.
 - **Front-end assets** — `inst/www/`: `app.css`, `app.js`, `hot_funs.js` (Handsontable hooks, drug-default injection).
 - **Reproducibility** — `renv.lock` pins package versions; deps declared in `DESCRIPTION`.

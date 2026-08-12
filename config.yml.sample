@@ -1,8 +1,13 @@
 default:
   title: "stanpumpR v1.1"
-  # Secure defaults for clinical deployments. Server bookmarks use opaque IDs;
-  # use "disable" to turn sharing off entirely. Never use "url" for clinical data.
-  bookmark_mode: "server"
+  # "url" makes saved simulations shareable as plain links and works on hosts
+  # without server-side state storage (e.g. shinyapps.io). No confidential data
+  # is placed in the URL: recipient, comments, and exact age are excluded, and
+  # ages >= 90 are normalized to 89. Restored state is re-validated server-side,
+  # so a crafted URL cannot inject code. Use "server" (opaque IDs) only on a host
+  # that supports disk-backed bookmarks such as Posit Connect Cloud; use
+  # "disable" to turn saved-state sharing off entirely.
+  bookmark_mode: "url"
   allow_url_debug: false
   # May be overridden by STANPUMPR_EMAIL_ENABLED in managed deployments.
   email_enabled: false
