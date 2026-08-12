@@ -8,6 +8,25 @@ inlineUI <- function(tag) {
 
 nbsp <- shiny::HTML("&nbsp;", .noWS = "outside")
 
+# rhandsontable 0.3.8 bundles Handsontable 6.2.2, which is inside both vulnerable
+# ranges identified during the security review (XSS < 8.2.0; CVE-2021-23446).
+# This dependency ships the patched 10.0.0 build. Because it shares the name
+# "handsontable" with the bundled dependency, htmltools::resolveDependencies()
+# keeps the higher version (10.0.0) and drops 6.2.2 wherever the two are resolved
+# together. It is injected in TWO places, both of which are required:
+#   * app_ui() head — supersedes the 6.2.2 that rHandsontableOutput() placeholders
+#     load into the page (this is what the browser actually runs); and
+#   * secureRHandsontable() — supersedes 6.2.2 in each rendered widget payload.
+handsontablePatchedDependency <- function() {
+  htmltools::htmlDependency(
+    name = "handsontable",
+    version = "10.0.0",
+    src = c(file = system.file("www", "handsontable-10.0.0", package = "stanpumpR")),
+    script = "handsontable.full.min.js",
+    stylesheet = "handsontable.full.min.css"
+  )
+}
+
 secureRHandsontable <- function(...) {
   hot <- rhandsontable::rhandsontable(...)
   licenseKey <- .sprglobals$config$handsontable_license_key
@@ -16,17 +35,13 @@ secureRHandsontable <- function(...) {
   }
   hot$x$licenseKey <- licenseKey
 
-  # rhandsontable 0.3.8 bundles Handsontable 6.2.2. Override that dependency
-  # with 10.0.0, the first release outside both vulnerable ranges identified
-  # during the security review (XSS < 8.2.0; CVE-2021-23446 < 10.0.0).
-  patchedDependency <- htmltools::htmlDependency(
-    name = "handsontable",
-    version = "10.0.0",
-    src = c(file = system.file("www", "handsontable-10.0.0", package = "stanpumpR")),
-    script = "handsontable.full.min.js",
-    stylesheet = "handsontable.full.min.css"
-  )
-  htmltools::attachDependencies(hot, patchedDependency, append = TRUE)
+  # Append to the widget's own `$dependencies` field, NOT via
+  # htmltools::attachDependencies(): htmlwidgets renders from `$dependencies`
+  # (and the package widget YAML) and ignores the object's `html_dependencies`
+  # attribute, so attachDependencies() silently leaves the vulnerable 6.2.2 in
+  # place.
+  hot$dependencies <- c(hot$dependencies, list(handsontablePatchedDependency()))
+  hot
 }
 
 addHotHooks <- function(hot, filterKeys = TRUE, sanitize = TRUE, ...) {
