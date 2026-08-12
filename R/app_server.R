@@ -16,12 +16,15 @@ app_server <- function(input, output, session) {
   observeEvent(input$debug_level, ignoreInit = TRUE, {
     session$userData$debug(input$debug_level)
   })
-  observe({
-    query <- parseQueryString(session$clientData$url_search)
-    if (!is.null(query[["debug"]])) {
-      session$userData$debug(as.numeric(query[["debug"]]))
-    }
-  })
+  if (isTRUE(config$allow_url_debug)) {
+    observe({
+      query <- parseQueryString(session$clientData$url_search)
+      requested <- suppressWarnings(as.numeric(query[["debug"]]))
+      if (length(requested) == 1L && is.finite(requested) && requested %in% c(DEBUG_LEVEL_OFF, DEBUG_LEVEL_NORMAL, DEBUG_LEVEL_VERBOSE)) {
+        session$userData$debug(requested)
+      }
+    })
+  }
 
   # Write out logs to the log section
   observeEvent(session$userData$debug(), {
@@ -187,17 +190,20 @@ app_server <- function(input, output, session) {
         "***************************************************************************",
         sep = ""
       )
-      DT <- as.data.frame(state$values$DT)
-      doseTable(DT)
-      outputComments("doseTable:")
-      outputComments(DT)
-      ET <- as.data.frame(state$values$ET)
+      DT <- as.data.frame(state$values$DT, stringsAsFactors = FALSE)
+      ET <- as.data.frame(state$values$ET, stringsAsFactors = FALSE)
       if (ncol(ET) == 0) {
         ET <- eventTableInit
       }
+      tryCatch({
+        validateDoseTableInput(DT, drugDefaults())
+        validateEventTableInput(ET, eventDefaults())
+      }, error = function(e) {
+        showModal(modalDialog(title = "Invalid saved simulation", "The saved simulation was rejected because it contains invalid or excessive data."))
+        stop("Rejected invalid bookmark state: ", conditionMessage(e), call. = FALSE)
+      })
+      doseTable(DT)
       eventTable(ET)
-      outputComments("eventTable:")
-      outputComments(ET)
     }, name = "onRestored()")
   })
 
@@ -320,6 +326,7 @@ app_server <- function(input, output, session) {
   })
   sex <- reactive({
     req(input$sex)
+    if (length(input$sex) != 1L || !input$sex %in% c("male", "female")) stop("Invalid sex value.")
     input$sex
   })
 
@@ -367,6 +374,7 @@ app_server <- function(input, output, session) {
   doseTableClean <- reactive({
     profileCode({
       outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
+      validateDoseTableInput(doseTable(), drugDefaults())
       DT <- cleanDT(doseTable())
       DT$Time <- clockTimeToDelta(referenceTime(), DT$Time)
       DT <- DT[
@@ -390,6 +398,7 @@ app_server <- function(input, output, session) {
   eventTableClean <- reactive({
     profileCode({
       outputComments("In eventTableClean", level = DEBUG_LEVEL_VERBOSE)
+      validateEventTableInput(eventTable(), eventDefaults())
       ET <- eventTable()
       if (length(ET$Time) > 0) {
         ET$Time <- as.character(ET$Time)
@@ -424,8 +433,12 @@ app_server <- function(input, output, session) {
     profileCode({
       req(doseTableClean())
 
-      plotMaximum <- as.numeric(input$maximum)
-      steps <- maxtimes$steps[maxtimes$times == input$maximum]
+      requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
+      if (length(requestedMaximum) != 1L || !is.finite(requestedMaximum) || !requestedMaximum %in% maxtimes$times) {
+        stop("Invalid maximum simulation time.")
+      }
+      plotMaximum <- requestedMaximum
+      steps <- maxtimes$steps[maxtimes$times == plotMaximum]
       maxTime <- max(as.numeric(doseTableClean()$Time),
                      as.numeric(eventTableClean()$Time),
                      na.rm = TRUE)
@@ -453,6 +466,14 @@ app_server <- function(input, output, session) {
 
   simulationPlotRetval <- reactive({
     req(input$plotWidth)
+    if (!is.numeric(input$plotWidth) || length(input$plotWidth) != 1L ||
+        !is.finite(input$plotWidth) || input$plotWidth < 200 || input$plotWidth > MAX_PLOT_WIDTH) {
+      stop("Invalid plot width.")
+    }
+    if (!is.numeric(input$yaxisHeight) || length(input$yaxisHeight) != 1L ||
+        !is.finite(input$yaxisHeight) || input$yaxisHeight < 100 || input$yaxisHeight > 500) {
+      stop("Invalid plot height.")
+    }
     profileCode({
       outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
       req(doseTableClean(), testCovariates(),
@@ -529,7 +550,11 @@ app_server <- function(input, output, session) {
   })
 
   observe({
-    shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
+    shinyjs::toggleState(
+      "sendSlide",
+      condition = isTRUE(config$email_enabled) &&
+        isEmailAllowed(input$recipient, config$email_allowed_domains)
+    )
   })
 
   # Send Slide -----------------------------
@@ -538,15 +563,25 @@ app_server <- function(input, output, session) {
     {
       outputComments("input$sendSlide",input$sendSlide)
 
+      if (!isTRUE(config$email_enabled)) {
+        shinyalert::shinyalert("Email disabled", "Email export is disabled for this deployment.", type = "error")
+        return()
+      }
+
       # Server-side guard: the send button's disabled state is enforced only in
       # the browser and can be bypassed by sending the event over the WebSocket,
       # so the recipient MUST be validated here before any mail is sent.
-      if (!isTRUE(isEmailValid(input$recipient))) {
+      if (!isEmailAllowed(input$recipient, config$email_allowed_domains)) {
         shinyalert::shinyalert(
           "Invalid email address",
-          "Please enter a valid recipient email address.",
+          "The recipient must use an approved email domain.",
           type = "error", closeOnClickOutside = TRUE
         )
+        return()
+      }
+
+      if (length(input$emailComments) != 1L || nchar(input$emailComments, type = "bytes") > MAX_INPUT_TEXT) {
+        shinyalert::shinyalert("Comments too long", "Email comments exceed the permitted length.", type = "error")
         return()
       }
 
@@ -588,7 +623,10 @@ app_server <- function(input, output, session) {
           drugs = drugs(),
           drugDefaults = drugDefaults(),
           email_username = config$email_username,
-          email_password = config$email_password
+          email_password = config$email_password,
+          smtp_host = config$email_smtp_host,
+          smtp_port = config$email_smtp_port,
+          smtp_ssl = config$email_smtp_ssl
         ) |> profileCode("sendSlide()")
       shinycssloaders::hidePageSpinner()
 
@@ -951,7 +989,7 @@ app_server <- function(input, output, session) {
         unlist()
       editPriorDosesTable$Delete <- FALSE
 
-      editPriorDosesTableHOT <- rhandsontable(
+      editPriorDosesTableHOT <- secureRHandsontable(
         editPriorDosesTable[ , c("Delete","Time","Dose","Units")],
         overflow = 'visible',
         rowHeaders = NULL,
@@ -1104,7 +1142,7 @@ app_server <- function(input, output, session) {
     if (hasEvents) {
       tempTable <- tempTable[,c("Time", "Event")]
       tempTable$Delete <- FALSE
-      tempTableHOT <- rhandsontable(
+      tempTableHOT <- secureRHandsontable(
         tempTable[,c("Delete","Time","Event")],
         overflow = 'visible',
         rowHeaders = NULL,
@@ -1226,7 +1264,7 @@ app_server <- function(input, output, session) {
           Time = rep("",6),
           Target = rep("", 6)
         )
-        targetHOT <- rhandsontable(
+        targetHOT <- secureRHandsontable(
           targetTable,
           overflow = 'visible',
           rowHeaders = NULL,
@@ -1319,6 +1357,7 @@ app_server <- function(input, output, session) {
           return()
         }
         targetTable <- hot_to_r(input$targetTableHTML)
+        validateTargetTableInput(targetTable)
 
         tryCatchLog({
 
@@ -1390,7 +1429,7 @@ app_server <- function(input, output, session) {
       x$Units <- drugUnitsSimplify(x$Units)
       # endCe is managed via the Drug Thresholds modal
       x <- x[, !names(x) %in% "endCe"]
-      drugsHOT <- rhandsontable(
+      drugsHOT <- secureRHandsontable(
         x,
         overflow = 'visible',
         rowHeaders = NULL,
@@ -1504,7 +1543,7 @@ app_server <- function(input, output, session) {
     drugThresholdsTrigger$depend()
     x <- drugDefaults()[, c("Drug", "endCe")]
     names(x)[2] <- "Threshold"
-    rhandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
+    secureRHandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
       hot_col(col = 1, halign = "htLeft", readOnly = TRUE) %>%
       hot_col(col = 2, halign = "htRight", type = "numeric") %>%
       hot_table(contextMenu = FALSE)

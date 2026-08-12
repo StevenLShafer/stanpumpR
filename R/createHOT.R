@@ -1,7 +1,7 @@
 createHOT <- function(doseTable,drugDefaults)
 {
   rownames(doseTable) <- 1:nrow(doseTable)
-  HOT <- rhandsontable::rhandsontable(
+  HOT <- secureRHandsontable(
     doseTable,
     `overflow-y` = 'scroll',
     rowHeaders = NULL,

@@ -124,8 +124,8 @@ Gaussian absorption model; not exported or wired into the engine (see its proven
 - **Suggest Dosing** (`suggest.R`) — optimizes bolus + infusion to reach/hold a target concentration.
 - **Email a slide** (`sendSlide.R`) — branded PPTX of the current simulation plus a URL that reconstructs the state.
 - **Editors & modals** — in-app Drug Library and Drug Thresholds editors; click-to-add-dose / double-click-to-edit from plot coordinates.
-- **URL bookmarking** — `enableBookmarking = "url"`; `bookmarksToExclude` keeps transient UI state out of the link.
-- **Debug & profiler** — `?debug=1` reveals a live log (`outputComments`) and a per-reactive profiler (`profileCode`).
+- **Saved simulations** — opaque server-side bookmarking is the secure default; URL-embedded state remains available only as an explicit non-clinical configuration choice. `bookmarksToExclude` keeps transient UI state out of saved state.
+- **Debug & profiler** — the live log (`outputComments`) and per-reactive profiler (`profileCode`) are disabled in production. URL activation requires the explicit `allow_url_debug` configuration flag.
 - **Front-end assets** — `inst/www/`: `app.css`, `app.js`, `hot_funs.js` (Handsontable hooks, drug-default injection).
 - **Reproducibility** — `renv.lock` pins package versions; deps declared in `DESCRIPTION`.
 - **Tests / CI** — ~40 files in `tests/testthat/` (one per drug plus PK, plotting, helper suites); R-CMD-check via GitHub Actions.

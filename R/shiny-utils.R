@@ -8,6 +8,27 @@ inlineUI <- function(tag) {
 
 nbsp <- shiny::HTML("&nbsp;", .noWS = "outside")
 
+secureRHandsontable <- function(...) {
+  hot <- rhandsontable::rhandsontable(...)
+  licenseKey <- .sprglobals$config$handsontable_license_key
+  if (is.null(licenseKey) || length(licenseKey) != 1L || !nzchar(licenseKey)) {
+    licenseKey <- DEFAULT_CONFIG$handsontable_license_key
+  }
+  hot$x$licenseKey <- licenseKey
+
+  # rhandsontable 0.3.8 bundles Handsontable 6.2.2. Override that dependency
+  # with 10.0.0, the first release outside both vulnerable ranges identified
+  # during the security review (XSS < 8.2.0; CVE-2021-23446 < 10.0.0).
+  patchedDependency <- htmltools::htmlDependency(
+    name = "handsontable",
+    version = "10.0.0",
+    src = c(file = system.file("www", "handsontable-10.0.0", package = "stanpumpR")),
+    script = "handsontable.full.min.js",
+    stylesheet = "handsontable.full.min.css"
+  )
+  htmltools::attachDependencies(hot, patchedDependency, append = TRUE)
+}
+
 addHotHooks <- function(hot, filterKeys = TRUE, sanitize = TRUE, ...) {
   hooks <- list(...)
 

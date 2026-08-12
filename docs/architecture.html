@@ -391,7 +391,7 @@
         <div class="reactives">
           <span class="chip">output$PlotSimulation</span>
           <span class="chip">output$hover_info</span>
-          <span class="chip">URL bookmarking</span>
+          <span class="chip">Opaque saved-state links</span>
         </div>
       </div>
 
@@ -561,7 +561,7 @@
         <div class="layer-head"><span class="tag">Shell</span><h3>App bootstrap &amp; framework</h3><span class="role">entry + wiring</span></div>
         <div class="layer-body">
           <div class="frow"><span class="fname">app.R</span><span class="fdesc">One line: <code>stanpumpR::run_app()</code> — the deploy entry point.</span></div>
-          <div class="frow"><span class="fname">app_run.R</span><span class="fdesc">Loads libraries, merges <code>config.yml</code> with defaults, sets the ggplot theme, mounts assets, launches <code>shinyApp()</code> with URL bookmarking.</span></div>
+          <div class="frow"><span class="fname">app_run.R</span><span class="fdesc">Loads libraries, merges <code>config.yml</code> with defaults, sets the ggplot theme, mounts assets, and launches <code>shinyApp()</code> with configurable secure bookmarking.</span></div>
           <div class="frow"><span class="fname">app_ui.R</span><span class="fdesc">The entire bslib UI — navbar, sidebar accordions, dose/event grids, plot card, debug panel.</span></div>
           <div class="frow"><span class="fname">app_server.R</span><span class="fdesc">The 46 KB reactive heart — every reactive, observer, output, and modal.</span></div>
           <div class="frow"><span class="fname">app_globals.R</span><span class="fdesc">Initial tables, bookmark exclusion list, and the <span class="fn">outputComments()</span> logger.</span></div>
@@ -644,14 +644,14 @@
       </div>
       <div class="card">
         <span class="k">state</span>
-        <h3>URL bookmarking</h3>
-        <p>Shiny <code>enableBookmarking="url"</code> encodes inputs into a shareable link; <code>bookmarksToExclude</code> keeps transient UI state out.</p>
+        <h3>Saved simulations</h3>
+        <p>Opaque server-side bookmark IDs are the secure default; URL-embedded state is an explicit non-clinical option. <code>bookmarksToExclude</code> keeps transient UI state out.</p>
         <div class="files"><span class="file">app_globals.R</span></div>
       </div>
       <div class="card">
         <span class="k">observability</span>
         <h3>Debug &amp; profiler</h3>
-        <p><code>&amp;debug=1</code> reveals a live log (<span class="fn">outputComments</span>) and a per-reactive profiler (<span class="fn">profileCode</span>).</p>
+        <p>The live log (<span class="fn">outputComments</span>) and per-reactive profiler (<span class="fn">profileCode</span>) are disabled in production. URL activation requires the explicit <code>allow_url_debug</code> configuration flag.</p>
         <div class="files"><span class="file">app_globals.R</span><span class="file">app_server.R</span></div>
       </div>
       <div class="card">

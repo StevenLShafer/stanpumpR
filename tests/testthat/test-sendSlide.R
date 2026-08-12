@@ -19,3 +19,15 @@ test_that("it generates the email body", {
   expect_match(bodyText, "file from <a href=\"http://example.com\">stanpumpR</a>")
   expect_match(bodyText, "Thank you for using stanpumpR")
 })
+
+test_that("email comments and bookmark attributes are escaped", {
+  values <- list(age = 50, ageUnit = 1, weight = 70, weightUnit = 1,
+                 height = 170, heightUnit = 1, sex = "<script>")
+  body <- generateBodyText(
+    "doctor@hospital.example", values, "years", "kg", "cm",
+    "https://example.test/state?id=&quot;bad", "<img src=x onerror=alert(1)>"
+  )
+  expect_false(grepl("<script>|<img", body))
+  expect_match(body, "&lt;script&gt;")
+  expect_match(body, "&lt;img")
+})

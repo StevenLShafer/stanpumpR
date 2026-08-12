@@ -4,6 +4,10 @@
 # Workflow borrows from https://github.com/r-lib/actions/tree/v2/examples
 name: Shiny PR 2 Deploy
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   pull_request_target:
     types: [labeled, synchronize]
@@ -30,22 +34,24 @@ jobs:
     environment:
       name: pr-preview
     env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
+      # Preview credentials must belong to an isolated account that cannot read,
+      # modify, or deploy production applications.
+      SHINY_APP_NAME: ${{ vars.PR_SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           # This job only runs for fork PRs that a maintainer has explicitly
           # labeled DEPLOY (see the `if:` above), not arbitrary forks
           allow-unsafe-pr-checkout: true
+          persist-credentials: false
 
       - name: Setup pandoc
-        uses: r-lib/actions/setup-pandoc@v2
+        uses: r-lib/actions/setup-pandoc@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
 
       - name: Setup R
-        uses: r-lib/actions/setup-r@v2
+        uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
         with:
           r-version: 'renv'
           use-public-rspm: true
@@ -57,7 +63,7 @@ jobs:
         # has no prebuilt binary. Mirrors the R-CMD-check workflow's system deps.
         run: sudo apt-get update && sudo apt-get install -y cmake default-jdk libcairo2-dev libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libgit2-dev libpng-dev libx11-dev
 
-      - uses: r-lib/actions/setup-renv@v2
+      - uses: r-lib/actions/setup-renv@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
 
       - name: Install stanpumpR from GitHub
         run: |
@@ -79,26 +85,25 @@ jobs:
             default = list(
               title = paste("PR #${{ github.event.pull_request.number }}:", Sys.getenv("PR_TITLE")),
               long_title = TRUE,
-              email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
-              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
+              email_enabled = FALSE,
               debug = 1
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
-          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
+          rsconnect::setAccountInfo("${{ vars.PR_SHINY_ACCOUNT }}", "${{ secrets.PR_SHINY_TOKEN }}", "${{ secrets.PR_SHINY_SECRET }}")
           rsconnect::deployApp(
-            appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}",
+            appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.PR_SHINY_ACCOUNT }}",
             appDir = ".", appFiles = c("app.R", "config.yml"), forceUpdate = TRUE
           )
         shell: Rscript {0}
 
       - name: Comment PR with deployment URL
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `**Preview Deployment**\n\nThis PR has been deployed to: https://${{ vars.SHINY_ACCOUNT }}.shinyapps.io/${{ env.SHINY_APP_NAME }}/\n\n_This deployment will be automatically cleaned up when the PR is closed._`
+              body: `**Preview Deployment**\n\nThis PR has been deployed to: https://${{ vars.PR_SHINY_ACCOUNT }}.shinyapps.io/${{ env.SHINY_APP_NAME }}/\n\n_This deployment will be automatically cleaned up when the PR is closed._`
             })

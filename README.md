@@ -39,7 +39,7 @@ Requires R 4.6.x (developed and deployed on 4.6.1). CI exercises the current rel
     devtools::load_all(".")
     run_app()
     ```
-6. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `&debug=1` to the URL.
+6. Debug mode shows a detailed log and a performance profiler. It is off in production, and URL activation is disabled unless an administrator explicitly sets `allow_url_debug: true`.
 
 #### Running tests
 

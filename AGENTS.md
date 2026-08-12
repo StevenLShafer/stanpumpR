@@ -64,3 +64,8 @@ renv::restore()           # Restore pinned R package dependencies from renv.lock
 - Created `GEMINI.md` and `AGENTS.md` to establish cross-machine context and workflow guidelines for Antigravity.
 - Verified workspace setup and reviewed core architecture (`docs/architecture.md`, `CLAUDE.md`, `DESCRIPTION`).
 - Updated `.Rbuildignore` to ignore agent markdown files during `R CMD check`.
+- Created `codex/security-hardening` from `master` after a clinical-environment security review.
+- Added server-side input and bookmark validation, secure server bookmarks, production debug restrictions, and bounded simulation inputs.
+- Disabled email by default, added recipient-domain and SMTP configuration, and moved exports into private per-send temporary directories with guaranteed cleanup.
+- Overrode rhandsontable's vulnerable Handsontable 6.2.2 assets with 10.0.0 and documented its separate hospital/commercial licensing requirement.
+- Pinned GitHub Actions, pinned production deployment to the triggering commit, and isolated preview deployment credentials from production.

@@ -28,6 +28,15 @@ RESOLUTION <- 100
 # shared sending account (the app is unauthenticated and public).
 EMAIL_SESSION_LIMIT <- 25
 
+# Server-side security limits. Browser controls are not a security boundary:
+# every value can be forged over the Shiny websocket or through a bookmark.
+MAX_DOSE_ROWS <- 500L
+MAX_EVENT_ROWS <- 100L
+MAX_TARGET_ROWS <- 20L
+MAX_DOSE_VALUE <- 1e9
+MAX_INPUT_TEXT <- 2000L
+MAX_PLOT_WIDTH <- 4096
+
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")
@@ -59,5 +68,13 @@ DEFAULT_CONFIG <- list(
   title = "stanpumpR",
   help_link = "https://steveshafer.shinyapps.io/stanpumpR_HelpPage",
   debug = DEBUG_LEVEL_OFF,
+  allow_url_debug = FALSE,
+  bookmark_mode = "server",
+  email_enabled = FALSE,
+  email_allowed_domains = character(0),
+  email_smtp_host = "smtp.gmail.com",
+  email_smtp_port = 587,
+  email_smtp_ssl = TRUE,
+  handsontable_license_key = "non-commercial-and-evaluation",
   long_title = FALSE
 )

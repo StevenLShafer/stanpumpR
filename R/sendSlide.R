@@ -11,7 +11,10 @@ sendSlide <- function(
   drugs,
   drugDefaults,
   email_username,
-  email_password
+  email_password,
+  smtp_host = "smtp.gmail.com",
+  smtp_port = 587,
+  smtp_ssl = TRUE
 )
 {
   tryCatchLog::tryCatchLog({
@@ -27,7 +30,14 @@ sendSlide <- function(
       stop("email password missing")
     }
 
-    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults)
+    outputDir <- tempfile(pattern = "stanpumpr-email-")
+    dir.create(outputDir, mode = "0700")
+    on.exit(unlink(outputDir, recursive = TRUE, force = TRUE), add = TRUE)
+
+    emailData <- generateEmail(
+      values, recipient, plotObject, allResults, plotResults, height, width,
+      slide, drugs, drugDefaults, outputDir = outputDir
+    )
 
     outputComments("Sending email")
     email <- mailR::send.mail(
@@ -37,11 +47,11 @@ sendSlide <- function(
       body = emailData$bodyText,
       html = TRUE,
       smtp = list(
-        host.name = "smtp.gmail.com",
-        port = 587,
+        host.name = smtp_host,
+        port = smtp_port,
         user.name = email_username,
         passwd = email_password,
-        ssl = TRUE),
+        ssl = smtp_ssl),
       attach.files = c(
         emailData$pptxfileName,
         emailData$pngfileName,
@@ -49,9 +59,6 @@ sendSlide <- function(
       ),
       authenticate = TRUE
     )
-    unlink(emailData$pptxfileName)
-    unlink(emailData$pngfileName)
-    unlink(emailData$xlsxfileName)
     outputComments("Leaving sendMail()")
     return(TRUE)
   }, error = function(e) {
@@ -59,15 +66,17 @@ sendSlide <- function(
   })
 }
 
-generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults) {
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults,
+                          outputDir) {
   title <- paste("stanpumpR simulation on", format(Sys.time()))
   DT <- values$DT
   url <- values$url
 
   outputComments("In function sendSlide()")
 
-  if (!file.exists("Slides")) dir.create("Slides")
-  TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
+  if (missing(outputDir) || !is.character(outputDir) || length(outputDir) != 1L || !dir.exists(outputDir)) {
+    stop("A private export directory must be supplied.")
+  }
   DATE <- format(Sys.Date(), "%m/%d/%y")
   outputComments("reading Template.pptx")
   PPTX <- officer::read_pptx(system.file("extdata", "Template.pptx", package = "stanpumpR"))
@@ -81,16 +90,16 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location_type ("dt"))
   PPTX <- officer::ph_with(PPTX, slide, location = officer::ph_location_type ("sldNum"))
   PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location_type ("ftr"))
-  pptxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".pptx")
+  pptxfileName <- file.path(outputDir, "stanpumpR-simulation.pptx")
 
   outputComments("Saving PPTX")
   print(PPTX, target = pptxfileName)
 
-  xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
+  xlsxfileName <- file.path(outputDir, "stanpumpR-simulation.xlsx")
 
   outputComments("Creating PNG file")
 
-  pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
+  pngfileName <- file.path(outputDir, "stanpumpR-preview.png")
   ggplot2::ggsave(
     plotObject +
       ggplot2::theme(
