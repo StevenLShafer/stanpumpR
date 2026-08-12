@@ -32,8 +32,16 @@ are in `connect-cloud-deployment.md`.
   attachments, header injection, and sanitized failures.
 - Changed R/test files parse, `renv.lock` is valid JSON, dependency declarations agree, and
   `git diff --check` passes.
-- The complete updated `devtools::test()` suite and live Connect Cloud acceptance test remain
-  required before release. Generate and commit `manifest.json` from the exact GitHub revision.
+- The full `devtools::test()` suite passes on the working tree (77 tests, 0 failures).
+- The Handsontable 10.0.0 upgrade was runtime-verified in a running app: the browser reports
+  `window.Handsontable.version === "10.0.0"` and loads only the 10.0.0 assets. An earlier
+  implementation was ineffective — it attached the override via
+  `htmltools::attachDependencies()` (ignored by htmlwidgets) and did not supersede the 6.2.2
+  pulled in by `rHandsontableOutput()` placeholders, so the app kept serving the vulnerable
+  6.2.2. The dependency is now appended to the widget's `$dependencies` field and injected into
+  the `app_ui()` head; `test-shiny-utils.R` guards both resolution paths.
+- The live Connect Cloud acceptance test remains required before release. Generate and commit
+  `manifest.json` from the exact GitHub revision.
 
 ## Residual risks and decisions
 
