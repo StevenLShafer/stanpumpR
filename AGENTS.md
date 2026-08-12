@@ -69,3 +69,4 @@ renv::restore()           # Restore pinned R package dependencies from renv.lock
 - Disabled email by default, added recipient-domain and SMTP configuration, and moved exports into private per-send temporary directories with guaranteed cleanup.
 - Overrode rhandsontable's vulnerable Handsontable 6.2.2 assets with 10.0.0 and documented its separate hospital/commercial licensing requirement.
 - Pinned GitHub Actions, pinned production deployment to the triggering commit, and isolated preview deployment credentials from production.
+- Security hardening committed on `codex/security-hardening` as `93f902a` (`Harden clinical deployment security`); 102 tests pass and all workflow YAML files parse.
