@@ -7,6 +7,7 @@ UNIT_INCH <- 2.54
 
 MIN_AGE <- 0
 MAX_AGE <- 110
+DEIDENTIFIED_MAX_AGE <- 89
 MIN_WEIGHT <- 0.1
 MAX_WEIGHT <- 500
 MIN_HEIGHT <- 10
@@ -71,7 +72,6 @@ DEFAULT_CONFIG <- list(
   allow_url_debug = FALSE,
   bookmark_mode = "server",
   email_enabled = FALSE,
-  email_allowed_domains = character(0),
   email_smtp_host = "smtp.gmail.com",
   email_smtp_port = 587,
   email_smtp_ssl = TRUE,

@@ -121,10 +121,16 @@ validateTargetTableInput <- function(targetTable) {
   invisible(TRUE)
 }
 
-isEmailAllowed <- function(email, allowedDomains) {
-  if (!isTRUE(isEmailValid(email)) || length(allowedDomains) == 0L) return(FALSE)
-  domain <- tolower(sub("^[^@]+@", "", email))
-  domain %in% tolower(trimws(allowedDomains))
+normalizeSimulationAge <- function(age) {
+  if (!is.numeric(age) || length(age) != 1L || is.na(age) || !is.finite(age)) {
+    stop("Age must be a single finite number.")
+  }
+  min(age, DEIDENTIFIED_MAX_AGE)
+}
+
+isEmailRecipientValid <- function(email) {
+  is.character(email) && length(email) == 1L && !is.na(email) &&
+    nchar(email, type = "bytes") <= 254L && isTRUE(isEmailValid(email))
 }
 
 recalculatePK <- function(drugs, drugDefaults, doseTable,

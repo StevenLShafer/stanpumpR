@@ -39,11 +39,18 @@ test_that("event tables reject unknown and excessive input", {
   expect_error(validateEventTableInput(invalid, defaults), "unknown event")
 })
 
-test_that("email recipients must belong to an explicit allowlist", {
-  expect_true(isEmailAllowed("doctor@hospital.example", "hospital.example"))
-  expect_false(isEmailAllowed("doctor@outside.example", "hospital.example"))
-  expect_false(isEmailAllowed("doctor@hospital.example", character(0)))
-  expect_false(isEmailAllowed("not-an-email", "hospital.example"))
+test_that("simulation ages 90 and older are normalized to 89", {
+  expect_equal(normalizeSimulationAge(89), 89)
+  expect_equal(normalizeSimulationAge(90), 89)
+  expect_equal(normalizeSimulationAge(105), 89)
+  expect_error(normalizeSimulationAge(NA_real_), "finite")
+})
+
+test_that("email recipients may use any valid domain", {
+  expect_true(isEmailRecipientValid("doctor@hospital.example"))
+  expect_true(isEmailRecipientValid("clinician@gmail.com"))
+  expect_false(isEmailRecipientValid("not-an-email"))
+  expect_false(isEmailRecipientValid(c("one@example.com", "two@example.com")))
 })
 
 test_that("target tables are bounded and numeric", {

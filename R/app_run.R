@@ -23,8 +23,29 @@ run_app <- function(config_file = "config.yml") {
 
   options(warn = 1)
 
-  config <- config::get(file = config_file)
+  config <- if (file.exists(config_file)) config::get(file = config_file) else list()
   config <- c(config, DEFAULT_CONFIG[!names(DEFAULT_CONFIG) %in% names(config)])
+  # Credentials must come from the process environment, not config.yml. An
+  # empty environment variable intentionally does not fall back to plaintext
+  # configuration, preventing accidental secret deployment in an app bundle.
+  config$email_username <- Sys.getenv("STANPUMPR_EMAIL_USERNAME", unset = "")
+  config$email_password <- Sys.getenv("STANPUMPR_EMAIL_PASSWORD", unset = "")
+  envFlag <- function(name, fallback) {
+    value <- Sys.getenv(name, unset = "")
+    if (!nzchar(value)) return(fallback)
+    normalized <- tolower(trimws(value))
+    if (!normalized %in% c("true", "false")) stop(name, " must be true or false")
+    identical(normalized, "true")
+  }
+  envText <- function(name, fallback) {
+    value <- Sys.getenv(name, unset = "")
+    if (nzchar(value)) value else fallback
+  }
+  envPort <- Sys.getenv("STANPUMPR_EMAIL_SMTP_PORT", unset = "")
+  config$email_enabled <- envFlag("STANPUMPR_EMAIL_ENABLED", config$email_enabled)
+  config$email_smtp_ssl <- envFlag("STANPUMPR_EMAIL_SMTP_SSL", config$email_smtp_ssl)
+  config$email_smtp_host <- envText("STANPUMPR_EMAIL_SMTP_HOST", config$email_smtp_host)
+  if (nzchar(envPort)) config$email_smtp_port <- suppressWarnings(as.numeric(envPort))
   scalarFlag <- function(value, name) {
     if (!is.logical(value) || length(value) != 1L || is.na(value)) {
       stop(name, " must be true or false")
@@ -55,10 +76,8 @@ run_app <- function(config_file = "config.yml") {
     }, logical(1))]
     invalidPort <- !is.numeric(config$email_smtp_port) || length(config$email_smtp_port) != 1L ||
       !is.finite(config$email_smtp_port) || config$email_smtp_port < 1 || config$email_smtp_port > 65535
-    invalidDomains <- !is.character(config$email_allowed_domains) || length(config$email_allowed_domains) == 0L ||
-      anyNA(config$email_allowed_domains) || any(!grepl("^[A-Za-z0-9.-]+$", config$email_allowed_domains))
-    if (length(missingEmailConfig) > 0L || invalidPort || invalidDomains) {
-      stop("Email is enabled but its credentials, SMTP host, or recipient-domain allowlist is incomplete.")
+    if (length(missingEmailConfig) > 0L || invalidPort) {
+      stop("Email is enabled but its credentials or SMTP configuration is incomplete.")
     }
   }
   .sprglobals$config <- config

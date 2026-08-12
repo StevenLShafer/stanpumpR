@@ -58,6 +58,7 @@ bookmarksToExclude <- c(
   "sendSlide",
   "recipient",
   "emailComments",
+  "age",
   "drugEditsOK",
   "editDrugsHTML",
   "editDrugs",

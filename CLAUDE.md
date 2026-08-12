@@ -4,6 +4,27 @@ Orientation for Claude Code working in this repo. Human-facing docs live in
 [`docs/architecture.html`](docs/architecture.html) (visual map) and
 [`docs/architecture.md`](docs/architecture.md).
 
+## Security/privacy audit handoff
+
+The active work is on `codex/security-hardening`. Review the working tree, not only commit
+`93f902a`; later email, PHI, and Connect Cloud changes are currently uncommitted.
+
+Read these first, then verify them independently:
+
+- `docs/security-hardening-changelog.md` — change and verification inventory.
+- `docs/privacy-and-phi.md` — data-flow assessment and residual PHI paths.
+- `docs/security-deployment.md` — secure defaults and external controls.
+- `docs/connect-cloud-deployment.md` — manifest, variables, and acceptance procedure.
+- `AGENTS.md` — chronological work log and repository rules.
+
+Audit server-side input validation; bookmark exclusions and restoration; age normalization;
+free-text and recipient PHI risks; SMTP TLS/MIME/header injection; temporary-file cleanup; secret,
+log, and deployment exclusions; dependency consistency; pinned workflows; and startup without
+`config.yml`. Confirm that the Connect Cloud manifest records the exact GitHub revision.
+
+Known incomplete verification: the updated full `devtools::test()` suite and live Connect Cloud
+acceptance test have not yet been completed, and `manifest.json` has not yet been generated.
+
 ## What this is
 
 stanpumpR is a Shiny web app that simulates plasma and effect-site concentrations of
@@ -18,11 +39,12 @@ re-render fast.
 
 ```r
 devtools::load_all(".")
-run_app()          # add ?debug=1 to the URL for the live log + profiler
+run_app()          # URL debug is disabled unless explicitly allowed in local configuration
 devtools::test()   # testthat suite
 ```
 
-Requires a `config.yml` (copy from `config.yml.sample`). Package versions are pinned with
+`config.yml` is optional; secure built-in defaults apply when absent. SMTP credentials are read
+only from `STANPUMPR_EMAIL_*` environment variables. Package versions are pinned with
 **renv** — after pulling `renv.lock` changes run `renv::restore()`.
 
 Developed and deployed on **R 4.6.1** with current CRAN package versions (all CRAN, no GitHub

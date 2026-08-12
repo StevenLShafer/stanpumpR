@@ -1,6 +1,7 @@
 .DS_Store
 
 config.yml
+shiny_bookmarks/
 /ignore
 /Slides
 /rsconnect
@@ -15,6 +16,9 @@ config.yml
 
 # User-specific files
 .Ruserdata
+.Renviron
+.Renviron.*
+!.Renviron.example
 
 # Default R plot output
 Rplots.pdf

@@ -64,7 +64,7 @@ app_ui <- function() {
               open = FALSE,
 
               bslib::accordion_panel(
-                "Patient Profile",
+                "Simulation Profile",
                 icon = icon("user-injured"),
 
                 numericInput(
@@ -215,15 +215,23 @@ app_ui <- function() {
                 )
               ),
 
-              if (isTRUE(config$email_enabled)) {
-                bslib::accordion_panel(
-                  "Email Slide",
-                  icon = icon("envelope"),
-                  textInput("recipient", NULL, "", placeholder = "Enter approved email address"),
-                  textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
-                  actionButton("sendSlide", "Send", class = "btn-primary")
-                )
-              }
+              bslib::accordion_panel(
+                "Email Simulation",
+                icon = icon("envelope"),
+                if (!isTRUE(config$email_enabled)) {
+                  div(
+                    class = "alert alert-secondary py-2 small",
+                    "Email sending is not configured for this deployment."
+                  )
+                },
+                textInput("recipient", NULL, "", placeholder = "Enter recipient email address"),
+                textAreaInput(
+                  "emailComments", NULL, "",
+                  placeholder = "Do not enter any protected health information (PHI).",
+                  rows = 3
+                ),
+                actionButton("sendSlide", "Send Simulation", class = "btn-primary")
+              )
             ),
 
             actionButton("setTarget", "Suggest Dosing", class = "btn-outline-primary", icon = icon("fas fa-prescription")),
@@ -237,6 +245,10 @@ app_ui <- function() {
             bslib::card(
               id = "plotContainer",
               class = "overflow-hidden",
+              bslib::card_header(
+                icon("chart-line"),
+                "Simulation — not a patient record"
+              ),
               plotOutput(
                 outputId = "PlotSimulation",
                 width = "100%",

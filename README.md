@@ -18,6 +18,13 @@ It is hoped that stanpumpR will encourage device manufacturers to develop the ne
 
 stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encourage to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible.
 
+Security, privacy, and deployment documentation:
+
+- [Security deployment baseline](docs/security-deployment.md)
+- [Privacy and PHI assessment](docs/privacy-and-phi.md)
+- [Security hardening implementation record](docs/security-hardening-changelog.md)
+- [Posit Connect Cloud deployment](docs/connect-cloud-deployment.md)
+
 Near-term future developments in stanpumpR will include
 
 1. Oral opioids. StanpumpR is programmed for PO, IM, and IN delivery. Need to get good PK for the opioids. Note that only first order absorption pk is currently supported.

@@ -113,7 +113,7 @@ Gaussian absorption model; not exported or wired into the engine (see its proven
 
 **Output — plot, dosing advisor & export**
 `simulationPlot.R`, `setLinetypes.R`, `suggest.R` (target-controlled dosing optimizer),
-`sendSlide.R` (renders an `officer` PPTX from `Template.pptx`, emails via `mailR`).
+`sendSlide.R` (renders an `officer` PPTX from `Template.pptx`, emails via curl SMTP).
 
 **Util — time & misc**
 `clockTimeToDelta.R`, `deltaToClockTime.R`, `hourMinute.R`, `utils.R`,

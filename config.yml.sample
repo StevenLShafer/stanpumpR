@@ -4,15 +4,15 @@ default:
   # use "disable" to turn sharing off entirely. Never use "url" for clinical data.
   bookmark_mode: "server"
   allow_url_debug: false
+  # May be overridden by STANPUMPR_EMAIL_ENABLED in managed deployments.
   email_enabled: false
-  email_allowed_domains: ["stanfordhealthcare.org"]
   email_smtp_host: "smtp.gmail.com"
   email_smtp_port: 587
   email_smtp_ssl: true
   # Hospitals and other commercial users must supply a valid Handsontable key.
   # See inst/www/handsontable-10.0.0/LICENSE.txt.
   handsontable_license_key: "non-commercial-and-evaluation"
-  email_username: "<gmail username>"
-  email_password: "<gmail password>"
+  # Credentials and optional SMTP overrides use STANPUMPR_EMAIL_* environment
+  # variables. Never put credentials in this file.
   help_link: "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
   debug: 0   # 0 = off, 1 = normal, 2 = verbose
