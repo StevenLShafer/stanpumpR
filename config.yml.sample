@@ -3,4 +3,5 @@ default:
   email_username: "<gmail username>"
   email_password: "<gmail password>"
   help_link: "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
+  source_link: "https://github.com/StevenLShafer/stanpumpR"
   debug: 2   # 0 = off, 1 = normal, 2 = verbose

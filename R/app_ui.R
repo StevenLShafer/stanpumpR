@@ -327,6 +327,16 @@ app_ui <- function() {
           href = config$help_link,
           target = "_blank"
         )
+      ),
+      bslib::nav_item(
+        tags$a(
+          # Font Awesome "brands" GitHub mark; links to the app's own source.
+          icon("github"),
+          "Source",
+          href = config$source_link,
+          target = "_blank",
+          rel = "noopener noreferrer"
+        )
       )
     )
   }
