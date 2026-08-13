@@ -29,16 +29,20 @@ flowchart TD
     A["<b>01 Inputs</b> — app_ui.R<br/>covariates · dose grid · events · graph options · plot clicks"]
     B["<b>02 Normalize & validate</b> — server-helpers.R<br/>doseTableClean() · eventTableClean() · testCovariates()"]
     C["<b>03 Resolve PK</b> — getDrugPK.R<br/>recalculatePK(): covariates → coefficients, per drug"]
-    D["<b>04 Simulate</b> — simCpCe.R<br/>processdoseTable(): re-simulate only changed drugs"]
+    D["<b>04 Simulate</b> — simCpCe.R<br/>processdoseTable(): simulate each drug in the table"]
     E["<b>05 Assemble plot</b> — simulationPlot.R<br/>build ggplot + allResults / plotResults"]
     F["<b>06 Render & interact</b> — app_server.R<br/>PlotSimulation · hover · click-to-dose · Suggest · email"]
     A --> B --> C --> D --> E --> F
     C -. "drugs() reactive" .- D
 ```
 
-Both `recalculatePK()` and `processdoseTable()` mutate a persistent per-drug list and **skip
-any drug whose inputs are unchanged**. Combined with closed-form solutions (no integration), a
-single dose edit re-simulates just the one drug it touched.
+`recalculatePK()` and `processdoseTable()` build up a per-drug list that `drugs()` threads from
+one into the next. `drugs()` is a plain `reactive()` that starts each run with `newDrugs <- NULL`,
+so the list is rebuilt from scratch on every invalidation — it is **not** cached across renders,
+and every drug is fully recomputed (PK + simulation) on any input change. `processdoseTable()` does
+contain a per-drug diff, but it is currently inert (`recalculatePK()` clears each drug's `$DT`
+right before it runs, so the diff always fires). What keeps this fast is the closed-form solution
+(no numeric integration), not incremental skipping.
 
 ### Key reactives (in `app_server.R`)
 
@@ -113,7 +117,7 @@ Gaussian absorption model; not exported or wired into the engine (see its proven
 
 **Output — plot, dosing advisor & export**
 `simulationPlot.R`, `setLinetypes.R`, `suggest.R` (target-controlled dosing optimizer),
-`sendSlide.R` (renders an `officer` PPTX from `Template.pptx`, emails via `mailR`).
+`sendSlide.R` (renders an `officer` PPTX from `Template.pptx`, emails via curl SMTP).
 
 **Util — time & misc**
 `clockTimeToDelta.R`, `deltaToClockTime.R`, `hourMinute.R`, `utils.R`,
@@ -124,8 +128,8 @@ Gaussian absorption model; not exported or wired into the engine (see its proven
 - **Suggest Dosing** (`suggest.R`) — optimizes bolus + infusion to reach/hold a target concentration.
 - **Email a slide** (`sendSlide.R`) — branded PPTX of the current simulation plus a URL that reconstructs the state.
 - **Editors & modals** — in-app Drug Library and Drug Thresholds editors; click-to-add-dose / double-click-to-edit from plot coordinates.
-- **URL bookmarking** — `enableBookmarking = "url"`; `bookmarksToExclude` keeps transient UI state out of the link.
-- **Debug & profiler** — `?debug=1` reveals a live log (`outputComments`) and a per-reactive profiler (`profileCode`).
+- **Saved simulations** — URL bookmarking is the default so saved state is a shareable link that works on hosts without server-side storage (e.g. shinyapps.io); opaque server-side bookmarking is available where the host supports it (e.g. Posit Connect Cloud). The URL carries no confidential data (`bookmarksToExclude` drops recipient/comments/exact age and transient UI state; ages 90+ are normalized), and restored state is decoded as JSON and re-validated server-side.
+- **Debug & profiler** — the live log (`outputComments`) and per-reactive profiler (`profileCode`) are disabled in production. URL activation requires the explicit `allow_url_debug` configuration flag.
 - **Front-end assets** — `inst/www/`: `app.css`, `app.js`, `hot_funs.js` (Handsontable hooks, drug-default injection).
 - **Reproducibility** — `renv.lock` pins package versions; deps declared in `DESCRIPTION`.
 - **Tests / CI** — ~40 files in `tests/testthat/` (one per drug plus PK, plotting, helper suites); R-CMD-check via GitHub Actions.

@@ -329,8 +329,8 @@
         <p>
           <span class="fn">recalculatePK()</span> walks the drugs named in the dose table and,
           per drug, calls <span class="fn">getDrugPK()</span> to turn the patient's covariates
-          into a full set of rate constants, eigenvalues, and closed-form coefficients. Results
-          are cached on a per-drug list and only recomputed when covariates change.
+          into a full set of rate constants, eigenvalues, and closed-form coefficients. It does
+          this for every drug in the table on each run &mdash; there is no skip-if-unchanged logic.
         </p>
         <div class="reactives">
           <span class="chip r">drugs()  ·  step A</span>
@@ -346,10 +346,11 @@
           <div class="stage-files"><span class="file">processdoseTable.R</span><span class="file">simCpCe.R</span></div>
         </div>
         <p>
-          <span class="fn">processdoseTable()</span> diffs each drug's doses against the cached
-          result and re-simulates only what changed — calling <span class="fn">simCpCe()</span>,
-          which converts dose units, classifies bolus / infusion / oral routes, and dispatches to
-          the right closed-form solver. Output is a tidy time × site table per drug.
+          <span class="fn">processdoseTable()</span> simulates each drug in the table by calling
+          <span class="fn">simCpCe()</span>, which converts dose units, classifies bolus / infusion
+          / oral routes, and dispatches to the right closed-form solver. Output is a tidy time
+          &times; site table per drug. It carries a per-drug diff intended to skip unchanged drugs,
+          but that diff is currently inert (see the note below), so every drug is re-simulated.
         </p>
         <div class="reactives">
           <span class="chip r">drugs()  ·  step B</span>
@@ -391,7 +392,7 @@
         <div class="reactives">
           <span class="chip">output$PlotSimulation</span>
           <span class="chip">output$hover_info</span>
-          <span class="chip">URL bookmarking</span>
+          <span class="chip">Opaque saved-state links</span>
         </div>
       </div>
 
@@ -400,10 +401,14 @@
     <div class="note">
       <span class="mk">WHY IT'S FAST</span>
       <p>
-        Both <span class="fn">recalculatePK()</span> and <span class="fn">processdoseTable()</span>
-        mutate a persistent per-drug list and skip any drug whose inputs are unchanged. Combined
-        with closed-form solutions (no ODE integration), a dose edit re-simulates just the one drug
-        it touched.
+        <span class="fn">recalculatePK()</span> and <span class="fn">processdoseTable()</span> build
+        a per-drug list that <span class="fn">drugs()</span> threads through, but that list is not
+        cached across renders: <span class="fn">drugs()</span> is a plain reactive that restarts
+        from <code>NULL</code> each run, so every drug is fully recomputed on any input change.
+        What keeps it fast is the closed-form solution (no ODE integration), not incremental
+        skipping &mdash; <span class="fn">processdoseTable()</span>'s per-drug diff exists but is
+        currently inert (<span class="fn">recalculatePK()</span> clears each drug's <code>$DT</code>
+        just before it runs).
       </p>
     </div>
   </div>
@@ -561,7 +566,7 @@
         <div class="layer-head"><span class="tag">Shell</span><h3>App bootstrap &amp; framework</h3><span class="role">entry + wiring</span></div>
         <div class="layer-body">
           <div class="frow"><span class="fname">app.R</span><span class="fdesc">One line: <code>stanpumpR::run_app()</code> — the deploy entry point.</span></div>
-          <div class="frow"><span class="fname">app_run.R</span><span class="fdesc">Loads libraries, merges <code>config.yml</code> with defaults, sets the ggplot theme, mounts assets, launches <code>shinyApp()</code> with URL bookmarking.</span></div>
+          <div class="frow"><span class="fname">app_run.R</span><span class="fdesc">Loads libraries, merges <code>config.yml</code> with defaults, sets the ggplot theme, mounts assets, and launches <code>shinyApp()</code> with configurable secure bookmarking.</span></div>
           <div class="frow"><span class="fname">app_ui.R</span><span class="fdesc">The entire bslib UI — navbar, sidebar accordions, dose/event grids, plot card, debug panel.</span></div>
           <div class="frow"><span class="fname">app_server.R</span><span class="fdesc">The 46 KB reactive heart — every reactive, observer, output, and modal.</span></div>
           <div class="frow"><span class="fname">app_globals.R</span><span class="fdesc">Initial tables, bookmark exclusion list, and the <span class="fn">outputComments()</span> logger.</span></div>
@@ -601,7 +606,7 @@
           <div class="frow"><span class="fname">simulationPlot.R</span><span class="fdesc">Assembles the composite <code>ggplot2</code> figure and its data tables.</span></div>
           <div class="frow"><span class="fname">setLinetypes.R</span><span class="fdesc">Maps normalization + user choices to plasma/effect linetypes.</span></div>
           <div class="frow"><span class="fname">suggest.R</span><span class="fdesc">"Suggest Dosing" — optimizes a regimen to hit a target effect-site concentration.</span></div>
-          <div class="frow"><span class="fname">sendSlide.R</span><span class="fdesc">Renders an <code>officer</code> PowerPoint slide from <code>Template.pptx</code> and emails it via <code>mailR</code>.</span></div>
+          <div class="frow"><span class="fname">sendSlide.R</span><span class="fdesc">Renders an <code>officer</code> PowerPoint slide from <code>Template.pptx</code> and emails it via curl SMTP with mandatory TLS.</span></div>
         </div>
       </div>
 
@@ -644,14 +649,14 @@
       </div>
       <div class="card">
         <span class="k">state</span>
-        <h3>URL bookmarking</h3>
-        <p>Shiny <code>enableBookmarking="url"</code> encodes inputs into a shareable link; <code>bookmarksToExclude</code> keeps transient UI state out.</p>
+        <h3>Saved simulations</h3>
+        <p>URL bookmarking is the default so saved state is a shareable link that works on hosts without server-side storage; opaque server-stored IDs are available where the host supports them (e.g. Posit Connect Cloud). The URL carries no confidential data &mdash; <code>bookmarksToExclude</code> drops recipient/comments/exact age and transient UI state, ages 90+ are normalized, and restored state is decoded as JSON and re-validated server-side.</p>
         <div class="files"><span class="file">app_globals.R</span></div>
       </div>
       <div class="card">
         <span class="k">observability</span>
         <h3>Debug &amp; profiler</h3>
-        <p><code>&amp;debug=1</code> reveals a live log (<span class="fn">outputComments</span>) and a per-reactive profiler (<span class="fn">profileCode</span>).</p>
+        <p>The live log (<span class="fn">outputComments</span>) and per-reactive profiler (<span class="fn">profileCode</span>) are disabled in production. URL activation requires the explicit <code>allow_url_debug</code> configuration flag.</p>
         <div class="files"><span class="file">app_globals.R</span><span class="file">app_server.R</span></div>
       </div>
       <div class="card">
