@@ -16,5 +16,7 @@ default:
   email_smtp_ssl: true
   # Credentials and optional SMTP overrides use STANPUMPR_EMAIL_* environment
   # variables. Never put credentials in this file.
+  # "Examples and Help" nav link -> separately deployed help app on shinyapps.io.
+  # Source maintained in its own repo: github.com/StevenLShafer/stanpumpR_HelpPage
   help_link: "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
   debug: 0   # 0 = off, 1 = normal, 2 = verbose

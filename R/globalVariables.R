@@ -67,6 +67,9 @@ DEBUG_LEVEL_VERBOSE <- 2
 
 DEFAULT_CONFIG <- list(
   title = "stanpumpR",
+  # "Examples and Help" nav link. Points to the separately deployed help app on
+  # shinyapps.io, whose source is maintained in its own repository:
+  # https://github.com/StevenLShafer/stanpumpR_HelpPage
   help_link = "https://steveshafer.shinyapps.io/stanpumpR_HelpPage",
   debug = DEBUG_LEVEL_OFF,
   allow_url_debug = FALSE,
