@@ -18,7 +18,7 @@ dexmedetomidine <- function(weight, height, age, sex)
     upperTypical <- 0.4
     lowerTypical <- 0.8
     MEAC <- 0
-    reference <- "Barry Dyck, Check reference and numbers"
+    reference <- "Dyck JB et al., Anesthesiology 1993;78(5):821-828. https://pubmed.ncbi.nlm.nih.gov/8098191/"
 
     v2 <- v1 * k12 / k21
     v3 <- v1 * k13 / k31

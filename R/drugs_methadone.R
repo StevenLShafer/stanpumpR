@@ -16,7 +16,7 @@ methadone <- function(weight, height, age, sex)
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Inturissi?"
+  reference <- "Inturrisi CE et al., Clin Pharmacol Ther 1987;41(4):392-401. https://pubmed.ncbi.nlm.nih.gov/3829576/"
   
   v2 <- v1 * k12 / k21
   v3 <- v1 * k13 / k31

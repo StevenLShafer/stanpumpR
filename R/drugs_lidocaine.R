@@ -16,7 +16,7 @@ lidocaine <- function(weight, height, age, sex)
   lowerTypical <- 0.5
   tPeak <- 5
   MEAC <- 0
-  reference <- "Schnider?"
+  reference <- "Schnider TW et al., Anesthesiology 1996;84(5):1043-1050. https://pubmed.ncbi.nlm.nih.gov/8623997/"
   
   v2 <- v1 * k12 / k21
   v3 <- 1

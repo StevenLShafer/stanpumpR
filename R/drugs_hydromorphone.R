@@ -16,7 +16,7 @@ hydromorphone <- function(weight, height, age, sex)
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Drover PK"
+  reference <- "Drover DR et al., Anesthesiology 2002;97(4):827-836. https://pubmed.ncbi.nlm.nih.gov/12357147/"
   
   v2 <- v1 * k12 / k21
   v3 <- v1 * k13 / k31
