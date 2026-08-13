@@ -10,3 +10,6 @@ stanpumpR_0.0.0.1.tar.gz
 tests
 vignettes
 Original Stanpump
+shiny_bookmarks
+.Renviron
+.Renviron.*

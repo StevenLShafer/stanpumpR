@@ -13,7 +13,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Setup R
-        uses: r-lib/actions/setup-r@v2
+        uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
         with:
           use-public-rspm: true
 
@@ -22,16 +22,16 @@ jobs:
 
       - name: Delete app
         env:
-          SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
+          SHINY_APP_NAME: ${{ vars.PR_SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
         run: |
           install.packages("rsconnect")
-          rsconnect::setAccountInfo("${{ vars.SHINY_ACCOUNT }}", "${{ secrets.SHINY_TOKEN }}", "${{ secrets.SHINY_SECRET }}")
-          rsconnect::terminateApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}")
-          rsconnect::purgeApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.SHINY_ACCOUNT }}")
+          rsconnect::setAccountInfo("${{ vars.PR_SHINY_ACCOUNT }}", "${{ secrets.PR_SHINY_TOKEN }}", "${{ secrets.PR_SHINY_SECRET }}")
+          rsconnect::terminateApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.PR_SHINY_ACCOUNT }}")
+          rsconnect::purgeApp(appName = "${{ env.SHINY_APP_NAME }}", account = "${{ vars.PR_SHINY_ACCOUNT }}")
         shell: Rscript {0}
       - name: Remove DEPLOY label
         if: always()   # even if previous step fails
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             try {

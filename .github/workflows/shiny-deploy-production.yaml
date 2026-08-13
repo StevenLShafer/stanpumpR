@@ -1,11 +1,14 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # see https://www.tidyverse.org/blog/2022/06/actions-2-0-0/ for info on setup-r-dependencies@v2
+# Legacy shinyapps.io deployment retained for manual rollback during the
+# Connect Cloud migration. Connect Cloud publishes directly from GitHub.
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
 
-name: Deployment Production
+name: Legacy shinyapps.io Production (manual only)
+
+permissions:
+  contents: read
 
 jobs:
   deployment-production:
@@ -13,30 +16,30 @@ jobs:
     environment:
       name: production
       url: https://stanpumpr.io
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
-      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-pandoc@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
 
-      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
         with:
           r-version: 'renv'
           use-public-rspm: true
 
       - name: Install system dependencies
-        # renv restores the full lockfile (incl. dev deps like gert -> libgit2,
-        # rJava -> JDK, systemfonts/ragg -> cairo/freetype). Install the system
+        # renv restores the full lockfile (incl. dev deps like gert -> libgit2
+        # and systemfonts/ragg -> cairo/freetype). Install the system
         # libraries these load against so the restore doesn't fail when a package
         # has no prebuilt binary. Mirrors the R-CMD-check workflow's system deps.
-        run: sudo apt-get update && sudo apt-get install -y cmake default-jdk libcairo2-dev libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libgit2-dev libpng-dev libx11-dev
+        run: sudo apt-get update && sudo apt-get install -y cmake libcairo2-dev libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libgit2-dev libpng-dev libx11-dev
 
-      - uses: r-lib/actions/setup-renv@v2
+      - uses: r-lib/actions/setup-renv@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
 
       - name: Install stanpumpR from GitHub
         run: |
-          pkg_ref <- "${{ github.repository }}"
+          pkg_ref <- paste0("${{ github.repository }}@", "${{ github.sha }}")
           remotes::install_github(pkg_ref, upgrade = "never", force = TRUE)
           find.package("stanpumpR") # force a failure if package didn't install so GHA won't continue
         shell: Rscript {0}
@@ -50,8 +53,14 @@ jobs:
         run: |
           shinyConfig <- list(
             default = list(
-              email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
-              email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
+              email_enabled = FALSE,
+              # shinyapps.io does not support disk-backed ("server") bookmarks;
+              # URL bookmarking is required there. The URL carries no PHI
+              # (recipient/comments/exact age excluded; age >= 90 normalized) and
+              # restored state is re-validated server-side. Use "server" only on
+              # a host with state storage (e.g. Posit Connect Cloud).
+              bookmark_mode = "url",
+              allow_url_debug = FALSE,
               debug = 0
             )
           )

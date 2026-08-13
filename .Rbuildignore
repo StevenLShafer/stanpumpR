@@ -23,4 +23,7 @@
 ^GEMINI\.md$
 ^AGENTS\.md$
 ^\.agents$
+^shiny_bookmarks$
+^\.Renviron$
+^\.Renviron\..*$
 
