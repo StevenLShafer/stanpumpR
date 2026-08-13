@@ -8,6 +8,11 @@ inlineUI <- function(tag) {
 
 nbsp <- shiny::HTML("&nbsp;", .noWS = "outside")
 
+# The dose/event/target/drug grids use the Handsontable 6.2.2 build bundled with
+# rhandsontable 0.3.8 (the last MIT-licensed Handsontable release). The client-side
+# key-filtering and input-sanitizing hooks in addHotHooks() (hookFilterKeys /
+# hookSanitize, defined in inst/www/hot_funs.js) plus the server-side validators
+# in server-helpers.R remain the defense-in-depth layer over this grid.
 addHotHooks <- function(hot, filterKeys = TRUE, sanitize = TRUE, ...) {
   hooks <- list(...)
 
