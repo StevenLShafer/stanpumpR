@@ -320,6 +320,7 @@ app_server <- function(input, output, session) {
   })
   sex <- reactive({
     req(input$sex)
+    if (length(input$sex) != 1L || !input$sex %in% c("male", "female")) stop("Invalid sex value.")
     input$sex
   })
 
@@ -367,6 +368,7 @@ app_server <- function(input, output, session) {
   doseTableClean <- reactive({
     profileCode({
       outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
+      validateDoseTableInput(doseTable(), drugDefaults())
       DT <- cleanDT(doseTable())
       DT$Time <- clockTimeToDelta(referenceTime(), DT$Time)
       DT <- DT[
@@ -390,6 +392,7 @@ app_server <- function(input, output, session) {
   eventTableClean <- reactive({
     profileCode({
       outputComments("In eventTableClean", level = DEBUG_LEVEL_VERBOSE)
+      validateEventTableInput(eventTable(), eventDefaults())
       ET <- eventTable()
       if (length(ET$Time) > 0) {
         ET$Time <- as.character(ET$Time)
@@ -424,8 +427,12 @@ app_server <- function(input, output, session) {
     profileCode({
       req(doseTableClean())
 
-      plotMaximum <- as.numeric(input$maximum)
-      steps <- maxtimes$steps[maxtimes$times == input$maximum]
+      requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
+      if (length(requestedMaximum) != 1L || !is.finite(requestedMaximum) || !requestedMaximum %in% maxtimes$times) {
+        stop("Invalid maximum simulation time.")
+      }
+      plotMaximum <- requestedMaximum
+      steps <- maxtimes$steps[maxtimes$times == plotMaximum]
       maxTime <- max(as.numeric(doseTableClean()$Time),
                      as.numeric(eventTableClean()$Time),
                      na.rm = TRUE)
@@ -453,6 +460,14 @@ app_server <- function(input, output, session) {
 
   simulationPlotRetval <- reactive({
     req(input$plotWidth)
+    if (!is.numeric(input$plotWidth) || length(input$plotWidth) != 1L ||
+        !is.finite(input$plotWidth) || input$plotWidth < 200 || input$plotWidth > MAX_PLOT_WIDTH) {
+      stop("Invalid plot width.")
+    }
+    if (!is.numeric(input$yaxisHeight) || length(input$yaxisHeight) != 1L ||
+        !is.finite(input$yaxisHeight) || input$yaxisHeight < 100 || input$yaxisHeight > 500) {
+      stop("Invalid plot height.")
+    }
     profileCode({
       outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
       req(doseTableClean(), testCovariates(),
@@ -1319,6 +1334,7 @@ app_server <- function(input, output, session) {
           return()
         }
         targetTable <- hot_to_r(input$targetTableHTML)
+        validateTargetTableInput(targetTable)
 
         tryCatchLog({
 
