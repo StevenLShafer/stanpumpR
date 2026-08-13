@@ -140,6 +140,63 @@ inputWithChoices <- function(tag, choices, inputId = NULL, selected = NULL) {
   htmltools::attachDependencies(tag, dep)
 }
 
+#' Create a button group for selecting a line type using SVG images instead of text
+lineTypeSelector <- function(inputId, label, selected) {
+
+  css <- '
+.line-type-icon-wrapper {
+  display: flex;
+}
+.line-type-icon {
+  width: 100%;
+  height: 12px;
+}
+.line-type-none-icon {
+  font-size: 12px;
+  opacity: 0.6;
+  line-height: 1;
+}
+  '
+
+  line_types <- list(
+    list(value = "blank",   dasharray = NA,         tooltip = "None"),
+    list(value = "solid",   dasharray = "none",     tooltip = "Solid"),
+    list(value = "dashed",  dasharray = "6,3",      tooltip = "Dashed"),
+    list(value = "dotted",  dasharray = "0,4",      tooltip = "Dotted"),
+    list(value = "dotdash", dasharray = "0,3,6,3",  tooltip = "Dot-dash")
+  )
+
+  line_type_icon <- function(entry) {
+    inner <- if (is.na(entry$dasharray)) {
+      htmltools::tags$i(class = "fa fa-ban line-type-none-icon")
+    } else {
+      htmltools::HTML(sprintf(
+        '<svg class="line-type-icon" viewBox="0 0 48 8" preserveAspectRatio="none"><line x1="2" y1="4" x2="46" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke" stroke-dasharray="%s"/></svg>',
+        entry$dasharray
+      ))
+    }
+    htmltools::tags$span(class = "line-type-icon-wrapper", title = entry$tooltip, inner)
+  }
+
+  dep <- htmltools::htmlDependency(
+    name = "line-type-radio-buttons",
+    version = "1.0.0",
+    src = c(href = ""),
+    head = sprintf("<style>%s</style>", css)
+  )
+
+  tag <- shinyWidgets::radioGroupButtons(
+    inputId = inputId,
+    label = label,
+    choiceNames = lapply(line_types, line_type_icon),
+    choiceValues = lapply(line_types, function(x) x$value),
+    selected = selected,
+    justified = TRUE
+  )
+  tag <- htmltools::tagAppendAttributes(tag, class = "line-type-button-group")
+  htmltools::attachDependencies(tag, dep)
+}
+
 #' Create an input that has its label on its left, and the input takes
 #' the rest of the space
 inputWithInlineLabel <- function(tag) {
