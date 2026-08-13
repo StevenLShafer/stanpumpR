@@ -1,5 +1,10 @@
 app_ui <- function() {
-  js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(stanpumpR::getDrugDefaultsGlobal()))
+  drug_defaults_json <- jsonlite::toJSON(stanpumpR::getDrugDefaultsGlobal())
+  # Prevent a future metadata value containing "</script>" from terminating the
+  # inline script element. The data is trusted today, but this keeps that true
+  # even if defaults later become administrator-editable.
+  drug_defaults_json <- gsub("<", "\\\\u003c", drug_defaults_json, fixed = TRUE)
+  js_drug_defaults <- paste0("var drug_defaults=", drug_defaults_json)
   config <- .sprglobals$config
 
   stanpumpr_theme <- bslib::bs_theme(
@@ -40,6 +45,7 @@ app_ui <- function() {
             "frame-ancestors 'none'"
           )
         ),
+        tags$meta(name = "referrer", content = "no-referrer"),
         shinyjs::useShinyjs(),
         tags$script(src = "stanpumpr-assets/app.js"),
         tags$script(HTML(js_drug_defaults)),
@@ -339,7 +345,8 @@ app_ui <- function() {
           icon("circle-info"),
           "Examples and Help",
           href = config$help_link,
-          target = "_blank"
+          target = "_blank",
+          rel = "noopener noreferrer"
         )
       )
     )
