@@ -58,7 +58,7 @@ app_ui <- function() {
               open = FALSE,
 
               bslib::accordion_panel(
-                "Patient Profile",
+                "Simulation Profile",
                 icon = icon("user-injured"),
 
                 numericInput(
@@ -229,6 +229,10 @@ app_ui <- function() {
             bslib::card(
               id = "plotContainer",
               class = "overflow-hidden",
+              bslib::card_header(
+                icon("chart-line"),
+                "Simulation — not a patient record"
+              ),
               plotOutput(
                 outputId = "PlotSimulation",
                 width = "100%",

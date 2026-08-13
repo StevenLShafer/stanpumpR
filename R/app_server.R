@@ -306,6 +306,17 @@ app_server <- function(input, output, session) {
     req(input$ageUnit)
     as.numeric(input$ageUnit)
   })
+  observeEvent(list(input$age, input$ageUnit), {
+    req(input$age, input$ageUnit)
+    enteredAge <- suppressWarnings(as.numeric(input$age) * ageUnit())
+    if (is.finite(enteredAge) && enteredAge >= 90) {
+      updateNumericInput(
+        session,
+        "age",
+        value = DEIDENTIFIED_MAX_AGE / ageUnit()
+      )
+    }
+  }, ignoreInit = TRUE)
   weight <- reactive({
     req(input$weight)
     input$weight * weightUnit()
@@ -316,7 +327,7 @@ app_server <- function(input, output, session) {
   })
   age <- reactive({
     req(input$age)
-    input$age * ageUnit()
+    normalizeSimulationAge(input$age * ageUnit())
   })
   sex <- reactive({
     req(input$sex)

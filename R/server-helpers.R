@@ -121,6 +121,13 @@ validateTargetTableInput <- function(targetTable) {
   invisible(TRUE)
 }
 
+normalizeSimulationAge <- function(age) {
+  if (!is.numeric(age) || length(age) != 1L || is.na(age) || !is.finite(age)) {
+    stop("Age must be a single finite number.")
+  }
+  min(age, DEIDENTIFIED_MAX_AGE)
+}
+
 recalculatePK <- function(drugs, drugDefaults, doseTable,
                           age, weight, height, sex) {
   #  for (idx in seq(nrow(drugDefaults))) {

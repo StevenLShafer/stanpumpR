@@ -47,6 +47,13 @@ test_that("event tables reject unknown and excessive input", {
   expect_error(validateEventTableInput(invalid, defaults), "unknown event")
 })
 
+test_that("simulation ages 90 and older are normalized to 89", {
+  expect_equal(normalizeSimulationAge(89), 89)
+  expect_equal(normalizeSimulationAge(90), 89)
+  expect_equal(normalizeSimulationAge(105), 89)
+  expect_error(normalizeSimulationAge(NA_real_), "finite")
+})
+
 test_that("target tables are bounded and numeric", {
   valid <- data.frame(Time = "10", Target = 2)
   expect_true(validateTargetTableInput(valid))
