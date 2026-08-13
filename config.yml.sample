@@ -14,9 +14,6 @@ default:
   email_smtp_host: "smtp.gmail.com"
   email_smtp_port: 587
   email_smtp_ssl: true
-  # Hospitals and other commercial users must supply a valid Handsontable key.
-  # See inst/www/handsontable-10.0.0/LICENSE.txt.
-  handsontable_license_key: "non-commercial-and-evaluation"
   # Credentials and optional SMTP overrides use STANPUMPR_EMAIL_* environment
   # variables. Never put credentials in this file.
   help_link: "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"

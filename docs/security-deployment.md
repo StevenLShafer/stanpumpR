@@ -39,14 +39,18 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 ```
 
 The inline-script exceptions remain necessary for the current Shiny/htmlwidgets stack. They
-make strict input validation and the updated Handsontable dependency security-critical.
+make the strict server-side input validation security-critical.
 
-## Handsontable licensing
+## Handsontable
 
-stanpumpR overrides the vulnerable Handsontable 6.2.2 embedded by `rhandsontable` with version
-10.0.0. The upstream license files are shipped in `inst/www/handsontable-10.0.0/`. Hospitals
-and other commercial users must obtain and configure an appropriate `handsontable_license_key`;
-the default `non-commercial-and-evaluation` key must not be used where its terms do not apply.
+The editable grids use the Handsontable 6.2.2 build bundled with `rhandsontable` (the last
+MIT-licensed Handsontable release, so no commercial license key is required). Note that 6.2.2
+predates the fix for the client-side XSS issues in Handsontable < 8.2.0 (incl. CVE-2021-23446);
+the residual risk is mitigated — not eliminated — by the client-side sanitizing/key-filtering
+hooks (`hookSanitize` / `hookFilterKeys` in `inst/www/hot_funs.js`, applied via `addHotHooks()`)
+and the server-side validators, which reject any unknown drug/route/unit/event, non-finite value,
+overlong text, or oversized table on both the reactive path and bookmark restore. A deployment
+that needs a patched Handsontable must move to a licensed 8.2.0+/rhandsontable build.
 
 ## Email
 

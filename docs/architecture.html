@@ -329,8 +329,8 @@
         <p>
           <span class="fn">recalculatePK()</span> walks the drugs named in the dose table and,
           per drug, calls <span class="fn">getDrugPK()</span> to turn the patient's covariates
-          into a full set of rate constants, eigenvalues, and closed-form coefficients. Results
-          are cached on a per-drug list and only recomputed when covariates change.
+          into a full set of rate constants, eigenvalues, and closed-form coefficients. It does
+          this for every drug in the table on each run &mdash; there is no skip-if-unchanged logic.
         </p>
         <div class="reactives">
           <span class="chip r">drugs()  ·  step A</span>
@@ -346,10 +346,11 @@
           <div class="stage-files"><span class="file">processdoseTable.R</span><span class="file">simCpCe.R</span></div>
         </div>
         <p>
-          <span class="fn">processdoseTable()</span> diffs each drug's doses against the cached
-          result and re-simulates only what changed — calling <span class="fn">simCpCe()</span>,
-          which converts dose units, classifies bolus / infusion / oral routes, and dispatches to
-          the right closed-form solver. Output is a tidy time × site table per drug.
+          <span class="fn">processdoseTable()</span> simulates each drug in the table by calling
+          <span class="fn">simCpCe()</span>, which converts dose units, classifies bolus / infusion
+          / oral routes, and dispatches to the right closed-form solver. Output is a tidy time
+          &times; site table per drug. It carries a per-drug diff intended to skip unchanged drugs,
+          but that diff is currently inert (see the note below), so every drug is re-simulated.
         </p>
         <div class="reactives">
           <span class="chip r">drugs()  ·  step B</span>
@@ -400,10 +401,14 @@
     <div class="note">
       <span class="mk">WHY IT'S FAST</span>
       <p>
-        Both <span class="fn">recalculatePK()</span> and <span class="fn">processdoseTable()</span>
-        mutate a persistent per-drug list and skip any drug whose inputs are unchanged. Combined
-        with closed-form solutions (no ODE integration), a dose edit re-simulates just the one drug
-        it touched.
+        <span class="fn">recalculatePK()</span> and <span class="fn">processdoseTable()</span> build
+        a per-drug list that <span class="fn">drugs()</span> threads through, but that list is not
+        cached across renders: <span class="fn">drugs()</span> is a plain reactive that restarts
+        from <code>NULL</code> each run, so every drug is fully recomputed on any input change.
+        What keeps it fast is the closed-form solution (no ODE integration), not incremental
+        skipping &mdash; <span class="fn">processdoseTable()</span>'s per-drug diff exists but is
+        currently inert (<span class="fn">recalculatePK()</span> clears each drug's <code>$DT</code>
+        just before it runs).
       </p>
     </div>
   </div>

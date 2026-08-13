@@ -59,13 +59,24 @@ One dependency chain; Shiny re-runs only what an edit invalidates:
 inputs (covariates, doseTableHTML, events, graph opts)
   → doseTableClean() / eventTableClean() / testCovariates()   # clean + validate
   → drugs()            # A: recalculatePK() → getDrugPK() per drug (covariates → coefficients)
-                       # B: processdoseTable() → simCpCe() per changed drug (simulate)
+                       # B: processdoseTable() → simCpCe() per drug (simulate)
   → simulationPlotRetval() = simulationPlot(...)   # build ggplot + result tables
   → output$PlotSimulation, output$hover_info, Suggest Dosing, email slide
 ```
 
-`recalculatePK()` and `processdoseTable()` both mutate a persistent per-drug list and **skip
-unchanged drugs** — preserve that diffing behavior when editing them.
+`recalculatePK()` and `processdoseTable()` build up a per-drug list (each returns the modified
+list) that `drugs()` feeds from one into the next. Note: `drugs()` is a plain `reactive()` that
+starts each run with `newDrugs <- NULL`, so the list is **rebuilt from scratch on every
+invalidation** — it is not cached across renders.
+
+`processdoseTable()` contains a diff (`!identical(tempDT, drugs[[drug]]$DT) | …`) meant to skip a
+drug whose dose/event subset is unchanged, and its header comment still claims it does. That skip
+is currently **inert**: `drugs()` starts from `NULL` and `recalculatePK()` sets each drug's `$DT`
+to `NULL` immediately before `processdoseTable()` runs, so the stored `$DT` is always `NULL` and
+the diff is always TRUE. `recalculatePK()` has no skip logic of its own. Net effect: **every drug
+is fully recomputed (PK + simulation) on every change to any input.** Reviving the skip would
+require persisting the previous `drugs()` value across renders (e.g. via `isolate()`) and stopping
+`recalculatePK()` from clearing `$DT` — a behavioral change; don't assume the diff works today.
 
 ## The PK/PD engine (`R/`)
 

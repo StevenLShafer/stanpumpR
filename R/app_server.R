@@ -1007,7 +1007,7 @@ app_server <- function(input, output, session) {
         unlist()
       editPriorDosesTable$Delete <- FALSE
 
-      editPriorDosesTableHOT <- secureRHandsontable(
+      editPriorDosesTableHOT <- rhandsontable::rhandsontable(
         editPriorDosesTable[ , c("Delete","Time","Dose","Units")],
         overflow = 'visible',
         rowHeaders = NULL,
@@ -1160,7 +1160,7 @@ app_server <- function(input, output, session) {
     if (hasEvents) {
       tempTable <- tempTable[,c("Time", "Event")]
       tempTable$Delete <- FALSE
-      tempTableHOT <- secureRHandsontable(
+      tempTableHOT <- rhandsontable::rhandsontable(
         tempTable[,c("Delete","Time","Event")],
         overflow = 'visible',
         rowHeaders = NULL,
@@ -1282,7 +1282,7 @@ app_server <- function(input, output, session) {
           Time = rep("",6),
           Target = rep("", 6)
         )
-        targetHOT <- secureRHandsontable(
+        targetHOT <- rhandsontable::rhandsontable(
           targetTable,
           overflow = 'visible',
           rowHeaders = NULL,
@@ -1447,7 +1447,7 @@ app_server <- function(input, output, session) {
       x$Units <- drugUnitsSimplify(x$Units)
       # endCe is managed via the Drug Thresholds modal
       x <- x[, !names(x) %in% "endCe"]
-      drugsHOT <- secureRHandsontable(
+      drugsHOT <- rhandsontable::rhandsontable(
         x,
         overflow = 'visible',
         rowHeaders = NULL,
@@ -1561,7 +1561,7 @@ app_server <- function(input, output, session) {
     drugThresholdsTrigger$depend()
     x <- drugDefaults()[, c("Drug", "endCe")]
     names(x)[2] <- "Threshold"
-    secureRHandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
+    rhandsontable::rhandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
       hot_col(col = 1, halign = "htLeft", readOnly = TRUE) %>%
       hot_col(col = 2, halign = "htRight", type = "numeric") %>%
       hot_table(contextMenu = FALSE)

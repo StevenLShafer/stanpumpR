@@ -86,6 +86,5 @@ DEFAULT_CONFIG <- list(
   email_smtp_host = "smtp.gmail.com",
   email_smtp_port = 587,
   email_smtp_ssl = TRUE,
-  handsontable_license_key = "non-commercial-and-evaluation",
   long_title = FALSE
 )

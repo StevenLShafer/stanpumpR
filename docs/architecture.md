@@ -29,16 +29,20 @@ flowchart TD
     A["<b>01 Inputs</b> — app_ui.R<br/>covariates · dose grid · events · graph options · plot clicks"]
     B["<b>02 Normalize & validate</b> — server-helpers.R<br/>doseTableClean() · eventTableClean() · testCovariates()"]
     C["<b>03 Resolve PK</b> — getDrugPK.R<br/>recalculatePK(): covariates → coefficients, per drug"]
-    D["<b>04 Simulate</b> — simCpCe.R<br/>processdoseTable(): re-simulate only changed drugs"]
+    D["<b>04 Simulate</b> — simCpCe.R<br/>processdoseTable(): simulate each drug in the table"]
     E["<b>05 Assemble plot</b> — simulationPlot.R<br/>build ggplot + allResults / plotResults"]
     F["<b>06 Render & interact</b> — app_server.R<br/>PlotSimulation · hover · click-to-dose · Suggest · email"]
     A --> B --> C --> D --> E --> F
     C -. "drugs() reactive" .- D
 ```
 
-Both `recalculatePK()` and `processdoseTable()` mutate a persistent per-drug list and **skip
-any drug whose inputs are unchanged**. Combined with closed-form solutions (no integration), a
-single dose edit re-simulates just the one drug it touched.
+`recalculatePK()` and `processdoseTable()` build up a per-drug list that `drugs()` threads from
+one into the next. `drugs()` is a plain `reactive()` that starts each run with `newDrugs <- NULL`,
+so the list is rebuilt from scratch on every invalidation — it is **not** cached across renders,
+and every drug is fully recomputed (PK + simulation) on any input change. `processdoseTable()` does
+contain a per-drug diff, but it is currently inert (`recalculatePK()` clears each drug's `$DT`
+right before it runs, so the diff always fires). What keeps this fast is the closed-form solution
+(no numeric integration), not incremental skipping.
 
 ### Key reactives (in `app_server.R`)
 

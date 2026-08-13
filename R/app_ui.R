@@ -46,10 +46,6 @@ app_ui <- function() {
           )
         ),
         tags$meta(name = "referrer", content = "no-referrer"),
-        # Supersede the vulnerable Handsontable 6.2.2 that rHandsontableOutput()
-        # placeholders pull into the page. Page-level resolution keeps the
-        # higher-versioned 10.0.0 and drops 6.2.2 before the browser loads it.
-        handsontablePatchedDependency(),
         shinyjs::useShinyjs(),
         tags$script(src = "stanpumpr-assets/app.js"),
         tags$script(HTML(js_drug_defaults)),

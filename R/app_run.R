@@ -65,10 +65,6 @@ run_app <- function(config_file = "config.yml") {
   if (!config$bookmark_mode %in% c("disable", "server", "url")) {
     stop("bookmark_mode must be one of: disable, server, url")
   }
-  if (!is.character(config$handsontable_license_key) || length(config$handsontable_license_key) != 1L ||
-      is.na(config$handsontable_license_key) || !nzchar(config$handsontable_license_key)) {
-    stop("handsontable_license_key must be a non-empty string")
-  }
   if (isTRUE(config$email_enabled)) {
     requiredEmailConfig <- c("email_username", "email_password", "email_smtp_host")
     missingEmailConfig <- requiredEmailConfig[vapply(requiredEmailConfig, function(x) {

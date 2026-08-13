@@ -39,7 +39,7 @@ renv::restore()           # Restore pinned R package dependencies from renv.lock
    - `advanceClosedFormPO_IM_IN.R` (extravascular 1st-order absorption)
 5. **Plot & Render**: `simulationPlot.R` generates `ggplot2` output, results table, and dosing suggestions (`suggest.R`).
 
-*Note: `recalculatePK()` and `processdoseTable()` perform smart diffing, re-simulating only drugs whose inputs have changed.*
+*Note: `drugs()` rebuilds its per-drug list from `NULL` on every run, so `recalculatePK()` and `processdoseTable()` fully recompute every drug (PK + simulation) on any input change. `processdoseTable()` has a per-drug diff meant to skip unchanged drugs, but it is currently inert (`recalculatePK()` clears each drug's `$DT` right before it runs). What keeps the app fast is the closed-form solution, not incremental skipping.*
 
 ---
 
