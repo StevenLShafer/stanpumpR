@@ -17,7 +17,7 @@ etomidate <- function(weight, height, age, sex)
   lowerTypical <- 0.8 # Journal of Clinical Pharmacology, 2011;51:482-491
   tPeak <- 1.6
   MEAC <- 0
-  reference <- "Anesthesiology 1986 65:19-27"
+  reference <- "Arden JR et al., Anesthesiology 1986;65(1):19-27. https://pubmed.ncbi.nlm.nih.gov/3729056/"
   
   v2 <- v1 * k12 / k21
   v3 <- v1 * k13 / k31

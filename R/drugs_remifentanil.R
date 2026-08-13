@@ -135,7 +135,7 @@ default <- list(
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Minto/Schnider"
+  reference <- "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
 
   return(
     list(
