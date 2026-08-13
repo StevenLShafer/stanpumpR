@@ -32,7 +32,7 @@ oxycodone <- function(weight, height, age, sex)
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Lamminsalo 2019"
+  reference <- "Lamminsalo M et al., Expert Opin Drug Deliv 2019;16(6):649-656. https://pubmed.ncbi.nlm.nih.gov/31092024/"
 
   ka_PO = 0.22 # 1/h # From Mandema
   ka_PO = ka_PO / 60 # 1/min
