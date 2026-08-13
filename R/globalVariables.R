@@ -69,5 +69,18 @@ DEFAULT_CONFIG <- list(
   title = "stanpumpR",
   help_link = "https://steveshafer.shinyapps.io/stanpumpR_HelpPage",
   debug = DEBUG_LEVEL_OFF,
+  allow_url_debug = FALSE,
+  # URL bookmarking is the default so saved simulations are shareable as plain
+  # links and work on hosts without server-side state storage (e.g.
+  # shinyapps.io, which throws "server is not configured for saving sessions to
+  # disk" when bookmark_mode = "server"). The URL carries no confidential data:
+  # recipient, comments, and exact age are excluded (see bookmarksToExclude) and
+  # ages >= 90 are normalized to 89 before persistence. URL state is decoded by
+  # Shiny via jsonlite (safeFromJSON) -- never unserialize()/eval() -- and every
+  # restored value is re-validated on the reactive path (validateDoseTableInput
+  # gates the only eval(call(drug,...)) sink), so a crafted URL cannot inject
+  # code. Set "server" only on a host that supports disk-backed bookmarks (e.g.
+  # Posit Connect / Connect Cloud); "disable" turns saved-state sharing off.
+  bookmark_mode = "url",
   long_title = FALSE
 )

@@ -16,12 +16,15 @@ app_server <- function(input, output, session) {
   observeEvent(input$debug_level, ignoreInit = TRUE, {
     session$userData$debug(input$debug_level)
   })
-  observe({
-    query <- parseQueryString(session$clientData$url_search)
-    if (!is.null(query[["debug"]])) {
-      session$userData$debug(as.numeric(query[["debug"]]))
-    }
-  })
+  if (isTRUE(config$allow_url_debug)) {
+    observe({
+      query <- parseQueryString(session$clientData$url_search)
+      requested <- suppressWarnings(as.numeric(query[["debug"]]))
+      if (length(requested) == 1L && is.finite(requested) && requested %in% c(DEBUG_LEVEL_OFF, DEBUG_LEVEL_NORMAL, DEBUG_LEVEL_VERBOSE)) {
+        session$userData$debug(requested)
+      }
+    })
+  }
 
   # Write out logs to the log section
   observeEvent(session$userData$debug(), {
@@ -167,6 +170,10 @@ app_server <- function(input, output, session) {
     profileCode({
       state$values$DT <- doseTable()
       state$values$ET <- eventTable()
+      # Store only the normalized display value. Exact ages above 89 are never
+      # retained in bookmarks (URL or server), so the saved link carries no
+      # identifying age.
+      state$values$simulationAge <- normalizeSimulationAge(age()) / ageUnit()
       setBookmarkExclude(bookmarksToExclude)
     }, name = "onBookmark()")
   })
@@ -187,17 +194,23 @@ app_server <- function(input, output, session) {
         "***************************************************************************",
         sep = ""
       )
-      DT <- as.data.frame(state$values$DT)
-      doseTable(DT)
-      outputComments("doseTable:")
-      outputComments(DT)
-      ET <- as.data.frame(state$values$ET)
+      DT <- as.data.frame(state$values$DT, stringsAsFactors = FALSE)
+      ET <- as.data.frame(state$values$ET, stringsAsFactors = FALSE)
       if (ncol(ET) == 0) {
         ET <- eventTableInit
       }
+      tryCatch({
+        validateDoseTableInput(DT, drugDefaults())
+        validateEventTableInput(ET, eventDefaults())
+      }, error = function(e) {
+        showModal(modalDialog(title = "Invalid saved simulation", "The saved simulation was rejected because it contains invalid or excessive data."))
+        stop("Rejected invalid bookmark state: ", conditionMessage(e), call. = FALSE)
+      })
+      doseTable(DT)
       eventTable(ET)
-      outputComments("eventTable:")
-      outputComments(ET)
+      if (!is.null(state$values$simulationAge)) {
+        updateNumericInput(session, "age", value = state$values$simulationAge)
+      }
     }, name = "onRestored()")
   })
 

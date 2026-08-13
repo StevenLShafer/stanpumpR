@@ -1,6 +1,15 @@
 default:
   title: "stanpumpR v1.1"
+  # "url" makes saved simulations shareable as plain links and works on hosts
+  # without server-side state storage (e.g. shinyapps.io). No confidential data
+  # is placed in the URL: recipient, comments, and exact age are excluded, and
+  # ages >= 90 are normalized to 89. Restored state is re-validated server-side,
+  # so a crafted URL cannot inject code. Use "server" (opaque IDs) only on a host
+  # that supports disk-backed bookmarks such as Posit Connect Cloud; use
+  # "disable" to turn saved-state sharing off entirely.
+  bookmark_mode: "url"
+  allow_url_debug: false
   email_username: "<gmail username>"
   email_password: "<gmail password>"
   help_link: "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
-  debug: 2   # 0 = off, 1 = normal, 2 = verbose
+  debug: 0   # 0 = off, 1 = normal, 2 = verbose
