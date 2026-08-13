@@ -1,0 +1,9 @@
+# Copy these names to your user-level ~/.Renviron and replace the examples.
+# Never put real credentials in this project directory.
+STANPUMPR_EMAIL_USERNAME=stanpumpr@example.com
+STANPUMPR_EMAIL_PASSWORD=replace-with-google-app-password
+STANPUMPR_EMAIL_ENABLED=true
+# Optional overrides; these are the defaults shown here.
+STANPUMPR_EMAIL_SMTP_HOST=smtp.gmail.com
+STANPUMPR_EMAIL_SMTP_PORT=587
+STANPUMPR_EMAIL_SMTP_SSL=true

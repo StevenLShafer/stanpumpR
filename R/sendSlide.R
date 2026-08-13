@@ -11,14 +11,17 @@ sendSlide <- function(
   drugs,
   drugDefaults,
   email_username,
-  email_password
+  email_password,
+  smtp_host = "smtp.gmail.com",
+  smtp_port = 587,
+  smtp_ssl = TRUE
 )
 {
-  tryCatchLog::tryCatchLog({
+  tryCatch({
     prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
     on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
 
-    outputComments("Sending email to", recipient)
+    outputComments("Preparing simulation email")
 
     if (missing(email_username) || is.null(email_username)) {
       stop("email username missing")
@@ -27,47 +30,110 @@ sendSlide <- function(
       stop("email password missing")
     }
 
-    emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults)
+    outputDir <- tempfile(pattern = "stanpumpr-email-")
+    dir.create(outputDir, mode = "0700")
+    on.exit(unlink(outputDir, recursive = TRUE, force = TRUE), add = TRUE)
+
+    emailData <- generateEmail(
+      values, recipient, plotObject, allResults, plotResults, height, width,
+      slide, drugs, drugDefaults, outputDir = outputDir
+    )
 
     outputComments("Sending email")
-    email <- mailR::send.mail(
-      from = paste0("stanpumpR <", email_username, ">"),
+    message <- createSimulationEmailMessage(
+      from = email_username,
       to = recipient,
       subject = emailData$title,
-      body = emailData$bodyText,
-      html = TRUE,
-      smtp = list(
-        host.name = "smtp.gmail.com",
-        port = 587,
-        user.name = email_username,
-        passwd = email_password,
-        ssl = TRUE),
-      attach.files = c(
+      html = emailData$bodyText,
+      attachments = c(
         emailData$pptxfileName,
         emailData$pngfileName,
         emailData$xlsxfileName
-      ),
-      authenticate = TRUE
+      )
     )
-    unlink(emailData$pptxfileName)
-    unlink(emailData$pngfileName)
-    unlink(emailData$xlsxfileName)
+    smtpScheme <- if (isTRUE(smtp_ssl) && smtp_port == 465) "smtps" else "smtp"
+    curl::send_mail(
+      mail_from = email_username,
+      mail_rcpt = recipient,
+      message = message,
+      smtp_server = sprintf("%s://%s:%d", smtpScheme, smtp_host, smtp_port),
+      use_ssl = if (isTRUE(smtp_ssl)) "force" else "no",
+      username = email_username,
+      password = email_password,
+      verbose = FALSE
+    )
     outputComments("Leaving sendMail()")
     return(TRUE)
   }, error = function(e) {
-    return(e$message)
+    # SMTP/library exceptions can contain internal host, account, or transport
+    # details. Do not log the exception or return it to a client.
+    return("The simulation email could not be sent. Please try again later.")
   })
 }
 
-generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults) {
-  title <- paste("stanpumpR simulation on", format(Sys.time()))
+createSimulationEmailMessage <- function(from, to, subject, html, attachments) {
+  if (!isEmailRecipientValid(from) || !isEmailRecipientValid(to)) {
+    stop("Invalid email header address.")
+  }
+  if (!is.character(subject) || length(subject) != 1L || grepl("[\r\n]", subject)) {
+    stop("Invalid email subject.")
+  }
+  if (!all(file.exists(attachments))) stop("Email attachment missing.")
+
+  boundary <- paste0("stanpumpr-", paste(sample(c(letters, 0:9), 32L, TRUE), collapse = ""))
+  wrapBase64 <- function(x) paste(strwrap(x, width = 76L), collapse = "\r\n")
+  encodeFile <- function(path) {
+    raw <- readBin(path, what = "raw", n = file.info(path)$size)
+    wrapBase64(base64enc::base64encode(raw))
+  }
+  mimeTypes <- c(
+    pptx = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    png = "image/png",
+    xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  )
+  parts <- c(
+    paste0(
+      "--", boundary, "\r\n",
+      "Content-Type: text/html; charset=UTF-8\r\n",
+      "Content-Transfer-Encoding: base64\r\n\r\n",
+      wrapBase64(base64enc::base64encode(charToRaw(enc2utf8(html)))), "\r\n"
+    ),
+    vapply(attachments, function(path) {
+      ext <- tolower(tools::file_ext(path))
+      mime <- unname(mimeTypes[[ext]])
+      if (is.null(mime)) mime <- "application/octet-stream"
+      filename <- basename(path)
+      paste0(
+        "--", boundary, "\r\n",
+        "Content-Type: ", mime, "; name=\"", filename, "\"\r\n",
+        "Content-Disposition: attachment; filename=\"", filename, "\"\r\n",
+        "Content-Transfer-Encoding: base64\r\n\r\n",
+        encodeFile(path), "\r\n"
+      )
+    }, character(1)),
+    paste0("--", boundary, "--\r\n")
+  )
+  paste0(
+    "From: stanpumpR <", from, ">\r\n",
+    "To: ", to, "\r\n",
+    "Subject: ", subject, "\r\n",
+    "MIME-Version: 1.0\r\n",
+    "Content-Type: multipart/mixed; boundary=\"", boundary, "\"\r\n\r\n",
+    paste(parts, collapse = "")
+  )
+}
+
+generateEmail <- function(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults,
+                          outputDir) {
+  title <- paste("stanpumpR SIMULATION (not a patient record) on", format(Sys.time()))
   DT <- values$DT
   url <- values$url
 
   outputComments("In function sendSlide()")
 
-  if (!file.exists("Slides")) dir.create("Slides")
-  TIMESTAMP <- format(Sys.time(), format = "%y%m%d-%H%M%S")
+  if (missing(outputDir) || !is.character(outputDir) || length(outputDir) != 1L || !dir.exists(outputDir)) {
+    stop("A private export directory must be supplied.")
+  }
   DATE <- format(Sys.Date(), "%m/%d/%y")
   outputComments("reading Template.pptx")
   PPTX <- officer::read_pptx(system.file("extdata", "Template.pptx", package = "stanpumpR"))
@@ -80,19 +146,23 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location_type ("dt"))
   PPTX <- officer::ph_with(PPTX, slide, location = officer::ph_location_type ("sldNum"))
-  PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location_type ("ftr"))
-  pptxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".pptx")
+  PPTX <- officer::ph_with(
+    PPTX, "stanpumpR SIMULATION — NOT A PATIENT RECORD",
+    location = officer::ph_location_type("ftr")
+  )
+  pptxfileName <- file.path(outputDir, "stanpumpR-simulation.pptx")
 
   outputComments("Saving PPTX")
   print(PPTX, target = pptxfileName)
 
-  xlsxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".xlsx")
+  xlsxfileName <- file.path(outputDir, "stanpumpR-simulation.xlsx")
 
   outputComments("Creating PNG file")
 
-  pngfileName <- paste0("Slides/Preview.", slide, ".", TIMESTAMP, ".png")
+  pngfileName <- file.path(outputDir, "stanpumpR-preview.png")
   ggplot2::ggsave(
     plotObject +
+      ggplot2::labs(caption = "stanpumpR SIMULATION — NOT A PATIENT RECORD") +
       ggplot2::theme(
         strip.text.y = ggplot2::element_text(size = 6, angle = 180),
         axis.text.y = ggplot2::element_text(size = 6),
@@ -157,6 +227,10 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")
   openxlsx::writeData(wb, sheet = 1, covariates)
+  openxlsx::writeData(
+    wb, sheet = 1, x = "stanpumpR SIMULATION — NOT A PATIENT RECORD",
+    startCol = 4, startRow = 1
+  )
 
   outputComments("Writing dose table")
   openxlsx::addWorksheet(wb, "Dose Table")
@@ -274,6 +348,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     "<body><div>",
     "<p>&nbsp;</p>",
     "<p>Dear ",htmltools::htmlEscape(gsub("@", " at ",as.character(recipient))),":<p>&nbsp;</p>",
+    "<p><strong>SIMULATION — NOT A PATIENT RECORD</strong></p><p>&nbsp;</p>",
     "<p>Here is the simulation you requested from stanpumpR on ", Sys.Date(),".</p><p>&nbsp;</p>",
     "<p>The simulation is for a ",values$age / values$ageUnit, " ", ageUnit, "-old ",htmltools::htmlEscape(values$sex),
     " weighing ", values$weight / values$weightUnit, " ",weightUnit,

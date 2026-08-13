@@ -568,7 +568,11 @@ app_server <- function(input, output, session) {
   })
 
   observe({
-    shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
+    shinyjs::toggleState(
+      "sendSlide",
+      condition = isTRUE(config$email_enabled) &&
+        isEmailRecipientValid(input$recipient)
+    )
   })
 
   # Send Slide -----------------------------
@@ -577,15 +581,25 @@ app_server <- function(input, output, session) {
     {
       outputComments("input$sendSlide",input$sendSlide)
 
+      if (!isTRUE(config$email_enabled)) {
+        shinyalert::shinyalert("Email disabled", "Email export is disabled for this deployment.", type = "error")
+        return()
+      }
+
       # Server-side guard: the send button's disabled state is enforced only in
       # the browser and can be bypassed by sending the event over the WebSocket,
       # so the recipient MUST be validated here before any mail is sent.
-      if (!isTRUE(isEmailValid(input$recipient))) {
+      if (!isEmailRecipientValid(input$recipient)) {
         shinyalert::shinyalert(
           "Invalid email address",
-          "Please enter a valid recipient email address.",
+          "Enter a valid recipient email address.",
           type = "error", closeOnClickOutside = TRUE
         )
+        return()
+      }
+
+      if (length(input$emailComments) != 1L || nchar(input$emailComments, type = "bytes") > MAX_INPUT_TEXT) {
+        shinyalert::shinyalert("Comments too long", "Email comments exceed the permitted length.", type = "error")
         return()
       }
 
@@ -627,7 +641,10 @@ app_server <- function(input, output, session) {
           drugs = drugs(),
           drugDefaults = drugDefaults(),
           email_username = config$email_username,
-          email_password = config$email_password
+          email_password = config$email_password,
+          smtp_host = config$email_smtp_host,
+          smtp_port = config$email_smtp_port,
+          smtp_ssl = config$email_smtp_ssl
         ) |> profileCode("sendSlide()")
       shinycssloaders::hidePageSpinner()
 

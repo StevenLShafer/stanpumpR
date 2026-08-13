@@ -210,11 +210,21 @@ app_ui <- function() {
               ),
 
               bslib::accordion_panel(
-                "Email Slide",
+                "Email Simulation",
                 icon = icon("envelope"),
-                textInput("recipient", NULL, "", placeholder = "Enter email address"),
-                textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
-                actionButton("sendSlide", "Send", class = "btn-primary")
+                if (!isTRUE(config$email_enabled)) {
+                  div(
+                    class = "alert alert-secondary py-2 small",
+                    "Email sending is not configured for this deployment."
+                  )
+                },
+                textInput("recipient", NULL, "", placeholder = "Enter recipient email address"),
+                textAreaInput(
+                  "emailComments", NULL, "",
+                  placeholder = "Do not enter any protected health information (PHI).",
+                  rows = 3
+                ),
+                actionButton("sendSlide", "Send Simulation", class = "btn-primary")
               )
             ),
 

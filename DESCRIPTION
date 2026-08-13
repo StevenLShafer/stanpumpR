@@ -12,8 +12,10 @@ Authors@R:
 Description: stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
 License: MIT + file LICENSE
 Imports:
+  base64enc,
   bslib,
   config,
+  curl,
   dplyr,
   glue,
   ggplot2  (>= 3.4),
@@ -24,7 +26,6 @@ Imports:
   jsonlite,
   lubridate,
   magrittr,
-  mailR,
   memoise,
   officer,
   openxlsx,

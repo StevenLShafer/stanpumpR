@@ -128,6 +128,11 @@ normalizeSimulationAge <- function(age) {
   min(age, DEIDENTIFIED_MAX_AGE)
 }
 
+isEmailRecipientValid <- function(email) {
+  is.character(email) && length(email) == 1L && !is.na(email) &&
+    nchar(email, type = "bytes") <= 254L && isTRUE(isEmailValid(email))
+}
+
 recalculatePK <- function(drugs, drugDefaults, doseTable,
                           age, weight, height, sex) {
   #  for (idx in seq(nrow(drugDefaults))) {

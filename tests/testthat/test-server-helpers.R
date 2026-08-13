@@ -54,6 +54,13 @@ test_that("simulation ages 90 and older are normalized to 89", {
   expect_error(normalizeSimulationAge(NA_real_), "finite")
 })
 
+test_that("email recipients may use any valid domain", {
+  expect_true(isEmailRecipientValid("doctor@hospital.example"))
+  expect_true(isEmailRecipientValid("clinician@gmail.com"))
+  expect_false(isEmailRecipientValid("not-an-email"))
+  expect_false(isEmailRecipientValid(c("one@example.com", "two@example.com")))
+})
+
 test_that("target tables are bounded and numeric", {
   valid <- data.frame(Time = "10", Target = 2)
   expect_true(validateTargetTableInput(valid))

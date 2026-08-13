@@ -82,5 +82,9 @@ DEFAULT_CONFIG <- list(
   # code. Set "server" only on a host that supports disk-backed bookmarks (e.g.
   # Posit Connect / Connect Cloud); "disable" turns saved-state sharing off.
   bookmark_mode = "url",
+  email_enabled = FALSE,
+  email_smtp_host = "smtp.gmail.com",
+  email_smtp_port = 587,
+  email_smtp_ssl = TRUE,
   long_title = FALSE
 )

@@ -9,7 +9,12 @@ default:
   # "disable" to turn saved-state sharing off entirely.
   bookmark_mode: "url"
   allow_url_debug: false
-  email_username: "<gmail username>"
-  email_password: "<gmail password>"
+  # May be overridden by STANPUMPR_EMAIL_ENABLED in managed deployments.
+  email_enabled: false
+  email_smtp_host: "smtp.gmail.com"
+  email_smtp_port: 587
+  email_smtp_ssl: true
+  # Credentials and optional SMTP overrides use STANPUMPR_EMAIL_* environment
+  # variables. Never put credentials in this file.
   help_link: "https://steveshafer.shinyapps.io/stanpumpR_HelpPage"
   debug: 0   # 0 = off, 1 = normal, 2 = verbose

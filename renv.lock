@@ -2338,30 +2338,6 @@
       "Maintainer": "Lionel Henry <lionel@posit.co>",
       "Repository": "CRAN"
     },
-    "mailR": {
-      "Package": "mailR",
-      "Version": "0.8",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "A Utility to Send Emails from R",
-      "Description": "Interface to Apache Commons Email to send emails from R.",
-      "Date": "2021-11-05",
-      "Author": "Rahul Premraj",
-      "Maintainer": "Rahul Premraj <r.premraj+mailR@gmail.com>",
-      "License": "GPL-3",
-      "Imports": [
-        "rJava",
-        "stringr",
-        "R.utils",
-        "assertthat"
-      ],
-      "SystemRequirements": "Java",
-      "URL": "https://github.com/rpremrajGit/mailR",
-      "RoxygenNote": "7.1.2",
-      "Encoding": "UTF-8",
-      "NeedsCompilation": "no",
-      "Repository": "CRAN"
-    },
     "memoise": {
       "Package": "memoise",
       "Version": "2.0.1",
@@ -3207,27 +3183,6 @@
       "Author": "Hadley Wickham [aut, cre] (ORCID: <https://orcid.org/0000-0003-4757-117X>), Lionel Henry [aut], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
-    },
-    "rJava": {
-      "Package": "rJava",
-      "Version": "1.0-18",
-      "Source": "Repository",
-      "Title": "Low-Level R to Java Interface",
-      "Author": "Simon Urbanek [aut, cre, cph] (https://urbanek.nz, ORCID: <https://orcid.org/0000-0003-2297-1732>)",
-      "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
-      "Authors@R": "person(\"Simon\", \"Urbanek\", role=c(\"aut\",\"cre\",\"cph\"), email=\"Simon.Urbanek@r-project.org\", comment=c(\"https://urbanek.nz\", ORCID=\"0000-0003-2297-1732\"))",
-      "Depends": [
-        "R (>= 3.6.0)",
-        "methods"
-      ],
-      "Description": "Low-level interface to Java VM very much like .C/.Call and friends. Allows creation of objects, calling methods and accessing fields.",
-      "License": "LGPL-2.1",
-      "URL": "https://www.rforge.net/rJava/",
-      "SystemRequirements": "Java JDK 1.2 or higher (for JRI/REngine JDK 1.4 or higher), GNU make",
-      "BugReports": "https://github.com/s-u/rJava/issues",
-      "NeedsCompilation": "yes",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
     },
     "ragg": {
       "Package": "ragg",
