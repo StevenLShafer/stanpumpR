@@ -1,8 +1,5 @@
 # stanpumpR — Architecture
 
-A visual version of this map is in [`architecture.html`](architecture.html) (open in a
-browser). This document is the GitHub-rendered equivalent.
-
 stanpumpR is a Shiny web app that turns a table of drug doses plus a patient's covariates into
 predicted **plasma** and **effect-site** concentration curves — using **closed-form**
 pharmacokinetic solutions rather than a numeric ODE solver. It is packaged as a standard R
@@ -11,126 +8,215 @@ package with a golem-style `ui / server / run` split; the entry point is
 
 | | |
 |---|---|
-| Language | R — developed/deployed on 4.6.1 (min declared ≥ 4.1) |
+| Language | R (see `DESCRIPTION` for the supported versions) |
 | Framework | Shiny + bslib (Bootstrap 5) |
-| Structure | R package, ~60 files in `R/` |
-| Drug library | 23 drugs, data-as-code |
+| Structure | R package, golem-style `ui / server / run` split |
 | Deps lock | renv (`renv.lock`) |
 | Config | `config.yml` merged over `DEFAULT_CONFIG` |
+| Deploy | shinyapps.io, via GitHub Actions on merge to `master` |
 
 ## The request → render pipeline
 
-Everything is one reactive dependency chain inside `R/app_server.R`. An edit — a covariate, a
+Everything is one reactive dependency chain. Any edit — a covariate, a
 dose cell, a graph option — invalidates one link, and Shiny re-runs only what is downstream.
 The heavy computation is the last two stages.
 
-```mermaid
-flowchart TD
-    A["<b>01 Inputs</b> — app_ui.R<br/>covariates · dose grid · events · graph options · plot clicks"]
-    B["<b>02 Normalize & validate</b> — server-helpers.R<br/>doseTableClean() · eventTableClean() · testCovariates()"]
-    C["<b>03 Resolve PK</b> — getDrugPK.R<br/>recalculatePK(): covariates → coefficients, per drug"]
-    D["<b>04 Simulate</b> — simCpCe.R<br/>processdoseTable(): re-simulate only changed drugs"]
-    E["<b>05 Assemble plot</b> — simulationPlot.R<br/>build ggplot + allResults / plotResults"]
-    F["<b>06 Render & interact</b> — app_server.R<br/>PlotSimulation · hover · click-to-dose · Suggest · email"]
-    A --> B --> C --> D --> E --> F
-    C -. "drugs() reactive" .- D
-```
+### 01 — Inputs
 
-Both `recalculatePK()` and `processdoseTable()` mutate a persistent per-drug list and **skip
-any drug whose inputs are unchanged**. Combined with closed-form solutions (no integration), a
-single dose edit re-simulates just the one drug it touched.
+The sidebar groups inputs into a few categories — patient covariates, graph/display
+options, optional extra plot facets, and the email-slide form.
 
-### Key reactives (in `app_server.R`)
+The **dose table** is a `rhandsontable` editable table, with `Apply` / `Undo` / `Redo`
+controls and a display toggle for elapsed-minutes vs. clock time. Its full edit → apply lifecycle
+is covered in [The dose table lifecycle](#the-dose-table-lifecycle).
 
-| Reactive | Role |
-|---|---|
-| `doseTableClean()` / `eventTableClean()` | coerce grids, drop blank rows, convert clock→elapsed time |
-| `testCovariates()` / `weight()` `height()` `age()` `sex()` | validated patient values |
-| `plotInfo()` → `plotMaximum()`, `steps()` | x-axis extent derived from doses/events |
-| `drugs()` | **A:** `recalculatePK()` then **B:** `processdoseTable()` |
-| `simulationPlotRetval()` | calls `simulationPlot()`; exposes `plotObject`, `allResults`, `plotResults`, `plotHeight` |
+**Events** are not a permanently visible table — they're edited by clicking on the Events plot
+(which only appears when "Events" is chosen in the "Additional Plots" section). Events are stored
+in a single reactive called `eventTable()`. Unlike the dose table, there's no draft/undo/redo
+layer for events.
+
+The **plot** itself (built in step 06) is also an input source: clicking or double-clicking a
+facet adds or edits a dose, and hovering shows a tooltip with additional information.
+
+### 02 — Dose table
+
+The dose table goes through a draft stage before it's committed, so a typo mid-edit never reaches
+the simulator: edits land in a draft copy first, `Apply` commits the draft to the canonical
+`doseTable()`, and `doseTableClean()` normalizes whatever `doseTable()` currently holds for
+everything downstream. See [The dose table lifecycle](#the-dose-table-lifecycle) below for the
+full mechanism.
+
+### 03 — Resolve pharmacokinetics
+
+`drugs()` is a reactive that gets re-calculated whenever the dose table changes (more specifically,
+when `doseTableClean()` is updated). It runs `recalculatePK()`, which in turn runs `getDrugPK()` in a loop
+for each drug in the doses table. This turns the patient's covariates into a full set of rate constants,
+eigenvalues, and closed-form coefficients.
+
+### 04 — Simulate concentrations
+
+`processdoseTable()` is designed to diff each drug's doses against the cached result and
+re-simulate only what changed — calling `simCpCe()`, which converts dose units, classifies
+bolus / infusion / oral routes, and dispatches to the right closed-form solver — for drugs whose
+slice actually changed. Output is a tidy time × site table per drug. See
+[Known issue: the per-drug cache doesn't persist](#known-issue-the-per-drug-cache-doesnt-persist)
+below — the diffing this step relies on doesn't currently have any state to diff against.
+
+### 05 — Assemble the plot
+
+`simulationPlotRetval()` is where the dose/event/PK state gathered above turns into a figure. It
+pulls `doseTableClean()`, `eventTableClean()`, `drugs()`, and all the inputs on the page to stitch
+every drug's curves into one `ggplot2` object.
+
+### 06 — Render & interact
+
+`output$PlotSimulation` renders the plot. Hover reports precise concentrations, click adds a dose,
+double-click edits a drug.
+
+## The dose table lifecycle
+
+1. As a user types into the dose table, JavaScript hooks on the grid do real-time cleanup —
+   fixing/converting times, dropping a row if its drug is removed, etc.
+2. **`input$doseTableHTML`** fires after that JS-side cleanup completes, on every edit. The
+   observer converts it to an R data frame with `hot_to_r()` and saves it as `doseTableDraft()`.
+3. **Undo / redo** — pop/push `doseTableDraft()` against the undo/redo stacks. This only ever
+   touches the draft; nothing downstream re-simulates yet.
+4. **`input$dosetable_apply`** commits the pending edit: it copies `doseTableDraft()`'s value
+   into `doseTable()`, the canonical reactive everything downstream reads from.
+5. `doseTable()` can also be updated directly — by clicking on the plot and adding/editing/
+   deleting a dose from the resulting modal — which bypasses the draft entirely and applies
+   immediately, with no separate confirm step.
+6. **`doseTableClean()`** is what the rest of the pipeline actually depends on. Whenever
+   `doseTable()` changes, this reactive re-derives a cleaned copy via `cleanDT()` (coerce column
+   types, drop incomplete rows, convert clock times to elapsed minutes).
 
 ## The computational core
 
-stanpumpR never numerically integrates. Each drug is a 3-compartment mammillary model with an
+stanpumpR never numerically integrates. Each drug is a mammillary 3-compartment model with an
 effect-site link; disposition is solved analytically once per patient, then evaluated at every
 time point as a sum of exponentials.
 
 ### A — Parameterize the patient (`getDrugPK.R`)
 
-1. `eval(call(drug, weight, height, age, sex))` runs the drug's own covariate model → `v1..v3`, `cl1..cl3`, `tPeak`, `MEAC`.
+1. `eval(call(drug, weight, height, age, sex))` runs the drug's own covariate model (e.g. Eleveld
+   for propofol, Kim/Eleveld-style models for remifentanil, etc.) → `v1..v3`, `cl1..cl3`,
+   `tPeak`, `MEAC`.
 2. Volumes & clearances → micro rate constants `k10, k12, k13, k21, k31`.
 3. `cube()` solves the characteristic cubic → eigenvalues `lambda_1, lambda_2, lambda_3`.
 4. `tPeakError()` + `optimize()` back-solve the effect-site rate `ke0` from time-to-peak-effect.
-5. Precompute per-route (bolus / infusion / PO / IM / IN) exponential coefficients `p_coef_*`, `e_coef_*`.
+5. Precompute per-route (bolus / infusion / PO / IM / IN) exponential coefficients `p_coef_*`,
+   `e_coef_*`.
 
 ### B — Advance the doses (`simCpCe.R`)
 
-1. Reduce mg/mcg/ng, per-kg, per-hour doses to base units.
-2. Classify each dose as bolus, infusion, or `PO / IM / IN`.
+1. Reduce mg/mcg/ng, per-kg, per-hour doses to base units against the drug's concentration unit.
+2. Classify each dose as `Bolus`, infusion, or `PO / IM / IN`.
 3. Dispatch to a solver:
    - `advanceClosedForm0.R` — IV, no PK events
    - `advanceClosedForm1.R` — time-varying PK driven by events
    - `advanceClosedFormPO_IM_IN.R` — extravascular routes
-4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state across event boundaries.
+4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
+   across event boundaries.
 5. Interpolate to an even grid (`equiSpace`), normalize to peak Cp/Ce, and scale against MEAC.
 
 Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `equiSpace` and `max`.
 
-The exported, Shiny-free entry point for this whole path is
-`simulateDrugsWithCovariates()` (used by the vignettes and tests).
+The exported, Shiny-free entry point for this whole path is `simulateDrugsWithCovariates()` — it
+loops drugs, calls `getDrugPK()` → `simCpCe()`, and returns per-drug results. This is what the
+vignettes and tests drive.
 
-## Drug library — data as code
+**Pharmacodynamics.** `modelInteraction()` computes a propofol × opioid response surface for the
+optional interaction facet (`modelInteraction.R`, `CE.R`, `calculateCe.R`).
 
-Adding a drug means one `R/drugs_<name>.R` file plus one row in the defaults CSV. See
+**Covariate helpers.** `lbmJames()` computes lean body mass; `recoveryCalc()` computes
+time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
+linetypes.
+
+## Drug library
+
+Adding a drug involves adding one `R/drugs_<name>.R` file and one row in the defaults CSV — the
+pattern the project is explicitly built to let outside investigators contribute to. See
 **[adding-a-drug.md](adding-a-drug.md)** for the full procedure.
 
-- **Model** — `R/drugs_*.R` (23 files): each exports `drug(weight, height, age, sex)` returning compartment `PK`, `tPeak`, `MEAC`. Bodies encode published covariate models (often branching on BMI or sex). Invoked by name via `eval(call(drug, ...))`.
-- **Metadata** — `inst/extdata/drugDefaults_global.csv`: colors, units, typical ranges, MEAC, emergence thresholds. Loaded once via memoised `getDrugDefaultsGlobal()`; the `Drug` column *is* the drug list.
-- **Events** — `inst/extdata/eventDefaults.csv`: named clinical events that can switch a drug to alternate PK mid-simulation.
+## Component catalog
 
-## Component catalog (`R/` by responsibility)
-
-Files are flat in `R/` and wired by the `Collate:` order in `DESCRIPTION`.
+Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTION`.
 
 **Shell — bootstrap & framework**
-`app.R`, `app_run.R` (`run_app()`), `app_ui.R`, `app_server.R` (the reactive heart),
-`app_globals.R` (init tables, bookmark exclusions, `outputComments()`),
-`globalVariables.R`, `zzz.R`, `stanpumpR-package.R`.
+- `app.R` — one line, `stanpumpR::run_app()`; the deploy entry point.
+- `app_run.R` — loads libraries, merges the local config file with default configurations, sets 
+  the ggplot theme, mounts asset folders, launches the shiny app.
+- `app_ui.R` — the entire UI: navbar, sidebar accordions, dose/event grids, plot card,
+  debug panel.
+- `app_server.R` — the entire reactive heart: every reactive, observer, output, and modal.
+- `app_globals.R` — global variables used by the app: init tables, bookmark exclusion list,
+  `outputComments()` logger.
+- `globalVariables.R` — constants used in the app.
 
 **Reactive glue — server helpers & UI widgets**
-`server-helpers.R` (`recalculatePK`, `cleanDT`, `checkNumericCovariates`), `shiny-utils.R`,
-`createHOT.R` (the `rhandsontable` dose grid), `processdoseTable.R`, `validateDose.R`,
-`validateTime.R`.
+- `server-helpers.R` — `recalculatePK()`, `cleanDT()`, `checkNumericCovariates()`, reactive
+  triggers, intro modal.
+- `shiny-utils.R` — UI builders (`inputWithChoices`, `addHotHooks`, inline-input helpers).
+- `createHOT.R` — builds the `rhandsontable` dose grid from the current table + drug colors.
+- `processdoseTable.R` — per-drug diff-and-simulate driver (pipeline step 04).
+- `validateDose.R`, `validateTime.R` — input guards for dose amounts and clock/elapsed times.
 
 **PK/PD engine — the math core**
-`getDrugPK.R`, `cube.R`, `simCpCe.R`, `advanceClosedForm0/1/PO_IM_IN.R`,
-`advanceState.R`, `advanceStatePO.R`, `convertState.R`, `CE.R`, `calculateCe.R`,
-`tPeakError.R`, `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R`,
-`simulateDrugsWithCovariates.R`.
-*Experimental (tracked, not yet integrated):* `ig_absorption.R` — a closed-form Inverse
-Gaussian absorption model; not exported or wired into the engine (see its provenance header).
+- `getDrugPK.R` — covariates → rate constants, eigenvalues, per-route coefficients.
+- `cube.R` — solves the disposition cubic for `lambda_1..3`.
+- `simCpCe.R` — single-drug simulation: units → route → solver dispatch.
+- `advanceClosedForm0.R` / `advanceClosedForm1.R` / `advanceClosedFormPO_IM_IN.R` — the three
+  closed-form solvers (IV, event-varying, extravascular).
+- `advanceState.R`, `advanceStatePO.R`, `convertState.R` — carry compartment state across dose &
+  event boundaries.
+- `CE.R`, `calculateCe.R`, `tPeakError.R` — effect-site concentration and `ke0` fitting.
+- `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
+  thresholds, body-size scaling.
+- `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
+- `ig_absorption.R` — *experimental, tracked, not yet integrated.* Closed-form Inverse Gaussian
+  absorption model; not exported or wired in (see its provenance header).
 
 **Output — plot, dosing advisor & export**
-`simulationPlot.R`, `setLinetypes.R`, `suggest.R` (target-controlled dosing optimizer),
-`sendSlide.R` (renders an `officer` PPTX from `Template.pptx`, emails via `mailR`).
+- `simulationPlot.R` — assembles the composite `ggplot2` figure and its data tables.
+- `setLinetypes.R` — maps normalization + user choices to plasma/effect linetypes.
+- `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
+- `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
+  `mailR`.
 
 **Util — time & misc**
-`clockTimeToDelta.R`, `deltaToClockTime.R`, `hourMinute.R`, `utils.R`,
-`drugAndEventDefaults.R`.
+- `clockTimeToDelta.R`, `deltaToClockTime.R`, `hourMinute.R` — convert between wall-clock
+  procedure times and elapsed minutes.
+- `utils.R`, `drugAndEventDefaults.R` — small shared helpers and the memoised defaults loaders.
 
-## Around the core
+## App features
 
-- **Suggest Dosing** (`suggest.R`) — optimizes bolus + infusion to reach/hold a target concentration.
-- **Email a slide** (`sendSlide.R`) — branded PPTX of the current simulation plus a URL that reconstructs the state.
-- **Editors & modals** — in-app Drug Library and Drug Thresholds editors; click-to-add-dose / double-click-to-edit from plot coordinates.
-- **URL bookmarking** — `enableBookmarking = "url"`; `bookmarksToExclude` keeps transient UI state out of the link.
-- **Debug & profiler** — `?debug=1` reveals a live log (`outputComments`) and a per-reactive profiler (`profileCode`).
-- **Front-end assets** — `inst/www/`: `app.css`, `app.js`, `hot_funs.js` (Handsontable hooks, drug-default injection).
-- **Reproducibility** — `renv.lock` pins package versions; deps declared in `DESCRIPTION`.
-- **Tests / CI** — ~40 files in `tests/testthat/` (one per drug plus PK, plotting, helper suites); R-CMD-check via GitHub Actions.
+- **Suggest Dosing** (`suggest.R`) — given a target drug and end time, optimizes bolus +
+  infusion amounts to reach and hold a target concentration.
+- **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current
+  simulation and mails it: plot, dose table, and a URL that reconstructs the exact state.
+- **Editors & modals** (`app_server.R`) — in-app Drug Library and Drug Thresholds editors, plus
+  click-to-add-dose / double-click-to-edit driven from plot coordinates.
+- **URL bookmarking** (`app_globals.R`) — `enableBookmarking = "url"` encodes inputs into a
+  shareable link; `bookmarksToExclude` keeps transient UI state out.
+- **Debug & profiler** (`app_globals.R`, `app_server.R`) — `?debug=1` reveals a live log
+  (`outputComments()`) and a per-reactive profiler (`profileCode()`).
+- **Front-end assets** (`inst/www/`) — `app.css`, `app.js`, `hot_funs.js` (Handsontable
+  copy/paste hooks and drug-default injection into the client).
+- **Config** (`config.yml`, `app_run.R`) — environment-specific title, help link, and debug flag,
+  merged over `DEFAULT_CONFIG` at launch.
+- **Reproducibility** (`renv.lock`, `DESCRIPTION`) — `renv.lock` pins exact package versions so
+  production matches local; deps declared in `DESCRIPTION`.
+- **Tests / CI** (`tests/testthat/`, `.github/`) — ~40 test files (one per drug plus PK,
+  plotting, and helper suites); R-CMD-check and shinyapps.io deploy run via GitHub Actions.
 
----
+## Known issue: the per-drug cache doesn't persist
 
-*Generated from `master`. If the code has drifted from this map, update it — it lives with the
-code so it can be kept honest.*
+`drugs()` (step 03) is meant to keep a per-drug cache across reactive re-runs so that
+`processdoseTable()` (step 04) can skip re-simulating drugs whose doses haven't changed. In the
+current implementation it doesn't: `recalculatePK()` resets `drugs[[drug]]$DT` to `NULL` for
+every drug it touches, and `drugs()` itself rebuilds its list from `NULL` on every invalidation
+rather than holding it in a `reactiveVal`. So `processdoseTable()`'s `identical(tempDT,
+drugs[[drug]]$DT)` check is always comparing against `NULL` — every drug in the table gets
+re-simulated on every `drugs()` invalidation (a covariate edit, a dose edit, an event edit), not
+just the one that changed. The skip logic is real code; it just has no persisted state to skip
+against. Worth fixing or filing as an issue rather than treating as expected behavior.

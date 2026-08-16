@@ -4,7 +4,7 @@ stanpumpR is designed so that adding a drug is a small, self-contained change â€
 let outside investigators contribute and maintain the pharmacokinetics for individual drugs.
 A new drug touches **four** places. None of the engine code needs to change.
 
-> Prerequisite: read the [architecture map](architecture.html) first if you haven't. You only
+> Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 
 ## 1. The model â€” `R/drugs_<name>.R`
