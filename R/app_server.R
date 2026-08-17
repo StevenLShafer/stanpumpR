@@ -550,7 +550,6 @@ app_server <- function(input, output, session) {
         return()
       }
 
-      # Per-session cap to prevent the shared account being used as a relay.
       if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
         shinyalert::shinyalert(
           "Send limit reached",
@@ -559,7 +558,6 @@ app_server <- function(input, output, session) {
         )
         return()
       }
-      emailSendCount(emailSendCount() + 1)
 
       values <- list(
         comments = input$emailComments,
@@ -593,6 +591,7 @@ app_server <- function(input, output, session) {
       shinycssloaders::hidePageSpinner()
 
       if (isTRUE(emailRetval)) {
+        emailSendCount(emailSendCount() + 1)
         shinyalert::shinyalert("Email sent", type = "success", closeOnClickOutside = TRUE)
       } else {
         shinyalert::shinyalert("Error sending email", emailRetval, type = "error", closeOnClickOutside = TRUE)
