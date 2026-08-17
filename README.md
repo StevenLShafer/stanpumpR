@@ -35,18 +35,18 @@ Near-term future developments in stanpumpR will include
 
 ### Setting up locally
 
-Requires R 4.6.x (developed and deployed on 4.6.1). CI exercises the current release and one prior (~4.5); `DESCRIPTION` still declares the minimum as `R (>= 4.1)`, but 4.6.x is the supported line.
-
-1. Clone/download this repository to your local machine
-2. Open the `stanpumpR.Rproj` file in RStudio
-3. Run `renv::restore()` to install all the necessary packages
-4. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
-5. Run the app from the RStudio Console:
+1. Check the required R version by looking at the third line of the file [`renv.lock`](renv.lock)
+2. Download and install the required R version
+3. Clone/download this repository to your local machine
+4. Open the `stanpumpR.Rproj` file in RStudio
+5. Run `renv::restore()` to install all the necessary packages
+6. Make a copy of the file `config.yml.sample` as a new file named `config.yml`. This `config.yml` is a configuration file that stanpumpR needs. You can change the settings inside it.
+7. Run the app from the RStudio Console:
     ```
     devtools::load_all(".")
     run_app()
     ```
-6. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `&debug=1` to the URL.
+8. Debug mode shows a detailed log and a performance profiler. By default, debug mode is off in production. You can turn it on by adding `&debug=1` to the URL.
 
 #### Running tests
 
