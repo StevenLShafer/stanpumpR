@@ -13,7 +13,7 @@ app_ui <- function() {
 
   function(request) {
     bslib::page_navbar(
-      title = span(config$title, class = if (config$long_title) "title-long"),
+      title = "test1",
       theme = stanpumpr_theme,
 
       header = tags$head(
