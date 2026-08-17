@@ -428,7 +428,7 @@ app_server <- function(input, output, session) {
       req(doseTableClean())
 
       requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
-      if (length(requestedMaximum) != 1L || !is.finite(requestedMaximum) || !requestedMaximum %in% maxtimes$times) {
+      if (!is_valid_number(requestedMaximum) || !requestedMaximum %in% maxtimes$times) {
         stop("Invalid maximum simulation time.")
       }
       plotMaximum <- requestedMaximum
@@ -460,12 +460,10 @@ app_server <- function(input, output, session) {
 
   simulationPlotRetval <- reactive({
     req(input$plotWidth)
-    if (!is.numeric(input$plotWidth) || length(input$plotWidth) != 1L ||
-        !is.finite(input$plotWidth) || input$plotWidth < 200 || input$plotWidth > MAX_PLOT_WIDTH) {
+    if (!is_valid_number(input$plotWidth, 200, MAX_PLOT_WIDTH)) {
       stop("Invalid plot width.")
     }
-    if (!is.numeric(input$yaxisHeight) || length(input$yaxisHeight) != 1L ||
-        !is.finite(input$yaxisHeight) || input$yaxisHeight < 100 || input$yaxisHeight > 500) {
+    if (!is_valid_number(input$yaxisHeight, 100, 500)) {
       stop("Invalid plot height.")
     }
     profileCode({

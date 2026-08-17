@@ -3,6 +3,17 @@
   x >= range[1] & x <= range[2]
 }
 
+#' Check if a value is a valid single number within bounds
+#'
+#' @param x Value to check
+#' @param min Minimum allowable value (optional)
+#' @param max Maximum allowable value (optional)
+#' @return Logical value indicating whether the value is valid
+#' @noRd
+is_valid_number <- function(x, min = -Inf, max = Inf) {
+  is.numeric(x) && length(x) == 1L && is.finite(x) && x >= min && x <= max
+}
+
 identicalTable <- function(x, y) {
   rownames(x) <- NULL
   rownames(y) <- NULL

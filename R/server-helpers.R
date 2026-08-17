@@ -41,19 +41,16 @@ showIntroModal <- function() {
 checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
   msg <- ""
   success <- TRUE
-  if (!is.numeric(age) || !is.numeric(weight) || !is.numeric(height)) {
-    success <- FALSE
-  }
-  if (!age %btwn% c(MIN_AGE, MAX_AGE)) {
+  if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
     msg <- glue::glue("Age must be between {MIN_AGE} and {MAX_AGE}")
     success <- FALSE
   }
-  if (!weight %btwn% c(MIN_WEIGHT, MAX_WEIGHT)) {
+  if (!is_valid_number(weight, MIN_WEIGHT, MAX_WEIGHT)) {
     msg <- glue::glue("Weight must be between {MIN_WEIGHT} and {MAX_WEIGHT}")
     success <- FALSE
   }
-  if (!height %btwn% c(MIN_HEIGHT, MAX_HEIGHT)) {
-    msg <-glue::glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
+  if (!is_valid_number(height, MIN_HEIGHT, MAX_HEIGHT)) {
+    msg <- glue::glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
     success <- FALSE
   }
 
