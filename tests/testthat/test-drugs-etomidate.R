@@ -21,7 +21,7 @@ test_that("returns the correct calculations", {
     typical = 0.5,
     upperTypical = 0.4,
     lowerTypical = 0.8,
-    reference = "Anesthesiology 1986 65:19-27"
+    reference = "Arden JR et al., Anesthesiology 1986;65(1):19-27. https://pubmed.ncbi.nlm.nih.gov/3729056/"
   )
 
   expect_equal_rounded(actual, expected)
