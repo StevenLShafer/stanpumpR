@@ -21,7 +21,7 @@ test_that("returns the correct calculations", {
     typical = 1.5,
     upperTypical = 2.2,
     lowerTypical = 1,
-    reference = "/*  Plaud,  CPT, in press */"
+    reference = "Plaud B et al., Clin Pharmacol Ther 1995;58(2):185-191. https://pubmed.ncbi.nlm.nih.gov/7648768/"
   )
 
   expect_equal_rounded(actual, expected)

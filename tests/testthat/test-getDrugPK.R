@@ -82,7 +82,7 @@ test_that("it returns the same value", {
     ),
     tPeak = 1.6,
     pkEvents = "default",
-    reference = "Not Available",
+    reference = "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/",
     weight = 70,
     height = 170,
     age = 50,

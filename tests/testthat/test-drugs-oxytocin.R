@@ -19,7 +19,7 @@ test_that("returns the correct calculations if weight is > 1", {
     typical = 0.1,
     upperTypical = 0.05,
     lowerTypical = 0.2,
-    reference = "190912-135448"
+    reference = "Eisenach (unpublished data)"
   )
   expect_equal_rounded(actual, expected)
 })
@@ -45,7 +45,7 @@ test_that("returns the correct calculations if weight is <= 1", {
     typical = 0.1,
     upperTypical = 0.05,
     lowerTypical = 0.2,
-    reference = "190912-135448"
+    reference = "Eisenach (unpublished data)"
   )
   expect_equal_rounded(actual, expected)
 })
