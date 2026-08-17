@@ -24,8 +24,7 @@ defaultSex <- "female"
 # Resolution for linear interpolation
 RESOLUTION <- 100
 
-# Max number of slides a single session may email, to limit abuse of the
-# shared sending account (the app is unauthenticated and public).
+# Max number of emails a single session can send out, to limit abuse
 EMAIL_SESSION_LIMIT <- 25
 
 # Be sure there are more items below then potential facets on the simulation plot
