@@ -17,27 +17,17 @@ app_ui <- function() {
       theme = stanpumpr_theme,
 
       header = tags$head(
-        # Content-Security-Policy (defense-in-depth). 'unsafe-inline'/'unsafe-eval'
-        # are required because Shiny and htmlwidgets (e.g. rhandsontable) emit
-        # inline scripts/styles; the meaningful protections here are the
-        # restrictions on default-src / connect-src / object-src / base-uri, which
-        # constrain where the page may load from or send data to. NOTE: verify
-        # against a running instance before relying on it, and note that
-        # `frame-ancestors` is ignored when a CSP is delivered via <meta> — set
-        # `X-Frame-Options`/`frame-ancestors` as a real response header at the
-        # hosting/proxy layer for clickjacking protection.
         tags$meta(
           `http-equiv` = "Content-Security-Policy",
           content = paste(
             "default-src 'self';",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval';",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval';",  # many htmlwidgets use inline scripts
             "style-src 'self' 'unsafe-inline';",
             "img-src 'self' data:;",
             "font-src 'self' data:;",
             "connect-src 'self';",
             "object-src 'none';",
-            "base-uri 'self';",
-            "frame-ancestors 'none'"
+            "base-uri 'self';"
           )
         ),
         shinyjs::useShinyjs(),
