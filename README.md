@@ -16,7 +16,7 @@ stanpumpR uses very little of the original STANPUMP code. However, conceptually 
 
 It is hoped that stanpumpR will encourage device manufacturers to develop the next generation of drug delivery systems and anesthesia information management systems. Companies seeking to develop such systems should contact Dr. Shafer to request written permission to incorporate stanpumpR into their products. Without written permission, stanpumpR must not be incorporated into commercially available systems.
 
-stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encourage to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible.
+stanpumpR is a collaborative research project. Individuals interested in adding drugs, pharmacokinetic data sets, or new algorithms to stanpumpR are encourage to contact Dr. Shafer. It is hoped that eventually each drug in the stanpumpR library will be maintained by an investigator, who will assume responsibility for keeping the pharmacokinetics as up-to-date as possible. See [`docs/adding-a-drug.md`](docs/adding-a-drug.md) for the technical steps.
 
 Near-term future developments in stanpumpR will include
 
@@ -25,6 +25,13 @@ Near-term future developments in stanpumpR will include
 3. Improved models of drug interaction
 4. PK changes with pregnancy, CYP2D6, and renal function. These have been added to the UI, but no models with these are yet in the program.
 5. Create of help and example pages.
+
+### Documentation
+
+- [`docs/architecture.md`](docs/architecture.md) — how the app is put together: the reactive
+  pipeline, the PK/PD engine, and the file layout.
+- [`docs/adding-a-drug.md`](docs/adding-a-drug.md) — the four touch points for contributing a
+  new drug.
 
 ### Setting up locally
 
