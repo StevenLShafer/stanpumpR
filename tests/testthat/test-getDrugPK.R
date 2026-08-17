@@ -138,15 +138,9 @@ test_that("every drug in the library supplies a reference", {
     character(1)
   )
 
+  # Compare name vectors rather than asserting a bare TRUE: under testthat's 3rd
+  # edition a failure prints the offending drug names, so you learn which drug
+  # lacks a citation, not merely that one does.
   missing <- names(references)[!nzchar(references) | references == "Not Available"]
-
-  # Carry the offending drug names in `info`. This package sets no
-  # Config/testthat/edition, so it runs under the 2nd edition, where a failing
-  # expect_equal() on a character vector reports only "Lengths differ" and hides
-  # the values -- which would leave you knowing a drug lacks a citation but not
-  # which one.
-  expect_true(
-    length(missing) == 0,
-    info = paste("drugs with no reference:", paste(missing, collapse = ", "))
-  )
+  expect_equal(missing, character(0))
 })

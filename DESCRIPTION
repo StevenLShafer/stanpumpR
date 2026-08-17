@@ -51,11 +51,12 @@ Suggests:
     remotes,
     rmarkdown,
     rsconnect,
-    testthat
+    testthat (>= 3.0.0)
 Depends:
   R (>= 4.1)
 Encoding: UTF-8
 LazyData: true
+Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
 Collate:
   drugAndEventDefaults.R
