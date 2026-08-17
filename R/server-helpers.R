@@ -66,21 +66,24 @@ validateDoseTableInput <- function(DT, drugDefaults = getDrugDefaultsGlobal()) {
   }
   if (nrow(DT) > MAX_DOSE_ROWS) stop("Dose table exceeds the permitted row limit.")
 
-  drug <- as.character(DT$Drug)
-  time <- as.character(DT$Time)
-  units <- as.character(DT$Units)
-  dose <- suppressWarnings(as.numeric(DT$Dose))
-  present <- nzchar(drug) | nzchar(time) | nzchar(units) | !is.na(dose)
+  DT <- cleanDT(DT)
+  if (nrow(DT) == 0L) return(invisible(TRUE))
 
-  if (any(nchar(drug) > 64L | nchar(time) > 32L | nchar(units) > 32L, na.rm = TRUE)) {
-    stop("Dose table contains an overlong value.")
+  if (any(
+    nchar(DT$Drug) > MAX_DRUGNAME_LENGTH |
+    nchar(DT$Time) > MAX_TIME_STRING_LENGTH |
+    nchar(DT$Units) > MAX_UNIT_STRING_LENGTH,
+    na.rm = TRUE
+  )) {
+    stop("Dose table contains a value that's too long.")
   }
-  if (any(nzchar(drug) & !drug %in% drugDefaults$Drug, na.rm = TRUE)) stop("Dose table contains an unknown drug.")
-  if (any(nzchar(units) & !units %in% allUnits, na.rm = TRUE)) stop("Dose table contains unknown dose units.")
-  if (any(present & (!is.finite(dose) | dose < 0 | dose > MAX_DOSE_VALUE), na.rm = TRUE)) {
+
+  if (any(!DT$Drug %in% drugDefaults$Drug)) stop("Dose table contains an unknown drug.")
+  if (any(!DT$Units %in% allUnits)) stop("Dose table contains unknown dose units.")
+  if (any(!is.finite(DT$Dose) | DT$Dose < 0 | DT$Dose > MAX_DOSE_VALUE)) {
     stop("Dose must be finite, non-negative, and within the permitted limit.")
   }
-  if (any(nzchar(time) & vapply(time, function(x) !identical(validateTime(x), x), logical(1)), na.rm = TRUE)) {
+  if (any(vapply(DT$Time, function(x) !identical(validateTime(x), x), logical(1)))) {
     stop("Dose table contains an invalid time.")
   }
   invisible(TRUE)
@@ -91,9 +94,11 @@ validateEventTableInput <- function(ET, eventDefaults = getEventDefaults()) {
   if (nrow(ET) > MAX_EVENT_ROWS) stop("Event table exceeds the permitted row limit.")
   time <- as.character(ET$Time)
   event <- as.character(ET$Event)
-  if (any(nchar(time) > 32L | nchar(event) > 128L, na.rm = TRUE)) stop("Event table contains an overlong value.")
-  if (any(nzchar(event) & !event %in% eventDefaults$Event, na.rm = TRUE)) stop("Event table contains an unknown event.")
-  if (any(nzchar(time) & vapply(time, function(x) !identical(validateTime(x), x), logical(1)), na.rm = TRUE)) {
+  if (any(nchar(time) > MAX_TIME_STRING_LENGTH | nchar(event) > MAX_DRUGNAME_LENGTH, na.rm = TRUE)) {
+    stop("Event table contains a value that's too long.")
+  }
+  if (any(!event %in% eventDefaults$Event)) stop("Event table contains an unknown event.")
+  if (any(vapply(time, function(x) !identical(validateTime(x), x), logical(1)))) {
     stop("Event table contains an invalid time.")
   }
   invisible(TRUE)
@@ -108,7 +113,7 @@ validateTargetTableInput <- function(targetTable) {
   targetText <- as.character(targetTable$Target)
   target <- suppressWarnings(as.numeric(targetText))
   present <- nzchar(time) | nzchar(targetText)
-  if (any(nchar(time) > 32L, na.rm = TRUE)) stop("Target table contains an overlong time.")
+  if (any(nchar(time) > MAX_TIME_STRING_LENGTH, na.rm = TRUE)) stop("Target table contains an overlong time.")
   if (any(nzchar(time) & vapply(time, function(x) !identical(validateTime(x), x), logical(1)), na.rm = TRUE)) {
     stop("Target table contains an invalid time.")
   }
@@ -145,11 +150,12 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
   drugs
 }
 
+# Coerce all columns to the correct data type and only keep full rows
 cleanDT <- function(DT) {
   DT$Drug    <- as.character(DT$Drug)
   DT$Units   <- as.character(DT$Units)
-  DT$Dose    <- as.numeric(DT$Dose)
-  DT$Time    <- as.character(DT$Time)  # Stored as factors... Arrgh.....
+  DT$Dose    <- suppressWarnings(as.numeric(DT$Dose))
+  DT$Time    <- as.character(DT$Time)
   DT <- DT[DT$Drug != "" & !is.na(DT$Dose) & DT$Time != "" & DT$Units != "", ]
   DT
 }

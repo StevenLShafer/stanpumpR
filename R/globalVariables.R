@@ -28,14 +28,18 @@ RESOLUTION <- 100
 # shared sending account (the app is unauthenticated and public).
 EMAIL_SESSION_LIMIT <- 25
 
-# Server-side security limits. Browser controls are not a security boundary:
-# every value can be forged over the Shiny websocket or through a bookmark.
 MAX_DOSE_ROWS <- 500L
 MAX_EVENT_ROWS <- 100L
 MAX_TARGET_ROWS <- 20L
 MAX_DOSE_VALUE <- 1e9
 MAX_INPUT_TEXT <- 2000L
-MAX_PLOT_WIDTH <- 4096
+MAX_PLOT_WIDTH <- 4096L
+MIN_PLOT_WIDTH <- 100L
+MAX_YAXIS_HEIGHT <- 350L
+MIN_YAXIS_HEIGHT <- 150L
+MAX_DRUGNAME_LENGTH <- 128L
+MAX_TIME_STRING_LENGTH <- 32L
+MAX_UNIT_STRING_LENGTH <- 32L
 
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15

@@ -460,10 +460,10 @@ app_server <- function(input, output, session) {
 
   simulationPlotRetval <- reactive({
     req(input$plotWidth)
-    if (!is_valid_number(input$plotWidth, 200, MAX_PLOT_WIDTH)) {
+    if (!is_valid_number(input$plotWidth, MIN_PLOT_WIDTH, MAX_PLOT_WIDTH)) {
       stop("Invalid plot width.")
     }
-    if (!is_valid_number(input$yaxisHeight, 100, 500)) {
+    if (!is_valid_number(input$yaxisHeight, MIN_YAXIS_HEIGHT, MAX_YAXIS_HEIGHT)) {
       stop("Invalid plot height.")
     }
     profileCode({

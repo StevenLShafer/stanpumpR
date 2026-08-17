@@ -180,7 +180,7 @@ app_ui <- function() {
                     "twodash"
                   )
                 ),
-                sliderInput("yaxisHeight", "Y axis height", 150, 350, 200, ticks = FALSE),
+                sliderInput("yaxisHeight", "Y axis height", MIN_YAXIS_HEIGHT, MAX_YAXIS_HEIGHT, 200, ticks = FALSE),
                 conditionalPanel(
                   condition = "input.normalization === 'none'",
                   checkboxInput(
