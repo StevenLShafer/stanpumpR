@@ -11,24 +11,11 @@ on:
 
 jobs:
   deployment-pr:
-    # A fork PR is deployed only when a maintainer explicitly adds the DEPLOY
-    # label (the `labeled` event), which pins the exact reviewed head.sha. New
-    # commits pushed afterwards (`synchronize`) must NOT silently re-deploy with
-    # secrets from an untrusted fork, so `synchronize` auto-deploy is restricted
-    # to same-repo (trusted) PRs. To redeploy a fork PR's new commits, a
-    # maintainer re-adds the DEPLOY label, forcing a fresh review.
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event.action == 'labeled' && github.event.label.name == 'DEPLOY') ||
-      (github.event.action == 'synchronize' &&
-       contains(github.event.pull_request.labels.*.name, 'DEPLOY') &&
-       github.event.pull_request.head.repo.full_name == github.repository)
+      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'DEPLOY'))
     runs-on: ubuntu-24.04
-    # Ties this secret-bearing job to a GitHub Environment. Configure required
-    # reviewers for the `pr-preview` environment in repo Settings > Environments
-    # to add a manual approval gate before deploy secrets are exposed.
-    environment:
-      name: pr-preview
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       SHINY_APP_NAME: ${{ vars.SHINY_APP_NAME }}_PR_${{ github.event.pull_request.number }}
@@ -37,8 +24,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          # This job only runs for fork PRs that a maintainer has explicitly
-          # labeled DEPLOY (see the `if:` above), not arbitrary forks
           allow-unsafe-pr-checkout: true
 
       - name: Setup pandoc
@@ -51,11 +36,7 @@ jobs:
           use-public-rspm: true
 
       - name: Install system dependencies
-        # renv restores the full lockfile (incl. dev deps like gert -> libgit2,
-        # rJava -> JDK, systemfonts/ragg -> cairo/freetype). Install the system
-        # libraries these load against so the restore doesn't fail when a package
-        # has no prebuilt binary. Mirrors the R-CMD-check workflow's system deps.
-        run: sudo apt-get update && sudo apt-get install -y cmake default-jdk libcairo2-dev libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libgit2-dev libpng-dev libx11-dev
+        run: sudo apt-get update && sudo apt-get install -y libpng-dev
 
       - uses: r-lib/actions/setup-renv@v2
 
