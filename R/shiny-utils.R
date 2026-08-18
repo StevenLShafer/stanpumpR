@@ -6,6 +6,15 @@ inlineUI <- function(tag) {
   attachClass(tag, "inline_ui")
 }
 
+# Add HTML attributes to a Shiny input tag
+addInputAttributes <- function(tag, ...) {
+  htmltools::tagQuery(tag)$
+    find("input")$
+    filter(function(x, i) i == 1)$
+    addAttrs(...)$
+    allTags()
+}
+
 nbsp <- shiny::HTML("&nbsp;", .noWS = "outside")
 
 addHotHooks <- function(hot, filterKeys = TRUE, sanitize = TRUE, ...) {

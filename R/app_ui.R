@@ -62,7 +62,21 @@ app_ui <- function() {
                     c("yr" = UNIT_YEAR, "mo" = UNIT_MONTH),
                     inputId = "ageUnit",
                     selected = defaultAgeUnit
+                  ) |>
+                  addInputAttributes(
+                    oninput = glue::glue(
+                      "if (this.value > {MAX_AGE}) {{ this.value = {MAX_AGE}; }}"
+                    )
                   ),
+
+                conditionalPanel(
+                  glue::glue("input.age >= {MAX_AGE}"),
+                  div(
+                    class = "info-note",
+                    icon("circle-info"),
+                    glue::glue("An age of {MAX_AGE} or above is identifying information, so any such age is recorded as {MAX_AGE}.")
+                  )
+                ),
 
                 numericInput(
                   inputId = "weight",
