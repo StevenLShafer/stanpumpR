@@ -27,6 +27,19 @@ RESOLUTION <- 100
 # Max number of emails a single session can send out, to limit abuse
 EMAIL_SESSION_LIMIT <- 25
 
+MAX_DOSE_ROWS <- 500L
+MAX_EVENT_ROWS <- 100L
+MAX_TARGET_ROWS <- 20L
+MAX_DOSE_VALUE <- 1e9
+MAX_INPUT_TEXT <- 2000L
+MAX_PLOT_WIDTH <- 4096L
+MIN_PLOT_WIDTH <- 100L
+MAX_YAXIS_HEIGHT <- 350L
+MIN_YAXIS_HEIGHT <- 150L
+MAX_DRUGNAME_LENGTH <- 128L
+MAX_TIME_STRING_LENGTH <- 32L
+MAX_UNIT_STRING_LENGTH <- 32L
+
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")

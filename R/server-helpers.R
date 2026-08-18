@@ -41,19 +41,16 @@ showIntroModal <- function() {
 checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
   msg <- ""
   success <- TRUE
-  if (!is.numeric(age) || !is.numeric(weight) || !is.numeric(height)) {
-    success <- FALSE
-  }
-  if (!age %btwn% c(MIN_AGE, MAX_AGE)) {
+  if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
     msg <- glue::glue("Age must be between {MIN_AGE} and {MAX_AGE}")
     success <- FALSE
   }
-  if (!weight %btwn% c(MIN_WEIGHT, MAX_WEIGHT)) {
+  if (!is_valid_number(weight, MIN_WEIGHT, MAX_WEIGHT)) {
     msg <- glue::glue("Weight must be between {MIN_WEIGHT} and {MAX_WEIGHT}")
     success <- FALSE
   }
-  if (!height %btwn% c(MIN_HEIGHT, MAX_HEIGHT)) {
-    msg <-glue::glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
+  if (!is_valid_number(height, MIN_HEIGHT, MAX_HEIGHT)) {
+    msg <- glue::glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
     success <- FALSE
   }
 
@@ -61,6 +58,69 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
     errorFx(msg)
   }
   success
+}
+
+validateDoseTableInput <- function(DT, drugDefaults = getDrugDefaultsGlobal()) {
+  if (!is.data.frame(DT) || !all(c("Drug", "Time", "Dose", "Units") %in% names(DT))) {
+    stop("Invalid dose table structure.")
+  }
+  if (nrow(DT) > MAX_DOSE_ROWS) stop("Dose table exceeds the permitted row limit.")
+
+  DT <- cleanDT(DT)
+  if (nrow(DT) == 0L) return(invisible(TRUE))
+
+  if (any(
+    nchar(DT$Drug) > MAX_DRUGNAME_LENGTH |
+    nchar(DT$Time) > MAX_TIME_STRING_LENGTH |
+    nchar(DT$Units) > MAX_UNIT_STRING_LENGTH,
+    na.rm = TRUE
+  )) {
+    stop("Dose table contains a value that's too long.")
+  }
+
+  if (any(!DT$Drug %in% drugDefaults$Drug)) stop("Dose table contains an unknown drug.")
+  if (any(!DT$Units %in% allUnits)) stop("Dose table contains unknown dose units.")
+  if (any(!is.finite(DT$Dose) | DT$Dose < 0 | DT$Dose > MAX_DOSE_VALUE)) {
+    stop("Dose must be finite, non-negative, and within the permitted limit.")
+  }
+  if (any(vapply(DT$Time, function(x) !identical(validateTime(x), x), logical(1)))) {
+    stop("Dose table contains an invalid time.")
+  }
+  invisible(TRUE)
+}
+
+validateEventTableInput <- function(ET, eventDefaults = getEventDefaults()) {
+  if (!is.data.frame(ET) || !all(c("Time", "Event") %in% names(ET))) stop("Invalid event table structure.")
+  if (nrow(ET) > MAX_EVENT_ROWS) stop("Event table exceeds the permitted row limit.")
+  time <- as.character(ET$Time)
+  event <- as.character(ET$Event)
+  if (any(nchar(time) > MAX_TIME_STRING_LENGTH | nchar(event) > MAX_DRUGNAME_LENGTH, na.rm = TRUE)) {
+    stop("Event table contains a value that's too long.")
+  }
+  if (any(!event %in% eventDefaults$Event)) stop("Event table contains an unknown event.")
+  if (any(vapply(time, function(x) !identical(validateTime(x), x), logical(1)))) {
+    stop("Event table contains an invalid time.")
+  }
+  invisible(TRUE)
+}
+
+validateTargetTableInput <- function(targetTable) {
+  if (!is.data.frame(targetTable) || !all(c("Time", "Target") %in% names(targetTable))) {
+    stop("Invalid target table structure.")
+  }
+  if (nrow(targetTable) > MAX_TARGET_ROWS) stop("Target table exceeds the permitted row limit.")
+  time <- as.character(targetTable$Time)
+  targetText <- as.character(targetTable$Target)
+  target <- suppressWarnings(as.numeric(targetText))
+  present <- nzchar(time) | nzchar(targetText)
+  if (any(nchar(time) > MAX_TIME_STRING_LENGTH, na.rm = TRUE)) stop("Target table contains an overlong time.")
+  if (any(nzchar(time) & vapply(time, function(x) !identical(validateTime(x), x), logical(1)), na.rm = TRUE)) {
+    stop("Target table contains an invalid time.")
+  }
+  if (any(present & (!is.finite(target) | target < 0 | target > MAX_DOSE_VALUE), na.rm = TRUE)) {
+    stop("Target concentrations must be finite and within the permitted limit.")
+  }
+  invisible(TRUE)
 }
 
 recalculatePK <- function(drugs, drugDefaults, doseTable,
@@ -90,11 +150,12 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
   drugs
 }
 
+# Coerce all columns to the correct data type and only keep full rows
 cleanDT <- function(DT) {
   DT$Drug    <- as.character(DT$Drug)
   DT$Units   <- as.character(DT$Units)
-  DT$Dose    <- as.numeric(DT$Dose)
-  DT$Time    <- as.character(DT$Time)  # Stored as factors... Arrgh.....
+  DT$Dose    <- suppressWarnings(as.numeric(DT$Dose))
+  DT$Time    <- as.character(DT$Time)
   DT <- DT[DT$Drug != "" & !is.na(DT$Dose) & DT$Time != "" & DT$Units != "", ]
   DT
 }
