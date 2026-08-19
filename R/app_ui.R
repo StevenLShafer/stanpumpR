@@ -313,6 +313,14 @@ app_ui <- function() {
           href = config$help_link,
           target = "_blank"
         )
+      ),
+      bslib::nav_item(
+        tags$a(
+          icon("github"),
+          "Source",
+          href = config$source_link,
+          target = "_blank"
+        )
       )
     )
   }
