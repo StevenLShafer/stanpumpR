@@ -71,6 +71,8 @@ app_server <- function(input, output, session) {
   #                           Initialization                                  #
   #############################################################################
 
+  outputComments(getInstalledPackagesInfo())
+
   outputComments(
     "**********************************************************************\n",
     "*                       Initializing                                 *\n",
