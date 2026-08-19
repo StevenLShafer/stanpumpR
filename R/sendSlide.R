@@ -30,25 +30,24 @@ sendSlide <- function(
     emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults)
 
     outputComments("Sending email")
-    email <- mailR::send.mail(
-      from = paste0("stanpumpR <", email_username, ">"),
-      to = recipient,
-      subject = emailData$title,
-      body = emailData$bodyText,
-      html = TRUE,
-      smtp = list(
-        host.name = "smtp.gmail.com",
-        port = 587,
-        user.name = email_username,
-        passwd = email_password,
-        ssl = TRUE),
-      attach.files = c(
-        emailData$pptxfileName,
-        emailData$pngfileName,
-        emailData$xlsxfileName
-      ),
-      authenticate = TRUE
+
+    msg <- emayili::envelope() |>
+      emayili::from(paste0("stanpumpR <", email_username, ">")) |>
+      emayili::to(recipient) |>
+      emayili::subject(emailData$title, interpolate = FALSE) |>
+      emayili::html(emailData$bodyText, interpolate = FALSE) |>
+      emayili::attachment(emailData$pptxfileName) |>
+      emayili::attachment(emailData$pngfileName) |>
+      emayili::attachment(emailData$xlsxfileName)
+
+    smtp <- emayili::server(
+      host = "smtp.gmail.com",
+      port = 587,
+      username = email_username,
+      password = email_password
     )
+    smtp(msg, verbose = FALSE)
+
     unlink(emailData$pptxfileName)
     unlink(emailData$pngfileName)
     unlink(emailData$xlsxfileName)

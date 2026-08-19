@@ -9,91 +9,6 @@
     ]
   },
   "Packages": {
-    "R.methodsS3": {
-      "Package": "R.methodsS3",
-      "Version": "1.8.2",
-      "Source": "Repository",
-      "Depends": [
-        "R (>= 2.13.0)"
-      ],
-      "Imports": [
-        "utils"
-      ],
-      "Suggests": [
-        "codetools"
-      ],
-      "Title": "S3 Methods Simplified",
-      "Authors@R": "c(person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"), email = \"henrikb@braju.com\"))",
-      "Author": "Henrik Bengtsson [aut, cre, cph]",
-      "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
-      "Description": "Methods that simplify the setup of S3 generic functions and S3 methods.  Major effort has been made in making definition of methods as simple as possible with a minimum of maintenance for package developers.  For example, generic functions are created automatically, if missing, and naming conflict are automatically solved, if possible.  The method setMethodS3() is a good start for those who in the future may want to migrate to S4.  This is a cross-platform package implemented in pure R that generates standard S3 methods.",
-      "License": "LGPL (>= 2.1)",
-      "LazyLoad": "TRUE",
-      "URL": "https://github.com/HenrikBengtsson/R.methodsS3",
-      "BugReports": "https://github.com/HenrikBengtsson/R.methodsS3/issues",
-      "NeedsCompilation": "no",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
-    },
-    "R.oo": {
-      "Package": "R.oo",
-      "Version": "1.27.1",
-      "Source": "Repository",
-      "Depends": [
-        "R (>= 2.13.0)",
-        "R.methodsS3 (>= 1.8.2)"
-      ],
-      "Imports": [
-        "methods",
-        "utils"
-      ],
-      "Suggests": [
-        "tools"
-      ],
-      "Title": "R Object-Oriented Programming with or without References",
-      "Authors@R": "c(person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"), email = \"henrikb@braju.com\"))",
-      "Author": "Henrik Bengtsson [aut, cre, cph]",
-      "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
-      "Description": "Methods and classes for object-oriented programming in R with or without references.  Large effort has been made on making definition of methods as simple as possible with a minimum of maintenance for package developers.  The package has been developed since 2001 and is now considered very stable.  This is a cross-platform package implemented in pure R that defines standard S3 classes without any tricks.",
-      "License": "LGPL (>= 2.1)",
-      "LazyLoad": "TRUE",
-      "URL": "https://henrikbengtsson.github.io/R.oo/, https://github.com/HenrikBengtsson/R.oo",
-      "BugReports": "https://github.com/HenrikBengtsson/R.oo/issues",
-      "NeedsCompilation": "no",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
-    },
-    "R.utils": {
-      "Package": "R.utils",
-      "Version": "2.13.0",
-      "Source": "Repository",
-      "Depends": [
-        "R (>= 2.14.0)",
-        "R.oo"
-      ],
-      "Imports": [
-        "methods",
-        "utils",
-        "tools",
-        "R.methodsS3"
-      ],
-      "Suggests": [
-        "datasets",
-        "digest (>= 0.6.10)"
-      ],
-      "Title": "Various Programming Utilities",
-      "Authors@R": "c(person(\"Henrik\", \"Bengtsson\", role=c(\"aut\", \"cre\", \"cph\"), email = \"henrikb@braju.com\"))",
-      "Author": "Henrik Bengtsson [aut, cre, cph]",
-      "Maintainer": "Henrik Bengtsson <henrikb@braju.com>",
-      "Description": "Utility functions useful when programming and developing R packages.",
-      "License": "LGPL (>= 2.1)",
-      "LazyLoad": "TRUE",
-      "URL": "https://henrikbengtsson.github.io/R.utils/, https://github.com/HenrikBengtsson/R.utils",
-      "BugReports": "https://github.com/HenrikBengtsson/R.utils/issues",
-      "NeedsCompilation": "no",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
-    },
     "R6": {
       "Package": "R6",
       "Version": "2.6.1",
@@ -264,29 +179,6 @@
       "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>)",
       "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
       "Repository": "CRAN"
-    },
-    "assertthat": {
-      "Package": "assertthat",
-      "Version": "0.2.1",
-      "Source": "Repository",
-      "Title": "Easy Pre and Post Assertions",
-      "Authors@R": "person(\"Hadley\", \"Wickham\", , \"hadley@rstudio.com\", c(\"aut\", \"cre\"))",
-      "Description": "An extension to stopifnot() that makes it easy to declare  the pre and post conditions that you code should satisfy, while also  producing friendly error messages so that your users know what's gone wrong.",
-      "License": "GPL-3",
-      "Imports": [
-        "tools"
-      ],
-      "Suggests": [
-        "testthat",
-        "covr"
-      ],
-      "RoxygenNote": "6.0.1",
-      "Collate": "'assert-that.r' 'on-failure.r' 'assertions-file.r' 'assertions-scalar.R' 'assertions.r' 'base.r' 'base-comparison.r' 'base-is.r' 'base-logical.r' 'base-misc.r' 'utils.r' 'validate-that.R'",
-      "NeedsCompilation": "no",
-      "Author": "Hadley Wickham [aut, cre]",
-      "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
     },
     "base64enc": {
       "Package": "base64enc",
@@ -1061,6 +953,62 @@
       "NeedsCompilation": "no",
       "Author": "Hadley Wickham [aut, cre], RStudio [cph]",
       "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
+      "Repository": "CRAN"
+    },
+    "emayili": {
+      "Package": "emayili",
+      "Version": "0.9.3",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Send Email Messages",
+      "Authors@R": "c(person(given = c(\"Andrew\", \"B.\"), family = \"Collier\", role = c(\"aut\", \"cre\", \"cph\"), email = \"andrew.b.collier@gmail.com\"), person(given = \"Matt\", family = \"Dennis\", role = \"ctb\", email = \"matt@fathomdata.dev\"), person(given = \"Antoine\", family = \"Bichat\", role = \"ctb\", email = \"a.bichat@yahoo.fr\", comment = c(ORCID = \"0000-0001-6599-7081\")), person(given = \"Daniel\", family = \"Fahey\", role = \"ctb\", email = \"dpfahey@gmail.com\"), person(given = c(\"Johann\",  \"R.\"), family = \"Kleinbub\", role = \"ctb\", email = \"johann.kleinbub@gmail.com\"), person(given = c(\"Panagiotis\"), family = \"Moulos\", role = \"ctb\", email = \"pmoulos@gmail.com\"), person(given = \"Swechhya\", family = \"Bista\", role = \"ctb\", email = \"swechhyabista@gmail.com\"), person(given = \"Colin\", family = \"Fay\", role = \"ctb\", email = \"contact@colinfay.me\", comment = c(ORCID = \"0000-0001-7343-1846\")))",
+      "Description": "A light, simple tool for sending emails with minimal dependencies.",
+      "URL": "https://datawookie.github.io/emayili/",
+      "BugReports": "https://github.com/datawookie/emayili/issues",
+      "License": "GPL-3",
+      "Language": "en-GB",
+      "Imports": [
+        "base64enc",
+        "commonmark",
+        "curl (>= 4.0)",
+        "digest",
+        "dplyr",
+        "glue",
+        "htmltools",
+        "httr",
+        "logger",
+        "magrittr (>= 2.0.1)",
+        "mime",
+        "purrr",
+        "rmarkdown",
+        "rvest",
+        "stringi",
+        "stringr",
+        "tidyr",
+        "urltools",
+        "xfun",
+        "xml2"
+      ],
+      "Suggests": [
+        "cld2",
+        "cld3",
+        "gpg",
+        "here",
+        "jinjar",
+        "lintr",
+        "memoise",
+        "testthat (>= 2.1.0)",
+        "roxygen2",
+        "showtext",
+        "Microsoft365R"
+      ],
+      "SystemRequirements": "The function render() requires Pandoc (http://pandoc.org). To use PGP/GnuPG encryption requires gpg.",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.2",
+      "KeepSource": "true",
+      "NeedsCompilation": "no",
+      "Author": "Andrew B. Collier [aut, cre, cph], Matt Dennis [ctb], Antoine Bichat [ctb] (<https://orcid.org/0000-0001-6599-7081>), Daniel Fahey [ctb], Johann R. Kleinbub [ctb], Panagiotis Moulos [ctb], Swechhya Bista [ctb], Colin Fay [ctb] (<https://orcid.org/0000-0001-7343-1846>)",
+      "Maintainer": "Andrew B. Collier <andrew.b.collier@gmail.com>",
       "Repository": "CRAN"
     },
     "evaluate": {
@@ -2261,6 +2209,64 @@
       "Maintainer": "Lionel Henry <lionel@posit.co>",
       "Repository": "CRAN"
     },
+    "logger": {
+      "Package": "logger",
+      "Version": "0.4.2",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "A Lightweight, Modern and Flexible Logging Utility",
+      "Date": "2026-05-08",
+      "Authors@R": "c( person(\"Gergely\", \"Daróczi\", , \"daroczig@rapporter.net\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0003-3149-8537\")), person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\", comment = c(ORCID = \"0000-0003-4757-117X\")), person(\"Jonathan\", \"Carroll\", , \"rpkg@jcarroll.com.au\", role = \"ctb\",  comment = c(ORCID = \"0000-0002-1404-5264\")),        person(\"Spare Cores\", role = \"fnd\"), person(\"System1\", role = \"fnd\") )",
+      "Description": "Inspired by the the 'futile.logger' R package and 'logging' Python module, this utility provides a flexible and extensible way of formatting and delivering log messages with low overhead.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://daroczig.github.io/logger/",
+      "BugReports": "https://github.com/daroczig/logger/issues",
+      "Depends": [
+        "R (>= 4.0.0)"
+      ],
+      "Imports": [
+        "utils"
+      ],
+      "Suggests": [
+        "botor",
+        "cli",
+        "covr",
+        "crayon",
+        "devtools",
+        "glue",
+        "jsonlite",
+        "knitr",
+        "mirai (>= 1.3.0)",
+        "ntfy",
+        "pander",
+        "parallel",
+        "R.utils",
+        "rmarkdown",
+        "roxygen2",
+        "RPushbullet",
+        "rsyslog",
+        "shiny",
+        "slackr (>= 1.4.1)",
+        "syslognet",
+        "telegram",
+        "testthat (>= 3.0.0)",
+        "withr"
+      ],
+      "Enhances": [
+        "futile.logger",
+        "log4r",
+        "logging"
+      ],
+      "VignetteBuilder": "knitr",
+      "Config/testthat/edition": "3",
+      "Config/testthat/parallel": "TRUE",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.3",
+      "NeedsCompilation": "no",
+      "Author": "Gergely Daróczi [aut, cre] (ORCID: <https://orcid.org/0000-0003-3149-8537>), Hadley Wickham [aut] (ORCID: <https://orcid.org/0000-0003-4757-117X>), Jonathan Carroll [ctb] (ORCID: <https://orcid.org/0000-0002-1404-5264>), Spare Cores [fnd], System1 [fnd]",
+      "Maintainer": "Gergely Daróczi <daroczig@rapporter.net>",
+      "Repository": "CRAN"
+    },
     "lubridate": {
       "Package": "lubridate",
       "Version": "1.9.5",
@@ -2336,30 +2342,6 @@
       "NeedsCompilation": "yes",
       "Author": "Stefan Milton Bache [aut, cph] (Original author and creator of magrittr), Hadley Wickham [aut], Lionel Henry [cre], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
       "Maintainer": "Lionel Henry <lionel@posit.co>",
-      "Repository": "CRAN"
-    },
-    "mailR": {
-      "Package": "mailR",
-      "Version": "0.8",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "A Utility to Send Emails from R",
-      "Description": "Interface to Apache Commons Email to send emails from R.",
-      "Date": "2021-11-05",
-      "Author": "Rahul Premraj",
-      "Maintainer": "Rahul Premraj <r.premraj+mailR@gmail.com>",
-      "License": "GPL-3",
-      "Imports": [
-        "rJava",
-        "stringr",
-        "R.utils",
-        "assertthat"
-      ],
-      "SystemRequirements": "Java",
-      "URL": "https://github.com/rpremrajGit/mailR",
-      "RoxygenNote": "7.1.2",
-      "Encoding": "UTF-8",
-      "NeedsCompilation": "no",
       "Repository": "CRAN"
     },
     "memoise": {
@@ -3208,27 +3190,6 @@
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
     },
-    "rJava": {
-      "Package": "rJava",
-      "Version": "1.0-18",
-      "Source": "Repository",
-      "Title": "Low-Level R to Java Interface",
-      "Author": "Simon Urbanek [aut, cre, cph] (https://urbanek.nz, ORCID: <https://orcid.org/0000-0003-2297-1732>)",
-      "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
-      "Authors@R": "person(\"Simon\", \"Urbanek\", role=c(\"aut\",\"cre\",\"cph\"), email=\"Simon.Urbanek@r-project.org\", comment=c(\"https://urbanek.nz\", ORCID=\"0000-0003-2297-1732\"))",
-      "Depends": [
-        "R (>= 3.6.0)",
-        "methods"
-      ],
-      "Description": "Low-level interface to Java VM very much like .C/.Call and friends. Allows creation of objects, calling methods and accessing fields.",
-      "License": "LGPL-2.1",
-      "URL": "https://www.rforge.net/rJava/",
-      "SystemRequirements": "Java JDK 1.2 or higher (for JRI/REngine JDK 1.4 or higher), GNU make",
-      "BugReports": "https://github.com/s-u/rJava/issues",
-      "NeedsCompilation": "yes",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
-    },
     "ragg": {
       "Package": "ragg",
       "Version": "1.5.2",
@@ -3819,6 +3780,57 @@
       "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
       "Repository": "CRAN"
     },
+    "rvest": {
+      "Package": "rvest",
+      "Version": "1.0.5",
+      "Source": "Repository",
+      "Title": "Easily Harvest (Scrape) Web Pages",
+      "Authors@R": "c( person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\")), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"), comment = c(ROR = \"03wc8by49\")) )",
+      "Description": "Wrappers around the 'xml2' and 'httr' packages to make it easy to download, then manipulate, HTML and XML.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://rvest.tidyverse.org/, https://github.com/tidyverse/rvest",
+      "BugReports": "https://github.com/tidyverse/rvest/issues",
+      "Depends": [
+        "R (>= 4.1)"
+      ],
+      "Imports": [
+        "cli",
+        "glue",
+        "httr (>= 0.5)",
+        "lifecycle (>= 1.0.3)",
+        "magrittr",
+        "rlang (>= 1.1.0)",
+        "selectr",
+        "tibble",
+        "xml2 (>= 1.4.0)"
+      ],
+      "Suggests": [
+        "chromote",
+        "covr",
+        "knitr",
+        "purrr",
+        "R6",
+        "readr",
+        "repurrrsive",
+        "rmarkdown",
+        "spelling",
+        "stringi (>= 0.3.1)",
+        "testthat (>= 3.0.2)",
+        "tidyr",
+        "webfakes"
+      ],
+      "VignetteBuilder": "knitr",
+      "Config/Needs/website": "tidyverse/tidytemplate",
+      "Config/testthat/edition": "3",
+      "Config/testthat/parallel": "true",
+      "Encoding": "UTF-8",
+      "Language": "en-US",
+      "RoxygenNote": "7.3.2",
+      "NeedsCompilation": "no",
+      "Author": "Hadley Wickham [aut, cre], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+      "Maintainer": "Hadley Wickham <hadley@posit.co>",
+      "Repository": "CRAN"
+    },
     "rvg": {
       "Package": "rvg",
       "Version": "0.4.2",
@@ -3936,6 +3948,34 @@
       "NeedsCompilation": "no",
       "Author": "Hadley Wickham [aut], Thomas Lin Pedersen [cre, aut] (<https://orcid.org/0000-0002-5147-4711>), Dana Seidel [aut], Posit Software, PBC [cph, fnd] (03wc8by49)",
       "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
+      "Repository": "CRAN"
+    },
+    "selectr": {
+      "Package": "selectr",
+      "Version": "0.6-0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Translate CSS Selectors to XPath Expressions",
+      "Authors@R": "c(person(\"Simon\", \"Potter\", role = c(\"aut\", \"trl\", \"cre\"), email = \"simon@sjp.co.nz\"), person(\"Simon\", \"Sapin\", role = \"aut\"), person(\"Ian\", \"Bicking\", role = \"aut\"))",
+      "License": "BSD_3_clause + file LICENCE",
+      "Encoding": "UTF-8",
+      "Depends": [
+        "R (>= 3.3)"
+      ],
+      "Imports": [
+        "R6"
+      ],
+      "Suggests": [
+        "testthat",
+        "XML",
+        "xml2"
+      ],
+      "URL": "https://sjp.co.nz/projects/selectr/",
+      "BugReports": "https://github.com/sjp/selectr/issues",
+      "Description": "Translates a CSS selector into an equivalent XPath expression. This allows us to use CSS selectors when working with the XML package as it can only evaluate XPath expressions. Also provided are convenience functions useful for using CSS selectors on XML nodes. This package is a port of the Python package 'cssselect' (<https://cssselect.readthedocs.io/>).",
+      "NeedsCompilation": "no",
+      "Author": "Simon Potter [aut, trl, cre], Simon Sapin [aut], Ian Bicking [aut]",
+      "Maintainer": "Simon Potter <simon@sjp.co.nz>",
       "Repository": "CRAN"
     },
     "sessioninfo": {
@@ -4755,6 +4795,36 @@
       "Maintainer": "Yihui Xie <xie@yihui.name>",
       "Repository": "CRAN"
     },
+    "triebeard": {
+      "Package": "triebeard",
+      "Version": "0.4.1",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "'Radix' Trees in 'Rcpp'",
+      "Author": "Os Keyes [aut, cre], Drew Schmidt [aut], Yuuki Takano [cph]",
+      "Maintainer": "Os Keyes <ironholds@gmail.com>",
+      "Description": "'Radix trees', or 'tries', are key-value data structures optimised for efficient lookups, similar in purpose to hash tables. 'triebeard' provides an implementation of 'radix trees' for use in R programming and in developing packages with 'Rcpp'.",
+      "License": "MIT + file LICENSE",
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Encoding": "UTF-8",
+      "Imports": [
+        "Rcpp"
+      ],
+      "RoxygenNote": "7.1.2",
+      "Suggests": [
+        "knitr",
+        "rmarkdown",
+        "testthat"
+      ],
+      "VignetteBuilder": "knitr",
+      "URL": "https://github.com/Ironholds/triebeard/",
+      "BugReports": "https://github.com/Ironholds/triebeard/issues",
+      "Date": "2023-03-04",
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN"
+    },
     "tryCatchLog": {
       "Package": "tryCatchLog",
       "Version": "1.3.3",
@@ -4826,6 +4896,42 @@
       "Author": "R Core team [aut] (The code in urltools.R adapted from the tools package), Jim Hester [aut] (ORCID: <https://orcid.org/0000-0002-2739-7082>), Gábor Csárdi [aut, cre], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
       "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
       "Repository": "CRAN"
+    },
+    "urltools": {
+      "Package": "urltools",
+      "Version": "1.7.3.1",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Vectorised Tools for URL Handling and Parsing",
+      "Date": "2019-04-14",
+      "Authors@R": "c(person(given = \"Os\", family = \"Keyes\", role = c(\"aut\", \"cre\"), email = \"ironholds@gmail.com\"), person(given = \"Jay\", family = \"Jacobs\", role = \"aut\"), person(given = \"Drew\", family = \"Schmidt\", role = \"aut\"), person(given = \"Mark\", family = \"Greenaway\", role = \"ctb\"), person(given = \"Bob\", family = \"Rudis\", role = \"ctb\"), person(given = \"Alex\", family = \"Pinto\", role = \"ctb\"), person(given = \"Maryam\", family = \"Khezrzadeh\", role = \"ctb\"), person(given = \"Peter\", family = \"Meilstrup\", role = \"ctb\"), person(given = c(\"Adam\", \"M.\"), family = \"Costello\", role = \"cph\"), person(given = \"Jeff\", family = \"Bezanson\", role = \"cph\"), person(given = \"Peter\", family = \"Meilstrup\", role = \"ctb\"), person(given = \"Xueyuan\", family = \"Jiang\", role = \"ctb\"))",
+      "Description": "A toolkit for all URL-handling needs, including encoding and decoding, parsing, parameter extraction and modification. All functions are designed to be both fast and entirely vectorised. It is intended to be useful for people dealing with web-related datasets, such as server-side logs, although may be useful for other situations involving large sets of URLs.",
+      "License": "MIT + file LICENSE",
+      "LazyData": "TRUE",
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Imports": [
+        "Rcpp",
+        "methods",
+        "triebeard"
+      ],
+      "Suggests": [
+        "testthat",
+        "knitr"
+      ],
+      "URL": "https://github.com/Ironholds/urltools/",
+      "BugReports": "https://github.com/Ironholds/urltools/issues",
+      "VignetteBuilder": "knitr",
+      "RoxygenNote": "6.1.1",
+      "Encoding": "UTF-8",
+      "Depends": [
+        "R (>= 2.10)"
+      ],
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN",
+      "Author": "Os Keyes [aut, cre], Jay Jacobs [aut], Drew Schmidt [aut], Mark Greenaway [ctb], Bob Rudis [ctb], Alex Pinto [ctb], Maryam Khezrzadeh [ctb], Peter Meilstrup [ctb], Adam M. Costello [cph], Jeff Bezanson [cph], Peter Meilstrup [ctb], Xueyuan Jiang [ctb]",
+      "Maintainer": "Os Keyes <ironholds@gmail.com>"
     },
     "usethis": {
       "Package": "usethis",
