@@ -74,7 +74,7 @@ app_ui <- function() {
                   div(
                     class = "info-note",
                     icon("circle-info"),
-                    glue::glue("An age of {MAX_AGE} or above is identifying information, so any such age is recorded as {MAX_AGE}.")
+                    glue::glue("An age of {MAX_AGE} or above is PHI. Ages > {MAX_AGE} are entered as {MAX_AGE}.")
                   )
                 ),
 
