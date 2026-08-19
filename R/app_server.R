@@ -623,6 +623,44 @@ app_server <- function(input, output, session) {
     )
   })
 
+  # Literature references ####################################################
+  # Surface each active drug's model citation (returned by its R/drugs_*.R
+  # function and passed through getDrugPK()). A trailing PubMed/DOI URL in the
+  # citation string, if present, is rendered as a link.
+  # Provenance: added 2026-08; citations verified on PubMed (NCBI E-utilities).
+  output$drugReferences <- renderUI({
+    drugList <- drugs()
+    if (length(drugList) == 0) {
+      return(tags$p(class = "text-muted small mb-0",
+                    "No drugs in the current simulation."))
+    }
+    items <- lapply(names(drugList), function(drug) {
+      ref <- drugList[[drug]]$reference
+      if (is.null(ref) || !nzchar(ref)) ref <- "Not Available"
+      color <- drugList[[drug]]$Color
+      if (is.null(color)) color <- "inherit"
+      # Pull a single trailing URL out of the citation and turn it into a link
+      # only when it points at PubMed or doi.org. The citation strings are
+      # developer-authored, but constraining the host keeps this defensive.
+      url <- regmatches(ref, regexpr("https?://\\S+", ref))
+      citation <- trimws(sub("\\s*https?://\\S+\\s*$", "", ref))
+      link <- NULL
+      if (length(url) == 1L &&
+          grepl("^https://(pubmed\\.ncbi\\.nlm\\.nih\\.gov|doi\\.org)/", url)) {
+        label <- if (grepl("pubmed", url)) "PubMed" else "DOI"
+        link <- tagList(" ",
+                        tags$a(label, href = url,
+                               target = "_blank", rel = "noopener noreferrer"))
+      }
+      tags$li(
+        tags$strong(style = paste0("color:", color, ";"),
+                    tools::toTitleCase(drug)),
+        ": ", citation, link
+      )
+    })
+    tags$ul(class = "small mb-0", items)
+  })
+
   # Display Time, CE, or total opioid
   xy_str <- function(e) {
     if (is.null(e$panelvar1)) return()

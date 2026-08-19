@@ -82,7 +82,7 @@ test_that("it returns the same value", {
     ),
     tPeak = 1.6,
     pkEvents = "default",
-    reference = "Not Available",
+    reference = "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/",
     weight = 70,
     height = 170,
     age = 50,
@@ -100,4 +100,47 @@ test_that("it returns the same value", {
   )
 
   expect_equal_rounded(actual, expected)
+})
+
+test_that("it falls back to 'Not Available' when a drug function omits a reference", {
+  # getDrugPK() forwards whatever `reference` the drug function returned, falling
+  # back to "Not Available" only when there is none (R/getDrugPK.R:419). Every
+  # drug in the library currently supplies one -- see the test below -- so this
+  # branch is unreachable with real data. It is a safety net for a drug function
+  # added later that omits the field, which is exactly why it needs a stub to be
+  # exercised at all.
+  #
+  # Capture the real function before mocking, so the stub can delegate to it for
+  # the rest of the structure getDrugPK() expects.
+  realPropofol <- propofol
+  local_mocked_bindings(
+    propofol = function(weight, height, age, sex) {
+      X <- realPropofol(weight, height, age, sex)
+      X$reference <- NULL
+      X
+    }
+  )
+
+  actual <- getDrugPK("propofol", 70, 170, 50, "male", getDrugDefaultsGlobal())
+
+  expect_equal(actual$reference, "Not Available")
+})
+
+test_that("every drug in the library supplies a reference", {
+  # Guards the invariant the citation work established: the References panel
+  # should never show a drug as "Not Available". A drug added without a
+  # `reference` fails here, rather than quietly surfacing a blank citation.
+  drugDefaults <- getDrugDefaultsGlobal()
+
+  references <- vapply(
+    drugDefaults$Drug,
+    function(drug) getDrugPK(drug, 70, 170, 50, "male", drugDefaults)$reference,
+    character(1)
+  )
+
+  # Compare name vectors rather than asserting a bare TRUE: under testthat's 3rd
+  # edition a failure prints the offending drug names, so you learn which drug
+  # lacks a citation, not merely that one does.
+  missing <- names(references)[!nzchar(references) | references == "Not Available"]
+  expect_equal(missing, character(0))
 })

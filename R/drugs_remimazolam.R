@@ -38,7 +38,7 @@ remimazolam <- function(weight, height, age, sex)
   upperTypical <- NA
   lowerTypical <- NA
   MEAC <- NA
-  reference <- "Eleveld 2025"
+  reference <- "Eleveld DJ et al., Br J Anaesth 2025;135(1):206-217. https://pubmed.ncbi.nlm.nih.gov/40312166/"
 
   tPeak <- 2.5
 

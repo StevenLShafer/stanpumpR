@@ -16,7 +16,7 @@ pethidine <- function(weight, height, age, sex)
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Fit of Sven Bjorkman data"
+  reference <- "Bjorkman S, J Pharmacokinet Pharmacodyn 2003;30(4):285-307. https://pubmed.ncbi.nlm.nih.gov/14650375/"
   
   v2 <- v1 * k12 / k21
   v3 <- v1 * k13 / k31

@@ -28,7 +28,7 @@ naloxone <- function(weight, height, age, sex)
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Papathanasiou"
+  reference <- "Papathanasiou T et al., Br J Anaesth 2019;123(2):e204-e214. https://pubmed.ncbi.nlm.nih.gov/30915992/"
   
   return(
     list(
