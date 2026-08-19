@@ -181,7 +181,7 @@ Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTIO
 - `setLinetypes.R` — maps normalization + user choices to plasma/effect linetypes.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
 - `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
-  `mailR`.
+  `emayili`.
 
 **Util — time & misc**
 - `clockTimeToDelta.R`, `deltaToClockTime.R`, `hourMinute.R` — convert between wall-clock
