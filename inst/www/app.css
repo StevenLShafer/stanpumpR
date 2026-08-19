@@ -126,3 +126,18 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
    --bs-modal-width: 350px;
  }
 }
+
+.info-note {
+  display: flex;
+  gap: 7px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #4a5764;
+  background-color: #f4f6f8;
+  border: 1px solid #e4e9ed;
+  border-left: 3px solid #9aa8ae;
+  border-radius: 4px;
+  padding: 7px 9px;
+  margin-top: -0.75rem;
+  margin-bottom: 1rem;
+}
