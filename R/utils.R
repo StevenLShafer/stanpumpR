@@ -25,6 +25,16 @@ isEmailValid <- function(email) {
   nchar(email) == attr(regexpr(regex_email, email, perl = FALSE), "match.length")
 }
 
+# Get a snapshot of the R version and packages, to help with troubleshooting in production
+getInstalledPackagesInfo <- function() {
+  pkgs <- utils::installed.packages()[, c("Package", "Version"), drop = FALSE]
+  pkgs <- pkgs[order(tolower(pkgs[, "Package"])), , drop = FALSE]
+  paste0(
+    R.version.string, "\n", nrow(pkgs), " packages:\n",
+    paste0("  ", pkgs[, "Package"], " ", pkgs[, "Version"], collapse = "\n")
+  )
+}
+
 drugHasNonZeroDoses <- function(dt, drug) {
   drugDoses <- dt[dt$Drug == drug & dt$Dose != "", ]
   any(suppressWarnings(as.numeric(drugDoses$Dose)) != 0, na.rm = TRUE)
