@@ -151,7 +151,7 @@ Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTIO
 - `app_server.R` — the entire reactive heart: every reactive, observer, output, and modal.
 - `app_globals.R` — global variables used by the app: init tables, bookmark exclusion list,
   `outputComments()` logger.
-- `globalVariables.R` — constants used in the app.
+- `constants.R` — constants used in the app.
 
 **Reactive glue — server helpers & UI widgets**
 - `server-helpers.R` — `recalculatePK()`, `cleanDT()`, `checkNumericCovariates()`, reactive

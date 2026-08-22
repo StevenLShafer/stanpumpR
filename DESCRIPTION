@@ -68,6 +68,7 @@ Collate:
   advanceStatePO.R
   calculateCe.R
   clockTimeToDelta.R
+  constants.R
   convertState.R
   createHOT.R
   cube.R
@@ -93,7 +94,6 @@ Collate:
   drugs_rocuronium.R
   drugs_sufentanil.R
   getDrugPK.R
-  globalVariables.R
   hourMinute.R
   ig_absorption.R
   lbmJames.R
