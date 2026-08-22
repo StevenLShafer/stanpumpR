@@ -12,15 +12,16 @@ app_server <- function(input, output, session) {
     showIntroModal()
   }, once = TRUE)
 
-  session$userData$debug <- reactiveVal(config$debug)
+  session$userData$debug <- reactiveVal({
+    query <- parseQueryString(isolate(session$clientData$url_search))
+    if (!is.null(query[["debug"]])) {
+      as.numeric(query[["debug"]])
+    } else {
+      config$debug
+    }
+  })
   observeEvent(input$debug_level, ignoreInit = TRUE, {
     session$userData$debug(input$debug_level)
-  })
-  observe({
-    query <- parseQueryString(session$clientData$url_search)
-    if (!is.null(query[["debug"]])) {
-      session$userData$debug(as.numeric(query[["debug"]]))
-    }
   })
 
   # Write out logs to the log section
