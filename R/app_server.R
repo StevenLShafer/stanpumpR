@@ -542,31 +542,30 @@ app_server <- function(input, output, session) {
     simulationPlotRetval()$plotHeight
   })
 
+  # Send Slide -----------------------------
+  observeEvent(input$emailComments, {
+    shinyjs::toggle("commentSafe", condition = nzchar(input$emailComments))
+  })
+
   observe({
     shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
   })
 
-  # Send Slide -----------------------------
   observeEvent(
     input$sendSlide,
     {
       outputComments("input$sendSlide",input$sendSlide)
 
+      error <- NULL
       if (!isEmailValid(input$recipient)) {
-        shinyalert::shinyalert(
-          "Invalid email address",
-          "Please enter a valid recipient email address.",
-          type = "error", closeOnClickOutside = TRUE
-        )
-        return()
+        error <- "Please enter a valid recipient email address."
+      } else if (nzchar(input$emailComments) && !input$commentSafe) {
+        error <- "Please click the box confirming there is no PHI in the comments."
+      } else if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
+        error <- "This session has reached its email limit. Please reload the page to send more."
       }
-
-      if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
-        shinyalert::shinyalert(
-          "Send limit reached",
-          "This session has reached its email limit. Please reload the page to send more.",
-          type = "error", closeOnClickOutside = TRUE
-        )
+      if (!is.null(error)) {
+        shinyalert::shinyalert("Error",error, type = "error", closeOnClickOutside = TRUE)
         return()
       }
 
