@@ -43,3 +43,48 @@ test_that("drugHasNonZeroDoses detects any non-zero dose for a drug", {
   expect_false(drugHasNonZeroDoses(dt, "midazolam"))
 })
 
+test_that("formatMinutes labels sub-hour durations in minutes", {
+  expect_equal(formatMinutes(10), "10 minutes")
+  expect_equal(formatMinutes(30), "30 minutes")
+  expect_equal(formatMinutes(59), "59 minutes")
+  expect_equal(formatMinutes(1), "1 minute")
+})
+
+test_that("formatMinutes labels sub-day durations in hours", {
+  expect_equal(formatMinutes(60), "1 hour")
+  expect_equal(formatMinutes(90), "1.5 hours")
+  expect_equal(formatMinutes(60*2), "2 hours")
+  expect_equal(formatMinutes(60*12), "12 hours")
+})
+
+test_that("formatMinutes labels whole days as days", {
+  expect_equal(formatMinutes(60*24), "1 day")
+  expect_equal(formatMinutes(60*24*2), "2 days")
+  expect_equal(formatMinutes(60*24*5), "5 days")
+  expect_equal(formatMinutes(60*24*7), "7 days")
+})
+
+test_that("formatMinutes adds leftover hours to whole days", {
+  expect_equal(formatMinutes(60*24+60*4), "1 day 4 hours")
+  expect_equal(formatMinutes(60*24+60*8), "1 day 8 hours")
+  expect_equal(formatMinutes(60*24+60*1), "1 day 1 hour")
+})
+
+test_that("formatMinutes rounds untidy values instead of exposing fractions", {
+  expect_equal(formatMinutes(61), "1 hour")
+  expect_equal(formatMinutes(60*24 + 1), "1 day")
+  expect_equal(formatMinutes(100), "1.7 hours")
+})
+
+test_that("formatMinutes gives the no-limit sentinel its own label", {
+  expect_equal(formatMinutes(MAX_TIME_NO_LIMIT), "No limit")
+})
+
+test_that("formatMinutes is vectorized and total on bad input", {
+  expect_equal(formatMinutes(c(10, 60, 60*24)), c("10 minutes", "1 hour", "1 day"))
+})
+
+test_that("formatMinutes deals with bad inputs", {
+  expect_equal(formatMinutes(numeric(0)), character(0))
+  expect_equal(formatMinutes(c(NA, -5, Inf)), c(NA_character_, NA_character_, NA_character_))
+})
