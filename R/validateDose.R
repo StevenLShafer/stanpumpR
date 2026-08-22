@@ -2,8 +2,8 @@
 # Routine designed to accept pretty much anything and not return an error.
 validateDose <- function(x)
 {
-  if (length(x) > 1) {
-    stop("validateDose can only accept single items, not vectors.")
+  if (length(x) != 1 || !is.atomic(x)) {
+    stop("validateDose can only accept single items.")
   }
   if (is.null(x) || is.na(x) || is.nan(x)) {
     x <- ""
