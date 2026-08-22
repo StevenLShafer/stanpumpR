@@ -25,6 +25,7 @@ showIntroModal <- function() {
         individual patients is a matter of clinical judgment by the health care
         provider."
       ),
+      shiny::p("stanpumpR does not collect any protected healthcare information."),
       shiny::tags$button(
         type = "button",
         class = "btn btn-warning",
