@@ -2,14 +2,17 @@
 # Routine designed to accept pretty much anything and not return an error.
 validateDose <- function(x)
 {
-  if (length(x) != 1 || !is.atomic(x)) {
+  if (length(x) > 1 || is.list(x)) {
     stop("validateDose can only accept single items.")
   }
   if (is.null(x) || is.na(x) || is.nan(x)) {
     x <- ""
   }
-  if (is.factor(x) || is.numeric(x)) {
+  if (is.factor(x)) {
     x <- as.character(x)
+  }
+  if (is.numeric(x)) {
+    x <- format(x, scientific = FALSE)
   }
 
   # Remove everything except digits and first decimal point
