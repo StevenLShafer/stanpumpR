@@ -15,11 +15,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(stanpumpR)
-library(ggplot2)
-```
-
 Define the parameters of the analysis:
 
 ```{r}
@@ -57,6 +52,7 @@ output <- stanpumpR::simulateDrugsWithCovariates(doseTable, eventTable, weight, 
 Plot the output:
 
 ```{r}
+library(ggplot2)
 for (drug in output) {
   results <- drug[['results']]
   cpce <- results[results$Site == "Plasma" | results$Site == "Effect Site", ]
