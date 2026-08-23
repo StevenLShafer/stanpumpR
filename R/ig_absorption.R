@@ -201,7 +201,7 @@ if (FALSE) {
     kk <- thr - eps
     a <- ig_absorption_conc(c(0.5, 2, 10, 48), 1, kk, mu, lam)
     b <- ig_absorption_conc_quad(c(0.5, 2, 10, 48), 1, kk, mu, lam)
-    cat(sprintf("b = %+9.1e   max rel err = %.2e\n",
+    message(sprintf("b = %+9.1e   max rel err = %.2e\n",
                 eps, max(abs(a - b) / abs(b))))
   }
 }

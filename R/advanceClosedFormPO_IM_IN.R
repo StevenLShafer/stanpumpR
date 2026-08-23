@@ -8,9 +8,6 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   # Modified to include PO and IV delivery     #
   ##############################################
 
-  cat("Structure of pkSet\n")
-  print(utils::str(pkSet))
-
   # Add tlag_ to PO, IM, and IN dose times
   dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
   dose$Time[dose$IM] <- dose$Time[dose$IM] + pkSet$tlag_IM
@@ -68,8 +65,6 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       rate[i] <- infusionLine[i-1]
     }
   }
-  # cat("poLine\n")
-  # print(poLine)
 
   results <- with (
     pkSet,
@@ -90,11 +85,6 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)
       p_infusion_l3 <- p_coef_infusion_l3 * rate * (1 - l3_dt)
 
-      # cat("p_coef_PO_1", p_coef_PO_1, "\n")
-      # cat("p_coef_PO_2", p_coef_PO_2, "\n")
-      # cat("p_coef_PO_3", p_coef_PO_3, "\n")
-      # cat("p_coef_PO_4", p_coef_PO_4, "\n")
-
       p_PO_l1 <- p_coef_PO_l1 * poLine
       p_PO_l2 <- p_coef_PO_l2 * poLine
       p_PO_l3 <- p_coef_PO_l3 * poLine
@@ -110,17 +100,6 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_IN_l3 <- p_coef_IN_l3 * inLine
       p_IN_ka <- p_coef_IN_ka * inLine
 
-      # cat("ppo1\n")
-      # print(ppo1)
-      # cat("ppo2\n")
-      # print(ppo2)
-      # cat("ppo3\n")
-      # print(ppo3)
-      # cat("ppo4\n")
-      # print(ppo4)
-      # cat("exp(-ka_ * dt)\n")
-      # print(exp(-ka_ * dt))
-
       p_state_l1    <- advanceStatePO(l1_dt,    p_bolus_l1, p_infusion_l1, p_PO_l1,    p_IM_l1,    p_IN_l1, L)
       p_state_l2    <- advanceStatePO(l2_dt,    p_bolus_l2, p_infusion_l2, p_PO_l2,    p_IM_l2,    p_IN_l2, L)
       p_state_l3    <- advanceStatePO(l3_dt,    p_bolus_l3, p_infusion_l3, p_PO_l3,    p_IM_l3,    p_IN_l3, L)
@@ -128,16 +107,6 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_state_ka_IM <- advanceStatePO(ka_IM_dt, doseNA,     doseNA,        doseNA,     p_IM_ka,    doseNA,  L)
       p_state_ka_IN <- advanceStatePO(ka_IN_dt, doseNA,     doseNA,        doseNA,     doseNA,     p_IN_ka, L)
 
-
-      # Wrap up, calculate Ce
-      # cat("p_state_1\n")
-      # print(p_state_1)
-      # cat("p_state_2\n")
-      # print(p_state_2)
-      # cat("p_state_3\n")
-      # print(p_state_3)
-      # cat("p_state_4\n")
-      # print(p_state_4)
       Cp <- p_state_l1 + p_state_l2 + p_state_l3 + p_state_ka_PO + p_state_ka_IM + p_state_ka_IN
       Ce <- calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
 

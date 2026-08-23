@@ -9,15 +9,12 @@ suggest <- function(
 {
   targetTable$Time <- as.character(targetTable$Time)
   targetTable$Target <- as.character(targetTable$Target)
-  # print(str(targetTable))
   # Process and clean up targetTable
   for (i in seq_len(nrow(targetTable)))
   {
     targetTable$Time[i] <- validateTime(targetTable$Time[i])
     targetTable$Target[i] <- validateDose(targetTable$Target[i]) # should work for target too
   }
-  # cat("After validating time and dose\n")
-  # print(str(targetTable))
   targetTable$Target    <- as.numeric(targetTable$Target)
   targetTable$Time    <- as.character(targetTable$Time)  # Stored as factors... Arrgh.....
   targetTable <- targetTable[targetTable$Time!=0  & targetTable$Target!=0, ]
@@ -58,8 +55,6 @@ suggest <- function(
   targetTable$Time <- targetTable$Time - offsetTime
   endTime <- endTime - offsetTime
 
-  # print(str(targetTable))
-  #
   outputComments("Ready to search for the target dose")
   drug <- drugList[which(targetDrug == drugList)]
 
@@ -91,8 +86,6 @@ suggest <- function(
   # plot <- ggplot(results,aes(x=Time, y=Ce)) +
   #   geom_line() +
   #   labs(title="First pass")
-  # print(plot)
-
 
   # Now calculate the infusion rate that would based on the end infusion concentrations
   USE <- 1:(nrow(testTable)-1)
@@ -113,7 +106,6 @@ suggest <- function(
   # plot <- ggplot(results,aes(x=Time, y=Ce)) +
   #  geom_line() +
   #  labs(title="After 10 iterations")
-  # print(plot)
 
   # Now set up for nlm
   obj <- function(Dose, Time, Units, PK, maximum)
@@ -172,11 +164,9 @@ suggest <- function(
   # plot <- ggplot(results,aes(x=Time, y=Ce)) +
   #   geom_line() +
   #   labs(title="After nlm")
-  # print(plot)
 
   testTable$Drug <- targetDrug
   testTable$Time <- testTable$Time + offsetTime
-  # print(str(testTable))
 
   testTable
 
