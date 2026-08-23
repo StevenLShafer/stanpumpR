@@ -202,11 +202,7 @@ app_ui <- function() {
                 textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
                 actionButton("sendSlide", "Send", class = "btn-primary")
               )
-            ),
-
-            actionButton("setTarget", "Suggest Dosing", class = "btn-outline-primary", icon = icon("fas fa-prescription")),
-            actionButton("editDrugs", "Drug Library", class = "btn-outline-primary", icon = icon("fas fa-capsules")),
-            actionButton("editThresholds", "Drug Thresholds", class = "btn-outline-primary", icon = icon("fas fa-bullseye"))
+            )
           ),
 
           bslib::layout_columns(
@@ -240,7 +236,15 @@ app_ui <- function() {
             ),
 
             bslib::card(
-              bslib::card_header(icon("syringe"), "Doses"),
+              bslib::card_header(
+                class = "d-flex align-items-center justify-content-between",
+                span(icon("syringe"), "Doses"),
+                actionLink(
+                  inputId = "setTarget",
+                  label = "Suggest Dosing",
+                  class = "btn-sm my-0"
+                )
+              ),
 
               bslib::layout_columns(
                 selectInput(
@@ -306,6 +310,27 @@ app_ui <- function() {
       ),
 
       bslib::nav_spacer(),
+      bslib::nav_menu(
+        "Settings",
+        icon = icon("gear"),
+        align = "right",
+        bslib::nav_item(
+          actionLink(
+            inputId = "editDrugs",
+            label = "Drug Library",
+            icon = icon("fas fa-capsules"),
+            class = "dropdown-item"
+          )
+        ),
+        bslib::nav_item(
+          actionLink(
+            inputId = "editThresholds",
+            label = "Drug Thresholds",
+            icon = icon("fas fa-bullseye"),
+            class = "dropdown-item"
+          )
+        )
+      ),
       bslib::nav_item(
         tags$a(
           icon("circle-info"),
