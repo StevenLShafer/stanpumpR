@@ -146,6 +146,21 @@ app_ui <- function() {
               ),
 
               bslib::accordion_panel(
+                "Time",
+                icon = icon("clock"),
+                selectInput(
+                  "timeMode",
+                  "Time Display",
+                  c("Actual time" = "clock",
+                    "Elapsed minutes" = "relative")
+                ),
+                conditionalPanel(
+                  "input.timeMode == 'clock'",
+                  textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                )
+              ),
+
+              bslib::accordion_panel(
                 "Graph Options",
                 icon = icon("sliders"),
                 selectInput("typical", "Show typical", c("<none>" = "none","Mid", "Range"), selected = "Range"),
@@ -242,19 +257,6 @@ app_ui <- function() {
             bslib::card(
               bslib::card_header(icon("syringe"), "Doses"),
 
-              bslib::layout_columns(
-                selectInput(
-                  "timeMode",
-                  "Time Display",
-                  c("Actual time" = "clock",
-                    "Elapsed minutes" = "relative")
-                ),
-                conditionalPanel(
-                  "input.timeMode == 'clock'",
-                  textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
-                )
-              ),
-              br(),
               rhandsontable::rHandsontableOutput("doseTableHTML"),
 
               bslib::card_footer(
