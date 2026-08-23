@@ -140,7 +140,7 @@ pattern the project is explicitly built to let outside investigators contribute 
 
 ## Component catalog
 
-Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTION`.
+All files are flat in `R/`.
 
 **Shell — bootstrap & framework**
 - `app.R` — one line, `stanpumpR::run_app()`; the deploy entry point.
