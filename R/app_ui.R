@@ -153,7 +153,7 @@ app_ui <- function() {
                 selectInput(
                   inputId = "maximum",
                   label = "Max time (minutes)",
-                  choices = setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
+                  choices = stats::setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
                   selected = 60
                 ),
                 lineTypeSelector(

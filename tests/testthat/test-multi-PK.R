@@ -1,6 +1,4 @@
 test_that("simulateDrugsWithCovariates passes smoke tests and can generate a plot", {
-  library(ggplot2)
-
   weight <- 70
   height <- 170
   age <- 50
@@ -26,9 +24,10 @@ test_that("simulateDrugsWithCovariates passes smoke tests and can generate a plo
   for (drug in output) {
     results <- drug[["results"]]
     cpce <- results[results$Site == "Plasma" | results$Site == "Effect Site", ]
-    g <- ggplot() +
-      geom_line(data = cpce, aes(x=Time, y=Y, group=Site, color=Site)) +
-      xlab('time (minutes)') + ylab(paste0(drug$Drug,' concentration (', drug$Concentration.Units, ')'))
+    g <- ggplot2::ggplot() +
+      ggplot2::geom_line(data = cpce, ggplot2::aes(x=Time, y=Y, group=Site, color=Site)) +
+      ggplot2::xlab('time (minutes)') +
+      ggplot2::ylab(paste0(drug$Drug,' concentration (', drug$Concentration.Units, ')'))
     expect_no_error(print(g))
   }
 })

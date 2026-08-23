@@ -39,6 +39,7 @@ Imports:
   shinydashboard,
   shinyjs,
   shinyWidgets,
+  stats,
   tidyr,
   tryCatchLog,
   utils,
