@@ -20,11 +20,11 @@ sendSlide <- function(
 
     outputComments("Sending email to", recipient)
 
-    if (missing(email_username) || is.null(email_username)) {
-      stop("email username missing")
+    if (is.null(email_username)) {
+      stop("Email username missing")
     }
-    if (missing(email_password) || is.null(email_password)) {
-      stop("email password missing")
+    if (is.null(email_password)) {
+      stop("Email password missing")
     }
 
     emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults)

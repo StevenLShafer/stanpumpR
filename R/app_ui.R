@@ -198,9 +198,19 @@ app_ui <- function() {
               bslib::accordion_panel(
                 "Email Slide",
                 icon = icon("envelope"),
-                textInput("recipient", NULL, "", placeholder = "Enter email address"),
-                textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
-                actionButton("sendSlide", "Send", class = "btn-primary")
+                if (is.null(config$email_username) || is.null(config$email_password)) {
+                  div(
+                    class = "info-note",
+                    icon("circle-info"),
+                    "Email is not configured. Please ask admin to set email username and password in app configuration."
+                  )
+                } else {
+                  tagList(
+                    textInput("recipient", NULL, "", placeholder = "Enter email address"),
+                    textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
+                    actionButton("sendSlide", "Send", class = "btn-primary")
+                  )
+                }
               )
             ),
 
