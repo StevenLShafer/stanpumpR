@@ -173,9 +173,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   sheet = 5
   for (drug in sort(unique(as.character(DT$Drug))))
   {
-    cat("Drug = ", drug, "\n")
     thisDrug <- which(drugDefaults$Drug == drug)
-    cat("thisDrug = ", thisDrug, "\n")
 
     pkSets <- drugs[[drug]]$PK
     parameters <-   as.data.frame(

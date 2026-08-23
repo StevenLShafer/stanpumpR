@@ -93,7 +93,7 @@ simulationPlot <- function(
 
   if (nrow(allResults) == 0)
   {
-    cat("Returning Null, nrow(allResults) == 0\n")
+    message("Returning Null, nrow(allResults) == 0")
     return(NULL)
   }
 
@@ -421,11 +421,6 @@ simulationPlot <- function(
 
   if (logY)
   {
-#    upper <- 10^ceiling(log10(max(plotResults$Y)))
-#    cat("upper", upper,"\n")
-#    lower <- min(upper / 10000, min(plotResults$Y[plotResults$Time > minimum + (maximum - minimum)/2]))
-#    cat("lower", upper,"\n")
-#    plotObject <- plotObject + scale_y_log10(limits=c(lower,upper))
     plotObject <- plotObject + ggplot2::scale_y_log10()
   } else {
     plotObject <- plotObject + ggplot2::scale_y_continuous(limits=c(0, NA))
@@ -535,7 +530,6 @@ simulationPlot <- function(
   # This code should work if facetscales gets fixed
   # scales_y <- sapply(as.character(unique(plotTable$Wrap)), function(x) x = scale_y_continuous())
   # if (plotEvents) scales_y$Events <- scale_y_continuous(labels = NULL)
-#  print(scales_y)
   plotObject <- plotObject +
     ggplot2::facet_grid(
       Wrap ~ .,
