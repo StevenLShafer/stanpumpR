@@ -114,6 +114,7 @@ app_server <- function(input, output, session) {
   # Routine to output doseTableHTML from doseTable
   output$doseTableHTML <- renderRHandsontable({
     req(doseTableDraft())
+    req(validateDoseTableInput(doseTableDraft()))
 
     profileCode({
       outputComments("Rendering doseTableHTML")
@@ -321,7 +322,9 @@ app_server <- function(input, output, session) {
   })
   sex <- reactive({
     req(input$sex)
-    if (length(input$sex) != 1L || !input$sex %in% c("male", "female")) stop("Invalid sex value.")
+    if (length(input$sex) != 1L || !input$sex %in% c("male", "female")) {
+      stop(safeError("Invalid sex value."))
+    }
     input$sex
   })
 
@@ -430,7 +433,7 @@ app_server <- function(input, output, session) {
 
       requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
       if (!is_valid_number(requestedMaximum) || !requestedMaximum %in% maxtimes$times) {
-        stop("Invalid maximum simulation time.")
+        stop(safeError("Invalid maximum simulation time."))
       }
       plotMaximum <- requestedMaximum
       steps <- maxtimes$steps[maxtimes$times == plotMaximum]
@@ -462,10 +465,10 @@ app_server <- function(input, output, session) {
   simulationPlotRetval <- reactive({
     req(input$plotWidth)
     if (!is_valid_number(input$plotWidth, MIN_PLOT_WIDTH, MAX_PLOT_WIDTH)) {
-      stop("Invalid plot width.")
+      stop(safeError("Invalid plot width."))
     }
     if (!is_valid_number(input$yaxisHeight, MIN_YAXIS_HEIGHT, MAX_YAXIS_HEIGHT)) {
-      stop("Invalid plot height.")
+      stop(safeError("Invalid plot height."))
     }
     profileCode({
       outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
