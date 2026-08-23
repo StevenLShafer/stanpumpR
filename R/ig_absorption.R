@@ -59,7 +59,7 @@
 #' neither overflows nor underflows.  Base R only -- no dependency.
 erfcx_real <- function(x) {
   # erfc(x) = 2 * pnorm(-x * sqrt(2))
-  exp(x^2 + log(2) + pnorm(-x * sqrt(2), log.p = TRUE))
+  exp(x^2 + log(2) + stats::pnorm(-x * sqrt(2), log.p = TRUE))
 }
 
 
@@ -166,7 +166,7 @@ ig_absorption_conc_quad <- function(t, A, k, mu, lambda, dose = 1, F = 1) {
     breaks <- unique(c(1e-14, breaks, ti))
     tot <- 0
     for (j in seq_len(length(breaks) - 1)) {
-      tot <- tot + integrate(integrand, breaks[j], breaks[j + 1],
+      tot <- tot + stats::integrate(integrand, breaks[j], breaks[j + 1],
                              rel.tol = 1e-12, subdivisions = 500L)$value
     }
     F * dose * tot
