@@ -1607,44 +1607,6 @@
       "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
       "Repository": "CRAN"
     },
-    "here": {
-      "Package": "here",
-      "Version": "1.0.2",
-      "Source": "Repository",
-      "Title": "A Simpler Way to Find Your Files",
-      "Date": "2025-09-06",
-      "Authors@R": "c(person(given = \"Kirill\", family = \"M\\u00fcller\", role = c(\"aut\", \"cre\"), email = \"kirill@cynkra.com\", comment = c(ORCID = \"0000-0002-1416-3412\")), person(given = \"Jennifer\", family = \"Bryan\", role = \"ctb\", email = \"jenny@rstudio.com\", comment = c(ORCID = \"0000-0002-6983-2759\")))",
-      "Description": "Constructs paths to your project's files. Declare the relative path of a file within your project with 'i_am()'. Use the 'here()' function as a drop-in replacement for 'file.path()', it will always locate the files relative to your project root.",
-      "License": "MIT + file LICENSE",
-      "URL": "https://here.r-lib.org/, https://github.com/r-lib/here",
-      "BugReports": "https://github.com/r-lib/here/issues",
-      "Imports": [
-        "rprojroot (>= 2.1.0)"
-      ],
-      "Suggests": [
-        "conflicted",
-        "covr",
-        "fs",
-        "knitr",
-        "palmerpenguins",
-        "plyr",
-        "readr",
-        "rlang",
-        "rmarkdown",
-        "testthat",
-        "uuid",
-        "withr"
-      ],
-      "VignetteBuilder": "knitr",
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.3.9000",
-      "Config/testthat/edition": "3",
-      "Config/Needs/website": "tidyverse/tidytemplate",
-      "NeedsCompilation": "no",
-      "Author": "Kirill Müller [aut, cre] (ORCID: <https://orcid.org/0000-0002-1416-3412>), Jennifer Bryan [ctb] (ORCID: <https://orcid.org/0000-0002-6983-2759>)",
-      "Maintainer": "Kirill Müller <kirill@cynkra.com>",
-      "Repository": "CRAN"
-    },
     "highr": {
       "Package": "highr",
       "Version": "0.12",
@@ -2913,26 +2875,6 @@
       "Maintainer": "Lionel Henry <lionel@posit.co>",
       "Repository": "CRAN"
     },
-    "png": {
-      "Package": "png",
-      "Version": "0.1-9",
-      "Source": "Repository",
-      "Title": "Read and write PNG images",
-      "Author": "Simon Urbanek [aut, cre, cph] (https://urbanek.nz, ORCID: <https://orcid.org/0000-0003-2297-1732>)",
-      "Authors@R": "person(\"Simon\", \"Urbanek\", role=c(\"aut\",\"cre\",\"cph\"), email=\"Simon.Urbanek@r-project.org\", comment=c(\"https://urbanek.nz\", ORCID=\"0000-0003-2297-1732\"))",
-      "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
-      "Depends": [
-        "R (>= 2.9.0)"
-      ],
-      "Description": "This package provides an easy and simple way to read, write and display bitmap images stored in the PNG format. It can read and write both files and in-memory raw vectors.",
-      "License": "GPL-2 | GPL-3",
-      "SystemRequirements": "libpng",
-      "URL": "https://www.rforge.net/png/",
-      "BugReports": "https://github.com/s-u/png/issues/",
-      "NeedsCompilation": "yes",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
-    },
     "praise": {
       "Package": "praise",
       "Version": "1.0.0",
@@ -4089,31 +4031,6 @@
       "Maintainer": "Carson Sievert <carson@posit.co>",
       "Repository": "CRAN"
     },
-    "shinyBS": {
-      "Package": "shinyBS",
-      "Version": "0.65.0",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "Extra Twitter Bootstrap Components for Shiny",
-      "Date": "2026-03-18",
-      "Authors@R": "c( person(given = \"Eric\", family = \"Bailey\", email = \"ebailey@idem.in.gov\",  role = c(\"aut\") ), person(given = \"Federico\", family = \"Marini\", email = \"marinif@uni-mainz.de\",  role = c(\"cre\", \"ctb\"), comment = c(ORCID = \"0000-0003-3252-7758\")), person(given = \"Jesse\", family = \"Koops\", email = \"Jesse.Koops@cito.nl\",  role = c(\"ctb\") ) )",
-      "Description": "Adds easy access to additional Twitter Bootstrap components to Shiny.",
-      "Imports": [
-        "shiny (>= 0.13.2)",
-        "htmltools",
-        "stats",
-        "jsonlite"
-      ],
-      "URL": "https://github.com/federicomarini/shinyBS/",
-      "BugReports": "https://github.com/federicomarini/shinyBS/issues",
-      "License": "GPL-3",
-      "RoxygenNote": "7.3.3",
-      "Encoding": "UTF-8",
-      "NeedsCompilation": "no",
-      "Author": "Eric Bailey [aut], Federico Marini [cre, ctb] (ORCID: <https://orcid.org/0000-0003-3252-7758>), Jesse Koops [ctb]",
-      "Maintainer": "Federico Marini <marinif@uni-mainz.de>",
-      "Repository": "CRAN"
-    },
     "shinyWidgets": {
       "Package": "shinyWidgets",
       "Version": "0.9.1",
@@ -4212,32 +4129,6 @@
       "NeedsCompilation": "no",
       "Author": "Dean Attali [aut, cre] (Maintainer/developer of shinycssloaders since 2019, <https://orcid.org/0000-0002-5645-3493>), Andras Sali [aut] (Original creator of shinycssloaders package), Luke Hass [ctb, cph] (Author of included CSS loader code)",
       "Maintainer": "Dean Attali <daattali@gmail.com>",
-      "Repository": "CRAN"
-    },
-    "shinydashboard": {
-      "Package": "shinydashboard",
-      "Version": "0.7.3",
-      "Source": "Repository",
-      "Title": "Create Dashboards with 'Shiny'",
-      "Authors@R": "c( person(\"Winston\", \"Chang\", , \"winston@posit.co\", role = c(\"aut\", \"cre\")), person(\"Barbara\", \"Borges Ribeiro\", role = \"aut\"), person(, \"Posit Software, PBC\", role = \"cph\"), person(, \"Almasaeed Studio\", role = c(\"ctb\", \"cph\"), comment = \"AdminLTE theme for Bootstrap\"), person(, \"Adobe Systems Incorporated\", role = c(\"ctb\", \"cph\"), comment = \"Source Sans Pro font\") )",
-      "Description": "Create dashboards with 'Shiny'. This package provides a theme on top of 'Shiny', making it easy to create attractive dashboards.",
-      "License": "MIT + file LICENSE",
-      "URL": "https://rstudio.github.io/shinydashboard/, https://github.com/rstudio/shinydashboard",
-      "BugReports": "https://github.com/rstudio/shinydashboard/issues",
-      "Depends": [
-        "R (>= 3.0)"
-      ],
-      "Imports": [
-        "htmltools (>= 0.2.6)",
-        "promises",
-        "shiny (>= 1.0.0)",
-        "utils"
-      ],
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.2",
-      "NeedsCompilation": "no",
-      "Author": "Winston Chang [aut, cre], Barbara Borges Ribeiro [aut], Posit Software, PBC [cph], Almasaeed Studio [ctb, cph] (AdminLTE theme for Bootstrap), Adobe Systems Incorporated [ctb, cph] (Source Sans Pro font)",
-      "Maintainer": "Winston Chang <winston@posit.co>",
       "Repository": "CRAN"
     },
     "shinyjs": {
@@ -4825,38 +4716,6 @@
       "NeedsCompilation": "yes",
       "Repository": "CRAN"
     },
-    "tryCatchLog": {
-      "Package": "tryCatchLog",
-      "Version": "1.3.3",
-      "Source": "Repository",
-      "Title": "Advanced 'tryCatch()' and 'try()' Functions",
-      "Authors@R": "c( person(\"Juergen\",  \"Altfeld\",   email = \"jaltfeld@altfeld-im.de\", role = c(\"aut\", \"cre\", \"cph\")), person(\"Charles\",  \"Epaillard\", email = \"charles.epaillard@gmail.com\", role = \"ctb\"), person(\"Brandon\",  \"Bertelsen\", email = \"brandon@bertelsen.ca\", role = \"ctb\"), person(\"Valerian\", \"Wrobel\",    email = \"valerian.wrobel@gmail.com\", role = \"ctb\"), person(\"Duccio\",   \"Aiazzi\",    email = \"aiazziduccio@gmail.com\", role = \"ctb\") )",
-      "Description": "Advanced tryCatch() and try() functions for better error handling (logging, stack trace with source code references and support for post-mortem analysis via dump files).",
-      "Imports": [
-        "utils"
-      ],
-      "Depends": [
-        "R (>= 3.1.0)"
-      ],
-      "License": "GPL-3 | file LICENSE",
-      "URL": "https://github.com/aryoda/tryCatchLog",
-      "BugReports": "https://github.com/aryoda/tryCatchLog/issues",
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.2",
-      "Suggests": [
-        "futile.logger",
-        "lgr",
-        "testthat (>= 3.2.0)",
-        "knitr",
-        "rmarkdown",
-        "covr"
-      ],
-      "VignetteBuilder": "knitr",
-      "NeedsCompilation": "no",
-      "Author": "Juergen Altfeld [aut, cre, cph], Charles Epaillard [ctb], Brandon Bertelsen [ctb], Valerian Wrobel [ctb], Duccio Aiazzi [ctb]",
-      "Maintainer": "Juergen Altfeld <jaltfeld@altfeld-im.de>",
-      "Repository": "CRAN"
-    },
     "urlchecker": {
       "Package": "urlchecker",
       "Version": "2.0.0",
@@ -5120,36 +4979,6 @@
       "RoxygenNote": "7.3.3",
       "NeedsCompilation": "no",
       "Author": "Simon Garnier [aut, cre], Noam Ross [ctb, cph], Bob Rudis [ctb, cph], Marco Sciaini [ctb, cph], Antônio Pedro Camargo [ctb, cph], Cédric Scherer [ctb, cph]",
-      "Repository": "CRAN"
-    },
-    "waiter": {
-      "Package": "waiter",
-      "Version": "0.2.5.1",
-      "Source": "Repository",
-      "Title": "Loading Screen for 'Shiny'",
-      "Date": "2022-01-02",
-      "Authors@R": "c( person(given = \"John\", family = \"Coene\", role = c(\"aut\", \"cre\"), email = \"jcoenep@gmail.com\"), person(given = \"Jinhwan\", family = \"Kim\", role = \"ctb\", email = 'hwanistic@gmail.com'), person(given = \"Victor\", family = \"Granda\", role = c(\"ctb\"), email = \"victorgrandagarcia@gmail.com\", comment = c(ORCID = \"0000-0002-0469-1991\")))",
-      "Description": "Full screen and partial loading screens for 'Shiny' with spinners, progress bars, and notifications.",
-      "License": "MIT + file LICENSE",
-      "URL": "https://waiter.john-coene.com/, https://github.com/JohnCoene/waiter",
-      "BugReports": "https://github.com/JohnCoene/waiter/issues",
-      "Encoding": "UTF-8",
-      "Imports": [
-        "R6",
-        "shiny",
-        "htmltools"
-      ],
-      "RoxygenNote": "7.3.3",
-      "Suggests": [
-        "httr",
-        "knitr",
-        "packer",
-        "rmarkdown"
-      ],
-      "VignetteBuilder": "knitr",
-      "NeedsCompilation": "no",
-      "Author": "John Coene [aut, cre], Jinhwan Kim [ctb], Victor Granda [ctb] (ORCID: <https://orcid.org/0000-0002-0469-1991>)",
-      "Maintainer": "John Coene <jcoenep@gmail.com>",
       "Repository": "CRAN"
     },
     "waldo": {

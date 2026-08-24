@@ -14,7 +14,7 @@ sendSlide <- function(
   email_password
 )
 {
-  tryCatchLog::tryCatchLog({
+  tryCatch({
     prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
     on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
 
