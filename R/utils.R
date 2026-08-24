@@ -14,22 +14,35 @@ is_valid_number <- function(x, min = -Inf, max = Inf) {
   is.numeric(x) && length(x) == 1L && is.finite(x) && x >= min && x <= max
 }
 
-# Format a duration given in minutes as a human-readable number of minutes/hours/days
+# Format a duration given in minutes as a human-readable number of
+# minutes/hours/days/weeks/years. Month is skipped because it's so irregular.
 formatMinutes <- function(minutes) {
   vapply(minutes, function(mins) {
     if (!is_valid_number(mins) || mins < 0) return(NA_character_)
-    if (mins >= MAX_TIME_NO_LIMIT) return("No limit")
-    if (mins < 60) return(pluralNoun(mins, "minute"))
-    if (mins < 60*24) return(pluralNoun(round(mins / 60, 1), "hour"))
-
-    days <- mins %/% 1440
-    leftoverHours <- round((mins %% 1440) / 60, 1)
-    if (leftoverHours == 0) {
-      pluralNoun(days, "day")
-    } else {
-      paste(pluralNoun(days, "day"), pluralNoun(leftoverHours, "hour"))
-    }
+    if (mins < MINS_PER_HOUR) return(pluralNoun(mins, "minute"))
+    if (mins < MINS_PER_DAY) return(pluralNoun(round(mins / MINS_PER_HOUR, 1), "hour"))
+    if (mins < MINS_PER_WEEK) return(withRemainder(mins, MINS_PER_DAY, "day", MINS_PER_HOUR, "hour"))
+    if (mins < MINS_PER_YEAR) return(withRemainder(mins, MINS_PER_WEEK, "week", MINS_PER_DAY, "day"))
+    withRemainder(mins, MINS_PER_YEAR, "year", MINS_PER_WEEK, "week")
   }, character(1))
+}
+
+# Label a duration as whole "major" units plus any remainder in "minor" units,
+# e.g. "2 days 4 hours"
+withRemainder <- function(mins, majorSize, majorUnit, minorSize, minorUnit) {
+  major <- mins %/% majorSize
+  minor <- round((mins %% majorSize) / minorSize, 1)
+
+  if (minor * minorSize >= majorSize) {
+    major <- major + 1
+    minor <- 0
+  }
+
+  if (minor == 0) {
+    pluralNoun(major, majorUnit)
+  } else {
+    paste(pluralNoun(major, majorUnit), pluralNoun(minor, minorUnit))
+  }
 }
 
 # Pluralize a noun if there is more than 1 of it

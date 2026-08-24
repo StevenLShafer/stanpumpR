@@ -50,10 +50,20 @@ imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, inUnits, imUnits)
 
-MAX_TIME_NO_LIMIT <- 1000000
+MINS_PER_HOUR <- 60
+MINS_PER_DAY  <- 60 * 24
+MINS_PER_WEEK <- 60 * 24 * 7
+MINS_PER_YEAR <- 525600  # more than 52 weeks because of leap years
+
 maxtimes <- data.frame(
-  times = c(10, 30, 60, 90, 120, 180, 240, 300, 360, 480, 600, 720, 1440, 1680, 1920, 2880, 4320, 5760,7200, MAX_TIME_NO_LIMIT ),
-  steps = c( 1,  5, 10, 15,  15,  30,  30,  60,  60,  60, 120, 120, 240,  240, 240,  480,   480,  720, 720, 1440)
+  times = c(MINS_PER_HOUR * c(1, 2, 4, 6, 12),
+            MINS_PER_DAY * c(1, 2, 4),
+            MINS_PER_WEEK * c(1, 2, 4, 8, 16, 32),
+            MINS_PER_YEAR),
+  steps = c(10, 15, 30, 60, 120,
+            MINS_PER_DAY / c(6, 3, 2),
+            MINS_PER_DAY * c(1, 2, 4), MINS_PER_WEEK * c(1, 2, 4),
+            MINS_PER_YEAR / 12)
 )
 
 PLOT_ID_EVENTS      <- "Events"
