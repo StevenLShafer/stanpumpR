@@ -564,6 +564,8 @@ app_server <- function(input, output, session) {
         error <- "Please enter a valid recipient email address."
       } else if (nzchar(input$emailComments) && !input$commentSafe) {
         error <- "Please click the box confirming there is no PHI in the comments."
+      } else if (nchar(input$emailComments) > MAX_INPUT_TEXT) {
+        error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")
       } else if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
         error <- "This session has reached its email limit. Please reload the page to send more."
       }

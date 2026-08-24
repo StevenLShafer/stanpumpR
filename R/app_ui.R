@@ -207,7 +207,8 @@ app_ui <- function() {
                 } else {
                   tagList(
                     textInput("recipient", NULL, "", placeholder = "Enter email address"),
-                    textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
+                    textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3) |>
+                      addInputAttributes(maxlength = MAX_INPUT_TEXT),
                     checkboxInput("commentSafe", "This comment does not contain PHI", FALSE) |>
                       htmltools::tagAppendAttributes(class = "micro"),
                     actionButton("sendSlide", "Send", class = "btn-primary")
