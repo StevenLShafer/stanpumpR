@@ -30,9 +30,6 @@ jobs:
           r-version: 'renv'
           use-public-rspm: true
 
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libpng-dev
-
       - uses: r-lib/actions/setup-renv@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
 
       - name: Install stanpumpR from GitHub

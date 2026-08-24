@@ -12,49 +12,42 @@ Authors@R:
 Description: stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
 License: MIT + file LICENSE
 Imports:
-  bslib,
-  config,
-  dplyr,
-  emayili,
-  glue,
-  ggplot2  (>= 3.4),
-  grid,
-  htmltools,
-  htmlwidgets,
-  httr,
-  jsonlite,
-  lubridate,
-  magrittr,
-  memoise,
-  officer,
-  openxlsx,
-  png,
-  purrr,
-  rhandsontable,
-  rvg,
-  shiny,
-  shinyalert,
-  shinyBS,
-  shinycssloaders,
-  shinydashboard,
-  shinyjs,
-  shinyWidgets,
-  stats,
-  tidyr,
-  tryCatchLog,
-  utils,
-  waiter,
-  yaml
+    bslib,
+    config,
+    dplyr,
+    emayili,
+    glue,
+    ggplot2  (>= 3.4),
+    grid,
+    htmltools,
+    htmlwidgets,
+    jsonlite,
+    lubridate,
+    magrittr,
+    memoise,
+    officer,
+    openxlsx,
+    purrr,
+    rhandsontable,
+    rvg,
+    shiny,
+    shinyalert,
+    shinycssloaders,
+    shinyjs,
+    shinyWidgets,
+    stats,
+    tidyr,
+    utils
 Suggests:
     devtools,
-    here,
     knitr,
     remotes,
     rmarkdown,
     rsconnect,
-    testthat
+    testthat,
+    yaml
 Depends:
-  R (>= 4.1)
+    R (>= 4.1)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

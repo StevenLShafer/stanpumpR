@@ -83,10 +83,9 @@ app_server <- function(input, output, session) {
 
   main_plot <- reactive({
     outputComments("In main_plot", level = DEBUG_LEVEL_VERBOSE)
-    #    tryCatchLog({
     tryCatch({
       if (is.null(doseTableClean()) || is.null(drugs()) || is.null(plotObjectReactive())) {
-        #        nothingtoPlot
+        # nothingtoPlot
       } else {
         plotObjectReactive()
       }
@@ -501,9 +500,6 @@ app_server <- function(input, output, session) {
       plasmaLinetype <- linetypes()$plasmaLinetype
       effectsiteLinetype <- linetypes()$effectsiteLinetype
 
-      # try tryCatchLog if something goes wrong here for a better traceback
-
-      #    tryCatchLog({
       simulationPlot(
         drugs = drugs(),
         events = ET,
@@ -527,7 +523,6 @@ app_server <- function(input, output, session) {
       )
     }, name = "simulationPlotRetval() reactive")
   })
-  #  })
 
   plotObjectReactive <- reactive({
     simulationPlotRetval()$plotObject
@@ -1335,24 +1330,20 @@ app_server <- function(input, output, session) {
         targetTable <- rhandsontable::hot_to_r(input$targetTableHTML)
         validateTargetTableInput(targetTable)
 
-        tryCatchLog::tryCatchLog({
+        if (!any(doseTable()$Drug==input$targetDrug)) {
+          outputComments("Updating doseTable for new drug")
+          doseTable(rbind(doseTable(),
+                          data.frame(Drug=input$targetDrug,Time="0",Dose="0",Units="mg")))
+          outputComments(doseTable())
+        }
 
-          if (!any(doseTable()$Drug==input$targetDrug)) {
-            outputComments("Updating doseTable for new drug")
-            doseTable(rbind(doseTable(),
-                            data.frame(Drug=input$targetDrug,Time="0",Dose="0",Units="mg")))
-            outputComments(doseTable())
-          }
-
-          testTable <- suggest(input$targetDrug,
-                               targetTable,
-                               endTime,
-                               drugs(),
-                               drugList,
-                               eventTable(),
-                               referenceTime())
-
-        })
+        testTable <- suggest(input$targetDrug,
+                             targetTable,
+                             endTime,
+                             drugs(),
+                             drugList,
+                             eventTable(),
+                             referenceTime())
 
         if (is.null(testTable)) return()
 
