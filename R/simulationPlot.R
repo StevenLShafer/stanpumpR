@@ -93,7 +93,7 @@ simulationPlot <- function(
 
   if (nrow(allResults) == 0)
   {
-    cat("Returning Null, nrow(allResults) == 0\n")
+    message("Returning Null, nrow(allResults) == 0")
     return(NULL)
   }
 
@@ -201,7 +201,7 @@ simulationPlot <- function(
   # Need this table both for plotMEAC and for Interaction
     X <- allEquispace %>%
       dplyr::group_by(Time) %>%
-      dplyr::summarize(SUM = mean(MEAC)*n())
+      dplyr::summarize(SUM = mean(MEAC)*dplyr::n())
     totalMEAC <- data.frame(
       Drug = "total opioid",
       Time = X$Time,
@@ -421,11 +421,6 @@ simulationPlot <- function(
 
   if (logY)
   {
-#    upper <- 10^ceiling(log10(max(plotResults$Y)))
-#    cat("upper", upper,"\n")
-#    lower <- min(upper / 10000, min(plotResults$Y[plotResults$Time > minimum + (maximum - minimum)/2]))
-#    cat("lower", upper,"\n")
-#    plotObject <- plotObject + scale_y_log10(limits=c(lower,upper))
     plotObject <- plotObject + ggplot2::scale_y_log10()
   } else {
     plotObject <- plotObject + ggplot2::scale_y_continuous(limits=c(0, NA))
@@ -535,7 +530,6 @@ simulationPlot <- function(
   # This code should work if facetscales gets fixed
   # scales_y <- sapply(as.character(unique(plotTable$Wrap)), function(x) x = scale_y_continuous())
   # if (plotEvents) scales_y$Events <- scale_y_continuous(labels = NULL)
-#  print(scales_y)
   plotObject <- plotObject +
     ggplot2::facet_grid(
       Wrap ~ .,
@@ -555,9 +549,9 @@ simulationPlot <- function(
           ),
           axis.text.y = ggplot2::element_text(size = 15),
           panel.spacing = grid::unit(2, "lines"),
-          legend.background = element_blank(),
-          legend.box.background = element_blank(),
-          legend.key = element_blank()
+          legend.background = ggplot2::element_blank(),
+          legend.box.background = ggplot2::element_blank(),
+          legend.key = ggplot2::element_blank()
           )
 
   # Step A7: add in process plotRecovery

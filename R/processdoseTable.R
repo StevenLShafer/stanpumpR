@@ -7,38 +7,26 @@
 processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
 {
   # Now, process dose table for each drug
-  # cat("Entering processdoseTable()\n")
   drugList <- names(drugs)
   for (i in 1:length(drugList))
   {
     drug <- drugList[i]
-    # cat("drug = ",drug,"\n")
     tempDT <- DT[DT$Drug == drug,]
-    # cat("Structure of tempDT\n")
-    # print(utils::str(tempDT))
-    # cat("ET$Event",ET$Event,"\n")
-    # cat("drugs[[drug]]$pkEvents",drugs[[drug]]$pkEvents,"\n")
     tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[drug]]$pkEvents,]
-    # cat("Structure of tempET\n")
-    # print(utils::str(tempET))
 
     if (!identical(tempDT, drugs[[drug]]$DT) |
          (length(drugs[[drug]]$pkEvents) > 1 &
           !identical(drugs[[drug]]$ET, tempET))
       )
     {
-      # cat("Seems not\n")
       if (nrow(tempDT) == 0 ) # Delete anything that should be deleted
       {
-        # cat("starting to set everything to NULL\n")
         drugs[[drug]]$DT        <- NULL
         drugs[[drug]]$ET        <- NULL
         drugs[[drug]]$results   <- NULL
         drugs[[drug]]$equiSpace <- NULL
         drugs[[drug]]$max       <- NULL
-        # cat("everything to NULL\n")
       } else {
-        # cat("calling simCpCe\n")
         X <- simCpCe(
           tempDT,
           tempET,
@@ -46,16 +34,13 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
           plotMaximum,
           plotRecovery
           )
-        # cat("back from simCpCe\n")
         drugs[[drug]]$DT                <- tempDT
         drugs[[drug]]$ET                <- tempET
         drugs[[drug]]$results           <- X$results
         drugs[[drug]]$equiSpace         <- X$equiSpace
         drugs[[drug]]$max               <- X$max
-        # cat("drugs[] updated\n")
       }
     }
   }
-  # cat("Exiting processdoseTable()\n")
   drugs
 }

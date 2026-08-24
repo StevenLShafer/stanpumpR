@@ -175,9 +175,6 @@ dexmedetomidine <- function(weight, height, age, sex)
 
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # cat("Here is the structure of PK")
-  # print(utils::str(PK))
-
   return(
     list(
       PK = PK,

@@ -1,5 +1,3 @@
-library(lubridate)
-
 test_that("HH:MM gets parsed correctly", {
     expect_equal(hourMinute("12:34"),754)
 })

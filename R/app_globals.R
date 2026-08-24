@@ -111,7 +111,7 @@ outputComments <- function(
     if (is.data.frame((text)))
     {
       con <- textConnection("outputString","w",local=TRUE)
-      capture.output(print(text, digits = 3), file = con, type="output", split = FALSE)
+      utils::capture.output(print(text, digits = 3), file = con, type="output", split = FALSE)
       close(con)
       if (echo)
       {
