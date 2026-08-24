@@ -142,9 +142,6 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   margin-bottom: 1rem;
 }
 
-.navbar .dropdown-item .action-icon {
-  display: inline-block;
-  width: 1.25em;
+.navbar .dropdown-menu .action-icon {
   margin-right: 0.4rem;
-  text-align: center;
 }

@@ -237,13 +237,9 @@ app_ui <- function() {
 
             bslib::card(
               bslib::card_header(
-                class = "d-flex align-items-center justify-content-between",
+                class = "justify-content-between",
                 span(icon("syringe"), "Doses"),
-                actionLink(
-                  inputId = "setTarget",
-                  label = "Suggest Dosing",
-                  class = "btn-sm my-0"
-                )
+                actionLink("setTarget", "Suggest Dosing", class = "small")
               ),
 
               bslib::layout_columns(
@@ -313,21 +309,18 @@ app_ui <- function() {
       bslib::nav_menu(
         "Settings",
         icon = icon("gear"),
-        align = "right",
         bslib::nav_item(
           actionLink(
-            inputId = "editDrugs",
-            label = "Drug Library",
-            icon = icon("fas fa-capsules"),
-            class = "dropdown-item"
+            "editDrugs",
+            "Drug Library",
+            icon = icon("fas fa-capsules")
           )
         ),
         bslib::nav_item(
           actionLink(
-            inputId = "editThresholds",
-            label = "Drug Thresholds",
-            icon = icon("fas fa-bullseye"),
-            class = "dropdown-item"
+            "editThresholds",
+            "Drug Thresholds",
+            icon = icon("fas fa-bullseye")
           )
         )
       ),
