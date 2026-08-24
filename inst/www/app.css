@@ -145,3 +145,7 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   margin-top: -0.75rem;
   margin-bottom: 1rem;
 }
+
+.navbar .dropdown-menu .action-icon {
+  margin-right: 0.4rem;
+}

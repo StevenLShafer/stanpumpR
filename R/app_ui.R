@@ -215,11 +215,7 @@ app_ui <- function() {
                   )
                 }
               )
-            ),
-
-            actionButton("setTarget", "Suggest Dosing", class = "btn-outline-primary", icon = icon("fas fa-prescription")),
-            actionButton("editDrugs", "Drug Library", class = "btn-outline-primary", icon = icon("fas fa-capsules")),
-            actionButton("editThresholds", "Drug Thresholds", class = "btn-outline-primary", icon = icon("fas fa-bullseye"))
+            )
           ),
 
           bslib::layout_columns(
@@ -272,7 +268,11 @@ app_ui <- function() {
               ),
 
               bslib::card(
-                bslib::card_header(icon("syringe"), "Doses"),
+                bslib::card_header(
+                  class = "justify-content-between",
+                  span(icon("syringe"), "Doses"),
+                  actionLink("setTarget", "Suggest Dosing", class = "small")
+                ),
 
                 rhandsontable::rHandsontableOutput("doseTableHTML"),
 
@@ -327,6 +327,24 @@ app_ui <- function() {
       ),
 
       bslib::nav_spacer(),
+      bslib::nav_menu(
+        "Settings",
+        icon = icon("gear"),
+        bslib::nav_item(
+          actionLink(
+            "editDrugs",
+            "Drug Library",
+            icon = icon("fas fa-capsules")
+          )
+        ),
+        bslib::nav_item(
+          actionLink(
+            "editThresholds",
+            "Drug Thresholds",
+            icon = icon("fas fa-bullseye")
+          )
+        )
+      ),
       bslib::nav_item(
         tags$a(
           icon("circle-info"),
