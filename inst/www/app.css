@@ -3,6 +3,10 @@
   pointer-events: auto;
 }
 
+.micro {
+  font-size: 0.8rem;
+}
+
 .handsontableEditor .handsontable td {
   background: #f0f0f0;
 }
