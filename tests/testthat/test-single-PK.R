@@ -1,6 +1,4 @@
 test_that("getDrugPK passes smoke tests and can generate a plot", {
-  library(ggplot2)
-
   maximum <- 60
   plotRecovery <- FALSE
 
@@ -26,7 +24,9 @@ test_that("getDrugPK passes smoke tests and can generate a plot", {
   results <- output["results"][["results"]]
   cpce <- results[results$Site == "Plasma" | results$Site == "Effect Site", ]
 
-  g <- ggplot(cpce, aes(x=Time, y=Y, group=Site, color=Site)) +
-    geom_line() + xlab('Time (minutes)') + ylab('Concentration (ng/ml)')
+  g <- ggplot2::ggplot(cpce, ggplot2::aes(x=Time, y=Y, group=Site, color=Site)) +
+    ggplot2::geom_line() +
+    ggplot2::xlab('Time (minutes)') +
+    ggplot2::ylab('Concentration (ng/ml)')
   expect_no_error(print(g))
 })

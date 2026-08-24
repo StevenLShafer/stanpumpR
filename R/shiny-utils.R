@@ -8,8 +8,14 @@ inlineUI <- function(tag) {
 
 # Add HTML attributes to a Shiny input tag
 addInputAttributes <- function(tag, ...) {
+  tagClasses <- htmltools::tagGetAttribute(tag, "class")
+  selector <- if (grepl("shiny-input-textarea", tagClasses)) {
+    "textarea"
+  } else {
+    "input"
+  }
   htmltools::tagQuery(tag)$
-    find("input")$
+    find(selector)$
     filter(function(x, i) i == 1)$
     addAttrs(...)$
     allTags()

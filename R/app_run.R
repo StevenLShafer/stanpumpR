@@ -2,25 +2,6 @@
 #'
 #' @export
 run_app <- function(config_file = "config.yml") {
-  suppressWarnings(suppressPackageStartupMessages({
-    library(stanpumpR)
-    library(shiny)
-    library(shinyjs)
-    library(shinydashboard)
-    library(tryCatchLog)
-    library(httr)
-    library(ggplot2)
-    library(grid)
-    library(openxlsx)
-    library(dplyr)
-    library(officer)
-    library(rhandsontable)
-    library(purrr)
-    library(png)
-    library(tidyr)
-    library(lubridate)
-  }))
-
   options(warn = 1)
 
   config <- config::get(file = config_file)

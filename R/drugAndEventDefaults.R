@@ -15,7 +15,7 @@ drugUnitsSimplify <- function(units) {
 #' @export
 getDrugDefaultsGlobal <- memoise::memoise(function(expand = TRUE)
 {
-  drugDefaultsDataset <- read.csv(
+  drugDefaultsDataset <- utils::read.csv(
     system.file("extdata", "drugDefaults_global.csv", package = "stanpumpR"),
     na.strings = ""
   )
@@ -28,7 +28,7 @@ getDrugDefaultsGlobal <- memoise::memoise(function(expand = TRUE)
 })
 
 getEventDefaults <- function() {
-  read.csv(
+  utils::read.csv(
     system.file("extdata", "eventDefaults.csv", package = "stanpumpR")
   )
 }

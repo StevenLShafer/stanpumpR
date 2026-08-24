@@ -3,6 +3,10 @@
   pointer-events: auto;
 }
 
+.micro {
+  font-size: 0.8rem;
+}
+
 .handsontableEditor .handsontable td {
   background: #f0f0f0;
 }
@@ -140,4 +144,8 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   padding: 7px 9px;
   margin-top: -0.75rem;
   margin-bottom: 1rem;
+}
+
+.navbar .dropdown-menu .action-icon {
+  margin-right: 0.4rem;
 }

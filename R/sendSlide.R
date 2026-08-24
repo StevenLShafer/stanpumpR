@@ -20,11 +20,11 @@ sendSlide <- function(
 
     outputComments("Sending email to", recipient)
 
-    if (missing(email_username) || is.null(email_username)) {
-      stop("email username missing")
+    if (is.null(email_username)) {
+      stop("Email username missing")
     }
-    if (missing(email_password) || is.null(email_password)) {
-      stop("email password missing")
+    if (is.null(email_password)) {
+      stop("Email password missing")
     }
 
     emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults)
@@ -173,9 +173,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   sheet = 5
   for (drug in sort(unique(as.character(DT$Drug))))
   {
-    cat("Drug = ", drug, "\n")
     thisDrug <- which(drugDefaults$Drug == drug)
-    cat("thisDrug = ", thisDrug, "\n")
 
     pkSets <- drugs[[drug]]$PK
     parameters <-   as.data.frame(
