@@ -3,8 +3,6 @@ propofol <- function(weight, height, age, sex)
   # Units **************
   # Time: Minutes
   # Volume: Liters
-  #cat("Starting Propofol.R\n")
-
 
   # Schnider
 
@@ -16,7 +14,6 @@ propofol <- function(weight, height, age, sex)
     cl2 = 1.29-0.024*(age-53),
     cl3 = 0.836
   )
-
 
   # Eleveld
   # Pharmacokinetic / pharmacodynamic model for propofol for broad application
@@ -209,7 +206,6 @@ propofol <- function(weight, height, age, sex)
 
   events <- c("default")
   PK <- sapply(events, function(x) list(get0(x)))
-  # print(str(PK))
 
   tPeak <- 1.600 # Anesthesiology 90:1502-1516, 1999
   # typical <- 3
@@ -217,8 +213,6 @@ propofol <- function(weight, height, age, sex)
   # lowerTypical <- 2.5
   # MEAC <- 0
   reference <- "Anesthesiology 1998"
-  #cat("Exiting Propofol.R\n")
-
 
   return(
     list(

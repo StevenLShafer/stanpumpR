@@ -153,7 +153,7 @@ app_ui <- function() {
                 selectInput(
                   inputId = "maximum",
                   label = "Max time (minutes)",
-                  choices = setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
+                  choices = stats::setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
                   selected = 60
                 ),
                 lineTypeSelector(
@@ -198,9 +198,22 @@ app_ui <- function() {
               bslib::accordion_panel(
                 "Email Slide",
                 icon = icon("envelope"),
-                textInput("recipient", NULL, "", placeholder = "Enter email address"),
-                textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
-                actionButton("sendSlide", "Send", class = "btn-primary")
+                if (is.null(config$email_username) || is.null(config$email_password)) {
+                  div(
+                    class = "info-note",
+                    icon("circle-info"),
+                    "Email is not configured. Please ask admin to set email username and password in app configuration."
+                  )
+                } else {
+                  tagList(
+                    textInput("recipient", NULL, "", placeholder = "Enter email address"),
+                    textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3) |>
+                      addInputAttributes(maxlength = MAX_INPUT_TEXT),
+                    checkboxInput("commentSafe", "This comment does not contain PHI", FALSE) |>
+                      htmltools::tagAppendAttributes(class = "micro"),
+                    actionButton("sendSlide", "Send", class = "btn-primary")
+                  )
+                }
               )
             )
           ),
@@ -235,38 +248,46 @@ app_ui <- function() {
               )
             ),
 
-            bslib::card(
-              bslib::card_header(
-                class = "justify-content-between",
-                span(icon("syringe"), "Doses"),
-                actionLink("setTarget", "Suggest Dosing", class = "small")
-              ),
+            div(
+              bslib::card(
+                fill = FALSE,
+                bslib::card_header(icon("clock"), "Time"),
 
-              bslib::layout_columns(
-                selectInput(
-                  "timeMode",
-                  "Time Display",
-                  c("Actual time" = "clock",
-                    "Elapsed minutes" = "relative")
-                ),
-                conditionalPanel(
-                  "input.timeMode == 'clock'",
-                  textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                bslib::layout_columns(
+                  selectizeInput(
+                    "timeMode",
+                    "Time Display",
+                    c("Actual time" = "clock", "Elapsed minutes" = "relative"),
+                    options = list(dropdownParent = "body")
+                  ),
+                  conditionalPanel(
+                    "input.timeMode == 'clock'",
+                    textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                  )
                 )
               ),
-              br(),
-              rhandsontable::rHandsontableOutput("doseTableHTML"),
 
-              bslib::card_footer(
-                div(
-                  class = "d-grid",
-                  style = "grid-template-columns: 1fr auto auto; gap: 0.25rem",
-                  actionButton("dosetable_apply", "Apply Changes", icon = icon("circle-check"), class = "btn-primary my-0 btn-lg"),
-                  actionButton("dosetable_undo", NULL, icon = icon("undo"), title = "Undo", class = "my-0 btn-lg btn-outline-primary"),
-                  actionButton("dosetable_redo", NULL, icon = icon("redo"), title = "Redo", class = "my-0 btn-lg btn-outline-primary")
+              bslib::card(
+                bslib::card_header(
+                  class = "justify-content-between",
+                  span(icon("syringe"), "Doses"),
+                  actionLink("setTarget", "Suggest Dosing", class = "small")
+                ),
+
+                rhandsontable::rHandsontableOutput("doseTableHTML"),
+
+                bslib::card_footer(
+                  div(
+                    class = "d-grid",
+                    style = "grid-template-columns: 1fr auto auto; gap: 0.25rem",
+                    actionButton("dosetable_apply", "Apply Changes", icon = icon("circle-check"), class = "btn-primary my-0 btn-lg"),
+                    actionButton("dosetable_undo", NULL, icon = icon("undo"), title = "Undo", class = "my-0 btn-lg btn-outline-primary"),
+                    actionButton("dosetable_redo", NULL, icon = icon("redo"), title = "Redo", class = "my-0 btn-lg btn-outline-primary")
+                  )
                 )
               )
-            )
+            ) |>
+              bslib::as_fill_carrier()
           ),
 
           bslib::accordion(

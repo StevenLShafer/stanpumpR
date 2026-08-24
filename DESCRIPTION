@@ -39,6 +39,7 @@ Imports:
   shinydashboard,
   shinyjs,
   shinyWidgets,
+  stats,
   tidyr,
   tryCatchLog,
   utils,
@@ -57,65 +58,5 @@ Depends:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-Collate:
-  drugAndEventDefaults.R
-  sendSlide.R
-  CE.R
-  advanceClosedForm0.R
-  advanceClosedForm1.R
-  advanceClosedFormPO_IM_IN.R
-  advanceState.R
-  advanceStatePO.R
-  calculateCe.R
-  clockTimeToDelta.R
-  constants.R
-  convertState.R
-  createHOT.R
-  cube.R
-  deltaToClockTime.R
-  drugs_alfentanil.R
-  drugs_dexmedetomidine.R
-  drugs_etomidate.R
-  drugs_fentanyl.R
-  drugs_hydromorphone.R
-  drugs_ketamine.R
-  drugs_lidocaine.R
-  drugs_methadone.R
-  drugs_midazolam.R
-  drugs_morphine.R
-  drugs_naloxone.R
-  drugs_oliceridine.R
-  drugs_oxycodone.R
-  drugs_oxytocin.R
-  drugs_pethidine.R
-  drugs_propofol.R
-  drugs_remifentanil.R
-  drugs_remimazolam.R
-  drugs_rocuronium.R
-  drugs_sufentanil.R
-  getDrugPK.R
-  hourMinute.R
-  ig_absorption.R
-  lbmJames.R
-  modelInteraction.R
-  processdoseTable.R
-  recoveryCalc.R
-  server-helpers.R
-  setLinetypes.R
-  shiny-utils.R
-  simCpCe.R
-  simulationPlot.R
-  suggest.R
-  tPeakError.R
-  utils.R
-  validateDose.R
-  validateTime.R
-  simulateDrugsWithCovariates.R
-  stanpumpR-package.R
-  zzz.R
-  app_globals.R
-  app_ui.R
-  app_server.R
-  app_run.R
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0

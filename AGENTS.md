@@ -41,12 +41,10 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 
 ## Key Rules
 
-- **`Collate:` order**: `DESCRIPTION` defines file load order under `Collate:`. Every new `.R` file in `R/` MUST be registered there or `R CMD build` fails.
 - **Adding a drug** requires all four (full procedure: `docs/adding-a-drug.md`):
   1. `R/drugs_<name>.R` (covariate model function)
   2. `inst/extdata/drugDefaults_global.csv` (row with colors, units, MEAC)
-  3. `DESCRIPTION` (`Collate:` entry)
-  4. `tests/testthat/test-drugs-<name>.R` (unit test — pin values with `expect_equal_rounded()` from `tests/testthat/helpers.R`)
+  3. `tests/testthat/test-drugs-<name>.R` (unit test — pin values with `expect_equal_rounded()` from `tests/testthat/helpers.R`)
 - **Debug logging**: `outputComments()`, active when `?debug=1` is in the URL.
 - **Deploy**: GitHub Actions — PRs auto-deploy to a test environment; merges to `master` deploy to production (shinyapps.io).
 - **Adding an R package**: add to `DESCRIPTION` first, then `renv::install("pkg")` + `renv::snapshot()`, commit `DESCRIPTION` + `renv.lock` together.
