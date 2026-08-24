@@ -152,8 +152,8 @@ app_ui <- function() {
                 selectInput("normalization", "Normalize to", c("<none>" = "none","Peak plasma", "Peak effect site")),
                 selectInput(
                   inputId = "maximum",
-                  label = "Max time (minutes)",
-                  choices = stats::setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
+                  label = "Max time",
+                  choices = stats::setNames(maxtimes$times, formatMinutes(maxtimes$times)),
                   selected = 60
                 ),
                 lineTypeSelector(
