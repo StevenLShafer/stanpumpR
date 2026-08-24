@@ -248,15 +248,12 @@ app_ui <- function() {
                   selectizeInput(
                     "timeMode",
                     "Time Display",
-                    c("Actual time" = "clock",
-                      "Elapsed minutes" = "relative"),
+                    c("Actual time" = "clock", "Elapsed minutes" = "relative"),
                     options = list(dropdownParent = "body")
-                  ) |>
-                    attachClass("mb-0"),
+                  ),
                   conditionalPanel(
                     "input.timeMode == 'clock'",
-                    textInput("referenceTime", "Procedure start", placeholder = "HH:MM") |>
-                      attachClass("mb-0")
+                    textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
                   )
                 )
               ),
