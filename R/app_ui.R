@@ -1,5 +1,5 @@
 app_ui <- function() {
-  js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(stanpumpR::getDrugDefaultsGlobal()))
+  js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(getDrugDefaultsGlobal()))
   config <- .sprglobals$config
 
   stanpumpr_theme <- bslib::bs_theme(
