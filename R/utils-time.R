@@ -39,7 +39,7 @@ hourMinute <- function(x)
 }
 
 getReferenceTime <- function(time) {
-  time <- gsub("[^[:digit:]:. APM]","",time) # Get rid of strange formatting characters
+  time <- gsub("[^[:digit:]:. APMapm]","",time) # Get rid of strange formatting characters
   time <- lubridate::parse_date_time(time, c("HMSOp","HMOp","HMS","HM"), quiet=TRUE)
   if (is.na(time)) return(NA)
   time <- 60*lubridate::hour(time) + lubridate::minute(time)
