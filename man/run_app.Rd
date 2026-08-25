@@ -8,8 +8,8 @@ run_app(config_file = "config.yml")
 }
 \arguments{
 \item{config_file}{Path to a YAML configuration file, read by
-\code{\link[config:get]{config::get()}}. Any setting it does not specify falls back to the
-package defaults. The file must exist; copy \code{config.yml.sample} to
+\code{\link[config:get]{config::get()}}. Any setting that isn't specified in the config file
+falls back to the package defaults. Copy \code{config.yml.sample} to
 \code{config.yml} for local use.}
 }
 \value{
