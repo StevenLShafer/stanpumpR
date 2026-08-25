@@ -420,7 +420,7 @@ getDrugPK <- function(
       PK = PK,
       tPeak = tPeak,
       pkEvents = events,
-      reference = "Not Available",
+      reference = if (is.null(X$reference)) "Not Available" else X$reference,
       weight = weight,
       height = height,
       age = age,
