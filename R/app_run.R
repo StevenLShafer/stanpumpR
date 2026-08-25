@@ -1,15 +1,23 @@
 #' Launch Shiny App
 #'
 #' @param config_file Path to a YAML configuration file, read by
-#'   [config::get()]. Any setting it does not specify falls back to the
-#'   package defaults. The file must exist; copy `config.yml.sample` to
+#'   [config::get()]. Any setting that isn't specified in the config file
+#'   falls back to the package defaults. Copy `config.yml.sample` to
 #'   `config.yml` for local use.
 #' @return A Shiny app object, as returned by [shiny::shinyApp()].
 #' @export
 run_app <- function(config_file = "config.yml") {
   options(warn = 1)
 
-  config <- config::get(file = config_file)
+  config <- tryCatch({
+    config::get(file = config_file)
+  }, error = function(e) {
+    if (!grepl("not found", e$message)) {
+      stop(e)
+    }
+    list()
+  })
+
   config <- c(config, DEFAULT_CONFIG[!names(DEFAULT_CONFIG) %in% names(config)])
   .sprglobals$config <- config
 
