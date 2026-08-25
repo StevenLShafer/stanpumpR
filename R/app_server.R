@@ -195,6 +195,8 @@ app_server <- function(input, output, session) {
       ET <- as.data.frame(state$values$ET)
       if (ncol(ET) == 0) {
         ET <- eventTableInit
+      } else {
+        ET <- ET[, c("Time", "Event")]
       }
       eventTable(ET)
       outputComments("eventTable:")
@@ -1088,8 +1090,7 @@ app_server <- function(input, output, session) {
         ET <- eventTable()
         ET <- data.frame(
           Time  = c(ET$Time, clickTime),
-          Event = c(ET$Event, clickEvent),
-          Fill = c(ET$Fill, eventDefaults()$Color[clickEvent == eventDefaults()$Event])
+          Event = c(ET$Event, clickEvent)
         )
         ET <- ET[order(ET$Time,ET$Event),]
         eventTable(ET)
@@ -1205,8 +1206,6 @@ app_server <- function(input, output, session) {
         removeModal()
         ET <- rhandsontable::hot_to_r(input$editEventsTableHTML)
         ET <- ET[!ET$Delete,c("Time","Event")]
-        CROWS <- match(ET$Event, eventDefaults()$Event)
-        ET$Fill <- eventDefaults()$Color[CROWS]
         ET <- ET[order(ET$Time,ET$Event),]
         eventTable(ET)
       }, name = "input$editEventsOK observer")

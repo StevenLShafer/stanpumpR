@@ -13,7 +13,7 @@ test_that("simulateDrugsWithCovariates passes smoke tests and can generate a plo
     Units = c("mcg", "mcg/kg/min", "mcg/kg/min", "mg", "mcg/kg/min", "mcg/kg/min")
   )
 
-  eventTable <- data.frame(Time = double(), Event = character(), Fill = character())
+  eventTable <- data.frame(Time = double(), Event = character())
 
   output <- simulateDrugsWithCovariates(doseTable, eventTable, weight, height, age, sex, maximum, plotRecovery)
 
