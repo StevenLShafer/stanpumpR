@@ -153,7 +153,8 @@ All files are flat in `R/`.
 - `app_globals.R` — global variables used by the app: init tables, bookmark exclusion list,
   `outputComments()` logger.
 - `constants.R` — constants used in the app.
-- `zzz.R` — defines `.sprglobals`, the package-level environment that can hold dy.
+- `zzz.R` — defines `.sprglobals`, an environment that can hold any global variables that
+  need to be shared across the UI and Server portions of the Shiny app.
 - `stanpumpR-package.R` — roxygen package-level docs and `@importFrom` declarations.
 
 **Reactive glue — server helpers & UI widgets**
