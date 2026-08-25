@@ -17,7 +17,7 @@ test_that("returns the correct calculations for male", {
       )
     ),
     tPeak = 1.6,
-    reference = "Anesthesiology 1998"
+    reference = "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/"
   )
 
   expect_equal_rounded(actual, expected)
@@ -42,7 +42,7 @@ test_that("returns the correct calculations for female", {
       )
     ),
     tPeak = 1.6,
-    reference = "Anesthesiology 1998"
+    reference = "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/"
   )
 
   expect_equal_rounded(actual, expected)

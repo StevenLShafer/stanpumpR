@@ -30,12 +30,12 @@ rocuronium <- function(weight, height, age, sex)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  tPeak = 2.2 #  British Journal of Anaesthesia 99 (5): 679-85 (2007)
+  tPeak = 2.2 # tPeak per Cortinez LI et al., Br J Anaesth 2007;99(5):679-685. https://pubmed.ncbi.nlm.nih.gov/17681967/
   typical <- 1.5
   upperTypical <- 2.2
   lowerTypical <- 1
   MEAC <- 0
-  reference <- "/*  Plaud,  CPT, in press */"
+  reference <- "Plaud B et al., Clin Pharmacol Ther 1995;58(2):185-191. https://pubmed.ncbi.nlm.nih.gov/7648768/"
 
 
   return(

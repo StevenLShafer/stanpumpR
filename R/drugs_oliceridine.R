@@ -18,7 +18,7 @@ oliceridine <- function(weight, height, age, sex)
   upperTypical <- NA
   lowerTypical <- NA
   MEAC <- NA
-  reference <- "Dahan 2020"
+  reference <- "Dahan A et al., Anesthesiology 2020;133(3):559-568. https://pubmed.ncbi.nlm.nih.gov/32788558/"
 
   tPeak <- 0.25*60
 

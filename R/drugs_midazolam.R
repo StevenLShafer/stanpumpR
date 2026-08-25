@@ -15,7 +15,7 @@ midazolam <- function(weight, height, age, sex)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
   
-  reference <- "Clin Pharmacol Ther. 1995 Jul;58(1):35-43, and Barr/Zomorodi 2001"
+  reference <- "Mould DR et al., Clin Pharmacol Ther 1995;58(1):35-43. https://pubmed.ncbi.nlm.nih.gov/7628181/"
   typical <- .100 
   upperTypical <- .040
   lowerTypical <- .120

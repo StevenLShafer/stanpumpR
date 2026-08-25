@@ -21,7 +21,7 @@ test_that("returns the correct calculations", {
     typical = 0.3,
     upperTypical = 0.2,
     lowerTypical = 0.5,
-    reference = "Fit of Sven Bjorkman data"
+    reference = "Bjorkman S, J Pharmacokinet Pharmacodyn 2003;30(4):285-307. https://pubmed.ncbi.nlm.nih.gov/14650375/"
   )
   expect_equal_rounded(actual, expected)
 })

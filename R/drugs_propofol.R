@@ -207,12 +207,12 @@ propofol <- function(weight, height, age, sex)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  tPeak <- 1.600 # Anesthesiology 90:1502-1516, 1999
+  tPeak <- 1.600 # tPeak per Schnider TW et al., Anesthesiology 1999;90(6):1502-1516. https://pubmed.ncbi.nlm.nih.gov/10360845/
   # typical <- 3
   # upperTypical <- 4.0
   # lowerTypical <- 2.5
   # MEAC <- 0
-  reference <- "Anesthesiology 1998"
+  reference <- "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/"
 
   return(
     list(

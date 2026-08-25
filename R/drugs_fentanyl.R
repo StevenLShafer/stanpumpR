@@ -27,7 +27,7 @@ fentanyl <- function(weight, height, age, sex)
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <-  "JPET 1987,240:159-166"
+  reference <- "Scott JC, Stanski DR. J Pharmacol Exp Ther 1987;240(1):159-166. https://pubmed.ncbi.nlm.nih.gov/3100765/"
 
   return(
     list(

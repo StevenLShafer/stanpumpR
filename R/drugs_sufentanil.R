@@ -21,7 +21,7 @@ sufentanil <- function(weight, height, age, sex)
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Anesthesiology 1995 83:1194-1204"
+  reference <- "Gepts E et al., Anesthesiology 1995;83(6):1194-1204. https://pubmed.ncbi.nlm.nih.gov/8533912/"
   
   return(
     list(
