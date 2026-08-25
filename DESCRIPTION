@@ -1,5 +1,5 @@
 Package: stanpumpR
-Title: stanpumpR, a PK/PD simulation program
+Title: Pharmacokinetic and Pharmacodynamic Simulation
 Version: 0.0.1.9002
 Authors@R:
     c(person(given = "Steven",
@@ -9,7 +9,13 @@ Authors@R:
            comment = c(ORCID="0000-0002-0289-7793")),
       person("Dean", "Attali", email = "daattali@gmail.com", role = "aut",
              comment = c(ORCID="0000-0002-5645-3493")))
-Description: stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
+Description: Open-source software for pharmacokinetic and pharmacodynamic
+    simulation, intended to make pharmacokinetics accessible to facilitate
+    perioperative patient care, teaching, and research. Calculates and plots
+    predicted plasma and effect-site concentrations for intravenous and
+    extravascular anesthetics using analytical closed-form three-compartment
+    solutions. May be freely downloaded and used without restriction for
+    non-commercial purposes.
 License: MIT + file LICENSE
 Imports:
     bslib,
