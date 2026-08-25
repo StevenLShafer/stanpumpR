@@ -1,3 +1,25 @@
+## tests should possibly be added for invalid times
+
+## tests for validateTime
+
+test_that("'MM' gets parsed correctly", {
+    expect_equal(validateTime("80"),"80")
+})
+
+test_that("'HH:MM' gets parsed correctly", {
+    expect_equal(validateTime("08:44"),"08:44")
+})
+
+test_that("'HH:MM' gets parsed correctly", {
+    expect_equal(validateTime("08:80"),"09:20")
+})
+
+test_that("A single period returns 0", {
+    expect_equal(validateTime("."), "0")
+})
+
+## tests for validateDose
+
 test_that("plain numeric strings pass through unchanged", {
   expect_equal(validateDose("5"), "5")
   expect_equal(validateDose("3.14"), "3.14")

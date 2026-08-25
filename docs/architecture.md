@@ -87,7 +87,7 @@ double-click edits a drug.
    deleting a dose from the resulting modal — which bypasses the draft entirely and applies
    immediately, with no separate confirm step.
 6. **`doseTableClean()`** is what the rest of the pipeline actually depends on. Whenever
-   `doseTable()` changes, this reactive re-derives a cleaned copy via `cleanDT()` (coerce column
+   `doseTable()` changes, this reactive re-derives a cleaned copy via `cleanDoseTable()` (coerce column
    types, drop incomplete rows, convert clock times to elapsed minutes).
 
 ## The computational core
@@ -103,7 +103,8 @@ time point as a sum of exponentials.
    `tPeak`, `MEAC`.
 2. Volumes & clearances → micro rate constants `k10, k12, k13, k21, k31`.
 3. `cube()` solves the characteristic cubic → eigenvalues `lambda_1, lambda_2, lambda_3`.
-4. `tPeakError()` + `optimize()` back-solve the effect-site rate `ke0` from time-to-peak-effect.
+4. `tPeakError()` + `CE()` + `optimize()` back-solve the effect-site rate `ke0` from
+   time-to-peak-effect.
 5. Precompute per-route (bolus / infusion / PO / IM / IN) exponential coefficients `p_coef_*`,
    `e_coef_*`.
 
@@ -126,7 +127,7 @@ loops drugs, calls `getDrugPK()` → `simCpCe()`, and returns per-drug results. 
 vignettes and tests drive.
 
 **Pharmacodynamics.** `modelInteraction()` computes a propofol × opioid response surface for the
-optional interaction facet (`modelInteraction.R`, `CE.R`, `calculateCe.R`).
+optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
 
 **Covariate helpers.** `lbmJames()` computes lean body mass; `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
@@ -152,14 +153,19 @@ All files are flat in `R/`.
 - `app_globals.R` — global variables used by the app: init tables, bookmark exclusion list,
   `outputComments()` logger.
 - `constants.R` — constants used in the app.
+- `zzz.R` — defines `.sprglobals`, the package-level environment that can hold dy.
+- `stanpumpR-package.R` — roxygen package-level docs and `@importFrom` declarations.
 
 **Reactive glue — server helpers & UI widgets**
-- `server-helpers.R` — `recalculatePK()`, `cleanDT()`, `checkNumericCovariates()`, reactive
-  triggers, intro modal.
-- `shiny-utils.R` — UI builders (`inputWithChoices`, `addHotHooks`, inline-input helpers).
+- `drug-pipeline.R` — `recalculatePK()` (step 03) and `processdoseTable()` (step 04):
+  per-drug diff-and-recompute drivers behind the `drugs()` reactive.
+- `server-helpers.R` — functions used by the Shiny server that are not generalized.
+- `utils-shiny-ui.R` — generic UI builders.
+- `utils-shiny-server.R` — generic server functions.
 - `createHOT.R` — builds the `rhandsontable` dose grid from the current table + drug colors.
-- `processdoseTable.R` — per-drug diff-and-simulate driver (pipeline step 04).
-- `validateDose.R`, `validateTime.R` — input guards for dose amounts and clock/elapsed times.
+- `input-tables.R` — **table-level** validation and cleaning for the dose / event / target grids.
+- `validate-input.R` — **cell-level** guards: `validateDose()`, `validateTime()`. One value in,
+  a clean string out, never errors.
 
 **PK/PD engine — the math core**
 - `getDrugPK.R` — covariates → rate constants, eigenvalues, per-route coefficients.
@@ -167,9 +173,10 @@ All files are flat in `R/`.
 - `simCpCe.R` — single-drug simulation: units → route → solver dispatch.
 - `advanceClosedForm0.R` / `advanceClosedForm1.R` / `advanceClosedFormPO_IM_IN.R` — the three
   closed-form solvers (IV, event-varying, extravascular).
-- `advanceState.R`, `advanceStatePO.R`, `convertState.R` — carry compartment state across dose &
-  event boundaries.
-- `CE.R`, `calculateCe.R`, `tPeakError.R` — effect-site concentration and `ke0` fitting.
+- `advanceState.R` (`advanceState()`, `advanceStatePO()`), `convertState.R` — carry compartment
+  state across dose & event boundaries.
+- `calculateCe.R` — effect-site concentration from a plasma curve. The `ke0` fit itself
+  (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
   thresholds, body-size scaling.
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
@@ -184,9 +191,9 @@ All files are flat in `R/`.
   `emayili`.
 
 **Util — time & misc**
-- `clockTimeToDelta.R`, `deltaToClockTime.R`, `hourMinute.R` — convert between wall-clock
-  procedure times and elapsed minutes.
-- `utils.R`, `drugAndEventDefaults.R` — small shared helpers and the memoised defaults loaders.
+- `utils-time.R` — several time-related utility functions.
+- `utils.R` — generic helpers only (functions that don't know anything about doses/drugs/etc).
+- `drugAndEventDefaults.R` — the memoised drug/event defaults loaders.
 
 ## App features
 
@@ -206,8 +213,8 @@ All files are flat in `R/`.
   merged over `DEFAULT_CONFIG` at launch.
 - **Reproducibility** (`renv.lock`, `DESCRIPTION`) — `renv.lock` pins exact package versions so
   production matches local; deps declared in `DESCRIPTION`.
-- **Tests / CI** (`tests/testthat/`, `.github/`) — ~40 test files (one per drug plus PK,
-  plotting, and helper suites); R-CMD-check and shinyapps.io deploy run via GitHub Actions.
+- **Tests / CI** (`tests/testthat/`, `.github/`) — one test file per drug and per R file;
+  R-CMD-check and shinyapps.io deploy run via GitHub Actions.
 
 ## Known issue: the per-drug cache doesn't persist
 

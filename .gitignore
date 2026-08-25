@@ -4,6 +4,7 @@ config.yml
 /ignore
 /Slides
 /rsconnect
+.claude/
 
 
 # History files
