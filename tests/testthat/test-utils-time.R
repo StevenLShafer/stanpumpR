@@ -1,32 +1,31 @@
-test_that("clockTimeToDelta: valid delta times are returned", {
+test_that("clockTimeToDelta tests", {
   expect_equal(clockTimeToDelta("08:00", c("7", "09:00", "10:15", "06:00")), c(7,60,135,1320))
-})
-
-test_that("clockTimeToDelta: valid delta times are returned", {
   expect_equal(clockTimeToDelta("none", c("7", "09:00"," 10:15", "06:00")), c(7,540,615,360))
-})
-
-test_that("clockTimeToDelta: valid delta times are returned", {
   expect_equal(clockTimeToDelta("none", c("7", "360")), c(7,360))
+  expect_equal(clockTimeToDelta("08:00", "07:59"), MINS_PER_DAY - 1)
+  expect_equal(clockTimeToDelta("23:45", "00:15"), 30)
+  expect_equal(clockTimeToDelta("08:00", "08:00"), 0)
 })
 
-test_that("deltaToClockTime: valid clock times are returned", {
+test_that("deltaToClockTime tests", {
   expect_equal(deltaToClockTime("08:00", c(7,60,135,1320)), c("08:07", "09:00", "10:15", "06:00"))
-})
-
-test_that("deltaToClockTime: valid clock times are returned", {
   expect_equal(deltaToClockTime("none", c(7,540,615,360)), c(7,540,615,360))
+  expect_equal(deltaToClockTime("08:00", -30), "07:30")
+  expect_equal(deltaToClockTime("00:10", -30), "23:40")
+  expect_equal(deltaToClockTime("22:00", 180), "01:00")
+  expect_equal(deltaToClockTime("01:23", MINS_PER_DAY), "01:23")
+  expect_equal(deltaToClockTime("none", c("15", "930")), c(15, 930))
 })
 
-test_that("hourMinute: HH:MM gets parsed correctly", {
-  expect_equal(hourMinute("12:34"),754)
-})
-
-test_that("hourMinute: HHMM gets parsed correctly", {
-  expect_equal(hourMinute("1234"),754)
-})
-
-test_that("hourMinute: AH:MM gives NA", {
+test_that("hourMinute tests", {
+  expect_equal(hourMinute("12:34"), 754)
+  expect_equal(hourMinute("1234"), 754)
+  expect_equal(hourMinute("00:00"), 0)
+  expect_equal(hourMinute("1:0"), 60)
+  expect_equal(hourMinute("8:30"), 510)
+  expect_equal(hourMinute("12:3"), 723)
+  expect_equal(hourMinute("23:59"), MINS_PER_DAY - 1)
+  expect_equal(hourMinute("24:04"), 4)
   expect_true(is.na(hourMinute("A2:34")))
 })
 
@@ -53,6 +52,8 @@ test_that("getReferenceTime: 'HH:MM PM' gets parsed correctly", {
 
 test_that("getReferenceTime: 'HH:MM' gets parsed correctly", {
   expect_equal(getReferenceTime("08:44"),"08:30")
+  expect_equal(getReferenceTime("08:14"),"08:00")
+  expect_equal(getReferenceTime("08:15"),"08:15")
 })
 
 test_that("getReferenceTime: noon and midnight land on the right side of the clock", {

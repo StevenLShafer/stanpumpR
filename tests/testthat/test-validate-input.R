@@ -1,24 +1,53 @@
-## tests should possibly be added for invalid times
-
-## tests for validateTime
-
-test_that("'MM' gets parsed correctly", {
-    expect_equal(validateTime("80"),"80")
+test_that("validateTime: 'MM' gets parsed correctly", {
+  expect_equal(validateTime("80"),"80")
+  expect_equal(validateTime(80),"80")
+  expect_equal(validateTime(6.7), "6.7")
+  expect_equal(validateTime("-80"),"80")
+  expect_equal(validateTime("8;30"),"830")
+  expect_equal(validateTime("8-30"),"830")
+  expect_equal(validateTime("8 30"),"830")
 })
 
-test_that("'HH:MM' gets parsed correctly", {
-    expect_equal(validateTime("08:44"),"08:44")
+test_that("validateTime: 'HH:MM' gets parsed correctly", {
+  expect_equal(validateTime("08:44"),"08:44")
+  expect_equal(validateTime("08:80"),"09:20")
+  expect_equal(validateTime("99:99"),"100:39")
+  expect_equal(validateTime("\t 08:44  \n"),"08:44")
+  expect_equal(validateTime("-08:44"),"08:44")
+  expect_equal(validateTime("+08:44"),"08:44")
+  expect_equal(validateTime("08:44 pm"),"08:44")
+  expect_equal(validateTime("8:3"),"08:03")
+  expect_equal(validateTime("0008:0003"),"08:03")
+  expect_equal(validateTime("'08:44'"),"08:44")
+  expect_equal(validateTime("00:2345"),"39:05")   # 2345 is minutes
+  expect_equal(validateTime("1:2:3:4"),"04:54")   # 234 is minutes
 })
 
-test_that("'HH:MM' gets parsed correctly", {
-    expect_equal(validateTime("08:80"),"09:20")
+test_that("validateTime: bad inputs return 0", {
+  expect_equal(validateTime("."), "0")
+  expect_equal(validateTime("abcde"), "0")
+  expect_equal(validateTime(" "), "0")
+  expect_equal(validateTime("!@#$%"), "0")
+  expect_equal(validateTime(".."), "0")
+  expect_equal(validateTime(".:"), "0")
+  expect_equal(validateTime(":."), "0")
+  expect_equal(validateTime(NA), "0")
+  expect_equal(validateTime(NaN), "0")
+  expect_equal(validateTime(NULL), "0")
+  expect_equal(validateTime(TRUE), "0")
 })
 
-test_that("A single period returns 0", {
-    expect_equal(validateTime("."), "0")
+test_that("validateTime: colon for empty hours/minutes", {
+  expect_equal(validateTime(":"),"00:00")
+  expect_equal(validateTime("::"),"00:00")
+  expect_equal(validateTime(":30"),"00:30")
+  expect_equal(validateTime("30:"),"30:00")
 })
 
-## tests for validateDose
+test_that("validateTime: errors on vectors", {
+  expect_error(validateTime(c("1", "2")))
+  expect_error(validateTime(c(1, 2)))
+})
 
 test_that("plain numeric strings pass through unchanged", {
   expect_equal(validateDose("5"), "5")
