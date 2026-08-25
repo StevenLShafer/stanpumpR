@@ -156,6 +156,12 @@ inputWithChoices <- function(tag, choices, inputId = NULL, selected = NULL) {
 }
 
 #' Create a button group for selecting a line type using SVG images instead of text
+#'
+#' @param inputId The input slot that will be used to access the value.
+#' @param label Display label for the control.
+#' @param selected The initially selected line type value.
+#' @return A Shiny input tag.
+#' @noRd
 lineTypeSelector <- function(inputId, label, selected) {
 
   css <- '
@@ -214,6 +220,10 @@ lineTypeSelector <- function(inputId, label, selected) {
 
 #' Create an input that has its label on its left, and the input takes
 #' the rest of the space
+#'
+#' @param tag A Shiny input tag.
+#' @return The input tag, restyled with an inline label.
+#' @noRd
 inputWithInlineLabel <- function(tag) {
   css <- "
     .input-inline-label {

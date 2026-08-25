@@ -1,5 +1,10 @@
 #' Launch Shiny App
 #'
+#' @param config_file Path to a YAML configuration file, read by
+#'   [config::get()]. Any setting it does not specify falls back to the
+#'   package defaults. The file must exist; copy `config.yml.sample` to
+#'   `config.yml` for local use.
+#' @return A Shiny app object, as returned by [shiny::shinyApp()].
 #' @export
 run_app <- function(config_file = "config.yml") {
   options(warn = 1)
