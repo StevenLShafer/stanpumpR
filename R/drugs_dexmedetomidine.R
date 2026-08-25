@@ -34,7 +34,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    events <- c("default")
+    events <- c(PK_EVENT_DEFAULT)
   } else {
     v3 <- 1
     cl3 <- 0
@@ -163,7 +163,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    events <- c("default", "CPBStart","CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd")
+    events <- c(PK_EVENT_DEFAULT, "CPBStart","CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd")
 
     tPeak <- 2 # Just a guess
     typical <- 10 #Clin Pharmacol Ther. 1995 Jul;58(1):35-43.

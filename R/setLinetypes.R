@@ -4,7 +4,7 @@ setLinetypes.lineType <- function(plasmaLinetype, effectsiteLinetype) {
   list(plasmaLinetype = plasmaLinetype, effectsiteLinetype = effectsiteLinetype)
 }
 
-setLinetypes <- function(normalization="none",dplasmaLinetype,deffectsiteLinetype)
+setLinetypes <- function(normalization = NORMALIZE_NONE,dplasmaLinetype,deffectsiteLinetype)
 {
   result <- switch(
     normalization,

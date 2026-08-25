@@ -19,7 +19,7 @@ remifentanil <- function(weight, height, age, sex)
   if (BMI < 30) # NIH Obesity cutoff
   {
   # Eleveld
-  if (sex == "male")
+  if (sex == SEX_MALE)
   {
     M1F2 <- 1
   } else {
@@ -99,7 +99,7 @@ remifentanil <- function(weight, height, age, sex)
 
   # Kim Model
   BMI <-  weight / (height / 100)^2
-  if (sex == "male")
+  if (sex == SEX_MALE)
   {
     FFM <- 9.27 * weight / (6.68  + 0.216 * weight)
   } else {
@@ -124,7 +124,7 @@ default <- list(
     cl3 = cl3
   )
 
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   infusate_concentration <- 50

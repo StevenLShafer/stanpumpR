@@ -13,7 +13,7 @@ alfentanil <- function(weight, height, age, sex)
     cl3 = 0.2469389
   )
 
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   tPeak <- 1.4		# see t_peaks.xls

@@ -12,7 +12,7 @@ midazolam <- function(weight, height, age, sex)
   cl3 = 0.8321115
   )
   
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
   
   reference <- "Clin Pharmacol Ther. 1995 Jul;58(1):35-43, and Barr/Zomorodi 2001"

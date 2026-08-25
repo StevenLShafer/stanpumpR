@@ -12,8 +12,8 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # Fill in gaps using exponentially decreasing amounts
   gapStart <- timeLine[1:length(timeLine)-1]
   gapEnd   <- timeLine[2:length(timeLine)]
-  start <- min(0.693/pkSets$default$lambda_4 / 4, 1)
-  newTimes <- c(exp(log(start)+0:40 * log(1440/start)/41))
+  start <- min(0.693/pkSets[[PK_EVENT_DEFAULT]]$lambda_4 / 4, 1)
+  newTimes <- c(exp(log(start)+0:40 * log(MINS_PER_DAY/start)/41))
   for (i in 1:length(gapEnd))
   {
     distance <- gapEnd[i] - gapStart[i]
