@@ -82,7 +82,7 @@ test_that("it returns the same value", {
     ),
     tPeak = 1.6,
     pkEvents = "default",
-    reference = "Not Available",
+    reference = "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/",
     weight = 70,
     height = 170,
     age = 50,
@@ -100,6 +100,33 @@ test_that("it returns the same value", {
   )
 
   expect_equal_rounded(actual, expected)
+})
+
+test_that("it falls back to 'Not Available' when a drug function omits a reference", {
+  expect_equal(getDrugPK("propofol", 70, 170, 50, "male")$reference, "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/")
+
+  realPropofol <- propofol
+  local_mocked_bindings(
+    propofol = function(...) {
+      X <- realPropofol(...)
+      X$reference <- NULL
+      X
+    }
+  )
+
+  expect_equal(getDrugPK("propofol", 70, 170, 50, "male")$reference, "Not Available")
+})
+
+test_that("every drug in the library supplies a reference", {
+  references <- vapply(
+    getDrugDefaultsGlobal()$Drug,
+    function(drug) getDrugPK(drug, 70, 170, 50, "male")$reference,
+    character(1)
+  )
+
+  missing <- names(references)[!nzchar(references) | references == "Not Available"]
+
+  expect_equal(missing, character(0))
 })
 
 test_that("getDrugPK accepts both documented sex values", {
