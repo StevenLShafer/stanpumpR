@@ -44,3 +44,30 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
   }
   drugs
 }
+
+recalculatePK <- function(drugs, drugDefaults, doseTable,
+                          age, weight, height, sex) {
+  #  for (idx in seq(nrow(drugDefaults))) {
+  #    drug <- drugDefaults$Drug[idx]
+  for (drug in unique(doseTable$Drug)) {
+    idx <- which(drugDefaults$Drug==drug)
+    drugs[[drug]]$Color <- drugDefaults$Color[idx]
+    drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
+    outputComments("Getting PK for", drug)
+    drugs[[drug]] <- utils::modifyList(
+      drugs[[drug]],
+      getDrugPK(
+        drug = drug,
+        weight = weight,
+        height = height,
+        age = age,
+        sex = sex,
+        drugDefaults = drugDefaults[idx, ]
+      )
+    )
+    drugs[[drug]]$DT <- NULL # Remove old dose table, if any
+    drugs[[drug]]$equiSpace <- NULL # Ditto
+  }
+
+  drugs
+}

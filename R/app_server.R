@@ -374,7 +374,7 @@ app_server <- function(input, output, session) {
     profileCode({
       outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
       validateDoseTableInput(doseTable(), drugDefaults())
-      DT <- cleanDT(doseTable())
+      DT <- cleanDoseTable(doseTable())
       DT$Time <- clockTimeToDelta(referenceTime(), DT$Time)
       DT <- DT[
         DT$Drug  != "" &
