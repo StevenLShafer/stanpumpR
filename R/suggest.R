@@ -21,7 +21,7 @@ suggest <- function(
   outputComments("structure of targetTable")
   outputComments(targetTable)
   # # Remove blank values of targetTable
-  if (referenceTime == "none")
+  if (referenceTime == REFERENCE_TIME_NONE)
   {
     targetTable$Time <- as.numeric(targetTable$Time)
     endTime <- as.numeric(endTime)

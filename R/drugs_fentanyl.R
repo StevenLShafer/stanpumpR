@@ -19,7 +19,7 @@ fentanyl <- function(weight, height, age, sex)
   cl3 = 1.55  * (weight/70) ^ 0.75
   )
 
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   tPeak <- 3.694		# from Shafer/Varvel, t_peaks.xls

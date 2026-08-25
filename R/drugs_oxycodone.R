@@ -57,7 +57,7 @@ oxycodone <- function(weight, height, age, sex)
     tlag_PO = tlag_PO
   )
 
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   return(

@@ -33,7 +33,7 @@ ketamine <- function(weight, height, age, sex)
     cl3 = cl3
   )
   
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
   
   return(

@@ -5,6 +5,10 @@ UNIT_LB <- 0.453592
 UNIT_CM <- 1
 UNIT_INCH <- 2.54
 
+SEX_MALE <- "male"
+SEX_FEMALE <- "female"
+SEX_VALUES <- c(SEX_MALE, SEX_FEMALE)
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 MIN_WEIGHT <- 0.1
@@ -19,7 +23,7 @@ defaultWeight <- 60
 defaultWeightUnit <- UNIT_KG
 defaultHeight <- 66
 defaultHeightUnit <- UNIT_INCH
-defaultSex <- "female"
+defaultSex <- SEX_FEMALE
 
 # Resolution for linear interpolation
 RESOLUTION <- 100
@@ -65,6 +69,10 @@ maxtimes <- data.frame(
             MINS_PER_DAY * c(1, 2, 4), MINS_PER_WEEK * c(1, 2, 4),
             MINS_PER_YEAR / 12)
 )
+
+REFERENCE_TIME_NONE <- "none"
+NORMALIZE_NONE <- "none"
+PK_EVENT_DEFAULT <- "default"
 
 PLOT_ID_EVENTS      <- "Events"
 PLOT_ID_MEAC        <- "MEAC"

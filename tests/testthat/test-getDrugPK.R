@@ -101,3 +101,25 @@ test_that("it returns the same value", {
 
   expect_equal_rounded(actual, expected)
 })
+
+test_that("getDrugPK accepts both documented sex values", {
+  dd <- getDrugDefaults("propofol")
+  expect_no_error(getDrugPK("propofol", 70, 170, 50, "male", dd))
+  expect_no_error(getDrugPK("propofol", 70, 170, 50, "female", dd))
+})
+
+test_that("getDrugPK rejects an unrecognized sex instead of silently guessing", {
+  dd <- getDrugDefaults("propofol")
+  expect_error(getDrugPK("propofol", 70, 170, 50, "F", dd), "Invalid sex")
+  expect_error(getDrugPK("propofol", 70, 170, 50, "Female", dd), "Invalid sex")
+  expect_error(getDrugPK("propofol", 70, 170, 50, "", dd), "Invalid sex")
+  expect_error(getDrugPK("propofol", 70, 170, 50, NA, dd), "Invalid sex")
+  expect_error(getDrugPK("propofol", 70, 170, 50, c("male", "female"), dd), "Invalid sex")
+})
+
+test_that("male and female produce different parameters", {
+  dd <- getDrugDefaults("propofol")
+  m <- getDrugPK("propofol", 70, 170, 50, SEX_MALE, dd)$PK[[PK_EVENT_DEFAULT]]
+  f <- getDrugPK("propofol", 70, 170, 50, SEX_FEMALE, dd)$PK[[PK_EVENT_DEFAULT]]
+  expect_false(isTRUE(all.equal(m$cl1, f$cl1)))
+})

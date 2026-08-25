@@ -78,7 +78,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       # Process Events
       defaultEvent <- data.frame(
         Time = 0,
-        Event = "default"
+        Event = PK_EVENT_DEFAULT
       )
       if (events$Time[1] > 0)
         events <- rbind(defaultEvent,events)

@@ -31,3 +31,17 @@ test_that("simulateDrugsWithCovariates passes smoke tests and can generate a plo
     expect_no_error(print(g))
   }
 })
+
+test_that("simulateDrugsWithCovariates rejects an unrecognized sex", {
+  dose <- data.frame(Drug = "propofol", Time = 0, Dose = 100, Units = "mg")
+  events <- data.frame(Time = double(), Event = character())
+  expect_error(
+    simulateDrugsWithCovariates(dose, events, 70, 170, 50, "F", 60, FALSE),
+    "Invalid sex"
+  )
+  # also caught when the dose table is empty, before the per-drug loop
+  expect_error(
+    simulateDrugsWithCovariates(dose[0, ], events, 70, 170, 50, "F", 60, FALSE),
+    "Invalid sex"
+  )
+})

@@ -9,7 +9,7 @@ simulationPlot <- function(
   xAxisLabel = "Time (Minutes)",
   plasmaLinetype = "solid",
   effectsiteLinetype = "dashed",
-  normalization = c("none"),
+  normalization = c(NORMALIZE_NONE),
   plotMEAC = FALSE,
   plotInteraction = FALSE,
   plotCost = FALSE,

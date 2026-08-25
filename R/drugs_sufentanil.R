@@ -13,7 +13,7 @@ sufentanil <- function(weight, height, age, sex)
     cl3 = 0.32747
   )
   
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
   
   tPeak <- 5.8		# from Shafer/Varvel, t_peaks.xls

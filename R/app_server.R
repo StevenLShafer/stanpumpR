@@ -142,7 +142,7 @@ app_server <- function(input, output, session) {
 
   referenceTime <- reactive({
     if (input$timeMode == "relative") {
-      "none"
+      REFERENCE_TIME_NONE
     } else {
       input$referenceTime
     }
@@ -323,7 +323,7 @@ app_server <- function(input, output, session) {
   })
   sex <- reactive({
     req(input$sex)
-    if (length(input$sex) != 1L || !input$sex %in% c("male", "female")) {
+    if (length(input$sex) != 1L || !input$sex %in% SEX_VALUES) {
       stop(safeError("Invalid sex value."))
     }
     input$sex
@@ -481,7 +481,7 @@ app_server <- function(input, output, session) {
 
       xBreaks <- 0:(plotMaximum()/steps()) * steps()
       xLabels <- deltaToClockTime(referenceTime(), xBreaks)
-      if (referenceTime() == "none") {
+      if (referenceTime() == REFERENCE_TIME_NONE) {
         xAxisLabel <- "Time (Minutes)"
       } else {
         xAxisLabel <- "Time"
@@ -675,7 +675,7 @@ app_server <- function(input, output, session) {
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
     time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
-    if (referenceTime() == "none")
+    if (referenceTime() == REFERENCE_TIME_NONE)
     {
       time = paste(time, "minutes")
     } else {
@@ -748,7 +748,7 @@ app_server <- function(input, output, session) {
     j <- which.min(abs(e$x - drugs()[[firstDrug]]$equiSpace$Time))
     time <- round(drugs()[[firstDrug]]$equiSpace$Time[j], 1)
 
-    if (referenceTime() == "none")
+    if (referenceTime() == REFERENCE_TIME_NONE)
     {
       time <- as.character(time)
     } else {
@@ -1074,7 +1074,7 @@ app_server <- function(input, output, session) {
     {
       profileCode({
         clickTime <- validateTime(input$clickTimeEvent)
-        if (referenceTime() == "none")
+        if (referenceTime() == REFERENCE_TIME_NONE)
         {
           clickTime <- as.numeric(clickTime)
         } else {
@@ -1487,7 +1487,7 @@ app_server <- function(input, output, session) {
       modalDialog(
         title = "Drug Thresholds",
         p("Set the threshold concentration for each drug."),
-        if (input$normalization == "none")
+        if (input$normalization == NORMALIZE_NONE)
           checkboxInput("showThresholdModal", "Show time until threshold", value = input$showThreshold),
         shinycssloaders::withSpinner(rhandsontable::rHandsontableOutput("editThresholdsTable", height = 350)),
         br(),

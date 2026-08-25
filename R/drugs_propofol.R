@@ -130,7 +130,7 @@ propofol <- function(weight, height, age, sex)
 
   # Al-sallami FFM
   BMI <-  weight / (height / 100)^2
-  if (sex == "male")
+  if (sex == SEX_MALE)
   {
     FFM <- (0.88 + ((1 - 0.88) / (1 + (age / 13.4)^(-12.7)))) *
       42.92 * weight / (30.93 + BMI)
@@ -204,7 +204,7 @@ propofol <- function(weight, height, age, sex)
     cl3 = CL3
   )
 
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   tPeak <- 1.600 # Anesthesiology 90:1502-1516, 1999

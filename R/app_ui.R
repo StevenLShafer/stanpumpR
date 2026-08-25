@@ -107,7 +107,7 @@ app_ui <- function() {
                 shinyWidgets::radioGroupButtons(
                   inputId = "sex", label = "Sex",
                   choiceNames = list(span(icon("mars"), "Male"), span(icon("venus"), "Female")),
-                  choiceValues = c("male", "female"),
+                  choiceValues = SEX_VALUES,
                   justified = TRUE,
                   selected = defaultSex
                 ),
@@ -148,8 +148,8 @@ app_ui <- function() {
               bslib::accordion_panel(
                 "Graph Options",
                 icon = icon("sliders"),
-                selectInput("typical", "Show typical", c("<none>" = "none","Mid", "Range"), selected = "Range"),
-                selectInput("normalization", "Normalize to", c("<none>" = "none","Peak plasma", "Peak effect site")),
+                selectInput("typical", "Show typical", c("<none>" = "none", "Mid", "Range"), selected = "Range"),
+                selectInput("normalization", "Normalize to", c("<none>" = NORMALIZE_NONE, "Peak plasma", "Peak effect site")),
                 selectInput(
                   inputId = "maximum",
                   label = "Max time",

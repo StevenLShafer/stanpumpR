@@ -32,6 +32,10 @@ getDrugPK <- function(
 {
   drugList <- getDrugDefaultsGlobal()$Drug
   if (!drug %in% drugList) stop("Unknown drug: ", drug)
+  if (length(sex) != 1 || !sex %in% SEX_VALUES) {
+    stop("Invalid sex: ", paste(sex, collapse = ", "),
+         ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
+  }
   X <- eval(call(drug, weight, height, age, sex))
   tPeak <- X$tPeak
 

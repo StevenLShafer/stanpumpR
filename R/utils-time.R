@@ -1,6 +1,6 @@
 # Convert clock times (x) to difference from the reference time
 clockTimeToDelta <- function(reference, x) {
-  if (reference == "none") {
+  if (reference == REFERENCE_TIME_NONE) {
     FIX <- grepl(":",x)
     x[FIX] <- as.numeric(unlist(lapply(x[FIX],FUN = hourMinute)))
     x <- as.numeric(x)
@@ -11,14 +11,14 @@ clockTimeToDelta <- function(reference, x) {
   FIX <- grepl(":",x)
   x[FIX] <- as.numeric(unlist(lapply(x[FIX],FUN = hourMinute))) - start
   x <- as.numeric(x)
-  x[x < 0] <- x[x < 0] + 1440 # Wrap around midnight
+  x[x < 0] <- x[x < 0] + MINS_PER_DAY # Wrap around midnight
   x
 }
 
 # Convert delta time (x) from the reference time to an actual clock time
 deltaToClockTime <- function(reference, x)
 {
-  if (reference == "none") {
+  if (reference == REFERENCE_TIME_NONE) {
     return(as.numeric(x))
   }
   start <- hourMinute(reference)
