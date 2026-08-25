@@ -9,8 +9,7 @@ doseTableNewRow <-  doseTableInit[7, ]
 
 eventTableInit <- data.frame(
   Time = numeric(0),
-  Event = character(0),
-  Fill = character(0)
+  Event = character(0)
 )
 
 bookmarksToExclude <- c(

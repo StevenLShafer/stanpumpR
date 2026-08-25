@@ -9,7 +9,7 @@ test_that("getDrugPK passes smoke tests and can generate a plot", {
     Units = c("mcg", "mcg/kg/min", "mcg/kg/min")
   )
 
-  eventTable <- data.frame(Time = double(), Event = character(), Fill = character())
+  eventTable <- data.frame(Time = double(), Event = character())
 
   PK <- getDrugPK(
     drug = "remifentanil",

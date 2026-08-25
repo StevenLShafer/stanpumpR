@@ -36,7 +36,7 @@ doseTable <- data.frame(
 Initialize an empty events table. The table is used by the Shiny app interface for stanpumpR to display events on the plot.
 
 ```{r}
-eventTable <- data.frame( Time = double(), Event = character(), Fill = character())
+eventTable <- data.frame( Time = double(), Event = character())
 ```
 
 Load the pharmacokinetic model parameters. The drug defaults table is loaded for the the specific drug, with default parameters for typical concentration levels, MEAC and emergence/return of spontaneous ventilation.

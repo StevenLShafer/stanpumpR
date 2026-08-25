@@ -40,7 +40,7 @@ doseTable <- data.frame(
 Initialize an empty events table. The table is used by the Shiny app interface for stanpumpR to display events on the plot.
 
 ```{r}
-eventTable <- data.frame(Time = double(), Event = character(), Fill = character())
+eventTable <- data.frame(Time = double(), Event = character())
 ```
 
 Calculate the predicted drug concentrations using simulateDrugsWithCovariates:
