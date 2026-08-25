@@ -19,35 +19,61 @@ test_that("deltaToClockTime: valid clock times are returned", {
 })
 
 test_that("hourMinute: HH:MM gets parsed correctly", {
-    expect_equal(hourMinute("12:34"),754)
+  expect_equal(hourMinute("12:34"),754)
 })
 
 test_that("hourMinute: HHMM gets parsed correctly", {
-    expect_equal(hourMinute("1234"),754)
+  expect_equal(hourMinute("1234"),754)
 })
 
 test_that("hourMinute: AH:MM gives NA", {
-    expect_true(is.na(hourMinute("A2:34")))
+  expect_true(is.na(hourMinute("A2:34")))
 })
 
 test_that("getReferenceTime: 'HH:MM:SS AM' gets parsed correctly", {
-    expect_equal(getReferenceTime("08:30:00 AM"),"08:30")
+  expect_equal(getReferenceTime("08:30:00 AM"),"08:30")
+  expect_equal(getReferenceTime("08:30:00 am"),"08:30")
 })
 
 test_that("getReferenceTime: 'HH:MM:SS PM' gets parsed correctly", {
-    expect_equal(getReferenceTime("08:44:55 PM"),"20:30")
+  expect_equal(getReferenceTime("08:44:55 PM"),"20:30")
+  expect_equal(getReferenceTime("08:44:55 pm"),"20:30")
 })
 
 test_that("getReferenceTime: 'HH:MM AM' gets parsed correctly", {
-    expect_equal(getReferenceTime("08:30 AM"),"08:30")
+  expect_equal(getReferenceTime("08:30 AM"),"08:30")
+  expect_equal(getReferenceTime("08:30 am"),"08:30")
 })
 
 test_that("getReferenceTime: 'HH:MM PM' gets parsed correctly", {
-    expect_equal(getReferenceTime("08:44 PM"),"20:30")
+  expect_equal(getReferenceTime("08:44 PM"),"20:30")
+  expect_equal(getReferenceTime("08:44 pm"),"20:30")
+  expect_equal(getReferenceTime("  08:44   pm  "),"20:30")
 })
 
 test_that("getReferenceTime: 'HH:MM' gets parsed correctly", {
-    expect_equal(getReferenceTime("08:44"),"08:30")
+  expect_equal(getReferenceTime("08:44"),"08:30")
+})
+
+test_that("getReferenceTime: noon and midnight land on the right side of the clock", {
+  expect_equal(getReferenceTime("12:00 am"), "00:00")
+  expect_equal(getReferenceTime("12:30 am"), "00:30")
+  expect_equal(getReferenceTime("12:00 pm"), "12:00")
+  expect_equal(getReferenceTime("12:30 pm"), "12:30")
+})
+
+test_that("getReferenceTime: a colon-less time is accepted", {
+  expect_equal(getReferenceTime("0830"), "08:30")
+  expect_equal(getReferenceTime("0830pm"), "20:30")
+  expect_equal(getReferenceTime("2345"), "23:45")
+})
+
+test_that("getReferenceTime: unparseable input returns NA", {
+  expect_true(is.na(getReferenceTime("")))
+  expect_true(is.na(getReferenceTime("noon")))
+  expect_true(is.na(getReferenceTime("abc")))
+  expect_true(is.na(getReferenceTime("25:00")))
+  expect_true(is.na(getReferenceTime("8:75")))
 })
 
 test_that("formatMinutes: labels sub-hour durations in minutes", {
