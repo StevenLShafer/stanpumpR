@@ -22,12 +22,12 @@
 #'
 #' @export
 getDrugPK <- function(
-  drug = "propofol",
-  weight = 70,
-  height = 170,
-  age = 50,
-  sex = "male",
-  drugDefaults
+  drug,
+  weight,
+  height,
+  age,
+  sex,
+  drugDefaults = getDrugDefaults(drug)
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
