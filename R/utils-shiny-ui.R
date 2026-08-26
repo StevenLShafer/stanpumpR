@@ -3,26 +3,25 @@ attachClass <- function(tag, class) {
 }
 
 citationItemHTML <- function(drug, reference, color) {
-  CITATION_LINK_HOSTS <- c("pubmed.ncbi.nlm.nih.gov", "doi.org")
-
   text <- reference
   url <- NULL
+  label <- NULL
   link <- NULL
 
   if (is.null(reference) || !nzchar(reference)) {
     text <- "Not Available"
   } else {
-    hosts <- paste(gsub(".", "\\.", CITATION_LINK_HOSTS, fixed = TRUE), collapse = "|")
+    hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
     pattern <- paste0("\\s+https://(", hosts, ")/\\S+$")
-    url <- regmatches(reference, regexpr(pattern, reference))
-    if (length(url) > 0) {
+    res <- regmatches(reference, regexec(pattern, reference))[[1]]
+    if (length(res) > 0) {
       text <- sub(pattern, "", reference)
-      url <- trimws(url)
+      url <- trimws(res[1])
+      label <- names(CITATION_WEBSITES)[match(res[2], CITATION_WEBSITES)]
     }
   }
 
-  if (length(url) > 0) {
-    label <- if (grepl("doi.org", url, fixed = TRUE)) "DOI" else "PubMed"
+  if (!is.null(url)) {
     link <- tagList(" ", tags$a(
       label,
       href = url,

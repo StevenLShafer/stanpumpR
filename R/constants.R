@@ -85,6 +85,14 @@ DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
 DEBUG_LEVEL_VERBOSE <- 2
 
+# If a drug reference contains a URL at the very end of the citation, and the URL
+# is one of the following websites and is served over https, then it will be
+# shown in the UI as a link.
+CITATION_WEBSITES <- c(
+  "PubMed" = "pubmed.ncbi.nlm.nih.gov",
+  "DOI"    = "doi.org"
+)
+
 DEFAULT_CONFIG <- list(
   title = "stanpumpR",
   help_link = "https://steveshafer.shinyapps.io/stanpumpR_HelpPage",
