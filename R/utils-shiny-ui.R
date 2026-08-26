@@ -2,6 +2,44 @@ attachClass <- function(tag, class) {
   htmltools::tagAppendAttributes(tag, class = class)
 }
 
+citationItemHTML <- function(drug, reference, color) {
+  CITATION_LINK_HOSTS <- c("pubmed.ncbi.nlm.nih.gov", "doi.org")
+
+  text <- reference
+  url <- NULL
+  link <- NULL
+
+  if (is.null(reference) || !nzchar(reference)) {
+    text <- "Not Available"
+  } else {
+    hosts <- paste(gsub(".", "\\.", CITATION_LINK_HOSTS, fixed = TRUE), collapse = "|")
+    pattern <- paste0("\\s+https://(", hosts, ")/\\S+$")
+    url <- regmatches(reference, regexpr(pattern, reference))
+    if (length(url) > 0) {
+      text <- sub(pattern, "", reference)
+      url <- trimws(url)
+    }
+  }
+
+  if (length(url) > 0) {
+    label <- if (grepl("doi.org", url, fixed = TRUE)) "DOI" else "PubMed"
+    link <- tagList(" ", tags$a(
+      label,
+      href = url,
+      target = "_blank",
+      rel = "noreferrer"
+    ))
+  }
+
+  tags$div(
+    tags$strong(
+      style = paste0("color:", if (is.null(color)) "inherit" else color, ";"),
+      tools::toTitleCase(drug)
+    ),
+    ": ", text, link
+  )
+}
+
 inlineUI <- function(tag) {
   attachClass(tag, "inline_ui")
 }

@@ -43,6 +43,7 @@ Imports:
     shinyWidgets,
     stats,
     tidyr,
+    tools,
     utils
 Suggests:
     devtools,
