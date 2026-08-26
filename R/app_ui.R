@@ -291,6 +291,15 @@ app_ui <- function() {
           ),
 
           bslib::accordion(
+            open = FALSE,
+            bslib::accordion_panel(
+              "References",
+              icon = icon("book"),
+              uiOutput("drug_references", class = "small")
+            )
+          ),
+
+          bslib::accordion(
             id = "debug_area",
             open = FALSE,
             bslib::accordion_panel(

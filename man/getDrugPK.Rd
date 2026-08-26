@@ -5,14 +5,7 @@
 \title{Get the pharmacokinetic and pharmacodynamic values for a drug based on
 patient covariates}
 \usage{
-getDrugPK(
-  drug = "propofol",
-  weight = 70,
-  height = 170,
-  age = 50,
-  sex = "male",
-  drugDefaults
-)
+getDrugPK(drug, weight, height, age, sex, drugDefaults = getDrugDefaults(drug))
 }
 \arguments{
 \item{drug}{name of drug (string)}

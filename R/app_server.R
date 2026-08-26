@@ -627,6 +627,17 @@ app_server <- function(input, output, session) {
     )
   })
 
+  output$drug_references <- renderUI({
+    simulatedDrugs <- tryCatch(drugs(), shiny.silent.error = function(err) NULL)
+    if (length(simulatedDrugs) == 0) {
+      return(span("No drugs in the current simulation.", class = "text-muted"))
+    }
+    items <- lapply(names(simulatedDrugs), function(drug) {
+      citationItemHTML(drug, simulatedDrugs[[drug]]$reference, simulatedDrugs[[drug]]$Color)
+    })
+    tags$ul(class = "mb-0", lapply(items, tags$li))
+  })
+
   # Display Time, CE, or total opioid
   xy_str <- function(e) {
     if (is.null(e$panelvar1)) return()
