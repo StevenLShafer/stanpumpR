@@ -518,3 +518,54 @@ advanceClosedFormGas <- function(
 
   list(results = results, state = out, timeLine = timeLine)
 }
+
+
+#' Simulate every inhaled gas in a dose table as one coupled group
+#'
+#' The gases share one breathing circuit and one alveolar ventilation, so they
+#' cannot be simulated -- or cached -- drug by drug the way the intravenous
+#' drugs are.  Total fresh gas flow is the sum of the air, oxygen and nitrous
+#' oxide rows, so changing any one of them changes every gas trajectory.  This
+#' function therefore takes the whole dose table and simulates all of the gas
+#' rows together in a single call.
+#'
+#' The gas rows must also be kept away from \code{recalculatePK()} and
+#' \code{simCpCe()}: the former would call \code{eval(call("air", ...))} and
+#' fail, since the gases have no \code{drugs_*.R} covariate function, and the
+#' latter converts every dose to a mass, which a gas tension is not.
+#'
+#' @param doseTable a cleaned dose table with \code{Drug}, \code{Time} in
+#'   minutes, and \code{Dose}.  Non-gas rows are ignored.
+#' @param weight patient weight in kg
+#' @param age patient age in years
+#' @param maximum simulation length in minutes
+#' @param cardiacOutput optional override in L/min; defaults to 75 mL/kg
+#'
+#' @returns \code{NULL} if the dose table contains no gases, otherwise the list
+#'   returned by \code{advanceClosedFormGas()}
+#' @export
+simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
+                          cardiacOutput = NULL)
+{
+  if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
+
+  gasRows <- doseTable[isGasDrug(doseTable$Drug), , drop = FALSE]
+  if (nrow(gasRows) == 0) return(NULL)
+
+  gasDose <- data.frame(
+    Time = as.numeric(gasRows$Time),
+    Drug = as.character(gasRows$Drug),
+    Dose = as.numeric(gasRows$Dose),
+    stringsAsFactors = FALSE
+  )
+  gasDose <- gasDose[!is.na(gasDose$Time) & !is.na(gasDose$Dose), , drop = FALSE]
+  if (nrow(gasDose) == 0) return(NULL)
+
+  advanceClosedFormGas(
+    gasDose,
+    weight        = weight,
+    age           = age,
+    maximum       = maximum,
+    cardiacOutput = cardiacOutput
+  )
+}

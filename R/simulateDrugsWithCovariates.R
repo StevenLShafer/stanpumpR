@@ -21,6 +21,10 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
          ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
   }
   drugList <- unique(dose$Drug)
+  # The inhaled gases are simulated by simulateGases() / advanceClosedFormGas(),
+  # not here: they have no drugs_*.R covariate function and no mass dose, so
+  # getDrugPK() and simCpCe() cannot handle them.
+  drugList <- drugList[!isGasDrug(drugList)]
   output <- c()
   for (drug in drugList)
   {
