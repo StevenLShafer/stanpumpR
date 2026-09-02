@@ -136,7 +136,14 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60)
 #' @keywords internal
 gasTypicalBand <- function(drug, props)
 {
+  # Oxygen's band is an acceptable inspired range, not a therapeutic window.
   if (drug == "oxygen") return(c(lower = 25, typical = 40, upper = 90))
+
+  # Nitrous oxide is the exception to the MAC rule.  Its MAC is 104%, so a
+  # 0.7-1.3 MAC band would be drawn at 73-135% -- a range that cannot be
+  # delivered at one atmosphere without a hypoxic mixture.  Use the range it is
+  # actually given in instead.
+  if (drug == "nitrousOxide") return(c(lower = 50, typical = 60, upper = 70))
 
   MAC40 <- props$MAC40[props$gas == drug]
   if (length(MAC40) == 0 || is.na(MAC40)) return(c(lower = 0, typical = 0, upper = 0))
