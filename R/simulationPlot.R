@@ -159,11 +159,13 @@ simulationPlot <- function(
   switch(
     normalization,
     "none" = {
-      plotTable$Wrap <- paste0(
-                          plotTable$Drug,
-                          "\n(",
-                          plotTable$Concentration.Units,
-                          "/ml)")
+      # Intravenous concentrations are per millilitre; the inhaled gases are a
+      # percentage of one atmosphere and MAC is dimensionless, so neither takes
+      # the "/ml" suffix.
+      unitText <- paste0(plotTable$Concentration.Units, "/ml")
+      gasRow <- isGasSeries(plotTable$Drug)
+      unitText[gasRow] <- plotTable$Concentration.Units[gasRow]
+      plotTable$Wrap <- paste0(plotTable$Drug, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical
       plotTable$y    <- plotTable$typical
