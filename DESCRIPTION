@@ -64,6 +64,7 @@ Collate:
   advanceClosedForm0.R
   advanceClosedForm1.R
   advanceClosedFormPO_IM_IN.R
+  advanceClosedFormGas.R
   advanceState.R
   advanceStatePO.R
   calculateCe.R
@@ -93,6 +94,7 @@ Collate:
   drugs_rocuronium.R
   drugs_sufentanil.R
   getDrugPK.R
+  gasProperties.R
   globalVariables.R
   hourMinute.R
   ig_absorption.R
