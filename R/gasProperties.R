@@ -175,3 +175,31 @@ macForAge <- function(MAC40, age)
 # nitrogen contributions.
 AIR_FRACTION_O2 <- 0.2093
 AIR_FRACTION_N2 <- 0.7807
+
+
+#' Names of the dose-table entries handled by the inhaled-gas engine
+#'
+#' Read from the \code{Class} column of \code{drugDefaults_global.csv}.  These
+#' rows are routed to \code{advanceClosedFormGas()} as a group and never reach
+#' \code{getDrugPK()} or \code{simCpCe()}, which assume a three-compartment
+#' mammillary model and mass units that the gases do not have.
+#'
+#' @returns character vector of gas/setting names
+#' @export
+gasDrugNames <- function()
+{
+  d <- getDrugDefaultsGlobal()
+  if (!"Class" %in% names(d)) return(character(0))
+  d$Drug[!is.na(d$Class) & d$Class == "gas"]
+}
+
+
+#' Is this dose-table entry handled by the inhaled-gas engine?
+#'
+#' @param drug one or more drug names
+#' @returns logical vector
+#' @export
+isGasDrug <- function(drug)
+{
+  drug %in% gasDrugNames()
+}

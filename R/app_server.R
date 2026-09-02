@@ -330,6 +330,34 @@ app_server <- function(input, output, session) {
     }, name = "testCovariates() reactive")
   })
 
+  # The inhaled gases are simulated by a separate engine and must be kept out of
+  # the intravenous path: recalculatePK() would call eval(call("air", ...)) and
+  # fail, because the gases have no drugs_*.R covariate function, and simCpCe()
+  # converts every dose to a mass, which a gas tension is not.
+  doseTableIV <- reactive({
+    DT <- doseTableClean()
+    if (is.null(DT)) return(NULL)
+    DT <- DT[!isGasDrug(DT$Drug), , drop = FALSE]
+    if (nrow(DT) == 0) NULL else DT
+  })
+
+  # Every gas is simulated in ONE call, because they share the breathing circuit
+  # and the alveolar ventilation: total fresh gas flow is the sum of the air,
+  # oxygen and nitrous oxide rows, so changing any one of them changes every gas
+  # trajectory.  There is deliberately no per-gas change detection.
+  gases <- reactive({
+    profileCode({
+      outputComments("In gases", level = DEBUG_LEVEL_VERBOSE)
+      req(testCovariates())
+      simulateGases(
+        doseTableClean(),
+        weight  = weight(),
+        age     = age(),
+        maximum = plotMaximum()
+      )
+    }, name = "gases() reactive")
+  })
+
   drugs <- reactive({
     profileCode({
       outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
@@ -340,7 +368,7 @@ app_server <- function(input, output, session) {
       newDrugs <- recalculatePK(
         newDrugs,
         drugDefaults(),
-        doseTableClean(),
+        doseTableIV(),
         age = age(),
         weight = weight(),
         height = height(),
@@ -348,7 +376,7 @@ app_server <- function(input, output, session) {
       ) |> profileCode("recalculatePK() in drugs()")
 
       newDrugs <- processdoseTable(
-        doseTableClean(),
+        doseTableIV(),
         eventTableClean(),
         newDrugs,
         plotMaximum(),

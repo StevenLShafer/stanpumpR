@@ -9,9 +9,10 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
   # Now, process dose table for each drug
   # cat("Entering processdoseTable()\n")
   drugList <- names(drugs)
-  for (i in 1:length(drugList))
+  # Iterate the vector directly: 1:length(x) is c(1, 0) for an empty x, which a
+  # dose table containing only inhaled gases would otherwise hit.
+  for (drug in drugList)
   {
-    drug <- drugList[i]
     # cat("drug = ",drug,"\n")
     tempDT <- DT[DT$Drug == drug,]
     # cat("Structure of tempDT\n")
