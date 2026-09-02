@@ -349,11 +349,19 @@ app_server <- function(input, output, session) {
     profileCode({
       outputComments("In gases", level = DEBUG_LEVEL_VERBOSE)
       req(testCovariates())
-      simulateGases(
-        doseTableClean(),
+      DT <- doseTableClean()
+      if (is.null(DT)) return(list())
+      sim <- simulateGases(
+        DT,
         weight  = weight(),
         age     = age(),
         maximum = plotMaximum()
+      )
+      gasDrugEntries(
+        sim,
+        DT[isGasDrug(DT$Drug), , drop = FALSE],
+        drugDefaults(),
+        plotMaximum()
       )
     }, name = "gases() reactive")
   })
@@ -382,7 +390,11 @@ app_server <- function(input, output, session) {
         plotMaximum(),
         plotRecovery()
       ) |> profileCode("processdoseTable() in drugs()")
-      newDrugs
+
+      # The inhaled gases are simulated as one group and appended as their own
+      # entries, so that simulationPlot() treats them like any other series and
+      # a dose table containing only inhaled agents still plots.
+      c(newDrugs, gases())
     }, name = "drugs() reactive")
   })
 

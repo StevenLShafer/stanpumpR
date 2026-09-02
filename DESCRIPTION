@@ -95,6 +95,7 @@ Collate:
   drugs_sufentanil.R
   getDrugPK.R
   gasProperties.R
+  gasDrugEntries.R
   globalVariables.R
   hourMinute.R
   ig_absorption.R
