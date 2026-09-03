@@ -46,7 +46,7 @@
 reportableGases <- function(gasDose)
 {
   dosed <- unique(gasDose$Drug[!is.na(gasDose$Dose) & gasDose$Dose > 0])
-  agents <- intersect(c("nitrousOxide", "sevoflurane", "isoflurane"), dosed)
+  agents <- intersect(potentAgents(), dosed)
 
   anyFlow <- any(c("air", "oxygen", "nitrousOxide") %in% dosed)
   c(if (anyFlow) "oxygen", agents)
@@ -101,7 +101,7 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60)
   }
 
   # MAC gets its own series when any potent agent is running.
-  potent <- intersect(c("nitrousOxide", "sevoflurane", "isoflurane"), report)
+  potent <- intersect(potentAgents(), report)
   if (length(potent) > 0)
   {
     mac <- sim$results[sim$results$Drug == "MAC", ]

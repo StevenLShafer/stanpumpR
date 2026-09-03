@@ -8,14 +8,15 @@ test_that("the gas entries are registered in the drug defaults table", {
   gases <- gasDrugNames()
   expect_setequal(
     gases,
-    c("air", "oxygen", "nitrousOxide", "sevoflurane", "isoflurane", "ventilation")
+    c("air", "oxygen", "nitrousOxide", "sevoflurane", "isoflurane", "desflurane",
+      "ventilation")
   )
 
   d <- getDrugDefaultsGlobal()
   expect_true("Class" %in% names(d))
   # Every pre-existing drug must still be classified as intravenous
   expect_true(all(d$Class[d$Drug == "propofol"] == "IV"))
-  expect_equal(sum(d$Class == "gas"), 6)
+  expect_equal(sum(d$Class == "gas"), 7)
 
   # Units offered in the dose table
   expect_equal(unlist(d$Units[d$Drug == "oxygen"]), "L/min")

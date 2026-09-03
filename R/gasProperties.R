@@ -61,28 +61,43 @@
 getGasProperties <- function()
 {
   data.frame(
-    gas          = c("nitrousOxide", "sevoflurane", "isoflurane", "nitrogen", "oxygen"),
-    soluble      = c(TRUE,           TRUE,          TRUE,         TRUE,       FALSE),
+    gas     = c("nitrousOxide", "sevoflurane", "isoflurane", "desflurane",
+                "nitrogen", "oxygen"),
+    soluble = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
 
-    # Blood:gas.  N2O 0.47 and isoflurane 1.4 are the values used by
-    # Korman/Dash/Peyton (Anesthesiology 2018;128:1075-83); sevoflurane 0.65 is
-    # the conventional value (they quote 0.67).  Nitrogen 0.014.
-    # TODO(fixture): replace with Gas Man 4.2 values from Weber et al. Table 1.
-    lambda_blood = c(0.47,           0.65,          1.4,          0.014,      NA),
+    # Blood:gas ("Lambda" in gasman.ini)
+    lambda_blood = c(0.47, 0.65, 1.3, 0.42, 0.014, NA),
 
-    # Tissue:blood.  Conventional values (Eger).  Nitrogen is near-unity in
-    # lean tissue and lipophilic in fat.
-    # TODO(fixture): replace with Gas Man 4.2 values from Weber et al. Table 1.
-    tb_brain     = c(1.1,            1.7,           2.6,          1.0,        NA),
-    tb_muscle    = c(1.2,            3.1,           4.0,          1.0,        NA),
-    tb_fat       = c(2.3,            48,            45,           5.3,        NA),
+    # Tissue:GAS ("VRG" / "MUS" / "FAT" in gasman.ini).  Note these are
+    # tissue:gas, NOT tissue:blood: desflurane's VRG of 0.54 is its blood:gas
+    # 0.42 times a brain:blood of about 1.3.  An earlier version of this file
+    # stored tissue:blood and multiplied, which was one conversion too many.
+    tg_brain  = c(0.42, 1.1, 2.1, 0.54, 0.010, NA),
+    tg_muscle = c(0.54, 2.4, 4.5, 0.97, 0.014, NA),
+    tg_fat    = c(1.08, 34,  70,  13,   0.070, NA),
 
-    # MAC at age 40, % of 1 atm.
-    MAC40        = c(104,            2.05,          1.15,         NA,         NA),
-    potent       = c(TRUE,           TRUE,          TRUE,         FALSE,      FALSE),
+    # MAC, % of 1 atm, at the reference age.
+    MAC40 = c(110, 2.1, 1.1, 6.0, NA, NA),
+
+    # Whether the agent contributes to the summed MAC.  gasman.ini gives
+    # nitrogen a MAC of 200, presumably for hyperbaric completeness, but
+    # including it would post 0.4 MAC on room air, so it is excluded here.
+    # Flagged rather than assumed -- see the note in the header.
+    potent = c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE),
 
     stringsAsFactors = FALSE
   )
+}
+
+
+#' The agents that contribute to summed MAC
+#'
+#' @returns character vector of gas names
+#' @export
+potentAgents <- function()
+{
+  props <- getGasProperties()
+  props$gas[props$potent]
 }
 
 
@@ -98,9 +113,9 @@ getGasProperties <- function()
 gasPartitionTissueGas <- function(props)
 {
   c(
-    brain  = props$tb_brain  * props$lambda_blood,
-    muscle = props$tb_muscle * props$lambda_blood,
-    fat    = props$tb_fat    * props$lambda_blood
+    brain  = props$tg_brain,
+    muscle = props$tg_muscle,
+    fat    = props$tg_fat
   )
 }
 

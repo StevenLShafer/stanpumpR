@@ -320,15 +320,21 @@ gasSettingsAt <- function(split, t)
   Q_air  <- settingAt(split[["air"]],          t)
   Q_O2   <- settingAt(split[["oxygen"]],       t)
   Q_N2O  <- settingAt(split[["nitrousOxide"]], t)
-  F_sevo <- settingAt(split[["sevoflurane"]],  t)
-  F_iso  <- settingAt(split[["isoflurane"]],   t)
   VA     <- settingAt(split[["ventilation"]],  t)
+
+  # Every volatile agent in the properties table has its vaporiser read here,
+  # rather than from a hardcoded list.  Adding desflurane to the table
+  # previously meant remembering to add it here too, and forgetting produced a
+  # subscript error rather than a wrong number -- loud, but avoidable.  Nitrous
+  # oxide is excluded because it arrives through a flowmeter, not a vaporiser.
+  volatiles <- setdiff(potentAgents(), "nitrousOxide")
+  F_vap <- vapply(volatiles, function(g) settingAt(split[[g]], t), numeric(1))
 
   Q <- Q_air + Q_O2 + Q_N2O
 
   # Vapour displaces carrier gas.  At 2% sevoflurane this is a 2% correction;
   # small, but free to include and it keeps the fractions summing to 100.
-  carrier <- 1 - (F_sevo + F_iso) / 100
+  carrier <- 1 - sum(F_vap) / 100
   if (carrier < 0) carrier <- 0
 
   if (Q > 0)
@@ -341,8 +347,7 @@ gasSettingsAt <- function(split, t)
   } else {
     Ffgf <- c(oxygen = 0, nitrogen = 0, nitrousOxide = 0)
   }
-  Ffgf[["sevoflurane"]] <- F_sevo
-  Ffgf[["isoflurane"]]  <- F_iso
+  for (g in volatiles) Ffgf[[g]] <- F_vap[[g]]
 
   list(Q = Q, VA = VA, Ffgf = Ffgf)
 }
