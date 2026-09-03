@@ -350,3 +350,32 @@ test_that("desflurane simulates and washes in fastest of the volatiles", {
   expect_gt(max(brn), 0)
   expect_equal(max(mac), max(brn) / macForAge(6.0, 40), tolerance = 1e-9)
 })
+
+
+test_that("Gas Man's numbers are used as they stand, with bad provenance flagged", {
+  # Policy: use Gas Man's values so validation compares like with like, but flag
+  # the ones known to be wrong rather than silently correcting them.
+  props <- getGasProperties()
+
+  # Nitrogen's MAC is recorded as Gas Man states it...
+  expect_equal(props$MAC40[props$gas == "nitrogen"], 200)
+
+  # ...and flagged, because Eger put the MAC of nitrogen at 110 ATMOSPHERES,
+  # i.e. 11000% of one atmosphere.  Gas Man's 200 is low by about 55-fold.
+  flagged <- flaggedGasParameters()
+  expect_true("nitrogen" %in% flagged$gas)
+  expect_match(flagged$flagNote[flagged$gas == "nitrogen"], "110 atm")
+
+  # The arithmetic that makes it matter: room air is 0.79 atm nitrogen, so at
+  # Eger's value it contributes a negligible fraction of a MAC, whereas at Gas
+  # Man's it would contribute a large one.
+  expect_lt(0.79 / 110, 0.01)     # Eger: about 0.007 MAC
+  expect_gt(0.79 / 2, 0.3)        # Gas Man: about 0.4 MAC
+
+  # Which is why nitrogen stays out of the summed MAC while that figure stands
+  expect_false("nitrogen" %in% potentAgents())
+
+  # An unflagged parameter means "not yet checked", not "verified", so the rest
+  # of the table carrying no flag is expected rather than reassuring.
+  expect_equal(nrow(flagged), 1)
+})

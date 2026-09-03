@@ -76,8 +76,11 @@ getGasProperties <- function()
     tg_muscle = c(0.54, 2.4, 4.5, 0.97, 0.014, NA),
     tg_fat    = c(1.08, 34,  70,  13,   0.070, NA),
 
-    # MAC, % of 1 atm, at the reference age.
-    MAC40 = c(110, 2.1, 1.1, 6.0, NA, NA),
+    # MAC, % of 1 atm, at the reference age.  Nitrogen's 200 is Gas Man's own
+    # figure, recorded as it stands and flagged below rather than corrected or
+    # omitted: the table should say what Gas Man says.  It is inert here because
+    # nitrogen is not summed into MAC.
+    MAC40 = c(110, 2.1, 1.1, 6.0, 200, NA),
 
     # Whether the agent contributes to the summed MAC.  gasman.ini gives
     # nitrogen a MAC of 200, presumably for hyperbaric completeness, but
@@ -85,8 +88,35 @@ getGasProperties <- function()
     # Flagged rather than assumed -- see the note in the header.
     potent = c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE),
 
+    # Provenance flags.  A value is used as Gas Man states it, so that
+    # validation compares like with like, but is marked when its provenance is
+    # known to be wrong.  FALSE means "not yet checked", not "verified".
+    flagged = c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE),
+    flagNote = c(NA, NA, NA, NA,
+                 paste("MAC 200 (2 atm) contradicts Eger's estimate of 110 atm,",
+                       "i.e. 11000% of one atmosphere: low by about 55-fold.",
+                       "Room air is 0.79 atm nitrogen, so the true contribution",
+                       "is about 0.007 MAC, not the 0.4 MAC this figure implies."),
+                 NA),
+
     stringsAsFactors = FALSE
   )
+}
+
+
+#' Parameters whose provenance is known to be wrong
+#'
+#' Gas Man's values are used as they stand so that validation compares like with
+#' like, but the ones known to be wrong are flagged rather than silently
+#' corrected.  An empty result does not mean the table has been verified; it
+#' means nothing further has been checked yet.
+#'
+#' @returns a data frame of the flagged gases and the reason
+#' @export
+flaggedGasParameters <- function()
+{
+  props <- getGasProperties()
+  props[props$flagged, c("gas", "MAC40", "flagNote")]
 }
 
 
