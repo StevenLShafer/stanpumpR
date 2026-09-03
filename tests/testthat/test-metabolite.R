@@ -34,13 +34,13 @@ test_that("the one-compartment case reproduces getDrugPK's effect-site coefficie
   expect_gt(ke0, 0)
 
   # A one-compartment "metabolite" whose single coefficient is 1 and whose
-  # eigenvalue is ke0.  Choose kForm so that K = ke0.
+  # eigenvalue is ke0.  Choose kFormation so that K = ke0.
   effectSite <- list(p_coef_bolus_l1 = 1, p_coef_bolus_l2 = 0,
                      p_coef_bolus_l3 = 0,
                      lambda_1 = ke0, lambda_2 = 0, lambda_3 = 0)
 
-  # K = kForm * v1, so kForm = ke0 / v1 makes K equal ke0
-  co <- metaboliteCoefficients(parent, effectSite, kForm = ke0 / parent$v1)
+  # K = kFormation * v1, so kFormation = ke0 / v1 makes K equal ke0
+  co <- metaboliteCoefficients(parent, effectSite, kFormation = ke0 / parent$v1)
 
   # Coefficients on the parent eigenvalues, in lambda order
   onLambda <- co$bolus[seq_along(dispositionTerms(parent)$lambda)]
@@ -66,28 +66,28 @@ test_that("metabolite concentration starts at zero", {
   # exists at the instant the parent is given.
   parent     <- pkFor("hydromorphone")
   metabolite <- pkFor("morphine")
-  co <- metaboliteCoefficients(parent, metabolite, kForm = 0.01)
+  co <- metaboliteCoefficients(parent, metabolite, kFormation = 0.01)
 
   expect_equal(sum(co$bolus), 0, tolerance = 1e-12)
   expect_equal(metaboliteAfterBolus(co, 10, 0), 0, tolerance = 1e-12)
 })
 
 
-test_that("metabolite exposure follows kForm and the metabolite's own clearance", {
+test_that("metabolite exposure follows kFormation and the metabolite's own clearance", {
   # AUC of the metabolite for a unit parent bolus is
-  #     kForm * mwRatio / (k10_parent * CL_metabolite)
+  #     kFormation * mwRatio / (k10_parent * CL_metabolite)
   # because every molecule formed must eventually clear through the metabolite's
   # own clearance.
   parent     <- pkFor("hydromorphone")
   metabolite <- pkFor("morphine")
   CLm <- metabolite$k10 * metabolite$v1
 
-  for (kf in c(0.005, 0.05)) {
+  for (kFormation in c(0.005, 0.05)) {
     for (R in c(1, 285.34 / 299.36)) {
-      co <- metaboliteCoefficients(parent, metabolite, kForm = kf, mwRatio = R)
+      co <- metaboliteCoefficients(parent, metabolite, kFormation = kFormation, mwRatio = R)
       # AUC is the sum of coefficient/lambda, which is the infusion coefficients
-      expect_equal(sum(co$infusion), kf * R / (parent$k10 * CLm),
-                   tolerance = 1e-8, info = paste("kForm", kf, "R", R))
+      expect_equal(sum(co$infusion), kFormation * R / (parent$k10 * CLm),
+                   tolerance = 1e-8, info = paste("kFormation", kFormation, "R", R))
     }
   }
 })
@@ -96,13 +96,13 @@ test_that("metabolite exposure follows kForm and the metabolite's own clearance"
 test_that("the closed form matches a direct numerical convolution", {
   parent     <- pkFor("hydromorphone")
   metabolite <- pkFor("morphine")
-  kf <- 0.01
+  kFormation <- 0.01
   R  <- 285.34 / 299.36
-  co <- metaboliteCoefficients(parent, metabolite, kForm = kf, mwRatio = R)
+  co <- metaboliteCoefficients(parent, metabolite, kFormation = kFormation, mwRatio = R)
 
   P <- dispositionTerms(parent)
   M <- dispositionTerms(metabolite)
-  K <- kf * parent$v1 * R
+  K <- kFormation * parent$v1 * R
 
   Cp      <- function(t) sum(P$coef * exp(-P$lambda * t))
   CmUnit  <- function(t) sum(M$coef * exp(-M$lambda * t))
@@ -124,15 +124,15 @@ test_that("the closed form matches a direct numerical convolution", {
 test_that("the closed form matches an RK4 integration of the full cascade", {
   parent     <- pkFor("hydromorphone")
   metabolite <- pkFor("morphine")
-  kf   <- 0.01
+  kFormation <- 0.01
   R    <- 285.34 / 299.36
   dose <- 2
-  co <- metaboliteCoefficients(parent, metabolite, kForm = kf, mwRatio = R)
+  co <- metaboliteCoefficients(parent, metabolite, kFormation = kFormation, mwRatio = R)
 
   # Six compartments written out by hand from the micro rate constants: three
   # for the parent, three for the metabolite, coupled by the formation term.
   #
-  # Note the formation term is kForm * A1: a first order transfer out of the
+  # Note the formation term is kFormation * A1: a first order transfer out of the
   # parent's central compartment with its own rate constant, and it is NOT
   # subtracted from dA1/dt.  The parent's fitted clearance already subsumes the
   # metabolic loss, so removing it again would double-count it.
@@ -143,7 +143,7 @@ test_that("the closed form matches an RK4 integration of the full cascade", {
       -(parent$k10 + parent$k12 + parent$k13) * A1 + parent$k21 * A2 + parent$k31 * A3,
         parent$k12 * A1 - parent$k21 * A2,
         parent$k13 * A1 - parent$k31 * A3,
-        kf * R * A1 -
+        kFormation * R * A1 -
           (metabolite$k10 + metabolite$k12 + metabolite$k13) * B1 +
           metabolite$k21 * B2 + metabolite$k31 * B3,
         metabolite$k12 * B1 - metabolite$k21 * B2,
@@ -173,19 +173,19 @@ test_that("the closed form matches an RK4 integration of the full cascade", {
 test_that("no pathway means no metabolite", {
   parent     <- pkFor("hydromorphone")
   metabolite <- pkFor("morphine")
-  co <- metaboliteCoefficients(parent, metabolite, kForm = 0)
+  co <- metaboliteCoefficients(parent, metabolite, kFormation = 0)
 
   expect_true(all(co$bolus == 0))
   expect_equal(metaboliteAfterBolus(co, 100, c(1, 10, 100)), c(0, 0, 0))
 })
 
 
-test_that("metabolite concentration scales linearly with dose and with kForm", {
+test_that("metabolite concentration scales linearly with dose and with kFormation", {
   parent     <- pkFor("hydromorphone")
   metabolite <- pkFor("morphine")
 
-  a <- metaboliteCoefficients(parent, metabolite, kForm = 0.005)
-  b <- metaboliteCoefficients(parent, metabolite, kForm = 0.010)
+  a <- metaboliteCoefficients(parent, metabolite, kFormation = 0.005)
+  b <- metaboliteCoefficients(parent, metabolite, kFormation = 0.010)
   expect_equal(b$bolus, 2 * a$bolus, tolerance = 1e-12)
 
   t <- c(1, 10, 60)
@@ -204,7 +204,7 @@ test_that("a shared eigenvalue is separated rather than dividing by zero", {
   twin <- list(p_coef_bolus_l1 = 0.01, p_coef_bolus_l2 = 0, p_coef_bolus_l3 = 0,
                lambda_1 = P$lambda[1], lambda_2 = 0, lambda_3 = 0)
 
-  co <- metaboliteCoefficients(parent, twin, kForm = 0.01)
+  co <- metaboliteCoefficients(parent, twin, kFormation = 0.01)
   expect_true(all(is.finite(co$bolus)))
   expect_true(all(is.finite(co$infusion)))
   expect_equal(sum(co$bolus), 0, tolerance = 1e-6)
@@ -219,10 +219,10 @@ test_that("a shared eigenvalue is separated rather than dividing by zero", {
 test_that("an invalid rate constant or weight ratio is refused", {
   parent     <- pkFor("hydromorphone")
   metabolite <- pkFor("morphine")
-  expect_error(metaboliteCoefficients(parent, metabolite, kForm = -0.1))
-  expect_error(metaboliteCoefficients(parent, metabolite, kForm = 0.01,
+  expect_error(metaboliteCoefficients(parent, metabolite, kFormation = -0.1))
+  expect_error(metaboliteCoefficients(parent, metabolite, kFormation = 0.01,
                                       mwRatio = 0))
   # A transfer rate constant has no upper bound, unlike a share of elimination.
   expect_no_error(metaboliteCoefficients(parent, metabolite,
-                                         kForm = parent$k10 * 2))
+                                         kFormation = parent$k10 * 2))
 })

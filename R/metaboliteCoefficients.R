@@ -21,13 +21,13 @@
 #     Cp(t) = SUM_i  p_i exp(-lambda_i t)          p_i = p_coef_bolus_li
 #
 # Metabolite is formed by a FIRST ORDER TRANSFER FROM THE PLASMA COMPARTMENT,
-# with its own rate constant kForm.  Writing A1 for the parent amount in the
+# with its own rate constant kFormation.  Writing A1 for the parent amount in the
 # central compartment, R for the ratio of molecular weights (metabolite over
 # parent, because formation is molar but concentrations are by mass) and U for a
 # unit scale, the rate at which metabolite mass appears is
 #
-#     formation(t) = kForm * A1(t) * R * U
-#                  = kForm * v1 * R * U * Cp(t)
+#     formation(t) = kFormation * A1(t) * R * U
+#                  = kFormation * v1 * R * U * Cp(t)
 #                  = K Cp(t)
 #
 # FORMATION DOES NOT ALTER THE PARENT (Shafer, 2026-09-03)
@@ -39,7 +39,7 @@
 # double-count the loss and would make the parent's own model disagree with the
 # data it was fitted to.
 #
-# The consequence is that kForm is completely independent of the parent's PK
+# The consequence is that kFormation is completely independent of the parent's PK
 # model.  It is not a fraction of k10 and does not scale with the parent's
 # clearance; it is its own parameter, added on top of a disposition model that
 # stands unchanged.  An earlier version of this file expressed formation as a
@@ -116,7 +116,7 @@ dispositionTerms <- function(pkSet)
 #'
 #' @param parent the parent drug's PK set
 #' @param metabolite the metabolite's own disposition PK set
-#' @param kForm first-order rate constant, per minute, for transfer from the
+#' @param kFormation first-order rate constant, per minute, for transfer from the
 #'   parent's central compartment to the metabolite.  Its own parameter: it is
 #'   not a fraction of the parent's elimination and does not scale with the
 #'   parent's clearance.
@@ -131,12 +131,12 @@ dispositionTerms <- function(pkSet)
 #'   \code{bolus} and \code{infusion} (coefficients on each), and the scalar
 #'   \code{K} used to form them
 #' @export
-metaboliteCoefficients <- function(parent, metabolite, kForm, mwRatio = 1,
+metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
                                    unitScale = 1)
 {
-  # No upper bound on kForm.  The old 'fraction' form was capped at 1 because it
+  # No upper bound on kFormation.  The old 'fraction' form was capped at 1 because it
   # was a share of elimination; a transfer rate constant has no such ceiling.
-  stopifnot(kForm >= 0, mwRatio > 0, unitScale > 0)
+  stopifnot(kFormation >= 0, mwRatio > 0, unitScale > 0)
 
   P <- dispositionTerms(parent)
   M <- dispositionTerms(metabolite)
@@ -146,7 +146,7 @@ metaboliteCoefficients <- function(parent, metabolite, kForm, mwRatio = 1,
   # Mass of metabolite formed per unit of plasma concentration per minute.  The
   # parent's v1 converts concentration to the amount the transfer acts on; the
   # parent's k10 does NOT appear, because formation is independent of it.
-  K <- kForm * parent$v1 * mwRatio * unitScale
+  K <- kFormation * parent$v1 * mwRatio * unitScale
 
   # An exact shared eigenvalue would divide by zero; the convolution then takes
   # the t*exp(-lambda t) form instead.  Two independently fitted drugs never
