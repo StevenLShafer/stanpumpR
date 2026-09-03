@@ -201,9 +201,9 @@ test_that("MAC sums the potent agents and adjusts for age", {
   props <- getGasProperties()
 
   # Mapleson: about 6% per decade
-  expect_equal(macForAge(2.05, 40), 2.05, tolerance = 1e-12)
-  expect_lt(macForAge(2.05, 80), macForAge(2.05, 40))
-  expect_equal(macForAge(2.05, 50) / macForAge(2.05, 40), 10^(-0.00269 * 10),
+  expect_equal(macForAge(2.1, 40), 2.1, tolerance = 1e-12)
+  expect_lt(macForAge(2.1, 80), macForAge(2.1, 40))
+  expect_equal(macForAge(2.1, 50) / macForAge(2.1, 40), 10^(-0.00269 * 10),
                tolerance = 1e-12)
 
   # A long run at a fixed dial should approach brain/MAC for that agent alone
@@ -290,4 +290,63 @@ test_that("cardiac output defaults to 75 mL/kg and changes uptake when overridde
   # Higher cardiac output removes more agent from the alveolus, so the
   # alveolar tension rises more slowly -- the classic Gas Man demonstration.
   expect_lt(aHigh[length(aHigh)], aLow[length(aLow)])
+})
+
+
+test_that("agent parameters are Gas Man's own, not literature substitutes", {
+  # Read from gasman.ini in the Gas Man source (GPL-3.0,
+  # github.com/rasman/gasmanonline).  Pinned because several differ from the
+  # conventional published values this file previously carried.
+  p <- getGasProperties()
+  get <- function(gas, col) p[[col]][p$gas == gas]
+
+  # blood:gas
+  expect_equal(get("nitrousOxide", "lambda_blood"), 0.47)
+  expect_equal(get("sevoflurane",  "lambda_blood"), 0.65)
+  expect_equal(get("isoflurane",   "lambda_blood"), 1.3)   # not 1.4
+  expect_equal(get("desflurane",   "lambda_blood"), 0.42)
+  expect_equal(get("nitrogen",     "lambda_blood"), 0.014)
+
+  # MAC
+  expect_equal(get("nitrousOxide", "MAC40"), 110)          # not 104
+  expect_equal(get("sevoflurane",  "MAC40"), 2.1)          # not 2.05
+  expect_equal(get("isoflurane",   "MAC40"), 1.1)
+  expect_equal(get("desflurane",   "MAC40"), 6.0)
+
+  # tissue:GAS, stored directly rather than converted from tissue:blood
+  expect_equal(get("desflurane", "tg_brain"),  0.54)
+  expect_equal(get("desflurane", "tg_muscle"), 0.97)
+  expect_equal(get("desflurane", "tg_fat"),    13)
+  expect_equal(unname(gasPartitionTissueGas(p[p$gas == "desflurane", ])),
+               c(0.54, 0.97, 13))
+
+  # Nitrogen is excluded from summed MAC despite gasman.ini giving it MAC 200,
+  # which would otherwise post 0.4 MAC on room air.
+  expect_false(get("nitrogen", "potent"))
+  expect_setequal(potentAgents(),
+                  c("nitrousOxide", "sevoflurane", "isoflurane", "desflurane"))
+})
+
+
+test_that("desflurane simulates and washes in fastest of the volatiles", {
+  mk <- function(agent) data.frame(
+    Time = c(0, 0, 0), Drug = c("oxygen", "ventilation", agent),
+    Dose = c(6, 4, 1), stringsAsFactors = FALSE)
+
+  fa <- function(agent) {
+    s <- advanceClosedFormGas(mk(agent), maximum = 30)
+    r <- s$results[s$results$Drug == agent & s$results$Site == "Alveolar", ]
+    approx(r$Time, r$Y, 10)$y
+  }
+
+  # Least soluble equilibrates fastest: desflurane 0.42 < sevoflurane 0.65 < isoflurane 1.3
+  expect_gt(fa("desflurane"), fa("sevoflurane"))
+  expect_gt(fa("sevoflurane"), fa("isoflurane"))
+
+  # And it reaches the brain and contributes MAC
+  s <- advanceClosedFormGas(mk("desflurane"), age = 40, maximum = 60)
+  brn <- s$results[s$results$Drug == "desflurane" & s$results$Site == "Brain", "Y"]
+  mac <- s$results[s$results$Drug == "MAC", "Y"]
+  expect_gt(max(brn), 0)
+  expect_equal(max(mac), max(brn) / macForAge(6.0, 40), tolerance = 1e-9)
 })

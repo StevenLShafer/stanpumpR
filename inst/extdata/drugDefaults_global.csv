@@ -24,4 +24,5 @@ oxygen,%,L/min,L/min,L/min,"L/min",#2E7D32,0,0,0,0,0,gas
 nitrousOxide,%,L/min,L/min,L/min,"L/min",#1E88E5,0,0,0,0,0,gas
 sevoflurane,%,%,%,%,"%",#F9A825,0,0,0,0,0,gas
 isoflurane,%,%,%,%,"%",#8E24AA,0,0,0,0,0,gas
+desflurane,%,%,%,%,"%",#00897B,0,0,0,0,0,gas
 ventilation,L/min,L/min,L/min,L/min,"L/min",#546E7A,0,0,0,0,0,gas
