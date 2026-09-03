@@ -214,11 +214,13 @@ test_that("MAC sums the potent agents and adjusts for age", {
     stringsAsFactors = FALSE
   )
   sim <- advanceClosedFormGas(dose, age = 40, maximum = 600)
-  brn <- sim$results[sim$results$Drug == "sevoflurane" & sim$results$Site == "Brain", "Y"]
+  alv <- sim$results[sim$results$Drug == "sevoflurane" & sim$results$Site == "Alveolar", "Y"]
   mac <- sim$results[sim$results$Drug == "MAC", "Y"]
 
+  # MAC is Minimum ALVEOLAR Concentration, and Gas Man's own CSV writes
+  # GetALV / m_fMAC, so it comes from the alveolar series, not the brain.
   MACsevo <- macForAge(props$MAC40[props$gas == "sevoflurane"], 40)
-  expect_equal(mac[length(mac)], brn[length(brn)] / MACsevo, tolerance = 1e-9)
+  expect_equal(mac, alv / MACsevo, tolerance = 1e-9)
 })
 
 
@@ -345,10 +347,17 @@ test_that("desflurane simulates and washes in fastest of the volatiles", {
 
   # And it reaches the brain and contributes MAC
   s <- advanceClosedFormGas(mk("desflurane"), age = 40, maximum = 60)
+  alv <- s$results[s$results$Drug == "desflurane" & s$results$Site == "Alveolar", "Y"]
   brn <- s$results[s$results$Drug == "desflurane" & s$results$Site == "Brain", "Y"]
   mac <- s$results[s$results$Drug == "MAC", "Y"]
   expect_gt(max(brn), 0)
-  expect_equal(max(mac), max(brn) / macForAge(6.0, 40), tolerance = 1e-9)
+  expect_equal(mac, alv / macForAge(6.0, 40), tolerance = 1e-9)
+
+  # ...and it is NOT the brain series.  The two converge at equilibrium, so the
+  # distinction only shows during wash-in, which is where it is checked.
+  early <- which(s$timeLine > 1 & s$timeLine < 10)
+  expect_gt(max(abs(alv[early] - brn[early])), 0.1)
+  expect_false(isTRUE(all.equal(mac[early], brn[early] / macForAge(6.0, 40))))
 })
 
 
