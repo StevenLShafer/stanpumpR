@@ -27,6 +27,26 @@
 # the metabolite concentration with the metabolite's own ke0 -- the metabolite
 # has its own effect site because its effect, not the parent's, is what matters
 # clinically.  Codeine is the clearest case: the analgesia is morphine's.
+#
+# A NOTE FOR WHOEVER WIRES THIS INTO simCpCe()
+# --------------------------------------------
+# A pure prodrug returns NA for its own effect site (see the ke0 guard below).
+# That is right for the PLOTTED series: simulationPlot() drops NA rows, so
+# codeine is drawn as plasma only and morphine carries the effect, which is the
+# specified behaviour.
+#
+# It is NOT safe for the derived scalars simCpCe() computes afterwards.  Two
+# places break, both verified:
+#
+#   maxCe <- max(results$"Effect Site")            -> NA
+#   equiSpace Ce via stats::approx(...)            -> ERROR, "need at least two
+#                                                     non-NA values to interpolate"
+#
+# So the wiring has to split the two: keep NA in the plotted series, and use
+# zero for the equiSpace Ce of a prodrug.  Zero is the honest value there --
+# codeine has no effect of its own, its MEAC is zero, and the hover readout and
+# the total-opioid MEAC sum both read equiSpace.  The morphine row, carrying the
+# summed contribution, is where the effect actually appears.
 # -----------------------------------------------------------------------------
 
 
