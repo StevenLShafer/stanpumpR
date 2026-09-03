@@ -65,6 +65,7 @@ Collate:
   advanceClosedForm1.R
   advanceClosedFormPO_IM_IN.R
   advanceClosedFormGas.R
+  advanceGasManBaseline.R
   advanceState.R
   advanceStatePO.R
   calculateCe.R
