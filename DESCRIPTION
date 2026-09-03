@@ -64,6 +64,7 @@ Collate:
   advanceClosedForm0.R
   advanceClosedForm1.R
   advanceClosedFormPO_IM_IN.R
+  advanceClosedFormMetabolite.R
   advanceState.R
   advanceStatePO.R
   calculateCe.R
@@ -97,6 +98,7 @@ Collate:
   hourMinute.R
   ig_absorption.R
   lbmJames.R
+  metaboliteCoefficients.R
   modelInteraction.R
   processdoseTable.R
   recoveryCalc.R
