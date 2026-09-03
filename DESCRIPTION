@@ -98,6 +98,7 @@ Collate:
   hourMinute.R
   ig_absorption.R
   lbmJames.R
+  mergeMetabolite.R
   metaboliteCoefficients.R
   modelInteraction.R
   processdoseTable.R

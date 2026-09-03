@@ -22,11 +22,18 @@
 #
 # Metabolite is formed from parent elimination.  With CL = k10 * v1 the parent's
 # elimination clearance, fm the MOLAR fraction of that elimination proceeding by
-# this pathway, and R the ratio of molecular weights (metabolite over parent,
-# because formation is molar but concentrations are by mass), the rate at which
-# metabolite mass appears is
+# this pathway, R the ratio of molecular weights (metabolite over parent, because
+# formation is molar but concentrations are by mass), and U a unit scale, the
+# rate at which metabolite mass appears is
 #
-#     formation(t) = fm * R * CL * Cp(t) = K Cp(t)
+#     formation(t) = fm * R * U * CL * Cp(t) = K Cp(t)
+#
+# U is needed because simCpCe() carries doses in an internal mass unit chosen by
+# each drug's Concentration.Units: mg for a drug reported in mcg/mL, mcg for one
+# reported in ng/mL.  A parent and its metabolite need not agree.  Codeine's
+# metabolite morphine is reported in mcg/mL and so carried in mg, and a parent
+# reported in ng/mL is carried in mcg -- a thousandfold difference that would
+# otherwise pass silently into the metabolite curve.
 #
 # The metabolite then obeys its own disposition, whose unit-bolus response is
 # likewise a sum of exponentials in its own right:
@@ -96,14 +103,18 @@ dispositionTerms <- function(pkSet)
 #' @param mwRatio molecular weight of the metabolite divided by that of the
 #'   parent.  Formation is molar but concentrations are reported by mass, so
 #'   this converts between them.  Defaults to 1.
+#' @param unitScale conversion from the parent's internal dose unit to the
+#'   metabolite's, normally from \code{metaboliteUnitScale()}.  Defaults to 1,
+#'   which is correct only when both drugs share a Concentration.Units.
 #'
 #' @returns a list with \code{lambda} (the union of eigenvalues),
 #'   \code{bolus} and \code{infusion} (coefficients on each), and the scalar
 #'   \code{K} used to form them
 #' @export
-metaboliteCoefficients <- function(parent, metabolite, fraction, mwRatio = 1)
+metaboliteCoefficients <- function(parent, metabolite, fraction, mwRatio = 1,
+                                   unitScale = 1)
 {
-  stopifnot(fraction >= 0, fraction <= 1, mwRatio > 0)
+  stopifnot(fraction >= 0, fraction <= 1, mwRatio > 0, unitScale > 0)
 
   P <- dispositionTerms(parent)
   M <- dispositionTerms(metabolite)
@@ -113,7 +124,7 @@ metaboliteCoefficients <- function(parent, metabolite, fraction, mwRatio = 1)
   # Parent elimination clearance, and the mass of metabolite formed per unit of
   # parent eliminated.
   CL <- parent$k10 * parent$v1
-  K  <- fraction * mwRatio * CL
+  K  <- fraction * mwRatio * unitScale * CL
 
   # An exact shared eigenvalue would divide by zero; the convolution then takes
   # the t*exp(-lambda t) form instead.  Two independently fitted drugs never
@@ -161,4 +172,40 @@ metaboliteAfterBolus <- function(coefs, dose, times)
 {
   vapply(times, function(t)
     dose * sum(coefs$bolus * exp(-coefs$lambda * t)), numeric(1))
+}
+
+
+#' Internal dose unit of a drug, in milligrams
+#'
+#' simCpCe() converts every dose into an internal mass unit implied by the
+#' drug's \code{Concentration.Units}, so that dividing by a volume in litres
+#' yields the reported concentration directly: a drug reported in mcg/mL carries
+#' its doses in mg, one reported in ng/mL carries them in mcg.
+#'
+#' @param concentrationUnits the drug's \code{Concentration.Units}, "mcg" or "ng"
+#' @returns the internal dose unit expressed in milligrams
+#' @keywords internal
+internalDoseScale <- function(concentrationUnits)
+{
+  switch(concentrationUnits,
+         mcg = 1,      # doses carried in mg
+         ng  = 1e-3,   # doses carried in mcg
+         stop("Unsupported Concentration.Units: ", concentrationUnits))
+}
+
+
+#' Unit conversion from a parent's dose units to its metabolite's
+#'
+#' A parent and its metabolite need not report in the same units.  Morphine is
+#' reported in mcg/mL and so carried internally in mg; a parent reported in
+#' ng/mL is carried in mcg.  Without this factor the metabolite curve would be
+#' wrong by a thousandfold, silently and in a plausible-looking direction.
+#'
+#' @param parentUnits parent drug's \code{Concentration.Units}
+#' @param metaboliteUnits metabolite drug's \code{Concentration.Units}
+#' @returns the multiplier to apply to metabolite formation
+#' @export
+metaboliteUnitScale <- function(parentUnits, metaboliteUnits)
+{
+  internalDoseScale(parentUnits) / internalDoseScale(metaboliteUnits)
 }
