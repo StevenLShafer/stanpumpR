@@ -108,10 +108,28 @@
 # simulated as one group and cannot be diffed drug by drug the way
 # processdoseTable() diffs the intravenous drugs.
 #
-# The one term that would break linearity is the volume loss from bulk nitrous
-# oxide uptake (the concentration effect).  It is deliberately not implemented:
-# whether Gas Man models it at all is unresolved.  The switch is carried through
-# the call signature so that turning it on later is a flag, not a rewrite.
+# The one term that would break linearity is the volume change from bulk gas
+# uptake -- the concentration and second gas effect.  It is NOT implemented
+# here yet.
+#
+# CORRECTION (2026-09-03): an earlier version of this comment said it was
+# unresolved whether Gas Man models it, and a later one said Gas Man does not.
+# Both were wrong.  Gas Man does model it, in GasDoc.cpp::Calc, under the names
+# "uptake effect" and "Correct for constant lung capacity" rather than
+# "concentration effect" -- which is why a grep for the usual term found
+# nothing and produced the wrong conclusion:
+#
+#     if (samp.m_bUptEnb) {
+#         if (fTotUptake > 0.0F)  f += fResults[CKT] * fTotUptake;   // inducing
+#         else                    f += fResults[ALV] * fTotUptake;   // emerging
+#     }
+#     fTarget[ALV] = f / g;
+#
+# and fTotUptake is summed across ALL gases before being handed to each one, so
+# nitrous oxide's uptake augments a volatile's alveolar tension.  That is the
+# second gas effect, and it is on by default (m_bRtnEnb = m_bUptEnb = true).
+#
+# It must therefore be implemented for the Gas Man baseline to be a baseline.
 # -----------------------------------------------------------------------------
 
 
@@ -401,8 +419,9 @@ advanceClosedFormGas <- function(
 )
 {
   if (isTRUE(concentrationEffect))
-    stop("The concentration effect (nitrous oxide volume loss) is not yet ",
-         "implemented.  See the header of advanceClosedFormGas.R.")
+    stop("The concentration and second gas effect is not yet implemented. ",
+         "Gas Man DOES model it -- see the header of this file -- so this ",
+         "must be built before the Gas Man baseline is meaningful.")
 
   if (is.null(body)) body <- getGasBody(weight)
   Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
