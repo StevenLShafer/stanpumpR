@@ -7,7 +7,7 @@
 
 pkWithMetabolite <- function(parentDrug = "hydromorphone",
                              metaboliteDrug = "morphine",
-                             fraction = 0.08,
+                             kForm = 0.01,
                              mwRatio = 1) {
   parent <- getDrugPK(parentDrug, 70, 170, 50, "male",
                       getDrugDefaults(parentDrug))$PK$default
@@ -15,7 +15,7 @@ pkWithMetabolite <- function(parentDrug = "hydromorphone",
                       getDrugDefaults(metaboliteDrug))$PK$default
   parent$metabolite <- list(
     name  = metaboliteDrug,
-    coefs = metaboliteCoefficients(parent, met, fraction, mwRatio),
+    coefs = metaboliteCoefficients(parent, met, kForm, mwRatio),
     ke0   = met$ke0
   )
   parent
@@ -84,12 +84,12 @@ test_that("the metabolite effect site lags the metabolite concentration", {
 })
 
 
-test_that("metabolite exposure scales with the pathway fraction", {
+test_that("metabolite exposure scales with the transfer rate constant", {
   DT <- data.frame(Time = 0, Dose = 5, Bolus = TRUE)
 
-  low  <- advanceClosedFormMetabolite(DT, pkWithMetabolite(fraction = 0.05),
+  low  <- advanceClosedFormMetabolite(DT, pkWithMetabolite(kForm = 0.005),
                                       240, FALSE, 0)
-  high <- advanceClosedFormMetabolite(DT, pkWithMetabolite(fraction = 0.10),
+  high <- advanceClosedFormMetabolite(DT, pkWithMetabolite(kForm = 0.010),
                                       240, FALSE, 0)
 
   expect_equal(high$CpMetabolite, 2 * low$CpMetabolite, tolerance = 1e-9)

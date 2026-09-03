@@ -20,13 +20,31 @@
 #
 #     Cp(t) = SUM_i  p_i exp(-lambda_i t)          p_i = p_coef_bolus_li
 #
-# Metabolite is formed from parent elimination.  With CL = k10 * v1 the parent's
-# elimination clearance, fm the MOLAR fraction of that elimination proceeding by
-# this pathway, R the ratio of molecular weights (metabolite over parent, because
-# formation is molar but concentrations are by mass), and U a unit scale, the
-# rate at which metabolite mass appears is
+# Metabolite is formed by a FIRST ORDER TRANSFER FROM THE PLASMA COMPARTMENT,
+# with its own rate constant kForm.  Writing A1 for the parent amount in the
+# central compartment, R for the ratio of molecular weights (metabolite over
+# parent, because formation is molar but concentrations are by mass) and U for a
+# unit scale, the rate at which metabolite mass appears is
 #
-#     formation(t) = fm * R * U * CL * Cp(t) = K Cp(t)
+#     formation(t) = kForm * A1(t) * R * U
+#                  = kForm * v1 * R * U * Cp(t)
+#                  = K Cp(t)
+#
+# FORMATION DOES NOT ALTER THE PARENT (Shafer, 2026-09-03)
+# -------------------------------------------------------
+# The transfer is NOT subtracted from the parent's differential equations, and
+# that is deliberate rather than an omission.  The parent's clearance was fitted
+# to observed plasma concentrations, so it already subsumes whatever portion of
+# the drug is eliminated as this metabolite.  Subtracting the pathway again would
+# double-count the loss and would make the parent's own model disagree with the
+# data it was fitted to.
+#
+# The consequence is that kForm is completely independent of the parent's PK
+# model.  It is not a fraction of k10 and does not scale with the parent's
+# clearance; it is its own parameter, added on top of a disposition model that
+# stands unchanged.  An earlier version of this file expressed formation as a
+# fraction of the parent's elimination clearance, which tied the two together
+# and was wrong.
 #
 # U is needed because simCpCe() carries doses in an internal mass unit chosen by
 # each drug's Concentration.Units: mg for a drug reported in mcg/mL, mcg for one
@@ -98,8 +116,10 @@ dispositionTerms <- function(pkSet)
 #'
 #' @param parent the parent drug's PK set
 #' @param metabolite the metabolite's own disposition PK set
-#' @param fraction molar fraction of parent elimination proceeding by this
-#'   metabolic pathway
+#' @param kForm first-order rate constant, per minute, for transfer from the
+#'   parent's central compartment to the metabolite.  Its own parameter: it is
+#'   not a fraction of the parent's elimination and does not scale with the
+#'   parent's clearance.
 #' @param mwRatio molecular weight of the metabolite divided by that of the
 #'   parent.  Formation is molar but concentrations are reported by mass, so
 #'   this converts between them.  Defaults to 1.
@@ -111,20 +131,22 @@ dispositionTerms <- function(pkSet)
 #'   \code{bolus} and \code{infusion} (coefficients on each), and the scalar
 #'   \code{K} used to form them
 #' @export
-metaboliteCoefficients <- function(parent, metabolite, fraction, mwRatio = 1,
+metaboliteCoefficients <- function(parent, metabolite, kForm, mwRatio = 1,
                                    unitScale = 1)
 {
-  stopifnot(fraction >= 0, fraction <= 1, mwRatio > 0, unitScale > 0)
+  # No upper bound on kForm.  The old 'fraction' form was capped at 1 because it
+  # was a share of elimination; a transfer rate constant has no such ceiling.
+  stopifnot(kForm >= 0, mwRatio > 0, unitScale > 0)
 
   P <- dispositionTerms(parent)
   M <- dispositionTerms(metabolite)
   if (length(P$lambda) == 0 || length(M$lambda) == 0)
     stop("Both the parent and the metabolite need at least one exponential term")
 
-  # Parent elimination clearance, and the mass of metabolite formed per unit of
-  # parent eliminated.
-  CL <- parent$k10 * parent$v1
-  K  <- fraction * mwRatio * unitScale * CL
+  # Mass of metabolite formed per unit of plasma concentration per minute.  The
+  # parent's v1 converts concentration to the amount the transfer acts on; the
+  # parent's k10 does NOT appear, because formation is independent of it.
+  K <- kForm * parent$v1 * mwRatio * unitScale
 
   # An exact shared eigenvalue would divide by zero; the convolution then takes
   # the t*exp(-lambda t) form instead.  Two independently fitted drugs never

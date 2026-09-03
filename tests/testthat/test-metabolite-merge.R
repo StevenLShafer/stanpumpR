@@ -36,15 +36,15 @@ test_that("the unit scale carries straight into the coefficients", {
   met    <- getDrugPK("morphine", 70, 170, 50, "male",
                       getDrugDefaults("morphine"))$PK$default
 
-  plain  <- metaboliteCoefficients(parent, met, 0.1)
-  scaled <- metaboliteCoefficients(parent, met, 0.1, unitScale = 1e-3)
+  plain  <- metaboliteCoefficients(parent, met, 0.01)
+  scaled <- metaboliteCoefficients(parent, met, 0.01, unitScale = 1e-3)
 
   expect_equal(scaled$bolus, plain$bolus * 1e-3, tolerance = 1e-15)
   expect_equal(scaled$K, plain$K * 1e-3, tolerance = 1e-15)
   # Still starts at zero
   expect_equal(sum(scaled$bolus), 0, tolerance = 1e-15)
 
-  expect_error(metaboliteCoefficients(parent, met, 0.1, unitScale = 0))
+  expect_error(metaboliteCoefficients(parent, met, 0.01, unitScale = 0))
 })
 
 
