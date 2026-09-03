@@ -140,3 +140,42 @@ test_that("a pkSet without a metabolite is refused", {
     "metabolite"
   )
 })
+
+
+test_that("a pure prodrug has no effect site of its own", {
+  # Codeine and tramadol are prodrugs only, so they carry no tPeak and
+  # getDrugPK leaves ke0 at zero.  calculateCe() divides by ke0 and would
+  # otherwise return NaN at every point.
+  pk <- pkWithMetabolite()
+  pk$ke0 <- 0
+
+  r <- advanceClosedFormMetabolite(doseTable(), pk, 240, FALSE, 0)
+
+  expect_true(all(is.na(r$Ce)))
+  expect_false(any(is.nan(r$Ce)))   # NA, so the plot drops it; not NaN
+  expect_true(all(is.finite(r$Cp)))
+  expect_gt(max(r$Cp), 0)
+
+  # The metabolite is untouched: its effect is the one that matters
+  expect_gt(max(r$CpMetabolite), 0)
+  expect_gt(max(r$CeMetabolite), 0)
+  expect_true(all(is.finite(r$CpMetabolite)))
+  expect_true(all(is.finite(r$CeMetabolite)))
+})
+
+
+test_that("advanceClosedForm0 also survives a drug with no tPeak", {
+  # The same latent divide-by-ke0.  No drug in the library reaches it today,
+  # which is why it had never surfaced.
+  pk <- getDrugPK("morphine", 70, 170, 50, "male",
+                  getDrugDefaults("morphine"))$PK$default
+  pk$ke0 <- 0
+
+  r <- advanceClosedForm0(data.frame(Time = 0, Dose = 5, Bolus = TRUE),
+                          pk, 120, FALSE, 0)
+
+  expect_true(all(is.finite(r$Cp)))
+  expect_gt(max(r$Cp), 0)
+  expect_true(all(is.na(r$Ce)))
+  expect_false(any(is.nan(r$Ce)))
+})

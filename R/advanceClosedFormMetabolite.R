@@ -105,7 +105,16 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
                              pkSet$p_coef_infusion_l3 * rate * (1 - l3_dt), 0, L)
 
   Cp <- p_state_l1 + p_state_l2 + p_state_l3
-  Ce <- calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
+  # A pure prodrug -- codeine, tramadol -- has no effect of its own, carries no
+  # tPeak, and so getDrugPK leaves ke0 at zero.  calculateCe() divides by ke0 and
+  # would return NaN for every point.  NA rather than zero, because
+  # simulationPlot() drops NA rows: the parent is then plotted as plasma only,
+  # instead of carrying a meaningless flat effect-site line along the axis.
+  Ce <- if (pkSet$ke0 > 0) {
+    calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
+  } else {
+    rep(NA_real_, L)
+  }
 
   # ---- Metabolite ----
   #

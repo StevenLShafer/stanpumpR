@@ -70,7 +70,14 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
 
       # Wrap up, calculate Ce
       Cp <- p_state_l1 + p_state_l2 + p_state_l3
-      Ce <- calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
+      # A drug with no tPeak has ke0 == 0, and calculateCe() divides by ke0.
+      # No drug in the library does today, but a pure prodrug would, and the
+      # result would be NaN at every point rather than an absent effect site.
+      Ce <- if (pkSet$ke0 > 0) {
+        calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
+      } else {
+        rep(NA_real_, L)
+      }
 
       if (plotRecovery)
       {
