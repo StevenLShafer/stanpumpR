@@ -510,12 +510,23 @@ advanceClosedFormGas <- function(
         stringsAsFactors = FALSE))
   }
 
-  # (5) MAC: the age-adjusted sum of brain tensions over the potent agents.
+  # (5) MAC, from the ALVEOLAR tension -- state 2, not the brain state 3.
+  #
+  # Minimum Alveolar Concentration is alveolar by definition, it is what is
+  # clinically titrated to, and it is what Gas Man itself reports: its CSV
+  # export writes GetALV(fMin, ng) / m_fMAC.  An earlier version of this file
+  # used the brain tension, which lags alveolar and is not what MAC means.
+  #
+  # Two things here are stanpumpR's, with no Gas Man counterpart to be faithful
+  # to.  Gas Man emits ONE ROW PER AGENT, each with its own MAC column, and
+  # never sums them; additive MAC across agents is ours.  And Gas Man uses
+  # m_fMAC raw, with no age term, so macForAge() is ours too -- a validation run
+  # against Gas Man output must use the reference age.
   macTotal <- rep(0, nT)
   for (g in props$gas[props$potent])
   {
     MAC <- macForAge(props$MAC40[props$gas == g], age)
-    macTotal <- macTotal + out[[g]][, 3] / MAC
+    macTotal <- macTotal + out[[g]][, 2] / MAC
   }
   results <- rbind(results, data.frame(
     Drug = "MAC", Time = timeLine, Site = "MAC", Y = macTotal,
