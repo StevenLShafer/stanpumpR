@@ -65,12 +65,19 @@
 #     ART = ALV, on the assumption that blood leaving the lung equilibrates
 #     with alveolar gas.  That is an ASSUMPTION and has not been checked
 #     against GetART().  If ART disagrees but ALV agrees, this is why.
-#   * m_bVapEnb.  Gas Man can inflate FGF to account for added vapour volume.
-#     Its default was not established; `vaporizer_effect` is FALSE here.
-#   * Weight.  Gas Man does NOT scale compartment volumes by weight; weight
-#     enters only as a multiplier on uptake.  A 140 kg patient therefore gets a
-#     70 kg FRC and twice the uptake.  Reproduced faithfully.  Comparisons at
-#     70 kg avoid the question entirely, which is the recommended starting point.
+#   * m_bVapEnb is CONFIRMED false by default (InitDocument sets
+#     m_bVapEnb = false), so `vaporizer_effect = FALSE` here is right.
+#   * Weight.  CORRECTED 2026-09-03.  An earlier version of this file said Gas
+#     Man does not scale compartment volumes by weight.  It does, but not by
+#     scaling m_fVolume -- which is why it was missed.  ComputeTerms divides the
+#     ALVEOLAR and TISSUE rate constants by fWtFactor = weight/70, which is
+#     equivalent to multiplying those effective volumes by it.  The CIRCUIT is
+#     not scaled, correctly, since it is machine rather than patient.  Uptake is
+#     separately multiplied by fWtFactor, consistently.
+#
+#     Note the DEFAULT VA and CO scale allometrically instead, by
+#     (weight/70)^0.75, but only as defaults -- an explicit scenario overrides
+#     them, so that does not enter a comparison that sets va and co.
 # =============================================================================
 
 
@@ -158,7 +165,8 @@ gasman_uptake <- function(state, sol, lambda, exp_tissue, subdt,
 # dubious and the whole tick should be retried at twice the resolution.
 gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
                         exp_tissue, subdt, tot_uptake,
-                        circuit, uptake_effect, recirculation) {
+                        circuit, uptake_effect, recirculation,
+                        wt_factor = 1) {
 
   eff_ckt    <- fgf * sol[["CKT"]]
   eff_alv    <- va  * sol[["ALV"]]
@@ -219,7 +227,12 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
   # P(t+dt) = target*(1 - exp(-k dt)) + P(t)*exp(-k dt),
   #   k = effective_flow / (volume * solubility)
   f_ckt <- exp(-subdt / (GASMAN_VOLUME[["CKT"]] * sol[["CKT"]]) * (eff_ckt + eff_alv))
-  f_alv <- exp(-subdt / (GASMAN_VOLUME[["ALV"]] * sol[["ALV"]]) * (eff_alv + blood_flow))
+  # ALV and the tissues carry the weight factor; the circuit does not, because
+  # the circuit is machine rather than patient.  Gas Man does this by dividing
+  # the rate constant by fWtFactor (ComputeTerms), which is the same thing as
+  # multiplying the effective volume by it.
+  f_alv <- exp(-subdt / (GASMAN_VOLUME[["ALV"]] * sol[["ALV"]] * wt_factor) *
+                 (eff_alv + blood_flow))
   decay <- c(CKT = f_ckt, ALV = f_alv,
              VRG = exp_tissue[["VRG"]], MUS = exp_tissue[["MUS"]],
              FAT = exp_tissue[["FAT"]])
@@ -315,10 +328,11 @@ gasman_simulate <- function(agents,
       n_sub <- 2^nv_level
       subdt <- dt / n_sub
 
+      wt_factor <- weight / GASMAN_STD_WEIGHT
       exp_tissue <- lapply(seq_along(agents), function(i) {
         eff <- lam[i] * co * GASMAN_RATIO
         exp(-eff * subdt / (GASMAN_VOLUME[c("VRG", "MUS", "FAT")] *
-                              sol[[i]][c("VRG", "MUS", "FAT")]))
+                              sol[[i]][c("VRG", "MUS", "FAT")] * wt_factor))
       })
 
       ok <- TRUE
@@ -338,7 +352,8 @@ gasman_simulate <- function(agents,
 
           r <- gasman_calc(state[[i]], sol[[i]], lam[i], del[i],
                            eff_fgf, va, co, exp_tissue[[i]], subdt,
-                           tot_uptake, circuit, uptake_effect, recirculation)
+                           tot_uptake, circuit, uptake_effect, recirculation,
+                           wt_factor)
           state[[i]] <- r$state
           if (!r$ok) ok <- FALSE
 
