@@ -82,11 +82,14 @@
 #
 # ODDITIES REPRODUCED RATHER THAN FIXED
 # -------------------------------------
-#   * Compartment volumes are NOT scaled by weight.  Weight enters only as
-#     fWtFactor = weight/70 multiplying the uptake rate.  A 140 kg patient
-#     therefore gets the same FRC and the same tissue volumes as a 70 kg one,
-#     but twice the uptake.  Faithfully reproduced; flagged for the phase that
-#     corrects parameters.
+#   * CORRECTED 2026-09-03: an earlier version of this note said compartment
+#     volumes are not weight-scaled.  They are.  Gas Man does not scale
+#     m_fVolume, which is why it was missed; ComputeTerms instead divides the
+#     ALVEOLAR and TISSUE rate constants by fWtFactor = weight/70, which is the
+#     same as multiplying those effective volumes.  The CIRCUIT is deliberately
+#     unscaled, being machine rather than patient.  Uptake carries the same
+#     factor, consistently.  This engine previously applied the factor to uptake
+#     only, which was internally inconsistent at any weight other than 70.
 #   * Gas Man's uptake sum runs over VRG, MUS and FAT only, and when
 #     recirculation is disabled it adds back CO * lambdaBloodGas * mixedVenous.
 # -----------------------------------------------------------------------------
@@ -172,7 +175,7 @@ gasManUptake <- function(state, sol, lambdaBlood, fExpTissue, subdt,
 #'   sub-step should be rejected and retried at finer resolution
 #' @keywords internal
 gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
-                       fExpTissue, subdt, totUptake, opts)
+                       fExpTissue, subdt, totUptake, opts, wtFactor = 1)
 {
   effCKT    <- FGF * sol[["CKT"]]
   effALV    <- VA  * sol[["ALV"]]
@@ -228,7 +231,12 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
   target[["VRG"]] <- target[["MUS"]] <- target[["FAT"]] <- state[["ALV"]]
 
   fCKT <- exp(-subdt / (GASMAN_VOLUME[["CKT"]] * sol[["CKT"]]) * (effCKT + effALV))
-  fALV <- exp(-subdt / (GASMAN_VOLUME[["ALV"]] * sol[["ALV"]]) * (effALV + bloodFlow))
+  # The weight factor scales the ALVEOLUS and the TISSUES but not the CIRCUIT,
+  # which is machine rather than patient.  Gas Man does it by dividing the rate
+  # constant by fWtFactor in ComputeTerms, equivalent to multiplying the
+  # effective volume.
+  fALV <- exp(-subdt / (GASMAN_VOLUME[["ALV"]] * sol[["ALV"]] * wtFactor) *
+                (effALV + bloodFlow))
   decay <- c(CKT = fCKT, ALV = fALV,
              VRG = fExpTissue[["VRG"]], MUS = fExpTissue[["MUS"]],
              FAT = fExpTissue[["FAT"]])
@@ -334,10 +342,11 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
       subdt <- dt / nSub
 
       # Tissue exponentials are constant within a sub-step size.
+      wtFactor <- weight / GASMAN_STD_WEIGHT
       fExpTissue <- lapply(agents, function(g) {
         eff <- lambdaBlood[[g]] * cardiacOutput * GASMAN_RATIO
         exp(-eff * subdt / (GASMAN_VOLUME[c("VRG", "MUS", "FAT")] *
-                              sol[[g]][c("VRG", "MUS", "FAT")]))
+                              sol[[g]][c("VRG", "MUS", "FAT")] * wtFactor))
       })
       names(fExpTissue) <- agents
 
@@ -354,7 +363,8 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
           r <- gasManCalc(state[[g]], sol[[g]], lambdaBlood[[g]],
                           DEL = s$Ffgf[[g]], FGF = s$Q, VA = s$VA,
                           CO = cardiacOutput, fExpTissue = fExpTissue[[g]],
-                          subdt = subdt, totUptake = totUptake, opts = opts)
+                          subdt = subdt, totUptake = totUptake, opts = opts,
+                          wtFactor = wtFactor)
           state[[g]] <- r$state
           if (!r$ok) ok <- FALSE
         }

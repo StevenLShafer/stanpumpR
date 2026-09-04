@@ -189,3 +189,31 @@ test_that("tensions stay physical throughout", {
   sevo <- b$results[b$results$Drug == "sevoflurane", ]
   expect_lt(max(sevo$Y), 2 + 1e-9)
 })
+
+
+test_that("weight scales the alveolus and tissues but not the circuit", {
+  # Gas Man's ComputeTerms divides the ALVEOLAR and TISSUE rate constants by
+  # fWtFactor = weight/70, equivalent to multiplying those effective volumes.
+  # The circuit is machine, not patient, and is left alone.  Uptake carries the
+  # same factor.  This engine previously applied the factor to uptake only,
+  # which was internally inconsistent off 70 kg.
+  at <- function(w, site, t) {
+    b <- advanceGasManBaseline(simpleDT(), weight = w, maximum = 30, dt = 0.1)
+    valueAt(b, "sevoflurane", site, t)
+  }
+
+  # A heavier patient has a larger alveolus and larger tissues, so the alveolar
+  # tension rises more slowly.
+  expect_gt(at(70, "ALV", 5), at(100, "ALV", 5))
+  expect_gt(at(100, "ALV", 5), at(140, "ALV", 5))
+  expect_gt(at(70, "VRG", 10), at(140, "VRG", 10))
+
+  # The circuit is unscaled, so it is barely moved -- only through the
+  # alveolar term feeding back into it.
+  ckt70  <- at(70,  "CKT", 30)
+  ckt140 <- at(140, "CKT", 30)
+  expect_lt(abs(ckt70 - ckt140) / ckt70, 0.05)
+
+  # And 70 kg is exactly the reference: the factor is one.
+  expect_equal(GASMAN_STD_WEIGHT, 70)
+})
