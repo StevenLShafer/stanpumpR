@@ -43,6 +43,10 @@
 #   * ALV early (0-5 min), where the integration scheme matters most.
 #   * The Uptake and Delivered columns, which integrate the whole trajectory
 #     and so accumulate any systematic error.
+#   * VA.  Gas Man reports INSPIRED ventilation, the setting plus the volume
+#     drawn in to replace uptake, and this code now does the same.  It is worth
+#     comparing because it is the only column exposing the INSTANTANEOUS uptake
+#     rate -- Uptake itself is cumulative, so a rate error there is smeared.
 #   * A case with nitrous oxide AND a volatile, which exercises the uptake
 #     ("second gas") coupling between gases.
 #   * dt_ms.  Gas Man's m_fdt is m_cMSec_dx/60000.  The value is 6000 ms, which
@@ -395,9 +399,24 @@ gasman_simulate <- function(agents,
                                  sum(miss), ncol(rec[[i]]), byrow = TRUE)
   }
 
+  # Gas Man's VA column is INSPIRED ventilation, not the setting.  GetVA returns
+  #     (sum over gases of UPT(t) - UPT(t - one tick)) / dt  +  m_fVA
+  # when uptake is enabled: the expired setting plus the extra volume drawn in to
+  # replace what blood took up.  Reporting the setting instead would make the
+  # column look like a disagreement when it is only a difference of definition.
+  # Note this is REPORTING only -- the model is untouched either way.
+  cum_tot <- Reduce(`+`, lapply(rec, function(m) m[, "Uptake"]))
+  if (uptake_effect) {
+    prev   <- stats::approx(out_times, cum_tot, out_times - dt, rule = 2)$y
+    va_rep <- va + (cum_tot - prev) / dt
+    va_rep[out_times < dt] <- va          # Gas Man returns the setting on tick 1
+  } else {
+    va_rep <- rep(va, n_out)
+  }
+
   res <- do.call(rbind, lapply(seq_along(agents), function(i) data.frame(
     Time = out_times, Agent = names_in[i],
-    FGF = fgf, VA = va, CO = co,
+    FGF = fgf, VA = va_rep, CO = co,
     CKT = rec[[i]][, "CKT"], ALV = rec[[i]][, "ALV"],
     ART = rec[[i]][, "ALV"],          # ASSUMPTION -- see KNOWN GAPS
     VRG = rec[[i]][, "VRG"], MUS = rec[[i]][, "MUS"], FAT = rec[[i]][, "FAT"],
@@ -416,7 +435,7 @@ gasman_simulate <- function(agents,
 # Gas Man writes Time as "H:M:S".  Pass `time_parser` if the export differs.
 gasman_compare <- function(ours, theirs,
                            columns = c("CKT", "ALV", "VRG", "MUS", "FAT", "VEN",
-                                       "Uptake", "Delivered"),
+                                       "Uptake", "Delivered", "VA"),
                            time_parser = NULL) {
 
   if (is.null(time_parser)) {
