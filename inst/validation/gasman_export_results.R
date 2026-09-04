@@ -28,6 +28,7 @@ if (!exists("gasman_simulate")) {
 }
 
 OUTFILE <- "gasman_baseline_results.xlsx"
+CSVFILE <- "gasman_baseline_summary.csv"
 DT_MS   <- 6000
 MINUTES <- 30
 
@@ -162,6 +163,16 @@ for (r in seq_len(nrow(grid)))
 
 openxlsx::write.xlsx(sheets, file = OUTFILE, overwrite = TRUE)
 
+# The Summary again as CSV.  Same numbers from the same run, but 6 KB rather
+# than 83 KB, so it travels as an email attachment where the workbook does not,
+# and it opens directly in Excel.  Label is dropped: long prose, already in the
+# Grid sheet.
+csv <- roundOut(summary)
+csv$Label <- NULL
+utils::write.csv(csv, CSVFILE, row.names = FALSE)
+
 cat("Wrote", OUTFILE, "--", length(sheets), "sheets,",
     nrow(run$ours), "rows of results\n")
+cat("Wrote", CSVFILE, "--", nrow(csv), "rows
+")
 cat("Scenario files for Gas Man are in scenarios/\n")
