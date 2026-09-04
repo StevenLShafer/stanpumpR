@@ -149,3 +149,33 @@ exercise low flow, a near-closed circuit, a soluble agent, desflurane and
 reduced cardiac output, none of which the 2026-09-04 concordance run touched.
 Weight is still 70 throughout, so the scaling corrected in `4185455` remains
 untested, and every case holds its settings constant.
+
+### Correction, same day: the reported VA depended on the output grid
+
+The `VA` column in the first version of this grid export was wrong, and the CSV
+sent to Epstein on 2026-09-04 carries the wrong values.
+
+`gasman_simulate()` reconstructed the uptake rate by interpolating *cumulative*
+uptake on the **output** grid, at `t` and `t - dt`. That makes a reported number
+depend on how often output happens to be written, which it must not. Measured on
+case 1, identical model run, VA at 30 minutes:
+
+| output spacing | VA reported (before) | VA reported (after) |
+|---|---|---|
+| 1 s | 4.010966406 | 4.010966406 |
+| 5 s | 4.002193300 | 4.010966406 |
+| 30 s | 4.010977700 | 4.010966406 |
+| 60 s | 4.010991900 | 4.010966406 |
+
+The fix records the uptake increment over each tick as the run proceeds, which
+is the window `GetVA` actually uses:
+`(sum over gases of UPT(t) - UPT(t - one tick)) / dt + m_fVA`.
+
+Two things this does not change. The model is untouched — every tension, and
+`Uptake` and `Delivered`, are identical before and after; only the reported `VA`
+moves. And the agreement with Gas Man stands: on Epstein's scenario the
+corrected figure is 4.170709095 against his 4.170708179, a relative difference
+of 2.2e-07, now independent of output spacing where before it was not.
+
+The bug was confined to `inst/validation/gasman_baseline_standalone.R`.
+`R/advanceGasManBaseline.R` takes VA as an input and never reconstructs it.
