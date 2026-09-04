@@ -44,7 +44,10 @@ Imports:
     stats,
     tidyr,
     tools,
+    undomanager,
     utils
+Remotes:
+    daattali/undomanager
 Suggests:
     devtools,
     knitr,

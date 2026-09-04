@@ -33,7 +33,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 
 `recalculatePK()` and `processdoseTable()` are *meant* to diff inputs and only re-simulate drugs that changed — see known issues below.
 
-**Dose table lifecycle**: edits land in a draft (`doseTableDraft()`) with undo/redo; `Apply` commits it to the canonical `doseTable()`; `doseTableClean()` (cleaned via `cleanDoseTable()` in `input-tables.R`) is what the rest of the pipeline actually reads. Clicking the plot to add/edit a dose bypasses the draft and applies immediately.
+**Dose table lifecycle**: edits land in a draft held by an `{undomanager}` (`doseTableHistory()`, with `doseTableDraft()` a thin reactive over its `$value`) that owns the undo/redo history; `Apply` commits it to the canonical `doseTable()`; `doseTableClean()` (cleaned via `cleanDoseTable()` in `input-tables.R`) is what the rest of the pipeline actually reads. Clicking the plot to add/edit a dose bypasses the draft and applies immediately, and any direct write to `doseTable()` resets the draft and clears the history.
 
 **Testing/scripting entry point**: `simulateDrugsWithCovariates()` is the exported, Shiny-free API (loops `getDrugPK()` → `simCpCe()` per drug) — used by tests and vignettes to drive the PK/PD core without the app.
 
@@ -47,7 +47,8 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
   3. `tests/testthat/test-drugs-<name>.R` (unit test — pin values with `expect_equal_rounded()` from `tests/testthat/helpers.R`)
 - **Debug logging**: `outputComments()`, active when `?debug=1` is in the URL.
 - **Deploy**: GitHub Actions — PRs auto-deploy to a test environment; merges to `master` deploy to production (shinyapps.io).
-- **Adding an R package**: add to `DESCRIPTION` first, then `renv::install("pkg")` + `renv::snapshot()`, commit `DESCRIPTION` + `renv.lock` together.
+- **Adding an R package**: add to `DESCRIPTION` first, then `renv::install("pkg")` + `renv::snapshot()`, commit `DESCRIPTION` + `renv.lock` together. For a package that isn't on CRAN, also add it under `Remotes:` in `DESCRIPTION` (e.g. `daattali/undomanager`) and install with `renv::install("user/repo")`, so the deploy can resolve it.
+
 
 ## Known Issues
 
