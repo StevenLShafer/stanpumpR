@@ -129,6 +129,29 @@ for (t in c(1, 2, 5, 10, 20, 30)) {
               t, a, b, a / b))
 }
 
+# ---------------------------------------------------------------------------
+# FIRST DIAGNOSTIC: Delivered has no model in it
+# ---------------------------------------------------------------------------
+# Gas Man accumulates fResults[DEL] += fDEL * fFGF * subdt / 100, and
+# GetDelivered returns it unchanged.  So the Delivered column is a pure function
+# of the dial, the fresh gas flow and elapsed time -- no compartments, no
+# solubilities, no integration scheme, no weight.  It separates two very
+# different problems:
+#
+#   Delivered AGREES, Uptake disagrees  -> the inputs are being read the same way
+#                                          on both sides, and the disagreement is
+#                                          in the model or its parameters.
+#   Delivered DISAGREES                 -> FGF or the dial is not what we think
+#                                          it is, and everything downstream
+#                                          follows from that.  CHECK THIS FIRST.
+cat("\nDelivered at 30 min -- model-free, should match Gas Man exactly:\n")
+for (r in seq_len(nrow(grid))) {
+  o <- run$ours[run$ours$Case == r & run$ours$Agent == grid$agent1[r], ]
+  expected <- grid$del1[r] * grid$fgf[r] * MINUTES / 100
+  cat(sprintf("  case %d  %-11s  ours %7.4f L   dial x FGF x t / 100 = %7.4f L\n",
+              r, grid$agent1[r], o$Delivered[nrow(o)], expected))
+}
+
 cat("\nNext:\n")
 cat("  theirs <- sprintf(\"gasman_out/case_%03d.csv\", 1:5)\n")
 cat("  gasman_verify(run, theirs)\n")
