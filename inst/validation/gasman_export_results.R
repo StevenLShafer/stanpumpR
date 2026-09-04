@@ -31,14 +31,22 @@ OUTFILE <- "gasman_baseline_results.xlsx"
 DT_MS   <- 6000
 MINUTES <- 30
 
-# Output sampling for the Case sheets.  Five seconds, not one: the fastest thing
-# in the model is the circuit washin, whose time constant is the circuit volume
-# over the effective flow through it -- 8 L / (8 + 4) L/min, about 40 s in case
-# 1 and longer everywhere else.  Five-second sampling puts eight points in that
-# constant, which resolves the curve, while one-second sampling makes the file
-# five times larger to carry information the model does not contain.  Set this
-# to 1 if you want the dense version; nothing else changes.
-EVERY_SECONDS <- 5
+# Output sampling for the Case sheets.  Dense early, sparse late, because the
+# curve is not equally interesting throughout.
+#
+# The fastest thing in the model is the circuit washin, whose time constant is
+# the circuit volume over the effective flow through it -- 8 L / (8 + 4) L/min,
+# about 40 s in case 1 and longer in every other case.  So the first two minutes
+# are sampled every 5 s, putting eight points in that constant.  After that the
+# curves are slow and smooth, and disagreements between two implementations of
+# the same model are smooth too -- they do not appear at one isolated second and
+# vanish at the next -- so 30 s resolves anything real while keeping the
+# workbook small enough to email.
+#
+# Set BOTH to 1 for a dense export; nothing else changes.
+EVERY_SECONDS      <- 5     # sampling within the first EARLY_MINUTES
+LATE_EVERY_SECONDS <- 30    # sampling thereafter
+EARLY_MINUTES      <- 2
 
 grid <- data.frame(
   case    = 1:5,
@@ -63,6 +71,14 @@ grid <- data.frame(
 
 cat("Running the grid...\n")
 run <- gasman_grid(grid, outdir = "scenarios", every_seconds = EVERY_SECONDS)
+
+# Thin the late portion.  Keep every row inside EARLY_MINUTES, and thereafter
+# only those landing on a LATE_EVERY_SECONDS boundary.  Times are in minutes and
+# come off a fixed grid, so the modulo is exact rather than floating-point luck,
+# but round anyway so this stays true if the grid ever changes.
+keep <- run$ours$Time <= EARLY_MINUTES |
+        round(run$ours$Time * 60) %% LATE_EVERY_SECONDS == 0
+run$ours <- run$ours[keep, ]
 
 # ---- provenance --------------------------------------------------------------
 gitrev <- tryCatch(
@@ -106,7 +122,9 @@ add("ART",              "reported as ALV; not verified against GetART()")
 add("", "")
 add("Sheet Grid",       "the five case definitions")
 add("Sheet Summary",    "key timepoints, for eyeballing")
-add("Sheet Case_n",     paste0("full series, every ", EVERY_SECONDS, " seconds"))
+add("Sheet Case_n",     paste0("every ", EVERY_SECONDS, " s for the first ",
+                              EARLY_MINUTES, " min, then every ",
+                              LATE_EVERY_SECONDS, " s"))
 
 # ---- a compact summary -------------------------------------------------------
 tt <- c(1, 2, 5, 10, 15, 20, 30)
