@@ -326,11 +326,21 @@ gasman_simulate <- function(agents,
            dimnames = list(NULL, c(GASMAN_COMPARTMENTS, "Uptake", "Delivered"))))
   for (i in seq_along(agents)) rec[[i]][1, ] <- c(state[[i]], 0, 0)
 
+  # VA is RECORDED as the run proceeds, not reconstructed afterwards.  Gas Man's
+  # GetVA is (sum over gases of UPT(t) - UPT(t - one tick)) / dt + m_fVA, i.e.
+  # the uptake rate over the LAST TICK.  An earlier version recovered that by
+  # interpolating cumulative uptake on the OUTPUT grid, which made the reported
+  # number depend on how often output was written -- 4.0110 at one-second output
+  # against 4.0022 at five-second output for the same run.  The tick is the only
+  # correct window, so record it here.
+  va_rec    <- rep(va, n_out)     # Gas Man returns the setting on tick 1
+
   n_ticks   <- max(1, ceiling(minutes / dt))
   next_out  <- 2
   max_vern  <- 0
 
   for (tick in seq_len(n_ticks)) {
+    cum_before <- sum(cum_uptake)      # for this tick's VA
     # Settings are constant here, so the only change is at time zero.
     check_fast_decay <- (tick - 1) < GASMAN_VERNIER_TICKS
     nv_level <- 0
@@ -385,10 +395,14 @@ gasman_simulate <- function(agents,
     }
     max_vern <- max(max_vern, nv_level)
 
+    # Averaged over the tick, exactly the window GetVA uses.
+    va_now <- if (uptake_effect) va + (sum(cum_uptake) - cum_before) / dt else va
+
     t_end <- tick * dt
     while (next_out <= n_out && out_times[next_out] <= t_end + 1e-12) {
       for (i in seq_along(agents))
         rec[[i]][next_out, ] <- c(state[[i]], cum_uptake[i], cum_delivered[i])
+      va_rec[next_out] <- va_now
       next_out <- next_out + 1
     }
   }
@@ -405,14 +419,7 @@ gasman_simulate <- function(agents,
   # replace what blood took up.  Reporting the setting instead would make the
   # column look like a disagreement when it is only a difference of definition.
   # Note this is REPORTING only -- the model is untouched either way.
-  cum_tot <- Reduce(`+`, lapply(rec, function(m) m[, "Uptake"]))
-  if (uptake_effect) {
-    prev   <- stats::approx(out_times, cum_tot, out_times - dt, rule = 2)$y
-    va_rep <- va + (cum_tot - prev) / dt
-    va_rep[out_times < dt] <- va          # Gas Man returns the setting on tick 1
-  } else {
-    va_rep <- rep(va, n_out)
-  }
+  va_rep <- va_rec        # recorded per tick in the loop above, see the note there
 
   res <- do.call(rbind, lapply(seq_along(agents), function(i) data.frame(
     Time = out_times, Agent = names_in[i],
