@@ -3,8 +3,8 @@
 # =============================================================================
 #
 # Produces gasman_baseline_results.xlsx: our answers for every case in the
-# five-case grid, at one-second resolution, with provenance recorded so the run
-# can be reproduced or challenged.
+# five-case grid, with provenance recorded so the run can be reproduced or
+# challenged.
 #
 # The point is to give a fixed reference to diff against.  Two independent
 # checks become possible:
@@ -31,6 +31,15 @@ OUTFILE <- "gasman_baseline_results.xlsx"
 DT_MS   <- 6000
 MINUTES <- 30
 
+# Output sampling for the Case sheets.  Five seconds, not one: the fastest thing
+# in the model is the circuit washin, whose time constant is the circuit volume
+# over the effective flow through it -- 8 L / (8 + 4) L/min, about 40 s in case
+# 1 and longer everywhere else.  Five-second sampling puts eight points in that
+# constant, which resolves the curve, while one-second sampling makes the file
+# five times larger to carry information the model does not contain.  Set this
+# to 1 if you want the dense version; nothing else changes.
+EVERY_SECONDS <- 5
+
 grid <- data.frame(
   case    = 1:5,
   label   = c("sevoflurane, high flow",
@@ -53,7 +62,7 @@ grid <- data.frame(
 )
 
 cat("Running the grid...\n")
-run <- gasman_grid(grid, outdir = "scenarios", every_seconds = 1)
+run <- gasman_grid(grid, outdir = "scenarios", every_seconds = EVERY_SECONDS)
 
 # ---- provenance --------------------------------------------------------------
 gitrev <- tryCatch(
@@ -83,6 +92,10 @@ add("uptake_effect",    "TRUE  (m_bUptEnb; the concentration and second gas effe
 add("recirculation",    "TRUE  (m_bRtnEnb)")
 add("vaporizer_effect", "FALSE (m_bVapEnb; confirmed false in InitDocument)")
 add("", "")
+add("Precision",        paste("10 significant digits. The arithmetic is",
+                              "double throughout; this is the reporting",
+                              "boundary only. Gas Man stores results in C++",
+                              "float, about 7 digits."))
 add("Tensions",         "percent of one atmosphere")
 add("Uptake",           "cumulative litres of agent taken up by the tissues")
 add("Delivered",        "cumulative litres of agent delivered")
@@ -93,7 +106,7 @@ add("ART",              "reported as ALV; not verified against GetART()")
 add("", "")
 add("Sheet Grid",       "the five case definitions")
 add("Sheet Summary",    "key timepoints, for eyeballing")
-add("Sheet Case_n",     "full series at one-second resolution")
+add("Sheet Case_n",     paste0("full series, every ", EVERY_SECONDS, " seconds"))
 
 # ---- a compact summary -------------------------------------------------------
 tt <- c(1, 2, 5, 10, 15, 20, 30)
@@ -111,9 +124,23 @@ summary <- do.call(rbind, lapply(seq_len(nrow(grid)), function(r) {
   }))
 }))
 
-sheets <- list(About = about, Grid = grid, Summary = summary)
+# Report 10 significant digits.  Our arithmetic is double precision and stays
+# double throughout; this rounding is at the REPORTING boundary only.  Gas Man
+# stores its results in C++ float (typedef float COMP_ARRAY[MAX_COMPART]), whose
+# epsilon is 1.19e-07, so it carries about 7 significant digits.  Printing 15
+# against a 7-digit target is false precision, and 10 leaves three digits of
+# headroom below anything Gas Man can resolve -- enough that a real disagreement
+# is still visible well before the rounding is.
+roundOut <- function(d) {
+  num <- vapply(d, is.numeric, logical(1))
+  num[names(d) %in% c("Case", "Time", "Minute")] <- FALSE
+  d[num] <- lapply(d[num], signif, digits = 10)
+  d
+}
+
+sheets <- list(About = about, Grid = grid, Summary = roundOut(summary))
 for (r in seq_len(nrow(grid)))
-  sheets[[paste0("Case_", r)]] <- run$ours[run$ours$Case == r, ]
+  sheets[[paste0("Case_", r)]] <- roundOut(run$ours[run$ours$Case == r, ])
 
 openxlsx::write.xlsx(sheets, file = OUTFILE, overwrite = TRUE)
 
