@@ -270,8 +270,10 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
 #' @param weight patient weight in kg
 #' @param maximum simulation length in minutes
 #' @param cardiacOutput cardiac output in L/min; defaults to Gas Man's 5
-#' @param dt base tick in minutes.  Gas Man's m_fdt is m_cMSec_dx/60000, so a
-#'   1000 ms tick is 1/60.  Smaller is more faithful and slower.
+#' @param dt base tick in minutes.  Gas Man's m_fdt is m_cMSec_dx/60000, and
+#'   m_cMSec_dx is 6000 ms -- its breath period, 10 breaths per minute -- so the
+#'   default here is 0.1.  dt does not multiply ventilation; it only sets how
+#'   stale the targets are between sub-steps.
 #' @param circuit one of "semi-closed", "open" or "ideal"
 #' @param uptakeEffect apply the constant-lung-capacity correction, which is the
 #'   concentration and second gas effect.  Gas Man defaults it on.
@@ -282,7 +284,7 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
 #'   compartments), \code{state}, \code{timeLine} and \code{maxVernier}
 #' @export
 advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
-                                  cardiacOutput = 5, dt = 1/60,
+                                  cardiacOutput = 5, dt = 0.1,
                                   circuit = c("semi-closed", "open", "ideal"),
                                   uptakeEffect = TRUE, recirculation = TRUE,
                                   resolution = 601)

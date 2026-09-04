@@ -45,9 +45,19 @@
 #     and so accumulate any systematic error.
 #   * A case with nitrous oxide AND a volatile, which exercises the uptake
 #     ("second gas") coupling between gases.
-#   * dt_ms.  Gas Man's m_fdt is m_cMSec_dx/60000 and the value of m_cMSec_dx
-#     is not something I could read out of the source.  1000 ms is the guess
-#     here.  If curves diverge early and converge later, try 500 or 250.
+#   * dt_ms.  Gas Man's m_fdt is m_cMSec_dx/60000.  The value is 6000 ms, which
+#     is Gas Man's BREATH PERIOD -- its own comment says Calc is called
+#     "2^nVerner times per breath to advance one full breath period", and 6000 ms
+#     is 10 breaths per minute.  Their scenario template sets dt_ms,6000.  An
+#     earlier version of this file defaulted to 1000, which was simply wrong.
+#
+#     Note dt does NOT multiply ventilation.  VA is a separate parameter in
+#     L/min and enters as a flow; dt only sets how stale the targets are between
+#     sub-steps.  Measured sensitivity for sevoflurane 2%, FGF 8, VA 4, CO 5:
+#     dt 1000 against dt 6000 differs by 6.4% at 1 min, 1.3% at 5 min and under
+#     0.2% by 20 min, and the curves converge as dt shrinks.  That is a bounded
+#     splitting error, not a rate error, so dt alone cannot explain a large
+#     disagreement in uptake.
 #
 # KNOWN GAPS, stated up front so they are not mistaken for findings
 # ------------------------------------------------------------------
@@ -260,7 +270,7 @@ gasman_simulate <- function(agents,
                             uptake_effect = TRUE,
                             recirculation = TRUE,
                             vaporizer_effect = FALSE,
-                            dt_ms = 1000,
+                            dt_ms = 6000,
                             every_seconds = 1) {
 
   stopifnot(is.list(agents), length(agents) > 0)
@@ -488,7 +498,7 @@ if (identical(environment(), globalenv()) && !exists("GASMAN_QUIET")) {
 #'   state at time zero; without a schedule the settings are constant.
 #' @return character vector of CSV lines
 gasman_scenario_csv <- function(agents, fgf = 8, va = 4, co = 5, weight = 70,
-                                circuit = "semi-closed", dt_ms = 1000,
+                                circuit = "semi-closed", dt_ms = 6000,
                                 schedule = NULL) {
 
   ckt <- switch(circuit,
@@ -566,7 +576,7 @@ gasman_grid <- function(grid, outdir = "gasman_scenarios",
     args <- list(agents = agents,
                  fgf = g(r, "fgf", 8), va = g(r, "va", 4), co = g(r, "co", 5),
                  weight = g(r, "weight", 70), circuit = g(r, "circuit", "semi-closed"),
-                 dt_ms = g(r, "dt_ms", 1000))
+                 dt_ms = g(r, "dt_ms", 6000))
 
     files[r] <- file.path(outdir, sprintf("case_%03d.csv", r))
     writeLines(do.call(gasman_scenario_csv, args), files[r])
