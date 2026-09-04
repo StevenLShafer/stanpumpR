@@ -101,3 +101,51 @@ That report preceded this run and is not reproduced by it. The base tick was
 wrong at the time (1000 ms against Gas Man's 6000), but measurement put that at
 about 6% at one minute and under 0.2% by twenty — too small to be the whole
 cause. What changed between the two runs has not been established.
+
+---
+
+## 2026-09-04 — the five-case grid, our side
+
+**Run by:** this repository, on `newryzen`, via
+`inst/validation/gasman_export_results.R`. Gas Man has **not** yet been run
+against these; this section records our answers so that when it is, the
+comparison is against a fixed, dated reference rather than a moving one.
+
+Every case: 70 kg, semi-closed, 30 minutes, `dt_ms = 6000`, settings constant,
+uptake coupling and recirculation on.
+
+Alveolar tension of the primary agent, percent of one atmosphere:
+
+| case | agent | dial | FGF | VA | CO | 1 min | 5 min | 15 min | 30 min |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | sevoflurane | 2.0 | 8.0 | 4 | 5.0 | 0.440 | 1.185 | 1.518 | 1.593 |
+| 2 | sevoflurane + 70% N2O | 2.0 | 8.0 | 4 | 5.0 | 0.466 | 1.376 | 1.692 | 1.731 |
+| 3 | isoflurane | 1.2 | 2.0 | 4 | 5.0 | 0.066 | 0.271 | 0.473 | 0.566 |
+| 4 | desflurane | 6.0 | 0.5 | 4 | 5.0 | 0.122 | 0.768 | 1.806 | 2.570 |
+| 5 | sevoflurane + 70% N2O | 2.0 | 2.0 | 6 | 2.5 | 0.192 | 0.860 | 1.438 | 1.677 |
+
+Case 2 minus case 1 is the second gas effect in isolation: identical dial, flow
+and ventilation, differing only in whether nitrous oxide is running and so
+whether `totUptake` carries a second gas. It reaches 1.376 against 1.185 at
+five minutes, a ratio of 1.16.
+
+### Checks that passed before Gas Man is involved
+
+* **`Delivered` is exact.** All five cases reproduce `dial x FGF x t / 100` to
+  between 0 and 2e-15. That column has no model, no parameters and no
+  integration scheme in it, so it isolates input handling from modelling: if it
+  ever disagrees with Gas Man, the dial or the flow is being read differently
+  and nothing downstream is worth looking at until that is fixed.
+* Every tension finite, non-negative, and never above the dial that produced it.
+* `VA` reports inspired ventilation in every case, above the setting by the
+  summed uptake rate: 4.011, 4.238, 4.008, 4.012 and 6.162 against settings of
+  4, 4, 4, 4 and 6. Case 2 is the largest excess, as it should be, being the
+  case with the most nitrous oxide being taken up.
+
+### Still not established
+
+Gas Man has not been run on any of these. Cases 3, 4 and 5 are the first to
+exercise low flow, a near-closed circuit, a soluble agent, desflurane and
+reduced cardiac output, none of which the 2026-09-04 concordance run touched.
+Weight is still 70 throughout, so the scaling corrected in `4185455` remains
+untested, and every case holds its settings constant.
