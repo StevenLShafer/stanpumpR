@@ -49,6 +49,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 - **Deploy**: GitHub Actions — PRs auto-deploy to a test environment; merges to `master` deploy to production (shinyapps.io).
 - **Adding an R package**: add to `DESCRIPTION` first, then `renv::install("pkg")` + `renv::snapshot()`, commit `DESCRIPTION` + `renv.lock` together. For a package that isn't on CRAN, also add it under `Remotes:` in `DESCRIPTION` (e.g. `daattali/undomanager`) and install with `renv::install("user/repo")`, so the deploy can resolve it.
 
+
 ## Known Issues
 
 **Per-drug simulation cache doesn't persist.** `recalculatePK()` resets `drugs[[drug]]$DT` to `NULL` on every touch, so `processdoseTable()`'s change-detection always compares against `NULL`. Result: every drug re-simulates on every reactive invalidation (any covariate/dose/event edit), not just the one that changed. The skip logic exists but has no state to skip against — treat this as a real bug, not expected behavior.
