@@ -175,7 +175,8 @@ gasManUptake <- function(state, sol, lambdaBlood, fExpTissue, subdt,
 #'   sub-step should be rejected and retried at finer resolution
 #' @keywords internal
 gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
-                       fExpTissue, subdt, totUptake, opts, wtFactor = 1)
+                       fExpTissue, subdt, totUptake, opts, wtFactor = 1,
+                       checkFastDecay = TRUE)
 {
   effCKT    <- FGF * sol[["CKT"]]
   effALV    <- VA  * sol[["ALV"]]
@@ -250,8 +251,11 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
   }
 
   # More than 90% of the circuit or alveolar value gone in one sub-step means
-  # the step is too coarse to trust.
-  if (fCKT < 0.1 || fALV < 0.1) ok <- FALSE
+  # the step is too coarse to trust.  Gas Man applies this ONLY within
+  # VERNIER_TICKS ticks of a settings change, so once a setting has been in
+  # force a while it stops sub-stepping on this criterion.  Applying it always
+  # would make this MORE accurate than Gas Man, the wrong direction here.
+  if (checkFastDecay && (fCKT < 0.1 || fALV < 0.1)) ok <- FALSE
 
   state[["VEN"]] <- if (opts$recirculation) {
     sum(state[c("VRG", "MUS", "FAT")] * GASMAN_RATIO)
@@ -335,6 +339,8 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
     t0 <- (tick - 1) * dt
     s  <- gasSettingsAt(bySetting, t0)
 
+    # Settings hold across a tick, so the change is at the tick boundary.
+    checkFastDecay <- (tick - 1) < GASMAN_VERNIER_TICKS
     nVernier <- 0
     repeat {
       saved <- state
@@ -364,7 +370,8 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
                           DEL = s$Ffgf[[g]], FGF = s$Q, VA = s$VA,
                           CO = cardiacOutput, fExpTissue = fExpTissue[[g]],
                           subdt = subdt, totUptake = totUptake, opts = opts,
-                          wtFactor = wtFactor)
+                          wtFactor = wtFactor,
+                          checkFastDecay = checkFastDecay)
           state[[g]] <- r$state
           if (!r$ok) ok <- FALSE
         }

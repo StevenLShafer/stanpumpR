@@ -113,8 +113,9 @@ GASMAN_VOLUME <- c(CKT = 8, ALV = 2.5, VRG = 6, MUS = 33, FAT = 14.5, VEN = 1)
 # [Ratio] in gasman.ini: fraction of cardiac output to each tissue group
 GASMAN_RATIO <- c(VRG = 0.76, MUS = 0.18, FAT = 0.06)
 
-GASMAN_MAX_VERNIER <- 5     # MAX_VERNIER
-GASMAN_STD_WEIGHT  <- 70    # STD_WEIGHT
+GASMAN_MAX_VERNIER   <- 5     # MAX_VERNIER
+GASMAN_VERNIER_TICKS <- 3     # VERNIER_TICKS
+GASMAN_STD_WEIGHT    <- 70    # STD_WEIGHT
 
 GASMAN_COMPARTMENTS <- c("CKT", "ALV", "VRG", "MUS", "FAT", "VEN")
 
@@ -166,7 +167,7 @@ gasman_uptake <- function(state, sol, lambda, exp_tissue, subdt,
 gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
                         exp_tissue, subdt, tot_uptake,
                         circuit, uptake_effect, recirculation,
-                        wt_factor = 1) {
+                        wt_factor = 1, check_fast_decay = TRUE) {
 
   eff_ckt    <- fgf * sol[["CKT"]]
   eff_alv    <- va  * sol[["ALV"]]
@@ -245,8 +246,15 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
   }
 
   # More than 90% of the circuit or alveolar value gone in one sub-step means
-  # the step is too coarse to trust.
-  if (f_ckt < 0.1 || f_alv < 0.1) ok <- FALSE
+  # the step is too coarse to trust.  Gas Man applies this test ONLY within
+  # VERNIER_TICKS ticks of a settings change -- see the guard in Calc:
+  #   int i = VERNIER_TICKS - int((dwTime - samp.m_dwBaseTime) / m_cMSec_dx);
+  #   if (i > 0) { if (fExpCKT < 0.1F || fExpALV < 0.1F) bMyRet = false; }
+  # so once a setting has been in force a while it stops sub-stepping on this
+  # criterion even if the step is coarse.  Applying it unconditionally would
+  # make this code MORE accurate than Gas Man, which is the wrong direction for
+  # a baseline.
+  if (check_fast_decay && (f_ckt < 0.1 || f_alv < 0.1)) ok <- FALSE
 
   # Venous is algebraic, not differential: the blood-flow-weighted mean of the
   # NEW tissue tensions.  The alveolar target above therefore used the PREVIOUS
@@ -319,6 +327,8 @@ gasman_simulate <- function(agents,
   max_vern  <- 0
 
   for (tick in seq_len(n_ticks)) {
+    # Settings are constant here, so the only change is at time zero.
+    check_fast_decay <- (tick - 1) < GASMAN_VERNIER_TICKS
     nv_level <- 0
     repeat {
       saved_state <- state
@@ -353,7 +363,7 @@ gasman_simulate <- function(agents,
           r <- gasman_calc(state[[i]], sol[[i]], lam[i], del[i],
                            eff_fgf, va, co, exp_tissue[[i]], subdt,
                            tot_uptake, circuit, uptake_effect, recirculation,
-                           wt_factor)
+                           wt_factor, check_fast_decay)
           state[[i]] <- r$state
           if (!r$ok) ok <- FALSE
 
