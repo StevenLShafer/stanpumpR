@@ -50,10 +50,11 @@
 #
 # THINGS THAT ARE NOT YET PINNED DOWN, so do not read them as findings
 # --------------------------------------------------------------------
-#   * dt_ms.  Gas Man's base tick (m_cMSec_dx) could not be read out of the
-#     source; 1000 ms is a guess.  It is set explicitly in both the scenario
-#     and our run, so it is at least the SAME guess on both sides.  If curves
-#     diverge early and re-converge later, try 500 or 250 in DT_MS below.
+#   * dt_ms is now 6000, Gas Man's breath period, matching their scenario
+#     template.  An earlier version guessed 1000.  Note this is NOT a large
+#     effect: measured, dt 1000 against 6000 differs by 6.4% at 1 min and under
+#     0.2% by 20 min, and the curves converge as dt shrinks.  dt does not
+#     multiply ventilation -- VA is separate, in L/min.
 #   * ART.  We report ART = ALV.  Unverified.  If ART disagrees while ALV
 #     agrees, that assumption is the reason and nothing is actually wrong.
 #   * Weight is held at 70 in every case on purpose.  The API README says
@@ -66,7 +67,7 @@ if (!exists("gasman_simulate")) {
   source("gasman_baseline_standalone.R")
 }
 
-DT_MS   <- 1000     # base tick, milliseconds
+DT_MS   <- 6000     # base tick, ms -- Gas Man's breath period (10 breaths/min)
 MINUTES <- 30       # length of every case
 OUTDIR  <- "scenarios"
 
