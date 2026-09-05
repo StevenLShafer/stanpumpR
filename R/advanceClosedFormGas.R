@@ -185,7 +185,73 @@ expmPade <- function(A)
 #' @param Ffgf fresh-gas fraction of this gas, percent of 1 atm
 #' @returns a list with \code{A} (5x5) and \code{b} (length 5)
 #' @keywords internal
-gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf)
+# -----------------------------------------------------------------------------
+# The uptake coupling: the concentration and second gas effect
+# -----------------------------------------------------------------------------
+# Gas taken up by blood leaves a volume deficit in the alveolus.  On induction
+# that deficit draws replacement gas in from the circuit, concentrating whatever
+# else is there; on emergence the flow reverses.  Because the deficit is summed
+# over ALL gases, nitrous oxide's uptake augments a volatile's alveolar tension.
+# That is the second gas effect, and Gas Man models it (m_bUptEnb, defaulting
+# true) -- see the note at the head of this file.
+#
+# Uptake of gas i into tissue t, in L/min, is the volume the tissue gains:
+#
+#     V_t * lambda_t/gas * dF_t/dt / 100
+#       = V_t * lambda_t/gas * k_t * (F_alv - F_t) / 100
+#       = Q_t * lambda_blood * (F_alv - F_t) / 100        since k_t = Q_t*lb/(V_t*ltg)
+#
+# Summing over the three tissue groups collapses to the classical Fick form
+#
+#     uptake_i = lambda_blood,i * Qco * (F_alv,i - F_ven,i) / 100
+#
+# with F_ven the blood-flow-weighted mean tissue tension.  The /100 is because
+# tensions are carried as percent of one atmosphere.
+#
+# NOTE ON OXYGEN.  Oxygen is carried here as a two-state gas with no tissue
+# compartments, so it contributes nothing to the sum, and it does not RECEIVE
+# the term either.  Gas Man does not model oxygen at all, so there is no
+# reference for what it should do, and applying the correction to it would be an
+# untestable deviation.  Physically the volume loss must concentrate alveolar
+# oxygen as well, so this is a known simplification rather than a settled
+# question -- revisit it once the soluble gases are validated.
+
+#' Blood-flow-weighted mixed venous tension for one soluble gas
+#'
+#' @param y state vector for one soluble gas, \code{[circ, alv, brain, muscle, fat]}
+#' @param body geometry from \code{getGasBody()}
+#' @returns mixed venous tension, percent of one atmosphere
+gasMixedVenous <- function(y, body)
+{
+  y[[3]] * body$f_brain + y[[4]] * body$f_muscle + y[[5]] * body$f_fat
+}
+
+
+#' Total uptake summed over every soluble gas
+#'
+#' Gas Man's \code{fTotUptake}: positive while gas is being taken up, negative
+#' during washout.  Oxygen is excluded -- see the note above.
+#'
+#' @param state named list of per-gas state vectors
+#' @param props gas property table from \code{getGasProperties()}
+#' @param body geometry from \code{getGasBody()}
+#' @param Qco cardiac output, L/min
+#' @returns total uptake in L/min
+gasTotalUptake <- function(state, props, body, Qco)
+{
+  total <- 0
+  for (g in props$gas)
+  {
+    if (g == "oxygen") next
+    y  <- state[[g]]
+    lb <- props$lambda_blood[props$gas == g]
+    total <- total + lb * Qco * (y[[2]] - gasMixedVenous(y, body)) / 100
+  }
+  total
+}
+
+
+gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0)
 {
   lb  <- props$lambda_blood
   ltg <- gasPartitionTissueGas(props)
@@ -205,9 +271,13 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf)
 
   A <- matrix(0, 5, 5)
 
-  # (1) circuit
+  # (1) circuit.  On EMERGENCE (totUptake < 0) alveolar gas is displaced back
+  # into the circuit, which Gas Man models by subtracting the term from the
+  # circuit numerator:  if (tot_uptake < 0) f <- f - tot_uptake * ALV.  There is
+  # no matching term on induction, when make-up gas flows the other way.
   A[1, 1] <- -(Q + VA) / Vc
   A[1, 2] <-  VA / Vc
+  if (totUptake < 0) A[1, 2] <- A[1, 2] - totUptake / Vc
 
   # (2) alveolar.  The mixed-venous term redistributes lambda_b * Qco across the
   # three tissue states in proportion to their share of cardiac output.
@@ -221,6 +291,23 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf)
   A[3, 2] <-  kb;  A[3, 3] <- -kb
   A[4, 2] <-  km;  A[4, 4] <- -km
   A[5, 2] <-  kf;  A[5, 5] <- -kf
+
+  # The uptake coupling.  Gas Man's Calc adds this to the alveolar numerator:
+  #
+  #     if (fTotUptake > 0) f += fResults[CKT] * fTotUptake;   // inducing
+  #     else                f += fResults[ALV] * fTotUptake;   // emerging
+  #
+  # so on induction the make-up volume is drawn from the CIRCUIT and the term is
+  # proportional to the circuit tension; on emergence alveolar gas is pushed out
+  # and the term is proportional to the alveolar tension.  Either way it is
+  # linear in the state, so it modifies A rather than b, and with totUptake held
+  # fixed across a sub-step the system stays linear and the matrix exponential
+  # stays exact over that step.
+  if (totUptake > 0) {
+    A[2, 1] <- A[2, 1] + totUptake / Va
+  } else if (totUptake < 0) {
+    A[2, 2] <- A[2, 2] + totUptake / Va
+  }
 
   b <- c(Q * Ffgf / Vc, 0, 0, 0, 0)
 
@@ -395,10 +482,11 @@ gasSettingsAt <- function(split, t)
 #'   engine; note that letting it vary would logically require the intravenous
 #'   pharmacokinetics to respond to it as well, which stanpumpR does not model.
 #' @param resolution number of output time points
-#' @param concentrationEffect if TRUE, apply the volume-loss correction from
-#'   bulk nitrous oxide uptake.  NOT IMPLEMENTED -- whether Gas Man models the
-#'   concentration effect is unresolved, and setting this to TRUE is an error
-#'   rather than a silent no-op.
+#' @param uptakeEffect if TRUE (the default, as in Gas Man, whose m_bUptEnb
+#'   defaults true), couple the gases through their summed uptake, giving the
+#'   concentration and second gas effect.  Set FALSE to isolate that term: with
+#'   it off the gases do not influence one another at all, which is what makes
+#'   the effect measurable as a difference rather than asserted.
 #'
 #' @returns a list with \code{results}, a tidy data frame of
 #'   \code{Drug, Time, Site, Y} matching the shape returned by
@@ -415,14 +503,9 @@ advanceClosedFormGas <- function(
   body = NULL,
   cardiacOutput = NULL,
   resolution = 601,
-  concentrationEffect = FALSE
+  uptakeEffect = TRUE
 )
 {
-  if (isTRUE(concentrationEffect))
-    stop("The concentration and second gas effect is not yet implemented. ",
-         "Gas Man DOES model it -- see the header of this file -- so this ",
-         "must be built before the Gas Man baseline is meaningful.")
-
   if (is.null(body)) body <- getGasBody(weight)
   Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
 
@@ -482,29 +565,55 @@ advanceClosedFormGas <- function(
     s <- gasSettingsAt(bySetting, t0)
 
     # Build one propagator per gas for this interval: y <- P y + q.
-    prop <- list()
-    for (g in props$gas)
+    #
+    # Without the uptake coupling the gases are independent and the system is
+    # constant across the whole interval, so the propagators are built once.
+    # With it they are coupled through totUptake, which depends on the state, so
+    # the system is no longer linear over the interval and the propagators are
+    # rebuilt every sub-step from the state at the START of that step.
+    #
+    # That is Gas Man's own treatment -- it freezes fTotUptake per tick too --
+    # but the propagation WITHIN each step stays exact here where Gas Man
+    # splits.  So this is a strictly more accurate integration of the same
+    # equations, and the two converge as dt shrinks rather than agreeing
+    # digit-for-digit at any fixed dt.
+    buildProp <- function(totUptake)
     {
-      if (g == "oxygen")
+      pr <- list()
+      for (g in props$gas)
       {
-        sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]])
-      } else {
-        sys <- gasSystemSoluble(props[props$gas == g, ], body,
-                                s$Q, s$VA, Qco, s$Ffgf[[g]])
+        if (g == "oxygen")
+        {
+          sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]])
+        } else {
+          sys <- gasSystemSoluble(props[props$gas == g, ], body,
+                                  s$Q, s$VA, Qco, s$Ffgf[[g]], totUptake)
+        }
+        pr[[g]] <- gasPropagator(sys$A, sys$b, dt)
       }
-      prop[[g]] <- gasPropagator(sys$A, sys$b, dt)
+      pr
     }
+
+    prop <- if (uptakeEffect) NULL else buildProp(0)
 
     stepStates <- list()
     for (g in props$gas) stepStates[[g]] <- matrix(NA_real_, nSub, length(state[[g]]))
 
     for (k in seq_len(nSub))
     {
+      if (uptakeEffect)
+        prop <- buildProp(gasTotalUptake(state, props, body, Qco))
+
+      # Every gas advances from the state at the start of the sub-step, so the
+      # update is simultaneous rather than sequential and no gas sees another's
+      # new value within a step.
+      newState <- state
       for (g in props$gas)
       {
-        state[[g]] <- as.vector(prop[[g]]$P %*% state[[g]] + prop[[g]]$q)
-        stepStates[[g]][k, ] <- state[[g]]
+        newState[[g]] <- as.vector(prop[[g]]$P %*% state[[g]] + prop[[g]]$q)
+        stepStates[[g]][k, ] <- newState[[g]]
       }
+      state <- newState
     }
 
     times <- c(times, t0 + dt * seq_len(nSub))
@@ -580,7 +689,7 @@ advanceClosedFormGas <- function(
 #'   returned by \code{advanceClosedFormGas()}
 #' @export
 simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
-                          cardiacOutput = NULL)
+                          cardiacOutput = NULL, uptakeEffect = TRUE)
 {
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
 
@@ -601,6 +710,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
     weight        = weight,
     age           = age,
     maximum       = maximum,
-    cardiacOutput = cardiacOutput
+    cardiacOutput = cardiacOutput,
+    uptakeEffect  = uptakeEffect
   )
 }
