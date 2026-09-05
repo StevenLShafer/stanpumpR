@@ -189,9 +189,24 @@ getGasBody <- function(weight = 70, circuitVolume = 8)
     Q_cardiac  = 0.075 * weight,  # 75 mL/kg
 
     # Fraction of cardiac output to each tissue group.  Must sum to 1.
-    f_brain    = 0.75,
-    f_muscle   = 0.20,
-    f_fat      = 0.05,
+    #
+    # These are Gas Man's [Ratio] values from gasman.ini, adopted deliberately.
+    # An earlier version of this file used 0.75 / 0.20 / 0.05, which carried no
+    # citation and was not Gas Man's.  That difference was small but structural:
+    # it was the entire residual disagreement between this engine and the Gas
+    # Man baseline once every other difference had been controlled -- about
+    # 0.45% on alveolar sevoflurane at 30 minutes, and it did NOT shrink as the
+    # step size shrank, which is how it was found.  See
+    # tests/testthat/test-gas-convergence.R.
+    #
+    # PROVENANCE NOT YET ESTABLISHED.  Gas Man supplies these numbers but no
+    # source for them.  They are carried unchanged so that this engine can be
+    # checked against Gas Man; replacing them with values supported by the
+    # peer-reviewed literature is a later, separate, documented step.  Do not
+    # change them casually -- doing so breaks the validation chain.
+    f_brain    = 0.76,
+    f_muscle   = 0.18,
+    f_fat      = 0.06,
 
     # Oxygen consumption, L/min.  3.5 mL/kg/min -> 245 mL/min at 70 kg.
     # This is a constant volume sink in the gas phase and exists whether or not
