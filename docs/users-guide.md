@@ -207,6 +207,73 @@ oxytocin, oxycodone, oliceridine, and remimazolam.
 
 ---
 
+## Pharmacokinetic models and their sources
+
+Every drug in stanpumpR is a published pharmacokinetic model, and which model was
+chosen matters as much as the dose you typed. Propofol from Eleveld behaves
+differently from propofol from Marsh or Schnider. The table below records the
+model actually implemented for each drug.
+
+Each entry is the `reference` field returned by that drug's model function in
+`R/drugs_<name>.R`, so this table describes what the program computes rather than
+what the literature offers.
+
+| Drug | Model source |
+|---|---|
+| Propofol | Eleveld DJ et al., *Br J Anaesth* 2018;120(5):942–959. [PMID 29661412](https://pubmed.ncbi.nlm.nih.gov/29661412/) |
+| Remifentanil | Minto CF et al., *Anesthesiology* 1997;86:10–23. [PMID 9009935](https://pubmed.ncbi.nlm.nih.gov/9009935/) |
+| Fentanyl | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
+| Alfentanil | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
+| Sufentanil | Gepts E et al., *Anesthesiology* 1995;83(6):1194–1204. [PMID 8533912](https://pubmed.ncbi.nlm.nih.gov/8533912/) |
+| Morphine | Lötsch J et al., *Clin Pharmacol Ther* 2002;72(2):151–162. [PMID 12189362](https://pubmed.ncbi.nlm.nih.gov/12189362/) |
+| Pethidine (meperidine) | Björkman S, *J Pharmacokinet Pharmacodyn* 2003;30(4):285–307. [PMID 14650375](https://pubmed.ncbi.nlm.nih.gov/14650375/) |
+| Hydromorphone | Drover DR et al., *Anesthesiology* 2002;97(4):827–836. [PMID 12357147](https://pubmed.ncbi.nlm.nih.gov/12357147/) |
+| Methadone | Inturrisi CE et al., *Clin Pharmacol Ther* 1987;41(4):392–401. [PMID 3829576](https://pubmed.ncbi.nlm.nih.gov/3829576/) |
+| Ketamine | Domino EF et al., *Clin Pharmacol Ther* 1984;36(5):645–653. [PMID 6488686](https://pubmed.ncbi.nlm.nih.gov/6488686/) |
+| Dexmedetomidine | Adult: Dyck JB et al., *Anesthesiology* 1993;78(5):821–828. [PMID 8098191](https://pubmed.ncbi.nlm.nih.gov/8098191/)<br>Age ≤ 1 yr: Zuppa, *Br J Anaesth* 2019 |
+| Midazolam | Mould DR et al., *Clin Pharmacol Ther* 1995;58(1):35–43. [PMID 7628181](https://pubmed.ncbi.nlm.nih.gov/7628181/) |
+| Etomidate | Arden JR et al., *Anesthesiology* 1986;65(1):19–27. [PMID 3729056](https://pubmed.ncbi.nlm.nih.gov/3729056/) |
+| Lidocaine | Schnider TW et al., *Anesthesiology* 1996;84(5):1043–1050. [PMID 8623997](https://pubmed.ncbi.nlm.nih.gov/8623997/) |
+| Rocuronium | Plaud B et al., *Clin Pharmacol Ther* 1995;58(2):185–191. [PMID 7648768](https://pubmed.ncbi.nlm.nih.gov/7648768/) |
+| Naloxone | Papathanasiou T et al., *Br J Anaesth* 2019;123(2):e204–e214. [PMID 30915992](https://pubmed.ncbi.nlm.nih.gov/30915992/) |
+| Oxytocin | Eisenach, unpublished data<br>Second model: Tanaka et al |
+| Oxycodone | Lamminsalo M et al., *Expert Opin Drug Deliv* 2019;16(6):649–656. [PMID 31092024](https://pubmed.ncbi.nlm.nih.gov/31092024/) |
+| Oliceridine | Dahan A et al., *Anesthesiology* 2020;133(3):559–568. [PMID 32788558](https://pubmed.ncbi.nlm.nih.gov/32788558/) |
+| Remimazolam | Eleveld DJ et al., *Br J Anaesth* 2025;135(1):206–217. [PMID 40312166](https://pubmed.ncbi.nlm.nih.gov/40312166/) |
+
+### Reading these honestly
+
+**Two entries are not peer-reviewed literature.** Oxytocin's human model comes
+from unpublished Eisenach data, and its second model is cited only as "Tanaka et
+al" without a volume or year. Dexmedetomidine's infant model is cited as "Zuppa,
+*Br J Anaesth* 2019" without page numbers or a PMID. These three are the weakest
+citations in the library and are flagged rather than tidied over.
+
+**A citation is the disposition model, not a guarantee of fit.** Each of these
+papers fitted a particular population — often healthy volunteers or elective
+surgical patients of a particular age and size. The model is extrapolated
+whenever your patient sits outside that population, and the plot gives no visual
+hint when that is happening.
+
+**Where a drug has two models**, stanpumpR picks between them on a covariate —
+dexmedetomidine switches to the infant model at age ≤ 1 year, for example — so
+the reference that applies depends on the patient you entered.
+
+**The effect-site rate constant often comes from a different source than the
+disposition model.** Where the two differ, that is noted in
+`docs/drug-reference.html`, which also carries each drug's modelled time to peak
+effect and its covariate scaling.
+
+### Inhaled agents
+
+The gas model parameters are Gas Man's, taken from `gasman.ini`, and are recorded
+with their provenance — including which of them have *no* established provenance
+— in `R/gasProperties.R` and `inst/validation/VALIDATION.md`. Nitrogen's MAC in
+particular is carried at Gas Man's value while being known to be wrong by a
+factor of about 55; it is not used in any calculation.
+
+---
+
 ## Inhaled anaesthetics *(branch only)*
 
 Not on `master` yet. On `inhaled-gas-engine`, seven further entries appear in the
@@ -305,6 +372,14 @@ what was intended. Places worth a second look:
 - The **MEAC panel** description is inferred from the drug library column and the
   plot code; someone who uses it should check the wording.
 - No screenshots. The guide would be much better with four or five.
+- The **model source table** was extracted from the `reference` field in each
+  `R/drugs_*.R`. Those fields are correct on the `drug-reference-citations`
+  branch but NOT on `master`, where several are still placeholders -- propofol's
+  reads "Anesthesiology 1998" while the model implemented is Eleveld 2018. That
+  branch should be merged before this guide is published, or the table will
+  describe something the code does not say.
+- Better still, the table should be GENERATED from the drug files rather than
+  hand-maintained here, so it cannot drift. It drifted once already.
 - Nothing here covers the vignettes (`stanpumpR-single-PK`, `stanpumpR-multi-PK`)
   which document the scripting interface for people who want to drive the engine
   from R rather than the app.
