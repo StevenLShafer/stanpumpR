@@ -128,14 +128,41 @@ test_that("the system is linear in the vaporiser setting", {
     Dose = c(2, 4, sevo),
     stringsAsFactors = FALSE
   )
-  a <- advanceClosedFormGas(mk(1), maximum = 30)
-  b <- advanceClosedFormGas(mk(2), maximum = 30)
+  # Linearity holds only with the gases UNCOUPLED.  The uptake term makes the
+  # system nonlinear on purpose -- see the second expectation below.
+  a <- advanceClosedFormGas(mk(1), maximum = 30, uptakeEffect = FALSE)
+  b <- advanceClosedFormGas(mk(2), maximum = 30, uptakeEffect = FALSE)
 
   ga <- a$results[a$results$Drug == "sevoflurane" & a$results$Site == "Brain", "Y"]
   gb <- b$results[b$results$Drug == "sevoflurane" & b$results$Site == "Brain", "Y"]
 
   # Doubling the dial doubles the entire brain trajectory, exactly.
   expect_equal(gb, 2 * ga, tolerance = 1e-9)
+})
+
+
+test_that("the uptake coupling makes the system nonlinear in the dial", {
+  # This is not a defect, it is the physiology: a gas taken up in bulk
+  # concentrates itself and everything beside it, so doubling the vaporiser
+  # setting must give MORE than twice the tension.  With the coupling off the
+  # test above shows the system is exactly linear, so the departure isolates
+  # the uptake term as the cause.
+  mk <- function(sevo) data.frame(
+    Time = c(0, 0, 0),
+    Drug = c("oxygen", "ventilation", "sevoflurane"),
+    Dose = c(2, 4, sevo),
+    stringsAsFactors = FALSE
+  )
+  a <- advanceClosedFormGas(mk(1), maximum = 30, uptakeEffect = TRUE)
+  b <- advanceClosedFormGas(mk(2), maximum = 30, uptakeEffect = TRUE)
+
+  at <- function(r, t) {
+    d <- r$results[r$results$Drug == "sevoflurane" & r$results$Site == "Brain", ]
+    stats::approx(d$Time, d$Y, t)$y
+  }
+  expect_gt(at(b, 10), 2 * at(a, 10))
+  # ...but only slightly: sevoflurane alone is not taken up in great volume.
+  expect_lt(at(b, 10), 2.02 * at(a, 10))
 })
 
 
@@ -261,13 +288,22 @@ test_that("settings persist until changed and take effect at the change point", 
 })
 
 
-test_that("the concentration effect is refused rather than silently ignored", {
-  dose <- data.frame(Time = 0, Drug = "oxygen", Dose = 2,
-                     stringsAsFactors = FALSE)
-  expect_error(
-    advanceClosedFormGas(dose, concentrationEffect = TRUE),
-    "not yet"
-  )
+test_that("the uptake coupling is on by default, as in Gas Man", {
+  # Gas Man's m_bUptEnb defaults true, so the concentration and second gas
+  # effect are present unless deliberately switched off.  This test previously
+  # asserted the opposite -- that asking for the effect was an error -- which
+  # was correct while it was unimplemented and is now wrong.
+  DT <- data.frame(
+    Time = c(0, 0, 0, 0),
+    Drug = c("oxygen", "nitrousOxide", "ventilation", "sevoflurane"),
+    Dose = c(2.4, 5.6, 4, 2), stringsAsFactors = FALSE)
+
+  at <- function(r) {
+    d <- r$results[r$results$Drug == "sevoflurane" & r$results$Site == "Alveolar", ]
+    stats::approx(d$Time, d$Y, 5)$y
+  }
+  expect_gt(at(advanceClosedFormGas(DT, maximum = 30)),
+            at(advanceClosedFormGas(DT, maximum = 30, uptakeEffect = FALSE)))
 })
 
 
