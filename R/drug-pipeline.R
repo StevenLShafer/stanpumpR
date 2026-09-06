@@ -12,7 +12,6 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
   # dose table containing only inhaled gases would otherwise hit.
   for (drug in drugList)
   {
-    drug <- drugList[i]
     tempDT <- DT[DT$Drug == drug,]
     tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[drug]]$pkEvents,]
 
