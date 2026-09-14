@@ -209,15 +209,16 @@ app_server <- function(input, output, session) {
   ## Dose Table Loop  ##
   ######################
 
-  # This is used to hold the current state of the table as the user edits it
-  # without applying it, to allow the user to make many successive edits quickly
-  doseTableDraft <- reactiveVal()
+  # Holds the current state of the table as the user edits it without applying
+  # it, to allow the user to make many successive edits quickly and undo/redo edits
+  doseTableHistory <- undomanager::undomanager(type = "data.frame")$reactive()
 
-  doseTableUndo <- reactiveVal(list())
-  doseTableRedo <- reactiveVal(list())
+  doseTableDraft <- reactive(doseTableHistory()$value)
 
   observeEvent(doseTable(), {
-    doseTableDraft(doseTable())
+    # A newly applied or restored table becomes the draft and starts a fresh
+    # history: there are no earlier drafts to step back to.
+    doseTableHistory()$do(doseTable())$clear()
   })
 
   observe({
@@ -228,31 +229,21 @@ app_server <- function(input, output, session) {
   })
 
   observe({
-    shinyjs::toggleState("dosetable_undo", condition = length(doseTableUndo()) > 0)
-    shinyjs::toggleState("dosetable_redo", condition = length(doseTableRedo()) > 0)
+    shinyjs::toggleState("dosetable_undo", condition = doseTableHistory()$can_undo)
+    shinyjs::toggleState("dosetable_redo", condition = doseTableHistory()$can_redo)
   })
 
   observeEvent(input$dosetable_apply, {
     shinyjs::disable("dosetable_apply")
     doseTable(doseTableDraft())
-    doseTableUndo(list())
-    doseTableRedo(list())
   })
 
   observeEvent(input$dosetable_undo, {
-    req(length(doseTableUndo()) > 0)
-
-    doseTableRedo( c(doseTableRedo(), list(doseTableDraft())) )
-    doseTableDraft( utils::tail(doseTableUndo(), 1)[[1]] )
-    doseTableUndo( utils::head(doseTableUndo(), -1) )
+    doseTableHistory()$undo()
   })
 
   observeEvent(input$dosetable_redo, {
-    req(length(doseTableRedo()) > 0)
-
-    doseTableUndo( c(doseTableUndo(), list(doseTableDraft())) )
-    doseTableDraft( utils::tail(doseTableRedo(), 1)[[1]] )
-    doseTableRedo( utils::head(doseTableRedo(), -1) )
+    doseTableHistory()$redo()
   })
 
   observeEvent(input$doseTableHTML, {
@@ -284,15 +275,11 @@ app_server <- function(input, output, session) {
 
       # make sure that table has changed before updating doseTable reactive
       if ( !identicalTable(doseTableDraft(), data) ) {
-        doseTableUndo( c(doseTableUndo(), list(doseTableDraft())) )
-        doseTableRedo(list())
-
         # add empty row at the bottom if needed
         if (nzchar(utils::tail(data, 1)$Drug)) {
           data[nrow(data) + 1, ] <- ""
         }
-
-        doseTableDraft(data)
+        doseTableHistory()$do(data)
       }
     }, name = "input$doseTableHTML observer")
   })
@@ -413,8 +400,10 @@ app_server <- function(input, output, session) {
 
   observeEvent(input$timeMode, {
     doseTable(doseTableDraft())
-    doseTableUndo(list())
-    doseTableRedo(list())
+    # Clear explicitly rather than relying on the doseTable() observer: if the
+    # draft already matched, that reactiveVal never invalidates and the history
+    # would survive a time-mode switch.
+    doseTableHistory()$clear()
 
     # When switching to relative time, convert any clock times (HH:MM) to minutes
     if (input$timeMode == "relative") {
