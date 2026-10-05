@@ -176,29 +176,29 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   if (plotRecovery)
   {
-    # Note that I am looking at plasma, not effect site.
-    # This is for reasons of speed. I abandoned move forward e_state variables in the interest of
-    # speed, and because I would have to take them through the transformation when the PK changes.
-    # That seems computationally hazardous
+    # Time until the EFFECT SITE falls to the threshold if delivery stops now.
+    #
+    # This used to look at plasma, "for reasons of speed", because the
+    # effect-site states are not carried through the changes in PK.  They do not
+    # need to be.  Once delivery stops, plasma is the three exponentials already
+    # in hand,
+    #     Cp(t) = sum_i p_i exp(-lambda_i t),
+    # and the effect site, driven by that plasma from its present value Ce0, is
+    #     Ce(t) = sum_i a_i exp(-lambda_i t) + (Ce0 - sum_i a_i) exp(-ke0 t),
+    #     a_i   = p_i * ke0 / (ke0 - lambda_i),
+    # which is exact, costs nothing, and uses the PK in force at that moment --
+    # the same assumption the other two engines make.
+    # (Claude Code, Claude Fable 5.1, 2026-10-05; verified against stopping
+    # delivery in the simulation by tests/testthat/test-recovery-engines.R.)
     recovery <- sapply(
       1:L,
       function(i)
-        (
-          recoveryCalc(
-            c(
-              p_state_l1[i],
-              p_state_l2[i],
-              p_state_l3[i],
-              0
-            ),
-            c(
-              lambda_1[i],
-              lambda_2[i],
-              lambda_3[i],
-              0
-            ),
-            emerge)
-        )
+      {
+        lam <- c(lambda_1[i], lambda_2[i], lambda_3[i])
+        p   <- c(p_state_l1[i], p_state_l2[i], p_state_l3[i])
+        a   <- p * ke0[i] / (ke0[i] - lam)
+        recoveryCalc(c(a, Ce[i] - sum(a)), c(lam, ke0[i]), emerge)
+      }
     )
   } else {
     recovery <- rep(0, L)

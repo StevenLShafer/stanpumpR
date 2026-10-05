@@ -118,8 +118,16 @@ test_that("it falls back to 'Not Available' when a drug function omits a referen
 })
 
 test_that("every drug in the library supplies a reference", {
+  # The library also carries the inhaled gases, which are not intravenous drugs:
+  # they have no drugs_<name>.R covariate function, never reach getDrugPK(), and
+  # are routed to the gas engine instead (see test-gas-routing.R).  Their
+  # parameter provenance is recorded in R/gasProperties.R rather than in a
+  # reference field, so they are excluded here rather than made to fake one.
+  ivDrugs <- getDrugDefaultsGlobal()$Drug
+  ivDrugs <- ivDrugs[!isGasDrug(ivDrugs)]
+
   references <- vapply(
-    getDrugDefaultsGlobal()$Drug,
+    ivDrugs,
     function(drug) getDrugPK(drug, 70, 170, 50, "male")$reference,
     character(1)
   )

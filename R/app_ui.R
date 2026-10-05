@@ -188,6 +188,13 @@ app_ui <- function() {
                     value = FALSE
                   )
                 ),
+                # Opioids lower MAC.  When ticked, the MAC series is reported in
+                # multiples of the opioid-reduced MAC; see R/opioidMacInteraction.R.
+                checkboxInput(
+                  inputId = "opioidMacInteraction",
+                  label = "Include opioid - MAC interaction",
+                  value = FALSE
+                ),
               ),
 
               bslib::accordion_panel(

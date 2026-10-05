@@ -1,4 +1,3 @@
-# TODO Fix plotRecovery
 
 #' Turn a simulated plasma and effect-site series into the shapes the app plots
 #'
@@ -95,7 +94,12 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
 #' @param events table of events
 #' @param PK PK parameters from \code{getDrugPK(drug)}
 #' @param maximum maximum length of simulation in minutes
-#' @param plotRecovery (current broken, leave set to FALSE) should recovery parameters be calculated?
+#' @param plotRecovery should the "time until threshold" be calculated?  For
+#'   each time point, how long the effect site would take to fall to
+#'   \code{PK$endCe} if all delivery stopped at that moment; returned as the
+#'   \code{Recovery} column of \code{equiSpace}.  Checked against stopping
+#'   delivery in the simulation itself by
+#'   \code{tests/testthat/test-recovery-engines.R} (2026-10-05).
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite additionally carries
