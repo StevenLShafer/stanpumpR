@@ -87,17 +87,7 @@ Example row (remifentanil):
 remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1
 ```
 
-## 3. Register the file — `DESCRIPTION`
-
-Add the filename to the `Collate:` list (kept roughly alphabetical among the `drugs_*` block):
-
-```
-  drugs_<name>.R
-```
-
-The package loads files in `Collate` order; a file not listed there won't be loaded.
-
-## 4. The test — `tests/testthat/test-drugs-<name>.R`
+## 3. The test — `tests/testthat/test-drugs-<name>.R`
 
 Pin the returned values at a reference patient so future edits are intentional. Mirror the
 existing drug tests:

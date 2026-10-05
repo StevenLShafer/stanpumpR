@@ -21,7 +21,7 @@ test_that("returns the correct calculations", {
     typical = 1,
     upperTypical = 1.5,
     lowerTypical = 0.5,
-    reference = "Schnider?"
+    reference = "Schnider TW et al., Anesthesiology 1996;84(5):1043-1050. https://pubmed.ncbi.nlm.nih.gov/8623997/"
   )
   expect_equal_rounded(actual, expected)
 })

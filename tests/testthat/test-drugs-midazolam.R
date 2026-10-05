@@ -21,7 +21,7 @@ test_that("returns the correct calculations", {
     typical = 0.1,
     upperTypical = 0.04,
     lowerTypical = 0.12,
-    reference = "Clin Pharmacol Ther. 1995 Jul;58(1):35-43, and Barr/Zomorodi 2001"
+    reference = "Mould DR et al., Clin Pharmacol Ther 1995;58(1):35-43. https://pubmed.ncbi.nlm.nih.gov/7628181/"
   )
   expect_equal_rounded(actual, expected)
 })

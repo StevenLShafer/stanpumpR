@@ -6,7 +6,7 @@ test_that("it returns the correct array", {
     Units = "mcg/kg/min"
   )
 
-  events <- data.frame( Time = double(), Event = character(), Fill = character())
+  events <- data.frame( Time = double(), Event = character())
 
   PK <- list(
     Color = "#0000C0",

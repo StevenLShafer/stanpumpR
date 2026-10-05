@@ -16,7 +16,7 @@ morphine <- function(weight, height, age, sex)
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Lotsch PK"
+  reference <- "Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162. https://pubmed.ncbi.nlm.nih.gov/12189362/"
   
   v2 <- v1 * k12 / k21
   v3 <- v1 * k13 / k31
@@ -33,7 +33,7 @@ morphine <- function(weight, height, age, sex)
     cl3 = cl3
   )
   
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
   
   return(

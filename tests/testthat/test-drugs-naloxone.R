@@ -21,7 +21,7 @@ test_that("returns the correct calculations", {
     typical = 0,
     upperTypical = 0,
     lowerTypical = 0,
-    reference = "Papathanasiou"
+    reference = "Papathanasiou T et al., Br J Anaesth 2019;123(2):e204-e214. https://pubmed.ncbi.nlm.nih.gov/30915992/"
   )
   expect_equal_rounded(actual, expected)
 })

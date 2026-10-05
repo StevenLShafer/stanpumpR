@@ -1,5 +1,5 @@
 app_ui <- function() {
-  js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(stanpumpR::getDrugDefaultsGlobal()))
+  js_drug_defaults <- paste0("var drug_defaults=", jsonlite::toJSON(getDrugDefaultsGlobal()))
   config <- .sprglobals$config
 
   stanpumpr_theme <- bslib::bs_theme(
@@ -62,7 +62,21 @@ app_ui <- function() {
                     c("yr" = UNIT_YEAR, "mo" = UNIT_MONTH),
                     inputId = "ageUnit",
                     selected = defaultAgeUnit
+                  ) |>
+                  addInputAttributes(
+                    oninput = glue::glue(
+                      "if (this.value > {MAX_AGE}) {{ this.value = {MAX_AGE}; }}"
+                    )
                   ),
+
+                conditionalPanel(
+                  glue::glue("input.age >= {MAX_AGE}"),
+                  div(
+                    class = "info-note",
+                    icon("circle-info"),
+                    glue::glue("An age of {MAX_AGE} or above is PHI. Ages > {MAX_AGE} are entered as {MAX_AGE}.")
+                  )
+                ),
 
                 numericInput(
                   inputId = "weight",
@@ -93,7 +107,7 @@ app_ui <- function() {
                 shinyWidgets::radioGroupButtons(
                   inputId = "sex", label = "Sex",
                   choiceNames = list(span(icon("mars"), "Male"), span(icon("venus"), "Female")),
-                  choiceValues = c("male", "female"),
+                  choiceValues = SEX_VALUES,
                   justified = TRUE,
                   selected = defaultSex
                 ),
@@ -134,12 +148,12 @@ app_ui <- function() {
               bslib::accordion_panel(
                 "Graph Options",
                 icon = icon("sliders"),
-                selectInput("typical", "Show typical", c("<none>" = "none","Mid", "Range"), selected = "Range"),
-                selectInput("normalization", "Normalize to", c("<none>" = "none","Peak plasma", "Peak effect site")),
+                selectInput("typical", "Show typical", c("<none>" = "none", "Mid", "Range"), selected = "Range"),
+                selectInput("normalization", "Normalize to", c("<none>" = NORMALIZE_NONE, "Peak plasma", "Peak effect site")),
                 selectInput(
                   inputId = "maximum",
-                  label = "Max time (minutes)",
-                  choices = setNames(maxtimes$times, format(maxtimes$times, scientific = FALSE, trim = TRUE, big.mark = ",")),
+                  label = "Max time",
+                  choices = stats::setNames(maxtimes$times, formatMinutes(maxtimes$times)),
                   selected = 60
                 ),
                 lineTypeSelector(
@@ -152,7 +166,7 @@ app_ui <- function() {
                   label = "Effect site line",
                   selected = "solid"
                 ),
-                sliderInput("yaxisHeight", "Y axis height", 150, 350, 200, ticks = FALSE),
+                sliderInput("yaxisHeight", "Y axis height", MIN_YAXIS_HEIGHT, MAX_YAXIS_HEIGHT, 200, ticks = FALSE),
                 conditionalPanel(
                   condition = "input.normalization === 'none'",
                   checkboxInput(
@@ -169,6 +183,13 @@ app_ui <- function() {
                     value = FALSE
                   )
                 ),
+                # Opioids lower MAC.  When ticked, the MAC series is reported in
+                # multiples of the opioid-reduced MAC; see R/opioidMacInteraction.R.
+                checkboxInput(
+                  inputId = "opioidMacInteraction",
+                  label = "Include opioid - MAC interaction",
+                  value = FALSE
+                ),
               ),
 
               bslib::accordion_panel(
@@ -184,15 +205,24 @@ app_ui <- function() {
               bslib::accordion_panel(
                 "Email Slide",
                 icon = icon("envelope"),
-                textInput("recipient", NULL, "", placeholder = "Enter email address"),
-                textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3),
-                actionButton("sendSlide", "Send", class = "btn-primary")
+                if (is.null(config$email_username) || is.null(config$email_password)) {
+                  div(
+                    class = "info-note",
+                    icon("circle-info"),
+                    "Email is not configured. Please ask admin to set email username and password in app configuration."
+                  )
+                } else {
+                  tagList(
+                    textInput("recipient", NULL, "", placeholder = "Enter email address"),
+                    textAreaInput("emailComments", NULL, "", placeholder = "Comments (optional)", rows = 3) |>
+                      addInputAttributes(maxlength = MAX_INPUT_TEXT),
+                    checkboxInput("commentSafe", "This comment does not contain PHI", FALSE) |>
+                      htmltools::tagAppendAttributes(class = "micro"),
+                    actionButton("sendSlide", "Send", class = "btn-primary")
+                  )
+                }
               )
-            ),
-
-            actionButton("setTarget", "Suggest Dosing", class = "btn-outline-primary", icon = icon("fas fa-prescription")),
-            actionButton("editDrugs", "Drug Library", class = "btn-outline-primary", icon = icon("fas fa-capsules")),
-            actionButton("editThresholds", "Drug Thresholds", class = "btn-outline-primary", icon = icon("fas fa-bullseye"))
+            )
           ),
 
           bslib::layout_columns(
@@ -225,33 +255,54 @@ app_ui <- function() {
               )
             ),
 
-            bslib::card(
-              bslib::card_header(icon("syringe"), "Doses"),
+            div(
+              bslib::card(
+                fill = FALSE,
+                bslib::card_header(icon("clock"), "Time"),
 
-              bslib::layout_columns(
-                selectInput(
-                  "timeMode",
-                  "Time Display",
-                  c("Actual time" = "clock",
-                    "Elapsed minutes" = "relative")
-                ),
-                conditionalPanel(
-                  "input.timeMode == 'clock'",
-                  textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                bslib::layout_columns(
+                  selectizeInput(
+                    "timeMode",
+                    "Time Display",
+                    c("Actual time" = "clock", "Elapsed minutes" = "relative"),
+                    options = list(dropdownParent = "body")
+                  ),
+                  conditionalPanel(
+                    "input.timeMode == 'clock'",
+                    textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                  )
                 )
               ),
-              br(),
-              rhandsontable::rHandsontableOutput("doseTableHTML"),
 
-              bslib::card_footer(
-                div(
-                  class = "d-grid",
-                  style = "grid-template-columns: 1fr auto auto; gap: 0.25rem",
-                  actionButton("dosetable_apply", "Apply Changes", icon = icon("circle-check"), class = "btn-primary my-0 btn-lg"),
-                  actionButton("dosetable_undo", NULL, icon = icon("undo"), title = "Undo", class = "my-0 btn-lg btn-outline-primary"),
-                  actionButton("dosetable_redo", NULL, icon = icon("redo"), title = "Redo", class = "my-0 btn-lg btn-outline-primary")
+              bslib::card(
+                bslib::card_header(
+                  class = "justify-content-between",
+                  span(icon("syringe"), "Doses"),
+                  actionLink("setTarget", "Suggest Dosing", class = "small")
+                ),
+
+                rhandsontable::rHandsontableOutput("doseTableHTML"),
+
+                bslib::card_footer(
+                  div(
+                    class = "d-grid",
+                    style = "grid-template-columns: 1fr auto auto; gap: 0.25rem",
+                    actionButton("dosetable_apply", "Apply Changes", icon = icon("circle-check"), class = "btn-primary my-0 btn-lg"),
+                    actionButton("dosetable_undo", NULL, icon = icon("undo"), title = "Undo", class = "my-0 btn-lg btn-outline-primary"),
+                    actionButton("dosetable_redo", NULL, icon = icon("redo"), title = "Redo", class = "my-0 btn-lg btn-outline-primary")
+                  )
                 )
               )
+            ) |>
+              bslib::as_fill_carrier()
+          ),
+
+          bslib::accordion(
+            open = FALSE,
+            bslib::accordion_panel(
+              "References",
+              icon = icon("book"),
+              uiOutput("drug_references", class = "small")
             )
           ),
 
@@ -292,11 +343,37 @@ app_ui <- function() {
       ),
 
       bslib::nav_spacer(),
+      bslib::nav_menu(
+        "Settings",
+        icon = icon("gear"),
+        bslib::nav_item(
+          actionLink(
+            "editDrugs",
+            "Drug Library",
+            icon = icon("fas fa-capsules")
+          )
+        ),
+        bslib::nav_item(
+          actionLink(
+            "editThresholds",
+            "Drug Thresholds",
+            icon = icon("fas fa-bullseye")
+          )
+        )
+      ),
       bslib::nav_item(
         tags$a(
           icon("circle-info"),
           "Examples and Help",
           href = config$help_link,
+          target = "_blank"
+        )
+      ),
+      bslib::nav_item(
+        tags$a(
+          icon("github"),
+          "Source",
+          href = config$source_link,
           target = "_blank"
         )
       )

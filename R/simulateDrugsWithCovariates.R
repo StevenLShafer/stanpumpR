@@ -9,14 +9,23 @@
 #' @param age age in years
 #' @param sex sex as string: "female" or "male"
 #' @param maximum maximum length of simulation in minutes
-#' @param plotRecovery (current broken, leave set to FALSE) should recovery parameters be calculated?
+#' @param plotRecovery should the "time until threshold" be calculated?  See
+#'   \code{simCpCe()}.
 #'
 #' @returns a list of data frames with the output of the a single drug simulation
 #'
 #' @export
 simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex, maximum, plotRecovery)
 {
+  if (length(sex) != 1 || !sex %in% SEX_VALUES) {
+    stop("Invalid sex: ", paste(sex, collapse = ", "),
+         ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
+  }
   drugList <- unique(dose$Drug)
+  # The inhaled gases are simulated by simulateGases() / advanceClosedFormGas(),
+  # not here: they have no drugs_*.R covariate function and no mass dose, so
+  # getDrugPK() and simCpCe() cannot handle them.
+  drugList <- drugList[!isGasDrug(drugList)]
   output <- c()
   for (drug in drugList)
   {

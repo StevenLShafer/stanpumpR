@@ -1,4 +1,3 @@
-# TODO Fix plotRecovery
 #' Simulate plasma and effect site concentration from time 0 to maximum
 #'
 #' See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
@@ -7,7 +6,12 @@
 #' @param events table of events
 #' @param PK PK parameters from \code{getDrugPK(drug)}
 #' @param maximum maximum length of simulation in minutes
-#' @param plotRecovery (current broken, leave set to FALSE) should recovery parameters be calculated?
+#' @param plotRecovery should the "time until threshold" be calculated?  For
+#'   each time point, how long the effect site would take to fall to
+#'   \code{PK$endCe} if all delivery stopped at that moment; returned as the
+#'   \code{Recovery} column of \code{equiSpace}.  Checked against stopping
+#'   delivery in the simulation itself by
+#'   \code{tests/testthat/test-recovery-engines.R} (2026-10-05).
 #'
 #' @returns a list of data frames with the output of the a single drug simulation
 #'
@@ -18,7 +22,6 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # pK <- PK
     # maximum <- max
     # Convert all doses to base units
-#  cat("in simCpCe\n")
     switch(
       PK$Concentration.Units,  # Units (per ml)
       mcg = {                  # 1 mcg/ml = 1000 mg/L
@@ -48,8 +51,6 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("hr",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / 60
 
-#    cat("Completed conversion of dose units\n")
-
     # Identify bolus doses
     dose$Bolus <- !(grepl("min", dose$Units) |
                       grepl("hr", dose$Units) |
@@ -57,35 +58,22 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
                       grepl("IM", dose$Units) |
                       grepl("IN", dose$Units))
 
-#    cat("Bolus Doses identified\n")
-
     # Identify PO doses
     dose$PO <- grepl("PO", dose$Units)
     dose$IM <- grepl("IM", dose$Units)
     dose$IN <- grepl("IN", dose$Units)
 
-    # cat("Other Doses identified\n")
-    # cat("starting on events\n")
-#    print(str(events))
     events <- events[,c(1,2)]
-#    cat("Did that process OK?\n")
 
     pkSets <- PK$PK
     pkEvents <- PK$pkEvents
 
-#    cat("All Events:\n")
-#    print(events)
-
     events$Event <- gsub(" ","", events$Event)
     events <- events[events$Event %in% pkEvents,]
-    # cat("Retained Events:\n")
-    # print(events)
     if (length(pkEvents) == 1 | nrow(events) == 0)
     {
       if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
       {
- #       cat("calling advanceClosedForm0\n")
-
         results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
       } else {
         results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
@@ -94,7 +82,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       # Process Events
       defaultEvent <- data.frame(
         Time = 0,
-        Event = "default"
+        Event = PK_EVENT_DEFAULT
       )
       if (events$Time[1] > 0)
         events <- rbind(defaultEvent,events)
@@ -105,7 +93,6 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     }
 
   names(results) <- c("Time", "Plasma","Effect Site", "Recovery")
-  # print(str(results))
   maxCp <- max(results$Plasma)
   maxCe <- max(results$"Effect Site")
   if (maxCp == 0)
@@ -153,12 +140,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     Cp = max(results$Plasma),
     Ce = max(results$"Effect Site")
     )
-#  print(str(max))
   if (!plotRecovery) results$Recovery <- NULL
   results <- tidyr::gather(results,"Site","Y",-Time)
   results$Drug <- PK$drug
   results <- results[,c(4,1,2,3)]
-#  print(results)
   # Structure of results
   # Four columns: Drug, Time, Site, Y
   # 7 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCE, CeNormCe, and MEAC

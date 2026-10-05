@@ -13,7 +13,7 @@ oxytocin <- function(weight, height, age, sex)
     typical <-  0.1
     upperTypical <- 0.05
     lowerTypical <- 0.2
-    reference <- "190912-135448" # Initial Eisenach Data
+    reference <- "Eisenach (unpublished data)" # Initial Eisenach Data
     v1	<- 10.1 # l
     v2	<- 7.03 # l
     v3  <- 1    # l
@@ -47,7 +47,7 @@ oxytocin <- function(weight, height, age, sex)
     cl3 = cl3
   )
 
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   return(

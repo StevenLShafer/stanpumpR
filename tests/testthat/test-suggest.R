@@ -10,8 +10,7 @@ test_that("suggest yields a table with the appropriate columns", {
 
   eventTable <- data.frame(
     Time = 0,
-    Event = "Event",
-    Fill = "black"
+    Event = "Event"
   )
 
   age <- 50

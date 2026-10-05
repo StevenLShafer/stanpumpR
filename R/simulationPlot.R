@@ -9,7 +9,7 @@ simulationPlot <- function(
   xAxisLabel = "Time (Minutes)",
   plasmaLinetype = "solid",
   effectsiteLinetype = "dashed",
-  normalization = c("none"),
+  normalization = c(NORMALIZE_NONE),
   plotMEAC = FALSE,
   plotInteraction = FALSE,
   plotCost = FALSE,
@@ -93,7 +93,7 @@ simulationPlot <- function(
 
   if (nrow(allResults) == 0)
   {
-    cat("Returning Null, nrow(allResults) == 0\n")
+    message("Returning Null, nrow(allResults) == 0")
     return(NULL)
   }
 
@@ -159,11 +159,13 @@ simulationPlot <- function(
   switch(
     normalization,
     "none" = {
-      plotTable$Wrap <- paste0(
-                          plotTable$Drug,
-                          "\n(",
-                          plotTable$Concentration.Units,
-                          "/ml)")
+      # Intravenous concentrations are per millilitre; the inhaled gases are a
+      # percentage of one atmosphere and MAC is dimensionless, so neither takes
+      # the "/ml" suffix.
+      unitText <- paste0(plotTable$Concentration.Units, "/ml")
+      gasRow <- isGasSeries(plotTable$Drug)
+      unitText[gasRow] <- plotTable$Concentration.Units[gasRow]
+      plotTable$Wrap <- paste0(plotTable$Drug, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical
       plotTable$y    <- plotTable$typical
@@ -201,7 +203,7 @@ simulationPlot <- function(
   # Need this table both for plotMEAC and for Interaction
     X <- allEquispace %>%
       dplyr::group_by(Time) %>%
-      dplyr::summarize(SUM = mean(MEAC)*n())
+      dplyr::summarize(SUM = mean(MEAC)*dplyr::n())
     totalMEAC <- data.frame(
       Drug = "total opioid",
       Time = X$Time,
@@ -421,11 +423,6 @@ simulationPlot <- function(
 
   if (logY)
   {
-#    upper <- 10^ceiling(log10(max(plotResults$Y)))
-#    cat("upper", upper,"\n")
-#    lower <- min(upper / 10000, min(plotResults$Y[plotResults$Time > minimum + (maximum - minimum)/2]))
-#    cat("lower", upper,"\n")
-#    plotObject <- plotObject + scale_y_log10(limits=c(lower,upper))
     plotObject <- plotObject + ggplot2::scale_y_log10()
   } else {
     plotObject <- plotObject + ggplot2::scale_y_continuous(limits=c(0, NA))
@@ -535,7 +532,6 @@ simulationPlot <- function(
   # This code should work if facetscales gets fixed
   # scales_y <- sapply(as.character(unique(plotTable$Wrap)), function(x) x = scale_y_continuous())
   # if (plotEvents) scales_y$Events <- scale_y_continuous(labels = NULL)
-#  print(scales_y)
   plotObject <- plotObject +
     ggplot2::facet_grid(
       Wrap ~ .,
@@ -555,9 +551,9 @@ simulationPlot <- function(
           ),
           axis.text.y = ggplot2::element_text(size = 15),
           panel.spacing = grid::unit(2, "lines"),
-          legend.background = element_blank(),
-          legend.box.background = element_blank(),
-          legend.key = element_blank()
+          legend.background = ggplot2::element_blank(),
+          legend.box.background = ggplot2::element_blank(),
+          legend.key = ggplot2::element_blank()
           )
 
   # Step A7: add in process plotRecovery
@@ -604,13 +600,19 @@ simulationPlot <- function(
     }
     recoveryLabels <- recoveryLabels[recoveryLabels$Drug != "",]
 
+    # `Wrap =`, not `Wrap <-`: the assignment form named the column after the
+    # whole expression, and the code below only found it because `$` on a data
+    # frame matches partial names.  (Fixed 2026-10-05.)
     arrows <- data.frame(
       Drug = plotTable$Drug,
       y = plotTable$endCe,
       new = "\u2190 Threshold",
       x = maximum,
-      Wrap <- as.character(plotTable$Wrap)
+      Wrap = as.character(plotTable$Wrap)
     )
+    # No threshold, no arrow.  Oxygen, the carrier gases and any panel without
+    # an endCe would otherwise get one pointing at zero.
+    arrows <- arrows[!is.na(arrows$y) & arrows$y > 0, , drop = FALSE]
 
     recoveryLabels$Wrap <- factor(recoveryLabels$Wrap, levels=wrapFactors, ordered = TRUE)
     recovery$Wrap <- factor(recovery$Wrap, levels=wrapFactors, ordered = TRUE)

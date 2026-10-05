@@ -1,5 +1,5 @@
 Package: stanpumpR
-Title: stanpumpR, a PK/PD simulation program
+Title: Pharmacokinetic and Pharmacodynamic Simulation
 Version: 0.0.1.9002
 Authors@R:
     c(person(given = "Steven",
@@ -9,116 +9,56 @@ Authors@R:
            comment = c(ORCID="0000-0002-0289-7793")),
       person("Dean", "Attali", email = "daattali@gmail.com", role = "aut",
              comment = c(ORCID="0000-0002-5645-3493")))
-Description: stanpumpR is open-source software for pharmacokinetic / pharmacodynamic simulation. It is intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. stanpumpR may be freely downloaded and used without restriction for non-commericial purposes.
+Description: Open-source software for pharmacokinetic and pharmacodynamic
+    simulation, intended to make pharmacokinetics accessible to facilitate
+    perioperative patient care, teaching, and research. Calculates and plots
+    predicted plasma and effect-site concentrations for intravenous and
+    extravascular anesthetics using analytical closed-form three-compartment
+    solutions. May be freely downloaded and used without restriction for
+    non-commercial purposes.
 License: MIT + file LICENSE
 Imports:
-  bslib,
-  config,
-  dplyr,
-  glue,
-  ggplot2  (>= 3.4),
-  grid,
-  htmltools,
-  htmlwidgets,
-  httr,
-  jsonlite,
-  lubridate,
-  magrittr,
-  mailR,
-  memoise,
-  officer,
-  openxlsx,
-  png,
-  purrr,
-  rhandsontable,
-  rvg,
-  shiny,
-  shinyalert,
-  shinyBS,
-  shinycssloaders,
-  shinydashboard,
-  shinyjs,
-  shinyWidgets,
-  tidyr,
-  tryCatchLog,
-  utils,
-  waiter,
-  yaml
+    bslib,
+    config,
+    dplyr,
+    emayili,
+    glue,
+    ggplot2  (>= 3.4),
+    grid,
+    htmltools,
+    htmlwidgets,
+    jsonlite,
+    lubridate,
+    magrittr,
+    memoise,
+    officer,
+    openxlsx,
+    purrr,
+    rhandsontable,
+    rvg,
+    shiny,
+    shinyalert,
+    shinycssloaders,
+    shinyjs,
+    shinyWidgets,
+    stats,
+    tidyr,
+    tools,
+    undomanager,
+    utils
 Suggests:
     devtools,
-    here,
     knitr,
     remotes,
     rmarkdown,
     rsconnect,
-    testthat
+    testthat (>= 3.0.0), 
+    yaml
 Depends:
-  R (>= 4.1)
+    R (>= 4.1)
 Encoding: UTF-8
 LazyData: true
+Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
-Collate:
-  drugAndEventDefaults.R
-  sendSlide.R
-  CE.R
-  advanceClosedForm0.R
-  advanceClosedForm1.R
-  advanceClosedFormPO_IM_IN.R
-  advanceClosedFormMetabolite.R
-  advanceState.R
-  advanceStatePO.R
-  calculateCe.R
-  clockTimeToDelta.R
-  convertState.R
-  createHOT.R
-  cube.R
-  deltaToClockTime.R
-  drugs_alfentanil.R
-  drugs_dexmedetomidine.R
-  drugs_etomidate.R
-  drugs_fentanyl.R
-  drugs_hydromorphone.R
-  drugs_ketamine.R
-  drugs_lidocaine.R
-  drugs_methadone.R
-  drugs_midazolam.R
-  drugs_morphine.R
-  drugs_naloxone.R
-  drugs_oliceridine.R
-  drugs_oxycodone.R
-  drugs_oxytocin.R
-  drugs_pethidine.R
-  drugs_propofol.R
-  drugs_remifentanil.R
-  drugs_remimazolam.R
-  drugs_rocuronium.R
-  drugs_sufentanil.R
-  getDrugPK.R
-  globalVariables.R
-  hourMinute.R
-  ig_absorption.R
-  lbmJames.R
-  mergeMetabolite.R
-  metaboliteCoefficients.R
-  modelInteraction.R
-  processdoseTable.R
-  recoveryCalc.R
-  server-helpers.R
-  setLinetypes.R
-  shiny-utils.R
-  simCpCe.R
-  simulationPlot.R
-  suggest.R
-  tPeakError.R
-  utils.R
-  validateDose.R
-  validateTime.R
-  simulateDrugsWithCovariates.R
-  stanpumpR-package.R
-  zzz.R
-  app_globals.R
-  app_ui.R
-  app_server.R
-  app_run.R
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0

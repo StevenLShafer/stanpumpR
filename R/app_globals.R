@@ -9,8 +9,7 @@ doseTableNewRow <-  doseTableInit[7, ]
 
 eventTableInit <- data.frame(
   Time = numeric(0),
-  Event = character(0),
-  Fill = character(0)
+  Event = character(0)
 )
 
 bookmarksToExclude <- c(
@@ -56,6 +55,7 @@ bookmarksToExclude <- c(
   "sendSlide",
   "recipient",
   "emailComments",
+  "commentSafe",
   "drugEditsOK",
   "editDrugsHTML",
   "editDrugs",
@@ -110,7 +110,7 @@ outputComments <- function(
     if (is.data.frame((text)))
     {
       con <- textConnection("outputString","w",local=TRUE)
-      capture.output(print(text, digits = 3), file = con, type="output", split = FALSE)
+      utils::capture.output(print(text, digits = 3), file = con, type="output", split = FALSE)
       close(con)
       if (echo)
       {

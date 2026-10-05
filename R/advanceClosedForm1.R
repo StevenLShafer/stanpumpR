@@ -5,9 +5,6 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # Begin closed form approach #
   ##############################
 
-  #cat("Starting advanceClosedForm1\n")
-  #cat("Dose Table\n")
-
   # Create timeline
   timeLine <- sort(unique(c(0, dose$Time, events$Time, events$Time - 0.01, dose$Time[dose$Bolus] - 0.01, maximum)))
   timeLine <- timeLine[timeLine >=0]
@@ -15,8 +12,8 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # Fill in gaps using exponentially decreasing amounts
   gapStart <- timeLine[1:length(timeLine)-1]
   gapEnd   <- timeLine[2:length(timeLine)]
-  start <- min(0.693/pkSets$default$lambda_4 / 4, 1)
-  newTimes <- c(exp(log(start)+0:40 * log(1440/start)/41))
+  start <- min(0.693/pkSets[[PK_EVENT_DEFAULT]]$lambda_4 / 4, 1)
+  newTimes <- c(exp(log(start)+0:40 * log(MINS_PER_DAY/start)/41))
   for (i in 1:length(gapEnd))
   {
     distance <- gapEnd[i] - gapStart[i]
@@ -50,14 +47,6 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     pkLine[i] <- events$Event[utils::tail(which(events$Time <= timeLine[i]),1)]
   }
 
-  # cat("bolusLine\n")
-  # print(bolusLine)
-  # cat("InfusionLine\n")
-  # print(infusionLine)
-  # cat("rate\n")
-  # print(rate)
-  # cat("\n")
-  #
   # Set up time varying parameters
   parameters <-   as.data.frame(
     cbind(
@@ -107,10 +96,6 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   lambda_2   <- parameters[pkLine, "lambda_2"]
   lambda_3   <- parameters[pkLine, "lambda_3"]
 
-  # cat("lambda_1:\n")
-  # print(lambda_1)
-  # cat("\n")
-
   p_coef_bolus_l1   <- parameters[pkLine, "p_coef_bolus_l1"]
   p_coef_bolus_l2   <- parameters[pkLine, "p_coef_bolus_l2"]
   p_coef_bolus_l3   <- parameters[pkLine, "p_coef_bolus_l3"]
@@ -120,12 +105,6 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   p_coef_infusion_l1   <- parameters[infusionpkLine, "p_coef_infusion_l1"]
   p_coef_infusion_l2   <- parameters[infusionpkLine, "p_coef_infusion_l2"]
   p_coef_infusion_l3   <- parameters[infusionpkLine, "p_coef_infusion_l3"]
-
-  # cat("p_coef_infusion_l1:\n")
-  # print(p_coef_infusion_l1)
-  # cat("\n")
-
-
 
   # Vectorize calculations
   l1_dt <- exp(-lambda_1 * dt)
@@ -162,11 +141,6 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       oldState <- c(p_state_l1[now], p_state_l2[now], p_state_l3[now])
       newState <- convertState(oldState, oldPK, newPK)
 
-      # cat("oldState\n")
-      # print(oldState)
-      # cat("newState\n")
-      # print(newState)
-
       p_state_l1[now] <- newState[1]
       p_state_l2[now] <- newState[2]
       p_state_l3[now] <- newState[3]
@@ -184,9 +158,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   Cp <- p_state_l1 + p_state_l2 + p_state_l3
   if (sum(is.na(Cp)) + sum(is.nan(Cp)) > 0)
   {
-    cat("Problem with calculation of Cp\n")
+    message("Problem with calculation of Cp")
     print(Cp)
-    cat("pkLine:\n")
+    message("pkLine:")
     print(pkLine)
   }
   Ce <- calculateCe(Cp, ke0, dt, L)
@@ -199,35 +173,32 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     Cp  = round(Cp, 2),
     Ce  = round(Ce, 2)
   )
-  # cat("Results of advanceClosedForm1\n")
-  # print(temp)
-  # cat("\n")
 
   if (plotRecovery)
   {
-    # Note that I am looking at plasma, not effect site.
-    # This is for reasons of speed. I abandoned move forward e_state variables in the interest of
-    # speed, and because I would have to take them through the transformation when the PK changes.
-    # That seems computationally hazardous
+    # Time until the EFFECT SITE falls to the threshold if delivery stops now.
+    #
+    # This used to look at plasma, "for reasons of speed", because the
+    # effect-site states are not carried through the changes in PK.  They do not
+    # need to be.  Once delivery stops, plasma is the three exponentials already
+    # in hand,
+    #     Cp(t) = sum_i p_i exp(-lambda_i t),
+    # and the effect site, driven by that plasma from its present value Ce0, is
+    #     Ce(t) = sum_i a_i exp(-lambda_i t) + (Ce0 - sum_i a_i) exp(-ke0 t),
+    #     a_i   = p_i * ke0 / (ke0 - lambda_i),
+    # which is exact, costs nothing, and uses the PK in force at that moment --
+    # the same assumption the other two engines make.
+    # (Claude Code, Claude Fable 5.1, 2026-10-05; verified against stopping
+    # delivery in the simulation by tests/testthat/test-recovery-engines.R.)
     recovery <- sapply(
       1:L,
       function(i)
-        (
-          recoveryCalc(
-            c(
-              p_state_l1[i],
-              p_state_l2[i],
-              p_state_l3[i],
-              0
-            ),
-            c(
-              lambda_1[i],
-              lambda_2[i],
-              lambda_3[i],
-              0
-            ),
-            emerge)
-        )
+      {
+        lam <- c(lambda_1[i], lambda_2[i], lambda_3[i])
+        p   <- c(p_state_l1[i], p_state_l2[i], p_state_l3[i])
+        a   <- p * ke0[i] / (ke0[i] - lam)
+        recoveryCalc(c(a, Ce[i] - sum(a)), c(lam, ke0[i]), emerge)
+      }
     )
   } else {
     recovery <- rep(0, L)
