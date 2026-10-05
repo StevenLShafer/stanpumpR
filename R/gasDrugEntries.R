@@ -67,14 +67,16 @@ reportableGases <- function(gasDose)
 #' @param washout optional output of \code{gasWashout()}.  When supplied, each
 #'   entry also carries the "time until threshold": for an agent, the time for
 #'   its vessel-rich group tension to fall to the \code{endCe} threshold in
-#'   \code{drugDefaults}; for MAC, the time for the summed MAC to fall to
-#'   \code{GAS_MAC_THRESHOLD}.  See R/gasRecovery.R.
-#' @param age patient age in years, for the MAC threshold
+#'   \code{drugDefaults}, adjusted for age; for MAC, the time for the summed
+#'   MAC to fall to \code{macThreshold}.  See R/gasRecovery.R.
+#' @param age patient age in years, for the age-adjusted thresholds
+#' @param macThreshold threshold for the MAC series, in multiples of MAC
 #' @returns a named list of drug-shaped entries, empty if there is nothing to
 #'   report
 #' @export
 gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
-                           washout = NULL, age = 50)
+                           washout = NULL, age = 50,
+                           macThreshold = GAS_MAC_THRESHOLD)
 {
   if (is.null(sim)) return(list())
   if (is.null(drugDefaults)) drugDefaults <- getDrugDefaultsGlobal()
@@ -100,6 +102,8 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     # gasRecovery.R; oxygen has no threshold and no washout to speak of.
     endCe <- drugDefaults$endCe[match(g, drugDefaults$Drug)]
     if (length(endCe) != 1 || is.na(endCe)) endCe <- 0
+    # A volatile agent's threshold is stored at age 40 and follows MAC with age.
+    endCe <- gasThresholdForAge(g, endCe, age)
     recovery <- NULL
     if (!is.null(washout) && g %in% names(washout$rate) && endCe > 0)
       recovery <- gasRecoveryTime(washout, g, endCe)
@@ -134,8 +138,8 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
         typical      = c(lower = 0.8, typical = 1.0, upper = 1.3),
         color        = "#000000",
         recovery     = if (is.null(washout)) NULL else
-          macRecoveryTime(washout, age, GAS_MAC_THRESHOLD),
-        endCe        = if (is.null(washout)) 0 else GAS_MAC_THRESHOLD
+          macRecoveryTime(washout, age, macThreshold),
+        endCe        = if (is.null(washout)) 0 else macThreshold
       )
       # Kept so that applyOpioidMacInteraction() can redo the time until
       # threshold against the opioid-reduced MAC without re-running anything.

@@ -103,6 +103,11 @@ app_server <- function(input, output, session) {
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
   drugDefaults <- reactiveVal(getDrugDefaultsGlobal())
+
+  # Threshold for the MAC series' "time until threshold".  MAC is not a drug and
+  # has no row in drugDefaults, so it is kept here; it is edited in the Drug
+  # Thresholds dialog with the rest.
+  macThreshold <- reactiveVal(GAS_MAC_THRESHOLD)
   eventDefaults <- reactiveVal(getEventDefaults())
   drugList <- getDrugDefaultsGlobal()$Drug
 
@@ -415,7 +420,8 @@ app_server <- function(input, output, session) {
         drugDefaults(),
         plotMaximum(),
         washout = washout,
-        age     = age()
+        age     = age(),
+        macThreshold = macThreshold()
       )
     }, name = "gases() reactive")
   })
@@ -1594,6 +1600,8 @@ app_server <- function(input, output, session) {
       modalDialog(
         title = "Drug Thresholds",
         p("Set the threshold concentration for each drug."),
+        p(class = "small text-muted",
+          "Inhaled agents are in %, shown for this patient's age; MAC is in multiples of MAC."),
         if (input$normalization == NORMALIZE_NONE)
           checkboxInput("showThresholdModal", "Show time until threshold", value = input$showThreshold),
         shinycssloaders::withSpinner(rhandsontable::rHandsontableOutput("editThresholdsTable", height = 350)),
@@ -1614,8 +1622,14 @@ app_server <- function(input, output, session) {
 
   output$editThresholdsTable <- rhandsontable::renderRHandsontable({
     drugThresholdsTrigger$depend()
-    x <- drugDefaults()[, c("Drug", "endCe")]
-    names(x)[2] <- "Threshold"
+    # Shown at the patient's age for the volatile agents, and with a row for
+    # MAC; see thresholdTableForDisplay().  isolate(): opening the dialog is
+    # what refreshes it, not a change of age behind it.
+    x <- thresholdTableForDisplay(
+      drugDefaults(),
+      tryCatch(isolate(age()), error = function(e) 40),
+      isolate(macThreshold())
+    )
     rhandsontable::rhandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
       rhandsontable::hot_col(col = 1, halign = "htLeft", readOnly = TRUE) %>%
       rhandsontable::hot_col(col = 2, halign = "htRight", type = "numeric") %>%
@@ -1625,9 +1639,13 @@ app_server <- function(input, output, session) {
   observeEvent(input$thresholdEditsOK, {
     removeModal()
     tt <- rhandsontable::hot_to_r(input$editThresholdsTable)
-    newDrugDefaults <- drugDefaults()
-    newDrugDefaults$endCe <- as.numeric(tt$Threshold)[match(newDrugDefaults$Drug, tt$Drug)]
-    drugDefaults(newDrugDefaults)
+    updated <- thresholdTableToDefaults(
+      tt, drugDefaults(),
+      tryCatch(isolate(age()), error = function(e) 40),
+      macThreshold()
+    )
+    drugDefaults(updated$drugDefaults)
+    macThreshold(updated$macThreshold)
     updateCheckboxInput(session, "showThreshold", value = input$showThresholdModal)
   })
 

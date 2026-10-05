@@ -4,7 +4,13 @@
 \alias{gasWashout}
 \title{Washout of every soluble gas, as sums of exponentials}
 \usage{
-gasWashout(sim, gasDose, weight = 70, cardiacOutput = NULL)
+gasWashout(
+  sim,
+  gasDose,
+  weight = 70,
+  cardiacOutput = NULL,
+  rebreathing = FALSE
+)
 }
 \arguments{
 \item{sim}{output of \code{simulateGases()}}
@@ -14,15 +20,21 @@ gasWashout(sim, gasDose, weight = 70, cardiacOutput = NULL)
 \item{weight}{patient weight in kg}
 
 \item{cardiacOutput}{cardiac output in L/min; defaults to the body's}
+
+\item{rebreathing}{FALSE, the default and what the app shows: the fresh gas
+flow is turned up so that none of the agent is inspired.  TRUE: the fresh
+gas flow is left as it is and the circuit washes out with the patient.}
 }
 \value{
-a list with \code{Time}, \code{rate} (per gas, an nT x 5 matrix of
+a list with \code{Time}, \code{rate} (per gas, an nT x K matrix of
 positive decay rates per minute) and \code{amplitude} (per gas, an
-nT x 5 x 5 array: time point, compartment, exponential), or NULL if there
-is no simulation
+nT x 5 x K array: time point, compartment, exponential), where K is 4
+without rebreathing and 5 with; or NULL if there is no simulation.
+Compartments are numbered as in the engine: 1 circuit, 2 alveolar,
+3 vessel-rich group, 4 muscle, 5 fat.
 }
 \description{
 For each time point of a gas simulation, and each soluble gas, expresses the
-washout that would follow if delivery stopped at that moment as five decaying
-exponentials per compartment.  See the file header for the assumptions.
+washout that would follow if that gas were turned off at that moment as
+decaying exponentials per compartment.  See the file header.
 }

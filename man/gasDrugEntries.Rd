@@ -10,7 +10,8 @@ gasDrugEntries(
   drugDefaults = NULL,
   maximum = 60,
   washout = NULL,
-  age = 50
+  age = 50,
+  macThreshold = GAS_MAC_THRESHOLD
 )
 }
 \arguments{
@@ -25,10 +26,12 @@ gasDrugEntries(
 \item{washout}{optional output of \code{gasWashout()}.  When supplied, each
 entry also carries the "time until threshold": for an agent, the time for
 its vessel-rich group tension to fall to the \code{endCe} threshold in
-\code{drugDefaults}; for MAC, the time for the summed MAC to fall to
-\code{GAS_MAC_THRESHOLD}.  See R/gasRecovery.R.}
+\code{drugDefaults}, adjusted for age; for MAC, the time for the summed
+MAC to fall to \code{macThreshold}.  See R/gasRecovery.R.}
 
-\item{age}{patient age in years, for the MAC threshold}
+\item{age}{patient age in years, for the age-adjusted thresholds}
+
+\item{macThreshold}{threshold for the MAC series, in multiples of MAC}
 }
 \value{
 a named list of drug-shaped entries, empty if there is nothing to

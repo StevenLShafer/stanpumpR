@@ -21,8 +21,8 @@ oliceridine,ng,mg,mcg/kg/min,mg,"mg,mcg/kg/min",#FF00CC,18.296,37.504,27.4,27.9,
 remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.3,0.6,0.2,0,0.2,IV
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas
 oxygen,%,L/min,L/min,L/min,"L/min",#2E7D32,0,0,0,0,0,gas
-nitrousOxide,%,L/min,L/min,L/min,"L/min",#1E88E5,0,0,0,0,0,gas
-sevoflurane,%,%,%,%,"%",#F9A825,0,0,0,0,0.7,gas
-isoflurane,%,%,%,%,"%",#8E24AA,0,0,0,0,0.4,gas
-desflurane,%,%,%,%,"%",#00897B,0,0,0,0,2,gas
+nitrousOxide,%,L/min,L/min,L/min,"L/min",#1E88E5,0,0,0,0,10,gas
+sevoflurane,%,%,%,%,"%",#F9A825,0,0,0,0,0.21,gas
+isoflurane,%,%,%,%,"%",#8E24AA,0,0,0,0,0.11,gas
+desflurane,%,%,%,%,"%",#00897B,0,0,0,0,0.6,gas
 ventilation,L/min,L/min,L/min,L/min,"L/min",#546E7A,0,0,0,0,0,gas

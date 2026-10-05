@@ -332,34 +332,42 @@ The comparison with the published points is in the header of
 
 *Time until threshold* (Graph Options) works for the inhaled agents and for MAC
 as it does for the intravenous drugs: at every moment, how long until the
-concentration would fall to the threshold if delivery stopped right then. It is
-drawn as a thin black line on each panel, read against the minute labels at the
-right-hand edge. The Y axis is linear while it is showing.
+concentration would fall to the threshold if the agent were turned off right
+then. It is drawn as a thin black line on each panel, read against the minute
+labels at the right-hand edge. The Y axis is linear while it is showing.
 
-For a gas, "delivery stops" means the vaporiser and the nitrous oxide are turned
-off, and nothing else changes: total fresh gas flow stays the same, as oxygen,
-and so does ventilation. Turning the flow up at the end of a case, as is usual,
-will be faster than the line says.
+What "turned off" means for a gas (S. Shafer, 2026-10-05):
+
+- **Each agent is its own decision.** Turning off the vaporiser and turning off
+  the nitrous oxide are separate adjustments, so each panel shows the time for
+  that agent alone.
+- **The fresh gas flow is turned up so that there is no rebreathing.** That is
+  what is done to wake a patient, and it is the clinically important number.
+  The time shown therefore does not depend on the flow in use at that moment.
+- Ventilation stays as it is.
 
 | Panel | What is timed | Default threshold |
 |---|---|---|
-| sevoflurane, isoflurane, desflurane | Vessel-rich group (brain) tension, the solid line | 0.7%, 0.4%, 2% - about a third of MAC |
-| MAC | The MAC series itself, which is alveolar | 0.33 MAC |
-| oxygen, nitrous oxide | Not timed | none |
+| sevoflurane, isoflurane, desflurane | Vessel-rich group (brain) tension, the solid line | 0.1 x the age-adjusted MAC of that agent |
+| nitrous oxide | Vessel-rich group (brain) tension | 10% |
+| MAC | The MAC series itself, which is alveolar, with every agent turned off | 0.1 MAC |
+| oxygen | Not timed | none |
 
-The agent thresholds can be changed in the Drug Thresholds dialog like any other
-drug's. The MAC threshold is not yet adjustable.
+All of these can be changed in the Drug Thresholds dialog. The volatile agents
+are shown there at the patient's age, so the number in the dialog is the number
+on the plot; they follow MAC if the age is changed. Nitrous oxide comes off fast
+enough that its threshold matters little.
 
-Two approximations:
+Two approximations, both making the time shown a little long:
 
 - The washout leaves out the coupling between gases (the concentration and
-  second gas effect). For a volatile agent alone that makes no measurable
-  difference. With 70% nitrous oxide washing out as well, the time shown is
-  longer than the full calculation by up to about 5% for the agent and 10% for
-  MAC.
+  second gas effect). For a volatile agent that makes no measurable difference,
+  with or without nitrous oxide running. When 70% nitrous oxide is turned off at
+  the same moment, the time shown is long by about 5% for the volatile agent and
+  16% for MAC.
 - With *Include opioid - MAC interaction* ticked, the opioid's effect on MAC is
-  held at its value at the moment delivery stops. In truth the opioid would wear
-  off too, so the time shown for MAC is on the long side.
+  held at its value at the moment the agents are turned off. In truth the opioid
+  would wear off too.
 
 ### Where the engine deliberately differs from Gas Man
 

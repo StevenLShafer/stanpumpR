@@ -22,5 +22,6 @@ numeric vector of minutes, one per time point
 }
 \description{
 Alveolar tensions of the potent agents, each as a fraction of its
-age-adjusted MAC, summed -- exactly as the MAC series is built.
+age-adjusted MAC, summed -- exactly as the MAC series is built.  Every potent
+agent is taken to be turned off.
 }
