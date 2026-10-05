@@ -611,6 +611,17 @@ advanceClosedFormGas <- function(
       for (g in props$gas)
       {
         newState[[g]] <- as.vector(prop[[g]]$P %*% state[[g]] + prop[[g]]$q)
+
+        # Oxygen cannot go negative (Shafer, 2026-10-05).  Metabolic consumption
+        # is modelled as a constant sink, which is right while there is oxygen
+        # to consume but, unchecked, drives the fraction below zero whenever
+        # supply cannot meet demand (apnea, or a hypoxic mixture).  Flooring at
+        # zero after each sub-step is the statement that consumption stops when
+        # nothing is left.  The linear advance within the sub-step is unchanged,
+        # so a run that never reaches zero is unaffected to the last digit.
+        # (Claude Code, Claude Fable 5.1; verified by test-gas-engine.R.)
+        if (g == "oxygen") newState[[g]] <- pmax(newState[[g]], 0)
+
         stepStates[[g]][k, ] <- newState[[g]]
       }
       state <- newState

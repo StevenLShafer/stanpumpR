@@ -424,3 +424,19 @@ test_that("Gas Man's numbers are used as they stand, with bad provenance flagged
   # of the table carrying no flag is expected rather than reassuring.
   expect_equal(nrow(flagged), 1)
 })
+
+test_that("oxygen never goes negative, even with no ventilation", {
+  # Apnea: nothing replaces the oxygen being consumed.  The constant metabolic
+  # sink would otherwise carry the alveolar fraction far below zero.
+  apnea <- data.frame(Time = 0, Drug = c("oxygen", "nitrousOxide"), Dose = c(1, 2))
+  sim <- advanceClosedFormGas(apnea, weight = 60, maximum = 60)
+  o2 <- sim$results$Y[sim$results$Drug == "oxygen"]
+  expect_gte(min(o2), 0)
+  expect_equal(utils::tail(o2, 1), 0)
+  expect_gte(min(sim$state[["oxygen"]]), 0)
+
+  # The floor must not touch a run that never reaches it.
+  ventilated <- rbind(apnea, data.frame(Time = 0, Drug = "ventilation", Dose = 4))
+  sim <- advanceClosedFormGas(ventilated, weight = 60, maximum = 60)
+  expect_gt(min(sim$results$Y[sim$results$Drug == "oxygen"]), 10)
+})
