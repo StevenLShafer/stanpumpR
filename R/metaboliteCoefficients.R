@@ -5,6 +5,11 @@
 # Steven L. Shafer, to support drugs whose effect is mediated by an active
 # metabolite -- codeine, whose analgesia is morphine's, being the clearest case.
 #
+# Extended 2026-10-05 (Claude Opus 5) with the oral route: the same convolution
+# kernel now serves a bolus, an infusion and an oral dose, and a first-pass
+# branch delivers metabolite formed before the parent reaches the systemic
+# circulation.
+#
 # STATUS: run and verified on R 4.6.1 by tests/testthat/test-metabolite.R.  The
 # closed form is checked against numerical convolution, against an independent
 # ODE integration of the two-drug cascade, and against the effect-site
@@ -71,6 +76,30 @@
 #     coefficient on exp(-lambda_i t) =   K p_i SUM_j [ m_j / (mu_j - lambda_i) ]
 #     coefficient on exp(-mu_j t)     = - K m_j SUM_i [ p_i / (mu_j - lambda_i) ]
 #
+# THE ORAL ROUTE
+# --------------
+# Nothing above depends on the driving concentration being a bolus response.
+# Any sum of exponentials will do, so the oral case reuses the same kernel with
+# the parent's ORAL plasma response as the driving set:
+#
+#     Cp_PO(t) = SUM_i a_i exp(-lambda_i t) + a_ka exp(-ka t)
+#     a_i      = p_i ka/(ka - lambda_i) F        a_ka = -SUM_i a_i
+#
+# which is exactly what getDrugPK writes into p_coef_PO_*.  The convolution then
+# runs over the parent's eigenvalues, ka, and the metabolite's.
+#
+# Oral dosing adds a second, parallel route.  Some of the dose is converted
+# before it ever reaches the systemic circulation, and that metabolite appears
+# directly in the metabolite's own central compartment.  It is not a convolution
+# through the parent at all: it is the metabolite's own oral response, scaled by
+# the fraction converted.  The two routes are summed.
+#
+# They are separate parameters because they are separate processes with
+# different time courses -- first-pass metabolite appears with the absorption
+# kernel, systemic metabolite appears only after the parent has been absorbed
+# and then converted.  Oral data alone constrain only their SUM; separating them
+# needs intravenous parent data as well.
+#
 # CONSISTENCY WITH THE EFFECT SITE
 # --------------------------------
 # The effect site is the one-compartment special case of this same integral, and
@@ -107,12 +136,73 @@ dispositionTerms <- function(pkSet)
 }
 
 
+#' Separate eigenvalues that coincide
+#'
+#' The convolution divides by (mu - lambda), so an exact tie is a division by
+#' zero.  Two independently fitted drugs never share an eigenvalue exactly, and
+#' the degenerate case takes a t*exp(-lambda t) form that is not worth carrying,
+#' so a tie is broken by a relative hair.  The perturbation is far below the
+#' precision of any published parameter set.
+#'
+#' @param lamM eigenvalues to adjust
+#' @param lamP eigenvalues to separate them from
+#' @returns \code{lamM}, with any exact tie nudged
+#' @keywords internal
+separateEigenvalues <- function(lamM, lamP)
+{
+  for (j in seq_along(lamM))
+    for (i in seq_along(lamP))
+      if (abs(lamM[j] - lamP[i]) < 1e-10 * max(lamM[j], lamP[i]))
+        lamM[j] <- lamM[j] * (1 + 1e-8)
+  lamM
+}
+
+
+#' Convolve a driving concentration with a disposition response
+#'
+#' Both are sums of exponentials, so the convolution is again a sum of
+#' exponentials over the union of the two eigenvalue sets.  This is the kernel
+#' of the derivation at the top of this file, factored out so that the same
+#' algebra serves a bolus, an infusion and an oral dose: only the driving term
+#' set changes.
+#'
+#' @param P driving terms, a list of \code{coef} and \code{lambda}
+#' @param M disposition terms of the formed species, same shape
+#' @param K mass formed per unit driving concentration per minute
+#'
+#' @returns a list of \code{lambda} (driving eigenvalues, then disposition
+#'   eigenvalues) and \code{coef}
+#' @keywords internal
+convolveExponentials <- function(P, M, K)
+{
+  lamP <- P$lambda
+  lamM <- separateEigenvalues(M$lambda, lamP)
+
+  # Coefficient on each driving eigenvalue: K p_i SUM_j m_j/(mu_j - lambda_i)
+  coefP <- vapply(seq_along(lamP), function(i)
+    K * P$coef[i] * sum(M$coef / (lamM - lamP[i])), numeric(1))
+
+  # Coefficient on each disposition eigenvalue: -K m_j SUM_i p_i/(mu_j - lambda_i)
+  coefM <- vapply(seq_along(lamM), function(j)
+    -K * M$coef[j] * sum(P$coef / (lamM[j] - lamP)), numeric(1))
+
+  list(lambda = c(lamP, lamM), coef = c(coefP, coefM))
+}
+
+
 #' Coefficients for an active metabolite formed from a parent drug
 #'
 #' Returns the metabolite's concentration as a sum of exponentials over the
 #' union of the parent's and the metabolite's eigenvalues, in the same
 #' bolus/infusion coefficient form the rest of the engine uses, so that the
 #' result can be advanced by \code{advanceState()} without any new machinery.
+#'
+#' When the parent carries a first-order oral absorption constant, a third
+#' coefficient vector is returned for an oral dose.  It is the sum of the
+#' systemic route, in which absorbed parent is converted after reaching the
+#' central compartment, and the first-pass route, in which a fraction of the
+#' dose is converted before reaching the systemic circulation and appears
+#' directly in the metabolite's central compartment.
 #'
 #' @param parent the parent drug's PK set
 #' @param metabolite the metabolite's own disposition PK set
@@ -126,17 +216,23 @@ dispositionTerms <- function(pkSet)
 #' @param unitScale conversion from the parent's internal dose unit to the
 #'   metabolite's, normally from \code{metaboliteUnitScale()}.  Defaults to 1,
 #'   which is correct only when both drugs share a Concentration.Units.
+#' @param firstPassFraction fraction of an oral parent dose appearing directly
+#'   as metabolite, having been converted before reaching the systemic
+#'   circulation.  Defaults to 0.  Ignored when the parent has no oral
+#'   absorption constant.
 #'
-#' @returns a list with \code{lambda} (the union of eigenvalues),
-#'   \code{bolus} and \code{infusion} (coefficients on each), and the scalar
-#'   \code{K} used to form them
+#' @returns a list with \code{lambda} (the union of eigenvalues: parent, then
+#'   metabolite, then the absorption constant when there is one),
+#'   \code{bolus}, \code{infusion} and \code{PO} coefficients on each, and the
+#'   scalar \code{K} used to form them
 #' @export
 metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
-                                   unitScale = 1)
+                                   unitScale = 1, firstPassFraction = 0)
 {
   # No upper bound on kFormation.  The old 'fraction' form was capped at 1 because it
   # was a share of elimination; a transfer rate constant has no such ceiling.
-  stopifnot(kFormation >= 0, mwRatio > 0, unitScale > 0)
+  stopifnot(kFormation >= 0, mwRatio > 0, unitScale > 0,
+            firstPassFraction >= 0, firstPassFraction <= 1)
 
   P <- dispositionTerms(parent)
   M <- dispositionTerms(metabolite)
@@ -148,35 +244,58 @@ metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
   # parent's k10 does NOT appear, because formation is independent of it.
   K <- kFormation * parent$v1 * mwRatio * unitScale
 
-  # An exact shared eigenvalue would divide by zero; the convolution then takes
-  # the t*exp(-lambda t) form instead.  Two independently fitted drugs never
-  # share one exactly, so rather than carry that branch we separate the pair by
-  # a relative hair and note it.  The perturbation is far below the precision of
-  # any published parameter set.
-  lamP <- P$lambda
-  lamM <- M$lambda
-  for (j in seq_along(lamM))
-    for (i in seq_along(lamP))
-      if (abs(lamM[j] - lamP[i]) < 1e-10 * max(lamM[j], lamP[i]))
-        lamM[j] <- lamM[j] * (1 + 1e-8)
-
-  # Coefficient on each parent eigenvalue: K p_i SUM_j m_j/(mu_j - lambda_i)
-  coefP <- vapply(seq_along(lamP), function(i)
-    K * P$coef[i] * sum(M$coef / (lamM - lamP[i])), numeric(1))
-
-  # Coefficient on each metabolite eigenvalue: -K m_j SUM_i p_i/(mu_j - lambda_i)
-  coefM <- vapply(seq_along(lamM), function(j)
-    -K * M$coef[j] * sum(P$coef / (lamM[j] - lamP)), numeric(1))
-
-  lambda <- c(lamP, lamM)
-  bolus  <- c(coefP, coefM)
+  iv     <- convolveExponentials(P, M, K)
+  lambda <- iv$lambda
+  bolus  <- iv$coef
 
   # An infusion is the integral of the bolus response, so each exponential's
   # infusion coefficient is its bolus coefficient over its own eigenvalue --
   # the same relation the parent and effect-site coefficients already use.
   infusion <- bolus / lambda
 
-  list(lambda = lambda, bolus = bolus, infusion = infusion, K = K)
+  nP <- length(P$lambda)
+  nM <- length(M$lambda)
+
+  ka <- if (is.null(parent$ka_PO)) 0 else parent$ka_PO
+  if (ka > 0)
+  {
+    bio <- if (is.null(parent$bioavailability_PO)) 1 else parent$bioavailability_PO
+
+    # The parent's own plasma response to a unit oral dose, which is what
+    # getDrugPK writes into p_coef_PO_*: the bolus response retarded by
+    # first-order absorption and scaled by bioavailability.
+    lamPO <- separateEigenvalues(P$lambda, ka)
+    aLam  <- P$coef * ka / (ka - lamPO) * bio
+    drive <- list(coef = c(aLam, -sum(aLam)), lambda = c(lamPO, ka))
+
+    # convolveExponentials returns driving eigenvalues (parent, then ka)
+    # followed by the metabolite's.  Reorder onto the shared vector, which
+    # carries ka last so that the bolus and infusion vectors keep the ordering
+    # the intravenous case has always had.
+    systemic <- convolveExponentials(drive, M, K)$coef
+    PO <- c(systemic[seq_len(nP)],
+            systemic[nP + 1 + seq_len(nM)],
+            systemic[nP + 1])
+
+    # First pass: converted before reaching the systemic circulation, so it
+    # enters the metabolite's central compartment through the absorption step
+    # rather than through the parent's disposition.
+    if (firstPassFraction > 0)
+    {
+      scale <- firstPassFraction * mwRatio * unitScale
+      muFP  <- separateEigenvalues(M$lambda, ka)
+      fpMu  <- M$coef * ka / (ka - muFP) * scale
+      PO    <- PO + c(rep(0, nP), fpMu, -sum(fpMu))
+    }
+
+    lambda   <- c(lambda, ka)
+    bolus    <- c(bolus, 0)
+    infusion <- c(infusion, 0)
+  } else {
+    PO <- rep(0, length(lambda))
+  }
+
+  list(lambda = lambda, bolus = bolus, infusion = infusion, PO = PO, K = K)
 }
 
 
@@ -194,6 +313,24 @@ metaboliteAfterBolus <- function(coefs, dose, times)
 {
   vapply(times, function(t)
     dose * sum(coefs$bolus * exp(-coefs$lambda * t)), numeric(1))
+}
+
+
+#' Metabolite concentration at arbitrary times after a single oral parent dose
+#'
+#' The oral counterpart of \code{metaboliteAfterBolus()}, carrying both the
+#' systemic and the first-pass route.  Times are measured from the dose, after
+#' any absorption lag has been applied by the caller.
+#'
+#' @param coefs output of \code{metaboliteCoefficients()}
+#' @param dose oral parent dose, in the parent's base mass units
+#' @param times times in minutes
+#' @returns numeric vector of metabolite concentrations
+#' @export
+metaboliteAfterOral <- function(coefs, dose, times)
+{
+  vapply(times, function(t)
+    dose * sum(coefs$PO * exp(-coefs$lambda * t)), numeric(1))
 }
 
 

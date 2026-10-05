@@ -9,6 +9,11 @@
 #' @param age age in years
 #' @param sex sex as string: "female" or "male"
 #' @param drugDefaults output from \code{getDrugDefaults(drug)}
+#' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
+#'   Passed only to drug models that declare it; the rest ignore it.
+#' @param resolveMetabolite should a drug that names an active metabolite have
+#'   that metabolite's coefficients built?  Set FALSE when resolving the
+#'   metabolite itself, which stops a cascade from recursing.
 #'
 #' @examples
 #' PK <- stanpumpR::getDrugPK(
@@ -27,7 +32,9 @@ getDrugPK <- function(
   height,
   age,
   sex,
-  drugDefaults = getDrugDefaults(drug)
+  drugDefaults = getDrugDefaults(drug),
+  cyp2d6 = CYP2D6_DEFAULT,
+  resolveMetabolite = TRUE
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -36,7 +43,20 @@ getDrugPK <- function(
     stop("Invalid sex: ", paste(sex, collapse = ", "),
          ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
   }
-  X <- eval(call(drug, weight, height, age, sex))
+  if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
+    stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
+         ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
+  }
+
+  # Every model takes the four patient covariates.  A pharmacogenetic
+  # phenotype goes only to models that name it, so that a drug whose kinetics
+  # depend on one can add it to its signature without every other drug model
+  # having to change, and so that a model taking only ... is not handed an
+  # argument it cannot forward.
+  drugFunction <- match.fun(drug)
+  covariates <- list(weight = weight, height = height, age = age, sex = sex)
+  if ("cyp2d6" %in% names(formals(drugFunction))) covariates$cyp2d6 <- cyp2d6
+  X <- do.call(drugFunction, covariates)
   tPeak <- X$tPeak
 
   events <- names(X$PK)
@@ -219,7 +239,11 @@ getDrugPK <- function(
         p_coef_bolus_l1 <- (k21 - lambda_1) / (lambda_2 - lambda_1) / v1
         p_coef_bolus_l2 <- (k21 - lambda_2) / (lambda_1 - lambda_2) / v1
       } else {
-        p_coef_bolus_l1 <- 1 / lambda_1 / v1
+        # One compartment.  Cp(0) = dose / v1, so the coefficient is 1/v1.
+        # This branch previously divided by lambda_1 as well, which inflated
+        # every concentration by 1/k10.  No drug in the library reached it
+        # until codeine, whose disposition is identified only as CL and Vss.
+        p_coef_bolus_l1 <- 1 / v1
       }
     }
 
@@ -413,8 +437,62 @@ getDrugPK <- function(
   }
 
   PK <- sapply(events, function(x) list(get0(x)))
+
+  # An active metabolite is resolved by simulating the metabolite's own
+  # disposition and convolving the parent's plasma profile through it.  The
+  # coefficients ride along inside each PK set, so simCpCe() can hand them
+  # straight to advanceClosedFormMetabolite().
+  metaboliteName <- NULL
+  if (resolveMetabolite && !is.null(X$metabolite))
+  {
+    metaboliteName <- X$metabolite$name
+    metaboliteDefaults <- getDrugDefaults(metaboliteName)
+
+    # resolveMetabolite = FALSE: one level only.  A cascade such as codeine to
+    # morphine to morphine-6-glucuronide would need a two-stage convolution,
+    # which this does not attempt, and the guard keeps a metabolite that names
+    # a metabolite of its own from recursing.
+    metabolitePK <- getDrugPK(
+      drug = metaboliteName,
+      weight = weight, height = height, age = age, sex = sex,
+      drugDefaults = metaboliteDefaults,
+      cyp2d6 = cyp2d6,
+      resolveMetabolite = FALSE
+    )
+    metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
+
+    # A parent and its metabolite need not report in the same units, and the
+    # internal dose unit follows the reported one.  Without this the curve
+    # would be wrong by a thousandfold.
+    unitScale <- metaboliteUnitScale(
+      drugDefaults$Concentration.Units,
+      metaboliteDefaults$Concentration.Units
+    )
+
+    firstPass <- X$metabolite$firstPassFraction
+    if (is.null(firstPass)) firstPass <- 0
+    mwRatio <- X$metabolite$mwRatio
+    if (is.null(mwRatio)) mwRatio <- 1
+
+    for (event in events)
+    {
+      PK[[event]]$metabolite <- list(
+        name  = metaboliteName,
+        ke0   = metaboliteSet$ke0,
+        coefs = metaboliteCoefficients(
+          parent            = PK[[event]],
+          metabolite        = metaboliteSet,
+          kFormation        = X$metabolite$kFormation,
+          mwRatio           = mwRatio,
+          unitScale         = unitScale,
+          firstPassFraction = firstPass
+        )
+      )
+    }
+  }
+
   #  thisDrug <- which(drugDefaults$Drug == drug)
-  return(
+  out <-
     list(
       drug = drug,
       PK = PK,
@@ -436,7 +514,12 @@ getDrugPK <- function(
       Default.Units       = drugDefaults$Default.Units,
       emerge              = drugDefaults$Emerge
     )
-  )
+
+  # Appended rather than declared, because assigning NULL to a list element
+  # does not create it: a drug with no metabolite returns exactly the shape it
+  # always has.
+  out$metaboliteName <- metaboliteName
+  return(out)
 }
 
 # Calculate the error between the predicted and actual time of peak effect

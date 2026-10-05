@@ -9,6 +9,18 @@ SEX_MALE <- "male"
 SEX_FEMALE <- "female"
 SEX_VALUES <- c(SEX_MALE, SEX_FEMALE)
 
+# CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
+# genotyping laboratories report, rather than the three the UI carried before
+# any drug used them.  "normal" is the reference: a drug's formation parameters
+# are published relative to it.
+CYP2D6_POOR         <- "poor"
+CYP2D6_INTERMEDIATE <- "intermediate"
+CYP2D6_NORMAL       <- "normal"
+CYP2D6_ULTRARAPID   <- "ultrarapid"
+CYP2D6_VALUES  <- c(CYP2D6_POOR, CYP2D6_INTERMEDIATE, CYP2D6_NORMAL,
+                    CYP2D6_ULTRARAPID)
+CYP2D6_DEFAULT <- CYP2D6_NORMAL
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 MIN_WEIGHT <- 0.1

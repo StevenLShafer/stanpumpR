@@ -1,4 +1,92 @@
 # TODO Fix plotRecovery
+
+#' Turn a simulated plasma and effect-site series into the shapes the app plots
+#'
+#' Splits out of \code{simCpCe()} so that a drug whose series changes after it
+#' was first simulated -- because it received a contribution from a parent
+#' drug's active metabolite -- can be finished the same way, rather than having
+#' the normalisation, the equispaced grid and the maxima recomputed by hand in
+#' two places.
+#'
+#' @param wide a data frame of \code{Time}, \code{Plasma}, \code{Effect Site}
+#'   and \code{Recovery}
+#' @param PK PK parameters from \code{getDrugPK(drug)}
+#' @param maximum maximum length of simulation in minutes
+#' @param plotRecovery should recovery be kept in the plotted series?
+#'
+#' @returns a list of \code{results}, \code{equiSpace} and \code{max}
+#' @keywords internal
+finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
+{
+  results <- wide
+  maxCp <- max(results$Plasma)
+
+  # A pure prodrug -- codeine, tramadol -- has no effect site of its own, so
+  # its effect-site column is NA at every point.  That is right for the plotted
+  # series, because simulationPlot() drops NA rows and the drug is then drawn
+  # as plasma only.  It is not right for anything derived, which is why every
+  # scalar below is guarded: max() would return NA and approx() would refuse to
+  # interpolate a column with fewer than two non-NA values.
+  ceAllNA <- all(is.na(results$"Effect Site"))
+  maxCe <- if (ceAllNA) 0 else max(results$"Effect Site", na.rm = TRUE)
+
+  results$CpNormCp <- if (maxCp > 0) results$Plasma        / maxCp * 100 else 0
+  results$CeNormCp <- if (maxCp > 0) results$"Effect Site" / maxCp * 100 else 0
+  results$CpNormCe <- if (maxCe > 0) results$Plasma        / maxCe * 100 else 0
+  results$CeNormCe <- if (maxCe > 0) results$"Effect Site" / maxCe * 100 else 0
+
+  # Calculate equispaced output
+  xout <- seq(from = 0, to = maximum, length.out = RESOLUTION)
+  equiSpaceCe <- if (ceAllNA) {
+    # Zero, not NA.  A prodrug has no effect of its own and its MEAC is zero,
+    # and both the hover readout and the total-opioid MEAC sum read equiSpace.
+    # The metabolite's row is where the effect actually appears.
+    rep(0, length(xout))
+  } else {
+    stats::approx(x = results$Time, y = results$"Effect Site", xout = xout)$y
+  }
+  equiSpace <- data.frame(
+    Drug = PK$drug,
+    Time = xout,
+    Ce = equiSpaceCe,
+    Time = xout,
+    Recovery = stats::approx(
+      x = results$Time,
+      y = results$Recovery,
+      xout = xout
+    )$y
+  )
+
+  equiSpace$Ce[1] <- 0  # Approx tends to make it a very small negative number
+  if (PK$MEAC == 0)
+  {
+    equiSpace$MEAC <- 0
+  } else {
+    equiSpace$MEAC <- equiSpace$Ce / PK$MEAC * 100
+  }
+  max <- data.frame(
+    Drug = PK$drug,
+    Recovery = max(results$Recovery),
+    Cp = maxCp,
+    Ce = maxCe
+  )
+  if (!plotRecovery) results$Recovery <- NULL
+  results <- tidyr::gather(results, "Site", "Y", -Time)
+  results$Drug <- PK$drug
+  results <- results[, c(4, 1, 2, 3)]
+  # Structure of results
+  # Four columns: Drug, Time, Site, Y
+  # 7 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCE, CeNormCe, and MEAC
+  # These will be subset in simulation plot as needed.
+
+  list(
+    results = results,
+    equiSpace = equiSpace,
+    max = max
+  )
+}
+
+
 #' Simulate plasma and effect site concentration from time 0 to maximum
 #'
 #' See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
@@ -9,7 +97,10 @@
 #' @param maximum maximum length of simulation in minutes
 #' @param plotRecovery (current broken, leave set to FALSE) should recovery parameters be calculated?
 #'
-#' @returns a list of data frames with the output of the a single drug simulation
+#' @returns a list of data frames with the output of the a single drug
+#'   simulation.  A drug that forms an active metabolite additionally carries
+#'   \code{metaboliteSeries} and \code{metaboliteName}; \code{foldMetabolites()}
+#'   adds that contribution to the metabolite drug's own row.
 #'
 #' @export
 simCpCe <- function(dose, events, PK, maximum, plotRecovery)
@@ -66,15 +157,28 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
 
     events$Event <- gsub(" ","", events$Event)
     events <- events[events$Event %in% pkEvents,]
+
+    # A drug that forms an active metabolite takes its own route, because the
+    # metabolite is advanced alongside the parent over the union of the two
+    # drugs' eigenvalues.
+    hasMetabolite <- !is.null(pkSets[[1]]$metabolite)
+
     if (length(pkEvents) == 1 | nrow(events) == 0)
     {
-      if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
+      if (hasMetabolite)
+      {
+        results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, PK$endCe)
+      } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
       {
         results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
       } else {
         results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
       }
     } else {
+      if (hasMetabolite)
+        stop("A drug with an active metabolite cannot yet switch kinetics on a ",
+             "clinical event; advanceClosedForm1() carries no metabolite ",
+             "coefficients.")
       # Process Events
       defaultEvent <- data.frame(
         Time = 0,
@@ -88,68 +192,28 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, PK$endCe)
     }
 
+  # Lift the metabolite out into a series of its own before the parent's
+  # columns are renamed.  It is folded into the metabolite drug's own row
+  # later, once every drug has been simulated, because the contribution
+  # crosses from one drug's entry into another's.
+  metaboliteSeries <- NULL
+  if (hasMetabolite)
+  {
+    metaboliteSeries <- data.frame(
+      Time = results$Time,
+      Cp   = results$CpMetabolite,
+      Ce   = results$CeMetabolite
+    )
+    results$CpMetabolite <- NULL
+    results$CeMetabolite <- NULL
+  }
+
   names(results) <- c("Time", "Plasma","Effect Site", "Recovery")
-  maxCp <- max(results$Plasma)
-  maxCe <- max(results$"Effect Site")
-  if (maxCp == 0)
-  {
-    results$CpNormCp <- 0
-    results$CeNormCp <- 0
-    results$CpNormCe <- 0
-    results$CeNormCe <- 0
 
-  } else {
-    results$CpNormCp <- results$Plasma        / maxCp * 100
-    results$CeNormCp <- results$"Effect Site" / maxCp * 100
-    results$CpNormCe <- results$Plasma        / maxCe * 100
-    results$CeNormCe <- results$"Effect Site" / maxCe * 100
-  }
+  out <- finishDrugSeries(results, PK, maximum, plotRecovery)
+  out$wide             <- results
+  out$metaboliteSeries <- metaboliteSeries
+  out$metaboliteName   <- PK$metaboliteName
 
-  # Calculate equispaced output
-  xout <- seq(from = 0, to = maximum, length.out = RESOLUTION)
-  equiSpace <- data.frame(
-    Drug = PK$drug,
-    Time = xout,
-    Ce = stats::approx(
-      x = results$Time,
-      y = results$"Effect Site",
-      xout = xout
-      )$y,
-    Time = xout,
-    Recovery = stats::approx(
-      x = results$Time,
-      y = results$Recovery,
-      xout = xout
-    )$y
-    )
-
-  equiSpace$Ce[1] <- 0  # Approx tends to make it a very small negative number
-  if (PK$MEAC == 0)
-  {
-    equiSpace$MEAC <- 0
-  } else {
-    equiSpace$MEAC <- equiSpace$Ce / PK$MEAC * 100
-  }
-  max <- data.frame(
-    Drug = PK$drug,
-    Recovery = max(results$Recovery),
-    Cp = max(results$Plasma),
-    Ce = max(results$"Effect Site")
-    )
-  if (!plotRecovery) results$Recovery <- NULL
-  results <- tidyr::gather(results,"Site","Y",-Time)
-  results$Drug <- PK$drug
-  results <- results[,c(4,1,2,3)]
-  # Structure of results
-  # Four columns: Drug, Time, Site, Y
-  # 7 Sites: Plasma, Effect Site, CpNormCp, CeNormCp, CpNormCE, CeNormCe, and MEAC
-  # These will be subset in simulation plot as needed.
-
-  return(
-    list(
-      results = results,
-      equiSpace = equiSpace,
-      max =   max
-    )
-  )
+  return(out)
 }

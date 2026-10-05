@@ -128,13 +128,18 @@ app_ui <- function() {
                     shinyjs::disabled()
                 ),
 
+                # Four categories, not three, and named the way the
+                # genotyping laboratories report them.  Codeine is the first
+                # drug whose kinetics read this, so it is no longer disabled.
                 selectInput(
                   inputId = "cyp2d6",
                   label = "CYP 2D6",
-                  c("Rapid" = "rapid", "Typical" = "typical", "Slow" = "slow"),
-                  selected = "typical"
-                ) |>
-                  shinyjs::disabled(),
+                  c("Ultrarapid"   = CYP2D6_ULTRARAPID,
+                    "Normal"       = CYP2D6_NORMAL,
+                    "Intermediate" = CYP2D6_INTERMEDIATE,
+                    "Poor"         = CYP2D6_POOR),
+                  selected = CYP2D6_DEFAULT
+                ),
 
                 selectInput(
                   inputId = "renal",

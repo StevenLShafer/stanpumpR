@@ -133,5 +133,16 @@ test_that("it returns the correct array", {
       stringsAsFactors = FALSE
     )
   )
-  expect_equal(actual, expected)
+  # simCpCe additionally returns `wide`, the Time/Plasma/Effect Site/Recovery
+  # series the drug was built from, which foldMetabolites() needs when another
+  # drug's active metabolite has to be added to this one's row.  It is checked
+  # for shape rather than spelled out row by row.
+  expect_equal(actual[c("results", "equiSpace", "max")], expected)
+  expect_named(actual$wide, c("Time", "Plasma", "Effect Site", "Recovery"))
+  expect_equal(nrow(actual$wide), length(unique(actual$wide$Time)))
+  # Nothing was given, so nothing is present
+  expect_true(all(actual$wide$Plasma == 0))
+  # A drug with no active metabolite carries no metabolite series
+  expect_null(actual$metaboliteSeries)
+  expect_null(actual$metaboliteName)
 })
