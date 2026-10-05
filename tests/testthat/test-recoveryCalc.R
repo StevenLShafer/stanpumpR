@@ -65,3 +65,37 @@ test_that("unreachable target (0) saturates at the 1440-minute search bound", {
   expect_gt(t_rec, 1400)
   expect_lte(t_rec, 1440)
 })
+
+
+# --- Added 2026-10-05 with the rewrite of recoveryCalc() (Claude Code, Claude
+# Fable 5.1).  The limitation documented at the top of this file no longer
+# applies: the crossing is bracketed on a grid and refined with uniroot(), so a
+# short-acting single exponential is found correctly.
+
+test_that("a fast single exponential is found, not lost at the far end of the search", {
+  # The case the old optimize()-based search could return ~1440 for.
+  expect_equal(recoveryCalc(1, 0.1, 0.5), log(2) / 0.1, tolerance = 1e-3)
+  expect_equal(recoveryCalc(5, 2, 0.01), log(500) / 2, tolerance = 1e-3)
+})
+
+test_that("a concentration still rising towards a peak above the target is not reported as zero", {
+  # Effect site just after a bolus: nothing there yet, but plasma will fill it.
+  # C(t) = exp(-0.05 t) - exp(-0.5 t): zero now, peaks near 0.70 at t = 5.1.
+  state <- c(1, -1); lambda <- c(0.05, 0.5)
+  C <- function(t) sum(state * exp(-lambda * t))
+  expect_equal(C(0), 0)
+  t_rec <- recoveryCalc(state, lambda, 0.3)
+  expect_gt(t_rec, 5)                       # after the peak, not before it
+  expect_equal(C(t_rec), 0.3, tolerance = 1e-3)
+  expect_lt(C(t_rec + 1), 0.3)              # and falling through it
+
+  # If the peak never reaches the target, there is nothing to wait for.
+  expect_equal(recoveryCalc(state, lambda, 0.9), 0)
+})
+
+test_that("the search is bounded at a day", {
+  # Still above the target after a day.
+  expect_equal(recoveryCalc(1, 1e-6, 0.5), MINS_PER_DAY)
+  # A target of zero is never reached, so it saturates too.
+  expect_equal(recoveryCalc(c(2, 1), c(0.1, 0.01), 0), MINS_PER_DAY)
+})

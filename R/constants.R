@@ -54,6 +54,12 @@ imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, inUnits, imUnits)
 
+# Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
+# gases are flowmeter settings in L/min, potent agents are vaporizer settings in %.
+# Kept out of allUnits, which lists the mass-based units offered for IV/PO/IM/IN
+# drugs, but they are legitimate entries in the dose table.
+gasUnits <- c("L/min", "%")
+
 MINS_PER_HOUR <- 60
 MINS_PER_DAY  <- 60 * 24
 MINS_PER_WEEK <- 60 * 24 * 7

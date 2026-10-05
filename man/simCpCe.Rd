@@ -15,7 +15,12 @@ simCpCe(dose, events, PK, maximum, plotRecovery)
 
 \item{maximum}{maximum length of simulation in minutes}
 
-\item{plotRecovery}{(current broken, leave set to FALSE) should recovery parameters be calculated?}
+\item{plotRecovery}{should the "time until threshold" be calculated?  For
+each time point, how long the effect site would take to fall to
+\code{PK$endCe} if all delivery stopped at that moment; returned as the
+\code{Recovery} column of \code{equiSpace}.  Checked against stopping
+delivery in the simulation itself by
+\code{tests/testthat/test-recovery-engines.R} (2026-10-05).}
 }
 \value{
 a list of data frames with the output of the a single drug simulation

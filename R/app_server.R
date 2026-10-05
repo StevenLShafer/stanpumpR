@@ -103,6 +103,11 @@ app_server <- function(input, output, session) {
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
   drugDefaults <- reactiveVal(getDrugDefaultsGlobal())
+
+  # Threshold for the MAC series' "time until threshold".  MAC is not a drug and
+  # has no row in drugDefaults, so it is kept here; it is edited in the Drug
+  # Thresholds dialog with the rest.
+  macThreshold <- reactiveVal(GAS_MAC_THRESHOLD)
   eventDefaults <- reactiveVal(getEventDefaults())
   drugList <- getDrugDefaultsGlobal()$Drug
 
@@ -114,6 +119,7 @@ app_server <- function(input, output, session) {
   output$doseTableHTML <- rhandsontable::renderRHandsontable({
     req(doseTableDraft())
     req(validateDoseTableInput(doseTableDraft()))
+    doseTableRefresh()
 
     profileCode({
       outputComments("Rendering doseTableHTML")
@@ -168,6 +174,12 @@ app_server <- function(input, output, session) {
     profileCode({
       state$values$DT <- doseTable()
       state$values$ET <- eventTable()
+      # Edited thresholds travel with the URL, so a restored session reports
+      # the same times until threshold.  endCe is saved as stored (the gases'
+      # at the reference age), keyed by drug, so a changed drug list does not
+      # misalign it.
+      state$values$macThreshold <- macThreshold()
+      state$values$endCe <- stats::setNames(drugDefaults()$endCe, drugDefaults()$Drug)
       setBookmarkExclude(bookmarksToExclude)
     }, name = "onBookmark()")
   })
@@ -201,6 +213,13 @@ app_server <- function(input, output, session) {
       eventTable(ET)
       outputComments("eventTable:")
       outputComments(ET)
+      # Thresholds, when the bookmark has them; bookmarks made before they
+      # were saved keep the defaults.
+      restored <- restoreThresholds(drugDefaults(), state$values$endCe,
+                                    state$values$macThreshold)
+      drugDefaults(restored$drugDefaults)
+      macThreshold(restored$macThreshold)
+      outputComments("macThreshold:", restored$macThreshold)
     }, name = "onRestored()")
   })
 
@@ -215,7 +234,28 @@ app_server <- function(input, output, session) {
 
   doseTableDraft <- reactive(doseTableHistory()$value)
 
+  # Bumped to force the dose table to re-render when applyGasTableRules()
+  # puts back exactly what the draft already held (e.g. the user deleted the
+  # ventilation row): the reactiveVal would not invalidate on an identical value,
+  # and the table on screen would then disagree with the draft.
+  doseTableRefresh <- reactiveVal(0)
+
+  # Weight for the default ventilation.  Must not block or error if the weight
+  # box is momentarily empty, so fall back to 70 kg.
+  gasVentilationWeight <- function() {
+    tryCatch(isolate(weight()), error = function(e) 70)
+  }
+
   observeEvent(doseTable(), {
+    # Every route into doseTable() -- Apply Changes, the add-dose dialog,
+    # Suggest Dosing, restoring a bookmark -- passes through here, so this is
+    # where the gas rules (see applyGasTableRules()) are enforced.  Fixing the
+    # table sets doseTable() again, which brings this observer straight back.
+    fixed <- applyGasTableRules(doseTable(), gasVentilationWeight())
+    if (!identicalTable(fixed, doseTable())) {
+      doseTable(fixed)
+      return()
+    }
     # A newly applied or restored table becomes the draft and starts a fresh
     # history: there are no earlier drafts to step back to.
     doseTableHistory()$do(doseTable())$clear()
@@ -279,6 +319,15 @@ app_server <- function(input, output, session) {
         if (nzchar(utils::tail(data, 1)$Drug)) {
           data[nrow(data) + 1, ] <- ""
         }
+
+        # As soon as a gas is entered, apply the gas rules: oxygen alongside
+        # nitrous oxide, flows rounded to 0.1 L/min, and a ventilation row.
+        withVentilation <- applyGasTableRules(data, gasVentilationWeight())
+        if (!identicalTable(withVentilation, data)) {
+          data <- withVentilation
+          doseTableRefresh(doseTableRefresh() + 1)
+        }
+
         doseTableHistory()$do(data)
       }
     }, name = "input$doseTableHTML observer")
@@ -325,6 +374,60 @@ app_server <- function(input, output, session) {
     }, name = "testCovariates() reactive")
   })
 
+  # The inhaled gases are simulated by a separate engine and must be kept out of
+  # the intravenous path: recalculatePK() would call eval(call("air", ...)) and
+  # fail, because the gases have no drugs_*.R covariate function, and simCpCe()
+  # converts every dose to a mass, which a gas tension is not.
+  doseTableIV <- reactive({
+    DT <- doseTableClean()
+    if (is.null(DT)) return(NULL)
+    DT <- DT[!isGasDrug(DT$Drug), , drop = FALSE]
+    if (nrow(DT) == 0) NULL else DT
+  })
+
+  # Every gas is simulated in ONE call, because they share the breathing circuit
+  # and the alveolar ventilation: total fresh gas flow is the sum of the air,
+  # oxygen and nitrous oxide rows, so changing any one of them changes every gas
+  # trajectory.  There is deliberately no per-gas change detection.
+  gases <- reactive({
+    profileCode({
+      outputComments("In gases", level = DEBUG_LEVEL_VERBOSE)
+      req(testCovariates())
+      DT <- doseTableClean()
+      if (is.null(DT)) return(list())
+      sim <- simulateGases(
+        DT,
+        weight  = weight(),
+        age     = age(),
+        maximum = plotMaximum()
+      )
+      gasRows <- DT[isGasDrug(DT$Drug), , drop = FALSE]
+
+      # "Time until threshold" for the gases is only worked out when it is
+      # being shown: it is an eigen-decomposition per gas and a root-find per
+      # plotted point, which is cheap but not free.
+      washout <- NULL
+      if (isTRUE(plotRecovery()) && !is.null(sim)) {
+        washout <- gasWashout(
+          sim,
+          data.frame(Time = as.numeric(gasRows$Time), Drug = gasRows$Drug,
+                     Dose = as.numeric(gasRows$Dose)),
+          weight = weight()
+        ) |> profileCode("gasWashout() in gases()")
+      }
+
+      gasDrugEntries(
+        sim,
+        gasRows,
+        drugDefaults(),
+        plotMaximum(),
+        washout = washout,
+        age     = age(),
+        macThreshold = macThreshold()
+      )
+    }, name = "gases() reactive")
+  })
+
   drugs <- reactive({
     profileCode({
       outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
@@ -335,7 +438,7 @@ app_server <- function(input, output, session) {
       newDrugs <- recalculatePK(
         newDrugs,
         drugDefaults(),
-        doseTableClean(),
+        doseTableIV(),
         age = age(),
         weight = weight(),
         height = height(),
@@ -343,13 +446,33 @@ app_server <- function(input, output, session) {
       ) |> profileCode("recalculatePK() in drugs()")
 
       newDrugs <- processdoseTable(
-        doseTableClean(),
+        doseTableIV(),
         eventTableClean(),
         newDrugs,
         plotMaximum(),
         plotRecovery()
       ) |> profileCode("processdoseTable() in drugs()")
-      newDrugs
+
+      # The inhaled gases are simulated as one group and appended as their own
+      # entries, so that simulationPlot() treats them like any other series and
+      # a dose table containing only inhaled agents still plots.  A failure in
+      # the gas engine is logged and leaves the intravenous drugs plotting;
+      # Shiny's own "stop, nothing to show yet" signal is let through.
+      gasEntries <- tryCatch(gases(), error = function(e) {
+        if (inherits(e, "shiny.silent.error")) stop(e)
+        outputComments("Gas engine failed:", conditionMessage(e))
+        list()
+      })
+
+      # Optionally let the opioids lower MAC.  Done here rather than in gases()
+      # because it needs the opioids' effect-site concentrations, and this is
+      # the first place both are in hand; it also keeps the gas simulation from
+      # re-running when only the tick box or an opioid dose changes.
+      if (isTRUE(input$opioidMacInteraction)) {
+        gasEntries <- applyOpioidMacInteraction(gasEntries, newDrugs)
+      }
+
+      c(newDrugs, gasEntries)
     }, name = "drugs() reactive")
   })
 
@@ -702,6 +825,9 @@ app_server <- function(input, output, session) {
         outputComments("in click(), returning from imgDrugTime()")
         DrugTimeUnits(x)
 
+        # The MAC panel is a derived series, not a drug: no dose to add.
+        if (x$drug == "MAC") return()
+
         if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION)) {
           showRemoveAddedPlotModal(x$drug)
         } else if (x$drug == PLOT_ID_EVENTS) {
@@ -721,7 +847,7 @@ app_server <- function(input, output, session) {
         x <- imgDrugTime(input$plot_dblclick)
         DrugTimeUnits(x)
 
-        if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION))
+        if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION, "MAC"))
         {
           return()
         } else if (x$drug == PLOT_ID_EVENTS)
@@ -1487,6 +1613,8 @@ app_server <- function(input, output, session) {
       modalDialog(
         title = "Drug Thresholds",
         p("Set the threshold concentration for each drug."),
+        p(class = "small text-muted",
+          "Inhaled agents are in %, shown for this patient's age; MAC is in multiples of MAC."),
         if (input$normalization == NORMALIZE_NONE)
           checkboxInput("showThresholdModal", "Show time until threshold", value = input$showThreshold),
         shinycssloaders::withSpinner(rhandsontable::rHandsontableOutput("editThresholdsTable", height = 350)),
@@ -1507,8 +1635,14 @@ app_server <- function(input, output, session) {
 
   output$editThresholdsTable <- rhandsontable::renderRHandsontable({
     drugThresholdsTrigger$depend()
-    x <- drugDefaults()[, c("Drug", "endCe")]
-    names(x)[2] <- "Threshold"
+    # Shown at the patient's age for the volatile agents, and with a row for
+    # MAC; see thresholdTableForDisplay().  isolate(): opening the dialog is
+    # what refreshes it, not a change of age behind it.
+    x <- thresholdTableForDisplay(
+      drugDefaults(),
+      tryCatch(isolate(age()), error = function(e) 40),
+      isolate(macThreshold())
+    )
     rhandsontable::rhandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
       rhandsontable::hot_col(col = 1, halign = "htLeft", readOnly = TRUE) %>%
       rhandsontable::hot_col(col = 2, halign = "htRight", type = "numeric") %>%
@@ -1518,9 +1652,13 @@ app_server <- function(input, output, session) {
   observeEvent(input$thresholdEditsOK, {
     removeModal()
     tt <- rhandsontable::hot_to_r(input$editThresholdsTable)
-    newDrugDefaults <- drugDefaults()
-    newDrugDefaults$endCe <- as.numeric(tt$Threshold)[match(newDrugDefaults$Drug, tt$Drug)]
-    drugDefaults(newDrugDefaults)
+    updated <- thresholdTableToDefaults(
+      tt, drugDefaults(),
+      tryCatch(isolate(age()), error = function(e) 40),
+      macThreshold()
+    )
+    drugDefaults(updated$drugDefaults)
+    macThreshold(updated$macThreshold)
     updateCheckboxInput(session, "showThreshold", value = input$showThresholdModal)
   })
 

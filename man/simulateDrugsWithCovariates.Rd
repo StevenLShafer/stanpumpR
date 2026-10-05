@@ -30,7 +30,8 @@ simulateDrugsWithCovariates(
 
 \item{maximum}{maximum length of simulation in minutes}
 
-\item{plotRecovery}{(current broken, leave set to FALSE) should recovery parameters be calculated?}
+\item{plotRecovery}{should the "time until threshold" be calculated?  See
+\code{simCpCe()}.}
 }
 \value{
 a list of data frames with the output of the a single drug simulation
