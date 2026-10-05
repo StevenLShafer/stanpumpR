@@ -300,7 +300,10 @@ gasScenarioGasManCsv <- function(s, circuit = "ideal")
   agents <- c(s$agents, "nitrogen")
   DT <- s$DT[order(s$DT$Time), ]
   bySetting <- split(DT, DT$Drug)
-  hms <- function(m) sprintf("%02d:%02d:%02d", m %/% 60, m %% 60, 0)
+  hms <- function(m) {
+    s <- round(m * 60)
+    sprintf("%02d:%02d:%02d", s %/% 3600, (s %% 3600) %/% 60, s %% 60)
+  }
   num <- function(x) format(x, digits = 10, scientific = FALSE, trim = TRUE)
 
   rows <- vapply(sort(unique(DT$Time)), function(t0) {

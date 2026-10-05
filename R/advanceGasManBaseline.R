@@ -171,6 +171,11 @@ gasManUptake <- function(state, sol, lambdaBlood, fExpTissue, subdt,
 #' @param subdt sub-step length in minutes
 #' @param totUptake uptake summed over every gas, L/min
 #' @param opts list of circuit, uptakeEffect, recirculation
+#' @param wtFactor weight / 70, which scales the alveolar and tissue effective
+#'   volumes (Gas Man's fWtFactor); the circuit is not scaled
+#' @param checkFastDecay apply the rejection test for more than 90\% of the
+#'   circuit or alveolar value decaying in one sub-step.  Gas Man applies it
+#'   only within VERNIER_TICKS ticks of a settings change.
 #' @returns list of \code{state} and \code{ok}, where ok is FALSE when the
 #'   sub-step should be rejected and retried at finer resolution
 #' @keywords internal

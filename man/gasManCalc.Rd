@@ -42,6 +42,13 @@ gasManCalc(
 \item{totUptake}{uptake summed over every gas, L/min}
 
 \item{opts}{list of circuit, uptakeEffect, recirculation}
+
+\item{wtFactor}{weight / 70, which scales the alveolar and tissue effective
+volumes (Gas Man's fWtFactor); the circuit is not scaled}
+
+\item{checkFastDecay}{apply the rejection test for more than 90\\% of the
+circuit or alveolar value decaying in one sub-step.  Gas Man applies it
+only within VERNIER_TICKS ticks of a settings change.}
 }
 \value{
 list of \code{state} and \code{ok}, where ok is FALSE when the

@@ -299,6 +299,7 @@ gasman_simulate <- function(agents,
                             every_seconds = 1) {
 
   stopifnot(is.list(agents), length(agents) > 0)
+  circuit <- match.arg(circuit, c("semi-closed", "open", "ideal"))
   dt <- dt_ms / 60000                       # minutes, as Gas Man's m_fdt
 
   names_in <- vapply(agents, function(a) a$name, character(1))
@@ -552,12 +553,15 @@ gasman_scenario_csv <- function(agents, fgf = 8, va = 4, co = 5, weight = 70,
                                 circuit = "semi-closed", dt_ms = 6000,
                                 schedule = NULL) {
 
+  # The same three circuits gasman_simulate() implements, under the names Gas
+  # Man's scenario parser accepts, so that a grid row cannot run through one
+  # engine and not the other.
   ckt <- switch(circuit,
                 "semi-closed" = "Semi",
                 "ideal"       = "Ideal",
-                "closed"      = "Closed",
-                stop("Gas Man's scenario format accepts Semi, Closed or Ideal. ",
-                     "Circuit '", circuit, "' has no documented mapping."))
+                "open"        = "Open",
+                stop("circuit must be one of semi-closed, ideal or open; got '",
+                     circuit, "'"))
 
   hhmmss <- function(minutes) {
     s  <- round(minutes * 60)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/advanceClosedFormGas.R
 \name{gasMixedVenous}
 \alias{gasMixedVenous}
-\title{System matrix and forcing vector for one soluble gas}
+\title{Blood-flow-weighted mixed venous tension for one soluble gas}
 \usage{
 gasMixedVenous(y, body)
 }
@@ -10,46 +10,10 @@ gasMixedVenous(y, body)
 \item{y}{state vector for one soluble gas, \code{[circ, alv, brain, muscle, fat]}}
 
 \item{body}{geometry from \code{getGasBody()}}
-
-\item{props}{one row of \code{getGasProperties()}}
-
-\item{Q}{total fresh gas flow, L/min}
-
-\item{VA}{alveolar ventilation, L/min}
-
-\item{Qco}{cardiac output, L/min}
-
-\item{Ffgf}{fresh-gas fraction of this gas, percent of 1 atm}
-
-\item{totUptake}{summed uptake of all the gases, L/min, for the coupling}
-
-\item{circuit}{"ideal" (the default), "semi-closed" or "open"; see the
-header.  "open" is the ideal circuit with no rebreathing whatever the flow.}
-
-\item{MV}{minute ventilation, L/min, which sets where rebreathing stops in
-the ideal circuit.  Defaults to \code{VA}: no dead space.}
-
-\item{cE}{carbon dioxide as a fraction of exhaled gas, absorbed from whatever
-is rebreathed; see \code{gasCircuitBlend()}}
 }
 \value{
-a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
-and open circuits, \code{fresh} and \code{alveolar}: the weights from
-which the circuit tension is \code{fresh * Ffgf + alveolar * F_alv}.  They
-are NULL for the semi-closed circuit, whose tension is a state.
-
 mixed venous tension, percent of one atmosphere
 }
 \description{
-Implements equations (1), (2) and (3) of the header for the state ordering
-\code{c(F_circ, F_alv, F_brain, F_muscle, F_fat)}.
+Blood-flow-weighted mixed venous tension for one soluble gas
 }
-\keyword{Blood-flow-weighted}
-\keyword{for}
-\keyword{gas}
-\keyword{internal}
-\keyword{mixed}
-\keyword{one}
-\keyword{soluble}
-\keyword{tension}
-\keyword{venous}

@@ -221,7 +221,7 @@
 # -----------------------------------------------------------------------------
 
 
-#' Matrix exponential by scaling and squaring with a [6/6] Pade approximant
+#' Matrix exponential by scaling and squaring with a \[6/6\] Pade approximant
 #'
 #' Written out rather than taken from a package, to keep the engine
 #' dependency-free in the same spirit as \code{cube.R}.
@@ -260,29 +260,6 @@ expmPade <- function(A)
 }
 
 
-#' System matrix and forcing vector for one soluble gas
-#'
-#' Implements equations (1), (2) and (3) of the header for the state ordering
-#' \code{c(F_circ, F_alv, F_brain, F_muscle, F_fat)}.
-#'
-#' @param props one row of \code{getGasProperties()}
-#' @param body output of \code{getGasBody()}
-#' @param Q total fresh gas flow, L/min
-#' @param VA alveolar ventilation, L/min
-#' @param Qco cardiac output, L/min
-#' @param Ffgf fresh-gas fraction of this gas, percent of 1 atm
-#' @param totUptake summed uptake of all the gases, L/min, for the coupling
-#' @param circuit "ideal" (the default), "semi-closed" or "open"; see the
-#'   header.  "open" is the ideal circuit with no rebreathing whatever the flow.
-#' @param MV minute ventilation, L/min, which sets where rebreathing stops in
-#'   the ideal circuit.  Defaults to \code{VA}: no dead space.
-#' @param cE carbon dioxide as a fraction of exhaled gas, absorbed from whatever
-#'   is rebreathed; see \code{gasCircuitBlend()}
-#' @returns a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
-#'   and open circuits, \code{fresh} and \code{alveolar}: the weights from
-#'   which the circuit tension is \code{fresh * Ffgf + alveolar * F_alv}.  They
-#'   are NULL for the semi-closed circuit, whose tension is a state.
-#' @keywords internal
 # -----------------------------------------------------------------------------
 # The uptake coupling: the concentration and second gas effect
 # -----------------------------------------------------------------------------
@@ -398,6 +375,29 @@ gasCircuitBlend <- function(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
 }
 
 
+#' System matrix and forcing vector for one soluble gas
+#'
+#' Implements equations (1), (2) and (3) of the header for the state ordering
+#' \code{c(F_circ, F_alv, F_brain, F_muscle, F_fat)}.
+#'
+#' @param props one row of \code{getGasProperties()}
+#' @param body output of \code{getGasBody()}
+#' @param Q total fresh gas flow, L/min
+#' @param VA alveolar ventilation, L/min
+#' @param Qco cardiac output, L/min
+#' @param Ffgf fresh-gas fraction of this gas, percent of 1 atm
+#' @param totUptake summed uptake of all the gases, L/min, for the coupling
+#' @param circuit "ideal" (the default), "semi-closed" or "open"; see the
+#'   header.  "open" is the ideal circuit with no rebreathing whatever the flow.
+#' @param MV minute ventilation, L/min, which sets where rebreathing stops in
+#'   the ideal circuit.  Defaults to \code{VA}: no dead space.
+#' @param cE carbon dioxide as a fraction of exhaled gas, absorbed from whatever
+#'   is rebreathed; see \code{gasCircuitBlend()}
+#' @returns a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
+#'   and open circuits, \code{fresh} and \code{alveolar}: the weights from
+#'   which the circuit tension is \code{fresh * Ffgf + alveolar * F_alv}.  They
+#'   are NULL for the semi-closed circuit, whose tension is a state.
+#' @keywords internal
 gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
                              circuit = c("ideal", "semi-closed", "open"),
                              MV = VA, cE = 0)

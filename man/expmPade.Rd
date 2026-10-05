@@ -2,7 +2,7 @@
 % Please edit documentation in R/advanceClosedFormGas.R
 \name{expmPade}
 \alias{expmPade}
-\title{Matrix exponential by scaling and squaring with a \link{6/6} Pade approximant}
+\title{Matrix exponential by scaling and squaring with a [6/6] Pade approximant}
 \usage{
 expmPade(A)
 }

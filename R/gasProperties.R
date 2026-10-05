@@ -44,12 +44,16 @@
 #'     which is modelled in the gas phase only with a metabolic sink -- it binds
 #'     haemoglobin nonlinearly and has no meaningful partition coefficient.}
 #'   \item{lambda_blood}{blood:gas partition coefficient}
-#'   \item{tb_brain, tb_muscle, tb_fat}{tissue:blood partition coefficients, as
-#'     published.  The equations need tissue:gas, obtained by multiplying by
-#'     \code{lambda_blood} -- see \code{gasPartitionTissueGas()}.}
+#'   \item{tg_brain, tg_muscle, tg_fat}{tissue:GAS partition coefficients, as
+#'     gasman.ini gives them (VRG, MUS, FAT).  These are what the equations
+#'     need; they are NOT tissue:blood and must not be multiplied by
+#'     \code{lambda_blood} again -- see \code{gasPartitionTissueGas()}.}
 #'   \item{MAC40}{minimum alveolar concentration at age 40, in \% of 1 atm.
 #'     NA for gases with no anaesthetic potency in this context.}
 #'   \item{potent}{TRUE if the gas contributes to the MAC sum}
+#'   \item{flagged, flagNote}{provenance: TRUE, with a note, for a value used
+#'     as Gas Man states it although known to be wrong; see
+#'     \code{flaggedGasParameters()}}
 #' }
 #'
 #' The vessel-rich group is parameterised with the BRAIN partition coefficient,
@@ -134,8 +138,9 @@ potentAgents <- function()
 #' Tissue:gas partition coefficients for one gas
 #'
 #' The differential equations are written in gas tensions, so the capacity of a
-#' tissue is its volume times its tissue:GAS partition coefficient.  Published
-#' tables give tissue:BLOOD, hence this conversion.
+#' tissue is its volume times its tissue:GAS partition coefficient.  That is
+#' what \code{getGasProperties()} stores, so this is a selection, not a
+#' conversion: no factor of \code{lambda_blood} is applied.
 #'
 #' @param props one row of \code{getGasProperties()}
 #' @returns named numeric vector: brain, muscle, fat (tissue:gas)

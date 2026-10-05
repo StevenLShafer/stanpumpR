@@ -442,8 +442,14 @@ app_server <- function(input, output, session) {
 
       # The inhaled gases are simulated as one group and appended as their own
       # entries, so that simulationPlot() treats them like any other series and
-      # a dose table containing only inhaled agents still plots.
-      gasEntries <- gases()
+      # a dose table containing only inhaled agents still plots.  A failure in
+      # the gas engine is logged and leaves the intravenous drugs plotting;
+      # Shiny's own "stop, nothing to show yet" signal is let through.
+      gasEntries <- tryCatch(gases(), error = function(e) {
+        if (inherits(e, "shiny.silent.error")) stop(e)
+        outputComments("Gas engine failed:", conditionMessage(e))
+        list()
+      })
 
       # Optionally let the opioids lower MAC.  Done here rather than in gases()
       # because it needs the opioids' effect-site concentrations, and this is
@@ -806,6 +812,9 @@ app_server <- function(input, output, session) {
         outputComments("in click(), returning from imgDrugTime()")
         DrugTimeUnits(x)
 
+        # The MAC panel is a derived series, not a drug: no dose to add.
+        if (x$drug == "MAC") return()
+
         if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION)) {
           showRemoveAddedPlotModal(x$drug)
         } else if (x$drug == PLOT_ID_EVENTS) {
@@ -825,7 +834,7 @@ app_server <- function(input, output, session) {
         x <- imgDrugTime(input$plot_dblclick)
         DrugTimeUnits(x)
 
-        if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION))
+        if (x$drug %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION, "MAC"))
         {
           return()
         } else if (x$drug == PLOT_ID_EVENTS)

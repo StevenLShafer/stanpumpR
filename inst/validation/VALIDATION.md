@@ -249,8 +249,10 @@ are in `gasman_engine_scenarios_settings.csv`.
 | 4 | Desflurane 6% at FGF 4 for 10 min, then 8% at FGF 0.5 to 60 min | Low flow, where the circuit equation dominates |
 | 5 | 100 kg, isoflurane 1.2%, FGF 2, VA 5.227, CO 6.534, 30 min | First comparison away from 70 kg; Gas Man's allometric defaults |
 
-All: semi-closed, uptake and return on, ventilation 4 L/min and cardiac output
-5 L/min except scenario 5.
+All: uptake and return on, ventilation 4 L/min and cardiac output 5 L/min
+except scenario 5. The tables in this entry are for the **semi-closed** circuit,
+which was the engine's only circuit when they were made; the ideal circuit was
+added later the same day and has its own entry below.
 
 ### Result
 

@@ -14,6 +14,7 @@ named numeric vector: brain, muscle, fat (tissue:gas)
 }
 \description{
 The differential equations are written in gas tensions, so the capacity of a
-tissue is its volume times its tissue:GAS partition coefficient.  Published
-tables give tissue:BLOOD, hence this conversion.
+tissue is its volume times its tissue:GAS partition coefficient.  That is
+what \code{getGasProperties()} stores, so this is a selection, not a
+conversion: no factor of \code{lambda_blood} is applied.
 }
