@@ -23,7 +23,7 @@ minutes, and \code{Dose}.  Non-gas rows are ignored.}
 
 \item{maximum}{simulation length in minutes}
 
-\item{cardiacOutput}{optional override in L/min; defaults to 75 mL/kg}
+\item{cardiacOutput}{optional override in L/min; defaults to Gas Man's 5 L/min at 70 kg, scaled by (weight/70)^0.75}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

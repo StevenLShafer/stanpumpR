@@ -307,9 +307,11 @@ test_that("the uptake coupling is on by default, as in Gas Man", {
 })
 
 
-test_that("cardiac output defaults to 75 mL/kg and changes uptake when overridden", {
-  expect_equal(getGasBody(70)$Q_cardiac, 5.25, tolerance = 1e-12)
-  expect_equal(getGasBody(100)$Q_cardiac, 7.5, tolerance = 1e-12)
+test_that("cardiac output defaults to Gas Man's 5 L/min, scaled allometrically, and changes uptake when overridden", {
+  # gasman.ini [Defaults] CO=5 at 70 kg; GasDoc.cpp scales by (weight/70)^0.75.
+  expect_equal(getGasBody(70)$Q_cardiac, 5, tolerance = 1e-12)
+  expect_equal(getGasBody(140)$Q_cardiac, 5 * 2^0.75, tolerance = 1e-12)
+  expect_equal(getGasBody(35)$Q_cardiac,  5 * 0.5^0.75, tolerance = 1e-12)
 
   dose <- data.frame(
     Time = c(0, 0, 0),
@@ -439,4 +441,14 @@ test_that("oxygen never goes negative, even with no ventilation", {
   ventilated <- rbind(apnea, data.frame(Time = 0, Drug = "ventilation", Dose = 4))
   sim <- advanceClosedFormGas(ventilated, weight = 60, maximum = 60)
   expect_gt(min(sim$results$Y[sim$results$Drug == "oxygen"]), 10)
+})
+
+test_that("default ventilation is Gas Man's 4 L/min at 70 kg, scaled allometrically", {
+  # gasman.ini [Defaults] VA=4; GasDoc.cpp: m_fVA = m_fDfltVA * (weight/70)^0.75.
+  expect_equal(defaultGasVentilation(70), 4)
+  expect_equal(defaultGasVentilation(60), round(4 * (60 / 70)^0.75, 1))   # 3.6
+  expect_equal(defaultGasVentilation(140), round(4 * 2^0.75, 1))          # 6.7
+  # Missing or invalid weight falls back to the 70 kg standard.
+  expect_equal(defaultGasVentilation(NA), 4)
+  expect_equal(defaultGasVentilation(-5), 4)
 })

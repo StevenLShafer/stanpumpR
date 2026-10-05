@@ -32,7 +32,7 @@ a setting that persists until the next row for the same drug.}
 weight-scaled standard.}
 
 \item{cardiacOutput}{cardiac output in L/min.  Defaults to the covariate
-value in \code{body} (75 mL/kg).  Accepted per call so that a
+value in \code{body} (Gas Man's 5 L/min at 70 kg, allometric).  Accepted per call so that a
 time-varying cardiac output can be added later without changing the
 engine; note that letting it vary would logically require the intravenous
 pharmacokinetics to respond to it as well, which stanpumpR does not model.}

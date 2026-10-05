@@ -40,8 +40,9 @@ skip_if_no_baseline <- function() {
 #   The vaporiser displaces 2% of the carrier, so carrier = 0.98 and
 #   F_fgf,N2O = 100 * 0.98 * 5.6/8 = 68.6%, NOT 70%.
 #   Nitrogen must be present on both sides, starting at the same ambient.
-#   Cardiac output must be forced equal: getGasBody() uses 75 mL/kg = 5.25 L/min
-#   at 70 kg, while the Gas Man scenarios use 5.0.
+#   Cardiac output must be equal on both sides.  It is forced here; since
+#   2026-10-05 getGasBody() also defaults to Gas Man's 5.0 L/min at 70 kg
+#   (it was 75 mL/kg = 5.25 L/min when this test was written).
 matchedDoseTable <- function() data.frame(
   Time = c(0, 0, 0, 0),
   Drug = c("oxygen", "nitrousOxide", "ventilation", "sevoflurane"),

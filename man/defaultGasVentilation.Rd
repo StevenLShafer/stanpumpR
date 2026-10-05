@@ -2,7 +2,7 @@
 % Please edit documentation in R/gasProperties.R
 \name{defaultGasVentilation}
 \alias{defaultGasVentilation}
-\title{Default ventilation for a patient, L/min}
+\title{Default alveolar ventilation for a patient, L/min}
 \usage{
 defaultGasVentilation(weight = 70)
 }
@@ -14,5 +14,5 @@ ventilation in L/min, rounded to 0.1 so it reads cleanly in the
 dose table
 }
 \description{
-Default ventilation for a patient, L/min
+Gas Man's default: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.
 }

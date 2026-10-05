@@ -24,9 +24,14 @@ Circuit volume is a property of the anaesthesia machine, not the patient, so
 it does not scale.
 }
 \details{
-Cardiac output is 75 mL/kg (Shafer, 2026-09-02): 5.25 L/min at 70 kg, which
-sits inside the 5.0-6.03 L/min range Weber et al. report for Gas Man.  It is
-returned here as a single covariate-derived constant, but
+Cardiac output is Gas Man's default: 5 L/min at 70 kg (gasman.ini
+\code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75}
+as \code{GasDoc.cpp} does.  Adopted 2026-10-05 at Shafer's direction ("for
+now I want to be identical with Gas Man; later on we will update with more
+current data"), replacing the linear 75 mL/kg (5.25 L/min at 70 kg) he chose
+on 2026-09-02.  Tissue and alveolar volumes still scale linearly with weight,
+which is also what Gas Man does (\code{fWtFactor = fWeight / STD_WEIGHT}).
+Cardiac output is returned here as a single covariate-derived constant, but
 \code{advanceClosedFormGas()} accepts it per segment, so making it
 time-varying later requires no change to the engine.
 }

@@ -477,7 +477,7 @@ gasSettingsAt <- function(split, t)
 #' @param body geometry and flows, from \code{getGasBody()}.  Defaults to the
 #'   weight-scaled standard.
 #' @param cardiacOutput cardiac output in L/min.  Defaults to the covariate
-#'   value in \code{body} (75 mL/kg).  Accepted per call so that a
+#'   value in \code{body} (Gas Man's 5 L/min at 70 kg, allometric).  Accepted per call so that a
 #'   time-varying cardiac output can be added later without changing the
 #'   engine; note that letting it vary would logically require the intravenous
 #'   pharmacokinetics to respond to it as well, which stanpumpR does not model.
@@ -694,7 +694,7 @@ advanceClosedFormGas <- function(
 #' @param weight patient weight in kg
 #' @param age patient age in years
 #' @param maximum simulation length in minutes
-#' @param cardiacOutput optional override in L/min; defaults to 75 mL/kg
+#' @param cardiacOutput optional override in L/min; defaults to Gas Man's 5 L/min at 70 kg, scaled by (weight/70)^0.75
 #'
 #' @returns \code{NULL} if the dose table contains no gases, otherwise the list
 #'   returned by \code{advanceClosedFormGas()}

@@ -156,9 +156,14 @@ gasPartitionTissueGas <- function(props)
 #' Circuit volume is a property of the anaesthesia machine, not the patient, so
 #' it does not scale.
 #'
-#' Cardiac output is 75 mL/kg (Shafer, 2026-09-02): 5.25 L/min at 70 kg, which
-#' sits inside the 5.0-6.03 L/min range Weber et al. report for Gas Man.  It is
-#' returned here as a single covariate-derived constant, but
+#' Cardiac output is Gas Man's default: 5 L/min at 70 kg (gasman.ini
+#' \code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75}
+#' as \code{GasDoc.cpp} does.  Adopted 2026-10-05 at Shafer's direction ("for
+#' now I want to be identical with Gas Man; later on we will update with more
+#' current data"), replacing the linear 75 mL/kg (5.25 L/min at 70 kg) he chose
+#' on 2026-09-02.  Tissue and alveolar volumes still scale linearly with weight,
+#' which is also what Gas Man does (\code{fWtFactor = fWeight / STD_WEIGHT}).
+#' Cardiac output is returned here as a single covariate-derived constant, but
 #' \code{advanceClosedFormGas()} accepts it per segment, so making it
 #' time-varying later requires no change to the engine.
 #'
@@ -186,7 +191,7 @@ getGasBody <- function(weight = 70, circuitVolume = 8)
     V_fat      = 14.5 * scale,
 
     # Cardiac output, L/min
-    Q_cardiac  = 0.075 * weight,  # 75 mL/kg
+    Q_cardiac  = GAS_DEFAULT_CO_70KG * scale^GAS_DEFAULT_VA_WEIGHT_EXPO,  # Gas Man: 5 L/min, allometric
 
     # Fraction of cardiac output to each tissue group.  Must sum to 1.
     #
@@ -231,21 +236,28 @@ macForAge <- function(MAC40, age)
 }
 
 
-# Default ventilation, used when a gas is in the dose table but no usable
-# ventilation setting has been entered (Shafer, 2026-10-05: "8 mL/kg").
+# Default alveolar ventilation, used when a gas is in the dose table but no
+# usable ventilation setting has been entered.
 #
-# ASSUMPTION, NOT YET CONFIRMED BY SHAFER: 8 mL/kg is a tidal volume, and the
-# ventilation setting the engine needs is a flow in L/min, so a respiratory
-# rate is required to get from one to the other.  10 breaths/min is assumed
-# here (Claude Code, Claude Fable 5.1, 2026-10-05), giving 80 mL/kg/min:
-# 5.6 L/min at 70 kg.  No dead-space correction is applied, although the engine
-# treats the setting as ALVEOLAR ventilation.  Change the rate here if a
-# different one, or a dead-space correction, is wanted.
-GAS_DEFAULT_TIDAL_VOLUME_ML_PER_KG <- 8
-GAS_DEFAULT_RESPIRATORY_RATE       <- 10
+# These are Gas Man's own defaults, adopted at Shafer's direction (2026-10-05:
+# "for now I want to be identical with Gas Man; later on we will update with
+# more current data"): gasman.ini [Defaults] VA=4 (L/min at the 70 kg
+# standard), scaled to the patient allometrically as (weight / 70)^0.75 --
+# GasDoc.cpp computes
+#     factor = sqrt(sqrt(factor * factor * factor))
+# and sets m_fVA = m_fDfltVA * factor.  Source read from
+# github.com/rasman/gasmanonline, gasman_api/gasmanAPI (GPL-3.0), 2026-10-05.
+#
+# (Claude Code, Claude Fable 5.1, 2026-10-05.  An earlier draft the same day
+# used 8 mL/kg x an assumed 10 breaths/min; this replaces it.)
+GAS_DEFAULT_VA_70KG        <- 4
+GAS_DEFAULT_CO_70KG        <- 5     # gasman.ini [Defaults] CO=5, same scaling
+GAS_DEFAULT_VA_WEIGHT_EXPO <- 0.75
 
 
-#' Default ventilation for a patient, L/min
+#' Default alveolar ventilation for a patient, L/min
+#'
+#' Gas Man's default: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.
 #'
 #' @param weight patient weight, kg.  Falls back to 70 kg if missing or invalid.
 #' @returns ventilation in L/min, rounded to 0.1 so it reads cleanly in the
@@ -254,8 +266,7 @@ GAS_DEFAULT_RESPIRATORY_RATE       <- 10
 defaultGasVentilation <- function(weight = 70)
 {
   if (length(weight) != 1 || !is.finite(weight) || weight <= 0) weight <- 70
-  round(GAS_DEFAULT_TIDAL_VOLUME_ML_PER_KG / 1000 *
-          GAS_DEFAULT_RESPIRATORY_RATE * weight, 1)
+  round(GAS_DEFAULT_VA_70KG * (weight / 70)^GAS_DEFAULT_VA_WEIGHT_EXPO, 1)
 }
 
 

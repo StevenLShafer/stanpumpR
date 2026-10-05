@@ -295,7 +295,14 @@ alveolus, so sevoflurane rises faster in its presence. It has been validated
 against Gas Man itself across five scenarios; see `inst/validation/VALIDATION.md`
 for the record.
 
-Cardiac output is fixed at 75 mL/kg and is not currently a user input.
+Cardiac output is fixed at Gas Man's default, 5 L/min at 70 kg scaled by
+(weight / 70)^0.75, and is not currently a user input.
+
+Ventilation must be greater than zero whenever a gas is being given. If you
+enter a gas without a ventilation row, one is added for you at Gas Man's
+default alveolar ventilation: 4 L/min at 70 kg, scaled the same way. Entering
+nitrous oxide also adds an oxygen row, starting at 21% of the fresh gas. Gas
+flows and ventilation are rounded to the nearest 0.1 L/min.
 
 ---
 
