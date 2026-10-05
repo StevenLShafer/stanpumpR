@@ -30,7 +30,7 @@ test_that("returns the correct calculations", {
     typical = 0.0018,
     upperTypical = 0.0012,
     lowerTypical = 0.003,
-    reference = "Drover PK"
+    reference = "Drover DR et al., Anesthesiology 2002;97(4):827-836. https://pubmed.ncbi.nlm.nih.gov/12357147/"
   )
   expect_equal_rounded(actual, expected)
 })

@@ -14,41 +14,40 @@ sendSlide <- function(
   email_password
 )
 {
-  tryCatchLog::tryCatchLog({
+  tryCatch({
     prevEcho <- options("ECHO_OUTPUT_COMMENTS" = TRUE)
     on.exit(options("ECHO_OUTPUT_COMMENTS" = prevEcho[[1]]))
 
     outputComments("Sending email to", recipient)
 
-    if (missing(email_username) || is.null(email_username)) {
-      stop("email username missing")
+    if (is.null(email_username)) {
+      stop("Email username missing")
     }
-    if (missing(email_password) || is.null(email_password)) {
-      stop("email password missing")
+    if (is.null(email_password)) {
+      stop("Email password missing")
     }
 
     emailData <- generateEmail(values, recipient, plotObject, allResults, plotResults, height, width, slide, drugs, drugDefaults)
 
     outputComments("Sending email")
-    email <- mailR::send.mail(
-      from = paste0("stanpumpR <", email_username, ">"),
-      to = recipient,
-      subject = emailData$title,
-      body = emailData$bodyText,
-      html = TRUE,
-      smtp = list(
-        host.name = "smtp.gmail.com",
-        port = 587,
-        user.name = email_username,
-        passwd = email_password,
-        ssl = TRUE),
-      attach.files = c(
-        emailData$pptxfileName,
-        emailData$pngfileName,
-        emailData$xlsxfileName
-      ),
-      authenticate = TRUE
+
+    msg <- emayili::envelope() |>
+      emayili::from(paste0("stanpumpR <", email_username, ">")) |>
+      emayili::to(recipient) |>
+      emayili::subject(emailData$title, interpolate = FALSE) |>
+      emayili::html(emailData$bodyText, interpolate = FALSE) |>
+      emayili::attachment(emailData$pptxfileName) |>
+      emayili::attachment(emailData$pngfileName) |>
+      emayili::attachment(emailData$xlsxfileName)
+
+    smtp <- emayili::server(
+      host = "smtp.gmail.com",
+      port = 587,
+      username = email_username,
+      password = email_password
     )
+    smtp(msg, verbose = FALSE)
+
     unlink(emailData$pptxfileName)
     unlink(emailData$pngfileName)
     unlink(emailData$xlsxfileName)
@@ -174,9 +173,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   sheet = 5
   for (drug in sort(unique(as.character(DT$Drug))))
   {
-    cat("Drug = ", drug, "\n")
     thisDrug <- which(drugDefaults$Drug == drug)
-    cat("thisDrug = ", thisDrug, "\n")
 
     pkSets <- drugs[[drug]]$PK
     parameters <-   as.data.frame(

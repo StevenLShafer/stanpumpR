@@ -16,7 +16,7 @@ ketamine <- function(weight, height, age, sex)
   lowerTypical <- 0.16 # mcg/ml - Moen 2013 review
   tPeak <- 3 # Just a guess
   MEAC <- 0
-  reference <- "Clin Pharmacol Ther 199136:645-653"
+  reference <- "Domino EF et al., Clin Pharmacol Ther 1984;36(5):645-653. https://pubmed.ncbi.nlm.nih.gov/6488686/"
   
   v2 <- v1 * k12 / k21
   v3 <- v1 * k13 / k31
@@ -33,7 +33,7 @@ ketamine <- function(weight, height, age, sex)
     cl3 = cl3
   )
   
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
   
   return(

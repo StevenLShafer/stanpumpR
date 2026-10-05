@@ -78,16 +78,26 @@ double-click edits a drug.
 1. As a user types into the dose table, JavaScript hooks on the grid do real-time cleanup —
    fixing/converting times, dropping a row if its drug is removed, etc.
 2. **`input$doseTableHTML`** fires after that JS-side cleanup completes, on every edit. The
-   observer converts it to an R data frame with `hot_to_r()` and saves it as `doseTableDraft()`.
-3. **Undo / redo** — pop/push `doseTableDraft()` against the undo/redo stacks. This only ever
-   touches the draft; nothing downstream re-simulates yet.
+   observer converts it to an R data frame with `hot_to_r()` and records it via
+   `doseTableHistory()$do()`.
+3. **Undo / redo** — the draft and its history live in one `{undomanager}`,
+   `doseTableHistory()`. `doseTableDraft()` is a thin reactive over its `$value`.
+   `$do()` records an edit (pushing the previous draft onto the undo stack and discarding 
+   any redo history), and `$undo()` / `$redo()` step through it. This only ever touches
+   the draft; nothing downstream re-simulates yet.
 4. **`input$dosetable_apply`** commits the pending edit: it copies `doseTableDraft()`'s value
    into `doseTable()`, the canonical reactive everything downstream reads from.
 5. `doseTable()` can also be updated directly — by clicking on the plot and adding/editing/
-   deleting a dose from the resulting modal — which bypasses the draft entirely and applies
-   immediately, with no separate confirm step.
-6. **`doseTableClean()`** is what the rest of the pipeline actually depends on. Whenever
-   `doseTable()` changes, this reactive re-derives a cleaned copy via `cleanDT()` (coerce column
+   deleting a dose from the resulting modal, by the edit-doses and suggest-dosing dialogs, or by
+   a URL restore — which bypasses the draft entirely and applies immediately, with no separate
+   confirm step.
+6. Whenever `doseTable()` changes by any route, the observer on it resets the draft to the newly
+   committed table and **clears the undo/redo history**: once the canonical table has moved there
+   is no earlier draft worth stepping back to. The time-mode switch clears the history explicitly
+   instead of relying on that observer, because it assigns `doseTable()` a value that may equal
+   what it already holds, and `reactiveVal` does not notify observers on a no-op assignment.
+7. **`doseTableClean()`** is what the rest of the pipeline actually depends on. Whenever
+   `doseTable()` changes, this reactive re-derives a cleaned copy via `cleanDoseTable()` (coerce column
    types, drop incomplete rows, convert clock times to elapsed minutes).
 
 ## The computational core
@@ -103,7 +113,8 @@ time point as a sum of exponentials.
    `tPeak`, `MEAC`.
 2. Volumes & clearances → micro rate constants `k10, k12, k13, k21, k31`.
 3. `cube()` solves the characteristic cubic → eigenvalues `lambda_1, lambda_2, lambda_3`.
-4. `tPeakError()` + `optimize()` back-solve the effect-site rate `ke0` from time-to-peak-effect.
+4. `tPeakError()` + `CE()` + `optimize()` back-solve the effect-site rate `ke0` from
+   time-to-peak-effect.
 5. Precompute per-route (bolus / infusion / PO / IM / IN) exponential coefficients `p_coef_*`,
    `e_coef_*`.
 
@@ -126,7 +137,7 @@ loops drugs, calls `getDrugPK()` → `simCpCe()`, and returns per-drug results. 
 vignettes and tests drive.
 
 **Pharmacodynamics.** `modelInteraction()` computes a propofol × opioid response surface for the
-optional interaction facet (`modelInteraction.R`, `CE.R`, `calculateCe.R`).
+optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
 
 **Covariate helpers.** `lbmJames()` computes lean body mass; `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
@@ -140,7 +151,7 @@ pattern the project is explicitly built to let outside investigators contribute 
 
 ## Component catalog
 
-Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTION`.
+All files are flat in `R/`.
 
 **Shell — bootstrap & framework**
 - `app.R` — one line, `stanpumpR::run_app()`; the deploy entry point.
@@ -151,15 +162,21 @@ Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTIO
 - `app_server.R` — the entire reactive heart: every reactive, observer, output, and modal.
 - `app_globals.R` — global variables used by the app: init tables, bookmark exclusion list,
   `outputComments()` logger.
-- `globalVariables.R` — constants used in the app.
+- `constants.R` — constants used in the app.
+- `zzz.R` — defines `.sprglobals`, an environment that can hold any global variables that
+  need to be shared across the UI and Server portions of the Shiny app.
+- `stanpumpR-package.R` — roxygen package-level docs and `@importFrom` declarations.
 
 **Reactive glue — server helpers & UI widgets**
-- `server-helpers.R` — `recalculatePK()`, `cleanDT()`, `checkNumericCovariates()`, reactive
-  triggers, intro modal.
-- `shiny-utils.R` — UI builders (`inputWithChoices`, `addHotHooks`, inline-input helpers).
+- `drug-pipeline.R` — `recalculatePK()` (step 03) and `processdoseTable()` (step 04):
+  per-drug diff-and-recompute drivers behind the `drugs()` reactive.
+- `server-helpers.R` — functions used by the Shiny server that are not generalized.
+- `utils-shiny-ui.R` — generic UI builders.
+- `utils-shiny-server.R` — generic server functions.
 - `createHOT.R` — builds the `rhandsontable` dose grid from the current table + drug colors.
-- `processdoseTable.R` — per-drug diff-and-simulate driver (pipeline step 04).
-- `validateDose.R`, `validateTime.R` — input guards for dose amounts and clock/elapsed times.
+- `input-tables.R` — **table-level** validation and cleaning for the dose / event / target grids.
+- `validate-input.R` — **cell-level** guards: `validateDose()`, `validateTime()`. One value in,
+  a clean string out, never errors.
 
 **PK/PD engine — the math core**
 - `getDrugPK.R` — covariates → rate constants, eigenvalues, per-route coefficients.
@@ -167,9 +184,10 @@ Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTIO
 - `simCpCe.R` — single-drug simulation: units → route → solver dispatch.
 - `advanceClosedForm0.R` / `advanceClosedForm1.R` / `advanceClosedFormPO_IM_IN.R` — the three
   closed-form solvers (IV, event-varying, extravascular).
-- `advanceState.R`, `advanceStatePO.R`, `convertState.R` — carry compartment state across dose &
-  event boundaries.
-- `CE.R`, `calculateCe.R`, `tPeakError.R` — effect-site concentration and `ke0` fitting.
+- `advanceState.R` (`advanceState()`, `advanceStatePO()`), `convertState.R` — carry compartment
+  state across dose & event boundaries.
+- `calculateCe.R` — effect-site concentration from a plasma curve. The `ke0` fit itself
+  (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
   thresholds, body-size scaling.
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
@@ -181,12 +199,12 @@ Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTIO
 - `setLinetypes.R` — maps normalization + user choices to plasma/effect linetypes.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
 - `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
-  `mailR`.
+  `emayili`.
 
 **Util — time & misc**
-- `clockTimeToDelta.R`, `deltaToClockTime.R`, `hourMinute.R` — convert between wall-clock
-  procedure times and elapsed minutes.
-- `utils.R`, `drugAndEventDefaults.R` — small shared helpers and the memoised defaults loaders.
+- `utils-time.R` — several time-related utility functions.
+- `utils.R` — generic helpers only (functions that don't know anything about doses/drugs/etc).
+- `drugAndEventDefaults.R` — the memoised drug/event defaults loaders.
 
 ## App features
 
@@ -206,8 +224,8 @@ Files are flat in `R/` and wired together by the `Collate:` order in `DESCRIPTIO
   merged over `DEFAULT_CONFIG` at launch.
 - **Reproducibility** (`renv.lock`, `DESCRIPTION`) — `renv.lock` pins exact package versions so
   production matches local; deps declared in `DESCRIPTION`.
-- **Tests / CI** (`tests/testthat/`, `.github/`) — ~40 test files (one per drug plus PK,
-  plotting, and helper suites); R-CMD-check and shinyapps.io deploy run via GitHub Actions.
+- **Tests / CI** (`tests/testthat/`, `.github/`) — one test file per drug and per R file;
+  R-CMD-check and shinyapps.io deploy run via GitHub Actions.
 
 ## Known issue: the per-drug cache doesn't persist
 

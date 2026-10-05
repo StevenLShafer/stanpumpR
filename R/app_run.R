@@ -1,29 +1,23 @@
 #' Launch Shiny App
 #'
+#' @param config_file Path to a YAML configuration file, read by
+#'   [config::get()]. Any setting that isn't specified in the config file
+#'   falls back to the package defaults. Copy `config.yml.sample` to
+#'   `config.yml` for local use.
+#' @return A Shiny app object, as returned by [shiny::shinyApp()].
 #' @export
 run_app <- function(config_file = "config.yml") {
-  suppressWarnings(suppressPackageStartupMessages({
-    library(stanpumpR)
-    library(shiny)
-    library(shinyjs)
-    library(shinydashboard)
-    library(tryCatchLog)
-    library(httr)
-    library(ggplot2)
-    library(grid)
-    library(openxlsx)
-    library(dplyr)
-    library(officer)
-    library(rhandsontable)
-    library(purrr)
-    library(png)
-    library(tidyr)
-    library(lubridate)
-  }))
-
   options(warn = 1)
 
-  config <- config::get(file = config_file)
+  config <- tryCatch({
+    config::get(file = config_file)
+  }, error = function(e) {
+    if (!grepl("not found", e$message)) {
+      stop(e)
+    }
+    list()
+  })
+
   config <- c(config, DEFAULT_CONFIG[!names(DEFAULT_CONFIG) %in% names(config)])
   .sprglobals$config <- config
 

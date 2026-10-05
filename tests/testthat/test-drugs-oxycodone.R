@@ -24,7 +24,7 @@ test_that("returns the correct calculations", {
     typical = 14.4,
     upperTypical = 9.6,
     lowerTypical = 24,
-    reference = "Lamminsalo 2019"
+    reference = "Lamminsalo M et al., Expert Opin Drug Deliv 2019;16(6):649-656. https://pubmed.ncbi.nlm.nih.gov/31092024/"
   )
   expect_equal_rounded(actual, expected)
 })

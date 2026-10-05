@@ -12,15 +12,16 @@ app_server <- function(input, output, session) {
     showIntroModal()
   }, once = TRUE)
 
-  session$userData$debug <- reactiveVal(config$debug)
+  session$userData$debug <- reactiveVal({
+    query <- parseQueryString(isolate(session$clientData$url_search))
+    if (!is.null(query[["debug"]])) {
+      as.numeric(query[["debug"]])
+    } else {
+      config$debug
+    }
+  })
   observeEvent(input$debug_level, ignoreInit = TRUE, {
     session$userData$debug(input$debug_level)
-  })
-  observe({
-    query <- parseQueryString(session$clientData$url_search)
-    if (!is.null(query[["debug"]])) {
-      session$userData$debug(as.numeric(query[["debug"]]))
-    }
   })
 
   # Write out logs to the log section
@@ -71,6 +72,8 @@ app_server <- function(input, output, session) {
   #                           Initialization                                  #
   #############################################################################
 
+  outputComments(getInstalledPackagesInfo())
+
   outputComments(
     "**********************************************************************\n",
     "*                       Initializing                                 *\n",
@@ -80,10 +83,9 @@ app_server <- function(input, output, session) {
 
   main_plot <- reactive({
     outputComments("In main_plot", level = DEBUG_LEVEL_VERBOSE)
-    #    tryCatchLog({
     tryCatch({
       if (is.null(doseTableClean()) || is.null(drugs()) || is.null(plotObjectReactive())) {
-        #        nothingtoPlot
+        # nothingtoPlot
       } else {
         plotObjectReactive()
       }
@@ -109,8 +111,9 @@ app_server <- function(input, output, session) {
   emailSendCount <- reactiveVal(0)
 
   # Routine to output doseTableHTML from doseTable
-  output$doseTableHTML <- renderRHandsontable({
+  output$doseTableHTML <- rhandsontable::renderRHandsontable({
     req(doseTableDraft())
+    req(validateDoseTableInput(doseTableDraft()))
 
     profileCode({
       outputComments("Rendering doseTableHTML")
@@ -139,7 +142,7 @@ app_server <- function(input, output, session) {
 
   referenceTime <- reactive({
     if (input$timeMode == "relative") {
-      "none"
+      REFERENCE_TIME_NONE
     } else {
       input$referenceTime
     }
@@ -192,6 +195,8 @@ app_server <- function(input, output, session) {
       ET <- as.data.frame(state$values$ET)
       if (ncol(ET) == 0) {
         ET <- eventTableInit
+      } else {
+        ET <- ET[, c("Time", "Event")]
       }
       eventTable(ET)
       outputComments("eventTable:")
@@ -204,15 +209,16 @@ app_server <- function(input, output, session) {
   ## Dose Table Loop  ##
   ######################
 
-  # This is used to hold the current state of the table as the user edits it
-  # without applying it, to allow the user to make many successive edits quickly
-  doseTableDraft <- reactiveVal()
+  # Holds the current state of the table as the user edits it without applying
+  # it, to allow the user to make many successive edits quickly and undo/redo edits
+  doseTableHistory <- undomanager::undomanager(type = "data.frame")$reactive()
 
-  doseTableUndo <- reactiveVal(list())
-  doseTableRedo <- reactiveVal(list())
+  doseTableDraft <- reactive(doseTableHistory()$value)
 
   observeEvent(doseTable(), {
-    doseTableDraft(doseTable())
+    # A newly applied or restored table becomes the draft and starts a fresh
+    # history: there are no earlier drafts to step back to.
+    doseTableHistory()$do(doseTable())$clear()
   })
 
   observe({
@@ -223,31 +229,21 @@ app_server <- function(input, output, session) {
   })
 
   observe({
-    shinyjs::toggleState("dosetable_undo", condition = length(doseTableUndo()) > 0)
-    shinyjs::toggleState("dosetable_redo", condition = length(doseTableRedo()) > 0)
+    shinyjs::toggleState("dosetable_undo", condition = doseTableHistory()$can_undo)
+    shinyjs::toggleState("dosetable_redo", condition = doseTableHistory()$can_redo)
   })
 
   observeEvent(input$dosetable_apply, {
     shinyjs::disable("dosetable_apply")
     doseTable(doseTableDraft())
-    doseTableUndo(list())
-    doseTableRedo(list())
   })
 
   observeEvent(input$dosetable_undo, {
-    req(length(doseTableUndo()) > 0)
-
-    doseTableRedo( c(doseTableRedo(), list(doseTableDraft())) )
-    doseTableDraft( utils::tail(doseTableUndo(), 1)[[1]] )
-    doseTableUndo( head(doseTableUndo(), -1) )
+    doseTableHistory()$undo()
   })
 
   observeEvent(input$dosetable_redo, {
-    req(length(doseTableRedo()) > 0)
-
-    doseTableUndo( c(doseTableUndo(), list(doseTableDraft())) )
-    doseTableDraft( utils::tail(doseTableRedo(), 1)[[1]] )
-    doseTableRedo( head(doseTableRedo(), -1) )
+    doseTableHistory()$redo()
   })
 
   observeEvent(input$doseTableHTML, {
@@ -275,19 +271,15 @@ app_server <- function(input, output, session) {
       # the row names for it to work
       nrows <- length(data$data)
       data$params$rRowHeaders <- as.character(seq.int(nrows))
-      data <- hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
+      data <- rhandsontable::hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
 
       # make sure that table has changed before updating doseTable reactive
       if ( !identicalTable(doseTableDraft(), data) ) {
-        doseTableUndo( c(doseTableUndo(), list(doseTableDraft())) )
-        doseTableRedo(list())
-
         # add empty row at the bottom if needed
-        if (nzchar(tail(data, 1)$Drug)) {
+        if (nzchar(utils::tail(data, 1)$Drug)) {
           data[nrow(data) + 1, ] <- ""
         }
-
-        doseTableDraft(data)
+        doseTableHistory()$do(data)
       }
     }, name = "input$doseTableHTML observer")
   })
@@ -318,6 +310,9 @@ app_server <- function(input, output, session) {
   })
   sex <- reactive({
     req(input$sex)
+    if (length(input$sex) != 1L || !input$sex %in% SEX_VALUES) {
+      stop(safeError("Invalid sex value."))
+    }
     input$sex
   })
 
@@ -365,7 +360,8 @@ app_server <- function(input, output, session) {
   doseTableClean <- reactive({
     profileCode({
       outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
-      DT <- cleanDT(doseTable())
+      validateDoseTableInput(doseTable(), drugDefaults())
+      DT <- cleanDoseTable(doseTable())
       DT$Time <- clockTimeToDelta(referenceTime(), DT$Time)
       DT <- DT[
         DT$Drug  != "" &
@@ -388,6 +384,7 @@ app_server <- function(input, output, session) {
   eventTableClean <- reactive({
     profileCode({
       outputComments("In eventTableClean", level = DEBUG_LEVEL_VERBOSE)
+      validateEventTableInput(eventTable(), eventDefaults())
       ET <- eventTable()
       if (length(ET$Time) > 0) {
         ET$Time <- as.character(ET$Time)
@@ -403,8 +400,10 @@ app_server <- function(input, output, session) {
 
   observeEvent(input$timeMode, {
     doseTable(doseTableDraft())
-    doseTableUndo(list())
-    doseTableRedo(list())
+    # Clear explicitly rather than relying on the doseTable() observer: if the
+    # draft already matched, that reactiveVal never invalidates and the history
+    # would survive a time-mode switch.
+    doseTableHistory()$clear()
 
     # When switching to relative time, convert any clock times (HH:MM) to minutes
     if (input$timeMode == "relative") {
@@ -422,15 +421,19 @@ app_server <- function(input, output, session) {
     profileCode({
       req(doseTableClean())
 
-      plotMaximum <- as.numeric(input$maximum)
-      steps <- maxtimes$steps[maxtimes$times == input$maximum]
+      requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
+      if (!is_valid_number(requestedMaximum) || !requestedMaximum %in% maxtimes$times) {
+        stop(safeError("Invalid maximum simulation time."))
+      }
+      plotMaximum <- requestedMaximum
+      steps <- maxtimes$steps[maxtimes$times == plotMaximum]
       maxTime <- max(as.numeric(doseTableClean()$Time),
                      as.numeric(eventTableClean()$Time),
                      na.rm = TRUE)
 
       if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
         steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
-        if (is.na(steps)) steps <- tail(maxtimes$steps, 1)
+        if (is.na(steps)) steps <- utils::tail(maxtimes$steps, 1)
         plotMaximum <- ceiling((maxTime + 30)/steps) * steps
       }
       list(plotMaximum = plotMaximum, steps = steps)
@@ -451,6 +454,12 @@ app_server <- function(input, output, session) {
 
   simulationPlotRetval <- reactive({
     req(input$plotWidth)
+    if (!is_valid_number(input$plotWidth, MIN_PLOT_WIDTH, MAX_PLOT_WIDTH)) {
+      stop(safeError("Invalid plot width."))
+    }
+    if (!is_valid_number(input$yaxisHeight, MIN_YAXIS_HEIGHT, MAX_YAXIS_HEIGHT)) {
+      stop(safeError("Invalid plot height."))
+    }
     profileCode({
       outputComments("In simulationPlotRetval", level = DEBUG_LEVEL_VERBOSE)
       req(doseTableClean(), testCovariates(),
@@ -461,7 +470,7 @@ app_server <- function(input, output, session) {
 
       xBreaks <- 0:(plotMaximum()/steps()) * steps()
       xLabels <- deltaToClockTime(referenceTime(), xBreaks)
-      if (referenceTime() == "none") {
+      if (referenceTime() == REFERENCE_TIME_NONE) {
         xAxisLabel <- "Time (Minutes)"
       } else {
         xAxisLabel <- "Time"
@@ -482,9 +491,6 @@ app_server <- function(input, output, session) {
       plasmaLinetype <- linetypes()$plasmaLinetype
       effectsiteLinetype <- linetypes()$effectsiteLinetype
 
-      # try tryCatchLog if something goes wrong here for a better traceback
-
-      #    tryCatchLog({
       simulationPlot(
         drugs = drugs(),
         events = ET,
@@ -508,7 +514,6 @@ app_server <- function(input, output, session) {
       )
     }, name = "simulationPlotRetval() reactive")
   })
-  #  })
 
   plotObjectReactive <- reactive({
     simulationPlotRetval()$plotObject
@@ -526,31 +531,32 @@ app_server <- function(input, output, session) {
     simulationPlotRetval()$plotHeight
   })
 
+  # Send Slide -----------------------------
+  observeEvent(input$emailComments, {
+    shinyjs::toggle("commentSafe", condition = nzchar(input$emailComments))
+  })
+
   observe({
     shinyjs::toggleState("sendSlide", condition = isEmailValid(input$recipient))
   })
 
-  # Send Slide -----------------------------
   observeEvent(
     input$sendSlide,
     {
       outputComments("input$sendSlide",input$sendSlide)
 
+      error <- NULL
       if (!isEmailValid(input$recipient)) {
-        shinyalert::shinyalert(
-          "Invalid email address",
-          "Please enter a valid recipient email address.",
-          type = "error", closeOnClickOutside = TRUE
-        )
-        return()
+        error <- "Please enter a valid recipient email address."
+      } else if (nzchar(input$emailComments) && !input$commentSafe) {
+        error <- "Please click the box confirming there is no PHI in the comments."
+      } else if (nchar(input$emailComments) > MAX_INPUT_TEXT) {
+        error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")
+      } else if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
+        error <- "This session has reached its email limit. Please reload the page to send more."
       }
-
-      if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
-        shinyalert::shinyalert(
-          "Send limit reached",
-          "This session has reached its email limit. Please reload the page to send more.",
-          type = "error", closeOnClickOutside = TRUE
-        )
+      if (!is.null(error)) {
+        shinyalert::shinyalert("Error",error, type = "error", closeOnClickOutside = TRUE)
         return()
       }
 
@@ -610,6 +616,17 @@ app_server <- function(input, output, session) {
     )
   })
 
+  output$drug_references <- renderUI({
+    simulatedDrugs <- tryCatch(drugs(), shiny.silent.error = function(err) NULL)
+    if (length(simulatedDrugs) == 0) {
+      return(span("No drugs in the current simulation.", class = "text-muted"))
+    }
+    items <- lapply(names(simulatedDrugs), function(drug) {
+      citationItemHTML(drug, simulatedDrugs[[drug]]$reference, simulatedDrugs[[drug]]$Color)
+    })
+    tags$ul(class = "mb-0", lapply(items, tags$li))
+  })
+
   # Display Time, CE, or total opioid
   xy_str <- function(e) {
     if (is.null(e$panelvar1)) return()
@@ -658,7 +675,7 @@ app_server <- function(input, output, session) {
     x[2] <- substr(x[2],2,10)
     x[2] <- substr(x[2],1,nchar(x[2])-1)
     time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
-    if (referenceTime() == "none")
+    if (referenceTime() == REFERENCE_TIME_NONE)
     {
       time = paste(time, "minutes")
     } else {
@@ -731,7 +748,7 @@ app_server <- function(input, output, session) {
     j <- which.min(abs(e$x - drugs()[[firstDrug]]$equiSpace$Time))
     time <- round(drugs()[[firstDrug]]$equiSpace$Time[j], 1)
 
-    if (referenceTime() == "none")
+    if (referenceTime() == REFERENCE_TIME_NONE)
     {
       time <- as.character(time)
     } else {
@@ -884,7 +901,7 @@ app_server <- function(input, output, session) {
     showModal(
       modalDialog(
         title = paste("Edit", drug, "doses"),
-        rHandsontableOutput("editPriorDosesTable"),
+        rhandsontable::rHandsontableOutput("editPriorDosesTable"),
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
         tags$button(
@@ -932,7 +949,7 @@ app_server <- function(input, output, session) {
     deleteDrugDoses(DrugTimeUnits()$drug)
   })
 
-  output$editPriorDosesTable <- renderRHandsontable({
+  output$editPriorDosesTable <- rhandsontable::renderRHandsontable({
     profileCode({
       dt <- doseTable()
       drug <- DrugTimeUnits()$drug
@@ -945,28 +962,28 @@ app_server <- function(input, output, session) {
         unlist()
       editPriorDosesTable$Delete <- FALSE
 
-      editPriorDosesTableHOT <- rhandsontable(
+      editPriorDosesTableHOT <- rhandsontable::rhandsontable(
         editPriorDosesTable[ , c("Delete","Time","Dose","Units")],
         overflow = 'visible',
         rowHeaders = NULL,
         height = 220,
         stretchH = "all"
       ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = "Delete",
           type = "checkbox",
           halign = "htRight"
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = "Time",
           halign = "htRight"
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = "Dose",
           type = "numeric",
           halign = "htRight"
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = "Units",
           type = "dropdown",
           source = possibleUnits,
@@ -975,9 +992,9 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid = FALSE
         ) %>%
-        hot_table(contextMenu = FALSE) %>%
-        hot_rows(rowHeights = 10) %>%
-        hot_cols(colWidths = c(50,55,55,90)) %>%
+        rhandsontable::hot_table(contextMenu = FALSE) %>%
+        rhandsontable::hot_rows(rowHeights = 10) %>%
+        rhandsontable::hot_cols(colWidths = c(50,55,55,90)) %>%
         addHotHooks(filterKeys = TRUE, sanitize = TRUE)
 
       editPriorDosesTableHOT
@@ -989,7 +1006,7 @@ app_server <- function(input, output, session) {
     {
       profileCode({
         removeModal()
-        TT <- hot_to_r(input$editPriorDosesTable)
+        TT <- rhandsontable::hot_to_r(input$editPriorDosesTable)
         outputComments("In ObserveEvent for editDosesOK")
         TT$Drug <- DrugTimeUnits()$drug
         outputComments("TT:")
@@ -1057,7 +1074,7 @@ app_server <- function(input, output, session) {
     {
       profileCode({
         clickTime <- validateTime(input$clickTimeEvent)
-        if (referenceTime() == "none")
+        if (referenceTime() == REFERENCE_TIME_NONE)
         {
           clickTime <- as.numeric(clickTime)
         } else {
@@ -1073,8 +1090,7 @@ app_server <- function(input, output, session) {
         ET <- eventTable()
         ET <- data.frame(
           Time  = c(ET$Time, clickTime),
-          Event = c(ET$Event, clickEvent),
-          Fill = c(ET$Fill, eventDefaults()$Color[clickEvent == eventDefaults()$Event])
+          Event = c(ET$Event, clickEvent)
         )
         ET <- ET[order(ET$Time,ET$Event),]
         eventTable(ET)
@@ -1085,7 +1101,7 @@ app_server <- function(input, output, session) {
   # Edit prior drug doses
   editEventsHOT <- reactiveVal(NULL)
 
-  output$editEventsTableHTML <- renderRHandsontable({
+  output$editEventsTableHTML <- rhandsontable::renderRHandsontable({
     req(editEventsHOT())
     editEventsHOT()
   })
@@ -1098,23 +1114,23 @@ app_server <- function(input, output, session) {
     if (hasEvents) {
       tempTable <- tempTable[,c("Time", "Event")]
       tempTable$Delete <- FALSE
-      tempTableHOT <- rhandsontable(
+      tempTableHOT <- rhandsontable::rhandsontable(
         tempTable[,c("Delete","Time","Event")],
         overflow = 'visible',
         rowHeaders = NULL,
         height = 220,
         stretchH = "all"
       ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = "Delete",
           type="checkbox",
           halign = "htRight"
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = "Time",
           halign = "htRight"
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = "Event",
           type = "dropdown",
           source = eventDefaults()$Event,
@@ -1123,9 +1139,9 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid = FALSE
         ) %>%
-        hot_table(contextMenu = FALSE) %>%
-        hot_rows(rowHeights = 10) %>%
-        hot_cols(colWidths = c(60,65,100))
+        rhandsontable::hot_table(contextMenu = FALSE) %>%
+        rhandsontable::hot_rows(rowHeights = 10) %>%
+        rhandsontable::hot_cols(colWidths = c(60,65,100))
 
       editEventsHOT(NULL)  # force re-render even if table data is identical
       editEventsHOT(tempTableHOT)
@@ -1135,7 +1151,7 @@ app_server <- function(input, output, session) {
       modalDialog(
         title = "Edit Events",
         if (hasEvents)
-          rHandsontableOutput(outputId = "editEventsTableHTML")
+          rhandsontable::rHandsontableOutput(outputId = "editEventsTableHTML")
         else
           tags$p("There are no events yet."),
         if (hasEvents) actionButton("editEventsOK", "Apply", class = "btn-primary"),
@@ -1188,10 +1204,8 @@ app_server <- function(input, output, session) {
     {
       profileCode({
         removeModal()
-        ET <- hot_to_r(input$editEventsTableHTML)
+        ET <- rhandsontable::hot_to_r(input$editEventsTableHTML)
         ET <- ET[!ET$Delete,c("Time","Event")]
-        CROWS <- match(ET$Event, eventDefaults()$Event)
-        ET$Fill <- eventDefaults()$Color[CROWS]
         ET <- ET[order(ET$Time,ET$Event),]
         eventTable(ET)
       }, name = "input$editEventsOK observer")
@@ -1207,7 +1221,7 @@ app_server <- function(input, output, session) {
   # Event to trigger calculation to set doses for a target
   targetHOTVal <- reactiveVal(NULL)
 
-  output$targetTableHTML <- renderRHandsontable({
+  output$targetTableHTML <- rhandsontable::renderRHandsontable({
     req(targetHOTVal())
     targetHOTVal()
   })
@@ -1220,29 +1234,29 @@ app_server <- function(input, output, session) {
           Time = rep("",6),
           Target = rep("", 6)
         )
-        targetHOT <- rhandsontable(
+        targetHOT <- rhandsontable::rhandsontable(
           targetTable,
           overflow = 'visible',
           rowHeaders = NULL,
           height = 220
         ) %>%
-          hot_col(
+          rhandsontable::hot_col(
             col = "Time",
             halign = "htRight"
           ) %>%
-          hot_col(
+          rhandsontable::hot_col(
             col = "Target",
             type = "numeric",
             halign = "htRight"
           ) %>%
-          hot_context_menu(
+          rhandsontable::hot_context_menu(
             allowRowEdit = TRUE,
             allowColEdit = FALSE
           ) %>%
-          hot_rows(
+          rhandsontable::hot_rows(
             rowHeights = 10
           ) %>%
-          hot_cols(
+          rhandsontable::hot_cols(
             colWidths = c(70,70)
           ) %>%
           addHotHooks(filterKeys = TRUE, sanitize = TRUE)
@@ -1262,7 +1276,7 @@ app_server <- function(input, output, session) {
               label = "Drug",
               choices = drugList
             ),
-            rHandsontableOutput(
+            rhandsontable::rHandsontableOutput(
               outputId = "targetTableHTML"
             ),
             textInput(
@@ -1312,26 +1326,23 @@ app_server <- function(input, output, session) {
           outputComments("No endtime")
           return()
         }
-        targetTable <- hot_to_r(input$targetTableHTML)
+        targetTable <- rhandsontable::hot_to_r(input$targetTableHTML)
+        validateTargetTableInput(targetTable)
 
-        tryCatchLog({
+        if (!any(doseTable()$Drug==input$targetDrug)) {
+          outputComments("Updating doseTable for new drug")
+          doseTable(rbind(doseTable(),
+                          data.frame(Drug=input$targetDrug,Time="0",Dose="0",Units="mg")))
+          outputComments(doseTable())
+        }
 
-          if (!any(doseTable()$Drug==input$targetDrug)) {
-            outputComments("Updating doseTable for new drug")
-            doseTable(rbind(doseTable(),
-                            data.frame(Drug=input$targetDrug,Time="0",Dose="0",Units="mg")))
-            outputComments(doseTable())
-          }
-
-          testTable <- suggest(input$targetDrug,
-                               targetTable,
-                               endTime,
-                               drugs(),
-                               drugList,
-                               eventTable(),
-                               referenceTime())
-
-        })
+        testTable <- suggest(input$targetDrug,
+                             targetTable,
+                             endTime,
+                             drugs(),
+                             drugList,
+                             eventTable(),
+                             referenceTime())
 
         if (is.null(testTable)) return()
 
@@ -1361,7 +1372,7 @@ app_server <- function(input, output, session) {
           ". Also, you can easily break your session by entering crazy things. If so, just reload your session."
         ),
         br(),
-        shinycssloaders::withSpinner(rHandsontableOutput("editDrugsHTML", height = 350)),
+        shinycssloaders::withSpinner(rhandsontable::rHandsontableOutput("editDrugsHTML", height = 350)),
         br(),
         actionButton("drugEditsOK", "Apply", class = "btn-primary"),
         tags$button(
@@ -1377,25 +1388,25 @@ app_server <- function(input, output, session) {
     )
   })
 
-  output$editDrugsHTML <- renderRHandsontable({
+  output$editDrugsHTML <- rhandsontable::renderRHandsontable({
     profileCode({
       editDrugsTrigger$depend()
       x <- drugDefaults()
       x$Units <- drugUnitsSimplify(x$Units)
       # endCe is managed via the Drug Thresholds modal
       x <- x[, !names(x) %in% "endCe"]
-      drugsHOT <- rhandsontable(
+      drugsHOT <- rhandsontable::rhandsontable(
         x,
         overflow = 'visible',
         rowHeaders = NULL,
         height = 350
       ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = 1,
           halign = "htRight",
           readOnly = TRUE
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = 2,
           type = "dropdown",
           source = c("mcg","ng"),
@@ -1404,7 +1415,7 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid=FALSE
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = 3,
           type = "dropdown",
           source = bolusUnits,
@@ -1413,7 +1424,7 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid=FALSE
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = 4,
           type = "dropdown",
           source = infusionUnits,
@@ -1422,7 +1433,7 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid=FALSE
         ) %>%
-        hot_col(
+        rhandsontable::hot_col(
           col = 5,
           type = "dropdown",
           source = allUnits,
@@ -1431,13 +1442,13 @@ app_server <- function(input, output, session) {
           valign = "vtMiddle",
           allowInvalid=FALSE
         ) %>%
-        hot_col(col = 6,  halign = "htLeft") %>%
-        hot_col(col = 7,  halign = "htRight") %>%
-        hot_col(col = 8,  halign = "htRight") %>%
-        hot_col(col = 9,  halign = "htRight") %>%
-        hot_col(col = 10, halign = "htRight") %>%
-        hot_col(col = 11, halign = "htRight") %>%
-        hot_table(contextMenu = FALSE)
+        rhandsontable::hot_col(col = 6,  halign = "htLeft") %>%
+        rhandsontable::hot_col(col = 7,  halign = "htRight") %>%
+        rhandsontable::hot_col(col = 8,  halign = "htRight") %>%
+        rhandsontable::hot_col(col = 9,  halign = "htRight") %>%
+        rhandsontable::hot_col(col = 10, halign = "htRight") %>%
+        rhandsontable::hot_col(col = 11, halign = "htRight") %>%
+        rhandsontable::hot_table(contextMenu = FALSE)
       drugsHOT
     }, name = "output$editDrugsHTML")
   })
@@ -1447,7 +1458,7 @@ app_server <- function(input, output, session) {
     profileCode({
       removeModal()
       current      <- drugDefaults()
-      newDrugDefaults <- hot_to_r(input$editDrugsHTML)
+      newDrugDefaults <- rhandsontable::hot_to_r(input$editDrugsHTML)
       newDrugDefaults$Drug                 <- as.character(newDrugDefaults$Drug)
       newDrugDefaults$Concentration.Units  <- as.character(newDrugDefaults$Concentration.Units)
       newDrugDefaults$Bolus.Units          <- as.character(newDrugDefaults$Bolus.Units)
@@ -1476,9 +1487,9 @@ app_server <- function(input, output, session) {
       modalDialog(
         title = "Drug Thresholds",
         p("Set the threshold concentration for each drug."),
-        if (input$normalization == "none")
+        if (input$normalization == NORMALIZE_NONE)
           checkboxInput("showThresholdModal", "Show time until threshold", value = input$showThreshold),
-        shinycssloaders::withSpinner(rHandsontableOutput("editThresholdsTable", height = 350)),
+        shinycssloaders::withSpinner(rhandsontable::rHandsontableOutput("editThresholdsTable", height = 350)),
         br(),
         actionButton("thresholdEditsOK", "Apply", class = "btn-primary"),
         tags$button(
@@ -1494,19 +1505,19 @@ app_server <- function(input, output, session) {
     )
   })
 
-  output$editThresholdsTable <- renderRHandsontable({
+  output$editThresholdsTable <- rhandsontable::renderRHandsontable({
     drugThresholdsTrigger$depend()
     x <- drugDefaults()[, c("Drug", "endCe")]
     names(x)[2] <- "Threshold"
-    rhandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
-      hot_col(col = 1, halign = "htLeft", readOnly = TRUE) %>%
-      hot_col(col = 2, halign = "htRight", type = "numeric") %>%
-      hot_table(contextMenu = FALSE)
+    rhandsontable::rhandsontable(x, overflow = 'visible', rowHeaders = NULL, height = 350) %>%
+      rhandsontable::hot_col(col = 1, halign = "htLeft", readOnly = TRUE) %>%
+      rhandsontable::hot_col(col = 2, halign = "htRight", type = "numeric") %>%
+      rhandsontable::hot_table(contextMenu = FALSE)
   })
 
   observeEvent(input$thresholdEditsOK, {
     removeModal()
-    tt <- hot_to_r(input$editThresholdsTable)
+    tt <- rhandsontable::hot_to_r(input$editThresholdsTable)
     newDrugDefaults <- drugDefaults()
     newDrugDefaults$endCe <- as.numeric(tt$Threshold)[match(newDrugDefaults$Drug, tt$Drug)]
     drugDefaults(newDrugDefaults)

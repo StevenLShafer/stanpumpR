@@ -28,7 +28,7 @@ test_that("returns the correct calculations if BMI is > 30 and male", {
     typical = 1.2,
     upperTypical = 0.8,
     lowerTypical = 2,
-    reference = "Minto/Schnider"
+    reference = "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
   )
   expect_equal_rounded(actual, expected)
 })
@@ -59,7 +59,7 @@ test_that("returns the correct calculations if BMI is <= 30 and male", {
     typical = 1.2,
     upperTypical = 0.8,
     lowerTypical = 2,
-    reference = "Minto/Schnider"
+    reference = "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
   )
   expect_equal_rounded(actual, expected)
 })
@@ -91,7 +91,7 @@ test_that("returns the correct calculations if BMI is > 30 and female", {
     typical = 1.2,
     upperTypical = 0.8,
     lowerTypical = 2,
-    reference = "Minto/Schnider"
+    reference = "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
   )
   expect_equal_rounded(actual, expected)
 })
@@ -123,7 +123,7 @@ test_that("returns the correct calculations if BMI is <= 30 and female", {
     typical = 1.2,
     upperTypical = 0.8,
     lowerTypical = 2,
-    reference = "Minto/Schnider"
+    reference = "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
   )
   expect_equal_rounded(actual, expected)
 })

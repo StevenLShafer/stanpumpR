@@ -1,16 +1,3 @@
-makeReactiveTrigger <- function() {
-  rv <- shiny::reactiveValues(a = 0)
-  list(
-    depend = function() {
-      rv$a
-      invisible()
-    },
-    trigger = function() {
-      rv$a <- shiny::isolate(rv$a + 1)
-    }
-  )
-}
-
 showIntroModal <- function() {
   shiny::showModal(
     shiny::modalDialog(
@@ -25,6 +12,7 @@ showIntroModal <- function() {
         individual patients is a matter of clinical judgment by the health care
         provider."
       ),
+      shiny::p("stanpumpR does not collect any protected healthcare information."),
       shiny::tags$button(
         type = "button",
         class = "btn btn-warning",
@@ -41,19 +29,16 @@ showIntroModal <- function() {
 checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
   msg <- ""
   success <- TRUE
-  if (!is.numeric(age) || !is.numeric(weight) || !is.numeric(height)) {
-    success <- FALSE
-  }
-  if (!age %btwn% c(MIN_AGE, MAX_AGE)) {
+  if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
     msg <- glue::glue("Age must be between {MIN_AGE} and {MAX_AGE}")
     success <- FALSE
   }
-  if (!weight %btwn% c(MIN_WEIGHT, MAX_WEIGHT)) {
+  if (!is_valid_number(weight, MIN_WEIGHT, MAX_WEIGHT)) {
     msg <- glue::glue("Weight must be between {MIN_WEIGHT} and {MAX_WEIGHT}")
     success <- FALSE
   }
-  if (!height %btwn% c(MIN_HEIGHT, MAX_HEIGHT)) {
-    msg <-glue::glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
+  if (!is_valid_number(height, MIN_HEIGHT, MAX_HEIGHT)) {
+    msg <- glue::glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
     success <- FALSE
   }
 
@@ -61,50 +46,4 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
     errorFx(msg)
   }
   success
-}
-
-recalculatePK <- function(drugs, drugDefaults, doseTable,
-                          age, weight, height, sex) {
-  #  for (idx in seq(nrow(drugDefaults))) {
-  #    drug <- drugDefaults$Drug[idx]
-  for (drug in unique(doseTable$Drug)) {
-    idx <- which(drugDefaults$Drug==drug)
-    drugs[[drug]]$Color <- drugDefaults$Color[idx]
-    drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
-    outputComments("Getting PK for", drug)
-    drugs[[drug]] <- utils::modifyList(
-      drugs[[drug]],
-      getDrugPK(
-        drug = drug,
-        weight = weight,
-        height = height,
-        age = age,
-        sex = sex,
-        drugDefaults = drugDefaults[idx, ]
-      )
-    )
-    drugs[[drug]]$DT <- NULL # Remove old dose table, if any
-    drugs[[drug]]$equiSpace <- NULL # Ditto
-  }
-
-  drugs
-}
-
-cleanDT <- function(DT) {
-  DT$Drug    <- as.character(DT$Drug)
-  DT$Units   <- as.character(DT$Units)
-  DT$Dose    <- as.numeric(DT$Dose)
-  DT$Time    <- as.character(DT$Time)  # Stored as factors... Arrgh.....
-  DT <- DT[DT$Drug != "" & !is.na(DT$Dose) & DT$Time != "" & DT$Units != "", ]
-  DT
-}
-
-# When the given element is inside a modal, make sure its first input gets focus
-# when the modal opens
-modalFocus <- function(tag) {
-  if (tag$name == "input") {
-    htmltools::tagAppendAttributes(tag, class = "modal-focusme")
-  } else {
-    htmltools::tagQuery(tag)$find("input")$addClass("modal-focusme")$allTags()
-  }
 }

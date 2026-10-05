@@ -15,7 +15,7 @@ remimazolam <- function(weight, height, age, sex)
   Kv3_Pugh  <- 82.4
 
   Fv3_age <- exp(Kv3_age/1000 * (age-35))
-  if (sex == "female")
+  if (sex == SEX_FEMALE)
   {
     Fcl1_sex <- exp(Kcl1_sex/100)
     Fv3_sex <- exp(Kv3_sex / 100)
@@ -38,7 +38,7 @@ remimazolam <- function(weight, height, age, sex)
   upperTypical <- NA
   lowerTypical <- NA
   MEAC <- NA
-  reference <- "Eleveld 2025"
+  reference <- "Eleveld DJ et al., Br J Anaesth 2025;135(1):206-217. https://pubmed.ncbi.nlm.nih.gov/40312166/"
 
   tPeak <- 2.5
 
@@ -51,7 +51,7 @@ remimazolam <- function(weight, height, age, sex)
     cl3 = cl3
   )
 
-  events <- c("default")
+  events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
   return(

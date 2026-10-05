@@ -11,8 +11,7 @@ test_that("simulationPlot yields desired objects", {
 
   eventTable <- data.frame(
     Time = 0,
-    Event = "Event",
-    Fill = "black"
+    Event = "Event"
   )
 
   ## from server.R

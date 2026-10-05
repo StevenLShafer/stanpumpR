@@ -45,9 +45,9 @@ createHOT <- function(doseTable,drugDefaults)
     cell <- list(row = i - 1, col = 3)
     if (!is.na(doseTable$Drug[i]) && doseTable$Drug[i] != "")
     {
-      cell$source <- unlist(drugDefaults$Units[drugDefaults$Drug == doseTable$Drug[i]])
+      cell$source <- as.list(unlist(drugDefaults$Units[drugDefaults$Drug == doseTable$Drug[i]]))
     } else {
-      cell$source <- c("")
+      cell$source <- as.list(c(""))
     }
     HOT$x$cell <- c(HOT$x$cell, list(cell))
   }

@@ -82,7 +82,7 @@ test_that("it returns the same value", {
     ),
     tPeak = 1.6,
     pkEvents = "default",
-    reference = "Not Available",
+    reference = "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/",
     weight = 70,
     height = 170,
     age = 50,
@@ -100,4 +100,53 @@ test_that("it returns the same value", {
   )
 
   expect_equal_rounded(actual, expected)
+})
+
+test_that("it falls back to 'Not Available' when a drug function omits a reference", {
+  expect_equal(getDrugPK("propofol", 70, 170, 50, "male")$reference, "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/")
+
+  realPropofol <- propofol
+  local_mocked_bindings(
+    propofol = function(...) {
+      X <- realPropofol(...)
+      X$reference <- NULL
+      X
+    }
+  )
+
+  expect_equal(getDrugPK("propofol", 70, 170, 50, "male")$reference, "Not Available")
+})
+
+test_that("every drug in the library supplies a reference", {
+  references <- vapply(
+    getDrugDefaultsGlobal()$Drug,
+    function(drug) getDrugPK(drug, 70, 170, 50, "male")$reference,
+    character(1)
+  )
+
+  missing <- names(references)[!nzchar(references) | references == "Not Available"]
+
+  expect_equal(missing, character(0))
+})
+
+test_that("getDrugPK accepts both documented sex values", {
+  dd <- getDrugDefaults("propofol")
+  expect_no_error(getDrugPK("propofol", 70, 170, 50, "male", dd))
+  expect_no_error(getDrugPK("propofol", 70, 170, 50, "female", dd))
+})
+
+test_that("getDrugPK rejects an unrecognized sex instead of silently guessing", {
+  dd <- getDrugDefaults("propofol")
+  expect_error(getDrugPK("propofol", 70, 170, 50, "F", dd), "Invalid sex")
+  expect_error(getDrugPK("propofol", 70, 170, 50, "Female", dd), "Invalid sex")
+  expect_error(getDrugPK("propofol", 70, 170, 50, "", dd), "Invalid sex")
+  expect_error(getDrugPK("propofol", 70, 170, 50, NA, dd), "Invalid sex")
+  expect_error(getDrugPK("propofol", 70, 170, 50, c("male", "female"), dd), "Invalid sex")
+})
+
+test_that("male and female produce different parameters", {
+  dd <- getDrugDefaults("propofol")
+  m <- getDrugPK("propofol", 70, 170, 50, SEX_MALE, dd)$PK[[PK_EVENT_DEFAULT]]
+  f <- getDrugPK("propofol", 70, 170, 50, SEX_FEMALE, dd)$PK[[PK_EVENT_DEFAULT]]
+  expect_false(isTRUE(all.equal(m$cl1, f$cl1)))
 })

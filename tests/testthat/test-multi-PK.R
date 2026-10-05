@@ -1,6 +1,4 @@
 test_that("simulateDrugsWithCovariates passes smoke tests and can generate a plot", {
-  library(ggplot2)
-
   weight <- 70
   height <- 170
   age <- 50
@@ -15,7 +13,7 @@ test_that("simulateDrugsWithCovariates passes smoke tests and can generate a plo
     Units = c("mcg", "mcg/kg/min", "mcg/kg/min", "mg", "mcg/kg/min", "mcg/kg/min")
   )
 
-  eventTable <- data.frame(Time = double(), Event = character(), Fill = character())
+  eventTable <- data.frame(Time = double(), Event = character())
 
   output <- simulateDrugsWithCovariates(doseTable, eventTable, weight, height, age, sex, maximum, plotRecovery)
 
@@ -26,9 +24,24 @@ test_that("simulateDrugsWithCovariates passes smoke tests and can generate a plo
   for (drug in output) {
     results <- drug[["results"]]
     cpce <- results[results$Site == "Plasma" | results$Site == "Effect Site", ]
-    g <- ggplot() +
-      geom_line(data = cpce, aes(x=Time, y=Y, group=Site, color=Site)) +
-      xlab('time (minutes)') + ylab(paste0(drug$Drug,' concentration (', drug$Concentration.Units, ')'))
+    g <- ggplot2::ggplot() +
+      ggplot2::geom_line(data = cpce, ggplot2::aes(x=Time, y=Y, group=Site, color=Site)) +
+      ggplot2::xlab('time (minutes)') +
+      ggplot2::ylab(paste0(drug$Drug,' concentration (', drug$Concentration.Units, ')'))
     expect_no_error(print(g))
   }
+})
+
+test_that("simulateDrugsWithCovariates rejects an unrecognized sex", {
+  dose <- data.frame(Drug = "propofol", Time = 0, Dose = 100, Units = "mg")
+  events <- data.frame(Time = double(), Event = character())
+  expect_error(
+    simulateDrugsWithCovariates(dose, events, 70, 170, 50, "F", 60, FALSE),
+    "Invalid sex"
+  )
+  # also caught when the dose table is empty, before the per-drug loop
+  expect_error(
+    simulateDrugsWithCovariates(dose[0, ], events, 70, 170, 50, "F", 60, FALSE),
+    "Invalid sex"
+  )
 })

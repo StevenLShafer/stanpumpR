@@ -18,7 +18,7 @@ dexmedetomidine <- function(weight, height, age, sex)
     upperTypical <- 0.4
     lowerTypical <- 0.8
     MEAC <- 0
-    reference <- "Barry Dyck, Check reference and numbers"
+    reference <- "Dyck JB et al., Anesthesiology 1993;78(5):821-828. https://pubmed.ncbi.nlm.nih.gov/8098191/"
 
     v2 <- v1 * k12 / k21
     v3 <- v1 * k13 / k31
@@ -34,7 +34,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    events <- c("default")
+    events <- c(PK_EVENT_DEFAULT)
   } else {
     v3 <- 1
     cl3 <- 0
@@ -163,7 +163,7 @@ dexmedetomidine <- function(weight, height, age, sex)
       cl2 = cl2,
       cl3 = cl3
     )
-    events <- c("default", "CPBStart","CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd")
+    events <- c(PK_EVENT_DEFAULT, "CPBStart","CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd")
 
     tPeak <- 2 # Just a guess
     typical <- 10 #Clin Pharmacol Ther. 1995 Jul;58(1):35-43.
@@ -174,9 +174,6 @@ dexmedetomidine <- function(weight, height, age, sex)
   }
 
   PK <- sapply(events, function(x) list(get0(x)))
-
-  # cat("Here is the structure of PK")
-  # print(utils::str(PK))
 
   return(
     list(

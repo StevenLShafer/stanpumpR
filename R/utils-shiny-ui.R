@@ -2,32 +2,63 @@ attachClass <- function(tag, class) {
   htmltools::tagAppendAttributes(tag, class = class)
 }
 
+citationItemHTML <- function(drug, reference, color) {
+  text <- reference
+  url <- NULL
+  label <- NULL
+  link <- NULL
+
+  if (is.null(reference) || !nzchar(reference)) {
+    text <- "Not Available"
+  } else {
+    hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
+    pattern <- paste0("\\s+https://(", hosts, ")/\\S+$")
+    res <- regmatches(reference, regexec(pattern, reference))[[1]]
+    if (length(res) > 0) {
+      text <- sub(pattern, "", reference)
+      url <- trimws(res[1])
+      label <- names(CITATION_WEBSITES)[match(res[2], CITATION_WEBSITES)]
+    }
+  }
+
+  if (!is.null(url)) {
+    link <- tagList(" ", tags$a(
+      label,
+      href = url,
+      target = "_blank",
+      rel = "noreferrer"
+    ))
+  }
+
+  tags$div(
+    tags$strong(
+      style = paste0("color:", if (is.null(color)) "inherit" else color, ";"),
+      tools::toTitleCase(drug)
+    ),
+    ": ", text, link
+  )
+}
+
 inlineUI <- function(tag) {
   attachClass(tag, "inline_ui")
 }
 
-nbsp <- shiny::HTML("&nbsp;", .noWS = "outside")
-
-addHotHooks <- function(hot, filterKeys = TRUE, sanitize = TRUE, ...) {
-  hooks <- list(...)
-
-  if (filterKeys) hooks$beforeKeyDown <- c("hookFilterKeys", hooks$beforeKeyDown)
-  if (sanitize)   hooks$beforeChange <- c("hookSanitize", hooks$beforeChange)
-
-  js <- c("function(el, x) {", "  var hot = this.hot;")
-
-  for (hookType in names(hooks)) {
-    for (fxn in hooks[[hookType]]) {
-      js <- c(js,
-              sprintf("  hot.removeHook('%s', %s);", hookType, fxn),
-              sprintf("  hot.addHook('%s', %s);", hookType, fxn)
-      )
-    }
+# Add HTML attributes to a Shiny input tag
+addInputAttributes <- function(tag, ...) {
+  tagClasses <- htmltools::tagGetAttribute(tag, "class")
+  selector <- if (grepl("shiny-input-textarea", tagClasses)) {
+    "textarea"
+  } else {
+    "input"
   }
-
-  js <- c(js, "}")
-  htmlwidgets::onRender(hot, paste(js, collapse = "\n"))
+  htmltools::tagQuery(tag)$
+    find(selector)$
+    filter(function(x, i) i == 1)$
+    addAttrs(...)$
+    allTags()
 }
+
+nbsp <- shiny::HTML("&nbsp;", .noWS = "outside")
 
 #' Create an input that has choices appended to the right of it. The choices are
 #' technically radio buttons under the hood, but they appear as buttons.
@@ -141,6 +172,12 @@ inputWithChoices <- function(tag, choices, inputId = NULL, selected = NULL) {
 }
 
 #' Create a button group for selecting a line type using SVG images instead of text
+#'
+#' @param inputId The input slot that will be used to access the value.
+#' @param label Display label for the control.
+#' @param selected The initially selected line type value.
+#' @return A Shiny input tag.
+#' @noRd
 lineTypeSelector <- function(inputId, label, selected) {
 
   css <- '
@@ -199,6 +236,10 @@ lineTypeSelector <- function(inputId, label, selected) {
 
 #' Create an input that has its label on its left, and the input takes
 #' the rest of the space
+#'
+#' @param tag A Shiny input tag.
+#' @return The input tag, restyled with an inline label.
+#' @noRd
 inputWithInlineLabel <- function(tag) {
   css <- "
     .input-inline-label {

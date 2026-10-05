@@ -16,6 +16,10 @@
 #' @export
 simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex, maximum, plotRecovery)
 {
+  if (length(sex) != 1 || !sex %in% SEX_VALUES) {
+    stop("Invalid sex: ", paste(sex, collapse = ", "),
+         ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
+  }
   drugList <- unique(dose$Drug)
   output <- c()
   for (drug in drugList)
