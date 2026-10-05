@@ -126,6 +126,41 @@
 #     14-15% on room air at 4 L/min -- the correct alveolar oxygen tension falls
 #     out of the mass balance rather than being asserted.
 #
+# (4a) OXYGEN AND THE GAS VOLUME (2026-10-05; `oxygenUptake`, on by default).
+#     The sink above removes oxygen from the oxygen fraction but not from the
+#     VOLUME, so with nothing else done the fractions stop adding up: 0.3 L/min
+#     of oxygen with 1 L/min of nitrous oxide settled at 5% oxygen, 74% nitrous
+#     oxide and no nitrogen.  Oxygen consumed is volume lost, exactly as agent
+#     taken up is, and it enters the same coupling term, with carbon dioxide
+#     accounted for where it actually goes:
+#
+#       * In the ALVEOLI, carbon dioxide replaces most of the oxygen taken up.
+#         Alveolar gas therefore shrinks by VO2 - VCO2 = VO2 (1 - RQ), and that
+#         is what is added to the summed uptake u of the other gases.
+#       * Carbon dioxide is not carried as a gas.  Its alveolar fraction is
+#         taken at its steady value, 100 VCO2 / VA (about 5%), so the fractions
+#         that ARE carried sum to 100 less that in the alveoli.
+#       * In the CIRCUIT, the absorber strips the carbon dioxide from the
+#         exhaled gas that is rebreathed.  That gas shrinks by the carbon
+#         dioxide it held, c_E = VCO2 / MV of its volume, and the fractions of
+#         everything else in it rise to match; inspired gas sums to 100.
+#
+#     The ideal-circuit blend becomes, with u+ the uptake when positive,
+#         Q >= MV + u+ :  F_circ = F_fgf
+#         otherwise    :  F_circ = f F_fgf + g F_alv
+#             k = (MV + u+ - Q) / (MV (1 - c_E))      rebreathed, per unit exhaled
+#             f = Q / D,   g = k VA / D,   D = (MV + u+) - k (MV - VA)
+#     which is the earlier f = Q / (VA + Q d), g = 1 - f when u and c_E are zero.
+#     The patient now inspires MV + u+ and exhales MV, so the fresh gas flow
+#     that stops rebreathing is the minute ventilation plus what is taken up.
+#
+#     In the steady state the gas vented is the fresh gas less the oxygen
+#     consumed: with 0.3 + 1.0 L/min in and 0.21 L/min consumed, 1.09 L/min
+#     leaves as 92% nitrous oxide and 8% oxygen (dry, carbon dioxide aside).
+#
+#     Gas Man does none of this: it has no oxygen.  Pass oxygenUptake = FALSE to
+#     compare with it.
+#
 # (5) MAC, summed over the potent agents, using the BRAIN (vessel-rich group)
 #     tension and age-adjusted MAC:
 #
@@ -241,11 +276,12 @@ expmPade <- function(A)
 #'   header.  "open" is the ideal circuit with no rebreathing whatever the flow.
 #' @param MV minute ventilation, L/min, which sets where rebreathing stops in
 #'   the ideal circuit.  Defaults to \code{VA}: no dead space.
+#' @param cE carbon dioxide as a fraction of exhaled gas, absorbed from whatever
+#'   is rebreathed; see \code{gasCircuitBlend()}
 #' @returns a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
-#'   and open circuits, \code{fresh}: the fraction of inspired gas that is
-#'   fresh gas, from which the circuit tension is
-#'   \code{fresh * Ffgf + (1 - fresh) * F_alv}.  It is NULL for the semi-closed
-#'   circuit, whose tension is a state.
+#'   and open circuits, \code{fresh} and \code{alveolar}: the weights from
+#'   which the circuit tension is \code{fresh * Ffgf + alveolar * F_alv}.  They
+#'   are NULL for the semi-closed circuit, whose tension is a state.
 #' @keywords internal
 # -----------------------------------------------------------------------------
 # The uptake coupling: the concentration and second gas effect
@@ -329,15 +365,42 @@ gasTotalUptake <- function(state, props, body, Qco)
 #' @keywords internal
 gasFreshFraction <- function(Q, VA, circuit = "ideal", MV = VA)
 {
-  if (circuit == "open" || MV <= 0 || Q >= MV) return(1)
-  d <- 1 - VA / MV
-  Q / (VA + Q * d)
+  gasCircuitBlend(Q, VA, MV, circuit)$fresh
+}
+
+
+#' Inspired gas in the ideal circuit, as a blend of fresh and alveolar gas
+#'
+#' \code{F_circ = fresh * F_fgf + alveolar * F_alv}.  See (1) and (4a) in the
+#' file header.  With no uptake and no carbon dioxide the two weights sum to
+#' one; with carbon dioxide absorbed from the rebreathed gas they sum to a
+#' little more, because the alveolar fractions they multiply sum to a little
+#' less than 100.
+#'
+#' @param Q total fresh gas flow, L/min
+#' @param VA alveolar ventilation, L/min
+#' @param MV minute ventilation, L/min
+#' @param circuit "ideal" or "open"
+#' @param u summed uptake of gas from the alveoli, L/min; only a positive value
+#'   adds to what is inspired
+#' @param cE carbon dioxide as a fraction (0 to 1) of exhaled gas, removed from
+#'   whatever is rebreathed
+#' @returns a list with \code{fresh} and \code{alveolar}
+#' @keywords internal
+gasCircuitBlend <- function(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
+{
+  inspired <- MV + max(u, 0)
+  if (circuit == "open" || MV <= 0 || Q >= inspired)
+    return(list(fresh = 1, alveolar = 0))
+  k <- (inspired - Q) / (MV * (1 - cE))
+  D <- inspired - k * (MV - VA)
+  list(fresh = Q / D, alveolar = k * VA / D)
 }
 
 
 gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
                              circuit = c("ideal", "semi-closed", "open"),
-                             MV = VA)
+                             MV = VA, cE = 0)
 {
   circuit <- match.arg(circuit)
   lb  <- props$lambda_blood
@@ -398,7 +461,8 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
 
   b <- c(Q * Ffgf / Vc, 0, 0, 0, 0)
 
-  if (circuit == "semi-closed") return(list(A = A, b = b, fresh = NULL))
+  if (circuit == "semi-closed")
+    return(list(A = A, b = b, fresh = NULL, alveolar = NULL))
 
   # IDEAL (or open) CIRCUIT.  The circuit tension is not a state but
   #     F_circ = f F_fgf + (1 - f) F_alv.
@@ -408,14 +472,14 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   # a constant inflow, and the rebreathed share comes straight back as alveolar
   # gas.  The circuit row and column are then empty, so the propagator leaves
   # that entry alone and the caller sets it from the line above.
-  f <- gasFreshFraction(Q, VA, circuit, MV)
+  bl <- gasCircuitBlend(Q, VA, MV, circuit, totUptake, cE)
   fromCircuit <- A[2, 1]
-  A[2, 2] <- A[2, 2] + fromCircuit * (1 - f)
+  A[2, 2] <- A[2, 2] + fromCircuit * bl$alveolar
   A[1, ] <- 0
   A[, 1] <- 0
-  b <- c(0, fromCircuit * f * Ffgf, 0, 0, 0)
+  b <- c(0, fromCircuit * bl$fresh * Ffgf, 0, 0, 0)
 
-  list(A = A, b = b, fresh = f)
+  list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar)
 }
 
 
@@ -429,16 +493,25 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
 #' @param Ffgf fresh-gas oxygen fraction, percent of 1 atm
 #' @param circuit "ideal" (the default), "semi-closed" or "open"
 #' @param MV minute ventilation, L/min; defaults to \code{VA}, no dead space
-#' @returns a list with \code{A} (2x2), \code{b} (length 2) and \code{fresh},
-#'   as for \code{gasSystemSoluble()}
+#' @param totUptake summed uptake of gas from the alveoli, L/min.  Oxygen takes
+#'   the same coupling as the soluble gases: make-up gas drawn in when it is
+#'   positive, alveolar gas pushed out when it is negative.
+#' @param cE carbon dioxide as a fraction of exhaled gas; see
+#'   \code{gasCircuitBlend()}
+#' @returns a list with \code{A} (2x2), \code{b} (length 2), \code{fresh} and
+#'   \code{alveolar}, as for \code{gasSystemSoluble()}
 #' @keywords internal
 gasSystemOxygen <- function(body, Q, VA, Ffgf,
                             circuit = c("ideal", "semi-closed", "open"),
-                            MV = VA)
+                            MV = VA, totUptake = 0, cE = 0)
 {
   circuit <- match.arg(circuit)
   Vc <- body$V_circuit
   Va <- body$V_alveolar
+
+  # What the alveolus draws from the circuit, and what uptake pushes back out.
+  fromCircuit <- (VA + max(totUptake, 0)) / Va
+  pushedOut   <- min(totUptake, 0) / Va
 
   if (circuit != "semi-closed")
   {
@@ -447,24 +520,24 @@ gasSystemOxygen <- function(body, Q, VA, Ffgf,
     # Below Q = MV the rebreathed share returns the patient's own oxygen-poor
     # gas.  With no dead space the steady state is F_fgf - 100 VO2 / Q: what is
     # delivered less what is consumed, as it must be.
-    f <- gasFreshFraction(Q, VA, circuit, MV)
+    bl <- gasCircuitBlend(Q, VA, MV, circuit, totUptake, cE)
     A <- matrix(0, 2, 2)
-    A[2, 2] <- -VA * f / Va
-    b <- c(0, VA * f * Ffgf / Va - 100 * body$VO2 / Va)
-    return(list(A = A, b = b, fresh = f))
+    A[2, 2] <- -VA / Va + fromCircuit * bl$alveolar + pushedOut
+    b <- c(0, fromCircuit * bl$fresh * Ffgf - 100 * body$VO2 / Va)
+    return(list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar))
   }
 
   A <- matrix(0, 2, 2)
   A[1, 1] <- -(Q + VA) / Vc
-  A[1, 2] <-  VA / Vc
-  A[2, 1] <-  VA / Va
-  A[2, 2] <- -VA / Va
+  A[1, 2] <-  VA / Vc - min(totUptake, 0) / Vc
+  A[2, 1] <-  fromCircuit
+  A[2, 2] <- -VA / Va + pushedOut
 
   # Metabolic consumption is a constant volume sink, so it enters b, not A.
   # The factor of 100 converts L/min of oxygen into percent of alveolar volume.
   b <- c(Q * Ffgf / Vc, -100 * body$VO2 / Va)
 
-  list(A = A, b = b, fresh = NULL)
+  list(A = A, b = b, fresh = NULL, alveolar = NULL)
 }
 
 
@@ -620,6 +693,14 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 #' @param circuit "ideal", the default: no rebreathing once fresh gas flow
 #'   reaches minute ventilation, and no circuit volume.  "semi-closed": Gas
 #'   Man's default, the circuit as one well-mixed volume.  See the file header.
+#' @param oxygenUptake if TRUE (the default), oxygen consumed shrinks the gas
+#'   volume: its net volume, after the carbon dioxide that replaces it in the
+#'   alveoli, joins the summed uptake that couples the gases, oxygen itself
+#'   takes that coupling, and the absorber removes carbon dioxide from
+#'   rebreathed gas.  See (4a) in the file header.  FALSE restores the earlier
+#'   behaviour, in which oxygen was a sink with no effect on volume; Gas Man has
+#'   no oxygen, so comparisons with it pass FALSE.  Has no effect when
+#'   \code{uptakeEffect} is FALSE.
 #' @param deadSpace dead space as a fraction of minute ventilation, 0.3 by
 #'   default.  The "ventilation" rows are minute ventilation; alveolar
 #'   ventilation is that times \code{1 - deadSpace}.  Pass 0 to treat the rows
@@ -642,7 +723,8 @@ advanceClosedFormGas <- function(
   resolution = 601,
   uptakeEffect = TRUE,
   circuit = c("ideal", "semi-closed"),
-  deadSpace = GAS_DEAD_SPACE_FRACTION
+  deadSpace = GAS_DEAD_SPACE_FRACTION,
+  oxygenUptake = TRUE
 )
 {
   circuit <- match.arg(circuit)
@@ -717,26 +799,44 @@ advanceClosedFormGas <- function(
     # splits.  So this is a strictly more accurate integration of the same
     # equations, and the two converge as dt shrinks rather than agreeing
     # digit-for-digit at any fixed dt.
-    buildProp <- function(totUptake)
+    buildProp <- function(totUptake, oxygenTotUptake = 0, cE = 0)
     {
       pr <- list()
       for (g in props$gas)
       {
         if (g == "oxygen")
         {
-          sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]], circuit, s$MV)
+          sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]], circuit, s$MV,
+                                 oxygenTotUptake, cE)
         } else {
           sys <- gasSystemSoluble(props[props$gas == g, ], body,
                                   s$Q, s$VA, Qco, s$Ffgf[[g]], totUptake, circuit,
-                                  s$MV)
+                                  s$MV, cE)
         }
         pr[[g]] <- gasPropagator(sys$A, sys$b, dt)
         # Ideal circuit: remember how to fill in the circuit tension, which is
         # a function of the alveolar tension rather than a state.
-        pr[[g]]$fresh <- sys$fresh
-        pr[[g]]$Ffgf  <- s$Ffgf[[g]]
+        pr[[g]]$fresh    <- sys$fresh
+        pr[[g]]$alveolar <- sys$alveolar
+        pr[[g]]$Ffgf     <- s$Ffgf[[g]]
       }
       pr
+    }
+
+    # The propagators for one sub-step, from the state at its start.
+    coupledProp <- function(state)
+    {
+      u <- gasTotalUptake(state, props, body, Qco)
+      if (!oxygenUptake) return(buildProp(u))
+
+      # Oxygen consumed is volume lost: VO2 from the system, of which carbon
+      # dioxide gives VCO2 back to the alveoli and the absorber then takes it
+      # from the rebreathed gas.  All of it stops if the oxygen has run out.
+      consuming <- state[["oxygen"]][2] > 0
+      VO2  <- if (consuming) body$VO2 else 0
+      VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
+      u <- u + VO2 - VCO2
+      buildProp(u, u, if (s$MV > 0) VCO2 / s$MV else 0)
     }
 
     prop <- if (uptakeEffect) NULL else buildProp(0)
@@ -746,8 +846,7 @@ advanceClosedFormGas <- function(
 
     for (k in seq_len(nSub))
     {
-      if (uptakeEffect)
-        prop <- buildProp(gasTotalUptake(state, props, body, Qco))
+      if (uptakeEffect) prop <- coupledProp(state)
 
       # Every gas advances from the state at the start of the sub-step, so the
       # update is simultaneous rather than sequential and no gas sees another's
@@ -761,7 +860,7 @@ advanceClosedFormGas <- function(
         # alveolar tension.
         if (!is.null(prop[[g]]$fresh))
           newState[[g]][1] <- prop[[g]]$fresh * prop[[g]]$Ffgf +
-            (1 - prop[[g]]$fresh) * newState[[g]][2]
+            prop[[g]]$alveolar * newState[[g]][2]
 
         # Oxygen cannot go negative (Shafer, 2026-10-05).  Metabolic consumption
         # is modelled as a constant sink, which is right while there is oxygen
@@ -846,7 +945,8 @@ advanceClosedFormGas <- function(
 #' @param age patient age in years
 #' @param maximum simulation length in minutes
 #' @param cardiacOutput optional override in L/min; defaults to Gas Man's 5 L/min at 70 kg, scaled by (weight/70)^0.75
-#' @param uptakeEffect,circuit,deadSpace passed to \code{advanceClosedFormGas()}
+#' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
+#'   \code{advanceClosedFormGas()}
 #'
 #' @returns \code{NULL} if the dose table contains no gases, otherwise the list
 #'   returned by \code{advanceClosedFormGas()}
@@ -854,7 +954,8 @@ advanceClosedFormGas <- function(
 simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           cardiacOutput = NULL, uptakeEffect = TRUE,
                           circuit = c("ideal", "semi-closed"),
-                          deadSpace = GAS_DEAD_SPACE_FRACTION)
+                          deadSpace = GAS_DEAD_SPACE_FRACTION,
+                          oxygenUptake = TRUE)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -879,6 +980,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
     cardiacOutput = cardiacOutput,
     uptakeEffect  = uptakeEffect,
     circuit       = circuit,
-    deadSpace     = deadSpace
+    deadSpace     = deadSpace,
+    oxygenUptake  = oxygenUptake
   )
 }

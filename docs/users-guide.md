@@ -383,13 +383,14 @@ wear off too.
 ### Where the engine deliberately differs from Gas Man
 
 The parameters and defaults are Gas Man's, and the intent for now is to give the
-same answers Gas Man gives. Eight differences are deliberate (confirmed by
+same answers Gas Man gives. Nine differences are deliberate (confirmed by
 S. Shafer, 2026-10-05) and will remain:
 
 | | Gas Man | stanpumpR | Why |
 |---|---|---|---|
 | Breathing circuit | Defaults to "Semi-closed": the whole circuit is one well-mixed 8 L volume, so some exhaled gas is rebreathed at any fresh gas flow, however high | The "Ideal" circuit, which Gas Man also offers: no rebreathing once fresh gas flow reaches minute ventilation; below that, the shortfall is made up with exhaled gas. No circuit volume, so no lag | It is how a circle system behaves. The mixing box has no threshold at fresh gas flow = ventilation and understates the inspired concentration at moderate and high flows |
 | Ventilation and dead space | The ventilation setting is alveolar ventilation; there is no dead space | The ventilation setting is minute ventilation, 30% of it dead space. Rebreathing stops when fresh gas flow reaches the minute ventilation | Minute ventilation is what is set on a ventilator and read from a monitor |
+| Oxygen consumption and gas volume | No oxygen, so no volume is lost to it | Oxygen consumed (3.5 mL/kg/min) shrinks the gas volume, as uptake of an anaesthetic does. Carbon dioxide replaces most of it in the alveoli and is then removed by the absorber from whatever exhaled gas is rebreathed | Without it the gas fractions do not add up at low flows. With 0.3 L/min of oxygen and 1 L/min of nitrous oxide, what leaves the circuit is the 1.3 L/min delivered less the 0.21 L/min consumed: 92% nitrous oxide and 8% oxygen, not the 77% and 23% delivered |
 | MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
 | MAC across agents | Each agent reported separately | A single MAC series, the sum of each potent agent's alveolar fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
 | Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |
@@ -403,12 +404,22 @@ The model has no circuit volume, so a change at the vaporiser reaches the
 patient at once; the gas already in a real circuit takes a little time to mix
 out, which is not clinically important.
 
+Carbon dioxide is not shown as a gas, but it is accounted for. Alveolar gas
+holds about 5% of it (100 x carbon dioxide production / alveolar ventilation,
+with production at 0.8 of oxygen consumption), so the alveolar concentrations
+shown add up to about 95%; inspired gas, which has been through the absorber,
+adds up to 100%. Because the patient breathes in slightly more than they breathe
+out, the fresh gas flow that stops rebreathing is the minute ventilation plus
+what is being taken up, a little above the minute ventilation itself.
+
 Consequences worth knowing when comparing the two side by side:
 
 - Enter in Gas Man the **alveolar** ventilation, 70% of the minute ventilation
   used here, and expect a small difference whenever fresh gas flow is below the
   minute ventilation, where Gas Man's ideal circuit has no dead space to return
   unused gas from.
+- At low fresh gas flows expect the concentrations here to run higher than Gas
+  Man's, because the oxygen consumed is no longer there to dilute them.
 - Set Gas Man's circuit to **Ideal**. This is the largest of the differences.
   With Gas Man left on Semi-closed, 2% sevoflurane at 8 L/min gives an alveolar
   concentration of 0.47% at one minute and 1.59% at thirty; with the ideal

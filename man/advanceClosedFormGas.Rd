@@ -14,7 +14,8 @@ advanceClosedFormGas(
   resolution = 601,
   uptakeEffect = TRUE,
   circuit = c("ideal", "semi-closed"),
-  deadSpace = GAS_DEAD_SPACE_FRACTION
+  deadSpace = GAS_DEAD_SPACE_FRACTION,
+  oxygenUptake = TRUE
 )
 }
 \arguments{
@@ -55,6 +56,15 @@ Man's default, the circuit as one well-mixed volume.  See the file header.}
 default.  The "ventilation" rows are minute ventilation; alveolar
 ventilation is that times \code{1 - deadSpace}.  Pass 0 to treat the rows
 as alveolar ventilation, as Gas Man does.}
+
+\item{oxygenUptake}{if TRUE (the default), oxygen consumed shrinks the gas
+volume: its net volume, after the carbon dioxide that replaces it in the
+alveoli, joins the summed uptake that couples the gases, oxygen itself
+takes that coupling, and the absorber removes carbon dioxide from
+rebreathed gas.  See (4a) in the file header.  FALSE restores the earlier
+behaviour, in which oxygen was a sink with no effect on volume; Gas Man has
+no oxygen, so comparisons with it pass FALSE.  Has no effect when
+\code{uptakeEffect} is FALSE.}
 }
 \value{
 a list with \code{results}, a tidy data frame of

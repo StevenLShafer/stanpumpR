@@ -61,7 +61,7 @@ test_that("the closed-form engine converges as the step shrinks", {
   v <- vapply(c(301, 601, 1201, 2401), function(r)
     alvAt(advanceClosedFormGas(DT, weight = 70, maximum = 30, resolution = r,
                                cardiacOutput = 5, circuit = "semi-closed",
-                               deadSpace = 0),
+                               deadSpace = 0, oxygenUptake = FALSE),
           "sevoflurane", 30),
     numeric(1))
 
@@ -102,7 +102,7 @@ test_that("the two engines converge to the same limit", {
   eng <- alvAt(advanceClosedFormGas(matchedDoseTable(), weight = 70,
                                     maximum = 30, resolution = 4801,
                                     cardiacOutput = 5, circuit = "semi-closed",
-                                    deadSpace = 0),
+                                    deadSpace = 0, oxygenUptake = FALSE),
                "sevoflurane", 30)
 
   # Same limit to well under a tenth of a percent.  If this fails, something

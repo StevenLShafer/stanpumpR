@@ -540,3 +540,69 @@ semi-closed circuit, in which a finite flush always left some rebreathing
 ventilation 4); with the ideal circuit any flow at or above the minute
 ventilation is the limit.
 
+---
+
+## 2026-10-05 — oxygen consumed shrinks the gas volume
+
+Recorded by Claude Code (Claude Fable 5.1) at the direction of S. Shafer: "as
+oxygen is consumed, the gas volume shrinks. CO2 is added as oxygen is consumed,
+but is removed by the CO2 absorber." Oxygen consumption is 3.5 mL/kg/min. A
+ninth deliberate difference from Gas Man, which has no oxygen.
+
+### The problem
+
+Oxygen was a sink in the oxygen fraction with no effect on the gas volume. At
+high flows that hardly matters. At low flows the fractions stopped adding up.
+Shafer's case, 60 kg, 0.3 L/min oxygen with 1 L/min nitrous oxide, minute
+ventilation 5.1, settled at alveolar oxygen 5.2%, nitrous oxide 73.8% and
+nitrogen 0.4%: 79% in all.
+
+### The model
+
+Oxygen consumed is volume lost, like agent taken up, and joins the same coupling
+term. Carbon dioxide is accounted for where it goes, with a respiratory quotient
+of 0.8 (Claude's figure; not yet confirmed by Shafer):
+
+* In the alveoli, carbon dioxide replaces most of the oxygen, so alveolar gas
+  shrinks by VO2 - VCO2. That is added to the summed uptake of the other gases,
+  and oxygen itself now takes the coupling.
+* Carbon dioxide is not carried as a gas. Its alveolar fraction is taken at its
+  steady value, 100 VCO2 / VA, about 5%.
+* The absorber removes carbon dioxide from rebreathed exhaled gas, which shrinks
+  by the fraction it held, VCO2 / MV; the ideal-circuit blend allows for that.
+* The patient inspires the minute ventilation plus what is taken up, so the
+  fresh gas flow that stops rebreathing is MV + uptake.
+
+Equations are in the header of `R/advanceClosedFormGas.R`, section (4a).
+
+### Checks
+
+The same case, run for 24 hours:
+
+| | oxygen | nitrous oxide | nitrogen | sum |
+|---|---|---|---|---|
+| inspired, % | 12.0 | 88.0 | 0.0 | 100.0 |
+| alveolar, % | 6.3 | 89.0 | 0.0 | 95.3, plus carbon dioxide 4.7 = 100.0 |
+
+Mass balance: 1.3 L/min in, 0.21 L/min of oxygen consumed, so 1.09 L/min leaves,
+0.09 of it oxygen. Exhaled gas, carbon dioxide aside, is 8.26% oxygen and 91.74%
+nitrous oxide in the model, which is 0.09/1.09 and 1/1.09.
+
+Pure oxygen at 1 L/min: once nitrogen has washed out, alveolar gas is oxygen
+plus carbon dioxide and nothing else, and inspired gas is 100% oxygen.
+
+These are in `tests/testthat/test-gas-engine.R`.
+
+### Effect on the Gas Man comparisons
+
+None. They are run with `oxygenUptake = FALSE`, as they are with `deadSpace = 0`,
+because Gas Man has neither. The app's own defaults now differ from Gas Man in
+both respects, and at low flows by a good deal.
+
+### Not established
+
+* The respiratory quotient, and whether carbon dioxide at its steady value is
+  good enough during rapid changes in ventilation.
+* Where the pop-off sits relative to the absorber. Vented gas is taken to leave
+  before the absorber, carrying its carbon dioxide with it.
+

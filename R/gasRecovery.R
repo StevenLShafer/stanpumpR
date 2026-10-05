@@ -202,6 +202,8 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
 #'   circuit to model.
 #' @param deadSpace dead space as a fraction of minute ventilation, as in
 #'   \code{advanceClosedFormGas()}; must be the value the simulation used.
+#' @param oxygenUptake whether oxygen consumed shrinks the gas volume, as in
+#'   \code{advanceClosedFormGas()}; must match the simulation.
 #' @returns a list with \code{Time}, \code{rate} (per gas, an nT x K matrix of
 #'   positive decay rates per minute) and \code{amplitude} (per gas, an
 #'   nT x 5 x K array: time point, compartment, exponential), where K is 5 for
@@ -213,7 +215,8 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
 gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
                        rebreathing = FALSE,
                        circuit = c("ideal", "semi-closed"),
-                       deadSpace = GAS_DEAD_SPACE_FRACTION)
+                       deadSpace = GAS_DEAD_SPACE_FRACTION,
+                       oxygenUptake = TRUE)
 {
   circuit <- match.arg(circuit)
   if (is.null(sim)) return(NULL)
@@ -252,9 +255,19 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
       s <- gasSettingsAt(bySetting, changes[iv], deadSpace)
       # Agent inflow off, no coupling.  "open" is the no-rebreathing limit:
       # the patient inspires fresh gas only, whatever the flow.
+      #
+      # With rebreathing, the volume lost to oxygen consumption still has to be
+      # allowed for: at low flows it is a large part of the fresh gas, and what
+      # is vented -- the only way the agent leaves -- is the fresh gas less the
+      # oxygen consumed.  It is a constant, so the washout stays linear.
+      uO2 <- 0; cE <- 0
+      if (rebreathing && oxygenUptake) {
+        uO2 <- body$VO2 * (1 - GAS_RESPIRATORY_QUOTIENT)
+        if (s$MV > 0) cE <- GAS_RESPIRATORY_QUOTIENT * body$VO2 / s$MV
+      }
       A <- gasSystemSoluble(props[props$gas == g, ], body, s$Q, s$VA, Qco,
-                            Ffgf = 0, totUptake = 0, circuit = washoutCircuit,
-                            MV = s$MV)$A[keep, keep, drop = FALSE]
+                            Ffgf = 0, totUptake = uO2, circuit = washoutCircuit,
+                            MV = s$MV, cE = cE)$A[keep, keep, drop = FALSE]
       e <- eigen(A)
       # A is similar to a symmetric matrix, so its eigenvalues are real; any
       # imaginary part is rounding.
@@ -272,7 +285,8 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
   list(Time = Time, rate = rate, amplitude = amplitude, rebreathing = rebreathing,
        # What macRecoveryTimeExact() needs to run the coupled washout itself.
        state = sim$state[gases], bySetting = bySetting, changes = changes,
-       interval = interval, body = body, Qco = Qco, deadSpace = deadSpace)
+       interval = interval, body = body, Qco = Qco, deadSpace = deadSpace,
+       oxygenUptake = oxygenUptake)
 }
 
 
@@ -496,8 +510,13 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     }
     FinAlv <- numeric(4 * nG); FinAlv[alvCol] <- Fin
 
+    # Oxygen consumed shrinks the alveolar gas too, net of the carbon dioxide
+    # that replaces it; a constant, added to the uptake of the other gases.
+    uOxygen <- if (isTRUE(washout$oxygenUptake))
+      body$VO2 * (1 - GAS_RESPIRATORY_QUOTIENT) / Va else 0
+
     deriv <- function(Y) {
-      u <- as.vector(Y %*% uWeight) / Va
+      u <- as.vector(Y %*% uWeight) / Va + uOxygen
       D <- Y %*% Bt
       D <- sweep(D, 2, inflow, `+`)
       # Uptake positive: make-up gas is drawn in at the fresh-gas tension.

@@ -10,7 +10,9 @@ gasSystemOxygen(
   VA,
   Ffgf,
   circuit = c("ideal", "semi-closed", "open"),
-  MV = VA
+  MV = VA,
+  totUptake = 0,
+  cE = 0
 )
 }
 \arguments{
@@ -25,10 +27,17 @@ gasSystemOxygen(
 \item{circuit}{"ideal" (the default), "semi-closed" or "open"}
 
 \item{MV}{minute ventilation, L/min; defaults to \code{VA}, no dead space}
+
+\item{totUptake}{summed uptake of gas from the alveoli, L/min.  Oxygen takes
+the same coupling as the soluble gases: make-up gas drawn in when it is
+positive, alveolar gas pushed out when it is negative.}
+
+\item{cE}{carbon dioxide as a fraction of exhaled gas; see
+\code{gasCircuitBlend()}}
 }
 \value{
-a list with \code{A} (2x2), \code{b} (length 2) and \code{fresh},
-as for \code{gasSystemSoluble()}
+a list with \code{A} (2x2), \code{b} (length 2), \code{fresh} and
+\code{alveolar}, as for \code{gasSystemSoluble()}
 }
 \description{
 Implements equation (4) for the state ordering \code{c(F_circ, F_alv)}.

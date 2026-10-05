@@ -243,6 +243,22 @@ macForAge <- function(MAC40, age)
 GAS_DEAD_SPACE_FRACTION <- 0.3
 
 
+# Respiratory quotient: litres of carbon dioxide produced per litre of oxygen
+# consumed.  0.8 is the usual figure for a mixed diet.
+#
+# Why it is here.  Oxygen consumed leaves the gas phase, and the gas volume
+# shrinks by that much (Shafer, 2026-10-05: "as oxygen is consumed, the gas
+# volume shrinks.  CO2 is added as oxygen is consumed, but is removed by the CO2
+# absorber").  The two halves of that happen in different places.  In the
+# ALVEOLI carbon dioxide replaces most of the oxygen taken up, so alveolar gas
+# shrinks only by VO2 - VCO2.  In the CIRCUIT the absorber removes the carbon
+# dioxide from whatever exhaled gas is rebreathed, which is where the rest of
+# the volume goes.  Getting the split right needs VCO2, hence this number.
+#
+# NOT YET CONFIRMED BY SHAFER (Claude Code, Claude Fable 5.1, 2026-10-05).
+GAS_RESPIRATORY_QUOTIENT <- 0.8
+
+
 # Default ventilation, used when a gas is in the dose table but no usable
 # ventilation setting has been entered.  It is a MINUTE ventilation, chosen so
 # that the ALVEOLAR ventilation it implies is Gas Man's default.

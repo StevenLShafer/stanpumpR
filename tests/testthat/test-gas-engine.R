@@ -490,34 +490,44 @@ test_that("ideal circuit: the fresh-gas fraction, with and without dead space", 
   expect_gt(gasFreshFraction(1, 2.8, MV = 4), gasFreshFraction(1, 4))
 })
 
-test_that("ideal circuit: no rebreathing once fresh gas flow reaches minute ventilation", {
+test_that("ideal circuit: no rebreathing once fresh gas flow covers what is inspired", {
   mk <- function(Q) data.frame(Time = 0, Drug = c("oxygen", "ventilation", "sevoflurane"),
                                Dose = c(Q, 4, 2))
   final <- function(sim, j) utils::tail(sim$state$sevoflurane[, j], 1)
 
-  # At or above the minute ventilation the patient inspires the dial setting
-  # from the first breath, and how far above makes no difference at all.
-  at4  <- advanceClosedFormGas(mk(4),  maximum = 30)
+  # Comfortably above the minute ventilation the patient inspires the dial
+  # setting from the first breath, and how far above makes no difference at all.
+  at8  <- advanceClosedFormGas(mk(8),  maximum = 30)
   at15 <- advanceClosedFormGas(mk(15), maximum = 30)
-  expect_equal(at4$state$sevoflurane[-1, 1], rep(2, nrow(at4$state$sevoflurane) - 1))
-  expect_equal(at4$state$sevoflurane, at15$state$sevoflurane)
+  expect_equal(at8$state$sevoflurane[-1, 1], rep(2, nrow(at8$state$sevoflurane) - 1))
+  expect_equal(at8$state$sevoflurane, at15$state$sevoflurane)
 
-  # Between alveolar (2.8) and minute (4) ventilation there is still a little
-  # rebreathing: the threshold is the minute ventilation.
+  # Exactly AT the minute ventilation a trace is still rebreathed while gas is
+  # being taken up, because the patient inspires the minute ventilation PLUS
+  # what the blood takes: the threshold is MV + uptake.  It is a trace.
+  at4 <- advanceClosedFormGas(mk(4), maximum = 30)
+  circ <- at4$state$sevoflurane[-1, 1]
+  expect_true(all(circ < 2))
+  expect_true(all(circ > 1.97))
+  # With the gases uncoupled there is no uptake to add, and it is exactly 2.
+  flat4 <- advanceClosedFormGas(mk(4), maximum = 30, uptakeEffect = FALSE)
+  expect_equal(flat4$state$sevoflurane[-1, 1], rep(2, nrow(flat4$state$sevoflurane) - 1))
+
+  # Between alveolar (2.8) and minute (4) ventilation there is real rebreathing.
   at3 <- advanceClosedFormGas(mk(3), maximum = 30)
-  expect_true(all(at3$state$sevoflurane[-1, 1] < 2))
-  expect_lt(final(at3, 2), final(at4, 2))
+  expect_true(all(at3$state$sevoflurane[-1, 1] < 1.95))
+  expect_lt(final(at3, 2), final(at8, 2))
 
-  # Below it the inspired gas is f fresh + (1 - f) alveolar, at every moment.
-  at1 <- advanceClosedFormGas(mk(1), maximum = 30)
+  # Below the threshold, with the gases uncoupled so that the weights are the
+  # plain ones, the inspired gas is f fresh + (1 - f) alveolar at every moment.
+  at1 <- advanceClosedFormGas(mk(1), maximum = 30, uptakeEffect = FALSE)
   y <- at1$state$sevoflurane[-1, ]
   f <- 1 / (2.8 + 1 * 0.3)
   expect_equal(y[, 1], f * 2 + (1 - f) * y[, 2])
   expect_lt(final(at1, 2), final(at3, 2))
 
-  # With no dead space the threshold is at the ventilation entered, and the
-  # blend is Gas Man's f = Q / VA.
-  gm1 <- advanceClosedFormGas(mk(1), maximum = 30, deadSpace = 0)
+  # With no dead space as well, the blend is Gas Man's f = Q / VA.
+  gm1 <- advanceClosedFormGas(mk(1), maximum = 30, deadSpace = 0, uptakeEffect = FALSE)
   y <- gm1$state$sevoflurane[-1, ]
   expect_equal(y[, 1], 0.25 * 2 + 0.75 * y[, 2])
 
@@ -528,12 +538,37 @@ test_that("ideal circuit: no rebreathing once fresh gas flow reaches minute vent
   expect_equal(alv$state$sevoflurane[, 2:5], at15$state$sevoflurane[, 2:5])
 
   # The mixing box, for contrast, is still rebreathing at Q = VA: half and half.
-  box <- advanceClosedFormGas(mk(4), maximum = 600, circuit = "semi-closed", deadSpace = 0)
+  box <- advanceClosedFormGas(mk(4), maximum = 600, circuit = "semi-closed",
+                              deadSpace = 0, oxygenUptake = FALSE)
   expect_equal(final(box, 1), (4 * 2 + 4 * final(box, 2)) / 8, tolerance = 1e-3)
   expect_lt(final(box, 1), 2)
   # And it only approaches the ideal circuit as the flow becomes enormous.
   flood <- advanceClosedFormGas(mk(1e6), maximum = 30, circuit = "semi-closed")
-  expect_equal(final(flood, 2), final(at4, 2), tolerance = 1e-4)
+  expect_equal(final(flood, 2), final(at8, 2), tolerance = 1e-4)
+})
+
+test_that("the circuit blend: limits, and what uptake and absorbed carbon dioxide do to it", {
+  # No uptake, no carbon dioxide: the two weights sum to one.
+  bl <- gasCircuitBlend(1, 2.8, 4)
+  expect_equal(bl$fresh, 1 / (2.8 + 0.3))
+  expect_equal(bl$fresh + bl$alveolar, 1)
+  expect_equal(gasCircuitBlend(4, 2.8, 4), list(fresh = 1, alveolar = 0))
+  expect_equal(gasCircuitBlend(0, 2.8, 4)$fresh, 0)
+  expect_equal(gasCircuitBlend(1, 2.8, 4, "open"), list(fresh = 1, alveolar = 0))
+
+  # Uptake raises what is inspired, and so the flow needed to stop rebreathing.
+  expect_lt(gasCircuitBlend(4, 2.8, 4, u = 0.5)$fresh, 1)
+  expect_equal(gasCircuitBlend(4.5, 2.8, 4, u = 0.5)$fresh, 1)
+  # Washout (negative uptake) does not lower it: only what is inspired counts.
+  expect_equal(gasCircuitBlend(3, 2.8, 4, u = -0.5), gasCircuitBlend(3, 2.8, 4))
+
+  # Carbon dioxide absorbed from rebreathed gas: the weights sum to more than
+  # one, by exactly what makes inspired gas sum to 100 when the alveolar
+  # fractions being carried sum to 100 less the carbon dioxide.
+  VA <- 2.8; MV <- 4; VCO2 <- 0.2; cE <- VCO2 / MV
+  bl <- gasCircuitBlend(1, VA, MV, u = 0.05, cE = cE)
+  alveolarSum <- 100 * (1 - VCO2 / VA)
+  expect_equal(bl$fresh * 100 + bl$alveolar * alveolarSum, 100)
 })
 
 test_that("ideal circuit: the closed-form advance matches an independent RK4 integration", {
@@ -568,31 +603,64 @@ test_that("ideal circuit: the closed-form advance matches an independent RK4 int
   }
 })
 
-test_that("ideal circuit: oxygen at low flow obeys the mass balance", {
-  # Below the threshold the patient rebreathes their own oxygen-poor gas.  What
-  # is vented is exhaled gas, so in the steady state the MIXED EXPIRED fraction
-  # is F_fgf - 100 VO2 / Q: what is delivered less what is consumed.
+test_that("oxygen consumed shrinks the gas volume, and the fractions add up", {
+  # The case that showed the problem (Shafer, 2026-10-05): 0.3 L/min of oxygen
+  # with 1 L/min of nitrous oxide at 60 kg.  Oxygen consumption is 3.5 mL/kg/min,
+  # 0.21 L/min, so only 0.09 L/min of oxygen is left over.
+  body <- getGasBody(60)
+  expect_equal(body$VO2, 0.0035 * 60)
+  dose <- data.frame(Time = 0, Drug = c("nitrousOxide", "oxygen", "ventilation"),
+                     Dose = c(1, 0.3, 5.1))
+  sim <- advanceClosedFormGas(dose, weight = 60, maximum = 1440, resolution = 2881)
+  last <- function(g, j) utils::tail(sim$state[[g]][, j], 1)
+  gases <- c("oxygen", "nitrousOxide", "nitrogen")
+
+  # Inspired gas sums to 100: the absorber has taken the carbon dioxide out.
+  expect_equal(sum(vapply(gases, last, numeric(1), j = 1)), 100, tolerance = 1e-6)
+  # Alveolar gas sums to 100 with its carbon dioxide, 100 VCO2 / VA.
+  VA <- 5.1 * (1 - GAS_DEAD_SPACE_FRACTION)
+  co2 <- 100 * GAS_RESPIRATORY_QUOTIENT * body$VO2 / VA
+  expect_equal(co2, 4.7, tolerance = 0.01)
+  expect_equal(sum(vapply(gases, last, numeric(1), j = 2)) + co2, 100, tolerance = 1e-6)
+
+  # Mass balance.  What is vented is exhaled gas, and with the nitrous oxide
+  # equilibrated it carries away the fresh gas less the oxygen consumed:
+  # 1.09 L/min, 0.09 of it oxygen.
+  exhaled <- vapply(gases, function(g)
+    (1 - GAS_DEAD_SPACE_FRACTION) * last(g, 2) + GAS_DEAD_SPACE_FRACTION * last(g, 1), numeric(1))
+  expect_equal(100 * exhaled[["oxygen"]] / sum(exhaled), 100 * 0.09 / 1.09, tolerance = 0.01)
+  expect_equal(100 * exhaled[["nitrousOxide"]] / sum(exhaled), 100 * 1 / 1.09, tolerance = 0.01)
+
+  # Without it, as before today, the fractions do not add up: most of the
+  # volume the oxygen left behind is simply missing.
+  old <- advanceClosedFormGas(dose, weight = 60, maximum = 1440, oxygenUptake = FALSE)
+  oldSum <- sum(vapply(gases, function(g) utils::tail(old$state[[g]][, 2], 1), numeric(1)))
+  expect_lt(oldSum, 85)
+})
+
+test_that("oxygen: pure oxygen at low flow, the old formula when switched off, and starvation", {
   body <- getGasBody(70)
   dose <- data.frame(Time = 0, Drug = c("oxygen", "ventilation"), Dose = c(1, 4))
 
-  # No dead space: exhaled gas is alveolar gas.
-  sim <- advanceClosedFormGas(dose, weight = 70, maximum = 240, deadSpace = 0)
-  alv <- utils::tail(sim$state$oxygen[, 2], 1)
-  expect_equal(alv, 100 - 100 * body$VO2 / 1, tolerance = 1e-3)
-  # Inspired is the blend, so it is below 100% even on pure oxygen.
-  expect_equal(utils::tail(sim$state$oxygen[, 1], 1), 0.25 * 100 + 0.75 * alv, tolerance = 1e-6)
+  # Pure oxygen: once the nitrogen is gone, alveolar gas is oxygen and carbon
+  # dioxide and nothing else, however low the flow.
+  sim <- advanceClosedFormGas(dose, weight = 70, maximum = 1440, resolution = 2881)
+  co2 <- 100 * GAS_RESPIRATORY_QUOTIENT * body$VO2 / (4 * (1 - GAS_DEAD_SPACE_FRACTION))
+  expect_equal(utils::tail(sim$state$oxygen[, 2], 1) + co2, 100, tolerance = 2e-3)
+  expect_equal(utils::tail(sim$state$oxygen[, 1], 1), 100, tolerance = 2e-3)
 
-  # 30% dead space: exhaled gas is 70% alveolar and 30% inspired.
-  sim <- advanceClosedFormGas(dose, weight = 70, maximum = 240)
-  alv  <- utils::tail(sim$state$oxygen[, 2], 1)
-  insp <- utils::tail(sim$state$oxygen[, 1], 1)
-  expect_equal(0.7 * alv + 0.3 * insp, 100 - 100 * body$VO2 / 1, tolerance = 1e-3)
-  # Alveolar oxygen is the inspired value less consumption over ALVEOLAR ventilation.
-  expect_equal(alv, insp - 100 * body$VO2 / 2.8, tolerance = 1e-3)
+  # Switched off, oxygen is the plain sink it was: with no dead space the
+  # alveolar steady state is F_fgf - 100 VO2 / Q.
+  old <- advanceClosedFormGas(dose, weight = 70, maximum = 240, deadSpace = 0,
+                              oxygenUptake = FALSE)
+  alv <- utils::tail(old$state$oxygen[, 2], 1)
+  expect_equal(alv, 100 - 100 * body$VO2 / 1, tolerance = 1e-3)
+  expect_equal(utils::tail(old$state$oxygen[, 1], 1), 0.25 * 100 + 0.75 * alv, tolerance = 1e-6)
 
   # A flow below oxygen consumption cannot be survived, in the model as in life.
   starved <- advanceClosedFormGas(
     data.frame(Time = 0, Drug = c("oxygen", "ventilation"), Dose = c(0.1, 4)),
     weight = 70, maximum = 600)
-  expect_equal(utils::tail(starved$state$oxygen[, 2], 1), 0)
+  expect_lt(utils::tail(starved$state$oxygen[, 2], 1), 1)
+  expect_gte(min(starved$state$oxygen), 0)
 })

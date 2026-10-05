@@ -167,9 +167,12 @@ gasScenarioEngine <- function(s, resolution = 601, circuit = "ideal")
   # deadSpace = 0: the scenarios give ALVEOLAR ventilation, as Gas Man takes
   # it.  The app's own default treats the ventilation row as minute ventilation
   # with a 30% dead space, which Gas Man has no counterpart for.
+  # oxygenUptake = FALSE: Gas Man has no oxygen, so none of its volume is lost
+  # to oxygen consumption.
   sim <- advanceClosedFormGas(s$DT, weight = s$weight, maximum = s$maximum,
                               cardiacOutput = s$CO, resolution = resolution,
-                              circuit = circuit, deadSpace = 0)
+                              circuit = circuit, deadSpace = 0,
+                              oxygenUptake = FALSE)
   do.call(rbind, lapply(s$agents, function(g) {
     m <- sim$state[[g]][, 1:5, drop = FALSE]
     out <- as.data.frame(lapply(seq_len(5), function(j)

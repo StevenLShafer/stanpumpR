@@ -11,7 +11,8 @@ gasWashout(
   cardiacOutput = NULL,
   rebreathing = FALSE,
   circuit = c("ideal", "semi-closed"),
-  deadSpace = GAS_DEAD_SPACE_FRACTION
+  deadSpace = GAS_DEAD_SPACE_FRACTION,
+  oxygenUptake = TRUE
 )
 }
 \arguments{
@@ -34,6 +35,9 @@ circuit to model.}
 
 \item{deadSpace}{dead space as a fraction of minute ventilation, as in
 \code{advanceClosedFormGas()}; must be the value the simulation used.}
+
+\item{oxygenUptake}{whether oxygen consumed shrinks the gas volume, as in
+\code{advanceClosedFormGas()}; must match the simulation.}
 }
 \value{
 a list with \code{Time}, \code{rate} (per gas, an nT x K matrix of

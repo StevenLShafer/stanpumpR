@@ -12,7 +12,8 @@ simulateGases(
   cardiacOutput = NULL,
   uptakeEffect = TRUE,
   circuit = c("ideal", "semi-closed"),
-  deadSpace = GAS_DEAD_SPACE_FRACTION
+  deadSpace = GAS_DEAD_SPACE_FRACTION,
+  oxygenUptake = TRUE
 )
 }
 \arguments{
@@ -27,7 +28,8 @@ minutes, and \code{Dose}.  Non-gas rows are ignored.}
 
 \item{cardiacOutput}{optional override in L/min; defaults to Gas Man's 5 L/min at 70 kg, scaled by (weight/70)^0.75}
 
-\item{uptakeEffect, circuit, deadSpace}{passed to \code{advanceClosedFormGas()}}
+\item{uptakeEffect, circuit, deadSpace, oxygenUptake}{passed to
+\code{advanceClosedFormGas()}}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

@@ -28,13 +28,15 @@ header.  "open" is the ideal circuit with no rebreathing whatever the flow.}
 
 \item{MV}{minute ventilation, L/min, which sets where rebreathing stops in
 the ideal circuit.  Defaults to \code{VA}: no dead space.}
+
+\item{cE}{carbon dioxide as a fraction of exhaled gas, absorbed from whatever
+is rebreathed; see \code{gasCircuitBlend()}}
 }
 \value{
 a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
-and open circuits, \code{fresh}: the fraction of inspired gas that is
-fresh gas, from which the circuit tension is
-\code{fresh * Ffgf + (1 - fresh) * F_alv}.  It is NULL for the semi-closed
-circuit, whose tension is a state.
+and open circuits, \code{fresh} and \code{alveolar}: the weights from
+which the circuit tension is \code{fresh * Ffgf + alveolar * F_alv}.  They
+are NULL for the semi-closed circuit, whose tension is a state.
 
 mixed venous tension, percent of one atmosphere
 }
