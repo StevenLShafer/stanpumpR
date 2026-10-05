@@ -307,7 +307,7 @@ flows and ventilation are rounded to the nearest 0.1 L/min.
 ### Where the engine deliberately differs from Gas Man
 
 The parameters and defaults are Gas Man's, and the intent for now is to give the
-same answers Gas Man gives. Five differences are deliberate (confirmed by
+same answers Gas Man gives. Six differences are deliberate (confirmed by
 S. Shafer, 2026-10-05) and will remain:
 
 | | Gas Man | stanpumpR | Why |
@@ -315,6 +315,7 @@ S. Shafer, 2026-10-05) and will remain:
 | MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
 | MAC across agents | Each agent reported separately | A single MAC series, the sum of each potent agent's alveolar fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
 | Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |
+| Nitrogen | Carried only if nitrogen is added to the run as an agent | Always carried; its washout from the body is part of the summed uptake that couples the gases | The patient starts full of nitrogen whether or not anyone enters it, and it leaves through the same alveoli |
 | Starting nitrogen | 80% (`Ambient=80`) | 78.07%, with oxygen at 20.93% | Room air, so that the gas fractions sum correctly once oxygen is modelled |
 | Integration | Each time step is split into sequential sub-updates | Each step is advanced exactly, by matrix exponential | Accuracy does not then depend on the step size |
 
@@ -325,6 +326,10 @@ Consequences worth knowing when comparing the two side by side:
 - The two integrations do not agree digit for digit at any fixed step size. They
   converge to a common answer as the step shrinks; `tests/testthat/test-gas-convergence.R`
   checks this.
+- Add Nitrogen as an agent in Gas Man, delivered at 0% (or at 78% of any air
+  flow), before comparing. Without it Gas Man leaves nitrogen washout out of the
+  uptake coupling, which by itself moves alveolar sevoflurane by about 0.3-0.5%
+  during a wash-in.
 - Nitrogen differs slightly throughout because it starts from a different value.
   It is not an anaesthetic here and is not summed into MAC.
 

@@ -226,3 +226,73 @@ them:
 No new run against Gas Man itself was made today. In particular the allometric
 defaults have been transcribed from the source and unit-tested, but not checked
 against Gas Man output at a weight other than 70 kg.
+
+---
+
+## 2026-10-05 — five scenarios for the app engine
+
+Recorded by Claude Code (Claude Fable 5.1) at the request of S. Shafer, after
+reading the correspondence with Epstein from 2026-09-01 onward.
+
+Everything above this entry validates the **baseline** — Gas Man's stepping
+restated in R. The app runs a different routine, `advanceClosedFormGas()`. These
+five scenarios put that routine, at the resolution the app uses (601 points),
+beside Gas Man. They are defined in `gasman_engine_scenarios.R`; the numbers are
+in `gasman_engine_scenarios_results.csv`, and the settings to enter in Gas Man
+are in `gasman_engine_scenarios_settings.csv`.
+
+| # | Scenario | Why |
+|---|---|---|
+| 1 | Sevoflurane 2%, FGF 8, 30 min | The anchor; Epstein's Scenario 1 |
+| 2 | Sevoflurane 2% + N2O 70% delivered, FGF 8, 30 min | Second gas effect; Epstein's Scenario 2 |
+| 3 | Sevoflurane over 180 min: 2% at FGF 6, 3% from 30 min, 1.5% at FGF 2 from 60 min, vaporiser off at FGF 10 from 150 min | Setting changes and emergence, proposed by Epstein 2026-09-06; nothing before this was other than constant-setting wash-in |
+| 4 | Desflurane 6% at FGF 4 for 10 min, then 8% at FGF 0.5 to 60 min | Low flow, where the circuit equation dominates |
+| 5 | 100 kg, isoflurane 1.2%, FGF 2, VA 5.227, CO 6.534, 30 min | First comparison away from 70 kg; Gas Man's allometric defaults |
+
+All: semi-closed, uptake and return on, ventilation 4 L/min and cardiac output
+5 L/min except scenario 5.
+
+### Result
+
+Three values per compartment and time: **gasman**, the baseline at Gas Man's
+native 6-second tick; **limit**, what the baseline converges to as the tick
+shrinks (Richardson extrapolation from 0.1/16 and 0.1/32 min); **engine**, the
+app engine. Worst difference over all five compartments and all reported times,
+as a percentage of that compartment's peak:
+
+| # | Agent | engine vs limit | gasman vs limit |
+|---|---|---|---|
+| 1 | sevoflurane | 0.001% | 2.1% |
+| 2 | sevoflurane | 0.08% | 2.4% |
+| 2 | nitrous oxide | 0.08% | 2.9% |
+| 3 | sevoflurane | 0.17% | 1.2% |
+| 4 | desflurane | 0.004% | 2.3% |
+| 5 | isoflurane | 0.001% | 1.7% |
+
+The engine sits on the limit. The 1–3% between the engine and Gas Man at its
+native tick is Gas Man's own distance from that limit: it is largest in the
+first minutes after a setting changes and decays (scenario 1, alveolar: 2.1% of
+peak at 1 min, 0.07% at 30 min). The engine's own worst case, 0.17%, is the
+circuit one minute after the vaporiser is turned off in scenario 3, where the
+app's output step is 0.3 min; alveolar at that instant is within 0.12%.
+
+### What this does and does not establish
+
+* **No new run of Gas Man itself was made.** "gasman" here is the baseline,
+  which earlier entries tie to Gas Man to 6.2e-04. Scenarios 3, 4 and 5 have
+  never been run in Gas Man; the settings file exists so that they can be.
+* **Nitrogen must be added as an agent in Gas Man for a like-for-like run.** The
+  app engine always carries nitrogen and its washout feeds the uptake coupling.
+  Gas Man does so only if nitrogen is one of the agents. Epstein's September
+  runs of Scenarios 1 and 2 did not include it, so they are not directly
+  comparable with the "gasman" column here: with nitrogen, alveolar sevoflurane
+  in scenario 1 is 1.1791 at 5 min and 1.5887 at 30 min; without, as in the
+  September grid, 1.1852 and 1.5931. That is a sixth difference between the app
+  and Gas Man as usually run, beyond the five recorded earlier today.
+* For the comparison the baseline's nitrogen starts at 78.07%, as the engine's
+  does, not Gas Man's 80%. A run in Gas Man itself would start at 80 unless
+  `Ambient` is edited.
+* Oxygen is not part of the comparison; Gas Man does not model it.
+* `tests/testthat/test-gas-scenarios.R` guards a fast subset: all five against
+  the native tick (within 4%), and scenarios 1 and 5 against the limit (within
+  0.1%).

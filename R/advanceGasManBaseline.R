@@ -291,6 +291,10 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
 #'   concentration and second gas effect.  Gas Man defaults it on.
 #' @param recirculation model venous return.  Gas Man defaults it on.
 #' @param resolution number of output time points
+#' @param nitrogenAmbient starting nitrogen tension, percent.  Gas Man's
+#'   \code{Ambient} is 80, the default.  \code{advanceClosedFormGas()} starts at
+#'   78.07 because it also models oxygen, so pass \code{AIR_FRACTION_N2 * 100}
+#'   when the two engines are to be compared like with like.
 #'
 #' @returns a list with \code{results} (tidy Drug/Time/Site/Y over the Gas Man
 #'   compartments), \code{state}, \code{timeLine} and \code{maxVernier}
@@ -299,7 +303,7 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
                                   cardiacOutput = 5, dt = 0.1,
                                   circuit = c("semi-closed", "open", "ideal"),
                                   uptakeEffect = TRUE, recirculation = TRUE,
-                                  resolution = 601)
+                                  resolution = 601, nitrogenAmbient = 80)
 {
   circuit <- match.arg(circuit)
   opts <- list(circuit = circuit, uptakeEffect = uptakeEffect,
@@ -321,7 +325,7 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
   # agent; everything else starts at zero.
   cmps <- c("CKT", "ALV", "VRG", "MUS", "FAT", "VEN")
   state <- lapply(agents, function(g)
-    setNames(rep(if (g == "nitrogen") 80 else 0, length(cmps)), cmps))
+    setNames(rep(if (g == "nitrogen") nitrogenAmbient else 0, length(cmps)), cmps))
   names(state) <- agents
 
   nTicks   <- max(1, ceiling(maximum / dt))

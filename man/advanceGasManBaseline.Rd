@@ -13,7 +13,8 @@ advanceGasManBaseline(
   circuit = c("semi-closed", "open", "ideal"),
   uptakeEffect = TRUE,
   recirculation = TRUE,
-  resolution = 601
+  resolution = 601,
+  nitrogenAmbient = 80
 )
 }
 \arguments{
@@ -38,6 +39,11 @@ concentration and second gas effect.  Gas Man defaults it on.}
 \item{recirculation}{model venous return.  Gas Man defaults it on.}
 
 \item{resolution}{number of output time points}
+
+\item{nitrogenAmbient}{starting nitrogen tension, percent.  Gas Man's
+\code{Ambient} is 80, the default.  \code{advanceClosedFormGas()} starts at
+78.07 because it also models oxygen, so pass \code{AIR_FRACTION_N2 * 100}
+when the two engines are to be compared like with like.}
 }
 \value{
 a list with \code{results} (tidy Drug/Time/Site/Y over the Gas Man
