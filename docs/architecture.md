@@ -78,15 +78,25 @@ double-click edits a drug.
 1. As a user types into the dose table, JavaScript hooks on the grid do real-time cleanup —
    fixing/converting times, dropping a row if its drug is removed, etc.
 2. **`input$doseTableHTML`** fires after that JS-side cleanup completes, on every edit. The
-   observer converts it to an R data frame with `hot_to_r()` and saves it as `doseTableDraft()`.
-3. **Undo / redo** — pop/push `doseTableDraft()` against the undo/redo stacks. This only ever
-   touches the draft; nothing downstream re-simulates yet.
+   observer converts it to an R data frame with `hot_to_r()` and records it via
+   `doseTableHistory()$do()`.
+3. **Undo / redo** — the draft and its history live in one `{undomanager}`,
+   `doseTableHistory()`. `doseTableDraft()` is a thin reactive over its `$value`.
+   `$do()` records an edit (pushing the previous draft onto the undo stack and discarding 
+   any redo history), and `$undo()` / `$redo()` step through it. This only ever touches
+   the draft; nothing downstream re-simulates yet.
 4. **`input$dosetable_apply`** commits the pending edit: it copies `doseTableDraft()`'s value
    into `doseTable()`, the canonical reactive everything downstream reads from.
 5. `doseTable()` can also be updated directly — by clicking on the plot and adding/editing/
-   deleting a dose from the resulting modal — which bypasses the draft entirely and applies
-   immediately, with no separate confirm step.
-6. **`doseTableClean()`** is what the rest of the pipeline actually depends on. Whenever
+   deleting a dose from the resulting modal, by the edit-doses and suggest-dosing dialogs, or by
+   a URL restore — which bypasses the draft entirely and applies immediately, with no separate
+   confirm step.
+6. Whenever `doseTable()` changes by any route, the observer on it resets the draft to the newly
+   committed table and **clears the undo/redo history**: once the canonical table has moved there
+   is no earlier draft worth stepping back to. The time-mode switch clears the history explicitly
+   instead of relying on that observer, because it assigns `doseTable()` a value that may equal
+   what it already holds, and `reactiveVal` does not notify observers on a no-op assignment.
+7. **`doseTableClean()`** is what the rest of the pipeline actually depends on. Whenever
    `doseTable()` changes, this reactive re-derives a cleaned copy via `cleanDoseTable()` (coerce column
    types, drop incomplete rows, convert clock times to elapsed minutes).
 
