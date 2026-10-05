@@ -96,6 +96,17 @@ test_that("validateDoseTableInput: rejects dose units outside the allowlist", {
   expect_error(validateDoseTableInput(bad_units, sample_drug_defaults), "unknown dose units")
 })
 
+test_that("validateDoseTableInput: accepts the inhaled gas units", {
+  gas_defaults <- data.frame(Drug = c("nitrousOxide", "sevoflurane"))
+  rows <- data.frame(
+    Drug  = c("nitrousOxide", "sevoflurane"),
+    Time  = c("0", "0"),
+    Dose  = c("4", "2"),
+    Units = c("L/min", "%")
+  )
+  expect_true(validateDoseTableInput(rows, gas_defaults))
+})
+
 test_that("validateDoseTableInput: rejects wrong doses", {
   ok <- data.frame(Drug = "propofol", Time = "0", Dose = "0", Units = "mg")
   expect_true(validateDoseTableInput(ok, sample_drug_defaults))
