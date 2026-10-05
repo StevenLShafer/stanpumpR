@@ -359,11 +359,18 @@ gasScenarioGasManCpp <- function(s, exe, ini,
   exe <- normalizePath(exe)
   old <- setwd(workdir)
   on.exit(setwd(old), add = TRUE)
-  status <- system2(exe, c(basename(infile), "--end", s$maximum * 60,
+  # A reused workdir may hold the previous run's output; a failed run must not
+  # hand that back as this one's result.
+  unlink(outfile)
+  output <- system2(exe, c(basename(infile), "--end", s$maximum * 60,
                            "--every", 6, "--ini", "gasman.ini",
                            "--output", basename(outfile)),
                     stdout = TRUE, stderr = TRUE)
-  if (!file.exists(outfile)) stop("gasman_run failed: ", paste(status, collapse = " "))
+  status <- attr(output, "status")
+  if (!is.null(status) && status != 0)
+    stop("gasman_run exited with status ", status, ": ", paste(output, collapse = " "))
+  if (!file.exists(outfile))
+    stop("gasman_run produced no output: ", paste(output, collapse = " "))
 
   raw <- utils::read.csv(outfile, stringsAsFactors = FALSE)
   hms <- do.call(rbind, lapply(strsplit(raw$Time, ":"), as.numeric))

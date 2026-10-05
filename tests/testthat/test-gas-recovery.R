@@ -309,6 +309,38 @@ test_that("the Drug Thresholds table shows every editable threshold and round-tr
 })
 
 
+test_that("thresholds come back from a bookmark, and old bookmarks keep the defaults", {
+  dd <- getDrugDefaultsGlobal()
+
+  # What onBookmark() saves: the stored endCe named by drug, and the MAC threshold.
+  saved <- stats::setNames(dd$endCe, dd$Drug)
+  saved[["sevoflurane"]] <- 0.5
+  saved[["propofol"]] <- 2.5
+  back <- restoreThresholds(dd, saved, 0.33)
+  expect_equal(back$macThreshold, 0.33)
+  e <- stats::setNames(back$drugDefaults$endCe, back$drugDefaults$Drug)
+  expect_equal(e[["sevoflurane"]], 0.5)
+  expect_equal(e[["propofol"]], 2.5)
+  expect_equal(e[["nitrousOxide"]], dd$endCe[dd$Drug == "nitrousOxide"])
+  # Nothing else in the table is touched.
+  expect_equal(back$drugDefaults[, names(dd) != "endCe"], dd[, names(dd) != "endCe"])
+
+  # A bookmark from before thresholds were saved.
+  back <- restoreThresholds(dd, NULL, NULL)
+  expect_equal(back$drugDefaults, dd)
+  expect_equal(back$macThreshold, GAS_MAC_THRESHOLD)
+
+  # Entries that cannot be used: an unknown drug, a non-number, a negative,
+  # and a MAC threshold that is not a single number.
+  back <- restoreThresholds(dd, c(notADrug = 1, sevoflurane = "x", propofol = -1), "abc")
+  expect_equal(back$drugDefaults, dd)
+  expect_equal(back$macThreshold, GAS_MAC_THRESHOLD)
+  back <- restoreThresholds(dd, saved, c(0.1, 0.2))
+  expect_equal(back$macThreshold, GAS_MAC_THRESHOLD)
+  expect_equal(back$drugDefaults$endCe[back$drugDefaults$Drug == "sevoflurane"], 0.5)
+})
+
+
 test_that("no threshold, no time; and a lower threshold takes longer", {
   gasDose <- gasRows(list(0, "oxygen", 4), list(0, "ventilation", 4), list(0, "sevoflurane", 2))
   sim <- simulateGases(gasDose, weight = 70, age = 40, maximum = 60)

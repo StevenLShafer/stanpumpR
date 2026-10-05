@@ -174,6 +174,12 @@ app_server <- function(input, output, session) {
     profileCode({
       state$values$DT <- doseTable()
       state$values$ET <- eventTable()
+      # Edited thresholds travel with the URL, so a restored session reports
+      # the same times until threshold.  endCe is saved as stored (the gases'
+      # at the reference age), keyed by drug, so a changed drug list does not
+      # misalign it.
+      state$values$macThreshold <- macThreshold()
+      state$values$endCe <- stats::setNames(drugDefaults()$endCe, drugDefaults()$Drug)
       setBookmarkExclude(bookmarksToExclude)
     }, name = "onBookmark()")
   })
@@ -207,6 +213,13 @@ app_server <- function(input, output, session) {
       eventTable(ET)
       outputComments("eventTable:")
       outputComments(ET)
+      # Thresholds, when the bookmark has them; bookmarks made before they
+      # were saved keep the defaults.
+      restored <- restoreThresholds(drugDefaults(), state$values$endCe,
+                                    state$values$macThreshold)
+      drugDefaults(restored$drugDefaults)
+      macThreshold(restored$macThreshold)
+      outputComments("macThreshold:", restored$macThreshold)
     }, name = "onRestored()")
   })
 

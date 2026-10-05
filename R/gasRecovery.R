@@ -183,6 +183,37 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
 }
 
 
+#' Thresholds from a restored bookmark
+#'
+#' A bookmark saves the stored \code{endCe} of every drug, named by drug, and
+#' the MAC threshold.  Both are optional: bookmarks made before thresholds were
+#' saved, and any entry that is not a usable number, leave the drug's current
+#' value in place and the MAC threshold at its default.  Drugs named in the
+#' bookmark but absent from the defaults are ignored.
+#'
+#' @param drugDefaults the drug defaults table to update
+#' @param endCe named numeric vector of stored thresholds, or NULL
+#' @param macThreshold a single threshold for the MAC series, or NULL
+#' @returns a list with the updated \code{drugDefaults} and \code{macThreshold}
+#' @export
+restoreThresholds <- function(drugDefaults, endCe = NULL, macThreshold = NULL)
+{
+  usable <- function(x) suppressWarnings(as.numeric(x))
+
+  if (length(endCe) > 0 && !is.null(names(endCe))) {
+    value <- usable(endCe)
+    at <- match(names(endCe), drugDefaults$Drug)
+    ok <- !is.na(at) & !is.na(value) & value >= 0
+    drugDefaults$endCe[at[ok]] <- value[ok]
+  }
+
+  mac <- usable(macThreshold)
+  macThreshold <- if (length(mac) == 1 && !is.na(mac) && mac >= 0) mac else GAS_MAC_THRESHOLD
+
+  list(drugDefaults = drugDefaults, macThreshold = macThreshold)
+}
+
+
 #' Washout of every soluble gas, as sums of exponentials
 #'
 #' For each time point of a gas simulation, and each soluble gas, expresses the
