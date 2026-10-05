@@ -341,7 +341,9 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
   for (tick in seq_len(nTicks))
   {
     t0 <- (tick - 1) * dt
-    s  <- gasSettingsAt(bySetting, t0)
+    # deadSpace = 0: Gas Man has none, so the "ventilation" row is alveolar
+    # ventilation here, whatever the app engine makes of it.
+    s  <- gasSettingsAt(bySetting, t0, deadSpace = 0)
 
     # Settings hold across a tick, so the change is at the tick boundary.
     checkFastDecay <- (tick - 1) < GASMAN_VERNIER_TICKS

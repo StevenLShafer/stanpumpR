@@ -60,7 +60,9 @@ test_that("the closed-form engine converges as the step shrinks", {
   DT <- matchedDoseTable()
   v <- vapply(c(301, 601, 1201, 2401), function(r)
     alvAt(advanceClosedFormGas(DT, weight = 70, maximum = 30, resolution = r,
-                               cardiacOutput = 5), "sevoflurane", 30),
+                               cardiacOutput = 5, circuit = "semi-closed",
+                               deadSpace = 0),
+          "sevoflurane", 30),
     numeric(1))
 
   # Successive differences must shrink monotonically toward zero.
@@ -94,9 +96,14 @@ test_that("the two engines converge to the same limit", {
   # The baseline converges FIRST ORDER in dt, so extrapolate: limit ~ 2f(h/2)-f(h).
   lim <- 2 * baselineAt(188, 30) - baselineAt(375, 30)
 
+  # The standalone baseline runs Gas Man's semi-closed circuit and takes its
+  # ventilation as alveolar, so the engine is asked for the same; its own
+  # defaults are the ideal circuit and a 30% dead space.
   eng <- alvAt(advanceClosedFormGas(matchedDoseTable(), weight = 70,
                                     maximum = 30, resolution = 4801,
-                                    cardiacOutput = 5), "sevoflurane", 30)
+                                    cardiacOutput = 5, circuit = "semi-closed",
+                                    deadSpace = 0),
+               "sevoflurane", 30)
 
   # Same limit to well under a tenth of a percent.  If this fails, something
   # STRUCTURAL differs between the engines -- a coefficient, a flow fraction, a

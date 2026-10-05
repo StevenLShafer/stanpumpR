@@ -4,15 +4,21 @@
 \alias{gasSettingsAt}
 \title{Settings in force at a given time, and the derived fresh-gas composition}
 \usage{
-gasSettingsAt(split, t)
+gasSettingsAt(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 }
 \arguments{
 \item{split}{list of per-setting data frames, from \code{split()} on Drug}
 
 \item{t}{time in minutes}
+
+\item{deadSpace}{dead space as a fraction of minute ventilation.  The
+"ventilation" row of the dose table is MINUTE ventilation, and alveolar
+ventilation is \code{MV * (1 - deadSpace)}.  Zero makes the row alveolar
+ventilation, as it is in Gas Man.}
 }
 \value{
-a list with the raw settings and the fresh-gas fractions
+a list with total fresh gas flow \code{Q}, minute ventilation
+\code{MV}, alveolar ventilation \code{VA}, and the fresh-gas fractions
 }
 \description{
 Collects the six dose-table settings and turns the three flowmeter rows plus

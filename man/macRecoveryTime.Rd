@@ -4,7 +4,7 @@
 \alias{macRecoveryTime}
 \title{Time until the summed MAC falls to a threshold}
 \usage{
-macRecoveryTime(washout, age, threshold = GAS_MAC_THRESHOLD)
+macRecoveryTime(washout, age, threshold = GAS_MAC_THRESHOLD, exact = TRUE)
 }
 \arguments{
 \item{washout}{output of \code{gasWashout()}}
@@ -16,6 +16,12 @@ per time point, which is how the opioid interaction enters: an opioid that
 lowers MAC by a fraction R makes a given end-tidal concentration worth
 1 / (1 - R) times as much, so the threshold on the unadjusted MAC is
 \code{threshold * (1 - R)}.}
+
+\item{exact}{TRUE, the default: the coupled forward simulation of
+\code{gasCoupledRecovery()}.  FALSE: the sum-of-exponentials shortcut,
+which leaves the coupling between gases out and reads long when nitrous
+oxide is in use.  The shortcut is always used for a washout made with
+\code{rebreathing = TRUE}.}
 }
 \value{
 numeric vector of minutes, one per time point
@@ -23,5 +29,5 @@ numeric vector of minutes, one per time point
 \description{
 Alveolar tensions of the potent agents, each as a fraction of its
 age-adjusted MAC, summed -- exactly as the MAC series is built.  Every potent
-agent is taken to be turned off.
+agent is taken to be turned off, with no rebreathing.
 }

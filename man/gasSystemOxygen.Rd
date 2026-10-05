@@ -4,7 +4,14 @@
 \alias{gasSystemOxygen}
 \title{System matrix and forcing vector for oxygen}
 \usage{
-gasSystemOxygen(body, Q, VA, Ffgf)
+gasSystemOxygen(
+  body,
+  Q,
+  VA,
+  Ffgf,
+  circuit = c("ideal", "semi-closed", "open"),
+  MV = VA
+)
 }
 \arguments{
 \item{body}{output of \code{getGasBody()}}
@@ -14,9 +21,14 @@ gasSystemOxygen(body, Q, VA, Ffgf)
 \item{VA}{alveolar ventilation, L/min}
 
 \item{Ffgf}{fresh-gas oxygen fraction, percent of 1 atm}
+
+\item{circuit}{"ideal" (the default), "semi-closed" or "open"}
+
+\item{MV}{minute ventilation, L/min; defaults to \code{VA}, no dead space}
 }
 \value{
-a list with \code{A} (2x2) and \code{b} (length 2)
+a list with \code{A} (2x2), \code{b} (length 2) and \code{fresh},
+as for \code{gasSystemSoluble()}
 }
 \description{
 Implements equation (4) for the state ordering \code{c(F_circ, F_alv)}.

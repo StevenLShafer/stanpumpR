@@ -20,9 +20,21 @@ gasMixedVenous(y, body)
 \item{Qco}{cardiac output, L/min}
 
 \item{Ffgf}{fresh-gas fraction of this gas, percent of 1 atm}
+
+\item{totUptake}{summed uptake of all the gases, L/min, for the coupling}
+
+\item{circuit}{"ideal" (the default), "semi-closed" or "open"; see the
+header.  "open" is the ideal circuit with no rebreathing whatever the flow.}
+
+\item{MV}{minute ventilation, L/min, which sets where rebreathing stops in
+the ideal circuit.  Defaults to \code{VA}: no dead space.}
 }
 \value{
-a list with \code{A} (5x5) and \code{b} (length 5)
+a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
+and open circuits, \code{fresh}: the fraction of inspired gas that is
+fresh gas, from which the circuit tension is
+\code{fresh * Ffgf + (1 - fresh) * F_alv}.  It is NULL for the semi-closed
+circuit, whose tension is a state.
 
 mixed venous tension, percent of one atmosphere
 }

@@ -236,8 +236,16 @@ macForAge <- function(MAC40, age)
 }
 
 
-# Default alveolar ventilation, used when a gas is in the dose table but no
-# usable ventilation setting has been entered.
+# Dead space, as a fraction of minute ventilation (Shafer, 2026-10-05).  The
+# "ventilation" row of the dose table is MINUTE ventilation; alveolar
+# ventilation, which is what exchanges gas, is the rest.  Gas Man has no dead
+# space: what it calls ventilation is alveolar ventilation.
+GAS_DEAD_SPACE_FRACTION <- 0.3
+
+
+# Default ventilation, used when a gas is in the dose table but no usable
+# ventilation setting has been entered.  It is a MINUTE ventilation, chosen so
+# that the ALVEOLAR ventilation it implies is Gas Man's default.
 #
 # These are Gas Man's own defaults, adopted at Shafer's direction (2026-10-05:
 # "for now I want to be identical with Gas Man; later on we will update with
@@ -250,23 +258,27 @@ macForAge <- function(MAC40, age)
 #
 # (Claude Code, Claude Fable 5.1, 2026-10-05.  An earlier draft the same day
 # used 8 mL/kg x an assumed 10 breaths/min; this replaces it.)
-GAS_DEFAULT_VA_70KG        <- 4
+GAS_DEFAULT_VA_70KG        <- 4     # ALVEOLAR, as in Gas Man
 GAS_DEFAULT_CO_70KG        <- 5     # gasman.ini [Defaults] CO=5, same scaling
 GAS_DEFAULT_VA_WEIGHT_EXPO <- 0.75
 
 
-#' Default alveolar ventilation for a patient, L/min
+#' Default minute ventilation for a patient, L/min
 #'
-#' Gas Man's default: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.
+#' The minute ventilation whose alveolar part is Gas Man's default alveolar
+#' ventilation: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.  With a
+#' dead space of 30\% that is 5.7 L/min at 70 kg.
 #'
 #' @param weight patient weight, kg.  Falls back to 70 kg if missing or invalid.
-#' @returns ventilation in L/min, rounded to 0.1 so it reads cleanly in the
-#'   dose table
+#' @param deadSpace dead space as a fraction of minute ventilation
+#' @returns minute ventilation in L/min, rounded to 0.1 so it reads cleanly in
+#'   the dose table
 #' @export
-defaultGasVentilation <- function(weight = 70)
+defaultGasVentilation <- function(weight = 70, deadSpace = GAS_DEAD_SPACE_FRACTION)
 {
   if (length(weight) != 1 || !is.finite(weight) || weight <= 0) weight <- 70
-  round(GAS_DEFAULT_VA_70KG * (weight / 70)^GAS_DEFAULT_VA_WEIGHT_EXPO, 1)
+  round(GAS_DEFAULT_VA_70KG * (weight / 70)^GAS_DEFAULT_VA_WEIGHT_EXPO /
+          (1 - deadSpace), 1)
 }
 
 

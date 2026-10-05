@@ -1,4 +1,23 @@
 "Scenario","Name","Weight_kg","Circuit","Uptake","Return","dt_ms","From_min","To_min","Agent","DEL_percent","FGF_L_min","VA_L_min","CO_L_min"
+1,"Sevoflurane wash-in, high flow",70,"Ideal","on","on",6000,0,30,"Sevoflurane",2,8,4,5
+1,"Sevoflurane wash-in, high flow",70,"Ideal","on","on",6000,0,30,"Nitrogen",0,8,4,5
+2,"Second gas effect: sevoflurane with 70% nitrous oxide",70,"Ideal","on","on",6000,0,30,"Sevoflurane",2,8,4,5
+2,"Second gas effect: sevoflurane with 70% nitrous oxide",70,"Ideal","on","on",6000,0,30,"Nitrous Oxide",70,8,4,5
+2,"Second gas effect: sevoflurane with 70% nitrous oxide",70,"Ideal","on","on",6000,0,30,"Nitrogen",0,8,4,5
+3,"Whole anaesthetic: step up, step down, emergence",70,"Ideal","on","on",6000,0,30,"Sevoflurane",2,6,4,5
+3,"Whole anaesthetic: step up, step down, emergence",70,"Ideal","on","on",6000,0,30,"Nitrogen",0,6,4,5
+3,"Whole anaesthetic: step up, step down, emergence",70,"Ideal","on","on",6000,30,60,"Sevoflurane",3,6,4,5
+3,"Whole anaesthetic: step up, step down, emergence",70,"Ideal","on","on",6000,30,60,"Nitrogen",0,6,4,5
+3,"Whole anaesthetic: step up, step down, emergence",70,"Ideal","on","on",6000,60,150,"Sevoflurane",1.5,2,4,5
+3,"Whole anaesthetic: step up, step down, emergence",70,"Ideal","on","on",6000,60,150,"Nitrogen",0,2,4,5
+3,"Whole anaesthetic: step up, step down, emergence",70,"Ideal","on","on",6000,150,180,"Sevoflurane",0,10,4,5
+3,"Whole anaesthetic: step up, step down, emergence",70,"Ideal","on","on",6000,150,180,"Nitrogen",0,10,4,5
+4,"Desflurane: wash-in at 4 L/min, then low flow at 0.5 L/min",70,"Ideal","on","on",6000,0,10,"Desflurane",6,4,4,5
+4,"Desflurane: wash-in at 4 L/min, then low flow at 0.5 L/min",70,"Ideal","on","on",6000,0,10,"Nitrogen",0,4,4,5
+4,"Desflurane: wash-in at 4 L/min, then low flow at 0.5 L/min",70,"Ideal","on","on",6000,10,60,"Desflurane",8,0.5,4,5
+4,"Desflurane: wash-in at 4 L/min, then low flow at 0.5 L/min",70,"Ideal","on","on",6000,10,60,"Nitrogen",0,0.5,4,5
+5,"100 kg patient at Gas Man's weight-scaled defaults",100,"Ideal","on","on",6000,0,30,"Isoflurane",1.2,2,5.2268,6.5335
+5,"100 kg patient at Gas Man's weight-scaled defaults",100,"Ideal","on","on",6000,0,30,"Nitrogen",0,2,5.2268,6.5335
 1,"Sevoflurane wash-in, high flow",70,"Semi-closed","on","on",6000,0,30,"Sevoflurane",2,8,4,5
 1,"Sevoflurane wash-in, high flow",70,"Semi-closed","on","on",6000,0,30,"Nitrogen",0,8,4,5
 2,"Second gas effect: sevoflurane with 70% nitrous oxide",70,"Semi-closed","on","on",6000,0,30,"Sevoflurane",2,8,4,5

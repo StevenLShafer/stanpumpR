@@ -9,7 +9,9 @@ gasWashout(
   gasDose,
   weight = 70,
   cardiacOutput = NULL,
-  rebreathing = FALSE
+  rebreathing = FALSE,
+  circuit = c("ideal", "semi-closed"),
+  deadSpace = GAS_DEAD_SPACE_FRACTION
 )
 }
 \arguments{
@@ -23,13 +25,22 @@ gasWashout(
 
 \item{rebreathing}{FALSE, the default and what the app shows: the fresh gas
 flow is turned up so that none of the agent is inspired.  TRUE: the fresh
-gas flow is left as it is and the circuit washes out with the patient.}
+gas flow is left as it is, and whatever rebreathing the circuit allows at
+that flow goes on.}
+
+\item{circuit}{the circuit model, as in \code{advanceClosedFormGas()}.  Only
+matters when \code{rebreathing = TRUE}: without rebreathing there is no
+circuit to model.}
+
+\item{deadSpace}{dead space as a fraction of minute ventilation, as in
+\code{advanceClosedFormGas()}; must be the value the simulation used.}
 }
 \value{
 a list with \code{Time}, \code{rate} (per gas, an nT x K matrix of
 positive decay rates per minute) and \code{amplitude} (per gas, an
-nT x 5 x K array: time point, compartment, exponential), where K is 4
-without rebreathing and 5 with; or NULL if there is no simulation.
+nT x 5 x K array: time point, compartment, exponential), where K is 5 for
+rebreathing in a semi-closed circuit and 4 otherwise; or NULL if there is
+no simulation.
 Compartments are numbered as in the engine: 1 circuit, 2 alveolar,
 3 vessel-rich group, 4 muscle, 5 fat.
 }

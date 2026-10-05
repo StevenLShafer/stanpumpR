@@ -283,7 +283,7 @@ drug list and behave like any other row in the dose table:
 |---|---|---|
 | air, oxygen, nitrousOxide | L/min | Fresh gas flows |
 | sevoflurane, isoflurane, desflurane | % | Vaporiser settings |
-| ventilation | L/min | Alveolar ventilation |
+| ventilation | L/min | Minute ventilation |
 
 Set the flows, the vaporiser, and the ventilation, and the program simulates
 alveolar and brain tensions for each agent, plus MAC. Nitrogen is carried
@@ -298,9 +298,14 @@ for the record.
 Cardiac output is fixed at Gas Man's default, 5 L/min at 70 kg scaled by
 (weight / 70)^0.75, and is not currently a user input.
 
+Ventilation is **minute ventilation**. Thirty percent of it is taken to be dead
+space, so the alveolar ventilation, which is what exchanges gas, is 70% of what
+you enter.
+
 Ventilation must be greater than zero whenever a gas is being given. If you
-enter a gas without a ventilation row, one is added for you at Gas Man's
-default alveolar ventilation: 4 L/min at 70 kg, scaled the same way. Entering
+enter a gas without a ventilation row, one is added for you: 5.7 L/min at 70 kg,
+scaled the same way as cardiac output. That is the minute ventilation whose
+alveolar part is Gas Man's default alveolar ventilation of 4 L/min. Entering
 nitrous oxide also adds an oxygen row, starting at 21% of the fresh gas. Gas
 flows and ventilation are rounded to the nearest 0.1 L/min.
 
@@ -344,6 +349,7 @@ What "turned off" means for a gas (S. Shafer, 2026-10-05):
 - **The fresh gas flow is turned up so that there is no rebreathing.** That is
   what is done to wake a patient, and it is the clinically important number.
   The time shown therefore does not depend on the flow in use at that moment.
+  Any fresh gas flow at or above the minute ventilation achieves it.
 - Ventilation stays as it is.
 
 | Panel | What is timed | Default threshold |
@@ -358,25 +364,32 @@ are shown there at the patient's age, so the number in the dialog is the number
 on the plot; they follow MAC if the age is changed. Nitrous oxide comes off fast
 enough that its threshold matters little.
 
-Two approximations, both making the time shown a little long:
+Every line is calculated by simulating it: the agent is turned off at each
+moment in turn and the washout is run forward, with the gases coupled as they
+are in the engine, until the concentration comes down through the threshold.
+Checked against making the same change in the dose table and simulating on, the
+lines agree to within a few hundredths of a minute.
 
-- The washout leaves out the coupling between gases (the concentration and
-  second gas effect). For a volatile agent that makes no measurable difference,
-  with or without nitrous oxide running. When 70% nitrous oxide is turned off at
-  the same moment, the time shown is long by about 5% for the volatile agent and
-  16% for MAC.
-- With *Include opioid - MAC interaction* ticked, the opioid's effect on MAC is
-  held at its value at the moment the agents are turned off. In truth the opioid
-  would wear off too.
+Remember what each line is asking. The sevoflurane line is the time if the
+vaporiser alone is turned off. If nitrous oxide is turned off at the same
+moment the sevoflurane goes faster, because nitrous oxide on its way out carries
+it along: 15.7 minutes instead of 17.3 in one two-hour example.
+
+One approximation remains, which makes the MAC time a little long: with
+*Include opioid - MAC interaction* ticked, the opioid's effect on MAC is held at
+its value at the moment the agents are turned off. In truth the opioid would
+wear off too.
 
 ### Where the engine deliberately differs from Gas Man
 
 The parameters and defaults are Gas Man's, and the intent for now is to give the
-same answers Gas Man gives. Six differences are deliberate (confirmed by
+same answers Gas Man gives. Eight differences are deliberate (confirmed by
 S. Shafer, 2026-10-05) and will remain:
 
 | | Gas Man | stanpumpR | Why |
 |---|---|---|---|
+| Breathing circuit | Defaults to "Semi-closed": the whole circuit is one well-mixed 8 L volume, so some exhaled gas is rebreathed at any fresh gas flow, however high | The "Ideal" circuit, which Gas Man also offers: no rebreathing once fresh gas flow reaches minute ventilation; below that, the shortfall is made up with exhaled gas. No circuit volume, so no lag | It is how a circle system behaves. The mixing box has no threshold at fresh gas flow = ventilation and understates the inspired concentration at moderate and high flows |
+| Ventilation and dead space | The ventilation setting is alveolar ventilation; there is no dead space | The ventilation setting is minute ventilation, 30% of it dead space. Rebreathing stops when fresh gas flow reaches the minute ventilation | Minute ventilation is what is set on a ventilator and read from a monitor |
 | MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
 | MAC across agents | Each agent reported separately | A single MAC series, the sum of each potent agent's alveolar fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
 | Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |
@@ -384,7 +397,22 @@ S. Shafer, 2026-10-05) and will remain:
 | Starting nitrogen | 80% (`Ambient=80`) | 78.07%, with oxygen at 20.93% | Room air, so that the gas fractions sum correctly once oxygen is modelled |
 | Integration | Each time step is split into sequential sub-updates | Each step is advanced exactly, by matrix exponential | Accuracy does not then depend on the step size |
 
+The breathing circuit follows the rule of thumb that rebreathing stops once
+fresh gas flow reaches minute ventilation (Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? APSF, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>).
+The model has no circuit volume, so a change at the vaporiser reaches the
+patient at once; the gas already in a real circuit takes a little time to mix
+out, which is not clinically important.
+
 Consequences worth knowing when comparing the two side by side:
+
+- Enter in Gas Man the **alveolar** ventilation, 70% of the minute ventilation
+  used here, and expect a small difference whenever fresh gas flow is below the
+  minute ventilation, where Gas Man's ideal circuit has no dead space to return
+  unused gas from.
+- Set Gas Man's circuit to **Ideal**. This is the largest of the differences.
+  With Gas Man left on Semi-closed, 2% sevoflurane at 8 L/min gives an alveolar
+  concentration of 0.47% at one minute and 1.59% at thirty; with the ideal
+  circuit, here and in Gas Man, it is 1.09% and 1.71%.
 
 - To reproduce a Gas Man MAC value, set the age to 40, where the age adjustment
   is exactly 1, and compare one agent at a time.

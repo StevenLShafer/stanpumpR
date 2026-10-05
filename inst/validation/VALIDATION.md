@@ -372,3 +372,171 @@ work directory first.
 API build; Epstein has reported the API about 8e-05 from the web edition. Open,
 closed and ideal circuits, liquid injection and flush remain untested, as do
 agents other than sevoflurane, isoflurane, desflurane and nitrous oxide.
+
+---
+
+## 2026-10-05 — the ideal circuit becomes the app engine's default
+
+Recorded by Claude Code (Claude Fable 5.1) at the direction of S. Shafer: "the
+ideal circuit is real life."
+
+### What changed and why
+
+Until today the app engine implemented only Gas Man's default, "Semi-closed", in
+which the whole breathing circuit is a single well-mixed 8 L volume:
+
+    V_circ dF_circ/dt = Q (F_fgf - F_circ) + VA (F_alv - F_circ)
+
+Fresh and exhaled gas are stirred together before any is vented, so some exhaled
+gas is rebreathed at any fresh gas flow. With fresh gas flow equal to alveolar
+ventilation the patient still inspires half exhaled gas. This was noticed when
+the "no rebreathing" reference for the time-until-threshold tests needed a flush
+of 100,000 L/min to converge.
+
+A circle system does not behave like that: once fresh gas flow reaches minute
+ventilation there is no rebreathing. Gas Man has this as its "Ideal" circuit,
+
+    Q >= VA:   F_circ = F_fgf
+    Q <  VA:   F_circ = f F_fgf + (1 - f) F_alv,   f = Q / VA
+
+and `advanceClosedFormGas()` now implements it and uses it by default. The
+semi-closed model remains available as `circuit = "semi-closed"`. This is a
+seventh deliberate difference from Gas Man *as shipped* -- its default -- though
+not from Gas Man, which offers both.
+
+### Validation
+
+`gasman_run` (built from `d3a2dd3`, as above) was run on all five scenarios with
+`circuit` set to `Ideal`, alongside the baseline and the app engine with the
+ideal circuit. The scenario files are `scenarios_engine/scenario_N_ideal.csv`;
+the semi-closed ones are now `scenario_N_semiclosed.csv`. Results for both
+circuits are in `gasman_engine_scenarios_results.csv`, which has gained a
+`Circuit` column.
+
+**The R baseline restates Gas Man's Ideal circuit.** Worst difference between
+`advanceGasManBaseline(circuit = "ideal")` and `gasman_run`, percent of each
+compartment's peak, over all five scenarios:
+
+| CKT | ALV | VRG | MUS | FAT |
+|---|---|---|---|---|
+| 0.0004 | 0.0006 | 0.0005 | 0.003 | 0.062 |
+
+The same as for the semi-closed circuit. The ideal circuit had been listed as
+untested since the first entry in this file.
+
+**The app engine, ideal circuit.** Worst difference over all compartments and
+times, percent of peak:
+
+| # | Agent | engine vs Gas Man C++ (Ideal) | engine vs limit |
+|---|---|---|---|
+| 1 | sevoflurane | 1.1% | 0.002% |
+| 2 | sevoflurane | 1.4% | 0.25% |
+| 2 | nitrous oxide | 2.2% | 0.28% |
+| 3 | sevoflurane | 0.64% | 0.13% |
+| 4 | desflurane | 1.5% | 0.02% |
+| 5 | isoflurane | 1.2% | 0.0004% |
+
+As before, the gap to Gas Man at its 6-second tick is Gas Man's distance from
+the limit of its own equations, and the engine sits on the limit. The gap is
+smaller than with the semi-closed circuit because there is no circuit volume to
+integrate.
+
+### What the change of default does to the answers
+
+It is large. App engine, alveolar concentration of the primary agent, percent:
+
+| # | min | ideal | semi-closed |
+|---|---|---|---|
+| 1 | 1 | 1.09 | 0.47 |
+| 1 | 30 | 1.71 | 1.59 |
+| 3 | 60 | 2.61 | 2.39 |
+| 3 | 155 (5 min after vaporiser off) | 0.27 | 0.37 |
+| 4 | 1 | 3.77 | 0.93 |
+| 4 | 60 (low flow, 0.5 L/min) | 4.89 | 4.53 |
+| 5 | 30 | 0.62 | 0.50 |
+
+Wash-in and washout are both faster, most of all in the first minutes, because
+the patient inspires the dial setting at once instead of waiting for an 8 L
+volume to fill.
+
+Reference supplied by Shafer: Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? APSF, 20 October 2022. https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/
+
+### Not established
+
+* Whether the absence of ANY circuit volume is right. The ideal circuit has no
+  lag between the vaporiser and the inspired gas; a real circuit has some, and
+  the reference above says so.
+* Where the threshold belongs was open when this entry was first written: the
+  reference puts it at MINUTE ventilation, Gas Man's Ideal circuit at the
+  ALVEOLAR ventilation it is given. Resolved the same day; see the next entry.
+* The oxygen model with the ideal circuit has no Gas Man counterpart, as before.
+  Below fresh gas flow = ventilation its alveolar steady state is the delivered
+  fraction less 100 x VO2 / fresh gas flow, by mass balance.
+
+---
+
+## 2026-10-05 — minute ventilation, dead space, and exact time until threshold
+
+Recorded by Claude Code (Claude Fable 5.1) at the direction of S. Shafer: "The
+user sets minute ventilation, not alveolar ventilation. Let's set dead space at
+30% of minute ventilation."
+
+### Ventilation and dead space
+
+The "ventilation" row of the dose table is now MINUTE ventilation, MV. Alveolar
+ventilation is VA = MV (1 - d) with d = 0.3. Gas Man has no dead space; what it
+calls ventilation is alveolar ventilation. This is an eighth deliberate
+difference.
+
+The ideal circuit with a dead space. Below the threshold the patient inspires
+all the fresh gas and makes up the rest with exhaled gas, and exhaled gas is
+alveolar gas diluted by the dead-space gas that came back unchanged:
+
+    MV F_circ    = Q F_fgf + (MV - Q) F_exhaled
+    MV F_exhaled = VA F_alv + d MV F_circ
+
+    =>  F_circ = f F_fgf + (1 - f) F_alv,   f = Q / (VA + Q d)   for Q < MV
+        F_circ = F_fgf                                           for Q >= MV
+
+f reaches exactly 1 at Q = MV, so the threshold is at minute ventilation, as the
+APSF reference has it. With d = 0 this is Gas Man's ideal circuit, f = Q / VA.
+
+The default ventilation, used when a gas is entered without one, is the minute
+ventilation whose alveolar part is Gas Man's default alveolar ventilation:
+4 / 0.7 = 5.7 L/min at 70 kg, scaled by (weight / 70)^0.75.
+
+**Every comparison with Gas Man in this directory is run with `deadSpace = 0`**,
+so that the ventilation in a scenario is alveolar on both sides. The earlier
+results in this file are therefore unchanged. The dead space itself has no Gas
+Man counterpart to check against; it is covered by the engine's own tests: the
+fresh-gas fraction and its limits, agreement with an independent integration,
+and the oxygen mass balance (below the threshold the mixed-expired oxygen
+settles at the delivered fraction less 100 x VO2 / fresh gas flow).
+
+### Time until threshold, by simulation
+
+The "time until threshold" lines for the inhaled agents and MAC were first
+computed with the coupling between gases left out, which let the washout be
+written as a sum of exponentials. Checked against making the same change in the
+engine, that read long whenever nitrous oxide was washing out: with 70% nitrous
+oxide after two hours, 18% for the nitrous oxide line and 10% for MAC.
+
+Every line is now computed by `gasCoupledRecovery()`: the agent is turned off at
+each time point in turn and the washout integrated forward with the engine's
+equations, coupling included, in the limit of no rebreathing. All the time
+points are integrated together as rows of one matrix, so a line costs a few
+hundredths of a second. Against the engine with the same change made in the dose
+table (70 kg, sevoflurane 2% with 70% nitrous oxide, minute ventilation 4):
+
+| Line | at 30 min | at 119 min | engine |
+|---|---|---|---|
+| sevoflurane, vaporiser off alone | 11.96 | 17.31 | 11.96, 17.31 |
+| nitrous oxide, turned off alone | 6.18 | 8.95 | 6.18, 8.95 |
+| MAC, everything off | 11.19 | 49.47 | 11.19, 49.48 |
+
+The reference run uses a flush of 100,000 L/min. That figure dates from the
+semi-closed circuit, in which a finite flush always left some rebreathing
+(22.6 min for MAC at 100 L/min against 20.08 in the limit, with alveolar
+ventilation 4); with the ideal circuit any flow at or above the minute
+ventilation is the limit.
+

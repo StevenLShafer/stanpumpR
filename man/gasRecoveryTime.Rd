@@ -4,7 +4,7 @@
 \alias{gasRecoveryTime}
 \title{Time until one gas falls to its threshold}
 \usage{
-gasRecoveryTime(washout, gas, threshold, compartment = 3)
+gasRecoveryTime(washout, gas, threshold, compartment = 3, exact = TRUE)
 }
 \arguments{
 \item{washout}{output of \code{gasWashout()}}
@@ -15,11 +15,18 @@ gasRecoveryTime(washout, gas, threshold, compartment = 3)
 
 \item{compartment}{3 for the vessel-rich group (the default, the gas
 counterpart of the effect site), 2 for alveolar}
+
+\item{exact}{TRUE, the default: the coupled forward simulation of
+\code{gasCoupledRecovery()}.  FALSE: the sum-of-exponentials shortcut,
+which leaves the coupling between gases out.  The shortcut is always used
+for a washout made with \code{rebreathing = TRUE}.}
 }
 \value{
 numeric vector of minutes, one per time point; zero wherever the
-tension is already at or below the threshold, or if there is no threshold
+tension is at or below the threshold and not on its way above it, or if
+there is no threshold
 }
 \description{
-Time until one gas falls to its threshold
+That gas alone is turned off, with no rebreathing; anything else in use goes
+on being given.
 }

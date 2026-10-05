@@ -24,7 +24,10 @@
 # Segment inputs, held constant between dose-table change points:
 #
 #     Q    = Q_air + Q_O2 + Q_N2O           total fresh gas flow, L/min
-#     VA                                    alveolar ventilation, L/min
+#     MV                                    minute ventilation, L/min: what the
+#                                           user enters as "ventilation"
+#     VA   = MV (1 - d)                     alveolar ventilation, L/min, with
+#                                           d the dead-space fraction, 0.3
 #     Qco                                   cardiac output, L/min
 #     F_fgf,i                               fresh-gas fraction of gas i, %
 #
@@ -37,15 +40,65 @@
 #     F_fgf,N2O  = 100 * carrier * (Q_N2O)               / Q
 #     F_fgf,sevo = F_vap,sevo         (already a % of 1 atm)
 #
-# (1) CIRCUIT.  Fresh gas enters at the flowmeter/vaporiser composition and
-#     leaves through the pop-off at circuit composition; exhaled gas returns at
-#     alveolar composition.  The VA(F_alv - F_circ) term IS the rebreathing:
-#     at high Q the circuit is flushed and F_circ -> F_fgf, at low Q it is
-#     pulled toward F_alv.  At steady state
-#         F_circ = (Q F_fgf + VA F_alv) / (Q + VA),
-#     a smooth weighted average, with no threshold at Q = VA.
+# (1) CIRCUIT.  Two models, chosen by the `circuit` argument.
+#
+#     "ideal" -- THE DEFAULT since 2026-10-05, at Shafer's direction: "the ideal
+#     circuit is real life".  A circle system's valves keep exhaled gas out of
+#     the inspiratory limb, so every litre of fresh gas is inspired and exhaled
+#     gas only makes up the shortfall:
+#
+#         Q >= MV:   F_circ = F_fgf                           no rebreathing
+#         Q <  MV:   F_circ = f F_fgf + (1 - f) F_alv,        f = Q / (VA + Q d)
+#
+#     There is a threshold at Q = MV, the MINUTE ventilation, above which the
+#     patient inspires fresh gas and nothing else, and there is no circuit
+#     volume and so no lag.
+#
+#     Where f comes from.  Below the threshold the patient inspires all the
+#     fresh gas and makes up the rest with exhaled gas:
+#         MV F_circ = Q F_fgf + (MV - Q) F_exhaled.
+#     Exhaled gas is not alveolar gas.  A fraction d of every breath only
+#     reaches the dead space and comes back unchanged, so
+#         MV F_exhaled = VA F_alv + d MV F_circ.
+#     Eliminating F_exhaled gives the line above; f rises from 0 at Q = 0 to
+#     exactly 1 at Q = MV.
+#
+#     With d = 0 this is Gas Man's "Ideal" circuit (GasDoc.cpp, IDEAL_CKT),
+#     whose threshold is at Q = VA because Gas Man has no dead space: its
+#     ventilation IS alveolar ventilation.  The dead space, and with it the
+#     threshold at minute ventilation, is stanpumpR's (Shafer, 2026-10-05: "the
+#     user sets minute ventilation, not alveolar ventilation ... set dead space
+#     at 30% of minute ventilation").  Pass deadSpace = 0 to compare with Gas
+#     Man.
+#
+#     Reference supplied by Shafer: Feldman JM, Lampotang S, Hendrickx J.  Is
+#     rebreathing prevented when FGF equals MV?  APSF, 20 October 2022.
+#     https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/
+#     It supports the threshold as a rule of thumb, and adds two cautions that
+#     this model does not capture: the real threshold sits slightly above or
+#     below minute ventilation depending on the workstation, and after a change
+#     of setting the gas already in the circuit takes a little time to mix out.
+#     The article's threshold is MINUTE ventilation, which is where this model
+#     puts it.
+#
+#     F_circ is then not a
+#     state but a function of F_alv, and substituting it into (2) leaves a
+#     four-state system per gas; the circuit entry of the state vector is filled
+#     in afterwards so that everything downstream still finds it.
+#
+#     "semi-closed" -- Gas Man's own default, and this engine's until that date.
+#     The whole circuit is ONE WELL-MIXED VOLUME: fresh gas enters at the
+#     flowmeter/vaporiser composition and leaves through the pop-off at circuit
+#     composition; exhaled gas returns at alveolar composition.
 #
 #         V_circ dF_circ/dt = Q (F_fgf - F_circ) + VA (F_alv - F_circ)
+#
+#     At steady state F_circ = (Q F_fgf + VA F_alv) / (Q + VA), a smooth
+#     weighted average with no threshold at Q = VA: because fresh and exhaled
+#     gas are stirred together before any is vented, some fresh gas is always
+#     thrown away and some exhaled gas always rebreathed, at any flow.  With
+#     Q = VA the patient still inspires half exhaled gas.  The two models agree
+#     as Q -> 0 and differ most at Q = VA.  Kept for comparison with Gas Man.
 #
 # (2) ALVEOLAR, soluble gases.  Ventilation exchanges with the circuit; blood
 #     removes gas in proportion to the alveolar-to-mixed-venous gradient.
@@ -183,7 +236,16 @@ expmPade <- function(A)
 #' @param VA alveolar ventilation, L/min
 #' @param Qco cardiac output, L/min
 #' @param Ffgf fresh-gas fraction of this gas, percent of 1 atm
-#' @returns a list with \code{A} (5x5) and \code{b} (length 5)
+#' @param totUptake summed uptake of all the gases, L/min, for the coupling
+#' @param circuit "ideal" (the default), "semi-closed" or "open"; see the
+#'   header.  "open" is the ideal circuit with no rebreathing whatever the flow.
+#' @param MV minute ventilation, L/min, which sets where rebreathing stops in
+#'   the ideal circuit.  Defaults to \code{VA}: no dead space.
+#' @returns a list with \code{A} (5x5), \code{b} (length 5) and, for the ideal
+#'   and open circuits, \code{fresh}: the fraction of inspired gas that is
+#'   fresh gas, from which the circuit tension is
+#'   \code{fresh * Ffgf + (1 - fresh) * F_alv}.  It is NULL for the semi-closed
+#'   circuit, whose tension is a state.
 #' @keywords internal
 # -----------------------------------------------------------------------------
 # The uptake coupling: the concentration and second gas effect
@@ -251,8 +313,33 @@ gasTotalUptake <- function(state, props, body, Qco)
 }
 
 
-gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0)
+#' Fraction of inspired gas that is fresh gas, for the ideal circuit
+#'
+#' One when fresh gas flow meets or exceeds MINUTE ventilation -- no rebreathing
+#' -- and \code{Q / (VA + Q d)} below that, with \code{d = 1 - VA / MV} the
+#' dead-space fraction; see the file header for the derivation.  With no dead
+#' space this is \code{Q / VA}, Gas Man's ideal circuit.  Always one for an open
+#' circuit.
+#'
+#' @param Q total fresh gas flow, L/min
+#' @param VA alveolar ventilation, L/min
+#' @param circuit "ideal" or "open"
+#' @param MV minute ventilation, L/min; defaults to \code{VA}, i.e. no dead space
+#' @returns a number between 0 and 1
+#' @keywords internal
+gasFreshFraction <- function(Q, VA, circuit = "ideal", MV = VA)
 {
+  if (circuit == "open" || MV <= 0 || Q >= MV) return(1)
+  d <- 1 - VA / MV
+  Q / (VA + Q * d)
+}
+
+
+gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
+                             circuit = c("ideal", "semi-closed", "open"),
+                             MV = VA)
+{
+  circuit <- match.arg(circuit)
   lb  <- props$lambda_blood
   ltg <- gasPartitionTissueGas(props)
 
@@ -311,7 +398,24 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0)
 
   b <- c(Q * Ffgf / Vc, 0, 0, 0, 0)
 
-  list(A = A, b = b)
+  if (circuit == "semi-closed") return(list(A = A, b = b, fresh = NULL))
+
+  # IDEAL (or open) CIRCUIT.  The circuit tension is not a state but
+  #     F_circ = f F_fgf + (1 - f) F_alv.
+  # Everything the alveolus takes from the circuit -- ventilation, plus the
+  # make-up gas drawn in when uptake is positive -- is A[2, 1], already
+  # assembled above.  Substituting F_circ splits it: the fresh-gas share becomes
+  # a constant inflow, and the rebreathed share comes straight back as alveolar
+  # gas.  The circuit row and column are then empty, so the propagator leaves
+  # that entry alone and the caller sets it from the line above.
+  f <- gasFreshFraction(Q, VA, circuit, MV)
+  fromCircuit <- A[2, 1]
+  A[2, 2] <- A[2, 2] + fromCircuit * (1 - f)
+  A[1, ] <- 0
+  A[, 1] <- 0
+  b <- c(0, fromCircuit * f * Ffgf, 0, 0, 0)
+
+  list(A = A, b = b, fresh = f)
 }
 
 
@@ -323,12 +427,32 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0)
 #' @param Q total fresh gas flow, L/min
 #' @param VA alveolar ventilation, L/min
 #' @param Ffgf fresh-gas oxygen fraction, percent of 1 atm
-#' @returns a list with \code{A} (2x2) and \code{b} (length 2)
+#' @param circuit "ideal" (the default), "semi-closed" or "open"
+#' @param MV minute ventilation, L/min; defaults to \code{VA}, no dead space
+#' @returns a list with \code{A} (2x2), \code{b} (length 2) and \code{fresh},
+#'   as for \code{gasSystemSoluble()}
 #' @keywords internal
-gasSystemOxygen <- function(body, Q, VA, Ffgf)
+gasSystemOxygen <- function(body, Q, VA, Ffgf,
+                            circuit = c("ideal", "semi-closed", "open"),
+                            MV = VA)
 {
+  circuit <- match.arg(circuit)
   Vc <- body$V_circuit
   Va <- body$V_alveolar
+
+  if (circuit != "semi-closed")
+  {
+    # Ideal circuit: F_circ = f F_fgf + (1 - f) F_alv, so the alveolus sees
+    #     V_alv dF_alv/dt = VA f (F_fgf - F_alv) - 100 VO2.
+    # Below Q = MV the rebreathed share returns the patient's own oxygen-poor
+    # gas.  With no dead space the steady state is F_fgf - 100 VO2 / Q: what is
+    # delivered less what is consumed, as it must be.
+    f <- gasFreshFraction(Q, VA, circuit, MV)
+    A <- matrix(0, 2, 2)
+    A[2, 2] <- -VA * f / Va
+    b <- c(0, VA * f * Ffgf / Va - 100 * body$VO2 / Va)
+    return(list(A = A, b = b, fresh = f))
+  }
 
   A <- matrix(0, 2, 2)
   A[1, 1] <- -(Q + VA) / Vc
@@ -340,7 +464,7 @@ gasSystemOxygen <- function(body, Q, VA, Ffgf)
   # The factor of 100 converts L/min of oxygen into percent of alveolar volume.
   b <- c(Q * Ffgf / Vc, -100 * body$VO2 / Va)
 
-  list(A = A, b = b)
+  list(A = A, b = b, fresh = NULL)
 }
 
 
@@ -418,14 +542,20 @@ settingAt <- function(doseRows, t)
 #'
 #' @param split list of per-setting data frames, from \code{split()} on Drug
 #' @param t time in minutes
-#' @returns a list with the raw settings and the fresh-gas fractions
+#' @param deadSpace dead space as a fraction of minute ventilation.  The
+#'   "ventilation" row of the dose table is MINUTE ventilation, and alveolar
+#'   ventilation is \code{MV * (1 - deadSpace)}.  Zero makes the row alveolar
+#'   ventilation, as it is in Gas Man.
+#' @returns a list with total fresh gas flow \code{Q}, minute ventilation
+#'   \code{MV}, alveolar ventilation \code{VA}, and the fresh-gas fractions
 #' @keywords internal
-gasSettingsAt <- function(split, t)
+gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 {
   Q_air  <- settingAt(split[["air"]],          t)
   Q_O2   <- settingAt(split[["oxygen"]],       t)
   Q_N2O  <- settingAt(split[["nitrousOxide"]], t)
-  VA     <- settingAt(split[["ventilation"]],  t)
+  MV     <- settingAt(split[["ventilation"]],  t)
+  VA     <- MV * (1 - deadSpace)
 
   # Every volatile agent in the properties table has its vaporiser read here,
   # rather than from a hardcoded list.  Adding desflurane to the table
@@ -454,7 +584,7 @@ gasSettingsAt <- function(split, t)
   }
   for (g in volatiles) Ffgf[[g]] <- F_vap[[g]]
 
-  list(Q = Q, VA = VA, Ffgf = Ffgf)
+  list(Q = Q, VA = VA, MV = MV, Ffgf = Ffgf)
 }
 
 
@@ -487,6 +617,13 @@ gasSettingsAt <- function(split, t)
 #'   concentration and second gas effect.  Set FALSE to isolate that term: with
 #'   it off the gases do not influence one another at all, which is what makes
 #'   the effect measurable as a difference rather than asserted.
+#' @param circuit "ideal", the default: no rebreathing once fresh gas flow
+#'   reaches minute ventilation, and no circuit volume.  "semi-closed": Gas
+#'   Man's default, the circuit as one well-mixed volume.  See the file header.
+#' @param deadSpace dead space as a fraction of minute ventilation, 0.3 by
+#'   default.  The "ventilation" rows are minute ventilation; alveolar
+#'   ventilation is that times \code{1 - deadSpace}.  Pass 0 to treat the rows
+#'   as alveolar ventilation, as Gas Man does.
 #'
 #' @returns a list with \code{results}, a tidy data frame of
 #'   \code{Drug, Time, Site, Y} matching the shape returned by
@@ -503,9 +640,12 @@ advanceClosedFormGas <- function(
   body = NULL,
   cardiacOutput = NULL,
   resolution = 601,
-  uptakeEffect = TRUE
+  uptakeEffect = TRUE,
+  circuit = c("ideal", "semi-closed"),
+  deadSpace = GAS_DEAD_SPACE_FRACTION
 )
 {
+  circuit <- match.arg(circuit)
   if (is.null(body)) body <- getGasBody(weight)
   Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
 
@@ -562,7 +702,7 @@ advanceClosedFormGas <- function(
 
     # Settings are read at the START of the interval and held across it, which
     # is what makes the interval linear and the advance exact.
-    s <- gasSettingsAt(bySetting, t0)
+    s <- gasSettingsAt(bySetting, t0, deadSpace)
 
     # Build one propagator per gas for this interval: y <- P y + q.
     #
@@ -584,12 +724,17 @@ advanceClosedFormGas <- function(
       {
         if (g == "oxygen")
         {
-          sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]])
+          sys <- gasSystemOxygen(body, s$Q, s$VA, s$Ffgf[["oxygen"]], circuit, s$MV)
         } else {
           sys <- gasSystemSoluble(props[props$gas == g, ], body,
-                                  s$Q, s$VA, Qco, s$Ffgf[[g]], totUptake)
+                                  s$Q, s$VA, Qco, s$Ffgf[[g]], totUptake, circuit,
+                                  s$MV)
         }
         pr[[g]] <- gasPropagator(sys$A, sys$b, dt)
+        # Ideal circuit: remember how to fill in the circuit tension, which is
+        # a function of the alveolar tension rather than a state.
+        pr[[g]]$fresh <- sys$fresh
+        pr[[g]]$Ffgf  <- s$Ffgf[[g]]
       }
       pr
     }
@@ -611,6 +756,12 @@ advanceClosedFormGas <- function(
       for (g in props$gas)
       {
         newState[[g]] <- as.vector(prop[[g]]$P %*% state[[g]] + prop[[g]]$q)
+
+        # Ideal circuit: F_circ = f F_fgf + (1 - f) F_alv, set from the new
+        # alveolar tension.
+        if (!is.null(prop[[g]]$fresh))
+          newState[[g]][1] <- prop[[g]]$fresh * prop[[g]]$Ffgf +
+            (1 - prop[[g]]$fresh) * newState[[g]][2]
 
         # Oxygen cannot go negative (Shafer, 2026-10-05).  Metabolic consumption
         # is modelled as a constant sink, which is right while there is oxygen
@@ -695,13 +846,17 @@ advanceClosedFormGas <- function(
 #' @param age patient age in years
 #' @param maximum simulation length in minutes
 #' @param cardiacOutput optional override in L/min; defaults to Gas Man's 5 L/min at 70 kg, scaled by (weight/70)^0.75
+#' @param uptakeEffect,circuit,deadSpace passed to \code{advanceClosedFormGas()}
 #'
 #' @returns \code{NULL} if the dose table contains no gases, otherwise the list
 #'   returned by \code{advanceClosedFormGas()}
 #' @export
 simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
-                          cardiacOutput = NULL, uptakeEffect = TRUE)
+                          cardiacOutput = NULL, uptakeEffect = TRUE,
+                          circuit = c("ideal", "semi-closed"),
+                          deadSpace = GAS_DEAD_SPACE_FRACTION)
 {
+  circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
 
   gasRows <- doseTable[isGasDrug(doseTable$Drug), , drop = FALSE]
@@ -722,6 +877,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
     age           = age,
     maximum       = maximum,
     cardiacOutput = cardiacOutput,
-    uptakeEffect  = uptakeEffect
+    uptakeEffect  = uptakeEffect,
+    circuit       = circuit,
+    deadSpace     = deadSpace
   )
 }

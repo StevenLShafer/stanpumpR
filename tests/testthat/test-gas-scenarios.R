@@ -27,6 +27,11 @@ gasScenarioEnv <- function() {
 
 pctOfPeak <- function(a, b, ref) 100 * max(abs(a - b)) / max(abs(ref))
 
+# How far the engine may sit from Gas Man at Gas Man's own 6-second tick, as a
+# percentage of each compartment's peak.  The gap is Gas Man's distance from
+# the limit of its own equations, largest just after a setting changes.
+GAS_SCENARIO_NATIVE_TOLERANCE <- 4
+
 
 test_that("there are five scenarios, each well formed", {
   env <- gasScenarioEnv()
@@ -43,6 +48,8 @@ test_that("there are five scenarios, each well formed", {
   # Scenario 2 delivers exactly 70% nitrous oxide once the vaporiser has
   # displaced 2% of the carrier, matching the Gas Man run it is compared with.
   set <- env$gasScenarioSettings(sc)
+  expect_equal(unique(set$Circuit), "Ideal")
+  expect_equal(unique(env$gasScenarioSettings(sc, "semi-closed")$Circuit), "Semi-closed")
   expect_equal(set$DEL_percent[set$Scenario == 2 & set$Agent == "Nitrous Oxide"], 70)
   # Scenario 5 uses Gas Man's allometric defaults at 100 kg.
   expect_equal(unique(set$VA_L_min[set$Scenario == 5]), 5.2268)
@@ -50,15 +57,15 @@ test_that("there are five scenarios, each well formed", {
 })
 
 
-test_that("the engine tracks Gas Man at its native tick in all five scenarios", {
+test_that("the engine tracks Gas Man at its native tick in all five scenarios, in both circuits", {
   env <- gasScenarioEnv()
-  for (s in env$gasEngineScenarios()) {
-    eng <- env$gasScenarioEngine(s)
-    gm  <- env$gasScenarioBaseline(s, dt = 0.1)
+  for (circuit in c("ideal", "semi-closed")) for (s in env$gasEngineScenarios()) {
+    eng <- env$gasScenarioEngine(s, circuit = circuit)
+    gm  <- env$gasScenarioBaseline(s, dt = 0.1, circuit = circuit)
     for (g in s$agents) for (cmp in env$GAS_SCENARIO_COMPARTMENTS) {
       e <- eng[eng$Agent == g, cmp]; m <- gm[gm$Agent == g, cmp]
-      # Worst seen when written: 2.9% (nitrous oxide, alveolar, scenario 2).
-      expect_lt(pctOfPeak(e, m, m), 4)
+      expect_lt(pctOfPeak(e, m, m), GAS_SCENARIO_NATIVE_TOLERANCE,
+                label = paste(circuit, "scenario", s$id, g, cmp, "percent of peak"))
     }
   }
 })
@@ -69,11 +76,12 @@ test_that("the engine lands on the limit Gas Man converges to", {
   sc <- env$gasEngineScenarios()
   # The 70 kg anchor and the 100 kg case: between them the plain wash-in and
   # the weight scaling.  A coarser extrapolation than the full run, for speed.
-  for (s in sc[c(1, 5)]) {
-    eng <- env$gasScenarioEngine(s)
-    lim <- env$gasScenarioLimit(s, refine = 4)
+  for (circuit in c("ideal", "semi-closed")) for (s in sc[c(1, 5)]) {
+    eng <- env$gasScenarioEngine(s, circuit = circuit)
+    lim <- env$gasScenarioLimit(s, refine = 4, circuit = circuit)
     for (cmp in env$GAS_SCENARIO_COMPARTMENTS)
-      expect_lt(pctOfPeak(eng[[cmp]], lim[[cmp]], lim[[cmp]]), 0.1)
+      expect_lt(pctOfPeak(eng[[cmp]], lim[[cmp]], lim[[cmp]]), 0.1,
+                label = paste(circuit, "scenario", s$id, cmp, "percent of peak"))
   }
 })
 

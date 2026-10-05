@@ -45,7 +45,7 @@ test_that("expmPade reproduces analytic matrix exponentials", {
 })
 
 
-test_that("closed-form advance matches independent RK4 integration", {
+test_that("closed-form advance matches independent RK4 integration (semi-closed circuit)", {
   body  <- getGasBody(70)
   props <- getGasProperties()
   p     <- props[props$gas == "sevoflurane", ]
@@ -72,7 +72,7 @@ test_that("closed-form advance matches independent RK4 integration", {
     y + dt/6 * (k1 + 2*k2 + 2*k3 + k4)
   }
 
-  sys <- gasSystemSoluble(p, body, Q, VA, Qco, Ffgf)
+  sys <- gasSystemSoluble(p, body, Q, VA, Qco, Ffgf, circuit = "semi-closed")
 
   for (horizon in c(1, 10, 60)) {
     y <- rep(0, 5)
@@ -107,13 +107,13 @@ test_that("alveolar oxygen steady state equals inspired minus 100*VO2/VA", {
 })
 
 
-test_that("circuit steady state is the flow-weighted average of fresh and alveolar gas", {
+test_that("semi-closed circuit: steady state is the flow-weighted average of fresh and alveolar gas", {
   body <- getGasBody(70)
   props <- getGasProperties()
   p <- props[props$gas == "nitrogen", ]
 
   Q <- 1; VA <- 5; Qco <- body$Q_cardiac; Ffgf <- 79.07
-  sys <- gasSystemSoluble(p, body, Q, VA, Qco, Ffgf)
+  sys <- gasSystemSoluble(p, body, Q, VA, Qco, Ffgf, circuit = "semi-closed")
 
   # Run to steady state, then check F_circ = (Q Ffgf + VA F_alv)/(Q + VA)
   y <- advanceGasSegment(rep(0, 5), sys$A, sys$b, 100000)
@@ -443,12 +443,156 @@ test_that("oxygen never goes negative, even with no ventilation", {
   expect_gt(min(sim$results$Y[sim$results$Drug == "oxygen"]), 10)
 })
 
-test_that("default ventilation is Gas Man's 4 L/min at 70 kg, scaled allometrically", {
+test_that("default ventilation is a minute ventilation whose alveolar part is Gas Man's 4 L/min", {
   # gasman.ini [Defaults] VA=4; GasDoc.cpp: m_fVA = m_fDfltVA * (weight/70)^0.75.
-  expect_equal(defaultGasVentilation(70), 4)
-  expect_equal(defaultGasVentilation(60), round(4 * (60 / 70)^0.75, 1))   # 3.6
-  expect_equal(defaultGasVentilation(140), round(4 * 2^0.75, 1))          # 6.7
+  # That is ALVEOLAR ventilation.  The dose table takes MINUTE ventilation, with
+  # a dead space of 30%, so the default is 4 / 0.7.
+  expect_equal(GAS_DEAD_SPACE_FRACTION, 0.3)
+  expect_equal(defaultGasVentilation(70), 5.7)
+  expect_equal(defaultGasVentilation(70) * (1 - GAS_DEAD_SPACE_FRACTION), 4, tolerance = 0.02)
+  expect_equal(defaultGasVentilation(60), round(4 * (60 / 70)^0.75 / 0.7, 1))   # 5.1
+  expect_equal(defaultGasVentilation(140), round(4 * 2^0.75 / 0.7, 1))          # 9.6
+  # With no dead space it is Gas Man's own number.
+  expect_equal(defaultGasVentilation(70, deadSpace = 0), 4)
   # Missing or invalid weight falls back to the 70 kg standard.
-  expect_equal(defaultGasVentilation(NA), 4)
-  expect_equal(defaultGasVentilation(-5), 4)
+  expect_equal(defaultGasVentilation(NA), 5.7)
+  expect_equal(defaultGasVentilation(-5), 5.7)
+})
+
+
+# --- The ideal circuit, the engine's default since 2026-10-05 ----------------
+# (Claude Code, Claude Fable 5.1; run on R 4.6.1.)
+
+test_that("the ideal circuit is the default", {
+  expect_equal(formals(advanceClosedFormGas)$circuit[[2]], "ideal")
+  expect_equal(formals(simulateGases)$circuit[[2]], "ideal")
+  expect_equal(formals(gasSystemSoluble)$circuit[[2]], "ideal")
+})
+
+test_that("ideal circuit: the fresh-gas fraction, with and without dead space", {
+  # No dead space: Gas Man's ideal circuit, threshold at alveolar ventilation.
+  expect_equal(gasFreshFraction(4, 4), 1)
+  expect_equal(gasFreshFraction(10, 4), 1)
+  expect_equal(gasFreshFraction(1, 4), 0.25)
+  expect_equal(gasFreshFraction(0, 4), 0)
+  expect_equal(gasFreshFraction(1, 4, "open"), 1)
+  expect_equal(gasFreshFraction(2, 0), 1)          # no ventilation: nothing rebreathed
+
+  # 30% dead space: minute ventilation 4, alveolar 2.8.  The threshold is at
+  # MINUTE ventilation, and f = Q / (VA + Q d) runs continuously up to it.
+  expect_equal(gasFreshFraction(4, 2.8, MV = 4), 1)
+  expect_equal(gasFreshFraction(3.999, 2.8, MV = 4), 1, tolerance = 1e-3)
+  expect_lt(gasFreshFraction(3.5, 2.8, MV = 4), 1)       # between VA and MV: still rebreathing
+  expect_equal(gasFreshFraction(1, 2.8, MV = 4), 1 / (2.8 + 0.3))
+  expect_equal(gasFreshFraction(0, 2.8, MV = 4), 0)
+  # More of each fresh litre reaches the alveoli's inspired gas than with no
+  # dead space at the same MV, because dead-space gas comes back unused.
+  expect_gt(gasFreshFraction(1, 2.8, MV = 4), gasFreshFraction(1, 4))
+})
+
+test_that("ideal circuit: no rebreathing once fresh gas flow reaches minute ventilation", {
+  mk <- function(Q) data.frame(Time = 0, Drug = c("oxygen", "ventilation", "sevoflurane"),
+                               Dose = c(Q, 4, 2))
+  final <- function(sim, j) utils::tail(sim$state$sevoflurane[, j], 1)
+
+  # At or above the minute ventilation the patient inspires the dial setting
+  # from the first breath, and how far above makes no difference at all.
+  at4  <- advanceClosedFormGas(mk(4),  maximum = 30)
+  at15 <- advanceClosedFormGas(mk(15), maximum = 30)
+  expect_equal(at4$state$sevoflurane[-1, 1], rep(2, nrow(at4$state$sevoflurane) - 1))
+  expect_equal(at4$state$sevoflurane, at15$state$sevoflurane)
+
+  # Between alveolar (2.8) and minute (4) ventilation there is still a little
+  # rebreathing: the threshold is the minute ventilation.
+  at3 <- advanceClosedFormGas(mk(3), maximum = 30)
+  expect_true(all(at3$state$sevoflurane[-1, 1] < 2))
+  expect_lt(final(at3, 2), final(at4, 2))
+
+  # Below it the inspired gas is f fresh + (1 - f) alveolar, at every moment.
+  at1 <- advanceClosedFormGas(mk(1), maximum = 30)
+  y <- at1$state$sevoflurane[-1, ]
+  f <- 1 / (2.8 + 1 * 0.3)
+  expect_equal(y[, 1], f * 2 + (1 - f) * y[, 2])
+  expect_lt(final(at1, 2), final(at3, 2))
+
+  # With no dead space the threshold is at the ventilation entered, and the
+  # blend is Gas Man's f = Q / VA.
+  gm1 <- advanceClosedFormGas(mk(1), maximum = 30, deadSpace = 0)
+  y <- gm1$state$sevoflurane[-1, ]
+  expect_equal(y[, 1], 0.25 * 2 + 0.75 * y[, 2])
+
+  # Alveolar ventilation is 70% of what is entered: the same alveolar
+  # ventilation given directly, with no dead space, gives the same patient.
+  alv <- advanceClosedFormGas(data.frame(Time = 0, Drug = c("oxygen", "ventilation", "sevoflurane"),
+                                         Dose = c(15, 2.8, 2)), maximum = 30, deadSpace = 0)
+  expect_equal(alv$state$sevoflurane[, 2:5], at15$state$sevoflurane[, 2:5])
+
+  # The mixing box, for contrast, is still rebreathing at Q = VA: half and half.
+  box <- advanceClosedFormGas(mk(4), maximum = 600, circuit = "semi-closed", deadSpace = 0)
+  expect_equal(final(box, 1), (4 * 2 + 4 * final(box, 2)) / 8, tolerance = 1e-3)
+  expect_lt(final(box, 1), 2)
+  # And it only approaches the ideal circuit as the flow becomes enormous.
+  flood <- advanceClosedFormGas(mk(1e6), maximum = 30, circuit = "semi-closed")
+  expect_equal(final(flood, 2), final(at4, 2), tolerance = 1e-4)
+})
+
+test_that("ideal circuit: the closed-form advance matches an independent RK4 integration", {
+  body  <- getGasBody(70)
+  props <- getGasProperties()
+  p     <- props[props$gas == "sevoflurane", ]
+  ltg   <- gasPartitionTissueGas(p)
+  Qco <- body$Q_cardiac; Ffgf <- 2; VA <- 4
+
+  for (Q in c(1, 6)) {
+    f <- min(1, Q / VA)
+    # Written straight from the header: the circuit is not a state.
+    deriv <- function(y) {
+      Fa <- y[1]; Fb <- y[2]; Fm <- y[3]; Ff <- y[4]
+      Fc <- f * Ffgf + (1 - f) * Fa
+      Fv <- body$f_brain * Fb + body$f_muscle * Fm + body$f_fat * Ff
+      lb <- p$lambda_blood
+      c((VA * (Fc - Fa) - lb * Qco * (Fa - Fv)) / body$V_alveolar,
+        body$f_brain  * Qco * lb * (Fa - Fb) / (body$V_brain  * ltg[["brain"]]),
+        body$f_muscle * Qco * lb * (Fa - Fm) / (body$V_muscle * ltg[["muscle"]]),
+        body$f_fat    * Qco * lb * (Fa - Ff) / (body$V_fat    * ltg[["fat"]]))
+    }
+    y <- rep(0, 4); h <- 0.001
+    for (n in seq_len(20 / h)) {
+      k1 <- deriv(y); k2 <- deriv(y + h / 2 * k1); k3 <- deriv(y + h / 2 * k2); k4 <- deriv(y + h * k3)
+      y <- y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+    }
+    sys <- gasSystemSoluble(p, body, Q, VA, Qco, Ffgf)       # ideal by default
+    expect_equal(sys$fresh, f)
+    closed <- advanceGasSegment(rep(0, 5), sys$A, sys$b, 20)
+    expect_equal(closed[2:5], y, tolerance = 1e-7, info = paste("Q =", Q))
+  }
+})
+
+test_that("ideal circuit: oxygen at low flow obeys the mass balance", {
+  # Below the threshold the patient rebreathes their own oxygen-poor gas.  What
+  # is vented is exhaled gas, so in the steady state the MIXED EXPIRED fraction
+  # is F_fgf - 100 VO2 / Q: what is delivered less what is consumed.
+  body <- getGasBody(70)
+  dose <- data.frame(Time = 0, Drug = c("oxygen", "ventilation"), Dose = c(1, 4))
+
+  # No dead space: exhaled gas is alveolar gas.
+  sim <- advanceClosedFormGas(dose, weight = 70, maximum = 240, deadSpace = 0)
+  alv <- utils::tail(sim$state$oxygen[, 2], 1)
+  expect_equal(alv, 100 - 100 * body$VO2 / 1, tolerance = 1e-3)
+  # Inspired is the blend, so it is below 100% even on pure oxygen.
+  expect_equal(utils::tail(sim$state$oxygen[, 1], 1), 0.25 * 100 + 0.75 * alv, tolerance = 1e-6)
+
+  # 30% dead space: exhaled gas is 70% alveolar and 30% inspired.
+  sim <- advanceClosedFormGas(dose, weight = 70, maximum = 240)
+  alv  <- utils::tail(sim$state$oxygen[, 2], 1)
+  insp <- utils::tail(sim$state$oxygen[, 1], 1)
+  expect_equal(0.7 * alv + 0.3 * insp, 100 - 100 * body$VO2 / 1, tolerance = 1e-3)
+  # Alveolar oxygen is the inspired value less consumption over ALVEOLAR ventilation.
+  expect_equal(alv, insp - 100 * body$VO2 / 2.8, tolerance = 1e-3)
+
+  # A flow below oxygen consumption cannot be survived, in the model as in life.
+  starved <- advanceClosedFormGas(
+    data.frame(Time = 0, Drug = c("oxygen", "ventilation"), Dose = c(0.1, 4)),
+    weight = 70, maximum = 600)
+  expect_equal(utils::tail(starved$state$oxygen[, 2], 1), 0)
 })

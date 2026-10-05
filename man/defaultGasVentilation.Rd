@@ -2,17 +2,21 @@
 % Please edit documentation in R/gasProperties.R
 \name{defaultGasVentilation}
 \alias{defaultGasVentilation}
-\title{Default alveolar ventilation for a patient, L/min}
+\title{Default minute ventilation for a patient, L/min}
 \usage{
-defaultGasVentilation(weight = 70)
+defaultGasVentilation(weight = 70, deadSpace = GAS_DEAD_SPACE_FRACTION)
 }
 \arguments{
 \item{weight}{patient weight, kg.  Falls back to 70 kg if missing or invalid.}
+
+\item{deadSpace}{dead space as a fraction of minute ventilation}
 }
 \value{
-ventilation in L/min, rounded to 0.1 so it reads cleanly in the
-dose table
+minute ventilation in L/min, rounded to 0.1 so it reads cleanly in
+the dose table
 }
 \description{
-Gas Man's default: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.
+The minute ventilation whose alveolar part is Gas Man's default alveolar
+ventilation: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.  With a
+dead space of 30\\% that is 5.7 L/min at 70 kg.
 }

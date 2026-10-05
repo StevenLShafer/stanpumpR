@@ -12,7 +12,9 @@ advanceClosedFormGas(
   body = NULL,
   cardiacOutput = NULL,
   resolution = 601,
-  uptakeEffect = TRUE
+  uptakeEffect = TRUE,
+  circuit = c("ideal", "semi-closed"),
+  deadSpace = GAS_DEAD_SPACE_FRACTION
 )
 }
 \arguments{
@@ -44,6 +46,15 @@ defaults true), couple the gases through their summed uptake, giving the
 concentration and second gas effect.  Set FALSE to isolate that term: with
 it off the gases do not influence one another at all, which is what makes
 the effect measurable as a difference rather than asserted.}
+
+\item{circuit}{"ideal", the default: no rebreathing once fresh gas flow
+reaches minute ventilation, and no circuit volume.  "semi-closed": Gas
+Man's default, the circuit as one well-mixed volume.  See the file header.}
+
+\item{deadSpace}{dead space as a fraction of minute ventilation, 0.3 by
+default.  The "ventilation" rows are minute ventilation; alveolar
+ventilation is that times \code{1 - deadSpace}.  Pass 0 to treat the rows
+as alveolar ventilation, as Gas Man does.}
 }
 \value{
 a list with \code{results}, a tidy data frame of
