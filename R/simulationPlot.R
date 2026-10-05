@@ -600,13 +600,19 @@ simulationPlot <- function(
     }
     recoveryLabels <- recoveryLabels[recoveryLabels$Drug != "",]
 
+    # `Wrap =`, not `Wrap <-`: the assignment form named the column after the
+    # whole expression, and the code below only found it because `$` on a data
+    # frame matches partial names.  (Fixed 2026-10-05.)
     arrows <- data.frame(
       Drug = plotTable$Drug,
       y = plotTable$endCe,
       new = "\u2190 Threshold",
       x = maximum,
-      Wrap <- as.character(plotTable$Wrap)
+      Wrap = as.character(plotTable$Wrap)
     )
+    # No threshold, no arrow.  Oxygen, the carrier gases and any panel without
+    # an endCe would otherwise get one pointing at zero.
+    arrows <- arrows[!is.na(arrows$y) & arrows$y > 0, , drop = FALSE]
 
     recoveryLabels$Wrap <- factor(recoveryLabels$Wrap, levels=wrapFactors, ordered = TRUE)
     recovery$Wrap <- factor(recovery$Wrap, levels=wrapFactors, ordered = TRUE)

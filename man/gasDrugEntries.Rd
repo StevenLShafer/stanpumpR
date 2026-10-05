@@ -4,7 +4,14 @@
 \alias{gasDrugEntries}
 \title{Turn inhaled-gas engine output into \code{drugs}-shaped entries}
 \usage{
-gasDrugEntries(sim, gasDose, drugDefaults = NULL, maximum = 60)
+gasDrugEntries(
+  sim,
+  gasDose,
+  drugDefaults = NULL,
+  maximum = 60,
+  washout = NULL,
+  age = 50
+)
 }
 \arguments{
 \item{sim}{output of \code{simulateGases()}, or NULL}
@@ -14,6 +21,14 @@ gasDrugEntries(sim, gasDose, drugDefaults = NULL, maximum = 60)
 \item{drugDefaults}{the drug defaults table, for colours and units}
 
 \item{maximum}{simulation length in minutes}
+
+\item{washout}{optional output of \code{gasWashout()}.  When supplied, each
+entry also carries the "time until threshold": for an agent, the time for
+its vessel-rich group tension to fall to the \code{endCe} threshold in
+\code{drugDefaults}; for MAC, the time for the summed MAC to fall to
+\code{GAS_MAC_THRESHOLD}.  See R/gasRecovery.R.}
+
+\item{age}{patient age in years, for the MAC threshold}
 }
 \value{
 a named list of drug-shaped entries, empty if there is nothing to

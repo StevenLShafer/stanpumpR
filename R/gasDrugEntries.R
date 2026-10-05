@@ -64,10 +64,17 @@ reportableGases <- function(gasDose)
 #' @param gasDose the gas rows of the dose table, used to decide what to report
 #' @param drugDefaults the drug defaults table, for colours and units
 #' @param maximum simulation length in minutes
+#' @param washout optional output of \code{gasWashout()}.  When supplied, each
+#'   entry also carries the "time until threshold": for an agent, the time for
+#'   its vessel-rich group tension to fall to the \code{endCe} threshold in
+#'   \code{drugDefaults}; for MAC, the time for the summed MAC to fall to
+#'   \code{GAS_MAC_THRESHOLD}.  See R/gasRecovery.R.
+#' @param age patient age in years, for the MAC threshold
 #' @returns a named list of drug-shaped entries, empty if there is nothing to
 #'   report
 #' @export
-gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60)
+gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
+                           washout = NULL, age = 50)
 {
   if (is.null(sim)) return(list())
   if (is.null(drugDefaults)) drugDefaults <- getDrugDefaultsGlobal()
@@ -89,6 +96,14 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60)
     # alveolar series: the end-tidal value is the whole of what we model.
     if (nrow(brn) == 0) brn <- alv
 
+    # Time until threshold.  Only the soluble agents wash out by the model in
+    # gasRecovery.R; oxygen has no threshold and no washout to speak of.
+    endCe <- drugDefaults$endCe[match(g, drugDefaults$Drug)]
+    if (length(endCe) != 1 || is.na(endCe)) endCe <- 0
+    recovery <- NULL
+    if (!is.null(washout) && g %in% names(washout$rate) && endCe > 0)
+      recovery <- gasRecoveryTime(washout, g, endCe)
+
     out[[g]] <- gasEntry(
       drug         = g,
       alveolar     = alv,
@@ -96,7 +111,9 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60)
       xout         = xout,
       drugDefaults = drugDefaults,
       unitLabel    = "%",
-      typical      = gasTypicalBand(g, props)
+      typical      = gasTypicalBand(g, props),
+      recovery     = recovery,
+      endCe        = if (is.null(recovery)) 0 else endCe
     )
   }
 
@@ -115,8 +132,15 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60)
         drugDefaults = drugDefaults,
         unitLabel    = "age-adjusted",
         typical      = c(lower = 0.8, typical = 1.0, upper = 1.3),
-        color        = "#000000"
+        color        = "#000000",
+        recovery     = if (is.null(washout)) NULL else
+          macRecoveryTime(washout, age, GAS_MAC_THRESHOLD),
+        endCe        = if (is.null(washout)) 0 else GAS_MAC_THRESHOLD
       )
+      # Kept so that applyOpioidMacInteraction() can redo the time until
+      # threshold against the opioid-reduced MAC without re-running anything.
+      out[["MAC"]]$washout <- washout
+      out[["MAC"]]$age     <- age
     }
   }
 
@@ -164,10 +188,14 @@ gasTypicalBand <- function(drug, props)
 #' @param unitLabel axis-label units for the facet, e.g. "\%" or "MAC"
 #' @param typical named vector of lower, typical, upper for the shaded band
 #' @param color optional colour override
+#' @param recovery optional "time until threshold" in minutes, one value per
+#'   row of \code{alveolar}; NULL for none
+#' @param endCe the threshold \code{recovery} refers to, in the units plotted
 #' @returns a list shaped like an entry of the `drugs` list
 #' @keywords internal
 gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
-                     unitLabel, typical, color = NULL)
+                     unitLabel, typical, color = NULL,
+                     recovery = NULL, endCe = 0)
 {
   if (is.null(color))
   {
@@ -205,7 +233,8 @@ gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
     Drug     = drug,
     Time     = xout,
     Ce       = stats::approx(brain$Time, ce, xout, rule = 2)$y,
-    Recovery = 0,
+    Recovery = if (is.null(recovery)) 0 else
+      stats::approx(alveolar$Time, recovery, xout, rule = 2)$y,
     MEAC     = 0,
     stringsAsFactors = FALSE
   )
@@ -220,11 +249,12 @@ gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
     lowerTypical        = unname(typical[["lower"]]),
     upperTypical        = unname(typical[["upper"]]),
     MEAC                = 0,
-    endCe               = 0,
+    endCe               = endCe,
     isGas               = TRUE,
     results             = results,
     equiSpace           = equiSpace,
-    max                 = data.frame(Drug = drug, Recovery = 0,
+    max                 = data.frame(Drug = drug,
+                                     Recovery = if (is.null(recovery)) 0 else max(recovery),
                                      Cp = maxCp, Ce = maxCe,
                                      stringsAsFactors = FALSE)
   )

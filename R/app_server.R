@@ -394,11 +394,28 @@ app_server <- function(input, output, session) {
         age     = age(),
         maximum = plotMaximum()
       )
+      gasRows <- DT[isGasDrug(DT$Drug), , drop = FALSE]
+
+      # "Time until threshold" for the gases is only worked out when it is
+      # being shown: it is an eigen-decomposition per gas and a root-find per
+      # plotted point, which is cheap but not free.
+      washout <- NULL
+      if (isTRUE(plotRecovery()) && !is.null(sim)) {
+        washout <- gasWashout(
+          sim,
+          data.frame(Time = as.numeric(gasRows$Time), Drug = gasRows$Drug,
+                     Dose = as.numeric(gasRows$Dose)),
+          weight = weight()
+        ) |> profileCode("gasWashout() in gases()")
+      }
+
       gasDrugEntries(
         sim,
-        DT[isGasDrug(DT$Drug), , drop = FALSE],
+        gasRows,
         drugDefaults(),
-        plotMaximum()
+        plotMaximum(),
+        washout = washout,
+        age     = age()
       )
     }, name = "gases() reactive")
   })

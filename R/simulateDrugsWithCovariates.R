@@ -9,7 +9,8 @@
 #' @param age age in years
 #' @param sex sex as string: "female" or "male"
 #' @param maximum maximum length of simulation in minutes
-#' @param plotRecovery (current broken, leave set to FALSE) should recovery parameters be calculated?
+#' @param plotRecovery should the "time until threshold" be calculated?  See
+#'   \code{simCpCe()}.
 #'
 #' @returns a list of data frames with the output of the a single drug simulation
 #'

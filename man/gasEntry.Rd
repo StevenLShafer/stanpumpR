@@ -12,7 +12,9 @@ gasEntry(
   drugDefaults,
   unitLabel,
   typical,
-  color = NULL
+  color = NULL,
+  recovery = NULL,
+  endCe = 0
 )
 }
 \arguments{
@@ -29,6 +31,11 @@ gasEntry(
 \item{typical}{named vector of lower, typical, upper for the shaded band}
 
 \item{color}{optional colour override}
+
+\item{recovery}{optional "time until threshold" in minutes, one value per
+row of \code{alveolar}; NULL for none}
+
+\item{endCe}{the threshold \code{recovery} refers to, in the units plotted}
 }
 \value{
 a list shaped like an entry of the \code{drugs} list

@@ -159,7 +159,22 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
 
   series <- mac$results[mac$results$Site == "Plasma", c("Time", "Y")]
   U <- stats::approx(opioid$Time, opioid$U, series$Time, rule = 2)$y
-  series$Y <- series$Y / (1 - opioidMacReduction(U))
+  R <- opioidMacReduction(U)
+  series$Y <- series$Y / (1 - R)
+
+  # Time until threshold, if it is being shown.  The opioid-adjusted MAC is the
+  # unadjusted MAC divided by (1 - R), so it falls to the threshold when the
+  # unadjusted MAC falls to threshold * (1 - R).
+  #
+  # APPROXIMATION: R is held at its value at the moment delivery stops.  In
+  # truth the opioid would stop too and its effect would wane, so MAC would
+  # recover and the adjusted value fall FASTER than this says.  Doing that
+  # properly needs the opioids' own washout curves, which the intravenous
+  # engines do not expose; until they do, this errs on the side of a longer
+  # time.
+  recovery <- NULL
+  if (!is.null(mac$washout))
+    recovery <- macRecoveryTime(mac$washout, mac$age, mac$endCe * (1 - R))
 
   # Rebuilt through gasEntry() so that the normalisation series, the equispaced
   # values behind the hover readout, and the maxima all follow.
@@ -172,7 +187,11 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
     unitLabel    = "opioid-adjusted",
     typical      = c(lower = mac$lowerTypical, typical = mac$typical,
                      upper = mac$upperTypical),
-    color        = mac$Color
+    color        = mac$Color,
+    recovery     = recovery,
+    endCe        = mac$endCe
   )
+  gasEntries[["MAC"]]$washout <- mac$washout
+  gasEntries[["MAC"]]$age     <- mac$age
   gasEntries
 }
