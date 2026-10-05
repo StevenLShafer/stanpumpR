@@ -304,6 +304,30 @@ default alveolar ventilation: 4 L/min at 70 kg, scaled the same way. Entering
 nitrous oxide also adds an oxygen row, starting at 21% of the fresh gas. Gas
 flows and ventilation are rounded to the nearest 0.1 L/min.
 
+### Where the engine deliberately differs from Gas Man
+
+The parameters and defaults are Gas Man's, and the intent for now is to give the
+same answers Gas Man gives. Five differences are deliberate (confirmed by
+S. Shafer, 2026-10-05) and will remain:
+
+| | Gas Man | stanpumpR | Why |
+|---|---|---|---|
+| MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
+| MAC across agents | Each agent reported separately | A single MAC series, the sum of each potent agent's alveolar fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
+| Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |
+| Starting nitrogen | 80% (`Ambient=80`) | 78.07%, with oxygen at 20.93% | Room air, so that the gas fractions sum correctly once oxygen is modelled |
+| Integration | Each time step is split into sequential sub-updates | Each step is advanced exactly, by matrix exponential | Accuracy does not then depend on the step size |
+
+Consequences worth knowing when comparing the two side by side:
+
+- To reproduce a Gas Man MAC value, set the age to 40, where the age adjustment
+  is exactly 1, and compare one agent at a time.
+- The two integrations do not agree digit for digit at any fixed step size. They
+  converge to a common answer as the step shrinks; `tests/testthat/test-gas-convergence.R`
+  checks this.
+- Nitrogen differs slightly throughout because it starts from a different value.
+  It is not an anaesthetic here and is not summed into MAC.
+
 ---
 
 ## Time display

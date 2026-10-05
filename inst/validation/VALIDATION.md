@@ -179,3 +179,50 @@ of 2.2e-07, now independent of output spacing where before it was not.
 
 The bug was confined to `inst/validation/gasman_baseline_standalone.R`.
 `R/advanceGasManBaseline.R` takes VA as an input and never reconstructs it.
+
+## 2026-10-05 — defaults aligned with Gas Man; deliberate differences recorded
+
+Recorded by Claude Code (Claude Fable 5.1) at the direction of S. Shafer, who
+stated the policy: *identical with Gas Man for now, to be updated with more
+current data later.* The Gas Man source was read directly for the first time on
+this machine, from `github.com/rasman/gasmanonline`, `gasman_api/gasmanAPI`
+(`gasman.ini`, `GasDoc.cpp`, `GasGlobal.h`).
+
+### Changed to match Gas Man
+
+| Quantity | Was | Now | Gas Man source |
+|---|---|---|---|
+| Default alveolar ventilation | none (0, i.e. apnea, unless a row was entered) | 4 L/min at 70 kg x (weight/70)^0.75 | `[Defaults] VA=4`; `m_fVA = m_fDfltVA * factor` |
+| Cardiac output | 75 mL/kg, linear (5.25 L/min at 70 kg) | 5 L/min at 70 kg x (weight/70)^0.75 | `[Defaults] CO=5`; `m_fCO = m_fDfltCO * factor` |
+
+where `factor = sqrt(sqrt(f * f * f))` with `f = weight / 70`. Compartment
+volumes were already scaled linearly with weight on both sides
+(`fWtFactor = fWeight / STD_WEIGHT`), and the circuit volume is unscaled on both.
+
+The earlier concordance runs in this file forced cardiac output to 5.0 on our
+side, so their results are unaffected by the change of default.
+
+### Deliberate differences, confirmed and retained
+
+Shafer reviewed these on 2026-10-05 and judged each a good decision. They are
+not defects to be reconciled, and a comparison against Gas Man must allow for
+them:
+
+1. **Age-adjusted MAC.** `macForAge()` applies Mapleson's relation; Gas Man uses
+   `m_fMAC` raw. Compare at age 40, where the adjustment is exactly 1.
+2. **Summed MAC.** One MAC series, additive across potent agents; Gas Man emits
+   one row per agent and never sums them. Nitrogen is excluded from the sum.
+3. **Oxygen is modelled**, with metabolic consumption (3.5 mL/kg/min) and a
+   floor at zero; Gas Man does not model oxygen, so there is no reference for
+   it. Oxygen is excluded from the uptake coupling, as before.
+4. **Starting nitrogen is 78.07%**, alongside 20.93% oxygen, rather than Gas
+   Man's `Ambient=80`.
+5. **Exact integration.** Each sub-step is advanced by matrix exponential where
+   Gas Man splits it. The two converge as the step shrinks and do not agree
+   digit for digit at a fixed step; see `tests/testthat/test-gas-convergence.R`.
+
+### Not established by this entry
+
+No new run against Gas Man itself was made today. In particular the allometric
+defaults have been transcribed from the source and unit-tested, but not checked
+against Gas Man output at a weight other than 70 kg.
