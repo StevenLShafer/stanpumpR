@@ -304,6 +304,30 @@ default alveolar ventilation: 4 L/min at 70 kg, scaled the same way. Entering
 nitrous oxide also adds an oxygen row, starting at 21% of the fresh gas. Gas
 flows and ventilation are rounded to the nearest 0.1 L/min.
 
+### Opioids and MAC
+
+Opioids lower MAC. Under **Graph Options**, ticking *Include opioid - MAC
+interaction* reports the MAC series in multiples of the opioid-reduced MAC, so
+the same end-tidal concentration reads as more MAC when an opioid is on board.
+The gas concentrations themselves do not change.
+
+The opioids are combined by adding their effect-site concentrations, each as a
+multiple of that opioid's MEAC: U = sum of Ce / MEAC. This is the total shown in
+the % MEAC plot. The fractional reduction in MAC is then
+
+    R = Emax x U^gamma / (U50^gamma + U^gamma)
+
+and the MAC series is divided by (1 - R). Nitrous oxide is already part of the
+MAC series, so it is included.
+
+**This is an approximate model.** The published studies of opioid MAC reduction
+do not agree well with one another. The parameters in use (Emax 0.9, U50 1.76,
+gamma 1) are a rough fit to nine published points: they give a 50% reduction in
+MAC at about 2.2 times MEAC and a ceiling of 90%, and they fall short of the
+published reductions at low opioid levels. They are expected to be replaced.
+The comparison with the published points is in the header of
+`R/opioidMacInteraction.R`.
+
 ### Where the engine deliberately differs from Gas Man
 
 The parameters and defaults are Gas Man's, and the intent for now is to give the

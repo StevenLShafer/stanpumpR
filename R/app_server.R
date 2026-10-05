@@ -431,7 +431,17 @@ app_server <- function(input, output, session) {
       # The inhaled gases are simulated as one group and appended as their own
       # entries, so that simulationPlot() treats them like any other series and
       # a dose table containing only inhaled agents still plots.
-      c(newDrugs, gases())
+      gasEntries <- gases()
+
+      # Optionally let the opioids lower MAC.  Done here rather than in gases()
+      # because it needs the opioids' effect-site concentrations, and this is
+      # the first place both are in hand; it also keeps the gas simulation from
+      # re-running when only the tick box or an opioid dose changes.
+      if (isTRUE(input$opioidMacInteraction)) {
+        gasEntries <- applyOpioidMacInteraction(gasEntries, newDrugs)
+      }
+
+      c(newDrugs, gasEntries)
     }, name = "drugs() reactive")
   })
 
