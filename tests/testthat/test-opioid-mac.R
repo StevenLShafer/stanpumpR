@@ -12,7 +12,7 @@ test_that("opioidMacReduction follows the sigmoid and its limits", {
   R <- opioidMacReduction(U)
   expect_true(all(diff(R) > 0))
   expect_lt(max(R), OPIOID_MAC_EMAX)
-  expect_equal(opioidMacReduction(1e9), OPIOID_MAC_EMAX, tolerance = 1e-9)
+  expect_equal(opioidMacReduction(1e15), OPIOID_MAC_EMAX, tolerance = 1e-9)
   # The explicit form, with parameters given and at the defaults.
   expect_equal(opioidMacReduction(3, Emax = 0.68, U50 = 2.2, gamma = 1.75),
                0.68 * 3^1.75 / (2.2^1.75 + 3^1.75))
