@@ -18,8 +18,9 @@ gasCircuitBlend(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
 \item{u}{summed uptake of gas from the alveoli, L/min; only a positive value
 adds to what is inspired}
 
-\item{cE}{carbon dioxide as a fraction (0 to 1) of exhaled gas, removed from
-whatever is rebreathed}
+\item{cE}{carbon dioxide as a fraction of exhaled gas, removed from whatever
+is rebreathed.  Capped at \code{GAS_MAX_EXHALED_CO2}, which keeps the blend
+physical at any ventilation.}
 }
 \value{
 a list with \code{fresh} and \code{alveolar}

@@ -263,7 +263,8 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
       uO2 <- 0; cE <- 0
       if (rebreathing && oxygenUptake) {
         uO2 <- body$VO2 * (1 - GAS_RESPIRATORY_QUOTIENT)
-        if (s$MV > 0) cE <- GAS_RESPIRATORY_QUOTIENT * body$VO2 / s$MV
+        if (s$MV > 0) cE <- min(GAS_RESPIRATORY_QUOTIENT * body$VO2 / s$MV,
+                                GAS_MAX_EXHALED_CO2)
       }
       A <- gasSystemSoluble(props[props$gas == g, ], body, s$Q, s$VA, Qco,
                             Ffgf = 0, totUptake = uO2, circuit = washoutCircuit,

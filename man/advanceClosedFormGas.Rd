@@ -64,7 +64,10 @@ takes that coupling, and the absorber removes carbon dioxide from
 rebreathed gas.  See (4a) in the file header.  FALSE restores the earlier
 behaviour, in which oxygen was a sink with no effect on volume; Gas Man has
 no oxygen, so comparisons with it pass FALSE.  Has no effect when
-\code{uptakeEffect} is FALSE.}
+\code{uptakeEffect} is FALSE, and is switched off for the semi-closed
+circuit, whose well-mixed-box model has no carbon dioxide absorber to put
+the volume balance in: that circuit exists only for comparison with Gas
+Man, which has no oxygen.}
 }
 \value{
 a list with \code{results}, a tidy data frame of

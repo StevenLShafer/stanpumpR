@@ -543,8 +543,30 @@ test_that("ideal circuit: no rebreathing once fresh gas flow covers what is insp
   expect_equal(final(box, 1), (4 * 2 + 4 * final(box, 2)) / 8, tolerance = 1e-3)
   expect_lt(final(box, 1), 2)
   # And it only approaches the ideal circuit as the flow becomes enormous.
+  # (The semi-closed circuit has no oxygen volume model, so compare with the
+  # ideal circuit run the same way.)
   flood <- advanceClosedFormGas(mk(1e6), maximum = 30, circuit = "semi-closed")
-  expect_equal(final(flood, 2), final(at8, 2), tolerance = 1e-4)
+  ideal <- advanceClosedFormGas(mk(8), maximum = 30, oxygenUptake = FALSE)
+  expect_equal(final(flood, 2), final(ideal, 2), tolerance = 1e-4)
+  # Asking for it on the semi-closed circuit is the same as not.
+  expect_equal(flood$state, advanceClosedFormGas(mk(1e6), maximum = 30, circuit = "semi-closed",
+                                                 oxygenUptake = FALSE)$state)
+})
+
+test_that("a ventilation too small to clear its own carbon dioxide still gives a physical blend", {
+  # VCO2 at 70 kg is 0.196 L/min; at a minute ventilation of 0.2 L/min the
+  # exhaled gas would be nearly all carbon dioxide and the uncapped blend would
+  # turn negative.  The cap keeps every fraction between 0 and the dial.
+  body <- getGasBody(70)
+  expect_lt(GAS_RESPIRATORY_QUOTIENT * body$VO2 / 0.2, 1.01)
+  bl <- gasCircuitBlend(0.1, 0.14, 0.2, u = 0.05, cE = 0.98)
+  expect_true(bl$fresh > 0 && bl$fresh < 1 && bl$alveolar > 0)
+  dose <- data.frame(Time = 0, Drug = c("oxygen", "ventilation", "sevoflurane"),
+                     Dose = c(0.1, 0.2, 2))
+  sim <- advanceClosedFormGas(dose, weight = 70, maximum = 60)
+  expect_true(all(sim$state$sevoflurane >= 0))
+  expect_true(all(sim$state$sevoflurane[, 1:2] <= 2 + 1e-9))
+  expect_true(all(sim$results$Y[sim$results$Drug == "MAC"] >= 0))
 })
 
 test_that("the circuit blend: limits, and what uptake and absorbed carbon dioxide do to it", {

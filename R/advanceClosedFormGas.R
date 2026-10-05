@@ -360,8 +360,9 @@ gasFreshFraction <- function(Q, VA, circuit = "ideal", MV = VA)
 #' @param circuit "ideal" or "open"
 #' @param u summed uptake of gas from the alveoli, L/min; only a positive value
 #'   adds to what is inspired
-#' @param cE carbon dioxide as a fraction (0 to 1) of exhaled gas, removed from
-#'   whatever is rebreathed
+#' @param cE carbon dioxide as a fraction of exhaled gas, removed from whatever
+#'   is rebreathed.  Capped at \code{GAS_MAX_EXHALED_CO2}, which keeps the blend
+#'   physical at any ventilation.
 #' @returns a list with \code{fresh} and \code{alveolar}
 #' @keywords internal
 gasCircuitBlend <- function(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
@@ -369,8 +370,13 @@ gasCircuitBlend <- function(Q, VA, MV = VA, circuit = "ideal", u = 0, cE = 0)
   inspired <- MV + max(u, 0)
   if (circuit == "open" || MV <= 0 || Q >= inspired)
     return(list(fresh = 1, alveolar = 0))
+  cE <- min(max(cE, 0), GAS_MAX_EXHALED_CO2)
   k <- (inspired - Q) / (MV * (1 - cE))
   D <- inspired - k * (MV - VA)
+  # With cE capped and the dead space under half of the minute ventilation, D
+  # is positive; this is a guard against a future change to either, not a
+  # branch that runs.
+  if (D <= 0) stop("ventilation and dead space do not permit a physical circuit blend")
   list(fresh = Q / D, alveolar = k * VA / D)
 }
 
@@ -700,7 +706,10 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 #'   rebreathed gas.  See (4a) in the file header.  FALSE restores the earlier
 #'   behaviour, in which oxygen was a sink with no effect on volume; Gas Man has
 #'   no oxygen, so comparisons with it pass FALSE.  Has no effect when
-#'   \code{uptakeEffect} is FALSE.
+#'   \code{uptakeEffect} is FALSE, and is switched off for the semi-closed
+#'   circuit, whose well-mixed-box model has no carbon dioxide absorber to put
+#'   the volume balance in: that circuit exists only for comparison with Gas
+#'   Man, which has no oxygen.
 #' @param deadSpace dead space as a fraction of minute ventilation, 0.3 by
 #'   default.  The "ventilation" rows are minute ventilation; alveolar
 #'   ventilation is that times \code{1 - deadSpace}.  Pass 0 to treat the rows
@@ -728,6 +737,10 @@ advanceClosedFormGas <- function(
 )
 {
   circuit <- match.arg(circuit)
+  # The semi-closed circuit is Gas Man's mixing box, kept for comparison with a
+  # program that has no oxygen.  It has no absorber in its volume balance, so
+  # the oxygen volume model is not applied to it rather than applied wrongly.
+  if (circuit == "semi-closed") oxygenUptake <- FALSE
   if (is.null(body)) body <- getGasBody(weight)
   Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
 
@@ -836,7 +849,7 @@ advanceClosedFormGas <- function(
       VO2  <- if (consuming) body$VO2 else 0
       VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
       u <- u + VO2 - VCO2
-      buildProp(u, u, if (s$MV > 0) VCO2 / s$MV else 0)
+      buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0)
     }
 
     prop <- if (uptakeEffect) NULL else buildProp(0)

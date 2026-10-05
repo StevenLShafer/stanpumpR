@@ -263,6 +263,13 @@ GAS_DEAD_SPACE_FRACTION <- 0.3
 # NOT YET CONFIRMED BY SHAFER (Claude Code, Claude Fable 5.1, 2026-10-05).
 GAS_RESPIRATORY_QUOTIENT <- 0.8
 
+# The most of the exhaled gas that is taken to be carbon dioxide.  The carbon
+# dioxide fraction is VCO2 / MV, which is a few percent at any ventilation a
+# patient could live with, but at a minute ventilation of a fraction of a litre
+# it would exceed one and the circuit blend would go negative.  Capped here;
+# such a patient is dead of hypercapnia whatever the gas model says.
+GAS_MAX_EXHALED_CO2 <- 0.5
+
 
 # Default ventilation, used when a gas is in the dose table but no usable
 # ventilation setting has been entered.  It is a MINUTE ventilation, chosen so
