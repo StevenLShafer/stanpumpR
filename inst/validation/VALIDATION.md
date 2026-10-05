@@ -278,9 +278,9 @@ app's output step is 0.3 min; alveolar at that instant is within 0.12%.
 
 ### What this does and does not establish
 
-* **No new run of Gas Man itself was made.** "gasman" here is the baseline,
-  which earlier entries tie to Gas Man to 6.2e-04. Scenarios 3, 4 and 5 have
-  never been run in Gas Man; the settings file exists so that they can be.
+* When this table was first written no run of Gas Man itself had been made;
+  "gasman" above is the baseline. Gas Man itself was run later the same day --
+  see the next section.
 * **Nitrogen must be added as an agent in Gas Man for a like-for-like run.** The
   app engine always carries nitrogen and its washout feeds the uptake coupling.
   Gas Man does so only if nitrogen is one of the agents. Epstein's September
@@ -288,7 +288,9 @@ app's output step is 0.3 min; alveolar at that instant is within 0.12%.
   comparable with the "gasman" column here: with nitrogen, alveolar sevoflurane
   in scenario 1 is 1.1791 at 5 min and 1.5887 at 30 min; without, as in the
   September grid, 1.1852 and 1.5931. That is a sixth difference between the app
-  and Gas Man as usually run, beyond the five recorded earlier today.
+  and Gas Man as usually run, beyond the five recorded earlier today. **Shafer
+  reviewed it the same day and decided the app will retain nitrogen**; it is
+  recorded with the other five in `docs/users-guide.md`.
 * For the comparison the baseline's nitrogen starts at 78.07%, as the engine's
   does, not Gas Man's 80%. A run in Gas Man itself would start at 80 unless
   `Ambient` is edited.
@@ -296,3 +298,77 @@ app's output step is 0.3 min; alveolar at that instant is within 0.12%.
 * `tests/testthat/test-gas-scenarios.R` guards a fast subset: all five against
   the native tick (within 4%), and scenarios 1 and 5 against the limit (within
   0.1%).
+
+### Run against Gas Man itself, the same day
+
+Shafer asked for scenarios 3, 4 and 5 to be tested against the Gas Man C++.
+Claude Code (Claude Fable 5.1) built Gas Man's own command-line runner,
+`gasman_run`, from source -- `github.com/rasman/gasmanonline`, `gasman_api`,
+commit `d3a2dd3` -- on `Grey` with the Rtools 4.5 g++ and cmake, and ran all
+five scenarios through it. Neither the source nor the binary is in this
+repository; the scenario files given to it are in `scenarios_engine/`, and
+`runGasEngineScenarios(gasmanExe = , gasmanIni = )` repeats the run.
+
+Conditions: `dt_ms` 6000, semi-closed, nitrogen added as an agent at 0%
+delivered, and `Ambient` for nitrogen set to 78.07 in a private copy of
+`gasman.ini` so that both sides start from room air. Output read at the 6-second
+ticks; `gasman_run` prints six significant figures.
+
+**Check that the build is Gas Man.** Scenario 1 without nitrogen, on the stock
+`gasman.ini`, gives alveolar sevoflurane 1.1852 at 5 min and 1.59315 at 30 min,
+which are Epstein's September values (1.185200, 1.593143) from the web edition.
+
+**The R baseline restates Gas Man on the new scenarios too.** Worst difference
+between `advanceGasManBaseline()` and `gasman_run`, as a percentage of each
+compartment's peak:
+
+| # | CKT | ALV | VRG | MUS | FAT |
+|---|---|---|---|---|---|
+| 1 | 0.0003 | 0.0003 | 0.0004 | 0.0024 | 0.061 |
+| 2 | 0.0002 | 0.0003 | 0.0002 | 0.0022 | 0.061 |
+| 3 | 0.0004 | 0.0005 | 0.0006 | 0.0018 | 0.060 |
+| 4 | 0.0004 | 0.0005 | 0.0004 | 0.0008 | 0.036 |
+| 5 | 0.0001 | 0.0002 | 0.0002 | 0.0031 | 0.060 |
+
+That is the same picture as September -- agreement to the printed precision
+everywhere but fat, where Gas Man's float32 accumulation shows -- now extended
+to setting changes, emergence, low flow after a flow change, and 100 kg. These
+had been listed as untested since the first entry in this file.
+
+**The app engine against Gas Man itself.** Worst difference over all
+compartments and times, percent of peak:
+
+| # | Agent | engine vs Gas Man C++ | engine vs limit |
+|---|---|---|---|
+| 1 | sevoflurane | 2.1% | 0.001% |
+| 2 | sevoflurane | 2.4% | 0.08% |
+| 2 | nitrous oxide | 2.9% | 0.08% |
+| 3 | sevoflurane | 1.1% | 0.17% |
+| 4 | desflurane | 2.3% | 0.004% |
+| 5 | isoflurane | 1.6% | 0.001% |
+
+These are the baseline figures of the table above to two digits, as they must
+be given how closely the baseline tracks the real program. Scenario 3, alveolar
+sevoflurane, percent of one atmosphere:
+
+| min | engine | Gas Man C++ | limit |
+|---|---|---|---|
+| 30 | 1.5514 | 1.5500 | 1.5514 |
+| 60 | 2.3875 | 2.3861 | 2.3875 |
+| 150 | 1.2157 | 1.2156 | 1.2157 |
+| 155 | 0.3735 | 0.3849 | 0.3734 |
+| 180 | 0.1390 | 0.1396 | 0.1390 |
+
+The largest gap in relative terms is in emergence: five minutes after the
+vaporiser is turned off Gas Man reads 3% above the engine, and the engine is on
+the limit. That is Gas Man's 6-second tick lagging a fast change, not a
+modelling difference.
+
+**Observed in passing:** `gasman_run` looked for `gasman.ini` in the current
+directory even when `--ini` gave another path, so the runner here changes to the
+work directory first.
+
+**Still not established.** The web and desktop editions were not run, only the
+API build; Epstein has reported the API about 8e-05 from the web edition. Open,
+closed and ideal circuits, liquid injection and flush remain untested, as do
+agents other than sevoflurane, isoflurane, desflurane and nitrous oxide.
