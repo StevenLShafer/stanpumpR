@@ -114,6 +114,7 @@ app_server <- function(input, output, session) {
   output$doseTableHTML <- rhandsontable::renderRHandsontable({
     req(doseTableDraft())
     req(validateDoseTableInput(doseTableDraft()))
+    doseTableRefresh()
 
     profileCode({
       outputComments("Rendering doseTableHTML")
@@ -216,7 +217,27 @@ app_server <- function(input, output, session) {
   doseTableUndo <- reactiveVal(list())
   doseTableRedo <- reactiveVal(list())
 
+  # Bumped to force the dose table to re-render when applyGasTableRules()
+  # puts back exactly what the draft already held (e.g. the user deleted the
+  # ventilation row): the reactiveVal would not invalidate on an identical value,
+  # and the table on screen would then disagree with the draft.
+  doseTableRefresh <- reactiveVal(0)
+
+  # Weight for the default ventilation.  Must not block or error if the weight
+  # box is momentarily empty, so fall back to 70 kg.
+  gasVentilationWeight <- function() {
+    tryCatch(isolate(weight()), error = function(e) 70)
+  }
+
   observeEvent(doseTable(), {
+    # Every route into doseTable() -- Apply Changes, the add-dose dialog,
+    # Suggest Dosing, restoring a bookmark -- passes through here, so this is
+    # where the gas rules (see applyGasTableRules()) are enforced.
+    fixed <- applyGasTableRules(doseTable(), gasVentilationWeight())
+    if (!identicalTable(fixed, doseTable())) {
+      doseTable(fixed)
+      return()
+    }
     doseTableDraft(doseTable())
   })
 
@@ -290,6 +311,14 @@ app_server <- function(input, output, session) {
         # add empty row at the bottom if needed
         if (nzchar(utils::tail(data, 1)$Drug)) {
           data[nrow(data) + 1, ] <- ""
+        }
+
+        # As soon as a gas is entered, apply the gas rules: oxygen alongside
+        # nitrous oxide, flows rounded to 0.1 L/min, and a ventilation row.
+        withVentilation <- applyGasTableRules(data, gasVentilationWeight())
+        if (!identicalTable(withVentilation, data)) {
+          data <- withVentilation
+          doseTableRefresh(doseTableRefresh() + 1)
         }
 
         doseTableDraft(data)

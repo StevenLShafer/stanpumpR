@@ -107,6 +107,65 @@ test_that("validateDoseTableInput: accepts the inhaled gas units", {
   expect_true(validateDoseTableInput(rows, gas_defaults))
 })
 
+test_that("ensureGasVentilation: leaves a table with no gases alone", {
+  expect_identical(ensureGasVentilation(doseTableInit, 70), doseTableInit)
+  # A ventilation row on its own is not a gas being given.
+  only_vent <- data.frame(Drug = c("ventilation", ""), Time = c("0", ""), Dose = c("0", ""), Units = c("L/min", ""))
+  expect_identical(ensureGasVentilation(only_vent, 70), only_vent)
+})
+
+test_that("ensureGasVentilation: adds a ventilation row as soon as a gas is named", {
+  # Only the drug name typed so far: no time, dose or units yet.
+  DT <- data.frame(
+    Drug  = c("propofol", "nitrousOxide", "", ""),
+    Time  = c("0", "", "", ""),
+    Dose  = c("0", "", "", ""),
+    Units = c("mg", "", "", "")
+  )
+  out <- ensureGasVentilation(DT, weight = 60)
+  expect_equal(nrow(out), nrow(DT) + 1L)
+  # Inserted below the last filled row, above the trailing blanks.
+  expect_equal(out$Drug, c("propofol", "nitrousOxide", "ventilation", "", ""))
+  expect_equal(out[3, "Time"], "0")
+  expect_equal(out[3, "Units"], "L/min")
+  expect_equal(as.numeric(out[3, "Dose"]), defaultGasVentilation(60))
+  expect_gt(as.numeric(out[3, "Dose"]), 0)
+  expect_true(validateDoseTableInput(out))
+  # Idempotent: a second pass changes nothing.
+  expect_identical(ensureGasVentilation(out, weight = 60), out)
+})
+
+test_that("ensureGasVentilation: replaces a zero, blank or negative ventilation, keeps a positive one", {
+  mk <- function(dose, time = "0", units = "L/min") data.frame(
+    Drug = c("oxygen", "ventilation", ""), Time = c("0", time, ""),
+    Dose = c("2", dose, ""), Units = c("L/min", units, "")
+  )
+  for (bad in c("0", "", "-3", "abc")) {
+    out <- ensureGasVentilation(mk(bad), weight = 70)
+    expect_equal(nrow(out), 3L)
+    expect_equal(as.numeric(out$Dose[2]), defaultGasVentilation(70))
+  }
+  # Blank time and units are filled in too, or the row would be dropped on cleaning.
+  out <- ensureGasVentilation(mk("", time = "", units = ""), weight = 70)
+  expect_equal(out[2, "Time"], "0")
+  expect_equal(out[2, "Units"], "L/min")
+
+  expect_identical(ensureGasVentilation(mk("6"), weight = 70), mk("6"))
+})
+
+test_that("ensureGasVentilation: with the default in place the gases are actually delivered", {
+  DT <- data.frame(
+    Drug  = c("nitrousOxide", "oxygen", "air"),
+    Time  = c("0", "0", "0"),
+    Dose  = c("2", "1", "1"),
+    Units = c("L/min", "L/min", "L/min")
+  )
+  sim <- simulateGases(cleanDoseTable(ensureGasVentilation(DT, weight = 60)), weight = 60, maximum = 60)
+  alv <- function(g) sim$results$Y[sim$results$Drug == g & sim$results$Site == "Alveolar"]
+  expect_gt(utils::tail(alv("nitrousOxide"), 1), 30)
+  expect_gt(min(alv("oxygen")), 15)
+})
+
 test_that("validateDoseTableInput: rejects wrong doses", {
   ok <- data.frame(Drug = "propofol", Time = "0", Dose = "0", Units = "mg")
   expect_true(validateDoseTableInput(ok, sample_drug_defaults))
@@ -388,4 +447,78 @@ test_that("drugHasNonZeroDoses detects any non-zero dose for a drug", {
   expect_false(drugHasNonZeroDoses(dt, "fentanyl"))
   expect_false(drugHasNonZeroDoses(dt, "ketamine"))
   expect_false(drugHasNonZeroDoses(dt, "midazolam"))
+})
+
+test_that("ensureGasOxygen: adds a blank oxygen row when nitrous oxide is named, fills it once the flow is known", {
+  named <- data.frame(
+    Drug  = c("propofol", "nitrousOxide", ""),
+    Time  = c("0", "0", ""),
+    Dose  = c("0", "0", ""),
+    Units = c("mg", "L/min", "")
+  )
+  out <- ensureGasOxygen(named)
+  expect_equal(out$Drug, c("propofol", "nitrousOxide", "oxygen", ""))
+  expect_equal(out[3, "Dose"], "")          # 21% of an unknown total
+  expect_equal(out[3, "Time"], "0")
+  expect_equal(out[3, "Units"], "L/min")
+
+  # The user now enters the nitrous oxide flow: the blank oxygen dose is filled.
+  out$Dose[2] <- "4"
+  filled <- ensureGasOxygen(out)
+  # 0.21 / 0.79 * 4 = 1.063 -> 1.1 L/min
+  expect_equal(filled[3, "Dose"], "1.1")
+  expect_identical(ensureGasOxygen(filled), filled)
+})
+
+test_that("ensureGasOxygen: never overwrites an oxygen dose the user entered, and ignores tables without nitrous oxide", {
+  mk <- function(o2) data.frame(
+    Drug = c("nitrousOxide", "oxygen"), Time = c("0", "0"),
+    Dose = c("4", o2), Units = c("L/min", "L/min")
+  )
+  expect_identical(ensureGasOxygen(mk("2")), mk("2"))
+  expect_identical(ensureGasOxygen(mk("0")), mk("0"))
+
+  sevo <- data.frame(Drug = "sevoflurane", Time = "0", Dose = "2", Units = "%")
+  expect_identical(ensureGasOxygen(sevo), sevo)
+  expect_identical(ensureGasOxygen(doseTableInit), doseTableInit)
+})
+
+test_that("ensureGasOxygen: counts the oxygen an air flow already carries", {
+  DT <- data.frame(
+    Drug = c("nitrousOxide", "air"), Time = c("0", "0"),
+    Dose = c("2", "2"), Units = c("L/min", "L/min")
+  )
+  out <- ensureGasOxygen(DT)
+  Q_O2 <- as.numeric(out$Dose[out$Drug == "oxygen"])
+  # (0.21 * 4 - 0.2093 * 2) / 0.79 = 0.533 -> 0.5
+  expect_equal(Q_O2, 0.5)
+  # Rounding the flow to 0.1 L/min moves the fraction off 21% slightly.
+  expect_equal((Q_O2 + AIR_FRACTION_O2 * 2) / (Q_O2 + 4), 0.21, tolerance = 0.05)
+})
+
+test_that("roundGasFlows: rounds L/min gas rows to 0.1 and nothing else", {
+  DT <- data.frame(
+    Drug  = c("propofol", "oxygen", "nitrousOxide", "ventilation", "sevoflurane", "air"),
+    Time  = rep("0", 6),
+    Dose  = c("1.234", "1.26", "2", "4.449", "2.15", ""),
+    Units = c("mg", "L/min", "L/min", "L/min", "%", "L/min")
+  )
+  out <- roundGasFlows(DT)
+  expect_equal(out$Dose, c("1.234", "1.3", "2", "4.4", "2.15", ""))
+  expect_identical(roundGasFlows(out), out)
+  expect_identical(roundGasFlows(doseTableInit), doseTableInit)
+})
+
+test_that("applyGasTableRules: nitrous oxide alone yields oxygen and ventilation rows", {
+  DT <- data.frame(
+    Drug = c("nitrousOxide", ""), Time = c("0", ""),
+    Dose = c("2", ""), Units = c("L/min", "")
+  )
+  out <- applyGasTableRules(DT, weight = 60)
+  expect_equal(out$Drug, c("nitrousOxide", "oxygen", "ventilation", ""))
+  expect_equal(out$Dose[2], "0.5")                       # 0.21 / 0.79 * 2 = 0.53
+  expect_equal(as.numeric(out$Dose[3]), defaultGasVentilation(60))
+  expect_true(validateDoseTableInput(out))
+  expect_identical(applyGasTableRules(out, weight = 60), out)
+  expect_identical(applyGasTableRules(doseTableInit, 60), doseTableInit)
 })

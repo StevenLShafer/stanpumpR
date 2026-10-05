@@ -2,6 +2,7 @@
 
 export(advanceClosedFormGas)
 export(advanceGasManBaseline)
+export(defaultGasVentilation)
 export(flaggedGasParameters)
 export(gasDrugEntries)
 export(gasDrugNames)

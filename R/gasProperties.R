@@ -231,6 +231,39 @@ macForAge <- function(MAC40, age)
 }
 
 
+# Default ventilation, used when a gas is in the dose table but no usable
+# ventilation setting has been entered (Shafer, 2026-10-05: "8 mL/kg").
+#
+# ASSUMPTION, NOT YET CONFIRMED BY SHAFER: 8 mL/kg is a tidal volume, and the
+# ventilation setting the engine needs is a flow in L/min, so a respiratory
+# rate is required to get from one to the other.  10 breaths/min is assumed
+# here (Claude Code, Claude Fable 5.1, 2026-10-05), giving 80 mL/kg/min:
+# 5.6 L/min at 70 kg.  No dead-space correction is applied, although the engine
+# treats the setting as ALVEOLAR ventilation.  Change the rate here if a
+# different one, or a dead-space correction, is wanted.
+GAS_DEFAULT_TIDAL_VOLUME_ML_PER_KG <- 8
+GAS_DEFAULT_RESPIRATORY_RATE       <- 10
+
+
+#' Default ventilation for a patient, L/min
+#'
+#' @param weight patient weight, kg.  Falls back to 70 kg if missing or invalid.
+#' @returns ventilation in L/min, rounded to 0.1 so it reads cleanly in the
+#'   dose table
+#' @export
+defaultGasVentilation <- function(weight = 70)
+{
+  if (length(weight) != 1 || !is.finite(weight) || weight <= 0) weight <- 70
+  round(GAS_DEFAULT_TIDAL_VOLUME_ML_PER_KG / 1000 *
+          GAS_DEFAULT_RESPIRATORY_RATE * weight, 1)
+}
+
+
+# Fresh-gas oxygen fraction the oxygen row starts at when it is added
+# automatically alongside nitrous oxide (Shafer, 2026-10-05: 21%, room air).
+GAS_INITIAL_O2_FRACTION <- 0.21
+
+
 # Composition of dry air.  Used to split an air flow into its oxygen and
 # nitrogen contributions.
 AIR_FRACTION_O2 <- 0.2093
