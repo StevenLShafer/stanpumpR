@@ -306,3 +306,54 @@ test_that("the plot builds, and breaks the recovery line, across a lag", {
   expect_gt(length(unique(recoveryLayer$group)), 1)
   expect_false(anyNA(recoveryLayer$y))
 })
+
+
+test_that("a recovery column that is missing throughout still renders", {
+  # Flagged by the active-metabolites session: a row that is entirely missing
+  # in one series can vanish or break a panel rather than falling back on what
+  # it does have.  A plot window shorter than the lag produces exactly that --
+  # every equispaced point inside the pending window -- so the panel is drawn
+  # with no recovery line and the drug's other series intact.
+  local_mocked_bindings(outputComments = function(...) {})
+
+  dd <- getDrugDefaultsGlobal(FALSE)
+  doseTable <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 2,
+                          Units = "mg IN")
+  eventTable <- data.frame(Time = 0, Event = "Event")
+
+  newDrugs <- recalculatePK(NULL, dd, doseTable, 50, 70, 171, "male")
+  newDrugs$hydromorphone$PK$default$tlag_IN <- 180
+  drugs <- processdoseTable(doseTable, eventTable, newDrugs, 120, TRUE)
+
+  expect_true(all(is.na(drugs$hydromorphone$equiSpace$Recovery)))
+
+  p <- simulationPlot(
+    drugs = drugs, events = eventTable, drugDefaults = dd,
+    eventDefaults = getEventDefaultsGlobal(), plotRecovery = TRUE
+  )
+  expect_s3_class(p$plotObject, "ggplot")
+  expect_no_warning(ggplot2::ggplot_build(p$plotObject))
+})
+
+
+test_that("a drug with no effect site at all renders with recovery switched on", {
+  # The other half of the same blind spot: three drugs now have no effect site,
+  # so plotRecovery has to cope with a panel whose effect-site series is
+  # missing from end to end.
+  local_mocked_bindings(outputComments = function(...) {})
+
+  dd <- getDrugDefaultsGlobal(FALSE)
+  doseTable <- data.frame(Drug = "tramadol", Time = 0, Dose = 100,
+                          Units = "mg PO")
+  eventTable <- data.frame(Time = 0, Event = "Event")
+
+  newDrugs <- recalculatePK(NULL, dd, doseTable, 50, 70, 171, "male")
+  drugs <- processdoseTable(doseTable, eventTable, newDrugs, 1440, TRUE)
+
+  p <- simulationPlot(
+    drugs = drugs, events = eventTable, drugDefaults = dd,
+    eventDefaults = getEventDefaultsGlobal(), plotRecovery = TRUE
+  )
+  expect_s3_class(p$plotObject, "ggplot")
+  expect_no_warning(ggplot2::ggplot_build(p$plotObject))
+})

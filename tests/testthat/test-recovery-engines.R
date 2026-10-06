@@ -298,3 +298,48 @@ test_that("a drug with no metabolite is untouched by the fold", {
   expect_equal(folded$wide$Recovery, direct$wide$Recovery)
   expect_null(folded$formedFrom)
 })
+
+
+test_that("a metabolite drug with no effect site gets no time, not a wrong one", {
+  # Tramadol forms desmetramadol, and desmetramadol has no ke0 yet -- the first
+  # pair in the library where the RECEIVING drug has no effect site, a branch
+  # written before any drug reached it.  There are no effect-site states to
+  # fold, so the fold must leave the row's time alone rather than solving a
+  # problem that has no answer.  Note desmetramadol carries endCe 84 despite
+  # having no effect site, so a threshold alone must not be enough to make the
+  # fold report something.
+  o <- refSim(data.frame(Drug = "tramadol", Time = 0, Dose = 100,
+                         Units = "mg PO"), 1440)
+
+  expect_equal(o$desmetramadol$formedFrom, "tramadol")
+  expect_gt(o$desmetramadol$endCe, 0)
+  expect_true(all(is.na(o$desmetramadol$wide$"Effect Site")))
+  expect_gt(max(o$desmetramadol$wide$Plasma), 0)
+
+  # No states offered, so nothing to solve from
+  expect_null(o$tramadol$metaboliteRecoveryStates)
+  # And no time claimed -- not NA either, since nothing is pending; there is
+  # simply no effect site for a threshold to apply to.
+  expect_false(anyNA(o$desmetramadol$wide$Recovery))
+  expect_true(all(o$desmetramadol$wide$Recovery == 0))
+  expect_equal(o$desmetramadol$max$Recovery, 0)
+})
+
+
+test_that("exactly three drugs have no effect site, and the fold handles each", {
+  # The set has moved repeatedly while this was being written, so it is pinned:
+  # a drug losing or gaining an effect site changes which branch of the fold it
+  # takes.  If this fails, the set has changed and the NA paths want rechecking
+  # rather than the number updating on its own.
+  dd <- getDrugDefaultsGlobal()
+  noCe <- character(0)
+  for (drug in dd$Drug[!isGasDrug(dd$Drug)])
+  {
+    PK <- tryCatch(getDrugPK(drug, 70, 171, 50, "male", dd[dd$Drug == drug, ]),
+                   error = function(e) NULL)
+    if (is.null(PK)) next
+    if (all(vapply(PK$PK, function(s) s$ke0 == 0, logical(1))))
+      noCe <- c(noCe, drug)
+  }
+  expect_setequal(noCe, c("codeine", "tramadol", "desmetramadol"))
+})
