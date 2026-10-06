@@ -25,11 +25,12 @@ test_that("returns the correct calculations", {
     PK = list(default = list(
       v1 = 714, v2 = 151, v3 = 1,
       cl1 = 64.4 / 60, cl2 = 0.910 / 60, cl3 = 0,
-      ka_PO = 0.0637451777,
+      ka_PO = 0.0448919972,
       bioavailability_PO = 1,
       tlag_PO = 0
     )),
-    tPeak = 60,        # provisional; see the drug file
+    tPeak = 90,        # provisional, measured ORALLY; see the drug file
+    tPeakRoute = ROUTE_PO,
     MEAC = 8,          # provisional, set equal to morphine's; see the drug file
     typical = 20,
     upperTypical = 30,
@@ -89,12 +90,31 @@ test_that("hydrocodone is offered orally only, because the parameters are appare
 })
 
 
-test_that("the oral peak falls at an hour", {
+test_that("the oral plasma peak falls at 1.3 h and the effect site at 90 min", {
+  # Checked analytically rather than off the plotted grid, whose geometric
+  # fill is about 15 min wide here and cannot resolve 78 from 90.
+  p <- hydrocodone(70, 171, 50, "male")$PK$default
+  PK <- getDrugPK("hydrocodone", 70, 171, 50, "male", getDrugDefaults("hydrocodone"))
+  pk <- PK$PK$default
+
+  lam <- c(pk$lambda_1, pk$lambda_2)
+  a   <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2) * pk$ka_PO / (pk$ka_PO - lam)
+  coef   <- c(a, -sum(a))
+  lambda <- c(lam, pk$ka_PO)
+
+  plasmaPeak <- stats::optimize(
+    function(t) sum(coef * exp(-lambda * t)), c(1, 500), maximum = TRUE)$maximum
+  expect_equal(plasmaPeak, 78, tolerance = 0.02)
+
+  expect_equal(effectSitePeakTime(coef, lambda, pk$ke0), 90, tolerance = 0.02)
+
+  # And the effect site really does lag: solving this oral tPeak against a
+  # bolus curve, as the engine does for every intravenous drug, would have put
+  # the peak elsewhere.
+  expect_gt(effectSitePeakTime(coef, lambda, pk$ke0), plasmaPeak)
+
   o <- oralHydrocodone(20, maximum = 1440)
   w <- o$hydrocodone$wide
-  expect_equal(w$Time[which.max(w$Plasma)], 60, tolerance = 2)
-  # Kapil 2015 saw 15.9 ng/mL from a 20 mg extended-release tablet; an
-  # immediate-release input of the same dose peaks higher and earlier.
   expect_gt(max(w$Plasma), 18)
   expect_lt(max(w$Plasma), 35)
 })
@@ -180,15 +200,19 @@ test_that("the provisional potency is consistent with the drug table", {
 
 test_that("the effect site is live now that tPeak is set", {
   PK <- getDrugPK("hydrocodone", 70, 171, 50, "male", getDrugDefaults("hydrocodone"))
-  expect_equal(PK$tPeak, 60)
+  expect_equal(PK$tPeak, 90)
+  expect_equal(PK$tPeakRoute, ROUTE_PO)
   expect_gt(PK$PK$default$ke0, 0)
 
   o <- oralHydrocodone(20, maximum = 1440)
   w <- o$hydrocodone$wide
   expect_false(any(is.na(w$"Effect Site")))
   expect_gt(max(w$"Effect Site"), 0)
-  # The effect site lags the plasma peak
-  expect_gt(w$Time[which.max(w$"Effect Site")], w$Time[which.max(w$Plasma)])
+  # The effect site lags, but the plotted grid is about 15 min wide where the
+  # two peaks sit 12 min apart, so the lag is checked where it is visible.
+  expect_gte(w$Time[which.max(w$"Effect Site")], w$Time[which.max(w$Plasma)])
+  early <- w[w$Time > 0 & w$Time < 40, ]
+  expect_true(all(early$"Effect Site" < early$Plasma))
   # and it now contributes to the opioid total
   expect_gt(max(o$hydrocodone$equiSpace$MEAC), 0)
 })
