@@ -40,6 +40,18 @@ shown <- function(sim, t) {
   es$Recovery[max(which(es$Time <= t + 1e-9))]
 }
 
+# The grid time that value was actually read FROM, so that a brute-force run
+# can be compared against it at the same instant rather than at t.  Where
+# recovery is changing steeply -- on bypass it grows about ten minutes per
+# minute of continued infusion -- a grid point under a minute away from t is
+# worth ten minutes of difference, which is sampling offset rather than
+# anything the engine did.  (Diagnosed by the weight-adjustment session,
+# 2026-10-06, while scaling the same test's PK to fat-free mass.)
+shownTime <- function(sim, t) {
+  es <- sim$equiSpace
+  es$Time[max(which(es$Time <= t + 1e-9))]
+}
+
 # `tolerance` is in MINUTES.  The plotted series is the engine's own time line
 # interpolated onto 100 points, so where the curve has a corner -- reaching zero
 # as the effect site crosses the threshold -- it can be out by up to the spacing
@@ -109,13 +121,17 @@ test_that("time-varying PK: the effect site is timed, not the plasma", {
   # After the last change in PK, so that "the PK in force now" is also the PK
   # the brute-force run goes on using.
   for (t in c(45, 60, 90, 110)) {
-    # Within 3%, or three quarters of a minute where the time itself is short:
-    # early on it is a minute or two and the resolution of the brute-force run
-    # is most of the difference; on bypass, with clearance a fraction of what it
-    # was, it runs to hours.
-    want <- bruteRecovery(DT, ET, PK, t, horizon = 1440)
-    expect_lt(abs(shown(sim, t) - want), max(0.75, 0.03 * want),
-              label = paste("at", t, "min: difference in minutes"))
+    # Compared at the grid instant the shown value was read from, not at t.
+    # Comparing at t folded a sub-minute sampling offset into the assertion and
+    # needed a 3% tolerance to absorb it, which made the test sensitive to the
+    # covariate model rather than to the engine -- scaling this patient's PK to
+    # fat-free mass pushed it to 3.2% and the test failed for no engine reason.
+    # Matched instants agree to well under 1%, so the limit is 1%, or three
+    # quarters of a minute where the time itself is only a minute or two.
+    at   <- shownTime(sim, t)
+    want <- bruteRecovery(DT, ET, PK, at, horizon = 1440)
+    expect_lt(abs(shown(sim, t) - want), max(0.75, 0.01 * want),
+              label = paste("at", round(at, 2), "min: difference in minutes"))
   }
 })
 
