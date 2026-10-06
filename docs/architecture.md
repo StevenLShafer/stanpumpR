@@ -126,6 +126,7 @@ time point as a sum of exponentials.
    - `advanceClosedForm0.R` — IV, no PK events
    - `advanceClosedForm1.R` — time-varying PK driven by events
    - `advanceClosedFormPO_IM_IN.R` — extravascular routes
+   - `advanceClosedFormMetabolite.R` — a drug that forms an active metabolite
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
    across event boundaries.
 5. Interpolate to an even grid (`equiSpace`), normalize to peak Cp/Ce, and scale against MEAC.
@@ -135,6 +136,36 @@ Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `
 The exported, Shiny-free entry point for this whole path is `simulateDrugsWithCovariates()` — it
 loops drugs, calls `getDrugPK()` → `simCpCe()`, and returns per-drug results. This is what the
 vignettes and tests drive.
+
+**Active metabolites.** A drug may name another drug as its active metabolite. The parent's
+plasma curve is convolved through the metabolite's own disposition
+(`metaboliteCoefficients.R`), which leaves a sum of exponentials over the union of the two
+drugs' eigenvalues — so the metabolite advances through the same `advanceState()` machinery,
+with no solver of its own. An oral dose adds a second branch for metabolite formed during
+first pass, which enters the metabolite's central compartment through the absorption step
+rather than through the parent.
+
+This is the one place where the per-drug independence the pipeline otherwise assumes breaks
+down: a contribution crosses from one drug's entry into another's. So `foldMetabolites()`
+(`mergeMetabolite.R`) runs **after** every drug has been simulated, adding each contribution
+to the metabolite drug's own row and rebuilding that row from the sum. Each drug keeps its own
+simulation in `wideOwn` and the folded total in `wide`, which is what makes re-folding safe.
+A metabolite that was never given directly gets a row created for it.
+
+A pure prodrug (`tPeak = 0`, hence `ke0 = 0`) has no effect site: its effect-site column is
+`NA`, which the plot drops, and the effect appears on the metabolite's row instead. Codeine is
+the worked example; see `R/drugs_codeine.R`.
+
+**"Time until threshold" across a fold.** Concentrations superpose; recovery times do not. So
+the merged row's `Recovery` is not built from the two `Recovery` columns — it is solved again
+from the *state* underneath them. Each engine carries the effect site out as one amplitude per
+eigenvalue (`recoveryStates.R`), `foldMetabolites()` carries every contributing set onto the
+merged time line, concatenates the amplitudes, and hands `recoveryCalc()` one combined sum of
+exponentials. That is exact, because the whole intravenous path is linear — which is why this
+needs no jointly simulated washout, unlike the inhaled gases, whose uptake is coupled through a
+shared alveolus (`gasCoupledRecovery()` in `gasRecovery.R`). Without it a patient given only
+the parent saw no time at all for the opioid they actually had — 40 mg of oxycodone forms
+oxymorphone past oxymorphone's own threshold, and the row showed nothing.
 
 **Pharmacodynamics.** `modelInteraction()` computes a propofol × opioid response surface for the
 optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
@@ -182,11 +213,19 @@ All files are flat in `R/`.
 - `getDrugPK.R` — covariates → rate constants, eigenvalues, per-route coefficients.
 - `cube.R` — solves the disposition cubic for `lambda_1..3`.
 - `simCpCe.R` — single-drug simulation: units → route → solver dispatch.
-- `advanceClosedForm0.R` / `advanceClosedForm1.R` / `advanceClosedFormPO_IM_IN.R` — the three
-  closed-form solvers (IV, event-varying, extravascular).
+- `advanceClosedForm0.R` / `advanceClosedForm1.R` / `advanceClosedFormPO_IM_IN.R` /
+  `advanceClosedFormMetabolite.R` — the closed-form solvers (IV, event-varying,
+  extravascular, active metabolite).
+- `metaboliteCoefficients.R` — convolves a parent's curve through a metabolite's disposition;
+  also the parent/metabolite unit scaling. `mergeMetabolite.R` — folds each formed
+  contribution into the metabolite drug's row once every drug has been simulated.
 - `advanceState.R` (`advanceState()`, `advanceStatePO()`), `convertState.R` — carry compartment
-  state across dose & event boundaries.
-- `calculateCe.R` — effect-site concentration from a plasma curve. The `ke0` fit itself
+  state across dose & event boundaries. `recoveryStates.R` — carries the effect site as one
+  amplitude per eigenvalue, so that a drug receiving an active metabolite can have its time
+  until threshold solved from the combined state; the time-invariant solvers also read the
+  effect-site concentration off it, exactly.
+- `calculateCe.R` — effect-site concentration approximated from a plasma curve; used only by
+  the event-driven solver. The `ke0` fit itself
   (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
   thresholds, body-size scaling.
@@ -197,6 +236,9 @@ All files are flat in `R/`.
 **Output — plot, dosing advisor & export**
 - `simulationPlot.R` — assembles the composite `ggplot2` figure and its data tables.
 - `setLinetypes.R` — maps normalization + user choices to plasma/effect linetypes.
+- `tci.R` — target-controlled infusion: turns "Plasma target" / "Effect site target" dose rows
+  into the infusion schedule a TCI pump would run (Shafer & Gregg 1992, as in STANPUMP), using
+  the same closed-form coefficients as the solvers. Called from `simCpCe()`.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
 - `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
   `emayili`.
@@ -208,6 +250,14 @@ All files are flat in `R/`.
 
 ## App features
 
+- **Target-controlled infusion** (`tci.R`) — a dose row with units `Plasma target` or
+  `Effect site target` runs a simulated TCI pump: a rapid loading infusion sized to reach the
+  target without overshoot, then a plasma hold. The controller re-plans every 10 s, hands off
+  from effect-site to plasma control within 5% of the target (the effect-site solution is
+  ill-conditioned at steady state and would alias), and stops on a target of 0 or a manual
+  infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,
+  `simulationPlot()` draws them as a per-drug rate panel with the loading dose written as a
+  number, and `sendSlide()` merges them into the exported dose table.
 - **Suggest Dosing** (`suggest.R`) — given a target drug and end time, optimizes bolus +
   infusion amounts to reach and hold a target concentration.
 - **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current

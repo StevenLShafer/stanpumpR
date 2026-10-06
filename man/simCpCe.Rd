@@ -23,7 +23,13 @@ delivery in the simulation itself by
 \code{tests/testthat/test-recovery-engines.R} (2026-10-05).}
 }
 \value{
-a list of data frames with the output of the a single drug simulation
+a list of data frames with the output of the a single drug
+simulation, plus \code{recoveryStates}: the effect-site exponential states
+behind the \code{Recovery} column, or NULL when recovery was not asked
+for.  A drug that forms an active metabolite additionally carries
+\code{metaboliteSeries}, \code{metaboliteName} and
+\code{metaboliteRecoveryStates}; \code{foldMetabolites()} adds that
+contribution, and its recovery, to the metabolite drug's own row.
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example

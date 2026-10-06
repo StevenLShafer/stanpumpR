@@ -12,7 +12,8 @@ simulateDrugsWithCovariates(
   age,
   sex,
   maximum,
-  plotRecovery
+  plotRecovery,
+  cyp2d6 = CYP2D6_DEFAULT
 )
 }
 \arguments{
@@ -32,9 +33,15 @@ simulateDrugsWithCovariates(
 
 \item{plotRecovery}{should the "time until threshold" be calculated?  See
 \code{simCpCe()}.}
+
+\item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
+Only drugs whose model declares it are affected.}
 }
 \value{
-a list of data frames with the output of the a single drug simulation
+a list of data frames with the output of the a single drug
+simulation.  A drug that forms an active metabolite adds its contribution
+to the metabolite drug's entry, which is created if that drug was not
+dosed directly.
 }
 \description{
 See \code{vignette("stanpumpR-multi-PK", package = "stanpumpR")} for an example

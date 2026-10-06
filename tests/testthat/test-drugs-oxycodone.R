@@ -24,7 +24,17 @@ test_that("returns the correct calculations", {
     typical = 14.4,
     upperTypical = 9.6,
     lowerTypical = 24,
-    reference = "Lamminsalo M et al., Expert Opin Drug Deliv 2019;16(6):649-656. https://pubmed.ncbi.nlm.nih.gov/31092024/"
+    reference = "Lamminsalo M et al., Expert Opin Drug Deliv 2019;16(6):649-656. https://pubmed.ncbi.nlm.nih.gov/31092024/",
+    # Oxymorphone, added 2026-10-05.  The disposition above is unchanged: a
+    # metabolite is an independent transfer and is not subtracted from the
+    # parent, so oxycodone's own plasma and effect-site curves are identical
+    # with and without it.  Asserted in test-drugs-oxymorphone.R.
+    metabolite = list(
+      name              = "oxymorphone",
+      kFormation        = 6.629873e-06 * 70,
+      firstPassFraction = 0,
+      mwRatio           = 301.34 / 315.36
+    )
   )
   expect_equal_rounded(actual, expected)
 })

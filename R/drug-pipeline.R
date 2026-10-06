@@ -27,6 +27,15 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
         drugs[[drug]]$results   <- NULL
         drugs[[drug]]$equiSpace <- NULL
         drugs[[drug]]$max       <- NULL
+        # A drug no longer in the dose table forms no metabolite, and keeping
+        # a stale contribution would go on feeding the metabolite's row.
+        drugs[[drug]]$wideOwn         <- NULL
+        drugs[[drug]]$wide            <- NULL
+        drugs[[drug]]$metaboliteSeries <- NULL
+        drugs[[drug]]$formedFrom      <- NULL
+        drugs[[drug]]$recoveryStatesOwn         <- NULL
+        drugs[[drug]]$metaboliteRecoveryStates  <- NULL
+        drugs[[drug]]$tci       <- NULL
       } else {
         X <- simCpCe(
           tempDT,
@@ -40,17 +49,32 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
         drugs[[drug]]$results           <- X$results
         drugs[[drug]]$equiSpace         <- X$equiSpace
         drugs[[drug]]$max               <- X$max
+        # wideOwn is this drug's own simulation and nothing else.  wide is what
+        # gets plotted, and may additionally carry metabolite formed from
+        # another drug.  Keeping them apart is what makes folding idempotent.
+        drugs[[drug]]$wideOwn           <- X$wide
+        drugs[[drug]]$wide              <- X$wide
+        drugs[[drug]]$metaboliteSeries  <- X$metaboliteSeries
+        drugs[[drug]]$formedFrom        <- NULL
+        # The effect-site states behind Recovery, which foldMetabolites() needs
+        # to solve the combined time until threshold.  Own and formed are kept
+        # apart for the same reason wideOwn and wide are.
+        drugs[[drug]]$recoveryStatesOwn        <- X$recoveryStates
+        drugs[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
+        drugs[[drug]]$tci               <- X$tci
       }
     }
   }
-  drugs
+
+  foldMetabolites(drugs, plotMaximum, plotRecovery)
 }
 
 recalculatePK <- function(drugs, drugDefaults, doseTable,
-                          age, weight, height, sex) {
+                          age, weight, height, sex,
+                          cyp2d6 = CYP2D6_DEFAULT) {
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
-  for (drug in unique(doseTable$Drug)) {
+  resolve <- function(drugs, drug) {
     idx <- which(drugDefaults$Drug==drug)
     drugs[[drug]]$Color <- drugDefaults$Color[idx]
     drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
@@ -63,11 +87,36 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         height = height,
         age = age,
         sex = sex,
-        drugDefaults = drugDefaults[idx, ]
+        drugDefaults = drugDefaults[idx, ],
+        cyp2d6 = cyp2d6
       )
     )
     drugs[[drug]]$DT <- NULL # Remove old dose table, if any
     drugs[[drug]]$equiSpace <- NULL # Ditto
+    drugs
+  }
+
+  dosed <- unique(doseTable$Drug)
+  for (drug in dosed) drugs <- resolve(drugs, drug)
+
+  # A drug that forms an active metabolite needs the metabolite's own row to
+  # exist even when the metabolite was never given directly: giving codeine has
+  # to show the morphine it produces.  Resolve those too, so foldMetabolites()
+  # has somewhere to put the contribution.
+  for (drug in dosed)
+  {
+    target <- drugs[[drug]]$metaboliteName
+    if (is.null(target) || !nzchar(target)) next
+    if (target %in% dosed) next
+    if (!target %in% drugDefaults$Drug) next
+    drugs <- resolve(drugs, target)
+    # It carries no doses of its own, so its own simulation is empty and its
+    # whole curve, and its whole time until threshold, will come from the fold.
+    drugs[[target]]$DT      <- NULL
+    drugs[[target]]$wideOwn <- NULL
+    drugs[[target]]$wide    <- NULL
+    drugs[[target]]$recoveryStatesOwn        <- NULL
+    drugs[[target]]$metaboliteRecoveryStates <- NULL
   }
 
   drugs
