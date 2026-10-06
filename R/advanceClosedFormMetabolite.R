@@ -32,10 +32,11 @@
 # its effect, not the parent's, is what matters clinically.  Codeine is the
 # clearest case: the analgesia is morphine's.
 #
-# Carrying the effect site as states rather than as a curve from calculateCe()
-# is what lets the metabolite drug's row report a time until threshold for the
-# metabolite it actually has, formed and given together; see
-# R/recoveryStates.R.
+# Both effect sites, the parent's and the metabolite's, are carried as states
+# and read off as their sum, rather than derived from the plasma curve by
+# calculateCe().  That keeps them exact, and it is what lets the metabolite
+# drug's row report a time until threshold for the metabolite it actually
+# has, formed and given together; see R/recoveryStates.R.
 #
 # INTRAMUSCULAR AND INTRANASAL ARE NOT SUPPORTED HERE
 # ---------------------------------------------------
@@ -171,16 +172,8 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
                               pkSet$p_coef_PO_ka * poLine, doseNA, doseNA, L)
   }
 
-  # A pure prodrug -- codeine, tramadol -- has no effect of its own, carries no
-  # tPeak, and so getDrugPK leaves ke0 at zero.  calculateCe() divides by ke0 and
-  # would return NaN for every point.  NA rather than zero, because
-  # simulationPlot() drops NA rows: the parent is then plotted as plasma only,
-  # instead of carrying a meaningless flat effect-site line along the axis.
-  Ce <- if (pkSet$ke0 > 0) {
-    calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
-  } else {
-    rep(NA_real_, L)
-  }
+  # The parent's effect site is worked out below, from its own states,
+  # together with its recovery.
 
   # ---- Metabolite ----
   #
@@ -248,13 +241,24 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     NULL
   }
 
-  # ---- Recovery, parent only ----
+  # ---- Parent effect site and recovery ----
   #
-  # The parent's own effect site, which a pure prodrug does not have.  The
-  # metabolite's time until threshold is not computed here: it belongs to the
-  # metabolite drug's row, where foldMetabolites() works it out from the states
-  # above together with whatever of that drug was given directly.
-  if (plotRecovery && pkSet$ke0 > 0)
+  # The parent's own effect site, which a pure prodrug does not have, as the
+  # sum of its own exponential states: the same closed form as
+  # advanceClosedForm0() and advanceClosedFormPO_IM_IN(), so the parent's
+  # columns are identical with or without a metabolite attached.  A pure
+  # prodrug -- codeine, tramadol -- carries no tPeak, so getDrugPK leaves ke0
+  # at zero and there are no effect-site states to sum: NA rather than zero,
+  # because simulationPlot() drops NA rows and the parent is then plotted as
+  # plasma only, instead of carrying a meaningless flat effect-site line along
+  # the axis.  The metabolite's time
+  # until threshold is not computed here: it belongs to the metabolite drug's
+  # row, where foldMetabolites() works it out from the states above together
+  # with whatever of that drug was given directly.
+  recoveryStates <- NULL
+  recovery <- doseNA
+  Ce <- rep(NA_real_, L)
+  if (pkSet$ke0 > 0)
   {
     ke0_dt <- exp(-pkSet$ke0 * dt)
     e_state_l1 <- advanceStatePO(l1_dt,
@@ -283,10 +287,12 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
       lambdas <- c(lambdas, pkSet$ka_PO)
     }
     recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending)
-    recovery <- recoveryFromStates(recoveryStates, emerge)
-  } else {
-    recoveryStates <- NULL
-    recovery <- doseNA
+    Ce <- rowSums(recoveryStates$state)
+    if (plotRecovery) {
+      recovery <- recoveryFromStates(recoveryStates, emerge)
+    } else {
+      recoveryStates <- NULL
+    }
   }
 
   results <- data.frame(

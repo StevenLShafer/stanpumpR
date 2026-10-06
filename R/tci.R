@@ -163,9 +163,8 @@ tciSchedule <- function(dose, PK, maximum,
     e <<- e * d4 + K$einf * rate * (1 - d4)
   }
   # One row per interval, even when the rate repeats (the pump off while the
-  # effect site rises to its peak): the simulation's effect-site curve is
-  # worked out step by step from the plasma curve, and it needs these points
-  # to follow the steep fall in plasma after the loading dose.
+  # effect site rises to its peak): the schedule is the pump's programme, one
+  # decision per update interval.
   emit <- function(time, rate, held) {
     n <<- n + 1L
     rTime[n] <<- time; rRate[n] <<- rate; rDt[n] <<- held

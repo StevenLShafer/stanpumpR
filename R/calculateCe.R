@@ -1,4 +1,9 @@
 # Function to calculate Ce from Cp, dt, and ke0
+#
+# An approximation: the plasma is taken as linear (rising) or log-linear
+# (falling) within each step.  Since 2026-10-06 only advanceClosedForm1(), the
+# event-driven solver whose PK set changes mid-run, uses it; the time-invariant
+# solvers sum the effect site's own exponential states instead.
 calculateCe <- function(Cp, ke0, dt, L)
 {
   Ce <- rep(0,L)

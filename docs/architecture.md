@@ -222,8 +222,10 @@ All files are flat in `R/`.
 - `advanceState.R` (`advanceState()`, `advanceStatePO()`), `convertState.R` — carry compartment
   state across dose & event boundaries. `recoveryStates.R` — carries the effect site as one
   amplitude per eigenvalue, so that a drug receiving an active metabolite can have its time
-  until threshold solved from the combined state.
-- `calculateCe.R` — effect-site concentration from a plasma curve. The `ke0` fit itself
+  until threshold solved from the combined state; the time-invariant solvers also read the
+  effect-site concentration off it, exactly.
+- `calculateCe.R` — effect-site concentration approximated from a plasma curve; used only by
+  the event-driven solver. The `ke0` fit itself
   (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
   thresholds, body-size scaling.
