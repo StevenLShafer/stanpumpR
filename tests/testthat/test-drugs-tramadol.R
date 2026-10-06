@@ -36,7 +36,7 @@ test_that("tramadol returns the correct calculations", {
     metabolite = list(
       name              = "desmetramadol",
       kFormation        = (10.5 / 60) / 90,
-      firstPassFraction = 0,
+      firstPassFraction = 0.10,
       mwRatio           = 249.38 / 263.38
     )
   )
@@ -53,7 +53,11 @@ test_that("desmetramadol returns the correct calculations", {
       v1 = 78.9, v2 = 131, v3 = 1,
       cl1 = 84.2 / 60, cl2 = 274 / 60, cl3 = 0
     )),
+    # ke0 is supplied directly rather than solved from a tPeak; the peak is
+    # observed against the metabolite curve after an ORAL PARENT dose, which
+    # getDrugPK cannot build.  See the drug file.
     tPeak = 0,
+    ke0 = 0.0287536942,
     MEAC = 84,
     typical = 40,
     upperTypical = 80,
@@ -183,14 +187,113 @@ test_that("the provisional potency is consistent with the drug table", {
   expect_equal(dd$endCe[dd$Drug == "desmetramadol"], DESMETRAMADOL_MEAC)
   # Lee 2019 cites 84 ug/L as the minimum effective concentration of M1
   expect_equal(DESMETRAMADOL_MEAC, 84)
+})
 
-  # tPeak is the remaining blank, and until it is set the MEAC is not read
-  if (DESMETRAMADOL_TPEAK == 0) {
-    PK <- getDrugPK("desmetramadol", 70, 171, 50, "male",
-                    getDrugDefaults("desmetramadol"))
-    expect_equal(PK$PK$default$ke0, 0)
-    o <- oralTramadol(100, maximum = 1440)
-    expect_true(all(is.na(o$desmetramadol$wide$"Effect Site")))
-    expect_false(any(is.na(o$desmetramadol$equiSpace$Ce)))
+
+test_that("peak analgesia falls at 2.5 h after an oral tramadol dose", {
+  # This is the whole point of the metabolite model, and it is the one
+  # number the equilibration was solved for.  Checked analytically, because
+  # the plotted grid is far coarser than the tolerance worth asserting.
+  #
+  # The driving curve is the metabolite profile after an ORAL PARENT dose,
+  # not a bolus and not the drug's own oral curve, so a change to tramadol's
+  # absorption, formation or first-pass fraction invalidates the solved ke0.
+  # This test is what makes that loud.
+  p   <- getDrugPK("tramadol", 70, 171, 50, "male",
+                   getDrugDefaults("tramadol"))$PK$default
+  ke0 <- getDrugPK("desmetramadol", 70, 171, 50, "male",
+                   getDrugDefaults("desmetramadol"))$PK$default$ke0
+  co  <- p$metabolite$coefs
+
+  e <- co$PO * ke0 / (ke0 - co$lambda)
+  peak <- stats::optimize(
+    function(t) sum(e * exp(-co$lambda * t)) - sum(e) * exp(-ke0 * t),
+    c(1, 5000), maximum = TRUE)$maximum
+  expect_equal(peak, DESMETRAMADOL_TPEAK_ORAL_PARENT, tolerance = 0.01)
+  expect_equal(DESMETRAMADOL_TPEAK_ORAL_PARENT, 150)
+
+  # and the effect site lags the metabolite concentration, as it must
+  plasmaPeak <- stats::optimize(
+    function(t) sum(co$PO * exp(-co$lambda * t)), c(1, 3000), maximum = TRUE)$maximum
+  expect_lt(plasmaPeak, peak)
+})
+
+
+test_that("first pass is what makes that peak reachable at all", {
+  # With systemic formation alone the metabolite peaked at about 4 h, and an
+  # effect site cannot peak before the curve driving it, so 2.5 h was
+  # impossible rather than merely unfitted.
+  p  <- getDrugPK("tramadol", 70, 171, 50, "male",
+                  getDrugDefaults("tramadol"))$PK$default
+  mo <- getDrugPK("desmetramadol", 70, 171, 50, "male",
+                  getDrugDefaults("desmetramadol"))$PK$default
+  kF <- (10.5 / 60) / 90
+
+  peakFor <- function(fp) {
+    co <- metaboliteCoefficients(p, mo, kFormation = kF, mwRatio = 249.38 / 263.38,
+                                 unitScale = 1, firstPassFraction = fp)
+    stats::optimize(function(t) sum(co$PO * exp(-co$lambda * t)),
+                    c(1, 3000), maximum = TRUE)$maximum
   }
+  expect_gt(peakFor(0), 220)      # formation alone: about 4 h
+  expect_lt(peakFor(0.10), 150)   # with first pass: early enough to work
+})
+
+
+test_that("first pass is CYP2D6 driven like the systemic route", {
+  # Presystemic O-demethylation is the same reaction, so a poor metaboliser
+  # must not receive a full first-pass contribution.  Leaving the fraction
+  # constant was a bug: it put poor at 71% of normal instead of a tenth.
+  fp <- vapply(CYP2D6_VALUES,
+               function(g) tramadol(70, 171, 50, "male", g)$metabolite$firstPassFraction,
+               numeric(1))
+  expect_equal(unname(fp[["normal"]]), 0.10)
+  expect_true(all(diff(fp) > 0))
+  expect_equal(unname(fp[["poor"]] / fp[["normal"]]),
+               unname(TRAMADOL_CYP2D6_WEIGHT[["poor"]]), tolerance = 1e-9)
+
+  peaks <- vapply(CYP2D6_VALUES,
+                  function(g) max(oralTramadol(100, g, maximum = 1440)$desmetramadol$wide$Plasma),
+                  numeric(1))
+  expect_gt(peaks[["ultrarapid"]] / peaks[["poor"]], 15)
+})
+
+
+test_that("the metabolite's effect site is live and carries tramadol's effect", {
+  PK <- getDrugPK("desmetramadol", 70, 171, 50, "male",
+                  getDrugDefaults("desmetramadol"))
+  expect_gt(PK$PK$default$ke0, 0)
+
+  o <- oralTramadol(100, maximum = 1440)
+  w <- o$desmetramadol$wide
+  expect_false(any(is.na(w$"Effect Site")))
+  expect_gt(max(o$desmetramadol$equiSpace$MEAC), 0)
+
+  # the parent still contributes nothing: its activity is out of scope
+  expect_true(all(is.na(o$tramadol$wide$"Effect Site")))
+  expect_equal(max(o$tramadol$equiSpace$MEAC), 0)
+})
+
+
+test_that("the opioid contribution is ordered across phenotypes", {
+  meac <- vapply(CYP2D6_VALUES,
+                 function(g) max(oralTramadol(100, g, maximum = 1440)$desmetramadol$equiSpace$MEAC),
+                 numeric(1))
+  expect_true(all(diff(meac) > 0))
+  expect_lt(meac[["poor"]], 10)
+  expect_gt(meac[["ultrarapid"]] / meac[["poor"]], 10)
+})
+
+
+test_that("only the two deliberate prodrugs now lack an effect site", {
+  # codeine and tramadol, both by design.  Pinned because the count has been
+  # got wrong by hand more than once.
+  dd <- getDrugDefaultsGlobal(FALSE)
+  blank <- Filter(function(d) {
+    k <- tryCatch(getDrugPK(d, 70, 171, 50, "male",
+                            getDrugDefaults(d))$PK$default$ke0,
+                  error = function(e) NA_real_)
+    !is.na(k) && k == 0
+  }, dd$Drug[dd$Class == "IV"])
+  expect_setequal(blank, c("codeine", "tramadol"))
 })

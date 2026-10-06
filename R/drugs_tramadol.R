@@ -220,12 +220,37 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
       metabolite = list(
         name              = "desmetramadol",
         kFormation        = kFormation,
-        # No first-pass branch.  Holford's model is intravenous and supplies
-        # no presystemic appearance fraction, and the tramadol specification
-        # lists that fraction as unidentified.  Oral metabolite formed during
-        # first pass is therefore absent, which understates early
-        # desmetramadol after an oral dose.
-        firstPassFraction = 0,
+        # First pass, added 2026-10-06.  Holford's model is intravenous and
+        # has no presystemic term, so with formation alone the metabolite
+        # peaked at 4 h.  Peak analgesia after oral tramadol is observed at
+        # 2.5 h, and the effect site cannot precede the curve driving it, so
+        # that was unreachable: the metabolite was appearing too late because
+        # presystemic formation was missing.
+        #
+        # 0.10 is inferred rather than fitted, and three independent routes
+        # agree on it:
+        #   - Lee 2019 reports 20 to 30% of an oral dose undergoing first
+        #     pass.  Holford puts CYP2D6 at 10.5 of 28.9 L/h, a 36% share of
+        #     tramadol clearance.  If presystemic extraction splits in the
+        #     same proportion, first-pass M1 is 0.073 to 0.109.
+        #   - At 0.10 a 100 mg oral dose gives a metabolite peak of 42 ng/mL,
+        #     which sits in the range oral tramadol studies report.
+        #   - It brings the metabolite peak to 93 min, which makes the
+        #     observed 2.5 h peak analgesia reachable with a 24 min
+        #     equilibration half-time rather than an implausible one.
+        #
+        # It raises total metabolite exposure by about 1.4 fold against
+        # formation alone, taking the dose fraction converted from 0.25 to
+        # 0.35.  That is a consequence of the change, not an independent
+        # check, and is the thing to revisit if measured oral M1 exposure
+        # turns out lower.
+        #
+        # Scaled by the SAME phenotype activity as the systemic route, since
+        # presystemic O-demethylation is the same CYP2D6 reaction.  Leaving
+        # it constant was a bug in the first version of this change: a poor
+        # metaboliser then received full first-pass metabolite and reached
+        # 71% of a normal metaboliser's peak instead of about a tenth.
+        firstPassFraction = 0.10 * activity,
         # O-desmethyltramadol 249.38, tramadol base 263.38 g/mol
         mwRatio           = 249.38 / 263.38
       )

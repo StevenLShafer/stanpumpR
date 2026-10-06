@@ -317,32 +317,42 @@ test_that("a drug with no metabolite is untouched by the fold", {
 
 
 test_that("a metabolite drug with no effect site gets no time, not a wrong one", {
-  # Tramadol forms desmetramadol, and desmetramadol has no ke0 yet -- the first
-  # pair in the library where the RECEIVING drug has no effect site, a branch
-  # written before any drug reached it.  There are no effect-site states to
-  # fold, so the fold must leave the row's time alone rather than solving a
-  # problem that has no answer.  Note desmetramadol carries endCe 84 despite
-  # having no effect site, so a threshold alone must not be enough to make the
-  # fold report something.
-  o <- refSim(data.frame(Drug = "tramadol", Time = 0, Dose = 100,
-                         Units = "mg PO"), 1440)
+  # There are NO effect-site states to fold, so the fold must leave the row's
+  # time alone rather than solving a problem that has no answer.
+  #
+  # Edited 2026-10-06 by the active-metabolites session, which caused the
+  # break: this used tramadol into desmetramadol, the first real pair whose
+  # RECEIVING drug had no effect site.  Desmetramadol has since been given
+  # one, so no pair in the library has the property any more and the branch
+  # is unexercised by real drugs.  Rather than delete the coverage, the
+  # condition is now constructed: morphine with its ke0 forced to zero,
+  # standing in for the receiving drug.  Per the note on the test below, the
+  # NA paths were rechecked rather than the expectation simply relaxed.
+  dd <- getDrugDefaultsGlobal()
+  DT <- data.frame(Drug = "codeine", Time = 0, Dose = 60, Units = "mg PO")
 
-  expect_equal(o$desmetramadol$formedFrom, "tramadol")
-  expect_gt(o$desmetramadol$endCe, 0)
-  expect_true(all(is.na(o$desmetramadol$wide$"Effect Site")))
-  expect_gt(max(o$desmetramadol$wide$Plasma), 0)
+  drugs <- recalculatePK(NULL, dd, DT, 50, 70, 171, "male")
+  # Force the receiving drug to have no effect site, which is what the
+  # branch under test exists for.
+  for (ev in names(drugs$morphine$PK)) drugs$morphine$PK[[ev]]$ke0 <- 0
+  drugs$codeine$PK$default$metabolite$ke0 <- 0
+  drugs <- processdoseTable(DT, data.frame(Time = numeric(0), Event = character(0)),
+                            drugs, 1440, TRUE)
 
-  # No states offered, so nothing to solve from
-  expect_null(o$tramadol$metaboliteRecoveryStates)
-  # And no time claimed -- not NA either, since nothing is pending; there is
-  # simply no effect site for a threshold to apply to.
-  expect_false(anyNA(o$desmetramadol$wide$Recovery))
-  expect_true(all(o$desmetramadol$wide$Recovery == 0))
-  expect_equal(o$desmetramadol$max$Recovery, 0)
+  expect_equal(drugs$morphine$formedFrom, "codeine")
+  expect_gt(drugs$morphine$endCe, 0)      # a threshold alone must not suffice
+  expect_true(all(is.na(drugs$morphine$wide$"Effect Site")))
+  expect_gt(max(drugs$morphine$wide$Plasma), 0)
+
+  # No states offered, so nothing to solve from, and no time claimed.
+  expect_null(drugs$codeine$metaboliteRecoveryStates)
+  expect_false(anyNA(drugs$morphine$wide$Recovery))
+  expect_true(all(drugs$morphine$wide$Recovery == 0))
+  expect_equal(drugs$morphine$max$Recovery, 0)
 })
 
 
-test_that("exactly three drugs have no effect site, and the fold handles each", {
+test_that("exactly two drugs have no effect site, and the fold handles each", {
   # The set has moved repeatedly while this was being written, so it is pinned:
   # a drug losing or gaining an effect site changes which branch of the fold it
   # takes.  If this fails, the set has changed and the NA paths want rechecking
@@ -357,5 +367,9 @@ test_that("exactly three drugs have no effect site, and the fold handles each", 
     if (all(vapply(PK$PK, function(s) s$ke0 == 0, logical(1))))
       noCe <- c(noCe, drug)
   }
-  expect_setequal(noCe, c("codeine", "tramadol", "desmetramadol"))
+  # Was three until 2026-10-06, when desmetramadol was given a tPeak and so
+  # an effect site.  The NA paths were rechecked rather than this number
+  # being updated on its own: the test above now constructs the
+  # no-effect-site receiving drug, since no real pair has it any more.
+  expect_setequal(noCe, c("codeine", "tramadol"))
 })

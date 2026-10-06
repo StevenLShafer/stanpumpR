@@ -274,7 +274,19 @@ getDrugPK <- function(
     # Solving an oral tPeak against the bolus curve counts the absorption
     # delay twice, because the oral curve already peaks late.  For hydrocodone
     # that error is about 24 minutes.
-    if (tPeak > 0)
+    if (!is.null(X$ke0) && X$ke0 > 0)
+    {
+      # A drug may supply ke0 directly, which is the escape hatch for a time
+      # to peak effect defined against a curve this function cannot build.
+      # Desmetramadol is the case: it is never dosed, and its peak effect is
+      # observed after an oral dose of its PARENT, so the driving curve is
+      # the metabolite profile formed from tramadol.  That profile depends on
+      # tramadol's absorption and formation, neither of which is in scope
+      # here, because the metabolite's own PK is resolved before the parent's
+      # coefficients are built.  The drug file records the tPeak it was
+      # solved for and how.
+      ke0 <- X$ke0
+    } else if (tPeak > 0)
     {
       if (identical(tPeakRoute, ROUTE_PO))
       {

@@ -80,10 +80,45 @@
 # inst/extdata/drugDefaults_global.csv; test-drugs-tramadol.R checks the two
 # agree.
 #
-# tPeak IS STILL MISSING and is the one thing keeping this row inert.  With
-# no time to peak there is no effect site, so the MEAC below is not read and
-# a tramadol dose shows concentrations without effect.
-DESMETRAMADOL_TPEAK <- 0   # minutes to peak effect site after an IV bolus
+# EQUILIBRATION: ke0 SUPPLIED DIRECTLY, AND NEEDS A LITERATURE REFERENCE
+# ----------------------------------------------------------------------
+# Steven L. Shafer, 2026-10-06: peak analgesia is at 2.5 h after an ORAL
+# dose of tramadol.  No citation is attached to that yet.
+#
+# Why ke0 is given here instead of a tPeak.  getDrugPK solves ke0 so the
+# effect site peaks at tPeak, against whichever plasma curve the observation
+# followed: a bolus by default, or the drug's own oral curve with
+# tPeakRoute = ROUTE_PO.  Neither applies.  Desmetramadol is never dosed, so
+# it has no curve of its own; the 2.5 h is measured against the metabolite
+# profile formed from an ORAL PARENT dose, which carries tramadol's
+# absorption delay and then the metabolic delay on top of it.  getDrugPK
+# cannot build that curve at the point it resolves this drug, because the
+# metabolite's own PK is needed before the parent's coefficients exist.  So
+# the solve is done once, here, and the answer recorded.
+#
+#     ke0 = 0.0287536942 /min, an equilibration half-time of 24.1 min,
+#     giving an effect-site peak at 150.0 min after 100 mg oral tramadol
+#     in a normal metaboliser.
+#
+# What it depends on, and when it stops being right.  The driving curve is
+# the metabolite profile, so this number is only valid for tramadol's
+# current absorption constant, formation clearance and first-pass fraction.
+# Change any of those and it must be re-solved; test-drugs-tramadol.R
+# asserts the 150 min peak directly, so it will fail rather than drift.
+#
+# It also moves with CYP2D6 phenotype and with body weight, because both
+# reshape the metabolite curve.  The solve is at 70 kg, normal metaboliser.
+#
+# Note this was reachable only after first-pass formation was added to
+# tramadol.  With systemic formation alone the metabolite peaked at 4 h, and
+# an effect site cannot peak before the curve driving it, so 2.5 h was not
+# merely unfitted but impossible.  See the first-pass note in
+# R/drugs_tramadol.R.
+DESMETRAMADOL_KE0 <- 0.0287536942  # 1/min; solved, see above
+
+# Recorded for documentation; the engine does not use it, because the solve
+# above is against a curve tPeak cannot name.
+DESMETRAMADOL_TPEAK_ORAL_PARENT <- 150  # minutes after an oral tramadol dose
 
 # MEAC: a cited value, but a SECONDARY citation needing primary verification
 # ---------------------------------------------------------------------------
@@ -163,7 +198,9 @@ desmetramadol <- function(weight, height, age, sex)
   return(
     list(
       PK = PK,
-      tPeak = DESMETRAMADOL_TPEAK,
+      # No tPeak: ke0 is supplied directly.  See the header.
+      tPeak = 0,
+      ke0 = DESMETRAMADOL_KE0,
       MEAC = DESMETRAMADOL_MEAC,
       typical = typical,
       upperTypical = upperTypical,
