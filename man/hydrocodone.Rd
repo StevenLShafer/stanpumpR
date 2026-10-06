@@ -4,7 +4,14 @@
 \alias{hydrocodone}
 \title{Hydrocodone pharmacokinetics}
 \usage{
-hydrocodone(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
+hydrocodone(
+  weight,
+  height,
+  age,
+  sex,
+  cyp2d6 = CYP2D6_DEFAULT,
+  adjustToFFM = TRUE
+)
 }
 \arguments{
 \item{weight}{weight in kg (used only to scale metabolite formation, since

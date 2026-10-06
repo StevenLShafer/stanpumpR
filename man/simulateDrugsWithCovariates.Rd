@@ -13,7 +13,8 @@ simulateDrugsWithCovariates(
   sex,
   maximum,
   plotRecovery,
-  cyp2d6 = CYP2D6_DEFAULT
+  cyp2d6 = CYP2D6_DEFAULT,
+  adjustToFFM = TRUE
 )
 }
 \arguments{
@@ -36,6 +37,10 @@ simulateDrugsWithCovariates(
 
 \item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 Only drugs whose model declares it are affected.}
+
+\item{adjustToFFM}{scale each model's volumes and clearances to the patient's
+fat-free mass (the default) rather than total body weight; see
+\code{docs/weight-adjustment.md}.}
 }
 \value{
 a list of data frames with the output of the a single drug

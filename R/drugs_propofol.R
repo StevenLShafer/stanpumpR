@@ -1,8 +1,11 @@
-propofol <- function(weight, height, age, sex)
+propofol <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Minutes
   # Volume: Liters
+
+  # adjustToFFM is accepted for a uniform signature but not used: the Eleveld
+  # model below carries its own Al-Sallami fat-free-mass covariate.
 
   # Schnider
 

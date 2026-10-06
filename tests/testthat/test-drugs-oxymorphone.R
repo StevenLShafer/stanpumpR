@@ -17,7 +17,7 @@ simDrug <- function(drug, dose, units, maximum = 1440, cyp2d6 = CYP2D6_DEFAULT) 
 
 
 test_that("returns the correct calculations", {
-  actual <- oxymorphone(70, 171, 50, "male")
+  actual <- oxymorphone(70, 171, 50, "male", adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(default = list(
@@ -40,7 +40,7 @@ test_that("returns the correct calculations", {
 
 
 test_that("one compartment reproduces the reported intravenous summary", {
-  x <- oxymorphone(70, 171, 50, "male")$PK$default
+  x <- oxymorphone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   # Manufacturer summary: CL 2.0 L/min, Vss 3.08 L/kg, terminal half-life 1.3 h
   expect_equal(x$cl1, 2.0)
   expect_equal(x$v1 / 70, 3.08)
@@ -49,7 +49,7 @@ test_that("one compartment reproduces the reported intravenous summary", {
   expect_equal(x$v1 / x$cl1 / 60, 3.08 * 70 / 120)
 
   # Both scale with weight, so the half-life does not
-  y <- oxymorphone(35, 171, 50, "male")$PK$default
+  y <- oxymorphone(35, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(y$v1 / y$cl1, x$v1 / x$cl1)
 })
 
@@ -169,4 +169,12 @@ test_that("the effect site is live, whether dosed directly or formed", {
   expect_gt(max(f$"Effect Site"), 0)
   # and now contribute to the opioid total rather than nothing
   expect_gt(max(formed$oxymorphone$equiSpace$MEAC), 0)
+})
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y male: volume x 1.3049067, clearance x 1.2209126
+  # (worked out from the Al-Sallami formula by hand).
+  x <- oxymorphone(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(x$v1,  281.33787)
+  expect_equal_rounded(x$cl1, 2.4418252)
 })

@@ -4,7 +4,7 @@
 \alias{oxymorphone}
 \title{Oxymorphone pharmacokinetics}
 \usage{
-oxymorphone(weight, height, age, sex)
+oxymorphone(weight, height, age, sex, adjustToFFM = TRUE)
 }
 \arguments{
 \item{weight}{weight in kg}

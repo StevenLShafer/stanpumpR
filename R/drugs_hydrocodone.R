@@ -217,7 +217,8 @@ HYDROCODONE_CYP2D6_WEIGHT <- c(
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   hydromorphone as the formed active species
 #' @export
-hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
+hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
+                        adjustToFFM = TRUE)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
@@ -226,6 +227,10 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
   activity <- unname(HYDROCODONE_CYP2D6_WEIGHT[[cyp2d6]])
 
   # --- Apparent disposition, Melhem 2013 (see header: no weight scaling) ---
+  # adjustToFFM does NOT touch the disposition: it is apparent (divided by an
+  # unmeasured bioavailability) and deliberately carries no size term.  It is
+  # used only below, to keep the formation constant in step with the
+  # hydromorphone model it feeds.
   v1  <- 714                 # L,   Vc/F
   v2  <- 151                 # L,   Vp/F
   v3  <- 1                   # unused third compartment
@@ -242,10 +247,14 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
 
   # --- Hydromorphone formation ---
   # Calibrated so the hydromorphone:hydrocodone AUC ratio reproduces Kapil
-  # 2015's observed 3.8/325.3 = 0.01168.  Scaled by weight because the
-  # hydromorphone model it feeds is weight-scaled while this one is not.
+  # 2015's observed 3.8/325.3 = 0.01168.  That AUC ratio is kFormation x Vc/F
+  # over hydromorphone's clearance, so kFormation follows hydromorphone's
+  # clearance scaling: linear in weight when hydromorphone scaled on total
+  # weight, the fat-free-mass clearance factor when it scales on fat-free
+  # mass (docs/weight-adjustment.md).  Either way the measured ratio is kept.
   KFORMATION_PER_KG <- 3.18574e-07     # 1/min per kg, normal metaboliser
-  kFormation <- KFORMATION_PER_KG * weight * activity
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  kFormation <- KFORMATION_PER_KG * 70 * size$clearance * activity
 
   reference <- paste0(
     "Melhem MR et al., Clin Pharmacokinet 2013;52:907-917. ",

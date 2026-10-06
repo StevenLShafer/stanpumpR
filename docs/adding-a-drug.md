@@ -4,25 +4,32 @@ stanpumpR is designed so that adding a drug is a small, self-contained change �
 let outside investigators contribute and maintain the pharmacokinetics for individual drugs.
 A new drug touches **four** places. None of the engine code needs to change.
 
+> Every model must handle body size the stanpumpR way — see
+> [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
+
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 
 ## 1. The model — `R/drugs_<name>.R`
 
 Create a file named after the drug (lowercase, matching the CSV `Drug` value). Export one
-function `<name>(weight, height, age, sex)` that returns a list. Even if the model ignores
-covariates, keep the full signature.
+function `<name>(weight, height, age, sex, adjustToFFM = TRUE)` that returns a list. Keep the
+full signature even if the model ignores some arguments.
 
-Minimal, covariate-independent example (`alfentanil`):
+Minimal example (`alfentanil`, whose published parameters are fixed values for a 70 kg adult):
 
 ```r
-alfentanil <- function(weight, height, age, sex)
+alfentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units: time in minutes, volumes in liters
 
+  # Size scaling: the published parameters describe a 70 kg adult and formerly
+  # did not scale at all (hence legacyVolume = 1).
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+
   default <- list(
-    v1 = 2.1853,  v2 = 6.698864, v3 = 14.52582,
-    cl1 = 0.1988623, cl2 = 1.433557, cl3 = 0.2469389
+    v1 = 2.1853    * size$volume,  v2 = 6.698864 * size$volume,  v3 = 14.52582 * size$volume,
+    cl1 = 0.1988623 * size$clearance, cl2 = 1.433557 * size$clearance, cl3 = 0.2469389 * size$clearance
   )
 
   events <- c("default")
@@ -46,6 +53,24 @@ alfentanil <- function(weight, height, age, sex)
 Covariate-driven models simply compute `v1..v3` / `cl1..cl3` from the arguments before
 building `default` — see `R/drugs_remifentanil.R` (branches on BMI between the Eleveld and Kim
 models) or `R/drugs_propofol.R`.
+
+### Body size scaling (required)
+
+Every model must do one of two things, and say which in a comment:
+
+1. **Carry its own size covariate**, as the Eleveld models do (`R/drugs_propofol.R`). Accept
+   `adjustToFFM` and ignore it; note in the comment that the model has its own covariate.
+2. **Inherit the library's fat-free-mass scaling.** Write the published parameters for the
+   70 kg reference adult, call `pkSizeFactors(weight, height, age, sex, adjustToFFM, ...)`, and
+   multiply every volume by `size$volume` and every clearance by `size$clearance`. The
+   `legacyVolume` / `legacyClearance` arguments say what the model does when the user turns the
+   switch off, and must reproduce the published scaling: `legacyVolume = 1` for fixed
+   parameters, the default `weight / 70` for a per-kilogram V1 with fixed rate constants, or
+   `legacyClearance = (weight / 70)^0.75` for a model published with allometric clearance.
+
+A published model that was fitted on total body weight is **still** scaled to fat-free mass
+(remimazolam is an example); only a model with its own fat-free-mass covariate is exempt.
+Placeholders for a missing compartment (`v3 = 1`, `cl3 = 0`) are left unscaled.
 
 ### Return-value contract
 
@@ -163,13 +188,14 @@ codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO",#4A6FE3,50,150,100,0,0,IV
 
 ## 3. The test — `tests/testthat/test-drugs-<name>.R`
 
-Pin the returned values at a reference patient so future edits are intentional. Mirror the
-existing drug tests:
+Pin the returned values at a reference patient so future edits are intentional, with the
+switch off (so the published parameters are what is pinned) and a second test with it on for
+a non-reference patient. Mirror the existing drug tests:
 
 ```r
 test_that("returns the correct calculations", {
   weight <- 70; height <- 171; age <- 50; sex <- "male"
-  actual <- <name>(weight, height, age, sex)
+  actual <- <name>(weight, height, age, sex, adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(default = list(
@@ -183,9 +209,17 @@ test_that("returns the correct calculations", {
 
   expect_equal_rounded(actual, expected)
 })
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
+  actual <- <name>(120, 170, 50, "male")
+  expected <- list(v1 = ..., v2 = ..., v3 = ..., cl1 = ..., cl2 = ..., cl3 = ...)
+  expect_equal_rounded(actual$PK$default[names(expected)], expected)
+})
 ```
 
-`expect_equal_rounded` is defined in `tests/testthat/helpers.R`.
+`expect_equal_rounded` is defined in `tests/testthat/helpers.R`. Work the scaled pins out from
+the published numbers and the factors above, not by running the code under test.
 
 ## Verify
 

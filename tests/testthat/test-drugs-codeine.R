@@ -24,7 +24,7 @@ trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) 
 
 
 test_that("returns the correct calculations", {
-  actual <- codeine(70, 171, 50, "male")
+  actual <- codeine(70, 171, 50, "male", adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(default = list(
@@ -53,7 +53,7 @@ test_that("returns the correct calculations", {
 
 
 test_that("disposition follows the intravenous anchors", {
-  x <- codeine(70, 171, 50, "male")$PK$default
+  x <- codeine(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   # Persson 1992: 10.8 mL/min/kg
   expect_equal(x$cl1 / 70, 10.8 / 1000, tolerance = 1e-9)
   # Guay 1988: mean residence time 3.90 h, and Vss = CL * MRT for one compartment
@@ -62,7 +62,7 @@ test_that("disposition follows the intravenous anchors", {
   expect_gt(x$v1 / 70, 2.4)
   expect_lt(x$v1 / 70, 2.7)
   # Scales linearly with weight
-  y <- codeine(35, 171, 50, "male")$PK$default
+  y <- codeine(35, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(y$v1, x$v1 / 2)
   expect_equal(y$cl1, x$cl1 / 2)
 })
@@ -98,7 +98,7 @@ test_that("the CYP2D6 phenotype weights are Ashraf's group medians as odds ratio
 test_that("formation is ordered across the four phenotypes", {
   kf <- vapply(c(CYP2D6_POOR, CYP2D6_INTERMEDIATE, CYP2D6_NORMAL,
                  CYP2D6_ULTRARAPID),
-               function(g) codeine(70, 171, 50, "male", g)$metabolite$kFormation,
+               function(g) codeine(70, 171, 50, "male", g, adjustToFFM = FALSE)$metabolite$kFormation,
                numeric(1))
   expect_true(all(diff(kf) > 0))
   # Poor is small but not structurally zero; Ashraf's own estimate is nonzero
@@ -114,7 +114,7 @@ test_that("total codeine clearance moves only slightly with phenotype", {
   # is why Yue 1991 and Chen 1991 found no significant difference between
   # extensive and poor metabolisers.
   cl <- vapply(CYP2D6_VALUES,
-               function(g) codeine(70, 171, 50, "male", g)$PK$default$cl1,
+               function(g) codeine(70, 171, 50, "male", g, adjustToFFM = FALSE)$PK$default$cl1,
                numeric(1))
   expect_lt(max(cl) / min(cl) - 1, 0.06)
 })
@@ -134,7 +134,7 @@ test_that("the formation fraction is Ashraf rescaled to the Lotsch clearance", {
   expected <- (0.16 / 1.16) * 75.3 / 357.5
   expect_equal(expected, 0.0290523, tolerance = 1e-5)
 
-  x <- codeine(70, 171, 50, "male")
+  x <- codeine(70, 171, 50, "male", adjustToFFM = FALSE)
   p <- x$PK$default
   # kFormation * v1 is the formation clearance; against total clearance it is
   # the fraction of codeine eliminated as morphine.
@@ -358,4 +358,15 @@ test_that("asking for no recovery leaves the morphine row's times at zero", {
     data.frame(Time = numeric(0), Event = character(0)),
     70, 171, 50, "male", 1440, FALSE)
   expect_true(all(o$morphine$wide$Recovery == 0))
+})
+
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
+  # (worked out from the Al-Sallami formula by hand).  The formation constant
+  # is a clearance over a volume, so it is no longer weight-independent.
+  x <- codeine(120, 170, 50, "male")
+  expect_equal_rounded(x$PK$default$v1,  230.84321)
+  expect_equal_rounded(x$PK$default$cl1, 0.92300994)
+  expect_equal_rounded(x$metabolite$kFormation, 0.00011616364)
 })

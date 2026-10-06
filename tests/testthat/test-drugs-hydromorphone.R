@@ -1,9 +1,10 @@
-test_that("returns the correct calculations", {
+test_that("returns the published parameters with total-body-weight scaling", {
   weight <- 70
   height <- 171
   age <- 50
   sex <- "male"
-  actual <- hydromorphone(weight, height, age, sex)
+  # The switch off reproduces the pre-fat-free-mass output exactly.
+  actual <- hydromorphone(weight, height, age, sex, adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(
@@ -92,4 +93,20 @@ test_that("time until threshold counts down from the first minutes on every rout
     at60 <- stats::approx(es$Time, es$Recovery, 60)$y
     expect_lt(at60, at10, label = paste("recovery falls by 60 min for", units))
   }
+})
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
+  # volumes x 1.3049067 and clearances x 1.3049067^0.75 = 1.2209126 (worked out
+  # from the Al-Sallami formula by hand, not from the code under test).
+  actual <- hydromorphone(120, 170, 50, "male")
+  expected <- list(
+        v1 = 14.614954,
+        v2 = 146.14954,
+        v3 = 1230.733,
+        cl1 = 1.5862097,
+        cl2 = 4.1022664,
+        cl3 = 1.0939377
+  )
+  expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })

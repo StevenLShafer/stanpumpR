@@ -1,16 +1,23 @@
-sufentanil <- function(weight, height, age, sex)
+sufentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Minutes
   # Volume: Liters
   
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: no size scaling, the parameters were used as published.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+
   default <- list(
-    v1 = 14.3,
-    v2 = 63.38694,
-    v3 = 251.9,
-    cl1 = 0.92235,
-    cl2 = 1.55298,
-    cl3 = 0.32747
+    v1 = 14.3      * size$volume,
+    v2 = 63.38694  * size$volume,
+    v3 = 251.9     * size$volume,
+    cl1 = 0.92235 * size$clearance,
+    cl2 = 1.55298 * size$clearance,
+    cl3 = 0.32747 * size$clearance
   )
   
   events <- c(PK_EVENT_DEFAULT)

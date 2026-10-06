@@ -13,6 +13,9 @@
 #'   \code{simCpCe()}.
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 #'   Only drugs whose model declares it are affected.
+#' @param adjustToFFM scale each model's volumes and clearances to the patient's
+#'   fat-free mass (the default) rather than total body weight; see
+#'   `docs/weight-adjustment.md`.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -22,7 +25,8 @@
 #' @export
 simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          maximum, plotRecovery,
-                                         cyp2d6 = CYP2D6_DEFAULT)
+                                         cyp2d6 = CYP2D6_DEFAULT,
+                                         adjustToFFM = TRUE)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -51,7 +55,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   for (drug in drugList)
   {
     drugDefaults <- getDrugDefaults(drug)
-    PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6)
+    PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
+                    adjustToFFM = adjustToFFM)
     # simCpCe() reads the emergence threshold off PK$endCe, which getDrugPK()
     # does not set: its own `emerge` field reads a drugDefaults$Emerge column
     # that does not exist, the CSV calls it endCe.  The Shiny path works
@@ -87,7 +92,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     if (target %in% drugList) next
     targetDefaults <- getDrugDefaults(target)
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
-                          cyp2d6 = cyp2d6)
+                          cyp2d6 = cyp2d6, adjustToFFM = adjustToFFM)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

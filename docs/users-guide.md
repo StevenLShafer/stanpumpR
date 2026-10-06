@@ -42,6 +42,21 @@ they change the predictions.
 | Weight | kg or lb | |
 | Height | in or cm | |
 | Sex | male / female | |
+| Adjust weight to fat-free mass | checkbox | On by default. See below. |
+
+**Adjust weight to fat-free mass.** Most of the drug models were reported for a
+typical 70 kg adult and, if they scaled at all, scaled with total body weight.
+Drug clearance tracks lean tissue, not fat, so with this box ticked stanpumpR
+computes the patient's fat-free mass from weight, height, age and sex
+(Al-Sallami et al. 2015) and scales each model's volumes by the ratio of that to
+the fat-free mass of a 70 kg, 170 cm man, and its clearances by the same ratio to
+the 0.75 power. The reference man is unchanged; a 70 kg woman or a 120 kg man is
+not. Doses you type per kilogram are still converted with total body weight.
+Propofol and remifentanil already carry fat-free mass inside their published
+models and ignore the box. Untick it to see what total-body-weight scaling
+predicts, or to reproduce a simulation made before this option existed. The
+full account, with worked examples, is in
+[docs/weight-adjustment.md](weight-adjustment.md).
 
 Three further fields — **Pregnant**, **CYP 2D6**, and **Renal Function** — appear
 in the interface but are **currently disabled**. The inputs were added ahead of
@@ -309,6 +324,13 @@ surgical patients of a particular age and size. The model is extrapolated
 whenever your patient sits outside that population, and the plot gives no visual
 hint when that is happening.
 
+**Most models are scaled to fat-free mass, not used exactly as published.** Unless
+the *Adjust weight to fat-free mass* box is unticked, every model in the table
+except propofol, remifentanil and oxytocin has its volumes and clearances scaled
+from the published 70 kg values to the patient's fat-free mass. The published
+parameters are what a 70 kg, 170 cm man receives. See
+[docs/weight-adjustment.md](weight-adjustment.md).
+
 **Where a drug has two models**, stanpumpR picks between them on a covariate —
 dexmedetomidine switches to the infant model at age ≤ 1 year, for example — so
 the reference that applies depends on the patient you entered.
@@ -557,6 +579,7 @@ output. Off by default in production.
 - **Examples and Help** — the link in the navigation bar, top right.
 - `docs/architecture.md` — how the program is put together.
 - `docs/adding-a-drug.md` — adding a drug or a pharmacokinetic model.
+- `docs/weight-adjustment.md` — how patient weight, height, age and sex scale the models.
 - `README.md` — installation and local setup.
 
 ---

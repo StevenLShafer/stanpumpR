@@ -157,11 +157,17 @@ DESMETRAMADOL_MEAC  <- 84  # ng/mL; provisional, see above
 #'
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-desmetramadol <- function(weight, height, age, sex)
+desmetramadol <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Holford 2014 allometry: clearances (W/70)^0.75, volumes W/70
-  perKg   <- weight / 70
-  perKg75 <- perKg^0.75
+  # Holford 2014 allometry: clearances (W/70)^0.75, volumes W/70.  With the
+  # fat-free-mass switch on (docs/weight-adjustment.md) the same exponents
+  # apply to the fat-free-mass ratio instead.  Tramadol and desmetramadol
+  # must make this call identically: the formation constant is a clearance
+  # over a volume, and the pair was fitted jointly.
+  size    <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                           legacyClearance = (weight / 70)^0.75)
+  perKg   <- size$volume
+  perKg75 <- size$clearance
 
   v1  <- 78.9 * perKg
   v2  <- 131  * perKg

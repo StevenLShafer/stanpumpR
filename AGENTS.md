@@ -45,6 +45,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
   1. `R/drugs_<name>.R` (covariate model function)
   2. `inst/extdata/drugDefaults_global.csv` (row with colors, units, MEAC)
   3. `tests/testthat/test-drugs-<name>.R` (unit test — pin values with `expect_equal_rounded()` from `tests/testthat/helpers.R`)
+- **Body size scaling is mandatory** (`docs/weight-adjustment.md`): a drug function is `<name>(weight, height, age, sex, adjustToFFM = TRUE)` and either carries its own size covariate (Eleveld-style) or scales its 70 kg reference parameters with `pkSizeFactors()` — volumes by `$volume`, clearances by `$clearance` — passing the `legacy*` factors that reproduce the published scaling when the switch is off. Tests pin both switch positions.
 - **Debug logging**: `outputComments()`, active when `?debug=1` is in the URL.
 - **Deploy**: GitHub Actions — PRs auto-deploy to a test environment; merges to `master` deploy to production (shinyapps.io).
 - **Adding an R package**: add to `DESCRIPTION` first, then `renv::install("pkg")` + `renv::snapshot()`, commit `DESCRIPTION` + `renv.lock` together. For a package that isn't on CRAN, also add it under `Remotes:` in `DESCRIPTION` (e.g. `daattali/undomanager`) and install with `renv::install("user/repo")`, so the deploy can resolve it.
