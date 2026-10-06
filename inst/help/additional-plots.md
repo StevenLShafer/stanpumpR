@@ -28,4 +28,4 @@ Removing the Events panel while events are entered asks for confirmation, becaus
 
 ## Panels that appear on their own
 
-Two panels are not checkboxes. The **MAC equivalents** panel appears whenever a potent inhaled agent (sevoflurane, isoflurane, desflurane or nitrous oxide) is running, and the **oxygen** panel whenever any gas flow is. See [Inhaled anesthetics](help:inhaled-agents).
+Two panels are not checkboxes. The **MAC equivalents** panel appears whenever a potent inhaled agent (sevoflurane, isoflurane, desflurane or nitrous oxide) is running, and the **oxygen** panel whenever any gas flow is running. See [Inhaled anesthetics](help:inhaled-agents).

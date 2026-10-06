@@ -43,7 +43,7 @@ out <- simulateDrugsWithCovariates(doseTable, eventTable,
                                    weight = 70, height = 170, age = 50, sex = "male",
                                    maximum = 60, plotRecovery = FALSE)
 names(out)          # one element per drug
-out$propofol$results
+out$remifentanil$results
 ```
 
 The result for each drug is a tidy table of `Time`, `Site` (Plasma, Effect Site, and the normalised and recovery series) and `Y`, plus `equiSpace`, the curves on an even grid, and `max`, the peaks.

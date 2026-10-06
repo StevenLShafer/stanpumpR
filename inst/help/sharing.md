@@ -2,7 +2,7 @@ The URL in your browser's address bar is the simulation. Every change you make i
 
 ## To save or share a simulation
 
-Copy the address bar and paste it into an email, a document, or a teaching handout. Whoever opens it sees exactly what you saw. The URL is long, because it carries the whole state.
+Copy the address bar and paste it into an email, a document, or a teaching handout. Whoever opens it sees the same patient, doses, events, options and thresholds you had; edits to the rest of the Drug Library (concentrations, units, colours, ranges) are not carried, as listed below. The URL is long, because it carries the whole state.
 
 ## What is included
 

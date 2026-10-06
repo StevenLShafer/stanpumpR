@@ -412,6 +412,28 @@ helpSearch <- function(term, index = helpSearchIndexCached(), maxHits = 25) {
   utils::head(res, maxHits)
 }
 
+#' Escape a snippet for HTML with the search term wrapped in <mark>
+#'
+#' The matches are found on the plain text and each piece is escaped on its
+#' own, so a term such as "amp" cannot land inside an entity like &amp;.
+#' @noRd
+helpHighlight <- function(text, term) {
+  esc <- htmltools::htmlEscape
+  m <- gregexpr(helpEscapeRegex(term), text, ignore.case = TRUE)[[1]]
+  if (m[1] == -1) return(esc(text))
+  starts <- as.integer(m)
+  lengths <- attr(m, "match.length")
+  pieces <- character(0)
+  pos <- 1
+  for (k in seq_along(starts)) {
+    pieces <- c(pieces,
+                esc(substr(text, pos, starts[k] - 1)),
+                "<mark>", esc(substr(text, starts[k], starts[k] + lengths[k] - 1)), "</mark>")
+    pos <- starts[k] + lengths[k]
+  }
+  paste(c(pieces, esc(substr(text, pos, nchar(text)))), collapse = "")
+}
+
 #' Search results for the sidebar
 #' @noRd
 helpSearchResultsUI <- function(term, hits) {
@@ -419,11 +441,8 @@ helpSearchResultsUI <- function(term, hits) {
     return(tags$div(class = "help-search-results small text-muted",
                     "Nothing found for “", htmltools::htmlEscape(term), "”."))
   }
-  pattern <- helpEscapeRegex(term)
   items <- lapply(seq_len(nrow(hits)), function(i) {
-    snippet <- htmltools::htmlEscape(hits$snippet[i])
-    snippet <- gsub(paste0("(", pattern, ")"), "<mark>\\1</mark>", snippet,
-                    ignore.case = TRUE)
+    snippet <- helpHighlight(hits$snippet[i], term)
     tags$li(
       tags$a(href = "#", `data-help-page` = hits$id[i], hits$title[i]),
       tags$span(class = "help-search-section", hits$sectionTitle[i]),

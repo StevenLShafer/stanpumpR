@@ -13,7 +13,7 @@ Changing a covariate re-simulates every drug at once; there is no Apply step for
 
 ## What the models do with them
 
-Internally every model receives age in years, weight in kilograms, height in centimetres and sex. From these the models derive what they need: body mass index, lean body mass by the James equation, fat-free mass by the Al-Sallami equations, post-menstrual age for the maturation functions, and allometric size scaling. See [Covariates and body size](help:models/covariates) for the equations.
+Internally every model receives age in years, weight in kilograms, height in centimetres and sex. From these the models derive what they need: body mass index, lean body mass by the James equation, fat-free mass by whichever equation the model's authors used (Al-Sallami's for the Eleveld models, Janmahasatian's for the Kim remifentanil model), post-menstrual age for the maturation functions, and allometric size scaling. See [Covariates and body size](help:models/covariates) for the equations.
 
 A few models switch between parameter sets on a covariate:
 

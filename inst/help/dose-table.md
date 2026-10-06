@@ -15,7 +15,7 @@ The dose table is the main way you talk to the program. It sits to the right of 
 
 Anything that cannot be read as a time becomes 0 rather than raising an error. If the time display is set to *Actual time*, times are clock times; see [Time display](help:time-display).
 
-**Dose.** A number. Negative numbers and junk become 0.
+**Dose.** A number. Anything that is not a digit or a decimal point is removed before the number is read, so `5 mg` is read as 5, a minus sign is dropped (`-5` becomes 5, not 0), and an entry with no digits at all becomes 0.
 
 **Units.** A drop-down whose contents depend on the drug in that row. The list, and the default, come from the drug library and are shown on each drug's page. The unit decides what kind of row it is:
 

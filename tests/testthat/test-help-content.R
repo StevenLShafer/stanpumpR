@@ -149,6 +149,15 @@ test_that("search results render with highlighted snippets", {
   expect_match(none, "Nothing found", fixed = TRUE)
 })
 
+test_that("highlighting marks the term on the plain text, not inside HTML entities", {
+  expect_equal(helpHighlight("a & amp b", "amp"), "a &amp; <mark>amp</mark> b")
+  expect_equal(helpHighlight("Propofol and propofol", "propofol"),
+               "<mark>Propofol</mark> and <mark>propofol</mark>")
+  expect_equal(helpHighlight("x < y", "lt"), "x &lt; y")
+  expect_equal(helpHighlight("1:30 or 1:30", "1:30"), "<mark>1:30</mark> or <mark>1:30</mark>")
+  expect_equal(helpHighlight("none here", "zzz"), "none here")
+})
+
 test_that("the sidebar lists every page once and marks the current one", {
   reg <- helpPageRegistry()
   nav <- as.character(helpSidebarNav(reg, "models/effect-site"))
