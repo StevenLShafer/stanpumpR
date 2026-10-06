@@ -46,11 +46,16 @@
 #     7.9 ng.h/mL, i.e. CL/F about 500 L/h).  It is much lower than the
 #     0.47-0.52 "relative to intramuscular" figures on labels, which assume
 #     complete intramuscular absorption that Dowling (F_IM 0.36) did not find.
-#   - ka = 1.151 /h with a 4.3 min lag: the lag is Laffont's, and ka matches
-#     the mean input time of the whole published mixture (0.94 h) with one
-#     lagged exponential.  A single first-order input starts more slowly than
-#     the published immediate zero-order branch, so the first few minutes
-#     after a spray are understated.
+#   - ka = 1.064 /h, no lag: one exponential whose mean input time equals
+#     that of the whole published mixture (0.94 h), the moment-matching the
+#     specification uses for its own inverse-Gaussian initialisers.  Laffont's
+#     4.3 min lag on the first-order branch is folded into that mean rather
+#     than carried separately: the library keeps its drugs lag-free, because
+#     during a lag the engine has no state for the drug and the time until
+#     threshold cannot be reported (see R/recoveryStates.R).  A single
+#     first-order input starts more slowly than the published immediate
+#     zero-order branch, so the first few minutes after a spray are
+#     understated.
 #
 # Both numbers are derived initialisers, flagged as such; a direct fit of
 # the spray to an intravenous anchor would replace them.
@@ -108,9 +113,9 @@ naloxone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # Intranasal: derived from Laffont 2024, see the header.  F is anchored on
   # the reference man's clearance so that his nasal AUC is the fitted one.
   clRef <- 91 * (FFM_REFERENCE / 70)^0.75             # 75.4 L/h
-  ka_IN              <- 1 / (0.9402597 - 0.0717) / 60  # 1/min, = 1.151 /h
+  ka_IN              <- 1 / 0.9402597 / 60             # 1/min, = 1.064 /h
   bioavailability_IN <- clRef / NALOXONE_LAFFONT_CL_F  # 0.190
-  tlag_IN            <- 0.0717 * 60                    # 4.3 min
+  tlag_IN            <- 0                              # folded into ka, see header
 
   default <- list(
     v1 = v1,

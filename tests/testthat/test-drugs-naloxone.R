@@ -23,9 +23,9 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         cl1 = 1.2615039,
         cl2 = 0.094333333,
         cl3 = 0.49666667,
-        ka_IN = 0.019188856,
+        ka_IN = 0.0177255993,
         bioavailability_IN = 0.19040215,
-        tlag_IN = 4.302
+        tlag_IN = 0
       )
     ),
     tPeak = 0,
@@ -75,9 +75,9 @@ test_that("the nasal route reproduces Laffont's fitted exposure for the referenc
   x <- naloxone(70, 170, 35, "male")$PK$default
   expect_equal(x$cl1 * 60, 75.39925, tolerance = 1e-6)
   expect_equal(x$bioavailability_IN, 75.39925 / 396, tolerance = 1e-6)
-  # Lag 0.0717 h; ka matches the mean input time of the whole mixture, 0.94 h
-  expect_equal(x$tlag_IN, 0.0717 * 60)
-  expect_equal(x$tlag_IN + 1 / x$ka_IN, 0.9402597 * 60, tolerance = 1e-6)
+  # No lag; ka matches the mean input time of the whole mixture, 0.94 h
+  expect_equal(x$tlag_IN, 0)
+  expect_equal(1 / x$ka_IN, 0.9402597 * 60, tolerance = 1e-6)
   PK <- getDrugPK("naloxone", 70, 170, 35, "male", getDrugDefaults("naloxone"))$PK$default
   aucIN <- sum(c(PK$p_coef_IN_l1, PK$p_coef_IN_l2, PK$p_coef_IN_l3, PK$p_coef_IN_ka) /
                c(PK$lambda_1, PK$lambda_2, PK$lambda_3, PK$ka_IN))
@@ -102,12 +102,13 @@ test_that("ke0 is Yassen's, and the effect site peaks a few minutes after a bolu
   expect_gt(max(w$"Effect Site"), 0)
 })
 
-test_that("a nasal dose is accepted and peaks after the lag", {
+test_that("a nasal dose is accepted and peaks within the first hour", {
   o <- simulateDrugsWithCovariates(
     data.frame(Drug = "naloxone", Time = 0, Dose = 4, Units = "mg IN"),
     noEvents, 70, 170, 35, "male", 240, FALSE)
   w <- o$naloxone$wide
-  expect_gt(w$Time[which.max(w$Plasma)], 4.3)
+  expect_gt(w$Time[which.max(w$Plasma)], 2)
+  expect_lt(w$Time[which.max(w$Plasma)], 60)
   # Narcan 4 mg: label peak about 4.8 ng/mL; this input is a little faster
   expect_gt(max(w$Plasma), 3)
   expect_lt(max(w$Plasma), 10)
