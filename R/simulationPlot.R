@@ -132,9 +132,43 @@ simulationPlot <- function(
   if (plasmaLinetype == "blank")
   {
     #   cat ("removing plasma concentrations\n")
-    allResults <- allResults[allResults$Site != "Plasma",]
-    plasmaLinetype <- NULL
-    plotTable$MaxCp <- 0
+    # Hiding the plasma line must not hide a drug entirely.
+    #
+    # A drug with no effect site -- a prodrug such as codeine or tramadol, or
+    # one whose potency has not been supplied yet -- carries NA in its
+    # effect-site column, and those rows are dropped further down.  Removing
+    # its plasma rows here as well would leave it with nothing at all to
+    # draw: an empty panel with axes and a typical-range band and no curve.
+    # Since the default setting is a blank plasma line, that is what such a
+    # drug looked like out of the box.
+    #
+    # So plasma is removed only from the drugs that have an effect site to
+    # show instead.  Note the NA test: the effect-site rows still exist at
+    # this point and are dropped later, so their mere presence does not mean
+    # the drug has anything to plot.
+    # The exception applies only when the effect site is actually being
+    # shown.  Blanking BOTH lines is a deliberate request for an empty plot,
+    # and forcing plasma back on there would override an explicit choice
+    # rather than rescue an accidental one.
+    withEffectSite <- if (effectsiteLinetype == "blank") {
+      unique(allResults$Drug)
+    } else {
+      unique(
+        allResults$Drug[allResults$Site == "Effect Site" & !is.na(allResults$Y)]
+      )
+    }
+    allResults <- allResults[
+      allResults$Site != "Plasma" | !(allResults$Drug %in% withEffectSite),
+    ]
+    if (any(allResults$Site == "Plasma"))
+    {
+      # Whatever plasma survived is the only curve those drugs have, so it is
+      # drawn rather than blanked, and keeps its own legend entry.
+      plasmaLinetype <- "solid"
+    } else {
+      plasmaLinetype <- NULL
+      plotTable$MaxCp <- 0
+    }
   }
   if (effectsiteLinetype == "blank")
   {
