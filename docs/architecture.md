@@ -247,6 +247,16 @@ All files are flat in `R/`.
 - `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
   `emayili`.
 
+**Help — the Help tab**
+- `help-content.R` — page registry (`helpStaticPages()`), Markdown rendering via `shiny::markdown()`,
+  `help:`/`scenario:` link rewriting, heading ids and table of contents, full-text search.
+- `help-drugs.R` — pages generated from the drug library: each drug model run at six reference
+  patients, with its citation, units and thresholds; the drug index; the bibliography.
+- `help-scenarios.R` — the teaching-scenario registry (`helpScenarios()`), its validator, the
+  generated scenario pages, and `applyHelpScenario()`, which loads one into the simulator.
+- `help-ui.R`, `help-server.R` — the nav panel and the server module (`helpServer()`), called
+  once from `app_server()`. Content lives in `inst/help/` (see `inst/help/README.md`).
+
 **Util — time & misc**
 - `utils-time.R` — several time-related utility functions.
 - `utils.R` — generic helpers only (functions that don't know anything about doses/drugs/etc).
@@ -274,7 +284,9 @@ All files are flat in `R/`.
   (`outputComments()`) and a per-reactive profiler (`profileCode()`).
 - **Front-end assets** (`inst/www/`) — `app.css`, `app.js`, `hot_funs.js` (Handsontable
   copy/paste hooks and drug-default injection into the client).
-- **Config** (`config.yml`, `app_run.R`) — environment-specific title, help link, and debug flag,
+- **Help** (`R/help-*.R`, `inst/help/`) — the in-app help: Markdown pages plus pages generated
+  from the drug library and the teaching scenarios, with search and one-click scenario loading.
+- **Config** (`config.yml`, `app_run.R`) — environment-specific title and debug flag,
   merged over `DEFAULT_CONFIG` at launch.
 - **Reproducibility** (`renv.lock`, `DESCRIPTION`) — `renv.lock` pins exact package versions so
   production matches local; deps declared in `DESCRIPTION`.

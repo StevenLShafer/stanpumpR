@@ -2,7 +2,7 @@
 
 stanpumpR is designed so that adding a drug is a small, self-contained change — the goal is to
 let outside investigators contribute and maintain the pharmacokinetics for individual drugs.
-A new drug touches **four** places. None of the engine code needs to change.
+A new drug touches **four** files, including a help page. None of the engine code needs to change.
 
 > Every model must handle body size the stanpumpR way — see
 > [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
@@ -221,11 +221,26 @@ test_that("scales to fat-free mass for a 120 kg man", {
 `expect_equal_rounded` is defined in `tests/testthat/helpers.R`. Work the scaled pins out from
 the published numbers and the factors above, not by running the code under test.
 
+## 4. The help page — `inst/help/drugs/<name>.md`
+
+The in-app help (the **Help** tab) generates a page for every drug in the CSV: its parameters
+at six reference patients, its citation, its units and typical range, all computed from the
+files above so they cannot drift. What it cannot generate is the narrative — the population
+the model was fitted in, which covariates it uses and how, where it is extrapolated, who did
+the work. That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
+under an "About this model" heading). `tests/testthat/test-help-drugs.R` fails if the file is
+missing. See `inst/help/README.md` for the Markdown conventions and `inst/help/drugs/fentanyl.md`
+for a short example.
+
+Optionally, add a teaching scenario that uses the drug: a `helpScenario()` entry in
+`R/help-scenarios.R` and its narrative in `inst/help/scenarios/<id>.md`.
+
 ## Verify
 
 ```r
 devtools::load_all(".")
 devtools::test(filter = "drugs-<name>")   # unit test
+devtools::test(filter = "help")           # the help pages, including the new drug's
 run_app()                                  # confirm it appears in the dose-grid dropdown and plots
 ```
 

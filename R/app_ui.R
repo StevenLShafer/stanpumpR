@@ -13,6 +13,7 @@ app_ui <- function() {
 
   function(request) {
     bslib::page_navbar(
+      id = "mainNav",
       title = span(config$title, class = if (config$long_title) "title-long"),
       theme = stanpumpr_theme,
 
@@ -366,6 +367,10 @@ app_ui <- function() {
         )
       ),
 
+      # The help: pages in inst/help plus pages generated from the drug library
+      # and the teaching scenarios.  See R/help-content.R.
+      helpNavPanel(),
+
       bslib::nav_spacer(),
       bslib::nav_menu(
         "Settings",
@@ -383,14 +388,6 @@ app_ui <- function() {
             "Drug Thresholds",
             icon = icon("fas fa-bullseye")
           )
-        )
-      ),
-      bslib::nav_item(
-        tags$a(
-          icon("circle-info"),
-          "Examples and Help",
-          href = config$help_link,
-          target = "_blank"
         )
       ),
       bslib::nav_item(
