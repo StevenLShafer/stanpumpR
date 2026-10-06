@@ -126,10 +126,29 @@ test_that("the two cases coexist in one plot", {
 })
 
 
-test_that("blanking both lines still empties the plot", {
+test_that("blanking both lines returns an empty plot rather than erroring", {
   # The escape hatch has to keep working: asking for neither series draws
   # neither, rather than the prodrug rule forcing plasma back on.
+  #
+  # Nothing survives both filters, and simulationPlot answers "nothing to
+  # plot" with NULL, as its own earlier zero-row guard does.  That guard runs
+  # before the linetype filters and so never saw this case; until a drug
+  # existed with only one of the two series, nothing exercised the path, and
+  # the function errored on a zero-row assignment.  Reproducible on master.
   DT <- data.frame(Drug = "tramadol", Time = 0, Dose = 100, Units = "mg PO")
-  p <- plotWith(DT, plasmaLinetype = "blank", effectsiteLinetype = "blank")
-  expect_equal(drawnFor(p, "tramadol"), 0)
+  expect_no_error(
+    p <- plotWith(DT, plasmaLinetype = "blank", effectsiteLinetype = "blank")
+  )
+  expect_null(p)
+})
+
+
+test_that("blanking both lines is empty for an ordinary drug too", {
+  # Not a prodrug problem: any single-drug table with both series blanked
+  # reaches the same place.
+  DT <- data.frame(Drug = "fentanyl", Time = 0, Dose = 100, Units = "mcg")
+  expect_no_error(
+    p <- plotWith(DT, plasmaLinetype = "blank", effectsiteLinetype = "blank")
+  )
+  expect_null(p)
 })

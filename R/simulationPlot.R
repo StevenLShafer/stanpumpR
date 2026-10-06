@@ -177,6 +177,23 @@ simulationPlot <- function(
     plotTable$MaxCe <- 0
   }
 
+  # Both series can be blanked, which is a legitimate request for an empty
+  # plot.  Nothing then survives the two filters above, and the assignments
+  # below cannot write a length-one value into a zero-row data frame.
+  #
+  # The zero-row guard at Step C2 cannot catch this: it runs before the
+  # linetype filters, when the rows still exist.  Pre-existing rather than new
+  # -- master errors here identically -- but nothing exercised the path until
+  # a drug appeared that has only one of the two series.
+  #
+  # Same answer as that earlier guard: nothing to plot is NULL, which
+  # output$PlotSimulation already handles.
+  if (nrow(allResults) == 0)
+  {
+    message("Returning Null, both linetypes blank")
+    return(NULL)
+  }
+
   allResults$Wrap <- ""
   allResults$Label <- ""
 
