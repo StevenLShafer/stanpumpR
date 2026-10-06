@@ -52,11 +52,11 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   {
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6)
-    # The threshold recovery is measured against.  getDrugPK() does not carry
-    # it -- it lives in the drug defaults, and in the app recalculatePK() puts
-    # it on the drug entry -- so without this line simCpCe() was handed a NULL
-    # emerge and every time until threshold came back zero, silently, whatever
-    # plotRecovery said.
+    # simCpCe() reads the emergence threshold off PK$endCe, which getDrugPK()
+    # does not set: its own `emerge` field reads a drugDefaults$Emerge column
+    # that does not exist, the CSV calls it endCe.  The Shiny path works
+    # because recalculatePK() assigns it by hand.  Without this line every
+    # time until threshold computed through this function is zero.
     PK$endCe <- drugDefaults$endCe
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
