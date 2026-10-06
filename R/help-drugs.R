@@ -172,7 +172,10 @@ helpDrugParameterTable <- function(drug, drugDefaults = getDrugDefaultsGlobal(),
 helpConcentrationUnits <- function(units) {
   switch(as.character(units),
          "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL",
-         "%" = "% of one atmosphere", as.character(units))
+         "%" = "% of one atmosphere",
+         # An osmotic agent is plotted as the serum osmolality it produces.
+         "mOsm" = "mOsm/kg (serum osmolality)",
+         as.character(units))
 }
 
 helpReferenceShort <- function(reference) {
