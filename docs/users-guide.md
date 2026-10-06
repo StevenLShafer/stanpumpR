@@ -578,7 +578,8 @@ output. Off by default in production.
 
 ## Where to go next
 
-- **Examples and Help** — the link in the navigation bar, top right.
+- **Help** — the Help tab in the navigation bar: this guide's material as pages, a generated
+  page for every drug, the models and methods, and loadable teaching scenarios.
 - `docs/architecture.md` — how the program is put together.
 - `docs/adding-a-drug.md` — adding a drug or a pharmacokinetic model.
 - `docs/weight-adjustment.md` — how patient weight, height, age and sex scale the models.

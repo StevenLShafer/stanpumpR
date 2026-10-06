@@ -1,0 +1,5 @@
+Air is entered as a **fresh gas flow** in L/min at the flowmeter. The engine splits it into its oxygen (20.93 per cent) and nitrogen (78.07 per cent) contributions, which are added to the oxygen and nitrogen in the fresh gas. Air itself is therefore not plotted: its oxygen appears on the oxygen panel, and its nitrogen is carried internally.
+
+Nitrogen is always carried, whether or not air is given: the patient starts full of it (room air), and its washout from the body is part of the summed uptake that couples the gases. It is not an anesthetic here, is not summed into MAC equivalents and is not plotted. Gas Man's figure for nitrogen's MAC is recorded in the parameter table and flagged as known to be wrong by a factor of about 55; it is inert in every calculation.
+
+Giving air with nitrous oxide dilutes the nitrous oxide, and giving it with a volatile agent in place of pure oxygen keeps some nitrogen in the lungs. Both show on the plot. See [The inhaled-gas engine](help:models/gas-engine).

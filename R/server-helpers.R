@@ -19,6 +19,15 @@ showIntroModal <- function() {
         `data-bs-dismiss` = "modal",
         "OK"
       ),
+      # Opens the Help tab at the tour (the click is handled in app.js)
+      shiny::tags$a(
+        href = "#",
+        class = "btn btn-outline-primary ms-2",
+        `data-bs-dismiss` = "modal",
+        `data-help-page` = "quick-start",
+        shiny::icon("circle-question"),
+        "Take the tour"
+      ),
       footer = NULL,
       easyClose = TRUE,
       size = "m"
