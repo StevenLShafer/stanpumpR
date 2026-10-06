@@ -161,3 +161,48 @@ test_that("male and female produce different parameters", {
   f <- getDrugPK("propofol", 70, 170, 50, SEX_FEMALE, dd)$PK[[PK_EVENT_DEFAULT]]
   expect_false(isTRUE(all.equal(m$cl1, f$cl1)))
 })
+
+
+test_that("getDrugPK resolves drug functions from a caller that cannot see them", {
+  # Regression for a bug that passed 1504 tests and broke R CMD check on four
+  # platforms.  getDrugPK looked a drug function up twice, one line apart, in
+  # two different environments: exists() searched its own frame, whose
+  # enclosure is this namespace, while match.fun() searched parent.frame(2),
+  # the environment of getDrugPK's CALLER.  Under devtools::load_all() the
+  # drug functions are visible to any caller and it resolved; in an installed
+  # package they are internal, the caller is the user's workspace, and it
+  # failed with "object 'remifentanil' of mode 'function' was not found".
+  #
+  # The bug is about the CALLER's environment, not about installation, which
+  # is what makes it testable here.  Enclosing the caller in an environment
+  # whose parent is baseenv() means the lookup walks frame, that environment,
+  # baseenv, emptyenv, and never reaches the attached package -- exactly the
+  # condition an installed package creates.
+  #
+  # Harness contributed by the recovery session, which was right that CI is
+  # not a good enough guard for this: six minutes after a push, against two
+  # seconds here.
+  caller <- function()
+    fn("remifentanil", 70, 170, 50, "male", dd("remifentanil"))
+  blind <- new.env(parent = baseenv())
+  assign("fn", getDrugPK, blind)
+  assign("dd", getDrugDefaults, blind)
+  environment(caller) <- blind
+
+  expect_false(exists("remifentanil", envir = blind, mode = "function"))
+  expect_no_error(PK <- caller())
+  expect_equal(PK$drug, "remifentanil")
+
+  # and the same for a drug that DOES take the optional covariate, since that
+  # is the branch the faulty lookup sat in
+  caller2 <- function()
+    fn("codeine", 70, 170, 50, "male", dd("codeine"), cyp2d6 = "ultrarapid")
+  environment(caller2) <- blind
+  expect_no_error(cod <- caller2())
+  expect_equal(cod$drug, "codeine")
+  # the phenotype really did reach the model
+  expect_equal(cod$PK$default$metabolite$coefs$K,
+               getDrugPK("codeine", 70, 170, 50, "male",
+                         getDrugDefaults("codeine"),
+                         cyp2d6 = "ultrarapid")$PK$default$metabolite$coefs$K)
+})
