@@ -108,7 +108,16 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_state_ka_IN <- advanceStatePO(ka_IN_dt, doseNA,     doseNA,        doseNA,     doseNA,     p_IN_ka, L)
 
       Cp <- p_state_l1 + p_state_l2 + p_state_l3 + p_state_ka_PO + p_state_ka_IM + p_state_ka_IN
-      Ce <- calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
+      # A drug with no tPeak has ke0 == 0, and calculateCe() divides by it,
+      # leaving Ce[1] = 0 and NaN everywhere after.  That is worse than an
+      # absent effect site, because one non-NA point is enough to get past an
+      # all-NA guard and then fail inside approx().  NA throughout, as
+      # advanceClosedForm0() does.
+      Ce <- if (pkSet$ke0 > 0) {
+        calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
+      } else {
+        rep(NA_real_, L)
+      }
 
       if (plotRecovery)
       {

@@ -76,12 +76,18 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # Oral doses appear after their absorption lag.
   if (hasPO) dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
 
-  # Timeline: dose times, the instant before each bolus, and a geometric fill
-  # so the early curvature is drawn smoothly.  An oral dose starts from zero
-  # rather than jumping, so it needs no instant-before point of its own, but
-  # including every dose time costs nothing and keeps this aligned with
-  # advanceClosedFormPO_IM_IN.
-  timeLine <- sort(unique(c(0, dose$Time, dose$Time[dose$Bolus] - .01, maximum)))
+  # Timeline: dose times, the instant before each dose, and a geometric fill so
+  # the early curvature is drawn smoothly.
+  #
+  # The instant-before point is needed for ORAL doses as well as boluses, even
+  # though an oral dose does not make the concentration jump.  Recovery does
+  # jump at every dose, and without a grid point just before the next one, the
+  # plotted series interpolates straight across that jump and reports a time
+  # until threshold that is far too long.  advanceClosedFormPO_IM_IN() takes
+  # the same precaution for the same reason.
+  before <- dose$Bolus
+  if (hasPO) before <- before | dose$PO
+  timeLine <- sort(unique(c(0, dose$Time, dose$Time[before] - .01, maximum)))
   timeLine <- timeLine[timeLine >= 0]
 
   gapStart <- timeLine[1:length(timeLine) - 1]
@@ -188,10 +194,16 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # coefficients cancel exactly.  A negative concentration is meaningless.
   Cm[Cm < 0] <- 0
 
+  # The metabolite drug may itself have no effect site, either because it is
+  # another prodrug or because its potency has not been supplied yet.  NA, not
+  # the plasma concentration, for the same reason as the parent above: the
+  # plotted row then shows plasma only rather than an effect-site line that is
+  # really a mislabelled copy of it, and the merge keeps the receiving drug's
+  # own convention instead of mixing NA with a number.
   Cem <- if (!is.null(met$ke0) && met$ke0 > 0) {
     calculateCe(Cm, rep(met$ke0, L), dt, L)
   } else {
-    Cm
+    rep(NA_real_, L)
   }
 
   # ---- Recovery, parent only ----
