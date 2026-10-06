@@ -1,0 +1,9 @@
+Ventilation is the patient's **minute ventilation** in L/min: the setting on a ventilator, or what the monitor reads for a spontaneously breathing patient. It is an input, not a drug, and is not plotted.
+
+Thirty per cent of it is taken to be dead space, so the **alveolar ventilation**, which is what exchanges gas with the circuit, is 70 per cent of what you enter. This is one of the deliberate differences from Gas Man, whose ventilation setting is alveolar ventilation with no dead space; when comparing, enter 70 per cent of the minute ventilation in Gas Man. See [Where the gas engine differs from Gas Man](help:models/gas-differences).
+
+Ventilation must be greater than zero whenever a gas is being given; with none, nothing carries gas to the alveoli and every agent sits at zero while oxygen is consumed. If you enter a gas and there is no ventilation row, one is added: 5.7 L/min at 70 kg, scaled to the patient by (weight/70)^0.75. That is the minute ventilation whose alveolar part is Gas Man's default of 4 L/min. A ventilation dose that is blank or zero is replaced by the default.
+
+Minute ventilation also sets the **threshold for rebreathing**: in the ideal circuit, once the fresh gas flow reaches the minute ventilation the patient inspires fresh gas and nothing else; below it, the shortfall is made up with exhaled gas. Raising the ventilation while the fresh gas flow stays fixed therefore increases rebreathing as well as alveolar exchange. See [Inhaled anesthetics](help:inhaled-agents).
+
+Ventilation can be changed during a simulation by adding a row at a later time, for example to model the change from controlled to spontaneous ventilation at emergence.

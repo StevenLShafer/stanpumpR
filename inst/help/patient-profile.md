@@ -1,0 +1,34 @@
+The first panel in the left sidebar. These covariates are passed to every drug's pharmacokinetic model, so they change the predictions. Which covariates a given model actually uses is recorded on its page under [Drug library](help:drugs/index); some use all four, some none.
+
+## The fields
+
+| Field | Units | Range | Notes |
+|---|---|---|---|
+| Age | years or months | 0 to 90 | Toggle the unit beside the field. Ages of 90 and above are entered as 90 (see below). |
+| Weight | kg or lb | 0.1 to 500 kg | |
+| Height | in or cm | 10 to 200 cm | |
+| Sex | male or female | | |
+
+Changing a covariate re-simulates every drug at once; there is no Apply step for the patient.
+
+## What the models do with them
+
+Internally every model receives age in years, weight in kilograms, height in centimetres and sex. From these the models derive what they need: body mass index, lean body mass by the James equation, fat-free mass by the Al-Sallami equations, post-menstrual age for the maturation functions, and allometric size scaling. See [Covariates and body size](help:models/covariates) for the equations.
+
+A few models switch between parameter sets on a covariate:
+
+- **Dexmedetomidine** uses an infant model (with cardiopulmonary-bypass events) at age ≤ 1 year and an adult model above it.
+- **Remifentanil** uses one model at BMI below 30 and another at BMI of 30 and above.
+- **Oxytocin** switches to a rat model if the weight is 1 kg or less; this is a research setting, not a clinical one.
+
+## Age 90 and above
+
+An age of 90 or above is protected health information under the HIPAA Safe Harbor rule, so the field stops at 90 and a note appears if you reach it. For the purposes of these models the difference between 90 and 95 is small.
+
+## The disabled fields
+
+**Pregnant** (shown for women of child-bearing age), **CYP 2D6** and **Renal Function** are present but greyed out. They were added ahead of the models that will use them, so that the interface shows the intent. No drug in the current library responds to them. Pharmacokinetic models that depend on CYP2D6 phenotype are in development; see [In development](help:in-development).
+
+## Default patient
+
+The app opens with a 50-year-old woman, 60 kg, 66 inches (168 cm). The teaching scenarios each set their own patient.

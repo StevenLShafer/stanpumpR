@@ -2,7 +2,7 @@
 
 stanpumpR is designed so that adding a drug is a small, self-contained change — the goal is to
 let outside investigators contribute and maintain the pharmacokinetics for individual drugs.
-A new drug touches **four** places. None of the engine code needs to change.
+A new drug touches **four** files plus a help page. None of the engine code needs to change.
 
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
@@ -71,7 +71,7 @@ transitions. Event names must exist in `inst/extdata/eventDefaults.csv`.
 Add one row. Columns:
 
 ```
-Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lower,Upper,Typical,MEAC,endCe
+Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lower,Upper,Typical,MEAC,endCe,Class
 ```
 
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
@@ -80,11 +80,12 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
 - `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and emergence effect-site level.
+- `Class` — `IV` for every drug handled by `getDrugPK()`; `gas` is reserved for the inhaled-gas engine.
 
 Example row (remifentanil):
 
 ```
-remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1
+remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1,IV
 ```
 
 ## 3. The test — `tests/testthat/test-drugs-<name>.R`
@@ -113,11 +114,26 @@ test_that("returns the correct calculations", {
 
 `expect_equal_rounded` is defined in `tests/testthat/helpers.R`.
 
+## 4. The help page — `inst/help/drugs/<name>.md`
+
+The in-app help (the **Help** tab) generates a page for every drug in the CSV: its parameters
+at six reference patients, its citation, its units and typical range, all computed from the
+files above so they cannot drift. What it cannot generate is the narrative — the population
+the model was fitted in, which covariates it uses and how, where it is extrapolated, who did
+the work. That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
+under an "About this model" heading). `tests/testthat/test-help-drugs.R` fails if the file is
+missing. See `inst/help/README.md` for the Markdown conventions and `inst/help/drugs/fentanyl.md`
+for a short example.
+
+Optionally, add a teaching scenario that uses the drug: a `helpScenario()` entry in
+`R/help-scenarios.R` and its narrative in `inst/help/scenarios/<id>.md`.
+
 ## Verify
 
 ```r
 devtools::load_all(".")
 devtools::test(filter = "drugs-<name>")   # unit test
+devtools::test(filter = "help")           # the help pages, including the new drug's
 run_app()                                  # confirm it appears in the dose-grid dropdown and plots
 ```
 

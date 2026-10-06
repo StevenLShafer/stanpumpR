@@ -1,0 +1,5 @@
+Sevoflurane is entered as a **vaporizer setting** in per cent of one atmosphere. Its blood:gas partition coefficient of 0.65 makes it the second least soluble volatile agent after desflurane, so its alveolar concentration follows the inspired concentration quickly and it washes out quickly; its fat:gas coefficient of 34 means that after long anesthetics a reservoir in fat slows the last part of emergence. Its MAC of 2.1 per cent at age 40 is about 1.6 per cent at 80 and 2.5 per cent at 10.
+
+The engine's structure and parameters are Gas Man®'s; see [The inhaled-gas engine](help:models/gas-engine). Scenarios: [wash-in at high and low flow](scenario:sevoflurane-washin), [the second gas effect](scenario:second-gas-effect), [MAC and age](scenario:mac-and-age), [emergence](scenario:emergence-sevoflurane), and [opioids lower MAC](scenario:opioid-mac-interaction).
+
+Not modelled: the metabolism of sevoflurane (about 5 per cent, releasing fluoride), compound A formation with desiccated absorbent at low flows, and the pharmacodynamics of the agent beyond MAC.

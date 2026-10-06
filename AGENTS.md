@@ -41,14 +41,19 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 
 ## Key Rules
 
-- **Adding a drug** requires all three (full procedure: `docs/adding-a-drug.md`):
+- **Adding a drug** requires all four (full procedure: `docs/adding-a-drug.md`):
   1. `R/drugs_<name>.R` (covariate model function)
   2. `inst/extdata/drugDefaults_global.csv` (row with colors, units, MEAC)
   3. `tests/testthat/test-drugs-<name>.R` (unit test — pin values with `expect_equal_rounded()` from `tests/testthat/helpers.R`)
+  4. `inst/help/drugs/<name>.md` (the narrative for the drug's generated help page; `test-help-drugs.R` fails without it)
 - **Debug logging**: `outputComments()`, active when `?debug=1` is in the URL.
 - **Deploy**: GitHub Actions — PRs auto-deploy to a test environment; merges to `master` deploy to production (shinyapps.io).
 - **Adding an R package**: add to `DESCRIPTION` first, then `renv::install("pkg")` + `renv::snapshot()`, commit `DESCRIPTION` + `renv.lock` together. For a package that isn't on CRAN, also add it under `Remotes:` in `DESCRIPTION` (e.g. `daattali/undomanager`) and install with `renv::install("user/repo")`, so the deploy can resolve it.
 
+
+## The Help Tab (`R/help-*.R`, `inst/help/`)
+
+The in-app help is a `bslib::nav_panel("Help")` with a sidebar (search + contents) and one `uiOutput`. Pages are either Markdown in `inst/help/<id>.md` (rendered by `shiny::markdown()`, i.e. commonmark — no pandoc, no MathJax) or generated from the code: one page per drug (`help-drugs.R` runs the drug model at six reference patients), one per teaching scenario (`help-scenarios.R`), plus the drug index, scenario index and bibliography. `help-content.R` holds the registry (`helpStaticPages()`), the renderer and the search; `help-server.R` is called once from `app_server()`. Links between pages are `[text](help:page-id)`; `[text](scenario:id)` makes a button that calls `applyHelpScenario()`, which writes `doseTable()`/`eventTable()` and the inputs, then `bslib::nav_select()`s the Simulator. All clicks go through two delegated handlers in `inst/www/app.js` (`help_goto`, `help_scenario_load`), so the help adds no per-page inputs. `inst/help/README.md` is the authoring guide. Tests: `test-help-content.R`, `test-help-drugs.R`, `test-help-scenarios.R`.
 
 ## Known Issues
 

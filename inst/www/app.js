@@ -50,6 +50,27 @@ $(document).on('shiny:value', function(event) {
   }
 });
 
+// Help tab (R/help-server.R).  Every link to a help page is an <a> with a
+// data-help-page attribute, and every "load this scenario" button has
+// data-help-scenario; one delegated handler each forwards them to Shiny, so
+// the help needs no per-link inputs.
+$(document).on('click', '[data-help-page]', function(e) {
+  e.preventDefault();
+  Shiny.setInputValue('help_goto', $(this).attr('data-help-page'), {priority: 'event'});
+});
+$(document).on('click', '[data-help-scenario]', function(e) {
+  e.preventDefault();
+  Shiny.setInputValue('help_scenario_load', $(this).attr('data-help-scenario'), {priority: 'event'});
+});
+// A new help page starts at the top, whatever the scroll position of the last
+$(document).on('shiny:value', function(event) {
+  if (event.target.id === 'help_content') {
+    window.scrollTo(0, 0);
+    var main = document.querySelector('.help-main');
+    if (main) main.scrollTop = 0;
+  }
+});
+
 // When a modal opens, auto-focus on the first element that wants focus
 $(document).on('shown.bs.modal', function() {
   $('.modal-body .modal-focusme:eq(0)').focus();

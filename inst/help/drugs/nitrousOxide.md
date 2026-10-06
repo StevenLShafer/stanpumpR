@@ -1,0 +1,7 @@
+Nitrous oxide is entered as a **fresh gas flow** in L/min at the flowmeter, like oxygen and air; its inspired concentration is its share of the total fresh gas flow, diluted by any vapour. Entering nitrous oxide adds an oxygen row at 21 per cent of the fresh gas if there is none, so that a hypoxic mixture is not the default.
+
+Its blood:gas partition coefficient of 0.47 is low, but it is given in high concentrations (50 to 70 per cent), so the *volume* taken up in the first minutes is large. That bulk uptake shrinks the alveolar gas and concentrates whatever else is in it: the **concentration effect** on nitrous oxide itself and the **second gas effect** on a volatile agent given with it. The engine reproduces both; see [the second gas effect scenario](scenario:second-gas-effect).
+
+Its MAC of 110 per cent (more than one atmosphere) means it cannot be a sole anesthetic at sea level; at 70 per cent it contributes about 0.64 MAC equivalents, which is why it is summed into the MAC-equivalents panel with the volatile agents. Its MAC is age-adjusted like theirs. The default recovery threshold is 10 per cent; nitrous oxide washes out fast enough that the threshold matters little.
+
+The engine's structure and parameters are Gas Man®'s; see [The inhaled-gas engine](help:models/gas-engine). Not modelled: diffusion into closed gas spaces, diffusion hypoxia at the end of a case (the oxygen panel shows inspired and alveolar oxygen, but the engine does not model the lungs' nitrogen reabsorption in detail), and the pharmacodynamics beyond MAC.

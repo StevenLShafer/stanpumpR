@@ -1,0 +1,79 @@
+The simulation engine can be driven from R without the app, for research, for batch simulations, or for checking a result. A limited set of functions is exported.
+
+## Installing as a library
+
+```r
+# from a clone of the repository
+devtools::install(build_vignettes = TRUE)
+library(stanpumpR)
+```
+
+## One drug
+
+`getDrugPK()` turns a drug name and covariates into the full parameter set; `simCpCe()` simulates a dose table with it.
+
+```r
+doseTable <- data.frame(
+  Drug  = c("remifentanil", "remifentanil", "remifentanil"),
+  Time  = c(0, 0, 30),
+  Dose  = c(60, 0.15, 0),
+  Units = c("mcg", "mcg/kg/min", "mcg/kg/min")
+)
+eventTable <- data.frame(Time = double(), Event = character())
+
+PK <- getDrugPK(
+  drug = "remifentanil",
+  weight = 70, height = 170, age = 50, sex = "male",
+  getDrugDefaults("remifentanil")
+)
+
+out <- simCpCe(doseTable, eventTable, PK, maximum = 60, plotRecovery = FALSE)
+results <- out$results
+head(results[results$Site %in% c("Plasma", "Effect Site"), ])
+```
+
+`PK$PK$default` holds the volumes, clearances, rate constants, eigenvalues and ke0; `PK$tPeak` and `PK$reference` the time to peak effect and the citation.
+
+## Several drugs
+
+`simulateDrugsWithCovariates()` loops over the drugs in a dose table:
+
+```r
+out <- simulateDrugsWithCovariates(doseTable, eventTable,
+                                   weight = 70, height = 170, age = 50, sex = "male",
+                                   maximum = 60, plotRecovery = FALSE)
+names(out)          # one element per drug
+out$propofol$results
+```
+
+The result for each drug is a tidy table of `Time`, `Site` (Plasma, Effect Site, and the normalised and recovery series) and `Y`, plus `equiSpace`, the curves on an even grid, and `max`, the peaks.
+
+## The inhaled agents
+
+```r
+gasTable <- data.frame(
+  Drug  = c("oxygen", "sevoflurane", "ventilation"),
+  Time  = c(0, 0, 0),
+  Dose  = c(6, 2, 6),
+  Units = c("L/min", "%", "L/min")
+)
+sim <- simulateGases(gasTable, weight = 70, age = 40, maximum = 60)
+```
+
+`getGasProperties()` returns the parameter table, `macForAge()` the age-adjusted MAC, and `gasRecoveryTime()` and `macRecoveryTime()` the time until threshold.
+
+## The drug library
+
+`getDrugDefaultsGlobal()` returns the library as a data frame; `getDrugDefaults(drug)` one row.
+
+## Vignettes
+
+Two vignettes walk through these calls with plots: `vignette("stanpumpR-single-PK")` and `vignette("stanpumpR-multi-PK")`.
+
+## Units
+
+Doses are converted using the drug's concentration units from the library: a drug plotted in mcg/mL has its doses converted to mg, one plotted in ng/mL to mcg. Times are minutes. Weight is kilograms, height centimetres, age years.
+
+## What is not exported
+
+The Shiny server, the plotting code and Suggest Dosing are internal. They can be reached with `stanpumpR:::` or `devtools::load_all()`, with no promise of a stable interface.

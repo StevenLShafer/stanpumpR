@@ -26,14 +26,21 @@ Near-term future developments in stanpumpR will include
 2. Improved models of pediatric pharmacokinetics
 3. Improved models of drug interaction
 4. PK changes with pregnancy, CYP2D6, and renal function. These have been added to the UI, but no models with these are yet in the program.
-5. Create of help and example pages.
+5. Expanding the in-app help (the **Help** tab): more teaching scenarios, and screenshots.
 
 ### Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — how the app is put together: the reactive
   pipeline, the PK/PD engine, and the file layout.
-- [`docs/adding-a-drug.md`](docs/adding-a-drug.md) — the four touch points for contributing a
-  new drug.
+- [`docs/adding-a-drug.md`](docs/adding-a-drug.md) — the touch points for contributing a
+  new drug, including its help page.
+- [`docs/users-guide.md`](docs/users-guide.md) — a draft user's guide written from the code.
+- **The in-app help** — the **Help** tab in the running app: a user's guide, a generated page
+  for every drug (parameters at reference patients, citation, units), the models and methods,
+  loadable teaching scenarios, the investigators, and a map of this repository. The hand-written
+  pages are Markdown in [`inst/help/`](inst/help/) (see [`inst/help/README.md`](inst/help/README.md));
+  the drug and scenario pages are generated from the code by `R/help-drugs.R` and
+  `R/help-scenarios.R`.
 
 ### Setting up locally
 
