@@ -224,6 +224,11 @@ app_server <- function(input, output, session) {
       drugDefaults(restored$drugDefaults)
       macThreshold(restored$macThreshold)
       outputComments("macThreshold:", restored$macThreshold)
+      # Bookmarks made before the fat-free-mass switch existed were simulated
+      # on total body weight; restore them that way so their output is unchanged.
+      if (is.null(state$input$adjustToFFM)) {
+        updateCheckboxInput(session, "adjustToFFM", value = FALSE)
+      }
     }, name = "onRestored()")
   })
 
@@ -369,6 +374,11 @@ app_server <- function(input, output, session) {
     input$sex
   })
 
+  adjustToFFM <- reactive({
+    # TRUE until the checkbox reports, so the first simulation uses the default.
+    if (is.null(input$adjustToFFM)) TRUE else isTRUE(input$adjustToFFM)
+  })
+
   testCovariates <- reactive({
     profileCode({
       outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
@@ -446,7 +456,10 @@ app_server <- function(input, output, session) {
         age = age(),
         weight = weight(),
         height = height(),
-        sex = sex()
+        sex = sex(),
+        # NULL on the first pass, before the control has reported in
+        cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
+        adjustToFFM = adjustToFFM()
       ) |> profileCode("recalculatePK() in drugs()")
 
       newDrugs <- processdoseTable(
@@ -697,7 +710,8 @@ app_server <- function(input, output, session) {
         age = age(),
         weight = weight(),
         height = height(),
-        sex = sex()
+        sex = sex(),
+        adjustToFFM = adjustToFFM()
       )
 
       shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")
@@ -802,6 +816,28 @@ app_server <- function(input, output, session) {
     if (is.na(drug)) return(NULL)
     outputComments("Drug identified in xy_str() is", drug)
 
+    # A TCI rate panel: report the pump rate in force at that moment.
+    if (grepl(" TCI$", drug))
+    {
+      drug <- sub(" TCI$", "", drug)
+      rates <- drugs()[[drug]]$tci$rates
+      if (is.null(rates)) return(NULL)
+      j <- max(which(rates$Time <= e$x), 1)
+      time <- round(e$x, 1)
+      if (referenceTime() == REFERENCE_TIME_NONE)
+      {
+        time <- paste(time, "minutes")
+      } else {
+        time <- deltaToClockTime(referenceTime(), time)
+      }
+      if (rates$Bolus[j]) {
+        b <- drugs()[[drug]]$tci$boluses
+        k <- which(b$Time == rates$Time[j])[1]
+        return(paste0("Time: ", time, ", ", drug, " TCI loading dose: ", signif(b$Amount[k], 3), " ", b$Units[k]))
+      }
+      return(paste0("Time: ", time, ", ", drug, " TCI rate: ", signif(rates$Rate[j], 3), " ", rates$Units[j]))
+    }
+
     # if the panel's drug was just removed, drugs()[[drug]] will be NULL until
     # the plot re-renders
     if (!drug %in% names(drugs())) return(NULL)
@@ -819,7 +855,16 @@ app_server <- function(input, output, session) {
     returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs()[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
     if (plotRecovery())
     {
-      returnText <- paste0(returnText,", Time until threshold: ",round(drugs()[[drug]]$equiSpace$Recovery[j], 1), " minutes")
+      recovery <- drugs()[[drug]]$equiSpace$Recovery[j]
+      # Missing means a dose has been given that has not begun to be absorbed,
+      # so there is no time to report rather than a time of zero.  Saying which
+      # it is, because "0 minutes" and "not yet absorbed" are opposites.
+      returnText <- paste0(
+        returnText, ", Time until threshold: ",
+        if (length(recovery) != 1 || is.na(recovery))
+          "not yet, dose still being absorbed"
+        else paste(round(recovery, 1), "minutes")
+      )
     }
     return(returnText)
   }
@@ -906,6 +951,8 @@ app_server <- function(input, output, session) {
       # title may contain a space ("MAC equivalents").
       drug <- as.character(plotResults$Drug[as.character(plotResults$Wrap) == e$panelvar1])[1]
       if (is.na(drug)) drug <- unlist(strsplit(yaxis, " "))[1]
+      # A click on a drug's TCI rate panel is a click on that drug.
+      drug <- sub(" TCI$", "", drug)
     }
     outputComments("drug from panelvar1", drug)
 

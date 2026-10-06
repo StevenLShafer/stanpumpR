@@ -8,12 +8,16 @@ The first panel in the left sidebar. These covariates are passed to every drug's
 | Weight | kg or lb | 0.1 to 500 kg | |
 | Height | in or cm | 10 to 200 cm | |
 | Sex | male or female | | |
+| CYP 2D6 | phenotype | | Scales the active metabolites of codeine, tramadol, hydrocodone and oxycodone. |
+| Adjust weight to fat-free mass | checkbox | | On by default; scales most models to fat-free mass. |
 
 Changing a covariate re-simulates every drug at once; there is no Apply step for the patient.
 
+**Adjust weight to fat-free mass** scales most of the models to the patient's fat-free mass rather than total body weight; it is on by default. **CYP 2D6**, with the phenotypes the genotyping laboratories report (poor, intermediate, normal, ultrarapid), scales the formation of the active metabolites. See [Scaling to fat-free mass](help:models/fat-free-mass) and [Active metabolites](help:models/metabolites).
+
 ## What the models do with them
 
-Internally every model receives age in years, weight in kilograms, height in centimetres and sex. From these the models derive what they need: body mass index, lean body mass by the James equation, fat-free mass by whichever equation the model's authors used (Al-Sallami's for the Eleveld models, Janmahasatian's for the Kim remifentanil model), post-menstrual age for the maturation functions, and allometric size scaling. See [Covariates and body size](help:models/covariates) for the equations.
+Internally every model receives age in years, weight in kilograms, height in centimetres and sex. From these the models derive what they need: body mass index, lean body mass by the James equation, fat-free mass by whichever equation the model's authors used (Al-Sallami's for the Eleveld models, Janmahasatian's for the Kim remifentanil model), post-menstrual age for the maturation functions, and allometric size scaling. Unless the fat-free-mass box is unticked, the models that do not carry their own body-size covariate are scaled to the patient's fat-free mass. See [Covariates and body size](help:models/covariates) and [Scaling to fat-free mass](help:models/fat-free-mass) for the equations.
 
 A few models switch between parameter sets on a covariate:
 
@@ -27,7 +31,7 @@ An age of 90 or above is protected health information under the HIPAA Safe Harbo
 
 ## The disabled fields
 
-**Pregnant** (shown for women of child-bearing age), **CYP 2D6** and **Renal Function** are present but greyed out. They were added ahead of the models that will use them, so that the interface shows the intent. No drug in the current library responds to them. Pharmacokinetic models that depend on CYP2D6 phenotype are in development; see [In development](help:in-development).
+**Pregnant** (shown for women of child-bearing age) and **Renal Function** are present but greyed out. They were added ahead of the models that will use them, so that the interface shows the intent, and no drug in the current library responds to them. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
 
 ## Default patient
 

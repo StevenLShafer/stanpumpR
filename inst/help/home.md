@@ -22,6 +22,6 @@ stanpumpR predicts drug concentrations. You describe a patient and a dosing regi
 
 ## A note on scope
 
-The library holds twenty intravenous drugs and the inhaled anesthetics. Several features are visible but not yet active, and several more are in development; see [In development](help:in-development) for an honest list.
+The library holds the intravenous and oral drugs and the inhaled anesthetics. A few features are visible but not yet active; see [In development](help:in-development) for an honest list of what is done and what is not.
 
 stanpumpR is a collaborative research project. If you would like to add a drug, a data set or an algorithm, see [Contributing](help:contributing).

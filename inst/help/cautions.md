@@ -12,7 +12,11 @@ Some models have no covariates at all: the same dose in milligrams gives the sam
 
 ## Disabled covariates
 
-Pregnancy, CYP2D6 phenotype and renal function appear in the interface but do not yet influence any prediction. They were added ahead of the models that will use them.
+Pregnancy and renal function appear in the interface but do not yet influence any prediction. They were added ahead of the models that will use them. CYP2D6 phenotype is now active, but only for the four drugs with modelled active metabolites; for every other drug it has no effect.
+
+## Provisional parameters in the newer drugs
+
+Several of the recently added opioids carry parameters that are explicitly provisional and uncited: the time to peak effect of hydrocodone and oxymorphone, the effect-site rate constant of desmetramadol, and the minimum effective concentrations of hydrocodone and oxymorphone. Their pages say so. They are working values, not validated ones.
 
 ## The shaded band is orientation, not a target
 

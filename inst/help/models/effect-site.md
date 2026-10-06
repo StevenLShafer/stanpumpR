@@ -41,7 +41,9 @@ The drug pages carry the current values; this table is illustrative. Where the c
 
 ## A drug with no effect site
 
-A tPeak of zero means no effect site: ke0 is left at zero and the effect-site concentration is not computed. No drug in the current library does this, but the active-metabolite work in development uses it for prodrugs whose effect is their metabolite's.
+A tPeak of zero means no effect site: ke0 is left at zero and the effect-site concentration is not computed. Codeine and tramadol do this: they are modelled as prodrugs, and their effect appears on the row of the metabolite formed from them. See [Active metabolites](help:models/metabolites).
+
+For a drug given orally, the time to peak effect is observed after an oral dose, so ke0 is solved against the oral plasma curve rather than an intravenous bolus; hydrocodone is the case. Desmetramadol, which is never dosed directly, supplies its ke0 to the engine ready-solved, because the curve its peak was observed against (the metabolite formed from oral tramadol) is not one the effect-site solver can build.
 
 ## What to look for on the plot
 

@@ -52,6 +52,8 @@ PK <- stanpumpR::getDrugPK(
 )
 ```
 
+Most models scale their volumes and clearances to the patient's fat-free mass (Al-Sallami et al. 2015) relative to a 70 kg, 170 cm man; pass `adjustToFFM = FALSE` to use total body weight instead. Remifentanil and propofol carry fat-free mass inside their published models and ignore the argument. See `docs/weight-adjustment.md` in the source repository.
+
 Calculate the predicted drug concentrations using simCpCe.
 
 ```{r}

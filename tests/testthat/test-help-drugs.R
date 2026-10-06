@@ -16,6 +16,10 @@ test_that("every narrative belongs to a drug in the library", {
   expect_true(all(files %in% drugDefaults$Drug), info = paste("orphan:", setdiff(files, drugDefaults$Drug)))
 })
 
+# Drugs with no effect site of their own: the effect is the metabolite's
+# (R/drugs_codeine.R, R/drugs_tramadol.R)
+prodrugs <- c("codeine", "tramadol")
+
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
   patients <- helpReferencePatients()
   expect_equal(nrow(patients), 6)
@@ -25,11 +29,74 @@ test_that("the parameter table evaluates every intravenous model at the referenc
     expect_equal(nrow(tab), nrow(patients), info = drug)
     expect_true(all(is.finite(tab$V1) & tab$V1 > 0), info = drug)
     expect_true(all(is.finite(tab$CL1) & tab$CL1 > 0), info = drug)
-    expect_true(all(is.finite(tab$ke0) & tab$ke0 > 0), info = drug)
     expect_true(all(is.finite(tab$halfLife1)), info = drug)
     expect_true(all(nzchar(tab$reference)), info = drug)
-    expect_true(all(tab$tPeak > 0), info = drug)
+    if (drug %in% prodrugs) {
+      expect_true(all(tab$ke0 == 0), info = drug)
+      expect_true(all(tab$tPeak == 0), info = drug)
+    } else {
+      expect_true(all(is.finite(tab$ke0) & tab$ke0 > 0), info = drug)
+      # desmetramadol supplies ke0 directly and has no tPeak of its own
+      expect_true(all(tab$tPeak > 0 | tab$ke0Supplied), info = drug)
+    }
+    expect_true(all(tab$tPeakRoute %in% TPEAK_ROUTES), info = drug)
   }
+  # one-compartment models report the absent compartments as absent, not as 1 L
+  cod <- helpDrugParameterTable("codeine", drugDefaults, patients)
+  expect_true(all(is.na(cod$V2) & is.na(cod$V3)))
+  expect_true(all(is.na(cod$halfLife2)))
+  expect_equal(unique(cod$metabolite), "morphine")
+  hyd <- helpDrugParameterTable("hydrocodone", drugDefaults, patients)
+  expect_equal(unique(hyd$tPeakRoute), ROUTE_PO)
+  des <- helpDrugParameterTable("desmetramadol", drugDefaults, patients)
+  expect_true(all(des$ke0Supplied))
+})
+
+test_that("the fat-free-mass switch is reported from the code", {
+  expect_true(helpDrugRespondsToFFM("morphine"))
+  expect_false(helpDrugRespondsToFFM("propofol"))
+  expect_false(helpDrugRespondsToFFM("hydrocodone"))
+  html <- helpDrugPageHTML("morphine")
+  expect_match(html, "Adjust weight to fat-free mass", fixed = TRUE)
+  expect_match(html, 'data-help-page="models/fat-free-mass"', fixed = TRUE)
+  expect_match(helpDrugPageHTML("propofol"), "does not change this model", fixed = TRUE)
+})
+
+test_that("prodrugs, metabolites and oral-only drugs are described from the code", {
+  expect_setequal(helpParentDrugs("morphine"), "codeine")
+  expect_setequal(helpParentDrugs("hydromorphone"), "hydrocodone")
+  expect_setequal(helpParentDrugs("oxymorphone"), "oxycodone")
+  expect_setequal(helpParentDrugs("desmetramadol"), "tramadol")
+  expect_length(helpParentDrugs("propofol"), 0)
+
+  cod <- helpDrugPageHTML("codeine")
+  expect_match(cod, "no effect site of its own", fixed = TRUE)
+  expect_match(cod, "Active metabolite", fixed = TRUE)
+  expect_match(cod, 'data-help-page="drugs/morphine"', fixed = TRUE)
+  expect_match(cod, "Effect of CYP2D6 phenotype", fixed = TRUE)
+  expect_match(cod, "Ultrarapid", fixed = TRUE)
+  expect_match(cod, "none: no effect site", fixed = TRUE)
+
+  mor <- helpDrugPageHTML("morphine")
+  expect_match(mor, "Formed as a metabolite", fixed = TRUE)
+  expect_match(mor, 'data-help-page="drugs/codeine"', fixed = TRUE)
+
+  hyd <- helpDrugPageHTML("hydrocodone")
+  expect_match(hyd, "Oral only", fixed = TRUE)
+  expect_match(hyd, "after an oral dose", fixed = TRUE)
+
+  des <- helpDrugPageHTML("desmetramadol")
+  expect_match(des, "cannot be entered in the dose table", fixed = TRUE)
+  expect_match(des, "ke0 supplied by the model", fixed = TRUE)
+  expect_match(des, "appears only as the active metabolite of Tramadol", fixed = TRUE)
+
+  oxy <- helpDrugPageHTML("oxymorphone")
+  expect_match(oxy, 'data-help-page="drugs/oxycodone"', fixed = TRUE)
+
+  prop <- helpDrugPageHTML("propofol")
+  expect_match(prop, "Plasma target and Effect site target", fixed = TRUE)
+  expect_false(grepl("Active metabolite</h2>", prop, fixed = TRUE))
+  expect_false(grepl("Formed as a metabolite", prop, fixed = TRUE))
 })
 
 test_that("the table shows the covariate switches", {
@@ -43,8 +110,13 @@ test_that("the table shows the covariate switches", {
   adult <- remi[remi$Patient == "Reference adult", ]
   expect_false(isTRUE(all.equal(obese$V1 / 120, adult$V1 / 70)))
 
-  alf <- helpDrugParameterTable("alfentanil")
-  expect_equal(length(unique(alf$V1)), 1)
+  # Alfentanil has no covariates of its own: its parameters are identical at
+  # every patient with the fat-free-mass switch off. (With it on, they vary by
+  # size like every scaled model.)
+  alfOff <- helpDrugParameterTable("alfentanil", adjustToFFM = FALSE)
+  expect_equal(length(unique(alfOff$V1)), 1)
+  alfOn <- helpDrugParameterTable("alfentanil", adjustToFFM = TRUE)
+  expect_true(length(unique(alfOn$V1)) > 1)
 })
 
 test_that("an unknown drug gives a message, not an error", {
@@ -58,7 +130,10 @@ test_that("every intravenous drug page carries its citation, units and tables", 
     row <- drugDefaults[drugDefaults$Drug == drug, ]
     pk <- helpDrugPK(drug, helpReferencePatients()[1, ], drugDefaults)
     expect_match(html, htmltools::htmlEscape(helpReferenceShort(pk$reference)), fixed = TRUE, info = drug)
-    expect_match(html, row$Default.Units, fixed = TRUE, info = drug)
+    # desmetramadol has no dosing unit at all (it appears only as a metabolite)
+    if (!is.na(row$Default.Units) && nzchar(row$Default.Units)) {
+      expect_match(html, row$Default.Units, fixed = TRUE, info = drug)
+    }
     expect_match(html, "Volumes and clearances", fixed = TRUE, info = drug)
     expect_match(html, "About this model", fixed = TRUE, info = drug)
     expect_match(html, 'data-help-page="drugs/index"', fixed = TRUE, info = drug)
@@ -72,7 +147,7 @@ test_that("the propofol page reads from the code, not from a hand-written table"
   expect_match(html, "mcg/mL", fixed = TRUE)
   expect_match(html, "this model has covariates", fixed = TRUE)
   alf <- helpDrugPageHTML("alfentanil")
-  expect_match(alf, "no covariates", fixed = TRUE)
+  expect_match(alf, "no covariates of its own", fixed = TRUE)
 })
 
 test_that("extravascular routes and events are described where the model has them", {
@@ -114,6 +189,8 @@ test_that("the drug index links every drug", {
   expect_match(html, "Eleveld DJ et al.", fixed = TRUE)
   expect_match(html, "Anesthetic agent", fixed = TRUE)
   expect_match(html, "Ventilator setting", fixed = TRUE)
+  expect_match(html, "metabolite only", fixed = TRUE)
+  expect_match(html, "IV, TCI", fixed = TRUE)
 })
 
 test_that("the bibliography lists every model citation once, with its drugs", {

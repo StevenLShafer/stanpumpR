@@ -16,12 +16,13 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 
 ## Which drugs have routes
 
-| Drug | Routes | ka (1/min) | F | Lag |
-|---|---|---|---|---|
-| oxycodone | PO | 0.06 | 0.5 | 0 |
-| hydromorphone | PO, IM, IN | 0.01 for each | 0.6 for each | 0, 90 and 180 min |
+| Drug | Routes |
+|---|---|
+| oxycodone | PO |
+| hydromorphone | PO, IM, IN |
+| codeine, hydrocodone, oxymorphone, tramadol | PO |
 
-Each drug's page shows the current values. The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model; the hydromorphone values are provisional, and their intramuscular and intranasal lag times are described in the code as placeholders. The active-metabolite work in development revises hydromorphone's absorption; see [In development](help:in-development).
+Each drug's page shows the current absorption rate, bioavailability and lag. The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's intramuscular and intranasal absorption was revised so that each route's peak matches the measured time (about 20 minutes intranasal, 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down.
 
 ## What to look for
 
@@ -29,4 +30,4 @@ Give oxycodone 10 mg PO and turn the plasma line on. The concentration rises ove
 
 ## Limits
 
-Only first-order absorption is supported. Zero-order (constant-rate) absorption, enterohepatic recirculation, and absorption that saturates are not modelled. An inverse Gaussian absorption model is drafted in the repository (`R/ig_absorption.R`) but is not wired in. Oral doses are invisible to Suggest Dosing and to the target-controlled infusion in development, both of which treat them, as a real pump would, as unexpected additions.
+Only first-order absorption is supported. Zero-order (constant-rate) absorption, enterohepatic recirculation, and absorption that saturates are not modelled. An inverse Gaussian absorption model is drafted in the repository (`R/ig_absorption.R`) but is not wired in. Oral doses are invisible to Suggest Dosing and to [target-controlled infusion](help:tci), both of which treat them, as a real pump would, as unexpected additions.

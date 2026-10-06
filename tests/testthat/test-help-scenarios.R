@@ -84,12 +84,22 @@ test_that("every scenario runs through the simulation engine", {
     iv <- d[!isGasDrug(d$Drug), ]
     if (nrow(iv) > 0) {
       out <- simulateDrugsWithCovariates(iv, helpScenarioEventTable(s), p$weight, p$height, p$age, p$sex,
-                                         s$options$maximum, s$options$showThreshold)
-      expect_setequal(names(out), unique(iv$Drug))
+                                         s$options$maximum, s$options$showThreshold,
+                                         cyp2d6 = p$cyp2d6, adjustToFFM = p$adjustToFFM)
+      # every dosed drug has a row; a drug that forms an active metabolite adds
+      # the metabolite's row too
+      expect_true(all(unique(iv$Drug) %in% names(out)), info = s$id)
+      expect_true(all(setdiff(names(out), iv$Drug) %in% drugDefaults$Drug), info = s$id)
       for (drug in names(out)) {
         res <- out[[drug]]$results
-        expect_true(all(is.finite(res$Y)), info = paste(s$id, drug))
-        expect_true(any(res$Y > 0), info = paste(s$id, drug, "is all zero"))
+        # A prodrug (codeine, tramadol) has no effect site of its own, so its
+        # effect-site series is NA by design; the effect is on its metabolite's
+        # row. Require finite, positive values where the series is present, and
+        # no non-finite values that are not NA (no Inf/NaN).
+        expect_false(any(is.nan(res$Y) | is.infinite(res$Y)), info = paste(s$id, drug))
+        finiteY <- res$Y[is.finite(res$Y)]
+        expect_true(length(finiteY) > 0, info = paste(s$id, drug, "has no finite values"))
+        expect_true(any(finiteY > 0), info = paste(s$id, drug, "is all zero"))
       }
     }
     gas <- d[isGasDrug(d$Drug), ]

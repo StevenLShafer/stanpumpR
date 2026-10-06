@@ -14,7 +14,7 @@ The suggested regimen is applied directly to the dose table, bypassing the draft
 
 - **Decreasing targets are not supported.** A row that asks for a lower concentration than the one before is raised to the previous value. Falling to a lower concentration cannot be hurried by dosing, only by waiting, and the search does not model turning the infusion off and on again.
 - **It takes a moment.** The doses are found by non-linear regression on repeated simulations.
-- **The result is good, not provably optimal.** Better algorithms exist. For a target-controlled regimen computed exactly, the method of Shafer and Gregg is being added to the dose table as *Plasma target* and *Effect site target* units; see [In development](help:in-development).
+- **The result is good, not provably optimal.** Better algorithms exist. For a target-controlled regimen computed exactly, the method of Shafer and Gregg is in the dose table as the *Plasma target* and *Effect site target* units; see [Target-controlled infusion](help:tci).
 
 ## How it searches
 

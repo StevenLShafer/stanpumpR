@@ -1,5 +1,25 @@
-oxycodone <- function(weight, height, age, sex)
+oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
+                      adjustToFFM = TRUE)
 {
+  # Relative CYP2D6 activity for oxymorphone formation, normal = 1.  Oxycodone
+  # specific, not imported from codeine or hydrocodone.  Samer 2010 measured
+  # oxymorphone peak concentration 62% lower in poor than in extensive
+  # metabolisers, giving the floor, and 75% lower in poor than in ultrarapid,
+  # giving the top.  The intermediate value interpolates between the floor and
+  # normal using the relative CYP2D6 activity implied by Ashraf 2024's
+  # activity-score groups; that middle point is the one assumption here.
+  CYP2D6_WEIGHT <- c(
+    poor         = 0.38,
+    intermediate = 0.6514113,
+    normal       = 1.0,
+    ultrarapid   = 1.52
+  )
+  if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
+    stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
+         ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
+  }
+  cypActivity <- unname(CYP2D6_WEIGHT[[cyp2d6]])
+
   # Units **************
   # Time: Minutes
   # Volume: Liters
@@ -17,11 +37,18 @@ oxycodone <- function(weight, height, age, sex)
   THETA9 <- 0.00516 # (litre/h)  Intercompartmental rate between CSF and CSF peripheral
   THETA10 <- 0.0385 # (litre)  CSF peripheral volume of distribution
 
-  v1  <- THETA2 # liters
-  v2  <- THETA3 # Liters
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: no size scaling, the parameters were used as published.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+
+  v1  <- THETA2 * size$volume # liters
+  v2  <- THETA3 * size$volume # Liters
   v3  <- 1 # no third compartment
-  cl1 <- THETA1 # l/h
-  cl2 <- THETA5 # l/h
+  cl1 <- THETA1 * size$clearance # l/h
+  cl2 <- THETA5 * size$clearance # l/h
   cl3 <- 0
 
   cl1 <- cl1 / 60 # l/min
@@ -68,7 +95,31 @@ oxycodone <- function(weight, height, age, sex)
       typical = typical,
       upperTypical = upperTypical,
       lowerTypical = lowerTypical,
-      reference = reference
+      reference = reference,
+      # Oxymorphone, formed by CYP2D6.  Adding this does NOT change
+      # oxycodone's own plasma or effect-site curve: formation is modelled as
+      # an independent transfer and is not subtracted from the parent, whose
+      # fitted clearance already subsumes it.
+      #
+      # Calibrated against the observed plasma ratio rather than a formation
+      # clearance.  Agema 2021 reports oxymorphone concentrations about 2% of
+      # oxycodone's after oral dosing; their own model could not carry
+      # oxymorphone because more than half its samples were below the limit
+      # of quantitation, which is a fair warning that this curve sits at the
+      # edge of what is measurable.
+      #
+      # kFormation scales with weight because the oxymorphone model it feeds
+      # is weight-scaled while oxycodone's volumes are fixed; holding it
+      # constant instead would make the calibrated 2% drift with body weight.
+      metabolite = list(
+        name              = "oxymorphone",
+        kFormation        = 6.629873e-06 * weight * cypActivity,
+        # Lalovic 2004 found negligible intestinal O-demethylation, so no
+        # first-pass branch.
+        firstPassFraction = 0,
+        # Oxymorphone 301.34, oxycodone 315.36 g/mol
+        mwRatio           = 301.34 / 315.36
+      )
     )
   )
 }

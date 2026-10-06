@@ -40,7 +40,7 @@ helpReferencePatients <- function() {
 
 #' getDrugPK() for one reference patient, or NULL if the model errors
 #' @noRd
-helpDrugPK <- function(drug, patient, drugDefaults = getDrugDefaultsGlobal()) {
+helpDrugPK <- function(drug, patient, drugDefaults = getDrugDefaultsGlobal(), ...) {
   row <- drugDefaults[drugDefaults$Drug == drug, ]
   if (nrow(row) == 0) return(NULL)
   tryCatch(
@@ -50,10 +50,69 @@ helpDrugPK <- function(drug, patient, drugDefaults = getDrugDefaultsGlobal()) {
       height = patient$height,
       age = patient$age,
       sex = patient$sex,
-      drugDefaults = row
+      drugDefaults = row,
+      ...
     )),
     error = function(e) NULL
   )
+}
+
+#' The drug's model function, or NULL for a drug without one (the gases)
+#' @noRd
+helpDrugFunction <- function(drug) {
+  if (!exists(drug, mode = "function")) return(NULL)
+  get(drug, mode = "function")
+}
+
+#' The raw list a drug's model function returns at one patient, or NULL
+#'
+#' This is the function's own output, before getDrugPK() turns it into rate
+#' constants: it is where the metabolite link and its formation parameters
+#' live.  `...` is for `cyp2d6` and `adjustToFFM`, passed only when the
+#' function declares them.
+#' @noRd
+helpDrugModelOutput <- function(drug, patient, ...) {
+  fn <- helpDrugFunction(drug)
+  if (is.null(fn)) return(NULL)
+  args <- list(weight = patient$weight, height = patient$height, age = patient$age, sex = patient$sex)
+  extra <- list(...)
+  extra <- extra[names(extra) %in% names(formals(fn))]
+  tryCatch(suppressWarnings(do.call(fn, c(args, extra))), error = function(e) NULL)
+}
+
+#' Does the drug's model declare this argument (cyp2d6, adjustToFFM)?
+#' @noRd
+helpDrugDeclares <- function(drug, arg) {
+  fn <- helpDrugFunction(drug)
+  !is.null(fn) && arg %in% names(formals(fn))
+}
+
+#' The drugs whose model names `drug` as its active metabolite
+#' @noRd
+helpParentDrugs <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
+  iv <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug)]
+  adult <- helpReferencePatients()[1, ]
+  Filter(function(d) {
+    X <- helpDrugModelOutput(d, adult)
+    !is.null(X$metabolite) && identical(X$metabolite$name, drug)
+  }, iv)
+}
+
+#' Whether the fat-free-mass switch changes this model's parameters
+#'
+#' Evaluated at the obese reference patient, where the fat-free-mass and
+#' total-weight factors differ most.  NA when the model takes no such switch.
+#' @noRd
+helpDrugRespondsToFFM <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
+  if (!helpDrugDeclares(drug, "adjustToFFM")) return(NA)
+  obese <- helpReferencePatients()[4, ]
+  on <- helpDrugPK(drug, obese, drugDefaults, adjustToFFM = TRUE)
+  off <- helpDrugPK(drug, obese, drugDefaults, adjustToFFM = FALSE)
+  if (is.null(on) || is.null(off)) return(NA)
+  a <- on$PK[[PK_EVENT_DEFAULT]]
+  b <- off$PK[[PK_EVENT_DEFAULT]]
+  !isTRUE(all.equal(c(a$v1, a$v2, a$v3, a$cl1, a$cl2, a$cl3),
+                    c(b$v1, b$v2, b$v3, b$cl1, b$cl2, b$cl3)))
 }
 
 helpHalfLife <- function(lambda) {
@@ -69,17 +128,22 @@ helpHalfLife <- function(lambda) {
 #'   the citation in force for that patient
 #' @noRd
 helpDrugParameterTable <- function(drug, drugDefaults = getDrugDefaultsGlobal(),
-                                   patients = helpReferencePatients()) {
+                                   patients = helpReferencePatients(), ...) {
   rows <- lapply(seq_len(nrow(patients)), function(i) {
     p <- patients[i, ]
-    pk <- helpDrugPK(drug, p, drugDefaults)
+    pk <- helpDrugPK(drug, p, drugDefaults, ...)
     if (is.null(pk)) return(NULL)
     d <- pk$PK[[PK_EVENT_DEFAULT]]
     if (is.null(d)) d <- pk$PK[[1]]
     lambdas <- sort(c(d$lambda_1, d$lambda_2, d$lambda_3), decreasing = TRUE)
+    # A one- or two-compartment model carries placeholder volumes of 1 L for
+    # the compartments it lacks, with zero clearance into them.  Report those
+    # as absent rather than as a litre.
+    v2 <- if (isTRUE(d$cl2 > 0)) d$v2 else NA_real_
+    v3 <- if (isTRUE(d$cl3 > 0)) d$v3 else NA_real_
     data.frame(
       Patient = p$label, Age = p$age, Weight = p$weight, Height = p$height, Sex = p$sex,
-      V1 = d$v1, V2 = d$v2, V3 = d$v3,
+      V1 = d$v1, V2 = v2, V3 = v3,
       CL1 = d$cl1, CL2 = d$cl2, CL3 = d$cl3,
       k10 = d$k10, k12 = d$k12, k13 = d$k13, k21 = d$k21, k31 = d$k31,
       halfLife1 = helpHalfLife(lambdas[1]),
@@ -88,6 +152,11 @@ helpDrugParameterTable <- function(drug, drugDefaults = getDrugDefaultsGlobal(),
       ke0 = d$ke0,
       ke0HalfTime = helpHalfLife(d$ke0),
       tPeak = pk$tPeak,
+      # Which curve tPeak was observed against ("IV" or "PO"), and whether the
+      # model supplied ke0 directly instead of a tPeak (desmetramadol)
+      tPeakRoute = if (is.null(pk$tPeakRoute)) ROUTE_IV else pk$tPeakRoute,
+      ke0Supplied = isTRUE(pk$tPeak == 0) && isTRUE(d$ke0 > 0),
+      metabolite = if (is.null(pk$metaboliteName)) "" else pk$metaboliteName,
       events = paste(pk$pkEvents, collapse = ", "),
       reference = pk$reference,
       stringsAsFactors = FALSE
@@ -151,24 +220,61 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   params <- helpDrugParameterTable(drug, drugDefaults)
   units <- helpDrugUnits(row)
   concUnits <- helpConcentrationUnits(row$Concentration.Units)
+  adult <- helpReferencePatients()[1, ]
+  pkRef <- helpDrugPK(drug, adult, drugDefaults)
+  modelOut <- helpDrugModelOutput(drug, adult)
+  metabolite <- if (is.null(pkRef$metaboliteName)) NULL else pkRef$metaboliteName
+  parents <- helpParentDrugs(drug, drugDefaults)
+  # A drug with no effect site of its own: a prodrug such as codeine, whose
+  # effect appears on its metabolite's row
+  prodrug <- !is.null(pkRef) && isTRUE(pkRef$tPeak == 0) &&
+    isTRUE(pkRef$PK[[PK_EVENT_DEFAULT]]$ke0 == 0)
 
   # --- At a glance -----------------------------------------------------------
   esc <- htmltools::htmlEscape
   routes <- c(if (any(grepl(" PO$", units))) "oral", if (any(grepl(" IM$", units))) "intramuscular",
               if (any(grepl(" IN$", units))) "intranasal")
+  intravenous <- any(units %in% c(bolusUnits, infusionUnits))
+  tci <- any(units %in% tciUnits)
+  given <- if (length(units) == 0) {
+    paste0("Not dosed directly: appears only as the active metabolite of ",
+           paste(helpDrugTitle(parents), collapse = " and "))
+  } else if (intravenous && length(routes)) {
+    paste0("Intravenous, also ", paste(routes, collapse = " and "))
+  } else if (intravenous) {
+    "Intravenous"
+  } else {
+    paste0(tools::toTitleCase(paste(routes, collapse = " and ")), " only")
+  }
+  unitsShown <- if (length(units)) paste(units, collapse = ", ") else
+    "None: this drug cannot be entered in the dose table"
+  defaultShown <- if (nzchar(as.character(row$Default.Units))) as.character(row$Default.Units) else "—"
+  meacShown <- if (!is.na(row$MEAC) && row$MEAC > 0) {
+    sprintf("%s %s", helpFormatNumber(row$MEAC), concUnits)
+  } else if (prodrug) {
+    "None: the effect is the metabolite's, which carries its own MEAC"
+  } else {
+    "Not an opioid: not on the MEAC panel"
+  }
   glance <- data.frame(
-    Property = esc(c("Class", "Concentration units", "Units offered in the dose table",
-                     "Default unit", "Typical concentration (shaded band)",
+    Property = esc(c("Given as", "Concentration units", "Units offered in the dose table",
+                     "Default unit", "Target-controlled infusion", "Active metabolite", "Formed from",
+                     "Typical concentration (shaded band)",
                      "Typical value", "MEAC", "Recovery threshold (endCe)", "Plot colour")),
     Value = c(
-      esc(if (length(routes)) paste0("Intravenous, also ", paste(routes, collapse = " and ")) else "Intravenous"),
+      esc(given),
       esc(concUnits),
-      esc(paste(units, collapse = ", ")),
-      esc(as.character(row$Default.Units)),
+      esc(unitsShown),
+      esc(defaultShown),
+      esc(if (tci) "Yes: Plasma target and Effect site target units" else "No"),
+      if (!is.null(metabolite)) helpPageLink(paste0("drugs/", metabolite)) else esc("None modelled"),
+      if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
+                                 collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
       esc(sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
       esc(sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
-      esc(if (!is.na(row$MEAC) && row$MEAC > 0) sprintf("%s %s", helpFormatNumber(row$MEAC), concUnits) else "Not an opioid: not on the MEAC panel"),
-      esc(sprintf("%s %s", helpFormatNumber(row$endCe), concUnits)),
+      esc(meacShown),
+      esc(if (prodrug) "None: a prodrug has no effect site to time" else
+            sprintf("%s %s", helpFormatNumber(row$endCe), concUnits)),
       paste0(as.character(helpColorSwatch(row$Color)), " ", esc(as.character(row$Color)))
     ),
     stringsAsFactors = FALSE
@@ -208,38 +314,156 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       `CL3 (L/min)` = helpFormatNumber(params$CL3),
       check.names = FALSE, stringsAsFactors = FALSE
     )
+    tPeakShown <- vapply(seq_len(nrow(params)), function(i) {
+      if (isTRUE(params$ke0Supplied[i])) return("ke0 supplied by the model")
+      if (isTRUE(params$tPeak[i] == 0)) return("none: no effect site")
+      paste0(helpFormatNumber(params$tPeak[i]),
+             if (identical(params$tPeakRoute[i], ROUTE_PO)) " after an oral dose" else "")
+    }, character(1))
     derived <- data.frame(
       params$Patient,
       helpFormatNumber(params$halfLife1),
       helpFormatNumber(params$halfLife2),
       helpFormatNumber(params$halfLife3),
-      helpFormatNumber(params$ke0),
+      ifelse(params$ke0 > 0, helpFormatNumber(params$ke0), "none"),
       helpFormatNumber(params$ke0HalfTime),
-      helpFormatNumber(params$tPeak),
+      tPeakShown,
       stringsAsFactors = FALSE
     )
     names(derived) <- c("Patient", "t\u00bd \u03b1 (min)", "t\u00bd \u03b2 (min)",
                         "t\u00bd \u03b3 (min)", "ke0 (1/min)", "t\u00bd ke0 (min)", "tPeak (min)")
     varies <- function(x) length(unique(round(x, 6))) > 1
-    covariateNote <- if (varies(params$V1) || varies(params$CL1)) {
+    # The fat-free-mass switch (docs/weight-adjustment.md): most models are
+    # scaled to it by default, a few carry their own size covariate, and one
+    # (hydrocodone) is deliberately unscaled.
+    ffm <- helpDrugRespondsToFFM(drug, drugDefaults)
+    # Whether the model has covariates of its OWN is judged with the switch
+    # off, so that a drug that varies between patients only because of the
+    # default fat-free-mass scaling is not described as having covariates.
+    paramsOff <- if (isTRUE(ffm)) helpDrugParameterTable(drug, drugDefaults, adjustToFFM = FALSE) else params
+    ownCovariates <- varies(paramsOff$V1) || varies(paramsOff$CL1)
+    covariateNote <- if (ownCovariates) {
       "The parameters change between these patients, so this model has covariates: see the notes below for which ones and how."
+    } else if (isTRUE(ffm)) {
+      "The published model has no covariates of its own. The values here differ between patients only because of the fat-free-mass scaling, on by default; untick <em>Adjust weight to fat-free mass</em> and they are identical at every size. Dose in per-kilogram units if you want the dose scaled too."
     } else {
       "The parameters are the same for every patient: this model has no covariates, and a dose is the same whether the patient weighs 20 kg or 120 kg. Dose in per-kilogram units if you want size taken into account."
     }
+    ffmNote <- if (isTRUE(ffm)) {
+      paste0("These values are with <em>Adjust weight to fat-free mass</em> ticked, as it is by default: ",
+             "the model's volumes are scaled by the patient's fat-free mass relative to a 70 kg, 170 cm man, ",
+             "and its clearances by that ratio to the 0.75 power. The 70 kg reference man is unchanged. ",
+             "Unticking the box restores the scaling the published model used. See ",
+             helpPageLink("models/fat-free-mass"), ".")
+    } else if (isFALSE(ffm)) {
+      paste0("The <em>Adjust weight to fat-free mass</em> switch does not change this model: it either carries ",
+             "its own body-size covariate or, as its notes explain, is deliberately not scaled. See ",
+             helpPageLink("models/fat-free-mass"), ".")
+    } else ""
+    effectNote <- if (prodrug) {
+      paste0("This drug has <strong>no effect site of its own</strong>: ke0 is zero, only the plasma ",
+             "concentration is plotted, and the effect appears on the ",
+             helpPageLink(paste0("drugs/", metabolite)), " row, which receives the metabolite formed from it. See ",
+             helpPageLink("models/metabolites"), ".")
+    } else if (any(params$ke0Supplied)) {
+      paste0("ke0 is supplied by the model rather than solved from a tPeak, because this drug is never dosed ",
+             "directly and its time to peak effect is observed after a dose of its parent; see ",
+             helpPageLink("models/effect-site", "The effect site and ke0"), ".")
+    } else if (any(params$tPeakRoute == ROUTE_PO)) {
+      paste0("ke0 is solved so that the effect-site concentration after an <strong>oral</strong> dose peaks at tPeak, ",
+             "because that is how this drug's time to peak effect was observed; see ",
+             helpPageLink("models/effect-site", "The effect site and ke0"), ".")
+    } else {
+      paste0("ke0 is solved so that the effect-site concentration after a bolus peaks at tPeak; see ",
+             helpPageLink("models/effect-site", "The effect site and ke0"), ".")
+    }
     paramsHTML <- paste0(
       "<p>", covariateNote, "</p>",
+      if (nzchar(ffmNote)) paste0("<p>", ffmNote, "</p>") else "",
       helpTableHTML(shown, "Volumes and clearances"),
       helpTableHTML(derived, "Half-lives, effect-site equilibration and time to peak effect"),
-      "<p class='small text-muted'>The disposition half-lives are ln(2) divided by the three ",
+      "<p class='small text-muted'>The disposition half-lives are ln(2) divided by the ",
       "eigenvalues of the compartment model (\u03b1 fastest, \u03b3 slowest); a dash means the ",
-      "compartment is absent. ke0 is solved so that the effect-site concentration after a bolus ",
-      "peaks at tPeak; see ", helpPageLink("models/effect-site", "The effect site and ke0"), ".</p>"
+      "compartment is absent. ", effectNote, "</p>"
+    )
+  }
+
+  # --- Active metabolite ---------------------------------------------------
+  metaboliteHTML <- ""
+  if (!is.null(metabolite) && !is.null(modelOut$metabolite)) {
+    m <- modelOut$metabolite
+    firstPass <- if (is.null(m$firstPassFraction)) 0 else m$firstPassFraction
+    mwRatio <- if (is.null(m$mwRatio)) 1 else m$mwRatio
+    formation <- data.frame(
+      Parameter = c("Metabolite", "Formation rate constant, kFormation (1/min)",
+                    "Formation half-time (min)",
+                    "Fraction of an oral dose converted during first pass",
+                    "Molecular weight ratio (metabolite / parent)"),
+      Value = c(helpPageLink(paste0("drugs/", metabolite)),
+                helpFormatNumber(m$kFormation),
+                helpFormatNumber(log(2) / m$kFormation),
+                helpFormatNumber(firstPass),
+                helpFormatNumber(mwRatio)),
+      stringsAsFactors = FALSE
+    )
+    phenotypeHTML <- ""
+    if (helpDrugDeclares(drug, "cyp2d6")) {
+      byPhenotype <- lapply(CYP2D6_VALUES, function(ph) {
+        X <- helpDrugModelOutput(drug, adult, cyp2d6 = ph)
+        if (is.null(X)) return(NULL)
+        fp <- if (is.null(X$metabolite$firstPassFraction)) 0 else X$metabolite$firstPassFraction
+        data.frame(phenotype = ph, kFormation = X$metabolite$kFormation, firstPass = fp,
+                   cl1 = X$PK[[PK_EVENT_DEFAULT]]$cl1, stringsAsFactors = FALSE)
+      })
+      byPhenotype <- do.call(rbind, byPhenotype[!vapply(byPhenotype, is.null, logical(1))])
+      normal <- byPhenotype[byPhenotype$phenotype == CYP2D6_NORMAL, ]
+      if (nrow(byPhenotype) > 0 && nrow(normal) == 1) {
+        tab <- data.frame(
+          `CYP2D6 phenotype` = tools::toTitleCase(byPhenotype$phenotype),
+          `Formation rate, relative to normal` = helpFormatNumber(byPhenotype$kFormation / normal$kFormation),
+          `First-pass fraction` = helpFormatNumber(byPhenotype$firstPass),
+          `Parent clearance CL1 (L/min)` = helpFormatNumber(byPhenotype$cl1),
+          check.names = FALSE, stringsAsFactors = FALSE
+        )
+        phenotypeHTML <- paste0(
+          "<p>Formation is by CYP2D6, so the <strong>CYP 2D6</strong> field in the Patient Profile changes it. ",
+          "At the reference adult:</p>",
+          helpTableHTML(tab, "Effect of CYP2D6 phenotype"),
+          "<p class='small text-muted'>Where formation is a branch of the parent's clearance, the parent's ",
+          "own clearance moves with phenotype too, as the last column shows.</p>"
+        )
+      }
+    }
+    metaboliteHTML <- paste0(
+      helpH2("Active metabolite"),
+      "<p>A dose of this drug also produces a curve for <strong>", esc(helpDrugTitle(metabolite)),
+      "</strong>, formed from it and added to that drug's own row (a row is created if ",
+      esc(helpDrugTitle(metabolite)), " was not given). Formation is a first-order transfer out of ",
+      "this drug's central compartment at the rate below; it does not change this drug's own curve, ",
+      "whose fitted clearance already includes it. See ", helpPageLink("models/metabolites"), ".</p>",
+      helpRawTableHTML(formation, "Formation at the reference adult"),
+      phenotypeHTML
+    )
+  }
+
+  # --- Formed from ------------------------------------------------------------
+  formedHTML <- ""
+  if (length(parents)) {
+    items <- vapply(parents, function(p) {
+      paste0("<li>", helpPageLink(paste0("drugs/", p)), "</li>")
+    }, character(1))
+    formedHTML <- paste0(
+      helpH2("Formed as a metabolite"),
+      "<p>This drug is the modelled active metabolite of ", if (length(parents) > 1) "these drugs" else "this drug",
+      ". Giving ", if (length(parents) > 1) "any of them" else "it",
+      " adds the metabolite formed to this drug's row, whether or not this drug was given itself, and the ",
+      "time until threshold is solved from the combined curve. The formation parameters are on the parent's page.</p>",
+      "<ul>", paste(items, collapse = ""), "</ul>"
     )
   }
 
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""
-  pkRef <- helpDrugPK(drug, helpReferencePatients()[1, ], drugDefaults)
   if (!is.null(pkRef)) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
     routes <- list(PO = "Oral (PO)", IM = "Intramuscular (IM)", IN = "Intranasal (IN)")
@@ -289,6 +513,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     helpH2("Model source"), sourceHTML,
     helpH2("Parameters at reference patients"), paramsHTML,
     absorptionHTML,
+    metaboliteHTML,
+    formedHTML,
     eventsHTML,
     if (nzchar(narrative)) paste0(helpH2("About this model"), narrative) else "",
     helpScenariosUsingDrugHTML(drug),
@@ -406,11 +632,21 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     row <- iv[i, ]
     pk <- helpDrugPK(row$Drug, adult, drugDefaults)
     conc <- helpConcentrationUnits(row$Concentration.Units)
+    units <- helpDrugUnits(row)
+    given <- if (length(units) == 0) "metabolite only"
+      else if (any(units %in% c(bolusUnits, infusionUnits))) {
+        paste(c("IV", if (any(grepl(" PO$", units))) "oral", if (any(grepl(" IM$", units))) "IM",
+                if (any(grepl(" IN$", units))) "IN", if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
+      } else "oral"
+    metabolite <- if (is.null(pk$metaboliteName)) "" else
+      sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))
     data.frame(
       Drug = sprintf('<a href="#" data-help-page="drugs/%s">%s%s</a>', row$Drug,
                      as.character(helpColorSwatch(row$Color)), helpDrugTitle(row$Drug)),
       `Model source` = htmltools::htmlEscape(if (is.null(pk)) "Not available" else helpReferenceShort(pk$reference)),
-      `Default unit` = htmltools::htmlEscape(as.character(row$Default.Units)),
+      `Given as` = given,
+      `Active metabolite` = metabolite,
+      `Default unit` = htmltools::htmlEscape(if (nzchar(as.character(row$Default.Units))) as.character(row$Default.Units) else "—"),
       `Typical range` = sprintf("%s\u2013%s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), conc),
       MEAC = if (!is.na(row$MEAC) && row$MEAC > 0) sprintf("%s %s", helpFormatNumber(row$MEAC), conc) else "",
       check.names = FALSE, stringsAsFactors = FALSE
@@ -436,7 +672,9 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     "actually computes: its parameters at a set of reference patients, the citation, the units ",
     "it accepts and the typical concentrations that draw the shaded band. The model source shown ",
     "here is the one in force for a 40-year-old, 70 kg, 170 cm man; a few drugs switch models ",
-    "with age or body size, and their pages say where.</p>",
+    "with age or body size, and their pages say where. A drug with an active metabolite adds a ",
+    "curve for it when given (", helpPageLink("models/metabolites"), "); TCI marks the drugs that ",
+    "accept target-controlled infusion units (", helpPageLink("tci"), ").</p>",
     "<p>The library can be edited for the current session under ",
     helpPageLink("drug-library", "Settings \u2192 Drug Library"), ".</p>",
     helpH2("Intravenous drugs"), ivTable,

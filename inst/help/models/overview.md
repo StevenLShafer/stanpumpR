@@ -11,6 +11,12 @@ stanpumpR never numerically integrates a differential equation. Every intravenou
 7. **Events.** Where a model has different parameters during cardiopulmonary bypass, the state is converted at each event boundary and the simulation continues with the new parameters. See [Events that change the kinetics](help:models/pk-events).
 8. **Output.** Plasma and effect-site concentrations on an even time grid, the peaks (for normalization), the percentage of MEAC, and the time until threshold.
 
+## Active metabolites and targeting
+
+- [Active metabolites](help:models/metabolites): a drug may form another drug, whose curve is convolved from the parent's and added to the metabolite's row. Codeine and tramadol are modelled as prodrugs with no effect site of their own.
+- [Target-controlled infusion](help:tci): the *Plasma target* and *Effect site target* units run a simulated TCI pump, computing the infusion exactly from the same closed-form coefficients.
+- [Scaling to fat-free mass](help:models/fat-free-mass): most models are scaled to the patient's fat-free mass by default, a switch away from the published total-weight scaling.
+
 ## Beyond concentrations
 
 - [MEAC](help:models/meac) puts opioids on a common axis of analgesic effect.

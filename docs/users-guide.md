@@ -42,6 +42,21 @@ they change the predictions.
 | Weight | kg or lb | |
 | Height | in or cm | |
 | Sex | male / female | |
+| Adjust weight to fat-free mass | checkbox | On by default. See below. |
+
+**Adjust weight to fat-free mass.** Most of the drug models were reported for a
+typical 70 kg adult and, if they scaled at all, scaled with total body weight.
+Drug clearance tracks lean tissue, not fat, so with this box ticked stanpumpR
+computes the patient's fat-free mass from weight, height, age and sex
+(Al-Sallami et al. 2015) and scales each model's volumes by the ratio of that to
+the fat-free mass of a 70 kg, 170 cm man, and its clearances by the same ratio to
+the 0.75 power. The reference man is unchanged; a 70 kg woman or a 120 kg man is
+not. Doses you type per kilogram are still converted with total body weight.
+Propofol and remifentanil already carry fat-free mass inside their published
+models and ignore the box. Untick it to see what total-body-weight scaling
+predicts, or to reproduce a simulation made before this option existed. The
+full account, with worked examples, is in
+[docs/weight-adjustment.md](weight-adjustment.md).
 
 Three further fields — **Pregnant**, **CYP 2D6**, and **Renal Function** — appear
 in the interface but are **currently disabled**. The inputs were added ahead of
@@ -63,7 +78,10 @@ This is the main way you talk to the program. It sits to the right of the plot.
 - **Units** — a dropdown whose contents depend on the drug in that row. Propofol
   offers `mg`, `mg/kg`, `mcg/kg/min`, `mg/kg/hr`; remifentanil defaults to
   `mcg/kg/min`. Choosing a per-minute or per-hour unit makes the row an
-  **infusion**; a mass unit makes it a **bolus**.
+  **infusion**; a mass unit makes it a **bolus**. For the drugs that support it,
+  `Plasma target` and `Effect site target` make the row a **target**: the dose
+  is then the concentration you want, and the program works out the infusion
+  (see *Target-controlled infusion*).
 
 An infusion runs from its time until the next row for that same drug changes it,
 or until the end of the simulation. To stop an infusion, add a row for the same
@@ -175,10 +193,61 @@ On/Off, Tourniquet On/Off, and Other.
 
 ---
 
+## Target-controlled infusion
+
+A target-controlled infusion (TCI) pump holds a concentration rather than a
+rate: you set the concentration you want in the plasma or at the site of drug
+effect, and the pump's pharmacokinetic model computes the infusion needed to
+reach it quickly and then hold it. stanpumpR simulates such a pump for
+propofol, remifentanil, alfentanil, sufentanil, fentanyl, lidocaine,
+hydromorphone, etomidate and ketamine.
+
+Enter a row for the drug with units `Plasma target` or `Effect site target`.
+The dose is the target concentration, in the drug's concentration units per
+ml (mcg/ml for propofol, ng/ml for the opioids). From that time the controller
+takes over:
+
+- **Reaching the target.** With the plasma targeted, the pump gives the bolus
+  that fills the central compartment and then the infusion that holds it.
+  With the effect site targeted, it gives the larger bolus that makes the
+  effect-site concentration *peak* exactly at the target, with no overshoot.
+  The plasma concentration overshoots, falls while the effect site rises, and
+  the two meet at the target at the time of peak effect. After that, holding
+  the plasma at the target holds the effect site there too, so that is what
+  the controller does. The method is Shafer and Gregg, *J Pharmacokinet
+  Biopharm* 1992;20:147, as implemented in the original STANPUMP.
+- **The bolus is a rapid infusion** over the pump's 10-second update interval.
+  On the rate panel it is written as a number rather than drawn, since its
+  rate would flatten the rest of the panel to zero.
+- **Changing the target.** A higher target gives another, smaller loading dose.
+  A lower target turns the pump off until the concentration has fallen to the
+  new target, then resumes.
+- **A target of 0 stops the TCI infusion.**
+- **Boluses are allowed** during a TCI infusion. The concentration rises, and
+  the controller gives no more drug until it is back at the target.
+- **Manual infusions are not.** Setting a target zeroes any infusion that is
+  running for that drug, and entering an infusion row stops the TCI infusion:
+  the two cannot run together.
+
+A **TCI rate panel** appears below the concentration panels for each drug under
+TCI, in mg/kg/min or mcg/kg/min. Hover over it for the rate at any moment. The
+rate changes every 10 seconds, so these rows are kept out of the dose table,
+where they would make it unusable; they are merged back in when a slide is
+emailed, so the Excel dose table lists the pump's complete programme.
+
+Two things the simulated pump does not model. It does not know about oral,
+intramuscular or intranasal doses of the same drug, which it treats, like a
+real pump would, as an unexpected addition. And it has no upper limit on its
+rate, so the loading dose is always delivered within one interval.
+
+---
+
 ## Suggest Dosing
 
-The **Suggest Dosing** button works backwards: you say what effect-site
-concentration you want and when, and it finds doses that get you there.
+The **Suggest Dosing** button is the older way to work backwards from a
+concentration: you say what effect-site concentration you want and when, and
+it searches for doses that get you there. For the drugs that offer target
+units, a TCI target row gives a better answer, faster.
 
 Enter time and target concentration pairs, choose the drug, and confirm.
 
@@ -254,6 +323,13 @@ papers fitted a particular population — often healthy volunteers or elective
 surgical patients of a particular age and size. The model is extrapolated
 whenever your patient sits outside that population, and the plot gives no visual
 hint when that is happening.
+
+**Most models are scaled to fat-free mass, not used exactly as published.** Unless
+the *Adjust weight to fat-free mass* box is unticked, every model in the table
+except propofol, remifentanil and oxytocin has its volumes and clearances scaled
+from the published 70 kg values to the patient's fat-free mass. The published
+parameters are what a 70 kg, 170 cm man receives. See
+[docs/weight-adjustment.md](weight-adjustment.md).
 
 **Where a drug has two models**, stanpumpR picks between them on a covariate —
 dexmedetomidine switches to the infant model at age ≤ 1 year, for example — so
@@ -504,6 +580,7 @@ output. Off by default in production.
   page for every drug, the models and methods, and loadable teaching scenarios.
 - `docs/architecture.md` — how the program is put together.
 - `docs/adding-a-drug.md` — adding a drug or a pharmacokinetic model.
+- `docs/weight-adjustment.md` — how patient weight, height, age and sex scale the models.
 - `README.md` — installation and local setup.
 
 ---

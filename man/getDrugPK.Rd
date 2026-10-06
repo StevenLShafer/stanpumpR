@@ -5,7 +5,17 @@
 \title{Get the pharmacokinetic and pharmacodynamic values for a drug based on
 patient covariates}
 \usage{
-getDrugPK(drug, weight, height, age, sex, drugDefaults = getDrugDefaults(drug))
+getDrugPK(
+  drug,
+  weight,
+  height,
+  age,
+  sex,
+  drugDefaults = getDrugDefaults(drug),
+  cyp2d6 = CYP2D6_DEFAULT,
+  resolveMetabolite = TRUE,
+  adjustToFFM = TRUE
+)
 }
 \arguments{
 \item{drug}{name of drug (string)}
@@ -19,6 +29,18 @@ getDrugPK(drug, weight, height, age, sex, drugDefaults = getDrugDefaults(drug))
 \item{sex}{sex as string: "female" or "male"}
 
 \item{drugDefaults}{output from \code{getDrugDefaults(drug)}}
+
+\item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
+Passed only to drug models that declare it; the rest ignore it.}
+
+\item{resolveMetabolite}{should a drug that names an active metabolite have
+that metabolite's coefficients built?  Set FALSE when resolving the
+metabolite itself, which stops a cascade from recursing.}
+
+\item{adjustToFFM}{scale the model's volumes and clearances to the patient's
+fat-free mass (the default) rather than total body weight; see
+\code{docs/weight-adjustment.md}.  Ignored by models that carry their own
+fat-free-mass covariate (propofol, remifentanil).}
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example

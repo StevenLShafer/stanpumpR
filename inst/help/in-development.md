@@ -1,31 +1,25 @@
-This page lists what is being worked on and what is visible but not yet active, so that nobody mistakes a placeholder for a feature. It describes work in progress at the time this help was written (October 2026); check the repository for the current state.
+This page lists what is being worked on and what is visible but not yet active, so that nobody mistakes a placeholder for a feature. It describes the state of the repository when this help was last revised (October 2026); check the repository for the current state.
+
+## Recently landed
+
+Four pieces of work that this page previously listed as "in development" have now merged, and each has its own help page:
+
+- **Target-controlled infusion.** Two new dose-table units, *Plasma target* and *Effect site target*, run a simulated TCI pump for propofol, remifentanil, alfentanil, sufentanil, fentanyl, lidocaine, hydromorphone, etomidate and ketamine. See [Target-controlled infusion](help:tci).
+- **Active metabolites.** Codeine, tramadol, hydrocodone and oxycodone now form active metabolites, and the drugs needed for them (codeine, tramadol, desmetramadol, hydrocodone, oxymorphone) have been added. See [Active metabolites](help:models/metabolites).
+- **Fat-free-mass dosing.** Most models are now scaled to the patient's fat-free mass by default, with a switch to turn it off. See [Scaling to fat-free mass](help:models/fat-free-mass).
+- **Time until threshold across a metabolite, and during an absorption lag.** Recovery is now solved from the combined effect-site state when a drug receives an active metabolite, and reads "not yet absorbed" rather than zero during an extravascular lag.
+
+## Now active
+
+**CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes.
 
 ## Visible but not active
 
-**Pregnant, CYP 2D6 and Renal Function** in the Patient Profile are disabled. No model in the current library uses them. The CYP2D6 field is waiting for the active-metabolite models below.
+**Pregnant** and **Renal Function** in the Patient Profile are still disabled: no model in the current library uses them. Renal function in particular governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
 
-## Target-controlled infusion
+## Provisional values flagged in the code
 
-A target-controlled infusion (TCI) pump holds a concentration rather than a rate: you set the plasma or effect-site concentration you want and the pump's pharmacokinetic model computes the infusion needed to reach it quickly and hold it. The algorithm is Shafer and Gregg's (1992), as implemented in the original STANPUMP, and it is being returned to stanpumpR as two new units in the dose table, **Plasma target** and **Effect site target**, for propofol, remifentanil, alfentanil, sufentanil, fentanyl, lidocaine, hydromorphone, etomidate and ketamine.
-
-As drafted: the dose is the target concentration; the controller recomputes the rate every ten seconds; with the effect site targeted it gives the largest bolus that reaches the target without overshoot, then holds the plasma at the target once the effect site is within 5 per cent; a target of 0 stops it; manual boluses are allowed during TCI and manual infusions are not; a TCI rate panel appears below the concentration panels. When it merges, [Suggest Dosing](help:suggest-dosing) will remain as the older way to work backwards from a concentration.
-
-## Active metabolites
-
-Several opioids act partly or wholly through a metabolite. Work in progress adds a **metabolite link** to the engine, so that a parent drug's dose produces a second curve for the metabolite formed from it, and adds the drugs that need it:
-
-| Parent | Active metabolite | Notes as drafted |
-|---|---|---|
-| codeine | morphine | A prodrug: codeine has no effect site of its own; the analgesia is the morphine's. Formation is CYP2D6-dependent |
-| tramadol | O-desmethyltramadol (desmetramadol) | Modelled as a prodrug for its opioid effect; the monoaminergic analgesia of tramadol itself is not represented. Formation is CYP2D6-dependent |
-| hydrocodone | hydromorphone | Oral only; CYP2D6-dependent formation |
-| oxycodone | oxymorphone | Oxymorphone also as a drug in its own right |
-
-This is the work that will activate the **CYP 2D6** field: poor, normal and ultrarapid metabolisers form the metabolite at different rates. Several times to peak effect in this work are provisional and are marked as such in the code. Hydromorphone's intramuscular and intranasal absorption are revised in the same work.
-
-## Other work in progress
-
-Two further pieces of work were under way on Dr Shafer's own machine when this help was written, concerning **weight adjustment** of dosing and **recovery**. They were not available to read, so nothing is said about them here beyond their existence; this page should be updated when they merge.
+Several parameters in the newly added drugs are explicitly provisional and carry no citation yet, as their pages and the source files say: the oral time to peak effect of hydrocodone, the time to peak effect and potency of oxymorphone, the effect-site rate constant of desmetramadol, and the minimum effective concentrations set equal to or scaled from morphine's for hydrocodone and oxymorphone. These are marked in the code so they are replaced rather than trusted.
 
 ## Longer-term intentions
 
@@ -34,7 +28,9 @@ From the project README:
 1. Oral opioids with good pharmacokinetics for each; only first-order absorption is currently supported.
 2. Improved models of pediatric pharmacokinetics.
 3. Improved models of drug interaction.
-4. Pharmacokinetic changes with pregnancy, CYP2D6 and renal function.
+4. Pharmacokinetic changes with pregnancy and renal function.
+
+A second-generation metabolite link (morphine-6-glucuronide from codeine, for example) would need a two-stage cascade, which the engine does not yet do.
 
 ## Known issues in the code
 

@@ -1,11 +1,19 @@
-remimazolam <- function(weight, height, age, sex)
+remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Eleveld British Journal of Anaesthesia, 135 (1): 206e217 (2025)
   # Units **************
   # Time: Hours
   # Volume: Liters
 
-  Fsize <- weight / 70
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: volumes x weight/70, clearances x (weight/70)^0.75
+  # (the published Fsize).
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyClearance = (weight / 70)^0.75)
+  Fsize <- size$volume
   Kv3_age <-  7.31
   Kcl1_sex <- 16.3
   Kv3_sex <- 28.7
@@ -27,7 +35,7 @@ remimazolam <- function(weight, height, age, sex)
   v1 <- 4.31 * Fsize
   v2 <- 12.3 * Fsize
   v3 <- 18.6 * Fsize * Fv3_age * Fv3_sex
-  cl1 <- 1.12 * Fsize ** 0.75
+  cl1 <- 1.12 * size$clearance
   cl2 <- 1.45 * (v2 / 12.3) ** 0.75
   cl3 <- 0.298 * (v3 /18.6) ** 0.75
 

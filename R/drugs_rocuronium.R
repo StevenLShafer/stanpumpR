@@ -1,10 +1,10 @@
-rocuronium <- function(weight, height, age, sex)
+rocuronium <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Minutes
   # Volume: Liters
 
-  v1  <-  0.056 * weight
+  v1Ref <- 0.056 * 70   # 0.056 L/kg at the 70 kg reference
   k10 <- 0.1746
   k12 <- 0.100381
   k13 <- 0
@@ -12,10 +12,18 @@ rocuronium <- function(weight, height, age, sex)
   k31 <- 0
   k41 <- 0.168
 
-  v2 <- v1 * k12 / k21
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: V1 proportional to weight with fixed rate
+  # constants, so volumes and clearances both scaled with weight/70.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  v1 <- v1Ref * size$volume
+  v2 <- v1Ref * k12 / k21 * size$volume
   v3 <- 1
-  cl1 <- v1 * k10
-  cl2 <- v1 * k12
+  cl1 <- v1Ref * k10 * size$clearance
+  cl2 <- v1Ref * k12 * size$clearance
   cl3 <- 0
 
   default <- list(

@@ -4,7 +4,7 @@ Morphine's parameters are from Lötsch and colleagues (*Clin Pharmacol Ther* 200
 
 ### Covariates
 
-Weight only, scaling every volume and clearance linearly.
+Weight. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the volumes scale with the patient's fat-free mass and the clearances with that ratio to the 0.75 power; with the switch off, every volume and clearance scales linearly with weight, as Lötsch's per-kilogram model did.
 
 ### Effect site
 
@@ -16,7 +16,7 @@ MEAC is 8 ng/mL (0.008 mcg/mL in the plotted units) and the shaded band 6.4 to 1
 
 ### Active metabolite
 
-Morphine-6-glucuronide is an active metabolite that accumulates in renal failure. It is not in the current model; the active-metabolite work in development models morphine as the metabolite of codeine, and a metabolite link for morphine itself could follow. See [In development](help:in-development).
+Morphine-6-glucuronide is an active metabolite that accumulates in renal failure. It is not in the current model. Morphine is itself now the modelled metabolite of [codeine](help:drugs/codeine): giving codeine adds a morphine row, which is where codeine's analgesia appears. A second-generation link to morphine-6-glucuronide would need a two-stage cascade, which the engine does not yet do. See [Active metabolites](help:models/metabolites).
 
 ### Where to be careful
 

@@ -1,4 +1,4 @@
-fentanyl <- function(weight, height, age, sex)
+fentanyl <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Minutes
@@ -10,13 +10,21 @@ fentanyl <- function(weight, height, age, sex)
   # 4 = Varvel, Anesthesiology. 1989;70:928-34.
   # 5 = Shafer, Anesthesiology. 1990;73:1091-102.
 
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: volumes x weight/70, clearances x (weight/70)^0.75.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyClearance = (weight / 70)^0.75)
+
   default <- list(
-  v1  = 12.1  * weight/70,
-  v2  = 35.7  * weight/70,
-  v3  = 224   * weight/70,
-  cl1 = 0.632 * (weight/70) ^ 0.75,
-  cl2 = 2.8   * (weight/70) ^ 0.75,
-  cl3 = 1.55  * (weight/70) ^ 0.75
+    v1  = 12.1  * size$volume,
+    v2  = 35.7  * size$volume,
+    v3  = 224   * size$volume,
+    cl1 = 0.632 * size$clearance,
+    cl2 = 2.8   * size$clearance,
+    cl3 = 1.55  * size$clearance
   )
 
   events <- c(PK_EVENT_DEFAULT)

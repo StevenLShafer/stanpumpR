@@ -142,7 +142,8 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Weight Unit",
       "Height",
       "Height Unit",
-      "Sex"
+      "Sex",
+      "Adjust weight to fat-free mass"
     ),
     Value = c(
       values$age / values$ageUnit,
@@ -151,15 +152,18 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       weightUnit,
       values$height / values$heightUnit,
       heightUnit,
-      values$sex
+      values$sex,
+      if (isTRUE(values$adjustToFFM)) "yes" else "no"
     ))
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")
   openxlsx::writeData(wb, sheet = 1, covariates)
 
+  # The TCI infusion rows live outside the dose table in the app so that the
+  # table stays usable; they are merged in for the export (tci.R).
   outputComments("Writing dose table")
   openxlsx::addWorksheet(wb, "Dose Table")
-  openxlsx::writeData(wb, sheet = 2, DT)
+  openxlsx::writeData(wb, sheet = 2, tciMergeDoseTable(DT, drugs))
 
   outputComments("Writing simulation results")
   openxlsx::addWorksheet(wb, "Simulation Results")

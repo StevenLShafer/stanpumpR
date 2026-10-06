@@ -132,15 +132,66 @@ simulationPlot <- function(
   if (plasmaLinetype == "blank")
   {
     #   cat ("removing plasma concentrations\n")
-    allResults <- allResults[allResults$Site != "Plasma",]
-    plasmaLinetype <- NULL
-    plotTable$MaxCp <- 0
+    # Hiding the plasma line must not hide a drug entirely.
+    #
+    # A drug with no effect site -- a prodrug such as codeine or tramadol, or
+    # one whose potency has not been supplied yet -- carries NA in its
+    # effect-site column, and those rows are dropped further down.  Removing
+    # its plasma rows here as well would leave it with nothing at all to
+    # draw: an empty panel with axes and a typical-range band and no curve.
+    # Since the default setting is a blank plasma line, that is what such a
+    # drug looked like out of the box.
+    #
+    # So plasma is removed only from the drugs that have an effect site to
+    # show instead.  Note the NA test: the effect-site rows still exist at
+    # this point and are dropped later, so their mere presence does not mean
+    # the drug has anything to plot.
+    # The exception applies only when the effect site is actually being
+    # shown.  Blanking BOTH lines is a deliberate request for an empty plot,
+    # and forcing plasma back on there would override an explicit choice
+    # rather than rescue an accidental one.
+    withEffectSite <- if (effectsiteLinetype == "blank") {
+      unique(allResults$Drug)
+    } else {
+      unique(
+        allResults$Drug[allResults$Site == "Effect Site" & !is.na(allResults$Y)]
+      )
+    }
+    allResults <- allResults[
+      allResults$Site != "Plasma" | !(allResults$Drug %in% withEffectSite),
+    ]
+    if (any(allResults$Site == "Plasma"))
+    {
+      # Whatever plasma survived is the only curve those drugs have, so it is
+      # drawn rather than blanked, and keeps its own legend entry.
+      plasmaLinetype <- "solid"
+    } else {
+      plasmaLinetype <- NULL
+      plotTable$MaxCp <- 0
+    }
   }
   if (effectsiteLinetype == "blank")
   {
     allResults <- allResults[allResults$Site != "Effect Site",]
     effectsiteLinetype <- NULL
     plotTable$MaxCe <- 0
+  }
+
+  # Both series can be blanked, which is a legitimate request for an empty
+  # plot.  Nothing then survives the two filters above, and the assignments
+  # below cannot write a length-one value into a zero-row data frame.
+  #
+  # The zero-row guard at Step C2 cannot catch this: it runs before the
+  # linetype filters, when the rows still exist.  Pre-existing rather than new
+  # -- master errors here identically -- but nothing exercised the path until
+  # a drug appeared that has only one of the two series.
+  #
+  # Same answer as that earlier guard: nothing to plot is NULL, which
+  # output$PlotSimulation already handles.
+  if (nrow(allResults) == 0)
+  {
+    message("Returning Null, both linetypes blank")
+    return(NULL)
   }
 
   allResults$Wrap <- ""
@@ -366,22 +417,87 @@ simulationPlot <- function(
 
   }
 
+  # Step B4b and D7b: add the TCI infusion-rate panels
+
+  # One panel per drug under target-controlled infusion, directly below the
+  # concentration panels, showing the pump rate the controller ran (tci.R).
+  # The series is named "<drug> TCI" so that it can take the drug's colour
+  # without colliding with the concentration series; the loading dose is
+  # written on the panel as a number rather than drawn, since its rate would
+  # flatten the rest of the panel to zero.
+  tciRates   <- purrr::map_dfr(drugs, \(x) purrr::pluck(x, "tci", "rates"))
+  tciBoluses <- purrr::map_dfr(drugs, \(x) purrr::pluck(x, "tci", "boluses"))
+  tciLabels  <- NULL
+  if (nrow(tciRates) > 0)
+  {
+    tciRates <- tciRates[tciRates$Drug %in% plotTable$Drug, ]
+    for (drug in unique(tciRates$Drug))
+    {
+      r <- tciRates[tciRates$Drug == drug, ]
+      r <- r[order(r$Time), ]
+      # A loading interval is drawn at the rate that follows it; the number
+      # on the panel says what was given.
+      for (k in rev(which(r$Bolus))) r$Rate[k] <- if (k < nrow(r)) r$Rate[k + 1] else 0
+      # Hold the last rate out to the end of the plot.
+      r <- rbind(r, r[nrow(r), ])
+      r$Time[nrow(r)] <- maximum
+
+      name <- paste(drug, "TCI")
+      wrap <- paste0(drug, " TCI
+(", r$Units[1], ")")
+      plotResults <- rbind(plotResults, data.frame(
+        Drug = name, Time = r$Time, Y = r$Rate, Site = "Rate", Wrap = wrap, Label = ""
+      ))
+
+      newplotTable <- plotTable[plotTable$Drug == drug, ][1, ]
+      newplotTable$Drug <- name
+      newplotTable$Concentration.Units <- r$Units[1]
+      newplotTable$typical <- 0
+      newplotTable$lowerTypical <- 0
+      newplotTable$upperTypical <- 0
+      newplotTable$y <- 0
+      newplotTable$ymin <- 0
+      newplotTable$ymax <- 0
+      newplotTable$Wrap <- wrap
+      newplotTable$endCe <- 0
+      newplotTable$MaxRecovery <- 0
+      plotTable <- rbind(plotTable, newplotTable)
+
+      b <- tciBoluses[tciBoluses$Drug == drug, ]
+      if (nrow(b) > 0)
+      {
+        top <- max(r$Rate, 0)
+        if (top == 0) top <- 1
+        tciLabels <- rbind(tciLabels, data.frame(
+          Drug = name,
+          Time = b$Time,
+          y = top,
+          Label = paste(signif(b$Amount, 3), b$Units),
+          Wrap = wrap
+        ))
+      }
+    }
+  }
+
   # Step B5 and D8: finalize plotResults and plotTable
 
   ##################################################
 
-  plotResults$Site <- factor(plotResults$Site,levels=c("Plasma", "Effect Site", PLOT_ID_EVENTS, "Recovery"), ordered=TRUE)
+  plotResults$Site <- factor(plotResults$Site,levels=c("Plasma", "Effect Site", PLOT_ID_EVENTS, "Recovery", "Rate"), ordered=TRUE)
   plotResults <- plotResults[!is.na(plotResults$Y),]
 
   # Convert $Drug and $Wrap to factors to preserve order from plotTable
 
-  drugFactors <- c(drugDefaults$Drug, "total opioid", PLOT_NAME_INTERACTION, "Recovery", PLOT_NAME_EVENTS)
+  drugFactors <- c(drugDefaults$Drug, paste(drugDefaults$Drug, "TCI"), "total opioid", PLOT_NAME_INTERACTION, "Recovery", PLOT_NAME_EVENTS)
   plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
   plotTable <- plotTable[order(plotTable$Factor),]
 
   drugFactors <- c(plotTable$Drug, "Recovery")
   wrapFactors <- plotTable$Wrap
   drugColors <-  c(plotTable$drugColor, "black")
+  # Named, so that a colour scale with explicit breaks (the TCI rate series
+  # are kept out of the legend) still colours every series.
+  names(drugColors) <- drugFactors
 
   plotResults$Drug  <- factor(plotResults$Drug,  levels = drugFactors, ordered = TRUE)
   plotTable$Drug    <- factor(plotTable$Drug,    levels = drugFactors, ordered = TRUE)
@@ -393,14 +509,21 @@ simulationPlot <- function(
   # Begin plotting                                                                 #
   ##################################################################################
 
-  linetypes <- c(plasmaLinetype, effectsiteLinetype, "blank", "dotted")
+  linetypes <- c(plasmaLinetype, effectsiteLinetype, "blank", "dotted", "solid")
+  names(linetypes) <- c(
+    if (!is.null(plasmaLinetype)) "Plasma",
+    if (!is.null(effectsiteLinetype)) "Effect Site",
+    PLOT_ID_EVENTS, "Recovery", "Rate"
+  )
 
   # Step A1: create plotObject with lines from `plotResults`
 
-  data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS)
+  data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS & Site != "Rate")
+  rateData <- subset(plotResults, Site == "Rate")
 
   if (logY) {
     data <- data[data$Y>0,]
+    rateData <- rateData[rateData$Y>0,]
   }
 
   plotObject <- ggplot2::ggplot() +
@@ -415,15 +538,53 @@ simulationPlot <- function(
       linewidth=1
     )
 
+  # The pump rate is piecewise constant, so it is drawn as steps; the loading
+  # dose is marked and written as a number.
+  if (nrow(rateData) > 0)
+  {
+    plotObject <- plotObject +
+      ggplot2::geom_step(
+        data = rateData,
+        ggplot2::aes(x = Time, y = Y, color = Drug),
+        linewidth = 1,
+        show.legend = FALSE
+      )
+  }
+  if (!is.null(tciLabels))
+  {
+    tciLabels$Wrap <- factor(tciLabels$Wrap, levels = wrapFactors, ordered = TRUE)
+    tciLabels$Drug <- factor(tciLabels$Drug, levels = drugFactors, ordered = TRUE)
+    plotObject <- plotObject +
+      ggplot2::geom_segment(
+        data = tciLabels,
+        ggplot2::aes(x = Time, xend = Time, y = 0, yend = y, color = Drug),
+        linetype = "dashed",
+        linewidth = 0.5,
+        inherit.aes = FALSE,
+        show.legend = FALSE
+      ) +
+      ggplot2::geom_label(
+        data = tciLabels,
+        ggplot2::aes(x = Time, y = y, label = Label),
+        color = "black",
+        hjust = -0.05,
+        vjust = 1,
+        size = 3.5,
+        inherit.aes = FALSE,
+        show.legend = FALSE,
+        label.padding = grid::unit(0.5, "mm")
+      )
+  }
+
   # Step A2: add scales to plotObject
 
   plotObject <- plotObject +
     ggplot2::coord_cartesian(xlim = c(min(xBreaks), max(xBreaks)), clip="off") +
     ggplot2::scale_x_continuous(expand = c(0,0), breaks = xBreaks, labels = xLabels) +
-    ggplot2::scale_color_manual(values=drugColors) +
+    ggplot2::scale_color_manual(values=drugColors, breaks = drugFactors[!grepl(" TCI$", drugFactors)]) +
     ggplot2::scale_fill_manual(values=drugColors)  +
     ggplot2::scale_alpha_manual(values = c(plotTable$alpha, 0.5)) +
-    ggplot2::scale_linetype_manual(values=linetypes)
+    ggplot2::scale_linetype_manual(values=linetypes, breaks = c("Plasma", "Effect Site"))
 
   # Step A3: handle logarithmic Y axis
 
@@ -581,7 +742,7 @@ simulationPlot <- function(
     for (i in 1:nplotTable)
     {
       USE <- recovery$Drug == as.character(plotTable$Drug[i])
-      if (plotTable$MaxRecovery[i] > 0)
+      if (isTRUE(plotTable$MaxRecovery[i] > 0))
       {
 #        labels <- as.numeric(x$layout$panel_params[[i]]$y.labels)
         labels <- as.numeric(stats::na.omit(x$layout$panel_params[[i]]$y$get_labels()))
@@ -623,6 +784,16 @@ simulationPlot <- function(
     recoveryLabels$Wrap <- factor(recoveryLabels$Wrap, levels=wrapFactors, ordered = TRUE)
     recovery$Wrap <- factor(recovery$Wrap, levels=wrapFactors, ordered = TRUE)
     arrows$Wrap   <- factor(arrows$Wrap, levels=wrapFactors, ordered = TRUE)
+
+    # Recovery is missing wherever it could not be computed -- a dose given
+    # that has not begun to be absorbed; see pendingDoseTimes().  Break the
+    # line there rather than drawing across the gap, which would assert a time
+    # for the one stretch that has none.  An explicit group, rather than
+    # relying on how the geom happens to treat a missing value.  With nothing
+    # missing the group is constant and the line is exactly the one drawn
+    # before.
+    recovery$Segment <- cumsum(is.na(recovery$Recovery))
+    recovery <- recovery[!is.na(recovery$Recovery), , drop = FALSE]
 
     # Step A7: finish plotObject
 
@@ -673,7 +844,8 @@ simulationPlot <- function(
        data = recovery,
        ggplot2::aes(
          x = Time,
-         y = Recovery
+         y = Recovery,
+         group = Segment
         ),
        show.legend = FALSE,
        color = "black",

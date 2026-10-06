@@ -20,7 +20,7 @@
 
 **Cp.** Plasma concentration.
 
-**CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of codeine, tramadol, hydrocodone and oxycodone. The field in the Patient Profile is not yet active.
+**CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of codeine, tramadol, hydrocodone and oxycodone. The field in the Patient Profile scales that formation across the poor, intermediate, normal and ultrarapid phenotypes. See [Active metabolites](help:models/metabolites).
 
 **Dead space.** The part of each breath that does not reach the alveoli; 30 per cent of minute ventilation in the gas model.
 
@@ -30,7 +30,9 @@
 
 **endCe.** The recovery threshold in the drug library: the effect-site concentration that *Time until threshold* counts down to.
 
-**Fat-free mass (FFM).** Body mass excluding fat, by the Al-Sallami equations; used by the Eleveld models.
+**Fat-free mass (FFM).** Body mass excluding fat, by the Al-Sallami equations. Used inside the Eleveld models, and, when *Adjust weight to fat-free mass* is on, to scale most of the other models. See [Scaling to fat-free mass](help:models/fat-free-mass).
+
+**Prodrug.** A drug with little effect of its own whose action is that of a metabolite the body forms from it. Codeine (through morphine) and, as modelled here, tramadol (through desmetramadol) are the examples. See [Active metabolites](help:models/metabolites).
 
 **Fresh gas flow.** The total flow from the flowmeters (air, oxygen, nitrous oxide) into the breathing circuit.
 
@@ -70,7 +72,7 @@
 
 **Steady state.** When the rate of drug in equals the rate out and the concentration is constant; reached in practice only after several terminal half-lives.
 
-**TCI.** Target-controlled infusion: a pump that computes its own rate to reach and hold a target concentration. See [In development](help:in-development).
+**TCI.** Target-controlled infusion: a pump that computes its own rate to reach and hold a target concentration, entered as the *Plasma target* or *Effect site target* units. See [Target-controlled infusion](help:tci).
 
 **Time until threshold.** At each moment, how long the concentration would take to fall to the threshold if delivery stopped then. See [Time until threshold](help:models/recovery).
 

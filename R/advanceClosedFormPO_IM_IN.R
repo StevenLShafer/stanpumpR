@@ -9,17 +9,24 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   ##############################################
 
   # Add tlag_ to PO, IM, and IN dose times
+  givenAt <- dose$Time
   dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
   dose$Time[dose$IM] <- dose$Time[dose$IM] + pkSet$tlag_IM
   dose$Time[dose$IN] <- dose$Time[dose$IN] + pkSet$tlag_IN
 
   # Create timeline
+  #
+  # A lagged dose contributes the instant it was GIVEN as well, which is not
+  # otherwise a point on the line, so that the window over which recovery
+  # cannot be reported starts exactly where it should.  Only when some dose is
+  # actually lagged, so that an unlagged run keeps the line it always had.
   timeLine <- sort(
     unique(
       c(
         0,
         dose$Time,
         dose$Time - .01, # run until just before next dose
+        givenAt[givenAt < dose$Time],
         maximum
       )
     )
@@ -108,82 +115,68 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_state_ka_IN <- advanceStatePO(ka_IN_dt, doseNA,     doseNA,        doseNA,     doseNA,     p_IN_ka, L)
 
       Cp <- p_state_l1 + p_state_l2 + p_state_l3 + p_state_ka_PO + p_state_ka_IM + p_state_ka_IN
-      Ce <- calculateCe(Cp, rep(pkSet$ke0, L), dt, L)
+      # The effect site from its own exponential states, exactly, rather than
+      # derived from the plasma curve by calculateCe(); see advanceClosedForm0().
+      ke0_dt <- exp(-ke0 * dt)
+      e_bolus_l1  <- e_coef_bolus_l1  * bolusLine
+      e_bolus_l2  <- e_coef_bolus_l2  * bolusLine
+      e_bolus_l3  <- e_coef_bolus_l3  * bolusLine
+      e_bolus_ke0 <- e_coef_bolus_ke0 * bolusLine
 
-      if (plotRecovery)
-      {
-        ke0_dt <- exp(-ke0 * dt)
-        e_bolus_l1  <- e_coef_bolus_l1  * bolusLine
-        e_bolus_l2  <- e_coef_bolus_l2  * bolusLine
-        e_bolus_l3  <- e_coef_bolus_l3  * bolusLine
-        e_bolus_ke0 <- e_coef_bolus_ke0 * bolusLine
+      e_infusion_l1  <- e_coef_infusion_l1  * rate * (1 - l1_dt)
+      e_infusion_l2  <- e_coef_infusion_l2  * rate * (1 - l2_dt)
+      e_infusion_l3  <- e_coef_infusion_l3  * rate * (1 - l3_dt)
+      e_infusion_ke0 <- e_coef_infusion_ke0 * rate * (1 - ke0_dt)
 
-        e_infusion_l1  <- e_coef_infusion_l1  * rate * (1 - l1_dt)
-        e_infusion_l2  <- e_coef_infusion_l2  * rate * (1 - l2_dt)
-        e_infusion_l3  <- e_coef_infusion_l3  * rate * (1 - l3_dt)
-        e_infusion_ke0 <- e_coef_infusion_ke0 * rate * (1 - ke0_dt)
+      e_PO_l1  <- e_coef_PO_l1  * poLine
+      e_PO_l2  <- e_coef_PO_l2  * poLine
+      e_PO_l3  <- e_coef_PO_l3  * poLine
+      e_PO_ke0 <- e_coef_PO_ke0 * poLine
+      e_PO_ka  <- e_coef_PO_ka  * poLine
 
-        e_PO_l1  <- e_coef_PO_l1  * poLine
-        e_PO_l2  <- e_coef_PO_l2  * poLine
-        e_PO_l3  <- e_coef_PO_l3  * poLine
-        e_PO_ke0 <- e_coef_PO_ke0 * poLine
-        e_PO_ka  <- e_coef_PO_ka  * poLine
+      e_IM_l1  <- e_coef_IM_l1  * imLine
+      e_IM_l2  <- e_coef_IM_l2  * imLine
+      e_IM_l3  <- e_coef_IM_l3  * imLine
+      e_IM_ke0 <- e_coef_IM_ke0 * imLine
+      e_IM_ka  <- e_coef_IM_ka  * imLine
 
-        e_IM_l1  <- e_coef_IM_l1  * imLine
-        e_IM_l2  <- e_coef_IM_l2  * imLine
-        e_IM_l3  <- e_coef_IM_l3  * imLine
-        e_IM_ke0 <- e_coef_IM_ke0 * imLine
-        e_IM_ka  <- e_coef_IM_ka  * imLine
+      e_IN_l1  <- e_coef_IN_l1  * inLine
+      e_IN_l2  <- e_coef_IN_l2  * inLine
+      e_IN_l3  <- e_coef_IN_l3  * inLine
+      e_IN_ke0 <- e_coef_IN_ke0 * inLine
+      e_IN_ka  <- e_coef_IN_ka  * inLine
 
-        e_IN_l1  <- e_coef_IN_l1  * inLine
-        e_IN_l2  <- e_coef_IN_l2  * inLine
-        e_IN_l3  <- e_coef_IN_l3  * inLine
-        e_IN_ke0 <- e_coef_IN_ke0 * inLine
-        e_IN_ka  <- e_coef_IN_ka  * inLine
+      e_state_l1     <- advanceStatePO(l1_dt,    e_bolus_l1,  e_infusion_l1,  e_PO_l1,  e_IM_l1,  e_IN_l1,  L)
+      e_state_l2     <- advanceStatePO(l2_dt,    e_bolus_l2,  e_infusion_l2,  e_PO_l2,  e_IM_l2,  e_IN_l2,  L)
+      e_state_l3     <- advanceStatePO(l3_dt,    e_bolus_l3,  e_infusion_l3,  e_PO_l3,  e_IM_l3,  e_IN_l3,  L)
+      e_state_ke0    <- advanceStatePO(ke0_dt,   e_bolus_ke0, e_infusion_ke0, e_PO_ke0, e_IM_ke0, e_IN_ke0, L)
+      e_state_ka_PO  <- advanceStatePO(ka_PO_dt, doseNA,      doseNA,         e_PO_ka,  doseNA,   doseNA,   L)
+      e_state_ka_IM  <- advanceStatePO(ka_IM_dt, doseNA,      doseNA,         doseNA,   e_IM_ka,  doseNA,   L)
+      e_state_ka_IN  <- advanceStatePO(ka_IN_dt, doseNA,      doseNA,         doseNA,   doseNA,   e_IN_ka,  L)
 
-        e_state_l1     <- advanceStatePO(l1_dt,    e_bolus_l1,  e_infusion_l1,  e_PO_l1,  e_IM_l1,  e_IN_l1,  L)
-        e_state_l2     <- advanceStatePO(l2_dt,    e_bolus_l2,  e_infusion_l2,  e_PO_l2,  e_IM_l2,  e_IN_l2,  L)
-        e_state_l3     <- advanceStatePO(l3_dt,    e_bolus_l3,  e_infusion_l3,  e_PO_l3,  e_IM_l3,  e_IN_l3,  L)
-        e_state_ke0    <- advanceStatePO(ke0_dt,   e_bolus_ke0, e_infusion_ke0, e_PO_ke0, e_IM_ke0, e_IN_ke0, L)
-        e_state_ka_PO  <- advanceStatePO(ka_PO_dt, doseNA,      doseNA,         e_PO_ka,  doseNA,   doseNA,   L)
-        e_state_ka_IM  <- advanceStatePO(ka_IM_dt, doseNA,      doseNA,         doseNA,   e_IM_ka,  doseNA,   L)
-        e_state_ka_IN  <- advanceStatePO(ka_IN_dt, doseNA,      doseNA,         doseNA,   doseNA,   e_IN_ka,  L)
+      # The states, not just the time they imply.  A drug that also receives
+      # an active metabolite has to add this drug's amplitudes to the formed
+      # contribution's before solving; see R/recoveryStates.R.  Built whether
+      # or not recovery is plotted, because the effect site is read off it.
+      recoveryStates <- recoveryStateSet(
+        timeLine,
+        list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
+             e_state_ka_PO, e_state_ka_IM, e_state_ka_IN),
+        c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN),
+        pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
+      )
 
-        recovery <- sapply(
-          1:L,
-          function(i)
-            (
-              recoveryCalc(
-                c(
-                  e_state_l1[i],
-                  e_state_l2[i],
-                  e_state_l3[i],
-                  e_state_ke0[i],
-                  e_state_ka_PO[i],
-                  e_state_ka_IM[i],
-                  e_state_ka_IN[i]
-                ),
-                c(
-                  lambda_1,
-                  lambda_2,
-                  lambda_3,
-                  ke0,
-                  ka_PO,
-                  ka_IM,
-                  ka_IN
-                ),
-                emerge)
-            )
-        )
-      } else {
-        recovery <- doseNA
-      }
+      # No effect site (ke0 = 0): Ce is NA, not zero; see advanceClosedForm0().
+      Ce <- if (ke0 > 0) rowSums(recoveryStates$state) else rep(NA_real_, L)
+
+      recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else doseNA
       results <- data.frame(
         Time = timeLine,
         Cp = Cp,
         Ce = Ce,
         Recovery = recovery
       )
+      attr(results, "recoveryStates") <- if (plotRecovery) recoveryStates else NULL
       return(results)
     }
   )

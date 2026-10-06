@@ -9,6 +9,25 @@ SEX_MALE <- "male"
 SEX_FEMALE <- "female"
 SEX_VALUES <- c(SEX_MALE, SEX_FEMALE)
 
+# Which plasma curve a drug's tPeak was observed against.  getDrugPK() solves
+# ke0 so the effect site peaks at tPeak, and the answer depends on whether the
+# observation followed an intravenous bolus or an oral dose.
+ROUTE_IV <- "IV"
+ROUTE_PO <- "PO"
+TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
+
+# CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
+# genotyping laboratories report, rather than the three the UI carried before
+# any drug used them.  "normal" is the reference: a drug's formation parameters
+# are published relative to it.
+CYP2D6_POOR         <- "poor"
+CYP2D6_INTERMEDIATE <- "intermediate"
+CYP2D6_NORMAL       <- "normal"
+CYP2D6_ULTRARAPID   <- "ultrarapid"
+CYP2D6_VALUES  <- c(CYP2D6_POOR, CYP2D6_INTERMEDIATE, CYP2D6_NORMAL,
+                    CYP2D6_ULTRARAPID)
+CYP2D6_DEFAULT <- CYP2D6_NORMAL
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 MIN_WEIGHT <- 0.1
@@ -53,6 +72,15 @@ inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, inUnits, imUnits)
+
+# Target-controlled infusion (tci.R).  The "dose" of a target row is the target
+# concentration, in the drug's concentration units per ml.
+TCI_UNIT_PLASMA <- "Plasma target"
+TCI_UNIT_EFFECT <- "Effect site target"
+tciUnits <- c(TCI_UNIT_PLASMA, TCI_UNIT_EFFECT)
+TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP)
+TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
+TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
 # gases are flowmeter settings in L/min, potent agents are vaporizer settings in %.

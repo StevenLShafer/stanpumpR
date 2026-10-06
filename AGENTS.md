@@ -25,7 +25,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 1. **Inputs**: Patient covariates, dose grid (`rhandsontable`), clinical events, plot settings.
 2. **Validate**: `doseTableClean()`, `eventTableClean()`, `testCovariates()`.
 3. **Resolve PK**: `recalculatePK()` calls `getDrugPK()`, which converts covariates → micro rate constants → eigenvalues (`cube()`) → $k_{e0}$ (solved by `tPeakError()` + `CE()`) → exponential coefficients.
-4. **Simulate**: `processdoseTable()` calls `simCpCe()`, which dispatches to:
+4. **Simulate**: `processdoseTable()` calls `simCpCe()`, which first expands any `Plasma target` / `Effect site target` rows into a TCI infusion schedule (`tci.R`, Shafer & Gregg 1992; returned as `$tci` for the rate panel and export), then dispatches to:
    - `advanceClosedForm0.R` (IV, standard PK)
    - `advanceClosedForm1.R` (time-varying PK with events)
    - `advanceClosedFormPO_IM_IN.R` (extravascular 1st-order absorption)
@@ -46,6 +46,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
   2. `inst/extdata/drugDefaults_global.csv` (row with colors, units, MEAC)
   3. `tests/testthat/test-drugs-<name>.R` (unit test — pin values with `expect_equal_rounded()` from `tests/testthat/helpers.R`)
   4. `inst/help/drugs/<name>.md` (the narrative for the drug's generated help page; `test-help-drugs.R` fails without it)
+- **Body size scaling is mandatory** (`docs/weight-adjustment.md`): a drug function is `<name>(weight, height, age, sex, adjustToFFM = TRUE)` and either carries its own size covariate (Eleveld-style) or scales its 70 kg reference parameters with `pkSizeFactors()` — volumes by `$volume`, clearances by `$clearance` — passing the `legacy*` factors that reproduce the published scaling when the switch is off. Tests pin both switch positions.
 - **Debug logging**: `outputComments()`, active when `?debug=1` is in the URL.
 - **Deploy**: GitHub Actions — PRs auto-deploy to a test environment; merges to `master` deploy to production (shinyapps.io).
 - **Adding an R package**: add to `DESCRIPTION` first, then `renv::install("pkg")` + `renv::snapshot()`, commit `DESCRIPTION` + `renv.lock` together. For a package that isn't on CRAN, also add it under `Remotes:` in `DESCRIPTION` (e.g. `daattali/undomanager`) and install with `renv::install("user/repo")`, so the deploy can resolve it.

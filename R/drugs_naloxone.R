@@ -1,15 +1,21 @@
-naloxone <- function(weight, height, age, sex)
+naloxone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Minutes
   # Volume: Liters
   
-  v1 <- 0.408 * weight
-  v2 <- 0.636 * weight
-  v3 <- 1.637 * weight
-  cl1 <- 0.049 * weight
-  cl2 <- 0.046 * weight
-  cl3 <- 0.026 * weight
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: volumes and clearances all x weight/70.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  v1 <- 0.408 * 70 * size$volume
+  v2 <- 0.636 * 70 * size$volume
+  v3 <- 1.637 * 70 * size$volume
+  cl1 <- 0.049 * 70 * size$clearance
+  cl2 <- 0.046 * 70 * size$clearance
+  cl3 <- 0.026 * 70 * size$clearance
   
   default <- list(
     v1 = v1,

@@ -163,7 +163,14 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     message("pkLine:")
     print(pkLine)
   }
-  Ce <- calculateCe(Cp, ke0, dt, L)
+  # ke0 is a per-step vector here, because the PK set can change on an event.
+  # A drug with no tPeak carries zero throughout, and calculateCe() divides by
+  # it; see the same guard in advanceClosedForm0().
+  Ce <- if (any(ke0 > 0)) {
+    calculateCe(Cp, ke0, dt, L)
+  } else {
+    rep(NA_real_, L)
+  }
 
   temp <- data.frame(
     Time = round(timeLine, 2),
@@ -190,17 +197,16 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     # the same assumption the other two engines make.
     # (Claude Code, Claude Fable 5.1, 2026-10-05; verified against stopping
     # delivery in the simulation by tests/testthat/test-recovery-engines.R.)
-    recovery <- sapply(
-      1:L,
-      function(i)
-      {
-        lam <- c(lambda_1[i], lambda_2[i], lambda_3[i])
-        p   <- c(p_state_l1[i], p_state_l2[i], p_state_l3[i])
-        a   <- p * ke0[i] / (ke0[i] - lam)
-        recoveryCalc(c(a, Ce[i] - sum(a)), c(lam, ke0[i]), emerge)
-      }
-    )
+    #
+    # The eigenvalues in force change with time here, so the state set carries
+    # a lambda per point as well as an amplitude per point; see
+    # R/recoveryStates.R, which a metabolite fold then reads.
+    lam <- cbind(lambda_1, lambda_2, lambda_3, ke0)
+    a   <- cbind(p_state_l1, p_state_l2, p_state_l3) * ke0 / (ke0 - lam[, 1:3])
+    recoveryStates <- recoveryStateSet(timeLine, cbind(a, Ce - rowSums(a)), lam)
+    recovery <- recoveryFromStates(recoveryStates, emerge)
   } else {
+    recoveryStates <- NULL
     recovery <- rep(0, L)
   }
 
@@ -210,5 +216,6 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     Ce = Ce,
     Recovery = recovery
   )
+  attr(results, "recoveryStates") <- recoveryStates
   return(results)
 }

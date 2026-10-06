@@ -14,6 +14,24 @@ Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maxim
 
 Struys MMRF, De Smet T, Glen JB, Vereecke HEM, Absalom AR, Schnider TW. The history of target-controlled infusion. *Anesth Analg* 2016;122:56-69.
 
+## Active metabolites
+
+Ashraf MW, Mndala BM, Rao RN, et al. Pharmacometric modelling of codeine and morphine disposition in a CYP2D6-stratified population. *Clin Pharmacokinet* 2024;63:1377-1391.
+
+Holford S, Allegaert K, Anderson BJ, et al. Parent-metabolite pharmacokinetic models for tramadol. *J Pharmacol Clin Toxicol* 2014;2(1):1023.
+
+Stamer UM, Musshoff F, Kobilay M, Madea B, Hoeft A, Stuber F. Concentrations of tramadol and O-desmethyltramadol enantiomers in different CYP2D6 genotypes. *Clin Pharmacol Ther* 2007;82:41-47.
+
+Melhem MR, Rubino CM, Farr SJ, et al. Population pharmacokinetics of an extended-release hydrocodone formulation. *Clin Pharmacokinet* 2013;52:907-917.
+
+Kapil RP, Friedman K, Cipriano A, et al. Effects of paroxetine on the pharmacokinetics of hydrocodone and its metabolites. *Clin Ther* 2015;37:2286-2296.
+
+Otton SV, Schadel M, Cheung SW, Kaplan HL, Busto UE, Sellers EM. CYP2D6 phenotype determines the metabolic conversion of hydrocodone to hydromorphone. *Clin Pharmacol Ther* 1993;54:463-472.
+
+Adams MP, Ahdieh H. Pharmacokinetics and dose-proportionality of oxymorphone extended release and its metabolites. *Drugs R D* 2005;6:91-99.
+
+Persson K, Hammarlund-Udenaes M, Mortimer O, Rane A. The postoperative pharmacokinetics of codeine. *Eur J Clin Pharmacol* 1992;42:663-666.
+
 ## Body size and maturation
 
 James WPT. *Research on Obesity: A Report of the DHSS/MRC Group.* London: HMSO, 1976.

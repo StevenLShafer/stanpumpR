@@ -59,6 +59,7 @@ helpScenarioDefaultOptions <- function() {
 #' @noRd
 helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
+                         cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
@@ -74,7 +75,8 @@ helpScenario <- function(id, title, group, summary,
   }
   list(
     id = id, title = title, group = group, summary = summary,
-    patient = list(age = age, weight = weight, height = height, sex = sex),
+    patient = list(age = age, weight = weight, height = height, sex = sex,
+                   cyp2d6 = cyp2d6, adjustToFFM = adjustToFFM),
     doses = doses, events = events, options = options
   )
 }
@@ -207,12 +209,44 @@ helpScenarios <- function() {
       "oral-oxycodone",
       "Oral oxycodone: absorption sets the pace",
       "Opioids",
-      "Two oral doses six hours apart, with the rise governed by absorption rather than distribution.",
+      "Two oral doses six hours apart, with the rise governed by absorption rather than distribution, and the oxymorphone formed from them.",
       doses = helpDoses(
         c("oxycodone", 0, 10, "mg PO"),
         c("oxycodone", 360, 10, "mg PO")
       ),
       maximum = 720, plasmaLinetype = "dashed"
+    ),
+    helpScenario(
+      "codeine-cyp2d6",
+      "Codeine: a prodrug, and the CYP2D6 phenotype",
+      "Opioids",
+      "Sixty milligrams of oral codeine produces a morphine curve; change the CYP 2D6 field and watch it change.",
+      doses = helpDoses(
+        c("codeine", 0, 60, "mg PO")
+      ),
+      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
+      "tramadol-oral",
+      "Tramadol and its metabolite desmetramadol",
+      "Opioids",
+      "An oral dose of tramadol, with the opioid effect carried by the desmetramadol formed from it.",
+      doses = helpDoses(
+        c("tramadol", 0, 100, "mg PO")
+      ),
+      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
+      "tci-propofol",
+      "Target-controlled infusion of propofol",
+      "Intravenous basics",
+      "An effect-site target of 3 mcg/mL, stepped down to 2 and then off: the pump finds the doses, and the rate panel shows them.",
+      doses = helpDoses(
+        c("propofol", 0, 3, "Effect site target"),
+        c("propofol", 30, 2, "Effect site target"),
+        c("propofol", 60, 0, "Effect site target")
+      ),
+      maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE
     ),
 
     # --- Interactions --------------------------------------------------------
@@ -365,6 +399,18 @@ helpScenarios <- function() {
       maximum = 60, plasmaLinetype = "dashed"
     ),
     helpScenario(
+      "obesity-fat-free-mass",
+      "Obesity: dosing by weight against fat-free mass",
+      "Special populations",
+      "Per-kilogram boluses of fentanyl and sufentanil in a 120 kg man, with the models scaled to his fat-free mass; untick the box to see total-weight scaling.",
+      age = 50, weight = 120, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("fentanyl", 0, 2, "mcg/kg"),
+        c("sufentanil", 0, 0.2, "mcg/kg")
+      ),
+      maximum = 240, plasmaLinetype = "dashed"
+    ),
+    helpScenario(
       "mac-and-age",
       "MAC and age",
       "Inhaled anesthetics",
@@ -409,6 +455,8 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!is_valid_number(p$weight, MIN_WEIGHT, MAX_WEIGHT)) say("weight out of range: ", p$weight)
   if (!is_valid_number(p$height, MIN_HEIGHT, MAX_HEIGHT)) say("height out of range: ", p$height)
   if (!p$sex %in% SEX_VALUES) say("invalid sex: ", p$sex)
+  if (!p$cyp2d6 %in% CYP2D6_VALUES) say("invalid cyp2d6: ", p$cyp2d6)
+  if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
 
   o <- s$options
   if (!o$maximum %in% maxtimes$times) say("maximum is not one of the Max time choices: ", o$maximum)
@@ -513,6 +561,8 @@ applyHelpScenario <- function(session, s, doseTable, eventTable) {
   updateNumericInput(session, "height", value = p$height)
   updateRadioButtons(session, "heightUnit", selected = as.character(UNIT_CM))
   shinyWidgets::updateRadioGroupButtons(session, "sex", selected = p$sex)
+  updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
+  updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
 
   updateSelectInput(session, "maximum", selected = as.character(o$maximum))
   updateSelectInput(session, "typical", selected = o$typical)
@@ -555,6 +605,8 @@ helpScenarioPageHTML <- function(id) {
     Weight = sprintf("%s kg", helpFormatNumber(p$weight)),
     Height = sprintf("%s cm", helpFormatNumber(p$height)),
     Sex = p$sex,
+    `CYP 2D6` = tools::toTitleCase(p$cyp2d6),
+    `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     check.names = FALSE, stringsAsFactors = FALSE
   )
   dosesShown <- s$doses

@@ -8,7 +8,7 @@ Although the disposition is intravenous, the dose table offers oxycodone only as
 
 ### Covariates
 
-None.
+None in the published model. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the fixed parameters are scaled to the patient's fat-free mass; unticking the box uses them as published, unscaled.
 
 ### Effect site
 
@@ -20,4 +20,4 @@ MEAC is 12 ng/mL, described in the code as a compromise between the lower values
 
 ### Active metabolite
 
-Oxymorphone, formed by CYP2D6, is a potent active metabolite. The active-metabolite work in development links oxycodone to it; see [In development](help:in-development).
+Oxycodone forms **oxymorphone**, a potent metabolite, by CYP2D6, so a dose of oxycodone adds an [oxymorphone](help:drugs/oxymorphone) row. Formation is calibrated against the roughly 2 per cent plasma ratio Agema and colleagues observed, and the **CYP 2D6** field scales it. At present oxymorphone's own effect-site potency is provisional, so the metabolite's contribution to the opioid total is small; see [Active metabolites](help:models/metabolites).

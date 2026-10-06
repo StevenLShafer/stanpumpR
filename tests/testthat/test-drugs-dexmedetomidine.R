@@ -1,9 +1,10 @@
-test_that("returns the correct calculations for age less than or equal to 1", {
+test_that("returns the published parameters with total-body-weight scaling for age <= 1", {
   weight <- 70
   height <- 171
   age <- 1
   sex <- "male"
-  actual <- dexmedetomidine(weight, height, age, sex)
+  # The switch off reproduces the pre-fat-free-mass output exactly.
+  actual <- dexmedetomidine(weight, height, age, sex, adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(
@@ -91,12 +92,13 @@ test_that("returns the correct calculations for age less than or equal to 1", {
   expect_equal_rounded(actual, expected)
 })
 
-test_that("returns the correct calculations for age greater than 1", {
+test_that("returns the published parameters with total-body-weight scaling for age > 1", {
   weight <- 70
   height <- 171
   age <- 2
   sex <- "male"
-  actual <- dexmedetomidine(weight, height, age, sex)
+  # The switch off reproduces the pre-fat-free-mass output exactly.
+  actual <- dexmedetomidine(weight, height, age, sex, adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(
@@ -118,4 +120,34 @@ test_that("returns the correct calculations for age greater than 1", {
   )
 
   expect_equal_rounded(actual, expected)
+})
+
+test_that("the adult (Dyck) model scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
+  # (worked out from the Al-Sallami formula by hand).
+  actual <- dexmedetomidine(120, 170, 50, "male")
+  expected <- list(
+    v1 = 10.51415,
+    v2 = 16.64204,
+    v3 = 231.8747,
+    cl1 = 0.5430234,
+    cl2 = 2.538044,
+    cl3 = 2.429833
+  )
+  expect_equal_rounded(actual$PK$default[names(expected)], expected)
+})
+
+test_that("the infant (Zuppa) model scales to fat-free mass across its bypass events", {
+  # 10 kg, 75 cm, 1 y male: FFM 7.754 kg (maturation 0.88), so volumes
+  # x 0.14234683 and clearances x 0.23174525, against Zuppa's 10/70 = 0.142857
+  # and 0.232368.  Pins worked out by hand from the published parameters.
+  actual <- dexmedetomidine(10, 75, 1, "male")
+  expect_equal_rounded(actual$PK$default$v1,  18.78978)   # 132 L x Fv
+  expect_equal_rounded(actual$PK$default$cl1, 0.2873641)  # 1.240 L/min x Fcl
+  expect_equal_rounded(actual$PK$CPB33$v1,    19.65831)   # 115 L x Fv x (33/37)^-1.6
+  expect_equal_rounded(actual$PK$CPB33$cl2,   0.6906008)  # 2.980 L/min x Fcl
+  expect_equal_rounded(actual$PK$CPBEnd$cl1,  0.1436805)  # 0.623 x Fcl x 365/(1.77+365)
+  # the placeholders for the missing third compartment are untouched
+  expect_equal(actual$PK$CPBStart$v3, 1)
+  expect_equal(actual$PK$CPBStart$cl3, 0)
 })

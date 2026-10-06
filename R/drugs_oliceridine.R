@@ -1,14 +1,21 @@
-oliceridine <- function(weight, height, age, sex)
+oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Hours
   # Volume: Liters
 
-  v1 <- 28
-  v2 <- 29.1
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: no size scaling, the parameters were used as published.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+
+  v1 <- 28   * size$volume
+  v2 <- 29.1 * size$volume
   v3 <- 1 #NA
-  cl1 <- 31.7 / 60
-  cl2 <- 37.5 / 60
+  cl1 <- 31.7 / 60 * size$clearance
+  cl2 <- 37.5 / 60 * size$clearance
   cl3 <- 0 #NA
 
 # these are returned but not used except tPeak

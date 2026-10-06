@@ -53,9 +53,13 @@ The Kim remifentanil model for obesity uses the Janmahasatian fat-free mass inst
 
 Eleveld's propofol model gives women a higher clearance than men (2.10 against 1.79 L/min at reference size); Eleveld's remifentanil model increases clearance and V2 in women between puberty and the menopause; remimazolam's clearance and V3 are larger in women. Elsewhere sex enters only through lean or fat-free mass.
 
-## The disabled covariates
+## CYP2D6, and the disabled covariates
 
-Pregnancy, CYP2D6 phenotype and renal function are in the interface but no model in the library uses them. Models of codeine, tramadol, hydrocodone and oxymorphone that depend on CYP2D6 phenotype are in development; see [In development](help:in-development).
+**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites). Pregnancy and renal function remain in the interface but unused by any model.
+
+## Fat-free mass as the default scaling
+
+Most of the models above describe a 70 kg adult and scaled, if at all, with total body weight. By default stanpumpR now rescales them to the patient's fat-free mass instead, because clearance tracks lean tissue rather than fat. The switch, and the list of which models it affects, is on its own page: [Scaling to fat-free mass](help:models/fat-free-mass).
 
 ## References
 

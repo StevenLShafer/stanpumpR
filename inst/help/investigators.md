@@ -48,17 +48,21 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | oxycodone | **Marko Lamminsalo** and colleagues (2019); **Jaap W. Mandema**; **Anne E. Olesen**; Kokki | Intravenous kinetics; the absorption and MEAC chosen to match their observations |
 | oliceridine | **Albert Dahan** and colleagues (2020) | Two-compartment kinetics and the respiratory end point used for MEAC |
 | remimazolam | Eleveld and colleagues (2025) | Kinetics with size, age and sex covariates |
+| codeine | **Kristin Persson**, **David R. Guay** and colleagues; **Muhammad W. Ashraf** and colleagues (2024) | One-compartment disposition; CYP2D6-dependent formation of morphine |
+| tramadol, desmetramadol | **Sophie Holford** and colleagues (2014); **Ulrike M. Stamer** and colleagues (2007) | Joint parent-and-metabolite kinetics; CYP2D6 phenotype weights |
+| hydrocodone | **Murad R. Melhem** and colleagues (2013); **Ram P. Kapil** and colleagues (2015); **S. Victoria Otton** and colleagues (1993) | Apparent oral disposition; CYP2D6-dependent formation of hydromorphone |
+| oxymorphone | Endo (manufacturer summary); **Michael P. Adams** and **Harry Ahdieh** (2005) | One-compartment disposition; also oxycodone's metabolite |
 
 ## Pharmacodynamics and methods
 
 - **Lewis B. Sheiner**, Stanski and colleagues (1979): the effect compartment.
 - Shafer and Varvel (1991), Minto and colleagues (2003): time to peak effect as the model-independent way to carry ke0.
-- **Keith M. Gregg** and Shafer (1992): the effect-site targeting algorithm, implemented in STANPUMP and in the target-controlled infusion now in development.
+- **Keith M. Gregg** and Shafer (1992): the effect-site targeting algorithm, implemented in STANPUMP and in stanpumpR's [target-controlled infusion](help:tci).
 - **James M. Bailey** and Shafer (1991): the plasma targeting algorithm.
 - **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time.
 - **Thomas W. Bouillon** and colleagues (2004): the propofol-remifentanil response surface.
 - **Kay L. Austin**, **John V. Stapleton**, **Laurence E. Mather** (1980) and **Geoffrey K. Gourlay** and colleagues (1988): the minimum effective analgesic concentration.
-- **W. P. T. James** (1976): lean body mass. **Hesham S. Al-Sallami**, **Nick Holford**, **Stephen Duffull** and colleagues (2015): fat-free mass. **Brian J. Anderson** and Holford (2008): allometry and maturation.
+- **W. P. T. James** (1976): lean body mass. **Hesham S. Al-Sallami**, **Nick Holford**, **Stephen Duffull** and colleagues (2015) and **Sarayut Janmahasatian** and colleagues (2005): fat-free mass, used to [scale most of the models](help:models/fat-free-mass). **Brian J. Anderson** and Holford (2008): allometry and maturation.
 - **Brunner**, **Katoh**, **Lang**, **Westmoreland**, **Sebel** and their colleagues (1992 to 1999): the opioid reduction of MAC that the approximate interaction model is fitted to.
 
 ## The inhaled anesthetics

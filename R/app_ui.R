@@ -92,6 +92,25 @@ app_ui <- function() {
                     selected = defaultWeightUnit
                   ),
 
+                # Most models scale to the patient's fat-free mass rather than to
+                # total body weight; see docs/weight-adjustment.md.
+                bslib::tooltip(
+                  checkboxInput(
+                    inputId = "adjustToFFM",
+                    label = "Adjust weight to fat-free mass",
+                    value = TRUE
+                  ),
+                  paste(
+                    "The pharmacokinetic weight is scaled to the patient's fat-free",
+                    "mass, calculated from weight, height, age and sex",
+                    "(Al-Sallami et al., Clin Pharmacokinet 2015), relative to a",
+                    "70 kg, 170 cm man. Doses entered per kg still use total body",
+                    "weight. Propofol and remifentanil already include fat-free",
+                    "mass in their models and are not affected."
+                  ),
+                  placement = "right"
+                ),
+
                 numericInput(
                   inputId = "height",
                   label = "Height",
@@ -129,13 +148,18 @@ app_ui <- function() {
                     shinyjs::disabled()
                 ),
 
+                # Four categories, not three, and named the way the
+                # genotyping laboratories report them.  Codeine is the first
+                # drug whose kinetics read this, so it is no longer disabled.
                 selectInput(
                   inputId = "cyp2d6",
                   label = "CYP 2D6",
-                  c("Rapid" = "rapid", "Typical" = "typical", "Slow" = "slow"),
-                  selected = "typical"
-                ) |>
-                  shinyjs::disabled(),
+                  c("Ultrarapid"   = CYP2D6_ULTRARAPID,
+                    "Normal"       = CYP2D6_NORMAL,
+                    "Intermediate" = CYP2D6_INTERMEDIATE,
+                    "Poor"         = CYP2D6_POOR),
+                  selected = CYP2D6_DEFAULT
+                ),
 
                 selectInput(
                   inputId = "renal",
