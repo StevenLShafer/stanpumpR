@@ -53,9 +53,24 @@ getDrugPK <- function(
   # depend on one can add it to its signature without every other drug model
   # having to change, and so that a model taking only ... is not handed an
   # argument it cannot forward.
+  #
+  # Both lookups below must search the SAME place, and get() is used rather
+  # than match.fun() for exactly that reason.  exists() and get() default to
+  # the calling frame, whose enclosure is this package's namespace, so they
+  # find the drug functions whether the package is loaded or installed.
+  # match.fun() does not: it searches parent.frame(2), the environment of
+  # getDrugPK's own CALLER.  Under devtools::load_all() the drug functions
+  # happen to be visible there and it resolved; in an installed package they
+  # are internal and the caller is the user's workspace, so it failed with
+  # "object 'remifentanil' of mode 'function' was not found".
+  #
+  # That combination passed all 1504 tests and broke R CMD check on four
+  # platforms, because nothing in the suite runs against an installed
+  # package.  Two lookups of the same name, one line apart, resolving in
+  # different environments.
   covariates <- list(weight = weight, height = height, age = age, sex = sex)
   if (exists(drug, mode = "function") &&
-      "cyp2d6" %in% names(formals(match.fun(drug))))
+      "cyp2d6" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2d6 <- cyp2d6
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
