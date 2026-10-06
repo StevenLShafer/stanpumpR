@@ -130,6 +130,10 @@ app_server <- function(input, output, session) {
 
   eventTable <- reactiveVal(eventTableInit)
 
+  # The Help tab: see R/help-server.R.  Loading a teaching scenario from the
+  # help writes doseTable() and eventTable() directly, as a URL restore does.
+  helpServer(input, output, session, doseTable, eventTable, drugDefaults)
+
   outputComments("Setup Complete")
 
   # Get reference time from client
@@ -759,7 +763,12 @@ app_server <- function(input, output, session) {
       return(span("No drugs in the current simulation.", class = "text-muted"))
     }
     items <- lapply(names(simulatedDrugs), function(drug) {
-      citationItemHTML(drug, simulatedDrugs[[drug]]$reference, simulatedDrugs[[drug]]$Color)
+      tagList(
+        citationItemHTML(drug, simulatedDrugs[[drug]]$reference, simulatedDrugs[[drug]]$Color),
+        # Opens the drug's page in the Help tab (handled in app.js)
+        tags$a(href = "#", class = "small ms-1", `data-help-page` = paste0("drugs/", drug),
+               "About this model")
+      )
     })
     tags$ul(class = "mb-0", lapply(items, tags$li))
   })

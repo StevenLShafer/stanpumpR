@@ -83,7 +83,7 @@ test_that("returns the published parameters with total-body-weight scaling for a
     ),
     tPeak = 2,
     MEAC = 0,
-    typical = 10,
+    typical = 0.6,
     upperTypical = 0.4,
     lowerTypical = 0.8,
     reference = "Zuppa BJA 2019"
@@ -113,7 +113,7 @@ test_that("returns the published parameters with total-body-weight scaling for a
     ),
     tPeak = 10,
     MEAC = 0,
-    typical = 10,
+    typical = 0.6,
     upperTypical = 0.4,
     lowerTypical = 0.8,
     reference = "Dyck JB et al., Anesthesiology 1993;78(5):821-828. https://pubmed.ncbi.nlm.nih.gov/8098191/"

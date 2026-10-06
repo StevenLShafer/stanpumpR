@@ -9,7 +9,7 @@ pethidine,mcg,mg,mg/hr,mg,"mg,mg/hr",#5155FF,0.2,0.5,0.3,0.25,0.25,IV
 hydromorphone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg IM,mg IN,Plasma target,Effect site target",#032FED,1.2,3,1.8,1.5,1.5,IV
 methadone,mcg,mg,mg/hr,mg,"mg,mg/hr",#71C5E8,0.048,0.12,0.072,0.06,0.06,IV
 ketamine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,Plasma target,Effect site target",#FFCC00,0.1,0.16,0.12,0,0.1,IV
-dexmedetomidine,ng,mcg,mcg/kg/hr,mcg/kg/hr,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#791AEE,0.4,0.8,10,0,0.4,IV
+dexmedetomidine,ng,mcg,mcg/kg/hr,mcg/kg/hr,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#791AEE,0.4,0.8,0.6,0,0.4,IV
 midazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.04,0.12,0.1,0,0.04,IV
 etomidate,mcg,mg,mg/kg/min,mg,"mg,mg/kg/min,Plasma target,Effect site target",#FFCC00,0.4,0.8,0.5,0,0.4,IV
 lidocaine,mcg,mg,mg/hr,mg,"mg,mg/hr,Plasma target,Effect site target",#B7AE7F,0.5,1.5,1,0,0.5,IV
@@ -18,7 +18,7 @@ naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/kg,mg,mg/kg,mcg/min,mcg/kg/min,mg/min,mg/kg
 oxytocin,ng,mcg,mcg/min,mcg,"mcg,mg,mg/kg,mcg/min",#008F7D,0.05,0.2,0.1,0,0.05,IV
 oxycodone,ng,,,mg PO,mg PO,#032FED,10,20,14,12,10,IV
 oliceridine,ng,mg,mcg/kg/min,mg,"mg,mcg/kg/min",#FF00CC,18.296,37.504,27.4,27.9,27.4,IV
-remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.3,0.6,0.2,0,0.2,IV
+remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.3,0.6,0.45,0,0.2,IV
 codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO",#4A6FE3,50,150,100,0,0,IV
 hydrocodone,ng,,,mg PO,mg PO,#2C5FB8,10,30,20,8,8,IV
 oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO",#B5468C,1,4,2,0.8,0.8,IV

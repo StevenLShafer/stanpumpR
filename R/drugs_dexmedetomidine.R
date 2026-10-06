@@ -14,7 +14,7 @@ dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     k31 <- 0.0112
 
     tPeak <- 10 # Just a guess
-    typical <- 10 #Clin Pharmacol Ther. 1995 Jul;58(1):35-43.
+    typical <- 0.6 # midpoint of the 0.4-0.8 ng/mL sedation range (the app reads drugDefaults_global.csv)
     upperTypical <- 0.4
     lowerTypical <- 0.8
     MEAC <- 0
@@ -182,7 +182,7 @@ dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     events <- c(PK_EVENT_DEFAULT, "CPBStart","CPB36", "CPB35", "CPB34", "CPB33", "CPB32", "CPB31", "CPBEnd")
 
     tPeak <- 2 # Just a guess
-    typical <- 10 #Clin Pharmacol Ther. 1995 Jul;58(1):35-43.
+    typical <- 0.6 # midpoint of the 0.4-0.8 ng/mL sedation range (the app reads drugDefaults_global.csv)
     upperTypical <- 0.4
     lowerTypical <- 0.8
     MEAC <- 0

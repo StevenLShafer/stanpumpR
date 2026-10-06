@@ -149,3 +149,239 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
 .navbar .dropdown-menu .action-icon {
   margin-right: 0.4rem;
 }
+
+/* ---- Help tab (R/help-ui.R, R/help-content.R) ---------------------------- */
+.help-main {
+  max-width: 980px;
+  padding: 0.5rem 1.5rem 3rem;
+}
+.help-title {
+  font-size: 1.9rem;
+  margin-bottom: 1rem;
+}
+.help-body h2 {
+  font-size: 1.35rem;
+  margin-top: 2rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e4e9ed;
+}
+.help-body h3 {
+  font-size: 1.1rem;
+  margin-top: 1.5rem;
+}
+.help-body p, .help-body li {
+  line-height: 1.55;
+}
+.help-body table.help-table {
+  font-size: 0.9rem;
+  margin: 0.75rem 0 1.25rem;
+}
+.help-body table.help-table caption {
+  caption-side: top;
+  font-weight: 600;
+  color: #2c3e50;
+  padding: 0.25rem 0;
+}
+.help-body table:not(.help-table) {
+  font-size: 0.9rem;
+  margin: 0.75rem 0 1.25rem;
+  border-collapse: collapse;
+}
+.help-body table:not(.help-table) th,
+.help-body table:not(.help-table) td {
+  border: 1px solid #dee2e6;
+  padding: 0.3rem 0.5rem;
+  vertical-align: top;
+}
+.help-body table:not(.help-table) th {
+  background: #f4f6f8;
+}
+.help-body pre {
+  background: #f4f6f8;
+  border: 1px solid #e4e9ed;
+  border-radius: 4px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+}
+.help-body code {
+  font-size: 0.9em;
+}
+.help-body blockquote {
+  border-left: 3px solid #9aa8ae;
+  margin: 1rem 0;
+  padding: 0.25rem 1rem;
+  color: #4a5764;
+  background: #f8f9fa;
+}
+.help-body .lead {
+  font-size: 1.1rem;
+  color: #4a5764;
+}
+.help-callout {
+  border-left: 3px solid #2c3e50;
+  background: #f4f6f8;
+  padding: 0.6rem 0.9rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+}
+.help-callout-warn {
+  border-left-color: #e36c0a;
+  background: #fff7f0;
+}
+.help-swatch {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  margin-right: 0.4em;
+  vertical-align: -0.1em;
+}
+.help-citations li {
+  margin-bottom: 0.4rem;
+}
+.help-breadcrumb {
+  margin-bottom: 0.25rem;
+}
+/* A compact, full-width "on this page" strip, so wide tables below it are not
+   pushed down beside a floated box */
+.help-toc {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  background: #f8f9fa;
+  border: 1px solid #e4e9ed;
+  border-radius: 4px;
+}
+.help-toc-title {
+  display: inline;
+  font-weight: 600;
+  margin-right: 0.75rem;
+}
+.help-toc ul {
+  display: inline;
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+.help-toc li {
+  display: inline-block;
+  margin: 0.1rem 1rem 0.1rem 0;
+}
+.help-toc li::before {
+  content: "\00B7";
+  color: #9aa8ae;
+  margin-right: 0.6rem;
+}
+.help-scenario-btn {
+  margin-right: 0.5rem;
+}
+.help-scenario-hint {
+  display: inline-block;
+}
+.help-scenario-list {
+  list-style: none;
+  padding-left: 0;
+}
+.help-scenario-item {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #eef1f3;
+}
+.help-scenario-summary {
+  color: #4a5764;
+  margin: 0.15rem 0 0.4rem;
+}
+
+/* sidebar */
+.help-sidebar .help-nav-section {
+  margin-bottom: 0.4rem;
+}
+.help-sidebar .help-nav-section summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.3rem 0;
+  color: #2c3e50;
+  list-style-position: inside;
+}
+.help-sidebar .help-nav-count {
+  float: right;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #7b8a8b;
+  background: #eef1f3;
+  border-radius: 10px;
+  padding: 0 0.5em;
+  margin-top: 0.15rem;
+}
+.help-sidebar .help-nav-list {
+  list-style: none;
+  padding-left: 0.9rem;
+  margin: 0.2rem 0 0.4rem;
+  font-size: 0.9rem;
+}
+.help-sidebar .help-nav-list li {
+  padding: 0.15rem 0;
+}
+.help-sidebar .help-nav-list li.active > a {
+  font-weight: 600;
+  color: #2c3e50;
+}
+.help-sidebar .help-nav-list a {
+  text-decoration: none;
+}
+.help-sidebar .help-nav-list a:hover {
+  text-decoration: underline;
+}
+.help-search-results {
+  margin: 0.25rem 0 1rem;
+  padding: 0.5rem 0.6rem;
+  background: #f8f9fa;
+  border: 1px solid #e4e9ed;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+.help-search-results ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.25rem 0 0;
+}
+.help-search-results li {
+  padding: 0.3rem 0;
+  border-top: 1px solid #eef1f3;
+}
+.help-search-section {
+  display: block;
+  font-size: 0.75rem;
+  color: #7b8a8b;
+}
+.help-search-snippet {
+  color: #4a5764;
+}
+.help-search-snippet mark {
+  padding: 0 0.1em;
+  background: #fff3b0;
+}
+
+/* screenshots in the help */
+.help-body .help-figure {
+  margin: 1rem 0 1.5rem;
+}
+.help-body .help-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #dbe1e6;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.help-body .help-figure-medium {
+  max-width: 480px;
+}
+.help-body .help-figure-narrow {
+  max-width: 300px;
+}
+.help-body .help-figure figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #4a5764;
+}

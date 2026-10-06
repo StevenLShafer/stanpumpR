@@ -16,7 +16,7 @@ test_that("returns the correct calculations if BMI is > 30 and male", {
     PK = list(
       default = list(
         v1 = 4.568805,
-        v2 = 4.864832,
+        v2 = 6.820768,
         v3 = 3.3799,
         cl1 = 2.518915,
         cl2 = 1.576,
@@ -28,7 +28,7 @@ test_that("returns the correct calculations if BMI is > 30 and male", {
     typical = 1.2,
     upperTypical = 0.8,
     lowerTypical = 2,
-    reference = "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+    reference = "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
   )
   expect_equal_rounded(actual, expected)
 })
@@ -59,7 +59,7 @@ test_that("returns the correct calculations if BMI is <= 30 and male", {
     typical = 1.2,
     upperTypical = 0.8,
     lowerTypical = 2,
-    reference = "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+    reference = "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
   )
   expect_equal_rounded(actual, expected)
 })
@@ -79,7 +79,7 @@ test_that("returns the correct calculations if BMI is > 30 and female", {
     PK = list(
       default = list(
         v1 = 4.568805,
-        v2 = 4.29787,
+        v2 = 5.9494,
         v3 = 3.3799,
         cl1 = 2.518915,
         cl2 = 1.576,
@@ -91,7 +91,7 @@ test_that("returns the correct calculations if BMI is > 30 and female", {
     typical = 1.2,
     upperTypical = 0.8,
     lowerTypical = 2,
-    reference = "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+    reference = "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
   )
   expect_equal_rounded(actual, expected)
 })
@@ -123,7 +123,7 @@ test_that("returns the correct calculations if BMI is <= 30 and female", {
     typical = 1.2,
     upperTypical = 0.8,
     lowerTypical = 2,
-    reference = "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+    reference = "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
   )
   expect_equal_rounded(actual, expected)
 })

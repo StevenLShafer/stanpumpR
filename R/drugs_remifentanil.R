@@ -98,15 +98,26 @@ remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
   cl2 =exp(THETA05) * M5
   cl3 =exp(THETA06) * M6
 
+  reference <- "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
+
   } else {
 
   # Kim Model
+  # Kim TK, Obara S, Egan TD, et al. Disposition of remifentanil in obesity: a
+  # new pharmacokinetic model incorporating the influence of body mass.
+  # Anesthesiology 2017;126:1019-1032.  Fat-free mass by Janmahasatian et al.
+  # (Clin Pharmacokinet 2005;44:1051-1065):
+  #   men:   FFM = 9270 * WT / (6680 + 216 * BMI)
+  #   women: FFM = 9270 * WT / (8780 + 244 * BMI)
+  # written here with numerator and denominator divided by 1000.  The
+  # denominator takes BMI; an earlier version of this file used weight there,
+  # which roughly halved FFM, and so V2, for an obese adult.
   BMI <-  weight / (height / 100)^2
   if (sex == SEX_MALE)
   {
-    FFM <- 9.27 * weight / (6.68  + 0.216 * weight)
+    FFM <- 9.27 * weight / (6.68 + 0.216 * BMI)
   } else {
-    FFM <- 9.27 * weight / (8.78 + 0.244 * weight)
+    FFM <- 9.27 * weight / (8.78 + 0.244 * BMI)
   }
 
   v1 <- 4.76 * (weight / 74.5)^0.658
@@ -115,6 +126,8 @@ remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
   cl1 <- 2.77 * (weight / 74.5)^0.336 - 0.0149 * (age - 37)
   cl2 <- 1.94 - 0.028 * (age - 37)
   cl3 <- 0.197
+
+  reference <- "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
 
   }
 
@@ -138,7 +151,10 @@ default <- list(
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+  # The citation is set in the branch above, so that the References panel
+  # names the model actually computed: Eleveld 2017 below BMI 30, Kim 2017 at
+  # and above it.  Minto 1997 (Anesthesiology 86:10-23, PMID 9009935), the
+  # model STANPUMP used, remains in the comments at the top of this file.
 
   return(
     list(

@@ -70,7 +70,13 @@ bookmarksToExclude <- c(
   "dosetable_redo",
   "debug_area",
   "HandsontableCopyPaste",
-  "shinyalert"
+  "shinyalert",
+  # The Help tab (R/help-server.R): which tab and page are open is not part of
+  # a simulation
+  "mainNav",
+  "help_goto",
+  "help_search",
+  "help_scenario_load"
 )
 
 outputComments <- function(
