@@ -41,8 +41,8 @@
 #
 # ABSORPTION
 # ==========
-# ka is set so the plasma peak falls at 60 min, which is the immediate-release
-# behaviour this unit represents.  The source absorption model was a
+# ka is set so the plasma peak falls at 78 min, the 1.3 h that clinical
+# references give for a standard oral dose.  The source absorption model was a
 # multi-phase extended-release structure whose routing was not recoverable, so
 # it could not be transferred; a product-specific extended-release input is a
 # separate piece of work.
@@ -130,26 +130,38 @@
 # inst/extdata/drugDefaults_global.csv, which is what the plot and the opioid
 # total actually read.  test-drugs-hydrocodone.R checks that the two agree.
 
-# tPeak: PROVISIONAL, AND NEEDS A LITERATURE REFERENCE AND VALIDATION
-# -------------------------------------------------------------------
+# tPeak: PROVISIONAL, MEASURED AFTER AN ORAL DOSE, AND NEEDS A LITERATURE
+# REFERENCE AND VALIDATION
+# ------------------------------------------------------------------------
 # Set by Steven L. Shafer on 2026-10-06.  No citation is attached to it yet,
 # and none was found in the search behind this file.
 #
-# What it means and what would validate it: tPeak is the time to peak
-# EFFECT SITE concentration after an intravenous bolus, which getDrugPK()
-# back-solves into ke0.  Hydrocodone is never given intravenously, and this
-# package does not offer it that way, so the quantity cannot be read directly
-# off an observed oral time to peak effect; an oral peak is dominated by
-# absorption, which is already modelled separately.  Validating this needs
-# either an intravenous hydrocodone effect study or a joint fit of absorption
-# and effect delay to oral data.
+# THIS IS AN ORAL tPeak, which is why the drug declares tPeakRoute = ROUTE_PO
+# below.  getDrugPK() then solves ke0 by convolving the ORAL plasma curve with
+# the effect site's own response, rather than the intravenous bolus curve it
+# uses for every other drug.  Solving an oral tPeak against the bolus curve
+# counts the absorption delay twice: for hydrocodone it put the effect-site
+# peak at 84 min when 60 was intended.
+#
+# Why 90 and not the 30 to 60 min the clinical references give.  Those
+# references also put peak concentration at about 1.3 h, and the two cannot
+# both describe this system: the effect site always peaks later than the
+# plasma curve driving it, because dCe/dt = ke0 (Cp - Ce) is still positive
+# when Cp turns over.  A peak effect before the 78 min concentration peak is
+# unreachable at any ke0.  The 30 to 60 min figure is read here as onset to
+# useful analgesia, felt on the rising limb, rather than the effect-site
+# maximum, and 90 min is a modest lag past the concentration peak.
+#
+# What would validate it: a study reporting a measured effect against measured
+# concentrations after oral hydrocodone, so the equilibration delay can be
+# separated from absorption.  The clinical onset tables cannot do that.
 #
 # A further caution specific to hydrocodone: part of its effect is carried by
 # the hydromorphone it forms, which this package plots on its own row with its
-# own equilibration. An effect delay fitted to oral hydrocodone data without
+# own equilibration.  An effect delay fitted to oral hydrocodone data without
 # separating the metabolite would absorb some of hydromorphone's onset into
 # this number.
-HYDROCODONE_TPEAK <- 60  # minutes; provisional, see above
+HYDROCODONE_TPEAK <- 90  # minutes after an ORAL dose; provisional, see above
 
 # MEAC: PROVISIONAL, SET EQUAL TO MORPHINE'S, AND NEEDS LITERATURE VALIDATION
 # --------------------------------------------------------------------------
@@ -221,8 +233,10 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
   cl2 <- 0.910 / 60          # L/min, Q/F
   cl3 <- 0
 
-  # --- Absorption: peak at 60 min ---
-  ka_PO              <- 0.0637451777   # 1/min, = 3.825 /h
+  # --- Absorption: plasma peak at 1.3 h ---
+  # Clinical references put peak hydrocodone concentration at about 1.3 h
+  # after a standard oral dose; ka is set so this model reproduces that.
+  ka_PO              <- 0.0448919972   # 1/min, = 2.694 /h, plasma peak 78 min
   bioavailability_PO <- 1              # the apparent scale already carries F
   tlag_PO            <- 0
 
@@ -266,6 +280,9 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
     list(
       PK = PK,
       tPeak = HYDROCODONE_TPEAK,
+      # Measured after an oral dose, so ke0 is solved against the oral plasma
+      # curve rather than an intravenous bolus.  See the constant above.
+      tPeakRoute = ROUTE_PO,
       MEAC = HYDROCODONE_MEAC,
       typical = typical,
       upperTypical = upperTypical,
