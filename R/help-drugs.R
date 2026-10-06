@@ -225,10 +225,13 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   modelOut <- helpDrugModelOutput(drug, adult)
   metabolite <- if (is.null(pkRef$metaboliteName)) NULL else pkRef$metaboliteName
   parents <- helpParentDrugs(drug, drugDefaults)
-  # A drug with no effect site of its own: a prodrug such as codeine, whose
-  # effect appears on its metabolite's row
-  prodrug <- !is.null(pkRef) && isTRUE(pkRef$tPeak == 0) &&
+  # A drug with no effect site in the model (tPeak and ke0 both zero).  When it
+  # also names a metabolite it is a prodrug, such as codeine, whose effect
+  # appears on the metabolite's row; without one (an antibiotic, say) it is
+  # simply plotted as plasma only.
+  noEffectSite <- !is.null(pkRef) && isTRUE(pkRef$tPeak == 0) &&
     isTRUE(pkRef$PK[[PK_EVENT_DEFAULT]]$ke0 == 0)
+  prodrug <- noEffectSite && !is.null(metabolite)
 
   # --- At a glance -----------------------------------------------------------
   esc <- htmltools::htmlEscape
@@ -273,7 +276,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       esc(sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
       esc(sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
       esc(meacShown),
-      esc(if (prodrug) "None: a prodrug has no effect site to time" else
+      esc(if (noEffectSite) "None: no effect site in the model to time" else
             sprintf("%s %s", helpFormatNumber(row$endCe), concUnits)),
       paste0(as.character(helpColorSwatch(row$Color)), " ", esc(as.character(row$Color)))
     ),
@@ -365,6 +368,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
              "concentration is plotted, and the effect appears on the ",
              helpPageLink(paste0("drugs/", metabolite)), " row, which receives the metabolite formed from it. See ",
              helpPageLink("models/metabolites"), ".")
+    } else if (noEffectSite) {
+      "This model has <strong>no effect site</strong>: ke0 is zero and only the plasma concentration is plotted."
     } else if (any(params$ke0Supplied)) {
       paste0("ke0 is supplied by the model rather than solved from a tPeak, because this drug is never dosed ",
              "directly and its time to peak effect is observed after a dose of its parent; see ",
