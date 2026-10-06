@@ -80,7 +80,7 @@ getDrugPK <- function(
   # Likewise the fat-free-mass switch: every drug model in the library
   # declares it, but a mocked model taking only ... need not.
   if (exists(drug, mode = "function") &&
-      "adjustToFFM" %in% names(formals(match.fun(drug))))
+      "adjustToFFM" %in% names(formals(get(drug, mode = "function"))))
     covariates$adjustToFFM <- adjustToFFM
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
