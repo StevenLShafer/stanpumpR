@@ -173,6 +173,19 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IM <- grepl("IM", dose$Units)
     dose$IN <- grepl("IN", dose$Units)
 
+    # Target-controlled infusion.  A "Plasma target" or "Effect site target"
+    # row (Dose = the target concentration, which is already in the units Cp
+    # and Ce come out in) is replaced by the infusion rows the TCI controller
+    # would run; see tci.R.  The schedule is also returned, in display units,
+    # for the rate panel of the plot and for export.
+    tci <- NULL
+    if (any(isTciUnit(dose$Units)))
+    {
+      schedule <- tciSchedule(dose, PK, maximum)
+      dose <- schedule$dose
+      tci <- tciDisplay(schedule, PK)
+    }
+
     events <- events[,c(1,2)]
 
     pkSets <- PK$PK
@@ -249,6 +262,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   out$metaboliteName   <- PK$metaboliteName
   out$recoveryStates           <- recoveryStates
   out$metaboliteRecoveryStates <- metaboliteRecoveryStates
+
+  out$tci              <- tci
 
   return(out)
 }

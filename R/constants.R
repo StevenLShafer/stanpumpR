@@ -73,6 +73,15 @@ imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, inUnits, imUnits)
 
+# Target-controlled infusion (tci.R).  The "dose" of a target row is the target
+# concentration, in the drug's concentration units per ml.
+TCI_UNIT_PLASMA <- "Plasma target"
+TCI_UNIT_EFFECT <- "Effect site target"
+tciUnits <- c(TCI_UNIT_PLASMA, TCI_UNIT_EFFECT)
+TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP)
+TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
+TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
+
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
 # gases are flowmeter settings in L/min, potent agents are vaporizer settings in %.
 # Kept out of allUnits, which lists the mass-based units offered for IV/PO/IM/IN
