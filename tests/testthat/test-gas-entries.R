@@ -126,6 +126,12 @@ test_that("gas facets are labelled in % and MAC, not per millilitre", {
   expect_false(any(grepl("%/ml", wraps, fixed = TRUE)))
   expect_true(any(grepl("sevoflurane", wraps) & grepl("(%)", wraps, fixed = TRUE)))
   expect_true(any(grepl("age-adjusted", wraps, fixed = TRUE)))
+  # The panel is titled for what it plots, not for the series' internal name:
+  # the alveolar concentration as a multiple of MAC, which changes, not MAC.
+  expect_true(any(grepl("MAC equivalents", wraps, fixed = TRUE)))
+  expect_false(any(grepl("^MAC\n", wraps)))
+  # ...while the series keeps its name, so the lookups that key on it still work.
+  expect_true("MAC" %in% p$plotResults$Drug)
 })
 
 
