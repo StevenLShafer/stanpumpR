@@ -124,9 +124,10 @@ test_that("time-varying PK: the effect site is timed, not the plasma", {
 # A drug that arrives partly as another drug's active metabolite
 # ---------------------------------------------------------------------------
 #
-# Codeine's analgesia is morphine's, so the morphine row carries morphine the
-# patient was given and morphine formed from codeine.  Its time until threshold
-# has to be the time for the sum.  Recovery does not superpose, so it is solved
+# Three pairs: codeine forms morphine, hydrocodone forms hydromorphone, and
+# oxycodone forms oxymorphone.  Each receiving drug carries opioid the patient
+# was given and opioid formed from the parent, so its time until threshold has
+# to be the time for the sum.  Recovery does not superpose, so it is solved
 # again from the underlying effect-site states; these tests check that against
 # the definition, the same way the ones above do for a single drug.
 #
@@ -142,23 +143,23 @@ refSim <- function(DT, maximum, plotRecovery = TRUE)
 
 # A zero dose adds points to an engine's time line and changes nothing else,
 # which is how the brute-force run is given a grid fine enough to find the
-# crossing.  Without it the metabolite engine's geometric line is 80 minutes
-# wide out at the crossing, and that spacing, not the quantity under test, is
-# what the comparison would measure.
+# crossing.  Without it the metabolite engine's geometric line is over an hour
+# wide out where the crossing falls, and that spacing, not the quantity under
+# test, is what the comparison would measure.
 densify <- function(d, drugs, from, to, by = 2)
   rbind(d, do.call(rbind, lapply(drugs, function(g)
     data.frame(Drug = g, Time = seq(from, to, by = by), Dose = 0, Units = "mg"))))
 
 # Stop all delivery at t -- of the parent as well, though the parent already in
-# the body goes on forming metabolite -- and time the morphine row's combined
+# the body goes on forming metabolite -- and time the receiving row's combined
 # effect site.
-bruteMetabolite <- function(DT, t, endCe, horizon = 2000) {
+bruteMetabolite <- function(DT, target, t, endCe, horizon = 2000) {
   d <- DT[DT$Time <= t, , drop = FALSE]
   for (i in which(grepl("min|hr", d$Units)))
     d <- rbind(d, data.frame(Drug = d$Drug[i], Time = t, Dose = 0,
                              Units = d$Units[i]))
   d <- densify(d, unique(DT$Drug), t, t + horizon)
-  w <- refSim(d[order(d$Time), ], t + horizon, FALSE)$morphine$wide
+  w <- refSim(d[order(d$Time), ], t + horizon, FALSE)[[target]]$wide
   w <- w[w$Time >= t, ]
   above <- which(w$"Effect Site" > endCe)
   if (length(above) == 0) return(0)
@@ -168,57 +169,109 @@ bruteMetabolite <- function(DT, t, endCe, horizon = 2000) {
     (w$"Effect Site"[i + 1] - w$"Effect Site"[i]) - t
 }
 
-# Sampled on the merged series' own time line, so that `shown` is read where it
-# was computed rather than interpolated across a corner.
-expectFoldMatchesBrute <- function(DT, maximum, horizon = 2000, tolerance = 0.5,
-                                   n = 5) {
+# Sampled on the merged series' own time line, so that what is shown is read
+# where it was computed rather than interpolated across a corner.
+expectFoldMatchesBrute <- function(DT, target, maximum, horizon = 2000,
+                                   tolerance = 0.5, n = 5) {
   o <- refSim(DT, maximum)
-  w <- o$morphine$wide
-  endCe <- o$morphine$endCe
+  w <- o[[target]]$wide
+  endCe <- o[[target]]$endCe
   for (t in w$Time[round(seq(3, nrow(w) - 8, length.out = n))])
-    expect_lt(abs(w$Recovery[w$Time == t] - bruteMetabolite(DT, t, endCe, horizon)),
+    expect_lt(abs(w$Recovery[w$Time == t] -
+                    bruteMetabolite(DT, target, t, endCe, horizon)),
               tolerance,
-              label = paste("morphine at", round(t, 1),
+              label = paste(target, "at", round(t, 1),
                             "min: difference in minutes"))
 }
 
 
-test_that("formed metabolite alone: the morphine row matches stopping delivery", {
-  # A dose large enough that the formed morphine clears morphine's threshold.
-  # Before this fix the row reported no time at all, because its recovery was
-  # taken from doses of morphine that were never given.
-  DT <- data.frame(Drug = "codeine", Time = 0, Dose = 600, Units = "mg PO")
+test_that("formed metabolite alone: the row matches stopping delivery", {
+  # Before this fix the receiving row reported no time at all, because its
+  # recovery was taken from doses that were never given.
+  #
+  # Oxycodone is the case that matters clinically: 40 mg is an ordinary dose,
+  # and the oxymorphone formed from it clears oxymorphone's own threshold.
+  DT <- data.frame(Drug = "oxycodone", Time = 0, Dose = 40, Units = "mg PO")
   o <- refSim(DT, 1440)
-  expect_gt(max(o$morphine$wide$"Effect Site"), o$morphine$endCe)
-  expect_gt(max(o$morphine$wide$Recovery), 0)
+  expect_gt(max(o$oxymorphone$wide$"Effect Site"), o$oxymorphone$endCe)
+  expect_gt(max(o$oxymorphone$wide$Recovery), 0)
+  expectFoldMatchesBrute(DT, "oxymorphone", 1440)
 
-  expectFoldMatchesBrute(DT, 1440)
+  # Codeine needs a dose far above any clinical one, morphine's threshold being
+  # very low relative to what codeine forms; it is kept because it is the
+  # original worked example and the only pure prodrug among the three.
+  expectFoldMatchesBrute(
+    data.frame(Drug = "codeine", Time = 0, Dose = 600, Units = "mg PO"),
+    "morphine", 1440)
 })
 
 
-test_that("given and formed together: the morphine row times the sum", {
+test_that("given and formed together: the row times the sum", {
+  # Ordinary doses of both, which is where the understatement was worst: the
+  # row showed the time for the injected oxymorphone alone.
+  DT <- data.frame(Drug  = c("oxycodone", "oxymorphone"),
+                   Time  = c(0, 0),
+                   Dose  = c(20, 1),
+                   Units = c("mg PO", "mg"))
+  expectFoldMatchesBrute(DT, "oxymorphone", 1440)
+
+  o     <- refSim(DT, 1440)
+  alone <- refSim(DT[DT$Drug == "oxymorphone", ], 1440)
+  expect_gt(max(o$oxymorphone$wide$Recovery),
+            max(alone$oxymorphone$wide$Recovery) + 60)
+
   DT <- data.frame(Drug  = c("codeine", "morphine"),
                    Time  = c(0, 0),
                    Dose  = c(600, 10),
                    Units = c("mg PO", "mg"))
-  expectFoldMatchesBrute(DT, 1440)
-
-  # And it is longer than the injected morphine alone, which is the understated
-  # answer the row used to show.
-  o <- refSim(DT, 1440)
+  expectFoldMatchesBrute(DT, "morphine", 1440)
+  o     <- refSim(DT, 1440)
   alone <- refSim(DT[DT$Drug == "morphine", ], 1440)
   expect_gt(max(o$morphine$wide$Recovery), max(alone$morphine$wide$Recovery))
 })
 
 
+test_that("hydrocodone's hydromorphone, through the extravascular engine", {
+  # Hydromorphone given orally goes through advanceClosedFormPO_IM_IN, whose
+  # state set has seven terms, while the formed contribution has seven of its
+  # own over a different eigenvalue set.  This is the case that checks two
+  # differently shaped sets concatenate.
+  #
+  # Orally rather than intranasally, which carries a three-hour absorption lag.
+  # The engine reports no time at all until a lagged dose starts, having no
+  # effect-site state to report one from until then, while the brute-force run
+  # replays the lag and disagrees.  That is the single-drug engine's own
+  # behaviour with no metabolite anywhere in sight, so it is not this fold's to
+  # settle.
+  DT <- data.frame(Drug  = c("hydrocodone", "hydromorphone"),
+                   Time  = c(0, 0),
+                   Dose  = c(30, 2),
+                   Units = c("mg PO", "mg PO"))
+  expectFoldMatchesBrute(DT, "hydromorphone", 1440)
+
+  o     <- refSim(DT, 1440)
+  alone <- refSim(DT[DT$Drug == "hydromorphone", ], 1440)
+  expect_gt(max(o$hydromorphone$wide$Recovery),
+            max(alone$hydromorphone$wide$Recovery))
+})
+
+
 test_that("an infusion of the metabolite drug alongside the parent", {
   # The states carry an infusion as well as a bolus, so the merged row has to
-  # work while morphine is still running.
-  DT <- data.frame(Drug  = c("codeine", "morphine"),
-                   Time  = c(0, 0),
-                   Dose  = c(600, 2),
-                   Units = c("mg PO", "mg/hr"))
-  expectFoldMatchesBrute(DT, 720)
+  # work while the receiving drug is still running.
+  expectFoldMatchesBrute(
+    data.frame(Drug  = c("oxycodone", "oxymorphone"),
+               Time  = c(0, 0),
+               Dose  = c(20, 0.2),
+               Units = c("mg PO", "mg/hr")),
+    "oxymorphone", 720)
+
+  expectFoldMatchesBrute(
+    data.frame(Drug  = c("codeine", "morphine"),
+               Time  = c(0, 0),
+               Dose  = c(600, 2),
+               Units = c("mg PO", "mg/hr")),
+    "morphine", 720)
 })
 
 
@@ -226,11 +279,12 @@ test_that("doses at different times, through both engines", {
   # Codeine intravenously -- so the parent goes through the bolus branch of
   # advanceClosedFormMetabolite -- and morphine an hour later, which puts the
   # two time lines out of step and makes the merge interpolate.
-  DT <- data.frame(Drug  = c("codeine", "morphine"),
-                   Time  = c(0, 60),
-                   Dose  = c(300, 5),
-                   Units = c("mg", "mg"))
-  expectFoldMatchesBrute(DT, 1440)
+  expectFoldMatchesBrute(
+    data.frame(Drug  = c("codeine", "morphine"),
+               Time  = c(0, 60),
+               Dose  = c(300, 5),
+               Units = c("mg", "mg")),
+    "morphine", 1440)
 })
 
 

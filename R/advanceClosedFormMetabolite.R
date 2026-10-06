@@ -83,12 +83,18 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # Oral doses appear after their absorption lag.
   if (hasPO) dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
 
-  # Timeline: dose times, the instant before each bolus, and a geometric fill
-  # so the early curvature is drawn smoothly.  An oral dose starts from zero
-  # rather than jumping, so it needs no instant-before point of its own, but
-  # including every dose time costs nothing and keeps this aligned with
-  # advanceClosedFormPO_IM_IN.
-  timeLine <- sort(unique(c(0, dose$Time, dose$Time[dose$Bolus] - .01, maximum)))
+  # Timeline: dose times, the instant before each dose, and a geometric fill so
+  # the early curvature is drawn smoothly.
+  #
+  # The instant-before point is needed for ORAL doses as well as boluses, even
+  # though an oral dose does not make the concentration jump.  Recovery does
+  # jump at every dose, and without a grid point just before the next one, the
+  # plotted series interpolates straight across that jump and reports a time
+  # until threshold that is far too long.  advanceClosedFormPO_IM_IN() takes
+  # the same precaution for the same reason.
+  before <- dose$Bolus
+  if (hasPO) before <- before | dose$PO
+  timeLine <- sort(unique(c(0, dose$Time, dose$Time[before] - .01, maximum)))
   timeLine <- timeLine[timeLine >= 0]
 
   gapStart <- timeLine[1:length(timeLine) - 1]
@@ -195,8 +201,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     states
   }
 
-  CmStates <- advance(met$coefs)
-  Cm <- rowSums(CmStates)
+  Cm <- rowSums(advance(met$coefs))
 
   # The metabolite's effect site, as one state per eigenvalue rather than as a
   # single curve.  It used to come from calculateCe(), which interpolates the
@@ -206,21 +211,31 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # threshold once this contribution has been folded in.  See
   # R/recoveryStates.R and R/mergeMetabolite.R.
   #
-  # A metabolite with no effect site of its own -- there is none today -- has
-  # its concentration stand in for it, as it did before.
+  # The metabolite drug may itself have no effect site, either because it is
+  # another prodrug or because its potency has not been supplied yet.  Then NA,
+  # not the plasma concentration, for the same reason as the parent above: the
+  # plotted row shows plasma only rather than an effect-site line that is really
+  # a mislabelled copy of it, and the merge keeps the receiving drug's own
+  # convention instead of mixing NA with a number.  There are no effect-site
+  # states to carry either, so foldMetabolites() leaves that row's time until
+  # threshold alone rather than solving a problem that has no answer.
   hasCe <- !is.null(met$ke0) && met$ke0 > 0
-  metCoefs  <- if (hasCe) effectSiteCoefficients(met$coefs, met$ke0) else met$coefs
-  CemStates <- if (hasCe) advance(metCoefs) else CmStates
-  Cem <- rowSums(CemStates)
+  metCoefs  <- if (hasCe) effectSiteCoefficients(met$coefs, met$ke0) else NULL
+  CemStates <- if (hasCe) advance(metCoefs) else NULL
+  Cem <- if (hasCe) rowSums(CemStates) else rep(NA_real_, L)
 
   # Floating point can leave either sum a hair below zero at t = 0, where the
   # coefficients cancel exactly.  A negative concentration is meaningless.  The
   # states are left alone: recoveryCalc() reads them as a signed sum, and
   # clipping one would stop them adding up to the curve.
   Cm[Cm < 0] <- 0
-  Cem[Cem < 0] <- 0
+  if (hasCe) Cem[Cem < 0] <- 0
 
-  metaboliteStates <- recoveryStateSet(timeLine, CemStates, metCoefs$lambda)
+  metaboliteStates <- if (hasCe) {
+    recoveryStateSet(timeLine, CemStates, metCoefs$lambda)
+  } else {
+    NULL
+  }
 
   # ---- Recovery, parent only ----
   #

@@ -43,9 +43,13 @@
 #
 # Rewritten 2026-10-05 (Claude Code, Claude Opus 5) at the request of
 # Steven L. Shafer.  Until then the receiving drug kept the recovery computed
-# from its own doses alone, so a patient given codeine saw no time at all for
-# the morphine they actually had, and a patient given both saw the time for the
-# injected morphine only.  See R/recoveryStates.R for the states, and
+# from its own doses alone, so a patient given only the parent saw no time at
+# all for the opioid they actually had, and a patient given both saw the time
+# for the injected part only.  With three pairs in the library -- codeine to
+# morphine, hydrocodone to hydromorphone, oxycodone to oxymorphone -- that is
+# visible at ordinary doses: 40 mg of oxycodone forms oxymorphone past
+# oxymorphone's own threshold, and the row showed nothing.  See
+# R/recoveryStates.R for the states, and
 # tests/testthat/test-recovery-engines.R for the check against stopping
 # delivery in the simulation itself.
 #
@@ -202,8 +206,9 @@ foldedRecovery <- function(times, drugs, target, parents)
   sets <- list()
 
   # The receiving drug's own doses, when it was given directly.  A drug with no
-  # effect site of its own -- there is none today, but a prodrug that were also
-  # a metabolite would be one -- carries no states and contributes none.
+  # effect site of its own -- a prodrug that were also a metabolite, or one
+  # whose potency has not been supplied yet -- carries no states, and this
+  # returns NULL rather than reporting a time for part of the picture.
   if (!is.null(drugs[[target]]$wideOwn))
   {
     own <- drugs[[target]]$recoveryStatesOwn

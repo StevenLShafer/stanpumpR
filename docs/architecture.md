@@ -163,8 +163,9 @@ eigenvalue (`recoveryStates.R`), `foldMetabolites()` carries every contributing 
 merged time line, concatenates the amplitudes, and hands `recoveryCalc()` one combined sum of
 exponentials. That is exact, because the whole intravenous path is linear — which is why this
 needs no jointly simulated washout, unlike the inhaled gases, whose uptake is coupled through a
-shared alveolus (`gasCoupledRecovery()` in `gasRecovery.R`). Without it, a patient given
-codeine saw no time at all for the morphine they actually had.
+shared alveolus (`gasCoupledRecovery()` in `gasRecovery.R`). Without it a patient given only
+the parent saw no time at all for the opioid they actually had — 40 mg of oxycodone forms
+oxymorphone past oxymorphone's own threshold, and the row showed nothing.
 
 **Pharmacodynamics.** `modelInteraction()` computes a propofol × opioid response surface for the
 optional interaction facet (`modelInteraction.R`, `calculateCe.R`).

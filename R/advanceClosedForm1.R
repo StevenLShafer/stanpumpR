@@ -163,7 +163,14 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     message("pkLine:")
     print(pkLine)
   }
-  Ce <- calculateCe(Cp, ke0, dt, L)
+  # ke0 is a per-step vector here, because the PK set can change on an event.
+  # A drug with no tPeak carries zero throughout, and calculateCe() divides by
+  # it; see the same guard in advanceClosedForm0().
+  Ce <- if (any(ke0 > 0)) {
+    calculateCe(Cp, ke0, dt, L)
+  } else {
+    rep(NA_real_, L)
+  }
 
   temp <- data.frame(
     Time = round(timeLine, 2),

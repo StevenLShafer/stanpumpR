@@ -256,10 +256,16 @@ test_that("a dose given both ways sums on the morphine row", {
 })
 
 
-# "Time until threshold" on the morphine row.  Codeine is the only drug that
-# forms a metabolite, so it is the only drug for which the morphine a patient
-# has is partly morphine nobody gave them.  Recovery used to be taken from the
-# receiving drug's own doses, which for codeine alone meant no doses at all.
+# "Time until threshold" on the morphine row.  The morphine a patient given
+# codeine has is partly morphine nobody gave them, and recovery used to be
+# taken from the receiving drug's own doses -- which for codeine alone meant no
+# doses at all.
+#
+# Codeine is the pure prodrug of the three parent drugs, and the one whose
+# metabolite has by far the lowest threshold relative to what is formed, so the
+# doses here are deliberately extreme.  The clinically ordinary cases are
+# oxycodone's and hydrocodone's; those are in test-recovery-engines.R, along
+# with the check against stopping delivery in the simulation itself.
 #
 # (Claude Code, Claude Opus 5, 2026-10-05; run on R 4.6.1.)
 

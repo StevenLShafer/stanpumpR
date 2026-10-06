@@ -20,6 +20,8 @@ oxycodone,ng,,,mg PO,mg PO,#032FED,10,20,14,12,10,IV
 oliceridine,ng,mg,mcg/kg/min,mg,"mg,mcg/kg/min",#FF00CC,18.296,37.504,27.4,27.9,27.4,IV
 remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.3,0.6,0.2,0,0.2,IV
 codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO",#4A6FE3,50,150,100,0,0,IV
+hydrocodone,ng,,,mg PO,mg PO,#2C5FB8,10,30,20,8,8,IV
+oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO",#B5468C,1,4,2,0.8,0.8,IV
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas
 oxygen,%,L/min,L/min,L/min,"L/min",#2E7D32,0,0,0,0,0,gas
 nitrousOxide,%,L/min,L/min,L/min,"L/min",#1E88E5,0,0,0,0,10,gas

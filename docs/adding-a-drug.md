@@ -117,6 +117,19 @@ together with any of the metabolite drug that was given directly (`recoveryState
 in a drug model has to arrange that; `endCe` on the metabolite drug's defaults row is the
 threshold it is measured against.
 
+**A drug whose potency is not yet known** uses the same mechanism, but should say so. Put
+`tPeak` and `MEAC` in named constants at the top of the file with a comment explaining what
+is missing, and add a test asserting that the constant matches the CSV's `MEAC` column —
+the plot and the opioid total read the CSV, not the drug function, so changing one without
+the other fails silently. `R/drugs_hydrocodone.R` and `R/drugs_oxymorphone.R` are the
+worked examples.
+
+**Apparent parameters restrict the route.** A model fitted to oral data alone gives
+clearance and volume divided by an unmeasured bioavailability. Those predict oral
+concentrations correctly, because the unknown factor cancels, and intravenous ones wrong by
+`1/F`. Such a drug must offer oral units only and carry `bioavailability_PO = 1`, since the
+apparent scale already contains it. Hydrocodone is the example.
+
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 
 Add one row. Columns:

@@ -227,19 +227,29 @@ test_that("the intravenous engines all carry their states out", {
   expect_equal(ncol(X$recoveryStates$state), 4)
   expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
 
-  # advanceClosedFormPO_IM_IN
-  PK <- pkFor("oxycodone", weight = 70, height = 170, age = 50, sex = "male")
-  X <- simCpCe(data.frame(Drug = "oxycodone", Time = 0, Dose = 10, Units = "mg PO"),
+  # advanceClosedFormPO_IM_IN.  Hydromorphone, not oxycodone: oxycodone now
+  # forms oxymorphone and so takes the metabolite engine instead.
+  PK <- pkFor("hydromorphone", weight = 70, height = 170, age = 50, sex = "male")
+  X <- simCpCe(data.frame(Drug = "hydromorphone", Time = 0, Dose = 2,
+                          Units = "mg PO"),
                noEvents, PK, 480, TRUE)
   expect_equal(ncol(X$recoveryStates$state), 7)
   expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
 
-  # advanceClosedFormMetabolite, which carries two sets: the parent's own
-  # effect site and the metabolite's
+  # advanceClosedFormMetabolite, for a parent that has an effect site of its
+  # own: two sets come out, the parent's and the metabolite's.
+  PK <- pkFor("oxycodone", weight = 70, height = 170, age = 50, sex = "male")
+  X <- simCpCe(data.frame(Drug = "oxycodone", Time = 0, Dose = 20, Units = "mg PO"),
+               noEvents, PK, 720, TRUE)
+  expect_equal(ncol(X$recoveryStates$state), 5)      # 3 lambdas, ke0, ka_PO
+  expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
+  expect_equal(rowSums(X$metaboliteRecoveryStates$state), X$metaboliteSeries$Ce,
+               tolerance = 1e-15)
+
+  # And for a pure prodrug, which has no effect site of its own at all
   PK <- pkFor("codeine", weight = 70, height = 171, age = 50, sex = "male")
   X <- simCpCe(data.frame(Drug = "codeine", Time = 0, Dose = 60, Units = "mg PO"),
                noEvents, PK, 720, TRUE)
-  # Codeine is a pure prodrug, so it has no effect site of its own
   expect_null(X$recoveryStates)
   expect_false(is.null(X$metaboliteRecoveryStates))
   # The metabolite's states sum to the metabolite's effect site exactly
@@ -259,4 +269,26 @@ test_that("the intravenous engines all carry their states out", {
   # recovery was about
   expect_equal(rowSums(X$recoveryStates$state), X$wide$"Effect Site",
                tolerance = 1e-12)
+})
+
+
+test_that("a metabolite with no effect site carries no states", {
+  # Every receiving drug in the library has a live effect site today, so this
+  # branch is reached by hand: a metabolite drug whose potency has not been
+  # supplied yet, or which is itself a prodrug.  Its effect-site contribution is
+  # NA rather than a copy of its plasma concentration, and there is no state set
+  # to fold -- foldMetabolites() then leaves the receiving row's time until
+  # threshold alone instead of solving a problem that has no answer.
+  PK <- getDrugPK("codeine", 70, 171, 50, "male", getDrugDefaults("codeine"))
+  pkSet <- PK$PK$default
+  pkSet$metabolite$ke0 <- 0
+
+  dose <- data.frame(Drug = "codeine", Time = 0, Dose = 60, Units = "mg PO",
+                     Bolus = FALSE, PO = TRUE, IM = FALSE, IN = FALSE)
+  out <- advanceClosedFormMetabolite(dose, pkSet, 720, TRUE, 0.008)
+
+  expect_true(all(is.na(out$CeMetabolite)))
+  expect_true(all(out$CpMetabolite >= 0))
+  expect_gt(max(out$CpMetabolite), 0)
+  expect_null(attr(out, "metaboliteRecoveryStates"))
 })
