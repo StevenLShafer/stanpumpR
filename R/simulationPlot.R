@@ -156,23 +156,29 @@ simulationPlot <- function(
 
   # Step D4: finish plotTable apart from extensions below
 
+  # The panel title.  "MAC" is the series' internal name; what is plotted is
+  # the alveolar concentration as a multiple of the (age-adjusted) MAC, which
+  # changes through the case while MAC itself does not, so the panel says so.
+  panelName <- plotTable$Drug
+  panelName[panelName == "MAC"] <- "MAC equivalents"
+
   switch(
     normalization,
     "none" = {
       # Intravenous concentrations are per millilitre; the inhaled gases are a
-      # percentage of one atmosphere and MAC is dimensionless, so neither takes
-      # the "/ml" suffix.
+      # percentage of one atmosphere and MAC equivalents are dimensionless, so
+      # neither takes the "/ml" suffix.
       unitText <- paste0(plotTable$Concentration.Units, "/ml")
       gasRow <- isGasSeries(plotTable$Drug)
       unitText[gasRow] <- plotTable$Concentration.Units[gasRow]
-      plotTable$Wrap <- paste0(plotTable$Drug, "\n(", unitText, ")")
+      plotTable$Wrap <- paste0(panelName, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical
       plotTable$y    <- plotTable$typical
     },
     "Peak plasma" = {
       plotTable$Wrap <- paste0(
-                          plotTable$Drug,
+                          panelName,
                           "\n(% Peak Cp)")
       plotTable$ymin <- 0
       plotTable$ymax <- 0
@@ -180,7 +186,7 @@ simulationPlot <- function(
     },
     "Peak effect site" = {
       plotTable$Wrap <- paste0(
-                          plotTable$Drug,
+                          panelName,
                           "\n(% Peak Ce)")
       plotTable$ymin <- 0
       plotTable$ymax <- 0

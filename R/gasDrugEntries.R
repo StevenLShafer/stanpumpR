@@ -189,7 +189,8 @@ gasTypicalBand <- function(drug, props)
 #' @param alveolar,brain data frames of Time and Y
 #' @param xout equispaced output times
 #' @param drugDefaults drug defaults table
-#' @param unitLabel axis-label units for the facet, e.g. "\%" or "MAC"
+#' @param unitLabel axis-label units for the facet, e.g. "\%" for a gas or
+#'   "age-adjusted" for the MAC-equivalents series
 #' @param typical named vector of lower, typical, upper for the shaded band
 #' @param color optional colour override
 #' @param recovery optional "time until threshold" in minutes, one value per
