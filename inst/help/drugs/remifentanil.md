@@ -1,10 +1,10 @@
-### The model, and its citation
+### Two models, by body mass index
 
-The citation the model function returns, and the one shown in the References panel, is Minto and colleagues' 1997 model (*Anesthesiology* 1997;86:10-23), the model on which STANPUMP's remifentanil kinetics were based and which most commercial remifentanil TCI pumps implement.
+For a patient with **BMI below 30** the parameters are the **Eleveld allometric model** (Eleveld DJ, Proost JH, Vereecke H, Absalom AR, Olofsen E, Vuyk J, Struys MMRF. *Anesthesiology* 2017;126:1005-1018): reference volumes of 5.81, 8.82 and 5.03 L and clearances of 2.58, 1.72 and 0.124 L/min at 70 kg and 35 years, scaled by Al-Sallami fat-free mass, with age terms on every parameter, a maturation term on clearance and a sex term that raises clearance and V2 in women between puberty and the menopause. It was fitted to pooled data from several earlier studies, including Minto's.
 
-The parameters the code actually computes are not Minto's. For a patient with **BMI below 30** they are the **Eleveld allometric model** (Eleveld DJ, Proost JH, Vereecke H, Absalom AR, Olofsen E, Vuyk J, Struys MMRF. *Anesthesiology* 2017;126:1005-1018): reference volumes of 5.81, 8.82 and 5.03 L and clearances of 2.58, 1.72 and 0.124 L/min at 70 kg and 35 years, scaled by Al-Sallami fat-free mass, with age terms on every parameter, a maturation term on clearance and a sex term that raises clearance and V2 in women between puberty and the menopause. For a patient with **BMI of 30 or above** they are the **Kim model for obesity** (Kim TK, Obara S, Egan TD, et al. *Anesthesiology* 2017;126:1019-1032), with V1 and clearance scaled to weight, V2 to Janmahasatian fat-free mass, and age terms. Minto's own equations are present in the file as comments.
+For a patient with **BMI of 30 or above** they are the **Kim model for obesity** (Kim TK, Obara S, Egan TD, et al. *Anesthesiology* 2017;126:1019-1032), developed in lean and obese volunteers, with V1 and clearance scaled to weight, V2 to Janmahasatian fat-free mass, and age terms. The citation the model function returns, and the References panel shows, follows the branch in use for the patient entered.
 
-The citation and the computation should agree; until they do, this page records the difference so that a reader of the References panel is not misled.
+Minto and colleagues' 1997 model (*Anesthesiology* 1997;86:10-23), on which STANPUMP's remifentanil kinetics were based and which most commercial remifentanil TCI pumps implement, is kept in the drug file as comments but is not computed.
 
 ### Covariates
 

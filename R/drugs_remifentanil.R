@@ -95,6 +95,8 @@ remifentanil <- function(weight, height, age, sex)
   cl2 =exp(THETA05) * M5
   cl3 =exp(THETA06) * M6
 
+  reference <- "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
+
   } else {
 
   # Kim Model
@@ -122,6 +124,8 @@ remifentanil <- function(weight, height, age, sex)
   cl2 <- 1.94 - 0.028 * (age - 37)
   cl3 <- 0.197
 
+  reference <- "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
+
   }
 
 default <- list(
@@ -144,7 +148,10 @@ default <- list(
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
-  reference <- "Minto CF et al., Anesthesiology 1997;86:10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+  # The citation is set in the branch above, so that the References panel
+  # names the model actually computed: Eleveld 2017 below BMI 30, Kim 2017 at
+  # and above it.  Minto 1997 (Anesthesiology 86:10-23, PMID 9009935), the
+  # model STANPUMP used, remains in the comments at the top of this file.
 
   return(
     list(

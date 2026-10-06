@@ -60,11 +60,9 @@ Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensit
 
 Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? *APSF Newsletter*, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>
 
-## Models not cited by the drug functions but used
+## Models present in the drug files but not the ones cited
 
-Eleveld DJ, Proost JH, Vereecke H, Absalom AR, Olofsen E, Vuyk J, Struys MMRF. An allometric model of remifentanil pharmacokinetics and pharmacodynamics. *Anesthesiology* 2017;126:1005-1018. *(The remifentanil parameters computed at BMI below 30.)*
-
-Kim TK, Obara S, Egan TD, Minto CF, La Colla L, Drover DR, Vuyk J, Mertens M. Disposition of remifentanil in obesity: a new pharmacokinetic model incorporating the influence of body mass. *Anesthesiology* 2017;126:1019-1032. *(The remifentanil parameters computed at BMI 30 and above.)*
+Minto CF, Schnider TW, Egan TD, Youngs E, Lemmens HJM, Gambus PL, Billard V, Hoke JF, Moore KHP, Hermann DJ, Muir KT, Mandema JW, Shafer SL. Influence of age and gender on the pharmacokinetics and pharmacodynamics of remifentanil. I. Model development. *Anesthesiology* 1997;86:10-23. *(In the remifentanil file as comments; the parameters computed are Eleveld's and Kim's.)*
 
 Shafer SL, Varvel JR, Aziz N, Scott JC. Pharmacokinetics of fentanyl administered by computer-controlled infusion pump. *Anesthesiology* 1990;73:1091-1102. *(The pooled fentanyl parameters.)*
 

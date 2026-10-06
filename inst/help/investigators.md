@@ -30,7 +30,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | Drug | Investigators | What is used |
 |---|---|---|
 | propofol | **Douglas J. Eleveld** and colleagues, Groningen | The 2018 general-purpose propofol model, with its fat-free-mass, maturation and ageing covariates. **Thomas W. Schnider**'s 1999 time to peak effect gives ke0; his 1998 kinetic model is in the file but superseded. |
-| remifentanil | **Charles F. Minto**, Schnider, Shafer and colleagues (1997); Eleveld and colleagues (2017); **Tae Kyun Kim**, **Talmage D. Egan** and colleagues (2017) | The citation shown is Minto's; the parameters computed are Eleveld's below BMI 30 and Kim's at and above it. See the drug's page. |
+| remifentanil | Eleveld and colleagues (2017); **Tae Kyun Kim**, **Talmage D. Egan** and colleagues (2017); **Charles F. Minto**, Schnider, Shafer and colleagues (1997) | Eleveld's allometric model below BMI 30 and Kim's obesity model at and above it. Minto's 1997 model, the basis of STANPUMP's and most pumps' remifentanil kinetics, is kept in the file but not computed. |
 | fentanyl, alfentanil | Scott and Stanski (1987); Shafer, **John R. Varvel** and colleagues (1990) | Alfentanil's parameters are Scott and Stanski's. Fentanyl's are the pooled analysis of Shafer and Varvel, scaled allometrically, with Scott and Stanski cited. |
 | sufentanil | **Elisabeth Gepts** and colleagues (1995) | Three-compartment kinetics in surgical patients |
 | morphine | **Jörn Lötsch** and colleagues (2002) | Three-compartment kinetics, weight-scaled V1 |
