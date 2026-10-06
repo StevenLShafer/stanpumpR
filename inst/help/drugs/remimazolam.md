@@ -16,7 +16,7 @@ The time to peak effect is 2.5 minutes.
 
 ### Typical concentrations
 
-The shaded band is 0.3 to 0.6 mcg/mL. The library's *Typical* value, which draws the *Mid* band, is 0.2 mcg/mL, below the lower end of the range; the two should be reconciled, and the *Range* band is the one to use meanwhile. The recovery threshold is 0.2 mcg/mL. See [the remimazolam sedation scenario](scenario:remimazolam-sedation).
+The shaded band is 0.3 to 0.6 mcg/mL, with the *Typical* value that draws the *Mid* band at its midpoint, 0.45 mcg/mL. The recovery threshold is 0.2 mcg/mL. See [the remimazolam sedation scenario](scenario:remimazolam-sedation).
 
 ### Where to be careful
 

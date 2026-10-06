@@ -98,12 +98,21 @@ remifentanil <- function(weight, height, age, sex)
   } else {
 
   # Kim Model
+  # Kim TK, Obara S, Egan TD, et al. Disposition of remifentanil in obesity: a
+  # new pharmacokinetic model incorporating the influence of body mass.
+  # Anesthesiology 2017;126:1019-1032.  Fat-free mass by Janmahasatian et al.
+  # (Clin Pharmacokinet 2005;44:1051-1065):
+  #   men:   FFM = 9270 * WT / (6680 + 216 * BMI)
+  #   women: FFM = 9270 * WT / (8780 + 244 * BMI)
+  # written here with numerator and denominator divided by 1000.  The
+  # denominator takes BMI; an earlier version of this file used weight there,
+  # which roughly halved FFM, and so V2, for an obese adult.
   BMI <-  weight / (height / 100)^2
   if (sex == SEX_MALE)
   {
-    FFM <- 9.27 * weight / (6.68  + 0.216 * weight)
+    FFM <- 9.27 * weight / (6.68 + 0.216 * BMI)
   } else {
-    FFM <- 9.27 * weight / (8.78 + 0.244 * weight)
+    FFM <- 9.27 * weight / (8.78 + 0.244 * BMI)
   }
 
   v1 <- 4.76 * (weight / 74.5)^0.658

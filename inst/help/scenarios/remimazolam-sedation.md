@@ -12,4 +12,4 @@ After the last bolus the effect site falls out of the band within about 15 minut
 
 ## Background
 
-[Remimazolam](help:drugs/remimazolam) is Eleveld's 2025 model with weight, age and sex covariates. The library's typical value (0.2 mcg/mL) sits below its band (0.3 to 0.6); the *Range* band is the one shown here.
+[Remimazolam](help:drugs/remimazolam) is Eleveld's 2025 model with weight, age and sex covariates.

@@ -16,7 +16,7 @@ test_that("returns the correct calculations if BMI is > 30 and male", {
     PK = list(
       default = list(
         v1 = 4.568805,
-        v2 = 4.864832,
+        v2 = 6.820768,
         v3 = 3.3799,
         cl1 = 2.518915,
         cl2 = 1.576,
@@ -79,7 +79,7 @@ test_that("returns the correct calculations if BMI is > 30 and female", {
     PK = list(
       default = list(
         v1 = 4.568805,
-        v2 = 4.29787,
+        v2 = 5.9494,
         v3 = 3.3799,
         cl1 = 2.518915,
         cl2 = 1.576,

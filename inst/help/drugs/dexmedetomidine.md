@@ -12,7 +12,7 @@ The adult time to peak effect is 10 minutes and the infant's 2 minutes; both are
 
 ### Typical concentrations
 
-The shaded band is 0.4 to 0.8 ng/mL, the range associated with sedation in the intensive care unit. The library's *Typical* value, which draws the *Mid* band, is recorded as 10 ng/mL, which lies far outside that range and appears to be a transcription error; the *Range* band is the one to use.
+The shaded band is 0.4 to 0.8 ng/mL, the range associated with sedation in the intensive care unit; the *Typical* value that draws the *Mid* band is its midpoint, 0.6 ng/mL.
 
 ### Where to be careful
 
