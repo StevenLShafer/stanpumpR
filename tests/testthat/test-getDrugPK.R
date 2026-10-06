@@ -80,6 +80,9 @@ test_that("it returns the same value", {
         e_coef_IN_ka = 0
       )
     ),
+    # Which curve tPeak was measured against; "IV" for every drug whose model
+    # predates oral-only drugs, which is to say all of them but hydrocodone.
+    tPeakRoute = ROUTE_IV,
     tPeak = 1.6,
     pkEvents = "default",
     reference = "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/",
