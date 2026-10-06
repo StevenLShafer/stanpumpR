@@ -13,6 +13,7 @@ getDrugPK(
   sex,
   drugDefaults = getDrugDefaults(drug),
   cyp2d6 = CYP2D6_DEFAULT,
+  osmolality = OSMOLALITY_DEFAULT,
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE
 )
@@ -32,6 +33,10 @@ getDrugPK(
 
 \item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 Passed only to drug models that declare it; the rest ignore it.}
+
+\item{osmolality}{baseline serum osmolality in mOsm/kg, before any osmotic
+agent.  Passed only to drug models that declare it (mannitol); the rest
+ignore it.}
 
 \item{resolveMetabolite}{should a drug that names an active metabolite have
 that metabolite's coefficients built?  Set FALSE when resolving the

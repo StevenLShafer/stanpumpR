@@ -26,7 +26,8 @@ showIntroModal <- function() {
   )
 }
 
-checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
+checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
+                                   osmolality = OSMOLALITY_DEFAULT) {
   msg <- ""
   success <- TRUE
   if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
@@ -39,6 +40,10 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL) {
   }
   if (!is_valid_number(height, MIN_HEIGHT, MAX_HEIGHT)) {
     msg <- glue::glue("Height must be between {MIN_HEIGHT} and {MAX_HEIGHT}")
+    success <- FALSE
+  }
+  if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
+    msg <- glue::glue("Serum osmolality must be between {MIN_OSMOLALITY} and {MAX_OSMOLALITY} mOsm/kg")
     success <- FALSE
   }
 

@@ -7,4 +7,9 @@ test_that("checkNumericCovariates correctly identifies out of bounds input", {
   expect_false(checkNumericCovariates(5, MAX_WEIGHT + 1, 170))
   expect_false(checkNumericCovariates(5, 70, MIN_HEIGHT - 1))
   expect_false(checkNumericCovariates(5, 70, MAX_HEIGHT + 1))
+  expect_true(checkNumericCovariates(21, 70, 170, osmolality = 310))
+  expect_false(checkNumericCovariates(21, 70, 170, osmolality = MIN_OSMOLALITY - 1))
+  expect_false(checkNumericCovariates(21, 70, 170, osmolality = MAX_OSMOLALITY + 1))
+  # An empty numeric field reports NA
+  expect_false(checkNumericCovariates(21, 70, 170, osmolality = NA))
 })

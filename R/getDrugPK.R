@@ -11,6 +11,9 @@
 #' @param drugDefaults output from \code{getDrugDefaults(drug)}
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 #'   Passed only to drug models that declare it; the rest ignore it.
+#' @param osmolality baseline serum osmolality in mOsm/kg, before any osmotic
+#'   agent.  Passed only to drug models that declare it (mannitol); the rest
+#'   ignore it.
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
@@ -38,6 +41,7 @@ getDrugPK <- function(
   sex,
   drugDefaults = getDrugDefaults(drug),
   cyp2d6 = CYP2D6_DEFAULT,
+  osmolality = OSMOLALITY_DEFAULT,
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE
 )
@@ -51,6 +55,11 @@ getDrugPK <- function(
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
          ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
+  }
+  if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
+    stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
+         ". Must be a number between ", MIN_OSMOLALITY, " and ",
+         MAX_OSMOLALITY, " mOsm/kg")
   }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
@@ -82,6 +91,10 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "adjustToFFM" %in% names(formals(get(drug, mode = "function"))))
     covariates$adjustToFFM <- adjustToFFM
+  # And the baseline serum osmolality, which only an osmotic agent reads.
+  if (exists(drug, mode = "function") &&
+      "osmolality" %in% names(formals(get(drug, mode = "function"))))
+    covariates$osmolality <- osmolality
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
@@ -529,6 +542,7 @@ getDrugPK <- function(
       weight = weight, height = height, age = age, sex = sex,
       drugDefaults = metaboliteDefaults,
       cyp2d6 = cyp2d6,
+      osmolality = osmolality,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE
     )
@@ -593,6 +607,10 @@ getDrugPK <- function(
   # does not create it: a drug with no metabolite returns exactly the shape it
   # always has.
   out$metaboliteName <- metaboliteName
+  # An osmotic agent reports serum osmolality rather than its own
+  # concentration: simCpCe() reads the baseline, the fraction and the molecular
+  # weight from here.  See R/drugs_mannitol.R.
+  out$osmotic <- X$osmotic
   return(out)
 }
 

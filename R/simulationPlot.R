@@ -222,6 +222,8 @@ simulationPlot <- function(
       unitText <- paste0(plotTable$Concentration.Units, "/ml")
       gasRow <- isGasSeries(plotTable$Drug)
       unitText[gasRow] <- plotTable$Concentration.Units[gasRow]
+      # An osmotic agent is plotted as serum osmolality (drugs_mannitol.R).
+      unitText[plotTable$Concentration.Units == "mOsm"] <- "mOsm/kg"
       plotTable$Wrap <- paste0(panelName, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical
@@ -592,7 +594,25 @@ simulationPlot <- function(
   {
     plotObject <- plotObject + ggplot2::scale_y_log10()
   } else {
-    plotObject <- plotObject + ggplot2::scale_y_continuous(limits=c(0, NA))
+    # Every panel starts at zero, except a serum osmolality panel: anchored
+    # at zero, a rise from 290 to 320 mOsm/kg would be a ripple along the top.
+    # It starts a little below the lower of the baseline and the typical band
+    # instead.  This replaces scale_y_continuous(limits = c(0, NA)), which
+    # cannot vary by facet; a blank point at the floor of each panel gives the
+    # same zero-anchored axis everywhere else.
+    yFloor <- data.frame(Wrap = plotTable$Wrap, Y = 0)
+    osmoticRows <- normalization == NORMALIZE_NONE &
+      plotTable$Concentration.Units == "mOsm"
+    for (i in which(osmoticRows))
+    {
+      panelY <- plotResults$Y[plotResults$Wrap == plotTable$Wrap[i] &
+                              plotResults$Site == "Plasma"]
+      lowest <- min(c(panelY, plotTable$ymin[i], plotTable$ymax[i]), na.rm = TRUE)
+      yFloor$Y[i] <- 10 * floor((lowest - 5) / 10)
+    }
+    plotObject <- plotObject +
+      ggplot2::geom_blank(data = yFloor, ggplot2::aes(y = Y), inherit.aes = FALSE) +
+      ggplot2::scale_y_continuous()
   }
 
   # Step A3: labs and themes

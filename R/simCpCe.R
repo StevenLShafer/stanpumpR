@@ -143,9 +143,20 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mg_Conv  <- .001       # 1 ng/ml = 0.001 mcg/ml = 0.001 mg/L80
         mcg_Conv <- 1        # Native unit
         ng_Conv  <- 1000
-      }
+      },
+      mOsm = {                 # An osmotic agent: amounts in mOsm, Cp in mOsm/L
+        # 1 mOsm is molecularWeight mg of a solute that does not dissociate,
+        # so a dose in mg divided by mg_Conv is a dose in mOsm.
+        mg_Conv  <- PK$osmotic$molecularWeight
+        mcg_Conv <- PK$osmotic$molecularWeight * 1000
+        ng_Conv  <- PK$osmotic$molecularWeight * 1000000
+      },
+      stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
 
+    # Grams.  Anchored, because "mg" and every other mass unit contain a "g".
+    use <- grep("^g( |/|$)", dose$Units)
+    dose$Dose[use] <- dose$Dose[use] * 1000 / mg_Conv
     use <- grep("mg",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / mg_Conv
     use <- grep("mcg",dose$Units)
@@ -255,6 +266,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   attr(results, "metaboliteRecoveryStates") <- NULL
 
   names(results) <- c("Time", "Plasma","Effect Site", "Recovery")
+
+  # An osmotic agent is shown as the serum osmolality it produces: the
+  # patient's baseline plus the net rise its plasma concentration causes.  See
+  # R/drugs_mannitol.R.  Such a drug has no effect site, so only the plasma
+  # column changes.
+  if (!is.null(PK$osmotic))
+  {
+    results$Plasma <- PK$osmotic$baseline + PK$osmotic$fraction * results$Plasma
+  }
 
   out <- finishDrugSeries(results, PK, maximum, plotRecovery)
   out$wide             <- results

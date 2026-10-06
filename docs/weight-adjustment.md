@@ -114,7 +114,7 @@ scaled everything linearly with weight.
 
 | Scaled to fat-free mass | Not scaled (own covariates) |
 |---|---|
-| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, methadone, midazolam, morphine, naloxone, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. |
+| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, methadone, midazolam, morphine, naloxone, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. |
 
 Each scaled model's source file (`R/drugs_<name>.R`) carries a comment stating
 what it did before and what it does now.
@@ -127,7 +127,7 @@ before fat-free mass was introduced:
 
 | Model type | Behaviour with the switch off |
 |---|---|
-| Fixed published parameters (alfentanil, sufentanil, midazolam, oliceridine, oxycodone, adult dexmedetomidine) | no scaling at all |
+| Fixed published parameters (alfentanil, sufentanil, midazolam, oliceridine, oxycodone, mannitol, adult dexmedetomidine) | no scaling at all |
 | V1 per kilogram with fixed rate constants (ketamine, etomidate, morphine, methadone, hydromorphone, pethidine, lidocaine, rocuronium, naloxone) | volumes and clearances both × weight / 70 |
 | Allometric on total weight (fentanyl, remimazolam, infant dexmedetomidine) | volumes × weight / 70, clearances × (weight / 70)<sup>0.75</sup> |
 

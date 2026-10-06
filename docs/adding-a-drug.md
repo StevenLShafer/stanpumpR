@@ -102,6 +102,19 @@ codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
 file changes. Valid values are in `CYP2D6_VALUES`: `poor`, `intermediate`, `normal`,
 `ultrarapid`. Validate it and fail loudly on anything else.
 
+**Optional — an osmotic agent.** A drug reported as the serum osmolality it produces, rather
+than as its own concentration, adds `osmolality` to its signature (the patient's baseline,
+mOsm/kg, passed only to models that name it) and returns an `osmotic` block:
+
+```r
+osmotic = list(baseline = osmolality, fraction = 0.555, molecularWeight = 182.17)
+```
+
+Its CSV row uses `mOsm` as `Concentration.Units`, so doses in g or mg are converted to mOsm
+with the molecular weight, and `simCpCe()` plots `baseline + fraction * Cp`. The panel is
+labelled mOsm/kg and its y-axis is not anchored at zero. `R/drugs_mannitol.R` is the example,
+and [mannitol.md](mannitol.md) explains where its fraction comes from.
+
 **Optional — an active metabolite.** A drug whose effect is carried by a metabolite returns
 a `metabolite` block alongside the usual fields:
 
@@ -164,7 +177,8 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 ```
 
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
-- `Concentration.Units` — `mcg` or `ng` per mL (sets the internal unit scaling in `simCpCe`).
+- `Concentration.Units` — `mcg` or `ng` per mL (sets the internal unit scaling in `simCpCe`),
+  or `mOsm` for an osmotic agent (see above).
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).

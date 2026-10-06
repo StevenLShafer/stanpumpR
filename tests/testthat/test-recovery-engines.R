@@ -316,7 +316,7 @@ test_that("a drug with no metabolite is untouched by the fold", {
 })
 
 
-test_that("exactly two drugs have no effect site, and the fold handles each", {
+test_that("exactly three drugs have no effect site, and the fold handles each", {
   # The set has moved repeatedly while this was being written, so it is pinned:
   # a drug losing or gaining an effect site changes which branch of the fold it
   # takes.  If this fails, the set has changed and the NA paths want rechecking
@@ -336,5 +336,10 @@ test_that("exactly two drugs have no effect site, and the fold handles each", {
   # being updated on its own: no real pair has a receiving drug without an
   # effect site any more, so that case is constructed in
   # test-metabolite-merge.R, with the other folds that are not real drugs.
-  expect_setequal(noCe, c("codeine", "tramadol"))
+  # Mannitol joined on 2026-10-06: it is plotted as serum osmolality and has no
+  # published ke0.  It neither forms nor receives a metabolite, so it never
+  # reaches the fold; its NA effect site was checked through finishDrugSeries()
+  # and every simulationPlot() mode (normalisations, log axis, MEAC,
+  # interaction, recovery, blank plasma line) instead.
+  expect_setequal(noCe, c("codeine", "tramadol", "mannitol"))
 })

@@ -286,9 +286,10 @@ test_that("the opioid contribution is ordered across phenotypes", {
 })
 
 
-test_that("only the two deliberate prodrugs now lack an effect site", {
-  # codeine and tramadol, both by design.  Pinned because the count has been
-  # got wrong by hand more than once.
+test_that("only the deliberate drugs lack an effect site", {
+  # codeine and tramadol, prodrugs by design, and mannitol, which is plotted
+  # as serum osmolality and has no published ke0.  Pinned because the count
+  # has been got wrong by hand more than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
     k <- tryCatch(getDrugPK(d, 70, 171, 50, "male",
@@ -296,7 +297,7 @@ test_that("only the two deliberate prodrugs now lack an effect site", {
                   error = function(e) NA_real_)
     !is.na(k) && k == 0
   }, dd$Drug[dd$Class == "IV"])
-  expect_setequal(blank, c("codeine", "tramadol"))
+  expect_setequal(blank, c("codeine", "tramadol", "mannitol"))
 })
 
 test_that("the pair scales to fat-free mass identically for a 120 kg man", {
