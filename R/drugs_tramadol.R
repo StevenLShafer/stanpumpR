@@ -138,7 +138,8 @@ TRAMADOL_CYP2D6_WEIGHT <- c(
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   desmetramadol as the formed active species
 #' @export
-tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
+tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
+                     adjustToFFM = TRUE)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
@@ -146,9 +147,15 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
   }
   activity <- unname(TRAMADOL_CYP2D6_WEIGHT[[cyp2d6]])
 
-  # Holford 2014 allometry
-  perKg   <- weight / 70
-  perKg75 <- perKg^0.75
+  # Holford 2014 allometry: clearances (W/70)^0.75, volumes W/70.  With the
+  # fat-free-mass switch on (docs/weight-adjustment.md) the same exponents
+  # apply to the fat-free-mass ratio instead.  Tramadol and desmetramadol
+  # must make this call identically: the formation constant is a clearance
+  # over a volume, and the pair was fitted jointly.
+  size    <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                           legacyClearance = (weight / 70)^0.75)
+  perKg   <- size$volume
+  perKg75 <- size$clearance
 
   # Clearance splits into a residual pathway and the CYP2D6 branch, so the
   # total moves with phenotype.

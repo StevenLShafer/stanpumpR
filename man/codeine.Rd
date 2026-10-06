@@ -4,7 +4,7 @@
 \alias{codeine}
 \title{Codeine pharmacokinetics}
 \usage{
-codeine(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
+codeine(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE)
 }
 \arguments{
 \item{weight}{weight in kg}

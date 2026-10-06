@@ -146,17 +146,24 @@ OXYMORPHONE_MEAC  <- 0.8  # ng/mL; provisional, see above
 #'
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-oxymorphone <- function(weight, height, age, sex)
+oxymorphone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # --- Disposition, one compartment (see header) ---
   VSS_PER_KG <- 3.08          # L/kg, manufacturer summary
   CL_PER_KG  <- 120 / 70      # L/h/kg, 2.0 L/min at the 70 kg reference the
                               # summary's volume-per-kg implies
 
-  v1  <- VSS_PER_KG * weight
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: volume and clearance both linear in weight
+  # (a per-kilogram summary), so both scaled with weight/70.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  v1  <- VSS_PER_KG * 70 * size$volume
   v2  <- 1                    # unused
   v3  <- 1                    # unused
-  cl1 <- CL_PER_KG / 60 * weight
+  cl1 <- CL_PER_KG / 60 * 70 * size$clearance
   cl2 <- 0
   cl3 <- 0
 

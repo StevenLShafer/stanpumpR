@@ -19,7 +19,7 @@ trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) 
 
 
 test_that("returns the correct calculations", {
-  actual <- hydrocodone(70, 171, 50, "male")
+  actual <- hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(default = list(
@@ -49,7 +49,7 @@ test_that("returns the correct calculations", {
 
 
 test_that("the apparent disposition is the published one", {
-  x <- hydrocodone(70, 171, 50, "male")$PK$default
+  x <- hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   # Melhem 2013 / FDA review: CL/F 64.4 L/h, Vc/F 714 L, Q/F 0.910 L/h, Vp/F 151 L
   expect_equal(x$cl1 * 60, 64.4)
   expect_equal(x$cl2 * 60, 0.910)      # 0.910, not 91.0
@@ -58,14 +58,14 @@ test_that("the apparent disposition is the published one", {
 
   # It carries no weight term, because the source covariate normalisers were
   # not recoverable.  Unusual for this package, and deliberate.
-  y <- hydrocodone(35, 171, 50, "male")$PK$default
+  y <- hydrocodone(35, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(y$v1, x$v1)
   expect_equal(y$cl1, x$cl1)
 })
 
 
 test_that("the model is nearly mono-exponential, matching the observed half-life", {
-  x <- hydrocodone(70, 171, 50, "male")$PK$default
+  x <- hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   r <- cube(x$cl1 / x$v1, x$cl2 / x$v1, 0, x$cl2 / x$v2, 0)
   r <- sort(r[r > 0], decreasing = TRUE) * 60      # per hour
   expect_equal(unname(r), c(0.0915604, 0.00593669), tolerance = 1e-5)
@@ -86,14 +86,14 @@ test_that("hydrocodone is offered orally only, because the parameters are appare
   expect_equal(units, "mg PO")
   expect_false(grepl("min|hr", units))
   # Bioavailability is carried as 1: the apparent scale already contains it
-  expect_equal(hydrocodone(70, 171, 50, "male")$PK$default$bioavailability_PO, 1)
+  expect_equal(hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default$bioavailability_PO, 1)
 })
 
 
 test_that("the oral plasma peak falls at 1.3 h and the effect site at 90 min", {
   # Checked analytically rather than off the plotted grid, whose geometric
   # fill is about 15 min wide here and cannot resolve 78 from 90.
-  p <- hydrocodone(70, 171, 50, "male")$PK$default
+  p <- hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   PK <- getDrugPK("hydrocodone", 70, 171, 50, "male", getDrugDefaults("hydrocodone"))
   pk <- PK$PK$default
 
@@ -215,4 +215,15 @@ test_that("the effect site is live now that tPeak is set", {
   expect_true(all(early$"Effect Site" < early$Plasma))
   # and it now contributes to the opioid total
   expect_gt(max(o$hydrocodone$equiSpace$MEAC), 0)
+})
+
+test_that("fat-free mass scaling leaves the apparent disposition alone and moves only formation", {
+  # 120 kg, 170 cm, 50 y male.  Disposition is apparent and carries no size
+  # term; kFormation follows hydromorphone's clearance factor, 1.2209126
+  # (worked out from the Al-Sallami formula by hand), so the Kapil AUC ratio
+  # is preserved against the scaled hydromorphone model.
+  x <- hydrocodone(120, 170, 50, "male")
+  expect_equal(x$PK$default$v1, 714)
+  expect_equal(x$PK$default$cl1 * 60, 64.4)
+  expect_equal_rounded(x$metabolite$kFormation, 2.7226571e-05)
 })

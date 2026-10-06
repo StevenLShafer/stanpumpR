@@ -1,8 +1,11 @@
-remifentanil <- function(weight, height, age, sex)
+remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Minutes
   # Volume: Liters
+
+  # adjustToFFM is accepted for a uniform signature but not used: both the
+  # Eleveld and the Kim models below carry their own fat-free-mass covariate.
 
   # Schnider
 

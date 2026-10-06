@@ -1,8 +1,14 @@
-oxytocin <- function(weight, height, age, sex)
+oxytocin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Minutes
   # Volume: Liters
+
+  # adjustToFFM is accepted for a uniform signature but deliberately not used.
+  # The human model was fitted in parturients, so the 70 kg reference male that
+  # anchors the fat-free-mass scaling does not describe the population these
+  # parameters belong to, and the Al-Sallami formula has not been validated in
+  # pregnancy.  The rat model has no meaningful height.
 
   if (weight > 1)
   {

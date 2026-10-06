@@ -14,6 +14,10 @@
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
+#' @param adjustToFFM scale the model's volumes and clearances to the patient's
+#'   fat-free mass (the default) rather than total body weight; see
+#'   `docs/weight-adjustment.md`.  Ignored by models that carry their own
+#'   fat-free-mass covariate (propofol, remifentanil).
 #'
 #' @examples
 #' PK <- stanpumpR::getDrugPK(
@@ -34,7 +38,8 @@ getDrugPK <- function(
   sex,
   drugDefaults = getDrugDefaults(drug),
   cyp2d6 = CYP2D6_DEFAULT,
-  resolveMetabolite = TRUE
+  resolveMetabolite = TRUE,
+  adjustToFFM = TRUE
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -72,6 +77,11 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "cyp2d6" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2d6 <- cyp2d6
+  # Likewise the fat-free-mass switch: every drug model in the library
+  # declares it, but a mocked model taking only ... need not.
+  if (exists(drug, mode = "function") &&
+      "adjustToFFM" %in% names(formals(get(drug, mode = "function"))))
+    covariates$adjustToFFM <- adjustToFFM
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
@@ -519,6 +529,7 @@ getDrugPK <- function(
       weight = weight, height = height, age = age, sex = sex,
       drugDefaults = metaboliteDefaults,
       cyp2d6 = cyp2d6,
+      adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]

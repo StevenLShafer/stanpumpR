@@ -170,7 +170,8 @@ CODEINE_CYP2D6_WEIGHT <- c(
 #'   additional \code{metabolite} element that names morphine as the formed
 #'   active species
 #' @export
-codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
+codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
+                    adjustToFFM = TRUE)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
@@ -182,8 +183,15 @@ codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
   CL_PER_KG <- 10.8 / 1000 * 60   # Persson 1992, 10.8 mL/min/kg -> L/h/kg
   MRT       <- 3.90               # Guay 1988, hours
 
-  clTotal <- CL_PER_KG / 60 * weight   # L/min
-  v1      <- CL_PER_KG * MRT * weight  # L, = Vss = CL * MRT
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: clearance and volume both linear in weight
+  # (per-kilogram sources), so both scaled with weight/70.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  clTotal <- CL_PER_KG / 60 * 70 * size$clearance   # L/min
+  v1      <- CL_PER_KG * MRT * 70 * size$volume     # L, = Vss * size at 70 kg
 
   # Formation clearance is a branch of total clearance, so changing the
   # phenotype changes the total as well.  The CYP2D6 branch is only about 3% of
@@ -210,8 +218,9 @@ codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
 
   # --- Morphine formation ---
   # kFormation is a first-order transfer out of the central compartment, so it
-  # is the formation clearance over the central volume.  It is independent of
-  # weight, because both scale linearly with it.
+  # is the formation clearance over the central volume.  With both scaled on
+  # total weight it was weight-independent; with the fat-free-mass scaling it
+  # falls as the size ratio ^ -0.25, like every other k10-type constant.
   kFormation <- clFormation / v1
 
   # The largest first-pass fraction that keeps the simulated morphine peak

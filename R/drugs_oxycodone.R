@@ -1,4 +1,5 @@
-oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
+oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
+                      adjustToFFM = TRUE)
 {
   # Relative CYP2D6 activity for oxymorphone formation, normal = 1.  Oxycodone
   # specific, not imported from codeine or hydrocodone.  Samer 2010 measured
@@ -36,11 +37,18 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
   THETA9 <- 0.00516 # (litre/h)  Intercompartmental rate between CSF and CSF peripheral
   THETA10 <- 0.0385 # (litre)  CSF peripheral volume of distribution
 
-  v1  <- THETA2 # liters
-  v2  <- THETA3 # Liters
+  # Size scaling (see docs/weight-adjustment.md): the published parameters
+  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
+  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
+  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
+  # exactly: no size scaling, the parameters were used as published.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+
+  v1  <- THETA2 * size$volume # liters
+  v2  <- THETA3 * size$volume # Liters
   v3  <- 1 # no third compartment
-  cl1 <- THETA1 # l/h
-  cl2 <- THETA5 # l/h
+  cl1 <- THETA1 * size$clearance # l/h
+  cl2 <- THETA5 * size$clearance # l/h
   cl3 <- 0
 
   cl1 <- cl1 / 60 # l/min

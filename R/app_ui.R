@@ -91,6 +91,25 @@ app_ui <- function() {
                     selected = defaultWeightUnit
                   ),
 
+                # Most models scale to the patient's fat-free mass rather than to
+                # total body weight; see docs/weight-adjustment.md.
+                bslib::tooltip(
+                  checkboxInput(
+                    inputId = "adjustToFFM",
+                    label = "Adjust weight to fat-free mass",
+                    value = TRUE
+                  ),
+                  paste(
+                    "The pharmacokinetic weight is scaled to the patient's fat-free",
+                    "mass, calculated from weight, height, age and sex",
+                    "(Al-Sallami et al., Clin Pharmacokinet 2015), relative to a",
+                    "70 kg, 170 cm man. Doses entered per kg still use total body",
+                    "weight. Propofol and remifentanil already include fat-free",
+                    "mass in their models and are not affected."
+                  ),
+                  placement = "right"
+                ),
+
                 numericInput(
                   inputId = "height",
                   label = "Height",

@@ -1,9 +1,10 @@
-test_that("returns the correct calculations", {
+test_that("returns the published parameters with total-body-weight scaling", {
   weight <- 70
   height <- 171
   age <- 50
   sex <- "male"
-  actual <- methadone(weight, height, age, sex)
+  # The switch off reproduces the pre-fat-free-mass output exactly.
+  actual <- methadone(weight, height, age, sex, adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(
@@ -24,4 +25,20 @@ test_that("returns the correct calculations", {
     reference = "Inturrisi CE et al., Clin Pharmacol Ther 1987;41(4):392-401. https://pubmed.ncbi.nlm.nih.gov/3829576/"
   )
   expect_equal_rounded(actual, expected)
+})
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
+  # volumes x 1.3049067 and clearances x 1.3049067^0.75 = 1.2209126 (worked out
+  # from the Al-Sallami formula by hand, not from the code under test).
+  actual <- methadone(120, 170, 50, "male")
+  expected <- list(
+        v1 = 16.441824,
+        v2 = 111.8044,
+        v3 = 1615.3374,
+        cl1 = 0.123991,
+        cl2 = 6.2764676,
+        cl3 = 1.7229519
+  )
+  expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })

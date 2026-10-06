@@ -220,6 +220,11 @@ app_server <- function(input, output, session) {
       drugDefaults(restored$drugDefaults)
       macThreshold(restored$macThreshold)
       outputComments("macThreshold:", restored$macThreshold)
+      # Bookmarks made before the fat-free-mass switch existed were simulated
+      # on total body weight; restore them that way so their output is unchanged.
+      if (is.null(state$input$adjustToFFM)) {
+        updateCheckboxInput(session, "adjustToFFM", value = FALSE)
+      }
     }, name = "onRestored()")
   })
 
@@ -365,6 +370,11 @@ app_server <- function(input, output, session) {
     input$sex
   })
 
+  adjustToFFM <- reactive({
+    # TRUE until the checkbox reports, so the first simulation uses the default.
+    if (is.null(input$adjustToFFM)) TRUE else isTRUE(input$adjustToFFM)
+  })
+
   testCovariates <- reactive({
     profileCode({
       outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
@@ -444,7 +454,8 @@ app_server <- function(input, output, session) {
         height = height(),
         sex = sex(),
         # NULL on the first pass, before the control has reported in
-        cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6
+        cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
+        adjustToFFM = adjustToFFM()
       ) |> profileCode("recalculatePK() in drugs()")
 
       newDrugs <- processdoseTable(
@@ -695,7 +706,8 @@ app_server <- function(input, output, session) {
         age = age(),
         weight = weight(),
         height = height(),
-        sex = sex()
+        sex = sex(),
+        adjustToFFM = adjustToFFM()
       )
 
       shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")

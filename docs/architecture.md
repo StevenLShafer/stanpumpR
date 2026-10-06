@@ -108,7 +108,8 @@ time point as a sum of exponentials.
 
 ### A — Parameterize the patient (`getDrugPK.R`)
 
-1. `eval(call(drug, weight, height, age, sex))` runs the drug's own covariate model (e.g. Eleveld
+1. `do.call(drug, covariates)` runs the drug's own covariate model with the four patient
+   covariates passed by name, plus `adjustToFFM` when the drug function declares it (e.g. Eleveld
    for propofol, Kim/Eleveld-style models for remifentanil, etc.) → `v1..v3`, `cl1..cl3`,
    `tPeak`, `MEAC`.
 2. Volumes & clearances → micro rate constants `k10, k12, k13, k21, k31`.
@@ -170,7 +171,10 @@ oxymorphone past oxymorphone's own threshold, and the row showed nothing.
 **Pharmacodynamics.** `modelInteraction()` computes a propofol × opioid response surface for the
 optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
 
-**Covariate helpers.** `lbmJames()` computes lean body mass; `recoveryCalc()` computes
+**Covariate helpers.** `pkSizeFactors()` (`pkSizeFactors.R`) turns weight, height, age and sex
+into the fat-free-mass multipliers that most drug models apply to their volumes and clearances
+(`ffmAlSallami()` is the Al-Sallami 2015 fat-free mass; see `docs/weight-adjustment.md`);
+`lbmJames()` computes the older James lean body mass; `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 

@@ -17,7 +17,7 @@ trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) 
 
 
 test_that("tramadol returns the correct calculations", {
-  actual <- tramadol(70, 171, 50, "male")
+  actual <- tramadol(70, 171, 50, "male", adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(default = list(
@@ -46,7 +46,7 @@ test_that("tramadol returns the correct calculations", {
 
 
 test_that("desmetramadol returns the correct calculations", {
-  actual <- desmetramadol(70, 171, 50, "male")
+  actual <- desmetramadol(70, 171, 50, "male", adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(default = list(
@@ -72,8 +72,8 @@ test_that("desmetramadol returns the correct calculations", {
 test_that("both carry Holford's allometry", {
   # clearances (W/70)^0.75, volumes W/70
   for (fn in list(tramadol, desmetramadol)) {
-    a <- fn(70, 171, 50, "male")$PK$default
-    b <- fn(35, 171, 50, "male")$PK$default
+    a <- fn(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
+    b <- fn(35, 171, 50, "male", adjustToFFM = FALSE)$PK$default
     expect_equal(b$v1 / a$v1, 0.5, tolerance = 1e-9)
     expect_equal(b$v2 / a$v2, 0.5, tolerance = 1e-9)
     expect_equal(b$cl1 / a$cl1, 0.5^0.75, tolerance = 1e-9)
@@ -125,7 +125,7 @@ test_that("phenotype moves the parent's own clearance too", {
   # tramadol more slowly and has higher parent concentrations.  This is the
   # clinically familiar direction.
   cl <- vapply(CYP2D6_VALUES,
-               function(g) tramadol(70, 171, 50, "male", g)$PK$default$cl1 * 60,
+               function(g) tramadol(70, 171, 50, "male", g, adjustToFFM = FALSE)$PK$default$cl1 * 60,
                numeric(1))
   expect_equal(unname(cl[["normal"]]), 28.9, tolerance = 1e-6)
   expect_equal(unname(cl[["poor"]]), 18.4 + 10.5 * 0.10, tolerance = 1e-6)
@@ -160,7 +160,8 @@ test_that("the oral peak falls where Brvar's own model puts it", {
 test_that("an intravenous dose gives dose over the central volume", {
   o <- simulateDrugsWithCovariates(
     data.frame(Drug = "tramadol", Time = 0, Dose = 100, Units = "mg"),
-    noEvents, 70, 171, 50, "male", 1440, FALSE)
+    noEvents, 70, 171, 50, "male", 1440, FALSE, adjustToFFM = FALSE)
+  # 90 L is the published 70 kg central volume, hence the legacy switch
   expect_equal(max(o$tramadol$wide$Plasma), 100e6 / 90 / 1000, tolerance = 1e-6)
   expect_gt(max(o$desmetramadol$wide$Plasma), 0)
 })
@@ -296,4 +297,24 @@ test_that("only the two deliberate prodrugs now lack an effect site", {
     !is.na(k) && k == 0
   }, dd$Drug[dd$Class == "IV"])
   expect_setequal(blank, c("codeine", "tramadol"))
+})
+
+test_that("the pair scales to fat-free mass identically for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
+  # (worked out from the Al-Sallami formula by hand), the same factors for
+  # both members of the jointly fitted pair.
+  t <- tramadol(120, 170, 50, "male")$PK$default
+  d <- desmetramadol(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(t$v1,  117.4416)
+  expect_equal_rounded(t$v2,  103.08763)
+  expect_equal_rounded(t$cl1, 0.58807291)
+  expect_equal_rounded(t$cl2, 2.1365971)
+  expect_equal_rounded(d$v1,  102.95713)
+  expect_equal_rounded(d$v2,  170.94277)
+  expect_equal_rounded(d$cl1, 1.7133474)
+  expect_equal_rounded(d$cl2, 5.575501)
+  # and the formation constant falls with size the same way under either switch
+  f <- function(w, ...) tramadol(w, 170, 50, "male", ...)$metabolite$kFormation
+  expect_equal(f(120) / f(70), f(120, adjustToFFM = FALSE) / f(70, adjustToFFM = FALSE) *
+                 (1.30490665^-0.25) / ((120 / 70)^-0.25), tolerance = 1e-6)
 })

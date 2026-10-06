@@ -4,7 +4,7 @@
 \alias{tramadol}
 \title{Tramadol pharmacokinetics}
 \usage{
-tramadol(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
+tramadol(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE)
 }
 \arguments{
 \item{weight}{weight in kg}

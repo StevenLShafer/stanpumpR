@@ -4,7 +4,7 @@
 \alias{desmetramadol}
 \title{Desmetramadol (O-desmethyltramadol) pharmacokinetics}
 \usage{
-desmetramadol(weight, height, age, sex)
+desmetramadol(weight, height, age, sex, adjustToFFM = TRUE)
 }
 \arguments{
 \item{weight}{weight in kg}

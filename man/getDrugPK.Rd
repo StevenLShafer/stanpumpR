@@ -13,7 +13,8 @@ getDrugPK(
   sex,
   drugDefaults = getDrugDefaults(drug),
   cyp2d6 = CYP2D6_DEFAULT,
-  resolveMetabolite = TRUE
+  resolveMetabolite = TRUE,
+  adjustToFFM = TRUE
 )
 }
 \arguments{
@@ -35,6 +36,11 @@ Passed only to drug models that declare it; the rest ignore it.}
 \item{resolveMetabolite}{should a drug that names an active metabolite have
 that metabolite's coefficients built?  Set FALSE when resolving the
 metabolite itself, which stops a cascade from recursing.}
+
+\item{adjustToFFM}{scale the model's volumes and clearances to the patient's
+fat-free mass (the default) rather than total body weight; see
+\code{docs/weight-adjustment.md}.  Ignored by models that carry their own
+fat-free-mass covariate (propofol, remifentanil).}
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
