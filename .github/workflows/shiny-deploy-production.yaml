@@ -10,6 +10,13 @@ name: Deployment Production
 permissions:
   contents: read
 
+# One production application, so one group for every run that targets it.  See
+# the note in shiny-pr-2-deploy.yaml: shinyapps.io returns HTTP 409 if a deploy
+# is already in progress for the application.
+concurrency:
+  group: shiny-deploy-production
+  cancel-in-progress: false
+
 jobs:
   deployment-production:
     runs-on: ubuntu-24.04

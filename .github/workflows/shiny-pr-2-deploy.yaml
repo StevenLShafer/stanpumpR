@@ -13,6 +13,17 @@ on:
     types: [labeled, synchronize]
   workflow_dispatch:
 
+# shinyapps.io allows only one deploy task per application at a time and answers
+# a second with HTTP 409.  GitHub will happily run these in parallel, so two
+# merges or a re-run landing within a few minutes of each other raced and lost.
+# One group per PR, because each PR deploys to its own stanpumpr_PR_<n> app.
+# cancel-in-progress is false so a deploy already talking to shinyapps.io is
+# never killed part-way; a newer run waits, and GitHub keeps only the newest
+# pending run in the group, so the latest commit still wins.
+concurrency:
+  group: shiny-deploy-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deployment-pr:
     if: |
