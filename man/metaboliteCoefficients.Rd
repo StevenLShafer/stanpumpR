@@ -9,7 +9,8 @@ metaboliteCoefficients(
   metabolite,
   kFormation,
   mwRatio = 1,
-  unitScale = 1
+  unitScale = 1,
+  firstPassFraction = 0
 )
 }
 \arguments{
@@ -29,15 +30,29 @@ this converts between them.  Defaults to 1.}
 \item{unitScale}{conversion from the parent's internal dose unit to the
 metabolite's, normally from \code{metaboliteUnitScale()}.  Defaults to 1,
 which is correct only when both drugs share a Concentration.Units.}
+
+\item{firstPassFraction}{fraction of an oral parent dose appearing directly
+as metabolite, having been converted before reaching the systemic
+circulation.  Defaults to 0.  Ignored when the parent has no oral
+absorption constant.}
 }
 \value{
-a list with \code{lambda} (the union of eigenvalues),
-\code{bolus} and \code{infusion} (coefficients on each), and the scalar
-\code{K} used to form them
+a list with \code{lambda} (the union of eigenvalues: parent, then
+metabolite, then the absorption constant when there is one),
+\code{bolus}, \code{infusion} and \code{PO} coefficients on each, and the
+scalar \code{K} used to form them
 }
 \description{
 Returns the metabolite's concentration as a sum of exponentials over the
 union of the parent's and the metabolite's eigenvalues, in the same
 bolus/infusion coefficient form the rest of the engine uses, so that the
 result can be advanced by \code{advanceState()} without any new machinery.
+}
+\details{
+When the parent carries a first-order oral absorption constant, a third
+coefficient vector is returned for an oral dose.  It is the sum of the
+systemic route, in which absorbed parent is converted after reaching the
+central compartment, and the first-pass route, in which a fraction of the
+dose is converted before reaching the systemic circulation and appears
+directly in the metabolite's central compartment.
 }

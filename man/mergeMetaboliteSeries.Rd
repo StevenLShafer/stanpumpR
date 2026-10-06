@@ -7,15 +7,16 @@
 mergeMetaboliteSeries(base, addition)
 }
 \arguments{
-\item{base}{the existing series for the metabolite drug, a data frame of
-\code{Time}, \code{Cp} and \code{Ce}, or NULL when the drug was not given
-directly and exists only as a metabolite}
+\item{base}{the existing wide series for the metabolite drug, a data frame
+of \code{Time}, \code{Plasma}, \code{Effect Site} and \code{Recovery}, or
+NULL when the drug was not given directly and exists only as a metabolite}
 
-\item{addition}{the metabolite contribution, same shape}
+\item{addition}{the metabolite contribution, a data frame of \code{Time},
+\code{Cp} and \code{Ce}}
 }
 \value{
-a data frame of \code{Time}, \code{Cp} and \code{Ce} on the union of
-the two timelines, carrying the arithmetic sum
+a wide series on the union of the two timelines, carrying the
+arithmetic sum
 }
 \description{
 Add a metabolite contribution to a drug's simulated series

@@ -7,8 +7,8 @@
 advanceClosedFormMetabolite(dose, pkSet, maximum, plotRecovery, emerge)
 }
 \arguments{
-\item{dose}{the drug's dose-table rows, already unit-converted, with a
-\code{Bolus} column}
+\item{dose}{the drug's dose-table rows, already unit-converted, with
+\code{Bolus}, \code{PO}, \code{IM} and \code{IN} columns}
 
 \item{pkSet}{the parent's PK set, which must carry a \code{metabolite}
 element holding \code{coefs} (from \code{metaboliteCoefficients()}),

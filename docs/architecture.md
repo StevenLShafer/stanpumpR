@@ -126,6 +126,7 @@ time point as a sum of exponentials.
    - `advanceClosedForm0.R` — IV, no PK events
    - `advanceClosedForm1.R` — time-varying PK driven by events
    - `advanceClosedFormPO_IM_IN.R` — extravascular routes
+   - `advanceClosedFormMetabolite.R` — a drug that forms an active metabolite
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
    across event boundaries.
 5. Interpolate to an even grid (`equiSpace`), normalize to peak Cp/Ce, and scale against MEAC.
@@ -135,6 +136,25 @@ Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `
 The exported, Shiny-free entry point for this whole path is `simulateDrugsWithCovariates()` — it
 loops drugs, calls `getDrugPK()` → `simCpCe()`, and returns per-drug results. This is what the
 vignettes and tests drive.
+
+**Active metabolites.** A drug may name another drug as its active metabolite. The parent's
+plasma curve is convolved through the metabolite's own disposition
+(`metaboliteCoefficients.R`), which leaves a sum of exponentials over the union of the two
+drugs' eigenvalues — so the metabolite advances through the same `advanceState()` machinery,
+with no solver of its own. An oral dose adds a second branch for metabolite formed during
+first pass, which enters the metabolite's central compartment through the absorption step
+rather than through the parent.
+
+This is the one place where the per-drug independence the pipeline otherwise assumes breaks
+down: a contribution crosses from one drug's entry into another's. So `foldMetabolites()`
+(`mergeMetabolite.R`) runs **after** every drug has been simulated, adding each contribution
+to the metabolite drug's own row and rebuilding that row from the sum. Each drug keeps its own
+simulation in `wideOwn` and the folded total in `wide`, which is what makes re-folding safe.
+A metabolite that was never given directly gets a row created for it.
+
+A pure prodrug (`tPeak = 0`, hence `ke0 = 0`) has no effect site: its effect-site column is
+`NA`, which the plot drops, and the effect appears on the metabolite's row instead. Codeine is
+the worked example; see `R/drugs_codeine.R`.
 
 **Pharmacodynamics.** `modelInteraction()` computes a propofol × opioid response surface for the
 optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
@@ -182,8 +202,12 @@ All files are flat in `R/`.
 - `getDrugPK.R` — covariates → rate constants, eigenvalues, per-route coefficients.
 - `cube.R` — solves the disposition cubic for `lambda_1..3`.
 - `simCpCe.R` — single-drug simulation: units → route → solver dispatch.
-- `advanceClosedForm0.R` / `advanceClosedForm1.R` / `advanceClosedFormPO_IM_IN.R` — the three
-  closed-form solvers (IV, event-varying, extravascular).
+- `advanceClosedForm0.R` / `advanceClosedForm1.R` / `advanceClosedFormPO_IM_IN.R` /
+  `advanceClosedFormMetabolite.R` — the closed-form solvers (IV, event-varying,
+  extravascular, active metabolite).
+- `metaboliteCoefficients.R` — convolves a parent's curve through a metabolite's disposition;
+  also the parent/metabolite unit scaling. `mergeMetabolite.R` — folds each formed
+  contribution into the metabolite drug's row once every drug has been simulated.
 - `advanceState.R` (`advanceState()`, `advanceStatePO()`), `convertState.R` — carry compartment
   state across dose & event boundaries.
 - `calculateCe.R` — effect-site concentration from a plasma curve. The `ke0` fit itself

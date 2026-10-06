@@ -66,12 +66,59 @@ those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug
 `"CPB Start"`) to switch kinetics on a clinical event; `advanceClosedForm1()` handles the
 transitions. Event names must exist in `inst/extdata/eventDefaults.csv`.
 
+**Optional — a pharmacogenetic covariate.** A model whose kinetics depend on CYP2D6 adds
+`cyp2d6` to its signature, with a default:
+
+```r
+codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
+```
+
+`getDrugPK()` passes the phenotype only to models that name the argument, so no other drug
+file changes. Valid values are in `CYP2D6_VALUES`: `poor`, `intermediate`, `normal`,
+`ultrarapid`. Validate it and fail loudly on anything else.
+
+**Optional — an active metabolite.** A drug whose effect is carried by a metabolite returns
+a `metabolite` block alongside the usual fields:
+
+```r
+metabolite = list(
+  name              = "morphine",   # must be a drug in the CSV
+  kFormation        = 1.24e-4,      # 1/min, first-order out of the central compartment
+  firstPassFraction = 0.0015,       # of an oral dose, converted before reaching systemic
+  mwRatio           = 285.34 / 299.36
+)
+```
+
+`getDrugPK()` resolves the metabolite's own disposition and convolves the parent through it
+(`metaboliteCoefficients()`); `simCpCe()` routes the drug through
+`advanceClosedFormMetabolite()`; and `foldMetabolites()` adds the formed contribution to the
+metabolite drug's own row after every drug has been simulated, creating that row if the
+metabolite was never given directly. See `R/drugs_codeine.R` for a worked example.
+
+Four things to know before using it:
+
+- `kFormation` is **not** a share of the parent's elimination. The parent's published
+  clearance already subsumes the metabolic loss, so formation is added on top of a
+  disposition model that stands unchanged. Subtracting it again would double-count.
+- A parent and its metabolite need not report in the same units. `getDrugPK()` applies
+  `metaboliteUnitScale()` automatically from the two `Concentration.Units`; getting this
+  wrong is a silent thousandfold error.
+- Only one level is resolved. A cascade (codeine → morphine → M6G) would need a two-stage
+  convolution and is not supported.
+- Only the intravenous and oral routes carry metabolite coefficients. IM and IN doses raise
+  rather than silently dropping the metabolite, and a metabolite drug cannot also switch
+  kinetics on a clinical event.
+
+**A pure prodrug** sets `tPeak = 0`, so `ke0` is zero and the drug has no effect site. Its
+plotted effect-site column is `NA`, which `simulationPlot()` drops, and the derived scalars
+fall back to zero. The effect appears on the metabolite's row.
+
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 
 Add one row. Columns:
 
 ```
-Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lower,Upper,Typical,MEAC,endCe
+Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lower,Upper,Typical,MEAC,endCe,Class
 ```
 
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
@@ -80,11 +127,21 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
 - `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and emergence effect-site level.
+- `Class` — `IV` for an injected or swallowed drug, `gas` for an inhaled agent. The gases
+  take a separate simulation path and have no `drugs_*.R` covariate function, so a new drug
+  added by this procedure is `IV`.
 
 Example row (remifentanil):
 
 ```
-remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1
+remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1,IV
+```
+
+A prodrug sets `MEAC` to zero and uses the band columns for its own plasma concentration,
+since it has no effect site to band. Codeine's row is the example:
+
+```
+codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO",#4A6FE3,50,150,100,0,0,IV
 ```
 
 ## 3. The test — `tests/testthat/test-drugs-<name>.R`

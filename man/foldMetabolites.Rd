@@ -4,10 +4,14 @@
 \alias{foldMetabolites}
 \title{Fold every metabolite contribution into the drug it is a metabolite of}
 \usage{
-foldMetabolites(drugs)
+foldMetabolites(drugs, maximum, plotRecovery = FALSE)
 }
 \arguments{
 \item{drugs}{the simulated drug list}
+
+\item{maximum}{maximum length of simulation in minutes}
+
+\item{plotRecovery}{should recovery be kept in the plotted series?}
 }
 \value{
 the drug list with metabolite contributions folded in
@@ -15,7 +19,8 @@ the drug list with metabolite contributions folded in
 \description{
 Walks the simulated drug list, and for each drug carrying a metabolite adds
 that contribution to the metabolite drug's own series, creating the series if
-the metabolite drug was not given directly.
+the metabolite drug was not given directly.  The receiving drug's plotted
+series, equispaced grid and maxima are then recomputed from the sum.
 }
 \details{
 This has to run after every drug has been simulated, because a metabolite

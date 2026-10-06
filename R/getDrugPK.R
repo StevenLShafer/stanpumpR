@@ -53,10 +53,15 @@ getDrugPK <- function(
   # depend on one can add it to its signature without every other drug model
   # having to change, and so that a model taking only ... is not handed an
   # argument it cannot forward.
-  drugFunction <- match.fun(drug)
   covariates <- list(weight = weight, height = height, age = age, sex = sex)
-  if ("cyp2d6" %in% names(formals(drugFunction))) covariates$cyp2d6 <- cyp2d6
-  X <- do.call(drugFunction, covariates)
+  if (exists(drug, mode = "function") &&
+      "cyp2d6" %in% names(formals(match.fun(drug))))
+    covariates$cyp2d6 <- cyp2d6
+  # Dispatch on the name, not the resolved function, so that a drug with no
+  # covariate function at all -- an inhaled gas, which belongs on the gas path
+  # and never reaches here -- still fails with R's own "could not find
+  # function", which is what test-gas-routing.R pins.
+  X <- do.call(drug, covariates)
   tPeak <- X$tPeak
 
   events <- names(X$PK)

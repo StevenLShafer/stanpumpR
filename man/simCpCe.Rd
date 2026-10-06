@@ -23,7 +23,10 @@ delivery in the simulation itself by
 \code{tests/testthat/test-recovery-engines.R} (2026-10-05).}
 }
 \value{
-a list of data frames with the output of the a single drug simulation
+a list of data frames with the output of the a single drug
+simulation.  A drug that forms an active metabolite additionally carries
+\code{metaboliteSeries} and \code{metaboliteName}; \code{foldMetabolites()}
+adds that contribution to the metabolite drug's own row.
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
