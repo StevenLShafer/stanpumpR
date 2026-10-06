@@ -52,6 +52,12 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   {
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6)
+    # simCpCe() reads the emergence threshold off PK$endCe, which getDrugPK()
+    # does not set: its own `emerge` field reads a drugDefaults$Emerge column
+    # that does not exist, the CSV calls it endCe.  The Shiny path works
+    # because recalculatePK() assigns it by hand.  Without this line every
+    # time until threshold computed through this function is zero.
+    PK$endCe <- drugDefaults$endCe
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
 
