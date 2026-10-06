@@ -243,35 +243,35 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
 .help-breadcrumb {
   margin-bottom: 0.25rem;
 }
+/* A compact, full-width "on this page" strip, so wide tables below it are not
+   pushed down beside a floated box */
 .help-toc {
-  float: right;
-  max-width: 260px;
-  margin: 0 0 1rem 1.5rem;
-  padding: 0.6rem 0.9rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.9rem;
   font-size: 0.85rem;
   background: #f8f9fa;
   border: 1px solid #e4e9ed;
   border-radius: 4px;
 }
 .help-toc-title {
-  display: block;
+  display: inline;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-right: 0.75rem;
 }
 .help-toc ul {
+  display: inline;
   list-style: none;
   padding-left: 0;
   margin: 0;
 }
 .help-toc li {
-  margin: 0.15rem 0;
+  display: inline-block;
+  margin: 0.1rem 1rem 0.1rem 0;
 }
-@media (max-width: 900px) {
-  .help-toc {
-    float: none;
-    max-width: none;
-    margin-left: 0;
-  }
+.help-toc li::before {
+  content: "\00B7";
+  color: #9aa8ae;
+  margin-right: 0.6rem;
 }
 .help-scenario-btn {
   margin-right: 0.5rem;
