@@ -129,8 +129,53 @@
 # Setting HYDROCODONE_MEAC here also requires updating the MEAC column of
 # inst/extdata/drugDefaults_global.csv, which is what the plot and the opioid
 # total actually read.  test-drugs-hydrocodone.R checks that the two agree.
-HYDROCODONE_TPEAK <- 0   # minutes to peak effect site after an IV bolus
-HYDROCODONE_MEAC  <- 0   # ng/mL
+
+# tPeak: PROVISIONAL, AND NEEDS A LITERATURE REFERENCE AND VALIDATION
+# -------------------------------------------------------------------
+# Set by Steven L. Shafer on 2026-10-06.  No citation is attached to it yet,
+# and none was found in the search behind this file.
+#
+# What it means and what would validate it: tPeak is the time to peak
+# EFFECT SITE concentration after an intravenous bolus, which getDrugPK()
+# back-solves into ke0.  Hydrocodone is never given intravenously, and this
+# package does not offer it that way, so the quantity cannot be read directly
+# off an observed oral time to peak effect; an oral peak is dominated by
+# absorption, which is already modelled separately.  Validating this needs
+# either an intravenous hydrocodone effect study or a joint fit of absorption
+# and effect delay to oral data.
+#
+# A further caution specific to hydrocodone: part of its effect is carried by
+# the hydromorphone it forms, which this package plots on its own row with its
+# own equilibration. An effect delay fitted to oral hydrocodone data without
+# separating the metabolite would absorb some of hydromorphone's onset into
+# this number.
+HYDROCODONE_TPEAK <- 60  # minutes; provisional, see above
+
+# MEAC: PROVISIONAL, SET EQUAL TO MORPHINE'S, AND NEEDS LITERATURE VALIDATION
+# --------------------------------------------------------------------------
+# Set by Steven L. Shafer on 2026-10-06 to morphine's minimum effective
+# analgesic concentration as a working value, pending a hydrocodone-specific
+# one.
+#
+# Morphine's is 0.008 in its own row, which is mcg/mL because morphine is
+# reported in mcg/mL.  Hydrocodone is reported in ng/mL, so the same
+# CONCENTRATION is 8, not 0.008.  Anyone revisiting this should check the unit
+# before comparing the two numbers.
+#
+# What would validate or replace it:
+#   - A human concentration-effect study for hydrocodone.  None was found;
+#     this remains the gap that keeps HYDROCODONE_TPEAK at zero.
+#   - Equipotency with morphine is the assumption being made, and it is an
+#     assumption about ORAL analgesic equivalence carried over to a plasma
+#     concentration, which is not the same thing.
+#   - Hydrocodone's effect is shared with the hydromorphone it forms, and this
+#     package already plots that contribution on the hydromorphone row.  A
+#     parent MEAC fitted in the presence of that metabolite would double count
+#     unless the two are partitioned together.
+#
+# This value does nothing until HYDROCODONE_TPEAK is also set: with no effect
+# site there is no effect-site concentration to compare against it.
+HYDROCODONE_MEAC  <- 8   # ng/mL; provisional, see above
 # -----------------------------------------------------------------------------
 
 

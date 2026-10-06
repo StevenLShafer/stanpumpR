@@ -29,8 +29,8 @@ test_that("returns the correct calculations", {
       bioavailability_PO = 1,
       tlag_PO = 0
     )),
-    tPeak = 0,
-    MEAC = 0,
+    tPeak = 60,        # provisional; see the drug file
+    MEAC = 8,          # provisional, set equal to morphine's; see the drug file
     typical = 20,
     upperTypical = 30,
     lowerTypical = 10,
@@ -159,20 +159,36 @@ test_that("an unknown phenotype is refused", {
 })
 
 
-test_that("the placeholder potency is consistent with the drug table", {
-  # Hydrocodone has no published concentration-effect vector.  Until tPeak and
-  # MEAC are supplied it plots as plasma only.  This test exists so that
+test_that("the provisional potency is consistent with the drug table", {
+  # tPeak and MEAC are provisional values set by hand, not fitted; see the
+  # constants at the top of R/drugs_hydrocodone.R.  This test exists so that
   # changing HYDROCODONE_MEAC without also changing the CSV fails loudly: the
   # plot and the opioid total read the CSV, not the drug function.
   dd <- getDrugDefaultsGlobal(FALSE)
   expect_equal(dd$MEAC[dd$Drug == "hydrocodone"], HYDROCODONE_MEAC)
+  # The emergence threshold has to move with MEAC.  Left at zero it makes the
+  # time until threshold pin at the simulation length, which is how the
+  # omission shows up.
+  expect_equal(dd$endCe[dd$Drug == "hydrocodone"], HYDROCODONE_MEAC)
 
-  if (HYDROCODONE_TPEAK == 0) {
-    PK <- getDrugPK("hydrocodone", 70, 171, 50, "male", getDrugDefaults("hydrocodone"))
-    expect_equal(PK$PK$default$ke0, 0)
-    o <- oralHydrocodone(20, maximum = 1440)
-    expect_true(all(is.na(o$hydrocodone$wide$"Effect Site")))
-    # and nothing derived is allowed to be NA
-    expect_false(any(is.na(o$hydrocodone$equiSpace$Ce)))
-  }
+  # MEAC is set equal to morphine's.  Morphine is reported in mcg/mL and
+  # hydrocodone in ng/mL, so the two rows carry the same CONCENTRATION with
+  # numbers a thousandfold apart.
+  expect_equal(HYDROCODONE_MEAC, dd$MEAC[dd$Drug == "morphine"] * 1000)
+})
+
+
+test_that("the effect site is live now that tPeak is set", {
+  PK <- getDrugPK("hydrocodone", 70, 171, 50, "male", getDrugDefaults("hydrocodone"))
+  expect_equal(PK$tPeak, 60)
+  expect_gt(PK$PK$default$ke0, 0)
+
+  o <- oralHydrocodone(20, maximum = 1440)
+  w <- o$hydrocodone$wide
+  expect_false(any(is.na(w$"Effect Site")))
+  expect_gt(max(w$"Effect Site"), 0)
+  # The effect site lags the plasma peak
+  expect_gt(w$Time[which.max(w$"Effect Site")], w$Time[which.max(w$Plasma)])
+  # and it now contributes to the opioid total
+  expect_gt(max(o$hydrocodone$equiSpace$MEAC), 0)
 })

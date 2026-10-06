@@ -89,8 +89,51 @@
 # Setting OXYMORPHONE_MEAC here also requires updating the MEAC column of
 # inst/extdata/drugDefaults_global.csv, which is what the plot and the opioid
 # total actually read.  test-drugs-oxymorphone.R checks that the two agree.
-OXYMORPHONE_TPEAK <- 0   # minutes to peak effect site after an IV bolus
-OXYMORPHONE_MEAC  <- 0   # ng/mL
+
+# tPeak: PROVISIONAL, AND NEEDS A LITERATURE REFERENCE AND VALIDATION
+# -------------------------------------------------------------------
+# Set by Steven L. Shafer on 2026-10-06.  No citation is attached to it yet,
+# and none was found in the search behind this file.
+#
+# tPeak is the time to peak EFFECT SITE concentration after an intravenous
+# bolus, which getDrugPK() back-solves into ke0.  Oxymorphone can be given
+# intravenously, so unlike hydrocodone the quantity is directly observable in
+# principle; what is missing is a study that observed it.  Babalonis 2016
+# measured experimental effects after ORAL immediate-release oxymorphone,
+# where absorption dominates the onset and cannot be separated from
+# equilibration without modelling both.
+#
+# A caution on the disposition this sits on: the one-compartment reduction
+# below has no distribution phase, so the early plasma curve after a bolus is
+# wrong in exactly the window ke0 is most sensitive to.  A tPeak validated
+# against a real two-compartment oxymorphone model would not transfer to this
+# one unchanged.
+OXYMORPHONE_TPEAK <- 20  # minutes; provisional, see above
+
+# MEAC: PROVISIONAL, SET TO ONE TENTH OF MORPHINE'S, AND NEEDS LITERATURE
+# EVALUATION
+# -----------------------------------------------------------------------
+# Set by Steven L. Shafer on 2026-10-06, taking oxymorphone as ten times as
+# potent as morphine.  Morphine's is 0.008 in its own row, which is mcg/mL
+# because morphine is reported in mcg/mL, so 8 ng/mL; a tenth of that is 0.8,
+# and oxymorphone is reported in ng/mL, so the value here is 0.8 rather than
+# 0.0008.  Check the unit before comparing the two rows.
+#
+# What would evaluate or replace it:
+#   - A human concentration-effect study for oxymorphone.  None was found.
+#   - Tenfold potency relative to morphine is a received equianalgesic ratio,
+#     and an equianalgesic DOSE ratio is not a concentration ratio: it folds
+#     in bioavailability, clearance and distribution, all of which differ
+#     between the two drugs.  Oxymorphone's receptor affinity relative to
+#     oxycodone is reported as 8 to 44 fold, which is a different comparison
+#     again and should not be read as support for this number.
+#   - Oxymorphone also arrives as oxycodone's metabolite, so this value now
+#     feeds the opioid total whenever oxycodone is given.  At about 2% of
+#     oxycodone concentrations and a tenth of its MEAC, the formed
+#     contribution is small but no longer zero, which is worth confirming
+#     against the 15 to 20% of oral oxycodone analgesia sometimes attributed
+#     to oxymorphone.
+OXYMORPHONE_MEAC  <- 0.8  # ng/mL; provisional, see above
 # -----------------------------------------------------------------------------
 
 

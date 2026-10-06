@@ -27,8 +27,8 @@ test_that("returns the correct calculations", {
       bioavailability_PO = 0.10,
       tlag_PO = 0
     )),
-    tPeak = 0,
-    MEAC = 0,
+    tPeak = 20,        # provisional; see the drug file
+    MEAC = 0.8,        # provisional, a tenth of morphine's; see the drug file
     typical = 2,
     upperTypical = 4,
     lowerTypical = 1,
@@ -133,22 +133,40 @@ test_that("an unknown phenotype is refused by oxycodone", {
 })
 
 
-test_that("the placeholder potency is consistent with the drug table", {
-  # See the header of R/drugs_oxymorphone.R.  Changing OXYMORPHONE_MEAC
-  # without updating the CSV would silently leave the plot reading zero.
+test_that("the provisional potency is consistent with the drug table", {
+  # See the constants at the top of R/drugs_oxymorphone.R.  Changing
+  # OXYMORPHONE_MEAC without updating the CSV would silently leave the plot
+  # reading the old value.
   dd <- getDrugDefaultsGlobal(FALSE)
   expect_equal(dd$MEAC[dd$Drug == "oxymorphone"], OXYMORPHONE_MEAC)
+  expect_equal(dd$endCe[dd$Drug == "oxymorphone"], OXYMORPHONE_MEAC)
 
-  if (OXYMORPHONE_TPEAK == 0) {
-    PK <- getDrugPK("oxymorphone", 70, 171, 50, "male", getDrugDefaults("oxymorphone"))
-    expect_equal(PK$PK$default$ke0, 0)
-    o <- simDrug("oxymorphone", 5, "mg PO", maximum = 720)
-    expect_true(all(is.na(o$oxymorphone$wide$"Effect Site")))
-    expect_false(any(is.na(o$oxymorphone$equiSpace$Ce)))
+  # A tenth of morphine's, taking oxymorphone as ten times as potent.
+  # Morphine is reported in mcg/mL and oxymorphone in ng/mL.
+  expect_equal(OXYMORPHONE_MEAC, dd$MEAC[dd$Drug == "morphine"] * 1000 / 10)
+})
 
-    # The same must hold when it arrives as a metabolite rather than a dose
-    q <- simDrug("oxycodone", 10, "mg PO", maximum = 720)
-    expect_true(all(is.na(q$oxymorphone$wide$"Effect Site")))
-    expect_gt(max(q$oxymorphone$wide$Plasma), 0)
-  }
+
+test_that("the effect site is live, whether dosed directly or formed", {
+  PK <- getDrugPK("oxymorphone", 70, 171, 50, "male", getDrugDefaults("oxymorphone"))
+  expect_equal(PK$tPeak, 20)
+  expect_gt(PK$PK$default$ke0, 0)
+
+  direct <- simDrug("oxymorphone", 5, "mg PO", maximum = 720)
+  w <- direct$oxymorphone$wide
+  expect_false(any(is.na(w$"Effect Site")))
+  # The effect site lags, but with a 4.7 min equilibration half-time against
+  # slow oral absorption the two peaks can share a grid point, so the lag is
+  # checked where it is visible rather than at the peak.
+  expect_gte(w$Time[which.max(w$"Effect Site")], w$Time[which.max(w$Plasma)])
+  early <- w[w$Time > 0 & w$Time < w$Time[which.max(w$Plasma)] / 2, ]
+  expect_true(all(early$"Effect Site" < early$Plasma))
+
+  # Arriving as oxycodone's metabolite, it must also carry a real effect site
+  formed <- simDrug("oxycodone", 10, "mg PO", maximum = 1440)
+  f <- formed$oxymorphone$wide
+  expect_false(any(is.na(f$"Effect Site")))
+  expect_gt(max(f$"Effect Site"), 0)
+  # and now contribute to the opioid total rather than nothing
+  expect_gt(max(formed$oxymorphone$equiSpace$MEAC), 0)
 })
