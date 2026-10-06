@@ -254,3 +254,102 @@ test_that("a dose given both ways sums on the morphine row", {
   formed <- trapz(alone$morphine$wide$Time, alone$morphine$wide$Plasma)
   expect_equal(total - given, formed, tolerance = 1e-3)
 })
+
+
+# "Time until threshold" on the morphine row.  Codeine is the only drug that
+# forms a metabolite, so it is the only drug for which the morphine a patient
+# has is partly morphine nobody gave them.  Recovery used to be taken from the
+# receiving drug's own doses, which for codeine alone meant no doses at all.
+#
+# (Claude Code, Claude Opus 5, 2026-10-05; run on R 4.6.1.)
+
+recoveryRun <- function(DT, maximum = 1440)
+  simulateDrugsWithCovariates(
+    DT, data.frame(Time = numeric(0), Event = character(0)),
+    70, 171, 50, "male", maximum, TRUE)
+
+
+test_that("the morphine row reports a time for morphine formed from codeine", {
+  # 600 mg is far above any clinical dose; it is the dose at which formed
+  # morphine clears morphine's own threshold, which is what makes a time until
+  # threshold exist to be reported.
+  o <- recoveryRun(data.frame(Drug = "codeine", Time = 0, Dose = 600,
+                              Units = "mg PO"))
+  w <- o$morphine$wide
+
+  expect_null(o$morphine$wideOwn)          # never given directly
+  expect_equal(o$morphine$formedFrom, "codeine")
+  expect_gt(max(w$"Effect Site"), o$morphine$endCe)
+  # The reported time, which was identically zero before this was fixed
+  expect_gt(max(w$Recovery), 60)
+  expect_gt(max(o$morphine$equiSpace$Recovery), 60)
+
+  # Nothing is given after time zero, so the moment the effect site comes down
+  # through the threshold is fixed: every point before it must report the same
+  # absolute time.
+  rising <- w[w$Recovery > 0, ]
+  expect_gt(nrow(rising), 5)
+  absolute <- rising$Time + rising$Recovery
+  expect_lt(max(absolute) - min(absolute), 0.5)
+
+  # Codeine's own row still reports nothing, having no effect site of its own
+  expect_true(all(o$codeine$wide$Recovery == 0))
+})
+
+
+test_that("a clinical dose of codeine stays below morphine's threshold", {
+  # 60 mg forms morphine that never reaches the threshold, so no time is the
+  # right answer -- the fix must not invent one.
+  o <- recoveryRun(data.frame(Drug = "codeine", Time = 0, Dose = 60,
+                              Units = "mg PO"))
+  expect_lt(max(o$morphine$wide$"Effect Site"), o$morphine$endCe)
+  expect_true(all(o$morphine$wide$Recovery == 0))
+})
+
+
+test_that("codeine lengthens the time until threshold for given morphine", {
+  both <- recoveryRun(data.frame(Drug  = c("codeine", "morphine"),
+                                 Time  = c(0, 0),
+                                 Dose  = c(600, 10),
+                                 Units = c("mg PO", "mg")))
+  given <- recoveryRun(data.frame(Drug = "morphine", Time = 0, Dose = 10,
+                                  Units = "mg"))
+
+  # The row's own simulation is unchanged -- the understated answer is still
+  # there to compare against -- but the row now reports the sum.
+  expect_gt(max(both$morphine$wide$Recovery),
+            max(both$morphine$wideOwn$Recovery))
+  expect_equal(max(both$morphine$wideOwn$Recovery),
+               max(given$morphine$wide$Recovery))
+  # Formed morphine adds hours here, not minutes
+  expect_gt(max(both$morphine$wide$Recovery) -
+              max(given$morphine$wide$Recovery), 120)
+})
+
+
+test_that("the formed contribution's states are the metabolite's effect site", {
+  # What the fold adds to the receiving drug is one amplitude per eigenvalue,
+  # and they have to sum to the curve that is plotted or the time reported
+  # would not belong to the curve shown.
+  o <- recoveryRun(data.frame(Drug = "codeine", Time = 0, Dose = 600,
+                              Units = "mg PO"))
+  states <- o$codeine$metaboliteRecoveryStates
+  expect_false(is.null(states))
+  # Codeine's three eigenvalues collapse to one (it is one-compartment), plus
+  # morphine's three, plus the absorption constant, plus morphine's ke0
+  expect_equal(ncol(states$state), 6)
+  expect_equal(rowSums(states$state), o$codeine$metaboliteSeries$Ce,
+               tolerance = 1e-15)
+  # And the fold's answer is what those states imply
+  expect_equal(o$morphine$wide$Recovery,
+               recoveryFromStates(states, o$morphine$endCe))
+})
+
+
+test_that("asking for no recovery leaves the morphine row's times at zero", {
+  o <- simulateDrugsWithCovariates(
+    data.frame(Drug = "codeine", Time = 0, Dose = 600, Units = "mg PO"),
+    data.frame(Time = numeric(0), Event = character(0)),
+    70, 171, 50, "male", 1440, FALSE)
+  expect_true(all(o$morphine$wide$Recovery == 0))
+})

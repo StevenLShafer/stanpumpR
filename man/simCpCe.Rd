@@ -24,9 +24,12 @@ delivery in the simulation itself by
 }
 \value{
 a list of data frames with the output of the a single drug
-simulation.  A drug that forms an active metabolite additionally carries
-\code{metaboliteSeries} and \code{metaboliteName}; \code{foldMetabolites()}
-adds that contribution to the metabolite drug's own row.
+simulation, plus \code{recoveryStates}: the effect-site exponential states
+behind the \code{Recovery} column, or NULL when recovery was not asked
+for.  A drug that forms an active metabolite additionally carries
+\code{metaboliteSeries}, \code{metaboliteName} and
+\code{metaboliteRecoveryStates}; \code{foldMetabolites()} adds that
+contribution, and its recovery, to the metabolite drug's own row.
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example

@@ -102,9 +102,12 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
 #'   \code{tests/testthat/test-recovery-engines.R} (2026-10-05).
 #'
 #' @returns a list of data frames with the output of the a single drug
-#'   simulation.  A drug that forms an active metabolite additionally carries
-#'   \code{metaboliteSeries} and \code{metaboliteName}; \code{foldMetabolites()}
-#'   adds that contribution to the metabolite drug's own row.
+#'   simulation, plus \code{recoveryStates}: the effect-site exponential states
+#'   behind the \code{Recovery} column, or NULL when recovery was not asked
+#'   for.  A drug that forms an active metabolite additionally carries
+#'   \code{metaboliteSeries}, \code{metaboliteName} and
+#'   \code{metaboliteRecoveryStates}; \code{foldMetabolites()} adds that
+#'   contribution, and its recovery, to the metabolite drug's own row.
 #'
 #' @export
 simCpCe <- function(dose, events, PK, maximum, plotRecovery)
@@ -212,12 +215,24 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     results$CeMetabolite <- NULL
   }
 
+  # The effect-site states behind the Recovery column, which the engines carry
+  # out as attributes.  foldMetabolites() needs them: a drug that also receives
+  # an active metabolite has to solve for its time until threshold from the
+  # combined effect site, because recovery times do not add.  Lifted off rather
+  # than left on `wide`, which is copied around the pipeline.
+  recoveryStates           <- attr(results, "recoveryStates")
+  metaboliteRecoveryStates <- attr(results, "metaboliteRecoveryStates")
+  attr(results, "recoveryStates")           <- NULL
+  attr(results, "metaboliteRecoveryStates") <- NULL
+
   names(results) <- c("Time", "Plasma","Effect Site", "Recovery")
 
   out <- finishDrugSeries(results, PK, maximum, plotRecovery)
   out$wide             <- results
   out$metaboliteSeries <- metaboliteSeries
   out$metaboliteName   <- PK$metaboliteName
+  out$recoveryStates           <- recoveryStates
+  out$metaboliteRecoveryStates <- metaboliteRecoveryStates
 
   return(out)
 }

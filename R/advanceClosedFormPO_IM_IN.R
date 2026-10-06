@@ -149,33 +149,18 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
         e_state_ka_IM  <- advanceStatePO(ka_IM_dt, doseNA,      doseNA,         doseNA,   e_IM_ka,  doseNA,   L)
         e_state_ka_IN  <- advanceStatePO(ka_IN_dt, doseNA,      doseNA,         doseNA,   doseNA,   e_IN_ka,  L)
 
-        recovery <- sapply(
-          1:L,
-          function(i)
-            (
-              recoveryCalc(
-                c(
-                  e_state_l1[i],
-                  e_state_l2[i],
-                  e_state_l3[i],
-                  e_state_ke0[i],
-                  e_state_ka_PO[i],
-                  e_state_ka_IM[i],
-                  e_state_ka_IN[i]
-                ),
-                c(
-                  lambda_1,
-                  lambda_2,
-                  lambda_3,
-                  ke0,
-                  ka_PO,
-                  ka_IM,
-                  ka_IN
-                ),
-                emerge)
-            )
+        # The states, not just the time they imply.  A drug that also receives
+        # an active metabolite has to add this drug's amplitudes to the formed
+        # contribution's before solving; see R/recoveryStates.R.
+        recoveryStates <- recoveryStateSet(
+          timeLine,
+          list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
+               e_state_ka_PO, e_state_ka_IM, e_state_ka_IN),
+          c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN)
         )
+        recovery <- recoveryFromStates(recoveryStates, emerge)
       } else {
+        recoveryStates <- NULL
         recovery <- doseNA
       }
       results <- data.frame(
@@ -184,6 +169,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
         Ce = Ce,
         Recovery = recovery
       )
+      attr(results, "recoveryStates") <- recoveryStates
       return(results)
     }
   )

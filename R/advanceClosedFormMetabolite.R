@@ -27,10 +27,15 @@
 # metabolite's eigenvalues, plus the absorption constant when there is an oral
 # route (see metaboliteCoefficients.R for the derivation).  That means it
 # advances through the same advanceStatePO() the parent uses, with no new
-# machinery.  Its effect site then comes from calculateCe() applied to the
-# metabolite concentration with the metabolite's own ke0 -- the metabolite has
-# its own effect site because its effect, not the parent's, is what matters
-# clinically.  Codeine is the clearest case: the analgesia is morphine's.
+# machinery.  Its effect site is one further exponential at the metabolite's own
+# ke0, advanced the same way -- the metabolite has its own effect site because
+# its effect, not the parent's, is what matters clinically.  Codeine is the
+# clearest case: the analgesia is morphine's.
+#
+# Carrying the effect site as states rather than as a curve from calculateCe()
+# is what lets the metabolite drug's row report a time until threshold for the
+# metabolite it actually has, formed and given together; see
+# R/recoveryStates.R.
 #
 # INTRAMUSCULAR AND INTRANASAL ARE NOT SUPPORTED HERE
 # ---------------------------------------------------
@@ -60,7 +65,9 @@
 #' @param emerge emergence threshold passed to \code{recoveryCalc()}
 #'
 #' @returns a data frame of \code{Time}, \code{Cp}, \code{Ce},
-#'   \code{CpMetabolite}, \code{CeMetabolite} and \code{Recovery}
+#'   \code{CpMetabolite}, \code{CeMetabolite} and \code{Recovery}, carrying
+#'   the \code{recoveryStates} and \code{metaboliteRecoveryStates} attributes
+#'   that \code{simCpCe()} lifts off for \code{foldMetabolites()}
 #' @export
 advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emerge)
 {
@@ -171,31 +178,56 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # already carry the whole parent-to-metabolite convolution as well as the
   # first-pass branch.
 
-  Cm <- doseNA
-  for (k in seq_along(met$coefs$lambda))
+  advance <- function(coefs)
   {
-    lk_dt <- exp(-met$coefs$lambda[k] * dt)
-    Cm <- Cm + advanceStatePO(
-      lk_dt,
-      met$coefs$bolus[k] * bolusLine,
-      met$coefs$infusion[k] * rate * (1 - lk_dt),
-      met$coefs$PO[k] * poLine,
-      doseNA, doseNA, L
-    )
+    states <- matrix(0, L, length(coefs$lambda))
+    for (k in seq_along(coefs$lambda))
+    {
+      lk_dt <- exp(-coefs$lambda[k] * dt)
+      states[, k] <- advanceStatePO(
+        lk_dt,
+        coefs$bolus[k] * bolusLine,
+        coefs$infusion[k] * rate * (1 - lk_dt),
+        coefs$PO[k] * poLine,
+        doseNA, doseNA, L
+      )
+    }
+    states
   }
 
-  # Floating point can leave the sum a hair below zero at t = 0, where the
-  # coefficients cancel exactly.  A negative concentration is meaningless.
+  CmStates <- advance(met$coefs)
+  Cm <- rowSums(CmStates)
+
+  # The metabolite's effect site, as one state per eigenvalue rather than as a
+  # single curve.  It used to come from calculateCe(), which interpolates the
+  # plasma concentration between time points; the closed form is exact, and --
+  # the reason it is worth the change -- it leaves the amplitudes in hand, which
+  # is what the metabolite drug's row needs to work out its own time until
+  # threshold once this contribution has been folded in.  See
+  # R/recoveryStates.R and R/mergeMetabolite.R.
+  #
+  # A metabolite with no effect site of its own -- there is none today -- has
+  # its concentration stand in for it, as it did before.
+  hasCe <- !is.null(met$ke0) && met$ke0 > 0
+  metCoefs  <- if (hasCe) effectSiteCoefficients(met$coefs, met$ke0) else met$coefs
+  CemStates <- if (hasCe) advance(metCoefs) else CmStates
+  Cem <- rowSums(CemStates)
+
+  # Floating point can leave either sum a hair below zero at t = 0, where the
+  # coefficients cancel exactly.  A negative concentration is meaningless.  The
+  # states are left alone: recoveryCalc() reads them as a signed sum, and
+  # clipping one would stop them adding up to the curve.
   Cm[Cm < 0] <- 0
+  Cem[Cem < 0] <- 0
 
-  Cem <- if (!is.null(met$ke0) && met$ke0 > 0) {
-    calculateCe(Cm, rep(met$ke0, L), dt, L)
-  } else {
-    Cm
-  }
+  metaboliteStates <- recoveryStateSet(timeLine, CemStates, metCoefs$lambda)
 
   # ---- Recovery, parent only ----
-
+  #
+  # The parent's own effect site, which a pure prodrug does not have.  The
+  # metabolite's time until threshold is not computed here: it belongs to the
+  # metabolite drug's row, where foldMetabolites() works it out from the states
+  # above together with whatever of that drug was given directly.
   if (plotRecovery && pkSet$ke0 > 0)
   {
     ke0_dt <- exp(-pkSet$ke0 * dt)
@@ -224,13 +256,14 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
                                     pkSet$e_coef_PO_ka * poLine, doseNA, doseNA, L)
       lambdas <- c(lambdas, pkSet$ka_PO)
     }
-    recovery <- sapply(1:L, function(i)
-      recoveryCalc(vapply(states, function(s) s[i], numeric(1)), lambdas, emerge))
+    recoveryStates <- recoveryStateSet(timeLine, states, lambdas)
+    recovery <- recoveryFromStates(recoveryStates, emerge)
   } else {
+    recoveryStates <- NULL
     recovery <- doseNA
   }
 
-  data.frame(
+  results <- data.frame(
     Time         = timeLine,
     Cp           = Cp,
     Ce           = Ce,
@@ -238,4 +271,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     CeMetabolite = Cem,
     Recovery     = recovery
   )
+  attr(results, "recoveryStates")           <- recoveryStates
+  attr(results, "metaboliteRecoveryStates") <- metaboliteStates
+  results
 }

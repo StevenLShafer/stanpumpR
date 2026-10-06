@@ -22,7 +22,9 @@ element holding \code{coefs} (from \code{metaboliteCoefficients()}),
 }
 \value{
 a data frame of \code{Time}, \code{Cp}, \code{Ce},
-\code{CpMetabolite}, \code{CeMetabolite} and \code{Recovery}
+\code{CpMetabolite}, \code{CeMetabolite} and \code{Recovery}, carrying
+the \code{recoveryStates} and \code{metaboliteRecoveryStates} attributes
+that \code{simCpCe()} lifts off for \code{foldMetabolites()}
 }
 \description{
 Simulate a parent drug together with an active metabolite

@@ -33,6 +33,8 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
         drugs[[drug]]$wide            <- NULL
         drugs[[drug]]$metaboliteSeries <- NULL
         drugs[[drug]]$formedFrom      <- NULL
+        drugs[[drug]]$recoveryStatesOwn         <- NULL
+        drugs[[drug]]$metaboliteRecoveryStates  <- NULL
       } else {
         X <- simCpCe(
           tempDT,
@@ -53,6 +55,11 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
         drugs[[drug]]$wide              <- X$wide
         drugs[[drug]]$metaboliteSeries  <- X$metaboliteSeries
         drugs[[drug]]$formedFrom        <- NULL
+        # The effect-site states behind Recovery, which foldMetabolites() needs
+        # to solve the combined time until threshold.  Own and formed are kept
+        # apart for the same reason wideOwn and wide are.
+        drugs[[drug]]$recoveryStatesOwn        <- X$recoveryStates
+        drugs[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
       }
     }
   }
@@ -102,10 +109,12 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     if (!target %in% drugDefaults$Drug) next
     drugs <- resolve(drugs, target)
     # It carries no doses of its own, so its own simulation is empty and its
-    # whole curve will come from the fold.
+    # whole curve, and its whole time until threshold, will come from the fold.
     drugs[[target]]$DT      <- NULL
     drugs[[target]]$wideOwn <- NULL
     drugs[[target]]$wide    <- NULL
+    drugs[[target]]$recoveryStatesOwn        <- NULL
+    drugs[[target]]$metaboliteRecoveryStates <- NULL
   }
 
   drugs

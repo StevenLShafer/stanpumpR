@@ -111,7 +111,11 @@ Four things to know before using it:
 
 **A pure prodrug** sets `tPeak = 0`, so `ke0` is zero and the drug has no effect site. Its
 plotted effect-site column is `NA`, which `simulationPlot()` drops, and the derived scalars
-fall back to zero. The effect appears on the metabolite's row.
+fall back to zero. The effect appears on the metabolite's row — including its "time until
+threshold", which `foldMetabolites()` solves from the formed contribution's effect-site states
+together with any of the metabolite drug that was given directly (`recoveryStates.R`). Nothing
+in a drug model has to arrange that; `endCe` on the metabolite drug's defaults row is the
+threshold it is measured against.
 
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 

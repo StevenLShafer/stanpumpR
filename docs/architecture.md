@@ -156,6 +156,16 @@ A pure prodrug (`tPeak = 0`, hence `ke0 = 0`) has no effect site: its effect-sit
 `NA`, which the plot drops, and the effect appears on the metabolite's row instead. Codeine is
 the worked example; see `R/drugs_codeine.R`.
 
+**"Time until threshold" across a fold.** Concentrations superpose; recovery times do not. So
+the merged row's `Recovery` is not built from the two `Recovery` columns — it is solved again
+from the *state* underneath them. Each engine carries the effect site out as one amplitude per
+eigenvalue (`recoveryStates.R`), `foldMetabolites()` carries every contributing set onto the
+merged time line, concatenates the amplitudes, and hands `recoveryCalc()` one combined sum of
+exponentials. That is exact, because the whole intravenous path is linear — which is why this
+needs no jointly simulated washout, unlike the inhaled gases, whose uptake is coupled through a
+shared alveolus (`gasCoupledRecovery()` in `gasRecovery.R`). Without it, a patient given
+codeine saw no time at all for the morphine they actually had.
+
 **Pharmacodynamics.** `modelInteraction()` computes a propofol × opioid response surface for the
 optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
 
@@ -209,7 +219,9 @@ All files are flat in `R/`.
   also the parent/metabolite unit scaling. `mergeMetabolite.R` — folds each formed
   contribution into the metabolite drug's row once every drug has been simulated.
 - `advanceState.R` (`advanceState()`, `advanceStatePO()`), `convertState.R` — carry compartment
-  state across dose & event boundaries.
+  state across dose & event boundaries. `recoveryStates.R` — carries the effect site as one
+  amplitude per eigenvalue, so that a drug receiving an active metabolite can have its time
+  until threshold solved from the combined state.
 - `calculateCe.R` — effect-site concentration from a plasma curve. The `ke0` fit itself
   (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery

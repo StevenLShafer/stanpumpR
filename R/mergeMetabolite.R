@@ -27,14 +27,31 @@
 # own around its own dose times -- so they are interpolated onto the union of
 # the two before being added, rather than assumed to share a grid.
 #
-# RECOVERY IS NOT SUMMED
-# ----------------------
+# RECOVERY IS NOT SUMMED -- IT IS RECOMPUTED
+# -----------------------------------------
 # Recovery is not a concentration and does not superpose; it is the solution of
-# a decay-to-threshold problem for one drug's effect-site state.  The receiving
-# drug keeps the recovery computed from its own doses, which understates it
-# whenever a metabolite is also contributing.  plotRecovery is documented as
-# broken and defaults to FALSE, so nothing reads this today, but it is a real
-# limitation to fix alongside the rest of recovery.
+# a decay-to-threshold problem, and two drugs' times until threshold do not add.
+# So the merged series' Recovery column is not built from the two Recovery
+# columns at all.  It is solved again, once, from the STATE underneath them:
+# every contribution's effect site is a sum of exponentials, the states DO
+# superpose, and the combined effect site is a sum of exponentials over the
+# union of the eigenvalue sets, which is exactly what recoveryCalc() takes.
+# That is exact, and it is why this does not need the jointly simulated washout
+# the inhaled gases use (gasCoupledRecovery() in R/gasRecovery.R): there, uptake
+# is coupled through a shared alveolus; here, each contribution distributes
+# through its own linear disposition and only the sum matters.
+#
+# Rewritten 2026-10-05 (Claude Code, Claude Opus 5) at the request of
+# Steven L. Shafer.  Until then the receiving drug kept the recovery computed
+# from its own doses alone, so a patient given codeine saw no time at all for
+# the morphine they actually had, and a patient given both saw the time for the
+# injected morphine only.  See R/recoveryStates.R for the states, and
+# tests/testthat/test-recovery-engines.R for the check against stopping
+# delivery in the simulation itself.
+#
+# When the states are not available -- a caller that assembled a drug list by
+# hand, or a run with plotRecovery FALSE -- the receiving drug's own Recovery is
+# carried through as before, which is the old behaviour rather than a wrong one.
 # -----------------------------------------------------------------------------
 
 
@@ -77,7 +94,9 @@ mergeMetaboliteSeries <- function(base, addition)
     Time          = times,
     Plasma        = onto(base, "Plasma")        + onto(addition, "Cp"),
     `Effect Site` = onto(base, "Effect Site")   + onto(addition, "Ce"),
-    # Recovery belongs to the receiving drug's own doses; see the header.
+    # Recovery is not summed.  The receiving drug's own column is carried here
+    # as a placeholder; foldMetabolites() solves for the combined time until
+    # threshold from the underlying states and overwrites it.  See the header.
     Recovery      = onto(base, "Recovery"),
     check.names   = FALSE
   )
@@ -89,7 +108,10 @@ mergeMetaboliteSeries <- function(base, addition)
 #' Walks the simulated drug list, and for each drug carrying a metabolite adds
 #' that contribution to the metabolite drug's own series, creating the series if
 #' the metabolite drug was not given directly.  The receiving drug's plotted
-#' series, equispaced grid and maxima are then recomputed from the sum.
+#' series, equispaced grid and maxima are then recomputed from the sum, and so
+#' is its time until threshold -- which cannot be taken from either part,
+#' because recovery times do not add.  See the header, and
+#' \code{foldedRecovery()}.
 #'
 #' This has to run after every drug has been simulated, because a metabolite
 #' contribution crosses from one drug's entry into another's.  It is the same
@@ -98,7 +120,9 @@ mergeMetaboliteSeries <- function(base, addition)
 #'
 #' @param drugs the simulated drug list
 #' @param maximum maximum length of simulation in minutes
-#' @param plotRecovery should recovery be kept in the plotted series?
+#' @param plotRecovery should recovery be kept in the plotted series, and the
+#'   receiving drug's time until threshold solved again from the combined
+#'   effect site?
 #'
 #' @returns the drug list with metabolite contributions folded in
 #' @export
@@ -134,6 +158,12 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
       merged <- mergeMetaboliteSeries(merged, drugs[[parent]]$metaboliteSeries)
     if (is.null(merged)) next
 
+    if (plotRecovery)
+    {
+      recovery <- foldedRecovery(merged$Time, drugs, target, contributions[[target]])
+      if (!is.null(recovery)) merged$Recovery <- recovery
+    }
+
     drugs[[target]]$wide <- merged
 
     X <- finishDrugSeries(merged, drugs[[target]], maximum, plotRecovery)
@@ -147,4 +177,47 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
   }
 
   drugs
+}
+
+
+#' Time until threshold for a drug that also receives a metabolite contribution
+#'
+#' The effect site the patient has is the sum of the effect sites the given and
+#' the formed drug produce, so the time until it falls to the threshold has to
+#' be solved from the combined state rather than taken from either part.  Every
+#' contributing state set is carried onto the merged time line, the amplitudes
+#' are concatenated, and \code{recoveryCalc()} is asked once per time point.
+#'
+#' @param times the merged series' time line
+#' @param drugs the simulated drug list
+#' @param target the receiving drug's name
+#' @param parents the names of the drugs contributing metabolite to it
+#'
+#' @returns minutes, one per element of \code{times}, or NULL when any
+#'   contribution did not carry its states and the caller should fall back on
+#'   the receiving drug's own Recovery
+#' @keywords internal
+foldedRecovery <- function(times, drugs, target, parents)
+{
+  sets <- list()
+
+  # The receiving drug's own doses, when it was given directly.  A drug with no
+  # effect site of its own -- there is none today, but a prodrug that were also
+  # a metabolite would be one -- carries no states and contributes none.
+  if (!is.null(drugs[[target]]$wideOwn))
+  {
+    own <- drugs[[target]]$recoveryStatesOwn
+    if (is.null(own)) return(NULL)
+    sets <- c(sets, list(own))
+  }
+
+  for (parent in parents)
+  {
+    formed <- drugs[[parent]]$metaboliteRecoveryStates
+    if (is.null(formed)) return(NULL)
+    sets <- c(sets, list(formed))
+  }
+  if (length(sets) == 0) return(NULL)
+
+  combinedRecovery(times, sets, drugs[[target]]$endCe)
 }

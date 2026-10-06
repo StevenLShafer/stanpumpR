@@ -52,6 +52,12 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   {
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6)
+    # The threshold recovery is measured against.  getDrugPK() does not carry
+    # it -- it lives in the drug defaults, and in the app recalculatePK() puts
+    # it on the drug entry -- so without this line simCpCe() was handed a NULL
+    # emerge and every time until threshold came back zero, silently, whatever
+    # plotRecovery said.
+    PK$endCe <- drugDefaults$endCe
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
 
@@ -66,6 +72,10 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output[[drug]]$wideOwn             <- X$wide
     output[[drug]]$wide                <- X$wide
     output[[drug]]$metaboliteSeries    <- X$metaboliteSeries
+    # foldMetabolites() solves the receiving drug's time until threshold from
+    # these; see R/recoveryStates.R.
+    output[[drug]]$recoveryStatesOwn        <- X$recoveryStates
+    output[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
   }
 
   # A metabolite that was never given directly still needs a row to appear in.

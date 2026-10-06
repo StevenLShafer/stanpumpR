@@ -93,8 +93,11 @@ test_that("mergeMetaboliteSeries interpolates onto the union of two timelines", 
 })
 
 
-test_that("recovery is carried from the receiving drug, not summed", {
-  # Recovery is not a concentration and does not superpose.
+test_that("recovery is not summed by the merge", {
+  # Recovery is not a concentration and does not superpose, so the merge does
+  # not add the two columns.  It carries the receiving drug's own through as a
+  # placeholder; foldMetabolites() solves the combined time from the underlying
+  # effect-site states, which is tested below and in test-recovery-engines.R.
   a <- wideSeries(c(0, 10), c(0, 4), c(0, 2), Recovery = c(0, 7))
   b <- data.frame(Time = c(0, 10), Cp = c(0, 1), Ce = c(0, 1))
 
@@ -230,4 +233,163 @@ test_that("foldMetabolites leaves a drug list with no metabolites alone", {
   expect_equal(foldMetabolites(drugs, maximum = 10), drugs)
   expect_null(foldMetabolites(NULL, maximum = 10))
   expect_equal(foldMetabolites(list(), maximum = 10), list())
+})
+
+
+# ---------------------------------------------------------------------------
+# The folded time until threshold
+# ---------------------------------------------------------------------------
+#
+# foldMetabolites() solves it again from the effect-site states of every
+# contribution, because recovery times do not add.  These tests work on
+# hand-built state sets, so that what is being checked is the fold's
+# bookkeeping rather than any drug's kinetics; the end-to-end check against
+# stopping delivery in the simulation is in test-recovery-engines.R.
+#
+# (Claude Code, Claude Opus 5, 2026-10-05; run on R 4.6.1.)
+
+# A single decaying exponential, which makes the expected time arithmetic:
+# amplitude A at rate k reaches target T after log(A / T) / k minutes.
+decaySet <- function(times, A, k)
+  recoveryStateSet(times, matrix(A * exp(-k * times), ncol = 1), k)
+
+timeToFall <- function(A, k, target) log(A / target) / k
+
+
+test_that("the fold solves recovery from the combined state", {
+  k <- 0.01
+  times <- c(0, 10, 20)
+  drugs <- list(
+    codeine = c(drugEntry("codeine"), list(
+      metaboliteName   = "morphine",
+      metaboliteSeries = data.frame(Time = times, Cp = 3 * exp(-k * times),
+                                    Ce = 3 * exp(-k * times)),
+      metaboliteRecoveryStates = decaySet(times, 3, k)
+    )),
+    morphine = c(drugEntry("morphine", wideSeries(times, 5 * exp(-k * times),
+                                                  5 * exp(-k * times))),
+                 list(endCe = 1, recoveryStatesOwn = decaySet(times, 5, k)))
+  )
+
+  out <- foldMetabolites(drugs, maximum = 20, plotRecovery = TRUE)
+
+  # Both contributions decay at the same rate here, so the combined effect site
+  # is a single exponential of amplitude 8 and the answer is exact arithmetic.
+  want <- timeToFall(8 * exp(-k * times), k, 1)
+  expect_equal(out$morphine$wide$Recovery, want, tolerance = 1e-3)
+
+  # Longer than either part alone, which is the whole point
+  expect_gt(out$morphine$wide$Recovery[1], timeToFall(5, k, 1))
+  expect_gt(out$morphine$wide$Recovery[1], timeToFall(3, k, 1))
+})
+
+
+test_that("the fold reports a time for a drug that was never given", {
+  k <- 0.02
+  times <- c(0, 25, 50)
+  drugs <- list(
+    codeine = c(drugEntry("codeine"), list(
+      metaboliteName   = "morphine",
+      metaboliteSeries = data.frame(Time = times, Cp = 4 * exp(-k * times),
+                                    Ce = 4 * exp(-k * times)),
+      metaboliteRecoveryStates = decaySet(times, 4, k)
+    )),
+    morphine = c(drugEntry("morphine"), list(endCe = 1))
+  )
+
+  out <- foldMetabolites(drugs, maximum = 50, plotRecovery = TRUE)
+  expect_equal(out$morphine$wide$Recovery,
+               timeToFall(4 * exp(-k * times), k, 1), tolerance = 1e-3)
+})
+
+
+test_that("two parents feeding one metabolite are both in the time", {
+  k <- 0.01
+  times <- c(0, 10)
+  contribution <- function(A) list(
+    metaboliteName   = "morphine",
+    metaboliteSeries = data.frame(Time = times, Cp = A * exp(-k * times),
+                                  Ce = A * exp(-k * times)),
+    metaboliteRecoveryStates = decaySet(times, A, k)
+  )
+  drugs <- list(
+    codeine     = c(drugEntry("codeine"),     contribution(2)),
+    hydrocodone = c(drugEntry("hydrocodone"), contribution(3)),
+    morphine    = c(drugEntry("morphine"), list(endCe = 1))
+  )
+
+  out <- foldMetabolites(drugs, maximum = 10, plotRecovery = TRUE)
+  expect_equal(out$morphine$wide$Recovery,
+               timeToFall(5 * exp(-k * times), k, 1), tolerance = 1e-3)
+})
+
+
+test_that("the fold interpolates states onto the merged time line", {
+  # The two drugs build their own time lines, so the receiving drug's states
+  # have to be carried onto the union before they can be added.
+  k <- 0.01
+  own    <- c(0, 20)
+  formed <- c(0, 10, 20)
+  drugs <- list(
+    codeine = c(drugEntry("codeine"), list(
+      metaboliteName   = "morphine",
+      metaboliteSeries = data.frame(Time = formed, Cp = 3 * exp(-k * formed),
+                                    Ce = 3 * exp(-k * formed)),
+      metaboliteRecoveryStates = decaySet(formed, 3, k)
+    )),
+    morphine = c(drugEntry("morphine", wideSeries(own, 5 * exp(-k * own),
+                                                  5 * exp(-k * own))),
+                 list(endCe = 1, recoveryStatesOwn = decaySet(own, 5, k)))
+  )
+
+  out <- foldMetabolites(drugs, maximum = 20, plotRecovery = TRUE)
+  expect_equal(out$morphine$wide$Time, formed)
+  # Exact at t = 10 even though the receiving drug has no point there, because
+  # the state is decayed rather than interpolated
+  expect_equal(out$morphine$wide$Recovery,
+               timeToFall(8 * exp(-k * formed), k, 1), tolerance = 1e-3)
+})
+
+
+test_that("the fold falls back on the own column when states are missing", {
+  # A caller that built the drug list by hand, or a run with plotRecovery
+  # FALSE, gets the old behaviour rather than a wrong one.
+  drugs <- list(
+    codeine = c(drugEntry("codeine"), list(
+      metaboliteName   = "morphine",
+      metaboliteSeries = data.frame(Time = c(0, 10), Cp = c(0, 2), Ce = c(0, 1))
+    )),
+    morphine = c(drugEntry("morphine",
+                           wideSeries(c(0, 10), c(0, 4), c(0, 2),
+                                      Recovery = c(0, 7))),
+                 list(endCe = 1))
+  )
+  expect_equal(foldMetabolites(drugs, maximum = 10,
+                               plotRecovery = TRUE)$morphine$wide$Recovery,
+               c(0, 7))
+
+  # And recovery is not solved at all when it was not asked for
+  withStates <- drugs
+  withStates$codeine$metaboliteRecoveryStates <-
+    decaySet(c(0, 10), 3, 0.01)
+  withStates$morphine$recoveryStatesOwn <- decaySet(c(0, 10), 5, 0.01)
+  expect_equal(foldMetabolites(withStates, maximum = 10,
+                               plotRecovery = FALSE)$morphine$wide$Recovery,
+               c(0, 7))
+})
+
+
+test_that("no threshold means no time, not an error", {
+  k <- 0.01
+  times <- c(0, 10)
+  drugs <- list(
+    codeine = c(drugEntry("codeine"), list(
+      metaboliteName   = "morphine",
+      metaboliteSeries = data.frame(Time = times, Cp = c(0, 2), Ce = c(0, 1)),
+      metaboliteRecoveryStates = decaySet(times, 3, k)
+    )),
+    morphine = drugEntry("morphine")          # no endCe at all
+  )
+  out <- foldMetabolites(drugs, maximum = 10, plotRecovery = TRUE)
+  expect_equal(out$morphine$wide$Recovery, c(0, 0))
 })

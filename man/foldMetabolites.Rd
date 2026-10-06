@@ -11,7 +11,9 @@ foldMetabolites(drugs, maximum, plotRecovery = FALSE)
 
 \item{maximum}{maximum length of simulation in minutes}
 
-\item{plotRecovery}{should recovery be kept in the plotted series?}
+\item{plotRecovery}{should recovery be kept in the plotted series, and the
+receiving drug's time until threshold solved again from the combined
+effect site?}
 }
 \value{
 the drug list with metabolite contributions folded in
@@ -20,7 +22,10 @@ the drug list with metabolite contributions folded in
 Walks the simulated drug list, and for each drug carrying a metabolite adds
 that contribution to the metabolite drug's own series, creating the series if
 the metabolite drug was not given directly.  The receiving drug's plotted
-series, equispaced grid and maxima are then recomputed from the sum.
+series, equispaced grid and maxima are then recomputed from the sum, and so
+is its time until threshold -- which cannot be taken from either part,
+because recovery times do not add.  See the header, and
+\code{foldedRecovery()}.
 }
 \details{
 This has to run after every drug has been simulated, because a metabolite
