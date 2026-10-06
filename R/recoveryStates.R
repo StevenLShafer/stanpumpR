@@ -30,10 +30,38 @@
 # not.
 #
 # A state set is a list of
-#   time   the engine's own time line, length L
-#   state  an L x K matrix of effect-site amplitudes
-#   lambda the K eigenvalues: a vector when the PK does not change, or an L x K
-#          matrix when it does (advanceClosedForm1)
+#   time    the engine's own time line, length L
+#   state   an L x K matrix of effect-site amplitudes
+#   lambda  the K eigenvalues: a vector when the PK does not change, or an L x K
+#           matrix when it does (advanceClosedForm1)
+#   pending an optional length-L logical: the times at which these amplitudes
+#           do NOT tell the whole story, because a dose has been given that has
+#           not begun to be absorbed
+#
+# WHAT THE MASK IS FOR
+# ====================
+# An extravascular dose may carry an absorption lag, and the engines apply it
+# by moving the dose later.  Between being given and starting, the drug is in
+# the patient but has no state in the model at all, so recoveryCalc() finds
+# nothing above the threshold and returns zero -- which reads as "recovered"
+# when it means "not yet absorbed".  Those are opposite situations and the
+# number cannot tell them apart.
+#
+# The mask makes the engine say so: NA, not zero, wherever a dose is pending.
+# It is not only the zero case.  A pending dose makes the answer wrong even
+# when other doses give a nonzero one, because the time reported leaves out
+# drug that is certain to be absorbed.
+#
+# This is deliberately the small half of the problem.  Reporting the RIGHT time
+# through a lag means recoveryCalc() accounting for input that has not arrived,
+# and a dose starting in the future contributes a delayed term that is not a
+# sum of exponentials from now -- the one representation recoveryCalc() takes.
+# That is a change to its contract and is left alone here.
+#
+# As of 2026-10-06 no drug in the library carries a nonzero lag: hydromorphone's
+# intramuscular and intranasal lags were the last, and were removed when its
+# absorption was refitted.  This is a guard against the next drug that sets
+# one, and the engines' lag machinery is untouched and still live.
 #
 # Each engine builds one while it is computing recovery anyway, so carrying it
 # out costs a cbind().
@@ -47,10 +75,16 @@
 #'   eigenvalue
 #' @param lambda the eigenvalues: a vector of length \code{ncol(state)}, or a
 #'   matrix the same shape as \code{state} when the PK changes with time
+#' @param pending optional logical, one per time, TRUE where a dose has been
+#'   given but has not begun to be absorbed and the amplitudes therefore do not
+#'   describe the whole of what the patient has received.  NULL, the default,
+#'   means nothing is ever pending, which is the case for every intravenous
+#'   dose and for any extravascular one with no lag.
 #'
-#' @returns a state set: a list of \code{time}, \code{state} and \code{lambda}
+#' @returns a state set: a list of \code{time}, \code{state}, \code{lambda}
+#'   and \code{pending}
 #' @keywords internal
-recoveryStateSet <- function(time, state, lambda)
+recoveryStateSet <- function(time, state, lambda, pending = NULL)
 {
   state <- if (is.matrix(state)) state else do.call(cbind, state)
   stopifnot(nrow(state) == length(time))
@@ -59,7 +93,14 @@ recoveryStateSet <- function(time, state, lambda)
   } else {
     stopifnot(length(lambda) == ncol(state))
   }
-  list(time = time, state = state, lambda = lambda)
+  if (!is.null(pending))
+  {
+    stopifnot(is.logical(pending), length(pending) == length(time))
+    # Nothing pending anywhere is the same as no mask, and dropping it here
+    # keeps the common case from carrying a vector of FALSE around.
+    if (!any(pending)) pending <- NULL
+  }
+  list(time = time, state = state, lambda = lambda, pending = pending)
 }
 
 
@@ -102,7 +143,7 @@ advanceStatesOnto <- function(set, times)
     matrix(set$lambda, L, K, byrow = TRUE)
 
   if (identical(times, t0))
-    return(list(time = times, state = S, lambda = Lam))
+    return(list(time = times, state = S, lambda = Lam, pending = set$pending))
 
   # The interval each new time falls in.  lo is the last point at or before it;
   # hi the next one.  A time at or beyond the last point has lo == hi, and then
@@ -143,7 +184,14 @@ advanceStatesOnto <- function(set, times)
     out[flat] <- lin[flat]
   }
 
-  list(time = times, state = out, lambda = lam)
+  # The mask is a step function that turns on when a dose is given and off when
+  # it starts absorbing, and both of those instants are points on the engine's
+  # own line, so the LEFT anchor's value holds across the interval.  That is
+  # the opposite end from the one lambda is taken at, because they are
+  # different kinds of quantity: lambda describes the step INTO hi, while
+  # pending describes the state AT lo and onwards.
+  list(time = times, state = out, lambda = lam,
+       pending = if (is.null(set$pending)) NULL else set$pending[lo])
 }
 
 
@@ -153,7 +201,8 @@ advanceStatesOnto <- function(set, times)
 #' @param emerge the threshold the effect site has to fall to
 #'
 #' @returns minutes, one per row of \code{set$state}; zeros when there is no
-#'   threshold to fall to
+#'   threshold to fall to, and NA wherever \code{set$pending} says a dose has
+#'   been given that has not begun to be absorbed
 #' @keywords internal
 recoveryFromStates <- function(set, emerge)
 {
@@ -163,9 +212,13 @@ recoveryFromStates <- function(set, emerge)
   Lam <- if (is.matrix(set$lambda)) set$lambda else
     matrix(set$lambda, nT, ncol(set$state), byrow = TRUE)
 
-  vapply(seq_len(nT),
-         function(i) recoveryCalc(set$state[i, ], Lam[i, ], emerge),
-         numeric(1))
+  out <- vapply(seq_len(nT),
+                function(i) recoveryCalc(set$state[i, ], Lam[i, ], emerge),
+                numeric(1))
+
+  # Not computable rather than zero; see the header.
+  if (!is.null(set$pending)) out[set$pending] <- NA_real_
+  out
 }
 
 
@@ -189,9 +242,19 @@ combinedRecovery <- function(times, sets, emerge)
   # line, so the two cbinds line up whether or not a contributor's PK changed
   # with time.
   onto <- lapply(sets, advanceStatesOnto, times = times)
+
+  # Any one contribution with a dose still to start makes the combined answer
+  # incomplete, so the masks are OR'd: a pending parent dose leaves the
+  # metabolite drug's row unable to report a time just as a pending dose of its
+  # own would.
+  pending <- Reduce(`|`, lapply(onto, function(x)
+    if (is.null(x$pending)) logical(length(times)) else x$pending))
+  if (!any(pending)) pending <- NULL
+
   recoveryFromStates(
-    list(state  = do.call(cbind, lapply(onto, `[[`, "state")),
-         lambda = do.call(cbind, lapply(onto, `[[`, "lambda"))),
+    list(state   = do.call(cbind, lapply(onto, `[[`, "state")),
+         lambda  = do.call(cbind, lapply(onto, `[[`, "lambda")),
+         pending = pending),
     emerge
   )
 }
@@ -237,4 +300,36 @@ effectSiteCoefficients <- function(coefs, ke0)
   out <- list(lambda = c(lambda, ke0), bolus = bolus, PO = link(coefs$PO))
   out$infusion <- if (is.null(bolus)) NULL else bolus / out$lambda
   out
+}
+
+
+#' Times at which a dose has been given but has not begun to be absorbed
+#'
+#' An extravascular dose may carry an absorption lag, and the engines apply it
+#' by moving the dose later.  Over the interval between the two the drug is in
+#' the patient and nothing in the model represents it, so recovery cannot be
+#' computed and must not be reported as zero.  See R/recoveryStates.R.
+#'
+#' @param given the dose times as the user entered them
+#' @param started the same times after their lags have been added
+#' @param amount the doses, so that a zero-dose row -- which some callers add
+#'   purely to put a point on the time line -- does not blank anything
+#' @param times the time line to report on
+#'
+#' @returns logical, one per element of \code{times}; NULL when no dose carries
+#'   a lag at all, which is every intravenous case and the normal
+#'   extravascular one
+#' @keywords internal
+pendingDoseTimes <- function(given, started, amount, times)
+{
+  lagged <- which(started > given & amount != 0)
+  if (length(lagged) == 0) return(NULL)
+
+  # Half open: pending from the instant it is given up to, but not including,
+  # the instant it starts.  At the start instant the state exists and recovery
+  # is computable again.
+  out <- logical(length(times))
+  for (i in lagged)
+    out <- out | (times >= given[i] & times < started[i])
+  if (!any(out)) NULL else out
 }

@@ -4,7 +4,7 @@
 \alias{recoveryStateSet}
 \title{Assemble a set of effect-site exponential states}
 \usage{
-recoveryStateSet(time, state, lambda)
+recoveryStateSet(time, state, lambda, pending = NULL)
 }
 \arguments{
 \item{time}{the engine's time line}
@@ -14,9 +14,16 @@ eigenvalue}
 
 \item{lambda}{the eigenvalues: a vector of length \code{ncol(state)}, or a
 matrix the same shape as \code{state} when the PK changes with time}
+
+\item{pending}{optional logical, one per time, TRUE where a dose has been
+given but has not begun to be absorbed and the amplitudes therefore do not
+describe the whole of what the patient has received.  NULL, the default,
+means nothing is ever pending, which is the case for every intravenous
+dose and for any extravascular one with no lag.}
 }
 \value{
-a state set: a list of \code{time}, \code{state} and \code{lambda}
+a state set: a list of \code{time}, \code{state}, \code{lambda}
+and \code{pending}
 }
 \description{
 Assemble a set of effect-site exponential states

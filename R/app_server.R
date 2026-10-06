@@ -809,7 +809,16 @@ app_server <- function(input, output, session) {
     returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs()[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
     if (plotRecovery())
     {
-      returnText <- paste0(returnText,", Time until threshold: ",round(drugs()[[drug]]$equiSpace$Recovery[j], 1), " minutes")
+      recovery <- drugs()[[drug]]$equiSpace$Recovery[j]
+      # Missing means a dose has been given that has not begun to be absorbed,
+      # so there is no time to report rather than a time of zero.  Saying which
+      # it is, because "0 minutes" and "not yet absorbed" are opposites.
+      returnText <- paste0(
+        returnText, ", Time until threshold: ",
+        if (length(recovery) != 1 || is.na(recovery))
+          "not yet, dose still being absorbed"
+        else paste(round(recovery, 1), "minutes")
+      )
     }
     return(returnText)
   }

@@ -9,17 +9,24 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   ##############################################
 
   # Add tlag_ to PO, IM, and IN dose times
+  givenAt <- dose$Time
   dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
   dose$Time[dose$IM] <- dose$Time[dose$IM] + pkSet$tlag_IM
   dose$Time[dose$IN] <- dose$Time[dose$IN] + pkSet$tlag_IN
 
   # Create timeline
+  #
+  # A lagged dose contributes the instant it was GIVEN as well, which is not
+  # otherwise a point on the line, so that the window over which recovery
+  # cannot be reported starts exactly where it should.  Only when some dose is
+  # actually lagged, so that an unlagged run keeps the line it always had.
   timeLine <- sort(
     unique(
       c(
         0,
         dose$Time,
         dose$Time - .01, # run until just before next dose
+        givenAt[givenAt < dose$Time],
         maximum
       )
     )
@@ -165,7 +172,8 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
           timeLine,
           list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
                e_state_ka_PO, e_state_ka_IM, e_state_ka_IN),
-          c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN)
+          c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN),
+          pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
         )
         recovery <- recoveryFromStates(recoveryStates, emerge)
       } else {

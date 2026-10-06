@@ -8,7 +8,7 @@
 # column names used non-standardly inside dplyr/ggplot2 calls, or created as a
 # side effect at run time
 utils::globalVariables(c(
-  "Drug", "Label", "MEAC", "Recovery", "Site", "Time", "Y",
+  "Drug", "Label", "MEAC", "Recovery", "Segment", "Site", "Time", "Y",
   "endCe", "new", "outputString", "xmax", "xmin", "y", "ymax", "ymin"
 ))
 

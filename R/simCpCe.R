@@ -44,16 +44,27 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   } else {
     stats::approx(x = results$Time, y = results$"Effect Site", xout = xout)$y
   }
+  # Recovery is missing wherever it could not be computed -- a dose given that
+  # has not begun to be absorbed; see pendingDoseTimes().  na.rm = FALSE so
+  # that such a stretch stays missing instead of being interpolated across,
+  # which would invent a number for exactly the interval that has none.  It
+  # costs up to one grid step of extra blank at each end of the stretch, the
+  # bracketing interval being partly unknown, and erring blank is the right way
+  # round.  approx() refuses a column with fewer than two known values, so the
+  # all-missing case -- a dose that never starts within the run -- is handled
+  # before it gets there.
+  equiSpaceRecovery <- if (sum(!is.na(results$Recovery)) < 2) {
+    rep(NA_real_, length(xout))
+  } else {
+    stats::approx(x = results$Time, y = results$Recovery, xout = xout,
+                  na.rm = FALSE)$y
+  }
   equiSpace <- data.frame(
     Drug = PK$drug,
     Time = xout,
     Ce = equiSpaceCe,
     Time = xout,
-    Recovery = stats::approx(
-      x = results$Time,
-      y = results$Recovery,
-      xout = xout
-    )$y
+    Recovery = equiSpaceRecovery
   )
 
   equiSpace$Ce[1] <- 0  # Approx tends to make it a very small negative number
@@ -63,9 +74,14 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   } else {
     equiSpace$MEAC <- equiSpace$Ce / PK$MEAC * 100
   }
+  # na.rm, for the same reason, and -Inf rather than a maximum if every point
+  # is missing.  The plot reads this to scale the recovery axis and treats zero
+  # as "no axis to draw", which is what an all-missing column should give.
+  maxRecovery <- suppressWarnings(max(results$Recovery, na.rm = TRUE))
+  if (!is.finite(maxRecovery)) maxRecovery <- 0
   max <- data.frame(
     Drug = PK$drug,
-    Recovery = max(results$Recovery),
+    Recovery = maxRecovery,
     Cp = maxCp,
     Ce = maxCe
   )

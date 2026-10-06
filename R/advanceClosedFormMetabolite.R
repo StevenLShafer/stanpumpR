@@ -81,6 +81,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
          "coefficients.")
 
   # Oral doses appear after their absorption lag.
+  givenAt <- dose$Time
   if (hasPO) dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
 
   # Timeline: dose times, the instant before each dose, and a geometric fill so
@@ -92,9 +93,14 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # plotted series interpolates straight across that jump and reports a time
   # until threshold that is far too long.  advanceClosedFormPO_IM_IN() takes
   # the same precaution for the same reason.
+  # A lagged dose also contributes the instant it was GIVEN, so that the window
+  # over which recovery cannot be reported starts exactly where it should; see
+  # pendingDoseTimes().  Only when some dose is actually lagged, so an unlagged
+  # run keeps the line it always had.
   before <- dose$Bolus
   if (hasPO) before <- before | dose$PO
-  timeLine <- sort(unique(c(0, dose$Time, dose$Time[before] - .01, maximum)))
+  timeLine <- sort(unique(c(0, dose$Time, dose$Time[before] - .01,
+                            givenAt[givenAt < dose$Time], maximum)))
   timeLine <- timeLine[timeLine >= 0]
 
   gapStart <- timeLine[1:length(timeLine) - 1]
@@ -231,8 +237,13 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   Cm[Cm < 0] <- 0
   if (hasCe) Cem[Cem < 0] <- 0
 
+  # The parent's pending doses leave the METABOLITE's row unable to report a
+  # time too: metabolite certain to be formed from a dose that has not started
+  # absorbing is missing from these amplitudes just as the parent's own is.
+  pending <- pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
+
   metaboliteStates <- if (hasCe) {
-    recoveryStateSet(timeLine, CemStates, metCoefs$lambda)
+    recoveryStateSet(timeLine, CemStates, metCoefs$lambda, pending)
   } else {
     NULL
   }
@@ -271,7 +282,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
                                     pkSet$e_coef_PO_ka * poLine, doseNA, doseNA, L)
       lambdas <- c(lambdas, pkSet$ka_PO)
     }
-    recoveryStates <- recoveryStateSet(timeLine, states, lambdas)
+    recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending)
     recovery <- recoveryFromStates(recoveryStates, emerge)
   } else {
     recoveryStates <- NULL

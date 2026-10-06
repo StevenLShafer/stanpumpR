@@ -575,7 +575,7 @@ simulationPlot <- function(
     for (i in 1:nplotTable)
     {
       USE <- recovery$Drug == as.character(plotTable$Drug[i])
-      if (plotTable$MaxRecovery[i] > 0)
+      if (isTRUE(plotTable$MaxRecovery[i] > 0))
       {
 #        labels <- as.numeric(x$layout$panel_params[[i]]$y.labels)
         labels <- as.numeric(stats::na.omit(x$layout$panel_params[[i]]$y$get_labels()))
@@ -617,6 +617,16 @@ simulationPlot <- function(
     recoveryLabels$Wrap <- factor(recoveryLabels$Wrap, levels=wrapFactors, ordered = TRUE)
     recovery$Wrap <- factor(recovery$Wrap, levels=wrapFactors, ordered = TRUE)
     arrows$Wrap   <- factor(arrows$Wrap, levels=wrapFactors, ordered = TRUE)
+
+    # Recovery is missing wherever it could not be computed -- a dose given
+    # that has not begun to be absorbed; see pendingDoseTimes().  Break the
+    # line there rather than drawing across the gap, which would assert a time
+    # for the one stretch that has none.  An explicit group, rather than
+    # relying on how the geom happens to treat a missing value.  With nothing
+    # missing the group is constant and the line is exactly the one drawn
+    # before.
+    recovery$Segment <- cumsum(is.na(recovery$Recovery))
+    recovery <- recovery[!is.na(recovery$Recovery), , drop = FALSE]
 
     # Step A7: finish plotObject
 
@@ -667,7 +677,8 @@ simulationPlot <- function(
        data = recovery,
        ggplot2::aes(
          x = Time,
-         y = Recovery
+         y = Recovery,
+         group = Segment
         ),
        show.legend = FALSE,
        color = "black",

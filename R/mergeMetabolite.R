@@ -88,10 +88,10 @@ mergeMetaboliteSeries <- function(base, addition)
   # rule = 2 holds the end values rather than returning NA.  Both series run to
   # the same simulation end, so this only guards the endpoints against floating
   # point, and never extrapolates a curve into territory it did not cover.
-  onto <- function(df, column) {
+  onto <- function(df, column, keepNA = FALSE) {
     y <- df[[column]]
     if (all(is.na(y))) return(rep(NA_real_, length(times)))
-    stats::approx(df$Time, y, times, rule = 2)$y
+    stats::approx(df$Time, y, times, rule = 2, na.rm = !keepNA)$y
   }
 
   data.frame(
@@ -101,7 +101,11 @@ mergeMetaboliteSeries <- function(base, addition)
     # Recovery is not summed.  The receiving drug's own column is carried here
     # as a placeholder; foldMetabolites() solves for the combined time until
     # threshold from the underlying states and overwrites it.  See the header.
-    Recovery      = onto(base, "Recovery"),
+    # keepNA: a stretch where recovery could not be computed stays missing
+    # rather than being interpolated across.  foldMetabolites() normally
+    # overwrites this from the combined states anyway; this is the fallback
+    # path, where the receiving drug's own column is all there is.
+    Recovery      = onto(base, "Recovery", keepNA = TRUE),
     check.names   = FALSE
   )
 }

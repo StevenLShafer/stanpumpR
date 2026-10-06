@@ -13,7 +13,8 @@ recoveryFromStates(set, emerge)
 }
 \value{
 minutes, one per row of \code{set$state}; zeros when there is no
-threshold to fall to
+threshold to fall to, and NA wherever \code{set$pending} says a dose has
+been given that has not begun to be absorbed
 }
 \description{
 Time until threshold from a set of effect-site states
