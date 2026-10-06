@@ -788,8 +788,11 @@ app_server <- function(input, output, session) {
       return("Click to enter events, Double click to edit events")
     }
 
-    x <- unlist(strsplit(yaxis," "))
-    drug <- x[1]
+    # The panel title is "<name>\n(<units>)".  The series behind it is looked
+    # up through plotResults rather than by splitting the title on spaces,
+    # because a title may itself contain one ("MAC equivalents").
+    drug <- as.character(plotResults$Drug[as.character(plotResults$Wrap) == e$panelvar1])[1]
+    if (is.na(drug)) return(NULL)
     outputComments("Drug identified in xy_str() is", drug)
 
     # if the panel's drug was just removed, drugs()[[drug]] will be NULL until
@@ -797,8 +800,8 @@ app_server <- function(input, output, session) {
     if (!drug %in% names(drugs())) return(NULL)
 
     j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
-    x[2] <- substr(x[2],2,10)
-    x[2] <- substr(x[2],1,nchar(x[2])-1)
+    x <- c(sub("\\s*\\(.*$", "", yaxis),                 # the name as shown
+           sub("^.*\\((.*)\\)\\s*$", "\\1", yaxis))      # the units, unbracketed
     time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
     if (referenceTime() == REFERENCE_TIME_NONE)
     {
@@ -901,7 +904,10 @@ app_server <- function(input, output, session) {
     } else if (yaxis == PLOT_NAME_EVENTS) {
       drug <- PLOT_ID_EVENTS
     } else {
-      drug <- unlist(strsplit(yaxis, " "))[1]
+      # Looked up through the panel title rather than its first word, since a
+      # title may contain a space ("MAC equivalents").
+      drug <- as.character(plotResults$Drug[as.character(plotResults$Wrap) == e$panelvar1])[1]
+      if (is.na(drug)) drug <- unlist(strsplit(yaxis, " "))[1]
     }
     outputComments("drug from panelvar1", drug)
 
@@ -1625,7 +1631,7 @@ app_server <- function(input, output, session) {
         title = "Drug Thresholds",
         p("Set the threshold concentration for each drug."),
         p(class = "small text-muted",
-          "Inhaled agents are in %, shown for this patient's age; MAC is in multiples of MAC."),
+          "Inhaled agents are in %, shown for this patient's age; the MAC row is in MAC equivalents (multiples of the age-adjusted MAC)."),
         if (input$normalization == NORMALIZE_NONE)
           checkboxInput("showThresholdModal", "Show time until threshold", value = input$showThreshold),
         shinycssloaders::withSpinner(rhandsontable::rHandsontableOutput("editThresholdsTable", height = 350)),

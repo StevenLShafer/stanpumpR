@@ -286,8 +286,16 @@ drug list and behave like any other row in the dose table:
 | ventilation | L/min | Minute ventilation |
 
 Set the flows, the vaporiser, and the ventilation, and the program simulates
-alveolar and brain tensions for each agent, plus MAC. Nitrogen is carried
-implicitly and washes out; you do not enter it.
+alveolar and brain tensions for each agent, plus a **MAC equivalents** panel.
+Nitrogen is carried implicitly and washes out; you do not enter it.
+
+Two meanings of "MAC" are kept apart. *MAC* is a property of an agent: the
+alveolar concentration at which half of patients do not move to incision, 2.1%
+for sevoflurane at age 40, lower in the old and higher in the young. It does
+not change during an anaesthetic. What changes is the patient's alveolar
+concentration *as a multiple of that MAC* — the MAC equivalents panel, summed
+over the potent agents present. "1 MAC of sevoflurane" means an alveolar
+concentration of one MAC equivalent.
 
 The engine reproduces the Gas Man model, including the concentration and second
 gas effect — nitrous oxide taken up in bulk concentrates whatever else is in the
@@ -312,9 +320,9 @@ flows and ventilation are rounded to the nearest 0.1 L/min.
 ### Opioids and MAC
 
 Opioids lower MAC. Under **Graph Options**, ticking *Include opioid - MAC
-interaction* reports the MAC series in multiples of the opioid-reduced MAC, so
-the same end-tidal concentration reads as more MAC when an opioid is on board.
-The gas concentrations themselves do not change.
+interaction* reports MAC equivalents relative to the opioid-reduced MAC, so
+the same end-tidal concentration reads as more MAC equivalents when an opioid
+is on board. The gas concentrations themselves do not change.
 
 The opioids are combined by adding their effect-site concentrations, each as a
 multiple of that opioid's MEAC: U = sum of Ce / MEAC. This is the total shown in
@@ -322,8 +330,8 @@ the % MEAC plot. The fractional reduction in MAC is then
 
     R = Emax x U^gamma / (U50^gamma + U^gamma)
 
-and the MAC series is divided by (1 - R). Nitrous oxide is already part of the
-MAC series, so it is included.
+and the MAC equivalents are divided by (1 - R). Nitrous oxide is already part
+of the MAC equivalents, so it is included.
 
 **This is an approximate model.** The published studies of opioid MAC reduction
 do not agree well with one another. The parameters in use (Emax 0.9, U50 1.76,
@@ -336,7 +344,7 @@ The comparison with the published points is in the header of
 ### Time until threshold, for the inhaled agents
 
 *Time until threshold* (Graph Options) works for the inhaled agents and for MAC
-as it does for the intravenous drugs: at every moment, how long until the
+equivalents as it does for the intravenous drugs: at every moment, how long until the
 concentration would fall to the threshold if the agent were turned off right
 then. It is drawn as a thin black line on each panel, read against the minute
 labels at the right-hand edge. The Y axis is linear while it is showing.
@@ -356,7 +364,7 @@ What "turned off" means for a gas (S. Shafer, 2026-10-05):
 |---|---|---|
 | sevoflurane, isoflurane, desflurane | Vessel-rich group (brain) tension, the solid line | 0.1 x the age-adjusted MAC of that agent |
 | nitrous oxide | Vessel-rich group (brain) tension | 10% |
-| MAC | The MAC series itself, which is alveolar, with every agent turned off | 0.1 MAC |
+| MAC equivalents | The summed series itself, which is alveolar, with every agent turned off | 0.1 MAC equivalents |
 | oxygen | Not timed | none |
 
 All of these can be changed in the Drug Thresholds dialog. The volatile agents
@@ -392,7 +400,7 @@ S. Shafer, 2026-10-05) and will remain:
 | Ventilation and dead space | The ventilation setting is alveolar ventilation; there is no dead space | The ventilation setting is minute ventilation, 30% of it dead space. Rebreathing stops when fresh gas flow reaches the minute ventilation | Minute ventilation is what is set on a ventilator and read from a monitor |
 | Oxygen consumption and gas volume | No oxygen, so no volume is lost to it | Oxygen consumed (3.5 mL/kg/min) shrinks the gas volume, as uptake of an anaesthetic does. Carbon dioxide replaces most of it in the alveoli and is then removed by the absorber from whatever exhaled gas is rebreathed | Without it the gas fractions do not add up at low flows. With 0.3 L/min of oxygen and 1 L/min of nitrous oxide, what leaves the circuit is the 1.3 L/min delivered less the 0.21 L/min consumed: 92% nitrous oxide and 8% oxygen, not the 77% and 23% delivered |
 | MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
-| MAC across agents | Each agent reported separately | A single MAC series, the sum of each potent agent's alveolar fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
+| MAC across agents | Each agent reported separately | A single MAC-equivalents series, the sum of each potent agent's alveolar concentration as a fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
 | Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |
 | Nitrogen | Carried only if nitrogen is added to the run as an agent | Always carried; its washout from the body is part of the summed uptake that couples the gases | The patient starts full of nitrogen whether or not anyone enters it, and it leaves through the same alveoli |
 | Starting nitrogen | 80% (`Ambient=80`) | 78.07%, with oxygen at 20.93% | Room air, so that the gas fractions sum correctly once oxygen is modelled |

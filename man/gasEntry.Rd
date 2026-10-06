@@ -26,7 +26,8 @@ gasEntry(
 
 \item{drugDefaults}{drug defaults table}
 
-\item{unitLabel}{axis-label units for the facet, e.g. "\\%" or "MAC"}
+\item{unitLabel}{axis-label units for the facet, e.g. "\\%" for a gas or
+"age-adjusted" for the MAC-equivalents series}
 
 \item{typical}{named vector of lower, typical, upper for the shaded band}
 
