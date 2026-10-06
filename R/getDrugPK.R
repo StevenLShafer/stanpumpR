@@ -63,6 +63,14 @@ getDrugPK <- function(
   # function", which is what test-gas-routing.R pins.
   X <- do.call(drug, covariates)
   tPeak <- X$tPeak
+  # Which curve tPeak was measured against.  Defaults to the intravenous
+  # bolus, which is what every drug in the library assumed before oral-only
+  # drugs arrived, so no existing model changes.
+  tPeakRoute <- if (is.null(X$tPeakRoute)) ROUTE_IV else X$tPeakRoute
+  if (length(tPeakRoute) != 1 || !tPeakRoute %in% TPEAK_ROUTES) {
+    stop("Invalid tPeakRoute for ", drug, ": ", paste(tPeakRoute, collapse = ", "),
+         ". Must be one of: ", paste(TPEAK_ROUTES, collapse = ", "))
+  }
 
   events <- names(X$PK)
   for (event in events)
@@ -257,17 +265,39 @@ getDrugPK <- function(
     if (lambda_3 > 0) p_coef_infusion_l3 <- p_coef_bolus_l3 / lambda_3
 
     # find ke0 from tPeak
+    #
+    # ke0 is whatever makes the peak EFFECT SITE concentration fall at tPeak.
+    # Which plasma curve that peak is measured against matters: a tPeak
+    # observed after an intravenous bolus has to be solved against the bolus
+    # response, and one observed after an oral dose against the ORAL response.
+    #
+    # Solving an oral tPeak against the bolus curve counts the absorption
+    # delay twice, because the oral curve already peaks late.  For hydrocodone
+    # that error is about 24 minutes.
     if (tPeak > 0)
     {
-      ke0 <- stats::optimize(
-        tPeakError, c(0,200),tPeak,
-        p_coef_bolus_l1,
-        p_coef_bolus_l2,
-        p_coef_bolus_l3,
-        lambda_1,
-        lambda_2,
-        lambda_3
-      )$minimum
+      if (identical(tPeakRoute, ROUTE_PO))
+      {
+        ke0 <- ke0FromTPeak(
+          tPeak = tPeak,
+          coef = c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3) *
+                 ka_PO / (ka_PO - c(lambda_1, lambda_2, lambda_3)) *
+                 bioavailability_PO,
+          lambda = c(lambda_1, lambda_2, lambda_3),
+          ka = ka_PO,
+          drug = drug
+        )
+      } else {
+        ke0 <- stats::optimize(
+          tPeakError, c(0,200),tPeak,
+          p_coef_bolus_l1,
+          p_coef_bolus_l2,
+          p_coef_bolus_l3,
+          lambda_1,
+          lambda_2,
+          lambda_3
+        )$minimum
+      }
     } else {
       ke0 <- 0
     }
@@ -501,6 +531,7 @@ getDrugPK <- function(
     list(
       drug = drug,
       PK = PK,
+      tPeakRoute = tPeakRoute,
       tPeak = tPeak,
       pkEvents = events,
       reference = if (is.null(X$reference)) "Not Available" else X$reference,
@@ -526,6 +557,91 @@ getDrugPK <- function(
   out$metaboliteName <- metaboliteName
   return(out)
 }
+
+#' Time of the peak effect site concentration for a given plasma curve
+#'
+#' The plasma curve is supplied as a sum of exponentials.  Convolving it with
+#' the effect site's own response, ke0 exp(-ke0 t), is again a sum of
+#' exponentials over the same eigenvalues plus ke0, so the peak is found by
+#' maximising that sum directly.
+#'
+#' @param coef coefficients of the plasma curve
+#' @param lambda its eigenvalues, same length
+#' @param ke0 effect site rate constant, per minute
+#' @param upper longest time to search, in minutes
+#' @returns the time of the maximum, in minutes
+#' @keywords internal
+effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
+{
+  use <- lambda > 0
+  coef <- coef[use]
+  lambda <- lambda[use]
+  e <- coef * ke0 / (ke0 - lambda)
+  stats::optimize(
+    function(t) sum(e * exp(-lambda * t)) - sum(e) * exp(-ke0 * t),
+    c(0, upper), maximum = TRUE
+  )$maximum
+}
+
+
+#' Back-solve ke0 from a time to peak effect observed after an oral dose
+#'
+#' The effect site always peaks LATER than the plasma curve driving it, because
+#' dCe/dt = ke0 (Cp - Ce) is still positive at the moment Cp turns over.  The
+#' peak time falls monotonically towards the plasma peak as ke0 rises, so there
+#' is exactly one ke0 for any target later than the plasma peak, and none at
+#' all for a target at or before it.
+#'
+#' That second case is a real failure rather than a numerical one: a reported
+#' peak effect earlier than the reported peak concentration cannot be produced
+#' by any effect site model, and usually means the two numbers came from
+#' different sources or that the earlier one describes onset rather than
+#' maximum.  It raises instead of returning a huge ke0 that would quietly make
+#' the effect site a copy of the plasma curve.
+#'
+#' @param tPeak observed time to peak effect after an oral dose, in minutes
+#' @param coef coefficients of the oral plasma curve on the drug's own
+#'   eigenvalues, already carrying absorption and bioavailability
+#' @param lambda those eigenvalues
+#' @param ka absorption rate constant, per minute
+#' @param drug the drug's name, used only in the error message
+#' @returns ke0, per minute
+#' @keywords internal
+ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug")
+{
+  if (is.null(ka) || ka <= 0)
+    stop("An oral tPeak needs an oral absorption constant, but ", drug,
+         " has none.")
+
+  use <- lambda > 0
+  # The oral plasma curve: the drug's own exponentials plus the absorption one,
+  # whose coefficient is minus the sum of the others so the curve starts at zero.
+  oralCoef   <- c(coef[use], -sum(coef[use]))
+  oralLambda <- c(lambda[use], ka)
+
+  plasmaPeak <- stats::optimize(
+    function(t) sum(oralCoef * exp(-oralLambda * t)),
+    c(0, 4000), maximum = TRUE
+  )$maximum
+
+  if (tPeak <= plasmaPeak)
+    stop("Cannot solve ke0 for ", drug, ": a peak effect at ", round(tPeak, 1),
+         " min is not reachable, because the oral plasma concentration itself ",
+         "peaks at ", round(plasmaPeak, 1), " min and the effect site always ",
+         "peaks later. Either the time to peak effect belongs after that, or ",
+         "the absorption constant is too slow.")
+
+  peakAt <- function(ke0) effectSitePeakTime(oralCoef, oralLambda, ke0)
+
+  # Bracket: peakAt() falls towards plasmaPeak as ke0 grows.  Widen downwards
+  # until the peak is later than the target, which must happen as ke0 -> 0.
+  lo <- 1e-6
+  hi <- 10
+  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
+  stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
+                 tol = .Machine$double.eps^0.5)$root
+}
+
 
 # Calculate the error between the predicted and actual time of peak effect
 # site concentration

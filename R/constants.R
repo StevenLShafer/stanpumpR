@@ -9,6 +9,13 @@ SEX_MALE <- "male"
 SEX_FEMALE <- "female"
 SEX_VALUES <- c(SEX_MALE, SEX_FEMALE)
 
+# Which plasma curve a drug's tPeak was observed against.  getDrugPK() solves
+# ke0 so the effect site peaks at tPeak, and the answer depends on whether the
+# observation followed an intravenous bolus or an oral dose.
+ROUTE_IV <- "IV"
+ROUTE_PO <- "PO"
+TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
+
 # CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
 # genotyping laboratories report, rather than the three the UI carried before
 # any drug used them.  "normal" is the reference: a drug's formation parameters
