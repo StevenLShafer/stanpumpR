@@ -67,6 +67,25 @@ test_that("every help: and scenario: link in the Markdown resolves", {
   }
 })
 
+test_that("every screenshot the help references ships with the package", {
+  www <- system.file("www", package = "stanpumpR")
+  found <- 0
+  for (id in helpMarkdownIds()) {
+    text <- helpReadMarkdown(id)
+    refs <- regmatches(text, gregexpr("stanpumpr-assets/[A-Za-z0-9_./-]+", text))[[1]]
+    for (r in unique(refs)) {
+      found <- found + 1
+      expect_true(file.exists(file.path(www, sub("^stanpumpr-assets/", "", r))),
+                  info = sprintf("%s references missing image %s", id, r))
+    }
+  }
+  expect_gt(found, 0)
+  # and the figures render as figures, not escaped text
+  html <- helpPageHTML("quick-start")
+  expect_match(html, '<figure class="help-figure', fixed = TRUE)
+  expect_match(html, '<img src="stanpumpr-assets/help/quick-start-doses.png"', fixed = TRUE)
+})
+
 test_that("help links become data attributes and external links open in a new tab", {
   html <- helpMarkdownToHTML("See [propofol](help:drugs/propofol), [load](scenario:propofol-bolus) and [PubMed](https://pubmed.ncbi.nlm.nih.gov/1/).")
   expect_match(html, 'href="#" data-help-page="drugs/propofol"', fixed = TRUE)

@@ -361,3 +361,27 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   padding: 0 0.1em;
   background: #fff3b0;
 }
+
+/* screenshots in the help */
+.help-body .help-figure {
+  margin: 1rem 0 1.5rem;
+}
+.help-body .help-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #dbe1e6;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.help-body .help-figure-medium {
+  max-width: 480px;
+}
+.help-body .help-figure-narrow {
+  max-width: 300px;
+}
+.help-body .help-figure figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #4a5764;
+}
