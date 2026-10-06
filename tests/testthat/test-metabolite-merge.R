@@ -393,3 +393,54 @@ test_that("no threshold means no time, not an error", {
   out <- foldMetabolites(drugs, maximum = 10, plotRecovery = TRUE)
   expect_equal(out$morphine$wide$Recovery, c(0, 0))
 })
+
+
+test_that("a metabolite drug with no effect site gets no time, not a wrong one", {
+  # There are NO effect-site states to fold, so the fold must leave the row's
+  # time alone rather than solving a problem that has no answer.
+  #
+  # The condition is CONSTRUCTED, which is why it lives in this file rather
+  # than with the real-drug folds in test-recovery-engines.R: morphine's ke0 is
+  # forced to zero, and the parent's metabolite link zeroed to match, standing
+  # in for a receiving drug that has no effect site of its own.
+  #
+  # It used to be a real pair.  Tramadol into desmetramadol was the only one
+  # whose RECEIVING drug lacked an effect site, and desmetramadol was given one
+  # on 2026-10-06, so no pair in the library has the property any more.  The
+  # coverage was reconstructed rather than deleted, by the active-metabolites
+  # session, which made the change -- test-recovery-engines.R pins the set of
+  # drugs with no effect site and says to recheck these paths rather than
+  # update the number on its own, and that is what happened.
+  #
+  # Unlike the other tests here this one drives the real pipeline,
+  # recalculatePK() into processdoseTable(), because the branch under test is
+  # reached through getDrugPK's resolved metabolite rather than through a
+  # hand-built drug entry.  Only the ke0 values are synthetic.
+  dd <- getDrugDefaultsGlobal()
+  DT <- data.frame(Drug = "codeine", Time = 0, Dose = 60, Units = "mg PO")
+
+  drugs <- recalculatePK(NULL, dd, DT, 50, 70, 171, "male")
+  # The lever the branch actually reads is the parent's metabolite ke0, which
+  # advanceClosedFormMetabolite() checks to decide whether the metabolite has
+  # an effect site at all.  Morphine's own ke0 is zeroed too, not because
+  # anything reads it here -- morphine is never dosed in this table -- but so
+  # that the constructed drug is self-consistent rather than a drug with an
+  # effect site whose metabolite link says otherwise.
+  for (ev in names(drugs$morphine$PK)) drugs$morphine$PK[[ev]]$ke0 <- 0
+  drugs$codeine$PK$default$metabolite$ke0 <- 0
+  drugs <- processdoseTable(DT, data.frame(Time = numeric(0), Event = character(0)),
+                            drugs, 1440, TRUE)
+
+  expect_equal(drugs$morphine$formedFrom, "codeine")
+  expect_gt(drugs$morphine$endCe, 0)      # a threshold alone must not suffice
+  expect_true(all(is.na(drugs$morphine$wide$"Effect Site")))
+  expect_gt(max(drugs$morphine$wide$Plasma), 0)
+
+  # No states offered, so nothing to solve from, and no time claimed.  Not NA
+  # either: nothing is pending, there is simply no effect site for the
+  # threshold to apply to.
+  expect_null(drugs$codeine$metaboliteRecoveryStates)
+  expect_false(anyNA(drugs$morphine$wide$Recovery))
+  expect_true(all(drugs$morphine$wide$Recovery == 0))
+  expect_equal(drugs$morphine$max$Recovery, 0)
+})
