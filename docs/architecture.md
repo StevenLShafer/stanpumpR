@@ -234,6 +234,9 @@ All files are flat in `R/`.
 **Output — plot, dosing advisor & export**
 - `simulationPlot.R` — assembles the composite `ggplot2` figure and its data tables.
 - `setLinetypes.R` — maps normalization + user choices to plasma/effect linetypes.
+- `tci.R` — target-controlled infusion: turns "Plasma target" / "Effect site target" dose rows
+  into the infusion schedule a TCI pump would run (Shafer & Gregg 1992, as in STANPUMP), using
+  the same closed-form coefficients as the solvers. Called from `simCpCe()`.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
 - `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
   `emayili`.
@@ -245,6 +248,14 @@ All files are flat in `R/`.
 
 ## App features
 
+- **Target-controlled infusion** (`tci.R`) — a dose row with units `Plasma target` or
+  `Effect site target` runs a simulated TCI pump: a rapid loading infusion sized to reach the
+  target without overshoot, then a plasma hold. The controller re-plans every 10 s, hands off
+  from effect-site to plasma control within 5% of the target (the effect-site solution is
+  ill-conditioned at steady state and would alias), and stops on a target of 0 or a manual
+  infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,
+  `simulationPlot()` draws them as a per-drug rate panel with the loading dose written as a
+  number, and `sendSlide()` merges them into the exported dose table.
 - **Suggest Dosing** (`suggest.R`) — given a target drug and end time, optimizes bolus +
   infusion amounts to reach and hold a target concentration.
 - **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current

@@ -35,6 +35,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
         drugs[[drug]]$formedFrom      <- NULL
         drugs[[drug]]$recoveryStatesOwn         <- NULL
         drugs[[drug]]$metaboliteRecoveryStates  <- NULL
+        drugs[[drug]]$tci       <- NULL
       } else {
         X <- simCpCe(
           tempDT,
@@ -60,6 +61,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
         # apart for the same reason wideOwn and wide are.
         drugs[[drug]]$recoveryStatesOwn        <- X$recoveryStates
         drugs[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
+        drugs[[drug]]$tci               <- X$tci
       }
     }
   }

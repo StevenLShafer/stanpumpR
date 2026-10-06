@@ -25,7 +25,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 1. **Inputs**: Patient covariates, dose grid (`rhandsontable`), clinical events, plot settings.
 2. **Validate**: `doseTableClean()`, `eventTableClean()`, `testCovariates()`.
 3. **Resolve PK**: `recalculatePK()` calls `getDrugPK()`, which converts covariates → micro rate constants → eigenvalues (`cube()`) → $k_{e0}$ (solved by `tPeakError()` + `CE()`) → exponential coefficients.
-4. **Simulate**: `processdoseTable()` calls `simCpCe()`, which dispatches to:
+4. **Simulate**: `processdoseTable()` calls `simCpCe()`, which first expands any `Plasma target` / `Effect site target` rows into a TCI infusion schedule (`tci.R`, Shafer & Gregg 1992; returned as `$tci` for the rate panel and export), then dispatches to:
    - `advanceClosedForm0.R` (IV, standard PK)
    - `advanceClosedForm1.R` (time-varying PK with events)
    - `advanceClosedFormPO_IM_IN.R` (extravascular 1st-order absorption)
