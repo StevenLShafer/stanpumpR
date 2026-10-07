@@ -179,7 +179,7 @@ validateDoseTableInput <- function(DT, drugDefaults = getDrugDefaultsGlobal()) {
   }
 
   if (any(!DT$Drug %in% drugDefaults$Drug)) stop(shiny::safeError("Dose table contains an unknown drug."))
-  if (any(!DT$Units %in% c(allUnits, gasUnits, tciUnits))) stop(shiny::safeError("Dose table contains unknown dose units."))
+  if (any(!DT$Units %in% c(allUnits, gasUnits, tciUnits, scheduledUnits))) stop(shiny::safeError("Dose table contains unknown dose units."))
   if (any(!is.finite(DT$Dose) | DT$Dose < 0 | DT$Dose > MAX_DOSE_VALUE)) {
     stop(shiny::safeError("Dose must be finite, non-negative, and within the permitted limit."))
   }

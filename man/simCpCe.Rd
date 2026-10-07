@@ -30,6 +30,8 @@ for.  A drug that forms an active metabolite additionally carries
 \code{metaboliteSeries}, \code{metaboliteName} and
 \code{metaboliteRecoveryStates}; \code{foldMetabolites()} adds that
 contribution, and its recovery, to the metabolite drug's own row.
+\code{tci} holds the TCI schedule, if any, and \code{scheduled} the
+repeats of any qd/bid/tid/qid dose (Drug, Time, Dose, Units), or NULL.
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example

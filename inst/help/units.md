@@ -26,6 +26,7 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams and do
 | Oral | g PO, mg PO, mcg PO; and each per kg | An oral dose at that time |
 | Intramuscular | the same with IM | |
 | Intranasal | the same with IN | |
+| Scheduled | any bolus, PO, IM or IN unit followed by qd, bid, tid or qid | Repeated every 24, 12, 8 or 6 hours; see [The dose table](help:dose-table) |
 | Gas flow | L/min | A flowmeter or ventilation setting |
 | Vaporizer | % | A vaporizer setting |
 

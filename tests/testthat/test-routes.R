@@ -31,6 +31,13 @@ test_that("doseRoute() agrees with every unit the app offers", {
   expect_equal(doseRoute(units), old)
 })
 
+test_that("doseRoute() reads the route ahead of a dosing frequency", {
+  expect_equal(doseRoute(c("mg bid", "mg/kg PO qd", "mg IM tid", "mcg IN qid")),
+               c("IV", "PO", "IM", "IN"))
+  expect_true(all(doseRoute(scheduledUnits) ==
+                    doseRoute(scheduleBaseUnit(scheduledUnits))))
+})
+
 test_that("groupUnitsByRoute() orders IV, PO, IM, IN and keeps order within a route", {
   units <- c("mg", "mg PO", "mg IN", "mg/kg", "mg IM", "Plasma target", "mg/kg PO")
   expect_equal(groupUnitsByRoute(units),
@@ -46,6 +53,8 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
     expect_false(is.unsorted(match(doseRoute(units), DOSE_ROUTES)), label = dd$Drug[i])
   }
   hydromorphone <- dd$Units[[which(dd$Drug == "hydromorphone")]]
+  unscheduled <- hydromorphone[!isScheduledUnit(hydromorphone)]
+  expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV], c("mg PO", "mg IM", "mg IN"))
   expect_equal(unique(doseRoute(hydromorphone)), DOSE_ROUTES)
   expect_true(all(c("Plasma target", "Effect site target") %in%
                     hydromorphone[doseRoute(hydromorphone) == ROUTE_IV]))

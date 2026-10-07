@@ -251,6 +251,9 @@ All files are flat in `R/`.
 - `tci.R` — target-controlled infusion: turns "Plasma target" / "Effect site target" dose rows
   into the infusion schedule a TCI pump would run (Shafer & Gregg 1992, as in STANPUMP), using
   the same closed-form coefficients as the solvers. Called from `simCpCe()`.
+- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` dose row into its
+  repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
+  `exportDoseTable()`, which merges the TCI rows and the repeats into the exported dose table.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
 - `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
   `emayili`.
@@ -280,6 +283,12 @@ All files are flat in `R/`.
   infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,
   `simulationPlot()` draws them as a per-drug rate panel with the loading dose written as a
   number, and `sendSlide()` merges them into the exported dose table.
+- **Scheduled doses** (`scheduled.R`) — a bolus, PO, IM or IN unit with a frequency suffix
+  (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 h (qd / bid /
+  tid / qid) until the end of the X axis. A scheduled dose of 0 for the same route stops the
+  sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
+  table: `simCpCe()` returns them as `$scheduled` and `sendSlide()` merges them into the export.
+  The frequencies are offered per drug in `drugDefaults_global.csv`.
 - **Suggest Dosing** (`suggest.R`) — given a target drug and end time, optimizes bolus +
   infusion amounts to reach and hold a target concentration.
 - **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current
