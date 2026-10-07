@@ -16,9 +16,17 @@ test_that("every narrative belongs to a drug in the library", {
   expect_true(all(files %in% drugDefaults$Drug), info = paste("orphan:", setdiff(files, drugDefaults$Drug)))
 })
 
-# Drugs with no effect site of their own: the effect is the metabolite's
-# (R/drugs_codeine.R, R/drugs_tramadol.R)
-prodrugs <- c("codeine", "tramadol")
+# Drugs with no effect site of their own.  codeine, tramadol and prednisone
+# are prodrugs whose effect is the metabolite's; the antibiotics, the other
+# steroids, sugammadex and glycopyrrolate are plasma-only by design, because
+# there is no equilibration model to attach (see each drug's header).
+prodrugs <- c(
+  "codeine", "tramadol", "prednisone",
+  "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+  "metronidazole", "gentamicin",
+  "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
+  "sugammadex", "glycopyrrolate"
+)
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
   patients <- helpReferencePatients()

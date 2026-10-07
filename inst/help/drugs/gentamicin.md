@@ -1,0 +1,19 @@
+### The model
+
+Gentamicin's parameters are from Smit and colleagues (*J Antimicrob Chemother* 2020;75:3286-3292), a two-compartment model of total serum gentamicin fitted in 542 mostly overweight or obese patients and validated in 208 more: clearance 3.53 L/h at a de-indexed eGFR of 74 mL/min, scaling linearly with eGFR; central volume 16.6 L at 70 kg, scaling linearly with weight; intercompartmental clearance 1.48 L/h and peripheral volume 13.4 L, fixed. The source's 25 per cent reduction in clearance for intensive-care admission is not an input and is left off.
+
+### Covariates
+
+Clearance follows the CKD-EPI 2009 eGFR de-indexed by Du Bois body surface area, estimated from age, sex and body size at an **assumed normal creatinine** because stanpumpR collects none. Renal decline with age is represented; **renal impairment is not**, and gentamicin is the drug for which that omission matters most. Weight enters the central volume and the body surface area: the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass), total weight with the switch off, when the size-free Q and Vp are also fixed as published.
+
+### Effect site
+
+None; only the plasma concentration is plotted.
+
+### Typical concentrations
+
+The shaded band runs from a trough ceiling of about 1 mcg/mL to the historical peak benchmark of 8 to 10 mcg/mL. That benchmark (Kashuba and colleagues, *Antimicrob Agents Chemother* 1999;43:623-629) was a peak extrapolated to 30 minutes after a 30-minute infusion, not the end-of-infusion maximum this two-compartment model shows, which is higher.
+
+### Where to be careful
+
+The training range of eGFR was about 6 to 216 mL/min and renal replacement was excluded. Nothing here predicts nephrotoxicity or ototoxicity; a trough is a surrogate, not a probability.

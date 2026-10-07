@@ -72,6 +72,21 @@ A published model that was fitted on total body weight is **still** scaled to fa
 (remimazolam is an example); only a model with its own fat-free-mass covariate is exempt.
 Placeholders for a missing compartment (`v3 = 1`, `cl3 = 0`) are left unscaled.
 
+**A model with its own weight or renal covariate** (vancomycin, gentamicin, sugammadex,
+cefazolin) evaluates the published equations at the pharmacokinetic weight,
+`70 * size$volume`, which is the fat-free-mass weight with the switch on and total body
+weight with it off, and scales any size-free parameter by the library factors. Renal
+function comes from `R/renalFunction.R` (`creatinineClearanceCG()`, `egfrDeindexed()`),
+which runs at an **assumed normal creatinine** because the app collects none; say so in the
+model's header and in its `reference` string. See `R/drugs_vancomycin.R`.
+
+**What the engine cannot represent.** The closed-form engine is linear and mammillary, with
+first-order extravascular absorption. A source model with saturable protein binding
+(cefazolin, hydrocortisone), reversible interconversion (prednisone and prednisolone) or an
+apparent oral scale has to be reduced to that form, and the reduction must be written down
+in the header: which part is exact, which is approximate, and what is plotted
+(`R/drugs_cefazolin.R`, `R/drugs_hydrocortisone.R`, `R/drugs_prednisolone.R`).
+
 ### Return-value contract
 
 | Field | Meaning |

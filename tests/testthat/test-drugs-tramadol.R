@@ -286,9 +286,11 @@ test_that("the opioid contribution is ordered across phenotypes", {
 })
 
 
-test_that("only the two deliberate prodrugs now lack an effect site", {
-  # codeine and tramadol, both by design.  Pinned because the count has been
-  # got wrong by hand more than once.
+test_that("exactly the drugs meant to be plasma-only lack an effect site", {
+  # codeine, tramadol and prednisone are prodrugs by design; the antibiotics,
+  # the other steroids, sugammadex and glycopyrrolate have no equilibration
+  # model to attach (see each drug's header).  Pinned because the count has
+  # been got wrong by hand more than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
     k <- tryCatch(getDrugPK(d, 70, 171, 50, "male",
@@ -296,7 +298,13 @@ test_that("only the two deliberate prodrugs now lack an effect site", {
                   error = function(e) NA_real_)
     !is.na(k) && k == 0
   }, dd$Drug[dd$Class == "IV"])
-  expect_setequal(blank, c("codeine", "tramadol"))
+  expect_setequal(blank, c(
+    "codeine", "tramadol", "prednisone",
+    "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+    "metronidazole", "gentamicin",
+    "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
+    "sugammadex", "glycopyrrolate"
+  ))
 })
 
 test_that("the pair scales to fat-free mass identically for a 120 kg man", {
