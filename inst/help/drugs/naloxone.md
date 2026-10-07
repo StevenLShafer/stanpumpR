@@ -1,23 +1,29 @@
 ### The model
 
-Naloxone's parameters are from Papathanasiou and colleagues (*Br J Anaesth* 2019;123:e204-e214), a population analysis of naloxone kinetics. The model is three-compartment with every volume and clearance proportional to weight: 0.408, 0.636 and 1.64 L/kg and 0.049, 0.046 and 0.026 L/min/kg.
+Naloxone's intravenous parameters are from Dowling and colleagues (*Ther Drug Monit* 2008;30:490-496), a three-compartment population model of intravenous, intramuscular and intranasal naloxone in six healthy men: clearance 91 L/h at a **lean body weight of 70 kg**, scaling with lean body weight to the 0.75 power; central volume 2.87 L at 70 kg total weight; peripheral volumes 1.49 and 33.6 L with intercompartmental clearances 5.66 and 29.8 L/h. Note the clearance is normalised to a lean weight, not an ordinary 70 kg man: the reference man of this library (fat-free mass 54.5 kg) has a clearance of 75.4 L/h.
+
+This model replaced the Papathanasiou 2019 weight-proportional model in October 2026 so that the intravenous and nasal routes rest on one specification.
+
+### Nasal spray
+
+The **mg IN** unit is the 4 mg per 0.1 mL concentrated spray. Dowling's own nasal arm used a dilute solution through an atomiser and does not describe it; Laffont and colleagues (*Front Psychiatry* 2024;15:1399803) modelled the spray in 60 adults during a remifentanil challenge, but on an apparent scale (CL/F 396 L/h) with no absolute bioavailability. The route here is **derived**: bioavailability 0.19 makes the reference man's nasal AUC equal Laffont's fitted dose over CL/F (and agrees with the Narcan label's exposure, which implies a CL/F near 500 L/h), and the absorption constant (1.06/h, no lag) matches the mean input time of Laffont's whole published input. Both are initialisers rather than fitted values. The 0.47 to 0.52 figures on labels are relative to intramuscular, which Dowling found incompletely absorbed (F 0.36).
 
 ### Covariates
 
-Weight only, scaling every parameter linearly.
+Clearance carries its own lean-body-weight covariate, which is the same Janmahasatian fat-free mass the library's [fat-free-mass scaling](help:models/fat-free-mass) uses, in either switch position. The central volume sees the pharmacokinetic weight with the switch on and total weight with it off; the peripheral parameters, fixed in the source, take the library factors with the switch on.
 
 ### Effect site
 
-The time to peak effect is 1 minute, described in the code as based on clinical observation: naloxone works within a minute or two of an intravenous dose.
+ke0 is supplied directly from Yassen and colleagues (*Clin Pharmacokinet* 2007;46:965-980), who fitted an equilibration half-time of 6.5 minutes in the reversal of buprenorphine-induced respiratory depression. Against this disposition that puts the peak effect of a bolus at about 3.4 minutes. No antagonism model is attached: the row shows naloxone alone, not the opioid it reverses.
 
 ### Typical concentrations
 
-Naloxone has no therapeutic range in the library (the band is 0 to 0), because the concentration needed depends entirely on the opioid it is opposing. Its recovery threshold is 1 ng/mL.
+The shaded band (1 to 10 ng/mL) covers what 0.4 mg intravenously produces after distribution; the concentration actually needed depends entirely on the opioid being opposed. The recovery threshold is 1 ng/mL.
 
 ### Why it is here
 
-Naloxone is in the library for one teaching point: its duration is short, 30 to 90 minutes, and shorter than that of almost every opioid it reverses. A patient who wakes after naloxone may renarcotise as the naloxone leaves and the opioid remains. [The naloxone scenario](scenario:naloxone-morphine) puts the two curves on one picture.
+Naloxone's duration is short, and shorter than that of almost every opioid it reverses: a patient who wakes after naloxone may renarcotise as the naloxone leaves and the opioid remains. [The naloxone scenario](scenario:naloxone-morphine) puts the two curves on one picture.
 
 ### Where to be careful
 
-The model says nothing about how much naloxone is needed, which depends on the opioid's affinity (buprenorphine and fentanyl analogues need more) and on the degree of respiratory depression. Intranasal naloxone, which Papathanasiou's study also characterised, is not offered as a route.
+Six men is a small anchor and the model says nothing about how much naloxone is needed, which depends on the opioid's affinity (buprenorphine and the fentanyl analogues need more) and on the degree of respiratory depression. The nasal input understates the first few minutes after a spray, because a single first-order input starts more slowly than the immediate component of the published mixture.

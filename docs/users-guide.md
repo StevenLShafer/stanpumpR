@@ -270,10 +270,35 @@ Editing here changes how the current session behaves.
 **Drug Thresholds** edits the recovery thresholds alone — the `endCe` values that
 *Time until threshold* counts down to.
 
-The library ships with 20 intravenous drugs: propofol, remifentanil, fentanyl,
+The library ships with the anaesthetic drugs (propofol, remifentanil, fentanyl,
 alfentanil, sufentanil, morphine, pethidine, hydromorphone, methadone, ketamine,
-dexmedetomidine, midazolam, etomidate, lidocaine, rocuronium, naloxone,
-oxytocin, oxycodone, oliceridine, and remimazolam.
+dexmedetomidine, midazolam, etomidate, lidocaine, rocuronium, oxytocin,
+oxycodone, oliceridine, remimazolam, codeine, hydrocodone, oxymorphone,
+tramadol), the reversal agents (naloxone, sugammadex, neostigmine,
+glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,
+ceftriaxone, vancomycin, metronidazole, gentamicin) and five corticosteroids
+(hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone).
+
+Three things to know about the antibiotics and steroids:
+
+- **Renal function is assumed normal.** Several of these models (cefazolin,
+  vancomycin, gentamicin, sugammadex) carry a creatinine-clearance or eGFR
+  covariate. stanpumpR has no creatinine input, so it estimates renal function
+  from age, sex and body size at an assumed normal creatinine (1.0 mg/dL in men,
+  0.8 in women). The decline of renal function with age is represented; renal
+  impairment is not. A patient with a raised creatinine will clear these drugs
+  more slowly than the plot shows.
+- **Some rows are not total concentration.** Cefazolin plots **unbound**
+  cefazolin (the source model is written on free drug, and free time above MIC
+  is the target). Prednisolone plots **free** prednisolone, and prednisone's own
+  row is total prednisone with its prednisolone appearing on the prednisolone
+  row. Hydrocortisone plots the **increment in total cortisol above baseline**
+  from a linearised form of its source model, which is reasonable for stress
+  doses and understates the tail at replacement doses. Each drug's reference
+  text says what is plotted.
+- **No effect site.** The antibiotics and steroids have no meaningful
+  equilibration delay for the engine to model (the steroid effect is genomic
+  and takes hours), so they are plotted as plasma only, like codeine.
 
 ---
 
@@ -305,11 +330,26 @@ what the literature offers.
 | Etomidate | Arden JR et al., *Anesthesiology* 1986;65(1):19–27. [PMID 3729056](https://pubmed.ncbi.nlm.nih.gov/3729056/) |
 | Lidocaine | Schnider TW et al., *Anesthesiology* 1996;84(5):1043–1050. [PMID 8623997](https://pubmed.ncbi.nlm.nih.gov/8623997/) |
 | Rocuronium | Plaud B et al., *Clin Pharmacol Ther* 1995;58(2):185–191. [PMID 7648768](https://pubmed.ncbi.nlm.nih.gov/7648768/) |
-| Naloxone | Papathanasiou T et al., *Br J Anaesth* 2019;123(2):e204–e214. [PMID 30915992](https://pubmed.ncbi.nlm.nih.gov/30915992/) |
+| Naloxone | Dowling J et al., *Ther Drug Monit* 2008;30:490–496. [DOI 10.1097/FTD.0b013e3181816214](https://doi.org/10.1097/FTD.0b013e3181816214) (intravenous; clearance on lean body weight). Nasal spray derived from Laffont CM et al., *Front Psychiatry* 2024;15:1399803; k<sub>e0</sub> from Yassen A et al., *Clin Pharmacokinet* 2007;46:965–980 |
 | Oxytocin | Eisenach, unpublished data<br>Second model: Tanaka et al |
 | Oxycodone | Lamminsalo M et al., *Expert Opin Drug Deliv* 2019;16(6):649–656. [PMID 31092024](https://pubmed.ncbi.nlm.nih.gov/31092024/) |
 | Oliceridine | Dahan A et al., *Anesthesiology* 2020;133(3):559–568. [PMID 32788558](https://pubmed.ncbi.nlm.nih.gov/32788558/) |
 | Remimazolam | Eleveld DJ et al., *Br J Anaesth* 2025;135(1):206–217. [PMID 40312166](https://pubmed.ncbi.nlm.nih.gov/40312166/) |
+| Sugammadex | Kleijn HJ et al., *Br J Clin Pharmacol* 2011;72:415–433. [DOI 10.1111/j.1365-2125.2011.04000.x](https://doi.org/10.1111/j.1365-2125.2011.04000.x) (total sugammadex; rocuronium binding not modelled) |
+| Neostigmine | Calvey TN et al., *Br J Clin Pharmacol* 1979;7:149–155. [DOI 10.1111/j.1365-2125.1979.tb00915.x](https://doi.org/10.1111/j.1365-2125.1979.tb00915.x) — **patient 1 of six individual fits; no population model exists**. Time to peak effect from Heier T et al., *Anesthesiology* 2002;97:90–95 |
+| Glycopyrrolate | Bartels C et al., *Br J Clin Pharmacol* 2013;76:868–879. [DOI 10.1111/bcp.12118](https://doi.org/10.1111/bcp.12118) (active cation; bromide-labelled dose) |
+| Cefazolin | Komatsu T et al., *Antimicrob Agents Chemother* 2024;68:e00267-24. [DOI 10.1128/aac.00267-24](https://doi.org/10.1128/aac.00267-24) (**unbound** cefazolin) |
+| Clindamycin | Bouazza N et al., *Br J Clin Pharmacol* 2012;74:971–977. [DOI 10.1111/j.1365-2125.2012.04292.x](https://doi.org/10.1111/j.1365-2125.2012.04292.x) (final table; IV and oral) |
+| Cefalexin | Haynes AS et al., *Antimicrob Agents Chemother* 2024;68:e00182-24. [DOI 10.1128/aac.00182-24](https://doi.org/10.1128/aac.00182-24) (oral only, apparent parameters, **fitted in children**) |
+| Ceftriaxone | Sanz-Codina M et al., *J Antimicrob Chemother* 2023;78:380–388. [DOI 10.1093/jac/dkac400](https://doi.org/10.1093/jac/dkac400) (total; six healthy men) |
+| Vancomycin | Thomson AH et al., *J Antimicrob Chemother* 2009;63:1050–1057. [DOI 10.1093/jac/dkp085](https://doi.org/10.1093/jac/dkp085) |
+| Metronidazole | da Silva Neto MJJ et al., *J Antimicrob Chemother* 2021;76:3212–3219. [DOI 10.1093/jac/dkab337](https://doi.org/10.1093/jac/dkab337) (IV; oral F 0.841 from Bergan 1984, absorption from an experimental tablet) |
+| Gentamicin | Smit C et al., *J Antimicrob Chemother* 2020;75:3286–3292. [DOI 10.1093/jac/dkaa312](https://doi.org/10.1093/jac/dkaa312) (not in ICU) |
+| Hydrocortisone | Bindellini D et al., *J Pharmacokinet Pharmacodyn* 2024;51:809–824. [DOI 10.1007/s10928-024-09934-7](https://doi.org/10.1007/s10928-024-09934-7) — **linearised** in the CBG-saturated regime; oral F 0.88 from Johnson 2018 |
+| Methylprednisolone | Hong Y et al., *Pharm Res* 2007;24:1088–1097. [DOI 10.1007/s11095-006-9232-x](https://doi.org/10.1007/s11095-006-9232-x) (IV); oral F 0.82 from Al-Habet and Rogers 1989; oral absorption constant provisional |
+| Dexamethasone | Hong Y et al., *Pharm Res* 2007;24:1088–1097 (IV, phosphate-labelled dose); oral F 0.81 from Spoorenberg 2014; oral and IM absorption from Krzyzanski 2021 |
+| Prednisolone | Xu J, Winkler J, Derendorf H. *J Pharmacokinet Pharmacodyn* 2007;34:355–372. [DOI 10.1007/s10928-007-9050-8](https://doi.org/10.1007/s10928-007-9050-8) (reversible pair reduced to its exact mammillary equivalent; **free** prednisolone) |
+| Prednisone | Xu J, Winkler J, Derendorf H, as above (oral prodrug; total prednisone, with prednisolone on the prednisolone row) |
 | Mannitol | Kaneda K et al., *J Clin Pharmacol* 2010;50(5):536–543. [PMID 20051588](https://pubmed.ncbi.nlm.nih.gov/20051588/)<br>Osmolality: Rudehill A et al., *J Neurosurg Anesthesiol* 1993;5(1):4–12. [PMID 8431668](https://pubmed.ncbi.nlm.nih.gov/8431668/). See [docs/mannitol.md](mannitol.md). |
 
 ### Reading these honestly

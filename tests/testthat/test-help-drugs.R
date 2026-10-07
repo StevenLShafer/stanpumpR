@@ -16,11 +16,19 @@ test_that("every narrative belongs to a drug in the library", {
   expect_true(all(files %in% drugDefaults$Drug), info = paste("orphan:", setdiff(files, drugDefaults$Drug)))
 })
 
-# Drugs with no effect site of their own: for the prodrugs the effect is the
-# metabolite's (R/drugs_codeine.R, R/drugs_tramadol.R); mannitol is plotted as
-# serum osmolality and has no published ke0 (R/drugs_mannitol.R).
-prodrugs <- c("codeine", "tramadol")
-noEffectSite <- c(prodrugs, "mannitol")
+# Drugs with no effect site of their own.  codeine, tramadol and prednisone
+# are prodrugs whose effect is the metabolite's; the antibiotics, the other
+# steroids, sugammadex and glycopyrrolate are plasma-only by design, because
+# there is no equilibration model to attach (see each drug's header);
+# mannitol is plotted as serum osmolality and has no published ke0
+# (R/drugs_mannitol.R).
+prodrugs <- c(
+  "codeine", "tramadol", "prednisone",
+  "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+  "metronidazole", "gentamicin",
+  "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
+  "sugammadex", "glycopyrrolate", "mannitol"
+)
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
   patients <- helpReferencePatients()
@@ -33,7 +41,7 @@ test_that("the parameter table evaluates every intravenous model at the referenc
     expect_true(all(is.finite(tab$CL1) & tab$CL1 > 0), info = drug)
     expect_true(all(is.finite(tab$halfLife1)), info = drug)
     expect_true(all(nzchar(tab$reference)), info = drug)
-    if (drug %in% noEffectSite) {
+    if (drug %in% prodrugs) {
       expect_true(all(tab$ke0 == 0), info = drug)
       expect_true(all(tab$tPeak == 0), info = drug)
     } else {

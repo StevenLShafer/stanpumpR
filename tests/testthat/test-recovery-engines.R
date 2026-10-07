@@ -316,7 +316,7 @@ test_that("a drug with no metabolite is untouched by the fold", {
 })
 
 
-test_that("exactly three drugs have no effect site, and the fold handles each", {
+test_that("exactly the plasma-only drugs have no effect site, and the fold handles each", {
   # The set has moved repeatedly while this was being written, so it is pinned:
   # a drug losing or gaining an effect site changes which branch of the fold it
   # takes.  If this fails, the set has changed and the NA paths want rechecking
@@ -332,14 +332,39 @@ test_that("exactly three drugs have no effect site, and the fold handles each", 
       noCe <- c(noCe, drug)
   }
   # Was three until 2026-10-06, when desmetramadol was given a tPeak and so
-  # an effect site.  The NA paths were rechecked rather than this number
-  # being updated on its own: no real pair has a receiving drug without an
-  # effect site any more, so that case is constructed in
-  # test-metabolite-merge.R, with the other folds that are not real drugs.
-  # Mannitol joined on 2026-10-06: it is plotted as serum osmolality and has no
-  # published ke0.  It neither forms nor receives a metabolite, so it never
-  # reaches the fold; its NA effect site was checked through finishDrugSeries()
-  # and every simulationPlot() mode (normalisations, log axis, MEAC,
-  # interaction, recovery, blank plasma line) instead.
-  expect_setequal(noCe, c("codeine", "tramadol", "mannitol"))
+  # an effect site, then two (codeine, tramadol).  The antibiotics, the
+  # steroids, sugammadex and glycopyrrolate joined on 2026-10-06 as
+  # plasma-only drugs by design (no equilibration model to attach; see each
+  # header).  That brought a REAL pair whose receiving drug has no effect
+  # site, prednisone -> prednisolone, so the NA fold path that
+  # test-metabolite-merge.R constructs is now also exercised by a real drug:
+  # see "oral prednisone folds onto a prednisolone row with no effect site"
+  # below.  Mannitol joined too: plotted as serum osmolality, no published
+  # ke0, and it neither forms nor receives a metabolite, so it never reaches
+  # the fold.
+  expect_setequal(noCe, c(
+    "codeine", "tramadol", "prednisone",
+    "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
+    "metronidazole", "gentamicin",
+    "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
+    "sugammadex", "glycopyrrolate", "mannitol"
+  ))
+})
+
+
+test_that("oral prednisone folds onto a prednisolone row with no effect site", {
+  # The receiving drug has ke0 = 0, so the fold has no effect-site states to
+  # solve a time until threshold from: the plasma fold must still happen, the
+  # effect site stays NA, and the recovery column reads zero throughout,
+  # which is the convention every effect-site-free row (codeine's own row
+  # included) already follows.
+  o <- simulateDrugsWithCovariates(
+    data.frame(Drug = "prednisone", Time = 0, Dose = 20, Units = "mg PO"),
+    data.frame(Time = numeric(0), Event = character(0)),
+    70, 170, 35, "male", 720, TRUE)
+  pl <- o$prednisolone
+  expect_equal(pl$formedFrom, "prednisone")
+  expect_gt(max(pl$wide$Plasma, na.rm = TRUE), 0)
+  expect_true(all(is.na(pl$wide$"Effect Site")))
+  expect_true(all(pl$equiSpace$Recovery == 0))
 })
