@@ -179,8 +179,9 @@ optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
 into the fat-free-mass multipliers that most drug models apply to their volumes and clearances
 (`ffmAlSallami()` is the Al-Sallami 2015 fat-free mass; see `docs/weight-adjustment.md`);
 `lbmJames()` computes the older James lean body mass; `renalFunction.R` supplies
-Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR at an assumed normal
-creatinine for the renally cleared antibiotics and sugammadex; `recoveryCalc()` computes
+Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally cleared
+models (mannitol, the antibiotics, sugammadex), at the patient's serum creatinine or an
+assumed normal one when none is entered; `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 

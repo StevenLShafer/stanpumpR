@@ -59,10 +59,10 @@ predicts, or to reproduce a simulation made before this option existed. The
 full account, with worked examples, is in
 [docs/weight-adjustment.md](weight-adjustment.md).
 
-Three further fields — **Pregnant**, **CYP 2D6**, and **Renal Function** — appear
-in the interface but are **currently disabled**. The inputs were added ahead of
-the models that will use them; no drug in the library yet responds to them.
-They are visible so the intent is clear, not because they do anything.
+**Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin and sugammadex)
+use it to estimate renal function; left blank, they assume a normal creatinine for
+the patient's sex. **Pregnant** appears in the interface but is **currently
+disabled**: no drug in the library yet responds to it.
 
 ---
 
@@ -281,13 +281,13 @@ ceftriaxone, vancomycin, metronidazole, gentamicin) and five corticosteroids
 
 Three things to know about the antibiotics and steroids:
 
-- **Renal function is assumed normal.** Several of these models (cefazolin,
-  vancomycin, gentamicin, sugammadex) carry a creatinine-clearance or eGFR
-  covariate. stanpumpR has no creatinine input, so it estimates renal function
-  from age, sex and body size at an assumed normal creatinine (1.0 mg/dL in men,
-  0.8 in women). The decline of renal function with age is represented; renal
-  impairment is not. A patient with a raised creatinine will clear these drugs
-  more slowly than the plot shows.
+- **Enter the creatinine.** Several of these models (cefazolin, vancomycin,
+  gentamicin, sugammadex) and mannitol carry a creatinine-clearance or eGFR
+  covariate, computed from the **Serum creatinine** field. Left blank, it is an
+  assumed normal creatinine (1.0 mg/dL in men, 0.8 in women): the decline of
+  renal function with age is represented, renal impairment is not, and a patient
+  with a raised creatinine will clear these drugs more slowly than the plot
+  shows.
 - **Some rows are not total concentration.** Cefazolin plots **unbound**
   cefazolin (the source model is written on free drug, and free time above MIC
   is the target). Prednisolone plots **free** prednisolone, and prednisone's own
@@ -607,8 +607,9 @@ output. Off by default in production.
   ranges — the very young, the very old, the very large, the critically ill —
   produces numbers, but the numbers deserve less confidence than the plot's
   crispness suggests.
-- **Disabled covariates.** Pregnancy, CYP2D6, and renal function do not yet
-  influence any prediction, even though the fields exist.
+- **Disabled covariates.** Pregnancy does not yet influence any prediction,
+  even though the field exists. A blank serum creatinine means an assumed normal
+  one, not a measured one.
 - **The interaction panel is one model of one stimulus.** Bouillon's surface
   describes response to laryngoscopy. It is not a general-purpose depth monitor.
 - **The shaded band is orientation, not a target.** It is a published typical

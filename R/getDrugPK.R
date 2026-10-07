@@ -21,6 +21,10 @@
 #' @param osmolality baseline serum osmolality in mOsm/kg, before any osmotic
 #'   agent.  Passed only to drug models that declare it (mannitol); the rest
 #'   ignore it.
+#' @param creatinine serum creatinine in mg/dL, or NULL (the default) for the
+#'   assumed normal value for the patient's sex.  Passed only to the renal
+#'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
+#'   sugammadex); see `R/renalFunction.R`.
 #'
 #' @examples
 #' PK <- stanpumpR::getDrugPK(
@@ -43,7 +47,8 @@ getDrugPK <- function(
   cyp2d6 = CYP2D6_DEFAULT,
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE,
-  osmolality = OSMOLALITY_DEFAULT
+  osmolality = OSMOLALITY_DEFAULT,
+  creatinine = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -60,6 +65,18 @@ getDrugPK <- function(
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
          ". Must be a number between ", MIN_OSMOLALITY, " and ",
          MAX_OSMOLALITY, " mOsm/kg")
+  }
+  # An empty creatinine field reports NA: that means "not entered", the same
+  # as NULL, and the models fall back to the assumed normal value.  NaN is
+  # not blank: it falls through to the check below and is rejected.
+  if (!is.null(creatinine) && length(creatinine) == 1 && is.na(creatinine) &&
+      !(is.numeric(creatinine) && is.nan(creatinine)))
+    creatinine <- NULL
+  if (!is.null(creatinine) &&
+      !is_valid_number(creatinine, MIN_CREATININE, MAX_CREATININE)) {
+    stop("Invalid creatinine: ", paste(creatinine, collapse = ", "),
+         ". Must be a number between ", MIN_CREATININE, " and ",
+         MAX_CREATININE, " mg/dL, or NULL for the assumed normal value")
   }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
@@ -95,6 +112,10 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "osmolality" %in% names(formals(get(drug, mode = "function"))))
     covariates$osmolality <- osmolality
+  # And the serum creatinine, which only the renally cleared models read.
+  if (exists(drug, mode = "function") &&
+      "creatinine" %in% names(formals(get(drug, mode = "function"))))
+    covariates["creatinine"] <- list(creatinine)
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
@@ -543,6 +564,7 @@ getDrugPK <- function(
       drugDefaults = metaboliteDefaults,
       cyp2d6 = cyp2d6,
       osmolality = osmolality,
+      creatinine = creatinine,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE
     )

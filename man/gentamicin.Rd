@@ -4,7 +4,7 @@
 \alias{gentamicin}
 \title{Gentamicin pharmacokinetics}
 \usage{
-gentamicin(weight, height, age, sex, adjustToFFM = TRUE)
+gentamicin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -20,6 +20,9 @@ eGFR (at an assumed normal creatinine) at the fat-free-mass weight, and
 scale the peripheral volume and intercompartmental clearance to fat-free
 mass; when \code{FALSE}, use total body weight and the published fixed
 peripheral parameters.}
+
+\item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
+assumed normal value for the patient's sex (R/renalFunction.R)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

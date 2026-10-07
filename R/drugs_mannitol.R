@@ -25,7 +25,7 @@ MANNITOL_MW <- 182.17   # g/mol
 MANNITOL_OSMOTIC_FRACTION <- (310 - 292) / (5.91 * 1000 / MANNITOL_MW)  # 0.555
 
 mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                     osmolality = OSMOLALITY_DEFAULT)
+                     osmolality = OSMOLALITY_DEFAULT, creatinine = NULL)
 {
   # Units **************
   # Time: Minutes
@@ -55,14 +55,39 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # taken to describe the 70 kg reference adult and scaled to fat-free mass in
   # the usual way.  That is consistent with the study's own finding that
   # weight-based dosing gave higher than expected concentrations in obese
-  # patients.  adjustToFFM = FALSE gives the published means unscaled.
+  # patients.  adjustToFFM = FALSE gives the published volumes and
+  # distribution clearances unscaled.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+
+  # Renal function.  Mannitol is filtered at the glomerulus and not
+  # reabsorbed; nearly all of a dose is excreted unchanged in the urine, so its
+  # clearance tracks GFR.  CL1 is scaled by the patient's Cockcroft-Gault
+  # creatinine clearance over the reference patient's, at the creatinine
+  # entered in the Patient Profile or, when none is, an assumed normal one
+  # (R/renalFunction.R).  Cockcroft-Gault carries body size, so the renal
+  # factor replaces the size factor on CL1.  The weight it sees is the
+  # pharmacokinetic weight (70 kg x FFM / FFM_ref) with the switch on and
+  # total body weight with it off, as for the other renal models.  This is an
+  # assumption on top of Kaneda, whose patients had normal renal function and
+  # whose model has no renal covariate: in renal failure the label reports a
+  # half-life of up to 36 hours, which this reproduces in order of magnitude
+  # (see docs/mannitol.md).
+  crclWeight <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
+  crcl <- creatinineClearanceCG(crclWeight, age, sex,
+                                patientCreatinine(creatinine, sex))
+  # Kaneda's clearance is taken to belong to the reference patient (70 kg,
+  # 35 years, male, creatinine 1.0 mg/dL; Cockcroft-Gault 102 mL/min), so his
+  # renal factor is exactly 1.  Computed here rather than at the top level
+  # because R/pkSizeFactors.R and R/renalFunction.R are sourced after this file.
+  crclReference <- creatinineClearanceCG(FFM_REFERENCE_WEIGHT, FFM_REFERENCE_AGE,
+                                         FFM_REFERENCE_SEX, SCR_ASSUMED_MALE)
+  renal <- crcl / crclReference
 
   default <- list(
     v1  = v1Ref  * size$volume,
     v2  = v2Ref  * size$volume,
     v3  = v3Ref  * size$volume,
-    cl1 = cl1Ref * size$clearance,
+    cl1 = cl1Ref * renal,
     cl2 = cl2Ref * size$clearance,
     cl3 = cl3Ref * size$clearance
   )
@@ -85,7 +110,9 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   upperTypical <- 320
   reference <- paste(
     "Kaneda K et al., J Clin Pharmacol 2010;50(5):536-543. https://pubmed.ncbi.nlm.nih.gov/20051588/",
-    "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/"
+    "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/",
+    "Renal function: stanpumpR assumption, CL1 scaled by Cockcroft-Gault creatinine clearance",
+    "over the reference patient's, from the entered creatinine or an assumed normal one."
   )
 
   return(

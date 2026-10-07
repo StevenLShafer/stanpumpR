@@ -180,13 +180,26 @@ app_ui <- function() {
                   placement = "right"
                 ),
 
-                selectInput(
-                  inputId = "renal",
-                  label = "Renal Function",
-                  c("Normal" = "normal", "Impaired" = "impaired", "ESRD" = "ESRD"),
-                  selected = "normal"
-                ) |>
-                  shinyjs::disabled()
+                # Read only by the renally cleared models (mannitol, vancomycin,
+                # gentamicin, cefazolin, sugammadex).  Blank means an assumed
+                # normal creatinine for the patient's sex; see R/renalFunction.R.
+                bslib::tooltip(
+                  numericInput(
+                    inputId = "creatinine",
+                    label = "Serum creatinine (mg/dL)",
+                    value = NA,
+                    min = MIN_CREATININE,
+                    max = MAX_CREATININE,
+                    step = 0.1
+                  ),
+                  paste(
+                    "Used by the renally cleared drugs: mannitol, vancomycin,",
+                    "gentamicin, cefazolin and sugammadex. Leave blank to assume a",
+                    "normal creatinine for the patient's sex (1.0 mg/dL for a man,",
+                    "0.8 for a woman); renal impairment is then not represented."
+                  ),
+                  placement = "right"
+                )
               ),
 
               bslib::accordion_panel(

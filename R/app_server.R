@@ -385,13 +385,21 @@ app_server <- function(input, output, session) {
     if (is.null(input$osmolality)) OSMOLALITY_DEFAULT else input$osmolality
   })
 
+  # NULL when the field is blank: the renal models then assume a normal value.
+  creatinine <- reactive({
+    x <- input$creatinine
+    # NaN is not blank: it is passed on, and the covariate check rejects it.
+    if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
+  })
+
   testCovariates <- reactive({
     profileCode({
       outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
       req(weight(), height(), age(), sex())
       errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
       checkNumericCovariates(age(), weight(), height(), errorFxn,
-                             osmolality = osmolality())
+                             osmolality = osmolality(),
+                             creatinine = creatinine())
     }, name = "testCovariates() reactive")
   })
 
@@ -470,6 +478,7 @@ app_server <- function(input, output, session) {
         # NULL on the first pass, before the control has reported in
         cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
         osmolality = osmolality(),
+        creatinine = creatinine(),
         adjustToFFM = adjustToFFM()
       ) |> profileCode("recalculatePK() in drugs()")
 
@@ -725,7 +734,8 @@ app_server <- function(input, output, session) {
         height = height(),
         sex = sex(),
         adjustToFFM = adjustToFFM(),
-        osmolality = osmolality()
+        osmolality = osmolality(),
+        creatinine = creatinine()
       )
 
       shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")

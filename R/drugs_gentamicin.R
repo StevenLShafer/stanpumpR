@@ -23,12 +23,13 @@
 #
 # RENAL FUNCTION
 # ==============
-# stanpumpR has no creatinine input.  G is the CKD-EPI 2009 equation (the
-# version in use when the model was fitted; the exact variant was not
-# recoverable from the supplement) at an ASSUMED NORMAL creatinine, de-indexed
-# by the Du Bois body surface area (R/renalFunction.R).  Age and sex are
-# therefore represented; renal impairment is not, and gentamicin is the drug
-# for which that omission matters most.  The training range of G was about
+# G is the CKD-EPI 2009 equation (the version in use when the model was
+# fitted; the exact variant was not recoverable from the supplement) at the
+# patient's serum creatinine from the Patient Profile, de-indexed by the
+# Du Bois body surface area (R/renalFunction.R).  When no creatinine is
+# entered it is an ASSUMED NORMAL one: age and sex are then represented but
+# renal impairment is not, and gentamicin is the drug for which that matters
+# most.  The training range of G was about
 # 6-216 mL/min; renal replacement was excluded.
 #
 # BODY SIZE (docs/weight-adjustment.md)
@@ -80,7 +81,8 @@
 #'   peripheral parameters.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE)
+gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                       creatinine = NULL)
 {
   # Size scaling (see the header): size$volume is the weight ratio the
   # published Vc and the body surface area see; size$clearance scales the
@@ -89,7 +91,8 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE)
                         legacyVolume = weight / 70, legacyClearance = 1)
   pkW  <- 70 * size$volume
 
-  G <- egfrDeindexed(pkW, height, age, sex)        # mL/min, assumed creatinine
+  G <- egfrDeindexed(pkW, height, age, sex,         # mL/min
+                     patientCreatinine(creatinine, sex))
   ICU <- 0                                         # not an input; not in ICU
 
   cl1 <- 3.53 * (G / 74) * 0.751^ICU / 60          # L/min
@@ -123,7 +126,7 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Smit C et al., J Antimicrob Chemother 2020;75:3286-3292. ",
     "Two-compartment total-serum model with de-indexed CKD-EPI eGFR, ",
-    "estimated here at an assumed normal creatinine; not in ICU. ",
+    "from the entered creatinine or an assumed normal one; not in ICU. ",
     "https://doi.org/10.1093/jac/dkaa312"
   )
 

@@ -15,7 +15,8 @@ getDrugPK(
   cyp2d6 = CYP2D6_DEFAULT,
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE,
-  osmolality = OSMOLALITY_DEFAULT
+  osmolality = OSMOLALITY_DEFAULT,
+  creatinine = NULL
 )
 }
 \arguments{
@@ -46,6 +47,11 @@ fat-free-mass covariate (propofol, remifentanil).}
 \item{osmolality}{baseline serum osmolality in mOsm/kg, before any osmotic
 agent.  Passed only to drug models that declare it (mannitol); the rest
 ignore it.}
+
+\item{creatinine}{serum creatinine in mg/dL, or NULL (the default) for the
+assumed normal value for the patient's sex.  Passed only to the renal
+models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
+sugammadex); see \code{R/renalFunction.R}.}
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
