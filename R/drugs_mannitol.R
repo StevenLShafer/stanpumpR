@@ -110,7 +110,9 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   upperTypical <- 320
   reference <- paste(
     "Kaneda K et al., J Clin Pharmacol 2010;50(5):536-543. https://pubmed.ncbi.nlm.nih.gov/20051588/",
-    "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/"
+    "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/",
+    "Renal function: stanpumpR assumption, CL1 scaled by Cockcroft-Gault creatinine clearance",
+    "over the reference patient's, from the entered creatinine or an assumed normal one."
   )
 
   return(

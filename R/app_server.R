@@ -388,7 +388,8 @@ app_server <- function(input, output, session) {
   # NULL when the field is blank: the renal models then assume a normal value.
   creatinine <- reactive({
     x <- input$creatinine
-    if (is.null(x) || length(x) != 1 || is.na(x)) NULL else x
+    # NaN is not blank: it is passed on, and the covariate check rejects it.
+    if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
   })
 
   testCovariates <- reactive({

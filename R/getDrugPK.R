@@ -67,8 +67,10 @@ getDrugPK <- function(
          MAX_OSMOLALITY, " mOsm/kg")
   }
   # An empty creatinine field reports NA: that means "not entered", the same
-  # as NULL, and the models fall back to the assumed normal value.
-  if (!is.null(creatinine) && length(creatinine) == 1 && is.na(creatinine))
+  # as NULL, and the models fall back to the assumed normal value.  NaN is
+  # not blank: it falls through to the check below and is rejected.
+  if (!is.null(creatinine) && length(creatinine) == 1 && is.na(creatinine) &&
+      !(is.numeric(creatinine) && is.nan(creatinine)))
     creatinine <- NULL
   if (!is.null(creatinine) &&
       !is_valid_number(creatinine, MIN_CREATININE, MAX_CREATININE)) {

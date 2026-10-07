@@ -16,4 +16,4 @@ None. An antibiotic's effect is its exposure relative to the MIC, and there is n
 
 ### Where to be careful
 
-A patient with a raised creatinine is simulated as if the creatinine were normal, so the curve declines too fast for them. Albumin, which sets the binding capacity, plays no part in the unbound curve. The model was fitted in surgical prophylaxis with 15-minute infusions; it has not been validated for prolonged treatment courses.
+Enter the **Serum creatinine** for a patient with impaired renal function: left blank, a raised creatinine is simulated as if it were normal, and the curve declines too fast. Albumin, which sets the binding capacity, plays no part in the unbound curve. The model was fitted in surgical prophylaxis with 15-minute infusions; it has not been validated for prolonged treatment courses.

@@ -25,7 +25,9 @@ test_that("returns the published parameters with the switch off", {
     lowerTypical = 300,
     reference = paste(
       "Kaneda K et al., J Clin Pharmacol 2010;50(5):536-543. https://pubmed.ncbi.nlm.nih.gov/20051588/",
-      "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/"
+      "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/",
+      "Renal function: stanpumpR assumption, CL1 scaled by Cockcroft-Gault creatinine clearance",
+      "over the reference patient's, from the entered creatinine or an assumed normal one."
     ),
     osmotic = list(
       baseline = 280,
@@ -225,4 +227,5 @@ test_that("an invalid creatinine is rejected and a blank one is not", {
   expect_error(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = "1"), "Invalid creatinine")
   expect_identical(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = NA),
                    getDrugPK("mannitol", 70, 170, 35, "male"))
+  expect_error(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = NaN), "Invalid creatinine")
 })

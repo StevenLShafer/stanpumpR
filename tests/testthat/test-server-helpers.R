@@ -18,4 +18,5 @@ test_that("checkNumericCovariates correctly identifies out of bounds input", {
   expect_true(checkNumericCovariates(21, 70, 170, creatinine = 1.4))
   expect_false(checkNumericCovariates(21, 70, 170, creatinine = MIN_CREATININE / 2))
   expect_false(checkNumericCovariates(21, 70, 170, creatinine = MAX_CREATININE + 1))
+  expect_false(checkNumericCovariates(21, 70, 170, creatinine = NaN))
 })
