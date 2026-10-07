@@ -46,17 +46,39 @@
 # end-infusion maximum of a two-compartment model.  Troughs are kept below
 # 1-2 mg/L to limit toxicity.  No toxicity probability is modelled.
 #
+# TIME UNTIL THRESHOLD: FREE DRUG AT THE MIC
+# ==========================================
+# The default threshold (endCe in drugDefaults_global.csv) is the TOTAL
+# concentration at which FREE gentamicin equals the MIC of 2 mg/L for the
+# Enterobacterales: the susceptible breakpoint of CLSI M100 (from 2023,
+# lowered from 4; now FDA-recognised) and EUCAST (S <= 2), and the MIC90 of
+# 9,809 US Enterobacterales (Sader 2023).  Gentamicin is essentially unbound
+# in serum under physiological conditions (Gordon 1972), so the threshold is
+# the MIC itself.  The lowest credible measurements put the free fraction
+# near 0.8 (van der Mast 2019; Myers 1978, bracketed at physiological calcium
+# and magnesium), which would raise the threshold to 2.5 mg/L.  Around surgery it is given for Gram-negative cover.  See
+# R/antibioticThresholds.R.
+#
 # References
 # ----------
 # Smit C et al., J Antimicrob Chemother 2020;75:3286-3292.
 #   https://doi.org/10.1093/jac/dkaa312
 # Kashuba ADM et al., Antimicrob Agents Chemother 1999;43:623-629.
 #   https://doi.org/10.1128/AAC.43.3.623
+# Sader HS et al., Open Forum Infect Dis 2023;10:ofad058.
+#   https://doi.org/10.1093/ofid/ofad058
+# Gordon RC et al., Antimicrob Agents Chemother 1972;2:214-216.
+#   https://doi.org/10.1128/AAC.2.3.214
 # -----------------------------------------------------------------------------
 
 #' Gentamicin pharmacokinetics
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM evaluate the central volume and the de-indexed CKD-EPI
+#'   eGFR (at an assumed normal creatinine) at the fat-free-mass weight, and
+#'   scale the peripheral volume and intercompartmental clearance to fat-free
+#'   mass; when \code{FALSE}, use total body weight and the published fixed
+#'   peripheral parameters.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,

@@ -128,7 +128,8 @@ time point as a sum of exponentials.
 2. Classify each dose as `Bolus`, infusion, or `PO / IM / IN` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`).
 3. Dispatch to a solver:
    - `advanceClosedForm0.R` — IV, no PK events
-   - `advanceClosedForm1.R` — time-varying PK driven by events
+   - `advanceClosedForm1.R` — time-varying PK driven by events, including extravascular doses
+     (the absorption depot is carried as an amount, which a change in PK set does not touch)
    - `advanceClosedFormPO_IM_IN.R` — extravascular routes
    - `advanceClosedFormMetabolite.R` — a drug that forms an active metabolite
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
@@ -233,7 +234,9 @@ All files are flat in `R/`.
   state across dose & event boundaries. `recoveryStates.R` — carries the effect site as one
   amplitude per eigenvalue, so that a drug receiving an active metabolite can have its time
   until threshold solved from the combined state; the time-invariant solvers also read the
-  effect-site concentration off it, exactly.
+  effect-site concentration off it, exactly. A drug with no effect site carries its plasma
+  amplitudes instead and is timed on its plasma (the antibiotics, against free drug at the MIC:
+  `antibioticThresholds.R`).
 - `calculateCe.R` — effect-site concentration approximated from a plasma curve; used only by
   the event-driven solver. The `ke0` fit itself
   (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.

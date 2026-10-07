@@ -51,6 +51,9 @@ GLYCOPYRROLATE_CATION_FRACTION <- 318.43 / 398.33   # cation / bromide salt mass
 #' Glycopyrrolate pharmacokinetics
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published fixed parameters unscaled.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 glycopyrrolate <- function(weight, height, age, sex, adjustToFFM = TRUE)

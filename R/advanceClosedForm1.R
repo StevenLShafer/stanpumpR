@@ -1,13 +1,89 @@
 # Closed form, multiple PK sets
+#
+# EXTRAVASCULAR DOSES (oral, intramuscular, intranasal)
+# =====================================================
+# Until 2026-10-07 this engine had no extravascular route at all.  A dose was
+# either a bolus or, failing that, an infusion rate, so "10 mg PO" became a
+# 10 mg/min infusion that ran until the next rate change.  No drug in the
+# library had both a PK event and an extravascular route, so nothing hit it,
+# but any such drug would have been wrong by orders of magnitude.
+#
+# The other engines carry an absorbed dose as an extra exponential state at ka.
+# That does not survive a change of PK set here: convertState() maps the three
+# disposition states to compartment amounts and back, and an absorption state
+# is a mode of the augmented system (depot -> central), not of the disposition.
+# So the depot is carried as what it physically is, an AMOUNT, which a change
+# in disposition does not touch:
+#
+#     G(t) = G(t0) exp(-ka (t - t0)) + F x (dose landing in the depot)
+#
+# and its output, ka G(t), is an exponentially decaying input to the central
+# compartment.  Over a step of length dt with the depot at G at its start, the
+# disposition state for eigenvalue lambda_j, whose response to a unit bolus is
+# b_j = p_coef_bolus_lj, gains
+#
+#     b_j ka G (exp(-ka dt) - exp(-lambda_j dt)) / (lambda_j - ka)
+#
+# (or b_j ka G dt exp(-ka dt) when lambda_j = ka), which is exact.  That
+# increment is added to the infusion term, so it is advanced, carried across a
+# change in PK and zeroed at the event instant exactly as an infusion is.  The
+# plasma is still the sum of the three disposition states: drug in the depot is
+# not in the plasma.  Bioavailability is that of the PK set in force when the
+# dose lands; ka is that of the set in force over each step; an absorption lag
+# moves the dose later, as in advanceClosedFormPO_IM_IN(), with the same
+# not-yet-absorbed mask on the time until threshold (pendingDoseTimes()).
+#
+# Rewritten by Claude Code at the request of Steven L. Shafer, 2026-10-07;
+# checked against advanceClosedFormPO_IM_IN() with a single PK set, and across
+# a change in PK against simulating the two sides separately, by
+# tests/testthat/test-closedForm1-extravascular.R.
 advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emerge)
 {
   ##############################
   # Begin closed form approach #
   ##############################
 
+  # Older callers, and some tests, build the dose table by hand without the
+  # route columns simCpCe() adds.
+  routes <- c("PO", "IM", "IN")
+  for (r in routes) if (is.null(dose[[r]])) dose[[r]] <- rep(FALSE, nrow(dose))
+  extravascular <- dose$PO | dose$IM | dose$IN
+
+  # The PK set in force at time t: the last event at or before it.
+  eventAt <- function(t) events$Event[utils::tail(which(events$Time <= t), 1)]
+  pkField <- function(set, name) {
+    x <- set[[name]]
+    if (is.null(x) || is.na(x)) 0 else x
+  }
+
+  # Absorption lags move the dose later, using the lag of the PK set in force
+  # when the dose was given.
+  givenAt <- dose$Time
+  lagOf <- function(set, r) {
+    if (pkField(set, paste0("ka_", r)) <= 0) set <- pkSets[[PK_EVENT_DEFAULT]]
+    pkField(set, paste0("tlag_", r))
+  }
+  for (r in routes)
+  {
+    for (k in which(dose[[r]]))
+      dose$Time[k] <- dose$Time[k] + lagOf(pkSets[[eventAt(givenAt[k])]], r)
+  }
+
   # Create timeline
-  timeLine <- sort(unique(c(0, dose$Time, events$Time, events$Time - 0.01, dose$Time[dose$Bolus] - 0.01, maximum)))
-  timeLine <- timeLine[timeLine >=0]
+  #
+  # An extravascular dose gets the instant before it, as a bolus does: the
+  # concentration does not jump, but the time until threshold does, and without
+  # that point the plotted series would interpolate straight across the jump.
+  # A lagged dose also contributes the instant it was GIVEN, so that the window
+  # over which recovery cannot be reported starts where it should.  Neither adds
+  # anything to a run with no extravascular dose.
+  timeLine <- sort(unique(c(0, dose$Time, events$Time, events$Time - 0.01,
+                            dose$Time[dose$Bolus | extravascular] - 0.01,
+                            givenAt[givenAt < dose$Time], maximum)))
+  # Nothing past the end of the run: the event segments stop at maximum, so a
+  # point beyond it -- a dose its lag pushes past the end -- would never be
+  # advanced.
+  timeLine <- timeLine[timeLine >= 0 & timeLine <= maximum]
 
   # Fill in gaps using exponentially decreasing amounts
   gapStart <- timeLine[1:length(timeLine)-1]
@@ -23,12 +99,15 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   L <- length(timeLine)
   doseNA <- rep(0, L)
 
-  # Create bolusLine and infusionLine
+  # Create bolusLine, infusionLine and the amounts landing in each depot
   bolusLine <- infusionLine <- pkLine <- dt <- rate <- rep(0, L)
+  depotLine <- matrix(0, L, length(routes), dimnames = list(NULL, routes))
   for (i in 1:L)
   {
     bolusLine[i]    <- sum(dose$Dose[dose$Time == timeLine[i] & dose$Bolus])
-    USE <- dose$Time == timeLine[i] & !dose$Bolus
+    for (r in routes)
+      depotLine[i, r] <- sum(dose$Dose[dose$Time == timeLine[i] & dose[[r]]])
+    USE <- dose$Time == timeLine[i] & !dose$Bolus & !extravascular
     if (i == 1)
     {
       infusionLine[i] <- sum(dose$Dose[USE])
@@ -67,6 +146,19 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       p_coef_infusion_l2 = purrr::map_dbl(pkSets, "p_coef_infusion_l2"),
       p_coef_infusion_l3 = purrr::map_dbl(pkSets, "p_coef_infusion_l3")
     ))
+  # Absorption, which not every PK set carries.  An event set that leaves a
+  # route out (a bypass set fitted to intravenous data, say) does not stop the
+  # gut absorbing: the route keeps the default set's ka and bioavailability.
+  for (r in routes)
+  {
+    ka  <- vapply(pkSets, pkField, numeric(1), name = paste0("ka_", r))
+    bio <- vapply(pkSets, pkField, numeric(1), name = paste0("bioavailability_", r))
+    missing <- ka <= 0
+    ka[missing]  <- ka[[PK_EVENT_DEFAULT]]
+    bio[missing] <- bio[[PK_EVENT_DEFAULT]]
+    parameters[[paste0("ka_", r)]] <- ka
+    parameters[[paste0("bioavailability_", r)]] <- bio
+  }
 
   #Set up time varying parameters
   parameters$k <- parameters$k10 + parameters$k12 + parameters$k13
@@ -106,10 +198,16 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   p_coef_infusion_l2   <- parameters[infusionpkLine, "p_coef_infusion_l2"]
   p_coef_infusion_l3   <- parameters[infusionpkLine, "p_coef_infusion_l3"]
 
-  # Vectorize calculations
-  l1_dt <- exp(-lambda_1 * dt)
-  l2_dt <- exp(-lambda_2 * dt)
-  l3_dt <- exp(-lambda_3 * dt)
+  # Vectorize calculations.  The decay over the step INTO a point is that of
+  # the PK set in force over the step, the same set the infusion and depot
+  # increments use (infusionpkLine).  It used to be the set in force AT the
+  # point, which for the 0.01-minute step into an event decayed states still
+  # in the old set's coordinates with the new set's eigenvalues, an error of
+  # about 2e-4 that convertState() then carried for the rest of the run.
+  # (Found by review against a matrix-exponential solution, 2026-10-07.)
+  l1_dt <- exp(-parameters[infusionpkLine, "lambda_1"] * dt)
+  l2_dt <- exp(-parameters[infusionpkLine, "lambda_2"] * dt)
+  l3_dt <- exp(-parameters[infusionpkLine, "lambda_3"] * dt)
 
   p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
   p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
@@ -118,6 +216,33 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   p_infusion_l1 <- p_coef_infusion_l1 * rate * (1 - l1_dt)
   p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)
   p_infusion_l3 <- p_coef_infusion_l3 * rate * (1 - l3_dt)
+
+  # The depots, and what each delivers to the central compartment over each
+  # step; see the header.  Like an infusion, the step INTO point i runs on the
+  # PK set in force before it (infusionpkLine), whose state coordinates the
+  # increment is expressed in.
+  depot <- list()
+  for (r in routes)
+  {
+    if (!any(depotLine[, r] != 0)) next
+    kaStep <- parameters[infusionpkLine, paste0("ka_", r)]
+    bio    <- parameters[pkLine, paste0("bioavailability_", r)]
+    G <- rep(0, L)
+    G[1] <- bio[1] * depotLine[1, r]
+    for (i in seq_len(L)[-1])
+      G[i] <- G[i - 1] * exp(-kaStep[i] * dt[i]) + bio[i] * depotLine[i, r]
+    Gstart <- c(0, G[-L])
+    for (j in 1:3)
+    {
+      b   <- parameters[infusionpkLine, paste0("p_coef_bolus_l", j)]
+      lam <- parameters[infusionpkLine, paste0("lambda_", j)]
+      inc <- b * depotInput(lam, kaStep, Gstart, dt)
+      if (j == 1) p_infusion_l1 <- p_infusion_l1 + inc
+      if (j == 2) p_infusion_l2 <- p_infusion_l2 + inc
+      if (j == 3) p_infusion_l3 <- p_infusion_l3 + inc
+    }
+    depot[[r]] <- G
+  }
 
   p_state_l1 <- p_state_l2 <- p_state_l3 <- rep(0, L)
 
@@ -145,7 +270,8 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       p_state_l2[now] <- newState[2]
       p_state_l3[now] <- newState[3]
 
-      # Infusion was processed with prior PK, so infusion is now 0
+      # Infusion was processed with prior PK, so infusion is now 0.  So is
+      # the depot's input over the same step, which travels with it.
       p_infusion_l1[now] <- p_infusion_l2[now] <- p_infusion_l3[now] <- 0
 
       # No decrement in time either
@@ -166,8 +292,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # ke0 is a per-step vector here, because the PK set can change on an event.
   # A drug with no tPeak carries zero throughout, and calculateCe() divides by
   # it; see the same guard in advanceClosedForm0().
-  Ce <- if (any(ke0 > 0)) {
-    calculateCe(Cp, ke0, dt, L)
+  hasCe <- any(ke0 > 0)
+  Ce <- if (hasCe) {
+    calculateCe(Cp, parameters[infusionpkLine, "ke0"], dt, L)
   } else {
     rep(NA_real_, L)
   }
@@ -183,7 +310,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   if (plotRecovery)
   {
-    # Time until the EFFECT SITE falls to the threshold if delivery stops now.
+    # Time until the EFFECT SITE falls to the threshold if delivery stops now,
+    # or the PLASMA for a drug with no effect site (ke0 = 0: the antibiotics,
+    # whose threshold is the MIC).
     #
     # This used to look at plasma, "for reasons of speed", because the
     # effect-site states are not carried through the changes in PK.  They do not
@@ -198,12 +327,44 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     # (Claude Code, Claude Fable 5.1, 2026-10-05; verified against stopping
     # delivery in the simulation by tests/testthat/test-recovery-engines.R.)
     #
+    # Drug still in a depot keeps being absorbed after "delivery stops" -- it
+    # has already been given.  Draining a depot G at ka adds to the plasma
+    #     sum_i b_i ka G (exp(-ka t) - exp(-lambda_i t)) / (lambda_i - ka),
+    # so each lambda_i amplitude moves by -b_i ka G / (lambda_i - ka) and a new
+    # term at ka carries the sum of those moves with the sign reversed (it is
+    # zero at t = 0: the depot adds nothing to the plasma until it drains).
+    # (Claude Code, 2026-10-07.)
+    #
     # The eigenvalues in force change with time here, so the state set carries
     # a lambda per point as well as an amplitude per point; see
     # R/recoveryStates.R, which a metabolite fold then reads.
-    lam <- cbind(lambda_1, lambda_2, lambda_3, ke0)
-    a   <- cbind(p_state_l1, p_state_l2, p_state_l3) * ke0 / (ke0 - lam[, 1:3])
-    recoveryStates <- recoveryStateSet(timeLine, cbind(a, Ce - rowSums(a)), lam)
+    lam <- cbind(lambda_1, lambda_2, lambda_3)
+    P   <- cbind(p_state_l1, p_state_l2, p_state_l3)
+    b   <- cbind(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3)
+    for (r in names(depot))
+    {
+      ka <- parameters[pkLine, paste0("ka_", r)]
+      # A sum of exponentials cannot carry lambda_i == ka, or ke0 == ka, exactly
+      # (the term is then t exp(-ka t)); a relative nudge of 1e-6 moves the
+      # answer by far less than anything plotted.
+      near <- abs(cbind(lam, ke0) - ka) < 1e-9 * pmax(ka, 1e-12)
+      ka <- ifelse(apply(near, 1, any), ka * (1 + 1e-6), ka)
+      shift <- b * ka * depot[[r]] / (lam - ka)
+      shift[!is.finite(shift)] <- 0
+      P   <- cbind(P - shift, rowSums(shift))
+      lam <- cbind(lam, ka)
+      b   <- cbind(b, 0)
+    }
+    if (hasCe)
+    {
+      a <- P * ke0 / (ke0 - lam)
+      recoveryStates <- recoveryStateSet(timeLine, cbind(a, Ce - rowSums(a)), cbind(lam, ke0),
+                                         pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine))
+    } else {
+      recoveryStates <- recoveryStateSet(timeLine, P, lam,
+                                         pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine),
+                                         horizon = RECOVERY_HORIZON_PLASMA)
+    }
     recovery <- recoveryFromStates(recoveryStates, emerge)
   } else {
     recoveryStates <- NULL
@@ -218,4 +379,27 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   )
   attr(results, "recoveryStates") <- recoveryStates
   return(results)
+}
+
+
+#' Input from a draining depot to one disposition state over one step
+#'
+#' A depot holding \code{G} at the start of a step of length \code{dt} empties
+#' into the central compartment at \code{ka G exp(-ka t)}.  A disposition state
+#' with eigenvalue \code{lambda} and unit-bolus response 1 gains, over the step,
+#' \code{ka G (exp(-ka dt) - exp(-lambda dt)) / (lambda - ka)}; the caller
+#' multiplies by the state's bolus coefficient.  When \code{lambda} equals
+#' \code{ka} the limit is \code{ka G dt exp(-ka dt)}.
+#'
+#' @param lambda,ka,G,dt vectors, one per step
+#' @returns the gain per unit bolus coefficient, one per step
+#' @keywords internal
+depotInput <- function(lambda, ka, G, dt)
+{
+  d    <- lambda - ka
+  same <- abs(d) < 1e-9 * pmax(abs(ka), 1e-12)
+  out  <- ka * G * ifelse(same, dt * exp(-ka * dt),
+                          (exp(-ka * dt) - exp(-lambda * dt)) / ifelse(same, 1, d))
+  out[G == 0 | ka <= 0] <- 0
+  out
 }

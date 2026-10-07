@@ -57,6 +57,9 @@
 #' Prednisone pharmacokinetics (total concentration), forming prednisolone
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published fixed parameters unscaled.
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   prednisolone as the formed active species
 #' @export

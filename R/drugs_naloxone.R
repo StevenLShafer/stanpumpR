@@ -92,6 +92,12 @@ NALOXONE_LAFFONT_CL_F <- 396     # L/h, apparent clearance of the 4 mg spray
 #' Naloxone pharmacokinetics
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM scale the central volume with the fat-free-mass weight
+#'   and the peripheral volumes and intercompartmental clearances to fat-free
+#'   mass; when \code{FALSE}, scale the central volume with total body weight and
+#'   use the published fixed peripheral parameters. Elimination clearance always
+#'   takes the model's own lean-body-weight covariate. No renal-function
+#'   estimate.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 naloxone <- function(weight, height, age, sex, adjustToFFM = TRUE)

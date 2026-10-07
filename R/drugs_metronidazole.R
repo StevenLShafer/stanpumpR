@@ -43,13 +43,40 @@
 # ============
 # Hydroxymetronidazole, an active metabolite about 65% as potent against the
 # tested anaerobes, whose population disposition was not recovered.  Hepatic
-# impairment.  Binding is low (free fraction about 0.85), so total is close
-# to free.
+# impairment.  Binding is low (free fraction 0.96; see below), so total is
+# close to free.
+#
+# TIME UNTIL THRESHOLD: FREE DRUG AT THE MIC
+# ==========================================
+# The default threshold (endCe in drugDefaults_global.csv) is the TOTAL
+# concentration at which FREE metronidazole equals the MIC of 4 mg/L for the
+# Bacteroides fragilis group: the EUCAST susceptible breakpoint for
+# Bacteroides spp. (S <= 4, R > 4 mg/L; the CLSI anaerobe breakpoint is 8),
+# and the B. fragilis-group MIC da Silva Neto used for target attainment.
+# Wild-type B. fragilis sits well below it (MIC50/MIC90 about 0.5/1 mg/L,
+# Boiten 2024).  Binding is linear, so the threshold is MIC / fu =
+# 4 / 0.96 = 4.2 mg/L.
+#
+# fu = 0.96 is from Dorn 2021: 0.964 +/- 0.044 by ultrafiltration in plasma
+# from adults given 0.5 g IV for abdominal or bariatric surgical prophylaxis,
+# independent of concentration (0.981 at 2 mg/L and 0.966 at 10 mg/L in
+# spiked plasma).  It replaces the uncited "about 0.85" this header used to
+# give; the labels' "less than 20% bound" is a bound, not a measurement.
+# Dorn's free fraction is quoted from the article; its abstract gives only
+# total concentrations, and the full text could not be read when this was
+# written, so it is worth checking against the paper.  Any credible value
+# (0.80-1.0) moves the threshold by less than a fifth.  See
+# R/antibioticThresholds.R.  (Free fraction 0.96 confirmed by Steven L.
+# Shafer, 2026-10-07.)
 #
 # References
 # ----------
 # da Silva Neto MJJ et al., J Antimicrob Chemother 2021;76:3212-3219.
 #   https://doi.org/10.1093/jac/dkab337
+# Dorn C et al., J Antimicrob Chemother 2021;76:2114-2120.
+#   https://doi.org/10.1093/jac/dkab143
+# Boiten KE et al., J Antimicrob Chemother 2024;79:868-874.
+#   https://doi.org/10.1093/jac/dkae043
 # Bergan T et al., 1984. https://pubmed.ncbi.nlm.nih.gov/6588489/
 # Loft S et al., 1986. https://pubmed.ncbi.nlm.nih.gov/3743624/
 # Experimental-tablet study, 2022. https://pmc.ncbi.nlm.nih.gov/articles/PMC9024553/
@@ -73,6 +100,10 @@ adjustedBodyWeight <- function(weight, height, sex)
 #' Metronidazole pharmacokinetics
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, scale
+#'   clearance to total body weight to the 0.75 power and volume to the patient's
+#'   adjusted body weight, as published. No renal-function estimate.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 metronidazole <- function(weight, height, age, sex, adjustToFFM = TRUE)

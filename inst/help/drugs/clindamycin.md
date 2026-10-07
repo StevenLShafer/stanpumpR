@@ -10,11 +10,11 @@ The source scaled clearance with total weight to the power 0.497 and left the vo
 
 ### Effect site
 
-None; only the plasma concentration is plotted.
+None; only the plasma concentration is plotted. *Time until threshold* is therefore timed on the plasma curve. That curve is **total** clindamycin (bound plus free), but it is free drug that acts on the organism, so the threshold is the total concentration at which the **free** concentration equals the MIC. The line shows how long, with no further dose, until free clindamycin falls below the MIC. The MIC is **0.5 mg/L**, the CLSI susceptible breakpoint for staphylococci. Because binding saturates, the threshold comes from the binding fit of Wulkersdorfer and colleagues (*J Antimicrob Chemother* 2021;76:2106-2113): free clindamycin is 0.5 mg/L when the total is about **5.2 mcg/mL** (free fraction about 0.10). The often-quoted free fraction of 0.15 is an average over a whole dose and would put the threshold too low, at 3.3 mcg/mL. When alpha-1 acid glycoprotein is raised, after surgery or with inflammation, the same free level needs more total drug. See *Time until threshold: free drug at the MIC* above.
 
 ### Typical concentrations
 
-The shaded band is 1 to 4 mcg/mL total, around the source's working trough criterion of 2 mg/L. Clindamycin is about 85 per cent bound to alpha-1 acid glycoprotein, so free concentrations are roughly a sixth of what is plotted.
+The shaded band is 1 to 4 mcg/mL total, around the source's working trough criterion of 2 mg/L. Clindamycin is bound to alpha-1 acid glycoprotein, and the binding saturates: about 90 per cent bound at these low levels, less at the peak after a dose. Free concentrations in the band are therefore roughly a tenth of what is plotted.
 
 ### Where to be careful
 

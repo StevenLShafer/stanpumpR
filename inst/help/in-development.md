@@ -10,6 +10,11 @@ Five pieces of work that this page previously listed as "in development" have no
 - **Antibiotics, corticosteroids and reversal agents.** Sixteen drugs from three literature reviews: cefazolin, cefalexin, ceftriaxone, clindamycin, gentamicin, metronidazole and vancomycin; dexamethasone, hydrocortisone, methylprednisolone, prednisolone and prednisone; and sugammadex, neostigmine and glycopyrrolate, with naloxone moved to the Dowling model and given a nasal route. Most have no effect site and are plotted as plasma concentrations. Each drug's page says what its row plots (unbound cefazolin, free prednisolone and the hydrocortisone increment above baseline are not the usual laboratory measure) and which values are provisional.
 - **Time until threshold across a metabolite, and during an absorption lag.** Recovery is now solved from the combined effect-site state when a drug receives an active metabolite, and reads "not yet absorbed" rather than zero during an extravascular lag.
 
+Two later changes to *Time until threshold* and the solvers:
+
+- **Time until threshold for the antibiotics.** A drug with no effect site is now timed on its plasma concentration. Each antibiotic's threshold is the plotted concentration at which **free** drug equals the MIC for its main target organism (unbound cefazolin is compared with the MIC directly; total-drug curves use the MIC divided by the free fraction), so the line shows the time left above the MIC. See [Time until threshold](help:models/recovery).
+- **Oral doses across clinical events.** The solver used when a clinical event changes the kinetics now absorbs oral, intramuscular and intranasal doses, rather than treating them as infusions. No drug with an extravascular route currently has event-dependent kinetics, so this guards future models.
+
 ## Now active
 
 **CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes.

@@ -3,7 +3,12 @@ convertState <- function(oldState, oldPK, newPK)
 {
   if (oldPK$lambda_2 == 0)
   {
-    return(state = oldState) # In a one compartment model, state variable doesn't change
+    # One compartment: the state is the concentration, and what carries across
+    # a change in PK is the AMOUNT.  Returning the state unchanged, as this did
+    # until 2026-10-07, kept the concentration continuous instead, creating or
+    # destroying drug whenever V1 changed.  (Claude Code; checked against an
+    # ODE solution in tests/testthat/test-closedForm1-extravascular.R.)
+    return(state = oldState * oldPK$v1 / newPK$v1)
   }
 
   if (oldPK$lambda_3 == 0)

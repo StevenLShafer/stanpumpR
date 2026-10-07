@@ -15,12 +15,11 @@ gentamicin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
-patient's fat-free mass as described in the
-\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
-\code{FALSE} reproduces the published size scaling exactly.  Each drug
-file's header says what the switch changes for that model; for cefazolin
-it also sets the weight the creatinine-clearance estimate uses.}
+\item{adjustToFFM}{evaluate the central volume and the de-indexed CKD-EPI
+eGFR (at an assumed normal creatinine) at the fat-free-mass weight, and
+scale the peripheral volume and intercompartmental clearance to fat-free
+mass; when \code{FALSE}, use total body weight and the published fixed
+peripheral parameters.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
 assumed normal value for the patient's sex (R/renalFunction.R)}

@@ -15,12 +15,10 @@ clindamycin(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
-patient's fat-free mass as described in the
-\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
-\code{FALSE} reproduces the published size scaling exactly.  Each drug
-file's header says what the switch changes for that model; for cefazolin
-it also sets the weight the creatinine-clearance estimate uses.}
+\item{adjustToFFM}{scale the volume to the patient's fat-free mass and the
+clearance to that ratio to the published 0.497 power; when \code{FALSE},
+leave the volume unscaled and apply the 0.497 power to total body weight. No
+renal-function estimate.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
