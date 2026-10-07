@@ -70,19 +70,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   #Set up time varying parameters
   parameters$k <- parameters$k10 + parameters$k12 + parameters$k13
-
-  if (sum(parameters$k21) == 0)
-  {
-    parameters$v2 <- 0
-  } else {
-    parameters$v2 <- parameters$v1 * parameters$k12 / parameters$k21
-  }
-  if (sum(parameters$k31) == 0)
-  {
-    parameters$v3 <- 1
-  } else {
-    parameters$v3 <- parameters$v1 * parameters$k13 / parameters$k31
-  }
+  # No v2 or v3: convertState() works from the rate constants, so that a set
+  # without a peripheral compartment (k21 = 0, which made v2 here 0/0 when it
+  # shared a run with one that had one) needs no volume for it.
 
   v1  <- parameters[pkLine,"v1"]
   k10 <- parameters[pkLine,"k10"]
