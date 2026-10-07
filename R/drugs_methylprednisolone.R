@@ -49,6 +49,9 @@ METHYLPREDNISOLONE_KA_PO <- 0.0212903403   # 1/min, = 1.277 /h
 #' Methylprednisolone pharmacokinetics
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published fixed parameters unscaled.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 methylprednisolone <- function(weight, height, age, sex, adjustToFFM = TRUE)

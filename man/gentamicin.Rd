@@ -15,8 +15,11 @@ gentamicin(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{scale the size-free parameters to fat-free mass and
-estimate creatinine clearance on the pharmacokinetic weight}
+\item{adjustToFFM}{evaluate the central volume and the de-indexed CKD-EPI
+eGFR (at an assumed normal creatinine) at the fat-free-mass weight, and
+scale the peripheral volume and intercompartmental clearance to fat-free
+mass; when \code{FALSE}, use total body weight and the published fixed
+peripheral parameters.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

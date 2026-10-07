@@ -45,6 +45,10 @@
 #' Cefalexin pharmacokinetics (oral, apparent)
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published allometry on total body weight (volumes linear, clearances to the
+#'   0.75 power). No renal-function estimate.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 cefalexin <- function(weight, height, age, sex, adjustToFFM = TRUE)

@@ -15,8 +15,10 @@ neostigmine(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{scale the size-free parameters to fat-free mass and
-estimate creatinine clearance on the pharmacokinetic weight}
+\item{adjustToFFM}{scale volumes to the patient's fat-free mass and
+clearances to that ratio to the 0.75 power; when \code{FALSE}, scale every
+volume and clearance linearly with total body weight, as the per-kilogram
+source does.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

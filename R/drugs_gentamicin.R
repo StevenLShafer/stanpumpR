@@ -56,6 +56,11 @@
 #' Gentamicin pharmacokinetics
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM evaluate the central volume and the de-indexed CKD-EPI
+#'   eGFR (at an assumed normal creatinine) at the fat-free-mass weight, and
+#'   scale the peripheral volume and intercompartmental clearance to fat-free
+#'   mass; when \code{FALSE}, use total body weight and the published fixed
+#'   peripheral parameters.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE)

@@ -15,8 +15,10 @@ clindamycin(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{scale the size-free parameters to fat-free mass and
-estimate creatinine clearance on the pharmacokinetic weight}
+\item{adjustToFFM}{scale the volume to the patient's fat-free mass and the
+clearance to that ratio to the published 0.497 power; when \code{FALSE},
+leave the volume unscaled and apply the 0.497 power to total body weight. No
+renal-function estimate.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
