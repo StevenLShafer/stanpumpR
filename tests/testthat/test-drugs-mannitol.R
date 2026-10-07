@@ -59,7 +59,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
 })
 
 test_that("the reference man receives the published parameters", {
+  # Kaneda's means, unscaled: his fat-free mass is the reference, and his
+  # Cockcroft-Gault clearance at creatinine 1.0 is the reference 102.08 mL/min.
+  published <- list(v1 = 2.80, v2 = 8.86, v3 = 12.0, cl1 = 0.07, cl2 = 2.07, cl3 = 0.16)
   actual <- mannitol(70, 170, 35, "male")
+  expect_equal_rounded(actual$PK$default, published)
   expect_equal_rounded(
     actual$PK$default,
     mannitol(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
