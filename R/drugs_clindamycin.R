@@ -78,6 +78,10 @@
 #' Clindamycin pharmacokinetics
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM scale the volume to the patient's fat-free mass and the
+#'   clearance to that ratio to the published 0.497 power; when \code{FALSE},
+#'   leave the volume unscaled and apply the 0.497 power to total body weight. No
+#'   renal-function estimate.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 clindamycin <- function(weight, height, age, sex, adjustToFFM = TRUE)

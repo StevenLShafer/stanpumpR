@@ -15,12 +15,12 @@ naloxone(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
-patient's fat-free mass as described in the
-\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
-\code{FALSE} reproduces the published size scaling exactly.  Each drug
-file's header says what the switch changes for that model; for cefazolin
-it also sets the weight the creatinine-clearance estimate uses.}
+\item{adjustToFFM}{scale the central volume with the fat-free-mass weight
+and the peripheral volumes and intercompartmental clearances to fat-free
+mass; when \code{FALSE}, scale the central volume with total body weight and
+use the published fixed peripheral parameters. Elimination clearance always
+takes the model's own lean-body-weight covariate. No renal-function
+estimate.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
