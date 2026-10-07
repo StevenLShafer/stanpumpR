@@ -289,7 +289,8 @@ test_that("the opioid contribution is ordered across phenotypes", {
 test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # codeine, tramadol and prednisone are prodrugs by design; the antibiotics,
   # the other steroids, sugammadex and glycopyrrolate have no equilibration
-  # model to attach (see each drug's header).  Pinned because the count has
+  # model to attach (see each drug's header); mannitol is plotted as serum
+  # osmolality and has no published ke0.  Pinned because the count has
   # been got wrong by hand more than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
@@ -303,7 +304,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
-    "sugammadex", "glycopyrrolate"
+    "sugammadex", "glycopyrrolate", "mannitol"
   ))
 })
 

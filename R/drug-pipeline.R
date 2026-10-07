@@ -72,7 +72,8 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
 recalculatePK <- function(drugs, drugDefaults, doseTable,
                           age, weight, height, sex,
                           cyp2d6 = CYP2D6_DEFAULT,
-                          adjustToFFM = TRUE) {
+                          adjustToFFM = TRUE,
+                          osmolality = OSMOLALITY_DEFAULT) {
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
   resolve <- function(drugs, drug) {
@@ -90,6 +91,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         sex = sex,
         drugDefaults = drugDefaults[idx, ],
         cyp2d6 = cyp2d6,
+        osmolality = osmolality,
         adjustToFFM = adjustToFFM
       )
     )

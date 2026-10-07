@@ -39,6 +39,7 @@ prednisone,ng,,,mg PO,"mg PO,mg/kg PO",#C9A227,10,80,30,0,0,IV
 sugammadex,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#7B68EE,5,30,10,0,0,IV
 neostigmine,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#9370DB,30,300,100,0,30,IV
 glycopyrrolate,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#8A2BE2,1,10,3,0,0,IV
+mannitol,mOsm,g,g/hr,g,"g,g/kg,g/hr,g/kg/hr",#00A3AD,300,320,310,0,0,IV
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas
 oxygen,%,L/min,L/min,L/min,"L/min",#2E7D32,0,0,0,0,0,gas
 nitrousOxide,%,L/min,L/min,L/min,"L/min",#1E88E5,0,0,0,0,10,gas

@@ -43,6 +43,7 @@ they change the predictions.
 | Height | in or cm | |
 | Sex | male / female | |
 | Adjust weight to fat-free mass | checkbox | On by default. See below. |
+| Baseline serum osmolality | mOsm/kg | Before mannitol; 280 by default. Read only by mannitol, which is plotted as the serum osmolality it produces. See [docs/mannitol.md](mannitol.md). |
 
 **Adjust weight to fat-free mass.** Most of the drug models were reported for a
 typical 70 kg adult and, if they scaled at all, scaled with total body weight.
@@ -349,6 +350,7 @@ what the literature offers.
 | Dexamethasone | Hong Y et al., *Pharm Res* 2007;24:1088–1097 (IV, phosphate-labelled dose); oral F 0.81 from Spoorenberg 2014; oral and IM absorption from Krzyzanski 2021 |
 | Prednisolone | Xu J, Winkler J, Derendorf H. *J Pharmacokinet Pharmacodyn* 2007;34:355–372. [DOI 10.1007/s10928-007-9050-8](https://doi.org/10.1007/s10928-007-9050-8) (reversible pair reduced to its exact mammillary equivalent; **free** prednisolone) |
 | Prednisone | Xu J, Winkler J, Derendorf H, as above (oral prodrug; total prednisone, with prednisolone on the prednisolone row) |
+| Mannitol | Kaneda K et al., *J Clin Pharmacol* 2010;50(5):536–543. [PMID 20051588](https://pubmed.ncbi.nlm.nih.gov/20051588/)<br>Osmolality: Rudehill A et al., *J Neurosurg Anesthesiol* 1993;5(1):4–12. [PMID 8431668](https://pubmed.ncbi.nlm.nih.gov/8431668/). See [docs/mannitol.md](mannitol.md). |
 
 ### Reading these honestly
 

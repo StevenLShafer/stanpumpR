@@ -316,7 +316,7 @@ test_that("a drug with no metabolite is untouched by the fold", {
 })
 
 
-test_that("exactly two drugs have no effect site, and the fold handles each", {
+test_that("exactly the plasma-only drugs have no effect site, and the fold handles each", {
   # The set has moved repeatedly while this was being written, so it is pinned:
   # a drug losing or gaining an effect site changes which branch of the fold it
   # takes.  If this fails, the set has changed and the NA paths want rechecking
@@ -339,13 +339,15 @@ test_that("exactly two drugs have no effect site, and the fold handles each", {
   # site, prednisone -> prednisolone, so the NA fold path that
   # test-metabolite-merge.R constructs is now also exercised by a real drug:
   # see "oral prednisone folds onto a prednisolone row with no effect site"
-  # below.
+  # below.  Mannitol joined too: plotted as serum osmolality, no published
+  # ke0, and it neither forms nor receives a metabolite, so it never reaches
+  # the fold.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
-    "sugammadex", "glycopyrrolate"
+    "sugammadex", "glycopyrrolate", "mannitol"
   ))
 })
 

@@ -14,7 +14,8 @@ getDrugPK(
   drugDefaults = getDrugDefaults(drug),
   cyp2d6 = CYP2D6_DEFAULT,
   resolveMetabolite = TRUE,
-  adjustToFFM = TRUE
+  adjustToFFM = TRUE,
+  osmolality = OSMOLALITY_DEFAULT
 )
 }
 \arguments{
@@ -41,6 +42,10 @@ metabolite itself, which stops a cascade from recursing.}
 fat-free mass (the default) rather than total body weight; see
 \code{docs/weight-adjustment.md}.  Ignored by models that carry their own
 fat-free-mass covariate (propofol, remifentanil).}
+
+\item{osmolality}{baseline serum osmolality in mOsm/kg, before any osmotic
+agent.  Passed only to drug models that declare it (mannitol); the rest
+ignore it.}
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example

@@ -14,7 +14,8 @@ simulateDrugsWithCovariates(
   maximum,
   plotRecovery,
   cyp2d6 = CYP2D6_DEFAULT,
-  adjustToFFM = TRUE
+  adjustToFFM = TRUE,
+  osmolality = OSMOLALITY_DEFAULT
 )
 }
 \arguments{
@@ -41,6 +42,9 @@ Only drugs whose model declares it are affected.}
 \item{adjustToFFM}{scale each model's volumes and clearances to the patient's
 fat-free mass (the default) rather than total body weight; see
 \code{docs/weight-adjustment.md}.}
+
+\item{osmolality}{baseline serum osmolality in mOsm/kg.  Only an osmotic
+agent (mannitol), which is reported as serum osmolality, is affected.}
 }
 \value{
 a list of data frames with the output of the a single drug

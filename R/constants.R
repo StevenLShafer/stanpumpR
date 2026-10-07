@@ -28,6 +28,14 @@ CYP2D6_VALUES  <- c(CYP2D6_POOR, CYP2D6_INTERMEDIATE, CYP2D6_NORMAL,
                     CYP2D6_ULTRARAPID)
 CYP2D6_DEFAULT <- CYP2D6_NORMAL
 
+# Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
+# only by models that declare an `osmolality` argument (mannitol), which add
+# their own contribution on top of it.  The default, 280, is within the normal
+# adult range (about 275 to 295); the user enters the patient's measured value.
+OSMOLALITY_DEFAULT <- 280
+MIN_OSMOLALITY <- 200
+MAX_OSMOLALITY <- 400
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 MIN_WEIGHT <- 0.1
@@ -66,7 +74,7 @@ MAX_UNIT_STRING_LENGTH <- 32L
 # Be sure there are more items below then potential facets on the simulation plot
 #                     1     2     3     4     5     6     7     8     9    10    11    12    13    14   15
 bolusUnits <- c("g","mg","mcg", "ng","g/kg","mg/kg","mcg/kg","ng/kg")
-infusionUnits <- c("mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr")
+infusionUnits <- c("g/min","g/hr","g/kg/hr","mg/min","mg/hr","mg/kg/min","mg/kg/hr","mcg/min","mcg/hr","mcg/kg/min","mcg/kg/hr")
 poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
 inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
