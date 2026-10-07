@@ -101,6 +101,7 @@ in the header: which part is exact, which is approximate, and what is plotted
 | `MEAC` | reference effect concentration used for the MEAC plot / normalization (`0` if not applicable). |
 | `typical`, `upperTypical`, `lowerTypical` | the shaded "typical range" band on the plot. |
 | `reference` | literature citation (string). |
+| `prodrug` | optional; `FALSE` marks an active parent that has a metabolite but no effect site, so the help does not call it a prodrug (see "An active parent with no effect-site model" below). |
 
 **Optional — extravascular routes.** To support oral/IM/intranasal dosing, add absorption
 fields to a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_IM` / `_IN`
@@ -108,6 +109,17 @@ equivalents). `getDrugPK()` builds the matching absorption coefficients and `sim
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
 The route is the suffix of the unit (`mg PO`, `mg IM`, `mg IN`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
+
+**Optional — oral input as a constant daily rate.** A model fitted with each day's oral dose
+spread evenly over the day, rather than absorbed first-order, offers the unit `mg/day PO`
+(`poRateUnits` in `R/constants.R`). It is oral by route, so the help and the dropdowns call it
+oral, but a rate by kind (`isRateUnit()` in `R/routes.R`): `simCpCe()` converts it to mg/min and
+runs each row as the drug's running input rate, as it does an infusion, until the drug's next
+rate row; `0 mg/day PO` stops it. It is applied to the model's parameters directly, with no
+absorption rate constant and no bioavailability, so it suits **apparent** oral parameters (see
+below) and the model needs no `ka_PO` at all. Amiodarone is the example: Pollak and colleagues
+modelled a 400 mg/day dose as 16.7 mg/h for 24 hours. A source reporting clearances per day is
+converted with `MINS_PER_DAY` in the drug file.
 
 **Optional — time-varying PK.** Provide more than one named PK set (e.g. `default`,
 `"CPB Start"`) to switch kinetics on a clinical event; `advanceClosedForm1()` handles the
@@ -177,6 +189,13 @@ together with any of the metabolite drug that was given directly (`recoveryState
 in a drug model has to arrange that; `endCe` on the metabolite drug's defaults row is the
 threshold it is measured against.
 
+**An active parent with no effect-site model** looks the same to the engine (`tPeak = 0` and a
+`metabolite` block), but is not a prodrug, and the generated help page would otherwise say
+that its effect is the metabolite's. Such a model returns `prodrug = FALSE` alongside the
+usual fields. The field is optional and read only by the help (`R/help-drugs.R`); leaving it
+out keeps the prodrug description. Amiodarone, which is active itself and has no published
+human ke0, is the example (`R/drugs_amiodarone.R`).
+
 **A drug whose potency is not yet known** uses the same mechanism, but should say so. Put
 `tPeak` and `MEAC` in named constants at the top of the file with a comment explaining what
 is missing, and add a test asserting that the constant matches the CSV's `MEAC` column —
@@ -188,7 +207,9 @@ worked examples.
 clearance and volume divided by an unmeasured bioavailability. Those predict oral
 concentrations correctly, because the unknown factor cancels, and intravenous ones wrong by
 `1/F`. Such a drug must offer oral units only and carry `bioavailability_PO = 1`, since the
-apparent scale already contains it. Hydrocodone is the example.
+apparent scale already contains it. Hydrocodone is the example. A drug offered only as the
+constant-rate oral unit `mg/day PO` (amiodarone) carries no absorption fields at all: the rate
+is applied to the apparent parameters as it stands.
 
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 
@@ -206,7 +227,8 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
 - `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and the "time until threshold"
   level: the effect-site concentration for a drug with an effect site, the plasma concentration
-  for one without, and `0` for none. For an antibiotic, `endCe` is the plotted concentration at
+  for one without, and `0` for none. A drug with no established range sets all three band
+  columns to `0`: no band is drawn, and its help page says so (desethylamiodarone). For an antibiotic, `endCe` is the plotted concentration at
   which **free** drug equals the MIC: the MIC itself if the model plots unbound drug, the MIC
   divided by the free fraction if it plots total drug. Add the antibiotic to
   `antibioticMicTable()` in `R/antibioticThresholds.R`, which records the organism, MIC, free

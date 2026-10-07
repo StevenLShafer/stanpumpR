@@ -114,7 +114,7 @@ scaled everything linearly with weight.
 
 | Scaled to fat-free mass | Not scaled (own covariates) |
 |---|---|
-| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, methadone, midazolam, morphine, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; and sugammadex, neostigmine, glycopyrrolate | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance, which is the Janmahasatian fat-free mass; its other parameters inherit the scaling. |
+| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, methadone, midazolam, morphine, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; and amiodarone, desethylamiodarone | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance, which is the Janmahasatian fat-free mass; its other parameters inherit the scaling. |
 
 **Models with their own weight or renal covariates.** Several antibiotic and
 reversal-agent models write a body-weight term into some parameters
@@ -140,7 +140,7 @@ before fat-free mass was introduced:
 
 | Model type | Behaviour with the switch off |
 |---|---|
-| Fixed published parameters (alfentanil, sufentanil, midazolam, oliceridine, oxycodone, mannitol, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate) | no scaling at all |
+| Fixed published parameters (alfentanil, sufentanil, midazolam, oliceridine, oxycodone, mannitol, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone) | no scaling at all |
 | V1 per kilogram with fixed rate constants (ketamine, etomidate, morphine, methadone, hydromorphone, pethidine, lidocaine, rocuronium, neostigmine) | volumes and clearances both × weight / 70 |
 | Allometric on total weight (fentanyl, remimazolam, infant dexmedetomidine, cefalexin, hydrocortisone, metronidazole on its adjusted body weight, clindamycin with its published 0.497 exponent) | volumes × weight / 70, clearances × (weight / 70)<sup>0.75</sup> (or the published exponent) |
 | Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone) | the published equations on total body weight; size-free parameters fixed |

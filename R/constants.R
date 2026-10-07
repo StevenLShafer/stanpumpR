@@ -91,7 +91,17 @@ poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
 inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 
-allUnits <- c(bolusUnits, infusionUnits, poUnits, inUnits, imUnits)
+# Constant-rate oral input: a daily oral dose spread evenly over the day, as
+# Pollak, Bouillon and Shafer modelled long-term oral amiodarone (400 mg/d as
+# 16.7 mg/h for 24 h; R/drugs_amiodarone.R).  Oral by route, so doseRoute()
+# reads it as PO, but a rate by kind: simCpCe() runs each row as the drug's
+# running input rate until the next, like an infusion row, on the drug's
+# apparent oral parameters (no ka, no bioavailability).  Kept out of
+# infusionUnits, which lists the intravenous rates.  (Claude Code,
+# 2026-10-07, at the request of Steven L. Shafer.)
+poRateUnits <- c("mg/day PO")
+
+allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, inUnits, imUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.

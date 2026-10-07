@@ -30,6 +30,11 @@ test_that("validateDoseTableInput: full rows pass", {
   expect_true(validateDoseTableInput(rows, sample_drug_defaults))
 
   expect_true(validateDoseTableInput(doseTableInit))
+
+  # The constant-rate oral unit (poRateUnits), amiodarone's
+  rows <- data.frame(Drug = "amiodarone", Time = c("0", "2880"), Dose = c("1600", "0"),
+                     Units = "mg/day PO")
+  expect_true(validateDoseTableInput(rows, data.frame(Drug = "amiodarone")))
 })
 
 test_that("validateDoseTableInput: blank placeholder rows are allowed, not rejected", {

@@ -37,7 +37,12 @@ test_that("each antibiotic's default threshold is free drug at its MIC", {
 })
 
 
-test_that("the antibiotics are exactly the drugs with no effect site and a threshold", {
+test_that("the antibiotics and amiodarone are exactly the drugs with no effect site and a threshold", {
+  # A policy pin.  Until 2026-10-07 only the antibiotics were timed on their
+  # plasma by default.  Amiodarone joined deliberately: its threshold is the
+  # bottom of the therapeutic window, 1.0 mg/L of serum amiodarone, and it is
+  # not an antibiotic, so no MIC, free fraction or antibiotic help applies to
+  # it (R/drugs_amiodarone.R).
   dd <- getDrugDefaultsGlobal()
   timedOnPlasma <- character(0)
   for (drug in dd$Drug[!isGasDrug(dd$Drug)]) {
@@ -45,7 +50,10 @@ test_that("the antibiotics are exactly the drugs with no effect site and a thres
     if (PK$PK[[PK_EVENT_DEFAULT]]$ke0 == 0 && dd$endCe[dd$Drug == drug] > 0)
       timedOnPlasma <- c(timedOnPlasma, drug)
   }
-  expect_setequal(timedOnPlasma, antibioticMicTable()$Drug)
+  expect_setequal(timedOnPlasma, c(antibioticMicTable()$Drug, "amiodarone"))
+  expect_false("amiodarone" %in% antibioticMicTable()$Drug)
+  amio <- helpDrugPageHTML("amiodarone")
+  expect_false(grepl("Time until threshold: free drug at the MIC", amio, fixed = TRUE))
 })
 
 

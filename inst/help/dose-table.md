@@ -24,13 +24,14 @@ Anything that cannot be read as a time becomes 0 rather than raising an error. I
 | mass, or mass per kg | **bolus** at that time | `mg`, `mcg/kg` |
 | mass per minute or hour, with or without per kg | **infusion** from that time | `mcg/kg/min`, `mg/hr` |
 | mass with `PO`, `IM` or `IN` | **extravascular dose** at that time | `mg PO`, `mg IN` |
+| mass per day with `PO` | **oral rate**: the daily dose spread evenly over each day, from that time | `mg/day PO` (amiodarone) |
 | any of the above doses followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
 | `L/min` | fresh gas flow or ventilation setting | inhaled agents |
 | `%` | vaporizer setting | inhaled agents |
 
 ## Infusions
 
-An infusion runs from its time until the next row for that same drug changes it, or until the end of the simulation. To stop one, add a row for the same drug at the stop time with a dose of 0. A bolus row does not interrupt an infusion; the two add.
+An infusion runs from its time until the next row for that same drug changes it, or until the end of the simulation. To stop one, add a row for the same drug at the stop time with a dose of 0. A bolus row does not interrupt an infusion; the two add. An oral rate (`mg/day PO`) behaves the same way: each row sets the daily dose from its time, and `0 mg/day PO` stops it.
 
 Per-kilogram units use the weight in the Patient Profile at the time of simulation, so changing the weight changes the delivered amount.
 

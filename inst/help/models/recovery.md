@@ -2,12 +2,12 @@
 
 ## The thresholds
 
-Each drug's threshold (`endCe` in the drug library) is the effect-site concentration at which recovery is expected. The defaults are each opioid's MEAC (the concentration at which analgesia is expected to become inadequate, and, near enough, at which spontaneous ventilation returns in a patient who has been apneic), 1 mcg/mL for propofol, 1 mcg/mL for rocuronium, and the lower end of the typical range for most other drugs. For the inhaled agents it is 0.1 of the age-adjusted MAC. For the antibiotics it is the plasma concentration at which the free drug equals the MIC (see below). The corticosteroids, sugammadex, glycopyrrolate, mannitol and the prodrugs codeine and tramadol have no default threshold, so their line stays at zero. A threshold of zero always means "no threshold": a concentration that decays never reaches zero, so there is nothing to time. All of them can be edited under **Settings → Drug Thresholds**; the edited values travel with the URL.
+Each drug's threshold (`endCe` in the drug library) is the effect-site concentration at which recovery is expected. The defaults are each opioid's MEAC (the concentration at which analgesia is expected to become inadequate, and, near enough, at which spontaneous ventilation returns in a patient who has been apneic), 1 mcg/mL for propofol, 1 mcg/mL for rocuronium, and the lower end of the typical range for most other drugs. For the inhaled agents it is 0.1 of the age-adjusted MAC. For the antibiotics it is the plasma concentration at which the free drug equals the MIC (see below). For amiodarone it is 1 mcg/mL, the bottom of its therapeutic window, so the line shows how long serum amiodarone would take to fall out of the window if dosing stopped. The corticosteroids, sugammadex, glycopyrrolate, mannitol and the prodrugs codeine and tramadol have no default threshold, so their line stays at zero. A threshold of zero always means "no threshold": a concentration that decays never reaches zero, so there is nothing to time. All of them can be edited under **Settings → Drug Thresholds**; the edited values travel with the URL.
 
 ## Which concentration is timed
 
 - **A drug with an effect site** is timed on its effect-site concentration, because that is where the effect is.
-- **A drug with no effect site** is timed on its plasma concentration: the antibiotics, the corticosteroids, sugammadex, glycopyrrolate, mannitol, and the prodrugs codeine and tramadol. Of these, only the antibiotics have a threshold by default.
+- **A drug with no effect site** is timed on its plasma concentration: the antibiotics, the corticosteroids, sugammadex, glycopyrrolate, mannitol, amiodarone and desethylamiodarone, and the prodrugs codeine and tramadol. Of these, only the antibiotics and amiodarone have a threshold by default.
 
 ## The antibiotics: free drug at the MIC
 

@@ -120,6 +120,30 @@ helpHalfLife <- function(lambda) {
   log(2) / lambda
 }
 
+#' A half-life for a table whose column is in minutes
+#'
+#' Minutes, as every other time on the page, but a half-life of a day or
+#' more also gives its length in days, so that amiodarone's 55-day terminal
+#' half-life does not read only as "79,700".  (Claude Code, 2026-10-07, at
+#' the request of Steven L. Shafer.)
+#' @noRd
+helpFormatHalfLife <- function(minutes) {
+  shown <- helpFormatNumber(minutes)
+  long <- !is.na(minutes) & is.finite(minutes) & minutes >= MINS_PER_DAY
+  shown[long] <- sprintf("%s (%s d)", shown[long], helpFormatNumber(minutes[long] / MINS_PER_DAY))
+  shown
+}
+
+#' Does the drug's defaults row carry no typical-range band?
+#'
+#' A drug with no established range (desethylamiodarone) carries zeros in
+#' the band columns, which the plot draws as no band at all; the help says so
+#' rather than printing "0 to 0".  (Claude Code, 2026-10-07.)
+#' @noRd
+helpNoBand <- function(row) {
+  isTRUE(row$Lower == 0) && isTRUE(row$Upper == 0) && isTRUE(row$Typical == 0)
+}
+
 #' Volumes, clearances and derived constants of a drug at the reference patients
 #'
 #' @returns a data frame with one row per patient for which the model ran:
@@ -231,10 +255,12 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   # A drug with no effect site in the model (tPeak and ke0 both zero).  When it
   # also names a metabolite it is a prodrug, such as codeine, whose effect
   # appears on the metabolite's row; without one (an antibiotic, say) it is
-  # simply plotted as plasma only.
+  # simply plotted as plasma only.  A model can say it is NOT a prodrug
+  # (prodrug = FALSE): amiodarone is active itself, and merely has no
+  # effect-site model, so its effect is not "the metabolite's".
   noEffectSite <- !is.null(pkRef) && isTRUE(pkRef$tPeak == 0) &&
     isTRUE(pkRef$PK[[PK_EVENT_DEFAULT]]$ke0 == 0)
-  prodrug <- noEffectSite && !is.null(metabolite)
+  prodrug <- noEffectSite && !is.null(metabolite) && !isFALSE(modelOut$prodrug)
   # An antibiotic's threshold is free drug at the MIC; see R/antibioticThresholds.R
   mic <- antibioticMic(drug)
 
@@ -257,7 +283,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   }
   unitsShown <- if (length(units)) paste(units, collapse = ", ") else
     "None: this drug cannot be entered in the dose table"
-  defaultShown <- if (nzchar(as.character(row$Default.Units))) as.character(row$Default.Units) else "—"
+  # A drug with no dosing unit reads the blank CSV cell as NA, which
+  # nzchar() alone would print as "NA"
+  defaultShown <- if (!is.na(row$Default.Units) && nzchar(as.character(row$Default.Units)))
+    as.character(row$Default.Units) else "—"
   meacShown <- if (!is.na(row$MEAC) && row$MEAC > 0) {
     sprintf("%s %s", helpFormatNumber(row$MEAC), concUnits)
   } else if (prodrug) {
@@ -279,8 +308,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       if (!is.null(metabolite)) helpPageLink(paste0("drugs/", metabolite)) else esc("None modelled"),
       if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
-      esc(sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
-      esc(sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
+      esc(if (helpNoBand(row)) "None: no range has been established, so no band is drawn"
+          else sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
+      esc(if (helpNoBand(row)) "None" else sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
       esc(meacShown),
       esc(if (!is.null(mic)) {
             sprintf("%s %s %s, the level at which free drug equals the MIC (%s mg/L); timed on the plasma",
@@ -339,11 +369,11 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     }, character(1))
     derived <- data.frame(
       params$Patient,
-      helpFormatNumber(params$halfLife1),
-      helpFormatNumber(params$halfLife2),
-      helpFormatNumber(params$halfLife3),
+      helpFormatHalfLife(params$halfLife1),
+      helpFormatHalfLife(params$halfLife2),
+      helpFormatHalfLife(params$halfLife3),
       ifelse(params$ke0 > 0, helpFormatNumber(params$ke0), "none"),
-      helpFormatNumber(params$ke0HalfTime),
+      helpFormatHalfLife(params$ke0HalfTime),
       tPeakShown,
       stringsAsFactors = FALSE
     )
@@ -403,7 +433,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       helpTableHTML(derived, "Half-lives, effect-site equilibration and time to peak effect"),
       "<p class='small text-muted'>The disposition half-lives are ln(2) divided by the ",
       "eigenvalues of the compartment model (\u03b1 fastest, \u03b3 slowest); a dash means the ",
-      "compartment is absent. ", effectNote, "</p>"
+      "compartment is absent, and a half-life of a day or more also gives its length in days (d). ",
+      effectNote, "</p>"
     )
   }
 
@@ -420,7 +451,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
                     "Molecular weight ratio (metabolite / parent)"),
       Value = c(helpPageLink(paste0("drugs/", metabolite)),
                 helpFormatNumber(m$kFormation),
-                helpFormatNumber(log(2) / m$kFormation),
+                helpFormatHalfLife(log(2) / m$kFormation),
                 helpFormatNumber(firstPass),
                 helpFormatNumber(mwRatio)),
       stringsAsFactors = FALSE
@@ -706,8 +737,10 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
       `Model source` = htmltools::htmlEscape(if (is.null(pk)) "Not available" else helpReferenceShort(pk$reference)),
       `Given as` = given,
       `Active metabolite` = metabolite,
-      `Default unit` = htmltools::htmlEscape(if (nzchar(as.character(row$Default.Units))) as.character(row$Default.Units) else "—"),
-      `Typical range` = sprintf("%s\u2013%s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), conc),
+      `Default unit` = htmltools::htmlEscape(if (!is.na(row$Default.Units) && nzchar(as.character(row$Default.Units)))
+                                               as.character(row$Default.Units) else "—"),
+      `Typical range` = if (helpNoBand(row)) "none established" else
+        sprintf("%s\u2013%s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), conc),
       MEAC = if (!is.na(row$MEAC) && row$MEAC > 0) sprintf("%s %s", helpFormatNumber(row$MEAC), conc) else "",
       check.names = FALSE, stringsAsFactors = FALSE
     )
