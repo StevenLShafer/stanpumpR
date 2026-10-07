@@ -73,10 +73,23 @@ test_that("the dose table a scenario produces is what the app expects", {
 test_that("scenario dose tables in minutes are written exactly as before time units", {
   # minutesToDisplayTime() in minutes is as.character() for every time the
   # scenarios use (it differs only where as.character() would write 1e+05)
-  for (s in scenarios) {
-    expect_equal(s$options$timeUnits, "minutes", info = s$id)
+  for (s in Filter(function(s) s$options$timeUnits == "minutes", scenarios)) {
     d <- s$doses[order(s$doses$Time, s$doses$Drug), ]
     expect_identical(helpScenarioDoseTable(s, blankRows = 0)$Time, as.character(d$Time), info = s$id)
+  }
+})
+
+test_that("every scenario's dose times survive being written in its own unit", {
+  # The long-term scenarios are written in days; whatever the unit, the app
+  # must read back exactly the minutes the scenario defines.
+  for (s in scenarios) {
+    d <- s$doses[order(s$doses$Time, s$doses$Drug), ]
+    written <- helpScenarioDoseTable(s, blankRows = 0)$Time
+    expect_identical(
+      displayTimeToMinutes(written, REFERENCE_TIME_NONE, s$options$timeUnits),
+      as.numeric(d$Time),
+      info = s$id
+    )
   }
 })
 

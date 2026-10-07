@@ -26,7 +26,8 @@ HELP_SCENARIO_GROUPS <- c(
   "Interactions",
   "Special populations",
   "Recovery and emergence",
-  "Inhaled anesthetics"
+  "Inhaled anesthetics",
+  "Long-term therapy"
 )
 
 #' Default graph options for a scenario
@@ -426,6 +427,57 @@ helpScenarios <- function() {
         c("ventilation", 0, 6, "L/min")
       ),
       maximum = 60
+    ),
+
+    # --- Long-term therapy ---------------------------------------------------
+    helpScenario(
+      "amiodarone-pollak-regimen",
+      "Amiodarone: Pollak's stepped loading regimen",
+      "Long-term therapy",
+      "Loading a drug with a huge peripheral volume: a year of amiodarone held inside its window.",
+      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("amiodarone",      0, 1600, "mg/day PO"),
+        c("amiodarone",   2880, 1200, "mg/day PO"),
+        c("amiodarone",  10080, 1000, "mg/day PO"),
+        c("amiodarone",  20160,  800, "mg/day PO"),
+        c("amiodarone",  30240,  600, "mg/day PO"),
+        c("amiodarone",  40320,  400, "mg/day PO"),
+        c("amiodarone", 129600,  343, "mg/day PO")
+      ),
+      timeUnits = "days", maximum = 525600
+    ),
+    helpScenario(
+      "amiodarone-label-loading",
+      "Amiodarone: the label's high-dose loading regimen",
+      "Long-term therapy",
+      "Why a loading dose that is right in the first week overshoots by the third.",
+      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("amiodarone",     0, 1600, "mg/day PO"),
+        c("amiodarone", 30240,  800, "mg/day PO"),
+        c("amiodarone", 73440,  400, "mg/day PO")
+      ),
+      timeUnits = "days", maximum = 525600
+    ),
+    helpScenario(
+      "amiodarone-washout",
+      "Amiodarone: stopping after six months",
+      "Long-term therapy",
+      "A fast early fall and then months of washout: the context-sensitive decrement of amiodarone.",
+      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("amiodarone",      0, 1600, "mg/day PO"),
+        c("amiodarone",   2880, 1200, "mg/day PO"),
+        c("amiodarone",  10080, 1000, "mg/day PO"),
+        c("amiodarone",  20160,  800, "mg/day PO"),
+        c("amiodarone",  30240,  600, "mg/day PO"),
+        c("amiodarone",  40320,  400, "mg/day PO"),
+        c("amiodarone", 129600,  343, "mg/day PO"),
+        c("amiodarone", 262080,    0, "mg/day PO")
+      ),
+      timeUnits = "days", maximum = 525600,
+      showThreshold = TRUE
     )
   )
 }
