@@ -12,4 +12,10 @@ test_that("checkNumericCovariates correctly identifies out of bounds input", {
   expect_false(checkNumericCovariates(21, 70, 170, osmolality = MAX_OSMOLALITY + 1))
   # An empty numeric field reports NA
   expect_false(checkNumericCovariates(21, 70, 170, osmolality = NA))
+  # Creatinine is optional: blank (NA or NULL) passes, a value must be in range
+  expect_true(checkNumericCovariates(21, 70, 170, creatinine = NA))
+  expect_true(checkNumericCovariates(21, 70, 170, creatinine = NULL))
+  expect_true(checkNumericCovariates(21, 70, 170, creatinine = 1.4))
+  expect_false(checkNumericCovariates(21, 70, 170, creatinine = MIN_CREATININE / 2))
+  expect_false(checkNumericCovariates(21, 70, 170, creatinine = MAX_CREATININE + 1))
 })

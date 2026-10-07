@@ -27,11 +27,12 @@
 #
 # RENAL FUNCTION
 # ==============
-# stanpumpR has no creatinine input.  CrCL is Cockcroft-Gault at an ASSUMED
-# NORMAL creatinine (R/renalFunction.R), so the model captures the decline of
-# renal function with age and the sex difference, but NOT renal impairment.
-# For the vancomycin question that matters most, accumulation in a patient
-# with a raised creatinine, this simulation is optimistic.
+# CrCL is Cockcroft-Gault at the patient's serum creatinine from the Patient
+# Profile, floored at 60 umol/L (0.68 mg/dL) as in the source.  When none is
+# entered it is an ASSUMED NORMAL creatinine (R/renalFunction.R), which
+# captures the decline of renal function with age and the sex difference but
+# not renal impairment; for accumulation in a patient with a raised
+# creatinine, enter it.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -64,7 +65,8 @@
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE)
+vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                       creatinine = NULL)
 {
   # Size scaling (see the header).  size$volume is the weight ratio the
   # published volume and renal terms see (fat-free-mass ratio with the switch
@@ -74,7 +76,9 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE)
                         legacyVolume = weight / 70, legacyClearance = 1)
   pkW  <- 70 * size$volume
 
-  crcl <- creatinineClearanceCG(pkW, age, sex)        # mL/min, assumed creatinine
+  # Thomson floored serum creatinine at 60 umol/L before Cockcroft-Gault.
+  scr  <- max(patientCreatinine(creatinine, sex), 60 / 88.42)
+  crcl <- creatinineClearanceCG(pkW, age, sex, scr)   # mL/min
 
   cl1 <- 2.99 * (1 + 0.0154 * (crcl - 66)) / 60      # L/min
   if (cl1 <= 0)
@@ -110,7 +114,7 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Thomson AH et al., J Antimicrob Chemother 2009;63:1050-1057. ",
     "Two-compartment total-serum model with Cockcroft-Gault creatinine ",
-    "clearance, estimated here at an assumed normal creatinine. ",
+    "clearance, from the entered creatinine or an assumed normal one. ",
     "https://doi.org/10.1093/jac/dkp085"
   )
 

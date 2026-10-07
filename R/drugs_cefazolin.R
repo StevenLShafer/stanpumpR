@@ -30,10 +30,11 @@
 # RENAL FUNCTION
 # ==============
 # CLu = 29.3 x (CrCL / 70)^0.586 L/h, with CrCL the Cockcroft-Gault creatinine
-# clearance in mL/min.  stanpumpR has no creatinine input, so CrCL is
-# estimated from age, sex and body size at an ASSUMED NORMAL creatinine
-# (R/renalFunction.R).  Renal impairment is therefore not represented, and
-# the curve in a patient with a raised creatinine will decline too fast.
+# clearance in mL/min, at the patient's serum creatinine from the Patient
+# Profile.  When none is entered CrCL is estimated from age, sex and body size
+# at an ASSUMED NORMAL creatinine (R/renalFunction.R); renal impairment is
+# then not represented, and the curve in a patient with a raised creatinine
+# will decline too fast.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -68,9 +69,12 @@
 #'   \code{FALSE} reproduces the published size scaling exactly.  Each drug
 #'   file's header says what the switch changes for that model; for cefazolin
 #'   it also sets the weight the creatinine-clearance estimate uses.
+#' @param creatinine the patient's serum creatinine in mg/dL, or NULL for the
+#'   assumed normal value for the patient's sex (R/renalFunction.R)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE)
+cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                      creatinine = NULL)
 {
   # Size scaling (see docs/weight-adjustment.md and the header).  The
   # published volumes and Qu carry no size term, so with the switch off they
@@ -80,7 +84,8 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
-  crcl <- creatinineClearanceCG(pkW, age, sex)       # mL/min, assumed creatinine
+  crcl <- creatinineClearanceCG(pkW, age, sex,       # mL/min
+                                patientCreatinine(creatinine, sex))
 
   # Komatsu 2024, unbound: CLu 29.3 (CrCL/70)^0.586 L/h, Vcu 36.6 L,
   # Qu 54.4 L/h, Vpu 42.2 L
@@ -117,8 +122,8 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Komatsu T et al., Antimicrob Agents Chemother 2024;68:e00267-24. ",
     "Unbound two-compartment model; the plotted concentration is UNBOUND ",
-    "cefazolin. Creatinine clearance is estimated at an assumed normal ",
-    "creatinine. https://doi.org/10.1128/aac.00267-24"
+    "cefazolin. Creatinine clearance is from the entered creatinine or an ",
+    "assumed normal one. https://doi.org/10.1128/aac.00267-24"
   )
 
   return(

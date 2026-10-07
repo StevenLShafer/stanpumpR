@@ -30,10 +30,10 @@
 #
 # RENAL FUNCTION
 # ==============
-# stanpumpR has no creatinine input.  CR is Cockcroft-Gault at an ASSUMED
-# NORMAL creatinine (R/renalFunction.R).  Sugammadex is renally cleared and
-# the label does not recommend it below 30 mL/min; this model cannot show
-# that patient.
+# CR is Cockcroft-Gault at the patient's serum creatinine from the Patient
+# Profile, or at an ASSUMED NORMAL creatinine when none is entered
+# (R/renalFunction.R).  Sugammadex is renally cleared and the label does not
+# recommend it below 30 mL/min.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -55,14 +55,16 @@
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE)
+sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                       creatinine = NULL)
 {
   # Size scaling (see the header): the model's own weight terms are
   # evaluated at the pharmacokinetic weight with the switch on, total body
   # weight with it off.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   W  <- 70 * size$volume
-  CR <- creatinineClearanceCG(W, age, sex)     # mL/min, assumed creatinine
+  CR <- creatinineClearanceCG(W, age, sex,     # mL/min
+                              patientCreatinine(creatinine, sex))
   rS <- 1
 
   cl1 <- 5.58 * (1 + 0.00378 * (W - 74.5)) * (2 * CR / (CR + 119))^1.29 / 60
@@ -97,8 +99,8 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Kleijn HJ et al., Br J Clin Pharmacol 2011;72:415-433. ",
     "Two-compartment model of TOTAL sugammadex (free plus rocuronium ",
-    "complex); creatinine clearance estimated at an assumed normal ",
-    "creatinine; rocuronium binding not modelled. ",
+    "complex); creatinine clearance from the entered creatinine or an ",
+    "assumed normal one; rocuronium binding not modelled. ",
     "https://doi.org/10.1111/j.1365-2125.2011.04000.x"
   )
 

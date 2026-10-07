@@ -12,7 +12,7 @@ Some models have no covariates at all: the same dose in milligrams gives the sam
 
 ## Disabled covariates
 
-Pregnancy and the Renal Function field appear in the interface but do not influence any prediction. Renal function is estimated by four models (cefazolin, vancomycin, gentamicin and sugammadex) from age, weight and sex at an **assumed normal creatinine**, because stanpumpR collects none; renal decline with age is represented, renal impairment is not. A patient with impaired kidneys will clear these drugs more slowly than the plot shows. CYP2D6 phenotype is now active, but only for the four drugs with modelled active metabolites; for every other drug it has no effect.
+Pregnancy appears in the interface but does not influence any prediction. Renal function is estimated by mannitol, vancomycin, gentamicin, cefazolin and sugammadex from the **Serum creatinine** field; if it is left blank they assume a normal creatinine, and a patient with impaired kidneys will then clear these drugs more slowly than the plot shows. CYP2D6 phenotype is now active, but only for the four drugs with modelled active metabolites; for every other drug it has no effect.
 
 ## Provisional parameters in the newer drugs
 

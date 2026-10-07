@@ -135,11 +135,36 @@ expected concentrations in obese patients.
 No renal maturation is applied. In infants the model will overpredict
 clearance, and it has not been validated in children.
 
+### Renal function — added
+
+Mannitol is filtered at the glomerulus and not reabsorbed, and nearly all of a
+dose is excreted unchanged, so its clearance tracks GFR. stanpumpR scales CL1 by
+the patient's Cockcroft-Gault creatinine clearance over the reference patient's
+(70 kg, 35 years, male, creatinine 1.0 mg/dL: 102 mL/min):
+
+```
+CL1 = 0.07 L/min × CrCl / 102
+```
+
+CrCl is computed from the **Serum creatinine** field in the Patient Profile, or
+from an assumed normal creatinine (1.0 mg/dL in men, 0.8 in women) when the field
+is blank. Cockcroft-Gault carries body size, so this factor replaces the
+fat-free-mass factor on CL1. It sees the pharmacokinetic weight with the switch
+on and total weight with it off, as the other renal models do. The volumes and
+the distribution clearances are unchanged.
+
+This is an assumption layered on Kaneda, not part of it. As a check, the label
+gives a half-life of up to 36 hours in renal impairment. A 70 kg, 50-year-old man
+with a creatinine of 10 mg/dL gets CL1 = 0.006 L/min here, and a terminal
+half-life of 46 hours, which is the same order. At normal creatinine the model is
+unchanged for the reference patient. Clearance now falls with age, by about 14%
+at 50 years compared with 35.
+
 ### Not modelled
 
-- **Renal function.** Mannitol clearance tracks GFR. stanpumpR's renal-function
-  field is not yet connected to any model. In renal impairment the predicted
-  osmolality falls far too fast.
+- **A fitted renal covariate.** Kaneda's patients had normal renal function
+  and the model has none; see *Renal function*, above, for the assumption
+  stanpumpR adds.
 - **Intracranial pressure.** No ICP model has been published that could be
   attached. Kobayashi 1994 related ICP reduction to the plasma-to-peripheral
   mannitol gradient, which is suggestive but was not fitted to a model.

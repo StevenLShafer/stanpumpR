@@ -16,7 +16,7 @@ Five pieces of work that this page previously listed as "in development" have no
 
 ## Visible but not active
 
-**Pregnant** and **Renal Function** in the Patient Profile are still disabled. Renal function is estimated by four models (cefazolin, vancomycin, gentamicin and sugammadex) from age, weight and sex at an **assumed normal creatinine**, because stanpumpR collects none; renal decline with age is represented, renal impairment is not. Entering a measured creatinine would let them represent impairment. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
+**Pregnant** in the Patient Profile is still disabled. The **Serum creatinine** field is live: mannitol, vancomycin, gentamicin, cefazolin and sugammadex estimate renal function from it, or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
 
 ## Provisional values flagged in the code
 

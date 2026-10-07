@@ -4,7 +4,7 @@
 \alias{cefazolin}
 \title{Cefazolin pharmacokinetics (unbound)}
 \usage{
-cefazolin(weight, height, age, sex, adjustToFFM = TRUE)
+cefazolin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,9 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
+assumed normal value for the patient's sex (R/renalFunction.R)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

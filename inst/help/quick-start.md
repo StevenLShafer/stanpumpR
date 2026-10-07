@@ -17,10 +17,10 @@ Open **Patient Profile** in the left sidebar. Enter age, weight, height and sex.
 
 <figure class="help-figure help-figure-narrow">
 <img src="stanpumpr-assets/help/quick-start-patient.png" alt="The Patient Profile panel: age with yr/mo buttons, weight with kg/lb, height with in/cm, sex, CYP 2D6, and the greyed-out Pregnant and Renal Function fields">
-<figcaption>The Patient Profile panel. This picture was taken before the CYP 2D6 field became active; Pregnant and Renal Function are still greyed out.</figcaption>
+<figcaption>The Patient Profile panel. This picture predates the CYP 2D6, serum osmolality and serum creatinine fields; the Renal Function selector shown greyed out has since been replaced by Serum creatinine.</figcaption>
 </figure>
 
-*CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites, and *Adjust weight to fat-free mass* is on by default. Two further fields, *Pregnant* and *Renal Function*, are visible but disabled. See [Patient profile](help:patient-profile).
+*CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites, and *Adjust weight to fat-free mass* is on by default. *Serum creatinine* is optional and used by the renally cleared drugs; *Pregnant* is visible but disabled. See [Patient profile](help:patient-profile).
 
 ## 2. Enter the doses
 

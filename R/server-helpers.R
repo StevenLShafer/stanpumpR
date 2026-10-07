@@ -36,7 +36,8 @@ showIntroModal <- function() {
 }
 
 checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
-                                   osmolality = OSMOLALITY_DEFAULT) {
+                                   osmolality = OSMOLALITY_DEFAULT,
+                                   creatinine = NULL) {
   msg <- ""
   success <- TRUE
   if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
@@ -53,6 +54,12 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
   }
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     msg <- glue::glue("Serum osmolality must be between {MIN_OSMOLALITY} and {MAX_OSMOLALITY} mOsm/kg")
+    success <- FALSE
+  }
+  # Optional: blank (NA or NULL) means the assumed normal value.
+  if (!is.null(creatinine) && !(length(creatinine) == 1 && is.na(creatinine)) &&
+      !is_valid_number(creatinine, MIN_CREATININE, MAX_CREATININE)) {
+    msg <- glue::glue("Serum creatinine must be between {MIN_CREATININE} and {MAX_CREATININE} mg/dL, or left blank")
     success <- FALSE
   }
 

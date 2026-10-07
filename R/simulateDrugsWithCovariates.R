@@ -15,6 +15,8 @@
 #'   Only drugs whose model declares it are affected.
 #' @param osmolality baseline serum osmolality in mOsm/kg.  Only an osmotic
 #'   agent (mannitol), which is reported as serum osmolality, is affected.
+#' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
+#'   value for the patient's sex.  Only the renally cleared models are affected.
 #' @param adjustToFFM scale each model's volumes and clearances to the patient's
 #'   fat-free mass (the default) rather than total body weight; see
 #'   `docs/weight-adjustment.md`.
@@ -29,7 +31,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          maximum, plotRecovery,
                                          cyp2d6 = CYP2D6_DEFAULT,
                                          adjustToFFM = TRUE,
-                                         osmolality = OSMOLALITY_DEFAULT)
+                                         osmolality = OSMOLALITY_DEFAULT,
+                                         creatinine = NULL)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -59,7 +62,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   {
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
-                    osmolality = osmolality, adjustToFFM = adjustToFFM)
+                    osmolality = osmolality, creatinine = creatinine,
+                    adjustToFFM = adjustToFFM)
     # simCpCe() reads the emergence threshold off PK$endCe, which getDrugPK()
     # does not set: its own `emerge` field reads a drugDefaults$Emerge column
     # that does not exist, the CSV calls it endCe.  The Shiny path works
@@ -96,7 +100,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     targetDefaults <- getDrugDefaults(target)
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
                           cyp2d6 = cyp2d6, osmolality = osmolality,
-                          adjustToFFM = adjustToFFM)
+                          creatinine = creatinine, adjustToFFM = adjustToFFM)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

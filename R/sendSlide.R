@@ -144,7 +144,8 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Height Unit",
       "Sex",
       "Adjust weight to fat-free mass",
-      "Baseline serum osmolality (mOsm/kg)"
+      "Baseline serum osmolality (mOsm/kg)",
+      "Serum creatinine (mg/dL)"
     ),
     Value = c(
       values$age / values$ageUnit,
@@ -155,7 +156,8 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       heightUnit,
       values$sex,
       if (isTRUE(values$adjustToFFM)) "yes" else "no",
-      if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality
+      if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
+      if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine
     ))
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")

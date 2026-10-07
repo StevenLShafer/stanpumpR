@@ -79,8 +79,10 @@ off, and scales any size-free parameter by the library factors. Write that choic
 `if (isTRUE(adjustToFFM)) size$pkWeight else weight`, as `R/drugs_cefazolin.R` does. Do not
 derive the weight from `70 * size$volume` unless the model's `legacyVolume` is `weight / 70`;
 with `legacyVolume = 1` that expression is 70 kg for everyone when the switch is off. Renal
-function comes from `R/renalFunction.R` (`creatinineClearanceCG()`, `egfrDeindexed()`),
-which runs at an **assumed normal creatinine** because the app collects none; say so in the
+function comes from `R/renalFunction.R` (`creatinineClearanceCG()`, `egfrDeindexed()`).
+Add `creatinine = NULL` to the model's signature and pass `patientCreatinine(creatinine, sex)`
+as the creatinine: that is the patient's serum creatinine from the Patient Profile, or an
+**assumed normal creatinine** for the patient's sex when the field is blank. Say so in the
 model's header and in its `reference` string. See `R/drugs_vancomycin.R`.
 
 **What the engine cannot represent.** The closed-form engine is linear and mammillary, with

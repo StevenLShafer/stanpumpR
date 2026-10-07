@@ -126,7 +126,8 @@ published values and everyone else is scaled on lean rather than total weight;
 parameters the source left without a size term take the library factors above.
 With the switch off, total body weight enters every published term as written
 and the size-free parameters are fixed. `R/renalFunction.R` holds the renal
-estimators and the assumed normal creatinine they run at.
+estimators, which run at the patient's serum creatinine or, when none is
+entered, an assumed normal one.
 
 Each scaled model's source file (`R/drugs_<name>.R`) carries a comment stating
 what it did before and what it does now.
