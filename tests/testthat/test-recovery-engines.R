@@ -316,7 +316,7 @@ test_that("a drug with no metabolite is untouched by the fold", {
 })
 
 
-test_that("exactly the plasma-only drugs have no effect site, and the fold handles each", {
+test_that("exactly the plasma-only drugs have no effect site", {
   # The set has moved repeatedly while this was being written, so it is pinned:
   # a drug losing or gaining an effect site changes which branch of the fold it
   # takes.  If this fails, the set has changed and the NA paths want rechecking
@@ -367,4 +367,150 @@ test_that("oral prednisone folds onto a prednisolone row with no effect site", {
   expect_gt(max(pl$wide$Plasma, na.rm = TRUE), 0)
   expect_true(all(is.na(pl$wide$"Effect Site")))
   expect_true(all(pl$equiSpace$Recovery == 0))
+})
+
+
+# The plasma at u, by simulating to u and reading the last point, which is
+# always at the end of the run: nothing interpolated.
+plasmaAt <- function(DT, PK, u) {
+  r <- simCpCe(DT, noEvents, PK, u, FALSE)$wide
+  r$Plasma[nrow(r)]
+}
+
+# The engine says that, given nothing more after t, the plasma comes down
+# through PK$endCe at `at`.  Then it must be above the threshold `within`
+# minutes before that instant and below it `within` minutes after.  `DT`
+# holds the doses given up to t.  recoveryCalc() solves to uniroot()'s
+# tolerance of 0.01 min, and the largest error measured in these tests was
+# 2.5e-3 min (by uniroot() on simulations run to the crossing), so the
+# callers use 0.02.  (Claude Code, 2026-10-07, mutation review.)
+expectPlasmaCrossesAt <- function(DT, PK, at, within, label) {
+  expect_gt(plasmaAt(DT, PK, at - within), PK$endCe,
+            label = paste(label, ": plasma just before the reported instant"))
+  expect_lt(plasmaAt(DT, PK, at + within), PK$endCe,
+            label = paste(label, ": plasma just after the reported instant"))
+}
+
+
+test_that("a drug with no effect site is timed on its plasma", {
+  # The antibiotics have no effect site.  Their threshold is the MIC, and the
+  # time until threshold is the time until the PLASMA falls to it if no more
+  # is given -- including, for an oral dose, drug still in the gut, which has
+  # been given and keeps arriving.  Until 2026-10-07 these drugs carried
+  # all-zero effect-site states and so always read zero.  The thresholds are
+  # set here rather than read from the library, so that the test is about the
+  # engines and not about the defaults.
+  bruteP <- function(DT, PK, t, horizon = 1440) {
+    r <- simCpCe(DT[DT$Time <= t, , drop = FALSE], noEvents, PK, t + horizon, FALSE)$wide
+    r <- r[r$Time >= t, ]
+    above <- which(r$Plasma > PK$endCe)
+    if (length(above) == 0) return(0)
+    j <- max(above)
+    # log-linear: the decline is exponential and the points are far apart
+    r$Time[j] + log(r$Plasma[j] / PK$endCe) / log(r$Plasma[j] / r$Plasma[j + 1]) *
+      (r$Time[j + 1] - r$Time[j]) - t
+  }
+
+  # Intravenous: the plain engine
+  PK <- pkFor("cefazolin")
+  PK$endCe <- 2
+  DT <- data.frame(Drug = "cefazolin", Time = c(0, 240), Dose = 2000, Units = "mg")
+  sim <- simCpCe(DT, noEvents, PK, 480, TRUE)
+  expect_gt(max(sim$equiSpace$Recovery), 0)
+  for (t in c(10, 60, 200, 300, 450)) {
+    at <- shownTime(sim, t)
+    expect_lt(abs(shown(sim, t) - bruteP(DT, PK, at)), 0.5,
+              label = paste("cefazolin at", round(at, 1), "min: difference in minutes"))
+  }
+
+  # Oral: the extravascular engine, through the absorption phase
+  PK <- pkFor("cefalexin")
+  PK$endCe <- 2
+  DT <- data.frame(Drug = "cefalexin", Time = c(0, 360), Dose = 500, Units = "mg PO")
+  sim <- simCpCe(DT, noEvents, PK, 720, TRUE)
+  for (t in c(5, 30, 120, 365, 500)) {
+    at <- shownTime(sim, t)
+    expect_lt(abs(shown(sim, t) - bruteP(DT, PK, at)), 0.5,
+              label = paste("cefalexin at", round(at, 1), "min: difference in minutes"))
+  }
+  # Straight after the first dose the plasma is below the MIC, but the drug in
+  # the gut is going to take it over: a time, not zero.  A 30-minute run, so
+  # that the plotted grid is fine enough to see the first minutes.
+  sim <- simCpCe(DT[1, ], noEvents, PK, 30, TRUE)
+  es <- sim$equiSpace
+  cp <- stats::approx(sim$wide$Time, sim$wide$Plasma, es$Time)$y
+  rising <- es[es$Time > 0 & cp < PK$endCe, ]
+  expect_gt(nrow(rising), 0)
+  expect_true(all(rising$Recovery > 60))
+
+  # The absorption term itself.  At 2 mg/L the crossing comes hours after the
+  # dose, by which time the term at ka has decayed to nothing, so the checks
+  # above pass whether or not the plasma states include it.  Two thresholds
+  # either side of the peak do not:
+  #  - just ABOVE the peak the plasma never gets there, so the time is zero
+  #    throughout.  Leave the ka term out and what remains, the disposition
+  #    term alone, starts at more than twice the peak and reads hours.
+  #  - just BELOW it, straight after the dose, the plasma is far below the
+  #    threshold and the time is to the far side of the peak, which depends
+  #    on how fast the gut empties.  Checked at the engine's own points over
+  #    the first half hour by simulating to the instant reported.
+  # (Claude Code, 2026-10-07, mutation review.)
+  DT1  <- DT[1, ]
+  peak <- max(simCpCe(DT1, noEvents, PK, 720, FALSE)$wide$Plasma)
+  PK$endCe <- 1.05 * peak
+  expect_true(all(simCpCe(DT1, noEvents, PK, 720, TRUE)$wide$Recovery == 0))
+  PK$endCe <- 0.9 * peak
+  w <- simCpCe(DT1, noEvents, PK, 720, TRUE)$wide
+  early <- which(w$Time > 0 & w$Time <= 30)
+  expect_true(all(w$Plasma[early] < PK$endCe))
+  for (i in early)
+    expectPlasmaCrossesAt(DT1, PK, w$Time[i] + w$Recovery[i], 0.02,
+                          paste("cefalexin at 0.9 x peak, from", round(w$Time[i], 2), "min"))
+})
+
+
+test_that("a lagged dose of a drug with no effect site is masked, not timed", {
+  # The plasma branch of advanceClosedFormPO_IM_IN() carries its own copy of
+  # the not-yet-absorbing mask (see R/recoveryStates.R), and nothing tested it:
+  # every lag test was on a drug with an effect site.  No drug in the library
+  # has a lag, so cefalexin is given one by hand.  The second dose is given
+  # while the first is well above the threshold, so an unmasked answer there
+  # would be a plausible time rather than zero.
+  # (Claude Code, 2026-10-07, mutation review.)
+  PK <- pkFor("cefalexin")
+  PK$PK$default$tlag_PO <- 20
+  DT <- data.frame(Drug = "cefalexin", Time = c(0, 120), Dose = 500, Units = "mg PO")
+  w <- simCpCe(DT, noEvents, PK, 480, TRUE)$wide
+  expect_true(all(w$Plasma[w$Time < 20] == 0))
+  pending <- w$Time < 20 | (w$Time >= 120 & w$Time < 140)
+  expect_true(all(c(0, 20, 120, 140) %in% w$Time))
+  expect_true(all(is.na(w$Recovery[pending])))
+  expect_false(anyNA(w$Recovery[!pending]))
+  expect_gt(w$Recovery[max(which(w$Time < 120))], 60)
+  # Once the second dose has landed the time is right again.
+  for (i in which(w$Time >= 140 & w$Time <= 200))
+    expectPlasmaCrossesAt(DT, PK, w$Time[i] + w$Recovery[i], 0.02,
+                          paste("lagged cefalexin, from", round(w$Time[i], 2), "min"))
+})
+
+
+test_that("a pure prodrug is timed on its own plasma, through its absorption", {
+  # Codeine has no effect site of its own, so a threshold set on it is timed
+  # on its plasma, through advanceClosedFormMetabolite(), whose parent plasma
+  # states carry the absorption term at ka_PO.  The same two thresholds
+  # either side of the peak as for cefalexin above, for the same reason.
+  # Codeine's shipped threshold is zero; these are set by hand.
+  # (Claude Code, 2026-10-07, mutation review.)
+  PK <- pkFor("codeine", height = 171)
+  DT <- data.frame(Drug = "codeine", Time = 0, Dose = 60, Units = "mg PO")
+  peak <- max(simCpCe(DT, noEvents, PK, 720, FALSE)$wide$Plasma)
+  PK$endCe <- 1.05 * peak
+  expect_true(all(simCpCe(DT, noEvents, PK, 720, TRUE)$wide$Recovery == 0))
+  PK$endCe <- 0.9 * peak
+  w <- simCpCe(DT, noEvents, PK, 720, TRUE)$wide
+  early <- which(w$Time > 0 & w$Time <= 30)
+  expect_true(all(w$Plasma[early] < PK$endCe))
+  for (i in early)
+    expectPlasmaCrossesAt(DT, PK, w$Time[i] + w$Recovery[i], 0.02,
+                          paste("codeine at 0.9 x peak, from", round(w$Time[i], 2), "min"))
 })

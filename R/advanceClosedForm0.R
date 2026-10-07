@@ -97,7 +97,7 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
       # an active metabolite has to add this drug's amplitudes to the formed
       # contribution's before solving; see R/recoveryStates.R.  Built whether
       # or not recovery is plotted, because the effect site is read off it.
-      recoveryStates <- recoveryStateSet(
+      effectStates <- recoveryStateSet(
         timeLine,
         list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0),
         c(lambda_1, lambda_2, lambda_3, ke0)
@@ -108,7 +108,17 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
       # e_coef_* are all zero in that case, so the sum would read as an
       # effect site sitting at zero, which is a different thing (the
       # metabolite drugs depend on the NA).
-      Ce <- if (ke0 > 0) rowSums(recoveryStates$state) else rep(NA_real_, L)
+      Ce <- if (ke0 > 0) rowSums(effectStates$state) else rep(NA_real_, L)
+
+      # Time until threshold is timed on the effect site, or on the plasma
+      # for a drug that has none -- the antibiotics, whose threshold is the
+      # MIC.  See "Which concentration is timed" in R/recoveryStates.R.
+      recoveryStates <- if (ke0 > 0) effectStates else recoveryStateSet(
+        timeLine,
+        list(p_state_l1, p_state_l2, p_state_l3),
+        c(lambda_1, lambda_2, lambda_3),
+        horizon = RECOVERY_HORIZON_PLASMA
+      )
 
       recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else rep(0, L)
       results <- data.frame(

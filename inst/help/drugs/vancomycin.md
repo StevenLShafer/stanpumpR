@@ -8,7 +8,7 @@ Clearance follows Cockcroft-Gault creatinine clearance, estimated from age, sex 
 
 ### Effect site
 
-None; only the plasma concentration is plotted.
+None; only the plasma concentration is plotted. *Time until threshold* is therefore timed on the plasma curve. That curve is **total** vancomycin (bound plus free), but it is free drug that acts on the organism, so the threshold is the total concentration at which the **free** concentration equals the MIC. The line shows how long, with no further dose, until free vancomycin falls below the MIC. Vancomycin's free fraction is taken as **0.70**: Dejaco and colleagues (*Antimicrob Agents Chemother* 2026;70:e01593-25) measured 0.72 in 706 samples from 228 adult in-patients at body temperature and pH 7.4, unaffected by concentration or albumin, and recommend 0.70; Stove and colleagues (*Ther Drug Monit* 2015;37:180-187) found 0.725 by equilibrium dialysis. The label's "about 55 per cent bound" comes from ultrafiltration at room temperature or high centrifugal force, which overstates binding. With an MIC of 1 mg/L the threshold is therefore 1.4 mcg/mL total. See *Time until threshold: free drug at the MIC* above.
 
 ### Typical concentrations
 

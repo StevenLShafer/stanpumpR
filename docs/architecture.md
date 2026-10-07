@@ -55,12 +55,15 @@ eigenvalues, and closed-form coefficients.
 
 ### 04 — Simulate concentrations
 
-`processdoseTable()` is designed to diff each drug's doses against the cached result and
-re-simulate only what changed — calling `simCpCe()`, which converts dose units, classifies
-bolus / infusion / oral routes, and dispatches to the right closed-form solver — for drugs whose
-slice actually changed. Output is a tidy time × site table per drug. See
-[Known issue: the per-drug cache doesn't persist](#known-issue-the-per-drug-cache-doesnt-persist)
-below — the diffing this step relies on doesn't currently have any state to diff against.
+`processdoseTable()` re-simulates only the drugs whose inputs changed, calling `simCpCe()`, which
+converts dose units, classifies bolus / infusion / oral routes, and dispatches to the right
+closed-form solver. `drugs()` keeps the previous result in `ivSimulationCache` (a plain variable,
+so reading it adds no reactive dependency) and passes it as `cache`. Each drug's own simulation is
+stored with a key (`simulationKey()`: its resolved PK, its dose rows, its PK events when it has
+more than one PK set, the plot length and the recovery switch); a drug whose key is unchanged
+reuses its stored simulation. `foldMetabolites()` then runs on every call, so a metabolite drug's
+plotted series always reflects its parents' current doses. Output is a tidy time × site table
+per drug.
 
 ### 05 — Assemble the plot
 
@@ -125,7 +128,8 @@ time point as a sum of exponentials.
 2. Classify each dose as `Bolus`, infusion, or `PO / IM / IN` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`).
 3. Dispatch to a solver:
    - `advanceClosedForm0.R` — IV, no PK events
-   - `advanceClosedForm1.R` — time-varying PK driven by events
+   - `advanceClosedForm1.R` — time-varying PK driven by events, including extravascular doses
+     (the absorption depot is carried as an amount, which a change in PK set does not touch)
    - `advanceClosedFormPO_IM_IN.R` — extravascular routes
    - `advanceClosedFormMetabolite.R` — a drug that forms an active metabolite
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
@@ -229,7 +233,9 @@ All files are flat in `R/`.
   state across dose & event boundaries. `recoveryStates.R` — carries the effect site as one
   amplitude per eigenvalue, so that a drug receiving an active metabolite can have its time
   until threshold solved from the combined state; the time-invariant solvers also read the
-  effect-site concentration off it, exactly.
+  effect-site concentration off it, exactly. A drug with no effect site carries its plasma
+  amplitudes instead and is timed on its plasma (the antibiotics, against free drug at the MIC:
+  `antibioticThresholds.R`).
 - `calculateCe.R` — effect-site concentration approximated from a plasma curve; used only by
   the event-driven solver. The `ke0` fit itself
   (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
@@ -294,15 +300,3 @@ All files are flat in `R/`.
   production matches local; deps declared in `DESCRIPTION`.
 - **Tests / CI** (`tests/testthat/`, `.github/`) — one test file per drug and per R file;
   R-CMD-check and shinyapps.io deploy run via GitHub Actions.
-
-## Known issue: the per-drug cache doesn't persist
-
-`drugs()` (step 03) is meant to keep a per-drug cache across reactive re-runs so that
-`processdoseTable()` (step 04) can skip re-simulating drugs whose doses haven't changed. In the
-current implementation it doesn't: `recalculatePK()` resets `drugs[[drug]]$DT` to `NULL` for
-every drug it touches, and `drugs()` itself rebuilds its list from `NULL` on every invalidation
-rather than holding it in a `reactiveVal`. So `processdoseTable()`'s `identical(tempDT,
-drugs[[drug]]$DT)` check is always comparing against `NULL` — every drug in the table gets
-re-simulated on every `drugs()` invalidation (a covariate edit, a dose edit, an event edit), not
-just the one that changed. The skip logic is real code; it just has no persisted state to skip
-against. Worth fixing or filing as an issue rather than treating as expected behavior.

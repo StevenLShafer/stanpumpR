@@ -31,14 +31,48 @@
 #
 # NOT MODELLED
 # ============
-# Protein binding (free fraction about 0.15, dependent on alpha-1 acid
-# glycoprotein), the active N-demethyl and sulfoxide metabolites, and the
-# prodrug step.  The curve is total parent clindamycin.
+# Protein binding (saturable, to alpha-1 acid glycoprotein: see below), the
+# active N-demethyl and sulfoxide metabolites, and the prodrug step.  The
+# curve is total parent clindamycin.
+#
+# TIME UNTIL THRESHOLD: FREE DRUG AT THE MIC
+# ==========================================
+# The default threshold (endCe in drugDefaults_global.csv) is the TOTAL
+# concentration at which FREE clindamycin equals the MIC of 0.5 mg/L for
+# staphylococci: the CLSI/FDA susceptible breakpoint for Staphylococcus spp.
+# (S <= 0.5, I 1-2, R >= 4 mg/L), also the EUCAST breakpoint for streptococci
+# of groups A, B, C and G.  It is the conservative end of the defensible range:
+# the EUCAST staphylococcal breakpoint and the S. aureus ECOFF are 0.25 mg/L.
+# Clindamycin is the beta-lactam-allergy prophylaxis agent for skin flora.
+#
+# Binding to alpha-1 acid glycoprotein is saturable, so the free fraction is
+# lowest at the low levels where free drug crosses the MIC.  Wulkersdorfer
+# 2021 (900 mg IV, healthy adults, intravascular microdialysis and
+# ultrafiltration) fitted a single saturable site, Kd 0.85 mg/L in vivo
+# (1.16 in vitro):
+#     C_total = C_free + Bmax C_free / (Kd + C_free).
+# Bmax is not in the abstract; 12.7 mg/L reproduces its in vivo AUC ratio of
+# 0.147 (14.9 mg/L its in vitro ratio of 0.139).  Free 0.5 mg/L is then
+# 0.5 + 12.7 x 0.5 / 1.35 = 5.2 mg/L total (free fraction about 0.10; 5.0
+# with the in vitro set).  Son 1998's human binding equation gives 5.9.  The
+# constant 0.15 this header used to quote is the average over a whole 900 mg
+# profile and overstates free drug at the crossing (it would give 3.3); older
+# ex vivo ultrafiltration studies put the free fraction near 0.2 (2.5), but
+# conflict with the in vivo microdialysis.  Raised AAG -- after surgery, in
+# inflammation -- binds more, so the same free level needs more total drug.
+# See R/antibioticThresholds.R.  (Free fraction about 0.10, threshold
+# 5.2 mg/L, chosen by Steven L. Shafer, 2026-10-07.)
 #
 # References
 # ----------
 # Bouazza N et al., Br J Clin Pharmacol 2012;74:971-977.
 #   https://doi.org/10.1111/j.1365-2125.2012.04292.x
+# Wulkersdorfer B et al., J Antimicrob Chemother 2021;76:2106-2113.
+#   https://doi.org/10.1093/jac/dkab140
+# Son DS et al., J Vet Pharmacol Ther 1998;21:34-40 (human plasma binding).
+#   https://doi.org/10.1046/j.1365-2885.1998.00111.x
+# Diekema DJ et al., Open Forum Infect Dis 2019;6(Suppl 1):S47-S53 (MSSA 96%
+#   susceptible to clindamycin).  https://doi.org/10.1093/ofid/ofy270
 # -----------------------------------------------------------------------------
 
 #' Clindamycin pharmacokinetics
@@ -87,7 +121,8 @@ clindamycin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC  <- 0
 
   # Band, total mg/L: the source's working trough criterion of 2 mg/L, with
-  # 1 and 4 mg/L either side.  Orientation only; free fraction is about 0.15.
+  # 1 and 4 mg/L either side.  Orientation only; binding is saturable (see the
+  # header), free fraction about 0.1 at these levels.
   typical      <- 2
   upperTypical <- 4
   lowerTypical <- 1

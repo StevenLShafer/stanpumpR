@@ -235,6 +235,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   noEffectSite <- !is.null(pkRef) && isTRUE(pkRef$tPeak == 0) &&
     isTRUE(pkRef$PK[[PK_EVENT_DEFAULT]]$ke0 == 0)
   prodrug <- noEffectSite && !is.null(metabolite)
+  # An antibiotic's threshold is free drug at the MIC; see R/antibioticThresholds.R
+  mic <- antibioticMic(drug)
 
   # --- At a glance -----------------------------------------------------------
   esc <- htmltools::htmlEscape
@@ -280,7 +282,15 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       esc(sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
       esc(sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
       esc(meacShown),
-      esc(if (noEffectSite) "None: no effect site in the model to time" else
+      esc(if (!is.null(mic)) {
+            sprintf("%s %s %s, the level at which free drug equals the MIC (%s mg/L); timed on the plasma",
+                    helpFormatNumber(row$endCe), concUnits, mic$Plotted, helpFormatNumber(mic$MIC))
+          } else if (noEffectSite && !is.na(row$endCe) && row$endCe > 0) {
+            sprintf("%s %s, timed on the plasma (no effect site in the model)",
+                    helpFormatNumber(row$endCe), concUnits)
+          } else if (noEffectSite) {
+            "None by default; a threshold set under Drug Thresholds is timed on the plasma"
+          } else
             sprintf("%s %s", helpFormatNumber(row$endCe), concUnits)),
       paste0(as.character(helpColorSwatch(row$Color)), " ", esc(as.character(row$Color)))
     ),
@@ -500,6 +510,45 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     }
   }
 
+  # --- Time until threshold: free drug at the MIC -----------------------------
+  micHTML <- ""
+  if (!is.null(mic)) {
+    unbound <- mic$Plotted == "unbound"
+    tab <- data.frame(
+      Quantity = c("Target organism", "MIC (free drug)", "What the curve shows",
+                   "Unbound (free) fraction at that level", "Threshold on the curve"),
+      Value = c(mic$Organism,
+                sprintf("%s mg/L", helpFormatNumber(mic$MIC)),
+                if (unbound) "Unbound (free) drug" else "Total (bound plus free) drug",
+                if (unbound) "Not needed: the curve is already free drug"
+                else helpFormatNumber(mic$FreeFraction),
+                sprintf("%s %s %s", helpFormatNumber(row$endCe), concUnits, mic$Plotted)),
+      stringsAsFactors = FALSE
+    )
+    micHTML <- paste0(
+      helpH2("Time until threshold: free drug at the MIC"),
+      "<p>The antibiotics have no effect site, so <em>Time until threshold</em> times the ",
+      "<strong>plasma</strong> curve. It shows how long, if no more is given, until <strong>free</strong> ",
+      esc(tolower(helpDrugTitle(drug))), " falls below the MIC: the time left above the MIC, which ",
+      "is when to redose. It is free drug that acts on the organism, and susceptibility ",
+      "breakpoints are set against it.</p>",
+      if (unbound) {
+        "<p>This model plots <strong>unbound</strong> drug, so the threshold is the MIC itself.</p>"
+      } else {
+        paste0("<p>This model plots <strong>total</strong> drug, bound plus free, which is what a ",
+               "laboratory reports. Binding is not simulated. Instead the threshold is set to the total ",
+               "concentration at which the free concentration equals the MIC, using the unbound fraction ",
+               "measured at that low level", if (isTRUE(mic$Saturable)) {
+                 " (binding is saturable, so the free fraction rises as the concentration rises; the value at the threshold is the one that matters)"
+               } else "", ".</p>")
+      },
+      helpTableHTML(tab),
+      "<p class='small text-muted'>Sources: ", esc(mic$MicSource), " ", esc(mic$BindingSource),
+      " The threshold can be changed under Settings → Drug Thresholds; see ",
+      helpPageLink("models/recovery"), ".</p>"
+    )
+  }
+
   # --- Events ----------------------------------------------------------------
   eventsHTML <- ""
   if (!is.null(params) && any(nzchar(params$events) & params$events != PK_EVENT_DEFAULT)) {
@@ -524,6 +573,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     absorptionHTML,
     metaboliteHTML,
     formedHTML,
+    micHTML,
     eventsHTML,
     if (nzchar(narrative)) paste0(helpH2("About this model"), narrative) else "",
     helpScenariosUsingDrugHTML(drug),

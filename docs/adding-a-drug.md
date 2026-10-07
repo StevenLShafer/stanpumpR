@@ -73,9 +73,12 @@ A published model that was fitted on total body weight is **still** scaled to fa
 Placeholders for a missing compartment (`v3 = 1`, `cl3 = 0`) are left unscaled.
 
 **A model with its own weight or renal covariate** (vancomycin, gentamicin, sugammadex,
-cefazolin) evaluates the published equations at the pharmacokinetic weight,
-`70 * size$volume`, which is the fat-free-mass weight with the switch on and total body
-weight with it off, and scales any size-free parameter by the library factors. Renal
+cefazolin) evaluates the published equations at the pharmacokinetic weight with the switch
+on (`size$pkWeight`, which is 70 kg × FFM / FFM<sub>ref</sub>) and at total body weight with it
+off, and scales any size-free parameter by the library factors. Write that choice out:
+`if (isTRUE(adjustToFFM)) size$pkWeight else weight`, as `R/drugs_cefazolin.R` does. Do not
+derive the weight from `70 * size$volume` unless the model's `legacyVolume` is `weight / 70`;
+with `legacyVolume = 1` that expression is 70 kg for everyone when the switch is off. Renal
 function comes from `R/renalFunction.R` (`creatinineClearanceCG()`, `egfrDeindexed()`),
 which runs at an **assumed normal creatinine** because the app collects none; say so in the
 model's header and in its `reference` string. See `R/drugs_vancomycin.R`.
@@ -199,7 +202,14 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
-- `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and emergence effect-site level.
+- `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and the "time until threshold"
+  level: the effect-site concentration for a drug with an effect site, the plasma concentration
+  for one without, and `0` for none. For an antibiotic, `endCe` is the plotted concentration at
+  which **free** drug equals the MIC: the MIC itself if the model plots unbound drug, the MIC
+  divided by the free fraction if it plots total drug. Add the antibiotic to
+  `antibioticMicTable()` in `R/antibioticThresholds.R`, which records the organism, MIC, free
+  fraction and sources, feeds the drug's help page, and is checked against this column by
+  `test-antibiotic-thresholds.R`.
 - `Class` — `IV` for an injected or swallowed drug, `gas` for an inhaled agent. The gases
   take a separate simulation path and have no `drugs_*.R` covariate function, so a new drug
   added by this procedure is `IV`.

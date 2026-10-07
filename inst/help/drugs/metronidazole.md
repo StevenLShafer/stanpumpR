@@ -12,7 +12,7 @@ Weight, two ways: clearance allometrically on total weight, volume on adjusted b
 
 ### Effect site
 
-None; only the plasma concentration is plotted. The shaded band (4 to 25 mcg/mL) runs from the source's MIC scenario of 4 mg/L to the peak a 500 mg dose produces.
+None; only the plasma concentration is plotted. The shaded band (4 to 25 mcg/mL) runs from the source's MIC scenario of 4 mg/L to the peak a 500 mg dose produces. *Time until threshold* is timed on the plasma curve. That curve is **total** metronidazole (bound plus free), but it is free drug that acts on the organism, so the threshold is the total concentration at which the **free** concentration equals the MIC. The line shows how long, with no further dose, until free metronidazole falls below the MIC. Metronidazole is barely bound: Dorn and colleagues (*J Antimicrob Chemother* 2021;76:2114-2120) measured a free fraction of **0.96** by ultrafiltration in adults given 0.5 g for abdominal surgical prophylaxis, independent of concentration. With the 4 mg/L MIC for the *Bacteroides fragilis* group, the threshold is therefore 4.2 mcg/mL total. See *Time until threshold: free drug at the MIC* above.
 
 ### Where to be careful
 

@@ -65,6 +65,25 @@
 #
 # Each engine builds one while it is computing recovery anyway, so carrying it
 # out costs a cbind().
+#
+# WHICH CONCENTRATION IS TIMED
+# ============================
+# A drug with an effect site is timed on its effect site, and the states are
+# the effect-site amplitudes.  A drug with NO effect site (ke0 = 0) is timed on
+# its PLASMA, and the states are the plasma amplitudes -- including, after an
+# extravascular dose, the absorption term, because drug in the depot has been
+# given and keeps arriving after delivery stops.  Until 2026-10-07 such a drug
+# carried all-zero effect-site states and so always read zero.  The case that
+# matters is the antibiotics, whose threshold is the plotted concentration at
+# which FREE drug equals the MIC (R/antibioticThresholds.R).  Every other drug
+# without an effect site has a threshold of zero, which recoveryFromStates()
+# reads as "no threshold".  A metabolite fold adds like to like: a receiving
+# drug with no effect site has plasma states of its own, and its parent hands
+# over the formed PLASMA contribution (advanceClosedFormMetabolite()).
+# A plasma state set looks a week ahead rather than a day (its `horizon`;
+# RECOVERY_HORIZON_PLASMA in R/recoveryCalc.R), because an antibiotic's time
+# above the MIC commonly runs past a day.
+# (Claude Code, 2026-10-07, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
 
 
@@ -80,11 +99,15 @@
 #'   describe the whole of what the patient has received.  NULL, the default,
 #'   means nothing is ever pending, which is the case for every intravenous
 #'   dose and for any extravascular one with no lag.
+#' @param horizon how far ahead, in minutes, to look for the threshold:
+#'   \code{RECOVERY_HORIZON_EFFECT} (a day) for effect-site states,
+#'   \code{RECOVERY_HORIZON_PLASMA} (a week) for plasma states
 #'
-#' @returns a state set: a list of \code{time}, \code{state}, \code{lambda}
-#'   and \code{pending}
+#' @returns a state set: a list of \code{time}, \code{state}, \code{lambda},
+#'   \code{pending} and \code{horizon}
 #' @keywords internal
-recoveryStateSet <- function(time, state, lambda, pending = NULL)
+recoveryStateSet <- function(time, state, lambda, pending = NULL,
+                             horizon = RECOVERY_HORIZON_EFFECT)
 {
   state <- if (is.matrix(state)) state else do.call(cbind, state)
   stopifnot(nrow(state) == length(time))
@@ -100,7 +123,8 @@ recoveryStateSet <- function(time, state, lambda, pending = NULL)
     # keeps the common case from carrying a vector of FALSE around.
     if (!any(pending)) pending <- NULL
   }
-  list(time = time, state = state, lambda = lambda, pending = pending)
+  list(time = time, state = state, lambda = lambda, pending = pending,
+       horizon = horizon)
 }
 
 
@@ -142,8 +166,10 @@ advanceStatesOnto <- function(set, times)
   Lam <- if (is.matrix(set$lambda)) set$lambda else
     matrix(set$lambda, L, K, byrow = TRUE)
 
+  horizon <- if (is.null(set$horizon)) RECOVERY_HORIZON_EFFECT else set$horizon
   if (identical(times, t0))
-    return(list(time = times, state = S, lambda = Lam, pending = set$pending))
+    return(list(time = times, state = S, lambda = Lam, pending = set$pending,
+                horizon = horizon))
 
   # The interval each new time falls in.  lo is the last point at or before it;
   # hi the next one.  A time at or beyond the last point has lo == hi, and then
@@ -191,7 +217,8 @@ advanceStatesOnto <- function(set, times)
   # different kinds of quantity: lambda describes the step INTO hi, while
   # pending describes the state AT lo and onwards.
   list(time = times, state = out, lambda = lam,
-       pending = if (is.null(set$pending)) NULL else set$pending[lo])
+       pending = if (is.null(set$pending)) NULL else set$pending[lo],
+       horizon = horizon)
 }
 
 
@@ -201,19 +228,25 @@ advanceStatesOnto <- function(set, times)
 #' @param emerge the threshold the effect site has to fall to
 #'
 #' @returns minutes, one per row of \code{set$state}; zeros when there is no
-#'   threshold to fall to, and NA wherever \code{set$pending} says a dose has
-#'   been given that has not begun to be absorbed
+#'   threshold to fall to (missing, or zero), and NA wherever
+#'   \code{set$pending} says a dose has been given that has not begun to be
+#'   absorbed
 #' @keywords internal
 recoveryFromStates <- function(set, emerge)
 {
   nT <- nrow(set$state)
-  if (is.null(emerge) || length(emerge) != 1 || is.na(emerge)) return(rep(0, nT))
+  # A threshold of zero is no threshold: a sum of decaying exponentials never
+  # reaches it, and every drug without one -- the steroids, the reversal agents,
+  # a prodrug's own row -- would otherwise read a full day at every point.
+  if (is.null(emerge) || length(emerge) != 1 || is.na(emerge) || emerge <= 0)
+    return(rep(0, nT))
 
   Lam <- if (is.matrix(set$lambda)) set$lambda else
     matrix(set$lambda, nT, ncol(set$state), byrow = TRUE)
 
+  horizon <- if (is.null(set$horizon)) RECOVERY_HORIZON_EFFECT else set$horizon
   out <- vapply(seq_len(nT),
-                function(i) recoveryCalc(set$state[i, ], Lam[i, ], emerge),
+                function(i) recoveryCalc(set$state[i, ], Lam[i, ], emerge, horizon),
                 numeric(1))
 
   # Not computable rather than zero; see the header.
@@ -251,10 +284,14 @@ combinedRecovery <- function(times, sets, emerge)
     if (is.null(x$pending)) logical(length(times)) else x$pending))
   if (!any(pending)) pending <- NULL
 
+  # The receiving drug and what is formed into it are timed on the same
+  # concentration (see "Which concentration is timed" above), so they share a
+  # horizon; the longer is taken should they ever differ.
   recoveryFromStates(
     list(state   = do.call(cbind, lapply(onto, `[[`, "state")),
          lambda  = do.call(cbind, lapply(onto, `[[`, "lambda")),
-         pending = pending),
+         pending = pending,
+         horizon = max(vapply(onto, `[[`, numeric(1), "horizon"))),
     emerge
   )
 }

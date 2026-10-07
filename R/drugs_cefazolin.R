@@ -50,10 +50,25 @@
 # part in the free curve and is not an input.  No active metabolite.  Doses
 # are cefazolin equivalents: the sodium salt label already states them so.
 #
+# TIME UNTIL THRESHOLD: FREE DRUG AT THE MIC
+# ==========================================
+# The curve is UNBOUND cefazolin, so the default threshold (endCe in
+# drugDefaults_global.csv) is the MIC itself: 2 mg/L for methicillin-
+# susceptible S. aureus.  That is the EUCAST S. aureus ECOFF and the MSSA
+# MIC90 at standard inoculum (Nannini 2009), the unbound target anaesthesia
+# prophylaxis studies use (Eley 2020), and the CLSI Enterobacterales
+# susceptible breakpoint (S <= 2), so it covers E. coli too.  It is not a
+# staphylococcal breakpoint: CLSI dropped those in 2013 and EUCAST infers
+# staphylococcal susceptibility from cefoxitin.  See R/antibioticThresholds.R.
+#
 # References
 # ----------
 # Komatsu T et al., Antimicrob Agents Chemother 2024;68:e00267-24.
 #   https://doi.org/10.1128/aac.00267-24
+# Nannini EC et al., Antimicrob Agents Chemother 2009;53:3437-3441.
+#   https://doi.org/10.1128/AAC.00317-09
+# Eley VA et al., Anesth Analg 2020;131:199-207.
+#   https://doi.org/10.1213/ANE.0000000000004766
 # -----------------------------------------------------------------------------
 
 #' Cefazolin pharmacokinetics (unbound)
@@ -62,8 +77,12 @@
 #' @param height height in cm
 #' @param age age in years
 #' @param sex sex as a string
-#' @param adjustToFFM scale the size-free parameters to fat-free mass and
-#'   estimate creatinine clearance on the pharmacokinetic weight
+#' @param adjustToFFM \code{TRUE} (the default) scales the model to the
+#'   patient's fat-free mass as described in the
+#'   \href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
+#'   \code{FALSE} reproduces the published size scaling exactly.  Each drug
+#'   file's header says what the switch changes for that model; for cefazolin
+#'   it also sets the weight the creatinine-clearance estimate uses.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE)
@@ -105,7 +124,7 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC  <- 0
 
   # Band, unbound mg/L: Komatsu's illustrative MIC scenarios of 0.5 and 1 mg/L
-  # and the 2 mg/L susceptibility breakpoint for S. aureus.  Orientation only.
+  # and 2 mg/L, the S. aureus ECOFF and MSSA MIC90.  Orientation only.
   typical      <- 1
   upperTypical <- 2
   lowerTypical <- 0.5
