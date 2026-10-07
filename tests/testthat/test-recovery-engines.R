@@ -316,7 +316,7 @@ test_that("a drug with no metabolite is untouched by the fold", {
 })
 
 
-test_that("exactly the plasma-only drugs have no effect site, and the fold handles each", {
+test_that("exactly the plasma-only drugs have no effect site", {
   # The set has moved repeatedly while this was being written, so it is pinned:
   # a drug losing or gaining an effect site changes which branch of the fold it
   # takes.  If this fails, the set has changed and the NA paths want rechecking
