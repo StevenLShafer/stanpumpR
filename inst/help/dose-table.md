@@ -24,6 +24,7 @@ Anything that cannot be read as a time becomes 0 rather than raising an error. I
 | mass, or mass per kg | **bolus** at that time | `mg`, `mcg/kg` |
 | mass per minute or hour, with or without per kg | **infusion** from that time | `mcg/kg/min`, `mg/hr` |
 | mass with `PO`, `IM` or `IN` | **extravascular dose** at that time | `mg PO`, `mg IN` |
+| any of the above doses followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
 | `L/min` | fresh gas flow or ventilation setting | inhaled agents |
 | `%` | vaporizer setting | inhaled agents |
 
@@ -32,6 +33,23 @@ Anything that cannot be read as a time becomes 0 rather than raising an error. I
 An infusion runs from its time until the next row for that same drug changes it, or until the end of the simulation. To stop one, add a row for the same drug at the stop time with a dose of 0. A bolus row does not interrupt an infusion; the two add.
 
 Per-kilogram units use the weight in the Patient Profile at the time of simulation, so changing the weight changes the delivered amount.
+
+## Scheduled doses
+
+For drugs given on a schedule (the analgesic opioids, the antibiotics, the steroids and mannitol), each bolus, oral, intramuscular and intranasal unit also comes with a frequency:
+
+| Suffix | Meaning | Interval |
+|---|---|---|
+| `qd` | once a day | 24 hours |
+| `bid` | twice a day | 12 hours |
+| `tid` | three times a day | 8 hours |
+| `qid` | four times a day | 6 hours |
+
+The first dose is given at the time in the row, and the same dose is then repeated at that interval until the end of the X axis, so lengthening the axis extends the schedule. The repeats are not added to the dose table, which would fill with rows, but they are merged back in when a slide is emailed, so the exported dose table lists the full dose sequence.
+
+- To **stop** a schedule, enter a scheduled dose of **0** for the same drug and route at the stop time, at any frequency. `0 mg PO bid` stops an oral schedule of that drug; an intravenous schedule carries on. An ordinary dose of 0 does not stop it.
+- To **change** the dose or the frequency, enter a new scheduled row for the same route: it replaces the running schedule from its own time.
+- Ordinary doses can be given alongside a schedule; they add.
 
 ## Applying changes
 

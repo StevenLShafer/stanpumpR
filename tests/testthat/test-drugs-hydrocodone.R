@@ -83,8 +83,10 @@ test_that("hydrocodone is offered orally only, because the parameters are appare
   # ones wrong by 1/F, so no intravenous unit may be offered.
   dd <- getDrugDefaultsGlobal(FALSE)
   units <- dd$Units[dd$Drug == "hydrocodone"]
-  expect_equal(units, "mg PO")
-  expect_false(grepl("min|hr", units))
+  units <- strsplit(units, ",")[[1]]
+  expect_equal(units, c("mg PO", paste("mg PO", names(SCHEDULE_INTERVALS))))
+  expect_true(all(doseRoute(units) == "PO"))
+  expect_false(any(grepl("min|hr", units)))
   # Bioavailability is carried as 1: the apparent scale already contains it
   expect_equal(hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default$bioavailability_PO, 1)
 })

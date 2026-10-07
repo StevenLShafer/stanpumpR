@@ -102,6 +102,14 @@ TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP
 TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
 TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 
+# Scheduled (repeating) doses (scheduled.R).  A bolus, PO, IM or IN unit with
+# one of these suffixes, e.g. "mg PO bid", gives the dose at the entered time
+# and then again every interval (minutes) until the end of the plot.
+SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60)
+scheduledUnits <- as.vector(t(outer(
+  c(bolusUnits, poUnits, imUnits, inUnits), names(SCHEDULE_INTERVALS), paste
+)))
+
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
 # gases are flowmeter settings in L/min, potent agents are vaporizer settings in %.
 # Kept out of allUnits, which lists the mass-based units offered for IV/PO/IM/IN

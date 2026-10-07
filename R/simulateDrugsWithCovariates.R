@@ -89,6 +89,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output[[drug]]$recoveryStatesOwn        <- X$recoveryStates
     output[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
     output[[drug]]$tci                 <- X$tci
+    output[[drug]]$scheduled           <- X$scheduled
   }
 
   # A metabolite that was never given directly still needs a row to appear in.

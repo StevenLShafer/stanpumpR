@@ -48,7 +48,8 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = 
         # apart for the same reason wideOwn and wide are.
         recoveryStatesOwn        = X$recoveryStates,
         metaboliteRecoveryStates = X$metaboliteRecoveryStates,
-        tci               = X$tci
+        tci               = X$tci,
+        scheduled         = X$scheduled
       )
     }
     for (field in names(sim)) drugs[[drug]][[field]] <- sim[[field]]
