@@ -162,19 +162,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   #Set up time varying parameters
   parameters$k <- parameters$k10 + parameters$k12 + parameters$k13
-
-  if (sum(parameters$k21) == 0)
-  {
-    parameters$v2 <- 0
-  } else {
-    parameters$v2 <- parameters$v1 * parameters$k12 / parameters$k21
-  }
-  if (sum(parameters$k31) == 0)
-  {
-    parameters$v3 <- 1
-  } else {
-    parameters$v3 <- parameters$v1 * parameters$k13 / parameters$k31
-  }
+  # No v2 or v3: convertState() works from the rate constants, so that a set
+  # without a peripheral compartment (k21 = 0, which made v2 here 0/0 when it
+  # shared a run with one that had one) needs no volume for it.
 
   v1  <- parameters[pkLine,"v1"]
   k10 <- parameters[pkLine,"k10"]
@@ -205,6 +195,11 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # in the old set's coordinates with the new set's eigenvalues, an error of
   # about 2e-4 that convertState() then carried for the rest of the run.
   # (Found by review against a matrix-exponential solution, 2026-10-07.)
+  # Between sets whose eigenvalues differ widely it was far worse: from
+  # clindamycin's set into propofol's with an infusion running, the old
+  # p_coef_bolus / lambda scaled by the new (1 - exp(-lambda dt)) infused 165
+  # times the drug over that step and left plasma 2.4% high; see
+  # tests/testthat/test-convertState.R.
   l1_dt <- exp(-parameters[infusionpkLine, "lambda_1"] * dt)
   l2_dt <- exp(-parameters[infusionpkLine, "lambda_2"] * dt)
   l3_dt <- exp(-parameters[infusionpkLine, "lambda_3"] * dt)

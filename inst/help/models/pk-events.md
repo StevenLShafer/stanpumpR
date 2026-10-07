@@ -2,7 +2,9 @@ Most clinical events on the Events panel are annotations: they mark the time axi
 
 ## How it works
 
-A drug's model function returns not one parameter set but a named list of them: `default`, and optionally one per event. When the dose table is simulated, the event table is scanned for events the drug knows about; at each such event the compartment amounts are carried across unchanged (`convertState()`), the parameters are switched, and the simulation continues with the new rate constants and eigenvalues (`advanceClosedForm1.R`). The concentrations are continuous across the boundary; their slopes are not.
+A drug's model function returns not one parameter set but a named list of them: `default`, and optionally one per event. When the dose table is simulated, the event table is scanned for events the drug knows about; at each such event the amount of drug in each compartment is carried across unchanged (`convertState()`), the parameters are switched, and the simulation continues with the new rate constants and eigenvalues (`advanceClosedForm1.R`). Because it is the amount that carries, the plasma concentration is continuous across an event only if V1 is: where V1 changes, as it does on bypass, plasma steps by the ratio of the old V1 to the new. Its slope changes in any case.
+
+The parameter sets need not have the same number of compartments. A compartment the new set adds starts empty. Drug in a compartment the new set lacks moves to its remaining peripheral compartment, or to the central compartment if it has none, so no drug is created or lost at the event.
 
 An event with the same name as a parameter set triggers that set until the next recognised event. Events the drug does not know about are ignored for that drug.
 
