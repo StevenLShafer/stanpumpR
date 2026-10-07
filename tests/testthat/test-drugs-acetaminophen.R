@@ -84,27 +84,50 @@ test_that("ke0 is Anderson's 53 min equilibration half-time", {
   expect_equal(log(2) / PK$ke0, 53)
 })
 
+# Independent check: integrate the two-compartment model with an effect site
+# and first-order oral input by fourth-order Runge-Kutta, from the published
+# parameters, and compare with the closed-form engine at its own time points.
+rk4Acetaminophen <- function(times, doseIV, dosePO, dt = 0.02)
+{
+  v1 <- 43.7; v2 <- 29.7; cl <- 0.398647084; q <- 43.5 / 60  # reference man
+  ka <- 1 / (5.3 + 11.5 / log(2)); f <- 0.86; ke0 <- log(2) / 53
+  d <- function(s) c(-ka * s[1],
+                     f * ka * s[1] - (cl + q) * s[2] / v1 + q * s[3] / v2,
+                     q * s[2] / v1 - q * s[3] / v2,
+                     ke0 * (s[2] / v1 - s[4]))
+  s <- c(dosePO, doseIV, 0, 0); t <- 0
+  out <- matrix(NA_real_, length(times), 2)
+  for (i in seq_along(times)) {
+    while (t < times[i] - 1e-12) {
+      h <- min(dt, times[i] - t)
+      k1 <- d(s); k2 <- d(s + h / 2 * k1); k3 <- d(s + h / 2 * k2); k4 <- d(s + h * k3)
+      s <- s + h * (k1 + 2 * k2 + 2 * k3 + k4) / 6
+      t <- t + h
+    }
+    out[i, ] <- c(s[2] / v1, s[4])
+  }
+  out
+}
+
 test_that("1 g intravenous and oral match an independent integration", {
-  # Reference man, switch on.  Expected values from a fourth-order Runge-Kutta
-  # integration of the two-compartment model with an effect site (Python,
-  # step 0.01 min), not from the closed-form engine.
   iv <- simulateDrugsWithCovariates(
     data.frame(Drug = "acetaminophen", Time = 0, Dose = 1000, Units = "mg"),
     noEvents, 70, 170, 35, "male", 360, TRUE)$acetaminophen$wide
-  at <- function(w, t, col) w[[col]][which.min(abs(w$Time - t))]
-  expect_equal(at(iv, 60,  "Plasma"),      9.0226288, tolerance = 1e-4)
-  expect_equal(at(iv, 240, "Plasma"),      3.3938961, tolerance = 1e-4)
-  expect_equal(at(iv, 60,  "Effect Site"), 6.9876389, tolerance = 1e-4)
-  expect_equal(at(iv, 240, "Effect Site"), 4.8834844, tolerance = 1e-4)
+  ref <- rk4Acetaminophen(iv$Time, 1000, 0)
+  # skip t = 0, where the engine reports the pre-bolus value
+  keep <- iv$Time > 0
+  expect_equal(iv$Plasma[keep], ref[keep, 1], tolerance = 1e-5)
+  expect_equal(iv$"Effect Site"[keep], ref[keep, 2], tolerance = 1e-5)
 
   po <- simulateDrugsWithCovariates(
     data.frame(Drug = "acetaminophen", Time = 0, Dose = 1000, Units = "mg PO"),
     noEvents, 70, 170, 35, "male", 360, TRUE)$acetaminophen$wide
-  expect_equal(at(po, 60,  "Plasma"),      9.0753163, tolerance = 1e-4)
-  expect_equal(at(po, 240, "Plasma"),      3.2732578, tolerance = 1e-4)
-  expect_equal(at(po, 60,  "Effect Site"), 4.7794932, tolerance = 1e-4)
-  # Fasted 1 g tablet peaks near 10 mg/L at about 35 min
-  expect_equal(po$Time[which.max(po$Plasma)], 35, tolerance = 0.05)
-  expect_gt(max(po$Plasma), 9.5)
-  expect_lt(max(po$Plasma), 10.5)
+  ref <- rk4Acetaminophen(po$Time, 0, 1000)
+  expect_equal(po$Plasma, ref[, 1], tolerance = 1e-5)
+  expect_equal(po$"Effect Site", ref[, 2], tolerance = 1e-5)
+  # Fasted 1 g tablet: the Python integration peaks at 10.14 mg/L at 35 min
+  expect_gt(max(po$Plasma), 9.8)
+  expect_lt(max(po$Plasma), 10.2)
+  expect_gt(po$Time[which.max(po$Plasma)], 30)
+  expect_lt(po$Time[which.max(po$Plasma)], 40)
 })
