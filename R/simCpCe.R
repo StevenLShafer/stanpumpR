@@ -131,6 +131,8 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
 #'   \code{metaboliteSeries}, \code{metaboliteName} and
 #'   \code{metaboliteRecoveryStates}; \code{foldMetabolites()} adds that
 #'   contribution, and its recovery, to the metabolite drug's own row.
+#'   \code{tci} holds the TCI schedule, if any, and \code{scheduled} the
+#'   repeats of any qd/bid/tid/qid dose (Drug, Time, Dose, Units), or NULL.
 #'
 #' @export
 simCpCe <- function(dose, events, PK, maximum, plotRecovery)
@@ -138,6 +140,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # dose <- doseTable
     # pK <- PK
     # maximum <- max
+
+    # Scheduled doses (qd, bid, tid, qid): expand each into its repeats out to
+    # the end of the plot, while the dose is still in the user's units.  The
+    # repeats are also returned on their own, for export; see scheduled.R.
+    expanded <- expandScheduledDoses(dose, maximum)
+    dose <- expanded$dose
+
     # Convert all doses to base units
     switch(
       PK$Concentration.Units,  # Units (per ml)
@@ -291,6 +300,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   out$metaboliteRecoveryStates <- metaboliteRecoveryStates
 
   out$tci              <- tci
+  out$scheduled        <- expanded$scheduled
 
   return(out)
 }

@@ -36,6 +36,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
         drugs[[drug]]$recoveryStatesOwn         <- NULL
         drugs[[drug]]$metaboliteRecoveryStates  <- NULL
         drugs[[drug]]$tci       <- NULL
+        drugs[[drug]]$scheduled <- NULL
       } else {
         X <- simCpCe(
           tempDT,
@@ -62,6 +63,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
         drugs[[drug]]$recoveryStatesOwn        <- X$recoveryStates
         drugs[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
         drugs[[drug]]$tci               <- X$tci
+        drugs[[drug]]$scheduled         <- X$scheduled
       }
     }
   }
