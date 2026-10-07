@@ -5,6 +5,15 @@ test_that("doseRoute() reads the route from the units suffix", {
   expect_equal(doseRoute(c(tciUnits, gasUnits)), rep("IV", 4))
   expect_equal(doseRoute(character(0)), character(0))
   expect_equal(doseRoute(factor("mg PO")), "PO")
+  expect_equal(doseRoute(NA_character_), "IV")
+})
+
+test_that("doseRoute() reads the route when a qualifier follows it", {
+  # Scheduled doses add a frequency after the route ("mg PO bid").
+  expect_equal(doseRoute(c("mg PO bid", "mg/kg IM qid", "mg IN tid", "mg tid", "mg/kg qd")),
+               c("PO", "IM", "IN", "IV", "IV"))
+  expect_equal(groupUnitsByRoute(c("mg", "mg PO", "mg PO bid", "mg bid", "mg IM", "mg IM qid")),
+               c("mg", "mg bid", "mg PO", "mg PO bid", "mg IM", "mg IM qid"))
 })
 
 test_that("doseRoute() agrees with every unit the app offers", {
@@ -46,6 +55,7 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
   hydromorphone <- dd$Units[[which(dd$Drug == "hydromorphone")]]
   unscheduled <- hydromorphone[!isScheduledUnit(hydromorphone)]
   expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV], c("mg PO", "mg IM", "mg IN"))
+  expect_equal(unique(doseRoute(hydromorphone)), DOSE_ROUTES)
   expect_true(all(c("Plasma target", "Effect site target") %in%
                     hydromorphone[doseRoute(hydromorphone) == ROUTE_IV]))
 })

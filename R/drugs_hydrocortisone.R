@@ -92,6 +92,10 @@ HYDROCORTISONE_NS <- 4.15     # Bindellini's fixed nonspecific binding factor
 #' Hydrocortisone pharmacokinetics (linearised, saturated-binding regime)
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published allometry on total body weight (volumes linear, clearances to the
+#'   0.75 power). No renal-function estimate.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 hydrocortisone <- function(weight, height, age, sex, adjustToFFM = TRUE)
