@@ -16,11 +16,11 @@ When the app opens, a welcome dialog states what stanpumpR is and is not. **OK**
 Open **Patient Profile** in the left sidebar. Enter age, weight, height and sex. The unit buttons beside each field switch between years and months, kilograms and pounds, inches and centimetres. These four covariates drive the pharmacokinetic models, so they change the predictions.
 
 <figure class="help-figure help-figure-narrow">
-<img src="stanpumpr-assets/help/quick-start-patient.png" alt="The Patient Profile panel: age with yr/mo buttons, weight with kg/lb, height with in/cm, sex, CYP 2D6, and the greyed-out Pregnant and Renal Function fields">
-<figcaption>The Patient Profile panel. This picture was taken before the CYP 2D6 field became active; Pregnant and Renal Function are still greyed out.</figcaption>
+<img src="stanpumpr-assets/help/quick-start-patient.png" alt="The Patient Profile panel: age with yr/mo buttons, weight with kg/lb and the ticked Adjust weight to fat-free mass box, height with in/cm, sex, CYP 2D6 set to Normal, baseline serum osmolality of 280 mOsm/kg, and the greyed-out Renal Function field">
+<figcaption>The Patient Profile panel for a 40-year-old man. Renal Function is greyed out; Pregnant, also disabled, appears only for women of child-bearing age.</figcaption>
 </figure>
 
-*CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites, and *Adjust weight to fat-free mass* is on by default. Two further fields, *Pregnant* and *Renal Function*, are visible but disabled. See [Patient profile](help:patient-profile).
+*Adjust weight to fat-free mass* is on by default. *CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites. *Baseline serum osmolality* is read only by mannitol. *Renal Function*, and *Pregnant* for women of child-bearing age, are visible but disabled. See [Patient profile](help:patient-profile).
 
 ## 2. Enter the doses
 
