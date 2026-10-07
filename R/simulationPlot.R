@@ -527,7 +527,15 @@ simulationPlot <- function(
 
   # Step A1: create plotObject with lines from `plotResults`
 
-  data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS & Site != "Rate")
+  # The "Recovery" rows are the time until threshold in minutes.  They stay in
+  # plotResults, which is exported, but are not drawn as a line: they are not a
+  # concentration, and drawn on a concentration axis they set the panel's
+  # height (84 "ng/ml" for a 250 mcg fentanyl bolus whose effect site peaks
+  # at 4), which flattened the concentration curve and then made the overlay
+  # in Step A7, scaled to that height, a copy of the stray line.  Step A7
+  # draws the time until threshold, scaled to the concentrations, from
+  # allEquispace.
+  data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS & Site != "Rate" & Site != "Recovery")
   rateData <- subset(plotResults, Site == "Rate")
 
   if (logY) {

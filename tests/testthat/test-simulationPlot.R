@@ -286,3 +286,27 @@ test_that("each panel's time-until-threshold labels are in a unit that suits it"
   expect_gt(length(y), 0)
   expect_equal(unique(signif(y, 10)), signif(7 / top * max(vanco$y), 10))
 })
+
+
+test_that("the time until threshold does not set a concentration panel's height", {
+  # The engines return the time until threshold as "Recovery" rows in minutes.
+  # They used to be drawn as a dotted line on the concentration axis, so a
+  # 250 mcg fentanyl bolus, whose effect site peaks near 5 ng/ml, had a panel
+  # reaching 84 "ng/ml" and a flattened curve; a plasma-timed drug whose time
+  # runs to days (amiodarone) was flattened entirely.  The overlay is drawn
+  # from equiSpace, scaled to the panel; the raw rows stay in plotResults.
+  DT <- data.frame(Drug = c("fentanyl", "vancomycin"), Time = 0,
+                   Dose = c(250, 1000), Units = c("mcg", "mg"))
+  drugs <- simulatedFor(DT, 1440, plotRecovery = TRUE)
+  p <- plotIn(drugs, plotRecovery = TRUE, plasmaLinetype = "blank", effectsiteLinetype = "solid",
+              xBreaks = seq(0, 1440, 240), xLabels = seq(0, 1440, 240))
+  expect_true(any(p$plotResults$Site == "Recovery"))
+  built <- ggplot2::ggplot_build(p$plotObject)
+  lineSites <- unique(as.character(built$plot$layers[[1]]$data$Site))
+  expect_false("Recovery" %in% lineSites)
+  ranges <- vapply(built$layout$panel_params, function(pp) max(pp$y.range), numeric(1))
+  ceMax  <- max(drugs$fentanyl$wide$`Effect Site`, na.rm = TRUE)
+  cpMax  <- max(drugs$vancomycin$wide$Plasma)
+  expect_lt(ranges[1], 1.2 * ceMax)
+  expect_lt(ranges[2], 1.2 * cpMax)
+})
