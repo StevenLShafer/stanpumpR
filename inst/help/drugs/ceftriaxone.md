@@ -4,7 +4,7 @@ Ceftriaxone's parameters are from Sanz-Codina and colleagues (*J Antimicrob Chem
 
 ### What is plotted
 
-Total ceftriaxone, which is what a laboratory reports. Ceftriaxone is 85 to 95 per cent albumin-bound with saturable binding; the paper's purpose was to compare two ways of measuring the free fraction, and neither binding map is applied here. The shaded band (10 to 50 mcg/mL total) is the range of total concentration that keeps free drug above a 1 to 2 mg/L MIC.
+Total ceftriaxone, which is what a laboratory reports. Ceftriaxone is 85 to 95 per cent albumin-bound with saturable binding; the paper's purpose was to compare two ways of measuring the free fraction, and neither binding map is applied here. The shaded band (10 to 50 mcg/mL total) is an illustrative range of total concentration, for orientation only. It is not a free-drug target: at 95 per cent binding, 10 mcg/mL total is 0.5 mcg/mL free, below a 1 to 2 mg/L MIC.
 
 ### Covariates
 

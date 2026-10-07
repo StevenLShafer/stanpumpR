@@ -31,7 +31,7 @@ An age of 90 or above is protected health information under the HIPAA Safe Harbo
 
 ## The disabled fields
 
-**Pregnant** (shown for women of child-bearing age) and **Renal Function** are present but greyed out. They were added ahead of the models that will use them, so that the interface shows the intent, and no drug in the current library responds to them. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
+**Pregnant** (shown for women of child-bearing age) and **Renal Function** are present but greyed out. They were added ahead of the models that will use them, so that the interface shows the intent, and no drug responds to them. Renal function is estimated by four models (cefazolin, vancomycin, gentamicin and sugammadex) from age, weight and sex at an **assumed normal creatinine**, because stanpumpR collects none; renal decline with age is represented, renal impairment is not. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
 
 ## Default patient
 

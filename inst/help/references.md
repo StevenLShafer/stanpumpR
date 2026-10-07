@@ -42,6 +42,16 @@ Anderson BJ, Holford NHG. Mechanism-based concepts of size and maturity in pharm
 
 Al-Sallami HS, Goulding A, Grant A, Taylor R, Holford N, Duffull SB. Prediction of fat-free mass in children. *Clin Pharmacokinet* 2015;54:1169-1178.
 
+## Renal function
+
+Several models estimate renal function from age, weight and sex at an assumed normal creatinine (1.0 mg/dL in men, 0.8 in women), because stanpumpR collects none.
+
+Cockcroft DW, Gault MH. Prediction of creatinine clearance from serum creatinine. *Nephron* 1976;16:31-41.
+
+Levey AS, Stevens LA, Schmid CH, et al. A new equation to estimate glomerular filtration rate. *Ann Intern Med* 2009;150:604-612.
+
+Du Bois D, Du Bois EF. A formula to estimate the approximate surface area if height and weight be known. *Arch Intern Med* 1916;17:863-871.
+
 ## Pharmacodynamics
 
 Austin KL, Stapleton JV, Mather LE. Relationship between blood meperidine concentrations and analgesic response: a preliminary report. *Anesthesiology* 1980;53:460-466.

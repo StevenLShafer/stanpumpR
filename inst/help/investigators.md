@@ -43,7 +43,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | etomidate | **John R. Arden** and colleagues (1986) | Kinetics in patients, including the elderly |
 | lidocaine | Schnider and colleagues (1996) | Two-compartment kinetics during an infusion |
 | rocuronium | **Bertrand Plaud** and colleagues (1995); **Luis I. Cortínez** and colleagues (2007) | Kinetics; time to peak effect |
-| naloxone | **Theodoros Papathanasiou** and colleagues (2019) | Kinetics after intravenous and intranasal dosing |
+| naloxone | **J. Dowling** and colleagues (2008); **C. M. Laffont** and colleagues (2024); **A. Yassen** and colleagues (2007) | Intravenous kinetics with clearance on lean body weight; the nasal route; the effect-site rate constant |
 | oxytocin | **James C. Eisenach** (unpublished); Tanaka and colleagues | Human kinetics from unpublished data; a rat model |
 | oxycodone | **Marko Lamminsalo** and colleagues (2019); **Jaap W. Mandema**; **Anne E. Olesen**; Kokki | Intravenous kinetics; the absorption and MEAC chosen to match their observations |
 | oliceridine | **Albert Dahan** and colleagues (2020) | Two-compartment kinetics and the respiratory end point used for MEAC |
@@ -52,6 +52,19 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | tramadol, desmetramadol | **Sophie Holford** and colleagues (2014); **Ulrike M. Stamer** and colleagues (2007) | Joint parent-and-metabolite kinetics; CYP2D6 phenotype weights |
 | hydrocodone | **Murad R. Melhem** and colleagues (2013); **Ram P. Kapil** and colleagues (2015); **S. Victoria Otton** and colleagues (1993) | Apparent oral disposition; CYP2D6-dependent formation of hydromorphone |
 | oxymorphone | Endo (manufacturer summary); **Michael P. Adams** and **Harry Ahdieh** (2005) | One-compartment disposition; also oxycodone's metabolite |
+| cefazolin | **T. Komatsu** and colleagues (2024) | Unbound two-compartment kinetics with creatinine clearance |
+| cefalexin | **A. S. Haynes** and colleagues (2024) | Apparent oral kinetics, fitted in children |
+| ceftriaxone | **M. Sanz-Codina** and colleagues (2023) | Two-compartment kinetics of total ceftriaxone |
+| clindamycin | **N. Bouazza** and colleagues (2012) | One-compartment kinetics, intravenous and oral |
+| gentamicin | **C. Smit** and colleagues (2020) | Two-compartment kinetics with de-indexed eGFR |
+| metronidazole | **M. J. J. da Silva Neto** and colleagues (2021) | Intravenous one-compartment kinetics |
+| vancomycin | **A. H. Thomson** and colleagues (2009) | Two-compartment kinetics with creatinine clearance |
+| hydrocortisone | **D. Bindellini** and colleagues (2024) | Cortisol kinetics, linearised for stress doses |
+| methylprednisolone, dexamethasone | **Y. Hong** and colleagues (2007) | Intravenous kinetics |
+| prednisolone, prednisone | **J. Xu**, **J. Winkler** and **H. Derendorf** (2007) | The reversible prednisone-prednisolone pair |
+| sugammadex | **H. J. Kleijn** and colleagues (2011) | Two-compartment kinetics of total sugammadex with creatinine clearance |
+| neostigmine | **T. N. Calvey** and colleagues (1979); **T. Heier** and colleagues (2002) | One patient's two-compartment fit; the time to peak effect |
+| glycopyrrolate | **C. Bartels** and colleagues (2013) | Three-compartment kinetics of the active cation |
 
 ## Pharmacodynamics and methods
 

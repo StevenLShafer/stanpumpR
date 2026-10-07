@@ -55,7 +55,7 @@ Eleveld's propofol model gives women a higher clearance than men (2.10 against 1
 
 ## CYP2D6, and the disabled covariates
 
-**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites). Pregnancy and renal function remain in the interface but unused by any model.
+**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites). Pregnancy and the Renal Function field remain in the interface but unused. Renal function is estimated by four models (cefazolin, vancomycin, gentamicin and sugammadex) from age, weight and sex at an **assumed normal creatinine**, because stanpumpR collects none; renal decline with age is represented, renal impairment is not.
 
 ## Fat-free mass as the default scaling
 
