@@ -255,3 +255,67 @@ test_that("the switches that were wrong before 2026-10-07", {
   expect_equal(s, c(bodyAmount(three, c(5, 1, 0.2)) / one$v1, 0, 0))
 })
 
+
+test_that("the simulation carries the drug across an event that changes the number of compartments", {
+  # A drug whose PK set changes structure at 50 minutes, simulated through
+  # simCpCe(), against the same thing solved piecewise by matrix exponential.
+  # Every set is given clindamycin's units (mg in, mg/L out) and no effect
+  # site, since only the plasma is compared.
+  noCe <- function(s) { s$ke0 <- 0; s$lambda_4 <- 0; s }
+  switching <- function(before, after) {
+    PK <- getDrugPK("clindamycin", 70, 170, 50, "male", dd[dd$Drug == "clindamycin", ])
+    PK$PK <- list(default = noCe(before), Switch = noCe(after))
+    PK$pkEvents <- c(PK_EVENT_DEFAULT, "Switch")
+    PK
+  }
+  switchAt <- 50
+  events <- data.frame(Time = switchAt, Event = "Switch")
+  # A bolus, an infusion running across the event, a bolus at the event itself
+  # and one after it
+  DT <- data.frame(Drug = "clindamycin",
+                   Time  = c(0,   10,   50,  80,  120),
+                   Dose  = c(600, 1200, 300, 300, 0),
+                   Units = c("mg", "mg/hr", "mg", "mg", "mg/hr"))
+  bolus <- DT[DT$Units == "mg", ]
+  rate  <- DT[DT$Units == "mg/hr", ]
+
+  exactPlasma <- function(before, after, times) {
+    rateAt <- function(t) {
+      i <- which(rate$Time <= t)
+      if (length(i) == 0) 0 else rate$Dose[max(i)] / 60
+    }
+    breaks <- sort(unique(c(0, DT$Time, switchAt, times)))
+    x <- c(0, 0, 0, 1)
+    out <- numeric(length(times))
+    for (k in seq_along(breaks)) {
+      t <- breaks[k]
+      s <- if (t < switchAt) before else after
+      if (t == switchAt) x[1:3] <- mapAmounts(x[1:3], nCompartments(after))
+      x[1] <- x[1] + sum(bolus$Dose[bolus$Time == t])
+      out[times == t] <- x[1] / s$v1
+      if (k < length(breaks)) {
+        M <- rbind(cbind(rates(s), c(rateAt(t), 0, 0)), 0)
+        x <- as.vector(expmTaylor(M * (breaks[k + 1] - t)) %*% x)
+      }
+    }
+    out
+  }
+
+  pairs <- list(c("clindamycin", "vancomycin"), c("vancomycin", "clindamycin"),
+                c("clindamycin", "propofol"),   c("propofol", "clindamycin"),
+                c("vancomycin", "propofol"),    c("propofol", "vancomycin"))
+  for (p in pairs) {
+    before <- pkSet(p[1])
+    after  <- pkSet(p[2])
+    sim <- simCpCe(DT, events, switching(before, after), 300, FALSE)$wide
+    expect_false(anyNA(sim$Plasma))
+    ref <- exactPlasma(before, after, sim$Time)
+    err <- abs(sim$Plasma - ref) / max(ref)
+    what <- paste(p, collapse = " -> ")
+    # Exact on both sides.  Until 2026-10-07 the 0.01-minute step into the
+    # event ran on the new set's eigenvalues, which left errors of up to 2.4%
+    # here after clindamycin or vancomycin switched to propofol's set.
+    expect_lt(max(err[sim$Time < switchAt]), 1e-9, label = paste(what, "before the event"))
+    expect_lt(max(err[sim$Time >= switchAt]), 1e-9, label = paste(what, "after the event"))
+  }
+})

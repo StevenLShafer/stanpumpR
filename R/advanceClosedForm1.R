@@ -97,9 +97,19 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   p_coef_infusion_l3   <- parameters[infusionpkLine, "p_coef_infusion_l3"]
 
   # Vectorize calculations
-  l1_dt <- exp(-lambda_1 * dt)
-  l2_dt <- exp(-lambda_2 * dt)
-  l3_dt <- exp(-lambda_3 * dt)
+  #
+  # The decay over the step INTO each point is that of the set in force at the
+  # step's start, like the infusion coefficients above.  The two differ only on
+  # the step into an event, the last 0.01 minutes before it, whose states are
+  # still the old set's until convertState() runs.  Until 2026-10-07 this used
+  # pkLine, so that step decayed the old states on the NEW set's eigenvalues and
+  # scaled the old p_coef_bolus / lambda by the new (1 - exp(-lambda dt)): with
+  # an infusion running from clindamycin's set into propofol's, 165 times the
+  # drug infused.  (Claude Code, Claude Opus 5.5; checked against a matrix
+  # exponential by tests/testthat/test-convertState.R.)
+  l1_dt <- exp(-parameters[infusionpkLine, "lambda_1"] * dt)
+  l2_dt <- exp(-parameters[infusionpkLine, "lambda_2"] * dt)
+  l3_dt <- exp(-parameters[infusionpkLine, "lambda_3"] * dt)
 
   p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
   p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
