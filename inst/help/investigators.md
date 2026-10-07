@@ -43,6 +43,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | etomidate | **John R. Arden** and colleagues (1986) | Kinetics in patients, including the elderly |
 | lidocaine | Schnider and colleagues (1996) | Two-compartment kinetics during an infusion |
 | rocuronium | **Bertrand Plaud** and colleagues (1995); **Luis I. Cortínez** and colleagues (2007) | Kinetics; time to peak effect |
+| acetaminophen | **James D. Morse** and colleagues (2022); **Brian J. Anderson** and colleagues (2001) | Intravenous and oral kinetics with clearance on normal fat mass; the analgesic effect-site rate constant |
 | naloxone | **J. Dowling** and colleagues (2008); **C. M. Laffont** and colleagues (2024); **A. Yassen** and colleagues (2007) | Intravenous kinetics with clearance on lean body weight; the nasal route; the effect-site rate constant |
 | oxytocin | **James C. Eisenach** (unpublished); Tanaka and colleagues | Human kinetics from unpublished data; a rat model |
 | oxycodone | **Marko Lamminsalo** and colleagues (2019); **Jaap W. Mandema**; **Anne E. Olesen**; Kokki | Intravenous kinetics; the absorption and MEAC chosen to match their observations |

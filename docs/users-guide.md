@@ -274,7 +274,7 @@ The library ships with the anaesthetic drugs (propofol, remifentanil, fentanyl,
 alfentanil, sufentanil, morphine, pethidine, hydromorphone, methadone, ketamine,
 dexmedetomidine, midazolam, etomidate, lidocaine, rocuronium, oxytocin,
 oxycodone, oliceridine, remimazolam, codeine, hydrocodone, oxymorphone,
-tramadol), the reversal agents (naloxone, sugammadex, neostigmine,
+tramadol), the analgesic acetaminophen (intravenous and oral), the reversal agents (naloxone, sugammadex, neostigmine,
 glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,
 ceftriaxone, vancomycin, metronidazole, gentamicin) and five corticosteroids
 (hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone).
@@ -330,6 +330,7 @@ what the literature offers.
 | Etomidate | Arden JR et al., *Anesthesiology* 1986;65(1):19–27. [PMID 3729056](https://pubmed.ncbi.nlm.nih.gov/3729056/) |
 | Lidocaine | Schnider TW et al., *Anesthesiology* 1996;84(5):1043–1050. [PMID 8623997](https://pubmed.ncbi.nlm.nih.gov/8623997/) |
 | Rocuronium | Plaud B et al., *Clin Pharmacol Ther* 1995;58(2):185–191. [PMID 7648768](https://pubmed.ncbi.nlm.nih.gov/7648768/) |
+| Acetaminophen | Morse JD et al., *Eur J Drug Metab Pharmacokinet* 2022;47:497–507. [DOI 10.1007/s13318-022-00766-9](https://doi.org/10.1007/s13318-022-00766-9) (intravenous and fasted tablet; clearance on normal fat mass). ke0 from Anderson BJ et al., *Eur J Clin Pharmacol* 2001;57:559–569. [DOI 10.1007/s002280100367](https://doi.org/10.1007/s002280100367) |
 | Naloxone | Dowling J et al., *Ther Drug Monit* 2008;30:490–496. [DOI 10.1097/FTD.0b013e3181816214](https://doi.org/10.1097/FTD.0b013e3181816214) (intravenous; clearance on lean body weight). Nasal spray derived from Laffont CM et al., *Front Psychiatry* 2024;15:1399803; k<sub>e0</sub> from Yassen A et al., *Clin Pharmacokinet* 2007;46:965–980 |
 | Oxytocin | Eisenach, unpublished data<br>Second model: Tanaka et al |
 | Oxycodone | Lamminsalo M et al., *Expert Opin Drug Deliv* 2019;16(6):649–656. [PMID 31092024](https://pubmed.ncbi.nlm.nih.gov/31092024/) |
