@@ -379,12 +379,19 @@ app_server <- function(input, output, session) {
     if (is.null(input$adjustToFFM)) TRUE else isTRUE(input$adjustToFFM)
   })
 
+  osmolality <- reactive({
+    # The default until the control reports, and for bookmarks made before it
+    # existed (Shiny restores only the inputs a bookmark saved).
+    if (is.null(input$osmolality)) OSMOLALITY_DEFAULT else input$osmolality
+  })
+
   testCovariates <- reactive({
     profileCode({
       outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
       req(weight(), height(), age(), sex())
       errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
-      checkNumericCovariates(age(), weight(), height(), errorFxn)
+      checkNumericCovariates(age(), weight(), height(), errorFxn,
+                             osmolality = osmolality())
     }, name = "testCovariates() reactive")
   })
 
@@ -459,6 +466,7 @@ app_server <- function(input, output, session) {
         sex = sex(),
         # NULL on the first pass, before the control has reported in
         cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
+        osmolality = osmolality(),
         adjustToFFM = adjustToFFM()
       ) |> profileCode("recalculatePK() in drugs()")
 
@@ -711,7 +719,8 @@ app_server <- function(input, output, session) {
         weight = weight(),
         height = height(),
         sex = sex(),
-        adjustToFFM = adjustToFFM()
+        adjustToFFM = adjustToFFM(),
+        osmolality = osmolality()
       )
 
       shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")

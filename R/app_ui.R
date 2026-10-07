@@ -161,6 +161,25 @@ app_ui <- function() {
                   selected = CYP2D6_DEFAULT
                 ),
 
+                # Read only by the osmotic agents (mannitol), which plot the
+                # serum osmolality they produce on top of this baseline.
+                bslib::tooltip(
+                  numericInput(
+                    inputId = "osmolality",
+                    label = "Baseline serum osmolality (mOsm/kg)",
+                    value = OSMOLALITY_DEFAULT,
+                    min = MIN_OSMOLALITY,
+                    max = MAX_OSMOLALITY,
+                    step = 1
+                  ),
+                  paste(
+                    "The patient's measured serum osmolality before any",
+                    "mannitol. Mannitol is plotted as the predicted serum",
+                    "osmolality: this baseline plus the rise mannitol causes."
+                  ),
+                  placement = "right"
+                ),
+
                 selectInput(
                   inputId = "renal",
                   label = "Renal Function",
