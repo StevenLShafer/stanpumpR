@@ -17,8 +17,8 @@ test_that("returns the published parameters with the switch off", {
     tPeak = 0,
     MEAC = 0,
     typical = 310,
-    upperTypical = 300,
-    lowerTypical = 320,
+    upperTypical = 320,
+    lowerTypical = 300,
     reference = paste(
       "Kaneda K et al., J Clin Pharmacol 2010;50(5):536-543. https://pubmed.ncbi.nlm.nih.gov/20051588/",
       "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/"
@@ -166,4 +166,17 @@ test_that("every other panel still starts at zero", {
   )
   yRange <- ggplot2::ggplot_build(out$plotObject)$layout$panel_params[[1]]$y.range
   expect_lte(yRange[1], 0)
+})
+
+test_that("peak normalisation scales the rise above the baseline, not the osmolality", {
+  dose <- data.frame(Drug = "mannitol", Time = c(0, 30), Dose = c(140, 0), Units = "g/hr")
+  out <- simulateDrugsWithCovariates(dose, events, 70, 170, 35, "male", 240, FALSE)
+  norm <- out$mannitol$results
+  norm <- norm[norm$Site == "CpNormCp", ]
+  # Zero before the dose, 100 at the peak, whatever the baseline
+  expect_equal(norm$Y[norm$Time == 0], 0)
+  expect_equal(max(norm$Y), 100)
+  # The unnormalised series is still the absolute osmolality
+  expect_equal(out$mannitol$max$Cp, max(out$mannitol$wide$Plasma))
+  expect_gt(out$mannitol$max$Cp, 280)
 })

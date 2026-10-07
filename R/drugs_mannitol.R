@@ -79,8 +79,10 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # Band: the usual target range of serum osmolality during osmotherapy, with
   # 320 mOsm/kg the conventional ceiling.
   typical      <- 310
-  upperTypical <- 300
-  lowerTypical <- 320
+  # Named for what they are.  Several older models in the library carry these
+  # two the other way round; the plot reads the CSV's Lower and Upper instead.
+  lowerTypical <- 300
+  upperTypical <- 320
   reference <- paste(
     "Kaneda K et al., J Clin Pharmacol 2010;50(5):536-543. https://pubmed.ncbi.nlm.nih.gov/20051588/",
     "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/"

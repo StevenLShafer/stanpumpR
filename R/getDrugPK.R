@@ -11,9 +11,6 @@
 #' @param drugDefaults output from \code{getDrugDefaults(drug)}
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 #'   Passed only to drug models that declare it; the rest ignore it.
-#' @param osmolality baseline serum osmolality in mOsm/kg, before any osmotic
-#'   agent.  Passed only to drug models that declare it (mannitol); the rest
-#'   ignore it.
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
@@ -21,6 +18,9 @@
 #'   fat-free mass (the default) rather than total body weight; see
 #'   `docs/weight-adjustment.md`.  Ignored by models that carry their own
 #'   fat-free-mass covariate (propofol, remifentanil).
+#' @param osmolality baseline serum osmolality in mOsm/kg, before any osmotic
+#'   agent.  Passed only to drug models that declare it (mannitol); the rest
+#'   ignore it.
 #'
 #' @examples
 #' PK <- stanpumpR::getDrugPK(
@@ -41,9 +41,9 @@ getDrugPK <- function(
   sex,
   drugDefaults = getDrugDefaults(drug),
   cyp2d6 = CYP2D6_DEFAULT,
-  osmolality = OSMOLALITY_DEFAULT,
   resolveMetabolite = TRUE,
-  adjustToFFM = TRUE
+  adjustToFFM = TRUE,
+  osmolality = OSMOLALITY_DEFAULT
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug

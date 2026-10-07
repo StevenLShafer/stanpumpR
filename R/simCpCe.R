@@ -29,7 +29,14 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   ceAllNA <- all(is.na(results$"Effect Site"))
   maxCe <- if (ceAllNA) 0 else max(results$"Effect Site", na.rm = TRUE)
 
-  results$CpNormCp <- if (maxCp > 0) results$Plasma        / maxCp * 100 else 0
+  # An osmotic agent's plasma column is serum osmolality, baseline included.
+  # Normalised to its peak that would read about 95% before any dose, so the
+  # rise above the baseline is normalised instead.  The absolute values, which
+  # the unnormalised plot shows, are left alone.
+  plasmaRise <- results$Plasma
+  if (!is.null(PK$osmotic)) plasmaRise <- plasmaRise - PK$osmotic$baseline
+  maxRise <- max(plasmaRise)
+  results$CpNormCp <- if (maxRise > 0) plasmaRise          / maxRise * 100 else 0
   results$CeNormCp <- if (maxCp > 0) results$"Effect Site" / maxCp * 100 else 0
   results$CpNormCe <- if (maxCe > 0) results$Plasma        / maxCe * 100 else 0
   results$CeNormCe <- if (maxCe > 0) results$"Effect Site" / maxCe * 100 else 0
