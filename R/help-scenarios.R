@@ -23,7 +23,7 @@
 HELP_SCENARIO_GROUPS <- c(
   "Intravenous basics",
   "Opioids",
-  "Oral absorption",
+  "Oral analgesics",
   "Interactions",
   "Special populations",
   "Recovery and emergence",
@@ -250,11 +250,11 @@ helpScenarios <- function() {
       maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE
     ),
 
-    # --- Oral absorption -----------------------------------------------------
+    # --- Oral analgesics -----------------------------------------------------
     helpScenario(
       "gabapentin-saturable-absorption",
       "Gabapentin: why 1200 mg is not twice 600 mg",
-      "Oral absorption",
+      "Oral analgesics",
       "Gabapentin's absorption saturates: 600 mg and then, after a washout, 1200 mg by mouth, and the larger dose peaks less than half again as high.",
       doses = helpDoses(
         c("gabapentin", 0, 600, "mg PO"),
