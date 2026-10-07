@@ -179,17 +179,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("hr",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / 60
 
-    # Identify bolus doses
-    dose$Bolus <- !(grepl("min", dose$Units) |
-                      grepl("hr", dose$Units) |
-                      grepl("PO", dose$Units) |
-                      grepl("IM", dose$Units) |
-                      grepl("IN", dose$Units))
-
-    # Identify PO doses
-    dose$PO <- grepl("PO", dose$Units)
-    dose$IM <- grepl("IM", dose$Units)
-    dose$IN <- grepl("IN", dose$Units)
+    # Identify extravascular (PO, IM, IN) and IV bolus doses
+    route <- doseRoute(dose$Units)
+    dose$PO <- route == ROUTE_PO
+    dose$IM <- route == ROUTE_IM
+    dose$IN <- route == ROUTE_IN
+    dose$Bolus <- route == ROUTE_IV &
+      !(grepl("min", dose$Units) | grepl("hr", dose$Units))
 
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp

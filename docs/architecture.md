@@ -122,7 +122,7 @@ time point as a sum of exponentials.
 ### B — Advance the doses (`simCpCe.R`)
 
 1. Reduce mg/mcg/ng, per-kg, per-hour doses to base units against the drug's concentration unit.
-2. Classify each dose as `Bolus`, infusion, or `PO / IM / IN`.
+2. Classify each dose as `Bolus`, infusion, or `PO / IM / IN` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`).
 3. Dispatch to a solver:
    - `advanceClosedForm0.R` — IV, no PK events
    - `advanceClosedForm1.R` — time-varying PK driven by events
