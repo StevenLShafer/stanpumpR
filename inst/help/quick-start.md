@@ -16,11 +16,11 @@ When the app opens, a welcome dialog states what stanpumpR is and is not. **OK**
 Open **Patient Profile** in the left sidebar. Enter age, weight, height and sex. The unit buttons beside each field switch between years and months, kilograms and pounds, inches and centimetres. These four covariates drive the pharmacokinetic models, so they change the predictions.
 
 <figure class="help-figure help-figure-narrow">
-<img src="stanpumpr-assets/help/quick-start-patient.png" alt="The Patient Profile panel: age with yr/mo buttons, weight with kg/lb, height with in/cm, sex, and the disabled CYP 2D6 and Renal Function fields">
-<figcaption>The Patient Profile panel. The greyed-out fields are not yet active.</figcaption>
+<img src="stanpumpr-assets/help/quick-start-patient.png" alt="The Patient Profile panel: age with yr/mo buttons, weight with kg/lb, height with in/cm, sex, CYP 2D6, and the greyed-out Pregnant and Renal Function fields">
+<figcaption>The Patient Profile panel. This picture was taken before the CYP 2D6 field became active; Pregnant and Renal Function are still greyed out.</figcaption>
 </figure>
 
-Three further fields, *Pregnant*, *CYP 2D6* and *Renal Function*, are visible but disabled: no model in the library yet responds to them. See [Patient profile](help:patient-profile).
+*CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites, and *Adjust weight to fat-free mass* is on by default. Two further fields, *Pregnant* and *Renal Function*, are visible but disabled. See [Patient profile](help:patient-profile).
 
 ## 2. Enter the doses
 
@@ -38,7 +38,7 @@ Right-click a row to insert or remove rows. See [The dose table](help:dose-table
 
 ## 3. Apply
 
-Press **Apply Changes**. Nothing recalculates until you do, so you can make several related edits and see them together. The button is grey when there is nothing new to apply. *Undo* and *Redo* step through your edits.
+Press **Apply Changes**. Edits to the dose table do not recalculate until you do, so you can make several related edits and see them together. The button is grey when there is nothing new to apply. *Undo* and *Redo* step through your edits.
 
 ## 4. Read the plot
 

@@ -2,11 +2,12 @@ This page lists what is being worked on and what is visible but not yet active, 
 
 ## Recently landed
 
-Four pieces of work that this page previously listed as "in development" have now merged, and each has its own help page:
+Five pieces of work that this page previously listed as "in development" have now merged, and each has its own help page:
 
 - **Target-controlled infusion.** Two new dose-table units, *Plasma target* and *Effect site target*, run a simulated TCI pump for propofol, remifentanil, alfentanil, sufentanil, fentanyl, lidocaine, hydromorphone, etomidate and ketamine. See [Target-controlled infusion](help:tci).
 - **Active metabolites.** Codeine, tramadol, hydrocodone and oxycodone now form active metabolites, and the drugs needed for them (codeine, tramadol, desmetramadol, hydrocodone, oxymorphone) have been added. See [Active metabolites](help:models/metabolites).
 - **Fat-free-mass dosing.** Most models are now scaled to the patient's fat-free mass by default, with a switch to turn it off. See [Scaling to fat-free mass](help:models/fat-free-mass).
+- **Antibiotics, corticosteroids and reversal agents.** Sixteen drugs from three literature reviews: cefazolin, cefalexin, ceftriaxone, clindamycin, gentamicin, metronidazole and vancomycin; dexamethasone, hydrocortisone, methylprednisolone, prednisolone and prednisone; and sugammadex, neostigmine and glycopyrrolate, with naloxone moved to the Dowling model and given a nasal route. Most have no effect site and are plotted as plasma concentrations. Each drug's page says what its row plots (unbound cefazolin, free prednisolone and the hydrocortisone increment above baseline are not the usual laboratory measure) and which values are provisional.
 - **Time until threshold across a metabolite, and during an absorption lag.** Recovery is now solved from the combined effect-site state when a drug receives an active metabolite, and reads "not yet absorbed" rather than zero during an extravascular lag.
 
 ## Now active
@@ -15,7 +16,7 @@ Four pieces of work that this page previously listed as "in development" have no
 
 ## Visible but not active
 
-**Pregnant** and **Renal Function** in the Patient Profile are still disabled: no model in the current library uses them. Renal function in particular governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
+**Pregnant** and **Renal Function** in the Patient Profile are still disabled. Renal function is estimated by four models (cefazolin, vancomycin, gentamicin and sugammadex) from age, weight and sex at an **assumed normal creatinine**, because stanpumpR collects none; renal decline with age is represented, renal impairment is not. Entering a measured creatinine would let them represent impairment. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
 
 ## Provisional values flagged in the code
 

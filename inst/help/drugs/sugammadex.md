@@ -4,7 +4,7 @@ Sugammadex's parameters are from Kleijn and colleagues (*Br J Clin Pharmacol* 20
 
 ### Covariates
 
-Every parameter carries a weight term and two carry creatinine clearance: clearance rises with weight and falls steeply with creatinine clearance through a saturating term, and the peripheral volume grows as creatinine clearance falls. Creatinine clearance is Cockcroft-Gault at an **assumed normal creatinine**, because stanpumpR collects none, so renal decline with age is represented and **renal impairment is not**; the label does not recommend sugammadex below 30 mL/min and this model cannot show that patient. The weight the equations see is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total body weight with the switch off. The source's ethnicity term is left at its reference value.
+Every parameter carries a weight term and two carry creatinine clearance: clearance rises with weight and falls steeply as creatinine clearance declines, through a saturating term, and the peripheral volume grows as creatinine clearance falls. Creatinine clearance is Cockcroft-Gault at an **assumed normal creatinine**, because stanpumpR collects none, so renal decline with age is represented and **renal impairment is not**; the label does not recommend sugammadex below 30 mL/min and this model cannot show that patient. The weight the equations see is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total body weight with the switch off. The source's ethnicity term is left at its reference value.
 
 ### Effect site
 
