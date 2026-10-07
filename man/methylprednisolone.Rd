@@ -15,8 +15,11 @@ methylprednisolone(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{scale the size-free parameters to fat-free mass and
-estimate creatinine clearance on the pharmacokinetic weight}
+\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
+patient's fat-free mass as \code{docs/weight-adjustment.md} describes;
+\code{FALSE} reproduces the published size scaling exactly.  Each drug
+file's header says what the switch changes for that model; for cefazolin
+it also sets the weight the creatinine-clearance estimate uses.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
