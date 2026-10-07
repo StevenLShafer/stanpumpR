@@ -23,11 +23,13 @@ The band is orientation, not a target. It is a published typical range for a typ
 
 ## The time-until-threshold line
 
-With **Graph Options → Time until threshold** ticked, a thin black line appears on each panel, read against the minute labels on the right-hand axis. At every moment it shows how long the concentration would take to fall to the drug's recovery threshold if delivery stopped right then. See [Time until threshold](help:models/recovery).
+With **Graph Options → Time until threshold** ticked, a thin black line appears on each panel, read against the labels at the panel's right-hand edge. At every moment it shows how long the concentration would take to fall to the drug's recovery threshold if delivery stopped right then. See [Time until threshold](help:models/recovery).
+
+Each panel's labels are in whichever unit suits the longest time on that panel, whatever the x axis shows: minutes (`min`) below 2 hours, hours (`h`) below 2 days, days (`d`) below 3 weeks, and weeks (`wk`) beyond. One panel can therefore read in minutes and the next in days. The search for the threshold stops at a horizon: a day for a drug with an effect site, and a week (or the length of the plot, if that is longer) for a drug timed on its plasma, such as an antibiotic. A line flat along the top of a panel means the time is at least that long, and the hover then says "more than 24 hours" (or "more than 7 days").
 
 ## Interacting with the plot
 
-- **Hover** over any curve for the time and concentration at that point. On the MEAC and interaction panels the hover shows the summed value or the probability.
+- **Hover** over any curve for the time and concentration at that point. The time is in the **Time units** chosen in the Time card ("3.5 days"), or the time of day under **Actual time**. The concentration is read at exactly that time from the full simulation: the effect-site concentration (`Ce`) for a drug with an effect site, and the plasma concentration (`Cp`) for one without, such as an antibiotic or a prodrug. With the time-until-threshold line on, the hover adds that time too, in the same unit as the panel's labels. On the MEAC and interaction panels the hover shows the summed value or the probability.
 - **Click** anywhere on a drug's panel to add a dose of that drug at that time. A small dialog asks for the amount and unit, and the dose is applied immediately, bypassing the draft.
 - **Double-click** a drug's panel to edit or delete that drug's doses in a compact table.
 - On the **Events** panel, click to add an event and double-click to edit the event list.
@@ -46,7 +48,7 @@ See [Additional plots](help:additional-plots).
 
 ## Axes
 
-The y axis of each panel is linear by default; **Log Y axis** switches to logarithmic where that is meaningful. The x axis runs to **Max time**. Panel height is set by the **Y axis height** slider.
+The y axis of each panel is linear by default; **Log Y axis** switches to logarithmic where that is meaningful. The x axis runs to **Max time** and is labelled in the **Time units** chosen in the Time card (minutes, hours, days or weeks), or with times of day under **Actual time**; see [Time display](help:time-display). The unit changes only the labels: the simulation itself is always computed in minutes. Panel height is set by the **Y axis height** slider.
 
 ## Resolution
 

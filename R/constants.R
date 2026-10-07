@@ -131,16 +131,68 @@ MINS_PER_DAY  <- 60 * 24
 MINS_PER_WEEK <- 60 * 24 * 7
 MINS_PER_YEAR <- 525600  # more than 52 weeks because of leap years
 
-maxtimes <- data.frame(
-  times = c(MINS_PER_HOUR * c(1, 2, 4, 6, 12),
-            MINS_PER_DAY * c(1, 2, 4),
-            MINS_PER_WEEK * c(1, 2, 4, 8, 16, 32),
-            MINS_PER_YEAR),
-  steps = c(10, 15, 30, 60, 120,
-            MINS_PER_DAY / c(6, 3, 2),
-            MINS_PER_DAY * c(1, 2, 4), MINS_PER_WEEK * c(1, 2, 4),
-            MINS_PER_YEAR / 12)
+# Time units (R/utils-time.R).  The unit is a display and entry setting only:
+# the engine, the scenarios, the events, the simulation cache and the exported
+# Time columns are in minutes whatever it is.  A bare number typed into the
+# dose table is in the unit; an entry with a colon is a clock time or an
+# elapsed H:MM and is never scaled.  Values are minutes per unit.
+TIME_UNITS <- c(minutes = 1, hours = MINS_PER_HOUR, days = MINS_PER_DAY, weeks = MINS_PER_WEEK)
+TIME_UNIT_DEFAULT <- "minutes"
+# Clock ("Actual time") entry addresses only the 24 hours after the procedure
+# start, so it is offered for these units only; days and weeks are elapsed.
+CLOCK_TIME_UNITS <- c("minutes", "hours")
+TIME_MODES <- c("clock", "relative")
+# A time converted to another unit is rounded to TIME_SNAP_DIGITS decimal
+# places of a minute (0.001 min) and written with TIME_STRING_DIGITS
+# significant digits.  Ten digits make every conversion, and any chain of them,
+# return the identical minutes on a 0.001 minute grid up to a year (six digits
+# did not: day 5 became 0.714286 weeks, 7200.00288 minutes, which moved a
+# scheduled stop past a repeat).
+TIME_STRING_DIGITS <- 10
+TIME_SNAP_DIGITS <- 3
+
+# TCI target rows and the inhaled agents are simulated only on plots of this
+# length or less.  Beyond a week the TCI controller writes ever more rows, and
+# the gas engine's uptake coupling is frozen over steps of about maximum/601.
+ACUTE_MAX_PLOT_MINUTES <- MINS_PER_WEEK
+
+# Drugs that are only meaningful over weeks to months.  Adding one to a plot
+# shorter than a week offers to switch the Time units to days, 365 days.
+LONG_TERM_DRUGS <- c("amiodarone")
+LONG_TERM_PLOT_MINUTES <- 365 * MINS_PER_DAY
+
+# The Max time choices for each time unit: the durations (minutes) and the
+# tick spacing (minutes) of each.  "minutes" and "hours" offer the same
+# durations, so switching between them never changes Max time.  365 days is
+# not a multiple of its 30-day ticks: the axis runs past the last tick.
+MAX_TIMES <- list(
+  minutes = data.frame(
+    times = MINS_PER_HOUR * c(1, 2, 4, 6, 8, 12, 18, 24),
+    steps = c(10, 15, 30, 60, 60, 120, 180, 240)
+  ),
+  hours = data.frame(
+    times = MINS_PER_HOUR * c(1, 2, 4, 6, 8, 12, 18, 24),
+    steps = MINS_PER_HOUR * c(0.25, 0.25, 0.5, 1, 1, 2, 3, 4)
+  ),
+  days = data.frame(
+    times = MINS_PER_DAY * c(2, 3, 4, 7, 14, 28, 56, 91, 182, 365),
+    steps = MINS_PER_DAY * c(0.5, 0.5, 1, 1, 2, 7, 7, 7, 14, 30)
+  ),
+  weeks = data.frame(
+    times = MINS_PER_WEEK * c(4, 8, 13, 26, 39, 52),
+    steps = MINS_PER_WEEK * c(1, 1, 1, 2, 3, 4)
+  )
 )
+# The word each unit's Max time choices are labelled in ("1 hour", "365 days")
+MAX_TIME_LABEL_UNITS <- c(minutes = "hour", hours = "hour", days = "day", weeks = "week")
+# Every Max time any unit offers.  input$maximum outside this is refused; one
+# inside it but not in the current unit's list is a moment when the browser has
+# not yet caught up with a change of unit.
+MAX_TIME_VALUES <- sort(unique(unlist(lapply(MAX_TIMES, `[[`, "times"))))
+# How close (minutes) the last dose or event may come to the end of the plot
+# before the plot is lengthened to show what follows it.  30 minutes is the
+# original rule, kept so that the minute and hour plots are unchanged.
+TIME_EXTEND_MARGIN <- c(minutes = 30, hours = 30, days = MINS_PER_DAY / 2, weeks = MINS_PER_WEEK)
 
 REFERENCE_TIME_NONE <- "none"
 NORMALIZE_NONE <- "none"

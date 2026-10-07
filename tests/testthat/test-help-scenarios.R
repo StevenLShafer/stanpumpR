@@ -70,6 +70,69 @@ test_that("the dose table a scenario produces is what the app expects", {
   expect_true(all(validateDoseTableInput(dt, drugDefaults)))
 })
 
+test_that("scenario dose tables in minutes are written exactly as before time units", {
+  # minutesToDisplayTime() in minutes is as.character() for every time the
+  # scenarios use (it differs only where as.character() would write 1e+05)
+  for (s in scenarios) {
+    expect_equal(s$options$timeUnits, "minutes", info = s$id)
+    d <- s$doses[order(s$doses$Time, s$doses$Drug), ]
+    expect_identical(helpScenarioDoseTable(s, blankRows = 0)$Time, as.character(d$Time), info = s$id)
+  }
+})
+
+test_that("a scenario in another time unit writes and checks its times in that unit", {
+  s <- helpScenario("long-one", "Long", "Opioids", "x",
+                    doses = helpDoses(c("morphine", 0, 10, "mg"), c("morphine", 30240, 10, "mg")),
+                    timeUnits = "days", maximum = 28 * MINS_PER_DAY)
+  expect_length(helpScenarioCheck(s, drugDefaults), 0)
+  dt <- helpScenarioDoseTable(s)
+  expect_equal(dt$Time[1:2], c("0", "21"))
+  expect_identical(displayTimeToMinutes(dt$Time[1:2], REFERENCE_TIME_NONE, "days"), c(0, 30240))
+  expect_true(all(validateDoseTableInput(dt, drugDefaults)))
+
+  # Max time must be one of the scenario's unit's choices
+  s$options$maximum <- 1440
+  expect_match(helpScenarioCheck(s, drugDefaults), "Max time choices", all = FALSE)
+  s$options$timeUnits <- "fortnights"
+  expect_match(helpScenarioCheck(s, drugDefaults), "invalid timeUnits", all = FALSE)
+
+  # The page: times in the unit, in full (three significant figures printed
+  # 30240 minutes as 30,200), and the unit named
+  s <- helpScenario("long-one", "Long", "Opioids", "x",
+                    doses = helpDoses(c("morphine", 30240, 10, "mg")),
+                    timeUnits = "days", maximum = 28 * MINS_PER_DAY)
+  local_mocked_bindings(
+    helpScenarioById = function(id) s,
+    helpReadMarkdown = function(id) "## What to look for"
+  )
+  html <- helpScenarioPageHTML("long-one")
+  expect_match(html, "Time (days)", fixed = TRUE)
+  expect_match(html, "<td>21</td>", fixed = TRUE)
+  expect_match(html, "28 days", fixed = TRUE)
+  s$options$timeUnits <- "minutes"
+  s$options$maximum <- 1440
+  expect_match(helpScenarioPageHTML("long-one"), "<td>30240</td>", fixed = TRUE)
+})
+
+test_that("the checker mirrors the app's rule for TCI and inhaled agents", {
+  # Simulated only on plots of 7 days or less (timeUnitViolation())
+  tci <- helpScenario("tci-long", "TCI", "Opioids", "x",
+                      doses = helpDoses(c("propofol", 0, 3, "Effect site target")),
+                      timeUnits = "days", maximum = 14 * MINS_PER_DAY)
+  expect_match(helpScenarioCheck(tci, drugDefaults), "7 days or less", all = FALSE)
+  tci$options$maximum <- 7 * MINS_PER_DAY
+  expect_length(helpScenarioCheck(tci, drugDefaults), 0)
+  gas <- helpScenario("gas-long", "Gas", "Inhaled anesthetics", "x",
+                      doses = helpDoses(c("sevoflurane", 0, 2, "%"), c("ventilation", 0, 5, "L/min")),
+                      timeUnits = "weeks", maximum = 4 * MINS_PER_WEEK)
+  expect_match(helpScenarioCheck(gas, drugDefaults), "7 days or less", all = FALSE)
+  # events must fall on the plot too
+  ev <- helpScenario("ev", "Ev", "Opioids", "x", doses = helpDoses(c("propofol", 0, 1, "mg")),
+                     events = helpEvents(c(90, "Induction")), maximum = 60,
+                     addedPlots = PLOT_ID_EVENTS)
+  expect_match(helpScenarioCheck(ev, drugDefaults), "event at 90 is beyond Max time", all = FALSE)
+})
+
 test_that("event tables are produced for scenarios with and without events", {
   expect_identical(helpScenarioEventTable(helpScenarioById("propofol-bolus")), eventTableInit)
   et <- helpScenarioEventTable(helpScenarioById("tiva-remifentanil-propofol"))
@@ -116,7 +179,9 @@ test_that("scenario pages and the index render with load buttons", {
     expect_match(html, sprintf('data-help-scenario="%s"', s$id), fixed = TRUE, info = s$id)
     expect_match(html, htmltools::htmlEscape(s$summary), fixed = TRUE, info = s$id)
     expect_match(html, "What to look for", fixed = TRUE, info = s$id)
-    expect_match(html, formatMinutes(s$options$maximum), fixed = TRUE, info = s$id)
+    # Max time as the unit's Max time list labels it, and the times' unit
+    expect_match(html, maxTimeLabel(s$options$maximum, s$options$timeUnits), fixed = TRUE, info = s$id)
+    expect_match(html, paste0("Time (", s$options$timeUnits, ")"), fixed = TRUE, info = s$id)
     for (drug in unique(s$doses$Drug)) {
       expect_match(html, sprintf('data-help-page="drugs/%s"', drug), fixed = TRUE, info = s$id)
     }
@@ -148,5 +213,29 @@ test_that("loading a scenario sets the tables and sends the input updates", {
   applyHelpScenario(session, s, doseTable, eventTable)
 
   expect_identical(shiny::isolate(doseTable()), helpScenarioDoseTable(s))
+  expect_identical(shiny::isolate(eventTable()), helpScenarioEventTable(s))
+})
+
+test_that("with the app's timeApi, a scenario sets its time settings and the table's format", {
+  skip_if_not(exists("MockShinySession", asNamespace("shiny")), "MockShinySession not available")
+  session <- shiny::MockShinySession$new()
+  doseTable <- shiny::reactiveVal(doseTableInit)
+  eventTable <- shiny::reactiveVal(eventTableInit)
+  calls <- list()
+  timeApi <- list(
+    showTimeSettings = function(unit, mode, maximum) {
+      calls$show <<- list(unit = unit, mode = mode, maximum = maximum)
+    },
+    setDoseTable = function(dt, format) calls$set <<- list(dt = dt, format = format)
+  )
+  s <- helpScenarioById("tiva-remifentanil-propofol")
+
+  applyHelpScenario(session, s, doseTable, eventTable, timeApi)
+
+  expect_equal(calls$show, list(unit = "minutes", mode = "relative", maximum = s$options$maximum))
+  expect_identical(calls$set$dt, helpScenarioDoseTable(s))
+  expect_equal(calls$set$format, timeFormat("minutes", "relative"))
+  # the dose table goes through timeApi, not straight into doseTable()
+  expect_identical(shiny::isolate(doseTable()), doseTableInit)
   expect_identical(shiny::isolate(eventTable()), helpScenarioEventTable(s))
 })

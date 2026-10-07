@@ -4,16 +4,19 @@ The dose table is the main way you talk to the program. It sits to the right of 
 
 **Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row.
 
-**Time.** When it happens. The field is forgiving:
+**Time.** When it happens, in the **Time units** chosen in the Time card above the table (the card header says which: *Doses (times in hours)*). The field is forgiving:
 
 | You type | It means |
 |---|---|
-| `12` | twelve minutes |
-| `1:30` | one hour thirty minutes |
-| `130` | the same, read as `HH:MM` |
-| `0:80` | rolls over to `1:20` |
+| `12` | twelve of the time unit: twelve minutes, or twelve days |
+| `1.5` | one and a half: 90 minutes when the unit is hours |
+| `130` | 130 of the unit, not 1:30 |
+| `1:30` | with the *Actual time* display, the clock time 01:30 (with *Elapsed time* the table takes numbers only; an `H:MM` pasted in is read as hours and minutes) |
+| `0:80` | rolls over to `01:20` |
 
-Anything that cannot be read as a time becomes 0 rather than raising an error. If the time display is set to *Actual time*, times are clock times; see [Time display](help:time-display).
+Anything that cannot be read as a time becomes 0 rather than raising an error. With *Actual time*, a number without a colon is counted from the procedure start. See [Time display](help:time-display), which also explains what happens to the table when you change the unit (it is converted, so the doses stay put).
+
+A regimen written in days goes in most easily with the Time units set to days. Day 1 begins at time 0, so day *n* begins at *n* − 1: "1600 mg a day on days 1 and 2, then 1200 mg a day on days 3 to 7" is three rows of a once-a-day unit, 1600 at `0`, 1200 at `2`, and a stop (0) at `7`. See *Scheduled doses* below.
 
 **Dose.** A number. Anything that is not a digit or a decimal point is removed before the number is read, so `5 mg` is read as 5, a minus sign is dropped (`-5` becomes 5, not 0), and an entry with no digits at all becomes 0.
 

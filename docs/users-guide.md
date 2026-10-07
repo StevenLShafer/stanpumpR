@@ -90,13 +90,16 @@ drug at the stop time with a dose of zero.
 
 ### Entering times
 
-The time field is forgiving and accepts three forms:
+Times are in the **Time units** chosen above the dose table (see *Time
+display*), and the field is forgiving:
 
-- `12` — twelve minutes
-- `1:30` — one hour thirty minutes
-- `130` — the same, interpreted as `HH:MM`
+- `12` — twelve of the unit: twelve minutes, or twelve days
+- `1.5` — one and a half of the unit
+- `1:30` — with *Actual time*, the clock time 01:30 (with *Elapsed time* the
+  table takes numbers only; an `H:MM` pasted in is read as hours and minutes)
+- `130` — 130 of the unit, not 1:30
 
-Minutes above 59 roll over, so `0:80` becomes `1:20`. Anything that cannot be
+Minutes above 59 roll over, so `0:80` becomes `01:20`. Anything that cannot be
 read as a time becomes zero rather than raising an error.
 
 ### Applying changes
@@ -148,7 +151,9 @@ and you can edit it (see *Drug Library*).
 
 ### Interacting with the plot
 
-- **Hover** over any curve for the precise concentration at that moment.
+- **Hover** over any curve for the precise concentration at that moment: Ce for a
+  drug with an effect site, Cp for one without. The time is shown in the chosen
+  time units, or as a time of day under Actual time.
 - **Click** to add a dose of that drug at that time. This bypasses the draft and
   applies immediately.
 - **Double-click** on a drug's curve to edit or delete that drug's doses.
@@ -161,7 +166,7 @@ and you can edit it (see *Drug Library*).
 |---|---|
 | Show typical | The shaded band, above |
 | Normalize to | Rescale every curve to its own peak plasma or peak effect-site value, so drugs on wildly different scales can be compared in shape |
-| Max time | How far the simulation runs |
+| Max time | How far the simulation runs. The choices follow the Time units: 1–24 hours (minutes, hours), 2–365 days, 4–52 weeks |
 | Plasma line / Effect site line | Line style, including none |
 | Y axis height | Plot height in pixels |
 | Time until threshold | Draws, for each drug, how long until it falls to its recovery threshold (`endCe` in the library). Only available when normalization is off |
@@ -569,11 +574,25 @@ Consequences worth knowing when comparing the two side by side:
 
 Above the dose table:
 
-- **Elapsed minutes** — everything counted from zero.
-- **Actual time** — enter a **Procedure start** as `HH:MM` and times display as
-  clock times.
+- **Time units** — minutes, hours, days or weeks. A number typed as a time is
+  in this unit, the time axis is labelled in it, and it sets the **Max time**
+  choices. Changing it rewrites every time in the dose table in the new unit
+  (90 minutes becomes 1.5 hours), so the doses stay where they were; it also
+  applies any unapplied edits.
+- **Time Display**
+  - **Elapsed time** — everything counted from zero.
+  - **Actual time** (minutes and hours only) — enter a **Procedure start** as
+    `HH:MM`; a time with a colon is then a clock time, and a number is counted
+    from the procedure start. Switching to elapsed time converts the clock
+    times.
 
-This changes display and entry only. The simulation is identical.
+This changes display and entry only. The simulation is identical: it always
+works in minutes.
+
+Target-controlled infusions and inhaled agents are simulated only on plots of
+7 days or less; Suggest Dosing is offered in minutes and hours. A dose beyond
+the unit's longest Max time (24 hours, 365 days, 52 weeks) brings a
+notification rather than a longer plot.
 
 ---
 

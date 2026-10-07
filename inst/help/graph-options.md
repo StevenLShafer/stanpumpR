@@ -4,7 +4,7 @@ The second panel in the left sidebar. These settings change how the simulation i
 |---|---|
 | **Show typical** | The shaded band behind each drug: the therapeutic *Range*, a narrow band at the *Mid* value, or none. See [Reading the plot](help:reading-the-plot). |
 | **Normalize to** | Rescale every curve to its own peak plasma or peak effect-site value, so drugs on very different scales can be compared in shape. Only the normalized line is shown. See [Normalization](help:models/normalization). |
-| **Max time** | How far the simulation runs: from one hour to a year. The grid of evaluation times scales with it. If a dose or event is within half an hour of Max time or beyond it, the plotted range is extended to show it, in steps matching the grid. |
+| **Max time** | How far the simulation runs. The choices follow the **Time units** in the Time card: 1 to 24 hours for minutes and hours, 2 to 365 days for days, 4 to 52 weeks for weeks (see [Time display](help:time-display)). The grid of evaluation times scales with it. If a dose or event is near Max time or beyond it (within half an hour, for minutes and hours), the plotted range is extended to show it, in steps matching the axis, up to the unit's longest Max time. |
 | **Plasma line** | Line style for the plasma concentration: none (the default), solid, dashed, dotted or dot-dash. |
 | **Effect site line** | Line style for the effect-site concentration; solid by default. |
 | **Y axis height** | The height of each panel, from short to tall. |

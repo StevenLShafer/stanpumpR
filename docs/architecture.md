@@ -27,8 +27,10 @@ The sidebar groups inputs into a few categories — patient covariates, graph/di
 options, optional extra plot facets, and the email-slide form.
 
 The **dose table** is a `rhandsontable` editable table, with `Apply` / `Undo` / `Redo`
-controls and a display toggle for elapsed-minutes vs. clock time. Its full edit → apply lifecycle
-is covered in [The dose table lifecycle](#the-dose-table-lifecycle).
+controls, and above it a *Time units* selector (minutes, hours, days, weeks) and a display toggle
+for elapsed vs. clock time (clock for minutes and hours only). Its full edit → apply lifecycle
+is covered in [The dose table lifecycle](#the-dose-table-lifecycle), and the time units in
+[Time units](#time-units).
 
 **Events** are not a permanently visible table — they're edited by clicking on the Events plot
 (which only appears when "Events" is chosen in the "Additional Plots" section). Events are stored
@@ -96,12 +98,45 @@ double-click edits a drug.
    confirm step.
 6. Whenever `doseTable()` changes by any route, the observer on it resets the draft to the newly
    committed table and **clears the undo/redo history**: once the canonical table has moved there
-   is no earlier draft worth stepping back to. The time-mode switch clears the history explicitly
-   instead of relying on that observer, because it assigns `doseTable()` a value that may equal
-   what it already holds, and `reactiveVal` does not notify observers on a no-op assignment.
+   is no earlier draft worth stepping back to. A change of time unit or display goes through
+   `setDoseTable()`, which resets the draft and history itself instead of relying on that
+   observer, because it may assign `doseTable()` a value that equals what it already holds, and
+   `reactiveVal` does not notify observers on a no-op assignment.
 7. **`doseTableClean()`** is what the rest of the pipeline actually depends on. Whenever
    `doseTable()` changes, this reactive re-derives a cleaned copy via `cleanDoseTable()` (coerce column
-   types, drop incomplete rows, convert clock times to elapsed minutes).
+   types, drop incomplete rows) and converts the Time strings to minutes with
+   `displayTimeToMinutes()`, reading them in `doseTableFormat()` (below).
+
+## Time units
+
+The engine, the event table, the scenarios, `input$maximum`'s values, the simulation cache key
+and the exported Time columns are in **minutes** whatever the user picks; time units are entry
+and display only (`R/utils-time.R`, the "Time units" block of `app_server()`).
+
+- The dose table holds its Time strings **as typed**: a bare number is an offset in the unit
+  (from 0, or from the procedure start in clock mode); an `H:MM` entry is a clock time in clock
+  mode and elapsed hours and minutes otherwise, never scaled by the unit. So the strings mean
+  something only together with the format they were typed in, `c(unit, mode)`, which
+  `doseTableFormat()` records beside the table (and bookmarks save as `doseTableFormat`).
+  Everything that reads or writes the strings (`doseTableClean()`, the grid, the add-dose,
+  edit-doses, add-event, edit-events and Suggest Dosing dialogs) goes by that record; what is
+  drawn (axis, hover, recovery labels) goes by the selectors.
+- One observer on `input$timeUnits` / `input$timeMode` rewrites the table into the new format
+  with `rebaseDoseTimes()` (ten significant digits, so every conversion and chain of conversions
+  returns identical minutes, and the simulation cache is reused), then `setDoseTable()`, which
+  writes the table and the record together. `plotInfo()` waits while the record and the
+  selectors disagree, so nothing is simulated from a table read in the wrong unit.
+- Scenarios and the long-term-drug prompt change the selectors through
+  `timeApi$showTimeSettings()` and write the table with `timeApi$setDoseTable()` in the format
+  the selectors will report, so the browser's echo finds nothing to convert. A restored
+  bookmark's selectors are built by `app_ui()` (an old bookmark without a unit opens in days if
+  its Max time was over a day), and `onRestored()` converts the saved table to them itself: the
+  conversion observer does not run for restored inputs.
+- The grid is stamped with its format (`createHOT(..., timeFormat)`); an edit from a grid drawn
+  before a switch is converted on arrival.
+- Max time choices are per unit (`MAX_TIMES` in `constants.R`); the plot is lengthened past the
+  last dose only up to the unit's longest choice. TCI rows and inhaled agents are simulated only
+  on plots of `ACUTE_MAX_PLOT_MINUTES` (a week) or less (`timeUnitViolation()`).
 
 ## The computational core
 
@@ -285,9 +320,14 @@ All files are flat in `R/`.
   once from `app_server()`. Content lives in `inst/help/` (see `inst/help/README.md`).
 
 **Util — time & misc**
-- `utils-time.R` — several time-related utility functions.
+- `utils-time.R` — clock-time helpers and the time-unit conversions (`displayTimeToMinutes()`,
+  `minutesToDisplayTime()`, `rebaseDoseTimes()`, the Max time choices); see [Time units](#time-units).
 - `utils.R` — generic helpers only (functions that don't know anything about doses/drugs/etc).
 - `drugAndEventDefaults.R` — the memoised drug/event defaults loaders.
+- `utils-time-display.R` — writes the engine's minutes in the display time unit, never converting
+  the data: the x-axis labels and title, the hover readout (interpolated at the hovered time in the
+  drug's full series, Cp for a drug with no effect site), each panel's time-until-threshold labels
+  (min / h / d / wk, chosen per panel) and the `Time (<unit>)` column added to the exported sheets.
 
 ## App features
 

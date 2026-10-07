@@ -96,9 +96,17 @@ app_server <- function(input, output, session) {
 
   output$PlotSimulation <- renderPlot({
     outputComments("In output$PlotSimulation", level = DEBUG_LEVEL_VERBOSE)
+    # Said here, in the plot area, because main_plot() swallows errors and the
+    # plot would otherwise just stay as it was.
+    violation <- timeUnitViolation()
+    validate(need(is.null(violation), violation))
     req(main_plot(), cancelOutput = TRUE)
     main_plot()
-  }, height = function() plotHeight())
+  }, height = function() {
+    # renderPlot() measures before it draws, and with a violation there is no
+    # plot to measure: a fixed height lets the message above through.
+    if (!is.null(timeUnitViolation())) 150 else plotHeight()
+  })
 
   # Make drugs and events local to session
   outputComments("Setting Drug and Event Defaults")
@@ -120,24 +128,192 @@ app_server <- function(input, output, session) {
     req(doseTableDraft())
     req(validateDoseTableInput(doseTableDraft()))
     doseTableRefresh()
+    # A change of format that leaves every string as it was (no times, or
+    # only clock times) must still redraw the grid, to renew its stamp.
+    format <- doseTableFormat()
 
     profileCode({
       outputComments("Rendering doseTableHTML")
 
-      createHOT(doseTableDraft(), drugDefaults())
+      createHOT(doseTableDraft(), drugDefaults(), format)
     }, name = "createHOT() from doseTableHTML")
   })
 
   eventTable <- reactiveVal(eventTableInit)
 
+  #############################################################################
+  #                              Time units                                   #
+  #############################################################################
+  # See R/utils-time.R.  The time unit (input$timeUnits) and the time display
+  # (input$timeMode) decide how times are shown and typed; the engine works in
+  # minutes whatever they are.  The dose table holds its times as typed, so
+  # the format they were typed in is kept beside it, in doseTableFormat().
+  # doseTable() and its draft are always in that format, and everything that
+  # reads or writes their Time strings -- doseTableClean(), the grid, and the
+  # add-dose, edit-doses, add-event, edit-events and Suggest Dosing dialogs --
+  # goes by it, never by the selectors.  What is drawn (the axis, the hover,
+  # the recovery labels) goes by the selectors.  When the selectors change, one
+  # observer rewrites the table into the new format, and plotInfo() waits,
+  # silently, while the two disagree: nothing is ever simulated from a table
+  # read in the wrong unit.
+
+  # The chosen time unit; minutes until the control reports, and for anything
+  # that is not a unit.
+  timeUnit <- reactive(validTimeUnit(input$timeUnits))
+
+  # The format the selectors ask for.  Days and weeks are always elapsed.
+  selectorFormat <- reactive({
+    timeFormat(timeUnit(), if (is.null(input$timeMode)) "clock" else input$timeMode)
+  })
+
+  # Starts as the selectors start: minutes and clock time, as the UI opens, or
+  # a restored bookmark's settings.  doseTableInit's times are all "0", the
+  # same in every format, and onRestored() converts a restored table itself.
+  # (Starting from the UI's defaults instead would leave the plot waiting for
+  # good whenever a session starts with other settings and nothing converts
+  # the table: a browser reconnecting in days, say, since the conversion
+  # observer ignores the initial inputs.)
+  doseTableFormat <- reactiveVal(isolate(selectorFormat()))
+
+  # The procedure start that times in `format` are read against.  The box is
+  # read only in clock mode, so typing in it does not disturb elapsed times.
+  referenceFor <- function(format) {
+    if (isClockFormat(format)) input$referenceTime else REFERENCE_TIME_NONE
+  }
+
+  # As referenceFor(), but waiting while a clock-mode procedure start cannot
+  # be read (it is empty until the browser's clock arrives, and may be half
+  # typed), rather than reading every clock time as missing.
+  reqReference <- function(format) {
+    reference <- referenceFor(format)
+    if (isClockFormat(format)) req(isValidReferenceTime(reference))
+    reference
+  }
+
+  # Replace the dose table and its format together.  The draft and its undo
+  # history are reset here, not left to the doseTable() observer: when dt is
+  # identical() to doseTable() that reactiveVal does not invalidate, and the
+  # draft would keep strings in the old format.  $do() then $clear(): $clear()
+  # alone keeps the current draft.
+  setDoseTable <- function(dt, format) {
+    doseTable(dt)
+    doseTableFormat(format)
+    doseTableHistory()$do(dt)$clear()
+  }
+
+  # Which unit the Max time and Time Display choices were last sent for.
+  # Plain variables, not reactive values: they record what the browser was
+  # told.  The initial inputs (a restored bookmark's too) are in place before
+  # the server function runs, and the UI built both lists for them.
+  maxChoicesUnit <- isolate(timeUnit())
+  modeChoicesUnit <- isolate(timeUnit())
+
+  # Offer the unit's Max time choices.  The choices and the selection are
+  # always sent together: selectize ignores a selection that is not among the
+  # options it has, and will not send an empty value.  Without `selected` the
+  # current Max time is kept if the unit offers it, else snapped to the
+  # nearest longer choice.
+  syncMaxTimeChoices <- function(unit, selected = NULL) {
+    if (identical(unit, maxChoicesUnit) && is.null(selected)) return(invisible())
+    if (is.null(selected)) selected <- snapMaximum(isolate(input$maximum), unit)
+    updateSelectInput(session, "maximum", choices = maxTimeChoices(unit),
+                      selected = maxTimeValue(snapMaximum(selected, unit)))
+    maxChoicesUnit <<- unit
+    invisible()
+  }
+
+  syncTimeModeChoices <- function(unit, selected) {
+    updateSelectizeInput(session, "timeMode", choices = timeModeChoices(unit), selected = selected)
+    modeChoicesUnit <<- unit
+    invisible()
+  }
+
+  # What the server uses to change the time settings itself: loading a
+  # scenario, restoring a bookmark, the long-term drug prompt.  Setting the
+  # selectors this way and writing the table with setDoseTable() in the format
+  # they will report means their echo finds nothing to convert.
+  timeApi <- list(
+    setDoseTable = setDoseTable,
+    showTimeSettings = function(unit, mode, maximum) {
+      format <- timeFormat(unit, mode)
+      updateSelectInput(session, "timeUnits", selected = format[["unit"]])
+      syncTimeModeChoices(format[["unit"]], format[["mode"]])
+      syncMaxTimeChoices(format[["unit"]], selected = maximum)
+    }
+  )
+
+  # The selectors changed: rewrite the dose table into the new format.
+  # priority = 10 runs this before the bookmarking observer, so a bookmark
+  # never pairs the new selectors with the old table.  The switch applies any
+  # unapplied edits in the dose table, as it always has.
+  observeEvent(list(input$timeUnits, input$timeMode), ignoreInit = TRUE, priority = 10, {
+    target <- selectorFormat()
+    unit <- target[["unit"]]
+    # Days and weeks have no clock mode: the Time Display is set to elapsed,
+    # the only choice it then offers.  Back in minutes or hours it offers both.
+    if (!identical(input$timeMode, target[["mode"]]) ||
+        (unit %in% CLOCK_TIME_UNITS) != (modeChoicesUnit %in% CLOCK_TIME_UNITS)) {
+      syncTimeModeChoices(unit, target[["mode"]])
+    }
+
+    from <- doseTableFormat()
+    if (identical(from, target)) {
+      # The echo of a change the server made (a scenario, a restored bookmark,
+      # the long-term prompt, a refused switch): the table is already in it.
+      syncMaxTimeChoices(unit)
+      return()
+    }
+
+    draft <- doseTableDraft()
+    res <- rebaseDoseTimes(draft, from, target, input$referenceTime)
+    if (!res$ok) {
+      # Clock times cannot be converted without the procedure start.  Put the
+      # selectors back; the table is untouched.
+      showModal(modalDialog(
+        title = "Set a valid procedure start first",
+        "The dose table has clock times (HH:MM), which are read from the Procedure start.",
+        "Enter the procedure start as HH:MM, then change the time settings again.",
+        easyClose = TRUE
+      ))
+      updateSelectInput(session, "timeUnits", selected = from[["unit"]])
+      syncTimeModeChoices(from[["unit"]], from[["mode"]])
+      return()
+    }
+
+    setDoseTable(res$table, target)
+    syncMaxTimeChoices(unit)
+    note <- if (unit != from[["unit"]]) {
+      paste0("Dose times converted to ", unit, ".")
+    } else if (!identicalTable(res$table, draft)) {
+      if (isClockFormat(target)) {
+        paste0("Elapsed times converted to ", unit, " after the procedure start.")
+      } else {
+        paste0("Clock times converted to elapsed ", unit, ".")
+      }
+    }
+    if (!is.null(note)) showNotification(note, id = "timeConverted", type = "message")
+  })
+
+  # The Doses card header says what the times in the table are:
+  # "(times in days)", "(HH:MM or minutes)"
+  output$doseTimeUnits <- renderText({
+    format <- doseTableFormat()
+    if (isClockFormat(format)) {
+      paste0("(", timeEntryUnitText(format), ")")
+    } else {
+      paste0("(times in ", timeEntryUnitText(format), ")")
+    }
+  })
+
   # The Help tab: see R/help-server.R.  Loading a teaching scenario from the
-  # help writes doseTable() and eventTable() directly, as a URL restore does.
-  helpServer(input, output, session, doseTable, eventTable, drugDefaults)
+  # help writes doseTable() and eventTable() directly, as a URL restore does,
+  # and sets the time settings through timeApi.
+  helpServer(input, output, session, doseTable, eventTable, drugDefaults, timeApi = timeApi)
 
   outputComments("Setup Complete")
 
   # Get reference time from client
-  # The reference time is passed from app.js on event shiny:connected
+  # The reference time is passed from app.js on event shiny:sessioninitialized
   observeEvent(input$client_time, {
     if (input$referenceTime != '') {
       return()
@@ -150,12 +326,11 @@ app_server <- function(input, output, session) {
     updateNumericInput(session, "referenceTime", value = start)
   }, ignoreNULL = TRUE, once = TRUE)
 
+  # The procedure start for what is drawn (the axis and hover labels), which
+  # follow the selectors: REFERENCE_TIME_NONE when times are elapsed, and in
+  # clock mode a readable "HH:MM" (it waits until there is one).
   referenceTime <- reactive({
-    if (input$timeMode == "relative") {
-      REFERENCE_TIME_NONE
-    } else {
-      input$referenceTime
-    }
+    reqReference(selectorFormat())
   })
 
   DrugTimeUnits <- reactiveVal("")
@@ -177,6 +352,8 @@ app_server <- function(input, output, session) {
   onBookmark(function(state) {
     profileCode({
       state$values$DT <- doseTable()
+      # The format DT's Time strings are in ("days/relative"); see doseTableFormat()
+      state$values$doseTableFormat <- timeFormatString(doseTableFormat())
       state$values$ET <- eventTable()
       # Edited thresholds travel with the URL, so a restored session reports
       # the same times until threshold.  endCe is saved as stored (the gases'
@@ -204,8 +381,43 @@ app_server <- function(input, output, session) {
         "***************************************************************************",
         sep = ""
       )
-      DT <- as.data.frame(state$values$DT)
-      doseTable(DT)
+      # The table is written in the format it was saved in; a bookmark made
+      # before time units existed was in minutes, clock or elapsed as its Time
+      # Display was.  The selectors were restored by the UI (app_ui(), which
+      # also picks a unit for an old bookmark from its Max time), so the table
+      # is converted to what they show.  The conversion observer does not run
+      # for restored inputs, so it is done here.
+      saved <- parseTimeFormat(state$values$doseTableFormat)
+      if (is.null(saved)) {
+        saved <- timeFormat(TIME_UNIT_DEFAULT,
+                            if (is.null(state$input$timeMode)) "clock" else state$input$timeMode)
+      }
+      if (is.null(state$values$DT)) {
+        # A link with inputs and no dose table: keep the one there is
+        DT <- doseTable()
+        saved <- doseTableFormat()
+      } else {
+        DT <- as.data.frame(state$values$DT)
+      }
+      target <- selectorFormat()
+      restoredMaximum <- suppressWarnings(as.numeric(state$input$maximum))
+      res <- rebaseDoseTimes(DT, saved, target, input$referenceTime)
+      if (res$ok) {
+        setDoseTable(res$table, target)
+        if (!isTRUE(restoredMaximum %in% MAX_TIMES[[target[["unit"]]]]$times)) {
+          # A Max time the unit does not offer (an old bookmark's 16 weeks):
+          # the browser fell back to the first choice; take the nearest
+          # longer one instead.
+          syncMaxTimeChoices(target[["unit"]], selected = snapMaximum(restoredMaximum, target[["unit"]]))
+        }
+      } else {
+        # Clock times and no readable procedure start: keep the table as
+        # saved, and show the selectors that match it.
+        setDoseTable(DT, saved)
+        timeApi$showTimeSettings(saved[["unit"]], saved[["mode"]], restoredMaximum)
+        showNotification("The dose table's clock times need a procedure start (HH:MM).",
+                         type = "warning", duration = 10)
+      }
       outputComments("doseTable:")
       outputComments(DT)
       ET <- as.data.frame(state$values$ET)
@@ -320,7 +532,21 @@ app_server <- function(input, output, session) {
       # the row names for it to work
       nrows <- length(data$data)
       data$params$rRowHeaders <- as.character(seq.int(nrows))
+      # The format of the grid the edit was made in (createHOT() stamps it).
+      stamp <- parseTimeFormat(data$params$timeFormat)
       data <- rhandsontable::hot_to_r(data) |> profileCode("hot_to_r() in input$doseTableHTML observer")
+
+      # An edit made in a grid drawn before a change of time unit or display
+      # arrives in the old format: in minutes, say, when the table is now in
+      # days.  Stored as it came, Apply would move every dose 1440-fold, so it
+      # is converted; and the grid is redrawn, in the current format.
+      format <- doseTableFormat()
+      if (!is.null(stamp) && !identical(stamp, format)) {
+        doseTableRefresh(doseTableRefresh() + 1)
+        res <- rebaseDoseTimes(data, stamp, format, input$referenceTime)
+        if (!res$ok) return()
+        data <- res$table
+      }
 
       # make sure that table has changed before updating doseTable reactive
       if ( !identicalTable(doseTableDraft(), data) ) {
@@ -421,7 +647,7 @@ app_server <- function(input, output, session) {
   gases <- reactive({
     profileCode({
       outputComments("In gases", level = DEBUG_LEVEL_VERBOSE)
-      req(testCovariates())
+      req(testCovariates(), is.null(timeUnitViolation()))
       DT <- doseTableClean()
       if (is.null(DT)) return(list())
       sim <- simulateGases(
@@ -465,7 +691,9 @@ app_server <- function(input, output, session) {
   drugs <- reactive({
     profileCode({
       outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
-      req(testCovariates(), doseTableClean())
+      # Nothing is simulated while the time-units rule is broken: the plot
+      # area says why (output$PlotSimulation).
+      req(testCovariates(), doseTableClean(), is.null(timeUnitViolation()))
 
       newDrugs <- recalculatePK(
         NULL,
@@ -524,15 +752,15 @@ app_server <- function(input, output, session) {
       outputComments("In doseTableClean", level = DEBUG_LEVEL_VERBOSE)
       validateDoseTableInput(doseTable(), drugDefaults())
       DT <- cleanDoseTable(doseTable())
-      DT$Time <- clockTimeToDelta(referenceTime(), DT$Time)
+      # Read in the format the table was typed in, never the selectors, which
+      # run ahead of the table while it is being converted.
+      format <- doseTableFormat()
+      DT$Time <- displayTimeToMinutes(DT$Time, reqReference(format), format[["unit"]])
       DT <- DT[
         DT$Drug  != "" &
           DT$Units != "" &
           !is.na(DT$Dose) &
           !is.na(DT$Time), ]
-      if (input$maximum == 10) {
-        DT <- DT[DT$Time <= 10, ]
-      }
       if (nrow(DT) == 0) {
         DT <- NULL
       } else {
@@ -548,62 +776,153 @@ app_server <- function(input, output, session) {
       outputComments("In eventTableClean", level = DEBUG_LEVEL_VERBOSE)
       validateEventTableInput(eventTable(), eventDefaults())
       ET <- eventTable()
-      if (length(ET$Time) > 0) {
-        ET$Time <- as.character(ET$Time)
-        ET$Time <- clockTimeToDelta(referenceTime(), ET$Time)
-        if (input$maximum == 10) {
-          ET <- ET[ET$Time <= 10, ]
-        }
-      }
+      # Event times are stored in minutes whatever the time settings; the
+      # dialogs convert them.  (Not through as.character(), which keeps only
+      # 15 significant digits.)
+      if (!is.numeric(ET$Time)) ET$Time <- as.numeric(as.character(ET$Time))
       ET
     }, name = "eventTableClean() reactive")
   })
 
 
-  observeEvent(input$timeMode, {
-    doseTable(doseTableDraft())
-    # Clear explicitly rather than relying on the doseTable() observer: if the
-    # draft already matched, that reactiveVal never invalidates and the history
-    # would survive a time-mode switch.
-    doseTableHistory()$clear()
-
-    # When switching to relative time, convert any clock times (HH:MM) to minutes
-    if (input$timeMode == "relative") {
-      dt <- doseTable()
-      to_update <- (dt$Time != "" & !is.na(dt$Time) & grepl(":", dt$Time))
-      if (any(to_update)) {
-        dt$Time[to_update] <- clockTimeToDelta(input$referenceTime, dt$Time[to_update])
-      }
-      doseTable(dt)
-    }
-  }, ignoreInit = TRUE)
-
-
   plotInfo <- reactive({
     profileCode({
       req(doseTableClean())
+      # While the selectors and the dose table's format disagree the table is
+      # being converted (or a scenario or bookmark is being put in place):
+      # wait for the browser and the conversion to catch up.
+      req(identical(doseTableFormat(), selectorFormat()))
 
       requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
-      if (!is_valid_number(requestedMaximum) || !requestedMaximum %in% maxtimes$times) {
+      if (!is_valid_number(requestedMaximum) || !requestedMaximum %in% MAX_TIME_VALUES) {
         stop(safeError("Invalid maximum simulation time."))
       }
+      # A Max time of another unit: the choices for this one are on their way.
+      unit <- timeUnit()
+      maxTimes <- MAX_TIMES[[unit]]
+      req(requestedMaximum %in% maxTimes$times)
+
       plotMaximum <- requestedMaximum
-      steps <- maxtimes$steps[maxtimes$times == plotMaximum]
+      steps <- maxTimes$steps[maxTimes$times == plotMaximum]
       maxTime <- max(as.numeric(doseTableClean()$Time),
                      as.numeric(eventTableClean()$Time),
                      na.rm = TRUE)
 
-      if (input$maximum != 10 && (maxTime + 29) >= plotMaximum) {
-        steps <- maxtimes$steps[maxtimes$times >= (maxTime + 30)][1]
-        if (is.na(steps)) steps <- utils::tail(maxtimes$steps, 1)
-        plotMaximum <- ceiling((maxTime + 30)/steps) * steps
+      # Lengthen the plot when the last dose or event comes within a margin of
+      # its end, using the ticks of the unit's next longer Max time (minutes
+      # and hours: 30 minutes, as always).  Never past the unit's longest Max
+      # time: a longer plot is a matter of choosing a larger unit.
+      margin <- TIME_EXTEND_MARGIN[[unit]]
+      longest <- max(maxTimes$times)
+      if ((maxTime + margin - 1) >= plotMaximum) {
+        steps <- maxTimes$steps[maxTimes$times >= (maxTime + margin)][1]
+        if (is.na(steps)) steps <- utils::tail(maxTimes$steps, 1)
+        plotMaximum <- ceiling((maxTime + margin)/steps) * steps
+        if (plotMaximum > longest) {
+          plotMaximum <- longest
+          steps <- utils::tail(maxTimes$steps, 1)
+        }
       }
-      list(plotMaximum = plotMaximum, steps = steps)
+
+      # Doses and events the plot cannot reach (see the observer below)
+      beyond <- c(
+        doses = sum(doseTableClean()$Time >= plotMaximum),
+        events = sum(as.numeric(eventTableClean()$Time) >= plotMaximum)
+      )
+      list(plotMaximum = plotMaximum, steps = steps, beyond = beyond)
     }, name = "plotInfo() reactive")
   })
 
   plotMaximum <- reactive(plotInfo()$plotMaximum)
+  # Tick spacing, in minutes, for the current time unit
   steps       <- reactive(plotInfo()$steps)
+
+  # The length of a plot in words, as the Max time list says it ("14 days"),
+  # or, for a plot lengthened past the last dose, as a duration
+  plotLengthLabel <- function(maximum) {
+    label <- maxTimeLabel(maximum, timeUnit())
+    if (is.na(label)) formatMinutes(maximum) else label
+  }
+
+  observe({
+    info <- tryCatch(plotInfo(), error = function(e) NULL)
+    if (is.null(info)) return()  # waiting: leave things as they are
+    beyond <- info$beyond
+    if (sum(beyond) == 0) {
+      removeNotification("timeBeyondPlot")
+      return()
+    }
+    what <- c(if (beyond[["doses"]] > 0) pluralNoun(beyond[["doses"]], "dose row"),
+              if (beyond[["events"]] > 0) pluralNoun(beyond[["events"]], "event"))
+    showNotification(
+      paste0(paste(what, collapse = " and "), if (sum(beyond) == 1) " falls" else " fall",
+             " after the end of the plot (", plotLengthLabel(info$plotMaximum),
+             "). Choose a longer Max time or a larger time unit."),
+      id = "timeBeyondPlot", type = "warning", duration = NULL
+    )
+  })
+
+  # Part of the time-units rules: TCI target rows and the inhaled agents are
+  # simulated only on plots of a week or less (ACUTE_MAX_PLOT_MINUTES).  Over
+  # weeks the TCI controller would write tens of thousands of rate changes, and
+  # the gas engine's uptake coupling is frozen over steps of maximum/601.
+  # NULL when the rule is kept, else the message to show; the plot is then
+  # replaced by the message and nothing is simulated.
+  timeUnitViolation <- reactive({
+    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    if (is.null(DT)) return(NULL)
+    acute <- DT$Units %in% tciUnits | isGasDrug(DT$Drug)
+    if (!any(acute)) return(NULL)
+    maximum <- tryCatch(plotMaximum(), error = function(e) NULL)
+    if (is.null(maximum) || maximum <= ACUTE_MAX_PLOT_MINUTES) return(NULL)
+    rows <- ifelse(DT$Units[acute] %in% tciUnits,
+                   paste(DT$Drug[acute], tolower(DT$Units[acute])),
+                   DT$Drug[acute])
+    paste0(
+      "Target-controlled infusions and inhaled agents are simulated only on plots of ",
+      "7 days or less, and this plot is ", plotLengthLabel(maximum), " (",
+      paste(unique(rows), collapse = ", "),
+      "). Remove those rows or choose a Max time of 7 days or less."
+    )
+  })
+
+  observe({
+    violation <- timeUnitViolation()
+    if (is.null(violation)) {
+      removeNotification("timeUnitRule")
+    } else {
+      showNotification(violation, id = "timeUnitRule", type = "warning", duration = NULL)
+    }
+  })
+
+  # A drug that acts over weeks to months (LONG_TERM_DRUGS) added to a plot
+  # shorter than a week: offer, once per addition, to show a year.  Not done
+  # automatically: the user may have meant a short plot.  The button goes
+  # through timeApi$showTimeSettings(), the path a scenario takes, and the
+  # conversion observer then converts the dose table.
+  longTermSeen <- character(0)  # plain variable: the long-term drugs already handled
+  observe({
+    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    present <- intersect(LONG_TERM_DRUGS, DT$Drug)
+    longTermSeen <<- intersect(longTermSeen, present)  # a drug removed may be added again
+    added <- setdiff(present, longTermSeen)
+    if (length(added) == 0) return()
+    maximum <- tryCatch(plotMaximum(), error = function(e) NULL)
+    if (is.null(maximum)) return()  # waiting; this runs again when it is known
+    longTermSeen <<- c(longTermSeen, added)
+    if (maximum >= MINS_PER_WEEK) return()
+    showNotification(
+      paste0(paste(added, collapse = " and "), if (length(added) == 1) " acts" else " act",
+             " over weeks to months; this plot is ", plotLengthLabel(maximum), "."),
+      action = actionLink("showLongTermTime", "Show 365 days"),
+      id = "longTermPrompt", type = "message", duration = NULL
+    )
+  })
+
+  observeEvent(input$showLongTermTime, {
+    removeNotification("longTermPrompt")
+    timeApi$showTimeSettings("days", "relative", LONG_TERM_PLOT_MINUTES)
+  })
 
 
   plotRecovery <- reactive({
@@ -630,16 +949,21 @@ app_server <- function(input, output, session) {
       DT <- doseTableClean()
       ET <- eventTableClean()
 
-      xBreaks <- 0:(plotMaximum()/steps()) * steps()
-      xLabels <- deltaToClockTime(referenceTime(), xBreaks)
-      if (referenceTime() == REFERENCE_TIME_NONE) {
-        xAxisLabel <- "Time (Minutes)"
-      } else {
-        xAxisLabel <- "Time"
-        updateNumericInput(session, "referenceTime", value = xLabels[1])
+      # The breaks are minutes, like the data; only the labels and the title
+      # are in the display unit, or clock time (utils-time-display.R).  The
+      # axis runs to plotMaximum() even when the tick step does not divide it.
+      xBreaks <- seq(0, plotMaximum(), by = steps())
+      xLabels <- axisTimeLabels(xBreaks, timeUnit(), referenceTime())
+      xAxisLabel <- timeAxisTitle(timeUnit(), referenceTime())
+      if (referenceTime() != REFERENCE_TIME_NONE) {
+        # Tidies the procedure start as typed ("8:00" becomes "08:00").  It
+        # is written from the reference itself, never from an axis label,
+        # which in any other mode would be a number of hours or days.
+        updateNumericInput(session, "referenceTime",
+                           value = deltaToClockTime(referenceTime(), 0))
       }
 
-      plotMEAC               <- PLOT_ID_MEAC        %in% input$addedPlots
+      plotMEAC              <- PLOT_ID_MEAC        %in% input$addedPlots
       plotInteraction        <- PLOT_ID_INTERACTION %in% input$addedPlots
       plotCost               <- "Cost"                %in% input$addedPlots
       plotEvents             <- PLOT_ID_EVENTS      %in% input$addedPlots
@@ -661,6 +985,7 @@ app_server <- function(input, output, session) {
         xBreaks = xBreaks,
         xLabels = xLabels,
         xAxisLabel = xAxisLabel,
+        xMaximum = plotMaximum(),
         plasmaLinetype = plasmaLinetype,
         effectsiteLinetype = effectsiteLinetype,
         normalization = normalization,
@@ -716,6 +1041,8 @@ app_server <- function(input, output, session) {
         error <- glue::glue("Comment is too long, please limit to {MAX_INPUT_TEXT} characters.")
       } else if (emailSendCount() >= EMAIL_SESSION_LIMIT) {
         error <- "This session has reached its email limit. Please reload the page to send more."
+      } else if (!is.null(timeUnitViolation())) {
+        error <- timeUnitViolation()  # there is no plot to send
       }
       if (!is.null(error)) {
         shinyalert::shinyalert("Error",error, type = "error", closeOnClickOutside = TRUE)
@@ -735,7 +1062,11 @@ app_server <- function(input, output, session) {
         sex = sex(),
         adjustToFFM = adjustToFFM(),
         osmolality = osmolality(),
-        creatinine = creatinine()
+        creatinine = creatinine(),
+        # The workbook's times stay in minutes; these add the display unit
+        # beside them and say what the plot showed (sendSlide.R).
+        timeUnit = timeUnit(),
+        maximum = plotMaximum()
       )
 
       shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Sending email...")
@@ -798,12 +1129,18 @@ app_server <- function(input, output, session) {
   })
 
   # Display Time, CE, or total opioid
+  #
+  # e$x is in minutes (data coordinates), whatever the axis labels say.  Every
+  # time shown goes through formatPlotTime(), so it reads in the display unit
+  # ("3.47 weeks"), or as HH:MM in clock mode -- the MEAC and interaction
+  # panels used to say "minutes" even then.  See utils-time-display.R.
   xy_str <- function(e) {
     if (is.null(e$panelvar1)) return()
     outputComments("In xy_str")
     outputComments("e$panelvar1 = ", e$panelvar1)
 
     yaxis <- gsub("\n"," ", e$panelvar1)
+    hoverTime <- function(minutes) formatPlotTime(minutes, timeUnit(), referenceTime())
 
     plotResults <- plotResultsReactive()
     if (yaxis == PLOT_NAME_MEAC)
@@ -816,7 +1153,7 @@ app_server <- function(input, output, session) {
       }
       j <- which.min(abs(e$x - plotResults$Time[TO]))
       return(
-        paste0("Time: ", round(plotResults$Time[TO][j], 1), " minutes, ", plotResults$Drug[TO][j], ": ", signif(plotResults$Y[TO][j], 2), " ", PLOT_NAME_MEAC)
+        paste0("Time: ", hoverTime(plotResults$Time[TO][j]), ", ", plotResults$Drug[TO][j], ": ", signif(plotResults$Y[TO][j], 2), " ", PLOT_NAME_MEAC)
       )
     }
     if (yaxis == PLOT_NAME_INTERACTION)
@@ -824,7 +1161,7 @@ app_server <- function(input, output, session) {
       TO <- plotResults$Drug == PLOT_NAME_INTERACTION
       j <- which.min(abs(e$x - plotResults$Time[TO]))
       return(
-        paste0("Time: ", round(plotResults$Time[TO][j], 1), " minutes, P (response): ", signif(plotResults$Y[TO][j], 2))
+        paste0("Time: ", hoverTime(plotResults$Time[TO][j]), ", P (response): ", signif(plotResults$Y[TO][j], 2))
       )
     }
 
@@ -847,13 +1184,7 @@ app_server <- function(input, output, session) {
       rates <- drugs()[[drug]]$tci$rates
       if (is.null(rates)) return(NULL)
       j <- max(which(rates$Time <= e$x), 1)
-      time <- round(e$x, 1)
-      if (referenceTime() == REFERENCE_TIME_NONE)
-      {
-        time <- paste(time, "minutes")
-      } else {
-        time <- deltaToClockTime(referenceTime(), time)
-      }
+      time <- hoverTime(e$x)
       if (rates$Bolus[j]) {
         b <- drugs()[[drug]]$tci$boluses
         k <- which(b$Time == rates$Time[j])[1]
@@ -865,29 +1196,31 @@ app_server <- function(input, output, session) {
     # if the panel's drug was just removed, drugs()[[drug]] will be NULL until
     # the plot re-renders
     if (!drug %in% names(drugs())) return(NULL)
+    entry <- drugs()[[drug]]
 
-    j <- which.min(abs(e$x - drugs()[[drug]]$equiSpace$Time))
+    # Read at the hovered time itself, interpolated in the drug's full series
+    # rather than snapped to the nearest of 100 equispaced points, and as Cp
+    # for a drug with no effect site (hoverConcentration()).
     x <- c(sub("\\s*\\(.*$", "", yaxis),                 # the name as shown
            sub("^.*\\((.*)\\)\\s*$", "\\1", yaxis))      # the units, unbracketed
-    time <- round(drugs()[[drug]]$equiSpace$Time[j], 1)
-    if (referenceTime() == REFERENCE_TIME_NONE)
+    normalization <- if (is.null(input$normalization)) NORMALIZE_NONE else input$normalization
+    conc <- hoverConcentration(entry$results, e$x, normalization)
+    returnText <- paste0("Time: ", hoverTime(e$x), ", ", x[1], " ", conc$label, ": ",
+                         signif(conc$value, 2), " ", x[2])
+    # Not under normalization, which hides the line (simulationPlot()).
+    if (plotRecovery() && identical(normalization, NORMALIZE_NONE))
     {
-      time = paste(time, "minutes")
-    } else {
-      time <- deltaToClockTime(referenceTime(), time)
-    }
-    returnText <- paste0("Time: ", time, ", ",x[1], " Ce: ", signif(drugs()[[drug]]$equiSpace$Ce[j], 2), " ", x[2])
-    if (plotRecovery())
-    {
-      recovery <- drugs()[[drug]]$equiSpace$Recovery[j]
       # Missing means a dose has been given that has not begun to be absorbed,
-      # so there is no time to report rather than a time of zero.  Saying which
-      # it is, because "0 minutes" and "not yet absorbed" are opposites.
+      # and is said in words.  A time is written in the unit of this panel's
+      # recovery labels, and as "more than ..." where the engine's search
+      # stopped at its horizon (formatRecovery()).
       returnText <- paste0(
         returnText, ", Time until threshold: ",
-        if (length(recovery) != 1 || is.na(recovery))
-          "not yet, dose still being absorbed"
-        else paste(round(recovery, 1), "minutes")
+        formatRecovery(
+          hoverRecovery(entry, e$x),
+          maxRecovery = entry$max$Recovery,
+          horizon = recoveryHorizonFor(entry, plotMaximum())
+        )
       )
     }
     return(returnText)
@@ -951,15 +1284,17 @@ app_server <- function(input, output, session) {
     outputComments("plottedDrugs", plottedDrugs)
     outputComments("plottedAll", plottedAll)
 
-    firstDrug <- plottedDrugs[1]
-    j <- which.min(abs(e$x - drugs()[[firstDrug]]$equiSpace$Time))
-    time <- round(drugs()[[firstDrug]]$equiSpace$Time[j], 1)
-
-    if (referenceTime() == REFERENCE_TIME_NONE)
-    {
-      time <- as.character(time)
+    # The time clicked, in MINUTES (the plot's x data are minutes whatever
+    # the time unit; the dialogs format it).  Read from the click itself
+    # rather than snapped to the 100-point display grid, which is 3.7 days
+    # coarse on a 52-week plot.  Kept on the plot, and rounded: to 0.1 minute
+    # in minutes, as always, otherwise to a quarter of the unit.
+    unit <- doseTableFormat()[["unit"]]
+    time <- min(max(as.numeric(e$x), 0), plotMaximum())
+    time <- if (unit == "minutes") {
+      round(time, 1)
     } else {
-      time <- deltaToClockTime(referenceTime(), time)
+      round(time / TIME_UNITS[[unit]] * 4) / 4 * TIME_UNITS[[unit]]
     }
 
     # Get Drug
@@ -1035,10 +1370,13 @@ app_server <- function(input, output, session) {
   #################################### Single Click Response ##################################
 
 
+  # `time` is in minutes (imgDrugTime()); the dialog shows it, and the dose
+  # table stores what is typed, in the dose table's format.
   showAddDrugModal <- function(drug, time) {
     thisDrug     <- which(drug == drugDefaults()$Drug)
     initialUnits <- unlist(drugDefaults()$Units[thisDrug])
     selectedUnit <- drugDefaults()$Default.Units[thisDrug]
+    format <- doseTableFormat()
 
     showModal(
       modalDialog(
@@ -1052,8 +1390,8 @@ app_server <- function(input, output, session) {
         ),
         textInput(
           inputId = "addDoseTime",
-          label = "Time",
-          value = time
+          label = timeEntryLabel(format),
+          value = minutesToEntryTime(time, format, input$referenceTime)
         ),
         textInput(
           inputId = "addDoseAmount",
@@ -1113,6 +1451,9 @@ app_server <- function(input, output, session) {
     showModal(
       modalDialog(
         title = paste("Edit", drug, "doses"),
+        # The column must stay headed "Time" (the grid's hooks find it by
+        # name), so the unit is said above it
+        tags$p(class = "small text-muted mb-1", timeEntryLabel(doseTableFormat())),
         rhandsontable::rHandsontableOutput("editPriorDosesTable"),
         actionButton("editDosesOK", "Apply", class = "btn-primary"),
         actionButton("deleteAllDosesBtn", "Delete All Doses", class = "btn-outline-danger"),
@@ -1231,15 +1572,6 @@ app_server <- function(input, output, session) {
           dt[dt$Drug != DrugTimeUnits()$drug,]
         )
 
-        # Sort by time, by drug, but put blanks at the bottom
-        outputComments(toString(unique(dt$Time)))
-        dt$Time[dt$Time == ""] <- "zzzzz"
-        dt <- dt[order(dt$Time, dt$Drug),]
-        dt$Time[dt$Time == "zzzzz"] <- ""
-
-        outputComments("doseTable after update:")
-        outputComments(dt)
-
         for (i in 1:nrow(dt))
         {
           if (dt$Drug[i] > "")
@@ -1248,19 +1580,33 @@ app_server <- function(input, output, session) {
             dt$Dose[i] <- validateDose(dt$Dose[i]) # should work for target too
           }
         }
+
+        # Sort by time, by drug, but put blanks at the bottom.  By the time
+        # each string stands for, in the dose table's format: sorted as text,
+        # "10" came before "9", and "1.5" days before "10" hours.
+        outputComments(toString(unique(dt$Time)))
+        format <- doseTableFormat()
+        minutes <- displayTimeToMinutes(dt$Time, referenceFor(format), format[["unit"]])
+        dt <- dt[order(is.na(minutes), minutes, dt$Drug), ]
+
+        outputComments("doseTable after update:")
+        outputComments(dt)
         doseTable(dt)
       }, name = "input$editDosesOK observer")
     })
 
+  # `time` is in minutes (imgDrugTime()), shown in the dose table's format;
+  # events are stored in minutes.
   showAddEventModal <- function(time) {
+    format <- doseTableFormat()
     showModal(
       modalDialog(
         `data-submit-btn` = "addEventBtn",
         title = paste("Enter a new event"),
         textInput(
           inputId = "clickTimeEvent",
-          label = "Time",
-          value = time
+          label = timeEntryLabel(format),
+          value = minutesToEntryTime(time, format, input$referenceTime)
         ) |> modalFocus(),
         selectInput(
           inputId = "clickEvent",
@@ -1285,17 +1631,16 @@ app_server <- function(input, output, session) {
     input$addEventBtn,
     {
       profileCode({
-        clickTime <- validateTime(input$clickTimeEvent)
-        if (referenceTime() == REFERENCE_TIME_NONE)
-        {
-          clickTime <- as.numeric(clickTime)
-        } else {
-          if (nchar(clickTime) == 5)
-          {
-            clickTime <- clockTimeToDelta(referenceTime(), clickTime)
-          } else {
-            clickTime <- as.numeric(clickTime)
-          }
+        # Read as the dose table's times are.  A time that cannot be read (a
+        # clock time of 24:00 or more, or with no readable procedure start)
+        # leaves the dialog open: stored as NA it would stop every plot.
+        format <- doseTableFormat()
+        clickTime <- displayTimeToMinutes(validateTime(input$clickTimeEvent),
+                                          referenceFor(format), format[["unit"]])
+        if (is.na(clickTime)) {
+          showNotification(paste0("That time could not be read: enter it as ",
+                                  timeEntryUnitText(format), "."), type = "error")
+          return()
         }
 
         clickEvent <- input$clickEvent
@@ -1318,13 +1663,25 @@ app_server <- function(input, output, session) {
     editEventsHOT()
   })
 
+  # The times as the edit-events dialog showed them, and the minutes behind
+  # them (editedTimesToMinutes()).  A plain variable: set when the dialog opens.
+  editEventsShown <- NULL
+
   showEditEventsModal <- function()
   {
     tempTable <- eventTable()
     hasEvents <- nrow(tempTable) > 0
+    format <- doseTableFormat()
 
     if (hasEvents) {
       tempTable <- tempTable[,c("Time", "Event")]
+      # Shown as text in the dose table's format (events are stored in
+      # minutes).  A numeric column would also be rounded to four digits on
+      # its way back from the browser.
+      minutes <- tempTable$Time
+      if (!is.numeric(minutes)) minutes <- as.numeric(as.character(minutes))
+      tempTable$Time <- minutesToEntryTime(minutes, format, input$referenceTime)
+      editEventsShown <<- list(text = tempTable$Time, minutes = minutes)
       tempTable$Delete <- FALSE
       tempTableHOT <- rhandsontable::rhandsontable(
         tempTable[,c("Delete","Time","Event")],
@@ -1353,7 +1710,8 @@ app_server <- function(input, output, session) {
         ) %>%
         rhandsontable::hot_table(contextMenu = FALSE) %>%
         rhandsontable::hot_rows(rowHeights = 10) %>%
-        rhandsontable::hot_cols(colWidths = c(60,65,100))
+        rhandsontable::hot_cols(colWidths = c(60,65,100)) %>%
+        addHotHooks(filterKeys = TRUE, sanitize = TRUE)
 
       editEventsHOT(NULL)  # force re-render even if table data is identical
       editEventsHOT(tempTableHOT)
@@ -1363,7 +1721,10 @@ app_server <- function(input, output, session) {
       modalDialog(
         title = "Edit Events",
         if (hasEvents)
-          rhandsontable::rHandsontableOutput(outputId = "editEventsTableHTML")
+          tagList(
+            tags$p(class = "small text-muted mb-1", timeEntryLabel(format)),
+            rhandsontable::rHandsontableOutput(outputId = "editEventsTableHTML")
+          )
         else
           tags$p("There are no events yet."),
         if (hasEvents) actionButton("editEventsOK", "Apply", class = "btn-primary"),
@@ -1415,9 +1776,20 @@ app_server <- function(input, output, session) {
     input$editEventsOK,
     {
       profileCode({
-        removeModal()
         ET <- rhandsontable::hot_to_r(input$editEventsTableHTML)
-        ET <- ET[!ET$Delete,c("Time","Event")]
+        format <- doseTableFormat()
+        shown <- editEventsShown
+        minutes <- editedTimesToMinutes(ET$Time, shown$text, shown$minutes,
+                                        format, referenceFor(format))
+        keep <- !ET$Delete
+        if (any(is.na(minutes[keep]))) {
+          # The dialog stays open to be corrected
+          showNotification(paste0("Every event needs a time, entered as ",
+                                  timeEntryUnitText(format), "."), type = "error")
+          return()
+        }
+        removeModal()
+        ET <- data.frame(Time = minutes[keep], Event = as.character(ET$Event[keep]))
         ET <- ET[order(ET$Time,ET$Event),]
         eventTable(ET)
       }, name = "input$editEventsOK observer")
@@ -1442,6 +1814,15 @@ app_server <- function(input, output, session) {
     input$setTarget,
     {
       profileCode({
+        # Suggest Dosing is an induction and maintenance tool: its infusion
+        # times are whole minutes, and its fit is over the plot's equispaced
+        # points.  It is offered on the minute and hour plots only.
+        format <- doseTableFormat()
+        if (!format[["unit"]] %in% CLOCK_TIME_UNITS) {
+          showNotification("Suggest Dosing is available when the Time units are minutes or hours.",
+                           type = "warning")
+          return()
+        }
         targetTable <-  data.frame(
           Time = rep("",6),
           Target = rep("", 6)
@@ -1488,12 +1869,13 @@ app_server <- function(input, output, session) {
               label = "Drug",
               choices = drugList
             ),
+            tags$p(class = "small text-muted mb-1", timeEntryLabel(format)),
             rhandsontable::rHandsontableOutput(
               outputId = "targetTableHTML"
             ),
             textInput(
               inputId = "targetEndTime",
-              label = "End Time",
+              label = paste("End", timeEntryLabel(format)),
               value = ""
             ),
             conditionalPanel(
@@ -1530,10 +1912,8 @@ app_server <- function(input, output, session) {
     input$targetOK,
     {
       profileCode({
-        removeModal()
-        shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Calculating doses...")
-        endTime <- validateTime(input$targetEndTime)
-        if ((endTime) == "")
+        # Tested before validateTime(), which turns a blank into "0"
+        if (!nzchar(trimws(input$targetEndTime)))
         {
           outputComments("No endtime")
           return()
@@ -1541,6 +1921,29 @@ app_server <- function(input, output, session) {
         targetTable <- rhandsontable::hot_to_r(input$targetTableHTML)
         validateTargetTableInput(targetTable)
 
+        # The times are typed in the dose table's format.  suggest() is given
+        # them as minutes, and its suggested doses are written back in that
+        # format.
+        format <- doseTableFormat()
+        reference <- referenceFor(format)
+        toMinutes <- function(x) {
+          displayTimeToMinutes(validateTime(x), reference, format[["unit"]])
+        }
+        endTime <- toMinutes(input$targetEndTime)
+        targetTimes <- as.character(targetTable$Time)
+        typed <- !is.na(targetTimes) & nzchar(trimws(targetTimes))
+        targetMinutes <- vapply(targetTimes[typed], toMinutes, numeric(1))
+        if (is.na(endTime) || anyNA(targetMinutes)) {
+          # The dialog stays open to be corrected
+          showNotification(paste0("A time could not be read: enter times as ",
+                                  timeEntryUnitText(format), "."), type = "error")
+          return()
+        }
+        targetTimes[typed] <- minutesToDisplayTime(targetMinutes, "minutes")
+        targetTable$Time <- targetTimes
+
+        removeModal()
+        shinycssloaders::showPageSpinner(background = "#FFFFFFEE", caption = "Calculating doses...")
         if (!any(doseTable()$Drug==input$targetDrug)) {
           outputComments("Updating doseTable for new drug")
           doseTable(rbind(doseTable(),
@@ -1554,11 +1957,20 @@ app_server <- function(input, output, session) {
                              drugs(),
                              drugList,
                              eventTable(),
-                             referenceTime())
+                             REFERENCE_TIME_NONE)
 
-        if (is.null(testTable)) return()
+        if (is.null(testTable)) {
+          shinycssloaders::hidePageSpinner()
+          return()
+        }
 
         outputComments("Setting doseTable")
+        # Numeric minutes from suggest(), into the table's format: numbers of
+        # the unit, which clock mode reads as offsets from the start, as these
+        # rows always were (a clock time would round a dose at 2.5 minutes to
+        # the minute).  rbind() would otherwise turn them into strings with
+        # as.character(), which writes 1e5 as "1e+05".
+        testTable$Time <- minutesToDisplayTime(testTable$Time, format[["unit"]])
         dt <- doseTable()
         dt <- dt[dt$Drug != input$targetDrug,]
 

@@ -58,8 +58,11 @@ function hookFilterKeys(event) {
   let ok = true;
 
   if (col === timeCol) {
+    // Elapsed times are numbers in the time unit.  In clock mode a time is
+    // HH:MM, or a number of units after the procedure start, which may have a
+    // decimal point ("1.5" hours).  A pasted elapsed H:MM is still accepted.
     let timeMode = getTimeMode();
-    ok = (timeMode === 'relative') ? /^[0-9.]$/.test(key) : /^[0-9:]$/.test(key);
+    ok = (timeMode === 'relative') ? /^[0-9.]$/.test(key) : /^[0-9.:]$/.test(key);
   } else if (col === doseCol) {
     ok = /^[0-9.]$/.test(key);
   }
@@ -100,61 +103,32 @@ function hookSanitize(changes, source) {
 }
 
 
-// clean the time input (remove extra dots, colons, etc) based the time mode
+// Clean a time: keep only digits, decimal points and colons, and only the
+// first of each.  The same whatever the time display: what a time means
+// depends on the format the table is in (R/utils-time.R), and the server's
+// validateTime() (R/validate-input.R) checks every Time string against its own
+// cleaning, so the two must agree character for character.  Cleaning by mode,
+// as this once did, rewrote valid times whenever ANOTHER cell in the row was
+// edited: in clock mode "1.5" became "15", "0.25" "025" and "10080" (four
+// digits at most) "1008"; in elapsed mode "01:30" became "130" and "36:00"
+// "3600".
 function cleanTime(value) {
-  if (!value) return value;
-
-  let timeMode = getTimeMode();
-  let str = String(value);
-
-  if (timeMode === 'relative') {
-    // Allow only digits and decimal point
-    str = str.replace(/[^0-9.]/g, '');
-
-    // Keep only first decimal point
-    let firstDot = str.indexOf('.');
-    if (firstDot !== -1) {
-      let beforeDot = str.substring(0, firstDot);
-      let afterDot = str.substring(firstDot + 1).replace(/\./g, '');
-      str = beforeDot + '.' + afterDot;
-    }
-
-    // Remove leading zeros (except for decimals like 0.5)
-    if (str.length > 1 && str[0] === '0' && str[1] !== '.') {
-      str = str.replace(/^0+/, '') || '0';
-    }
-
-  } else {
-    // Clock mode: allow only digits and colon
-    str = str.replace(/[^0-9:]/g, '');
-
-    // Keep only first colon
-    let firstColon = str.indexOf(':');
-    if (firstColon !== -1) {
-      let beforeColon = str.substring(0, firstColon);
-      let afterColon = str.substring(firstColon + 1).replace(/:/g, '');
-      str = beforeColon + ':' + afterColon;
-    }
-
-    // Limit HH to 2 digits, MM to 2 digits
-    if (firstColon !== -1) {
-      let parts = str.split(':');
-      if (parts[0].length > 2) {
-        parts[0] = parts[0].substring(0, 2);
-      }
-      if (parts[1] && parts[1].length > 2) {
-        parts[1] = parts[1].substring(0, 2);
-      }
-      str = parts.join(':');
-    } else {
-      // No colon yet, limit to reasonable length
-      if (str.length > 4) {
-        str = str.substring(0, 4);
-      }
-    }
-  }
-
+  if (value === null || value === undefined) return '';
+  let str = String(value).replace(/[^0-9.:]/g, '');
+  str = removeExtraDecimal(str);
+  str = removeExtraColon(str);
   return str;
+}
+
+// "007" -> "7", "00.5" -> "0.5", "000" -> "0".  R's validateTime() keeps
+// leading zeros, but the result here is still one of its fixed points, and
+// means the same number.
+function stripLeadingZeros(x) {
+  return x.replace(/^0+(?=[0-9])/, '');
+}
+
+function padTwo(n) {
+  return n < 10 ? '0' + n : String(n);
 }
 
 // https://stackoverflow.com/questions/8140612/remove-all-dots-except-the-first-one-from-a-string
@@ -185,49 +159,36 @@ function validateDose(dose) {
   return clean;
 }
 
+// Mirrors validateTime() in R/validate-input.R; see cleanTime() above.
 function validateTime(time) {
-  time = String(time);
-
-  // remove anything but numbers, decimal points, and colons
+  // remove anything but numbers, decimal points, and colons, and all but the
+  // first decimal point and the first colon
   var clean = cleanTime(time);
 
-  // remove all but first decimal
-  clean = removeExtraDecimal(clean);
-
-  // remove all but first colon
-  clean = removeExtraColon(clean);
-
-  // if only decimal points and colon return 0
-  if(clean.replace(/[\.:]/g,'').length === 0) {
-    return 0;
+  // nothing left, or only a decimal point and a colon
+  if (clean === '' || clean === '.' || clean === '.:' || clean === ':.') {
+    return '0';
   }
 
   // if there is decimal then remove colon
-  if(/\./.test(clean)) {
-    return clean.replace(/:/g,'');
+  if (/\./.test(clean)) {
+    return stripLeadingZeros(clean.replace(/:/g, ''));
   }
 
-  var colon_pos = clean.match(/:/);
+  var colon_pos = clean.indexOf(':');
 
-  // if no colon and number 4 digits or greater then parse into hours and minutes
-  //  if(colon_pos === null && clean.length >= 4) {
-    //    clean = clean.substring(0,2) + ':' + clean.substring(2,clean.length);
-    //  }
-
-  colon_pos = clean.match(/:/);
-
-  if(colon_pos !== null) {
-    colon_pos = colon_pos.index;
-    var HH = colon_pos === 0 ? 0 : parseInt(clean.substring(0,colon_pos));
-    var MM = colon_pos === clean.length - 1 ? 0 : parseInt(clean.substring(colon_pos + 1, clean.length));
+  if (colon_pos !== -1) {
+    var HH = colon_pos === 0 ? 0 : parseInt(clean.substring(0, colon_pos), 10);
+    var MM = colon_pos === clean.length - 1 ? 0 : parseInt(clean.substring(colon_pos + 1), 10);
     // convert minutes greater than 60 to hours and minutes
-    HH = HH + Math.floor(MM/60);
+    HH = HH + Math.floor(MM / 60);
     MM = MM % 60;
-    // combine into two digit hours and minutes
-    clean = ('0' + HH).slice(-2) + ':' + ('0' + MM).slice(-2);
+    // at least two digits each; an hour count of 100 or more is kept whole
+    // (an elapsed "100:30"), not cut to its last two digits
+    return padTwo(HH) + ':' + padTwo(MM);
   }
 
-  return clean;
+  return stripLeadingZeros(clean);
 }
 
 // Hook to take care of advanced logic every time a cell is updatd in the main
@@ -260,16 +221,24 @@ function hookDoseTableUpdate(changes, source) {
     let rowdata = hot.getDataAtRow(row);
     // if everything in row is empty then exit
     if (rowdata.every(function(d) { return d === null; })) { return; }
+    // The Time cell is rewritten only when it, or the drug, was edited: a
+    // stored time is already clean, and cleaning it again because the dose
+    // next to it changed once corrupted it (see cleanTime()).
+    let rowChanges = changes.filter(function(change) { return change[0] === row; });
+    let timeEdited = rowChanges.some(function(change) { return change[1] === timeCol; });
+    let drugEdited = rowChanges.some(function(change) { return change[1] === drugCol; });
     var drug = rowdata[drugCol];
     var time = validateTime(rowdata[timeCol]);
     var dose = validateDose(rowdata[doseCol]);
     var unit = rowdata[unitsCol];
+    var writeTime = timeEdited || drugEdited;
 
     // if drug change then reset time and dose and update unit
     if (drugchange) {
       time = '0';
       dose = 0;
       unit = '';
+      writeTime = true;
     }
 
     // if drug is empty, set everything to empty
@@ -277,6 +246,7 @@ function hookDoseTableUpdate(changes, source) {
       time = '';
       dose = '';
       unit = '';
+      writeTime = true;
     }
 
     // dynamically change dropdown for units based on drug
@@ -285,7 +255,9 @@ function hookDoseTableUpdate(changes, source) {
     hot.setCellMeta(row, unitsCol, 'readOnly', false);
 
     unit = unit !== '' ? unit : validateUnit(unit, drug);
-    allChanges.push([row, timeCol, time]);
+    if (writeTime) {
+      allChanges.push([row, timeCol, time]);
+    }
     allChanges.push([row, doseCol, dose]);
     allChanges.push([row, unitsCol, unit]);
   });

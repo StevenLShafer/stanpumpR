@@ -25,9 +25,12 @@
 #' @param drugDefaults the reactiveVal() holding the (editable) drug library;
 #'   the drug pages describe the library as the session currently has it
 #' @param navId id of the page_navbar(), to switch tabs
+#' @param timeApi the app_server()'s time-units functions (setDoseTable,
+#'   showTimeSettings), through which a scenario sets its time unit and writes
+#'   its dose table; NULL writes the tables directly
 #' @noRd
 helpServer <- function(input, output, session, doseTable, eventTable, drugDefaults,
-                       navId = "mainNav") {
+                       navId = "mainNav", timeApi = NULL) {
   helpPage <- reactiveVal("home")
 
   registry <- reactive({
@@ -79,7 +82,7 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
       return()
     }
     outputComments("Loading help scenario", s$id)
-    applyHelpScenario(session, s, doseTable, eventTable)
+    applyHelpScenario(session, s, doseTable, eventTable, timeApi)
     bslib::nav_select(navId, "Simulator", session = session)
     showNotification(
       tagList(tags$strong("Loaded: "), s$title, tags$br(),

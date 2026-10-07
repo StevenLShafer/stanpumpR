@@ -269,12 +269,30 @@ test_that("validateEventTableInput: full rows pass", {
   expect_true(validateEventTableInput(valid, sample_event_defaults))
 
   rows <- data.frame(
-    Time  = c("0", "10", "08:30"),
+    Time  = c("0", "10", "510"),
     Event = c("Induction", "Intubation", "CPB Start")
   )
   expect_true(validateEventTableInput(rows, sample_event_defaults))
 
   expect_true(validateEventTableInput(eventTableInit))
+})
+
+test_that("validateEventTableInput: event times are minutes, checked as numbers", {
+  # Stored as numbers whatever the time unit.  As text, 1e5 minutes was
+  # "1e+05", not a valid time string, and an event 69 days in stopped the plot.
+  long <- data.frame(Time = c(0, 100000, 200000, 524160, 1440 / 7),
+                     Event = rep("Induction", 5))
+  expect_true(validateEventTableInput(long, sample_event_defaults))
+  expect_error(validateEventTableInput(data.frame(Time = -1, Event = "Induction"), sample_event_defaults),
+               "invalid time")
+  expect_error(validateEventTableInput(data.frame(Time = NA_real_, Event = "Induction"), sample_event_defaults),
+               "invalid time")
+  expect_error(validateEventTableInput(data.frame(Time = Inf, Event = "Induction"), sample_event_defaults),
+               "invalid time")
+  # a clock time is converted to minutes when the event is entered; one
+  # stored as text is not a time
+  expect_error(validateEventTableInput(data.frame(Time = "08:30", Event = "Induction"), sample_event_defaults),
+               "invalid time")
 })
 
 test_that("validateEventTableInput: extra columns beyond Time and Event are allowed", {
