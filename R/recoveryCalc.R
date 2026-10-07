@@ -5,10 +5,10 @@
 #     C(t) = sum(state * exp(-lambda * t)),
 #
 # and this returns the time at which it comes down through `target` for the
-# LAST time, searched over the next 24 hours.  Zero means it is at or below the
-# target now and stays there; MINS_PER_DAY means it is still above the target
-# after a day -- which includes a target of zero, since a decaying exponential
-# never gets there.
+# LAST time, searched over the next 24 hours (or `horizon`).  Zero means it is
+# at or below the target now and stays there; the horizon itself means it is
+# still above the target at the end of the search -- which includes a target
+# of zero, since a decaying exponential never gets there.
 #
 # The amplitudes need not all be positive.  The effect site lags the plasma, so
 # after a bolus its ke0 term is negative and C(t) RISES before it falls.  That
@@ -40,23 +40,42 @@
 # Search grid, in minutes: zero, then 0.05 to 24 hours in equal ratios.
 RECOVERY_GRID <- c(0, exp(seq(log(0.05), log(MINS_PER_DAY), length.out = 90)))
 
+# How far ahead to look.  A day for a drug timed on its effect site: beyond
+# that "more than a day" is the answer that matters for recovery.  A week for
+# a drug timed on its plasma -- the antibiotics -- whose time above the MIC
+# commonly runs past a day (free vancomycin after 1.5 g, for one).  Chosen by
+# Steven L. Shafer, 2026-10-07.  See "Which concentration is timed" in
+# R/recoveryStates.R.
+RECOVERY_HORIZON_EFFECT <- MINS_PER_DAY
+RECOVERY_HORIZON_PLASMA <- MINS_PER_WEEK
+
+# The same grid out to another horizon, with the same ratio between steps.
+recoveryGrid <- function(horizon)
+{
+  if (horizon == MINS_PER_DAY) return(RECOVERY_GRID)
+  n <- ceiling(90 * log(horizon / 0.05) / log(MINS_PER_DAY / 0.05))
+  c(0, exp(seq(log(0.05), log(horizon), length.out = n)))
+}
+
 recoveryCalc <-   function(
   state,
   lambda,
-  target
+  target,
+  horizon = MINS_PER_DAY
   )
 {
   f <- function(t) sum(state * exp(-lambda * t)) - target
+  grid <- recoveryGrid(horizon)
 
   # Concentration at every grid time in one go: grid x exponentials.
-  excess <- as.vector(exp(-outer(RECOVERY_GRID, lambda)) %*% state) - target
+  excess <- as.vector(exp(-outer(grid, lambda)) %*% state) - target
   above <- which(excess > 0)
   if (length(above) == 0) return(0)
 
   i <- above[length(above)]
-  if (i == length(RECOVERY_GRID)) return(MINS_PER_DAY)
+  if (i == length(grid)) return(horizon)
 
-  stats::uniroot(f, c(RECOVERY_GRID[i], RECOVERY_GRID[i + 1]),
+  stats::uniroot(f, c(grid[i], grid[i + 1]),
                  f.lower = excess[i], f.upper = excess[i + 1],
                  tol = 0.01)$root
 }

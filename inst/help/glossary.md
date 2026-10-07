@@ -28,11 +28,11 @@
 
 **Eigenvalue.** One of the three exponents (α, β, γ) of the tri-exponential concentration curve, obtained by solving the characteristic cubic of the compartment model.
 
-**endCe.** The recovery threshold in the drug library: the effect-site concentration that *Time until threshold* counts down to.
+**endCe.** The recovery threshold in the drug library: the effect-site concentration that *Time until threshold* counts down to. For a drug with no effect site it is a plasma concentration. For an antibiotic it is the plotted concentration at which the free drug equals the MIC. See [Time until threshold](help:models/recovery).
 
 **Fat-free mass (FFM).** Body mass excluding fat, by the Al-Sallami equations. Used inside the Eleveld models, and, when *Adjust weight to fat-free mass* is on, to scale most of the other models. See [Scaling to fat-free mass](help:models/fat-free-mass).
 
-**Prodrug.** A drug with little effect of its own whose action is that of a metabolite the body forms from it. Codeine (through morphine) and, as modelled here, tramadol (through desmetramadol) are the examples. See [Active metabolites](help:models/metabolites).
+**Free (unbound) drug.** The part of a drug in plasma that is not bound to plasma proteins such as albumin. Only free drug crosses into tissue and acts. Most of stanpumpR's curves are total drug (bound plus free); a drug's page says when a curve is free drug instead, as cefazolin's is.
 
 **Fresh gas flow.** The total flow from the flowmeters (air, oxygen, nitrous oxide) into the breathing circuit.
 
@@ -54,6 +54,8 @@
 
 **MEAC.** Minimum effective analgesic concentration. See [MEAC: comparing opioids](help:models/meac).
 
+**MIC.** Minimum inhibitory concentration: the lowest concentration of an antibiotic that stops visible growth of an organism in the laboratory. It is compared with the free drug concentration. The antibiotics' *Time until threshold* counts down to it. See [Time until threshold](help:models/recovery).
+
 **Minute ventilation.** The volume breathed per minute; the "ventilation" entry in the dose table.
 
 **Normalization.** Rescaling each curve to its own peak. See [Normalization](help:models/normalization).
@@ -61,6 +63,8 @@
 **Partition coefficient.** The ratio of concentrations of a gas in two phases at equilibrium: blood:gas, tissue:gas.
 
 **PK/PD.** Pharmacokinetics (what the body does to the drug: concentration over time) and pharmacodynamics (what the drug does to the body: effect at a given concentration).
+
+**Prodrug.** A drug with little effect of its own whose action is that of a metabolite the body forms from it. Codeine (through morphine) and, as modelled here, tramadol (through desmetramadol) are the examples. See [Active metabolites](help:models/metabolites).
 
 **Rate constant (k).** A first-order rate, 1/min: k10 elimination, k12 and k21 transfer to and from the fast compartment, k13 and k31 to and from the slow one.
 

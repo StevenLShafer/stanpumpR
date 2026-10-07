@@ -33,13 +33,6 @@ scheduleInterval <- function(units) {
   unname(SCHEDULE_INTERVALS[sub("^.* ", "", units)])
 }
 
-# "mg PO bid" -> "PO"; "mg/kg bid" -> "IV"
-scheduleRoute <- function(units) {
-  base <- scheduleBaseUnit(units)
-  route <- sub("^.* ", "", base)
-  ifelse(route %in% c("PO", "IM", "IN"), route, "IV")
-}
-
 # Expand one drug's scheduled rows.
 #
 # dose:    that drug's rows of the dose table, as typed (user units, numeric
@@ -57,7 +50,7 @@ expandScheduledDoses <- function(dose, maximum) {
   if (!any(isSched)) return(list(dose = dose, scheduled = NULL))
 
   rows <- which(isSched)
-  route <- scheduleRoute(dose$Units[rows])
+  route <- doseRoute(dose$Units[rows])
   time <- as.numeric(dose$Time[rows])
 
   # Same route, same time: the last one entered wins; the others are dropped

@@ -449,15 +449,18 @@ app_server <- function(input, output, session) {
     }, name = "gases() reactive")
   })
 
+  # The intravenous drugs as last simulated, so that processdoseTable() only
+  # re-simulates the drugs whose inputs changed.  A plain variable, not a
+  # reactive value: reading it must not make drugs() depend on itself.
+  ivSimulationCache <- NULL
+
   drugs <- reactive({
     profileCode({
       outputComments("In drugs", level = DEBUG_LEVEL_VERBOSE)
       req(testCovariates(), doseTableClean())
 
-      newDrugs <- NULL
-
       newDrugs <- recalculatePK(
-        newDrugs,
+        NULL,
         drugDefaults(),
         doseTableIV(),
         age = age(),
@@ -475,8 +478,10 @@ app_server <- function(input, output, session) {
         eventTableClean(),
         newDrugs,
         plotMaximum(),
-        plotRecovery()
+        plotRecovery(),
+        cache = ivSimulationCache
       ) |> profileCode("processdoseTable() in drugs()")
+      ivSimulationCache <<- newDrugs
 
       # The inhaled gases are simulated as one group and appended as their own
       # entries, so that simulationPlot() treats them like any other series and

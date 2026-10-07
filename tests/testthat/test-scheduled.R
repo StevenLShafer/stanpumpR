@@ -123,6 +123,6 @@ test_that("the scheduled units are offered and validated", {
   expect_true("mg PO bid" %in% getDrugDefaults("cefalexin")$Units[[1]])
   expect_false("mg bid" %in% getDrugDefaults("propofol")$Units[[1]])
   expect_true(validateDoseTableInput(doses("0", "1", "g qid")))
-  expect_equal(scheduleRoute(c("mg bid", "mg/kg PO qd", "mg IM tid", "mcg IN qid")),
+  expect_equal(doseRoute(c("mg bid", "mg/kg PO qd", "mg IM tid", "mcg IN qid")),
                c("IV", "PO", "IM", "IN"))
 })

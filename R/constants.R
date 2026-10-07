@@ -14,7 +14,13 @@ SEX_VALUES <- c(SEX_MALE, SEX_FEMALE)
 # observation followed an intravenous bolus or an oral dose.
 ROUTE_IV <- "IV"
 ROUTE_PO <- "PO"
+ROUTE_IM <- "IM"
+ROUTE_IN <- "IN"
 TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
+
+# Every route a dose can take, in the order the units dropdowns list them.  A
+# dose's route is carried by its Units string; see doseRoute() in R/routes.R.
+DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_IM, ROUTE_IN)
 
 # CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
 # genotyping laboratories report, rather than the three the UI carried before

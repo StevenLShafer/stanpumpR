@@ -1,74 +1,81 @@
-# process the Dose Table
-# including removing simulations of drugs no longer mentioned
-# and simulating any drugs for which there has been a change in the
-# table.
-# If there has been no changed in the dose table for a specific drug
-# then it is skipped.
-processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery)
+# Process the dose table: simulate each drug, reusing the previous simulation
+# of any drug whose inputs have not changed, then fold the active metabolites.
+#
+# `drugs` comes fresh from recalculatePK() on every call, so it holds PK but no
+# simulation.  `cache` is the list the previous call returned (the app keeps it
+# between reactive invalidations; scripts and tests pass NULL).  A drug is
+# re-simulated only when something simCpCe() reads has changed: its doses, its
+# PK events (for a drug with more than one PK set), its resolved PK (which
+# carries the covariates), the plot length, or the recovery switch.
+#
+# The reused outputs are the drug's OWN simulation, saved before folding.  The
+# folded series of a metabolite drug depends on its parents' doses too, so it
+# is never cached: foldMetabolites() rebuilds it from the own series each time.
+processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = NULL)
 {
-  # Now, process dose table for each drug
-  drugList <- names(drugs)
-  # Iterate the vector directly: 1:length(x) is c(1, 0) for an empty x, which a
-  # dose table containing only inhaled gases would otherwise hit.
-  for (drug in drugList)
+  for (drug in names(drugs))
   {
     tempDT <- DT[DT$Drug == drug,]
     tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[drug]]$pkEvents,]
 
-    if (!identical(tempDT, drugs[[drug]]$DT) |
-         (length(drugs[[drug]]$pkEvents) > 1 &
-          !identical(drugs[[drug]]$ET, tempET))
-      )
+    if (nrow(tempDT) == 0) next  # e.g. a metabolite that was not given directly
+
+    key <- simulationKey(drugs[[drug]], tempDT, tempET, plotMaximum, plotRecovery)
+    sim <- cache[[drug]]$sim
+    if (is.null(sim) || !identical(cache[[drug]]$simKey, key))
     {
-      if (nrow(tempDT) == 0 ) # Delete anything that should be deleted
-      {
-        drugs[[drug]]$DT        <- NULL
-        drugs[[drug]]$ET        <- NULL
-        drugs[[drug]]$results   <- NULL
-        drugs[[drug]]$equiSpace <- NULL
-        drugs[[drug]]$max       <- NULL
-        # A drug no longer in the dose table forms no metabolite, and keeping
-        # a stale contribution would go on feeding the metabolite's row.
-        drugs[[drug]]$wideOwn         <- NULL
-        drugs[[drug]]$wide            <- NULL
-        drugs[[drug]]$metaboliteSeries <- NULL
-        drugs[[drug]]$formedFrom      <- NULL
-        drugs[[drug]]$recoveryStatesOwn         <- NULL
-        drugs[[drug]]$metaboliteRecoveryStates  <- NULL
-        drugs[[drug]]$tci       <- NULL
-        drugs[[drug]]$scheduled <- NULL
-      } else {
-        X <- simCpCe(
-          tempDT,
-          tempET,
-          drugs[[drug]],
-          plotMaximum,
-          plotRecovery
-          )
-        drugs[[drug]]$DT                <- tempDT
-        drugs[[drug]]$ET                <- tempET
-        drugs[[drug]]$results           <- X$results
-        drugs[[drug]]$equiSpace         <- X$equiSpace
-        drugs[[drug]]$max               <- X$max
+      X <- simCpCe(
+        tempDT,
+        tempET,
+        drugs[[drug]],
+        plotMaximum,
+        plotRecovery
+        )
+      sim <- list(
+        DT                = tempDT,
+        ET                = tempET,
+        results           = X$results,
+        equiSpace         = X$equiSpace,
+        max               = X$max,
         # wideOwn is this drug's own simulation and nothing else.  wide is what
         # gets plotted, and may additionally carry metabolite formed from
         # another drug.  Keeping them apart is what makes folding idempotent.
-        drugs[[drug]]$wideOwn           <- X$wide
-        drugs[[drug]]$wide              <- X$wide
-        drugs[[drug]]$metaboliteSeries  <- X$metaboliteSeries
-        drugs[[drug]]$formedFrom        <- NULL
+        wideOwn           = X$wide,
+        wide              = X$wide,
+        metaboliteSeries  = X$metaboliteSeries,
         # The effect-site states behind Recovery, which foldMetabolites() needs
         # to solve the combined time until threshold.  Own and formed are kept
         # apart for the same reason wideOwn and wide are.
-        drugs[[drug]]$recoveryStatesOwn        <- X$recoveryStates
-        drugs[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
-        drugs[[drug]]$tci               <- X$tci
-        drugs[[drug]]$scheduled         <- X$scheduled
-      }
+        recoveryStatesOwn        = X$recoveryStates,
+        metaboliteRecoveryStates = X$metaboliteRecoveryStates,
+        tci               = X$tci,
+        scheduled         = X$scheduled
+      )
     }
+    for (field in names(sim)) drugs[[drug]][[field]] <- sim[[field]]
+    drugs[[drug]]$sim    <- sim
+    drugs[[drug]]$simKey <- key
   }
 
   foldMetabolites(drugs, plotMaximum, plotRecovery)
+}
+
+# Everything a drug's simulation depends on, for processdoseTable() to compare
+# with the cached copy.  `PK` is the drug's entry as recalculatePK() built it,
+# before any simulation is attached.  Row names are dropped from the tables
+# because they shift when another drug's rows are added or removed above.
+simulationKey <- function(PK, DT, ET, plotMaximum, plotRecovery)
+{
+  rownames(DT) <- NULL
+  rownames(ET) <- NULL
+  list(
+    PK           = PK,
+    DT           = DT,
+    # The event table only reaches the engine when the drug switches PK sets.
+    ET           = if (length(PK$pkEvents) > 1) ET,
+    plotMaximum  = plotMaximum,
+    plotRecovery = isTRUE(plotRecovery)
+  )
 }
 
 recalculatePK <- function(drugs, drugDefaults, doseTable,
@@ -97,8 +104,6 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         adjustToFFM = adjustToFFM
       )
     )
-    drugs[[drug]]$DT <- NULL # Remove old dose table, if any
-    drugs[[drug]]$equiSpace <- NULL # Ditto
     drugs
   }
 

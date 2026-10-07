@@ -188,17 +188,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("hr",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / 60
 
-    # Identify bolus doses
-    dose$Bolus <- !(grepl("min", dose$Units) |
-                      grepl("hr", dose$Units) |
-                      grepl("PO", dose$Units) |
-                      grepl("IM", dose$Units) |
-                      grepl("IN", dose$Units))
-
-    # Identify PO doses
-    dose$PO <- grepl("PO", dose$Units)
-    dose$IM <- grepl("IM", dose$Units)
-    dose$IN <- grepl("IN", dose$Units)
+    # Identify extravascular (PO, IM, IN) and IV bolus doses
+    route <- doseRoute(dose$Units)
+    dose$PO <- route == ROUTE_PO
+    dose$IM <- route == ROUTE_IM
+    dose$IN <- route == ROUTE_IN
+    dose$Bolus <- route == ROUTE_IV &
+      !(grepl("min", dose$Units) | grepl("hr", dose$Units))
 
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp
@@ -226,16 +222,25 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # drugs' eigenvalues.
     hasMetabolite <- !is.null(pkSets[[1]]$metabolite)
 
+    # The threshold, in the units the engines simulate.  An osmotic agent is
+    # plotted as serum osmolality, baseline + fraction x Cp (below), and its
+    # threshold is set on that axis, so it is mapped back to a concentration.
+    # One at or below the baseline can never be reached and is treated as no
+    # threshold.
+    emerge <- PK$endCe
+    if (!is.null(PK$osmotic) && length(emerge) == 1 && !is.na(emerge) && emerge > 0)
+      emerge <- max(0, (emerge - PK$osmotic$baseline) / PK$osmotic$fraction)
+
     if (length(pkEvents) == 1 | nrow(events) == 0)
     {
       if (hasMetabolite)
       {
-        results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, PK$endCe)
+        results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
       } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
       {
-        results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
+        results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
       } else {
-        results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, PK$endCe)
+        results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, emerge)
       }
     } else {
       if (hasMetabolite)
@@ -252,7 +257,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       events <- events[events$Time < maximum,]
       events <- rbind(events, events[nrow(events),])
       events$Time[nrow(events)] <- maximum
-      results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, PK$endCe)
+      results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, emerge)
     }
 
   # Lift the metabolite out into a series of its own before the parent's

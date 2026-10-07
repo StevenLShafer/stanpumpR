@@ -4,7 +4,7 @@ Cefazolin's parameters are from Komatsu and colleagues (*Antimicrob Agents Chemo
 
 ### What is plotted
 
-stanpumpR's engine is linear, so it simulates the linear half of that model and **plots unbound cefazolin**. That is the concentration the pharmacodynamic target is written on: the fraction of the dosing interval that free drug spends above the organism's MIC. A laboratory reports total cefazolin, which at the concentrations a 2 g dose produces is two to four times the unbound value, the ratio falling as the level rises because binding saturates. The shaded band (0.5 to 2 mcg/mL unbound) marks the MIC scenarios of 0.5 and 1 mg/L the source examined and the 2 mg/L susceptibility breakpoint for *Staphylococcus aureus*.
+stanpumpR's engine is linear, so it simulates the linear half of that model and **plots unbound cefazolin**. That is the concentration the pharmacodynamic target is written on: the fraction of the dosing interval that free drug spends above the organism's MIC. A laboratory reports total cefazolin, which at the concentrations a 2 g dose produces is two to four times the unbound value, the ratio falling as the level rises because binding saturates. The shaded band (0.5 to 2 mcg/mL unbound) marks the MIC scenarios of 0.5 and 1 mg/L the source examined and 2 mg/L, the upper end of the MIC distribution of wild-type *Staphylococcus aureus* (its epidemiological cut-off) and the MIC90 of methicillin-susceptible strains. There is no longer a cefazolin breakpoint for staphylococci: susceptibility is inferred from oxacillin or cefoxitin.
 
 ### Covariates
 
@@ -12,7 +12,7 @@ Clearance follows Cockcroft-Gault creatinine clearance to the power 0.586. stanp
 
 ### Effect site
 
-None. An antibiotic's effect is its exposure relative to the MIC, and there is nothing for the engine to equilibrate it into; only the plasma concentration is plotted.
+None. An antibiotic's effect is its exposure relative to the MIC, and there is nothing for the engine to equilibrate it into; only the plasma concentration is plotted. *Time until threshold* is therefore timed on the plasma curve, which for cefazolin is **unbound** (free) drug, so the threshold is the MIC itself: the line shows how long, with no further dose, until free cefazolin falls below the MIC. The MIC is **2 mg/L**, for methicillin-susceptible *S. aureus*; it is also the CLSI susceptible breakpoint for *E. coli* and the other Enterobacterales. See *Time until threshold: free drug at the MIC* above.
 
 ### Where to be careful
 

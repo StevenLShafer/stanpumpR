@@ -222,6 +222,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   metCoefs  <- if (hasCe) effectSiteCoefficients(met$coefs, met$ke0) else NULL
   CemStates <- if (hasCe) advance(metCoefs) else NULL
   Cem <- if (hasCe) rowSums(CemStates) else rep(NA_real_, L)
+  CmStates  <- if (hasCe) NULL else advance(met$coefs)
 
   # Floating point can leave either sum a hair below zero at t = 0, where the
   # coefficients cancel exactly.  A negative concentration is meaningless.  The
@@ -235,10 +236,16 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # absorbing is missing from these amplitudes just as the parent's own is.
   pending <- pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
 
+  # A metabolite drug with no effect site has its time until threshold timed
+  # on its plasma instead (see "Which concentration is timed" in
+  # R/recoveryStates.R), so the formed contribution then carries plasma states.
+  # The receiving drug's own states are plasma states for the same reason, so
+  # the fold adds like to like.
   metaboliteStates <- if (hasCe) {
     recoveryStateSet(timeLine, CemStates, metCoefs$lambda, pending)
   } else {
-    NULL
+    recoveryStateSet(timeLine, CmStates, met$coefs$lambda, pending,
+                     horizon = RECOVERY_HORIZON_PLASMA)
   }
 
   # ---- Parent effect site and recovery ----
@@ -288,11 +295,24 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     }
     recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending)
     Ce <- rowSums(recoveryStates$state)
-    if (plotRecovery) {
-      recovery <- recoveryFromStates(recoveryStates, emerge)
-    } else {
-      recoveryStates <- NULL
+  } else {
+    # No effect site of its own -- a pure prodrug, or a drug like prednisone
+    # given for what it forms -- so its own time until threshold, if it has a
+    # threshold at all, is timed on its plasma.
+    states  <- list(p_state_l1, p_state_l2, p_state_l3)
+    lambdas <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3)
+    if (hasPO && pkSet$ka_PO > 0)
+    {
+      states[[4]] <- Cp - p_state_l1 - p_state_l2 - p_state_l3
+      lambdas <- c(lambdas, pkSet$ka_PO)
     }
+    recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending,
+                                       horizon = RECOVERY_HORIZON_PLASMA)
+  }
+  if (plotRecovery) {
+    recovery <- recoveryFromStates(recoveryStates, emerge)
+  } else {
+    recoveryStates <- NULL
   }
 
   results <- data.frame(
