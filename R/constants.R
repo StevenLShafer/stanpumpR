@@ -153,6 +153,46 @@ PLOT_NAME_EVENTS      <- "Events"
 PLOT_NAME_MEAC        <- "% MEAC"
 PLOT_NAME_INTERACTION <- "p response"
 
+# The time line the closed-form engines simulate on (R/simulationTimeGrid.R).
+# PRE_DOSE_OFFSET puts a point just before each dose, where the time until
+# threshold jumps.  Up to GRID_LEGACY_MAXIMUM (a day) each gap between knots
+# gets the GRID_LOG_POINTS geometric offsets it always had, so those plots are
+# unchanged point for point.  Beyond it the fill starts at
+# maximum / GRID_FINE_POINTS (or at the drug's own start, if that is later)
+# and no step is longer than maximum / GRID_UNIFORM_POINTS.
+#
+# The two counts were chosen by measurement, the closed form evaluated at 8 to
+# 32 points inside every step against the straight line the plot draws across
+# it (Claude Code, 2026-10-07):
+#
+#   GRID_UNIFORM_POINTS = 500.  On a 52-week plot of a two-compartment model
+#   with Pollak 2000's amiodarone parameters (half-lives 17.3 h and 55.4 d),
+#   given as Pollak's seven-step oral regimen at constant rates or as
+#   400 mg/day stopped at day 180, no chord strays from the curve by more than
+#   0.4% of the peak.  1000 does no better -- the largest error sits where the
+#   geometric steps hand over to uniform ones, and that point moves with the
+#   step -- and doubles the points on a plot with few doses.  The uniform
+#   steps there are 17.5 h, two to four pixels on a full-width plot.
+#
+#   GRID_FINE_POINTS = 20000.  What decides it is the peak after an oral dose,
+#   which nothing else puts a point near.  The earliest in the library is
+#   oxycodone's plasma peak, 30 min after the dose.  Starting the fill at
+#   maximum / 20000 (26 min on a 52-week plot) draws every oral drug's plasma
+#   and effect-site peak, under daily dosing for 52 weeks, to within 0.4% of
+#   its height; starting it at maximum / 2000 (4.4 h) drew oxycodone's at 42%,
+#   and maximum / 10000 at 94%.  On a plot shorter than 20000 x start (about
+#   two weeks) the fill starts exactly where it always did.
+#
+#   Cost, 10 mg of oxycodone four times a day for 52 weeks with the time until
+#   threshold: 24,752 points and 1.7 s, against 52,416 points and 10.2 s on the
+#   line before this change (5,824 points and 0.4 s at 2000).  Once a day:
+#   9,100 points and 0.5 s, against 15,652 and 2.7 s.
+PRE_DOSE_OFFSET     <- 0.01
+GRID_LOG_POINTS     <- 41
+GRID_LEGACY_MAXIMUM <- MINS_PER_DAY
+GRID_UNIFORM_POINTS <- 500
+GRID_FINE_POINTS    <- 20000
+
 DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
 DEBUG_LEVEL_VERBOSE <- 2

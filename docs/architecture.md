@@ -138,6 +138,21 @@ time point as a sum of exponentials.
 
 Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `equiSpace` and `max`.
 
+**The time line.** The closed-form engines are exact at any time, so the points they are asked
+about decide only how the curve is drawn and what a run costs. `simulationTimeGrid()`
+(`R/simulationTimeGrid.R`) builds the line for all four engines from their knots — every dose
+time, the instant `PRE_DOSE_OFFSET` before a dose, the instant a lagged dose was given, any
+event — and fills the gaps between them; no knot is ever moved or dropped, which is what keeps
+`advanceStatesOnto()` exact. Up to a day (`GRID_LEGACY_MAXIMUM`) each gap gets the 41 geometric
+offsets the engines always used, so those plots are unchanged point for point. Beyond a day the
+fill starts at `maximum / GRID_FINE_POINTS` after each knot and no step is longer than
+`maximum / GRID_UNIFORM_POINTS`, so a washout on a 52-week plot is drawn as a curve, not a
+straight chord, and the cost is bounded by the number of doses rather than growing with the
+plot (`R/constants.R` records how the two counts were chosen). `doseLines()` lays the doses
+on the line. The line depends only on `maximum` in minutes. A drug timed on its plasma looks
+for its threshold a week ahead, or as far as the plot runs if that is longer
+(`recoveryHorizonPlasma()`).
+
 The exported, Shiny-free entry point for this whole path is `simulateDrugsWithCovariates()` — it
 loops drugs, calls `getDrugPK()` → `simCpCe()`, and returns per-drug results. This is what the
 vignettes and tests drive.

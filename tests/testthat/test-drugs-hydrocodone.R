@@ -130,7 +130,16 @@ test_that("formed hydromorphone reproduces the observed exposure ratio", {
   hc <- o$hydrocodone$wide
   hm <- o$hydromorphone$wide
   ratio <- trapz(hm$Time, hm$Plasma) / trapz(hc$Time, hc$Plasma)
-  expect_equal(ratio, 3.8 / 325.3, tolerance = 0.15)
+  # Divided by the target, so that the tolerance is relative.  It was
+  # expect_equal(ratio, 0.0117, tolerance = 0.15), and expect_equal() treats a
+  # tolerance larger than the expected value as ABSOLUTE, so any ratio below
+  # 0.16 passed.  Nor did the area mean much: until 2026-10-07 the series drew
+  # one straight chord from 20 hours to 30 days, which made both AUCs six times
+  # too large (hydrocodone 112,504 against 18,629 ng.min/mL) and this ratio
+  # 8.7% high.  kFormation was not tuned against that: the closed-form ratio is
+  # 0.0116815, Kapil's to five figures.  On the plot-scaled time line
+  # (R/simulationTimeGrid.R) trapz() is within 0.1% of it.  (Claude Code.)
+  expect_equal(ratio / (3.8 / 325.3), 1, tolerance = 0.02)
 
   expect_equal(o$hydromorphone$formedFrom, "hydrocodone")
   # Kapil's hydromorphone peak was 0.19 ng/mL
@@ -150,7 +159,11 @@ test_that("the exposure ratio does not drift with body weight", {
     trapz(o$hydromorphone$wide$Time, o$hydromorphone$wide$Plasma) /
       trapz(o$hydrocodone$wide$Time, o$hydrocodone$wide$Plasma)
   }
-  expect_equal(ratioAt(50), ratioAt(100), tolerance = 0.02)
+  # As a ratio, so that the tolerance is relative rather than absolute (see
+  # above).  The closed-form ratio is the same at every weight; the 2.2% that
+  # used to separate these two was the straight chord the old time line drew
+  # across the second week, whose error depends on the curve's shape.
+  expect_equal(ratioAt(50) / ratioAt(100), 1, tolerance = 0.02)
 })
 
 

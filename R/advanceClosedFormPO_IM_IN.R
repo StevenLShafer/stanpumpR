@@ -20,58 +20,29 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   # otherwise a point on the line, so that the window over which recovery
   # cannot be reported starts exactly where it should.  Only when some dose is
   # actually lagged, so that an unlagged run keeps the line it always had.
-  timeLine <- sort(
-    unique(
-      c(
-        0,
-        dose$Time,
-        dose$Time - .01, # run until just before next dose
-        givenAt[givenAt < dose$Time],
-        maximum
-      )
-    )
+  #
+  # The fill between those points is scaled to the plot; see
+  # R/simulationTimeGrid.R.
+  timeLine <- simulationTimeGrid(
+    c(
+      dose$Time,
+      dose$Time - PRE_DOSE_OFFSET, # run until just before next dose
+      givenAt[givenAt < dose$Time]
+    ),
+    maximum,
+    gridStart(pkSet$ke0)
   )
-  timeLine <- timeLine[timeLine >=0]
-
-  # Fill in gaps using exponentially decreasing amounts
-  gapStart <- timeLine[1:length(timeLine)-1]
-  gapEnd   <- timeLine[2:length(timeLine)]
-  start <- min(0.693/pkSet$ke0 / 4, 1)
-  newTimes <- c(exp(log(start)+0:40 * log(MINS_PER_DAY/start)/41))
-  for (i in 1:length(gapEnd))
-  {
-    distance <- gapEnd[i] - gapStart[i]
-    timeLine <- c(timeLine, gapStart[i] + newTimes[newTimes <= distance])
-  }
-  timeLine <- sort(unique(timeLine))
   L <- length(timeLine)
   doseNA <- rep(0, L)
 
   # Create bolusLine and infusionLine
-  bolusLine <- infusionLine <- poLine <- imLine <- inLine<- dt <- rate <- doseNA
-  for (i in 1:L)
-  {
-    bolusLine[i]    <- sum(dose$Dose[dose$Time == timeLine[i] & dose$Bolus])
-    poLine[i]       <- sum(dose$Dose[dose$Time == timeLine[i] & dose$PO])
-    imLine[i]       <- sum(dose$Dose[dose$Time == timeLine[i] & dose$IM])
-    inLine[i]       <- sum(dose$Dose[dose$Time == timeLine[i] & dose$IN])
-    USE <- dose$Time == timeLine[i] & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN
-    if (i == 1)
-    {
-      infusionLine[i] <- sum(dose$Dose[USE])
-      rate[1] <- 0
-      dt[1] <- 0
-    } else {
-      if (sum(USE) == 0)
-      {
-        infusionLine[i] <- infusionLine[i-1]
-      } else {
-        infusionLine[i] <- sum(dose$Dose[USE])
-      }
-      dt[i] <- timeLine[i] - timeLine[i-1]
-      rate[i] <- infusionLine[i-1]
-    }
-  }
+  inputs    <- doseLines(dose, timeLine, c("PO", "IM", "IN"))
+  bolusLine <- inputs$bolus
+  poLine    <- inputs$PO
+  imLine    <- inputs$IM
+  inLine    <- inputs$IN
+  rate      <- inputs$rate
+  dt        <- inputs$dt
 
   results <- with (
     pkSet,
@@ -180,7 +151,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
              p_state_ka_PO, p_state_ka_IM, p_state_ka_IN),
         c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN),
         pending,
-        horizon = RECOVERY_HORIZON_PLASMA
+        horizon = recoveryHorizonPlasma(maximum)
       )
 
       recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else doseNA
