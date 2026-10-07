@@ -73,13 +73,12 @@ A published model that was fitted on total body weight is **still** scaled to fa
 Placeholders for a missing compartment (`v3 = 1`, `cl3 = 0`) are left unscaled.
 
 **A model with its own weight or renal covariate** (vancomycin, gentamicin, sugammadex,
-cefazolin) evaluates the published equations at the fat-free-mass weight with the switch on
-and at total body weight with it off, and scales any size-free parameter by the library
-factors. Choose that weight explicitly, as `R/drugs_cefazolin.R` does:
-`pkW <- if (isTRUE(adjustToFFM)) size$pkWeight else weight`. The shortcut
-`70 * size$volume` gives the same answer only when the volume's legacy factor is the
-default `weight / 70`; with `legacyVolume = 1` it would give 70 kg, not the patient's
-weight, with the switch off. Renal
+cefazolin) evaluates the published equations at the pharmacokinetic weight with the switch
+on (`size$pkWeight`, which is 70 kg × FFM / FFM<sub>ref</sub>) and at total body weight with it
+off, and scales any size-free parameter by the library factors. Write that choice out:
+`if (isTRUE(adjustToFFM)) size$pkWeight else weight`, as `R/drugs_cefazolin.R` does. Do not
+derive the weight from `70 * size$volume` unless the model's `legacyVolume` is `weight / 70`;
+with `legacyVolume = 1` that expression is 70 kg for everyone when the switch is off. Renal
 function comes from `R/renalFunction.R` (`creatinineClearanceCG()`, `egfrDeindexed()`),
 which runs at an **assumed normal creatinine** because the app collects none; say so in the
 model's header and in its `reference` string. See `R/drugs_vancomycin.R`.

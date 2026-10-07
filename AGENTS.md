@@ -31,7 +31,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
    - `advanceClosedFormPO_IM_IN.R` (extravascular 1st-order absorption)
 5. **Plot & Render**: `simulationPlot.R` generates `ggplot2` output.
 
-`recalculatePK()` and `processdoseTable()` are *meant* to diff inputs and only re-simulate drugs that changed — see known issues below.
+`processdoseTable()` re-simulates only the drugs whose inputs changed: `drugs()` passes it the previous result as `cache`, and a drug whose `simulationKey()` (PK, dose rows, PK events, plot length, recovery switch) is unchanged reuses its own stored simulation. `foldMetabolites()` always re-runs on top.
 
 **Dose table lifecycle**: edits land in a draft held by an `{undomanager}` (`doseTableHistory()`, with `doseTableDraft()` a thin reactive over its `$value`) that owns the undo/redo history; `Apply` commits it to the canonical `doseTable()`; `doseTableClean()` (cleaned via `cleanDoseTable()` in `input-tables.R`) is what the rest of the pipeline actually reads. Clicking the plot to add/edit a dose bypasses the draft and applies immediately, and any direct write to `doseTable()` resets the draft and clears the history.
 
@@ -57,7 +57,3 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 ## The Help Tab (`R/help-*.R`, `inst/help/`)
 
 The in-app help is a `bslib::nav_panel("Help")` with a sidebar (search + contents) and one `uiOutput`. Pages are either Markdown in `inst/help/<id>.md` (rendered by `shiny::markdown()`, i.e. commonmark — no pandoc, no MathJax) or generated from the code: one page per drug (`help-drugs.R` runs the drug model at six reference patients), one per teaching scenario (`help-scenarios.R`), plus the drug index, scenario index and bibliography. `help-content.R` holds the registry (`helpStaticPages()`), the renderer and the search; `help-server.R` is called once from `app_server()`. Links between pages are `[text](help:page-id)`; `[text](scenario:id)` makes a button that calls `applyHelpScenario()`, which writes `doseTable()`/`eventTable()` and the inputs, then `bslib::nav_select()`s the Simulator. All clicks go through two delegated handlers in `inst/www/app.js` (`help_goto`, `help_scenario_load`), so the help adds no per-page inputs. `inst/help/README.md` is the authoring guide. Tests: `test-help-content.R`, `test-help-drugs.R`, `test-help-scenarios.R`.
-
-## Known Issues
-
-**Per-drug simulation cache doesn't persist.** `recalculatePK()` resets `drugs[[drug]]$DT` to `NULL` on every touch, so `processdoseTable()`'s change-detection always compares against `NULL`. Result: every drug re-simulates on every reactive invalidation (any covariate/dose/event edit), not just the one that changed. The skip logic exists but has no state to skip against — treat this as a real bug, not expected behavior.
