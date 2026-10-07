@@ -304,7 +304,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
-    "sugammadex", "glycopyrrolate", "mannitol"
+    "sugammadex", "glycopyrrolate", "mannitol", "gabapentin"
   ))
 })
 

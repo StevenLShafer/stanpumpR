@@ -91,6 +91,8 @@ first-order extravascular absorption. A source model with saturable protein bind
 apparent oral scale has to be reduced to that form, and the reduction must be written down
 in the header: which part is exact, which is approximate, and what is plotted
 (`R/drugs_cefazolin.R`, `R/drugs_hydrocortisone.R`, `R/drugs_prednisolone.R`).
+The one exception is oral bioavailability that falls with the size of the dose: the
+engine applies that itself, dose by dose (see *saturable oral absorption* below).
 
 ### Return-value contract
 
@@ -189,6 +191,22 @@ clearance and volume divided by an unmeasured bioavailability. Those predict ora
 concentrations correctly, because the unknown factor cancels, and intravenous ones wrong by
 `1/F`. Such a drug must offer oral units only and carry `bioavailability_PO = 1`, since the
 apparent scale already contains it. Hydrocodone is the example.
+
+**Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
+that the fraction of an oral dose absorbed falls as the dose rises, returns an
+`oralSaturation` block alongside the usual fields:
+
+```r
+oralSaturation = list(Imax = 0.906, ID50 = 571)   # ID50 in mg per administration
+```
+
+`simCpCe()` scales every oral dose by `1 - Imax * D / (ID50 + D)`, with D its dose in mg,
+before it reaches the engine, and `bioavailability_PO` becomes the fraction absorbed in the
+limit of a small dose. The hyperbolic `Dmax / (D50 + D)` form is the case `Imax = 1` with
+`bioavailability_PO = Dmax / D50`. Each dose is then an ordinary input, so superposition
+holds; what is not represented is saturation shared between doses taken together or close
+in time. `Imax` must lie between 0 and 1 (`validateOralSaturation()`), and the drug's help
+page tabulates the fraction at several doses. `R/drugs_gabapentin.R` is the example.
 
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 

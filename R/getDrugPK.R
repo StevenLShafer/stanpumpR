@@ -24,7 +24,7 @@
 #' @param creatinine serum creatinine in mg/dL, or NULL (the default) for the
 #'   assumed normal value for the patient's sex.  Passed only to the renal
 #'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
-#'   sugammadex); see `R/renalFunction.R`.
+#'   sugammadex, gabapentin); see `R/renalFunction.R`.
 #'
 #' @examples
 #' PK <- stanpumpR::getDrugPK(
@@ -633,6 +633,9 @@ getDrugPK <- function(
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
   out$osmotic <- X$osmotic
+  # A drug whose oral absorption saturates scales each oral dose by its own
+  # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
+  out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
   return(out)
 }
 

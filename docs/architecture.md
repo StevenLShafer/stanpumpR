@@ -290,6 +290,11 @@ All files are flat in `R/`.
   sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
   table: `simCpCe()` returns them as `$scheduled` and `sendSlide()` merges them into the export.
   The frequencies are offered per drug in `drugDefaults_global.csv`.
+- **Saturable oral absorption** (`oralSaturationFraction()` in `routes.R`) — a drug whose oral
+  bioavailability falls with dose (gabapentin) returns an `oralSaturation` block, and
+  `simCpCe()` scales each oral dose by `1 - Imax × D / (ID50 + D)` before the engine runs.
+  Each dose is then an ordinary input, so the engines stay linear; saturation shared between
+  overlapping doses is not represented.
 - **Suggest Dosing** (`suggest.R`) — given a target drug and end time, optimizes bolus +
   infusion amounts to reach and hold a target concentration.
 - **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current

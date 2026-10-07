@@ -21,8 +21,19 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 | oxycodone | PO |
 | hydromorphone | PO, IM, IN |
 | codeine, hydrocodone, oxymorphone, tramadol | PO |
+| gabapentin | PO, with saturable absorption |
 
 Each drug's page shows the current absorption rate, bioavailability and lag. The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's intramuscular and intranasal absorption was revised so that each route's peak matches the measured time (about 20 minutes intranasal, 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down.
+
+## Saturable absorption
+
+Gabapentin is absorbed by a carrier in the small intestine that saturates, so the larger the dose, the smaller the fraction absorbed. Such a drug declares the saturation, and each oral dose is scaled by its own fraction absorbed before it reaches the engine:
+
+```
+fraction absorbed = 1 - Imax × D / (ID50 + D)      D = dose in mg
+```
+
+For gabapentin, Imax is 0.906 and ID50 571 mg (Tran and colleagues, 2017): 0.69 of a 300 mg dose is absorbed, 0.54 of 600 mg and 0.39 of 1200 mg. The drug's bioavailability is then the limit for a very small dose. Once scaled, each dose is an ordinary first-order input, so doses still add, and the drug's page shows the fraction at several doses. What is not represented is saturation shared between doses: two doses entered as separate rows at the same time are each scaled by their own size, not by their sum, and absorption from doses taken close together does not compete.
 
 ## What to look for
 
@@ -30,4 +41,4 @@ Give oxycodone 10 mg PO and turn the plasma line on. The concentration rises ove
 
 ## Limits
 
-Only first-order absorption is supported. Zero-order (constant-rate) absorption, enterohepatic recirculation, and absorption that saturates are not modelled. An inverse Gaussian absorption model is drafted in the repository (`R/ig_absorption.R`) but is not wired in. Oral doses are invisible to Suggest Dosing and to [target-controlled infusion](help:tci), both of which treat them, as a real pump would, as unexpected additions.
+Only first-order absorption is supported, scaled per dose where it saturates. Zero-order (constant-rate) absorption, enterohepatic recirculation, and saturation shared between overlapping doses are not modelled. An inverse Gaussian absorption model is drafted in the repository (`R/ig_absorption.R`) but is not wired in. Oral doses are invisible to Suggest Dosing and to [target-controlled infusion](help:tci), both of which treat them, as a real pump would, as unexpected additions.

@@ -21,13 +21,14 @@ test_that("every narrative belongs to a drug in the library", {
 # steroids, sugammadex and glycopyrrolate are plasma-only by design, because
 # there is no equilibration model to attach (see each drug's header);
 # mannitol is plotted as serum osmolality and has no published ke0
-# (R/drugs_mannitol.R).
+# (R/drugs_mannitol.R); gabapentin has no estimated human equilibration delay
+# yet (GABAPENTIN_TPEAK in R/drugs_gabapentin.R).
 prodrugs <- c(
   "codeine", "tramadol", "prednisone",
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
   "metronidazole", "gentamicin",
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
-  "sugammadex", "glycopyrrolate", "mannitol"
+  "sugammadex", "glycopyrrolate", "mannitol", "gabapentin"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
