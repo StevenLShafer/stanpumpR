@@ -24,13 +24,13 @@ hydrocodone,ng,,,mg PO,mg PO,#2C5FB8,10,30,20,8,8,IV
 oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO",#B5468C,1,4,2,0.8,0.8,IV
 tramadol,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO",#7E57C2,100,600,300,0,0,IV
 desmetramadol,ng,,,,,#26A69A,20,80,40,84,84,IV
-cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#2E8B57,0.5,2,1,0,0,IV
-clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO",#3CB371,1,4,2,0,0,IV
-cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO",#66CDAA,1,4,2,0,0,IV
-ceftriaxone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#20B2AA,10,50,20,0,0,IV
-vancomycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#008B8B,10,20,15,0,0,IV
-metronidazole,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO",#5F9EA0,4,25,8,0,0,IV
-gentamicin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#6B8E23,1,10,8,0,0,IV
+cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#2E8B57,0.5,2,1,0,2,IV
+clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO",#3CB371,1,4,2,0,5.2,IV
+cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO",#66CDAA,1,4,2,0,4.7,IV
+ceftriaxone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#20B2AA,10,50,20,0,15,IV
+vancomycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#008B8B,10,20,15,0,1.4,IV
+metronidazole,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO",#5F9EA0,4,25,8,0,4.2,IV
+gentamicin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#6B8E23,1,10,8,0,2,IV
 hydrocortisone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO",#D2691E,0.2,1,0.5,0,0,IV
 methylprednisolone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO",#CD853F,0.2,1.5,0.5,0,0,IV
 dexamethasone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg IM,mg/kg IM",#B8860B,20,100,50,0,0,IV

@@ -35,10 +35,25 @@
 # Protein binding (about 15%), renal impairment, food and formulation
 # differences.  Doses are cefalexin equivalents of the monohydrate product.
 #
+# TIME UNTIL THRESHOLD: FREE DRUG AT THE MIC
+# ==========================================
+# The default threshold (endCe in drugDefaults_global.csv) is the TOTAL
+# concentration at which FREE cefalexin equals the MIC of 4 mg/L for
+# methicillin-susceptible S. aureus: the MSSA MIC90 (Haynes 2022: MIC50 2,
+# MIC90 4 mg/L, none above 4) and the target of Haynes 2024's free-drug
+# attainment analysis.  Neither CLSI nor EUCAST has a human cefalexin
+# breakpoint for staphylococci (inferred from oxacillin or cefoxitin).
+# Binding is low and linear, about 12-15% (label 10-15%; Singhvi 1977 12.4%
+# by ultrafiltration), so the threshold is MIC / fu = 4 / 0.85 = 4.7 mg/L.
+# See R/antibioticThresholds.R.
+#
 # References
 # ----------
 # Haynes AS et al., Antimicrob Agents Chemother 2024;68:e00182-24.
 #   https://doi.org/10.1128/aac.00182-24
+# Haynes AS et al., Microbiol Spectr 2022;10:e01039-22.
+#   https://doi.org/10.1128/spectrum.01039-22
+# Singhvi SM et al., J Lab Clin Med 1977;89:414-420.  PMID 833477.
 # Ryder et al., Pharmacotherapy 2026. https://doi.org/10.1002/phar.70179
 # -----------------------------------------------------------------------------
 
@@ -85,7 +100,8 @@ cefalexin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC  <- 0
 
   # Band, total mg/L: MICs of 1 to 4 mg/L for the staphylococci and
-  # streptococci cefalexin is used against.  Orientation only.
+  # streptococci cefalexin is used against.  Orientation only: MICs are free
+  # drug, and with 15% binding the matching totals are about 18% higher.
   typical      <- 2
   upperTypical <- 4
   lowerTypical <- 1

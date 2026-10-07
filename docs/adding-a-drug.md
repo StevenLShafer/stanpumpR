@@ -202,7 +202,14 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
-- `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and emergence effect-site level.
+- `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and the "time until threshold"
+  level: the effect-site concentration for a drug with an effect site, the plasma concentration
+  for one without, and `0` for none. For an antibiotic, `endCe` is the plotted concentration at
+  which **free** drug equals the MIC: the MIC itself if the model plots unbound drug, the MIC
+  divided by the free fraction if it plots total drug. Add the antibiotic to
+  `antibioticMicTable()` in `R/antibioticThresholds.R`, which records the organism, MIC, free
+  fraction and sources, feeds the drug's help page, and is checked against this column by
+  `test-antibiotic-thresholds.R`.
 - `Class` — `IV` for an injected or swallowed drug, `gas` for an inhaled agent. The gases
   take a separate simulation path and have no `drugs_*.R` covariate function, so a new drug
   added by this procedure is `IV`.
