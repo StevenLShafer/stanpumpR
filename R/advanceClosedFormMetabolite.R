@@ -244,7 +244,8 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   metaboliteStates <- if (hasCe) {
     recoveryStateSet(timeLine, CemStates, metCoefs$lambda, pending)
   } else {
-    recoveryStateSet(timeLine, CmStates, met$coefs$lambda, pending)
+    recoveryStateSet(timeLine, CmStates, met$coefs$lambda, pending,
+                     horizon = RECOVERY_HORIZON_PLASMA)
   }
 
   # ---- Parent effect site and recovery ----
@@ -305,7 +306,8 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
       states[[4]] <- Cp - p_state_l1 - p_state_l2 - p_state_l3
       lambdas <- c(lambdas, pkSet$ka_PO)
     }
-    recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending)
+    recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending,
+                                       horizon = RECOVERY_HORIZON_PLASMA)
   }
   if (plotRecovery) {
     recovery <- recoveryFromStates(recoveryStates, emerge)

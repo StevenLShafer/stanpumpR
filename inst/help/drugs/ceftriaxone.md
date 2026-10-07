@@ -12,7 +12,7 @@ None in the source. The parameters take the default [fat-free-mass scaling](help
 
 ### Effect site
 
-None; only the plasma concentration is plotted.
+None; only the plasma concentration is plotted. *Time until threshold* is therefore timed on the plasma curve. That curve is **total** ceftriaxone (bound plus free), but it is free drug that acts on the organism, so the threshold is the total concentration at which the **free** concentration equals the MIC. The line shows how long, with no further dose, until free ceftriaxone falls below the MIC. The MIC is **1 mg/L**, the Enterobacterales susceptible breakpoint that CLSI and EUCAST share. Binding is saturable, so the threshold comes from Sanz-Codina's own binding fit in the same six men as the curve: free ceftriaxone reaches 1 mg/L when the total is about **15 mcg/mL** (free fraction 0.065). It depends on how binding is measured and on albumin: equilibrium dialysis would put it nearer 19 to 22 mcg/mL, and at the lower albumin usual in surgical patients it is nearer 13 mcg/mL. See *Time until threshold: free drug at the MIC* above.
 
 ### Where to be careful
 

@@ -37,4 +37,4 @@ Edited thresholds travel with the URL, so a shared simulation reports the same t
 |---|---|---|---|---|---|---|
 | *See each drug's page, or the drug index, for the current values.* | | | | | | |
 
-The thresholds for the intravenous drugs default to their MEAC where they have one, and to the lower end of the typical range otherwise.
+The thresholds for the intravenous drugs default to their MEAC where they have one, and to the lower end of the typical range otherwise. The antibiotics' thresholds are the plasma concentration at which **free** drug equals the MIC for the drug's main target organism. Cefazolin's curve is unbound drug, so its threshold is the MIC itself. The others' curves are total drug, so their thresholds are higher than the MIC, by the inverse of the free fraction. See [Time until threshold](help:models/recovery).

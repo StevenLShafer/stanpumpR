@@ -116,7 +116,8 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
       recoveryStates <- if (ke0 > 0) effectStates else recoveryStateSet(
         timeLine,
         list(p_state_l1, p_state_l2, p_state_l3),
-        c(lambda_1, lambda_2, lambda_3)
+        c(lambda_1, lambda_2, lambda_3),
+        horizon = RECOVERY_HORIZON_PLASMA
       )
 
       recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else rep(0, L)

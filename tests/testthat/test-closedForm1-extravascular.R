@@ -7,14 +7,22 @@
 # an extravascular route, so the drugs here are given a PK event by hand: a
 # second PK set taken from a heavier patient, switched in at 50 minutes.
 #
-# The reference is an independent solution of the same system -- an absorption
-# depot feeding a three-compartment model, amounts carried across the switch --
-# by matrix exponential, which shares no code with the engines.  Writing it
-# exposed a second, older defect: convertState() kept a ONE-compartment
-# model's concentration continuous across a change in V1 instead of its
-# amount.
+# The reference is an independent solution of the same system -- absorption
+# depots feeding a three-compartment model and an effect site, amounts carried
+# across the switch -- by matrix exponential, which shares no code with the
+# engines.  Writing it exposed a second, older defect: convertState() kept a
+# ONE-compartment model's concentration continuous across a change in V1
+# instead of its amount.
 #
 # (Claude Code, 2026-10-07, at the request of Steven L. Shafer; run on R 4.3.3.)
+#
+# A mutation review the same day found that every dose here went by mouth,
+# that the two PK sets never differed in ka, bioavailability or lag, and that
+# no effect-site drug was absorbed across a real change in PK, so changes to
+# which set supplies what, or which routes are processed, went unnoticed.  The
+# reference now carries all three depots and the effect site, and the tests
+# below marked "mutation review" close those gaps.
+# (Claude Code, 2026-10-07; run on R 4.3.3.)
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
@@ -34,6 +42,7 @@ switchedPK <- function(drug, same = FALSE) {
   PK
 }
 switchAt50 <- data.frame(Time = 50, Event = "Switch")
+setsOf <- function(PK) list(PK$PK$default, PK$PK$Switch)
 
 # exp(M) by scaling and squaring a Taylor series; M is small and well scaled.
 expmTaylor <- function(M) {
@@ -45,42 +54,133 @@ expmTaylor <- function(M) {
   E
 }
 
-# Plasma concentration from first principles.  State: depot, central,
-# peripheral 2, peripheral 3 (amounts) and a constant 1 that carries the
-# infusion rate.  Doses here are mg; `scale` converts mg/L to plotted units.
-exactCp <- function(DT, sets, switchAt, times, weight = 70, scale = 1) {
-  setAt <- function(t) if (t < switchAt) sets[[1]] else sets[[2]]
-  sys <- function(s, R) {
-    A <- matrix(0, 5, 5)
-    A[1, 1] <- -s$ka_PO
-    A[2, 1] <-  s$ka_PO
-    A[2, 2] <- -(s$k10 + s$k12 + s$k13)
-    A[2, 3] <-  s$k21; A[3, 2] <- s$k12; A[3, 3] <- -s$k21
-    A[2, 4] <-  s$k31; A[4, 2] <- s$k13; A[4, 4] <- -s$k31
-    A[2, 5] <-  R
-    A
+# The reference, from first principles.  State: the three depots (PO, IM, IN)
+# and the central, second and third compartments, all AMOUNTS; the effect
+# site, a CONCENTRATION obeying dCe/dt = ke0 (Cp - Ce) and so continuous
+# across a change in V1; and a constant 1 that carries the infusion rate.
+#
+# Which PK set supplies what is the engine's stated contract (the header of
+# R/advanceClosedForm1.R), written out again here without its code: ka and
+# ke0 come from the set in force over each step, bioavailability from the set
+# in force when the dose LANDS, the lag from the set in force when it is
+# GIVEN, and a set with no ka for a route (ka = 0) uses the default set's
+# ka, bioavailability and lag for that route.  sets[[1]] is the default set,
+# sets[[2]] the one switched in at `switchAt`.
+#
+# Doses here are mg; `scale` converts mg/L to plotted units.
+# (Extended from the plasma and the oral route alone by Claude Code,
+# 2026-10-07, mutation review.)
+exactRoutes <- c("PO", "IM", "IN")
+
+exactRoute <- function(s, r, sets) {
+  ka <- s[[paste0("ka_", r)]]
+  if (is.null(ka) || ka <= 0) s <- sets[[1]]
+  get <- function(x) if (is.null(s[[x]])) 0 else s[[x]]
+  list(ka = get(paste0("ka_", r)), F = get(paste0("bioavailability_", r)),
+       tlag = get(paste0("tlag_", r)))
+}
+
+exactSystem <- function(s, R, sets) {
+  A <- matrix(0, 8, 8)
+  for (j in 1:3) {
+    ka <- exactRoute(s, exactRoutes[j], sets)$ka
+    A[j, j] <- -ka
+    A[4, j] <-  ka
   }
-  perKg <- ifelse(grepl("kg", DT$Units), weight, 1)
+  A[4, 4] <- -(s$k10 + s$k12 + s$k13)
+  A[4, 5] <-  s$k21; A[5, 4] <- s$k12; A[5, 5] <- -s$k21
+  A[4, 6] <-  s$k31; A[6, 4] <- s$k13; A[6, 6] <- -s$k31
+  A[7, 4] <-  s$ke0 / s$v1; A[7, 7] <- -s$ke0
+  A[4, 8] <-  R
+  A
+}
+
+# Cp and Ce at `times`, and the whole state there.
+exactRun <- function(DT, sets, switchAt, times, weight = 70, scale = 1) {
+  setAt  <- function(t) if (t < switchAt) sets[[1]] else sets[[2]]
+  perKg  <- ifelse(grepl("kg", DT$Units), weight, 1)
   isRate <- grepl("hr", DT$Units)
+  route  <- vapply(DT$Units, function(u) {
+    r <- exactRoutes[vapply(exactRoutes, grepl, logical(1), x = u)]
+    if (length(r) == 0) "" else r
+  }, character(1), USE.NAMES = FALSE)
+  lands <- DT$Time
+  for (d in which(route != ""))
+    lands[d] <- DT$Time[d] + exactRoute(setAt(DT$Time[d]), route[d], sets)$tlag
   rateAt <- function(t) {
     i <- which(isRate & DT$Time <= t)
     if (length(i) == 0) 0 else DT$Dose[max(i)] * perKg[max(i)] / 60
   }
-  breaks <- sort(unique(c(0, DT$Time, switchAt, times)))
-  x <- c(0, 0, 0, 0, 1)
-  out <- setNames(numeric(length(times)), times)
+  breaks <- sort(unique(c(0, DT$Time, lands, switchAt, times)))
+  x <- c(rep(0, 7), 1)
+  n <- length(times)
+  out <- list(Cp = numeric(n), Ce = numeric(n), state = matrix(0, n, 8))
   for (k in seq_along(breaks)) {
     t <- breaks[k]
     s <- setAt(t)
-    for (d in which(DT$Time == t & !isRate)) {
-      if (grepl("PO", DT$Units[d])) x[1] <- x[1] + DT$Dose[d] * perKg[d] * s$bioavailability_PO
-      else x[2] <- x[2] + DT$Dose[d] * perKg[d]
+    for (d in which(lands == t & !isRate)) {
+      amount <- DT$Dose[d] * perKg[d]
+      if (route[d] == "") {
+        x[4] <- x[4] + amount
+      } else {
+        j <- match(route[d], exactRoutes)
+        x[j] <- x[j] + amount * exactRoute(s, route[d], sets)$F
+      }
     }
-    if (t %in% times) out[as.character(t)] <- x[2] / s$v1 * scale
+    for (i in which(times == t)) {
+      out$Cp[i] <- x[4] / s$v1 * scale
+      out$Ce[i] <- x[7] * scale
+      out$state[i, ] <- x
+    }
     if (k < length(breaks))
-      x <- as.vector(expmTaylor(sys(s, rateAt(t)) * (breaks[k + 1] - t)) %*% x)
+      x <- as.vector(expmTaylor(exactSystem(s, rateAt(t), sets) * (breaks[k + 1] - t)) %*% x)
   }
-  unname(out)
+  out
+}
+
+exactCp <- function(...) exactRun(...)$Cp
+
+# Time until threshold by its definition, on the exact solution: give nothing
+# after t, stop any infusion, let the depots go on draining, and find when the
+# effect site (site = "Ce") or the plasma (site = "Cp") comes down through
+# `thr` for the last time, with the PK in force at t throughout -- the
+# engine's own assumption, so it is only compared after the last change in
+# PK.  Stepped by one matrix exponential every `h` minutes out to `horizon`,
+# then refined by uniroot() to far below anything asserted.  Meaningless at a
+# time when a dose has been given but has not begun to be absorbed.
+exactRecovery <- function(DT, sets, switchAt, t, thr, site = "Ce", scale = 1,
+                          horizon = MINS_PER_DAY, h = 1, weight = 70) {
+  x0 <- exactRun(DT[DT$Time <= t, , drop = FALSE], sets, switchAt, t,
+                 weight = weight)$state[1, ]
+  x0[8] <- 0
+  s <- if (t < switchAt) sets[[1]] else sets[[2]]
+  A <- exactSystem(s, 0, sets)
+  read <- function(x) scale * if (site == "Ce") x[7] else x[4] / s$v1
+  E <- expmTaylor(A * h)
+  X <- matrix(0, ceiling(horizon / h) + 1, 8)
+  X[1, ] <- x0
+  for (k in seq_len(nrow(X) - 1)) X[k + 1, ] <- E %*% X[k, ]
+  above <- which(apply(X, 1, read) > thr)
+  if (length(above) == 0) return(0)
+  k <- max(above)
+  if (k == nrow(X)) return(horizon)
+  (k - 1) * h + stats::uniroot(function(u) read(expmTaylor(A * u) %*% X[k, ]) - thr,
+                               c(0, h), tol = 1e-9)$root
+}
+
+# The engine's time until threshold against exactRecovery(), at every point of
+# its own time line from `from` on, so nothing is interpolated.  `from` must be
+# at or after the switch, and after any lag window.  `tolerance` in minutes.
+expectRecoveryExact <- function(w, DT, sets, thr, site, tolerance, from = 50,
+                                scale = 1, label = "") {
+  rows <- which(w$Time >= from)
+  expect_false(anyNA(w$Recovery[rows]), label = paste(label, "recovery missing"))
+  err <- vapply(rows, function(i)
+    w$Recovery[i] - exactRecovery(DT, sets, 50, w$Time[i], thr, site, scale),
+    numeric(1))
+  expect_lt(max(abs(err)), tolerance,
+            label = paste(label, "largest difference in time until threshold, minutes"))
+  invisible(err)
 }
 
 # Engine output at its own time points, so nothing is interpolated.
@@ -89,29 +189,94 @@ engineCp <- function(sim, from = 0) {
   w[w$Time >= from, c("Time", "Plasma")]
 }
 
+# Largest relative error over the points where the reference is not
+# vanishingly small.
+relErr <- function(got, ref, floor = 1e-6) {
+  keep <- ref > max(ref) * floor
+  max(abs(got[keep] - ref[keep]) / ref[keep])
+}
 
-test_that("an oral dose is absorbed, not infused, across a change in PK", {
-  for (drug in c("clindamycin", "hydromorphone")) {
+# Tolerances used below, from what was measured on R 4.3.3:
+#
+#  - Plasma: exact, measured 3e-13 relative; asserted at 1e-8.
+#  - Effect site: advanceClosedForm1() derives it from the plasma curve with
+#    calculateCe(), an approximation (plasma linear or log-linear within each
+#    step), unlike the other engines, which carry its exponential states.
+#    The error is largest in the first minute after a dose (8%) and decays;
+#    from the switch on it measured at most 9e-4 relative for hydromorphone,
+#    so the effect site is compared from the switch on, at 3e-3.
+#  - Time until threshold timed on the PLASMA (no effect site) is exact but
+#    for recoveryCalc()'s uniroot() tolerance of 0.01 min: measured at most
+#    2.4e-3 min; asserted at 0.02 min.
+#  - Timed on the EFFECT SITE it inherits calculateCe()'s error, damped over
+#    the hours to the crossing: measured at most 0.016 min after a switch,
+#    0.019 with ka on an eigenvalue and 0.024 just after a lagged dose lands;
+#    asserted at 0.05 min.
+
+
+test_that("an oral, intramuscular or intranasal dose is absorbed, not infused, across a change in PK", {
+  # Each route of hydromorphone has its own ka and bioavailability (PO 0.01 /
+  # 0.6, IM 0.0128 / 1, IN 0.0149 / 0.55), so a route that borrowed another's
+  # absorption would show.  Until the mutation review only "mg PO" was run.
+  cases <- list(c("clindamycin", "PO"), c("hydromorphone", "PO"),
+                c("hydromorphone", "IM"), c("hydromorphone", "IN"))
+  for (case in cases) {
+    drug <- case[1]
+    unit <- paste("mg", case[2])
     scale <- if (drug == "hydromorphone") 1000 else 1      # ng/mL from mg/L
     mg    <- if (drug == "hydromorphone") c(4, 1, 0.003, 3, 0) else c(600, 300, 0.5, 450, 0)
     DT <- data.frame(Drug = drug, Time = c(0, 20, 30, 50, 100), Dose = mg,
-                     Units = c("mg PO", "mg", "mg/kg/hr", "mg PO", "mg/kg/hr"))
+                     Units = c(unit, "mg", "mg/kg/hr", unit, "mg/kg/hr"))
     PK  <- switchedPK(drug)
     sim <- simCpCe(DT, switchAt50, PK, 300, FALSE)
     got <- engineCp(sim)
-    # Every engine point but the instant of the switch, where the step into it
-    # runs on the new eigenvalues for 0.01 minutes (an older approximation,
-    # good to 1e-4 here and untouched by this change).
-    got <- got[abs(got$Time - 50) > 1e-9, ]
-    ref <- exactCp(DT, list(PK$PK$default, PK$PK$Switch), 50, got$Time, scale = scale)
-    keep <- ref > max(ref) * 1e-3
-    expect_lt(max(abs(got$Plasma[keep] - ref[keep]) / ref[keep]), 2e-3,
-              label = paste(drug, "largest relative error against the exact solution"))
-    # And well after the switch, where nothing approximate remains
-    late <- got$Time > 60 & keep
-    expect_lt(max(abs(got$Plasma[late] - ref[late]) / ref[late]), 2e-4,
-              label = paste(drug, "after the switch"))
+    ref <- exactCp(DT, setsOf(PK), 50, got$Time, scale = scale)
+    # Exact, at every point including the switch.  (The step into a switch
+    # used to decay states with the new set's eigenvalues, a 2e-4 error that
+    # persisted; fixed 2026-10-07.)
+    expect_lt(relErr(got$Plasma, ref), 1e-8,
+              label = paste(drug, unit, "largest relative error against the exact solution"))
   }
+})
+
+
+test_that("two depots at once, and a third route at the switch, are all absorbed", {
+  # Oral and intramuscular together at the start, intranasal exactly at the
+  # switch: three depots draining at three rates, each carried across the
+  # change in PK.  A route left unprocessed once another has been would show
+  # here.  (Claude Code, 2026-10-07, mutation review.)
+  PK <- switchedPK("hydromorphone")
+  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 0, 50), Dose = c(4, 1, 2),
+                   Units = c("mg PO", "mg IM", "mg IN"))
+  w   <- simCpCe(DT, switchAt50, PK, 300, FALSE)$wide
+  ref <- exactRun(DT, setsOf(PK), 50, w$Time, scale = 1000)
+  expect_lt(relErr(w$Plasma, ref$Cp), 1e-8, label = "plasma, largest relative error")
+  after <- w$Time >= 50
+  expect_lt(max(abs(w$"Effect Site"[after] / ref$Ce[after] - 1)), 3e-3,
+            label = "effect site from the switch on, largest relative error")
+})
+
+
+test_that("ka and bioavailability come from the set in force over the step and when the dose lands", {
+  # Until the mutation review both PK sets always carried the same ka and F,
+  # so nothing showed which set supplies them.  Here the switched set absorbs
+  # three times as fast and has half the bioavailability, with one dose before
+  # the switch and one exactly at it.  The first dose must drain at the old ka
+  # up to 50 minutes (including the 0.01-minute step into the switch) and at
+  # the new ka after; the second must take the NEW set's F; and the time until
+  # threshold at the switch instant itself must assume the new ka.
+  # (Claude Code, 2026-10-07, mutation review.)
+  PK <- switchedPK("clindamycin")
+  PK$PK$Switch$ka_PO <- 3 * PK$PK$default$ka_PO
+  PK$PK$Switch$bioavailability_PO <- 0.5
+  DT <- data.frame(Drug = "clindamycin", Time = c(0, 50), Dose = 600, Units = "mg PO")
+  w <- simCpCe(DT, switchAt50, PK, 480, TRUE)$wide
+  expect_lt(relErr(w$Plasma, exactCp(DT, setsOf(PK), 50, w$Time)), 1e-8,
+            label = "plasma, largest relative error")
+  expect_true(50 %in% w$Time)
+  expect_gt(w$Recovery[w$Time == 50], 60)
+  expectRecoveryExact(w, DT, setsOf(PK), PK$endCe, "Cp", 0.02,
+                      label = "clindamycin, switched ka and F")
 })
 
 
@@ -135,48 +300,52 @@ test_that("with the same PK on both sides of an event it matches the oral engine
     expect_equal(b$Plasma[match(t, b$Time)], a$Plasma[match(t, a$Time)],
                  tolerance = 1e-10, label = paste(drug, "plasma"))
     # Time until threshold.  The effect site in this engine comes from
-    # calculateCe(), an approximation the oral engine no longer uses, so the
-    # times agree to a fraction of a minute rather than exactly.
-    expect_lt(max(abs(one$equiSpace$Recovery - two$equiSpace$Recovery)), 1,
+    # calculateCe(), an approximation the oral engine no longer uses, so for
+    # hydromorphone the times agree closely rather than exactly; the plotted
+    # grid also interpolates across two different time lines.  The largest
+    # difference measured was 0.008 min (hydromorphone; cefalexin 0.007 from
+    # the interpolation alone), so 0.03 min.  It was 1 min, which a 125-fold
+    # error would have passed.  (Tightened 2026-10-07, mutation review.)
+    expect_lt(max(abs(one$equiSpace$Recovery - two$equiSpace$Recovery)), 0.03,
               label = paste(drug, "time until threshold, minutes"))
+    # At the points the two time lines share nothing is interpolated: exact
+    # for the drugs timed on their plasma (measured 3e-13 min).
+    if (drug != "hydromorphone")
+      expect_lt(max(abs(b$Recovery[match(t, b$Time)] - a$Recovery[match(t, a$Time)])), 1e-6,
+                label = paste(drug, "time until threshold at shared points, minutes"))
   }
 })
 
 
 test_that("time until threshold counts drug still being absorbed after a change in PK", {
-  # Clindamycin is timed on its plasma (no effect site).  Checked after the
-  # switch, so that "the PK in force now" is also the PK the brute-force run
-  # goes on using.
+  # Clindamycin is timed on its plasma (no effect site).  Checked from the
+  # switch on, so that "the PK in force now" is also the PK the reference goes
+  # on using, at every point of the engine's own time line against the exact
+  # solution.  (Until the mutation review this was checked against the engine
+  # itself, interpolated log-linearly across its sparse late points, to half a
+  # minute.)  Two thresholds: 2 mg/L, which both doses cross, and 6 mg/L, which
+  # only the second does.
   PK <- switchedPK("clindamycin")
-  PK$endCe <- 2
   DT <- data.frame(Drug = "clindamycin", Time = c(0, 120), Dose = c(600, 600),
                    Units = "mg PO")
-  sim <- simCpCe(DT, switchAt50, PK, 480, TRUE)
-  for (t in c(60, 100, 125, 150, 300)) {
-    es <- sim$equiSpace
-    i  <- max(which(es$Time <= t + 1e-9))
-    at <- es$Time[i]
-    d  <- DT[DT$Time <= at, , drop = FALSE]
-    r  <- simCpCe(d, switchAt50, PK, at + 1440, FALSE)$wide
-    r  <- r[r$Time >= at, ]
-    above <- which(r$Plasma > PK$endCe)
-    # Log-linear between the bracketing points: hours out, the engine's points
-    # are far apart and the decline is exponential, so a straight line would
-    # cross minutes late.
-    brute <- if (length(above) == 0) 0 else {
-      j <- max(above)
-      r$Time[j] + log(r$Plasma[j] / PK$endCe) / log(r$Plasma[j] / r$Plasma[j + 1]) *
-        (r$Time[j + 1] - r$Time[j]) - at
-    }
-    expect_lt(abs(es$Recovery[i] - brute), 0.5,
-              label = paste("clindamycin at", round(at, 1), "min: difference in minutes"))
+  for (thr in c(2, 6)) {
+    PK$endCe <- thr
+    w <- simCpCe(DT, switchAt50, PK, 480, TRUE)$wide
+    expectRecoveryExact(w, DT, setsOf(PK), thr, "Cp", 0.02,
+                        label = paste("clindamycin, threshold", thr))
   }
-  # Straight after the second dose the plasma is still low, but the drug in
-  # the gut is going to take it over the threshold.
-  es <- sim$equiSpace
-  early <- es[es$Time > 121 & es$Time < 130, ]
-  expect_gt(nrow(early), 0)
+  # Straight after the second dose the plasma is still below 6 mg/L, but the
+  # drug in the gut is going to take it over the threshold: a time, not zero.
+  # Until 2026-10-07 this was asserted at a threshold of 2 mg/L, which the
+  # plasma (4 to 4.6 mg/L there) was already above, so it held whether or not
+  # the depot was counted.  (Mutation review.)
+  early <- w[w$Time > 120 & w$Time <= 130, ]
+  expect_true(all(early$Plasma < PK$endCe))
+  expect_gt(nrow(early), 5)
   expect_true(all(early$Recovery > 60))
+  # Just before it, at the same plasma, the first dose's remnant in the gut
+  # cannot take it to 6 mg/L: none.
+  expect_equal(w$Recovery[max(which(w$Time < 120))], 0)
 })
 
 
@@ -192,6 +361,101 @@ test_that("an absorption lag is applied, and masked, across a change in PK", {
   # Given but not yet absorbing: no time, rather than zero
   expect_true(all(is.na(w$Recovery[w$Time >= 60 & w$Time < 90])))
   expect_false(anyNA(w$Recovery[w$Time >= 90]))
+})
+
+
+test_that("an absorption lag is taken from the set in force when the dose is GIVEN", {
+  # The test above puts the lag in the set that is in force both when the dose
+  # is given and from then on, so it cannot tell "the set in force when given"
+  # from "the last set" or "the set in force when it lands".  Here the default
+  # set has a 30-minute lag and the switched set none, and the second dose is
+  # given at 40 minutes, under the default set, and so lands at 70, after the
+  # switch.  (Claude Code, 2026-10-07, mutation review.)
+  PK <- switchedPK("clindamycin")
+  PK$endCe <- 2
+  PK$PK$default$tlag_PO <- 30
+  PK$PK$Switch$tlag_PO  <- 0
+  DT <- data.frame(Drug = "clindamycin", Time = c(0, 40), Dose = 600, Units = "mg PO")
+  w <- simCpCe(DT, switchAt50, PK, 480, TRUE)$wide
+  expect_true(all(w$Plasma[w$Time < 30] == 0))
+  expect_lt(relErr(w$Plasma, exactCp(DT, setsOf(PK), 50, w$Time)), 1e-8,
+            label = "plasma, largest relative error")
+  # Not computable from exactly the instant each dose is given until it starts
+  # absorbing, and computable everywhere else -- including the point just
+  # before the second dose is given, when the first is in and above.
+  pending <- w$Time < 30 | (w$Time >= 40 & w$Time < 70)
+  expect_true(all(c(40, 70) %in% w$Time))
+  expect_true(all(is.na(w$Recovery[pending])))
+  expect_false(anyNA(w$Recovery[!pending]))
+  expect_gt(w$Recovery[max(which(w$Time < 40))], 60)
+  expectRecoveryExact(w, DT, setsOf(PK), 2, "Cp", 0.02, from = 70,
+                      label = "clindamycin, after the lagged dose lands")
+})
+
+
+test_that("an effect-site drug absorbed across a real change in PK", {
+  # Hydromorphone's effect site, after oral and intramuscular doses, across a
+  # switch to a heavier patient's disposition (and so a different ke0), with a
+  # dose exactly at the switch and one after it.  Until the mutation review no
+  # effect-site drug was absorbed across a real change in PK at all.  The
+  # effect site, and the time until it falls to the threshold, are compared
+  # with the exact solution from the switch on, within the tolerances measured
+  # above for calculateCe().  (Claude Code, 2026-10-07.)
+  PK <- switchedPK("hydromorphone")
+  for (route in c("PO", "IM")) {
+    DT <- data.frame(Drug = "hydromorphone", Time = c(0, 50, 120),
+                     Dose = if (route == "PO") c(4, 2, 2) else c(2, 1, 1),
+                     Units = paste("mg", route))
+    w   <- simCpCe(DT, switchAt50, PK, 300, TRUE)$wide
+    ref <- exactRun(DT, setsOf(PK), 50, w$Time, scale = 1000)
+    expect_lt(relErr(w$Plasma, ref$Cp), 1e-8, label = paste(route, "plasma"))
+    after <- w$Time >= 50
+    expect_lt(max(abs(w$"Effect Site"[after] / ref$Ce[after] - 1)), 3e-3,
+              label = paste(route, "effect site from the switch on, largest relative error"))
+    expect_gt(min(w$Recovery[after]), 60)
+    expectRecoveryExact(w, DT, setsOf(PK), PK$endCe, "Ce", 0.05, scale = 1000,
+                        label = paste("hydromorphone", route))
+  }
+})
+
+
+test_that("ka equal to an eigenvalue of the switched set does not wreck the time until threshold", {
+  # The depot's term in the recovery states divides by lambda_i - ka, so the
+  # engine nudges ka by a part in a million when they coincide.  Here the
+  # switched set's ka_PO is set to its own lambda_2 and the answer is compared
+  # with the exact solution, which has no such singularity.
+  # (Claude Code, 2026-10-07, mutation review.)
+  PK <- switchedPK("hydromorphone")
+  PK$PK$Switch$ka_PO <- PK$PK$Switch$lambda_2
+  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 60), Dose = 4, Units = "mg PO")
+  w <- simCpCe(DT, switchAt50, PK, 300, TRUE)$wide
+  expect_lt(relErr(w$Plasma, exactCp(DT, setsOf(PK), 50, w$Time, scale = 1000)), 1e-8,
+            label = "plasma, largest relative error")
+  expectRecoveryExact(w, DT, setsOf(PK), PK$endCe, "Ce", 0.05, scale = 1000,
+                      label = "hydromorphone, ka on lambda_2")
+})
+
+
+test_that("a lagged dose of an effect-site drug is masked across a change in PK", {
+  # The effect-site branch of the engine's recovery carries its own mask; the
+  # lag tests above are all on clindamycin, which takes the plasma branch.  An
+  # oral dose at the start keeps the time nonzero, so that an unmasked answer
+  # would be a plausible number rather than zero.
+  # (Claude Code, 2026-10-07, mutation review.)
+  PK <- switchedPK("hydromorphone")
+  PK$PK$Switch$tlag_IM <- 15
+  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 70), Dose = c(4, 1),
+                   Units = c("mg PO", "mg IM"))
+  w <- simCpCe(DT, switchAt50, PK, 300, TRUE)$wide
+  expect_lt(relErr(w$Plasma, exactCp(DT, setsOf(PK), 50, w$Time, scale = 1000)), 1e-8,
+            label = "plasma, largest relative error")
+  pending <- w$Time >= 70 & w$Time < 85
+  expect_true(all(c(70, 85) %in% w$Time))
+  expect_true(all(is.na(w$Recovery[pending])))
+  expect_false(anyNA(w$Recovery[!pending]))
+  expect_gt(w$Recovery[max(which(w$Time < 70))], 60)
+  expectRecoveryExact(w, DT, setsOf(PK), PK$endCe, "Ce", 0.05, scale = 1000, from = 85,
+                      label = "hydromorphone, after the lagged dose lands")
 })
 
 
@@ -211,4 +475,46 @@ test_that("depotInput is continuous through lambda == ka", {
   expect_equal(depotInput(0.05 * (1 + 1e-7), ka, G, dt), exact, tolerance = 1e-6)
   expect_equal(depotInput(0.2, ka, 0, dt), 0)
   expect_equal(depotInput(0.2, 0, G, dt), 0)
+})
+
+
+test_that("an event set that leaves a route out keeps the default set's absorption", {
+  # Same disposition on both sides, but the event set carries no oral route:
+  # the gut must go on absorbing as before, not freeze.
+  PK <- switchedPK("clindamycin", same = TRUE)
+  PK$PK$Switch$ka_PO <- 0
+  PK$PK$Switch$bioavailability_PO <- 0
+  DT <- data.frame(Drug = "clindamycin", Time = c(0, 60), Dose = 600, Units = "mg PO")
+  a <- simCpCe(DT, noEvents, pkWith("clindamycin"), 300, FALSE)$wide
+  b <- simCpCe(DT, switchAt50, PK, 300, FALSE)$wide
+  t <- intersect(a$Time, b$Time)
+  expect_equal(b$Plasma[match(t, b$Time)], a$Plasma[match(t, a$Time)], tolerance = 1e-10)
+
+  # Its lag too: a stray tlag on a set without the route is not applied.  The
+  # 60-minute dose is given under the event set and must start at once.
+  PK$PK$Switch$tlag_PO <- 45
+  c2 <- simCpCe(DT, switchAt50, PK, 300, FALSE)$wide
+  t <- intersect(a$Time, c2$Time)
+  expect_equal(c2$Plasma[match(t, c2$Time)], a$Plasma[match(t, a$Time)], tolerance = 1e-10)
+})
+
+
+test_that("ka equal to ke0 does not wreck the time until threshold", {
+  PK <- switchedPK("hydromorphone", same = TRUE)
+  for (ev in names(PK$PK)) PK$PK[[ev]]$ka_PO <- PK$PK[[ev]]$ke0
+  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 8, Units = "mg PO")
+  w <- simCpCe(DT, switchAt50, PK, 480, TRUE)$wide
+  expect_true(all(is.finite(w$Recovery)))
+  expect_gt(max(w$Recovery), 60)
+})
+
+
+test_that("a dose its lag pushes past the end of the run leaves no stray points", {
+  PK <- switchedPK("clindamycin")
+  PK$PK$Switch$tlag_PO <- 30
+  PK$endCe <- 2
+  DT <- data.frame(Drug = "clindamycin", Time = c(0, 380), Dose = 600, Units = "mg PO")
+  w <- simCpCe(DT, switchAt50, PK, 400, TRUE)$wide
+  expect_lte(max(w$Time), 400)
+  expect_gt(w$Plasma[nrow(w)], 0)
 })

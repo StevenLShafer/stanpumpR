@@ -59,10 +59,14 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # Absorption lags move the dose later, using the lag of the PK set in force
   # when the dose was given.
   givenAt <- dose$Time
+  lagOf <- function(set, r) {
+    if (pkField(set, paste0("ka_", r)) <= 0) set <- pkSets[[PK_EVENT_DEFAULT]]
+    pkField(set, paste0("tlag_", r))
+  }
   for (r in routes)
   {
     for (k in which(dose[[r]]))
-      dose$Time[k] <- dose$Time[k] + pkField(pkSets[[eventAt(givenAt[k])]], paste0("tlag_", r))
+      dose$Time[k] <- dose$Time[k] + lagOf(pkSets[[eventAt(givenAt[k])]], r)
   }
 
   # Create timeline
@@ -76,7 +80,10 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   timeLine <- sort(unique(c(0, dose$Time, events$Time, events$Time - 0.01,
                             dose$Time[dose$Bolus | extravascular] - 0.01,
                             givenAt[givenAt < dose$Time], maximum)))
-  timeLine <- timeLine[timeLine >=0]
+  # Nothing past the end of the run: the event segments stop at maximum, so a
+  # point beyond it -- a dose its lag pushes past the end -- would never be
+  # advanced.
+  timeLine <- timeLine[timeLine >= 0 & timeLine <= maximum]
 
   # Fill in gaps using exponentially decreasing amounts
   gapStart <- timeLine[1:length(timeLine)-1]
@@ -139,13 +146,18 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
       p_coef_infusion_l2 = purrr::map_dbl(pkSets, "p_coef_infusion_l2"),
       p_coef_infusion_l3 = purrr::map_dbl(pkSets, "p_coef_infusion_l3")
     ))
-  # Absorption, which not every PK set carries
+  # Absorption, which not every PK set carries.  An event set that leaves a
+  # route out (a bypass set fitted to intravenous data, say) does not stop the
+  # gut absorbing: the route keeps the default set's ka and bioavailability.
   for (r in routes)
   {
-    parameters[[paste0("ka_", r)]] <-
-      vapply(pkSets, pkField, numeric(1), name = paste0("ka_", r))
-    parameters[[paste0("bioavailability_", r)]] <-
-      vapply(pkSets, pkField, numeric(1), name = paste0("bioavailability_", r))
+    ka  <- vapply(pkSets, pkField, numeric(1), name = paste0("ka_", r))
+    bio <- vapply(pkSets, pkField, numeric(1), name = paste0("bioavailability_", r))
+    missing <- ka <= 0
+    ka[missing]  <- ka[[PK_EVENT_DEFAULT]]
+    bio[missing] <- bio[[PK_EVENT_DEFAULT]]
+    parameters[[paste0("ka_", r)]] <- ka
+    parameters[[paste0("bioavailability_", r)]] <- bio
   }
 
   #Set up time varying parameters
@@ -186,10 +198,16 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   p_coef_infusion_l2   <- parameters[infusionpkLine, "p_coef_infusion_l2"]
   p_coef_infusion_l3   <- parameters[infusionpkLine, "p_coef_infusion_l3"]
 
-  # Vectorize calculations
-  l1_dt <- exp(-lambda_1 * dt)
-  l2_dt <- exp(-lambda_2 * dt)
-  l3_dt <- exp(-lambda_3 * dt)
+  # Vectorize calculations.  The decay over the step INTO a point is that of
+  # the PK set in force over the step, the same set the infusion and depot
+  # increments use (infusionpkLine).  It used to be the set in force AT the
+  # point, which for the 0.01-minute step into an event decayed states still
+  # in the old set's coordinates with the new set's eigenvalues, an error of
+  # about 2e-4 that convertState() then carried for the rest of the run.
+  # (Found by review against a matrix-exponential solution, 2026-10-07.)
+  l1_dt <- exp(-parameters[infusionpkLine, "lambda_1"] * dt)
+  l2_dt <- exp(-parameters[infusionpkLine, "lambda_2"] * dt)
+  l3_dt <- exp(-parameters[infusionpkLine, "lambda_3"] * dt)
 
   p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
   p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
@@ -276,7 +294,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # it; see the same guard in advanceClosedForm0().
   hasCe <- any(ke0 > 0)
   Ce <- if (hasCe) {
-    calculateCe(Cp, ke0, dt, L)
+    calculateCe(Cp, parameters[infusionpkLine, "ke0"], dt, L)
   } else {
     rep(NA_real_, L)
   }
@@ -326,10 +344,11 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     for (r in names(depot))
     {
       ka <- parameters[pkLine, paste0("ka_", r)]
-      # A sum of exponentials cannot carry lambda_i == ka exactly (the term is
-      # then t exp(-ka t)); a relative nudge of 1e-6 moves the answer by far
-      # less than anything plotted.
-      ka <- ifelse(apply(abs(lam - ka) < 1e-9 * pmax(ka, 1e-12), 1, any), ka * (1 + 1e-6), ka)
+      # A sum of exponentials cannot carry lambda_i == ka, or ke0 == ka, exactly
+      # (the term is then t exp(-ka t)); a relative nudge of 1e-6 moves the
+      # answer by far less than anything plotted.
+      near <- abs(cbind(lam, ke0) - ka) < 1e-9 * pmax(ka, 1e-12)
+      ka <- ifelse(apply(near, 1, any), ka * (1 + 1e-6), ka)
       shift <- b * ka * depot[[r]] / (lam - ka)
       shift[!is.finite(shift)] <- 0
       P   <- cbind(P - shift, rowSums(shift))
@@ -343,7 +362,8 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
                                          pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine))
     } else {
       recoveryStates <- recoveryStateSet(timeLine, P, lam,
-                                         pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine))
+                                         pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine),
+                                         horizon = RECOVERY_HORIZON_PLASMA)
     }
     recovery <- recoveryFromStates(recoveryStates, emerge)
   } else {

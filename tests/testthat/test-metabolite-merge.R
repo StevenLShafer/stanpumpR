@@ -436,7 +436,7 @@ test_that("a metabolite drug with no effect site is timed on its plasma", {
                             drugs, 1440, TRUE)
 
   expect_equal(drugs$morphine$formedFrom, "codeine")
-  expect_gt(drugs$morphine$endCe, 0)      # a threshold alone must not suffice
+  expect_gt(drugs$morphine$endCe, 0)      # morphine's shipped threshold
   expect_true(all(is.na(drugs$morphine$wide$"Effect Site")))
   expect_gt(max(drugs$morphine$wide$Plasma), 0)
 
@@ -448,18 +448,41 @@ test_that("a metabolite drug with no effect site is timed on its plasma", {
                tolerance = 1e-9)
   expect_false(anyNA(drugs$morphine$wide$Recovery))
 
-  # With the threshold at half the formed peak, the time at the peak is the
-  # time until the plasma comes back down through it.
+  # With the threshold at half the formed peak, the time is the time until the
+  # formed plasma comes back down through it.  Checked by simulating the parent
+  # to the instant the row reports and reading the formed plasma at the last
+  # point, which is always the end of the run: it must be above the threshold
+  # 0.02 min before that instant and below it 0.02 min after.  recoveryCalc()
+  # solves to uniroot()'s 0.01 min; the largest error measured here was 3e-4
+  # min.  Checked on the way up, at the peak and on the way down.
+  #
+  # The reference used to be the last point of the row's own time line above
+  # the threshold, with one step of that line as the tolerance.  Out there the
+  # steps are 68 minutes, and timing the formed plasma 20% too fast, a
+  # 52-minute error, passed.  (Claude Code, 2026-10-07, mutation review.)
   w <- drugs$morphine$wide
   drugs$morphine$endCe <- max(w$Plasma) / 2
   drugs <- processdoseTable(DT, data.frame(Time = numeric(0), Event = character(0)),
                             drugs, 1440, TRUE)
   w <- drugs$morphine$wide
+  thr <- drugs$morphine$endCe
+  formedAt <- function(u) {
+    m <- simCpCe(DT, data.frame(Time = numeric(0), Event = character(0)),
+                 drugs$codeine, u, FALSE)$metaboliteSeries
+    m$Cp[nrow(m)]
+  }
   peak <- which.max(w$Plasma)
-  down <- max(which(w$Plasma > drugs$morphine$endCe))
-  expect_gt(w$Recovery[peak], 0)
-  expect_lt(abs(w$Recovery[peak] - (w$Time[down] - w$Time[peak])),
-            w$Time[down + 1] - w$Time[down])
+  # The same curve the row plots
+  expect_equal(formedAt(w$Time[peak]), w$Plasma[peak], tolerance = 1e-12)
+  for (i in c(5, 10, 20, peak, peak + 5)) {
+    expect_gt(w$Recovery[i], 0)
+    at <- w$Time[i] + w$Recovery[i]
+    expect_gt(formedAt(at - 0.02), thr,
+              label = paste("formed plasma just before the instant reported at", round(w$Time[i], 1)))
+    expect_lt(formedAt(at + 0.02), thr,
+              label = paste("formed plasma just after the instant reported at", round(w$Time[i], 1)))
+  }
   # And nothing once it is below for good
+  down <- max(which(w$Plasma > thr))
   expect_true(all(w$Recovery[w$Time > w$Time[down + 1]] == 0))
 })

@@ -299,3 +299,42 @@ test_that("a metabolite with no effect site carries plasma states", {
   expect_false(is.null(formed))
   expect_equal(pmax(rowSums(formed$state), 0), out$CpMetabolite, tolerance = 1e-9)
 })
+
+
+test_that("a lagged parent dose masks the formed states as well as its own", {
+  # A parent dose given but not yet absorbing leaves out the metabolite it is
+  # certain to form, so the formed contribution has to carry the mask too, in
+  # both of its branches: effect-site states when the metabolite has an effect
+  # site (morphine as shipped), plasma states when it has none.  Nothing tested
+  # the plasma branch.  No drug in the library has a lag, so codeine is given
+  # a 20-minute one by hand, and a second dose given while the first is well
+  # under way, so that an unmasked answer would be a plausible time rather
+  # than zero.  The thresholds are a quarter of each curve's peak.
+  # (Claude Code, 2026-10-07, mutation review.)
+  PK <- getDrugPK("codeine", 70, 171, 50, "male", getDrugDefaults("codeine"))
+  pkSet <- PK$PK$default
+  pkSet$tlag_PO <- 20
+  dose <- data.frame(Drug = "codeine", Time = c(0, 120), Dose = 60000, Units = "mg PO",
+                     Bolus = FALSE, PO = TRUE, IM = FALSE, IN = FALSE)
+  for (metKe0 in c(pkSet$metabolite$ke0, 0)) {
+    pkSet$metabolite$ke0 <- metKe0
+    label <- if (metKe0 > 0) "formed effect site" else "formed plasma"
+    base <- advanceClosedFormMetabolite(dose, pkSet, 480, FALSE, 0)
+    out  <- advanceClosedFormMetabolite(dose, pkSet, 480, TRUE, max(base$Cp) / 4)
+    pending <- out$Time < 20 | (out$Time >= 120 & out$Time < 140)
+    expect_true(all(c(0, 20, 120, 140) %in% out$Time))
+
+    # The parent's own time, on its plasma
+    expect_true(all(is.na(out$Recovery[pending])), label = paste(label, ": parent masked"))
+    expect_false(anyNA(out$Recovery[!pending]))
+
+    # The formed contribution's
+    formed <- attr(out, "metaboliteRecoveryStates")
+    expect_identical(formed$pending, pending, label = paste(label, "mask"))
+    curve <- if (metKe0 > 0) out$CeMetabolite else out$CpMetabolite
+    rec <- recoveryFromStates(formed, max(curve) / 4)
+    expect_true(all(is.na(rec[pending])), label = paste(label, ": masked"))
+    expect_false(anyNA(rec[!pending]))
+    expect_gt(rec[max(which(out$Time < 120))], 60)
+  }
+})

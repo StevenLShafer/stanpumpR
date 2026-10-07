@@ -16,7 +16,7 @@ Weight, as allometry: volumes linear, clearance to the 0.75 power, on the fat-fr
 
 ### Effect site
 
-None; only the plasma concentration is plotted. The shaded band (1 to 4 mcg/mL) spans the MICs of the staphylococci and streptococci cefalexin is used against.
+None; only the plasma concentration is plotted. The shaded band (1 to 4 mcg/mL total) spans the MICs of the staphylococci and streptococci cefalexin is used against, for orientation; MICs are free drug, and the matching total concentrations are about 18 per cent higher. *Time until threshold* is timed on the plasma curve. That curve is **total** cefalexin (bound plus free), but it is free drug that acts on the organism, so the threshold is the total concentration at which the **free** concentration equals the MIC. The line shows how long, with no further dose, until free cefalexin falls below the MIC. The MIC is **4 mg/L**, the MIC90 of methicillin-susceptible *S. aureus* (Haynes and colleagues, *Microbiol Spectr* 2022;10:e01039-22). Cefalexin is only 10 to 15 per cent bound, so with a free fraction of 0.85 the threshold is 4.7 mcg/mL total. See *Time until threshold: free drug at the MIC* above.
 
 ### Where to be careful
 

@@ -51,12 +51,37 @@
 # range because that is what is read off a concentration plot; the AUC is
 # the better target and can be computed from the curve.
 #
+# TIME UNTIL THRESHOLD: FREE DRUG AT THE MIC
+# ==========================================
+# The default threshold (endCe in drugDefaults_global.csv) is the TOTAL
+# concentration at which FREE vancomycin equals the MIC of 1 mg/L for
+# S. aureus, MRSA included -- the modal MIC and MIC90 for MSSA and MRSA alike,
+# and the MIC the Rybak consensus target assumes.  Binding is linear at
+# these concentrations, so the threshold is MIC / fu = 1 / 0.70 = 1.4 mg/L.
+#
+# fu = 0.70 is from Dejaco 2026, 706 samples from 228 adult in-patients (ICU
+# and non-ICU, surgical wards included) by ultrafiltration at 37 C and pH
+# 7.4: mean 0.722 (range 0.53-0.93), independent of total concentration
+# (3.9-57 mg/L), albumin and total protein, and 0.725 in spiked healthy
+# serum; the authors recommend 0.70 for clinical use.  Stove 2015 found 0.725
+# by equilibrium dialysis.  The label's "about 55% bound" comes from
+# ultrafiltration at room temperature or high g-force, which overstates
+# binding.  Some LC-MS/MS series report a free fraction near 0.46 with very
+# wide scatter (Li 2021: 0.02-0.99), which would put the threshold near 2.2.  See R/antibioticThresholds.R.  (Free fraction 0.70 confirmed by
+# Steven L. Shafer, 2026-10-07.)
+#
 # References
 # ----------
 # Thomson AH et al., J Antimicrob Chemother 2009;63:1050-1057.
 #   https://doi.org/10.1093/jac/dkp085
 # Rybak MJ et al., Am J Health Syst Pharm 2020;77:835-864.
 #   https://doi.org/10.1093/ajhp/zxaa036
+# Dejaco A et al., Antimicrob Agents Chemother 2026;70:e01593-25.
+#   https://doi.org/10.1128/aac.01593-25
+# Stove V et al., Ther Drug Monit 2015;37:180-187.
+#   https://doi.org/10.1097/FTD.0000000000000122
+# Diekema DJ et al., Open Forum Infect Dis 2019;6(Suppl 1):S47-S53.
+#   https://doi.org/10.1093/ofid/ofy270
 # -----------------------------------------------------------------------------
 
 #' Vancomycin pharmacokinetics

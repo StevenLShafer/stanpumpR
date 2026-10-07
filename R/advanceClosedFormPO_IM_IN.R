@@ -179,7 +179,8 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
         list(p_state_l1, p_state_l2, p_state_l3,
              p_state_ka_PO, p_state_ka_IM, p_state_ka_IN),
         c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN),
-        pending
+        pending,
+        horizon = RECOVERY_HORIZON_PLASMA
       )
 
       recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else doseNA

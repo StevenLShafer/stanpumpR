@@ -8,7 +8,7 @@ Clearance follows the CKD-EPI 2009 eGFR de-indexed by Du Bois body surface area,
 
 ### Effect site
 
-None; only the plasma concentration is plotted.
+None; only the plasma concentration is plotted. *Time until threshold* is therefore timed on the plasma curve. That curve is **total** gentamicin (bound plus free), but it is free drug that acts on the organism, so the threshold is the total concentration at which the **free** concentration equals the MIC. The line shows how long, with no further dose, until free gentamicin falls below the MIC. The MIC is **2 mg/L**, the susceptible breakpoint for *E. coli* and the other Enterobacterales that CLSI (since 2023) and EUCAST share. Gentamicin is essentially unbound in serum, so the threshold is the MIC itself. See *Time until threshold: free drug at the MIC* above.
 
 ### Typical concentrations
 
