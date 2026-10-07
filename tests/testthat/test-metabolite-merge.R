@@ -395,9 +395,13 @@ test_that("no threshold means no time, not an error", {
 })
 
 
-test_that("a metabolite drug with no effect site gets no time, not a wrong one", {
-  # There are NO effect-site states to fold, so the fold must leave the row's
-  # time alone rather than solving a problem that has no answer.
+test_that("a metabolite drug with no effect site is timed on its plasma", {
+  # Since 2026-10-07 a drug with no effect site has its time until threshold
+  # timed on its PLASMA (see "Which concentration is timed" in
+  # R/recoveryStates.R): that is how the antibiotics are timed against their
+  # MIC.  The formed contribution then carries plasma states, and the fold
+  # solves the receiving row's time from them.  Until then there were no
+  # states to fold and the row read zero, which this test used to pin.
   #
   # The condition is CONSTRUCTED, which is why it lives in this file rather
   # than with the real-drug folds in test-recovery-engines.R: morphine's ke0 is
@@ -436,11 +440,26 @@ test_that("a metabolite drug with no effect site gets no time, not a wrong one",
   expect_true(all(is.na(drugs$morphine$wide$"Effect Site")))
   expect_gt(max(drugs$morphine$wide$Plasma), 0)
 
-  # No states offered, so nothing to solve from, and no time claimed.  Not NA
-  # either: nothing is pending, there is simply no effect site for the
-  # threshold to apply to.
-  expect_null(drugs$codeine$metaboliteRecoveryStates)
+  # Plasma states are offered, and they add up to the formed plasma
+  # concentration.
+  formed <- drugs$codeine$metaboliteRecoveryStates
+  expect_false(is.null(formed))
+  expect_equal(rowSums(formed$state), drugs$codeine$metaboliteSeries$Cp,
+               tolerance = 1e-9)
   expect_false(anyNA(drugs$morphine$wide$Recovery))
-  expect_true(all(drugs$morphine$wide$Recovery == 0))
-  expect_equal(drugs$morphine$max$Recovery, 0)
+
+  # With the threshold at half the formed peak, the time at the peak is the
+  # time until the plasma comes back down through it.
+  w <- drugs$morphine$wide
+  drugs$morphine$endCe <- max(w$Plasma) / 2
+  drugs <- processdoseTable(DT, data.frame(Time = numeric(0), Event = character(0)),
+                            drugs, 1440, TRUE)
+  w <- drugs$morphine$wide
+  peak <- which.max(w$Plasma)
+  down <- max(which(w$Plasma > drugs$morphine$endCe))
+  expect_gt(w$Recovery[peak], 0)
+  expect_lt(abs(w$Recovery[peak] - (w$Time[down] - w$Time[peak])),
+            w$Time[down + 1] - w$Time[down])
+  # And nothing once it is below for good
+  expect_true(all(w$Recovery[w$Time > w$Time[down + 1]] == 0))
 })

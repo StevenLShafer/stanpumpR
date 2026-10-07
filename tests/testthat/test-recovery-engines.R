@@ -368,3 +368,56 @@ test_that("oral prednisone folds onto a prednisolone row with no effect site", {
   expect_true(all(is.na(pl$wide$"Effect Site")))
   expect_true(all(pl$equiSpace$Recovery == 0))
 })
+
+
+test_that("a drug with no effect site is timed on its plasma", {
+  # The antibiotics have no effect site.  Their threshold is the MIC, and the
+  # time until threshold is the time until the PLASMA falls to it if no more
+  # is given -- including, for an oral dose, drug still in the gut, which has
+  # been given and keeps arriving.  Until 2026-10-07 these drugs carried
+  # all-zero effect-site states and so always read zero.  The thresholds are
+  # set here rather than read from the library, so that the test is about the
+  # engines and not about the defaults.
+  bruteP <- function(DT, PK, t, horizon = 1440) {
+    r <- simCpCe(DT[DT$Time <= t, , drop = FALSE], noEvents, PK, t + horizon, FALSE)$wide
+    r <- r[r$Time >= t, ]
+    above <- which(r$Plasma > PK$endCe)
+    if (length(above) == 0) return(0)
+    j <- max(above)
+    # log-linear: the decline is exponential and the points are far apart
+    r$Time[j] + log(r$Plasma[j] / PK$endCe) / log(r$Plasma[j] / r$Plasma[j + 1]) *
+      (r$Time[j + 1] - r$Time[j]) - t
+  }
+
+  # Intravenous: the plain engine
+  PK <- pkFor("cefazolin")
+  PK$endCe <- 2
+  DT <- data.frame(Drug = "cefazolin", Time = c(0, 240), Dose = 2000, Units = "mg")
+  sim <- simCpCe(DT, noEvents, PK, 480, TRUE)
+  expect_gt(max(sim$equiSpace$Recovery), 0)
+  for (t in c(10, 60, 200, 300, 450)) {
+    at <- shownTime(sim, t)
+    expect_lt(abs(shown(sim, t) - bruteP(DT, PK, at)), 0.5,
+              label = paste("cefazolin at", round(at, 1), "min: difference in minutes"))
+  }
+
+  # Oral: the extravascular engine, through the absorption phase
+  PK <- pkFor("cefalexin")
+  PK$endCe <- 2
+  DT <- data.frame(Drug = "cefalexin", Time = c(0, 360), Dose = 500, Units = "mg PO")
+  sim <- simCpCe(DT, noEvents, PK, 720, TRUE)
+  for (t in c(5, 30, 120, 365, 500)) {
+    at <- shownTime(sim, t)
+    expect_lt(abs(shown(sim, t) - bruteP(DT, PK, at)), 0.5,
+              label = paste("cefalexin at", round(at, 1), "min: difference in minutes"))
+  }
+  # Straight after the first dose the plasma is below the MIC, but the drug in
+  # the gut is going to take it over: a time, not zero.  A 30-minute run, so
+  # that the plotted grid is fine enough to see the first minutes.
+  sim <- simCpCe(DT[1, ], noEvents, PK, 30, TRUE)
+  es <- sim$equiSpace
+  cp <- stats::approx(sim$wide$Time, sim$wide$Plasma, es$Time)$y
+  rising <- es[es$Time > 0 & cp < PK$endCe, ]
+  expect_gt(nrow(rising), 0)
+  expect_true(all(rising$Recovery > 60))
+})

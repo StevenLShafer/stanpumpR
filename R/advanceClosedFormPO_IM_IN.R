@@ -158,16 +158,29 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       # an active metabolite has to add this drug's amplitudes to the formed
       # contribution's before solving; see R/recoveryStates.R.  Built whether
       # or not recovery is plotted, because the effect site is read off it.
-      recoveryStates <- recoveryStateSet(
+      pending <- pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
+      effectStates <- recoveryStateSet(
         timeLine,
         list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
              e_state_ka_PO, e_state_ka_IM, e_state_ka_IN),
         c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN),
-        pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
+        pending
       )
 
       # No effect site (ke0 = 0): Ce is NA, not zero; see advanceClosedForm0().
-      Ce <- if (ke0 > 0) rowSums(recoveryStates$state) else rep(NA_real_, L)
+      Ce <- if (ke0 > 0) rowSums(effectStates$state) else rep(NA_real_, L)
+
+      # Timed on the plasma when there is no effect site, as in
+      # advanceClosedForm0().  The absorption states are plasma states too:
+      # drug still in the depot is already given, and keeps arriving after
+      # delivery stops.
+      recoveryStates <- if (ke0 > 0) effectStates else recoveryStateSet(
+        timeLine,
+        list(p_state_l1, p_state_l2, p_state_l3,
+             p_state_ka_PO, p_state_ka_IM, p_state_ka_IN),
+        c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN),
+        pending
+      )
 
       recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else doseNA
       results <- data.frame(

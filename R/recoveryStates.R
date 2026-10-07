@@ -65,6 +65,22 @@
 #
 # Each engine builds one while it is computing recovery anyway, so carrying it
 # out costs a cbind().
+#
+# WHICH CONCENTRATION IS TIMED
+# ============================
+# A drug with an effect site is timed on its effect site, and the states are
+# the effect-site amplitudes.  A drug with NO effect site (ke0 = 0) is timed on
+# its PLASMA, and the states are the plasma amplitudes -- including, after an
+# extravascular dose, the absorption term, because drug in the depot has been
+# given and keeps arriving after delivery stops.  Until 2026-10-07 such a drug
+# carried all-zero effect-site states and so always read zero.  The case that
+# matters is the antibiotics, whose threshold is the plotted concentration at
+# which FREE drug equals the MIC (R/antibioticThresholds.R).  Every other drug
+# without an effect site has a threshold of zero, which recoveryFromStates()
+# reads as "no threshold".  A metabolite fold adds like to like: a receiving
+# drug with no effect site has plasma states of its own, and its parent hands
+# over the formed PLASMA contribution (advanceClosedFormMetabolite()).
+# (Claude Code, 2026-10-07, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
 
 
@@ -201,13 +217,18 @@ advanceStatesOnto <- function(set, times)
 #' @param emerge the threshold the effect site has to fall to
 #'
 #' @returns minutes, one per row of \code{set$state}; zeros when there is no
-#'   threshold to fall to, and NA wherever \code{set$pending} says a dose has
-#'   been given that has not begun to be absorbed
+#'   threshold to fall to (missing, or zero), and NA wherever
+#'   \code{set$pending} says a dose has been given that has not begun to be
+#'   absorbed
 #' @keywords internal
 recoveryFromStates <- function(set, emerge)
 {
   nT <- nrow(set$state)
-  if (is.null(emerge) || length(emerge) != 1 || is.na(emerge)) return(rep(0, nT))
+  # A threshold of zero is no threshold: a sum of decaying exponentials never
+  # reaches it, and every drug without one -- the steroids, the reversal agents,
+  # a prodrug's own row -- would otherwise read a full day at every point.
+  if (is.null(emerge) || length(emerge) != 1 || is.na(emerge) || emerge <= 0)
+    return(rep(0, nT))
 
   Lam <- if (is.matrix(set$lambda)) set$lambda else
     matrix(set$lambda, nT, ncol(set$state), byrow = TRUE)

@@ -160,6 +160,8 @@ test_that("recoveryFromStates is recoveryCalc, one point at a time", {
   # No threshold to fall to means no time to report
   expect_equal(recoveryFromStates(set, NULL), rep(0, 3))
   expect_equal(recoveryFromStates(set, NA_real_), rep(0, 3))
+  # A threshold of zero is no threshold, not a day at every point
+  expect_equal(recoveryFromStates(set, 0), rep(0, 3))
 })
 
 
@@ -246,11 +248,14 @@ test_that("the intravenous engines all carry their states out", {
   expect_equal(rowSums(X$metaboliteRecoveryStates$state), X$metaboliteSeries$Ce,
                tolerance = 1e-15)
 
-  # And for a pure prodrug, which has no effect site of its own at all
+  # And for a pure prodrug, which has no effect site of its own at all.  Its
+  # own time until threshold, should it be given one, is timed on its plasma
+  # (see "Which concentration is timed" in R/recoveryStates.R), so its states
+  # are plasma states and sum to its plasma concentration.
   PK <- pkFor("codeine", weight = 70, height = 171, age = 50, sex = "male")
   X <- simCpCe(data.frame(Drug = "codeine", Time = 0, Dose = 60, Units = "mg PO"),
                noEvents, PK, 720, TRUE)
-  expect_null(X$recoveryStates)
+  expect_equal(rowSums(X$recoveryStates$state), X$wide$Plasma, tolerance = 1e-12)
   expect_false(is.null(X$metaboliteRecoveryStates))
   # The metabolite's states sum to the metabolite's effect site exactly
   expect_equal(rowSums(X$metaboliteRecoveryStates$state), X$metaboliteSeries$Ce,
@@ -272,13 +277,13 @@ test_that("the intravenous engines all carry their states out", {
 })
 
 
-test_that("a metabolite with no effect site carries no states", {
-  # Every receiving drug in the library has a live effect site today, so this
-  # branch is reached by hand: a metabolite drug whose potency has not been
-  # supplied yet, or which is itself a prodrug.  Its effect-site contribution is
-  # NA rather than a copy of its plasma concentration, and there is no state set
-  # to fold -- foldMetabolites() then leaves the receiving row's time until
-  # threshold alone instead of solving a problem that has no answer.
+test_that("a metabolite with no effect site carries plasma states", {
+  # This branch is reached by hand: a metabolite drug whose potency has not
+  # been supplied yet, or which is itself a prodrug.  Its effect-site
+  # contribution is NA rather than a copy of its plasma concentration.  Since
+  # 2026-10-07 a drug with no effect site is timed on its plasma, so the state
+  # set it carries for the fold is the formed PLASMA contribution (until then
+  # it carried none).
   PK <- getDrugPK("codeine", 70, 171, 50, "male", getDrugDefaults("codeine"))
   pkSet <- PK$PK$default
   pkSet$metabolite$ke0 <- 0
@@ -290,5 +295,7 @@ test_that("a metabolite with no effect site carries no states", {
   expect_true(all(is.na(out$CeMetabolite)))
   expect_true(all(out$CpMetabolite >= 0))
   expect_gt(max(out$CpMetabolite), 0)
-  expect_null(attr(out, "metaboliteRecoveryStates"))
+  formed <- attr(out, "metaboliteRecoveryStates")
+  expect_false(is.null(formed))
+  expect_equal(pmax(rowSums(formed$state), 0), out$CpMetabolite, tolerance = 1e-9)
 })
