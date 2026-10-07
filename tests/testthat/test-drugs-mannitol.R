@@ -24,7 +24,7 @@ test_that("returns the published parameters with the switch off", {
       "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/"
     ),
     osmotic = list(
-      baseline = 290,
+      baseline = 280,
       # (310 - 292) / (5.91 mg/mL * 1000 / 182.17), worked out by hand
       fraction = 0.55483249,
       molecularWeight = 182.17
@@ -85,16 +85,17 @@ test_that("predicts serum osmolality after 1 g/kg over 30 minutes", {
   dose <- data.frame(Drug = "mannitol", Time = c(0, 30), Dose = c(140, 0), Units = "g/hr")
   wide <- simulateMannitol(dose)
 
-  expect_equal(at(wide, 0), 290)
-  expect_equal_rounded(at(wide, 30),  290 + 0.55483249 * 26.622358)  # 304.77
-  expect_equal_rounded(at(wide, 480), 290 + 0.55483249 * 3.7288398)  # 292.07
+  # The default baseline, 280 mOsm/kg
+  expect_equal(at(wide, 0), 280)
+  expect_equal_rounded(at(wide, 30),  280 + 0.55483249 * 26.622358)  # 294.77
+  expect_equal_rounded(at(wide, 480), 280 + 0.55483249 * 3.7288398)  # 282.07
   # No effect site: the drug is plotted as plasma only.
   expect_true(all(is.na(wide$"Effect Site")))
 })
 
 test_that("the baseline osmolality shifts the curve and nothing else", {
   dose <- data.frame(Drug = "mannitol", Time = 0, Dose = 50, Units = "g")
-  normal <- simulateMannitol(dose)
+  normal <- simulateMannitol(dose, osmolality = 290)
   high   <- simulateMannitol(dose, osmolality = 310)
   expect_equal(high$Plasma - normal$Plasma, rep(20, nrow(normal)))
 })
@@ -110,7 +111,7 @@ test_that("gram, per-kilogram and infusion units agree", {
 
   # A 70 g bolus is 384.26 mOsm in a 2.8 L central volume: 137.24 mOsm/L at
   # time zero, so the osmolality jumps by 0.55483249 times that.
-  expect_equal_rounded(max(grams$Plasma), 290 + 0.55483249 * 70000 / 182.17 / 2.8)
+  expect_equal_rounded(max(grams$Plasma), 280 + 0.55483249 * 70000 / 182.17 / 2.8)
 })
 
 test_that("an invalid baseline osmolality is rejected", {

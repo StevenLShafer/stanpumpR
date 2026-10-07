@@ -595,7 +595,7 @@ simulationPlot <- function(
     plotObject <- plotObject + ggplot2::scale_y_log10()
   } else {
     # Every panel starts at zero, except a serum osmolality panel: anchored
-    # at zero, a rise from 290 to 320 mOsm/kg would be a ripple along the top.
+    # at zero, a rise from 280 to 310 mOsm/kg would be a ripple along the top.
     # It starts a little below the lower of the baseline and the typical band
     # instead.  This replaces scale_y_continuous(limits = c(0, NA)), which
     # cannot vary by facet; a blank point at the floor of each panel gives the

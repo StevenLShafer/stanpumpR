@@ -43,7 +43,7 @@ they change the predictions.
 | Height | in or cm | |
 | Sex | male / female | |
 | Adjust weight to fat-free mass | checkbox | On by default. See below. |
-| Serum osmolality | mOsm/kg | Baseline before mannitol; 290 by default. Read only by mannitol, which is plotted as the serum osmolality it produces. See [docs/mannitol.md](mannitol.md). |
+| Baseline serum osmolality | mOsm/kg | Before mannitol; 280 by default. Read only by mannitol, which is plotted as the serum osmolality it produces. See [docs/mannitol.md](mannitol.md). |
 
 **Adjust weight to fat-free mass.** Most of the drug models were reported for a
 typical 70 kg adult and, if they scaled at all, scaled with total body weight.

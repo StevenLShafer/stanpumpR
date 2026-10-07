@@ -166,7 +166,7 @@ app_ui <- function() {
                 bslib::tooltip(
                   numericInput(
                     inputId = "osmolality",
-                    label = "Serum osmolality (mOsm/kg)",
+                    label = "Baseline serum osmolality (mOsm/kg)",
                     value = OSMOLALITY_DEFAULT,
                     min = MIN_OSMOLALITY,
                     max = MAX_OSMOLALITY,

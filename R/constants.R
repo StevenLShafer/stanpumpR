@@ -30,8 +30,9 @@ CYP2D6_DEFAULT <- CYP2D6_NORMAL
 
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
-# their own contribution on top of it.  The default is a normal adult value.
-OSMOLALITY_DEFAULT <- 290
+# their own contribution on top of it.  The default, 280, is within the normal
+# adult range (about 275 to 295); the user enters the patient's measured value.
+OSMOLALITY_DEFAULT <- 280
 MIN_OSMOLALITY <- 200
 MAX_OSMOLALITY <- 400
 

@@ -10,7 +10,7 @@ osmolality(t) = baseline + 0.555 × Cp(t)
 - `Cp(t)` is the plasma mannitol concentration in mOsm/L (1 mmol of mannitol is
   1 mOsm, because it does not dissociate; 1 g is 1000 / 182.17 = 5.49 mOsm).
 - `baseline` is the patient's serum osmolality before mannitol, in mOsm/kg. It is
-  the **Serum osmolality** field in the Patient Profile, 290 by default, and the
+  the **Baseline serum osmolality** field in the Patient Profile, 280 by default, and the
   `osmolality` argument of `getDrugPK()` and `simulateDrugsWithCovariates()`.
 - 0.555 is the net rise in measured osmolality per mOsm/L of plasma mannitol
   (see *The pharmacodynamic link*, below).

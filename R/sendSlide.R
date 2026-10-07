@@ -144,7 +144,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Height Unit",
       "Sex",
       "Adjust weight to fat-free mass",
-      "Serum osmolality (mOsm/kg)"
+      "Baseline serum osmolality (mOsm/kg)"
     ),
     Value = c(
       values$age / values$ageUnit,

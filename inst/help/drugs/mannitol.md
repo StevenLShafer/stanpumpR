@@ -8,7 +8,7 @@ Mannitol is not shown as a drug concentration. The plot shows the **serum osmola
 
 osmolality = baseline + 0.555 × plasma mannitol (mOsm/L)
 
-The baseline is the **Serum osmolality** field in the Patient Profile, 290 mOsm/kg by default. Enter the patient's measured value. One gram of mannitol is 5.49 mOsm.
+The baseline is the **Baseline serum osmolality** field in the Patient Profile, 280 mOsm/kg by default. Enter the patient's measured value. One gram of mannitol is 5.49 mOsm.
 
 The factor 0.555 is less than 1 because mannitol stays in the extracellular fluid and draws water out of cells. That water dilutes sodium, so the measured osmolality rises by only about half the mannitol concentration. The osmolal gap still equals the mannitol concentration. Rudehill measured both in the same patients: plasma mannitol peaked at 32.4 mOsm/L while osmolality rose from 292 to 310 mOsm/kg. Treating mannitol as an ideal solute (factor 1) would overpredict the peak rise by about 80%.
 

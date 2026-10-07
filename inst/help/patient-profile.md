@@ -10,7 +10,7 @@ The first panel in the left sidebar. These covariates are passed to every drug's
 | Sex | male or female | | |
 | CYP 2D6 | phenotype | | Scales the active metabolites of codeine, tramadol, hydrocodone and oxycodone. |
 | Adjust weight to fat-free mass | checkbox | | On by default; scales most models to fat-free mass. |
-| Serum osmolality | mOsm/kg | 200 to 400 | The patient's baseline, 290 by default. Read only by [mannitol](help:drugs/mannitol), which is plotted as the serum osmolality it produces on top of this value. |
+| Baseline serum osmolality | mOsm/kg | 200 to 400 | The patient's starting value, 280 by default. Read only by [mannitol](help:drugs/mannitol), which is plotted as the serum osmolality it produces on top of this value. |
 
 Changing a covariate re-simulates every drug at once; there is no Apply step for the patient.
 
