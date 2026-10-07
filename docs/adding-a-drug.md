@@ -101,6 +101,8 @@ in the header: which part is exact, which is approximate, and what is plotted
 fields to a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_IM` / `_IN`
 equivalents). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
+The route is the suffix of the unit (`mg PO`, `mg IM`, `mg IN`; `doseRoute()` in `R/routes.R`),
+so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
 
 **Optional — time-varying PK.** Provide more than one named PK set (e.g. `default`,
 `"CPB Start"`) to switch kinetics on a clinical event; `advanceClosedForm1()` handles the

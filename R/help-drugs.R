@@ -238,8 +238,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
 
   # --- At a glance -----------------------------------------------------------
   esc <- htmltools::htmlEscape
-  routes <- c(if (any(grepl(" PO$", units))) "oral", if (any(grepl(" IM$", units))) "intramuscular",
-              if (any(grepl(" IN$", units))) "intranasal")
+  route <- doseRoute(units)
+  routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_IM %in% route) "intramuscular",
+              if (ROUTE_IN %in% route) "intranasal")
   intravenous <- any(units %in% c(bolusUnits, infusionUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
@@ -643,8 +644,9 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     units <- helpDrugUnits(row)
     given <- if (length(units) == 0) "metabolite only"
       else if (any(units %in% c(bolusUnits, infusionUnits))) {
-        paste(c("IV", if (any(grepl(" PO$", units))) "oral", if (any(grepl(" IM$", units))) "IM",
-                if (any(grepl(" IN$", units))) "IN", if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
+        route <- doseRoute(units)
+        paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_IM %in% route) "IM",
+                if (ROUTE_IN %in% route) "IN", if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else "oral"
     metabolite <- if (is.null(pk$metaboliteName)) "" else
       sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))

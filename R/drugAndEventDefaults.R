@@ -1,5 +1,7 @@
+# Split each drug's comma-separated Units into a vector, grouped by route (IV,
+# then PO, IM, IN) so the units dropdowns list each route's units together.
 drugUnitsExpand <- function(units) {
-  strsplit(units, ",")
+  lapply(strsplit(units, ","), groupUnitsByRoute)
 }
 drugUnitsSimplify <- function(units) {
   unlist(lapply(units, paste, collapse = ","))
