@@ -1,7 +1,11 @@
-# The route of a dose is not stored separately: it is the suffix of its Units
-# string ("mg PO", "mg/kg IM", "mg IN").  Units with no route suffix (bolus and
+# The route of a dose is not stored separately: it is a word in its Units
+# string ("mg PO", "mg/kg IM", "mg IN").  Units with no route word (bolus and
 # infusion units, the TCI targets, the gases' L/min and %) are intravenous, or
 # for the gases, treated with them.
+#
+# The route is matched as a whole word anywhere after the first, not only as
+# the last word, so that a unit carrying a further qualifier after the route
+# (a dosing frequency, "mg PO bid") still reads as its route.
 
 #' Route of administration implied by dose units
 #'
@@ -12,9 +16,9 @@
 doseRoute <- function(units) {
   units <- as.character(units)
   route <- rep(ROUTE_IV, length(units))
-  suffix <- sub("^.* ", "", units)
-  extravascular <- grepl(" ", units) & suffix %in% DOSE_ROUTES
-  route[extravascular] <- suffix[extravascular]
+  for (r in setdiff(DOSE_ROUTES, ROUTE_IV)) {
+    route[grepl(paste0(" ", r, "( |$)"), units)] <- r
+  }
   route
 }
 
