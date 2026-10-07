@@ -194,3 +194,29 @@ test_that("the re-anchored model reproduces the Western single-dose data", {
   expect_equal(auc(400), 31.54, tolerance = 1e-3)
   expect_equal(auc(600), 40.45, tolerance = 1e-3)
 })
+
+
+test_that("the saturable-absorption scenario says what the model does", {
+  # inst/help/scenarios/gabapentin-saturable-absorption.md quotes these
+  # numbers; if the model changes, the narrative has to change with it.
+  # Worked out by hand: 40 y, 70 kg man, CrCL 97.2 mL/min, half-life 5.53 h;
+  # peaks 3.99 and 5.80 mcg/mL (the second carrying 0.07 left from the first).
+  s <- helpScenarioById("gabapentin-saturable-absorption")
+  p <- s$patient
+  out <- simulateDrugsWithCovariates(
+    s$doses, noEvents, p$weight, p$height, p$age, p$sex,
+    s$options$maximum, FALSE, adjustToFFM = p$adjustToFFM
+  )
+  w <- out$gabapentin$wide
+  first  <- max(w$Plasma[w$Time < 2160])
+  second <- max(w$Plasma[w$Time >= 2160])
+  expect_equal(first, 3.99, tolerance = 0.01)
+  expect_equal(second, 5.80, tolerance = 0.01)
+  expect_equal(second / first, 1.45, tolerance = 0.01)
+
+  pk <- getDrugPK("gabapentin", p$weight, p$height, p$age, p$sex)
+  expect_equal(log(2) * pk$PK$default$v1 / (pk$PK$default$cl1 * 60), 5.53, tolerance = 0.01)
+  absorbed <- c(600, 1200) * oralSaturationFraction(c(600, 1200), pk$oralSaturation)
+  expect_equal(round(absorbed), c(321, 463))
+  expect_equal(round(2 * 600 * oralSaturationFraction(600, pk$oralSaturation)), 643)
+})

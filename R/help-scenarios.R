@@ -23,6 +23,7 @@
 HELP_SCENARIO_GROUPS <- c(
   "Intravenous basics",
   "Opioids",
+  "Oral absorption",
   "Interactions",
   "Special populations",
   "Recovery and emergence",
@@ -247,6 +248,20 @@ helpScenarios <- function() {
         c("propofol", 60, 0, "Effect site target")
       ),
       maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE
+    ),
+
+    # --- Oral absorption -----------------------------------------------------
+    helpScenario(
+      "gabapentin-saturable-absorption",
+      "Gabapentin: why 1200 mg is not twice 600 mg",
+      "Oral absorption",
+      "Gabapentin's absorption saturates: 600 mg and then, after a washout, 1200 mg by mouth, and the larger dose peaks less than half again as high.",
+      doses = helpDoses(
+        c("gabapentin", 0, 600, "mg PO"),
+        c("gabapentin", 2160, 1200, "mg PO")
+      ),
+      # Gabapentin has no effect site, so the plasma line carries the curve.
+      maximum = 2880, plasmaLinetype = "solid"
     ),
 
     # --- Interactions --------------------------------------------------------
