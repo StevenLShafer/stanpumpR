@@ -342,12 +342,14 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # below.  Mannitol joined too: plotted as serum osmolality, no published
   # ke0, and it neither forms nor receives a metabolite, so it never reaches
   # the fold.
+  # Gabapentin joined on 2026-10-07: no estimated human equilibration delay
+  # yet (GABAPENTIN_TPEAK in R/drugs_gabapentin.R).
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
-    "sugammadex", "glycopyrrolate", "mannitol"
+    "sugammadex", "glycopyrrolate", "mannitol", "gabapentin"
   ))
 })
 

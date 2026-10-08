@@ -2,7 +2,7 @@
 #
 # Several models carry a renal covariate (Cockcroft-Gault creatinine
 # clearance, or a de-indexed CKD-EPI eGFR): mannitol, vancomycin, gentamicin,
-# cefazolin and sugammadex.  Each takes an optional `creatinine` argument,
+# cefazolin, sugammadex and gabapentin.  Each takes an optional `creatinine` argument,
 # the patient's serum creatinine from the Patient Profile.
 #
 # When none is entered the models ASSUME A NORMAL SERUM CREATININE for the
@@ -58,7 +58,8 @@ patientCreatinine <- function(creatinine, sex)
 #'
 #' `(140 - age) x weight / (72 x SCr)`, times 0.85 for a woman, in mL/min.
 #' This is the estimator the vancomycin (Thomson 2009), cefazolin (Komatsu
-#' 2024) and sugammadex (Kleijn 2011) models were fitted with.
+#' 2024), sugammadex (Kleijn 2011) and gabapentin (Tran 2017) models were
+#' fitted with.
 #'
 #' @param weight the weight the calling model scales on, kg
 #' @param age age in years
