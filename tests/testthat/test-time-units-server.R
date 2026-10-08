@@ -370,4 +370,47 @@ test_that("a long-term drug on a short plot offers a year", {
   })
 })
 
+test_that("Show 365 days closes an open dialog before converting the table", {
+  # The notification is drawn above any open dialog, so it can be clicked
+  # while, say, the add-dose dialog shows a time in minutes; that time would
+  # then be read in days.  The click must close the dialog first.
+  local_mocked_bindings(LONG_TERM_DRUGS = "morphine")
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    dt <- doseTableInit[c(1, 7:12), ]
+    dt[1, ] <- list("morphine", "0", "10", "mg")
+    doseTable(dt)
+    session$flushReact()
+    before <- length(sent$modals)
+    session$setInputs(showLongTermTime = 1)
+    modalTypes <- vapply(sent$modals[seq_along(sent$modals) > before], `[[`, character(1), "type")
+    expect_true("remove" %in% modalTypes)
+  })
+})
+
+test_that("the long-term prompt is not offered again while the table is unreadable", {
+  # A half-typed Procedure start makes doseTableClean() wait (req).  That is
+  # not an empty table: the drug never left, so the prompt must not return.
+  local_mocked_bindings(LONG_TERM_DRUGS = "morphine")
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session)
+    dt <- doseTableInit[c(1, 7:12), ]
+    dt[1, ] <- list("morphine", "08:00", "10", "mg")
+    doseTable(dt)
+    session$flushReact()
+    expect_equal(notified(sent, "longTermPrompt")$type, "show")
+    for (typed in c("", "0", "09", "09:", "09:0", "09:00")) session$setInputs(referenceTime = typed)
+    expect_length(notifications(sent, "longTermPrompt"), 1)
+
+    # Removing the drug and adding it back is a new addition, and is offered
+    doseTable(doseTableInit[c(1, 7:12), ])
+    session$flushReact()
+    doseTable(dt)
+    session$flushReact()
+    expect_length(notifications(sent, "longTermPrompt"), 2)
+  })
+})
+
 .sprglobals$config <- oldConfig

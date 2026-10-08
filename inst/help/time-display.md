@@ -44,7 +44,7 @@ The length of the simulation is set under **Graph Options → Max time**. Its ch
 | Days | 2, 3, 4, 7, 14, 28, 56, 91, 182 or 365 days |
 | Weeks | 4, 8, 13, 26, 39 or 52 weeks |
 
-Minutes and hours offer the same lengths, so switching between them keeps Max time. Changing to another unit keeps it if the new unit offers it, and otherwise takes the next longer choice.
+Minutes and hours offer the same lengths, so switching between them keeps Max time. Changing to another unit keeps it if the new unit offers it, otherwise takes the next longer choice, or the unit's longest when there is none longer: going from days or weeks to minutes or hours gives 24 hours, and 365 days becomes 52 weeks (364 days).
 
 If a dose or an event falls near or after the end of the plot, the plot is lengthened to show it, but never past the unit's longest choice (24 hours, 365 days or 52 weeks). A dose beyond that brings a notification: choose a longer Max time or a larger time unit.
 

@@ -10,9 +10,9 @@ The maintenance dose follows from one number. At steady state the input equals t
 
 ## Try next
 
-- Change *Time units* to **weeks** and the axis reads in weeks; the dose times convert themselves (day 2 becomes 0.2857142857 weeks) and convert back exactly when you return to days.
+- Change *Time units* to **weeks** and the axis reads in weeks (Max time becomes 52 weeks, a day short of a year); the dose times convert themselves (day 2 becomes 0.2857142857 weeks) and convert back exactly when you return to days.
 - Replace the regimen with a single row of 400 mg/day PO at 0. Without a loading phase serum amiodarone is only 0.56 mg/L after a week and 1.33 mg/L after three months: most of the first season is spent below the window.
-- Set *Max time* to 28 days to look at the loading phase on its own.
+- To look at the loading phase on its own, delete the 343 mg/day row at day 90 and set *Max time* to 56 days. With that row in place any shorter Max time is lengthened to 91 days, because the plot always runs a little past the last dose.
 
 ## Background
 

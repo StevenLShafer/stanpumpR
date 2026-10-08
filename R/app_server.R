@@ -902,7 +902,12 @@ app_server <- function(input, output, session) {
   # conversion observer then converts the dose table.
   longTermSeen <- character(0)  # plain variable: the long-term drugs already handled
   observe({
-    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    # FALSE, not NULL, while the table cannot be read (req() waiting on a
+    # half-typed Procedure start, or a validation error): NULL is a table with
+    # no rows, and reading the two alike would empty longTermSeen and offer the
+    # prompt again for a drug that never left the table.
+    DT <- tryCatch(doseTableClean(), error = function(e) FALSE)
+    if (isFALSE(DT)) return()
     present <- intersect(LONG_TERM_DRUGS, DT$Drug)
     longTermSeen <<- intersect(longTermSeen, present)  # a drug removed may be added again
     added <- setdiff(present, longTermSeen)
@@ -920,6 +925,13 @@ app_server <- function(input, output, session) {
   })
 
   observeEvent(input$showLongTermTime, {
+    # The notification sits above any open dialog (Shiny's notification panel
+    # is drawn over Bootstrap's modals), so this can be clicked while the
+    # add-dose, add-event, edit or Suggest Dosing dialog is open.  Each of those
+    # reads what was typed in the format of the dose table when it is
+    # submitted, so a time typed as 30 minutes would be stored as 30 days once
+    # the table had been converted.  Close the dialog first.
+    removeModal()
     removeNotification("longTermPrompt")
     timeApi$showTimeSettings("days", "relative", LONG_TERM_PLOT_MINUTES)
   })

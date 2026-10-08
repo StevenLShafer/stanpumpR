@@ -451,12 +451,12 @@ helpScenarios <- function() {
       "amiodarone-label-loading",
       "Amiodarone: the label's high-dose loading regimen",
       "Long-term therapy",
-      "Why a loading dose that is right in the first week overshoots by the third.",
+      "A loading dose that is right in the first week overshoots by the third, and a maintenance dose above clearance x target never settles inside the window.",
       age = 60, weight = 70, height = 170, sex = SEX_MALE,
       doses = helpDoses(
         c("amiodarone",     0, 1600, "mg/day PO"),
         c("amiodarone", 30240,  800, "mg/day PO"),
-        c("amiodarone", 73440,  400, "mg/day PO")
+        c("amiodarone", 73440,  600, "mg/day PO")
       ),
       timeUnits = "days", maximum = 525600
     ),
