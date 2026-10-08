@@ -50,7 +50,7 @@
 #     that of the whole published mixture (0.94 h), the moment-matching the
 #     specification uses for its own inverse-Gaussian initialisers.  Laffont's
 #     4.3 min lag on the first-order branch is folded into that mean rather
-#     than carried separately: the library keeps its drugs lag-free, because
+#     than carried separately: the library keeps its drugs lag-free where it can, because
 #     during a lag the engine has no state for the drug and the time until
 #     threshold cannot be reported (see R/recoveryStates.R).  A single
 #     first-order input starts more slowly than the published immediate

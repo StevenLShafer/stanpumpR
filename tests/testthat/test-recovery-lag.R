@@ -11,10 +11,12 @@
 # through a lag means recoveryCalc() accounting for input that has not arrived
 # yet, which is a change to its contract.  See R/recoveryStates.R.
 #
-# NO DRUG IN THE LIBRARY CARRIES A LAG as of 2026-10-06 -- hydromorphone's
-# intramuscular and intranasal lags were the last, and went when its absorption
-# was refitted.  So every test here puts one in by hand, and the first one
-# pins that the unlagged path is untouched.
+# ONE DRUG CARRIES A LAG as of 2026-10-08: acetaminophen's oral route keeps
+# Morse 2022's published 5.3 min lag, by decision of Steven L. Shafer (see
+# R/drugs_acetaminophen.R).  Before that none did -- hydromorphone's
+# intramuscular and intranasal lags were the last, and went when its
+# absorption was refitted.  Most tests here put a lag in by hand; the
+# acetaminophen test below exercises the live one.
 #
 # (Claude Code, Claude Opus 5, 2026-10-06; run on R 4.6.1.)
 
@@ -30,10 +32,12 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("no drug in the library carries an absorption lag", {
-  # If this ever fails it is not a defect -- a drug has been given a lag, and
-  # the behaviour the rest of this file guards has become live rather than
-  # latent.  Worth knowing, and worth rereading R/recoveryStates.R.
+test_that("only the drugs known to carry an absorption lag do", {
+  # If this ever fails it is not a defect -- a drug has been given a lag (or
+  # lost one), and the behaviour the rest of this file guards has become live
+  # for it.  Worth knowing, and worth rereading R/recoveryStates.R; then add
+  # the drug here deliberately.
+  knownLagged <- c("acetaminophen")
   dd <- getDrugDefaultsGlobal()
   lagged <- character(0)
   for (drug in dd$Drug[!isGasDrug(dd$Drug)])
@@ -47,7 +51,27 @@ test_that("no drug in the library carries an absorption lag", {
       if (any(!is.na(lags) & lags > 0)) lagged <- c(lagged, drug)
     }
   }
-  expect_equal(unique(lagged), character(0))
+  expect_equal(sort(unique(lagged)), sort(knownLagged))
+})
+
+
+test_that("acetaminophen's live oral lag blanks recovery for 5.3 min only", {
+  # The one lag in the library, end to end through getDrugPK and simCpCe.  A
+  # 4 g tablet so the effect site clears the 10 mcg/mL threshold and the time
+  # reported once absorption starts is a real one.
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("acetaminophen", 70, 170, 35, "male",
+                  dd[dd$Drug == "acetaminophen", ])
+  PK$endCe <- dd$endCe[dd$Drug == "acetaminophen"]
+  expect_equal(PK$PK$default$tlag_PO, 5.3)
+  DT <- data.frame(Drug = "acetaminophen", Time = 0, Dose = 4000,
+                   Units = "mg PO")
+  X <- simCpCe(DT, noEvents, PK, 720, TRUE)
+  w <- X$wide
+
+  expect_true(all(is.na(w$Recovery[w$Time < 5.3])))
+  expect_false(anyNA(w$Recovery[w$Time >= 5.3]))
+  expect_gt(max(w$Recovery, na.rm = TRUE), 60)
 })
 
 
