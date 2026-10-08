@@ -34,7 +34,8 @@
 #     CL1/F   229 L/day    31.2%
 #     CL2/F   588 L/day    56.2%
 #
-# The abstract prints CL2/F as 599 L/day.  Table II's 588 is used here.  The
+# The abstract prints CL2/F as 599 L/day; that is a misprint (Steven L. Shafer,
+# a co-author, 2026-10-08), and Table II's 588 is the estimate.  The
 # difference is small: the half-lives are 17.33 h and 55.36 days with 588,
 # 17.09 h and 55.09 days with 599, and the paper reports 17 h and 55 days.
 #
@@ -153,7 +154,7 @@
 AMIODARONE_V1  <- 882     # L, V1/F
 AMIODARONE_V2  <- 12700   # L, V2/F
 AMIODARONE_CL1 <- 229     # L/day, CL1/F
-AMIODARONE_CL2 <- 588     # L/day, CL2/F (Table II; the abstract prints 599)
+AMIODARONE_CL2 <- 588     # L/day, CL2/F (Table II; the abstract's 599 is a misprint)
 
 # The citation both members of the pair return.  One string, so that the
 # bibliography lists one item for both drugs (test-help-drugs.R counts each

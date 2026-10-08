@@ -9,7 +9,7 @@ Amiodarone's kinetics are from Pollak, Bouillon and Shafer (*Clin Pharmacol Ther
 | CL1/F | 229 L/day | 31% |
 | CL2/F | 588 L/day | 56% |
 
-The abstract prints CL2/F as 599 L/day; the table's 588 is used here, and the difference is small (terminal half-life 55.4 days against 55.1). The rapid half-life is 17.3 hours and the terminal half-life 55.4 days, the product of a low clearance and an enormous peripheral volume, which reflects amiodarone's lipophilicity. The drug file converts the clearances to litres per minute, the library's unit.
+The abstract prints CL2/F as 599 L/day, which is a misprint; Table II's 588 is the estimate (the difference is small in any case: terminal half-life 55.4 days against 55.1). The rapid half-life is 17.3 hours and the terminal half-life 55.4 days, the product of a low clearance and an enormous peripheral volume, which reflects amiodarone's lipophilicity. The drug file converts the clearances to litres per minute, the library's unit.
 
 ### Oral only, as a constant daily rate
 
