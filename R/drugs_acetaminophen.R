@@ -24,32 +24,29 @@
 # The library's own reference man (70 kg, 170 cm, FFM 54.5 kg) is a little
 # fatter, and his clearance is 23.92 L/h.
 #
-# VERIFICATION STATUS (2026-10-07).  CL 24.0 L/h/70 kg, Ffat 0.816 on CL,
-# volumes on total body weight, allometric exponents 3/4 and 1, and the
-# 70 kg / 176 cm / FFM 56.1 kg standard are all confirmed from the paper's
-# text.  V1 43.7, Q 43.5 and V2 29.7 come from a model specification that
-# could not be checked against Morse's parameter table: the table could not
-# be retrieved, and the abstract's sentence ("clearance and central volume
-# of distribution were 24.0 L/h/70 kg and 43.5 L/h/70 kg") carries a unit
-# typo and may give 43.5 as V1.  The size descriptor on Q (taken here as
-# total weight) is not stated in the text either.  Check all three against
-# Table 2 of the paper.
+# All values are from Morse's Table 2 (final model): CL 24.0 L/h/70 kg,
+# Q2 43.5 L/h/70 kg, V1 43.7 L/70 kg, V2 29.7 L/70 kg, FFAT on CL 0.816,
+# FFAT on V fixed at 1 (volumes on total weight), oral F 0.859.  Size is
+# scaled by (WT/70)^3/4 for clearances and ^1 for volumes, so Q2 is on total
+# weight.  The abstract's "central volume of distribution ... 43.5 L/h/70 kg"
+# is an error in the abstract: 43.5 is Q2 in the table.
 #
 # ORAL ROUTE
 # ==========
-# Fasted tablet, from the same paper: bioavailability 0.86 (the abstract and
-# results; the discussion says 0.87), absorption half-life 11.5 min, lag
-# 5.3 min.  The library keeps its drugs lag-free, because during a lag the
-# engine has no state for the drug and the time until threshold cannot be
+# Fasted tablet, from the same paper's Table 2: bioavailability 0.859,
+# absorption half-life 11.5 min, lag 5.30 min.  The library keeps its drugs
+# lag-free, because during a lag the engine has no state for the drug and the time until threshold cannot be
 # reported (see R/recoveryStates.R), so the lag is folded into one
 # exponential with the same mean input time:
 #
 #     MIT = 5.3 + 11.5 / ln 2 = 21.89 min,   ka = 1 / MIT = 0.0457 /min
 #
-# This starts absorption a few minutes early and peaks slightly later and
-# lower than the lagged input; AUC is unchanged.  Food roughly doubles the
-# absorption half-life and lengthens the lag up to 4.6-fold (Morse); that is
-# not modelled, so the oral curve is the FASTED curve.
+# This starts absorption a few minutes early, and the reference man's 1 g
+# tablet peaks at 10.1 mg/L at 35 min instead of 11.0 mg/L at 34 min with the
+# lag kept: about 8% lower.  AUC is unchanged.  (Morse's simulated population
+# median, with between-subject variability, is 12.8 mg/L at 0.61 h.)  Food
+# multiplies the tablet's absorption half-life by 1.87 and its lag by 4.63
+# (Morse Table 2); that is not modelled, so the oral curve is the FASTED curve.
 #
 # EFFECT SITE
 # ===========
@@ -118,7 +115,7 @@ acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   # Oral, fasted tablet: the 5.3 min lag folded into ka, see the header
   ka_PO              <- 1 / (5.3 + 11.5 / log(2))   # 1/min, = 0.0457
-  bioavailability_PO <- 0.86
+  bioavailability_PO <- 0.859            # Morse Table 2, FPARA
   tlag_PO            <- 0
 
   default <- list(

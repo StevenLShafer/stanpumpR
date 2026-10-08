@@ -2,11 +2,11 @@
 
 Acetaminophen (paracetamol) kinetics are from Morse and colleagues (*Eur J Drug Metab Pharmacokinet* 2022;47:497-507). They pooled intravenous, tablet, sachet and suspension data from 116 healthy adults aged 18 to 49 and weighing 49 to 116 kg, and fitted a two-compartment model. For their standard man (70 kg, 176 cm), clearance is 24.0 L/h, central volume 43.7 L, intercompartmental clearance 43.5 L/h and peripheral volume 29.7 L. The terminal half-time at the library's reference man is about 2.3 hours.
 
-The clearance, the fat factor and the covariate structure were checked against the paper's text. The central volume, intercompartmental clearance and peripheral volume were not, because the paper's parameter table could not be retrieved, and the abstract gives a central volume of 43.5 (with a unit typo) where this model uses 43.7. These three values are flagged in the code as needing a check against the paper.
+Every value is from the paper's final-model table (Table 2). The abstract's "central volume of distribution ... 43.5" is an error in the abstract: in the table, 43.5 L/h is the intercompartmental clearance and the central volume is 43.7 L.
 
 ### Oral route
 
-**mg PO** is a fasted immediate-release tablet, from the same study: bioavailability 0.86, absorption half-time 11.5 minutes and a 5.3 minute lag. The library keeps its drugs lag-free, so the lag is folded into a single absorption constant with the same mean input time (21.9 minutes, ka 0.046/min). A 1 g tablet then peaks near 10 mcg/mL at about 35 minutes in the reference man. Food roughly doubles the absorption half-time and lengthens the lag up to 4.6-fold. That is not modelled, so the oral curve is the fasted curve.
+**mg PO** is a fasted immediate-release tablet, from the same study: bioavailability 0.859, absorption half-time 11.5 minutes and a 5.3 minute lag. The library keeps its drugs lag-free, so the lag is folded into a single absorption constant with the same mean input time (21.9 minutes, ka 0.046/min). A 1 g tablet then peaks at 10.1 mcg/mL at about 35 minutes in the reference man, about 8 per cent below the 11.0 mcg/mL that the lagged input gives. Food multiplies the tablet's absorption half-time by 1.87 and its lag by 4.6. That is not modelled, so the oral curve is the fasted curve.
 
 ### Covariates
 

@@ -25,7 +25,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         cl2 = 0.725,
         cl3 = 0,
         ka_PO = 0.0456808881,
-        bioavailability_PO = 0.86,
+        bioavailability_PO = 0.859,
         tlag_PO = 0
       )
     ),
@@ -75,7 +75,7 @@ test_that("the oral lag is folded into ka with the same mean input time", {
   x <- acetaminophen(70, 170, 35, "male")$PK$default
   expect_equal(x$tlag_PO, 0)
   expect_equal(1 / x$ka_PO, 5.3 + 11.5 / log(2))   # 21.89 min
-  expect_equal(x$bioavailability_PO, 0.86)
+  expect_equal(x$bioavailability_PO, 0.859)
 })
 
 test_that("ke0 is Anderson's 53 min equilibration half-time", {
@@ -90,7 +90,7 @@ test_that("ke0 is Anderson's 53 min equilibration half-time", {
 rk4Acetaminophen <- function(times, doseIV, dosePO, dt = 0.02)
 {
   v1 <- 43.7; v2 <- 29.7; cl <- 0.398647084; q <- 43.5 / 60  # reference man
-  ka <- 1 / (5.3 + 11.5 / log(2)); f <- 0.86; ke0 <- log(2) / 53
+  ka <- 1 / (5.3 + 11.5 / log(2)); f <- 0.859; ke0 <- log(2) / 53
   d <- function(s) c(-ka * s[1],
                      f * ka * s[1] - (cl + q) * s[2] / v1 + q * s[3] / v2,
                      q * s[2] / v1 - q * s[3] / v2,
@@ -125,7 +125,7 @@ test_that("1 g intravenous and oral match an independent integration", {
   ref <- rk4Acetaminophen(po$Time, 0, 1000)
   expect_equal(po$Plasma, ref[, 1], tolerance = 1e-5)
   expect_equal(po$"Effect Site", ref[, 2], tolerance = 1e-5)
-  # Fasted 1 g tablet: the Python integration peaks at 10.14 mg/L at 35 min
+  # Fasted 1 g tablet: the Python integration peaks at 10.12 mg/L at 35 min
   expect_gt(max(po$Plasma), 9.8)
   expect_lt(max(po$Plasma), 10.2)
   expect_gt(po$Time[which.max(po$Plasma)], 30)
