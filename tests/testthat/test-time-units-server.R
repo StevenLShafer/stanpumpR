@@ -276,6 +276,34 @@ test_that("TCI rows and inhaled agents are not simulated beyond a week", {
   })
 })
 
+test_that("removing the rows the week rule names clears it, for an agent from the startup menu", {
+  # The menu adds oxygen, with its flow left blank, before an inhaled agent;
+  # the cleaned table leaves that row out, but while it is there the gas rules
+  # keep adding ventilation back, so the message has to name it.
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    chosen <- list("sevoflurane", "cefazolin")
+    names(chosen) <- startupDrugInputId(c("Inhaled anesthetics", "Antibiotics"))
+    do.call(session$setInputs, chosen)
+    session$setInputs(startup_ok = 1)
+    expect_setequal(doseTable()$Drug[nzchar(doseTable()$Drug)],
+                    c("oxygen", "sevoflurane", "cefazolin", "ventilation"))
+    session$setInputs(timeUnits = "days")
+    echo(session, sent)
+    session$setInputs(maximum = maxTimeValue(14 * MINS_PER_DAY))
+    violation <- timeUnitViolation()
+    for (drug in c("oxygen", "sevoflurane", "ventilation")) expect_match(violation, drug)
+    expect_no_match(violation, "cefazolin")
+    # the user removes the rows named and applies
+    dt <- doseTable()
+    doseTableHistory()$do(dt[!dt$Drug %in% c("oxygen", "sevoflurane", "ventilation"), ])
+    session$setInputs(dosetable_apply = 1)
+    expect_null(timeUnitViolation())
+    expect_identical(names(drugs()), "cefazolin")
+  })
+})
+
 test_that("the plot is not lengthened past the unit's longest Max time", {
   shiny::testServer(app_server, {
     sent <- recordMessages(session)

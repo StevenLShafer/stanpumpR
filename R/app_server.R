@@ -178,8 +178,9 @@ app_server <- function(input, output, session) {
   })
 
   # Starts as the selectors start: minutes and clock time, as the UI opens, or
-  # a restored bookmark's settings.  doseTableInit's times are all "0", the
-  # same in every format, and onRestored() converts a restored table itself.
+  # a restored bookmark's settings.  The session starts with an empty table
+  # (doseTableBlank), the startup menu's Start writes times that are all "0",
+  # the same in every format, and onRestored() converts a restored table itself.
   # (Starting from the UI's defaults instead would leave the plot waiting for
   # good whenever a session starts with other settings and nothing converts
   # the table: a browser reconnecting in days, say, since the conversion
@@ -460,13 +461,8 @@ app_server <- function(input, output, session) {
         saved <- timeFormat(TIME_UNIT_DEFAULT,
                             if (is.null(state$input$timeMode)) "clock" else state$input$timeMode)
       }
-      if (is.null(state$values$DT)) {
-        # A link with inputs and no dose table: keep the one there is
-        DT <- doseTable()
-        saved <- doseTableFormat()
-      } else {
-        DT <- as.data.frame(state$values$DT)
-      }
+      # Always there: a link without a dose table returned above
+      DT <- as.data.frame(state$values$DT)
       target <- selectorFormat()
       restoredMaximum <- suppressWarnings(as.numeric(state$input$maximum))
       res <- rebaseDoseTimes(DT, saved, target, input$referenceTime)
@@ -946,6 +942,12 @@ app_server <- function(input, output, session) {
     rows <- ifelse(DT$Units[acute] %in% tciUnits,
                    paste(DT$Drug[acute], tolower(DT$Units[acute])),
                    DT$Drug[acute])
+    # A gas row with its flow left blank (the oxygen the startup menu adds
+    # with an inhaled agent) is not in the cleaned table, but while it is in
+    # the dose table the gas rules keep adding ventilation back: name it too,
+    # so that removing the rows named clears the rule.
+    allDrugs <- as.character(doseTable()$Drug)
+    rows <- c(rows, allDrugs[isGasDrug(allDrugs)])
     paste0(
       "Target-controlled infusions and inhaled agents are simulated only on plots of ",
       "7 days or less, and this plot is ", plotLengthLabel(maximum), " (",
