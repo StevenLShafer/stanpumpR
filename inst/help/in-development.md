@@ -15,6 +15,12 @@ Two later changes to *Time until threshold* and the solvers:
 - **Time until threshold for the antibiotics.** A drug with no effect site is now timed on its plasma concentration. Each antibiotic's threshold is the plotted concentration at which **free** drug equals the MIC for its main target organism (unbound cefazolin is compared with the MIC directly; total-drug curves use the MIC divided by the free fraction), so the line shows the time left above the MIC. See [Time until threshold](help:models/recovery).
 - **Oral doses across clinical events.** The solver used when a clinical event changes the kinetics now absorbs oral, intramuscular and intranasal doses, rather than treating them as infusions. No drug with an extravascular route currently has event-dependent kinetics, so this guards future models.
 
+And for plots longer than a day:
+
+- **Time units.** A *Time units* selector in the Time card (minutes, hours, days, weeks) sets the unit that times are typed in and the time axis is labelled in, and the Max time choices that go with it (up to a year). Changing it converts the dose table, so the doses stay where they were. *Actual time* is offered for minutes and hours. Target-controlled infusions and inhaled agents are simulated on plots of 7 days or less. See [Time display](help:time-display).
+- **Amiodarone.** Long-term oral amiodarone and its active metabolite desethylamiodarone (Pollak, Bouillon and Shafer 2000), given as a constant daily oral rate (`mg/day PO`), with three long-term scenarios; see [Amiodarone](help:drugs/amiodarone).
+  Acute intravenous amiodarone is a separate entry, [Amiodarone IV](help:drugs/amiodaroneIV) (Korth-Bradley and colleagues 1996), for the first one to three days only, with [the label's 24-hour loading regimen](scenario:amiodarone-iv-loading) as a scenario.
+
 ## Now active
 
 **CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes.

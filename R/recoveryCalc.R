@@ -49,6 +49,22 @@ RECOVERY_GRID <- c(0, exp(seq(log(0.05), log(MINS_PER_DAY), length.out = 90)))
 RECOVERY_HORIZON_EFFECT <- MINS_PER_DAY
 RECOVERY_HORIZON_PLASMA <- MINS_PER_WEEK
 
+# The plasma horizon a run of length `maximum` uses: a week, or the length of
+# the plot if that is longer.  A drug timed on its plasma may be one whose
+# half-life is measured in weeks -- amiodarone's is 55 days -- and on a plot
+# of months a week's horizon would report "a week" at almost every point,
+# which is the cap, not an answer.  Looking as far ahead as the plot runs
+# lets it report any time up to the length of the plot itself.  recoveryGrid()
+# keeps its ratio between steps, so a year's horizon costs 143 grid points
+# against a week's 109, and the answer is still to uniroot()'s 0.01 minutes.
+# A plot of a week or less keeps the week, and with it the same answers.  The effect-site horizon stays a
+# day: beyond that "more than a day" is the answer that matters for recovery.
+# (Claude Code, 2026-10-07, at the request of Steven L. Shafer.)
+recoveryHorizonPlasma <- function(maximum)
+{
+  max(RECOVERY_HORIZON_PLASMA, maximum)
+}
+
 # The same grid out to another horizon, with the same ratio between steps.
 recoveryGrid <- function(horizon)
 {

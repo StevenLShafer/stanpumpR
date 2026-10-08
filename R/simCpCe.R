@@ -184,17 +184,27 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("kg",dose$Units)
     dose$Dose[use] <- dose$Dose[use] * PK$weight
 
-    # Convert dose per hour to dose per minute
+    # Convert dose per hour or per day to dose per minute
     use <- grep("hr",dose$Units)
     dose$Dose[use] <- dose$Dose[use] / 60
+    use <- grep("/day", dose$Units)
+    dose$Dose[use] <- dose$Dose[use] / MINS_PER_DAY
 
-    # Identify extravascular (PO, IM, IN) and IV bolus doses
+    # Identify extravascular (PO, IM, IN) and IV bolus doses.  A rate unit
+    # (isRateUnit(), R/routes.R) is an input rate whatever its route word, so
+    # it is neither: a "mg/day PO" row, the constant-rate oral input of
+    # poRateUnits, becomes an infusion row on the drug's apparent oral
+    # parameters, with no absorption constant and no bioavailability (the
+    # apparent scale already contains F; getDrugPK() sets bioavailability_PO
+    # to zero for a drug without ka_PO, so it must not be applied).  Every
+    # other unit is classified exactly as before.  (Claude Code, 2026-10-07,
+    # at the request of Steven L. Shafer.)
     route <- doseRoute(dose$Units)
-    dose$PO <- route == ROUTE_PO
-    dose$IM <- route == ROUTE_IM
-    dose$IN <- route == ROUTE_IN
-    dose$Bolus <- route == ROUTE_IV &
-      !(grepl("min", dose$Units) | grepl("hr", dose$Units))
+    rate  <- isRateUnit(dose$Units)
+    dose$PO <- route == ROUTE_PO & !rate
+    dose$IM <- route == ROUTE_IM & !rate
+    dose$IN <- route == ROUTE_IN & !rate
+    dose$Bolus <- route == ROUTE_IV & !rate
 
     # Saturable oral absorption (gabapentin): each oral dose is scaled by the
     # fraction absorbed at its own size, in mg per administration.  The dose is

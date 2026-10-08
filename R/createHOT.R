@@ -1,4 +1,8 @@
-createHOT <- function(doseTable,drugDefaults)
+# timeFormat: the format the Time strings are in (timeFormat() in
+# R/utils-time.R).  It is stamped on the widget, and rhandsontable sends the
+# widget's settings back with every edit, so the server can tell an edit made
+# in a grid drawn before a change of time unit from one made after it.
+createHOT <- function(doseTable, drugDefaults, timeFormat = NULL)
 {
   rownames(doseTable) <- 1:nrow(doseTable)
   HOT <- rhandsontable::rhandsontable(
@@ -35,6 +39,8 @@ createHOT <- function(doseTable,drugDefaults)
       valign = "vtMiddle",
       allowInvalid = FALSE
     )
+
+  if (!is.null(timeFormat)) HOT$x$timeFormat <- timeFormatString(timeFormat)
 
   # Disable context menu options that aren't relevant
   HOT$x$contextMenu$items <- HOT$x$contextMenu$items[grepl("row", names(HOT$x$contextMenu$items))]

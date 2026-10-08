@@ -31,6 +31,35 @@ test_that("doseRoute() agrees with every unit the app offers", {
   expect_equal(doseRoute(units), old)
 })
 
+test_that("the constant-rate oral unit is oral by route and a rate by kind", {
+  # "mg/day PO" (poRateUnits; R/drugs_amiodarone.R).  (Claude Code,
+  # 2026-10-07.)
+  expect_true(all(doseRoute(poRateUnits) == ROUTE_PO))
+  expect_true(all(isRateUnit(poRateUnits)))
+  expect_true(all(poRateUnits %in% allUnits))
+  expect_false(any(poRateUnits %in% c(infusionUnits, poUnits, scheduledUnits)))
+  expect_true(all(isRateUnit(infusionUnits)))
+  expect_false(any(isRateUnit(c(bolusUnits, poUnits, imUnits, inUnits, tciUnits,
+                                scheduledUnits, "%"))))
+  expect_equal(isRateUnit(factor("mg/hr")), TRUE)
+})
+
+test_that("every unit offered before the oral rate keeps its exact classification", {
+  # simCpCe() classified a row by substrings until 2026-10-07: a bolus was an
+  # intravenous unit with neither "min" nor "hr" in it, and every PO, IM or
+  # IN unit was an extravascular dose.  It now asks isRateUnit(), so that
+  # "mg/day PO" can be a rate; for every other unit the answer must be the
+  # one it always was.
+  units <- unique(c(setdiff(allUnits, poRateUnits), gasUnits, tciUnits, scheduledUnits,
+                    unlist(getDrugDefaultsGlobal()$Units)))
+  units <- setdiff(units, poRateUnits)
+  route <- doseRoute(units)
+  oldBolus <- route == ROUTE_IV & !(grepl("min", units) | grepl("hr", units))
+  newBolus <- route == ROUTE_IV & !isRateUnit(units)
+  expect_equal(newBolus, oldBolus)
+  expect_false(any(isRateUnit(units[route != ROUTE_IV])))
+})
+
 test_that("doseRoute() reads the route ahead of a dosing frequency", {
   expect_equal(doseRoute(c("mg bid", "mg/kg PO qd", "mg IM tid", "mcg IN qid")),
                c("IV", "PO", "IM", "IN"))

@@ -39,6 +39,8 @@ bookmarksToExclude <- c(
   "sidebarItemExpanded",
   "simType",
   "maximum-selectized",
+  "timeUnits-selectized",
+  "showLongTermTime",
   "targetTableHTML",
   "editPriorDosesTable",
   "addDoseDrug",

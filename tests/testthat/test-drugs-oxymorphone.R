@@ -88,7 +88,12 @@ test_that("oxycodone forms oxymorphone at the observed ratio", {
 
   ratio <- trapz(o$oxymorphone$wide$Time, o$oxymorphone$wide$Plasma) /
            trapz(o$oxycodone$wide$Time,   o$oxycodone$wide$Plasma)
-  expect_equal(ratio, 0.02, tolerance = 0.25)
+  # Divided by the target, so that the 25% is relative: expect_equal() treats
+  # a tolerance larger than the expected value as absolute, and 0.25 against
+  # 0.02 passed any ratio below 0.27.  The closed-form ratio is 0.02003; the
+  # straight chord the time line drew across the second day until 2026-10-07
+  # read 0.02033.  (Claude Code.)
+  expect_equal(ratio / 0.02, 1, tolerance = 0.25)
 })
 
 

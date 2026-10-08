@@ -92,13 +92,16 @@ drug at the stop time with a dose of zero.
 
 ### Entering times
 
-The time field is forgiving and accepts three forms:
+Times are in the **Time units** chosen above the dose table (see *Time
+display*), and the field is forgiving:
 
-- `12` — twelve minutes
-- `1:30` — one hour thirty minutes
-- `130` — the same, interpreted as `HH:MM`
+- `12` — twelve of the unit: twelve minutes, or twelve days
+- `1.5` — one and a half of the unit
+- `1:30` — with *Actual time*, the clock time 01:30 (with *Elapsed time* the
+  table takes numbers only; an `H:MM` pasted in is read as hours and minutes)
+- `130` — 130 of the unit, not 1:30
 
-Minutes above 59 roll over, so `0:80` becomes `1:20`. Anything that cannot be
+Minutes above 59 roll over, so `0:80` becomes `01:20`. Anything that cannot be
 read as a time becomes zero rather than raising an error.
 
 ### Applying changes
@@ -150,7 +153,9 @@ and you can edit it (see *Drug Library*).
 
 ### Interacting with the plot
 
-- **Hover** over any curve for the precise concentration at that moment.
+- **Hover** over any curve for the precise concentration at that moment: Ce for a
+  drug with an effect site, Cp for one without. The time is shown in the chosen
+  time units, or as a time of day under Actual time.
 - **Click** to add a dose of that drug at that time. This bypasses the draft and
   applies immediately.
 - **Double-click** on a drug's curve to edit or delete that drug's doses.
@@ -163,7 +168,7 @@ and you can edit it (see *Drug Library*).
 |---|---|
 | Show typical | The shaded band, above |
 | Normalize to | Rescale every curve to its own peak plasma or peak effect-site value, so drugs on wildly different scales can be compared in shape |
-| Max time | How far the simulation runs |
+| Max time | How far the simulation runs. The choices follow the Time units: 1–24 hours (minutes, hours), 2–365 days, 4–52 weeks |
 | Plasma line / Effect site line | Line style, including none |
 | Y axis height | Plot height in pixels |
 | Time until threshold | Draws, for each drug, how long until it falls to its recovery threshold (`endCe` in the library). Only available when normalization is off |
@@ -279,8 +284,13 @@ oxycodone, oliceridine, remimazolam, codeine, hydrocodone, oxymorphone,
 tramadol), two oral analgesics (gabapentin, pregabalin), the reversal agents
 (naloxone, sugammadex, neostigmine,
 glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,
-ceftriaxone, vancomycin, metronidazole, gentamicin) and five corticosteroids
-(hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone).
+ceftriaxone, vancomycin, metronidazole, gentamicin), five corticosteroids
+(hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone),
+and amiodarone in two entries: **amiodarone** for long-term oral therapy (dosed
+in mg/day PO, best viewed with *Time units* set to days or weeks), with its
+active metabolite **desethylamiodarone**, and **amiodaroneIV** for the first one
+to three days of intravenous therapy. The two amiodarone entries are separate
+models and their concentrations do not add.
 
 Three things to know about the antibiotics and steroids:
 
@@ -355,6 +365,9 @@ what the literature offers.
 | Prednisolone | Xu J, Winkler J, Derendorf H. *J Pharmacokinet Pharmacodyn* 2007;34:355–372. [DOI 10.1007/s10928-007-9050-8](https://doi.org/10.1007/s10928-007-9050-8) (reversible pair reduced to its exact mammillary equivalent; **free** prednisolone) |
 | Prednisone | Xu J, Winkler J, Derendorf H, as above (oral prodrug; total prednisone, with prednisolone on the prednisolone row) |
 | Mannitol | Kaneda K et al., *J Clin Pharmacol* 2010;50(5):536–543. [PMID 20051588](https://pubmed.ncbi.nlm.nih.gov/20051588/)<br>Osmolality: Rudehill A et al., *J Neurosurg Anesthesiol* 1993;5(1):4–12. [PMID 8431668](https://pubmed.ncbi.nlm.nih.gov/8431668/). See [docs/mannitol.md](mannitol.md). |
+| Amiodarone | Pollak PT, Bouillon T, Shafer SL. *Clin Pharmacol Ther* 2000;67:642–652. [PMID 10872646](https://pubmed.ncbi.nlm.nih.gov/10872646/) (long-term oral; apparent parameters, constant daily input) |
+| Desethylamiodarone | Pollak PT, Bouillon T, Shafer SL, as above (formed from all amiodarone cleared, mass basis; not dosed directly) |
+| Amiodarone IV | Korth-Bradley JM et al. *J Clin Pharmacol* 1996;36:715–719. [PMID 8877675](https://pubmed.ncbi.nlm.nih.gov/8877675/) (acute intravenous therapy, first one to three days; no metabolite) |
 | Gabapentin | Tran P et al., *J Pharmacokinet Pharmacodyn* 2017;44:567–579. [DOI 10.1007/s10928-017-9549-6](https://doi.org/10.1007/s10928-017-9549-6) (oral only; clearance proportional to creatinine clearance and the disposition re-anchored to the intravenous volume; saturable absorption applied dose by dose) |
 | Pregabalin | Chan PLS et al., *Clin Pharmacol Ther* 2021;110:132–140. [DOI 10.1002/cpt.2132](https://doi.org/10.1002/cpt.2132) (oral only, apparent parameters); time to peak effect from van Esdonk MJ et al., *CPT Pharmacometrics Syst Pharmacol* 2018;7:573–580. [DOI 10.1002/psp4.12318](https://doi.org/10.1002/psp4.12318) |
 
@@ -575,11 +588,25 @@ Consequences worth knowing when comparing the two side by side:
 
 Above the dose table:
 
-- **Elapsed minutes** — everything counted from zero.
-- **Actual time** — enter a **Procedure start** as `HH:MM` and times display as
-  clock times.
+- **Time units** — minutes, hours, days or weeks. A number typed as a time is
+  in this unit, the time axis is labelled in it, and it sets the **Max time**
+  choices. Changing it rewrites every time in the dose table in the new unit
+  (90 minutes becomes 1.5 hours), so the doses stay where they were; it also
+  applies any unapplied edits.
+- **Time Display**
+  - **Elapsed time** — everything counted from zero.
+  - **Actual time** (minutes and hours only) — enter a **Procedure start** as
+    `HH:MM`; a time with a colon is then a clock time, and a number is counted
+    from the procedure start. Switching to elapsed time converts the clock
+    times.
 
-This changes display and entry only. The simulation is identical.
+This changes display and entry only. The simulation is identical: it always
+works in minutes.
+
+Target-controlled infusions and inhaled agents are simulated only on plots of
+7 days or less; Suggest Dosing is offered in minutes and hours. A dose beyond
+the unit's longest Max time (24 hours, 365 days, 52 weeks) brings a
+notification rather than a longer plot.
 
 ---
 
