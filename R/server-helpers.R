@@ -1,18 +1,11 @@
+# The welcome dialog on its own, for a session restored from a bookmark.  A
+# fresh session shows the same text inside the startup drug menu instead
+# (R/startup-drugs.R).
 showIntroModal <- function() {
   shiny::showModal(
     shiny::modalDialog(
       title = "Welcome to stanpumpR",
-      shiny::p(
-        "stanpumpR, derived from the original STANPUMP program developed at
-        Stanford University,  performs pharmacokinetic simulations
-        based on mathematical models published in the peer-reviewed
-        literature. stanpumpR is intended to help clinicians and investigators
-        better understand the mathematical implications of published models.
-        stanpumpR is only an advisory program. How these models are applied to
-        individual patients is a matter of clinical judgment by the health care
-        provider."
-      ),
-      shiny::p("stanpumpR does not collect any protected healthcare information."),
+      welcomeText(),
       shiny::tags$button(
         type = "button",
         class = "btn btn-warning",
