@@ -15,12 +15,10 @@ gabapentin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
-patient's fat-free mass as described in the
-\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
-\code{FALSE} reproduces the published size scaling exactly.  Each drug
-file's header says what the switch changes for that model; for cefazolin
-it also sets the weight the creatinine-clearance estimate uses.}
+\item{adjustToFFM}{\code{TRUE} (the default) scales the volume to the
+patient's fat-free mass and evaluates Cockcroft-Gault at the
+pharmacokinetic weight; \code{FALSE} uses 58 L for everyone and
+Cockcroft-Gault at total body weight.  See the file's header.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
 assumed normal value for the patient's sex (R/renalFunction.R)}

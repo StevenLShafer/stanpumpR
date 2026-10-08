@@ -185,6 +185,10 @@ GABAPENTIN_TPEAK <- 0   # minutes after an ORAL dose; 0 = no effect site
 #' the returned \code{oralSaturation} block.
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM \code{TRUE} (the default) scales the volume to the
+#'   patient's fat-free mass and evaluates Cockcroft-Gault at the
+#'   pharmacokinetic weight; \code{FALSE} uses 58 L for everyone and
+#'   Cockcroft-Gault at total body weight.  See the file's header.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 gabapentin <- function(weight, height, age, sex, adjustToFFM = TRUE,

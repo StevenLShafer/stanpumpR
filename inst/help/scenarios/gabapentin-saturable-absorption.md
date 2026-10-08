@@ -10,7 +10,7 @@ The shaded band, 4.1 to 9.4 mcg/mL, is the average concentration at the doses th
 
 ## Try next
 
-- Give the 1200 mg as two doses of 600 mg, at 36 and 48 hours. Each is absorbed at 54 per cent, so 643 mg reaches the circulation instead of 463 mg. Keep divided doses hours apart: the model scales each dose by its own size and does not represent saturation shared between doses taken together.
+- Give the 1200 mg as two doses of 600 mg, at 36 and 42 hours, so both peaks fall inside the two-day plot. Each is absorbed at 54 per cent, so 643 mg reaches the circulation instead of 463 mg. Keep divided doses hours apart: the model scales each dose by its own size and does not represent saturation shared between doses taken together.
 - Enter a **Serum creatinine** of 2.0 mg/dL in the Patient Profile. Creatinine clearance halves, the half-life doubles to about 11 hours, and the first dose has not cleared by the time of the second.
 - Change the first dose to 300 mg. About 69 per cent is absorbed, so 300 mg gives more than half the peak of 600 mg.
 
