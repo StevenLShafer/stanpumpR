@@ -43,7 +43,7 @@ The drug pages carry the current values; this table is illustrative. Where the c
 
 A tPeak of zero means no effect site: ke0 is left at zero and the effect-site concentration is not computed. Codeine and tramadol do this: they are modelled as prodrugs, and their effect appears on the row of the metabolite formed from them. See [Active metabolites](help:models/metabolites).
 
-For a drug given orally, the time to peak effect is observed after an oral dose, so ke0 is solved against the oral plasma curve rather than an intravenous bolus; hydrocodone is the case. Desmetramadol, which is never dosed directly, supplies its ke0 to the engine ready-solved, because the curve its peak was observed against (the metabolite formed from oral tramadol) is not one the effect-site solver can build.
+For a drug given orally, the time to peak effect is observed after an oral dose, so ke0 is solved against the oral plasma curve rather than an intravenous bolus; hydrocodone and pregabalin are the cases. The time is counted from the dose, so an absorption lag, such as pregabalin's 19 minutes, is part of it. Desmetramadol, which is never dosed directly, supplies its ke0 to the engine ready-solved, because the curve its peak was observed against (the metabolite formed from oral tramadol) is not one the effect-site solver can build.
 
 ## What to look for on the plot
 

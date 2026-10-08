@@ -61,7 +61,7 @@ predicts, or to reproduce a simulation made before this option existed. The
 full account, with worked examples, is in
 [docs/weight-adjustment.md](weight-adjustment.md).
 
-**Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin and sugammadex)
+**Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin)
 use it to estimate renal function; left blank, they assume a normal creatinine for
 the patient's sex. **Pregnant** appears in the interface but is **currently
 disabled**: no drug in the library yet responds to it.
@@ -281,7 +281,8 @@ The library ships with the anaesthetic drugs (propofol, remifentanil, fentanyl,
 alfentanil, sufentanil, morphine, pethidine, hydromorphone, methadone, ketamine,
 dexmedetomidine, midazolam, etomidate, lidocaine, rocuronium, oxytocin,
 oxycodone, oliceridine, remimazolam, codeine, hydrocodone, oxymorphone,
-tramadol), the reversal agents (naloxone, sugammadex, neostigmine,
+tramadol), two oral analgesics (gabapentin, pregabalin), the reversal agents
+(naloxone, sugammadex, neostigmine,
 glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,
 ceftriaxone, vancomycin, metronidazole, gentamicin), five corticosteroids
 (hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone),
@@ -294,7 +295,8 @@ models and their concentrations do not add.
 Three things to know about the antibiotics and steroids:
 
 - **Enter the creatinine.** Several of these models (cefazolin, vancomycin,
-  gentamicin, sugammadex) and mannitol carry a creatinine-clearance or eGFR
+  gentamicin, sugammadex), mannitol, gabapentin and pregabalin carry a
+  creatinine-clearance or eGFR
   covariate, computed from the **Serum creatinine** field. Left blank, it is an
   assumed normal creatinine (1.0 mg/dL in men, 0.8 in women): the decline of
   renal function with age is represented, renal impairment is not, and a patient
@@ -366,6 +368,8 @@ what the literature offers.
 | Amiodarone | Pollak PT, Bouillon T, Shafer SL. *Clin Pharmacol Ther* 2000;67:642–652. [PMID 10872646](https://pubmed.ncbi.nlm.nih.gov/10872646/) (long-term oral; apparent parameters, constant daily input) |
 | Desethylamiodarone | Pollak PT, Bouillon T, Shafer SL, as above (formed from all amiodarone cleared, mass basis; not dosed directly) |
 | Amiodarone IV | Korth-Bradley JM et al. *J Clin Pharmacol* 1996;36:715–719. [PMID 8877675](https://pubmed.ncbi.nlm.nih.gov/8877675/) (acute intravenous therapy, first one to three days; no metabolite) |
+| Gabapentin | Tran P et al., *J Pharmacokinet Pharmacodyn* 2017;44:567–579. [DOI 10.1007/s10928-017-9549-6](https://doi.org/10.1007/s10928-017-9549-6) (oral only; clearance proportional to creatinine clearance and the disposition re-anchored to the intravenous volume; saturable absorption applied dose by dose) |
+| Pregabalin | Chan PLS et al., *Clin Pharmacol Ther* 2021;110:132–140. [DOI 10.1002/cpt.2132](https://doi.org/10.1002/cpt.2132) (oral only, apparent parameters); time to peak effect from van Esdonk MJ et al., *CPT Pharmacometrics Syst Pharmacol* 2018;7:573–580. [DOI 10.1002/psp4.12318](https://doi.org/10.1002/psp4.12318) |
 
 ### Reading these honestly
 

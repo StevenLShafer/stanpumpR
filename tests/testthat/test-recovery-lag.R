@@ -22,6 +22,10 @@
 # only when a threshold is set under Drug Thresholds, timed on the plasma; the
 # last test here pins it on the real drug.
 #
+# Pregabalin followed on 2026-10-08, with Chan 2021's estimated lag of 0.32 h
+# and, unlike gabapentin, an effect site, so with a threshold set the gap is
+# timed on the effect site; the test after gabapentin's pins that.
+#
 # (Claude Code, Claude Opus 5, 2026-10-06; run on R 4.6.1.)
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
@@ -36,7 +40,7 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("only gabapentin carries an absorption lag", {
+test_that("only gabapentin and pregabalin carry an absorption lag", {
   # If this ever fails it is not a defect -- a drug has gained or lost a lag,
   # and the behaviour the rest of this file guards has changed where it is
   # live.  Worth knowing, and worth rereading R/recoveryStates.R.
@@ -53,7 +57,7 @@ test_that("only gabapentin carries an absorption lag", {
       if (any(!is.na(lags) & lags > 0)) lagged <- c(lagged, drug)
     }
   }
-  expect_equal(unique(lagged), "gabapentin")
+  expect_setequal(unique(lagged), c("gabapentin", "pregabalin"))
 })
 
 
@@ -378,6 +382,29 @@ test_that("gabapentin's own lag blanks a plasma threshold, dose by dose", {
   lag <- 0.311 * 60
   expect_equal(PK$PK$default$tlag_PO, lag)
   DT <- data.frame(Drug = "gabapentin", Time = c(0, 720), Dose = c(600, 300),
+                   Units = "mg PO")
+  X <- simCpCe(DT, noEvents, PK, 1440, TRUE)
+  w <- X$wide
+
+  pending <- (w$Time < lag) | (w$Time >= 720 & w$Time < 720 + lag)
+  expect_true(all(is.na(w$Recovery[pending])))
+  expect_false(anyNA(w$Recovery[!pending]))
+  expect_gt(w$Recovery[w$Time == lag], 60)
+})
+
+
+test_that("pregabalin's lag blanks an effect-site threshold, dose by dose", {
+  # Pregabalin has an effect site, so time until threshold is timed on it.
+  # With a threshold of 1 mcg/mL the readout is missing for the 19.2 min after
+  # each oral dose and a real time everywhere else, including the stretch
+  # before the second dose, when the effect site is already below 1.
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("pregabalin", 70, 170, 50, "male", dd[dd$Drug == "pregabalin", ])
+  PK$endCe <- 1
+  lag <- 0.32 * 60
+  expect_equal(PK$PK$default$tlag_PO, lag)
+  expect_gt(PK$PK$default$ke0, 0)
+  DT <- data.frame(Drug = "pregabalin", Time = c(0, 720), Dose = c(150, 75),
                    Units = "mg PO")
   X <- simCpCe(DT, noEvents, PK, 1440, TRUE)
   w <- X$wide

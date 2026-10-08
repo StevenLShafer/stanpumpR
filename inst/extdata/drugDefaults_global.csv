@@ -25,6 +25,7 @@ oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg PO q
 tramadol,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#7E57C2,100,600,300,0,0,IV,Opioids
 desmetramadol,ng,,,,,#26A69A,20,80,40,84,84,IV,
 gabapentin,mcg,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#880E4F,4.1,9.4,6,0,0,IV,Other
+pregabalin,mcg,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#AD1457,1.3,5.4,2.7,0,0,IV,Other
 cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#2E8B57,0.5,2,1,0,2,IV,Antibiotics
 clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#3CB371,1,4,2,0,5.2,IV,Antibiotics
 cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#66CDAA,1,4,2,0,4.7,IV,Antibiotics
