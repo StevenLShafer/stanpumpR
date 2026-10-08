@@ -51,6 +51,8 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | codeine | **Kristin Persson**, **David R. Guay** and colleagues; **Muhammad W. Ashraf** and colleagues (2024) | One-compartment disposition; CYP2D6-dependent formation of morphine |
 | tramadol, desmetramadol | **Sophie Holford** and colleagues (2014); **Ulrike M. Stamer** and colleagues (2007) | Joint parent-and-metabolite kinetics; CYP2D6 phenotype weights |
 | hydrocodone | **Murad R. Melhem** and colleagues (2013); **Ram P. Kapil** and colleagues (2015); **S. Victoria Otton** and colleagues (1993) | Apparent oral disposition; CYP2D6-dependent formation of hydromorphone |
+| gabapentin | Tran and colleagues (2017) | One-compartment kinetics with saturable absorption; clearance on creatinine clearance |
+| pregabalin | **Phylinda L. S. Chan** and colleagues (2021); **Michiel J. van Esdonk** and colleagues (2018) | One-compartment kinetics with clearance on creatinine clearance; the delay to analgesia, as a time to peak effect |
 | oxymorphone | Endo (manufacturer summary); **Michael P. Adams** and **Harry Ahdieh** (2005) | One-compartment disposition; also oxycodone's metabolite |
 | cefazolin | **T. Komatsu** and colleagues (2024) | Unbound two-compartment kinetics with creatinine clearance |
 | cefalexin | **A. S. Haynes** and colleagues (2024) | Apparent oral kinetics, fitted in children |

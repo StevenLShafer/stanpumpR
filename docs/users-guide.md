@@ -61,7 +61,7 @@ predicts, or to reproduce a simulation made before this option existed. The
 full account, with worked examples, is in
 [docs/weight-adjustment.md](weight-adjustment.md).
 
-**Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin and sugammadex)
+**Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin)
 use it to estimate renal function; left blank, they assume a normal creatinine for
 the patient's sex. **Pregnant** appears in the interface but is **currently
 disabled**: no drug in the library yet responds to it.
@@ -276,7 +276,8 @@ The library ships with the anaesthetic drugs (propofol, remifentanil, fentanyl,
 alfentanil, sufentanil, morphine, pethidine, hydromorphone, methadone, ketamine,
 dexmedetomidine, midazolam, etomidate, lidocaine, rocuronium, oxytocin,
 oxycodone, oliceridine, remimazolam, codeine, hydrocodone, oxymorphone,
-tramadol), the reversal agents (naloxone, sugammadex, neostigmine,
+tramadol), two oral analgesics (gabapentin, pregabalin), the reversal agents
+(naloxone, sugammadex, neostigmine,
 glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,
 ceftriaxone, vancomycin, metronidazole, gentamicin) and five corticosteroids
 (hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone).
@@ -284,7 +285,8 @@ ceftriaxone, vancomycin, metronidazole, gentamicin) and five corticosteroids
 Three things to know about the antibiotics and steroids:
 
 - **Enter the creatinine.** Several of these models (cefazolin, vancomycin,
-  gentamicin, sugammadex) and mannitol carry a creatinine-clearance or eGFR
+  gentamicin, sugammadex), mannitol, gabapentin and pregabalin carry a
+  creatinine-clearance or eGFR
   covariate, computed from the **Serum creatinine** field. Left blank, it is an
   assumed normal creatinine (1.0 mg/dL in men, 0.8 in women): the decline of
   renal function with age is represented, renal impairment is not, and a patient
@@ -353,6 +355,8 @@ what the literature offers.
 | Prednisolone | Xu J, Winkler J, Derendorf H. *J Pharmacokinet Pharmacodyn* 2007;34:355–372. [DOI 10.1007/s10928-007-9050-8](https://doi.org/10.1007/s10928-007-9050-8) (reversible pair reduced to its exact mammillary equivalent; **free** prednisolone) |
 | Prednisone | Xu J, Winkler J, Derendorf H, as above (oral prodrug; total prednisone, with prednisolone on the prednisolone row) |
 | Mannitol | Kaneda K et al., *J Clin Pharmacol* 2010;50(5):536–543. [PMID 20051588](https://pubmed.ncbi.nlm.nih.gov/20051588/)<br>Osmolality: Rudehill A et al., *J Neurosurg Anesthesiol* 1993;5(1):4–12. [PMID 8431668](https://pubmed.ncbi.nlm.nih.gov/8431668/). See [docs/mannitol.md](mannitol.md). |
+| Gabapentin | Tran P et al., *J Pharmacokinet Pharmacodyn* 2017;44:567–579. [DOI 10.1007/s10928-017-9549-6](https://doi.org/10.1007/s10928-017-9549-6) (oral only; clearance proportional to creatinine clearance and the disposition re-anchored to the intravenous volume; saturable absorption applied dose by dose) |
+| Pregabalin | Chan PLS et al., *Clin Pharmacol Ther* 2021;110:132–140. [DOI 10.1002/cpt.2132](https://doi.org/10.1002/cpt.2132) (oral only, apparent parameters); time to peak effect from van Esdonk MJ et al., *CPT Pharmacometrics Syst Pharmacol* 2018;7:573–580. [DOI 10.1002/psp4.12318](https://doi.org/10.1002/psp4.12318) |
 
 ### Reading these honestly
 

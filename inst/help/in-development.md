@@ -21,7 +21,7 @@ Two later changes to *Time until threshold* and the solvers:
 
 ## Visible but not active
 
-**Pregnant** in the Patient Profile is still disabled. The **Serum creatinine** field is live: mannitol, vancomycin, gentamicin, cefazolin and sugammadex estimate renal function from it, or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
+**Pregnant** in the Patient Profile is still disabled. The **Serum creatinine** field is live: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin estimate renal function from it, or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
 
 ## Provisional values flagged in the code
 

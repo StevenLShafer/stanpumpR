@@ -22,8 +22,9 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 | hydromorphone | PO, IM, IN |
 | codeine, hydrocodone, oxymorphone, tramadol | PO |
 | gabapentin | PO, with saturable absorption |
+| pregabalin | PO |
 
-Each drug's page shows the current absorption rate, bioavailability and lag. The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's intramuscular and intranasal absorption was revised so that each route's peak matches the measured time (about 20 minutes intranasal, 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down.
+Each drug's page shows the current absorption rate, bioavailability and lag. The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's intramuscular and intranasal absorption was revised so that each route's peak matches the measured time (about 20 minutes intranasal, 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down. Gabapentin (0.31 h) and pregabalin (0.32 h) keep the lags their sources estimated, so time until threshold reads blank for those minutes after each of their doses. A drug's time to peak effect after an oral dose is counted from the dose, lag included.
 
 ## Saturable absorption
 
@@ -33,7 +34,7 @@ Gabapentin is absorbed by a carrier in the small intestine that saturates, so th
 fraction absorbed = 1 - Imax × D / (ID50 + D)      D = dose in mg
 ```
 
-For gabapentin, Imax is 0.906 and ID50 571 mg (Tran and colleagues, 2017): 0.69 of a 300 mg dose is absorbed, 0.54 of 600 mg and 0.39 of 1200 mg. The drug's bioavailability is then the limit for a very small dose. Once scaled, each dose is an ordinary first-order input, so doses still add, and the drug's page shows the fraction at several doses. What is not represented is saturation shared between doses: two doses entered as separate rows at the same time are each scaled by their own size, not by their sum, and absorption from doses taken close together does not compete.
+For gabapentin, Imax is 0.906 and ID50 571 mg (Tran and colleagues, 2017): 0.69 of a 300 mg dose is absorbed, 0.54 of 600 mg and 0.39 of 1200 mg. The drug's bioavailability is then the limit for a very small dose. Once scaled, each dose is an ordinary first-order input, so doses still add, and the drug's page shows the fraction at several doses. What is not represented is saturation shared between doses: two doses entered as separate rows at the same time are each scaled by their own size, not by their sum, and absorption from doses taken close together does not compete. Pregabalin, a close relative, is about 90 per cent absorbed whatever the dose (Bockbrader and colleagues, 2010): its absorption is linear, and [the pregabalin scenario](help:scenarios/pregabalin-linear-absorption) sets the two side by side.
 
 ## What to look for
 

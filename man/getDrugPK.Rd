@@ -51,7 +51,7 @@ ignore it.}
 \item{creatinine}{serum creatinine in mg/dL, or NULL (the default) for the
 assumed normal value for the patient's sex.  Passed only to the renal
 models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
-sugammadex, gabapentin); see \code{R/renalFunction.R}.}
+sugammadex, gabapentin, pregabalin); see \code{R/renalFunction.R}.}
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example

@@ -4,7 +4,7 @@
 \alias{ke0FromTPeak}
 \title{Back-solve ke0 from a time to peak effect observed after an oral dose}
 \usage{
-ke0FromTPeak(tPeak, coef, lambda, ka, drug = "this drug")
+ke0FromTPeak(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 }
 \arguments{
 \item{tPeak}{observed time to peak effect after an oral dose, in minutes}
@@ -17,6 +17,8 @@ eigenvalues, already carrying absorption and bioavailability}
 \item{ka}{absorption rate constant, per minute}
 
 \item{drug}{the drug's name, used only in the error message}
+
+\item{lag}{oral absorption lag, in minutes}
 }
 \value{
 ke0, per minute
@@ -35,5 +37,9 @@ by any effect site model, and usually means the two numbers came from
 different sources or that the earlier one describes onset rather than
 maximum.  It raises instead of returning a huge ke0 that would quietly make
 the effect site a copy of the plasma curve.
+
+The time is counted from the dose.  An absorption lag delays the plasma and
+the effect site alike, so the curves are built from the start of absorption
+and the lag is added to both peaks.
 }
 \keyword{internal}
