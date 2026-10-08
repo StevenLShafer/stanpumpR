@@ -8,10 +8,6 @@
 app_server <- function(input, output, session) {
   config <- .sprglobals$config
 
-  observeEvent(input$show_intro_modal, {
-    showIntroModal()
-  }, once = TRUE)
-
   session$userData$debug <- reactiveVal({
     query <- parseQueryString(isolate(session$clientData$url_search))
     if (!is.null(query[["debug"]])) {
@@ -94,6 +90,19 @@ app_server <- function(input, output, session) {
     })
   })
 
+  # renderPlot() asks for the height before it draws, so an error in the
+  # simulation surfaced here, as red text in the plot area, although main_plot()
+  # deliberately shows nothing for it.  Treat it the same way.
+  plotHeightOrNothing <- function() {
+    height <- tryCatch(plotHeight(), error = function(err) {
+      if (!inherits(err, "shiny.silent.error")) {
+        outputComments("No plot:", conditionMessage(err))
+      }
+      NULL
+    })
+    req(height)
+  }
+
   output$PlotSimulation <- renderPlot({
     outputComments("In output$PlotSimulation", level = DEBUG_LEVEL_VERBOSE)
     # Said here, in the plot area, because main_plot() swallows errors and the
@@ -105,7 +114,7 @@ app_server <- function(input, output, session) {
   }, height = function() {
     # renderPlot() measures before it draws, and with a violation there is no
     # plot to measure: a fixed height lets the message above through.
-    if (!is.null(timeUnitViolation())) 150 else plotHeight()
+    if (!is.null(timeUnitViolation())) 150 else plotHeightOrNothing()
   })
 
   # Make drugs and events local to session
@@ -119,7 +128,9 @@ app_server <- function(input, output, session) {
   eventDefaults <- reactiveVal(getEventDefaults())
   drugList <- getDrugDefaultsGlobal()$Drug
 
-  doseTable <- reactiveVal(doseTableInit)
+  # Empty until the drugs are chosen in the startup menu, or a bookmark
+  # restores its own (see Startup, below)
+  doseTable <- reactiveVal(doseTableBlank)
 
   emailSendCount <- reactiveVal(0)
 
@@ -308,7 +319,60 @@ app_server <- function(input, output, session) {
   # The Help tab: see R/help-server.R.  Loading a teaching scenario from the
   # help writes doseTable() and eventTable() directly, as a URL restore does,
   # and sets the time settings through timeApi.
-  helpServer(input, output, session, doseTable, eventTable, drugDefaults, timeApi = timeApi)
+  helpPage <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
+                         timeApi = timeApi)
+
+  ###########
+  # Startup #
+  ###########
+
+  # A fresh session opens on the drug menu (R/startup-drugs.R).  A bookmark
+  # carries its own dose table, which onRestored() puts in, so it skips the
+  # menu unless that table is empty.  Shown now, as the session starts, rather
+  # than in reply to the browser.
+  startupMenuOpen <- opensOnStartupMenu(session$restoreContext$values)
+  if (startupMenuOpen) {
+    showModal(startupDrugModal(startupDrugChoices(isolate(drugDefaults()))))
+  }
+
+  # app.js asks for the welcome on a first visit, or when a week has passed
+  # since the last.  With the menu open it goes at the top of the menu; a
+  # modal replacing the menu would leave nothing to choose the drugs with.
+  startupWelcome <- reactiveVal(FALSE)
+  output$startup_welcome <- renderUI({
+    req(startupWelcome())
+    startupWelcomeUI()
+  })
+  observeEvent(input$show_intro_modal, {
+    if (startupMenuOpen) {
+      startupWelcome(TRUE)
+    } else {
+      showIntroModal()
+    }
+  }, once = TRUE)
+
+  startWithChosenDrugs <- function() {
+    if (!startupMenuOpen) return(FALSE)
+    startupMenuOpen <<- FALSE
+    removeModal()
+    chosen <- unlist(lapply(DRUG_CATEGORIES, function(category) {
+      input[[startupDrugInputId(category)]]
+    }), use.names = FALSE)
+    outputComments("Starting with:", paste(chosen, collapse = ", "))
+    # Its times are all "0", the same in every format: written in the
+    # format the table already has.
+    setDoseTable(startupDoseTable(chosen, drugDefaults()), doseTableFormat())
+    TRUE
+  }
+  observeEvent(input$startup_ok, {
+    startWithChosenDrugs()
+  })
+  observeEvent(input$startup_tour, {
+    if (startWithChosenDrugs()) {
+      helpPage("quick-start")
+      bslib::nav_select("mainNav", "Help", session = session)
+    }
+  })
 
   outputComments("Setup Complete")
 
@@ -374,6 +438,10 @@ app_server <- function(input, output, session) {
   })
 
   onRestored(function(state) {
+    # Shiny calls this for any query string; ?debug=1 alone has no dose table,
+    # and restoring its absence would leave the dose table unusable (and turn
+    # off adjustToFFM, below, as if for an old bookmark).
+    if (!isBookmarkRestore(state$values)) return()
     profileCode({
       outputComments(
         "***************************************************************************\n",
@@ -2029,8 +2097,9 @@ app_server <- function(input, output, session) {
       editDrugsTrigger$depend()
       x <- drugDefaults()
       x$Units <- drugUnitsSimplify(x$Units)
-      # endCe is managed via the Drug Thresholds modal
-      x <- x[, !names(x) %in% "endCe"]
+      # endCe is managed via the Drug Thresholds modal.  Category only groups
+      # the startup menu, which has closed by now.
+      x <- x[, !names(x) %in% c("endCe", "Category")]
       drugsHOT <- rhandsontable::rhandsontable(
         x,
         overflow = 'visible',
@@ -2107,8 +2176,9 @@ app_server <- function(input, output, session) {
       newDrugDefaults$Typical              <- as.numeric(newDrugDefaults$Typical)
       newDrugDefaults$MEAC                 <- as.numeric(newDrugDefaults$MEAC)
 
-      # endCe is not in the table; restore from current values
+      # endCe and Category are not in the table; restore from current values
       newDrugDefaults$endCe     <- current$endCe[match(newDrugDefaults$Drug, current$Drug)]
+      newDrugDefaults$Category  <- current$Category[match(newDrugDefaults$Drug, current$Drug)]
 
       newDrugDefaults$Units <- drugUnitsExpand(newDrugDefaults$Units)
       drugDefaults(newDrugDefaults)

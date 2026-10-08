@@ -385,3 +385,27 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   font-size: 0.85rem;
   color: #4a5764;
 }
+
+/* the startup drug menu (R/startup-drugs.R): categories flow into columns */
+.startup-welcome {
+  border-left: 3px solid #2c3e50;
+  background: #f4f6f8;
+  padding: 0.6rem 0.9rem 0.8rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+.startup-drug-groups {
+  column-width: 13rem;
+  column-gap: 1.5rem;
+}
+.startup-drug-group {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+}
+.startup-drug-group .control-label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+.startup-drug-group .shiny-input-container {
+  margin-bottom: 0;
+}

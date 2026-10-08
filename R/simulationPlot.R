@@ -633,7 +633,10 @@ simulationPlot <- function(
   # Step A3: labs and themes
 
   nFacets <- length(unique(plotResults$Wrap))
-  width <- width - 200 # roughly account for legend and Y axis labels
+  # Roughly account for the legend and Y axis labels.  Floored, because a
+  # narrow pane would otherwise give a negative aspect ratio, or at exactly 200
+  # an infinite one, which ggplot cannot draw.
+  width <- max(width - 200, 100)
   aspect <- yAxisHeight / width
   height <- yAxisHeight * nFacets + 50
   plotObject <- plotObject + ggplot2::labs(x = xAxisLabel) +

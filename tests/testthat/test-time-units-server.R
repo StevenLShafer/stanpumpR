@@ -185,6 +185,8 @@ test_that("a change that leaves every string as it was still clears the history"
   shiny::testServer(app_server, {
     sent <- recordMessages(session)
     startApp(session, timeMode = "relative")
+    # The table the startup menu gives with its defaults: times of 0
+    setDoseTable(doseTableInit, doseTableFormat())
     session$flushReact()
     doseTableHistory()$do(withTimes("30"))
     doseTableHistory()$undo()

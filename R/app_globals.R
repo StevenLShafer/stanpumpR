@@ -1,4 +1,8 @@
 blanks <- rep("", 6)
+# The dose table the app opened with before the startup drug menu, and what
+# the menu still gives when Start is pressed with its defaults ticked
+# (startupDoseTable(STARTUP_DRUGS_DEFAULT); test-startup-drugs.R holds them
+# equal).
 doseTableInit <- data.frame(
   Drug = c("propofol","propofol","fentanyl","remifentanil","remifentanil","rocuronium", blanks),
   Time = c(as.character(rep(0,6)), blanks),
@@ -6,6 +10,9 @@ doseTableInit <- data.frame(
   Units = c("mg","mcg/kg/min","mcg","mcg","mcg/kg/min","mg", blanks)
 )
 doseTableNewRow <-  doseTableInit[7, ]
+# The dose table a session holds until the startup menu fills it
+doseTableBlank <- doseTableInit[7:12, ]
+rownames(doseTableBlank) <- NULL
 
 eventTableInit <- data.frame(
   Time = numeric(0),
@@ -66,6 +73,13 @@ bookmarksToExclude <- c(
   "profiler_threshold",
   "plotWidth",
   "show_intro_modal",
+  # The startup drug menu (R/startup-drugs.R): what it chose is in the dose
+  # table.  One checkbox group per entry in DRUG_CATEGORIES, which loads after
+  # this file; test-startup-drugs.R checks that every one is listed here.
+  "startup_ok",
+  "startup_tour",
+  "startupDrugs_1", "startupDrugs_2", "startupDrugs_3", "startupDrugs_4",
+  "startupDrugs_5", "startupDrugs_6", "startupDrugs_7",
   "client_time",
   "dosetable_apply",
   "dosetable_undo",

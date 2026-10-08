@@ -126,6 +126,30 @@ scheduledUnits <- as.vector(t(outer(
 # drugs, but they are legitimate entries in the dose table.
 gasUnits <- c("L/min", "%")
 
+# The startup drug menu (R/startup-drugs.R).  The categories, in the order the
+# menu lists them; each drug's is the Category column of
+# drugDefaults_global.csv, and a drug with no category is not offered.
+DRUG_CATEGORIES <- c(
+  "Hypnotics and sedatives",
+  "Opioids",
+  "Neuromuscular blockade",
+  "Inhaled anesthetics",
+  "Antibiotics",
+  "Corticosteroids",
+  "Other"
+)
+# Ticked when the menu opens: the four drugs the app opened with before it
+# had a menu.
+STARTUP_DRUGS_DEFAULT <- c("propofol", "fentanyl", "remifentanil", "rocuronium")
+# A chosen drug starts with one zero-dose row in its Default.Units, except
+# these, which start with a bolus row and an infusion row, as they always have.
+STARTUP_UNITS <- list(
+  propofol     = c("mg", "mcg/kg/min"),
+  remifentanil = c("mcg", "mcg/kg/min")
+)
+# Blank rows below the chosen drugs, to type into
+STARTUP_BLANK_ROWS <- 6L
+
 MINS_PER_HOUR <- 60
 MINS_PER_DAY  <- 60 * 24
 MINS_PER_WEEK <- 60 * 24 * 7
