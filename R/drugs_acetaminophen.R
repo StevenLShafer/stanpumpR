@@ -34,19 +34,20 @@
 # ORAL ROUTE
 # ==========
 # Fasted tablet, from the same paper's Table 2: bioavailability 0.859,
-# absorption half-life 11.5 min, lag 5.30 min.  The library keeps its drugs
-# lag-free, because during a lag the engine has no state for the drug and the time until threshold cannot be
-# reported (see R/recoveryStates.R), so the lag is folded into one
-# exponential with the same mean input time:
+# absorption half-life 11.5 min, lag 5.30 min, all used as published.  The
+# reference man's 1 g tablet peaks at 11.0 mg/L at 34 min.  (Morse's
+# simulated population median, with between-subject variability, is
+# 12.8 mg/L at 0.61 h.)
 #
-#     MIT = 5.3 + 11.5 / ln 2 = 21.89 min,   ka = 1 / MIT = 0.0457 /min
+# Unlike the rest of the library, the lag is kept rather than folded into ka
+# (Steven L. Shafer, 2026-10-08).  Folding it by mean input time lowered the
+# tablet peak about 8%.  The cost is that for the 5.3 min between an oral
+# dose and its absorption the engine holds no state for that dose, so the
+# time until threshold does not count it (see R/recoveryStates.R).
 #
-# This starts absorption a few minutes early, and the reference man's 1 g
-# tablet peaks at 10.1 mg/L at 35 min instead of 11.0 mg/L at 34 min with the
-# lag kept: about 8% lower.  AUC is unchanged.  (Morse's simulated population
-# median, with between-subject variability, is 12.8 mg/L at 0.61 h.)  Food
-# multiplies the tablet's absorption half-life by 1.87 and its lag by 4.63
-# (Morse Table 2); that is not modelled, so the oral curve is the FASTED curve.
+# Food multiplies the tablet's absorption half-life by 1.87 and its lag by
+# 4.63 (Morse Table 2); that is not modelled, so the oral curve is the
+# FASTED curve.
 #
 # EFFECT SITE
 # ===========
@@ -113,10 +114,10 @@ acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v3  <- 1                                   # two compartments
   cl3 <- 0
 
-  # Oral, fasted tablet: the 5.3 min lag folded into ka, see the header
-  ka_PO              <- 1 / (5.3 + 11.5 / log(2))   # 1/min, = 0.0457
-  bioavailability_PO <- 0.859            # Morse Table 2, FPARA
-  tlag_PO            <- 0
+  # Oral, fasted tablet (Morse Table 2), lag kept as published
+  ka_PO              <- log(2) / 11.5    # 1/min, absorption half-life 11.5 min
+  bioavailability_PO <- 0.859            # FPARA
+  tlag_PO            <- 5.3              # min
 
   default <- list(
     v1 = v1,
