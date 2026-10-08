@@ -207,37 +207,6 @@ helpScenarios <- function() {
       maximum = 240, addedPlots = PLOT_ID_MEAC
     ),
     helpScenario(
-      "oral-oxycodone",
-      "Oral oxycodone: absorption sets the pace",
-      "Opioids",
-      "Two oral doses six hours apart, with the rise governed by absorption rather than distribution, and the oxymorphone formed from them.",
-      doses = helpDoses(
-        c("oxycodone", 0, 10, "mg PO"),
-        c("oxycodone", 360, 10, "mg PO")
-      ),
-      maximum = 720, plasmaLinetype = "dashed"
-    ),
-    helpScenario(
-      "codeine-cyp2d6",
-      "Codeine: a prodrug, and the CYP2D6 phenotype",
-      "Opioids",
-      "Sixty milligrams of oral codeine produces a morphine curve; change the CYP 2D6 field and watch it change.",
-      doses = helpDoses(
-        c("codeine", 0, 60, "mg PO")
-      ),
-      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
-    ),
-    helpScenario(
-      "tramadol-oral",
-      "Tramadol and its metabolite desmetramadol",
-      "Opioids",
-      "An oral dose of tramadol, with the opioid effect carried by the desmetramadol formed from it.",
-      doses = helpDoses(
-        c("tramadol", 0, 100, "mg PO")
-      ),
-      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
-    ),
-    helpScenario(
       "tci-propofol",
       "Target-controlled infusion of propofol",
       "Intravenous basics",
@@ -251,6 +220,37 @@ helpScenarios <- function() {
     ),
 
     # --- Oral analgesics -----------------------------------------------------
+    helpScenario(
+      "oral-oxycodone",
+      "Oral oxycodone: absorption sets the pace",
+      "Oral analgesics",
+      "Two oral doses six hours apart, with the rise governed by absorption rather than distribution, and the oxymorphone formed from them.",
+      doses = helpDoses(
+        c("oxycodone", 0, 10, "mg PO"),
+        c("oxycodone", 360, 10, "mg PO")
+      ),
+      maximum = 720, plasmaLinetype = "dashed"
+    ),
+    helpScenario(
+      "codeine-cyp2d6",
+      "Codeine: a prodrug, and the CYP2D6 phenotype",
+      "Oral analgesics",
+      "Sixty milligrams of oral codeine produces a morphine curve; change the CYP 2D6 field and watch it change.",
+      doses = helpDoses(
+        c("codeine", 0, 60, "mg PO")
+      ),
+      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
+      "tramadol-oral",
+      "Tramadol and its metabolite desmetramadol",
+      "Oral analgesics",
+      "An oral dose of tramadol, with the opioid effect carried by the desmetramadol formed from it.",
+      doses = helpDoses(
+        c("tramadol", 0, 100, "mg PO")
+      ),
+      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
+    ),
     helpScenario(
       "gabapentin-saturable-absorption",
       "Gabapentin: why 1200 mg is not twice 600 mg",
