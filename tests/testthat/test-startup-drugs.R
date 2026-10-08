@@ -6,9 +6,9 @@ local_mocked_bindings(outputComments = function(...) {})
 dd <- getDrugDefaultsGlobal()
 
 test_that("every drug that can be dosed has a category the menu knows", {
-  # Not offered: a metabolite with no units of its own, and the carrier gases
+  # Not offered: the metabolites with no units of their own, and the carrier gases
   # and ventilation, which the gas rules add themselves
-  notOffered <- c("desmetramadol", "air", "oxygen", "ventilation")
+  notOffered <- c("desmetramadol", "desethylamiodarone", "air", "oxygen", "ventilation")
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))
   expect_true(all(dd$Category[match(dosed, dd$Drug)] %in% DRUG_CATEGORIES))
@@ -28,7 +28,7 @@ test_that("the menu lists the categories in order, each sorted by name", {
                    c("dexmedetomidine", "etomidate", "ketamine", "midazolam",
                      "propofol", "remimazolam"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
-  expect_false(any(c("desmetramadol", "air", "oxygen", "ventilation") %in% unlist(choices)))
+  expect_false(any(c("desmetramadol", "desethylamiodarone", "air", "oxygen", "ventilation") %in% unlist(choices)))
   # A library without the column (an old edited copy) offers nothing, quietly
   expect_identical(startupDrugChoices(dd[, names(dd) != "Category"]), list())
 })

@@ -112,6 +112,21 @@ test_that("the repeats are merged into the exported dose table", {
   expect_equal(cz$Time, c(0, 480, 960))
   expect_equal(cz$Units, c("mg tid", "mg", "mg"))
   expect_equal(nrow(out[out$Drug == "vancomycin", ]), 1)
+
+  # Shown in another time unit, the same table with that unit beside the
+  # minutes: 480 min is a third of a day.  Minutes, the default, add nothing.
+  expect_identical(exportDoseTable(doseTable, drugs, timeUnit = "minutes"), out)
+  inDays <- exportDoseTable(doseTable, drugs, timeUnit = "days")
+  expect_equal(names(inDays), c("Drug", "Time", "Time (days)", "Dose", "Units"))
+  expect_equal(inDays[, names(out)], out)
+  expect_equal(inDays$`Time (days)`[inDays$Drug == "cefazolin"], c(0, 1, 2) / 3)
+
+  # ...and when nothing is merged in, so the typed rows are returned as they are
+  plain <- doses(c(0, 90), c(1000, 1000), c("mg", "mg"))
+  inHours <- exportDoseTable(plain, list(), timeUnit = "hours")
+  expect_equal(names(inHours), c("Drug", "Time", "Time (hours)", "Dose", "Units"))
+  expect_equal(inHours$`Time (hours)`, c(0, 1.5))
+  expect_identical(exportDoseTable(plain, list()), plain)
 })
 
 test_that("the scheduled units are offered and validated", {

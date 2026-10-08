@@ -7,6 +7,7 @@ simulationPlot <- function(
   xBreaks = c(0:6*10),
   xLabels = c(0:6*10),
   xAxisLabel = "Time (Minutes)",
+  xMaximum = NULL,
   plasmaLinetype = "solid",
   effectsiteLinetype = "dashed",
   normalization = c(NORMALIZE_NONE),
@@ -197,8 +198,14 @@ simulationPlot <- function(
   allResults$Wrap <- ""
   allResults$Label <- ""
 
+  # The breaks, and everything plotted, are in minutes; xLabels and
+  # xAxisLabel say what they are in the display unit (utils-time-display.R).
+  # The axis runs to xMaximum, the length of the simulation, rather than to
+  # the last break: a tick step need not divide Max time, and 365 days ticked
+  # every 30 days would otherwise stop at day 360.  Without xMaximum the last
+  # break is the end, as it always was.
   minimum <- min(xBreaks)
-  maximum <- max(xBreaks)
+  maximum <- if (is.null(xMaximum)) max(xBreaks) else xMaximum
   plotTable$xmin <- minimum
   plotTable$xmax <- maximum
 
@@ -520,7 +527,15 @@ simulationPlot <- function(
 
   # Step A1: create plotObject with lines from `plotResults`
 
-  data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS & Site != "Rate")
+  # The "Recovery" rows are the time until threshold in minutes.  They stay in
+  # plotResults, which is exported, but are not drawn as a line: they are not a
+  # concentration, and drawn on a concentration axis they set the panel's
+  # height (84 "ng/ml" for a 250 mcg fentanyl bolus whose effect site peaks
+  # at 4), which flattened the concentration curve and then made the overlay
+  # in Step A7, scaled to that height, a copy of the stray line.  Step A7
+  # draws the time until threshold, scaled to the concentrations, from
+  # allEquispace.
+  data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS & Site != "Rate" & Site != "Recovery")
   rateData <- subset(plotResults, Site == "Rate")
 
   if (logY) {
@@ -581,7 +596,7 @@ simulationPlot <- function(
   # Step A2: add scales to plotObject
 
   plotObject <- plotObject +
-    ggplot2::coord_cartesian(xlim = c(min(xBreaks), max(xBreaks)), clip="off") +
+    ggplot2::coord_cartesian(xlim = c(minimum, maximum), clip="off") +
     ggplot2::scale_x_continuous(expand = c(0,0), breaks = xBreaks, labels = xLabels) +
     ggplot2::scale_color_manual(values=drugColors, breaks = drugFactors[!grepl(" TCI$", drugFactors)]) +
     ggplot2::scale_fill_manual(values=drugColors)  +
@@ -774,13 +789,22 @@ simulationPlot <- function(
         recoveryLabels$Drug[start:end] <- as.character(plotTable$Drug[i])
         recoveryLabels$y[start:end] <- labels
         recoveryLabels$Wrap[start:end] <- as.character(plotTable$Wrap[i])
-        plotTable$MaxRecovery[i] <- ceiling(plotTable$MaxRecovery[i] / nLabels) * nLabels
+        # The labels are in minutes, hours, days or weeks, whichever suits
+        # this panel's longest time (recoveryAxisUnit()), independently of
+        # the x axis.  The top of the scale is rounded up to a multiple of
+        # nLabels IN THAT UNIT, so the labels are whole numbers of it.  Rounded
+        # in minutes instead, a week's horizon over four labels would read
+        # 1.75, 3.5, 5.25 and 7 d rather than 2, 4, 6 and 8 d.  In minutes
+        # this is exactly the rounding it has always been.
+        recoveryUnit <- recoveryAxisUnit(plotTable$MaxRecovery[i])
+        maxRecoveryShown <- ceiling(plotTable$MaxRecovery[i] / recoveryUnit$factor / nLabels) * nLabels
+        plotTable$MaxRecovery[i] <- maxRecoveryShown * recoveryUnit$factor
 #        plotTable$MaxY[i] <- recoveryLabels$y[end]
 #        recoveryLabels$new[start:end] <- paste(labels /  plotTable$MaxY[i] * plotTable$MaxRecovery[i], "min")
 #        recovery$Recovery[USE] <- recovery$Recovery[USE] / plotTable$MaxRecovery[i] * plotTable$MaxY[i]
 #        plotTable does not have MaxY, and it is not needed in the table, so
         MaxYi <- recoveryLabels$y[end]
-        recoveryLabels$new[start:end] <- paste(labels /  MaxYi * plotTable$MaxRecovery[i], "min")
+        recoveryLabels$new[start:end] <- paste(labels /  MaxYi * maxRecoveryShown, recoveryUnit$abbreviation)
         recovery$Recovery[USE] <- recovery$Recovery[USE] / plotTable$MaxRecovery[i] * MaxYi
         recovery$Wrap[USE] <- as.character(plotTable$Wrap[i])
         start <- end + 1

@@ -192,13 +192,17 @@ validateDoseTableInput <- function(DT, drugDefaults = getDrugDefaultsGlobal()) {
 validateEventTableInput <- function(ET, eventDefaults = getEventDefaults()) {
   if (!is.data.frame(ET) || !all(c("Time", "Event") %in% names(ET))) stop(shiny::safeError("Invalid event table structure."))
   if (nrow(ET) > MAX_EVENT_ROWS) stop(shiny::safeError("Event table exceeds the permitted row limit."))
-  time <- as.character(ET$Time)
   event <- as.character(ET$Event)
-  if (any(nchar(time) > MAX_TIME_STRING_LENGTH | nchar(event) > MAX_DRUGNAME_LENGTH, na.rm = TRUE)) {
+  if (any(nchar(as.character(ET$Time)) > MAX_TIME_STRING_LENGTH | nchar(event) > MAX_DRUGNAME_LENGTH, na.rm = TRUE)) {
     stop(shiny::safeError("Event table contains a value that's too long."))
   }
   if (any(!event %in% eventDefaults$Event)) stop(shiny::safeError("Event table contains an unknown event."))
-  if (any(vapply(time, function(x) !identical(validateTime(x), x), logical(1)))) {
+  # Event times are minutes, stored as numbers whatever the time unit.  They
+  # are checked as numbers: as text, as.character(1e5) is "1e+05", which is
+  # not a valid time string, so an event 100000 minutes in stopped the plot.
+  time <- ET$Time
+  if (!is.numeric(time)) time <- suppressWarnings(as.numeric(as.character(time)))
+  if (any(!is.finite(time) | time < 0)) {
     stop(shiny::safeError("Event table contains an invalid time."))
   }
   invisible(TRUE)

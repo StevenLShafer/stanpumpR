@@ -101,17 +101,20 @@ expandScheduledDoses <- function(dose, maximum) {
 
 # The dose table as exported: the rows the user typed, then every drug's TCI
 # infusion rows and repeated scheduled doses, so that the full dose sequence
-# appears.
-exportDoseTable <- function(DT, drugs) {
+# appears.  Time is in minutes.  With a `timeUnit` other than minutes (the
+# plot's display unit) a "Time (<unit>)" column follows it with the same
+# times in that unit (addDisplayTimeColumn()); the default changes nothing.
+exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
   out <- tciMergeDoseTable(DT, drugs)
   if (is.null(out)) return(out)
   extra <- lapply(drugs, function(d) d$scheduled)
   extra <- do.call(rbind, Filter(Negate(is.null), extra))
-  if (is.null(extra) || nrow(extra) == 0) return(out)
-  out <- out[, c("Drug", "Time", "Dose", "Units")]
-  out$Time <- as.numeric(out$Time)
-  out <- rbind(out, extra)
-  out <- out[order(out$Drug, out$Time), ]
-  rownames(out) <- NULL
-  out
+  if (!is.null(extra) && nrow(extra) > 0) {
+    out <- out[, c("Drug", "Time", "Dose", "Units")]
+    out$Time <- as.numeric(out$Time)
+    out <- rbind(out, extra)
+    out <- out[order(out$Drug, out$Time), ]
+    rownames(out) <- NULL
+  }
+  addDisplayTimeColumn(out, timeUnit)
 }

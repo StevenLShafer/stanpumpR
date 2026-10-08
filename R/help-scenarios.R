@@ -27,13 +27,18 @@ HELP_SCENARIO_GROUPS <- c(
   "Interactions",
   "Special populations",
   "Recovery and emergence",
-  "Inhaled anesthetics"
+  "Inhaled anesthetics",
+  "Long-term therapy"
 )
 
 #' Default graph options for a scenario
 #' @noRd
 helpScenarioDefaultOptions <- function() {
   list(
+    # The Time units the scenario is shown in.  Its dose and event times, and
+    # maximum, are minutes whatever the unit; maximum must be one of the
+    # unit's Max time choices.
+    timeUnits = TIME_UNIT_DEFAULT,
     maximum = 60,
     typical = "Range",
     normalization = NORMALIZE_NONE,
@@ -175,6 +180,22 @@ helpScenarios <- function() {
       ),
       maximum = 60, plasmaLinetype = "dashed"
     ),
+    # The product label's first 24 hours of intravenous amiodarone: 150 mg
+    # over 10 minutes, 360 mg over 6 hours, 540 mg over 18 hours (Claude Code,
+    # 2026-10-08, at the request of Steven L. Shafer)
+    helpScenario(
+      "amiodarone-iv-loading",
+      "Amiodarone IV: the label's 24-hour loading infusion",
+      "Intravenous basics",
+      "A rapid load, a slow load and a maintenance rate: why the concentration dips when the rate is halved.",
+      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("amiodaroneIV",   0,  15, "mg/min"),
+        c("amiodaroneIV",  10,   1, "mg/min"),
+        c("amiodaroneIV", 370, 0.5, "mg/min")
+      ),
+      timeUnits = "hours", maximum = 1440
+    ),
 
     # --- Opioids -------------------------------------------------------------
     helpScenario(
@@ -261,7 +282,9 @@ helpScenarios <- function() {
         c("gabapentin", 2160, 1200, "mg PO")
       ),
       # Gabapentin has no effect site, so the plasma line carries the curve.
-      maximum = 2880, plasmaLinetype = "solid"
+      # Two days is longer than minutes and hours go (24 hours), so in days:
+      # the second dose reads 1.5.
+      timeUnits = "days", maximum = 2880, plasmaLinetype = "solid"
     ),
 
     # --- Interactions --------------------------------------------------------
@@ -437,6 +460,57 @@ helpScenarios <- function() {
         c("ventilation", 0, 6, "L/min")
       ),
       maximum = 60
+    ),
+
+    # --- Long-term therapy ---------------------------------------------------
+    helpScenario(
+      "amiodarone-pollak-regimen",
+      "Amiodarone: Pollak's stepped loading regimen",
+      "Long-term therapy",
+      "Loading a drug with a huge peripheral volume: a year of amiodarone held inside its window.",
+      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("amiodarone",      0, 1600, "mg/day PO"),
+        c("amiodarone",   2880, 1200, "mg/day PO"),
+        c("amiodarone",  10080, 1000, "mg/day PO"),
+        c("amiodarone",  20160,  800, "mg/day PO"),
+        c("amiodarone",  30240,  600, "mg/day PO"),
+        c("amiodarone",  40320,  400, "mg/day PO"),
+        c("amiodarone", 129600,  343, "mg/day PO")
+      ),
+      timeUnits = "days", maximum = 525600
+    ),
+    helpScenario(
+      "amiodarone-label-loading",
+      "Amiodarone: the label's high-dose loading regimen",
+      "Long-term therapy",
+      "A loading dose that is right in the first week overshoots by the third, and a maintenance dose above clearance x target never settles inside the window.",
+      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("amiodarone",     0, 1600, "mg/day PO"),
+        c("amiodarone", 30240,  800, "mg/day PO"),
+        c("amiodarone", 73440,  600, "mg/day PO")
+      ),
+      timeUnits = "days", maximum = 525600
+    ),
+    helpScenario(
+      "amiodarone-washout",
+      "Amiodarone: stopping after six months",
+      "Long-term therapy",
+      "A fast early fall and then months of washout: the context-sensitive decrement of amiodarone.",
+      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("amiodarone",      0, 1600, "mg/day PO"),
+        c("amiodarone",   2880, 1200, "mg/day PO"),
+        c("amiodarone",  10080, 1000, "mg/day PO"),
+        c("amiodarone",  20160,  800, "mg/day PO"),
+        c("amiodarone",  30240,  600, "mg/day PO"),
+        c("amiodarone",  40320,  400, "mg/day PO"),
+        c("amiodarone", 129600,  343, "mg/day PO"),
+        c("amiodarone", 262080,    0, "mg/day PO")
+      ),
+      timeUnits = "days", maximum = 525600,
+      showThreshold = TRUE
     )
   )
 }
@@ -474,7 +548,10 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
 
   o <- s$options
-  if (!o$maximum %in% maxtimes$times) say("maximum is not one of the Max time choices: ", o$maximum)
+  if (!identical(validTimeUnit(o$timeUnits), o$timeUnits)) say("invalid timeUnits: ", o$timeUnits)
+  if (!isTRUE(o$maximum %in% MAX_TIMES[[validTimeUnit(o$timeUnits)]]$times)) {
+    say("maximum is not one of the Max time choices for ", o$timeUnits, ": ", o$maximum)
+  }
   if (!o$typical %in% c("none", "Mid", "Range")) say("invalid typical: ", o$typical)
   if (!o$normalization %in% c(NORMALIZE_NONE, "Peak plasma", "Peak effect site")) say("invalid normalization: ", o$normalization)
   lineTypes <- c("blank", "solid", "dashed", "dotted", "dotdash")
@@ -509,6 +586,12 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
     }
     gases <- d$Drug[isGasDrug(d$Drug)]
     if (length(gases) > 0 && !"ventilation" %in% d$Drug) say("a gas scenario should set ventilation explicitly")
+    # The app's time-units rule: no TCI target rows and no inhaled agents on
+    # a plot of more than a week (timeUnitViolation() in R/app_server.R)
+    if ((length(gases) > 0 || any(d$Units %in% tciUnits)) &&
+        isTRUE(o$maximum > ACUTE_MAX_PLOT_MINUTES)) {
+      say("TCI targets and inhaled agents need a Max time of 7 days or less")
+    }
     if (PLOT_ID_INTERACTION %in% o$addedPlots) {
       opioids <- drugDefaults$Drug[!is.na(drugDefaults$MEAC) & drugDefaults$MEAC > 0]
       if (!"propofol" %in% d$Drug || !any(d$Drug %in% opioids)) say("the interaction panel needs propofol and an opioid")
@@ -518,6 +601,10 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   e <- s$events
   if (!is.null(e)) {
     if (!all(c("Time", "Event") %in% names(e))) say("event table lacks columns")
+    for (t in e$Time) {
+      if (!is_valid_number(t, 0, Inf)) say("invalid event time: ", t)
+      else if (t >= o$maximum) say("event at ", t, " is beyond Max time ", o$maximum)
+    }
     bad <- setdiff(e$Event, eventDefaults$Event)
     if (length(bad)) say("unknown events: ", paste(bad, collapse = ", "))
     if (!PLOT_ID_EVENTS %in% o$addedPlots) say("events are given but the Events panel is not shown")
@@ -529,14 +616,16 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
 #' The dose table a scenario puts into the app
 #'
 #' Character columns, as the dose table holds them, with blank rows after the
-#' doses so that there is room to type, as doseTableInit has.
+#' doses so that there is room to type, as doseTableInit has.  The times are
+#' written in the scenario's time unit, elapsed (the format applyHelpScenario()
+#' records for them).
 #' @noRd
 helpScenarioDoseTable <- function(s, blankRows = 3) {
   d <- s$doses
   d <- d[order(d$Time, d$Drug), ]
   dt <- data.frame(
     Drug = d$Drug,
-    Time = as.character(d$Time),
+    Time = minutesToDisplayTime(d$Time, s$options$timeUnits),
     Dose = as.character(d$Dose),
     Units = d$Units,
     stringsAsFactors = FALSE
@@ -561,11 +650,19 @@ helpScenarioEventTable <- function(s) {
 #' draft to confirm) and the undo history starts afresh, exactly as a URL
 #' restore does.
 #'
+#' With `timeApi` (app_server()'s), the time unit, elapsed time and Max time
+#' are set through it, and the dose table is written together with the format
+#' its times are in, so that the app has nothing to convert when the browser
+#' reports the new settings.  The order does not matter: it all reaches the
+#' browser in one message.
+#'
 #' @param session the Shiny session
 #' @param s a scenario from helpScenarios()
 #' @param doseTable,eventTable the app's reactiveVal()s
+#' @param timeApi list(setDoseTable, showTimeSettings), or NULL to write the
+#'   tables directly (tests)
 #' @noRd
-applyHelpScenario <- function(session, s, doseTable, eventTable) {
+applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL) {
   p <- s$patient
   o <- s$options
 
@@ -579,7 +676,9 @@ applyHelpScenario <- function(session, s, doseTable, eventTable) {
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
 
-  updateSelectInput(session, "maximum", selected = as.character(o$maximum))
+  if (is.null(timeApi)) {
+    updateSelectInput(session, "maximum", selected = maxTimeValue(o$maximum))
+  }
   updateSelectInput(session, "typical", selected = o$typical)
   updateSelectInput(session, "normalization", selected = o$normalization)
   shinyWidgets::updateRadioGroupButtons(session, "plasmaLinetype", selected = o$plasmaLinetype)
@@ -588,10 +687,15 @@ applyHelpScenario <- function(session, s, doseTable, eventTable) {
   updateCheckboxInput(session, "showThreshold", value = o$showThreshold)
   updateCheckboxInput(session, "logY", value = o$logY)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
-  updateSelectizeInput(session, "timeMode", selected = "relative")
 
   eventTable(helpScenarioEventTable(s))
-  doseTable(helpScenarioDoseTable(s))
+  if (is.null(timeApi)) {
+    updateSelectizeInput(session, "timeMode", selected = "relative")
+    doseTable(helpScenarioDoseTable(s))
+  } else {
+    timeApi$showTimeSettings(o$timeUnits, "relative", o$maximum)
+    timeApi$setDoseTable(helpScenarioDoseTable(s), timeFormat(o$timeUnits, "relative"))
+  }
   invisible(s)
 }
 
@@ -624,17 +728,23 @@ helpScenarioPageHTML <- function(id) {
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     check.names = FALSE, stringsAsFactors = FALSE
   )
+  # Times as the dose table will show them: in the scenario's time unit, in
+  # full (helpFormatNumber()'s three significant figures would print 30240
+  # minutes as 30,200)
+  timeHeader <- paste0("Time (", o$timeUnits, ")")
   dosesShown <- s$doses
   dosesShown <- dosesShown[order(dosesShown$Time, dosesShown$Drug), ]
   dosesShown <- data.frame(
     Drug = helpDrugTitle(dosesShown$Drug),
-    `Time (min)` = helpFormatNumber(dosesShown$Time),
+    Time = minutesToDisplayTime(dosesShown$Time, o$timeUnits),
     Dose = helpFormatNumber(dosesShown$Dose, 4),
     Units = dosesShown$Units,
     check.names = FALSE, stringsAsFactors = FALSE
   )
+  names(dosesShown)[2] <- timeHeader
   optionRows <- c(
-    "Max time" = formatMinutes(o$maximum),
+    "Time units" = o$timeUnits,
+    "Max time" = maxTimeLabel(o$maximum, o$timeUnits),
     "Show typical" = if (o$typical == "none") "<none>" else o$typical,
     "Normalize to" = if (o$normalization == NORMALIZE_NONE) "<none>" else o$normalization,
     "Plasma line" = o$plasmaLinetype,
@@ -648,8 +758,9 @@ helpScenarioPageHTML <- function(id) {
                              stringsAsFactors = FALSE)
   eventsHTML <- ""
   if (!is.null(s$events) && nrow(s$events) > 0) {
-    ev <- data.frame(`Time (min)` = helpFormatNumber(s$events$Time), Event = s$events$Event,
+    ev <- data.frame(Time = minutesToDisplayTime(s$events$Time, o$timeUnits), Event = s$events$Event,
                      check.names = FALSE, stringsAsFactors = FALSE)
+    names(ev)[1] <- timeHeader
     eventsHTML <- helpTableHTML(ev, "Events")
   }
 

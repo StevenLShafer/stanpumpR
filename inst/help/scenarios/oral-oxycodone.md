@@ -9,7 +9,7 @@ The second dose at six hours arrives when the first has fallen to about a third 
 ## Try next
 
 - Change the interval to four hours (doses at 0, 240 and 480 minutes) and see the accumulation.
-- Set *Max time* to 2 days and give 10 mg every six hours for a day. How many doses until the troughs stop rising?
+- Set *Time units* to days and *Max time* to 2 days, and give 10 mg every six hours for a day: a `mg PO qid` row at `0`, and a `0 mg PO qid` row at `1`. How many doses until the troughs stop rising?
 - Add hydromorphone 2 mg PO at the same times and compare the absorption rates: hydromorphone's absorption parameter in the library is much slower (a half-time of about 70 minutes), and provisional.
 
 ## Background

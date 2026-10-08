@@ -1,4 +1,8 @@
-$(document).on('shiny:connected', function(event) {
+// Not 'shiny:connected': since Shiny 1.14 that fires before the browser sends
+// its "init" message, so the inputs set here went to the server first, without
+// the page's URL, and the server never restored a bookmarked link's dose
+// table, events or thresholds (only the inputs drawn into the page were).
+$(document).on('shiny:sessioninitialized', function(event) {
   // Send shiny the current local time
   var timeNow = new Date().toLocaleTimeString();
   Shiny.setInputValue("client_time", timeNow);

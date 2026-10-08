@@ -343,14 +343,40 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # ke0, and it neither forms nor receives a metabolite, so it never reaches
   # the fold.
   # Gabapentin joined on 2026-10-07: no estimated human equilibration delay
-  # yet (GABAPENTIN_TPEAK in R/drugs_gabapentin.R).
+  # yet (GABAPENTIN_TPEAK in R/drugs_gabapentin.R).  Amiodarone and
+  # desethylamiodarone joined on 2026-10-07: an ACTIVE parent with no effect
+  # site (no human ke0 for the antiarrhythmic effect), forming a metabolite
+  # with none either.  The fold path is prednisone's, driven by a
+  # constant-rate input instead of an oral dose; rechecked in the next test.
+  # AmiodaroneIV joined on 2026-10-08: active, no effect site and no
+  # metabolite, so it never reaches the fold either.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
-    "sugammadex", "glycopyrrolate", "mannitol", "gabapentin"
+    "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
+    "amiodarone", "desethylamiodarone", "amiodaroneIV"
   ))
+})
+
+
+test_that("amiodarone folds onto a desethylamiodarone row with no effect site", {
+  # The same path as prednisone's below, from a constant-rate input
+  # ("mg/day PO").  The receiving row has no effect site and no threshold, so
+  # it reads zero; the parent's own threshold (1.0 mg/L, the bottom of the
+  # therapeutic window) is timed on its plasma.  (Claude Code, 2026-10-07.)
+  o <- simulateDrugsWithCovariates(
+    data.frame(Drug = "amiodarone", Time = 0, Dose = 1600, Units = "mg/day PO"),
+    noEvents, 70, 170, 50, "male", 1440, TRUE)
+  dea <- o$desethylamiodarone
+  expect_equal(dea$formedFrom, "amiodarone")
+  expect_gt(max(dea$wide$Plasma), 0)
+  expect_true(all(is.na(dea$wide$"Effect Site")))
+  expect_true(all(dea$equiSpace$Recovery == 0))
+  amio <- o$amiodarone$wide
+  expect_true(all(is.na(amio$"Effect Site")))
+  expect_gt(amio$Recovery[nrow(amio)], 0)
 })
 
 

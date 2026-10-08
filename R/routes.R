@@ -22,6 +22,25 @@ doseRoute <- function(units) {
   route
 }
 
+#' Is a dose unit an input rate rather than an amount?
+#'
+#' A rate -- mass per minute, hour or day, with or without per kg -- sets a
+#' running input from its time until the next rate row for the drug, whatever
+#' its route: the intravenous infusions ("mg/hr", "mcg/kg/min") and the
+#' constant-rate oral input ("mg/day PO", `poRateUnits`).  Matched on the
+#' "/min", "/hr" or "/day" word, so that a route or other qualifier may follow
+#' it.  Every unit offered before the oral rate arrived classifies exactly as
+#' the substring tests simCpCe() used ("min" or "hr" anywhere) did, which
+#' test-routes.R checks unit by unit.  (Claude Code, 2026-10-07, at the
+#' request of Steven L. Shafer.)
+#'
+#' @param units Character vector of dose units, as in the dose table.
+#' @returns Logical vector the same length as `units`.
+#' @noRd
+isRateUnit <- function(units) {
+  grepl("/(min|hr|day)( |$)", as.character(units))
+}
+
 #' Order a drug's units by route, keeping the order within each route
 #'
 #' @param units Character vector of one drug's units.
