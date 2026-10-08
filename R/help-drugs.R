@@ -541,6 +541,27 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         helpPageLink("models/absorption"), ".</p>",
         helpTableHTML(do.call(rbind, rows))
       )
+      # Saturable absorption: the oral bioavailability above is the limit for a
+      # small dose, and each dose is scaled by its own fraction absorbed.
+      sat <- pkRef$oralSaturation
+      if (!is.null(sat)) {
+        doses <- c(300, 600, 900, 1200)
+        f <- d$bioavailability_PO * oralSaturationFraction(doses, sat)
+        absorptionHTML <- paste0(
+          absorptionHTML,
+          "<p>Oral absorption <strong>saturates</strong>: the fraction absorbed falls as the dose ",
+          "rises, as 1 &minus; ", helpFormatNumber(sat$Imax), " &times; D / (",
+          helpFormatNumber(sat$ID50), " + D) with D the dose in mg, so the bioavailability above is ",
+          "the limit for a very small dose. Each oral dose is scaled by its own fraction. Doses ",
+          "entered as separate rows at the same time are scaled separately, not by their sum.</p>",
+          helpTableHTML(data.frame(
+            `Oral dose (mg)` = helpFormatNumber(doses),
+            `Fraction absorbed` = helpFormatNumber(f),
+            `Amount absorbed (mg)` = helpFormatNumber(doses * f),
+            check.names = FALSE, stringsAsFactors = FALSE
+          ))
+        )
+      }
     }
   }
 

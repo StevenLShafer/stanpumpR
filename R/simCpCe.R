@@ -206,6 +206,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IN <- route == ROUTE_IN & !rate
     dose$Bolus <- route == ROUTE_IV & !rate
 
+    # Saturable oral absorption (gabapentin): each oral dose is scaled by the
+    # fraction absorbed at its own size, in mg per administration.  The dose is
+    # in the base unit here, and the base unit times mg_Conv is mg for every
+    # concentration unit.  Scaled once, here, each dose is then an ordinary
+    # input to whichever engine runs; see oralSaturationFraction().
+    if (!is.null(PK$oralSaturation) && any(dose$PO))
+      dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
+        oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv, PK$oralSaturation)
+
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp
     # and Ce come out in) is replaced by the infusion rows the TCI controller

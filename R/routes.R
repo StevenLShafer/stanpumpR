@@ -49,3 +49,53 @@ isRateUnit <- function(units) {
 groupUnitsByRoute <- function(units) {
   units[order(match(doseRoute(units), DOSE_ROUTES))]
 }
+
+#' Fraction of an oral dose absorbed when absorption saturates
+#'
+#' Some drugs are absorbed by a carrier that saturates, so the fraction of an
+#' oral dose that reaches the circulation falls as the dose rises.  Gabapentin,
+#' carried by the L-amino acid transporter, is the case in the library.  Such a
+#' drug returns an `oralSaturation` block, and every oral dose is scaled by
+#'
+#'     1 - Imax * D / (ID50 + D)
+#'
+#' with D the dose in mg per administration.  That is the inhibitory Emax form
+#' of Tran et al. (J Pharmacokinet Pharmacodyn 2017;44:567-579) and contains
+#' the hyperbolic Dmax / (D50 + D) as the case Imax = 1.  The drug's
+#' `bioavailability_PO` stays the fraction absorbed in the limit of a small
+#' dose; the product of the two is the bioavailability of a given dose.
+#'
+#' Each dose is scaled once, by its own size, and is then an independent input
+#' to the linear engines, so superposition still holds.  What this cannot
+#' represent is saturation shared between doses: two doses taken together are
+#' scaled separately, not as their sum, and overlapping absorption from doses
+#' close in time does not compete.
+#'
+#' @param doseMg oral doses in mg per administration
+#' @param saturation `list(Imax, ID50)`, ID50 in mg, or NULL for none
+#' @returns the fraction of each dose absorbed, relative to `bioavailability_PO`
+#' @keywords internal
+oralSaturationFraction <- function(doseMg, saturation)
+{
+  if (is.null(saturation)) return(rep(1, length(doseMg)))
+  1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg)
+}
+
+#' Check a drug model's saturable oral absorption block
+#'
+#' @param saturation the `oralSaturation` block a drug model returned, or NULL
+#' @param drug the drug's name, for the error message
+#' @returns `saturation`, unchanged, if it is valid; otherwise an error
+#' @keywords internal
+validateOralSaturation <- function(saturation, drug)
+{
+  if (is.null(saturation)) return(NULL)
+  ok <- is.list(saturation) &&
+    is_valid_number(saturation$Imax, 0, 1) &&
+    is_valid_number(saturation$ID50) && saturation$ID50 > 0
+  # Imax above 1 would make the fraction absorbed negative at large doses.
+  if (!ok)
+    stop("Invalid oralSaturation for ", drug, ": needs Imax between 0 and 1 ",
+         "and a positive ID50 in mg.")
+  saturation
+}

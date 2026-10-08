@@ -1,7 +1,8 @@
 # The serum creatinine covariate, shared by every model with a renal term.
 # See R/renalFunction.R.
 
-renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex")
+renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex",
+                "gabapentin")
 
 test_that("a blank creatinine is the assumed normal value for the patient's sex", {
   expect_equal(patientCreatinine(NULL, "male"), SCR_ASSUMED_MALE)

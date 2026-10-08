@@ -23,6 +23,7 @@
 HELP_SCENARIO_GROUPS <- c(
   "Intravenous basics",
   "Opioids",
+  "Oral analgesics",
   "Interactions",
   "Special populations",
   "Recovery and emergence",
@@ -227,37 +228,6 @@ helpScenarios <- function() {
       maximum = 240, addedPlots = PLOT_ID_MEAC
     ),
     helpScenario(
-      "oral-oxycodone",
-      "Oral oxycodone: absorption sets the pace",
-      "Opioids",
-      "Two oral doses six hours apart, with the rise governed by absorption rather than distribution, and the oxymorphone formed from them.",
-      doses = helpDoses(
-        c("oxycodone", 0, 10, "mg PO"),
-        c("oxycodone", 360, 10, "mg PO")
-      ),
-      maximum = 720, plasmaLinetype = "dashed"
-    ),
-    helpScenario(
-      "codeine-cyp2d6",
-      "Codeine: a prodrug, and the CYP2D6 phenotype",
-      "Opioids",
-      "Sixty milligrams of oral codeine produces a morphine curve; change the CYP 2D6 field and watch it change.",
-      doses = helpDoses(
-        c("codeine", 0, 60, "mg PO")
-      ),
-      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
-    ),
-    helpScenario(
-      "tramadol-oral",
-      "Tramadol and its metabolite desmetramadol",
-      "Opioids",
-      "An oral dose of tramadol, with the opioid effect carried by the desmetramadol formed from it.",
-      doses = helpDoses(
-        c("tramadol", 0, 100, "mg PO")
-      ),
-      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
-    ),
-    helpScenario(
       "tci-propofol",
       "Target-controlled infusion of propofol",
       "Intravenous basics",
@@ -268,6 +238,53 @@ helpScenarios <- function() {
         c("propofol", 60, 0, "Effect site target")
       ),
       maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE
+    ),
+
+    # --- Oral analgesics -----------------------------------------------------
+    helpScenario(
+      "oral-oxycodone",
+      "Oral oxycodone: absorption sets the pace",
+      "Oral analgesics",
+      "Two oral doses six hours apart, with the rise governed by absorption rather than distribution, and the oxymorphone formed from them.",
+      doses = helpDoses(
+        c("oxycodone", 0, 10, "mg PO"),
+        c("oxycodone", 360, 10, "mg PO")
+      ),
+      maximum = 720, plasmaLinetype = "dashed"
+    ),
+    helpScenario(
+      "codeine-cyp2d6",
+      "Codeine: a prodrug, and the CYP2D6 phenotype",
+      "Oral analgesics",
+      "Sixty milligrams of oral codeine produces a morphine curve; change the CYP 2D6 field and watch it change.",
+      doses = helpDoses(
+        c("codeine", 0, 60, "mg PO")
+      ),
+      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
+      "tramadol-oral",
+      "Tramadol and its metabolite desmetramadol",
+      "Oral analgesics",
+      "An oral dose of tramadol, with the opioid effect carried by the desmetramadol formed from it.",
+      doses = helpDoses(
+        c("tramadol", 0, 100, "mg PO")
+      ),
+      maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
+      "gabapentin-saturable-absorption",
+      "Gabapentin: why 1200 mg is not twice 600 mg",
+      "Oral analgesics",
+      "Gabapentin's absorption saturates: 600 mg and then, after a washout, 1200 mg by mouth, and the larger dose peaks less than half again as high.",
+      doses = helpDoses(
+        c("gabapentin", 0, 600, "mg PO"),
+        c("gabapentin", 2160, 1200, "mg PO")
+      ),
+      # Gabapentin has no effect site, so the plasma line carries the curve.
+      # Two days is longer than minutes and hours go (24 hours), so in days:
+      # the second dose reads 1.5.
+      timeUnits = "days", maximum = 2880, plasmaLinetype = "solid"
     ),
 
     # --- Interactions --------------------------------------------------------

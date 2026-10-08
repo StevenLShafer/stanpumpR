@@ -16,6 +16,12 @@
 # was refitted.  So every test here puts one in by hand, and the first one
 # pins that the unlagged path is untouched.
 #
+# Gabapentin made the behaviour live on 2026-10-07: Tran 2017's oral lag of
+# 0.311 h is an estimated parameter (RSE 8%), kept rather than folded into ka.
+# Gabapentin has no effect site and no default threshold, so the gap shows
+# only when a threshold is set under Drug Thresholds, timed on the plasma; the
+# last test here pins it on the real drug.
+#
 # (Claude Code, Claude Opus 5, 2026-10-06; run on R 4.6.1.)
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
@@ -30,10 +36,10 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("no drug in the library carries an absorption lag", {
-  # If this ever fails it is not a defect -- a drug has been given a lag, and
-  # the behaviour the rest of this file guards has become live rather than
-  # latent.  Worth knowing, and worth rereading R/recoveryStates.R.
+test_that("only gabapentin carries an absorption lag", {
+  # If this ever fails it is not a defect -- a drug has gained or lost a lag,
+  # and the behaviour the rest of this file guards has changed where it is
+  # live.  Worth knowing, and worth rereading R/recoveryStates.R.
   dd <- getDrugDefaultsGlobal()
   lagged <- character(0)
   for (drug in dd$Drug[!isGasDrug(dd$Drug)])
@@ -47,7 +53,7 @@ test_that("no drug in the library carries an absorption lag", {
       if (any(!is.na(lags) & lags > 0)) lagged <- c(lagged, drug)
     }
   }
-  expect_equal(unique(lagged), character(0))
+  expect_equal(unique(lagged), "gabapentin")
 })
 
 
@@ -356,4 +362,28 @@ test_that("a drug with no effect site at all renders with recovery switched on",
   )
   expect_s3_class(p$plotObject, "ggplot")
   expect_no_warning(ggplot2::ggplot_build(p$plotObject))
+})
+
+
+test_that("gabapentin's own lag blanks a plasma threshold, dose by dose", {
+  # The live case.  No effect site, so time until threshold is timed on the
+  # plasma; with a threshold of 2 mcg/mL set, each oral dose leaves the
+  # readout missing for the 18.66 min before its absorption starts, and a real
+  # time everywhere else -- including the stretch before the second dose, when
+  # the plasma is already below the threshold and zero would be the old,
+  # wrong answer.
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("gabapentin", 70, 171, 50, "male", dd[dd$Drug == "gabapentin", ])
+  PK$endCe <- 2
+  lag <- 0.311 * 60
+  expect_equal(PK$PK$default$tlag_PO, lag)
+  DT <- data.frame(Drug = "gabapentin", Time = c(0, 720), Dose = c(600, 300),
+                   Units = "mg PO")
+  X <- simCpCe(DT, noEvents, PK, 1440, TRUE)
+  w <- X$wide
+
+  pending <- (w$Time < lag) | (w$Time >= 720 & w$Time < 720 + lag)
+  expect_true(all(is.na(w$Recovery[pending])))
+  expect_false(anyNA(w$Recovery[!pending]))
+  expect_gt(w$Recovery[w$Time == lag], 60)
 })
