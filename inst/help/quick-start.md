@@ -7,7 +7,7 @@ Five steps produce a simulation. Everything else in this help is refinement.
 
 When the app opens it asks which drugs to display, with a box for each drug, grouped by category: hypnotics and sedatives, opioids, neuromuscular blockade, inhaled anesthetics, antibiotics, corticosteroids and others. Propofol, fentanyl, remifentanil and rocuronium start ticked; untick them to start with something else. **Start** puts each ticked drug in the dose table with a dose of 0 at time 0, ready to edit. Any drug can be added to the dose table later. On a first visit, and once a week after that, the dialog also states what stanpumpR is and is not, and **Take the tour** starts with your ticked drugs and brings you to this page.
 
-A link to a saved simulation, or reloading the page, skips the question and opens the simulation as it was.
+A link to a saved simulation, or reloading the page, skips the question and opens the simulation as it was, provided its dose table has at least one drug in it. With an empty dose table (for instance, reloading before pressing **Start**), the question is asked again.
 
 ## 1. Describe the patient
 
