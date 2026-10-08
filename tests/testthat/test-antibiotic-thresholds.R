@@ -52,6 +52,9 @@ test_that("the antibiotics and amiodarone are exactly the drugs with no effect s
   }
   expect_setequal(timedOnPlasma, c(antibioticMicTable()$Drug, "amiodarone"))
   expect_false("amiodarone" %in% antibioticMicTable()$Drug)
+  # Acute intravenous amiodarone (2026-10-08) deliberately has no default
+  # threshold: the window is for chronic troughs (R/drugs_amiodaroneIV.R).
+  expect_false("amiodaroneIV" %in% timedOnPlasma)
   amio <- helpDrugPageHTML("amiodarone")
   expect_false(grepl("Time until threshold: free drug at the MIC", amio, fixed = TRUE))
 })

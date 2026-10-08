@@ -18,6 +18,8 @@ Two later changes to *Time until threshold* and the solvers:
 And for plots longer than a day:
 
 - **Time units.** A *Time units* selector in the Time card (minutes, hours, days, weeks) sets the unit that times are typed in and the time axis is labelled in, and the Max time choices that go with it (up to a year). Changing it converts the dose table, so the doses stay where they were. *Actual time* is offered for minutes and hours. Target-controlled infusions and inhaled agents are simulated on plots of 7 days or less. See [Time display](help:time-display).
+- **Amiodarone.** Long-term oral amiodarone and its active metabolite desethylamiodarone (Pollak, Bouillon and Shafer 2000), given as a constant daily oral rate (`mg/day PO`), with three long-term scenarios; see [Amiodarone](help:drugs/amiodarone).
+  Acute intravenous amiodarone is a separate entry, [Amiodarone IV](help:drugs/amiodaroneIV) (Korth-Bradley and colleagues 1996), for the first one to three days only, with [the label's 24-hour loading regimen](scenario:amiodarone-iv-loading) as a scenario.
 
 ## Now active
 

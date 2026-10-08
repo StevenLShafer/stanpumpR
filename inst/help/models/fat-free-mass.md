@@ -21,7 +21,7 @@ The reference man is 70 kg, 170 cm, 35 years old, whose fat-free mass by the for
 
 Each drug's page says whether the switch changes it, under *Parameters at reference patients*.
 
-- **Scaled to fat-free mass** (the default): alfentanil, codeine, dexmedetomidine (adult), etomidate, fentanyl, hydromorphone, ketamine, lidocaine, methadone, midazolam, morphine, naloxone, oliceridine, oxycodone, oxymorphone, pethidine, remimazolam, rocuronium, sufentanil, tramadol, desmetramadol, amiodarone and desethylamiodarone.
+- **Scaled to fat-free mass** (the default): alfentanil, codeine, dexmedetomidine (adult), etomidate, fentanyl, hydromorphone, ketamine, lidocaine, methadone, midazolam, morphine, naloxone, oliceridine, oxycodone, oxymorphone, pethidine, remimazolam, rocuronium, sufentanil, tramadol, desmetramadol, amiodarone, desethylamiodarone and amiodaroneIV.
 - **Not scaled, because they carry their own body-size covariate**: propofol and remifentanil already contain fat-free mass inside their Eleveld and Kim models.
 - **Not scaled, deliberately**: oxytocin was fitted in parturients, a population the reference man does not describe; hydrocodone's disposition is apparent (divided by an unmeasured bioavailability) and carries no size term that could be scaled.
 

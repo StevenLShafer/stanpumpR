@@ -291,9 +291,9 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # the other steroids, sugammadex and glycopyrrolate have no equilibration
   # model to attach (see each drug's header); mannitol is plotted as serum
   # osmolality and has no published ke0; amiodarone and desethylamiodarone
-  # (2026-10-07) are active but have no published human ke0 for the
-  # antiarrhythmic effect.  Pinned because the count has been got wrong by
-  # hand more than once.
+  # (2026-10-07) and amiodaroneIV (2026-10-08) are active but have no
+  # published human ke0 for the antiarrhythmic effect.  Pinned because the
+  # count has been got wrong by hand more than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
     k <- tryCatch(getDrugPK(d, 70, 171, 50, "male",
@@ -307,7 +307,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol",
-    "amiodarone", "desethylamiodarone"
+    "amiodarone", "desethylamiodarone", "amiodaroneIV"
   ))
 })
 

@@ -345,14 +345,15 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # ACTIVE parent with no effect site (no human ke0 for the antiarrhythmic
   # effect), forming a metabolite with none either.  The fold path is
   # prednisone's, driven by a constant-rate input instead of an oral dose;
-  # rechecked in the next test.
+  # rechecked in the next test.  AmiodaroneIV joined on 2026-10-08: active,
+  # no effect site and no metabolite, so it never reaches the fold either.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol",
-    "amiodarone", "desethylamiodarone"
+    "amiodarone", "desethylamiodarone", "amiodaroneIV"
   ))
 })
 

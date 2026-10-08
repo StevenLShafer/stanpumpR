@@ -12,7 +12,7 @@ Each drug is plotted in the concentration units given in the drug library: **mcg
 
 | Drug | Plotted in |
 |---|---|
-| propofol, morphine, pethidine, methadone, ketamine, midazolam, etomidate, lidocaine, rocuronium, remimazolam, amiodarone, desethylamiodarone | mcg/mL |
+| propofol, morphine, pethidine, methadone, ketamine, midazolam, etomidate, lidocaine, rocuronium, remimazolam, amiodarone, desethylamiodarone, amiodaroneIV | mcg/mL |
 | remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, dexmedetomidine, naloxone, oxytocin, oxycodone, oliceridine | ng/mL |
 
 Internally, doses of a drug plotted in mcg/mL are converted to milligrams and doses of one plotted in ng/mL to micrograms before simulation; volumes are in litres, so concentration comes out in the plotted unit.

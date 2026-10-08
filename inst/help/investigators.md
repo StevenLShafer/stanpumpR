@@ -66,6 +66,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | neostigmine | **T. N. Calvey** and colleagues (1979); **T. Heier** and colleagues (2002) | One patient's two-compartment fit; the time to peak effect |
 | glycopyrrolate | **C. Bartels** and colleagues (2013) | Three-compartment kinetics of the active cation |
 | amiodarone, desethylamiodarone | **P. Timothy Pollak**, **Thomas Bouillon** and Shafer (2000) | Apparent oral two-compartment kinetics of the parent and its metabolite in long-term therapy, with each day's oral dose as a constant rate |
+| amiodaroneIV | **J. M. Korth-Bradley** and colleagues (1996) | Per-kilogram two-compartment kinetics of acute intravenous amiodarone, for the first one to three days |
 
 ## Pharmacodynamics and methods
 

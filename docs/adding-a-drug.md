@@ -227,8 +227,10 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
 - `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and the "time until threshold"
   level: the effect-site concentration for a drug with an effect site, the plasma concentration
-  for one without, and `0` for none. A drug with no established range sets all three band
-  columns to `0`: no band is drawn, and its help page says so (desethylamiodarone). For an antibiotic, `endCe` is the plotted concentration at
+  for one without, and `0` for none. A drug with no established range, or none that applies
+  to its model, sets all three band columns to `0`: no band is drawn, and its help page says so
+  (desethylamiodarone; amiodaroneIV, whose chronic trough window does not describe intravenous
+  loading). For an antibiotic, `endCe` is the plotted concentration at
   which **free** drug equals the MIC: the MIC itself if the model plots unbound drug, the MIC
   divided by the free fraction if it plots total drug. Add the antibiotic to
   `antibioticMicTable()` in `R/antibioticThresholds.R`, which records the organism, MIC, free

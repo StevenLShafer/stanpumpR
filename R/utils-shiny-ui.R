@@ -33,7 +33,7 @@ citationItemHTML <- function(drug, reference, color) {
   tags$div(
     tags$strong(
       style = paste0("color:", if (is.null(color)) "inherit" else color, ";"),
-      tools::toTitleCase(drug)
+      helpDrugTitle(drug)
     ),
     ": ", text, link
   )

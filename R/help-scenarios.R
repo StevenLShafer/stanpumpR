@@ -179,6 +179,22 @@ helpScenarios <- function() {
       ),
       maximum = 60, plasmaLinetype = "dashed"
     ),
+    # The product label's first 24 hours of intravenous amiodarone: 150 mg
+    # over 10 minutes, 360 mg over 6 hours, 540 mg over 18 hours (Claude Code,
+    # 2026-10-08, at the request of Steven L. Shafer)
+    helpScenario(
+      "amiodarone-iv-loading",
+      "Amiodarone IV: the label's 24-hour loading infusion",
+      "Intravenous basics",
+      "A rapid load, a slow load and a maintenance rate: why the concentration dips when the rate is halved.",
+      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      doses = helpDoses(
+        c("amiodaroneIV",   0,  15, "mg/min"),
+        c("amiodaroneIV",  10,   1, "mg/min"),
+        c("amiodaroneIV", 370, 0.5, "mg/min")
+      ),
+      timeUnits = "hours", maximum = 1440
+    ),
 
     # --- Opioids -------------------------------------------------------------
     helpScenario(

@@ -53,8 +53,8 @@
 # has its own population kinetics (Korth-Bradley 1996, Pollak's reference
 # 37), whose clearance, about 0.22 L/h/kg, is larger than 229 L/day x F for
 # any F up to 1, so no choice of F reconciles the two.  Intravenous
-# amiodarone, if it is added, is a separate drug built on an intravenous
-# model.
+# amiodarone is therefore a separate drug, "amiodaroneIV", built on that
+# intravenous model (R/drugs_amiodaroneIV.R).
 #
 # ORAL INPUT AS A CONSTANT DAILY RATE
 # ===================================

@@ -136,9 +136,12 @@ helpFormatHalfLife <- function(minutes) {
 
 #' Does the drug's defaults row carry no typical-range band?
 #'
-#' A drug with no established range (desethylamiodarone) carries zeros in
-#' the band columns, which the plot draws as no band at all; the help says so
-#' rather than printing "0 to 0".  (Claude Code, 2026-10-07.)
+#' A drug with no established range (desethylamiodarone), or none that
+#' applies to its model (amiodaroneIV, whose chronic trough window does not
+#' describe loading), carries zeros in the band columns, which the plot draws
+#' as no band at all; the help says so rather than printing "0 to 0", and the
+#' drug's narrative says why.  (Claude Code, 2026-10-07; worded for both
+#' cases 2026-10-08.)
 #' @noRd
 helpNoBand <- function(row) {
   isTRUE(row$Lower == 0) && isTRUE(row$Upper == 0) && isTRUE(row$Typical == 0)
@@ -308,7 +311,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       if (!is.null(metabolite)) helpPageLink(paste0("drugs/", metabolite)) else esc("None modelled"),
       if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
-      esc(if (helpNoBand(row)) "None: no range has been established, so no band is drawn"
+      esc(if (helpNoBand(row)) "None: no range applies to this model, so no band is drawn"
           else sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
       esc(if (helpNoBand(row)) "None" else sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
       esc(meacShown),
@@ -739,7 +742,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
       `Active metabolite` = metabolite,
       `Default unit` = htmltools::htmlEscape(if (!is.na(row$Default.Units) && nzchar(as.character(row$Default.Units)))
                                                as.character(row$Default.Units) else "—"),
-      `Typical range` = if (helpNoBand(row)) "none established" else
+      `Typical range` = if (helpNoBand(row)) "none" else
         sprintf("%s\u2013%s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), conc),
       MEAC = if (!is.na(row$MEAC) && row$MEAC > 0) sprintf("%s %s", helpFormatNumber(row$MEAC), conc) else "",
       check.names = FALSE, stringsAsFactors = FALSE

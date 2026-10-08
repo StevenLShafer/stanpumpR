@@ -22,15 +22,16 @@ test_that("every narrative belongs to a drug in the library", {
 # there is no equilibration model to attach (see each drug's header);
 # mannitol is plotted as serum osmolality and has no published ke0
 # (R/drugs_mannitol.R); amiodarone and desethylamiodarone are both active,
-# with no published human ke0 for the antiarrhythmic effect.  Called
-# `prodrugs` until amiodarone, an active parent, joined it (2026-10-07).
+# with no published human ke0 for the antiarrhythmic effect, and so is
+# amiodaroneIV (2026-10-08).  Called `prodrugs` until amiodarone, an active
+# parent, joined it (2026-10-07).
 plasmaOnly <- c(
   "codeine", "tramadol", "prednisone",
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
   "metronidazole", "gentamicin",
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol",
-  "amiodarone", "desethylamiodarone"
+  "amiodarone", "desethylamiodarone", "amiodaroneIV"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -133,11 +134,11 @@ test_that("an active parent with no effect site is not described as a prodrug", 
   dea <- helpDrugPageHTML("desethylamiodarone")
   expect_match(dea, "appears only as the active metabolite of Amiodarone", fixed = TRUE)
   expect_match(dea, "cannot be entered in the dose table", fixed = TRUE)
-  expect_match(dea, "None: no range has been established", fixed = TRUE)
+  expect_match(dea, "None: no range applies to this model", fixed = TRUE)
   expect_false(grepl("0 to 0", dea, fixed = TRUE))
   # A drug with no dosing unit has no default unit either (not "NA")
   expect_false(grepl("<td>NA</td>", dea, fixed = TRUE))
-  expect_match(helpDrugIndexHTML(drugDefaults), "none established", fixed = TRUE)
+  expect_match(helpDrugIndexHTML(drugDefaults), "<td>none</td>", fixed = TRUE)
 })
 
 test_that("half-lives of a day or more are also given in days", {
