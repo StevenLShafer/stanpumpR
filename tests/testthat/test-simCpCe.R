@@ -146,3 +146,90 @@ test_that("it returns the correct array", {
   expect_null(actual$metaboliteSeries)
   expect_null(actual$metaboliteName)
 })
+
+# Audit finding F20 (October 2026): a dose after `maximum` was simulated, so a
+# direct call returned curves running past the window, and the maxima and the
+# normalised series came from a peak outside it.  The result now covers 0 to
+# maximum and nothing else.
+test_that("simCpCe() covers 0 to maximum: a later dose changes nothing inside it", {
+  events <- data.frame(Time = double(), Event = character())
+  PK <- getDrugPK("propofol", 70, 170, 40, "male")
+  early <- data.frame(Drug = "propofol", Time = 0, Dose = 1, Units = "mg")
+  both  <- data.frame(Drug = "propofol", Time = c(0, 120, 60), Dose = c(1, 100, 50),
+                      Units = "mg")
+
+  inside <- simCpCe(early, events, PK, maximum = 60, plotRecovery = TRUE)
+  out <- simCpCe(both, events, PK, maximum = 60, plotRecovery = TRUE)
+  expect_equal(max(out$results$Time), 60)
+  expect_equal(out$results, inside$results)
+  expect_equal(out$max, inside$max)
+  expect_equal(out$equiSpace, inside$equiSpace)
+  expect_equal(out$wide, inside$wide)
+  expect_equal(out$recoveryStates, inside$recoveryStates)
+  # normalised to the peak inside the window: 100%, not 1%
+  norm <- out$results$Y[out$results$Site == "CpNormCp"]
+  expect_equal(max(norm), 100)
+  expect_equal(out$max$Cp, max(out$results$Y[out$results$Site == "Plasma"]))
+
+  # the dose at 120 is simulated once the window reaches it
+  longer <- simCpCe(both, events, PK, maximum = 180, plotRecovery = FALSE)
+  expect_gt(longer$max$Cp, 10 * out$max$Cp)
+})
+
+test_that("simCpCe() cuts a lagged oral dose's absorption knot at maximum", {
+  # gabapentin's oral lag is about 19 minutes: a dose at 50 begins to be
+  # absorbed after a 60-minute window ends, which put a point at about 69
+  events <- data.frame(Time = double(), Event = character())
+  PK <- getDrugPK("gabapentin", 70, 170, 40, "male")
+  expect_gt(PK$PK$default$tlag_PO, 10)
+  dose <- data.frame(Drug = "gabapentin", Time = c(0, 50), Dose = c(300, 300),
+                     Units = "mg PO")
+  out <- simCpCe(dose, events, PK, maximum = 60, plotRecovery = TRUE)
+  expect_equal(max(out$results$Time), 60)
+  expect_equal(max(out$wide$Time), 60)
+  expect_equal(max(out$recoveryStates$time), 60)
+  expect_equal(nrow(out$recoveryStates$state), nrow(out$wide))
+  expect_equal(nrow(out$equiSpace), RESOLUTION)
+
+  # the same curve inside the window as on a longer run
+  long <- simCpCe(dose, events, PK, maximum = 120, plotRecovery = FALSE)
+  w <- long$wide[long$wide$Time <= 60, ]
+  expect_equal(out$wide$Plasma[match(w$Time, out$wide$Time)], w$Plasma)
+})
+
+test_that("scheduled, TCI and metabolite doses respect the window too", {
+  events <- data.frame(Time = double(), Event = character())
+
+  # a scheduled dose starting after maximum gives nothing; one before it
+  # repeats only inside the window
+  PK <- getDrugPK("morphine", 70, 170, 40, "male")
+  late <- data.frame(Drug = "morphine", Time = c(0, 600), Dose = c(4, 10),
+                     Units = c("mg", "mg qid"))
+  out <- simCpCe(late, events, PK, maximum = 480, plotRecovery = FALSE)
+  expect_null(out$scheduled)
+  expect_equal(max(out$results$Time), 480)
+  sched <- data.frame(Drug = "morphine", Time = 0, Dose = 4, Units = "mg qid")
+  out <- simCpCe(sched, events, PK, maximum = 480, plotRecovery = FALSE)
+  expect_equal(out$scheduled$Time, 360)
+
+  # a target set after maximum is not run
+  PK <- getDrugPK("propofol", 70, 170, 40, "male")
+  tci <- data.frame(Drug = "propofol", Time = c(0, 90), Dose = c(3, 4),
+                    Units = "Plasma target")
+  out <- simCpCe(tci, events, PK, maximum = 60, plotRecovery = FALSE)
+  first <- simCpCe(tci[1, ], events, PK, maximum = 60, plotRecovery = FALSE)
+  expect_equal(out$results, first$results)
+  expect_equal(out$tci, first$tci)
+
+  # a parent dose after maximum forms no metabolite inside the window
+  multi <- data.frame(Drug = "codeine", Time = c(0, 300), Dose = c(30, 60), Units = "mg PO")
+  a <- simulateDrugsWithCovariates(multi, events, 70, 170, 40, "male",
+                                   maximum = 240, plotRecovery = TRUE)
+  b <- simulateDrugsWithCovariates(multi[1, ], events, 70, 170, 40, "male",
+                                   maximum = 240, plotRecovery = TRUE)
+  expect_setequal(names(a), names(b))
+  for (drug in names(b)) {
+    expect_equal(a[[drug]]$max, b[[drug]]$max, info = drug)
+    expect_equal(max(a[[drug]]$results$Time), 240, info = drug)
+  }
+})

@@ -8,7 +8,9 @@
 #' @param height height in cm
 #' @param age age in years
 #' @param sex sex as string: "female" or "male"
-#' @param maximum maximum length of simulation in minutes
+#' @param maximum end of the simulation, in minutes.  As in \code{simCpCe()},
+#'   each drug's result covers 0 to \code{maximum} only: doses at or after it
+#'   are ignored.
 #' @param plotRecovery should the "time until threshold" be calculated?  See
 #'   \code{simCpCe()}.
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.

@@ -192,6 +192,13 @@ The exported, Shiny-free entry point for this whole path is `simulateDrugsWithCo
 loops drugs, calls `getDrugPK()` → `simCpCe()`, and returns per-drug results. This is what the
 vignettes and tests drive.
 
+**The window.** `simCpCe()` covers 0 to `maximum` and nothing else: a dose at or after
+`maximum` is dropped before simulating (as the scheduled repeats and the TCI controller always
+were), and a lagged extravascular dose's absorption knot past `maximum` is cut from the output
+with the recovery states (`clipToWindow()`), so the series, `max` and the normalised curves
+never see a peak outside the plot. The app lengthens the plot to the last dose first
+(`plotInfo()`), so this matters there only on a plot already at its unit's longest.
+
 **Active metabolites.** A drug may name another drug as its active metabolite. The parent's
 plasma curve is convolved through the metabolite's own disposition
 (`metaboliteCoefficients.R`), which leaves a sum of exponentials over the union of the two

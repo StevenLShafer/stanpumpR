@@ -109,14 +109,73 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
 }
 
 
+#' Cut an engine's output at the end of the window
+#'
+#' Drops the rows after \code{maximum} from an engine's wide output, and the
+#' same times from the effect-site state sets it carries as attributes
+#' (\code{recoveryStates}, \code{metaboliteRecoveryStates}).  Every engine's
+#' time line has a point at \code{maximum} itself, so the cut series still
+#' ends there.
+#'
+#' @param results an engine's output: a data frame with a \code{Time} column
+#' @param maximum end of the window, minutes
+#'
+#' @returns \code{results}, unchanged when nothing lies after \code{maximum}
+#' @keywords internal
+clipToWindow <- function(results, maximum)
+{
+  keep <- results$Time <= maximum
+  if (all(keep)) return(results)
+  sets <- c("recoveryStates", "metaboliteRecoveryStates")
+  states <- lapply(sets, function(a) clipStateSet(attr(results, a), maximum))
+  results <- results[keep, , drop = FALSE]
+  rownames(results) <- NULL
+  for (i in seq_along(sets)) attr(results, sets[i]) <- states[[i]]
+  results
+}
+
+#' Cut a state set from \code{recoveryStateSet()} at the end of the window
+#'
+#' @param set a state set, or NULL
+#' @param maximum end of the window, minutes
+#'
+#' @returns the set without its times after \code{maximum}
+#' @keywords internal
+clipStateSet <- function(set, maximum)
+{
+  if (is.null(set)) return(set)
+  keep <- set$time <= maximum
+  if (all(keep)) return(set)
+  set$time  <- set$time[keep]
+  set$state <- set$state[keep, , drop = FALSE]
+  if (is.matrix(set$lambda)) set$lambda <- set$lambda[keep, , drop = FALSE]
+  if (!is.null(set$pending)) {
+    set$pending <- set$pending[keep]
+    # as recoveryStateSet() does: nothing pending is no mask
+    if (!any(set$pending)) set$pending <- NULL
+  }
+  set
+}
+
+
 #' Simulate plasma and effect site concentration from time 0 to maximum
 #'
 #' See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
 #'
+#' The result covers the window from 0 to \code{maximum}, and only that: a
+#' dose at or after \code{maximum} is not simulated (it cannot change the
+#' curves inside the window), and the returned series, the maxima in
+#' \code{max} and the normalised series (CpNormCp and the rest, scaled to those
+#' maxima) all stop at \code{maximum}.  A dose given before \code{maximum} is
+#' simulated in full, including an oral dose whose absorption starts after it.
+#' The app chooses \code{maximum} long enough to take in every dose before it
+#' calls this.
+#'
 #' @param dose table of individual doses
 #' @param events table of events
 #' @param PK PK parameters from \code{getDrugPK(drug)}
-#' @param maximum maximum length of simulation in minutes
+#' @param maximum end of the simulation, in minutes: the window is 0 to
+#'   \code{maximum}, and doses at or after it are ignored
 #' @param plotRecovery should the "time until threshold" be calculated?  For
 #'   each time point, how long the effect site would take to fall to
 #'   \code{PK$endCe} if all delivery stopped at that moment; returned as the
@@ -140,6 +199,21 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # dose <- doseTable
     # pK <- PK
     # maximum <- max
+
+    # The result covers 0 to maximum, however this is called.  A dose at or
+    # after maximum cannot change anything inside that window, so it is not
+    # simulated: the rule the scheduled repeats and the TCI controller already
+    # follow ("no dose is given at or after it").  Simulated, such a dose ran
+    # the time line on past maximum, so the returned curves ran on to it and
+    # the maxima, and so the normalised curves, were taken from a peak outside
+    # the window: 1 mg of propofol at 0 and 100 mg at 120, run to 60, peaked
+    # at 1% (audit finding F20, October 2026).  The app lengthens its plot to
+    # take in every dose (plotInfo() in R/app_server.R) before calling, so
+    # there this matters only when the plot is already its unit's longest,
+    # and the app then says the dose falls after the end.
+    late <- suppressWarnings(as.numeric(dose$Time)) >= maximum
+    late[is.na(late)] <- FALSE
+    if (any(late)) dose <- dose[!late, , drop = FALSE]
 
     # Scheduled doses (qd, bid, tid, qid): expand each into its repeats out to
     # the end of the plot, while the dose is still in the user's units.  The
@@ -278,6 +352,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       events$Time[nrow(events)] <- maximum
       results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, emerge)
     }
+
+  # A lagged oral, IM or IN dose given before maximum still puts a point of
+  # the time line where its absorption starts, which can be after maximum
+  # (simulationTimeGrid()): gabapentin's lag is 19 minutes.  The series is cut
+  # at maximum, with the effect-site states that ride along, so that nothing
+  # returned lies outside the window either.
+  results <- clipToWindow(results, maximum)
 
   # Lift the metabolite out into a series of its own before the parent's
   # columns are renamed.  It is folded into the metabolite drug's own row
