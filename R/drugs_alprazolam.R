@@ -58,9 +58,11 @@
 # varied co-medication; DeVane's own discussion notes that a sex difference
 # "has been sometimes observed ... but not consistently", and the Greenblatt
 # and Wright review that "most studies show that alprazolam pharmacokinetics
-# are not significantly influenced by gender".  Men and women of the same
-# size therefore receive the same clearance; a woman's smaller body is still
-# represented through the weight terms.
+# are not significantly influenced by gender".  Only DeVane's sex term is
+# dropped.  With the fat-free-mass switch on (the default), sex still enters
+# through fat-free mass, so a woman's clearance is lower than a man's of the
+# same weight, height and age (70 kg, 170 cm, 35 y: 2.88 against 3.50 L/h).
+# With the switch off, clearance depends on weight and age alone.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================

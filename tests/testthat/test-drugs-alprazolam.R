@@ -42,6 +42,13 @@ test_that("DeVane's age term applies and his sex term does not", {
   on <- alprazolam(60, 160, 40, "female")$PK$default
   expect_equal_rounded(on[c("v1", "cl1")],
                        list(v1 = 34.9993756050, cl1 = 0.0416659233))
+  # Only the sex term is dropped: with the switch on, a woman's fat-free mass
+  # is lower than a man's of the same weight, height and age, and so is her
+  # clearance (header and help: 2.88 against 3.50 L/h; pharmacokinetic weight
+  # 57.682 kg, Al-Sallami written out again in Python)
+  f <- alprazolam(70, 170, 35, "female")$PK$default$cl1 * 60
+  m <- alprazolam(70, 170, 35, "male")$PK$default$cl1 * 60
+  expect_equal(c(f, m), c(2.8841074, 3.5), tolerance = 1e-7)
   # Over 60: clearance x 0.77; at exactly 60, no change ("older than 60")
   old <- alprazolam(70, 170, 70, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(old$cl1, 0.0449166667, tolerance = 1e-9)
