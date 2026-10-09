@@ -184,3 +184,14 @@ test_that("error work", {
   expect_error(validateDose(c("1", "2")), "single items")
   expect_error(validateDose(list(20)), "single items")
 })
+
+# The grid's Dose column must be text.  A numeric Handsontable column parses
+# a pasted entry itself before hookSanitize() (inst/www/hot_funs.js) sees it:
+# "1,000" became 1 and "1,5" 1.5, in the browser, whatever validateDose() says.
+test_that("the dose grid passes pasted doses to the sanitiser as typed", {
+  hot <- createHOT(doseTableInit, getDrugDefaultsGlobal())
+  headers <- hot$x$colHeaders
+  types <- vapply(hot$x$columns, function(col) col$type, character(1))
+  expect_equal(types[headers == "Dose"], "text")
+  expect_equal(types[headers == "Time"], "text")
+})

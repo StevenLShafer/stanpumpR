@@ -1630,7 +1630,10 @@ app_server <- function(input, output, session) {
         ) %>%
         rhandsontable::hot_col(
           col = "Dose",
-          type = "numeric",
+          # Text, not numeric: a numeric column parses a pasted entry itself,
+          # before hookSanitize() (inst/www/hot_funs.js) sees it, and read
+          # "1,000" as 1 and "1,5" as 1.5.  The hook reads it as written.
+          type = "text",
           halign = "htRight"
         ) %>%
         rhandsontable::hot_col(
