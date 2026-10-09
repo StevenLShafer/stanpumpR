@@ -34,6 +34,8 @@ head(results[results$Site %in% c("Plasma", "Effect Site"), ])
 
 `PK$PK$default` holds the volumes, clearances, rate constants, eigenvalues and ke0; `PK$tPeak` and `PK$reference` the time to peak effect and the citation.
 
+`PK$endCe` is the drug's recovery threshold from the library, the value the [Drug Thresholds](help:drug-library) dialog edits in the app. With `plotRecovery = TRUE`, `simCpCe()` reports at each time how long the effect site would take to fall to it if all delivery stopped there: the `Recovery` column of `out$equiSpace`, and `out$max$Recovery`. Set `PK$endCe` before calling `simCpCe()` to time a different concentration; zero means no threshold, and the times are then all zero.
+
 ## Several drugs
 
 `simulateDrugsWithCovariates()` loops over the drugs in a dose table:

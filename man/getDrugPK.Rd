@@ -53,6 +53,13 @@ assumed normal value for the patient's sex.  Passed only to the renal
 models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
 sugammadex, gabapentin); see \code{R/renalFunction.R}.}
 }
+\value{
+a list: the drug's PK sets (\code{PK}, one per PK event), its
+\code{tPeak} and \code{reference}, the covariates, and the library's
+values for the drug -- among them \code{MEAC} and \code{endCe}, the
+concentration \code{simCpCe()} times the effect site's fall to when
+\code{plotRecovery = TRUE}.
+}
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
 }

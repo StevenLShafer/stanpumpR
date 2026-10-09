@@ -99,7 +99,7 @@ test_that("it returns the same value", {
     Infusion.Units      = drugDefaults$Infusion.Units,
     Units               = drugDefaults$Units,
     Default.Units       = drugDefaults$Default.Units,
-    emerge              = drugDefaults$Emerge
+    endCe               = drugDefaults$endCe
   )
 
   expect_equal_rounded(actual, expected)
@@ -205,4 +205,38 @@ test_that("getDrugPK resolves drug functions from a caller that cannot see them"
                getDrugPK("codeine", 70, 170, 50, "male",
                          getDrugDefaults("codeine"),
                          cyp2d6 = "ultrarapid")$PK$default$metabolite$coefs$K)
+})
+
+# Audit finding F03 (October 2026): getDrugPK() returned no endCe, its
+# `emerge` field reading an Emerge column the library does not have, so a
+# direct getDrugPK() + simCpCe() call reported every time until threshold as
+# zero.  Only the app and simulateDrugsWithCovariates(), which set endCe by
+# hand, got a time.
+test_that("getDrugPK() carries the library's endCe, so direct recovery works", {
+  dd <- getDrugDefaults("propofol")
+  PK <- getDrugPK("propofol", 70, 170, 35, "male")
+  expect_equal(PK$endCe, dd$endCe)
+  expect_gt(PK$endCe, 0)
+  expect_null(PK$emerge)
+
+  # an edited threshold, as the app passes its session's row, is the one used
+  edited <- dd
+  edited$endCe <- 2.5
+  expect_equal(getDrugPK("propofol", 70, 170, 35, "male", edited)$endCe, 2.5)
+
+  dose <- data.frame(Drug = "propofol", Time = 0, Dose = 140, Units = "mg")
+  events <- data.frame(Time = double(), Event = character())
+  sim <- simCpCe(dose, events, PK, maximum = 60, plotRecovery = TRUE)
+  expect_gt(sim$max$Recovery, 0)
+  # Ce peaks above the threshold soon after the bolus, so there is a wait
+  peak <- which.max(sim$equiSpace$Ce)
+  expect_gt(sim$equiSpace$Ce[peak], PK$endCe)
+  expect_gt(sim$equiSpace$Recovery[peak], 0)
+
+  # and it is what simulateDrugsWithCovariates() gives, which no longer sets
+  # endCe itself
+  via <- simulateDrugsWithCovariates(dose, events, 70, 170, 35, "male",
+                                     maximum = 60, plotRecovery = TRUE)
+  expect_equal(via$propofol$max$Recovery, sim$max$Recovery)
+  expect_equal(via$propofol$equiSpace$Recovery, sim$equiSpace$Recovery)
 })
