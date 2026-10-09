@@ -12,7 +12,7 @@ Drafted with Claude Code, 2026-10-09.
 - Every number was compared with the paper's full text where it could be read:
   PMC, or PDFs Dr Shafer supplied: Swart 2004, DeVane 1993, Kruizinga 2022,
   dos Santos 2009, Berlin and Dahlström 1975, van Steveninck 1994 (parts I
-  and II), Mould 1995 and Hung 1996. Otherwise it was compared with the
+  and II), Halliday 1987, Mould 1995 and Hung 1996. Otherwise it was compared with the
   abstract.
 - Each implemented model was then run against published concentration
   measurements. Its engine output was compared with an independent
@@ -93,21 +93,27 @@ Kruizinga 2022.
 - Validation against the label: 4 mg IV gives 74 ng/mL at 15 min (label about
   70); 2 mg PO peaks at 19.7 (about 20); 4 mg IM peaks at 53 (about 48).
 
-**Temazepam** — two compartments fitted to the published IV means of van
-Steveninck 1994 (part II, Table I), in place of the specification's Ochs
-reduction.
-- Fit: V1 0.274, V2 0.607 L/kg; CL 1.04 mL/min/kg; Q 0.407 L/h/kg. Each of
-  the five means (Cmax, AUC to 3 h, 8 h and infinity, half-life) is reproduced
-  within 1.5%. The distribution half-life is 0.30 h, against the label's
-  0.4-0.6 h, which the fit was not given.
+**Temazepam** — two compartments fitted jointly to the published IV means of
+van Steveninck 1994 (part II, Table I) and Halliday 1987 (Figure 1, read by
+eye), in place of the specification's Ochs reduction.
+- Why both: Halliday's concentrations were about 1.6-fold van Steveninck's
+  in the first hours. A fit to van Steveninck alone (V1 0.274, V2 0.607
+  L/kg, CL 1.04 mL/min/kg, Q 0.407 L/h/kg) put Halliday 35-45% low, and most
+  oral peaks too.
+- Fit: V1 0.278, V2 0.523 L/kg; CL 1.10 mL/min/kg; Q 0.112 L/h/kg; half-lives
+  0.88 and 10.8 h.
+- Against van Steveninck: AUC∞ 0.96 and t½ 1.02 of the means; AUC0-8 1.13,
+  Cmax 1.21, AUC0-3 1.41.
+- Against Halliday: 0.80 at 5 min, 0.87-0.99 from 10 to 120 min.
 - Routes: oral only. The IV formulation is a research one; earlier ones caused
   venous thrombosis (Halliday 1987). Bioavailability 0.92 (label);
   absorption t½ 0.38 h (Müller 1987, morning soft gelatin).
 - No effect site: van Steveninck found proteresis, not hysteresis.
 - Band 250-600 ng/mL; threshold 250 ng/mL, where psychometric deterioration
   began (Saletu 1986).
-- Validation: 30 mg nightly on day 7 gives 278 ng/mL at 9 h and 103 at 24 h
-  (label 260 and 75). Single 20 mg peak 392 ng/mL against 362-708 observed.
+- Validation: 20 mg peaks at 545 ng/mL at 55 min (Müller: 510 at 1.0 h; range
+  362-708). 30 mg peaks at 818 (label 865). 30 mg nightly on day 7 gives 217
+  ng/mL at 9 h and 82 at 24 h (label 260 and 75).
 
 **Diazepam** — Hung 1996, Table I, in place of the specification's paediatric
 McCann 2025.

@@ -1,5 +1,6 @@
 # -----------------------------------------------------------------------------
-# Temazepam: oral only, two compartments derived from van Steveninck 1994
+# Temazepam: oral only, two compartments fitted to van Steveninck 1994 and
+# Halliday 1987
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL, total plasma.
@@ -14,12 +15,16 @@
 # decline is biphasic, with a distribution half-life of 0.4-0.6 h (label),
 # so a model needs two compartments, and no published paper reports them.
 #
-# DISPOSITION: FITTED TO VAN STEVENINCK 1994
-# ==========================================
-# van Steveninck AL et al. (part II) infused 0.4 mg/kg intravenously over 30
-# min into 9 healthy young volunteers (4 men, 5 women; 66 kg) on two occasions
-# six months apart, sampled for 24 h, and fitted each subject with two
-# compartments, reporting only the summary values (Table I):
+# DISPOSITION: FITTED TO TWO INTRAVENOUS STUDIES
+# =============================================
+# No two-compartment temazepam model is published.  Two intravenous studies
+# report mean data, and they disagree by about 1.6-fold in the first hours, so
+# the model is fitted to both.
+#
+# van Steveninck AL et al. (part II) infused 0.4 mg/kg over 30 min into 9
+# healthy young volunteers (4 men, 5 women; 66 kg) on two occasions six months
+# apart, sampled for 24 h, fitted each subject with two compartments, and
+# reported only summary values (Table I):
 #
 #                      occasion 1     occasion 2     used
 #     dose, mg         26.1 +/- 5.4   25.6 +/- 6.2   25.85
@@ -30,24 +35,38 @@
 #     AUC 0-inf        6.4            5.9            6.15
 #     half-life, h     10.7           10.4           10.55
 #
-# A two-compartment model was fitted to the five means (least squares on log
-# ratios; script in the PR): V1 18.24 L, CL 4.165 L/h, Q 27.05 L/h, V2 40.35 L,
-# which reproduce them within 1.5% (Cmax 1003, AUC 1.41, 2.76 and 6.21,
-# half-life 10.5 h).  The distribution half-life is 0.30 h, against the
-# label's 0.4-0.6 h, which the fit was not told.  Per kilogram of the mean
-# weight, 66.5 kg:
+# Halliday NJ et al. gave 11 young volunteers (68 kg) 20 mg intravenously over
+# 20 s, in two vehicles, and plotted the means to 2 h (Figure 1; no table).
+# Read from the figure by eye, averaging the two vehicles, which did not
+# differ: 1250, 1010, 910, 810, 625, 500 and 420 ng/mL at 5, 10, 15, 30, 60,
+# 90 and 120 min.  Scaled to the same dose and weight, these are about 1.6
+# times van Steveninck's concentrations over the first hours.
 #
-#     V1 0.2743 L/kg   CL 0.06262 L/h/kg (1.04 mL/min/kg)
-#     Q  0.4068 L/h/kg  V2 0.6067 L/kg
+# One two-compartment model, per kilogram, was fitted to both by least
+# squares on log ratios, the five van Steveninck means and the seven Halliday
+# points weighted equally (script in the PR):
+#
+#     V1 0.2784 L/kg   CL 0.0661 L/h/kg (1.10 mL/min/kg)
+#     Q  0.1115 L/h/kg  V2 0.5231 L/kg
+#
+# Half-lives 0.88 h and 10.8 h; Vss 0.80 L/kg.  Against van Steveninck: AUC
+# 0-inf 0.96 and half-life 1.02 of the means, AUC 0-8 h 1.13, but Cmax 1.21
+# and AUC 0-3 h 1.41.  Against Halliday: 0.80 at 5 min, 0.87-0.99 from 10 to
+# 120 min.  A fit to van Steveninck alone (V1 0.2743, CL 0.06262, Q 0.4068
+# L/h/kg, V2 0.6067 L/kg) reproduced its means within 1.5% but put Halliday's
+# 30-120 min concentrations 35-45% low, and the oral peaks below most of the
+# oral studies; the joint fit is the one used.  Its distribution half-life,
+# 0.88 h, is close to the 1.03 h Muller fitted after morning oral doses;
+# Drake found 0.5 h and the label says 0.4-0.6 h.  The clearance, 1.10 mL/min/kg, sits within the oral literature
+# (1.03, Ochs 1986; 1.02 women and 1.35 men, Divoll 1981; 1.59, Greenblatt
+# 1984; 2.33, Ochs 1984).
 #
 # This is a model built from published means, not a published model; the
-# parameters are reproducible from the table and the fit.  The research
-# formulation (polyethylene glycol 400) is not a product, and the earlier
-# injectable forms caused "an unacceptably high incidence of venous
-# thrombosis" (Halliday 1987), so the route offered is oral; the intravenous
-# data set the systemic disposition under it.  The clearance, 1.04 mL/min/kg, sits within the oral literature (1.03,
-# Ochs 1986; 1.02 women and 1.35 men, Divoll 1981; 1.59, Greenblatt 1984;
-# 2.33, Ochs 1984).
+# parameters are reproducible from the table, the figure and the fit.  The
+# research formulations (polyethylene glycol, salicylate) are not products,
+# and both of Halliday's caused "an unacceptably high incidence of venous
+# thrombosis", so the route offered is oral; the intravenous data set the
+# systemic disposition under it.
 #
 # ORAL ROUTE
 # ==========
@@ -58,18 +77,16 @@
 # setting, and the conditions of the intravenous study).  No lag.
 #
 # Checks, reference patient (70 kg, 170 cm, 35 y man):
-#   20 mg peaks at 392 ng/mL at 0.68 h.  Observed 20 mg soft gelatin: 510 at
+#   20 mg peaks at 545 ng/mL at 56 min.  Observed 20 mg soft gelatin: 510 at
 #     1.02 h (Muller, morning), 362 at 1.67 h (night), 617-708 at 30-40 min
-#     (Drake 1991, n = 24).
-#   30 mg peaks at 588 ng/mL.  Observed 30 mg capsules: 560 at 2.0 h
-#     (Greenblatt 1984); label 865 (666-982) at 1.5 h.
-#   30 mg nightly, day 7: 278 ng/mL 9 h after the dose and 103 at 24 h; label
+#     (Drake 1991, n = 24); about 370 at 2 h and still rising (Halliday,
+#     capsule), where the model gives 411.
+#   30 mg peaks at 818 ng/mL.  Observed 30 mg capsules: label 865 (666-982)
+#     at 1.5 h; 560 at 2.0 h (Greenblatt 1984).
+#   30 mg nightly, day 7: 217 ng/mL 9 h after the dose and 82 at 24 h; label
 #     (days 2-7) 260 +/- 210 and 75 +/- 80.
-# The steady state and the overnight decline agree.  Single-dose peaks vary
-# two-fold between studies with formulation and time of day; the model's
-# sit within that range, below the faster soft gelatin capsules and the
-# label.  (Means of individual peaks also run above the peak of a typical
-# curve when absorption varies between people.)
+# Single-dose peaks vary two-fold between studies with formulation and time
+# of day; the model's sit within that range.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -93,11 +110,11 @@
 # Band 250-600 ng/mL.  Psychometric performance deteriorated above about 250
 # ng/mL (Saletu 1986, 10-40 mg); 597 +/- 123 ng/mL was the target van
 # Steveninck chose for clear sedation short of sleep in awake volunteers (60%
-# of the maximal fall in saccadic velocity).  Typical 400, about the peak
-# after 20 mg.  The time-until-threshold level (endCe in the CSV, read
-# against plasma since there is no effect site) is 250 ng/mL, the level above
-# which psychometric performance deteriorated: after 20 mg the reference man
-# falls below it 2.3 h after the dose, after 30 mg 7.1 h.
+# of the maximal fall in saccadic velocity).  Typical 400, between the two.
+# The time-until-threshold level (endCe in the CSV, read against plasma since
+# there is no effect site) is 250 ng/mL, the level above which psychometric
+# performance deteriorated: after 20 mg the reference man falls below it 3.4
+# h after the dose, after 30 mg 5.2 h.
 #
 # NOT MODELLED
 # ============
@@ -130,20 +147,23 @@
 #
 # Drafted with Claude Code at the request of Steven L. Shafer, 2026-10-09,
 # from a ChatGPT specification whose references and values were checked
-# against the sources first (van Steveninck parts I and II in full).
+# against the sources first (van Steveninck parts I and II and Halliday in
+# full).
 # -----------------------------------------------------------------------------
 
-# Two compartments fitted to van Steveninck 1994 (part II, Table I), per kg
-TEMAZEPAM_V1_PER_KG <- 0.2743    # L/kg
-TEMAZEPAM_CL_PER_KG <- 0.06262   # L/h/kg
-TEMAZEPAM_Q_PER_KG  <- 0.4068    # L/h/kg
-TEMAZEPAM_V2_PER_KG <- 0.6067    # L/kg
+# Two compartments fitted jointly to van Steveninck 1994 (part II, Table I)
+# and Halliday 1987 (Figure 1), per kg
+TEMAZEPAM_V1_PER_KG <- 0.2784    # L/kg
+TEMAZEPAM_CL_PER_KG <- 0.0661    # L/h/kg
+TEMAZEPAM_Q_PER_KG  <- 0.1115    # L/h/kg
+TEMAZEPAM_V2_PER_KG <- 0.5231    # L/kg
 
 #' Temazepam pharmacokinetics (oral)
 #'
-#' Two compartments fitted to the intravenous summary data of van Steveninck
-#' et al. (1994), with the oral absorption of Muller et al. (1987) and the
-#' label's bioavailability.  Plasma only.  See the file's header.
+#' Two compartments fitted to the intravenous mean data of van Steveninck et
+#' al. (1994) and Halliday et al. (1987), with the oral absorption of Muller
+#' et al. (1987) and the label's bioavailability.  Plasma only.  See the
+#' file's header.
 #'
 #' @inheritParams cefazolin
 #' @param adjustToFFM \code{TRUE} (the default) scales volumes to fat-free mass
@@ -171,14 +191,15 @@ temazepam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   PK <- sapply(events, function(x) list(get0(x)))
 
   # Band, ng/mL plasma: from the psychometric threshold (Saletu 1986) to the
-  # sedation target of van Steveninck 1994; typical about the 20 mg peak.
+  # sedation target of van Steveninck 1994.
   typical      <- 400
   upperTypical <- 600
   lowerTypical <- 250
 
   reference <- paste0(
-    "van Steveninck AL et al., Clin Pharmacol Ther 1994;55:546-555. ",
-    "Two compartments fitted to the published intravenous means; oral ",
+    "van Steveninck AL et al., Clin Pharmacol Ther 1994;55:546-555, and ",
+    "Halliday NJ et al., Br J Anaesth 1987;59:465-467: two compartments ",
+    "fitted to the published intravenous means; oral ",
     "absorption from Muller FO et al., Eur J Clin Pharmacol 1987;33:211-214; ",
     "plasma only; oral only. https://doi.org/10.1038/clpt.1994.68"
   )

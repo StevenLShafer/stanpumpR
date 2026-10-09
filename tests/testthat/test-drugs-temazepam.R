@@ -1,5 +1,6 @@
 # temazepam: see the header of R/drugs_temazepam.R for how the two
-# compartments were fitted to van Steveninck 1994's intravenous means, and
+# compartments were fitted jointly to van Steveninck 1994's and Halliday
+# 1987's intravenous means, and
 # where the oral route and the band come from.  Pins were worked out by hand
 # (Python, with the fat-free-mass formula and the matrix exponential written
 # out again), not from the code under test.
@@ -31,13 +32,13 @@ twoComp <- function(t, p, D = 0, route = c("PO", "infusion"), Tinf = 0) {
 
 
 test_that("the reference patient receives the fitted per-kilogram values", {
-  # V1 0.2743, V2 0.6067 L/kg; CL 0.06262, Q 0.4068 L/h/kg; x 70 kg
+  # V1 0.2784, V2 0.5231 L/kg; CL 0.0661, Q 0.1115 L/h/kg; x 70 kg
   for (adjust in c(TRUE, FALSE)) {
     actual <- temazepam(70, 170, 35, "male", adjustToFFM = adjust)
     expected <- list(
       PK = list(default = list(
-        v1 = 19.201, v2 = 42.469, v3 = 1,
-        cl1 = 0.0730566667, cl2 = 0.4746, cl3 = 0,
+        v1 = 19.488, v2 = 36.617, v3 = 1,
+        cl1 = 0.0771166667, cl2 = 0.1300833333, cl3 = 0,
         ka_PO = 0.0304011921,
         bioavailability_PO = 0.92,
         tlag_PO = 0
@@ -58,32 +59,36 @@ test_that("the reference patient receives the fitted per-kilogram values", {
 test_that("per-kilogram scaling with the switch off, fat-free mass with it on", {
   off <- temazepam(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal_rounded(off[c("v1", "v2", "cl1", "cl2")],
-                       list(v1 = 32.916, v2 = 72.804, cl1 = 0.12524, cl2 = 0.8136))
+                       list(v1 = 33.408, v2 = 62.772, cl1 = 0.1322, cl2 = 0.223))
   on <- temazepam(120, 170, 50, "male")$PK$default
   expect_equal_rounded(on[c("v1", "v2", "cl1", "cl2")],
-                       list(v1 = 25.0555125118, v2 = 55.4180803532,
-                            cl1 = 0.0891958062, cl2 = 0.5794451287))
+                       list(v1 = 25.4300207192, v2 = 47.7817666602,
+                            cl1 = 0.0941527114, cl2 = 0.1588203831))
 })
 
 
-test_that("the model reproduces van Steveninck's intravenous means", {
-  # 25.85 mg over 28.5 min in the mean 66.5 kg subject (switch off, so the
-  # per-kilogram values scale exactly): Cmax 996, AUC 0-3 1.4, AUC 0-8 2.8,
-  # AUC 0-inf 6.15 ug.h/mL, half-life 10.55 h (Table I, both occasions).
+test_that("the joint fit against the two intravenous studies", {
+  # van Steveninck (Table I): 25.85 mg over 28.5 min in the mean 66.5 kg
+  # subject (switch off, so the per-kilogram values scale exactly).  Means
+  # Cmax 996, AUC 0-3 1.4, AUC 0-8 2.8, AUC 0-inf 6.15 ug.h/mL, half-life
+  # 10.55 h; the fit gives 1208, 1.976, 3.164, 5.881 and 10.78.
   p <- temazepam(66.5, 170, 21, "female", adjustToFFM = FALSE)$PK$default
   t <- seq(0, 480, by = 0.25)
   cp <- twoComp(t, p, 25.85, "infusion", 28.5)
   auc <- function(upto) { i <- t <= upto; sum(diff(t[i]) * (utils::head(cp[i], -1) + utils::tail(cp[i], -1)) / 2) / 60 }
-  expect_equal(max(cp), 996, tolerance = 0.015)
-  expect_equal(auc(180), 1400, tolerance = 0.015)
-  expect_equal(auc(480), 2800, tolerance = 0.015)
-  expect_equal(25.85 / (p$cl1 * 60) * 1000, 6150, tolerance = 0.015)
+  expect_equal(max(cp), 1208.3, tolerance = 2e-3)
+  expect_equal(auc(180), 1975.7, tolerance = 2e-3)
+  expect_equal(auc(480), 3163.5, tolerance = 2e-3)
+  expect_equal(25.85 / (p$cl1 * 60) * 1000, 5880.8, tolerance = 1e-4)
   k10 <- p$cl1 / p$v1; k12 <- p$cl2 / p$v1; k21 <- p$cl2 / p$v2
   a <- k10 + k12 + k21
   r <- c(a + sqrt(a^2 - 4 * k10 * k21), a - sqrt(a^2 - 4 * k10 * k21)) / 2
-  expect_equal(log(2) / r[2] / 60, 10.55, tolerance = 0.015)
-  # and a distribution half-life close to the label's 0.4-0.6 h, unfitted
-  expect_equal(log(2) / r[1] / 60, 0.299, tolerance = 0.01)
+  expect_equal(log(2) / r / 60, c(0.8810, 10.7757), tolerance = 1e-4)
+  # Halliday (Figure 1, read by eye): 20 mg over 20 s at 68 kg
+  h <- temazepam(68, 170, 22, "male", adjustToFFM = FALSE)$PK$default
+  got <- twoComp(c(5, 10, 15, 30, 60, 90, 120), h, 20, "infusion", 1 / 3)
+  expect_equal(got, c(1003.8, 952.7, 904.8, 778.0, 586.9, 455.9, 365.7),
+               tolerance = 1e-3)
 })
 
 
@@ -103,13 +108,13 @@ test_that("oral doses against the published single-dose and steady-state data", 
   p <- temazepam(70, 170, 35, "male")$PK$default
   t <- seq(0, 240, by = 0.1)
   c20 <- twoComp(t, p, 20)
-  # 20 mg peaks at 391.9 ng/mL at 0.678 h (observed 362-708)
-  expect_equal(max(c20), 391.87, tolerance = 1e-3)
-  expect_equal(t[which.max(c20)] / 60, 0.678, tolerance = 5e-3)
-  # 30 mg nightly, day 7: 277.9 ng/mL at 9 h, 103.1 at 24 h (label 260, 75)
+  # 20 mg peaks at 545.5 ng/mL at 0.92 h (observed 362-708)
+  expect_equal(max(c20), 545.46, tolerance = 1e-3)
+  expect_equal(t[which.max(c20)] / 60, 0.9245, tolerance = 5e-3)
+  # 30 mg nightly, day 7: 217.2 ng/mL at 9 h, 82.1 at 24 h (label 260, 75)
   ss <- function(tt) sum(twoComp(tt - 1440 * (0:6), p, 30))
-  expect_equal(ss(6 * 1440 + 540), 277.92, tolerance = 1e-3)
-  expect_equal(ss(7 * 1440), 103.11, tolerance = 1e-3)
+  expect_equal(ss(6 * 1440 + 540), 217.20, tolerance = 1e-3)
+  expect_equal(ss(7 * 1440), 82.13, tolerance = 1e-3)
 })
 
 
@@ -119,9 +124,9 @@ test_that("time until 250 ng/mL is read against plasma", {
   PK$endCe <- 250
   DT <- data.frame(Drug = "temazepam", Time = 0, Dose = 20, Units = "mg PO")
   w <- simCpCe(DT, noEvents, PK, 720, TRUE)$wide
-  # 20 mg falls below 250 ng/mL 2.34 h after the dose
-  at <- which(w$Time >= 60)[1]
-  expect_equal((w$Time[at] + w$Recovery[at]) / 60, 2.34, tolerance = 0.01)
+  # 20 mg falls below 250 ng/mL 3.40 h after the dose
+  at <- which(w$Time >= 90)[1]
+  expect_equal((w$Time[at] + w$Recovery[at]) / 60, 3.3965, tolerance = 0.01)
 })
 
 

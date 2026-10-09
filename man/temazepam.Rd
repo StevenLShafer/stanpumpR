@@ -22,7 +22,8 @@ and clearances to its 0.75 power; \code{FALSE} scales both with weight.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Two compartments fitted to the intravenous summary data of van Steveninck
-et al. (1994), with the oral absorption of Muller et al. (1987) and the
-label's bioavailability.  Plasma only.  See the file's header.
+Two compartments fitted to the intravenous mean data of van Steveninck et
+al. (1994) and Halliday et al. (1987), with the oral absorption of Muller
+et al. (1987) and the label's bioavailability.  Plasma only.  See the
+file's header.
 }
