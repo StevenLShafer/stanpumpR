@@ -1,6 +1,6 @@
 ### The model
 
-Midazolam's parameters are from Mould and colleagues (*Clin Pharmacol Ther* 1995;58:35-43). The model is a fixed three-compartment model with volumes of 3.3, 17.6 and 96.8 L and clearances of 0.535, 2.01 and 0.832 L/min.
+Midazolam's parameters were fitted to the data of Bührer and colleagues (*Clin Pharmacol Ther* 1990;48:544-554), who gave men aged 33 to 43 doses of 3.75 to 25 mg at 5 mg/min. Bührer's papers do not print the parameters; Zomorodi and colleagues do, in Table 3 of their study of sedation after coronary bypass surgery (*Anesthesiology* 1998;89:1418-1429). This was the set STANPUMP used for midazolam target-controlled infusion, and it drove the infusions in Zomorodi's study; later versions of STANPUMP carried the kinetics Zomorodi fitted in those patients instead. The model is a fixed three-compartment model with volumes of 3.3, 17.6 and 96.8 L and clearances of 0.535, 2.01 and 0.832 L/min. Earlier versions of this page credited Mould and colleagues (1995), whose paper reports only noncompartmental kinetics.
 
 ### Covariates
 
@@ -8,7 +8,7 @@ None. The parameters are for a typical adult. Midazolam's clearance is known to 
 
 ### Effect site
 
-The time to peak effect is 4 minutes.
+The time to peak effect is 3.0 minutes, from the same volunteers as the kinetics. Bührer's EEG equilibration half-time, fitted parametrically against his three-compartment kinetics, was 5.6 minutes (*Clin Pharmacol Ther* 1990;48:555-567); with this model it puts the peak at 3.0 minutes. His nonparametric estimate, 4.8 minutes, would put it at 2.7. In his volunteers, the EEG effect of 3.75 mg given over 45 seconds peaked 2.2 and 2.9 minutes after the infusion started. Earlier versions of the library used 4 minutes, a value with no recorded source.
 
 ### Typical concentrations
 

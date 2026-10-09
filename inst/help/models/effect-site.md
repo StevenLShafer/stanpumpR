@@ -33,7 +33,7 @@ Shafer and Varvel showed in 1991 that tPeak is the right quantity to carry from 
 | methadone | 11.3 | |
 | hydromorphone | 19.6 | |
 | rocuronium | 2.2 | Cortínez 2007 |
-| midazolam | 4 | |
+| midazolam | 3 | Bührer 1990 |
 | etomidate | 1.6 | |
 | ketamine, dexmedetomidine, oxytocin, naloxone | 3, 10, 5, 1 | described in the code as guesses or clinical observation |
 
