@@ -298,6 +298,26 @@ helpScenarios <- function() {
       # Two days, so in days, as for gabapentin: the second dose reads 1.5.
       timeUnits = "days", maximum = 2880, plasmaLinetype = "dashed"
     ),
+    helpScenario(
+      "acetaminophen-headache",
+      "Acetaminophen 500 mg for a headache",
+      "Oral analgesics",
+      "One 500 mg tablet: the plasma peaks in half an hour, but the effect site peaks nearly two hours after the dose, and only just reaches the lower edge of the band.",
+      doses = helpDoses(
+        c("acetaminophen", 0, 500, "mg PO")
+      ),
+      timeUnits = "hours", maximum = 480, plasmaLinetype = "dashed"
+    ),
+    helpScenario(
+      "acetaminophen-arthritis-qid",
+      "Acetaminophen 1 g four times a day for arthritis",
+      "Oral analgesics",
+      "The labelled maximum of 4 g a day: a short half-life against a six-hour interval, so the plasma swings six-fold and the effect site rises and falls with every dose.",
+      doses = helpDoses(
+        c("acetaminophen", 0, 1000, "mg PO qid")
+      ),
+      timeUnits = "hours", maximum = 1440, plasmaLinetype = "dashed"
+    ),
 
     # --- Interactions --------------------------------------------------------
     helpScenario(
