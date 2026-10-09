@@ -13,7 +13,7 @@
 #
 # Before gabapentin no drug carried a lag -- hydromorphone's intramuscular and
 # intranasal lags were the last, and went when its absorption was refitted --
-# so most tests here put one in by hand.  Five drugs now carry one, as below.
+# so most tests here put one in by hand.  Six drugs now carry one, as below.
 #
 # Acetaminophen followed on 2026-10-08, keeping Morse 2022's published 5.3 min
 # oral lag by decision of Steven L. Shafer (see R/drugs_acetaminophen.R); the
@@ -28,6 +28,9 @@
 # Pregabalin followed on 2026-10-08, with Chan 2021's estimated lag of 0.32 h
 # and, unlike gabapentin, an effect site, so with a threshold set the gap is
 # timed on the effect site; the test after gabapentin's pins that.
+#
+# Ibuprofen keeps Morse 2022's 6.66 min tablet lag, as acetaminophen keeps
+# its own; test-drugs-ibuprofen.R pins the blank window on the real drug.
 #
 # Zolpidem and clonazepam followed on 2026-10-09.  Zolpidem's transit
 # absorption (Kim 2026) is carried as a 15 min lag (R/drugs_zolpidem.R), and
@@ -49,7 +52,7 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("only gabapentin, pregabalin, acetaminophen, zolpidem and clonazepam carry an absorption lag", {
+test_that("only gabapentin, pregabalin, acetaminophen, ibuprofen, zolpidem and clonazepam carry an absorption lag", {
   # If this ever fails it is not a defect -- a drug has gained or lost a lag,
   # and the behaviour the rest of this file guards has changed where it is
   # live.  Worth knowing, and worth rereading R/recoveryStates.R.
@@ -67,8 +70,8 @@ test_that("only gabapentin, pregabalin, acetaminophen, zolpidem and clonazepam c
     }
   }
   expect_setequal(unique(lagged),
-                  c("gabapentin", "pregabalin", "acetaminophen", "zolpidem",
-                    "clonazepam"))
+                  c("gabapentin", "pregabalin", "acetaminophen", "ibuprofen",
+                    "zolpidem", "clonazepam"))
 })
 
 

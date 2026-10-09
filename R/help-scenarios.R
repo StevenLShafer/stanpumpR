@@ -318,6 +318,18 @@ helpScenarios <- function() {
       ),
       timeUnits = "hours", maximum = 1440, plasmaLinetype = "dashed"
     ),
+    helpScenario(
+      "ibuprofen-with-acetaminophen",
+      "Ibuprofen 400 mg with acetaminophen 1 g",
+      "Oral analgesics",
+      "Two common tablets taken together and cleared at much the same rate, yet ibuprofen's effect site stays above its threshold for six and a half hours and acetaminophen's for two and a half.",
+      doses = helpDoses(
+        c("ibuprofen", 0, 400, "mg PO"),
+        c("acetaminophen", 0, 1000, "mg PO")
+      ),
+      timeUnits = "hours", maximum = 720, plasmaLinetype = "dashed",
+      showThreshold = TRUE
+    ),
 
     # --- Interactions --------------------------------------------------------
     helpScenario(

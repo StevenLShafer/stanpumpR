@@ -419,10 +419,16 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
              helpPageLink("models/metabolites"), ".")
     } else if (noEffectSite) {
       "This model has <strong>no effect site</strong>: ke0 is zero and only the plasma concentration is plotted."
-    } else if (any(params$ke0Supplied)) {
+    } else if (any(params$ke0Supplied) && length(units) == 0) {
       paste0("ke0 is supplied by the model rather than solved from a tPeak, because this drug is never dosed ",
              "directly and its time to peak effect is observed after a dose of its parent; see ",
              helpPageLink("models/effect-site", "The effect site and ke0"), ".")
+    } else if (any(params$ke0Supplied)) {
+      # Dosed directly, with a published equilibration rate (acetaminophen,
+      # ibuprofen, alprazolam): the reason is the source, not a parent
+      paste0("ke0 is supplied by the model rather than solved from a tPeak, because its source reports the ",
+             "equilibration rate itself rather than a time to peak effect; the notes below say where it ",
+             "comes from. See ", helpPageLink("models/effect-site", "The effect site and ke0"), ".")
     } else if (any(params$tPeakRoute == ROUTE_PO)) {
       paste0("ke0 is solved so that the effect-site concentration after an <strong>oral</strong> dose peaks at tPeak, ",
              "because that is how this drug's time to peak effect was observed; see ",
