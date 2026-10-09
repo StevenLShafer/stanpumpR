@@ -2,9 +2,9 @@
 
 Sevoflurane 2 per cent in a 2:4 L/min mixture of oxygen and nitrous oxide (33 per cent oxygen, 67 per cent nitrous oxide) at a ventilation of 6 L/min. Watch the alveolar sevoflurane (dashed) in the first few minutes, and note its value at 5 minutes.
 
-Now set the nitrous oxide to 0 and the oxygen to 6 L/min (so the total flow and the absence of rebreathing are unchanged) and apply. The alveolar sevoflurane rises more slowly and is lower at 5 minutes.
+Now set the nitrous oxide to 0 and the oxygen to 6 L/min (so the total flow is unchanged) and apply. The alveolar sevoflurane rises more slowly and is lower at 5 minutes.
 
-The difference is the **second gas effect**. In the first minutes the patient takes up nitrous oxide in bulk, over a litre a minute; that volume leaves the alveoli and is replaced by inspired gas, so the alveolar gas is both concentrated and refreshed, and the sevoflurane in it rises faster than its own uptake would allow. The same mechanism acts on the nitrous oxide itself (the concentration effect) and on the oxygen.
+The difference is the **second gas effect**. In the first minutes the patient takes up nitrous oxide in bulk, about 0.8 L/min at the peak; that volume leaves the alveoli and is replaced by inspired gas, so the alveolar gas is both concentrated and refreshed, and the sevoflurane in it rises faster than its own uptake would allow. The same mechanism acts on the nitrous oxide itself (the concentration effect) and on the oxygen. The extra gas inspired also raises the fresh gas flow needed to prevent rebreathing, to about 6.9 L/min at its peak, so in the first minutes a little exhaled gas is rebreathed even at 6 L/min; the sevoflurane still rises faster with the nitrous oxide than without it.
 
 The nitrous oxide panel shows its own alveolar tension approaching the inspired 67 per cent within minutes, with the brain following; the MAC-equivalents panel sums the two agents.
 

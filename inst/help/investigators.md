@@ -86,7 +86,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 - **William W. Mapleson** (1996): the decline of MAC with age.
 - **Edmond I. Eger II**: MAC itself, and the nitrogen estimate that flags Gas Man's value.
 - **Jan F. A. Hendrickx**, **Hendrikus J. M. Lemmens** and Shafer (2006): tissue volumes and blood flows in the four-compartment gas model.
-- **Jeffrey M. Feldman**, **Samsun Lampotang** and Hendrickx (2022): the rule that rebreathing stops when fresh gas flow reaches minute ventilation.
+- **Jeffrey M. Feldman**, **Samsun Lampotang** and Hendrickx (2022): the rule of thumb that rebreathing stops when fresh gas flow reaches minute ventilation, which the gas model follows with the threshold raised by the gas being taken up.
 
 ## Becoming a maintainer
 

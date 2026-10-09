@@ -30,7 +30,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **Pharmacodynamics and derived quantities.** `modelInteraction.R` (propofol-opioid), `recoveryCalc.R` (time until threshold), `opioidMacInteraction.R`, `setLinetypes.R`.
 
-**The inhaled-gas engine.** `gasProperties.R` (parameters and provenance), `advanceClosedFormGas.R` (the model and its exact advance), `gasDrugEntries.R` (how gas results become plot series), `gasRecovery.R` (time until threshold for gases and MAC), `advanceGasManBaseline.R` (a transcription of Gas Man's own update, kept as the reference the engine is compared to).
+**The inhaled-gas engine.** `gasProperties.R` (parameters and provenance), `advanceClosedFormGas.R` (the model and its matrix-exponential advance), `gasDrugEntries.R` (how gas results become plot series), `gasRecovery.R` (time until threshold for gases and MAC), `advanceGasManBaseline.R` (a transcription of Gas Man's own update, kept as the reference the engine is compared to).
 
 **Output.** `simulationPlot.R` assembles the figure; `suggest.R` is Suggest Dosing; `sendSlide.R` builds and mails the PowerPoint slide.
 

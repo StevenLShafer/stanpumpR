@@ -24,6 +24,10 @@
 #     "what the code computes" followed by "what a person wants to say about
 #     it".
 #
+#   * Blocks generated from the code inside a hand-written page: a line
+#     "<!-- generated: NAME -->" in the Markdown is replaced by the block
+#     R/help-generated.R builds (the route table on models/absorption).
+#
 # Links between pages are written in Markdown as [text](help:page-id); a link
 # that loads a teaching scenario into the simulator is [text](scenario:id).
 # helpRewriteLinks() turns these into data attributes that inst/www/app.js
@@ -288,7 +292,8 @@ helpPageHTML <- function(id, drugDefaults = getDrugDefaultsGlobal()) {
   if (startsWith(id, "scenarios/")) {
     return(helpScenarioPageHTML(sub("^scenarios/", "", id)))
   }
-  helpMarkdownToHTML(helpReadMarkdown(id))
+  # A hand-written page may carry blocks built from the code (R/help-generated.R)
+  helpMarkdownToHTML(helpExpandGenerated(helpReadMarkdown(id), drugDefaults))
 }
 
 #' A complete help page: breadcrumb, title, table of contents, body
