@@ -68,7 +68,7 @@
 
 **Rate constant (k).** A first-order rate, 1/min: k10 elimination, k12 and k21 transfer to and from the fast compartment, k13 and k31 to and from the slow one.
 
-**Rebreathing.** Inspiring exhaled gas; in the gas model it stops once fresh gas flow reaches minute ventilation.
+**Rebreathing.** Inspiring exhaled gas; in the gas model it stops once fresh gas flow reaches minute ventilation plus the gas being taken up from the alveoli, a little above the minute ventilation.
 
 **Response surface.** A model of the combined effect of two drugs as a function of both concentrations. See [Propofol-opioid interaction](help:models/interaction).
 

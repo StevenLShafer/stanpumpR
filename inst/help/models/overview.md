@@ -1,4 +1,4 @@
-stanpumpR never numerically integrates a differential equation. Every intravenous drug is a mammillary three-compartment model with an effect-site link, solved analytically once per patient and then evaluated at every time point as a sum of exponentials. The inhaled agents use a separate engine, also closed-form, that advances the Gas Man model exactly by matrix exponential. This page is the map; the pages that follow are the territory.
+stanpumpR uses no numerical ODE solver. Every intravenous drug is a mammillary three-compartment model with an effect-site link, solved analytically once per patient and then evaluated at every time point as a sum of exponentials. The inhaled agents use a separate engine that advances the Gas Man model by matrix exponential in short steps: each step is exact with the uptake that couples the gases held at its value at the start of the step, and that coupling is updated from step to step, which leaves a small error that shrinks with the step (see [The inhaled-gas engine](help:models/gas-engine)). This page is the map; the pages that follow are the territory.
 
 ## From covariates to a curve
 
