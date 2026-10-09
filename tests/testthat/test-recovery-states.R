@@ -306,7 +306,7 @@ test_that("a lagged parent dose masks the formed states as well as its own", {
   # certain to form, so the formed contribution has to carry the mask too, in
   # both of its branches: effect-site states when the metabolite has an effect
   # site (morphine as shipped), plasma states when it has none.  Nothing tested
-  # the plasma branch.  No drug in the library has a lag, so codeine is given
+  # the plasma branch.  Codeine has no lag of its own, so it is given
   # a 20-minute one by hand, and a second dose given while the first is well
   # under way, so that an unmasked answer would be a plausible time rather
   # than zero.  The thresholds are a quarter of each curve's peak.

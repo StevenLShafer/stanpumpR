@@ -11,10 +11,13 @@
 # through a lag means recoveryCalc() accounting for input that has not arrived
 # yet, which is a change to its contract.  See R/recoveryStates.R.
 #
-# NO DRUG IN THE LIBRARY CARRIES A LAG as of 2026-10-06 -- hydromorphone's
-# intramuscular and intranasal lags were the last, and went when its absorption
-# was refitted.  So every test here puts one in by hand, and the first one
-# pins that the unlagged path is untouched.
+# Before gabapentin no drug carried a lag -- hydromorphone's intramuscular and
+# intranasal lags were the last, and went when its absorption was refitted --
+# so most tests here put one in by hand.  Three drugs now carry one, as below.
+#
+# Acetaminophen followed on 2026-10-08, keeping Morse 2022's published 5.3 min
+# oral lag by decision of Steven L. Shafer (see R/drugs_acetaminophen.R); the
+# test after the allow-list pins it on the real drug.
 #
 # Gabapentin made the behaviour live on 2026-10-07: Tran 2017's oral lag of
 # 0.311 h is an estimated parameter (RSE 8%), kept rather than folded into ka.
@@ -40,7 +43,7 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("only gabapentin and pregabalin carry an absorption lag", {
+test_that("only gabapentin, pregabalin and acetaminophen carry an absorption lag", {
   # If this ever fails it is not a defect -- a drug has gained or lost a lag,
   # and the behaviour the rest of this file guards has changed where it is
   # live.  Worth knowing, and worth rereading R/recoveryStates.R.
@@ -57,7 +60,27 @@ test_that("only gabapentin and pregabalin carry an absorption lag", {
       if (any(!is.na(lags) & lags > 0)) lagged <- c(lagged, drug)
     }
   }
-  expect_setequal(unique(lagged), c("gabapentin", "pregabalin"))
+  expect_setequal(unique(lagged), c("gabapentin", "pregabalin", "acetaminophen"))
+})
+
+
+test_that("acetaminophen's live oral lag blanks recovery for 5.3 min only", {
+  # Acetaminophen's live lag, end to end through getDrugPK and simCpCe.  An
+  # ordinary 1 g tablet: its effect site clears the 5 mcg/mL threshold, so the
+  # time reported once absorption starts is a real one.
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("acetaminophen", 70, 170, 35, "male",
+                  dd[dd$Drug == "acetaminophen", ])
+  PK$endCe <- dd$endCe[dd$Drug == "acetaminophen"]
+  expect_equal(PK$PK$default$tlag_PO, 5.3)
+  DT <- data.frame(Drug = "acetaminophen", Time = 0, Dose = 1000,
+                   Units = "mg PO")
+  X <- simCpCe(DT, noEvents, PK, 720, TRUE)
+  w <- X$wide
+
+  expect_true(all(is.na(w$Recovery[w$Time < 5.3])))
+  expect_false(anyNA(w$Recovery[w$Time >= 5.3]))
+  expect_gt(max(w$Recovery, na.rm = TRUE), 60)
 })
 
 
