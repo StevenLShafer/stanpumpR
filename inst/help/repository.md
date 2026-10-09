@@ -14,6 +14,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `tests/testthat/` | The unit tests, one file per drug and per source file |
 | `vignettes/` | Two worked examples of the scripting interface |
 | `docs/` | Developer documentation: architecture, adding a drug, the user's guide draft (not shipped in the package) |
+| `data-raw/` | Scripts that derive model parameters from published data, such as the temazepam fit (not shipped in the package) |
 | `renv.lock` | Pinned package versions for reproducible deployment |
 | `Original Stanpump/` | The original STANPUMP C source and documentation, zipped |
 | `.github/workflows/` | Continuous integration and deployment |

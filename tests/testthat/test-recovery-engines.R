@@ -349,14 +349,17 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # with none either.  The fold path is prednisone's, driven by a
   # constant-rate input instead of an oral dose; rechecked in the next test.
   # AmiodaroneIV joined on 2026-10-08: active, no effect site and no
-  # metabolite, so it never reaches the fold either.
+  # metabolite, so it never reaches the fold either.  Clonazepam, zolpidem and
+  # temazepam (direct effects, no effect site) joined on 2026-10-09, with no
+  # metabolite either.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
-    "amiodarone", "desethylamiodarone", "amiodaroneIV"
+    "amiodarone", "desethylamiodarone", "amiodaroneIV",
+    "clonazepam", "zolpidem", "temazepam"
   ))
 })
 

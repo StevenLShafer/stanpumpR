@@ -13,7 +13,7 @@
 #
 # Before gabapentin no drug carried a lag -- hydromorphone's intramuscular and
 # intranasal lags were the last, and went when its absorption was refitted --
-# so most tests here put one in by hand.  Three drugs now carry one, as below.
+# so most tests here put one in by hand.  Five drugs now carry one, as below.
 #
 # Acetaminophen followed on 2026-10-08, keeping Morse 2022's published 5.3 min
 # oral lag by decision of Steven L. Shafer (see R/drugs_acetaminophen.R); the
@@ -29,6 +29,12 @@
 # and, unlike gabapentin, an effect site, so with a threshold set the gap is
 # timed on the effect site; the test after gabapentin's pins that.
 #
+# Zolpidem and clonazepam followed on 2026-10-09.  Zolpidem's transit
+# absorption (Kim 2026) is carried as a 15 min lag (R/drugs_zolpidem.R), and
+# with its default 50 ng/mL threshold the gap shows on the plasma;
+# test-drugs-zolpidem.R pins it on the real drug.  Clonazepam keeps dos Santos
+# 2009's estimated tablet lag of 0.369 h; it has no default threshold.
+#
 # (Claude Code, Claude Opus 5, 2026-10-06; run on R 4.6.1.)
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
@@ -43,7 +49,7 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("only gabapentin, pregabalin and acetaminophen carry an absorption lag", {
+test_that("only gabapentin, pregabalin, acetaminophen, zolpidem and clonazepam carry an absorption lag", {
   # If this ever fails it is not a defect -- a drug has gained or lost a lag,
   # and the behaviour the rest of this file guards has changed where it is
   # live.  Worth knowing, and worth rereading R/recoveryStates.R.
@@ -60,7 +66,9 @@ test_that("only gabapentin, pregabalin and acetaminophen carry an absorption lag
       if (any(!is.na(lags) & lags > 0)) lagged <- c(lagged, drug)
     }
   }
-  expect_setequal(unique(lagged), c("gabapentin", "pregabalin", "acetaminophen"))
+  expect_setequal(unique(lagged),
+                  c("gabapentin", "pregabalin", "acetaminophen", "zolpidem",
+                    "clonazepam"))
 })
 
 
