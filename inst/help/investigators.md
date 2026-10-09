@@ -40,6 +40,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | ketamine | **Edward F. Domino** and colleagues (1984) | Kinetics in volunteers |
 | dexmedetomidine | **Jeffrey B. Dyck** and colleagues (1993); **Athena F. Zuppa** and colleagues (2019) | Adult kinetics; the infant model with cardiopulmonary-bypass parameters |
 | midazolam | **Diane R. Mould** and colleagues (1995) | Three-compartment kinetics |
+| diazepam | **Orlando R. Hung**, Shafer, Stanski and colleagues (1996); **M. Bührer**, Stanski and colleagues (1990) | Three-compartment kinetics with arterial sampling; the EEG time to peak effect |
 | lorazepam | **F. Nielsen-Kudsk** and colleagues (1983); **David J. Greenblatt** and colleagues (1982, 2000); **Juliana Barr** and colleagues (2001) | Two-compartment kinetics from mean half-lives; oral and intramuscular absorption; the EEG time to peak effect; the sedation band |
 | alprazolam | **C. Lindsay DeVane** and colleagues (1993); **Karthik Venkatakrishnan** and colleagues (2005) | Apparent oral kinetics with weight, age and sex; the EEG effect-site rate constant |
 | clonazepam | **Fábio M. dos Santos**, **François Noël** and colleagues (2009) | Apparent oral two-compartment kinetics of tablets; the finding that the effect follows plasma directly |

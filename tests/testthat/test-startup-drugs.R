@@ -25,7 +25,7 @@ test_that("the menu lists the categories in order, each sorted by name", {
     expect_identical(titles, sort(titles))
   }
   expect_identical(choices[["Hypnotics and sedatives"]],
-                   c("alprazolam", "clonazepam", "dexmedetomidine", "etomidate",
+                   c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "etomidate",
                      "ketamine", "lorazepam", "midazolam", "propofol",
                      "remimazolam", "temazepam", "zolpidem"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))

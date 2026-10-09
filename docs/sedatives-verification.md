@@ -19,9 +19,9 @@ Drafted with Claude Code, 2026-10-09.
   matrix-exponential solution, which agreed to rounding error.
 
 **Outcome.**
-- Five drugs are implemented: lorazepam, alprazolam, clonazepam, zolpidem and
-  temazepam.
-- Diazepam is not implemented yet (see the end of this document).
+- All six are implemented. Diazepam, lorazepam, clonazepam and temazepam
+  use different or derived sources from the ones the specification proposed,
+  for the reasons below.
 
 ## What the specification got right and wrong
 
@@ -44,6 +44,7 @@ Drafted with Claude Code, 2026-10-09.
 | temazepam | Ochs 1984: V 1.45 L/kg, CL 2.33 mL/min/kg, t½ 8.6 h | **Correct** (20 mg oral). The specification is also right that this one-compartment reduction cannot reach the label's 865 ng/mL peak. |
 | temazepam | label: 30 mg mean peak 865 ng/mL, biphasic decline | **Correct**: range 666-982 ng/mL at a mean of 1.5 h; distribution t½ 0.4-0.6 h; terminal t½ 3.5-18.4 h. |
 | temazepam | van Steveninck 1994 II: IV kinetics and concentration-effect parameters | **Obtained** (PDF). Individual two-compartment fits; only summary values are published (Table I). PD linear, with proteresis, so no effect-site delay. |
+| diazepam | Hung 1996 (proposed in the check): three-compartment IV kinetics with arterial sampling | **Obtained** (PDF). Table I gives the means of 4 men. This is the model implemented. |
 | diazepam | Mould 1995 as the adult PK/PD source (the specification did not cite it; proposed in the check) | **Obtained** (PDF). It gives diazepam's t½ke0 (1.2 min, DSST) and EC50 (116-132 ng/mL), but "values for t½, CL, and Vdβ could not be calculated": sampling lasted 3 h. There is no diazepam PK model in it. |
 
 ## What was built
@@ -108,14 +109,28 @@ reduction.
 - Validation: 30 mg nightly on day 7 gives 278 ng/mL at 9 h and 103 at 24 h
   (label 260 and 75). Single 20 mg peak 392 ng/mL against 362-708 observed.
 
+**Diazepam** — Hung 1996, Table I, in place of the specification's paediatric
+McCann 2025.
+- Model: three compartments (V1 3.43, V2 8.47, V3 87.51 L; CL 0.027, 1.103,
+  0.335 L/min) from 4 men with arterial sampling to 2 h and venous to 10 days.
+  Half-lives 1.3 min, 24 min, 45 h. Clearance 27 mL/min, against 20-32 (Klotz
+  1975) and 26.6 (Greenblatt 1989, 48 men).
+- Validation: Mould 1995's 3-min concentrations (1120 and 2390 ng/mL)
+  reproduced within 8-14%, and its AUC to 3 h within 10%.
+- Effect site: Bührer 1990's arterial EEG equilibration (t½ 1.6 min), carried
+  as a 2.63 min time to peak effect.
+- Routes: oral F 0.94 (Divoll 1983) and IM F 1.0 (Hung). Each absorption
+  half-life (20 min oral, 50 min IM) is set so the typical peak matches the
+  observed mean peak: 10 mg PO 302 ng/mL (Hogan 2020, 286-338); 10 mg IM 200
+  ng/mL (Hung, 199). The peak times then differ from those observed.
+- Not modelled: nordiazepam (53% of the dose reaches the circulation as it,
+  Greenblatt 1988), and age.
+
 ## Not yet implemented, and what would unblock them
 
-- **Diazepam.** Mould et al., *Clin Pharmacol Ther* 1995;58:35-43 gives
-  diazepam's effect site (t½ke0 1.2 min) but no disposition model: its
-  sampling lasted only 3 h. Bührer 1990
-  gives an arterial equilibration half-life of 1.6 min; Hung 1996 gives IM
-  bioavailability 1.0 and tmax 34 min; Divoll 1983 gives oral F 0.94.
-  Nordiazepam formation is 53% of the dose (Greenblatt 1988).
+- **Nordiazepam**, as diazepam's active metabolite: the library's
+  metabolite mechanism would carry it, with a nordiazepam disposition model
+  (Greenblatt 1988: V 90 L, CL 12.3 mL/min, t½ 93 h in older subjects).
 - **Barr 2001** (lorazepam ICU PK, ke0 and sedation model) would replace the
   derived lorazepam disposition. **Venkatakrishnan 2005** would allow IV
   alprazolam (no product exists). IV clonazepam would need a study sampled in

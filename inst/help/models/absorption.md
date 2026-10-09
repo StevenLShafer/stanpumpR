@@ -27,6 +27,7 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 | pregabalin | PO |
 | amiodarone | PO, as a constant daily rate (`mg/day PO`) |
 | lorazepam | PO, IM |
+| diazepam | PO, IM |
 | alprazolam | PO |
 | clonazepam | PO, with the lag of its tablet study |
 | zolpidem | PO, with a lag standing in for transit absorption |
