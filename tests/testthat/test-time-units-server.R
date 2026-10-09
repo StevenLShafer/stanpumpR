@@ -443,4 +443,49 @@ test_that("the long-term prompt is not offered again while the table is unreadab
   })
 })
 
+# Audit finding F01 (October 2026): "-5" was added as 5 and "1e3" as 13.  An
+# entry validateTime() or validateDose() cannot read leaves the dialog open.
+test_that("the add-dose and edit-doses dialogs refuse a time or dose they cannot read", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    doseTable(withTimes("0"))
+    session$flushReact()
+    before <- doseTable()
+
+    session$setInputs(addDoseDrug = "fentanyl", addDoseTime = "10", addDoseAmount = "-5",
+                      addDoseUnits = "mcg", addDoseBtn = 1)
+    expect_identical(doseTable(), before)
+    expect_true(anyErrorShown(sent))
+    session$setInputs(addDoseTime = "-10", addDoseAmount = "50", addDoseBtn = 2)
+    expect_identical(doseTable(), before)
+    # scientific notation is read as the number it is
+    session$setInputs(addDoseTime = "1e1", addDoseAmount = "5e1", addDoseBtn = 3)
+    added <- doseTable()[doseTable()$Drug == "fentanyl" & doseTable()$Time == "10", ]
+    expect_equal(added$Dose, "50")
+
+    DrugTimeUnits(list(drug = "propofol"))
+    editWith <- function(TT, n) {
+      session$setInputs(
+        editPriorDosesTable = list(
+          data = lapply(seq_len(nrow(TT)), function(i) unname(as.list(TT[i, ]))),
+          changes = list(event = "afterChange", source = "edit"),
+          params = rhandsontable::rhandsontable(TT)$x
+        ),
+        editDosesOK = n
+      )
+    }
+    before <- doseTable()
+    editWith(data.frame(Delete = FALSE, Time = c("0", "-10"), Dose = c("1", "2"), Units = "mg"), 1)
+    expect_identical(doseTable(), before)
+    # a cell the grid cleared because it could not read it is not taken as 0
+    editWith(data.frame(Delete = FALSE, Time = c("0", "10"), Dose = c("1", ""), Units = "mg"), 2)
+    expect_identical(doseTable(), before)
+    # a row being deleted is not checked
+    editWith(data.frame(Delete = c(FALSE, TRUE), Time = c("0", "10"), Dose = c("1e1", "-1"),
+                        Units = "mg"), 3)
+    expect_equal(doseTable()$Dose[doseTable()$Drug == "propofol"], "10")
+  })
+})
+
 .sprglobals$config <- oldConfig

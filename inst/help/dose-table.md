@@ -14,11 +14,11 @@ The dose table is the main way you talk to the program. It sits to the right of 
 | `1:30` | with the *Actual time* display, the clock time 01:30 (with *Elapsed time* the table takes numbers only; an `H:MM` pasted in is read as hours and minutes) |
 | `0:80` | rolls over to `01:20` |
 
-Anything that cannot be read as a time becomes 0 rather than raising an error. With *Actual time*, a number without a colon is counted from the procedure start. See [Time display](help:time-display), which also explains what happens to the table when you change the unit (it is converted, so the doses stay put).
+Times are never negative. With *Actual time*, a number without a colon is counted from the procedure start. What the Time and Dose cells accept is set out under *Entries that cannot be read*, below. See [Time display](help:time-display), which also explains what happens to the table when you change the unit (it is converted, so the doses stay put).
 
 A regimen written in days goes in most easily with the Time units set to days. Day 1 begins at time 0, so day *n* begins at *n* − 1: "1600 mg a day on days 1 and 2, then 1200 mg a day on days 3 to 7" is three rows of a once-a-day unit, 1600 at `0`, 1200 at `2`, and a stop (0) at `7`. See *Scheduled doses* below.
 
-**Dose.** A number. Anything that is not a digit or a decimal point is removed before the number is read, so `5 mg` is read as 5, a minus sign is dropped (`-5` becomes 5, not 0), and an entry with no digits at all becomes 0.
+**Dose.** A number, never negative. The unit goes in the Units column, not here.
 
 **Units.** A drop-down whose contents depend on the drug in that row. The list, and the default, come from the drug library and are shown on each drug's page. The unit decides what kind of row it is:
 
@@ -31,6 +31,12 @@ A regimen written in days goes in most easily with the Time units set to days. D
 | any of the above doses followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
 | `L/min` | fresh gas flow or ventilation setting | inhaled agents |
 | `%` | vaporizer setting | inhaled agents |
+
+## Entries that cannot be read
+
+A Time or Dose cell takes one number, written plainly (`2.5`, `.5`, `1,000`) or in scientific notation (`1e3` is stored as 1000), or, for a time, hours and minutes (`1:30`). Spaces and quotation marks around the entry, and a leading `+`, are dropped. A blank cell becomes 0.
+
+Nothing else is guessed at. An entry with a minus sign, a letter or a unit (`-5`, `5 mg`, `8:44 pm`), a second decimal point or colon (`1.2.3`, `1:2:30`), a comma that does not separate thousands (`1,5`), or a space or other mark inside the number (`8 30`, `8;30`) is not read as some other number: the cell is cleared, and the row is ignored by the simulation, like any incomplete row, until it is corrected. The *Add a dose* and *Edit doses* dialogs instead say what could not be read and stay open. (Until October 2026 such entries were stripped to their digits, so `-5` became 5 and `1e3` became 13.)
 
 ## Infusions
 
