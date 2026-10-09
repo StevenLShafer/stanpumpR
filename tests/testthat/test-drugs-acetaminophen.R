@@ -57,7 +57,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
 
-test_that("Morse's vector is recovered for her standard 70 kg, 176 cm man", {
+test_that("Morse's vector is recovered for the standard 70 kg, 176 cm man", {
   x <- acetaminophen(70, 176, 35, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(x$cl1 * 60, 24.0)
   expect_equal(x$v1, 43.7); expect_equal(x$v2, 29.7); expect_equal(x$cl2 * 60, 43.5)

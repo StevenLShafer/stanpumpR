@@ -12,7 +12,7 @@ None. Sugammadex acts in plasma, by encapsulating rocuronium there; the reversal
 
 ### Rocuronium binding is not modelled
 
-This is the main limitation of simulating the two side by side: giving sugammadex does not change the [rocuronium](help:drugs/rocuronium) row. The source's binding and train-of-four model would need coupled, mass-conserving states for free sugammadex, free rocuronium and the complex, which the closed-form engine does not have. The row shows the sugammadex concentration alone. The shaded band (5 to 30 mcg/mL) covers what 2 to 4 mg/kg produce over the first hour.
+This is the main limitation of simulating the two side by side: giving sugammadex does not change the [rocuronium](help:drugs/rocuronium) row. The source's binding and train-of-four model would need coupled, mass-conserving states for free sugammadex, free rocuronium and the complex, which the closed-form engine does not have. The row shows the sugammadex concentration alone. The shaded band (5 to 30 mcg/mL) covers what 2 to 4 mg/kg produce over the first hour, after the first 15 minutes or so, when 4 mg/kg is still above it.
 
 ### Where to be careful
 

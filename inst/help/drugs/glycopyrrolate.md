@@ -12,7 +12,7 @@ None in the source. The parameters take the default [fat-free-mass scaling](help
 
 ### Effect site
 
-None. The label's onset cannot identify an equilibration constant, and heart rate, secretions and the vagal response to neostigmine each need their own calibrated relationship. Only the plasma concentration is plotted; the shaded band (1 to 10 ng/mL) covers what 0.2 to 0.4 mg produce after distribution.
+None. The label's onset cannot identify an equilibration constant, and heart rate, secretions and the vagal response to neostigmine each need their own calibrated relationship. Only the plasma concentration is plotted; the shaded band (1 to 10 ng/mL) covers what 0.2 to 0.4 mg produce during distribution, for about the first 30 minutes after 0.2 mg and the first hour after 0.4 mg; after that the concentration is below 1 ng/mL.
 
 ### Where to be careful
 

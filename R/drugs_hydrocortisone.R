@@ -26,7 +26,7 @@
 # THE LINEARISATION USED HERE
 # ===========================
 # At the doses anaesthetists give (50-100 mg, total cortisol above
-# 1000 nmol/L for hours), CBG is saturated: its contribution to Ct is nearly
+# 1000 nmol/L for about two to three hours), CBG is saturated: its contribution to Ct is nearly
 # the constant B, and dCt/dCu is 1 + NS = 5.15 to within a few percent
 # (5.4 at Cu = 110 nmol/L, 5.15 at saturation).  In that regime the model IS
 # linear in the increment of total cortisol above the saturated bound pool:
@@ -50,20 +50,24 @@
 # =================
 # Below about 300 nmol/L of total cortisol, which is where replacement doses
 # of 5-20 mg spend most of their time, the CBG term is not saturated: it adds
-# up to 44 x Cu to the total and makes the apparent volume several times
-# larger and the decline several times slower than this model predicts.  The
-# linearisation therefore UNDERSTATES THE TAIL of every curve, and the error
-# grows as the concentration falls.  It also omits the part of the increment
-# that the CBG pool itself carries, at most B = 0.156 mcg/mL (15.6 mcg/dL).
-# For stress-dose simulation the first few hours are reasonable; for
-# replacement dosing this model is the wrong tool and the source's full
+# up to 44 x Cu to the total.  Run as described above (B = 431 nmol/L, an
+# intravenous bolus on a zero baseline), the source's model then declines
+# with an apparent half-time of total cortisol of 1.3-2 h, against this
+# model's terminal 0.91 h.  The linearisation therefore UNDERSTATES THE TAIL
+# of every curve, and the error grows with time: after 5 mg the source's
+# model is 10 times this one at 4 h and 30 times at 8 h; after 100 mg, 2.5
+# and 11 times.  It also omits the part of the increment that the CBG pool
+# itself carries, at most B = 0.156 mcg/mL (15.6 mcg/dL), which is most of
+# the early shortfall.  For stress dosing this model is within about a
+# quarter for the first hour after 50 mg and the first two hours after
+# 100 mg; for replacement dosing it is the wrong tool and the source's full
 # nonlinear model should be run instead.
 #
 # ORAL ROUTE
 # ==========
 # The source describes oral granules by a dose-dependent transit chain (mean
-# 0.868 h at 5 mg) feeding a 24 /h depot, with an input scaling parameter
-# BIO = 0.344.  The absorption constant here, 1.099 /h, matches the mean of
+# 0.868 h at 5 mg) feeding a 24 /h depot, with an estimated bioavailability
+# F = 0.344 (Table 2).  The absorption constant here, 1.099 /h, matches the mean of
 # that whole input (0.868 + 1/24 h) with a single first-order step.  The
 # bioavailability is NOT the source's 0.344: that parameter sits inside a
 # model whose dose-column convention could not be reproduced, and paired

@@ -16,7 +16,8 @@ gentamicin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
 \item{sex}{sex as a string}
 
 \item{adjustToFFM}{evaluate the central volume and the de-indexed CKD-EPI
-eGFR (at an assumed normal creatinine) at the fat-free-mass weight, and
+eGFR (at the entered creatinine, or an assumed normal one) at the
+fat-free-mass weight, and
 scale the peripheral volume and intercompartmental clearance to fat-free
 mass; when \code{FALSE}, use total body weight and the published fixed
 peripheral parameters.}

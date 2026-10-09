@@ -1,6 +1,6 @@
 ### The model
 
-Gentamicin's parameters are from Smit and colleagues (*J Antimicrob Chemother* 2020;75:3286-3292), a two-compartment model of total serum gentamicin fitted in 542 mostly overweight or obese patients and validated in 208 more: clearance 3.53 L/h at a de-indexed eGFR of 74 mL/min, scaling linearly with eGFR; central volume 16.6 L at 70 kg, scaling linearly with weight; intercompartmental clearance 1.48 L/h and peripheral volume 13.4 L, fixed. The source's 25 per cent reduction in clearance for intensive-care admission is not an input and is left off.
+Gentamicin's parameters are from Smit and colleagues (*J Antimicrob Chemother* 2020;75:3286-3292), a two-compartment model of total serum gentamicin fitted in 542 individuals, mostly overweight or obese hospital patients with 28 healthy participants of a prospective study, and validated in 208 more: clearance 3.53 L/h at a de-indexed eGFR of 74 mL/min, scaling linearly with eGFR; central volume 16.6 L at 70 kg, scaling linearly with weight; intercompartmental clearance 1.48 L/h and peripheral volume 13.4 L, fixed. The source's 25 per cent reduction in clearance for intensive-care admission is not an input and is left off.
 
 ### Covariates
 

@@ -91,7 +91,8 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
   tPeak <- 0
   MEAC  <- 0
 
-  # Band, total mg/L: what 2-4 mg/kg produce over the first hour.
+  # Band, total mg/L: what 2-4 mg/kg produce over the first hour, after the
+  # first 15 min or so, when 4 mg/kg is still above 30.
   typical      <- 10
   upperTypical <- 30
   lowerTypical <- 5

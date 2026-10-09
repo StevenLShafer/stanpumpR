@@ -4,7 +4,7 @@ Dexamethasone's parameters are from Hong and colleagues (*Pharm Res* 2007;24:108
 
 ### Dose basis
 
-Dexamethasone is labelled three ways: 4 mg of the phosphate is 3.3 mg of base and 4.3 mg of the sodium phosphate. The model is used on the convention common vial labels follow, dexamethasone **phosphate** milligrams, with no further correction. A dose already stated as base is about 20 per cent more potent per labelled milligram than the model assumes.
+Dexamethasone is labelled three ways: 4 mg of the phosphate is 3.3 mg of base and 4.4 mg of the sodium phosphate. The model is used on the convention common vial labels follow, dexamethasone **phosphate** milligrams, with no further correction. A dose already stated as base is about 20 per cent more potent per labelled milligram than the model assumes.
 
 ### Oral and intramuscular routes
 

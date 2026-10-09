@@ -18,8 +18,11 @@
 #     ka   = 10.0 /h
 #     lag  = 0.32 h
 #
-# NCLcr is Cockcroft-Gault creatinine clearance normalised to 1.73 m^2 of body
-# surface area.  Clearance is proportional to it up to the breakpoint of 96.4
+# NCLcr is, at 13 years and over, Cockcroft-Gault creatinine clearance
+# normalised to 1.73 m^2 of body surface area; under 13 it is the Schwartz
+# estimate, k x height / SCr in mL/min/1.73 m^2, with k 0.55 (0.45 under one
+# year), as in Chan's Methods and Table 1.  Clearance is proportional to it
+# up to the breakpoint of 96.4
 # mL/min/1.73 m^2 and constant above.  Chan's 4.96 L/h at the breakpoint is the
 # canonical Pfizer adult model's (Bockbrader 2011: CL/F = 0.0464 L/h per mL/min
 # of CLcr, to 107 mL/min, which is 4.96 L/h), and clearance proportional to
@@ -73,10 +76,13 @@
 #
 # RENAL FUNCTION
 # ==============
-# Cockcroft-Gault at the patient's serum creatinine from the Patient Profile,
-# or, when none is entered, an ASSUMED NORMAL creatinine (R/renalFunction.R),
-# which captures the decline with age and the sex difference but not renal
-# impairment.  Pregabalin, like gabapentin, is cleared unchanged by the
+# Cockcroft-Gault (13 years and over) or Schwartz (under 13) at the
+# patient's serum creatinine from the Patient Profile, or, when none is
+# entered, an ASSUMED NORMAL creatinine (R/renalFunction.R), which captures
+# the decline with age and the sex difference but not renal impairment.  The
+# assumed value is an adult's (1.0 mg/dL for a male, 0.8 for a female),
+# about twice a young child's, so for a child the creatinine should be
+# entered.  Pregabalin, like gabapentin, is cleared unchanged by the
 # kidney and accumulates in renal impairment.  Above the breakpoint clearance
 # does not rise, so augmented renal clearance is not represented, by design of
 # the source.  Haemodialysis, which removes pregabalin efficiently, is not
@@ -98,8 +104,9 @@
 # BAND
 # ====
 # 1.3-5.4 mcg/mL: the median steady-state average concentration in adults
-# taking 150 and 600 mg/day, the labelled range for neuropathic pain and
-# focal seizures (Chan 2021, Table 4); typical 2.7, for 300 mg/day.
+# with focal seizures taking 150 and 600 mg/day (Chan 2021, Table 4), the
+# labelled range there and for neuropathic pain (the label); typical 2.7,
+# for 300 mg/day, by linearity (2 x 1.34), not tabulated.
 # Orientation only: a chronic exposure, not a perioperative target, and a
 # single preoperative dose of 150 or 300 mg peaks above it.
 #
@@ -166,9 +173,9 @@ PREGABALIN_TPEAK <- 283   # minutes after an ORAL dose
 #' Pregabalin pharmacokinetics (oral)
 #'
 #' Chan et al. (2021): one compartment with first-order absorption after a
-#' lag, clearance on body-surface-area-normalised Cockcroft-Gault creatinine
-#' clearance to a breakpoint, and the effect site timed from van Esdonk et al.
-#' (2018).  See the header.
+#' lag, clearance on body-surface-area-normalised creatinine clearance
+#' (Cockcroft-Gault from 13 years, Schwartz below) to a breakpoint, and the
+#' effect site timed from van Esdonk et al. (2018).  See the header.
 #'
 #' @inheritParams cefazolin
 #' @param adjustToFFM \code{TRUE} (the default) evaluates Chan's weight,
@@ -186,9 +193,15 @@ pregabalin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   female <- sex == SEX_FEMALE
 
-  crcl  <- creatinineClearanceCG(pkW, age, sex,       # mL/min
-                                 patientCreatinine(creatinine, sex))
-  nclcr <- crcl * 1.73 / bsaDuBois(pkW, height)      # mL/min/1.73 m^2
+  # NCLcr, mL/min/1.73 m^2, as Chan computed it (Methods, Table 1):
+  # Cockcroft-Gault normalised to body surface area at 13 years and over,
+  # the Schwartz equation under 13.
+  scr   <- patientCreatinine(creatinine, sex)
+  nclcr <- if (age < 13) {
+    egfrSchwartz(height, age, scr)
+  } else {
+    creatinineClearanceCG(pkW, age, sex, scr) * 1.73 / bsaDuBois(pkW, height)
+  }
 
   # Chan 2021, Table 2: clearance proportional to NCLcr up to the breakpoint
   v1  <- 39.8 * (pkW / 70)^0.70 * (if (female) 0.83 else 1)

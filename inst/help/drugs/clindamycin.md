@@ -1,6 +1,6 @@
 ### The model
 
-Clindamycin's parameters are from Bouazza and colleagues (*Br J Clin Pharmacol* 2012;74:971-977), a population analysis of total plasma concentrations in 50 adults with osteomyelitis treated intravenously and by mouth. The code uses the paper's **final table**, not its abstract, which prints an earlier vector: clearance 15.2 L/h at 70 kg, volume 66.2 L, one compartment, absorption rate constant 0.967/h, oral bioavailability 0.876. Half-time at 70 kg is 3.0 hours.
+Clindamycin's parameters are from Bouazza and colleagues (*Br J Clin Pharmacol* 2012;74:971-977), a population analysis of total plasma concentrations in 50 patients with osteomyelitis treated intravenously and by mouth. The code uses the paper's **final table**, not its abstract, which prints an earlier vector: clearance 15.2 L/h at 70 kg, volume 66.2 L, one compartment, absorption rate constant 0.967/h, oral bioavailability 0.876. Half-time at 70 kg is 3.0 hours.
 
 Because both routes were fitted together, 15.2 L/h is systemic clearance and 0.876 is absolute bioavailability, applied once and only to oral doses.
 

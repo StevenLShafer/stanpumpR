@@ -6,7 +6,7 @@
 #
 # DISPOSITION
 # ===========
-# Bouazza et al. fitted total plasma clindamycin from 50 adults with
+# Bouazza et al. fitted total plasma clindamycin from 50 patients with
 # osteomyelitis treated intravenously and orally.  The FINAL TABLE of that
 # paper, not its abstract, gives: CL 15.2 x (BW/70)^0.497 L/h, V 66.2 L,
 # ka 0.967 /h, oral F 0.876.  The abstract prints a different, earlier vector

@@ -22,6 +22,6 @@ creatinine clearance in mL/min
 \verb{(140 - age) x weight / (72 x SCr)}, times 0.85 for a woman, in mL/min.
 This is the estimator the vancomycin (Thomson 2009), cefazolin (Komatsu
 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017) and pregabalin
-(Chan 2021) models were fitted with.
+(Chan 2021, from 13 years of age; Schwartz below) models were fitted with.
 }
 \keyword{internal}

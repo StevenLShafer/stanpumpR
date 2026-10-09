@@ -8,7 +8,7 @@ stanpumpR's engine is linear. At the doses anaesthetists give (50 to 100 mg) tot
 
 ### Oral route
 
-The absorption rate constant, 1.10/h, matches the mean input time of the source's dose-dependent transit chain and depot (0.91 h at 5 mg). Bioavailability is 0.88, from Johnson and colleagues' paired-route tablet study on calculated unbound cortisol (*J Bioequiv Availab* 2018;10:001-003), rather than the source's input scaling parameter of 0.344, which sits inside a dose-column convention that could not be reproduced. This is a cross-study choice and the code says so.
+The absorption rate constant, 1.10/h, matches the mean input time of the source's dose-dependent transit chain and depot (0.91 h at 5 mg). Bioavailability is 0.88, from Johnson and colleagues' paired-route tablet study on calculated unbound cortisol (*J Bioequiv Availab* 2018;10:001-003), rather than the source's estimated bioavailability of 0.344 (its Table 2), which sits inside a model whose dose convention could not be reproduced. This is a cross-study choice and the code says so.
 
 ### Covariates
 
@@ -20,4 +20,4 @@ None; the glucocorticoid effect is genomic and takes hours. Only the plasma conc
 
 ### Where to be careful
 
-Below about 300 nmol/L of total cortisol, where replacement doses of 5 to 20 mg spend most of their time, CBG is not saturated, the apparent volume is several times larger and the decline several times slower than this model predicts. **The linearisation understates the tail of every curve**, and the error grows as the concentration falls; it also leaves out the part of the increment the CBG pool itself carries, at most 0.16 mcg/mL. For stress-dose simulation the first hours are reasonable. For replacement dosing this is the wrong tool and the source's nonlinear model should be run instead.
+Below about 300 nmol/L of total cortisol, where replacement doses of 5 to 20 mg spend most of their time, CBG is not saturated. Run as published, the source's model then declines with an apparent half-time of total cortisol of 1.3 to 2 hours, against 0.9 hours here. **The linearisation understates the tail of every curve**, and the error grows with time: after 5 mg the source's model gives ten times this one's concentration at 4 hours. It also leaves out the part of the increment the CBG pool itself carries, at most 0.16 mcg/mL. For stress dosing the model is within about a quarter for the first hour after 50 mg and the first two hours after 100 mg. For replacement dosing this is the wrong tool and the source's nonlinear model should be run instead.
