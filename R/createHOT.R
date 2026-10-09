@@ -15,7 +15,7 @@ createHOT <- function(doseTable, drugDefaults, timeFormat = NULL)
     rhandsontable::hot_col(
       col = "Drug",
       type = "autocomplete",
-      source = drugDefaults$Drug,
+      source = sortDrugNames(drugDefaults$Drug),
       strict = TRUE,
       halign = "htLeft",
       valign = "vtMiddle",
