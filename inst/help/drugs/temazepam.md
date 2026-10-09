@@ -7,7 +7,9 @@ No two-compartment model of temazepam has been published, so this one was fitted
 
 Scaled to the same dose, Halliday's concentrations were about 1.6 times van Steveninck's in the first hours. A single model was fitted to both. Per kilogram, the central volume is 0.278 L/kg, the peripheral volume 0.523 L/kg, the clearance 1.10 mL/min/kg and the intercompartmental clearance 0.112 L/h/kg. For 70 kg, that is volumes of 19.5 and 36.6 L, a clearance of 4.63 L/h and an intercompartmental clearance of 7.8 L/h.
 
-The half-lives are 0.88 and 10.8 hours. The model matches van Steveninck's total exposure and half-life within 4 per cent and Halliday's concentrations from 10 minutes on within 13 per cent. It sits above van Steveninck's early concentrations and 20 per cent below Halliday's at 5 minutes. A fit to van Steveninck alone put Halliday's concentrations 35 to 45 per cent low, and most of the oral peaks too.
+The half-lives are 0.88 and 10.8 hours. The model matches van Steveninck's total exposure and half-life within 4 per cent and Halliday's concentrations from 10 minutes on within 13 per cent. It sits above van Steveninck's early concentrations and 20 per cent below Halliday's at 5 minutes. A fit to van Steveninck alone put Halliday's concentrations 35 to 44 per cent low, and most of the oral peaks too.
+
+The fit minimised the squared logarithms of the ratios of model to observed values: van Steveninck's five summary values and Halliday's seven mean concentrations, each with equal weight, with each study simulated at its own dose, infusion time and mean weight. Halving or doubling the weight given to Halliday changes the predicted oral peak by about 5 per cent. The full derivation, with the data, the alternatives tried and a script that reproduces the fit, is in the developer document `docs/temazepam.md`.
 
 The specification this model was built from proposed a one-compartment reduction of Ochs and colleagues' oral data (1.45 L/kg, 2.33 mL/min/kg). Spreading 30 mg through that volume gives at most about 300 ng/mL, against the label's 865, so a second compartment is needed.
 

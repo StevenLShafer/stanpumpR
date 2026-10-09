@@ -1,9 +1,9 @@
-# temazepam: see the header of R/drugs_temazepam.R for how the two
-# compartments were fitted jointly to van Steveninck 1994's and Halliday
-# 1987's intravenous means, and
-# where the oral route and the band come from.  Pins were worked out by hand
-# (Python, with the fat-free-mass formula and the matrix exponential written
-# out again), not from the code under test.
+# temazepam: see the header of R/drugs_temazepam.R and docs/temazepam.md for
+# how the two compartments were fitted jointly to van Steveninck 1994's and
+# Halliday 1987's intravenous means (the fit is data-raw/temazepam-fit.R),
+# and where the oral route and the band come from.  Pins were worked out by
+# hand (Python, with the fat-free-mass formula and the matrix exponential
+# written out again), not from the code under test.
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
@@ -89,6 +89,40 @@ test_that("the joint fit against the two intravenous studies", {
   got <- twoComp(c(5, 10, 15, 30, 60, 90, 120), h, 20, "infusion", 1 / 3)
   expect_equal(got, c(1003.8, 952.7, 904.8, 778.0, 586.9, 455.9, 365.7),
                tolerance = 1e-3)
+})
+
+
+test_that("the shipped constants are the least-squares minimum of the documented fit", {
+  # docs/temazepam.md and data-raw/temazepam-fit.R: the sum of squared log
+  # ratios over van Steveninck's five end points and Halliday's seven points,
+  # equally weighted.  Moving any one parameter 1% either way makes it worse.
+  vsTarget <- c(996, 1400, 2800, 6150, 10.55)
+  halRead  <- c(1250, 1010, 910, 810, 625, 500, 420)
+  t <- seq(0, 480, by = 0.5)
+  objective <- function(s) {
+    scale <- function(p) {
+      p$v1 <- p$v1 * s[1]; p$cl1 <- p$cl1 * s[2]
+      p$cl2 <- p$cl2 * s[3]; p$v2 <- p$v2 * s[4]
+      p
+    }
+    p <- scale(temazepam(66.5, 170, 21, "female", adjustToFFM = FALSE)$PK$default)
+    h <- scale(temazepam(68, 170, 22, "male", adjustToFFM = FALSE)$PK$default)
+    cp <- twoComp(t, p, 25.85, "infusion", 28.5)
+    auc <- function(upto) { i <- t <= upto; sum(diff(t[i]) * (utils::head(cp[i], -1) + utils::tail(cp[i], -1)) / 2) / 60 }
+    k10 <- p$cl1 / p$v1; k12 <- p$cl2 / p$v1; k21 <- p$cl2 / p$v2
+    a <- k10 + k12 + k21
+    beta <- (a - sqrt(a^2 - 4 * k10 * k21)) / 2
+    vs <- c(max(cp), auc(180), auc(480), 25.85 / (p$cl1 * 60) * 1000,
+            log(2) / beta / 60)
+    hal <- twoComp(c(5, 10, 15, 30, 60, 90, 120), h, 20, "infusion", 1 / 3)
+    sum(log(vs / vsTarget)^2) + sum(log(hal / halRead)^2)
+  }
+  best <- objective(rep(1, 4))
+  expect_equal(best, 0.258165, tolerance = 1e-5)
+  for (i in 1:4) for (f in c(0.99, 1.01)) {
+    s <- rep(1, 4); s[i] <- f
+    expect_gt(objective(s), best)
+  }
 })
 
 

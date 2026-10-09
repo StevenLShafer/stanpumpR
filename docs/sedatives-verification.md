@@ -96,13 +96,17 @@ Kruizinga 2022.
 
 **Temazepam** — two compartments fitted jointly to the published IV means of
 van Steveninck 1994 (part II, Table I) and Halliday 1987 (Figure 1, read by
-eye), in place of the specification's Ochs reduction.
+eye), in place of the specification's Ochs reduction. The derivation is
+written up in `docs/temazepam.md`, and `data-raw/temazepam-fit.R` reproduces
+it. **Kept as is** by Dr Shafer's decision (2026-10-09).
 - Why both: Halliday's concentrations were about 1.6-fold van Steveninck's
-  in the first hours. A fit to van Steveninck alone (V1 0.274, V2 0.607
-  L/kg, CL 1.04 mL/min/kg, Q 0.407 L/h/kg) put Halliday 35-45% low, and most
-  oral peaks too.
-- Fit: V1 0.278, V2 0.523 L/kg; CL 1.10 mL/min/kg; Q 0.112 L/h/kg; half-lives
-  0.88 and 10.8 h.
+  in the first hours. A fit to van Steveninck alone (V1 0.279, V2 0.603
+  L/kg, CL 1.04 mL/min/kg, Q 0.401 L/h/kg) put Halliday 35-44% low, and its
+  20 mg oral peak (391 ng/mL) below most oral studies.
+- Fit: least squares on log ratios, the five van Steveninck end points and
+  seven Halliday points weighted equally. V1 0.278, V2 0.523 L/kg; CL 1.10
+  mL/min/kg; Q 0.112 L/h/kg; half-lives 0.88 and 10.8 h. Halving or doubling
+  Halliday's weight moves the 20 mg oral peak by about 5%.
 - Against van Steveninck: AUC∞ 0.96 and t½ 1.02 of the means; AUC0-8 1.13,
   Cmax 1.21, AUC0-3 1.41.
 - Against Halliday: 0.80 at 5 min, 0.87-0.99 from 10 to 120 min.
