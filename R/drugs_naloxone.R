@@ -18,8 +18,10 @@
 # Note the clearance is normalised to a LEAN body weight of 70 kg, not to an
 # ordinary 70 kg man: the reference male of this package (70 kg, 170 cm,
 # fat-free mass 54.5 kg) has CL = 75.4 L/h, not 91.  The Janmahasatian lean
-# body weight is the same quantity as the package's adult fat-free mass, so
-# this model carries its own fat-free-mass covariate on clearance.
+# body weight is the same quantity as the package's fat-free mass,
+# ffmAlSallami(), in adult men, the population Dowling studied, so this model
+# carries its own fat-free-mass covariate on clearance.  In adult women
+# ffmAlSallami() is 1-3% above Janmahasatian's, raising clearance by 1-2%.
 #
 # This replaces the Papathanasiou 2019 weight-proportional model that the
 # library carried before, so that the intravenous and intranasal routes rest
@@ -102,8 +104,8 @@ NALOXONE_LAFFONT_CL_F <- 396     # L/h, apparent clearance of the 4 mg spray
 #' @export
 naloxone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Size scaling (see the header).  size$ffm is the Janmahasatian lean body
-  # weight the clearance covariate takes in either switch position.
+  # Size scaling (see the header).  size$ffm is ffmAlSallami()'s fat-free
+  # mass, which the clearance covariate takes in either switch position.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW   <- 70 * size$volume
   fixV  <- if (isTRUE(adjustToFFM)) size$volume    else 1

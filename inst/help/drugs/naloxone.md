@@ -10,7 +10,7 @@ The **mg IN** unit is the 4 mg per 0.1 mL concentrated spray. Dowling's own nasa
 
 ### Covariates
 
-Clearance carries its own lean-body-weight covariate, which is the same Janmahasatian fat-free mass the library's [fat-free-mass scaling](help:models/fat-free-mass) uses, in either switch position. The central volume sees the pharmacokinetic weight with the switch on and total weight with it off; the peripheral parameters, fixed in the source, take the library factors with the switch on.
+Clearance carries its own lean-body-weight covariate, in either switch position. Dowling used Janmahasatian's lean body weight; stanpumpR uses the fat-free mass of its own [fat-free-mass scaling](help:models/fat-free-mass), Al-Sallami's, which is the same in adult men, the population Dowling studied. In adult women it is 1 to 3 per cent higher, which raises clearance by 1 to 2 per cent. The central volume sees the pharmacokinetic weight with the switch on and total weight with it off; the peripheral parameters, fixed in the source, take the library factors with the switch on.
 
 ### Effect site
 
