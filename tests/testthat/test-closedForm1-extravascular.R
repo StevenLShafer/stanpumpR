@@ -206,8 +206,9 @@ relErr <- function(got, ref, floor = 1e-6) {
 #    from the switch on it measured at most 9e-4 relative for hydromorphone,
 #    so the effect site is compared from the switch on, at 3e-3.
 #  - Time until threshold timed on the PLASMA (no effect site) is exact but
-#    for recoveryCalc()'s uniroot() tolerance of 0.01 min: measured at most
-#    2.4e-3 min; asserted at 0.02 min.
+#    for recoveryCalc()'s root tolerance, 0.01 min when this was written
+#    (RECOVERY_TOL, 1e-6 min, since 2026-10-09): measured at most 2.4e-3 min;
+#    asserted at 0.02 min.
 #  - Timed on the EFFECT SITE it inherits calculateCe()'s error, damped over
 #    the hours to the crossing: measured at most 0.016 min after a switch,
 #    0.019 with ka on an eigenvalue and 0.024 just after a lagged dose lands;

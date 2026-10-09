@@ -453,8 +453,9 @@ test_that("a metabolite drug with no effect site is timed on its plasma", {
   # to the instant the row reports and reading the formed plasma at the last
   # point, which is always the end of the run: it must be above the threshold
   # 0.02 min before that instant and below it 0.02 min after.  recoveryCalc()
-  # solves to uniroot()'s 0.01 min; the largest error measured here was 3e-4
-  # min.  Checked on the way up, at the peak and on the way down.
+  # solved to uniroot()'s 0.01 min until 2026-10-09, and to RECOVERY_TOL
+  # (1e-6 min) since; the largest error measured here was 3e-4 min before
+  # that change.  Checked on the way up, at the peak and on the way down.
   #
   # The reference used to be the last point of the row's own time line above
   # the threshold, with one step of that line as the tolerance.  Out there the
