@@ -43,7 +43,7 @@ Q <  MV + U:  F_circuit = f F_fresh + g F_alveolar
 
 Here c_E is the carbon dioxide fraction of exhaled gas (carbon dioxide production over minute ventilation), which the absorber removes from whatever is rebreathed. With no uptake and no carbon dioxide this reduces to f = Q / (VA + 0.3 Q), g = 1 − f, and the threshold is the familiar Q = MV; the uptake raises it slightly, by about 0.05 L/min on oxygen and sevoflurane and by up to about 0.9 L/min early in an induction with 4 L/min of nitrous oxide in 6 L/min. See [Carbon dioxide](help:models/gas-differences) on the comparison page.
 
-The alveolar tension of gas i changes with ventilation and with uptake into the blood,
+The alveolar tension of gas i, written here as a fraction, changes with ventilation and with uptake into the blood (each term in L/min),
 
 ```
 V_alv dF_alv/dt = VA (F_circuit - F_alv) - uptake_i + total uptake × F_circuit    (total uptake > 0)

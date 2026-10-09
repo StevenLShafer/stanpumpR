@@ -29,8 +29,8 @@
 #' @returns a list: the drug's PK sets (\code{PK}, one per PK event), its
 #'   \code{tPeak} and \code{reference}, the covariates, and the library's
 #'   values for the drug -- among them \code{MEAC} and \code{endCe}, the
-#'   concentration \code{simCpCe()} times the effect site's fall to when
-#'   \code{plotRecovery = TRUE}.
+#'   effect-site threshold of the recovery time that \code{simCpCe()}
+#'   computes when \code{plotRecovery = TRUE}.
 #'
 #' @examples
 #' PK <- stanpumpR::getDrugPK(

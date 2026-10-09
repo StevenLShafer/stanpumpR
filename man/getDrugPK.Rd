@@ -57,8 +57,8 @@ sugammadex, gabapentin, pregabalin); see \code{R/renalFunction.R}.}
 a list: the drug's PK sets (\code{PK}, one per PK event), its
 \code{tPeak} and \code{reference}, the covariates, and the library's
 values for the drug -- among them \code{MEAC} and \code{endCe}, the
-concentration \code{simCpCe()} times the effect site's fall to when
-\code{plotRecovery = TRUE}.
+effect-site threshold of the recovery time that \code{simCpCe()}
+computes when \code{plotRecovery = TRUE}.
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example

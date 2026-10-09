@@ -1511,13 +1511,27 @@ app_server <- function(input, output, session) {
     updateSelectInput(session, "addDoseUnits", choices = units, selected = selectedUnit)
   })
 
+  # validateTime() for a dose time, but "" also for a time that names no time
+  # in the dose table's format: a clock time such as 25:00 (lubridate reads
+  # 24:30 as 00:30), or any clock time while the procedure start cannot be
+  # read.  doseTableClean() would drop such a row without a word, so the dose
+  # dialogs refuse it, as the add-event dialog does.
+  validateDoseTime <- function(x) {
+    out <- validateTime(x)
+    if (!nzchar(out)) return(out)
+    format <- doseTableFormat()
+    minutes <- displayTimeToMinutes(out, referenceFor(format), format[["unit"]])
+    if (is.na(minutes)) "" else out
+  }
+
   observeEvent(input$addDoseBtn, {
     profileCode({
-      addDoseTime <- validateTime(input$addDoseTime)
+      addDoseTime <- validateDoseTime(input$addDoseTime)
       addDoseAmount <- validateDose(input$addDoseAmount)
-      # A time or dose that could not be read ("", see R/validate-input.R)
-      # leaves the dialog open to be corrected, as the add-event dialog does,
-      # rather than adding a row the simulation would ignore.
+      # A time or dose that could not be read ("", see R/validate-input.R and
+      # validateDoseTime()) leaves the dialog open to be corrected, as the
+      # add-event dialog does, rather than adding a row the simulation would
+      # ignore.
       if (!nzchar(addDoseTime)) {
         showNotification(paste0("That time could not be read: enter it as ",
                                 timeEntryUnitText(doseTableFormat()), "."), type = "error")
@@ -1663,12 +1677,14 @@ app_server <- function(input, output, session) {
         # Every dose kept needs a time and a dose that can be read.  A blank
         # counts as unreadable here: the grid clears an entry it cannot read
         # (inst/www/hot_funs.js), and validateTime() and validateDose() below
-        # would make the blank 0.  The dialog stays open to be corrected.
+        # would make the blank 0.  So does a time that names no time in the
+        # table's format (validateDoseTime()).  The dialog stays open to be
+        # corrected.
         kept <- TT[!TT$Delete, , drop = FALSE]
         unreadable <- function(x, validate) {
           vapply(x, function(v) isBlankEntry(v) || !nzchar(validate(v)), logical(1))
         }
-        if (any(unreadable(kept$Time, validateTime)) || any(unreadable(kept$Dose, validateDose))) {
+        if (any(unreadable(kept$Time, validateDoseTime)) || any(unreadable(kept$Dose, validateDose))) {
           showNotification(paste0("Every dose needs a time, entered as ",
                                   timeEntryUnitText(doseTableFormat()),
                                   ", and a dose, entered as a number."), type = "error")

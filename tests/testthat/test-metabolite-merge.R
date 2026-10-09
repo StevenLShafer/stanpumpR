@@ -121,6 +121,13 @@ test_that("a missing side of the merge is handled", {
   expect_equal(made$Plasma, c(0, 4))
   expect_equal(made$"Effect Site", c(0, 2))
   expect_equal(made$Recovery, c(0, 0))
+
+  # A one-row contribution is kept as it is (approx() needs two points; a
+  # review of the F19 change found the merge had started to stop on it)
+  one <- mergeMetaboliteSeries(NULL, data.frame(Time = 5, Cp = 1, Ce = 0.5))
+  expect_equal(one$Time, 5)
+  expect_equal(one$Plasma, 1)
+  expect_equal(one$"Effect Site", 0.5)
 })
 
 

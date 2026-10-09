@@ -137,9 +137,12 @@ mergeMetaboliteSeries <- function(base, addition, times = NULL)
   # rule = 2 holds the end values rather than returning NA.  Both series run to
   # the same simulation end, so this only guards the endpoints against floating
   # point, and never extrapolates a curve into territory it did not cover.
+  # A series with one value (a direct call; a simulation always has many) is
+  # held, as rule = 2 would hold it: approx() needs two.
   onto <- function(df, column, keepNA = FALSE) {
     y <- df[[column]]
     if (all(is.na(y))) return(rep(NA_real_, length(times)))
+    if (sum(!is.na(y)) == 1) return(rep(y[!is.na(y)], length(times)))
     stats::approx(df$Time, y, times, rule = 2, na.rm = !keepNA)$y
   }
 

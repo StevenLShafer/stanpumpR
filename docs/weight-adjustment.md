@@ -143,7 +143,8 @@ before fat-free mass was introduced:
 |---|---|
 | Fixed published parameters (alfentanil, sufentanil, midazolam, oliceridine, oxycodone, mannitol, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone) | no scaling at all |
 | V1 per kilogram with fixed rate constants (ketamine, etomidate, morphine, methadone, hydromorphone, pethidine, lidocaine, rocuronium, neostigmine, amiodaroneIV) | volumes and clearances both × weight / 70 |
-| Allometric on total weight (fentanyl, remimazolam, infant dexmedetomidine, cefalexin, hydrocortisone, metronidazole on its adjusted body weight (total weight under 18 years), clindamycin with its published 0.497 exponent) | volumes × weight / 70, clearances × (weight / 70)<sup>0.75</sup> (or the published exponent) |
+| Allometric on total weight (fentanyl, remimazolam, infant dexmedetomidine, cefalexin, hydrocortisone, clindamycin with its published 0.497 exponent) | volumes × weight / 70, clearances × (weight / 70)<sup>0.75</sup> (or the published exponent) |
+| Metronidazole (da Silva Neto 2021) | volume 0.556 L/kg × the patient's adjusted body weight on Devine ideal weight (total body weight under 18 years, or where the ideal weight is not positive), clearance × (weight / 70)<sup>0.75</sup> on total weight, as published |
 | Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone, gabapentin, pregabalin, acetaminophen) | the published equations on total body weight; size-free parameters fixed |
 
 Propofol, remifentanil and oxytocin do not respond to the switch.

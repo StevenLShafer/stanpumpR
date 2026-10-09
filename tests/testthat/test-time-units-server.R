@@ -488,4 +488,39 @@ test_that("the add-dose and edit-doses dialogs refuse a time or dose they cannot
   })
 })
 
+# Review of the F01 fix (October 2026): in clock mode validateTime() keeps
+# "25:00", which is no time of day, and doseTableClean() dropped the row
+# without a word.  Both dose dialogs refuse it, as the add-event dialog does.
+# ("24:00" is read as midnight.)
+test_that("the dose dialogs refuse a clock time that is no time of day", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session)
+    doseTable(withTimes("08:00"))
+    session$flushReact()
+    before <- doseTable()
+
+    session$setInputs(addDoseDrug = "fentanyl", addDoseTime = "25:00", addDoseAmount = "50",
+                      addDoseUnits = "mcg", addDoseBtn = 1)
+    expect_identical(doseTable(), before)
+    expect_true(anyErrorShown(sent))
+    session$setInputs(addDoseTime = "09:30", addDoseBtn = 2)
+    expect_true(any(doseTable()$Drug == "fentanyl" & doseTable()$Time == "09:30"))
+
+    DrugTimeUnits(list(drug = "propofol"))
+    before <- doseTable()
+    session$setInputs(
+      editPriorDosesTable = list(
+        data = list(list(FALSE, "08:00", "1", "mg"), list(FALSE, "25:00", "2", "mg")),
+        changes = list(event = "afterChange", source = "edit"),
+        params = rhandsontable::rhandsontable(
+          data.frame(Delete = FALSE, Time = c("08:00", "25:00"), Dose = c("1", "2"), Units = "mg")
+        )$x
+      ),
+      editDosesOK = 1
+    )
+    expect_identical(doseTable(), before)
+  })
+})
+
 .sprglobals$config <- oldConfig
