@@ -83,7 +83,10 @@
 #
 # References
 # ----------
-# da Silva Neto MJJ et al., J Antimicrob Chemother 2021;76:3212-3219.
+# da Silva Neto MJJ, MacKay G, Agaram R, MacLeod M, Watson DG, Thomson AH.
+#   Evaluation of amoxicillin, metronidazole and gentamicin dosage regimens
+#   for use in antibiotic prophylaxis in colorectal surgery.  J Antimicrob
+#   Chemother 2021;76(12):3212-3219.  PMID 34542630.
 #   https://doi.org/10.1093/jac/dkab337
 # Dorn C et al., J Antimicrob Chemother 2021;76:2114-2120.
 #   https://doi.org/10.1093/jac/dkab143
@@ -184,7 +187,10 @@ metronidazole <- function(weight, height, age, sex, adjustToFFM = TRUE)
   lowerTypical <- 4
 
   reference <- paste0(
-    "da Silva Neto MJJ et al., J Antimicrob Chemother 2021;76:3212-3219. ",
+    "da Silva Neto MJJ, MacKay G, Agaram R, MacLeod M, Watson DG, Thomson AH. ",
+    "Evaluation of amoxicillin, metronidazole and gentamicin dosage regimens ",
+    "for use in antibiotic prophylaxis in colorectal surgery. ",
+    "J Antimicrob Chemother 2021;76(12):3212-3219. ",
     "Intravenous one-compartment model; oral bioavailability 0.841 (Bergan ",
     "1984) and absorption from an experimental tablet are cross-study additions. ",
     "https://doi.org/10.1093/jac/dkab337"
