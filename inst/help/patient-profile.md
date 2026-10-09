@@ -10,6 +10,7 @@ The first panel in the left sidebar. These covariates are passed to every drug's
 | Sex | male or female | | |
 | CYP 2D6 | phenotype | | Scales the active metabolites of codeine, tramadol, hydrocodone and oxycodone. |
 | Adjust weight to fat-free mass | checkbox | | On by default; scales most models to fat-free mass. |
+| Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by the renally cleared drugs: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin. Blank means an assumed normal creatinine for the patient's sex (1.0 in men, 0.8 in women). |
 | Baseline serum osmolality | mOsm/kg | 200 to 400 | The patient's starting value, 280 by default. Read only by [mannitol](help:drugs/mannitol), which is plotted as the serum osmolality it produces on top of this value. |
 
 Changing a covariate re-simulates every drug at once; there is no Apply step for the patient.
@@ -30,9 +31,9 @@ A few models switch between parameter sets on a covariate:
 
 An age of 90 or above is protected health information under the HIPAA Safe Harbor rule, so the field stops at 90 and a note appears if you reach it. For the purposes of these models the difference between 90 and 95 is small.
 
-## The disabled fields
+## The disabled field
 
-**Pregnant** (shown for women of child-bearing age) and **Renal Function** are present but greyed out. They were added ahead of the models that will use them, so that the interface shows the intent, and no drug responds to them. Renal function is estimated by four models (cefazolin, vancomycin, gentamicin and sugammadex) from age, weight and sex at an **assumed normal creatinine**, because stanpumpR collects none; renal decline with age is represented, renal impairment is not. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
+**Pregnant** (shown for women of child-bearing age) is present but greyed out. It was added ahead of the models that will use it, so that the interface shows the intent, and no drug responds to it. The **Serum creatinine** field replaced the greyed-out Renal Function selector: leave it blank and the renal models assume a normal creatinine, which represents renal decline with age but not renal impairment. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
 
 ## Default patient
 

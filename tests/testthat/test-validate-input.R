@@ -44,6 +44,22 @@ test_that("validateTime: colon for empty hours/minutes", {
   expect_equal(validateTime("30:"),"30:00")
 })
 
+test_that("validateTime: large numbers are written out, not in scientific notation", {
+  # as.character(1e5) is "1e+05", which validateTime() used to clean to "105"
+  expect_equal(validateTime(1e5), "100000")
+  expect_equal(validateTime(524160), "524160")
+  expect_equal(validateTime(0.1 + 0.2), "0.3")
+  expect_equal(validateTime(1/7), "0.142857142857143")
+})
+
+test_that("validateTime: decimals and long elapsed times are fixed points", {
+  for (x in c("1.5", ".5", "0.25", "10080", "100000", "0.1428571429", "36:00", "100:30", "007")) {
+    expect_identical(validateTime(x), x, info = x)
+  }
+  # an hour count too large for an integer is written out, not an error
+  expect_equal(validateTime("12345678901:00"), "12345678901:00")
+})
+
 test_that("validateTime: errors on vectors", {
   expect_error(validateTime(c("1", "2")))
   expect_error(validateTime(c(1, 2)))

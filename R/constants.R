@@ -42,6 +42,12 @@ OSMOLALITY_DEFAULT <- 280
 MIN_OSMOLALITY <- 200
 MAX_OSMOLALITY <- 400
 
+# Serum creatinine, mg/dL, for the renally cleared models.  Optional: when the
+# patient's is not entered (NULL, or NA from an empty field) each model uses
+# the assumed normal value for the patient's sex (R/renalFunction.R).
+MIN_CREATININE <- 0.2
+MAX_CREATININE <- 15
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 MIN_WEIGHT <- 0.1
@@ -85,7 +91,17 @@ poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
 inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 
-allUnits <- c(bolusUnits, infusionUnits, poUnits, inUnits, imUnits)
+# Constant-rate oral input: a daily oral dose spread evenly over the day, as
+# Pollak, Bouillon and Shafer modelled long-term oral amiodarone (400 mg/d as
+# 16.7 mg/h for 24 h; R/drugs_amiodarone.R).  Oral by route, so doseRoute()
+# reads it as PO, but a rate by kind: simCpCe() runs each row as the drug's
+# running input rate until the next, like an infusion row, on the drug's
+# apparent oral parameters (no ka, no bioavailability).  Kept out of
+# infusionUnits, which lists the intravenous rates.  (Claude Code,
+# 2026-10-07, at the request of Steven L. Shafer.)
+poRateUnits <- c("mg/day PO")
+
+allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, inUnits, imUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -110,21 +126,97 @@ scheduledUnits <- as.vector(t(outer(
 # drugs, but they are legitimate entries in the dose table.
 gasUnits <- c("L/min", "%")
 
+# The startup drug menu (R/startup-drugs.R).  The categories, in the order the
+# menu lists them; each drug's is the Category column of
+# drugDefaults_global.csv, and a drug with no category is not offered.
+DRUG_CATEGORIES <- c(
+  "Hypnotics and sedatives",
+  "Opioids",
+  "Neuromuscular blockade",
+  "Inhaled anesthetics",
+  "Antibiotics",
+  "Corticosteroids",
+  "Other"
+)
+# Ticked when the menu opens: the four drugs the app opened with before it
+# had a menu.
+STARTUP_DRUGS_DEFAULT <- c("propofol", "fentanyl", "remifentanil", "rocuronium")
+# A chosen drug starts with one zero-dose row in its Default.Units, except
+# these, which start with a bolus row and an infusion row, as they always have.
+STARTUP_UNITS <- list(
+  propofol     = c("mg", "mcg/kg/min"),
+  remifentanil = c("mcg", "mcg/kg/min")
+)
+# Blank rows below the chosen drugs, to type into
+STARTUP_BLANK_ROWS <- 6L
+
 MINS_PER_HOUR <- 60
 MINS_PER_DAY  <- 60 * 24
 MINS_PER_WEEK <- 60 * 24 * 7
 MINS_PER_YEAR <- 525600  # more than 52 weeks because of leap years
 
-maxtimes <- data.frame(
-  times = c(MINS_PER_HOUR * c(1, 2, 4, 6, 12),
-            MINS_PER_DAY * c(1, 2, 4),
-            MINS_PER_WEEK * c(1, 2, 4, 8, 16, 32),
-            MINS_PER_YEAR),
-  steps = c(10, 15, 30, 60, 120,
-            MINS_PER_DAY / c(6, 3, 2),
-            MINS_PER_DAY * c(1, 2, 4), MINS_PER_WEEK * c(1, 2, 4),
-            MINS_PER_YEAR / 12)
+# Time units (R/utils-time.R).  The unit is a display and entry setting only:
+# the engine, the scenarios, the events, the simulation cache and the exported
+# Time columns are in minutes whatever it is.  A bare number typed into the
+# dose table is in the unit; an entry with a colon is a clock time or an
+# elapsed H:MM and is never scaled.  Values are minutes per unit.
+TIME_UNITS <- c(minutes = 1, hours = MINS_PER_HOUR, days = MINS_PER_DAY, weeks = MINS_PER_WEEK)
+TIME_UNIT_DEFAULT <- "minutes"
+# Clock ("Actual time") entry addresses only the 24 hours after the procedure
+# start, so it is offered for these units only; days and weeks are elapsed.
+CLOCK_TIME_UNITS <- c("minutes", "hours")
+TIME_MODES <- c("clock", "relative")
+# A time converted to another unit is rounded to TIME_SNAP_DIGITS decimal
+# places of a minute (0.001 min) and written with TIME_STRING_DIGITS
+# significant digits.  Ten digits make every conversion, and any chain of them,
+# return the identical minutes on a 0.001 minute grid up to a year (six digits
+# did not: day 5 became 0.714286 weeks, 7200.00288 minutes, which moved a
+# scheduled stop past a repeat).
+TIME_STRING_DIGITS <- 10
+TIME_SNAP_DIGITS <- 3
+
+# TCI target rows and the inhaled agents are simulated only on plots of this
+# length or less.  Beyond a week the TCI controller writes ever more rows, and
+# the gas engine's uptake coupling is frozen over steps of about maximum/601.
+ACUTE_MAX_PLOT_MINUTES <- MINS_PER_WEEK
+
+# Drugs that are only meaningful over weeks to months.  Adding one to a plot
+# shorter than a week offers to switch the Time units to days, 365 days.
+LONG_TERM_DRUGS <- c("amiodarone")
+LONG_TERM_PLOT_MINUTES <- 365 * MINS_PER_DAY
+
+# The Max time choices for each time unit: the durations (minutes) and the
+# tick spacing (minutes) of each.  "minutes" and "hours" offer the same
+# durations, so switching between them never changes Max time.  365 days is
+# not a multiple of its 30-day ticks: the axis runs past the last tick.
+MAX_TIMES <- list(
+  minutes = data.frame(
+    times = MINS_PER_HOUR * c(1, 2, 4, 6, 8, 12, 18, 24),
+    steps = c(10, 15, 30, 60, 60, 120, 180, 240)
+  ),
+  hours = data.frame(
+    times = MINS_PER_HOUR * c(1, 2, 4, 6, 8, 12, 18, 24),
+    steps = MINS_PER_HOUR * c(0.25, 0.25, 0.5, 1, 1, 2, 3, 4)
+  ),
+  days = data.frame(
+    times = MINS_PER_DAY * c(2, 3, 4, 7, 14, 28, 56, 91, 182, 365),
+    steps = MINS_PER_DAY * c(0.5, 0.5, 1, 1, 2, 7, 7, 7, 14, 30)
+  ),
+  weeks = data.frame(
+    times = MINS_PER_WEEK * c(4, 8, 13, 26, 39, 52),
+    steps = MINS_PER_WEEK * c(1, 1, 1, 2, 3, 4)
+  )
 )
+# The word each unit's Max time choices are labelled in ("1 hour", "365 days")
+MAX_TIME_LABEL_UNITS <- c(minutes = "hour", hours = "hour", days = "day", weeks = "week")
+# Every Max time any unit offers.  input$maximum outside this is refused; one
+# inside it but not in the current unit's list is a moment when the browser has
+# not yet caught up with a change of unit.
+MAX_TIME_VALUES <- sort(unique(unlist(lapply(MAX_TIMES, `[[`, "times"))))
+# How close (minutes) the last dose or event may come to the end of the plot
+# before the plot is lengthened to show what follows it.  30 minutes is the
+# original rule, kept so that the minute and hour plots are unchanged.
+TIME_EXTEND_MARGIN <- c(minutes = 30, hours = 30, days = MINS_PER_DAY / 2, weeks = MINS_PER_WEEK)
 
 REFERENCE_TIME_NONE <- "none"
 NORMALIZE_NONE <- "none"
@@ -136,6 +228,46 @@ PLOT_ID_INTERACTION <- "Interaction"
 PLOT_NAME_EVENTS      <- "Events"
 PLOT_NAME_MEAC        <- "% MEAC"
 PLOT_NAME_INTERACTION <- "p response"
+
+# The time line the closed-form engines simulate on (R/simulationTimeGrid.R).
+# PRE_DOSE_OFFSET puts a point just before each dose, where the time until
+# threshold jumps.  Up to GRID_LEGACY_MAXIMUM (a day) each gap between knots
+# gets the GRID_LOG_POINTS geometric offsets it always had, so those plots are
+# unchanged point for point.  Beyond it the fill starts at
+# maximum / GRID_FINE_POINTS (or at the drug's own start, if that is later)
+# and no step is longer than maximum / GRID_UNIFORM_POINTS.
+#
+# The two counts were chosen by measurement, the closed form evaluated at 8 to
+# 32 points inside every step against the straight line the plot draws across
+# it (Claude Code, 2026-10-07):
+#
+#   GRID_UNIFORM_POINTS = 500.  On a 52-week plot of a two-compartment model
+#   with Pollak 2000's amiodarone parameters (half-lives 17.3 h and 55.4 d),
+#   given as Pollak's seven-step oral regimen at constant rates or as
+#   400 mg/day stopped at day 180, no chord strays from the curve by more than
+#   0.4% of the peak.  1000 does no better -- the largest error sits where the
+#   geometric steps hand over to uniform ones, and that point moves with the
+#   step -- and doubles the points on a plot with few doses.  The uniform
+#   steps there are 17.5 h, two to four pixels on a full-width plot.
+#
+#   GRID_FINE_POINTS = 20000.  What decides it is the peak after an oral dose,
+#   which nothing else puts a point near.  The earliest in the library is
+#   oxycodone's plasma peak, 30 min after the dose.  Starting the fill at
+#   maximum / 20000 (26 min on a 52-week plot) draws every oral drug's plasma
+#   and effect-site peak, under daily dosing for 52 weeks, to within 0.4% of
+#   its height; starting it at maximum / 2000 (4.4 h) drew oxycodone's at 42%,
+#   and maximum / 10000 at 94%.  On a plot shorter than 20000 x start (about
+#   two weeks) the fill starts exactly where it always did.
+#
+#   Cost, 10 mg of oxycodone four times a day for 52 weeks with the time until
+#   threshold: 24,752 points and 1.7 s, against 52,416 points and 10.2 s on the
+#   line before this change (5,824 points and 0.4 s at 2000).  Once a day:
+#   9,100 points and 0.5 s, against 15,652 and 2.7 s.
+PRE_DOSE_OFFSET     <- 0.01
+GRID_LOG_POINTS     <- 41
+GRID_LEGACY_MAXIMUM <- MINS_PER_DAY
+GRID_UNIFORM_POINTS <- 500
+GRID_FINE_POINTS    <- 20000
 
 DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1

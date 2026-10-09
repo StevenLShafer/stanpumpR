@@ -15,10 +15,11 @@
 #
 # This is a fourth sibling of advanceClosedForm0 / advanceClosedForm1 /
 # advanceClosedFormPO_IM_IN.  Like them it builds its own timeline and its own
-# bolus, infusion and oral lines; that duplication is the established shape of
-# this part of the package, and the alternative -- refactoring the timeline out
-# of the routines that carry the whole intravenous path -- is a change worth
-# making on its own rather than as a side effect of adding metabolites.
+# bolus, infusion and oral lines.  That duplication was the established shape
+# of this part of the package until 2026-10-07, when the timeline and the dose
+# lines were refactored out of all four routines into simulationTimeGrid() and
+# doseLines() (R/simulationTimeGrid.R), so that the grid could scale with the
+# length of the plot; each engine now only names its own knots and routes.
 #
 # The parent columns are computed exactly as the sibling routines compute them,
 # so a drug with a metabolite gives the same Cp and Ce it would without one.
@@ -98,52 +99,29 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # over which recovery cannot be reported starts exactly where it should; see
   # pendingDoseTimes().  Only when some dose is actually lagged, so an unlagged
   # run keeps the line it always had.
+  #
+  # The fill between those points is scaled to the plot; see
+  # R/simulationTimeGrid.R.  A pure prodrug has ke0 == 0, so the usual
+  # ke0-based grid start is undefined; gridStart() falls back on the
+  # metabolite's own ke0, which is what the plotted effect actually follows.
   before <- dose$Bolus
   if (hasPO) before <- before | dose$PO
-  timeLine <- sort(unique(c(0, dose$Time, dose$Time[before] - .01,
-                            givenAt[givenAt < dose$Time], maximum)))
-  timeLine <- timeLine[timeLine >= 0]
-
-  gapStart <- timeLine[1:length(timeLine) - 1]
-  gapEnd   <- timeLine[2:length(timeLine)]
-  # A pure prodrug has ke0 == 0, so the usual ke0-based grid start is undefined.
-  # Fall back on the metabolite's own ke0, which is what the plotted effect
-  # actually follows.
-  gridKe0 <- if (pkSet$ke0 > 0) pkSet$ke0 else met$ke0
-  start <- if (!is.null(gridKe0) && gridKe0 > 0) min(0.693 / gridKe0 / 4, 1) else 1
-  newTimes <- c(exp(log(start) + 0:40 * log(MINS_PER_DAY / start) / 41))
-  for (i in 1:length(gapEnd))
-  {
-    distance <- gapEnd[i] - gapStart[i]
-    timeLine <- c(timeLine, gapStart[i] + newTimes[newTimes <= distance])
-  }
-  timeLine <- sort(unique(timeLine))
+  timeLine <- simulationTimeGrid(
+    c(dose$Time, dose$Time[before] - PRE_DOSE_OFFSET,
+      givenAt[givenAt < dose$Time]),
+    maximum,
+    gridStart(pkSet$ke0, met$ke0)
+  )
   L <- length(timeLine)
   doseNA <- rep(0, L)
 
-  bolusLine <- infusionLine <- poLine <- dt <- rate <- doseNA
-  for (i in 1:L)
-  {
-    bolusLine[i] <- sum(dose$Dose[dose$Time == timeLine[i] & dose$Bolus])
-    if (hasPO) poLine[i] <- sum(dose$Dose[dose$Time == timeLine[i] & dose$PO])
-    USE <- dose$Time == timeLine[i] & !dose$Bolus
-    if (hasPO) USE <- USE & !dose$PO
-    if (i == 1)
-    {
-      infusionLine[i] <- sum(dose$Dose[USE])
-      rate[1] <- 0
-      dt[1]   <- 0
-    } else {
-      if (sum(USE) == 0)
-      {
-        infusionLine[i] <- infusionLine[i - 1]
-      } else {
-        infusionLine[i] <- sum(dose$Dose[USE])
-      }
-      dt[i]   <- timeLine[i] - timeLine[i - 1]
-      rate[i] <- infusionLine[i - 1]
-    }
-  }
+  # The oral line is all zero when there is no oral dose, and an oral row is
+  # never an infusion, which is what the loop this replaced did with hasPO.
+  inputs    <- doseLines(dose, timeLine, "PO")
+  bolusLine <- inputs$bolus
+  poLine    <- inputs$PO
+  rate      <- inputs$rate
+  dt        <- inputs$dt
 
   # ---- Parent ----
 
@@ -245,7 +223,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     recoveryStateSet(timeLine, CemStates, metCoefs$lambda, pending)
   } else {
     recoveryStateSet(timeLine, CmStates, met$coefs$lambda, pending,
-                     horizon = RECOVERY_HORIZON_PLASMA)
+                     horizon = recoveryHorizonPlasma(maximum))
   }
 
   # ---- Parent effect site and recovery ----
@@ -307,7 +285,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
       lambdas <- c(lambdas, pkSet$ka_PO)
     }
     recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending,
-                                       horizon = RECOVERY_HORIZON_PLASMA)
+                                       horizon = recoveryHorizonPlasma(maximum))
   }
   if (plotRecovery) {
     recovery <- recoveryFromStates(recoveryStates, emerge)

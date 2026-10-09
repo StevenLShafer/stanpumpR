@@ -7,7 +7,7 @@ A drug is a published pharmacokinetic model: volumes and clearances (or V1 and r
 The full procedure is in `docs/adding-a-drug.md` in the repository. In outline, four files:
 
 1. **`R/drugs_<name>.R`**: a function of `(weight, height, age, sex)` returning the parameter list, `tPeak`, and a `reference` string ending in a PubMed or DOI URL, which the app turns into a link. Look at `R/drugs_fentanyl.R` for a simple model and `R/drugs_propofol.R` for a covariate model.
-2. **`inst/extdata/drugDefaults_global.csv`**: one row with the concentration units, the units offered in the dose table, the default unit, a colour, the typical range, MEAC, the recovery threshold and the class.
+2. **`inst/extdata/drugDefaults_global.csv`**: one row with the concentration units, the units offered in the dose table, the default unit, a colour, the typical range, MEAC, the recovery threshold, the class, and the category it is listed under in the menu the app opens with.
 3. **`tests/testthat/test-drugs-<name>.R`**: a unit test pinning the parameters at a reference patient with `expect_equal_rounded()`, so that a later edit cannot silently change them.
 4. **`inst/help/drugs/<name>.md`**: the narrative for the drug's help page: the population the model was fitted in, the covariates, where it is extrapolated, and anything a user should know. The help tests require this file to exist.
 

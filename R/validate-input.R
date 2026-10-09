@@ -8,8 +8,12 @@ validateTime <- function(x)
   if (is.null(x) || is.na(x) || is.nan(x)) {
     x <- ""
   }
-  if (is.factor(x) || is.numeric(x)) {
+  if (is.factor(x)) {
     x <- as.character(x)
+  }
+  if (is.numeric(x)) {
+    # Not as.character(): 1e5 minutes would be "1e+05", and then "105"
+    x <- format(x, scientific = FALSE, trim = TRUE, digits = 15)
   }
   # Remove everything except digits, colons, and decimal points
   x <- gsub("[^0-9:.]","",x)
@@ -42,7 +46,9 @@ validateTime <- function(x)
     # force 80 minutes into 1 hour and 20 minutes
     HH <- HH + floor(MM/60)
     MM <- MM %% 60
-    x <- sprintf("%02d:%02d", HH, MM)
+    # %.0f rather than %d, which stops on an hour count too large for an
+    # integer.  inst/www/hot_funs.js validateTime() must give the same string.
+    x <- sprintf("%02.0f:%02.0f", HH, MM)
   }
   return(x)
 

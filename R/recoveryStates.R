@@ -58,10 +58,11 @@
 # sum of exponentials from now -- the one representation recoveryCalc() takes.
 # That is a change to its contract and is left alone here.
 #
-# As of 2026-10-08 one drug carries a nonzero lag: acetaminophen's oral route
-# keeps Morse 2022's published 5.3 min lag (R/drugs_acetaminophen.R), so this
-# guard is live for it.  Before that none did: hydromorphone's intramuscular
-# and intranasal lags were the last, removed when its absorption was refitted.
+# As of 2026-10-08 three drugs carry a nonzero oral lag, each as published:
+# gabapentin (Tran 2017, 0.311 h), pregabalin (Chan 2021, 0.32 h) and
+# acetaminophen (Morse 2022, 5.3 min), so this guard is live for them.  Before
+# gabapentin none did: hydromorphone's intramuscular and intranasal lags were
+# the last, removed when its absorption was refitted.
 #
 # Each engine builds one while it is computing recovery anyway, so carrying it
 # out costs a cbind().
@@ -82,7 +83,9 @@
 # over the formed PLASMA contribution (advanceClosedFormMetabolite()).
 # A plasma state set looks a week ahead rather than a day (its `horizon`;
 # RECOVERY_HORIZON_PLASMA in R/recoveryCalc.R), because an antibiotic's time
-# above the MIC commonly runs past a day.
+# above the MIC commonly runs past a day -- or as far ahead as the plot runs,
+# on a plot longer than a week (recoveryHorizonPlasma()), so that a drug whose
+# half-life is measured in weeks reports a time rather than the cap.
 # (Claude Code, 2026-10-07, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
 
@@ -101,7 +104,8 @@
 #'   dose and for any extravascular one with no lag.
 #' @param horizon how far ahead, in minutes, to look for the threshold:
 #'   \code{RECOVERY_HORIZON_EFFECT} (a day) for effect-site states,
-#'   \code{RECOVERY_HORIZON_PLASMA} (a week) for plasma states
+#'   \code{recoveryHorizonPlasma(maximum)} (a week, or the length of the plot
+#'   if that is longer) for plasma states
 #'
 #' @returns a state set: a list of \code{time}, \code{state}, \code{lambda},
 #'   \code{pending} and \code{horizon}

@@ -8,7 +8,7 @@ stanpumpR's engine is linear, so it simulates the linear half of that model and 
 
 ### Covariates
 
-Clearance follows Cockcroft-Gault creatinine clearance to the power 0.586. stanpumpR has no creatinine input, so creatinine clearance is estimated from age, sex and body size at an **assumed normal creatinine** (1.0 mg/dL in men, 0.8 in women): the fall of renal function with age and the sex difference are represented, **renal impairment is not**. The volumes and the intercompartmental clearance carry no size term in the source and take the default [fat-free-mass scaling](help:models/fat-free-mass); the renal term sees the pharmacokinetic weight with the switch on and total weight with it off.
+Clearance follows Cockcroft-Gault creatinine clearance to the power 0.586. Creatinine clearance comes from the **Serum creatinine** in the Patient Profile; left blank, it is estimated at an **assumed normal creatinine** (1.0 mg/dL in men, 0.8 in women), when the fall of renal function with age and the sex difference are represented but **renal impairment is not**. The volumes and the intercompartmental clearance carry no size term in the source and take the default [fat-free-mass scaling](help:models/fat-free-mass); the renal term sees the pharmacokinetic weight with the switch on and total weight with it off.
 
 ### Effect site
 
@@ -16,4 +16,4 @@ None. An antibiotic's effect is its exposure relative to the MIC, and there is n
 
 ### Where to be careful
 
-A patient with a raised creatinine is simulated as if the creatinine were normal, so the curve declines too fast for them. Albumin, which sets the binding capacity, plays no part in the unbound curve. The model was fitted in surgical prophylaxis with 15-minute infusions; it has not been validated for prolonged treatment courses.
+Enter the **Serum creatinine** for a patient with impaired renal function: left blank, a raised creatinine is simulated as if it were normal, and the curve declines too fast. Albumin, which sets the binding capacity, plays no part in the unbound curve. The model was fitted in surgical prophylaxis with 15-minute infusions; it has not been validated for prolonged treatment courses.

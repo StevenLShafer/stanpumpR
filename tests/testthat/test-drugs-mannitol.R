@@ -1,6 +1,10 @@
 test_that("returns the published parameters with the switch off", {
-  # Kaneda 2010 population means, high-dose clearance; unscaled with the
-  # switch off whatever the patient's size.
+  # Kaneda 2010 population means, high-dose clearance.  With the switch off
+  # the volumes and distribution clearances are unscaled whatever the
+  # patient's size; CL1 still carries renal function, Cockcroft-Gault on total
+  # weight at the assumed creatinine (0.8 for a woman):
+  #   (140 - 50) x 95 / (72 x 0.8) x 0.85 = 126.17 mL/min, against the
+  #   reference man's (140 - 35) x 70 / 72 = 102.08, so CL1 = 0.07 x 1.23597.
   actual <- mannitol(95, 160, 50, "female", adjustToFFM = FALSE)
 
   expected <- list(
@@ -9,7 +13,7 @@ test_that("returns the published parameters with the switch off", {
         v1 = 2.80,
         v2 = 8.86,
         v3 = 12.0,
-        cl1 = 0.07,
+        cl1 = 0.086517857,
         cl2 = 2.07,
         cl3 = 0.16
       )
@@ -21,7 +25,9 @@ test_that("returns the published parameters with the switch off", {
     lowerTypical = 300,
     reference = paste(
       "Kaneda K et al., J Clin Pharmacol 2010;50(5):536-543. https://pubmed.ncbi.nlm.nih.gov/20051588/",
-      "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/"
+      "Osmolality: Rudehill A et al., J Neurosurg Anesthesiol 1993;5(1):4-12. https://pubmed.ncbi.nlm.nih.gov/8431668/",
+      "Renal function: stanpumpR assumption, CL1 scaled by Cockcroft-Gault creatinine clearance",
+      "over the reference patient's, from the entered creatinine or an assumed normal one."
     ),
     osmotic = list(
       baseline = 280,
@@ -35,14 +41,17 @@ test_that("returns the published parameters with the switch off", {
 })
 
 test_that("scales to fat-free mass for a 120 kg man", {
-  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
-  # (the factors pinned in test-drugs-alfentanil.R, worked out by hand).
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, distribution clearances
+  # x 1.2209126 (the factors pinned in test-drugs-alfentanil.R, worked out by
+  # hand).  CL1 is renal: Cockcroft-Gault at the pharmacokinetic weight
+  # 70 x 1.3049067 = 91.343 kg, (140 - 50) x 91.343 / 72 = 114.18 mL/min,
+  # over the reference man's 102.08, so CL1 = 0.07 x 1.118491.
   actual <- mannitol(120, 170, 50, "male")
   expected <- list(
     v1 = 3.6537388,
     v2 = 11.561473,
     v3 = 15.658880,
-    cl1 = 0.085463882,
+    cl1 = 0.078294402,
     cl2 = 2.5272891,
     cl3 = 0.19534602
   )
@@ -50,7 +59,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
 })
 
 test_that("the reference man receives the published parameters", {
+  # Kaneda's means, unscaled: his fat-free mass is the reference, and his
+  # Cockcroft-Gault clearance at creatinine 1.0 is the reference 102.08 mL/min.
+  published <- list(v1 = 2.80, v2 = 8.86, v3 = 12.0, cl1 = 0.07, cl2 = 2.07, cl3 = 0.16)
   actual <- mannitol(70, 170, 35, "male")
+  expect_equal_rounded(actual$PK$default, published)
   expect_equal_rounded(
     actual$PK$default,
     mannitol(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
@@ -179,4 +192,44 @@ test_that("peak normalisation scales the rise above the baseline, not the osmola
   # The unnormalised series is still the absolute osmolality
   expect_equal(out$mannitol$max$Cp, max(out$mannitol$wide$Plasma))
   expect_gt(out$mannitol$max$Cp, 280)
+})
+
+
+test_that("clearance follows the entered serum creatinine", {
+  # A 70 kg, 170 cm, 50 y man.  Cockcroft-Gault is inversely proportional to
+  # creatinine, so CL1 is too, and nothing else changes.
+  normal <- mannitol(70, 170, 50, "male")
+  high   <- mannitol(70, 170, 50, "male", creatinine = 2.0)
+  # Blank means the assumed value, 1.0 mg/dL for a man.
+  expect_equal(mannitol(70, 170, 50, "male", creatinine = 1.0)$PK, normal$PK)
+  expect_equal(mannitol(70, 170, 50, "male", creatinine = NA)$PK, normal$PK)
+  # (140 - 50) x 70 / (72 x 2) = 43.75 mL/min over 102.08: CL1 = 0.07 x 0.428571
+  expect_equal_rounded(high$PK$default$cl1, 0.03)
+  expect_equal(high$PK$default[c("v1", "v2", "v3", "cl2", "cl3")],
+               normal$PK$default[c("v1", "v2", "v3", "cl2", "cl3")])
+})
+
+test_that("a high creatinine prolongs the osmolality rise", {
+  dose <- data.frame(Drug = "mannitol", Time = c(0, 30), Dose = c(140, 0), Units = "g/hr")
+  run <- function(creatinine) {
+    w <- simulateDrugsWithCovariates(dose, events, 70, 170, 35, "male", 480, FALSE,
+                                     creatinine = creatinine)$mannitol$wide
+    w$Plasma[w$Time == 480]
+  }
+  # The reference man with a creatinine of 4 mg/dL has a quarter of the
+  # reference creatinine clearance, so CL1 = 0.0175 L/min.  Eight hours after
+  # 1 g/kg over 30 minutes his plasma mannitol is 10.954746 mOsm/L, from an
+  # independent matrix-exponential solution (not this code), against
+  # 3.7288398 with normal kidneys.
+  expect_equal_rounded(run(4), 280 + 0.55483249 * 10.954746)  # 286.08
+  expect_gt(run(4), run(NULL))
+})
+
+test_that("an invalid creatinine is rejected and a blank one is not", {
+  expect_error(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = 0), "Invalid creatinine")
+  expect_error(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = 50), "Invalid creatinine")
+  expect_error(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = "1"), "Invalid creatinine")
+  expect_identical(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = NA),
+                   getDrugPK("mannitol", 70, 170, 35, "male"))
+  expect_error(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = NaN), "Invalid creatinine")
 })

@@ -39,7 +39,7 @@
 # simulated population median, with between-subject variability, is
 # 12.8 mg/L at 0.61 h.)
 #
-# Unlike the rest of the library, the lag is kept rather than folded into ka
+# Like gabapentin and pregabalin, the lag is kept rather than folded into ka
 # (Steven L. Shafer, 2026-10-08).  Folding it by mean input time lowered the
 # tablet peak about 8%.  The cost is that for the 5.3 min between an oral
 # dose and its absorption the engine holds no state for that dose, so the

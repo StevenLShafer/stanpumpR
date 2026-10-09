@@ -7,46 +7,20 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
   # time variant model (ClosedForm1)           #
   ##############################################
 
-  # Create timeline
-  timeLine <- sort(unique(c(0, dose$Time, dose$Time[dose$Bolus] - .01, maximum)))
-  timeLine <- timeLine[timeLine >=0]
-
-  # Fill in gaps using exponentially decreasing amounts
-  gapStart <- timeLine[1:length(timeLine)-1]
-  gapEnd   <- timeLine[2:length(timeLine)]
-  start <- min(0.693/pkSet$ke0 / 4, 1)
-  newTimes <- c(exp(log(start)+0:40 * log(MINS_PER_DAY/start)/41))
-  for (i in 1:length(gapEnd))
-  {
-    distance <- gapEnd[i] - gapStart[i]
-    timeLine <- c(timeLine, gapStart[i] + newTimes[newTimes <= distance])
-  }
-  timeLine <- sort(unique(timeLine))
+  # Create timeline: the doses and the instant before each bolus, filled in
+  # with a grid scaled to the plot; see R/simulationTimeGrid.R.
+  timeLine <- simulationTimeGrid(
+    c(dose$Time, dose$Time[dose$Bolus] - PRE_DOSE_OFFSET),
+    maximum,
+    gridStart(pkSet$ke0)
+  )
   L <- length(timeLine)
-  doseNA <- rep(0, L)
 
   # Create bolusLine and infusionLine
-  bolusLine <- infusionLine <- dt <- rate <- rep(0, L)
-  for (i in 1:L)
-  {
-    bolusLine[i]    <- sum(dose$Dose[dose$Time == timeLine[i] & dose$Bolus])
-    USE <- dose$Time == timeLine[i] & !dose$Bolus
-    if (i == 1)
-    {
-      infusionLine[i] <- sum(dose$Dose[USE])
-      rate[1] <- 0
-      dt[1] <- 0
-    } else {
-      if (sum(USE) == 0)
-      {
-        infusionLine[i] <- infusionLine[i-1]
-      } else {
-        infusionLine[i] <- sum(dose$Dose[USE])
-      }
-      dt[i] <- timeLine[i] - timeLine[i-1]
-      rate[i] <- infusionLine[i-1]
-    }
-  }
+  inputs    <- doseLines(dose, timeLine)
+  bolusLine <- inputs$bolus
+  rate      <- inputs$rate
+  dt        <- inputs$dt
 
   results <- with (
     pkSet,
@@ -117,7 +91,7 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
         timeLine,
         list(p_state_l1, p_state_l2, p_state_l3),
         c(lambda_1, lambda_2, lambda_3),
-        horizon = RECOVERY_HORIZON_PLASMA
+        horizon = recoveryHorizonPlasma(maximum)
       )
 
       recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else rep(0, L)

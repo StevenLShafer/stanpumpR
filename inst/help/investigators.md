@@ -52,6 +52,8 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | codeine | **Kristin Persson**, **David R. Guay** and colleagues; **Muhammad W. Ashraf** and colleagues (2024) | One-compartment disposition; CYP2D6-dependent formation of morphine |
 | tramadol, desmetramadol | **Sophie Holford** and colleagues (2014); **Ulrike M. Stamer** and colleagues (2007) | Joint parent-and-metabolite kinetics; CYP2D6 phenotype weights |
 | hydrocodone | **Murad R. Melhem** and colleagues (2013); **Ram P. Kapil** and colleagues (2015); **S. Victoria Otton** and colleagues (1993) | Apparent oral disposition; CYP2D6-dependent formation of hydromorphone |
+| gabapentin | Tran and colleagues (2017) | One-compartment kinetics with saturable absorption; clearance on creatinine clearance |
+| pregabalin | **Phylinda L. S. Chan** and colleagues (2021); **Michiel J. van Esdonk** and colleagues (2018) | One-compartment kinetics with clearance on creatinine clearance; the delay to analgesia, as a time to peak effect |
 | oxymorphone | Endo (manufacturer summary); **Michael P. Adams** and **Harry Ahdieh** (2005) | One-compartment disposition; also oxycodone's metabolite |
 | cefazolin | **T. Komatsu** and colleagues (2024) | Unbound two-compartment kinetics with creatinine clearance |
 | cefalexin | **A. S. Haynes** and colleagues (2024) | Apparent oral kinetics, fitted in children |
@@ -66,6 +68,8 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | sugammadex | **H. J. Kleijn** and colleagues (2011) | Two-compartment kinetics of total sugammadex with creatinine clearance |
 | neostigmine | **T. N. Calvey** and colleagues (1979); **T. Heier** and colleagues (2002) | One patient's two-compartment fit; the time to peak effect |
 | glycopyrrolate | **C. Bartels** and colleagues (2013) | Three-compartment kinetics of the active cation |
+| amiodarone, desethylamiodarone | **P. Timothy Pollak**, **Thomas Bouillon** and Shafer (2000) | Apparent oral two-compartment kinetics of the parent and its metabolite in long-term therapy, with each day's oral dose as a constant rate |
+| amiodaroneIV | **J. M. Korth-Bradley** and colleagues (1996) | Per-kilogram two-compartment kinetics of acute intravenous amiodarone, for the first one to three days |
 
 ## Pharmacodynamics and methods
 

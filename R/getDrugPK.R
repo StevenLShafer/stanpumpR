@@ -21,6 +21,10 @@
 #' @param osmolality baseline serum osmolality in mOsm/kg, before any osmotic
 #'   agent.  Passed only to drug models that declare it (mannitol); the rest
 #'   ignore it.
+#' @param creatinine serum creatinine in mg/dL, or NULL (the default) for the
+#'   assumed normal value for the patient's sex.  Passed only to the renal
+#'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
+#'   sugammadex, gabapentin, pregabalin); see `R/renalFunction.R`.
 #'
 #' @examples
 #' PK <- stanpumpR::getDrugPK(
@@ -43,7 +47,8 @@ getDrugPK <- function(
   cyp2d6 = CYP2D6_DEFAULT,
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE,
-  osmolality = OSMOLALITY_DEFAULT
+  osmolality = OSMOLALITY_DEFAULT,
+  creatinine = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -60,6 +65,18 @@ getDrugPK <- function(
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
          ". Must be a number between ", MIN_OSMOLALITY, " and ",
          MAX_OSMOLALITY, " mOsm/kg")
+  }
+  # An empty creatinine field reports NA: that means "not entered", the same
+  # as NULL, and the models fall back to the assumed normal value.  NaN is
+  # not blank: it falls through to the check below and is rejected.
+  if (!is.null(creatinine) && length(creatinine) == 1 && is.na(creatinine) &&
+      !(is.numeric(creatinine) && is.nan(creatinine)))
+    creatinine <- NULL
+  if (!is.null(creatinine) &&
+      !is_valid_number(creatinine, MIN_CREATININE, MAX_CREATININE)) {
+    stop("Invalid creatinine: ", paste(creatinine, collapse = ", "),
+         ". Must be a number between ", MIN_CREATININE, " and ",
+         MAX_CREATININE, " mg/dL, or NULL for the assumed normal value")
   }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
@@ -95,6 +112,10 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "osmolality" %in% names(formals(get(drug, mode = "function"))))
     covariates$osmolality <- osmolality
+  # And the serum creatinine, which only the renally cleared models read.
+  if (exists(drug, mode = "function") &&
+      "creatinine" %in% names(formals(get(drug, mode = "function"))))
+    covariates["creatinine"] <- list(creatinine)
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
@@ -311,7 +332,9 @@ getDrugPK <- function(
     #
     # Solving an oral tPeak against the bolus curve counts the absorption
     # delay twice, because the oral curve already peaks late.  For hydrocodone
-    # that error is about 24 minutes.
+    # that error is about 24 minutes.  An oral tPeak is counted from the
+    # dose, so the solve carries the drug's absorption lag (pregabalin's is
+    # 19 min); without it the effect site would peak one lag late.
     if (!is.null(X$ke0) && X$ke0 > 0)
     {
       # A drug may supply ke0 directly, which is the escape hatch for a time
@@ -335,7 +358,8 @@ getDrugPK <- function(
                  bioavailability_PO,
           lambda = c(lambda_1, lambda_2, lambda_3),
           ka = ka_PO,
-          drug = drug
+          drug = drug,
+          lag = tlag_PO
         )
       } else {
         ke0 <- stats::optimize(
@@ -543,6 +567,7 @@ getDrugPK <- function(
       drugDefaults = metaboliteDefaults,
       cyp2d6 = cyp2d6,
       osmolality = osmolality,
+      creatinine = creatinine,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE
     )
@@ -611,6 +636,9 @@ getDrugPK <- function(
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
   out$osmotic <- X$osmotic
+  # A drug whose oral absorption saturates scales each oral dose by its own
+  # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
+  out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
   return(out)
 }
 
@@ -655,15 +683,20 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
 #' maximum.  It raises instead of returning a huge ke0 that would quietly make
 #' the effect site a copy of the plasma curve.
 #'
+#' The time is counted from the dose.  An absorption lag delays the plasma and
+#' the effect site alike, so the curves are built from the start of absorption
+#' and the lag is added to both peaks.
+#'
 #' @param tPeak observed time to peak effect after an oral dose, in minutes
 #' @param coef coefficients of the oral plasma curve on the drug's own
 #'   eigenvalues, already carrying absorption and bioavailability
 #' @param lambda those eigenvalues
 #' @param ka absorption rate constant, per minute
 #' @param drug the drug's name, used only in the error message
+#' @param lag oral absorption lag, in minutes
 #' @returns ke0, per minute
 #' @keywords internal
-ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug")
+ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 {
   if (is.null(ka) || ka <= 0)
     stop("An oral tPeak needs an oral absorption constant, but ", drug,
@@ -675,7 +708,7 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug")
   oralCoef   <- c(coef[use], -sum(coef[use]))
   oralLambda <- c(lambda[use], ka)
 
-  plasmaPeak <- stats::optimize(
+  plasmaPeak <- lag + stats::optimize(
     function(t) sum(oralCoef * exp(-oralLambda * t)),
     c(0, 4000), maximum = TRUE
   )$maximum
@@ -687,7 +720,7 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug")
          "peaks later. Either the time to peak effect belongs after that, or ",
          "the absorption constant is too slow.")
 
-  peakAt <- function(ke0) effectSitePeakTime(oralCoef, oralLambda, ke0)
+  peakAt <- function(ke0) lag + effectSitePeakTime(oralCoef, oralLambda, ke0)
 
   # Bracket: peakAt() falls towards plasmaPeak as ke0 grows.  Widen downwards
   # until the peak is later than the target, which must happen as ke0 -> 0.

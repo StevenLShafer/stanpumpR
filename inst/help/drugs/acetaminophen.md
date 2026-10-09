@@ -6,7 +6,7 @@ Every value is from the paper's final-model table (Table 2). The abstract's "cen
 
 ### Oral route
 
-**mg PO** is a fasted immediate-release tablet, from the same study: bioavailability 0.859, absorption half-time 11.5 minutes and a 5.3 minute lag. All three are used as published, and a 1 g tablet peaks at 11.0 mcg/mL at about 34 minutes in the reference man. Unlike most drugs in the library, acetaminophen keeps its absorption lag; for those 5.3 minutes the dose is not yet counted in *time until threshold*. Food multiplies the tablet's absorption half-time by 1.87 and its lag by 4.6. That is not modelled, so the oral curve is the fasted curve.
+**mg PO** is a fasted immediate-release tablet, from the same study: bioavailability 0.859, absorption half-time 11.5 minutes and a 5.3 minute lag. All three are used as published, and a 1 g tablet peaks at 11.0 mcg/mL at about 34 minutes in the reference man. Like gabapentin and pregabalin, acetaminophen keeps its published absorption lag; for those 5.3 minutes the dose is not yet counted in *time until threshold*. Food multiplies the tablet's absorption half-time by 1.87 and its lag by 4.6. That is not modelled, so the oral curve is the fasted curve.
 
 ### Covariates
 

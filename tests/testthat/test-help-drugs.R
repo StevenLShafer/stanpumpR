@@ -21,13 +21,18 @@ test_that("every narrative belongs to a drug in the library", {
 # steroids, sugammadex and glycopyrrolate are plasma-only by design, because
 # there is no equilibration model to attach (see each drug's header);
 # mannitol is plotted as serum osmolality and has no published ke0
-# (R/drugs_mannitol.R).
-prodrugs <- c(
+# (R/drugs_mannitol.R); gabapentin has no estimated human equilibration delay
+# yet (GABAPENTIN_TPEAK in R/drugs_gabapentin.R); amiodarone and
+# desethylamiodarone are both active, with no published human ke0 for the
+# antiarrhythmic effect, and so is amiodaroneIV (2026-10-08).  Called
+# `prodrugs` until amiodarone, an active parent, joined it (2026-10-07).
+plasmaOnly <- c(
   "codeine", "tramadol", "prednisone",
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
   "metronidazole", "gentamicin",
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
-  "sugammadex", "glycopyrrolate", "mannitol"
+  "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
+  "amiodarone", "desethylamiodarone", "amiodaroneIV"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -41,7 +46,7 @@ test_that("the parameter table evaluates every intravenous model at the referenc
     expect_true(all(is.finite(tab$CL1) & tab$CL1 > 0), info = drug)
     expect_true(all(is.finite(tab$halfLife1)), info = drug)
     expect_true(all(nzchar(tab$reference)), info = drug)
-    if (drug %in% prodrugs) {
+    if (drug %in% plasmaOnly) {
       expect_true(all(tab$ke0 == 0), info = drug)
       expect_true(all(tab$tPeak == 0), info = drug)
     } else {
@@ -107,6 +112,43 @@ test_that("prodrugs, metabolites and oral-only drugs are described from the code
   expect_match(prop, "Plasma target and Effect site target", fixed = TRUE)
   expect_false(grepl("Active metabolite</h2>", prop, fixed = TRUE))
   expect_false(grepl("Formed as a metabolite", prop, fixed = TRUE))
+})
+
+test_that("an active parent with no effect site is not described as a prodrug", {
+  # Amiodarone forms an active metabolite and has no effect site, which the
+  # page would otherwise read as a prodrug; its model says prodrug = FALSE.
+  # (Claude Code, 2026-10-07.)
+  expect_setequal(helpParentDrugs("desethylamiodarone"), "amiodarone")
+  amio <- helpDrugPageHTML("amiodarone")
+  expect_match(amio, "Oral only", fixed = TRUE)
+  expect_match(amio, "mg/day PO", fixed = TRUE)
+  expect_match(amio, "Active metabolite", fixed = TRUE)
+  expect_match(amio, 'data-help-page="drugs/desethylamiodarone"', fixed = TRUE)
+  expect_match(amio, "This model has <strong>no effect site</strong>", fixed = TRUE)
+  expect_match(amio, "Not an opioid", fixed = TRUE)
+  expect_match(amio, "timed on the plasma (no effect site in the model)", fixed = TRUE)
+  expect_false(grepl("no effect site of its own", amio, fixed = TRUE))
+  expect_false(grepl("the effect is the metabolite", amio, fixed = TRUE))
+  # The prodrugs are unchanged
+  expect_match(helpDrugPageHTML("prednisone"), "no effect site of its own", fixed = TRUE)
+
+  dea <- helpDrugPageHTML("desethylamiodarone")
+  expect_match(dea, "appears only as the active metabolite of Amiodarone", fixed = TRUE)
+  expect_match(dea, "cannot be entered in the dose table", fixed = TRUE)
+  expect_match(dea, "None: no range applies to this model", fixed = TRUE)
+  expect_false(grepl("0 to 0", dea, fixed = TRUE))
+  # A drug with no dosing unit has no default unit either (not "NA")
+  expect_false(grepl("<td>NA</td>", dea, fixed = TRUE))
+  expect_match(helpDrugIndexHTML(drugDefaults), "<td>none</td>", fixed = TRUE)
+})
+
+test_that("half-lives of a day or more are also given in days", {
+  expect_equal(helpFormatHalfLife(c(10, 1439, 1440, 79717.909, NA)),
+               c("10", "1,440", "1,440 (1 d)", "79,700 (55.4 d)", "—"))
+  # Amiodarone's terminal half-lives, 55.4 days (parent) and 60.4 days
+  # (desethylamiodarone), at the reference adult
+  expect_match(helpDrugPageHTML("amiodarone"), "(55.4 d)", fixed = TRUE)
+  expect_match(helpDrugPageHTML("desethylamiodarone"), "(60.4 d)", fixed = TRUE)
 })
 
 test_that("the table shows the covariate switches", {

@@ -73,14 +73,16 @@ A published model that was fitted on total body weight is **still** scaled to fa
 Placeholders for a missing compartment (`v3 = 1`, `cl3 = 0`) are left unscaled.
 
 **A model with its own weight or renal covariate** (vancomycin, gentamicin, sugammadex,
-cefazolin) evaluates the published equations at the pharmacokinetic weight with the switch
+cefazolin, gabapentin, pregabalin) evaluates the published equations at the pharmacokinetic weight with the switch
 on (`size$pkWeight`, which is 70 kg × FFM / FFM<sub>ref</sub>) and at total body weight with it
 off, and scales any size-free parameter by the library factors. Write that choice out:
 `if (isTRUE(adjustToFFM)) size$pkWeight else weight`, as `R/drugs_cefazolin.R` does. Do not
 derive the weight from `70 * size$volume` unless the model's `legacyVolume` is `weight / 70`;
 with `legacyVolume = 1` that expression is 70 kg for everyone when the switch is off. Renal
-function comes from `R/renalFunction.R` (`creatinineClearanceCG()`, `egfrDeindexed()`),
-which runs at an **assumed normal creatinine** because the app collects none; say so in the
+function comes from `R/renalFunction.R` (`creatinineClearanceCG()`, `egfrDeindexed()`).
+Add `creatinine = NULL` to the model's signature and pass `patientCreatinine(creatinine, sex)`
+as the creatinine: that is the patient's serum creatinine from the Patient Profile, or an
+**assumed normal creatinine** for the patient's sex when the field is blank. Say so in the
 model's header and in its `reference` string. See `R/drugs_vancomycin.R`.
 
 **What the engine cannot represent.** The closed-form engine is linear and mammillary, with
@@ -89,6 +91,8 @@ first-order extravascular absorption. A source model with saturable protein bind
 apparent oral scale has to be reduced to that form, and the reduction must be written down
 in the header: which part is exact, which is approximate, and what is plotted
 (`R/drugs_cefazolin.R`, `R/drugs_hydrocortisone.R`, `R/drugs_prednisolone.R`).
+The one exception is oral bioavailability that falls with the size of the dose: the
+engine applies that itself, dose by dose (see *saturable oral absorption* below).
 
 ### Return-value contract
 
@@ -99,6 +103,7 @@ in the header: which part is exact, which is approximate, and what is plotted
 | `MEAC` | reference effect concentration used for the MEAC plot / normalization (`0` if not applicable). |
 | `typical`, `upperTypical`, `lowerTypical` | the shaded "typical range" band on the plot. |
 | `reference` | literature citation (string). |
+| `prodrug` | optional; `FALSE` marks an active parent that has a metabolite but no effect site, so the help does not call it a prodrug (see "An active parent with no effect-site model" below). |
 
 **Optional — extravascular routes.** To support oral/IM/intranasal dosing, add absorption
 fields to a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_IM` / `_IN`
@@ -106,6 +111,17 @@ equivalents). `getDrugPK()` builds the matching absorption coefficients and `sim
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
 The route is the suffix of the unit (`mg PO`, `mg IM`, `mg IN`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
+
+**Optional — oral input as a constant daily rate.** A model fitted with each day's oral dose
+spread evenly over the day, rather than absorbed first-order, offers the unit `mg/day PO`
+(`poRateUnits` in `R/constants.R`). It is oral by route, so the help and the dropdowns call it
+oral, but a rate by kind (`isRateUnit()` in `R/routes.R`): `simCpCe()` converts it to mg/min and
+runs each row as the drug's running input rate, as it does an infusion, until the drug's next
+rate row; `0 mg/day PO` stops it. It is applied to the model's parameters directly, with no
+absorption rate constant and no bioavailability, so it suits **apparent** oral parameters (see
+below) and the model needs no `ka_PO` at all. Amiodarone is the example: Pollak and colleagues
+modelled a 400 mg/day dose as 16.7 mg/h for 24 hours. A source reporting clearances per day is
+converted with `MINS_PER_DAY` in the drug file.
 
 **Optional — time-varying PK.** Provide more than one named PK set (e.g. `default`,
 `"CPB Start"`) to switch kinetics on a clinical event; `advanceClosedForm1()` handles the
@@ -175,6 +191,13 @@ together with any of the metabolite drug that was given directly (`recoveryState
 in a drug model has to arrange that; `endCe` on the metabolite drug's defaults row is the
 threshold it is measured against.
 
+**An active parent with no effect-site model** looks the same to the engine (`tPeak = 0` and a
+`metabolite` block), but is not a prodrug, and the generated help page would otherwise say
+that its effect is the metabolite's. Such a model returns `prodrug = FALSE` alongside the
+usual fields. The field is optional and read only by the help (`R/help-drugs.R`); leaving it
+out keeps the prodrug description. Amiodarone, which is active itself and has no published
+human ke0, is the example (`R/drugs_amiodarone.R`).
+
 **A drug whose potency is not yet known** uses the same mechanism, but should say so. Put
 `tPeak` and `MEAC` in named constants at the top of the file with a comment explaining what
 is missing, and add a test asserting that the constant matches the CSV's `MEAC` column —
@@ -186,14 +209,32 @@ worked examples.
 clearance and volume divided by an unmeasured bioavailability. Those predict oral
 concentrations correctly, because the unknown factor cancels, and intravenous ones wrong by
 `1/F`. Such a drug must offer oral units only and carry `bioavailability_PO = 1`, since the
-apparent scale already contains it. Hydrocodone is the example.
+apparent scale already contains it. Hydrocodone is the example. A drug offered only as the
+constant-rate oral unit `mg/day PO` (amiodarone) carries no absorption fields at all: the rate
+is applied to the apparent parameters as it stands.
+
+**Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
+that the fraction of an oral dose absorbed falls as the dose rises, returns an
+`oralSaturation` block alongside the usual fields:
+
+```r
+oralSaturation = list(Imax = 0.906, ID50 = 571)   # ID50 in mg per administration
+```
+
+`simCpCe()` scales every oral dose by `1 - Imax * D / (ID50 + D)`, with D its dose in mg,
+before it reaches the engine, and `bioavailability_PO` becomes the fraction absorbed in the
+limit of a small dose. The hyperbolic `Dmax / (D50 + D)` form is the case `Imax = 1` with
+`bioavailability_PO = Dmax / D50`. Each dose is then an ordinary input, so superposition
+holds; what is not represented is saturation shared between doses taken together or close
+in time. `Imax` must lie between 0 and 1 (`validateOralSaturation()`), and the drug's help
+page tabulates the fraction at several doses. `R/drugs_gabapentin.R` is the example.
 
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 
 Add one row. Columns:
 
 ```
-Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lower,Upper,Typical,MEAC,endCe,Class
+Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lower,Upper,Typical,MEAC,endCe,Class,Category
 ```
 
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
@@ -204,7 +245,10 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
 - `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and the "time until threshold"
   level: the effect-site concentration for a drug with an effect site, the plasma concentration
-  for one without, and `0` for none. For an antibiotic, `endCe` is the plotted concentration at
+  for one without, and `0` for none. A drug with no established range, or none that applies
+  to its model, sets all three band columns to `0`: no band is drawn, and its help page says so
+  (desethylamiodarone; amiodaroneIV, whose chronic trough window does not describe intravenous
+  loading). For an antibiotic, `endCe` is the plotted concentration at
   which **free** drug equals the MIC: the MIC itself if the model plots unbound drug, the MIC
   divided by the free fraction if it plots total drug. Add the antibiotic to
   `antibioticMicTable()` in `R/antibioticThresholds.R`, which records the organism, MIC, free
@@ -213,11 +257,18 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Class` — `IV` for an injected or swallowed drug, `gas` for an inhaled agent. The gases
   take a separate simulation path and have no `drugs_*.R` covariate function, so a new drug
   added by this procedure is `IV`.
+- `Category` — the group the drug is listed under in the menu the app opens with: one of
+  `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
+  `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`, `Corticosteroids`,
+  `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  own, and the carrier gases and ventilation, are blank. A new category goes into
+  `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
+  `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.
 
 Example row (remifentanil):
 
 ```
-remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1,IV
+remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min",#0000C0,0.8,2,1.2,1,1,IV,Opioids
 ```
 
 A prodrug sets `MEAC` to zero and uses the band columns for its own plasma concentration,

@@ -5,11 +5,9 @@ Five steps produce a simulation. Everything else in this help is refinement.
 <figcaption>The simulator. Patient and graph settings on the left, the plot in the middle, the dose table on the right.</figcaption>
 </figure>
 
-When the app opens, a welcome dialog states what stanpumpR is and is not. **OK** dismisses it; **Take the tour** brings you to this page.
+When the app opens it asks which drugs to display, with a box for each drug, grouped by category: hypnotics and sedatives, opioids, neuromuscular blockade, inhaled anesthetics, antibiotics, corticosteroids and others. Propofol, fentanyl, remifentanil and rocuronium start ticked; untick them to start with something else. **Start** puts each ticked drug in the dose table with a dose of 0 at time 0, ready to edit. Any drug can be added to the dose table later. On a first visit, and once a week after that, the dialog also states what stanpumpR is and is not, and **Take the tour** starts with your ticked drugs and brings you to this page.
 
-<figure class="help-figure help-figure-medium">
-<img src="stanpumpr-assets/help/quick-start-welcome.png" alt="The welcome dialog, with OK and Take the tour buttons">
-</figure>
+A link to a saved simulation, or reloading the page, skips the question and opens the simulation as it was, provided its dose table has at least one drug in it. With an empty dose table (for instance, reloading before pressing **Start**), the question is asked again.
 
 ## 1. Describe the patient
 
@@ -17,14 +15,14 @@ Open **Patient Profile** in the left sidebar. Enter age, weight, height and sex.
 
 <figure class="help-figure help-figure-narrow">
 <img src="stanpumpr-assets/help/quick-start-patient.png" alt="The Patient Profile panel: age with yr/mo buttons, weight with kg/lb and the ticked Adjust weight to fat-free mass box, height with in/cm, sex, CYP 2D6 set to Normal, baseline serum osmolality of 280 mOsm/kg, and the greyed-out Renal Function field">
-<figcaption>The Patient Profile panel for a 40-year-old man. Renal Function is greyed out; Pregnant, also disabled, appears only for women of child-bearing age.</figcaption>
+<figcaption>The Patient Profile panel for a 40-year-old man. The greyed-out Renal Function selector shown here has since been replaced by an optional Serum creatinine field; Pregnant, disabled, appears only for women of child-bearing age.</figcaption>
 </figure>
 
-*Adjust weight to fat-free mass* is on by default. *CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites. *Baseline serum osmolality* is read only by mannitol. *Renal Function*, and *Pregnant* for women of child-bearing age, are visible but disabled. See [Patient profile](help:patient-profile).
+*Adjust weight to fat-free mass* is on by default. *CYP 2D6* sets the metaboliser phenotype for the drugs with active metabolites. *Baseline serum osmolality* is read only by mannitol. *Serum creatinine* is optional and used by the renally cleared drugs; left blank, a normal value is assumed. *Pregnant*, for women of child-bearing age, is visible but disabled. See [Patient profile](help:patient-profile).
 
 ## 2. Enter the doses
 
-The **Doses** table is to the right of the plot. In the *Drug* column, start typing a drug name and choose from the list. Enter a *Time* (minutes, or `1:30` for an hour and a half), a *Dose*, and pick *Units*.
+The **Doses** table is to the right of the plot. In the *Drug* column, start typing a drug name and choose from the list. Enter a *Time*, a *Dose*, and pick *Units*. Times are in the **Time units** chosen in the *Time* card above the table: minutes when the app opens, or hours, days or weeks for longer courses (changing the unit converts the table). With the *Actual time* display, a time like `09:30` is a clock time.
 
 <figure class="help-figure help-figure-medium">
 <img src="stanpumpr-assets/help/quick-start-doses.png" alt="The dose table with four propofol rows: a 2 mg/kg bolus, an infusion of 150 then 100 mcg/kg/min, and a stop at 90 minutes; below it the Apply Changes, Undo and Redo buttons">
@@ -57,7 +55,7 @@ See [Reading the plot](help:reading-the-plot).
 
 ## 5. Refine
 
-**Graph Options** sets how far the simulation runs, line styles, normalization, a log axis, and the *Time until threshold* lines.
+**Graph Options** sets how far the simulation runs (*Max time*, whose choices follow the time units), line styles, normalization, a log axis, and the *Time until threshold* lines.
 
 <figure class="help-figure help-figure-narrow">
 <img src="stanpumpr-assets/help/quick-start-graph-options.png" alt="The Graph Options panel: Show typical, Normalize to, Max time, plasma and effect-site line styles, Y axis height, Time until threshold, and the opioid-MAC interaction checkbox">

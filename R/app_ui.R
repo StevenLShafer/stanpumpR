@@ -12,6 +12,17 @@ app_ui <- function() {
   )
 
   function(request) {
+    # The Time units, Max time and Time Display choices depend on one another,
+    # and a restored bookmark's selections must be among the choices built
+    # here: selectize ignores a selection it has no option for.  A bookmark
+    # made before there were time units has none: it opens in days if its Max
+    # time was more than a day (and the server converts its dose table).
+    timeUnit0 <- shiny::restoreInput("timeUnits", NULL)
+    if (!identical(validTimeUnit(timeUnit0), timeUnit0)) {
+      timeUnit0 <- legacyTimeUnit(shiny::restoreInput("maximum", 60))
+    }
+    maximum0 <- snapMaximum(shiny::restoreInput("maximum", 60), timeUnit0)
+
     bslib::page_navbar(
       id = "mainNav",
       title = span(config$title, class = if (config$long_title) "title-long"),
@@ -180,13 +191,26 @@ app_ui <- function() {
                   placement = "right"
                 ),
 
-                selectInput(
-                  inputId = "renal",
-                  label = "Renal Function",
-                  c("Normal" = "normal", "Impaired" = "impaired", "ESRD" = "ESRD"),
-                  selected = "normal"
-                ) |>
-                  shinyjs::disabled()
+                # Read only by the renally cleared models (mannitol, vancomycin,
+                # gentamicin, cefazolin, sugammadex).  Blank means an assumed
+                # normal creatinine for the patient's sex; see R/renalFunction.R.
+                bslib::tooltip(
+                  numericInput(
+                    inputId = "creatinine",
+                    label = "Serum creatinine (mg/dL)",
+                    value = NA,
+                    min = MIN_CREATININE,
+                    max = MAX_CREATININE,
+                    step = 0.1
+                  ),
+                  paste(
+                    "Used by the renally cleared drugs: mannitol, vancomycin,",
+                    "gentamicin, cefazolin and sugammadex. Leave blank to assume a",
+                    "normal creatinine for the patient's sex (1.0 mg/dL for a man,",
+                    "0.8 for a woman); renal impairment is then not represented."
+                  ),
+                  placement = "right"
+                )
               ),
 
               bslib::accordion_panel(
@@ -194,11 +218,13 @@ app_ui <- function() {
                 icon = icon("sliders"),
                 selectInput("typical", "Show typical", c("<none>" = "none", "Mid", "Range"), selected = "Range"),
                 selectInput("normalization", "Normalize to", c("<none>" = NORMALIZE_NONE, "Peak plasma", "Peak effect site")),
+                # Durations in minutes, labelled in the Time units; the server
+                # swaps the list when the unit changes (syncMaxTimeChoices()).
                 selectInput(
                   inputId = "maximum",
                   label = "Max time",
-                  choices = stats::setNames(maxtimes$times, formatMinutes(maxtimes$times)),
-                  selected = 60
+                  choices = maxTimeChoices(timeUnit0),
+                  selected = maxTimeValue(maximum0)
                 ),
                 lineTypeSelector(
                   inputId = "plasmaLinetype",
@@ -304,15 +330,29 @@ app_ui <- function() {
                 fill = FALSE,
                 bslib::card_header(icon("clock"), "Time"),
 
+                # Time units: what a number typed in the dose table means, and
+                # the unit of the time axis.  Changing it converts the dose
+                # table (R/utils-time.R).  Actual (clock) time is offered for
+                # minutes and hours only.
                 bslib::layout_columns(
+                  selectizeInput(
+                    "timeUnits",
+                    "Time units",
+                    stats::setNames(names(TIME_UNITS), tools::toTitleCase(names(TIME_UNITS))),
+                    selected = timeUnit0,
+                    options = list(dropdownParent = "body")
+                  ),
                   selectizeInput(
                     "timeMode",
                     "Time Display",
-                    c("Actual time" = "clock", "Elapsed minutes" = "relative"),
+                    timeModeChoices(timeUnit0),
                     options = list(dropdownParent = "body")
                   ),
                   conditionalPanel(
-                    "input.timeMode == 'clock'",
+                    sprintf(
+                      "input.timeMode == 'clock' && %s.indexOf(input.timeUnits) >= 0",
+                      jsonlite::toJSON(CLOCK_TIME_UNITS)
+                    ),
                     textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
                   )
                 )
@@ -321,7 +361,12 @@ app_ui <- function() {
               bslib::card(
                 bslib::card_header(
                   class = "justify-content-between",
-                  span(icon("syringe"), "Doses"),
+                  span(
+                    icon("syringe"), "Doses",
+                    # "(times in days)": the unit of the times in the table
+                    textOutput("doseTimeUnits", inline = TRUE) |>
+                      htmltools::tagAppendAttributes(class = "small text-muted")
+                  ),
                   actionLink("setTarget", "Suggest Dosing", class = "small")
                 ),
 

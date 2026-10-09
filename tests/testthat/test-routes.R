@@ -31,6 +31,35 @@ test_that("doseRoute() agrees with every unit the app offers", {
   expect_equal(doseRoute(units), old)
 })
 
+test_that("the constant-rate oral unit is oral by route and a rate by kind", {
+  # "mg/day PO" (poRateUnits; R/drugs_amiodarone.R).  (Claude Code,
+  # 2026-10-07.)
+  expect_true(all(doseRoute(poRateUnits) == ROUTE_PO))
+  expect_true(all(isRateUnit(poRateUnits)))
+  expect_true(all(poRateUnits %in% allUnits))
+  expect_false(any(poRateUnits %in% c(infusionUnits, poUnits, scheduledUnits)))
+  expect_true(all(isRateUnit(infusionUnits)))
+  expect_false(any(isRateUnit(c(bolusUnits, poUnits, imUnits, inUnits, tciUnits,
+                                scheduledUnits, "%"))))
+  expect_equal(isRateUnit(factor("mg/hr")), TRUE)
+})
+
+test_that("every unit offered before the oral rate keeps its exact classification", {
+  # simCpCe() classified a row by substrings until 2026-10-07: a bolus was an
+  # intravenous unit with neither "min" nor "hr" in it, and every PO, IM or
+  # IN unit was an extravascular dose.  It now asks isRateUnit(), so that
+  # "mg/day PO" can be a rate; for every other unit the answer must be the
+  # one it always was.
+  units <- unique(c(setdiff(allUnits, poRateUnits), gasUnits, tciUnits, scheduledUnits,
+                    unlist(getDrugDefaultsGlobal()$Units)))
+  units <- setdiff(units, poRateUnits)
+  route <- doseRoute(units)
+  oldBolus <- route == ROUTE_IV & !(grepl("min", units) | grepl("hr", units))
+  newBolus <- route == ROUTE_IV & !isRateUnit(units)
+  expect_equal(newBolus, oldBolus)
+  expect_false(any(isRateUnit(units[route != ROUTE_IV])))
+})
+
 test_that("doseRoute() reads the route ahead of a dosing frequency", {
   expect_equal(doseRoute(c("mg bid", "mg/kg PO qd", "mg IM tid", "mcg IN qid")),
                c("IV", "PO", "IM", "IN"))
@@ -58,4 +87,36 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
   expect_equal(unique(doseRoute(hydromorphone)), DOSE_ROUTES)
   expect_true(all(c("Plasma target", "Effect site target") %in%
                     hydromorphone[doseRoute(hydromorphone) == ROUTE_IV]))
+})
+
+test_that("oralSaturationFraction() is the inhibitory Emax of Tran 2017", {
+  # F = 1 - Imax x D / (ID50 + D); Tran reports 0.688, 0.627 and 0.471.
+  tran <- list(Imax = 0.906, ID50 = 571)
+  expect_equal(round(oralSaturationFraction(c(300, 400, 800), tran), 3),
+               c(0.688, 0.627, 0.471))
+  # Complete at a vanishingly small dose, 1 - Imax at a very large one.
+  expect_equal(oralSaturationFraction(0, tran), 1)
+  expect_equal(oralSaturationFraction(1e12, tran), 1 - 0.906, tolerance = 1e-8)
+  # The hyperbolic Dmax / (D50 + D) is the case Imax = 1, scaled by Dmax / D50.
+  hyper <- list(Imax = 1, ID50 = 1120)
+  expect_equal(oralSaturationFraction(300, hyper) * 823 / 1120, 823 / (1120 + 300))
+  # No block: every dose is absorbed as bioavailability_PO alone says.
+  expect_equal(oralSaturationFraction(c(10, 1000), NULL), c(1, 1))
+})
+
+test_that("validateOralSaturation() refuses a block that could go negative", {
+  expect_null(validateOralSaturation(NULL, "x"))
+  ok <- list(Imax = 0.906, ID50 = 571)
+  expect_identical(validateOralSaturation(ok, "x"), ok)
+  expect_error(validateOralSaturation(list(Imax = 1.2, ID50 = 571), "x"), "Imax")
+  expect_error(validateOralSaturation(list(Imax = 0.5, ID50 = 0), "x"), "ID50")
+  expect_error(validateOralSaturation(list(Imax = 0.5), "x"), "ID50")
+  expect_error(validateOralSaturation(c(Imax = 0.5, ID50 = 10), "x"), "x")
+})
+
+test_that("only a drug that declares saturable absorption has it", {
+  expect_equal(getDrugPK("gabapentin", 70, 170, 50, "male")$oralSaturation,
+               list(Imax = 0.906, ID50 = 571))
+  for (drug in c("oxycodone", "hydromorphone", "cefalexin"))
+    expect_null(getDrugPK(drug, 70, 170, 50, "male")$oralSaturation, info = drug)
 })

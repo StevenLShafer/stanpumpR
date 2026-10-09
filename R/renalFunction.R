@@ -1,22 +1,18 @@
 # Renal function for the drug models that need it.
 #
-# stanpumpR collects weight, height, age and sex, and nothing else.  Several
-# of the antibiotic and reversal-agent models carry a renal covariate
-# (Cockcroft-Gault creatinine clearance, or a de-indexed CKD-EPI eGFR), so
-# the app has to supply one from the covariates it has.  It does so by
-# ASSUMING A NORMAL SERUM CREATININE and letting age, sex and body size carry
-# the rest.  Every model that calls these helpers says so in its header, and
-# the assumption is deliberately visible here rather than buried in a drug
-# file.
+# Several models carry a renal covariate (Cockcroft-Gault creatinine
+# clearance, or a de-indexed CKD-EPI eGFR): mannitol, vancomycin, gentamicin,
+# cefazolin, sugammadex, gabapentin and pregabalin.  Each takes an optional
+# `creatinine` argument, the patient's serum creatinine from the Patient
+# Profile.
 #
-# What this does and does not capture:
-#   - It captures the fall in renal function with age and the sex difference
-#     that the creatinine-based formulas build in, which is most of the
-#     between-patient variation among people with NORMAL kidneys.
-#   - It does NOT capture renal impairment.  A patient with a creatinine of
-#     3 mg/dL is simulated as if it were 1.0.  Until the app collects a
-#     creatinine, a renally cleared drug in a patient with impaired kidneys
-#     is overpredicted to clear and underpredicted to accumulate.
+# When none is entered the models ASSUME A NORMAL SERUM CREATININE for the
+# patient's sex and let age, sex and body size carry the rest.  That captures
+# the fall in renal function with age and the sex difference, which is most
+# of the variation among people with normal kidneys, but not renal
+# impairment: a renally cleared drug in a patient with impaired kidneys is
+# then overpredicted to clear and underpredicted to accumulate.  Entering
+# the creatinine is what represents impairment.
 #
 # Body size.  Cockcroft-Gault contains body weight, and the weight passed in
 # is whatever the calling model is scaling on: with the fat-free-mass switch
@@ -41,11 +37,30 @@ assumedCreatinine <- function(sex)
   if (sex == SEX_FEMALE) SCR_ASSUMED_FEMALE else SCR_ASSUMED_MALE
 }
 
+#' The serum creatinine a renal model should use
+#'
+#' The patient's own if it was entered, otherwise the assumed normal value for
+#' the patient's sex.
+#'
+#' @param creatinine the entered serum creatinine in mg/dL, or NULL / NA when
+#'   none was entered
+#' @param sex `"male"` or `"female"`
+#' @return serum creatinine in mg/dL
+#' @keywords internal
+patientCreatinine <- function(creatinine, sex)
+{
+  if (is.null(creatinine) || length(creatinine) != 1 || is.na(creatinine))
+    assumedCreatinine(sex)
+  else
+    creatinine
+}
+
 #' Cockcroft-Gault creatinine clearance
 #'
 #' `(140 - age) x weight / (72 x SCr)`, times 0.85 for a woman, in mL/min.
 #' This is the estimator the vancomycin (Thomson 2009), cefazolin (Komatsu
-#' 2024) and sugammadex (Kleijn 2011) models were fitted with.
+#' 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017) and pregabalin
+#' (Chan 2021) models were fitted with.
 #'
 #' @param weight the weight the calling model scales on, kg
 #' @param age age in years

@@ -8,7 +8,7 @@ An infusion runs until the next row for the same drug changes it. Add a row for 
 
 ## The time I typed turned into something else
 
-The *Time* field accepts minutes (`12`), hours and minutes (`1:30`), or `HHMM` (`130`). Minutes above 59 roll over, so `0:80` becomes `1:20`. Anything it cannot read becomes zero. If the time display is set to *Actual time*, times are clock times relative to the procedure start. See [Time display](help:time-display).
+The *Time* field accepts a number of the **Time units** (`12`, `1.5`), and with the *Actual time* display a clock time with a colon (`09:30`); `130` is 130 of the unit, not 1:30. Minutes above 59 roll over, so `0:80` becomes `01:20`. Anything it cannot read becomes zero. If the time display is set to *Actual time*, a time with a colon is a clock time and a number is counted from the procedure start. Changing the Time units rewrites every time in the table in the new unit, so `90` minutes becomes `1.5` hours: the doses have not moved. See [Time display](help:time-display).
 
 ## Why can I not pick the unit I want?
 

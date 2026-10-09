@@ -44,7 +44,7 @@ Al-Sallami HS, Goulding A, Grant A, Taylor R, Holford N, Duffull SB. Prediction 
 
 ## Renal function
 
-Several models estimate renal function from age, weight and sex at an assumed normal creatinine (1.0 mg/dL in men, 0.8 in women), because stanpumpR collects none.
+Several models estimate renal function from the entered serum creatinine, or from an assumed normal creatinine (1.0 mg/dL in men, 0.8 in women) when none is entered.
 
 Cockcroft DW, Gault MH. Prediction of creatinine clearance from serum creatinine. *Nephron* 1976;16:31-41.
 

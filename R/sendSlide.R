@@ -132,6 +132,13 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     heightUnit <- "inches"
   }
 
+  # Every Time column in the workbook is in minutes, which is what the engine
+  # works in and what a script reading the sheets expects.  When the plot was
+  # shown in hours, days or weeks, each of those columns is followed by the
+  # same times in that unit, and the covariates sheet and the email say so.
+  # NULL (a caller that predates time units) means minutes.
+  timeUnit <- if (is.null(values$timeUnit)) "minutes" else values$timeUnit
+
   outputComments("Creating workbook")
   wb <- openxlsx::createWorkbook("SLS")
   covariates <- data.frame(
@@ -144,7 +151,8 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Height Unit",
       "Sex",
       "Adjust weight to fat-free mass",
-      "Baseline serum osmolality (mOsm/kg)"
+      "Baseline serum osmolality (mOsm/kg)",
+      "Serum creatinine (mg/dL)"
     ),
     Value = c(
       values$age / values$ageUnit,
@@ -155,8 +163,10 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       heightUnit,
       values$sex,
       if (isTRUE(values$adjustToFFM)) "yes" else "no",
-      if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality
+      if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
+      if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine
     ))
+  covariates <- rbind(covariates, plotTimeSettings(values$maximum, timeUnit))
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")
   openxlsx::writeData(wb, sheet = 1, covariates)
@@ -166,15 +176,15 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   # they are merged in for the export (tci.R, scheduled.R).
   outputComments("Writing dose table")
   openxlsx::addWorksheet(wb, "Dose Table")
-  openxlsx::writeData(wb, sheet = 2, exportDoseTable(DT, drugs))
+  openxlsx::writeData(wb, sheet = 2, exportDoseTable(DT, drugs, timeUnit = timeUnit))
 
   outputComments("Writing simulation results")
   openxlsx::addWorksheet(wb, "Simulation Results")
-  openxlsx::writeData(wb, sheet = 3, allResults)
+  openxlsx::writeData(wb, sheet = 3, addDisplayTimeColumn(allResults, timeUnit))
 
   outputComments("Writing results for plotting")
   openxlsx::addWorksheet(wb, "Results for Plotting")
-  openxlsx::writeData(wb, sheet = 4, plotResults)
+  openxlsx::writeData(wb, sheet = 4, addDisplayTimeColumn(plotResults, timeUnit))
 
   outputComments("Writing PK parameters")
   sheet = 5
@@ -282,6 +292,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     "<p>The simulation is for a ",values$age / values$ageUnit, " ", ageUnit, "-old ",htmltools::htmlEscape(values$sex),
     " weighing ", values$weight / values$weightUnit, " ",weightUnit,
     " and ", values$height / values$heightUnit, " ", heightUnit, " tall.</p><p>&nbsp;</p>",
+    plotTimeText(values$maximum, values$timeUnit),
     if (nchar(trimws(comments)) > 0) paste0("<p>Additional comments: ", htmltools::htmlEscape(comments), "</p><p>&nbsp;</p>") else "",
     "<p>You should be able to reload the file from ",
     "<a href=\"",htmltools::htmlEscape(url, attribute = TRUE),"\">stanpumpR</a>.</p><p>&nbsp;</p>",
@@ -299,3 +310,33 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     "</div></body></html>"
   ))
  }
+
+# The plot's time settings as rows for the Covariates sheet: the unit the plot
+# was shown in and how long it ran, in that unit and in minutes.  The length
+# is the plot's own, which may run past the Max time chosen when a dose falls
+# near the end.  No maximum (a caller that predates time units) adds nothing.
+plotTimeSettings <- function(maximum, timeUnit = "minutes")
+{
+  if (is.null(maximum)) return(NULL)
+  if (is.null(timeUnit)) timeUnit <- "minutes"
+  data.frame(
+    Covariate = c("Time units", "Max time", "Max time (minutes)"),
+    Value = c(timeUnit, formatElapsed(maximum, timeUnit), plainNumber(maximum))
+  )
+}
+
+# The same for the email body: how long the plot runs and, when it was not in
+# minutes, that the workbook's times are minutes with the unit beside them.
+plotTimeText <- function(maximum, timeUnit = "minutes")
+{
+  if (is.null(maximum)) return("")
+  if (is.null(timeUnit)) timeUnit <- "minutes"
+  paste0(
+    "<p>The plot runs for ", formatElapsed(maximum, timeUnit), ".",
+    if (timeUnit != "minutes")
+      paste0(" Times in the workbook are in minutes, each followed by the same time in ",
+             timeUnit, ".")
+    else "",
+    "</p><p>&nbsp;</p>"
+  )
+}

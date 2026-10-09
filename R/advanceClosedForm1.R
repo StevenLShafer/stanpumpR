@@ -77,54 +77,37 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # A lagged dose also contributes the instant it was GIVEN, so that the window
   # over which recovery cannot be reported starts where it should.  Neither adds
   # anything to a run with no extravascular dose.
-  timeLine <- sort(unique(c(0, dose$Time, events$Time, events$Time - 0.01,
-                            dose$Time[dose$Bolus | extravascular] - 0.01,
-                            givenAt[givenAt < dose$Time], maximum)))
+  knots <- c(dose$Time, events$Time, events$Time - PRE_DOSE_OFFSET,
+             dose$Time[dose$Bolus | extravascular] - PRE_DOSE_OFFSET,
+             givenAt[givenAt < dose$Time])
   # Nothing past the end of the run: the event segments stop at maximum, so a
   # point beyond it -- a dose its lag pushes past the end -- would never be
   # advanced.
-  timeLine <- timeLine[timeLine >= 0 & timeLine <= maximum]
-
-  # Fill in gaps using exponentially decreasing amounts
-  gapStart <- timeLine[1:length(timeLine)-1]
-  gapEnd   <- timeLine[2:length(timeLine)]
-  start <- min(0.693/pkSets[[PK_EVENT_DEFAULT]]$lambda_4 / 4, 1)
-  newTimes <- c(exp(log(start)+0:40 * log(MINS_PER_DAY/start)/41))
-  for (i in 1:length(gapEnd))
-  {
-    distance <- gapEnd[i] - gapStart[i]
-    timeLine <- c(timeLine, gapStart[i] + newTimes[newTimes <= distance])
-  }
-  timeLine <- sort(unique(timeLine))
+  #
+  # The fill starts at a minute (or maximum / GRID_FINE_POINTS on a plot
+  # longer than a day; R/simulationTimeGrid.R).  This engine has always read
+  # its start from pkSets$default$lambda_4, which no PK set carries, so
+  # 0.693 / NULL was numeric(0) and min(numeric(0), 1) a minute; it was surely
+  # meant to be ke0, as in the other engines.  Kept at a minute deliberately,
+  # so that the dexmedetomidine bypass runs -- the only drug that reaches this
+  # engine, and whose effect site calculateCe() approximates step by step --
+  # are drawn on exactly the line they always were.  (Claude Code, 2026-10-07.)
+  timeLine <- simulationTimeGrid(knots[knots <= maximum], maximum, start = 1)
   L <- length(timeLine)
-  doseNA <- rep(0, L)
 
   # Create bolusLine, infusionLine and the amounts landing in each depot
-  bolusLine <- infusionLine <- pkLine <- dt <- rate <- rep(0, L)
+  inputs    <- doseLines(dose, timeLine, routes)
+  bolusLine <- inputs$bolus
+  rate      <- inputs$rate
+  dt        <- inputs$dt
   depotLine <- matrix(0, L, length(routes), dimnames = list(NULL, routes))
-  for (i in 1:L)
-  {
-    bolusLine[i]    <- sum(dose$Dose[dose$Time == timeLine[i] & dose$Bolus])
-    for (r in routes)
-      depotLine[i, r] <- sum(dose$Dose[dose$Time == timeLine[i] & dose[[r]]])
-    USE <- dose$Time == timeLine[i] & !dose$Bolus & !extravascular
-    if (i == 1)
-    {
-      infusionLine[i] <- sum(dose$Dose[USE])
-      rate[1] <- 0
-      dt[1] <- 0
-    } else {
-      if (sum(USE) == 0)
-      {
-        infusionLine[i] <- infusionLine[i-1]
-      } else {
-        infusionLine[i] <- sum(dose$Dose[USE])
-      }
-      dt[i] <- timeLine[i] - timeLine[i-1]
-      rate[i] <- infusionLine[i-1]
-    }
-    pkLine[i] <- events$Event[utils::tail(which(events$Time <= timeLine[i]),1)]
-  }
+  for (r in routes) depotLine[, r] <- inputs[[r]]
+
+  # The PK set in force at each point: the last event at or before it, as
+  # eventAt() reads it, for every point at once.
+  eventIndex <- integer(L)
+  for (j in seq_len(nrow(events))) eventIndex[timeLine >= events$Time[j]] <- j
+  pkLine <- events$Event[eventIndex]
 
   # Set up time varying parameters
   parameters <-   as.data.frame(
@@ -358,7 +341,7 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     } else {
       recoveryStates <- recoveryStateSet(timeLine, P, lam,
                                          pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine),
-                                         horizon = RECOVERY_HORIZON_PLASMA)
+                                         horizon = recoveryHorizonPlasma(maximum))
     }
     recovery <- recoveryFromStates(recoveryStates, emerge)
   } else {

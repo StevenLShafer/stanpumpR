@@ -1,18 +1,11 @@
+# The welcome dialog on its own, for a session restored from a bookmark.  A
+# fresh session shows the same text inside the startup drug menu instead
+# (R/startup-drugs.R).
 showIntroModal <- function() {
   shiny::showModal(
     shiny::modalDialog(
       title = "Welcome to stanpumpR",
-      shiny::p(
-        "stanpumpR, derived from the original STANPUMP program developed at
-        Stanford University,  performs pharmacokinetic simulations
-        based on mathematical models published in the peer-reviewed
-        literature. stanpumpR is intended to help clinicians and investigators
-        better understand the mathematical implications of published models.
-        stanpumpR is only an advisory program. How these models are applied to
-        individual patients is a matter of clinical judgment by the health care
-        provider."
-      ),
-      shiny::p("stanpumpR does not collect any protected healthcare information."),
+      welcomeText(),
       shiny::tags$button(
         type = "button",
         class = "btn btn-warning",
@@ -36,7 +29,8 @@ showIntroModal <- function() {
 }
 
 checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
-                                   osmolality = OSMOLALITY_DEFAULT) {
+                                   osmolality = OSMOLALITY_DEFAULT,
+                                   creatinine = NULL) {
   msg <- ""
   success <- TRUE
   if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
@@ -53,6 +47,15 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
   }
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     msg <- glue::glue("Serum osmolality must be between {MIN_OSMOLALITY} and {MAX_OSMOLALITY} mOsm/kg")
+    success <- FALSE
+  }
+  # Optional: blank (NA or NULL) means the assumed normal value.  NaN is not
+  # blank and is rejected.
+  if (!is.null(creatinine) &&
+      !(length(creatinine) == 1 && is.na(creatinine) &&
+        !(is.numeric(creatinine) && is.nan(creatinine))) &&
+      !is_valid_number(creatinine, MIN_CREATININE, MAX_CREATININE)) {
+    msg <- glue::glue("Serum creatinine must be between {MIN_CREATININE} and {MAX_CREATININE} mg/dL, or left blank")
     success <- FALSE
   }
 

@@ -9,6 +9,11 @@ suggest <- function(
 {
   targetTable$Time <- as.character(targetTable$Time)
   targetTable$Target <- as.character(targetTable$Target)
+  # A row with no time is not a target.  Told apart before validateTime(),
+  # which turns a blank into "0": dropping the rows whose cleaned time was 0
+  # also dropped a target at time 0, and so, once the app passes times in
+  # minutes (it does since there are time units), one at the procedure start.
+  noTime <- is.na(targetTable$Time) | !nzchar(trimws(targetTable$Time))
   # Process and clean up targetTable
   for (i in seq_len(nrow(targetTable)))
   {
@@ -17,7 +22,7 @@ suggest <- function(
   }
   targetTable$Target    <- as.numeric(targetTable$Target)
   targetTable$Time    <- as.character(targetTable$Time)  # Stored as factors... Arrgh.....
-  targetTable <- targetTable[targetTable$Time!=0  & targetTable$Target!=0, ]
+  targetTable <- targetTable[!noTime & targetTable$Target!=0, ]
   outputComments("structure of targetTable")
   outputComments(targetTable)
   # # Remove blank values of targetTable

@@ -11,12 +11,23 @@
 # through a lag means recoveryCalc() accounting for input that has not arrived
 # yet, which is a change to its contract.  See R/recoveryStates.R.
 #
-# ONE DRUG CARRIES A LAG as of 2026-10-08: acetaminophen's oral route keeps
-# Morse 2022's published 5.3 min lag, by decision of Steven L. Shafer (see
-# R/drugs_acetaminophen.R).  Before that none did -- hydromorphone's
-# intramuscular and intranasal lags were the last, and went when its
-# absorption was refitted.  Most tests here put a lag in by hand; the
-# acetaminophen test below exercises the live one.
+# Before gabapentin no drug carried a lag -- hydromorphone's intramuscular and
+# intranasal lags were the last, and went when its absorption was refitted --
+# so most tests here put one in by hand.  Three drugs now carry one, as below.
+#
+# Acetaminophen followed on 2026-10-08, keeping Morse 2022's published 5.3 min
+# oral lag by decision of Steven L. Shafer (see R/drugs_acetaminophen.R); the
+# test after the allow-list pins it on the real drug.
+#
+# Gabapentin made the behaviour live on 2026-10-07: Tran 2017's oral lag of
+# 0.311 h is an estimated parameter (RSE 8%), kept rather than folded into ka.
+# Gabapentin has no effect site and no default threshold, so the gap shows
+# only when a threshold is set under Drug Thresholds, timed on the plasma; the
+# last test here pins it on the real drug.
+#
+# Pregabalin followed on 2026-10-08, with Chan 2021's estimated lag of 0.32 h
+# and, unlike gabapentin, an effect site, so with a threshold set the gap is
+# timed on the effect site; the test after gabapentin's pins that.
 #
 # (Claude Code, Claude Opus 5, 2026-10-06; run on R 4.6.1.)
 
@@ -32,12 +43,10 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("only the drugs known to carry an absorption lag do", {
-  # If this ever fails it is not a defect -- a drug has been given a lag (or
-  # lost one), and the behaviour the rest of this file guards has become live
-  # for it.  Worth knowing, and worth rereading R/recoveryStates.R; then add
-  # the drug here deliberately.
-  knownLagged <- c("acetaminophen")
+test_that("only gabapentin, pregabalin and acetaminophen carry an absorption lag", {
+  # If this ever fails it is not a defect -- a drug has gained or lost a lag,
+  # and the behaviour the rest of this file guards has changed where it is
+  # live.  Worth knowing, and worth rereading R/recoveryStates.R.
   dd <- getDrugDefaultsGlobal()
   lagged <- character(0)
   for (drug in dd$Drug[!isGasDrug(dd$Drug)])
@@ -51,12 +60,12 @@ test_that("only the drugs known to carry an absorption lag do", {
       if (any(!is.na(lags) & lags > 0)) lagged <- c(lagged, drug)
     }
   }
-  expect_equal(sort(unique(lagged)), sort(knownLagged))
+  expect_setequal(unique(lagged), c("gabapentin", "pregabalin", "acetaminophen"))
 })
 
 
 test_that("acetaminophen's live oral lag blanks recovery for 5.3 min only", {
-  # The one lag in the library, end to end through getDrugPK and simCpCe.  An
+  # Acetaminophen's live lag, end to end through getDrugPK and simCpCe.  An
   # ordinary 1 g tablet: its effect site clears the 5 mcg/mL threshold, so the
   # time reported once absorption starts is a real one.
   dd <- getDrugDefaultsGlobal()
@@ -380,4 +389,51 @@ test_that("a drug with no effect site at all renders with recovery switched on",
   )
   expect_s3_class(p$plotObject, "ggplot")
   expect_no_warning(ggplot2::ggplot_build(p$plotObject))
+})
+
+
+test_that("gabapentin's own lag blanks a plasma threshold, dose by dose", {
+  # The live case.  No effect site, so time until threshold is timed on the
+  # plasma; with a threshold of 2 mcg/mL set, each oral dose leaves the
+  # readout missing for the 18.66 min before its absorption starts, and a real
+  # time everywhere else -- including the stretch before the second dose, when
+  # the plasma is already below the threshold and zero would be the old,
+  # wrong answer.
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("gabapentin", 70, 171, 50, "male", dd[dd$Drug == "gabapentin", ])
+  PK$endCe <- 2
+  lag <- 0.311 * 60
+  expect_equal(PK$PK$default$tlag_PO, lag)
+  DT <- data.frame(Drug = "gabapentin", Time = c(0, 720), Dose = c(600, 300),
+                   Units = "mg PO")
+  X <- simCpCe(DT, noEvents, PK, 1440, TRUE)
+  w <- X$wide
+
+  pending <- (w$Time < lag) | (w$Time >= 720 & w$Time < 720 + lag)
+  expect_true(all(is.na(w$Recovery[pending])))
+  expect_false(anyNA(w$Recovery[!pending]))
+  expect_gt(w$Recovery[w$Time == lag], 60)
+})
+
+
+test_that("pregabalin's lag blanks an effect-site threshold, dose by dose", {
+  # Pregabalin has an effect site, so time until threshold is timed on it.
+  # With a threshold of 1 mcg/mL the readout is missing for the 19.2 min after
+  # each oral dose and a real time everywhere else, including the stretch
+  # before the second dose, when the effect site is already below 1.
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("pregabalin", 70, 170, 50, "male", dd[dd$Drug == "pregabalin", ])
+  PK$endCe <- 1
+  lag <- 0.32 * 60
+  expect_equal(PK$PK$default$tlag_PO, lag)
+  expect_gt(PK$PK$default$ke0, 0)
+  DT <- data.frame(Drug = "pregabalin", Time = c(0, 720), Dose = c(150, 75),
+                   Units = "mg PO")
+  X <- simCpCe(DT, noEvents, PK, 1440, TRUE)
+  w <- X$wide
+
+  pending <- (w$Time < lag) | (w$Time >= 720 & w$Time < 720 + lag)
+  expect_true(all(is.na(w$Recovery[pending])))
+  expect_false(anyNA(w$Recovery[!pending]))
+  expect_gt(w$Recovery[w$Time == lag], 60)
 })
