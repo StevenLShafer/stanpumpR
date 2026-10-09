@@ -257,12 +257,14 @@ concentration: you say what effect-site concentration you want and when, and
 it searches for doses that get you there. For the drugs that offer target
 units, a TCI target row gives a better answer, faster.
 
-Enter time and target concentration pairs, choose the drug, and confirm.
+Enter time and target concentration pairs, choose the drug, and confirm. Only
+drugs with an effect site and intravenous bolus and infusion units are listed.
+The regimen ends with an infusion rate of zero at the end time.
 
 Two limitations, both stated in the dialog:
 
 - **Decreasing targets are not supported.** Rows that ask for a lower
-  concentration than the one before are removed.
+  concentration than the one before are raised to the previous value.
 - Doses are found by non-linear regression, so it takes a moment. The result is
   good but not provably optimal.
 

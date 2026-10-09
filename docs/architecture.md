@@ -351,7 +351,11 @@ All files are flat in `R/`.
   Each dose is then an ordinary input, so the engines stay linear; saturation shared between
   overlapping doses is not represented.
 - **Suggest Dosing** (`suggest.R`) — given a target drug and end time, optimizes bolus +
-  infusion amounts to reach and hold a target concentration.
+  infusion amounts to reach and hold a target concentration. The fit is over the effect-site
+  concentration alone, evaluated as a sum of each row's unit-dose curve (the engine is linear);
+  every rate change is inside the window, and the regimen ends with one zero-rate row at the end
+  time. The dialog offers only `suggestDrugChoices()`: an effect site and IV bolus and infusion
+  units.
 - **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current
   simulation and mails it: plot, dose table, and a URL that reconstructs the exact state.
 - **Editors & modals** (`app_server.R`) — in-app Drug Library and Drug Thresholds editors, plus
