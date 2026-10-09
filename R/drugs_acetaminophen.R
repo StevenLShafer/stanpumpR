@@ -16,13 +16,21 @@
 #     Q  = 43.5 x (TBW / 70)^0.75       L/h
 #     V2 = 29.7 x (TBW / 70)            L
 #
-#     NFM = FFM + 0.816 x (TBW - FFM)   FFM by Janmahasatian
+#     NFM = FFM + 0.816 x (TBW - FFM)   FFM by Janmahasatian in the paper
 #
 # NFMstd is the normal fat mass of the paper's standard man, 70 kg and 176 cm,
 # whose FFM the paper gives as 56.1 kg.  The code computes it from the same
 # formula (56.13 kg, NFMstd 67.45 kg), so that man recovers 24.0 L/h exactly.
 # The library's own reference man (70 kg, 170 cm, FFM 54.5 kg) is a little
 # fatter, and his clearance is 23.92 L/h.
+#
+# Morse computed FFM with Janmahasatian's equations.  The code uses the
+# library's ffmAlSallami() (docs/weight-adjustment.md), which multiplies
+# Janmahasatian's FFM by a maturation term.  The term is 1 in men from about
+# 20 years, so the standard man and adult men are as published.  In adult
+# women it is 1.03 at 18 years and 1.01 at 50, raising clearance by less
+# than 0.3%.  In children it is about 0.88 in boys and 1.05 in girls, so
+# clearance is 1.5% lower in a boy and 0.5-0.7% higher in a girl.
 #
 # All values are from Morse's Table 2 (final model): CL 24.0 L/h/70 kg,
 # Q2 43.5 L/h/70 kg, V1 43.7 L/70 kg, V2 29.7 L/70 kg, FFAT on CL 0.816,
@@ -62,7 +70,7 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Clearance uses its own normal-fat-mass covariate in both switch positions;
-# size$ffm is the Janmahasatian FFM in adults.  With the switch on, the
+# size$ffm is ffmAlSallami()'s FFM (see the header).  With the switch on, the
 # volumes see the pharmacokinetic weight and Q takes the library clearance
 # factor; with it off, they see total body weight as published.
 #

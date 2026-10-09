@@ -10,7 +10,7 @@ Every value is from the paper's final-model table (Table 2). The abstract's "cen
 
 ### Covariates
 
-Clearance carries its own covariate, **normal fat mass**: fat-free mass (Janmahasatian) plus 0.816 of the fat mass, scaled allometrically to the 0.75 power. It does so in either position of the [fat-free-mass switch](help:models/fat-free-mass). The volumes and the intercompartmental clearance were published on total body weight. With the switch on they see the pharmacokinetic weight, and with it off they see total weight, as published.
+Clearance carries its own covariate, **normal fat mass**: fat-free mass plus 0.816 of the fat mass, scaled allometrically to the 0.75 power. It does so in either position of the [fat-free-mass switch](help:models/fat-free-mass). Morse computed fat-free mass with Janmahasatian's equations; stanpumpR uses its own, Al-Sallami's, which are the same in adult men. They give a clearance less than 0.3% higher in adult women, and in children about 1.5% lower in boys and under 1% higher in girls. The volumes and the intercompartmental clearance were published on total body weight. With the switch on they see the pharmacokinetic weight, and with it off they see total weight, as published.
 
 ### Effect site
 
