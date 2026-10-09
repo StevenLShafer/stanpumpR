@@ -57,7 +57,8 @@
 # Oral: bioavailability 0.94 (Divoll 1983, 5 mg against IV in 22 adults).
 # Intramuscular: 1.0 (Hung 1996, by deconvolution and by dose-normalised AUC).
 # Absorption rates are set so that the typical peak matches the observed
-# mean peak, as for oxycodone:
+# mean peak, as for oxycodone (kept so by decision of Steven L. Shafer,
+# 2026-10-09):
 #   Oral, absorption half-life 20 min: 10 mg peaks at 302 ng/mL at 27 min.
 #     Hogan 2020 (46 adults, 10 mg Valium fasting): geometric mean peaks 338
 #     and 286 ng/mL (51-75 and 76-111 kg) at median 1.0 and 0.75 h; 406

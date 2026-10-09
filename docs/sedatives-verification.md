@@ -129,7 +129,8 @@ McCann 2025.
 - Routes: oral F 0.94 (Divoll 1983) and IM F 1.0 (Hung). Each absorption
   half-life (20 min oral, 50 min IM) is set so the typical peak matches the
   observed mean peak: 10 mg PO 302 ng/mL (Hogan 2020, 286-338); 10 mg IM 200
-  ng/mL (Hung, 199). The peak times then differ from those observed.
+  ng/mL (Hung, 199). The peak times then differ from those observed. Kept
+  so by Dr Shafer's decision (2026-10-09).
 - Not modelled: nordiazepam, by Dr Shafer's decision (2026-10-09; 53% of
   the dose reaches the circulation as it, Greenblatt 1988), and age.
 
