@@ -39,7 +39,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | methadone | **Charles E. Inturrisi** and colleagues (1987) | Kinetics in patients with cancer pain |
 | ketamine | **Edward F. Domino** and colleagues (1984) | Kinetics in volunteers |
 | dexmedetomidine | **Jeffrey B. Dyck** and colleagues (1993); **Athena F. Zuppa** and colleagues (2019) | Adult kinetics; the infant model with cardiopulmonary-bypass parameters |
-| midazolam | **Diane R. Mould** and colleagues (1995) | Three-compartment kinetics |
+| midazolam | **M. Bührer**, Stanski and colleagues (1990); **Katayoun Zomorodi**, Shafer and colleagues (1998) | Three-compartment kinetics in volunteers, the set STANPUMP first used for midazolam TCI; Zomorodi's table of it |
 | etomidate | **John R. Arden** and colleagues (1986) | Kinetics in patients, including the elderly |
 | lidocaine | Schnider and colleagues (1996) | Two-compartment kinetics during an infusion |
 | rocuronium | **Bertrand Plaud** and colleagues (1995); **Luis I. Cortínez** and colleagues (2007) | Kinetics; time to peak effect |
