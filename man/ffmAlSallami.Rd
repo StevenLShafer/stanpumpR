@@ -22,8 +22,10 @@ fat-free mass in kg
 Al-Sallami et al. (2015), \emph{Clin Pharmacokinet} 54:1169-1178: the adult
 fat-free mass of Janmahasatian et al. (2005) multiplied by a sex-specific
 sigmoid maturation function of postnatal age.  The maturation term is 1 in
-adults, so for an adult this is the Janmahasatian formula.  The model was
-built on ages 3 to 29 years and adult data; below 3 years it is an
+men from about 20 years, so for an adult man this is the Janmahasatian
+formula.  In women it approaches 1 slowly (1.03 at 18 years, 1.012 at 50),
+so an adult woman's fat-free mass is 1-3\% above Janmahasatian's.  The model
+was built on ages 3 to 29 years and adult data; below 3 years it is an
 extrapolation.
 }
 \keyword{internal}

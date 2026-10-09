@@ -6,7 +6,7 @@ A 120 kg patient is not clearing drug 1.7 times as fast as a 70 kg one: the extr
 
 ## What the switch does
 
-With the box ticked, stanpumpR computes the patient's fat-free mass from weight, height, age and sex (the Al-Sallami 2015 equations, which reduce to the Janmahasatian 2005 formula in adults) and scales each affected model:
+With the box ticked, stanpumpR computes the patient's fat-free mass from weight, height, age and sex (the Al-Sallami 2015 equations, which extend the Janmahasatian 2005 formula to children; they give the same fat-free mass in adult men and 1 to 3 per cent more in adult women) and scales each affected model:
 
 | Parameter | Multiplier |
 |---|---|

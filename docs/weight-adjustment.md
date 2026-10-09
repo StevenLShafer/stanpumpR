@@ -65,8 +65,13 @@ male    maturation = 0.88 + 0.12 / (1 + (age / 13.4)^-12.7)
 female  maturation = 1.11 - 0.11 / (1 + (age / 7.1)^-1.1)
 ```
 
-The maturation term is 1 in adults, so for an adult the Al-Sallami FFM is the
-Janmahasatian FFM. The model was built on children aged 3 to 29 years plus the
+In men the maturation term is 1 from about 20 years, so for an adult man the
+Al-Sallami FFM is the Janmahasatian FFM, and the reference man's 54.5 kg is
+the same by either formula. In women the term approaches 1 only slowly: it is
+1.03 at 18 years, 1.016 at 35, 1.012 at 50 and 1.007 at 80, so an adult
+woman's Al-Sallami FFM is 1 to 3 percent above her Janmahasatian FFM. In
+children it is about 0.88 in boys before puberty and 1.04 to 1.08 in girls
+from 3 to 10 years. The model was built on children aged 3 to 29 years plus the
 adult data. Below 3 years it is an extrapolation. O'Hanlon and colleagues (2023)
 extended it down to premature neonates, but their model needs postmenstrual
 age, which stanpumpR does not collect, so stanpumpR uses the 2015 model
@@ -114,7 +119,7 @@ scaled everything linearly with weight.
 
 | Scaled to fat-free mass | Not scaled (own covariates) |
 |---|---|
-| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, methadone, midazolam, morphine, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; the oral analgesics gabapentin and pregabalin, on their own covariates; and the sedatives diazepam, lorazepam, clonazepam, zolpidem and temazepam, and alprazolam on its own weight covariate | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance, which is the Janmahasatian fat-free mass; its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. |
+| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, methadone, midazolam, morphine, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; the oral analgesics gabapentin and pregabalin, on their own covariates; and the sedatives diazepam, lorazepam, clonazepam, zolpidem and temazepam, and alprazolam on its own weight covariate | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance. Dowling used the Janmahasatian lean body weight; stanpumpR uses the Al-Sallami fat-free mass, which is the same in adult men, the population Dowling studied, and 1 to 3 percent higher in adult women. Its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. |
 
 **Models with their own weight or renal covariates.** Several antibiotic and
 reversal-agent models write a body-weight term into some parameters
