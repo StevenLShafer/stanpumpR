@@ -18,12 +18,13 @@ midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # which the set was entered.  Earlier versions of this file cited Mould et
   # al. (Clin Pharmacol Ther 1995;58:35-43), which reports only
   # noncompartmental kinetics.
-  # tPeak: 4 min, source not recorded.  With these kinetics Buhrer's t1/2 ke0
-  # of 4.8 min (nonparametric) or 5.6 min (parametric) (part II, Table III and
-  # text) would put the peak at 2.7 or 3.0 min, and Mould's 3.2 min at 2.2 min.
-  # Buhrer's observed peak EEG effect after 3.75 mg given over 45 s was at 2.9
-  # and 2.2 min (part I, Table II).  A 4 min peak needs a t1/2 ke0 of about
-  # 8.5 min.
+  # tPeak: 3.0 min, from the same data as the kinetics.  Buhrer's parametric
+  # t1/2 ke0 of 5.6 min (part II, text), fitted against his three-compartment
+  # kinetics, peaks at 2.97 min with these kinetics; his nonparametric 4.8 min
+  # (part II, Table III) peaks at 2.7 min.  His observed peak EEG effect after
+  # 3.75 mg given over 45 s was at 2.9 and 2.2 min (part I, Table II).  Until
+  # 2026 the library used 4 min, from no recorded source; Mould's t1/2 ke0 of
+  # 3.2 min would give 2.2 min.
   # Size scaling (see docs/weight-adjustment.md): the published parameters
   # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
   # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
@@ -46,14 +47,15 @@ midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Zomorodi K et al., Anesthesiology 1998;89(6):1418-1429, Table 3: ",
     "kinetics fitted to the data of Buhrer M et al., Clin Pharmacol Ther ",
-    "1990;48(5):544-554, used by STANPUMP for target-controlled infusion. ",
-    "https://pubmed.ncbi.nlm.nih.gov/9856717/"
+    "1990;48(5):544-554, used by STANPUMP for target-controlled infusion; ",
+    "time to peak effect from Buhrer M et al., Clin Pharmacol Ther ",
+    "1990;48(5):555-567. https://pubmed.ncbi.nlm.nih.gov/9856717/"
   )
   typical <- .100 
   upperTypical <- .040
   lowerTypical <- .120
   MEAC <- 0
-  tPeak <- 4
+  tPeak <- 3.0
   return(
     list(
       PK = PK, 

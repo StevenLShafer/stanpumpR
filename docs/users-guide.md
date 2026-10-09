@@ -341,7 +341,7 @@ what the literature offers.
 | Methadone | Inturrisi CE et al., *Clin Pharmacol Ther* 1987;41(4):392–401. [PMID 3829576](https://pubmed.ncbi.nlm.nih.gov/3829576/) |
 | Ketamine | Domino EF et al., *Clin Pharmacol Ther* 1984;36(5):645–653. [PMID 6488686](https://pubmed.ncbi.nlm.nih.gov/6488686/) |
 | Dexmedetomidine | Adult: Dyck JB et al., *Anesthesiology* 1993;78(5):821–828. [PMID 8098191](https://pubmed.ncbi.nlm.nih.gov/8098191/)<br>Age ≤ 1 yr: Zuppa, *Br J Anaesth* 2019 |
-| Midazolam | Mould DR et al., *Clin Pharmacol Ther* 1995;58(1):35–43. [PMID 7628181](https://pubmed.ncbi.nlm.nih.gov/7628181/) |
+| Midazolam | Zomorodi K et al., *Anesthesiology* 1998;89(6):1418–1429, Table 3. [PMID 9856717](https://pubmed.ncbi.nlm.nih.gov/9856717/) Kinetics fitted to the data of Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):544–554. [PMID 2225713](https://pubmed.ncbi.nlm.nih.gov/2225713/) Time to peak effect from Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):555–567. [PMID 2225714](https://pubmed.ncbi.nlm.nih.gov/2225714/) |
 | Etomidate | Arden JR et al., *Anesthesiology* 1986;65(1):19–27. [PMID 3729056](https://pubmed.ncbi.nlm.nih.gov/3729056/) |
 | Lidocaine | Schnider TW et al., *Anesthesiology* 1996;84(5):1043–1050. [PMID 8623997](https://pubmed.ncbi.nlm.nih.gov/8623997/) |
 | Rocuronium | Plaud B et al., *Clin Pharmacol Ther* 1995;58(2):185–191. [PMID 7648768](https://pubmed.ncbi.nlm.nih.gov/7648768/) |

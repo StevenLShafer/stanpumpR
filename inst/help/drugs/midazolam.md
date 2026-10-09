@@ -8,7 +8,7 @@ None. The parameters are for a typical adult. Midazolam's clearance is known to 
 
 ### Effect site
 
-The time to peak effect is 4 minutes. Its source is not recorded. With these kinetics, Bührer's EEG equilibration half-time of 4.8 minutes (5.6 by parametric fitting; *Clin Pharmacol Ther* 1990;48:555-567) would put the peak at 2.7 to 3.0 minutes, and Mould's 3.2 minutes at about 2.2 minutes. In Bührer's volunteers, the EEG effect of 3.75 mg given over 45 seconds peaked 2.2 and 2.9 minutes after the infusion started.
+The time to peak effect is 3.0 minutes, from the same volunteers as the kinetics. Bührer's EEG equilibration half-time, fitted parametrically against his three-compartment kinetics, was 5.6 minutes (*Clin Pharmacol Ther* 1990;48:555-567); with this model it puts the peak at 3.0 minutes. His nonparametric estimate, 4.8 minutes, would put it at 2.7. In his volunteers, the EEG effect of 3.75 mg given over 45 seconds peaked 2.2 and 2.9 minutes after the infusion started. Earlier versions of the library used 4 minutes, a value with no recorded source.
 
 ### Typical concentrations
 
