@@ -31,12 +31,14 @@
 # assumed value, after the age-adjusted creatinine of Bjork et al. (Kidney Int
 # 2021;99:940-947).  A child at the normal creatinine for age then gets the
 # adult assumed value (Cockcroft-Gault 38 mL/min for the boy above), and a
-# child at twice the normal for age gets half that clearance.  At a blank
-# field the step at 18 therefore cancels for these models (both sides get the
-# adult value), but an entered creatinine reads 18-22% higher on the adult
-# scale just under 18 than just over it.  Only the pregabalin model, whose
-# source estimated children's renal function from their own creatinine
-# (Schwartz under 13, Cockcroft-Gault from 13), takes the unscaled value.
+# child at twice the normal for age gets half that clearance; the CKD-EPI eGFR
+# (gentamicin) falls to about 0.43 of its value instead, 2^-1.209, since both
+# creatinines are above its kappa.  At a blank field the step at 18 cancels
+# for these models (both sides get the adult value), but an entered
+# creatinine reads 18-22% higher on the adult scale just under 18 than just
+# over it.  Only the pregabalin model, whose source estimated children's renal
+# function from their own creatinine (Schwartz under 13, Cockcroft-Gault from
+# 13), takes the unscaled value.
 #
 # Body size.  Cockcroft-Gault contains body weight, and the weight passed in
 # is whatever the calling model is scaling on: with the fat-free-mass switch
