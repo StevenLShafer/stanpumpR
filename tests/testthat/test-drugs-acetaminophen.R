@@ -32,7 +32,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
     tPeak = 0,
     ke0 = 0.0130782487,
     MEAC = 0,
-    typical = 10,
+    typical = 7,
     upperTypical = 15,
     lowerTypical = 3,
     reference = actual$reference
