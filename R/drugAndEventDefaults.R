@@ -29,6 +29,20 @@ getDrugDefaultsGlobal <- memoise::memoise(function(expand = TRUE)
   drugDefaultsDataset
 })
 
+#' Drug names in the order the app offers them
+#'
+#' Alphabetical, ignoring case, in the C collation so the order is the same
+#' on every platform.  The dose table's Drug column, the Add a dose dialog and
+#' Suggest Dosing list the drugs this way; the drug library itself, and so
+#' everything indexed by its rows, keeps the order of the CSV.
+#'
+#' @param drugs drug names
+#' @returns `drugs`, sorted
+#' @keywords internal
+sortDrugNames <- function(drugs) {
+  drugs[order(tolower(drugs), method = "radix")]
+}
+
 getEventDefaults <- function() {
   utils::read.csv(
     system.file("extdata", "eventDefaults.csv", package = "stanpumpR")

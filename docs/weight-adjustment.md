@@ -114,11 +114,12 @@ scaled everything linearly with weight.
 
 | Scaled to fat-free mass | Not scaled (own covariates) |
 |---|---|
-| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, methadone, midazolam, morphine, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; and amiodarone, desethylamiodarone, amiodaroneIV | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance, which is the Janmahasatian fat-free mass; its other parameters inherit the scaling. |
+| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, methadone, midazolam, morphine, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; and the oral analgesics gabapentin and pregabalin, on their own covariates | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance, which is the Janmahasatian fat-free mass; its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. |
 
 **Models with their own weight or renal covariates.** Several antibiotic and
 reversal-agent models write a body-weight term into some parameters
-(vancomycin's volumes, gentamicin's central volume, every sugammadex parameter)
+(vancomycin's volumes, gentamicin's central volume, every sugammadex parameter,
+pregabalin's clearance and volume)
 or carry weight into a renal covariate through Cockcroft-Gault or body surface
 area. With the switch on, those terms are evaluated at the **pharmacokinetic
 weight**, 70 kg × FFM / FFM<sub>ref</sub>, so that the reference man receives the
@@ -143,7 +144,7 @@ before fat-free mass was introduced:
 | Fixed published parameters (alfentanil, sufentanil, midazolam, oliceridine, oxycodone, mannitol, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone) | no scaling at all |
 | V1 per kilogram with fixed rate constants (ketamine, etomidate, morphine, methadone, hydromorphone, pethidine, lidocaine, rocuronium, neostigmine, amiodaroneIV) | volumes and clearances both × weight / 70 |
 | Allometric on total weight (fentanyl, remimazolam, infant dexmedetomidine, cefalexin, hydrocortisone, metronidazole on its adjusted body weight (total weight under 18 years), clindamycin with its published 0.497 exponent) | volumes × weight / 70, clearances × (weight / 70)<sup>0.75</sup> (or the published exponent) |
-| Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone) | the published equations on total body weight; size-free parameters fixed |
+| Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone, gabapentin, pregabalin, acetaminophen) | the published equations on total body weight; size-free parameters fixed |
 
 Propofol, remifentanil and oxytocin do not respond to the switch.
 

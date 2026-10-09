@@ -132,6 +132,7 @@ gasUnits <- c("L/min", "%")
 DRUG_CATEGORIES <- c(
   "Hypnotics and sedatives",
   "Opioids",
+  "Oral analgesics",
   "Neuromuscular blockade",
   "Inhaled anesthetics",
   "Antibiotics",

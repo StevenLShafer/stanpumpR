@@ -73,7 +73,7 @@ A published model that was fitted on total body weight is **still** scaled to fa
 Placeholders for a missing compartment (`v3 = 1`, `cl3 = 0`) are left unscaled.
 
 **A model with its own weight or renal covariate** (vancomycin, gentamicin, sugammadex,
-cefazolin) evaluates the published equations at the pharmacokinetic weight with the switch
+cefazolin, gabapentin, pregabalin) evaluates the published equations at the pharmacokinetic weight with the switch
 on (`size$pkWeight`, which is 70 kg × FFM / FFM<sub>ref</sub>) and at total body weight with it
 off, and scales any size-free parameter by the library factors. Write that choice out:
 `if (isTRUE(adjustToFFM)) size$pkWeight else weight`, as `R/drugs_cefazolin.R` does. Do not
@@ -259,8 +259,8 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   added by this procedure is `IV`.
 - `Category` — the group the drug is listed under in the menu the app opens with: one of
   `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
-  `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`, `Corticosteroids`,
-  `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
+  `Corticosteroids`, `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.

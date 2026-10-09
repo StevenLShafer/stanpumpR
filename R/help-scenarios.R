@@ -286,6 +286,18 @@ helpScenarios <- function() {
       # the second dose reads 1.5.
       timeUnits = "days", maximum = 2880, plasmaLinetype = "solid"
     ),
+    helpScenario(
+      "pregabalin-linear-absorption",
+      "Pregabalin: twice the dose, twice the concentration",
+      "Oral analgesics",
+      "Pregabalin 150 mg and then, after a washout, 300 mg by mouth: unlike gabapentin, the larger dose peaks twice as high, and the effect site peaks hours after the plasma.",
+      doses = helpDoses(
+        c("pregabalin", 0, 150, "mg PO"),
+        c("pregabalin", 2160, 300, "mg PO")
+      ),
+      # Two days, so in days, as for gabapentin: the second dose reads 1.5.
+      timeUnits = "days", maximum = 2880, plasmaLinetype = "dashed"
+    ),
 
     # --- Interactions --------------------------------------------------------
     helpScenario(

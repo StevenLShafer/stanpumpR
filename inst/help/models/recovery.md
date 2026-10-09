@@ -7,7 +7,7 @@ Each drug's threshold (`endCe` in the drug library) is the effect-site concentra
 ## Which concentration is timed
 
 - **A drug with an effect site** is timed on its effect-site concentration, because that is where the effect is.
-- **A drug with no effect site** is timed on its plasma concentration: the antibiotics, the corticosteroids, sugammadex, glycopyrrolate, mannitol, amiodarone, desethylamiodarone and amiodaroneIV, and the prodrugs codeine and tramadol. Of these, only the antibiotics and amiodarone have a threshold by default.
+- **A drug with no effect site** is timed on its plasma concentration: the antibiotics, the corticosteroids, sugammadex, glycopyrrolate, mannitol, gabapentin, amiodarone, desethylamiodarone and amiodaroneIV, and the prodrugs codeine and tramadol. Of these, only the antibiotics and amiodarone have a threshold by default.
 
 ## The antibiotics: free drug at the MIC
 
