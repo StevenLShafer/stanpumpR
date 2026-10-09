@@ -32,7 +32,7 @@ The regimen is then refined with R's `nlm()` optimiser. The objective is a conce
 
 ## Why it is "good but not provably optimal"
 
-The objective is a least-squares fit, which treats overshoot and undershoot alike and spreads error evenly in time. It does not minimise the time to target, limit the peak plasma concentration, or guarantee no overshoot, and a different parameterisation of the regimen (more rate changes, or rates at different times) would do better. It is the best fit only for the rate-change times above, only at the 100 times it is judged at, and only to the optimiser's tolerance and the rounding of the doses. The dialog says so. For the drugs that offer *Plasma target* and *Effect site target* units, a [target-controlled infusion](help:tci) computes the loading dose and maintenance infusion exactly from the kinetics, every ten seconds, and is the right tool for a target.
+The objective is a least-squares fit, which treats overshoot and undershoot alike and spreads error evenly in time. It does not minimise the time to target, limit the peak plasma concentration, or guarantee no overshoot, and a different parameterisation of the regimen (more rate changes, or rates at different times) would do better. It is the best fit only for the rate-change times above, only at the 100 times it is judged at, and only to the optimiser's tolerance and the rounding of the doses. The dialog says so. For the drugs that offer *Plasma target* and *Effect site target* units, a [target-controlled infusion](help:tci) computes the loading dose and maintenance infusion directly from the kinetics at every update, and is the right tool for a target.
 
 ## Reference
 
