@@ -42,9 +42,9 @@
 #
 # Rules from the specification (Shafer, 2026-10-06):
 #   - A target of 0 stops the TCI infusion.
-#   - A manual infusion row stops the TCI infusion; a TCI target zeroes any
-#     manual infusion that is running.  When both are entered at the same
-#     time the target wins.
+#   - A manual infusion row stops the TCI infusion (the schedule gets a zero
+#     row there); a TCI target zeroes any manual infusion that is running.
+#     When both are entered at the same time the target wins.
 #   - Manual boluses are allowed during TCI; the controller sees them and
 #     gives no drug until the concentration is back at the target.
 #   - Oral, IM and IN doses are not in the controller's model (as an unmodelled
@@ -202,6 +202,11 @@ tciSchedule <- function(dose, PK, maximum,
     }
     m <- manualRows[manualRows$Time == te, ]
     if (nrow(m) > 0) {
+      # A manual infusion stops the controller.  The schedule says so with a
+      # zero row, as for a target of 0; without it the rate panel, its hover
+      # and the export carried the last TCI rate on to the end of the plot.
+      # The engine adds the zero to the manual rate set at the same time.
+      if (mode == "tci") emit(te, 0, 0)
       mode <- "manual"; manualRate <- sum(m$Dose)
     }
     tg <- targets[targets$Time == te, ]
