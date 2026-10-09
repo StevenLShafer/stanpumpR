@@ -101,8 +101,10 @@ display*), and the field is forgiving:
   table takes numbers only; an `H:MM` pasted in is read as hours and minutes)
 - `130` — 130 of the unit, not 1:30
 
-Minutes above 59 roll over, so `0:80` becomes `01:20`. Anything that cannot be
-read as a time becomes zero rather than raising an error.
+Minutes above 59 roll over, so `0:80` becomes `01:20`. A blank time or dose
+becomes zero. An entry that is not one plain number (or, for a time, `H:MM`) is
+not guessed at: `-5`, `5 mg`, `1.2.3` or `8;30` clears the cell, and the row is
+ignored until it is corrected. Scientific notation is read (`1e3` is 1000).
 
 ### Applying changes
 

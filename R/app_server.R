@@ -1514,6 +1514,19 @@ app_server <- function(input, output, session) {
     profileCode({
       addDoseTime <- validateTime(input$addDoseTime)
       addDoseAmount <- validateDose(input$addDoseAmount)
+      # A time or dose that could not be read ("", see R/validate-input.R)
+      # leaves the dialog open to be corrected, as the add-event dialog does,
+      # rather than adding a row the simulation would ignore.
+      if (!nzchar(addDoseTime)) {
+        showNotification(paste0("That time could not be read: enter it as ",
+                                timeEntryUnitText(doseTableFormat()), "."), type = "error")
+        return()
+      }
+      if (!nzchar(addDoseAmount)) {
+        showNotification("That dose could not be read: enter it as a number, such as 2.5.",
+                         type = "error")
+        return()
+      }
       removeModal()
       thisDrug <- which(drugDefaults()$Drug == input$addDoseDrug)
 
@@ -1642,8 +1655,22 @@ app_server <- function(input, output, session) {
     input$editDosesOK,
     {
       profileCode({
-        removeModal()
         TT <- rhandsontable::hot_to_r(input$editPriorDosesTable)
+        # Every dose kept needs a time and a dose that can be read.  A blank
+        # counts as unreadable here: the grid clears an entry it cannot read
+        # (inst/www/hot_funs.js), and validateTime() and validateDose() below
+        # would make the blank 0.  The dialog stays open to be corrected.
+        kept <- TT[!TT$Delete, , drop = FALSE]
+        unreadable <- function(x, validate) {
+          vapply(x, function(v) isBlankEntry(v) || !nzchar(validate(v)), logical(1))
+        }
+        if (any(unreadable(kept$Time, validateTime)) || any(unreadable(kept$Dose, validateDose))) {
+          showNotification(paste0("Every dose needs a time, entered as ",
+                                  timeEntryUnitText(doseTableFormat()),
+                                  ", and a dose, entered as a number."), type = "error")
+          return()
+        }
+        removeModal()
         outputComments("In ObserveEvent for editDosesOK")
         TT$Drug <- DrugTimeUnits()$drug
         outputComments("TT:")

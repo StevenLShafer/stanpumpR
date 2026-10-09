@@ -89,7 +89,9 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
   resolve <- function(drugs, drug) {
     idx <- which(drugDefaults$Drug==drug)
     drugs[[drug]]$Color <- drugDefaults$Color[idx]
-    drugs[[drug]]$endCe <- drugDefaults$endCe[idx]
+    # endCe, the time-until-threshold concentration, comes with the PK:
+    # getDrugPK() reads it from this session's drugDefaults row, with any
+    # Drug Thresholds edit.
     outputComments("Getting PK for", drug)
     drugs[[drug]] <- utils::modifyList(
       drugs[[drug]],

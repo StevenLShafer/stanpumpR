@@ -8,7 +8,9 @@
 #' @param height height in cm
 #' @param age age in years
 #' @param sex sex as string: "female" or "male"
-#' @param maximum maximum length of simulation in minutes
+#' @param maximum end of the simulation, in minutes.  As in \code{simCpCe()},
+#'   each drug's result covers 0 to \code{maximum} only: doses at or after it
+#'   are ignored.
 #' @param plotRecovery should the "time until threshold" be calculated?  See
 #'   \code{simCpCe()}.
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
@@ -64,12 +66,6 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
                     osmolality = osmolality, creatinine = creatinine,
                     adjustToFFM = adjustToFFM)
-    # simCpCe() reads the emergence threshold off PK$endCe, which getDrugPK()
-    # does not set: its own `emerge` field reads a drugDefaults$Emerge column
-    # that does not exist, the CSV calls it endCe.  The Shiny path works
-    # because recalculatePK() assigns it by hand.  Without this line every
-    # time until threshold computed through this function is zero.
-    PK$endCe <- drugDefaults$endCe
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
 
