@@ -130,14 +130,11 @@ McCann 2025.
   half-life (20 min oral, 50 min IM) is set so the typical peak matches the
   observed mean peak: 10 mg PO 302 ng/mL (Hogan 2020, 286-338); 10 mg IM 200
   ng/mL (Hung, 199). The peak times then differ from those observed.
-- Not modelled: nordiazepam (53% of the dose reaches the circulation as it,
-  Greenblatt 1988), and age.
+- Not modelled: nordiazepam, by Dr Shafer's decision (2026-10-09; 53% of
+  the dose reaches the circulation as it, Greenblatt 1988), and age.
 
 ## Not yet implemented, and what would unblock them
 
-- **Nordiazepam**, as diazepam's active metabolite: the library's
-  metabolite mechanism would carry it, with a nordiazepam disposition model
-  (Greenblatt 1988: V 90 L, CL 12.3 mL/min, t½ 93 h in older subjects).
 - **Barr 2001** (lorazepam ICU PK, ke0 and sedation model) would replace the
   derived lorazepam disposition. **Venkatakrishnan 2005** would allow IV
   alprazolam (no product exists). IV clonazepam would need a study sampled in

@@ -91,9 +91,10 @@
 #
 # NOT MODELLED
 # ============
-# Nordiazepam: about half of a diazepam dose reaches the circulation as
-# nordiazepam (53%, Greenblatt 1988), which is active and has a half-life of
-# days, so repeated dosing produces more effect than this curve shows.  Also
+# Nordiazepam, by decision (Steven L. Shafer, 2026-10-09): about half of a
+# diazepam dose reaches the circulation as nordiazepam (53%, Greenblatt
+# 1988), which is active and has a half-life of days, so repeated dosing
+# produces more effect than this curve shows.  Also
 # not modelled: age (the half-life rises from about 20 h at 20 years to about
 # 90 h at 80, from a larger volume with clearance unchanged; Klotz 1975), sex
 # (the volume is larger in women; Divoll 1983), obesity, CYP2C19 and CYP3A4,
