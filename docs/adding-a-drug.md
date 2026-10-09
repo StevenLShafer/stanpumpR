@@ -80,10 +80,15 @@ off, and scales any size-free parameter by the library factors. Write that choic
 derive the weight from `70 * size$volume` unless the model's `legacyVolume` is `weight / 70`;
 with `legacyVolume = 1` that expression is 70 kg for everyone when the switch is off. Renal
 function comes from `R/renalFunction.R` (`creatinineClearanceCG()`, `egfrDeindexed()`).
-Add `creatinine = NULL` to the model's signature and pass `patientCreatinine(creatinine, sex)`
-as the creatinine: that is the patient's serum creatinine from the Patient Profile, or an
-**assumed normal creatinine** for the patient's sex when the field is blank. Say so in the
-model's header and in its `reference` string. See `R/drugs_vancomycin.R`.
+Add `creatinine = NULL` to the model's signature and pass
+`adultEquivalentCreatinine(creatinine, age, sex)` as the creatinine: that is the patient's
+serum creatinine from the Patient Profile, or an **assumed normal creatinine** for the
+patient's age and sex when the field is blank, and for a child it is put on the adult scale
+(divided by the normal for age, times the adult value), because Cockcroft-Gault and CKD-EPI
+overestimate a child's renal function from the child's own creatinine. Pass
+`patientCreatinine(creatinine, age, sex)` instead only when the source applied its renal
+equation to children's own creatinine, as pregabalin's did. Say so in the model's header
+and in its `reference` string. See `R/drugs_vancomycin.R` and `R/renalFunction.R`.
 
 **What the engine cannot represent.** The closed-form engine is linear and mammillary, with
 first-order extravascular absorption. A source model with saturable protein binding

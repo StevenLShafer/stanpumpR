@@ -18,7 +18,8 @@
 #' @param osmolality baseline serum osmolality in mOsm/kg.  Only an osmotic
 #'   agent (mannitol), which is reported as serum osmolality, is affected.
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
-#'   value for the patient's sex.  Only the renally cleared models are affected.
+#'   value for the patient's age and sex.  Only the renally cleared models are
+#'   affected.
 #' @param adjustToFFM scale each model's volumes and clearances to the patient's
 #'   fat-free mass (the default) rather than total body weight; see
 #'   `docs/weight-adjustment.md`.

@@ -50,7 +50,8 @@ fat-free mass (the default) rather than total body weight; see
 agent (mannitol), which is reported as serum osmolality, is affected.}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal
-value for the patient's sex.  Only the renally cleared models are affected.}
+value for the patient's age and sex.  Only the renally cleared models are
+affected.}
 }
 \value{
 a list of data frames with the output of the a single drug

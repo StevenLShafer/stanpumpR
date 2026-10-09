@@ -4,11 +4,13 @@
 \alias{patientCreatinine}
 \title{The serum creatinine a renal model should use}
 \usage{
-patientCreatinine(creatinine, sex)
+patientCreatinine(creatinine, age, sex)
 }
 \arguments{
 \item{creatinine}{the entered serum creatinine in mg/dL, or NULL / NA when
 none was entered}
+
+\item{age}{age in years}
 
 \item{sex}{\code{"male"} or \code{"female"}}
 }
@@ -17,6 +19,6 @@ serum creatinine in mg/dL
 }
 \description{
 The patient's own if it was entered, otherwise the assumed normal value for
-the patient's sex.
+the patient's age and sex.
 }
 \keyword{internal}

@@ -79,10 +79,12 @@
 # Cockcroft-Gault (13 years and over) or Schwartz (under 13) at the
 # patient's serum creatinine from the Patient Profile, or, when none is
 # entered, an ASSUMED NORMAL creatinine (R/renalFunction.R), which captures
-# the decline with age and the sex difference but not renal impairment.  The
-# assumed value is an adult's (1.0 mg/dL for a male, 0.8 for a female),
-# about twice a young child's, so for a child the creatinine should be
-# entered.  Pregabalin, like gabapentin, is cleared unchanged by the
+# the decline with age and the sex difference but not renal impairment.  In
+# a child the assumed value is the normal creatinine for age (0.35 mg/dL at
+# five years), and, since Chan applied both equations to the children's own
+# creatinine, pregabalin takes it unscaled, where the models fitted only in
+# adults read a child's creatinine on the adult scale (R/renalFunction.R).
+# Pregabalin, like gabapentin, is cleared unchanged by the
 # kidney and accumulates in renal impairment.  Above the breakpoint clearance
 # does not rise, so augmented renal clearance is not represented, by design of
 # the source.  Haemodialysis, which removes pregabalin efficiently, is not
@@ -196,7 +198,7 @@ pregabalin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # NCLcr, mL/min/1.73 m^2, as Chan computed it (Methods, Table 1):
   # Cockcroft-Gault normalised to body surface area at 13 years and over,
   # the Schwartz equation under 13.
-  scr   <- patientCreatinine(creatinine, sex)
+  scr   <- patientCreatinine(creatinine, age, sex)
   nclcr <- if (age < 13) {
     egfrSchwartz(height, age, scr)
   } else {
@@ -242,7 +244,7 @@ pregabalin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "One compartment with first-order absorption after a lag; clearance on ",
     "creatinine clearance per 1.73 m^2 (Cockcroft-Gault normalised to body ",
     "surface area from 13 years, Schwartz below; from the entered creatinine ",
-    "or an assumed normal adult one for the patient's sex) to a breakpoint; ",
+    "or an assumed normal one for age and sex) to a breakpoint; ",
     "effect site from van Esdonk 2018; oral only. ",
     "https://doi.org/10.1002/cpt.2132"
   )

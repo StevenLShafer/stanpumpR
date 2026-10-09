@@ -148,7 +148,9 @@ CL1 = 0.07 L/min × CrCl / 102
 
 CrCl is computed from the **Serum creatinine** field in the Patient Profile, or
 from an assumed normal creatinine (1.0 mg/dL in men, 0.8 in women) when the field
-is blank. Cockcroft-Gault carries body size, so this factor replaces the
+is blank. A child's creatinine, entered or assumed, is read against the normal for
+age and put on the adult scale (`R/renalFunction.R`), so a blank field gives a child
+the adult value. Cockcroft-Gault carries body size, so this factor replaces the
 fat-free-mass factor on CL1. It sees the pharmacokinetic weight with the switch
 on and total weight with it off, as the other renal models do. The volumes and
 the distribution clearances are unchanged.

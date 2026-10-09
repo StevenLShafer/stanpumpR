@@ -90,13 +90,19 @@ Al-Sallami HS, Goulding A, Grant A, Taylor R, Holford N, Duffull SB. Prediction 
 
 ## Renal function
 
-Several models estimate renal function from the entered serum creatinine, or from an assumed normal creatinine (1.0 mg/dL in men, 0.8 in women) when none is entered.
+Several models estimate renal function from the entered serum creatinine, or from an assumed normal creatinine when none is entered: 1.0 mg/dL in men and 0.8 in women, and in children the median for age (Boer, then Pottel), read on the adult scale by the equations fitted in adults (after Björk).
 
 Cockcroft DW, Gault MH. Prediction of creatinine clearance from serum creatinine. *Nephron* 1976;16:31-41.
 
 Levey AS, Stevens LA, Schmid CH, et al. A new equation to estimate glomerular filtration rate. *Ann Intern Med* 2009;150:604-612.
 
 Du Bois D, Du Bois EF. A formula to estimate the approximate surface area if height and weight be known. *Arch Intern Med* 1916;17:863-871.
+
+Pottel H, Björk J, Courbebaisse M, et al. Development and validation of a modified full age spectrum creatinine-based equation to estimate glomerular filtration rate: a cross-sectional analysis of pooled data. *Ann Intern Med* 2021;174:183-191.
+
+Boer DP, de Rijke YB, Hop WC, Cransberg K, Dorresteijn EM. Reference values for serum creatinine in children younger than 1 year of age. *Pediatr Nephrol* 2010;25:2107-2113.
+
+Björk J, Nyman U, Larsson A, Delanaye P, Pottel H. Estimation of the glomerular filtration rate in children and young adults by means of the CKD-EPI equation with age-adjusted creatinine values. *Kidney Int* 2021;99:940-947.
 
 ## Pharmacodynamics
 

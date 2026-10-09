@@ -57,7 +57,13 @@ Eleveld's propofol model gives women a higher clearance than men (2.10 against 1
 
 ## CYP2D6, and the disabled covariates
 
-**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites). Pregnancy remains in the interface but unused. **Serum creatinine** is a live, optional covariate: mannitol, vancomycin, gentamicin, cefazolin and sugammadex estimate renal function from it, or from an **assumed normal creatinine** when it is blank, which represents renal decline with age but not renal impairment.
+**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites). Pregnancy remains in the interface but unused.
+
+## Renal function
+
+**Serum creatinine** is a live, optional covariate: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin estimate renal function from it. Left blank, it is an **assumed normal creatinine** for the patient's age and sex, which represents the decline of renal function with age but not renal impairment. In adults the assumed value is 1.0 mg/dL in men and 0.8 in women. In children it is the median of healthy children of the same age and sex: Boer's reference values under one year, about 0.25 mg/dL from the second month (higher in the first weeks, while the mother's creatinine clears); from two years, the values of the European Kidney Function Consortium (Pottel), 0.35 at five, 0.5 at ten, and 0.8 in boys and 0.7 in girls at seventeen; between one and two, a smooth join of the two. At 18 it steps up to the adult value.
+
+Cockcroft-Gault and CKD-EPI were developed in adults, and given a child's own creatinine they overestimate renal function: a healthy five-year-old boy of 20 kg at his normal 0.35 mg/dL has a Cockcroft-Gault clearance of 106 mL/min, about twice the normal GFR for his size. So the models built on those equations read a child's creatinine against the normal for age: divided by it, and multiplied by the adult value, after the age-adjusted creatinine of Björk and colleagues. A child at the normal creatinine for age gets the renal function the equation gives at an adult's normal creatinine and the child's own age and size, and a child at twice the normal for age half of it. Pregabalin is the exception: its source estimated children's renal function from their own creatinine, with the Schwartz equation under 13 and Cockcroft-Gault from 13, so pregabalin uses a child's creatinine as it is.
 
 ## Fat-free mass as the default scaling
 
@@ -72,3 +78,9 @@ Al-Sallami HS, Goulding A, Grant A, Taylor R, Holford N, Duffull SB. Prediction 
 Janmahasatian S, Duffull SB, Ash S, Ward LC, Byrne NM, Green B. Quantification of lean bodyweight. *Clin Pharmacokinet* 2005;44:1051-1065.
 
 Anderson BJ, Holford NHG. Mechanism-based concepts of size and maturity in pharmacokinetics. *Annu Rev Pharmacol Toxicol* 2008;48:303-332.
+
+Boer DP, de Rijke YB, Hop WC, Cransberg K, Dorresteijn EM. Reference values for serum creatinine in children younger than 1 year of age. *Pediatr Nephrol* 2010;25:2107-2113.
+
+Pottel H, Björk J, Courbebaisse M, et al. Development and validation of a modified full age spectrum creatinine-based equation to estimate glomerular filtration rate: a cross-sectional analysis of pooled data. *Ann Intern Med* 2021;174:183-191.
+
+Björk J, Nyman U, Larsson A, Delanaye P, Pottel H. Estimation of the glomerular filtration rate in children and young adults by means of the CKD-EPI equation with age-adjusted creatinine values. *Kidney Int* 2021;99:940-947.

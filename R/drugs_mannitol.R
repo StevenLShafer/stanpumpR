@@ -64,8 +64,9 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # clearance tracks GFR.  CL1 is scaled by the patient's Cockcroft-Gault
   # creatinine clearance over the reference patient's, at the creatinine
   # entered in the Patient Profile or, when none is, an assumed normal one
-  # (R/renalFunction.R).  Cockcroft-Gault carries body size, so the renal
-  # factor replaces the size factor on CL1.  The weight it sees is the
+  # (R/renalFunction.R; a child's, either way, on the adult scale).
+  # Cockcroft-Gault carries body size, so the renal factor replaces the size
+  # factor on CL1.  The weight it sees is the
   # pharmacokinetic weight (70 kg x FFM / FFM_ref) with the switch on and
   # total body weight with it off, as for the other renal models.  This is an
   # assumption on top of Kaneda, whose patients had normal renal function and
@@ -74,7 +75,7 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # (see docs/mannitol.md).
   crclWeight <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   crcl <- creatinineClearanceCG(crclWeight, age, sex,
-                                patientCreatinine(creatinine, sex))
+                                adultEquivalentCreatinine(creatinine, age, sex))
   # Kaneda's clearance is taken to belong to the reference patient (70 kg,
   # 35 years, male, creatinine 1.0 mg/dL; Cockcroft-Gault 102 mL/min), so his
   # renal factor is exactly 1.  Computed here rather than at the top level

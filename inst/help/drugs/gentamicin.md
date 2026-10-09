@@ -4,7 +4,7 @@ Gentamicin's parameters are from Smit and colleagues (*J Antimicrob Chemother* 2
 
 ### Covariates
 
-Clearance follows the CKD-EPI 2009 eGFR de-indexed by Du Bois body surface area, from the **Serum creatinine** in the Patient Profile. Left blank, the creatinine is **assumed normal** for the patient's sex: renal decline with age is then represented but renal impairment is not, and gentamicin is the drug for which that matters most. Enter it. Weight enters the central volume and the body surface area: the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass), total weight with the switch off, when the size-free Q and Vp are also fixed as published.
+Clearance follows the CKD-EPI 2009 eGFR de-indexed by Du Bois body surface area, from the **Serum creatinine** in the Patient Profile. Left blank, the creatinine is **assumed normal** for the patient's age and sex (in a child, read on the adult scale; see [Renal function](help:models/covariates)): renal decline with age is then represented but renal impairment is not, and gentamicin is the drug for which that matters most. Enter it. Weight enters the central volume and the body surface area: the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass), total weight with the switch off, when the size-free Q and Vp are also fixed as published.
 
 ### Effect site
 

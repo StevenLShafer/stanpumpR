@@ -4,7 +4,7 @@ Vancomycin's parameters are from Thomson and colleagues (*J Antimicrob Chemother
 
 ### Covariates
 
-Clearance follows Cockcroft-Gault creatinine clearance, from the **Serum creatinine** in the Patient Profile (floored at 0.68 mg/dL, 60 µmol/L, as in the source). Left blank, the creatinine is **assumed normal** for the patient's sex: renal decline with age is then represented but renal impairment is not, and for accumulation in a patient with a raised creatinine, which is the vancomycin question that matters most, the model would be optimistic. Enter it. Both volumes scale linearly with weight, which is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total weight with the switch off.
+Clearance follows Cockcroft-Gault creatinine clearance, from the **Serum creatinine** in the Patient Profile (floored at 0.68 mg/dL, 60 µmol/L, as in the source). Left blank, the creatinine is **assumed normal** for the patient's age and sex (in a child, read on the adult scale; see [Renal function](help:models/covariates)): renal decline with age is then represented but renal impairment is not, and for accumulation in a patient with a raised creatinine, which is the vancomycin question that matters most, the model would be optimistic. Enter it. Both volumes scale linearly with weight, which is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total weight with the switch off.
 
 ### Effect site
 

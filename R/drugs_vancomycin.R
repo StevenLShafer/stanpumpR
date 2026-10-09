@@ -28,7 +28,8 @@
 # RENAL FUNCTION
 # ==============
 # CrCL is Cockcroft-Gault at the patient's serum creatinine from the Patient
-# Profile, floored at 60 umol/L (0.68 mg/dL) as in the source.  When none is
+# Profile (a child's read on the adult scale, R/renalFunction.R), floored at
+# 60 umol/L (0.68 mg/dL) as in the source.  When none is
 # entered it is an ASSUMED NORMAL creatinine (R/renalFunction.R), which
 # captures the decline of renal function with age and the sex difference but
 # not renal impairment; for accumulation in a patient with a raised
@@ -102,7 +103,7 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   pkW  <- 70 * size$volume
 
   # Thomson floored serum creatinine at 60 umol/L before Cockcroft-Gault.
-  scr  <- max(patientCreatinine(creatinine, sex), 60 / 88.42)
+  scr  <- max(adultEquivalentCreatinine(creatinine, age, sex), 60 / 88.42)
   crcl <- creatinineClearanceCG(pkW, age, sex, scr)   # mL/min
 
   cl1 <- 2.99 * (1 + 0.0154 * (crcl - 66)) / 60      # L/min

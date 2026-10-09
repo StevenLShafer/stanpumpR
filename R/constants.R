@@ -44,7 +44,7 @@ MAX_OSMOLALITY <- 400
 
 # Serum creatinine, mg/dL, for the renally cleared models.  Optional: when the
 # patient's is not entered (NULL, or NA from an empty field) each model uses
-# the assumed normal value for the patient's sex (R/renalFunction.R).
+# the assumed normal value for the patient's age and sex (R/renalFunction.R).
 MIN_CREATININE <- 0.2
 MAX_CREATININE <- 15
 

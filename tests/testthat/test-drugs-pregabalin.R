@@ -125,6 +125,20 @@ test_that("children under 13 take the Schwartz estimate, as Chan's did", {
   expect_equal(clh(45, 155, 13, "male", 0.6), 4.96 * min(ncl13, 96.4) / 96.4 * (45 / 70)^0.52)
 })
 
+test_that("a child's blank creatinine is the normal for age, not an adult's", {
+  # Chan's children had their own creatinine, so the model takes the normal
+  # value for age unscaled.  An 8 y boy, 25 kg, 125 cm, at his normal 0.455
+  # mg/dL has a Schwartz NCLcr of 151, above the breakpoint, so he clears at
+  # the breakpoint rate; at an adult's 1.0 he was given 68.75.
+  blank <- pregabalin(25, 125, 8, "male", adjustToFFM = FALSE)$PK$default$cl1 * 60
+  expect_equal(assumedCreatinine(8, "male"), 0.455, tolerance = 1e-3)
+  expect_equal(blank, 4.96 * (25 / 70)^0.52)
+  # A 6-month-old girl, 8 kg, 70 cm, at the Boer plateau of 20 umol/L:
+  # 0.45 x 70 / 0.226 = 139, also above the breakpoint
+  infant <- pregabalin(8, 70, 0.5, "female", adjustToFFM = FALSE)$PK$default$cl1 * 60
+  expect_equal(infant, 4.96 * (8 / 70)^0.52 * 0.92)
+})
+
 
 test_that("pregabalin is offered orally only, in the startup menu under Oral analgesics", {
   dd <- getDrugDefaultsGlobal(FALSE)

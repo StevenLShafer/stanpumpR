@@ -4,7 +4,7 @@
 \alias{egfrDeindexed}
 \title{De-indexed CKD-EPI 2009 eGFR, in mL/min}
 \usage{
-egfrDeindexed(weight, height, age, sex, scr = assumedCreatinine(sex))
+egfrDeindexed(weight, height, age, sex, scr = adultCreatinine(sex))
 }
 \arguments{
 \item{weight}{the weight the calling model scales on, kg}
@@ -15,7 +15,10 @@ egfrDeindexed(weight, height, age, sex, scr = assumedCreatinine(sex))
 
 \item{sex}{\code{"male"} or \code{"female"}}
 
-\item{scr}{serum creatinine in mg/dL; defaults to the assumed normal value}
+\item{scr}{serum creatinine in mg/dL.  The models fitted in adults pass a
+child's on the adult scale (\code{adultEquivalentCreatinine()}).  Defaults to
+the assumed adult value, which is what a blank creatinine is on that
+scale at any age.}
 }
 \value{
 eGFR in mL/min for this patient's body surface

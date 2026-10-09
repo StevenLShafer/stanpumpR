@@ -12,7 +12,7 @@ Some models have no covariates at all: the same dose in milligrams gives the sam
 
 ## Disabled covariates
 
-Pregnancy appears in the interface but does not influence any prediction. Renal function is estimated by mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin from the **Serum creatinine** field; if it is left blank they assume a normal creatinine, and a patient with impaired kidneys will then clear these drugs more slowly than the plot shows. CYP2D6 phenotype is now active, but only for the four drugs with modelled active metabolites; for every other drug it has no effect.
+Pregnancy appears in the interface but does not influence any prediction. Renal function is estimated by mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin from the **Serum creatinine** field; if it is left blank they assume a normal creatinine for the patient's age and sex, and a patient with impaired kidneys will then clear these drugs more slowly than the plot shows. CYP2D6 phenotype is now active, but only for the four drugs with modelled active metabolites; for every other drug it has no effect.
 
 ## Provisional parameters in the newer drugs
 
