@@ -26,13 +26,16 @@ test_that("every narrative belongs to a drug in the library", {
 # desethylamiodarone are both active, with no published human ke0 for the
 # antiarrhythmic effect, and so is amiodaroneIV (2026-10-08).  Called
 # `prodrugs` until amiodarone, an active parent, joined it (2026-10-07).
+# Clonazepam's and zolpidem's published effects are direct functions of
+# plasma concentration (R/drugs_clonazepam.R, R/drugs_zolpidem.R) (2026-10-09).
 plasmaOnly <- c(
   "codeine", "tramadol", "prednisone",
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
   "metronidazole", "gentamicin",
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
-  "amiodarone", "desethylamiodarone", "amiodaroneIV"
+  "amiodarone", "desethylamiodarone", "amiodaroneIV",
+  "clonazepam", "zolpidem"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

@@ -25,8 +25,9 @@ test_that("the menu lists the categories in order, each sorted by name", {
     expect_identical(titles, sort(titles))
   }
   expect_identical(choices[["Hypnotics and sedatives"]],
-                   c("dexmedetomidine", "etomidate", "ketamine", "midazolam",
-                     "propofol", "remimazolam"))
+                   c("alprazolam", "clonazepam", "dexmedetomidine", "etomidate",
+                     "ketamine", "lorazepam", "midazolam", "propofol",
+                     "remimazolam", "zolpidem"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
   expect_false(any(c("desmetramadol", "desethylamiodarone", "air", "oxygen", "ventilation") %in% unlist(choices)))
   # A library without the column (an old edited copy) offers nothing, quietly

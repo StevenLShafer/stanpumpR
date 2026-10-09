@@ -292,8 +292,10 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # model to attach (see each drug's header); mannitol is plotted as serum
   # osmolality and has no published ke0; amiodarone and desethylamiodarone
   # (2026-10-07) and amiodaroneIV (2026-10-08) are active but have no
-  # published human ke0 for the antiarrhythmic effect.  Pinned because the
-  # count has been got wrong by hand more than once.
+  # published human ke0 for the antiarrhythmic effect; clonazepam's and
+  # zolpidem's published effects are direct functions of plasma
+  # concentration (2026-10-09).  Pinned because the count has been got wrong by hand more
+  # than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
     k <- tryCatch(getDrugPK(d, 70, 171, 50, "male",
@@ -307,7 +309,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "metronidazole", "gentamicin",
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
-    "amiodarone", "desethylamiodarone", "amiodaroneIV"
+    "amiodarone", "desethylamiodarone", "amiodaroneIV",
+    "clonazepam", "zolpidem"
   ))
 })
 

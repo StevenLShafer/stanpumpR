@@ -37,12 +37,14 @@ test_that("each antibiotic's default threshold is free drug at its MIC", {
 })
 
 
-test_that("the antibiotics and amiodarone are exactly the drugs with no effect site and a threshold", {
+test_that("the antibiotics, amiodarone and zolpidem are exactly the drugs with no effect site and a threshold", {
   # A policy pin.  Until 2026-10-07 only the antibiotics were timed on their
   # plasma by default.  Amiodarone joined deliberately: its threshold is the
   # bottom of the therapeutic window, 1.0 mg/L of serum amiodarone, and it is
   # not an antibiotic, so no MIC, free fraction or antibiotic help applies to
-  # it (R/drugs_amiodarone.R).
+  # it (R/drugs_amiodarone.R).  Zolpidem joined on 2026-10-09: its published
+  # effects are direct functions of plasma concentration, and its threshold is
+  # the FDA's 50 ng/mL driving level (R/drugs_zolpidem.R).
   dd <- getDrugDefaultsGlobal()
   timedOnPlasma <- character(0)
   for (drug in dd$Drug[!isGasDrug(dd$Drug)]) {
@@ -50,8 +52,9 @@ test_that("the antibiotics and amiodarone are exactly the drugs with no effect s
     if (PK$PK[[PK_EVENT_DEFAULT]]$ke0 == 0 && dd$endCe[dd$Drug == drug] > 0)
       timedOnPlasma <- c(timedOnPlasma, drug)
   }
-  expect_setequal(timedOnPlasma, c(antibioticMicTable()$Drug, "amiodarone"))
-  expect_false("amiodarone" %in% antibioticMicTable()$Drug)
+  expect_setequal(timedOnPlasma,
+                  c(antibioticMicTable()$Drug, "amiodarone", "zolpidem"))
+  expect_false(any(c("amiodarone", "zolpidem") %in% antibioticMicTable()$Drug))
   # Acute intravenous amiodarone (2026-10-08) deliberately has no default
   # threshold: the window is for chronic troughs (R/drugs_amiodaroneIV.R).
   expect_false("amiodaroneIV" %in% timedOnPlasma)
