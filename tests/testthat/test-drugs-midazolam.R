@@ -23,10 +23,10 @@ test_that("returns the published parameters with total-body-weight scaling", {
     upperTypical = 0.04,
     lowerTypical = 0.12,
     reference = paste0(
-      "Buhrer M et al., Clin Pharmacol Ther 1990;48(5):544-554, the set ",
-      "tabulated by Zomorodi K et al., Anesthesiology 1998;89(6):1418-1429 ",
-      "(Table 3), who used it for target-controlled infusion. ",
-      "https://pubmed.ncbi.nlm.nih.gov/2225713/"
+      "Zomorodi K et al., Anesthesiology 1998;89(6):1418-1429, Table 3: ",
+      "kinetics fitted to the data of Buhrer M et al., Clin Pharmacol Ther ",
+      "1990;48(5):544-554, used by STANPUMP for target-controlled infusion. ",
+      "https://pubmed.ncbi.nlm.nih.gov/9856717/"
     )
   )
   expect_equal_rounded(actual, expected)
@@ -34,9 +34,10 @@ test_that("returns the published parameters with total-body-weight scaling", {
 
 test_that("matches the Buhrer set as Zomorodi 1998 tabulates it", {
   # Zomorodi K et al., Anesthesiology 1998;89:1418-1429, Table 3, column
-  # "Buhrer" (Buhrer M et al., Clin Pharmacol Ther 1990;48:544-554): the
-  # parameters that drove the STANPUMP midazolam TCI in that study.  Each value
-  # is compared at the precision the table prints.
+  # "Buhrer": the parameters that drove the STANPUMP midazolam TCI in that
+  # study, fitted to the data of Buhrer M et al. (Clin Pharmacol Ther
+  # 1990;48:544-554), whose papers do not print them.  Each value is compared
+  # at the precision the table prints.
   pk <- midazolam(70, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(round(c(pk$v1, pk$v2, pk$v3), 2), c(3.3, 17.56, 96.76))
   expect_equal(round(c(pk$cl1, pk$cl2, pk$cl3), 2), c(0.54, 2.01, 0.83))
