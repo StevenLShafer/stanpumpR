@@ -71,6 +71,18 @@ test_that("the parameter table evaluates every intravenous model at the referenc
   expect_true(all(des$ke0Supplied))
 })
 
+test_that("a supplied ke0 is explained by the parent only for a drug never dosed", {
+  # Desmetramadol has no units and gets its ke0 from its parent's dose;
+  # acetaminophen, ibuprofen and alprazolam are dosed directly and supply a
+  # published equilibration rate.
+  expect_match(helpDrugPageHTML("desmetramadol"), "never dosed directly", fixed = TRUE)
+  for (drug in c("acetaminophen", "ibuprofen", "alprazolam")) {
+    page <- helpDrugPageHTML(drug)
+    expect_match(page, "reports the equilibration rate itself", fixed = TRUE, info = drug)
+    expect_false(grepl("never dosed directly", page, fixed = TRUE), info = drug)
+  }
+})
+
 test_that("the fat-free-mass switch is reported from the code", {
   expect_true(helpDrugRespondsToFFM("morphine"))
   expect_false(helpDrugRespondsToFFM("propofol"))
