@@ -12,7 +12,53 @@ Hughes MA, Glass PSA, Jacobs JR. Context-sensitive half-time in multicompartment
 
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
+## History of target-controlled infusion
+
+The three companion reviews on which [From CATIA to stanpumpR](help:history) draws:
+
 Struys MMRF, De Smet T, Glen JB, Vereecke HEM, Absalom AR, Schnider TW. The history of target-controlled infusion. *Anesth Analg* 2016;122:56-69.
+
+Absalom AR, Glen JB, Zwart GJC, Schnider TW, Struys MMRF. Target-controlled infusion: a mature technology. *Anesth Analg* 2016;122:70-78.
+
+Schnider TW, Minto CF, Struys MMRF, Absalom AR. The safety of target-controlled infusions. *Anesth Analg* 2016;122:79-85.
+
+And the primary papers the history cites:
+
+Widmark EMP. Studies in the concentration of indifferent narcotics in blood and tissues. *Acta Med Scand* 1919;52:87-164.
+
+Krüger-Thiemer E. Continuous intravenous infusion and multicompartment accumulation. *Eur J Pharmacol* 1968;4:317-324.
+
+Schwilden H. A general method for calculating the dosage scheme in linear pharmacokinetics. *Eur J Clin Pharmacol* 1981;20:379-386.
+
+Schwilden H, Schüttler J, Stoeckel H. Pharmacokinetics as applied to total intravenous anaesthesia. Theoretical considerations. *Anaesthesia* 1983;38(suppl):51-52.
+
+Schüttler J, Schwilden H, Stoeckel H. Pharmacokinetics as applied to total intravenous anaesthesia. Practical implications. *Anaesthesia* 1983;38(suppl):53-56.
+
+Schüttler J, Schwilden H, Stoeckel H. Infusion strategies to investigate the pharmacokinetics and pharmacodynamics of hypnotic drugs: etomidate as an example. *Eur J Anaesthesiol* 1985;2:133-142.
+
+Schüttler J, Kloos S, Schwilden H, Stoeckel H. Total intravenous anaesthesia with propofol and alfentanil by computer-assisted infusion. *Anaesthesia* 1988;43(suppl):2-7.
+
+Ausems ME, Stanski DR, Hug CC. An evaluation of the accuracy of pharmacokinetic data for the computer assisted infusion of alfentanil. *Br J Anaesth* 1985;57:1217-1225.
+
+Alvis JM, Reves JG, Govier AV, Menkhaus PG, Henling CE, Spain JA, Bradley E. Computer-assisted continuous infusions of fentanyl during cardiac anesthesia: comparison with a manual method. *Anesthesiology* 1985;63:41-49.
+
+Shafer SL, Siegel LC, Cooke JE, Scott JC. Testing computer-controlled infusion pumps by simulation. *Anesthesiology* 1988;68:261-266.
+
+Jacobs JR. Analytical solution to the three-compartment pharmacokinetic model. *IEEE Trans Biomed Eng* 1988;35:763-765.
+
+Jacobs JR. Algorithm for optimal linear model-based control with application to pharmacokinetic model-driven drug delivery. *IEEE Trans Biomed Eng* 1990;37:107-109.
+
+Jacobs JR, Williams EA. Algorithm to control "effect compartment" drug concentrations in pharmacokinetic model-driven drug delivery. *IEEE Trans Biomed Eng* 1993;40:993-999.
+
+Tackley RM, Lewis GT, Prys-Roberts C, Boaden RW, Dixon J, Harvey JT. Computer controlled infusion of propofol. *Br J Anaesth* 1989;62:46-53.
+
+White M, Kenny GN. Intravenous propofol anaesthesia using a computerised infusion system. *Anaesthesia* 1990;45:204-209.
+
+Glass PS, Glen JB, Kenny GN, Schüttler J, Shafer SL. Nomenclature for computer-assisted infusion devices. *Anesthesiology* 1997;86:1430-1431.
+
+Glen JB. The development of 'Diprifusor': a TCI system for propofol. *Anaesthesia* 1998;53(suppl 1):13-21.
+
+Hu C, Horstman DJ, Shafer SL. Variability of target-controlled infusion is less than the variability after bolus injection. *Anesthesiology* 2005;102:639-645.
 
 ## Active metabolites
 

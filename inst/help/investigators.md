@@ -12,9 +12,9 @@ stanpumpR is a thin layer of software over a thick layer of other people's work.
 
 Portions of the code written since 2026, including the inhaled-gas engine, the time-until-threshold calculation and this help system, were drafted with Claude Code at Dr Shafer's direction and verified by the test suite; each such file records this in a provenance header.
 
-## STANPUMP and the first generation of TCI
+## CATIA, STANPUMP and the first generation of TCI
 
-STANPUMP was one of several programs that, in the late 1980s and 1990s, used pharmacokinetic models to control infusion pumps, and their authors exchanged concepts and algorithms freely:
+The first target-controlled infusion was given in Bonn in 1979, and STANPUMP was one of several programs that, in the 1980s and 1990s, followed it in using pharmacokinetic models to control infusion pumps. Their authors exchanged concepts and algorithms freely:
 
 - **Donald R. Stanski** and Steven Shafer, Stanford (STANPUMP). Stanski's laboratory also produced the fentanyl and alfentanil kinetics (with **Jeffrey C. Scott**) and, with Lewis Sheiner, the effect-compartment model itself.
 - **Jürgen Schüttler** and **Helmut Schwilden**, University of Bonn (CATIA).
@@ -23,7 +23,7 @@ STANPUMP was one of several programs that, in the late 1980s and 1990s, used pha
 - **Johan F. Coetzee** and Pina, Stellenbosch University (STELPUMP).
 - **Tom De Smet** and **Michel M. R. F. Struys**, University of Ghent (RUGLOOP).
 
-Struys and colleagues reviewed this history in *The History of Target-Controlled Infusion* (*Anesth Analg* 2016;122:56-69). See [From STANPUMP to stanpumpR](help:history).
+Struys and colleagues reviewed this history in *The History of Target-Controlled Infusion* (*Anesth Analg* 2016;122:56-69), with two companion reviews: *Target-Controlled Infusion: A Mature Technology* by Absalom and colleagues (*Anesth Analg* 2016;122:70-78) and *The Safety of Target-Controlled Infusions* by Schnider and colleagues (*Anesth Analg* 2016;122:79-85). See [From CATIA to stanpumpR](help:history).
 
 ## The pharmacokinetic models
 

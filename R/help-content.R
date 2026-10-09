@@ -91,7 +91,7 @@ helpStaticPages <- function() {
     "scenarios/index",          "All scenarios",                   "scenarios",
 
     "investigators",            "The investigators",               "people",
-    "history",                  "From STANPUMP to stanpumpR",      "people",
+    "history",                  "From CATIA to stanpumpR",         "people",
 
     "repository",               "What is in the repository",       "project",
     "contributing",             "Contributing a drug or a model",  "project",
