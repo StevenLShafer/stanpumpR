@@ -2,7 +2,7 @@ Propofol and opioids are synergistic: a modest opioid concentration lets a much 
 
 ## The model
 
-Bouillon et al. (*Anesthesiology* 2004;100:1353-1372) gave volunteers propofol and remifentanil in combination and modelled the probability of no response to several stimuli as a response surface over the two effect-site concentrations. stanpumpR uses the laryngoscopy surface, with the Bayesian predicted parameters from their Table 4:
+Bouillon et al. (*Anesthesiology* 2004;100:1353-1372) gave 20 healthy volunteers (10 men and 10 women, aged 20 to 43 years, weighing 50 to 120 kg) propofol and remifentanil in combination and modelled the probability of no response to two stimuli, shake and shout and laryngoscopy, as response surfaces over the two effect-site concentrations. stanpumpR uses the laryngoscopy surface, with the Bayesian predicted parameters from their Table 4:
 
 | Parameter | Value |
 |---|---|
@@ -28,7 +28,7 @@ where U is the remifentanil-equivalent opioid effect-site concentration in ng/mL
 
 ## Other opioids
 
-The surface was fitted with remifentanil. Other opioids are converted to remifentanil equivalents through their MEAC: each opioid's effect-site concentration is divided by its own MEAC and multiplied by remifentanil's (1 ng/mL), and the results are summed. This assumes that equal multiples of MEAC are equi-effective in reducing stimulus intensity, which is the same additivity assumption as the [MEAC panel](help:models/meac).
+The surface was fitted with remifentanil. Other opioids are converted to remifentanil equivalents through their MEAC: each opioid's effect-site concentration is divided by its own MEAC and multiplied by remifentanil's (1 ng/mL), and the results are summed. In terms of the [MEAC panel](help:models/meac), U is its *total opioid* line divided by 100: 150% MEAC of fentanyl is U = 1.5 ng/mL. This assumes that equal multiples of MEAC are equi-effective in reducing stimulus intensity, which is the same additivity assumption as the MEAC panel. The paper studied remifentanil only, so the conversion of other opioids is stanpumpR's extension, not part of the published model.
 
 ## The three curves
 
@@ -38,11 +38,11 @@ The surface was fitted with remifentanil. Other opioids are converted to remifen
 
 ## What to look for
 
-[The TIVA scenario](scenario:tiva-remifentanil-propofol) gives propofol 1.5 mg/kg with an infusion and remifentanil 1 mcg/kg with an infusion. The *propofol alone* curve shows a high probability of response to laryngoscopy throughout; the combined curve is low. Turn the remifentanil infusion off (set its rate to 0 at time 0) and the two curves coincide.
+[The TIVA scenario](scenario:tiva-remifentanil-propofol) gives propofol 1.5 mg/kg with an infusion and remifentanil 1 mcg/kg with an infusion. Once the propofol bolus has redistributed, the *propofol alone* curve shows a high probability of response to laryngoscopy; the combined curve stays near zero while the infusions run. Turn the remifentanil infusion off (set its rate to 0 at time 0) and, once the remifentanil bolus wears off, the two curves come close together.
 
 ## Limits
 
-This is one model of one stimulus in one population of healthy volunteers. It is not a depth-of-anesthesia measure, says nothing about hemodynamics or ventilation, and does not describe other hypnotics or other stimuli. Bouillon's paper also fitted surfaces for other end points (sedation, shake and shout, pressure algometry) that are not implemented. See [Cautions](help:cautions).
+This is one model of one stimulus in one population of healthy volunteers. It is not a depth-of-anesthesia measure, says nothing about hemodynamics or ventilation, and does not describe other hypnotics or other stimuli. The parameters are typical values; the paper reports substantial between-subject variability, especially in the steepness for propofol. Bouillon's paper also modelled tolerance of shake and shout (a second probability surface) and two continuous EEG measures, the bispectral index and approximate entropy; none of these is implemented. See [Cautions](help:cautions).
 
 ## Reference
 

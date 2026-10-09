@@ -1233,17 +1233,19 @@ app_server <- function(input, output, session) {
         TO <- plotResults$Wrap == PLOT_NAME_MEAC
         outputComments("Elements found in search of plotResults$Wrap", sum(TO))
       }
-      j <- which.min(abs(e$x - plotResults$Time[TO]))
+      if (sum(TO) < 2) return(NULL)
       return(
-        paste0("Time: ", hoverTime(plotResults$Time[TO][j]), ", ", plotResults$Drug[TO][j], ": ", signif(plotResults$Y[TO][j], 2), " ", PLOT_NAME_MEAC)
+        paste0("Time: ", hoverTime(e$x), ", ", plotResults$Drug[TO][1], ": ",
+               signif(panelSeriesAt(plotResults[TO, ], e$x), 2), " ", PLOT_NAME_MEAC)
       )
     }
     if (yaxis == PLOT_NAME_INTERACTION)
     {
       TO <- plotResults$Drug == PLOT_NAME_INTERACTION
-      j <- which.min(abs(e$x - plotResults$Time[TO]))
+      if (sum(TO) < 2) return(NULL)
       return(
-        paste0("Time: ", hoverTime(plotResults$Time[TO][j]), ", P (response): ", signif(plotResults$Y[TO][j], 2))
+        paste0("Time: ", hoverTime(e$x), ", P (response): ",
+               signif(panelSeriesAt(plotResults[TO, ], e$x), 2))
       )
     }
 

@@ -1,3 +1,6 @@
+# A snapshot of the surface on arbitrary inputs, kept to pin the arithmetic.
+# The opioid values are large because they were once percentages of MEAC,
+# which simulationPlot() wrongly passed for concentrations; see below.
 test_that("it returns the correct values", {
   propofol <- c(0.00000000, 0.59173000, 0.79861721, 0.81922345, 0.75772238, 0.66173265, 0.56145644, 0.46957346, 0.39175785,
     0.32183082, 0.27009590, 0.22238628, 0.19023883, 0.15809139, 0.13784150, 0.12023101, 0.10262052, 0.09313125,
@@ -54,4 +57,138 @@ test_that("it returns the correct values", {
   )
 
   expect_equal(expected, actual)
+})
+
+
+# The surface takes concentrations: propofol in mcg/mL and the opioid as
+# remifentanil-equivalent ng/mL.  Checked against the equations as printed in
+# the help (inst/help/models/interaction.md), written out independently.
+test_that("modelInteraction() is Bouillon's laryngoscopy surface in concentration units", {
+  bouillon <- function(prop, U) {
+    intensity <- 0.83 * (1 - U^0.72 / (U^0.72 + (1.01 * 0.83)^0.72))
+    1 - prop^6.9 / (prop^6.9 + (6.68 * intensity)^6.9)
+  }
+  grid <- expand.grid(prop = c(0.5, 1, 2, 3, 4, 6), U = c(0, 0.25, 1, 2, 4))
+  expect_equal(modelInteraction(grid$prop, grid$U)$pNR, bouillon(grid$prop, grid$U),
+               tolerance = 1e-12)
+  # Propofol 3 mcg/mL with remifentanil 1 ng/mL: about a one-in-four chance of
+  # responding to laryngoscopy, not the 3e-9 the panel used to show.
+  expect_equal(modelInteraction(3, 1)$pNR, 0.2695460843, tolerance = 1e-9)
+  expect_equal(modelInteraction(3, 0)$pNR, modelInteraction(3, 0)$pNRpropofol)
+})
+
+test_that("remifentanilEquivalent() turns % MEAC into remifentanil ng/mL", {
+  expect_equal(remifentanilEquivalent(100), 1)
+  expect_equal(remifentanilEquivalent(c(0, 50, 250)), c(0, 0.5, 2.5))
+  # An edited remifentanil MEAC is honoured, so remifentanil maps to itself
+  expect_equal(remifentanilEquivalent(100, 2), 2)
+  # and a missing or nonsensical one falls back to 1 ng/mL
+  expect_equal(remifentanilEquivalent(100, NA), 1)
+  expect_equal(remifentanilEquivalent(100, numeric(0)), 1)
+  expect_equal(remifentanilEquivalent(100, 0), 1)
+})
+
+# The call path: simulationPlot() sums % MEAC and must convert it before the
+# surface.  Each opioid at one MEAC is 1 ng/mL of remifentanil.
+interactionPlot <- function(doseTable, maximum = 60) {
+  local_mocked_bindings(outputComments = function(...) {}, .env = parent.frame())
+  defaults <- getDrugDefaultsGlobal(FALSE)
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  drugs <- processdoseTable(
+    doseTable, events,
+    recalculatePK(NULL, defaults, doseTable, 50, 70, 170, "male"),
+    maximum, FALSE
+  )
+  list(
+    drugs = drugs,
+    plot = simulationPlot(
+      drugs = drugs, events = events,
+      drugDefaults = defaults, eventDefaults = getEventDefaults(),
+      xMaximum = maximum,
+      plotMEAC = TRUE, plotInteraction = TRUE,
+      plotEvents = FALSE, plotRecovery = FALSE
+    )
+  )
+}
+
+# (floored at zero, as the panel is: rounding can leave -1e-18 at time 0,
+# and a negative concentration to the power 6.9 is NaN)
+ceAt <- function(entry, t) pmax(seriesAt(entry$results, "Effect Site", t), 0)
+
+test_that("the interaction panel reads opioids as remifentanil-equivalent ng/mL", {
+  out <- interactionPlot(data.frame(
+    Drug  = c("propofol", "propofol", "remifentanil", "remifentanil"),
+    Time  = c(0, 0, 0, 0),
+    Dose  = c(140, 100, 70, 0.15),
+    Units = c("mg", "mcg/kg/min", "mcg", "mcg/kg/min")
+  ))
+  pr <- out$plot$plotResults
+  panel <- pr[pr$Drug == PLOT_NAME_INTERACTION, ]
+  expect_gt(nrow(panel), 0)
+  t <- panel$Time[panel$Time > 0]
+  remi <- ceAt(out$drugs$remifentanil, t)
+  expected <- modelInteraction(ceAt(out$drugs$propofol, t), remi)$pNR
+  expect_equal(panel$Y[panel$Time > 0], expected, tolerance = 1e-9)
+  # Far from what a 100-fold opioid gives
+  late <- t > 20
+  expect_true(all(expected[late] >
+                    100 * modelInteraction(ceAt(out$drugs$propofol, t[late]),
+                                           100 * remi[late])$pNR))
+})
+
+test_that("another opioid enters the interaction through its MEAC", {
+  out <- interactionPlot(data.frame(
+    Drug  = c("propofol", "propofol", "fentanyl"),
+    Time  = c(0, 0, 0),
+    Dose  = c(140, 100, 100),
+    Units = c("mg", "mcg/kg/min", "mcg")
+  ))
+  pr <- out$plot$plotResults
+  panel <- pr[pr$Drug == PLOT_NAME_INTERACTION, ]
+  t <- panel$Time
+  fentanylMEAC <- getDrugDefaultsGlobal(FALSE)$MEAC[getDrugDefaultsGlobal(FALSE)$Drug == "fentanyl"]
+  expected <- modelInteraction(ceAt(out$drugs$propofol, t),
+                               ceAt(out$drugs$fentanyl, t) / fentanylMEAC)$pNR
+  expect_equal(panel$Y, expected, tolerance = 1e-9)
+})
+
+# The MEAC and interaction panels used to be read on the 100 equispaced
+# points, 100 minutes apart on a one-week plot, which stepped over a bolus's
+# peak: fentanyl 100 mcg at minute 10 peaks at about 2.18 ng/mL, and the panel
+# showed 0.22 ng/mL (37% rather than 364% MEAC).
+test_that("the MEAC panel keeps a bolus's peak on a one-week plot", {
+  out <- interactionPlot(data.frame(
+    Drug = "fentanyl", Time = 10, Dose = 100, Units = "mcg"
+  ), maximum = 10080)
+  pr <- out$plot$plotResults
+  meac <- pr[pr$Wrap == PLOT_NAME_MEAC & pr$Drug == "fentanyl", ]
+  fentanylMEAC <- getDrugDefaultsGlobal(FALSE)$MEAC[getDrugDefaultsGlobal(FALSE)$Drug == "fentanyl"]
+  r <- out$drugs$fentanyl$results
+  rawPeak <- max(r$Y[r$Site == "Effect Site"], na.rm = TRUE)
+  expect_gt(rawPeak, 2)
+  expect_equal(max(meac$Y), rawPeak / fentanylMEAC * 100, tolerance = 1e-9)
+  # and the hover reads the peak where it is, not the nearest grid point
+  tPeak <- meac$Time[which.max(meac$Y)]
+  expect_equal(panelSeriesAt(meac, tPeak), max(meac$Y))
+  expect_lt(abs(tPeak - 13.5), 0.5)
+})
+
+# Only opioids are drawn on the MEAC panel; a non-opioid has no MEAC.
+test_that("the MEAC panel draws only drugs that have a MEAC", {
+  out <- interactionPlot(data.frame(
+    Drug  = c("propofol", "fentanyl", "morphine"),
+    Time  = c(0, 0, 0),
+    Dose  = c(140, 100, 5),
+    Units = c("mg", "mcg", "mg")
+  ))
+  pr <- out$plot$plotResults
+  meac <- pr[pr$Wrap == PLOT_NAME_MEAC, ]
+  expect_setequal(unique(meac$Drug), c("fentanyl", "morphine", "total opioid"))
+  total <- meac[meac$Drug == "total opioid", ]
+  t <- c(3, 30)
+  expect_equal(
+    panelSeriesAt(total, t),
+    panelSeriesAt(meac[meac$Drug == "fentanyl", ], t) +
+      panelSeriesAt(meac[meac$Drug == "morphine", ], t)
+  )
 })
