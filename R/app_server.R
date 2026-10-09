@@ -1944,12 +1944,14 @@ app_server <- function(input, output, session) {
             title = paste("Enter Target Effect Site Concentrations"),
             div(
               class = "fw-bold text-danger",
-              "Enter time and target concentration below. Decreasing targets are not yet supported, and will be removed. Doses are found with non-linear regression, which takes a moment to calculate. The suggestion will be good, but better algorithms likely exist."
+              "Enter time and target concentration below. Decreasing targets are not supported: a target lower than the one before is raised to it. Doses are found with non-linear regression, which takes a moment to calculate. The suggestion will be good, but better algorithms likely exist."
             ),
             selectInput(
               inputId = "targetDrug",
               label = "Drug",
-              choices = drugList
+              # Only the drugs it can target: an effect site, and intravenous
+              # bolus and infusion units
+              choices = suggestDrugChoices(drugDefaults())
             ),
             tags$p(class = "small text-muted mb-1", timeEntryLabel(format)),
             rhandsontable::rHandsontableOutput(
