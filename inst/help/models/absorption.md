@@ -18,15 +18,20 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 
 ## Which drugs have routes
 
-| Drug | Routes |
-|---|---|
-| oxycodone | PO |
-| hydromorphone | PO, IM, IN |
-| codeine, hydrocodone, oxymorphone, tramadol | PO |
-| gabapentin | PO, with saturable absorption |
-| amiodarone | PO, as a constant daily rate (`mg/day PO`) |
+The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, intramuscular and intranasal unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid` and so on; see [The dose table](help:dose-table)), which are not listed separately.
 
-Each drug's page shows the current absorption rate, bioavailability and lag. The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's intramuscular and intranasal absorption was revised so that each route's peak matches the measured time (about 20 minutes intranasal, 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down.
+<!-- generated: route-table -->
+
+Each drug's page shows the current absorption rate, bioavailability and lag, and where each route's parameters come from. They are not all of the same standing:
+
+- **Fitted with the intravenous model.** Clindamycin's oral parameters were fitted together with its intravenous ones, so its bioavailability is absolute.
+- **Cross-study additions.** For metronidazole, hydrocortisone, methylprednisolone and dexamethasone some or all of the oral parameters (and for dexamethasone the intramuscular ones) come from studies other than the disposition model's. Methylprednisolone's absorption rate constant is provisional: its oral exposure does not depend on it, its peak does.
+- **Apparent oral parameters.** Cefalexin and amiodarone were fitted to oral data alone with the bioavailability unknown, which predicts oral concentrations correctly and intravenous ones wrongly, so both are offered by mouth only; intravenous amiodarone is the separate [amiodarone IV](help:drugs/amiodaroneIV) row. Prednisone is oral only because no routine intravenous product was verified.
+- **Reduced to one input.** An oral dose of prednisolone or prednisone reaches the circulation partly as each steroid, which a single input cannot carry; effective coefficients make the oral exposures exact and the shapes approximate.
+- **Derived rather than fitted.** Naloxone's intranasal bioavailability and absorption rate are derived from a published model of the concentrated spray that has no absolute bioavailability, and are initial values rather than estimates.
+- **Chosen to match a time of peak.** The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's oral parameters are provisional, and its intramuscular route has no human pharmacokinetic study behind it: its bioavailability of 1 and its 30-minute peak are a judgement.
+
+Hydromorphone's intramuscular and intranasal absorption was revised so that each route peaks at its intended time (about 20 minutes intranasal, from Coda's data, and 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down.
 
 ## Saturable absorption
 
