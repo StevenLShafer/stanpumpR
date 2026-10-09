@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 # Provenance
 # ----------
-# Claude Code (Claude Opus 5.5), 2026-10-09, at the request of Steven L.
+# Claude Code, 2026-10-09, at the request of Steven L.
 # Shafer, after an audit found the hand-written route table on the absorption
 # page listing fewer drugs than the dose table offers by mouth, by injection
 # into muscle or by nasal spray.  Verified by tests/testthat/test-help-content.R.

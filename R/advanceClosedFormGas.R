@@ -49,7 +49,7 @@
 # The vapour displaces carrier gas within Q; it does not add to Q.  Gas Man has
 # an option (off by default) that instead adds the vapour's own volume, raising
 # the effective fresh gas flow by 1 / (1 - F_vap/100).  That option has no
-# counterpart here.  (Both notes: Claude Code, Claude Opus 5.5, 2026-10-09,
+# counterpart here.  (Both notes: Claude Code, 2026-10-09,
 # from audit findings F08 and F13.)
 #
 # (1) CIRCUIT.  Two models, chosen by the `circuit` argument.
@@ -215,7 +215,7 @@
 # uptake -- the concentration and second gas effect.  It is NOT implemented
 # here yet.
 #
-# UPDATE (2026-10-09, Claude Code, Claude Opus 5.5, from audit finding F07):
+# UPDATE (2026-10-09, Claude Code, from audit finding F07):
 # that sentence is historical.  The term is implemented (`uptakeEffect`, on by
 # default), and it does break linearity: the summed uptake depends on the
 # state.  The engine keeps each SUB-STEP linear by holding the summed uptake
