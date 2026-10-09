@@ -281,7 +281,9 @@ The library ships with the anaesthetic drugs (propofol, remifentanil, fentanyl,
 alfentanil, sufentanil, morphine, pethidine, hydromorphone, methadone, ketamine,
 dexmedetomidine, midazolam, etomidate, lidocaine, rocuronium, oxytocin,
 oxycodone, oliceridine, remimazolam, codeine, hydrocodone, oxymorphone,
-tramadol), three non-opioid analgesics (acetaminophen, intravenous and oral;
+tramadol), six sedatives besides midazolam and remimazolam (diazepam and
+lorazepam, intravenous, oral and intramuscular; alprazolam, clonazepam,
+zolpidem and temazepam, oral), three non-opioid analgesics (acetaminophen, intravenous and oral;
 gabapentin and pregabalin, oral), the reversal agents
 (naloxone, sugammadex, neostigmine,
 glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,

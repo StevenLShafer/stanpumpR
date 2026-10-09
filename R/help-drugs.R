@@ -323,6 +323,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
                     helpFormatNumber(row$endCe), concUnits)
           } else if (noEffectSite) {
             "None by default; a threshold set under Drug Thresholds is timed on the plasma"
+          } else if (is.na(row$endCe) || row$endCe <= 0) {
+            "None by default; a threshold set under Drug Thresholds is timed on the effect site"
           } else
             sprintf("%s %s", helpFormatNumber(row$endCe), concUnits)),
       paste0(as.character(helpColorSwatch(row$Color)), " ", esc(as.character(row$Color)))

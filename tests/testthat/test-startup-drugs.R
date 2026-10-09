@@ -28,8 +28,9 @@ test_that("the menu lists the categories in order, each sorted by name", {
   # oral opioids stay under Opioids
   expect_identical(choices[["Oral analgesics"]], c("acetaminophen", "gabapentin", "pregabalin"))
   expect_identical(choices[["Hypnotics and sedatives"]],
-                   c("dexmedetomidine", "etomidate", "ketamine", "midazolam",
-                     "propofol", "remimazolam"))
+                   c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "etomidate",
+                     "ketamine", "lorazepam", "midazolam", "propofol",
+                     "remimazolam", "temazepam", "zolpidem"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
   expect_false(any(c("desmetramadol", "desethylamiodarone", "air", "oxygen", "ventilation") %in% unlist(choices)))
   # A library without the column (an old edited copy) offers nothing, quietly
