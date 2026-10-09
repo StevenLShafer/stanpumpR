@@ -240,8 +240,9 @@ pregabalin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   reference <- paste0(
     "Chan PLS et al., Clin Pharmacol Ther 2021;110:132-140. ",
     "One compartment with first-order absorption after a lag; clearance on ",
-    "body-surface-area-normalised Cockcroft-Gault creatinine clearance (from ",
-    "the entered creatinine or an assumed normal one) to a breakpoint; ",
+    "creatinine clearance per 1.73 m^2 (Cockcroft-Gault normalised to body ",
+    "surface area from 13 years, Schwartz below; from the entered creatinine ",
+    "or an assumed normal adult one for the patient's sex) to a breakpoint; ",
     "effect site from van Esdonk 2018; oral only. ",
     "https://doi.org/10.1002/cpt.2132"
   )
