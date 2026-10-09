@@ -36,6 +36,8 @@ interpolated linearly, which is equally exact.
 The one place this smears is across a bolus, which lands at the right-hand
 end of an interval rather than being spread over it.  The engines insert the
 instant 0.01 minutes before every bolus, so the smear is confined to that
-0.01 minutes and cannot reach any point outside it.
+0.01 minutes and cannot reach any point outside it.  A metabolite fold's
+time line keeps no point inside such an interval (metaboliteTimeLine() in
+R/mergeMetabolite.R), so the fold never asks for one.
 }
 \keyword{internal}

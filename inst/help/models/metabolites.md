@@ -26,7 +26,9 @@ Amiodarone has no effect site either, but it is **not** a prodrug: it is active 
 
 ## Time until threshold across the link
 
-Concentrations add, but recovery times do not, so the merged row's [time until threshold](help:models/recovery) is not built from the two rows' recovery columns: it is solved again from the combined effect-site state underneath them. This is exact, because the whole intravenous path is linear. Without it, a patient given only the parent would see no recovery time at all for the opioid they actually had.
+Concentrations add, but recovery times do not, so the merged row's [time until threshold](help:models/recovery) is not built from the two rows' recovery columns: it is solved again from the combined effect-site state underneath them. Without it, a patient given only the parent would see no recovery time at all for the opioid they actually had.
+
+The sum is exact at every point of the merged row, because the whole intravenous path is linear, with one qualification about which points the row has. Each drug's own time line has a point a hundredth of a minute before each of its doses, and the dose lands at the end of that short interval. The merged row takes the points of both lines, except any that would fall inside the other drug's hundredth of a minute: read there, a dose given a moment later would be spread back onto the point. (Until October 2026 such points were kept: codeine by mouth at 19.995 minutes and morphine intravenously at 20 gave a morphine row that read half the bolus, and a recovery time of over three hours, 0.3 seconds before the morphine was given.) Between the last point before a dose and the dose itself the plot draws a straight line, as it does for any drug.
 
 ## CYP2D6 phenotype
 
