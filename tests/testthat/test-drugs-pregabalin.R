@@ -106,14 +106,14 @@ test_that("clearance is proportional to creatinine clearance up to the breakpoin
 })
 
 
-test_that("pregabalin is offered orally only, in the startup menu under Other", {
+test_that("pregabalin is offered orally only, in the startup menu under Oral analgesics", {
   dd <- getDrugDefaultsGlobal(FALSE)
   units <- strsplit(dd$Units[dd$Drug == "pregabalin"], ",")[[1]]
   expect_equal(units, c("mg PO", paste("mg PO", names(SCHEDULE_INTERVALS))))
   expect_true(all(doseRoute(units) == ROUTE_PO))
   expect_true(is.na(dd$Bolus.Units[dd$Drug == "pregabalin"]))
   expect_true(is.na(dd$Infusion.Units[dd$Drug == "pregabalin"]))
-  expect_equal(dd$Category[dd$Drug == "pregabalin"], "Other")
+  expect_equal(dd$Category[dd$Drug == "pregabalin"], "Oral analgesics")
 })
 
 

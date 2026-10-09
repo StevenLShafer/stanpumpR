@@ -24,6 +24,8 @@ test_that("the menu lists the categories in order, each sorted by name", {
     titles <- tolower(helpDrugTitle(drugs))
     expect_identical(titles, sort(titles))
   }
+  # The non-opioid oral analgesics; the oral opioids stay under Opioids
+  expect_identical(choices[["Oral analgesics"]], c("gabapentin", "pregabalin"))
   expect_identical(choices[["Hypnotics and sedatives"]],
                    c("dexmedetomidine", "etomidate", "ketamine", "midazolam",
                      "propofol", "remimazolam"))

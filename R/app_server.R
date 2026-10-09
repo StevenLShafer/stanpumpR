@@ -126,7 +126,8 @@ app_server <- function(input, output, session) {
   # Thresholds dialog with the rest.
   macThreshold <- reactiveVal(GAS_MAC_THRESHOLD)
   eventDefaults <- reactiveVal(getEventDefaults())
-  drugList <- getDrugDefaultsGlobal()$Drug
+  # Alphabetical, for the drug pickers; never index drugDefaults() with it
+  drugList <- sortDrugNames(getDrugDefaultsGlobal()$Drug)
 
   # Empty until the drugs are chosen in the startup menu, or a bookmark
   # restores its own (see Startup, below)
@@ -1402,7 +1403,7 @@ app_server <- function(input, output, session) {
     {
       units <- c("","")
     } else {
-      i <- which(drug == drugList)
+      i <- match(drug, drugDefaults()$Drug)
       units <- c(drugDefaults()$Bolus.Units[i], drugDefaults()$Infusion.Units[i])
     }
     outputComments("Exiting imgDrugTime()")
