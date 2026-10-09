@@ -90,6 +90,22 @@ test_that("the adult renal equations see a child's creatinine on the adult scale
   expect_equal(adultEquivalentCreatinine(2.5, 60, "female"), 2.5)
 })
 
+test_that("twice the normal creatinine for age halves Cockcroft-Gault but not CKD-EPI", {
+  # The claim in R/renalFunction.R and the Renal function help: on the adult
+  # scale both creatinines sit above CKD-EPI's kappa, so doubling multiplies
+  # the eGFR by 2^-1.209, about 0.43, where Cockcroft-Gault halves.
+  for (sex in SEX_VALUES) {
+    q <- assumedCreatinine(5, sex)
+    normal <- adultEquivalentCreatinine(q, 5, sex)
+    double <- adultEquivalentCreatinine(2 * q, 5, sex)
+    expect_equal(creatinineClearanceCG(20, 5, sex, double) /
+                   creatinineClearanceCG(20, 5, sex, normal), 0.5)
+    expect_equal(egfrCKDEPI2009(5, sex, double) / egfrCKDEPI2009(5, sex, normal),
+                 2^-1.209, info = sex)
+    expect_equal(round(2^-1.209, 2), 0.43)
+  }
+})
+
 test_that("Cockcroft-Gault on a child's own creatinine overstates renal function", {
   # The example in R/renalFunction.R: a 5 y boy of 20 kg and 110 cm.  At his
   # normal creatinine Cockcroft-Gault is 106 mL/min, where the normal GFR for
