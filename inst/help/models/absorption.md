@@ -30,6 +30,7 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 | alprazolam | PO |
 | clonazepam | PO, with the lag of its tablet study |
 | zolpidem | PO, with a lag standing in for transit absorption |
+| temazepam | PO |
 
 Each drug's page shows the current absorption rate, bioavailability and lag. The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's intramuscular and intranasal absorption was revised so that each route's peak matches the measured time (about 20 minutes intranasal, 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down. Gabapentin (0.31 h) and pregabalin (0.32 h) keep the lags their sources estimated, so time until threshold reads blank for those minutes after each of their doses. Clonazepam keeps the 0.369 h lag dos Santos and colleagues estimated for its tablets. Zolpidem's source absorbed it through a chain of transit compartments, which delivers the dose almost as a pure delay; it is represented by a lag of 0.25 h, the mean transit time, followed by the published absorption rate. A drug's time to peak effect after an oral dose is counted from the dose, lag included.
 

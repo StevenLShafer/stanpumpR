@@ -23,6 +23,7 @@ lorazepam,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg IM,mg qd,mg bid,mg tid,mg qid,
 alprazolam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#C55A11,20,40,30,0,0,IV,Hypnotics and sedatives
 clonazepam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#9C4A1A,20,70,40,0,0,IV,Hypnotics and sedatives
 zolpidem,ng,,,mg PO,"mg PO,mg PO qd",#6A1B9A,80,200,120,0,50,IV,Hypnotics and sedatives
+temazepam,ng,,,mg PO,"mg PO,mg PO qd",#7F3F00,250,600,400,0,250,IV,Hypnotics and sedatives
 codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4A6FE3,50,150,100,0,0,IV,Opioids
 hydrocodone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#2C5FB8,10,30,20,8,8,IV,Opioids
 oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#B5468C,1,4,2,0.8,0.8,IV,Opioids

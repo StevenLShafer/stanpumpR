@@ -44,6 +44,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | alprazolam | **C. Lindsay DeVane** and colleagues (1993); **Karthik Venkatakrishnan** and colleagues (2005) | Apparent oral kinetics with weight, age and sex; the EEG effect-site rate constant |
 | clonazepam | **Fábio M. dos Santos**, **François Noël** and colleagues (2009) | Apparent oral two-compartment kinetics of tablets; the finding that the effect follows plasma directly |
 | zolpidem | **Hyun Chul Kim** and colleagues (2026) | Apparent oral kinetics with transit absorption, as a lag |
+| temazepam | **Alfred L. van Steveninck**, **Adam F. Cohen** and colleagues (1994); **F. O. Müller** and colleagues (1987) | Intravenous summary data, to which two compartments were fitted; oral absorption |
 | etomidate | **John R. Arden** and colleagues (1986) | Kinetics in patients, including the elderly |
 | lidocaine | Schnider and colleagues (1996) | Two-compartment kinetics during an infusion |
 | rocuronium | **Bertrand Plaud** and colleagues (1995); **Luis I. Cortínez** and colleagues (2007) | Kinetics; time to peak effect |

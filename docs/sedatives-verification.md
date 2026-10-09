@@ -11,17 +11,17 @@ Drafted with Claude Code, 2026-10-09.
   pages and DOI were compared with the specification.
 - Every number was compared with the paper's full text where it could be read:
   PMC, or PDFs Dr Shafer supplied: Swart 2004, DeVane 1993, Kruizinga 2022,
-  dos Santos 2009, and Berlin and Dahlström 1975. Otherwise it was compared
-  with the abstract.
+  dos Santos 2009, Berlin and Dahlström 1975, van Steveninck 1994 (parts I
+  and II), Mould 1995 and Hung 1996. Otherwise it was compared with the
+  abstract.
 - Each implemented model was then run against published concentration
   measurements. Its engine output was compared with an independent
   matrix-exponential solution, which agreed to rounding error.
 
 **Outcome.**
-- Four drugs are implemented: lorazepam, alprazolam, clonazepam and zolpidem.
-- Diazepam and temazepam are not implemented yet. The specification's models
-  for them fail in adults, and the adult sources are behind paywalls (see the
-  end of this document).
+- Five drugs are implemented: lorazepam, alprazolam, clonazepam, zolpidem and
+  temazepam.
+- Diazepam is not implemented yet (see the end of this document).
 
 ## What the specification got right and wrong
 
@@ -43,6 +43,8 @@ Drafted with Claude Code, 2026-10-09.
 | zolpidem | label: t½ 2.6 h | **2.6 h is the 5 mg value**; 10 mg is 2.5 h. |
 | temazepam | Ochs 1984: V 1.45 L/kg, CL 2.33 mL/min/kg, t½ 8.6 h | **Correct** (20 mg oral). The specification is also right that this one-compartment reduction cannot reach the label's 865 ng/mL peak. |
 | temazepam | label: 30 mg mean peak 865 ng/mL, biphasic decline | **Correct**: range 666-982 ng/mL at a mean of 1.5 h; distribution t½ 0.4-0.6 h; terminal t½ 3.5-18.4 h. |
+| temazepam | van Steveninck 1994 II: IV kinetics and concentration-effect parameters | **Obtained** (PDF). Individual two-compartment fits; only summary values are published (Table I). PD linear, with proteresis, so no effect-site delay. |
+| diazepam | Mould 1995 as the adult PK/PD source (the specification did not cite it; proposed in the check) | **Obtained** (PDF). It gives diazepam's t½ke0 (1.2 min, DSST) and EC50 (116-132 ng/mL), but "values for t½, CL, and Vdβ could not be calculated": sampling lasted 3 h. There is no diazepam PK model in it. |
 
 ## What was built
 
@@ -90,17 +92,30 @@ Kruizinga 2022.
 - Validation against the label: 4 mg IV gives 74 ng/mL at 15 min (label about
   70); 2 mg PO peaks at 19.7 (about 20); 4 mg IM peaks at 53 (about 48).
 
+**Temazepam** — two compartments fitted to the published IV means of van
+Steveninck 1994 (part II, Table I), in place of the specification's Ochs
+reduction.
+- Fit: V1 0.274, V2 0.607 L/kg; CL 1.04 mL/min/kg; Q 0.407 L/h/kg. Each of
+  the five means (Cmax, AUC to 3 h, 8 h and infinity, half-life) is reproduced
+  within 1.5%. The distribution half-life is 0.30 h, against the label's
+  0.4-0.6 h, which the fit was not given.
+- Routes: oral only. The IV formulation is a research one; earlier ones caused
+  venous thrombosis (Halliday 1987). Bioavailability 0.92 (label);
+  absorption t½ 0.38 h (Müller 1987, morning soft gelatin).
+- No effect site: van Steveninck found proteresis, not hysteresis.
+- Band 250-600 ng/mL; threshold 250 ng/mL, where psychometric deterioration
+  began (Saletu 1986).
+- Validation: 30 mg nightly on day 7 gives 278 ng/mL at 9 h and 103 at 24 h
+  (label 260 and 75). Single 20 mg peak 392 ng/mL against 362-708 observed.
+
 ## Not yet implemented, and what would unblock them
 
-- **Diazepam.** Mould et al., *Clin Pharmacol Ther* 1995;58:35-43, the source
-  of the library's midazolam model, fitted diazepam in the same 12 volunteers
-  with an effect site. Its parameters are not in the abstract. Bührer 1990
+- **Diazepam.** Mould et al., *Clin Pharmacol Ther* 1995;58:35-43 gives
+  diazepam's effect site (t½ke0 1.2 min) but no disposition model: its
+  sampling lasted only 3 h. Bührer 1990
   gives an arterial equilibration half-life of 1.6 min; Hung 1996 gives IM
   bioavailability 1.0 and tmax 34 min; Divoll 1983 gives oral F 0.94.
   Nordiazepam formation is 53% of the dose (Greenblatt 1988).
-- **Temazepam.** van Steveninck et al., *Clin Pharmacol Ther*
-  1994;55:535-545 and 546-555, give IV kinetics and EEG/saccadic PD in
-  volunteers. No accessible paper reports a temazepam ke0.
 - **Barr 2001** (lorazepam ICU PK, ke0 and sedation model) would replace the
   derived lorazepam disposition. **Venkatakrishnan 2005** would allow IV
   alprazolam (no product exists). IV clonazepam would need a study sampled in
