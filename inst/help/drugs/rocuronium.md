@@ -4,7 +4,7 @@ Rocuronium's parameters are from Plaud and colleagues (*Clin Pharmacol Ther* 199
 
 ### Covariates
 
-Weight only, scaling the volumes and clearances linearly.
+Size only. By default, with *Adjust weight to fat-free mass* ticked, the volumes scale with the patient's fat-free mass relative to the 70 kg, 170 cm reference man and the clearances with that ratio to the 0.75 power, so height, age and sex enter through fat-free mass. Plaud's model is per kilogram of total body weight, with fixed rate constants: unticking the box restores that, scaling the volumes and clearances linearly with weight.
 
 ### Effect site
 

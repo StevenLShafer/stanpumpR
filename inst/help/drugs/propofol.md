@@ -15,7 +15,7 @@ Two of the published model's switches are fixed in the code: concentrations are 
 
 ### Effect site
 
-The time to peak effect, 1.6 minutes, is from Schnider and colleagues' 1999 study of propofol pharmacodynamics (*Anesthesiology* 1999;90:1502-1516). Eleveld's own pharmacodynamic model, with its age-dependent ke0, is not used; the drug library's single tPeak gives a ke0 that depends on the patient only through the disposition parameters.
+The time to peak effect, 1.6 minutes, is from Schnider and colleagues' 1999 study of propofol pharmacodynamics (*Anesthesiology* 1999;90:1502-1516). Eleveld's own pharmacodynamic model is not used. In that model the arterial ke0 is scaled to body weight, not to age; age acts instead on the delay of the measured effect and on the sensitivity to propofol. Here the drug library's single tPeak gives a ke0 that depends on the patient only through the disposition parameters.
 
 ### What is also in the file
 
@@ -27,4 +27,4 @@ The shaded band is 2.5 to 4 mcg/mL, a typical range for maintenance of anesthesi
 
 ### Where to be careful
 
-The Eleveld model is the broadest in the library, but its extremes rest on the few studies that covered them. Predictions in neonates, in patients over about 90 kg, and in the very elderly carry more uncertainty than the plot shows. It describes a typical patient; the published between-subject variability is about 30 per cent for clearance.
+The Eleveld model is the broadest in the library, but its extremes rest on the few studies that covered them. Predictions in neonates, in patients over about 90 kg, and in the very elderly carry more uncertainty than the plot shows. It describes a typical patient. Individuals differ from that patient considerably: the published between-subject variance of clearance is 0.265 on the log scale, a coefficient of variation of 55 per cent (Eleveld 2018, Table 2). That is the spread of real patients around the typical curve, which the plot does not show, and is separate from any uncertainty in the typical curve itself.
