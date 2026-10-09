@@ -12,7 +12,7 @@ There is no intravenous alprazolam product, and the model was fitted to oral dat
 
 - **Weight**: clearance and volume are proportional to it. With the [fat-free-mass switch](help:models/fat-free-mass) on, they use the pharmacokinetic weight; with it off, total body weight, as published.
 - **Age**: clearance is 23 per cent lower above 60.
-- **Sex**: clearance is 59 per cent higher in women, so a woman's steady-state concentration is 37 per cent lower than a man's on the same dose. **This term is disputed.** DeVane notes that a sex difference "has been sometimes observed ... but not consistently", and Greenblatt and Wright's review found that "most studies show that alprazolam pharmacokinetics are not significantly influenced by gender".
+- **Sex**: not applied. DeVane estimated a clearance 59 per cent higher in women, which would make a woman's steady-state concentration 37 per cent lower than a man's on the same dose. The estimate rests on 24 women. DeVane notes that a sex difference "has been sometimes observed ... but not consistently", and Greenblatt and Wright's review found that "most studies show that alprazolam pharmacokinetics are not significantly influenced by gender". Men and women of the same size receive the same clearance here; a woman's smaller size is represented through weight.
 - DeVane's fourth term, 26 per cent lower clearance with two or more concurrent illnesses, has no input here and is not applied.
 
 ### Effect site

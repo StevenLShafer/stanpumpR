@@ -32,14 +32,16 @@ test_that("the reference patient receives DeVane's typical values", {
 })
 
 
-test_that("DeVane's sex and age terms", {
-  # 60 kg, 160 cm, 40 y woman, switch off: V 42 L, CL 0.05 x 60 x 1.59 L/h
+test_that("DeVane's age term applies and his sex term does not", {
+  # 60 kg, 160 cm, 40 y woman, switch off: V 42 L, CL 0.05 x 60 L/h, with no
+  # +59% for sex (dropped by decision; see the header)
   off <- alprazolam(60, 160, 40, "female", adjustToFFM = FALSE)$PK$default
-  expect_equal_rounded(off[c("v1", "cl1")], list(v1 = 42, cl1 = 0.0795))
+  expect_equal_rounded(off[c("v1", "cl1")], list(v1 = 42, cl1 = 0.05))
+  expect_equal(off, alprazolam(60, 160, 40, "male", adjustToFFM = FALSE)$PK$default)
   # Switch on: the pharmacokinetic weight is 49.999 kg
   on <- alprazolam(60, 160, 40, "female")$PK$default
   expect_equal_rounded(on[c("v1", "cl1")],
-                       list(v1 = 34.9993756050, cl1 = 0.0662488181))
+                       list(v1 = 34.9993756050, cl1 = 0.0416659233))
   # Over 60: clearance x 0.77; at exactly 60, no change ("older than 60")
   old <- alprazolam(70, 170, 70, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(old$cl1, 0.0449166667, tolerance = 1e-9)

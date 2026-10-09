@@ -79,9 +79,10 @@ Kruizinga 2022.
   (equilibration t½ 4.8 min).
 - Validation: 1 mg peaks at 16.9 ng/mL (observed 12-22), but at 2.7 h against
   0.7-1.8 h, because ka came from steady-state samples.
-- **Decision for Dr Shafer:** DeVane's +59% clearance in women is disputed. The
-  Greenblatt and Wright review says most studies find no sex effect. It is
-  implemented as published and flagged on the drug's page.
+- **Sex term not applied** (Dr Shafer's decision, 2026-10-09): DeVane's +59%
+  clearance in women rests on 24 women, and the Greenblatt and Wright review
+  says most studies find no sex effect. The age term (over 60, −23%) is
+  applied.
 
 **Lorazepam** — two compartments derived from the Nielsen-Kudsk 1983 means.
 - Disposition: the specification's two models were rejected (above). V1 0.59

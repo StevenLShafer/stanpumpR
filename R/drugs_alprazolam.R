@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
-# Alprazolam: oral only, one compartment (DeVane 1993), with the EEG effect
-# site of Venkatakrishnan 2005
+# Alprazolam: oral only, one compartment (DeVane 1993, without its sex term),
+# with the EEG effect site of Venkatakrishnan 2005
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL, total plasma.
@@ -19,8 +19,9 @@
 #     IIV in CL 40% after the covariates; residual error 27%
 #
 # Every value agrees with the ChatGPT specification this model was built from.
-# The multiple-illness term (two or more disease states) has no input in
-# stanpumpR; the model is that of a patient without it.
+# Two terms are not applied.  The multiple-illness term (two or more disease
+# states) has no input in stanpumpR; the model is that of a patient without
+# it.  The sex term is dropped (see COVARIATES).
 #
 # What the data could and could not identify.  Sampling was sparse and at
 # steady state, which pins down clearance well (it agrees with the dose-
@@ -48,14 +49,18 @@
 #
 # COVARIATES
 # ==========
-# Sex and age as published.  The sex term is the one to be careful with: it
-# makes a woman's clearance 59% higher (95% CI 30-88%), so her steady-state
-# concentration 37% lower.  DeVane's own discussion notes that a sex
-# difference "has been sometimes observed ... but not consistently", and the
-# Greenblatt and Wright review says that "most studies show that alprazolam
-# pharmacokinetics are not significantly influenced by gender".  Age over 60
-# lowers clearance by 23%, consistent with the reduced clearance in the
-# elderly in the review.
+# Age as published: over 60, clearance is 23% lower, consistent with the
+# reduced clearance in the elderly in the Greenblatt and Wright review.
+#
+# DeVane's sex term is NOT applied (Steven L. Shafer, 2026-10-09).  It would
+# make a woman's clearance 59% higher (95% CI 30-88%), so her steady-state
+# concentration 37% lower.  It was estimated in 24 women among inpatients on
+# varied co-medication; DeVane's own discussion notes that a sex difference
+# "has been sometimes observed ... but not consistently", and the Greenblatt
+# and Wright review that "most studies show that alprazolam pharmacokinetics
+# are not significantly influenced by gender".  Men and women of the same
+# size therefore receive the same clearance; a woman's smaller body is still
+# represented through the weight terms.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -119,7 +124,6 @@
 ALPRAZOLAM_CL_PER_KG <- 0.05     # L/h/kg, apparent
 ALPRAZOLAM_V_PER_KG  <- 0.7      # L/kg, apparent
 ALPRAZOLAM_KA        <- 1.1      # 1/h
-ALPRAZOLAM_FEMALE    <- 0.59     # fractional increase in CL/F, women
 ALPRAZOLAM_OVER_60   <- -0.23    # fractional change in CL/F, age > 60
 
 # Venkatakrishnan 2005: effect-site equilibration half-life 4.8 min (EEG beta)
@@ -128,7 +132,8 @@ ALPRAZOLAM_KE0 <- log(2) / 4.8   # 1/min
 #' Alprazolam pharmacokinetics (oral)
 #'
 #' DeVane et al. (1993): one compartment, apparent oral clearance and volume
-#' proportional to weight, clearance higher in women and lower above 60; the
+#' proportional to weight, clearance lower above 60 (the published sex term
+#' is not applied); the
 #' EEG effect-site rate constant of Venkatakrishnan et al. (2005).  See the
 #' file's header.
 #'
@@ -144,8 +149,9 @@ alprazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
+  # DeVane's sex term (+59% in women) is deliberately not applied: see the
+  # header.
   cl1 <- ALPRAZOLAM_CL_PER_KG * pkW *
-    (1 + if (sex == SEX_FEMALE) ALPRAZOLAM_FEMALE else 0) *
     (1 + if (age > 60) ALPRAZOLAM_OVER_60 else 0) / 60   # L/min
 
   default <- list(
@@ -170,7 +176,8 @@ alprazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   reference <- paste0(
     "DeVane CL et al., Clin Pharmacol Ther 1993;53:521-528. ",
-    "One compartment, apparent oral clearance on weight, sex and age; ",
+    "One compartment, apparent oral clearance on weight and age (the sex ",
+    "term not applied); ",
     "ke0 from Venkatakrishnan K et al., J Clin Pharmacol 2005;45:529-537; ",
     "oral only. https://doi.org/10.1038/clpt.1993.65"
   )

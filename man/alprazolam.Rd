@@ -23,7 +23,8 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 DeVane et al. (1993): one compartment, apparent oral clearance and volume
-proportional to weight, clearance higher in women and lower above 60; the
+proportional to weight, clearance lower above 60 (the published sex term
+is not applied); the
 EEG effect-site rate constant of Venkatakrishnan et al. (2005).  See the
 file's header.
 }
