@@ -79,7 +79,7 @@ bookmarksToExclude <- c(
   "startup_ok",
   "startup_tour",
   "startupDrugs_1", "startupDrugs_2", "startupDrugs_3", "startupDrugs_4",
-  "startupDrugs_5", "startupDrugs_6", "startupDrugs_7",
+  "startupDrugs_5", "startupDrugs_6", "startupDrugs_7", "startupDrugs_8",
   "client_time",
   "dosetable_apply",
   "dosetable_undo",

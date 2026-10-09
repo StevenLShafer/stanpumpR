@@ -259,8 +259,8 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   added by this procedure is `IV`.
 - `Category` — the group the drug is listed under in the menu the app opens with: one of
   `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
-  `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`, `Corticosteroids`,
-  `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
+  `Corticosteroids`, `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.
