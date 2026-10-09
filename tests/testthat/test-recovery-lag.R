@@ -56,15 +56,15 @@ test_that("only the drugs known to carry an absorption lag do", {
 
 
 test_that("acetaminophen's live oral lag blanks recovery for 5.3 min only", {
-  # The one lag in the library, end to end through getDrugPK and simCpCe.  A
-  # 4 g tablet so the effect site clears the 10 mcg/mL threshold and the time
-  # reported once absorption starts is a real one.
+  # The one lag in the library, end to end through getDrugPK and simCpCe.  An
+  # ordinary 1 g tablet: its effect site clears the 5 mcg/mL threshold, so the
+  # time reported once absorption starts is a real one.
   dd <- getDrugDefaultsGlobal()
   PK <- getDrugPK("acetaminophen", 70, 170, 35, "male",
                   dd[dd$Drug == "acetaminophen", ])
   PK$endCe <- dd$endCe[dd$Drug == "acetaminophen"]
   expect_equal(PK$PK$default$tlag_PO, 5.3)
-  DT <- data.frame(Drug = "acetaminophen", Time = 0, Dose = 4000,
+  DT <- data.frame(Drug = "acetaminophen", Time = 0, Dose = 1000,
                    Units = "mg PO")
   X <- simCpCe(DT, noEvents, PK, 720, TRUE)
   w <- X$wide

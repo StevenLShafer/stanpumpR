@@ -33,8 +33,8 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
     ke0 = 0.0130782487,
     MEAC = 0,
     typical = 10,
-    upperTypical = 20,
-    lowerTypical = 5,
+    upperTypical = 15,
+    lowerTypical = 3,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)
@@ -137,4 +137,23 @@ test_that("1 g intravenous and oral match an independent integration", {
   expect_lt(max(po$Plasma), 11.2)
   expect_gt(po$Time[which.max(po$Plasma)], 29)
   expect_lt(po$Time[which.max(po$Plasma)], 39)
+})
+
+
+test_that("the CSV band and threshold match the model, and 1 g IV crosses it", {
+  dd <- getDrugDefaults("acetaminophen")
+  x <- acetaminophen(70, 170, 35, "male")
+  expect_equal(dd$Lower, x$lowerTypical)
+  expect_equal(dd$Upper, x$upperTypical)
+  expect_equal(dd$Typical, x$typical)
+  expect_equal(dd$endCe, 5)
+  expect_equal(dd$MEAC, 0)
+  # The threshold is set so an ordinary adult dose produces a real time
+  # until threshold: 1 g IV in the reference man peaks near 7.3 mcg/mL in
+  # the effect site, above 5.
+  w <- simulateDrugsWithCovariates(
+    data.frame(Drug = "acetaminophen", Time = 0, Dose = 1000, Units = "mg"),
+    noEvents, 70, 170, 35, "male", 480, TRUE)$acetaminophen$wide
+  expect_gt(max(w$"Effect Site"), dd$endCe)
+  expect_gt(max(w$Recovery, na.rm = TRUE), 60)
 })

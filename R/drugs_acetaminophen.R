@@ -136,11 +136,16 @@ acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   # Not an opioid, so not on the MEAC panel.
   MEAC <- 0
-  # Band, mg/L effect site: around Anderson's 10 mg/L target, at which the
-  # expected pain reduction is about 2.6 VAS units (EC50 9.98 mg/L).
+  # Band, mg/L effect site: 3 to 15, the range adult dosing actually reaches
+  # (1 g IV peaks near 7.3 mg/L in the effect site; 1 g every 6 h averages
+  # about 7).  The typical line stays at Anderson's 10 mg/L target, at which
+  # the expected pain reduction is about 2.6 VAS units (EC50 9.98 mg/L).  The
+  # recovery threshold (endCe in the CSV) is 5 mg/L, chosen by Steven L.
+  # Shafer (2026-10-08) so that time until threshold is informative for
+  # ordinary adult doses; at 10 mg/L it read zero for them.
   typical      <- 10
-  upperTypical <- 20
-  lowerTypical <- 5
+  upperTypical <- 15
+  lowerTypical <- 3
 
   reference <- paste0(
     "Morse JD et al., Eur J Drug Metab Pharmacokinet 2022;47:497-507 ",
