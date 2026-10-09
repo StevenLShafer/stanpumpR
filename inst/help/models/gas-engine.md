@@ -29,24 +29,39 @@ Nitrogen's MAC of 200 per cent is Gas Man's own figure, carried as it stands and
 
 ## Equations
 
-Fresh gas composition follows from the flowmeter and vaporizer settings; the vapour dilutes the carrier gases. The circuit is the ideal circle system: with fresh gas flow Q and minute ventilation MV (alveolar ventilation VA = 0.7 MV),
+Fresh gas composition follows from the flowmeter and vaporizer settings; the vapour dilutes the carrier gases. Air is split into 20.93 per cent oxygen and 78.07 per cent nitrogen; its remaining 1 per cent, mostly argon, is not carried.
+
+The circuit is the ideal circle system. With fresh gas flow Q, minute ventilation MV (alveolar ventilation VA = 0.7 MV) and U the total uptake when it is positive (zero otherwise), the patient inspires MV + U and the circuit supplies it:
 
 ```
-Q >= MV:  F_circuit = F_fresh                              no rebreathing
-Q <  MV:  F_circuit = f F_fresh + (1 - f) F_alveolar,   f = Q / (VA + 0.3 Q)
+Q >= MV + U:  F_circuit = F_fresh                          no rebreathing
+Q <  MV + U:  F_circuit = f F_fresh + g F_alveolar
+              k = (MV + U - Q) / (MV (1 - c_E))            exhaled gas rebreathed, per unit exhaled
+              D = MV + U - k (MV - VA)
+              f = Q / D,   g = k VA / D
 ```
 
-The alveolar tension of gas i changes with ventilation and with uptake into the blood,
+Here c_E is the carbon dioxide fraction of exhaled gas (carbon dioxide production over minute ventilation), which the absorber removes from whatever is rebreathed. With no uptake and no carbon dioxide this reduces to f = Q / (VA + 0.3 Q), g = 1 − f, and the threshold is the familiar Q = MV; the uptake raises it slightly, by about 0.05 L/min on oxygen and sevoflurane and by up to about 0.9 L/min early in an induction with 4 L/min of nitrous oxide in 6 L/min. See [Carbon dioxide](help:models/gas-differences) on the comparison page.
+
+The alveolar tension of gas i, written here as a fraction, changes with ventilation and with uptake into the blood (each term in L/min),
 
 ```
-V_alv dF_alv/dt = VA (F_circuit - F_alv) - uptake_i + F_alv × (total uptake + VO2 correction)
+V_alv dF_alv/dt = VA (F_circuit - F_alv) - uptake_i + total uptake × F_circuit    (total uptake > 0)
+                                                    + total uptake × F_alv        (total uptake < 0)
 ```
 
-where the last term is the **concentration and second gas effect**: gas taken up in bulk (and oxygen consumed) shrinks the alveolar volume, concentrating what remains. Uptake of each gas is cardiac output times the blood:gas coefficient times the alveolar-to-mixed-venous tension difference; each tissue takes up at its share of cardiac output times the arterial-to-tissue difference divided by its capacity. Mixed venous tension is the flow-weighted mean of the tissue tensions.
+where the last term is the **concentration and second gas effect**: gas taken up in bulk shrinks the alveolar volume, so make-up gas is drawn in from the circuit, concentrating what remains; when gas comes back out of the blood, as on emergence, alveolar gas is pushed out instead. The total uptake is the sum of every soluble gas's uptake (nitrogen included) plus the oxygen consumed less the carbon dioxide that replaces it, VO2 × (1 − 0.8). Uptake of each gas is cardiac output times the blood:gas coefficient times the alveolar-to-mixed-venous tension difference; each tissue takes up at its share of cardiac output times the arterial-to-tissue difference divided by its capacity. Mixed venous tension is the flow-weighted mean of the tissue tensions.
 
 ## Integration
 
-Within each segment between dose-table changes the system is linear with constant coefficients once the total-uptake coupling is linearised at the segment's start, and is advanced exactly by matrix exponential (a Padé approximation with scaling and squaring). Gas Man splits each time step into sequential sub-updates; the two agree as the step shrinks, and the repository's convergence test checks that they do.
+Between dose-table changes the settings are constant, and every equation above would be linear with constant coefficients but for one term: the total uptake that couples the gases depends on the state. The engine therefore advances in short steps. Within each step the total uptake (and with it the circuit blend) is held at its value at the start of the step, which makes the step linear, and the step is then solved exactly by matrix exponential (a Padé approximation with scaling and squaring). The uptake is recomputed at the start of the next step. So the propagation within a step is exact, but the coupling between steps is an approximation of first order in the step size: the answer depends slightly on the step and converges as it shrinks. Gas Man holds its total uptake per step in the same way and in addition splits each step into sequential sub-updates; the two converge to the same answer as the step shrinks, and the repository's convergence test checks that they do.
+
+The step is about the plot length divided by 600: 0.1 minute on a one-hour plot, 0.4 minute on a four-hour plot, 2.4 minutes on a day. Measured against the same engine at a 40-times finer step:
+
+- **Without nitrous oxide** the coupling is weak. In the teaching scenarios and the Gas Man validation scenarios that use no nitrous oxide, on their own plot lengths of half an hour to four hours, the alveolar tensions agree to within 0.003 percentage points, under 0.1 per cent of the agent's peak.
+- **During a nitrous oxide wash-in** the coupling is strong. In [the second gas effect scenario](scenario:second-gas-effect) (4 L/min nitrous oxide in 6 L/min, with 2 per cent sevoflurane) the alveolar nitrous oxide and sevoflurane run low at the first plotted points, by about 1.5 per cent of their value on a one-hour plot, 6 per cent on a four-hour plot and 13 per cent on a 24-hour plot. The error fades as uptake slows, to under 1 per cent after about 1, 2 and 12 minutes respectively, and roughly halves when the step is halved.
+
+To read the first minutes of a nitrous oxide induction closely, use a short plot.
 
 ## MAC
 

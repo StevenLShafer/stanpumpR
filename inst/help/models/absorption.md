@@ -18,22 +18,23 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 
 ## Which drugs have routes
 
-| Drug | Routes |
-|---|---|
-| oxycodone | PO |
-| hydromorphone | PO, IM, IN |
-| codeine, hydrocodone, oxymorphone, tramadol | PO |
-| gabapentin | PO, with saturable absorption |
-| pregabalin | PO |
-| amiodarone | PO, as a constant daily rate (`mg/day PO`) |
-| lorazepam | PO, IM |
-| diazepam | PO, IM |
-| alprazolam | PO |
-| clonazepam | PO, with the lag of its tablet study |
-| zolpidem | PO, with a lag standing in for transit absorption |
-| temazepam | PO |
+The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, intramuscular and intranasal unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid` and so on; see [The dose table](help:dose-table)), which are not listed separately.
 
-Each drug's page shows the current absorption rate, bioavailability and lag. The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's intramuscular and intranasal absorption was revised so that each route's peak matches the measured time (about 20 minutes intranasal, 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down. Gabapentin (0.31 h) and pregabalin (0.32 h) keep the lags their sources estimated, so time until threshold reads blank for those minutes after each of their doses. Clonazepam keeps the 0.369 h lag dos Santos and colleagues estimated for its tablets. Zolpidem's source absorbed it through a chain of transit compartments, which delivers the dose almost as a pure delay; it is represented by a lag of 0.25 h, the mean transit time, followed by the published absorption rate. A drug's time to peak effect after an oral dose is counted from the dose, lag included.
+<!-- generated: route-table -->
+
+Each drug's page shows the current absorption rate, bioavailability and lag, and where each route's parameters come from. They are not all of the same standing:
+
+- **Fitted with the intravenous model.** Clindamycin's oral parameters were fitted together with its intravenous ones, so its bioavailability is absolute.
+- **Cross-study additions.** For metronidazole, hydrocortisone, methylprednisolone and dexamethasone some or all of the oral parameters (and for dexamethasone the intramuscular ones) come from studies other than the disposition model's. Methylprednisolone's absorption rate constant is provisional: its oral exposure does not depend on it, its peak does.
+- **Apparent oral parameters.** Cefalexin and amiodarone were fitted to oral data alone with the bioavailability unknown, which predicts oral concentrations correctly and intravenous ones wrongly, so both are offered by mouth only; intravenous amiodarone is the separate [amiodarone IV](help:drugs/amiodaroneIV) row. Prednisone is oral only because no routine intravenous product was verified.
+- **Reduced to one input.** An oral dose of prednisolone or prednisone reaches the circulation partly as each steroid, which a single input cannot carry; effective coefficients make the oral exposures exact and the shapes approximate.
+- **Derived rather than fitted.** Naloxone's intranasal bioavailability and absorption rate are derived from a published model of the concentrated spray that has no absolute bioavailability, and are initial values rather than estimates.
+- **Apparent oral models.** Alprazolam, clonazepam and zolpidem were fitted to oral data alone, so their volumes and clearances are apparent (divided by the unknown bioavailability, which is carried as 1) and they are offered by mouth only.
+- **Absorption added to an intravenous model.** Lorazepam's oral and intramuscular routes come from a separate five-route crossover; temazepam's oral route from a separate oral study and the label's bioavailability, on a disposition fitted to intravenous data.
+- **Chosen to match a peak height.** Diazepam's oral and intramuscular absorption rates were chosen so that the typical peak matches the observed mean peak; the typical curves then peak earlier (oral) and later (intramuscular) than observed.
+- **Chosen to match a time of peak.** The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's oral parameters are provisional, and its intramuscular route has no human pharmacokinetic study behind it: its bioavailability of 1 and its 30-minute peak are a judgement.
+
+Hydromorphone's intramuscular and intranasal absorption was revised so that each route peaks at its intended time (about 20 minutes intranasal, from Coda's data, and 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down. Gabapentin (0.31 h) and pregabalin (0.32 h) keep the lags their sources estimated, so time until threshold reads blank for those minutes after each of their doses. Clonazepam keeps the 0.369 h lag dos Santos and colleagues estimated for its tablets. Zolpidem's source absorbed it through a chain of transit compartments, which delivers the dose almost as a pure delay; it is represented by a lag of 0.25 h, the mean transit time, followed by the published absorption rate. A drug's time to peak effect after an oral dose is counted from the dose, lag included.
 
 ## Saturable absorption
 

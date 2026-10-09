@@ -24,6 +24,11 @@ other half is generated from the code at run time (see `R/help-content.R`,
 * Add a button that loads a scenario as `[text](scenario:scenario-id)`.
 * External links open in a new tab automatically.
 * A page with three or more `##` headings gets a table of contents.
+* A fact the code owns can be built from the code instead of copied: a line
+  that is nothing but `<!-- generated: NAME -->` is replaced, when the page
+  renders, by the Markdown that block builds (`R/help-generated.R`). The route
+  table on `models/absorption.md` is one (`route-table`). Write the prose
+  around the marker by hand.
 * Screenshots live in `inst/www/help/` and are referenced as
   `stanpumpr-assets/help/<file>.png` (the app serves `inst/www` at that path).
   Wrap them in `<figure class="help-figure">` with an `<img>` and an optional

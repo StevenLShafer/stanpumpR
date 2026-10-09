@@ -4,7 +4,13 @@
 \alias{recoveryStateSet}
 \title{Assemble a set of effect-site exponential states}
 \usage{
-recoveryStateSet(time, state, lambda, pending = NULL)
+recoveryStateSet(
+  time,
+  state,
+  lambda,
+  pending = NULL,
+  horizon = RECOVERY_HORIZON_EFFECT
+)
 }
 \arguments{
 \item{time}{the engine's time line}
@@ -20,10 +26,15 @@ given but has not begun to be absorbed and the amplitudes therefore do not
 describe the whole of what the patient has received.  NULL, the default,
 means nothing is ever pending, which is the case for every intravenous
 dose and for any extravascular one with no lag.}
+
+\item{horizon}{how far ahead, in minutes, to look for the threshold:
+\code{RECOVERY_HORIZON_EFFECT} (a day) for effect-site states,
+\code{recoveryHorizonPlasma(maximum)} (a week, or the length of the plot
+if that is longer) for plasma states}
 }
 \value{
-a state set: a list of \code{time}, \code{state}, \code{lambda}
-and \code{pending}
+a state set: a list of \code{time}, \code{state}, \code{lambda},
+\code{pending} and \code{horizon}
 }
 \description{
 Assemble a set of effect-site exponential states

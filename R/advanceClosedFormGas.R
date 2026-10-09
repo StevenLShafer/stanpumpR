@@ -40,6 +40,18 @@
 #     F_fgf,N2O  = 100 * carrier * (Q_N2O)               / Q
 #     F_fgf,sevo = F_vap,sevo         (already a % of 1 atm)
 #
+# 0.2093 + 0.7807 is 0.99, not 1 (AIR_FRACTION_O2 and AIR_FRACTION_N2 in
+# gasProperties.R).  The remaining 1% of air, mostly argon, is not carried:
+# it is neither lumped into nitrogen nor normalised away.  An air flow counts
+# in full in Q but puts only 99% of itself into the carried fractions, and the
+# initial state (room air) is 78.07% nitrogen and 20.93% oxygen, summing to 99.
+#
+# The vapour displaces carrier gas within Q; it does not add to Q.  Gas Man has
+# an option (off by default) that instead adds the vapour's own volume, raising
+# the effective fresh gas flow by 1 / (1 - F_vap/100).  That option has no
+# counterpart here.  (Both notes: Claude Code, 2026-10-09,
+# from audit findings F08 and F13.)
+#
 # (1) CIRCUIT.  Two models, chosen by the `circuit` argument.
 #
 #     "ideal" -- THE DEFAULT since 2026-10-05, at Shafer's direction: "the ideal
@@ -52,7 +64,10 @@
 #
 #     There is a threshold at Q = MV, the MINUTE ventilation, above which the
 #     patient inspires fresh gas and nothing else, and there is no circuit
-#     volume and so no lag.
+#     volume and so no lag.  (With the uptake coupling and oxygen consumption
+#     on, as they are by default, (4a) below moves the threshold to
+#     Q = MV + max(u, 0), u the summed uptake; gasCircuitBlend() is the rule
+#     the engine runs.  Q = MV is the u = 0 case and the usual rule of thumb.)
 #
 #     Where f comes from.  Below the threshold the patient inspires all the
 #     fresh gas and makes up the rest with exhaled gas:
@@ -199,6 +214,25 @@
 # The one term that would break linearity is the volume change from bulk gas
 # uptake -- the concentration and second gas effect.  It is NOT implemented
 # here yet.
+#
+# UPDATE (2026-10-09, Claude Code, from audit finding F07):
+# that sentence is historical.  The term is implemented (`uptakeEffect`, on by
+# default), and it does break linearity: the summed uptake depends on the
+# state.  The engine keeps each SUB-STEP linear by holding the summed uptake
+# (and the ideal-circuit blend that depends on it) at its value at the start of
+# the sub-step, advances the sub-step exactly by matrix exponential, and
+# recomputes the uptake for the next one.  Propagation within a sub-step is
+# exact; the coupling between sub-steps is first order in dt.  The result is
+# therefore NOT independent of the step size, which is set by `resolution`
+# (about maximum / 600 by default).  Measured against the same engine at a
+# 40-fold finer step: under 0.003 percentage points in the scenarios without
+# nitrous oxide; with 4 L/min nitrous oxide in 6 L/min, the first plotted
+# alveolar values run low by about 1.5% of their value on a 60-minute plot,
+# 6% on 240 minutes and 13% on 1440, fading below 1% within 1, 2 and 12
+# minutes.  In the audit's matched ideal-circuit sevoflurane case the
+# 30-minute alveolar value moves from 1.71176014% with 31 steps to
+# 1.71178091% with 2401, against 1.71178112% from an independent ODE solver.
+# See the Integration section of inst/help/models/gas-engine.md.
 #
 # CORRECTION (2026-09-03): an earlier version of this comment said it was
 # unresolved whether Gas Man models it, and a later one said Gas Man does not.
@@ -690,7 +724,10 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 #'   time-varying cardiac output can be added later without changing the
 #'   engine; note that letting it vary would logically require the intravenous
 #'   pharmacokinetics to respond to it as well, which stanpumpR does not model.
-#' @param resolution number of output time points
+#' @param resolution number of output time points.  It also sets the sub-step
+#'   over which the uptake coupling is held fixed, and so, when
+#'   \code{uptakeEffect} is TRUE, the accuracy: the error is first order in the
+#'   sub-step, about \code{maximum / resolution} (see the file header).
 #' @param uptakeEffect if TRUE (the default, as in Gas Man, whose m_bUptEnb
 #'   defaults true), couple the gases through their summed uptake, giving the
 #'   concentration and second gas effect.  Set FALSE to isolate that term: with
@@ -790,13 +827,17 @@ advanceClosedFormGas <- function(
     if (len <= 0) next
 
     # Enough sub-steps to draw a smooth curve, proportional to the share of the
-    # simulation this interval occupies.  Accuracy does not depend on this:
-    # the advance is exact at every step size.
+    # simulation this interval occupies.  With uptakeEffect = FALSE accuracy
+    # does not depend on this: the advance is exact at every step size.  With
+    # the uptake coupling on (the default) it does: the coupling is frozen per
+    # sub-step (below), so the sub-step also sets the accuracy, first order in
+    # dt.  See the UPDATE in the file header for measured sizes.
     nSub <- max(1, round(resolution * len / maximum))
     dt   <- len / nSub
 
     # Settings are read at the START of the interval and held across it, which
-    # is what makes the interval linear and the advance exact.
+    # is what makes the interval linear -- apart from the uptake coupling,
+    # which is linearised per sub-step below.
     s <- gasSettingsAt(bySetting, t0, deadSpace)
 
     # Build one propagator per gas for this interval: y <- P y + q.
@@ -809,9 +850,13 @@ advanceClosedFormGas <- function(
     #
     # That is Gas Man's own treatment -- it freezes fTotUptake per tick too --
     # but the propagation WITHIN each step stays exact here where Gas Man
-    # splits.  So this is a strictly more accurate integration of the same
-    # equations, and the two converge as dt shrinks rather than agreeing
-    # digit-for-digit at any fixed dt.
+    # splits.  This removes Gas Man's splitting error but not the error of
+    # freezing the coupling, which is first order in dt: the sub-step is exact
+    # for the frozen coefficients, not for the coupled equations.  (An earlier
+    # version of this comment called the result "strictly more accurate" and
+    # step-independent; neither was shown, and the second is false -- audit
+    # finding F07.)  The two engines converge as dt shrinks rather than
+    # agreeing digit-for-digit at any fixed dt.
     buildProp <- function(totUptake, oxygenTotUptake = 0, cE = 0)
     {
       pr <- list()

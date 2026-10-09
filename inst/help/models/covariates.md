@@ -8,6 +8,8 @@ The four covariates in the Patient Profile reach the models in fixed units: age 
 
 **Allometric and covariate models.** Fentanyl scales volumes linearly and clearances to the 0.75 power of weight. Propofol (Eleveld), remifentanil (Eleveld, and Kim for obesity) and remimazolam (Eleveld) use allometric scaling together with age, sex and maturation terms.
 
+These three kinds describe the models as published, which is what stanpumpR runs with *Adjust weight to fat-free mass* unticked. By default the box is ticked and most of them, the fixed-parameter models included, are rescaled to the patient's fat-free mass, as described at the end of this page and in [Scaling to fat-free mass](help:models/fat-free-mass).
+
 ## Allometric scaling
 
 Metabolic rate, and hence clearance, scales across body sizes not with weight but approximately with weight to the three-quarter power, while volumes scale linearly:

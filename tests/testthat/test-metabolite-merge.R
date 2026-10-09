@@ -121,6 +121,13 @@ test_that("a missing side of the merge is handled", {
   expect_equal(made$Plasma, c(0, 4))
   expect_equal(made$"Effect Site", c(0, 2))
   expect_equal(made$Recovery, c(0, 0))
+
+  # A one-row contribution is kept as it is (approx() needs two points; a
+  # review of the F19 change found the merge had started to stop on it)
+  one <- mergeMetaboliteSeries(NULL, data.frame(Time = 5, Cp = 1, Ce = 0.5))
+  expect_equal(one$Time, 5)
+  expect_equal(one$Plasma, 1)
+  expect_equal(one$"Effect Site", 0.5)
 })
 
 
@@ -453,8 +460,9 @@ test_that("a metabolite drug with no effect site is timed on its plasma", {
   # to the instant the row reports and reading the formed plasma at the last
   # point, which is always the end of the run: it must be above the threshold
   # 0.02 min before that instant and below it 0.02 min after.  recoveryCalc()
-  # solves to uniroot()'s 0.01 min; the largest error measured here was 3e-4
-  # min.  Checked on the way up, at the peak and on the way down.
+  # solved to uniroot()'s 0.01 min until 2026-10-09, and to RECOVERY_TOL
+  # (1e-6 min) since; the largest error measured here was 3e-4 min before
+  # that change.  Checked on the way up, at the peak and on the way down.
   #
   # The reference used to be the last point of the row's own time line above
   # the threshold, with one step of that line as the tolerance.  Out there the
@@ -485,4 +493,52 @@ test_that("a metabolite drug with no effect site is timed on its plasma", {
   # And nothing once it is below for good
   down <- max(which(w$Plasma > thr))
   expect_true(all(w$Recovery[w$Time > w$Time[down + 1]] == 0))
+})
+
+
+# The union of two time lines keeps no point inside either line's pre-dose
+# interval, the PRE_DOSE_OFFSET that ends at a dose, where interpolation would
+# spread the dose back over the point (audit finding F19).
+test_that("the fold's time line keeps out of every pre-dose interval", {
+  bolusLine <- c(0, 10, 19.99, 20, 30)        # a bolus at 20
+  oralLine  <- c(0, 5, 19.985, 19.995, 25)    # an oral dose at 19.995
+  expect_equal(metaboliteTimeLine(list(bolusLine, oralLine)),
+               c(0, 5, 10, 19.985, 20, 25, 30))
+  # Elsewhere it is the plain union, and a missing line is skipped
+  expect_equal(metaboliteTimeLine(list(c(0, 1, 2), c(0, 1.5, 3), NULL)),
+               c(0, 1, 1.5, 2, 3))
+  expect_equal(metaboliteTimeLine(list(c(0, 9.99, 10))), c(0, 9.99, 10))
+})
+
+# The audit's case.  At 19.995 the morphine row read 0.286 mcg/mL, half of a
+# bolus given 0.3 seconds later, and a time until threshold of 197 minutes,
+# where the morphine present (all of it formed from codeine) was 0.000535
+# mcg/mL and never reaches the 0.008 mcg/mL threshold.
+test_that("a dose of one contributor is not spread back onto another's point", {
+  local_mocked_bindings(outputComments = function(...) {})
+  dose <- data.frame(Drug = c("codeine", "codeine", "morphine"),
+                     Time = c(0, 19.995, 20), Dose = c(30, 15, 10),
+                     Units = c("mg PO", "mg PO", "mg"))
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  X <- simulateDrugsWithCovariates(dose, events, 70, 170, 40, "male",
+                                   maximum = 60, plotRecovery = TRUE)
+  wide <- X$morphine$wide
+  before <- wide[wide$Time < 20, ]
+  # no point between the last one before the bolus and the bolus
+  expect_true(all(wide$Time <= 19.985 | wide$Time >= 20))
+  expect_true(all(before$Plasma < 0.001))
+  expect_true(all(before$Recovery == 0))
+  # and the bolus is all there at 20
+  alone <- simulateDrugsWithCovariates(dose[dose$Drug == "codeine", ], events,
+                                       70, 170, 40, "male", maximum = 60,
+                                       plotRecovery = FALSE)
+  given <- simulateDrugsWithCovariates(dose[dose$Drug == "morphine", ], events,
+                                       70, 170, 40, "male", maximum = 60,
+                                       plotRecovery = FALSE)
+  # 20 is a point of the morphine-alone line; the formed curve has no dose
+  # there, so it is read off its own line by interpolation
+  at20 <- function(Y) stats::approx(Y$morphine$wide$Time, Y$morphine$wide$Plasma, 20)$y
+  expect_equal(wide$Plasma[match(20, wide$Time)], at20(alone) + at20(given),
+               tolerance = 1e-6)
+  expect_gt(wide$Recovery[match(20, wide$Time)], 60)
 })

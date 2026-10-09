@@ -27,6 +27,25 @@
 # own around its own dose times -- so they are interpolated onto the union of
 # the two before being added, rather than assumed to share a grid.
 #
+# EXCEPT JUST BEFORE A DOSE
+# -------------------------
+# A dose lands at a point of its own drug's line, and the engines put a point
+# PRE_DOSE_OFFSET (0.01 minute) before it (simulationTimeGrid()), so that the
+# interval ending at the dose is too short to see.  Interpolated INTO that
+# interval -- linearly for the concentration, or by advanceStatesOnto() for
+# the time until threshold -- the dose is spread back across it.  On one
+# drug's own line nothing falls inside, but the union puts the other drug's
+# points there.  An external audit found the case (finding F19, 2026-10):
+# codeine 30 mg by mouth at 0 and 15 mg at 19.995 minutes, morphine 10 mg IV
+# at 20, 70 kg, 170 cm, 40-year-old man.  The union put codeine's 19.995 inside
+# morphine's (19.99, 20], and the morphine row read 0.286 mcg/mL there instead
+# of 0.000535 -- half the bolus, 0.3 seconds early -- with a time until
+# threshold of 197 minutes instead of zero.  So the union keeps no point that
+# falls strictly inside another contributor's pre-dose interval
+# (metaboliteTimeLine()).  Nothing is lost that the plot could show: such an
+# interval is a hundredth of a minute, and both of its ends are kept.
+# (Claude Code, 2026-10-09, at the request of Steven L. Shafer.)
+#
 # RECOVERY IS NOT SUMMED -- IT IS RECOMPUTED
 # -----------------------------------------
 # Recovery is not a concentration and does not superpose; it is the solution of
@@ -59,6 +78,41 @@
 # -----------------------------------------------------------------------------
 
 
+#' The time line of a metabolite fold
+#'
+#' The union of the contributors' own time lines, less any point that falls
+#' strictly inside one of them's pre-dose interval: an interval no longer than
+#' \code{PRE_DOSE_OFFSET} that ends at a point of that line, which is where the
+#' engines put the instant before a dose.  A point there would have the dose
+#' interpolated back onto it.  See "Except just before a dose" in the header of
+#' \code{R/mergeMetabolite.R}.  An interval of that length that does not end at
+#' a dose only loses a point the plot cannot show.
+#'
+#' @param lines the contributors' time lines, a list of numeric vectors (NULL
+#'   elements are skipped)
+#'
+#' @returns sorted unique times
+#' @keywords internal
+metaboliteTimeLine <- function(lines)
+{
+  lines <- Filter(function(x) length(x) > 0, lines)
+  times <- sort(unique(unlist(lines)))
+  keep <- rep(TRUE, length(times))
+  for (own in lines)
+  {
+    own <- sort(unique(own))
+    if (length(own) < 2) next
+    i <- findInterval(times, own)
+    inner <- i >= 1 & i < length(own)
+    j <- i[inner]
+    short <- own[j + 1] - own[j] <= PRE_DOSE_OFFSET * (1 + 1e-9)
+    strictly <- times[inner] > own[j] & times[inner] < own[j + 1]
+    keep[which(inner)[short & strictly]] <- FALSE
+  }
+  times[keep]
+}
+
+
 #' Add a metabolite contribution to a drug's simulated series
 #'
 #' @param base the existing wide series for the metabolite drug, a data frame
@@ -66,33 +120,40 @@
 #'   NULL when the drug was not given directly and exists only as a metabolite
 #' @param addition the metabolite contribution, a data frame of \code{Time},
 #'   \code{Cp} and \code{Ce}
+#' @param times the time line to put the sum on; by default the union of the
+#'   two, from \code{metaboliteTimeLine()}.  \code{foldMetabolites()} passes
+#'   the line of every contributor at once, so that several parents feeding one
+#'   drug respect each other's doses.
 #'
-#' @returns a wide series on the union of the two timelines, carrying the
-#'   arithmetic sum
+#' @returns a wide series on \code{times}, carrying the arithmetic sum
 #' @export
-mergeMetaboliteSeries <- function(base, addition)
+mergeMetaboliteSeries <- function(base, addition, times = NULL)
 {
   if (is.null(addition) || nrow(addition) == 0) return(base)
 
-  if (is.null(base) || nrow(base) == 0)
-    return(data.frame(
-      Time           = addition$Time,
-      Plasma         = addition$Cp,
-      `Effect Site`  = addition$Ce,
-      Recovery       = rep(0, nrow(addition)),
-      check.names    = FALSE
-    ))
-
-  times <- sort(unique(c(base$Time, addition$Time)))
+  if (is.null(times))
+    times <- metaboliteTimeLine(list(base$Time, addition$Time))
 
   # rule = 2 holds the end values rather than returning NA.  Both series run to
   # the same simulation end, so this only guards the endpoints against floating
   # point, and never extrapolates a curve into territory it did not cover.
+  # A series with one value (a direct call; a simulation always has many) is
+  # held, as rule = 2 would hold it: approx() needs two.
   onto <- function(df, column, keepNA = FALSE) {
     y <- df[[column]]
     if (all(is.na(y))) return(rep(NA_real_, length(times)))
+    if (sum(!is.na(y)) == 1) return(rep(y[!is.na(y)], length(times)))
     stats::approx(df$Time, y, times, rule = 2, na.rm = !keepNA)$y
   }
+
+  if (is.null(base) || nrow(base) == 0)
+    return(data.frame(
+      Time           = times,
+      Plasma         = onto(addition, "Cp"),
+      `Effect Site`  = onto(addition, "Ce"),
+      Recovery       = rep(0, length(times)),
+      check.names    = FALSE
+    ))
 
   data.frame(
     Time          = times,
@@ -161,9 +222,19 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
 
   for (target in names(contributions))
   {
+    parents <- contributions[[target]]
+    # One line for every contributor at once: the receiving drug's own doses
+    # and each parent's.  The state sets' lines are the series' lines, but are
+    # included so that the time until threshold, carried onto this line by
+    # advanceStatesOnto(), is kept out of their pre-dose intervals as well.
+    times <- metaboliteTimeLine(c(
+      list(drugs[[target]]$wideOwn$Time, drugs[[target]]$recoveryStatesOwn$time),
+      lapply(parents, function(p) drugs[[p]]$metaboliteSeries$Time),
+      lapply(parents, function(p) drugs[[p]]$metaboliteRecoveryStates$time)
+    ))
     merged <- drugs[[target]]$wideOwn
-    for (parent in contributions[[target]])
-      merged <- mergeMetaboliteSeries(merged, drugs[[parent]]$metaboliteSeries)
+    for (parent in parents)
+      merged <- mergeMetaboliteSeries(merged, drugs[[parent]]$metaboliteSeries, times)
     if (is.null(merged)) next
 
     if (plotRecovery)

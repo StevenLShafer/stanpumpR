@@ -26,6 +26,12 @@
 #'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
 #'   sugammadex, gabapentin, pregabalin); see `R/renalFunction.R`.
 #'
+#' @returns a list: the drug's PK sets (\code{PK}, one per PK event), its
+#'   \code{tPeak} and \code{reference}, the covariates, and the library's
+#'   values for the drug -- among them \code{MEAC} and \code{endCe}, the
+#'   effect-site threshold of the recovery time that \code{simCpCe()}
+#'   computes when \code{plotRecovery = TRUE}.
+#'
 #' @examples
 #' PK <- stanpumpR::getDrugPK(
 #'   drug = "remifentanil",
@@ -625,7 +631,12 @@ getDrugPK <- function(
       Infusion.Units      = drugDefaults$Infusion.Units,
       Units               = drugDefaults$Units,
       Default.Units       = drugDefaults$Default.Units,
-      emerge              = drugDefaults$Emerge
+      # The time-until-threshold concentration, which simCpCe() reads when
+      # asked for recovery.  Until October 2026 this was `emerge`, read from an
+      # Emerge column the library does not have, so a direct getDrugPK() +
+      # simCpCe() call computed every time until threshold as zero; the app
+      # and simulateDrugsWithCovariates() set endCe by hand (audit F03).
+      endCe               = drugDefaults$endCe
     )
 
   # Appended rather than declared, because assigning NULL to a list element

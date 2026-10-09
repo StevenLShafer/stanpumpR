@@ -121,11 +121,56 @@ test_that("a manual infusion stops the TCI infusion", {
     noEvents, propofolPK, 60, FALSE
   )
   rates <- X$tci$rates
-  expect_lt(max(rates$Time), 30)
+  # The schedule ends with a zero at the takeover, as for a target of 0
+  expect_equal(max(rates$Time), 30)
+  expect_equal(rates$Rate[nrow(rates)], 0)
+  expect_lt(max(rates$Time[rates$Rate > 0]), 30)
   # From 30 min the drug follows the manual rate, so the concentration drifts
   # away from the target.
   ce <- series(X, "Effect Site")
   expect_gt(abs(at(ce, 60) - 3), 0.1)
+})
+
+# The concentrations were always right, and are unchanged: the engine adds the
+# zero row to the manual rate set at the same moment.  What the zero row fixes
+# is the display.  Without it the rate panel held the last TCI rate (0.097
+# mg/kg/min at minute 29.83 here) out to the end of the plot, and the hover
+# read it at minute 40, while the pump was running the manual 20 mcg/kg/min
+# alone.
+test_that("after a manual takeover the rate panel and its hover read zero", {
+  doseTable <- tciDose(c(0, 30), c(3, 20), c(TCI_UNIT_EFFECT, "mcg/kg/min"))
+  drugs <- processdoseTable(
+    doseTable, noEvents,
+    recalculatePK(NULL, getDrugDefaultsGlobal(FALSE), doseTable, 50, 70, 170, "male"),
+    60, FALSE
+  )
+  rates <- drugs$propofol$tci$rates
+  # the hover's rule: the last rate row at or before the hovered time
+  hovered <- function(x) rates$Rate[max(which(rates$Time <= x), 1)]
+  expect_gt(hovered(29.9), 0)
+  expect_equal(hovered(40), 0)
+
+  p <- simulationPlot(
+    drugs = drugs, events = noEvents,
+    drugDefaults = getDrugDefaultsGlobal(FALSE), eventDefaults = getEventDefaults(),
+    xMaximum = 60, plotRecovery = FALSE, plotEvents = FALSE
+  )
+  panel <- p$plotResults[p$plotResults$Drug == "propofol TCI", ]
+  expect_true(all(panel$Y[panel$Time >= 30] == 0))
+})
+
+# Every TCI drug: the controller's last word before a manual infusion is zero.
+test_that("every TCI drug's schedule records the manual takeover", {
+  for (drug in c("propofol", "remifentanil", "fentanyl", "alfentanil", "sufentanil",
+                 "lidocaine", "hydromorphone", "etomidate", "ketamine")) {
+    PK <- getDrugPK(drug, 70, 170, 50, "male", getDrugDefaults(drug))
+    infusion <- getDrugDefaults(drug)$Infusion.Units
+    X <- simCpCe(tciDose(c(0, 30), c(PK$typical, 1), c(TCI_UNIT_EFFECT, infusion), drug),
+                 noEvents, PK, 60, FALSE)
+    r <- X$tci$rates
+    expect_equal(r$Time[nrow(r)], 30, info = drug)
+    expect_equal(r$Rate[nrow(r)], 0, info = drug)
+  }
 })
 
 test_that("a target of 0 stops the TCI infusion and the drug washes out", {

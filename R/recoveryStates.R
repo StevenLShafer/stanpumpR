@@ -152,7 +152,9 @@ recoveryStateSet <- function(time, state, lambda, pending = NULL,
 #' The one place this smears is across a bolus, which lands at the right-hand
 #' end of an interval rather than being spread over it.  The engines insert the
 #' instant 0.01 minutes before every bolus, so the smear is confined to that
-#' 0.01 minutes and cannot reach any point outside it.
+#' 0.01 minutes and cannot reach any point outside it.  A metabolite fold's
+#' time line keeps no point inside such an interval (metaboliteTimeLine() in
+#' R/mergeMetabolite.R), so the fold never asks for one.
 #'
 #' @param set a state set from \code{recoveryStateSet()}
 #' @param times the times to carry it onto
@@ -245,16 +247,96 @@ recoveryFromStates <- function(set, emerge)
   if (is.null(emerge) || length(emerge) != 1 || is.na(emerge) || emerge <= 0)
     return(rep(0, nT))
 
-  Lam <- if (is.matrix(set$lambda)) set$lambda else
-    matrix(set$lambda, nT, ncol(set$state), byrow = TRUE)
-
   horizon <- if (is.null(set$horizon)) RECOVERY_HORIZON_EFFECT else set$horizon
-  out <- vapply(seq_len(nT),
-                function(i) recoveryCalc(set$state[i, ], Lam[i, ], emerge, horizon),
-                numeric(1))
+  out <- recoveryRows(set$state, set$lambda, emerge, horizon)
 
   # Not computable rather than zero; see the header.
   if (!is.null(set$pending)) out[set$pending] <- NA_real_
+  out
+}
+
+
+#' recoveryCalc() for every row of a state set
+#'
+#' What \code{recoveryCalc()} does one row at a time, with the work that is the
+#' same for every row done once: when the eigenvalues do not change from row
+#' to row -- every engine but advanceClosedForm1() -- the target is appended
+#' as a column at rate zero, columns that are zero throughout (an unused
+#' route's absorption state) are dropped, columns at equal rates are merged,
+#' and the rest are put in order of rate, before the rows are solved.  Rows
+#' whose eigenvalues differ go through \code{recoveryCalc()} itself.
+#'
+#' @param S the amplitudes, one row per time
+#' @param lambda the eigenvalues: a vector, one per column, or a matrix the
+#'   shape of \code{S}
+#' @param target the threshold
+#' @param horizon how far ahead to look, minutes
+#'
+#' @returns minutes, one per row of \code{S}
+#' @keywords internal
+recoveryRows <- function(S, lambda, target, horizon)
+{
+  nT <- nrow(S)
+  if (nT == 0) return(numeric(0))
+  if (is.matrix(lambda))
+  {
+    first <- lambda[1, ]
+    if (nT > 0 && isTRUE(all(lambda == rep(first, each = nT)))) {
+      lambda <- first
+    } else {
+      return(vapply(seq_len(nT),
+                    function(i) recoveryCalc(S[i, ], lambda[i, ], target, horizon),
+                    numeric(1)))
+    }
+  }
+
+  used <- colSums(S != 0 | is.na(S)) > 0
+  A  <- cbind(S[, used, drop = FALSE], -target)
+  mu <- c(lambda[used], 0)
+  if (!all(is.finite(mu)))
+    return(vapply(seq_len(nT),
+                  function(i) recoveryCalc(S[i, ], lambda, target, horizon),
+                  numeric(1)))
+  if (anyDuplicated(mu)) {
+    A  <- t(rowsum(t(A), mu))               # columns grouped by increasing mu
+    mu <- sort(unique(mu))
+  } else {
+    o  <- order(mu)
+    A  <- A[, o, drop = FALSE]
+    mu <- mu[o]
+  }
+
+  # A screen, before any row is solved.  Between two neighbouring points of a
+  # coarse grid every positive term is at most its value at the left point and
+  # every negative term at most its value at the right, so their sum bounds
+  # C(t) - target from above over the whole interval.  A row whose bound is at
+  # or below zero on every interval never rises above the target, and its
+  # answer is zero without solving anything -- which is most rows of a run
+  # that stays below its threshold, among them every formed metabolite that
+  # never reaches its own.  The bound is rigorous, so the screen never clears
+  # a row that does cross; a row it cannot clear is solved exactly.
+  grid <- recoveryGrid(horizon)
+  G    <- length(grid)
+  Elo  <- exp(-outer(grid[-G], mu))
+  Ehi  <- exp(-outer(grid[-1], mu))
+  clear <- logical(nT)
+  for (rows in split(seq_len(nT), (seq_len(nT) - 1) %/% 2048))
+  {
+    Ar  <- A[rows, , drop = FALSE]
+    up  <- tcrossprod(pmax(Ar, 0), Elo) + tcrossprod(pmin(Ar, 0), Ehi)
+    clear[rows] <- rowSums(up > 0 | is.na(up)) == 0
+  }
+
+  out <- numeric(nT)
+  for (i in which(!clear))
+  {
+    a <- A[i, ]
+    if (!all(is.finite(a))) { out[i] <- NA_real_; next }
+    keep <- a != 0
+    a <- a[keep]
+    m <- mu[keep]
+    out[i] <- recoveryFromTerms(a, m - m[1], horizon)
+  }
   out
 }
 

@@ -266,30 +266,42 @@ simulationPlot <- function(
 
   if (plotMEAC | plotInteraction)
   {
-  # Need this table both for plotMEAC and for Interaction
-    X <- allEquispace %>%
-      dplyr::group_by(Time) %>%
-      dplyr::summarize(SUM = mean(MEAC)*dplyr::n())
+    # Both panels are read on one set of times dense enough to keep each
+    # drug's peaks; see R/derivedSeries.R.
+    opioids <- plotTable$Drug[!is.na(plotTable$MEAC) & plotTable$MEAC > 0]
+    entryOf <- function(drug) purrr::detect(drugs, \(x) identical(x$drug, drug))
+    derivedDrugs <- intersect(c(opioids, "propofol"), plotTable$Drug)
+    derivedTimes <- derivedSeriesTimes(lapply(derivedDrugs, entryOf), maximum)
+
+    # Each opioid as a percentage of its MEAC, and their sum
+    resultsMEAC <- purrr::map_dfr(opioids, function(drug) {
+      MEAC <- plotTable$MEAC[plotTable$Drug == drug][1]
+      data.frame(
+        Drug = drug,
+        Time = derivedTimes,
+        Y = derivedEffectSite(entryOf(drug), derivedTimes) / MEAC * 100,
+        Site = "Effect Site",
+        Wrap = PLOT_NAME_MEAC,
+        Label = ""
+      )
+    })
     totalMEAC <- data.frame(
       Drug = "total opioid",
-      Time = X$Time,
-      Y = X$SUM,
+      Time = derivedTimes,
+      Y = if (length(opioids) > 0) {
+        rowSums(matrix(resultsMEAC$Y, nrow = length(derivedTimes)))
+      } else {
+        rep(0, length(derivedTimes))
+      },
       Site = "Effect Site",
       Wrap = PLOT_NAME_MEAC,
       Label = ""
       )
-    opioids <- plotTable$Drug[plotTable$MEAC > 0]
     # MEAC plot
     if (length(opioids) > 0 & plotMEAC)
     {
-      resultsMEAC <- allEquispace[!is.na(allEquispace$MEAC),c("Drug","Time","MEAC")]
-      names(resultsMEAC)[3] <- "Y"
-      resultsMEAC$Site = "Effect Site"
-      resultsMEAC$Wrap <- PLOT_NAME_MEAC
-      resultsMEAC$Label <- ""
-
       # Add data for plot
-      plotResults <- rbind(plotResults, resultsMEAC[,names(plotResults)])
+      plotResults <- rbind(plotResults, resultsMEAC[, names(plotResults)])
 
       # Add plot to plotTable
       newplotTable <- plotTable[1,]
@@ -313,11 +325,16 @@ simulationPlot <- function(
 
     # Step B3 and D6: add Interaction
 
-    PropCe <- allEquispace$Ce[allEquispace$Drug == "propofol"]
-    if (length(opioids) > 0 & length(PropCe) > 0 & plotInteraction)
+    if (length(opioids) > 0 & "propofol" %in% plotTable$Drug & plotInteraction)
     {
-      Time <- allEquispace$Time[allEquispace$Drug == plotTable$Drug[1]]
-      x <- modelInteraction(PropCe, totalMEAC$Y)
+      Time <- derivedTimes
+      PropCe <- derivedEffectSite(entryOf("propofol"), derivedTimes)
+      # The surface takes remifentanil-equivalent ng/mL, not % MEAC
+      # (R/modelInteraction.R).
+      remifentanilMEAC <- suppressWarnings(as.numeric(
+        drugDefaults$MEAC[drugDefaults$Drug == "remifentanil"][1]))
+      x <- modelInteraction(PropCe,
+                            remifentanilEquivalent(totalMEAC$Y, remifentanilMEAC))
       resultsInteraction <- data.frame(
         Drug = PLOT_NAME_INTERACTION,
         Time = Time,

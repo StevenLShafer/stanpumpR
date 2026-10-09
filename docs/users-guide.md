@@ -101,8 +101,10 @@ display*), and the field is forgiving:
   table takes numbers only; an `H:MM` pasted in is read as hours and minutes)
 - `130` — 130 of the unit, not 1:30
 
-Minutes above 59 roll over, so `0:80` becomes `01:20`. Anything that cannot be
-read as a time becomes zero rather than raising an error.
+Minutes above 59 roll over, so `0:80` becomes `01:20`. A blank time or dose
+becomes zero. An entry that is not one plain number (or, for a time, `H:MM`) is
+not guessed at: `-5`, `5 mg`, `1.2.3` or `8;30` clears the cell, and the row is
+ignored until it is corrected. Scientific notation is read (`1e3` is 1000).
 
 ### Applying changes
 
@@ -257,12 +259,14 @@ concentration: you say what effect-site concentration you want and when, and
 it searches for doses that get you there. For the drugs that offer target
 units, a TCI target row gives a better answer, faster.
 
-Enter time and target concentration pairs, choose the drug, and confirm.
+Enter time and target concentration pairs, choose the drug, and confirm. Only
+drugs with an effect site and intravenous bolus and infusion units are listed.
+The regimen ends with an infusion rate of zero at the end time.
 
 Two limitations, both stated in the dialog:
 
 - **Decreasing targets are not supported.** Rows that ask for a lower
-  concentration than the one before are removed.
+  concentration than the one before are raised to the previous value.
 - Doses are found by non-linear regression, so it takes a moment. The result is
   good but not provably optimal.
 
@@ -502,7 +506,9 @@ What "turned off" means for a gas (S. Shafer, 2026-10-05):
 - **The fresh gas flow is turned up so that there is no rebreathing.** That is
   what is done to wake a patient, and it is the clinically important number.
   The time shown therefore does not depend on the flow in use at that moment.
-  Any fresh gas flow at or above the minute ventilation achieves it.
+  Any fresh gas flow at or above the minute ventilation plus the gas being
+  taken up (see below) achieves it; the calculation takes the limit of high
+  flow.
 - Ventilation stays as it is.
 
 | Panel | What is timed | Default threshold |
@@ -536,23 +542,26 @@ wear off too.
 ### Where the engine deliberately differs from Gas Man
 
 The parameters and defaults are Gas Man's, and the intent for now is to give the
-same answers Gas Man gives. Nine differences are deliberate (confirmed by
-S. Shafer, 2026-10-05) and will remain:
+same answers Gas Man gives. The table lists ten differences. Nine are
+deliberate (confirmed by S. Shafer, 2026-10-05) and will remain; the tenth is a
+Gas Man option, off by default, with no counterpart here:
 
 | | Gas Man | stanpumpR | Why |
 |---|---|---|---|
-| Breathing circuit | Defaults to "Semi-closed": the whole circuit is one well-mixed 8 L volume, so some exhaled gas is rebreathed at any fresh gas flow, however high | The "Ideal" circuit, which Gas Man also offers: no rebreathing once fresh gas flow reaches minute ventilation; below that, the shortfall is made up with exhaled gas. No circuit volume, so no lag | It is how a circle system behaves. The mixing box has no threshold at fresh gas flow = ventilation and understates the inspired concentration at moderate and high flows |
-| Ventilation and dead space | The ventilation setting is alveolar ventilation; there is no dead space | The ventilation setting is minute ventilation, 30% of it dead space. Rebreathing stops when fresh gas flow reaches the minute ventilation | Minute ventilation is what is set on a ventilator and read from a monitor |
+| Breathing circuit | Defaults to "Semi-closed": the whole circuit is one well-mixed 8 L volume, so some exhaled gas is rebreathed at any fresh gas flow, however high | The "Ideal" circuit, which Gas Man also offers: no rebreathing once fresh gas flow reaches the minute ventilation plus the gas being taken up (see the carbon dioxide paragraph below); below that, the shortfall is made up with exhaled gas. No circuit volume, so no lag | It is how a circle system behaves. The mixing box has no threshold near fresh gas flow = ventilation and understates the inspired concentration at moderate and high flows |
+| Ventilation and dead space | The ventilation setting is alveolar ventilation; there is no dead space | The ventilation setting is minute ventilation, 30% of it dead space. The rebreathing threshold is therefore set by the minute ventilation (plus uptake), not the alveolar ventilation | Minute ventilation is what is set on a ventilator and read from a monitor |
 | Oxygen consumption and gas volume | No oxygen, so no volume is lost to it | Oxygen consumed (3.5 mL/kg/min) shrinks the gas volume, as uptake of an anaesthetic does. Carbon dioxide replaces most of it in the alveoli and is then removed by the absorber from whatever exhaled gas is rebreathed | Without it the gas fractions do not add up at low flows. With 0.3 L/min of oxygen and 1 L/min of nitrous oxide, what leaves the circuit is the 1.3 L/min delivered less the 0.21 L/min consumed: 92% nitrous oxide and 8% oxygen, not the 77% and 23% delivered |
 | MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
 | MAC across agents | Each agent reported separately | A single MAC-equivalents series, the sum of each potent agent's alveolar concentration as a fraction of its own MAC | Agents given together are additive, and one number is what is titrated to |
 | Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |
 | Nitrogen | Carried only if nitrogen is added to the run as an agent | Always carried; its washout from the body is part of the summed uptake that couples the gases | The patient starts full of nitrogen whether or not anyone enters it, and it leaves through the same alveoli |
-| Starting nitrogen | 80% (`Ambient=80`) | 78.07%, with oxygen at 20.93% | Room air, so that the gas fractions sum correctly once oxygen is modelled |
-| Integration | Each time step is split into sequential sub-updates | Each step is advanced exactly, by matrix exponential | Accuracy does not then depend on the step size |
+| Starting nitrogen | 80% (`Ambient=80`) | 78.07%, with oxygen at 20.93%. The remaining 1% of air, mostly argon, is not carried: it is neither added to the nitrogen nor scaled away, so room air's carried gases sum to 99%, and an air flow contributes 99% of its volume to the gas fractions | Room air's own nitrogen and oxygen, so that the oxygen now modelled starts at its true value |
+| Integration | Each time step is split into sequential sub-updates, with the total uptake that couples the gases held at its value at the start of the step | Within each step every gas is advanced exactly, by matrix exponential, with the total uptake likewise held at its value at the start of the step; it is updated from step to step | This removes Gas Man's splitting error. The coupling between steps is still approximate (first order in the step), so the answer depends slightly on the step size: see the Integration section of the in-app help page *The inhaled-gas engine* |
+| Vapour volume | An optional setting, off by default, in which the vapour from a liquid agent's vaporiser adds its own volume to the fresh gas, raising the effective fresh gas flow by 1/(1 - delivered fraction) | Not offered. The total fresh gas flow is the sum of the flowmeters, and the vapour displaces carrier gas within it | Keeps the fresh gas flow at what the flowmeters show, which is also Gas Man's default |
 
 The breathing circuit follows the rule of thumb that rebreathing stops once
-fresh gas flow reaches minute ventilation (Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? APSF, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>).
+fresh gas flow reaches minute ventilation (Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? APSF, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>),
+with the threshold raised by the gas being taken up, as described below.
 The model has no circuit volume, so a change at the vaporiser reaches the
 patient at once; the gas already in a real circuit takes a little time to mix
 out, which is not clinically important.
@@ -561,9 +570,16 @@ Carbon dioxide is not shown as a gas, but it is accounted for. Alveolar gas
 holds about 5% of it (100 x carbon dioxide production / alveolar ventilation,
 with production at 0.8 of oxygen consumption), so the alveolar concentrations
 shown add up to about 95%; inspired gas, which has been through the absorber,
-adds up to 100%. Because the patient breathes in slightly more than they breathe
-out, the fresh gas flow that stops rebreathing is the minute ventilation plus
-what is being taken up, a little above the minute ventilation itself.
+adds up to 100% (less the 1% of any air in it that is not carried). Because the
+patient breathes in slightly more than they breathe out, the fresh gas flow that
+stops rebreathing is the minute ventilation plus what is being taken up, a
+little above the minute ventilation itself. Exactly, rebreathing stops when
+fresh gas flow >= minute ventilation + max(total uptake, 0), where the total
+uptake is the volume of all the gases leaving the alveoli for the blood
+(negative while they come back out) plus the oxygen consumed less the carbon
+dioxide that replaces it. That excess is about 0.05 L/min at 70 kg on oxygen
+and sevoflurane, and reaches about 0.9 L/min early in an induction with 4 L/min
+of nitrous oxide in 6 L/min.
 
 Consequences worth knowing when comparing the two side by side:
 
@@ -580,9 +596,14 @@ Consequences worth knowing when comparing the two side by side:
 
 - To reproduce a Gas Man MAC value, set the age to 40, where the age adjustment
   is exactly 1, and compare one agent at a time.
-- The two integrations do not agree digit for digit at any fixed step size. They
-  converge to a common answer as the step shrinks; `tests/testthat/test-gas-convergence.R`
-  checks this.
+- Leave Gas Man's vapour-volume option **off**, its default. In the low-flow
+  desflurane validation scenario (8% at 0.5 L/min after ten minutes at 6% and
+  4 L/min) turning it on raises Gas Man's alveolar desflurane at 60 minutes
+  from 4.89%, which the engine here reproduces with Gas Man's settings, to
+  5.05%.
+- The two integrations do not agree digit for digit at any fixed step size, and
+  neither is exact at a finite step. They converge to a common answer as the
+  step shrinks; `tests/testthat/test-gas-convergence.R` checks this.
 - Add Nitrogen as an agent in Gas Man, delivered at 0% (or at 78% of any air
   flow), before comparing. Without it Gas Man leaves nitrogen washout out of the
   uptake coupling, which by itself moves alveolar sevoflurane by about 0.3-0.5%

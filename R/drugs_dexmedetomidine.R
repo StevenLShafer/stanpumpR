@@ -6,6 +6,12 @@ dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   if (age > 1)
   {
+    # Fixed parameters, close to the pooled estimates of Dyck 1993 (V1 8.05,
+    # V2 12.4, V3 175 L; Cl2 2.05, Cl3 2.0 L/min).  Dyck's elimination
+    # clearance depends on height (pooled: 0.0101 x height - 1.33 L/min;
+    # final: 0.00791 x height - 0.927); that term is not applied, and the
+    # 0.445 L/min here is the pooled equation at about 176 cm.  Kept as is,
+    # by Steven L. Shafer's decision, 2026-10-09.
     v1Ref <- 8.0574   # liters, 70 kg adult
     k10 <- 0.0552
     k12 <- 0.258

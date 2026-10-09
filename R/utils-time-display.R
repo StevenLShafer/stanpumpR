@@ -192,6 +192,15 @@ seriesAt <- function(results, site, x)
                 na.rm = FALSE)$y
 }
 
+# A derived panel's series (rows of plotResults: Time, Y), interpolated at
+# time x, in minutes: what the MEAC and interaction hovers report.  They used
+# to take the nearest plotted point instead, which on a long plot could be
+# far from the hovered time.
+panelSeriesAt <- function(rows, x)
+{
+  stats::approx(rows$Time, rows$Y, xout = x, rule = 2, ties = mean)$y
+}
+
 # The concentration the hover reports on a drug's panel, as list(label,
 # value), interpolated at the hovered time x (minutes) from the drug's full
 # simulated series.  The hover used to take the nearest of the 100 equispaced

@@ -1234,17 +1234,19 @@ app_server <- function(input, output, session) {
         TO <- plotResults$Wrap == PLOT_NAME_MEAC
         outputComments("Elements found in search of plotResults$Wrap", sum(TO))
       }
-      j <- which.min(abs(e$x - plotResults$Time[TO]))
+      if (sum(TO) < 2) return(NULL)
       return(
-        paste0("Time: ", hoverTime(plotResults$Time[TO][j]), ", ", plotResults$Drug[TO][j], ": ", signif(plotResults$Y[TO][j], 2), " ", PLOT_NAME_MEAC)
+        paste0("Time: ", hoverTime(e$x), ", ", plotResults$Drug[TO][1], ": ",
+               signif(panelSeriesAt(plotResults[TO, ], e$x), 2), " ", PLOT_NAME_MEAC)
       )
     }
     if (yaxis == PLOT_NAME_INTERACTION)
     {
       TO <- plotResults$Drug == PLOT_NAME_INTERACTION
-      j <- which.min(abs(e$x - plotResults$Time[TO]))
+      if (sum(TO) < 2) return(NULL)
       return(
-        paste0("Time: ", hoverTime(plotResults$Time[TO][j]), ", P (response): ", signif(plotResults$Y[TO][j], 2))
+        paste0("Time: ", hoverTime(e$x), ", P (response): ",
+               signif(panelSeriesAt(plotResults[TO, ], e$x), 2))
       )
     }
 
@@ -1509,10 +1511,37 @@ app_server <- function(input, output, session) {
     updateSelectInput(session, "addDoseUnits", choices = units, selected = selectedUnit)
   })
 
+  # validateTime() for a dose time, but "" also for a time that names no time
+  # in the dose table's format: a clock time such as 25:00 (lubridate reads
+  # 24:30 as 00:30), or any clock time while the procedure start cannot be
+  # read.  doseTableClean() would drop such a row without a word, so the dose
+  # dialogs refuse it, as the add-event dialog does.
+  validateDoseTime <- function(x) {
+    out <- validateTime(x)
+    if (!nzchar(out)) return(out)
+    format <- doseTableFormat()
+    minutes <- displayTimeToMinutes(out, referenceFor(format), format[["unit"]])
+    if (is.na(minutes)) "" else out
+  }
+
   observeEvent(input$addDoseBtn, {
     profileCode({
-      addDoseTime <- validateTime(input$addDoseTime)
+      addDoseTime <- validateDoseTime(input$addDoseTime)
       addDoseAmount <- validateDose(input$addDoseAmount)
+      # A time or dose that could not be read ("", see R/validate-input.R and
+      # validateDoseTime()) leaves the dialog open to be corrected, as the
+      # add-event dialog does, rather than adding a row the simulation would
+      # ignore.
+      if (!nzchar(addDoseTime)) {
+        showNotification(paste0("That time could not be read: enter it as ",
+                                timeEntryUnitText(doseTableFormat()), "."), type = "error")
+        return()
+      }
+      if (!nzchar(addDoseAmount)) {
+        showNotification("That dose could not be read: enter it as a number, such as 2.5.",
+                         type = "error")
+        return()
+      }
       removeModal()
       thisDrug <- which(drugDefaults()$Drug == input$addDoseDrug)
 
@@ -1616,7 +1645,10 @@ app_server <- function(input, output, session) {
         ) %>%
         rhandsontable::hot_col(
           col = "Dose",
-          type = "numeric",
+          # Text, not numeric: a numeric column parses a pasted entry itself,
+          # before hookSanitize() (inst/www/hot_funs.js) sees it, and read
+          # "1,000" as 1 and "1,5" as 1.5.  The hook reads it as written.
+          type = "text",
           halign = "htRight"
         ) %>%
         rhandsontable::hot_col(
@@ -1641,8 +1673,24 @@ app_server <- function(input, output, session) {
     input$editDosesOK,
     {
       profileCode({
-        removeModal()
         TT <- rhandsontable::hot_to_r(input$editPriorDosesTable)
+        # Every dose kept needs a time and a dose that can be read.  A blank
+        # counts as unreadable here: the grid clears an entry it cannot read
+        # (inst/www/hot_funs.js), and validateTime() and validateDose() below
+        # would make the blank 0.  So does a time that names no time in the
+        # table's format (validateDoseTime()).  The dialog stays open to be
+        # corrected.
+        kept <- TT[!TT$Delete, , drop = FALSE]
+        unreadable <- function(x, validate) {
+          vapply(x, function(v) isBlankEntry(v) || !nzchar(validate(v)), logical(1))
+        }
+        if (any(unreadable(kept$Time, validateDoseTime)) || any(unreadable(kept$Dose, validateDose))) {
+          showNotification(paste0("Every dose needs a time, entered as ",
+                                  timeEntryUnitText(doseTableFormat()),
+                                  ", and a dose, entered as a number."), type = "error")
+          return()
+        }
+        removeModal()
         outputComments("In ObserveEvent for editDosesOK")
         TT$Drug <- DrugTimeUnits()$drug
         outputComments("TT:")
@@ -1945,12 +1993,14 @@ app_server <- function(input, output, session) {
             title = paste("Enter Target Effect Site Concentrations"),
             div(
               class = "fw-bold text-danger",
-              "Enter time and target concentration below. Decreasing targets are not yet supported, and will be removed. Doses are found with non-linear regression, which takes a moment to calculate. The suggestion will be good, but better algorithms likely exist."
+              "Enter time and target concentration below. Decreasing targets are not supported: a target lower than the one before is raised to it. Doses are found with non-linear regression, which takes a moment to calculate. The suggestion will be good, but better algorithms likely exist."
             ),
             selectInput(
               inputId = "targetDrug",
               label = "Drug",
-              choices = drugList
+              # Only the drugs it can target: an effect site, and intravenous
+              # bolus and infusion units; alphabetical, as the other pickers
+              choices = sortDrugNames(suggestDrugChoices(drugDefaults()))
             ),
             tags$p(class = "small text-muted mb-1", timeEntryLabel(format)),
             rhandsontable::rHandsontableOutput(

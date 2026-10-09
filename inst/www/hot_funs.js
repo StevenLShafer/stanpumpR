@@ -74,16 +74,22 @@ function hookFilterKeys(event) {
   }
 }
 
-// When a Time or Dose cell is changed, sanitize the input
+// When a Time or Dose cell is changed, sanitize the input.  An entry that
+// cannot be read (validateTime() and validateDose() below return '') is
+// cleared, and remembered in hot.rejectedCells until hookDoseTableUpdate()
+// has run for this change, so that it leaves the cell blank rather than
+// filling it with 0 as it does a cell that was never filled in.
 function hookSanitize(changes, source) {
   if (!changes || !isUserEditSource(source)) return;
 
   let hot = this;
+  hot.rejectedCells = {};
   let timeCol = findColByHeader(hot, "Time");
   let doseCol = findColByHeader(hot, "Dose");
   if (timeCol === null && doseCol === null) return;
 
   changes.forEach(function(change) {
+    if (!change) return;
     let col = change[1];
     let newVal = change[3];
 
@@ -93,7 +99,10 @@ function hookSanitize(changes, source) {
       change[3] = validateTime(newVal);
     } else if (col === doseCol) {
       change[3] = validateDose(newVal);
+    } else {
+      return;
     }
+    if (change[3] === '') hot.rejectedCells[change[0] + ':' + col] = true;
   });
 
   setTimeout(function() {
@@ -103,21 +112,41 @@ function hookSanitize(changes, source) {
 }
 
 
-// Clean a time: keep only digits, decimal points and colons, and only the
-// first of each.  The same whatever the time display: what a time means
-// depends on the format the table is in (R/utils-time.R), and the server's
-// validateTime() (R/validate-input.R) checks every Time string against its own
-// cleaning, so the two must agree character for character.  Cleaning by mode,
-// as this once did, rewrote valid times whenever ANOTHER cell in the row was
-// edited: in clock mode "1.5" became "15", "0.25" "025" and "10080" (four
-// digits at most) "1008"; in elapsed mode "01:30" became "130" and "36:00"
-// "3600".
-function cleanTime(value) {
+// validateTime() and validateDose() mirror the functions of the same names in
+// R/validate-input.R, whose header gives the rules, and must agree with them:
+// the server checks that every stored time is one its validateTime() leaves
+// unchanged.  In short, a blank entry is '0'; one non-negative number, in
+// plain decimal or scientific notation, with commas only between groups of
+// three digits, is that number; a time may instead be H:MM; anything else is
+// '', an unfinished cell, and the row is ignored until it is corrected.
+// Nothing is guessed at.  These once deleted every character that was not a
+// digit, a decimal point or a colon, so a pasted "-5" became 5, "1e3" 13 and
+// "8;30" 830 minutes.  The rules are the same whatever the time display: what
+// a time means depends on the format the table is in (R/utils-time.R).
+
+// The entry as a string, without the white space and quotation marks around it
+function trimEntry(value) {
   if (value === null || value === undefined) return '';
-  let str = String(value).replace(/[^0-9.:]/g, '');
-  str = removeExtraDecimal(str);
-  str = removeExtraColon(str);
-  return str;
+  return String(value).replace(/^[\s'"`]+|[\s'"`]+$/g, '');
+}
+
+// A number written out in plain decimal, as R's format(x, scientific = FALSE,
+// digits = 15) writes it: 1e3 is "1000", 2.5e-7 "0.00000025"
+function plainDecimal(n) {
+  return n.toLocaleString('en-US', { useGrouping: false, maximumSignificantDigits: 15 });
+}
+
+// A trimmed entry that is one non-negative number in an accepted form, as the
+// number to store; null for anything else
+function readEntryNumber(x) {
+  x = x.replace(/^\+/, '');
+  var ok = /^(([0-9]+|[0-9]{1,3}(,[0-9]{3})+)(\.[0-9]*)?|\.[0-9]+)([eE][+-]?[0-9]+)?$/.test(x);
+  if (!ok) return null;
+  x = x.replace(/,/g, '');
+  if (!/[eE]/.test(x)) return x;
+  var n = Number(x);
+  if (!isFinite(n)) return null;
+  return plainDecimal(n);
 }
 
 // "007" -> "7", "00.5" -> "0.5", "000" -> "0".  R's validateTime() keeps
@@ -131,55 +160,23 @@ function padTwo(n) {
   return n < 10 ? '0' + n : String(n);
 }
 
-// https://stackoverflow.com/questions/8140612/remove-all-dots-except-the-first-one-from-a-string
-function removeExtraDecimal(x) {
-  return x.replace( /^([^.]*\.)(.*)$/, function ( a, b, c ) {
-    return b + c.replace( /\./g, '' );
-  });
-}
-
-function removeExtraColon(x) {
-  return x.replace( /^([^:]*:)(.*)$/, function ( a, b, c ) {
-    return b + c.replace( /:/g, '' );
-  });
-}
-
-function cleanNumeric(x) {
-  return x.replace(/[^\d.]/g, '');
-}
-
+// A blank dose is 0, the number, as the grid has always stored it
 function validateDose(dose) {
-  dose = String(dose);
-  // remove anything but numbers and decimal points
-  var clean = cleanNumeric(dose);
-  var clean = removeExtraDecimal(clean);
-  if (clean === '') {
-    clean = 0;
-  }
-  return clean;
+  var x = trimEntry(dose);
+  if (x === '') return 0;
+  var n = readEntryNumber(x);
+  return n === null ? '' : n;
 }
 
-// Mirrors validateTime() in R/validate-input.R; see cleanTime() above.
 function validateTime(time) {
-  // remove anything but numbers, decimal points, and colons, and all but the
-  // first decimal point and the first colon
-  var clean = cleanTime(time);
+  var x = trimEntry(time);
+  if (x === '') return '0';
 
-  // nothing left, or only a decimal point and a colon
-  if (clean === '' || clean === '.' || clean === '.:' || clean === ':.') {
-    return '0';
-  }
-
-  // if there is decimal then remove colon
-  if (/\./.test(clean)) {
-    return stripLeadingZeros(clean.replace(/:/g, ''));
-  }
-
-  var colon_pos = clean.indexOf(':');
-
-  if (colon_pos !== -1) {
-    var HH = colon_pos === 0 ? 0 : parseInt(clean.substring(0, colon_pos), 10);
-    var MM = colon_pos === clean.length - 1 ? 0 : parseInt(clean.substring(colon_pos + 1), 10);
+  if (x.indexOf(':') !== -1) {
+    var m = /^\+?([0-9]*):([0-9]*)$/.exec(x);
+    if (m === null) return '';
+    var HH = m[1] === '' ? 0 : parseInt(m[1], 10);
+    var MM = m[2] === '' ? 0 : parseInt(m[2], 10);
     // convert minutes greater than 60 to hours and minutes
     HH = HH + Math.floor(MM / 60);
     MM = MM % 60;
@@ -188,7 +185,8 @@ function validateTime(time) {
     return padTwo(HH) + ':' + padTwo(MM);
   }
 
-  return stripLeadingZeros(clean);
+  var n = readEntryNumber(x);
+  return n === null ? '' : stripLeadingZeros(n);
 }
 
 // Hook to take care of advanced logic every time a cell is updatd in the main
@@ -221,17 +219,24 @@ function hookDoseTableUpdate(changes, source) {
     let rowdata = hot.getDataAtRow(row);
     // if everything in row is empty then exit
     if (rowdata.every(function(d) { return d === null; })) { return; }
-    // The Time cell is rewritten only when it, or the drug, was edited: a
-    // stored time is already clean, and cleaning it again because the dose
-    // next to it changed once corrupted it (see cleanTime()).
+    // The Time and Dose cells are rewritten only when they, or the drug, were
+    // edited: a stored value is already clean, and cleaning a time again
+    // because the dose next to it changed once corrupted it (when the grid
+    // cleaned by time display, "1.5" became "15").  Rewriting fills a blank
+    // cell with 0, except one hookSanitize() has just cleared because its
+    // entry could not be read: that stays blank, so the row is ignored until
+    // it is corrected, rather than the entry becoming 0.
     let rowChanges = changes.filter(function(change) { return change[0] === row; });
     let timeEdited = rowChanges.some(function(change) { return change[1] === timeCol; });
+    let doseEdited = rowChanges.some(function(change) { return change[1] === doseCol; });
     let drugEdited = rowChanges.some(function(change) { return change[1] === drugCol; });
+    let rejected = hot.rejectedCells || {};
     var drug = rowdata[drugCol];
-    var time = validateTime(rowdata[timeCol]);
-    var dose = validateDose(rowdata[doseCol]);
+    var time = rejected[row + ':' + timeCol] ? '' : validateTime(rowdata[timeCol]);
+    var dose = rejected[row + ':' + doseCol] ? '' : validateDose(rowdata[doseCol]);
     var unit = rowdata[unitsCol];
     var writeTime = timeEdited || drugEdited;
+    var writeDose = doseEdited || drugEdited;
 
     // if drug change then reset time and dose and update unit
     if (drugchange) {
@@ -239,6 +244,7 @@ function hookDoseTableUpdate(changes, source) {
       dose = 0;
       unit = '';
       writeTime = true;
+      writeDose = true;
     }
 
     // if drug is empty, set everything to empty
@@ -247,6 +253,7 @@ function hookDoseTableUpdate(changes, source) {
       dose = '';
       unit = '';
       writeTime = true;
+      writeDose = true;
     }
 
     // dynamically change dropdown for units based on drug
@@ -258,9 +265,12 @@ function hookDoseTableUpdate(changes, source) {
     if (writeTime) {
       allChanges.push([row, timeCol, time]);
     }
-    allChanges.push([row, doseCol, dose]);
+    if (writeDose && doseCol !== null) {
+      allChanges.push([row, doseCol, dose]);
+    }
     allChanges.push([row, unitsCol, unit]);
   });
+  hot.rejectedCells = {};
 
   if (allChanges.length > 0) {
     hot.setDataAtCell(allChanges, 'calculate');

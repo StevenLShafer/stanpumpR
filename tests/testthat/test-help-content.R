@@ -210,3 +210,63 @@ test_that("formatting helpers are tidy", {
   expect_equal(helpDrugTitle(c("nitrousOxide", "propofol")), c("Nitrous Oxide", "Propofol"))
   expect_match(helpPageLink("faq"), '<a href="#" data-help-page="faq">Frequently asked questions</a>', fixed = TRUE)
 })
+
+test_that("a generated-block marker is replaced, and an unknown one is an error", {
+  text <- "Before.\n\n<!-- generated: route-table -->\n\nAfter."
+  out <- helpExpandGenerated(text)
+  expect_false(grepl("<!--", out, fixed = TRUE))
+  expect_match(out, "| Drug | Oral (PO) |", fixed = TRUE)
+  expect_match(out, "^Before\\.")
+  expect_match(out, "After\\.$")
+  expect_identical(helpExpandGenerated("No marker here."), "No marker here.")
+  expect_error(helpExpandGenerated("<!-- generated: no-such-block -->"), "no-such-block")
+})
+
+# The absorption page's route table is generated from the drug library.  This
+# checks the rendered page against the library independently of the generator:
+# every drug offering a PO, IM or IN unit has a row, each route's cell lists
+# exactly the units offered for that route (repeating forms aside), and no
+# other drug is listed.  An audit found the hand-written table it replaced
+# missing ten of the drug-route pairs on offer.
+test_that("the absorption page lists every oral, intramuscular and intranasal unit offered", {
+  dd <- getDrugDefaultsGlobal()
+  html <- helpPageHTML("models/absorption")
+  tables <- regmatches(html, gregexpr("(?s)<table>.*?</table>", html, perl = TRUE))[[1]]
+  routeTable <- tables[grepl("Intranasal (IN)", tables, fixed = TRUE)]
+  expect_length(routeTable, 1)
+  rows <- regmatches(routeTable, gregexpr("(?s)<tr>.*?</tr>", routeTable, perl = TRUE))[[1]][-1]
+  cells <- lapply(rows, function(r) {
+    td <- regmatches(r, gregexpr("(?s)<td[^>]*>.*?</td>", r, perl = TRUE))[[1]]
+    trimws(gsub("<[^>]+>", "", td))
+  })
+  listed <- vapply(cells, `[`, "", 1)
+  unitsIn <- function(cell) {
+    cell <- trimws(sub("\\s*\\(.*\\)$", "", cell))
+    if (cell %in% c("", "—")) character(0) else strsplit(cell, ", ", fixed = TRUE)[[1]]
+  }
+
+  column <- c(PO = 2, IM = 3, IN = 4)
+  expected <- character(0)
+  for (i in seq_len(nrow(dd))) {
+    units <- dd$Units[[i]]
+    units <- units[!is.na(units) & nzchar(units)]
+    units <- unique(sub(" (qd|bid|tid|qid)$", "", units))
+    route <- doseRoute(units)
+    if (!any(route %in% names(column))) next
+    title <- helpDrugTitle(dd$Drug[i])
+    expected <- c(expected, title)
+    row <- which(listed == title)
+    expect_length(row, 1)
+    if (length(row) != 1) next
+    for (r in names(column)) {
+      expect_setequal(unitsIn(cells[[row]][column[[r]]]), units[route == r])
+    }
+  }
+  expect_setequal(listed, expected)
+
+  # The qualifications the old hand-written table carried are still there
+  cellOf <- function(drug, r) cells[[which(listed == helpDrugTitle(drug))]][column[[r]]]
+  expect_match(cellOf("gabapentin", "PO"), "saturable absorption", fixed = TRUE)
+  expect_match(cellOf("amiodarone", "PO"), "constant daily rate", fixed = TRUE)
+  expect_false(grepl("saturable", cellOf("oxycodone", "PO"), fixed = TRUE))
+})

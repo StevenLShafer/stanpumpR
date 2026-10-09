@@ -411,8 +411,9 @@ plasmaAt <- function(DT, PK, u) {
 # The engine says that, given nothing more after t, the plasma comes down
 # through PK$endCe at `at`.  Then it must be above the threshold `within`
 # minutes before that instant and below it `within` minutes after.  `DT`
-# holds the doses given up to t.  recoveryCalc() solves to uniroot()'s
-# tolerance of 0.01 min, and the largest error measured in these tests was
+# holds the doses given up to t.  recoveryCalc() solved to uniroot()'s
+# tolerance of 0.01 min when this was written (RECOVERY_TOL, 1e-6 min, since
+# 2026-10-09), and the largest error measured in these tests was
 # 2.5e-3 min (by uniroot() on simulations run to the crossing), so the
 # callers use 0.02.  (Claude Code, 2026-10-07, mutation review.)
 expectPlasmaCrossesAt <- function(DT, PK, at, within, label) {

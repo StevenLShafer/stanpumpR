@@ -4,7 +4,7 @@
 \alias{mergeMetaboliteSeries}
 \title{Add a metabolite contribution to a drug's simulated series}
 \usage{
-mergeMetaboliteSeries(base, addition)
+mergeMetaboliteSeries(base, addition, times = NULL)
 }
 \arguments{
 \item{base}{the existing wide series for the metabolite drug, a data frame
@@ -13,10 +13,14 @@ NULL when the drug was not given directly and exists only as a metabolite}
 
 \item{addition}{the metabolite contribution, a data frame of \code{Time},
 \code{Cp} and \code{Ce}}
+
+\item{times}{the time line to put the sum on; by default the union of the
+two, from \code{metaboliteTimeLine()}.  \code{foldMetabolites()} passes
+the line of every contributor at once, so that several parents feeding one
+drug respect each other's doses.}
 }
 \value{
-a wide series on the union of the two timelines, carrying the
-arithmetic sum
+a wide series on \code{times}, carrying the arithmetic sum
 }
 \description{
 Add a metabolite contribution to a drug's simulated series

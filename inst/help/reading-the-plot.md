@@ -29,7 +29,7 @@ Each panel's labels are in whichever unit suits the longest time on that panel, 
 
 ## Interacting with the plot
 
-- **Hover** over any curve for the time and concentration at that point. The time is in the **Time units** chosen in the Time card ("3.5 days"), or the time of day under **Actual time**. The concentration is read at exactly that time from the full simulation: the effect-site concentration (`Ce`) for a drug with an effect site, and the plasma concentration (`Cp`) for one without, such as an antibiotic or a prodrug. With the time-until-threshold line on, the hover adds that time too, in the same unit as the panel's labels. On the MEAC and interaction panels the hover shows the summed value or the probability.
+- **Hover** over any curve for the time and concentration at that point. The time is in the **Time units** chosen in the Time card ("3.5 days"), or the time of day under **Actual time**. The concentration is read at exactly that time from the full simulation: the effect-site concentration (`Ce`) for a drug with an effect site, and the plasma concentration (`Cp`) for one without, such as an antibiotic or a prodrug. With the time-until-threshold line on, the hover adds that time too, in the same unit as the panel's labels. On the MEAC and interaction panels the hover shows the summed value or the probability, also read at the hovered time.
 - **Click** anywhere on a drug's panel to add a dose of that drug at that time. A small dialog asks for the amount and unit, and the dose is applied immediately, bypassing the draft.
 - **Double-click** a drug's panel to edit or delete that drug's doses in a compact table.
 - On the **Events** panel, click to add an event and double-click to edit the event list.

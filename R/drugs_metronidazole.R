@@ -39,6 +39,18 @@
 # the published equations are evaluated on the patient's own total and
 # adjusted weights.
 #
+# CHILDREN.  The source enrolled 20 adults: 18-81 years, 47.6-101.9 kg,
+# 144-179 cm.  Devine's ideal weight is an adult formula, linear in height,
+# and goes negative below about 97 cm (men) or 102 cm (women); evaluated on a
+# 7 kg, 65 cm infant the published equation gave V = -8.2 L and a nonfinite
+# curve.  With the switch off, a patient under 18 (or of any age at a height
+# where Devine's ideal weight is not positive) therefore has V = 0.556 x TBW:
+# total body weight takes the place of the adjusted weight, the usual linear
+# volume scaling of the library's other total-weight models.  The published
+# equation is unchanged for every adult in the source's range.  Either way the
+# model is extrapolated in children; the default fat-free-mass path does not
+# use Devine and is unaffected.
+#
 # NOT MODELLED
 # ============
 # Hydroxymetronidazole, an active metabolite about 65% as potent against the
@@ -71,7 +83,10 @@
 #
 # References
 # ----------
-# da Silva Neto MJJ et al., J Antimicrob Chemother 2021;76:3212-3219.
+# da Silva Neto MJJ, MacKay G, Agaram R, MacLeod M, Watson DG, Thomson AH.
+#   Evaluation of amoxicillin, metronidazole and gentamicin dosage regimens
+#   for use in antibiotic prophylaxis in colorectal surgery.  J Antimicrob
+#   Chemother 2021;76(12):3212-3219.  PMID 34542630.
 #   https://doi.org/10.1093/jac/dkab337
 # Dorn C et al., J Antimicrob Chemother 2021;76:2114-2120.
 #   https://doi.org/10.1093/jac/dkab143
@@ -97,13 +112,28 @@ adjustedBodyWeight <- function(weight, height, sex)
   ibw + 0.4 * (weight - ibw)
 }
 
+# The weight the published volume equation is evaluated at with the switch
+# off: adjusted body weight, except where it has no meaning.  Devine ideal
+# weight and the adjusted weight built on it are adult constructs, and the
+# source enrolled adults only (18 to 81 years), so under 18 total body weight
+# takes its place.  At any age, a height at which Devine gives no positive
+# ideal weight (below about 97 cm in a man, 102 cm in a woman) also falls back
+# to total body weight; the adjusted weight there can be zero or negative.
+metronidazoleVolumeWeight <- function(weight, height, age, sex)
+{
+  if (age < 18 || idealBodyWeightDevine(height, sex) <= 0) return(weight)
+  adjustedBodyWeight(weight, height, sex)
+}
+
 #' Metronidazole pharmacokinetics
 #'
 #' @inheritParams cefazolin
 #' @param adjustToFFM scale volumes to the patient's fat-free mass and
 #'   clearances to that ratio to the 0.75 power; when \code{FALSE}, scale
 #'   clearance to total body weight to the 0.75 power and volume to the patient's
-#'   adjusted body weight, as published. No renal-function estimate.
+#'   adjusted body weight, as published (total body weight under 18 years,
+#'   where the adult adjusted weight does not apply). No renal-function
+#'   estimate.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 metronidazole <- function(weight, height, age, sex, adjustToFFM = TRUE)
@@ -113,9 +143,11 @@ metronidazole <- function(weight, height, age, sex, adjustToFFM = TRUE)
                                 FFM_REFERENCE_SEX)
 
   # Size scaling (see the header).  With the switch off: CL x (TBW/70)^0.75
-  # and V on the patient's own adjusted body weight, exactly as published.
+  # and V on the patient's own adjusted body weight, exactly as published,
+  # except that a child is scaled on total body weight (see
+  # metronidazoleVolumeWeight()).
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = adjustedBodyWeight(weight, height, sex) / ajbwRef,
+                        legacyVolume = metronidazoleVolumeWeight(weight, height, age, sex) / ajbwRef,
                         legacyClearance = (weight / 70)^0.75)
 
   v1  <- 0.556 * ajbwRef * size$volume
@@ -155,7 +187,10 @@ metronidazole <- function(weight, height, age, sex, adjustToFFM = TRUE)
   lowerTypical <- 4
 
   reference <- paste0(
-    "da Silva Neto MJJ et al., J Antimicrob Chemother 2021;76:3212-3219. ",
+    "da Silva Neto MJJ, MacKay G, Agaram R, MacLeod M, Watson DG, Thomson AH. ",
+    "Evaluation of amoxicillin, metronidazole and gentamicin dosage regimens ",
+    "for use in antibiotic prophylaxis in colorectal surgery. ",
+    "J Antimicrob Chemother 2021;76(12):3212-3219. ",
     "Intravenous one-compartment model; oral bioavailability 0.841 (Bergan ",
     "1984) and absorption from an experimental tablet are cross-study additions. ",
     "https://doi.org/10.1093/jac/dkab337"

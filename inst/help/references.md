@@ -16,7 +16,7 @@ Struys MMRF, De Smet T, Glen JB, Vereecke HEM, Absalom AR, Schnider TW. The hist
 
 ## Active metabolites
 
-Ashraf MW, Mndala BM, Rao RN, et al. Pharmacometric modelling of codeine and morphine disposition in a CYP2D6-stratified population. *Clin Pharmacokinet* 2024;63:1377-1391.
+Ashraf MW, Poikola S, Neuvonen M, et al. Population pharmacokinetic quantification of CYP2D6 activity in codeine metabolism in ambulatory surgical patients for model-informed precision dosing. *Clin Pharmacokinet* 2024;63:1547-1560.
 
 Holford S, Allegaert K, Anderson BJ, et al. Parent-metabolite pharmacokinetic models for tramadol. *J Pharmacol Clin Toxicol* 2014;2(1):1023.
 

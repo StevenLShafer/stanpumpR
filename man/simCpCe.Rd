@@ -13,7 +13,8 @@ simCpCe(dose, events, PK, maximum, plotRecovery)
 
 \item{PK}{PK parameters from \code{getDrugPK(drug)}}
 
-\item{maximum}{maximum length of simulation in minutes}
+\item{maximum}{end of the simulation, in minutes: the window is 0 to
+\code{maximum}, and doses at or after it are ignored}
 
 \item{plotRecovery}{should the "time until threshold" be calculated?  For
 each time point, how long the effect site would take to fall to
@@ -35,4 +36,14 @@ repeats of any qd/bid/tid/qid dose (Drug, Time, Dose, Units), or NULL.
 }
 \description{
 See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
+}
+\details{
+The result covers the window from 0 to \code{maximum}, and only that: a
+dose at or after \code{maximum} is not simulated (it cannot change the
+curves inside the window), and the returned series, the maxima in
+\code{max} and the normalised series (CpNormCp and the rest, scaled to those
+maxima) all stop at \code{maximum}.  A dose given before \code{maximum} is
+simulated in full, including an oral dose whose absorption starts after it.
+The app chooses \code{maximum} long enough to take in every dose before it
+calls this.
 }

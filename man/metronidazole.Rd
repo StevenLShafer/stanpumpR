@@ -18,7 +18,9 @@ metronidazole(weight, height, age, sex, adjustToFFM = TRUE)
 \item{adjustToFFM}{scale volumes to the patient's fat-free mass and
 clearances to that ratio to the 0.75 power; when \code{FALSE}, scale
 clearance to total body weight to the 0.75 power and volume to the patient's
-adjusted body weight, as published. No renal-function estimate.}
+adjusted body weight, as published (total body weight under 18 years,
+where the adult adjusted weight does not apply). No renal-function
+estimate.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

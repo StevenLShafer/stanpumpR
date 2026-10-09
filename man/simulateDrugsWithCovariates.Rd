@@ -32,7 +32,9 @@ simulateDrugsWithCovariates(
 
 \item{sex}{sex as string: "female" or "male"}
 
-\item{maximum}{maximum length of simulation in minutes}
+\item{maximum}{end of the simulation, in minutes.  As in \code{simCpCe()},
+each drug's result covers 0 to \code{maximum} only: doses at or after it
+are ignored.}
 
 \item{plotRecovery}{should the "time until threshold" be calculated?  See
 \code{simCpCe()}.}

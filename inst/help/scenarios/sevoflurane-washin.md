@@ -1,6 +1,6 @@
 ## What to look for
 
-Sevoflurane 2 per cent in 6 L/min of oxygen with a minute ventilation of 6 L/min. For the first 15 minutes the fresh gas flow equals the minute ventilation, so there is no rebreathing: the inspired concentration is the vaporizer setting, and the alveolar tension (dashed) rises towards it along the familiar wash-in curve, reaching about 1.1 per cent in a minute and 1.6 per cent at 15 minutes. The brain (solid) follows the alveolar tension with a lag of a few minutes.
+Sevoflurane 2 per cent in 6 L/min of oxygen with a minute ventilation of 6 L/min. For the first 15 minutes the fresh gas flow equals the minute ventilation, so there is almost no rebreathing (rebreathing stops at the minute ventilation plus the gas being taken up, here about 0.05 L/min more): the inspired concentration is within half a per cent of the vaporizer setting, and the alveolar tension (dashed) rises towards it along the familiar wash-in curve, reaching about 1.1 per cent in a minute and 1.6 per cent at 15 minutes. The brain (solid) follows the alveolar tension with a lag of a few minutes.
 
 At 15 minutes the oxygen flow drops to 1 L/min. Now five-sixths of each breath is rebreathed gas, which contains less sevoflurane than the fresh gas, so the inspired concentration falls below the vaporizer setting and the alveolar tension stops rising and drifts down. The patient's uptake, which was being replaced from the fresh gas, is now coming out of the circuit.
 
