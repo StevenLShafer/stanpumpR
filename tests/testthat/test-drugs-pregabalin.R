@@ -105,6 +105,26 @@ test_that("clearance is proportional to creatinine clearance up to the breakpoin
   expect_equal(low$PK$default$cl1, 4.96 / 60)
 })
 
+# Chan 2021 (Methods, Table 1): under 13 years NCLcr is the Schwartz
+# estimate, k x height / creatinine, with k 0.55 (0.45 under one year); from
+# 13 it is Cockcroft-Gault normalised to 1.73 m^2.  A source check in October
+# 2026 found Cockcroft-Gault applied at every age.
+test_that("children under 13 take the Schwartz estimate, as Chan's did", {
+  clh <- function(weight, height, age, sex, scr) {
+    pregabalin(weight, height, age, sex, adjustToFFM = FALSE, creatinine = scr)$PK$default$cl1 * 60
+  }
+  # 8 y boy, 25 kg, 125 cm: NCLcr 137.5 at 0.5 mg/dL (above the breakpoint)
+  # and 68.75 at 1.0 (below it)
+  expect_equal(clh(25, 125, 8, "male", 0.5), 4.96 * (25 / 70)^0.52)
+  expect_equal(clh(25, 125, 8, "male", 1.0), 4.96 * 68.75 / 96.4 * (25 / 70)^0.52)
+  # under one year k is 0.45: a 6-month-old girl, 8 kg, 70 cm, 0.4 mg/dL
+  expect_equal(clh(8, 70, 0.5, "female", 0.4),
+               4.96 * (0.45 * 70 / 0.4) / 96.4 * (8 / 70)^0.52 * 0.92)
+  # at 13, Cockcroft-Gault normalised to body surface area
+  ncl13 <- creatinineClearanceCG(45, 13, "male", 0.6) * 1.73 / bsaDuBois(45, 155)
+  expect_equal(clh(45, 155, 13, "male", 0.6), 4.96 * min(ncl13, 96.4) / 96.4 * (45 / 70)^0.52)
+})
+
 
 test_that("pregabalin is offered orally only, in the startup menu under Oral analgesics", {
   dd <- getDrugDefaultsGlobal(FALSE)

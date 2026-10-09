@@ -19,8 +19,10 @@
 # =====================================
 # The 70 kg normalisation is a convention of the fit, not evidence that the
 # model describes adults.  Ryder et al. (2026) used this vector to simulate
-# adults, which is precedent for the extrapolation rather than validation of
-# it.  The children had normal renal function and no renal covariate was
+# adults, scaling both CL/F and V/F linearly with weight/70, supplemented it
+# with oral pharmacokinetic anchors from published adult summary data, and
+# judged it fit for that purpose: precedent for the extrapolation, and a
+# check against adult means, but not a validation in adults.  The children had normal renal function and no renal covariate was
 # fitted; the allometric weight term does not stand in for one.
 #
 # BODY SIZE (docs/weight-adjustment.md)
@@ -54,7 +56,8 @@
 # Haynes AS et al., Microbiol Spectr 2022;10:e01039-22.
 #   https://doi.org/10.1128/spectrum.01039-22
 # Singhvi SM et al., J Lab Clin Med 1977;89:414-420.  PMID 833477.
-# Ryder et al., Pharmacotherapy 2026. https://doi.org/10.1002/phar.70179
+# Ryder JH et al., Pharmacotherapy 2026;46(7):e70179.
+#   https://doi.org/10.1002/phar.70179
 # -----------------------------------------------------------------------------
 
 #' Cefalexin pharmacokinetics (oral, apparent)
@@ -103,8 +106,8 @@ cefalexin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, total mg/L: MICs of 1 to 4 mg/L for the staphylococci and
-  # streptococci cefalexin is used against.  Orientation only: MICs are free
+  # Band, total mg/L: the MICs of 1 to 4 mg/L of the S. aureus isolates in
+  # Haynes 2022; streptococcal MICs are lower (0.06-0.5 mg/L, Ryder 2026).  Orientation only: MICs are free
   # drug, and with 15% binding the matching totals are about 18% higher.
   typical      <- 2
   upperTypical <- 4

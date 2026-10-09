@@ -85,7 +85,8 @@ glycopyrrolate <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 0     # no identified equilibration; plasma only
   MEAC  <- 0
 
-  # Band, ng/mL cation: what 0.2-0.4 mg produce after distribution.
+  # Band, ng/mL cation: what 0.2-0.4 mg produce during distribution, the
+  # first 30-60 min; afterwards the concentration is below 1 ng/mL.
   typical      <- 3
   upperTypical <- 10
   lowerTypical <- 1

@@ -1,6 +1,6 @@
 ### The model
 
-Pregabalin's parameters are from Chan and colleagues (*Clin Pharmacol Ther* 2021;110:132-140), who pooled ten Pfizer studies of 724 adults and 255 children, healthy volunteers and patients with focal seizures, with creatinine clearances from about 10 to 260 mL/min: one compartment, first-order absorption (10/h) after a lag of 0.32 h, clearance on creatinine clearance, and clearance and volume on weight and sex. Pregabalin is not metabolised and not bound to plasma proteins; the kidney clears it unchanged.
+Pregabalin's parameters are from Chan and colleagues (*Clin Pharmacol Ther* 2021;110:132-140), who pooled ten Pfizer studies of 724 adults and 255 children, healthy volunteers and patients with focal seizures, with creatinine clearances from about 10 to 260 mL/min in the adults and 15 to 290 mL/min in the children: one compartment, first-order absorption (10/h) after a lag of 0.32 h, clearance on creatinine clearance, and clearance and volume on weight and sex. Pregabalin is not metabolised and not bound to plasma proteins; the kidney clears it unchanged.
 
 The covariate equations are in the paper's supplement, which could not be read; the model here is read from its parameter table. Chan's absorption rate is described as a multiple of the elimination rate but tabulated as 10/h. Read as a multiple, the plasma would peak about 2.4 hours after a fasted dose; read as published, it peaks at 0.76 hours, as the fasted volunteer studies do (0.7 to 1.3 hours; Bockbrader and colleagues, *J Clin Pharmacol* 2010;50:941-950). The published reading is used.
 
@@ -12,7 +12,7 @@ There is no intravenous pregabalin product, and every model is apparent: clearan
 
 ### Covariates
 
-Clearance is proportional to Cockcroft-Gault creatinine clearance, normalised to 1.73 m&sup2; of body surface area, up to 96.4 mL/min/1.73 m&sup2;, and constant above it, so a creatinine clearance above normal does not speed elimination. The creatinine is the **Serum creatinine** in the Patient Profile; left blank, it is **assumed normal** for the patient's sex, which captures the fall in renal function with age but not renal impairment. Pregabalin accumulates in renal impairment, and the recommended dose halves for each halving of creatinine clearance below 60 mL/min (Randinitis and colleagues, *J Clin Pharmacol* 2003;43:277-283). Clearance and volume also scale with weight, and are 8 and 17 per cent lower in women. With the [fat-free-mass switch](help:models/fat-free-mass) on, the weight terms, Cockcroft-Gault and the body surface area all use the pharmacokinetic weight; with it off, total body weight, as published. Haemodialysis, which removes pregabalin efficiently, is not modelled.
+Clearance is proportional to creatinine clearance normalised to 1.73 m&sup2; of body surface area, up to 96.4 mL/min/1.73 m&sup2;, and constant above it, so a creatinine clearance above normal does not speed elimination. As in the source, it is the Cockcroft-Gault estimate from 13 years of age and the Schwartz estimate (0.55 &times; height / creatinine; 0.45 under one year) below. The creatinine is the **Serum creatinine** in the Patient Profile; left blank, it is **assumed normal** for the patient's sex, which captures the fall in renal function with age but not renal impairment. The assumed value is an adult's, about twice a young child's normal creatinine, so for a child enter the creatinine. Pregabalin accumulates in renal impairment, and the recommended dose halves for each halving of creatinine clearance below 60 mL/min (Randinitis and colleagues, *J Clin Pharmacol* 2003;43:277-283). Clearance and volume also scale with weight, and are 8 and 17 per cent lower in women. With the [fat-free-mass switch](help:models/fat-free-mass) on, the weight terms, Cockcroft-Gault and the body surface area all use the pharmacokinetic weight; with it off, total body weight, as published. Haemodialysis, which removes pregabalin efficiently, is not modelled.
 
 ### Effect site
 
@@ -20,7 +20,7 @@ The effect site peaks 4.7 hours after an oral dose. The delay is from van Esdonk
 
 ### Typical concentrations
 
-The shaded band, 1.3 to 5.4 mcg/mL, is the median steady-state average concentration in adults taking 150 to 600 mg a day, the labelled range for neuropathic pain and focal seizures (Chan and colleagues, 2021). It is for orientation: it describes chronic treatment, not a perioperative target, and a single dose of 150 or 300 mg peaks above it.
+The shaded band, 1.3 to 5.4 mcg/mL, is the median steady-state average concentration in adults taking 150 to 600 mg a day for focal seizures (Chan and colleagues, 2021); the label gives the same range for neuropathic pain. It is for orientation: it describes chronic treatment, not a perioperative target, and a single dose of 150 or 300 mg peaks above it.
 
 ### Where to be careful
 

@@ -28,7 +28,7 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Chan et al. (2021): one compartment with first-order absorption after a
-lag, clearance on body-surface-area-normalised Cockcroft-Gault creatinine
-clearance to a breakpoint, and the effect site timed from van Esdonk et al.
-(2018).  See the header.
+lag, clearance on body-surface-area-normalised creatinine clearance
+(Cockcroft-Gault from 13 years, Schwartz below) to a breakpoint, and the
+effect site timed from van Esdonk et al. (2018).  See the header.
 }

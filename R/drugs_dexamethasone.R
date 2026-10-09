@@ -8,7 +8,8 @@
 # DISPOSITION
 # ===========
 # Hong et al. gave intravenous dexamethasone phosphate to five healthy men in
-# a crossover with methylprednisolone and fitted: CL 18.1 L/h, Vc 41.6 L,
+# a five-way crossover (with hydrocortisone, methylprednisolone, oral
+# prednisolone and placebo) and fitted: CL 18.1 L/h, Vc 41.6 L,
 # k12 1.09 /h, k21 1.02 /h.  The macroparameters follow: Q = k12 Vc =
 # 45.34 L/h, Vp = Q/k21 = 44.45 L, Vss 86.1 L.  Half-times 0.29 and 3.68 h.
 # No covariates were fitted.
@@ -16,7 +17,7 @@
 # DOSE BASIS
 # ==========
 # Dexamethasone products are labelled three ways: 4 mg of dexamethasone
-# phosphate is 3.3 mg of dexamethasone base and 4.3 mg of the sodium
+# phosphate is 3.3 mg of dexamethasone base and 4.4 mg of the sodium
 # phosphate.  Hong reported doses of the phosphate product without a full
 # reconciliation to base in the retrieved methods, so the model is used on
 # the convention the labels in common use follow, dexamethasone PHOSPHATE

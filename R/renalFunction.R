@@ -60,7 +60,7 @@ patientCreatinine <- function(creatinine, sex)
 #' `(140 - age) x weight / (72 x SCr)`, times 0.85 for a woman, in mL/min.
 #' This is the estimator the vancomycin (Thomson 2009), cefazolin (Komatsu
 #' 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017) and pregabalin
-#' (Chan 2021) models were fitted with.
+#' (Chan 2021, from 13 years of age; Schwartz below) models were fitted with.
 #'
 #' @param weight the weight the calling model scales on, kg
 #' @param age age in years
@@ -73,6 +73,24 @@ creatinineClearanceCG <- function(weight, age, sex, scr = assumedCreatinine(sex)
   crcl <- (140 - age) * weight / (72 * scr)
   if (sex == SEX_FEMALE) crcl <- crcl * 0.85
   crcl
+}
+
+#' Schwartz estimated glomerular filtration rate in children
+#'
+#' `k x height / SCr`, in mL/min/1.73 m^2, with k 0.55 from one year of age
+#' and 0.45 below it.  This is the estimator the pregabalin model (Chan 2021)
+#' was fitted with for patients under 13 years; at 13 and over it used
+#' Cockcroft-Gault.
+#'
+#' @param height height in cm
+#' @param age age in years
+#' @param scr serum creatinine in mg/dL
+#' @return eGFR in mL/min/1.73 m^2
+#' @keywords internal
+egfrSchwartz <- function(height, age, scr)
+{
+  k <- if (age < 1) 0.45 else 0.55
+  k * height / scr
 }
 
 #' Du Bois body surface area
@@ -89,8 +107,9 @@ bsaDuBois <- function(weight, height)
 #' CKD-EPI 2009 estimated glomerular filtration rate
 #'
 #' The 2009 creatinine equation (Levey et al., Ann Intern Med 2009;150:604)
-#' without the race term, which is the version in use when the gentamicin
-#' model (Smit 2020) was fitted.  Indexed to 1.73 m^2.
+#' without the race term, taken to be the version the gentamicin model (Smit
+#' 2020) was fitted with: the 2021 equation post-dates its data, and its main
+#' text names only "CKD-EPI".  Indexed to 1.73 m^2.
 #'
 #' @inheritParams creatinineClearanceCG
 #' @return eGFR in mL/min/1.73 m^2

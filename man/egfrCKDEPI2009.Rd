@@ -18,7 +18,8 @@ eGFR in mL/min/1.73 m^2
 }
 \description{
 The 2009 creatinine equation (Levey et al., Ann Intern Med 2009;150:604)
-without the race term, which is the version in use when the gentamicin
-model (Smit 2020) was fitted.  Indexed to 1.73 m^2.
+without the race term, taken to be the version the gentamicin model (Smit
+2020) was fitted with: the 2021 equation post-dates its data, and its main
+text names only "CKD-EPI".  Indexed to 1.73 m^2.
 }
 \keyword{internal}

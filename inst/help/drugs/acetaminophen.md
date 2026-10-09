@@ -18,7 +18,7 @@ ke0 is supplied directly from Anderson and colleagues (*Eur J Clin Pharmacol* 20
 
 ### Typical concentrations
 
-The shaded band (3 to 15 mcg/mL) covers the effect-site concentrations adult dosing reaches: 1 g intravenously peaks near 7 mcg/mL, and 1 g every 6 hours averages about 7. The typical line, 7 mcg/mL, is that steady-state average. For comparison, Anderson's paediatric target effect-site concentration is 10 mg/L, which is expected to reduce pain by about 2.6 units on a 10-point scale. The recovery threshold is 5 mcg/mL in the effect site, so *time until threshold* counts down after an ordinary adult dose; at 10 mcg/mL a 1 g dose never reaches it. Acetaminophen is not an opioid and is not on the MEAC panel.
+The shaded band (3 to 15 mcg/mL) covers the effect-site concentrations adult dosing reaches: 1 g intravenously peaks near 7 mcg/mL, and 1 g intravenously every 6 hours averages about 7 (about 6 by mouth). The typical line, 7 mcg/mL, is that steady-state average. For comparison, Anderson's paediatric target effect-site concentration is 10 mg/L, which is expected to reduce pain by about 2.6 units on a 10-point scale. The recovery threshold is 5 mcg/mL in the effect site, so *time until threshold* counts down after an ordinary adult dose; at 10 mcg/mL a 1 g dose never reaches it. Acetaminophen is not an opioid and is not on the MEAC panel.
 
 ### Where to be careful
 

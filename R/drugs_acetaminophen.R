@@ -145,8 +145,8 @@ acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # Not an opioid, so not on the MEAC panel.
   MEAC <- 0
   # Band, mg/L effect site: 3 to 15, the range adult dosing actually reaches
-  # (1 g IV peaks near 7.3 mg/L in the effect site; 1 g every 6 h averages
-  # about 7).  The typical line is that 7 mg/L average.  For reference,
+  # (1 g IV peaks near 7.3 mg/L in the effect site; 1 g IV every 6 h
+  # averages about 7, by mouth about 6).  The typical line is that 7 mg/L average.  For reference,
   # Anderson's paediatric target is 10 mg/L, at which the expected pain
   # reduction is about 2.6 VAS units (EC50 9.98 mg/L).  The
   # recovery threshold (endCe in the CSV) is 5 mg/L, chosen by Steven L.

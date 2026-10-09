@@ -7,8 +7,9 @@
 #
 # DISPOSITION
 # ===========
-# Smit et al. fitted total serum gentamicin in 542 patients, mostly
-# overweight or obese, with 208 more for validation:
+# Smit et al. fitted total serum gentamicin in 542 individuals, mostly
+# overweight or obese hospital patients with 28 healthy participants of a
+# prospective study, with 208 more for validation:
 #
 #     CL = 3.53 x (G/74) x 0.751^ICU   L/h
 #     Vc = 16.6 x (W/70)               L
@@ -18,13 +19,16 @@
 # where G is the DE-INDEXED CKD-EPI eGFR in mL/min (indexed eGFR x BSA/1.73),
 # W total body weight, and ICU an indicator for intensive-care admission.
 # The ICU factor is not an input here and is left at 1 (not in ICU).  The
-# source warned against adding weight allometry to CL, which already carries
-# size through G, and against replacing W in Vc by an adjusted weight.
+# source kept de-indexed eGFR alone on CL, which carries size through G:
+# adding total body weight as well brought parameter correlation and no
+# significant improvement.  On Vc it fixed the exponent of total body weight
+# at 1 (estimated 0.91).
 #
 # RENAL FUNCTION
 # ==============
-# G is the CKD-EPI 2009 equation (the version in use when the model was
-# fitted; the exact variant was not recoverable from the supplement) at the
+# G is taken to be the CKD-EPI 2009 equation without the race term (the
+# 2021 equation post-dates the source's data, and its main text names only
+# "CKD-EPI"; the equations are in a supplement that was not read) at the
 # patient's serum creatinine from the Patient Profile, de-indexed by the
 # Du Bois body surface area (R/renalFunction.R).  When no creatinine is
 # entered it is an ASSUMED NORMAL one: age and sex are then represented but
@@ -75,7 +79,8 @@
 #'
 #' @inheritParams cefazolin
 #' @param adjustToFFM evaluate the central volume and the de-indexed CKD-EPI
-#'   eGFR (at an assumed normal creatinine) at the fat-free-mass weight, and
+#'   eGFR (at the entered creatinine, or an assumed normal one) at the
+#'   fat-free-mass weight, and
 #'   scale the peripheral volume and intercompartmental clearance to fat-free
 #'   mass; when \code{FALSE}, use total body weight and the published fixed
 #'   peripheral parameters.
