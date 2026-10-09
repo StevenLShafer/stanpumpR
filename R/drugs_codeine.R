@@ -139,7 +139,7 @@
 # Hull JH et al., Drug Intell Clin Pharm 1982;16(11):849-854.
 #   https://doi.org/10.1177/106002808201601107
 # Spahn H et al., Arzneimittelforschung 1985;35(6):973-976. PMID 4026924.
-# Ashraf MW et al., Clin Pharmacokinet 2024;63:1377-1391.
+# Ashraf MW et al., Clin Pharmacokinet 2024;63:1547-1560.
 #   https://doi.org/10.1007/s40262-024-01433-9
 # Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162.
 #   https://doi.org/10.1067/mcp.2002.126172
@@ -241,7 +241,7 @@ codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   reference <- paste0(
     "Persson K et al., Eur J Clin Pharmacol 1992;42(6):663-666. ",
     "https://pubmed.ncbi.nlm.nih.gov/1623909/ (disposition); ",
-    "Ashraf MW et al., Clin Pharmacokinet 2024;63:1377-1391. ",
+    "Ashraf MW et al., Clin Pharmacokinet 2024;63:1547-1560. ",
     "https://pubmed.ncbi.nlm.nih.gov/39300028/ (CYP2D6), rescaled to the ",
     "Lotsch morphine model"
   )

@@ -1,14 +1,16 @@
 ### The model
 
-Remimazolam's parameters are from Eleveld and colleagues (*Br J Anaesth* 2025;135:206-217), a pooled population model. At 70 kg and 35 years the volumes are 4.31, 12.3 and 18.6 L and the clearances 1.12, 1.45 and 0.298 L/min.
+Remimazolam's parameters are from Eleveld and colleagues (*Br J Anaesth* 2025;135:206-217), a pooled population model. For a 70 kg, 170 cm, 35-year-old man the volumes are 4.31, 12.3 and 18.6 L and the clearances 1.12, 1.45 and 0.298 L/min.
 
 ### Covariates
 
-- **Weight** scales the volumes linearly and the clearances allometrically to the 0.75 power.
+- **Size.** By default, with *Adjust weight to fat-free mass* ticked, the volumes scale with the patient's fat-free mass relative to the 70 kg, 170 cm reference man and the clearances with that ratio to the 0.75 power, so height, age and sex affect them through fat-free mass. The published model scales on total body weight instead: volumes in proportion to weight / 70 and clearances to (weight / 70)^0.75. Unticking the box restores the published scaling.
 - **Age** increases V3 exponentially (about 0.7 per cent per year from 35).
 - **Sex**: women have a higher elimination clearance (by a factor of e^0.163, about 18 per cent) and a larger V3 (by about 33 per cent).
 
-Two covariates in the published model are deliberately ignored in the code: the reduction of clearance with co-administered opioids, and the reduction with hepatic impairment by Child-Pugh class.
+The intercompartmental clearances follow their volumes to the 0.75 power, so the age and sex terms on V3 raise Q3 as well.
+
+Two covariates in the published model are deliberately ignored in the code. One is the reduction of clearance with co-administered opioids. The other is hepatic impairment, which in the published model does not act on clearance: a Pugh-Child score above 8 increases V3 by a factor of e^0.824 (about 2.3), and Q3, which follows V3, by about 1.9. The simulation assumes normal hepatic function.
 
 ### Effect site
 

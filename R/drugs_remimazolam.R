@@ -18,7 +18,9 @@ remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   Kcl1_sex <- 16.3
   Kv3_sex <- 28.7
 
-  # Ignored for now
+  # Ignored for now.  Kv3_Pugh is not a clearance term: in the published model
+  # Pugh-Child > 8 increases V3 by exp(0.824) (and so Q3, through the V3
+  # ratio ^ 0.75).  Normal hepatic function is assumed.
   Kcl1_opiates <- 13.9
   Kv3_Pugh  <- 82.4
 
@@ -35,7 +37,9 @@ remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v1 <- 4.31 * Fsize
   v2 <- 12.3 * Fsize
   v3 <- 18.6 * Fsize * Fv3_age * Fv3_sex
-  cl1 <- 1.12 * size$clearance
+  # Published CL includes FCLsex (Table 1, KCLsex = 16.3 %): a woman's
+  # elimination clearance is exp(0.163) = 1.18 times a man's.
+  cl1 <- 1.12 * size$clearance * Fcl1_sex
   cl2 <- 1.45 * (v2 / 12.3) ** 0.75
   cl3 <- 0.298 * (v3 /18.6) ** 0.75
 
