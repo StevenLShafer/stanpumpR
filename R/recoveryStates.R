@@ -58,10 +58,11 @@
 # sum of exponentials from now -- the one representation recoveryCalc() takes.
 # That is a change to its contract and is left alone here.
 #
-# As of 2026-10-06 no drug in the library carries a nonzero lag: hydromorphone's
-# intramuscular and intranasal lags were the last, and were removed when its
-# absorption was refitted.  This is a guard against the next drug that sets
-# one, and the engines' lag machinery is untouched and still live.
+# As of 2026-10-08 three drugs carry a nonzero oral lag, each as published:
+# gabapentin (Tran 2017, 0.311 h), pregabalin (Chan 2021, 0.32 h) and
+# acetaminophen (Morse 2022, 5.3 min), so this guard is live for them.  Before
+# gabapentin none did: hydromorphone's intramuscular and intranasal lags were
+# the last, removed when its absorption was refitted.
 #
 # Each engine builds one while it is computing recovery anyway, so carrying it
 # out costs a cbind().
