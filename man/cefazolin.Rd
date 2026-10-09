@@ -23,7 +23,7 @@ file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
-assumed normal value for the patient's sex (R/renalFunction.R)}
+assumed normal value for the patient's age and sex (R/renalFunction.R)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

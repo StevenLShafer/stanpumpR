@@ -2,17 +2,20 @@
 % Please edit documentation in R/renalFunction.R
 \name{assumedCreatinine}
 \alias{assumedCreatinine}
-\title{Assumed serum creatinine for a patient the app knows only by sex}
+\title{Assumed serum creatinine for a patient the app knows only by age and sex}
 \usage{
-assumedCreatinine(sex)
+assumedCreatinine(age, sex)
 }
 \arguments{
+\item{age}{age in years}
+
 \item{sex}{\code{"male"} or \code{"female"}}
 }
 \value{
 serum creatinine in mg/dL
 }
 \description{
-Assumed serum creatinine for a patient the app knows only by sex
+The normal value for a child's age (\code{normalCreatinineChild()}) under 18,
+the adult value (\code{adultCreatinine()}) from 18.
 }
 \keyword{internal}

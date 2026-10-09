@@ -63,7 +63,8 @@ full account, with worked examples, is in
 
 **Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin)
 use it to estimate renal function; left blank, they assume a normal creatinine for
-the patient's sex. **Pregnant** appears in the interface but is **currently
+the patient's age and sex (in a child, the median for age; see
+`R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** appears in the interface but is **currently
 disabled**: no drug in the library yet responds to it.
 
 ---
@@ -305,7 +306,8 @@ Three things to know about the antibiotics and steroids:
   gentamicin, sugammadex), mannitol, gabapentin and pregabalin carry a
   creatinine-clearance or eGFR
   covariate, computed from the **Serum creatinine** field. Left blank, it is an
-  assumed normal creatinine (1.0 mg/dL in men, 0.8 in women): the decline of
+  assumed normal creatinine (1.0 mg/dL in men, 0.8 in women, and the normal for
+  age in children): the decline of
   renal function with age is represented, renal impairment is not, and a patient
   with a raised creatinine will clear these drugs more slowly than the plot
   shows.

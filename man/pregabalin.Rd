@@ -21,7 +21,7 @@ weight; \code{FALSE} evaluates them at total body weight.  See the
 file's header.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
-assumed normal value for the patient's sex (R/renalFunction.R)}
+assumed normal value for the patient's age and sex (R/renalFunction.R)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

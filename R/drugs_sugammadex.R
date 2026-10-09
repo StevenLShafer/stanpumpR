@@ -32,7 +32,8 @@
 # ==============
 # CR is Cockcroft-Gault at the patient's serum creatinine from the Patient
 # Profile, or at an ASSUMED NORMAL creatinine when none is entered
-# (R/renalFunction.R).  Sugammadex is renally cleared and the label does not
+# (R/renalFunction.R; a child's creatinine, entered or assumed, is read on
+# the adult scale).  Sugammadex is renally cleared and the label does not
 # recommend it below 30 mL/min.
 #
 # BODY SIZE (docs/weight-adjustment.md)
@@ -64,7 +65,7 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   W  <- 70 * size$volume
   CR <- creatinineClearanceCG(W, age, sex,     # mL/min
-                              patientCreatinine(creatinine, sex))
+                              adultEquivalentCreatinine(creatinine, age, sex))
   rS <- 1
 
   cl1 <- 5.58 * (1 + 0.00378 * (W - 74.5)) * (2 * CR / (CR + 119))^1.29 / 60

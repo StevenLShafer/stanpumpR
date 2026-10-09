@@ -4,14 +4,17 @@
 \alias{egfrCKDEPI2009}
 \title{CKD-EPI 2009 estimated glomerular filtration rate}
 \usage{
-egfrCKDEPI2009(age, sex, scr = assumedCreatinine(sex))
+egfrCKDEPI2009(age, sex, scr = adultCreatinine(sex))
 }
 \arguments{
 \item{age}{age in years}
 
 \item{sex}{\code{"male"} or \code{"female"}}
 
-\item{scr}{serum creatinine in mg/dL; defaults to the assumed normal value}
+\item{scr}{serum creatinine in mg/dL.  The models fitted in adults pass a
+child's on the adult scale (\code{adultEquivalentCreatinine()}).  Defaults to
+the assumed adult value, which is what a blank creatinine is on that
+scale at any age.}
 }
 \value{
 eGFR in mL/min/1.73 m^2

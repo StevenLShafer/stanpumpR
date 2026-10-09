@@ -30,8 +30,9 @@
 # 2021 equation post-dates the source's data, and its main text names only
 # "CKD-EPI"; the equations are in a supplement that was not read) at the
 # patient's serum creatinine from the Patient Profile, de-indexed by the
-# Du Bois body surface area (R/renalFunction.R).  When no creatinine is
-# entered it is an ASSUMED NORMAL one: age and sex are then represented but
+# Du Bois body surface area (R/renalFunction.R; a child's creatinine is
+# read on the adult scale).  When no creatinine is entered it is an ASSUMED
+# NORMAL one: age and sex are then represented but
 # renal impairment is not, and gentamicin is the drug for which that matters
 # most.  The training range of G was about
 # 6-216 mL/min; renal replacement was excluded.
@@ -97,7 +98,7 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   pkW  <- 70 * size$volume
 
   G <- egfrDeindexed(pkW, height, age, sex,         # mL/min
-                     patientCreatinine(creatinine, sex))
+                     adultEquivalentCreatinine(creatinine, age, sex))
   ICU <- 0                                         # not an input; not in ICU
 
   cl1 <- 3.53 * (G / 74) * 0.751^ICU / 60          # L/min

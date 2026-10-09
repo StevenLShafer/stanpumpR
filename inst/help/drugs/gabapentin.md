@@ -14,7 +14,7 @@ There is no intravenous gabapentin product, and the absorption model describes i
 
 ### Covariates
 
-Clearance follows Cockcroft-Gault creatinine clearance, from the **Serum creatinine** in the Patient Profile. Left blank, the creatinine is **assumed normal** for the patient's sex: the fall in renal function with age is then represented but renal impairment is not. Gabapentin accumulates in renal impairment, and this is the drug in the library for which entering the creatinine matters most. Tran found no effect of weight on the volume, so the volume follows the [fat-free-mass scaling](help:models/fat-free-mass) with the switch on and is 58 L for everyone with it off; Cockcroft-Gault uses the pharmacokinetic weight with the switch on and total weight with it off. Dialysis is not modelled.
+Clearance follows Cockcroft-Gault creatinine clearance, from the **Serum creatinine** in the Patient Profile. Left blank, the creatinine is **assumed normal** for the patient's age and sex (in a child, read on the adult scale; see [Renal function](help:models/covariates)): the fall in renal function with age is then represented but renal impairment is not. Gabapentin accumulates in renal impairment, and this is the drug in the library for which entering the creatinine matters most. Tran found no effect of weight on the volume, so the volume follows the [fat-free-mass scaling](help:models/fat-free-mass) with the switch on and is 58 L for everyone with it off; Cockcroft-Gault uses the pharmacokinetic weight with the switch on and total weight with it off. Dialysis is not modelled.
 
 ### Effect site
 

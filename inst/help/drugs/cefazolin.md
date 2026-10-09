@@ -8,7 +8,7 @@ stanpumpR's engine is linear, so it simulates the linear half of that model and 
 
 ### Covariates
 
-Clearance follows Cockcroft-Gault creatinine clearance to the power 0.586. Creatinine clearance comes from the **Serum creatinine** in the Patient Profile; left blank, it is estimated at an **assumed normal creatinine** (1.0 mg/dL in men, 0.8 in women), when the fall of renal function with age and the sex difference are represented but **renal impairment is not**. The volumes and the intercompartmental clearance carry no size term in the source and take the default [fat-free-mass scaling](help:models/fat-free-mass); the renal term sees the pharmacokinetic weight with the switch on and total weight with it off.
+Clearance follows Cockcroft-Gault creatinine clearance to the power 0.586. Creatinine clearance comes from the **Serum creatinine** in the Patient Profile; left blank, it is estimated at an **assumed normal creatinine** (1.0 mg/dL in men, 0.8 in women; a child's creatinine is read on the adult scale, see [Renal function](help:models/covariates)), when the fall of renal function with age and the sex difference are represented but **renal impairment is not**. The volumes and the intercompartmental clearance carry no size term in the source and take the default [fat-free-mass scaling](help:models/fat-free-mass); the renal term sees the pharmacokinetic weight with the switch on and total weight with it off.
 
 ### Effect site
 

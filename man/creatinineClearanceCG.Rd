@@ -4,7 +4,7 @@
 \alias{creatinineClearanceCG}
 \title{Cockcroft-Gault creatinine clearance}
 \usage{
-creatinineClearanceCG(weight, age, sex, scr = assumedCreatinine(sex))
+creatinineClearanceCG(weight, age, sex, scr = adultCreatinine(sex))
 }
 \arguments{
 \item{weight}{the weight the calling model scales on, kg}
@@ -13,7 +13,10 @@ creatinineClearanceCG(weight, age, sex, scr = assumedCreatinine(sex))
 
 \item{sex}{\code{"male"} or \code{"female"}}
 
-\item{scr}{serum creatinine in mg/dL; defaults to the assumed normal value}
+\item{scr}{serum creatinine in mg/dL.  The models fitted in adults pass a
+child's on the adult scale (\code{adultEquivalentCreatinine()}).  Defaults to
+the assumed adult value, which is what a blank creatinine is on that
+scale at any age.}
 }
 \value{
 creatinine clearance in mL/min

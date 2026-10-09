@@ -89,9 +89,10 @@
 # RENAL FUNCTION
 # ==============
 # CrCL is Cockcroft-Gault, as in the source, at the patient's serum creatinine
-# from the Patient Profile.  When none is entered it is an ASSUMED NORMAL
-# creatinine (R/renalFunction.R), which captures the decline of renal function
-# with age and the sex difference but not renal impairment.  Gabapentin
+# from the Patient Profile (a child's read on the adult scale).  When none is
+# entered it is an ASSUMED NORMAL creatinine (R/renalFunction.R), which
+# captures the decline of renal function with age and the sex difference but
+# not renal impairment.  Gabapentin
 # accumulates in renal impairment, and this is the drug in the library where
 # entering the creatinine matters most.  Haemodialysis is not represented.
 #
@@ -202,7 +203,7 @@ gabapentin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   crcl <- creatinineClearanceCG(pkW, age, sex,       # mL/min
-                                patientCreatinine(creatinine, sex))
+                                adultEquivalentCreatinine(creatinine, age, sex))
 
   # Tran 2017, re-anchored to the intravenous volume (header, point 2):
   # V 81 -> 58 L, and clearance by the same 58/81 so the half-life is Tran's.

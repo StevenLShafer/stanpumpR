@@ -49,7 +49,7 @@ agent.  Passed only to drug models that declare it (mannitol); the rest
 ignore it.}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL (the default) for the
-assumed normal value for the patient's sex.  Passed only to the renal
+assumed normal value for the patient's age and sex.  Passed only to the renal
 models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
 sugammadex, gabapentin, pregabalin); see \code{R/renalFunction.R}.}
 }
