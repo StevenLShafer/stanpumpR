@@ -310,7 +310,11 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
-    "clonazepam", "zolpidem", "temazepam"
+    "clonazepam", "zolpidem", "temazepam",
+    # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
+    # or no effect is established; aripiprazole alone has a PET ke0.
+    "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
+    "olanzapine", "haloperidol", "haloperidolIV", "droperidol", "droperidolIM"
   ))
 })
 
