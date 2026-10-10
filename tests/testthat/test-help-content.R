@@ -245,7 +245,7 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
     if (cell %in% c("", "—")) character(0) else strsplit(cell, ", ", fixed = TRUE)[[1]]
   }
 
-  column <- c(PO = 2, IM = 3, IN = 4)
+  column <- c(PO = 2, IM = 3, IN = 4, RA = 5)
   expected <- character(0)
   for (i in seq_len(nrow(dd))) {
     units <- dd$Units[[i]]

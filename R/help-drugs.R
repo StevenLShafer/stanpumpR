@@ -271,7 +271,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   esc <- htmltools::htmlEscape
   route <- doseRoute(units)
   routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_IM %in% route) "intramuscular",
-              if (ROUTE_IN %in% route) "intranasal")
+              if (ROUTE_IN %in% route) "intranasal",
+              if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
   intravenous <- any(units %in% c(bolusUnits, infusionUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
@@ -527,7 +528,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   absorptionHTML <- ""
   if (!is.null(pkRef)) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
-    routes <- list(PO = "Oral (PO)", IM = "Intramuscular (IM)", IN = "Intranasal (IN)")
+    routes <- list(PO = "Oral (PO)", IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
+                   RA = "Regional anesthesia (RA)")
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -544,8 +546,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     if (length(rows) > 0) {
       absorptionHTML <- paste0(
         helpH2("Extravascular routes"),
-        "<p>Doses with PO, IM or IN units are absorbed by first-order kinetics into the central ",
-        "compartment after a lag, with the fraction shown reaching the circulation. See ",
+        "<p>Doses with PO, IM, IN or RA units are absorbed by first-order kinetics into the central ",
+        "compartment after a lag, with the fraction shown reaching the circulation. RA is a ",
+        "local anesthetic injected into tissue (a nerve block or an infiltration). See ",
         helpPageLink("models/absorption"), ".</p>",
         helpTableHTML(do.call(rbind, rows))
       )
@@ -759,7 +762,8 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
       else if (any(units %in% c(bolusUnits, infusionUnits))) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_IM %in% route) "IM",
-                if (ROUTE_IN %in% route) "IN", if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
+                if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
+                if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else "oral"
     metabolite <- if (is.null(pk$metaboliteName)) "" else
       sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))

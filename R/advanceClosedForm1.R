@@ -1,6 +1,6 @@
 # Closed form, multiple PK sets
 #
-# EXTRAVASCULAR DOSES (oral, intramuscular, intranasal)
+# EXTRAVASCULAR DOSES (oral, intramuscular, intranasal, regional anesthesia)
 # =====================================================
 # Until 2026-10-07 this engine had no extravascular route at all.  A dose was
 # either a bolus or, failing that, an infusion rate, so "10 mg PO" became a
@@ -45,9 +45,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   # Older callers, and some tests, build the dose table by hand without the
   # route columns simCpCe() adds.
-  routes <- c("PO", "IM", "IN")
+  routes <- c("PO", "IM", "IN", "RA")
   for (r in routes) if (is.null(dose[[r]])) dose[[r]] <- rep(FALSE, nrow(dose))
-  extravascular <- dose$PO | dose$IM | dose$IN
+  extravascular <- dose$PO | dose$IM | dose$IN | dose$RA
 
   # The PK set in force at time t: the last event at or before it.
   eventAt <- function(t) events$Event[utils::tail(which(events$Time <= t), 1)]

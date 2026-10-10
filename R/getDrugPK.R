@@ -156,6 +156,7 @@ getDrugPK <- function(
     # PO will add state_PO, associated with ka_PO #
     # IM will add state_IM, associated with ka_IM #
     # IN will add state_IN, associated with ka_IN #
+    # RA will add state_RA, associated with ka_RA #
 
     # Set up PK for oral delivery
     if (is.null(X$PK[[event]]$ka_PO))
@@ -220,6 +221,29 @@ getDrugPK <- function(
         tlag_IN <- 0
       } else {
         tlag_IN <- X$PK[[event]]$tlag_IN
+      }
+    }
+
+    # Set up PK for regional anesthesia (RA): a local anesthetic injected into
+    # tissue and absorbed first-order into the systemic circulation.
+    if (is.null(X$PK[[event]]$ka_RA))
+    {
+      ka_RA <- 0
+      bioavailability_RA <- 0
+      tlag_RA <- 0
+    } else {
+      ka_RA <- X$PK[[event]]$ka_RA
+      if (is.null(X$PK[[event]]$bioavailability_RA))
+      {
+        bioavailability_RA <- 1
+      } else {
+        bioavailability_RA <- X$PK[[event]]$bioavailability_RA
+      }
+      if (is.null(X$PK[[event]]$tlag_RA))
+      {
+        tlag_RA <- 0
+      } else {
+        tlag_RA <- X$PK[[event]]$tlag_RA
       }
     }
 
@@ -297,6 +321,18 @@ getDrugPK <- function(
     e_coef_IN_l3  <- 0
     e_coef_IN_ke0 <- 0
     e_coef_IN_ka  <- 0
+
+    # RA Delivery
+    p_coef_RA_l1  <- 0
+    p_coef_RA_l2  <- 0
+    p_coef_RA_l3  <- 0
+    p_coef_RA_ka  <- 0
+
+    e_coef_RA_l1  <- 0
+    e_coef_RA_l2  <- 0
+    e_coef_RA_l3  <- 0
+    e_coef_RA_ke0 <- 0
+    e_coef_RA_ka  <- 0
 
     if (k31 > 0)
     {
@@ -443,6 +479,20 @@ getDrugPK <- function(
       e_coef_IN_ka  <- - e_coef_IN_l1 - e_coef_IN_l2 - e_coef_IN_l3 - e_coef_IN_ke0
     }
 
+    if (ka_RA > 0)
+    {
+      p_coef_RA_l1  <- p_coef_bolus_l1 / (ka_RA - lambda_1) * ka_RA * bioavailability_RA
+      p_coef_RA_l2  <- p_coef_bolus_l2 / (ka_RA - lambda_2) * ka_RA * bioavailability_RA
+      p_coef_RA_l3  <- p_coef_bolus_l3 / (ka_RA - lambda_3) * ka_RA * bioavailability_RA
+      p_coef_RA_ka  <- - p_coef_RA_l1 - p_coef_RA_l2 - p_coef_RA_l3
+
+      e_coef_RA_l1  <- e_coef_bolus_l1 / (ka_RA - lambda_1) * ka_RA * bioavailability_RA
+      e_coef_RA_l2  <- e_coef_bolus_l2 / (ka_RA - lambda_2) * ka_RA * bioavailability_RA
+      e_coef_RA_l3  <- e_coef_bolus_l3 / (ka_RA - lambda_3) * ka_RA * bioavailability_RA
+      e_coef_RA_ke0 <- e_coef_bolus_ke0 / (ka_RA - ke0) *     ka_RA * bioavailability_RA
+      e_coef_RA_ka  <- - e_coef_RA_l1 - e_coef_RA_l2 - e_coef_RA_l3 - e_coef_RA_ke0
+    }
+
     # Vd Peak Effect
     if (tPeak == 0)
     {
@@ -483,6 +533,10 @@ getDrugPK <- function(
         ka_IN = ka_IN,
         bioavailability_IN = bioavailability_IN,
         tlag_IN = tlag_IN,
+
+        ka_RA = ka_RA,
+        bioavailability_RA = bioavailability_RA,
+        tlag_RA = tlag_RA,
 
         customFunction = customFunction,
 
@@ -546,7 +600,19 @@ getDrugPK <- function(
         e_coef_IN_l2 = e_coef_IN_l2,
         e_coef_IN_l3 = e_coef_IN_l3,
         e_coef_IN_ke0 = e_coef_IN_ke0,
-        e_coef_IN_ka = e_coef_IN_ka
+        e_coef_IN_ka = e_coef_IN_ka,
+
+        # RA Coefficients
+        p_coef_RA_l1 = p_coef_RA_l1,
+        p_coef_RA_l2 = p_coef_RA_l2,
+        p_coef_RA_l3 = p_coef_RA_l3,
+        p_coef_RA_ka = p_coef_RA_ka,
+
+        e_coef_RA_l1 = e_coef_RA_l1,
+        e_coef_RA_l2 = e_coef_RA_l2,
+        e_coef_RA_l3 = e_coef_RA_l3,
+        e_coef_RA_ke0 = e_coef_RA_ke0,
+        e_coef_RA_ka = e_coef_RA_ka
       )
     )
   }

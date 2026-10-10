@@ -14,7 +14,10 @@ test_that("returns the published parameters with total-body-weight scaling", {
         v3 = 1,
         cl1 = 1.400002,
         cl2 = 3.920002,
-        cl3 = 0
+        cl3 = 0,
+        ka_RA = 0.0111,
+        bioavailability_RA = 1,
+        tlag_RA = 0
       )
     ),
     tPeak = 5,

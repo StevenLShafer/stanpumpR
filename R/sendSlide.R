@@ -233,6 +233,9 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
         ka_IN = purrr::map_dbl(pkSets, "ka_IN"),
         bioavailability_IN = purrr::map_dbl(pkSets, "bioavailability_IN"),
         tlag_IN = purrr::map_dbl(pkSets, "tlag_IN"),
+        ka_RA = purrr::map_dbl(pkSets, "ka_RA"),
+        bioavailability_RA = purrr::map_dbl(pkSets, "bioavailability_RA"),
+        tlag_RA = purrr::map_dbl(pkSets, "tlag_RA"),
         p_coef_PO_l1 = purrr::map_dbl(pkSets, "p_coef_PO_l1"),
         p_coef_PO_l2 = purrr::map_dbl(pkSets, "p_coef_PO_l2"),
         p_coef_PO_l3 = purrr::map_dbl(pkSets, "p_coef_PO_l3"),
@@ -259,7 +262,16 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
         e_coef_IN_l2 = purrr::map_dbl(pkSets, "e_coef_IN_l2"),
         e_coef_IN_l3 = purrr::map_dbl(pkSets, "e_coef_IN_l3"),
         e_coef_IN_ke0 = purrr::map_dbl(pkSets, "e_coef_IN_ke0"),
-        e_coef_IN_ka = purrr::map_dbl(pkSets, "e_coef_IN_ka")
+        e_coef_IN_ka = purrr::map_dbl(pkSets, "e_coef_IN_ka"),
+        p_coef_RA_l1 = purrr::map_dbl(pkSets, "p_coef_RA_l1"),
+        p_coef_RA_l2 = purrr::map_dbl(pkSets, "p_coef_RA_l2"),
+        p_coef_RA_l3 = purrr::map_dbl(pkSets, "p_coef_RA_l3"),
+        p_coef_RA_ka = purrr::map_dbl(pkSets, "p_coef_RA_ka"),
+        e_coef_RA_l1 = purrr::map_dbl(pkSets, "e_coef_RA_l1"),
+        e_coef_RA_l2 = purrr::map_dbl(pkSets, "e_coef_RA_l2"),
+        e_coef_RA_l3 = purrr::map_dbl(pkSets, "e_coef_RA_l3"),
+        e_coef_RA_ke0 = purrr::map_dbl(pkSets, "e_coef_RA_ke0"),
+        e_coef_RA_ka = purrr::map_dbl(pkSets, "e_coef_RA_ka")
       ))
     parameters <- t(parameters)
     openxlsx::addWorksheet(wb, paste(drug,"PK"))
