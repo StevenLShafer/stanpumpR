@@ -133,7 +133,7 @@ tciSchedule <- function(dose, PK, maximum,
 
   targets   <- dose[dose$Target & dose$Time >= 0 & dose$Time < maximum, ]
   manual    <- which(!dose$Target & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN &
-                     !dose$RA)
+                     !dose$RA & !dose$RAslow)
   bolusRows <- dose[dose$Bolus & !dose$Target, ]
 
   # Several targets at one time: the last one entered wins.
@@ -256,6 +256,7 @@ tciSchedule <- function(dose, PK, maximum,
     tciRows$Units <- "TCI"
     tciRows$Bolus <- FALSE
     tciRows$PO <- tciRows$IM <- tciRows$IN <- tciRows$RA <- FALSE
+    if (!is.null(tciRows$RAslow)) tciRows$RAslow <- FALSE
     tciRows$Target <- FALSE
     keep <- rbind(keep, tciRows)
   }

@@ -35,6 +35,9 @@ test_that("it returns the same value", {
         ka_RA = 0,
         bioavailability_RA = 0,
         tlag_RA = 0,
+        ka_RAslow = 0,
+        bioavailability_RAslow = 0,
+        tlag_RAslow = 0,
         customFunction = "",
         lambda_1 = 0.6280493,
         lambda_2 = 0.04305881,
@@ -89,7 +92,16 @@ test_that("it returns the same value", {
         e_coef_RA_l2 = 0,
         e_coef_RA_l3 = 0,
         e_coef_RA_ke0 = 0,
-        e_coef_RA_ka = 0
+        e_coef_RA_ka = 0,
+        p_coef_RAslow_l1 = 0,
+        p_coef_RAslow_l2 = 0,
+        p_coef_RAslow_l3 = 0,
+        p_coef_RAslow_ka = 0,
+        e_coef_RAslow_l1 = 0,
+        e_coef_RAslow_l2 = 0,
+        e_coef_RAslow_l3 = 0,
+        e_coef_RAslow_ke0 = 0,
+        e_coef_RAslow_ka = 0
       )
     ),
     # Which curve tPeak was measured against; "IV" for every drug whose model

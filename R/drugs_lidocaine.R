@@ -54,8 +54,12 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     # mcg/mL.  Axillary block with epinephrine only; other sites and plain
     # solutions absorb differently, and F = 1 is an assumption (the label
     # describes complete absorption after parenteral injection; no
-    # site-specific absolute bioavailability has been measured).  (Claude
-    # Code, 2026-10-10, at the request of Steven L. Shafer.)
+    # site-specific absolute bioavailability has been measured).  A slow
+    # second depot (ka_RA_slow, as mepivacaine has) does not help here: fitted
+    # to the same curve on this disposition, the fast share falls to 3% and
+    # the fit barely improves, because this model's clearance (1.4 L/min) and
+    # Vss (34 L) cannot give the curve's long tail whatever the input.
+    # (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
     ka_RA = 0.0111,
     bioavailability_RA = 1,
     tlag_RA = 0

@@ -45,16 +45,28 @@
 # after 600 mg of 1.5% mepivacaine with epinephrine 5 mcg/mL for axillary
 # block (mean peak 3.89 mcg/mL at 24.6 min), with a one-rate absorption
 # half-time of 3.84 min; joined to the disposition above that rate predicts a
-# peak of 7.2 mcg/mL at 19 min, and does not transfer.  A two-rate input
-# (47% at 0.167/min, 53% at 0.0050/min) reproduces the published means with
-# this disposition and F = 1.  ka_RA is the single first-order rate that best
-# reproduces that two-rate curve from 5 to 180 min (weighted least squares,
-# each residual divided by the concentration + 0.3 mcg/mL): 0.0272/min, an
-# absorption half-time of 25 min.  It predicts a peak of 5.2 mcg/mL at 68
-# min, a third above the observed mean and later than it: a single depot,
-# with a disposition that has no distribution phase, cannot give both the
-# fast rise and the flat plateau.  The overprediction is on the side of
-# caution for systemic exposure.
+# peak of 7.2 mcg/mL at 19 min, and does not transfer.
+#
+# TWO PARALLEL DEPOTS (the default, MEPIVACAINE_RA_TWO_DEPOT below).  A
+# fast and a slow first-order depot in parallel, fitted (in the research
+# handoff) to Simon's 17 published group-mean concentrations from 5 to 180
+# min with this disposition fixed and F = 1, weighted least squares with each
+# residual divided by the concentration + 0.3 mcg/mL:
+#
+#     47.2% of the absorbed dose at ka 0.1670/min (half-time 4.2 min)
+#     52.8%                    at ka 0.00497/min (half-time 139 min)
+#
+# It predicts a peak of 3.8 mcg/mL at 27 min (observed 3.89 at 24.6).  It is
+# an internal fit, conditional on F = 1 and on joining a volunteer
+# intravenous study to a block study; the 3 h sampling does not establish the
+# slow depot's tail.  The engine carries the slow depot as a second RA input
+# (getDrugPK(), "RAslow").
+#
+# ONE DEPOT (MEPIVACAINE_RA_TWO_DEPOT = FALSE).  The single first-order rate
+# that best reproduces the two-depot curve by the same criterion: 0.0272/min,
+# a half-time of 25 min.  It peaks at 5.2 mcg/mL at 68 min, a third above the
+# observed mean and later: one depot, with a disposition that has no
+# distribution phase, cannot give both the fast rise and the flat plateau.
 #
 # The profile is that of axillary block WITH EPINEPHRINE; Simon's mepivacaine
 # exposure (AUC 30.4 mg.h/L) also exceeds what this intravenous clearance
@@ -91,6 +103,10 @@
 #' two-compartment model for the racemate, with a first-order absorption rate
 #' for tissue injection (RA).  See the header.
 #'
+# TRUE: RA doses are absorbed through two parallel depots (the default);
+# FALSE: through one, at ka 0.0272/min.  See the header.
+MEPIVACAINE_RA_TWO_DEPOT <- TRUE
+
 #' @inheritParams bupivacaine
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
@@ -117,10 +133,17 @@ mepivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl1 = v1 * k10 * size$clearance,
     cl2 = v1 * k12 * size$clearance,
     cl3 = 0,
-    ka_RA = 0.0272,            # 1/min, fitted to the axillary curve (header)
     bioavailability_RA = 1,
     tlag_RA = 0
   )
+  # Absorption after axillary block with epinephrine (header), 1/min
+  if (MEPIVACAINE_RA_TWO_DEPOT) {
+    default$ka_RA            <- 0.1669714901   # fast depot
+    default$ka_RA_slow       <- 0.0049724280   # slow depot
+    default$fraction_RA_slow <- 1 - 0.4721244694
+  } else {
+    default$ka_RA <- 0.0272
+  }
 
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
@@ -129,8 +152,9 @@ mepivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Burm AG et al., Anesth Analg 1997;84:85-89 (intravenous enantiomer ",
     "clearances and volumes, each enantiomer approximated as one compartment, ",
     "reduced exactly to two compartments for the racemate). Regional ",
-    "anesthesia (RA) absorption is first-order, fitted to axillary block with ",
-    "epinephrine (Simon 2002), F = 1 assumed. ",
+    "anesthesia (RA) absorption is through fast and slow first-order depots ",
+    "in parallel, fitted to axillary block with epinephrine (Simon 2002), ",
+    "F = 1 assumed. ",
     "https://doi.org/10.1097/00000539-199701000-00016"
   )
 

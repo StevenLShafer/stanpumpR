@@ -25,9 +25,14 @@ raReference <- function(s, dose, t) {
   e <- eigen(K)
   lam <- -Re(e$values)
   coef <- Re(e$vectors)[1, ] * solve(Re(e$vectors))[, 1] / s$v1
-  a <- coef * s$ka_RA / (s$ka_RA - lam)
-  dose * s$bioavailability_RA *
-    (colSums(a * exp(-outer(lam, t))) - sum(a) * exp(-s$ka_RA * t))
+  depot <- function(ka, F) {
+    if (is.null(ka) || ka <= 0) return(0)
+    a <- coef * ka / (ka - lam)
+    dose * F * (colSums(a * exp(-outer(lam, t))) - sum(a) * exp(-ka * t))
+  }
+  # A drug with a slow second depot splits the dose between the two
+  # (getDrugPK() carries each depot's share in its bioavailability).
+  depot(s$ka_RA, s$bioavailability_RA) + depot(s$ka_RAslow, s$bioavailability_RAslow)
 }
 
 test_that("RA units are read as the RA route and as amounts, not rates", {
@@ -55,11 +60,16 @@ test_that("an RA dose is absorbed first-order, matching an independent solution"
 test_that("the area under an RA dose is F x dose / CL", {
   for (drug in c("bupivacaine", "mepivacaine")) {
     s <- raPK(drug)$PK$default
-    coefs <- c(s$p_coef_RA_l1, s$p_coef_RA_l2, s$p_coef_RA_l3, s$p_coef_RA_ka)
-    rates <- c(s$lambda_1, s$lambda_2, s$lambda_3, s$ka_RA)
-    used <- rates > 0
-    expect_equal(sum(coefs[used] / rates[used]), s$bioavailability_RA / s$cl1,
-                 tolerance = 1e-10, label = drug)
+    area <- 0
+    for (r in c("RA", "RAslow")) {
+      coefs <- unlist(s[paste0("p_coef_", r, c("_l1", "_l2", "_l3", "_ka"))])
+      rates <- c(s$lambda_1, s$lambda_2, s$lambda_3, s[[paste0("ka_", r)]])
+      used <- rates > 0
+      area <- area + sum(coefs[used] / rates[used])
+    }
+    # The two depots' shares add up to the whole bioavailability, 1
+    expect_equal(s$bioavailability_RA + s$bioavailability_RAslow, 1, label = drug)
+    expect_equal(area, 1 / s$cl1, tolerance = 1e-10, label = drug)
   }
   # Racemic mepivacaine: AUC = dose x (0.5 / CLR + 0.5 / CLS) at F = 1
   s <- raPK("mepivacaine")$PK$default
@@ -104,4 +114,45 @@ test_that("the local anesthetics are listed together, plasma only", {
     row <- dd[dd$Drug == drug, ]
     expect_equal(c(row$Lower, row$Upper, row$Typical), c(0, 0, 0), label = drug)
   }
+})
+
+test_that("a slow second RA depot is absorbed across a change in PK set, and with a lag", {
+  PK <- raPK("mepivacaine")
+  DT <- data.frame(Drug = "mepivacaine", Time = c(0, 60), Dose = c(300, 200),
+                   Units = "mg RA")
+  single <- simCpCe(DT, noEvents, PK, 400, FALSE)$wide
+  PK2 <- PK
+  PK2$PK$Switch <- PK2$PK$default
+  PK2$pkEvents <- c(PK2$pkEvents, "Switch")
+  switched <- simCpCe(DT, data.frame(Time = 50, Event = "Switch"), PK2, 400, FALSE)$wide
+  at <- intersect(single$Time, switched$Time)
+  expect_gt(length(at), 20)
+  f <- function(x) x$Plasma[match(at, x$Time)]
+  expect_equal(f(switched), f(single), tolerance = 1e-8)
+
+  # Both depots follow the drug's lag
+  PK3 <- PK
+  PK3$PK$default$tlag_RA <- PK3$PK$default$tlag_RAslow <- 10
+  lagged <- simCpCe(DT[1, ], noEvents, PK3, 400, FALSE)$wide
+  plain  <- simCpCe(DT[1, ], noEvents, PK, 400, FALSE)$wide
+  expect_true(all(lagged$Plasma[lagged$Time <= 10] == 0))
+  g <- function(x, t) stats::approx(x$Time, x$Plasma, t)$y
+  expect_equal(g(lagged, c(40, 130, 300)), g(plain, c(30, 120, 290)), tolerance = 1e-3)
+})
+
+test_that("a drug without a slow depot has none, and a bad one is refused", {
+  s <- raPK("bupivacaine")$PK$default
+  expect_equal(s$ka_RAslow, 0)
+  expect_equal(s$bioavailability_RAslow, 0)
+  original <- bupivacaine
+  bad <- function(weight, height, age, sex, adjustToFFM = TRUE) {
+    x <- original(weight, height, age, sex, adjustToFFM)
+    x$PK$default$ka_RA_slow <- 0.005
+    x$PK$default$fraction_RA_slow <- 1.5
+    x
+  }
+  local_mocked_bindings(bupivacaine = bad)
+  dd <- getDrugDefaultsGlobal()
+  expect_error(getDrugPK("bupivacaine", 70, 170, 35, "male", dd[dd$Drug == "bupivacaine", ]),
+               "slow RA depot")
 })

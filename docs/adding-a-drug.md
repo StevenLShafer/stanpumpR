@@ -112,7 +112,9 @@ engine applies that itself, dose by dose (see *saturable oral absorption* below)
 
 **Optional — extravascular routes.** To support oral/IM/intranasal dosing, or regional
 anesthesia (RA, a local anesthetic injected into tissue), add absorption fields to a PK set:
-`ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_IM` / `_IN` / `_RA` equivalents). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
+`ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_IM` / `_IN` / `_RA` equivalents).
+An RA drug may add a slow second tissue depot absorbing in parallel: `ka_RA_slow` (1/min) and
+`fraction_RA_slow`, the share of the absorbed dose that goes through it (`R/drugs_mepivacaine.R`). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
 The route is the suffix of the unit (`mg PO`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.

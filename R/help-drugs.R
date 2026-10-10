@@ -528,8 +528,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   absorptionHTML <- ""
   if (!is.null(pkRef)) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
+    slowRA <- isTRUE(d$ka_RAslow > 0)
     routes <- list(PO = "Oral (PO)", IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
-                   RA = "Regional anesthesia (RA)")
+                   RA = if (slowRA) "Regional anesthesia (RA), fast depot" else "Regional anesthesia (RA)",
+                   RAslow = "Regional anesthesia (RA), slow depot")
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -548,7 +550,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         helpH2("Extravascular routes"),
         "<p>Doses with PO, IM, IN or RA units are absorbed by first-order kinetics into the central ",
         "compartment after a lag, with the fraction shown reaching the circulation. RA is a ",
-        "local anesthetic injected into tissue (a nerve block or an infiltration). See ",
+        "local anesthetic injected into tissue (a nerve block or an infiltration). ",
+        if (slowRA) paste0("Each RA dose is absorbed through a fast and a slow depot in parallel; ",
+                           "the bioavailability of each is its share of the dose. ") else "",
+        "See ",
         helpPageLink("models/absorption"), ".</p>",
         helpTableHTML(do.call(rbind, rows))
       )

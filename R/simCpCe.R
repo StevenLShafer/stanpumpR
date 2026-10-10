@@ -279,6 +279,21 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IM <- route == ROUTE_IM & !rate
     dose$IN <- route == ROUTE_IN & !rate
     dose$RA <- route == ROUTE_RA & !rate
+    # A drug with a slow second RA depot (ka_RA_slow in its model; see
+    # getDrugPK()) absorbs each RA dose through two parallel depots.  The
+    # dose rows are duplicated, the copy flagged as the internal route
+    # "RAslow"; the split of the dose is carried by the two bioavailabilities,
+    # so each copy keeps the whole dose.
+    dose$RAslow <- rep(FALSE, nrow(dose))
+    hasSlowRA <- any(vapply(PK$PK, function(s) isTRUE(s$ka_RAslow > 0), logical(1)))
+    if (hasSlowRA && any(dose$RA))
+    {
+      slowRows <- dose[dose$RA, , drop = FALSE]
+      slowRows$RA <- FALSE
+      slowRows$RAslow <- TRUE
+      dose <- rbind(dose, slowRows)
+      dose <- dose[order(dose$Time), , drop = FALSE]
+    }
     dose$Bolus <- route == ROUTE_IV & !rate
 
     # Saturable oral absorption (gabapentin): each oral dose is scaled by the
@@ -330,7 +345,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (hasMetabolite)
       {
         results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
-      } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$RA) == 0)
+      } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$RA) + sum(dose$RAslow) == 0)
       {
         results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
       } else {
