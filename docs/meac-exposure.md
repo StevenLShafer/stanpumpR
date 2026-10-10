@@ -133,13 +133,14 @@ The implied MME conversion factors (oral morphine mg per mg of drug, taking
 | Drug, route | MEAC-derived | CDC 2022 | Comment |
 |---|---|---|---|
 | oxycodone PO | 2.0 | 1.5 | Reasonable agreement |
-| hydromorphone PO | 9.1 | 5 | **Disagrees ~2×**: hydromorphone MEAC (1.5 ng/mL) may be low, or F/CL off |
+| hydromorphone PO | 9.1 | 5 | **Disagrees ~2×**: the oral bioavailability of 0.6 is too high, not the MEAC (§4.2.1) |
 | oxymorphone PO | 1.9 | 3 | MEAC is provisional (a tenth of morphine's) |
 | methadone PO | ≈ 3.9 | 4.7 | Within the published range |
 | fentanyl TD (mcg/h) | ≈ 1.9 | 2.4 | Ignores the patch's absorption kinetics |
 
 This comparison is useful in itself: **the disagreements point to MEAC values
-or kinetic parameters worth re-examining**, hydromorphone first. It should
+or kinetic parameters worth re-examining**. Hydromorphone, the largest, is
+worked through in §4.2.1. It should
 become a pinned test (§7) so a change to any MEAC or clearance shows up as a
 change in its implied ratio.
 
@@ -151,6 +152,83 @@ Calibration point: 50 MME/day (the CDC "reassess" threshold) is about 1.2 MEAC
 of continuous exposure and 90 MME/day about 2.1 MEAC, for this reference
 patient. These numbers belong in the help page only as an orientation aid, not
 as thresholds.
+
+#### 4.2.1 The hydromorphone discrepancy
+
+The implied oral factor splits into three ratios, each against morphine:
+
+| Term | Value | |
+|---|---|---|
+| MEAC ratio (8 ÷ 1.5 ng/mL) | 5.33 | |
+| Clearance ratio (1.23 ÷ 1.30 L/min) | 0.95 | |
+| **Implied IV potency** (the two above) | **5.1** | Published IV potency is 5 to 8.5: low end, but inside the range |
+| Bioavailability ratio (0.6 ÷ an assumed 0.33 for morphine) | 1.82 | **All of the excess** |
+| Implied oral factor | 9.2 | CDC 2022: 5 |
+
+The IV comparison, which has no bioavailability in it, agrees with the published
+range. The error appears only on the oral route.
+
+**The MEAC is not the culprit.** Holding bioavailability at 0.6, the hydromorphone
+MEAC would have to be about 2.7 ng/mL to bring the oral factor to 5. That would
+make IV hydromorphone only 2.8 times as potent as morphine, which no source
+supports. The IV comparison, if anything, suggests the MEAC is slightly high
+(1.2 ng/mL would give 6.3), and lowering it would widen the oral discrepancy.
+
+**The oral bioavailability of 0.6 has no source.** The drug file records that
+the original comment beside it was copied from the oxycodone file. The measured
+values:
+
+| Source | n | Oral bioavailability | Note |
+|---|---|---|---|
+| Vallner 1981, J Clin Pharmacol 21:152 ([doi](https://doi.org/10.1002/j.1552-4604.1981.tb05693.x)) | 6 | "incompletely absorbed" | The value of about 24% usually attributed to it needs checking against the full text |
+| Ritschel 1987, J Clin Pharmacol 27:647 ([doi](https://doi.org/10.1002/j.1552-4604.1987.tb03082.x)) | 8 | 51.4 ± 29.3% | The model's current citation |
+| Parab 1988, Biopharm Drug Dispos 9:187 ([doi](https://doi.org/10.1002/bod.2510090207)) | — | 50.7 ± 29.8% | Same group; probably the same or an overlapping cohort, so not independent. Hepatic extraction ratio 0.51 |
+| Lohela 2021, Anesth Analg 133:423 ([doi](https://doi.org/10.1213/ANE.0000000000005229)) | 12 | **33%** (placebo arm) | Modern randomised crossover, oral and IV in the same participants |
+| Sarhill 2001, Support Care Cancer 9:84 ([doi](https://doi.org/10.1007/s005200000183)) | review | "low" | 5 times morphine's potency orally, 8.5 times IV; this implies hydromorphone's bioavailability is about 0.6 times morphine's, roughly 0.2 |
+
+**The model's own clearance argues the same way.** Hydromorphone's clearance
+(1.30 L/min) is close to hepatic blood flow and almost the same as morphine's
+(1.23 L/min). Both are cleared mainly by hepatic glucuronidation. A drug like
+that should lose about as much to first pass as morphine does, which puts its
+bioavailability around 0.2 to 0.35. Pure flow-limited reasoning would give a
+lower ceiling still, but blood-to-plasma partitioning and glucuronidation
+outside the liver make that bound loose.
+
+**What a corrected value gives** (morphine at an assumed 0.33):
+
+| Hydromorphone oral bioavailability | Implied oral factor |
+|---|---|
+| 0.6 (current) | 9.2 |
+| 0.5 (Ritschel) | 7.7 |
+| **0.33 (Lohela 2021)** | **5.1**, matching CDC 2022 (5) |
+| 0.25 | 3.8, close to the older APS figure (4) |
+
+With 0.33, the MEAC derivation, the CDC table and the clinical potency ratios
+all agree.
+
+**Before changing the model:**
+
+1. *Morphine's bioavailability is still assumed.* The conclusion holds for any
+   morphine value between 0.25 and 0.4: with hydromorphone at 0.33, the factor
+   stays between 4.2 and 6.7, against 7.6 to 12.2 at the current 0.6. Adding
+   oral morphine (§5.3) settles it.
+2. *The absorption rate needs revisiting at the same time.* The current rate
+   (`ka_PO = 0.01`/min, peak at 46 min) was probably set together with 0.6.
+   Check it against the oral time to peak and peak concentration Lohela
+   reported for 2.6 mg.
+3. *Hydrocodone.* Hydromorphone is the modelled metabolite of hydrocodone. Its
+   formation should go through the metabolite link, not through hydromorphone's
+   own oral bioavailability, but a test should confirm that changing one does
+   not move the other.
+4. *The individual spread is large.* Standard deviations of about 30
+   percentage points mean individual values from roughly 0.2 to over 0.8. That
+   supports §4.3's point that conversions within a patient are more
+   trustworthy than population ratios.
+
+**Recommendation.** Set hydromorphone's oral bioavailability to 0.33, citing
+Lohela 2021 and keeping Ritschel as the earlier, higher estimate. Leave the
+MEAC at 1.5 ng/mL, and reconsider it only if the IV potency comparison argues
+for a lower value.
 
 ### 4.3 Rotation solver
 
@@ -252,7 +330,7 @@ engine (`docs/architecture.md#time-units`).
 | **Oral methadone** | The rotation everyone gets wrong; long half-life also tests the steady-state logic |
 | **Morphine-6-glucuronide** | The renal story for morphine; needs the two-stage metabolite cascade the engine lacks (`R/getDrugPK.R`, ~line 567) |
 | **Transdermal fentanyl** | A zero-order input with a skin depot; common in chronic use |
-| **Hydromorphone MEAC** | Implied ratio twice the CDC's (§4.2) |
+| **Hydromorphone oral bioavailability** | 0.6 has no source and doubles the implied oral factor; 0.33 (Lohela 2021) fits (§4.2.1) |
 | **Oxymorphone MEAC** | Marked provisional in the drug file |
 | **Buprenorphine, tapentadol** | Not in the library and do not fit additivity (§6); exclude explicitly rather than guess |
 
@@ -311,8 +389,9 @@ engine (`docs/architecture.md#time-units`).
 3. **Source and end point for `RC50`.** Ventilatory response to CO2, minute
    ventilation at fixed end-tidal CO2, or the Dahan-group "ventilation at
    isohypercapnia" models? Which opioids have usable data?
-4. **Hydromorphone.** Revisit MEAC, clearance or F, or accept the discrepancy
-   and document it?
+4. **Hydromorphone.** §4.2.1 recommends an oral bioavailability of 0.33 and an
+   unchanged MEAC. Should the MEAC also come down towards 1.2 ng/mL, which the
+   IV potency comparison mildly favours?
 5. **Should the MME-equivalent be shown at all?** Showing "≈ N MME/day" beside
    `Ubar` eases adoption but keeps the old concept alive. One option is to show
    it only in export, labelled as derived.
