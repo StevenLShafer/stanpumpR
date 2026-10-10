@@ -161,7 +161,8 @@ test_that("every scenario runs through the simulation engine", {
     if (nrow(iv) > 0) {
       out <- simulateDrugsWithCovariates(iv, helpScenarioEventTable(s), p$weight, p$height, p$age, p$sex,
                                          s$options$maximum, s$options$showThreshold,
-                                         cyp2d6 = p$cyp2d6, adjustToFFM = p$adjustToFFM)
+                                         cyp2d6 = p$cyp2d6, cyp2c19 = p$cyp2c19,
+                                         adjustToFFM = p$adjustToFFM)
       # every dosed drug has a row; a drug that forms an active metabolite adds
       # the metabolite's row too
       expect_true(all(unique(iv$Drug) %in% names(out)), info = s$id)

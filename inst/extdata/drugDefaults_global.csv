@@ -60,6 +60,16 @@ mannitol,mOsm,g,g/hr,g,"g,g/kg,g/hr,g/kg/hr,g qd,g bid,g tid,g qid,g/kg qd,g/kg 
 amiodarone,mcg,,,mg/day PO,"mg/day PO",#B22222,1,2.5,1.5,0,1,IV,Other
 desethylamiodarone,mcg,,,,,#E9967A,0,0,0,0,0,IV,
 amiodaroneIV,mcg,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#C2185B,0,0,0,0,0,IV,Other
+escitalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00838F,15,80,40,0,0,IV,Antidepressants
+citalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#26C6DA,50,110,80,0,0,IV,Antidepressants
+sertraline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#558B2F,10,150,50,0,0,IV,Antidepressants
+paroxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#9E9D24,20,65,40,0,0,IV,Antidepressants
+duloxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#EF6C00,30,120,60,0,0,IV,Antidepressants
+mirtazapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6D4C41,30,80,50,0,0,IV,Antidepressants
+bupropion,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#283593,0,0,0,0,0,IV,Antidepressants
+hydroxybupropion,ng,,,,,#9575CD,850,1500,1200,0,0,IV,
+fluoxetine,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidepressants
+norfluoxetine,ng,,,,,#4DB6AC,0,0,0,0,0,IV,
 methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4527A0,0,0,0,0,0,IV,Stimulants
 lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,0,0,0,0,0,IV,Stimulants
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas,

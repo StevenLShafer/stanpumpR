@@ -297,9 +297,10 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # plasma concentration (2026-10-09); methylphenidate and lisdexamfetamine
   # have no calibrated concentration-effect model for any ADHD endpoint;
   # bupivacaine, ropivacaine and mepivacaine model systemic plasma
-  # concentration, not the nerve block (2026-10-10); diclofenac, meloxicam
-  # and ketorolac have no published ke0 (2026-10-10).  Pinned because the
-  # count has been got wrong by hand more than once.
+  # concentration, not the nerve block (2026-10-10).  The antidepressants (2026-10-10) have
+  # no effect site: response lags weeks and no ke0 has been estimated.
+  # Diclofenac, meloxicam and ketorolac have no published ke0 (2026-10-10).
+  # Pinned because the count has been got wrong by hand more than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
     k <- tryCatch(getDrugPK(d, 70, 171, 50, "male",
@@ -317,6 +318,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "clonazepam", "zolpidem", "temazepam",
     "methylphenidate", "lisdexamfetamine",
     "bupivacaine", "ropivacaine", "mepivacaine",
+    "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
+    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
     "diclofenac", "meloxicam", "ketorolac"
   ))
 })

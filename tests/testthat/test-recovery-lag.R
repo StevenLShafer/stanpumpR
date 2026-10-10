@@ -72,7 +72,7 @@ test_that("only the expected oral drugs carry an absorption lag", {
   expect_setequal(unique(lagged),
                   c("gabapentin", "pregabalin", "acetaminophen", "ibuprofen",
                     "zolpidem", "clonazepam", "methylphenidate",
-                    "lisdexamfetamine", "morphine",
+                    "lisdexamfetamine", "morphine", "sertraline",
                     # both lagged oral depots (2026-10-10); meloxicam's
                     # lag is on its second depot only
                     "diclofenac", "meloxicam"))

@@ -354,11 +354,13 @@ All files are flat in `R/`.
   sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
   table: `simCpCe()` returns them as `$scheduled` and `sendSlide()` merges them into the export.
   The frequencies are offered per drug in `drugDefaults_global.csv`.
-- **Saturable oral absorption** (`oralSaturationFraction()` in `routes.R`) — a drug whose oral
-  bioavailability falls with dose (gabapentin) returns an `oralSaturation` block, and
-  `simCpCe()` scales each oral dose by `1 - Imax × D / (ID50 + D)` before the engine runs.
-  Each dose is then an ordinary input, so the engines stay linear; saturation shared between
-  overlapping doses is not represented.
+- **Dose-dependent oral absorption** (`oralSaturationFraction()` in `routes.R`) — a drug whose
+  oral bioavailability depends on the dose returns an `oralSaturation` block, and `simCpCe()`
+  scales each oral dose before the engine runs: by `1 - Imax × D / (ID50 + D)` when absorption
+  saturates (gabapentin), by `D / (D50 + D)` when it rises with dose (`form = "rising"`,
+  sertraline), or by `(D / Dref)^exponent` to carry an empirical dose power on apparent
+  clearance (`form = "power"`, paroxetine). Each dose is then an ordinary input, so the engines
+  stay linear; dependence shared between overlapping doses is not represented.
 - **Suggest Dosing** (`suggest.R`) — given a target drug and end time, optimizes bolus +
   infusion amounts to reach and hold a target concentration. The fit is over the effect-site
   concentration alone, evaluated as a sum of each row's unit-dose curve (the engine is linear);
