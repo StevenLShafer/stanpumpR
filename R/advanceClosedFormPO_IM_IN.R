@@ -1,5 +1,5 @@
-# Closed Form, one PK set only, oral, intranasal, IM and regional anesthesia
-# (RA, tissue injection) doses included alongside IV doses
+# Closed Form, one PK set only, oral, sublingual, intranasal, IM and regional
+# anesthesia (RA, tissue injection) doses included alongside IV doses
 advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge)
 {
   ##############################################
@@ -9,14 +9,16 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   # Modified to include PO and IV delivery     #
   ##############################################
 
-  # Add tlag_ to PO, IM, IN and RA dose times.  A hand-built dose table may
-  # carry no RA column.
+  # Add tlag_ to PO, IM, IN, SL and RA dose times.  A hand-built dose table
+  # may carry no SL or RA column.
+  if (is.null(dose$SL)) dose$SL <- rep(FALSE, nrow(dose))
   if (is.null(dose$RA)) dose$RA <- rep(FALSE, nrow(dose))
   if (is.null(dose$RAslow)) dose$RAslow <- rep(FALSE, nrow(dose))
   givenAt <- dose$Time
   dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
   dose$Time[dose$IM] <- dose$Time[dose$IM] + pkSet$tlag_IM
   dose$Time[dose$IN] <- dose$Time[dose$IN] + pkSet$tlag_IN
+  dose$Time[dose$SL] <- dose$Time[dose$SL] + pkSet$tlag_SL
   dose$Time[dose$RA] <- dose$Time[dose$RA] + pkSet$tlag_RA
   dose$Time[dose$RAslow] <- dose$Time[dose$RAslow] + pkSet$tlag_RAslow
 
@@ -42,11 +44,12 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   doseNA <- rep(0, L)
 
   # Create bolusLine and infusionLine
-  inputs    <- doseLines(dose, timeLine, c("PO", "IM", "IN", "RA", "RAslow"))
+  inputs    <- doseLines(dose, timeLine, c("PO", "IM", "IN", "SL", "RA", "RAslow"))
   bolusLine <- inputs$bolus
   poLine    <- inputs$PO
   imLine    <- inputs$IM
   inLine    <- inputs$IN
+  slLine    <- inputs$SL
   raLine    <- inputs$RA
   raSlowLine <- inputs$RAslow
   rate      <- inputs$rate
@@ -62,6 +65,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       ka_PO_dt <- exp(-ka_PO * dt)
       ka_IM_dt <- exp(-ka_IM * dt)
       ka_IN_dt <- exp(-ka_IN * dt)
+      ka_SL_dt <- exp(-ka_SL * dt)
       ka_RA_dt <- exp(-ka_RA * dt)
       ka_RAslow_dt <- exp(-ka_RAslow * dt)
 
@@ -97,17 +101,25 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_RA_ka <- p_coef_RA_ka * raLine
       p_RAslow_ka <- p_coef_RAslow_ka * raSlowLine
 
-      p_state_l1    <- advanceStatePO(l1_dt,    p_bolus_l1, p_infusion_l1, p_PO_l1,    p_IM_l1,    p_IN_l1, L, p_RA_l1)
-      p_state_l2    <- advanceStatePO(l2_dt,    p_bolus_l2, p_infusion_l2, p_PO_l2,    p_IM_l2,    p_IN_l2, L, p_RA_l2)
-      p_state_l3    <- advanceStatePO(l3_dt,    p_bolus_l3, p_infusion_l3, p_PO_l3,    p_IM_l3,    p_IN_l3, L, p_RA_l3)
+      # Sublingual doses enter the disposition states through the same last
+      # argument as RA, and keep their own absorption state.
+      p_X_l1 <- p_RA_l1 + p_coef_SL_l1 * slLine
+      p_X_l2 <- p_RA_l2 + p_coef_SL_l2 * slLine
+      p_X_l3 <- p_RA_l3 + p_coef_SL_l3 * slLine
+      p_SL_ka <- p_coef_SL_ka * slLine
+
+      p_state_l1    <- advanceStatePO(l1_dt,    p_bolus_l1, p_infusion_l1, p_PO_l1,    p_IM_l1,    p_IN_l1, L, p_X_l1)
+      p_state_l2    <- advanceStatePO(l2_dt,    p_bolus_l2, p_infusion_l2, p_PO_l2,    p_IM_l2,    p_IN_l2, L, p_X_l2)
+      p_state_l3    <- advanceStatePO(l3_dt,    p_bolus_l3, p_infusion_l3, p_PO_l3,    p_IM_l3,    p_IN_l3, L, p_X_l3)
       p_state_ka_PO <- advanceStatePO(ka_PO_dt, doseNA,     doseNA,        p_PO_ka,    doseNA,     doseNA,  L)
       p_state_ka_IM <- advanceStatePO(ka_IM_dt, doseNA,     doseNA,        doseNA,     p_IM_ka,    doseNA,  L)
       p_state_ka_IN <- advanceStatePO(ka_IN_dt, doseNA,     doseNA,        doseNA,     doseNA,     p_IN_ka, L)
       p_state_ka_RA <- advanceStatePO(ka_RA_dt, doseNA,     doseNA,        doseNA,     doseNA,     doseNA,  L, p_RA_ka)
       p_state_ka_RAslow <- advanceStatePO(ka_RAslow_dt, doseNA, doseNA,    doseNA,     doseNA,     doseNA,  L, p_RAslow_ka)
+      p_state_ka_SL <- advanceStatePO(ka_SL_dt, doseNA,     doseNA,        doseNA,     doseNA,     doseNA,  L, p_SL_ka)
 
       Cp <- p_state_l1 + p_state_l2 + p_state_l3 + p_state_ka_PO + p_state_ka_IM + p_state_ka_IN +
-        p_state_ka_RA + p_state_ka_RAslow
+        p_state_ka_RA + p_state_ka_RAslow + p_state_ka_SL
       # The effect site from its own exponential states, exactly, rather than
       # derived from the plasma curve by calculateCe(); see advanceClosedForm0().
       ke0_dt <- exp(-ke0 * dt)
@@ -146,29 +158,37 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       e_RA_ka  <- e_coef_RA_ka  * raLine
       e_RAslow_ka <- e_coef_RAslow_ka * raSlowLine
 
-      e_state_l1     <- advanceStatePO(l1_dt,    e_bolus_l1,  e_infusion_l1,  e_PO_l1,  e_IM_l1,  e_IN_l1,  L, e_RA_l1)
-      e_state_l2     <- advanceStatePO(l2_dt,    e_bolus_l2,  e_infusion_l2,  e_PO_l2,  e_IM_l2,  e_IN_l2,  L, e_RA_l2)
-      e_state_l3     <- advanceStatePO(l3_dt,    e_bolus_l3,  e_infusion_l3,  e_PO_l3,  e_IM_l3,  e_IN_l3,  L, e_RA_l3)
-      e_state_ke0    <- advanceStatePO(ke0_dt,   e_bolus_ke0, e_infusion_ke0, e_PO_ke0, e_IM_ke0, e_IN_ke0, L, e_RA_ke0)
+      e_X_l1  <- e_RA_l1  + e_coef_SL_l1  * slLine
+      e_X_l2  <- e_RA_l2  + e_coef_SL_l2  * slLine
+      e_X_l3  <- e_RA_l3  + e_coef_SL_l3  * slLine
+      e_X_ke0 <- e_RA_ke0 + e_coef_SL_ke0 * slLine
+      e_SL_ka <- e_coef_SL_ka * slLine
+
+      e_state_l1     <- advanceStatePO(l1_dt,    e_bolus_l1,  e_infusion_l1,  e_PO_l1,  e_IM_l1,  e_IN_l1,  L, e_X_l1)
+      e_state_l2     <- advanceStatePO(l2_dt,    e_bolus_l2,  e_infusion_l2,  e_PO_l2,  e_IM_l2,  e_IN_l2,  L, e_X_l2)
+      e_state_l3     <- advanceStatePO(l3_dt,    e_bolus_l3,  e_infusion_l3,  e_PO_l3,  e_IM_l3,  e_IN_l3,  L, e_X_l3)
+      e_state_ke0    <- advanceStatePO(ke0_dt,   e_bolus_ke0, e_infusion_ke0, e_PO_ke0, e_IM_ke0, e_IN_ke0, L, e_X_ke0)
       e_state_ka_PO  <- advanceStatePO(ka_PO_dt, doseNA,      doseNA,         e_PO_ka,  doseNA,   doseNA,   L)
       e_state_ka_IM  <- advanceStatePO(ka_IM_dt, doseNA,      doseNA,         doseNA,   e_IM_ka,  doseNA,   L)
       e_state_ka_IN  <- advanceStatePO(ka_IN_dt, doseNA,      doseNA,         doseNA,   doseNA,   e_IN_ka,  L)
       e_state_ka_RA  <- advanceStatePO(ka_RA_dt, doseNA,      doseNA,         doseNA,   doseNA,   doseNA,   L, e_RA_ka)
       e_state_ka_RAslow <- advanceStatePO(ka_RAslow_dt, doseNA,   doseNA,         doseNA,   doseNA,   doseNA,   L, e_RAslow_ka)
+      e_state_ka_SL  <- advanceStatePO(ka_SL_dt, doseNA,      doseNA,         doseNA,   doseNA,   doseNA,   L, e_SL_ka)
 
       # The states, not just the time they imply.  A drug that also receives
       # an active metabolite has to add this drug's amplitudes to the formed
       # contribution's before solving; see R/recoveryStates.R.  Built whether
       # or not recovery is plotted, because the effect site is read off it.
       pending <- pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
-      # The RA depots are carried only by a drug that has them, so that every
-      # other drug keeps exactly the states it always had.
-      raState <- function(x, xSlow) c(if (ka_RA > 0) list(x), if (ka_RAslow > 0) list(xSlow))
-      raRate  <- c(if (ka_RA > 0) ka_RA, if (ka_RAslow > 0) ka_RAslow)
+      # The RA and SL depots are carried only by a drug that has them, so that
+      # every other drug keeps exactly the states it always had.
+      raState <- function(x, xSlow, xSL)
+        c(if (ka_RA > 0) list(x), if (ka_RAslow > 0) list(xSlow), if (ka_SL > 0) list(xSL))
+      raRate  <- c(if (ka_RA > 0) ka_RA, if (ka_RAslow > 0) ka_RAslow, if (ka_SL > 0) ka_SL)
       effectStates <- recoveryStateSet(
         timeLine,
         c(list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
-               e_state_ka_PO, e_state_ka_IM, e_state_ka_IN), raState(e_state_ka_RA, e_state_ka_RAslow)),
+               e_state_ka_PO, e_state_ka_IM, e_state_ka_IN), raState(e_state_ka_RA, e_state_ka_RAslow, e_state_ka_SL)),
         c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN, raRate),
         pending
       )
@@ -183,7 +203,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       recoveryStates <- if (ke0 > 0) effectStates else recoveryStateSet(
         timeLine,
         c(list(p_state_l1, p_state_l2, p_state_l3,
-               p_state_ka_PO, p_state_ka_IM, p_state_ka_IN), raState(p_state_ka_RA, p_state_ka_RAslow)),
+               p_state_ka_PO, p_state_ka_IM, p_state_ka_IN), raState(p_state_ka_RA, p_state_ka_RAslow, p_state_ka_SL)),
         c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN, raRate),
         pending,
         horizon = recoveryHorizonPlasma(maximum)

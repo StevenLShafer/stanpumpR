@@ -2,19 +2,24 @@
 % Please edit documentation in R/routes.R
 \name{validateOralSaturation}
 \alias{validateOralSaturation}
-\title{Check a drug model's dose-dependent oral absorption block}
+\title{Check a drug model's dose-dependent absorption block}
 \usage{
-validateOralSaturation(saturation, drug)
+validateOralSaturation(saturation, drug, block = "oralSaturation")
 }
 \arguments{
-\item{saturation}{the \code{oralSaturation} block a drug model returned, or NULL}
+\item{saturation}{the block a drug model returned, or NULL}
 
 \item{drug}{the drug's name, for the error message}
+
+\item{block}{the block's name, for the error message}
 }
 \value{
 \code{saturation}, unchanged, if it is valid; otherwise an error
 }
 \description{
-Check a drug model's dose-dependent oral absorption block
+The same check serves the oral block (\code{oralSaturation}: gabapentin,
+sertraline, paroxetine) and the sublingual one (\code{sublingualSaturation},
+buprenorphine), which take the same forms and are applied by the same
+\code{oralSaturationFraction()}.
 }
 \keyword{internal}

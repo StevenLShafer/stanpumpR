@@ -31,6 +31,7 @@ temazepam,ng,,,mg PO,"mg PO,mg PO qd",#7F3F00,250,600,400,0,250,IV,Hypnotics and
 codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4A6FE3,50,150,100,0,0,IV,Opioids
 hydrocodone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#2C5FB8,10,30,20,8,8,IV,Opioids
 oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#B5468C,1,4,2,0.8,0.8,IV,Opioids
+buprenorphine,ng,mg,mcg/hr,mg,"mg,mcg,mcg/kg,mcg/hr,mcg/kg/hr,mg SL,mcg SL,mg IN,mcg IN,mg qd,mg bid,mg tid,mg qid,mg SL qd,mg SL bid,mg SL tid,mg SL qid",#5D4037,1.25,3,2.2,0,1.25,IV,Opioids
 tramadol,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#7E57C2,100,600,300,0,0,IV,Opioids
 desmetramadol,ng,,,,,#26A69A,20,80,40,84,84,IV,
 gabapentin,mcg,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#880E4F,4.1,9.4,6,0,0,IV,Oral analgesics

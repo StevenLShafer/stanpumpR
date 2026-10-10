@@ -299,7 +299,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("/day", dose$Units)
     dose$Dose[use] <- dose$Dose[use] / MINS_PER_DAY
 
-    # Identify extravascular (PO, IM, IN, RA) and IV bolus doses.  A rate unit
+    # Identify extravascular (PO, SL, IM, IN, RA) and IV bolus doses.  A rate unit
     # (isRateUnit(), R/routes.R) is an input rate whatever its route word, so
     # it is neither: a "mg/day PO" row, the constant-rate oral input of
     # poRateUnits, becomes an infusion row on the drug's apparent oral
@@ -313,6 +313,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$PO <- route == ROUTE_PO & !rate
     dose$IM <- route == ROUTE_IM & !rate
     dose$IN <- route == ROUTE_IN & !rate
+    dose$SL <- route == ROUTE_SL & !rate
     dose$RA <- route == ROUTE_RA & !rate
     # A drug with a slow second RA depot (ka_RA_slow in its model; see
     # getDrugPK()) absorbs each RA dose through two parallel depots.  The
@@ -339,6 +340,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     if (!is.null(PK$oralSaturation) && any(dose$PO))
       dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
         oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv, PK$oralSaturation)
+    # The same for sublingual doses whose bioavailability falls with the dose
+    # (buprenorphine): bioavailability_SL is the small-dose limit.
+    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
+      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
+        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv, PK$sublingualSaturation)
 
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp
@@ -383,7 +389,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         if (hasMetabolite)
         {
           results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
-        } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$RA) + sum(dose$RAslow) == 0)
+        } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) +
+                   sum(dose$RA) + sum(dose$RAslow) == 0)
         {
           results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
         } else {
