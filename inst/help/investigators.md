@@ -75,6 +75,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | duloxetine | **Zhong** and colleagues (2026) | Apparent oral one-compartment kinetics in depressed inpatients, with clearance 25% lower in women |
 | mirtazapine | **Yan** and colleagues (2026) | Apparent oral one-compartment kinetics in depressed inpatients, with clearance 29.4% lower at a BMI of 28 or more |
 | bupropion, hydroxybupropion | **Ghimire** and colleagues (2026) | Apparent oral two-compartment kinetics of the sustained-release tablet and its metabolite after a single 150 mg dose, with a fixed forming fraction of 0.1 |
+| fluoxetine, norfluoxetine | **Han** and colleagues (2025) | Joint apparent oral one-compartment kinetics of fluoxetine and norfluoxetine from steady-state troughs in Chinese psychiatric patients, with sex on clearance |
 | vancomycin | **A. H. Thomson** and colleagues (2009) | Two-compartment kinetics with creatinine clearance |
 | hydrocortisone | **D. Bindellini** and colleagues (2024) | Cortisol kinetics, linearised for stress doses |
 | methylprednisolone, dexamethasone | **Y. Hong** and colleagues (2007) | Intravenous kinetics |

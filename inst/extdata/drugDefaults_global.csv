@@ -61,6 +61,8 @@ duloxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#EF6C00,30,120,60,0,0,IV,Antide
 mirtazapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6D4C41,30,80,50,0,0,IV,Antidepressants
 bupropion,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#283593,0,0,0,0,0,IV,Antidepressants
 hydroxybupropion,ng,,,,,#9575CD,850,1500,1200,0,0,IV,
+fluoxetine,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidepressants
+norfluoxetine,ng,,,,,#4DB6AC,0,0,0,0,0,IV,
 methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4527A0,0,0,0,0,0,IV,Stimulants
 lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,0,0,0,0,0,IV,Stimulants
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas,

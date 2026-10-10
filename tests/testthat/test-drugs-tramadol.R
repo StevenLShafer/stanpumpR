@@ -316,7 +316,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "clonazepam", "zolpidem", "temazepam",
     "methylphenidate", "lisdexamfetamine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-    "mirtazapine", "bupropion", "hydroxybupropion"
+    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine"
   ))
 })
 

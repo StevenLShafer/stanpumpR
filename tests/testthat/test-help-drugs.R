@@ -38,7 +38,7 @@ plasmaOnly <- c(
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
   # The antidepressants: response lags weeks, no ke0 exists
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-  "mirtazapine", "bupropion", "hydroxybupropion",
+  "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
     "clonazepam", "zolpidem", "temazepam",
   "methylphenidate", "lisdexamfetamine"
 )
