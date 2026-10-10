@@ -46,7 +46,9 @@ plasmaOnly <- c(
   # systemic plasma concentration, not the nerve block (2026-10-10)
   "bupivacaine", "ropivacaine", "mepivacaine",
   # NSAIDs with no published ke0 (2026-10-10)
-  "diclofenac", "meloxicam", "ketorolac"
+  "diclofenac", "meloxicam", "ketorolac",
+    # aspirin and the salicylate it forms (2026-10-10): no ke0
+    "aspirin", "salicylate"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

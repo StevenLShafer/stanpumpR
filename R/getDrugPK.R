@@ -823,14 +823,12 @@ getDrugPK <- function(
 
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # The second oral depot is carried by advanceClosedFormPO_IM_IN() and
-  # advanceClosedForm1(), not by the metabolite engine or the per-formulation
-  # runs, and an oral tPeak is solved against the first depot alone.
+  # The second oral depot is carried by advanceClosedFormPO_IM_IN(),
+  # advanceClosedForm1() and advanceClosedFormMetabolite() (aspirin), not by
+  # the per-formulation runs, and an oral tPeak is solved against the first
+  # depot alone.
   if (any(vapply(PK, function(s) isTRUE(s$ka_PO2 > 0), logical(1))))
   {
-    if (resolveMetabolite && !is.null(X$metabolite))
-      stop("Invalid second oral depot for ", drug, ": a drug that forms an ",
-           "active metabolite cannot have one.")
     if (!is.null(X$oralFormulations))
       stop("Invalid second oral depot for ", drug, ": a drug with more than ",
            "one oral formulation cannot have one.")

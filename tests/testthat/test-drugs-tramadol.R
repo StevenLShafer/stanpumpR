@@ -323,7 +323,9 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
     "ondansetron", "aprepitant", "fosaprepitant",
-    "diclofenac", "meloxicam", "ketorolac"
+    "diclofenac", "meloxicam", "ketorolac",
+    # aspirin and the salicylate it forms (2026-10-10): no ke0
+    "aspirin", "salicylate"
   ))
 })
 

@@ -127,8 +127,10 @@ if absent) beside `ka_PO`, `bioavailability_PO` and `tlag_PO`. `bioavailability_
 absolute bioavailability of the whole dose, applied once; `getDrugPK()` splits it between the
 depots, and `simCpCe()` duplicates each oral dose row into the internal route `PO2`, as it
 does for the slow RA depot. Diclofenac is the example (`R/drugs_diclofenac.R`); meloxicam uses
-it with apparent parameters and `bioavailability_PO = 1`. Not available with an active
-metabolite, several oral formulations, or a `tPeak` measured after an oral dose.
+it with apparent parameters and `bioavailability_PO = 1`. With an active metabolite the
+metabolite engine carries both depots, splitting the first-pass fraction between them in
+proportion to their bioavailabilities (aspirin, `R/drugs_aspirin.R`). Not available with several
+oral formulations, or a `tPeak` measured after an oral dose.
 
 **Optional — parallel systems.** A drug whose plotted concentration is the sum of independent
 linear systems sharing its doses (ketorolac: the S and R enantiomers, fitted separately)
