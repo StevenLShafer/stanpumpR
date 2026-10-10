@@ -21,13 +21,18 @@ test_that("doseRoute() agrees with every unit the app offers", {
   expect_true(all(doseRoute(poUnits) == ROUTE_PO))
   expect_true(all(doseRoute(imUnits) == ROUTE_IM))
   expect_true(all(doseRoute(inUnits) == ROUTE_IN))
+  expect_true(all(doseRoute(slUnits) == ROUTE_SL))
+  expect_true(all(doseRoute(raUnits) == ROUTE_RA))
 
   dd <- getDrugDefaultsGlobal()
   units <- unique(unlist(dd$Units))
-  # The substring tests simCpCe() used before doseRoute()
+  # The substring tests simCpCe() used before doseRoute(), with RA (regional
+  # anesthesia, 2026-10-10) added
   old <- ifelse(grepl("PO", units), "PO",
                 ifelse(grepl("IM", units), "IM",
-                       ifelse(grepl("IN", units), "IN", "IV")))
+                       ifelse(grepl("IN", units), "IN",
+                              ifelse(grepl("SL", units), "SL",
+                                     ifelse(grepl("RA", units), "RA", "IV")))))
   expect_equal(doseRoute(units), old)
 })
 
@@ -39,7 +44,7 @@ test_that("the constant-rate oral unit is oral by route and a rate by kind", {
   expect_true(all(poRateUnits %in% allUnits))
   expect_false(any(poRateUnits %in% c(infusionUnits, poUnits, scheduledUnits)))
   expect_true(all(isRateUnit(infusionUnits)))
-  expect_false(any(isRateUnit(c(bolusUnits, poUnits, imUnits, inUnits, tciUnits,
+  expect_false(any(isRateUnit(c(bolusUnits, poUnits, imUnits, inUnits, raUnits, tciUnits,
                                 scheduledUnits, "%"))))
   expect_equal(isRateUnit(factor("mg/hr")), TRUE)
 })
@@ -83,10 +88,26 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
   }
   hydromorphone <- dd$Units[[which(dd$Drug == "hydromorphone")]]
   unscheduled <- hydromorphone[!isScheduledUnit(hydromorphone)]
-  expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV], c("mg PO", "mg IM", "mg IN"))
-  expect_equal(unique(doseRoute(hydromorphone)), DOSE_ROUTES)
+  expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV],
+               c("mg PO", "mg PO liquid", "mg/kg PO liquid", "mg IM", "mg IN"))
+  # Every route but sublingual and regional anesthesia, which hydromorphone
+  # does not offer
+  expect_equal(unique(doseRoute(hydromorphone)), setdiff(DOSE_ROUTES, c(ROUTE_SL, ROUTE_RA)))
+  lidocaine <- dd$Units[[which(dd$Drug == "lidocaine")]]
+  expect_equal(unique(doseRoute(lidocaine)), c(ROUTE_IV, ROUTE_RA))
   expect_true(all(c("Plasma target", "Effect site target") %in%
                     hydromorphone[doseRoute(hydromorphone) == ROUTE_IV]))
+})
+
+test_that("sublingual units read as SL and list between oral and intramuscular", {
+  # The sublingual route (buprenorphine), added 2026-10-10.
+  expect_equal(doseRoute(c("mg SL", "mcg/kg SL", "mg SL bid", "mcg SL qid")), rep(ROUTE_SL, 4))
+  expect_false(any(isRateUnit(slUnits)))
+  expect_true(all(slUnits %in% allUnits))
+  expect_true(all(paste(slUnits, "bid") %in% scheduledUnits))
+  expect_true(all(nchar(scheduledUnits) <= MAX_UNIT_STRING_LENGTH))
+  expect_equal(groupUnitsByRoute(c("mg IN", "mg SL", "mg", "mg IM", "mg PO")),
+               c("mg", "mg PO", "mg SL", "mg IM", "mg IN"))
 })
 
 test_that("oralSaturationFraction() is the inhibitory Emax of Tran 2017", {
@@ -119,4 +140,28 @@ test_that("only a drug that declares saturable absorption has it", {
                list(Imax = 0.906, ID50 = 571))
   for (drug in c("oxycodone", "hydromorphone", "cefalexin"))
     expect_null(getDrugPK(drug, 70, 170, 50, "male")$oralSaturation, info = drug)
+})
+
+test_that("formulation units read as oral, with their formulation", {
+  expect_true(all(doseRoute(poFormulationUnits) == ROUTE_PO))
+  expect_equal(doseFormulation(c("mg PO tablet", "mg/kg PO liquid", "mg PO liquid bid",
+                                 "mg PO", "mg", "mg IM")),
+               c("tablet", "liquid", "liquid", NA, NA, NA))
+  expect_false(any(isRateUnit(poFormulationUnits)))
+  expect_true(all(poFormulationUnits %in% allUnits))
+  expect_true(all(paste(poFormulationUnits, "bid") %in% scheduledUnits))
+  expect_equal(scheduleBaseUnit("mg PO liquid qid"), "mg PO liquid")
+})
+
+test_that("a further oral formulation must be valid and share the default lag", {
+  set <- getDrugPK("morphine", 70, 170, 40, "male")$PK$default
+  # The helper reproduces getDrugPK()'s own oral coefficients.
+  same <- oralCoefficients(set, set$ka_PO, set$bioavailability_PO)
+  expect_equal(same, set[names(same)])
+  expect_error(oralFormulationSet(set, list(ka_PO = 0.02, tlag_PO = 0), "x", "liquid"),
+               "share the default oral lag")
+  expect_error(oralFormulationSet(set, list(ka_PO = 0, tlag_PO = set$tlag_PO), "x", "liquid"),
+               "ka_PO > 0")
+  expect_error(oralFormulationSet(set, list(ka_PO = 0.02, tlag_PO = set$tlag_PO), "x", "syrup"),
+               "not one of")
 })

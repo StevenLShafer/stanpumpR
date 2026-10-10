@@ -36,7 +36,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | morphine | **Jörn Lötsch** and colleagues (2002) | Three-compartment kinetics, weight-scaled V1 |
 | pethidine | **Sven Björkman** (2003) | A physiologically based model, recast as compartments |
 | hydromorphone | **David R. Drover** and colleagues (2002) | Intravenous kinetics; the oral and other routes are provisional |
-| methadone | **Charles E. Inturrisi** and colleagues (1987) | Kinetics in patients with cancer pain |
+| methadone | **Thomas K. Henthorn** and **Evan D. Kharasch** (2025); **Charles E. Inturrisi** and colleagues (1987) | Separate R(-) and S(+) enantiomer kinetics in volunteers, summed to racemic methadone; Inturrisi's time to peak effect |
 | ketamine | **Edward F. Domino** and colleagues (1984) | Kinetics in volunteers |
 | dexmedetomidine | **Jeffrey B. Dyck** and colleagues (1993); **Athena F. Zuppa** and colleagues (2019) | Adult kinetics; the infant model with cardiopulmonary-bypass parameters |
 | midazolam | **Michael Bührer**, Stanski and colleagues (1990); **Katayoun Zomorodi**, Shafer and colleagues (1998) | Three-compartment kinetics fitted to Bührer's volunteer data, the set STANPUMP first used for midazolam TCI, printed in Zomorodi's Table 3; Bührer's EEG time to peak effect |

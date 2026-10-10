@@ -1,5 +1,5 @@
 # The route of a dose is not stored separately: it is a word in its Units
-# string ("mg PO", "mg/kg IM", "mg IN").  Units with no route word (bolus and
+# string ("mg PO", "mg/kg IM", "mg IN", "mg RA").  Units with no route word (bolus and
 # infusion units, the TCI targets, the gases' L/min and %) are intravenous, or
 # for the gases, treated with them.
 #
@@ -11,7 +11,7 @@
 #'
 #' @param units Character vector of dose units, as in the dose table.
 #' @returns Character vector the same length as `units`: one of `DOSE_ROUTES`
-#'   (`"IV"`, `"PO"`, `"IM"`, `"IN"`).
+#'   (`"IV"`, `"PO"`, `"IM"`, `"IN"`, `"RA"`).
 #' @noRd
 doseRoute <- function(units) {
   units <- as.character(units)
@@ -20,6 +20,24 @@ doseRoute <- function(units) {
     route[grepl(paste0(" ", r, "( |$)"), units)] <- r
   }
   route
+}
+
+#' Oral formulation named by dose units
+#'
+#' The word after "PO" in a formulation unit ("mg PO liquid", "mg/kg PO tablet
+#' bid"); see `ORAL_FORMULATIONS`.
+#'
+#' @param units Character vector of dose units, as in the dose table.
+#' @returns Character vector the same length as `units`: the formulation, or
+#'   NA for a unit that names none.
+#' @noRd
+doseFormulation <- function(units) {
+  units <- as.character(units)
+  formulation <- rep(NA_character_, length(units))
+  for (f in ORAL_FORMULATIONS) {
+    formulation[grepl(paste0(" ", ROUTE_PO, " ", f, "( |$)"), units)] <- f
+  }
+  formulation
 }
 
 #' Is a dose unit an input rate rather than an amount?
@@ -44,7 +62,7 @@ isRateUnit <- function(units) {
 #' Order a drug's units by route, keeping the order within each route
 #'
 #' @param units Character vector of one drug's units.
-#' @returns `units`, reordered IV, PO, IM, IN.
+#' @returns `units`, reordered IV, PO, IM, IN, RA.
 #' @noRd
 groupUnitsByRoute <- function(units) {
   units[order(match(doseRoute(units), DOSE_ROUTES))]
@@ -81,13 +99,18 @@ oralSaturationFraction <- function(doseMg, saturation)
   1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg)
 }
 
-#' Check a drug model's saturable oral absorption block
+#' Check a drug model's saturable absorption block
 #'
-#' @param saturation the `oralSaturation` block a drug model returned, or NULL
+#' The same check serves the oral block (`oralSaturation`, gabapentin) and the
+#' sublingual one (`sublingualSaturation`, buprenorphine), which have the same
+#' form and are applied by the same `oralSaturationFraction()`.
+#'
+#' @param saturation the block a drug model returned, or NULL
 #' @param drug the drug's name, for the error message
+#' @param block the block's name, for the error message
 #' @returns `saturation`, unchanged, if it is valid; otherwise an error
 #' @keywords internal
-validateOralSaturation <- function(saturation, drug)
+validateOralSaturation <- function(saturation, drug, block = "oralSaturation")
 {
   if (is.null(saturation)) return(NULL)
   ok <- is.list(saturation) &&
@@ -95,7 +118,7 @@ validateOralSaturation <- function(saturation, drug)
     is_valid_number(saturation$ID50) && saturation$ID50 > 0
   # Imax above 1 would make the fraction absorbed negative at large doses.
   if (!ok)
-    stop("Invalid oralSaturation for ", drug, ": needs Imax between 0 and 1 ",
+    stop("Invalid ", block, " for ", drug, ": needs Imax between 0 and 1 ",
          "and a positive ID50 in mg.")
   saturation
 }

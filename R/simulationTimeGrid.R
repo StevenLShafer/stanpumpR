@@ -198,7 +198,7 @@ gridStart <- function(ke0, fallback = NULL)
 #'   FALSE)
 #' @param timeLine the engine's time line
 #' @param routes the extravascular routes the engine carries as point inputs,
-#'   e.g. \code{c("PO", "IM", "IN")}
+#'   e.g. \code{c("PO", "IM", "IN", "RA")}
 #'
 #' @returns a list of \code{bolus}, one element per route, \code{infusion} (the
 #'   rate set at each point), \code{rate} (the rate over the step into each

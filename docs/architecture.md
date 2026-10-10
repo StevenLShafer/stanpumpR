@@ -154,18 +154,19 @@ time point as a sum of exponentials.
 3. `cube()` solves the characteristic cubic → eigenvalues `lambda_1, lambda_2, lambda_3`.
 4. `tPeakError()` + `CE()` + `optimize()` back-solve the effect-site rate `ke0` from
    time-to-peak-effect.
-5. Precompute per-route (bolus / infusion / PO / IM / IN) exponential coefficients `p_coef_*`,
+5. Precompute per-route (bolus / infusion / PO / SL / IM / IN) exponential coefficients `p_coef_*`,
    `e_coef_*`.
 
 ### B — Advance the doses (`simCpCe.R`)
 
 1. Reduce mg/mcg/ng, per-kg, per-hour doses to base units against the drug's concentration unit.
-2. Classify each dose as `Bolus`, infusion, or `PO / IM / IN` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`).
+2. Classify each dose as `Bolus`, infusion, or `PO / SL / IM / IN` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`).
 3. Dispatch to a solver:
    - `advanceClosedForm0.R` — IV, no PK events
    - `advanceClosedForm1.R` — time-varying PK driven by events, including extravascular doses
      (the absorption depot is carried as an amount, which a change in PK set does not touch)
-   - `advanceClosedFormPO_IM_IN.R` — extravascular routes
+   - `advanceClosedFormPO_IM_IN.R` — extravascular routes (PO, SL, IM, IN, and RA: a local
+     anesthetic injected into tissue, absorbed first-order)
    - `advanceClosedFormMetabolite.R` — a drug that forms an active metabolite
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
    across event boundaries.
@@ -347,7 +348,7 @@ All files are flat in `R/`.
   infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,
   `simulationPlot()` draws them as a per-drug rate panel with the loading dose written as a
   number, and `sendSlide()` merges them into the exported dose table.
-- **Scheduled doses** (`scheduled.R`) — a bolus, PO, IM or IN unit with a frequency suffix
+- **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM or IN unit with a frequency suffix
   (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 h (qd / bid /
   tid / qid) until the end of the X axis. A scheduled dose of 0 for the same route stops the
   sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
