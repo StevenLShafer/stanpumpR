@@ -874,6 +874,9 @@ getDrugPK <- function(
   # A drug with more than one oral formulation: the PK sets of each further
   # one, which simCpCe() uses for that formulation's doses.
   out$oralFormulations <- oralFormulations
+  # A pulsed extended-release formulation (Adderall XR): the fractions and
+  # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
+  out$oralPulses <- validateOralPulses(X$oralPulses, drug)
   return(out)
 }
 

@@ -26,9 +26,9 @@ Tsuda estimated clearance 1.26 times higher in the non-Japanese (US) cohort than
 
 Children and adolescents. **Adults are an extrapolation** of the weight equations beyond the fitted range. The variability between people (clearance 18 per cent, absorption rate 56 per cent) is not shown.
 
-### Not represented: Adderall
+### Adderall
 
-Adderall IR and XR (mixed amphetamine salts) are not in the library. They need separate d- and l-amphetamine models, a verified conversion of salt mass to amphetamine base, and an extended-release input for XR, and no complete Adderall-specific population model with those parts has been published. The clearances estimated for Mydayis, a different product, are not a substitute.
+Adderall IR and XR are a separate entry, [mixed amphetamine salts](help:drugs/mixedAmphetamineSalts), with a dose basis and a model of their own. They also plot d-amphetamine. The two entries' clearances differ: McGough's Adderall data give about 10.1 L/h at 37.8 kg, against 12.0 L/h from Tsuda's model at the same weight. That difference is about the size of this model's shortfall against Boellner. One possible reason is that not all of a lisdexamfetamine dose becomes d-amphetamine, which would inflate Tsuda's apparent clearance. This is unconfirmed, and the parameters here are left as published.
 
 ### Effect site and typical range
 

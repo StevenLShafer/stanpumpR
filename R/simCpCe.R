@@ -256,6 +256,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     expanded <- expandScheduledDoses(dose, maximum)
     dose <- expanded$dose
 
+    # A pulsed extended-release product (Adderall XR): each dose of a
+    # formulation the drug lists in oralPulses becomes its pulses, ordinary
+    # oral doses at fixed delays; see R/oral-pulses.R.
+    dose <- expandOralPulses(dose, PK$oralPulses, maximum)
+
     # Convert all doses to base units
     switch(
       PK$Concentration.Units,  # Units (per ml)
