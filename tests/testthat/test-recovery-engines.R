@@ -259,9 +259,14 @@ test_that("hydrocodone's hydromorphone, through the extravascular engine", {
   # replays the lag and disagrees.  That is the single-drug engine's own
   # behaviour with no metabolite anywhere in sight, so it is not this fold's to
   # settle.
+  #
+  # The oral hydromorphone dose puts into the circulation what 2 mg did at the
+  # former oral bioavailability of 0.6.  At the recalibrated 0.225 (Lohela
+  # 2021, 2026-10-10) 2 mg never reaches the threshold, alone or with the
+  # formed contribution, and both recovery maxima would be zero.
   DT <- data.frame(Drug  = c("hydrocodone", "hydromorphone"),
                    Time  = c(0, 0),
-                   Dose  = c(30, 2),
+                   Dose  = c(30, 2 * 0.6 / 0.225),
                    Units = c("mg PO", "mg PO"))
   expectFoldMatchesBrute(DT, "hydromorphone", 1440)
 
