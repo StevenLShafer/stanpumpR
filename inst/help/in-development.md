@@ -21,13 +21,15 @@ And for plots longer than a day:
 - **Amiodarone.** Long-term oral amiodarone and its active metabolite desethylamiodarone (Pollak, Bouillon and Shafer 2000), given as a constant daily oral rate (`mg/day PO`), with three long-term scenarios; see [Amiodarone](help:drugs/amiodarone).
   Acute intravenous amiodarone is a separate entry, [Amiodarone IV](help:drugs/amiodaroneIV) (Korth-Bradley and colleagues 1996), for the first one to three days only, with [the label's 24-hour loading regimen](scenario:amiodarone-iv-loading) as a scenario.
 
+- **Oxycodone.** A new model pooled from five studies replaces the Lamminsalo model. Clearance falls with age and renal function, oral absorption and an 11-minute effect-site half-time come from Lalovic 2006, and oxycodone can now be given intravenously (`mg`) as well as by mouth. See [Oxycodone](help:drugs/oxycodone).
+
 ## Now active
 
 **CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes.
 
 ## Visible but not active
 
-**Pregnant** in the Patient Profile is still disabled. The **Serum creatinine** field is live: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin estimate renal function from it, or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
+**Pregnant** in the Patient Profile is still disabled. The **Serum creatinine** field is live: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin and oxycodone estimate renal function from it, or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
 
 ## Provisional values flagged in the code
 

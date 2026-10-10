@@ -61,7 +61,8 @@
 #
 # What the coarser start gives up: a feature that is over within tau0 of a
 # knot is not sampled.  On a 52-week plot tau0 is 26 minutes, so every oral
-# absorption peak in the library (the earliest, oxycodone's, is at 30 minutes)
+# absorption peak in the library (the earliest when this was set, oxycodone's,
+# was at 30 minutes; its present model peaks at 35)
 # is drawn, but the effect-site peak a few minutes after a bolus of a fast drug
 # is not: fentanyl's, 3.6 minutes after the bolus, is drawn at about a quarter
 # of its height.  It is far narrower than a pixel there.  The dose instant

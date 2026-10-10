@@ -31,8 +31,8 @@ Each drug's page shows the current absorption rate, bioavailability and lag, and
 - **Derived rather than fitted.** Naloxone's intranasal bioavailability and absorption rate are derived from a published model of the concentrated spray that has no absolute bioavailability, and are initial values rather than estimates.
 - **Apparent oral models.** Alprazolam, clonazepam and zolpidem were fitted to oral data alone, so their volumes and clearances are apparent (divided by the unknown bioavailability, which is carried as 1) and they are offered by mouth only.
 - **Absorption added to an intravenous model.** Lorazepam's oral and intramuscular routes come from a separate five-route crossover; temazepam's oral route from a separate oral study and the label's bioavailability, on a disposition fitted to intravenous data.
-- **Chosen to match a peak height.** Diazepam's oral and intramuscular absorption rates were chosen so that the typical peak matches the observed mean peak; the typical curves then peak earlier (oral) and later (intramuscular) than observed.
-- **Chosen to match a time of peak.** The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's oral parameters are provisional, and its intramuscular route has no human pharmacokinetic study behind it: its bioavailability of 1 and its 30-minute peak are a judgement.
+- **Chosen to match a peak height.** Diazepam's oral and intramuscular absorption rates were chosen so that the typical peak matches the observed mean peak; the typical curves then peak earlier (oral) and later (intramuscular) than observed. Likewise oxycodone's ka was chosen to reproduce the height of the peak of Lalovic's mean oral curve (about 30 ng/mL after 15 mg), on top of a disposition pooled from intravenous studies, rather than taken from a fitted absorption model. It then peaks at 35 minutes, earlier than Lalovic's 65.
+- **Chosen to match a time of peak.** Hydromorphone's oral parameters are provisional, and its intramuscular route has no human pharmacokinetic study behind it: its bioavailability of 1 and its 30-minute peak are a judgement.
 
 Hydromorphone's intramuscular and intranasal absorption was revised so that each route peaks at its intended time (about 20 minutes intranasal, from Coda's data, and 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down. Gabapentin (0.31 h) and pregabalin (0.32 h) keep the lags their sources estimated, so time until threshold reads blank for those minutes after each of their doses. Clonazepam keeps the 0.369 h lag dos Santos and colleagues estimated for its tablets. Zolpidem's source absorbed it through a chain of transit compartments, which delivers the dose almost as a pure delay; it is represented by a lag of 0.25 h, the mean transit time, followed by the published absorption rate. A drug's time to peak effect after an oral dose is counted from the dose, lag included.
 
@@ -48,7 +48,7 @@ For gabapentin, Imax is 0.906 and ID50 571 mg (Tran and colleagues, 2017): 0.69 
 
 ## What to look for
 
-Give oxycodone 10 mg PO and turn the plasma line on. The concentration rises over about an hour and the effect site, with its own slow ke0, peaks later still. Compare it with the sharp peak of an intravenous bolus of any opioid. [The oral oxycodone scenario](scenario:oral-oxycodone) shows two doses six hours apart.
+Give oxycodone 10 mg PO and turn the plasma line on. The concentration rises to a peak at about 35 minutes, and the effect site peaks at about an hour. Compare it with the sharp peak of an intravenous bolus of any opioid. [The oral oxycodone scenario](scenario:oral-oxycodone) shows two doses six hours apart.
 
 ## Limits
 
