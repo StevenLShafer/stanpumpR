@@ -162,8 +162,8 @@
 # is for miosis, not analgesia.
 #
 # TO BE CHECKED: kept at 12 by decision of Steven L. Shafer (2026-10-10),
-# pending a separate review of the MEAC of every opioid in the library for
-# outliers.  With this model's 11-minute ke0 the effect site runs much closer
+# pending a separate audit of the MEAC and tPeak of every opioid in the
+# library for outliers, to be done as its own piece of work.  With this model's 11-minute ke0 the effect site runs much closer
 # to plasma than under the old 60-minute tPeak, so 10 mg by mouth now peaks
 # at about 18 ng/mL in the effect site, against 12.
 #

@@ -35,6 +35,8 @@ And for plots longer than a day:
 
 Several parameters in the newly added drugs are explicitly provisional and carry no citation yet, as their pages and the source files say: the oral time to peak effect of hydrocodone, the time to peak effect and potency of oxymorphone, the effect-site rate constant of desmetramadol, and the minimum effective concentrations set equal to or scaled from morphine's for hydrocodone and oxymorphone. These are marked in the code so they are replaced rather than trusted.
 
+A separate audit of the minimum effective concentration (MEAC) and time to peak effect (tPeak) of every opioid in the library is warranted, to find values that are out of line with the others. The opioids' MEACs come from mixed sources (analgesia studies, compromises between discordant reports, values scaled from morphine), and their tPeaks from end points as different as CSF concentration and pupil constriction. Oxycodone's MEAC of 12 ng/mL is held pending that audit.
+
 ## Longer-term intentions
 
 From the project README:
