@@ -358,6 +358,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # The antidepressants joined on 2026-10-10: response
   # lags weeks and no ke0 exists; bupropion forms hydroxybupropion, which has
   # no effect site either, so the fold takes the NA path, as for amiodarone.
+  # Ondansetron, aprepitant and fosaprepitant (no equilibration model for
+  # antiemesis) joined on 2026-10-10, with no metabolite.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
@@ -369,7 +371,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "methylphenidate", "lisdexamfetamine",
     "bupivacaine", "ropivacaine", "mepivacaine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine"
+    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
+    "ondansetron", "aprepitant", "fosaprepitant"
   ))
 })
 
