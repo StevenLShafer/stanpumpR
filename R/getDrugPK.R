@@ -607,6 +607,27 @@ getDrugPK <- function(
 
   PK <- sapply(events, function(x) list(get0(x)))
 
+  # Further oral formulations.  The model's ka_PO, bioavailability_PO and
+  # tlag_PO describe its default oral form (morphine: the immediate-release
+  # tablet); each entry of X$oralFormulations, named by a word of
+  # ORAL_FORMULATIONS, is another form with absorption of its own.  Each gets
+  # a full copy of every PK set with only the oral terms replaced, so that
+  # simCpCe() can run that formulation's doses through the same engines and
+  # add the result: the disposition is linear and shared.
+  oralFormulations <- NULL
+  if (!is.null(X$oralFormulations))
+  {
+    if (resolveMetabolite && !is.null(X$metabolite))
+      stop("Invalid oralFormulations for ", drug, ": a drug that forms an ",
+           "active metabolite cannot yet have more than one oral formulation, ",
+           "because the metabolite's coefficients are built from the default ",
+           "oral absorption.")
+    oralFormulations <- lapply(
+      stats::setNames(names(X$oralFormulations), names(X$oralFormulations)),
+      function(f) lapply(PK, oralFormulationSet, X$oralFormulations[[f]], drug, f)
+    )
+  }
+
   # An active metabolite is resolved by simulating the metabolite's own
   # disposition and convolving the parent's plasma profile through it.  The
   # coefficients ride along inside each PK set, so simCpCe() can hand them
@@ -707,7 +728,81 @@ getDrugPK <- function(
   # The same for sublingual doses (buprenorphine).
   out$sublingualSaturation <- validateOralSaturation(
     X$sublingualSaturation, drug, "sublingualSaturation")
+  # A drug with more than one oral formulation: the PK sets of each further
+  # one, which simCpCe() uses for that formulation's doses.
+  out$oralFormulations <- oralFormulations
   return(out)
+}
+
+#' Oral coefficients for a given absorption
+#'
+#' The same arithmetic as the "PO Coefficients" block of \code{getDrugPK()},
+#' from a finished PK set, so that a further oral formulation can be given
+#' its own absorption on the drug's own disposition and effect site.
+#'
+#' @param pkSet a PK set from \code{getDrugPK()}
+#' @param ka absorption rate constant, per minute
+#' @param bioavailability fraction of the dose absorbed
+#'
+#' @returns a list of the nine \code{p_coef_PO_*} and \code{e_coef_PO_*}
+#'   coefficients
+#' @keywords internal
+oralCoefficients <- function(pkSet, ka, bioavailability)
+{
+  lambda <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3)
+  scale  <- ka / (ka - lambda) * bioavailability
+  p <- c(pkSet$p_coef_bolus_l1, pkSet$p_coef_bolus_l2, pkSet$p_coef_bolus_l3) * scale
+  e <- c(pkSet$e_coef_bolus_l1, pkSet$e_coef_bolus_l2, pkSet$e_coef_bolus_l3) * scale
+  eKe0 <- pkSet$e_coef_bolus_ke0 / (ka - pkSet$ke0) * ka * bioavailability
+  list(
+    p_coef_PO_l1  = p[1],
+    p_coef_PO_l2  = p[2],
+    p_coef_PO_l3  = p[3],
+    p_coef_PO_ka  = -sum(p),
+    e_coef_PO_l1  = e[1],
+    e_coef_PO_l2  = e[2],
+    e_coef_PO_l3  = e[3],
+    e_coef_PO_ke0 = eKe0,
+    e_coef_PO_ka  = -sum(e) - eKe0
+  )
+}
+
+#' A PK set with the oral absorption of another formulation
+#'
+#' @param pkSet a PK set from \code{getDrugPK()}, for the default formulation
+#' @param absorption the formulation's \code{ka_PO}, \code{bioavailability_PO}
+#'   and \code{tlag_PO}
+#' @param drug,formulation names, for the error messages
+#'
+#' @returns \code{pkSet} with its oral terms replaced
+#' @keywords internal
+oralFormulationSet <- function(pkSet, absorption, drug, formulation)
+{
+  if (!formulation %in% ORAL_FORMULATIONS)
+    stop("Invalid oralFormulations for ", drug, ": '", formulation, "' is not ",
+         "one of ", paste(ORAL_FORMULATIONS, collapse = ", "))
+  ka <- absorption$ka_PO
+  bioavailability <- absorption$bioavailability_PO
+  if (is.null(bioavailability)) bioavailability <- 1
+  tlag <- absorption$tlag_PO
+  if (is.null(tlag)) tlag <- 0
+  if (!is_valid_number(ka, 0, Inf) || ka <= 0 ||
+      !is_valid_number(bioavailability, 0, 1) || bioavailability <= 0)
+    stop("Invalid oralFormulations for ", drug, ": the ", formulation,
+         " needs ka_PO > 0 and bioavailability_PO in (0, 1]")
+  if (pkSet$ka_PO <= 0)
+    stop("Invalid oralFormulations for ", drug, ": the drug has no default ",
+         "oral absorption for the ", formulation, " to be an alternative to")
+  # simCpCe() adds the formulations' series point by point, which needs every
+  # run on the same time line, and the engines put a point where each oral
+  # dose starts to be absorbed.  A different lag would put those points in
+  # different places.
+  if (!isTRUE(all.equal(tlag, pkSet$tlag_PO)))
+    stop("Invalid oralFormulations for ", drug, ": the ", formulation,
+         " must share the default oral lag (", pkSet$tlag_PO, " min)")
+  pkSet$ka_PO <- ka
+  pkSet$bioavailability_PO <- bioavailability
+  utils::modifyList(pkSet, oralCoefficients(pkSet, ka, bioavailability))
 }
 
 #' Time of the peak effect site concentration for a given plasma curve

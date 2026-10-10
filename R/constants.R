@@ -105,7 +105,19 @@ slUnits <- c("mg SL", "mg/kg SL", "mcg SL", "mcg/kg SL")
 # 2026-10-07, at the request of Steven L. Shafer.)
 poRateUnits <- c("mg/day PO")
 
-allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, slUnits, inUnits, imUnits)
+# Oral formulations.  A drug whose tablets and liquid are absorbed at different
+# rates offers a unit per formulation, "mg PO tablet" and "mg PO liquid".  The
+# formulation word follows the route, so doseRoute() still reads these as PO
+# and a frequency may still follow ("mg PO liquid bid").  The drug model's own
+# ka_PO, bioavailability_PO and tlag_PO describe its default oral form; each
+# other form it lists in `oralFormulations` (getDrugPK()) has absorption of its
+# own, which simCpCe() superposes.  First user: morphine.  (Claude Code,
+# 2026-10-10, at the request of Steven L. Shafer.)
+ORAL_FORMULATIONS <- c("tablet", "liquid")
+poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
+
+allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
+              slUnits, inUnits, imUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -121,7 +133,8 @@ TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 # and then again every interval (minutes) until the end of the plot.
 SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60)
 scheduledUnits <- as.vector(t(outer(
-  c(bolusUnits, poUnits, slUnits, imUnits, inUnits), names(SCHEDULE_INTERVALS), paste
+  c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
+  names(SCHEDULE_INTERVALS), paste
 )))
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
@@ -141,6 +154,7 @@ DRUG_CATEGORIES <- c(
   "Inhaled anesthetics",
   "Antibiotics",
   "Corticosteroids",
+  "Stimulants",
   "Other"
 )
 # Ticked when the menu opens: the four drugs the app opened with before it

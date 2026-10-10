@@ -36,7 +36,8 @@ plasmaOnly <- c(
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
-  "clonazepam", "zolpidem", "temazepam"
+  "clonazepam", "zolpidem", "temazepam",
+  "methylphenidate", "lisdexamfetamine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

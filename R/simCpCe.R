@@ -158,6 +158,41 @@ clipStateSet <- function(set, maximum)
 }
 
 
+#' Add engine results run on the same time line
+#'
+#' Each part is one engine's output for some of a drug's doses, all on the
+#' same time line.  The concentrations add; the time until threshold does not,
+#' and is solved again from the summed effect-site states.
+#'
+#' @param parts a list of engine outputs (\code{Time}, \code{Cp}, \code{Ce},
+#'   \code{Recovery}), the first being the run that carries every
+#'   non-oral dose
+#' @param plotRecovery was recovery asked for?  The parts then carry their
+#'   \code{recoveryStates}.
+#' @param emerge the threshold, in the units the engines simulate
+#'
+#' @returns one engine output, the sum of the parts
+#' @keywords internal
+superposeEngineResults <- function(parts, plotRecovery, emerge)
+{
+  out <- parts[[1]]
+  for (part in parts[-1])
+  {
+    if (!identical(part$Time, out$Time))
+      stop("Cannot add oral formulations run on different time lines.")
+    for (col in setdiff(names(out), c("Time", "Recovery")))
+      out[[col]] <- out[[col]] + part[[col]]
+  }
+  if (plotRecovery)
+  {
+    states <- mergeStateSets(out$Time, lapply(parts, attr, "recoveryStates"))
+    out$Recovery <- recoveryFromStates(states, emerge)
+    attr(out, "recoveryStates") <- states
+  }
+  out
+}
+
+
 #' Simulate plasma and effect site concentration from time 0 to maximum
 #'
 #' See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
@@ -330,33 +365,68 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     if (!is.null(PK$osmotic) && length(emerge) == 1 && !is.na(emerge) && emerge > 0)
       emerge <- max(0, (emerge - PK$osmotic$baseline) / PK$osmotic$fraction)
 
-    if (length(pkEvents) == 1 | nrow(events) == 0)
+    # The engines, for one dose table and one drug's PK sets.
+    runEngines <- function(dose, pkSets)
     {
-      if (hasMetabolite)
+      if (length(pkEvents) == 1 | nrow(events) == 0)
       {
-        results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
-      } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) == 0)
-      {
-        results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
+        if (hasMetabolite)
+        {
+          results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
+        } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) == 0)
+        {
+          results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
+        } else {
+          results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, emerge)
+        }
       } else {
-        results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, emerge)
+        if (hasMetabolite)
+          stop("A drug with an active metabolite cannot yet switch kinetics on a ",
+               "clinical event; advanceClosedForm1() carries no metabolite ",
+               "coefficients.")
+        # Process Events
+        defaultEvent <- data.frame(
+          Time = 0,
+          Event = PK_EVENT_DEFAULT
+        )
+        if (events$Time[1] > 0)
+          events <- rbind(defaultEvent,events)
+        events <- events[events$Time < maximum,]
+        events <- rbind(events, events[nrow(events),])
+        events$Time[nrow(events)] <- maximum
+        results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, emerge)
       }
+      results
+    }
+
+    # A drug with more than one oral formulation (morphine tablets and
+    # liquid; see oralFormulationSet() in getDrugPK.R) runs once for each.
+    # The default run carries every dose except the other formulations' oral
+    # ones, which it gives as zero; each further run carries only its own
+    # formulation's oral doses, on PK sets that differ only in their oral
+    # absorption.  Zeroing rather than dropping rows keeps every run on the
+    # same time line (the formulations share their lag), so the series add
+    # point by point, which is exact because the disposition is linear.  The
+    # effect-site states add the same way, and the time until threshold is
+    # solved once from their sum.  (Claude Code, 2026-10-10, at the request of
+    # Steven L. Shafer.)
+    formulation <- doseFormulation(dose$Units)
+    others <- names(PK$oralFormulations)
+    other <- dose$PO & formulation %in% others
+    if (!any(other))
+    {
+      results <- runEngines(dose, pkSets)
     } else {
-      if (hasMetabolite)
-        stop("A drug with an active metabolite cannot yet switch kinetics on a ",
-             "clinical event; advanceClosedForm1() carries no metabolite ",
-             "coefficients.")
-      # Process Events
-      defaultEvent <- data.frame(
-        Time = 0,
-        Event = PK_EVENT_DEFAULT
-      )
-      if (events$Time[1] > 0)
-        events <- rbind(defaultEvent,events)
-      events <- events[events$Time < maximum,]
-      events <- rbind(events, events[nrow(events),])
-      events$Time[nrow(events)] <- maximum
-      results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, emerge)
+      base <- dose
+      base$Dose[other] <- 0
+      parts <- list(runEngines(base, pkSets))
+      for (f in intersect(others, formulation[other]))
+      {
+        own <- dose
+        own$Dose[!(other & formulation == f)] <- 0
+        parts[[length(parts) + 1]] <- runEngines(own, PK$oralFormulations[[f]])
+      }
+      results <- superposeEngineResults(parts, plotRecovery, emerge)
     }
 
   # A lagged oral, IM or IN dose given before maximum still puts a point of
