@@ -28,6 +28,7 @@ HELP_SCENARIO_GROUPS <- c(
   "Special populations",
   "Recovery and emergence",
   "Inhaled anesthetics",
+  "Regional anesthesia",
   "Long-term therapy"
 )
 
@@ -506,6 +507,24 @@ helpScenarios <- function() {
       maximum = 60
     ),
 
+    # --- Regional anesthesia -------------------------------------------------
+    helpScenario(
+      "regional-anesthesia-absorption",
+      "Local anesthetics after a nerve block",
+      "Regional anesthesia",
+      "Lidocaine, bupivacaine and ropivacaine injected into tissue (RA) are absorbed into the circulation over hours, so the systemic peak comes late and its height and timing differ from drug to drug.",
+      # 65 years: the ropivacaine disposition is that of patients 61 and over.
+      age = 65,
+      doses = helpDoses(
+        c("lidocaine", 0, 400, "mg RA"),
+        c("bupivacaine", 0, 150, "mg RA"),
+        c("ropivacaine", 0, 175, "mg RA")
+      ),
+      # Bupivacaine and ropivacaine have no effect site, so the plasma line
+      # carries every curve; lidocaine's effect site is its systemic one.
+      timeUnits = "hours", maximum = 720,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",
