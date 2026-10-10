@@ -29,11 +29,12 @@ test_that("returns the published parameters with total-body-weight scaling", {
       "Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162. ",
       "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous); ",
       "Atrux-Tallau N et al., Clin Drug Investig 2022;42:1101-1112. ",
-      "https://pubmed.ncbi.nlm.nih.gov/36331670/ (oral tablet and liquid, ",
-      "calibrated to fasted Cmax, tmax and AUC)"
+      "https://pubmed.ncbi.nlm.nih.gov/36331670/ (oral tablet and liquid: ",
+      "pivotal tablet Cmax, tmax and AUC; liquid absorption rate from the ",
+      "pilot Cmax, same bioavailability)"
     ),
     oralFormulations = list(
-      liquid = list(ka_PO = 0.01798, bioavailability_PO = 0.301, tlag_PO = 17.6)
+      liquid = list(ka_PO = 0.01887, bioavailability_PO = 0.29, tlag_PO = 17.6)
     )
   )
   expect_equal_rounded(actual, expected)
@@ -56,9 +57,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
 })
 
 # Oral tablet and liquid, against the source they were calibrated to:
-# Atrux-Tallau 2022, 30 mg morphine sulfate in fasted adults.  Tablet Cmax
-# 28.5 ng/mL at a median 0.75 h, AUC 117.4 ng.h/mL; solution Cmax 37.9 ng/mL,
-# AUC 121.8 ng.h/mL.  Simulated through the app's own path, getDrugPK() and
+# Atrux-Tallau 2022, 30 mg morphine sulfate in fasted adults.  Pivotal study
+# (n = 39): tablet Cmax 28.5 ng/mL at a median 0.75 h, AUC 117.4 ng.h/mL.
+# Pilot crossover (n = 17): solution Cmax 37.9 ng/mL, AUC within 10% of the
+# other formulations, so the liquid takes the tablet's bioavailability; its
+# pilot AUC is not compared with the pivotal tablet's.  Simulated through the app's own path, getDrugPK() and
 # simCpCe(), at the 70 kg reference man.
 oralMorphine <- function(units, maximum = 24 * 60, time = 0, extra = NULL) {
   PK <- getDrugPK("morphine", 70, 170, 40, "male")
@@ -81,14 +84,17 @@ test_that("an oral tablet reproduces the observed peak, its time and AUC", {
   expect_equal(0.290 * 30 / (PK$cl1 * 60) * 1000, 117.4, tolerance = 0.01)
 })
 
-test_that("the liquid peaks earlier and a third higher, with the same lag", {
+test_that("the liquid peaks earlier and a third higher, with the same lag and F", {
   cp <- plasma(oralMorphine("mg PO liquid"))
   expect_equal(max(cp$Y) * 1000, 37.9, tolerance = 0.01)
-  expect_equal(cp$Time[which.max(cp$Y)], 36, tolerance = 0.05)
+  expect_equal(cp$Time[which.max(cp$Y)], 35, tolerance = 0.05)
   # Nothing is absorbed before the lag shared by both forms.
   expect_true(all(cp$Y[cp$Time < 17.6] == 0))
-  PK <- getDrugPK("morphine", 70, 170, 40, "male")$PK$default
-  expect_equal(0.301 * 30 / (PK$cl1 * 60) * 1000, 121.8, tolerance = 0.03)
+  # Same bioavailability as the tablet (pilot AUCs within 10%), so the same
+  # exposure: the forms differ in rate only.
+  PK <- getDrugPK("morphine", 70, 170, 40, "male")
+  expect_equal(PK$oralFormulations$liquid$default$bioavailability_PO,
+               PK$PK$default$bioavailability_PO)
 })
 
 test_that("tablet and liquid doses add, exactly, on their own absorption", {
