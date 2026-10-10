@@ -220,9 +220,19 @@ relErr <- function(got, ref, floor = 1e-6) {
 #    asserted at 0.05 min.
 
 
+# Hydromorphone's oral doses below are multiplied by HM_PO, so that each one
+# puts into the circulation exactly what it did when hydromorphone's oral
+# bioavailability was 0.6.  These tests check the engines, not that
+# calibration, and their tolerances were measured for effect-site
+# concentrations well above the threshold; at the recalibrated 0.225
+# (Lohela 2021, 2026-10-10) the same milligrams sit near it, where time until
+# threshold is less well conditioned.  The engine is linear, so the scaled
+# doses reproduce the original concentrations exactly.
+HM_PO <- 0.6 / 0.225
+
 test_that("an oral, intramuscular or intranasal dose is absorbed, not infused, across a change in PK", {
   # Each route of hydromorphone has its own ka and bioavailability (PO 0.01 /
-  # 0.6, IM 0.0128 / 1, IN 0.0149 / 0.55), so a route that borrowed another's
+  # 0.225, IM 0.0128 / 1, IN 0.0149 / 0.55), so a route that borrowed another's
   # absorption would show.  Until the mutation review only "mg PO" was run.
   cases <- list(c("clindamycin", "PO"), c("hydromorphone", "PO"),
                 c("hydromorphone", "IM"), c("hydromorphone", "IN"))
@@ -289,7 +299,7 @@ test_that("ka and bioavailability come from the set in force over the step and w
 test_that("with the same PK on both sides of an event it matches the oral engine", {
   for (drug in c("hydromorphone", "clindamycin", "cefalexin")) {
     po <- "mg PO"
-    DT <- data.frame(Drug = drug, Time = c(0, 90, 240), Dose = c(4, 4, 4), Units = po)
+    DT <- data.frame(Drug = drug, Time = c(0, 90, 240), Dose = c(4, 4, 4) * HM_PO, Units = po)
     if (drug != "hydromorphone") DT$Dose <- c(500, 500, 500)
     if (drug == "hydromorphone")
       DT <- rbind(DT, data.frame(Drug = drug, Time = 20, Dose = 1, Units = "mg"))
@@ -410,7 +420,7 @@ test_that("an effect-site drug absorbed across a real change in PK", {
   PK <- switchedPK("hydromorphone")
   for (route in c("PO", "IM")) {
     DT <- data.frame(Drug = "hydromorphone", Time = c(0, 50, 120),
-                     Dose = if (route == "PO") c(4, 2, 2) else c(2, 1, 1),
+                     Dose = if (route == "PO") c(4, 2, 2) * HM_PO else c(2, 1, 1),
                      Units = paste("mg", route))
     w   <- simCpCe(DT, switchAt50, PK, 300, TRUE)$wide
     ref <- exactRun(DT, setsOf(PK), 50, w$Time, scale = 1000)
@@ -433,7 +443,7 @@ test_that("ka equal to an eigenvalue of the switched set does not wreck the time
   # (Claude Code, 2026-10-07, mutation review.)
   PK <- switchedPK("hydromorphone")
   PK$PK$Switch$ka_PO <- PK$PK$Switch$lambda_2
-  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 60), Dose = 4, Units = "mg PO")
+  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 60), Dose = 4 * HM_PO, Units = "mg PO")
   w <- simCpCe(DT, switchAt50, PK, 300, TRUE)$wide
   expect_lt(relErr(w$Plasma, exactCp(DT, setsOf(PK), 50, w$Time, scale = 1000)), 1e-8,
             label = "plasma, largest relative error")
@@ -450,7 +460,7 @@ test_that("a lagged dose of an effect-site drug is masked across a change in PK"
   # (Claude Code, 2026-10-07, mutation review.)
   PK <- switchedPK("hydromorphone")
   PK$PK$Switch$tlag_IM <- 15
-  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 70), Dose = c(4, 1),
+  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 70), Dose = c(4 * HM_PO, 1),
                    Units = c("mg PO", "mg IM"))
   w <- simCpCe(DT, switchAt50, PK, 300, TRUE)$wide
   expect_lt(relErr(w$Plasma, exactCp(DT, setsOf(PK), 50, w$Time, scale = 1000)), 1e-8,

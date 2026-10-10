@@ -35,7 +35,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | sufentanil | **Elisabeth Gepts** and colleagues (1995) | Three-compartment kinetics in surgical patients |
 | morphine | **Jörn Lötsch** and colleagues (2002) | Three-compartment kinetics, weight-scaled V1 |
 | pethidine | **Sven Björkman** (2003) | A physiologically based model, recast as compartments |
-| hydromorphone | **David R. Drover** and colleagues (2002) | Intravenous kinetics; the oral and other routes are provisional |
+| hydromorphone | **David R. Drover** and colleagues (2002); **Terhi J. Lohela** and colleagues (2021) | Intravenous kinetics; oral bioavailability and absorption (the intramuscular route is still provisional) |
 | methadone | **Thomas K. Henthorn** and **Evan D. Kharasch** (2025); **Charles E. Inturrisi** and colleagues (1987) | Separate R(-) and S(+) enantiomer kinetics in volunteers, summed to racemic methadone; Inturrisi's time to peak effect |
 | ketamine | **Edward F. Domino** and colleagues (1984) | Kinetics in volunteers |
 | dexmedetomidine | **Jeffrey B. Dyck** and colleagues (1993); **Athena F. Zuppa** and colleagues (2019) | Adult kinetics; the infant model with cardiopulmonary-bypass parameters |
