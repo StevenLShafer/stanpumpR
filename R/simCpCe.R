@@ -320,6 +320,16 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IN <- route == ROUTE_IN & !rate
     dose$SL <- route == ROUTE_SL & !rate
     dose$RA <- route == ROUTE_RA & !rate
+    # A continuous perineural infusion ("mg/hr RA", raRateUnits): a rate into
+    # the tissue depot, not into the vein.  Only advanceClosedFormPO_IM_IN()
+    # carries it; see there.
+    dose$RArate <- route == ROUTE_RA & rate
+    # Set before the slow-depot rows below are added: `route` and `rate` are
+    # per row of the table as entered.  Set after, they no longer matched the
+    # longer table, so a drug with a slow RA depot given intravenously and by
+    # RA in one table stopped with an error, or, when the lengths happened to
+    # divide, had its rows mislabelled.  (Claude Code, 2026-10-10.)
+    dose$Bolus <- route == ROUTE_IV & !rate
     # A drug with a slow second RA depot (ka_RA_slow in its model; see
     # getDrugPK()) absorbs each RA dose through two parallel depots.  The
     # dose rows are duplicated, the copy flagged as the internal route
@@ -332,10 +342,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       slowRows <- dose[dose$RA, , drop = FALSE]
       slowRows$RA <- FALSE
       slowRows$RAslow <- TRUE
+      slowRows$RArate <- FALSE
+      slowRows$Bolus <- FALSE
       dose <- rbind(dose, slowRows)
       dose <- dose[order(dose$Time), , drop = FALSE]
     }
-    dose$Bolus <- route == ROUTE_IV & !rate
 
     # Saturable oral absorption (gabapentin): each oral dose is scaled by the
     # fraction absorbed at its own size, in mg per administration.  The dose is
@@ -416,7 +427,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         {
           results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
         } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) +
-                   sum(dose$RA) + sum(dose$RAslow) + sum(dose$PO2) == 0)
+                   sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
+                   sum(dose$PO2) == 0)
         {
           results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
         } else {

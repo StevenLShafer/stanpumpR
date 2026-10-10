@@ -156,3 +156,110 @@ test_that("a drug without a slow depot has none, and a bad one is refused", {
   expect_error(getDrugPK("bupivacaine", 70, 170, 35, "male", dd[dd$Drug == "bupivacaine", ]),
                "slow RA depot")
 })
+
+# The continuous perineural infusion ("mg/hr RA").  (Claude Code, 2026-10-10,
+# at the request of Steven L. Shafer.)
+
+# The same depot-plus-disposition system, with a constant rate R (mg/min)
+# into the depot from 0 to `stop` and a bolus `bolus` (mg) at 0, by RK4 at
+# 0.02 min, sharing no code with the engines.  Returns Cp (mg/L) at `t`.
+raInfusionReference <- function(s, bolus, R, stop, t, h = 0.02) {
+  depots <- list(c(s$ka_RA, s$bioavailability_RA))
+  if (isTRUE(s$ka_RAslow > 0)) depots[[2]] <- c(s$ka_RAslow, s$bioavailability_RAslow)
+  nd <- length(depots)
+  y <- c(vapply(depots, function(d) bolus * d[2], numeric(1)), 0, 0, 0)
+  f <- function(tt, y) {
+    rate <- if (tt < stop) R else 0
+    out <- numeric(length(y))
+    into <- 0
+    for (j in seq_len(nd)) {
+      out[j] <- rate * depots[[j]][2] - depots[[j]][1] * y[j]
+      into <- into + depots[[j]][1] * y[j]
+    }
+    a <- y[nd + 1:3]
+    out[nd + 1] <- into - (s$k10 + s$k12 + s$k13) * a[1] + s$k21 * a[2] + s$k31 * a[3]
+    out[nd + 2] <- s$k12 * a[1] - s$k21 * a[2]
+    out[nd + 3] <- s$k13 * a[1] - s$k31 * a[3]
+    out
+  }
+  grid <- seq(0, max(t) + h, by = h)
+  cp <- numeric(length(grid))
+  for (i in seq_along(grid)[-1]) {
+    tt <- grid[i - 1]
+    k1 <- f(tt, y); k2 <- f(tt + h / 2, y + h / 2 * k1)
+    k3 <- f(tt + h / 2, y + h / 2 * k2); k4 <- f(tt + h, y + h * k3)
+    y <- y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+    cp[i] <- y[nd + 1] / s$v1
+  }
+  stats::approx(grid, cp, t)$y
+}
+
+test_that("the continuous RA infusion unit is RA by route and a rate by kind", {
+  expect_true(all(doseRoute(raRateUnits) == ROUTE_RA))
+  expect_true(all(isRateUnit(raRateUnits)))
+  expect_true(all(raRateUnits %in% allUnits))
+  expect_false(any(raRateUnits %in% c(infusionUnits, raUnits, scheduledUnits)))
+  dd <- getDrugDefaultsGlobal()
+  offers <- dd$Drug[vapply(dd$Units, function(u) any(u %in% raRateUnits), logical(1))]
+  expect_setequal(offers, c("bupivacaine", "ropivacaine"))
+})
+
+test_that("a continuous RA infusion runs into the depot, matching an independent solution", {
+  # Bupivacaine and ropivacaine (one depot), and mepivacaine (two depots),
+  # which does not offer the unit but whose slow depot the engine must
+  # carry the same way.  A bolus and 12 mg/hr from 0, stopped at 240 min.
+  for (drug in c("bupivacaine", "ropivacaine", "mepivacaine")) {
+    PK <- raPK(drug)
+    s <- PK$PK$default
+    DT <- data.frame(Drug = drug, Time = c(0, 0, 240), Dose = c(50, 12, 0),
+                     Units = c("mg RA", "mg/hr RA", "mg/hr RA"))
+    w <- simCpCe(DT, noEvents, PK, 480, FALSE)$wide
+    at <- w$Time[w$Time >= 2 & w$Time <= 478]
+    got <- stats::approx(w$Time, w$Plasma, at)$y
+    ref <- raInfusionReference(s, 50, 12 / 60, 240, at)
+    expect_lt(max(abs(got / ref - 1)), 1e-4, label = drug)
+  }
+})
+
+test_that("a long continuous RA infusion settles at F x rate / CL", {
+  PK <- raPK("bupivacaine")
+  s <- PK$PK$default
+  DT <- data.frame(Drug = "bupivacaine", Time = 0, Dose = 10, Units = "mg/hr RA")
+  w <- simCpCe(DT, noEvents, PK, 4320, FALSE)$wide
+  expect_equal(utils::tail(w$Plasma, 1), s$bioavailability_RA * (10 / 60) / s$cl1,
+               tolerance = 1e-6)
+})
+
+test_that("a continuous RA infusion is not run as an intravenous infusion", {
+  # The same rate as an intravenous infusion of a drug with no depot would
+  # start rising at once from zero with a slope of R / V1; through the depot
+  # the first minute is far below that.
+  PK <- raPK("bupivacaine")
+  DT <- data.frame(Drug = "bupivacaine", Time = 0, Dose = 60, Units = "mg/hr RA")
+  w <- simCpCe(DT, noEvents, PK, 60, FALSE)$wide
+  ivSlope <- 1 / PK$PK$default$v1     # mg/L per min at 1 mg/min
+  expect_lt(stats::approx(w$Time, w$Plasma, 1)$y, 0.1 * ivSlope)
+})
+
+test_that("a continuous RA infusion is refused where the engine cannot carry it", {
+  PK <- raPK("bupivacaine")
+  PK$PK$Switch <- PK$PK$default
+  PK$pkEvents <- c(PK$pkEvents, "Switch")
+  DT <- data.frame(Drug = "bupivacaine", Time = 0, Dose = 10, Units = "mg/hr RA")
+  expect_error(simCpCe(DT, data.frame(Time = 50, Event = "Switch"), PK, 120, FALSE),
+               "continuous RA infusion")
+})
+
+test_that("an intravenous dose and an RA dose of a drug with a slow depot keep their own routes", {
+  # Mepivacaine's RA rows are duplicated for its slow depot; the intravenous
+  # rows beside them must stay intravenous (a recycling bug, 2026-10-10).
+  PK <- raPK("mepivacaine")
+  both <- data.frame(Drug = "mepivacaine", Time = c(0, 0, 60), Dose = c(100, 300, 200),
+                     Units = c("mg", "mg RA", "mg RA"))
+  w  <- simCpCe(both, noEvents, PK, 240, FALSE)$wide
+  iv <- simCpCe(both[1, ], noEvents, PK, 240, FALSE)$wide
+  ra <- simCpCe(both[2:3, ], noEvents, PK, 240, FALSE)$wide
+  at <- c(1, 10, 59, 61, 120, 230)
+  f <- function(x) stats::approx(x$Time, x$Plasma, at)$y
+  expect_equal(f(w), f(iv) + f(ra), tolerance = 1e-3)
+})

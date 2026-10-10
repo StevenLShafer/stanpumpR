@@ -68,9 +68,11 @@
 # NOT MODELLED
 # ============
 # Site-specific and epinephrine-specific absorption, parallel fast and slow
-# depots, the Weibull input, perineural catheter infusions, the postoperative
-# rise in alpha-1-acid glycoprotein (which raises total but not unbound
-# concentration during long infusions), and the age effect on clearance.
+# depots, the Weibull input, the postoperative rise in alpha-1-acid
+# glycoprotein (which raises total but not unbound concentration during long
+# infusions), and the age effect on clearance.  A perineural catheter
+# infusion is offered as "mg/hr RA", a constant rate into the same depot at
+# the same ka (2026-10-10).
 #
 # References
 # ----------

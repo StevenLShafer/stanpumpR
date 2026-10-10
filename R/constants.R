@@ -114,10 +114,15 @@ imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 # exactly as the oral, intramuscular and intranasal routes.
 slUnits <- c("mg SL", "mg/kg SL", "mcg SL", "mcg/kg SL")
 # Regional anesthesia (ROUTE_RA): a single injection into tissue, the whole
-# dose entering a depot that is absorbed first-order.  No rate units: a
-# perineural catheter infusion would need a rate through the depot, which the
-# engines do not carry, and no scheduled frequencies.
+# dose entering a depot that is absorbed first-order.  No scheduled
+# frequencies.
 raUnits <- c("g RA", "g/kg RA", "mg RA", "mg/kg RA", "mcg RA", "mcg/kg RA")
+# A continuous perineural (catheter) infusion: a constant rate INTO the
+# tissue depot, absorbed from it first-order as an RA dose is.  A rate by
+# kind (isRateUnit()) and RA by route: simCpCe() flags its rows RArate, and
+# advanceClosedFormPO_IM_IN() advances them exactly, as an infusion through
+# the depot.  (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
+raRateUnits <- c("mg/hr RA")
 
 # Constant-rate oral input: a daily oral dose spread evenly over the day, as
 # Pollak, Bouillon and Shafer modelled long-term oral amiodarone (400 mg/d as
@@ -149,7 +154,7 @@ ORAL_FORMULATIONS <- c("tablet", "liquid", "XR")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
-              slUnits, inUnits, imUnits, raUnits)
+              slUnits, inUnits, imUnits, raUnits, raRateUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.

@@ -79,7 +79,9 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
     byRoute <- lapply(stats::setNames(extravascular, extravascular), function(r) {
       u <- units[route == r]
       list(units = u,
-           notes = c(if (any(isRateUnit(u))) "constant daily rate, no depot",
+           notes = c(if (any(isRateUnit(u)))
+                       if (r == ROUTE_RA) "continuous infusion into the depot"
+                       else "constant daily rate, no depot",
                      if (length(u) > 0) notes[[r]]))
     })
     c(list(drug = row$Drug, iv = any(route == ROUTE_IV)), byRoute)
