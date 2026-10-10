@@ -258,11 +258,11 @@ both switch positions. See `docs/adding-a-drug.md` for the procedure.
   fat-free mass, creatinine clearance, and glomerular filtration rate to
   describe renal function from neonates to adults. *CPT Pharmacometrics Syst
   Pharmacol* 2023;12:401-12, with corrigendum 2024;13:181-2.
-  [PMID 36794347](https://pubmed.ncbi.nlm.nih.gov/36794347/)
+  [PMID 36691877](https://pubmed.ncbi.nlm.nih.gov/36691877/)
 - McLeay SC, Morrish GA, Kirkpatrick CM, Green B. The relationship between drug
   clearance and body size: systematic review and meta-analysis of the literature
   published from 2000 to 2007. *Clin Pharmacokinet* 2012;51:319-30.
   [PMID 22439649](https://pubmed.ncbi.nlm.nih.gov/22439649/)
 - Holford NHG, Anderson BJ. Allometric size: the scientific theory and extension
   to normal fat mass. *Eur J Pharm Sci* 2017;109S:S59-64.
-  [PMID 28506869](https://pubmed.ncbi.nlm.nih.gov/28506869/)
+  [PMID 28552478](https://pubmed.ncbi.nlm.nih.gov/28552478/)
