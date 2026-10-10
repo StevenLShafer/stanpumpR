@@ -12,7 +12,7 @@ Henthorn studied the intravenous route only. Oral bioavailability is 0.70, measu
 
 ### Covariates
 
-Weight is the only covariate, on the deep peripheral volume (weight to the power 1.23; 74 kg, the study mean, is taken as the reference). The authors tested weight on every other parameter and found no effect, so clearance does not change with weight: a heavier patient has more tissue to fill but eliminates methadone no faster. With *Adjust weight to fat-free mass* ticked the volume term uses the fat-free-mass weight; unticked, total body weight. Age, sex and race had no effect. CYP2B6 genotype changed clearance to the EDDP metabolite; the model uses the wild-type (\*1/\*1) values, as the authors recommend for practical use.
+Weight is the only covariate, on the deep peripheral volume (weight to the power 1.23, taking the published 208 L as the value at 70 kg; the paper does not state its reference weight, and its subjects averaged 74 kg). The authors tested weight on every other parameter and found no effect, so clearance does not change with weight: a heavier patient has more tissue to fill but eliminates methadone no faster. With *Adjust weight to fat-free mass* ticked the volume term uses the fat-free-mass weight; unticked, total body weight. Age, sex and race had no effect. CYP2B6 genotype changed clearance to the EDDP metabolite; the model uses the wild-type (\*1/\*1) values, as the authors recommend for practical use.
 
 ### Effect site
 

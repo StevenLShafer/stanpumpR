@@ -10,12 +10,12 @@ test_that("reference man: reduced parameters, oral route and pharmacodynamics", 
   expect_equal(
     actual$PK$default,
     list(
-      v1 = 34.6050574,
-      v2 = 130.4553449,
-      v3 = 167.1390566,
+      v1 = 34.6029236,
+      v2 = 130.4042348,
+      v3 = 178.5251339,
       cl1 = 0.1080264692,
-      cl2 = 12.9418716,
-      cl3 = 0.4789393121,
+      cl2 = 12.9415885,
+      cl3 = 0.4803807328,
       ka_PO = 0.0100236846,
       bioavailability_PO = 0.70,
       tlag_PO = 0
@@ -46,7 +46,7 @@ test_that("racemic clearance is the enantiomer clearances combined exactly", {
 })
 
 test_that("the reduction tracks the two-enantiomer model for a week", {
-  for (w in c(50, 74, 120)) {
+  for (w in c(50, 70, 120)) {
     e <- methadoneEnantiomers(w)
     pk <- methadoneRacemicPK(w)
     u <- methadoneUdf(pk$v1, pk$v2, pk$v3, pk$cl1, pk$cl2, pk$cl3)
@@ -54,7 +54,7 @@ test_that("the reduction tracks the two-enantiomer model for a week", {
     udf <- function(x) colSums(x$coef * exp(-outer(x$lambda, t)))
     enantiomers <- 0.5 * (udf(e$R) + udf(e$S))
     expect_lt(max(abs(udf(u) / enantiomers - 1)), 0.1)
-    if (w == 74) expect_lt(max(abs(udf(u) / enantiomers - 1)), 0.03)
+    if (w == 70) expect_lt(max(abs(udf(u) / enantiomers - 1)), 0.03)
   }
 })
 
@@ -68,8 +68,8 @@ test_that("the enantiomer models reproduce Henthorn's clearance shares", {
   expect_equal(round(100 * c(r$clRenal * s$clRenal, r$clEddp * s$clEddp,
                              METHADONE_S_CL_OTHER) / clS), c(16, 34, 49))
   # Terminal half-life ratio S/R, 0.69 in the Discussion.
-  e <- methadoneEnantiomers(74)
-  expect_equal(round(e$R$lambda[3] / e$S$lambda[3], 2), 0.68)
+  e <- methadoneEnantiomers(70)
+  expect_equal(e$R$lambda[3] / e$S$lambda[3], 0.69, tolerance = 0.01)
 })
 
 test_that("weight enters V3 only, on pharmacokinetic weight or total weight", {
@@ -79,14 +79,14 @@ test_that("weight enters V3 only, on pharmacokinetic weight or total weight", {
   off <- methadone(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(
     on[1:6],
-    list(v1 = 34.5984636, v2 = 130.2912298, v3 = 229.7468825,
-         cl1 = 0.1080264692, cl2 = 12.9404888, cl3 = 0.4837108417),
+    list(v1 = 34.5982634, v2 = 130.2796169, v3 = 245.7331206,
+         cl1 = 0.1080264692, cl2 = 12.9400613, cl3 = 0.4841747711),
     tolerance = 1e-5
   )
   expect_equal(
     off[1:6],
-    list(v1 = 34.600886, v2 = 130.2843707, v3 = 320.4198334,
-         cl1 = 0.1080264692, cl2 = 12.9374873, cl3 = 0.4851229203),
+    list(v1 = 34.6022111, v2 = 130.2938735, v3 = 343.0648022,
+         cl1 = 0.1080264692, cl2 = 12.9366231, cl3 = 0.4852550264),
     tolerance = 1e-5
   )
   ref <- methadone(70, 170, 50, "male")$PK$default

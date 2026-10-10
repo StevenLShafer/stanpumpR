@@ -25,17 +25,19 @@
 #                           = 0.09102 L/min
 #
 # These reproduce the paper's own clearance shares (R: 25% renal, 23% EDDP,
-# 51% other; S: 16%, 34%, 50%).  The typical-value terminal half-lives are
-# 48 h for R(-) and 33 h for S(+).  The paper quotes 2.5 and 1.7 days; their
-# ratio, 0.69, is reproduced exactly, so the quoted absolute values are taken
-# to be summaries of individual estimates rather than of the typical values.
+# 51% other; S: 16%, 34%, 50%).  At 70 kg the typical-value terminal
+# half-lives are 48 h for R(-) and 33 h for S(+).  The paper quotes 2.5 and
+# 1.7 days; their ratio, 0.69, is reproduced, so the quoted absolute values
+# are taken to be summaries of individual estimates rather than of the
+# typical values.
 #
 # COVARIATES
 # ==========
 # Weight is the only covariate in the final model, on V3 with exponent 1.23
 # (Table 2), for both enantiomers.  The paper writes the term as WT^1.23
-# without stating the weight it was centred on; 208.1 L is read as the value
-# at 74 kg, the study mean.  Sex, race and CYP2C19 had no effect.  Weight was
+# without stating the weight it was centred on; 208.1 L is taken as the value
+# at 70 kg, the library's reference weight (the study mean was 74 kg), at
+# Steven L. Shafer's instruction.  Sex, race and CYP2C19 had no effect.  Weight was
 # tested on every parameter and kept only on V3, and the authors conclude
 # that their data "do not support dose adjustments based on weight for
 # chronic methadone administration", so the other parameters are NOT size
@@ -65,7 +67,7 @@
 #      concentration, identical to the enantiomer model's.
 #   3. Convert the three exponentials to V1, V2, V3, CL1, CL2, CL3.
 #
-# At 74 kg the reduced model is within 2.5% of the enantiomer sum from 1 min
+# At 70 kg the reduced model is within 2.5% of the enantiomer sum from 1 min
 # to 7 days after a bolus, and within 1% throughout 10 days of 8-hourly
 # dosing.  It drifts low after a week (-26% at 14 days after a single dose,
 # when the concentration is under 2% of its 1-day value), because three
@@ -121,7 +123,7 @@ METHADONE_R <- list(
 METHADONE_S_OVER_R <- list(v = 0.60, q = 0.77, clRenal = 0.57, clEddp = 1.30)
 METHADONE_S_CL_OTHER <- 0.045              # L/min, Table 2
 METHADONE_V3_WT_EXPONENT <- 1.23
-METHADONE_WT_REF <- 74                     # kg, the study mean (see header)
+METHADONE_WT_REF <- 70                     # kg, see the header
 METHADONE_BASE_FRACTION <- 309.45 / 345.91 # base / hydrochloride
 
 # Three-compartment unit disposition function (per unit dose, per litre):

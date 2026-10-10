@@ -8,7 +8,7 @@ A single 10 mg dose in a 70 kg patient peaks at about 56 ng/mL in the effect sit
 
 ## Try next
 
-- Add 10 mg at 8 hours and 16 hours (480 and 960 minutes) and apply. The troughs rise each time: about 25 ng/mL before the second dose, 45 before the third, and 62 at 24 hours, above MEAC.
+- Add 10 mg at 8 hours and 16 hours (480 and 960 minutes) and apply. The troughs rise each time: about 25 ng/mL before the second dose, 44 before the third, and 61 at 24 hours, above MEAC.
 - Set *Time units* to days (the dose table is converted for you) and *Max time* to 7 days, then give 10 mg every 8 hours for the first three days: a `mg tid` row at `0`, and a `0 mg tid` row at `3` to stop it. See how long after the last dose the concentration stays above the threshold: nearly two days.
 - Change the dose's units to `mg PO` and apply: the same 10 mg by mouth peaks at about 3 hours at about 25 ng/mL, under half the intravenous effect-site peak; by 24 hours it runs at about 70% of the intravenous curve, the oral bioavailability.
 - Load [the opioid MEAC scenario](scenario:opioid-meac) for the opposite extreme: fentanyl, gone within an hour.
