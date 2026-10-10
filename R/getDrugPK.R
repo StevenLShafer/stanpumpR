@@ -11,6 +11,8 @@
 #' @param drugDefaults output from \code{getDrugDefaults(drug)}
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 #'   Passed only to drug models that declare it; the rest ignore it.
+#' @param cyp2c19 CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
+#'   Passed only to drug models that declare it (escitalopram, citalopram).
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
@@ -54,7 +56,8 @@ getDrugPK <- function(
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE,
   osmolality = OSMOLALITY_DEFAULT,
-  creatinine = NULL
+  creatinine = NULL,
+  cyp2c19 = CYP2C19_DEFAULT
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -66,6 +69,10 @@ getDrugPK <- function(
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
          ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
+  }
+  if (length(cyp2c19) != 1 || !cyp2c19 %in% CYP2C19_VALUES) {
+    stop("Invalid cyp2c19: ", paste(cyp2c19, collapse = ", "),
+         ". Must be one of: ", paste(CYP2C19_VALUES, collapse = ", "))
   }
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
@@ -109,6 +116,9 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "cyp2d6" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2d6 <- cyp2d6
+  if (exists(drug, mode = "function") &&
+      "cyp2c19" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp2c19 <- cyp2c19
   # Likewise the fat-free-mass switch: every drug model in the library
   # declares it, but a mocked model taking only ... need not.
   if (exists(drug, mode = "function") &&
@@ -779,6 +789,7 @@ getDrugPK <- function(
       weight = weight, height = height, age = age, sex = sex,
       drugDefaults = metaboliteDefaults,
       cyp2d6 = cyp2d6,
+      cyp2c19 = cyp2c19,
       osmolality = osmolality,
       creatinine = creatinine,
       adjustToFFM = adjustToFFM,

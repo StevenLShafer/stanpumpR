@@ -72,7 +72,7 @@ test_that("only the expected oral drugs carry an absorption lag", {
   expect_setequal(unique(lagged),
                   c("gabapentin", "pregabalin", "acetaminophen", "ibuprofen",
                     "zolpidem", "clonazepam", "methylphenidate",
-                    "lisdexamfetamine", "morphine"))
+                    "lisdexamfetamine", "morphine", "sertraline"))
 })
 
 

@@ -16,7 +16,8 @@ getDrugPK(
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE,
   osmolality = OSMOLALITY_DEFAULT,
-  creatinine = NULL
+  creatinine = NULL,
+  cyp2c19 = CYP2C19_DEFAULT
 )
 }
 \arguments{
@@ -52,6 +53,9 @@ ignore it.}
 assumed normal value for the patient's age and sex.  Passed only to the renal
 models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
 sugammadex, gabapentin, pregabalin); see \code{R/renalFunction.R}.}
+
+\item{cyp2c19}{CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
+Passed only to drug models that declare it (escitalopram, citalopram).}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

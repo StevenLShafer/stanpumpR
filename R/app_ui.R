@@ -172,6 +172,19 @@ app_ui <- function() {
                   selected = CYP2D6_DEFAULT
                 ),
 
+                # Read by escitalopram and citalopram, whose published
+                # clearances differ by CYP2C19 phenotype.  The five CPIC terms.
+                selectInput(
+                  inputId = "cyp2c19",
+                  label = "CYP 2C19",
+                  c("Ultrarapid"   = CYP2C19_ULTRARAPID,
+                    "Rapid"        = CYP2C19_RAPID,
+                    "Normal"       = CYP2C19_NORMAL,
+                    "Intermediate" = CYP2C19_INTERMEDIATE,
+                    "Poor"         = CYP2C19_POOR),
+                  selected = CYP2C19_DEFAULT
+                ),
+
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
                 bslib::tooltip(

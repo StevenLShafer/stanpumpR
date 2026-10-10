@@ -82,6 +82,7 @@ helpStaticPages <- function() {
     "models/fat-free-mass",     "Scaling to fat-free mass",        "models",
     "models/absorption",        "Oral, intramuscular, intranasal and regional anesthesia doses", "models",
     "models/metabolites",       "Active metabolites",              "models",
+    "models/antidepressants",   "Antidepressant models and their limits", "models",
     "models/pk-events",         "Events that change the kinetics", "models",
     "models/meac",              "MEAC: comparing opioids",         "models",
     "models/interaction",       "Propofol-opioid interaction",     "models",

@@ -146,6 +146,12 @@ codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
 file changes. Valid values are in `CYP2D6_VALUES`: `poor`, `intermediate`, `normal`,
 `ultrarapid`. Validate it and fail loudly on anything else.
 
+CYP2C19 works the same way: a model adds `cyp2c19 = CYP2C19_DEFAULT` to its signature, and
+gets the Patient Profile's **CYP 2C19** field. Valid values are in `CYP2C19_VALUES`, the five
+CPIC terms (`poor`, `intermediate`, `normal`, `rapid`, `ultrarapid`). A source that estimated
+fewer groups says in the drug file which group each of the five is given (escitalopram,
+citalopram). The drug's help page tabulates its clearance by phenotype automatically.
+
 **Optional — an osmotic agent.** A drug reported as the serum osmolality it produces, rather
 than as its own concentration, adds `osmolality` to its signature (the patient's baseline,
 mOsm/kg, passed only to models that name it) and returns an `osmotic` block:
@@ -237,6 +243,21 @@ holds; what is not represented is saturation shared between doses taken together
 in time. `Imax` must lie between 0 and 1 (`validateOralSaturation()`), and the drug's help
 page tabulates the fraction at several doses. `R/drugs_gabapentin.R` is the example.
 
+The block has two further forms, chosen with a `form` field (the one above is
+`form = "saturable"`, the default):
+
+- `list(form = "rising", D50 = 15.5)`: the fraction is `D / (D50 + D)`, so bioavailability
+  **rises** with the dose towards `bioavailability_PO`, which is then its maximum. Sertraline
+  (`R/drugs_sertraline.R`).
+- `list(form = "power", exponent = 0.363, Dref = 25)`: the fraction is `(D / Dref)^exponent`.
+  This carries an empirical power of the dose on **apparent clearance**,
+  `CL/F × (D / Dref)^-exponent`, which a linear engine cannot hold: write the clearance at
+  `Dref`, and the steady-state exposure `D / CL(D)` is reproduced by scaling the dose. The
+  half-life stays that of the reference dose, and each administration is read as the day's dose.
+  Paroxetine (`R/drugs_paroxetine.R`).
+
+Any form may carry `exampleDoses`, the oral doses in mg the help page tabulates.
+
 A **sublingual** bioavailability that falls with the dose is declared the same way, as a
 `sublingualSaturation` block with the same two fields; `simCpCe()` scales every SL dose by
 the same expression and `bioavailability_SL` becomes the small-dose limit. A source that
@@ -275,7 +296,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Category` — the group the drug is listed under in the menu the app opens with: one of
   `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
   `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
-  `Corticosteroids`, `Stimulants`, `Local anesthetics`, `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `Corticosteroids`, `Antidepressants`, `Stimulants`, `Local anesthetics`, `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.

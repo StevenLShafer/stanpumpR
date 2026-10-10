@@ -39,6 +39,21 @@ CYP2D6_VALUES  <- c(CYP2D6_POOR, CYP2D6_INTERMEDIATE, CYP2D6_NORMAL,
                     CYP2D6_ULTRARAPID)
 CYP2D6_DEFAULT <- CYP2D6_NORMAL
 
+# CYP2C19 metaboliser phenotype.  The five CPIC categories the genotyping
+# laboratories report (Lima et al., Clin Pharmacol Ther 2021;109:1417-1423),
+# read by the antidepressants whose published clearance depends on it
+# (escitalopram, citalopram).  "normal" is the reference.  A source that
+# pooled several of these (Akil 2016: "EM/RM" and "IM/PM") maps each of the
+# five onto its own groups in the drug file, and says so there.
+CYP2C19_POOR         <- "poor"
+CYP2C19_INTERMEDIATE <- "intermediate"
+CYP2C19_NORMAL       <- "normal"
+CYP2C19_RAPID        <- "rapid"
+CYP2C19_ULTRARAPID   <- "ultrarapid"
+CYP2C19_VALUES  <- c(CYP2C19_POOR, CYP2C19_INTERMEDIATE, CYP2C19_NORMAL,
+                     CYP2C19_RAPID, CYP2C19_ULTRARAPID)
+CYP2C19_DEFAULT <- CYP2C19_NORMAL
+
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
 # their own contribution on top of it.  The default, 280, is within the normal
@@ -167,6 +182,7 @@ DRUG_CATEGORIES <- c(
   "Inhaled anesthetics",
   "Antibiotics",
   "Corticosteroids",
+  "Antidepressants",
   "Stimulants",
   "Local anesthetics",
   "Antiemetics",
