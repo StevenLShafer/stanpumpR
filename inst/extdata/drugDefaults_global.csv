@@ -4,7 +4,7 @@ remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min,Plasma target,E
 fentanyl,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,0.48,1.2,0.72,0.6,0.6,IV,Opioids
 alfentanil,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,31.2,78,46.8,39,39,IV,Opioids
 sufentanil,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,0.0448,0.112,0.0672,0.056,0.056,IV,Opioids
-morphine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#032FED,0.0064,0.016,0.0096,0.008,0.008,IV,Opioids
+morphine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg PO tablet,mg PO liquid,mg qd,mg bid,mg tid,mg qid,mg PO tablet qd,mg PO tablet bid,mg PO tablet tid,mg PO tablet qid,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid",#032FED,0.0064,0.016,0.0096,0.008,0.008,IV,Opioids
 pethidine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#5155FF,0.2,0.5,0.3,0.25,0.25,IV,Opioids
 hydromorphone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg IM,mg IN,Plasma target,Effect site target,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg IM qd,mg IM bid,mg IM tid,mg IM qid,mg IN qd,mg IN bid,mg IN tid,mg IN qid",#032FED,1.2,3,1.8,1.5,1.5,IV,Opioids
 methadone,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#71C5E8,0.048,0.12,0.072,0.06,0.06,IV,Opioids

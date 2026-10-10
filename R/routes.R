@@ -22,6 +22,24 @@ doseRoute <- function(units) {
   route
 }
 
+#' Oral formulation named by dose units
+#'
+#' The word after "PO" in a formulation unit ("mg PO liquid", "mg/kg PO tablet
+#' bid"); see `ORAL_FORMULATIONS`.
+#'
+#' @param units Character vector of dose units, as in the dose table.
+#' @returns Character vector the same length as `units`: the formulation, or
+#'   NA for a unit that names none.
+#' @noRd
+doseFormulation <- function(units) {
+  units <- as.character(units)
+  formulation <- rep(NA_character_, length(units))
+  for (f in ORAL_FORMULATIONS) {
+    formulation[grepl(paste0(" ", ROUTE_PO, " ", f, "( |$)"), units)] <- f
+  }
+  formulation
+}
+
 #' Is a dose unit an input rate rather than an amount?
 #'
 #' A rate -- mass per minute, hour or day, with or without per kg -- sets a

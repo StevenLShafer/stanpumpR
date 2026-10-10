@@ -120,3 +120,27 @@ test_that("only a drug that declares saturable absorption has it", {
   for (drug in c("oxycodone", "hydromorphone", "cefalexin"))
     expect_null(getDrugPK(drug, 70, 170, 50, "male")$oralSaturation, info = drug)
 })
+
+test_that("formulation units read as oral, with their formulation", {
+  expect_true(all(doseRoute(poFormulationUnits) == ROUTE_PO))
+  expect_equal(doseFormulation(c("mg PO tablet", "mg/kg PO liquid", "mg PO liquid bid",
+                                 "mg PO", "mg", "mg IM")),
+               c("tablet", "liquid", "liquid", NA, NA, NA))
+  expect_false(any(isRateUnit(poFormulationUnits)))
+  expect_true(all(poFormulationUnits %in% allUnits))
+  expect_true(all(paste(poFormulationUnits, "bid") %in% scheduledUnits))
+  expect_equal(scheduleBaseUnit("mg PO liquid qid"), "mg PO liquid")
+})
+
+test_that("a further oral formulation must be valid and share the default lag", {
+  set <- getDrugPK("morphine", 70, 170, 40, "male")$PK$default
+  # The helper reproduces getDrugPK()'s own oral coefficients.
+  same <- oralCoefficients(set, set$ka_PO, set$bioavailability_PO)
+  expect_equal(same, set[names(same)])
+  expect_error(oralFormulationSet(set, list(ka_PO = 0.02, tlag_PO = 0), "x", "liquid"),
+               "share the default oral lag")
+  expect_error(oralFormulationSet(set, list(ka_PO = 0, tlag_PO = set$tlag_PO), "x", "liquid"),
+               "ka_PO > 0")
+  expect_error(oralFormulationSet(set, list(ka_PO = 0.02, tlag_PO = set$tlag_PO), "x", "syrup"),
+               "not one of")
+})
