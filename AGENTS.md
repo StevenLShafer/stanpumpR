@@ -28,7 +28,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 4. **Simulate**: `processdoseTable()` calls `simCpCe()`, which first expands any `qd`/`bid`/`tid`/`qid` dose into its repeats to the end of the plot (`scheduled.R`; returned as `$scheduled` for export) and any `Plasma target` / `Effect site target` rows into a TCI infusion schedule (`tci.R`, Shafer & Gregg 1992; returned as `$tci` for the rate panel and export), then dispatches to:
    - `advanceClosedForm0.R` (IV, standard PK)
    - `advanceClosedForm1.R` (time-varying PK with events)
-   - `advanceClosedFormPO_IM_IN.R` (extravascular 1st-order absorption)
+   - `advanceClosedFormPO_IM_IN.R` (extravascular 1st-order absorption: PO, IM, IN and RA, regional anesthesia, a local anesthetic injected into tissue — `ka_RA`/`bioavailability_RA`/`tlag_RA`, units `raUnits`; tests `test-route-ra.R`)
 5. **Plot & Render**: `simulationPlot.R` generates `ggplot2` output.
 
 `processdoseTable()` re-simulates only the drugs whose inputs changed: `drugs()` passes it the previous result as `cache`, and a drug whose `simulationKey()` (PK, dose rows, PK events, plot length, recovery switch) is unchanged reuses its own stored simulation. `foldMetabolites()` always re-runs on top.

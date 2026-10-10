@@ -21,13 +21,16 @@ test_that("doseRoute() agrees with every unit the app offers", {
   expect_true(all(doseRoute(poUnits) == ROUTE_PO))
   expect_true(all(doseRoute(imUnits) == ROUTE_IM))
   expect_true(all(doseRoute(inUnits) == ROUTE_IN))
+  expect_true(all(doseRoute(raUnits) == ROUTE_RA))
 
   dd <- getDrugDefaultsGlobal()
   units <- unique(unlist(dd$Units))
-  # The substring tests simCpCe() used before doseRoute()
+  # The substring tests simCpCe() used before doseRoute(), with RA (regional
+  # anesthesia, 2026-10-10) added
   old <- ifelse(grepl("PO", units), "PO",
                 ifelse(grepl("IM", units), "IM",
-                       ifelse(grepl("IN", units), "IN", "IV")))
+                       ifelse(grepl("IN", units), "IN",
+                              ifelse(grepl("RA", units), "RA", "IV"))))
   expect_equal(doseRoute(units), old)
 })
 
@@ -39,7 +42,7 @@ test_that("the constant-rate oral unit is oral by route and a rate by kind", {
   expect_true(all(poRateUnits %in% allUnits))
   expect_false(any(poRateUnits %in% c(infusionUnits, poUnits, scheduledUnits)))
   expect_true(all(isRateUnit(infusionUnits)))
-  expect_false(any(isRateUnit(c(bolusUnits, poUnits, imUnits, inUnits, tciUnits,
+  expect_false(any(isRateUnit(c(bolusUnits, poUnits, imUnits, inUnits, raUnits, tciUnits,
                                 scheduledUnits, "%"))))
   expect_equal(isRateUnit(factor("mg/hr")), TRUE)
 })
@@ -85,7 +88,9 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
   unscheduled <- hydromorphone[!isScheduledUnit(hydromorphone)]
   expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV],
                c("mg PO", "mg PO liquid", "mg/kg PO liquid", "mg IM", "mg IN"))
-  expect_equal(unique(doseRoute(hydromorphone)), DOSE_ROUTES)
+  expect_equal(unique(doseRoute(hydromorphone)), setdiff(DOSE_ROUTES, ROUTE_RA))
+  lidocaine <- dd$Units[[which(dd$Drug == "lidocaine")]]
+  expect_equal(unique(doseRoute(lidocaine)), c(ROUTE_IV, ROUTE_RA))
   expect_true(all(c("Plasma target", "Effect site target") %in%
                     hydromorphone[doseRoute(hydromorphone) == ROUTE_IV]))
 })

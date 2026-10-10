@@ -16,11 +16,15 @@ ROUTE_IV <- "IV"
 ROUTE_PO <- "PO"
 ROUTE_IM <- "IM"
 ROUTE_IN <- "IN"
+# Regional anesthesia: a local anesthetic injected into tissue (a peripheral
+# nerve block or a wound infiltration), absorbed first-order from the tissue
+# into the systemic circulation.
+ROUTE_RA <- "RA"
 TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
 
 # Every route a dose can take, in the order the units dropdowns list them.  A
 # dose's route is carried by its Units string; see doseRoute() in R/routes.R.
-DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_IM, ROUTE_IN)
+DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_IM, ROUTE_IN, ROUTE_RA)
 
 # CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
 # genotyping laboratories report, rather than the three the UI carried before
@@ -90,6 +94,11 @@ infusionUnits <- c("g/min","g/hr","g/kg/hr","mg/min","mg/hr","mg/kg/min","mg/kg/
 poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
 inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
+# Regional anesthesia (ROUTE_RA): a single injection into tissue, the whole
+# dose entering a depot that is absorbed first-order.  No rate units: a
+# perineural catheter infusion would need a rate through the depot, which the
+# engines do not carry, and no scheduled frequencies.
+raUnits <- c("g RA", "g/kg RA", "mg RA", "mg/kg RA", "mcg RA", "mcg/kg RA")
 
 # Constant-rate oral input: a daily oral dose spread evenly over the day, as
 # Pollak, Bouillon and Shafer modelled long-term oral amiodarone (400 mg/d as
@@ -116,7 +125,7 @@ ORAL_FORMULATIONS <- c("tablet", "liquid")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
-              inUnits, imUnits)
+              inUnits, imUnits, raUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -138,7 +147,7 @@ scheduledUnits <- as.vector(t(outer(
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
 # gases are flowmeter settings in L/min, potent agents are vaporizer settings in %.
-# Kept out of allUnits, which lists the mass-based units offered for IV/PO/IM/IN
+# Kept out of allUnits, which lists the mass-based units offered for IV/PO/IM/IN/RA
 # drugs, but they are legitimate entries in the dose table.
 gasUnits <- c("L/min", "%")
 
@@ -154,6 +163,7 @@ DRUG_CATEGORIES <- c(
   "Antibiotics",
   "Corticosteroids",
   "Stimulants",
+  "Local anesthetics",
   "Other"
 )
 # Ticked when the menu opens: the four drugs the app opened with before it
