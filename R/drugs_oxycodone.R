@@ -128,7 +128,8 @@
 #
 # ka (0.01 /min, no lag) puts the peak of the plasma curve at 30 ng/mL after
 # 15 mg, the peak of the MEAN concentration curve in Lalovic's Figure 2, as
-# the library matches oral peak heights (see R/drugs_diazepam.R).  The mean
+# the library matches oral peak heights (see R/drugs_diazepam.R; the 35-min
+# peak kept so by decision of Steven L. Shafer, 2026-10-10).  The mean
 # of the individual peaks, 38 ng/mL, is necessarily higher than the peak of
 # the mean curve and is not the target.  The model then peaks at 35 min,
 # earlier than Lalovic's mean tmax of 65 min, and gives 21.7, 12.4 and 3.7
