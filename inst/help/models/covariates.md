@@ -55,9 +55,11 @@ The Kim remifentanil model for obesity uses the Janmahasatian fat-free mass inst
 
 Eleveld's propofol model gives women a higher clearance than men (2.10 against 1.79 L/min at reference size); Eleveld's remifentanil model increases clearance and V2 in women between puberty and the menopause; remimazolam's clearance and V3 are larger in women. Elsewhere sex enters only through lean or fat-free mass.
 
-## CYP2D6, and the disabled covariates
+## CYP2D6 and CYP2C19, and the disabled covariates
 
-**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites). Pregnancy remains in the interface but unused.
+**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites).
+
+**CYP2C19 phenotype** is read by escitalopram and citalopram, whose published clearances differ by phenotype. The field offers the five terms the genotyping laboratories report (poor, intermediate, normal, rapid, ultrarapid). Neither source estimated all five, so each drug's page says which of its groups each phenotype is given. See [Antidepressant models and their limits](help:models/antidepressants). Pregnancy remains in the interface but unused.
 
 ## Renal function
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/routes.R
 \name{validateOralSaturation}
 \alias{validateOralSaturation}
-\title{Check a drug model's saturable oral absorption block}
+\title{Check a drug model's dose-dependent oral absorption block}
 \usage{
 validateOralSaturation(saturation, drug)
 }
@@ -15,6 +15,6 @@ validateOralSaturation(saturation, drug)
 \code{saturation}, unchanged, if it is valid; otherwise an error
 }
 \description{
-Check a drug model's saturable oral absorption block
+Check a drug model's dose-dependent oral absorption block
 }
 \keyword{internal}

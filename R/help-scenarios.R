@@ -66,7 +66,7 @@ helpScenarioDefaultOptions <- function() {
 helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
-                         doses, events = NULL, ...) {
+                         doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -82,7 +82,7 @@ helpScenario <- function(id, title, group, summary,
   list(
     id = id, title = title, group = group, summary = summary,
     patient = list(age = age, weight = weight, height = height, sex = sex,
-                   cyp2d6 = cyp2d6, adjustToFFM = adjustToFFM),
+                   cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, adjustToFFM = adjustToFFM),
     doses = doses, events = events, options = options
   )
 }
@@ -589,6 +589,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!is_valid_number(p$height, MIN_HEIGHT, MAX_HEIGHT)) say("height out of range: ", p$height)
   if (!p$sex %in% SEX_VALUES) say("invalid sex: ", p$sex)
   if (!p$cyp2d6 %in% CYP2D6_VALUES) say("invalid cyp2d6: ", p$cyp2d6)
+  if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
 
   o <- s$options
@@ -718,6 +719,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateRadioButtons(session, "heightUnit", selected = as.character(UNIT_CM))
   shinyWidgets::updateRadioGroupButtons(session, "sex", selected = p$sex)
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
+  updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
 
   if (is.null(timeApi)) {
@@ -769,6 +771,7 @@ helpScenarioPageHTML <- function(id) {
     Height = sprintf("%s cm", helpFormatNumber(p$height)),
     Sex = p$sex,
     `CYP 2D6` = tools::toTitleCase(p$cyp2d6),
+    `CYP 2C19` = tools::toTitleCase(p$cyp2c19),
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     check.names = FALSE, stringsAsFactors = FALSE
   )

@@ -70,13 +70,16 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
     units <- unique(scheduleBaseUnit(helpDrugUnits(row)))
     route <- doseRoute(units)
     if (!any(route %in% extravascular)) return(NULL)
-    saturable <- ROUTE_PO %in% route &&
-      !is.null(helpDrugModelOutput(row$Drug, adult)$oralSaturation)
+    sat <- if (ROUTE_PO %in% route) helpDrugModelOutput(row$Drug, adult)$oralSaturation
+    satNote <- if (!is.null(sat)) switch(oralSaturationForm(sat),
+      saturable = "saturable absorption",
+      rising    = "bioavailability rises with dose",
+      power     = "exposure more than dose-proportional")
     byRoute <- lapply(stats::setNames(extravascular, extravascular), function(r) {
       u <- units[route == r]
       list(units = u,
            notes = c(if (any(isRateUnit(u))) "constant daily rate, no depot",
-                     if (r == ROUTE_PO && length(u) > 0 && saturable) "saturable absorption"))
+                     if (r == ROUTE_PO && length(u) > 0) satNote))
     })
     c(list(drug = row$Drug, iv = any(route == ROUTE_IV)), byRoute)
   })

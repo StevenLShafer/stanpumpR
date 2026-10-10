@@ -46,6 +46,10 @@ fraction absorbed = 1 - Imax × D / (ID50 + D)      D = dose in mg
 
 For gabapentin, Imax is 0.906 and ID50 571 mg (Tran and colleagues, 2017): 0.69 of a 300 mg dose is absorbed, 0.54 of 600 mg and 0.39 of 1200 mg. The drug's bioavailability is then the limit for a very small dose. Once scaled, each dose is an ordinary first-order input, so doses still add, and the drug's page shows the fraction at several doses. What is not represented is saturation shared between doses: two doses entered as separate rows at the same time are each scaled by their own size, not by their sum, and absorption from doses taken close together does not compete. Pregabalin, a close relative, is about 90 per cent absorbed whatever the dose (Bockbrader and colleagues, 2010): its absorption is linear, and [the pregabalin scenario](help:scenarios/pregabalin-linear-absorption) sets the two side by side.
 
+## Bioavailability that rises with the dose, and exposure more than proportional to it
+
+The same per-dose scaling carries two other shapes. Sertraline's bioavailability, in Alhadab and Brundage's meta-analysis of single doses, **rises** with the dose, as 0.639 × D / (15.5 + D): 0.49 of a 50 mg dose and 0.59 of 200 mg. Paroxetine's apparent clearance in Kim and colleagues' model **falls** with the daily dose, as (D / 25)<sup>-0.363</sup>; a linear engine cannot change its clearance dose by dose, so the dose is scaled by (D / 25)<sup>0.363</sup> instead, which gives the same steady-state exposure for a once-daily dose. Its half-life is then that of 25 mg a day at every dose. Both are described on the drugs' own pages and on [Antidepressant models and their limits](help:models/antidepressants).
+
 ## What to look for
 
 Give oxycodone 10 mg PO and turn the plasma line on. The concentration rises over about an hour and the effect site, with its own slow ke0, peaks later still. Compare it with the sharp peak of an intravenous bolus of any opioid. [The oral oxycodone scenario](scenario:oral-oxycodone) shows two doses six hours apart.

@@ -294,7 +294,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # (2026-10-07) and amiodaroneIV (2026-10-08) are active but have no
   # published human ke0 for the antiarrhythmic effect; clonazepam's,
   # zolpidem's and temazepam's published effects are direct functions of
-  # plasma concentration (2026-10-09).  Pinned because the count has been got wrong by hand more
+  # plasma concentration (2026-10-09).  The antidepressants (2026-10-10) have
+  # no effect site: response lags weeks and no ke0 has been estimated.  Pinned because the count has been got wrong by hand more
   # than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
@@ -310,7 +311,9 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
-    "clonazepam", "zolpidem", "temazepam"
+    "clonazepam", "zolpidem", "temazepam",
+    "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
+    "mirtazapine", "bupropion", "hydroxybupropion"
   ))
 })
 

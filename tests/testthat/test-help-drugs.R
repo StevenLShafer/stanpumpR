@@ -36,6 +36,9 @@ plasmaOnly <- c(
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
+  # The antidepressants: response lags weeks, no ke0 exists
+  "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
+  "mirtazapine", "bupropion", "hydroxybupropion",
   "clonazepam", "zolpidem", "temazepam"
 )
 

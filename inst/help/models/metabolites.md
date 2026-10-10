@@ -9,6 +9,7 @@ Several opioids, and amiodarone, act partly or wholly through a metabolite the b
 | [hydrocodone](help:drugs/hydrocodone) | [hydromorphone](help:drugs/hydromorphone) | Oral only; CYP2D6-dependent. |
 | [oxycodone](help:drugs/oxycodone) | [oxymorphone](help:drugs/oxymorphone) | Oxymorphone is also a drug in its own right. |
 | [amiodarone](help:drugs/amiodarone) | [desethylamiodarone](help:drugs/desethylamiodarone) | Not a prodrug: both are active and appear equally potent, and neither has an effect site. All of amiodarone's clearance forms the metabolite, mass for mass, as Pollak and colleagues modelled it. Oral only, as a constant daily rate. Not CYP2D6-dependent. |
+| [bupropion](help:drugs/bupropion) | [hydroxybupropion](help:drugs/hydroxybupropion) | Not a prodrug: both are active, and neither has an effect site. A fixed tenth of bupropion's clearance forms the metabolite (Ghimire and colleagues), which makes the metabolite's tiny apparent volumes conditional on that assumption, so hydroxybupropion cannot be dosed. Oral only; the sustained-release tablet. Not CYP2D6-dependent (CYP2B6 forms it; no field). |
 
 ## How it is computed
 

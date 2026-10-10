@@ -523,6 +523,37 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- CYP2C19 phenotype -----------------------------------------------------
+  # A model that declares cyp2c19 (escitalopram, citalopram) has its clearance
+  # move with the Patient Profile's CYP 2C19 field: tabulate it at the
+  # reference adult.
+  cyp2c19HTML <- ""
+  if (helpDrugDeclares(drug, "cyp2c19")) {
+    byPhenotype <- lapply(CYP2C19_VALUES, function(ph) {
+      X <- helpDrugModelOutput(drug, adult, cyp2c19 = ph)
+      if (is.null(X)) return(NULL)
+      data.frame(phenotype = ph, cl1 = X$PK[[PK_EVENT_DEFAULT]]$cl1, stringsAsFactors = FALSE)
+    })
+    byPhenotype <- do.call(rbind, byPhenotype[!vapply(byPhenotype, is.null, logical(1))])
+    normal <- byPhenotype[byPhenotype$phenotype == CYP2C19_NORMAL, ]
+    if (!is.null(byPhenotype) && nrow(normal) == 1) {
+      tab <- data.frame(
+        `CYP2C19 phenotype` = tools::toTitleCase(rev(byPhenotype$phenotype)),
+        `Clearance CL1 (L/min)` = helpFormatNumber(rev(byPhenotype$cl1)),
+        `Relative to normal` = helpFormatNumber(rev(byPhenotype$cl1) / normal$cl1),
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+      cyp2c19HTML <- paste0(
+        helpH2("CYP2C19 phenotype"),
+        "<p>This model's clearance depends on CYP2C19, so the <strong>CYP 2C19</strong> field in the ",
+        "Patient Profile changes it. At the reference adult:</p>",
+        helpTableHTML(tab, "Effect of CYP2C19 phenotype"),
+        "<p class='small text-muted'>Where the source did not estimate a phenotype separately, the ",
+        "drug's own description below says which group it is given.</p>"
+      )
+    }
+  }
+
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""
   if (!is.null(pkRef)) {
@@ -549,18 +580,35 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         helpPageLink("models/absorption"), ".</p>",
         helpTableHTML(do.call(rbind, rows))
       )
-      # Saturable absorption: the oral bioavailability above is the limit for a
-      # small dose, and each dose is scaled by its own fraction absorbed.
+      # Dose-dependent absorption: each oral dose is scaled by its own
+      # fraction (oralSaturationFraction()), in one of three forms.
       sat <- pkRef$oralSaturation
       if (!is.null(sat)) {
-        doses <- c(300, 600, 900, 1200)
+        form <- oralSaturationForm(sat)
+        doses <- if (is.null(sat$exampleDoses)) c(300, 600, 900, 1200) else sat$exampleDoses
         f <- d$bioavailability_PO * oralSaturationFraction(doses, sat)
+        explanation <- switch(form,
+          saturable = paste0(
+            "<p>Oral absorption <strong>saturates</strong>: the fraction absorbed falls as the dose ",
+            "rises, as 1 &minus; ", helpFormatNumber(sat$Imax), " &times; D / (",
+            helpFormatNumber(sat$ID50), " + D) with D the dose in mg, so the bioavailability above is ",
+            "the limit for a very small dose. "),
+          rising = paste0(
+            "<p>Oral bioavailability <strong>rises with the dose</strong>, as D / (",
+            helpFormatNumber(sat$D50), " + D) with D the dose in mg, times the bioavailability above, ",
+            "which is its maximum. "),
+          power = paste0(
+            "<p>Exposure is <strong>more than proportional to the dose</strong>: each oral dose is scaled ",
+            "by (D / ", helpFormatNumber(sat$Dref), ")<sup>", helpFormatNumber(sat$exponent),
+            "</sup> with D the dose in mg. This carries the source's empirical power of the daily dose ",
+            "on apparent clearance, and reproduces its steady-state exposure for once-daily dosing; the ",
+            "\"fraction\" can exceed 1 above the reference dose, because it is an exposure scale on ",
+            "apparent parameters, not a physical bioavailability. ")
+        )
         absorptionHTML <- paste0(
           absorptionHTML,
-          "<p>Oral absorption <strong>saturates</strong>: the fraction absorbed falls as the dose ",
-          "rises, as 1 &minus; ", helpFormatNumber(sat$Imax), " &times; D / (",
-          helpFormatNumber(sat$ID50), " + D) with D the dose in mg, so the bioavailability above is ",
-          "the limit for a very small dose. Each oral dose is scaled by its own fraction. Doses ",
+          explanation,
+          "Each oral dose is scaled by its own fraction. Doses ",
           "entered as separate rows at the same time are scaled separately, not by their sum.</p>",
           helpTableHTML(data.frame(
             `Oral dose (mg)` = helpFormatNumber(doses),
@@ -633,6 +681,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     helpH2("At a glance"), glanceHTML,
     helpH2("Model source"), sourceHTML,
     helpH2("Parameters at reference patients"), paramsHTML,
+    cyp2c19HTML,
     absorptionHTML,
     metaboliteHTML,
     formedHTML,
