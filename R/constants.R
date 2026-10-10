@@ -196,8 +196,13 @@ DRUG_CATEGORIES <- c(
   "Stimulants",
   "Local anesthetics",
   "Antiemetics",
-  "Other"
+  "Other",
+  "Illicit drugs"
 )
+# The category of the opt-in research models of drugs of abuse
+# (R/illicit-drugs.R).  Hidden unless the user turns on input$showIllicitDrugs,
+# and never offered in the startup menu.
+ILLICIT_DRUG_CATEGORY <- "Illicit drugs"
 # Ticked when the menu opens: the four drugs the app opened with before it
 # had a menu.
 STARTUP_DRUGS_DEFAULT <- c("propofol", "fentanyl", "remifentanil", "rocuronium")

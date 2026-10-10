@@ -83,3 +83,4 @@ sevoflurane,%,%,%,%,"%",#F9A825,0,0,0,0,0.21,gas,Inhaled anesthetics
 isoflurane,%,%,%,%,"%",#8E24AA,0,0,0,0,0.11,gas,Inhaled anesthetics
 desflurane,%,%,%,%,"%",#00897B,0,0,0,0,0.6,gas,Inhaled anesthetics
 ventilation,L/min,L/min,L/min,L/min,"L/min",#546E7A,0,0,0,0,0,gas,
+diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs

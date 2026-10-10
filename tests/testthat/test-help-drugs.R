@@ -46,7 +46,9 @@ plasmaOnly <- c(
   # systemic plasma concentration, not the nerve block (2026-10-10)
   "bupivacaine", "ropivacaine", "mepivacaine",
   # NSAIDs with no published ke0 (2026-10-10)
-  "diclofenac", "meloxicam", "ketorolac"
+  "diclofenac", "meloxicam", "ketorolac",
+  # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
+  "diamorphine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
