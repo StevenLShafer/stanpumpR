@@ -10,9 +10,28 @@ The parameters are from Lyauk and colleagues (*Clin Transl Sci* 2016;9:337-345),
 
 The parameters are **apparent** d-MPH parameters, and the paper does not say whether its dose record was the 10 mg tablet or its 5 mg of d-MPH, a factor of two in every concentration. In the same subjects, Stage and colleagues (*Br J Clin Pharmacol* 2017;83:1506-1514) measured a median d-MPH AUC of 21.4 ng·h/mL after 10 mg, which with Lyauk's clearance is exactly a 5 mg input. So **half the tablet mass is converted to d-MPH**, once; that 0.5 is shown as the bioavailability but it is a dose basis, not an oral bioavailability. A 10 mg dose here gives an AUC of 21.4 ng·h/mL and a peak of about 5 ng/mL at 1.1 to 1.5 hours.
 
-### Oral only, immediate release only
+### Oral only
 
-Apparent parameters predict oral concentrations but not intravenous ones, so only oral units are offered. The model describes the immediate-release tablet. **Concerta, Ritalin LA, Aptensio XR and the other extended-release products are not represented**: each has its own product-specific input, and none has a published numerical input model this engine could carry. Entering a Concerta strength here simulates an immediate-release tablet of that size, which is wrong. The frequencies (bid, tid) repeat the immediate-release dose.
+Apparent parameters predict oral concentrations but not intravenous ones, so only oral units are offered. **mg PO** is the immediate-release tablet (Ritalin), and the frequencies (bid, tid) repeat it. **mg PO XR** is Concerta (below). Ritalin LA, Aptensio XR, Metadate CD and the other extended-release products are different inputs and are not represented: **mg PO XR here means Concerta only**.
+
+### Concerta
+
+No published model gives Concerta's input in numbers, so it was **fitted for stanpumpR** and attached to the disposition above. The fit used the shape of the mean curve that Childress and colleagues measured after Concerta 54 mg and 2 × 36 mg in fasted healthy adults (*Clin Pharmacol Drug Dev* 2025;14:829-835). Each Concerta dose is given as:
+
+- **22 per cent at once**, the drug in the tablet's overcoat (the label's figure), absorbed like the immediate-release tablet;
+- **78 per cent from 2 to 15 hours**, the osmotic core, delivered at a rate falling steadily to zero and given as small doses every 15 minutes.
+
+The 2 and 15 hours were chosen so that the curve's shape matches Childress's. They do not depend on how high the curve is.
+
+| Share of the area under the curve | 0–3 h | 3–7 h | 7–12 h | after 12 h | Peak time |
+|---|---|---|---|---|---|
+| Model | 0.11 | 0.27 | 0.35 | 0.27 | 6.8 h |
+| Concerta 54 mg | 0.10 | 0.26 | 0.33 | 0.31 | 7.0 h |
+| Concerta 2 × 36 mg | 0.11 | 0.30 | 0.34 | 0.25 | 6.5 h |
+
+The falling rate describes delivery into the blood, not release from the tablet. The pump releases steadily, but drug released late, in the colon, is absorbed less well.
+
+**The curve is lower than Childress measured.** The disposition is unchanged, so the amount absorbed is fixed by the dose basis and clearance above. The model gives an area under the curve of 116 ng·h/mL after 54 mg, against Childress's 174 (33 per cent low), and a peak of 8.9 against 14.6 ng/mL (39 per cent low). This is a difference between studies rather than between formulations: the same clearance reproduces Stage's measured d-methylphenidate exposure after the immediate-release tablet. Childress measured total methylphenidate, l-isomer included, in a different population and laboratory. The shape is the reliable part. Treat the height as uncertain by about a third, in the direction of being too low.
 
 ### How the absorption is reduced
 
