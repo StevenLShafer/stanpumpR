@@ -310,7 +310,10 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
-    "clonazepam", "zolpidem", "temazepam"
+    "clonazepam", "zolpidem", "temazepam",
+    # diamorphine (2026-10-10): the opt-in illicit research model plots parent
+    # plasma only, with 6-MAM and morphine not modelled, so it has no effect site.
+    "diamorphine"
   ))
 })
 
