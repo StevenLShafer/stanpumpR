@@ -353,6 +353,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # temazepam (direct effects, no effect site) joined on 2026-10-09, with no
   # metabolite either.  Methylphenidate and lisdexamfetamine joined on
   # 2026-10-10: no calibrated concentration-effect model, no metabolite.
+  # Bupivacaine, ropivacaine and mepivacaine (systemic
+  # plasma only, regional anesthesia) joined on 2026-10-10, with no metabolite.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
@@ -361,7 +363,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
-    "methylphenidate", "lisdexamfetamine"
+    "methylphenidate", "lisdexamfetamine",
+    "bupivacaine", "ropivacaine", "mepivacaine"
   ))
 })
 
