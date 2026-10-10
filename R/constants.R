@@ -54,6 +54,22 @@ CYP2C19_VALUES  <- c(CYP2C19_POOR, CYP2C19_INTERMEDIATE, CYP2C19_NORMAL,
                      CYP2C19_RAPID, CYP2C19_ULTRARAPID)
 CYP2C19_DEFAULT <- CYP2C19_NORMAL
 
+# CYP2C9 metaboliser phenotype, read by phenytoin, whose maximal elimination
+# rate depends on it (R/drugs_phenytoin.R).  The CPIC activity-score
+# phenotypes (Karnes et al., Clin Pharmacol Ther 2021;109:302-309): normal
+# (activity score 2), intermediate (1.5 or 1) and poor (0 or 0.5).  CPIC
+# advises no adjustment at an activity score of 1.5 (*1/*2), so the
+# "intermediate" here is the activity score of 1 (*1/*3), the genotype whose
+# effect on Vmax was measured (Odani 1997); a patient with an activity score
+# of 1.5 is entered as normal.  Kept apart from CYP2D6 and CYP2C19, and from
+# any drug interaction: each is its own field.  (Claude Code, 2026-10-10, at
+# the request of Steven L. Shafer.)
+CYP2C9_POOR         <- "poor"
+CYP2C9_INTERMEDIATE <- "intermediate"
+CYP2C9_NORMAL       <- "normal"
+CYP2C9_VALUES  <- c(CYP2C9_POOR, CYP2C9_INTERMEDIATE, CYP2C9_NORMAL)
+CYP2C9_DEFAULT <- CYP2C9_NORMAL
+
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
 # their own contribution on top of it.  The default, 280, is within the normal
@@ -140,11 +156,23 @@ poRateUnits <- c("mg/day PO")
 # bioequivalent: its doses then take the default oral absorption, as plain
 # "mg PO" does (hydromorphone's liquid).  (Claude Code, 2026-10-10, at the
 # request of Steven L. Shafer.)
-ORAL_FORMULATIONS <- c("tablet", "liquid")
+#
+# The antiseizure drugs added "ER" (extended release) and "DR" (delayed
+# release, enteric coated): one drug, one systemic disposition, and an input
+# of each product's own, so a patient switched from immediate- to extended-
+# release is one row each on the same drug rather than two drugs.  (Claude
+# Code, 2026-10-10, at the request of Steven L. Shafer.)
+ORAL_FORMULATIONS <- c("tablet", "liquid", "ER", "DR")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
 
+# Prodrug equivalents: fosphenytoin is prescribed in phenytoin sodium
+# equivalents (PE), and its units say so, so a dose is never read as mg of
+# fosphenytoin.  Offered only by a drug with a Michaelis-Menten block that
+# carries the conversion (R/drugs_phenytoin.R, R/advanceMichaelisMenten.R).
+peUnits <- c("mg PE", "mg/kg PE", "mg PE IM", "mg/kg PE IM", "mg PE/min")
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
-              slUnits, inUnits, imUnits, raUnits)
+              slUnits, inUnits, imUnits, raUnits, peUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -185,6 +213,7 @@ DRUG_CATEGORIES <- c(
   "Antidepressants",
   "Stimulants",
   "Local anesthetics",
+  "Antiseizure",
   "Other"
 )
 # Ticked when the menu opens: the four drugs the app opened with before it

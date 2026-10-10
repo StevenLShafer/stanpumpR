@@ -775,6 +775,7 @@ app_server <- function(input, output, session) {
         # NULL on the first pass, before the control has reported in
         cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
         cyp2c19 = if (is.null(input$cyp2c19)) CYP2C19_DEFAULT else input$cyp2c19,
+        cyp2c9 = if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9,
         osmolality = osmolality(),
         creatinine = creatinine(),
         adjustToFFM = adjustToFFM()

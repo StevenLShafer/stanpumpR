@@ -367,7 +367,10 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
     "methylphenidate", "lisdexamfetamine",
-    "bupivacaine", "ropivacaine", "mepivacaine",
+        "bupivacaine", "ropivacaine", "mepivacaine",
+    "phenytoin", "carbamazepine", "valproate", "phenobarbital", "pentobarbital",
+    "ethosuximide", "topiramate", "lacosamide", "lamotrigine", "zonisamide",
+    "tiagabine", "levetiracetam", "eslicarbazepine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine"
   ))

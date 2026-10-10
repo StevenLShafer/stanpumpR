@@ -430,7 +430,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     formulation <- doseFormulation(dose$Units)
     others <- names(PK$oralFormulations)
     other <- dose$PO & formulation %in% others
-    if (!any(other))
+    if (!is.null(PK$michaelisMenten))
+    {
+      # Saturable elimination (phenytoin): the whole dose table at once, by
+      # numerical integration, because superposition does not hold; see
+      # R/advanceMichaelisMenten.R.  No clinical-event PK switching.
+      results <- advanceMichaelisMenten(dose, PK, maximum, plotRecovery, emerge)
+    } else if (!any(other))
     {
       results <- runEngines(dose, pkSets)
     } else {

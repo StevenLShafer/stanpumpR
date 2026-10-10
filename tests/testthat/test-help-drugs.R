@@ -42,7 +42,12 @@ plasmaOnly <- c(
   "clonazepam", "zolpidem", "temazepam",
   "methylphenidate", "lisdexamfetamine",
   # systemic plasma concentration, not the nerve block (2026-10-10)
-  "bupivacaine", "ropivacaine", "mepivacaine"
+  "bupivacaine", "ropivacaine", "mepivacaine",
+  # the antiseizure drugs: plotted as plasma, no established concentration-
+  # linked effect site (2026-10-10)
+  "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",
+  "topiramate", "lacosamide", "lamotrigine", "zonisamide", "tiagabine",
+  "levetiracetam", "eslicarbazepine", "carbamazepine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
