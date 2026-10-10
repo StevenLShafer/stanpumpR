@@ -4,9 +4,9 @@ The four covariates in the Patient Profile reach the models in fixed units: age 
 
 **No covariates.** Alfentanil, sufentanil, midazolam, oliceridine, oxycodone and the adult dexmedetomidine model are fixed sets of parameters for a typical adult. A dose in milligrams produces the same curve in every patient. Dosing per kilogram makes the amount scale with weight, but that is an assumption of the user, not of the model.
 
-**Linear weight scaling.** Etomidate, ketamine, lidocaine, methadone, morphine, pethidine, hydromorphone, rocuronium and naloxone take V1 (or every parameter) proportional to weight, with the rate constants fixed. Volumes and clearances then both scale linearly with weight. This is how the original papers reported them.
+**Linear weight scaling.** Etomidate, ketamine, lidocaine, morphine, pethidine, hydromorphone, rocuronium and naloxone take V1 (or every parameter) proportional to weight, with the rate constants fixed. Volumes and clearances then both scale linearly with weight. This is how the original papers reported them.
 
-**Allometric and covariate models.** Fentanyl scales volumes linearly and clearances to the 0.75 power of weight. Propofol (Eleveld), remifentanil (Eleveld, and Kim for obesity) and remimazolam (Eleveld) use allometric scaling together with age, sex and maturation terms.
+**Allometric and covariate models.** Methadone (Henthorn and Kharasch) scales only its deep peripheral volume, to weight to the power 1.23. Fentanyl scales volumes linearly and clearances to the 0.75 power of weight. Propofol (Eleveld), remifentanil (Eleveld, and Kim for obesity) and remimazolam (Eleveld) use allometric scaling together with age, sex and maturation terms.
 
 These three kinds describe the models as published, which is what stanpumpR runs with *Adjust weight to fat-free mass* unticked. By default the box is ticked and most of them, the fixed-parameter models included, are rescaled to the patient's fat-free mass, as described at the end of this page and in [Scaling to fat-free mass](help:models/fat-free-mass).
 
