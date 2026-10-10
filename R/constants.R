@@ -140,7 +140,12 @@ poRateUnits <- c("mg/day PO")
 # bioequivalent: its doses then take the default oral absorption, as plain
 # "mg PO" does (hydromorphone's liquid).  (Claude Code, 2026-10-10, at the
 # request of Steven L. Shafer.)
-ORAL_FORMULATIONS <- c("tablet", "liquid")
+#
+# "XR" is an extended-release product released in pulses: a drug that lists
+# it in `oralPulses` gives each XR dose as fixed fractions at fixed delays,
+# each absorbed as its default oral form (R/oral-pulses.R; first user:
+# mixedAmphetamineSalts, Adderall XR).
+ORAL_FORMULATIONS <- c("tablet", "liquid", "XR")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
