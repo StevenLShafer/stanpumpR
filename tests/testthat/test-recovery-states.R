@@ -235,7 +235,8 @@ test_that("the intravenous engines all carry their states out", {
   X <- simCpCe(data.frame(Drug = "hydromorphone", Time = 0, Dose = 2,
                           Units = "mg PO"),
                noEvents, PK, 480, TRUE)
-  expect_equal(ncol(X$recoveryStates$state), 7)
+  # Three disposition states, ke0, and one depot each for PO, IM, IN and SL
+  expect_equal(ncol(X$recoveryStates$state), 8)
   expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
 
   # advanceClosedFormMetabolite, for a parent that has an effect site of its
