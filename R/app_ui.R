@@ -186,15 +186,12 @@ app_ui <- function() {
                 ),
 
                 # Read by phenytoin, whose maximal elimination rate depends on
-                # CYP2C9.  The CPIC phenotypes; intermediate is activity score
-                # 1 (*1/*3), and a score of 1.5 is entered as normal (see
-                # CYP2C9_VALUES in R/constants.R).
+                # CYP2C9 diplotype, read by meloxicam and phenytoin (see
+                # CYP2C9_VALUES in R/constants.R).  *1/*1 is the reference.
                 selectInput(
                   inputId = "cyp2c9",
                   label = "CYP 2C9",
-                  c("Normal"                  = CYP2C9_NORMAL,
-                    "Intermediate (AS 1.0)"   = CYP2C9_INTERMEDIATE,
-                    "Poor"                    = CYP2C9_POOR),
+                  CYP2C9_VALUES,
                   selected = CYP2C9_DEFAULT
                 ),
 

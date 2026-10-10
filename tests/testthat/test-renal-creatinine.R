@@ -2,8 +2,14 @@
 # See R/renalFunction.R.
 
 renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex",
-                "gabapentin", "pregabalin", "oxycodone",
+                "gabapentin", "pregabalin", "oxycodone", "meloxicam",
                 "lacosamide", "levetiracetam")
+
+# The elimination clearance of each of a drug's systems: its own and those of
+# its parallel systems (meloxicam's renal term is on its intravenous system).
+systemClearances <- function(pk)
+  c(pk$PK$default$cl1,
+    vapply(pk$parallelSystems, function(s) s$PK$default$cl1, numeric(1)))
 
 test_that("a blank creatinine is the assumed normal value for age and sex", {
   expect_equal(patientCreatinine(NULL, 40, "male"), SCR_ASSUMED_MALE)
@@ -29,6 +35,7 @@ test_that("each renal model is unchanged at the assumed creatinine", {
       entered <- getDrugPK(drug, 70, 170, 50, sex,
                            creatinine = assumedCreatinine(50, sex))
       expect_equal(entered$PK, blank$PK, info = paste(drug, sex))
+      expect_equal(entered$parallelSystems, blank$parallelSystems, info = paste(drug, sex))
     }
   }
 })
@@ -69,9 +76,10 @@ test_that("a child's creatinine is read against the normal for age", {
 
 test_that("a raised creatinine lowers every renal clearance", {
   for (drug in renalDrugs) {
-    normal <- getDrugPK(drug, 70, 170, 50, "male")$PK$default$cl1
-    raised <- getDrugPK(drug, 70, 170, 50, "male", creatinine = 3)$PK$default$cl1
-    expect_lt(raised, normal, label = drug)
+    normal <- systemClearances(getDrugPK(drug, 70, 170, 50, "male"))
+    raised <- systemClearances(getDrugPK(drug, 70, 170, 50, "male", creatinine = 3))
+    expect_lt(min(raised - normal), 0, label = drug)
+    expect_true(all(raised <= normal), label = drug)
   }
 })
 

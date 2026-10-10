@@ -179,7 +179,7 @@ superposeEngineResults <- function(parts, plotRecovery, emerge)
   for (part in parts[-1])
   {
     if (!identical(part$Time, out$Time))
-      stop("Cannot add oral formulations run on different time lines.")
+      stop("Cannot add engine runs on different time lines.")
     for (col in setdiff(names(out), c("Time", "Recovery")))
       out[[col]] <- out[[col]] + part[[col]]
   }
@@ -256,6 +256,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     expanded <- expandScheduledDoses(dose, maximum)
     dose <- expanded$dose
 
+    # A pulsed extended-release product (Adderall XR): each dose of a
+    # formulation the drug lists in oralPulses becomes its pulses, ordinary
+    # oral doses at fixed delays; see R/oral-pulses.R.
+    dose <- expandOralPulses(dose, PK$oralPulses, maximum)
+
     # Convert all doses to base units
     switch(
       PK$Concentration.Units,  # Units (per ml)
@@ -315,6 +320,16 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IN <- route == ROUTE_IN & !rate
     dose$SL <- route == ROUTE_SL & !rate
     dose$RA <- route == ROUTE_RA & !rate
+    # A continuous perineural infusion ("mg/hr RA", raRateUnits): a rate into
+    # the tissue depot, not into the vein.  Only advanceClosedFormPO_IM_IN()
+    # carries it; see there.
+    dose$RArate <- route == ROUTE_RA & rate
+    # Set before the slow-depot rows below are added: `route` and `rate` are
+    # per row of the table as entered.  Set after, they no longer matched the
+    # longer table, so a drug with a slow RA depot given intravenously and by
+    # RA in one table stopped with an error, or, when the lengths happened to
+    # divide, had its rows mislabelled.  (Claude Code, 2026-10-10.)
+    dose$Bolus <- route == ROUTE_IV & !rate
     # A drug with a slow second RA depot (ka_RA_slow in its model; see
     # getDrugPK()) absorbs each RA dose through two parallel depots.  The
     # dose rows are duplicated, the copy flagged as the internal route
@@ -327,10 +342,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       slowRows <- dose[dose$RA, , drop = FALSE]
       slowRows$RA <- FALSE
       slowRows$RAslow <- TRUE
+      slowRows$RArate <- FALSE
+      slowRows$Bolus <- FALSE
       dose <- rbind(dose, slowRows)
       dose <- dose[order(dose$Time), , drop = FALSE]
     }
-    dose$Bolus <- route == ROUTE_IV & !rate
 
     # Saturable oral absorption (gabapentin): each oral dose is scaled by the
     # fraction absorbed at its own size, in mg per administration.  The dose is
@@ -346,6 +362,23 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
         oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv, PK$sublingualSaturation)
 
+    # A drug with a second oral depot (ka_PO2 in its model; see getDrugPK())
+    # absorbs each oral dose through two parallel depots, each with its own
+    # lag.  As for the slow RA depot, the dose rows are duplicated, the copy
+    # flagged as the internal route "PO2", and the split of the dose is
+    # carried by the two bioavailabilities.  After the saturation scaling, so
+    # that both copies carry the scaled dose.
+    dose$PO2 <- rep(FALSE, nrow(dose))
+    hasPO2 <- any(vapply(PK$PK, function(s) isTRUE(s$ka_PO2 > 0), logical(1)))
+    if (hasPO2 && any(dose$PO))
+    {
+      secondRows <- dose[dose$PO, , drop = FALSE]
+      secondRows$PO <- FALSE
+      secondRows$PO2 <- TRUE
+      dose <- rbind(dose, secondRows)
+      dose <- dose[order(dose$Time), , drop = FALSE]
+    }
+
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp
     # and Ce come out in) is replaced by the infusion rows the TCI controller
@@ -354,6 +387,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     tci <- NULL
     if (any(isTciUnit(dose$Units)))
     {
+      # The controller inverts one system; it cannot target a sum of them.
+      if (!is.null(PK$parallelSystems))
+        stop("Target-controlled infusion is not available for a drug ",
+             "simulated as several parallel systems.")
       schedule <- tciSchedule(dose, PK, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
@@ -390,7 +427,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         {
           results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
         } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) +
-                   sum(dose$RA) + sum(dose$RAslow) == 0)
+                   sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
+                   sum(dose$PO2) == 0)
         {
           results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
         } else {
@@ -430,16 +468,39 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     formulation <- doseFormulation(dose$Units)
     others <- names(PK$oralFormulations)
     other <- dose$PO & formulation %in% others
+    # A drug plotted as the sum of parallel systems (ketorolac's S and R
+    # enantiomers; see parallelSystemSets() in getDrugPK.R) runs once for each,
+    # every dose scaled by that system's share, and the runs are added.  The
+    # systems share the doses, their lags and the effect site, so every run is
+    # on the same time line.  getDrugPK() refuses them alongside further oral
+    # formulations.  A system limited to some routes (meloxicam's oral and
+    # intravenous fits) gets the other routes' doses as zero, not dropped, so
+    # that it stays on the same time line; its absorption parameters must
+    # then match the other systems' (the same lags), which the drug ensures.
+    shareOf <- function(dose, fraction, routes = NULL) {
+      if (!is.null(fraction)) dose$Dose <- dose$Dose * fraction
+      if (!is.null(routes)) dose$Dose[!doseRoute(dose$Units) %in% routes] <- 0
+      dose
+    }
     if (!is.null(PK$michaelisMenten))
     {
       # Saturable elimination (phenytoin): the whole dose table at once, by
       # numerical integration, because superposition does not hold; see
-      # R/advanceMichaelisMenten.R.  No clinical-event PK switching.
+      # R/advanceMichaelisMenten.R.  No clinical-event PK switching, no
+      # parallel systems or extra oral formulations (getDrugPK() refuses them).
       results <- advanceMichaelisMenten(dose, PK, maximum, plotRecovery, emerge)
+    } else if (!is.null(PK$parallelSystems))
+    {
+      parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))
+      for (sys in PK$parallelSystems)
+        parts[[length(parts) + 1]] <- runEngines(
+          shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
+      results <- superposeEngineResults(parts, plotRecovery, emerge)
     } else if (!any(other))
     {
-      results <- runEngines(dose, pkSets)
+      results <- runEngines(shareOf(dose, PK$doseFraction), pkSets)
     } else {
+      dose <- shareOf(dose, PK$doseFraction)
       base <- dose
       base$Dose[other] <- 0
       parts <- list(runEngines(base, pkSets))

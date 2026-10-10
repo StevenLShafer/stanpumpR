@@ -264,8 +264,8 @@ parameters <- rbind(
   par("phenytoin", "salt factor (sodium)", "0.9199", "unitless (252.27/274.25)", LD, "molecular weights", odani),
   par("phenytoin", "conversion half-life (fosphenytoin)", "15", "min", LD, "Cerebyx label; Boucher 1989 8.0 min", "https://doi.org/10.1002/jps.2600781110"),
   par("phenytoin", "ka IM (fosphenytoin)", "2.47", "1/h", E, "Boucher 1989, 10 adults", "https://doi.org/10.1002/jps.2600781110"),
-  par("phenytoin", "CYP2C9 Vmax (intermediate)", "0.67", "x Vmax", E, "Odani 1997, *1/*3 heterozygotes", "https://doi.org/10.1016/S0009-9236(97)90031-X"),
-  par("phenytoin", "CYP2C9 Vmax (poor)", "0.50", "x Vmax", GD, "CPIC 2021 maintenance guidance", "https://doi.org/10.1002/cpt.2008"),
+  par("phenytoin", "CYP2C9 Vmax (*1/*3, *2/*2)", "0.67", "x Vmax", E, "Odani 1997, *1/*3 heterozygotes", "https://doi.org/10.1016/S0009-9236(97)90031-X"),
+  par("phenytoin", "CYP2C9 Vmax (*2/*3, *3/*3)", "0.50", "x Vmax", GD, "CPIC 2021 maintenance guidance", "https://doi.org/10.1002/cpt.2008"),
 
   par("valproate", "CL/F", "0.646", "L/h at 70 kg (x (WT/70)^0.75)", E, "Teixeira-da-Silva 2022, 836 patients", "https://doi.org/10.3390/pharmaceutics14040811"),
   par("valproate", "V/F", "14", "L at 70 kg (x WT/70)", FX, "Teixeira-da-Silva 2022", "https://doi.org/10.3390/pharmaceutics14040811"),

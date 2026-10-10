@@ -54,21 +54,15 @@ CYP2C19_VALUES  <- c(CYP2C19_POOR, CYP2C19_INTERMEDIATE, CYP2C19_NORMAL,
                      CYP2C19_RAPID, CYP2C19_ULTRARAPID)
 CYP2C19_DEFAULT <- CYP2C19_NORMAL
 
-# CYP2C9 metaboliser phenotype, read by phenytoin, whose maximal elimination
-# rate depends on it (R/drugs_phenytoin.R).  The CPIC activity-score
-# phenotypes (Karnes et al., Clin Pharmacol Ther 2021;109:302-309): normal
-# (activity score 2), intermediate (1.5 or 1) and poor (0 or 0.5).  CPIC
-# advises no adjustment at an activity score of 1.5 (*1/*2), so the
-# "intermediate" here is the activity score of 1 (*1/*3), the genotype whose
-# effect on Vmax was measured (Odani 1997); a patient with an activity score
-# of 1.5 is entered as normal.  Kept apart from CYP2D6 and CYP2C19, and from
-# any drug interaction: each is its own field.  (Claude Code, 2026-10-10, at
-# the request of Steven L. Shafer.)
-CYP2C9_POOR         <- "poor"
-CYP2C9_INTERMEDIATE <- "intermediate"
-CYP2C9_NORMAL       <- "normal"
-CYP2C9_VALUES  <- c(CYP2C9_POOR, CYP2C9_INTERMEDIATE, CYP2C9_NORMAL)
-CYP2C9_DEFAULT <- CYP2C9_NORMAL
+# CYP2C9 DIPLOTYPE, read by the models that name it: meloxicam, whose genotype
+# effect on clearance is estimated per allele (Aoyama 2017), and phenytoin,
+# which maps the diplotype to a maximal-elimination-rate multiplier through the
+# CPIC activity score (Karnes et al., Clin Pharmacol Ther 2021;109:302-309;
+# Odani 1997 measured the *1/*3 effect).  The six common *1/*2/*3 diplotypes;
+# *1/*1 (two normal-function alleles) is the reference.  Kept apart from CYP2D6
+# and CYP2C19, and from any drug interaction: each is its own field.
+CYP2C9_VALUES  <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
+CYP2C9_DEFAULT <- "*1/*1"
 
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
@@ -130,10 +124,15 @@ imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 # exactly as the oral, intramuscular and intranasal routes.
 slUnits <- c("mg SL", "mg/kg SL", "mcg SL", "mcg/kg SL")
 # Regional anesthesia (ROUTE_RA): a single injection into tissue, the whole
-# dose entering a depot that is absorbed first-order.  No rate units: a
-# perineural catheter infusion would need a rate through the depot, which the
-# engines do not carry, and no scheduled frequencies.
+# dose entering a depot that is absorbed first-order.  No scheduled
+# frequencies.
 raUnits <- c("g RA", "g/kg RA", "mg RA", "mg/kg RA", "mcg RA", "mcg/kg RA")
+# A continuous perineural (catheter) infusion: a constant rate INTO the
+# tissue depot, absorbed from it first-order as an RA dose is.  A rate by
+# kind (isRateUnit()) and RA by route: simCpCe() flags its rows RArate, and
+# advanceClosedFormPO_IM_IN() advances them exactly, as an infusion through
+# the depot.  (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
+raRateUnits <- c("mg/hr RA")
 
 # Constant-rate oral input: a daily oral dose spread evenly over the day, as
 # Pollak, Bouillon and Shafer modelled long-term oral amiodarone (400 mg/d as
@@ -162,7 +161,12 @@ poRateUnits <- c("mg/day PO")
 # of each product's own, so a patient switched from immediate- to extended-
 # release is one row each on the same drug rather than two drugs.  (Claude
 # Code, 2026-10-10, at the request of Steven L. Shafer.)
-ORAL_FORMULATIONS <- c("tablet", "liquid", "ER", "DR")
+#
+# "XR" is an extended-release product released in pulses: a drug that lists
+# it in `oralPulses` gives each XR dose as fixed fractions at fixed delays,
+# each absorbed as its default oral form (R/oral-pulses.R; first user:
+# mixedAmphetamineSalts, Adderall XR).
+ORAL_FORMULATIONS <- c("tablet", "liquid", "ER", "DR", "XR")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
 
 # Prodrug equivalents: fosphenytoin is prescribed in phenytoin sodium
@@ -172,7 +176,7 @@ poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATION
 peUnits <- c("mg PE", "mg/kg PE", "mg PE IM", "mg/kg PE IM", "mg PE/min")
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
-              slUnits, inUnits, imUnits, raUnits, peUnits)
+              slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -213,6 +217,7 @@ DRUG_CATEGORIES <- c(
   "Antidepressants",
   "Stimulants",
   "Local anesthetics",
+  "Antiemetics",
   "Antiseizure",
   "Other"
 )

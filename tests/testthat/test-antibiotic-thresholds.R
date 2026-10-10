@@ -37,7 +37,7 @@ test_that("each antibiotic's default threshold is free drug at its MIC", {
 })
 
 
-test_that("the antibiotics, amiodarone, zolpidem and temazepam are exactly the drugs with no effect site and a threshold", {
+test_that("the antibiotics, amiodarone, zolpidem, temazepam and ketorolac are exactly the drugs with no effect site and a threshold", {
   # A policy pin.  Until 2026-10-07 only the antibiotics were timed on their
   # plasma by default.  Amiodarone joined deliberately: its threshold is the
   # bottom of the therapeutic window, 1.0 mg/L of serum amiodarone, and it is
@@ -47,6 +47,9 @@ test_that("the antibiotics, amiodarone, zolpidem and temazepam are exactly the d
   # the FDA's 50 ng/mL driving level (R/drugs_zolpidem.R).  Temazepam joined
   # the same day, with no equilibration delay and a threshold of 250 ng/mL,
   # above which psychometric performance deteriorated (R/drugs_temazepam.R).
+  # Ketorolac joined on 2026-10-10: no published ke0, and its threshold is
+  # the adult analgesic EC50 of 0.37 mg/L racemate in plasma that Cloesmeijer
+  # 2021 cite (R/drugs_ketorolac.R).
   dd <- getDrugDefaultsGlobal()
   timedOnPlasma <- character(0)
   for (drug in dd$Drug[!isGasDrug(dd$Drug)]) {
@@ -55,8 +58,10 @@ test_that("the antibiotics, amiodarone, zolpidem and temazepam are exactly the d
       timedOnPlasma <- c(timedOnPlasma, drug)
   }
   expect_setequal(timedOnPlasma,
-                  c(antibioticMicTable()$Drug, "amiodarone", "zolpidem", "temazepam"))
-  expect_false(any(c("amiodarone", "zolpidem", "temazepam") %in% antibioticMicTable()$Drug))
+                  c(antibioticMicTable()$Drug, "amiodarone", "zolpidem", "temazepam",
+                    "ketorolac"))
+  expect_false(any(c("amiodarone", "zolpidem", "temazepam", "ketorolac") %in%
+                     antibioticMicTable()$Drug))
   # Acute intravenous amiodarone (2026-10-08) deliberately has no default
   # threshold: the window is for chronic troughs (R/drugs_amiodaroneIV.R).
   expect_false("amiodaroneIV" %in% timedOnPlasma)

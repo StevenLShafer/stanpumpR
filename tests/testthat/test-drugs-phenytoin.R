@@ -17,14 +17,17 @@ test_that("the reference patient gets Odani's parameters, switch off", {
   expect_equal(unname(a$michaelisMenten$kConversion), log(2) / 15)
 })
 
-test_that("CYP2C9 lowers Vmax and nothing else", {
-  n <- phenytoin(70, 170, 40, "male", adjustToFFM = FALSE, cyp2c9 = "normal")
-  i <- phenytoin(70, 170, 40, "male", adjustToFFM = FALSE, cyp2c9 = "intermediate")
-  p <- phenytoin(70, 170, 40, "male", adjustToFFM = FALSE, cyp2c9 = "poor")
+test_that("CYP2C9 diplotype lowers Vmax and nothing else", {
+  n <- phenytoin(70, 170, 40, "male", adjustToFFM = FALSE, cyp2c9 = "*1/*1")
+  i <- phenytoin(70, 170, 40, "male", adjustToFFM = FALSE, cyp2c9 = "*1/*3")
+  p <- phenytoin(70, 170, 40, "male", adjustToFFM = FALSE, cyp2c9 = "*3/*3")
+  expect_equal(n$michaelisMenten$vmax,
+               phenytoin(70, 170, 40, "male", adjustToFFM = FALSE,
+                         cyp2c9 = "*1/*2")$michaelisMenten$vmax)
   expect_equal(i$michaelisMenten$vmax, n$michaelisMenten$vmax * 0.67)
   expect_equal(p$michaelisMenten$vmax, n$michaelisMenten$vmax * 0.5)
   expect_equal(i$PK$default$v1, n$PK$default$v1)
-  expect_error(phenytoin(70, 170, 40, "male", cyp2c9 = "ultrarapid"))
+  expect_error(phenytoin(70, 170, 40, "male", cyp2c9 = "normal"))
 })
 
 test_that("it scales to fat-free mass", {

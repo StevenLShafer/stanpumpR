@@ -21,9 +21,15 @@ thresholdTableToDefaults(
 \item{macThreshold}{the current MAC threshold, kept if the table has no MAC row}
 }
 \value{
-a list with the updated \code{drugDefaults} and \code{macThreshold}
+a list with the updated \code{drugDefaults} and \code{macThreshold},
+and \code{invalid}, the drugs whose entries were refused (empty when all
+were accepted; otherwise \code{drugDefaults} and \code{macThreshold} are
+returned unchanged)
 }
 \description{
 The inverse of \code{thresholdTableForDisplay()}.  Rows not in the table keep
-the threshold they had; a blank or negative entry is treated as no threshold.
+the threshold they had.  Zero, entered as 0, is no threshold.  An entry that
+is not a non-negative number (blank, ".", text, negative) is refused rather
+than read as 0: nothing is changed, and \code{invalid} names the rows, so
+the dialog can say which to correct.
 }

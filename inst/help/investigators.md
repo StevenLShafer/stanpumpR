@@ -85,6 +85,8 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | glycopyrrolate | **C. Bartels** and colleagues (2013) | Three-compartment kinetics of the active cation |
 | amiodarone, desethylamiodarone | **P. Timothy Pollak**, **Thomas Bouillon** and Shafer (2000) | Apparent oral two-compartment kinetics of the parent and its metabolite in long-term therapy, with each day's oral dose as a constant rate |
 | amiodaroneIV | **J. M. Korth-Bradley** and colleagues (1996) | Per-kilogram two-compartment kinetics of acute intravenous amiodarone, for the first one to three days |
+| ondansetron | **M. D. Chiang** and colleagues (2021) | Two-compartment intravenous kinetics in adults |
+| aprepitant, fosaprepitant | **A. L. Nijstad** and colleagues (2023) | One-compartment kinetics with allometric weight scaling, fitted in children |
 
 ## Pharmacodynamics and methods
 

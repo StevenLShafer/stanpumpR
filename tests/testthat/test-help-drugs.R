@@ -40,9 +40,13 @@ plasmaOnly <- c(
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
   "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
   "clonazepam", "zolpidem", "temazepam",
-  "methylphenidate", "lisdexamfetamine",
+  "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts",
+  # no equilibration model for antiemesis (2026-10-10)
+  "ondansetron", "aprepitant", "fosaprepitant",
   # systemic plasma concentration, not the nerve block (2026-10-10)
   "bupivacaine", "ropivacaine", "mepivacaine",
+  # NSAIDs with no published ke0 (2026-10-10)
+  "diclofenac", "meloxicam", "ketorolac",
   # the antiseizure drugs: plotted as plasma, no established concentration-
   # linked effect site (2026-10-10)
   "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",

@@ -65,14 +65,17 @@ test_that("only the expected oral drugs carry an absorption lag", {
     if (is.null(PK)) next
     for (s in PK$PK)
     {
-      lags <- c(s$tlag_PO, s$tlag_IM, s$tlag_IN)
+      lags <- c(s$tlag_PO, s$tlag_IM, s$tlag_IN, s$tlag_PO2)
       if (any(!is.na(lags) & lags > 0)) lagged <- c(lagged, drug)
     }
   }
   expect_setequal(unique(lagged),
                   c("gabapentin", "pregabalin", "acetaminophen", "ibuprofen",
                     "zolpidem", "clonazepam", "methylphenidate",
-                    "lisdexamfetamine", "morphine", "sertraline"))
+                    "lisdexamfetamine", "morphine", "sertraline",
+                    # both lagged oral depots (2026-10-10); meloxicam's
+                    # lag is on its second depot only
+                    "diclofenac", "meloxicam"))
 })
 
 

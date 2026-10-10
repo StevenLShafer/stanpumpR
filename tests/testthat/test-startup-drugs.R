@@ -25,10 +25,11 @@ test_that("the menu lists the categories in order, each sorted by name", {
     titles <- tolower(helpDrugTitle(drugs))
     expect_identical(titles, sort(titles))
   }
-  # The non-opioid analgesics given by mouth (acetaminophen and ibuprofen IV
-  # too); the oral opioids stay under Opioids
+  # The non-opioid analgesics given by mouth (acetaminophen, ibuprofen,
+  # diclofenac and ketorolac IV too); the oral opioids stay under Opioids
   expect_identical(choices[["Oral analgesics"]],
-                   c("acetaminophen", "gabapentin", "ibuprofen", "pregabalin"))
+                   c("acetaminophen", "diclofenac", "gabapentin", "ibuprofen",
+                     "ketorolac", "meloxicam", "pregabalin"))
   expect_identical(choices[["Hypnotics and sedatives"]],
                    c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "etomidate",
                      "ketamine", "lorazepam", "midazolam", "propofol",

@@ -120,6 +120,35 @@ those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug
 The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
 
+**Optional — a second oral depot.** A formulation absorbed through two parallel first-order
+paths, each with its own lag, adds `ka_PO2` (1/min), `fraction_PO2` (the share of the
+**absorbed** oral dose that takes the second path) and optionally `tlag_PO2` (min; the oral lag
+if absent) beside `ka_PO`, `bioavailability_PO` and `tlag_PO`. `bioavailability_PO` stays the
+absolute bioavailability of the whole dose, applied once; `getDrugPK()` splits it between the
+depots, and `simCpCe()` duplicates each oral dose row into the internal route `PO2`, as it
+does for the slow RA depot. Diclofenac is the example (`R/drugs_diclofenac.R`); meloxicam uses
+it with apparent parameters and `bioavailability_PO = 1`. Not available with an active
+metabolite, several oral formulations, or a `tPeak` measured after an oral dose.
+
+**Optional — parallel systems.** A drug whose plotted concentration is the sum of independent
+linear systems sharing its doses (ketorolac: the S and R enantiomers, fitted separately)
+returns `parallelSystems`, a list of `list(name, doseFraction, PK)` entries whose `PK` has the
+same shape and event names as the drug's own, plus its own `doseFraction` (the share of each
+dose its own system receives; a salt or racemate conversion goes here). `getDrugPK()` builds
+each system's coefficients on the drug's effect site, and `simCpCe()` runs every system on the
+same doses and adds the results, which is exact. Target-controlled infusion is refused for
+such a drug, and it cannot have a metabolite, several oral formulations, saturable absorption
+or an osmotic block. The help page lists the systems under *Parallel systems*. See
+`R/drugs_ketorolac.R`.
+
+A system can also be limited to some routes: `routes` (values of `DOSE_ROUTES`) on a
+`parallelSystems` entry, and on the drug's own list for its own system. A system then gets the
+other routes' doses as zero, so it stays on the same time line. Give every system the same
+absorption parameters (the same lags) even where it receives none of those doses. Meloxicam
+uses this to send oral doses to its apparent oral fit (`routes = "PO"`) and intravenous doses to
+the separate ANJESO fit (`routes = "IV"`) (`R/drugs_meloxicam.R`). This is a way to offer a
+route from a separate study without inventing a bioavailability that links the two fits.
+
 **Optional — oral input as a constant daily rate.** A model fitted with each day's oral dose
 spread evenly over the day, rather than absorbed first-order, offers the unit `mg/day PO`
 (`poRateUnits` in `R/constants.R`). It is oral by route, so the help and the dropdowns call it
@@ -226,6 +255,25 @@ concentrations correctly, because the unknown factor cancels, and intravenous on
 apparent scale already contains it. Hydrocodone is the example. A drug offered only as the
 constant-rate oral unit `mg/day PO` (amiodarone) carries no absorption fields at all: the rate
 is applied to the apparent parameters as it stands.
+
+**Optional — a pulsed extended-release product.** A product designed as fixed
+fractions released at fixed delays (Adderall XR: two bead populations, half at once and
+half 4 h later) returns an `oralPulses` block naming the formulation word that selects it:
+
+```r
+oralPulses = list(XR = list(fraction = c(0.5, 0.5), delay = c(0, 240)))   # delay in minutes
+```
+
+and lists `mg PO XR` (and `mg PO XR qd`) in its CSV `Units`. `simCpCe()` replaces each
+dose of that formulation by its pulses before anything else happens to it
+(`expandOralPulses()`, `R/oral-pulses.R`; after the scheduled repeats are expanded): plain
+`mg PO` doses of `fraction[i]` of it at its time plus `delay[i]`, each absorbed with the
+drug's default `ka_PO`, `bioavailability_PO` and `tlag_PO`. The fractions must sum to one,
+so the amount given is unchanged (`validateOralPulses()`). This describes release, not
+absorption, and suits a product shown to be bioequivalent to its immediate-release form
+given in split doses; a continuous release (an osmotic pump) is not represented this way.
+The drug's help page must say how the pulses were chosen. `R/drugs_mixedAmphetamineSalts.R`
+is the example.
 
 **Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
 that the fraction of an oral dose absorbed falls as the dose rises, returns an

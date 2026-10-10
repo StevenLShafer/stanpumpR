@@ -104,16 +104,21 @@
 #
 # CYP2C9
 # ======
-# Odani A et al. (Clin Pharmacol Ther 1997;62:287-292), 44 Japanese patients:
-# Vmax 33% lower in *1/*3 heterozygotes (CPIC activity score 1).  That is the
-# "intermediate" phenotype here (CYP2C9_VALUES), x 0.67.  For POOR
-# metabolisers (activity score 0 or 0.5) no Vmax was estimated in a population
-# model the session could retrieve; CPIC (Karnes 2021) advises a maintenance
-# dose at least 50% lower, which for a drug whose steady-state dose rate is
-# proportional to Vmax is Vmax x 0.5.  That factor is GUIDELINE-ANCHORED, not
-# an estimate, and is recorded so in the parameter audit.  CYP2C19 reduced
-# Vmax by up to 14% in Odani 1997, not significant on its own, and is not
-# applied.  No CYP2D6 term: none is established for phenytoin.
+# The CYP2C9 diplotype (CYP2C9_VALUES) sets a maximal-elimination-rate
+# multiplier through the CPIC activity score (Karnes 2021).  Odani A et al.
+# (Clin Pharmacol Ther 1997;62:287-292), 44 Japanese patients, measured Vmax
+# 33% lower in *1/*3 heterozygotes (activity score 1); that is the anchor.
+#   *1/*1, *1/*2  (activity score 2 or 1.5, normal): x 1.0 -- CPIC advises no
+#                 adjustment at 1.5.
+#   *1/*3, *2/*2  (activity score 1, intermediate): x 0.67 (Odani 1997).
+#   *2/*3, *3/*3  (activity score 0.5 or 0, poor): x 0.50.  No population Vmax
+#                 was retrievable for poor metabolisers; CPIC advises a
+#                 maintenance dose at least 50% lower, which for a drug whose
+#                 steady-state dose rate is proportional to Vmax is Vmax x 0.5.
+#                 That factor is GUIDELINE-ANCHORED, not an estimate, and is
+#                 recorded so in the parameter audit.
+# CYP2C19 reduced Vmax by up to 14% in Odani 1997, not significant on its own,
+# and is not applied.  No CYP2D6 term: none is established for phenytoin.
 #
 # NOT MODELLED
 # ============
@@ -159,8 +164,11 @@
 #' Mass of phenytoin acid in a unit mass of phenytoin sodium
 PHENYTOIN_SODIUM_FRACTION <- 252.27 / 274.25
 
-#' Vmax multiplier by CYP2C9 phenotype; see the header of R/drugs_phenytoin.R
-PHENYTOIN_CYP2C9_VMAX <- c(normal = 1, intermediate = 0.67, poor = 0.5)
+#' Vmax multiplier by CYP2C9 diplotype; see the header of R/drugs_phenytoin.R
+PHENYTOIN_CYP2C9_VMAX <- c(
+  "*1/*1" = 1, "*1/*2" = 1, "*1/*3" = 0.67,
+  "*2/*2" = 0.67, "*2/*3" = 0.5, "*3/*3" = 0.5
+)
 
 #' Phenytoin pharmacokinetics (intravenous, oral and as fosphenytoin)
 #'
@@ -169,7 +177,7 @@ PHENYTOIN_CYP2C9_VMAX <- c(normal = 1, intermediate = 0.67, poor = 0.5)
 #' (\code{advanceMichaelisMenten()}).  See the header of the file.
 #'
 #' @inheritParams cefazolin
-#' @param cyp2c9 CYP2C9 phenotype, one of \code{CYP2C9_VALUES}
+#' @param cyp2c9 CYP2C9 diplotype, one of \code{CYP2C9_VALUES}
 #' @returns a list in the shape \code{getDrugPK()} expects, with a
 #'   \code{michaelisMenten} block
 #' @export
