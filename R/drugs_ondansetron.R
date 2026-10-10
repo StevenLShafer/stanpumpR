@@ -18,9 +18,9 @@
 #
 # WHAT IS LEFT OUT
 # ================
-# Chiang reported an age effect on clearance (exponent -4.91).  Its exact
-# parameterisation, and the CL/Vc covariance, could not be verified from the
-# retrieved table, so the age term is NOT applied: this is the reference
+# Chiang reported central volume falling with age (power exponent -4.91).
+# Its exact parameterisation, and the CL/Vc covariance, could not be verified
+# from the retrieved table, so the age term is NOT applied: this is the reference
 # patient's model, not the full covariate model.  The source has no
 # children; a child here is the adult reference scaled to fat-free mass,
 # which is an extrapolation (Mondick 2010 fitted ages 1-48 months, but its

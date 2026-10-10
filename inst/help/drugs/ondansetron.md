@@ -4,7 +4,7 @@ Ondansetron's parameters are from Chiang and colleagues (*Br J Clin Pharmacol* 2
 
 ### What is left out
 
-Chiang found clearance falling with age, but the exact form of that term, and the correlation between clearance and central volume, could not be verified from the published table, so **the age effect is not applied**: every patient gets the reference adult's model, scaled for size. Between-patient variability (clearance 50 per cent, central volume 42 per cent) is not shown. Beyond 3 hours the curve extrapolates the sampled window.
+Chiang found the central volume falling with age (a power exponent of -4.91), but the exact form of that term, and the correlation between clearance and central volume, could not be verified from the published table, so **the age effect is not applied**: every patient gets the reference adult's model, scaled for size. Between-patient variability (clearance 50 per cent, central volume 42 per cent) is not shown. Beyond 3 hours the curve extrapolates the sampled window.
 
 Oral ondansetron is not offered; no absorption model was assembled.
 
