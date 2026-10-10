@@ -12,6 +12,8 @@ Add `?debug=1` to the URL (or `&debug=1` if the URL already has a query string) 
 
 The level can be changed from the **Debug level** selector in the panel.
 
+The level stays in the address bar, ahead of the saved simulation, so reloading the page keeps it. It is left out when it matches the server's default level: in production, where debug is off by default, choosing **Off** takes it out; in a test deployment, where debug is on by default, **Off** shows as `debug=0`, so that survives a reload too. The link sent with an emailed slide never carries it.
+
 ## The log
 
 The left column is a running log written by `outputComments()` calls throughout the server. It shows the dose table after cleaning, the pharmacokinetic parameters calculated for each drug, the events applied, and the state restored from a URL. It is the first place to look when a simulation does not do what you expected.

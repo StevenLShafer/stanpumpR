@@ -37,6 +37,7 @@ plasmaOnly <- c(
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
   "clonazepam", "zolpidem", "temazepam",
+  "methylphenidate", "lisdexamfetamine",
   # systemic plasma concentration, not the nerve block (2026-10-10)
   "bupivacaine", "ropivacaine", "mepivacaine"
 )

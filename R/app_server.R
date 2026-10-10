@@ -18,6 +18,8 @@ app_server <- function(input, output, session) {
   })
   observeEvent(input$debug_level, ignoreInit = TRUE, {
     session$userData$debug(input$debug_level)
+    # Rewrite the address bar with the new level (withDebugQuery())
+    session$doBookmark()
   })
 
   # Write out logs to the log section
@@ -434,7 +436,9 @@ app_server <- function(input, output, session) {
   # This gets called after bookmarking is completed
   onBookmarked(function(url) {
     profileCode({
-      updateQueryString(url)
+      # The address bar keeps ?debug= across reloads; url(), which is
+      # emailed with a slide, does not carry it.
+      updateQueryString(withDebugQuery(url, isolate(session$userData$debug()), config$debug))
       url(url)
     }, name = "onBookmarked()")
   })

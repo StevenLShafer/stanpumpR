@@ -294,9 +294,10 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # (2026-10-07) and amiodaroneIV (2026-10-08) are active but have no
   # published human ke0 for the antiarrhythmic effect; clonazepam's,
   # zolpidem's and temazepam's published effects are direct functions of
-  # plasma concentration (2026-10-09); bupivacaine, ropivacaine and
-  # mepivacaine model systemic plasma concentration, not the nerve block
-  # (2026-10-10).  Pinned because the count has been got wrong by hand more
+  # plasma concentration (2026-10-09); methylphenidate and lisdexamfetamine
+  # have no calibrated concentration-effect model for any ADHD endpoint;
+  # bupivacaine, ropivacaine and mepivacaine model systemic plasma
+  # concentration, not the nerve block (2026-10-10).  Pinned because the count has been got wrong by hand more
   # than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
@@ -313,6 +314,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
+    "methylphenidate", "lisdexamfetamine",
     "bupivacaine", "ropivacaine", "mepivacaine"
   ))
 })
