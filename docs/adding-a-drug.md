@@ -256,6 +256,25 @@ apparent scale already contains it. Hydrocodone is the example. A drug offered o
 constant-rate oral unit `mg/day PO` (amiodarone) carries no absorption fields at all: the rate
 is applied to the apparent parameters as it stands.
 
+**Optional — a pulsed extended-release product.** A product designed as fixed
+fractions released at fixed delays (Adderall XR: two bead populations, half at once and
+half 4 h later) returns an `oralPulses` block naming the formulation word that selects it:
+
+```r
+oralPulses = list(XR = list(fraction = c(0.5, 0.5), delay = c(0, 240)))   # delay in minutes
+```
+
+and lists `mg PO XR` (and `mg PO XR qd`) in its CSV `Units`. `simCpCe()` replaces each
+dose of that formulation by its pulses before anything else happens to it
+(`expandOralPulses()`, `R/oral-pulses.R`; after the scheduled repeats are expanded): plain
+`mg PO` doses of `fraction[i]` of it at its time plus `delay[i]`, each absorbed with the
+drug's default `ka_PO`, `bioavailability_PO` and `tlag_PO`. The fractions must sum to one,
+so the amount given is unchanged (`validateOralPulses()`). This describes release, not
+absorption, and suits a product shown to be bioequivalent to its immediate-release form
+given in split doses; a continuous release (an osmotic pump) is not represented this way.
+The drug's help page must say how the pulses were chosen. `R/drugs_mixedAmphetamineSalts.R`
+is the example.
+
 **Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
 that the fraction of an oral dose absorbed falls as the dose rises, returns an
 `oralSaturation` block alongside the usual fields:

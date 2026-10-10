@@ -40,7 +40,7 @@ plasmaOnly <- c(
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
   "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
   "clonazepam", "zolpidem", "temazepam",
-  "methylphenidate", "lisdexamfetamine",
+  "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts",
   # no equilibration model for antiemesis (2026-10-10)
   "ondansetron", "aprepitant", "fosaprepitant",
   # systemic plasma concentration, not the nerve block (2026-10-10)

@@ -318,7 +318,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
-    "methylphenidate", "lisdexamfetamine",
+    "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts",
     "bupivacaine", "ropivacaine", "mepivacaine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",

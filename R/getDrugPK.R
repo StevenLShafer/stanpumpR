@@ -979,6 +979,9 @@ getDrugPK <- function(
   if (!is.null(X$parallelSystems))
     out$parallelSystems <- parallelSystemSets(X, PK, events, tPeakRoute, drug,
                                               covariates)
+  # A pulsed extended-release formulation (Adderall XR): the fractions and
+  # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
+  out$oralPulses <- validateOralPulses(X$oralPulses, drug)
   return(out)
 }
 
