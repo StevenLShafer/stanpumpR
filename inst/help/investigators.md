@@ -49,6 +49,8 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | etomidate | **John R. Arden** and colleagues (1986) | Kinetics in patients, including the elderly |
 | lidocaine | Schnider and colleagues (1996) | Two-compartment kinetics during an infusion |
 | rocuronium | **Bertrand Plaud** and colleagues (1995); **Luis I. Cortínez** and colleagues (2007) | Kinetics; time to peak effect |
+| vecuronium | **Kevin R. Vega-Villa**, **Tae Hyun Han** and colleagues (2014); **Tom Heier**, **Ronald D. Miller** and colleagues (1994) | Three-compartment kinetics in non-burn surgical adults; the effect-site rate constant and potency |
+| cisatracurium | **Shahpoor S. Sorooshian**, **Peter M. C. Wright** and colleagues (1996) | Population kinetics and pharmacodynamics in young and elderly adults |
 | acetaminophen | **James D. Morse** and colleagues (2022); **Brian J. Anderson** and colleagues (2001) | Intravenous and oral kinetics with clearance on normal fat mass; the analgesic effect-site rate constant |
 | ibuprofen | **James D. Morse** and colleagues (2022); **Jacqueline A. Hannam**, **Brian J. Anderson** and colleagues (2018) | Intravenous and oral kinetics with clearance and volumes on normal fat mass; the analgesic effect-site rate constant |
 | naloxone | **J. Dowling** and colleagues (2008); **C. M. Laffont** and colleagues (2024); **A. Yassen** and colleagues (2007) | Intravenous kinetics with clearance on lean body weight; the nasal route; the effect-site rate constant |
