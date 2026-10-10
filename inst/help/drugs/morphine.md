@@ -4,7 +4,7 @@ Morphine's parameters are from Lötsch and colleagues (*Clin Pharmacol Ther* 200
 
 ### Oral: tablet and liquid
 
-Oral morphine is entered as **mg PO tablet** (immediate-release tablet) or **mg PO liquid** (oral solution), each also available qd, bid, tid or qid. Both are calibrated to one crossover study of 30 mg morphine sulfate in fasted volunteers (Atrux-Tallau and colleagues, *Clin Drug Investig* 2022;42:1101-1112): Sevredol tablets peaked at 28.5 ng/mL and Oramorph solution at 37.9 ng/mL, with the same total exposure. Doses are labelled mg of morphine sulfate, as prescribed.
+Oral morphine is entered as **mg PO tablet** (immediate-release tablet), **mg PO liquid** (oral solution) or, for paediatric dosing, **mg/kg PO liquid**, each also available qd, bid, tid or qid. Both are calibrated to one crossover study of 30 mg morphine sulfate in fasted volunteers (Atrux-Tallau and colleagues, *Clin Drug Investig* 2022;42:1101-1112): Sevredol tablets peaked at 28.5 ng/mL and Oramorph solution at 37.9 ng/mL, with the same total exposure. Doses are labelled mg of morphine sulfate, as prescribed.
 
 The two forms share Lötsch's disposition and effect site and differ only in absorption. Bioavailability is 0.29 for the tablet and 0.30 for the liquid; both start to be absorbed 17.6 minutes after the dose, after which the liquid is absorbed faster (half-time 39 minutes against the tablet's 53). The plasma peak is about 36 minutes after liquid and 45 minutes after a tablet, and the liquid's peak is a third higher. Because morphine's effect site is so slow, the difference in peak effect is much smaller than the difference in plasma peak.
 

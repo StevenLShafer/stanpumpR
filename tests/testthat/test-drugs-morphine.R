@@ -143,3 +143,15 @@ test_that("time until threshold is solved from the summed effect site", {
   expect_true(any(sim$equiSpace$Recovery > 0, na.rm = TRUE))
   expect_false(is.null(sim$recoveryStates))
 })
+
+test_that("mg/kg PO liquid is the liquid scaled by the patient's weight", {
+  # Paediatric dosing: 0.2 mg/kg in a 20 kg child is 4 mg of liquid.
+  PK <- getDrugPK("morphine", 20, 115, 6, "female")
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  run <- function(dose, units)
+    simCpCe(data.frame(Drug = "morphine", Time = 0, Dose = dose, Units = units),
+            events, PK, 12 * 60, plotRecovery = FALSE)$results
+  expect_equal(run(0.2, "mg/kg PO liquid"), run(4, "mg PO liquid"))
+  units <- getDrugDefaults("morphine")$Units[[1]]
+  expect_true(all(c("mg/kg PO liquid", "mg/kg PO liquid qid") %in% units))
+})
