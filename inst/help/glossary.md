@@ -20,6 +20,8 @@
 
 **Cp.** Plasma concentration.
 
+**CYP2C19.** A liver enzyme with common genetic variants that clears escitalopram and the S enantiomer of citalopram. The field in the Patient Profile changes those two drugs' clearance across the poor, intermediate, normal, rapid and ultrarapid phenotypes. See [Antidepressant models and their limits](help:models/antidepressants).
+
 **CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of codeine, tramadol, hydrocodone and oxycodone. The field in the Patient Profile scales that formation across the poor, intermediate, normal and ultrarapid phenotypes. See [Active metabolites](help:models/metabolites).
 
 **Dead space.** The part of each breath that does not reach the alveoli; 30 per cent of minute ventilation in the gas model.

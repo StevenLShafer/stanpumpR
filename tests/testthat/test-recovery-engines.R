@@ -355,6 +355,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # 2026-10-10: no calibrated concentration-effect model, no metabolite.
   # Bupivacaine, ropivacaine and mepivacaine (systemic
   # plasma only, regional anesthesia) joined on 2026-10-10, with no metabolite.
+  # The antidepressants joined on 2026-10-10: response
+  # lags weeks and no ke0 exists; bupropion forms hydroxybupropion, which has
+  # no effect site either, so the fold takes the NA path, as for amiodarone.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
@@ -364,7 +367,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
     "methylphenidate", "lisdexamfetamine",
-    "bupivacaine", "ropivacaine", "mepivacaine"
+    "bupivacaine", "ropivacaine", "mepivacaine",
+    "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
+    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine"
   ))
 })
 

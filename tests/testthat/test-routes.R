@@ -135,6 +135,34 @@ test_that("validateOralSaturation() refuses a block that could go negative", {
   expect_error(validateOralSaturation(c(Imax = 0.5, ID50 = 10), "x"), "x")
 })
 
+test_that("the rising and power forms give the fractions they declare", {
+  # Rising: D / (D50 + D), the dose-dependent part of sertraline's single-dose
+  # F(D) = 0.639 D / (15.5 + D) (Alhadab 2020)
+  rising <- list(form = "rising", D50 = 15.5)
+  expect_equal(oralSaturationFraction(c(50, 100, 200), rising),
+               c(50 / 65.5, 100 / 115.5, 200 / 215.5))
+  expect_equal(oralSaturationFraction(0, rising), 0)
+  # Power: (D / Dref)^exponent, 1 at the reference dose (paroxetine, Kim 2015)
+  power <- list(form = "power", exponent = 0.363, Dref = 25)
+  expect_equal(oralSaturationFraction(c(12.5, 25, 50), power),
+               c(0.5^0.363, 1, 2^0.363))
+  # The saturable form is the default, with or without the field
+  expect_equal(oralSaturationFraction(300, list(form = "saturable", Imax = 0.906, ID50 = 571)),
+               oralSaturationFraction(300, list(Imax = 0.906, ID50 = 571)))
+})
+
+test_that("validateOralSaturation() checks each form's own parameters", {
+  ok <- list(form = "rising", D50 = 15.5)
+  expect_identical(validateOralSaturation(ok, "x"), ok)
+  expect_error(validateOralSaturation(list(form = "rising", D50 = 0), "x"), "D50")
+  expect_error(validateOralSaturation(list(form = "rising"), "x"), "D50")
+  ok <- list(form = "power", exponent = 0.363, Dref = 25)
+  expect_identical(validateOralSaturation(ok, "x"), ok)
+  expect_error(validateOralSaturation(list(form = "power", exponent = 0.363), "x"), "Dref")
+  expect_error(validateOralSaturation(list(form = "power", Dref = 25), "x"), "exponent")
+  expect_error(validateOralSaturation(list(form = "sigmoid", D50 = 1), "x"), "form")
+})
+
 test_that("only a drug that declares saturable absorption has it", {
   expect_equal(getDrugPK("gabapentin", 70, 170, 50, "male")$oralSaturation,
                list(Imax = 0.906, ID50 = 571))
