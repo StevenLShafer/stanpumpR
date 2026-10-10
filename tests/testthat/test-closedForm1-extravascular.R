@@ -70,7 +70,12 @@ expmTaylor <- function(M) {
 # Doses here are mg; `scale` converts mg/L to plotted units.
 # (Extended from the plasma and the oral route alone by Claude Code,
 # 2026-10-07, mutation review.)
-exactRoutes <- c("PO", "IM", "IN")
+exactRoutes <- c("PO", "IM", "IN", "SL")
+# State layout: one depot per route, then central, second and third
+# compartments, the effect site and the constant 1.  (SL added 2026-10-10.)
+nDepot <- length(exactRoutes)
+iC <- nDepot + 1; i2 <- nDepot + 2; i3 <- nDepot + 3; iE <- nDepot + 4; i1 <- nDepot + 5
+nState <- nDepot + 5
 
 exactRoute <- function(s, r, sets) {
   ka <- s[[paste0("ka_", r)]]
@@ -81,17 +86,17 @@ exactRoute <- function(s, r, sets) {
 }
 
 exactSystem <- function(s, R, sets) {
-  A <- matrix(0, 8, 8)
-  for (j in 1:3) {
+  A <- matrix(0, nState, nState)
+  for (j in seq_len(nDepot)) {
     ka <- exactRoute(s, exactRoutes[j], sets)$ka
-    A[j, j] <- -ka
-    A[4, j] <-  ka
+    A[j, j]  <- -ka
+    A[iC, j] <-  ka
   }
-  A[4, 4] <- -(s$k10 + s$k12 + s$k13)
-  A[4, 5] <-  s$k21; A[5, 4] <- s$k12; A[5, 5] <- -s$k21
-  A[4, 6] <-  s$k31; A[6, 4] <- s$k13; A[6, 6] <- -s$k31
-  A[7, 4] <-  s$ke0 / s$v1; A[7, 7] <- -s$ke0
-  A[4, 8] <-  R
+  A[iC, iC] <- -(s$k10 + s$k12 + s$k13)
+  A[iC, i2] <-  s$k21; A[i2, iC] <- s$k12; A[i2, i2] <- -s$k21
+  A[iC, i3] <-  s$k31; A[i3, iC] <- s$k13; A[i3, i3] <- -s$k31
+  A[iE, iC] <-  s$ke0 / s$v1; A[iE, iE] <- -s$ke0
+  A[iC, i1] <-  R
   A
 }
 
@@ -112,24 +117,24 @@ exactRun <- function(DT, sets, switchAt, times, weight = 70, scale = 1) {
     if (length(i) == 0) 0 else DT$Dose[max(i)] * perKg[max(i)] / 60
   }
   breaks <- sort(unique(c(0, DT$Time, lands, switchAt, times)))
-  x <- c(rep(0, 7), 1)
+  x <- c(rep(0, nState - 1), 1)
   n <- length(times)
-  out <- list(Cp = numeric(n), Ce = numeric(n), state = matrix(0, n, 8))
+  out <- list(Cp = numeric(n), Ce = numeric(n), state = matrix(0, n, nState))
   for (k in seq_along(breaks)) {
     t <- breaks[k]
     s <- setAt(t)
     for (d in which(lands == t & !isRate)) {
       amount <- DT$Dose[d] * perKg[d]
       if (route[d] == "") {
-        x[4] <- x[4] + amount
+        x[iC] <- x[iC] + amount
       } else {
         j <- match(route[d], exactRoutes)
         x[j] <- x[j] + amount * exactRoute(s, route[d], sets)$F
       }
     }
     for (i in which(times == t)) {
-      out$Cp[i] <- x[4] / s$v1 * scale
-      out$Ce[i] <- x[7] * scale
+      out$Cp[i] <- x[iC] / s$v1 * scale
+      out$Ce[i] <- x[iE] * scale
       out$state[i, ] <- x
     }
     if (k < length(breaks))
@@ -152,12 +157,12 @@ exactRecovery <- function(DT, sets, switchAt, t, thr, site = "Ce", scale = 1,
                           horizon = MINS_PER_DAY, h = 1, weight = 70) {
   x0 <- exactRun(DT[DT$Time <= t, , drop = FALSE], sets, switchAt, t,
                  weight = weight)$state[1, ]
-  x0[8] <- 0
+  x0[i1] <- 0
   s <- if (t < switchAt) sets[[1]] else sets[[2]]
   A <- exactSystem(s, 0, sets)
-  read <- function(x) scale * if (site == "Ce") x[7] else x[4] / s$v1
+  read <- function(x) scale * if (site == "Ce") x[iE] else x[iC] / s$v1
   E <- expmTaylor(A * h)
-  X <- matrix(0, ceiling(horizon / h) + 1, 8)
+  X <- matrix(0, ceiling(horizon / h) + 1, nState)
   X[1, ] <- x0
   for (k in seq_len(nrow(X) - 1)) X[k + 1, ] <- E %*% X[k, ]
   above <- which(apply(X, 1, read) > thr)
@@ -518,4 +523,28 @@ test_that("a dose its lag pushes past the end of the run leaves no stray points"
   w <- simCpCe(DT, switchAt50, PK, 400, TRUE)$wide
   expect_lte(max(w$Time), 400)
   expect_gt(w$Plasma[nrow(w)], 0)
+})
+
+
+test_that("a sublingual dose is absorbed across the switch like the other routes", {
+  # The sublingual route (buprenorphine; added 2026-10-10) against the
+  # matrix-exponential reference, given before and exactly at the switch, with
+  # an intranasal dose alongside so two depots drain at once.
+  PK <- switchedPK("buprenorphine")
+  DT <- data.frame(Drug = "buprenorphine", Time = c(0, 50, 20), Dose = c(8, 4, 0.3),
+                   Units = c("mg SL", "mg SL", "mg IN"))
+  w   <- simCpCe(DT, switchAt50, PK, 600, FALSE)$wide
+  ref <- exactRun(DT, setsOf(PK), 50, w$Time, scale = 1000)
+  expect_lt(relErr(w$Plasma[w$Time > 0], ref$Cp[w$Time > 0]), 1e-8,
+            label = "plasma, largest relative error")
+})
+
+test_that("with one PK set the sublingual route matches the reference exactly", {
+  PK <- switchedPK("buprenorphine", same = TRUE)
+  DT <- data.frame(Drug = "buprenorphine", Time = c(0, 30), Dose = c(16, 2),
+                   Units = c("mg SL", "mg"))
+  single <- simCpCe(DT, noEvents, pkWith("buprenorphine"), 600, FALSE)$wide
+  ref <- exactRun(DT, setsOf(PK), 50, single$Time, scale = 1000)
+  expect_lt(relErr(single$Plasma[single$Time > 0], ref$Cp[single$Time > 0]), 1e-8)
+  expect_lt(relErr(single$"Effect Site"[single$Time > 0], ref$Ce[single$Time > 0]), 1e-8)
 })

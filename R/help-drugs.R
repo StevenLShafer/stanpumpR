@@ -270,8 +270,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   # --- At a glance -----------------------------------------------------------
   esc <- htmltools::htmlEscape
   route <- doseRoute(units)
-  routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_IM %in% route) "intramuscular",
-              if (ROUTE_IN %in% route) "intranasal")
+  routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "sublingual",
+              if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal")
   intravenous <- any(units %in% c(bolusUnits, infusionUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
@@ -294,6 +294,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     sprintf("%s %s", helpFormatNumber(row$MEAC), concUnits)
   } else if (prodrug) {
     "None: the effect is the metabolite's, which carries its own MEAC"
+  } else if (identical(as.character(row$Category), "Opioids")) {
+    # An opioid with no established MEAC (buprenorphine, a partial agonist)
+    "None established: not on the MEAC panel (see the model notes)"
   } else {
     "Not an opioid: not on the MEAC panel"
   }
@@ -527,7 +530,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   absorptionHTML <- ""
   if (!is.null(pkRef)) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
-    routes <- list(PO = "Oral (PO)", IM = "Intramuscular (IM)", IN = "Intranasal (IN)")
+    routes <- list(PO = "Oral (PO)", SL = "Sublingual (SL)", IM = "Intramuscular (IM)",
+                   IN = "Intranasal (IN)")
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -544,7 +548,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     if (length(rows) > 0) {
       absorptionHTML <- paste0(
         helpH2("Extravascular routes"),
-        "<p>Doses with PO, IM or IN units are absorbed by first-order kinetics into the central ",
+        "<p>Doses with PO, SL, IM or IN units are absorbed by first-order kinetics into the central ",
         "compartment after a lag, with the fraction shown reaching the circulation. See ",
         helpPageLink("models/absorption"), ".</p>",
         helpTableHTML(do.call(rbind, rows))
@@ -758,7 +762,8 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     given <- if (length(units) == 0) "metabolite only"
       else if (any(units %in% c(bolusUnits, infusionUnits))) {
         route <- doseRoute(units)
-        paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_IM %in% route) "IM",
+        paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
+                if (ROUTE_IM %in% route) "IM",
                 if (ROUTE_IN %in% route) "IN", if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else "oral"
     metabolite <- if (is.null(pk$metaboliteName)) "" else

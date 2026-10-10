@@ -110,11 +110,11 @@ engine applies that itself, dose by dose (see *saturable oral absorption* below)
 | `reference` | literature citation (string). |
 | `prodrug` | optional; `FALSE` marks an active parent that has a metabolite but no effect site, so the help does not call it a prodrug (see "An active parent with no effect-site model" below). |
 
-**Optional — extravascular routes.** To support oral/IM/intranasal dosing, add absorption
-fields to a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_IM` / `_IN`
-equivalents). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
+**Optional — extravascular routes.** To support oral/sublingual/IM/intranasal dosing, add
+absorption fields to a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_SL` /
+`_IM` / `_IN` equivalents). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
-The route is the suffix of the unit (`mg PO`, `mg IM`, `mg IN`; `doseRoute()` in `R/routes.R`),
+The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
 
 **Optional — oral input as a constant daily rate.** A model fitted with each day's oral dose
@@ -184,7 +184,7 @@ Four things to know before using it:
   wrong is a silent thousandfold error.
 - Only one level is resolved. A cascade (codeine → morphine → M6G) would need a two-stage
   convolution and is not supported.
-- Only the intravenous and oral routes carry metabolite coefficients. IM and IN doses raise
+- Only the intravenous and oral routes carry metabolite coefficients. SL, IM and IN doses raise
   rather than silently dropping the metabolite, and a metabolite drug cannot also switch
   kinetics on a clinical event.
 

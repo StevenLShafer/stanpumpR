@@ -48,7 +48,7 @@ helpExpandGenerated <- function(text, drugDefaults = getDrugDefaultsGlobal()) {
 
 #' The extravascular routes each drug offers, from its units
 #'
-#' One entry per drug with a PO, IM or IN unit in `drugDefaults_global.csv`,
+#' One entry per drug with a PO, SL, IM or IN unit in `drugDefaults_global.csv`,
 #' the same Units the dose table's selector offers.  Each route lists that
 #' route's units without their repeating forms (`mg PO bid` is `mg PO` given
 #' on a schedule), with a note when a unit is a rate (`mg/day PO`, a constant
@@ -58,12 +58,12 @@ helpExpandGenerated <- function(text, drugDefaults = getDrugDefaultsGlobal()) {
 #' @param drugDefaults the drug library
 #' @returns a list with one element per such drug, in library order: a list of
 #'   `drug`, `iv` (TRUE when the drug is also given intravenously) and, named
-#'   PO, IM and IN, a list of `units` (empty when the route is not offered) and
+#'   PO, SL, IM and IN, a list of `units` (empty when the route is not offered) and
 #'   `notes`
 #' @noRd
 helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
   adult <- helpReferencePatients()[1, ]
-  extravascular <- c(ROUTE_PO, ROUTE_IM, ROUTE_IN)
+  extravascular <- c(ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN)
   rows <- lapply(seq_len(nrow(drugDefaults)), function(i) {
     row <- drugDefaults[i, ]
     if (isGasDrug(row$Drug)) return(NULL)
@@ -92,12 +92,12 @@ helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
            if (length(x$notes) > 0) paste0(" (", paste(x$notes, collapse = "; "), ")") else "")
   }
   body <- vapply(helpRouteInventory(drugDefaults), function(d) {
-    sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s |", helpDrugTitle(d$drug), d$drug,
-            cell(d[[ROUTE_PO]]), cell(d[[ROUTE_IM]]), cell(d[[ROUTE_IN]]),
+    sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s | %s |", helpDrugTitle(d$drug), d$drug,
+            cell(d[[ROUTE_PO]]), cell(d[[ROUTE_SL]]), cell(d[[ROUTE_IM]]), cell(d[[ROUTE_IN]]),
             if (d$iv) "yes" else "no")
   }, character(1))
-  paste(c("| Drug | Oral (PO) | Intramuscular (IM) | Intranasal (IN) | Also intravenous |",
-          "|---|---|---|---|---|",
+  paste(c("| Drug | Oral (PO) | Sublingual (SL) | Intramuscular (IM) | Intranasal (IN) | Also intravenous |",
+          "|---|---|---|---|---|---|",
           body), collapse = "\n")
 }
 

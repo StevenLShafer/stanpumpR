@@ -264,7 +264,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("/day", dose$Units)
     dose$Dose[use] <- dose$Dose[use] / MINS_PER_DAY
 
-    # Identify extravascular (PO, IM, IN) and IV bolus doses.  A rate unit
+    # Identify extravascular (PO, SL, IM, IN) and IV bolus doses.  A rate unit
     # (isRateUnit(), R/routes.R) is an input rate whatever its route word, so
     # it is neither: a "mg/day PO" row, the constant-rate oral input of
     # poRateUnits, becomes an infusion row on the drug's apparent oral
@@ -278,6 +278,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$PO <- route == ROUTE_PO & !rate
     dose$IM <- route == ROUTE_IM & !rate
     dose$IN <- route == ROUTE_IN & !rate
+    dose$SL <- route == ROUTE_SL & !rate
     dose$Bolus <- route == ROUTE_IV & !rate
 
     # Saturable oral absorption (gabapentin): each oral dose is scaled by the
@@ -329,7 +330,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (hasMetabolite)
       {
         results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
-      } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
+      } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) == 0)
       {
         results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
       } else {

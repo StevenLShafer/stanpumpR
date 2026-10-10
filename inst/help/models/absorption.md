@@ -1,4 +1,4 @@
-A dose with `PO`, `IM` or `IN` in its unit is not injected into the central compartment. It is placed in an absorption depot from which it enters the central compartment by first-order kinetics, after a lag, with only a fraction of the dose arriving at all.
+A dose with `PO`, `SL`, `IM` or `IN` in its unit is not injected into the central compartment. It is placed in an absorption depot from which it enters the central compartment by first-order kinetics, after a lag, with only a fraction of the dose arriving at all.
 
 The one exception is a **rate** with a route word, `mg/day PO`, which only [amiodarone](help:drugs/amiodarone) offers. It is a constant-rate (zero-order) oral input, the way Pollak and colleagues modelled a daily oral dose: there is no depot, absorption rate constant, lag or bioavailability, and the daily dose enters the central compartment evenly over the day, on the drug's apparent oral parameters, until the drug's next rate row, exactly as an infusion would.
 
@@ -18,7 +18,7 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 
 ## Which drugs have routes
 
-The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, intramuscular and intranasal unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid` and so on; see [The dose table](help:dose-table)), which are not listed separately.
+The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, sublingual, intramuscular and intranasal unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid` and so on; see [The dose table](help:dose-table)), which are not listed separately.
 
 <!-- generated: route-table -->
 
@@ -31,6 +31,7 @@ Each drug's page shows the current absorption rate, bioavailability and lag, and
 - **Derived rather than fitted.** Naloxone's intranasal bioavailability and absorption rate are derived from a published model of the concentrated spray that has no absolute bioavailability, and are initial values rather than estimates.
 - **Apparent oral models.** Alprazolam, clonazepam and zolpidem were fitted to oral data alone, so their volumes and clearances are apparent (divided by the unknown bioavailability, which is carried as 1) and they are offered by mouth only.
 - **Absorption added to an intravenous model.** Lorazepam's oral and intramuscular routes come from a separate five-route crossover; temazepam's oral route from a separate oral study and the label's bioavailability, on a disposition fitted to intravenous data.
+- **Reduced to one input, fitted to the published curve.** Buprenorphine's sublingual source has two parallel pathways (a fast burst and a slow mucosal tail) and a bioavailability that falls with dose. A single absorption rate constant was fitted to the published input at 16 mg, which keeps the time to peak and the exposure but puts the peak about 20% low, and the bioavailability is the paper's value at 16 mg (14%) for every dose. Its intranasal route, from a nine-volunteer spray study, is research only.
 - **Chosen to match a peak height.** Diazepam's oral and intramuscular absorption rates were chosen so that the typical peak matches the observed mean peak; the typical curves then peak earlier (oral) and later (intramuscular) than observed.
 - **Chosen to match a time of peak.** The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's oral parameters are provisional, and its intramuscular route has no human pharmacokinetic study behind it: its bioavailability of 1 and its 30-minute peak are a judgement.
 
