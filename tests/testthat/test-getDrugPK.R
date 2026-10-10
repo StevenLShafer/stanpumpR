@@ -301,3 +301,10 @@ test_that("the CYP2C19 phenotype is validated and reaches only the models that n
   expect_lt(getDrugPK("escitalopram", 70, 170, 50, "male", cyp2c19 = "poor")$PK$default$cl1,
             getDrugPK("escitalopram", 70, 170, 50, "male")$PK$default$cl1)
 })
+
+test_that("parallel-system routes must be dose routes", {
+  expect_null(parallelRoutes(NULL, "x"))
+  expect_equal(parallelRoutes(c("PO", "PO"), "x"), "PO")
+  expect_error(parallelRoutes("oral", "x"), "Invalid routes for x")
+  expect_error(parallelRoutes(character(0), "x"), "Invalid routes for x")
+})

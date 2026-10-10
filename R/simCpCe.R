@@ -456,16 +456,21 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # every dose scaled by that system's share, and the runs are added.  The
     # systems share the doses, their lags and the effect site, so every run is
     # on the same time line.  getDrugPK() refuses them alongside further oral
-    # formulations.
-    shareOf <- function(dose, fraction) {
+    # formulations.  A system limited to some routes (meloxicam's oral and
+    # intravenous fits) gets the other routes' doses as zero, not dropped, so
+    # that it stays on the same time line; its absorption parameters must
+    # then match the other systems' (the same lags), which the drug ensures.
+    shareOf <- function(dose, fraction, routes = NULL) {
       if (!is.null(fraction)) dose$Dose <- dose$Dose * fraction
+      if (!is.null(routes)) dose$Dose[!doseRoute(dose$Units) %in% routes] <- 0
       dose
     }
     if (!is.null(PK$parallelSystems))
     {
-      parts <- list(runEngines(shareOf(dose, PK$doseFraction), pkSets))
+      parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))
       for (sys in PK$parallelSystems)
-        parts[[length(parts) + 1]] <- runEngines(shareOf(dose, sys$doseFraction), sys$PK)
+        parts[[length(parts) + 1]] <- runEngines(
+          shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
       results <- superposeEngineResults(parts, plotRecovery, emerge)
     } else if (!any(other))
     {

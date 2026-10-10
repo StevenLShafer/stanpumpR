@@ -26,7 +26,8 @@
 #' @param creatinine serum creatinine in mg/dL, or NULL (the default) for the
 #'   assumed normal value for the patient's age and sex.  Passed only to the renal
 #'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
-#'   sugammadex, gabapentin, pregabalin); see `R/renalFunction.R`.
+#'   sugammadex, gabapentin, pregabalin, oxycodone, meloxicam intravenous); see
+#'   `R/renalFunction.R`.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -971,6 +972,10 @@ getDrugPK <- function(
   # X$doseFraction), and simCpCe() runs them on the same time line and adds
   # the results, which is exact because each is linear.
   out$doseFraction <- parallelDoseFraction(X$doseFraction, drug)
+  # A system may also be limited to some routes (meloxicam: the oral fit takes
+  # the oral doses, the intravenous fit the intravenous ones); the drug's own
+  # system declares X$routes, each parallel system its own routes.
+  out$routes <- parallelRoutes(X$routes, drug)
   if (!is.null(X$parallelSystems))
     out$parallelSystems <- parallelSystemSets(X, PK, events, tPeakRoute, drug,
                                               covariates)
@@ -991,6 +996,22 @@ parallelDoseFraction <- function(x, drug)
   x
 }
 
+#' Check the routes a parallel system receives
+#'
+#' @param x the declared routes (values of \code{DOSE_ROUTES}), or NULL for
+#'   every route
+#' @param drug the drug's name, for the error message
+#' @returns the routes, or NULL when none were declared
+#' @keywords internal
+parallelRoutes <- function(x, drug)
+{
+  if (is.null(x)) return(NULL)
+  if (!is.character(x) || length(x) == 0 || anyNA(x) || !all(x %in% DOSE_ROUTES))
+    stop("Invalid routes for ", drug, ": must be some of ",
+         paste(DOSE_ROUTES, collapse = ", "), ".")
+  unique(x)
+}
+
 #' PK sets of a drug's parallel systems
 #'
 #' Builds each system's PK sets through \code{getDrugPK()} itself, on the
@@ -1001,8 +1022,8 @@ parallelDoseFraction <- function(x, drug)
 #' @param events their names
 #' @param tPeakRoute,drug as in \code{getDrugPK()}
 #' @param covariates the patient covariates passed to the drug model
-#' @returns a list, one entry per system: \code{name}, \code{doseFraction}
-#'   and \code{PK}
+#' @returns a list, one entry per system: \code{name}, \code{doseFraction},
+#'   \code{routes} and \code{PK}
 #' @keywords internal
 parallelSystemSets <- function(X, PK, events, tPeakRoute, drug, covariates)
 {
@@ -1028,6 +1049,7 @@ parallelSystemSets <- function(X, PK, events, tPeakRoute, drug, covariates)
       name = sys$name,
       doseFraction = parallelDoseFraction(
         if (is.null(sys$doseFraction)) 1 else sys$doseFraction, drug),
+      routes = parallelRoutes(sys$routes, drug),
       PK = sets
     )
   })

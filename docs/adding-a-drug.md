@@ -141,6 +141,14 @@ such a drug, and it cannot have a metabolite, several oral formulations, saturab
 or an osmotic block. The help page lists the systems under *Parallel systems*. See
 `R/drugs_ketorolac.R`.
 
+A system can also be limited to some routes: `routes` (values of `DOSE_ROUTES`) on a
+`parallelSystems` entry, and on the drug's own list for its own system. A system then gets the
+other routes' doses as zero, so it stays on the same time line. Give every system the same
+absorption parameters (the same lags) even where it receives none of those doses. Meloxicam
+uses this to send oral doses to its apparent oral fit (`routes = "PO"`) and intravenous doses to
+the separate ANJESO fit (`routes = "IV"`) (`R/drugs_meloxicam.R`). This is a way to offer a
+route from a separate study without inventing a bioavailability that links the two fits.
+
 **Optional — oral input as a constant daily rate.** A model fitted with each day's oral dose
 spread evenly over the day, rather than absorbed first-order, offers the unit `mg/day PO`
 (`poRateUnits` in `R/constants.R`). It is oral by route, so the help and the dropdowns call it

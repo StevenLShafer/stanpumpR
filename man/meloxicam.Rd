@@ -2,9 +2,17 @@
 % Please edit documentation in R/drugs_meloxicam.R
 \name{meloxicam}
 \alias{meloxicam}
-\title{Meloxicam pharmacokinetics (apparent oral)}
+\title{Meloxicam pharmacokinetics (apparent oral, and intravenous ANJESO)}
 \usage{
-meloxicam(weight, height, age, sex, adjustToFFM = TRUE, cyp2c9 = "*1/*1")
+meloxicam(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  cyp2c9 = "*1/*1",
+  creatinine = NULL
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,10 +29,16 @@ lean-body-mass covariate either way}
 
 \item{cyp2c9}{CYP2C9 diplotype, one of
 \code{"*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3"}}
+
+\item{creatinine}{serum creatinine in mg/dL for the intravenous model's
+eGFR, or NULL for the assumed normal value for age and sex}
 }
 \value{
-a list in the shape \code{getDrugPK()} expects
+a list in the shape \code{getDrugPK()} expects, with the
+intravenous model as a parallel system
 }
 \description{
-Meloxicam pharmacokinetics (apparent oral)
+The oral doses go to the apparent oral model of Aoyama 2017, the
+intravenous doses to the ANJESO model of the FDA review, run as a parallel
+system; see the header of \code{R/drugs_meloxicam.R}.
 }

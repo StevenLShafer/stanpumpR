@@ -18,8 +18,8 @@ parallelSystemSets(X, PK, events, tPeakRoute, drug, covariates)
 \item{covariates}{the patient covariates passed to the drug model}
 }
 \value{
-a list, one entry per system: \code{name}, \code{doseFraction}
-and \code{PK}
+a list, one entry per system: \code{name}, \code{doseFraction},
+\code{routes} and \code{PK}
 }
 \description{
 Builds each system's PK sets through \code{getDrugPK()} itself, on the
