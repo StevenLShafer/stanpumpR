@@ -6,9 +6,10 @@
 #
 # DISPOSITION
 # ===========
-# Chiang and colleagues gave intravenous ondansetron to 14 adults aged 45-70
-# years and sampled plasma and cerebrospinal fluid for 3 hours.  Their
-# two-compartment plasma model (Table 4), linear elimination from the
+# Chiang and colleagues gave 16 mg of intravenous ondansetron over 15 min to
+# 15 adults aged 45-70 years and sampled plasma for 3 hours (cerebrospinal
+# fluid once); one patient's samples could not be quantified, so the model
+# was fitted to 14.  Their two-compartment plasma model (Table 4), linear elimination from the
 # central compartment, has the reference values
 #
 #     CL 24.6 L/h,  Vc 63.3 L,  Q 211 L/h,  Vp 107 L

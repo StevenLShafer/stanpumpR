@@ -1,6 +1,6 @@
 ### The model
 
-Ondansetron's parameters are from Chiang and colleagues (*Br J Clin Pharmacol* 2021;87:516-526), who gave intravenous ondansetron to 14 adults aged 45 to 70 and sampled plasma and cerebrospinal fluid for 3 hours. Their two-compartment model has, for the reference patient, clearance 24.6 L/h, central volume 63.3 L, intercompartmental clearance 211 L/h and peripheral volume 107 L. Half-times about 0.1 and 5.2 hours.
+Ondansetron's parameters are from Chiang and colleagues (*Br J Clin Pharmacol* 2021;87:516-526), who gave 16 mg of intravenous ondansetron over 15 minutes to 15 adults aged 45 to 70 and sampled plasma for 3 hours (and cerebrospinal fluid once); one patient's samples could not be quantified, so the model was fitted to 14. Their two-compartment model has, for the reference patient, clearance 24.6 L/h, central volume 63.3 L, intercompartmental clearance 211 L/h and peripheral volume 107 L. Half-times about 0.1 and 5.2 hours.
 
 ### What is left out
 
