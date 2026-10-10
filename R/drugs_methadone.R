@@ -82,11 +82,12 @@
 #
 # ORAL
 # ====
-# Henthorn studied intravenous methadone only.  Bioavailability is 0.85, the
-# figure the paper's introduction gives for oral methadone.  Kharasch 2004,
-# from the same laboratory, measured 0.70 with simultaneous oral and
-# intravenous labelled doses; Eap 2002 reviews a mean of about 0.75 with a
-# range of 0.36 to 1.  The absorption rate constant puts the oral plasma peak
+# Henthorn studied intravenous methadone only.  Bioavailability is 0.70, from
+# Kharasch 2004, the same laboratory, which measured it directly with
+# simultaneous oral deuterium-labelled and intravenous doses in healthy
+# volunteers.  Henthorn's introduction quotes "approximately 85%" without
+# data of its own; Eap 2002 reviews a mean of about 0.75 with a range of 0.36
+# to 1.  The absorption rate constant puts the oral plasma peak
 # at 3 hours in the reference man, the middle of the 2.5 to 4 hours Eap 2002
 # reports.
 #
@@ -260,7 +261,7 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl2 = base$cl2 / f,
     cl3 = base$cl3 / f,
     ka_PO = 0.0100236846,        # 1/min; plasma peak at 3 h, reference man
-    bioavailability_PO = 0.85,
+    bioavailability_PO = 0.70,     # Kharasch 2004
     tlag_PO = 0
   )
 
@@ -275,7 +276,8 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Henthorn TK, Kharasch ED, Clin Pharmacol Ther 2026;119(3):739-750. ",
     "R(-) and S(+) methadone models summed to racemate; ",
-    "oral bioavailability 0.85 (Henthorn), absorption from ",
+    "oral bioavailability 0.70 from Kharasch ED et al., ",
+    "Clin Pharmacol Ther 2004;76:250-269; absorption from ",
     "Eap CB et al., Clin Pharmacokinet 2002;41:1153-1193. ",
     "https://doi.org/10.1002/cpt.70147"
   )

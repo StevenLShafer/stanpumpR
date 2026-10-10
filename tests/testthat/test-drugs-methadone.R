@@ -17,7 +17,7 @@ test_that("reference man: reduced parameters, oral route and pharmacodynamics", 
       cl2 = 12.9418716,
       cl3 = 0.4789393121,
       ka_PO = 0.0100236846,
-      bioavailability_PO = 0.85,
+      bioavailability_PO = 0.70,
       tlag_PO = 0
     ),
     tolerance = 1e-5
@@ -95,7 +95,7 @@ test_that("weight enters V3 only, on pharmacokinetic weight or total weight", {
   expect_equal(on$cl1, ref$cl1)
 })
 
-test_that("an oral dose peaks at about 3 hours with 85% of the exposure", {
+test_that("an oral dose peaks at about 3 hours with 70% of the exposure", {
   ev <- data.frame(Time = numeric(0), Event = character(0), Fill = character(0))
   run <- function(units) {
     dose <- data.frame(Drug = "methadone", Time = 0, Dose = 10, Units = units)
@@ -109,8 +109,8 @@ test_that("an oral dose peaks at about 3 hours with 85% of the exposure", {
   expect_gt(tPeak, 150)
   expect_lt(tPeak, 210)
   # By 24 h most of the oral dose is absorbed and distribution is complete,
-  # so the oral curve sits a little below 0.85 of the intravenous one.
+  # so the oral curve sits close to 0.70 of the intravenous one.
   ratio <- approx(po$Time, po$Y, 1440)$y / approx(iv$Time, iv$Y, 1440)$y
-  expect_gt(ratio, 0.8)
-  expect_lt(ratio, 0.9)
+  expect_gt(ratio, 0.65)
+  expect_lt(ratio, 0.75)
 })

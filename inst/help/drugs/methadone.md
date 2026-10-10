@@ -8,7 +8,7 @@ Doses are methadone hydrochloride, as dispensed; concentrations are methadone ba
 
 ### Oral methadone
 
-Henthorn studied the intravenous route only. Oral bioavailability is 0.85, the figure the paper gives; Kharasch's earlier oral and intravenous crossover study measured 0.70, and a review by Eap and colleagues reports a mean of about 0.75 with a range of 0.36 to 1. Absorption is set so the plasma concentration peaks 3 hours after an oral dose, the middle of the 2.5 to 4 hours that review reports. An oral dose of 10 mg therefore gives about 85% of the exposure of 10 mg intravenously, arriving over hours rather than minutes.
+Henthorn studied the intravenous route only. Oral bioavailability is 0.70, measured by Kharasch and colleagues (*Clin Pharmacol Ther* 2004;76:250-269) from simultaneous oral and intravenous doses in healthy volunteers. Henthorn's paper quotes about 85% in passing, and a review by Eap and colleagues reports a mean of about 0.75 with a range of 0.36 to 1. Absorption is set so the plasma concentration peaks 3 hours after an oral dose, the middle of the 2.5 to 4 hours that review reports. An oral dose of 10 mg therefore gives about 70% of the exposure of 10 mg intravenously, arriving over hours rather than minutes.
 
 ### Covariates
 
