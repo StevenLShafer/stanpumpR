@@ -525,6 +525,18 @@ helpScenarios <- function() {
       timeUnits = "hours", maximum = 720,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    helpScenario(
+      "mepivacaine-two-depot-absorption",
+      "Mepivacaine: fast and slow absorption from one block",
+      "Regional anesthesia",
+      "Mepivacaine injected for an axillary block is absorbed through a fast and a slow depot in parallel, so the plasma rises within minutes, holds for an hour and then falls slowly.",
+      doses = helpDoses(
+        c("mepivacaine", 0, 600, "mg RA")
+      ),
+      # Mepivacaine has no effect site, so the plasma line carries the curve.
+      timeUnits = "hours", maximum = 480,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",
