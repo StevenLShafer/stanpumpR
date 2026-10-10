@@ -89,6 +89,13 @@ test_that("female sex lengthens absorption only", {
 })
 
 
+test_that("an unrecognised sex is refused rather than read as male", {
+  expect_error(methylphenidate(70, 170, 35, "Female"), "Invalid sex")
+  expect_error(methylphenidate(70, 170, 35, NA), "Invalid sex")
+  expect_error(methylphenidate(70, 170, 35, c("male", "female")), "Invalid sex")
+})
+
+
 test_that("the switch off reproduces Lyauk's published allometry", {
   # 50 kg: CL/F and Q/F x (50/70)^0.75, volumes x 50/70
   x <- methylphenidate(50, 160, 35, "male", adjustToFFM = FALSE)$PK$default
