@@ -36,7 +36,11 @@ plasmaOnly <- c(
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
-  "clonazepam", "zolpidem", "temazepam"
+  "clonazepam", "zolpidem", "temazepam",
+  # Antipsychotics: occupancy is a direct function of plasma, or no effect is
+  # established.  Aripiprazole, with a PET ke0, is the exception.
+  "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
+  "olanzapine", "haloperidol", "haloperidolIV", "droperidol", "droperidolIM"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
