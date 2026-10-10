@@ -2,7 +2,7 @@
 # See R/renalFunction.R.
 
 renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex",
-                "gabapentin", "pregabalin")
+                "gabapentin", "pregabalin", "oxycodone")
 
 test_that("a blank creatinine is the assumed normal value for age and sex", {
   expect_equal(patientCreatinine(NULL, 40, "male"), SCR_ASSUMED_MALE)

@@ -10,7 +10,7 @@ The first panel in the left sidebar. These covariates are passed to every drug's
 | Sex | male or female | | |
 | CYP 2D6 | phenotype | | Scales the active metabolites of codeine, tramadol, hydrocodone and oxycodone. |
 | Adjust weight to fat-free mass | checkbox | | On by default; scales most models to fat-free mass. |
-| Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by the renally cleared drugs: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin. Blank means an assumed normal creatinine for the patient's age and sex: 1.0 in men and 0.8 in women, and in a child the normal for age (about 0.25 in infancy, 0.35 at five, 0.5 at ten). See [Renal function](help:models/covariates). |
+| Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin and oxycodone. Blank means an assumed normal creatinine for the patient's age and sex: 1.0 in men and 0.8 in women, and in a child the normal for age (about 0.25 in infancy, 0.35 at five, 0.5 at ten). See [Renal function](help:models/covariates). |
 | Baseline serum osmolality | mOsm/kg | 200 to 400 | The patient's starting value, 280 by default. Read only by [mannitol](help:drugs/mannitol), which is plotted as the serum osmolality it produces on top of this value. |
 
 Changing a covariate re-simulates every drug at once; there is no Apply step for the patient.

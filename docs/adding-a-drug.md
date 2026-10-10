@@ -96,8 +96,8 @@ first-order extravascular absorption. A source model with saturable protein bind
 apparent oral scale has to be reduced to that form, and the reduction must be written down
 in the header: which part is exact, which is approximate, and what is plotted
 (`R/drugs_cefazolin.R`, `R/drugs_hydrocortisone.R`, `R/drugs_prednisolone.R`).
-The one exception is oral bioavailability that falls with the size of the dose: the
-engine applies that itself, dose by dose (see *saturable oral absorption* below).
+The one exception is oral or sublingual bioavailability that falls with the size of the
+dose: the engine applies that itself, dose by dose (see *saturable oral absorption* below).
 
 ### Return-value contract
 
@@ -110,13 +110,14 @@ engine applies that itself, dose by dose (see *saturable oral absorption* below)
 | `reference` | literature citation (string). |
 | `prodrug` | optional; `FALSE` marks an active parent that has a metabolite but no effect site, so the help does not call it a prodrug (see "An active parent with no effect-site model" below). |
 
-**Optional — extravascular routes.** To support oral/IM/intranasal dosing, or regional
-anesthesia (RA, a local anesthetic injected into tissue), add absorption fields to a PK set:
-`ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_IM` / `_IN` / `_RA` equivalents).
+**Optional — extravascular routes.** To support oral/sublingual/IM/intranasal dosing, or
+regional anesthesia (RA, a local anesthetic injected into tissue), add absorption fields to
+a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_SL` / `_IM` / `_IN` / `_RA`
+equivalents).
 An RA drug may add a slow second tissue depot absorbing in parallel: `ka_RA_slow` (1/min) and
 `fraction_RA_slow`, the share of the absorbed dose that goes through it (`R/drugs_mepivacaine.R`). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
-The route is the suffix of the unit (`mg PO`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
+The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
 
 **Optional — a second oral depot.** A formulation absorbed through two parallel first-order
@@ -207,7 +208,7 @@ Four things to know before using it:
   wrong is a silent thousandfold error.
 - Only one level is resolved. A cascade (codeine → morphine → M6G) would need a two-stage
   convolution and is not supported.
-- Only the intravenous and oral routes carry metabolite coefficients. IM and IN doses raise
+- Only the intravenous and oral routes carry metabolite coefficients. SL, IM and IN doses raise
   rather than silently dropping the metabolite, and a metabolite drug cannot also switch
   kinetics on a clinical event.
 
@@ -256,6 +257,13 @@ limit of a small dose. The hyperbolic `Dmax / (D50 + D)` form is the case `Imax 
 holds; what is not represented is saturation shared between doses taken together or close
 in time. `Imax` must lie between 0 and 1 (`validateOralSaturation()`), and the drug's help
 page tabulates the fraction at several doses. `R/drugs_gabapentin.R` is the example.
+
+A **sublingual** bioavailability that falls with the dose is declared the same way, as a
+`sublingualSaturation` block with the same two fields; `simCpCe()` scales every SL dose by
+the same expression and `bioavailability_SL` becomes the small-dose limit. A source that
+reports the dependence in another form (buprenorphine's power law) is fitted to this one
+over the dose range the source covers, and the fit is documented in the drug header
+(`R/drugs_buprenorphine.R`).
 
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 
