@@ -62,9 +62,12 @@
 # NOT MODELLED
 # ============
 # Site-specific and epinephrine-specific absorption, parallel fast and slow
-# tissue depots, perineural catheter infusions, liposomal bupivacaine (a
-# different input altogether), protein binding and the unbound fraction, and
-# the R/S enantiomers (levobupivacaine is not this model).
+# tissue depots, liposomal bupivacaine (a different input altogether),
+# protein binding and the unbound fraction (and so the postoperative rise in
+# total concentration during a long infusion), and the R/S enantiomers
+# (levobupivacaine is not this model).  A perineural catheter infusion is
+# offered as "mg/hr RA", a constant rate into the same depot at the same ka
+# (2026-10-10).
 #
 # References
 # ----------

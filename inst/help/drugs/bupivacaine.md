@@ -16,4 +16,4 @@ None. The model describes total (bound plus unbound) bupivacaine in plasma, not 
 
 ### Where to be careful
 
-Liposomal bupivacaine is a different input and is not this model. Alpha-1-acid glycoprotein rises after surgery, raising total but not unbound concentrations. Perineural catheter infusions are not offered: RA is a single injection.
+Liposomal bupivacaine is a different input and is not this model. Alpha-1-acid glycoprotein rises after surgery, raising total but not unbound concentrations. A perineural catheter infusion is entered as **mg/hr RA**: a constant rate into the same tissue depot, absorbed at the same rate as a single injection; see [the continuous infusion scenario](help:scenarios/bupivacaine-perineural-infusion).

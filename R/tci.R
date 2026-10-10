@@ -134,7 +134,8 @@ tciSchedule <- function(dose, PK, maximum,
   targets   <- dose[dose$Target & dose$Time >= 0 & dose$Time < maximum, ]
   isSL      <- if (is.null(dose$SL)) rep(FALSE, nrow(dose)) else dose$SL
   manual    <- which(!dose$Target & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN &
-                     !isSL & !dose$RA & !dose$RAslow & !dose$PO2)
+                     !isSL & !dose$RA & !dose$RAslow & !dose$PO2 &
+                     !(if (is.null(dose$RArate)) FALSE else dose$RArate))
   bolusRows <- dose[dose$Bolus & !dose$Target, ]
 
   # Several targets at one time: the last one entered wins.

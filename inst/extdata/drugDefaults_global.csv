@@ -13,8 +13,8 @@ dexmedetomidine,ng,mcg,mcg/kg/hr,mcg/kg/hr,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#791AEE
 midazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.04,0.12,0.1,0,0.04,IV,Hypnotics and sedatives
 etomidate,mcg,mg,mg/kg/min,mg,"mg,mg/kg/min,Plasma target,Effect site target",#FFCC00,0.4,0.8,0.5,0,0.4,IV,Hypnotics and sedatives
 lidocaine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg RA,mg/kg RA,Plasma target,Effect site target",#B7AE7F,0.5,1.5,1,0,0.5,IV,Local anesthetics
-bupivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA",#6A5ACD,0,0,0,0,0,IV,Local anesthetics
-ropivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA",#2F8F9D,0,0,0,0,0,IV,Local anesthetics
+bupivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#6A5ACD,0,0,0,0,0,IV,Local anesthetics
+ropivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#2F8F9D,0,0,0,0,0,IV,Local anesthetics
 mepivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA",#A0522D,0,0,0,0,0,IV,Local anesthetics
 rocuronium,mcg,mg,mg/kg/hr,mg,"mg,mg/kg/hr",#F9423A,1,2.2,1.5,0,1,IV,Neuromuscular blockade
 naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/kg,mg,mg/kg,mcg/min,mcg/kg/min,mg/min,mg/kg/min,mg IN",#404040,1,10,3,0,1,IV,Other

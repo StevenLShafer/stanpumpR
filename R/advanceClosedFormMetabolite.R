@@ -78,7 +78,8 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
 
   hasPO <- !is.null(dose$PO) && any(dose$PO)
   if ((!is.null(dose$IM) && any(dose$IM)) || (!is.null(dose$IN) && any(dose$IN)) ||
-      (!is.null(dose$SL) && any(dose$SL)) || (!is.null(dose$RA) && any(dose$RA)))
+      (!is.null(dose$SL) && any(dose$SL)) || (!is.null(dose$RA) && any(dose$RA)) ||
+      (!is.null(dose$RArate) && any(dose$RArate)))
     stop("A drug with an active metabolite cannot yet be given intramuscularly, ",
          "intranasally, sublingually or by tissue injection (RA); only intravenous ",
          "and oral routes carry metabolite coefficients.")

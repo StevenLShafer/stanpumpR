@@ -16,4 +16,4 @@ None, as for [bupivacaine](help:drugs/bupivacaine): total plasma concentration o
 
 ### Where to be careful
 
-Perineural catheter infusions, the postoperative rise in alpha-1-acid glycoprotein, and the effect of epinephrine are not represented.
+A perineural catheter infusion is entered as **mg/hr RA**, a constant rate into the same tissue depot. The postoperative rise in alpha-1-acid glycoprotein, which raises total ropivacaine over days of infusion, and the effect of epinephrine are not represented.

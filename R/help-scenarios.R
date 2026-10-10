@@ -552,6 +552,21 @@ helpScenarios <- function() {
       maximum = 60, plasmaLinetype = "dashed", effectsiteLinetype = "solid",
       logY = TRUE
     ),
+    helpScenario(
+      "bupivacaine-perineural-infusion",
+      "Bupivacaine: a continuous perineural infusion",
+      "Regional anesthesia",
+      "A 100 mg block followed by a 48-hour catheter infusion of 10 mg/hr: the block sets the peak, the infusion settles at rate / clearance, and the concentration falls within hours of stopping.",
+      doses = helpDoses(
+        c("bupivacaine", 0, 100, "mg RA"),
+        c("bupivacaine", 0, 10, "mg/hr RA"),
+        c("bupivacaine", 2880, 0, "mg/hr RA")
+      ),
+      # Bupivacaine has no effect site, so the plasma line carries the curve.
+      # Three days, in days: the infusion stops at 2.
+      timeUnits = "days", maximum = 4320,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",
