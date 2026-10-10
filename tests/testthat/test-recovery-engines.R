@@ -351,7 +351,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # AmiodaroneIV joined on 2026-10-08: active, no effect site and no
   # metabolite, so it never reaches the fold either.  Clonazepam, zolpidem and
   # temazepam (direct effects, no effect site) joined on 2026-10-09, with no
-  # metabolite either.  The antidepressants joined on 2026-10-10: response
+  # metabolite either.  Methylphenidate and lisdexamfetamine joined on
+  # 2026-10-10: no calibrated concentration-effect model, no metabolite.
+  # The antidepressants joined on 2026-10-10: response
   # lags weeks and no ke0 exists; bupropion forms hydroxybupropion, which has
   # no effect site either, so the fold takes the NA path, as for amiodarone.
   expect_setequal(noCe, c(
@@ -362,6 +364,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
+    "methylphenidate", "lisdexamfetamine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion"
   ))

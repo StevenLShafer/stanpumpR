@@ -4,10 +4,10 @@ remifentanil,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/kg/min,Plasma target,E
 fentanyl,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,0.48,1.2,0.72,0.6,0.6,IV,Opioids
 alfentanil,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,31.2,78,46.8,39,39,IV,Opioids
 sufentanil,ng,mcg,mcg/kg/hr,mcg,"mcg,mcg/kg,mcg/kg/hr,Plasma target,Effect site target",#0491E2,0.0448,0.112,0.0672,0.056,0.056,IV,Opioids
-morphine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#032FED,0.0064,0.016,0.0096,0.008,0.008,IV,Opioids
+morphine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg PO tablet,mg PO liquid,mg/kg PO liquid,mg qd,mg bid,mg tid,mg qid,mg PO tablet qd,mg PO tablet bid,mg PO tablet tid,mg PO tablet qid,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid",#032FED,0.0064,0.016,0.0096,0.008,0.008,IV,Opioids
 pethidine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#5155FF,0.2,0.5,0.3,0.25,0.25,IV,Opioids
 hydromorphone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg IM,mg IN,Plasma target,Effect site target,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg IM qd,mg IM bid,mg IM tid,mg IM qid,mg IN qd,mg IN bid,mg IN tid,mg IN qid",#032FED,1.2,3,1.8,1.5,1.5,IV,Opioids
-methadone,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#71C5E8,0.048,0.12,0.072,0.06,0.06,IV,Opioids
+methadone,mcg,mg,mg/hr,mg,"mg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#71C5E8,0.048,0.12,0.072,0.06,0.06,IV,Opioids
 ketamine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,Plasma target,Effect site target",#FFCC00,0.1,0.16,0.12,0,0.1,IV,Hypnotics and sedatives
 dexmedetomidine,ng,mcg,mcg/kg/hr,mcg/kg/hr,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#791AEE,0.4,0.8,0.6,0,0.4,IV,Hypnotics and sedatives
 midazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.04,0.12,0.1,0,0.04,IV,Hypnotics and sedatives
@@ -59,8 +59,10 @@ sertraline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#558B2F,10,150,50,0,0,IV,Antide
 paroxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#9E9D24,20,65,40,0,0,IV,Antidepressants
 duloxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#EF6C00,30,120,60,0,0,IV,Antidepressants
 mirtazapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6D4C41,30,80,50,0,0,IV,Antidepressants
-bupropion,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#4527A0,0,0,0,0,0,IV,Antidepressants
+bupropion,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#283593,0,0,0,0,0,IV,Antidepressants
 hydroxybupropion,ng,,,,,#9575CD,850,1500,1200,0,0,IV,
+methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4527A0,0,0,0,0,0,IV,Stimulants
+lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,0,0,0,0,0,IV,Stimulants
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas,
 oxygen,%,L/min,L/min,L/min,"L/min",#2E7D32,0,0,0,0,0,gas,
 nitrousOxide,%,L/min,L/min,L/min,"L/min",#1E88E5,0,0,0,0,10,gas,Inhaled anesthetics
