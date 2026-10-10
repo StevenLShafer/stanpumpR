@@ -47,6 +47,9 @@
 #     C at 24 h               0.338                  0.284
 #     AUC 0-24 h              25.1 ng.h/mL           25.7 ng.h/mL (both F 0.14)
 #
+# (The single-input column is at F 0.14; with the dose-dependent fraction
+# below, 16 mg absorbs 0.1384, so its concentrations are 1.1% lower.)
+#
 # The single exponential cannot reproduce the short zero-order burst, so the
 # peak is about 19% low, nor the slow mucosal tail, so a daily trough is about
 # 16% low.  A lag was not used: the library keeps its drugs lag-free where it
@@ -54,14 +57,30 @@
 # report the time until threshold (R/recoveryStates.R).  Fitting a lag (0.29 h)
 # alongside ka (1.03 /h) brings Cmax to 5.86 ng/mL.
 #
+# DOSE-DEPENDENT SUBLINGUAL BIOAVAILABILITY
+# =========================================
 # Bioavailability falls with the dose in Bjornsson's fit,
 # F = 0.14 x (dose/16 mg)^-0.371: 18.1% at 8 mg, 14.0% at 16 mg, 12.0% at
-# 24 mg.  The engine applies one F to every sublingual dose, and 0.14, the
-# value at the paper's 16 mg reference dose, is used.  That is the right order
-# for opioid-use-disorder doses (2-32 mg).  It is NOT validated at analgesic
-# sublingual doses (0.2-0.4 mg), for which the power law extrapolates to about
-# 0.6 and Kuhlman 1996 measured 51% at 4 mg in six men; sublingual analgesic
-# doses are therefore probably UNDER-predicted, by as much as threefold.
+# 24 mg.  The library applies a dose-dependent fraction the way it does for
+# oral gabapentin, scaling each sublingual dose by
+#
+#     F(D) = bioavailability_SL x (1 - Imax x D / (ID50 + D))
+#
+# (a sublingualSaturation block; oralSaturationFraction() in R/routes.R).  The
+# power law is not of that form, so the three constants were fitted to it by
+# least squares on log F over 2-32 mg, the range of the marketed tablets and
+# films: bioavailability_SL 0.4227, Imax 0.8165, ID50 3.427 mg.  Within that
+# range the two agree to 2.5%:
+#
+#     dose (mg)        2      4      8      16     24     32
+#     power law      0.303  0.234  0.181  0.140  0.120  0.108
+#     this form      0.295  0.237  0.181  0.138  0.121  0.111
+#
+# Below 2 mg the power law rises without limit (0.71 at 0.2 mg); this form
+# levels off at 0.42, which is also nearer the 51% Kuhlman 1996 measured at
+# 4 mg in six men.  Analgesic sublingual doses (0.2-0.4 mg; 0.39-0.40 here)
+# lie outside the fitted range and remain an extrapolation.  As for
+# gabapentin, two rows entered at the same time are scaled separately.
 #
 # INTRANASAL: RESEARCH ROUTE
 # ==========================
@@ -138,7 +157,10 @@
 # -----------------------------------------------------------------------------
 
 BUPRENORPHINE_KE0       <- 0.00447        # /min; Yassen 2006, t1/2 155 min
-BUPRENORPHINE_F_SL      <- 0.14           # Bjornsson 2023 at 16 mg
+# Sublingual fraction absorbed, fitted to Bjornsson 2023's power law over
+# 2-32 mg; see the header.
+BUPRENORPHINE_F_SL      <- 0.422692       # small-dose limit
+BUPRENORPHINE_SL_SATURATION <- list(Imax = 0.816527, ID50 = 3.42670)  # ID50 mg
 BUPRENORPHINE_KA_SL     <- 0.0129498493   # /min; fitted, see the header
 BUPRENORPHINE_F_IN      <- 0.482          # Eriksen 1989
 BUPRENORPHINE_KA_IN     <- 0.0227053660   # /min; plasma peak at 30.6 min
@@ -147,7 +169,8 @@ BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; band floor and endCe
 #' Buprenorphine sublingual bioavailability at a given dose (Bjornsson 2023)
 #'
 #' The dose-dependent fraction of the source model, 0.14 x (dose/16)^-0.371,
-#' for the help page and tests.  The engine uses the single value at 16 mg.
+#' for the tests.  The engine applies the Imax form fitted to it
+#' (`BUPRENORPHINE_SL_SATURATION`).
 #'
 #' @param doseMg sublingual dose, mg
 #' @returns the fraction reaching the circulation
@@ -199,9 +222,9 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Bjornsson M et al., Clin Pharmacokinet 2023;62:1427-1443 (intravenous ",
     "three-compartment disposition, healthy-volunteer Vc; sublingual reduced ",
-    "to one first-order input, F 0.14 at 16 mg); intranasal from Eriksen J et ",
-    "al., J Pharm Pharmacol 1989;41:803-805; ke0 from Yassen A et al., ",
-    "Anesthesiology 2006;104:1232-1242. ",
+    "to one first-order input with dose-dependent F, 0.14 at 16 mg); ",
+    "intranasal from Eriksen J et al., J Pharm Pharmacol 1989;41:803-805; ",
+    "ke0 from Yassen A et al., Anesthesiology 2006;104:1232-1242. ",
     "https://doi.org/10.1007/s40262-023-01288-6"
   )
 
@@ -215,6 +238,8 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
       typical = 2.2,
       upperTypical = 3,
       lowerTypical = BUPRENORPHINE_WITHDRAWAL,
+      # Each sublingual dose is scaled by its own fraction absorbed; see the header.
+      sublingualSaturation = BUPRENORPHINE_SL_SATURATION,
       reference = reference
     )
   )

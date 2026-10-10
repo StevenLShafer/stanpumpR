@@ -553,25 +553,30 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         helpPageLink("models/absorption"), ".</p>",
         helpTableHTML(do.call(rbind, rows))
       )
-      # Saturable absorption: the oral bioavailability above is the limit for a
+      # Saturable absorption: the bioavailability above is the limit for a
       # small dose, and each dose is scaled by its own fraction absorbed.
-      sat <- pkRef$oralSaturation
-      if (!is.null(sat)) {
-        doses <- c(300, 600, 900, 1200)
-        f <- d$bioavailability_PO * oralSaturationFraction(doses, sat)
+      saturable <- list(
+        list(sat = pkRef$oralSaturation, F = d$bioavailability_PO, route = "Oral",
+             doses = c(300, 600, 900, 1200)),
+        list(sat = pkRef$sublingualSaturation, F = d$bioavailability_SL, route = "Sublingual",
+             doses = c(0.4, 2, 8, 16, 24, 32))
+      )
+      for (s in saturable) {
+        if (is.null(s$sat)) next
+        f <- s$F * oralSaturationFraction(s$doses, s$sat)
+        absorbed <- data.frame(helpFormatNumber(s$doses), helpFormatNumber(f),
+                               helpFormatNumber(s$doses * f), stringsAsFactors = FALSE)
+        names(absorbed) <- c(sprintf("%s dose (mg)", s$route), "Fraction absorbed",
+                             "Amount absorbed (mg)")
         absorptionHTML <- paste0(
           absorptionHTML,
-          "<p>Oral absorption <strong>saturates</strong>: the fraction absorbed falls as the dose ",
-          "rises, as 1 &minus; ", helpFormatNumber(sat$Imax), " &times; D / (",
-          helpFormatNumber(sat$ID50), " + D) with D the dose in mg, so the bioavailability above is ",
-          "the limit for a very small dose. Each oral dose is scaled by its own fraction. Doses ",
-          "entered as separate rows at the same time are scaled separately, not by their sum.</p>",
-          helpTableHTML(data.frame(
-            `Oral dose (mg)` = helpFormatNumber(doses),
-            `Fraction absorbed` = helpFormatNumber(f),
-            `Amount absorbed (mg)` = helpFormatNumber(doses * f),
-            check.names = FALSE, stringsAsFactors = FALSE
-          ))
+          "<p>", s$route, " absorption <strong>saturates</strong>: the fraction absorbed falls as the dose ",
+          "rises, as 1 &minus; ", helpFormatNumber(s$sat$Imax), " &times; D / (",
+          helpFormatNumber(s$sat$ID50), " + D) with D the dose in mg, so the bioavailability above is ",
+          "the limit for a very small dose. Each ", tolower(s$route), " dose is scaled by its own ",
+          "fraction. Doses entered as separate rows at the same time are scaled separately, not by ",
+          "their sum.</p>",
+          helpTableHTML(absorbed)
         )
       }
     }

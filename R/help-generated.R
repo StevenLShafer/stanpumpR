@@ -53,7 +53,7 @@ helpExpandGenerated <- function(text, drugDefaults = getDrugDefaultsGlobal()) {
 #' route's units without their repeating forms (`mg PO bid` is `mg PO` given
 #' on a schedule), with a note when a unit is a rate (`mg/day PO`, a constant
 #' daily input with no depot) or when the drug's model declares saturable oral
-#' absorption (an `oralSaturation` block).
+#' absorption (an `oralSaturation` or `sublingualSaturation` block).
 #'
 #' @param drugDefaults the drug library
 #' @returns a list with one element per such drug, in library order: a list of
@@ -70,13 +70,13 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
     units <- unique(scheduleBaseUnit(helpDrugUnits(row)))
     route <- doseRoute(units)
     if (!any(route %in% extravascular)) return(NULL)
-    saturable <- ROUTE_PO %in% route &&
-      !is.null(helpDrugModelOutput(row$Drug, adult)$oralSaturation)
+    model <- helpDrugModelOutput(row$Drug, adult)
+    saturable <- c(PO = !is.null(model$oralSaturation), SL = !is.null(model$sublingualSaturation))
     byRoute <- lapply(stats::setNames(extravascular, extravascular), function(r) {
       u <- units[route == r]
       list(units = u,
            notes = c(if (any(isRateUnit(u))) "constant daily rate, no depot",
-                     if (r == ROUTE_PO && length(u) > 0 && saturable) "saturable absorption"))
+                     if (length(u) > 0 && isTRUE(saturable[r])) "saturable absorption"))
     })
     c(list(drug = row$Drug, iv = any(route == ROUTE_IV)), byRoute)
   })

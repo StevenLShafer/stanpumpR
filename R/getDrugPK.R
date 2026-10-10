@@ -704,6 +704,9 @@ getDrugPK <- function(
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
+  # The same for sublingual doses (buprenorphine).
+  out$sublingualSaturation <- validateOralSaturation(
+    X$sublingualSaturation, drug, "sublingualSaturation")
   return(out)
 }
 

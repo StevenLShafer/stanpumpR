@@ -19,7 +19,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         cl2 = 3.1,
         cl3 = 1.005,
         ka_SL = 0.0129498493,
-        bioavailability_SL = 0.14,
+        bioavailability_SL = 0.422692,
         tlag_SL = 0,
         ka_IN = 0.0227053660,
         bioavailability_IN = 0.482,
@@ -32,6 +32,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
     typical = 2.2,
     upperTypical = 3,
     lowerTypical = 1.25,
+    sublingualSaturation = list(Imax = 0.816527, ID50 = 3.42670),
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)
@@ -61,10 +62,23 @@ test_that("scales to fat-free mass for a 120 kg man", {
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
 
-test_that("the sublingual bioavailability is the paper's value at 16 mg", {
+test_that("the sublingual fraction absorbed follows the paper's power law", {
   # 18.1%, 14.0% and 12.0% at 8, 16 and 24 mg (Bjornsson 2023, Results)
   expect_equal(round(buprenorphineSublingualF(c(8, 16, 24)), 3), c(0.181, 0.140, 0.120))
-  expect_equal(BUPRENORPHINE_F_SL, buprenorphineSublingualF(16))
+  # The Imax form fitted to it agrees within 2.5% over 2-32 mg ...
+  fitted <- function(d) BUPRENORPHINE_F_SL *
+    oralSaturationFraction(d, BUPRENORPHINE_SL_SATURATION)
+  d <- exp(seq(log(2), log(32), length.out = 50))
+  expect_lt(max(abs(fitted(d) / buprenorphineSublingualF(d) - 1)), 0.025)
+  # ... with the values worked out by hand (Python)
+  expect_equal(round(fitted(c(2, 8, 16, 32)), 4), c(0.2955, 0.1811, 0.1384, 0.1109))
+  # and levels off below 2 mg rather than rising without limit
+  # (0.4037 at 0.2 mg, against the power law's 0.711)
+  expect_equal(round(fitted(0.2), 4), 0.4037)
+  expect_lt(fitted(0.2), BUPRENORPHINE_F_SL)
+  expect_null(validateOralSaturation(NULL, "buprenorphine", "sublingualSaturation"))
+  expect_error(validateOralSaturation(list(Imax = 2, ID50 = 1), "x", "sublingualSaturation"),
+               "sublingualSaturation")
 })
 
 test_that("the CSV row matches the model's band and offers no MEAC", {
@@ -92,15 +106,16 @@ simBup <- function(units, dose, maximum = 1440) {
 }
 
 test_that("16 mg sublingual peaks where the fitted single input does", {
-  # Hand calculation on the same disposition: Cmax 4.932 ng/mL at 49.65 min
-  # (published two-pathway input: 6.09 ng/mL at 52 min).
+  # Hand calculation on the same disposition at F 0.14: Cmax 4.932 ng/mL at
+  # 49.65 min (published two-pathway input: 6.09 ng/mL at 52 min).  The
+  # dose-dependent fraction at 16 mg is 0.13843, so 4.932 x 0.13843 / 0.14.
   r <- simBup("mg SL", 16)
   cp <- r[r$Site == "Plasma", ]
   i <- which.max(cp$Y)
-  expect_equal(cp$Y[i], 4.932, tolerance = 0.005)
+  expect_equal(cp$Y[i], 4.8768, tolerance = 0.005)
   expect_true(abs(cp$Time[i] - 49.65) < 2)
-  # The concentration at 24 h, 0.284 ng/mL against the published 0.338
-  expect_equal(cp$Y[cp$Time == 1440], 0.2837, tolerance = 0.005)
+  # The concentration at 24 h, 0.2837 x 0.98880 (published 0.338)
+  expect_equal(cp$Y[cp$Time == 1440], 0.2805, tolerance = 0.005)
 })
 
 test_that("0.3 mg intranasal peaks at Eriksen's 30.6 minutes", {
@@ -121,10 +136,16 @@ test_that("the effect site peaks about 134 minutes after an intravenous bolus", 
   expect_true(abs(ce$Time[i] - 134.2) < 15)
 })
 
-test_that("sublingual dosing is linear in dose and scheduled doses repeat", {
+test_that("each sublingual dose is scaled by its own fraction, and scheduled doses repeat", {
+  # 8 mg absorbs 0.18105, 16 mg 0.13843: doubling the dose raises the
+  # concentrations by 2 x 0.13843 / 0.18105 = 1.5292, not 2
   one <- simBup("mg SL", 8)
   two <- simBup("mg SL", 16)
-  expect_equal(two$Y[two$Site == "Plasma"], 2 * one$Y[one$Site == "Plasma"])
+  expect_equal(two$Y[two$Site == "Plasma"], 1.5292 * one$Y[one$Site == "Plasma"],
+               tolerance = 1e-4)
+  # The same dose in mcg is scaled by its size in mg, not its number
+  mcg <- simBup("mcg SL", 8000)
+  expect_equal(mcg$Y[mcg$Site == "Plasma"], one$Y[one$Site == "Plasma"])
   daily <- simBup("mg SL qd", 16, 3 * 1440)
   cp <- daily[daily$Site == "Plasma", ]
   # The second day starts from a non-zero trough and peaks higher than the first

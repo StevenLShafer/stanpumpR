@@ -96,8 +96,8 @@ first-order extravascular absorption. A source model with saturable protein bind
 apparent oral scale has to be reduced to that form, and the reduction must be written down
 in the header: which part is exact, which is approximate, and what is plotted
 (`R/drugs_cefazolin.R`, `R/drugs_hydrocortisone.R`, `R/drugs_prednisolone.R`).
-The one exception is oral bioavailability that falls with the size of the dose: the
-engine applies that itself, dose by dose (see *saturable oral absorption* below).
+The one exception is oral or sublingual bioavailability that falls with the size of the
+dose: the engine applies that itself, dose by dose (see *saturable oral absorption* below).
 
 ### Return-value contract
 
@@ -233,6 +233,13 @@ limit of a small dose. The hyperbolic `Dmax / (D50 + D)` form is the case `Imax 
 holds; what is not represented is saturation shared between doses taken together or close
 in time. `Imax` must lie between 0 and 1 (`validateOralSaturation()`), and the drug's help
 page tabulates the fraction at several doses. `R/drugs_gabapentin.R` is the example.
+
+A **sublingual** bioavailability that falls with the dose is declared the same way, as a
+`sublingualSaturation` block with the same two fields; `simCpCe()` scales every SL dose by
+the same expression and `bioavailability_SL` becomes the small-dose limit. A source that
+reports the dependence in another form (buprenorphine's power law) is fitted to this one
+over the dose range the source covers, and the fit is documented in the drug header
+(`R/drugs_buprenorphine.R`).
 
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 

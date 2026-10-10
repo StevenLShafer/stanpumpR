@@ -289,6 +289,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     if (!is.null(PK$oralSaturation) && any(dose$PO))
       dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
         oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv, PK$oralSaturation)
+    # The same for sublingual doses whose bioavailability falls with the dose
+    # (buprenorphine): bioavailability_SL is the small-dose limit.
+    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
+      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
+        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv, PK$sublingualSaturation)
 
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp

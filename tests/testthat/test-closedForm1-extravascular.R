@@ -526,6 +526,15 @@ test_that("a dose its lag pushes past the end of the run leaves no stray points"
 })
 
 
+# Buprenorphine scales each sublingual dose (mg) by its own fraction absorbed
+# before the engine sees it (sublingualSaturation); the reference is given the
+# scaled doses, so that what is compared is the engine.
+slScaled <- function(DT, PK) {
+  sl <- grepl(" SL", DT$Units)
+  DT$Dose[sl] <- DT$Dose[sl] * oralSaturationFraction(DT$Dose[sl], PK$sublingualSaturation)
+  DT
+}
+
 test_that("a sublingual dose is absorbed across the switch like the other routes", {
   # The sublingual route (buprenorphine; added 2026-10-10) against the
   # matrix-exponential reference, given before and exactly at the switch, with
@@ -534,7 +543,7 @@ test_that("a sublingual dose is absorbed across the switch like the other routes
   DT <- data.frame(Drug = "buprenorphine", Time = c(0, 50, 20), Dose = c(8, 4, 0.3),
                    Units = c("mg SL", "mg SL", "mg IN"))
   w   <- simCpCe(DT, switchAt50, PK, 600, FALSE)$wide
-  ref <- exactRun(DT, setsOf(PK), 50, w$Time, scale = 1000)
+  ref <- exactRun(slScaled(DT, PK), setsOf(PK), 50, w$Time, scale = 1000)
   expect_lt(relErr(w$Plasma[w$Time > 0], ref$Cp[w$Time > 0]), 1e-8,
             label = "plasma, largest relative error")
 })
@@ -544,7 +553,7 @@ test_that("with one PK set the sublingual route matches the reference exactly", 
   DT <- data.frame(Drug = "buprenorphine", Time = c(0, 30), Dose = c(16, 2),
                    Units = c("mg SL", "mg"))
   single <- simCpCe(DT, noEvents, pkWith("buprenorphine"), 600, FALSE)$wide
-  ref <- exactRun(DT, setsOf(PK), 50, single$Time, scale = 1000)
+  ref <- exactRun(slScaled(DT, PK), setsOf(PK), 50, single$Time, scale = 1000)
   expect_lt(relErr(single$Plasma[single$Time > 0], ref$Cp[single$Time > 0]), 1e-8)
   expect_lt(relErr(single$"Effect Site"[single$Time > 0], ref$Ce[single$Time > 0]), 1e-8)
 })
