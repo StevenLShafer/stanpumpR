@@ -5,7 +5,7 @@ fentanyl <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # Volume: Liters
   # Data from
   # 1 = McClain and Hug, Clin Pharmacol Ther. 1980;28:106-14.
-  # 2 = Scott and Stanski, Anesthesiology. 1990;73:1091-102.
+  # 2 = Scott and Stanski, J Pharmacol Exp Ther. 1987;240:159-66.
   # 3 = Hudson, Anesthesiology. 1986;64:334-8.
   # 4 = Varvel, Anesthesiology. 1989;70:928-34.
   # 5 = Shafer, Anesthesiology. 1990;73:1091-102.

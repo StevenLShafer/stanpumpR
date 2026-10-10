@@ -185,6 +185,7 @@ DRUG_CATEGORIES <- c(
   "Antidepressants",
   "Stimulants",
   "Local anesthetics",
+  "Antiemetics",
   "Other"
 )
 # Ticked when the menu opens: the four drugs the app opened with before it

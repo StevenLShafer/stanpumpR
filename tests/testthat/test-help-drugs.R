@@ -41,6 +41,8 @@ plasmaOnly <- c(
   "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
   "clonazepam", "zolpidem", "temazepam",
   "methylphenidate", "lisdexamfetamine",
+  # no equilibration model for antiemesis (2026-10-10)
+  "ondansetron", "aprepitant", "fosaprepitant",
   # systemic plasma concentration, not the nerve block (2026-10-10)
   "bupivacaine", "ropivacaine", "mepivacaine",
   # NSAIDs with no published ke0 (2026-10-10)
