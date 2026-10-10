@@ -53,7 +53,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | ibuprofen | **James D. Morse** and colleagues (2022); **Jacqueline A. Hannam**, **Brian J. Anderson** and colleagues (2018) | Intravenous and oral kinetics with clearance and volumes on normal fat mass; the analgesic effect-site rate constant |
 | naloxone | **J. Dowling** and colleagues (2008); **C. M. Laffont** and colleagues (2024); **A. Yassen** and colleagues (2007) | Intravenous kinetics with clearance on lean body weight; the nasal route; the effect-site rate constant |
 | oxytocin | **James C. Eisenach** (unpublished); Tanaka and colleagues | Human kinetics from unpublished data; a rat model |
-| oxycodone | **Marko Lamminsalo** and colleagues (2019); **Jaap W. Mandema**; **Anne E. Olesen**; Kokki | Intravenous kinetics; the absorption and MEAC chosen to match their observations |
+| oxycodone | **Reino Pöyhiä** and colleagues (1991); **Maija Kirvelä** and colleagues (1996); **Antti Liukas** and colleagues (2011); **Bojan Lalovic** and colleagues (2006); **Rajiv Balyan** and colleagues (2017); Mandema; Kokki | Pooled intravenous kinetics with age (Liukas) and renal (Kirvelä) effects on clearance; oral absorption and the effect-site rate constant (Lalovic); CYP2D6 and oxymorphone (Balyan, Lalovic); the MEAC from Mandema and Kokki |
 | oliceridine | **Albert Dahan** and colleagues (2020) | Two-compartment kinetics and the respiratory end point used for MEAC |
 | remimazolam | Eleveld and colleagues (2025) | Kinetics with size, age and sex covariates |
 | codeine | **Kristin Persson**, **David R. Guay** and colleagues; **Muhammad W. Ashraf** and colleagues (2024) | One-compartment disposition; CYP2D6-dependent formation of morphine |
