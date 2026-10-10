@@ -202,7 +202,7 @@ getDrugPK <- function(
       }
     }
 
-    # Set up PK for IM delivery
+    # Set up PK for IN delivery
     if (is.null(X$PK[[event]]$ka_IN))
     {
       ka_IN <- 0
@@ -222,6 +222,18 @@ getDrugPK <- function(
       } else {
         tlag_IN <- X$PK[[event]]$tlag_IN
       }
+    }
+
+    # Set up PK for sublingual delivery, exactly as the routes above
+    if (is.null(X$PK[[event]]$ka_SL))
+    {
+      ka_SL <- 0
+      bioavailability_SL <- 0
+      tlag_SL <- 0
+    } else {
+      ka_SL <- X$PK[[event]]$ka_SL
+      bioavailability_SL <- if (is.null(X$PK[[event]]$bioavailability_SL)) 1 else X$PK[[event]]$bioavailability_SL
+      tlag_SL <- if (is.null(X$PK[[event]]$tlag_SL)) 0 else X$PK[[event]]$tlag_SL
     }
 
     # Set up PK for regional anesthesia (RA): a local anesthetic injected into
@@ -345,6 +357,18 @@ getDrugPK <- function(
     e_coef_IN_l3  <- 0
     e_coef_IN_ke0 <- 0
     e_coef_IN_ka  <- 0
+
+    # SL Delivery
+    p_coef_SL_l1  <- 0
+    p_coef_SL_l2  <- 0
+    p_coef_SL_l3  <- 0
+    p_coef_SL_ka  <- 0
+
+    e_coef_SL_l1  <- 0
+    e_coef_SL_l2  <- 0
+    e_coef_SL_l3  <- 0
+    e_coef_SL_ke0 <- 0
+    e_coef_SL_ka  <- 0
 
     # RA Delivery
     p_coef_RA_l1  <- 0
@@ -515,6 +539,20 @@ getDrugPK <- function(
       e_coef_IN_ka  <- - e_coef_IN_l1 - e_coef_IN_l2 - e_coef_IN_l3 - e_coef_IN_ke0
     }
 
+    if (ka_SL > 0)
+    {
+      p_coef_SL_l1  <- p_coef_bolus_l1 / (ka_SL - lambda_1) * ka_SL * bioavailability_SL
+      p_coef_SL_l2  <- p_coef_bolus_l2 / (ka_SL - lambda_2) * ka_SL * bioavailability_SL
+      p_coef_SL_l3  <- p_coef_bolus_l3 / (ka_SL - lambda_3) * ka_SL * bioavailability_SL
+      p_coef_SL_ka  <- - p_coef_SL_l1 - p_coef_SL_l2 - p_coef_SL_l3
+
+      e_coef_SL_l1  <- e_coef_bolus_l1 / (ka_SL - lambda_1) * ka_SL * bioavailability_SL
+      e_coef_SL_l2  <- e_coef_bolus_l2 / (ka_SL - lambda_2) * ka_SL * bioavailability_SL
+      e_coef_SL_l3  <- e_coef_bolus_l3 / (ka_SL - lambda_3) * ka_SL * bioavailability_SL
+      e_coef_SL_ke0 <- e_coef_bolus_ke0 / (ka_SL - ke0) *     ka_SL * bioavailability_SL
+      e_coef_SL_ka  <- - e_coef_SL_l1 - e_coef_SL_l2 - e_coef_SL_l3 - e_coef_SL_ke0
+    }
+
     if (ka_RA > 0)
     {
       p_coef_RA_l1  <- p_coef_bolus_l1 / (ka_RA - lambda_1) * ka_RA * bioavailability_RA
@@ -583,6 +621,10 @@ getDrugPK <- function(
         ka_IN = ka_IN,
         bioavailability_IN = bioavailability_IN,
         tlag_IN = tlag_IN,
+
+        ka_SL = ka_SL,
+        bioavailability_SL = bioavailability_SL,
+        tlag_SL = tlag_SL,
 
         ka_RA = ka_RA,
         bioavailability_RA = bioavailability_RA,
@@ -655,6 +697,18 @@ getDrugPK <- function(
         e_coef_IN_l3 = e_coef_IN_l3,
         e_coef_IN_ke0 = e_coef_IN_ke0,
         e_coef_IN_ka = e_coef_IN_ka,
+
+        # SL Coefficients
+        p_coef_SL_l1 = p_coef_SL_l1,
+        p_coef_SL_l2 = p_coef_SL_l2,
+        p_coef_SL_l3 = p_coef_SL_l3,
+        p_coef_SL_ka = p_coef_SL_ka,
+
+        e_coef_SL_l1 = e_coef_SL_l1,
+        e_coef_SL_l2 = e_coef_SL_l2,
+        e_coef_SL_l3 = e_coef_SL_l3,
+        e_coef_SL_ke0 = e_coef_SL_ke0,
+        e_coef_SL_ka = e_coef_SL_ka,
 
         # RA Coefficients
         p_coef_RA_l1 = p_coef_RA_l1,
@@ -803,6 +857,9 @@ getDrugPK <- function(
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
+  # The same for sublingual doses (buprenorphine).
+  out$sublingualSaturation <- validateOralSaturation(
+    X$sublingualSaturation, drug, "sublingualSaturation")
   # A drug with more than one oral formulation: the PK sets of each further
   # one, which simCpCe() uses for that formulation's doses.
   out$oralFormulations <- oralFormulations

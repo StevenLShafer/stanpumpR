@@ -21,6 +21,7 @@ test_that("doseRoute() agrees with every unit the app offers", {
   expect_true(all(doseRoute(poUnits) == ROUTE_PO))
   expect_true(all(doseRoute(imUnits) == ROUTE_IM))
   expect_true(all(doseRoute(inUnits) == ROUTE_IN))
+  expect_true(all(doseRoute(slUnits) == ROUTE_SL))
   expect_true(all(doseRoute(raUnits) == ROUTE_RA))
 
   dd <- getDrugDefaultsGlobal()
@@ -30,7 +31,8 @@ test_that("doseRoute() agrees with every unit the app offers", {
   old <- ifelse(grepl("PO", units), "PO",
                 ifelse(grepl("IM", units), "IM",
                        ifelse(grepl("IN", units), "IN",
-                              ifelse(grepl("RA", units), "RA", "IV"))))
+                              ifelse(grepl("SL", units), "SL",
+                                     ifelse(grepl("RA", units), "RA", "IV")))))
   expect_equal(doseRoute(units), old)
 })
 
@@ -88,11 +90,24 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
   unscheduled <- hydromorphone[!isScheduledUnit(hydromorphone)]
   expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV],
                c("mg PO", "mg PO liquid", "mg/kg PO liquid", "mg IM", "mg IN"))
-  expect_equal(unique(doseRoute(hydromorphone)), setdiff(DOSE_ROUTES, ROUTE_RA))
+  # Every route but sublingual and regional anesthesia, which hydromorphone
+  # does not offer
+  expect_equal(unique(doseRoute(hydromorphone)), setdiff(DOSE_ROUTES, c(ROUTE_SL, ROUTE_RA)))
   lidocaine <- dd$Units[[which(dd$Drug == "lidocaine")]]
   expect_equal(unique(doseRoute(lidocaine)), c(ROUTE_IV, ROUTE_RA))
   expect_true(all(c("Plasma target", "Effect site target") %in%
                     hydromorphone[doseRoute(hydromorphone) == ROUTE_IV]))
+})
+
+test_that("sublingual units read as SL and list between oral and intramuscular", {
+  # The sublingual route (buprenorphine), added 2026-10-10.
+  expect_equal(doseRoute(c("mg SL", "mcg/kg SL", "mg SL bid", "mcg SL qid")), rep(ROUTE_SL, 4))
+  expect_false(any(isRateUnit(slUnits)))
+  expect_true(all(slUnits %in% allUnits))
+  expect_true(all(paste(slUnits, "bid") %in% scheduledUnits))
+  expect_true(all(nchar(scheduledUnits) <= MAX_UNIT_STRING_LENGTH))
+  expect_equal(groupUnitsByRoute(c("mg IN", "mg SL", "mg", "mg IM", "mg PO")),
+               c("mg", "mg PO", "mg SL", "mg IM", "mg IN"))
 })
 
 test_that("oralSaturationFraction() is the inhibitory Emax of Tran 2017", {

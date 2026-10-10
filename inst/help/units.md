@@ -25,9 +25,10 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams and do
 | Infusion | mg/min, mg/hr, mcg/min, mcg/hr; and each per kg | A rate from that time |
 | Oral | g PO, mg PO, mcg PO; and each per kg | An oral dose at that time |
 | Oral rate | mg/day PO | A daily oral dose spread evenly over each day, from that time until the drug's next rate row (amiodarone; see [its page](help:drugs/amiodarone)) |
+| Sublingual | mg SL, mcg SL; and each per kg | A dose under the tongue at that time (buprenorphine) |
 | Intramuscular | the same with IM | |
 | Intranasal | the same with IN | |
-| Scheduled | any bolus, PO, IM or IN unit followed by qd, bid, tid or qid | Repeated every 24, 12, 8 or 6 hours; see [The dose table](help:dose-table) |
+| Scheduled | any bolus, PO, SL, IM or IN unit followed by qd, bid, tid or qid | Repeated every 24, 12, 8 or 6 hours; see [The dose table](help:dose-table) |
 | Gas flow | L/min | A flowmeter or ventilation setting |
 | Vaporizer | % | A vaporizer setting |
 
