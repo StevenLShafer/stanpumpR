@@ -117,7 +117,8 @@
 # 10.9 ng.h/mL per mg, CL/F about 1.5 L/min.  This model with size scaling
 # predicts CL/F about 1.0 L/min for a child of that size, so it is about a
 # third low against the one paediatric oral dataset.  Their bioavailability was
-# not measured, and nothing is adjusted for it.
+# not measured, and nothing is adjusted for it (left so by decision of
+# Steven L. Shafer, 2026-10-10).
 #
 # ORAL ABSORPTION (Lalovic 2006)
 # ==============================
@@ -159,6 +160,12 @@
 # values suggested by Mandema and the 45-50 ng/mL suggested by Kokki 2012.
 # None of these five papers measured analgesia.  Lalovic's EC50 of 30 ng/mL
 # is for miosis, not analgesia.
+#
+# TO BE CHECKED: kept at 12 by decision of Steven L. Shafer (2026-10-10),
+# pending a separate review of the MEAC of every opioid in the library for
+# outliers.  With this model's 11-minute ke0 the effect site runs much closer
+# to plasma than under the old 60-minute tPeak, so 10 mg by mouth now peaks
+# at about 18 ng/mL in the effect site, against 12.
 #
 # OXYMORPHONE
 # ===========
