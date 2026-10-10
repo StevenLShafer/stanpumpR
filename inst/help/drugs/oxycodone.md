@@ -22,7 +22,7 @@ Lalovic measured pupil constriction after oral oxycodone and found that the pare
 
 ### MEAC and typical concentrations
 
-MEAC is 12 ng/mL, unchanged from the earlier model: a compromise between the lower values suggested by Mandema and the 45 to 50 ng/mL suggested by Kokki in 2012. None of the five studies behind this model measured analgesia. Lalovic's EC50 of 30 ng/mL is for miosis. The shaded band is 10 to 20 ng/mL. This value is to be checked in a review of the MEAC of every opioid in the library.
+MEAC is 12 ng/mL, unchanged from the earlier model: a compromise between the lower values suggested by Mandema and the 45 to 50 ng/mL suggested by Kokki in 2012. None of the five studies behind this model measured analgesia. Lalovic's EC50 of 30 ng/mL is for miosis. The shaded band is 10 to 20 ng/mL. This value is to be checked in a separate audit of the MEAC and time to peak effect of every opioid in the library.
 
 ### Active metabolite
 
