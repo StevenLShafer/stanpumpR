@@ -779,7 +779,13 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
                 if (ROUTE_IM %in% route) "IM",
                 if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
                 if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
-      } else "oral"
+      } else {
+        # No intravenous unit: name the routes it does have
+        route <- unique(doseRoute(units))
+        paste(c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
+                if (ROUTE_IM %in% route) "IM", if (ROUTE_IN %in% route) "IN",
+                if (ROUTE_RA %in% route) "RA"), collapse = ", ")
+      }
     metabolite <- if (is.null(pk$metaboliteName)) "" else
       sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))
     data.frame(

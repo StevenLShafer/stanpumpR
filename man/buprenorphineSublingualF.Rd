@@ -14,6 +14,7 @@ the fraction reaching the circulation
 }
 \description{
 The dose-dependent fraction of the source model, 0.14 x (dose/16)^-0.371,
-for the help page and tests.  The engine uses the single value at 16 mg.
+for the tests.  The engine applies the Imax form fitted to it
+(\code{BUPRENORPHINE_SL_SATURATION}).
 }
 \keyword{internal}

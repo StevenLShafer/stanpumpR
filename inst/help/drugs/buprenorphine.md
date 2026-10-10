@@ -6,7 +6,7 @@ This model was chosen over the larger Jones 2021 SUBLOCADE analysis because Bjö
 
 ### Covariates
 
-Clearance falls with age and rises with weight: CL = 52.1 × (age/35)<sup>−0.233</sup> × (weight/72.4)<sup>0.413</sup> L/h, which is 60.8 L/h at 18 years and 45.1 L/h at 65. With the [fat-free-mass switch](help:models/fat-free-mass) on, clearance sees the pharmacokinetic weight and the volumes and intercompartmental clearances take the library factors; with it off, clearance sees total weight and the rest are the published values.
+Clearance falls with age and rises with weight: CL = 52.1 × (age/35)<sup>−0.233</sup> × (weight/72.4)<sup>0.413</sup> L/h, which is 60.8 L/h at 18 years and 45.1 L/h at 65. The source studied adults, and the age term grows without limit in early childhood, so it is evaluated at no younger than 18 years: a child gets the clearance of an 18-year-old of the same size. The model is not validated in children. With the [fat-free-mass switch](help:models/fat-free-mass) on, clearance sees the pharmacokinetic weight and the volumes and intercompartmental clearances take the library factors; with it off, clearance sees total weight and the rest are the published values.
 
 The central volume is the healthy-volunteer value. The paper estimated 237 L in participants with opioid use disorder, but only the healthy volunteers received intravenous buprenorphine, and the authors attribute the difference to that.
 

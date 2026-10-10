@@ -131,6 +131,14 @@
 # for blockade of opioid reinforcement.  These are plasma targets from
 # maintenance treatment; they are not analgesic targets.
 #
+# AGE
+# ===
+# Bjornsson's participants were adults, and the age covariate is a power of
+# age, which is infinite at age 0 and implausible in childhood (119 L/h at one
+# year).  The age term is therefore evaluated at no younger than 18 years
+# (BUPRENORPHINE_MIN_AGE): a child gets the clearance of an 18-year-old of the
+# same size.  The model is not validated in children.
+#
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Clearance carries its own weight and age covariates.  With the switch on it
@@ -165,6 +173,7 @@ BUPRENORPHINE_KA_SL     <- 0.0129498493   # /min; fitted, see the header
 BUPRENORPHINE_F_IN      <- 0.482          # Eriksen 1989
 BUPRENORPHINE_KA_IN     <- 0.0227053660   # /min; plasma peak at 30.6 min
 BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; band floor and endCe
+BUPRENORPHINE_MIN_AGE   <- 18             # years; youngest age the CL term sees
 
 #' Buprenorphine sublingual bioavailability at a given dose (Bjornsson 2023)
 #'
@@ -194,7 +203,8 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   fixV  <- if (isTRUE(adjustToFFM)) size$volume    else 1
   fixCL <- if (isTRUE(adjustToFFM)) size$clearance else 1
 
-  cl1 <- 52.1 * (age / 35)^-0.233 * (pkW / 72.4)^0.413 / 60  # L/min
+  ageCL <- max(age, BUPRENORPHINE_MIN_AGE)   # see AGE in the header
+  cl1 <- 52.1 * (ageCL / 35)^-0.233 * (pkW / 72.4)^0.413 / 60  # L/min
   v1  <- 64.3 * fixV
   v2  <- 130  * fixV
   v3  <- 1580 * fixV

@@ -47,6 +47,19 @@ test_that("reproduces the paper's worked clearance examples", {
   expect_equal(cl(72.4, 35), 52.1)
 })
 
+test_that("the age term is evaluated at no younger than 18 years", {
+  # (age/35)^-0.233 is infinite at 0; a newborn or child gets the clearance of
+  # an 18-year-old of the same size: 52.1 x (18/35)^-0.233 = 60.84 L/h at
+  # 72.4 kg with the switch off.
+  cl <- function(a) buprenorphine(72.4, 175, a, "male", adjustToFFM = FALSE)$PK$default$cl1 * 60
+  expect_equal(cl(0), cl(18))
+  expect_equal(cl(5), cl(18))
+  expect_equal(round(cl(18), 1), 60.8)
+  expect_true(is.finite(cl(0)))
+  # Adults are unaffected
+  expect_lt(cl(30), cl(18))
+})
+
 test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126,
   # pharmacokinetic weight 70 x 1.3049067 = 91.34 kg for the CL covariate.
