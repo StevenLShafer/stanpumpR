@@ -119,6 +119,27 @@ those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug
 The route is the suffix of the unit (`mg PO`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
 
+**Optional — a second oral depot.** A formulation absorbed through two parallel first-order
+paths, each with its own lag, adds `ka_PO2` (1/min), `fraction_PO2` (the share of the
+**absorbed** oral dose that takes the second path) and optionally `tlag_PO2` (min; the oral lag
+if absent) beside `ka_PO`, `bioavailability_PO` and `tlag_PO`. `bioavailability_PO` stays the
+absolute bioavailability of the whole dose, applied once; `getDrugPK()` splits it between the
+depots, and `simCpCe()` duplicates each oral dose row into the internal route `PO2`, as it
+does for the slow RA depot. Diclofenac is the example (`R/drugs_diclofenac.R`); meloxicam uses
+it with apparent parameters and `bioavailability_PO = 1`. Not available with an active
+metabolite, several oral formulations, or a `tPeak` measured after an oral dose.
+
+**Optional — parallel systems.** A drug whose plotted concentration is the sum of independent
+linear systems sharing its doses (ketorolac: the S and R enantiomers, fitted separately)
+returns `parallelSystems`, a list of `list(name, doseFraction, PK)` entries whose `PK` has the
+same shape and event names as the drug's own, plus its own `doseFraction` (the share of each
+dose its own system receives; a salt or racemate conversion goes here). `getDrugPK()` builds
+each system's coefficients on the drug's effect site, and `simCpCe()` runs every system on the
+same doses and adds the results, which is exact. Target-controlled infusion is refused for
+such a drug, and it cannot have a metabolite, several oral formulations, saturable absorption
+or an osmotic block. The help page lists the systems under *Parallel systems*. See
+`R/drugs_ketorolac.R`.
+
 **Optional — oral input as a constant daily rate.** A model fitted with each day's oral dose
 spread evenly over the day, rather than absorbed first-order, offers the unit `mg/day PO`
 (`poRateUnits` in `R/constants.R`). It is oral by route, so the help and the dropdowns call it

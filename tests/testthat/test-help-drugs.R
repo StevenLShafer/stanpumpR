@@ -39,7 +39,9 @@ plasmaOnly <- c(
   "clonazepam", "zolpidem", "temazepam",
   "methylphenidate", "lisdexamfetamine",
   # systemic plasma concentration, not the nerve block (2026-10-10)
-  "bupivacaine", "ropivacaine", "mepivacaine"
+  "bupivacaine", "ropivacaine", "mepivacaine",
+  # NSAIDs with no published ke0 (2026-10-10)
+  "diclofenac", "meloxicam", "ketorolac"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

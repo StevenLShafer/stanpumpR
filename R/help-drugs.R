@@ -529,7 +529,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   if (!is.null(pkRef)) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
     slowRA <- isTRUE(d$ka_RAslow > 0)
-    routes <- list(PO = "Oral (PO)", IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
+    secondPO <- isTRUE(d$ka_PO2 > 0)
+    routes <- list(PO = if (secondPO) "Oral (PO), first depot" else "Oral (PO)",
+                   PO2 = "Oral (PO), second depot", IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
                    RA = if (slowRA) "Regional anesthesia (RA), fast depot" else "Regional anesthesia (RA)",
                    RAslow = "Regional anesthesia (RA), slow depot")
     rows <- lapply(names(routes), function(r) {
@@ -551,6 +553,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         "<p>Doses with PO, IM, IN or RA units are absorbed by first-order kinetics into the central ",
         "compartment after a lag, with the fraction shown reaching the circulation. RA is a ",
         "local anesthetic injected into tissue (a nerve block or an infiltration). ",
+        if (secondPO) paste0("Each oral dose is absorbed through two depots in parallel, each with ",
+                             "its own lag; the bioavailability of each is its share of the dose. ") else "",
         if (slowRA) paste0("Each RA dose is absorbed through a fast and a slow depot in parallel; ",
                            "the bioavailability of each is its share of the dose. ") else "",
         "See ",
@@ -620,6 +624,38 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- Parallel systems ------------------------------------------------------
+  # A drug plotted as the sum of independent systems (ketorolac: S and R
+  # enantiomers).  The parameter tables above are the drug's own system; the
+  # others are listed here at the adult reference patient.
+  parallelHTML <- ""
+  if (!is.null(pkRef$parallelSystems)) {
+    share <- function(x) if (is.null(x)) 1 else x
+    systemRow <- function(name, fraction, d) {
+      three <- isTRUE(d$k31 > 0)
+      data.frame(
+        System = name,
+        `Share of each dose` = helpFormatNumber(share(fraction)),
+        `V1 (L)` = helpFormatNumber(d$v1), `V2 (L)` = helpFormatNumber(d$v2),
+        `V3 (L)` = if (three) helpFormatNumber(d$v3) else "",
+        `CL1 (L/min)` = helpFormatNumber(d$cl1), `CL2 (L/min)` = helpFormatNumber(d$cl2),
+        `CL3 (L/min)` = if (three) helpFormatNumber(d$cl3) else "",
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+    }
+    rows <- c(
+      list(systemRow("This drug's own (tables above)", pkRef$doseFraction, pkRef$PK[[1]])),
+      lapply(pkRef$parallelSystems, function(sys) systemRow(sys$name, sys$doseFraction, sys$PK[[1]]))
+    )
+    parallelHTML <- paste0(
+      helpH2("Parallel systems"),
+      "<p>The plotted concentration is the sum of independent linear systems. Each is given ",
+      "its share of every dose, simulated on its own, and added. The parameter tables above ",
+      "are this drug's own system. At the adult reference patient:</p>",
+      helpTableHTML(do.call(rbind, rows))
+    )
+  }
+
   # --- Events ----------------------------------------------------------------
   eventsHTML <- ""
   if (!is.null(params) && any(nzchar(params$events) & params$events != PK_EVENT_DEFAULT)) {
@@ -642,6 +678,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     helpH2("Model source"), sourceHTML,
     helpH2("Parameters at reference patients"), paramsHTML,
     absorptionHTML,
+    parallelHTML,
     metaboliteHTML,
     formedHTML,
     micHTML,

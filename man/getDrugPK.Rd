@@ -16,7 +16,8 @@ getDrugPK(
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE,
   osmolality = OSMOLALITY_DEFAULT,
-  creatinine = NULL
+  creatinine = NULL,
+  model = NULL
 )
 }
 \arguments{
@@ -52,6 +53,10 @@ ignore it.}
 assumed normal value for the patient's age and sex.  Passed only to the renal
 models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
 sugammadex, gabapentin, pregabalin); see \code{R/renalFunction.R}.}
+
+\item{model}{internal: a model's output to use in place of calling the
+drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
+drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its
