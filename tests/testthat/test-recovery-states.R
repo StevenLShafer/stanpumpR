@@ -238,6 +238,14 @@ test_that("the intravenous engines all carry their states out", {
   expect_equal(ncol(X$recoveryStates$state), 7)
   expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
 
+  # A drug with a regional anesthesia depot carries one more state, ka_RA.
+  PK <- pkFor("lidocaine", weight = 70, height = 170, age = 50, sex = "male")
+  X <- simCpCe(data.frame(Drug = "lidocaine", Time = 0, Dose = 300,
+                          Units = "mg RA"),
+               noEvents, PK, 480, TRUE)
+  expect_equal(ncol(X$recoveryStates$state), 8)
+  expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
+
   # advanceClosedFormMetabolite, for a parent that has an effect site of its
   # own: two sets come out, the parent's and the metabolite's.
   PK <- pkFor("oxycodone", weight = 70, height = 170, age = 50, sex = "male")

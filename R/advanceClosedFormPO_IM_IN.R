@@ -150,11 +150,15 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       # contribution's before solving; see R/recoveryStates.R.  Built whether
       # or not recovery is plotted, because the effect site is read off it.
       pending <- pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
+      # The RA depot is carried only by a drug that has one, so that every
+      # other drug keeps exactly the states it always had.
+      raState <- function(x) if (ka_RA > 0) list(x) else list()
+      raRate  <- if (ka_RA > 0) ka_RA else numeric(0)
       effectStates <- recoveryStateSet(
         timeLine,
-        list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
-             e_state_ka_PO, e_state_ka_IM, e_state_ka_IN, e_state_ka_RA),
-        c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN, ka_RA),
+        c(list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
+               e_state_ka_PO, e_state_ka_IM, e_state_ka_IN), raState(e_state_ka_RA)),
+        c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN, raRate),
         pending
       )
 
@@ -167,9 +171,9 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       # delivery stops.
       recoveryStates <- if (ke0 > 0) effectStates else recoveryStateSet(
         timeLine,
-        list(p_state_l1, p_state_l2, p_state_l3,
-             p_state_ka_PO, p_state_ka_IM, p_state_ka_IN, p_state_ka_RA),
-        c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN, ka_RA),
+        c(list(p_state_l1, p_state_l2, p_state_l3,
+               p_state_ka_PO, p_state_ka_IM, p_state_ka_IN), raState(p_state_ka_RA)),
+        c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN, raRate),
         pending,
         horizon = recoveryHorizonPlasma(maximum)
       )
