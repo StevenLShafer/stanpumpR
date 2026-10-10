@@ -107,8 +107,11 @@ poRateUnits <- c("mg/day PO")
 # and a frequency may still follow ("mg PO liquid bid").  The drug model's own
 # ka_PO, bioavailability_PO and tlag_PO describe its default oral form; each
 # other form it lists in `oralFormulations` (getDrugPK()) has absorption of its
-# own, which simCpCe() superposes.  First user: morphine.  (Claude Code,
-# 2026-10-10, at the request of Steven L. Shafer.)
+# own, which simCpCe() superposes.  First user: morphine.  A drug may also
+# offer a formulation unit without listing it, when the forms are
+# bioequivalent: its doses then take the default oral absorption, as plain
+# "mg PO" does (hydromorphone's liquid).  (Claude Code, 2026-10-10, at the
+# request of Steven L. Shafer.)
 ORAL_FORMULATIONS <- c("tablet", "liquid")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
 

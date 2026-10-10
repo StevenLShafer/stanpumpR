@@ -83,7 +83,8 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
   }
   hydromorphone <- dd$Units[[which(dd$Drug == "hydromorphone")]]
   unscheduled <- hydromorphone[!isScheduledUnit(hydromorphone)]
-  expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV], c("mg PO", "mg IM", "mg IN"))
+  expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV],
+               c("mg PO", "mg PO liquid", "mg/kg PO liquid", "mg IM", "mg IN"))
   expect_equal(unique(doseRoute(hydromorphone)), DOSE_ROUTES)
   expect_true(all(c("Plasma target", "Effect site target") %in%
                     hydromorphone[doseRoute(hydromorphone) == ROUTE_IV]))

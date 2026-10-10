@@ -110,3 +110,21 @@ test_that("scales to fat-free mass for a 120 kg man", {
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
+
+test_that("oral liquid is the tablet's absorption, entered as prescribed", {
+  # The DILAUDID label: the 8 mg tablet and an equal dose of the oral
+  # solution are bioequivalent, so the liquid is not a separate formulation.
+  PK <- getDrugPK("hydromorphone", 20, 115, 6, "female")
+  expect_null(PK$oralFormulations)
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  run <- function(dose, units)
+    simCpCe(data.frame(Drug = "hydromorphone", Time = 0, Dose = dose,
+                       Units = units),
+            events, PK, 12 * 60, plotRecovery = FALSE)$results
+  expect_equal(run(2, "mg PO liquid"), run(2, "mg PO"))
+  # 0.1 mg/kg in a 20 kg child is 2 mg.
+  expect_equal(run(0.1, "mg/kg PO liquid"), run(2, "mg PO"))
+  units <- getDrugDefaults("hydromorphone")$Units[[1]]
+  expect_true(all(c("mg PO liquid", "mg/kg PO liquid", "mg PO liquid qid",
+                    "mg/kg PO liquid qid") %in% units))
+})
