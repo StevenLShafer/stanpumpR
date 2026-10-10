@@ -47,9 +47,10 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # Older callers, and some tests, build the dose table by hand without the
   # route columns simCpCe() adds.
   # "RAslow" is the slow second depot of an RA dose (see getDrugPK()).
-  routes <- c("PO", "IM", "IN", "SL", "RA", "RAslow")
+  # "PO2" is the second depot of an oral dose (see getDrugPK()).
+  routes <- c("PO", "IM", "IN", "SL", "RA", "RAslow", "PO2")
   for (r in routes) if (is.null(dose[[r]])) dose[[r]] <- rep(FALSE, nrow(dose))
-  extravascular <- dose$PO | dose$IM | dose$IN | dose$SL | dose$RA | dose$RAslow
+  extravascular <- dose$PO | dose$IM | dose$IN | dose$SL | dose$RA | dose$RAslow | dose$PO2
 
   # The PK set in force at time t: the last event at or before it.
   eventAt <- function(t) events$Event[utils::tail(which(events$Time <= t), 1)]

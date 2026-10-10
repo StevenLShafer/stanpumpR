@@ -300,7 +300,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # concentration, not the nerve block (2026-10-10).  The antidepressants
   # (2026-10-10) have no effect site: response lags weeks and no ke0 has been
   # estimated; ondansetron, aprepitant and fosaprepitant have no
-  # equilibration model for antiemesis (2026-10-10).  Pinned because the
+  # equilibration model for antiemesis (2026-10-10).  Diclofenac, meloxicam
+  # and ketorolac have no published ke0 (2026-10-10).  Pinned because the
   # count has been got wrong by hand more than once.
   dd <- getDrugDefaultsGlobal(FALSE)
   blank <- Filter(function(d) {
@@ -321,7 +322,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "bupivacaine", "ropivacaine", "mepivacaine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
-    "ondansetron", "aprepitant", "fosaprepitant"
+    "ondansetron", "aprepitant", "fosaprepitant",
+    "diclofenac", "meloxicam", "ketorolac"
   ))
 })
 
