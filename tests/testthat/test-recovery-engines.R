@@ -351,7 +351,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # AmiodaroneIV joined on 2026-10-08: active, no effect site and no
   # metabolite, so it never reaches the fold either.  Clonazepam, zolpidem and
   # temazepam (direct effects, no effect site) joined on 2026-10-09, with no
-  # metabolite either.
+  # metabolite either.  Methylphenidate and lisdexamfetamine joined on
+  # 2026-10-10: no calibrated concentration-effect model, no metabolite.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
@@ -359,7 +360,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
-    "clonazepam", "zolpidem", "temazepam"
+    "clonazepam", "zolpidem", "temazepam",
+    "methylphenidate", "lisdexamfetamine"
   ))
 })
 
