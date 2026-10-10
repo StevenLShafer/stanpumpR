@@ -393,7 +393,28 @@ app_ui <- function() {
                     textOutput("doseTimeUnits", inline = TRUE) |>
                       htmltools::tagAppendAttributes(class = "small text-muted")
                   ),
-                  actionLink("setTarget", "Suggest Dosing", class = "small")
+                  div(
+                    class = "d-flex align-items-center gap-3",
+                    # Opt-in for the drug-of-abuse research models (off by
+                    # default); when on, they are offered in the dose table and
+                    # the Add a dose dialog, with their names shown in red.
+                    bslib::tooltip(
+                      checkboxInput(
+                        "showIllicitDrugs",
+                        "Show illicit drugs",
+                        value = FALSE
+                      ) |>
+                        htmltools::tagAppendAttributes(class = "micro mb-0"),
+                      paste(
+                        "Show evidence-labelled research models of drugs of",
+                        "abuse (for example diamorphine). Off by default. These",
+                        "are plasma-exposure estimates for research, not dosing",
+                        "advice or safety thresholds."
+                      ),
+                      placement = "left"
+                    ),
+                    actionLink("setTarget", "Suggest Dosing", class = "small")
+                  )
                 ),
 
                 rhandsontable::rHandsontableOutput("doseTableHTML"),

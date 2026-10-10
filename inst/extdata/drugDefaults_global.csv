@@ -96,3 +96,4 @@ zonisamide,mcg,,,mg PO qd,"mg PO,mg PO liquid,mg PO qd,mg PO bid",#4527A0,10,40,
 tiagabine,ng,,,mg PO tid,"mg PO,mg PO bid,mg PO tid,mg PO qid",#00838F,20,200,50,0,0,IV,Antiseizure
 levetiracetam,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid",#2E7D32,12,46,30,0,0,IV,Antiseizure
 eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,26,15,0,0,IV,Antiseizure
+diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs

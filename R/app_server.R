@@ -133,6 +133,13 @@ app_server <- function(input, output, session) {
   # Alphabetical, for the drug pickers; never index drugDefaults() with it
   drugList <- sortDrugNames(getDrugDefaultsGlobal()$Drug)
 
+  # The drugs offered when a drug is chosen (the dose-table autocomplete and
+  # the Add a dose dialog): every drug when the illicit-drug opt-in is on, the
+  # non-illicit drugs when it is off (R/illicit-drugs.R).  Alphabetical.
+  drugChoices <- reactive(
+    sortDrugNames(visibleDrugNames(isTRUE(input$showIllicitDrugs), drugDefaults()))
+  )
+
   # Empty until the drugs are chosen in the startup menu, or a bookmark
   # restores its own (see Startup, below)
   doseTable <- reactiveVal(doseTableBlank)
@@ -151,7 +158,7 @@ app_server <- function(input, output, session) {
     profileCode({
       outputComments("Rendering doseTableHTML")
 
-      createHOT(doseTableDraft(), drugDefaults(), format)
+      createHOT(doseTableDraft(), drugDefaults(), format, drugChoices())
     }, name = "createHOT() from doseTableHTML")
   })
 
@@ -511,6 +518,11 @@ app_server <- function(input, output, session) {
       # on total body weight; restore them that way so their output is unchanged.
       if (is.null(state$input$adjustToFFM)) {
         updateCheckboxInput(session, "adjustToFFM", value = FALSE)
+      }
+      # A restored dose table with an illicit drug in it turns the opt-in on, so
+      # the drug is not hidden from the table it is part of (R/illicit-drugs.R).
+      if (any(isIllicitDrug(DT$Drug, drugDefaults()))) {
+        updateCheckboxInput(session, "showIllicitDrugs", value = TRUE)
       }
     }, name = "onRestored()")
   })
@@ -1496,7 +1508,9 @@ app_server <- function(input, output, session) {
         selectInput(
           inputId = "addDoseDrug",
           label = "Drug",
-          choices = drugList,
+          # The visible drugs, honouring the illicit-drug opt-in; the clicked
+          # drug is always included (it is already in the table).
+          choices = union(drug, drugChoices()),
           selected = drug
         ),
         textInput(

@@ -51,7 +51,9 @@ plasmaOnly <- c(
   # linked effect site (2026-10-10)
   "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",
   "topiramate", "lacosamide", "lamotrigine", "zonisamide", "tiagabine",
-  "levetiracetam", "eslicarbazepine", "carbamazepine"
+  "levetiracetam", "eslicarbazepine", "carbamazepine",
+  # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
+  "diamorphine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
