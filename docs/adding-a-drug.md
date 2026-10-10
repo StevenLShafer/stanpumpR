@@ -265,10 +265,15 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Category` — the group the drug is listed under in the menu the app opens with: one of
   `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
   `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
-  `Corticosteroids`, `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `Corticosteroids`, `Other`, `Illicit drugs`). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.
+  `Illicit drugs` (`ILLICIT_DRUG_CATEGORY`) is special: it is the category of the
+  opt-in drug-of-abuse research models (`R/illicit-drugs.R`). Those drugs are hidden
+  unless the user turns on **Show illicit drugs** (off by default), are shown in red in
+  the dose table, and are never offered in the startup menu. Give a drug this category
+  only if it is such a research model; diamorphine is the first (`R/drugs_diamorphine.R`).
 
 Example row (remifentanil):
 
