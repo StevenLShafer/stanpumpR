@@ -112,7 +112,7 @@ tciKinetics <- function(PK)
 # Build the pump's infusion schedule for one drug.
 #
 # dose:    that drug's rows of the dose table AFTER simCpCe() has converted
-#          them to base units and flagged Bolus / PO / IM / IN.  Target rows
+#          them to base units and flagged Bolus / PO / IM / IN / RA.  Target rows
 #          carry the target concentration in Dose.
 # PK:      the drug's PK object from getDrugPK() (default PK set, tPeak, weight).
 # maximum: end of the simulation (min).
@@ -132,7 +132,8 @@ tciSchedule <- function(dose, PK, maximum,
   dose$Bolus[dose$Target] <- FALSE
 
   targets   <- dose[dose$Target & dose$Time >= 0 & dose$Time < maximum, ]
-  manual    <- which(!dose$Target & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN)
+  manual    <- which(!dose$Target & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN &
+                     !dose$RA & !dose$RAslow)
   bolusRows <- dose[dose$Bolus & !dose$Target, ]
 
   # Several targets at one time: the last one entered wins.
@@ -254,7 +255,8 @@ tciSchedule <- function(dose, PK, maximum,
     tciRows$Dose  <- rates$Rate
     tciRows$Units <- "TCI"
     tciRows$Bolus <- FALSE
-    tciRows$PO <- tciRows$IM <- tciRows$IN <- FALSE
+    tciRows$PO <- tciRows$IM <- tciRows$IN <- tciRows$RA <- FALSE
+    if (!is.null(tciRows$RAslow)) tciRows$RAslow <- FALSE
     tciRows$Target <- FALSE
     keep <- rbind(keep, tciRows)
   }

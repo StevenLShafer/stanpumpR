@@ -295,8 +295,9 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # published human ke0 for the antiarrhythmic effect; clonazepam's,
   # zolpidem's and temazepam's published effects are direct functions of
   # plasma concentration (2026-10-09); methylphenidate and lisdexamfetamine
-  # have no calibrated concentration-effect model for any ADHD endpoint
-  # (2026-10-10).  The antidepressants (2026-10-10) have
+  # have no calibrated concentration-effect model for any ADHD endpoint;
+  # bupivacaine, ropivacaine and mepivacaine model systemic plasma
+  # concentration, not the nerve block (2026-10-10).  The antidepressants (2026-10-10) have
   # no effect site: response lags weeks and no ke0 has been estimated.  Pinned because the count has been got wrong by hand more
   # than once.
   dd <- getDrugDefaultsGlobal(FALSE)
@@ -315,6 +316,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
     "methylphenidate", "lisdexamfetamine",
+    "bupivacaine", "ropivacaine", "mepivacaine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine"
   ))

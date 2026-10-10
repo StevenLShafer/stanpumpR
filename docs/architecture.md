@@ -165,7 +165,8 @@ time point as a sum of exponentials.
    - `advanceClosedForm0.R` — IV, no PK events
    - `advanceClosedForm1.R` — time-varying PK driven by events, including extravascular doses
      (the absorption depot is carried as an amount, which a change in PK set does not touch)
-   - `advanceClosedFormPO_IM_IN.R` — extravascular routes
+   - `advanceClosedFormPO_IM_IN.R` — extravascular routes (PO, IM, IN, and RA: a local
+     anesthetic injected into tissue, absorbed first-order)
    - `advanceClosedFormMetabolite.R` — a drug that forms an active metabolite
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
    across event boundaries.

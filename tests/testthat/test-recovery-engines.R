@@ -353,6 +353,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # temazepam (direct effects, no effect site) joined on 2026-10-09, with no
   # metabolite either.  Methylphenidate and lisdexamfetamine joined on
   # 2026-10-10: no calibrated concentration-effect model, no metabolite.
+  # Bupivacaine, ropivacaine and mepivacaine (systemic
+  # plasma only, regional anesthesia) joined on 2026-10-10, with no metabolite.
   # The antidepressants joined on 2026-10-10: response
   # lags weeks and no ke0 exists; bupropion forms hydroxybupropion, which has
   # no effect site either, so the fold takes the NA path, as for amiodarone.
@@ -365,6 +367,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
     "methylphenidate", "lisdexamfetamine",
+    "bupivacaine", "ropivacaine", "mepivacaine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine"
   ))

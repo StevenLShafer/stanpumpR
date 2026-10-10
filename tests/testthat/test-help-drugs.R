@@ -39,8 +39,10 @@ plasmaOnly <- c(
   # The antidepressants: response lags weeks, no ke0 exists
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
   "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
-    "clonazepam", "zolpidem", "temazepam",
-  "methylphenidate", "lisdexamfetamine"
+  "clonazepam", "zolpidem", "temazepam",
+  "methylphenidate", "lisdexamfetamine",
+  # systemic plasma concentration, not the nerve block (2026-10-10)
+  "bupivacaine", "ropivacaine", "mepivacaine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

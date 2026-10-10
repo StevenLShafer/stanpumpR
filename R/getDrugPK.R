@@ -166,6 +166,7 @@ getDrugPK <- function(
     # PO will add state_PO, associated with ka_PO #
     # IM will add state_IM, associated with ka_IM #
     # IN will add state_IN, associated with ka_IN #
+    # RA will add state_RA, associated with ka_RA #
 
     # Set up PK for oral delivery
     if (is.null(X$PK[[event]]$ka_PO))
@@ -231,6 +232,53 @@ getDrugPK <- function(
       } else {
         tlag_IN <- X$PK[[event]]$tlag_IN
       }
+    }
+
+    # Set up PK for regional anesthesia (RA): a local anesthetic injected into
+    # tissue and absorbed first-order into the systemic circulation.
+    if (is.null(X$PK[[event]]$ka_RA))
+    {
+      ka_RA <- 0
+      bioavailability_RA <- 0
+      tlag_RA <- 0
+    } else {
+      ka_RA <- X$PK[[event]]$ka_RA
+      if (is.null(X$PK[[event]]$bioavailability_RA))
+      {
+        bioavailability_RA <- 1
+      } else {
+        bioavailability_RA <- X$PK[[event]]$bioavailability_RA
+      }
+      if (is.null(X$PK[[event]]$tlag_RA))
+      {
+        tlag_RA <- 0
+      } else {
+        tlag_RA <- X$PK[[event]]$tlag_RA
+      }
+    }
+
+    # An optional slow second tissue depot for RA (parallel first-order
+    # absorption).  The drug declares ka_RA_slow (1/min) and
+    # fraction_RA_slow, the share of the ABSORBED dose that goes through the
+    # slow depot.  Internally that is a second route, "RAslow", fed by the
+    # same RA dose rows (simCpCe() duplicates them), with the bioavailability
+    # split between the two depots and the same lag:
+    #     bioavailability_RA     = F x (1 - fraction_RA_slow)
+    #     bioavailability_RAslow = F x fraction_RA_slow
+    ka_RAslow <- 0
+    bioavailability_RAslow <- 0
+    tlag_RAslow <- 0
+    if (ka_RA > 0 && !is.null(X$PK[[event]]$ka_RA_slow))
+    {
+      slow <- X$PK[[event]]$fraction_RA_slow
+      if (!is_valid_number(X$PK[[event]]$ka_RA_slow) || X$PK[[event]]$ka_RA_slow <= 0 ||
+          !is_valid_number(slow, 0, 1))
+        stop("Invalid slow RA depot for ", drug, ": needs ka_RA_slow > 0 and ",
+             "fraction_RA_slow between 0 and 1.")
+      ka_RAslow <- X$PK[[event]]$ka_RA_slow
+      bioavailability_RAslow <- bioavailability_RA * slow
+      bioavailability_RA <- bioavailability_RA * (1 - slow)
+      tlag_RAslow <- tlag_RA
     }
 
     if (is.null(X$PK[[event]]$customFunction))
@@ -307,6 +355,30 @@ getDrugPK <- function(
     e_coef_IN_l3  <- 0
     e_coef_IN_ke0 <- 0
     e_coef_IN_ka  <- 0
+
+    # RA Delivery
+    p_coef_RA_l1  <- 0
+    p_coef_RA_l2  <- 0
+    p_coef_RA_l3  <- 0
+    p_coef_RA_ka  <- 0
+
+    e_coef_RA_l1  <- 0
+    e_coef_RA_l2  <- 0
+    e_coef_RA_l3  <- 0
+    e_coef_RA_ke0 <- 0
+    e_coef_RA_ka  <- 0
+
+    # RA slow depot Delivery
+    p_coef_RAslow_l1  <- 0
+    p_coef_RAslow_l2  <- 0
+    p_coef_RAslow_l3  <- 0
+    p_coef_RAslow_ka  <- 0
+
+    e_coef_RAslow_l1  <- 0
+    e_coef_RAslow_l2  <- 0
+    e_coef_RAslow_l3  <- 0
+    e_coef_RAslow_ke0 <- 0
+    e_coef_RAslow_ka  <- 0
 
     if (k31 > 0)
     {
@@ -453,6 +525,34 @@ getDrugPK <- function(
       e_coef_IN_ka  <- - e_coef_IN_l1 - e_coef_IN_l2 - e_coef_IN_l3 - e_coef_IN_ke0
     }
 
+    if (ka_RA > 0)
+    {
+      p_coef_RA_l1  <- p_coef_bolus_l1 / (ka_RA - lambda_1) * ka_RA * bioavailability_RA
+      p_coef_RA_l2  <- p_coef_bolus_l2 / (ka_RA - lambda_2) * ka_RA * bioavailability_RA
+      p_coef_RA_l3  <- p_coef_bolus_l3 / (ka_RA - lambda_3) * ka_RA * bioavailability_RA
+      p_coef_RA_ka  <- - p_coef_RA_l1 - p_coef_RA_l2 - p_coef_RA_l3
+
+      e_coef_RA_l1  <- e_coef_bolus_l1 / (ka_RA - lambda_1) * ka_RA * bioavailability_RA
+      e_coef_RA_l2  <- e_coef_bolus_l2 / (ka_RA - lambda_2) * ka_RA * bioavailability_RA
+      e_coef_RA_l3  <- e_coef_bolus_l3 / (ka_RA - lambda_3) * ka_RA * bioavailability_RA
+      e_coef_RA_ke0 <- e_coef_bolus_ke0 / (ka_RA - ke0) *     ka_RA * bioavailability_RA
+      e_coef_RA_ka  <- - e_coef_RA_l1 - e_coef_RA_l2 - e_coef_RA_l3 - e_coef_RA_ke0
+    }
+
+    if (ka_RAslow > 0)
+    {
+      p_coef_RAslow_l1  <- p_coef_bolus_l1 / (ka_RAslow - lambda_1) * ka_RAslow * bioavailability_RAslow
+      p_coef_RAslow_l2  <- p_coef_bolus_l2 / (ka_RAslow - lambda_2) * ka_RAslow * bioavailability_RAslow
+      p_coef_RAslow_l3  <- p_coef_bolus_l3 / (ka_RAslow - lambda_3) * ka_RAslow * bioavailability_RAslow
+      p_coef_RAslow_ka  <- - p_coef_RAslow_l1 - p_coef_RAslow_l2 - p_coef_RAslow_l3
+
+      e_coef_RAslow_l1  <- e_coef_bolus_l1 / (ka_RAslow - lambda_1) * ka_RAslow * bioavailability_RAslow
+      e_coef_RAslow_l2  <- e_coef_bolus_l2 / (ka_RAslow - lambda_2) * ka_RAslow * bioavailability_RAslow
+      e_coef_RAslow_l3  <- e_coef_bolus_l3 / (ka_RAslow - lambda_3) * ka_RAslow * bioavailability_RAslow
+      e_coef_RAslow_ke0 <- e_coef_bolus_ke0 / (ka_RAslow - ke0) *     ka_RAslow * bioavailability_RAslow
+      e_coef_RAslow_ka  <- - e_coef_RAslow_l1 - e_coef_RAslow_l2 - e_coef_RAslow_l3 - e_coef_RAslow_ke0
+    }
+
     # Vd Peak Effect
     if (tPeak == 0)
     {
@@ -493,6 +593,14 @@ getDrugPK <- function(
         ka_IN = ka_IN,
         bioavailability_IN = bioavailability_IN,
         tlag_IN = tlag_IN,
+
+        ka_RA = ka_RA,
+        bioavailability_RA = bioavailability_RA,
+        tlag_RA = tlag_RA,
+
+        ka_RAslow = ka_RAslow,
+        bioavailability_RAslow = bioavailability_RAslow,
+        tlag_RAslow = tlag_RAslow,
 
         customFunction = customFunction,
 
@@ -556,7 +664,31 @@ getDrugPK <- function(
         e_coef_IN_l2 = e_coef_IN_l2,
         e_coef_IN_l3 = e_coef_IN_l3,
         e_coef_IN_ke0 = e_coef_IN_ke0,
-        e_coef_IN_ka = e_coef_IN_ka
+        e_coef_IN_ka = e_coef_IN_ka,
+
+        # RA Coefficients
+        p_coef_RA_l1 = p_coef_RA_l1,
+        p_coef_RA_l2 = p_coef_RA_l2,
+        p_coef_RA_l3 = p_coef_RA_l3,
+        p_coef_RA_ka = p_coef_RA_ka,
+
+        e_coef_RA_l1 = e_coef_RA_l1,
+        e_coef_RA_l2 = e_coef_RA_l2,
+        e_coef_RA_l3 = e_coef_RA_l3,
+        e_coef_RA_ke0 = e_coef_RA_ke0,
+        e_coef_RA_ka = e_coef_RA_ka,
+
+        # RA slow depot Coefficients
+        p_coef_RAslow_l1 = p_coef_RAslow_l1,
+        p_coef_RAslow_l2 = p_coef_RAslow_l2,
+        p_coef_RAslow_l3 = p_coef_RAslow_l3,
+        p_coef_RAslow_ka = p_coef_RAslow_ka,
+
+        e_coef_RAslow_l1 = e_coef_RAslow_l1,
+        e_coef_RAslow_l2 = e_coef_RAslow_l2,
+        e_coef_RAslow_l3 = e_coef_RAslow_l3,
+        e_coef_RAslow_ke0 = e_coef_RAslow_ke0,
+        e_coef_RAslow_ka = e_coef_RAslow_ka
       )
     )
   }
