@@ -4,9 +4,10 @@
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
+# The 70 kg, 170 cm, 35 year reference man, whose size factors are exactly 1.
 raPK <- function(drug, weight = 70) {
   dd <- getDrugDefaultsGlobal()
-  PK <- getDrugPK(drug, weight, 170, 50, "male", dd[dd$Drug == drug, ])
+  PK <- getDrugPK(drug, weight, 170, 35, "male", dd[dd$Drug == drug, ])
   PK$endCe <- dd$endCe[dd$Drug == drug]
   PK
 }
@@ -87,9 +88,11 @@ test_that("an RA dose is absorbed, not infused, when the PK set changes", {
   PK$PK$Switch <- PK$PK$default
   PK$pkEvents <- c(PK$pkEvents, "Switch")
   switched <- simCpCe(DT, data.frame(Time = 50, Event = "Switch"), PK, 300, FALSE)$wide
-  at <- c(5, 45, 55, 90, 200, 290)
-  f <- function(x) stats::approx(x$Time, x$Plasma, at)$y
-  expect_equal(f(switched), f(single), tolerance = 1e-6)
+  # Compared at the points both engines computed, so nothing is interpolated.
+  at <- intersect(single$Time, switched$Time)
+  expect_gt(length(at), 20)
+  f <- function(x) x$Plasma[match(at, x$Time)]
+  expect_equal(f(switched), f(single), tolerance = 1e-8)
 })
 
 test_that("the local anesthetics are listed together, plasma only", {
