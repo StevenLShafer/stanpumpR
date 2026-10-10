@@ -52,7 +52,7 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("only gabapentin, pregabalin, acetaminophen, ibuprofen, zolpidem and clonazepam carry an absorption lag", {
+test_that("only gabapentin, pregabalin, acetaminophen, ibuprofen, zolpidem, clonazepam and olanzapine carry an absorption lag", {
   # If this ever fails it is not a defect -- a drug has gained or lost a lag,
   # and the behaviour the rest of this file guards has changed where it is
   # live.  Worth knowing, and worth rereading R/recoveryStates.R.
@@ -71,7 +71,10 @@ test_that("only gabapentin, pregabalin, acetaminophen, ibuprofen, zolpidem and c
   }
   expect_setequal(unique(lagged),
                   c("gabapentin", "pregabalin", "acetaminophen", "ibuprofen",
-                    "zolpidem", "clonazepam"))
+                    "zolpidem", "clonazepam",
+                    # Sun 2021's fixed 0.782 h lag; plasma only, so no
+                    # effect-site recovery to blank
+                    "olanzapine"))
 })
 
 
