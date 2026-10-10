@@ -569,6 +569,23 @@ helpScenarios <- function() {
       timeUnits = "days", maximum = 4320,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    helpScenario(
+      "ropivacaine-perineural-infusion",
+      "Ropivacaine: a continuous perineural infusion",
+      "Regional anesthesia",
+      "A 150 mg block followed by a 48-hour catheter infusion of 16 mg/hr: slow absorption delays the block's peak to 3 hours, the infusion settles at rate / clearance, and the concentration falls slowly after it stops.",
+      # 65 years: the ropivacaine disposition is that of patients 61 and over.
+      age = 65,
+      doses = helpDoses(
+        c("ropivacaine", 0, 150, "mg RA"),
+        c("ropivacaine", 0, 16, "mg/hr RA"),
+        c("ropivacaine", 2880, 0, "mg/hr RA")
+      ),
+      # Ropivacaine has no effect site, so the plasma line carries the curve.
+      # Three days, in days: the infusion stops at 2.
+      timeUnits = "days", maximum = 4320,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",
