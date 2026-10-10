@@ -48,7 +48,9 @@ plasmaOnly <- c(
   # NSAIDs with no published ke0 (2026-10-10)
   "diclofenac", "meloxicam", "ketorolac",
     # aspirin and the salicylate it forms (2026-10-10): no ke0
-    "aspirin", "salicylate"
+    "aspirin", "salicylate",
+  # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
+  "diamorphine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

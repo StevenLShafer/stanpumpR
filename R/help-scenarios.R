@@ -537,6 +537,36 @@ helpScenarios <- function() {
       timeUnits = "hours", maximum = 480,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    helpScenario(
+      "lidocaine-intravascular-injection",
+      "Lidocaine: a block dose injected into a vein",
+      "Regional anesthesia",
+      "The 400 mg of lidocaine meant for a nerve block goes into a vein instead: the plasma starts far above anything the block produces, and the effect site passes 5 mcg/mL within 2 minutes.",
+      doses = helpDoses(
+        # The block dose, given intravenously ("mg") rather than into the
+        # tissue ("mg RA"); the narrative switches it back.
+        c("lidocaine", 0, 400, "mg")
+      ),
+      # A log axis keeps the first-minute plasma (65 mcg/mL) from flattening
+      # the effect site, which carries the point.
+      maximum = 60, plasmaLinetype = "dashed", effectsiteLinetype = "solid",
+      logY = TRUE
+    ),
+    helpScenario(
+      "bupivacaine-perineural-infusion",
+      "Bupivacaine: a continuous perineural infusion",
+      "Regional anesthesia",
+      "A 100 mg block followed by a 48-hour catheter infusion of 10 mg/hr: the block sets the peak, the infusion settles at rate / clearance, and the concentration falls within hours of stopping.",
+      doses = helpDoses(
+        c("bupivacaine", 0, 100, "mg RA"),
+        c("bupivacaine", 0, 10, "mg/hr RA"),
+        c("bupivacaine", 2880, 0, "mg/hr RA")
+      ),
+      # Bupivacaine has no effect site, so the plasma line carries the curve.
+      # Three days, in days: the infusion stops at 2.
+      timeUnits = "days", maximum = 4320,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",

@@ -14,6 +14,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   if (is.null(dose$SL)) dose$SL <- rep(FALSE, nrow(dose))
   if (is.null(dose$RA)) dose$RA <- rep(FALSE, nrow(dose))
   if (is.null(dose$RAslow)) dose$RAslow <- rep(FALSE, nrow(dose))
+  if (is.null(dose$RArate)) dose$RArate <- rep(FALSE, nrow(dose))
   if (is.null(dose$PO2)) dose$PO2 <- rep(FALSE, nrow(dose))
   givenAt <- dose$Time
   dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
@@ -22,6 +23,7 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   dose$Time[dose$SL] <- dose$Time[dose$SL] + pkSet$tlag_SL
   dose$Time[dose$RA] <- dose$Time[dose$RA] + pkSet$tlag_RA
   dose$Time[dose$RAslow] <- dose$Time[dose$RAslow] + pkSet$tlag_RAslow
+  dose$Time[dose$RArate] <- dose$Time[dose$RArate] + pkSet$tlag_RA
   # The second oral depot (see getDrugPK()); a PK set built before it existed
   # carries no tlag_PO2, and then no PO2 rows either.
   if (any(dose$PO2)) dose$Time[dose$PO2] <- dose$Time[dose$PO2] + pkSet$tlag_PO2
@@ -48,7 +50,10 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   doseNA <- rep(0, L)
 
   # Create bolusLine and infusionLine
-  inputs    <- doseLines(dose, timeLine, c("PO", "IM", "IN", "SL", "RA", "RAslow", "PO2"))
+  # RArate rows are listed as a route so that they are not taken for
+  # intravenous infusion rows; their rate is read separately below.
+  inputs    <- doseLines(dose, timeLine,
+                         c("PO", "IM", "IN", "SL", "RA", "RAslow", "PO2", "RArate"))
   bolusLine <- inputs$bolus
   poLine    <- inputs$PO
   imLine    <- inputs$IM
@@ -59,6 +64,27 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   po2Line   <- inputs$PO2
   rate      <- inputs$rate
   dt        <- inputs$dt
+
+  # The continuous perineural infusion ("mg/hr RA"): the rate into the tissue
+  # depot over the step into each point, built as doseLines() builds an
+  # intravenous rate, from the RArate rows alone.
+  #
+  # A constant rate R into the depot over a step dt adds, to each exponential
+  # state x of an RA dose (bolus coefficient c_x, exponent x: the disposition
+  # eigenvalues and the depot's ka, and ke0 for the effect site),
+  #
+  #     R c_x / x (1 - exp(-x dt))
+  #
+  # which is exact, the same form as an intravenous infusion's increment.  The
+  # coefficients carry the bioavailability, and for a drug with a slow second
+  # depot (mepivacaine) each depot's share of it, so the slow depot's terms
+  # are added in the same way and the rate needs no splitting.  (Claude Code,
+  # 2026-10-10, at the request of Steven L. Shafer.)
+  raInfusion <- if (any(dose$RArate)) {
+    doseLines(data.frame(Time = dose$Time, Dose = dose$Dose, Bolus = !dose$RArate),
+              timeLine)$rate
+  } else rep(0, L)
+  overRate <- function(coef, x) if (x > 0) coef / x else 0
 
   # A PK set from before the second oral depot existed has none of its fields.
   if (is.null(pkSet$ka_PO2))
@@ -120,6 +146,20 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_RA_ka <- p_coef_RA_ka * raLine
       p_RAslow_ka <- p_coef_RAslow_ka * raSlowLine
 
+      # The continuous RA infusion, into the same states (see above).
+      if (any(raInfusion > 0))
+      {
+        p_RA_l1 <- p_RA_l1 + raInfusion * (1 - l1_dt) *
+          (overRate(p_coef_RA_l1, lambda_1) + overRate(p_coef_RAslow_l1, lambda_1))
+        p_RA_l2 <- p_RA_l2 + raInfusion * (1 - l2_dt) *
+          (overRate(p_coef_RA_l2, lambda_2) + overRate(p_coef_RAslow_l2, lambda_2))
+        p_RA_l3 <- p_RA_l3 + raInfusion * (1 - l3_dt) *
+          (overRate(p_coef_RA_l3, lambda_3) + overRate(p_coef_RAslow_l3, lambda_3))
+        p_RA_ka <- p_RA_ka + raInfusion * (1 - ka_RA_dt) * overRate(p_coef_RA_ka, ka_RA)
+        p_RAslow_ka <- p_RAslow_ka +
+          raInfusion * (1 - ka_RAslow_dt) * overRate(p_coef_RAslow_ka, ka_RAslow)
+      }
+
       # Sublingual doses enter the disposition states through the same last
       # argument as RA, and keep their own absorption state.
       p_X_l1 <- p_RA_l1 + p_coef_SL_l1 * slLine
@@ -178,6 +218,21 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       e_RA_ke0 <- e_coef_RA_ke0 * raLine + e_coef_RAslow_ke0 * raSlowLine
       e_RA_ka  <- e_coef_RA_ka  * raLine
       e_RAslow_ka <- e_coef_RAslow_ka * raSlowLine
+
+      if (any(raInfusion > 0))
+      {
+        e_RA_l1  <- e_RA_l1 + raInfusion * (1 - l1_dt) *
+          (overRate(e_coef_RA_l1, lambda_1) + overRate(e_coef_RAslow_l1, lambda_1))
+        e_RA_l2  <- e_RA_l2 + raInfusion * (1 - l2_dt) *
+          (overRate(e_coef_RA_l2, lambda_2) + overRate(e_coef_RAslow_l2, lambda_2))
+        e_RA_l3  <- e_RA_l3 + raInfusion * (1 - l3_dt) *
+          (overRate(e_coef_RA_l3, lambda_3) + overRate(e_coef_RAslow_l3, lambda_3))
+        e_RA_ke0 <- e_RA_ke0 + raInfusion * (1 - ke0_dt) *
+          (overRate(e_coef_RA_ke0, ke0) + overRate(e_coef_RAslow_ke0, ke0))
+        e_RA_ka  <- e_RA_ka + raInfusion * (1 - ka_RA_dt) * overRate(e_coef_RA_ka, ka_RA)
+        e_RAslow_ka <- e_RAslow_ka +
+          raInfusion * (1 - ka_RAslow_dt) * overRate(e_coef_RAslow_ka, ka_RAslow)
+      }
 
       e_X_l1  <- e_RA_l1  + e_coef_SL_l1  * slLine
       e_X_l2  <- e_RA_l2  + e_coef_SL_l2  * slLine

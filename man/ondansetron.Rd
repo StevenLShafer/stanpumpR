@@ -23,6 +23,6 @@ published fixed parameters unscaled.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Two-compartment intravenous reference model of Chiang 2021, without its
-age covariate.
+Two-compartment intravenous model of Chiang 2021, with its age covariate on
+central volume evaluated within the fitted 45-70 year range.
 }

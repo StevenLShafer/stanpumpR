@@ -21,7 +21,10 @@ test_that("every drug that can be dosed has a category the menu knows", {
 
 test_that("the menu lists the categories in order, each sorted by name", {
   choices <- startupDrugChoices(dd)
-  expect_identical(names(choices), DRUG_CATEGORIES)
+  # The illicit-drug category is opt-in and never offered in the startup menu
+  expect_identical(names(choices), setdiff(DRUG_CATEGORIES, ILLICIT_DRUG_CATEGORY))
+  expect_false(ILLICIT_DRUG_CATEGORY %in% names(choices))
+  expect_false("diamorphine" %in% unlist(choices))
   for (drugs in choices) {
     titles <- tolower(helpDrugTitle(drugs))
     expect_identical(titles, sort(titles))
@@ -145,9 +148,12 @@ test_that("the menu's inputs are kept out of the bookmark URL", {
 
 test_that("the menu ticks the defaults and has no way out but Start", {
   html <- as.character(startupDrugModal(startupDrugChoices(dd)))
-  for (category in DRUG_CATEGORIES) {
+  # Every offered category is in the menu; the opt-in illicit category is not
+  for (category in names(startupDrugChoices(dd))) {
     expect_match(html, sprintf('id="%s"', startupDrugInputId(category)), fixed = TRUE)
   }
+  expect_false(grepl(sprintf('id="%s"', startupDrugInputId(ILLICIT_DRUG_CATEGORY)),
+                     html, fixed = TRUE))
   ticked <- regmatches(html, gregexpr('value="[^"]+" checked', html))[[1]]
   expect_setequal(sub('value="([^"]+)" checked', "\\1", ticked), STARTUP_DRUGS_DEFAULT)
   expect_match(html, 'id="startup_ok"', fixed = TRUE)

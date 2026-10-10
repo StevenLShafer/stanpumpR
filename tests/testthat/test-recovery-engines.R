@@ -377,7 +377,11 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "ondansetron", "aprepitant", "fosaprepitant",
     "diclofenac", "meloxicam", "ketorolac",
     # aspirin and the salicylate it forms (2026-10-10): no ke0
-    "aspirin", "salicylate"
+    "aspirin", "salicylate",
+    # Diamorphine joined on 2026-10-10: the opt-in illicit research model
+    # (R/drugs_diamorphine.R) plots parent plasma only, with 6-MAM and morphine
+    # not modelled, so it has no effect site and forms no metabolite here.
+    "diamorphine"
   ))
 })
 

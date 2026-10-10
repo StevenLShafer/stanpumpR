@@ -51,6 +51,12 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   routes <- c("PO", "IM", "IN", "SL", "RA", "RAslow", "PO2")
   for (r in routes) if (is.null(dose[[r]])) dose[[r]] <- rep(FALSE, nrow(dose))
   extravascular <- dose$PO | dose$IM | dose$IN | dose$SL | dose$RA | dose$RAslow | dose$PO2
+  # A continuous perineural infusion ("mg/hr RA") is a rate into the tissue
+  # depot, which this engine does not carry; it would otherwise be run as an
+  # intravenous infusion.  No drug that offers it has a PK event.
+  if (!is.null(dose$RArate) && any(dose$RArate))
+    stop("A continuous RA infusion (mg/hr RA) cannot yet be combined with a ",
+         "clinical event that changes the PK.")
 
   # The PK set in force at time t: the last event at or before it.
   eventAt <- function(t) events$Event[utils::tail(which(events$Time <= t), 1)]
