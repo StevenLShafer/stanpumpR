@@ -28,6 +28,7 @@ HELP_SCENARIO_GROUPS <- c(
   "Special populations",
   "Recovery and emergence",
   "Inhaled anesthetics",
+  "Regional anesthesia",
   "Long-term therapy"
 )
 
@@ -66,7 +67,7 @@ helpScenarioDefaultOptions <- function() {
 helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
-                         doses, events = NULL, ...) {
+                         doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -82,7 +83,7 @@ helpScenario <- function(id, title, group, summary,
   list(
     id = id, title = title, group = group, summary = summary,
     patient = list(age = age, weight = weight, height = height, sex = sex,
-                   cyp2d6 = cyp2d6, adjustToFFM = adjustToFFM),
+                   cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, adjustToFFM = adjustToFFM),
     doses = doses, events = events, options = options
   )
 }
@@ -506,6 +507,66 @@ helpScenarios <- function() {
       maximum = 60
     ),
 
+    # --- Regional anesthesia -------------------------------------------------
+    helpScenario(
+      "regional-anesthesia-absorption",
+      "Local anesthetics after a nerve block",
+      "Regional anesthesia",
+      "Lidocaine, bupivacaine and ropivacaine injected into tissue (RA) are absorbed into the circulation over hours, so the systemic peak comes late and its height and timing differ from drug to drug.",
+      # 65 years: the ropivacaine disposition is that of patients 61 and over.
+      age = 65,
+      doses = helpDoses(
+        c("lidocaine", 0, 400, "mg RA"),
+        c("bupivacaine", 0, 150, "mg RA"),
+        c("ropivacaine", 0, 175, "mg RA")
+      ),
+      # Bupivacaine and ropivacaine have no effect site, so the plasma line
+      # carries every curve; lidocaine's effect site is its systemic one.
+      timeUnits = "hours", maximum = 720,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
+    helpScenario(
+      "mepivacaine-two-depot-absorption",
+      "Mepivacaine: fast and slow absorption from one block",
+      "Regional anesthesia",
+      "Mepivacaine injected for an axillary block is absorbed through a fast and a slow depot in parallel, so the plasma rises within minutes, holds for an hour and then falls slowly.",
+      doses = helpDoses(
+        c("mepivacaine", 0, 600, "mg RA")
+      ),
+      # Mepivacaine has no effect site, so the plasma line carries the curve.
+      timeUnits = "hours", maximum = 480,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
+    helpScenario(
+      "lidocaine-intravascular-injection",
+      "Lidocaine: a block dose injected into a vein",
+      "Regional anesthesia",
+      "The 400 mg of lidocaine meant for a nerve block goes into a vein instead: the plasma starts far above anything the block produces, and the effect site passes 5 mcg/mL within 2 minutes.",
+      doses = helpDoses(
+        # The block dose, given intravenously ("mg") rather than into the
+        # tissue ("mg RA"); the narrative switches it back.
+        c("lidocaine", 0, 400, "mg")
+      ),
+      # A log axis keeps the first-minute plasma (65 mcg/mL) from flattening
+      # the effect site, which carries the point.
+      maximum = 60, plasmaLinetype = "dashed", effectsiteLinetype = "solid",
+      logY = TRUE
+    ),
+    helpScenario(
+      "bupivacaine-perineural-infusion",
+      "Bupivacaine: a continuous perineural infusion",
+      "Regional anesthesia",
+      "A 100 mg block followed by a 48-hour catheter infusion of 10 mg/hr: the block sets the peak, the infusion settles at rate / clearance, and the concentration falls within hours of stopping.",
+      doses = helpDoses(
+        c("bupivacaine", 0, 100, "mg RA"),
+        c("bupivacaine", 0, 10, "mg/hr RA"),
+        c("bupivacaine", 2880, 0, "mg/hr RA")
+      ),
+      # Bupivacaine has no effect site, so the plasma line carries the curve.
+      # Three days, in days: the infusion stops at 2.
+      timeUnits = "days", maximum = 4320,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",
@@ -589,6 +650,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!is_valid_number(p$height, MIN_HEIGHT, MAX_HEIGHT)) say("height out of range: ", p$height)
   if (!p$sex %in% SEX_VALUES) say("invalid sex: ", p$sex)
   if (!p$cyp2d6 %in% CYP2D6_VALUES) say("invalid cyp2d6: ", p$cyp2d6)
+  if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
 
   o <- s$options
@@ -718,6 +780,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateRadioButtons(session, "heightUnit", selected = as.character(UNIT_CM))
   shinyWidgets::updateRadioGroupButtons(session, "sex", selected = p$sex)
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
+  updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
 
   if (is.null(timeApi)) {
@@ -769,6 +832,7 @@ helpScenarioPageHTML <- function(id) {
     Height = sprintf("%s cm", helpFormatNumber(p$height)),
     Sex = p$sex,
     `CYP 2D6` = tools::toTitleCase(p$cyp2d6),
+    `CYP 2C19` = tools::toTitleCase(p$cyp2c19),
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     check.names = FALSE, stringsAsFactors = FALSE
   )

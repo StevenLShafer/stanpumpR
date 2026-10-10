@@ -52,7 +52,7 @@ lagPK <- function(drug, ..., height = 171) {
 }
 
 
-test_that("only gabapentin, pregabalin, acetaminophen, ibuprofen, zolpidem and clonazepam carry an absorption lag", {
+test_that("only the expected oral drugs carry an absorption lag", {
   # If this ever fails it is not a defect -- a drug has gained or lost a lag,
   # and the behaviour the rest of this file guards has changed where it is
   # live.  Worth knowing, and worth rereading R/recoveryStates.R.
@@ -65,13 +65,17 @@ test_that("only gabapentin, pregabalin, acetaminophen, ibuprofen, zolpidem and c
     if (is.null(PK)) next
     for (s in PK$PK)
     {
-      lags <- c(s$tlag_PO, s$tlag_IM, s$tlag_IN)
+      lags <- c(s$tlag_PO, s$tlag_IM, s$tlag_IN, s$tlag_PO2)
       if (any(!is.na(lags) & lags > 0)) lagged <- c(lagged, drug)
     }
   }
   expect_setequal(unique(lagged),
                   c("gabapentin", "pregabalin", "acetaminophen", "ibuprofen",
-                    "zolpidem", "clonazepam"))
+                    "zolpidem", "clonazepam", "methylphenidate",
+                    "lisdexamfetamine", "morphine", "sertraline",
+                    # both lagged oral depots (2026-10-10); meloxicam's
+                    # lag is on its second depot only
+                    "diclofenac", "meloxicam"))
 })
 
 

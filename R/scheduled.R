@@ -13,7 +13,7 @@
 #
 # Rules from the specification (Shafer, 2026-10-07):
 #   - The first dose is given at the time entered.
-#   - A scheduled dose of 0 for the same route (IV, PO, IM or IN), at any
+#   - A scheduled dose of 0 for the same route (IV, PO, SL, IM or IN), at any
 #     frequency, stops the repeating sequence.  An ordinary (unscheduled) dose
 #     does not.
 #   - A later non-zero scheduled dose for the same route replaces the running

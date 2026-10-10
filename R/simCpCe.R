@@ -158,6 +158,41 @@ clipStateSet <- function(set, maximum)
 }
 
 
+#' Add engine results run on the same time line
+#'
+#' Each part is one engine's output for some of a drug's doses, all on the
+#' same time line.  The concentrations add; the time until threshold does not,
+#' and is solved again from the summed effect-site states.
+#'
+#' @param parts a list of engine outputs (\code{Time}, \code{Cp}, \code{Ce},
+#'   \code{Recovery}), the first being the run that carries every
+#'   non-oral dose
+#' @param plotRecovery was recovery asked for?  The parts then carry their
+#'   \code{recoveryStates}.
+#' @param emerge the threshold, in the units the engines simulate
+#'
+#' @returns one engine output, the sum of the parts
+#' @keywords internal
+superposeEngineResults <- function(parts, plotRecovery, emerge)
+{
+  out <- parts[[1]]
+  for (part in parts[-1])
+  {
+    if (!identical(part$Time, out$Time))
+      stop("Cannot add engine runs on different time lines.")
+    for (col in setdiff(names(out), c("Time", "Recovery")))
+      out[[col]] <- out[[col]] + part[[col]]
+  }
+  if (plotRecovery)
+  {
+    states <- mergeStateSets(out$Time, lapply(parts, attr, "recoveryStates"))
+    out$Recovery <- recoveryFromStates(states, emerge)
+    attr(out, "recoveryStates") <- states
+  }
+  out
+}
+
+
 #' Simulate plasma and effect site concentration from time 0 to maximum
 #'
 #' See \code{vignette("stanpumpR-single-PK", package = "stanpumpR")} for an example
@@ -221,6 +256,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     expanded <- expandScheduledDoses(dose, maximum)
     dose <- expanded$dose
 
+    # A pulsed extended-release product (Adderall XR): each dose of a
+    # formulation the drug lists in oralPulses becomes its pulses, ordinary
+    # oral doses at fixed delays; see R/oral-pulses.R.
+    dose <- expandOralPulses(dose, PK$oralPulses, maximum)
+
     # Convert all doses to base units
     switch(
       PK$Concentration.Units,  # Units (per ml)
@@ -264,7 +304,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("/day", dose$Units)
     dose$Dose[use] <- dose$Dose[use] / MINS_PER_DAY
 
-    # Identify extravascular (PO, IM, IN) and IV bolus doses.  A rate unit
+    # Identify extravascular (PO, SL, IM, IN, RA) and IV bolus doses.  A rate unit
     # (isRateUnit(), R/routes.R) is an input rate whatever its route word, so
     # it is neither: a "mg/day PO" row, the constant-rate oral input of
     # poRateUnits, becomes an infusion row on the drug's apparent oral
@@ -278,7 +318,35 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$PO <- route == ROUTE_PO & !rate
     dose$IM <- route == ROUTE_IM & !rate
     dose$IN <- route == ROUTE_IN & !rate
+    dose$SL <- route == ROUTE_SL & !rate
+    dose$RA <- route == ROUTE_RA & !rate
+    # A continuous perineural infusion ("mg/hr RA", raRateUnits): a rate into
+    # the tissue depot, not into the vein.  Only advanceClosedFormPO_IM_IN()
+    # carries it; see there.
+    dose$RArate <- route == ROUTE_RA & rate
+    # Set before the slow-depot rows below are added: `route` and `rate` are
+    # per row of the table as entered.  Set after, they no longer matched the
+    # longer table, so a drug with a slow RA depot given intravenously and by
+    # RA in one table stopped with an error, or, when the lengths happened to
+    # divide, had its rows mislabelled.  (Claude Code, 2026-10-10.)
     dose$Bolus <- route == ROUTE_IV & !rate
+    # A drug with a slow second RA depot (ka_RA_slow in its model; see
+    # getDrugPK()) absorbs each RA dose through two parallel depots.  The
+    # dose rows are duplicated, the copy flagged as the internal route
+    # "RAslow"; the split of the dose is carried by the two bioavailabilities,
+    # so each copy keeps the whole dose.
+    dose$RAslow <- rep(FALSE, nrow(dose))
+    hasSlowRA <- any(vapply(PK$PK, function(s) isTRUE(s$ka_RAslow > 0), logical(1)))
+    if (hasSlowRA && any(dose$RA))
+    {
+      slowRows <- dose[dose$RA, , drop = FALSE]
+      slowRows$RA <- FALSE
+      slowRows$RAslow <- TRUE
+      slowRows$RArate <- FALSE
+      slowRows$Bolus <- FALSE
+      dose <- rbind(dose, slowRows)
+      dose <- dose[order(dose$Time), , drop = FALSE]
+    }
 
     # Saturable oral absorption (gabapentin): each oral dose is scaled by the
     # fraction absorbed at its own size, in mg per administration.  The dose is
@@ -288,6 +356,28 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     if (!is.null(PK$oralSaturation) && any(dose$PO))
       dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
         oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv, PK$oralSaturation)
+    # The same for sublingual doses whose bioavailability falls with the dose
+    # (buprenorphine): bioavailability_SL is the small-dose limit.
+    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
+      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
+        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv, PK$sublingualSaturation)
+
+    # A drug with a second oral depot (ka_PO2 in its model; see getDrugPK())
+    # absorbs each oral dose through two parallel depots, each with its own
+    # lag.  As for the slow RA depot, the dose rows are duplicated, the copy
+    # flagged as the internal route "PO2", and the split of the dose is
+    # carried by the two bioavailabilities.  After the saturation scaling, so
+    # that both copies carry the scaled dose.
+    dose$PO2 <- rep(FALSE, nrow(dose))
+    hasPO2 <- any(vapply(PK$PK, function(s) isTRUE(s$ka_PO2 > 0), logical(1)))
+    if (hasPO2 && any(dose$PO))
+    {
+      secondRows <- dose[dose$PO, , drop = FALSE]
+      secondRows$PO <- FALSE
+      secondRows$PO2 <- TRUE
+      dose <- rbind(dose, secondRows)
+      dose <- dose[order(dose$Time), , drop = FALSE]
+    }
 
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp
@@ -297,6 +387,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     tci <- NULL
     if (any(isTciUnit(dose$Units)))
     {
+      # The controller inverts one system; it cannot target a sum of them.
+      if (!is.null(PK$parallelSystems))
+        stop("Target-controlled infusion is not available for a drug ",
+             "simulated as several parallel systems.")
       schedule <- tciSchedule(dose, PK, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
@@ -324,36 +418,95 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     if (!is.null(PK$osmotic) && length(emerge) == 1 && !is.na(emerge) && emerge > 0)
       emerge <- max(0, (emerge - PK$osmotic$baseline) / PK$osmotic$fraction)
 
-    if (length(pkEvents) == 1 | nrow(events) == 0)
+    # The engines, for one dose table and one drug's PK sets.
+    runEngines <- function(dose, pkSets)
     {
-      if (hasMetabolite)
+      if (length(pkEvents) == 1 | nrow(events) == 0)
       {
-        results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
-      } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) == 0)
-      {
-        results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
+        if (hasMetabolite)
+        {
+          results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
+        } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) +
+                   sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
+                   sum(dose$PO2) == 0)
+        {
+          results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
+        } else {
+          results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, emerge)
+        }
       } else {
-        results <- advanceClosedFormPO_IM_IN(dose,pkSets[[1]], maximum, plotRecovery, emerge)
+        if (hasMetabolite)
+          stop("A drug with an active metabolite cannot yet switch kinetics on a ",
+               "clinical event; advanceClosedForm1() carries no metabolite ",
+               "coefficients.")
+        # Process Events
+        defaultEvent <- data.frame(
+          Time = 0,
+          Event = PK_EVENT_DEFAULT
+        )
+        if (events$Time[1] > 0)
+          events <- rbind(defaultEvent,events)
+        events <- events[events$Time < maximum,]
+        events <- rbind(events, events[nrow(events),])
+        events$Time[nrow(events)] <- maximum
+        results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, emerge)
       }
-    } else {
-      if (hasMetabolite)
-        stop("A drug with an active metabolite cannot yet switch kinetics on a ",
-             "clinical event; advanceClosedForm1() carries no metabolite ",
-             "coefficients.")
-      # Process Events
-      defaultEvent <- data.frame(
-        Time = 0,
-        Event = PK_EVENT_DEFAULT
-      )
-      if (events$Time[1] > 0)
-        events <- rbind(defaultEvent,events)
-      events <- events[events$Time < maximum,]
-      events <- rbind(events, events[nrow(events),])
-      events$Time[nrow(events)] <- maximum
-      results <- advanceClosedForm1(dose, events, pkSets, maximum, plotRecovery, emerge)
+      results
     }
 
-  # A lagged oral, IM or IN dose given before maximum still puts a point of
+    # A drug with more than one oral formulation (morphine tablets and
+    # liquid; see oralFormulationSet() in getDrugPK.R) runs once for each.
+    # The default run carries every dose except the other formulations' oral
+    # ones, which it gives as zero; each further run carries only its own
+    # formulation's oral doses, on PK sets that differ only in their oral
+    # absorption.  Zeroing rather than dropping rows keeps every run on the
+    # same time line (the formulations share their lag), so the series add
+    # point by point, which is exact because the disposition is linear.  The
+    # effect-site states add the same way, and the time until threshold is
+    # solved once from their sum.  (Claude Code, 2026-10-10, at the request of
+    # Steven L. Shafer.)
+    formulation <- doseFormulation(dose$Units)
+    others <- names(PK$oralFormulations)
+    other <- dose$PO & formulation %in% others
+    # A drug plotted as the sum of parallel systems (ketorolac's S and R
+    # enantiomers; see parallelSystemSets() in getDrugPK.R) runs once for each,
+    # every dose scaled by that system's share, and the runs are added.  The
+    # systems share the doses, their lags and the effect site, so every run is
+    # on the same time line.  getDrugPK() refuses them alongside further oral
+    # formulations.  A system limited to some routes (meloxicam's oral and
+    # intravenous fits) gets the other routes' doses as zero, not dropped, so
+    # that it stays on the same time line; its absorption parameters must
+    # then match the other systems' (the same lags), which the drug ensures.
+    shareOf <- function(dose, fraction, routes = NULL) {
+      if (!is.null(fraction)) dose$Dose <- dose$Dose * fraction
+      if (!is.null(routes)) dose$Dose[!doseRoute(dose$Units) %in% routes] <- 0
+      dose
+    }
+    if (!is.null(PK$parallelSystems))
+    {
+      parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))
+      for (sys in PK$parallelSystems)
+        parts[[length(parts) + 1]] <- runEngines(
+          shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
+      results <- superposeEngineResults(parts, plotRecovery, emerge)
+    } else if (!any(other))
+    {
+      results <- runEngines(shareOf(dose, PK$doseFraction), pkSets)
+    } else {
+      dose <- shareOf(dose, PK$doseFraction)
+      base <- dose
+      base$Dose[other] <- 0
+      parts <- list(runEngines(base, pkSets))
+      for (f in intersect(others, formulation[other]))
+      {
+        own <- dose
+        own$Dose[!(other & formulation == f)] <- 0
+        parts[[length(parts) + 1]] <- runEngines(own, PK$oralFormulations[[f]])
+      }
+      results <- superposeEngineResults(parts, plotRecovery, emerge)
+    }
+
+  # A lagged oral, IM, IN or RA dose given before maximum still puts a point of
   # the time line where its absorption starts, which can be after maximum
   # (simulationTimeGrid()): gabapentin's lag is 19 minutes.  The series is cut
   # at maximum, with the effect-site states that ride along, so that nothing

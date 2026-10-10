@@ -238,6 +238,22 @@ test_that("the intravenous engines all carry their states out", {
   expect_equal(ncol(X$recoveryStates$state), 7)
   expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
 
+  # A drug with a regional anesthesia depot carries one more state, ka_RA.
+  PK <- pkFor("lidocaine", weight = 70, height = 170, age = 50, sex = "male")
+  X <- simCpCe(data.frame(Drug = "lidocaine", Time = 0, Dose = 300,
+                          Units = "mg RA"),
+               noEvents, PK, 480, TRUE)
+  expect_equal(ncol(X$recoveryStates$state), 8)
+  expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
+
+  # So does a drug with a sublingual depot, ka_SL (buprenorphine).
+  PK <- pkFor("buprenorphine", weight = 70, height = 170, age = 50, sex = "male")
+  X <- simCpCe(data.frame(Drug = "buprenorphine", Time = 0, Dose = 8,
+                          Units = "mg SL"),
+               noEvents, PK, 480, TRUE)
+  expect_equal(ncol(X$recoveryStates$state), 8)
+  expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
+
   # advanceClosedFormMetabolite, for a parent that has an effect site of its
   # own: two sets come out, the parent's and the metabolite's.
   PK <- pkFor("oxycodone", weight = 70, height = 170, age = 50, sex = "male")
@@ -245,8 +261,13 @@ test_that("the intravenous engines all carry their states out", {
                noEvents, PK, 720, TRUE)
   expect_equal(ncol(X$recoveryStates$state), 5)      # 3 lambdas, ke0, ka_PO
   expect_equal(recoveryFromStates(X$recoveryStates, PK$endCe), X$wide$Recovery)
-  expect_equal(rowSums(X$metaboliteRecoveryStates$state), X$metaboliteSeries$Ce,
-               tolerance = 1e-15)
+  # Compared on the scale of the curve rather than element by element:
+  # oxycodone's first-pass oxymorphone enters as exponentials that cancel at
+  # the dose, so at t = 0 the states sum to round-off (-4e-15 on macOS ARM)
+  # rather than an exact zero, which no relative tolerance accepts.
+  expect_lt(max(abs(rowSums(X$metaboliteRecoveryStates$state) -
+                      X$metaboliteSeries$Ce)),
+            1e-12 * max(X$metaboliteSeries$Ce))
 
   # And for a pure prodrug, which has no effect site of its own at all.  Its
   # own time until threshold, should it be given one, is timed on its plasma
@@ -258,8 +279,13 @@ test_that("the intravenous engines all carry their states out", {
   expect_equal(rowSums(X$recoveryStates$state), X$wide$Plasma, tolerance = 1e-12)
   expect_false(is.null(X$metaboliteRecoveryStates))
   # The metabolite's states sum to the metabolite's effect site exactly
-  expect_equal(rowSums(X$metaboliteRecoveryStates$state), X$metaboliteSeries$Ce,
-               tolerance = 1e-15)
+  # Compared on the scale of the curve rather than element by element:
+  # oxycodone's first-pass oxymorphone enters as exponentials that cancel at
+  # the dose, so at t = 0 the states sum to round-off (-4e-15 on macOS ARM)
+  # rather than an exact zero, which no relative tolerance accepts.
+  expect_lt(max(abs(rowSums(X$metaboliteRecoveryStates$state) -
+                      X$metaboliteSeries$Ce)),
+            1e-12 * max(X$metaboliteSeries$Ce))
 
   # advanceClosedForm1: time-varying PK, so a lambda per time point
   PK <- pkFor("dexmedetomidine", weight = 7, height = 65, age = 0.5, sex = "male")

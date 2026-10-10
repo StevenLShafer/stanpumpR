@@ -119,12 +119,13 @@ scaled everything linearly with weight.
 
 | Scaled to fat-free mass | Not scaled (own covariates) |
 |---|---|
-| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, methadone, midazolam, morphine, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; the oral analgesics gabapentin and pregabalin, on their own covariates; and the sedatives diazepam, lorazepam, clonazepam, zolpidem and temazepam, and alprazolam on its own weight covariate | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance. Dowling used the Janmahasatian lean body weight; stanpumpR uses the Al-Sallami fat-free mass, which is the same in adult men, the population Dowling studied, and 1 to 3 percent higher in adult women. Its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. **ibuprofen** (Morse 2022) has its own normal-fat-mass covariates on clearance (0.863 of fat mass) and on both volumes (0.718); its intercompartmental clearance inherits the scaling. |
+| alfentanil, dexmedetomidine, etomidate, fentanyl, hydromorphone, ketamine, lidocaine, mannitol, midazolam, morphine, oliceridine, oxycodone, pethidine, remimazolam, rocuronium, sufentanil, codeine, hydrocodone (formation only), oxymorphone, tramadol, desmetramadol; the antibiotics cefazolin, clindamycin, cefalexin, ceftriaxone, vancomycin, metronidazole, gentamicin; the steroids hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone; sugammadex, neostigmine, glycopyrrolate; amiodarone, desethylamiodarone, amiodaroneIV; the oral analgesics gabapentin and pregabalin, on their own covariates; and the sedatives diazepam, lorazepam, clonazepam, zolpidem and temazepam, and alprazolam on its own weight covariate; the antidepressants escitalopram, sertraline, paroxetine, duloxetine, mirtazapine (with its source's BMI step on clearance), bupropion, hydroxybupropion, fluoxetine and norfluoxetine, and citalopram on its own weight covariate for S-citalopram clearance; methadone (Henthorn 2025) on its own weight covariate on V3, its other parameters unscaled because the source tested weight on them and rejected it | **propofol** (Eleveld) and **remifentanil** (Eleveld, Kim) already contain the Al-Sallami or Janmahasatian fat-free mass as a covariate and are used as published. **oxytocin** was fitted in parturients, a population the reference male does not describe, and the formula has not been validated in pregnancy. **naloxone** (Dowling 2008) has its own lean-body-weight covariate on clearance. Dowling used the Janmahasatian lean body weight; stanpumpR uses the Al-Sallami fat-free mass, which is the same in adult men, the population Dowling studied, and 1 to 3 percent higher in adult women. Its other parameters inherit the scaling. **acetaminophen** (Morse 2022) has its own normal-fat-mass covariate on clearance (fat-free mass plus 0.816 of fat mass); its volumes and intercompartmental clearance inherit the scaling. **ibuprofen** (Morse 2022) has its own normal-fat-mass covariates on clearance (0.863 of fat mass) and on both volumes (0.718); its intercompartmental clearance inherits the scaling. |
 
 **Models with their own weight or renal covariates.** Several antibiotic and
 reversal-agent models write a body-weight term into some parameters
 (vancomycin's volumes, gentamicin's central volume, every sugammadex parameter,
-pregabalin's clearance and volume, alprazolam's clearance and volume)
+pregabalin's clearance and volume, alprazolam's clearance and volume,
+methadone's deep peripheral volume, citalopram's S-enantiomer clearance)
 or carry weight into a renal covariate through Cockcroft-Gault or body surface
 area. With the switch on, those terms are evaluated at the **pharmacokinetic
 weight**, 70 kg × FFM / FFM<sub>ref</sub>, so that the reference man receives the
@@ -146,11 +147,11 @@ before fat-free mass was introduced:
 
 | Model type | Behaviour with the switch off |
 |---|---|
-| Fixed published parameters (alfentanil, sufentanil, midazolam, oliceridine, oxycodone, mannitol, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone, zolpidem, clonazepam, diazepam) | no scaling at all |
-| V1 per kilogram with fixed rate constants (ketamine, etomidate, morphine, methadone, hydromorphone, pethidine, lidocaine, rocuronium, neostigmine, amiodaroneIV, lorazepam, temazepam) | volumes and clearances both × weight / 70 |
+| Fixed published parameters (alfentanil, sufentanil, midazolam, oliceridine, oxycodone, mannitol, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone, zolpidem, clonazepam, diazepam, escitalopram, sertraline, paroxetine, duloxetine, mirtazapine, bupropion, hydroxybupropion, fluoxetine, norfluoxetine) | no scaling at all |
+| V1 per kilogram with fixed rate constants (ketamine, etomidate, morphine, hydromorphone, pethidine, lidocaine, rocuronium, neostigmine, amiodaroneIV, lorazepam, temazepam) | volumes and clearances both × weight / 70 |
 | Allometric on total weight (fentanyl, remimazolam, infant dexmedetomidine, cefalexin, hydrocortisone, clindamycin with its published 0.497 exponent) | volumes × weight / 70, clearances × (weight / 70)<sup>0.75</sup> (or the published exponent) |
 | Metronidazole (da Silva Neto 2021) | volume 0.556 L/kg × the patient's adjusted body weight on Devine ideal weight (total body weight under 18 years, or where the ideal weight is not positive), clearance × (weight / 70)<sup>0.75</sup> on total weight, as published |
-| Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone, gabapentin, pregabalin, acetaminophen, ibuprofen, alprazolam) | the published equations on total body weight; size-free parameters fixed |
+| Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone, gabapentin, pregabalin, acetaminophen, ibuprofen, alprazolam, methadone, citalopram) | the published equations on total body weight; size-free parameters fixed |
 
 Propofol, remifentanil and oxytocin do not respond to the switch.
 
@@ -257,11 +258,11 @@ both switch positions. See `docs/adding-a-drug.md` for the procedure.
   fat-free mass, creatinine clearance, and glomerular filtration rate to
   describe renal function from neonates to adults. *CPT Pharmacometrics Syst
   Pharmacol* 2023;12:401-12, with corrigendum 2024;13:181-2.
-  [PMID 36794347](https://pubmed.ncbi.nlm.nih.gov/36794347/)
+  [PMID 36691877](https://pubmed.ncbi.nlm.nih.gov/36691877/)
 - McLeay SC, Morrish GA, Kirkpatrick CM, Green B. The relationship between drug
   clearance and body size: systematic review and meta-analysis of the literature
   published from 2000 to 2007. *Clin Pharmacokinet* 2012;51:319-30.
   [PMID 22439649](https://pubmed.ncbi.nlm.nih.gov/22439649/)
 - Holford NHG, Anderson BJ. Allometric size: the scientific theory and extension
   to normal fat mass. *Eur J Pharm Sci* 2017;109S:S59-64.
-  [PMID 28506869](https://pubmed.ncbi.nlm.nih.gov/28506869/)
+  [PMID 28552478](https://pubmed.ncbi.nlm.nih.gov/28552478/)

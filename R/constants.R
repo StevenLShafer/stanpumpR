@@ -16,11 +16,16 @@ ROUTE_IV <- "IV"
 ROUTE_PO <- "PO"
 ROUTE_IM <- "IM"
 ROUTE_IN <- "IN"
+ROUTE_SL <- "SL"
+# Regional anesthesia: a local anesthetic injected into tissue (a peripheral
+# nerve block or a wound infiltration), absorbed first-order from the tissue
+# into the systemic circulation.
+ROUTE_RA <- "RA"
 TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
 
 # Every route a dose can take, in the order the units dropdowns list them.  A
 # dose's route is carried by its Units string; see doseRoute() in R/routes.R.
-DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_IM, ROUTE_IN)
+DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA)
 
 # CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
 # genotyping laboratories report, rather than the three the UI carried before
@@ -33,6 +38,21 @@ CYP2D6_ULTRARAPID   <- "ultrarapid"
 CYP2D6_VALUES  <- c(CYP2D6_POOR, CYP2D6_INTERMEDIATE, CYP2D6_NORMAL,
                     CYP2D6_ULTRARAPID)
 CYP2D6_DEFAULT <- CYP2D6_NORMAL
+
+# CYP2C19 metaboliser phenotype.  The five CPIC categories the genotyping
+# laboratories report (Lima et al., Clin Pharmacol Ther 2021;109:1417-1423),
+# read by the antidepressants whose published clearance depends on it
+# (escitalopram, citalopram).  "normal" is the reference.  A source that
+# pooled several of these (Akil 2016: "EM/RM" and "IM/PM") maps each of the
+# five onto its own groups in the drug file, and says so there.
+CYP2C19_POOR         <- "poor"
+CYP2C19_INTERMEDIATE <- "intermediate"
+CYP2C19_NORMAL       <- "normal"
+CYP2C19_RAPID        <- "rapid"
+CYP2C19_ULTRARAPID   <- "ultrarapid"
+CYP2C19_VALUES  <- c(CYP2C19_POOR, CYP2C19_INTERMEDIATE, CYP2C19_NORMAL,
+                     CYP2C19_RAPID, CYP2C19_ULTRARAPID)
+CYP2C19_DEFAULT <- CYP2C19_NORMAL
 
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
@@ -90,6 +110,19 @@ infusionUnits <- c("g/min","g/hr","g/kg/hr","mg/min","mg/hr","mg/kg/min","mg/kg/
 poUnits <- c("g PO", "g/kg PO", "mg PO", "mg/kg PO", "mcg PO", "mcg/kg PO")
 inUnits <- c("g IN", "g/kg IN", "mg IN", "mg/kg IN", "mcg IN", "mcg/kg IN")
 imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
+# Sublingual: first-order absorption with its own ka, bioavailability and lag,
+# exactly as the oral, intramuscular and intranasal routes.
+slUnits <- c("mg SL", "mg/kg SL", "mcg SL", "mcg/kg SL")
+# Regional anesthesia (ROUTE_RA): a single injection into tissue, the whole
+# dose entering a depot that is absorbed first-order.  No scheduled
+# frequencies.
+raUnits <- c("g RA", "g/kg RA", "mg RA", "mg/kg RA", "mcg RA", "mcg/kg RA")
+# A continuous perineural (catheter) infusion: a constant rate INTO the
+# tissue depot, absorbed from it first-order as an RA dose is.  A rate by
+# kind (isRateUnit()) and RA by route: simCpCe() flags its rows RArate, and
+# advanceClosedFormPO_IM_IN() advances them exactly, as an infusion through
+# the depot.  (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
+raRateUnits <- c("mg/hr RA")
 
 # Constant-rate oral input: a daily oral dose spread evenly over the day, as
 # Pollak, Bouillon and Shafer modelled long-term oral amiodarone (400 mg/d as
@@ -101,7 +134,27 @@ imUnits <- c("g IM", "g/kg IM", "mg IM", "mg/kg IM", "mcg IM", "mcg/kg IM")
 # 2026-10-07, at the request of Steven L. Shafer.)
 poRateUnits <- c("mg/day PO")
 
-allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, inUnits, imUnits)
+# Oral formulations.  A drug whose tablets and liquid are absorbed at different
+# rates offers a unit per formulation, "mg PO tablet" and "mg PO liquid".  The
+# formulation word follows the route, so doseRoute() still reads these as PO
+# and a frequency may still follow ("mg PO liquid bid").  The drug model's own
+# ka_PO, bioavailability_PO and tlag_PO describe its default oral form; each
+# other form it lists in `oralFormulations` (getDrugPK()) has absorption of its
+# own, which simCpCe() superposes.  First user: morphine.  A drug may also
+# offer a formulation unit without listing it, when the forms are
+# bioequivalent: its doses then take the default oral absorption, as plain
+# "mg PO" does (hydromorphone's liquid).  (Claude Code, 2026-10-10, at the
+# request of Steven L. Shafer.)
+#
+# "XR" is an extended-release product released in pulses: a drug that lists
+# it in `oralPulses` gives each XR dose as fixed fractions at fixed delays,
+# each absorbed as its default oral form (R/oral-pulses.R; first user:
+# mixedAmphetamineSalts, Adderall XR).
+ORAL_FORMULATIONS <- c("tablet", "liquid", "XR")
+poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
+
+allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
+              slUnits, inUnits, imUnits, raUnits, raRateUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -112,17 +165,19 @@ TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP
 TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
 TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 
-# Scheduled (repeating) doses (scheduled.R).  A bolus, PO, IM or IN unit with
+# Scheduled (repeating) doses (scheduled.R).  A bolus, PO, SL, IM or IN unit with
 # one of these suffixes, e.g. "mg PO bid", gives the dose at the entered time
 # and then again every interval (minutes) until the end of the plot.
 SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60)
 scheduledUnits <- as.vector(t(outer(
-  c(bolusUnits, poUnits, imUnits, inUnits), names(SCHEDULE_INTERVALS), paste
+  c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
+  names(SCHEDULE_INTERVALS), paste
 )))
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
 # gases are flowmeter settings in L/min, potent agents are vaporizer settings in %.
-# Kept out of allUnits, which lists the mass-based units offered for IV/PO/IM/IN
+# Kept out of allUnits, which lists the mass-based units offered for
+# IV/PO/SL/IM/IN/RA
 # drugs, but they are legitimate entries in the dose table.
 gasUnits <- c("L/min", "%")
 
@@ -137,6 +192,10 @@ DRUG_CATEGORIES <- c(
   "Inhaled anesthetics",
   "Antibiotics",
   "Corticosteroids",
+  "Antidepressants",
+  "Stimulants",
+  "Local anesthetics",
+  "Antiemetics",
   "Other",
   "Illicit drugs"
 )

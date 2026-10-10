@@ -103,9 +103,11 @@ display*), and the field is forgiving:
 - `130` — 130 of the unit, not 1:30
 
 Minutes above 59 roll over, so `0:80` becomes `01:20`. A blank time or dose
-becomes zero. An entry that is not one plain number (or, for a time, `H:MM`) is
-not guessed at: `-5`, `5 mg`, `1.2.3` or `8;30` clears the cell, and the row is
-ignored until it is corrected. Scientific notation is read (`1e3` is 1000).
+in a new row becomes zero; emptying a filled cell is refused (enter `0` for no
+dose). An entry that is not one plain number (or, for a time, `H:MM`) is not
+guessed at: `-5`, `.`, `5 mg`, `1.2.3` or `8;30` is refused with a message, and
+the cell keeps its previous value (an empty cell stays empty, and the row is
+ignored until it is corrected). Scientific notation is read (`1e3` is 1000).
 
 ### Applying changes
 
@@ -294,7 +296,11 @@ ibuprofen, intravenous and oral; gabapentin and pregabalin, oral), the reversal 
 glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,
 ceftriaxone, vancomycin, metronidazole, gentamicin), five corticosteroids
 (hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone),
-and amiodarone in two entries: **amiodarone** for long-term oral therapy (dosed
+eight antidepressants (escitalopram, citalopram, sertraline, paroxetine,
+fluoxetine, duloxetine, mirtazapine and bupropion, oral, with the active
+metabolites **norfluoxetine** and **hydroxybupropion**; fluoxetine's model is
+valid only for the steady-state trough; see the help page *Antidepressant models and their
+limits*), and amiodarone in two entries: **amiodarone** for long-term oral therapy (dosed
 in mg/day PO, best viewed with *Time units* set to days or weeks), with its
 active metabolite **desethylamiodarone**, and **amiodaroneIV** for the first one
 to three days of intravenous therapy. The two amiodarone entries are separate
@@ -346,9 +352,9 @@ what the literature offers.
 | Morphine | Lötsch J et al., *Clin Pharmacol Ther* 2002;72(2):151–162. [PMID 12189362](https://pubmed.ncbi.nlm.nih.gov/12189362/) |
 | Pethidine (meperidine) | Björkman S, *J Pharmacokinet Pharmacodyn* 2003;30(4):285–307. [PMID 14650375](https://pubmed.ncbi.nlm.nih.gov/14650375/) |
 | Hydromorphone | Drover DR et al., *Anesthesiology* 2002;97(4):827–836. [PMID 12357147](https://pubmed.ncbi.nlm.nih.gov/12357147/) |
-| Methadone | Inturrisi CE et al., *Clin Pharmacol Ther* 1987;41(4):392–401. [PMID 3829576](https://pubmed.ncbi.nlm.nih.gov/3829576/) |
+| Methadone | Henthorn TK, Kharasch ED, *Clin Pharmacol Ther* 2026;119(3):739–750. [doi:10.1002/cpt.70147](https://doi.org/10.1002/cpt.70147) |
 | Ketamine | Domino EF et al., *Clin Pharmacol Ther* 1984;36(5):645–653. [PMID 6488686](https://pubmed.ncbi.nlm.nih.gov/6488686/) |
-| Dexmedetomidine | Adult: Dyck JB et al., *Anesthesiology* 1993;78(5):821–828. [PMID 8098191](https://pubmed.ncbi.nlm.nih.gov/8098191/)<br>Age ≤ 1 yr: Zuppa, *Br J Anaesth* 2019 |
+| Dexmedetomidine | Adult: Dyck JB et al., *Anesthesiology* 1993;78(5):821–828. [PMID 8098191](https://pubmed.ncbi.nlm.nih.gov/8098191/)<br>Age ≤ 1 yr: Zuppa AF et al., *Br J Anaesth* 2019;123(6):839–852. [PMID 31623840](https://pubmed.ncbi.nlm.nih.gov/31623840/) |
 | Midazolam | Zomorodi K et al., *Anesthesiology* 1998;89(6):1418–1429, Table 3. [PMID 9856717](https://pubmed.ncbi.nlm.nih.gov/9856717/) Kinetics fitted to the data of Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):544–554. [PMID 2225713](https://pubmed.ncbi.nlm.nih.gov/2225713/) Time to peak effect from Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):555–567. [PMID 2225714](https://pubmed.ncbi.nlm.nih.gov/2225714/) |
 | Etomidate | Arden JR et al., *Anesthesiology* 1986;65(1):19–27. [PMID 3729056](https://pubmed.ncbi.nlm.nih.gov/3729056/) |
 | Lidocaine | Schnider TW et al., *Anesthesiology* 1996;84(5):1043–1050. [PMID 8623997](https://pubmed.ncbi.nlm.nih.gov/8623997/) |
@@ -385,9 +391,8 @@ what the literature offers.
 
 **Two entries are not peer-reviewed literature.** Oxytocin's human model comes
 from unpublished Eisenach data, and its second model is cited only as "Tanaka et
-al" without a volume or year. Dexmedetomidine's infant model is cited as "Zuppa,
-*Br J Anaesth* 2019" without page numbers or a PMID. These three are the weakest
-citations in the library and are flagged rather than tidied over.
+al" without a volume or year. These two are the weakest citations in the library
+and are flagged rather than tidied over.
 
 **A citation is the disposition model, not a guarantee of fit.** Each of these
 papers fitted a particular population — often healthy volunteers or elective

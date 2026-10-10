@@ -1,4 +1,5 @@
-# Closed Form, one PK set only, oral, intranasal, and IM doses included alongside IV doses
+# Closed Form, one PK set only, oral, sublingual, intranasal, IM and regional
+# anesthesia (RA, tissue injection) doses included alongside IV doses
 advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge)
 {
   ##############################################
@@ -8,11 +9,24 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   # Modified to include PO and IV delivery     #
   ##############################################
 
-  # Add tlag_ to PO, IM, and IN dose times
+  # Add tlag_ to PO, IM, IN, SL and RA dose times.  A hand-built dose table
+  # may carry no SL or RA column.
+  if (is.null(dose$SL)) dose$SL <- rep(FALSE, nrow(dose))
+  if (is.null(dose$RA)) dose$RA <- rep(FALSE, nrow(dose))
+  if (is.null(dose$RAslow)) dose$RAslow <- rep(FALSE, nrow(dose))
+  if (is.null(dose$RArate)) dose$RArate <- rep(FALSE, nrow(dose))
+  if (is.null(dose$PO2)) dose$PO2 <- rep(FALSE, nrow(dose))
   givenAt <- dose$Time
   dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
   dose$Time[dose$IM] <- dose$Time[dose$IM] + pkSet$tlag_IM
   dose$Time[dose$IN] <- dose$Time[dose$IN] + pkSet$tlag_IN
+  dose$Time[dose$SL] <- dose$Time[dose$SL] + pkSet$tlag_SL
+  dose$Time[dose$RA] <- dose$Time[dose$RA] + pkSet$tlag_RA
+  dose$Time[dose$RAslow] <- dose$Time[dose$RAslow] + pkSet$tlag_RAslow
+  dose$Time[dose$RArate] <- dose$Time[dose$RArate] + pkSet$tlag_RA
+  # The second oral depot (see getDrugPK()); a PK set built before it existed
+  # carries no tlag_PO2, and then no PO2 rows either.
+  if (any(dose$PO2)) dose$Time[dose$PO2] <- dose$Time[dose$PO2] + pkSet$tlag_PO2
 
   # Create timeline
   #
@@ -36,13 +50,51 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   doseNA <- rep(0, L)
 
   # Create bolusLine and infusionLine
-  inputs    <- doseLines(dose, timeLine, c("PO", "IM", "IN"))
+  # RArate rows are listed as a route so that they are not taken for
+  # intravenous infusion rows; their rate is read separately below.
+  inputs    <- doseLines(dose, timeLine,
+                         c("PO", "IM", "IN", "SL", "RA", "RAslow", "PO2", "RArate"))
   bolusLine <- inputs$bolus
   poLine    <- inputs$PO
   imLine    <- inputs$IM
   inLine    <- inputs$IN
+  slLine    <- inputs$SL
+  raLine    <- inputs$RA
+  raSlowLine <- inputs$RAslow
+  po2Line   <- inputs$PO2
   rate      <- inputs$rate
   dt        <- inputs$dt
+
+  # The continuous perineural infusion ("mg/hr RA"): the rate into the tissue
+  # depot over the step into each point, built as doseLines() builds an
+  # intravenous rate, from the RArate rows alone.
+  #
+  # A constant rate R into the depot over a step dt adds, to each exponential
+  # state x of an RA dose (bolus coefficient c_x, exponent x: the disposition
+  # eigenvalues and the depot's ka, and ke0 for the effect site),
+  #
+  #     R c_x / x (1 - exp(-x dt))
+  #
+  # which is exact, the same form as an intravenous infusion's increment.  The
+  # coefficients carry the bioavailability, and for a drug with a slow second
+  # depot (mepivacaine) each depot's share of it, so the slow depot's terms
+  # are added in the same way and the rate needs no splitting.  (Claude Code,
+  # 2026-10-10, at the request of Steven L. Shafer.)
+  raInfusion <- if (any(dose$RArate)) {
+    doseLines(data.frame(Time = dose$Time, Dose = dose$Dose, Bolus = !dose$RArate),
+              timeLine)$rate
+  } else rep(0, L)
+  overRate <- function(coef, x) if (x > 0) coef / x else 0
+
+  # A PK set from before the second oral depot existed has none of its fields.
+  if (is.null(pkSet$ka_PO2))
+  {
+    pkSet$ka_PO2 <- 0
+    for (x in c("p_coef_PO2_l1", "p_coef_PO2_l2", "p_coef_PO2_l3", "p_coef_PO2_ka",
+                "e_coef_PO2_l1", "e_coef_PO2_l2", "e_coef_PO2_l3", "e_coef_PO2_ke0",
+                "e_coef_PO2_ka"))
+      pkSet[[x]] <- 0
+  }
 
   results <- with (
     pkSet,
@@ -54,6 +106,10 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       ka_PO_dt <- exp(-ka_PO * dt)
       ka_IM_dt <- exp(-ka_IM * dt)
       ka_IN_dt <- exp(-ka_IN * dt)
+      ka_SL_dt <- exp(-ka_SL * dt)
+      ka_RA_dt <- exp(-ka_RA * dt)
+      ka_RAslow_dt <- exp(-ka_RAslow * dt)
+      ka_PO2_dt <- exp(-ka_PO2 * dt)
 
       p_bolus_l1 <- p_coef_bolus_l1 * bolusLine
       p_bolus_l2 <- p_coef_bolus_l2 * bolusLine
@@ -63,10 +119,13 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_infusion_l2 <- p_coef_infusion_l2 * rate * (1 - l2_dt)
       p_infusion_l3 <- p_coef_infusion_l3 * rate * (1 - l3_dt)
 
-      p_PO_l1 <- p_coef_PO_l1 * poLine
-      p_PO_l2 <- p_coef_PO_l2 * poLine
-      p_PO_l3 <- p_coef_PO_l3 * poLine
+      # The second oral depot, when the drug has one, feeds the same
+      # disposition states as the first, as the slow RA depot does below.
+      p_PO_l1 <- p_coef_PO_l1 * poLine + p_coef_PO2_l1 * po2Line
+      p_PO_l2 <- p_coef_PO_l2 * poLine + p_coef_PO2_l2 * po2Line
+      p_PO_l3 <- p_coef_PO_l3 * poLine + p_coef_PO2_l3 * po2Line
       p_PO_ka <- p_coef_PO_ka * poLine
+      p_PO2_ka <- p_coef_PO2_ka * po2Line
 
       p_IM_l1 <- p_coef_IM_l1 * imLine
       p_IM_l2 <- p_coef_IM_l2 * imLine
@@ -78,14 +137,49 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       p_IN_l3 <- p_coef_IN_l3 * inLine
       p_IN_ka <- p_coef_IN_ka * inLine
 
-      p_state_l1    <- advanceStatePO(l1_dt,    p_bolus_l1, p_infusion_l1, p_PO_l1,    p_IM_l1,    p_IN_l1, L)
-      p_state_l2    <- advanceStatePO(l2_dt,    p_bolus_l2, p_infusion_l2, p_PO_l2,    p_IM_l2,    p_IN_l2, L)
-      p_state_l3    <- advanceStatePO(l3_dt,    p_bolus_l3, p_infusion_l3, p_PO_l3,    p_IM_l3,    p_IN_l3, L)
+      # The slow RA depot, when the drug has one, feeds the same disposition
+      # states, so its inputs are added to the fast depot's there; it keeps
+      # its own absorption state.
+      p_RA_l1 <- p_coef_RA_l1 * raLine + p_coef_RAslow_l1 * raSlowLine
+      p_RA_l2 <- p_coef_RA_l2 * raLine + p_coef_RAslow_l2 * raSlowLine
+      p_RA_l3 <- p_coef_RA_l3 * raLine + p_coef_RAslow_l3 * raSlowLine
+      p_RA_ka <- p_coef_RA_ka * raLine
+      p_RAslow_ka <- p_coef_RAslow_ka * raSlowLine
+
+      # The continuous RA infusion, into the same states (see above).
+      if (any(raInfusion > 0))
+      {
+        p_RA_l1 <- p_RA_l1 + raInfusion * (1 - l1_dt) *
+          (overRate(p_coef_RA_l1, lambda_1) + overRate(p_coef_RAslow_l1, lambda_1))
+        p_RA_l2 <- p_RA_l2 + raInfusion * (1 - l2_dt) *
+          (overRate(p_coef_RA_l2, lambda_2) + overRate(p_coef_RAslow_l2, lambda_2))
+        p_RA_l3 <- p_RA_l3 + raInfusion * (1 - l3_dt) *
+          (overRate(p_coef_RA_l3, lambda_3) + overRate(p_coef_RAslow_l3, lambda_3))
+        p_RA_ka <- p_RA_ka + raInfusion * (1 - ka_RA_dt) * overRate(p_coef_RA_ka, ka_RA)
+        p_RAslow_ka <- p_RAslow_ka +
+          raInfusion * (1 - ka_RAslow_dt) * overRate(p_coef_RAslow_ka, ka_RAslow)
+      }
+
+      # Sublingual doses enter the disposition states through the same last
+      # argument as RA, and keep their own absorption state.
+      p_X_l1 <- p_RA_l1 + p_coef_SL_l1 * slLine
+      p_X_l2 <- p_RA_l2 + p_coef_SL_l2 * slLine
+      p_X_l3 <- p_RA_l3 + p_coef_SL_l3 * slLine
+      p_SL_ka <- p_coef_SL_ka * slLine
+
+      p_state_l1    <- advanceStatePO(l1_dt,    p_bolus_l1, p_infusion_l1, p_PO_l1,    p_IM_l1,    p_IN_l1, L, p_X_l1)
+      p_state_l2    <- advanceStatePO(l2_dt,    p_bolus_l2, p_infusion_l2, p_PO_l2,    p_IM_l2,    p_IN_l2, L, p_X_l2)
+      p_state_l3    <- advanceStatePO(l3_dt,    p_bolus_l3, p_infusion_l3, p_PO_l3,    p_IM_l3,    p_IN_l3, L, p_X_l3)
       p_state_ka_PO <- advanceStatePO(ka_PO_dt, doseNA,     doseNA,        p_PO_ka,    doseNA,     doseNA,  L)
       p_state_ka_IM <- advanceStatePO(ka_IM_dt, doseNA,     doseNA,        doseNA,     p_IM_ka,    doseNA,  L)
       p_state_ka_IN <- advanceStatePO(ka_IN_dt, doseNA,     doseNA,        doseNA,     doseNA,     p_IN_ka, L)
+      p_state_ka_RA <- advanceStatePO(ka_RA_dt, doseNA,     doseNA,        doseNA,     doseNA,     doseNA,  L, p_RA_ka)
+      p_state_ka_RAslow <- advanceStatePO(ka_RAslow_dt, doseNA, doseNA,    doseNA,     doseNA,     doseNA,  L, p_RAslow_ka)
+      p_state_ka_SL <- advanceStatePO(ka_SL_dt, doseNA,     doseNA,        doseNA,     doseNA,     doseNA,  L, p_SL_ka)
+      p_state_ka_PO2 <- advanceStatePO(ka_PO2_dt, doseNA,   doseNA,        p_PO2_ka,   doseNA,     doseNA,  L)
 
-      Cp <- p_state_l1 + p_state_l2 + p_state_l3 + p_state_ka_PO + p_state_ka_IM + p_state_ka_IN
+      Cp <- p_state_l1 + p_state_l2 + p_state_l3 + p_state_ka_PO + p_state_ka_IM + p_state_ka_IN +
+        p_state_ka_RA + p_state_ka_RAslow + p_state_ka_SL + p_state_ka_PO2
       # The effect site from its own exponential states, exactly, rather than
       # derived from the plasma curve by calculateCe(); see advanceClosedForm0().
       ke0_dt <- exp(-ke0 * dt)
@@ -99,11 +193,12 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       e_infusion_l3  <- e_coef_infusion_l3  * rate * (1 - l3_dt)
       e_infusion_ke0 <- e_coef_infusion_ke0 * rate * (1 - ke0_dt)
 
-      e_PO_l1  <- e_coef_PO_l1  * poLine
-      e_PO_l2  <- e_coef_PO_l2  * poLine
-      e_PO_l3  <- e_coef_PO_l3  * poLine
-      e_PO_ke0 <- e_coef_PO_ke0 * poLine
+      e_PO_l1  <- e_coef_PO_l1  * poLine + e_coef_PO2_l1  * po2Line
+      e_PO_l2  <- e_coef_PO_l2  * poLine + e_coef_PO2_l2  * po2Line
+      e_PO_l3  <- e_coef_PO_l3  * poLine + e_coef_PO2_l3  * po2Line
+      e_PO_ke0 <- e_coef_PO_ke0 * poLine + e_coef_PO2_ke0 * po2Line
       e_PO_ka  <- e_coef_PO_ka  * poLine
+      e_PO2_ka <- e_coef_PO2_ka * po2Line
 
       e_IM_l1  <- e_coef_IM_l1  * imLine
       e_IM_l2  <- e_coef_IM_l2  * imLine
@@ -117,24 +212,64 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       e_IN_ke0 <- e_coef_IN_ke0 * inLine
       e_IN_ka  <- e_coef_IN_ka  * inLine
 
-      e_state_l1     <- advanceStatePO(l1_dt,    e_bolus_l1,  e_infusion_l1,  e_PO_l1,  e_IM_l1,  e_IN_l1,  L)
-      e_state_l2     <- advanceStatePO(l2_dt,    e_bolus_l2,  e_infusion_l2,  e_PO_l2,  e_IM_l2,  e_IN_l2,  L)
-      e_state_l3     <- advanceStatePO(l3_dt,    e_bolus_l3,  e_infusion_l3,  e_PO_l3,  e_IM_l3,  e_IN_l3,  L)
-      e_state_ke0    <- advanceStatePO(ke0_dt,   e_bolus_ke0, e_infusion_ke0, e_PO_ke0, e_IM_ke0, e_IN_ke0, L)
+      e_RA_l1  <- e_coef_RA_l1  * raLine + e_coef_RAslow_l1  * raSlowLine
+      e_RA_l2  <- e_coef_RA_l2  * raLine + e_coef_RAslow_l2  * raSlowLine
+      e_RA_l3  <- e_coef_RA_l3  * raLine + e_coef_RAslow_l3  * raSlowLine
+      e_RA_ke0 <- e_coef_RA_ke0 * raLine + e_coef_RAslow_ke0 * raSlowLine
+      e_RA_ka  <- e_coef_RA_ka  * raLine
+      e_RAslow_ka <- e_coef_RAslow_ka * raSlowLine
+
+      if (any(raInfusion > 0))
+      {
+        e_RA_l1  <- e_RA_l1 + raInfusion * (1 - l1_dt) *
+          (overRate(e_coef_RA_l1, lambda_1) + overRate(e_coef_RAslow_l1, lambda_1))
+        e_RA_l2  <- e_RA_l2 + raInfusion * (1 - l2_dt) *
+          (overRate(e_coef_RA_l2, lambda_2) + overRate(e_coef_RAslow_l2, lambda_2))
+        e_RA_l3  <- e_RA_l3 + raInfusion * (1 - l3_dt) *
+          (overRate(e_coef_RA_l3, lambda_3) + overRate(e_coef_RAslow_l3, lambda_3))
+        e_RA_ke0 <- e_RA_ke0 + raInfusion * (1 - ke0_dt) *
+          (overRate(e_coef_RA_ke0, ke0) + overRate(e_coef_RAslow_ke0, ke0))
+        e_RA_ka  <- e_RA_ka + raInfusion * (1 - ka_RA_dt) * overRate(e_coef_RA_ka, ka_RA)
+        e_RAslow_ka <- e_RAslow_ka +
+          raInfusion * (1 - ka_RAslow_dt) * overRate(e_coef_RAslow_ka, ka_RAslow)
+      }
+
+      e_X_l1  <- e_RA_l1  + e_coef_SL_l1  * slLine
+      e_X_l2  <- e_RA_l2  + e_coef_SL_l2  * slLine
+      e_X_l3  <- e_RA_l3  + e_coef_SL_l3  * slLine
+      e_X_ke0 <- e_RA_ke0 + e_coef_SL_ke0 * slLine
+      e_SL_ka <- e_coef_SL_ka * slLine
+
+      e_state_l1     <- advanceStatePO(l1_dt,    e_bolus_l1,  e_infusion_l1,  e_PO_l1,  e_IM_l1,  e_IN_l1,  L, e_X_l1)
+      e_state_l2     <- advanceStatePO(l2_dt,    e_bolus_l2,  e_infusion_l2,  e_PO_l2,  e_IM_l2,  e_IN_l2,  L, e_X_l2)
+      e_state_l3     <- advanceStatePO(l3_dt,    e_bolus_l3,  e_infusion_l3,  e_PO_l3,  e_IM_l3,  e_IN_l3,  L, e_X_l3)
+      e_state_ke0    <- advanceStatePO(ke0_dt,   e_bolus_ke0, e_infusion_ke0, e_PO_ke0, e_IM_ke0, e_IN_ke0, L, e_X_ke0)
       e_state_ka_PO  <- advanceStatePO(ka_PO_dt, doseNA,      doseNA,         e_PO_ka,  doseNA,   doseNA,   L)
       e_state_ka_IM  <- advanceStatePO(ka_IM_dt, doseNA,      doseNA,         doseNA,   e_IM_ka,  doseNA,   L)
       e_state_ka_IN  <- advanceStatePO(ka_IN_dt, doseNA,      doseNA,         doseNA,   doseNA,   e_IN_ka,  L)
+      e_state_ka_RA  <- advanceStatePO(ka_RA_dt, doseNA,      doseNA,         doseNA,   doseNA,   doseNA,   L, e_RA_ka)
+      e_state_ka_RAslow <- advanceStatePO(ka_RAslow_dt, doseNA,   doseNA,         doseNA,   doseNA,   doseNA,   L, e_RAslow_ka)
+      e_state_ka_SL  <- advanceStatePO(ka_SL_dt, doseNA,      doseNA,         doseNA,   doseNA,   doseNA,   L, e_SL_ka)
+      e_state_ka_PO2 <- advanceStatePO(ka_PO2_dt, doseNA,      doseNA,         e_PO2_ka, doseNA,   doseNA,   L)
 
       # The states, not just the time they imply.  A drug that also receives
       # an active metabolite has to add this drug's amplitudes to the formed
       # contribution's before solving; see R/recoveryStates.R.  Built whether
       # or not recovery is plotted, because the effect site is read off it.
       pending <- pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine)
+      # The RA, SL and second oral depots are carried only by a drug that has
+      # them, so that every other drug keeps exactly the states it always had.
+      raState <- function(x, xSlow, xSL, x2)
+        c(if (ka_RA > 0) list(x), if (ka_RAslow > 0) list(xSlow), if (ka_SL > 0) list(xSL),
+          if (ka_PO2 > 0) list(x2))
+      raRate  <- c(if (ka_RA > 0) ka_RA, if (ka_RAslow > 0) ka_RAslow, if (ka_SL > 0) ka_SL,
+                   if (ka_PO2 > 0) ka_PO2)
       effectStates <- recoveryStateSet(
         timeLine,
-        list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
-             e_state_ka_PO, e_state_ka_IM, e_state_ka_IN),
-        c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN),
+        c(list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0,
+               e_state_ka_PO, e_state_ka_IM, e_state_ka_IN),
+          raState(e_state_ka_RA, e_state_ka_RAslow, e_state_ka_SL, e_state_ka_PO2)),
+        c(lambda_1, lambda_2, lambda_3, ke0, ka_PO, ka_IM, ka_IN, raRate),
         pending
       )
 
@@ -147,9 +282,10 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       # delivery stops.
       recoveryStates <- if (ke0 > 0) effectStates else recoveryStateSet(
         timeLine,
-        list(p_state_l1, p_state_l2, p_state_l3,
-             p_state_ka_PO, p_state_ka_IM, p_state_ka_IN),
-        c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN),
+        c(list(p_state_l1, p_state_l2, p_state_l3,
+               p_state_ka_PO, p_state_ka_IM, p_state_ka_IN),
+          raState(p_state_ka_RA, p_state_ka_RAslow, p_state_ka_SL, p_state_ka_PO2)),
+        c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN, raRate),
         pending,
         horizon = recoveryHorizonPlasma(maximum)
       )

@@ -1,6 +1,7 @@
 # Closed form, multiple PK sets
 #
-# EXTRAVASCULAR DOSES (oral, intramuscular, intranasal)
+# EXTRAVASCULAR DOSES (oral, sublingual, intramuscular, intranasal, regional
+# anesthesia)
 # =====================================================
 # Until 2026-10-07 this engine had no extravascular route at all.  A dose was
 # either a bolus or, failing that, an infusion rate, so "10 mg PO" became a
@@ -45,9 +46,17 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   # Older callers, and some tests, build the dose table by hand without the
   # route columns simCpCe() adds.
-  routes <- c("PO", "IM", "IN")
+  # "RAslow" is the slow second depot of an RA dose (see getDrugPK()).
+  # "PO2" is the second depot of an oral dose (see getDrugPK()).
+  routes <- c("PO", "IM", "IN", "SL", "RA", "RAslow", "PO2")
   for (r in routes) if (is.null(dose[[r]])) dose[[r]] <- rep(FALSE, nrow(dose))
-  extravascular <- dose$PO | dose$IM | dose$IN
+  extravascular <- dose$PO | dose$IM | dose$IN | dose$SL | dose$RA | dose$RAslow | dose$PO2
+  # A continuous perineural infusion ("mg/hr RA") is a rate into the tissue
+  # depot, which this engine does not carry; it would otherwise be run as an
+  # intravenous infusion.  No drug that offers it has a PK event.
+  if (!is.null(dose$RArate) && any(dose$RArate))
+    stop("A continuous RA infusion (mg/hr RA) cannot yet be combined with a ",
+         "clinical event that changes the PK.")
 
   # The PK set in force at time t: the last event at or before it.
   eventAt <- function(t) events$Event[utils::tail(which(events$Time <= t), 1)]

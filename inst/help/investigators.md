@@ -36,7 +36,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | morphine | **Jörn Lötsch** and colleagues (2002) | Three-compartment kinetics, weight-scaled V1 |
 | pethidine | **Sven Björkman** (2003) | A physiologically based model, recast as compartments |
 | hydromorphone | **David R. Drover** and colleagues (2002) | Intravenous kinetics; the oral and other routes are provisional |
-| methadone | **Charles E. Inturrisi** and colleagues (1987) | Kinetics in patients with cancer pain |
+| methadone | **Thomas K. Henthorn** and **Evan D. Kharasch** (2025); **Charles E. Inturrisi** and colleagues (1987) | Separate R(-) and S(+) enantiomer kinetics in volunteers, summed to racemic methadone; Inturrisi's time to peak effect |
 | ketamine | **Edward F. Domino** and colleagues (1984) | Kinetics in volunteers |
 | dexmedetomidine | **Jeffrey B. Dyck** and colleagues (1993); **Athena F. Zuppa** and colleagues (2019) | Adult kinetics; the infant model with cardiopulmonary-bypass parameters |
 | midazolam | **Michael Bührer**, Stanski and colleagues (1990); **Katayoun Zomorodi**, Shafer and colleagues (1998) | Three-compartment kinetics fitted to Bührer's volunteer data, the set STANPUMP first used for midazolam TCI, printed in Zomorodi's Table 3; Bührer's EEG time to peak effect |
@@ -53,7 +53,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | ibuprofen | **James D. Morse** and colleagues (2022); **Jacqueline A. Hannam**, **Brian J. Anderson** and colleagues (2018) | Intravenous and oral kinetics with clearance and volumes on normal fat mass; the analgesic effect-site rate constant |
 | naloxone | **J. Dowling** and colleagues (2008); **C. M. Laffont** and colleagues (2024); **A. Yassen** and colleagues (2007) | Intravenous kinetics with clearance on lean body weight; the nasal route; the effect-site rate constant |
 | oxytocin | **James C. Eisenach** (unpublished); Tanaka and colleagues | Human kinetics from unpublished data; a rat model |
-| oxycodone | **Marko Lamminsalo** and colleagues (2019); **Jaap W. Mandema**; **Anne E. Olesen**; Kokki | Intravenous kinetics; the absorption and MEAC chosen to match their observations |
+| oxycodone | **Reino Pöyhiä** and colleagues (1991); **Maija Kirvelä** and colleagues (1996); **Antti Liukas** and colleagues (2011); **Bojan Lalovic** and colleagues (2006); **Rajiv Balyan** and colleagues (2017); Mandema; Kokki | Pooled intravenous kinetics with age (Liukas) and renal (Kirvelä) effects on clearance; oral absorption and the effect-site rate constant (Lalovic); CYP2D6 and oxymorphone (Balyan, Lalovic); the MEAC from Mandema and Kokki |
 | oliceridine | **Albert Dahan** and colleagues (2020) | Two-compartment kinetics and the respiratory end point used for MEAC |
 | remimazolam | Eleveld and colleagues (2025) | Kinetics with size, age and sex covariates |
 | codeine | **Kristin Persson**, **David R. Guay** and colleagues; **Muhammad W. Ashraf** and colleagues (2024) | One-compartment disposition; CYP2D6-dependent formation of morphine |
@@ -68,6 +68,14 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | clindamycin | **N. Bouazza** and colleagues (2012) | One-compartment kinetics, intravenous and oral |
 | gentamicin | **C. Smit** and colleagues (2020) | Two-compartment kinetics with de-indexed eGFR |
 | metronidazole | **M. J. J. da Silva Neto** and colleagues (2021) | Intravenous one-compartment kinetics |
+| escitalopram | **Liu** and colleagues (2022) | Apparent oral one-compartment kinetics in Chinese psychiatric patients, with CYP2C19 phenotype on clearance |
+| citalopram | **Ayman Akil**, **Robert R. Bies**, **Bruce G. Pollock** and colleagues (2016) | Apparent oral kinetics of R- and S-citalopram in older adults with Alzheimer's agitation (CitAD), with age, sex, weight and CYP2C19, combined exactly into one two-compartment model of the racemate |
+| sertraline | **Ali A. Alhadab** and **Richard C. Brundage** (2020) | Two-compartment kinetics from a model-based meta-analysis of intravenous and oral studies in healthy adults, with absorption that accelerates after the dose and bioavailability that rises with the dose |
+| paroxetine | **Jung-Ryul Kim**, **Doh Kwan Kim**, **Soo-Youn Lee** and colleagues (2015) | Apparent oral one-compartment kinetics from therapeutic drug monitoring, with age and an empirical power of the daily dose on clearance |
+| duloxetine | **Zhong** and colleagues (2026) | Apparent oral one-compartment kinetics in depressed inpatients, with clearance 25% lower in women |
+| mirtazapine | **Yan** and colleagues (2026) | Apparent oral one-compartment kinetics in depressed inpatients, with clearance 29.4% lower at a BMI of 28 or more |
+| bupropion, hydroxybupropion | **Ghimire** and colleagues (2026) | Apparent oral two-compartment kinetics of the sustained-release tablet and its metabolite after a single 150 mg dose, with a fixed forming fraction of 0.1 |
+| fluoxetine, norfluoxetine | **Han** and colleagues (2025) | Joint apparent oral one-compartment kinetics of fluoxetine and norfluoxetine from steady-state troughs in Chinese psychiatric patients, with sex on clearance |
 | vancomycin | **A. H. Thomson** and colleagues (2009) | Two-compartment kinetics with creatinine clearance |
 | hydrocortisone | **D. Bindellini** and colleagues (2024) | Cortisol kinetics, linearised for stress doses |
 | methylprednisolone, dexamethasone | **Y. Hong** and colleagues (2007) | Intravenous kinetics |
@@ -77,6 +85,8 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | glycopyrrolate | **C. Bartels** and colleagues (2013) | Three-compartment kinetics of the active cation |
 | amiodarone, desethylamiodarone | **P. Timothy Pollak**, **Thomas Bouillon** and Shafer (2000) | Apparent oral two-compartment kinetics of the parent and its metabolite in long-term therapy, with each day's oral dose as a constant rate |
 | amiodaroneIV | **J. M. Korth-Bradley** and colleagues (1996) | Per-kilogram two-compartment kinetics of acute intravenous amiodarone, for the first one to three days |
+| ondansetron | **M. D. Chiang** and colleagues (2021) | Two-compartment intravenous kinetics in adults |
+| aprepitant, fosaprepitant | **A. L. Nijstad** and colleagues (2023) | One-compartment kinetics with allometric weight scaling, fitted in children |
 
 ## Pharmacodynamics and methods
 

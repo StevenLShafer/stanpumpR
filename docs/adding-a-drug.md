@@ -96,8 +96,8 @@ first-order extravascular absorption. A source model with saturable protein bind
 apparent oral scale has to be reduced to that form, and the reduction must be written down
 in the header: which part is exact, which is approximate, and what is plotted
 (`R/drugs_cefazolin.R`, `R/drugs_hydrocortisone.R`, `R/drugs_prednisolone.R`).
-The one exception is oral bioavailability that falls with the size of the dose: the
-engine applies that itself, dose by dose (see *saturable oral absorption* below).
+The one exception is oral or sublingual bioavailability that falls with the size of the
+dose: the engine applies that itself, dose by dose (see *saturable oral absorption* below).
 
 ### Return-value contract
 
@@ -110,12 +110,44 @@ engine applies that itself, dose by dose (see *saturable oral absorption* below)
 | `reference` | literature citation (string). |
 | `prodrug` | optional; `FALSE` marks an active parent that has a metabolite but no effect site, so the help does not call it a prodrug (see "An active parent with no effect-site model" below). |
 
-**Optional — extravascular routes.** To support oral/IM/intranasal dosing, add absorption
-fields to a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_IM` / `_IN`
-equivalents). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
+**Optional — extravascular routes.** To support oral/sublingual/IM/intranasal dosing, or
+regional anesthesia (RA, a local anesthetic injected into tissue), add absorption fields to
+a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_SL` / `_IM` / `_IN` / `_RA`
+equivalents).
+An RA drug may add a slow second tissue depot absorbing in parallel: `ka_RA_slow` (1/min) and
+`fraction_RA_slow`, the share of the absorbed dose that goes through it (`R/drugs_mepivacaine.R`). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
-The route is the suffix of the unit (`mg PO`, `mg IM`, `mg IN`; `doseRoute()` in `R/routes.R`),
+The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
+
+**Optional — a second oral depot.** A formulation absorbed through two parallel first-order
+paths, each with its own lag, adds `ka_PO2` (1/min), `fraction_PO2` (the share of the
+**absorbed** oral dose that takes the second path) and optionally `tlag_PO2` (min; the oral lag
+if absent) beside `ka_PO`, `bioavailability_PO` and `tlag_PO`. `bioavailability_PO` stays the
+absolute bioavailability of the whole dose, applied once; `getDrugPK()` splits it between the
+depots, and `simCpCe()` duplicates each oral dose row into the internal route `PO2`, as it
+does for the slow RA depot. Diclofenac is the example (`R/drugs_diclofenac.R`); meloxicam uses
+it with apparent parameters and `bioavailability_PO = 1`. Not available with an active
+metabolite, several oral formulations, or a `tPeak` measured after an oral dose.
+
+**Optional — parallel systems.** A drug whose plotted concentration is the sum of independent
+linear systems sharing its doses (ketorolac: the S and R enantiomers, fitted separately)
+returns `parallelSystems`, a list of `list(name, doseFraction, PK)` entries whose `PK` has the
+same shape and event names as the drug's own, plus its own `doseFraction` (the share of each
+dose its own system receives; a salt or racemate conversion goes here). `getDrugPK()` builds
+each system's coefficients on the drug's effect site, and `simCpCe()` runs every system on the
+same doses and adds the results, which is exact. Target-controlled infusion is refused for
+such a drug, and it cannot have a metabolite, several oral formulations, saturable absorption
+or an osmotic block. The help page lists the systems under *Parallel systems*. See
+`R/drugs_ketorolac.R`.
+
+A system can also be limited to some routes: `routes` (values of `DOSE_ROUTES`) on a
+`parallelSystems` entry, and on the drug's own list for its own system. A system then gets the
+other routes' doses as zero, so it stays on the same time line. Give every system the same
+absorption parameters (the same lags) even where it receives none of those doses. Meloxicam
+uses this to send oral doses to its apparent oral fit (`routes = "PO"`) and intravenous doses to
+the separate ANJESO fit (`routes = "IV"`) (`R/drugs_meloxicam.R`). This is a way to offer a
+route from a separate study without inventing a bioavailability that links the two fits.
 
 **Optional — oral input as a constant daily rate.** A model fitted with each day's oral dose
 spread evenly over the day, rather than absorbed first-order, offers the unit `mg/day PO`
@@ -142,6 +174,12 @@ codeine <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT)
 `getDrugPK()` passes the phenotype only to models that name the argument, so no other drug
 file changes. Valid values are in `CYP2D6_VALUES`: `poor`, `intermediate`, `normal`,
 `ultrarapid`. Validate it and fail loudly on anything else.
+
+CYP2C19 works the same way: a model adds `cyp2c19 = CYP2C19_DEFAULT` to its signature, and
+gets the Patient Profile's **CYP 2C19** field. Valid values are in `CYP2C19_VALUES`, the five
+CPIC terms (`poor`, `intermediate`, `normal`, `rapid`, `ultrarapid`). A source that estimated
+fewer groups says in the drug file which group each of the five is given (escitalopram,
+citalopram). The drug's help page tabulates its clearance by phenotype automatically.
 
 **Optional — an osmotic agent.** A drug reported as the serum osmolality it produces, rather
 than as its own concentration, adds `osmolality` to its signature (the patient's baseline,
@@ -184,7 +222,7 @@ Four things to know before using it:
   wrong is a silent thousandfold error.
 - Only one level is resolved. A cascade (codeine → morphine → M6G) would need a two-stage
   convolution and is not supported.
-- Only the intravenous and oral routes carry metabolite coefficients. IM and IN doses raise
+- Only the intravenous and oral routes carry metabolite coefficients. SL, IM and IN doses raise
   rather than silently dropping the metabolite, and a metabolite drug cannot also switch
   kinetics on a clinical event.
 
@@ -218,6 +256,25 @@ apparent scale already contains it. Hydrocodone is the example. A drug offered o
 constant-rate oral unit `mg/day PO` (amiodarone) carries no absorption fields at all: the rate
 is applied to the apparent parameters as it stands.
 
+**Optional — a pulsed extended-release product.** A product designed as fixed
+fractions released at fixed delays (Adderall XR: two bead populations, half at once and
+half 4 h later) returns an `oralPulses` block naming the formulation word that selects it:
+
+```r
+oralPulses = list(XR = list(fraction = c(0.5, 0.5), delay = c(0, 240)))   # delay in minutes
+```
+
+and lists `mg PO XR` (and `mg PO XR qd`) in its CSV `Units`. `simCpCe()` replaces each
+dose of that formulation by its pulses before anything else happens to it
+(`expandOralPulses()`, `R/oral-pulses.R`; after the scheduled repeats are expanded): plain
+`mg PO` doses of `fraction[i]` of it at its time plus `delay[i]`, each absorbed with the
+drug's default `ka_PO`, `bioavailability_PO` and `tlag_PO`. The fractions must sum to one,
+so the amount given is unchanged (`validateOralPulses()`). This describes release, not
+absorption, and suits a product shown to be bioequivalent to its immediate-release form
+given in split doses; a continuous release (an osmotic pump) is not represented this way.
+The drug's help page must say how the pulses were chosen. `R/drugs_mixedAmphetamineSalts.R`
+is the example.
+
 **Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
 that the fraction of an oral dose absorbed falls as the dose rises, returns an
 `oralSaturation` block alongside the usual fields:
@@ -233,6 +290,28 @@ limit of a small dose. The hyperbolic `Dmax / (D50 + D)` form is the case `Imax 
 holds; what is not represented is saturation shared between doses taken together or close
 in time. `Imax` must lie between 0 and 1 (`validateOralSaturation()`), and the drug's help
 page tabulates the fraction at several doses. `R/drugs_gabapentin.R` is the example.
+
+The block has two further forms, chosen with a `form` field (the one above is
+`form = "saturable"`, the default):
+
+- `list(form = "rising", D50 = 15.5)`: the fraction is `D / (D50 + D)`, so bioavailability
+  **rises** with the dose towards `bioavailability_PO`, which is then its maximum. Sertraline
+  (`R/drugs_sertraline.R`).
+- `list(form = "power", exponent = 0.363, Dref = 25)`: the fraction is `(D / Dref)^exponent`.
+  This carries an empirical power of the dose on **apparent clearance**,
+  `CL/F × (D / Dref)^-exponent`, which a linear engine cannot hold: write the clearance at
+  `Dref`, and the steady-state exposure `D / CL(D)` is reproduced by scaling the dose. The
+  half-life stays that of the reference dose, and each administration is read as the day's dose.
+  Paroxetine (`R/drugs_paroxetine.R`).
+
+Any form may carry `exampleDoses`, the oral doses in mg the help page tabulates.
+
+A **sublingual** bioavailability that falls with the dose is declared the same way, as a
+`sublingualSaturation` block with the same two fields; `simCpCe()` scales every SL dose by
+the same expression and `bioavailability_SL` becomes the small-dose limit. A source that
+reports the dependence in another form (buprenorphine's power law) is fitted to this one
+over the dose range the source covers, and the fit is documented in the drug header
+(`R/drugs_buprenorphine.R`).
 
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 
@@ -265,7 +344,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Category` — the group the drug is listed under in the menu the app opens with: one of
   `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
   `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
-  `Corticosteroids`, `Other`, `Illicit drugs`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `Corticosteroids`, `Antidepressants`, `Stimulants`, `Local anesthetics`, `Antiemetics`, `Other`, `Illicit drugs`). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.

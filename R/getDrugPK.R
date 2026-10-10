@@ -11,6 +11,8 @@
 #' @param drugDefaults output from \code{getDrugDefaults(drug)}
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 #'   Passed only to drug models that declare it; the rest ignore it.
+#' @param cyp2c19 CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
+#'   Passed only to drug models that declare it (escitalopram, citalopram).
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
@@ -24,7 +26,11 @@
 #' @param creatinine serum creatinine in mg/dL, or NULL (the default) for the
 #'   assumed normal value for the patient's age and sex.  Passed only to the renal
 #'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
-#'   sugammadex, gabapentin, pregabalin); see `R/renalFunction.R`.
+#'   sugammadex, gabapentin, pregabalin, oxycodone, meloxicam intravenous); see
+#'   `R/renalFunction.R`.
+#' @param model internal: a model's output to use in place of calling the
+#'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
+#'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
 #'
 #' @returns a list: the drug's PK sets (\code{PK}, one per PK event), its
 #'   \code{tPeak} and \code{reference}, the covariates, and the library's
@@ -54,7 +60,9 @@ getDrugPK <- function(
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE,
   osmolality = OSMOLALITY_DEFAULT,
-  creatinine = NULL
+  creatinine = NULL,
+  cyp2c19 = CYP2C19_DEFAULT,
+  model = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -66,6 +74,10 @@ getDrugPK <- function(
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
          ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
+  }
+  if (length(cyp2c19) != 1 || !cyp2c19 %in% CYP2C19_VALUES) {
+    stop("Invalid cyp2c19: ", paste(cyp2c19, collapse = ", "),
+         ". Must be one of: ", paste(CYP2C19_VALUES, collapse = ", "))
   }
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
@@ -109,6 +121,9 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "cyp2d6" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2d6 <- cyp2d6
+  if (exists(drug, mode = "function") &&
+      "cyp2c19" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp2c19 <- cyp2c19
   # Likewise the fat-free-mass switch: every drug model in the library
   # declares it, but a mocked model taking only ... need not.
   if (exists(drug, mode = "function") &&
@@ -126,7 +141,7 @@ getDrugPK <- function(
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
   # function", which is what test-gas-routing.R pins.
-  X <- do.call(drug, covariates)
+  X <- if (is.null(model)) do.call(drug, covariates) else model
   tPeak <- X$tPeak
   # Which curve tPeak was measured against.  Defaults to the intravenous
   # bolus, which is what every drug in the library assumed before oral-only
@@ -156,6 +171,7 @@ getDrugPK <- function(
     # PO will add state_PO, associated with ka_PO #
     # IM will add state_IM, associated with ka_IM #
     # IN will add state_IN, associated with ka_IN #
+    # RA will add state_RA, associated with ka_RA #
 
     # Set up PK for oral delivery
     if (is.null(X$PK[[event]]$ka_PO))
@@ -201,7 +217,7 @@ getDrugPK <- function(
       }
     }
 
-    # Set up PK for IM delivery
+    # Set up PK for IN delivery
     if (is.null(X$PK[[event]]$ka_IN))
     {
       ka_IN <- 0
@@ -221,6 +237,92 @@ getDrugPK <- function(
       } else {
         tlag_IN <- X$PK[[event]]$tlag_IN
       }
+    }
+
+    # Set up PK for sublingual delivery, exactly as the routes above
+    if (is.null(X$PK[[event]]$ka_SL))
+    {
+      ka_SL <- 0
+      bioavailability_SL <- 0
+      tlag_SL <- 0
+    } else {
+      ka_SL <- X$PK[[event]]$ka_SL
+      bioavailability_SL <- if (is.null(X$PK[[event]]$bioavailability_SL)) 1 else X$PK[[event]]$bioavailability_SL
+      tlag_SL <- if (is.null(X$PK[[event]]$tlag_SL)) 0 else X$PK[[event]]$tlag_SL
+    }
+
+    # Set up PK for regional anesthesia (RA): a local anesthetic injected into
+    # tissue and absorbed first-order into the systemic circulation.
+    if (is.null(X$PK[[event]]$ka_RA))
+    {
+      ka_RA <- 0
+      bioavailability_RA <- 0
+      tlag_RA <- 0
+    } else {
+      ka_RA <- X$PK[[event]]$ka_RA
+      if (is.null(X$PK[[event]]$bioavailability_RA))
+      {
+        bioavailability_RA <- 1
+      } else {
+        bioavailability_RA <- X$PK[[event]]$bioavailability_RA
+      }
+      if (is.null(X$PK[[event]]$tlag_RA))
+      {
+        tlag_RA <- 0
+      } else {
+        tlag_RA <- X$PK[[event]]$tlag_RA
+      }
+    }
+
+    # An optional slow second tissue depot for RA (parallel first-order
+    # absorption).  The drug declares ka_RA_slow (1/min) and
+    # fraction_RA_slow, the share of the ABSORBED dose that goes through the
+    # slow depot.  Internally that is a second route, "RAslow", fed by the
+    # same RA dose rows (simCpCe() duplicates them), with the bioavailability
+    # split between the two depots and the same lag:
+    #     bioavailability_RA     = F x (1 - fraction_RA_slow)
+    #     bioavailability_RAslow = F x fraction_RA_slow
+    ka_RAslow <- 0
+    bioavailability_RAslow <- 0
+    tlag_RAslow <- 0
+    if (ka_RA > 0 && !is.null(X$PK[[event]]$ka_RA_slow))
+    {
+      slow <- X$PK[[event]]$fraction_RA_slow
+      if (!is_valid_number(X$PK[[event]]$ka_RA_slow) || X$PK[[event]]$ka_RA_slow <= 0 ||
+          !is_valid_number(slow, 0, 1))
+        stop("Invalid slow RA depot for ", drug, ": needs ka_RA_slow > 0 and ",
+             "fraction_RA_slow between 0 and 1.")
+      ka_RAslow <- X$PK[[event]]$ka_RA_slow
+      bioavailability_RAslow <- bioavailability_RA * slow
+      bioavailability_RA <- bioavailability_RA * (1 - slow)
+      tlag_RAslow <- tlag_RA
+    }
+
+    # An optional second oral depot (parallel first-order absorption with a
+    # lag of its own).  The drug declares ka_PO2 (1/min), fraction_PO2, the
+    # share of the ABSORBED oral dose that goes through it, and optionally
+    # tlag_PO2 (min; the oral lag if absent).  Internally that is a second
+    # route, "PO2", fed by the same oral dose rows (simCpCe() duplicates
+    # them), with the bioavailability split between the two depots:
+    #     bioavailability_PO  = F x (1 - fraction_PO2)
+    #     bioavailability_PO2 = F x fraction_PO2
+    # Diclofenac (two lagged absorption paths, Standing 2011) is the example.
+    ka_PO2 <- 0
+    bioavailability_PO2 <- 0
+    tlag_PO2 <- 0
+    if (ka_PO > 0 && !is.null(X$PK[[event]]$ka_PO2))
+    {
+      share <- X$PK[[event]]$fraction_PO2
+      lag2 <- X$PK[[event]]$tlag_PO2
+      if (is.null(lag2)) lag2 <- tlag_PO
+      if (!is_valid_number(X$PK[[event]]$ka_PO2) || X$PK[[event]]$ka_PO2 <= 0 ||
+          !is_valid_number(share, 0, 1) || !is_valid_number(lag2, 0, Inf))
+        stop("Invalid second oral depot for ", drug, ": needs ka_PO2 > 0, ",
+             "fraction_PO2 between 0 and 1 and tlag_PO2 >= 0.")
+      ka_PO2 <- X$PK[[event]]$ka_PO2
+      bioavailability_PO2 <- bioavailability_PO * share
+      bioavailability_PO <- bioavailability_PO * (1 - share)
+      tlag_PO2 <- lag2
     }
 
     if (is.null(X$PK[[event]]$customFunction))
@@ -297,6 +399,54 @@ getDrugPK <- function(
     e_coef_IN_l3  <- 0
     e_coef_IN_ke0 <- 0
     e_coef_IN_ka  <- 0
+
+    # SL Delivery
+    p_coef_SL_l1  <- 0
+    p_coef_SL_l2  <- 0
+    p_coef_SL_l3  <- 0
+    p_coef_SL_ka  <- 0
+
+    e_coef_SL_l1  <- 0
+    e_coef_SL_l2  <- 0
+    e_coef_SL_l3  <- 0
+    e_coef_SL_ke0 <- 0
+    e_coef_SL_ka  <- 0
+
+    # RA Delivery
+    p_coef_RA_l1  <- 0
+    p_coef_RA_l2  <- 0
+    p_coef_RA_l3  <- 0
+    p_coef_RA_ka  <- 0
+
+    e_coef_RA_l1  <- 0
+    e_coef_RA_l2  <- 0
+    e_coef_RA_l3  <- 0
+    e_coef_RA_ke0 <- 0
+    e_coef_RA_ka  <- 0
+
+    # RA slow depot Delivery
+    p_coef_RAslow_l1  <- 0
+    p_coef_RAslow_l2  <- 0
+    p_coef_RAslow_l3  <- 0
+    p_coef_RAslow_ka  <- 0
+
+    e_coef_RAslow_l1  <- 0
+    e_coef_RAslow_l2  <- 0
+    e_coef_RAslow_l3  <- 0
+    e_coef_RAslow_ke0 <- 0
+    e_coef_RAslow_ka  <- 0
+
+    # Second oral depot Delivery
+    p_coef_PO2_l1  <- 0
+    p_coef_PO2_l2  <- 0
+    p_coef_PO2_l3  <- 0
+    p_coef_PO2_ka  <- 0
+
+    e_coef_PO2_l1  <- 0
+    e_coef_PO2_l2  <- 0
+    e_coef_PO2_l3  <- 0
+    e_coef_PO2_ke0 <- 0
+    e_coef_PO2_ka  <- 0
 
     if (k31 > 0)
     {
@@ -443,6 +593,62 @@ getDrugPK <- function(
       e_coef_IN_ka  <- - e_coef_IN_l1 - e_coef_IN_l2 - e_coef_IN_l3 - e_coef_IN_ke0
     }
 
+    if (ka_SL > 0)
+    {
+      p_coef_SL_l1  <- p_coef_bolus_l1 / (ka_SL - lambda_1) * ka_SL * bioavailability_SL
+      p_coef_SL_l2  <- p_coef_bolus_l2 / (ka_SL - lambda_2) * ka_SL * bioavailability_SL
+      p_coef_SL_l3  <- p_coef_bolus_l3 / (ka_SL - lambda_3) * ka_SL * bioavailability_SL
+      p_coef_SL_ka  <- - p_coef_SL_l1 - p_coef_SL_l2 - p_coef_SL_l3
+
+      e_coef_SL_l1  <- e_coef_bolus_l1 / (ka_SL - lambda_1) * ka_SL * bioavailability_SL
+      e_coef_SL_l2  <- e_coef_bolus_l2 / (ka_SL - lambda_2) * ka_SL * bioavailability_SL
+      e_coef_SL_l3  <- e_coef_bolus_l3 / (ka_SL - lambda_3) * ka_SL * bioavailability_SL
+      e_coef_SL_ke0 <- e_coef_bolus_ke0 / (ka_SL - ke0) *     ka_SL * bioavailability_SL
+      e_coef_SL_ka  <- - e_coef_SL_l1 - e_coef_SL_l2 - e_coef_SL_l3 - e_coef_SL_ke0
+    }
+
+    if (ka_RA > 0)
+    {
+      p_coef_RA_l1  <- p_coef_bolus_l1 / (ka_RA - lambda_1) * ka_RA * bioavailability_RA
+      p_coef_RA_l2  <- p_coef_bolus_l2 / (ka_RA - lambda_2) * ka_RA * bioavailability_RA
+      p_coef_RA_l3  <- p_coef_bolus_l3 / (ka_RA - lambda_3) * ka_RA * bioavailability_RA
+      p_coef_RA_ka  <- - p_coef_RA_l1 - p_coef_RA_l2 - p_coef_RA_l3
+
+      e_coef_RA_l1  <- e_coef_bolus_l1 / (ka_RA - lambda_1) * ka_RA * bioavailability_RA
+      e_coef_RA_l2  <- e_coef_bolus_l2 / (ka_RA - lambda_2) * ka_RA * bioavailability_RA
+      e_coef_RA_l3  <- e_coef_bolus_l3 / (ka_RA - lambda_3) * ka_RA * bioavailability_RA
+      e_coef_RA_ke0 <- e_coef_bolus_ke0 / (ka_RA - ke0) *     ka_RA * bioavailability_RA
+      e_coef_RA_ka  <- - e_coef_RA_l1 - e_coef_RA_l2 - e_coef_RA_l3 - e_coef_RA_ke0
+    }
+
+    if (ka_RAslow > 0)
+    {
+      p_coef_RAslow_l1  <- p_coef_bolus_l1 / (ka_RAslow - lambda_1) * ka_RAslow * bioavailability_RAslow
+      p_coef_RAslow_l2  <- p_coef_bolus_l2 / (ka_RAslow - lambda_2) * ka_RAslow * bioavailability_RAslow
+      p_coef_RAslow_l3  <- p_coef_bolus_l3 / (ka_RAslow - lambda_3) * ka_RAslow * bioavailability_RAslow
+      p_coef_RAslow_ka  <- - p_coef_RAslow_l1 - p_coef_RAslow_l2 - p_coef_RAslow_l3
+
+      e_coef_RAslow_l1  <- e_coef_bolus_l1 / (ka_RAslow - lambda_1) * ka_RAslow * bioavailability_RAslow
+      e_coef_RAslow_l2  <- e_coef_bolus_l2 / (ka_RAslow - lambda_2) * ka_RAslow * bioavailability_RAslow
+      e_coef_RAslow_l3  <- e_coef_bolus_l3 / (ka_RAslow - lambda_3) * ka_RAslow * bioavailability_RAslow
+      e_coef_RAslow_ke0 <- e_coef_bolus_ke0 / (ka_RAslow - ke0) *     ka_RAslow * bioavailability_RAslow
+      e_coef_RAslow_ka  <- - e_coef_RAslow_l1 - e_coef_RAslow_l2 - e_coef_RAslow_l3 - e_coef_RAslow_ke0
+    }
+
+    if (ka_PO2 > 0)
+    {
+      p_coef_PO2_l1  <- p_coef_bolus_l1 / (ka_PO2 - lambda_1) * ka_PO2 * bioavailability_PO2
+      p_coef_PO2_l2  <- p_coef_bolus_l2 / (ka_PO2 - lambda_2) * ka_PO2 * bioavailability_PO2
+      p_coef_PO2_l3  <- p_coef_bolus_l3 / (ka_PO2 - lambda_3) * ka_PO2 * bioavailability_PO2
+      p_coef_PO2_ka  <- - p_coef_PO2_l1 - p_coef_PO2_l2 - p_coef_PO2_l3
+
+      e_coef_PO2_l1  <- e_coef_bolus_l1 / (ka_PO2 - lambda_1) * ka_PO2 * bioavailability_PO2
+      e_coef_PO2_l2  <- e_coef_bolus_l2 / (ka_PO2 - lambda_2) * ka_PO2 * bioavailability_PO2
+      e_coef_PO2_l3  <- e_coef_bolus_l3 / (ka_PO2 - lambda_3) * ka_PO2 * bioavailability_PO2
+      e_coef_PO2_ke0 <- e_coef_bolus_ke0 / (ka_PO2 - ke0) *     ka_PO2 * bioavailability_PO2
+      e_coef_PO2_ka  <- - e_coef_PO2_l1 - e_coef_PO2_l2 - e_coef_PO2_l3 - e_coef_PO2_ke0
+    }
+
     # Vd Peak Effect
     if (tPeak == 0)
     {
@@ -483,6 +689,22 @@ getDrugPK <- function(
         ka_IN = ka_IN,
         bioavailability_IN = bioavailability_IN,
         tlag_IN = tlag_IN,
+
+        ka_SL = ka_SL,
+        bioavailability_SL = bioavailability_SL,
+        tlag_SL = tlag_SL,
+
+        ka_RA = ka_RA,
+        bioavailability_RA = bioavailability_RA,
+        tlag_RA = tlag_RA,
+
+        ka_RAslow = ka_RAslow,
+        bioavailability_RAslow = bioavailability_RAslow,
+        tlag_RAslow = tlag_RAslow,
+
+        ka_PO2 = ka_PO2,
+        bioavailability_PO2 = bioavailability_PO2,
+        tlag_PO2 = tlag_PO2,
 
         customFunction = customFunction,
 
@@ -546,12 +768,97 @@ getDrugPK <- function(
         e_coef_IN_l2 = e_coef_IN_l2,
         e_coef_IN_l3 = e_coef_IN_l3,
         e_coef_IN_ke0 = e_coef_IN_ke0,
-        e_coef_IN_ka = e_coef_IN_ka
+        e_coef_IN_ka = e_coef_IN_ka,
+
+        # SL Coefficients
+        p_coef_SL_l1 = p_coef_SL_l1,
+        p_coef_SL_l2 = p_coef_SL_l2,
+        p_coef_SL_l3 = p_coef_SL_l3,
+        p_coef_SL_ka = p_coef_SL_ka,
+
+        e_coef_SL_l1 = e_coef_SL_l1,
+        e_coef_SL_l2 = e_coef_SL_l2,
+        e_coef_SL_l3 = e_coef_SL_l3,
+        e_coef_SL_ke0 = e_coef_SL_ke0,
+        e_coef_SL_ka = e_coef_SL_ka,
+
+        # RA Coefficients
+        p_coef_RA_l1 = p_coef_RA_l1,
+        p_coef_RA_l2 = p_coef_RA_l2,
+        p_coef_RA_l3 = p_coef_RA_l3,
+        p_coef_RA_ka = p_coef_RA_ka,
+
+        e_coef_RA_l1 = e_coef_RA_l1,
+        e_coef_RA_l2 = e_coef_RA_l2,
+        e_coef_RA_l3 = e_coef_RA_l3,
+        e_coef_RA_ke0 = e_coef_RA_ke0,
+        e_coef_RA_ka = e_coef_RA_ka,
+
+        # RA slow depot Coefficients
+        p_coef_RAslow_l1 = p_coef_RAslow_l1,
+        p_coef_RAslow_l2 = p_coef_RAslow_l2,
+        p_coef_RAslow_l3 = p_coef_RAslow_l3,
+        p_coef_RAslow_ka = p_coef_RAslow_ka,
+
+        e_coef_RAslow_l1 = e_coef_RAslow_l1,
+        e_coef_RAslow_l2 = e_coef_RAslow_l2,
+        e_coef_RAslow_l3 = e_coef_RAslow_l3,
+        e_coef_RAslow_ke0 = e_coef_RAslow_ke0,
+        e_coef_RAslow_ka = e_coef_RAslow_ka,
+
+        # Second oral depot Coefficients
+        p_coef_PO2_l1 = p_coef_PO2_l1,
+        p_coef_PO2_l2 = p_coef_PO2_l2,
+        p_coef_PO2_l3 = p_coef_PO2_l3,
+        p_coef_PO2_ka = p_coef_PO2_ka,
+
+        e_coef_PO2_l1 = e_coef_PO2_l1,
+        e_coef_PO2_l2 = e_coef_PO2_l2,
+        e_coef_PO2_l3 = e_coef_PO2_l3,
+        e_coef_PO2_ke0 = e_coef_PO2_ke0,
+        e_coef_PO2_ka = e_coef_PO2_ka
       )
     )
   }
 
   PK <- sapply(events, function(x) list(get0(x)))
+
+  # The second oral depot is carried by advanceClosedFormPO_IM_IN() and
+  # advanceClosedForm1(), not by the metabolite engine or the per-formulation
+  # runs, and an oral tPeak is solved against the first depot alone.
+  if (any(vapply(PK, function(s) isTRUE(s$ka_PO2 > 0), logical(1))))
+  {
+    if (resolveMetabolite && !is.null(X$metabolite))
+      stop("Invalid second oral depot for ", drug, ": a drug that forms an ",
+           "active metabolite cannot have one.")
+    if (!is.null(X$oralFormulations))
+      stop("Invalid second oral depot for ", drug, ": a drug with more than ",
+           "one oral formulation cannot have one.")
+    if (identical(tPeakRoute, ROUTE_PO) && tPeak > 0 && is.null(X$ke0))
+      stop("Invalid second oral depot for ", drug, ": an oral tPeak is solved ",
+           "against a single depot; supply ke0 directly.")
+  }
+
+  # Further oral formulations.  The model's ka_PO, bioavailability_PO and
+  # tlag_PO describe its default oral form (morphine: the immediate-release
+  # tablet); each entry of X$oralFormulations, named by a word of
+  # ORAL_FORMULATIONS, is another form with absorption of its own.  Each gets
+  # a full copy of every PK set with only the oral terms replaced, so that
+  # simCpCe() can run that formulation's doses through the same engines and
+  # add the result: the disposition is linear and shared.
+  oralFormulations <- NULL
+  if (!is.null(X$oralFormulations))
+  {
+    if (resolveMetabolite && !is.null(X$metabolite))
+      stop("Invalid oralFormulations for ", drug, ": a drug that forms an ",
+           "active metabolite cannot yet have more than one oral formulation, ",
+           "because the metabolite's coefficients are built from the default ",
+           "oral absorption.")
+    oralFormulations <- lapply(
+      stats::setNames(names(X$oralFormulations), names(X$oralFormulations)),
+      function(f) lapply(PK, oralFormulationSet, X$oralFormulations[[f]], drug, f)
+    )
+  }
 
   # An active metabolite is resolved by simulating the metabolite's own
   # disposition and convolving the parent's plasma profile through it.  The
@@ -572,6 +879,7 @@ getDrugPK <- function(
       weight = weight, height = height, age = age, sex = sex,
       drugDefaults = metaboliteDefaults,
       cyp2d6 = cyp2d6,
+      cyp2c19 = cyp2c19,
       osmolality = osmolality,
       creatinine = creatinine,
       adjustToFFM = adjustToFFM,
@@ -650,7 +958,175 @@ getDrugPK <- function(
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
+  # The same for sublingual doses (buprenorphine).
+  out$sublingualSaturation <- validateOralSaturation(
+    X$sublingualSaturation, drug, "sublingualSaturation")
+  # A drug with more than one oral formulation: the PK sets of each further
+  # one, which simCpCe() uses for that formulation's doses.
+  out$oralFormulations <- oralFormulations
+  # A drug plotted as the sum of independent linear systems that share its
+  # doses: ketorolac, whose S and R enantiomers have dispositions of their own
+  # (R/drugs_ketorolac.R).  The model's own PK is the first system; each entry
+  # of X$parallelSystems is another, with PK sets of the same shape.  Each
+  # system receives doseFraction of every dose (the drug's own share is
+  # X$doseFraction), and simCpCe() runs them on the same time line and adds
+  # the results, which is exact because each is linear.
+  out$doseFraction <- parallelDoseFraction(X$doseFraction, drug)
+  # A system may also be limited to some routes (meloxicam: the oral fit takes
+  # the oral doses, the intravenous fit the intravenous ones); the drug's own
+  # system declares X$routes, each parallel system its own routes.
+  out$routes <- parallelRoutes(X$routes, drug)
+  if (!is.null(X$parallelSystems))
+    out$parallelSystems <- parallelSystemSets(X, PK, events, tPeakRoute, drug,
+                                              covariates)
+  # A pulsed extended-release formulation (Adderall XR): the fractions and
+  # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
+  out$oralPulses <- validateOralPulses(X$oralPulses, drug)
   return(out)
+}
+
+#' Check the share of each dose a parallel system receives
+#'
+#' @param x the declared fraction, or NULL for the whole dose
+#' @param drug the drug's name, for the error message
+#' @returns the fraction, or NULL when none was declared
+#' @keywords internal
+parallelDoseFraction <- function(x, drug)
+{
+  if (is.null(x)) return(NULL)
+  if (!is_valid_number(x, 0, Inf) || x <= 0)
+    stop("Invalid doseFraction for ", drug, ": must be a positive number.")
+  x
+}
+
+#' Check the routes a parallel system receives
+#'
+#' @param x the declared routes (values of \code{DOSE_ROUTES}), or NULL for
+#'   every route
+#' @param drug the drug's name, for the error message
+#' @returns the routes, or NULL when none were declared
+#' @keywords internal
+parallelRoutes <- function(x, drug)
+{
+  if (is.null(x)) return(NULL)
+  if (!is.character(x) || length(x) == 0 || anyNA(x) || !all(x %in% DOSE_ROUTES))
+    stop("Invalid routes for ", drug, ": must be some of ",
+         paste(DOSE_ROUTES, collapse = ", "), ".")
+  unique(x)
+}
+
+#' PK sets of a drug's parallel systems
+#'
+#' Builds each system's PK sets through \code{getDrugPK()} itself, on the
+#' drug's own effect site (the systems add in plasma, so they must share ke0).
+#'
+#' @param X the drug model's output
+#' @param PK the drug's own finished PK sets
+#' @param events their names
+#' @param tPeakRoute,drug as in \code{getDrugPK()}
+#' @param covariates the patient covariates passed to the drug model
+#' @returns a list, one entry per system: \code{name}, \code{doseFraction},
+#'   \code{routes} and \code{PK}
+#' @keywords internal
+parallelSystemSets <- function(X, PK, events, tPeakRoute, drug, covariates)
+{
+  if (!is.null(X$metabolite) || !is.null(X$oralFormulations) ||
+      !is.null(X$oralSaturation) || !is.null(X$sublingualSaturation) ||
+      !is.null(X$osmotic))
+    stop("Invalid parallelSystems for ", drug, ": not available with an ",
+         "active metabolite, several oral formulations, saturable absorption ",
+         "or an osmotic agent.")
+  ke0 <- PK[[1]]$ke0
+  lapply(X$parallelSystems, function(sys) {
+    if (!identical(names(sys$PK), events))
+      stop("Invalid parallelSystems for ", drug, ": each system needs the ",
+           "same PK events as the drug (", paste(events, collapse = ", "), ").")
+    sets <- getDrugPK(
+      drug = drug,
+      weight = covariates$weight, height = covariates$height,
+      age = covariates$age, sex = covariates$sex,
+      model = list(PK = sys$PK, tPeak = X$tPeak, tPeakRoute = tPeakRoute,
+                   ke0 = if (ke0 > 0) ke0)
+    )$PK
+    list(
+      name = sys$name,
+      doseFraction = parallelDoseFraction(
+        if (is.null(sys$doseFraction)) 1 else sys$doseFraction, drug),
+      routes = parallelRoutes(sys$routes, drug),
+      PK = sets
+    )
+  })
+}
+
+#' Oral coefficients for a given absorption
+#'
+#' The same arithmetic as the "PO Coefficients" block of \code{getDrugPK()},
+#' from a finished PK set, so that a further oral formulation can be given
+#' its own absorption on the drug's own disposition and effect site.
+#'
+#' @param pkSet a PK set from \code{getDrugPK()}
+#' @param ka absorption rate constant, per minute
+#' @param bioavailability fraction of the dose absorbed
+#'
+#' @returns a list of the nine \code{p_coef_PO_*} and \code{e_coef_PO_*}
+#'   coefficients
+#' @keywords internal
+oralCoefficients <- function(pkSet, ka, bioavailability)
+{
+  lambda <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3)
+  scale  <- ka / (ka - lambda) * bioavailability
+  p <- c(pkSet$p_coef_bolus_l1, pkSet$p_coef_bolus_l2, pkSet$p_coef_bolus_l3) * scale
+  e <- c(pkSet$e_coef_bolus_l1, pkSet$e_coef_bolus_l2, pkSet$e_coef_bolus_l3) * scale
+  eKe0 <- pkSet$e_coef_bolus_ke0 / (ka - pkSet$ke0) * ka * bioavailability
+  list(
+    p_coef_PO_l1  = p[1],
+    p_coef_PO_l2  = p[2],
+    p_coef_PO_l3  = p[3],
+    p_coef_PO_ka  = -sum(p),
+    e_coef_PO_l1  = e[1],
+    e_coef_PO_l2  = e[2],
+    e_coef_PO_l3  = e[3],
+    e_coef_PO_ke0 = eKe0,
+    e_coef_PO_ka  = -sum(e) - eKe0
+  )
+}
+
+#' A PK set with the oral absorption of another formulation
+#'
+#' @param pkSet a PK set from \code{getDrugPK()}, for the default formulation
+#' @param absorption the formulation's \code{ka_PO}, \code{bioavailability_PO}
+#'   and \code{tlag_PO}
+#' @param drug,formulation names, for the error messages
+#'
+#' @returns \code{pkSet} with its oral terms replaced
+#' @keywords internal
+oralFormulationSet <- function(pkSet, absorption, drug, formulation)
+{
+  if (!formulation %in% ORAL_FORMULATIONS)
+    stop("Invalid oralFormulations for ", drug, ": '", formulation, "' is not ",
+         "one of ", paste(ORAL_FORMULATIONS, collapse = ", "))
+  ka <- absorption$ka_PO
+  bioavailability <- absorption$bioavailability_PO
+  if (is.null(bioavailability)) bioavailability <- 1
+  tlag <- absorption$tlag_PO
+  if (is.null(tlag)) tlag <- 0
+  if (!is_valid_number(ka, 0, Inf) || ka <= 0 ||
+      !is_valid_number(bioavailability, 0, 1) || bioavailability <= 0)
+    stop("Invalid oralFormulations for ", drug, ": the ", formulation,
+         " needs ka_PO > 0 and bioavailability_PO in (0, 1]")
+  if (pkSet$ka_PO <= 0)
+    stop("Invalid oralFormulations for ", drug, ": the drug has no default ",
+         "oral absorption for the ", formulation, " to be an alternative to")
+  # simCpCe() adds the formulations' series point by point, which needs every
+  # run on the same time line, and the engines put a point where each oral
+  # dose starts to be absorbed.  A different lag would put those points in
+  # different places.
+  if (!isTRUE(all.equal(tlag, pkSet$tlag_PO)))
+    stop("Invalid oralFormulations for ", drug, ": the ", formulation,
+         " must share the default oral lag (", pkSet$tlag_PO, " min)")
+  pkSet$ka_PO <- ka
+  pkSet$bioavailability_PO <- bioavailability
+  utils::modifyList(pkSet, oralCoefficients(pkSet, ka, bioavailability))
 }
 
 #' Time of the peak effect site concentration for a given plasma curve

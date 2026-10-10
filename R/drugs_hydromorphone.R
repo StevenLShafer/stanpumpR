@@ -47,6 +47,17 @@ hydromorphone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # at the upper end of a very wide observed range.
   ka_PO <- 0.01                  # 1/min; gives a plasma peak at 46 min
   bioavailability_PO <- 0.6
+  #
+  # Oral liquid ("mg PO liquid", "mg/kg PO liquid").  The DILAUDID label
+  # states that "bioequivalence between the DILAUDID 8 mg Tablet and an
+  # equivalent dose of DILAUDID Oral Solution has been demonstrated", i.e.
+  # Cmax and AUC within the 80-125% limits.  No published human study gives
+  # the solution's own Cmax or tmax, so there is nothing to fit a separate
+  # absorption to, and the liquid is deliberately NOT listed in
+  # oralFormulations: its doses take the oral parameters above, exactly as
+  # "mg PO" does.  The liquid units exist so that a dose can be entered as
+  # it is prescribed, including per kg for children.  (Claude Code,
+  # 2026-10-10, at the request of Steven L. Shafer.)
 
   # ---------------------------------------------------------------------
   # Intramuscular and intranasal, corrected 2026-10-06

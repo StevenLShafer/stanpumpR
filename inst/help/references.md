@@ -68,13 +68,15 @@ Holford S, Allegaert K, Anderson BJ, et al. Parent-metabolite pharmacokinetic mo
 
 Stamer UM, Musshoff F, Kobilay M, Madea B, Hoeft A, Stuber F. Concentrations of tramadol and O-desmethyltramadol enantiomers in different CYP2D6 genotypes. *Clin Pharmacol Ther* 2007;82:41-47.
 
-Melhem MR, Rubino CM, Farr SJ, et al. Population pharmacokinetics of an extended-release hydrocodone formulation. *Clin Pharmacokinet* 2013;52:907-917.
+Melhem MR, Rubino CM, Farr SJ, Robinson CY. Population pharmacokinetic analysis for hydrocodone following the administration of hydrocodone bitartrate extended-release capsules. *Clin Pharmacokinet* 2013;52:907-917.
 
-Kapil RP, Friedman K, Cipriano A, et al. Effects of paroxetine on the pharmacokinetics of hydrocodone and its metabolites. *Clin Ther* 2015;37:2286-2296.
+Kapil RP, Friedman K, Cipriano A, et al. Effects of paroxetine, a CYP2D6 inhibitor, on the pharmacokinetic properties of hydrocodone after coadministration with a single-entity, once-daily, extended-release hydrocodone tablet. *Clin Ther* 2015;37:2286-2296.
 
 Otton SV, Schadel M, Cheung SW, Kaplan HL, Busto UE, Sellers EM. CYP2D6 phenotype determines the metabolic conversion of hydrocodone to hydromorphone. *Clin Pharmacol Ther* 1993;54:463-472.
 
-Adams MP, Ahdieh H. Pharmacokinetics and dose-proportionality of oxymorphone extended release and its metabolites. *Drugs R D* 2005;6:91-99.
+Adams MP, Ahdieh H. Single- and multiple-dose pharmacokinetic and dose-proportionality study of oxymorphone immediate-release tablets. *Drugs R D* 2005;6:91-99.
+
+Adams MP, Ahdieh H. Pharmacokinetics and dose-proportionality of oxymorphone extended release and its metabolites: results of a randomized crossover study. *Pharmacotherapy* 2004;24:468-476.
 
 Persson K, Hammarlund-Udenaes M, Mortimer O, Rane A. The postoperative pharmacokinetics of codeine. *Eur J Clin Pharmacol* 1992;42:663-666.
 

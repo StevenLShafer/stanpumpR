@@ -1,8 +1,9 @@
 # Renal function for the drug models that need it.
 #
 # Several models carry a renal covariate (Cockcroft-Gault creatinine
-# clearance, or a de-indexed CKD-EPI eGFR): mannitol, vancomycin, gentamicin,
-# cefazolin, sugammadex, gabapentin and pregabalin.  Each takes an optional
+# clearance, or a CKD-EPI eGFR): mannitol, vancomycin, gentamicin, cefazolin,
+# sugammadex, gabapentin, pregabalin, oxycodone and (intravenous only)
+# meloxicam.  Each takes an optional
 # `creatinine` argument, the patient's serum creatinine from the Patient
 # Profile.
 #

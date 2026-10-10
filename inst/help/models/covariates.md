@@ -2,11 +2,11 @@ The four covariates in the Patient Profile reach the models in fixed units: age 
 
 ## Three kinds of model
 
-**No covariates.** Alfentanil, sufentanil, midazolam, oliceridine, oxycodone and the adult dexmedetomidine model are fixed sets of parameters for a typical adult. A dose in milligrams produces the same curve in every patient. Dosing per kilogram makes the amount scale with weight, but that is an assumption of the user, not of the model.
+**No covariates.** Alfentanil, sufentanil, midazolam, oliceridine and the adult dexmedetomidine model are fixed sets of parameters for a typical adult. A dose in milligrams produces the same curve in every patient. Dosing per kilogram makes the amount scale with weight, but that is an assumption of the user, not of the model.
 
-**Linear weight scaling.** Etomidate, ketamine, lidocaine, methadone, morphine, pethidine, hydromorphone, rocuronium and naloxone take V1 (or every parameter) proportional to weight, with the rate constants fixed. Volumes and clearances then both scale linearly with weight. This is how the original papers reported them.
+**Linear weight scaling.** Etomidate, ketamine, lidocaine, morphine, pethidine, hydromorphone, rocuronium and naloxone take V1 (or every parameter) proportional to weight, with the rate constants fixed. Volumes and clearances then both scale linearly with weight. This is how the original papers reported them.
 
-**Allometric and covariate models.** Fentanyl scales volumes linearly and clearances to the 0.75 power of weight. Propofol (Eleveld), remifentanil (Eleveld, and Kim for obesity) and remimazolam (Eleveld) use allometric scaling together with age, sex and maturation terms.
+**Allometric and covariate models.** Methadone (Henthorn and Kharasch) scales only its deep peripheral volume, to weight to the power 1.23. Fentanyl scales volumes linearly and clearances to the 0.75 power of weight. Propofol (Eleveld), remifentanil (Eleveld, and Kim for obesity) and remimazolam (Eleveld) use allometric scaling together with age, sex and maturation terms.
 
 These three kinds describe the models as published, which is what stanpumpR runs with *Adjust weight to fat-free mass* unticked. By default the box is ticked and most of them, the fixed-parameter models included, are rescaled to the patient's fat-free mass, as described at the end of this page and in [Scaling to fat-free mass](help:models/fat-free-mass).
 
@@ -55,13 +55,15 @@ The Kim remifentanil model for obesity uses the Janmahasatian fat-free mass inst
 
 Eleveld's propofol model gives women a higher clearance than men (2.10 against 1.79 L/min at reference size); Eleveld's remifentanil model increases clearance and V2 in women between puberty and the menopause; remimazolam's clearance and V3 are larger in women. Elsewhere sex enters only through lean or fat-free mass.
 
-## CYP2D6, and the disabled covariates
+## CYP2D6 and CYP2C19, and the disabled covariates
 
-**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites). Pregnancy remains in the interface but unused.
+**CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites).
+
+**CYP2C19 phenotype** is read by escitalopram and citalopram, whose published clearances differ by phenotype. The field offers the five terms the genotyping laboratories report (poor, intermediate, normal, rapid, ultrarapid). Neither source estimated all five, so each drug's page says which of its groups each phenotype is given. See [Antidepressant models and their limits](help:models/antidepressants). Pregnancy remains in the interface but unused.
 
 ## Renal function
 
-**Serum creatinine** is a live, optional covariate: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin estimate renal function from it. Left blank, it is an **assumed normal creatinine** for the patient's age and sex, which represents the decline of renal function with age but not renal impairment. In adults the assumed value is 1.0 mg/dL in men and 0.8 in women. In children it is the median of healthy children of the same age and sex: Boer's reference values under one year, about 0.25 mg/dL from the second month (higher in the first weeks, while the mother's creatinine clears); from two years, the values of the European Kidney Function Consortium (Pottel), 0.35 at five, 0.5 at ten, and 0.8 in boys and 0.7 in girls at seventeen; between one and two, a smooth join of the two. At 18 it steps up to the adult value.
+**Serum creatinine** is a live, optional covariate: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin and oxycodone (whose metabolic clearance falls in renal failure) estimate renal function from it. Left blank, it is an **assumed normal creatinine** for the patient's age and sex, which represents the decline of renal function with age but not renal impairment. In adults the assumed value is 1.0 mg/dL in men and 0.8 in women. In children it is the median of healthy children of the same age and sex: Boer's reference values under one year, about 0.25 mg/dL from the second month (higher in the first weeks, while the mother's creatinine clears); from two years, the values of the European Kidney Function Consortium (Pottel), 0.35 at five, 0.5 at ten, and 0.8 in boys and 0.7 in girls at seventeen; between one and two, a smooth join of the two. At 18 it steps up to the adult value.
 
 Cockcroft-Gault and CKD-EPI were developed in adults, and given a child's own creatinine they overestimate renal function: a healthy five-year-old boy of 20 kg at his normal 0.35 mg/dL has a Cockcroft-Gault clearance of 106 mL/min, about twice the normal GFR for his size. So the models built on those equations read a child's creatinine against the normal for age: divided by it, and multiplied by the adult value, after the age-adjusted creatinine of Björk and colleagues. A child at the normal creatinine for age gets the renal function the equation gives at an adult's normal creatinine and the child's own age and size. At twice the normal for age, the Cockcroft-Gault estimate halves and the CKD-EPI estimate (gentamicin) falls to about 0.43 of it. Pregabalin is the exception: its source estimated children's renal function from their own creatinine, with the Schwartz equation under 13 and Cockcroft-Gault from 13, so pregabalin uses a child's creatinine as it is.
 
