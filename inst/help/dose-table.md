@@ -26,7 +26,7 @@ A regimen written in days goes in most easily with the Time units set to days. D
 |---|---|---|
 | mass, or mass per kg | **bolus** at that time | `mg`, `mcg/kg` |
 | mass per minute or hour, with or without per kg | **infusion** from that time | `mcg/kg/min`, `mg/hr` |
-| mass with `PO`, `IM` or `IN` | **extravascular dose** at that time | `mg PO`, `mg IN` |
+| mass with `PO`, `SL`, `IM` or `IN` | **extravascular dose** at that time | `mg PO`, `mg IN` |
 | mass per day with `PO` | **oral rate**: the daily dose spread evenly over each day, from that time | `mg/day PO` (amiodarone) |
 | any of the above doses followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
 | `L/min` | fresh gas flow or ventilation setting | inhaled agents |
@@ -46,7 +46,7 @@ Per-kilogram units use the weight in the Patient Profile at the time of simulati
 
 ## Scheduled doses
 
-For drugs given on a schedule (the analgesic opioids, the antibiotics, the steroids and mannitol), each bolus, oral, intramuscular and intranasal unit also comes with a frequency:
+For drugs given on a schedule (the analgesic opioids, the antibiotics, the steroids and mannitol), each bolus, oral, sublingual, intramuscular and intranasal unit also comes with a frequency:
 
 | Suffix | Meaning | Interval |
 |---|---|---|

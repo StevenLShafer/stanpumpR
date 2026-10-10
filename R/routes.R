@@ -99,13 +99,18 @@ oralSaturationFraction <- function(doseMg, saturation)
   1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg)
 }
 
-#' Check a drug model's saturable oral absorption block
+#' Check a drug model's saturable absorption block
 #'
-#' @param saturation the `oralSaturation` block a drug model returned, or NULL
+#' The same check serves the oral block (`oralSaturation`, gabapentin) and the
+#' sublingual one (`sublingualSaturation`, buprenorphine), which have the same
+#' form and are applied by the same `oralSaturationFraction()`.
+#'
+#' @param saturation the block a drug model returned, or NULL
 #' @param drug the drug's name, for the error message
+#' @param block the block's name, for the error message
 #' @returns `saturation`, unchanged, if it is valid; otherwise an error
 #' @keywords internal
-validateOralSaturation <- function(saturation, drug)
+validateOralSaturation <- function(saturation, drug, block = "oralSaturation")
 {
   if (is.null(saturation)) return(NULL)
   ok <- is.list(saturation) &&
@@ -113,7 +118,7 @@ validateOralSaturation <- function(saturation, drug)
     is_valid_number(saturation$ID50) && saturation$ID50 > 0
   # Imax above 1 would make the fraction absorbed negative at large doses.
   if (!ok)
-    stop("Invalid oralSaturation for ", drug, ": needs Imax between 0 and 1 ",
+    stop("Invalid ", block, " for ", drug, ": needs Imax between 0 and 1 ",
          "and a positive ID50 in mg.")
   saturation
 }

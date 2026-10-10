@@ -135,6 +135,14 @@ METHYLPHENIDATE_ABSORPTION <- list(
 #' @export
 methylphenidate <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
+  # Sex selects the absorption below, so an unrecognised value must not fall
+  # through to the male parameters.  getDrugPK() checks this too; this guards
+  # direct calls to the exported model.
+  if (length(sex) != 1 || !sex %in% SEX_VALUES) {
+    stop("Invalid sex: ", paste(sex, collapse = ", "),
+         ". Must be one of: ", paste(SEX_VALUES, collapse = ", "))
+  }
+
   # Lyauk's allometry on total weight is what the switch-off position
   # reproduces (header).
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
