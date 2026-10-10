@@ -24,26 +24,18 @@ advanceState <- function(l, bolus, infusion, start, L)
 
 # Advance a single state variable over time, with the extravascular inputs:
 # the same recurrence with PO, IM and IN added after the infusion, in that
-# order, as the Reduce() it replaced added them.  Sublingual (SL), added
-# later, is optional and comes last, so that every caller written before it
-# keeps its arithmetic bit for bit.
-advanceStatePO <- function(l, bolus, infusion, PO, IM, IN, L, SL = NULL)
+# order, as the Reduce() it replaced added them, and then RA (regional
+# anesthesia) and SL (sublingual), which share the last argument as their sum.
+# It comes last, and defaults to zeros, so that callers without it (the
+# metabolite engine) are unchanged: adding 0 changes no double.
+advanceStatePO <- function(l, bolus, infusion, PO, IM, IN, L, RA = numeric(L))
 {
   out <- numeric(L)
   state <- 0
-  if (is.null(SL))
+  for (i in seq_len(L))
   {
-    for (i in seq_len(L))
-    {
-      state  <- state * l[i] + bolus[i] + infusion[i] + PO[i] + IM[i] + IN[i]
-      out[i] <- state
-    }
-  } else {
-    for (i in seq_len(L))
-    {
-      state  <- state * l[i] + bolus[i] + infusion[i] + PO[i] + IM[i] + IN[i] + SL[i]
-      out[i] <- state
-    }
+    state  <- state * l[i] + bolus[i] + infusion[i] + PO[i] + IM[i] + IN[i] + RA[i]
+    out[i] <- state
   }
   out
 }

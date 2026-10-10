@@ -1,5 +1,5 @@
 # The route of a dose is not stored separately: it is a word in its Units
-# string ("mg PO", "mg/kg IM", "mg IN").  Units with no route word (bolus and
+# string ("mg PO", "mg/kg IM", "mg IN", "mg RA").  Units with no route word (bolus and
 # infusion units, the TCI targets, the gases' L/min and %) are intravenous, or
 # for the gases, treated with them.
 #
@@ -11,7 +11,7 @@
 #'
 #' @param units Character vector of dose units, as in the dose table.
 #' @returns Character vector the same length as `units`: one of `DOSE_ROUTES`
-#'   (`"IV"`, `"PO"`, `"IM"`, `"IN"`).
+#'   (`"IV"`, `"PO"`, `"IM"`, `"IN"`, `"RA"`).
 #' @noRd
 doseRoute <- function(units) {
   units <- as.character(units)
@@ -62,7 +62,7 @@ isRateUnit <- function(units) {
 #' Order a drug's units by route, keeping the order within each route
 #'
 #' @param units Character vector of one drug's units.
-#' @returns `units`, reordered IV, PO, IM, IN.
+#' @returns `units`, reordered IV, PO, IM, IN, RA.
 #' @noRd
 groupUnitsByRoute <- function(units) {
   units[order(match(doseRoute(units), DOSE_ROUTES))]

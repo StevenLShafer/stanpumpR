@@ -37,7 +37,9 @@ plasmaOnly <- c(
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
   "clonazepam", "zolpidem", "temazepam",
-  "methylphenidate", "lisdexamfetamine"
+  "methylphenidate", "lisdexamfetamine",
+  # systemic plasma concentration, not the nerve block (2026-10-10)
+  "bupivacaine", "ropivacaine", "mepivacaine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

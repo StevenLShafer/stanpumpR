@@ -1,4 +1,4 @@
-A dose with `PO`, `SL`, `IM` or `IN` in its unit is not injected into the central compartment. It is placed in an absorption depot from which it enters the central compartment by first-order kinetics, after a lag, with only a fraction of the dose arriving at all.
+A dose with `PO`, `SL`, `IM`, `IN` or `RA` in its unit is not injected into the central compartment. It is placed in an absorption depot from which it enters the central compartment by first-order kinetics, after a lag, with only a fraction of the dose arriving at all.
 
 The one exception is a **rate** with a route word, `mg/day PO`, which only [amiodarone](help:drugs/amiodarone) offers. It is a constant-rate (zero-order) oral input, the way Pollak and colleagues modelled a daily oral dose: there is no depot, absorption rate constant, lag or bioavailability, and the daily dose enters the central compartment evenly over the day, on the drug's apparent oral parameters, until the drug's next rate row, exactly as an infusion would.
 
@@ -18,7 +18,7 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 
 ## Which drugs have routes
 
-The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, sublingual, intramuscular and intranasal unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid` and so on; see [The dose table](help:dose-table)), which are not listed separately.
+The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, sublingual, intramuscular, intranasal and regional anesthesia unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid` and so on; see [The dose table](help:dose-table)), which are not listed separately.
 
 <!-- generated: route-table -->
 
@@ -36,6 +36,14 @@ Each drug's page shows the current absorption rate, bioavailability and lag, and
 - **Chosen to match a time of peak.** The oxycodone ka was chosen to reproduce the time of peak concentration seen in published studies (about 30 to 45 minutes) rather than taken from a fitted absorption model. Hydromorphone's oral parameters are provisional, and its intramuscular route has no human pharmacokinetic study behind it: its bioavailability of 1 and its 30-minute peak are a judgement.
 
 Hydromorphone's intramuscular and intranasal absorption was revised so that each route peaks at its intended time (about 20 minutes intranasal, from Coda's data, and 30 minutes intramuscular): the delay is now carried by the absorption rate constant rather than by a lag, which also keeps the time-until-threshold readout correct, since during a lag the engine has no effect-site state to count down. Gabapentin (0.31 h) and pregabalin (0.32 h) keep the lags their sources estimated, so time until threshold reads blank for those minutes after each of their doses. Clonazepam keeps the 0.369 h lag dos Santos and colleagues estimated for its tablets. Zolpidem's source absorbed it through a chain of transit compartments, which delivers the dose almost as a pure delay; it is represented by a lag of 0.25 h, the mean transit time, followed by the published absorption rate. A drug's time to peak effect after an oral dose is counted from the dose, lag included.
+
+## Regional anesthesia (RA)
+
+`RA` is a local anesthetic injected into tissue: a peripheral nerve block or a wound infiltration. The dose enters a tissue depot and is absorbed into the systemic circulation by first-order kinetics, exactly as an oral dose is absorbed from the gut, and the curve is the total (bound plus unbound) concentration in plasma. [Lidocaine](help:drugs/lidocaine), [bupivacaine](help:drugs/bupivacaine), [ropivacaine](help:drugs/ropivacaine) and [mepivacaine](help:drugs/mepivacaine) offer it, each also as an intravenous `mg`, which shows what an unintended intravascular injection does.
+
+A drug may also declare a **slow second depot** (`ka_RA_slow` and `fraction_RA_slow` in its model): each RA dose is then split between a fast and a slow depot absorbing in parallel, each first-order, which is how absorption from tissue usually looks. [Mepivacaine](help:drugs/mepivacaine) uses it; the other local anesthetics have one depot, because no study of a peripheral block gives both rates for them against an intravenous reference.
+
+Each drug's absorption is site- and solution-specific: it was chosen from one study of one block, with or without epinephrine, as each drug's page records, and the bioavailability is assumed to be 1. Absorption from tissue is really faster at some sites (intercostal, epidural) than others (subcutaneous, femoral and sciatic), slowed by epinephrine at some sites and not others, and often biphasic, a fast and a slow process in parallel, which a drug with one depot does not represent. Use the curves for the shape and the scale of systemic exposure, not to predict toxicity: that depends on the unbound concentration and the patient as well. RA is a single injection; a perineural catheter infusion is not offered.
 
 ## Saturable absorption
 

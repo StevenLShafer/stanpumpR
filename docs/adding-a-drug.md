@@ -110,11 +110,14 @@ dose: the engine applies that itself, dose by dose (see *saturable oral absorpti
 | `reference` | literature citation (string). |
 | `prodrug` | optional; `FALSE` marks an active parent that has a metabolite but no effect site, so the help does not call it a prodrug (see "An active parent with no effect-site model" below). |
 
-**Optional — extravascular routes.** To support oral/sublingual/IM/intranasal dosing, add
-absorption fields to a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_SL` /
-`_IM` / `_IN` equivalents). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
+**Optional — extravascular routes.** To support oral/sublingual/IM/intranasal dosing, or
+regional anesthesia (RA, a local anesthetic injected into tissue), add absorption fields to
+a PK set: `ka_PO`, `bioavailability_PO`, `tlag_PO` (and the `_SL` / `_IM` / `_IN` / `_RA`
+equivalents).
+An RA drug may add a slow second tissue depot absorbing in parallel: `ka_RA_slow` (1/min) and
+`fraction_RA_slow`, the share of the absorbed dose that goes through it (`R/drugs_mepivacaine.R`). `getDrugPK()` builds the matching absorption coefficients and `simCpCe()` routes
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
-The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`; `doseRoute()` in `R/routes.R`),
+The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
 
 **Optional — oral input as a constant daily rate.** A model fitted with each day's oral dose
@@ -272,7 +275,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Category` — the group the drug is listed under in the menu the app opens with: one of
   `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
   `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
-  `Corticosteroids`, `Stimulants`, `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `Corticosteroids`, `Stimulants`, `Local anesthetics`, `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.
