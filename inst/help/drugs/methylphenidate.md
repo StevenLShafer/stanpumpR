@@ -45,7 +45,7 @@ Lyauk also estimated large effects of **CES1 genotype** on clearance (the G143E 
 
 ### Population and variability
 
-Healthy adults after one 10 mg dose. **Children are an extrapolation.** The pediatric population model (Shader and colleagues, *J Clin Pharmacol* 1999;39:775-785; 273 children, clearance 90.7 mL/min/kg, half-life 4.5 hours) is published without an absorption rate, so it cannot produce a curve without an invented one and is not offered.
+Healthy adults after one 10 mg dose. **Children are an extrapolation**: for children, use the separate entry [methylphenidate in children](help:drugs/methylphenidatePediatric), Shader and colleagues' model of 273 children. That entry plots total methylphenidate rather than d-methylphenidate, so its numbers are not on the same scale as this page's.
 
 The variability between people is large and is not shown: Lyauk estimated 62 per cent on the transit time, 22 per cent on clearance and 90 per cent on the central volume, so an individual's peak can sit far from this curve.
 

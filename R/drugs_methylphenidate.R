@@ -128,10 +128,9 @@
 # ==========================
 # Healthy adults, 10 mg single dose.  Children are an extrapolation: the
 # pediatric population model of Shader et al. (J Clin Pharmacol 1999;39:
-# 775-785) is a one-compartment model of total (racemic) MPH whose published
-# summary gives CL/F 90.7 mL/min/kg and a 4.5 h half-life but no absorption
-# rate, so it cannot produce a curve without an invented ka and is not
-# offered.  Interindividual variability (Lyauk: MTT 62.1%, CL/F 21.6%,
+# 775-785), total (racemic) MPH in 273 children, is the separate entry
+# methylphenidatePediatric (R/drugs_methylphenidatePediatric.R).  Its
+# analyte differs, so the two are not merged.  Interindividual variability (Lyauk: MTT 62.1%, CL/F 21.6%,
 # Vc/F 90.1% CV, full covariance whose off-diagonals are not printed) and the
 # 18.4% proportional residual error are not simulated: stanpumpR plots the
 # typical patient only.  The variability is large: a 90% CV on Vc/F moves the
