@@ -74,6 +74,7 @@ hydroxybupropion,ng,,,,,#9575CD,850,1500,1200,0,0,IV,
 fluoxetine,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidepressants
 norfluoxetine,ng,,,,,#4DB6AC,0,0,0,0,0,IV,
 methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO XR,mg PO XR qd",#4527A0,0,0,0,0,0,IV,Stimulants
+methylphenidatePediatric,ng,,,mg PO,"mg PO,mg/kg PO,mg PO bid,mg PO tid,mg/kg PO bid,mg/kg PO tid",#7B1FA2,0,0,0,0,0,IV,Stimulants
 lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,0,0,0,0,0,IV,Stimulants
 mixedAmphetamineSalts,ng,,,mg PO XR,"mg PO,mg PO bid,mg PO XR,mg PO XR qd",#827717,0,0,0,0,0,IV,Stimulants
 ondansetron,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#00838F,5,40,20,0,0,IV,Antiemetics
