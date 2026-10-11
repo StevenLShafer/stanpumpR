@@ -36,26 +36,30 @@
 # 0.0875 /h.  stanpumpR carries every extravascular route as a single
 # first-order input (ka, F, lag), so that structure was simulated exactly on
 # the disposition above for a 16 mg tablet (ODE, RK4, 1.8 s step), and a
-# single ka was fitted to it by least squares over 15 min to 24 h, with no lag:
+# single ka and lag were fitted to it by least squares over 15 min to 24 h:
 #
-#     ka_SL = 0.01295 /min (0.777 /h)
+#     ka_SL = 0.01719 /min (1.031 /h), tlag_SL = 17.59 min (0.293 h)
 #
-#                       published two-pathway   single first-order
-#     time to peak            52 min                 50 min
-#     Cmax, 16 mg             6.09 ng/mL             4.93 ng/mL
-#     C at 8 h                0.74                   0.73
-#     C at 24 h               0.338                  0.284
-#     AUC 0-24 h              25.1 ng.h/mL           25.7 ng.h/mL (both F 0.14)
+#                       published       one ka + lag    one ka, no lag
+#                       two-pathway     (used)          (until 2026-10-10)
+#     time to peak        52 min          56 min          50 min
+#     Cmax, 16 mg         6.09 ng/mL      5.86 ng/mL      4.93 ng/mL
+#     C at 8 h            0.74            0.69            0.73
+#     C at 24 h           0.338           0.284           0.284
+#     AUC 0-24 h          25.1            26.4            25.7 ng.h/mL
 #
-# (The single-input column is at F 0.14; with the dose-dependent fraction
-# below, 16 mg absorbs 0.1384, so its concentrations are 1.1% lower.)
+# (All at F 0.14; with the dose-dependent fraction below, 16 mg absorbs
+# 0.1384, so its concentrations are 1.1% lower: Cmax 5.79 ng/mL.)
 #
-# The single exponential cannot reproduce the short zero-order burst, so the
-# peak is about 19% low, nor the slow mucosal tail, so a daily trough is about
-# 16% low.  A lag was not used: the library keeps its drugs lag-free where it
-# can, because during a lag the engine has no state for the dose and cannot
-# report the time until threshold (R/recoveryStates.R).  Fitting a lag (0.29 h)
-# alongside ka (1.03 /h) brings Cmax to 5.86 ng/mL.
+# The lag stands in for the tablet dissolving under the tongue, and with it the
+# single input reaches the published peak within about 5%; without it the peak
+# was about 19% low.  Neither form reproduces the slow mucosal tail, so a daily
+# trough is about 16% low either way.  The cost of the lag: the engine has no
+# state for a dose until its lag has passed, so for 17.6 min after every
+# sublingual dose the time until threshold reads "not yet absorbed" rather
+# than a time (R/recoveryStates.R).  Chosen by Steven L. Shafer, 2026-10-10,
+# because the peak matters more for this drug than a short gap in a readout
+# measured in hours.
 #
 # DOSE-DEPENDENT SUBLINGUAL BIOAVAILABILITY
 # =========================================
@@ -169,7 +173,8 @@ BUPRENORPHINE_KE0       <- 0.00447        # /min; Yassen 2006, t1/2 155 min
 # 2-32 mg; see the header.
 BUPRENORPHINE_F_SL      <- 0.422692       # small-dose limit
 BUPRENORPHINE_SL_SATURATION <- list(Imax = 0.816527, ID50 = 3.42670)  # ID50 mg
-BUPRENORPHINE_KA_SL     <- 0.0129498493   # /min; fitted, see the header
+BUPRENORPHINE_KA_SL     <- 0.0171905401   # /min; fitted with the lag, see the header
+BUPRENORPHINE_TLAG_SL   <- 17.587178      # min; fitted with ka, see the header
 BUPRENORPHINE_F_IN      <- 0.482          # Eriksen 1989
 BUPRENORPHINE_KA_IN     <- 0.0227053660   # /min; plasma peak at 30.6 min
 BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; band floor and endCe
@@ -220,7 +225,7 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl3 = cl3,
     ka_SL = BUPRENORPHINE_KA_SL,
     bioavailability_SL = BUPRENORPHINE_F_SL,
-    tlag_SL = 0,
+    tlag_SL = BUPRENORPHINE_TLAG_SL,
     ka_IN = BUPRENORPHINE_KA_IN,
     bioavailability_IN = BUPRENORPHINE_F_IN,
     tlag_IN = 0

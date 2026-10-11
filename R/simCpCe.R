@@ -482,7 +482,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (!is.null(routes)) dose$Dose[!doseRoute(dose$Units) %in% routes] <- 0
       dose
     }
-    if (!is.null(PK$parallelSystems))
+    if (!is.null(PK$michaelisMenten))
+    {
+      # Saturable elimination (phenytoin): the whole dose table at once, by
+      # numerical integration, because superposition does not hold; see
+      # R/advanceMichaelisMenten.R.  No clinical-event PK switching, no
+      # parallel systems or extra oral formulations (getDrugPK() refuses them).
+      results <- advanceMichaelisMenten(dose, PK, maximum, plotRecovery, emerge)
+    } else if (!is.null(PK$parallelSystems))
     {
       parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))
       for (sys in PK$parallelSystems)

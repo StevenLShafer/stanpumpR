@@ -185,6 +185,16 @@ app_ui <- function() {
                   selected = CYP2C19_DEFAULT
                 ),
 
+                # Read by phenytoin, whose maximal elimination rate depends on
+                # CYP2C9 diplotype, read by meloxicam and phenytoin (see
+                # CYP2C9_VALUES in R/constants.R).  *1/*1 is the reference.
+                selectInput(
+                  inputId = "cyp2c9",
+                  label = "CYP 2C9",
+                  CYP2C9_VALUES,
+                  selected = CYP2C9_DEFAULT
+                ),
+
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
                 bslib::tooltip(
