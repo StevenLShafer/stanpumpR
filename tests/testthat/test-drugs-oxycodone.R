@@ -133,3 +133,25 @@ test_that("oxymorphone forms at 1% of oxycodone IV and 3.35% orally", {
   # Balyan 2017: intermediate about 0.63 of normal
   expect_equal(ratio("mg PO", "intermediate") / ratio("mg PO"), 0.65, tolerance = 0.03)
 })
+
+test_that("oral liquid is the tablet's absorption, entered as prescribed", {
+  # The ROXICODONE label and the FDA review of NDA 200535 find oxycodone
+  # oral solution and immediate-release tablets bioequivalent, so the liquid
+  # is not a separate formulation.  Run through the metabolite engine, which
+  # oxycodone takes because it forms oxymorphone.
+  PK <- getDrugPK("oxycodone", 20, 115, 6, "female")
+  expect_null(PK$oralFormulations)
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  run <- function(dose, units)
+    simCpCe(data.frame(Drug = "oxycodone", Time = 0, Dose = dose, Units = units),
+            events, PK, 12 * 60, plotRecovery = FALSE)
+  tablet <- run(2, "mg PO")
+  expect_equal(run(2, "mg PO liquid")$results, tablet$results)
+  # 0.1 mg/kg in a 20 kg child is 2 mg, oxymorphone included.
+  liquidKg <- run(0.1, "mg/kg PO liquid")
+  expect_equal(liquidKg$results, tablet$results)
+  expect_equal(liquidKg$metaboliteSeries, tablet$metaboliteSeries)
+  units <- getDrugDefaults("oxycodone")$Units[[1]]
+  expect_true(all(c("mg PO liquid", "mg/kg PO liquid", "mg PO liquid qid",
+                    "mg/kg PO liquid qid") %in% units))
+})
