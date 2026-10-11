@@ -287,6 +287,18 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   bioavailability_PO <- 0.67
   ka_PO   <- 0.01               # 1/min, absorption half-time 69 min
   tlag_PO <- 0                  # no lag (see header)
+  #
+  # Oral liquid ("mg PO liquid", "mg/kg PO liquid") takes these same oral
+  # parameters, exactly as "mg PO" does, and is deliberately not listed in
+  # oralFormulations.  Two head-to-head comparisons find solution and
+  # immediate-release tablet equivalent.  The ROXICODONE label, 15 mg fasted,
+  # single dose: solution Cmax 21.1, AUC 130.6 ng.h/mL, tmax 1.9 h; tablet
+  # 22.2, 128.2, 1.4 h.  FDA clinical pharmacology review of NDA 200535,
+  # 15 mg of the 20 mg/mL solution against a 15 mg ROXICODONE tablet,
+  # fasted: geometric mean ratios 105.2% (Cmax), 108.5% (AUCt) and 107.6%
+  # (AUCinf), inside the 80-125% bioequivalence limits.  The liquid is not
+  # absorbed faster, unlike morphine's.  (Claude Code, 2026-10-10, at the
+  # request of Steven L. Shafer.)
 
   # --- Effect site, Lalovic 2006: t1/2 ke0 11 min ---
   tPeak <- 12.35                # min after an IV bolus, reference patient

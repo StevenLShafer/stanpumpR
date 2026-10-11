@@ -366,8 +366,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # Ondansetron, aprepitant and fosaprepitant (no equilibration model for
   # antiemesis) joined on 2026-10-10, with no metabolite.
   # Diclofenac, meloxicam and ketorolac (no published ke0) joined the same
-  # day, with no metabolite.  Naproxen joined on 2026-10-11: its effect
-  # follows the plasma with no delay (R/drugs_naproxen.R), no metabolite.
+  # day, with no metabolite, and diclofenacEC on 2026-10-11.  Naproxen
+  # joined on 2026-10-11 too: its effect follows the plasma with no delay
+  # (R/drugs_naproxen.R), no metabolite.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
@@ -384,7 +385,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
     "ondansetron", "aprepitant", "fosaprepitant",
-    "diclofenac", "meloxicam", "ketorolac", "naproxen",
+    "diclofenac", "diclofenacEC", "meloxicam", "ketorolac", "naproxen",
     # aspirin and the salicylate it forms (2026-10-10): no ke0
     "aspirin", "salicylate",
     # Diamorphine joined on 2026-10-10: the opt-in illicit research model
