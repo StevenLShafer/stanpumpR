@@ -327,6 +327,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
     "ondansetron", "aprepitant", "fosaprepitant",
     "diclofenac", "meloxicam", "ketorolac",
+    # aspirin and the salicylate it forms (2026-10-10): no ke0
+    "aspirin", "salicylate",
     # diamorphine (2026-10-10): the opt-in illicit research model plots parent
     # plasma only, with 6-MAM and morphine not modelled, so it has no effect site.
     "diamorphine"

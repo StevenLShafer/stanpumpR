@@ -41,6 +41,9 @@ ibuprofen,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,
 diclofenac,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#5E35B1,0,0,0,0,0,IV,Oral analgesics
 meloxicam,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg/kg qd,mg PO qd,mg PO bid,mg/kg PO qd,mg/kg PO bid",#00838F,0,0,0,0,0,IV,Oral analgesics
 ketorolac,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#558B2F,0,0,0,0,0.37,IV,Oral analgesics
+celecoxib,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#AD7A00,0,0,0,0,242,IV,Oral analgesics
+aspirin,mcg,,,mg PO,"mg PO,mg PO qd",#8D6E63,0,0,0,0,0,IV,Other
+salicylate,mcg,,,,,#3949AB,0,0,0,0,0,IV,
 cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#2E8B57,0.5,2,1,0,2,IV,Antibiotics
 clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#3CB371,1,4,2,0,5.2,IV,Antibiotics
 cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#66CDAA,1,4,2,0,4.7,IV,Antibiotics
