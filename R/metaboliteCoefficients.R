@@ -224,7 +224,9 @@ convolveExponentials <- function(P, M, K)
 #' @returns a list with \code{lambda} (the union of eigenvalues: parent, then
 #'   metabolite, then the absorption constant when there is one),
 #'   \code{bolus}, \code{infusion} and \code{PO} coefficients on each, and the
-#'   scalar \code{K} used to form them
+#'   scalar \code{K} used to form them.  A parent with a second oral depot
+#'   (\code{ka_PO2}) adds its absorption constant after the first and a
+#'   \code{PO2} vector for the doses that take that path.
 #' @export
 metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
                                    unitScale = 1, firstPassFraction = 0)
@@ -256,11 +258,13 @@ metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
   nP <- length(P$lambda)
   nM <- length(M$lambda)
 
-  ka <- if (is.null(parent$ka_PO)) 0 else parent$ka_PO
-  if (ka > 0)
+  # The oral response through one first-order depot, on the vector
+  # (parent eigenvalues, metabolite eigenvalues, ka): the systemic route plus
+  # the first-pass route (a fraction `fp` of the dose converted before
+  # reaching the systemic circulation, entering the metabolite's central
+  # compartment through the same absorption step).
+  oralVector <- function(ka, bio, fp)
   {
-    bio <- if (is.null(parent$bioavailability_PO)) 1 else parent$bioavailability_PO
-
     # The parent's own plasma response to a unit oral dose, which is what
     # getDrugPK writes into p_coef_PO_*: the bolus response retarded by
     # first-order absorption and scaled by bioavailability.
@@ -273,29 +277,54 @@ metaboliteCoefficients <- function(parent, metabolite, kFormation, mwRatio = 1,
     # carries ka last so that the bolus and infusion vectors keep the ordering
     # the intravenous case has always had.
     systemic <- convolveExponentials(drive, M, K)$coef
-    PO <- c(systemic[seq_len(nP)],
-            systemic[nP + 1 + seq_len(nM)],
-            systemic[nP + 1])
+    out <- c(systemic[seq_len(nP)],
+             systemic[nP + 1 + seq_len(nM)],
+             systemic[nP + 1])
 
-    # First pass: converted before reaching the systemic circulation, so it
-    # enters the metabolite's central compartment through the absorption step
-    # rather than through the parent's disposition.
-    if (firstPassFraction > 0)
+    if (fp > 0)
     {
-      scale <- firstPassFraction * mwRatio * unitScale
+      scale <- fp * mwRatio * unitScale
       muFP  <- separateEigenvalues(M$lambda, ka)
       fpMu  <- M$coef * ka / (ka - muFP) * scale
-      PO    <- PO + c(rep(0, nP), fpMu, -sum(fpMu))
+      out   <- out + c(rep(0, nP), fpMu, -sum(fpMu))
     }
+    out
+  }
+
+  ka  <- if (is.null(parent$ka_PO)) 0 else parent$ka_PO
+  ka2 <- if (is.null(parent$ka_PO2)) 0 else parent$ka_PO2
+  if (ka > 0)
+  {
+    bio  <- if (is.null(parent$bioavailability_PO)) 1 else parent$bioavailability_PO
+    bio2 <- if (ka2 > 0) parent$bioavailability_PO2 else 0
+    # With a second oral depot (getDrugPK()), the dose is shared between the
+    # depots in proportion to their bioavailabilities, and so is the
+    # fraction converted on first pass.
+    share <- if (bio + bio2 > 0) bio / (bio + bio2) else 1
+    PO <- oralVector(ka, bio, firstPassFraction * share)
 
     lambda   <- c(lambda, ka)
     bolus    <- c(bolus, 0)
     infusion <- c(infusion, 0)
+
+    if (ka2 > 0)
+    {
+      v2  <- oralVector(ka2, bio2, firstPassFraction * (1 - share))
+      PO2 <- c(v2[seq_len(nP + nM)], 0, v2[nP + nM + 1])
+      PO  <- c(PO, 0)
+      lambda   <- c(lambda, ka2)
+      bolus    <- c(bolus, 0)
+      infusion <- c(infusion, 0)
+    }
   } else {
     PO <- rep(0, length(lambda))
   }
 
-  list(lambda = lambda, bolus = bolus, infusion = infusion, PO = PO, K = K)
+  out <- list(lambda = lambda, bolus = bolus, infusion = infusion, PO = PO, K = K)
+  # Only a parent with a second oral depot carries PO2, so that every other
+  # drug's coefficients keep exactly the shape they always had.
+  if (ka > 0 && ka2 > 0) out$PO2 <- PO2
+  out
 }
 
 

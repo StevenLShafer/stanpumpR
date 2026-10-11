@@ -12,7 +12,7 @@ ketamine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,Plasma target,Effect site targ
 dexmedetomidine,ng,mcg,mcg/kg/hr,mcg/kg/hr,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#791AEE,0.4,0.8,0.6,0,0.4,IV,Hypnotics and sedatives
 midazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.04,0.12,0.1,0,0.04,IV,Hypnotics and sedatives
 etomidate,mcg,mg,mg/kg/min,mg,"mg,mg/kg/min,Plasma target,Effect site target",#FFCC00,0.4,0.8,0.5,0,0.4,IV,Hypnotics and sedatives
-lidocaine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg RA,mg/kg RA,Plasma target,Effect site target",#B7AE7F,0.5,1.5,1,0,0.5,IV,Local anesthetics
+lidocaine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg RA,mg/kg RA,mg/hr RA,Plasma target,Effect site target",#B7AE7F,0.5,1.5,1,0,0.5,IV,Local anesthetics
 bupivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#6A5ACD,0,0,0,0,0,IV,Local anesthetics
 ropivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#2F8F9D,0,0,0,0,0,IV,Local anesthetics
 mepivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA",#A0522D,0,0,0,0,0,IV,Local anesthetics
@@ -42,6 +42,9 @@ diclofenac,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid
 diclofenacEC,mcg,,,mg PO,"mg PO,mg PO bid,mg PO tid",#7B1FA2,0,0,0,0,0,IV,Oral analgesics
 meloxicam,mcg,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg/kg qd,mg PO qd,mg PO bid,mg/kg PO qd,mg/kg PO bid",#00838F,0,0,0,0,0,IV,Oral analgesics
 ketorolac,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#558B2F,0,0,0,0,0.37,IV,Oral analgesics
+celecoxib,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#AD7A00,0,0,0,0,242,IV,Oral analgesics
+aspirin,mcg,,,mg PO,"mg PO,mg PO qd",#8D6E63,0,0,0,0,0,IV,Other
+salicylate,mcg,,,,,#3949AB,0,0,0,0,0,IV,
 cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#2E8B57,0.5,2,1,0,2,IV,Antibiotics
 clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#3CB371,1,4,2,0,5.2,IV,Antibiotics
 cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#66CDAA,1,4,2,0,4.7,IV,Antibiotics
@@ -71,6 +74,8 @@ bupropion,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#283593,0,0,0,0,0,IV,Antidepress
 hydroxybupropion,ng,,,,,#9575CD,850,1500,1200,0,0,IV,
 fluoxetine,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidepressants
 norfluoxetine,ng,,,,,#4DB6AC,0,0,0,0,0,IV,
+venlafaxine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#3949AB,0,0,0,0,0,IV,Antidepressants
+desvenlafaxine,ng,,,,,#90A4AE,0,0,0,0,0,IV,
 methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO XR,mg PO XR qd",#4527A0,0,0,0,0,0,IV,Stimulants
 lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,0,0,0,0,0,IV,Stimulants
 mixedAmphetamineSalts,ng,,,mg PO XR,"mg PO,mg PO bid,mg PO XR,mg PO XR qd",#827717,0,0,0,0,0,IV,Stimulants

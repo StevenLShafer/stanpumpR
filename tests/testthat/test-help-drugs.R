@@ -38,7 +38,7 @@ plasmaOnly <- c(
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
   # The antidepressants: response lags weeks, no ke0 exists
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-  "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
+  "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
   "clonazepam", "zolpidem", "temazepam",
   "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts",
   # no equilibration model for antiemesis (2026-10-10)
@@ -47,6 +47,8 @@ plasmaOnly <- c(
   "bupivacaine", "ropivacaine", "mepivacaine",
   # NSAIDs with no published ke0 (2026-10-10; diclofenacEC 2026-10-11)
   "diclofenac", "diclofenacEC", "meloxicam", "ketorolac",
+  # aspirin and the salicylate it forms (2026-10-10): no ke0
+  "aspirin", "salicylate",
   # the antiseizure drugs: plotted as plasma, no established concentration-
   # linked effect site (2026-10-10)
   "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",

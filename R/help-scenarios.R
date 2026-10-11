@@ -586,6 +586,22 @@ helpScenarios <- function() {
       timeUnits = "days", maximum = 4320,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    helpScenario(
+      "lidocaine-perineural-infusion",
+      "Lidocaine: a continuous perineural infusion",
+      "Regional anesthesia",
+      "A 300 mg block followed by a 48-hour catheter infusion of 100 mg/hr: high clearance needs a high rate for a plateau in the systemic analgesic range, and absorption from the tissue, not elimination, sets how fast it falls after the pump stops.",
+      doses = helpDoses(
+        c("lidocaine", 0, 300, "mg RA"),
+        c("lidocaine", 0, 100, "mg/hr RA"),
+        c("lidocaine", 2880, 0, "mg/hr RA")
+      ),
+      # The scenario is about the systemic plasma concentration; on a plot in
+      # days the effect site lies on top of it.  Three days: the infusion
+      # stops at 2.
+      timeUnits = "days", maximum = 4320,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",

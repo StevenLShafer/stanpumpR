@@ -381,9 +381,11 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "ethosuximide", "topiramate", "lacosamide", "lamotrigine", "zonisamide",
     "tiagabine", "levetiracetam", "eslicarbazepine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
+    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
     "ondansetron", "aprepitant", "fosaprepitant",
     "diclofenac", "diclofenacEC", "meloxicam", "ketorolac",
+    # aspirin and the salicylate it forms (2026-10-10): no ke0
+    "aspirin", "salicylate",
     # Diamorphine joined on 2026-10-10: the opt-in illicit research model
     # (R/drugs_diamorphine.R) plots parent plasma only, with 6-MAM and morphine
     # not modelled, so it has no effect site and forms no metabolite here.
