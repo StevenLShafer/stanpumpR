@@ -9,7 +9,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
   # Not offered: the metabolites with no units of their own, and the carrier gases
   # and ventilation, which the gas rules add themselves
   notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
-                  "salicylate",
+                  "desvenlafaxine", "salicylate",
                   "air", "oxygen", "ventilation")
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))
@@ -40,9 +40,10 @@ test_that("the menu lists the categories in order, each sorted by name", {
                      "remimazolam", "temazepam", "zolpidem"))
   expect_identical(choices[["Antidepressants"]],
                    c("bupropion", "citalopram", "duloxetine", "escitalopram",
-                     "fluoxetine", "mirtazapine", "paroxetine", "sertraline"))
+                     "fluoxetine", "mirtazapine", "paroxetine", "sertraline",
+                     "venlafaxine"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
-  expect_false(any(c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
+  expect_false(any(c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine", "desvenlafaxine",
                      "air", "oxygen", "ventilation") %in% unlist(choices)))
   # A library without the column (an old edited copy) offers nothing, quietly
   expect_identical(startupDrugChoices(dd[, names(dd) != "Category"]), list())
