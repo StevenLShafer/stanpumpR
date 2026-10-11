@@ -114,3 +114,19 @@ test_that("an oral dose peaks at about 3 hours with 70% of the exposure", {
   expect_gt(ratio, 0.65)
   expect_lt(ratio, 0.75)
 })
+
+test_that("oral liquid is the tablet's absorption, entered as prescribed", {
+  PK <- getDrugPK("methadone", 20, 115, 6, "female")
+  expect_null(PK$oralFormulations)
+  events <- data.frame(Time = numeric(0), Event = character(0))
+  run <- function(dose, units)
+    simCpCe(data.frame(Drug = "methadone", Time = 0, Dose = dose, Units = units),
+            events, PK, 24 * 60, plotRecovery = FALSE)
+  tablet <- run(2, "mg PO")
+  expect_equal(run(2, "mg PO liquid")$results, tablet$results)
+  liquidKg <- run(0.1, "mg/kg PO liquid")
+  expect_equal(liquidKg$results, tablet$results)
+  units <- getDrugDefaults("methadone")$Units[[1]]
+  expect_true(all(c("mg PO liquid", "mg/kg PO liquid", "mg PO liquid qid",
+                    "mg/kg PO liquid qid") %in% units))
+})
