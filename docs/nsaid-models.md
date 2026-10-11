@@ -10,6 +10,7 @@ meloxicam and ketorolac parameter tables were checked against the full papers.
 |---|---|---|
 | Ibuprofen | Morse 2022, intravenous and oral, 2 compartments | In the library (`R/drugs_ibuprofen.R`), fasted tablet |
 | Diclofenac | Standing 2011, intravenous and oral, 3 compartments | Added: dispersible tablet, two lagged oral depots, exact |
+| Diclofenac EC | Bartels 2010 (PAGE poster), apparent oral, 2 compartments | Added as a separate drug, `diclofenacEC`: enteric-coated tablet only, F 0.784 relative to immediate release; checked against the poster PDF |
 | Meloxicam | Aoyama 2017, apparent oral, 2 compartments, CYP2C9; ANJESO (FDA review 2020), intravenous, 3 compartments | Added: oral (the zero-order path approximated as first-order) and, as a separate route-limited system, intravenous |
 | Ketorolac | Cloesmeijer 2021, S (3) and R (2) enantiomers, intravenous | Added: S + R as parallel systems; oral provisional |
 | Aspirin | Koh 2025, one-compartment aspirin, two-compartment salicylate | Added (low dose, enteric-coated tablet): salicylate as a metabolite; each absorption path with the pre-systemic step approximated by one lagged depot |
