@@ -91,7 +91,8 @@
 # data of its own; Eap 2002 reviews a mean of about 0.75 with a range of 0.36
 # to 1.  The absorption rate constant puts the oral plasma peak
 # at 3 hours in the reference man, the middle of the 2.5 to 4 hours Eap 2002
-# reports.
+# reports.  Oral solution uses the same absorption: Blume 2015 found
+# levomethadone tablet and solution bioequivalent (Cmax 104%, AUC 99-101%).
 #
 # EFFECT SITE AND MEAC
 # ====================
@@ -265,6 +266,10 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE)
     ka_PO = 0.0100236846,        # 1/min; plasma peak at 3 h, reference man
     bioavailability_PO = 0.70,     # Kharasch 2004
     tlag_PO = 0
+    # Oral solution ("mg PO liquid") is not declared in oralFormulations: it
+    # takes the tablet's absorption.  Blume 2015 (Int J Clin Pharmacol Ther
+    # 53:335-44) found levomethadone tablet and oral solution bioequivalent
+    # (Cmax ratio 104%, AUC 99-101%); the hydrochloride is freely soluble.
   )
 
   events <- c(PK_EVENT_DEFAULT)
