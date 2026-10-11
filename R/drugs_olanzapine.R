@@ -56,6 +56,12 @@ OLANZAPINE_KA     <- 0.861   # 1/h
 OLANZAPINE_TLAG   <- 0.782   # h, fixed in the source
 OLANZAPINE_FEMALE <- 0.862   # multiplier on CL/F
 OLANZAPINE_AGE_VC <- 0.356   # power of age/36 on Vc/F
+# Youngest age the Vc/F age term sees.  Sun's subjects were adults (olanzapine
+# and samidorphan are approved from 18), and the power term goes to zero at
+# age 0, which the Patient Profile allows; so a younger patient's age term is
+# held at 18, as buprenorphine and ondansetron hold theirs.  Weight still
+# scales the child's volume and clearance.
+OLANZAPINE_MIN_AGE <- 18     # years
 
 #' Olanzapine pharmacokinetics (oral)
 #'
@@ -71,9 +77,10 @@ olanzapine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   wt <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   female <- if (sex == SEX_FEMALE) OLANZAPINE_FEMALE else 1
+  ageVc  <- max(age, OLANZAPINE_MIN_AGE)   # see OLANZAPINE_MIN_AGE
 
   default <- list(
-    v1 = OLANZAPINE_VC * (wt / 70) * (age / 36)^OLANZAPINE_AGE_VC,
+    v1 = OLANZAPINE_VC * (wt / 70) * (ageVc / 36)^OLANZAPINE_AGE_VC,
     v2 = OLANZAPINE_VP,
     v3 = 1,
     cl1 = OLANZAPINE_CL / 60 * (wt / 70)^0.75 * female,   # L/min

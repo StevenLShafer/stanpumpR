@@ -27,6 +27,20 @@ test_that("weight, age and sex enter as Sun printed them", {
   expect_equal(x$cl2, 6.15 / 60)
 })
 
+test_that("the age term is held at 18 below adulthood, so age 0 cannot zero Vc", {
+  # The Patient Profile allows age 0, where (age/36)^0.356 would be 0
+  for (age in c(0, 0.5, 5, 17)) {
+    x <- olanzapine(20, 110, age, "male", adjustToFFM = FALSE)$PK$default
+    expect_equal(x$v1, 656 * (20 / 70) * (18 / 36)^0.356, info = age)
+  }
+  w <- simulateDrugsWithCovariates(
+    data.frame(Drug = "olanzapine", Time = 0, Dose = 1, Units = "mg PO"),
+    noEvents, 3.5, 50, 0, "male", 600, FALSE
+  )$olanzapine$wide
+  expect_true(all(is.finite(w$Plasma)))
+  expect_gt(max(w$Plasma), 0)
+})
+
 test_that("with the switch on the model runs at the pharmacokinetic weight", {
   # 120 kg, 170 cm, 50 y man: pkWeight = 70 x 1.3049067
   x <- olanzapine(120, 170, 50, "male")$PK$default
