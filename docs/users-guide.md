@@ -290,8 +290,9 @@ dexmedetomidine, midazolam, etomidate, lidocaine, rocuronium, oxytocin,
 oxycodone, oliceridine, remimazolam, codeine, hydrocodone, oxymorphone,
 tramadol), six sedatives besides midazolam and remimazolam (diazepam and
 lorazepam, intravenous, oral and intramuscular; alprazolam, clonazepam,
-zolpidem and temazepam, oral), four non-opioid analgesics (acetaminophen and
-ibuprofen, intravenous and oral; gabapentin and pregabalin, oral), the reversal agents
+zolpidem and temazepam, oral), nine non-opioid analgesics (acetaminophen,
+ibuprofen, diclofenac, ketorolac and meloxicam, intravenous and oral; naproxen,
+celecoxib, gabapentin and pregabalin, oral), the reversal agents
 (naloxone, sugammadex, neostigmine,
 glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,
 ceftriaxone, vancomycin, metronidazole, gentamicin), five corticosteroids
