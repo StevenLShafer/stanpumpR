@@ -117,8 +117,10 @@
 # but no bioavailability or dose-scaling term, and no reading of the units
 # reconciles the two at typical concentrations (50-100 ng/mL on 20 mg/day in
 # the elderly): ug/h accumulates without limit; ug/L/h x V2 gives 1.6 ng/mL;
-# ug/min 6.5 ng/mL; a near-linear Vm/Km of 2.2 L/h about 380 ng/mL.  Kim's
-# 46 ng/mL at 20 mg/day would need Vmax near 3,300 ug/h.  Table 5 also puts
+# ug/min 6.5 ng/mL; a near-linear Vm/Km of 2.2 L/h about 380 ng/mL.  With all
+# of the dose absorbed (833 ug/h at 20 mg/day), Kim's 46 ng/mL would need
+# Vmax = 833 x (205 + 46) / 46, about 4,550 ug/h, ten times the printed
+# value (70 ng/mL would need about 3,300 ug/h).  Table 5 also puts
 # the weight exponent (1.83) on V2 while the printed code applies it to Vmax.
 # Shigetome 2025 (179 Japanese patients with major depression) has a
 # population PK model and a MADRS PK/PD module that needs the measured
