@@ -38,7 +38,7 @@ plasmaOnly <- c(
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
   # The antidepressants: response lags weeks, no ke0 exists
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-  "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
+  "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
   "clonazepam", "zolpidem", "temazepam",
   "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts",
   # no equilibration model for antiemesis (2026-10-10)

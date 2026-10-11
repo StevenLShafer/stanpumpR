@@ -297,9 +297,10 @@ celecoxib, gabapentin and pregabalin, oral), the reversal agents
 glycopyrrolate), seven antibiotics (cefazolin, clindamycin, cefalexin,
 ceftriaxone, vancomycin, metronidazole, gentamicin), five corticosteroids
 (hydrocortisone, methylprednisolone, dexamethasone, prednisolone, prednisone),
-eight antidepressants (escitalopram, citalopram, sertraline, paroxetine,
-fluoxetine, duloxetine, mirtazapine and bupropion, oral, with the active
-metabolites **norfluoxetine** and **hydroxybupropion**; fluoxetine's model is
+nine antidepressants (escitalopram, citalopram, sertraline, paroxetine,
+fluoxetine, venlafaxine, duloxetine, mirtazapine and bupropion, oral, with the
+active metabolites **norfluoxetine**, **desvenlafaxine** and
+**hydroxybupropion**; fluoxetine's model is
 valid only for the steady-state trough; see the help page *Antidepressant models and their
 limits*), and amiodarone in two entries: **amiodarone** for long-term oral therapy (dosed
 in mg/day PO, best viewed with *Time units* set to days or weeks), with its
