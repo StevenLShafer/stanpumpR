@@ -302,6 +302,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
   # estimated; ondansetron, aprepitant and fosaprepitant have no
   # equilibration model for antiemesis (2026-10-10).  Diclofenac, meloxicam
   # and ketorolac have no published ke0 (2026-10-10), nor diclofenacEC
+  # (2026-10-11); naproxen's effect follows its plasma with no delay
   # (2026-10-11).  Pinned because the
   # count has been got wrong by hand more than once.
   dd <- getDrugDefaultsGlobal(FALSE)
@@ -327,7 +328,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
     "ondansetron", "aprepitant", "fosaprepitant",
-    "diclofenac", "diclofenacEC", "meloxicam", "ketorolac",
+    "diclofenac", "diclofenacEC", "meloxicam", "ketorolac", "naproxen",
     # aspirin and the salicylate it forms (2026-10-10): no ke0
     "aspirin", "salicylate",
     # diamorphine (2026-10-10): the opt-in illicit research model plots parent

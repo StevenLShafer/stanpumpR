@@ -37,7 +37,7 @@ test_that("each antibiotic's default threshold is free drug at its MIC", {
 })
 
 
-test_that("the antibiotics, amiodarone, zolpidem, temazepam and ketorolac are exactly the drugs with no effect site and a threshold", {
+test_that("the antibiotics, amiodarone, zolpidem, temazepam, ketorolac and naproxen are exactly the drugs with no effect site and a threshold", {
   # A policy pin.  Until 2026-10-07 only the antibiotics were timed on their
   # plasma by default.  Amiodarone joined deliberately: its threshold is the
   # bottom of the therapeutic window, 1.0 mg/L of serum amiodarone, and it is
@@ -49,7 +49,10 @@ test_that("the antibiotics, amiodarone, zolpidem, temazepam and ketorolac are ex
   # above which psychometric performance deteriorated (R/drugs_temazepam.R).
   # Ketorolac joined on 2026-10-10: no published ke0, and its threshold is
   # the adult analgesic EC50 of 0.37 mg/L racemate in plasma that Cloesmeijer
-  # 2021 cite (R/drugs_ketorolac.R).
+  # 2021 cite (R/drugs_ketorolac.R).  Naproxen joined on 2026-10-11: its
+  # effect on pain follows the unbound plasma concentration with no delay,
+  # and its threshold is Bjornsson 2011's EC50 as total drug, 29 mg/L
+  # (R/drugs_naproxen.R).
   dd <- getDrugDefaultsGlobal()
   timedOnPlasma <- character(0)
   for (drug in dd$Drug[!isGasDrug(dd$Drug)]) {
@@ -59,8 +62,8 @@ test_that("the antibiotics, amiodarone, zolpidem, temazepam and ketorolac are ex
   }
   expect_setequal(timedOnPlasma,
                   c(antibioticMicTable()$Drug, "amiodarone", "zolpidem", "temazepam",
-                    "ketorolac"))
-  expect_false(any(c("amiodarone", "zolpidem", "temazepam", "ketorolac") %in%
+                    "ketorolac", "naproxen"))
+  expect_false(any(c("amiodarone", "zolpidem", "temazepam", "ketorolac", "naproxen") %in%
                      antibioticMicTable()$Drug))
   # Acute intravenous amiodarone (2026-10-08) deliberately has no default
   # threshold: the window is for chronic troughs (R/drugs_amiodaroneIV.R).

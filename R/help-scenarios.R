@@ -333,6 +333,19 @@ helpScenarios <- function() {
       timeUnits = "hours", maximum = 720, plasmaLinetype = "dashed",
       showThreshold = TRUE
     ),
+    helpScenario(
+      "naproxen-twice-daily",
+      "Naproxen 500 mg twice a day: three days to a steady state",
+      "Oral analgesics",
+      "A half-life of nearly a day against a twelve-hour interval: the concentration doubles over three days, and the first night it dips below the analgesic threshold.",
+      doses = helpDoses(
+        c("naproxen", 0, 500, "mg PO bid")
+      ),
+      # Naproxen has no effect site, so the plasma line carries the curve.
+      # Four days, so in days.
+      timeUnits = "days", maximum = 5760, plasmaLinetype = "solid",
+      showThreshold = TRUE
+    ),
 
     # --- Interactions --------------------------------------------------------
     helpScenario(

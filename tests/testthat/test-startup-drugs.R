@@ -33,7 +33,7 @@ test_that("the menu lists the categories in order, each sorted by name", {
   # diclofenac and ketorolac IV too); the oral opioids stay under Opioids
   expect_identical(choices[["Oral analgesics"]],
                    c("acetaminophen", "celecoxib", "diclofenac", "diclofenacEC",
-                     "gabapentin", "ibuprofen", "ketorolac", "meloxicam",
+                     "gabapentin", "ibuprofen", "ketorolac", "meloxicam", "naproxen",
                      "pregabalin"))
   expect_identical(choices[["Hypnotics and sedatives"]],
                    c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "etomidate",
