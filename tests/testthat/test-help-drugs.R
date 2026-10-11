@@ -48,6 +48,8 @@ plasmaOnly <- c(
   # NSAIDs with no published ke0 (2026-10-10); naproxen's effect follows
   # its plasma with no delay (Bjornsson 2011, R/drugs_naproxen.R)
   "diclofenac", "meloxicam", "ketorolac", "naproxen",
+  # aspirin and the salicylate it forms (2026-10-10): no ke0
+  "aspirin", "salicylate",
   # the antiseizure drugs: plotted as plasma, no established concentration-
   # linked effect site (2026-10-10)
   "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",
