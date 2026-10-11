@@ -15,14 +15,16 @@ ondansetron(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{scale volumes to the patient's fat-free mass and
-clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
-published fixed parameters unscaled.}
+\item{adjustToFFM}{below 18 years, evaluate Mondick's weight terms at the
+pharmacokinetic weight (TRUE) or total body weight (FALSE); from 18,
+scale Chiang's volumes to fat-free mass and clearances to that ratio to
+the 0.75 power, or use them unscaled.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Two-compartment intravenous model of Chiang 2021, with its age covariate on
-central volume evaluated within the fitted 45-70 year range.
+Two-compartment intravenous models: Mondick 2010 (allometric weight and
+maturation of clearance) below 18 years, Chiang 2021 (age on central
+volume, evaluated within the fitted 45-70 years) from 18.
 }
