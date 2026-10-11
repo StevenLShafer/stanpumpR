@@ -5,27 +5,24 @@ noEvents <- data.frame(Time = numeric(0), Event = character(0))
 trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) / 2)
 
 test_that("a normal metaboliser of 30 receives the published values", {
-  for (adjust in c(TRUE, FALSE)) {
-    actual <- risperidone(70, 170, 30, "male", adjustToFFM = adjust)
-    cl1 <- (4.2 + 23.2 * 2) / 60    # *1/*1, 50.6 L/h; no age term below 34
-    expected <- list(
-      PK = list(default = list(
-        v1 = 333, v2 = 1, v3 = 1,
-        cl1 = cl1, cl2 = 0, cl3 = 0,
-        ka_PO = 2.01 / 60, bioavailability_PO = 1, tlag_PO = 0
-      )),
-      tPeak = 0, MEAC = 0,
-      typical = 0, upperTypical = 0, lowerTypical = 0,
-      reference = actual$reference,
-      prodrug = FALSE,
-      metabolite = list(
-        name = "hydroxyrisperidone", kFormation = cl1 / 333,
-        firstPassFraction = 0, mwRatio = 1
-      )
+  actual <- risperidone(70, 170, 30, "male", adjustToFFM = FALSE)
+  cl1 <- (4.2 + 23.2 * 2) / 60    # *1/*1, 50.6 L/h; no age term below 34
+  expected <- list(
+    PK = list(default = list(
+      v1 = 333, v2 = 1, v3 = 1,
+      cl1 = cl1, cl2 = 0, cl3 = 0,
+      ka_PO = 2.01 / 60, bioavailability_PO = 1, tlag_PO = 0
+    )),
+    tPeak = 0, MEAC = 0,
+    typical = 0, upperTypical = 0, lowerTypical = 0,
+    reference = actual$reference,
+    prodrug = FALSE,
+    metabolite = list(
+      name = "hydroxyrisperidone", kFormation = cl1 / 333,
+      firstPassFraction = 0, mwRatio = 1
     )
-    if (adjust) next   # the FFM reference patient is 35, not 30: same values
-    expect_equal_rounded(actual, expected)
-  }
+  )
+  expect_equal_rounded(actual, expected)
 })
 
 test_that("CYP2D6 phenotype maps to Storset's example genotypes", {

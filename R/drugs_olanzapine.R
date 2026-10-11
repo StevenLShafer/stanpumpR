@@ -70,7 +70,7 @@ olanzapine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   wt <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
-  female <- if (identical(sex, "female")) OLANZAPINE_FEMALE else 1
+  female <- if (sex == SEX_FEMALE) OLANZAPINE_FEMALE else 1
 
   default <- list(
     v1 = OLANZAPINE_VC * (wt / 70) * (age / 36)^OLANZAPINE_AGE_VC,
