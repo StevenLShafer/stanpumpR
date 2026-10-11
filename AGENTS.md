@@ -46,6 +46,8 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 
 **Testing/scripting entry point**: `simulateDrugsWithCovariates()` is the exported, Shiny-free API (loops `getDrugPK()` → `simCpCe()` per drug) — used by tests and vignettes to drive the PK/PD core without the app.
 
+**Simulation API** (`R/api.R`, `inst/plumber/plumber.R`; spec `docs/api.md`): `apiSimulate(request)` validates a request (patient, dose table, duration, `timeUnit`, events, output grid), runs `simulateDrugsWithCovariates()`, and returns `meta`/`patient`/`drugs`/`doses`/`timeseries`/`warnings`, always in minutes, kg, cm and years; `apiFormatResult()` serialises it as JSON, CSV, xlsx or XML; `run_api()` serves `POST /simulate`, `GET /drugs`, `GET /health` with plumber (a Suggests). The requested output times are simulated exactly, not interpolated: `withOutputTimes()` adds them as extra points to every `simulationTimeGrid()` line, and nothing is added outside it. Request errors are `stanpumpr_api_error` conditions (HTTP 400). Inhaled agents are refused. Illicit drugs need `options.allowIllicitDrugs`. Tests: `test-api.R`.
+
 ---
 
 ## Key Rules

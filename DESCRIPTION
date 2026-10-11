@@ -49,10 +49,12 @@ Imports:
 Suggests:
     devtools,
     knitr,
+    plumber,
     remotes,
     rmarkdown,
     rsconnect,
     testthat (>= 3.0.0), 
+    xml2,
     yaml
 Depends:
     R (>= 4.1)
