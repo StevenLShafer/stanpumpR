@@ -378,7 +378,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts",
     "bupivacaine", "ropivacaine", "mepivacaine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
+    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
     "ondansetron", "aprepitant", "fosaprepitant",
     "diclofenac", "meloxicam", "ketorolac",
     # Diamorphine joined on 2026-10-10: the opt-in illicit research model

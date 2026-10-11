@@ -11,6 +11,7 @@ The **Antidepressants** in the startup menu are a library of named, source-speci
 | [duloxetine](help:drugs/duloxetine) | Zhong and colleagues, 2026 | 325 Chinese depressed inpatients | One compartment, apparent oral; sex |
 | [mirtazapine](help:drugs/mirtazapine) | Yan and colleagues, 2026 | 105 Chinese depressed inpatients | One compartment, apparent oral; BMI of 28 or more. The abstract and Table 2 disagree; Table 2 is used |
 | [fluoxetine](help:drugs/fluoxetine) | Han and colleagues, 2025 | 198 Chinese psychiatric patients, steady-state troughs only | One compartment, apparent oral, with [norfluoxetine](help:drugs/norfluoxetine) formed from it; sex. **Only the trough at steady state is valid**: the half-lives are hours, not days |
+| [venlafaxine](help:drugs/venlafaxine) | Wang and colleagues, 2022 | 24 healthy volunteers (rich profiles) and 127 psychiatric patients (troughs) | One compartment, apparent oral, with [desvenlafaxine](help:drugs/desvenlafaxine) formed from it and by first pass; the patients' clearance |
 | [bupropion](help:drugs/bupropion) | Ghimire and colleagues, 2026 | 19 adults, one 150 mg sustained-release dose | Two compartments for bupropion and two for [hydroxybupropion](help:drugs/hydroxybupropion), formed from it |
 
 All are given by mouth only (`mg PO`, with once- and twice-daily schedules). Most are **apparent** models, fitted to oral data alone, which predict oral concentrations correctly and intravenous ones not at all. See [Oral, intramuscular and intranasal doses](help:models/absorption).
@@ -31,10 +32,9 @@ All are given by mouth only (`mg PO`, with once- and twice-daily schedules). Mos
 
 These were assessed and left out until their sources are reconciled. They are not forgotten:
 
-- **Venlafaxine** with O-desmethylvenlafaxine (Wang and colleagues, 2022). The paper's main table omits the parent-to-metabolite rate constant its own scheme requires, and its immediate-release absorption cannot stand in for the extended-release product most patients take.
 - **Paroxetine, Feng and colleagues' Michaelis-Menten model** (2006). Its sole elimination route, at its printed Vmax of 454 to 474 µg/h, can remove at most about 11 mg a day, below the up to 40 mg a day the study gave. The model as printed cannot reach a steady state, so the source's input convention must be recovered first. Kim's model is used instead.
 - **Symptom-score models.** Shigetome and colleagues' paroxetine MADRS model needs the patient's measured week-1 response, so it cannot forecast from a baseline. No other model links concentration to remission.
-- **Metabolites** other than hydroxybupropion and norfluoxetine: desmethylcitalopram, desmethylsertraline and the others. Their sources' conversion conventions were not recovered.
+- **Metabolites** other than hydroxybupropion, norfluoxetine and desvenlafaxine: desmethylcitalopram, desmethylsertraline and the others. Their sources' conversion conventions were not recovered.
 - **Co-medication.** Mirtazapine's interactions with paroxetine and fluvoxamine are in its source, but the app has no field for co-medication.
 
 ## References
@@ -45,4 +45,4 @@ Liu and colleagues, external evaluation of ten escitalopram population models, *
 
 Meyer JH, Wilson AA, Sagrati S, et al. Serotonin transporter occupancy of five selective serotonin reuptake inhibitors at different doses: an [11C]DASB positron emission tomography study. *Am J Psychiatry* 2004;161:826-835. https://doi.org/10.1176/appi.ajp.161.5.826
 
-Wang and colleagues, *Front Pharmacol* 2022, https://doi.org/10.3389/fphar.2022.978202; Feng and colleagues, *Br J Clin Pharmacol* 2006, https://doi.org/10.1111/j.1365-2125.2006.02629.x; Shigetome and colleagues, *CPT Pharmacometrics Syst Pharmacol* 2025, https://doi.org/10.1002/psp4.70032.
+Feng and colleagues, *Br J Clin Pharmacol* 2006, https://doi.org/10.1111/j.1365-2125.2006.02629.x; Shigetome and colleagues, *CPT Pharmacometrics Syst Pharmacol* 2025, https://doi.org/10.1002/psp4.70032.

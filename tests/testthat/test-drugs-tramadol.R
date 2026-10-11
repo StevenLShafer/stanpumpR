@@ -321,7 +321,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts",
     "bupivacaine", "ropivacaine", "mepivacaine",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
+    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
     "ondansetron", "aprepitant", "fosaprepitant",
     "diclofenac", "meloxicam", "ketorolac",
     # diamorphine (2026-10-10): the opt-in illicit research model plots parent
