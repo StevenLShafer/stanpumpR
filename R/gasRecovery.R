@@ -157,20 +157,33 @@ thresholdTableForDisplay <- function(drugDefaults, age, macThreshold = GAS_MAC_T
 #' Take the edited Drug Thresholds table back into the defaults
 #'
 #' The inverse of \code{thresholdTableForDisplay()}.  Rows not in the table keep
-#' the threshold they had; a blank or negative entry is treated as no threshold.
+#' the threshold they had.  Zero, entered as 0, is no threshold.  An entry that
+#' is not a non-negative number (blank, ".", text, negative) is refused rather
+#' than read as 0: nothing is changed, and \code{invalid} names the rows, so
+#' the dialog can say which to correct.
 #'
 #' @param edited the edited table: \code{Drug} and \code{Threshold}
 #' @param drugDefaults the drug defaults table to update
 #' @param age patient age in years
 #' @param macThreshold the current MAC threshold, kept if the table has no MAC row
-#' @returns a list with the updated \code{drugDefaults} and \code{macThreshold}
+#' @returns a list with the updated \code{drugDefaults} and \code{macThreshold},
+#'   and \code{invalid}, the drugs whose entries were refused (empty when all
+#'   were accepted; otherwise \code{drugDefaults} and \code{macThreshold} are
+#'   returned unchanged)
 #' @export
 thresholdTableToDefaults <- function(edited, drugDefaults, age,
                                      macThreshold = GAS_MAC_THRESHOLD)
 {
-  value <- suppressWarnings(as.numeric(edited$Threshold))
-  value[is.na(value) | value < 0] <- 0
   drug <- as.character(edited$Drug)
+  value <- vapply(edited$Threshold, function(x) {
+    if (is.null(x) || length(x) != 1) return(NA_real_)
+    suppressWarnings(as.numeric(as.character(x)))
+  }, numeric(1), USE.NAMES = FALSE)
+  bad <- !is.finite(value) | value < 0
+  if (any(bad)) {
+    return(list(drugDefaults = drugDefaults, macThreshold = macThreshold,
+                invalid = drug[bad]))
+  }
 
   isMac <- drug == "MAC"
   if (any(isMac)) macThreshold <- value[isMac][1]
@@ -179,7 +192,8 @@ thresholdTableToDefaults <- function(edited, drugDefaults, age,
   at <- match(drugDefaults$Drug, drug[!isMac])
   drugDefaults$endCe[!is.na(at)] <- stored[at[!is.na(at)]]
 
-  list(drugDefaults = drugDefaults, macThreshold = macThreshold)
+  list(drugDefaults = drugDefaults, macThreshold = macThreshold,
+       invalid = character(0))
 }
 
 

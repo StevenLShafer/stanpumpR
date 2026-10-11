@@ -8,7 +8,7 @@ Oxymorphone is offered by mouth (**mg PO**) and intravenously. Oral bioavailabil
 
 ### Also oxycodone's metabolite
 
-[Oxycodone](help:drugs/oxycodone) names oxymorphone as its active metabolite, so a patient given oxycodone gets an oxymorphone row whether or not oxymorphone itself was given, and a patient given both sees the sum. The formation constant lives in the oxycodone model, calibrated against the roughly 2 per cent plasma ratio Agema and colleagues observed. See [Active metabolites](help:models/metabolites).
+[Oxycodone](help:drugs/oxycodone) names oxymorphone as its active metabolite, so a patient given oxycodone gets an oxymorphone row whether or not oxymorphone itself was given, and a patient given both sees the sum. The formation constant lives in the oxycodone model, calibrated to an oxymorphone AUC of 1 per cent of oxycodone's after an intravenous dose and 3.35 per cent after an oral one. See [Active metabolites](help:models/metabolites).
 
 ### Effect site and MEAC
 

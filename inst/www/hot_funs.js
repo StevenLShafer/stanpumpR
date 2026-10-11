@@ -57,14 +57,17 @@ function hookFilterKeys(event) {
 
   let ok = true;
 
+  // A minus sign is let through so that hookSanitize() sees "-2" and refuses
+  // it with a message.  Blocked here, "-2" was typed as "2", and a sign error
+  // became a positive dose without a word.
   if (col === timeCol) {
     // Elapsed times are numbers in the time unit.  In clock mode a time is
     // HH:MM, or a number of units after the procedure start, which may have a
     // decimal point ("1.5" hours).  A pasted elapsed H:MM is still accepted.
     let timeMode = getTimeMode();
-    ok = (timeMode === 'relative') ? /^[0-9.]$/.test(key) : /^[0-9.:]$/.test(key);
+    ok = (timeMode === 'relative') ? /^[0-9.\-]$/.test(key) : /^[0-9.:\-]$/.test(key);
   } else if (col === doseCol) {
-    ok = /^[0-9.]$/.test(key);
+    ok = /^[0-9.\-]$/.test(key);
   }
 
   if (!ok) {
@@ -75,10 +78,15 @@ function hookFilterKeys(event) {
 }
 
 // When a Time or Dose cell is changed, sanitize the input.  An entry that
-// cannot be read (validateTime() and validateDose() below return '') is
-// cleared, and remembered in hot.rejectedCells until hookDoseTableUpdate()
-// has run for this change, so that it leaves the cell blank rather than
-// filling it with 0 as it does a cell that was never filled in.
+// cannot be read (validateTime() and validateDose() below return '', e.g. ".",
+// "-2" or "abc") is refused with a message, and so is emptying a filled cell
+// of a row that keeps its drug (a blank cell was once quietly read as 0).  A
+// refused entry puts back what the cell held before, so the table never shows
+// one thing while the simulation uses another.  A cell that held nothing is
+// left blank, and remembered in hot.rejectedCells until hookDoseTableUpdate()
+// has run for this change, so that it stays blank rather than being filled
+// with 0 as a cell that was never filled in is; the row is then ignored until
+// it is corrected.
 function hookSanitize(changes, source) {
   if (!changes || !isUserEditSource(source)) return;
 
@@ -86,29 +94,89 @@ function hookSanitize(changes, source) {
   hot.rejectedCells = {};
   let timeCol = findColByHeader(hot, "Time");
   let doseCol = findColByHeader(hot, "Dose");
+  let drugCol = findColByHeader(hot, "Drug");
   if (timeCol === null && doseCol === null) return;
 
+  // Rows whose drug this same change clears: emptying the rest of such a row
+  // is clearing it, not a refused entry.
+  let clearedRows = {};
+  if (drugCol !== null) {
+    changes.forEach(function(change) {
+      if (change && change[1] === drugCol && (change[3] === null || change[3] === '')) {
+        clearedRows[change[0]] = true;
+      }
+    });
+  }
+
+  let refused = [];
   changes.forEach(function(change) {
     if (!change) return;
+    let row = change[0];
     let col = change[1];
+    let oldVal = change[2];
     let newVal = change[3];
+    if (col !== timeCol && col !== doseCol) return;
 
-    if (newVal === null || newVal === '') return;
-
-    if (col === timeCol) {
-      change[3] = validateTime(newVal);
-    } else if (col === doseCol) {
-      change[3] = validateDose(newVal);
-    } else {
+    let hadValue = trimEntry(oldVal) !== '';
+    let blank = trimEntry(newVal) === '';
+    if (blank) {
+      // Emptying a filled cell is refused only in the dose table, and only
+      // in a row that keeps its drug: a cell next to no drug is meant to be
+      // empty.  The dialogs' tables (no drug column) handle a blank
+      // themselves.
+      let keepsDrug = drugCol !== null && !clearedRows[row] &&
+        trimEntry(hot.getDataAtCell(row, drugCol)) !== '';
+      if (hadValue && keepsDrug) {
+        change[3] = oldVal;
+        refused.push({ col: col, entry: '' });
+      }
       return;
     }
-    if (change[3] === '') hot.rejectedCells[change[0] + ':' + col] = true;
+
+    change[3] = (col === timeCol) ? validateTime(newVal) : validateDose(newVal);
+    if (change[3] !== '') return;
+
+    refused.push({ col: col, entry: trimEntry(newVal) });
+    if (hadValue) {
+      change[3] = oldVal;
+    } else {
+      hot.rejectedCells[row + ':' + col] = true;
+    }
   });
+
+  if (refused.length > 0) notifyRefusedEntries(refused, timeCol);
 
   setTimeout(function() {
 
     hot.validateCells();
   }, 10);
+}
+
+// Say why an entry in the Time or Dose column was not accepted
+function notifyRefusedEntries(refused, timeCol) {
+  let lines = refused.slice(0, 3).map(function(r) {
+    let what = (r.col === timeCol) ? 'time' : 'dose';
+    if (r.entry === '') {
+      return (what === 'dose') ? 'A dose cannot be left blank; enter 0 for no dose.'
+                               : 'A time cannot be left blank.';
+    }
+    if (/^\s*-/.test(r.entry)) {
+      return '"' + r.entry + '" was not accepted: a ' + what + ' cannot be negative.';
+    }
+    return '"' + r.entry + '" was not accepted: a ' + what + ' must be a number.';
+  });
+  if (refused.length > 3) lines.push('(and ' + (refused.length - 3) + ' more)');
+  let html = lines.map(escapeHtml).join('<br>') +
+    '<br>The cell keeps its previous value, if it had one.';
+  if (window.Shiny && Shiny.notifications && typeof Shiny.notifications.show === 'function') {
+    Shiny.notifications.show({ html: html, type: 'warning', duration: 8000, id: 'doseEntryRefused' });
+  }
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
 }
 
 

@@ -195,7 +195,7 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
     "Holford S et al., J Pharmacol Clin Toxicol 2014;2(1):1023 ",
     "(joint intravenous parent and metabolite disposition); ",
     "Brvar N et al., Int J Pharm 2014;473:170-178. ",
-    "https://pubmed.ncbi.nlm.nih.gov/25014373/ (oral input timing); ",
+    "https://pubmed.ncbi.nlm.nih.gov/25014367/ (oral input timing); ",
     "Stamer UM et al., Clin Pharmacol Ther 2007;82:41-47. ",
     "https://pubmed.ncbi.nlm.nih.gov/17361124/ (CYP2D6)"
   )

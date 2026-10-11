@@ -16,7 +16,9 @@ getDrugPK(
   resolveMetabolite = TRUE,
   adjustToFFM = TRUE,
   osmolality = OSMOLALITY_DEFAULT,
-  creatinine = NULL
+  creatinine = NULL,
+  cyp2c19 = CYP2C19_DEFAULT,
+  model = NULL
 )
 }
 \arguments{
@@ -51,7 +53,15 @@ ignore it.}
 \item{creatinine}{serum creatinine in mg/dL, or NULL (the default) for the
 assumed normal value for the patient's age and sex.  Passed only to the renal
 models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
-sugammadex, gabapentin, pregabalin); see \code{R/renalFunction.R}.}
+sugammadex, gabapentin, pregabalin, oxycodone, meloxicam intravenous); see
+\code{R/renalFunction.R}.}
+
+\item{cyp2c19}{CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
+Passed only to drug models that declare it (escitalopram, citalopram).}
+
+\item{model}{internal: a model's output to use in place of calling the
+drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
+drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

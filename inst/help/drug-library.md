@@ -29,6 +29,8 @@ Edits the **recovery thresholds** alone: the concentration that *Time until thre
 
 For the inhaled agents the threshold is in per cent and is shown for the patient's age; the volatile agents' thresholds follow MAC as the age changes, so the number in the dialog is the number on the plot. A **MAC** row sets the threshold for the MAC-equivalents panel, in multiples of the age-adjusted MAC.
 
+Enter `0` for no threshold. A blank, negative or non-numeric entry is refused: *Apply* says which drug to correct, the dialog stays open, and no threshold is changed until it is.
+
 Edited thresholds travel with the URL, so a shared simulation reports the same times until threshold. See [Time until threshold](help:models/recovery).
 
 ## Defaults

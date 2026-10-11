@@ -49,7 +49,8 @@
 # Oxycodone names this drug as its metabolite, so a patient given oxycodone
 # gets an oxymorphone row whether or not oxymorphone itself was given, and a
 # patient given both sees the sum.  The formation constant lives in
-# R/drugs_oxycodone.R, calibrated against the observed plasma ratio.
+# R/drugs_oxycodone.R, calibrated against the observed plasma ratios after
+# intravenous and oral oxycodone.
 #
 # Oxymorphone's own metabolites, the 3-glucuronide and 6-hydroxyoxymorphone,
 # are not modelled.  The 6-hydroxy compound has animal analgesic activity and
@@ -128,7 +129,7 @@ OXYMORPHONE_TPEAK <- 20  # minutes; provisional, see above
 #     oxycodone is reported as 8 to 44 fold, which is a different comparison
 #     again and should not be read as support for this number.
 #   - Oxymorphone also arrives as oxycodone's metabolite, so this value now
-#     feeds the opioid total whenever oxycodone is given.  At about 2% of
+#     feeds the opioid total whenever oxycodone is given.  At about 1-3% of
 #     oxycodone concentrations and a tenth of its MEAC, the formed
 #     contribution is small but no longer zero, which is worth confirming
 #     against the 15 to 20% of oral oxycodone analgesia sometimes attributed

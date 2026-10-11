@@ -523,4 +523,20 @@ test_that("the dose dialogs refuse a clock time that is no time of day", {
   })
 })
 
+test_that("a blank or unreadable Age, Weight or Height is named in the plot area", {
+  shiny::testServer(app_server, {
+    startApp(session)
+    expect_null(patientEntryProblem())
+
+    # A lone "." or a blank field reaches the server as NULL (or NA)
+    session$setInputs(age = NULL)
+    expect_match(patientEntryProblem(), "Enter a number for Age in the Patient Profile")
+    session$setInputs(age = NA, weight = NA)
+    expect_match(patientEntryProblem(), "Age, Weight")
+
+    session$setInputs(age = 50, weight = 60)
+    expect_null(patientEntryProblem())
+  })
+})
+
 .sprglobals$config <- oldConfig

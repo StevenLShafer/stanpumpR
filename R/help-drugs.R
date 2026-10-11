@@ -270,8 +270,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   # --- At a glance -----------------------------------------------------------
   esc <- htmltools::htmlEscape
   route <- doseRoute(units)
-  routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_IM %in% route) "intramuscular",
-              if (ROUTE_IN %in% route) "intranasal")
+  routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "sublingual",
+              if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
+              if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
   intravenous <- any(units %in% c(bolusUnits, infusionUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
@@ -294,6 +295,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     sprintf("%s %s", helpFormatNumber(row$MEAC), concUnits)
   } else if (prodrug) {
     "None: the effect is the metabolite's, which carries its own MEAC"
+  } else if (identical(as.character(row$Category), "Opioids")) {
+    # An opioid with no established MEAC (buprenorphine, a partial agonist)
+    "None established: not on the MEAC panel (see the model notes)"
   } else {
     "Not an opioid: not on the MEAC panel"
   }
@@ -523,11 +527,48 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- CYP2C19 phenotype -----------------------------------------------------
+  # A model that declares cyp2c19 (escitalopram, citalopram) has its clearance
+  # move with the Patient Profile's CYP 2C19 field: tabulate it at the
+  # reference adult.
+  cyp2c19HTML <- ""
+  if (helpDrugDeclares(drug, "cyp2c19")) {
+    byPhenotype <- lapply(CYP2C19_VALUES, function(ph) {
+      X <- helpDrugModelOutput(drug, adult, cyp2c19 = ph)
+      if (is.null(X)) return(NULL)
+      data.frame(phenotype = ph, cl1 = X$PK[[PK_EVENT_DEFAULT]]$cl1, stringsAsFactors = FALSE)
+    })
+    byPhenotype <- do.call(rbind, byPhenotype[!vapply(byPhenotype, is.null, logical(1))])
+    normal <- byPhenotype[byPhenotype$phenotype == CYP2C19_NORMAL, ]
+    if (!is.null(byPhenotype) && nrow(normal) == 1) {
+      tab <- data.frame(
+        `CYP2C19 phenotype` = tools::toTitleCase(rev(byPhenotype$phenotype)),
+        `Clearance CL1 (L/min)` = helpFormatNumber(rev(byPhenotype$cl1)),
+        `Relative to normal` = helpFormatNumber(rev(byPhenotype$cl1) / normal$cl1),
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+      cyp2c19HTML <- paste0(
+        helpH2("CYP2C19 phenotype"),
+        "<p>This model's clearance depends on CYP2C19, so the <strong>CYP 2C19</strong> field in the ",
+        "Patient Profile changes it. At the reference adult:</p>",
+        helpTableHTML(tab, "Effect of CYP2C19 phenotype"),
+        "<p class='small text-muted'>Where the source did not estimate a phenotype separately, the ",
+        "drug's own description below says which group it is given.</p>"
+      )
+    }
+  }
+
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""
   if (!is.null(pkRef)) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
-    routes <- list(PO = "Oral (PO)", IM = "Intramuscular (IM)", IN = "Intranasal (IN)")
+    slowRA <- isTRUE(d$ka_RAslow > 0)
+    secondPO <- isTRUE(d$ka_PO2 > 0)
+    routes <- list(PO = if (secondPO) "Oral (PO), first depot" else "Oral (PO)",
+                   PO2 = "Oral (PO), second depot", SL = "Sublingual (SL)",
+                   IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
+                   RA = if (slowRA) "Regional anesthesia (RA), fast depot" else "Regional anesthesia (RA)",
+                   RAslow = "Regional anesthesia (RA), slow depot")
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -544,30 +585,58 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     if (length(rows) > 0) {
       absorptionHTML <- paste0(
         helpH2("Extravascular routes"),
-        "<p>Doses with PO, IM or IN units are absorbed by first-order kinetics into the central ",
-        "compartment after a lag, with the fraction shown reaching the circulation. See ",
+        "<p>Doses with PO, SL, IM, IN or RA units are absorbed by first-order kinetics into the central ",
+        "compartment after a lag, with the fraction shown reaching the circulation. RA is a ",
+        "local anesthetic injected into tissue (a nerve block or an infiltration). ",
+        if (secondPO) paste0("Each oral dose is absorbed through two depots in parallel, each with ",
+                             "its own lag; the bioavailability of each is its share of the dose. ") else "",
+        if (slowRA) paste0("Each RA dose is absorbed through a fast and a slow depot in parallel; ",
+                           "the bioavailability of each is its share of the dose. ") else "",
+        "See ",
         helpPageLink("models/absorption"), ".</p>",
         helpTableHTML(do.call(rbind, rows))
       )
-      # Saturable absorption: the oral bioavailability above is the limit for a
-      # small dose, and each dose is scaled by its own fraction absorbed.
-      sat <- pkRef$oralSaturation
-      if (!is.null(sat)) {
-        doses <- c(300, 600, 900, 1200)
-        f <- d$bioavailability_PO * oralSaturationFraction(doses, sat)
+      # Dose-dependent absorption: each oral or sublingual dose is scaled by
+      # its own fraction (oralSaturationFraction()), in one of three forms.
+      saturable <- list(
+        list(sat = pkRef$oralSaturation, F = d$bioavailability_PO, route = "Oral",
+             doses = c(300, 600, 900, 1200)),
+        list(sat = pkRef$sublingualSaturation, F = d$bioavailability_SL, route = "Sublingual",
+             doses = c(0.4, 2, 8, 16, 24, 32))
+      )
+      for (s in saturable) {
+        if (is.null(s$sat)) next
+        sat <- s$sat
+        doses <- if (is.null(sat$exampleDoses)) s$doses else sat$exampleDoses
+        f <- s$F * oralSaturationFraction(doses, sat)
+        absorbed <- data.frame(helpFormatNumber(doses), helpFormatNumber(f),
+                               helpFormatNumber(doses * f), stringsAsFactors = FALSE)
+        names(absorbed) <- c(sprintf("%s dose (mg)", s$route), "Fraction absorbed",
+                             "Amount absorbed (mg)")
+        explanation <- switch(oralSaturationForm(sat),
+          saturable = paste0(
+            "<p>", s$route, " absorption <strong>saturates</strong>: the fraction absorbed falls as the dose ",
+            "rises, as 1 &minus; ", helpFormatNumber(sat$Imax), " &times; D / (",
+            helpFormatNumber(sat$ID50), " + D) with D the dose in mg, so the bioavailability above is ",
+            "the limit for a very small dose. "),
+          rising = paste0(
+            "<p>", s$route, " bioavailability <strong>rises with the dose</strong>, as D / (",
+            helpFormatNumber(sat$D50), " + D) with D the dose in mg, times the bioavailability above, ",
+            "which is its maximum. "),
+          power = paste0(
+            "<p>Exposure is <strong>more than proportional to the dose</strong>: each ", tolower(s$route),
+            " dose is scaled by (D / ", helpFormatNumber(sat$Dref), ")<sup>", helpFormatNumber(sat$exponent),
+            "</sup> with D the dose in mg. This carries the source's empirical power of the daily dose ",
+            "on apparent clearance, and reproduces its steady-state exposure for once-daily dosing; the ",
+            "\"fraction\" can exceed 1 above the reference dose, because it is an exposure scale on ",
+            "apparent parameters, not a physical bioavailability. ")
+        )
         absorptionHTML <- paste0(
           absorptionHTML,
-          "<p>Oral absorption <strong>saturates</strong>: the fraction absorbed falls as the dose ",
-          "rises, as 1 &minus; ", helpFormatNumber(sat$Imax), " &times; D / (",
-          helpFormatNumber(sat$ID50), " + D) with D the dose in mg, so the bioavailability above is ",
-          "the limit for a very small dose. Each oral dose is scaled by its own fraction. Doses ",
-          "entered as separate rows at the same time are scaled separately, not by their sum.</p>",
-          helpTableHTML(data.frame(
-            `Oral dose (mg)` = helpFormatNumber(doses),
-            `Fraction absorbed` = helpFormatNumber(f),
-            `Amount absorbed (mg)` = helpFormatNumber(doses * f),
-            check.names = FALSE, stringsAsFactors = FALSE
-          ))
+          explanation,
+          "Each ", tolower(s$route), " dose is scaled by its own fraction. Doses entered as separate ",
+          "rows at the same time are scaled separately, not by their sum.</p>",
+          helpTableHTML(absorbed)
         )
       }
     }
@@ -612,6 +681,40 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- Parallel systems ------------------------------------------------------
+  # A drug plotted as the sum of independent systems (ketorolac: S and R
+  # enantiomers; meloxicam: the oral and intravenous fits, each limited to
+  # its routes).  The parameter tables above are the drug's own system; the
+  # others are listed here at the adult reference patient.
+  parallelHTML <- ""
+  if (!is.null(pkRef$parallelSystems)) {
+    share <- function(x) if (is.null(x)) 1 else x
+    systemRow <- function(name, fraction, routes, d) {
+      three <- isTRUE(d$k31 > 0)
+      data.frame(
+        System = name,
+        Routes = if (is.null(routes)) "All" else paste(routes, collapse = ", "),
+        `Share of each dose` = helpFormatNumber(share(fraction)),
+        `V1 (L)` = helpFormatNumber(d$v1), `V2 (L)` = helpFormatNumber(d$v2),
+        `V3 (L)` = if (three) helpFormatNumber(d$v3) else "",
+        `CL1 (L/min)` = helpFormatNumber(d$cl1), `CL2 (L/min)` = helpFormatNumber(d$cl2),
+        `CL3 (L/min)` = if (three) helpFormatNumber(d$cl3) else "",
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+    }
+    rows <- c(
+      list(systemRow("This drug's own (tables above)", pkRef$doseFraction, pkRef$routes, pkRef$PK[[1]])),
+      lapply(pkRef$parallelSystems, function(sys) systemRow(sys$name, sys$doseFraction, sys$routes, sys$PK[[1]]))
+    )
+    parallelHTML <- paste0(
+      helpH2("Parallel systems"),
+      "<p>The plotted concentration is the sum of independent linear systems. Each is given ",
+      "its share of every dose by the routes it takes, simulated on its own, and added. The parameter tables above ",
+      "are this drug's own system. At the adult reference patient:</p>",
+      helpTableHTML(do.call(rbind, rows))
+    )
+  }
+
   # --- Events ----------------------------------------------------------------
   eventsHTML <- ""
   if (!is.null(params) && any(nzchar(params$events) & params$events != PK_EVENT_DEFAULT)) {
@@ -633,7 +736,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     helpH2("At a glance"), glanceHTML,
     helpH2("Model source"), sourceHTML,
     helpH2("Parameters at reference patients"), paramsHTML,
+    cyp2c19HTML,
     absorptionHTML,
+    parallelHTML,
     metaboliteHTML,
     formedHTML,
     micHTML,
@@ -758,9 +863,17 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     given <- if (length(units) == 0) "metabolite only"
       else if (any(units %in% c(bolusUnits, infusionUnits))) {
         route <- doseRoute(units)
-        paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_IM %in% route) "IM",
-                if (ROUTE_IN %in% route) "IN", if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
-      } else "oral"
+        paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
+                if (ROUTE_IM %in% route) "IM",
+                if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
+                if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
+      } else {
+        # No intravenous unit: name the routes it does have
+        route <- unique(doseRoute(units))
+        paste(c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
+                if (ROUTE_IM %in% route) "IM", if (ROUTE_IN %in% route) "IN",
+                if (ROUTE_RA %in% route) "RA"), collapse = ", ")
+      }
     metabolite <- if (is.null(pk$metaboliteName)) "" else
       sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))
     data.frame(

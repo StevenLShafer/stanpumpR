@@ -81,19 +81,20 @@ test_that("the oral peak matches the observed immediate-release peak", {
 
 
 test_that("oxycodone forms oxymorphone at the observed ratio", {
-  # Agema 2021: oxymorphone plasma concentrations are about 2% of oxycodone's.
+  # After oral oxycodone: 0.027 in Balyan 2017's extensive metabolisers and
+  # 0.04 in Lalovic 2006; the model targets the midpoint, 0.0335, at 30 years.
+  # The first-pass part is a fixed fraction of the dose, so at 50 years, with
+  # clearance down by 0.00527 x 20 (Liukas), it is a smaller share of a larger
+  # oxycodone AUC: 0.01 + 0.0235 x 0.8946 = 0.0310.
   o <- simDrug("oxycodone", 10, "mg PO", maximum = 2880)
   expect_true("oxymorphone" %in% names(o))
   expect_equal(o$oxymorphone$formedFrom, "oxycodone")
 
   ratio <- trapz(o$oxymorphone$wide$Time, o$oxymorphone$wide$Plasma) /
            trapz(o$oxycodone$wide$Time,   o$oxycodone$wide$Plasma)
-  # Divided by the target, so that the 25% is relative: expect_equal() treats
-  # a tolerance larger than the expected value as absolute, and 0.25 against
-  # 0.02 passed any ratio below 0.27.  The closed-form ratio is 0.02003; the
-  # straight chord the time line drew across the second day until 2026-10-07
-  # read 0.02033.  (Claude Code.)
-  expect_equal(ratio / 0.02, 1, tolerance = 0.25)
+  # Divided by the target, so that the tolerance is relative: expect_equal()
+  # treats a tolerance larger than the expected value as absolute.
+  expect_equal(ratio / (0.01 + 0.0235 * (1 - 0.00527 * 20)), 1, tolerance = 0.03)
 })
 
 

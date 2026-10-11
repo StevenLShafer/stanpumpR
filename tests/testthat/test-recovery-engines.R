@@ -259,9 +259,14 @@ test_that("hydrocodone's hydromorphone, through the extravascular engine", {
   # replays the lag and disagrees.  That is the single-drug engine's own
   # behaviour with no metabolite anywhere in sight, so it is not this fold's to
   # settle.
+  #
+  # The oral hydromorphone dose puts into the circulation what 2 mg did at the
+  # former oral bioavailability of 0.6.  At the recalibrated 0.225 (Lohela
+  # 2021, 2026-10-10) 2 mg never reaches the threshold, alone or with the
+  # formed contribution, and both recovery maxima would be zero.
   DT <- data.frame(Drug  = c("hydrocodone", "hydromorphone"),
                    Time  = c(0, 0),
-                   Dose  = c(30, 2),
+                   Dose  = c(30, 2 * 0.6 / 0.225),
                    Units = c("mg PO", "mg PO"))
   expectFoldMatchesBrute(DT, "hydromorphone", 1440)
 
@@ -351,7 +356,19 @@ test_that("exactly the plasma-only drugs have no effect site", {
   # AmiodaroneIV joined on 2026-10-08: active, no effect site and no
   # metabolite, so it never reaches the fold either.  Clonazepam, zolpidem and
   # temazepam (direct effects, no effect site) joined on 2026-10-09, with no
-  # metabolite either.
+  # metabolite either.  Methylphenidate and lisdexamfetamine joined on
+  # 2026-10-10: no calibrated concentration-effect model, no metabolite.
+  # Bupivacaine, ropivacaine and mepivacaine (systemic
+  # plasma only, regional anesthesia) joined on 2026-10-10, with no metabolite.
+  # The antidepressants joined on 2026-10-10: response
+  # lags weeks and no ke0 exists; bupropion forms hydroxybupropion, which has
+  # no effect site either, so the fold takes the NA path, as for amiodarone.
+  # Ondansetron, aprepitant and fosaprepitant (no equilibration model for
+  # antiemesis) joined on 2026-10-10, with no metabolite.
+  # Diclofenac, meloxicam and ketorolac (no published ke0) joined the same
+  # day, with no metabolite, and diclofenacEC on 2026-10-11.  Naproxen
+  # joined on 2026-10-11 too: its effect follows the plasma with no delay
+  # (R/drugs_naproxen.R), no metabolite.
   expect_setequal(noCe, c(
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
@@ -360,6 +377,21 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
     "amiodarone", "desethylamiodarone", "amiodaroneIV",
     "clonazepam", "zolpidem", "temazepam",
+    "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts", "methylphenidatePediatric",
+    "bupivacaine", "ropivacaine", "mepivacaine",
+    "phenytoin", "carbamazepine", "valproate", "phenobarbital", "pentobarbital",
+    "ethosuximide", "topiramate", "lacosamide", "lamotrigine", "zonisamide",
+    "tiagabine", "levetiracetam", "eslicarbazepine",
+    "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
+    "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
+    "ondansetron", "aprepitant", "fosaprepitant",
+    "diclofenac", "diclofenacEC", "meloxicam", "ketorolac", "naproxen",
+    # aspirin and the salicylate it forms (2026-10-10): no ke0
+    "aspirin", "salicylate",
+    # Diamorphine joined on 2026-10-10: the opt-in illicit research model
+    # (R/drugs_diamorphine.R) plots parent plasma only, with 6-MAM and morphine
+    # not modelled, so it has no effect site and forms no metabolite here.
+    "diamorphine",
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
     # or no effect is established; aripiprazole alone has a PET ke0.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",

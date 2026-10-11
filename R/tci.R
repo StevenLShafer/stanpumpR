@@ -47,7 +47,7 @@
 #     When both are entered at the same time the target wins.
 #   - Manual boluses are allowed during TCI; the controller sees them and
 #     gives no drug until the concentration is back at the target.
-#   - Oral, IM and IN doses are not in the controller's model (as an unmodelled
+#   - Oral, SL, IM and IN doses are not in the controller's model (as an unmodelled
 #     input they are, to the pump, invisible); the simulation itself does
 #     include them.
 #   - Only the default PK set drives the controller.  No TCI drug has
@@ -112,8 +112,8 @@ tciKinetics <- function(PK)
 # Build the pump's infusion schedule for one drug.
 #
 # dose:    that drug's rows of the dose table AFTER simCpCe() has converted
-#          them to base units and flagged Bolus / PO / IM / IN.  Target rows
-#          carry the target concentration in Dose.
+#          them to base units and flagged Bolus / PO / IM / IN / SL / RA.
+#          Target rows carry the target concentration in Dose.
 # PK:      the drug's PK object from getDrugPK() (default PK set, tPeak, weight).
 # maximum: end of the simulation (min).
 #
@@ -132,7 +132,10 @@ tciSchedule <- function(dose, PK, maximum,
   dose$Bolus[dose$Target] <- FALSE
 
   targets   <- dose[dose$Target & dose$Time >= 0 & dose$Time < maximum, ]
-  manual    <- which(!dose$Target & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN)
+  isSL      <- if (is.null(dose$SL)) rep(FALSE, nrow(dose)) else dose$SL
+  manual    <- which(!dose$Target & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN &
+                     !isSL & !dose$RA & !dose$RAslow & !dose$PO2 &
+                     !(if (is.null(dose$RArate)) FALSE else dose$RArate))
   bolusRows <- dose[dose$Bolus & !dose$Target, ]
 
   # Several targets at one time: the last one entered wins.
@@ -254,7 +257,10 @@ tciSchedule <- function(dose, PK, maximum,
     tciRows$Dose  <- rates$Rate
     tciRows$Units <- "TCI"
     tciRows$Bolus <- FALSE
-    tciRows$PO <- tciRows$IM <- tciRows$IN <- FALSE
+    tciRows$PO <- tciRows$IM <- tciRows$IN <- tciRows$RA <- FALSE
+    if (!is.null(tciRows$SL)) tciRows$SL <- FALSE
+    if (!is.null(tciRows$RAslow)) tciRows$RAslow <- FALSE
+    if (!is.null(tciRows$PO2)) tciRows$PO2 <- FALSE
     tciRows$Target <- FALSE
     keep <- rbind(keep, tciRows)
   }

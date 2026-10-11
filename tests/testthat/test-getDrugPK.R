@@ -32,6 +32,18 @@ test_that("it returns the same value", {
         ka_IN = 0,
         bioavailability_IN = 0,
         tlag_IN = 0,
+        ka_SL = 0,
+        bioavailability_SL = 0,
+        tlag_SL = 0,
+        ka_RA = 0,
+        bioavailability_RA = 0,
+        tlag_RA = 0,
+        ka_RAslow = 0,
+        bioavailability_RAslow = 0,
+        tlag_RAslow = 0,
+        ka_PO2 = 0,
+        bioavailability_PO2 = 0,
+        tlag_PO2 = 0,
         customFunction = "",
         lambda_1 = 0.6280493,
         lambda_2 = 0.04305881,
@@ -77,7 +89,43 @@ test_that("it returns the same value", {
         e_coef_IN_l2 = 0,
         e_coef_IN_l3 = 0,
         e_coef_IN_ke0 = 0,
-        e_coef_IN_ka = 0
+        e_coef_IN_ka = 0,
+        p_coef_SL_l1 = 0,
+        p_coef_SL_l2 = 0,
+        p_coef_SL_l3 = 0,
+        p_coef_SL_ka = 0,
+        e_coef_SL_l1 = 0,
+        e_coef_SL_l2 = 0,
+        e_coef_SL_l3 = 0,
+        e_coef_SL_ke0 = 0,
+        e_coef_SL_ka = 0,
+        p_coef_RA_l1 = 0,
+        p_coef_RA_l2 = 0,
+        p_coef_RA_l3 = 0,
+        p_coef_RA_ka = 0,
+        e_coef_RA_l1 = 0,
+        e_coef_RA_l2 = 0,
+        e_coef_RA_l3 = 0,
+        e_coef_RA_ke0 = 0,
+        e_coef_RA_ka = 0,
+        p_coef_RAslow_l1 = 0,
+        p_coef_RAslow_l2 = 0,
+        p_coef_RAslow_l3 = 0,
+        p_coef_RAslow_ka = 0,
+        e_coef_RAslow_l1 = 0,
+        e_coef_RAslow_l2 = 0,
+        e_coef_RAslow_l3 = 0,
+        e_coef_RAslow_ke0 = 0,
+        e_coef_RAslow_ka = 0,
+        p_coef_PO2_l1 = 0,
+        p_coef_PO2_l2 = 0,
+        p_coef_PO2_l3 = 0,
+        p_coef_PO2_ka = 0,
+        e_coef_PO2_l1 = 0,
+        e_coef_PO2_l2 = 0,
+        e_coef_PO2_l3 = 0,
+        e_coef_PO2_ke0 = 0,
+        e_coef_PO2_ka = 0
       )
     ),
     # Which curve tPeak was measured against; "IV" for every drug whose model
@@ -239,4 +287,24 @@ test_that("getDrugPK() carries the library's endCe, so direct recovery works", {
                                      maximum = 60, plotRecovery = TRUE)
   expect_equal(via$propofol$max$Recovery, sim$max$Recovery)
   expect_equal(via$propofol$equiSpace$Recovery, sim$equiSpace$Recovery)
+})
+
+test_that("the CYP2C19 phenotype is validated and reaches only the models that name it", {
+  expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = "extensive"),
+               "Invalid cyp2c19")
+  expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = CYP2C19_VALUES),
+               "Invalid cyp2c19")
+  # A model that does not name it is unchanged by it
+  expect_equal(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = "poor")$PK,
+               getDrugPK("remifentanil", 70, 170, 50, "male")$PK)
+  # One that does is changed by it
+  expect_lt(getDrugPK("escitalopram", 70, 170, 50, "male", cyp2c19 = "poor")$PK$default$cl1,
+            getDrugPK("escitalopram", 70, 170, 50, "male")$PK$default$cl1)
+})
+
+test_that("parallel-system routes must be dose routes", {
+  expect_null(parallelRoutes(NULL, "x"))
+  expect_equal(parallelRoutes(c("PO", "PO"), "x"), "PO")
+  expect_error(parallelRoutes("oral", "x"), "Invalid routes for x")
+  expect_error(parallelRoutes(character(0), "x"), "Invalid routes for x")
 })

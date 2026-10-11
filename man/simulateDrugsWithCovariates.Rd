@@ -16,7 +16,8 @@ simulateDrugsWithCovariates(
   cyp2d6 = CYP2D6_DEFAULT,
   adjustToFFM = TRUE,
   osmolality = OSMOLALITY_DEFAULT,
-  creatinine = NULL
+  creatinine = NULL,
+  cyp2c19 = CYP2C19_DEFAULT
 )
 }
 \arguments{
@@ -39,8 +40,7 @@ are ignored.}
 \item{plotRecovery}{should the "time until threshold" be calculated?  See
 \code{simCpCe()}.}
 
-\item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
-Only drugs whose model declares it are affected.}
+\item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.}
 
 \item{adjustToFFM}{scale each model's volumes and clearances to the patient's
 fat-free mass (the default) rather than total body weight; see
@@ -52,6 +52,9 @@ agent (mannitol), which is reported as serum osmolality, is affected.}
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal
 value for the patient's age and sex.  Only the renally cleared models are
 affected.}
+
+\item{cyp2c19}{CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
+Only drugs whose model declares it are affected.}
 }
 \value{
 a list of data frames with the output of the a single drug

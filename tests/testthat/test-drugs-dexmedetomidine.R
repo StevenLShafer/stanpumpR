@@ -86,7 +86,7 @@ test_that("returns the published parameters with total-body-weight scaling for a
     typical = 0.6,
     upperTypical = 0.4,
     lowerTypical = 0.8,
-    reference = "Zuppa BJA 2019"
+    reference = "Zuppa AF et al., Br J Anaesth 2019;123(6):839-852. https://pubmed.ncbi.nlm.nih.gov/31623840/"
   )
 
   expect_equal_rounded(actual, expected)

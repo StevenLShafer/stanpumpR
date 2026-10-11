@@ -357,6 +357,24 @@ recoveryRows <- function(S, lambda, target, horizon)
 #' @keywords internal
 combinedRecovery <- function(times, sets, emerge)
 {
+  recoveryFromStates(mergeStateSets(times, sets), emerge)
+}
+
+
+#' Add state sets: one set describing the sum of what each describes
+#'
+#' The concentration is a sum over every set's exponentials, so carrying each
+#' set onto \code{times} and concatenating the amplitudes is exact.  Used for a
+#' metabolite fold (\code{combinedRecovery()}) and for a drug given as more than
+#' one oral formulation (\code{simCpCe()}).
+#'
+#' @param times the time line to report on
+#' @param sets a list of state sets from \code{recoveryStateSet()}
+#'
+#' @returns a state set on \code{times}
+#' @keywords internal
+mergeStateSets <- function(times, sets)
+{
   # advanceStatesOnto() always returns its lambdas as a matrix on the new time
   # line, so the two cbinds line up whether or not a contributor's PK changed
   # with time.
@@ -373,13 +391,11 @@ combinedRecovery <- function(times, sets, emerge)
   # The receiving drug and what is formed into it are timed on the same
   # concentration (see "Which concentration is timed" above), so they share a
   # horizon; the longer is taken should they ever differ.
-  recoveryFromStates(
-    list(state   = do.call(cbind, lapply(onto, `[[`, "state")),
-         lambda  = do.call(cbind, lapply(onto, `[[`, "lambda")),
-         pending = pending,
-         horizon = max(vapply(onto, `[[`, numeric(1), "horizon"))),
-    emerge
-  )
+  list(time    = times,
+       state   = do.call(cbind, lapply(onto, `[[`, "state")),
+       lambda  = do.call(cbind, lapply(onto, `[[`, "lambda")),
+       pending = pending,
+       horizon = max(vapply(onto, `[[`, numeric(1), "horizon")))
 }
 
 

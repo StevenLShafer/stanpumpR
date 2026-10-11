@@ -297,15 +297,44 @@ test_that("the Drug Thresholds table shows every editable threshold and round-tr
   shown$Threshold[shown$Drug == "MAC"] <- 0.33
   shown$Threshold[shown$Drug == "sevoflurane"] <- 0.5
   shown$Threshold[shown$Drug == "nitrousOxide"] <- 20
-  shown$Threshold[shown$Drug == "propofol"] <- NA
+  shown$Threshold[shown$Drug == "propofol"] <- 0
   back <- thresholdTableToDefaults(shown, dd, age = 70, macThreshold = 0.1)
+  expect_identical(back$invalid, character(0))
   expect_equal(back$macThreshold, 0.33)
   e <- stats::setNames(back$drugDefaults$endCe, back$drugDefaults$Drug)
   expect_equal(gasThresholdForAge("sevoflurane", e[["sevoflurane"]], 70), 0.5)
   expect_equal(e[["nitrousOxide"]], 20)
+  # 0, entered deliberately, is no threshold.
   expect_equal(e[["propofol"]], 0)
   # Rows the dialog does not show keep what they had.
   expect_equal(e[["oxygen"]], dd$endCe[dd$Drug == "oxygen"])
+})
+
+test_that("an unreadable or negative threshold is refused, not saved as 0", {
+  dd <- getDrugDefaultsGlobal()
+  shown <- thresholdTableForDisplay(dd, age = 50, macThreshold = 0.1)
+  propofol <- dd$endCe[dd$Drug == "propofol"]
+  expect_gt(propofol, 0)
+
+  # What hot_to_r() can hand back for ".", a blank, text or a negative entry
+  for (entry in list(NA, NaN, ".", "", "abc", -1)) {
+    edited <- shown
+    edited$Threshold <- as.list(edited$Threshold)
+    edited$Threshold[[which(edited$Drug == "propofol")]] <- entry
+    edited$Threshold[[which(edited$Drug == "MAC")]] <- 0.5   # a valid edit beside it
+    back <- thresholdTableToDefaults(edited, dd, age = 50, macThreshold = 0.1)
+    expect_identical(back$invalid, "propofol", info = format(entry))
+    # Nothing is applied, the valid edit included: the dialog stays open.
+    expect_identical(back$drugDefaults, dd, info = format(entry))
+    expect_equal(back$macThreshold, 0.1, info = format(entry))
+  }
+
+  # A NULL cell (an emptied cell in a list column)
+  edited <- shown
+  edited$Threshold <- as.list(edited$Threshold)
+  edited$Threshold[which(edited$Drug == "propofol")] <- list(NULL)
+  back <- thresholdTableToDefaults(edited, dd, age = 50, macThreshold = 0.1)
+  expect_identical(back$invalid, "propofol")
 })
 
 

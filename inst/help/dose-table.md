@@ -26,7 +26,7 @@ A regimen written in days goes in most easily with the Time units set to days. D
 |---|---|---|
 | mass, or mass per kg | **bolus** at that time | `mg`, `mcg/kg` |
 | mass per minute or hour, with or without per kg | **infusion** from that time | `mcg/kg/min`, `mg/hr` |
-| mass with `PO`, `IM` or `IN` | **extravascular dose** at that time | `mg PO`, `mg IN` |
+| mass with `PO`, `SL`, `IM` or `IN` | **extravascular dose** at that time | `mg PO`, `mg IN` |
 | mass per day with `PO` | **oral rate**: the daily dose spread evenly over each day, from that time | `mg/day PO` (amiodarone) |
 | any of the above doses followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
 | `L/min` | fresh gas flow or ventilation setting | inhaled agents |
@@ -34,9 +34,9 @@ A regimen written in days goes in most easily with the Time units set to days. D
 
 ## Entries that cannot be read
 
-A Time or Dose cell takes one number, written plainly (`2.5`, `.5`, `1,000`) or in scientific notation (`1e3` is stored as 1000), or, for a time, hours and minutes (`1:30`). Spaces and quotation marks around the entry, and a leading `+`, are dropped. A blank cell becomes 0.
+A Time or Dose cell takes one number, written plainly (`2.5`, `.5`, `1,000`) or in scientific notation (`1e3` is stored as 1000), or, for a time, hours and minutes (`1:30`). Spaces and quotation marks around the entry, and a leading `+`, are dropped. A blank cell in a new row becomes 0, but emptying a filled Time or Dose cell is refused: the cell keeps its value and a message asks for a number (enter `0` for no dose).
 
-Nothing else is guessed at. An entry with a minus sign, a letter or a unit (`-5`, `5 mg`, `8:44 pm`), a second decimal point or colon (`1.2.3`, `1:2:30`), a comma that does not separate thousands (`1,5`), or a space or other mark inside the number (`8 30`, `8;30`) is not read as some other number: the cell is cleared, and the row is ignored by the simulation, like any incomplete row, until it is corrected. The *Add a dose* and *Edit doses* dialogs instead say what could not be read and stay open. (Until October 2026 such entries were stripped to their digits, so `-5` became 5 and `1e3` became 13.)
+Nothing else is guessed at. An entry with a minus sign, a letter or a unit (`-5`, `5 mg`, `8:44 pm`), a second decimal point or colon (`1.2.3`, `1:2:30`), a comma that does not separate thousands (`1,5`), or a space or other mark inside the number (`8 30`, `8;30`) is not read as some other number. It is refused with a message saying why, and the cell keeps the value it had, so the table always shows the dose the simulation uses; a cell that was empty stays empty, and the row is ignored by the simulation, like any incomplete row, until it is corrected. The *Add a dose* and *Edit doses* dialogs instead say what could not be read and stay open. (Until October 2026 such entries were stripped to their digits, so `-5` became 5 and `1e3` became 13.)
 
 ## Infusions
 
@@ -46,7 +46,7 @@ Per-kilogram units use the weight in the Patient Profile at the time of simulati
 
 ## Scheduled doses
 
-For drugs given on a schedule (the analgesic opioids, the antibiotics, the steroids and mannitol), each bolus, oral, intramuscular and intranasal unit also comes with a frequency:
+For drugs given on a schedule (the analgesic opioids, the antibiotics, the steroids and mannitol), each bolus, oral, sublingual, intramuscular and intranasal unit also comes with a frequency:
 
 | Suffix | Meaning | Interval |
 |---|---|---|

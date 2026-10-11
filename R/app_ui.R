@@ -172,6 +172,29 @@ app_ui <- function() {
                   selected = CYP2D6_DEFAULT
                 ),
 
+                # Read by escitalopram and citalopram, whose published
+                # clearances differ by CYP2C19 phenotype.  The five CPIC terms.
+                selectInput(
+                  inputId = "cyp2c19",
+                  label = "CYP 2C19",
+                  c("Ultrarapid"   = CYP2C19_ULTRARAPID,
+                    "Rapid"        = CYP2C19_RAPID,
+                    "Normal"       = CYP2C19_NORMAL,
+                    "Intermediate" = CYP2C19_INTERMEDIATE,
+                    "Poor"         = CYP2C19_POOR),
+                  selected = CYP2C19_DEFAULT
+                ),
+
+                # Read by phenytoin, whose maximal elimination rate depends on
+                # CYP2C9 diplotype, read by meloxicam and phenytoin (see
+                # CYP2C9_VALUES in R/constants.R).  *1/*1 is the reference.
+                selectInput(
+                  inputId = "cyp2c9",
+                  label = "CYP 2C9",
+                  CYP2C9_VALUES,
+                  selected = CYP2C9_DEFAULT
+                ),
+
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
                 bslib::tooltip(
@@ -370,7 +393,28 @@ app_ui <- function() {
                     textOutput("doseTimeUnits", inline = TRUE) |>
                       htmltools::tagAppendAttributes(class = "small text-muted")
                   ),
-                  actionLink("setTarget", "Suggest Dosing", class = "small")
+                  div(
+                    class = "d-flex align-items-center gap-3",
+                    # Opt-in for the drug-of-abuse research models (off by
+                    # default); when on, they are offered in the dose table and
+                    # the Add a dose dialog, with their names shown in red.
+                    bslib::tooltip(
+                      checkboxInput(
+                        "showIllicitDrugs",
+                        "Show illicit drugs",
+                        value = FALSE
+                      ) |>
+                        htmltools::tagAppendAttributes(class = "micro mb-0"),
+                      paste(
+                        "Show evidence-labelled research models of drugs of",
+                        "abuse (for example diamorphine). Off by default. These",
+                        "are plasma-exposure estimates for research, not dosing",
+                        "advice or safety thresholds."
+                      ),
+                      placement = "left"
+                    ),
+                    actionLink("setTarget", "Suggest Dosing", class = "small")
+                  )
                 ),
 
                 rhandsontable::rHandsontableOutput("doseTableHTML"),

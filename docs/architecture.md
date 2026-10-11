@@ -154,18 +154,19 @@ time point as a sum of exponentials.
 3. `cube()` solves the characteristic cubic → eigenvalues `lambda_1, lambda_2, lambda_3`.
 4. `tPeakError()` + `CE()` + `optimize()` back-solve the effect-site rate `ke0` from
    time-to-peak-effect.
-5. Precompute per-route (bolus / infusion / PO / IM / IN) exponential coefficients `p_coef_*`,
+5. Precompute per-route (bolus / infusion / PO / SL / IM / IN) exponential coefficients `p_coef_*`,
    `e_coef_*`.
 
 ### B — Advance the doses (`simCpCe.R`)
 
 1. Reduce mg/mcg/ng, per-kg, per-hour doses to base units against the drug's concentration unit.
-2. Classify each dose as `Bolus`, infusion, or `PO / IM / IN` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`).
+2. Classify each dose as `Bolus`, infusion, or `PO / SL / IM / IN` (the route comes from the unit's suffix via `doseRoute()`, `R/routes.R`).
 3. Dispatch to a solver:
    - `advanceClosedForm0.R` — IV, no PK events
    - `advanceClosedForm1.R` — time-varying PK driven by events, including extravascular doses
      (the absorption depot is carried as an amount, which a change in PK set does not touch)
-   - `advanceClosedFormPO_IM_IN.R` — extravascular routes
+   - `advanceClosedFormPO_IM_IN.R` — extravascular routes (PO, SL, IM, IN, and RA: a local
+     anesthetic injected into tissue, absorbed first-order)
    - `advanceClosedFormMetabolite.R` — a drug that forms an active metabolite
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
    across event boundaries.
@@ -347,17 +348,19 @@ All files are flat in `R/`.
   infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,
   `simulationPlot()` draws them as a per-drug rate panel with the loading dose written as a
   number, and `sendSlide()` merges them into the exported dose table.
-- **Scheduled doses** (`scheduled.R`) — a bolus, PO, IM or IN unit with a frequency suffix
+- **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM or IN unit with a frequency suffix
   (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 h (qd / bid /
   tid / qid) until the end of the X axis. A scheduled dose of 0 for the same route stops the
   sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
   table: `simCpCe()` returns them as `$scheduled` and `sendSlide()` merges them into the export.
   The frequencies are offered per drug in `drugDefaults_global.csv`.
-- **Saturable oral absorption** (`oralSaturationFraction()` in `routes.R`) — a drug whose oral
-  bioavailability falls with dose (gabapentin) returns an `oralSaturation` block, and
-  `simCpCe()` scales each oral dose by `1 - Imax × D / (ID50 + D)` before the engine runs.
-  Each dose is then an ordinary input, so the engines stay linear; saturation shared between
-  overlapping doses is not represented.
+- **Dose-dependent oral absorption** (`oralSaturationFraction()` in `routes.R`) — a drug whose
+  oral bioavailability depends on the dose returns an `oralSaturation` block, and `simCpCe()`
+  scales each oral dose before the engine runs: by `1 - Imax × D / (ID50 + D)` when absorption
+  saturates (gabapentin), by `D / (D50 + D)` when it rises with dose (`form = "rising"`,
+  sertraline), or by `(D / Dref)^exponent` to carry an empirical dose power on apparent
+  clearance (`form = "power"`, paroxetine). Each dose is then an ordinary input, so the engines
+  stay linear; dependence shared between overlapping doses is not represented.
 - **Suggest Dosing** (`suggest.R`) — given a target drug and end time, optimizes bolus +
   infusion amounts to reach and hold a target concentration. The fit is over the effect-site
   concentration alone, evaluated as a sum of each row's unit-dose curve (the engine is linear);

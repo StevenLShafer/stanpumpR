@@ -18,6 +18,8 @@ app_server <- function(input, output, session) {
   })
   observeEvent(input$debug_level, ignoreInit = TRUE, {
     session$userData$debug(input$debug_level)
+    # Rewrite the address bar with the new level (withDebugQuery())
+    session$doBookmark()
   })
 
   # Write out logs to the log section
@@ -109,12 +111,14 @@ app_server <- function(input, output, session) {
     # plot would otherwise just stay as it was.
     violation <- timeUnitViolation()
     validate(need(is.null(violation), violation))
+    problem <- patientEntryProblem()
+    validate(need(is.null(problem), problem))
     req(main_plot(), cancelOutput = TRUE)
     main_plot()
   }, height = function() {
     # renderPlot() measures before it draws, and with a violation there is no
     # plot to measure: a fixed height lets the message above through.
-    if (!is.null(timeUnitViolation())) 150 else plotHeightOrNothing()
+    if (!is.null(timeUnitViolation()) || !is.null(patientEntryProblem())) 150 else plotHeightOrNothing()
   })
 
   # Make drugs and events local to session
@@ -128,6 +132,13 @@ app_server <- function(input, output, session) {
   eventDefaults <- reactiveVal(getEventDefaults())
   # Alphabetical, for the drug pickers; never index drugDefaults() with it
   drugList <- sortDrugNames(getDrugDefaultsGlobal()$Drug)
+
+  # The drugs offered when a drug is chosen (the dose-table autocomplete and
+  # the Add a dose dialog): every drug when the illicit-drug opt-in is on, the
+  # non-illicit drugs when it is off (R/illicit-drugs.R).  Alphabetical.
+  drugChoices <- reactive(
+    sortDrugNames(visibleDrugNames(isTRUE(input$showIllicitDrugs), drugDefaults()))
+  )
 
   # Empty until the drugs are chosen in the startup menu, or a bookmark
   # restores its own (see Startup, below)
@@ -147,7 +158,7 @@ app_server <- function(input, output, session) {
     profileCode({
       outputComments("Rendering doseTableHTML")
 
-      createHOT(doseTableDraft(), drugDefaults(), format)
+      createHOT(doseTableDraft(), drugDefaults(), format, drugChoices())
     }, name = "createHOT() from doseTableHTML")
   })
 
@@ -434,7 +445,9 @@ app_server <- function(input, output, session) {
   # This gets called after bookmarking is completed
   onBookmarked(function(url) {
     profileCode({
-      updateQueryString(url)
+      # The address bar keeps ?debug= across reloads; url(), which is
+      # emailed with a slide, does not carry it.
+      updateQueryString(withDebugQuery(url, isolate(session$userData$debug()), config$debug))
       url(url)
     }, name = "onBookmarked()")
   })
@@ -505,6 +518,11 @@ app_server <- function(input, output, session) {
       # on total body weight; restore them that way so their output is unchanged.
       if (is.null(state$input$adjustToFFM)) {
         updateCheckboxInput(session, "adjustToFFM", value = FALSE)
+      }
+      # A restored dose table with an illicit drug in it turns the opt-in on, so
+      # the drug is not hidden from the table it is part of (R/illicit-drugs.R).
+      if (any(isIllicitDrug(DT$Drug, drugDefaults()))) {
+        updateCheckboxInput(session, "showIllicitDrugs", value = TRUE)
       }
     }, name = "onRestored()")
   })
@@ -683,6 +701,24 @@ app_server <- function(input, output, session) {
     if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
   })
 
+  # The message for the plot area when Age, Weight or Height is not a number.
+  # A blank field, or an unfinished entry such as a lone ".", reaches the
+  # server as NULL or NA, and req() in age() etc. then stops everything
+  # silently: the plot went blank with no word of why.  (An out-of-range
+  # number is reported by checkNumericCovariates() in testCovariates().)
+  patientEntryProblem <- reactive({
+    fields <- c(age = "Age", weight = "Weight", height = "Height")
+    unreadable <- vapply(names(fields), function(id) {
+      x <- input[[id]]
+      !is.numeric(x) || length(x) != 1 || is.na(x)
+    }, logical(1))
+    if (!any(unreadable)) return(NULL)
+    paste0(
+      "Enter a number for ", paste(fields[unreadable], collapse = ", "),
+      " in the Patient Profile to see the simulation."
+    )
+  })
+
   testCovariates <- reactive({
     profileCode({
       outputComments("In testCovariates", level = DEBUG_LEVEL_VERBOSE)
@@ -770,6 +806,8 @@ app_server <- function(input, output, session) {
         sex = sex(),
         # NULL on the first pass, before the control has reported in
         cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
+        cyp2c19 = if (is.null(input$cyp2c19)) CYP2C19_DEFAULT else input$cyp2c19,
+        cyp2c9 = if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9,
         osmolality = osmolality(),
         creatinine = creatinine(),
         adjustToFFM = adjustToFFM()
@@ -1470,7 +1508,9 @@ app_server <- function(input, output, session) {
         selectInput(
           inputId = "addDoseDrug",
           label = "Drug",
-          choices = drugList,
+          # The visible drugs, honouring the illicit-drug opt-in; the clicked
+          # drug is always included (it is already in the table).
+          choices = union(drug, drugChoices()),
           selected = drug
         ),
         textInput(
@@ -2283,13 +2323,27 @@ app_server <- function(input, output, session) {
   })
 
   observeEvent(input$thresholdEditsOK, {
-    removeModal()
     tt <- rhandsontable::hot_to_r(input$editThresholdsTable)
     updated <- thresholdTableToDefaults(
       tt, drugDefaults(),
       tryCatch(isolate(age()), error = function(e) 40),
       macThreshold()
     )
+    # An entry that is not a number is refused, not read as 0 (no threshold):
+    # the dialog stays open, with every threshold as it was, until corrected.
+    if (length(updated$invalid) > 0) {
+      showNotification(
+        paste0(
+          "Threshold not changed: enter a number of 0 or more for ",
+          paste(unique(updated$invalid), collapse = ", "),
+          ". Enter 0 for no threshold."
+        ),
+        id = "thresholdInvalid", type = "error", duration = 10
+      )
+      return()
+    }
+    removeNotification("thresholdInvalid")
+    removeModal()
     drugDefaults(updated$drugDefaults)
     macThreshold(updated$macThreshold)
     updateCheckboxInput(session, "showThreshold", value = input$showThresholdModal)

@@ -2,14 +2,14 @@
 % Please edit documentation in R/routes.R
 \name{oralSaturationFraction}
 \alias{oralSaturationFraction}
-\title{Fraction of an oral dose absorbed when absorption saturates}
+\title{Fraction of an oral dose absorbed when it depends on the size of the dose}
 \usage{
 oralSaturationFraction(doseMg, saturation)
 }
 \arguments{
 \item{doseMg}{oral doses in mg per administration}
 
-\item{saturation}{\code{list(Imax, ID50)}, ID50 in mg, or NULL for none}
+\item{saturation}{the drug's \code{oralSaturation} block, or NULL for none}
 }
 \value{
 the fraction of each dose absorbed, relative to \code{bioavailability_PO}
@@ -30,9 +30,25 @@ the hyperbolic Dmax / (D50 + D) as the case Imax = 1.  The drug's
 \code{bioavailability_PO} stays the fraction absorbed in the limit of a small
 dose; the product of the two is the bioavailability of a given dose.
 
+Two further forms are declared with a \code{form} field (the one above is
+\code{form = "saturable"}, the default when the field is absent):
+\itemize{
+\item \code{form = "rising"}, \code{list(form, D50)}: the fraction is D / (D50 + D), so
+bioavailability RISES with the dose towards \code{bioavailability_PO}, which is
+then its maximum.  Sertraline (Alhadab and Brundage 2020, whose single-dose
+F(D) is 0.639 D / (15.5 + D)).
+\item \code{form = "power"}, \code{list(form, exponent, Dref)}: the fraction is
+(D / Dref)^exponent, 1 at the reference dose.  This is how an empirical
+power of the dose on apparent clearance, CL/F x (D / Dref)^-exponent, is
+carried by a linear engine: the steady-state exposure D / CL(D) is the
+same as that of the scaled dose on the reference clearance.  Paroxetine
+(Kim 2015).  The fraction may exceed 1 above Dref; it is an exposure
+scale on apparent parameters, not a physical bioavailability.
+}
+
 Each dose is scaled once, by its own size, and is then an independent input
 to the linear engines, so superposition still holds.  What this cannot
-represent is saturation shared between doses: two doses taken together are
+represent is dependence shared between doses: two doses taken together are
 scaled separately, not as their sum, and overlapping absorption from doses
 close in time does not compete.
 }

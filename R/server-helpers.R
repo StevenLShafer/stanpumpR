@@ -64,3 +64,27 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
   }
   success
 }
+
+# The bookmark URL for the address bar, with the session's debug level kept
+#
+# The URL is rewritten as a bookmark on every change, and the bookmark has no
+# debug parameter, so a reload used to lose ?debug=1 and the debug panel with
+# it.  The level is put back when it differs from the configured one, in front
+# of `_inputs_`, where Shiny's restore ignores it (after `_values_` it would be
+# read as a bookmarked value).  Only the address bar gets it: the URL emailed
+# with a slide, or copied from elsewhere, does not switch debugging on for
+# whoever opens it.
+#
+# @param url the bookmark URL from onBookmarked()
+# @param level the session's debug level (session$userData$debug(): a number
+#   from the URL or config, a string from the debug menu)
+# @param default the configured level (config$debug)
+withDebugQuery <- function(url, level, default = DEBUG_LEVEL_OFF) {
+  if (is.null(default)) default <- DEBUG_LEVEL_OFF
+  # The debug menu sends its level as a string
+  level <- suppressWarnings(as.numeric(level))
+  if (!is_valid_number(level) || isTRUE(level == default)) return(url)
+  sep <- regexpr("?", url, fixed = TRUE)
+  if (sep < 0) return(paste0(url, "?debug=", level))
+  paste0(substr(url, 1, sep), "debug=", level, "&", substring(url, sep + 1))
+}

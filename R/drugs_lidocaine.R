@@ -38,7 +38,31 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     v3 = v3,
     cl1 = cl1,
     cl2 = cl2,
-    cl3 = cl3
+    cl3 = cl3,
+    # Regional anesthesia (RA): a dose injected into tissue, absorbed
+    # first-order into the central compartment.  ka_RA is the single rate
+    # that best reproduces, with this disposition and F = 1, the arterial
+    # plasma curve after 600 mg of 1.5% lidocaine with epinephrine 5 mcg/mL
+    # for axillary block (Simon et al. 2002: mean peak 2.87 mcg/mL at 25.8
+    # min), as a two-rate input fitted to the published means (24% at
+    # 0.0903/min, 76% at 0.0088/min, on the Burm 1987 intravenous tracer
+    # disposition) describes it from 5 to 180 min: weighted least squares,
+    # each residual divided by the concentration + 0.3 mcg/mL.  0.0111/min is
+    # an absorption half-time of 62 min, and predicts a peak of 2.76 mcg/mL
+    # at 42 min.  Simon's own one-rate half-time, 8.4 min, does not transfer
+    # to an independent intravenous model: it predicts a peak of 6.9
+    # mcg/mL.  Axillary block with epinephrine only; other sites and plain
+    # solutions absorb differently, and F = 1 is an assumption (the label
+    # describes complete absorption after parenteral injection; no
+    # site-specific absolute bioavailability has been measured).  A slow
+    # second depot (ka_RA_slow, as mepivacaine has) does not help here: fitted
+    # to the same curve on this disposition, the fast share falls to 3% and
+    # the fit barely improves, because this model's clearance (1.4 L/min) and
+    # Vss (34 L) cannot give the curve's long tail whatever the input.
+    # (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
+    ka_RA = 0.0111,
+    bioavailability_RA = 1,
+    tlag_RA = 0
   )
   
   events <- c(PK_EVENT_DEFAULT)

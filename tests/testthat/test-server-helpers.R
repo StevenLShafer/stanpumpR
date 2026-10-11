@@ -20,3 +20,30 @@ test_that("checkNumericCovariates correctly identifies out of bounds input", {
   expect_false(checkNumericCovariates(21, 70, 170, creatinine = MAX_CREATININE + 1))
   expect_false(checkNumericCovariates(21, 70, 170, creatinine = NaN))
 })
+
+test_that("the address bar keeps the debug level, in front of the bookmark", {
+  bm <- "http://host/app/?_inputs_&age=50&_values_&DT=%7B%22Drug%22%3A%5B%22propofol%22%5D%7D"
+  # Off, or at the configured level: the URL is left alone
+  expect_identical(withDebugQuery(bm, DEBUG_LEVEL_OFF), bm)
+  expect_identical(withDebugQuery(bm, 2, default = 2), bm)
+  expect_identical(withDebugQuery(bm, 1, default = NULL), withDebugQuery(bm, 1))
+  expect_identical(withDebugQuery(bm, NULL), bm)
+  expect_identical(withDebugQuery(bm, "nonsense"), bm)
+
+  # On: added before _inputs_, where parseQueryString() (which app_server()
+  # reads the level from) finds it and Shiny's restore does not
+  url <- withDebugQuery(bm, 1)
+  expect_identical(url, sub("?", "?debug=1&", bm, fixed = TRUE))
+  query <- sub("^[^?]*", "", url)
+  expect_identical(shiny::parseQueryString(query)[["debug"]], "1")
+  rc <- shiny:::RestoreContext$new(query)
+  expect_identical(names(rc$values), "DT")
+  expect_true(isBookmarkRestore(rc$values))
+
+  # The debug menu sends a string; turning debugging off locally (config on)
+  # is kept too
+  expect_identical(withDebugQuery(bm, "2"), sub("?", "?debug=2&", bm, fixed = TRUE))
+  expect_identical(withDebugQuery(bm, "0", default = 2), sub("?", "?debug=0&", bm, fixed = TRUE))
+  # A URL with no query string at all
+  expect_identical(withDebugQuery("http://host/app/", 1), "http://host/app/?debug=1")
+})
