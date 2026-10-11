@@ -47,8 +47,13 @@ plasmaOnly <- c(
   "bupivacaine", "ropivacaine", "mepivacaine",
   # NSAIDs with no published ke0 (2026-10-10)
   "diclofenac", "meloxicam", "ketorolac",
-    # aspirin and the salicylate it forms (2026-10-10): no ke0
-    "aspirin", "salicylate",
+  # aspirin and the salicylate it forms (2026-10-10): no ke0
+  "aspirin", "salicylate",
+  # the antiseizure drugs: plotted as plasma, no established concentration-
+  # linked effect site (2026-10-10)
+  "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",
+  "topiramate", "lacosamide", "lamotrigine", "zonisamide", "tiagabine",
+  "levetiracetam", "eslicarbazepine", "carbamazepine",
   # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
   "diamorphine"
 )

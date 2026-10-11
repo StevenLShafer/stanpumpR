@@ -73,7 +73,7 @@ bupropion,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#283593,0,0,0,0,0,IV,Antidepress
 hydroxybupropion,ng,,,,,#9575CD,850,1500,1200,0,0,IV,
 fluoxetine,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidepressants
 norfluoxetine,ng,,,,,#4DB6AC,0,0,0,0,0,IV,
-methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4527A0,0,0,0,0,0,IV,Stimulants
+methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO XR,mg PO XR qd",#4527A0,0,0,0,0,0,IV,Stimulants
 lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,0,0,0,0,0,IV,Stimulants
 mixedAmphetamineSalts,ng,,,mg PO XR,"mg PO,mg PO bid,mg PO XR,mg PO XR qd",#827717,0,0,0,0,0,IV,Stimulants
 ondansetron,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#00838F,5,40,20,0,0,IV,Antiemetics
@@ -86,4 +86,17 @@ sevoflurane,%,%,%,%,"%",#F9A825,0,0,0,0,0.21,gas,Inhaled anesthetics
 isoflurane,%,%,%,%,"%",#8E24AA,0,0,0,0,0.11,gas,Inhaled anesthetics
 desflurane,%,%,%,%,"%",#00897B,0,0,0,0,0.6,gas,Inhaled anesthetics
 ventilation,L/min,L/min,L/min,L/min,"L/min",#546E7A,0,0,0,0,0,gas,
+phenytoin,mcg,mg,mg/min,mg PO ER,"mg,mg/kg,mg/min,mg PO ER,mg PO liquid,mg PO tablet,mg PO ER qd,mg PO ER bid,mg PO ER tid,mg PO liquid bid,mg PO liquid tid,mg PO tablet bid,mg PO tablet tid,mg PE,mg/kg PE,mg PE/min,mg PE IM,mg/kg PE IM",#2E7D32,10,20,15,0,0,IV,Antiseizure
+carbamazepine,mcg,,,mg PO bid,"mg PO,mg PO ER,mg PO bid,mg PO tid,mg PO ER qd,mg PO ER bid",#00695C,4,12,8,0,0,IV,Antiseizure
+valproate,mcg,mg,mg/hr,mg PO DR bid,"mg,mg/hr,mg PO DR,mg PO liquid,mg PO ER,mg PO DR bid,mg PO DR tid,mg PO liquid bid,mg PO liquid tid,mg PO ER qd,mg PO ER bid",#5D4037,50,100,75,0,0,IV,Antiseizure
+phenobarbital,mcg,mg,mg/hr,mg PO qd,"mg,mg/kg,mg/hr,mg PO,mg PO qd,mg PO bid",#455A64,10,40,20,0,0,IV,Antiseizure
+pentobarbital,mcg,mg,mg/kg/hr,mg/kg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6D4C41,20,40,30,0,0,IV,Antiseizure
+ethosuximide,mcg,,,mg PO bid,"mg PO,mg PO liquid,mg PO bid,mg PO tid,mg PO liquid bid,mg PO liquid tid",#827717,40,100,70,0,0,IV,Antiseizure
+topiramate,mcg,,,mg PO bid,"mg PO,mg PO bid,mg PO tid",#AD1457,5,20,10,0,0,IV,Antiseizure
+lacosamide,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid,mg PO tid",#1565C0,10,20,15,0,0,IV,Antiseizure
+lamotrigine,mcg,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#C62828,3,15,8,0,0,IV,Antiseizure
+zonisamide,mcg,,,mg PO qd,"mg PO,mg PO liquid,mg PO qd,mg PO bid",#4527A0,10,40,20,0,0,IV,Antiseizure
+tiagabine,ng,,,mg PO tid,"mg PO,mg PO bid,mg PO tid,mg PO qid",#00838F,20,200,50,0,0,IV,Antiseizure
+levetiracetam,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid",#2E7D32,12,46,30,0,0,IV,Antiseizure
+eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,26,15,0,0,IV,Antiseizure
 diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs

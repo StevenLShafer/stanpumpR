@@ -10,7 +10,7 @@ The second dose at six hours arrives when the first has fallen to about half its
 
 - Change the interval to four hours (doses at 0, 240 and 480 minutes) and see the accumulation.
 - Set *Time units* to days and *Max time* to 2 days, and give 10 mg every six hours for a day: a `mg PO qid` row at `0`, and a `0 mg PO qid` row at `1`. How many doses until the troughs stop rising?
-- Add hydromorphone 2 mg PO at the same times and compare the absorption: the two have the same absorption half-time (about 70 minutes), but hydromorphone's parameters are provisional.
+- Add hydromorphone 2 mg PO at the same times and compare the absorption: the two have the same absorption half-time (about 70 minutes). Hydromorphone's oral bioavailability is 0.225, calibrated to Lohela 2021, so 2 mg by mouth stays below its minimum effective concentration in an opioid-naive adult.
 
 ## Background
 

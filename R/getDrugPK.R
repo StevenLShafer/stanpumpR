@@ -13,6 +13,8 @@
 #'   Passed only to drug models that declare it; the rest ignore it.
 #' @param cyp2c19 CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
 #'   Passed only to drug models that declare it (escitalopram, citalopram).
+#' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES};
+#'   passed only to models that name it (phenytoin).
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
@@ -62,6 +64,7 @@ getDrugPK <- function(
   osmolality = OSMOLALITY_DEFAULT,
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
+  cyp2c9 = CYP2C9_DEFAULT,
   model = NULL
 )
 {
@@ -78,6 +81,10 @@ getDrugPK <- function(
   if (length(cyp2c19) != 1 || !cyp2c19 %in% CYP2C19_VALUES) {
     stop("Invalid cyp2c19: ", paste(cyp2c19, collapse = ", "),
          ". Must be one of: ", paste(CYP2C19_VALUES, collapse = ", "))
+  }
+  if (length(cyp2c9) != 1 || !cyp2c9 %in% CYP2C9_VALUES) {
+    stop("Invalid cyp2c9: ", paste(cyp2c9, collapse = ", "),
+         ". Must be one of: ", paste(CYP2C9_VALUES, collapse = ", "))
   }
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
@@ -124,6 +131,9 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "cyp2c19" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2c19 <- cyp2c19
+  if (exists(drug, mode = "function") &&
+      "cyp2c9" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp2c9 <- cyp2c9
   # Likewise the fat-free-mass switch: every drug model in the library
   # declares it, but a mocked model taking only ... need not.
   if (exists(drug, mode = "function") &&
@@ -878,6 +888,7 @@ getDrugPK <- function(
       drugDefaults = metaboliteDefaults,
       cyp2d6 = cyp2d6,
       cyp2c19 = cyp2c19,
+      cyp2c9 = cyp2c9,
       osmolality = osmolality,
       creatinine = creatinine,
       adjustToFFM = adjustToFFM,
@@ -962,6 +973,11 @@ getDrugPK <- function(
   # A drug with more than one oral formulation: the PK sets of each further
   # one, which simCpCe() uses for that formulation's doses.
   out$oralFormulations <- oralFormulations
+  # A drug with saturable (Michaelis-Menten) elimination: simCpCe() runs it
+  # through the numerical engine, R/advanceMichaelisMenten.R.  The linear PK
+  # set above carries the low-concentration limit, CL = Vmax / Km, for the
+  # parts of the app that need one (the help tables).
+  out$michaelisMenten <- validateMichaelisMenten(X$michaelisMenten, drug)
   # A drug plotted as the sum of independent linear systems that share its
   # doses: ketorolac, whose S and R enantiomers have dispositions of their own
   # (R/drugs_ketorolac.R).  The model's own PK is the first system; each entry

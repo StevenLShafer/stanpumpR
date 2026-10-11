@@ -67,7 +67,8 @@ helpScenarioDefaultOptions <- function() {
 helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
-                         doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT, ...) {
+                         doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
+                         cyp2c9 = CYP2C9_DEFAULT, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -83,7 +84,8 @@ helpScenario <- function(id, title, group, summary,
   list(
     id = id, title = title, group = group, summary = summary,
     patient = list(age = age, weight = weight, height = height, sex = sex,
-                   cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, adjustToFFM = adjustToFFM),
+                   cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+                   adjustToFFM = adjustToFFM),
     doses = doses, events = events, options = options
   )
 }
@@ -567,6 +569,23 @@ helpScenarios <- function() {
       timeUnits = "days", maximum = 4320,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    helpScenario(
+      "ropivacaine-perineural-infusion",
+      "Ropivacaine: a continuous perineural infusion",
+      "Regional anesthesia",
+      "A 150 mg block followed by a 48-hour catheter infusion of 16 mg/hr: slow absorption delays the block's peak to 3 hours, the infusion settles at rate / clearance, and the concentration falls slowly after it stops.",
+      # 65 years: the ropivacaine disposition is that of patients 61 and over.
+      age = 65,
+      doses = helpDoses(
+        c("ropivacaine", 0, 150, "mg RA"),
+        c("ropivacaine", 0, 16, "mg/hr RA"),
+        c("ropivacaine", 2880, 0, "mg/hr RA")
+      ),
+      # Ropivacaine has no effect site, so the plasma line carries the curve.
+      # Three days, in days: the infusion stops at 2.
+      timeUnits = "days", maximum = 4320,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",
@@ -651,6 +670,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$sex %in% SEX_VALUES) say("invalid sex: ", p$sex)
   if (!p$cyp2d6 %in% CYP2D6_VALUES) say("invalid cyp2d6: ", p$cyp2d6)
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
+  if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
 
   o <- s$options
@@ -781,6 +801,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   shinyWidgets::updateRadioGroupButtons(session, "sex", selected = p$sex)
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
+  updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
 
   if (is.null(timeApi)) {
@@ -833,6 +854,7 @@ helpScenarioPageHTML <- function(id) {
     Sex = p$sex,
     `CYP 2D6` = tools::toTitleCase(p$cyp2d6),
     `CYP 2C19` = tools::toTitleCase(p$cyp2c19),
+    `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     check.names = FALSE, stringsAsFactors = FALSE
   )

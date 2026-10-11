@@ -16,7 +16,7 @@ test_that("returns the published parameters with total-body-weight scaling", {
         cl2 = 3.36,
         cl3 = 0.896,
         ka_PO = 0.01,
-        bioavailability_PO = 0.6,
+        bioavailability_PO = 0.225,
         tlag_PO = 0,
         # Corrected 2026-10-06.  These three used to copy the oral values and
         # add lags of 90 and 180 min, which put the intranasal plasma peak at
@@ -82,9 +82,14 @@ test_that("time until threshold counts down from the first minutes on every rout
   # dose and three hours after an intranasal one, which reads as "already
   # recovered" when the truth is "not yet absorbed".
   ev <- data.frame(Time = numeric(0), Event = character(0))
-  for (units in c("mg", "mg IM", "mg IN", "mg PO")) {
+  # 2 mg by each parenteral route; 8 mg by mouth, because at the oral
+  # bioavailability of 0.225 (Lohela 2021, since 2026-10-10) 2 or 4 mg oral
+  # never brings the effect site up to the 1.5 ng/mL threshold, so there is
+  # no time to count down.
+  doses <- c("mg" = 2, "mg IM" = 2, "mg IN" = 2, "mg PO" = 8)
+  for (units in names(doses)) {
     o <- simulateDrugsWithCovariates(
-      data.frame(Drug = "hydromorphone", Time = 0, Dose = 2, Units = units),
+      data.frame(Drug = "hydromorphone", Time = 0, Dose = doses[[units]], Units = units),
       ev, 70, 171, 50, "male", 720, TRUE)
     es <- o$hydromorphone$equiSpace
     at10 <- stats::approx(es$Time, es$Recovery, 10)$y
@@ -127,4 +132,38 @@ test_that("oral liquid is the tablet's absorption, entered as prescribed", {
   units <- getDrugDefaults("hydromorphone")$Units[[1]]
   expect_true(all(c("mg PO liquid", "mg/kg PO liquid", "mg PO liquid qid",
                     "mg/kg PO liquid qid") %in% units))
+})
+
+test_that("oral hydromorphone reproduces Lohela 2021's apparent clearance and curve", {
+  # Lohela TJ et al., Anesth Analg 2021;133:423-434: 2.6 mg immediate-release
+  # hydromorphone HCl, 12 fasted volunteers, placebo phase.  Apparent oral
+  # clearance 5.78 L/min (Table 1); mean curve from Figure 1A, read from the
+  # plot, so compared loosely.
+  PK <- getDrugPK("hydromorphone", 70, 170, 40, "male")
+  set <- PK$PK$default
+  expect_equal(set$cl1 / set$bioavailability_PO, 5.78, tolerance = 0.005)
+  sim <- simCpCe(
+    data.frame(Drug = "hydromorphone", Time = 0, Dose = 2.6, Units = "mg PO"),
+    data.frame(Time = numeric(0), Event = character(0)), PK, 12 * 60, FALSE)
+  r <- sim$results[sim$results$Site == "Plasma", ]
+  hours <- c(0.5, 1, 1.5, 2, 3, 4, 6, 8)
+  lohela <- c(1.18, 1.30, 1.13, 0.90, 0.61, 0.45, 0.25, 0.17)   # ng/mL
+  model <- stats::approx(r$Time, r$Y, xout = hours * 60)$y
+  expect_true(all(abs(model / lohela - 1) < 0.2))
+  # Peak at 46 min on a fine grid; the engine's plotted grid puts it within
+  # a few minutes of that.
+  expect_lt(abs(r$Time[which.max(r$Y)] - 46), 6)
+})
+
+test_that("hydrocodone's formed hydromorphone does not use hydromorphone's oral F", {
+  # Hydromorphone is hydrocodone's metabolite.  Its formation runs through
+  # the metabolite link on the PARENT's absorption, so recalibrating
+  # hydromorphone's own oral bioavailability (0.6 -> 0.225, 2026-10-10) must
+  # leave it unchanged.  Pinned before that change: 10 mg oral hydrocodone,
+  # 70 kg reference man, peak formed hydromorphone 0.07444011 (ng/mL scale).
+  PK <- getDrugPK("hydrocodone", 70, 170, 40, "male")
+  sim <- simCpCe(
+    data.frame(Drug = "hydrocodone", Time = 0, Dose = 10, Units = "mg PO"),
+    data.frame(Time = numeric(0), Event = character(0)), PK, 720, FALSE)
+  expect_equal(max(sim$metaboliteSeries$Cp), 0.07444011, tolerance = 1e-6)
 })

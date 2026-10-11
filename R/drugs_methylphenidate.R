@@ -42,11 +42,52 @@
 # =========
 # Apparent parameters predict oral concentrations and would predict
 # intravenous ones wrong by 1/F (docs/adding-a-drug.md), so only oral units
-# are offered.  Nor do the parameters describe any extended-release product:
-# Concerta's osmotic input, Ritalin LA's beads and Aptensio's layers are each
-# product-specific, and none has a published numerical input model that this
-# engine could carry.  Entering a Concerta strength here would simulate an
-# immediate-release tablet of that size.
+# are offered.
+#
+# CONCERTA ("mg PO XR")
+# =====================
+# Drafted by Claude Code, 2026-10-10, at the request of Steven L. Shafer.
+# Concerta (OROS methylphenidate) is entered as "mg PO XR".  No published
+# model gives its input numerically (Gomeni 2017 fitted a double Weibull to
+# mean curves without printing a usable parameter set), so its input is
+# FITTED HERE, to the shape of the mean curve in Childress AC et al., Clin
+# Pharmacol Drug Dev 2025;14:829-835 (doi 10.1002/cpdd.1577), the OROS
+# reference arms of two bioequivalence trials: healthy adults, fasted, 54 mg
+# (n = 67) and 2 x 36 mg (n = 111), sampled every 30 min to 10 h then to 36 h.
+#
+# The input, given to the disposition above through oralPulses
+# (R/oral-pulses.R):
+#   - 22% at the time of the dose: the drug overcoat, the label's content
+#     fraction, absorbed as the immediate-release tablet;
+#   - 78%, the osmotic core, delivered from 2 h to 15 h at a rate falling
+#     linearly to zero, given as 52 pulses 15 min apart.
+# The 2 h and 15 h were fitted (1.94 and 15.18 h, rounded) to four shape
+# targets that do not depend on the level of the curve, the fractions of
+# AUC0-inf in 0-3, 3-7, 7-12 and after 12 h, and to Tmax:
+#
+#                 0-3 h   3-7 h   7-12 h   >12 h   Tmax
+#     model       0.111   0.268   0.350    0.274   6.8 h
+#     54 mg       0.103   0.257   0.329    0.311   7.0 h (median)
+#     2 x 36 mg   0.113   0.298   0.340    0.249   6.5 h (median)
+#
+# This is an in-vivo input rate, not the tablet's in-vitro release: the
+# osmotic pump delivers at a steady or rising rate, but the drug it delivers
+# late, in the colon, is absorbed less well, and the fitted rate falls.
+#
+# THE LEVEL: THIS MODEL IS LOW AGAINST CHILDRESS
+# ==============================================
+# The disposition is Lyauk's, unchanged, so the AUC of any dose is fixed by
+# the dose basis and CL/F above.  Against Childress the model is low: AUC
+# 116 against 174 ng.h/mL after 54 mg (-33%), 154 against 211 after 72 mg
+# (-27%), and Cmax 8.9 against 14.6 after 54 mg (-39%).  The difference is
+# between studies, not between formulations: Lyauk's clearance reproduces
+# Stage 2017's d-MPH AUC after the immediate-release tablet.  Candidate
+# reasons: Childress assayed total methylphenidate, so l-MPH is included;
+# different populations and laboratories.  It is reported, not tuned away.
+#
+# Ritalin LA, Aptensio XR, Metadate CD, Quillichew and the generic
+# "extended-release" methylphenidates are different inputs: "mg PO XR" here
+# means Concerta only.
 #
 # REDUCTION: TRANSIT CHAIN TO A LAG TIME
 # ======================================
@@ -112,6 +153,23 @@ METHYLPHENIDATE_D_FRACTION <- 0.5
 
 # Lag-time reduction of Lyauk's transit absorption, per sex (header).
 # Hours and per hour, as fitted; converted to minutes below.
+# Concerta's input (see the header): 22% at once, then 78% over 2 to 15 h at a
+# rate falling linearly to zero, as pulses every 15 min.
+CONCERTA_OVERCOAT <- 0.22
+CONCERTA_RELEASE_START <- 2    # h
+CONCERTA_RELEASE_END   <- 15   # h
+CONCERTA_PULSE_STEP    <- 15   # min
+
+concertaPulses <- function()
+{
+  n <- (CONCERTA_RELEASE_END - CONCERTA_RELEASE_START) * 60 / CONCERTA_PULSE_STEP
+  mid <- CONCERTA_RELEASE_START * 60 + (seq_len(n) - 0.5) * CONCERTA_PULSE_STEP  # min
+  w <- (CONCERTA_RELEASE_END * 60 - mid)       # falls linearly to zero
+  w <- w / sum(w)
+  list(fraction = c(CONCERTA_OVERCOAT, (1 - CONCERTA_OVERCOAT) * w),
+       delay    = c(0, mid))
+}
+
 METHYLPHENIDATE_ABSORPTION <- list(
   male   = list(tlag = 0.34871, ka = 0.39782),
   female = list(tlag = 0.62925, ka = 0.36607)
@@ -186,7 +244,10 @@ methylphenidate <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "https://doi.org/10.1111/cts.12423 (d-methylphenidate after racemic ",
     "Ritalin IR in healthy adults; transit absorption reduced to a lag time; ",
     "dose basis 50% d-MPH, checked against Stage C et al., Br J Clin ",
-    "Pharmacol 2017;83:1506-1514, https://doi.org/10.1111/bcp.13237)"
+    "Pharmacol 2017;83:1506-1514, https://doi.org/10.1111/bcp.13237). ",
+    "Concerta (mg PO XR): 22% at once, 78% over 2-15 h at a falling rate, ",
+    "fitted here to the curve shape of Childress AC et al., Clin Pharmacol ",
+    "Drug Dev 2025;14:829-835, https://doi.org/10.1002/cpdd.1577"
   )
 
   return(
@@ -197,7 +258,9 @@ methylphenidate <- function(weight, height, age, sex, adjustToFFM = TRUE)
       typical = 0,   # no therapeutic band (header)
       upperTypical = 0,
       lowerTypical = 0,
-      reference = reference
+      reference = reference,
+      # Concerta ("mg PO XR"): input fitted to Childress 2025 (header)
+      oralPulses = list(XR = concertaPulses())
     )
   )
 }
