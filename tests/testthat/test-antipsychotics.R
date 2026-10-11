@@ -49,18 +49,24 @@ test_that("occupancy is the paired hyperbola, with its limits", {
 })
 
 test_that("non-occupancy and missing endpoints are refused", {
-  expect_error(antipsychoticOccupancy("haloperidol", 3), "PANSS")
-  for (p in c("haloperidolIV", "droperidol", "droperidolIM", "chlorpromazine"))
+  expect_error(antipsychoticOccupancy("haloperidol", 3, fit = "Pilla Reddy 2013"), "PANSS")
+  # Lim 2013: half of the putamen receptors at 0.791 ng/mL
+  expect_equal(antipsychoticOccupancy("haloperidol", 0.791), 50)
+  expect_equal(antipsychoticOccupancy("haloperidolIV", 0.650, fit = "Lim 2013, caudate"), 50)
+  for (p in c("droperidol", "droperidolIM", "chlorpromazine"))
     expect_error(antipsychoticOccupancy(p, 1), "No pharmacodynamic endpoint")
   expect_error(antipsychoticOccupancy("quetiapine", -1), "nonnegative")
   expect_error(antipsychoticProfile("clozapine"), "Unknown antipsychotic profile")
 })
 
-test_that("only aripiprazole has an effect site", {
+test_that("only aripiprazole and the two haloperidols have an effect site", {
   for (p in profiles) {
     if (is.na(p$drug)) next
     pk <- getDrugPK(p$drug, 70, 170, 35, "male", getDrugDefaults(p$drug))
     hasCe <- pk$PK$default$ke0 > 0
-    expect_identical(hasCe, p$drug == "aripiprazole", info = p$drug)
+    expect_identical(hasCe, p$drug %in% c("aripiprazole", "haloperidol", "haloperidolIV"),
+                     info = p$drug)
+    # and it is the registered fit's ke0, not one solved from a tPeak
+    if (hasCe) expect_equal(pk$PK$default$ke0, p$pd[[1]]$ke0, info = p$drug)
   }
 })

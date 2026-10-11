@@ -19,8 +19,8 @@ pharmacodynamic endpoints (`antipsychoticProfiles()`,
   D2 occupancy is a receptor biomarker, and no validated clinical target is
   specified.
 - **Occupancy is not plotted.** The Effect Site trace stays a concentration.
-  Only aripiprazole has one (Kim 2012's PET ke0, supplied directly); the rest
-  are plasma only. `antipsychoticOccupancy()` turns a simulated driver
+  Aripiprazole (Kim 2012) and both haloperidols (Lim 2013) have one, from a
+  PET ke0 supplied directly; the rest are plasma only. `antipsychoticOccupancy()` turns a simulated driver
   concentration into occupancy with one of the profile's paired Emax/EC50
   fits, and refuses the haloperidol PANSS term and the profiles with no
   endpoint.
@@ -41,9 +41,9 @@ primary text, as far as the network allowed (2026-10-09).
 | olanzapine | Sun 2021 Table 3: all values; Vp and Q carry no covariates | power form of the age term; Kapur 1998 EC50 10.3 ng/mL (abstract gives occupancy by dose only) |
 | risperidone | Størset 2024 text: structure, ka, serum, allele activities, NFIB, both age terms, phenotype anchors 4.2 / 27.4 / 50.6 L/h; Emax 100% / EC50 8.2 ng/mL (Lindauer 2025) | V/F 333 L, Vm 96 L, CLm 8.0 L/h (Table 2); Emax 88% / EC50 4.9 ng/mL |
 | aripiprazole | Kim 2008 abstract: structure, ka, V/F **192 L** (the brief said 193), intermediate CL about 60% of normal; Kim 2012 abstract: EC50 8.63 ng/mL | genotype-class CL/F, CLm/fm, Vm/fm, the formation convention, ke0 0.725 /h, Emax |
-| haloperidol | abstract only: two compartments, 122 subjects | every parameter (indirectly supported by Li 2022's citation of CL/F 88, total V 3169 L) |
+| haloperidol | abstract only: two compartments, 122 subjects; full texts of Park 2006 (CYP2D6 0.77), Lim 2013 (ke0 0.213/h, Ce50 0.791 ng/mL) and Kim 1996 (rifampin, documented only) | every Pilla Reddy parameter (indirectly supported by Li 2022's citation of CL/F 88, total V 3169 L) |
 | haloperidolIV | Li 2022 text: CL 51.7 L/h, V 1490 L, IIV 29.9%, IV route | CRP function (not applied) |
-| droperidol | Cooper 2018 full text: all values | none; the source itself is weak, see below |
+| droperidol | Lehmann 1988 full text (Fig. 1 curves, Tables I-III); checked against Gupta 1992, Fischler 1986, Cooper 2018 and Grunwald 1993 full texts | none |
 | droperidolIM | Foo 2016 abstract: CL/F, Vc/F, ka, doses, half-lives | Q/F and Vp/F (consistent with the half-lives) |
 
 The Gründer 2008 aripiprazole alternative in the brief (Emax 95%, EC50
@@ -52,12 +52,11 @@ The Gründer 2008 aripiprazole alternative in the brief (Emax 95%, EC50
 
 ## Known weaknesses
 
-- **IV droperidol** (Cooper 2018): seven healthy men, no sample in the first
-  25 min after a dose, and the authors report that clearance is
-  underestimated (their noncompartmental 33.8 vs 15.3 L/h). Vss is about 20 L,
-  against roughly 140 L from Fischler 1986. After 1.4 mg the model starts at
-  440 ng/mL. Treat the early curve as an upper bound. A replacement IV model
-  would be worth finding.
+- **IV droperidol** (Lehmann 1988): fitted to the three dose groups' mean
+  curves rather than individual data. It reproduces Gupta's 24 h infusion
+  plateau (3.2 ng/mL) and Fischler's Vss; Fischler's clearance is higher.
+  Scaled to children it overstates clearance and volume about 2.5-fold
+  against Grunwald 1993. Cooper 2018, used first, was replaced.
 - **Aripiprazole CYP2D6**: poor and ultrarapid metabolisers were not studied
   and take the nearest studied clearance.
 - **Risperidone ultrarapid**: extrapolated as three functional alleles.

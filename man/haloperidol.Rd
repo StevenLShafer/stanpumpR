@@ -4,7 +4,14 @@
 \alias{haloperidol}
 \title{Haloperidol pharmacokinetics (oral)}
 \usage{
-haloperidol(weight, height, age, sex, adjustToFFM = TRUE)
+haloperidol(
+  weight,
+  height,
+  age,
+  sex,
+  cyp2d6 = CYP2D6_DEFAULT,
+  adjustToFFM = TRUE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -14,6 +21,8 @@ haloperidol(weight, height, age, sex, adjustToFFM = TRUE)
 \item{age}{age in years}
 
 \item{sex}{sex as a string}
+
+\item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}}
 
 \item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
 patient's fat-free mass as described in the
@@ -26,6 +35,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Pilla Reddy et al. (2013): two compartments, apparent oral parameters.
-Plasma only.
+Pilla Reddy et al. (2013): two compartments, apparent oral parameters,
+with CYP2D6 on clearance (Park 2006) and a D2-occupancy effect site (Lim
+2013).
 }
