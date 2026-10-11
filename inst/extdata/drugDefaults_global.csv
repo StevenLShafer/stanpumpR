@@ -84,6 +84,16 @@ mixedAmphetamineSalts,ng,,,mg PO XR,"mg PO,mg PO bid,mg PO XR,mg PO XR qd",#8277
 ondansetron,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#00838F,5,40,20,0,0,IV,Antiemetics
 aprepitant,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#8D6E2F,116,1500,500,0,0,IV,Antiemetics
 fosaprepitant,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6D4C41,116,1500,500,0,0,IV,Antiemetics
+quetiapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4E342E,0,0,0,0,0,IV,Antipsychotics
+risperidone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00ACC1,0,0,0,0,0,IV,Antipsychotics
+hydroxyrisperidone,ng,,,,,#80DEEA,0,0,0,0,0,IV,
+aripiprazole,ng,,,mg PO,"mg PO,mg PO qd",#512DA8,0,0,0,0,0,IV,Antipsychotics
+dehydroaripiprazole,ng,,,,,#B39DDB,0,0,0,0,0,IV,
+olanzapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#1B5E20,0,0,0,0,0,IV,Antipsychotics
+haloperidol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#9C27B0,0,0,0,0,0,IV,Antipsychotics
+haloperidolIV,ng,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#F48FB1,0,0,0,0,0,IV,Antipsychotics
+droperidol,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#F57F17,0,0,0,0,0,IV,Antipsychotics
+droperidolIM,ng,,,mg IM,"mg IM",#FFB74D,0,0,0,0,0,IV,Antipsychotics
 air,%,L/min,L/min,L/min,"L/min",#9E9E9E,0,0,0,0,0,gas,
 oxygen,%,L/min,L/min,L/min,"L/min",#2E7D32,0,0,0,0,0,gas,
 nitrousOxide,%,L/min,L/min,L/min,"L/min",#1E88E5,0,0,0,0,10,gas,Inhaled anesthetics

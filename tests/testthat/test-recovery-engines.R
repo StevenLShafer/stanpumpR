@@ -391,7 +391,11 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # Diamorphine joined on 2026-10-10: the opt-in illicit research model
     # (R/drugs_diamorphine.R) plots parent plasma only, with 6-MAM and morphine
     # not modelled, so it has no effect site and forms no metabolite here.
-    "diamorphine"
+    "diamorphine",
+    # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
+    # or no effect is established; aripiprazole alone has a PET ke0.
+    "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
+    "olanzapine", "haloperidol", "haloperidolIV", "droperidol", "droperidolIM"
   ))
 })
 

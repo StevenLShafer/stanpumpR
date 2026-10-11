@@ -81,7 +81,10 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # enteric-coated lag (2026-10-11)
                     "diclofenacEC",
                     # sublingual lag fitted with ka (2026-10-10)
-                    "buprenorphine"))
+                    "buprenorphine",
+                    # Sun 2021's fixed 0.782 h lag; plasma only, so no
+                    # effect-site recovery to blank
+                    "olanzapine"))
 })
 
 

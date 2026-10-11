@@ -57,7 +57,11 @@ plasmaOnly <- c(
   "topiramate", "lacosamide", "lamotrigine", "zonisamide", "tiagabine",
   "levetiracetam", "eslicarbazepine", "carbamazepine",
   # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
-  "diamorphine"
+  "diamorphine",
+  # Antipsychotics: occupancy is a direct function of plasma, or no effect is
+  # established.  Aripiprazole, with a PET ke0, is the exception.
+  "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
+  "olanzapine", "haloperidol", "haloperidolIV", "droperidol", "droperidolIM"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
