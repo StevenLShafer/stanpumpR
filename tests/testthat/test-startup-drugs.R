@@ -8,7 +8,8 @@ dd <- getDrugDefaultsGlobal()
 test_that("every drug that can be dosed has a category the menu knows", {
   # Not offered: the metabolites with no units of their own, and the carrier gases
   # and ventilation, which the gas rules add themselves
-  notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine", "desvenlafaxine",
+  notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
+                  "desvenlafaxine", "salicylate",
                   "air", "oxygen", "ventilation")
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))
@@ -31,8 +32,8 @@ test_that("the menu lists the categories in order, each sorted by name", {
   # The non-opioid analgesics given by mouth (acetaminophen, ibuprofen,
   # diclofenac and ketorolac IV too); the oral opioids stay under Opioids
   expect_identical(choices[["Oral analgesics"]],
-                   c("acetaminophen", "diclofenac", "gabapentin", "ibuprofen",
-                     "ketorolac", "meloxicam", "pregabalin"))
+                   c("acetaminophen", "celecoxib", "diclofenac", "gabapentin",
+                     "ibuprofen", "ketorolac", "meloxicam", "pregabalin"))
   expect_identical(choices[["Hypnotics and sedatives"]],
                    c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "etomidate",
                      "ketamine", "lorazepam", "midazolam", "propofol",
