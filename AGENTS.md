@@ -71,6 +71,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 - **Antipsychotics** (`docs/antipsychotics.md`): an apparent (`/F`) parameter set and an absolute IV one are separate drugs (`haloperidol` / `haloperidolIV`, `droperidol` / `droperidolIM`). D2 occupancy lives in `antipsychoticProfiles()` (`R/antipsychotics.R`), not in the MEAC or the band, which are zero.
 - **Debug logging**: `outputComments()`, active when `?debug=1` is in the URL.
 - **Deploy**: GitHub Actions — PRs auto-deploy to a test environment; merges to `master` deploy to production (shinyapps.io).
+- **Keeping the models current**: a weekly Claude Code Routine in the cloud (`docs/literature-watch.md`) searches PubMed for new PK studies of every drug in the CSV, screens them and emails the maintainer the promising ones with an assessment; it never writes code. Incorporating a paper is an ordinary drug addition or update started by the maintainer. A change to what the routine does is recorded on that page.
 - **Adding an R package**: add to `DESCRIPTION` first, then `renv::install("pkg")` + `renv::snapshot()`, commit `DESCRIPTION` + `renv.lock` together. For a package that isn't on CRAN, also add it under `Remotes:` in `DESCRIPTION` (e.g. `daattali/undomanager`) and install with `renv::install("user/repo")`, so the deploy can resolve it. A package used only by an optional entry point (plumber for the TCI API) goes in `Suggests`, is guarded with `requireNamespace()`, and is not snapshotted into `renv.lock`.
 
 
