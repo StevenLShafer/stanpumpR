@@ -66,6 +66,7 @@ vecuronium <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # construction nobody fitted.  The significance filter above governs which
   # kinetic changes reach Vega-Villa's model, which is a separate question.
   # Either way the effect is small beside the volume and clearance change.
+  # Shafer reviewed both derivations on 2026-10-12 and chose the 4.80.
   #
   # Rupp found NO significant age difference in ke0 (0.165 against 0.169),
   # Cpss50 (106 against 92) or gamma (4.84 against 5.80), so the potency and
