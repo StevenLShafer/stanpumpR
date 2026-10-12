@@ -141,8 +141,8 @@ apiDocsHtml <- function(path = system.file("apidocs", "api.md", package = "stanp
 # index.html.  Rendered once, when the app starts.
 apiDocsDir <- function(dir = file.path(tempdir(), "stanpumpr-api-docs")) {
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
-  con <- file(file.path(dir, "index.html"), open = "w", encoding = "UTF-8")
-  on.exit(close(con))
-  cat(apiDocsHtml(), file = con)
+  # Bytes, not text: a text connection on Windows would turn every \n into
+  # \r\n.  The page is UTF-8 (enc2utf8) whatever the session's locale.
+  writeBin(charToRaw(enc2utf8(apiDocsHtml())), file.path(dir, "index.html"))
   dir
 }
