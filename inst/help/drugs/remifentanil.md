@@ -4,7 +4,7 @@ For a patient with **BMI below 30** the parameters are the **Eleveld allometric 
 
 For a patient with **BMI of 30 or above** they are the **Kim model for obesity** (Kim TK, Obara S, Egan TD, et al. *Anesthesiology* 2017;126:1019-1032), with V1 and clearance scaled to weight, V2 to Janmahasatian fat-free mass, and age terms. Kim pooled data from 229 people, 107 surgical patients and 122 volunteers, aged 20 to 85 years with BMI from 16.1 to 73.7, so the model was not fitted to obese patients alone. Using it only at BMI 30 and above, the conventional threshold for obesity, is stanpumpR's rule, not a limit set by the source study. The citation the model function returns, and the References panel shows, follows the branch in use for the patient entered.
 
-Minto and colleagues' 1997 model (*Anesthesiology* 1997;86:10-23), on which STANPUMP's remifentanil kinetics were based and which most commercial remifentanil TCI pumps implement, is kept in the drug file as comments but is not computed.
+Minto and colleagues' 1997 model (*Anesthesiology* 1997;86:10-23), on which STANPUMP's remifentanil kinetics were based and which most commercial remifentanil TCI pumps implement, is kept in the drug file as comments and is computed on request: tick **Minto / Schnider** under Graph Options and the Minto model is run beside this one on the same doses, drawn as a second line in the remifentanil panel (and, under a target-controlled infusion, as a second pump in the rate panel), with its own age-dependent ke0. The time until threshold stays on the model above. See [The Minto and Schnider models](help:models/minto-schnider) and [the comparison scenario](scenario:eleveld-vs-minto-schnider).
 
 ### Covariates
 

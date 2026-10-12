@@ -17,9 +17,9 @@ Two of the published model's switches are fixed in the code: concentrations are 
 
 The time to peak effect, 1.6 minutes, is from Schnider and colleagues' 1999 study of propofol pharmacodynamics (*Anesthesiology* 1999;90:1502-1516). Eleveld's own pharmacodynamic model is not used. In that model the arterial ke0 is scaled to body weight, not to age; age acts instead on the delay of the measured effect and on the sensitivity to propofol. Here the drug library's single tPeak gives a ke0 that depends on the patient only through the disposition parameters.
 
-### What is also in the file
+### The Schnider model, beside it
 
-The Schnider 1998 pharmacokinetic model (*Anesthesiology* 1998;88:1170-1182), the basis of many commercial propofol TCI pumps, is written out in the drug file but overwritten by Eleveld's before it is returned. It is kept for reference and could be revived as an alternative model.
+The Schnider 1998 pharmacokinetic model (*Anesthesiology* 1998;88:1170-1182), the basis of most commercial propofol TCI pumps, is written out in the drug file but overwritten by Eleveld's before it is returned. It is computed on request: tick **Minto / Schnider** under Graph Options and the Schnider model is run beside this one on the same doses, drawn as a second line in the propofol panel (and, under a target-controlled infusion, as a second pump in the rate panel). The time until threshold stays on the Eleveld model. See [The Minto and Schnider models](help:models/minto-schnider) and [the comparison scenario](scenario:eleveld-vs-minto-schnider).
 
 ### Typical concentrations
 

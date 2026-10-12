@@ -27,7 +27,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **The pharmacokinetic engine.** `getDrugPK.R` turns covariates into rate constants, eigenvalues (`cube.R`), ke0 and coefficients; `simCpCe.R` simulates one drug's dose table, dispatching to `advanceClosedForm0.R` (intravenous, no events), `advanceClosedForm1.R` (with events) and `advanceClosedFormPO_IM_IN.R` (extravascular); `advanceState.R` and `convertState.R` carry state across boundaries; `calculateCe.R` the effect site; `drug-pipeline.R` loops over the drugs in the table; `simulateDrugsWithCovariates.R` is the exported entry point.
 
-**The drug library.** `drugs_<name>.R`, one per drug: the covariate model and the citation. `drugAndEventDefaults.R` reads the CSVs. `lbmJames.R` is the lean body mass equation.
+**The drug library.** `drugs_<name>.R`, one per drug: the covariate model and the citation. `drugAndEventDefaults.R` reads the CSVs. `lbmJames.R` is the lean body mass equation. `alternativeModels.R` holds the Schnider propofol and Minto remifentanil models that the *Minto / Schnider* box runs beside the library's ([The Minto and Schnider models](help:models/minto-schnider)).
 
 **Pharmacodynamics and derived quantities.** `modelInteraction.R` (propofol-opioid), `recoveryCalc.R` (time until threshold), `opioidMacInteraction.R`, `setLinetypes.R`.
 

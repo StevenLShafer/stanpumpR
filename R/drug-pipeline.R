@@ -11,16 +11,27 @@
 # The reused outputs are the drug's OWN simulation, saved before folding.  The
 # folded series of a metabolite drug depends on its parents' doses too, so it
 # is never cached: foldMetabolites() rebuilds it from the own series each time.
+#
+# A companion entry (an alternative model of a library drug, with
+# $companionOf naming the drug; R/alternativeModels.R) takes its parent's dose
+# rows and is cached under its own name, like any other drug.
 processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = NULL)
 {
   for (drug in names(drugs))
   {
-    tempDT <- DT[DT$Drug == drug,]
+    # A companion entry (an alternative model of a library drug; see
+    # R/alternativeModels.R) is simulated on its parent's dose rows, and never
+    # with the time until threshold, which stays on the library's own model.
+    parent <- drugs[[drug]]$companionOf
+    source <- if (is.null(parent)) drug else parent
+    recovery <- if (is.null(parent)) plotRecovery else FALSE
+
+    tempDT <- DT[DT$Drug == source,]
     tempET <- ET[gsub(" ","", ET$Event) %in% drugs[[drug]]$pkEvents,]
 
     if (nrow(tempDT) == 0) next  # e.g. a metabolite that was not given directly
 
-    key <- simulationKey(drugs[[drug]], tempDT, tempET, plotMaximum, plotRecovery)
+    key <- simulationKey(drugs[[drug]], tempDT, tempET, plotMaximum, recovery)
     sim <- cache[[drug]]$sim
     if (is.null(sim) || !identical(cache[[drug]]$simKey, key))
     {
@@ -29,7 +40,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = 
         tempET,
         drugs[[drug]],
         plotMaximum,
-        plotRecovery
+        recovery
         )
       sim <- list(
         DT                = tempDT,
@@ -85,7 +96,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           osmolality = OSMOLALITY_DEFAULT,
                           creatinine = NULL,
                           cyp2c19 = CYP2C19_DEFAULT,
-                          cyp2c9 = CYP2C9_DEFAULT) {
+                          cyp2c9 = CYP2C9_DEFAULT,
+                          alternativeModels = FALSE) {
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
   resolve <- function(drugs, drug) {
@@ -136,6 +148,27 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     drugs[[target]]$wide    <- NULL
     drugs[[target]]$recoveryStatesOwn        <- NULL
     drugs[[target]]$metaboliteRecoveryStates <- NULL
+  }
+
+  # The alternative models (R/alternativeModels.R): with the Minto / Schnider
+  # switch on, each dosed drug that has one gets a companion entry, named
+  # "<drug> (<model>)", which processdoseTable() simulates on the parent's
+  # doses and simulationPlot() draws in the parent's panel.  Appended after
+  # every library drug, so that a panel's first series is always the library's
+  # own.  A model that is not defined for this patient (a negative clearance,
+  # say) gives no entry; alternativeModelProblems() says why.
+  if (isTRUE(alternativeModels))
+  {
+    for (drug in intersect(dosed, ALTERNATIVE_MODEL_DRUGS))
+    {
+      idx <- which(drugDefaults$Drug == drug)[1]
+      entry <- alternativeModelEntry(
+        drug, weight, height, age, sex, drugDefaults[idx, ], adjustToFFM
+      )
+      if (is.null(entry)) next
+      outputComments("Getting PK for", entry$drug)
+      drugs[[entry$drug]] <- entry
+    }
   }
 
   drugs

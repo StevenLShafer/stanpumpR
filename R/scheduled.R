@@ -107,7 +107,9 @@ expandScheduledDoses <- function(dose, maximum) {
 exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
   out <- tciMergeDoseTable(DT, drugs)
   if (is.null(out)) return(out)
-  extra <- lapply(drugs, function(d) d$scheduled)
+  # A companion entry (R/alternativeModels.R) repeats its parent's scheduled
+  # doses; its TCI rows, which differ from the parent's, are merged above.
+  extra <- lapply(drugs, function(d) if (isAlternativeModelEntry(d)) NULL else d$scheduled)
   extra <- do.call(rbind, Filter(Negate(is.null), extra))
   if (!is.null(extra) && nrow(extra) > 0) {
     out <- out[, c("Drug", "Time", "Dose", "Units")]

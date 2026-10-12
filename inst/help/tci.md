@@ -19,6 +19,10 @@ Enter a dose-table row for the drug with units **Plasma target** or **Effect sit
 
 A **TCI rate panel** appears below the concentration panels for each drug under TCI, in the drug's colour, showing the pump rate the controller ran. Hover over it for the rate at any moment. The loading dose is written as a number rather than drawn, because its rate over a ten-second interval would flatten the rest of the panel. These rate rows are kept out of the dose table, where the ten-second changes would make it unusable, but they are merged back in when a slide is emailed, so the exported dose table lists the pump's complete programme.
 
+## A second pump on the Minto or Schnider model
+
+Most commercial pumps run Schnider's propofol model and Minto's remifentanil model rather than the Eleveld models the library uses. Tick **Minto / Schnider** under Graph Options and each target row for propofol or remifentanil is run by a second pump on that model as well: its rates are a second line in the TCI rate panel, its loading dose is written below the first pump's and named for the model, and the concentrations it predicts are a second line in the concentration panel. Each pump hits its own target; the two models disagree about how much drug that takes. Hover on the rate panel for both rates. See [The Minto and Schnider models](help:models/minto-schnider) and [the TCI comparison scenario](scenario:tci-eleveld-vs-minto-schnider).
+
 ## Two things the pump does not model
 
 It does not know about oral, intramuscular or intranasal doses of the same drug, which it treats, as a real pump would, as an unexpected addition. And it has no upper limit on its rate, so the loading dose is always delivered within one ten-second interval.

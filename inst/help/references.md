@@ -142,10 +142,14 @@ Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensit
 
 Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? *APSF Newsletter*, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>
 
+## The Minto and Schnider models
+
+Run beside the library's propofol and remifentanil models when **Minto / Schnider** is ticked under Graph Options; see [The Minto and Schnider models](help:models/minto-schnider).
+
+Minto CF, Schnider TW, Egan TD, Youngs E, Lemmens HJM, Gambus PL, Billard V, Hoke JF, Moore KHP, Hermann DJ, Muir KT, Mandema JW, Shafer SL. Influence of age and gender on the pharmacokinetics and pharmacodynamics of remifentanil. I. Model development. *Anesthesiology* 1997;86:10-23. *(The Minto remifentanil model, with its age-dependent ke0.)*
+
+Schnider TW, Minto CF, Gambus PL, Andresen C, Goodale DB, Shafer SL, Youngs EJ. The influence of method of administration and covariates on the pharmacokinetics of propofol in adult volunteers. *Anesthesiology* 1998;88:1170-1182. *(The Schnider propofol model; its time to peak effect is Schnider 1999's.)*
+
 ## Models present in the drug files but not the ones cited
 
-Minto CF, Schnider TW, Egan TD, Youngs E, Lemmens HJM, Gambus PL, Billard V, Hoke JF, Moore KHP, Hermann DJ, Muir KT, Mandema JW, Shafer SL. Influence of age and gender on the pharmacokinetics and pharmacodynamics of remifentanil. I. Model development. *Anesthesiology* 1997;86:10-23. *(In the remifentanil file as comments; the parameters computed are Eleveld's and Kim's.)*
-
 Shafer SL, Varvel JR, Aziz N, Scott JC. Pharmacokinetics of fentanyl administered by computer-controlled infusion pump. *Anesthesiology* 1990;73:1091-1102. *(The pooled fentanyl parameters.)*
-
-Schnider TW, Minto CF, Gambus PL, Andresen C, Goodale DB, Shafer SL, Youngs EJ. The influence of method of administration and covariates on the pharmacokinetics of propofol in adult volunteers. *Anesthesiology* 1998;88:1170-1182. *(Present in the propofol file; superseded by Eleveld 2018.)*

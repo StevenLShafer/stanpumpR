@@ -688,6 +688,48 @@ app_server <- function(input, output, session) {
     if (is.null(input$adjustToFFM)) TRUE else isTRUE(input$adjustToFFM)
   })
 
+  # The Minto / Schnider switch (R/alternativeModels.R): run the Schnider
+  # propofol and Minto remifentanil models beside the library's own, as
+  # companion entries of the drug list.  FALSE until the box reports, and for
+  # bookmarks made before it existed.
+  mintoSchnider <- reactive(isTRUE(input$mintoSchnider))
+
+  # The companion entries of a drug in the current simulation (none unless
+  # the switch is on and the drug has an alternative model)
+  companionsOf <- function(drug) {
+    Filter(function(entry) identical(entry$companionOf, drug), drugs())
+  }
+
+  # The box is usable only while a drug that has an alternative model is in
+  # the dose table; ticked while it is not, it simply has nothing to add.
+  observe({
+    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    shinyjs::toggleState(
+      "mintoSchnider",
+      condition = !is.null(DT) && any(DT$Drug %in% ALTERNATIVE_MODEL_DRUGS)
+    )
+  })
+
+  # An alternative model whose covariate terms give a negative volume or
+  # clearance for this patient (a small child on Schnider's model, say) is
+  # not drawn; say so rather than leave the second line silently missing.
+  observe({
+    problems <- character(0)
+    DT <- tryCatch(doseTableIV(), error = function(e) NULL)
+    if (mintoSchnider() && !is.null(DT)) {
+      patient <- tryCatch(list(weight(), height(), age(), sex()), error = function(e) NULL)
+      if (!is.null(patient)) {
+        problems <- alternativeModelProblems(DT$Drug, patient[[1]], patient[[2]], patient[[3]], patient[[4]])
+      }
+    }
+    if (length(problems) == 0) {
+      removeNotification("alternativeModels")
+    } else {
+      showNotification(paste(problems, collapse = " "), id = "alternativeModels",
+                       type = "warning", duration = NULL)
+    }
+  })
+
   osmolality <- reactive({
     # The default until the control reports, and for bookmarks made before it
     # existed (Shiny restores only the inputs a bookmark saved).
@@ -810,7 +852,8 @@ app_server <- function(input, output, session) {
         cyp2c9 = if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9,
         osmolality = osmolality(),
         creatinine = creatinine(),
-        adjustToFFM = adjustToFFM()
+        adjustToFFM = adjustToFFM(),
+        alternativeModels = mintoSchnider()
       ) |> profileCode("recalculatePK() in drugs()")
 
       newDrugs <- processdoseTable(
@@ -1239,10 +1282,13 @@ app_server <- function(input, output, session) {
       return(span("No drugs in the current simulation.", class = "text-muted"))
     }
     items <- lapply(names(simulatedDrugs), function(drug) {
+      entry <- simulatedDrugs[[drug]]
+      # Opens the drug's page in the Help tab (handled in app.js); a companion
+      # entry (the Schnider or Minto model) opens the page about those models.
+      page <- if (isAlternativeModelEntry(entry)) ALTERNATIVE_MODELS_HELP_PAGE else paste0("drugs/", drug)
       tagList(
-        citationItemHTML(drug, simulatedDrugs[[drug]]$reference, simulatedDrugs[[drug]]$Color),
-        # Opens the drug's page in the Help tab (handled in app.js)
-        tags$a(href = "#", class = "small ms-1", `data-help-page` = paste0("drugs/", drug),
+        citationItemHTML(drug, entry$reference, entry$Color),
+        tags$a(href = "#", class = "small ms-1", `data-help-page` = page,
                "About this model")
       )
     })
@@ -1298,22 +1344,34 @@ app_server <- function(input, output, session) {
     # because a title may itself contain one ("MAC equivalents").
     drug <- as.character(plotResults$Drug[as.character(plotResults$Wrap) == e$panelvar1])[1]
     if (is.na(drug)) return(NULL)
+    # A panel is read through the library's own drug.  A companion drawn in it
+    # (the Schnider or Minto model; R/alternativeModels.R) is reported after
+    # it, by the model's name.
+    drug <- alternativeModelParent(drug)
     outputComments("Drug identified in xy_str() is", drug)
 
-    # A TCI rate panel: report the pump rate in force at that moment.
+    # A TCI rate panel: report the pump rate in force at that moment, and the
+    # companion pump's after it.
     if (grepl(" TCI$", drug))
     {
       drug <- sub(" TCI$", "", drug)
-      rates <- drugs()[[drug]]$tci$rates
-      if (is.null(rates)) return(NULL)
-      j <- max(which(rates$Time <= e$x), 1)
-      time <- hoverTime(e$x)
-      if (rates$Bolus[j]) {
-        b <- drugs()[[drug]]$tci$boluses
-        k <- which(b$Time == rates$Time[j])[1]
-        return(paste0("Time: ", time, ", ", drug, " TCI loading dose: ", signif(b$Amount[k], 3), " ", b$Units[k]))
+      if (is.null(drugs()[[drug]]$tci$rates)) return(NULL)
+      pumpAt <- function(entry, name) {
+        rates <- entry$tci$rates
+        if (is.null(rates)) return(NULL)
+        j <- max(which(rates$Time <= e$x), 1)
+        if (rates$Bolus[j]) {
+          b <- entry$tci$boluses
+          k <- which(b$Time == rates$Time[j])[1]
+          return(paste0(name, " loading dose: ", signif(b$Amount[k], 3), " ", b$Units[k]))
+        }
+        paste0(name, " rate: ", signif(rates$Rate[j], 3), " ", rates$Units[j])
       }
-      return(paste0("Time: ", time, ", ", drug, " TCI rate: ", signif(rates$Rate[j], 3), " ", rates$Units[j]))
+      parts <- c(
+        pumpAt(drugs()[[drug]], paste(drug, "TCI")),
+        unlist(lapply(companionsOf(drug), function(entry) pumpAt(entry, entry$modelLabel)))
+      )
+      return(paste0("Time: ", hoverTime(e$x), ", ", paste(parts, collapse = ", ")))
     }
 
     # if the panel's drug was just removed, drugs()[[drug]] will be NULL until
@@ -1330,6 +1388,13 @@ app_server <- function(input, output, session) {
     conc <- hoverConcentration(entry$results, e$x, normalization)
     returnText <- paste0("Time: ", hoverTime(e$x), ", ", x[1], " ", conc$label, ": ",
                          signif(conc$value, 2), " ", x[2])
+    # The same reading from each companion model drawn in this panel
+    for (companion in companionsOf(drug))
+    {
+      concC <- hoverConcentration(companion$results, e$x, normalization)
+      returnText <- paste0(returnText, ", ", companion$modelLabel, " ", concC$label, ": ",
+                           signif(concC$value, 2), " ", x[2])
+    }
     # Not under normalization, which hides the line (simulationPlot()).
     if (plotRecovery() && identical(normalization, NORMALIZE_NONE))
     {
@@ -1433,8 +1498,10 @@ app_server <- function(input, output, session) {
       # title may contain a space ("MAC equivalents").
       drug <- as.character(plotResults$Drug[as.character(plotResults$Wrap) == e$panelvar1])[1]
       if (is.na(drug)) drug <- unlist(strsplit(yaxis, " "))[1]
-      # A click on a drug's TCI rate panel is a click on that drug.
+      # A click on a drug's TCI rate panel is a click on that drug, and a
+      # click on a companion's line (R/alternativeModels.R) on its parent.
       drug <- sub(" TCI$", "", drug)
+      drug <- alternativeModelParent(drug)
     }
     outputComments("drug from panelvar1", drug)
 

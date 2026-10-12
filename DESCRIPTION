@@ -24,6 +24,7 @@ Imports:
     emayili,
     glue,
     ggplot2  (>= 3.4),
+    grDevices,
     grid,
     htmltools,
     htmlwidgets,
