@@ -17,7 +17,7 @@ bupivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#6A5ACD,0,0,0,0,0,IV,Loca
 ropivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#2F8F9D,0,0,0,0,0,IV,Local anesthetics
 mepivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA",#A0522D,0,0,0,0,0,IV,Local anesthetics
 rocuronium,mcg,mg,mg/kg/hr,mg,"mg,mg/kg/hr",#F9423A,1,2.2,1.5,0,1,IV,Neuromuscular blockade
-vecuronium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#8B4513,100,155,130,0,100,IV,Neuromuscular blockade
+vecuronium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#8B4513,110,155,135,0,110,IV,Neuromuscular blockade
 cisatracurium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#556B2F,130,200,165,0,130,IV,Neuromuscular blockade
 naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/kg,mg,mg/kg,mcg/min,mcg/kg/min,mg/min,mg/kg/min,mg IN",#404040,1,10,3,0,1,IV,Other
 oxytocin,ng,mcg,mcg/min,mcg,"mcg,mg,mg/kg,mcg/min",#008F7D,0.05,0.2,0.1,0,0.05,IV,Other

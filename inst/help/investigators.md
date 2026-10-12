@@ -49,7 +49,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | etomidate | **John R. Arden** and colleagues (1986) | Kinetics in patients, including the elderly |
 | lidocaine | Schnider and colleagues (1996) | Two-compartment kinetics during an infusion |
 | rocuronium | **Bertrand Plaud** and colleagues (1995); **Luis I. Cortínez** and colleagues (2007) | Kinetics; time to peak effect |
-| vecuronium | **Kevin R. Vega-Villa**, **Tae Hyun Han** and colleagues (2014); **Tom Heier**, **Ronald D. Miller** and colleagues (1994) | Three-compartment kinetics in non-burn surgical adults; the effect-site rate constant and potency |
+| vecuronium | **Kevin R. Vega-Villa**, **Tae Hyun Han** and colleagues (2014); **Stephen M. Rupp**, **Dennis M. Fisher**, **Ronald D. Miller** and colleagues (1987) | Three-compartment kinetics in non-burn surgical adults; the effect-site rate constant and potency |
 | cisatracurium | **Shahpoor S. Sorooshian**, **Peter M. C. Wright** and colleagues (1996) | Population kinetics and pharmacodynamics in young and elderly adults |
 | acetaminophen | **James D. Morse** and colleagues (2022); **Brian J. Anderson** and colleagues (2001) | Intravenous and oral kinetics with clearance on normal fat mass; the analgesic effect-site rate constant |
 | ibuprofen | **James D. Morse** and colleagues (2022); **Jacqueline A. Hannam**, **Brian J. Anderson** and colleagues (2018) | Intravenous and oral kinetics with clearance and volumes on normal fat mass; the analgesic effect-site rate constant |
@@ -93,7 +93,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 ## Pharmacodynamics and methods
 
 - **Lewis B. Sheiner**, Stanski and colleagues (1979): the effect compartment.
-- Shafer and Varvel (1991), Minto and colleagues (2003): time to peak effect as the model-independent way to carry ke0.
+- Shafer and Varvel (1991), Minto and colleagues (2003): time to peak effect as the model-independent way to carry ke0. Vecuronium and cisatracurium are the worked cases: each drug's ke0 is converted to the time to peak effect it gives with the kinetics it was fitted with, then solved again against the kinetics the library uses.
 - **Keith M. Gregg** and Shafer (1992): the effect-site targeting algorithm, implemented in STANPUMP and in stanpumpR's [target-controlled infusion](help:tci).
 - **James M. Bailey** and Shafer (1991): the plasma targeting algorithm.
 - **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time.

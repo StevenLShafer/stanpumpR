@@ -49,7 +49,7 @@ The Kim remifentanil model for obesity uses the Janmahasatian fat-free mass inst
 
 **Maturation** describes the rise of clearance from birth to adult values. The Eleveld propofol model uses a sigmoid in post-menstrual age, with half-maximal clearance at about 42 weeks post-menstrual age; the app has no gestational-age input, so the model takes post-menstrual age as 40 weeks plus the age entered. Intercompartmental clearance to the slow compartment matures separately.
 
-**Ageing** describes the decline in adults. The Eleveld models reduce V2 and clearance exponentially with age; remifentanil's volumes and clearances decline with age; remimazolam's V3 grows with age. The adult dexmedetomidine, Minto-era and fixed-parameter models have no age term. [The age and propofol scenario](scenario:age-and-propofol) shows how large the effect is.
+**Ageing** describes the decline in adults. The Eleveld models reduce V2 and clearance exponentially with age; remifentanil's volumes and clearances decline with age; remimazolam's V3 grows with age. Two neuromuscular blockers carry an age effect taken from a second study, because the model supplying their kinetics had none: vecuronium's volumes and clearances fall by Rupp's published elderly ratios between ages 40 and 70, and cisatracurium's peripheral volume grows 37% between 50 and 65, as Sorooshian found. Each also shifts its time to peak effect across the same span. The adult dexmedetomidine, Minto-era and fixed-parameter models have no age term. [The age and propofol scenario](scenario:age-and-propofol) shows how large the effect is.
 
 ## Sex
 

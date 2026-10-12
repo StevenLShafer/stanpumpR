@@ -33,7 +33,7 @@ Shafer and Varvel showed in 1991 that tPeak is the right quantity to carry from 
 | methadone | 11.3 | |
 | hydromorphone | 19.6 | |
 | rocuronium | 2.2 | Cortínez 2007 |
-| vecuronium | 5.9 | Heier 1994 ke0 (provisional) |
+| vecuronium | 5.37 (to age 40), 4.80 (from 70) | Rupp 1987 ke0, with its own kinetics |
 | cisatracurium | 12.3 (young), 12.9 (elderly) | Sorooshian 1996 ke0, with its own kinetics |
 | midazolam | 3 | Bührer 1990 |
 | etomidate | 1.6 | |
