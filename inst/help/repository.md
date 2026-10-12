@@ -18,7 +18,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `docs/` | Developer documentation: architecture, adding a drug, body-size scaling, the simulation and TCI APIs, notes on individual models, the user's guide draft (not shipped in the package) |
 | `data-raw/` | Scripts that derive model parameters or data from published sources, such as the temazepam fit and the antiseizure registry (not shipped in the package) |
 | `renv.lock` | Pinned package versions for reproducible deployment |
-| `Original Stanpump/` | The original STANPUMP C source and documentation, zipped |
+| `Original Stanpump/` | The original STANPUMP C source and documentation, zipped. Third-party library headers and drivers it was built with (Greenleaf CommLib, Ring Zero) are not included; `REMOVED.TXT` in the archive lists them |
 | `.github/workflows/` | Continuous integration and deployment |
 
 ## The code in `R/`

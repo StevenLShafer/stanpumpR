@@ -6,7 +6,7 @@
 \alias{stanpumpR-package}
 \title{stanpumpR: Pharmacokinetic and Pharmacodynamic Simulation}
 \description{
-Open-source software for pharmacokinetic and pharmacodynamic simulation, intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. Calculates and plots predicted plasma and effect-site concentrations for intravenous and extravascular anesthetics using analytical closed-form three-compartment solutions. May be freely downloaded and used without restriction for non-commercial purposes.
+Open-source software for pharmacokinetic and pharmacodynamic simulation, intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. Calculates and plots predicted plasma and effect-site concentrations for intravenous and extravascular anesthetics using analytical closed-form three-compartment solutions.
 }
 \author{
 \strong{Maintainer}: Steven Shafer \email{steven.shafer@stanford.edu} (\href{https://orcid.org/0000-0002-0289-7793}{ORCID})
