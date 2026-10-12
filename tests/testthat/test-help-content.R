@@ -270,3 +270,21 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
   expect_match(cellOf("amiodarone", "PO"), "constant daily rate", fixed = TRUE)
   expect_false(grepl("saturable", cellOf("oxycodone", "PO"), fixed = TRUE))
 })
+
+# The Cautions page tells the user which drugs each Patient Profile field
+# reaches.  A model that names the field in its signature must be in the
+# list, or the user is told the field has no effect when it does (an audit of
+# 2026-10-12 found three renal drugs and three CYP2D6 drugs missing).
+test_that("the cautions page names every model that reads a patient field", {
+  text <- tolower(helpPlainText(helpMarkdownToHTML(
+    paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"), warn = FALSE),
+          collapse = "\n"))))
+  for (arg in c("creatinine", "osmolality", "cyp2d6", "cyp2c19", "cyp2c9")) {
+    readers <- Filter(function(drug) helpDrugDeclares(drug, arg), getDrugDefaultsGlobal()$Drug)
+    expect_gt(length(readers), 0, label = arg)
+    for (drug in readers) {
+      expect_true(grepl(tolower(drug), text, fixed = TRUE),
+                  info = paste(drug, "reads", arg, "but the cautions page does not say so"))
+    }
+  }
+})

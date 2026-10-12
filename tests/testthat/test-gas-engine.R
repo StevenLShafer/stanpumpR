@@ -686,3 +686,45 @@ test_that("oxygen: pure oxygen at low flow, the old formula when switched off, a
   expect_lt(utils::tail(starved$state$oxygen[, 2], 1), 1)
   expect_gte(min(starved$state$oxygen), 0)
 })
+
+# Vaporisers that together exceed 100% are a fresh gas that cannot exist.
+# Until 2026-10-12 the carrier fraction was clipped to zero and the volatile
+# fractions kept, so the fresh gas summed past 100% (an audit finding).
+test_that("vaporiser settings that together exceed 100% are reported and refused", {
+  ok <- data.frame(
+    Drug  = c("oxygen", "sevoflurane", "isoflurane", "ventilation"),
+    Time  = c(0, 0, 0, 0),
+    Dose  = c(2, 60, 40, 4),
+    Units = c("L/min", "%", "%", "L/min"),
+    stringsAsFactors = FALSE
+  )
+  expect_length(gasVaporiserProblems(ok), 0)
+  s <- gasSettingsAt(split(ok[ok$Drug != "ventilation", ], ok$Drug[ok$Drug != "ventilation"]), 0)
+  expect_equal(sum(s$Ffgf), 100)
+
+  # 60 + 40 + 5: the third agent, started later, pushes the sum past 100
+  bad <- rbind(ok, data.frame(Drug = "desflurane", Time = 10, Dose = 5, Units = "%"))
+  problems <- gasVaporiserProblems(bad)
+  expect_length(problems, 1)
+  expect_match(problems, "At 10 min")
+  expect_match(problems, "105%", fixed = TRUE)
+  expect_error(simulateGases(bad, maximum = 30), "105%", fixed = TRUE)
+
+  # lowering sevoflurane at the same time makes it possible again
+  fixed <- rbind(bad, data.frame(Drug = "sevoflurane", Time = 10, Dose = 50, Units = "%"))
+  expect_length(gasVaporiserProblems(fixed), 0)
+  sim <- simulateGases(fixed, maximum = 30)
+  expect_false(is.null(sim))
+
+  # non-gas rows, blank rows and character times are ignored or read
+  mixed <- data.frame(
+    Drug  = c("propofol", "sevoflurane", "isoflurane", ""),
+    Time  = c("0", "5", "5", ""),
+    Dose  = c("100", "70", "40", ""),
+    Units = c("mg", "%", "%", ""),
+    stringsAsFactors = FALSE
+  )
+  expect_match(gasVaporiserProblems(mixed), "At 5 min")
+  expect_length(gasVaporiserProblems(NULL), 0)
+  expect_length(gasVaporiserProblems(mixed[1, ]), 0)
+})

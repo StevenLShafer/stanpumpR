@@ -63,6 +63,9 @@ helpScenarioDefaultOptions <- function() {
 #' @param group one of HELP_SCENARIO_GROUPS
 #' @param summary one sentence: the point the scenario makes
 #' @param age,weight,height,sex the patient (years, kg, cm, "male"/"female")
+#' @param creatinine serum creatinine in mg/dL, or NULL for a blank field (the
+#'   renal models then assume a normal value for the patient's age and sex)
+#' @param osmolality baseline serum osmolality in mOsm/kg (mannitol)
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
 #' @param events data frame with Time (minutes) and Event, or NULL
 #' @param ... graph options overriding helpScenarioDefaultOptions()
@@ -71,7 +74,8 @@ helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
-                         cyp2c9 = CYP2C9_DEFAULT, ...) {
+                         cyp2c9 = CYP2C9_DEFAULT, creatinine = NULL,
+                         osmolality = OSMOLALITY_DEFAULT, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -86,9 +90,14 @@ helpScenario <- function(id, title, group, summary,
   }
   list(
     id = id, title = title, group = group, summary = summary,
+    # Every Patient Profile field is here, so that loading a scenario leaves
+    # nothing of the previous patient behind: a field the scenario does not
+    # name is reset to its default (an audit of 2026-10-12 found the creatinine
+    # and osmolality of the previous patient surviving a load).
     patient = list(age = age, weight = weight, height = height, sex = sex,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                   adjustToFFM = adjustToFFM),
+                   adjustToFFM = adjustToFFM,
+                   creatinine = creatinine, osmolality = osmolality),
     doses = doses, events = events, options = options
   )
 }
@@ -736,6 +745,10 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
+  if (!is.null(p$creatinine) && !is_valid_number(p$creatinine, MIN_CREATININE, MAX_CREATININE)) {
+    say("creatinine out of range: ", p$creatinine)
+  }
+  if (!is_valid_number(p$osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) say("osmolality out of range: ", p$osmolality)
 
   o <- s$options
   if (!identical(validTimeUnit(o$timeUnits), o$timeUnits)) say("invalid timeUnits: ", o$timeUnits)
@@ -875,6 +888,15 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
+  # A blank field is the state the renal models read as "assume a normal
+  # creatinine".  updateNumericInput() would send NA as the string "NA" and
+  # leave the browser to sanitise it, so the blank is sent explicitly.
+  if (is.null(p$creatinine)) {
+    session$sendInputMessage("creatinine", list(value = ""))
+  } else {
+    updateNumericInput(session, "creatinine", value = p$creatinine)
+  }
+  updateNumericInput(session, "osmolality", value = p$osmolality)
 
   if (is.null(timeApi)) {
     updateSelectInput(session, "maximum", selected = maxTimeValue(o$maximum))
@@ -905,7 +927,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
 helpScenarioLoadButton <- function(s) {
   sprintf(
     '<p><a href="#" class="btn btn-primary help-scenario-btn" data-help-scenario="%s">%s Load into the simulator</a>
-     <span class="small text-muted help-scenario-hint">Replaces the current patient, doses, events and graph options.</span></p>',
+     <span class="small text-muted help-scenario-hint">Replaces the current patient (every Patient Profile field), doses, events and graph options.</span></p>',
     s$id, as.character(icon("play"))
   )
 }
@@ -929,6 +951,8 @@ helpScenarioPageHTML <- function(id) {
     `CYP 2C19` = tools::toTitleCase(p$cyp2c19),
     `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
+    `Serum creatinine` = if (is.null(p$creatinine)) "blank (normal for age and sex assumed)" else sprintf("%s mg/dL", helpFormatNumber(p$creatinine)),
+    `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),
     check.names = FALSE, stringsAsFactors = FALSE
   )
   # Times as the dose table will show them: in the scenario's time unit, in

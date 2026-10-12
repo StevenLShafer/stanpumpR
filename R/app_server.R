@@ -710,6 +710,20 @@ app_server <- function(input, output, session) {
     )
   })
 
+  # Vaporisers that together exceed 100% are a fresh gas that cannot exist.
+  # The engine refuses them (gasSettingsAt()), which drugs() logs and
+  # swallows, so the gas curves would simply vanish: say why instead.
+  observe({
+    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    problems <- if (is.null(DT)) character(0) else gasVaporiserProblems(DT)
+    if (length(problems) == 0) {
+      removeNotification("gasVaporisers")
+    } else {
+      showNotification(paste(problems, collapse = " "), id = "gasVaporisers",
+                       type = "warning", duration = NULL)
+    }
+  })
+
   # An alternative model whose covariate terms give a negative volume or
   # clearance for this patient (a small child on Schnider's model, say) is
   # not drawn; say so rather than leave the second line silently missing.

@@ -682,6 +682,15 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 
   # Vapour displaces carrier gas.  At 2% sevoflurane this is a 2% correction;
   # small, but free to include and it keeps the fractions summing to 100.
+  # Vaporisers that together exceed 100% have no physical fresh gas: the
+  # carrier would be negative, and clipping it to zero (as this did until
+  # 2026-10-12) left the fractions summing past 100.  The dose table is
+  # checked by gasVaporiserProblems() before it gets here; this is the
+  # engine's own refusal.
+  if (sum(F_vap) > 100 + 1e-9) {
+    stop(sprintf("the vaporisers together are set to %s%% at %s min; the fresh gas cannot be more than 100%% vapour",
+                 format(sum(F_vap)), format(t)))
+  }
   carrier <- 1 - sum(F_vap) / 100
   if (carrier < 0) carrier <- 0
 
@@ -698,6 +707,51 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
   for (g in volatiles) Ffgf[[g]] <- F_vap[[g]]
 
   list(Q = Q, VA = VA, MV = MV, Ffgf = Ffgf)
+}
+
+
+#' Vaporiser settings that together exceed 100%
+#'
+#' At every time a vaporiser setting changes, the settings then in force for
+#' all the volatile agents are summed; a sum above 100% is a fresh gas that
+#' cannot exist (there would be no carrier left), and the engine refuses it.
+#' The app shows these as a notification, so that the gas curves do not simply
+#' vanish.  Rows for a single agent at one time keep the last one, as the
+#' engine does.
+#'
+#' @param doseTable a dose table with \code{Drug}, \code{Time} (minutes, or
+#'   anything \code{as.numeric()} reads) and \code{Dose}; non-gas rows and
+#'   blank rows are ignored
+#' @returns a character vector of messages, one per offending time, empty when
+#'   the settings are possible
+#' @export
+gasVaporiserProblems <- function(doseTable)
+{
+  if (is.null(doseTable) || nrow(doseTable) == 0) return(character(0))
+  volatiles <- setdiff(potentAgents(), "nitrousOxide")
+  drug <- as.character(doseTable$Drug)
+  rows <- doseTable[drug %in% volatiles, , drop = FALSE]
+  if (nrow(rows) == 0) return(character(0))
+  rows <- data.frame(
+    Time = suppressWarnings(as.numeric(as.character(rows$Time))),
+    Drug = as.character(rows$Drug),
+    Dose = suppressWarnings(as.numeric(as.character(rows$Dose))),
+    stringsAsFactors = FALSE
+  )
+  rows <- rows[!is.na(rows$Time) & !is.na(rows$Dose), , drop = FALSE]
+  if (nrow(rows) == 0) return(character(0))
+  rows <- rows[order(rows$Time), , drop = FALSE]
+  split <- split(rows, rows$Drug)
+  problems <- character(0)
+  for (t in sort(unique(rows$Time))) {
+    total <- sum(vapply(split, function(d) settingAt(d, t), numeric(1)))
+    if (total > 100 + 1e-9) {
+      problems <- c(problems, sprintf(
+        "At %s min the vaporisers together are set to %s%%; the fresh gas cannot be more than 100%% vapour, so the gases are not simulated until one of them is lowered.",
+        format(t), format(total)))
+    }
+  }
+  problems
 }
 
 

@@ -214,10 +214,11 @@ app_ui <- function() {
                   placement = "right"
                 ),
 
-                # Read only by the renally cleared models (mannitol, vancomycin,
-                # gentamicin, cefazolin, sugammadex, gabapentin, pregabalin).
-                # Blank means an assumed normal creatinine for the patient's age
-                # and sex; see R/renalFunction.R.
+                # Read only by the models that name `creatinine` in their
+                # signature (the help's Cautions page lists them, and a test
+                # keeps that list complete).  Blank means an assumed normal
+                # creatinine for the patient's age and sex; see
+                # R/renalFunction.R.
                 bslib::tooltip(
                   numericInput(
                     inputId = "creatinine",
@@ -228,8 +229,8 @@ app_ui <- function() {
                     step = 0.1
                   ),
                   paste(
-                    "Used by the renally cleared drugs: mannitol, vancomycin,",
-                    "gentamicin, cefazolin, sugammadex, gabapentin and pregabalin.",
+                    "Used by the renally cleared drugs (the Cautions page of the",
+                    "Help lists them).",
                     "Leave blank to assume a normal creatinine for the patient's",
                     "age and sex (1.0 mg/dL for a man, 0.8 for a woman, and the",
                     "normal for age in a child); renal impairment is then not",

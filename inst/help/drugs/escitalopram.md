@@ -30,7 +30,7 @@ The antidepressant effect develops over weeks, not minutes, and no equilibration
 
 ### Where to be careful
 
-- Liu and colleagues' own external validation (*Drug Des Devel Ther* 2025, [doi:10.2147/DDDT.S546904](https://doi.org/10.2147/DDDT.S546904)) found that population predictions, without a measured concentration to calibrate them, were unreliable for individual patients. Treat the curve as the typical patient's, not a prediction for the one in front of you.
+- An external evaluation of ten published escitalopram models, Liu's among them, in 193 Chinese patients (Yan and colleagues, *Drug Des Devel Ther* 2025;19:10937-10951, [doi:10.2147/DDDT.S546904](https://doi.org/10.2147/DDDT.S546904)) found that population predictions, without a measured concentration to calibrate them, were unreliable for individual patients. Treat the curve as the typical patient's, not a prediction for the one in front of you.
 - Other published models were not mixed with this one. Jin and colleagues (2010) fitted adults with major depression (CL/F 23.5 L/h, V/F 884 L; their covariates were not verified). Poweleit and colleagues (2023) fitted children and adolescents (CL/F 14.2 L/h × body surface area / 1.73 m² × a CYP2C19 factor, V/F 428 L, ka 0.8 /h); for a child that is the better source, and the child and infant in the table above are extrapolation of an adult model.
 - For racemic citalopram see [citalopram](help:drugs/citalopram).
 

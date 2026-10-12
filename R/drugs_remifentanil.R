@@ -19,7 +19,13 @@ remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   BMI <-  weight / (height / 100)^2
 
-  if (BMI < 30) # NIH Obesity cutoff
+  # Kim's model (below) is used at BMI 30 and above, the NIH obesity cutoff,
+  # but only in adults: Kim pooled adults aged 20 to 85, and Eleveld's model
+  # was fitted to ages from five days up, so an obese child stays on Eleveld,
+  # which scales with fat-free mass.  Before 2026-10-12 the switch had no age
+  # condition, and a 5-year-old's clearance jumped 67% at BMI 30 (an audit
+  # finding).  18 is stanpumpR's rule for "adult" here, not Kim's lower bound.
+  if (BMI < 30 || age < REMIFENTANIL_KIM_MIN_AGE)
   {
   # Eleveld
   if (sex == SEX_MALE)
@@ -152,8 +158,8 @@ default <- list(
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
   # The citation is set in the branch above, so that the References panel
-  # names the model actually computed: Eleveld 2017 below BMI 30, Kim 2017 at
-  # and above it.  Minto 1997 (Anesthesiology 86:10-23, PMID 9009935), the
+  # names the model actually computed: Eleveld 2017 below BMI 30 and in every
+  # child, Kim 2017 for an adult at BMI 30 and above.  Minto 1997 (Anesthesiology 86:10-23, PMID 9009935), the
   # model STANPUMP used, remains in the comments at the top of this file.
 
   return(
