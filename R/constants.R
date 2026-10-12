@@ -376,3 +376,41 @@ DEFAULT_CONFIG <- list(
   debug = DEBUG_LEVEL_OFF,
   long_title = FALSE
 )
+
+# TCI API (tci-api.R).  The stateless HTTP API that hands a pump controller its
+# next infusion rate; docs/tci-api.md is the specification (version 1.0), and
+# GET /tci/v1/drugs publishes these values under `limits`.  Within version 1
+# nothing here changes meaning: a token, a drug or a bound may only be added.
+TCI_API_VERSION <- "1.0"
+TCI_API_MIN_INTERVAL <- 1              # s: the controller's update interval, the time a rate is held
+TCI_API_MAX_INTERVAL <- 60             # s; above tPeak / 3 for the drug the response warns INTERVAL_LONG
+TCI_API_MAX_HISTORY <- 20000L          # events in one request; longer is 413 HISTORY_TOO_LONG
+TCI_API_LOOKAHEAD_MAX <- 30000         # s: how far the predictions look, STANPUMP's look_ahead() horizon
+TCI_API_LOOKAHEAD_EXACT_STEPS <- 300L  # plans targetReachedAt runs at the controller's own interval before ...
+TCI_API_LOOKAHEAD_MAX_STEP <- 60       # ... its step grows by a tenth per plan, up to this many seconds
+TCI_API_CLOCK_SKEW <- 2                # s a history event may lie after `now` and be clamped to it
+TCI_API_SERVER_SKEW <- 30              # s between the controller's clock and the server's before CLOCK_SKEW
+TCI_API_MAX_RATE <- 1e5                # ceiling on pump.maxRate, in the pump's own rate units
+TCI_API_TARGET_CEILING <- 5            # x the library's Upper: a higher target is refused
+TCI_API_ON_TARGET <- 0.01              # within this fraction of the target counts as on target
+TCI_API_DELIVERY_TOLERANCE <- 0.02     # the pump's totaliser may differ from the history by this fraction ...
+TCI_API_DELIVERY_TOLERANCE_ML <- 0.5   # ... or by this many mL of the syringe, whichever is larger
+TCI_API_MIN_INFUSATE <- 1e-3           # least syringe concentration, in its own units (0.001 mg/mL or 0.001 mcg/mL)
+TCI_API_PK_CACHE_SIZE <- 256L          # distinct covariate sets whose PK the server keeps (tciApiPK())
+# The unit tokens: one closed, case-sensitive list in the library's spellings.
+TCI_API_RATE_UNITS <- c("mL/hr", "mg/hr", "mg/min", "mcg/hr", "mcg/min",
+                        "mg/kg/hr", "mg/kg/min", "mcg/kg/hr", "mcg/kg/min")
+TCI_API_AMOUNT_UNITS <- c("mL", "mg", "mcg")
+TCI_API_BOLUS_UNITS <- c(TCI_API_AMOUNT_UNITS, "mg/kg", "mcg/kg")
+TCI_API_INFUSATE_UNITS <- c("mg/mL", "mcg/mL")
+TCI_API_CONCENTRATION_UNITS <- c("mcg/mL", "ng/mL")   # the drug decides which
+TCI_API_VOLUME_UNITS <- "mL"
+TCI_API_PUMP_STATES <- c("running", "paused", "alarm", "occlusion",
+                         "syringeEmpty", "purging", "standby")
+# An RFC 3339 time as the API accepts it: date and clock fields within their
+# ranges (the 60th second for a leap second), optional fractional seconds, and
+# a mandatory Z or numeric offset.  Mirrored in inst/api/openapi.json.
+TCI_API_TIME_PATTERN <- paste0(
+  "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])",
+  "[Tt ]([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?",
+  "([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$")

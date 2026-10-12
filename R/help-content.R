@@ -102,6 +102,7 @@ helpStaticPages <- function() {
     "repository",               "What is in the repository",       "project",
     "contributing",             "Contributing a drug or a model",  "project",
     "scripting",                "Driving the engine from R",       "project",
+    "tci-api",                  "The TCI API",                     "project",
     "validation",               "Testing and validation",          "project",
     "in-development",           "In development",                  "project",
 

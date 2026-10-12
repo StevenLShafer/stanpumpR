@@ -316,6 +316,19 @@ All files are flat in `R/`.
 - `tci.R` — target-controlled infusion: turns "Plasma target" / "Effect site target" dose rows
   into the infusion schedule a TCI pump would run (Shafer & Gregg 1992, as in STANPUMP), using
   the same closed-form coefficients as the solvers. Called from `simCpCe()`.
+- `tci-api.R` — the TCI API's computation, pure R (no Shiny, no plumber): `tciNextRate()` turns
+  a parsed request body (covariates, target, pump limits, delivery history) into the next-rate
+  response, rebuilding the seven-amplitude model state from the history, projecting it through
+  the declared latency, calling `tciRate()`, applying the pump's `maxRate` / `minRate` /
+  `rateResolution` and predicting what follows; `tciApiDrugs()`, `tciApiModel()` and
+  `tciApiHealth()` are the other endpoints' bodies. Validation signals the classed condition
+  `tci_api_error`. Reference: `docs/tci-api.md`.
+- `tci-api-server.R` — `tciApiRouter()` builds the Plumber router that serves `/tci/v1`
+  (`health`, `drugs`, `drugs/{drug}/model`, `drugs/{drug}/rate`, `openapi.json`) with
+  full-precision unboxed JSON and the API's error shape; `run_tci_api()` runs it. Plumber is a
+  `Suggests` dependency guarded by `requireNamespace()`, and the router shares nothing with
+  `run_app()`. `inst/api/entrypoint.R` (for `rsconnect::deployAPI()`) and the hand-written
+  `inst/api/openapi.json` go with it.
 - `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` dose row into its
   repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
   `exportDoseTable()`, which merges the TCI rows and the repeats into the exported dose table.
@@ -373,6 +386,16 @@ All files are flat in `R/`.
   Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
   `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
   `eleveld-vs-minto-schnider` and `tci-eleveld-vs-minto-schnider`; tests `test-minto-schnider.R`.
+- **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under
+  `/tci/v1` that returns the next infusion rate for one TCI drug in one patient from the
+  controller's record of what the pump has delivered (the STANPUMP principle: the model state is
+  re-derived from the delivery record on every request, so nothing is lost and every request is
+  a reproducible record). It uses the same `tciRate()` as the TCI rows, and adds the pump's
+  `maxRate` / `minRate` / `rateResolution`, a projection through the declared latency, a bounded
+  segment with a `fallback` rate and a hard stop at `holdUntil`, and predictions (peak, time to
+  target, decrement time, syringe empty). It is not deployed with the Shiny app (shinyapps.io
+  does not host Plumber): `run_tci_api()` or `rsconnect::deployAPI()` serve it. The normative
+  reference is `docs/tci-api.md`.
 - **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM or IN unit with a frequency suffix
   (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 h (qd / bid /
   tid / qid) until the end of the X axis. A scheduled dose of 0 for the same route stops the

@@ -22,6 +22,7 @@ And for plots longer than a day:
   Acute intravenous amiodarone is a separate entry, [Amiodarone IV](help:drugs/amiodaroneIV) (Korth-Bradley and colleagues 1996), for the first one to three days only, with [the label's 24-hour loading regimen](scenario:amiodarone-iv-loading) as a scenario.
 
 - **Oxycodone.** A new model pooled from five studies replaces the Lamminsalo model. Clearance falls with age and renal function, oral absorption and an 11-minute effect-site half-time come from Lalovic 2006, and oxycodone can now be given intravenously (`mg`) as well as by mouth. See [Oxycodone](help:drugs/oxycodone).
+- **The TCI API.** A stateless web service, `/tci/v1`, hands a real TCI pump its next rate from the pump's own record of what it has delivered, using the same controller as the *Plasma target* and *Effect site target* rows, with a correction for the delay before the pump acknowledges a new rate, a pump ceiling, and a fallback rate with a hard stop for a command that arrives late. It is not part of the shinyapps.io deployment and is served separately. See [The TCI API](help:tci-api).
 
 ## Now active
 
