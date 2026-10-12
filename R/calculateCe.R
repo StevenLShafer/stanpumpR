@@ -18,7 +18,17 @@ calculateCe <- function(Cp, ke0, dt, L)
       input = k * dt[i] + (ke0[i] * y0 - k) * (1 - exp(-ke0[i] * dt[i])) / ke0[i]
     } else {
       k = (log(y1) - log(y0))/dt[i]
-      input = y0 * ke0[i]/(k+ke0[i])*(exp(k * dt[i]) - exp(-ke0[i] * dt[i]))
+      if (abs((k + ke0[i]) * dt[i]) < 1e-8) {
+        # Plasma falling at (very nearly) the ke0 rate: the expression below
+        # is 0/0 there, and loses its digits to cancellation nearby.  Its
+        # limit as k -> -ke0 is y0 * ke0 * dt * exp(-ke0 * dt) (an audit of
+        # 2026-10-12 found the NaN).  Within |k + ke0| dt < 1e-8 the limit is
+        # within 1e-8 of the exact value, about where the cancellation error
+        # of the exact form reaches the same size.
+        input = y0 * ke0[i] * dt[i] * exp(-ke0[i] * dt[i])
+      } else {
+        input = y0 * ke0[i]/(k+ke0[i])*(exp(k * dt[i]) - exp(-ke0[i] * dt[i]))
+      }
     }
     Ce[i] = Ce[i-1] * exp(-ke0[i] * dt[i]) + input
   }

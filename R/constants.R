@@ -69,6 +69,11 @@ CYP2C9_DEFAULT <- "*1/*1"
 # their own contribution on top of it.  The default, 280, is within the normal
 # adult range (about 275 to 295); the user enters the patient's measured value.
 OSMOLALITY_DEFAULT <- 280
+
+# Remifentanil switches from Eleveld's model to Kim's obesity model at BMI 30,
+# but only from this age: Kim's subjects were adults (20 to 85 years), while
+# Eleveld's model was fitted down to infancy (R/drugs_remifentanil.R).
+REMIFENTANIL_KIM_MIN_AGE <- 18
 MIN_OSMOLALITY <- 200
 MAX_OSMOLALITY <- 400
 

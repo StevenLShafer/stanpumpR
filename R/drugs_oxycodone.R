@@ -204,7 +204,7 @@
 # References
 # ----------
 # Poyhia R, Olkkola KT, Seppala T, Kalso E. Br J Clin Pharmacol
-#   1991;32:516-518.  https://doi.org/10.1111/j.1365-2125.1991.tb03943.x
+#   1991;32:516-518.  https://doi.org/10.1111/j.1365-2125.1991.tb03942.x
 # Kirvela M, Lindgren L, Seppala T, Olkkola KT. J Clin Anesth 1996;8:13-18.
 #   https://doi.org/10.1016/0952-8180(95)00092-5
 # Liukas A, Kuusniemi K, Aantaa R, et al. Drugs Aging 2011;28:41-50.

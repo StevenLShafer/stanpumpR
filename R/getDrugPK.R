@@ -504,6 +504,27 @@ getDrugPK <- function(
     if (lambda_2 > 0) p_coef_infusion_l2 <- p_coef_bolus_l2 / lambda_2
     if (lambda_3 > 0) p_coef_infusion_l3 <- p_coef_bolus_l3 / lambda_3
 
+    # Every closed-form coefficient below divides by a difference of two rate
+    # constants (ka - lambda_i, ke0 - lambda_i, ka - ke0): an exact tie is a
+    # division by zero, and the t exp(-lambda t) form it would need is not
+    # carried.  So each absorption and effect-site rate constant is nudged off
+    # any rate it ties with (separateEigenvalues(), a relative 1e-8, far below
+    # the precision of any published parameter) HERE, once, and the nudged
+    # values go into the returned PK set, so that every engine, the recovery
+    # search, the TCI schedule and the metabolite fold all see rates that are
+    # already separate.  (Steven L. Shafer, 2026-10-12: "exponents cannot be
+    # identical or you get a divide by zero"; generalised from the ka guard in
+    # advanceClosedForm1() and the metabolite convolution.)  ke0 gets the same
+    # treatment once it is known, below.
+    lambdas <- c(lambda_1, lambda_2, lambda_3)
+    ka_PO     <- separateEigenvalues(ka_PO,     lambdas)
+    ka_PO2    <- separateEigenvalues(ka_PO2,    lambdas)
+    ka_IM     <- separateEigenvalues(ka_IM,     lambdas)
+    ka_IN     <- separateEigenvalues(ka_IN,     lambdas)
+    ka_SL     <- separateEigenvalues(ka_SL,     lambdas)
+    ka_RA     <- separateEigenvalues(ka_RA,     lambdas)
+    ka_RAslow <- separateEigenvalues(ka_RAslow, lambdas)
+
     # find ke0 from tPeak
     #
     # ke0 is whatever makes the peak EFFECT SITE concentration fall at tPeak.
@@ -559,6 +580,17 @@ getDrugPK <- function(
 
     if (ke0 > 0)
     {
+      # See the note above: ke0 off the eigenvalues, and the absorption rates
+      # off ke0 as well (a ka that ties with ke0 divides e_coef_*_ke0 by zero).
+      ke0       <- separateEigenvalues(ke0, lambdas)
+      ka_PO     <- separateEigenvalues(ka_PO,     ke0)
+      ka_PO2    <- separateEigenvalues(ka_PO2,    ke0)
+      ka_IM     <- separateEigenvalues(ka_IM,     ke0)
+      ka_IN     <- separateEigenvalues(ka_IN,     ke0)
+      ka_SL     <- separateEigenvalues(ka_SL,     ke0)
+      ka_RA     <- separateEigenvalues(ka_RA,     ke0)
+      ka_RAslow <- separateEigenvalues(ka_RAslow, ke0)
+
       e_coef_bolus_l1 <- p_coef_bolus_l1 / (ke0 - lambda_1) * ke0
       e_coef_infusion_l1 <- e_coef_bolus_l1 / lambda_1
 
@@ -1121,6 +1153,7 @@ parallelSystemSets <- function(X, PK, events, tPeakRoute, drug, covariates)
 oralCoefficients <- function(pkSet, ka, bioavailability)
 {
   lambda <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3)
+  ka     <- separateEigenvalues(ka, c(lambda, pkSet$ke0))   # no division by zero
   scale  <- ka / (ka - lambda) * bioavailability
   p <- c(pkSet$p_coef_bolus_l1, pkSet$p_coef_bolus_l2, pkSet$p_coef_bolus_l3) * scale
   e <- c(pkSet$e_coef_bolus_l1, pkSet$e_coef_bolus_l2, pkSet$e_coef_bolus_l3) * scale
@@ -1194,6 +1227,7 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
   use <- lambda > 0
   coef <- coef[use]
   lambda <- lambda[use]
+  ke0 <- separateEigenvalues(ke0, lambda)   # no division by zero
   e <- coef * ke0 / (ke0 - lambda)
   stats::optimize(
     function(t) sum(e * exp(-lambda * t)) - sum(e) * exp(-ke0 * t),
@@ -1270,6 +1304,9 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 # site concentration
 tPeakError <-   function(lambda_4, tPeak, p_coef_bolus_1,p_coef_bolus_2,p_coef_bolus_3, lambda_1, lambda_2, lambda_3)
 {
+  # lambda_4 is the trial ke0; the optimiser may land it exactly on an
+  # eigenvalue, where the coefficients below divide by zero.
+  lambda_4 <- separateEigenvalues(lambda_4, c(lambda_1, lambda_2, lambda_3))
   e_coef_bolus_1 <- p_coef_bolus_1 / (lambda_4 - lambda_1) * lambda_4
 
   if (lambda_2 > 0)

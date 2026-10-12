@@ -18,7 +18,7 @@ All are given by mouth only (`mg PO`, with once- and twice-daily schedules). Mos
 
 ## What a curve can and cannot tell you
 
-**Population, not patient.** Every curve is the typical patient of its source population. No model is offered as transferable beyond that population without calibration. When ten published escitalopram models were tested against an independent cohort, none gave reliable population predictions without it (Liu and colleagues, 2025).
+**Population, not patient.** Every curve is the typical patient of its source population. No model is offered as transferable beyond that population without calibration. When ten published escitalopram models were tested against an independent cohort, none gave reliable population predictions without it (Yan and colleagues, 2025).
 
 **Trough data shape the half-lives.** Most of these models were fitted to one or two concentrations per patient, drawn just before a dose at steady state. Such data pin down the average steady-state concentration (dose rate divided by clearance) well and the shape within a dosing interval poorly. Several apparent half-lives therefore differ from the product label's: mirtazapine's is about 7 hours against the label's 20 to 40, paroxetine's about 54 hours at 71 years against the label's 21, and fluoxetine's about 6 hours against the label's 4 to 6 days, with norfluoxetine's 20 minutes against 4 to 16 days. Fluoxetine's model was held back until its units were checked: its source's own simulated troughs confirm that the printed parameters are what the authors used, so the troughs are right and the time course is not. Each drug's page says where this applies.
 
@@ -41,7 +41,7 @@ These were assessed and left out. They are not forgotten:
 
 Hiemke C, Bergemann N, Clement HW, et al. Consensus guidelines for therapeutic drug monitoring in neuropsychopharmacology: update 2017. *Pharmacopsychiatry* 2018;51:9-62. https://doi.org/10.1055/s-0043-116492
 
-Liu and colleagues, external evaluation of ten escitalopram population models, *Drug Des Devel Ther* 2025, https://doi.org/10.2147/DDDT.S546904.
+Yan K, Xie X, Shao Q, Wang N, Yang M. A step toward precision dosing of escitalopram in Chinese patients: an external evaluation of published population pharmacokinetic models. *Drug Des Devel Ther* 2025;19:10937-10951. https://doi.org/10.2147/DDDT.S546904.
 
 Meyer JH, Wilson AA, Sagrati S, et al. Serotonin transporter occupancy of five selective serotonin reuptake inhibitors at different doses: an [11C]DASB positron emission tomography study. *Am J Psychiatry* 2004;161:826-835. https://doi.org/10.1176/appi.ajp.161.5.826
 

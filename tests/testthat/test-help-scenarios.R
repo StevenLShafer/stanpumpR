@@ -253,3 +253,70 @@ test_that("with the app's timeApi, a scenario sets its time settings and the tab
   expect_identical(shiny::isolate(doseTable()), doseTableInit)
   expect_identical(shiny::isolate(eventTable()), helpScenarioEventTable(s))
 })
+
+# A scenario carries every Patient Profile field, so that nothing of the
+# previous patient survives a load.  An audit of 2026-10-12 found the serum
+# creatinine and the baseline osmolality left as they were.
+test_that("a scenario names every patient field, with creatinine blank by default", {
+  for (s in scenarios) {
+    expect_setequal(names(s$patient),
+                    c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
+                      "adjustToFFM", "creatinine", "osmolality"), info = s$id)
+    expect_null(s$patient$creatinine, info = s$id)
+    expect_equal(s$patient$osmolality, OSMOLALITY_DEFAULT, info = s$id)
+  }
+  s <- helpScenario("x-y", "T", HELP_SCENARIO_GROUPS[1], "S",
+                    doses = helpDoses(c("propofol", 0, 100, "mg")),
+                    creatinine = 2.5, osmolality = 300)
+  expect_equal(s$patient$creatinine, 2.5)
+  expect_equal(s$patient$osmolality, 300)
+  expect_length(helpScenarioCheck(s), 0)
+  bad <- helpScenario("x-y", "T", HELP_SCENARIO_GROUPS[1], "S",
+                      doses = helpDoses(c("propofol", 0, 100, "mg")),
+                      creatinine = MAX_CREATININE + 1, osmolality = MIN_OSMOLALITY - 1)
+  problems <- helpScenarioCheck(bad)
+  expect_true(any(grepl("creatinine", problems)))
+  expect_true(any(grepl("osmolality", problems)))
+})
+
+test_that("loading a scenario resets the creatinine and osmolality fields", {
+  skip_if_not_installed("R6")
+  skip_if_not(exists("MockShinySession", asNamespace("shiny")), "MockShinySession not available")
+  # MockShinySession discards input messages; this one keeps them.
+  Recorder <- R6::R6Class("MockShinySession", inherit = shiny::MockShinySession,
+    public = list(
+      messages = list(),
+      sendInputMessage = function(inputId, message) {
+        self$messages[[inputId]] <- message
+        invisible()
+      }
+    )
+  )
+  session <- Recorder$new()
+  doseTable <- shiny::reactiveVal(doseTableInit)
+  eventTable <- shiny::reactiveVal(eventTableInit)
+
+  applyHelpScenario(session, helpScenarioById("pregabalin-linear-absorption"), doseTable, eventTable)
+
+  expect_true(all(c("creatinine", "osmolality") %in% names(session$messages)))
+  expect_true(is.na(session$messages$creatinine$value))
+  expect_equal(as.numeric(session$messages$osmolality$value), OSMOLALITY_DEFAULT)
+  # and the rest of the profile goes too
+  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "adjustToFFM")
+                  %in% names(session$messages)))
+
+  s <- helpScenario("x-y", "T", HELP_SCENARIO_GROUPS[1], "S",
+                    doses = helpDoses(c("pregabalin", 0, 150, "mg PO")),
+                    creatinine = 2.5, osmolality = 300)
+  session <- Recorder$new()
+  applyHelpScenario(session, s, doseTable, eventTable)
+  expect_equal(as.numeric(session$messages$creatinine$value), 2.5)
+  expect_equal(as.numeric(session$messages$osmolality$value), 300)
+})
+
+test_that("the scenario page shows the creatinine and osmolality the load will set", {
+  html <- helpScenarioPageHTML("pregabalin-linear-absorption")
+  expect_match(html, "Serum creatinine", fixed = TRUE)
+  expect_match(html, "blank (normal for age and sex assumed)", fixed = TRUE)
+  expect_match(html, "280 mOsm/kg", fixed = TRUE)
+})
