@@ -9,6 +9,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `R/` | All the code, in flat files (below) |
 | `inst/extdata/` | The drug library (`drugDefaults_global.csv`), the event list (`eventDefaults.csv`) and the PowerPoint template |
 | `inst/help/` | The hand-written pages of this help, as Markdown |
+| `inst/api/` | The TCI API's deployment entry point (`entrypoint.R`, for Posit Connect) and its OpenAPI document (`openapi.json`) |
 | `inst/www/` | The app's stylesheet and JavaScript |
 | `inst/validation/` | The Gas Man validation record, the scenario drivers and their results |
 | `tests/testthat/` | The unit tests, one file per drug and per source file |
@@ -34,6 +35,8 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 **The inhaled-gas engine.** `gasProperties.R` (parameters and provenance), `advanceClosedFormGas.R` (the model and its matrix-exponential advance), `gasDrugEntries.R` (how gas results become plot series), `gasRecovery.R` (time until threshold for gases and MAC), `advanceGasManBaseline.R` (a transcription of Gas Man's own update, kept as the reference the engine is compared to).
 
 **Output.** `simulationPlot.R` assembles the figure; `suggest.R` is Suggest Dosing; `sendSlide.R` builds and mails the PowerPoint slide.
+
+**Target-controlled infusion.** `tci.R` is the controller behind the *Plasma target* and *Effect site target* rows; `tci-api.R` is [the TCI API](help:tci-api)'s computation (`tciNextRate()`: the next rate for a real pump from its delivery history, pure R); `tci-api-server.R` wraps it in a `plumber` router (`tciApiRouter()`, `run_tci_api()`), the one file that touches `plumber`, an optional dependency.
 
 **The help.** `help-content.R` (page registry, Markdown rendering, search), `help-drugs.R` (the generated drug pages), `help-scenarios.R` (the teaching scenarios and their loader), `help-ui.R` and `help-server.R`.
 
@@ -66,5 +69,6 @@ The R version is recorded in the third line of `renv.lock`.
 
 - `docs/architecture.md`: the reactive pipeline in detail, the dose-table lifecycle, and known issues.
 - `docs/adding-a-drug.md`: the step-by-step procedure, summarised under [Contributing](help:contributing).
+- `docs/tci-api.md`: the TCI API reference, every field, unit token, bound and error code, summarised under [The TCI API](help:tci-api).
 - `AGENTS.md`: orientation for AI coding assistants working on the repository.
 - `inst/help/README.md`: how to write help pages.
