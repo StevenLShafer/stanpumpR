@@ -251,13 +251,16 @@ test_that("the format is negotiated from the query, the body, then Accept", {
 test_that("the HTTP service answers /health, /drugs and /simulate", {
   skip_if_not_installed("plumber")
   api <- plumber::pr(system.file("plumber", "plumber.R", package = "stanpumpR"))
-  call <- function(method, path, query = "", body = "", accept = "*/*") {
+  call <- function(method, path, query = "", body = "", accept = "*/*",
+                   type = "application/json") {
     req <- new.env()
     req$REQUEST_METHOD <- method
     req$PATH_INFO <- path
     req$QUERY_STRING <- query
     req$HTTP_ACCEPT <- accept
-    req$HEADERS <- c(accept = accept)
+    req$CONTENT_TYPE <- type
+    req$HTTP_CONTENT_TYPE <- type
+    req$HEADERS <- c(accept = accept, "content-type" = type)
     bodyRaw <- charToRaw(body)
     req$rook.input <- list(read = function(...) bodyRaw, rewind = function() invisible(0),
                            read_lines = function() body)
@@ -283,4 +286,10 @@ test_that("the HTTP service answers /health, /drugs and /simulate", {
   bad <- call("POST", "/simulate", "", sub("fentanyl", "fentanil", body))
   expect_equal(bad$status, 400L)
   expect_match(jsonlite::fromJSON(text(bad))$error, "unknown drug 'fentanil'")
+
+  # Malformed JSON sent as JSON reaches apiParseRequest() (@parser none), so
+  # it is a 400 that says why, not plumber's bare 500.
+  malformed <- call("POST", "/simulate", "", "{not json")
+  expect_equal(malformed$status, 400L)
+  expect_match(jsonlite::fromJSON(text(malformed))$error, "not valid JSON")
 })

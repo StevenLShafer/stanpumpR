@@ -23,6 +23,23 @@ apiFail <- function(res, e) {
   res
 }
 
+# A body sent as application/json is parsed by plumber before /simulate runs,
+# so a malformed one fails there and would reach the client as plumber's bare
+# 500.  The router's error handler parses it again with apiParseRequest(),
+# whose 400 says what is wrong.  (`@parser none` would avoid the first parse,
+# but plumber registers that parser with the regex "*", which is not a valid
+# pattern, and then fails on every request with a content type.)
+#* @plumber
+function(pr) {
+  plumber::pr_set_error(pr, function(req, res, err) {
+    if (identical(req$PATH_INFO, "/simulate")) {
+      parsed <- tryCatch(stanpumpR::apiParseRequest(req$postBody), error = function(e) e)
+      if (inherits(parsed, "stanpumpr_api_error")) err <- parsed
+    }
+    apiFail(res, err)
+  })
+}
+
 apiSend <- function(res, out) {
   res$status <- 200L
   res$setHeader("Content-Type", out$contentType)
