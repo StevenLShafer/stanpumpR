@@ -286,6 +286,30 @@ app_ui <- function() {
                   label = "Include opioid - MAC interaction",
                   value = FALSE
                 ),
+                # The Schnider propofol and Minto remifentanil models, the
+                # models in most TCI pumps, run beside the library's Eleveld
+                # models and drawn as a second line in the same panels
+                # (R/alternativeModels.R).  The server enables the box while
+                # propofol or remifentanil is in the dose table.
+                bslib::tooltip(
+                  checkboxInput(
+                    inputId = "mintoSchnider",
+                    label = ALTERNATIVE_MODELS_LABEL,
+                    value = FALSE
+                  ) |>
+                    shinyjs::disabled(),
+                  paste(
+                    "Also run the Schnider (1998) propofol and Minto (1997)",
+                    "remifentanil models, the models in most TCI pumps, and",
+                    "draw them beside the Eleveld curves as a second line in",
+                    "the drug's panel. Under a target-controlled infusion the",
+                    "second model drives a pump of its own, drawn as a second",
+                    "line in the TCI rate panel. Time until threshold stays on",
+                    "the Eleveld model. Available when propofol or remifentanil",
+                    "is in the dose table."
+                  ),
+                  placement = "right"
+                ),
               ),
 
               bslib::accordion_panel(

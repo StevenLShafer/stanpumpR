@@ -153,6 +153,21 @@ getDrugPK <- function(
   # function", which is what test-gas-routing.R pins.
   X <- if (is.null(model)) do.call(drug, covariates) else model
   tPeak <- X$tPeak
+  # A model that supplies ke0 directly may leave tPeak out altogether (NULL):
+  # the time to peak effect is then solved below, per PK set, as the moment
+  # the effect site peaks after a bolus with that ke0 and that disposition.
+  # The TCI controller searches out to tPeak and vdPeakEffect is read at it,
+  # so a model with a published ke0 still gets a true tPeak rather than a
+  # placeholder.  Minto's remifentanil, whose ke0 is a function of age
+  # (R/alternativeModels.R), is the case.  A tPeak of 0 beside a ke0
+  # (desmetramadol) still means what it did: no tPeak is reported.
+  solveTPeak <- is.null(tPeak)
+  if (solveTPeak) {
+    if (is.null(X$ke0) || !is_valid_number(X$ke0) || X$ke0 <= 0)
+      stop("No tPeak for ", drug, ": a model may leave tPeak out only when it supplies ke0.")
+    tPeak <- 0
+  }
+  tPeakSolved <- list()
   # Which curve tPeak was measured against.  Defaults to the intravenous
   # bolus, which is what every drug in the library assumed before oral-only
   # drugs arrived, so no existing model changes.
@@ -561,6 +576,17 @@ getDrugPK <- function(
       e_coef_infusion_ke0 <- e_coef_bolus_ke0 / ke0
     }
 
+    # The time to peak effect of a model that gave ke0 and no tPeak (above)
+    if (solveTPeak && ke0 > 0)
+    {
+      tPeak <- effectSitePeakTime(
+        c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+        c(lambda_1, lambda_2, lambda_3),
+        ke0
+      )
+      tPeakSolved[[event]] <- tPeak
+    }
+
     if (ka_PO > 0)
     {
       p_coef_PO_l1   <- p_coef_bolus_l1 / (ka_PO - lambda_1) * ka_PO * bioavailability_PO
@@ -832,6 +858,13 @@ getDrugPK <- function(
   }
 
   PK <- sapply(events, function(x) list(get0(x)))
+
+  # The reported tPeak of a model that gave ke0 and no tPeak is the default
+  # PK set's (each set solved its own above, for its vdPeakEffect).
+  if (solveTPeak && length(tPeakSolved) > 0)
+  {
+    tPeak <- if (!is.null(tPeakSolved[[PK_EVENT_DEFAULT]])) tPeakSolved[[PK_EVENT_DEFAULT]] else tPeakSolved[[1]]
+  }
 
   # The second oral depot is carried by advanceClosedFormPO_IM_IN(),
   # advanceClosedForm1() and advanceClosedFormMetabolite() (aspirin), not by

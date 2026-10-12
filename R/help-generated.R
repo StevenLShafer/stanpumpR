@@ -108,6 +108,54 @@ helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
           body), collapse = "\n")
 }
 
+#' The Schnider and Minto models at the reference patients, as Markdown
+#'
+#' One table per alternative model (R/alternativeModels.R): the volumes,
+#' clearances, ke0 and time to peak effect getDrugPK() computes from the model
+#' at each of the help's reference patients, beside the library's own values
+#' for the same patient, so the page states what the code computes.  A
+#' patient for whom the model is not defined (a negative clearance) is
+#' listed with the reason instead of numbers.
+#' @noRd
+helpAlternativeModelTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  patients <- helpReferencePatients()
+  num <- function(x, digits = 3) if (is.null(x) || is.na(x)) "—" else helpFormatNumber(x, digits)
+  tables <- vapply(ALTERNATIVE_MODEL_DRUGS, function(drug) {
+    spec <- ALTERNATIVE_MODELS[[drug]]
+    row <- drugDefaults[drugDefaults$Drug == drug, ][1, ]
+    lines <- vapply(seq_len(nrow(patients)), function(i) {
+      p <- patients[i, ]
+      patient <- sprintf("%s (%s y, %s kg, %s cm, %s)", p$label,
+                         helpFormatNumber(p$age), p$weight, p$height, p$sex)
+      problem <- alternativeModelProblem(drug, p$weight, p$height, p$age, p$sex)
+      own <- helpDrugPK(drug, p, drugDefaults)
+      ownSet <- if (is.null(own)) NULL else own$PK[[PK_EVENT_DEFAULT]]
+      ownText <- if (is.null(ownSet)) "—" else
+        sprintf("CL1 %s L/min, V1 %s L, ke0 %s/min", num(ownSet$cl1), num(ownSet$v1), num(ownSet$ke0))
+      if (!is.null(problem)) {
+        return(sprintf("| %s | not defined: %s | | | | | | | | %s |", patient,
+                       sub(" Only the library's model is shown\\.$", "", sub("^.*patient: ", "", problem)),
+                       ownText))
+      }
+      entry <- alternativeModelEntry(drug, p$weight, p$height, p$age, p$sex, row)
+      k <- entry$PK[[PK_EVENT_DEFAULT]]
+      sprintf("| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |", patient,
+              num(k$v1), num(k$v2), num(k$v3), num(k$cl1), num(k$cl2), num(k$cl3),
+              num(k$ke0), num(entry$tPeak), ownText)
+    }, character(1))
+    paste(c(
+      sprintf("**%s: the %s model**", helpDrugTitle(drug), spec$label),
+      "",
+      "| Patient | V1 (L) | V2 (L) | V3 (L) | CL1 (L/min) | CL2 (L/min) | CL3 (L/min) | ke0 (1/min) | tPeak (min) | Library model, same patient |",
+      "|---|---|---|---|---|---|---|---|---|---|",
+      lines,
+      ""
+    ), collapse = "\n")
+  }, character(1))
+  paste(tables, collapse = "\n")
+}
+
 HELP_GENERATED_BLOCKS <- list(
-  "route-table" = helpRouteTableMarkdown
+  "route-table" = helpRouteTableMarkdown,
+  "minto-schnider-table" = helpAlternativeModelTableMarkdown
 )

@@ -53,7 +53,11 @@ full mechanism.
 `drugs()` is a reactive that gets re-calculated whenever the dose table changes (more specifically,
 when `doseTableClean()` is updated). It runs `recalculatePK()`, which in turn runs `getDrugPK()` in a loop
 for each drug in the doses table. This turns the patient's covariates into a full set of rate constants,
-eigenvalues, and closed-form coefficients.
+eigenvalues, and closed-form coefficients. With the **Minto / Schnider** box ticked
+(`input$mintoSchnider`), `recalculatePK(alternativeModels = TRUE)` also appends a *companion entry*
+for each dosed drug that has an alternative model (`R/alternativeModels.R`: `propofol (Schnider)`,
+`remifentanil (Minto)`), built through the same `getDrugPK()` from the alternative model's output
+and marked with `$companionOf` and `$modelLabel`.
 
 ### 04 — Simulate concentrations
 
@@ -65,7 +69,8 @@ stored with a key (`simulationKey()`: its resolved PK, its dose rows, its PK eve
 more than one PK set, the plot length and the recovery switch); a drug whose key is unchanged
 reuses its stored simulation. `foldMetabolites()` then runs on every call, so a metabolite drug's
 plotted series always reflects its parents' current doses. Output is a tidy time × site table
-per drug.
+per drug. A companion entry is simulated on its parent's dose rows, cached under its own name, and
+never with the time until threshold, which stays on the library's model.
 
 ### 05 — Assemble the plot
 
@@ -327,6 +332,10 @@ All files are flat in `R/`.
 - `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` dose row into its
   repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
   `exportDoseTable()`, which merges the TCI rows and the repeats into the exported dose table.
+- `alternativeModels.R` — the Minto / Schnider switch: Schnider's propofol and Minto's
+  remifentanil models (as STANPUMP ran them), the companion-entry builder `recalculatePK()`
+  calls, the companion's colour and name-to-parent mapping, and `alternativeModelProblems()`,
+  which says when a model is not defined for the patient.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
 - `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
   `emayili`.
@@ -361,6 +370,22 @@ All files are flat in `R/`.
   infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,
   `simulationPlot()` draws them as a per-drug rate panel with the loading dose written as a
   number, and `sendSlide()` merges them into the exported dose table.
+- **Minto / Schnider** (`alternativeModels.R`) — a Graph Options box, enabled while propofol or
+  remifentanil is in the dose table, that runs Schnider's 1998 propofol model and Minto's 1997
+  remifentanil model (the models in most TCI pumps, written as the original STANPUMP ran them)
+  beside the library's Eleveld models. Each is a *companion entry* of the drug list
+  (`recalculatePK(alternativeModels = TRUE)`), simulated by `processdoseTable()` on the parent's
+  doses without recovery, and drawn by `simulationPlot()` as a second line in the parent's panel
+  in a derived colour with its own legend entry; under TCI the companion's pump is a second line
+  on the parent's rate panel with its loading dose labelled by model. Companions are kept out of
+  the MEAC sum, the interaction panel and the opioid-MAC interaction (a second remifentanil line
+  is not a second opioid); the hover reports both models and a click goes to the parent. Minto's
+  ke0 is the paper's function of age, so `getDrugPK()` accepts a model with `ke0` and no `tPeak`
+  and solves the time to peak effect from it. A model whose covariate terms give a non-positive
+  volume or clearance for the patient (James lean body mass at extremes; a small child on
+  Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
+  `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
+  `eleveld-vs-minto-schnider` and `tci-eleveld-vs-minto-schnider`; tests `test-minto-schnider.R`.
 - **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under
   `/tci/v1` that returns the next infusion rate for one TCI drug in one patient from the
   controller's record of what the pump has delivered (the STANPUMP principle: the model state is

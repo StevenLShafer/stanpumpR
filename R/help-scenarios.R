@@ -48,7 +48,10 @@ helpScenarioDefaultOptions <- function() {
     addedPlots = character(0),
     showThreshold = FALSE,
     logY = FALSE,
-    opioidMacInteraction = FALSE
+    opioidMacInteraction = FALSE,
+    # Run the Schnider propofol and Minto remifentanil models beside the
+    # library's (R/alternativeModels.R); needs one of those drugs dosed
+    mintoSchnider = FALSE
   )
 }
 
@@ -241,6 +244,38 @@ helpScenarios <- function() {
         c("propofol", 60, 0, "Effect site target")
       ),
       maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE
+    ),
+    # The library's Eleveld models beside the Schnider and Minto models most
+    # TCI pumps run (R/alternativeModels.R), in ordinary simulation and under
+    # TCI.  (Claude Code, 2026-10-12, at the request of Steven L. Shafer.)
+    helpScenario(
+      "eleveld-vs-minto-schnider",
+      "Eleveld beside Schnider and Minto: propofol and remifentanil",
+      "Intravenous basics",
+      "The same propofol and remifentanil doses run through the Eleveld models and through the Schnider and Minto models most TCI pumps use, drawn as two lines in each panel.",
+      doses = helpDoses(
+        c("propofol", 0, 2, "mg/kg"),
+        c("propofol", 0, 100, "mcg/kg/min"),
+        c("propofol", 60, 0, "mcg/kg/min"),
+        c("remifentanil", 0, 1, "mcg/kg"),
+        c("remifentanil", 0, 0.2, "mcg/kg/min"),
+        c("remifentanil", 60, 0, "mcg/kg/min")
+      ),
+      maximum = 120, plasmaLinetype = "dashed", mintoSchnider = TRUE
+    ),
+    helpScenario(
+      "tci-eleveld-vs-minto-schnider",
+      "TCI: the same targets on Eleveld and on Schnider and Minto",
+      "Intravenous basics",
+      "Effect-site targets of 3 mcg/mL propofol and 4 ng/mL remifentanil, held for an hour by a pump on each model: each pump hits its own target, and the rate panels show how much drug each thinks that takes.",
+      doses = helpDoses(
+        c("propofol", 0, 3, "Effect site target"),
+        c("propofol", 60, 0, "Effect site target"),
+        c("remifentanil", 0, 4, "Effect site target"),
+        c("remifentanil", 60, 0, "Effect site target")
+      ),
+      maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE,
+      mintoSchnider = TRUE
     ),
 
     # --- Oral analgesics -----------------------------------------------------
@@ -718,7 +753,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (o$logY && (o$showThreshold || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
     say("logY is unavailable with the threshold, events or interaction panels")
   }
-  for (name in c("showThreshold", "logY", "opioidMacInteraction")) {
+  for (name in c("showThreshold", "logY", "opioidMacInteraction", "mintoSchnider")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
 
@@ -750,6 +785,14 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
     if (PLOT_ID_INTERACTION %in% o$addedPlots) {
       opioids <- drugDefaults$Drug[!is.na(drugDefaults$MEAC) & drugDefaults$MEAC > 0]
       if (!"propofol" %in% d$Drug || !any(d$Drug %in% opioids)) say("the interaction panel needs propofol and an opioid")
+    }
+    # The Minto / Schnider box is enabled only while one of those drugs is dosed
+    if (isTRUE(o$mintoSchnider) && !any(d$Drug %in% ALTERNATIVE_MODEL_DRUGS)) {
+      say("Minto / Schnider needs ", paste(ALTERNATIVE_MODEL_DRUGS, collapse = " or "))
+    }
+    if (isTRUE(o$mintoSchnider)) {
+      p <- s$patient
+      for (problem in alternativeModelProblems(d$Drug, p$weight, p$height, p$age, p$sex)) say(problem)
     }
   }
 
@@ -844,6 +887,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateCheckboxInput(session, "showThreshold", value = o$showThreshold)
   updateCheckboxInput(session, "logY", value = o$logY)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
+  updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
 
   eventTable(helpScenarioEventTable(s))
   if (is.null(timeApi)) {
@@ -911,7 +955,8 @@ helpScenarioPageHTML <- function(id) {
     "Additional plots" = if (length(o$addedPlots)) paste(o$addedPlots, collapse = ", ") else "none",
     "Time until threshold" = if (o$showThreshold) "on" else "off",
     "Log Y axis" = if (o$logY) "on" else "off",
-    "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off"
+    "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off",
+    "Minto / Schnider" = if (o$mintoSchnider) "on" else "off"
   )
   optionsTable <- data.frame(Option = names(optionRows), Setting = unname(optionRows),
                              stringsAsFactors = FALSE)

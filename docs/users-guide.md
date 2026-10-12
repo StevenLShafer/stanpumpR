@@ -178,6 +178,7 @@ and you can edit it (see *Drug Library*).
 | Y axis height | Plot height in pixels |
 | Time until threshold | Draws, for each drug, how long until it falls to its recovery threshold (`endCe` in the library). Only available when normalization is off |
 | Log Y axis | Log-scale the concentration axis. Unavailable when Time until threshold, Events, or Interaction are showing, because those panels do not have a meaningful log form |
+| Minto / Schnider | Also run the Schnider (1998) propofol and Minto (1997) remifentanil models, the models most TCI pumps use, beside the library's Eleveld models: a second line in each drug's panel, and under TCI a second pump in the rate panel. Time until threshold stays on the Eleveld model. Enabled only while propofol or remifentanil is in the dose table |
 
 ---
 
@@ -252,6 +253,17 @@ Two things the simulated pump does not model. It does not know about oral,
 intramuscular or intranasal doses of the same drug, which it treats, like a
 real pump would, as an unexpected addition. And it has no upper limit on its
 rate, so the loading dose is always delivered within one interval.
+
+**A second pump on the Minto or Schnider model.** Most commercial pumps run
+Schnider's propofol model and Minto's remifentanil model rather than the
+Eleveld models the library uses. With **Graph Options → Minto / Schnider**
+ticked, each propofol or remifentanil target is also run by a pump on that
+model: its rates are a second line in the TCI rate panel, its loading dose is
+written below the first pump's and named for the model, and the concentrations
+it predicts are a second line in the concentration panel. Each pump hits its
+own target; the models disagree about how much drug that takes. The same box
+draws the second model as a second line under ordinary bolus and infusion
+dosing. The time until threshold is always the Eleveld model's.
 
 ---
 
@@ -346,8 +358,8 @@ what the literature offers.
 
 | Drug | Model source |
 |---|---|
-| Propofol | Eleveld DJ et al., *Br J Anaesth* 2018;120(5):942–959. [PMID 29661412](https://pubmed.ncbi.nlm.nih.gov/29661412/) |
-| Remifentanil | Minto CF et al., *Anesthesiology* 1997;86:10–23. [PMID 9009935](https://pubmed.ncbi.nlm.nih.gov/9009935/) |
+| Propofol | Eleveld DJ et al., *Br J Anaesth* 2018;120(5):942–959. [PMID 29661412](https://pubmed.ncbi.nlm.nih.gov/29661412/). With *Minto / Schnider* ticked, also Schnider TW et al., *Anesthesiology* 1998;88(5):1170–1182. [PMID 9605675](https://pubmed.ncbi.nlm.nih.gov/9605675/) |
+| Remifentanil | BMI below 30: Eleveld DJ et al., *Anesthesiology* 2017;126(6):1005–1018. [PMID 28509794](https://pubmed.ncbi.nlm.nih.gov/28509794/); BMI 30 and above: Kim TK et al., *Anesthesiology* 2017;126(6):1019–1032. [PMID 28509796](https://pubmed.ncbi.nlm.nih.gov/28509796/). With *Minto / Schnider* ticked, also Minto CF et al., *Anesthesiology* 1997;86:10–23. [PMID 9009935](https://pubmed.ncbi.nlm.nih.gov/9009935/) |
 | Fentanyl | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
 | Alfentanil | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
 | Sufentanil | Gepts E et al., *Anesthesiology* 1995;83(6):1194–1204. [PMID 8533912](https://pubmed.ncbi.nlm.nih.gov/8533912/) |

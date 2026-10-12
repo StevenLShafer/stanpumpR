@@ -27,7 +27,7 @@ Several models reason about size through a measure of lean tissue rather than to
 
 **BMI** = weight / (height/100)². Remifentanil switches models at BMI 30.
 
-**Lean body mass (James, 1976).** Used by the Schnider propofol model (present in the code but superseded by Eleveld) and historically by the Minto remifentanil model:
+**Lean body mass (James, 1976).** Used by the Schnider propofol model and the Minto remifentanil model, which run beside the library's Eleveld models when *Minto / Schnider* is ticked under Graph Options ([The Minto and Schnider models](help:models/minto-schnider)):
 
 ```
 men:   LBM = 1.10 weight - 128 (weight/height)²
