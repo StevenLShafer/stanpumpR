@@ -259,9 +259,9 @@ test_that("with the app's timeApi, a scenario sets its time settings and the tab
 # creatinine and the baseline osmolality left as they were.
 test_that("a scenario names every patient field, with creatinine blank by default", {
   for (s in scenarios) {
-    expect_setequal(names(s$patient),
-                    c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
-                      "adjustToFFM", "creatinine", "osmolality"), info = s$id)
+    expect_true(setequal(names(s$patient),
+                         c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
+                           "adjustToFFM", "creatinine", "osmolality")), info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
     expect_equal(s$patient$osmolality, OSMOLALITY_DEFAULT, info = s$id)
   }
@@ -280,26 +280,27 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
 })
 
 test_that("loading a scenario resets the creatinine and osmolality fields", {
-  skip_if_not_installed("R6")
   skip_if_not(exists("MockShinySession", asNamespace("shiny")), "MockShinySession not available")
-  # MockShinySession discards input messages; this one keeps them.
-  Recorder <- R6::R6Class("MockShinySession", inherit = shiny::MockShinySession,
-    public = list(
-      messages = list(),
-      sendInputMessage = function(inputId, message) {
-        self$messages[[inputId]] <- message
-        invisible()
-      }
-    )
-  )
-  session <- Recorder$new()
+  # MockShinySession discards input messages; record them on the instance.
+  recordingSession <- function() {
+    session <- shiny::MockShinySession$new()
+    session$messages <- list()
+    unlockBinding("sendInputMessage", session)
+    session$sendInputMessage <- function(inputId, message) {
+      session$messages[[inputId]] <- message
+      invisible()
+    }
+    lockBinding("sendInputMessage", session)
+    session
+  }
+  session <- recordingSession()
   doseTable <- shiny::reactiveVal(doseTableInit)
   eventTable <- shiny::reactiveVal(eventTableInit)
 
   applyHelpScenario(session, helpScenarioById("pregabalin-linear-absorption"), doseTable, eventTable)
 
   expect_true(all(c("creatinine", "osmolality") %in% names(session$messages)))
-  expect_true(is.na(session$messages$creatinine$value))
+  expect_identical(session$messages$creatinine$value, "")
   expect_equal(as.numeric(session$messages$osmolality$value), OSMOLALITY_DEFAULT)
   # and the rest of the profile goes too
   expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "adjustToFFM")
@@ -308,7 +309,7 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   s <- helpScenario("x-y", "T", HELP_SCENARIO_GROUPS[1], "S",
                     doses = helpDoses(c("pregabalin", 0, 150, "mg PO")),
                     creatinine = 2.5, osmolality = 300)
-  session <- Recorder$new()
+  session <- recordingSession()
   applyHelpScenario(session, s, doseTable, eventTable)
   expect_equal(as.numeric(session$messages$creatinine$value), 2.5)
   expect_equal(as.numeric(session$messages$osmolality$value), 300)

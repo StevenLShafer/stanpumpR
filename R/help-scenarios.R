@@ -888,9 +888,14 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
-  # NA clears the field (the browser shows it blank), which is the state the
-  # renal models read as "assume a normal creatinine".
-  updateNumericInput(session, "creatinine", value = if (is.null(p$creatinine)) NA else p$creatinine)
+  # A blank field is the state the renal models read as "assume a normal
+  # creatinine".  updateNumericInput() would send NA as the string "NA" and
+  # leave the browser to sanitise it, so the blank is sent explicitly.
+  if (is.null(p$creatinine)) {
+    session$sendInputMessage("creatinine", list(value = ""))
+  } else {
+    updateNumericInput(session, "creatinine", value = p$creatinine)
+  }
   updateNumericInput(session, "osmolality", value = p$osmolality)
 
   if (is.null(timeApi)) {
