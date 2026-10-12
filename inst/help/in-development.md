@@ -24,6 +24,10 @@ And for plots longer than a day:
 - **Oxycodone.** A new model pooled from five studies replaces the Lamminsalo model. Clearance falls with age and renal function, oral absorption and an 11-minute effect-site half-time come from Lalovic 2006, and oxycodone can now be given intravenously (`mg`) as well as by mouth. See [Oxycodone](help:drugs/oxycodone).
 - **The TCI API.** A stateless web service, `/tci/v1`, hands a real TCI pump its next rate from the pump's own record of what it has delivered, using the same controller as the *Plasma target* and *Effect site target* rows, with a correction for the delay before the pump acknowledges a new rate, a pump ceiling, and a fallback rate with a hard stop for a command that arrives late. It is not part of the shinyapps.io deployment and is served separately. See [The TCI API](help:tci-api).
 
+## Keeping the models current
+
+Since October 2026 the library has an agentic AI step. Every week a scheduled Claude Code routine, running in the cloud, searches PubMed for new pharmacokinetic studies of every drug in the library, screens them, and emails the maintainer the promising ones with its own view of what each would or would not add to stanpumpR. The maintainer decides what to incorporate, and a paper that is taken up goes through the usual steps for adding or updating a drug. The routine itself changes nothing in the app. It is described in the repository's `docs/literature-watch.md`.
+
 ## Now active
 
 **CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes.
