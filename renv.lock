@@ -2940,6 +2940,70 @@
       "Maintainer": "Lionel Henry <lionel@posit.co>",
       "Repository": "CRAN"
     },
+    "plumber": {
+      "Package": "plumber",
+      "Version": "1.3.3",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "An API Generator for R",
+      "Authors@R": "c( person(\"Barret\", \"Schloerke\", , \"barret@posit.co\", role = c(\"cre\", \"aut\"), comment = c(ORCID = \"0000-0001-9986-114X\")), person(\"Jeff\", \"Allen\", , \"cran@trestletech.com\", role = c(\"aut\", \"ccp\")), person(\"Bruno\", \"Tremblay\", , \"cran@neoxone.com\", role = \"ctb\"), person(\"Frans\", \"van Dunné\", , \"frans@ixpantia.com\", role = \"ctb\"), person(\"Sebastiaan\", \"Vandewoude\", , \"sebastiaanvandewoude@gmail.com\", role = \"ctb\"), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"), comment = c(ROR = \"03wc8by49\")) )",
+      "Description": "Gives the ability to automatically generate and serve an HTTP API from R functions using the annotations in the R documentation around your functions.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://www.rplumber.io, https://github.com/rstudio/plumber",
+      "BugReports": "https://github.com/rstudio/plumber/issues",
+      "Depends": [
+        "R (>= 3.0.0)"
+      ],
+      "Imports": [
+        "crayon",
+        "httpuv (>= 1.5.5)",
+        "jsonlite (>= 0.9.16)",
+        "lifecycle (>= 1.0.0)",
+        "magrittr",
+        "mime",
+        "promises (>= 1.1.0)",
+        "R6 (>= 2.0.0)",
+        "rlang (>= 1.0.0)",
+        "sodium",
+        "stringi (>= 0.3.0)",
+        "swagger (>= 3.33.0)",
+        "webutils (>= 1.1)"
+      ],
+      "Suggests": [
+        "arrow",
+        "base64enc",
+        "coro",
+        "future",
+        "geojsonsf",
+        "htmlwidgets",
+        "later",
+        "ragg",
+        "rapidoc",
+        "readr",
+        "readxl",
+        "redoc",
+        "rmarkdown",
+        "rstudioapi",
+        "sf",
+        "spelling",
+        "svglite",
+        "testthat (>= 0.11.0)",
+        "utils",
+        "visNetwork",
+        "withr",
+        "writexl",
+        "yaml"
+      ],
+      "ByteCompile": "TRUE",
+      "Config/Needs/check": "Cairo, r-quantities/units",
+      "Encoding": "UTF-8",
+      "Language": "en-US",
+      "RoxygenNote": "7.3.3",
+      "NeedsCompilation": "no",
+      "Author": "Barret Schloerke [cre, aut] (ORCID: <https://orcid.org/0000-0001-9986-114X>), Jeff Allen [aut, ccp], Bruno Tremblay [ctb], Frans van Dunné [ctb], Sebastiaan Vandewoude [ctb], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+      "Maintainer": "Barret Schloerke <barret@posit.co>",
+      "Repository": "CRAN"
+    },
     "praise": {
       "Package": "praise",
       "Version": "1.0.0",
@@ -4263,6 +4327,29 @@
       "Maintainer": "E. David Aja <david@posit.co>",
       "Repository": "CRAN"
     },
+    "sodium": {
+      "Package": "sodium",
+      "Version": "1.4.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "A Modern and Easy-to-Use Crypto Library",
+      "Authors@R": "person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), email = \"jeroenooms@gmail.com\", comment = c(ORCID = \"0000-0002-4035-0289\"))",
+      "Description": "Bindings to 'libsodium' <https://doc.libsodium.org/>: a modern, easy-to-use software library for encryption, decryption, signatures, password hashing and more. Sodium uses curve25519, a state-of-the-art Diffie-Hellman function by Daniel Bernstein, which has become very popular after it was discovered that the NSA had backdoored Dual EC DRBG.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://docs.ropensci.org/sodium/ https://github.com/r-lib/sodium",
+      "BugReports": "https://github.com/r-lib/sodium/issues",
+      "SystemRequirements": "libsodium (>= 1.0.3)",
+      "VignetteBuilder": "knitr",
+      "Suggests": [
+        "knitr",
+        "rmarkdown"
+      ],
+      "RoxygenNote": "7.2.3",
+      "NeedsCompilation": "yes",
+      "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>)",
+      "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
+      "Repository": "CRAN"
+    },
     "sourcetools": {
       "Package": "sourcetools",
       "Version": "0.1.7-2",
@@ -4359,6 +4446,29 @@
       "NeedsCompilation": "no",
       "Author": "Hadley Wickham [aut, cre, cph], Posit Software, PBC [cph, fnd]",
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
+      "Repository": "CRAN"
+    },
+    "swagger": {
+      "Package": "swagger",
+      "Version": "5.32.1",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Dynamically Generates Documentation from a 'Swagger' Compliant API",
+      "Authors@R": "c( person(\"Barret\", \"Schloerke\", role = \"aut\", email = \"barret@rstudio.com\", comment = c(ORCID = \"0000-0001-9986-114X\")), person(\"Javier\", \"Luraschi\", role = \"aut\", email = \"javier@rstudio.com\"), person(\"Bruno\", \"Tremblay\", role = c(\"cre\", \"ctb\"), email = \"cran@neoxone.com\"), person(family = \"RStudio\", role = \"cph\"), person(family = \"SmartBear Software\", role = c(\"aut\", \"cph\")) )",
+      "Suggests": [
+        "jsonlite",
+        "plumber",
+        "testthat"
+      ],
+      "Description": "A collection of 'HTML', 'JavaScript', and 'CSS' assets that dynamically generate beautiful documentation from a 'Swagger' compliant API: <https://swagger.io/specification/>.",
+      "License": "Apache License 2.0 | file LICENSE",
+      "Encoding": "UTF-8",
+      "URL": "https://rstudio.github.io/swagger/, https://github.com/rstudio/swagger",
+      "BugReports": "https://github.com/rstudio/swagger/issues",
+      "RoxygenNote": "7.3.3",
+      "NeedsCompilation": "no",
+      "Author": "Barret Schloerke [aut] (ORCID: <https://orcid.org/0000-0001-9986-114X>), Javier Luraschi [aut], Bruno Tremblay [cre, ctb], RStudio [cph], SmartBear Software [aut, cph]",
+      "Maintainer": "Bruno Tremblay <cran@neoxone.com>",
       "Repository": "CRAN"
     },
     "sys": {
@@ -5110,6 +5220,33 @@
       "NeedsCompilation": "no",
       "Author": "Hadley Wickham [aut, cre], Posit Software, PBC [cph, fnd]",
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
+      "Repository": "CRAN"
+    },
+    "webutils": {
+      "Package": "webutils",
+      "Version": "1.2.3",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Utility Functions for Developing Web Applications",
+      "Authors@R": "person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), email = \"jeroenooms@gmail.com\", comment = c(ORCID = \"0000-0002-4035-0289\"))",
+      "Description": "Parses http request data in application/json, multipart/form-data, or application/x-www-form-urlencoded format. Includes example of hosting and parsing html form data in R using either 'httpuv' or 'Rhttpd'.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://jeroen.r-universe.dev/webutils",
+      "BugReports": "https://github.com/jeroen/webutils/issues",
+      "Imports": [
+        "curl (>= 2.5)",
+        "jsonlite"
+      ],
+      "Suggests": [
+        "httpuv",
+        "testthat"
+      ],
+      "RoxygenNote": "7.3.2.9000",
+      "Language": "en-US",
+      "Encoding": "UTF-8",
+      "NeedsCompilation": "yes",
+      "Author": "Jeroen Ooms [aut, cre] (ORCID: <https://orcid.org/0000-0002-4035-0289>)",
+      "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
       "Repository": "CRAN"
     },
     "whisker": {
