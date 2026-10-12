@@ -26,3 +26,7 @@ It does not know about oral, intramuscular or intranasal doses of the same drug,
 ## TCI and Suggest Dosing
 
 [Suggest Dosing](help:suggest-dosing) is the older way to work backwards from a concentration, by searching over repeated simulations. For a drug that offers target units, a TCI target row gives a better answer, computed directly from the closed-form model rather than by search, and faster. See [the propofol TCI scenario](scenario:tci-propofol).
+
+## The same controller for a real pump
+
+The controller behind these rows is also offered to a real pump as a small, stateless web service, [The TCI API](help:tci-api). A pump's host computer sends the patient, the target, the pump's limits and the record of what the pump has delivered, and receives the rate for the next interval, corrected for the delay before the pump acknowledges it, together with a fallback rate and a hard stop in case the next command is late. Unlike the rows here, the API's pump has a ceiling, so a loading dose can spread over several intervals; with no ceiling and no latency it reproduces the schedule on this page rate for rate.

@@ -1,0 +1,940 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "stanpumpR TCI API",
+    "version": "1.0",
+    "description": "A stateless HTTP API that a target-controlled-infusion (TCI) controller calls once per update interval to obtain the next infusion rate for one drug in one patient, from the controller's own record of what the pump has delivered. The rate is the Shafer & Gregg (1992) controller of stanpumpR, the same one behind the app's target rows, accounting for the delay between the request and the moment the new rate runs on the pump. The server keeps no state: every request carries the whole delivery history and every response is reproducible from its request. The full specification is docs/tci-api.md in the stanpumpR repository. All times are RFC 3339 strings on the controller's clock; unit tokens are one closed, case-sensitive list in the stanpumpR library's spellings (mL/hr, mcg, mL); numbers are JSON numbers and are serialized at full double precision. Within version 1 the server only adds fields, warning codes and drugs; it rejects request fields it does not know. Any path not listed here is 404 NOT_FOUND, and a listed path with another method is 405 METHOD_NOT_ALLOWED, both in the error shape. Drafted by Claude Code, 2026-10-12, at the request of Steven L. Shafer.",
+    "contact": {
+      "name": "stanpumpR",
+      "url": "https://github.com/StevenLShafer/stanpumpR"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/StevenLShafer/stanpumpR/blob/master/LICENSE"
+    }
+  },
+  "tags": [
+    { "name": "controller", "description": "The rate for the coming interval: the endpoint a pump calls." },
+    { "name": "drugs", "description": "The TCI drugs and the model resolved for a patient." },
+    { "name": "service", "description": "Liveness and this document." }
+  ],
+  "paths": {
+    "/tci/v1/health": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Liveness",
+        "description": "The API version, the installed package version and commit, the server's clock and the number of TCI drugs.",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "The server is up.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Health" } } }
+          },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "500": { "$ref": "#/components/responses/Internal" }
+        }
+      }
+    },
+    "/tci/v1/drugs": {
+      "get": {
+        "tags": ["drugs"],
+        "summary": "The TCI drugs",
+        "description": "Every drug whose stanpumpR library row offers a target unit, with its concentration and mass units, the target sites it supports, its typical target and range, the hard target ceiling (5 x the upper end of the range), its time to peak effect for the reference patient and its citation; the accepted unit tokens; and the API's limits, including the covariate bounds.",
+        "operationId": "drugs",
+        "responses": {
+          "200": {
+            "description": "The drug list, the unit tokens and the limits.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Drugs" } } }
+          },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "500": { "$ref": "#/components/responses/Internal" }
+        }
+      }
+    },
+    "/tci/v1/drugs/{drug}/model": {
+      "get": {
+        "tags": ["drugs"],
+        "summary": "The model resolved for a patient",
+        "description": "The `model` block of a rate response for this drug and patient, for the pump to display and log before the case: the PK parameters, the time to peak effect, the citation and the MD5 hash of the parameters. The same validation as the request body: a parameter the API does not know is 400 UNKNOWN_FIELD, one given twice is 400 DUPLICATE_KEY, a covariate out of range is 422 INVALID_VALUE.",
+        "operationId": "model",
+        "parameters": [
+          { "$ref": "#/components/parameters/drug" },
+          {
+            "name": "weight", "in": "query", "required": true,
+            "description": "kg",
+            "schema": { "type": "number", "minimum": 0.1, "maximum": 500 }
+          },
+          {
+            "name": "height", "in": "query", "required": true,
+            "description": "cm",
+            "schema": { "type": "number", "minimum": 10, "maximum": 200 }
+          },
+          {
+            "name": "age", "in": "query", "required": true,
+            "description": "years; a decimal is allowed",
+            "schema": { "type": "number", "minimum": 0, "maximum": 90 }
+          },
+          {
+            "name": "sex", "in": "query", "required": true,
+            "schema": { "$ref": "#/components/schemas/Sex" }
+          },
+          {
+            "name": "adjustToFFM", "in": "query", "required": false,
+            "description": "The app's fat-free-mass switch, `true` by default; the query takes exactly `true` or `false` (lower case, as in JSON). Propofol and remifentanil carry their own size covariate and ignore it.",
+            "schema": { "type": "boolean", "default": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The model block.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Model" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "500": { "$ref": "#/components/responses/Internal" }
+        }
+      }
+    },
+    "/tci/v1/drugs/{drug}/rate": {
+      "post": {
+        "tags": ["controller"],
+        "summary": "The next infusion rate",
+        "description": "The controller. From the patient, the syringe, the pump's limits, the target, the command latency and update interval, and the whole record of what the pump has delivered, computes the rate to run for the coming interval (`rate`), how long to run it (`segment`), what to run if the next command does not arrive (`fallback`), the timing of the command and of the next request, the model state and the predictions. The body must be a JSON object with `Content-Type: application/json`; a body that is not JSON is 400 INVALID_JSON. Validation stops at the first failure in dependency order; the error body carries the code, a message and an RFC 6901 JSON pointer to the field at fault. The pump enforces its own limits whatever the response says (the safety contract, section 7 of the specification).",
+        "operationId": "rate",
+        "parameters": [ { "$ref": "#/components/parameters/drug" } ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RateRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The rate for the coming interval and the predictions that go with it. Warnings, when any, are in `warnings`.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RateResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "413": {
+            "description": "HISTORY_TOO_LONG: more than 20000 history events. Compact the history (section 4.2 of the specification).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "500": { "$ref": "#/components/responses/Internal" }
+        }
+      }
+    },
+    "/tci/v1/openapi.json": {
+      "get": {
+        "tags": ["service"],
+        "summary": "This document",
+        "description": "The OpenAPI 3.0.3 description of the API.",
+        "operationId": "openapi",
+        "responses": {
+          "200": {
+            "description": "The OpenAPI document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "500": { "$ref": "#/components/responses/Internal" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "drug": {
+        "name": "drug", "in": "path", "required": true,
+        "description": "The exact stanpumpR library id, lower case, as listed by GET /tci/v1/drugs (for example `propofol`). A drug not in the library is 404 UNKNOWN_DRUG; a library drug without target units is 422 DRUG_NOT_TCI.",
+        "schema": { "type": "string", "example": "propofol" }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "400: INVALID_JSON, INVALID_TYPE, MISSING_FIELD, UNKNOWN_FIELD, DUPLICATE_KEY, DRUG_MISMATCH.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "NotFound": {
+        "description": "404: UNKNOWN_DRUG (no such drug in the library), NOT_FOUND (no such path).",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "MethodNotAllowed": {
+        "description": "405 METHOD_NOT_ALLOWED: the path exists but not with this method. The `Allow` header names the methods it accepts.",
+        "headers": {
+          "Allow": { "description": "The methods the path accepts.", "schema": { "type": "string", "example": "POST" } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "Unprocessable": {
+        "description": "422: DRUG_NOT_TCI, INVALID_VALUE, UNIT_UNKNOWN, UNIT_MISMATCH, INFUSATE_REQUIRED, INFUSATE_MISMATCH, TIME_INVALID, HISTORY_INVALID, HISTORY_OVERLAP, HISTORY_IN_FUTURE, LATENCY_INVALID, TARGET_OUT_OF_RANGE.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "Internal": {
+        "description": "500 INTERNAL: the server could not process the request. The pump treats it as no response.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      }
+    },
+    "schemas": {
+      "ApiVersion": {
+        "type": "string",
+        "description": "The API version carried by every body, including errors: `1.0`. The minor part is bumped when fields are added.",
+        "example": "1.0"
+      },
+      "Rfc3339Time": {
+        "type": "string",
+        "format": "date-time",
+        "description": "An RFC 3339 date-time with a mandatory `Z` or offset and optional fractional seconds, on the controller's clock; every field within its RFC 3339 range (the 60th second is accepted for a leap second), else 422 TIME_INVALID. The server formats its own times in UTC with milliseconds, `YYYY-MM-DDTHH:MM:SS.sssZ`. A JSON number here is INVALID_TYPE.",
+        "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])[Tt ]([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$",
+        "example": "2026-10-11T14:32:05.250Z"
+      },
+      "Sex": {
+        "type": "string",
+        "enum": ["male", "female"]
+      },
+      "Site": {
+        "type": "string",
+        "description": "The controlled concentration: the effect site or the plasma.",
+        "enum": ["effect", "plasma"]
+      },
+      "RateUnits": {
+        "type": "string",
+        "description": "A rate token. `mL/hr` needs `infusate`; `/kg` units multiply by `patient.weight`.",
+        "enum": ["mL/hr", "mg/hr", "mg/min", "mcg/hr", "mcg/min", "mg/kg/hr", "mg/kg/min", "mcg/kg/hr", "mcg/kg/min"]
+      },
+      "AmountUnits": {
+        "type": "string",
+        "description": "An amount token for delivered segments and `pump.volumeInfused`. `mL` needs `infusate`.",
+        "enum": ["mL", "mg", "mcg"]
+      },
+      "BolusUnits": {
+        "type": "string",
+        "description": "An amount token for a bolus; `/kg` units multiply by `patient.weight`.",
+        "enum": ["mL", "mg", "mcg", "mg/kg", "mcg/kg"]
+      },
+      "ConcentrationUnits": {
+        "type": "string",
+        "description": "The drug's concentration units exactly: `mcg/mL` for propofol, ketamine, etomidate and lidocaine, `ng/mL` for the opioids. The right token for the wrong drug is UNIT_MISMATCH; any other token, including `mg/L`, is UNIT_UNKNOWN. Never converted.",
+        "enum": ["mcg/mL", "ng/mL"]
+      },
+      "MassUnits": {
+        "type": "string",
+        "description": "The drug's base mass unit: `mg` for a drug measured in mcg/mL, `mcg` for one measured in ng/mL.",
+        "enum": ["mg", "mcg"]
+      },
+      "InfusateUnits": {
+        "type": "string",
+        "enum": ["mg/mL", "mcg/mL"]
+      },
+      "VolumeUnits": {
+        "type": "string",
+        "enum": ["mL"]
+      },
+      "PumpState": {
+        "type": "string",
+        "description": "The pump's state at `now`. When not `running`, the latency projection runs at rate 0, RATE_MISMATCH is not raised and the response carries the warning PUMP_NOT_RUNNING; the plan is still computed and the pump decides whether to run it.",
+        "enum": ["running", "paused", "alarm", "occlusion", "syringeEmpty", "purging", "standby"],
+        "default": "running"
+      },
+      "Patient": {
+        "type": "object",
+        "description": "The covariates of the PK model. No identifiers.",
+        "additionalProperties": false,
+        "required": ["weight", "height", "age", "sex"],
+        "properties": {
+          "weight": { "type": "number", "description": "kg", "minimum": 0.1, "maximum": 500 },
+          "height": { "type": "number", "description": "cm", "minimum": 10, "maximum": 200 },
+          "age": { "type": "number", "description": "years; a decimal is allowed", "minimum": 0, "maximum": 90 },
+          "sex": { "$ref": "#/components/schemas/Sex" }
+        }
+      },
+      "Infusate": {
+        "type": "object",
+        "description": "The syringe on the pump. Required whenever any `mL` or `mL/hr` quantity appears in the request (INFUSATE_REQUIRED). Must equal the last `infusate` history event when there is one (INFUSATE_MISMATCH).",
+        "additionalProperties": false,
+        "required": ["concentration", "units"],
+        "properties": {
+          "concentration": { "type": "number", "minimum": 0.001, "description": "At least `limits.minInfusate` (0.001) in `units`; less is 422 INVALID_VALUE." },
+          "units": { "$ref": "#/components/schemas/InfusateUnits" }
+        }
+      },
+      "AmountQuantity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["value", "units"],
+        "properties": {
+          "value": { "type": "number", "minimum": 0 },
+          "units": { "$ref": "#/components/schemas/AmountUnits" }
+        }
+      },
+      "VolumeQuantity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["value", "units"],
+        "properties": {
+          "value": { "type": "number", "minimum": 0 },
+          "units": { "$ref": "#/components/schemas/VolumeUnits" }
+        }
+      },
+      "Pump": {
+        "type": "object",
+        "description": "The pump's units and limits. `rateUnits` is the unit of `maxRate`, `minRate`, `rateResolution`, `currentRate` and of the response's `rate.value` and `fallback.rate`.",
+        "additionalProperties": false,
+        "required": ["rateUnits", "maxRate"],
+        "properties": {
+          "rateUnits": { "$ref": "#/components/schemas/RateUnits" },
+          "maxRate": {
+            "type": "number",
+            "description": "The pump's ceiling, in `rateUnits`. A computed rate above it is clamped and `maxRate` named in `rate.limitedBy`.",
+            "minimum": 0, "exclusiveMinimum": true, "maximum": 100000
+          },
+          "minRate": {
+            "type": "number",
+            "description": "In `[0, maxRate)`. A computed rate below it is sent as 0.",
+            "minimum": 0
+          },
+          "rateResolution": {
+            "type": "number",
+            "description": "In `(0, maxRate/10]`. The rate is rounded down to a multiple of it.",
+            "minimum": 0, "exclusiveMinimum": true
+          },
+          "currentRate": {
+            "type": "number",
+            "description": "The rate the pump reports running at `now`, in `rateUnits`. A cross-check only: the history is authoritative. A difference beyond `max(rateResolution, 1e-6 x rate)` is the warning RATE_MISMATCH.",
+            "minimum": 0
+          },
+          "state": { "$ref": "#/components/schemas/PumpState" },
+          "volumeInfused": {
+            "allOf": [ { "$ref": "#/components/schemas/AmountQuantity" } ],
+            "description": "The pump's totaliser since the first history event. Compared with the integral of the history; beyond `max(2%, 0.5 mL-equivalent)` is the warning DELIVERY_MISMATCH."
+          },
+          "syringeVolumeRemaining": {
+            "allOf": [ { "$ref": "#/components/schemas/VolumeQuantity" } ],
+            "description": "Needs `infusate`. The warning SYRINGE_LOW when the planned segment plus the fallback segment exceed it; `prediction.syringeEmptyAt` is reported."
+          }
+        }
+      },
+      "Target": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["site", "value", "units"],
+        "properties": {
+          "site": { "$ref": "#/components/schemas/Site" },
+          "value": {
+            "type": "number",
+            "description": "The target concentration in `units`. 0 stops the infusion (rate 0, `controller.plan` = `off`). Above the drug's typical upper value is the warning TARGET_HIGH; above 5 x that value is 422 TARGET_OUT_OF_RANGE.",
+            "minimum": 0
+          },
+          "units": { "$ref": "#/components/schemas/ConcentrationUnits" }
+        }
+      },
+      "Timing": {
+        "type": "object",
+        "description": "Both required, no defaults.",
+        "additionalProperties": false,
+        "required": ["latency", "interval"],
+        "properties": {
+          "latency": {
+            "type": "number",
+            "description": "Seconds from `now` to the instant the pump acknowledges the new rate, the instant the controller will record as the segment's `time` in later histories. In `[0, interval)`: `>= interval` is 422 LATENCY_INVALID, `> interval/2` is the warning LATENCY_LONG. Use a high percentile of observed form-to-acknowledge times, not the mean: landing early is safe, landing late is not.",
+            "minimum": 0
+          },
+          "interval": {
+            "type": "number",
+            "description": "Seconds the new rate will be held: the controller's update interval. Above a third of the drug's time to peak effect is the warning INTERVAL_LONG.",
+            "minimum": 1, "maximum": 60
+          }
+        }
+      },
+      "LookAhead": {
+        "type": "object",
+        "description": "Ask for the time, with the pump off from `now`, for the controlled concentration to fall to this level (STANPUMP's look_ahead()).",
+        "additionalProperties": false,
+        "required": ["concentration"],
+        "properties": {
+          "concentration": { "type": "number", "description": "In `target.units`.", "minimum": 0, "exclusiveMinimum": true }
+        }
+      },
+      "Options": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "adjustToFFM": {
+            "type": "boolean",
+            "description": "The app's fat-free-mass switch, passed to the PK model; `true` by default. Propofol and remifentanil carry their own size covariate and ignore it. Echoed in `model.adjustToFFM`.",
+            "default": true
+          }
+        }
+      },
+      "RateChange": {
+        "type": "object",
+        "description": "The pump's rate from `time` until the next rate change, or until `now` if it is the last one. The rate before the first rate change is 0. Two rate changes at one instant are 422 HISTORY_INVALID.",
+        "additionalProperties": false,
+        "required": ["time", "rate", "units"],
+        "properties": {
+          "time": { "$ref": "#/components/schemas/Rfc3339Time" },
+          "rate": { "type": "number", "minimum": 0 },
+          "units": { "$ref": "#/components/schemas/RateUnits" },
+          "source": { "$ref": "#/components/schemas/Source" }
+        }
+      },
+      "DeliveredSegment": {
+        "type": "object",
+        "description": "The pump reports it delivered this amount between `from` and `to`, modelled as the constant rate `delivered / (to - from)`. The preferred form wherever the pump has a volume counter. Over its span it overrides the rate changes; delivered segments may not overlap each other (422 HISTORY_OVERLAP).",
+        "additionalProperties": false,
+        "required": ["from", "to", "delivered", "units"],
+        "properties": {
+          "from": { "$ref": "#/components/schemas/Rfc3339Time" },
+          "to": { "$ref": "#/components/schemas/Rfc3339Time" },
+          "delivered": { "type": "number", "minimum": 0 },
+          "units": { "$ref": "#/components/schemas/AmountUnits" },
+          "source": { "$ref": "#/components/schemas/Source" }
+        }
+      },
+      "Bolus": {
+        "type": "object",
+        "description": "Drug given outside the pump (a hand-pushed syringe, another line), treated as instantaneous. A bolus the pump delivers is a rate change or a delivered segment, never a `bolus` event. Two boluses at one instant are summed.",
+        "additionalProperties": false,
+        "required": ["time", "bolus", "units"],
+        "properties": {
+          "time": { "$ref": "#/components/schemas/Rfc3339Time" },
+          "bolus": { "type": "number", "minimum": 0, "exclusiveMinimum": true },
+          "units": { "$ref": "#/components/schemas/BolusUnits" },
+          "source": { "$ref": "#/components/schemas/Source" }
+        }
+      },
+      "InfusateChange": {
+        "type": "object",
+        "description": "A syringe change to a different concentration, in force from `time`. Once the history records any syringe, every `mL` quantity must lie at or after the first recorded one: the request's `infusate` is the syringe on the pump now (it must equal the last such event), so a `mL` quantity before the first recorded syringe has no known concentration and is 422 INFUSATE_REQUIRED, with the pointer at its `units`. A controller that may change syringes records the initial syringe as an infusate event at the start. With no infusate event in the history the request's `infusate` applies throughout. Two infusate changes at one instant are 422 HISTORY_INVALID.",
+        "additionalProperties": false,
+        "required": ["time", "infusate"],
+        "properties": {
+          "time": { "$ref": "#/components/schemas/Rfc3339Time" },
+          "infusate": { "$ref": "#/components/schemas/Infusate" },
+          "source": { "$ref": "#/components/schemas/Source" }
+        }
+      },
+      "Source": {
+        "type": "string",
+        "description": "For the audit trail (`tci`, `manual`, `bolus`, any string); the computation ignores it.",
+        "maxLength": 32
+      },
+      "HistoryEvent": {
+        "description": "One of the four kinds of delivery event. The server sorts them by time (`from` for a delivered segment); at one instant: infusate change, then boluses, then the rate change. An event up to 2 s after `now` is clamped to `now` with the warning HISTORY_CLOCK_SKEW; later is 422 HISTORY_IN_FUTURE. A time before 1970 is 422 TIME_INVALID.",
+        "oneOf": [
+          { "$ref": "#/components/schemas/RateChange" },
+          { "$ref": "#/components/schemas/DeliveredSegment" },
+          { "$ref": "#/components/schemas/Bolus" },
+          { "$ref": "#/components/schemas/InfusateChange" }
+        ]
+      },
+      "RateRequest": {
+        "type": "object",
+        "description": "The body of POST /tci/v1/drugs/{drug}/rate. Unknown keys anywhere are 400 UNKNOWN_FIELD; duplicate keys anywhere are 400 DUPLICATE_KEY; `null` is treated as absent; a string where a number is expected is 400 INVALID_TYPE; a non-finite number is 422 INVALID_VALUE; strings are compared exactly.",
+        "additionalProperties": false,
+        "required": ["now", "patient", "pump", "target", "timing", "history"],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Opaque, chosen by the client, echoed in every response including errors. Must not encode anything that maps to a patient. Should increase monotonically per pump channel.",
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7E]*$"
+          },
+          "drug": {
+            "type": "string",
+            "description": "If present must equal the path's drug (else 400 DRUG_MISMATCH). Include it so a stored body is self-describing."
+          },
+          "now": {
+            "allOf": [ { "$ref": "#/components/schemas/Rfc3339Time" } ],
+            "description": "The controller's clock at the moment the request is formed. All computation uses this clock; the server's clock is only reported."
+          },
+          "patient": { "$ref": "#/components/schemas/Patient" },
+          "infusate": { "$ref": "#/components/schemas/Infusate" },
+          "pump": { "$ref": "#/components/schemas/Pump" },
+          "target": { "$ref": "#/components/schemas/Target" },
+          "timing": { "$ref": "#/components/schemas/Timing" },
+          "history": {
+            "type": "array",
+            "description": "Everything delivered so far, in any order; may be empty. More than 20000 events is 413 HISTORY_TOO_LONG.",
+            "maxItems": 20000,
+            "items": { "$ref": "#/components/schemas/HistoryEvent" }
+          },
+          "lookAhead": { "$ref": "#/components/schemas/LookAhead" },
+          "options": { "$ref": "#/components/schemas/Options" }
+        },
+        "example": {
+          "requestId": "ch1-000193",
+          "drug": "propofol",
+          "now": "2026-10-11T14:31:58.500Z",
+          "patient": { "weight": 70, "height": 170, "age": 50, "sex": "male" },
+          "infusate": { "concentration": 10, "units": "mg/mL" },
+          "pump": {
+            "rateUnits": "mL/hr",
+            "maxRate": 1200,
+            "minRate": 0.1,
+            "rateResolution": 0.1,
+            "currentRate": 40.4,
+            "state": "running",
+            "volumeInfused": { "value": 26.95, "units": "mL" },
+            "syringeVolumeRemaining": { "value": 28.5, "units": "mL" }
+          },
+          "target": { "site": "effect", "value": 3.0, "units": "mcg/mL" },
+          "timing": { "latency": 1.5, "interval": 10 },
+          "history": [
+            { "time": "2026-10-11T13:59:30.000Z", "infusate": { "concentration": 10, "units": "mg/mL" } },
+            { "time": "2026-10-11T13:59:40.000Z", "bolus": 20, "units": "mg", "source": "manual" },
+            { "time": "2026-10-11T14:00:00.000Z", "rate": 995.1, "units": "mL/hr" },
+            { "time": "2026-10-11T14:00:10.000Z", "rate": 0, "units": "mL/hr" },
+            { "from": "2026-10-11T14:01:30.000Z", "to": "2026-10-11T14:10:00.000Z", "delivered": 7.90, "units": "mL" },
+            { "from": "2026-10-11T14:10:00.000Z", "to": "2026-10-11T14:20:00.000Z", "delivered": 7.88, "units": "mL" },
+            { "from": "2026-10-11T14:20:00.000Z", "to": "2026-10-11T14:25:00.000Z", "delivered": 3.60, "units": "mL" },
+            { "from": "2026-10-11T14:25:00.000Z", "to": "2026-10-11T14:30:00.000Z", "delivered": 3.46, "units": "mL" },
+            { "from": "2026-10-11T14:30:00.000Z", "to": "2026-10-11T14:31:50.000Z", "delivered": 1.24, "units": "mL" },
+            { "time": "2026-10-11T14:31:50.000Z", "rate": 40.4, "units": "mL/hr" }
+          ],
+          "lookAhead": { "concentration": 1.0 },
+          "options": { "adjustToFFM": true }
+        }
+      },
+      "ErrorCode": {
+        "type": "string",
+        "description": "400: INVALID_JSON, INVALID_TYPE, MISSING_FIELD, UNKNOWN_FIELD, DUPLICATE_KEY, DRUG_MISMATCH. 404: UNKNOWN_DRUG, NOT_FOUND. 405: METHOD_NOT_ALLOWED. 413: HISTORY_TOO_LONG. 422: DRUG_NOT_TCI, INVALID_VALUE, UNIT_UNKNOWN, UNIT_MISMATCH, INFUSATE_REQUIRED, INFUSATE_MISMATCH, TIME_INVALID, HISTORY_INVALID, HISTORY_OVERLAP, HISTORY_IN_FUTURE, LATENCY_INVALID, TARGET_OUT_OF_RANGE. 500: INTERNAL.",
+        "enum": [
+          "INVALID_JSON", "INVALID_TYPE", "MISSING_FIELD", "UNKNOWN_FIELD", "DUPLICATE_KEY", "DRUG_MISMATCH",
+          "UNKNOWN_DRUG", "NOT_FOUND",
+          "METHOD_NOT_ALLOWED",
+          "HISTORY_TOO_LONG",
+          "DRUG_NOT_TCI", "INVALID_VALUE", "UNIT_UNKNOWN", "UNIT_MISMATCH", "INFUSATE_REQUIRED", "INFUSATE_MISMATCH",
+          "TIME_INVALID", "HISTORY_INVALID", "HISTORY_OVERLAP", "HISTORY_IN_FUTURE", "LATENCY_INVALID", "TARGET_OUT_OF_RANGE",
+          "INTERNAL"
+        ]
+      },
+      "WarningCode": {
+        "type": "string",
+        "description": "What the controller should know but what does not stop the plan. Clients ignore codes they do not know.",
+        "enum": [
+          "RATE_MISMATCH", "DELIVERY_MISMATCH", "PUMP_NOT_RUNNING", "SYRINGE_LOW", "HISTORY_CLOCK_SKEW",
+          "CLOCK_SKEW", "LATENCY_LONG", "INTERVAL_LONG", "TARGET_HIGH"
+        ]
+      },
+      "Pointer": {
+        "type": "string",
+        "nullable": true,
+        "description": "An RFC 6901 JSON pointer to the field concerned (`/history/2/units`); the empty string is the whole body; null when no field applies (no such path, wrong method).",
+        "example": "/target/units"
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "$ref": "#/components/schemas/ErrorCode" },
+          "message": { "type": "string" },
+          "pointer": { "$ref": "#/components/schemas/Pointer" }
+        }
+      },
+      "Warning": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "$ref": "#/components/schemas/WarningCode" },
+          "message": { "type": "string" },
+          "pointer": { "$ref": "#/components/schemas/Pointer" }
+        }
+      },
+      "Server": {
+        "type": "object",
+        "description": "The server's own account of the exchange. Its clock is another clock than the controller's and is used for nothing but `computeSeconds` and the CLOCK_SKEW warning (`|receivedAt - now| > 30 s`).",
+        "required": ["package", "version", "receivedAt", "respondedAt"],
+        "properties": {
+          "package": { "type": "string", "example": "stanpumpR" },
+          "version": { "type": "string", "description": "The installed package version.", "example": "0.0.1.9002" },
+          "commit": {
+            "type": "string", "nullable": true,
+            "description": "The RemoteSha of the installed package when it was installed from GitHub, else null."
+          },
+          "receivedAt": { "$ref": "#/components/schemas/Rfc3339Time" },
+          "respondedAt": { "$ref": "#/components/schemas/Rfc3339Time" },
+          "computeSeconds": {
+            "type": "number",
+            "description": "`respondedAt - receivedAt`, so the client can split the network from the computation. Present on a rate response, not on an error."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "The body of every non-200 response. Validation stops at the first failure in dependency order, so `errors` usually holds one entry.",
+        "required": ["apiVersion", "errors", "server"],
+        "properties": {
+          "apiVersion": { "$ref": "#/components/schemas/ApiVersion" },
+          "requestId": { "type": "string", "nullable": true, "description": "The request's `requestId` when the body carried a usable one, else null." },
+          "errors": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/Error" }
+          },
+          "server": { "$ref": "#/components/schemas/Server" }
+        },
+        "example": {
+          "apiVersion": "1.0",
+          "requestId": "ch1-000412",
+          "errors": [
+            { "code": "UNIT_MISMATCH", "message": "target.units must be mcg/mL for propofol", "pointer": "/target/units" }
+          ],
+          "server": {
+            "package": "stanpumpR", "version": "0.0.1.9002", "commit": null,
+            "receivedAt": "2026-10-11T14:32:05.412Z", "respondedAt": "2026-10-11T14:32:05.413Z"
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "required": ["apiVersion", "status", "package", "version", "serverTime", "tciDrugs"],
+        "properties": {
+          "apiVersion": { "$ref": "#/components/schemas/ApiVersion" },
+          "status": { "type": "string", "enum": ["ok"] },
+          "package": { "type": "string", "example": "stanpumpR" },
+          "version": { "type": "string", "example": "0.0.1.9002" },
+          "commit": { "type": "string", "nullable": true },
+          "serverTime": { "$ref": "#/components/schemas/Rfc3339Time" },
+          "tciDrugs": { "type": "integer", "description": "The number of TCI drugs.", "example": 9 }
+        }
+      },
+      "Range": {
+        "type": "object",
+        "required": ["min", "max"],
+        "properties": {
+          "min": { "type": "number" },
+          "max": { "type": "number" }
+        }
+      },
+      "DrugInfo": {
+        "type": "object",
+        "required": ["drug", "concentrationUnits", "massUnits", "sites", "typicalTarget", "typicalRange", "targetCeiling", "tPeak", "reference"],
+        "properties": {
+          "drug": { "type": "string", "example": "propofol" },
+          "concentrationUnits": { "$ref": "#/components/schemas/ConcentrationUnits" },
+          "massUnits": { "$ref": "#/components/schemas/MassUnits" },
+          "sites": {
+            "type": "array",
+            "description": "The target sites the drug's library row offers.",
+            "items": { "$ref": "#/components/schemas/Site" }
+          },
+          "typicalTarget": { "type": "number", "description": "The library's typical target, in `concentrationUnits`." },
+          "typicalRange": {
+            "type": "object",
+            "required": ["lower", "upper"],
+            "properties": {
+              "lower": { "type": "number" },
+              "upper": { "type": "number", "description": "Above it the response warns TARGET_HIGH." }
+            }
+          },
+          "targetCeiling": { "type": "number", "description": "5 x `typicalRange.upper`; a higher target is 422 TARGET_OUT_OF_RANGE." },
+          "tPeak": { "type": "number", "description": "Minutes to peak effect after a bolus, for the reference patient." },
+          "reference": { "type": "string", "description": "The citation of the PK model." }
+        }
+      },
+      "Drugs": {
+        "type": "object",
+        "required": ["apiVersion", "drugs", "referencePatient", "units", "limits"],
+        "properties": {
+          "apiVersion": { "$ref": "#/components/schemas/ApiVersion" },
+          "drugs": { "type": "array", "items": { "$ref": "#/components/schemas/DrugInfo" } },
+          "referencePatient": { "$ref": "#/components/schemas/Patient" },
+          "units": {
+            "type": "object",
+            "description": "The accepted unit tokens, by use.",
+            "required": ["rate", "amount", "bolus", "concentration", "infusate", "volume"],
+            "properties": {
+              "rate": { "type": "array", "items": { "$ref": "#/components/schemas/RateUnits" } },
+              "amount": { "type": "array", "items": { "$ref": "#/components/schemas/AmountUnits" } },
+              "bolus": { "type": "array", "items": { "$ref": "#/components/schemas/BolusUnits" } },
+              "concentration": { "type": "array", "items": { "$ref": "#/components/schemas/ConcentrationUnits" } },
+              "infusate": { "type": "array", "items": { "$ref": "#/components/schemas/InfusateUnits" } },
+              "volume": { "type": "array", "items": { "$ref": "#/components/schemas/VolumeUnits" } }
+            }
+          },
+          "limits": {
+            "type": "object",
+            "description": "The API's constants and the covariate bounds.",
+            "required": ["minInterval", "maxInterval", "maxHistory", "lookAheadMax", "historyClockSkew", "serverClockSkew", "maxRate", "minInfusate", "targetCeiling", "onTarget", "deliveryTolerance", "deliveryToleranceMl", "plasmaSwitch", "weight", "height", "age", "sex", "pumpStates"],
+            "properties": {
+              "minInterval": { "type": "number", "description": "s", "example": 1 },
+              "maxInterval": { "type": "number", "description": "s", "example": 60 },
+              "maxHistory": { "type": "integer", "description": "events in one request", "example": 20000 },
+              "lookAheadMax": { "type": "number", "description": "s: the prediction horizon", "example": 30000 },
+              "historyClockSkew": { "type": "number", "description": "s a history event may lie after `now` and be clamped to it", "example": 2 },
+              "serverClockSkew": { "type": "number", "description": "s between the controller's clock and the server's before CLOCK_SKEW", "example": 30 },
+              "maxRate": { "type": "number", "description": "the ceiling on `pump.maxRate`, in the pump's own rate units", "example": 100000 },
+              "minInfusate": { "type": "number", "description": "the least `infusate.concentration`, in its own units (mg/mL or mcg/mL)", "example": 0.001 },
+              "targetCeiling": { "type": "number", "description": "x the drug's typical upper value", "example": 5 },
+              "onTarget": { "type": "number", "description": "the fraction of the target that counts as on target", "example": 0.01 },
+              "deliveryTolerance": { "type": "number", "example": 0.02 },
+              "deliveryToleranceMl": { "type": "number", "example": 0.5 },
+              "plasmaSwitch": { "type": "number", "description": "the effect site this close to the target is held by plasma control", "example": 0.05 },
+              "weight": { "$ref": "#/components/schemas/Range" },
+              "height": { "$ref": "#/components/schemas/Range" },
+              "age": { "$ref": "#/components/schemas/Range" },
+              "sex": { "type": "array", "items": { "$ref": "#/components/schemas/Sex" } },
+              "pumpStates": { "type": "array", "items": { "$ref": "#/components/schemas/PumpState" } }
+            }
+          }
+        }
+      },
+      "ModelParameters": {
+        "type": "object",
+        "description": "Volumes in L, clearances in L/min, rate constants and eigenvalues in 1/min.",
+        "required": ["v1", "v2", "v3", "cl1", "cl2", "cl3", "k10", "k12", "k13", "k21", "k31", "lambda_1", "lambda_2", "lambda_3", "ke0"],
+        "properties": {
+          "v1": { "type": "number" }, "v2": { "type": "number" }, "v3": { "type": "number" },
+          "cl1": { "type": "number" }, "cl2": { "type": "number" }, "cl3": { "type": "number" },
+          "k10": { "type": "number" }, "k12": { "type": "number" }, "k13": { "type": "number" },
+          "k21": { "type": "number" }, "k31": { "type": "number" },
+          "lambda_1": { "type": "number" }, "lambda_2": { "type": "number" }, "lambda_3": { "type": "number" },
+          "ke0": { "type": "number" }
+        }
+      },
+      "Model": {
+        "type": "object",
+        "description": "The PK model as resolved for the patient: what the pump displays and logs about the model it is being driven by.",
+        "required": ["drug", "reference", "concentrationUnits", "massUnits", "tPeak", "adjustToFFM", "parameters", "hash"],
+        "properties": {
+          "drug": { "type": "string", "example": "propofol" },
+          "reference": { "type": "string", "description": "The citation." },
+          "concentrationUnits": { "$ref": "#/components/schemas/ConcentrationUnits" },
+          "massUnits": { "$ref": "#/components/schemas/MassUnits" },
+          "tPeak": { "type": "number", "description": "Minutes to peak effect after a bolus.", "example": 1.6 },
+          "adjustToFFM": { "type": "boolean" },
+          "parameters": { "$ref": "#/components/schemas/ModelParameters" },
+          "hash": { "type": "string", "description": "`md5:` and the MD5 of the serialized `parameters`, rounded to ten significant digits first so that the same model hashes identically on every platform; two responses from one model compare by one string.", "example": "md5:3f1c..." }
+        }
+      },
+      "Controller": {
+        "type": "object",
+        "required": ["plan", "phase"],
+        "properties": {
+          "plan": {
+            "type": "string",
+            "description": "`effectSite`; `plasma` (including the hand-off within 5% of an effect-site target); `off` (target 0). `target.site` is echoed unchanged, so a pump never displays plasma TCI to a clinician who set an effect-site target.",
+            "enum": ["effectSite", "plasma", "off"]
+          },
+          "phase": {
+            "type": "string",
+            "description": "For the pump's screen. `stopped` (target 0); `aboveTarget` (rate 0 and the controlled concentration at `effectiveAt` is above the target); `waitingForPeak` (rate 0 otherwise); `loading` (rate > 0 and the controlled concentration at `effectiveAt` is below 95% of the target); `maintenance` (rate > 0 otherwise).",
+            "enum": ["stopped", "aboveTarget", "waitingForPeak", "loading", "maintenance"]
+          }
+        }
+      },
+      "Rate": {
+        "type": "object",
+        "description": "The commanded rate. The pump enforces its own limits whatever it says.",
+        "required": ["value", "units", "massPerMinute", "massUnits", "ideal", "limitedBy"],
+        "properties": {
+          "value": { "type": "number", "description": "The rate to run, in `pump.rateUnits`, after the pump's limits: clamped to `maxRate`, 0 below `minRate`, rounded down to `rateResolution`." },
+          "units": { "$ref": "#/components/schemas/RateUnits" },
+          "mlPerHour": { "type": "number", "description": "The same rate in mL/hr; present whenever `infusate` is given." },
+          "massPerMinute": { "type": "number", "description": "The same rate in `massUnits` per minute." },
+          "massUnits": { "$ref": "#/components/schemas/MassUnits" },
+          "ideal": { "type": "number", "description": "The unclamped, unrounded rate in `pump.rateUnits`." },
+          "limitedBy": {
+            "type": "array",
+            "description": "Each limit that changed the value.",
+            "items": { "type": "string", "enum": ["maxRate", "minRate", "rateResolution"] }
+          }
+        }
+      },
+      "Segment": {
+        "type": "object",
+        "description": "The command as a bounded segment the pump can program natively: `rate.value` for `holdSeconds`, or `volumeMl` at `rate.value`.",
+        "required": ["holdSeconds", "amount", "amountUnits"],
+        "properties": {
+          "holdSeconds": { "type": "number", "description": "= `timing.interval`. A hard stop." },
+          "amount": { "type": "number", "description": "`rate x interval` in `amountUnits`." },
+          "amountUnits": { "$ref": "#/components/schemas/MassUnits" },
+          "volumeMl": { "type": "number", "description": "The same in mL; present whenever `infusate` is given." }
+        }
+      },
+      "Fallback": {
+        "type": "object",
+        "description": "What to run at `holdUntil` if no newer command has been accepted: the controller's own next step, with the same limits, rounding and units. After `maxSeconds` with no accepted command the pump stops and alarms. Never extend a hold at a rate above `rate`.",
+        "required": ["rate", "units", "maxSeconds"],
+        "properties": {
+          "rate": { "type": "number" },
+          "units": { "$ref": "#/components/schemas/RateUnits" },
+          "maxSeconds": { "type": "number", "description": "= `timing.interval`." }
+        }
+      },
+      "TimingResponse": {
+        "type": "object",
+        "description": "All on the controller's clock.",
+        "required": ["now", "effectiveAt", "holdUntil", "nextRequestAt", "latency", "interval"],
+        "properties": {
+          "now": { "allOf": [ { "$ref": "#/components/schemas/Rfc3339Time" } ], "description": "The request's `now`, echoed verbatim (the same string, whatever its offset or precision), so that a controller can match a response to its request by comparing the two. The server's own times are formatted in UTC with milliseconds." },
+          "effectiveAt": { "allOf": [ { "$ref": "#/components/schemas/Rfc3339Time" } ], "description": "`now + latency`: when the command is expected to run." },
+          "holdUntil": { "allOf": [ { "$ref": "#/components/schemas/Rfc3339Time" } ], "description": "`effectiveAt + interval`: the hard stop of the segment." },
+          "nextRequestAt": { "allOf": [ { "$ref": "#/components/schemas/Rfc3339Time" } ], "description": "The latest time to ask again, `holdUntil - latency`, or earlier when the pump is off and the controlled concentration is predicted to reach the target (within the 1% band, after `effectiveAt`) before `holdUntil + interval`. The controller asks at once after any local event." },
+          "latency": { "type": "number", "description": "Echoed, s." },
+          "interval": { "type": "number", "description": "Echoed, s." }
+        }
+      },
+      "Concentrations": {
+        "type": "object",
+        "required": ["cp", "ce"],
+        "properties": {
+          "cp": { "type": "number", "description": "Plasma concentration, in `state.units`." },
+          "ce": { "type": "number", "description": "Effect-site concentration, in `state.units`." }
+        }
+      },
+      "StateNow": {
+        "type": "object",
+        "description": "The state at `now`, with the seven exponential amplitudes for audit (in the drug's base mass unit per litre).",
+        "required": ["cp", "ce", "p", "e"],
+        "properties": {
+          "cp": { "type": "number" },
+          "ce": { "type": "number" },
+          "p": { "type": "array", "description": "The three plasma amplitudes; `cp` is their sum.", "minItems": 3, "maxItems": 3, "items": { "type": "number" } },
+          "e": { "type": "array", "description": "The four effect-site amplitudes; `ce` is their sum.", "minItems": 4, "maxItems": 4, "items": { "type": "number" } }
+        }
+      },
+      "State": {
+        "type": "object",
+        "description": "Plasma and effect-site concentrations at `now`, `effectiveAt` and `holdUntil`, the last two from the commanded rate.",
+        "required": ["units", "now", "effectiveAt", "holdUntil"],
+        "properties": {
+          "units": { "$ref": "#/components/schemas/ConcentrationUnits" },
+          "now": { "$ref": "#/components/schemas/StateNow" },
+          "effectiveAt": { "$ref": "#/components/schemas/Concentrations" },
+          "holdUntil": { "$ref": "#/components/schemas/Concentrations" }
+        }
+      },
+      "LookAheadPrediction": {
+        "type": "object",
+        "description": "From `now`, with the pump off from `now`, the time for the controlled concentration to fall to `concentration`: the number a clinician means by \"if I stop the pump now\". Present only when the request asked for it.",
+        "required": ["site", "concentration", "units", "decrementSeconds", "horizonSeconds", "beyondHorizon"],
+        "properties": {
+          "site": { "$ref": "#/components/schemas/Site" },
+          "concentration": { "type": "number" },
+          "units": { "$ref": "#/components/schemas/ConcentrationUnits" },
+          "decrementSeconds": { "type": "number", "nullable": true, "description": "0 if already below; null with `beyondHorizon` true if not reached within the horizon." },
+          "horizonSeconds": { "type": "number", "example": 30000 },
+          "beyondHorizon": { "type": "boolean" }
+        }
+      },
+      "Prediction": {
+        "type": "object",
+        "description": "All from the commanded (clamped, rounded) rate, never the ideal.",
+        "required": ["units", "onTarget"],
+        "properties": {
+          "units": { "$ref": "#/components/schemas/ConcentrationUnits" },
+          "peakCe": { "type": "number", "nullable": true, "description": "With the pump off after `holdUntil`, the maximum effect-site concentration over the next `tPeak + 10 s`; the touching point when the plan was not capped. Null for a drug without an effect site." },
+          "peakAt": { "type": "string", "format": "date-time", "nullable": true, "description": "When `peakCe` is reached." },
+          "onTarget": { "type": "boolean", "description": "The controlled concentration at `holdUntil` is within 1% of the target." },
+          "deviation": { "type": "number", "nullable": true, "description": "The signed fractional error of the controlled concentration at `holdUntil`; null for a target of 0." },
+          "targetReachedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Running the same controller forward from `holdUntil` in closed loop (zero latency), the first time the controlled concentration is within 1% of the target; null if never within the horizon; `holdUntil` when already on target. Decided in closed form when the pump's ceiling can never lift the concentration into the band; on a grid that grows to 60 s after 300 plans (section 5.6 of docs/tci-api.md)." },
+          "lookAhead": { "$ref": "#/components/schemas/LookAheadPrediction" },
+          "syringeEmptyAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Only with `pump.syringeVolumeRemaining`: when the syringe empties at the commanded rate; null if the commanded rate is 0, unless the rate still running during the latency empties the syringe before `effectiveAt`, in which case that time." }
+        }
+      },
+      "Delivered": {
+        "type": "object",
+        "description": "The integral of the history (pump delivery plus boluses) and the pump's totaliser, both in the drug's base mass unit.",
+        "required": ["fromHistory", "units"],
+        "properties": {
+          "fromHistory": { "type": "number" },
+          "reported": { "type": "number", "nullable": true, "description": "`pump.volumeInfused` converted; null when it was not given." },
+          "units": { "$ref": "#/components/schemas/MassUnits" }
+        }
+      },
+      "Algorithm": {
+        "type": "object",
+        "required": ["name", "plasmaSwitch", "tauGridSeconds"],
+        "properties": {
+          "name": { "type": "string", "enum": ["shafer-gregg-1992"] },
+          "plasmaSwitch": { "type": "number", "description": "The effect site this close to the target is held by plasma control.", "example": 0.05 },
+          "tauGridSeconds": { "type": "number", "description": "The spacing of the effect-site search grid.", "example": 1 }
+        }
+      },
+      "RateResponse": {
+        "type": "object",
+        "description": "The body of a 200 from POST /tci/v1/drugs/{drug}/rate. Numbers are at full double precision and scalars are unboxed. Before applying it the pump checks `apiVersion`, `requestId`, `drug`, `target`, `rate.units` and `timing.now` against its request.",
+        "required": ["apiVersion", "requestId", "drug", "target", "controller", "rate", "segment", "fallback", "timing", "state", "prediction", "delivered", "model", "algorithm", "warnings", "server"],
+        "properties": {
+          "apiVersion": { "$ref": "#/components/schemas/ApiVersion" },
+          "requestId": { "type": "string", "nullable": true, "description": "Echoed; null when the request had none." },
+          "drug": { "type": "string" },
+          "target": { "$ref": "#/components/schemas/Target" },
+          "controller": { "$ref": "#/components/schemas/Controller" },
+          "rate": { "$ref": "#/components/schemas/Rate" },
+          "segment": { "$ref": "#/components/schemas/Segment" },
+          "fallback": { "$ref": "#/components/schemas/Fallback" },
+          "timing": { "$ref": "#/components/schemas/TimingResponse" },
+          "state": { "$ref": "#/components/schemas/State" },
+          "prediction": { "$ref": "#/components/schemas/Prediction" },
+          "delivered": { "$ref": "#/components/schemas/Delivered" },
+          "model": { "$ref": "#/components/schemas/Model" },
+          "algorithm": { "$ref": "#/components/schemas/Algorithm" },
+          "warnings": {
+            "type": "array",
+            "description": "Empty when there is nothing to say.",
+            "items": { "$ref": "#/components/schemas/Warning" }
+          },
+          "server": { "$ref": "#/components/schemas/Server" }
+        },
+        "example": {
+          "apiVersion": "1.0",
+          "requestId": "ch1-000193",
+          "drug": "propofol",
+          "target": { "site": "effect", "value": 3.0, "units": "mcg/mL" },
+          "controller": { "plan": "plasma", "phase": "maintenance" },
+          "rate": {
+            "value": 39.2, "units": "mL/hr",
+            "mlPerHour": 39.2,
+            "massPerMinute": 6.533, "massUnits": "mg",
+            "ideal": 39.20, "limitedBy": ["rateResolution"]
+          },
+          "segment": { "holdSeconds": 10, "amount": 1.089, "amountUnits": "mg", "volumeMl": 0.1089 },
+          "fallback": { "rate": 40.2, "units": "mL/hr", "maxSeconds": 10 },
+          "timing": {
+            "now": "2026-10-11T14:31:58.500Z",
+            "effectiveAt": "2026-10-11T14:32:00.000Z",
+            "holdUntil": "2026-10-11T14:32:10.000Z",
+            "nextRequestAt": "2026-10-11T14:32:08.500Z",
+            "latency": 1.5, "interval": 10
+          },
+          "state": {
+            "units": "mcg/mL",
+            "now":         { "cp": 3.005, "ce": 3.007, "p": [1.627, 1.186, 0.1918], "e": [18.93, 1.266, 0.1927, -17.38] },
+            "effectiveAt": { "cp": 3.005, "ce": 3.007 },
+            "holdUntil":   { "cp": 3.000, "ce": 3.006 }
+          },
+          "prediction": {
+            "units": "mcg/mL",
+            "peakCe": 3.006, "peakAt": "2026-10-11T14:32:10.000Z",
+            "onTarget": true, "deviation": 0.002028,
+            "targetReachedAt": "2026-10-11T14:32:10.000Z",
+            "lookAhead": { "site": "effect", "concentration": 1.0, "units": "mcg/mL",
+                           "decrementSeconds": 636.4, "horizonSeconds": 30000, "beyondHorizon": false },
+            "syringeEmptyAt": "2026-10-11T15:15:35.801Z"
+          },
+          "delivered": { "fromHistory": 269.4, "reported": 269.5, "units": "mg" },
+          "model": {
+            "drug": "propofol",
+            "reference": "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/",
+            "concentrationUnits": "mcg/mL", "massUnits": "mg",
+            "tPeak": 1.6, "adjustToFFM": true,
+            "parameters": { "v1": 6.283, "v2": 20.17, "v3": 136.7, "cl1": 1.551, "cl2": 1.516, "cl3": 0.6673,
+                            "k10": 0.2469, "k12": 0.2413, "k13": 0.1062, "k21": 0.07516, "k31": 0.00488,
+                            "lambda_1": 0.6280, "lambda_2": 0.04306, "lambda_3": 0.003349, "ke0": 0.6871 },
+            "hash": "md5:d7e1ee61f1de895385daa3903be4d7e5"
+          },
+          "algorithm": { "name": "shafer-gregg-1992", "plasmaSwitch": 0.05, "tauGridSeconds": 1 },
+          "warnings": [],
+          "server": {
+            "package": "stanpumpR", "version": "0.0.1.9002", "commit": null,
+            "receivedAt": "2026-10-11T14:31:58.662Z", "respondedAt": "2026-10-11T14:31:58.681Z",
+            "computeSeconds": 0.019
+          }
+        }
+      }
+    }
+  }
+}

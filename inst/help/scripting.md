@@ -80,6 +80,10 @@ Doses are converted using the drug's concentration units from the library: a dru
 
 `maximum` is the end of the simulation, and the result covers 0 to `maximum` and nothing else. A dose at or after `maximum` is ignored, since it cannot change anything inside the window, and so are the repeats of a scheduled dose and the target changes of a TCI row that fall there. The returned series stop at `maximum`, and `max` (the peaks) and the normalised series are taken over the window, so a large dose after it no longer shrinks the curves before it. A dose given before `maximum` is simulated in full, including an oral dose whose absorption only starts after it. Choose `maximum` long enough to take in every dose you want simulated: the app does this for you, lengthening the plot to the last dose or event.
 
+## The TCI API
+
+`tciNextRate(request)` is the computation behind [The TCI API](help:tci-api), the stateless web service that hands a real TCI pump its next rate. It is exported and needs no server: pass it a request body parsed with `jsonlite::fromJSON(txt, simplifyVector = FALSE)` and it returns the response as a list, so a logged request from a pump can be replayed and checked here. `tciApiDrugs()` lists the drugs the API offers, `tciApiModel()` resolves the model for a patient, and `tciApiRouter()` and `run_tci_api()` wrap them in a `plumber` router (`plumber` is an optional dependency, not loaded by the app).
+
 ## What is not exported
 
 The Shiny server, the plotting code and Suggest Dosing are internal. They can be reached with `stanpumpR:::` or `devtools::load_all()`, with no promise of a stable interface.
