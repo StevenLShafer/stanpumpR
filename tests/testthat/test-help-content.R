@@ -191,6 +191,36 @@ test_that("the sidebar lists every page once and marks the current one", {
   expect_false(grepl("<details class=\"help-nav-section\" open>\\s*<summary>\\s*Drug library", nav))
 })
 
+test_that("the drug library lists its drugs alphabetically, whatever the CSV order", {
+  dd <- getDrugDefaultsGlobal()
+  sorted <- function(x) identical(x, x[order(tolower(x), x, method = "radix")])
+  titles <- function(reg) reg$title[reg$section == "drugs" & reg$id != "drugs/index"]
+
+  # The sidebar, after the "All drugs" page
+  reg <- helpPageRegistry(dd)
+  drugIds <- reg$id[reg$section == "drugs"]
+  expect_equal(drugIds[1], "drugs/index")
+  expect_true(sorted(titles(reg)))
+  expect_setequal(titles(reg), helpDrugTitle(dd$Drug))
+
+  # Still sorted when the CSV is shuffled or a drug is appended at the end
+  shuffled <- dd[rev(seq_len(nrow(dd))), ]
+  expect_true(sorted(titles(helpPageRegistry(shuffled))))
+  appended <- rbind(dd, transform(dd[dd$Drug == "propofol", ], Drug = "aardvarkine"))
+  expect_equal(titles(helpPageRegistry(appended))[1], "Aardvarkine")
+
+  # Each table on the "All drugs" page
+  html <- helpDrugIndexHTML(shuffled)
+  tables <- regmatches(html, gregexpr("<tbody>.*?</tbody>", html))[[1]]
+  expect_length(tables, 2)
+  for (tb in tables) {
+    linked <- regmatches(tb, gregexpr('<tr><td><a href="#" data-help-page="drugs/[^"]+">', tb))[[1]]
+    drugs <- sub('.*drugs/([^"]+)">$', "\\1", linked)
+    expect_gt(length(drugs), 1)
+    expect_true(sorted(helpDrugTitle(drugs)))
+  }
+})
+
 test_that("the Help panel UI builds", {
   ui <- as.character(helpNavPanel())
   expect_match(ui, "help_search", fixed = TRUE)
