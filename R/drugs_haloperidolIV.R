@@ -36,10 +36,16 @@
 # Body size: no weight covariate, so the published values are the 70 kg
 # reference adult's and scale to fat-free mass (legacyVolume = 1).
 #
-# EFFECT
-# ======
-# None.  The paper established no concentration-to-delirium, sedation, D2 or
-# QTc relation, and the oral chronic PANSS model must not be reused here.
+# EFFECT SITE
+# ===========
+# Li established no concentration-to-delirium, sedation or QTc relation, and
+# the oral chronic PANSS model must not be reused here.  The D2-occupancy
+# effect site of Lim 2013 (ke0 0.213 /h, Ce50 0.791 ng/mL putamen; see
+# R/drugs_haloperidol.R) relates plasma haloperidol to occupancy whatever the
+# route, so ke0 is supplied here too.  Lim studied oral dosing in healthy
+# men; its use after an intravenous bolus in critically ill patients is a
+# transfer, recorded in antipsychoticProfiles().  CYP2D6 is not applied:
+# Li tested it on this model and it was not significant.
 # -----------------------------------------------------------------------------
 
 HALOPERIDOL_IV_CL <- 51.7    # L/h, absolute
@@ -48,7 +54,8 @@ HALOPERIDOL_IV_V  <- 1490    # L
 #' Haloperidol pharmacokinetics (intravenous)
 #'
 #' Li et al. (2022): one compartment, absolute parameters from critically ill
-#' adults.  Plasma only; the CRP covariate is not applied.
+#' adults, with Lim 2013's D2-occupancy effect site; the CRP covariate is
+#' not applied.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
@@ -72,12 +79,14 @@ haloperidolIV <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Li L et al., Pharmaceutics 2022;14:549. ",
     "https://doi.org/10.3390/pharmaceutics14030549 (intravenous, critically ill ",
-    "adults; CRP covariate not applied)"
+    "adults; CRP covariate not applied); effect site: Lim HS et al., ",
+    "Pharm Res 2013;30:683-693"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = 0,                       # ke0 is supplied, not solved
+    ke0 = HALOPERIDOL_KE0 / 60,      # 1/min, Lim 2013
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

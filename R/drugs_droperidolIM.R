@@ -26,7 +26,7 @@
 # abstract confirms 73.6 L is the central volume.)  IM bioavailability
 # was not measured, so the parameters are APPARENT: droperidolIM is offered as
 # mg IM only, with bioavailability_IM = 1.  Intravenous droperidol is the
-# separate drug "droperidol" (Cooper 2018); neither model's parameters may be
+# separate drug "droperidol" (Lehmann 1988); neither model's parameters may be
 # moved to the other route.
 #
 # Body size: weight was not recorded, so the published values are read as the

@@ -335,9 +335,9 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # plasma only, with 6-MAM and morphine not modelled, so it has no effect site.
     "diamorphine",
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
-    # or no effect is established; aripiprazole alone has a PET ke0.
+    # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
-    "olanzapine", "haloperidol", "haloperidolIV", "droperidol", "droperidolIM"
+    "olanzapine", "droperidol", "droperidolIM"
   ))
 })
 

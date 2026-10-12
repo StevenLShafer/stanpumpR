@@ -27,5 +27,6 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Li et al. (2022): one compartment, absolute parameters from critically ill
-adults.  Plasma only; the CRP covariate is not applied.
+adults, with Lim 2013's D2-occupancy effect site; the CRP covariate is
+not applied.
 }

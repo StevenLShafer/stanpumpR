@@ -8,8 +8,12 @@ Intravenous haloperidol, from Li and colleagues (*Pharmaceutics* 2022;14:549): 2
 
 ### Covariates
 
-Weight, age, sex and CYP2D6 genotype were tested and rejected. The final model lowered clearance with C-reactive protein, flattening above about 100 mg/L, but the exact function is in a supplement that was not available, so **the CRP effect is not applied**: this is the typical patient's clearance. The values take the library's [fat-free-mass scaling](help:models/fat-free-mass).
+Weight, age, sex and CYP2D6 genotype were tested and rejected, so the **CYP 2D6** field does not change this drug (unlike [oral haloperidol](help:drugs/haloperidol)). The final model lowered clearance with C-reactive protein, flattening above about 100 mg/L, but the exact function is in a supplement that was not available, so **the CRP effect is not applied**: this is the typical patient's clearance. The values take the library's [fat-free-mass scaling](help:models/fat-free-mass).
 
 ### Where to be careful
 
-A one-compartment model fitted to samples hours apart does not describe the minutes after a bolus, when the true concentration is higher before the drug distributes. No relation between concentration and delirium, sedation, D2 occupancy or QTc was established, so there is **no effect site** and no band.
+A one-compartment model fitted to samples hours apart does not describe the minutes after a bolus, when the true concentration is higher before the drug distributes. No relation between concentration and delirium, sedation or QTc was established.
+
+### Effect site
+
+The D2-occupancy effect site of Lim and colleagues (*Pharm Res* 2013;30:683-693) is supplied here as on [oral haloperidol](help:drugs/haloperidol): ke0 0.213 per hour, half-maximal putamen occupancy at 0.791 ng/mL. It was fitted after oral doses in healthy men, and its use after an intravenous bolus in critically ill patients is a transfer. Occupancy is a receptor biomarker, not a target, so there is no band.

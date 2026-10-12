@@ -154,8 +154,21 @@ antipsychoticProfiles <- function() list(
     analyte = "haloperidol", matrix = "plasma",
     pkSource = "Pilla Reddy 2013, doi:10.1097/JCP.0b013e3182a4ee2c",
     modelStatus = "implemented", pkVerified = FALSE,
-    warnings = "Parameters not yet checked against the full text.",
+    warnings = c("Parameters not yet checked against the full text.",
+                 "CYP2D6 from Park 2006 (*10/*10 0.77); poor and ultrarapid not studied.",
+                 "Occupancy PD (Lim 2013) transferred onto Pilla Reddy's PK."),
     pd = list(
+      occupancyFit("Lim 2013, putamen", "parent_effect_site", Emax = 100,
+                   EC50 = 0.791, ke0 = 0.213 / 60,
+                   source = "Lim HS 2013, doi:10.1007/s11095-012-0906-2",
+                   verified = TRUE,
+                   note = paste("[18F]fallypride PET, 8 healthy Korean men, oral;",
+                                "full inhibition of binding potential. Lim's PK model is not used.")),
+      occupancyFit("Lim 2013, caudate", "parent_effect_site", Emax = 100,
+                   EC50 = 0.650, ke0 = 0.209 / 60,
+                   source = "Lim HS 2013, doi:10.1007/s11095-012-0906-2",
+                   verified = TRUE,
+                   note = "Caudate fit; the drug's plotted Ce uses the putamen ke0."),
       list(endpoint = "PANSS", name = "Pilla Reddy 2013", driver = "Css",
            Emax = 0.31, EC50 = 3.58, ke0 = NA_real_,
            source = "Pilla Reddy 2013", verified = FALSE,
@@ -173,8 +186,21 @@ antipsychoticProfiles <- function() list(
     pkSource = "Li 2022, doi:10.3390/pharmaceutics14030549",
     modelStatus = "implemented", pkVerified = TRUE,
     warnings = c("CRP covariate not applied (function in an unread supplement).",
-                 "One compartment: no early distribution phase."),
-    pd = list()
+                 "One compartment: no early distribution phase.",
+                 "Occupancy PD (Lim 2013, oral, healthy men) transferred to IV use in ICU patients."),
+    pd = list(
+      occupancyFit("Lim 2013, putamen", "parent_effect_site", Emax = 100,
+                   EC50 = 0.791, ke0 = 0.213 / 60,
+                   source = "Lim HS 2013, doi:10.1007/s11095-012-0906-2",
+                   verified = TRUE,
+                   note = paste("[18F]fallypride PET, 8 healthy Korean men, oral;",
+                                "full inhibition of binding potential. Transferred to IV dosing.")),
+      occupancyFit("Lim 2013, caudate", "parent_effect_site", Emax = 100,
+                   EC50 = 0.650, ke0 = 0.209 / 60,
+                   source = "Lim HS 2013, doi:10.1007/s11095-012-0906-2",
+                   verified = TRUE,
+                   note = "Caudate fit; the drug's plotted Ce uses the putamen ke0.")
+    )
   ),
 
   droperidolIM = list(
@@ -192,13 +218,12 @@ antipsychoticProfiles <- function() list(
   droperidol = list(
     drug = "droperidol", route = ROUTE_IV, formulation = "intravenous",
     parameterBasis = "absolute_iv",
-    sourcePopulation = "7 healthy men",
+    sourcePopulation = "30 surgical adults (14-65 years), 5, 10 or 15 mg",
     analyte = "droperidol", matrix = "plasma",
-    pkSource = "Cooper 2018, doi:10.1177/2050312118813283",
-    modelStatus = "implemented_with_warning", pkVerified = TRUE,
-    unobservedMinutes = DROPERIDOL_UNOBSERVED_MIN,
-    warnings = c("No samples in the first 25 min after the start of a dose.",
-                 "Authors report IV clearance underestimated (NCA median 33.8 L/h vs 15.3)."),
+    pkSource = "Lehmann 1988, PMID 3179149 (pooled mean curves)",
+    modelStatus = "implemented", pkVerified = TRUE,
+    warnings = c("Fitted to mean curves, not individual data; no covariates.",
+                 "Children (Grunwald 1993) clear about 2.5-fold less per kg than this model predicts."),
     pd = list()
   ),
 

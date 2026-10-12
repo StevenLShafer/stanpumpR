@@ -9,7 +9,7 @@ test_that("IV haloperidol receives Li's absolute values", {
         v1 = 1490, v2 = 1, v3 = 1,
         cl1 = 51.7 / 60, cl2 = 0, cl3 = 0
       )),
-      tPeak = 0, MEAC = 0,
+      tPeak = 0, ke0 = 0.213 / 60, MEAC = 0,
       typical = 0, upperTypical = 0, lowerTypical = 0,
       reference = actual$reference
     )

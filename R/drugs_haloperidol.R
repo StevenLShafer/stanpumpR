@@ -28,13 +28,47 @@
 # Body size: no weight covariate, so the published values are the 70 kg
 # reference adult's and scale to fat-free mass (legacyVolume = 1).
 #
-# EFFECT
-# ======
-# None plotted.  The same paper's PANSS model drives its drug term with each
+# CYP2D6 (added 2026-10-11 from the full text of Park 2006)
+# ==========================================================
+# Park JY et al., J Clin Psychopharmacol 2006;26:135-142: single 5 mg oral
+# doses in healthy Korean men, noncompartmental.  CL/F (Table 1, placebo
+# phase) was 4.7 L/h/kg with CYP2D6*1/*1 (n = 8) and 3.6 with *10/*10
+# (n = 7), a ratio of 0.77 (not significant on its own; significant, 0.56,
+# with itraconazole).  Only that ratio is used: Park's absolute CL/F (about
+# 300 L/h) and half-life (12.6 h) are biased by sampling to 72 h against a
+# 31 h terminal half-life, and must not replace Pilla Reddy's.
+#
+#     normal 1, intermediate 0.77
+#
+# Poor and ultrarapid metabolisers were not studied: they take the nearest
+# studied value (0.77 and 1).  Pilla Reddy's population genotype mix is not
+# reported, so "normal" is read as their typical patient.
+#
+# Interactions not modelled, documented in the help: rifampin lowered
+# haloperidol troughs to 30% of baseline over 1 to 2 weeks and stopping it
+# raised them 3.3-fold over about 2 weeks (Kim YH 1996, J Clin
+# Psychopharmacol 16:247-252); itraconazole lowered CL/F to 0.67 (Park 2006).
+#
+# EFFECT SITE (added 2026-10-11 from the full text of Lim 2013)
+# ==============================================================
+# Lim HS et al., Pharm Res 2013;30:683-693: [18F]fallypride PET and plasma
+# in 8 healthy Korean men after 0.5, 1 or 3 mg daily for 7 days.  Effect
+# compartment with full inhibition of binding potential, driven by plasma:
+#
+#     ke0 0.213 /h (putamen; 0.209 caudate), Ce50 0.791 ng/mL (putamen;
+#     0.650 caudate)
+#
+# ke0 is supplied directly.  Lim's own PK model (one compartment with a
+# saturable binding compartment, CL/F 75 L/h) cannot be run by this engine
+# and is not used; the PD is transferred onto Pilla Reddy's PK, and
+# antipsychoticProfiles() records the transfer.  D2 occupancy is
+# 100 x Ce/(0.791 + Ce): a receptor biomarker, not a target, so there is no
+# band.  Lim's simulations put 2 mg every 12 h near a 65-80% window.
+#
+# The same paper's PANSS model (Pilla Reddy) drives its drug term with each
 # patient's AVERAGE STEADY-STATE concentration (Emax 0.31, EC50 3.58 ng/mL),
-# inside a Weibull placebo and dropout model that has not been transcribed.
-# It is not a moment-to-moment effect of C(t), so it is not an effect site and
-# 3.58 ng/mL is not a target; it is recorded in antipsychoticProfiles().
+# inside a Weibull placebo and dropout model that has not been transcribed;
+# it is recorded in antipsychoticProfiles() and not computed.
 # -----------------------------------------------------------------------------
 
 HALOPERIDOL_CL <- 88      # L/h, apparent
@@ -42,24 +76,42 @@ HALOPERIDOL_Q  <- 233     # L/h
 HALOPERIDOL_VC <- 669     # L
 HALOPERIDOL_VP <- 2500    # L
 HALOPERIDOL_KA <- 0.236   # 1/h
+HALOPERIDOL_KE0 <- 0.213  # 1/h, Lim 2013 (putamen); also used by haloperidolIV
+
+# CL/F multiplier by CYP2D6 phenotype (Park 2006); see the header
+HALOPERIDOL_CYP2D6 <- c(
+  poor         = 0.77,
+  intermediate = 0.77,
+  normal       = 1,
+  ultrarapid   = 1
+)
 
 #' Haloperidol pharmacokinetics (oral)
 #'
-#' Pilla Reddy et al. (2013): two compartments, apparent oral parameters.
-#' Plasma only.
+#' Pilla Reddy et al. (2013): two compartments, apparent oral parameters,
+#' with CYP2D6 on clearance (Park 2006) and a D2-occupancy effect site (Lim
+#' 2013).
 #'
 #' @inheritParams cefazolin
+#' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-haloperidol <- function(weight, height, age, sex, adjustToFFM = TRUE)
+haloperidol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
+                        adjustToFFM = TRUE)
 {
+  if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
+    stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
+         ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
+  }
+  cyp <- unname(HALOPERIDOL_CYP2D6[[cyp2d6]])
+
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
 
   default <- list(
     v1 = HALOPERIDOL_VC * size$volume,
     v2 = HALOPERIDOL_VP * size$volume,
     v3 = 1,
-    cl1 = HALOPERIDOL_CL / 60 * size$clearance,   # L/min
+    cl1 = HALOPERIDOL_CL / 60 * size$clearance * cyp,   # L/min
     cl2 = HALOPERIDOL_Q  / 60 * size$clearance,
     cl3 = 0,
     ka_PO = HALOPERIDOL_KA / 60,                  # 1/min
@@ -73,12 +125,15 @@ haloperidol <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Pilla Reddy V et al., J Clin Psychopharmacol 2013;33:731-739. ",
     "https://doi.org/10.1097/JCP.0b013e3182a4ee2c (apparent oral parameters; ",
-    "values not yet checked against the full text)"
+    "values not yet checked against the full text); CYP2D6: Park JY et al., ",
+    "J Clin Psychopharmacol 2006;26:135-142; effect site: Lim HS et al., ",
+    "Pharm Res 2013;30:683-693. https://doi.org/10.1007/s11095-012-0906-2"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = 0,                       # ke0 is supplied, not solved
+    ke0 = HALOPERIDOL_KE0 / 60,      # 1/min
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

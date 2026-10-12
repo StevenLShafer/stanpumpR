@@ -26,7 +26,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Cooper et al. (2018): two compartments, absolute intravenous branch of a
-joint intranasal/intravenous fit in seven healthy men.  The first 25 min
-after a dose were not sampled; see the file's header.  Plasma only.
+Lehmann et al. (1988): three compartments, from the mean plasma curves of
+30 surgical adults given 5, 10 or 15 mg, pooled per milligram.  Plasma
+only.
 }
