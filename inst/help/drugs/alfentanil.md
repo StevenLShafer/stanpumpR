@@ -4,7 +4,7 @@ Alfentanil's parameters are those of Scott and Stanski (*J Pharmacol Exp Ther* 1
 
 ### Covariates
 
-None. The parameters are for a typical adult, and the same dose in milligrams gives the same curve at any weight or age. Scott and Stanski found that age did not change alfentanil's kinetics but did increase the brain's sensitivity to it; the pharmacodynamic finding is not represented. Dose per kilogram if you want size taken into account.
+None of its own. The parameters are for a typical 70 kg adult. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the volumes scale with the patient's fat-free mass and the clearances with that ratio to the 0.75 power; with the switch off, the published values are used unchanged and the same dose in milligrams gives the same curve at any weight or age. Scott and Stanski found that age did not change alfentanil's kinetics but did increase the brain's sensitivity to it; the pharmacodynamic finding is not represented. Dose per kilogram if you want the dose scaled too.
 
 ### Effect site
 
@@ -16,4 +16,4 @@ MEAC is 39 ng/mL; the shaded band is 31 to 78 ng/mL. Concentrations of 200 to 40
 
 ### Where to be careful
 
-Alfentanil's small volumes and low clearance give it a terminal half-life of about 1.5 hours and an offset that, unlike remifentanil's, lengthens with infusion duration, though much less than fentanyl's. Its elimination depends on CYP3A4, so inhibitors (erythromycin, some antifungals) can prolong it substantially; the model does not know this.
+Alfentanil's small volumes and low clearance give it a terminal half-life of just under 2 hours (111 minutes in the reference adult) and an offset that, unlike remifentanil's, lengthens with infusion duration, though much less than fentanyl's. Its elimination depends on CYP3A4, so inhibitors (erythromycin, some antifungals) can prolong it substantially; the model does not know this.

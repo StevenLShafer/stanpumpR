@@ -94,9 +94,9 @@ No report found an adverse event caused by the TCI algorithm. They concluded tha
 
 ## stanpumpR
 
-stanpumpR uses very little of the original STANPUMP code. Conceptually it is identical: an open-source program that makes complex pharmacokinetic algorithms available to support patient care, teaching and research. The difference is that **stanpumpR does not control drug administration**. It is a web-based simulator, written in R with the Shiny framework, that shows the expected concentrations from any dosing regimen.
+stanpumpR uses very little of the original STANPUMP code. Conceptually it is identical: an open-source program that makes complex pharmacokinetic algorithms available to support patient care, teaching and research. The difference is that **the stanpumpR app does not control drug administration**. It is a web-based simulator, written in R with the Shiny framework, that shows the expected concentrations from any dosing regimen.
 
-The R package was begun by Steven Shafer in 2019. Dean Attali rebuilt it as a maintainable Shiny application with a test suite and automated deployment. In 2026 it gained an engine for the inhaled anesthetics following Gas Man®, validated by Richard Epstein. The same year STANPUMP's targeting algorithm returned as two dose-table units, *Plasma target* and *Effect site target*, which simulate a TCI pump using Shafer and Gregg's method; see [Target-controlled infusion](help:tci).
+The R package was begun by Steven Shafer in 2019. Dean Attali rebuilt it as a maintainable Shiny application with a test suite and automated deployment. In 2026 it gained an engine for the inhaled anesthetics following Gas Man®, validated by Richard Epstein. The same year STANPUMP's targeting algorithm returned as two dose-table units, *Plasma target* and *Effect site target*, which simulate a TCI pump using Shafer and Gregg's method; see [Target-controlled infusion](help:tci). The same controller is offered to real pumps by [the TCI API](help:tci-api), a stateless web service that computes the next rate for a pump's host computer, while the pump keeps its own limits and decides what to run.
 
 ## Licence and use
 

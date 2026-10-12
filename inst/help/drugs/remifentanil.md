@@ -12,7 +12,7 @@ Weight, height, age and sex all enter through fat-free mass, the allometric term
 
 ### Effect site
 
-The time to peak effect is 1.6 minutes, from the opioid simulation spreadsheet that accompanied the original comparisons; Minto's own ke0 of 0.595/min at age 40 corresponds to a similar peak. The resulting equilibration half-time of about a minute is the fastest in the library.
+The time to peak effect is 1.6 minutes, from the opioid simulation spreadsheet that accompanied the original comparisons; Minto's own ke0 of 0.595/min at age 40 corresponds to a similar peak. The resulting equilibration half-time of about a minute is among the fastest in the library.
 
 ### MEAC and typical concentrations
 

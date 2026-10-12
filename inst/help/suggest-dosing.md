@@ -3,7 +3,7 @@
 ## Using it
 
 1. Click **Suggest Dosing**. It is offered when the time unit is minutes or hours.
-2. Choose the **Drug**. Only drugs it can target are listed: those with an effect site and with intravenous bolus and infusion units. Drugs plotted as plasma concentrations only (the antibiotics, the corticosteroids, mannitol, and the prodrugs codeine and tramadol), oral-only drugs and the inhaled agents are not.
+2. Choose the **Drug**. Only drugs it can target are listed: those with an effect site and with intravenous bolus and infusion units. Drugs plotted as plasma concentrations only (among them the antibiotics, the corticosteroids, the antidepressants, the antiseizure drugs, the local anesthetics other than lidocaine, mannitol, and the prodrugs codeine and tramadol), oral-only drugs and the inhaled agents are not.
 3. In the table, enter pairs of **Time** and **Target** effect-site concentration, with the times in the dose table's time unit. Each target holds from its time until the next target's time.
 4. Enter an **End Time** for the regimen. The OK button appears once you have.
 5. Press **OK**. After a moment the dose table is replaced with a bolus at each target time and infusion rates between them, ending with a rate of zero at the end time, and the plot redraws.

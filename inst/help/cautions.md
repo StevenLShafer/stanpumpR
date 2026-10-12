@@ -26,6 +26,10 @@ The other Patient Profile fields reach only the models that name them, and a fie
 
 Several of the recently added opioids carry parameters that are explicitly provisional and uncited: the time to peak effect of hydrocodone and oxymorphone, the effect-site rate constant of desmetramadol, and the minimum effective concentrations of hydrocodone and oxymorphone. Their pages say so. They are working values, not validated ones.
 
+## Illicit-drug models are research estimates
+
+The research models of drugs of abuse (diamorphine) are hidden until **Show illicit drugs** above the dose table is ticked. Their curves are plasma-exposure estimates for research and teaching, not dosing advice or safety thresholds. See [diamorphine](help:drugs/diamorphine).
+
 ## The shaded band is orientation, not a target
 
 The "typical" range comes from the drug library and is a rough published range for a typical indication. It is not tailored to your patient, your stimulus, or your co-administered drugs. It can be edited under Settings.

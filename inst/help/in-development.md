@@ -23,14 +23,15 @@ And for plots longer than a day:
 
 - **Oxycodone.** A new model pooled from five studies replaces the Lamminsalo model. Clearance falls with age and renal function, oral absorption and an 11-minute effect-site half-time come from Lalovic 2006, and oxycodone can now be given intravenously (`mg`) as well as by mouth. See [Oxycodone](help:drugs/oxycodone).
 - **The TCI API.** A stateless web service, `/tci/v1`, hands a real TCI pump its next rate from the pump's own record of what it has delivered, using the same controller as the *Plasma target* and *Effect site target* rows, with a correction for the delay before the pump acknowledges a new rate, a pump ceiling, and a fallback rate with a hard stop for a command that arrives late. It is not part of the shinyapps.io deployment and is served separately. See [The TCI API](help:tci-api).
+- **More since then.** A startup menu that asks which drugs to display, grouped by category ([Quick start](help:quick-start)); doses repeated `qd`, `bid`, `tid` or `qid` to the end of the plot, and new routes and forms: regional-anesthesia (`RA`) depots for the local anesthetics, sublingual buprenorphine, oral liquids and extended-release (`XR`) forms given as timed pulses, and oral bioavailability that changes with the dose ([Units](help:units), [Absorption](help:models/absorption)); a **Minto / Schnider** switch that runs the pump models beside the library's ([The Minto and Schnider models](help:models/minto-schnider)); an opt-in *Show illicit drugs* group of research models; many new drugs ([All drugs](help:drugs/index)); and a simulation web service, `run_api()`, that takes a dose table and covariates and returns the concentrations (described in `docs/api.md` in the repository).
 
 ## Now active
 
-**CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes.
+**CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes, and the clearance of aripiprazole, haloperidol and risperidone. Beside it, **CYP 2C19** is read by citalopram and escitalopram, and **CYP 2C9** by meloxicam and phenytoin.
 
 ## Visible but not active
 
-**Pregnant** in the Patient Profile is still disabled. The **Serum creatinine** field is live: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin and oxycodone estimate renal function from it, or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
+**Pregnant** in the Patient Profile is still disabled. The **Serum creatinine** field is live: cefazolin, gabapentin, gentamicin, lacosamide, levetiracetam, mannitol, meloxicam, oxycodone, pregabalin, sugammadex and vancomycin estimate renal function from it (see [Cautions](help:cautions)), or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
 
 ## Provisional values flagged in the code
 
@@ -45,10 +46,11 @@ From the project README:
 1. Oral opioids with good pharmacokinetics for each; only first-order absorption is currently supported.
 2. Improved models of pediatric pharmacokinetics.
 3. Improved models of drug interaction.
-4. Pharmacokinetic changes with pregnancy and renal function.
+4. Pharmacokinetic changes with pregnancy. The field is in the Patient Profile, but no model yet reads it. (Renal function, through the serum creatinine, and the CYP 2D6, 2C19 and 2C9 phenotypes already reach the models that name them.)
+5. Expanding the in-app help: more teaching scenarios, and screenshots.
 
 A second-generation metabolite link (morphine-6-glucuronide from codeine, for example) would need a two-stage cascade, which the engine does not yet do.
 
 ## Known issues in the code
 
-The developer documentation (`docs/architecture.md`) records that the per-drug simulation cache does not persist between reactive updates, so every drug is re-simulated on every edit rather than only the one that changed. It is a performance issue, not a correctness one, and is noted there so that it is fixed rather than mistaken for intended behaviour.
+The per-drug simulation cache, once recorded here as not persisting between reactive updates, has been fixed: an edit now re-simulates only the drugs whose inputs changed, and the others reuse their stored simulation (`docs/architecture.md`).

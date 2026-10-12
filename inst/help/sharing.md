@@ -2,7 +2,7 @@ The URL in your browser's address bar is the simulation. Every change you make i
 
 ## To save or share a simulation
 
-Copy the address bar and paste it into an email, a document, or a teaching handout. Whoever opens it sees the same patient, doses, events, options and thresholds you had; edits to the rest of the Drug Library (concentrations, units, colours, ranges) are not carried, as listed below. The URL is long, because it carries the whole state.
+Copy the address bar and paste it into an email, a document, or a teaching handout. Whoever opens it sees the same patient, doses, events, options and thresholds you had; edits to the rest of the Drug Library (concentrations, units, colours, ranges) are not carried, as listed below. The URL is long, because it carries the whole state. A URL that carries doses opens straight onto the simulation, without the startup drug menu.
 
 ## What is included
 
@@ -11,7 +11,7 @@ Copy the address bar and paste it into an email, a document, or a teaching hando
 - The event table
 - Graph options and additional plots
 - Edited recovery thresholds, including the MAC threshold
-- The time display mode and procedure start
+- The time units, time display mode and procedure start
 
 ## What is not included
 
@@ -19,9 +19,9 @@ Copy the address bar and paste it into an email, a document, or a teaching hando
 - Which help page you were reading
 - Anything typed into the Email Slide panel
 
-## Bookmarks in the emailed slide
+## The URL in an emailed slide
 
-The emailed PowerPoint slide carries the same URL, so a slide can be opened months later and the simulation reconstructed. See [Email a slide](help:email-slide).
+The email that carries the PowerPoint slide includes the same URL as a link, so a simulation can be reopened months later and reconstructed. See [Email a slide](help:email-slide).
 
 ## Teaching
 

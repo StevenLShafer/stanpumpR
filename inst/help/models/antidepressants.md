@@ -14,7 +14,7 @@ The **Antidepressants** in the startup menu are a library of named, source-speci
 | [venlafaxine](help:drugs/venlafaxine) | Wang and colleagues, 2022 | 24 healthy volunteers (rich profiles) and 127 psychiatric patients (troughs) | One compartment, apparent oral, with [desvenlafaxine](help:drugs/desvenlafaxine) formed from it and by first pass; the patients' clearance |
 | [bupropion](help:drugs/bupropion) | Ghimire and colleagues, 2026 | 19 adults, one 150 mg sustained-release dose | Two compartments for bupropion and two for [hydroxybupropion](help:drugs/hydroxybupropion), formed from it |
 
-All are given by mouth only (`mg PO`, with once- and twice-daily schedules). Most are **apparent** models, fitted to oral data alone, which predict oral concentrations correctly and intravenous ones not at all. See [Oral, intramuscular and intranasal doses](help:models/absorption).
+All are given by mouth only (`mg PO`, with once-daily schedules, twice-daily ones for all but fluoxetine, and three times daily for venlafaxine). Most are **apparent** models, fitted to oral data alone, which predict oral concentrations correctly and intravenous ones not at all. See [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption).
 
 ## What a curve can and cannot tell you
 
