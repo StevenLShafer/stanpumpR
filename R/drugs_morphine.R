@@ -6,7 +6,21 @@
 # DISPOSITION
 # ===========
 # Lotsch 2002 (Model A), three compartments from intravenous morphine in eight
-# young volunteers, with tPeak 93.8 min after an intravenous bolus.
+# young volunteers.
+#
+# EFFECT SITE AND MEAC (opioid MEAC and tPeak audit, 2026-10-12)
+# ==============================================================
+# tPeak 93.8 min after an intravenous bolus and MEAC 8 ng/mL are older
+# library values with no primary source among the archived papers; Lotsch
+# 2002 has no pharmacodynamics, so the tPeak is not from it.  On this
+# disposition 93.8 min is a t1/2 ke0 of about 138 min, inside the 1.6-4.8 h
+# range of Lotsch's review (as cited by Atrux-Tallau 2022) but slower than the
+# 0.6 h Dahan 2020 found for cold-pressor analgesia (1.24 h for ventilation).
+# The MEAC is at the low end of morphine's literature: Dahlstrom 1982, 16
+# ng/mL (6-33) after abdominal surgery, as cited by Yue 1991 and Persson 1992;
+# a 9-14 ng/mL window cited by Ashraf 2024; Dahan 2020's cold-pressor C100,
+# 34.3 ng/mL.  Oxycodone's, hydrocodone's and oxymorphone's MEACs are tied to
+# this one, so a change here should move them together.
 #
 # ORAL: IMMEDIATE-RELEASE TABLET AND LIQUID
 # =========================================

@@ -29,7 +29,7 @@ clonazepam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#9C4A1A,20,
 zolpidem,ng,,,mg PO,"mg PO,mg PO qd",#6A1B9A,80,200,120,0,50,IV,Hypnotics and sedatives
 temazepam,ng,,,mg PO,"mg PO,mg PO qd",#7F3F00,250,600,400,0,250,IV,Hypnotics and sedatives
 codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4A6FE3,50,150,100,0,0,IV,Opioids
-hydrocodone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#2C5FB8,10,30,20,8,8,IV,Opioids
+hydrocodone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#2C5FB8,10,30,20,12,12,IV,Opioids
 oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#B5468C,1,4,2,0.8,0.8,IV,Opioids
 buprenorphine,ng,mg,mcg/hr,mg,"mg,mcg,mcg/kg,mcg/hr,mcg/kg/hr,mg SL,mcg SL,mg IN,mcg IN,mg qd,mg bid,mg tid,mg qid,mg SL qd,mg SL bid,mg SL tid,mg SL qid",#5D4037,1.25,3,2.2,0,1.25,IV,Opioids
 tramadol,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#7E57C2,100,600,300,0,0,IV,Opioids

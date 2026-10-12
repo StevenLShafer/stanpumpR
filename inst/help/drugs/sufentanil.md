@@ -8,7 +8,7 @@ None. The parameters are for a typical adult. Gepts found no significant covaria
 
 ### Effect site
 
-The time to peak effect is 5.8 minutes, from the Shafer and Varvel analysis: the slowest of the four anesthetic opioids in the library, so a sufentanil bolus produces a smoother and later effect-site peak than a fentanyl bolus of equivalent potency.
+The time to peak effect is 5.6 minutes, from Shafer and Varvel (*Anesthesiology* 1991;74:53-63, Figure 2, EEG): the slowest of the four anesthetic opioids in the library, so a sufentanil bolus produces a smoother and later effect-site peak than a fentanyl bolus of equivalent potency.
 
 ### MEAC and typical concentrations
 

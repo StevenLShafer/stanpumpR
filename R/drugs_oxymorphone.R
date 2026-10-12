@@ -77,10 +77,13 @@
 # -----------------------------------------------------------------------------
 # No human concentration-effect vector for oxymorphone was found.  Babalonis
 # 2016 measured experimental effects after oral immediate-release oxymorphone
-# but reports no potency, and equal-milligram comparisons cannot supply one.
+# and oxycodone and reports a relative potency per mg of oral oxymorphone to
+# oral oxycodone: 0.48 for pressure-pain threshold, about 0.5 for miosis and
+# 0.84-0.85 for drug liking.  It measured no concentrations, so that is a
+# dose ratio, not a concentration ratio, and it cannot set the MEAC directly.
 #
-# Until these are set, oxymorphone is plotted as plasma only and contributes
-# nothing to the opioid MEAC total, including when it arrives as oxycodone's
+# The provisional tPeak and MEAC below give oxymorphone an effect site and a
+# place in the opioid MEAC total, including when it arrives as oxycodone's
 # metabolite.  Oxymorphone binds the mu receptor 8 to 44 times more tightly
 # than oxycodone and is thought to carry 15 to 20% of oral oxycodone's
 # analgesia, so leaving it at zero understates a real effect; those figures
@@ -134,6 +137,15 @@ OXYMORPHONE_TPEAK <- 20  # minutes; provisional, see above
 #     contribution is small but no longer zero, which is worth confirming
 #     against the 15 to 20% of oral oxycodone analgesia sometimes attributed
 #     to oxymorphone.
+#
+# The opioid MEAC and tPeak audit (2026-10-12) left 0.8 unchanged because
+# the equianalgesic checks disagree in direction.  After a bolus, 1 mg IV
+# peaks at 4.8 MEAC against morphine 10 mg's 2.2, and 10 mg by mouth at
+# 2.7 against morphine 30 mg's 1.6, which would put the MEAC too low; at
+# steady state, rates equianalgesic to morphine 2 mg/h give 2.1 MEAC against
+# morphine's 3.4, which would put it too high.  The bolus figures depend on
+# the provisional tPeak (20 min against morphine's 93.8), so the tPeak, not
+# the MEAC, is the first thing to replace.
 OXYMORPHONE_MEAC  <- 0.8  # ng/mL; provisional, see above
 # -----------------------------------------------------------------------------
 

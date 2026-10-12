@@ -8,11 +8,11 @@ None.
 
 ### Effect site
 
-The time to peak effect is 15 minutes.
+The time to peak effect is 4.4 minutes. Dahan found oliceridine's analgesia (cold-pressor tolerance) equilibrated too fast to estimate; the model carries that as an equilibration half-time of 1 minute, which on this disposition peaks a bolus at 4.4 minutes. That is a stated assumption, not a measurement. The 0.25 hours (15 minutes) in the paper is the equilibration half-time of the ventilatory response, which the model used as a time to peak until October 2026.
 
 ### MEAC and typical concentrations
 
-MEAC is 27.9 ng/mL and the shaded band 18.3 to 37.5 ng/mL, both from the drug library rather than the drug file, which returns no values of its own for them. Oliceridine is a biased μ-agonist developed for a wider margin between analgesia and respiratory depression; the model is pharmacokinetic and says nothing about that margin.
+MEAC is 27.9 ng/mL and the shaded band 18.3 to 37.5 ng/mL, both from the drug library rather than the drug file, which returns no values of its own for them. The MEAC is Dahan's C100 for analgesia, the concentration that doubled cold-pressor tolerance (morphine's was 34.3 ng/mL in the same study). Oliceridine is a biased μ-agonist developed for a wider margin between analgesia and respiratory depression; the model is pharmacokinetic and says nothing about that margin.
 
 ### Where to be careful
 

@@ -18,11 +18,11 @@ Weight is the only covariate, on the deep peripheral volume (weight to the power
 
 ### Effect site
 
-The time to peak effect is 11.3 minutes, kept from the earlier model, as Henthorn's study measured no effect. The combination is unusual: an effect site that equilibrates within minutes, like fentanyl's, attached to a disposition that takes days to clear. A dose of methadone works quickly and then stays. See [the methadone scenario](scenario:methadone-bolus).
+Henthorn's study measured no effect, so the effect site comes from Inturrisi and colleagues (*Clin Pharmacol Ther* 1987;41:392-401), who related analgesia to methadone concentrations in cancer patients and found an equilibration half-time of 3.6 minutes, with peak analgesia 2 to 5 minutes after the dose. With Inturrisi's own kinetics that puts the effect-site peak 3.4 minutes after a bolus, and that time to peak is what the model carries; ke0 is solved again for Henthorn's disposition. (Until October 2026 the model used 11.3 minutes, attributed to Inturrisi but not in the paper.) The combination is unusual: an effect site that equilibrates within minutes, like fentanyl's, attached to a disposition that takes days to clear. A dose of methadone works quickly and then stays. See [the methadone scenario](scenario:methadone-bolus).
 
 ### MEAC and typical concentrations
 
-MEAC is 60 ng/mL of racemic methadone (0.06 mcg/mL in the plotted units); the shaded band is 48 to 120 ng/mL.
+MEAC is 60 ng/mL of racemic methadone (0.06 mcg/mL in the plotted units); the shaded band is 48 to 120 ng/mL. It is Gourlay's postoperative value, as quoted by Inturrisi; Inturrisi's own concentration for half-maximal analgesia, in opioid-tolerant cancer patients, was 290 ng/mL.
 
 ### Where to be careful
 

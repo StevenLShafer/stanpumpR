@@ -27,7 +27,17 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC <- NA
   reference <- "Dahan A et al., Anesthesiology 2020;133(3):559-568. https://pubmed.ncbi.nlm.nih.gov/32788558/"
 
-  tPeak <- 0.25*60
+  # Effect site.  Dahan 2020's library MEAC (27.9 ng/mL, drugDefaults) is the
+  # concentration that doubled cold-pressor tolerance, an analgesic end point,
+  # and for that end point the paper found oliceridine's equilibration too fast
+  # to estimate.  Its 0.25 h is the t1/2 ke0 of the ventilatory response, not
+  # a time to peak; read as one until 2026-10-12 it gave tPeak 15 min (as a
+  # t1/2 ke0 on this disposition it would give 26 min).  The tPeak now carries
+  # "too fast to measure" as a t1/2 ke0 of 1 min, which peaks a bolus at
+  # 4.4 min on this disposition: a stated assumption, not a measurement.
+  # Set by decision of Steven L. Shafer, 2026-10-12, in the opioid MEAC and
+  # tPeak audit.
+  tPeak <- 4.4
 
   default <- list(
     v1 = v1,

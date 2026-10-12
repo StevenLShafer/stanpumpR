@@ -156,16 +156,35 @@
 #
 # MEAC
 # ====
-# 12 ng/mL, retained from the previous model: a compromise between the lower
-# values suggested by Mandema and the 45-50 ng/mL suggested by Kokki 2012.
-# None of these five papers measured analgesia.  Lalovic's EC50 of 30 ng/mL
-# is for miosis, not analgesia.
+# 12 ng/mL, set for consistency with morphine's 8 ng/mL.  None of the five
+# papers behind the kinetics measured analgesia; Lalovic's EC50 of 30 ng/mL
+# is for miosis.  (The earlier note that this was a compromise with "lower
+# values suggested by Mandema" was wrong: Mandema 1996 has no
+# pharmacodynamics.)
 #
-# TO BE CHECKED: kept at 12 by decision of Steven L. Shafer (2026-10-10),
-# pending a separate audit of the MEAC and tPeak of every opioid in the
-# library for outliers, to be done as its own piece of work.  With this model's 11-minute ke0 the effect site runs much closer
-# to plasma than under the old 60-minute tPeak, so 10 mg by mouth now peaks
-# at about 18 ng/mL in the effect site, against 12.
+# The opioid MEAC and tPeak audit (2026-10-12) weighed two lines of evidence:
+#   - Consistency with morphine.  At equal intravenous dose rates this model
+#     reaches 1.4 times morphine's steady-state concentration (CL 0.86 against
+#     1.23 L/min for the 70 kg reference), and intravenous oxycodone is 1.0 to
+#     1.3 times as many mg as morphine for the same analgesia, so a MEAC
+#     consistent with morphine's 8 is 8 x 1.4 x (1.0 to 1.3) = 11 to 15.
+#   - Direct measurement.  Kokki 2012 titrated intravenous oxycodone after
+#     laparoscopic cholecystectomy and measured total venous plasma oxycodone
+#     at the onset of pain (MEC, mean 21 ng/mL, range 16-31) and 10 min after
+#     the dose that relieved it (MEAC, 55 and 47 ng/mL; authors' summary
+#     45-50).  Kokki cites Pesonen's cardiac-surgery values of 6-12 (MEC) and
+#     15-25 ng/mL (MEAC).  Kokki's MEC uses the same definition as Gourlay's
+#     fentanyl MEC behind fentanyl's 0.6 ng/mL, and lies above 12.
+# The direct value is higher in proportion to the way morphine's 8 ng/mL sits
+# at the low end of morphine's own literature (Dahlstrom 1982, 16 ng/mL,
+# range 6-33, as cited by Yue 1991 and Persson 1992), so the two are kept
+# together.  Kept at 12 by decision of Steven L. Shafer, 2026-10-12, which
+# resolves the TO BE CHECKED note of 2026-10-10.  With the 11-minute ke0,
+# 10 mg by mouth peaks at about 19 ng/mL in the effect site, 1.6 MEAC, as
+# morphine 30 mg by mouth does (1.6 MEAC).
+#
+# Kokki M et al., Basic Clin Pharmacol Toxicol 2012;110:469-475.
+#   https://doi.org/10.1111/j.1742-7843.2011.00839.x
 #
 # OXYMORPHONE
 # ===========

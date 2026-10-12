@@ -16,11 +16,11 @@ Weight. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the
 
 ### Effect site
 
-The time to peak effect is 93.8 minutes, the slowest in the library by far. Morphine is relatively hydrophilic and crosses the blood-brain barrier slowly, so its effect-site concentration lags the plasma by well over an hour. A bolus of morphine therefore never achieves an effect-site concentration near its plasma peak, and the clinical corollary is that titrating morphine to effect every five minutes overshoots: the effect of the previous dose has barely begun.
+The time to peak effect is 93.8 minutes, the slowest in the library by far. It is an older library value whose source has not been traced (Lötsch's study measured no effect). On this disposition it is an equilibration half-time of about 2.3 hours, within the 1.6 to 4.8 hours reported for morphine's central effects, though slower than the 0.6 hours Dahan and colleagues found for cold-pressor analgesia. Morphine is relatively hydrophilic and crosses the blood-brain barrier slowly, so its effect-site concentration lags the plasma by well over an hour. A bolus of morphine therefore never achieves an effect-site concentration near its plasma peak, and the clinical corollary is that titrating morphine to effect every five minutes overshoots: the effect of the previous dose has barely begun.
 
 ### MEAC and typical concentrations
 
-MEAC is 8 ng/mL (0.008 mcg/mL in the plotted units) and the shaded band 6.4 to 16 ng/mL.
+MEAC is 8 ng/mL (0.008 mcg/mL in the plotted units) and the shaded band 6.4 to 16 ng/mL. This is a long-standing library value, and its primary source has not been traced. It sits at the low end of morphine's literature: Dahlström and colleagues' postoperative patients averaged 16 ng/mL (range 6 to 33), and the concentration that doubled cold-pressor tolerance in Dahan's 2020 volunteers was 34 ng/mL. Oxycodone's, hydrocodone's and oxymorphone's MEACs are set relative to morphine's, so the four move together.
 
 ### Active metabolite
 

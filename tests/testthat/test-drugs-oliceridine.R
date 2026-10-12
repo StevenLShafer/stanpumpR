@@ -16,7 +16,10 @@ test_that("returns the published parameters with total-body-weight scaling", {
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
-  expect_equal(actual$tPeak, 15)
+  # Dahan 2020: analgesic equilibration too fast to estimate, carried as a
+  # t1/2 ke0 of 1 min, which peaks a bolus at 4.38 min on this disposition
+  # (worked out by hand); 0.25 h was the ventilatory t1/2 ke0, not a tPeak.
+  expect_equal(actual$tPeak, 4.4)
   expect_equal(actual$reference, "Dahan A et al., Anesthesiology 2020;133(3):559-568. https://pubmed.ncbi.nlm.nih.gov/32788558/")
 })
 

@@ -8,7 +8,7 @@ The absolute bioavailability of hydrocodone has never been measured, so apparent
 
 ### Absorption and effect site
 
-The absorption rate constant puts the plasma peak at about 78 minutes, the 1.3 hours clinical references give. The time to peak effect, 90 minutes, is **provisional and measured after an oral dose**: it carries no citation yet and was set by Dr Shafer. Because it is an oral tPeak, ke0 is solved against the oral plasma curve rather than an intravenous bolus, which is the right driving curve for an orally observed peak. The MEAC, 8 ng/mL, is **provisional**, set equal to morphine's as a working value pending a hydrocodone-specific one; the drug file records both as gaps to fill.
+The absorption rate constant puts the plasma peak at about 78 minutes, the 1.3 hours clinical references give. The time to peak effect, 90 minutes, is **provisional and measured after an oral dose**: it carries no citation yet and was set by Dr Shafer. Because it is an oral tPeak, ke0 is solved against the oral plasma curve rather than an intravenous bolus, which is the right driving curve for an orally observed peak. The MEAC, 12 ng/mL, is **provisional**, set equal to oxycodone's as a working value pending a hydrocodone-specific one: by mouth the two are about equipotent milligram for milligram and reach similar concentrations. Until October 2026 it was morphine's 8 ng/mL, which left 30 mg by mouth above MEAC for about 20 hours, far longer than the equianalgesic 20 mg of oxycodone. The drug file records both values as gaps to fill.
 
 ### Active metabolite
 

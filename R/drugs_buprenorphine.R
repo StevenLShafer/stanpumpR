@@ -118,10 +118,20 @@
 # association/dissociation model.  Their k_off (0.0785 /min, 8.8 min) is
 # fast beside ke0, and they conclude that biophase distribution, not receptor
 # kinetics, is rate-limiting, which is what lets the engine's single effect
-# compartment stand in for it.  ke0 is supplied directly rather than solved
-# from a tPeak because it was estimated, not a peak time.  Against this
-# disposition the effect site peaks 134 min after an intravenous bolus, close
-# to the 120 min maximum antinociception Escher 2007 observed after 0.15 mg.
+# compartment stand in for it.
+#
+# Yassen's ke0 belongs to Yassen's own disposition (V1 8.39, V2 23.3, V3 127 L;
+# CL 1.45, Q2 1.55, Q3 0.953 L/min; Table 1 prints Q2 as 155), not to
+# Bjornsson's.  Put directly on Bjornsson's, it moved the effect-site peak
+# after an intravenous bolus to 134 min.  So it is carried as a time to peak
+# (Minto 2003): on Yassen's own disposition ke0 = 0.00447 /min peaks the
+# effect site at 61.2 min after a bolus, and getDrugPK() solves ke0 against
+# Bjornsson's disposition from that.  Yassen observed peak effect at 70-100
+# min, a little later because the receptor-binding step adds to the delay.
+# Escher 2007's 120 min maximum (after 0.002 mg/kg) is for the RIII reflex
+# and electrical thresholds only; cold-pressor tolerance peaked at 30 min.
+# Changed from ke0 = 0.00447 /min by decision of Steven L. Shafer,
+# 2026-10-12, in the opioid MEAC and tPeak audit.
 #
 # MEAC AND THE BAND
 # =================
@@ -168,7 +178,9 @@
 # Drafted by Claude Code, 2026-10-10, at the request of Steven L. Shafer.
 # -----------------------------------------------------------------------------
 
-BUPRENORPHINE_KE0       <- 0.00447        # /min; Yassen 2006, t1/2 155 min
+# Yassen 2006's ke0 (0.00447 /min, t1/2 155 min) carried as the bolus peak
+# time it gives on Yassen's own disposition; see the header.
+BUPRENORPHINE_TPEAK     <- 61.2           # min after an intravenous bolus
 # Sublingual fraction absorbed, fitted to Bjornsson 2023's power law over
 # 2-32 mg; see the header.
 BUPRENORPHINE_F_SL      <- 0.422692       # small-dose limit
@@ -239,16 +251,16 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "three-compartment disposition, healthy-volunteer Vc; sublingual reduced ",
     "to one first-order input with dose-dependent F, 0.14 at 16 mg); ",
     "intranasal from Eriksen J et al., J Pharm Pharmacol 1989;41:803-805; ",
-    "ke0 from Yassen A et al., Anesthesiology 2006;104:1232-1242. ",
+    "effect site from Yassen A et al., Anesthesiology 2006;104:1232-1242 ",
+    "(ke0 carried as a 61.2 min time to peak). ",
     "https://doi.org/10.1007/s40262-023-01288-6"
   )
 
   return(
     list(
       PK = PK,
-      # No tPeak: ke0 is supplied directly.  See the header.
-      tPeak = 0,
-      ke0 = BUPRENORPHINE_KE0,
+      # Yassen's ke0 as a time to peak; getDrugPK() solves ke0.  See the header.
+      tPeak = BUPRENORPHINE_TPEAK,
       MEAC = 0,
       typical = 2.2,
       upperTypical = 3,

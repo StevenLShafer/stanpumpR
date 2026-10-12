@@ -96,9 +96,22 @@
 #
 # EFFECT SITE AND MEAC
 # ====================
-# Henthorn has no pharmacodynamics.  The 11.3 min time to peak effect and
-# the racemic MEAC of 60 ng/mL are kept from the previous (Inturrisi 1987)
-# model; ke0 is solved against this disposition.
+# Henthorn has no pharmacodynamics.  The effect site is Inturrisi 1987's:
+# analgesia (visual analogue pain intensity difference) in cancer patients
+# gave a harmonic-mean t1/2 ke0 of 3.6 min (range 1.3-23.1), with peak
+# analgesia 2-5 min after the dose.  Carried as a time to peak (Minto 2003)
+# on Inturrisi's own disposition (V1 0.18 L/kg; k10 0.00806, k12 0.408,
+# k21 0.06, k13 0.112, k31 0.00114 /min, the previous stanpumpR model), that
+# t1/2 ke0 peaks a bolus at 3.4 min; ke0 is solved against this disposition.
+# The 11.3 min used until 2026-10-12 was attributed to Inturrisi but is not
+# in the paper (it would need a t1/2 ke0 of 16 min); changed to 3.4 by
+# decision of Steven L. Shafer, 2026-10-12, in the opioid MEAC and tPeak
+# audit.
+#
+# The racemic MEAC of 60 ng/mL is Gourlay's postoperative value, which
+# Inturrisi quotes (p. 399); it is not an Inturrisi measurement.  Inturrisi's
+# own Css50 for analgesia was 0.29 mcg/mL (gamma about 2) in opioid-tolerant
+# cancer patients.
 #
 # References
 # ----------
@@ -275,7 +288,7 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  tPeak <- 11.3
+  tPeak <- 3.4   # Inturrisi 1987, t1/2 ke0 3.6 min carried as tPeak; see the header
   MEAC <- 60/1000
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8

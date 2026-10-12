@@ -31,7 +31,7 @@ test_that("returns the correct calculations", {
     )),
     tPeak = 90,        # provisional, measured ORALLY; see the drug file
     tPeakRoute = ROUTE_PO,
-    MEAC = 8,          # provisional, set equal to morphine's; see the drug file
+    MEAC = 12,         # provisional, set equal to oxycodone's; see the drug file
     typical = 20,
     upperTypical = 30,
     lowerTypical = 10,
@@ -206,10 +206,8 @@ test_that("the provisional potency is consistent with the drug table", {
   # omission shows up.
   expect_equal(dd$endCe[dd$Drug == "hydrocodone"], HYDROCODONE_MEAC)
 
-  # MEAC is set equal to morphine's.  Morphine is reported in mcg/mL and
-  # hydrocodone in ng/mL, so the two rows carry the same CONCENTRATION with
-  # numbers a thousandfold apart.
-  expect_equal(HYDROCODONE_MEAC, dd$MEAC[dd$Drug == "morphine"] * 1000)
+  # MEAC is set equal to oxycodone's (both rows in ng/mL); see the drug file.
+  expect_equal(HYDROCODONE_MEAC, dd$MEAC[dd$Drug == "oxycodone"])
 })
 
 
