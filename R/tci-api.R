@@ -305,8 +305,9 @@ tciApiLogical <- function(x, pointer, required = TRUE)
 }
 
 # A unit token from one of the closed lists of section 4.4.  Anything else is
-# UNIT_UNKNOWN, with the nearest accepted token named: a micro sign is read as
-# "mc" first, so that "µg" is told "mcg" rather than "mg".
+# UNIT_UNKNOWN, with the nearest accepted token named: a micro sign (U+00B5)
+# or Greek mu (U+03BC) is read as "mc" first, so that a microgram written
+# with either is told "mcg" rather than "mg".  The file stays ASCII.
 tciApiUnits <- function(x, pointer, tokens, required = TRUE)
 {
   x <- tciApiString(x, pointer, required)
@@ -321,7 +322,7 @@ tciApiUnits <- function(x, pointer, tokens, required = TRUE)
 
 tciApiNearestToken <- function(x, tokens)
 {
-  y <- gsub("µ|μ", "mc", x)
+  y <- gsub("\u00b5|\u03bc", "mc", x)
   tokens[which.min(utils::adist(tolower(y), tolower(tokens)))]
 }
 
@@ -575,9 +576,15 @@ tciApiPKCacheClear <- function()
   rm(list = names(tciApiPKCache), envir = tciApiPKCache)
 
 # MD5 of the serialised parameters, so two responses from one model compare
-# by a single string.  Base R has no SHA-256; tools::md5sum reads a file.
+# by a single string.  The parameters are rounded to ten significant digits
+# first: the Eleveld model's exp() and pow() differ in their last binary digit
+# between libm implementations (the first CI run hashed differently on Apple
+# silicon than on Linux), and a hash that differs by platform for the same
+# model would defeat its purpose.  Ten digits are far below any difference a
+# pump could deliver.  Base R has no SHA-256; tools::md5sum reads a file.
 tciApiHash <- function(x)
 {
+  x <- lapply(x, function(v) if (is.numeric(v)) signif(v, 10) else v)
   f <- tempfile(fileext = ".json")
   on.exit(unlink(f))
   writeLines(jsonlite::toJSON(x, auto_unbox = TRUE, digits = NA), f)

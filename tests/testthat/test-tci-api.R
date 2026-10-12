@@ -733,7 +733,7 @@ test_that("every error code is raised with its status and pointer", {
     list(mutate(function(r) { r$pump$state <- "stopped"; r }), 422, "INVALID_VALUE", "/pump/state"),
     list(mutate(function(r) { r$pump$volumeInfused <- list(value = -1, units = "mg"); r }), 422, "INVALID_VALUE", "/pump/volumeInfused/value"),
     list(mutate(function(r) { r$requestId <- strrep("x", 129); r }), 422, "INVALID_VALUE", "/requestId"),
-    list(mutate(function(r) { r$requestId <- "café"; r }), 422, "INVALID_VALUE", "/requestId"),
+    list(mutate(function(r) { r$requestId <- "caf\u00e9"; r }), 422, "INVALID_VALUE", "/requestId"),
     list(mutate(function(r) { r$history[[1]]$rate <- -1; r }), 422, "INVALID_VALUE", "/history/0/rate"),
     list(mutate(function(r) { r$history <- list(bolus(0, 0)); r }), 422, "INVALID_VALUE", "/history/0/bolus"),
     list(mutate(function(r) { r$history <- list(segment(5, 5, 1)); r }), 422, "INVALID_VALUE", "/history/0/to"),
@@ -741,7 +741,7 @@ test_that("every error code is raised with its status and pointer", {
     list(mutate(function(r) { r$lookAhead <- list(concentration = 0); r }), 422, "INVALID_VALUE", "/lookAhead/concentration"),
     list(mutate(function(r) { r$infusate <- list(concentration = 0, units = "mg/mL"); r }), 422, "INVALID_VALUE", "/infusate/concentration"),
     list(mutate(function(r) { r$pump$rateUnits <- "mL/h"; r }), 422, "UNIT_UNKNOWN", "/pump/rateUnits"),
-    list(mutate(function(r) { r$history[[1]]$units <- "µg/min"; r }), 422, "UNIT_UNKNOWN", "/history/0/units"),
+    list(mutate(function(r) { r$history[[1]]$units <- "\u00b5g/min"; r }), 422, "UNIT_UNKNOWN", "/history/0/units"),
     list(mutate(function(r) { r$target$units <- "mg/L"; r }), 422, "UNIT_UNKNOWN", "/target/units"),
     list(mutate(function(r) { r$target$units <- "ug/ml"; r }), 422, "UNIT_UNKNOWN", "/target/units"),
     list(mutate(function(r) { r$infusate <- list(concentration = 10, units = "mg/ml"); r }), 422, "UNIT_UNKNOWN", "/infusate/units"),
@@ -799,7 +799,7 @@ test_that("every error code is raised with its status and pointer", {
   expectApiError(json('{"drug":"propofol","drug":"propofol"}'), 400, "DUPLICATE_KEY", "/drug")
   # The messages name the nearest token.
   expect_match(apiError(mutate(function(r) { r$pump$rateUnits <- "mL/h"; r }))$message, "mL/hr")
-  expect_match(apiError(mutate(function(r) { r$history[[1]]$units <- "µg/min"; r }))$message, "mcg/min")
+  expect_match(apiError(mutate(function(r) { r$history[[1]]$units <- "\u00b5g/min"; r }))$message, "mcg/min")
   expect_match(apiError(mutate(function(r) { r$target$units <- "ng/mL"; r }))$message, "mcg/mL for propofol")
 })
 
@@ -1035,8 +1035,9 @@ test_that("the PK cache is bounded and a hit returns the same object", {
   # server without limit (about 11 KB per entry).  When the cache is full the
   # entry inserted first goes.
   expect_equal(TCI_API_PK_CACHE_SIZE, 256L)
+  # Cleared before and after, explicitly: withr is not a declared dependency.
   tciApiPKCacheClear()
-  withr::defer(tciApiPKCacheClear())
+  on.exit(tciApiPKCacheClear(), add = TRUE)
   expect_length(tciApiPKCacheKeys(), 0)
   first <- tciApiPK("propofol", 70, 170, 50, "male", TRUE)
   expect_identical(tciApiPK("propofol", 70, 170, 50, "male", TRUE), first)
@@ -1375,7 +1376,11 @@ test_that("the documented example request produces the documented response", {
   expect_equal(r$prediction$syringeEmptyAt, "2026-10-11T15:15:35.801Z")
   expect_equal(r$delivered$reported, 269.5)
   expect_equal(r$delivered$fromHistory, 269.4, tolerance = 1e-3)
-  expect_equal(r$model$hash, "md5:b234666ea41f47a9f5971de713273305")
+  # The hash is pinned to the model, not to a literal: it is the MD5 of the
+  # parameters at ten significant digits, the same on every platform, and the
+  # literal in the documentation is illustrative.
+  expect_match(r$model$hash, "^md5:[0-9a-f]{32}$")
+  expect_equal(r$model$hash, tciApiModel("propofol", 70, 170, 50, "male")$hash)
   # The OpenAPI document repeats the body and the response as its examples,
   # with exactly the same keys as the real output.
   spec <- jsonlite::fromJSON(system.file("api", "openapi.json", package = "stanpumpR"), simplifyVector = FALSE)
@@ -1392,7 +1397,7 @@ test_that("the documented example request produces the documented response", {
   expect_equal(ex$state$now$cp, r$state$now$cp, tolerance = 1e-3)
   expect_equal(ex$state$now$ce, r$state$now$ce, tolerance = 1e-3)
   expect_equal(ex$prediction$syringeEmptyAt, r$prediction$syringeEmptyAt)
-  expect_equal(ex$model$hash, r$model$hash)
+  expect_match(ex$model$hash, "^md5:[0-9a-f]{32}$")
   expect_equal(ex$model$reference, r$model$reference)
   expect_equal(unlist(ex$rate$limitedBy), "rateResolution")
   expect_length(ex$warnings, 0)

@@ -501,7 +501,7 @@ what to run if the next command does not arrive:
     "parameters": { "v1": 6.283, "v2": 20.17, "v3": 136.7, "cl1": 1.551, "cl2": 1.516, "cl3": 0.6673,
                     "k10": 0.2469, "k12": 0.2413, "k13": 0.1062, "k21": 0.07516, "k31": 0.00488,
                     "lambda_1": 0.6280, "lambda_2": 0.04306, "lambda_3": 0.003349, "ke0": 0.6871 },
-    "hash": "md5:b234666ea41f47a9f5971de713273305"
+    "hash": "md5:d7e1ee61f1de895385daa3903be4d7e5"
   },
   "algorithm": { "name": "shafer-gregg-1992", "plasmaSwitch": 0.05, "tauGridSeconds": 1 },
   "warnings": [],
@@ -514,8 +514,9 @@ what to run if the next command does not arrive:
 ```
 
 Numbers are rounded to four significant digits here; the server sends full
-double precision (§6.2), `model.hash` is the MD5 of the full-precision
-parameters, and `server.*` is the server's own clock. The test "the documented
+double precision (§6.2), `model.hash` is the MD5 of the parameters rounded
+to ten significant digits (the same on every platform; the value shown is
+illustrative), and `server.*` is the server's own clock. The test "the documented
 example request produces the documented response" in `test-tci-api.R` runs
 the §4 body and checks this response.
 
@@ -536,8 +537,10 @@ the §4 body and checks this response.
   `pump.rateUnits`; `rate.limitedBy` ⊆ `["maxRate", "minRate", "rateResolution"]`.
 * Numbers are serialized at **full double precision** and scalars unboxed
   (§8); nothing is rounded for display.
-* `model.hash` is the MD5 of the serialized `parameters`, so two responses
-  from the same model compare by one string. `server.commit` is the
+* `model.hash` is the MD5 of the serialized `parameters`, rounded to ten
+  significant digits first so that the same model hashes identically on every
+  platform (libm implementations differ in the last binary digit), so two
+  responses from the same model compare by one string. `server.commit` is the
   `RemoteSha` of the installed package when it was installed from GitHub,
   else `null`.
 * `GET /tci/v1/drugs/{drug}/model` returns exactly the `model` block.

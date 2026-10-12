@@ -705,7 +705,7 @@
           "tPeak": { "type": "number", "description": "Minutes to peak effect after a bolus.", "example": 1.6 },
           "adjustToFFM": { "type": "boolean" },
           "parameters": { "$ref": "#/components/schemas/ModelParameters" },
-          "hash": { "type": "string", "description": "`md5:` and the MD5 of the serialized `parameters`, so two responses from one model compare by one string.", "example": "md5:3f1c..." }
+          "hash": { "type": "string", "description": "`md5:` and the MD5 of the serialized `parameters`, rounded to ten significant digits first so that the same model hashes identically on every platform; two responses from one model compare by one string.", "example": "md5:3f1c..." }
         }
       },
       "Controller": {
@@ -924,7 +924,7 @@
             "parameters": { "v1": 6.283, "v2": 20.17, "v3": 136.7, "cl1": 1.551, "cl2": 1.516, "cl3": 0.6673,
                             "k10": 0.2469, "k12": 0.2413, "k13": 0.1062, "k21": 0.07516, "k31": 0.00488,
                             "lambda_1": 0.6280, "lambda_2": 0.04306, "lambda_3": 0.003349, "ke0": 0.6871 },
-            "hash": "md5:b234666ea41f47a9f5971de713273305"
+            "hash": "md5:d7e1ee61f1de895385daa3903be4d7e5"
           },
           "algorithm": { "name": "shafer-gregg-1992", "plasmaSwitch": 0.05, "tauGridSeconds": 1 },
           "warnings": [],
