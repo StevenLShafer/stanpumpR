@@ -1,10 +1,11 @@
 # The stanpumpR simulation API as an HTTP service.  Start it with
 # stanpumpR::run_api(); the request and the result are specified in
-# docs/api.md, and the work is done by apiSimulate() and apiFormatResult() in
-# R/api.R, so this file only maps HTTP onto them.
+# inst/apidocs/api.md (served at / here and at https://stanpumpr.io/api), and
+# the work is done by apiSimulate() and apiFormatResult() in R/api.R, so this
+# file only maps HTTP onto them.
 
 #* @apiTitle stanpumpR simulation API
-#* @apiDescription Pharmacokinetic simulation: POST a dose table, the patient's covariates and the length of the simulation to /simulate, and get back the predicted plasma and effect-site concentrations as JSON, CSV, Excel or XML. See docs/api.md in the stanpumpR repository.
+#* @apiDescription Pharmacokinetic simulation: POST a dose table, the patient's covariates and the length of the simulation to /simulate, and get back the predicted plasma and effect-site concentrations as JSON, CSV, Excel or XML. The full documentation is at https://stanpumpr.io/api and at / on this server.
 #* @apiVersion 1
 
 # Errors in the request are 400 (or the status apiError() gave), with the
@@ -50,6 +51,13 @@ apiSend <- function(res, out) {
   res
 }
 
+#* This documentation as a web page (inst/apidocs/api.md)
+#* @get /
+#* @serializer html
+function() {
+  stanpumpR::apiDocsHtml()
+}
+
 #* Liveness check, with the package and API versions
 #* @get /health
 #* @serializer unboxedJSON
@@ -81,13 +89,14 @@ function(res, format = "json", allowIllicitDrugs = "false") {
 
 #* Simulate a dose table for one patient
 #* @param format json (default), csv, xlsx or xml; overrides output.format and the Accept header
-#* @param layout long (default: one row per drug and time) or wide (one row per time); CSV and Excel only
+#* @param layout long (default: one row per drug and time) or wide (one row per time); CSV and Excel only; overrides output.layout
 #* @post /simulate
-function(req, res, format = "", layout = "long") {
+function(req, res, format = "", layout = "") {
   tryCatch({
     request <- stanpumpR::apiParseRequest(req$postBody)
     format <- stanpumpR:::apiNegotiateFormat(format, request, req$HTTP_ACCEPT)
-    layout <- stanpumpR:::apiField(request$output, "layout", layout)
+    # As for the format, the query parameter wins over the body.
+    if (!nzchar(layout)) layout <- stanpumpR:::apiField(request$output, "layout", "long")
     # Check the format before simulating, so a typo costs nothing.
     stanpumpR:::apiChoice(format, "format", stanpumpR:::API_FORMATS)
     result <- stanpumpR::apiSimulate(request)

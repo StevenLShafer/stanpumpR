@@ -36,7 +36,9 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **Output.** `simulationPlot.R` assembles the figure; `suggest.R` is Suggest Dosing; `sendSlide.R` builds and mails the PowerPoint slide.
 
-**Target-controlled infusion.** `tci.R` is the controller behind the *Plasma target* and *Effect site target* rows; `tci-api.R` is [the TCI API](help:tci-api)'s computation (`tciNextRate()`: the next rate for a real pump from its delivery history, pure R); `tci-api-server.R` wraps it in a `plumber` router (`tciApiRouter()`, `run_tci_api()`), the one file that touches `plumber`, an optional dependency.
+**Target-controlled infusion.** `tci.R` is the controller behind the *Plasma target* and *Effect site target* rows; `tci-api.R` is [the TCI API](help:tci-api)'s computation (`tciNextRate()`: the next rate for a real pump from its delivery history, pure R); `tci-api-server.R` wraps it in a `plumber` router (`tciApiRouter()`, `run_tci_api()`).
+
+**The Simulation API.** `api.R` is [the Simulation API](help:simulation-api): `apiSimulate()` validates a request and runs it, `apiFormatResult()` writes the result as JSON, CSV, Excel or XML, and `run_api()` serves `inst/plumber/plumber.R`. `api-docs.R` renders its documentation, `inst/apidocs/api.md`, as the page the app serves at [stanpumpr.io/api](https://stanpumpr.io/api). `plumber`, which both web services use, is an optional dependency.
 
 **The help.** `help-content.R` (page registry, Markdown rendering, search), `help-drugs.R` (the generated drug pages), `help-scenarios.R` (the teaching scenarios and their loader), `help-ui.R` and `help-server.R`.
 
@@ -69,6 +71,7 @@ The R version is recorded in the third line of `renv.lock`.
 
 - `docs/architecture.md`: the reactive pipeline in detail, the dose-table lifecycle, and known issues.
 - `docs/adding-a-drug.md`: the step-by-step procedure, summarised under [Contributing](help:contributing).
+- `inst/apidocs/api.md`: the Simulation API reference, published at [stanpumpr.io/api](https://stanpumpr.io/api) and summarised under [The Simulation API](help:simulation-api).
 - `docs/tci-api.md`: the TCI API reference, every field, unit token, bound and error code, summarised under [The TCI API](help:tci-api).
 - `AGENTS.md`: orientation for AI coding assistants working on the repository.
 - `inst/help/README.md`: how to write help pages.

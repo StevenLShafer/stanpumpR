@@ -35,9 +35,10 @@ Near-term future developments in stanpumpR will include
 - [`docs/adding-a-drug.md`](docs/adding-a-drug.md) — the touch points for contributing a
   new drug, including its help page.
 - [`docs/users-guide.md`](docs/users-guide.md) — a draft user's guide written from the code.
-- [`docs/api.md`](docs/api.md) — the simulation API: send a dose table, covariates and a
-  duration (from R, or over HTTP from any language) and get the concentrations back as JSON,
-  CSV, Excel or XML.
+- [stanpumpr.io/api](https://stanpumpr.io/api) — the Simulation API: send a dose table,
+  covariates and a duration (over HTTP from any language, or from R) and get the concentrations
+  back as JSON, CSV, Excel or XML. The page is rendered from
+  [`inst/apidocs/api.md`](inst/apidocs/api.md).
 - **The in-app help** — the **Help** tab in the running app: a user's guide, a generated page
   for every drug (parameters at reference patients, citation, units), the models and methods,
   loadable teaching scenarios, the investigators, and a map of this repository. The hand-written
@@ -74,7 +75,8 @@ A limited number of functions have been exported for use by your own code. To in
 2. `devtools::install(build_vignettes = TRUE)`
 
 To simulate a dose table from a script, call `apiSimulate()`, or start the HTTP service with
-`run_api()` (needs the `plumber` package). Both are described in [`docs/api.md`](docs/api.md).
+`run_api()` (needs the `plumber` package). Both are described at
+[stanpumpr.io/api](https://stanpumpr.io/api).
 
 ### Environments
 
