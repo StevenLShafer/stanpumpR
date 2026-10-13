@@ -214,19 +214,22 @@ helpScenarios <- function() {
       ),
       timeUnits = "hours", maximum = 1440
     ),
+    # The substitution error that prompted Ansari 2025: calcium chloride and
+    # calcium gluconate are one drug whose units name the salt, so the reader
+    # changes "mg/min chloride" to "mg/min gluconate" and watches the same
+    # gram give a third of the rise (Claude Code, 2026-10-13, at the request
+    # of Steven L. Shafer)
     helpScenario(
-      "calcium-chloride-vs-gluconate",
-      "Calcium chloride versus calcium gluconate",
+      "calcium-salt-substitution",
+      "Calcium chloride is not calcium gluconate",
       "Intravenous basics",
-      "1 g of calcium chloride and 3 g of calcium gluconate over 10 minutes raise the ionized calcium by the same 0.4 mmol/L, and it halves within half an hour.",
+      "1 g of calcium chloride over 10 minutes raises the ionized calcium by 0.4 mmol/L and it halves within half an hour; change the units to gluconate and the same gram gives a third of it.",
       # A typical parturient of Ansari 2025, with the switch off so that the
       # published parameters apply and the plot reproduces the paper
       age = 34, weight = 80, height = 162, sex = SEX_FEMALE, adjustToFFM = FALSE,
       doses = helpDoses(
-        c("calciumChloride",   0, 100, "mg/min"),
-        c("calciumChloride",  10,   0, "mg/min"),
-        c("calciumGluconate",  0, 300, "mg/min"),
-        c("calciumGluconate", 10,   0, "mg/min")
+        c("calcium",  0, 100, "mg/min chloride"),
+        c("calcium", 10,   0, "mg/min chloride")
       ),
       maximum = 60, plasmaLinetype = "solid"
     ),

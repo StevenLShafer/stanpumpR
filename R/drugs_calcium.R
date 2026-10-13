@@ -1,14 +1,23 @@
-# Intravenous calcium: calcium chloride, and calcium gluconate in
-# R/drugs_calciumGluconate.R, which shares everything here.
+# Intravenous calcium: calcium chloride and calcium gluconate, one drug.
 #
-# What stanpumpR plots for either salt is not the concentration of the salt
-# but the CHANGE in venous serum ionized calcium, in mmol/L, above the
-# patient's own baseline.  That is the quantity Ansari and colleagues
-# modelled: the measured ionized calcium at each time minus the patient's
-# value before the infusion.  The baseline itself (about 1.15 mmol/L in their
-# parturients) is not part of the model and is not plotted, so the panel
-# starts at zero and the curve is what the dose adds.  Total serum calcium,
-# which is mostly albumin bound, is not represented at all.
+# What stanpumpR plots is not the concentration of either salt but the CHANGE
+# in venous serum ionized calcium, in mmol/L, above the patient's own
+# baseline.  That is the quantity Ansari and colleagues modelled: the
+# measured ionized calcium at each time minus the patient's value before the
+# infusion.  The baseline itself (about 1.15 mmol/L in their parturients) is
+# not part of the model and is not plotted, so the panel starts at zero and
+# the curve is what the dose adds.  Total serum calcium, which is mostly
+# albumin bound, is not represented at all.
+#
+# Both salts raise the same ionized calcium, so they are one drug with one
+# curve, and a patient given both gets the sum.  The dose must say which salt
+# it is: every unit of calcium carries the word "chloride" or "gluconate"
+# ("g chloride", "mg/min gluconate"; calciumUnits in R/constants.R), and
+# there is no bare "g" or "mg", because 1 g of calcium gluconate carries a
+# third of the calcium in 1 g of calcium chloride and the substitution has
+# killed patients.  The `molar` block below gives the grams of each salt per
+# mole of what is plotted, keyed by that word, and simCpCe() converts each
+# dose by the weight its unit names.
 #
 # Source.  Ansari JR, Conti DJ, Michel G, Yarmosh A, Cole NM, Shafer SL.
 # Bioequivalence and pharmacokinetics of intravenous calcium during cesarean
@@ -32,10 +41,17 @@
 # multiply a predicted concentration in g/L by 1000/147 to get mmol/L.
 # stanpumpR keeps the parameters as published and does both conversions on
 # the dose instead (Concentration.Units "mmol" in the CSV and the `molar`
-# block below): a dose in grams of the product becomes millimoles of calcium
-# chloride equivalent, and dividing by the volumes in litres gives mmol/L
-# directly.  Because the dose is in millimoles, the plotted mmol/L is the
-# ionized calcium the dose adds, whichever salt was given.
+# block below): a dose in grams of the salt becomes millimoles of calcium
+# chloride equivalent, 1 g of calcium chloride being 1000 / 147.01 = 6.80
+# mmol and 1 g of calcium gluconate 1000 / (147.01 x 3.11) = 2.19 mmol, and
+# dividing by the volumes in litres gives mmol/L directly.
+#
+# The dose ratio.  Stoichiometry gives 448.4 / 147.0 = 3.05 g of calcium
+# gluconate monohydrate per gram of calcium chloride dihydrate; the model
+# estimated the ratio as a parameter, 3.11 (95% CI 2.77 to 3.48), and it is
+# used as published, 2% apart.  So 3.11 g of calcium gluconate plots
+# identically to 1 g of calcium chloride, and the usual 3 g dose is 96% of
+# it.
 #
 # Population.  All 70 patients were pregnant women, 18 to 55 years, at or
 # after 34 weeks' gestation, 55 to 100 kg (mean 79.8 kg, BMI 30.6 kg/m2,
@@ -70,18 +86,23 @@
 #
 # Drafted by Claude Code, 2026-10-13, at the request of Steven L. Shafer.
 
-# Grams of the product as dosed per mole of calcium chloride dihydrate
-# equivalent, the scale the model is written in.
+# Grams of calcium chloride dihydrate per mole, the scale the model is
+# written in.
 CALCIUM_CHLORIDE_DIHYDRATE_MW <- 147.01   # CaCl2.2H2O, g/mol (the paper rounds to 147)
 # Fitted dose ratio: grams of calcium gluconate that raise ionized calcium as
-# much as 1 g of calcium chloride (Ansari 2025, Table 2).  Stoichiometry gives
-# 448.4 / 147.0 = 3.05 (calcium gluconate monohydrate over calcium chloride
-# dihydrate); the fitted 3.11 is used as published, 2% apart.
+# much as 1 g of calcium chloride (Ansari 2025, Table 2).
 CALCIUM_GLUCONATE_DOSE_RATIO <- 3.11
 
-# The disposition both salts share.  Returns the list a drug model returns,
-# without the `molar` block that names the salt.
-calciumIonizedPK <- function(weight, height, age, sex, adjustToFFM = TRUE)
+# Grams of each salt, as dosed, per mole of calcium chloride dihydrate
+# equivalent, which is per mole of what is plotted.  Names are the words the
+# units carry (CALCIUM_SALTS); calcium gluconate's is not a molecular weight
+# but the fitted bioequivalence ratio applied to calcium chloride's.
+CALCIUM_SALT_WEIGHTS <- c(
+  chloride  = CALCIUM_CHLORIDE_DIHYDRATE_MW,
+  gluconate = CALCIUM_CHLORIDE_DIHYDRATE_MW * CALCIUM_GLUCONATE_DOSE_RATIO
+)
+
+calcium <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
   # Time: Minutes
@@ -126,7 +147,8 @@ calciumIonizedPK <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Ansari JR, Conti DJ, Michel G, Yarmosh A, Cole NM, Shafer SL.",
     "Bioequivalence and pharmacokinetics of intravenous calcium during cesarean delivery.",
     "Anesthesiology 2025;142:121-31 (parturients at cesarean delivery; plotted as the",
-    "change in ionized calcium, mmol/L). https://doi.org/10.1097/ALN.0000000000005248"
+    "change in ionized calcium, mmol/L, from calcium chloride or calcium gluconate",
+    "at the fitted ratio of 3.11 g per gram). https://doi.org/10.1097/ALN.0000000000005248"
   )
 
   list(
@@ -136,14 +158,7 @@ calciumIonizedPK <- function(weight, height, age, sex, adjustToFFM = TRUE)
     typical = typical,
     upperTypical = upperTypical,
     lowerTypical = lowerTypical,
-    reference = reference
+    reference = reference,
+    molar = list(molecularWeight = CALCIUM_SALT_WEIGHTS)
   )
-}
-
-calciumChloride <- function(weight, height, age, sex, adjustToFFM = TRUE)
-{
-  out <- calciumIonizedPK(weight, height, age, sex, adjustToFFM)
-  # 1 g of calcium chloride dihydrate is 1000 / 147.01 = 6.80 mmol of calcium.
-  out$molar <- list(molecularWeight = CALCIUM_CHLORIDE_DIHYDRATE_MW)
-  out
 }

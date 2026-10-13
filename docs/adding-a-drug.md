@@ -222,11 +222,22 @@ molar = list(molecularWeight = 147.01)   # grams of the product as dosed per mol
 `simCpCe()` converts a dose in g, mg, mcg or ng to millimoles with it, so dividing by the
 volumes in litres gives mmol/L; the panel is labelled mmol/L and starts at zero as usual.
 The weight is "grams of the product as dosed per mole of what is plotted", which need not be
-a true molecular weight: calcium gluconate carries calcium chloride's 147.01 times the fitted
-dose ratio of 3.11, so a dose of either salt becomes millimoles of calcium chloride
-equivalent and runs through the one model (`R/drugs_calciumChloride.R`,
-`R/drugs_calciumGluconate.R`). `validateMolar()` in `R/getDrugPK.R` requires the block when
-the units are `mmol` and refuses it otherwise.
+a true molecular weight. A drug given as more than one product returns one weight per
+product, named by a word its units carry:
+
+```r
+molar = list(molecularWeight = c(chloride = 147.01, gluconate = 147.01 * 3.11))
+```
+
+Intravenous calcium (`R/drugs_calcium.R`) is one drug for both salts, because both raise the
+same ionized calcium: its units are `g chloride`, `mg/min gluconate` and so on
+(`calciumUnits` in `R/constants.R`, built from `CALCIUM_SALTS`; there is no bare `g`),
+`doseProduct()` in `R/routes.R` reads the word, and `molarWeightOfDoses()` in
+`R/getDrugPK.R` gives `simCpCe()` the weight for each dose row, refusing a unit that names
+no product rather than guessing. Calcium gluconate's weight is calcium chloride's 147.01
+times the fitted dose ratio of 3.11, so a dose of either salt becomes millimoles of calcium
+chloride equivalent and runs through the one model. `validateMolar()` requires the block
+when the units are `mmol` and refuses it otherwise.
 
 **Optional — an active metabolite.** A drug whose effect is carried by a metabolite returns
 a `metabolite` block alongside the usual fields:

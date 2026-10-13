@@ -228,9 +228,10 @@ written in order to read its answer.
 `EffectSite` is null (or empty in CSV and XML) for a prodrug that has no
 effect site of its own. For example, tramadol's effect appears in the
 `desmetramadol` rows. For mannitol, `Plasma` is the serum osmolality in
-mOsm/kg. For calcium chloride and calcium gluconate, `Plasma` is the change
-in ionized calcium above the patient's baseline, in mmol/L (`ConcentrationUnits`
-is `mmol/L`).
+mOsm/kg. For calcium, `Plasma` is the change in ionized calcium above the
+patient's baseline, in mmol/L (`ConcentrationUnits` is `mmol/L`); its units
+name the salt (`g chloride`, `mg/min gluconate`), and a request with a bare
+`g` is refused.
 
 ### The time grid
 
