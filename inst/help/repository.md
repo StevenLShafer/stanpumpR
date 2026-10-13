@@ -12,7 +12,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `inst/plumber/` | The simulation API's `plumber` file (`plumber.R`), which `run_api()` serves |
 | `inst/api/` | The TCI API's deployment entry point (`entrypoint.R`, for Posit Connect) and its OpenAPI document (`openapi.json`) |
 | `inst/www/` | The app's stylesheet and JavaScript, and the screenshots in this help |
-| `inst/validation/` | The Gas Man validation record, the scenario drivers and their results |
+| `inst/validation/` | The GasMan validation record, the scenario drivers and their results |
 | `tests/testthat/` | The unit tests: one file per drug (a metabolite or prodrug is tested with its parent), and files for the engines, the inputs, the server and the help |
 | `vignettes/` | Two worked examples of the scripting interface |
 | `docs/` | Developer documentation: architecture, adding a drug, body-size scaling, the simulation and TCI APIs, notes on individual models, the user's guide draft (not shipped in the package) |
@@ -33,7 +33,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **Pharmacodynamics and derived quantities.** `modelInteraction.R` (propofol-opioid), `recoveryCalc.R` (time until threshold), `recoveryStates.R` (time until threshold for a drug that arrives as a metabolite), `derivedSeries.R` (the common time base of the MEAC and interaction panels), `opioidMacInteraction.R`, `setLinetypes.R`.
 
-**The inhaled-gas engine.** `gasProperties.R` (parameters and provenance), `advanceClosedFormGas.R` (the model and its matrix-exponential advance), `gasDrugEntries.R` (how gas results become plot series), `gasRecovery.R` (time until threshold for gases and MAC), `advanceGasManBaseline.R` (a transcription of Gas Man's own update, kept as the reference the engine is compared to).
+**The inhaled-gas engine.** `gasProperties.R` (parameters and provenance), `advanceClosedFormGas.R` (the model and its matrix-exponential advance), `gasDrugEntries.R` (how gas results become plot series), `gasRecovery.R` (time until threshold for gases and MAC), `advanceGasManBaseline.R` (a transcription of GasMan's own update, kept as the reference the engine is compared to).
 
 **Output.** `simulationPlot.R` assembles the figure; `suggest.R` is Suggest Dosing; `sendSlide.R` builds and mails the PowerPoint slide.
 

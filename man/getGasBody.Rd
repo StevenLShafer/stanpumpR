@@ -13,7 +13,7 @@ getGasBody(weight = 70, circuitVolume = 8)
 absorber).  This sets the time constant of the lag between the vaporiser
 dial and the inspired concentration, and is what makes low-flow anaesthesia
 behave differently from high-flow.
-TODO(fixture): confirm the value Gas Man 4.2 uses.}
+TODO(fixture): confirm the value GasMan 4.2 uses.}
 }
 \value{
 a list of geometry and flow parameters
@@ -24,13 +24,13 @@ Circuit volume is a property of the anaesthesia machine, not the patient, so
 it does not scale.
 }
 \details{
-Cardiac output is Gas Man's default: 5 L/min at 70 kg (gasman.ini
+Cardiac output is GasMan's default: 5 L/min at 70 kg (gasman.ini
 \code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75}
 as \code{GasDoc.cpp} does.  Adopted 2026-10-05 at Shafer's direction ("for
-now I want to be identical with Gas Man; later on we will update with more
+now I want to be identical with GasMan; later on we will update with more
 current data"), replacing the linear 75 mL/kg (5.25 L/min at 70 kg) he chose
 on 2026-09-02.  Tissue and alveolar volumes still scale linearly with weight,
-which is also what Gas Man does (\code{fWtFactor = fWeight / STD_WEIGHT}).
+which is also what GasMan does (\code{fWtFactor = fWeight / STD_WEIGHT}).
 Cardiac output is returned here as a single covariate-derived constant, but
 \code{advanceClosedFormGas()} accepts it per segment, so making it
 time-varying later requires no change to the engine.

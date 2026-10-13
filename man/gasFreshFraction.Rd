@@ -22,7 +22,7 @@ a number between 0 and 1
 One when fresh gas flow meets or exceeds MINUTE ventilation -- no rebreathing
 -- and \code{Q / (VA + Q d)} below that, with \code{d = 1 - VA / MV} the
 dead-space fraction; see the file header for the derivation.  With no dead
-space this is \code{Q / VA}, Gas Man's ideal circuit.  Always one for an open
+space this is \code{Q / VA}, GasMan's ideal circuit.  Always one for an open
 circuit.
 }
 \keyword{internal}

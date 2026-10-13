@@ -8,7 +8,7 @@ stanpumpR is a thin layer of software over a thick layer of other people's work.
 
 **Alexander Clarke** wrote the vignettes that document the scripting interface.
 
-**Richard H. Epstein**, University of Miami, validated the inhaled-gas engine against Gas Man, running the comparison scenarios through the Gas Man API and tracing each disagreement to its cause.
+**Richard H. Epstein**, University of Miami, validated the inhaled-gas engine against GasMan, running the comparison scenarios through the GasMan API and tracing each disagreement to its cause.
 
 Portions of the code written since 2026, including the inhaled-gas engine, the time-until-threshold calculation and this help system, were drafted with Claude Code at Dr Shafer's direction and verified by the test suite; each such file records this in a provenance header.
 
@@ -143,9 +143,9 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 
 ## The inhaled anesthetics
 
-- **James H. Philip**, Brigham and Women's Hospital and Harvard Medical School: Gas Man®, whose structure and parameters the inhaled-gas engine follows and against which it is validated.
+- **James H. Philip**, Brigham and Women's Hospital and Harvard Medical School: GasMan®, whose structure and parameters the inhaled-gas engine follows and against which it is validated.
 - **William W. Mapleson** (1996): the decline of MAC with age.
-- **Edmond I. Eger II**: MAC itself, and the nitrogen estimate that flags Gas Man's value.
+- **Edmond I. Eger II**: MAC itself, and the nitrogen estimate that flags GasMan's value.
 - **Jan F. A. Hendrickx**, **Hendrikus J. M. Lemmens** and Shafer (2006): tissue volumes and blood flows in the four-compartment gas model.
 - **Jeffrey M. Feldman**, **Samsun Lampotang** and Hendrickx (2022): the rule of thumb that rebreathing stops when fresh gas flow reaches minute ventilation, which the gas model follows with the threshold raised by the gas being taken up.
 
