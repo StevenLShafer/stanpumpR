@@ -130,3 +130,20 @@ test_that("oral liquid is the tablet's absorption, entered as prescribed", {
   expect_true(all(c("mg PO liquid", "mg/kg PO liquid", "mg PO liquid qid",
                     "mg/kg PO liquid qid") %in% units))
 })
+
+test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  Both enantiomers' CL x 24/14, then the racemic fit.
+  # The values are those the model gives with the flag on; test-pregnancy.R
+  # checks the ratio against the flag off and that nothing else moves.
+  actual <- methadone(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(34.698757, actual$v1)
+  expect_equal_rounded(132.1350653, actual$v2)
+  expect_equal_rounded(144.2931424, actual$v3)
+  expect_equal_rounded(0.1851882329, actual$cl1)
+  expect_equal_rounded(12.92238908, actual$cl2)
+  expect_equal_rounded(0.4444147292, actual$cl3)
+  expect_equal(methadone(70, 165, 30, "female")$PK$default,
+               methadone(70, 165, 30, "female", pregnant = FALSE)$PK$default)
+  expect_match(methadone(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
+  expect_no_match(methadone(70, 165, 30, "female")$reference, "Ansari")
+})

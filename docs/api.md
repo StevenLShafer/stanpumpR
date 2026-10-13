@@ -138,6 +138,8 @@ field.
     "height": 170,           // required
     "age": 50,               // required
     "sex": "male",           // required: "male" | "female"
+    "pregnant": false,       // late-pregnancy kinetics for the drugs that read it (default false);
+                             //   true needs sex "female"; inst/help/models/pregnancy.md
     "weightUnit": "kg",      // "kg" (default) | "lb"
     "heightUnit": "cm",      // "cm" (default) | "in"
     "ageUnit": "years",      // "years" (default) | "months"

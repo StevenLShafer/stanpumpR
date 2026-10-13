@@ -63,10 +63,30 @@
 # staphylococcal breakpoint: CLSI dropped those in 2013 and EUCAST infers
 # staphylococcal susceptibility from cefoxitin.  See R/antibioticThresholds.R.
 #
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 7
+# and text, from Elkomy 2014 and others): "Pregnancy increases the clearance
+# of cefazolin likely because of increased renal excretion", with a larger
+# volume of distribution, so that 2 g and a 3- to 6-hour interval are
+# recommended.  The review prints no factor for cefazolin itself; its
+# physiological statement is that renal blood flow and glomerular filtration
+# are "increased 50% by the second trimester".  With the Patient Profile's
+# Pregnant field on, the creatinine clearance the published renal term reads
+# is multiplied by PREGNANCY_GFR_FACTOR = 1.5 (R/constants.R), which with
+# Komatsu's exponent of 0.586 raises the unbound clearance by 1.5^0.586 =
+# 1.27.  The larger volume is NOT applied, as the review gives no figure, so
+# the simulated peak in a parturient is too high.  Komatsu's model is of
+# unbound cefazolin, whose fraction rises as albumin falls in pregnancy; the
+# unbound curve is the one plotted, and the free fraction is not an input.
+# See R/pregnancy.R.
+#
 # References
 # ----------
 # Komatsu T et al., Antimicrob Agents Chemother 2024;68:e00267-24.
 #   https://doi.org/10.1128/aac.00267-24
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
 # Nannini EC et al., Antimicrob Agents Chemother 2009;53:3437-3441.
 #   https://doi.org/10.1128/AAC.00317-09
 # Eley VA et al., Anesth Analg 2020;131:199-207.
@@ -87,10 +107,13 @@
 #'   it also sets the weight the creatinine-clearance estimate uses.
 #' @param creatinine the patient's serum creatinine in mg/dL, or NULL for the
 #'   assumed normal value for the patient's age and sex (R/renalFunction.R)
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   creatinine clearance the renal term reads by 1.5, the rise in glomerular
+#'   filtration of pregnancy (Ansari 2016; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                      creatinine = NULL)
+                      creatinine = NULL, pregnant = FALSE)
 {
   # Size scaling (see docs/weight-adjustment.md and the header).  The
   # published volumes and Qu carry no size term, so with the switch off they
@@ -102,6 +125,8 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   crcl <- creatinineClearanceCG(pkW, age, sex,       # mL/min
                                 adultEquivalentCreatinine(creatinine, age, sex))
+  # Pregnancy (see the header): the renal term alone.
+  if (isTRUE(pregnant)) crcl <- crcl * PREGNANCY_GFR_FACTOR
 
   # Komatsu 2024, unbound: CLu 29.3 (CrCL/70)^0.586 L/h, Vcu 36.6 L,
   # Qu 54.4 L/h, Vpu 42.2 L
@@ -141,6 +166,10 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "cefazolin. Creatinine clearance is from the entered creatinine or an ",
     "assumed normal one. https://doi.org/10.1128/aac.00267-24"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR)))
+  }
 
   return(
     list(

@@ -27,3 +27,7 @@ MEAC is 60 ng/mL of racemic methadone (0.06 mcg/mL in the plotted units); the sh
 ### Where to be careful
 
 The study population was young healthy volunteers, 50 to 100 kg, taking no drugs that affect CYP2B6 or CYP3A4. Inducers (rifampin, carbamazepine, phenytoin, efavirenz) can more than double methadone clearance and inhibitors can reduce it, and none of that is represented. Interindividual variability in clearance was 36% for R(-)- and 67% for S(+)-methadone. QT prolongation (mostly an S(+) effect) and NMDA antagonism are pharmacodynamic and not represented. Children are an extrapolation.
+
+### Pregnancy
+
+With **Pregnant** ticked, the clearance of both enantiomers is multiplied by 24/14 = 1.71 before the racemic reduction above is fitted again. The review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) reports an elimination half-life of 8 to 20 hours in pregnancy against 24 hours when not pregnant, from induction of CYP3A4 and CYP2B6, so that methadone maintenance needs a higher dose and a shorter interval by the third trimester; the factor is the nonpregnant half-life over the midpoint of that range, applied to every clearance component alike, with the volumes unchanged. See [Pregnancy](help:models/pregnancy).
