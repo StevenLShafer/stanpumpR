@@ -22,9 +22,10 @@ test_that("reference man: reduced parameters, oral route and pharmacodynamics", 
     ),
     tolerance = 1e-5
   )
-  # Inturrisi 1987's t1/2 ke0 3.6 min on Inturrisi's own disposition peaks a
-  # bolus at 3.356 min (worked out by hand); see the header.
-  expect_equal(actual$tPeak, 3.4)
+  # Kharasch 2004: peak miosis 10-15 min after IV methadone.  On Inturrisi
+  # 1987's own disposition a 10 min tPeak is a t1/2 ke0 of 15.4 min, inside
+  # Inturrisi's 1.3-23.1 min range (worked out by hand); see the header.
+  expect_equal(actual$tPeak, 10)
   expect_equal(actual$MEAC, 0.06)
   expect_equal(actual$typical, 0.072)
   expect_equal(actual$upperTypical, 0.048)

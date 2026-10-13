@@ -30,7 +30,7 @@ Minto and colleagues showed in 2003 (*Anesthesiology* 99:324-333) that tPeak is 
 | fentanyl | 3.6 | Shafer/Varvel 1991 |
 | sufentanil | 5.6 | Shafer/Varvel 1991 |
 | morphine | 93.8 | |
-| methadone | 3.4 | Inturrisi 1987 t½ke0 3.6 min, carried as tPeak |
+| methadone | 10 | Kharasch 2004 peak miosis 10-15 min, within Inturrisi 1987's range |
 | hydromorphone | 19.6 | |
 | oxycodone | 12.35 | Lalovic 2006 (pupil) t½ke0 11 min |
 | oliceridine | 4.4 | Dahan 2020: analgesia too fast to measure, taken as t½ke0 1 min |
