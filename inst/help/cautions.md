@@ -16,7 +16,7 @@ Pregnancy appears in the interface but does not influence any prediction.
 
 The other Patient Profile fields reach only the models that name them, and a field left blank or at its default silently gives the typical value, so it is worth knowing which drugs each one affects. (A test checks that this list names every model that reads the field.)
 
-- **Serum creatinine** is read by cefazolin, gabapentin, gentamicin, lacosamide, levetiracetam, mannitol, meloxicam, oxycodone, pregabalin, sugammadex and vancomycin. Left blank, they assume a normal creatinine for the patient's age and sex, and a patient with impaired kidneys will then clear these drugs more slowly than the plot shows.
+- **Serum creatinine** is read by cefazolin, gabapentin, gentamicin, lacosamide, levetiracetam, mannitol, intravenous meloxicam, oxycodone, pregabalin, sugammadex and vancomycin. Left blank, they assume a normal creatinine for the patient's age and sex, and a patient with impaired kidneys will then clear these drugs more slowly than the plot shows.
 - **Baseline serum osmolality** is read by mannitol alone, which is plotted as the osmolality it produces on top of it.
 - **CYP 2D6** is read by aripiprazole, codeine, haloperidol, hydrocodone, oxycodone, risperidone and tramadol: the four opioids through their active metabolites, the antipsychotics through their clearance. For every other drug it has no effect.
 - **CYP 2C19** is read by citalopram and escitalopram.

@@ -86,7 +86,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | paroxetine | **Jung-Ryul Kim**, **Doh Kwan Kim**, **Soo-Youn Lee** and colleagues (2015) | Apparent oral one-compartment kinetics from therapeutic drug monitoring, with age and an empirical power of the daily dose on clearance |
 | duloxetine | **Zhong** and colleagues (2026) | Apparent oral one-compartment kinetics in depressed inpatients, with clearance 25% lower in women |
 | mirtazapine | **Yan** and colleagues (2026) | Apparent oral one-compartment kinetics in depressed inpatients, with clearance 29.4% lower at a BMI of 28 or more |
-| bupropion, hydroxybupropion | **Ghimire** and colleagues (2026) | Apparent oral two-compartment kinetics of the sustained-release tablet and its metabolite after a single 150 mg dose, with a fixed forming fraction of 0.1 |
+| bupropion, hydroxybupropion | **Ghimire** and colleagues (2026) | Apparent oral two-compartment kinetics of the sustained-release tablet and its metabolite after a single 150 mg dose in 19 adults, most with chronic kidney disease, with a fixed forming fraction of 0.1 |
 | fluoxetine, norfluoxetine | **Han** and colleagues (2025) | Joint apparent oral one-compartment kinetics of fluoxetine and norfluoxetine from steady-state troughs in Chinese psychiatric patients, with sex on clearance |
 | venlafaxine, desvenlafaxine | **Wang** and colleagues (2022) | Joint apparent oral kinetics of venlafaxine and O-desmethylvenlafaxine with first-pass formation, in healthy volunteers and psychiatric patients |
 | vancomycin | **A. H. Thomson** and colleagues (2009) | Two-compartment kinetics with creatinine clearance |
