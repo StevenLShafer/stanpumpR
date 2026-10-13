@@ -6,7 +6,7 @@ A fit to mean data has no variability between patients. A mean curve is also smo
 
 ### Independent checks
 
-Two studies not used in the fit:
+Four studies not used in the fit:
 
 - NCT04526197 (35 healthy adults, 200 mg fasting) reports AUC(0–∞) 6743 ng·h/mL. That implies a CL/F of 29.7 L/h, 20% below this fit and within that study's 38% variability.
 - Itthipanichpong and colleagues (*J Med Assoc Thai* 2005;88:632-638; 18 Thai men averaging 63 kg) report CL/F 35.9 L/h, which is what this model gives at 63 kg.
@@ -30,7 +30,7 @@ Not modelled:
 - **Food.** A high-fat meal raises the suspension's peak by 144% and its AUC by 35–50%.
 - **The oral suspension,** which peaks 22% lower than capsules at the same AUC.
 - **Doses above 200 mg,** whose exposure rises less than proportionally because the drug dissolves poorly.
-- **CYP2C9 genotype.** Exposure is 3–7 times higher in \*3/\*3, from 8 subjects, with no per-allele model.
+- **CYP2C9 genotype.** Exposure is 3–7 times higher in \*3/\*3, from 8 subjects, with no per-allele model, so the **CYP 2C9** field in the Patient Profile does not change this model.
 - **Age, race and sex.** AUC is about 50% higher in the elderly and about 40% higher in Black subjects.
 - **Hepatic impairment.**
 

@@ -1,6 +1,6 @@
 ### The model
 
-From Graves and colleagues (*Pharmacotherapy* 1998;18:273-281), 829 adults on maintenance carbamazepine: one compartment, apparent oral, clearance (0.0134 × weight + 3.58) L/h, volume 1.97 L/kg, absorption 0.441/h. At 70 kg the clearance is 4.52 L/h and the half-life about 21 hours.
+From Graves and colleagues (*Pharmacotherapy* 1998;18:273-281), 829 adults on maintenance carbamazepine: one compartment, apparent oral, clearance (0.0134 × weight + 3.58) L/h, volume 1.97 L/kg, absorption 0.441/h. At 70 kg the clearance is 4.52 L/h and the half-life about 21 hours. The weight in these equations is the pharmacokinetic weight with the [fat-free-mass switch](help:models/fat-free-mass) on, and total weight, as published, with it off.
 
 ### The chronic state only
 

@@ -4,7 +4,7 @@ Oliceridine's parameters are from Dahan and colleagues (*Anesthesiology* 2020;13
 
 ### Covariates
 
-None.
+None in the source. The parameters take the default [fat-free-mass scaling](help:models/fat-free-mass) and are used as published with the switch off.
 
 ### Effect site
 
