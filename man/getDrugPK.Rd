@@ -20,6 +20,7 @@ getDrugPK(
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
   cyp2b6 = CYP2B6_DEFAULT,
+  pregnant = FALSE,
   model = NULL
 )
 }
@@ -66,6 +67,12 @@ passed only to models that name it (phenytoin).}
 
 \item{cyp2b6}{CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
 passed only to models that name it (methadone).}
+
+\item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default).
+Passed only to the models that name it (R/pregnancy.R lists them), which
+apply the changes of late pregnancy described by Ansari, Carvalho, Shafer
+and Flood (Anesth Analg 2016;122:786-804); every other model ignores it.
+TRUE requires \code{sex = "female"}.}
 
 \item{model}{internal: a model's output to use in place of calling the
 drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a

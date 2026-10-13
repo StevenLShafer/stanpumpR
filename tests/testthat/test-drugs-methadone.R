@@ -155,14 +155,14 @@ test_that("the CYP2B6 multiplier scales non-renal clearance only, per enantiomer
                             S = g[["S"]] * hepaticS + renalS)
   for (ph in CYP2B6_VALUES) {
     g <- switch(ph, poor = poor, intermediate = inter, c(R = 1, S = 1))
-    e <- methadoneEnantiomers(70, ph)
+    e <- methadoneEnantiomers(70, cyp2b6 = ph)
     expect_equal(c(R = clOf(e$R), S = clOf(e$S)), expected(g), tolerance = 1e-8,
                  info = ph)
   }
   # The renal share is untouched, so a poor metaboliser's clearance falls by
   # less than the hepatic multiplier alone would give
-  e <- methadoneEnantiomers(70, "poor")
-  n <- methadoneEnantiomers(70, "normal")
+  e <- methadoneEnantiomers(70, cyp2b6 = "poor")
+  n <- methadoneEnantiomers(70, cyp2b6 = "normal")
   expect_gt(clOf(e$S) / clOf(n$S), poor[["S"]])
   expect_equal(clOf(e$S) / clOf(n$S), 0.678, tolerance = 0.002)
   expect_equal(clOf(e$R) / clOf(n$R), 0.827, tolerance = 0.002)
@@ -196,7 +196,7 @@ test_that("an invalid cyp2b6 fails loudly", {
   expect_error(methadone(70, 170, 50, "male", cyp2b6 = "*1/*6"), "Invalid cyp2b6")
   expect_error(methadone(70, 170, 50, "male", cyp2b6 = c("poor", "normal")), "Invalid cyp2b6")
   expect_error(methadone(70, 170, 50, "male", cyp2b6 = NA), "Invalid cyp2b6")
-  expect_error(methadoneEnantiomers(70, "fast"), "Invalid cyp2b6")
+  expect_error(methadoneEnantiomers(70, cyp2b6 = "fast"), "Invalid cyp2b6")
 })
 
 test_that("a poor metaboliser accumulates higher on repeated oral dosing", {
@@ -218,4 +218,21 @@ test_that("a poor metaboliser accumulates higher on repeated oral dosing", {
   expect_gt(day14, 1.3)
   expect_lt(day14, 1.45)
   expect_gt(day14, day1)
+})
+
+test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  Both enantiomers' CL x 24/14, then the racemic fit.
+  # The values are those the model gives with the flag on; test-pregnancy.R
+  # checks the ratio against the flag off and that nothing else moves.
+  actual <- methadone(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(34.698757, actual$v1)
+  expect_equal_rounded(132.1350653, actual$v2)
+  expect_equal_rounded(144.2931424, actual$v3)
+  expect_equal_rounded(0.1851882329, actual$cl1)
+  expect_equal_rounded(12.92238908, actual$cl2)
+  expect_equal_rounded(0.4444147292, actual$cl3)
+  expect_equal(methadone(70, 165, 30, "female")$PK$default,
+               methadone(70, 165, 30, "female", pregnant = FALSE)$PK$default)
+  expect_match(methadone(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
+  expect_no_match(methadone(70, 165, 30, "female")$reference, "Ansari")
 })

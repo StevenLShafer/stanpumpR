@@ -25,7 +25,7 @@ Near-term future developments in stanpumpR will include
 1. Oral opioids. StanpumpR is programmed for PO, IM, and IN delivery. Need to get good PK for the opioids. Note that only first order absorption pk is currently supported.
 2. Improved models of pediatric pharmacokinetics
 3. Improved models of drug interaction
-4. PK changes with pregnancy. The field is in the Patient Profile, but no model yet reads it. (Renal function, through the serum creatinine, and the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes already reach the models that name them; the help's [Cautions](inst/help/cautions.md) page lists which.)
+4. PK changes with pregnancy beyond the eight drugs that now read the Patient Profile's Pregnant field (`R/pregnancy.R`, from Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804), and with renal function beyond the drugs that read the serum creatinine. (Each field reaches only the models that name it, the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes included; the help's [Cautions](inst/help/cautions.md) page lists which.)
 5. Expanding the in-app help (the **Help** tab): more teaching scenarios, and screenshots.
 
 ### Documentation

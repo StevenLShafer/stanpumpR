@@ -32,6 +32,11 @@
 #'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
 #'   sugammadex, gabapentin, pregabalin, oxycodone, meloxicam intravenous); see
 #'   `R/renalFunction.R`.
+#' @param pregnant is the patient pregnant?  TRUE or FALSE (the default).
+#'   Passed only to the models that name it (R/pregnancy.R lists them), which
+#'   apply the changes of late pregnancy described by Ansari, Carvalho, Shafer
+#'   and Flood (Anesth Analg 2016;122:786-804); every other model ignores it.
+#'   TRUE requires \code{sex = "female"}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -68,6 +73,7 @@ getDrugPK <- function(
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
   cyp2b6 = CYP2B6_DEFAULT,
+  pregnant = FALSE,
   model = NULL
 )
 {
@@ -93,6 +99,7 @@ getDrugPK <- function(
     stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
          ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
   }
+  pregnant <- checkPregnant(pregnant, sex)
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
          ". Must be a number between ", MIN_OSMOLALITY, " and ",
@@ -157,6 +164,11 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "creatinine" %in% names(formals(get(drug, mode = "function"))))
     covariates["creatinine"] <- list(creatinine)
+  # And the pregnancy flag, which only the models the pregnancy review
+  # quantifies read (R/pregnancy.R).
+  if (exists(drug, mode = "function") &&
+      "pregnant" %in% names(formals(get(drug, mode = "function"))))
+    covariates$pregnant <- pregnant
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
@@ -967,6 +979,7 @@ getDrugPK <- function(
       cyp2b6 = cyp2b6,
       osmolality = osmolality,
       creatinine = creatinine,
+      pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE
     )

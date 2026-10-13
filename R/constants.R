@@ -436,3 +436,21 @@ TCI_API_TIME_PATTERN <- paste0(
   "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])",
   "[Tt ]([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?",
   "([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$")
+
+# PREGNANCY.  The Patient Profile's Pregnant field, read only by the models
+# that name `pregnant` in their signature (R/pregnancy.R lists them, and the
+# help's Cautions page says which).  The field is offered for a woman from
+# PREGNANCY_MIN_AGE up to but not including PREGNANCY_MAX_AGE years; outside
+# that, or for a man, the flag is FALSE whatever the control last said.
+# The factors each model applies are from the review the library follows for
+# pregnancy, Ansari, Carvalho, Shafer and Flood, Anesth Analg 2016;122:786-804
+# (PREGNANCY_REFERENCE in R/pregnancy.R), and describe late pregnancy, where
+# nearly all of its data were collected.
+PREGNANCY_MIN_AGE <- 12
+PREGNANCY_MAX_AGE <- 60
+# Renal blood flow and the glomerular filtration rate "are increased 50% by
+# the second trimester and remain unchanged until 3 months postpartum"
+# (Ansari 2016, Clearance).  The renally cleared antibiotics the review lists
+# with an increased clearance (cefazolin, gentamicin, vancomycin) apply it to
+# the renal function their published clearance terms read.
+PREGNANCY_GFR_FACTOR <- 1.5

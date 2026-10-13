@@ -116,6 +116,15 @@
 # rifampin, phenobarbital, carbamazepine, efavirenz and by chronic methadone
 # itself, and inhibited by others.  None of that is modelled.
 #
+# WITH PREGNANCY.  The two covariates multiply: pregnancy scales all three
+# clearance components by 24/14 and the phenotype then scales the non-renal
+# part.  Treat a pregnant reduced-function metaboliser as the softest corner
+# of this model.  Ansari attributes pregnancy's higher methadone clearance
+# partly to induction of CYP2B6 itself, and CYP2B6 activity is LESS
+# inducible in *6 carriers (Kharasch's discussion), so the product of the
+# two factors probably overstates her clearance.  No source quantifies the
+# interaction, so none is applied.
+#
 # REDUCTION TO THE LINEAR ENGINE
 # ==============================
 # The engine runs one three-compartment mammillary model per drug.  Racemic
@@ -159,6 +168,22 @@
 # reports.  Oral solution uses the same absorption: Blume 2015 found
 # levomethadone tablet and solution bioequivalent (Cmax 104%, AUC 99-101%).
 #
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 3):
+# "Increased clearance, largely due to induction of CYP3A4 and CYP2B6 ...
+# Reduced elimination half-life of 8-20 h compared with the 24-h half-life in
+# a nonpregnant patient", with a higher dose and a shorter interval by the
+# third trimester.  The review's figure is that pair of half-lives, so with
+# the Patient Profile's Pregnant field on every clearance component of both
+# enantiomers (to EDDP, renal and other) is multiplied by
+# METHADONE_PREGNANCY_CL_FACTOR = 24 / 14 = 1.71, the nonpregnant half-life
+# over the midpoint of 8 to 20 h, before the racemic reduction, which is
+# fitted again at the new clearances.  The volumes are unchanged, so the
+# reduced model's half-lives fall by the same ratio.  The review attributes
+# the change to hepatic induction, but assigns no share to the renal
+# component, so all three are scaled alike.  See R/pregnancy.R.
+#
 # EFFECT SITE AND MEAC
 # ====================
 # Henthorn has no pharmacodynamics.  The 11.3 min time to peak effect and
@@ -179,9 +204,11 @@
 #   https://doi.org/10.2165/00003088-200241140-00003
 # Inturrisi CE et al., Clin Pharmacol Ther 1987;41:392-401.
 #   https://pubmed.ncbi.nlm.nih.gov/3829576/
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
 #
 # Revised with Claude Code at the request of Steven L. Shafer, 2026-10-10,
-# replacing the Inturrisi 1987 disposition.
+# replacing the Inturrisi 1987 disposition; pregnancy added 2026-10-13.
 # -----------------------------------------------------------------------------
 
 # Henthorn 2025, Table 2: R(-)-methadone, and the S(+)/R(-) ratios
@@ -210,6 +237,10 @@ METHADONE_CYP2B6_HEPATIC <- list(
 )
 METHADONE_WT_REF <- 70                     # kg, see the header
 METHADONE_BASE_FRACTION <- 309.45 / 345.91 # base / hydrochloride
+# Clearance of both enantiomers in pregnancy relative to Henthorn's values:
+# the nonpregnant 24-h half-life over the midpoint of the 8-20 h of Ansari
+# 2016 (see the header).
+METHADONE_PREGNANCY_CL_FACTOR <- 24 / 14
 
 # Three-compartment unit disposition function (per unit dose, per litre):
 # coefficients and exponents.
@@ -226,9 +257,12 @@ methadoneUdf <- function(vc, v2, v3, cl, q2, q3)
 }
 
 # R(-) and S(+) unit disposition functions with V3 at `v3Weight` kg, at the
-# CYP2B6 phenotype's hepatic clearance (the header's CYP2B6 section: the
-# multiplier scales the non-renal clearance only).
-methadoneEnantiomers <- function(v3Weight, cyp2b6 = CYP2B6_DEFAULT)
+# CYP2B6 phenotype's hepatic clearance (the header's CYP2B6 section: that
+# multiplier scales the non-renal clearance only), with every elimination
+# clearance then multiplied by `clFactor` (pregnancy, which the review
+# assigns to no one component; see the PREGNANCY section).
+methadoneEnantiomers <- function(v3Weight, clFactor = 1,
+                                 cyp2b6 = CYP2B6_DEFAULT)
 {
   r <- METHADONE_R
   s <- METHADONE_S_OVER_R
@@ -239,26 +273,29 @@ methadoneEnantiomers <- function(v3Weight, cyp2b6 = CYP2B6_DEFAULT)
   clS <- g[["S"]] * (r$clEddp * s$clEddp + METHADONE_S_CL_OTHER) +
     r$clRenal * s$clRenal
   list(
-    R = methadoneUdf(r$vc, r$v2, v3, clR, r$q2, r$q3),
-    S = methadoneUdf(r$vc * s$v, r$v2 * s$v, v3 * s$v, clS,
+    R = methadoneUdf(r$vc, r$v2, v3, clR * clFactor, r$q2, r$q3),
+    S = methadoneUdf(r$vc * s$v, r$v2 * s$v, v3 * s$v, clS * clFactor,
                      r$q2 * s$q, r$q3 * s$q)
   )
 }
 
 # The fit takes 30 to 150 ms, and the same patient is resolved repeatedly
-# (every dose-table edit, the help pages), so results are kept per weight.
+# (every dose-table edit, the help pages), so results are kept per weight
+# and clearance factor.
 methadoneFitCache <- new.env(parent = emptyenv())
 
 # Steps 1 to 3 of the header's reduction: the three-compartment model whose
 # bolus response best matches the mean of the R(-) and S(+) responses, with
 # equal area.  Returns v1, v2, v3, cl1, cl2, cl3 per unit of base.
-methadoneRacemicPK <- function(v3Weight, cyp2b6 = CYP2B6_DEFAULT)
+methadoneRacemicPK <- function(v3Weight, clFactor = 1,
+                               cyp2b6 = CYP2B6_DEFAULT)
 {
-  key <- paste(format(v3Weight, digits = 15), cyp2b6)
+  key <- paste(format(v3Weight, digits = 15), format(clFactor, digits = 15),
+               cyp2b6)
   cached <- methadoneFitCache[[key]]
   if (!is.null(cached)) return(cached)
 
-  e <- methadoneEnantiomers(v3Weight, cyp2b6)
+  e <- methadoneEnantiomers(v3Weight, clFactor, cyp2b6)
   udf <- function(coef, lambda, t) colSums(coef * exp(-outer(lambda, t)))
   t <- exp(seq(log(0.5), log(7 * 1440), length.out = 300))
   y <- 0.5 * (udf(e$R$coef, e$R$lambda, t) + udf(e$S$coef, e$S$lambda, t))
@@ -331,6 +368,9 @@ methadoneRacemicPK <- function(v3Weight, cyp2b6 = CYP2B6_DEFAULT)
 #' @param adjustToFFM \code{TRUE} (the default) evaluates Henthorn's weight
 #'   term on V3 at the pharmacokinetic weight; \code{FALSE} at total body
 #'   weight.  No other parameter is size scaled.
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   clearance of both enantiomers by 24/14 before the racemic reduction
+#'   (Ansari 2016; see the file's header).
 #' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
 #'   It scales the non-renal clearance of each enantiomer, from Kharasch et
 #'   al. (2015); the rapid and ultrarapid categories take the normal
@@ -338,7 +378,7 @@ methadoneRacemicPK <- function(v3Weight, cyp2b6 = CYP2B6_DEFAULT)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 methadone <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                      cyp2b6 = CYP2B6_DEFAULT)
+                      pregnant = FALSE, cyp2b6 = CYP2B6_DEFAULT)
 {
   if (length(cyp2b6) != 1 || !isTRUE(cyp2b6 %in% CYP2B6_VALUES))
     stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
@@ -348,7 +388,10 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE,
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
-  base <- methadoneRacemicPK(pkW, cyp2b6)
+  # Pregnancy and CYP2B6 (see the header): both act on the enantiomers'
+  # clearances, then the racemic model is fitted at the result.
+  clPregnancy <- if (isTRUE(pregnant)) METHADONE_PREGNANCY_CL_FACTOR else 1
+  base <- methadoneRacemicPK(pkW, clPregnancy, cyp2b6)
   # Hydrochloride doses, base concentrations (see the header).
   f <- METHADONE_BASE_FRACTION
 
@@ -386,6 +429,10 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "Anesthesiology 2015;123:1142-1153 (normal metaboliser unless given). ",
     "https://doi.org/10.1002/cpt.70147"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      "clearance x 24/14 (half-life 8-20 h against 24 h)"))
+  }
 
   return(
     list(

@@ -59,17 +59,36 @@
 # understated relative to an intravenous one at the same morphine
 # concentration.
 #
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 3,
+# from Gerdin 1990): "Volume of distribution unchanged, clearance >70%
+# increased, decreased half-life, glucuronide conjugation by UGT".  With the
+# Patient Profile's Pregnant field on, the elimination clearance CL1 is
+# multiplied by MORPHINE_PREGNANCY_CL_FACTOR = 1.7 and nothing else moves:
+# the volumes and the distribution clearances stay as published, so the
+# terminal half-life falls as the review says.  The data are from late
+# pregnancy and labour; morphine-6-glucuronide, whose formation rises with
+# the clearance, is not modelled (see above).  See R/pregnancy.R.
+#
 # References
 # ----------
 # Lotsch J, Skarke C, Schmidt H, Liefhold J, Geisslinger G.  Clin Pharmacol
 #   Ther 2002;72:151-162.  https://doi.org/10.1067/mcp.2002.126172
 # Atrux-Tallau N, Naimi Z, Jaudinot EO.  Clin Drug Investig 2022;42:1101-1112.
 #   https://doi.org/10.1007/s40261-022-01214-x
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
 # (Oral routes added by Claude Code, 2026-10-10, at the request of Steven L.
-# Shafer.)
+# Shafer; pregnancy 2026-10-13.)
 # -----------------------------------------------------------------------------
 
-morphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
+# Elimination clearance in pregnancy relative to the published value: Ansari
+# 2016, "clearance >70% increased" (see the header).
+MORPHINE_PREGNANCY_CL_FACTOR <- 1.7
+
+morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                     pregnant = FALSE)
 {
   # Units **************
   # Time: Minutes
@@ -119,9 +138,15 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v1 <- v1Ref * size$volume
   v2 <- v1Ref * k12 / k21 * size$volume
   v3 <- v1Ref * k13 / k31 * size$volume
-  cl1 <- v1Ref * k10 * size$clearance
+  # Pregnancy (see the header): elimination clearance only.
+  clPregnancy <- if (isTRUE(pregnant)) MORPHINE_PREGNANCY_CL_FACTOR else 1
+  cl1 <- v1Ref * k10 * size$clearance * clPregnancy
   cl2 <- v1Ref * k12 * size$clearance
   cl3 <- v1Ref * k13 * size$clearance
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", MORPHINE_PREGNANCY_CL_FACTOR)))
+  }
   
   default <- list(
     v1 = v1,

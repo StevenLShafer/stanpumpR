@@ -143,20 +143,40 @@ app_ui <- function() {
                   selected = defaultSex
                 ),
 
+                # Read only by the models the pregnancy review quantifies
+                # (R/pregnancy.R; the help's Cautions page lists them).
+                # Offered for a woman of PREGNANCY_MIN_AGE to PREGNANCY_MAX_AGE
+                # years, whatever unit the age is entered in; the server
+                # applies the same rule (pregnancyPossible()), so a control
+                # hidden by a change of age or sex leaves the flag off.
                 conditionalPanel(
-                  condition = "input.age && input.ageUnit && input.ageUnit == 1 && input.age > 11 & input.age < 60 && input.sex == 'female'",
-                  shinyWidgets::radioGroupButtons(
-                    inputId = "pregnant",
-                    label = "Pregnant",
-                    choiceNames = list(
-                      span(icon("check"), "Yes"),
-                      span(icon("xmark"), "No")
+                  condition = sprintf(
+                    "input.age && input.ageUnit && input.sex == 'female' && (input.age * input.ageUnit) >= %s && (input.age * input.ageUnit) < %s",
+                    PREGNANCY_MIN_AGE, PREGNANCY_MAX_AGE
+                  ),
+                  bslib::tooltip(
+                    shinyWidgets::radioGroupButtons(
+                      inputId = "pregnant",
+                      label = "Pregnant",
+                      choiceNames = list(
+                        span(icon("check"), "Yes"),
+                        span(icon("xmark"), "No")
+                      ),
+                      choiceValues = c(TRUE, FALSE),
+                      justified = TRUE,
+                      selected = FALSE
                     ),
-                    choiceValues = c(TRUE, FALSE),
-                    justified = TRUE,
-                    selected = FALSE
-                  ) |>
-                    shinyjs::disabled()
+                    paste(
+                      "Applies the pharmacokinetic changes of late pregnancy",
+                      "to the drugs for which the review the library follows",
+                      "(Ansari, Carvalho, Shafer and Flood 2016) gives a",
+                      "magnitude: morphine, remifentanil, oxycodone,",
+                      "methadone, dexamethasone, cefazolin, gentamicin and",
+                      "vancomycin. Every other drug is unchanged; the Help's",
+                      "Pregnancy page says what the review found for each."
+                    ),
+                    placement = "right"
+                  )
                 ),
 
                 # Four categories, not three, and named the way the

@@ -36,9 +36,9 @@ A few models switch between parameter sets on a covariate:
 
 An age of 90 or above is protected health information under the HIPAA Safe Harbor rule, so the field stops at 90 and a note appears if you reach it. For the purposes of these models the difference between 90 and 95 is small.
 
-## The disabled field
+## Pregnant, and the fields only some drugs read
 
-**Pregnant** (shown for women of child-bearing age) is present but greyed out. It was added ahead of the models that will use it, so that the interface shows the intent, and no drug responds to it. The **Serum creatinine** field replaced the greyed-out Renal Function selector: leave it blank and the renal models assume a normal creatinine, which represents renal decline with age but not renal impairment. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
+**Pregnant** (shown for a woman of 12 to 59 years) applies the pharmacokinetic changes of late pregnancy to the drugs for which the review the library follows (Ansari, Carvalho, Shafer and Flood 2016) gives a magnitude: morphine, remifentanil, oxycodone, methadone, dexamethasone, cefazolin, gentamicin and vancomycin. Every other drug is unchanged, and the References panel names the review while the field is changing a drug. See [Pregnancy](help:models/pregnancy). The **Serum creatinine** field replaced the greyed-out Renal Function selector: leave it blank and the renal models assume a normal creatinine, which represents renal decline with age but not renal impairment. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
 
 ## Default patient
 
