@@ -10,6 +10,8 @@ Shafer SL, Gregg KM. Algorithms to rapidly achieve and maintain stable drug conc
 
 Hughes MA, Glass PSA, Jacobs JR. Context-sensitive half-time in multicompartment pharmacokinetic models for intravenous anesthetic drugs. *Anesthesiology* 1992;76:334-341.
 
+Minto CF, Schnider TW, Shafer SL. Pharmacokinetics and pharmacodynamics of remifentanil. II. Model application. *Anesthesiology* 1997;86:24-33.
+
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
 ## History of target-controlled infusion
@@ -39,6 +41,8 @@ Schüttler J, Schwilden H, Stoeckel H. Infusion strategies to investigate the ph
 Schüttler J, Kloos S, Schwilden H, Stoeckel H. Total intravenous anaesthesia with propofol and alfentanil by computer-assisted infusion. *Anaesthesia* 1988;43(suppl):2-7.
 
 Ausems ME, Stanski DR, Hug CC. An evaluation of the accuracy of pharmacokinetic data for the computer assisted infusion of alfentanil. *Br J Anaesth* 1985;57:1217-1225.
+
+Ausems ME, Vuyk J, Hug CC, Stanski DR. Comparison of a computer-assisted infusion versus intermittent bolus administration of alfentanil as a supplement to nitrous oxide for lower abdominal surgery. *Anesthesiology* 1988;68:851-861.
 
 Alvis JM, Reves JG, Govier AV, Menkhaus PG, Henling CE, Spain JA, Bradley E. Computer-assisted continuous infusions of fentanyl during cardiac anesthesia: comparison with a manual method. *Anesthesiology* 1985;63:41-49.
 

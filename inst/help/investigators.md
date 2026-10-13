@@ -18,7 +18,7 @@ The first target-controlled infusion was given in Bonn in 1979, and STANPUMP was
 
 - **Donald R. Stanski** and Steven Shafer, Stanford (STANPUMP). Stanski's laboratory also produced the fentanyl and alfentanil kinetics (with **Jeffrey C. Scott**) and, with Lewis Sheiner, the effect-compartment model itself.
 - **Jürgen Schüttler** and **Helmut Schwilden**, University of Bonn (CATIA).
-- **Martin Ausems** and **Carl C. Hug**, University of Leiden and Emory (TIAC).
+- **Max E. Ausems** and **Carl C. Hug**, University of Leiden and Emory (TIAC).
 - **Joseph G. Reves** and **J. Michael Alvis**, University of Alabama (CACI), and **James R. Jacobs** and Reves at Duke (CACI II).
 - **Johan F. Coetzee** and Pina, Stellenbosch University (STELPUMP).
 - **Tom De Smet** and **Michel M. R. F. Struys**, University of Ghent (RUGLOOP).
