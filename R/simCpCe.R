@@ -281,6 +281,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- PK$osmotic$molecularWeight * 1000
         ng_Conv  <- PK$osmotic$molecularWeight * 1000000
       },
+      mmol = {                 # A molar drug: amounts in mmol, Cp in mmol/L
+        # molecularWeight is grams of the product as dosed per mole of what
+        # is plotted (R/drugs_calciumChloride.R), so a dose in mg divided by
+        # it is a dose in mmol.
+        mg_Conv  <- PK$molar$molecularWeight
+        mcg_Conv <- PK$molar$molecularWeight * 1000
+        ng_Conv  <- PK$molar$molecularWeight * 1000000
+      },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
 

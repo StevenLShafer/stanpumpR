@@ -211,6 +211,22 @@ helpScenarios <- function() {
       ),
       timeUnits = "hours", maximum = 1440
     ),
+    helpScenario(
+      "calcium-chloride-vs-gluconate",
+      "Calcium chloride versus calcium gluconate",
+      "Intravenous basics",
+      "1 g of calcium chloride and 3 g of calcium gluconate over 10 minutes raise the ionized calcium by the same 0.4 mmol/L, and it halves within half an hour.",
+      # A typical parturient of Ansari 2025, with the switch off so that the
+      # published parameters apply and the plot reproduces the paper
+      age = 34, weight = 80, height = 162, sex = SEX_FEMALE, adjustToFFM = FALSE,
+      doses = helpDoses(
+        c("calciumChloride",   0, 100, "mg/min"),
+        c("calciumChloride",  10,   0, "mg/min"),
+        c("calciumGluconate",  0, 300, "mg/min"),
+        c("calciumGluconate", 10,   0, "mg/min")
+      ),
+      maximum = 60, plasmaLinetype = "solid"
+    ),
 
     # --- Opioids -------------------------------------------------------------
     helpScenario(

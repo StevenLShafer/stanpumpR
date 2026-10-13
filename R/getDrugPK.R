@@ -1029,6 +1029,12 @@ getDrugPK <- function(
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
   out$osmotic <- X$osmotic
+  # A drug reported in millimoles per litre (Concentration.Units "mmol":
+  # intravenous calcium, plotted as the change in ionized calcium) carries
+  # the grams of the product as dosed per mole of what is plotted, which
+  # simCpCe() uses to turn a dose in grams into millimoles.  See
+  # R/drugs_calciumChloride.R.
+  out$molar <- validateMolar(X$molar, drug, drugDefaults$Concentration.Units)
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
@@ -1336,3 +1342,36 @@ CE <- function(t, e_coef_bolus_1, e_coef_bolus_2, e_coef_bolus_3, e_coef_bolus_4
     e_coef_bolus_4 * exp(-lambda_4 * t)
 }
 
+
+#' Validate a drug's `molar` block
+#'
+#' A drug whose CSV `Concentration.Units` is `mmol` is plotted in millimoles
+#' per litre, and its model must return `molar = list(molecularWeight = g)`,
+#' the grams of the product as dosed per mole of what is plotted, so that
+#' `simCpCe()` can turn a dose in grams into millimoles.  The block is refused
+#' for any other concentration unit, where it would be ignored silently.
+#' Intravenous calcium is the example (`R/drugs_calciumChloride.R`).
+#'
+#' @param molar the model's `molar` field, or NULL
+#' @param drug the drug name, for the message
+#' @param concentrationUnits the CSV's `Concentration.Units`
+#' @returns the block, or NULL when the drug has none
+#' @keywords internal
+validateMolar <- function(molar, drug, concentrationUnits)
+{
+  molarUnits <- identical(as.character(concentrationUnits), "mmol")
+  if (is.null(molar)) {
+    if (molarUnits)
+      stop("Invalid molar block for ", drug, ": a drug with Concentration.Units ",
+           "\"mmol\" must return molar = list(molecularWeight = ...).")
+    return(NULL)
+  }
+  if (!molarUnits)
+    stop("Invalid molar block for ", drug, ": only a drug with ",
+         "Concentration.Units \"mmol\" may return one.")
+  mw <- if (is.list(molar)) molar$molecularWeight else NULL
+  if (is.null(mw) || !is.numeric(mw) || length(mw) != 1 || !is.finite(mw) || mw <= 0)
+    stop("Invalid molar block for ", drug, ": molecularWeight must be a single ",
+         "positive number (grams per mole).")
+  list(molecularWeight = mw)
+}

@@ -395,6 +395,8 @@ what the literature offers.
 | Prednisolone | Xu J, Winkler J, Derendorf H. *J Pharmacokinet Pharmacodyn* 2007;34:355–372. [DOI 10.1007/s10928-007-9050-8](https://doi.org/10.1007/s10928-007-9050-8) (reversible pair reduced to its exact mammillary equivalent; **free** prednisolone) |
 | Prednisone | Xu J, Winkler J, Derendorf H, as above (oral prodrug; total prednisone, with prednisolone on the prednisolone row) |
 | Mannitol | Kaneda K et al., *J Clin Pharmacol* 2010;50(5):536–543. [PMID 20051588](https://pubmed.ncbi.nlm.nih.gov/20051588/)<br>Osmolality: Rudehill A et al., *J Neurosurg Anesthesiol* 1993;5(1):4–12. [PMID 8431668](https://pubmed.ncbi.nlm.nih.gov/8431668/). See [docs/mannitol.md](mannitol.md). |
+| Calcium chloride | Ansari JR et al., *Anesthesiology* 2025;142:121–131. [DOI 10.1097/ALN.0000000000005248](https://doi.org/10.1097/ALN.0000000000005248) (parturients at cesarean delivery; plotted as the change in ionized calcium, mmol/L; offered to every patient as an extrapolation) |
+| Calcium gluconate | Ansari JR et al., as above (the calcium chloride model through the fitted dose ratio, 3.11 g per gram of calcium chloride) |
 | Amiodarone | Pollak PT, Bouillon T, Shafer SL. *Clin Pharmacol Ther* 2000;67:642–652. [PMID 10872646](https://pubmed.ncbi.nlm.nih.gov/10872646/) (long-term oral; apparent parameters, constant daily input) |
 | Desethylamiodarone | Pollak PT, Bouillon T, Shafer SL, as above (formed from all amiodarone cleared, mass basis; not dosed directly) |
 | Amiodarone IV | Korth-Bradley JM et al. *J Clin Pharmacol* 1996;36:715–719. [PMID 8877675](https://pubmed.ncbi.nlm.nih.gov/8877675/) (acute intravenous therapy, first one to three days; no metabolite) |
