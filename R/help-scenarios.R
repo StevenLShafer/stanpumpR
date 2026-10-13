@@ -66,6 +66,8 @@ helpScenarioDefaultOptions <- function() {
 #' @param creatinine serum creatinine in mg/dL, or NULL for a blank field (the
 #'   renal models then assume a normal value for the patient's age and sex)
 #' @param osmolality baseline serum osmolality in mOsm/kg (mannitol)
+#' @param pregnant is the patient pregnant?  Only for a woman of child-bearing
+#'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
 #' @param events data frame with Time (minutes) and Event, or NULL
 #' @param ... graph options overriding helpScenarioDefaultOptions()
@@ -75,7 +77,7 @@ helpScenario <- function(id, title, group, summary,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
                          cyp2c9 = CYP2C9_DEFAULT, creatinine = NULL,
-                         osmolality = OSMOLALITY_DEFAULT, ...) {
+                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -97,7 +99,8 @@ helpScenario <- function(id, title, group, summary,
     patient = list(age = age, weight = weight, height = height, sex = sex,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
                    adjustToFFM = adjustToFFM,
-                   creatinine = creatinine, osmolality = osmolality),
+                   creatinine = creatinine, osmolality = osmolality,
+                   pregnant = pregnant),
     doses = doses, events = events, options = options
   )
 }
@@ -210,6 +213,22 @@ helpScenarios <- function() {
         c("amiodaroneIV", 370, 0.5, "mg/min")
       ),
       timeUnits = "hours", maximum = 1440
+    ),
+    helpScenario(
+      "calcium-chloride-vs-gluconate",
+      "Calcium chloride versus calcium gluconate",
+      "Intravenous basics",
+      "1 g of calcium chloride and 3 g of calcium gluconate over 10 minutes raise the ionized calcium by the same 0.4 mmol/L, and it halves within half an hour.",
+      # A typical parturient of Ansari 2025, with the switch off so that the
+      # published parameters apply and the plot reproduces the paper
+      age = 34, weight = 80, height = 162, sex = SEX_FEMALE, adjustToFFM = FALSE,
+      doses = helpDoses(
+        c("calciumChloride",   0, 100, "mg/min"),
+        c("calciumChloride",  10,   0, "mg/min"),
+        c("calciumGluconate",  0, 300, "mg/min"),
+        c("calciumGluconate", 10,   0, "mg/min")
+      ),
+      maximum = 60, plasmaLinetype = "solid"
     ),
 
     # --- Opioids -------------------------------------------------------------
@@ -462,6 +481,18 @@ helpScenarios <- function() {
         c("dexmedetomidine", 120, 0, "mcg/kg/hr")
       ),
       maximum = 240, plasmaLinetype = "dashed", showThreshold = TRUE
+    ),
+    helpScenario(
+      "remifentanil-labour",
+      "Remifentanil in labour: the parturient's doubled clearance",
+      "Special populations",
+      "A remifentanil infusion in a woman at term with Pregnant ticked: her clearance is twice the model's, so the plateau is half as high. Untick Pregnant to compare.",
+      age = 30, weight = 80, height = 165, sex = SEX_FEMALE, pregnant = TRUE,
+      doses = helpDoses(
+        c("remifentanil", 0, 0.1, "mcg/kg/min"),
+        c("remifentanil", 60, 0, "mcg/kg/min")
+      ),
+      maximum = 120, plasmaLinetype = "dashed"
     ),
 
     # --- Recovery and emergence ----------------------------------------------
@@ -745,6 +776,11 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
+  if (!is.logical(p$pregnant) || length(p$pregnant) != 1 || is.na(p$pregnant)) {
+    say("pregnant is not a single logical")
+  } else if (p$pregnant && !pregnancyPossible(p$age, p$sex)) {
+    say("pregnant, but not a woman of ", PREGNANCY_MIN_AGE, " to ", PREGNANCY_MAX_AGE, " years")
+  }
   if (!is.null(p$creatinine) && !is_valid_number(p$creatinine, MIN_CREATININE, MAX_CREATININE)) {
     say("creatinine out of range: ", p$creatinine)
   }
@@ -805,7 +841,8 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
     }
     if (isTRUE(o$mintoSchnider)) {
       p <- s$patient
-      for (problem in alternativeModelProblems(d$Drug, p$weight, p$height, p$age, p$sex)) say(problem)
+      for (problem in alternativeModelProblems(d$Drug, p$weight, p$height, p$age, p$sex,
+                                               pregnant = isTRUE(p$pregnant))) say(problem)
     }
   }
 
@@ -884,6 +921,10 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateNumericInput(session, "height", value = p$height)
   updateRadioButtons(session, "heightUnit", selected = as.character(UNIT_CM))
   shinyWidgets::updateRadioGroupButtons(session, "sex", selected = p$sex)
+  # The control holds "TRUE" / "FALSE"; it is sent even when hidden, so a
+  # later patient does not inherit the flag.
+  shinyWidgets::updateRadioGroupButtons(session, "pregnant",
+                                        selected = if (isTRUE(p$pregnant)) "TRUE" else "FALSE")
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
@@ -955,6 +996,8 @@ helpScenarioPageHTML <- function(id) {
     `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),
     check.names = FALSE, stringsAsFactors = FALSE
   )
+  # Shown only when set: "Pregnant: no" beside a man's age would be noise.
+  if (isTRUE(p$pregnant)) patient$Pregnant <- "yes"
   # Times as the dose table will show them: in the scenario's time unit, in
   # full (helpFormatNumber()'s three significant figures would print 30240
   # minutes as 30,200)

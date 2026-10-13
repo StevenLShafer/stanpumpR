@@ -175,36 +175,52 @@ propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE)
 #' `adjustToFFM` is accepted for the uniform signature and ignored: the model
 #' carries its own lean-body-mass covariate (James).  The same arithmetic is
 #' in the comments at the top of R/drugs_remifentanil.R.
+#'
+#' `pregnant` applies the same factor as the library's remifentanil model:
+#' clearance x REMIFENTANIL_PREGNANCY_CL_FACTOR (Ansari 2016, "clearance more
+#' than doubles"; see R/drugs_remifentanil.R), so that the two lines of the
+#' remifentanil panel move together for a parturient.
 #' @noRd
-remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE)
+remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                              pregnant = FALSE)
 {
   lbm <- lbmJames(weight, height, sex)
+  clPregnancy <- if (isTRUE(pregnant)) REMIFENTANIL_PREGNANCY_CL_FACTOR else 1
   default <- list(
     v1  = 5.1  - 0.0201  * (age - 40) + 0.072 * (lbm - 55),
     v2  = 9.82 - 0.0811  * (age - 40) + 0.108 * (lbm - 55),
     v3  = 5.42,
-    cl1 = 2.6  - 0.0162  * (age - 40) + 0.0191 * (lbm - 55),
+    cl1 = (2.6  - 0.0162  * (age - 40) + 0.0191 * (lbm - 55)) * clPregnancy,
     cl2 = 2.05 - 0.0301  * (age - 40),
     cl3 = 0.076 - 0.00113 * (age - 40)
   )
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
+  reference <- "Minto CF et al., Anesthesiology 1997;86(1):10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", REMIFENTANIL_PREGNANCY_CL_FACTOR)))
+  }
   list(
     PK = PK,
     ke0 = 0.595 - 0.007 * (age - 40),
-    reference = "Minto CF et al., Anesthesiology 1997;86(1):10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+    reference = reference
   )
 }
 
 #' Run an alternative model's function for a patient
 #'
+#' @param pregnant the pregnancy flag, passed on when the model names it
+#'   (R/pregnancy.R)
 #' @returns the model function's output (PK sets, tPeak or ke0, reference)
 #' @noRd
-alternativeModelOutput <- function(drug, weight, height, age, sex) {
+alternativeModelOutput <- function(drug, weight, height, age, sex, pregnant = FALSE) {
   spec <- ALTERNATIVE_MODELS[[drug]]
   if (is.null(spec)) stop("No alternative model for ", drug)
   fn <- get(spec$model, mode = "function")
-  fn(weight = weight, height = height, age = age, sex = sex)
+  args <- list(weight = weight, height = height, age = age, sex = sex)
+  if ("pregnant" %in% names(formals(fn))) args$pregnant <- isTRUE(pregnant)
+  do.call(fn, args)
 }
 
 #' Why an alternative model is not defined for a patient, or NULL
@@ -217,10 +233,10 @@ alternativeModelOutput <- function(drug, weight, height, age, sex) {
 #' @param drug a drug in `ALTERNATIVE_MODEL_DRUGS`
 #' @returns NULL when the model is defined, else one sentence
 #' @noRd
-alternativeModelProblem <- function(drug, weight, height, age, sex) {
+alternativeModelProblem <- function(drug, weight, height, age, sex, pregnant = FALSE) {
   spec <- ALTERNATIVE_MODELS[[drug]]
   if (is.null(spec)) return(NULL)
-  X <- tryCatch(alternativeModelOutput(drug, weight, height, age, sex),
+  X <- tryCatch(alternativeModelOutput(drug, weight, height, age, sex, pregnant),
                 error = function(e) NULL)
   if (is.null(X)) return(sprintf("%s's %s model could not be evaluated for this patient.", spec$label, drug))
   set <- X$PK[[PK_EVENT_DEFAULT]]
@@ -243,10 +259,10 @@ alternativeModelProblem <- function(drug, weight, height, age, sex) {
 #'   alternative model are ignored)
 #' @returns a character vector, empty when every alternative model is defined
 #' @noRd
-alternativeModelProblems <- function(drugs, weight, height, age, sex) {
+alternativeModelProblems <- function(drugs, weight, height, age, sex, pregnant = FALSE) {
   out <- character(0)
   for (drug in intersect(unique(drugs), ALTERNATIVE_MODEL_DRUGS)) {
-    problem <- alternativeModelProblem(drug, weight, height, age, sex)
+    problem <- alternativeModelProblem(drug, weight, height, age, sex, pregnant)
     if (!is.null(problem)) out <- c(out, problem)
   }
   out
@@ -265,15 +281,16 @@ alternativeModelProblems <- function(drugs, weight, height, age, sex) {
 #' @returns the entry, as recalculatePK() stores it, or NULL
 #' @noRd
 alternativeModelEntry <- function(drug, weight, height, age, sex, drugDefaults,
-                                  adjustToFFM = TRUE) {
-  if (!is.null(alternativeModelProblem(drug, weight, height, age, sex))) return(NULL)
+                                  adjustToFFM = TRUE, pregnant = FALSE) {
+  if (!is.null(alternativeModelProblem(drug, weight, height, age, sex, pregnant))) return(NULL)
   spec <- ALTERNATIVE_MODELS[[drug]]
-  model <- alternativeModelOutput(drug, weight, height, age, sex)
+  model <- alternativeModelOutput(drug, weight, height, age, sex, pregnant)
   entry <- getDrugPK(
     drug = drug,
     weight = weight, height = height, age = age, sex = sex,
     drugDefaults = drugDefaults,
     adjustToFFM = adjustToFFM,
+    pregnant = pregnant,
     model = model
   )
   entry$drug        <- alternativeModelName(drug)

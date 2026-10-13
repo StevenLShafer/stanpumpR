@@ -72,10 +72,27 @@
 # wide scatter (Li 2021: 0.02-0.99), which would put the threshold near 2.2.  See R/antibioticThresholds.R.  (Free fraction 0.70 confirmed by
 # Steven L. Shafer, 2026-10-07.)
 #
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 7,
+# from Onwuchuruba 2014 and others): "Increased volume of distribution and
+# clearance, unknown changes in half-life".  The review prints no factor for
+# vancomycin itself; its physiological statement is that renal blood flow
+# and glomerular filtration are "increased 50% by the second trimester".
+# With the Patient Profile's Pregnant field on, the creatinine clearance
+# Thomson's clearance term reads is multiplied by PREGNANCY_GFR_FACTOR = 1.5
+# (R/constants.R); the term is linear in it with a small negative intercept
+# (1 - 0.0154 x 66), so CL rises by slightly more than 1.5 (1.51 at a
+# creatinine clearance of 100 mL/min).
+# The larger volume is NOT applied, as the review gives no figure, so the
+# simulated peak in a parturient is too high.  See R/pregnancy.R.
+#
 # References
 # ----------
 # Thomson AH et al., J Antimicrob Chemother 2009;63:1050-1057.
 #   https://doi.org/10.1093/jac/dkp085
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
 # Rybak MJ et al., Am J Health Syst Pharm 2020;77:835-864.
 #   https://doi.org/10.1093/ajhp/zxaa036
 # Dejaco A et al., Antimicrob Agents Chemother 2026;70:e01593-25.
@@ -89,10 +106,13 @@
 #' Vancomycin pharmacokinetics
 #'
 #' @inheritParams cefazolin
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   creatinine clearance the clearance term reads by 1.5, the rise in
+#'   glomerular filtration of pregnancy (Ansari 2016; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                       creatinine = NULL)
+                       creatinine = NULL, pregnant = FALSE)
 {
   # Size scaling (see the header).  size$volume is the weight ratio the
   # published volume and renal terms see (fat-free-mass ratio with the switch
@@ -105,6 +125,8 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # Thomson floored serum creatinine at 60 umol/L before Cockcroft-Gault.
   scr  <- max(adultEquivalentCreatinine(creatinine, age, sex), 60 / 88.42)
   crcl <- creatinineClearanceCG(pkW, age, sex, scr)   # mL/min
+  # Pregnancy (see the header): the renal term alone.
+  if (isTRUE(pregnant)) crcl <- crcl * PREGNANCY_GFR_FACTOR
 
   cl1 <- 2.99 * (1 + 0.0154 * (crcl - 66)) / 60      # L/min
   if (cl1 <= 0)
@@ -143,6 +165,10 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "clearance, from the entered creatinine or an assumed normal one. ",
     "https://doi.org/10.1093/jac/dkp085"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR)))
+  }
 
   return(
     list(

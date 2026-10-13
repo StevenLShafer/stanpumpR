@@ -12,6 +12,12 @@ Hughes MA, Glass PSA, Jacobs JR. Context-sensitive half-time in multicompartment
 
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
+## Pregnancy
+
+The review the [Pregnant](help:models/pregnancy) field follows:
+
+Ansari J, Carvalho B, Shafer SL, Flood P. Pharmacokinetics and pharmacodynamics of drugs commonly used in pregnancy and parturition. *Anesth Analg* 2016;122:786-804. [DOI 10.1213/ANE.0000000000001143](https://doi.org/10.1213/ANE.0000000000001143)
+
 ## History of target-controlled infusion
 
 The three companion reviews on which [From CATIA to stanpumpR](help:history) draws:

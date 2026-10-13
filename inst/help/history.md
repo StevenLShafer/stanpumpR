@@ -61,7 +61,7 @@ STANPUMP also served as a test bed for:
 - a real-time Bayesian update of the pharmacokinetic parameters from observations made during drug administration;
 - output files ready for pharmacokinetic and pharmacodynamic model fitting, drug files read from disk, multiple syringe sizes and a batch mode for research. Its library included the hypnotics, opioids, benzodiazepines, local anesthetics and muscle relaxants, and kinetics for dogs, rats and horses as well as humans.
 
-STANPUMP was placed in the public domain. It was used in 268 of the 559 studies that Absalom and colleagues counted, nearly half. Its principles, and its pharmacokinetic engine, were taken into later research systems and into the commercial open TCI pumps. The original C source is kept in the repository, in `Original Stanpump/Stanpump.zip`, with its documentation; see [What is in the repository](help:repository).
+STANPUMP was distributed freely: its source and executable code could be copied and shared by anyone, though not sold. It was used in 268 of the 559 studies that Absalom and colleagues counted, nearly half. Its principles, and its pharmacokinetic engine, were taken into later research systems and into the commercial open TCI pumps. The original C source is kept in the repository, in `Original Stanpump/Stanpump.zip`, with its documentation; see [What is in the repository](help:repository).
 
 ## The Diprifusor
 
@@ -94,13 +94,15 @@ No report found an adverse event caused by the TCI algorithm. They concluded tha
 
 ## stanpumpR
 
-stanpumpR uses very little of the original STANPUMP code. Conceptually it is identical: an open-source program that makes complex pharmacokinetic algorithms available to support patient care, teaching and research. The difference is that **stanpumpR does not control drug administration**. It is a web-based simulator, written in R with the Shiny framework, that shows the expected concentrations from any dosing regimen.
+stanpumpR uses very little of the original STANPUMP code. Conceptually it is identical: an open-source program that makes complex pharmacokinetic algorithms available to support patient care, teaching and research. The difference is that **the stanpumpR app does not control drug administration**. It is a web-based simulator, written in R with the Shiny framework, that shows the expected concentrations from any dosing regimen.
 
-The R package was begun by Steven Shafer in 2019. Dean Attali rebuilt it as a maintainable Shiny application with a test suite and automated deployment. In 2026 it gained an engine for the inhaled anesthetics following GasMan®, validated by Richard Epstein. The same year STANPUMP's targeting algorithm returned as two dose-table units, *Plasma target* and *Effect site target*, which simulate a TCI pump using Shafer and Gregg's method; see [Target-controlled infusion](help:tci).
+The R package was begun by Steven Shafer in 2019. Dean Attali rebuilt it as a maintainable Shiny application with a test suite and automated deployment. In 2026 it gained an engine for the inhaled anesthetics following GasMan®, validated by Richard Epstein. The same year STANPUMP's targeting algorithm returned as two dose-table units, *Plasma target* and *Effect site target*, which simulate a TCI pump using Shafer and Gregg's method; see [Target-controlled infusion](help:tci). The same controller is offered to real pumps by [the TCI API](help:tci-api), a stateless web service that computes the next rate for a pump's host computer, while the pump keeps its own limits and decides what to run.
 
 ## Licence and use
 
-stanpumpR may be freely downloaded and used without restriction for non-commercial purposes. It is hoped that it will encourage device manufacturers to develop the next generation of drug delivery systems and anesthesia information management systems; companies seeking to develop such systems should contact Dr Shafer for written permission before incorporating stanpumpR into a product.
+stanpumpR is open-source software, copyright 2019-2026 Steven L. Shafer and contributors, released under the MIT License. Anyone may use, copy, modify and redistribute it, including commercially, provided the copyright and licence notice is kept with it. It is provided as is, without warranty of any kind.
+
+It is hoped that stanpumpR will encourage device manufacturers to develop the next generation of drug delivery systems and anesthesia information management systems. Companies are welcome to build on it under the terms of the licence; as a courtesy, Dr Shafer would be glad to hear from them.
 
 ## GasMan
 

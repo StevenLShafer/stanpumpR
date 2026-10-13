@@ -4,7 +4,7 @@ A 120 kg, 170 cm man given fentanyl 2 mcg/kg and sufentanil 0.2 mcg/kg, both per
 
 ## Try next
 
-- Untick **Adjust weight to fat-free mass** in the Patient Profile. Both curves drop: total-weight scaling inflates the volumes and clearances by the full weight ratio, diluting the same dose. The gap between the two settings is how much per-kilogram dosing on total weight departs from fat-free-mass dosing in this patient.
+- Untick **Adjust weight to fat-free mass** in the Patient Profile. Each model goes back to its published scaling, and the two curves move in opposite directions. Fentanyl's published model scales with total weight, which inflates its volumes and clearances by the full weight ratio and dilutes the same dose, so its curve drops. Sufentanil's published model has no size scaling at all, so its 24 mcg goes into a 70 kg man's volumes and its curve rises. The gap between the two settings is how far each published scaling departs from fat-free-mass scaling in this patient.
 - Change the patient to a 70 kg man and the two settings coincide: the reference man's factors are exactly 1 either way.
 - Try a 70 kg woman against the 70 kg man with the switch on. She has about 18 per cent less fat-free mass, so her concentrations run higher for the same per-kilogram dose, although per-kilogram dosing treats them identically.
 

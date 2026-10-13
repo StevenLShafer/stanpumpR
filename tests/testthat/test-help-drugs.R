@@ -65,7 +65,10 @@ plasmaOnly <- c(
   # Antipsychotics: occupancy is a direct function of plasma, or no effect is
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
-  "olanzapine", "droperidol", "droperidolIM"
+  "olanzapine", "droperidol", "droperidolIM",
+  # Calcium chloride and calcium gluconate (2026-10-13): plotted as the change
+  # in ionized calcium, which is the end point itself; no ke0.
+  "calciumChloride", "calciumGluconate"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

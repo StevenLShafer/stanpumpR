@@ -30,7 +30,7 @@ The rate to run, in the pump's units and in mL/hr, naming any pump limit that ch
 
 ## The same controller as the simulator
 
-The rate is computed by the function behind the app's TCI rows, `tciRate()`, including the hand-off from effect-site to plasma control within 5 per cent of the target. With no latency, a ten-second interval and a pump without a ceiling, a closed loop of API calls reproduces the app's TCI schedule rate for rate, and the test suite pins it. A logged request can therefore be replayed in the simulator: its history, written as dose-table rows, draws the curves the controller was planning from. Two things the API has that the app's rows do not: a pump ceiling, so a loading dose can spread over several intervals without overshoot, and the latency correction.
+The rate is computed by the function behind the app's TCI rows, `tciRate()`, including the hand-off from effect-site to plasma control within 5 per cent of the target. With no latency, a ten-second interval and a pump without a ceiling, a closed loop of API calls reproduces the app's TCI schedule rate for rate, and the test suite pins it. A logged request can therefore be replayed in the simulator: its history, written as dose-table rows, draws the curves the controller was planning from. Two things the API has that the app's rows do not: a pump ceiling, so a loading dose can spread over several intervals without overshoot, and the latency correction. It runs each drug's library model, never the Schnider or Minto pump that the [Minto / Schnider](help:models/minto-schnider) switch adds in the app.
 
 ## Running it
 

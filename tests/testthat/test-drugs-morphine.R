@@ -161,3 +161,20 @@ test_that("mg/kg PO liquid is the liquid scaled by the patient's weight", {
   units <- getDrugDefaults("morphine")$Units[[1]]
   expect_true(all(c("mg/kg PO liquid", "mg/kg PO liquid qid") %in% units))
 })
+
+test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  CL1 x 1.7.
+  # The values are those the model gives with the flag on; test-pregnancy.R
+  # checks the ratio against the flag off and that nothing else moves.
+  actual <- morphine(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(14.10666343, actual$v1)
+  expect_equal_rounded(69.18605273, actual$v2)
+  expect_equal_rounded(157.7093109, actual$v3)
+  expect_equal_rounded(1.784433573, actual$cl1)
+  expect_equal_rounded(1.895812561, actual$cl2)
+  expect_equal_rounded(0.2718260662, actual$cl3)
+  expect_equal(morphine(70, 165, 30, "female")$PK$default,
+               morphine(70, 165, 30, "female", pregnant = FALSE)$PK$default)
+  expect_match(morphine(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
+  expect_no_match(morphine(70, 165, 30, "female")$reference, "Ansari")
+})
