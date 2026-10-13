@@ -8,7 +8,7 @@ For teaching it helps to see both at once. The **Minto / Schnider** box under [G
 
 **Under a [target-controlled infusion](help:tci)** the second model drives a pump of its own, from the same target rows. Its infusion rates are drawn as a second line in the drug's TCI rate panel, its loading dose is written below the first pump's and named for the model, and the concentrations it predicts are the second line in the concentration panel. Each pump hits its own target; what the two models disagree about is how much drug that takes. When a slide is emailed, both pumps' rate rows are merged into the exported dose table, under their own names.
 
-**The time until threshold** is never computed for the second model. The thin black line stays on the library's own kinetics (Eleveld's, or Kim's for remifentanil at a BMI of 30 or more), which is also the model the shaded band, the MEAC panel, the interaction panel and the opioid-MAC interaction read: a second remifentanil line is a second model of the same drug, not a second opioid.
+**The time until threshold** is never computed for the second model. The thin black line stays on the library's own kinetics (Eleveld's, or Kim's for remifentanil in an adult with a BMI of 30 or more), which is also the model the shaded band, the MEAC panel, the interaction panel and the opioid-MAC interaction read: a second remifentanil line is a second model of the same drug, not a second opioid.
 
 [The simulation scenario](scenario:eleveld-vs-minto-schnider) and [the TCI scenario](scenario:tci-eleveld-vs-minto-schnider) show the switch on, with the differences to look for.
 
