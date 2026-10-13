@@ -196,6 +196,23 @@ with the molecular weight, and `simCpCe()` plots `baseline + fraction * Cp`. The
 labelled mOsm/kg and its y-axis is not anchored at zero. `R/drugs_mannitol.R` is the example,
 and [mannitol.md](mannitol.md) explains where its fraction comes from.
 
+**Optional — a drug reported in millimoles.** A drug whose source reports it in mmol/L
+(intravenous calcium, modelled as the change in ionized calcium) uses `mmol` as its CSV
+`Concentration.Units` and returns a `molar` block:
+
+```r
+molar = list(molecularWeight = 147.01)   # grams of the product as dosed per mole of what is plotted
+```
+
+`simCpCe()` converts a dose in g, mg, mcg or ng to millimoles with it, so dividing by the
+volumes in litres gives mmol/L; the panel is labelled mmol/L and starts at zero as usual.
+The weight is "grams of the product as dosed per mole of what is plotted", which need not be
+a true molecular weight: calcium gluconate carries calcium chloride's 147.01 times the fitted
+dose ratio of 3.11, so a dose of either salt becomes millimoles of calcium chloride
+equivalent and runs through the one model (`R/drugs_calciumChloride.R`,
+`R/drugs_calciumGluconate.R`). `validateMolar()` in `R/getDrugPK.R` requires the block when
+the units are `mmol` and refuses it otherwise.
+
 **Optional — an active metabolite.** A drug whose effect is carried by a metabolite returns
 a `metabolite` block alongside the usual fields:
 
@@ -325,7 +342,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
 - `Concentration.Units` — `mcg` or `ng` per mL (sets the internal unit scaling in `simCpCe`),
-  or `mOsm` for an osmotic agent (see above).
+  `mOsm` for an osmotic agent, or `mmol` for a drug reported in mmol/L (see above).
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
