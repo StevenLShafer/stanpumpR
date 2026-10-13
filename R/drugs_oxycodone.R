@@ -213,8 +213,11 @@
 #   2006;79:461-479.  https://doi.org/10.1016/j.clpt.2006.01.009
 # Balyan R, Mecoli M, Venkatasubramanian R, et al. Pharmacogenomics
 #   2017;18:337-348.  https://doi.org/10.2217/pgs-2016-0183
-# Samer CF et al. Br J Pharmacol 2010;160:919-930.
-#   https://doi.org/10.1111/j.1476-5381.2010.00709.x
+# Samer CF et al. Br J Pharmacol 2010;160:907-918 (pharmacokinetics; the
+#   oxymorphone Cmax figures).  PMID 20590587.
+#   https://doi.org/10.1111/j.1476-5381.2010.00673.x
+# Samer CF et al. Br J Pharmacol 2010;160:919-930 (the companion
+#   pharmacodynamic paper).  https://doi.org/10.1111/j.1476-5381.2010.00709.x
 # -----------------------------------------------------------------------------
 
 # Relative CYP2D6 activity for oxymorphone formation, normal = 1 (see header)

@@ -15,7 +15,7 @@
 #     CL 44.9 L/h   Vc 11.3 L   Q1 25.6 L/h   Vp1 19.0 L   Q2 8.23 L/h   Vp2 71.5 L
 #
 # Vss 101.8 L; eigenvalue half-times 0.093, 0.81 and 7.2 h.  No covariates
-# were fitted.  Renal impairment markedly reduces clearance (Kirvela), but
+# were fitted.  Renal impairment markedly reduces clearance (Kirvela 1993), but
 # no continuous relationship exists to apply.
 #
 # DOSE BASIS: BROMIDE ON THE LABEL, CATION IN THE MODEL
@@ -44,6 +44,8 @@
 # ----------
 # Bartels C et al., Br J Clin Pharmacol 2013;76:868-879.
 #   https://doi.org/10.1111/bcp.12118
+# Kirvela M et al., Br J Anaesth 1993;71:437-439.
+#   https://doi.org/10.1093/bja/71.3.437
 # -----------------------------------------------------------------------------
 
 GLYCOPYRROLATE_CATION_FRACTION <- 318.43 / 398.33   # cation / bromide salt mass

@@ -31,13 +31,16 @@
 #
 # WHY THIS SOURCE, AND ITS LIMITS
 # ===============================
-# The ChatGPT handoff proposed a free-drug model (Cheng S et al., Drugs R D
-# 2020;20:343-357, PMC7691416): 37 adults, Vmax 5.36 mg/kg/day and Km 0.532
+# The ChatGPT handoff proposed a free-drug model (Jun H et al., Drugs R D
+# 2020;20:343-358, PMC7691416): 37 adults, Vmax 5.36 mg/kg/day and Km 0.532
 # mg/L on UNBOUND phenytoin, with a linear binding model on albumin, and ka
 # (0.225 /h) and F (0.859) fixed.  Its parameters are on the unbound scale and
 # need its binding model to give the total concentration that is measured and
 # banded; Odani's are on the total scale and need nothing else.  Odani is
-# used, and Cheng's fixed ka is taken for the extended-release capsule below.
+# used, and Jun's fixed ka is taken for the extended-release capsule below.
+# (The paper prints no Vmax per kg: 5.36 mg/kg/day is derived from its
+# 15.3 mg/h at 70 kg, a weight^2.04 term and a bilirubin term, divided by
+# the mean weight of 68.5 kg; at 70 kg it is 5.25 mg/kg/day.)
 # Alqahtani S et al. (Pharmacology 2019;104:60-66), 43 Saudi adults, found
 # V 0.61 L/kg, Vmax 6.12 mg/kg/day and Km 5.33 mg/L: a cross-check, below.
 #
@@ -81,7 +84,7 @@
 # ORAL ABSORPTION
 # ===============
 # Odani assumed F = 1 and estimated no absorption rate (steady-state troughs).
-#   - ER capsule: ka 0.225 /h, FIXED by Cheng 2020.  A single 300 mg dose
+#   - ER capsule: ka 0.225 /h, FIXED by Jun 2020.  A single 300 mg dose
 #     then peaks at about 11 h in the reference patient, inside the label's 4
 #     to 12 h for the extended capsule.  Bioavailability 1 (on Odani's scale).
 #   - Suspension and chewable tablet: no population estimate exists.  The
@@ -147,7 +150,7 @@
 #   https://doi.org/10.1016/S0009-9236(97)90031-X
 # Karnes JH et al. (CPIC), Clin Pharmacol Ther 2021;109:302-309.
 #   https://doi.org/10.1002/cpt.2008
-# Cheng S et al., Drugs R D 2020;20:343-357.
+# Jun H et al., Drugs R D 2020;20:343-358.  PMID 33026608.
 #   https://doi.org/10.1007/s40268-020-00323-2
 # Alqahtani S et al., Pharmacology 2019;104:60-66.
 #   https://doi.org/10.1159/000500314
@@ -200,7 +203,7 @@ phenytoin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     # The low-concentration limit, Vmax / Km, for the help tables only: the
     # simulation uses the michaelisMenten block.
     cl1 = vmax / km, cl2 = 0, cl3 = 0,
-    ka_PO = 0.225 / 60,          # ER capsule, Cheng 2020 (fixed)
+    ka_PO = 0.225 / 60,          # ER capsule, Jun 2020 (fixed)
     bioavailability_PO = 1,
     tlag_PO = 0
   )

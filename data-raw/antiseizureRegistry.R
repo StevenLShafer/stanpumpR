@@ -259,7 +259,7 @@ parameters <- rbind(
   par("phenytoin", "V", "1.23", "L/kg (x weight^0.463)", E, "Odani 1996, 116 Japanese epilepsy patients", odani),
   par("phenytoin", "Vmax", "9.80", "mg/day/kg (x weight^0.463)", E, "Odani 1996", odani),
   par("phenytoin", "Km", "9.19", "mg/L total", E, "Odani 1996", odani),
-  par("phenytoin", "ka (ER capsule)", "0.225", "1/h", FX, "Cheng 2020, 37 adults", "https://doi.org/10.1007/s40268-020-00323-2"),
+  par("phenytoin", "ka (ER capsule)", "0.225", "1/h", FX, "Jun 2020, 37 adults", "https://doi.org/10.1007/s40268-020-00323-2"),
   par("phenytoin", "ka (suspension/chewable)", "2.0", "1/h", CA, "label Tmax 1.5-3 h", "https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=db8c69b0-4697-433e-98c7-b0b2d2c52a83"),
   par("phenytoin", "salt factor (sodium)", "0.9199", "unitless (252.27/274.25)", LD, "molecular weights", odani),
   par("phenytoin", "conversion half-life (fosphenytoin)", "15", "min", LD, "Cerebyx label; Boucher 1989 8.0 min", "https://doi.org/10.1002/jps.2600781110"),

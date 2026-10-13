@@ -59,8 +59,9 @@
 # and "mg PO bid", but the curve they draw is the SR tablet's.  The
 # immediate-release tablet (faster absorption, higher peak) and the
 # extended-release XL tablet are NOT modelled: Zhang and colleagues (2019)
-# found CL/F 221 L/h at 60.9 kg with an absorption lag for XL, and their 2017
-# IR/SR/ER crossover found relative bioavailabilities of 1, 0.955 and 0.68,
+# found CL/F 221 L/h at 60.9 kg with an absorption lag for XL, and Connarn
+# and colleagues' 2017 IR/SR/ER crossover (AAPS J 2017;19:1513-1522) found
+# relative bioavailabilities of 1, 0.955 and 0.68,
 # so XL doses entered here would be overpredicted by about a third.  Daily
 # exposure on a steady regimen depends only on dose over CL/F, so the
 # average concentrations at steady state are less formulation-sensitive than

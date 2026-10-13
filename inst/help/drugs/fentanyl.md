@@ -1,6 +1,6 @@
 ### The model
 
-The fentanyl parameters are a pooled analysis from the Stanford laboratory: the code lists its sources as McClain and Hug (1980), Scott and Stanski (1987), Hudson (1986), Varvel (1989) and Shafer (1990), the last being the model fitted to computer-controlled infusion data (Shafer SL, Varvel JR, Aziz N, Scott JC. *Anesthesiology* 1990;73:1091-1102). The citation returned by the model function is Scott and Stanski's 1987 study of fentanyl and alfentanil pharmacokinetics and EEG pharmacodynamics across age.
+The fentanyl parameters are a pooled analysis of several studies: the code lists its sources as McClain and Hug (1980), Scott and Stanski (1987), Hudson (1986), Varvel (1989) and Shafer (1990), the last being the model fitted to computer-controlled infusion data (Shafer SL, Varvel JR, Aziz N, Scott JC. *Anesthesiology* 1990;73:1091-1102). The citation returned by the model function is Scott and Stanski's 1987 study of fentanyl and alfentanil pharmacokinetics and EEG pharmacodynamics across age.
 
 At 70 kg the volumes are 12.1, 35.7 and 224 L and the clearances 0.632, 2.8 and 1.55 L/min.
 

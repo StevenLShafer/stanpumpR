@@ -34,7 +34,11 @@ oxytocin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     upperTypical <- 0.05
     lowerTypical <- 0.2
     # V1 = 0.10 L, V2 = 0.02 L, CL1 = 0.017 L/min, and CL2 = 0.000524
-    reference <- "Tanaka et al" # Paper using LC/MS Assay
+    reference <- paste0( # Paper using LC/MS Assay
+      "Tanaka A et al. Delivery of oxytocin to the brain for the treatment of ",
+      "autism spectrum disorder by nasal application. Mol Pharm ",
+      "2018;15(3):1105-1111. PMID 29338251."
+    )
     # V1 = 0.10 L, V2 = 0.02 L, CL1 = 0.017 L/min, and CL2 = 0.000524
     v1	<- 0.10 # l
     v2	<- 0.02 # l

@@ -8,7 +8,7 @@ The parameters are from Odani and colleagues (*Biol Pharm Bull* 1996;19:444-448)
 
 Concentrations are phenytoin acid. The dose carries its own basis, converted once: phenytoin **sodium** (the extended-release capsule and the injection) is 0.92 phenytoin acid by weight; the acid suspension and chewable tablet are entered as is. **Fosphenytoin** is a route of phenytoin, not a separate drug, so the saturable elimination sees every source at once: it is prescribed in phenytoin sodium equivalents (`mg PE`, `mg PE IM`, `mg PE/min`), converted to a phenytoin compartment at a 15-minute conversion half-life (intramuscularly it is absorbed first, completely, at 2.47/h).
 
-The extended-release capsule is absorbed at 0.225/h (fixed, Cheng 2020), peaking at about 11 hours; the suspension and chewable tablet have no published absorption rate and are given a label-anchored 2.0/h (peak about 2.4 hours). These are recorded as calibrations, not estimates, in the registry.
+The extended-release capsule is absorbed at 0.225/h (fixed, Jun 2020), peaking at about 11 hours; the suspension and chewable tablet have no published absorption rate and are given a label-anchored 2.0/h (peak about 2.4 hours). These are recorded as calibrations, not estimates, in the registry.
 
 ### CYP2C9
 

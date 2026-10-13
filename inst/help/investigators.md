@@ -107,8 +107,8 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 
 - **James H. Philip**, Brigham and Women's Hospital and Harvard Medical School: Gas Man®, whose structure and parameters the inhaled-gas engine follows and against which it is validated.
 - **William W. Mapleson** (1996): the decline of MAC with age.
-- **Edmond I. Eger II**: MAC itself, and the nitrogen estimate that flags Gas Man's value.
-- **Jan F. A. Hendrickx**, **Hendrikus J. M. Lemmens** and Shafer (2006): tissue volumes and blood flows in the four-compartment gas model.
+- **Edmond I. Eger II**, with Saidman and Brandstater (1965): MAC as the standard of anesthetic potency. Eger is also credited with the nitrogen MAC estimate that flags Gas Man's value, which is not from that paper.
+- **Jan F. A. Hendrickx**, **Hendrikus J. M. Lemmens** and Shafer (2006): the four-compartment structure of the gas model, and the demonstration that fitted volumes and clearances need not equal tissue volumes and blood flows.
 - **Jeffrey M. Feldman**, **Samsun Lampotang** and Hendrickx (2022): the rule of thumb that rebreathing stops when fresh gas flow reaches minute ventilation, which the gas model follows with the threshold raised by the gas being taken up.
 
 ## Becoming a maintainer
