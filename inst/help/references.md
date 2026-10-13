@@ -140,6 +140,8 @@ Philip JH. Gas Man: an example of goal oriented computer-assisted teaching which
 
 Mapleson WW. Effect of age on MAC in humans: a meta-analysis. *Br J Anaesth* 1996;76:179-185.
 
+Koblin DD, Fang Z, Eger EI II, Laster MJ, Gong D, Ionescu P, Halsey MJ, Trudell JR. Minimum alveolar concentrations of noble gases, nitrogen, and sulfur hexafluoride in rats: helium and neon as nonimmobilizers (nonanesthetics). *Anesth Analg* 1998;87:419-424.
+
 Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. *BMC Anesthesiol* 2006;6:7.
 
 Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensitive decrement times for inhaled anesthetics in obese patients explored with Gas Man®. *J Clin Monit Comput* 2021 (PMC7943506).

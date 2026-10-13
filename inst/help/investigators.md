@@ -18,7 +18,7 @@ The first target-controlled infusion was given in Bonn in 1979, and STANPUMP was
 
 - **Donald R. Stanski** and Steven Shafer, Stanford (STANPUMP). Stanski's laboratory also produced the fentanyl and alfentanil kinetics (with **Jeffrey C. Scott**) and, with Lewis Sheiner, the effect-compartment model itself.
 - **Jürgen Schüttler** and **Helmut Schwilden**, University of Bonn (CATIA).
-- **Max E. Ausems** and **Carl C. Hug**, University of Leiden and Emory (TIAC).
+- **Max E. Ausems** and **Carl C. Hug**, University of Leiden and Emory (TIAC): the accuracy of alfentanil kinetics under computer-assisted infusion (1985) and, with **Jaap Vuyk** and Stanski, its comparison with intermittent boluses (1988).
 - **Joseph G. Reves** and **J. Michael Alvis**, University of Alabama (CACI), and **James R. Jacobs** and Reves at Duke (CACI II).
 - **Johan F. Coetzee** and Pina, Stellenbosch University (STELPUMP).
 - **Tom De Smet** and **Michel M. R. F. Struys**, University of Ghent (RUGLOOP).
@@ -97,7 +97,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 - Shafer and Varvel (1991), Minto and colleagues (2003): time to peak effect as the model-independent way to carry ke0.
 - **Keith M. Gregg** and Shafer (1992): the effect-site targeting algorithm, implemented in STANPUMP and in stanpumpR's [target-controlled infusion](help:tci).
 - **James M. Bailey** and Shafer (1991): the plasma targeting algorithm.
-- **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time.
+- **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time. Minto, Schnider and Shafer (1997): the effect-site decrement times showing that remifentanil's stays at a few minutes however long the infusion.
 - **Thomas W. Bouillon** and colleagues (2004): the propofol-remifentanil response surface.
 - **Kay L. Austin**, **John V. Stapleton**, **Laurence E. Mather** (1980) and **Geoffrey K. Gourlay** and colleagues (1988): the minimum effective analgesic concentration.
 - **W. P. T. James** (1976): lean body mass. **Hesham S. Al-Sallami**, **Nick Holford**, **Stephen Duffull** and colleagues (2015) and **Sarayut Janmahasatian** and colleagues (2005): fat-free mass, used to [scale most of the models](help:models/fat-free-mass). **Brian J. Anderson** and Holford (2008): allometry and maturation.
@@ -107,7 +107,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 
 - **James H. Philip**, Brigham and Women's Hospital and Harvard Medical School: Gas Man®, whose structure and parameters the inhaled-gas engine follows and against which it is validated.
 - **William W. Mapleson** (1996): the decline of MAC with age.
-- **Edmond I. Eger II**, with Saidman and Brandstater (1965): MAC as the standard of anesthetic potency. Eger is also credited with the nitrogen MAC estimate that flags Gas Man's value, which is not from that paper.
+- **Edmond I. Eger II**, with Saidman and Brandstater (1965): MAC as the standard of anesthetic potency; and, with **Donald D. Koblin** and colleagues (1998), the nitrogen MAC of 110 atmospheres in rats that flags Gas Man's value.
 - **Jan F. A. Hendrickx**, **Hendrikus J. M. Lemmens** and Shafer (2006): the four-compartment structure of the gas model, and the demonstration that fitted volumes and clearances need not equal tissue volumes and blood flows.
 - **Jeffrey M. Feldman**, **Samsun Lampotang** and Hendrickx (2022): the rule of thumb that rebreathing stops when fresh gas flow reaches minute ventilation, which the gas model follows with the threshold raised by the gas being taken up.
 
