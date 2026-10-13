@@ -8,7 +8,7 @@ The dose is entered as mg of eslicarbazepine **acetate** (the product strength);
 
 ### What is not modelled
 
-Enzyme inducers add about 1.4 L/h to clearance (Falcao and colleagues), not applied for want of a co-medication field. No creatinine-clearance term was found in this cohort. There is no effect site.
+Enzyme inducers add about 1.4 L/h to clearance (the peer-reviewed value; the specification's 1.24 L/h is not the published figure), not applied for want of a co-medication field. No creatinine-clearance term was found in this cohort. There is no effect site.
 
 ### Band
 

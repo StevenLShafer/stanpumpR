@@ -6,7 +6,7 @@ At 70 kg the volumes are 12.1, 35.7 and 224 L and the clearances 0.632, 2.8 and 
 
 ### Covariates
 
-Size only. By default, with *Adjust weight to fat-free mass* ticked, the volumes scale with the patient's fat-free mass relative to the 70 kg, 170 cm reference man and the clearances with that ratio to the 0.75 power, so height, age and sex enter through fat-free mass ([fat-free-mass scaling](help:models/fat-free-mass)). Unticking the box restores the original scaling on total weight: volumes linearly and clearances allometrically to the 0.75 power. The model has no age term of its own, although Scott and Stanski found fentanyl's pharmacodynamic sensitivity to increase with age.
+Weight only: volumes scale linearly and clearances allometrically to the 0.75 power. There is no age term, although Scott and Stanski found fentanyl's pharmacodynamic sensitivity to increase with age, and no sex or height term.
 
 ### Effect site
 

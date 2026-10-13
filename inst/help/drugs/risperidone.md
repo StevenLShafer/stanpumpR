@@ -14,7 +14,7 @@ The **CYP 2D6** field is a phenotype, so it is mapped to the paper's own example
 
 ### Oral only
 
-All parameters are **apparent**, so risperidone is offered as **mg PO** only (also as a qd or bid [scheduled dose](help:dose-table)).
+All parameters are **apparent**, so risperidone is offered as **mg PO** only.
 
 ### Effect
 

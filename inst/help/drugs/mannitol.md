@@ -14,7 +14,7 @@ The factor 0.555 is less than 1 because mannitol stays in the extracellular flui
 
 ### Covariates
 
-The published means are taken to describe the 70 kg reference adult. The volumes and distribution clearances are scaled to fat-free mass; elimination clearance follows creatinine clearance instead (see *Where to be careful*). With *Adjust weight to fat-free mass* off the volumes and distribution clearances are used unscaled, and creatinine clearance is computed from total body weight. Kaneda found that weight-based dosing gave higher than expected concentrations in obese patients, which is consistent with this scaling. The baseline osmolality affects nothing but the starting point of the curve.
+The published means are taken to describe the 70 kg reference adult and are scaled to fat-free mass. With *Adjust weight to fat-free mass* off they are used unscaled. Kaneda found that weight-based dosing gave higher than expected concentrations in obese patients, which is consistent with this scaling. The baseline osmolality affects nothing but the starting point of the curve.
 
 ### Effect site
 

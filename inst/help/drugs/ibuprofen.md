@@ -6,7 +6,7 @@ Every value is from the paper's final-model table (Table 3). The abstract's "cen
 
 ### Routes
 
-**mg PO** is a fasted immediate-release tablet: bioavailability 0.941, absorption half-time 26.7 minutes and a 6.7 minute lag, all as published. A 400 mg tablet peaks at 23.6 mcg/mL at about an hour in the reference man. Like acetaminophen, ibuprofen keeps its published absorption lag; for those 6.7 minutes after each tablet *time until threshold* reads blank, because the dose is in the patient but not yet absorbed. Food multiplies the tablet's absorption half-time by 1.59 and its lag by 3.65. That is not modelled, so the oral curve is the fasted curve. The faster suspension and sachet are not offered either.
+**mg PO** is a fasted immediate-release tablet: bioavailability 0.941, absorption half-time 26.7 minutes and a 6.7 minute lag, all as published. A 400 mg tablet peaks at 23.6 mcg/mL at about an hour in the reference man. Like acetaminophen, ibuprofen keeps its published absorption lag; for those 6.7 minutes the dose is not yet counted in *time until threshold*. Food multiplies the tablet's absorption half-time by 1.59 and its lag by 3.65. That is not modelled, so the oral curve is the fasted curve. The faster suspension and sachet are not offered either.
 
 **mg** is intravenous ibuprofen, which the study gave as 300 mg over 15 minutes and 400 mg over 30 minutes. It is usually infused over 30 minutes: enter it as **mg/hr** for the length of the infusion (800 mg/hr at 0 and 0 mg/hr at 30 minutes gives 400 mg), since **mg** is a bolus.
 

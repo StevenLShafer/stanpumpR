@@ -16,7 +16,7 @@ The time to peak effect, 20 minutes, is **provisional** and carries no citation 
 
 ### Covariates
 
-Weight, through the per-kilogram clearance and volume. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the volume scales with fat-free mass and the clearance with that ratio to the 0.75 power; with the switch off both scale linearly with weight. Age, height and sex enter only through the fat-free mass, so with the switch off they do not enter at all.
+Weight, through the per-kilogram clearance and volume. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the volume scales with fat-free mass and the clearance with that ratio to the 0.75 power; with the switch off both scale linearly with weight. Age, height and sex do not enter.
 
 ### Where to be careful
 

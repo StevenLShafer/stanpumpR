@@ -4,7 +4,7 @@ Sufentanil's parameters are from Gepts and colleagues (*Anesthesiology* 1995;83:
 
 ### Covariates
 
-None. The parameters are for a typical adult. Gepts found no significant covariates in the population studied. They are taken to be the 70 kg reference man's and scaled to the patient's [fat-free mass](help:models/fat-free-mass) with the switch on, as it is by default; with it off everyone receives the published values.
+None. The parameters are for a typical adult. Gepts found no significant covariates in the population studied.
 
 ### Effect site
 

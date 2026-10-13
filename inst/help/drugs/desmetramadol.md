@@ -16,7 +16,7 @@ The MEAC, 84 ng/mL, is cited but needs primary verification: Lee 2019's introduc
 
 ### Covariates
 
-Weight, by Holford's allometry; under the default [fat-free-mass scaling](help:models/fat-free-mass) the same exponents apply to the fat-free-mass ratio, and with the switch off to weight/70, as published. Age, height and sex do not enter except through fat-free mass.
+Weight, by Holford's allometry; under the default [fat-free-mass scaling](help:models/fat-free-mass) the same exponents apply to the fat-free-mass ratio. Age, height and sex do not enter.
 
 ### Where to be careful
 

@@ -2,7 +2,7 @@
 
 Oral aripiprazole and its active metabolite, from Kim J-R and colleagues (*Br J Clin Pharmacol* 2008;66:802-810): 141 steady-state plasma concentrations from 80 Korean psychiatric patients on 10 to 30 mg/day. One compartment for each species, absorption fixed at 1.06 per hour, apparent volume 192 L. Aripiprazole forms [dehydroaripiprazole](help:drugs/dehydroaripiprazole).
 
-Only the abstract could be read. It gives the structure, the absorption rate, a volume of 192 L (the implementation brief the model was built from gives 193 L from the paper's table) and the ratio of intermediate to normal clearance. The genotype-group clearances and the metabolite parameters come from the brief and **have not yet been checked**.
+Only the abstract could be read. It gives the structure, the absorption rate, a volume of 192 L (the brief gives 193 L from the paper's table) and the ratio of intermediate to normal clearance. The genotype-group clearances and the metabolite parameters come from the brief and **have not yet been checked**.
 
 ### CYP 2D6
 
@@ -10,7 +10,7 @@ Apparent clearance is 3.15 L/h in **normal** metabolisers (two functional allele
 
 ### Oral only
 
-All parameters are **apparent**, so aripiprazole is offered by mouth only: **mg PO**, or **mg PO qd** for a once-daily dose repeated to the end of the plot (see [The dose table](help:dose-table)).
+All parameters are **apparent**, so aripiprazole is offered as **mg PO** only.
 
 ### Effect site
 

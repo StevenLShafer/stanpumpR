@@ -8,7 +8,7 @@ The source's linear weight term turns a volume negative below about 28 kg, so it
 
 ### What is not plotted
 
-Mizuno and colleagues (*Clin Pharmacol Ther* 2023) related the 24-hour exposure to absence-seizure freedom (half the children free at about 1,027 mcg·h/mL), but the full equation is not available, so no seizure probability is drawn. There is no effect site.
+Mizuno and colleagues (*Clin Pharmacol Ther* 2023) related the 24-hour exposure to absence-seizure freedom (half the children free at about 1,027 mg·h/mL), but the full equation is not available, so no seizure probability is drawn. There is no effect site.
 
 ### Band
 

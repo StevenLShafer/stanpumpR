@@ -4,7 +4,7 @@ Paroxetine's parameters are from Kim and colleagues (*Drug Des Devel Ther* 2015;
 
 ### The dose term
 
-A clearance that depends on the dose cannot be used directly by the simulator, whose parameters are fixed before the doses are seen. Instead, clearance is Kim's value at 25 mg a day, and each oral dose D is scaled by (D / 25)<sup>0.363</sup>. At steady state on D mg once a day the exposure over a day is then D &times; (D / 25)<sup>0.363</sup> / CL<sub>25</sub>, which is exactly Kim's D / CL(D). So for once-daily dosing the average steady-state concentration is Kim's at every dose: at age 50, 46 ng/mL on 20 mg and 160 ng/mL on 50 mg. The scale exceeds 1 above 25 mg because it is an exposure scale on apparent parameters, not a bioavailability. See [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption).
+A clearance that depends on the dose cannot be used directly by the simulator, whose parameters are fixed before the doses are seen. Instead, clearance is Kim's value at 25 mg a day, and each oral dose D is scaled by (D / 25)<sup>0.363</sup>. At steady state on D mg once a day the exposure over a day is then D &times; (D / 25)<sup>0.363</sup> / CL<sub>25</sub>, which is exactly Kim's D / CL(D). So for once-daily dosing the average steady-state concentration is Kim's at every dose: at age 50, 46 ng/mL on 20 mg and 160 ng/mL on 50 mg. The scale exceeds 1 above 25 mg because it is an exposure scale on apparent parameters, not a bioavailability. See [Oral, intramuscular and intranasal doses](help:models/absorption).
 
 What this does not reproduce:
 
@@ -18,7 +18,7 @@ The label's half-life is about 21 hours; this model's is 54 hours at 71. Kim's d
 
 ### Covariates
 
-Age, as published, with 71 years as the reference: at 20, clearance is 2.4 times the reference value. The power of age has no lower bound, and children are far outside Kim's data; the model should not be used for them. Kim retained no size covariate, so the parameters are taken to be the 70 kg reference man's and scaled to the patient's [fat-free mass](help:models/fat-free-mass) with the switch on; with it off everyone receives the published values. CYP2D6 genotype and interacting drugs are not represented: the Patient Profile's **CYP 2D6** field does not change this model.
+Age, as published, with 71 years as the reference: at 20, clearance is 2.4 times the reference value. The power of age has no lower bound, and children are far outside Kim's data; the model should not be used for them. Kim retained no size covariate, so the parameters are taken to be the 70 kg reference man's and scaled to the patient's [fat-free mass](help:models/fat-free-mass) with the switch on; with it off everyone receives the published values. CYP2D6 genotype and interacting drugs are not represented.
 
 ### Effect site
 
