@@ -18,6 +18,8 @@
 #'   Only drugs whose model declares it are affected.
 #' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES}.
 #'   Only drugs whose model declares it (phenytoin) are affected.
+#' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
+#'   Only drugs whose model declares it (methadone) are affected.
 #' @param osmolality baseline serum osmolality in mOsm/kg.  Only an osmotic
 #'   agent (mannitol), which is reported as serum osmolality, is affected.
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
@@ -40,7 +42,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          osmolality = OSMOLALITY_DEFAULT,
                                          creatinine = NULL,
                                          cyp2c19 = CYP2C19_DEFAULT,
-                                         cyp2c9 = CYP2C9_DEFAULT)
+                                         cyp2c9 = CYP2C9_DEFAULT,
+                                         cyp2b6 = CYP2B6_DEFAULT)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -70,7 +73,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   {
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
-                    cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+                    cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
                     adjustToFFM = adjustToFFM)
     currentDT <- dose[dose$Drug == drug,]
@@ -104,7 +107,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     targetDefaults <- getDrugDefaults(target)
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
                           cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                          osmolality = osmolality,
+                          cyp2b6 = cyp2b6, osmolality = osmolality,
                           creatinine = creatinine, adjustToFFM = adjustToFFM)
     output <- attach(output, target, targetPK, targetDefaults)
   }

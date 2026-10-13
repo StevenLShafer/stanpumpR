@@ -55,11 +55,17 @@ The Kim remifentanil model for obesity uses the Janmahasatian fat-free mass inst
 
 Eleveld's propofol model gives women a higher clearance than men (2.10 against 1.79 L/min at reference size); Eleveld's remifentanil model increases clearance and V2 in women between puberty and the menopause; remimazolam's clearance and V3 are larger in women. Elsewhere sex enters only through lean or fat-free mass.
 
-## CYP2D6 and CYP2C19, and the disabled covariates
+## CYP2D6, CYP2C19, CYP2C9 and CYP2B6, and the disabled covariates
 
 **CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites).
 
-**CYP2C19 phenotype** is read by escitalopram and citalopram, whose published clearances differ by phenotype. The field offers the five terms the genotyping laboratories report (poor, intermediate, normal, rapid, ultrarapid). Neither source estimated all five, so each drug's page says which of its groups each phenotype is given. See [Antidepressant models and their limits](help:models/antidepressants). Pregnancy remains in the interface but unused.
+**CYP2C19 phenotype** is read by escitalopram and citalopram, whose published clearances differ by phenotype. The field offers the five terms the genotyping laboratories report (poor, intermediate, normal, rapid, ultrarapid). Neither source estimated all five, so each drug's page says which of its groups each phenotype is given. See [Antidepressant models and their limits](help:models/antidepressants).
+
+**CYP2C9 diplotype** is read by phenytoin, whose maximal elimination rate it scales through the CPIC activity score, and by meloxicam, which estimated a coefficient per variant allele.
+
+**CYP2B6 phenotype** is read by methadone. CYP2B6 catalyses the N-demethylation that accounts for most of methadone's clearance, and the multipliers come from Kharasch and colleagues (*Anesthesiology* 2015;123:1142-1153), who measured clearance in cohorts of volunteers chosen for their genotype. The effect is larger on S(+)- than on R(-)-methadone, as every source finds, and it is applied to non-renal clearance only, because that study found renal clearance unchanged by genotype. [The methadone genotype scenario](scenario:methadone-cyp2b6) shows why a difference in clearance is nearly invisible after one dose and obvious at steady state.
+
+Pregnancy remains in the interface but unused.
 
 ## Renal function
 

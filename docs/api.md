@@ -146,7 +146,8 @@ field.
     "osmolality": 280,       // baseline serum osmolality, mOsm/kg (mannitol only)
     "cyp2d6": "normal",      // poor | intermediate | normal | ultrarapid
     "cyp2c19": "normal",     // poor | intermediate | normal | rapid | ultrarapid
-    "cyp2c9": "*1/*1"        // *1/*1 | *1/*2 | *1/*3 | *2/*2 | *2/*3 | *3/*3
+    "cyp2c9": "*1/*1",       // *1/*1 | *1/*2 | *1/*3 | *2/*2 | *2/*3 | *3/*3
+    "cyp2b6": "normal"       // poor | intermediate | normal | rapid | ultrarapid
   },
 
   "duration": 6,             // required: length of the simulation, in timeUnit

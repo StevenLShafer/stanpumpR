@@ -279,7 +279,7 @@ test_that("the cautions page names every model that reads a patient field", {
   text <- tolower(helpPlainText(helpMarkdownToHTML(
     paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"), warn = FALSE),
           collapse = "\n"))))
-  for (arg in c("creatinine", "osmolality", "cyp2d6", "cyp2c19", "cyp2c9")) {
+  for (arg in c("creatinine", "osmolality", "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6")) {
     readers <- Filter(function(drug) helpDrugDeclares(drug, arg), getDrugDefaultsGlobal()$Drug)
     expect_gt(length(readers), 0, label = arg)
     for (drug in readers) {

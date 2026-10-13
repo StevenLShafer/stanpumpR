@@ -97,6 +97,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           creatinine = NULL,
                           cyp2c19 = CYP2C19_DEFAULT,
                           cyp2c9 = CYP2C9_DEFAULT,
+                          cyp2b6 = CYP2B6_DEFAULT,
                           alternativeModels = FALSE) {
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
@@ -119,6 +120,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         cyp2d6 = cyp2d6,
         cyp2c19 = cyp2c19,
         cyp2c9 = cyp2c9,
+        cyp2b6 = cyp2b6,
         osmolality = osmolality,
         creatinine = creatinine,
         adjustToFFM = adjustToFFM

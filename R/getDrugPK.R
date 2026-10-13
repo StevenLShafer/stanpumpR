@@ -15,6 +15,8 @@
 #'   Passed only to drug models that declare it (escitalopram, citalopram).
 #' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES};
 #'   passed only to models that name it (phenytoin).
+#' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
+#'   passed only to models that name it (methadone).
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
@@ -65,6 +67,7 @@ getDrugPK <- function(
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
+  cyp2b6 = CYP2B6_DEFAULT,
   model = NULL
 )
 {
@@ -85,6 +88,10 @@ getDrugPK <- function(
   if (length(cyp2c9) != 1 || !cyp2c9 %in% CYP2C9_VALUES) {
     stop("Invalid cyp2c9: ", paste(cyp2c9, collapse = ", "),
          ". Must be one of: ", paste(CYP2C9_VALUES, collapse = ", "))
+  }
+  if (length(cyp2b6) != 1 || !cyp2b6 %in% CYP2B6_VALUES) {
+    stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
+         ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
   }
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
@@ -134,6 +141,9 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "cyp2c9" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2c9 <- cyp2c9
+  if (exists(drug, mode = "function") &&
+      "cyp2b6" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp2b6 <- cyp2b6
   # Likewise the fat-free-mass switch: every drug model in the library
   # declares it, but a mocked model taking only ... need not.
   if (exists(drug, mode = "function") &&
@@ -954,6 +964,7 @@ getDrugPK <- function(
       cyp2d6 = cyp2d6,
       cyp2c19 = cyp2c19,
       cyp2c9 = cyp2c9,
+      cyp2b6 = cyp2b6,
       osmolality = osmolality,
       creatinine = creatinine,
       adjustToFFM = adjustToFFM,

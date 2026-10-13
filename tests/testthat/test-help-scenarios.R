@@ -162,6 +162,7 @@ test_that("every scenario runs through the simulation engine", {
       out <- simulateDrugsWithCovariates(iv, helpScenarioEventTable(s), p$weight, p$height, p$age, p$sex,
                                          s$options$maximum, s$options$showThreshold,
                                          cyp2d6 = p$cyp2d6, cyp2c19 = p$cyp2c19,
+                                         cyp2c9 = p$cyp2c9, cyp2b6 = p$cyp2b6,
                                          adjustToFFM = p$adjustToFFM)
       # every dosed drug has a row; a drug that forms an active metabolite adds
       # the metabolite's row too
@@ -261,7 +262,7 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
   for (s in scenarios) {
     expect_true(setequal(names(s$patient),
                          c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
-                           "adjustToFFM", "creatinine", "osmolality")), info = s$id)
+                           "cyp2b6", "adjustToFFM", "creatinine", "osmolality")), info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
     expect_equal(s$patient$osmolality, OSMOLALITY_DEFAULT, info = s$id)
   }
@@ -303,8 +304,8 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   expect_identical(session$messages$creatinine$value, "")
   expect_equal(as.numeric(session$messages$osmolality$value), OSMOLALITY_DEFAULT)
   # and the rest of the profile goes too
-  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "adjustToFFM")
-                  %in% names(session$messages)))
+  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6",
+                    "adjustToFFM") %in% names(session$messages)))
 
   s <- helpScenario("x-y", "T", HELP_SCENARIO_GROUPS[1], "S",
                     doses = helpDoses(c("pregabalin", 0, 150, "mg PO")),

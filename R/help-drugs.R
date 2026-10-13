@@ -529,6 +529,43 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- CYP2B6 phenotype ------------------------------------------------------
+  # A model that declares cyp2b6 (methadone) has its clearance move with the
+  # Patient Profile's CYP 2B6 field: tabulate it, with the terminal half-life,
+  # at the reference adult.
+  cyp2b6HTML <- ""
+  if (helpDrugDeclares(drug, "cyp2b6")) {
+    byPhenotype <- lapply(CYP2B6_VALUES, function(ph) {
+      # getDrugPK(), not the model function alone: the terminal half-life is
+      # read from the exponents it solves.
+      X <- helpDrugPK(drug, adult, drugDefaults, cyp2b6 = ph)
+      if (is.null(X)) return(NULL)
+      set <- X$PK[[PK_EVENT_DEFAULT]]
+      lambda <- sort(c(set$lambda_1, set$lambda_2, set$lambda_3), decreasing = TRUE)
+      data.frame(phenotype = ph, cl1 = set$cl1,
+                 terminal = helpHalfLife(lambda[3]), stringsAsFactors = FALSE)
+    })
+    byPhenotype <- do.call(rbind, byPhenotype[!vapply(byPhenotype, is.null, logical(1))])
+    normal <- byPhenotype[byPhenotype$phenotype == CYP2B6_NORMAL, ]
+    if (!is.null(byPhenotype) && nrow(normal) == 1) {
+      tab <- data.frame(
+        `CYP2B6 phenotype` = tools::toTitleCase(rev(byPhenotype$phenotype)),
+        `Clearance CL1 (L/min)` = helpFormatNumber(rev(byPhenotype$cl1)),
+        `Relative to normal` = helpFormatNumber(rev(byPhenotype$cl1) / normal$cl1),
+        `Terminal half-life` = helpFormatHalfLife(rev(byPhenotype$terminal)),
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+      cyp2b6HTML <- paste0(
+        helpH2("CYP2B6 phenotype"),
+        "<p>This model's clearance depends on CYP2B6, so the <strong>CYP 2B6</strong> field in the ",
+        "Patient Profile changes it. At the reference adult:</p>",
+        helpTableHTML(tab, "Effect of CYP2B6 phenotype"),
+        "<p class='small text-muted'>Where the source did not estimate a phenotype separately, the ",
+        "drug's own description below says which group it is given.</p>"
+      )
+    }
+  }
+
   # --- CYP2C19 phenotype -----------------------------------------------------
   # A model that declares cyp2c19 (escitalopram, citalopram) has its clearance
   # move with the Patient Profile's CYP 2C19 field: tabulate it at the
@@ -739,6 +776,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     helpH2("Model source"), sourceHTML,
     helpH2("Parameters at reference patients"), paramsHTML,
     cyp2c19HTML,
+    cyp2b6HTML,
     absorptionHTML,
     parallelHTML,
     metaboliteHTML,
