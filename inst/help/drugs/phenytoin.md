@@ -6,13 +6,13 @@ The parameters are from Odani and colleagues (*Biol Pharm Bull* 1996;19:444-448)
 
 ### Dose basis and routes
 
-Concentrations are phenytoin acid. The dose carries its own basis, converted once: phenytoin **sodium** (the extended-release capsule and the injection) is 0.92 phenytoin acid by weight; the acid suspension and chewable tablet are entered as is. **Fosphenytoin** is a route of phenytoin, not a separate drug, so the saturable elimination sees every source at once: it is prescribed in phenytoin sodium equivalents (`mg PE`, `mg PE IM`, `mg PE/min`), converted to a phenytoin compartment at a 15-minute conversion half-life (intramuscularly it is absorbed first, completely, at 2.47/h).
+Concentrations are phenytoin acid. The dose carries its own basis, converted once: phenytoin **sodium** (the extended-release capsule and the injection) is 0.92 phenytoin acid by weight; the acid suspension and chewable tablet are entered as is. **Fosphenytoin** is a route of phenytoin, not a separate drug, so the saturable elimination sees every source at once: it is prescribed in phenytoin sodium equivalents (`mg PE`, `mg/kg PE`, `mg PE/min`, `mg PE IM`, `mg/kg PE IM`), converted to a phenytoin compartment at a 15-minute conversion half-life (intramuscularly it is absorbed first, completely, at 2.47/h).
 
 The extended-release capsule is absorbed at 0.225/h (fixed, Cheng 2020), peaking at about 11 hours; the suspension and chewable tablet have no published absorption rate and are given a label-anchored 2.0/h (peak about 2.4 hours). These are recorded as calibrations, not estimates, in the registry.
 
 ### CYP2C9
 
-The maximal elimination rate is 33 per cent lower in CYP2C9 intermediate metabolisers (activity score 1, the *1/*3 genotype; Odani 1997) and, following CPIC's maintenance-dose guidance, 50 per cent lower in poor metabolisers. Set the **CYP 2C9** field in the [Patient Profile](help:patient-profile); a score of 1.5 is entered as normal. CYP2C19 and CYP2D6 carry no established phenytoin effect.
+The maximal elimination rate is 33 per cent lower in CYP2C9 intermediate metabolisers (activity score 1, the *1/*3 genotype; Odani 1997) and, following CPIC's maintenance-dose guidance, 50 per cent lower in poor metabolisers. Set the **CYP 2C9** diplotype in the [Patient Profile](help:patient-profile): \*1/\*3 and \*2/\*2 are intermediate, \*2/\*3 and \*3/\*3 poor, and \*1/\*2 (activity score 1.5) is treated as normal, as CPIC advises. CYP2C19 and CYP2D6 carry no established phenytoin effect.
 
 ### What is not modelled
 

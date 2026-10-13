@@ -92,7 +92,7 @@ helpStaticPages <- function() {
     "models/normalization",     "Normalization",                   "models",
     "models/suggest-algorithm", "How Suggest Dosing searches",     "models",
     "models/gas-engine",        "The inhaled-gas engine",          "models",
-    "models/gas-differences",   "Where the gas engine differs from Gas Man", "models",
+    "models/gas-differences",   "Where the gas engine differs from GasMan", "models",
     "models/opioid-mac",        "Opioid reduction of MAC",         "models",
 
     "scenarios/index",          "All scenarios",                   "scenarios",

@@ -16,7 +16,7 @@ minute ventilation in L/min, rounded to 0.1 so it reads cleanly in
 the dose table
 }
 \description{
-The minute ventilation whose alveolar part is Gas Man's default alveolar
+The minute ventilation whose alveolar part is GasMan's default alveolar
 ventilation: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.  With a
 dead space of 30\\% that is 5.7 L/min at 70 kg.
 }

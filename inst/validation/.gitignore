@@ -5,6 +5,6 @@
 # reference the record refers to.)
 gasman_baseline_results.xlsx
 
-# Gas Man's own CSV exports land here when comparing; they are Rich's outputs,
+# GasMan's own CSV exports land here when comparing; they are Rich's outputs,
 # not ours, and are recorded in VALIDATION.md rather than tracked wholesale.
 gasman_out/

@@ -19,6 +19,6 @@ gasTotalUptake(state, props, body, Qco)
 total uptake in L/min
 }
 \description{
-Gas Man's \code{fTotUptake}: positive while gas is being taken up, negative
+GasMan's \code{fTotUptake}: positive while gas is being taken up, negative
 during washout.  Oxygen is excluded -- see the note above.
 }

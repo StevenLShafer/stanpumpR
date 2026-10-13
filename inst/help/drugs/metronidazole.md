@@ -1,6 +1,6 @@
 ### The model
 
-Metronidazole's intravenous parameters are from da Silva Neto and colleagues (*J Antimicrob Chemother* 2021;76:3212-3219), who fitted total plasma concentrations in 20 adults receiving prophylaxis for colorectal surgery (aged 18 to 81 years, 47.6 to 101.9 kg, 144 to 179 cm): clearance 3.22 L/h at 70 kg, volume 0.556 L per kilogram of **adjusted** body weight (Devine ideal weight plus 40 per cent of the excess), one compartment. Half-time at 70 kg is 8.4 hours.
+Metronidazole's intravenous parameters are from da Silva Neto and colleagues (*J Antimicrob Chemother* 2021;76:3212-3219), who fitted total plasma concentrations in 20 adults receiving prophylaxis for colorectal surgery (aged 18 to 81 years, 47.6 to 101.9 kg, 144 to 179 cm): clearance 3.22 L/h at 70 kg, volume 0.556 L per kilogram of **adjusted** body weight (Devine ideal weight plus 40 per cent of the excess), one compartment. Half-time is 8.4 hours at an adjusted weight of 70 kg, and 8.1 hours in the 70 kg, 170 cm reference man, whose adjusted weight is 67.6 kg.
 
 ### Oral route
 

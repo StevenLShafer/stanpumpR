@@ -1,6 +1,6 @@
 ### The model
 
-From Teixeira-da-Silva and colleagues (*Pharmaceutics* 2022;14:811), who fitted 1,751 routine levels from 836 patients aged 0.1 to 93 years: one compartment, total valproate, apparent clearance 0.646 L/h and volume 14 L at 70 kg, clearance scaled by weight to the power 0.75. The half-life is about 15 hours and 1,000 mg/day averages about 64 mg/L at steady state.
+From Teixeira-da-Silva and colleagues (*Pharmaceutics* 2022;14:811), who fitted 1,751 routine levels from 836 patients aged 0.1 to 93 years: one compartment, total valproate, apparent clearance 0.646 L/h and volume 14 L at 70 kg, clearance scaled by weight to the power 0.75 and volume in proportion to weight. The weight is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total body weight with the switch off. The half-life is about 15 hours and 1,000 mg/day averages about 64 mg/L at steady state.
 
 ### Formulations and routes
 
