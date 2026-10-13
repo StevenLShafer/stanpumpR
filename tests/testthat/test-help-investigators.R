@@ -19,7 +19,10 @@ test_that("names split into given names and surname", {
   expect_equal(helpSplitName("Liu"), list(given = character(0), surname = "Liu", initial = NA_character_))
   expect_equal(helpInvestigatorKey("Eleveld", "D"), "eleveld-d")
   expect_equal(helpInvestigatorKey("Liu", NA), "liu")
-  expect_match(helpInvestigatorKey("Pöyhiä", "R"), "^(poyhia|p-yhi)-r$")
+  expect_equal(helpInvestigatorKey("Pöyhiä", "R"), "poyhia-r")
+  expect_equal(helpInvestigatorKey("Schüttler", "J"), "schuttler-j")
+  expect_equal(helpFoldAccents("Björkman Noël Müller Cortínez Ström Ørsted Åke"),
+               "Bjorkman Noel Muller Cortinez Strom Orsted Ake")
 })
 
 test_that("the registry reads every bold name on the investigators page", {

@@ -73,7 +73,7 @@ HELP_NAME_STOPWORDS <- c(
 
 # Terms linked to an external site wherever they appear in the help.
 HELP_TERM_LINKS <- list(
-  list(pattern = "Gas ?Man(?:®)?", href = "https://www.gasmanweb.com/")
+  list(pattern = "Gas ?Man(?:\u00ae)?", href = "https://www.gasmanweb.com/")
 )
 
 # --- The registry -------------------------------------------------------------
@@ -104,14 +104,45 @@ helpSplitName <- function(name) {
 
 #' An investigator's key: the surname and first initial as a slug
 #'
-#' Accents are dropped ("Pöyhiä" gives "poyhia-r") where the platform's iconv
-#' can transliterate; otherwise the slug is taken from the name as it is.
+#' Accents are folded to the plain letter ("Poyhia R" gives "poyhia-r") by
+#' helpFoldAccents(), the same on every platform; iconv's transliteration
+#' differs between glibc and macOS.
 #' @noRd
 helpInvestigatorKey <- function(surname, initial) {
-  text <- paste(surname, if (!is.na(initial)) initial)
-  ascii <- tryCatch(iconv(text, "UTF-8", "ASCII//TRANSLIT"), error = function(e) NA_character_)
-  if (is.na(ascii) || grepl("?", ascii, fixed = TRUE)) ascii <- text
-  helpSlug(ascii)
+  helpSlug(helpFoldAccents(paste(surname, if (!is.na(initial)) initial)))
+}
+
+#' Replace the accented Latin letters with their plain letter
+#'
+#' Covers the Latin-1 and the common Latin Extended-A letters.  Anything else
+#' outside ASCII is left for helpSlug() to drop.
+#' @noRd
+helpFoldAccents <- function(x) {
+  x <- enc2utf8(x)
+  pairs <- c(
+    "\u00e0a", "\u00e1a", "\u00e2a", "\u00e3a", "\u00e4a", "\u00e5a", "\u00e7c",
+    "\u00e8e", "\u00e9e", "\u00eae", "\u00ebe", "\u00eci", "\u00edi", "\u00eei",
+    "\u00efi", "\u00f1n", "\u00f2o", "\u00f3o", "\u00f4o", "\u00f5o", "\u00f6o",
+    "\u00f8o", "\u00f9u", "\u00fau", "\u00fbu", "\u00fcu", "\u00fdy", "\u00ffy",
+    "\u00c0A", "\u00c1A", "\u00c2A", "\u00c3A", "\u00c4A", "\u00c5A", "\u00c7C",
+    "\u00c8E", "\u00c9E", "\u00caE", "\u00cbE", "\u00ccI", "\u00cdI", "\u00ceI",
+    "\u00cfI", "\u00d1N", "\u00d2O", "\u00d3O", "\u00d4O", "\u00d5O", "\u00d6O",
+    "\u00d8O", "\u00d9U", "\u00daU", "\u00dbU", "\u00dcU", "\u00ddY",
+    "\u0107c", "\u010dc", "\u0111d", "\u0119e", "\u011fg", "\u0131i", "\u0142l",
+    "\u0144n", "\u0151o", "\u0159r", "\u015bs", "\u015fs", "\u0161s", "\u0163t",
+    "\u016fu", "\u0171u", "\u017az", "\u017cz", "\u017ez",
+    "\u0106C", "\u010cC", "\u0110D", "\u0118E", "\u011eG", "\u0130I", "\u0141L",
+    "\u0143N", "\u0150O", "\u0158R", "\u015aS", "\u015eS", "\u0160S", "\u0162T",
+    "\u016eU", "\u0170U", "\u0179Z", "\u017bZ", "\u017dZ"
+  )
+  from <- paste(substr(pairs, 1, 1), collapse = "")
+  to <- paste(substr(pairs, 2, 2), collapse = "")
+  x <- gsub("\u00df", "ss", x)
+  x <- gsub("\u00e6", "ae", x)
+  x <- gsub("\u00c6", "AE", x)
+  x <- gsub("\u0153", "oe", x)
+  x <- gsub("\u0152", "OE", x)
+  chartr(from, to, x)
 }
 
 #' The bold names in a Markdown text
@@ -161,7 +192,7 @@ helpInvestigatorRegistry <- function(text = helpReadMarkdown("investigators")) {
   # One row per key, keeping the fullest spelling of the name
   reg <- reg[order(match(reg$key, unique(reg$key)), -nchar(reg$name)), ]
   reg <- reg[!duplicated(reg$key), ]
-  reg$ambiguous <- ave(reg$surname, reg$surname, FUN = length) > 1
+  reg$ambiguous <- reg$surname %in% reg$surname[duplicated(reg$surname)]
   reg$citationOnly <- reg$surname %in% HELP_INVESTIGATORS_CITATION_ONLY
   rownames(reg) <- NULL
   reg
@@ -400,7 +431,7 @@ helpInvestigatorHTML <- function(inv, data = helpInvestigatorsCached()) {
     rows <- blocks[blocks$section == section, ]
     md <- vapply(seq_len(nrow(rows)), function(i) {
       if (rows$kind[i] == "row") {
-        paste0("**", rows$drug[i], "** · ", rows$investigators[i], "  \n", rows$body[i])
+        paste0("**", rows$drug[i], "** \u00b7 ", rows$investigators[i], "  \n", rows$body[i])
       } else {
         rows$body[i]
       }
