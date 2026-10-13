@@ -31,7 +31,10 @@
 # Links between pages are written in Markdown as [text](help:page-id); a link
 # that loads a teaching scenario into the simulator is [text](scenario:id).
 # helpRewriteLinks() turns these into data attributes that inst/www/app.js
-# forwards to Shiny as input$help_goto and input$help_scenario_load.
+# forwards to Shiny as input$help_goto and input$help_scenario_load.  The
+# names of the investigators in inst/help/investigators.md are linked on every
+# page to a pop-up about them by helpLinkInvestigators()
+# (R/help-investigators.R), which also links "Gas Man" to its website.
 #
 # Adding a page: add a row to helpStaticPages() and create the .md file.
 # Adding a drug: the page exists as soon as the drug is in the defaults CSV;
@@ -311,6 +314,9 @@ helpPageUI <- function(id, drugDefaults = getDrugDefaultsGlobal()) {
   row <- registry[registry$id == id, ][1, ]
 
   rendered <- helpHeadingIds(helpPageHTML(id, drugDefaults))
+  # Every investigator named on the page becomes a link to their pop-up
+  # (R/help-investigators.R); citations were linked when they were built.
+  body <- helpLinkInvestigators(rendered$html, "prose")
   toc <- rendered$toc[rendered$toc$level == 2, ]
   tocUI <- NULL
   if (nrow(toc) >= 3) {
@@ -334,7 +340,7 @@ helpPageUI <- function(id, drugDefaults = getDrugDefaultsGlobal()) {
     ),
     tags$h1(class = "help-title", row$title),
     tocUI,
-    tags$div(class = "help-body", HTML(rendered$html))
+    tags$div(class = "help-body", HTML(body))
   )
 }
 

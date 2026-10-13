@@ -879,7 +879,9 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     data.frame(
       Drug = sprintf('<a href="#" data-help-page="drugs/%s">%s%s</a>', row$Drug,
                      as.character(helpColorSwatch(row$Color)), helpDrugTitle(row$Drug)),
-      `Model source` = htmltools::htmlEscape(if (is.null(pk)) "Not available" else helpReferenceShort(pk$reference)),
+      `Model source` = helpLinkInvestigators(
+        htmltools::htmlEscape(if (is.null(pk)) "Not available" else helpReferenceShort(pk$reference)),
+        "citation"),
       `Given as` = given,
       `Active metabolite` = metabolite,
       `Default unit` = htmltools::htmlEscape(if (!is.na(row$Default.Units) && nzchar(as.character(row$Default.Units)))
@@ -966,6 +968,6 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     "<p>These are the citations the drug model functions return, collected across the reference ",
     "patients, so a drug that switches models with age or size appears under each.</p>",
     "<ul class='help-citations'>", paste(items, collapse = ""), "</ul>",
-    helpMarkdownToHTML(helpReadMarkdown("references"))
+    helpLinkInvestigators(helpMarkdownToHTML(helpReadMarkdown("references")), "citation")
   )
 }

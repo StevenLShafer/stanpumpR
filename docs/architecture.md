@@ -343,6 +343,9 @@ All files are flat in `R/`.
 **Help — the Help tab**
 - `help-content.R` — page registry (`helpStaticPages()`), Markdown rendering via `shiny::markdown()`,
   `help:`/`scenario:` link rewriting, heading ids and table of contents, full-text search.
+- `help-investigators.R` — the investigators named in bold on `inst/help/investigators.md`: the registry,
+  the links to them in every page and citation (`helpLinkInvestigators()`), and the pop-up about each
+  (`helpInvestigatorModal()`, shown on `input$investigator_show`).
 - `help-drugs.R` — pages generated from the drug library: each drug model run at six reference
   patients, with its citation, units and thresholds; the drug index; the bibliography.
 - `help-scenarios.R` — the teaching-scenario registry (`helpScenarios()`), its validator, the

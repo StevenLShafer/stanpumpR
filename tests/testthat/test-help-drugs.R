@@ -4,6 +4,10 @@ drugDefaults <- getDrugDefaultsGlobal()
 ivDrugs <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug)]
 gasDrugs <- drugDefaults$Drug[isGasDrug(drugDefaults$Drug)]
 
+# The investigators named in a citation are links (R/help-investigators.R);
+# a citation is compared with the links taken off.
+withoutLinks <- function(html) gsub("<a [^>]*>|</a>", "", html)
+
 test_that("every drug in the library has a narrative", {
   for (drug in drugDefaults$Drug) {
     expect_true(helpHasMarkdown(paste0("drugs/", drug)),
@@ -222,7 +226,8 @@ test_that("every intravenous drug page carries its citation, units and tables", 
     html <- helpDrugPageHTML(drug, drugDefaults)
     row <- drugDefaults[drugDefaults$Drug == drug, ]
     pk <- helpDrugPK(drug, helpReferencePatients()[1, ], drugDefaults)
-    expect_match(html, htmltools::htmlEscape(helpReferenceShort(pk$reference)), fixed = TRUE, info = drug)
+    # The investigators in the citation are links (R/help-investigators.R)
+    expect_match(withoutLinks(html), htmltools::htmlEscape(helpReferenceShort(pk$reference)), fixed = TRUE, info = drug)
     # desmetramadol has no dosing unit at all (it appears only as a metabolite)
     if (!is.na(row$Default.Units) && nzchar(row$Default.Units)) {
       expect_match(html, row$Default.Units, fixed = TRUE, info = drug)
@@ -235,7 +240,7 @@ test_that("every intravenous drug page carries its citation, units and tables", 
 
 test_that("the propofol page reads from the code, not from a hand-written table", {
   html <- helpDrugPageHTML("propofol")
-  expect_match(html, "Eleveld DJ et al., Br J Anaesth 2018", fixed = TRUE)
+  expect_match(html, 'data-investigator="eleveld-d">Eleveld DJ</a> et al., Br J Anaesth 2018', fixed = TRUE)
   expect_match(html, "pubmed.ncbi.nlm.nih.gov/29661412", fixed = TRUE)
   expect_match(html, "mcg/mL", fixed = TRUE)
   expect_match(html, "this model has covariates", fixed = TRUE)
@@ -279,7 +284,7 @@ test_that("the drug index links every drug", {
   for (drug in drugDefaults$Drug) {
     expect_match(html, sprintf('data-help-page="drugs/%s"', drug), fixed = TRUE, info = drug)
   }
-  expect_match(html, "Eleveld DJ et al.", fixed = TRUE)
+  expect_match(withoutLinks(html), "Eleveld DJ et al.", fixed = TRUE)
   expect_match(html, "Anesthetic agent", fixed = TRUE)
   expect_match(html, "Ventilator setting", fixed = TRUE)
   expect_match(html, "metabolite only", fixed = TRUE)
@@ -288,10 +293,11 @@ test_that("the drug index links every drug", {
 
 test_that("the bibliography lists every model citation once, with its drugs", {
   html <- helpReferencesHTML(drugDefaults)
+  cites <- withoutLinks(html)
   refs <- unique(unlist(lapply(ivDrugs, function(d) helpDrugParameterTable(d, drugDefaults)$reference)))
   for (r in refs) {
     short <- htmltools::htmlEscape(helpReferenceShort(r))
-    expect_equal(lengths(regmatches(html, gregexpr(short, html, fixed = TRUE))), 1, info = r)
+    expect_equal(lengths(regmatches(cites, gregexpr(short, cites, fixed = TRUE))), 1, info = r)
   }
   expect_match(html, 'data-help-page="drugs/fentanyl"', fixed = TRUE)
   expect_match(html, 'data-help-page="drugs/alfentanil"', fixed = TRUE)

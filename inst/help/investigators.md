@@ -1,4 +1,4 @@
-stanpumpR is a thin layer of software over a thick layer of other people's work. Every curve it draws rests on a clinical study in which patients or volunteers were given a drug, blood was sampled, and a model was fitted. This page names the investigators whose work the program uses, and what of theirs is in it. Citations are on the [Bibliography](help:references) page and on each drug's page.
+stanpumpR is a thin layer of software over a thick layer of other people's work. Every curve it draws rests on a clinical study in which patients or volunteers were given a drug, blood was sampled, and a model was fitted. This page names the investigators whose work the program uses, and what of theirs is in it. Citations are on the [Bibliography](help:references) page and on each drug's page. Wherever an investigator is named in the help, or in the References panel under the plot, the name is a link that opens a summary of their contributions.
 
 ## The program
 
