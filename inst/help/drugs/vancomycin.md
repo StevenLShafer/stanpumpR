@@ -17,3 +17,7 @@ The shaded band is the traditional trough range, 10 to 20 mcg/mL. The 2020 conse
 ### Where to be careful
 
 The clearance equation is linear in creatinine clearance and reaches zero at 1.06 mL/min; it is not a model of anuria or dialysis, and the code refuses rather than clamps if driven there. Loading doses by weight, nephrotoxicity and the vancomycin infusion reaction are outside the model.
+
+### Pregnancy
+
+With **Pregnant** ticked, the creatinine clearance Thomson's clearance term reads is multiplied by 1.5, the rise in glomerular filtration the review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) gives for pregnancy; the term is linear with a small negative intercept, so the clearance rises by slightly more than 1.5. The review reports a larger volume of distribution and a higher clearance in pregnancy, with the change in half-life unknown; it prints no factor for vancomycin itself. The larger volume is not applied, so the simulated peak in a parturient is too high. See [Pregnancy](help:models/pregnancy).

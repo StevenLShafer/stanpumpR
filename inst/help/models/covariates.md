@@ -59,7 +59,9 @@ Eleveld's propofol model gives women a higher clearance than men (2.10 against 1
 
 **CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone. See [Active metabolites](help:models/metabolites).
 
-**CYP2C19 phenotype** is read by escitalopram and citalopram, whose published clearances differ by phenotype. The field offers the five terms the genotyping laboratories report (poor, intermediate, normal, rapid, ultrarapid). Neither source estimated all five, so each drug's page says which of its groups each phenotype is given. See [Antidepressant models and their limits](help:models/antidepressants). Pregnancy remains in the interface but unused.
+**CYP2C19 phenotype** is read by escitalopram and citalopram, whose published clearances differ by phenotype. The field offers the five terms the genotyping laboratories report (poor, intermediate, normal, rapid, ultrarapid). Neither source estimated all five, so each drug's page says which of its groups each phenotype is given. See [Antidepressant models and their limits](help:models/antidepressants).
+
+**Pregnant** applies the changes of late pregnancy to the eight drugs for which the 2016 review of Ansari, Carvalho, Shafer and Flood gives a magnitude, and nothing to the rest. See [Pregnancy](help:models/pregnancy).
 
 ## Renal function
 

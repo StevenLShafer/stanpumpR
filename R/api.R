@@ -215,11 +215,19 @@ apiPatient <- function(patient) {
   if (!is.null(creatinine)) {
     creatinine <- apiNumber(creatinine, "patient.creatinine", MIN_CREATININE, MAX_CREATININE)
   }
+  sex <- apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES)
+  # Read only by the models the pregnancy review quantifies (R/pregnancy.R);
+  # getDrugPK() would refuse it for a man, but the request is told why first.
+  pregnant <- apiFlag(get("pregnant", FALSE), "patient.pregnant")
+  if (pregnant && sex != SEX_FEMALE) {
+    apiError("patient.pregnant is true, so patient.sex must be 'female'.")
+  }
   list(
     weight      = weight,
     height      = height,
     age         = age,
-    sex         = apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES),
+    sex         = sex,
+    pregnant    = pregnant,
     adjustToFFM = apiFlag(get("adjustToFFM", TRUE), "patient.adjustToFFM"),
     osmolality  = apiNumber(get("osmolality", OSMOLALITY_DEFAULT), "patient.osmolality",
                             MIN_OSMOLALITY, MAX_OSMOLALITY),
@@ -413,7 +421,7 @@ apiSimulate <- function(request) {
         maximum, recovery,
         cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
         adjustToFFM = patient$adjustToFFM, osmolality = patient$osmolality,
-        creatinine = patient$creatinine)),
+        creatinine = patient$creatinine, pregnant = patient$pregnant)),
       error = function(e) {
         if (inherits(e, "stanpumpr_api_error")) stop(e)
         apiError("The simulation failed: ", conditionMessage(e), status = 422L)
@@ -475,6 +483,7 @@ apiSimulate <- function(request) {
       height = patient$height, heightUnit = "cm",
       age    = patient$age,    ageUnit    = "years",
       sex    = patient$sex,
+      pregnant = patient$pregnant,
       adjustToFFM = patient$adjustToFFM,
       osmolality  = patient$osmolality,
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,

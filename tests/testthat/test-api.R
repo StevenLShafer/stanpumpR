@@ -146,6 +146,12 @@ test_that("invalid requests are refused with a message naming the problem", {
   expectApiError(apiSimulate(apiRequest(patient = list(weight = 70, height = 170, age = 50, sex = "x"))),
                  "patient.sex must be one of")
   expectApiError(apiSimulate(apiRequest(patient = list(weight = 70, height = 170, age = 50, sex = "male",
+                                                       pregnant = TRUE))),
+                 "patient.pregnant is true, so patient.sex must be 'female'")
+  expectApiError(apiSimulate(apiRequest(patient = list(weight = 70, height = 165, age = 30, sex = "female",
+                                                       pregnant = "maybe"))),
+                 "patient.pregnant must be true or false")
+  expectApiError(apiSimulate(apiRequest(patient = list(weight = 70, height = 170, age = 50, sex = "male",
                                                        cyp2d6 = "fast"))),
                  "patient.cyp2d6 must be one of")
   expectApiError(apiSimulate(apiRequest(doses = data.frame(Drug = "aspirin2", Time = 0, Dose = 1, Units = "mg"))),
@@ -292,4 +298,22 @@ test_that("the HTTP service answers /health, /drugs and /simulate", {
   malformed <- call("POST", "/simulate", "", "{not json")
   expect_equal(malformed$status, 400L)
   expect_match(jsonlite::fromJSON(text(malformed))$error, "not valid JSON")
+})
+
+test_that("patient.pregnant reaches the models that read it and is echoed back", {
+  doses <- data.frame(Drug = "remifentanil", Time = 0, Dose = 1, Units = "mcg/kg/min")
+  patient <- list(weight = 70, height = 165, age = 30, sex = "female")
+  off <- apiSimulate(apiRequest(patient = patient, doses = doses, duration = 30))
+  on  <- apiSimulate(apiRequest(patient = c(patient, pregnant = TRUE), doses = doses, duration = 30))
+  expect_false(off$patient$pregnant)
+  expect_true(on$patient$pregnant)
+  # doubled clearance: half the plateau
+  last <- function(x) tail(x$timeseries$Plasma[x$timeseries$Drug == "remifentanil"], 1)
+  expect_equal(last(on) / last(off), 0.5, tolerance = 0.03)
+  # the string forms the other flags accept
+  expect_true(apiSimulate(apiRequest(patient = c(patient, pregnant = "yes"), doses = doses, duration = 30))$patient$pregnant)
+  # a drug that does not read it is unchanged
+  fent <- data.frame(Drug = "fentanyl", Time = 0, Dose = 100, Units = "mcg")
+  expect_equal(apiSimulate(apiRequest(patient = c(patient, pregnant = TRUE), doses = fent))$timeseries,
+               apiSimulate(apiRequest(patient = patient, doses = fent))$timeseries)
 })

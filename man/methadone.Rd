@@ -4,7 +4,7 @@
 \alias{methadone}
 \title{Methadone pharmacokinetics}
 \usage{
-methadone(weight, height, age, sex, adjustToFFM = TRUE)
+methadone(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -18,6 +18,10 @@ methadone(weight, height, age, sex, adjustToFFM = TRUE)
 \item{adjustToFFM}{\code{TRUE} (the default) evaluates Henthorn's weight
 term on V3 at the pharmacokinetic weight; \code{FALSE} at total body
 weight.  No other parameter is size scaled.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+clearance of both enantiomers by 24/14 before the racemic reduction
+(Ansari 2016; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

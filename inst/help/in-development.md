@@ -28,9 +28,11 @@ And for plots longer than a day:
 
 **CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes.
 
-## Visible but not active
+**Pregnant** in the Patient Profile is now active (October 2026): it applies the changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood (*Anesth Analg* 2016;122:786-804) to the eight drugs for which the review gives a magnitude (morphine, remifentanil, oxycodone, methadone, dexamethasone, cefazolin, gentamicin and vancomycin) and nothing to the rest. See [Pregnancy](help:models/pregnancy), which also lists the drugs the review describes without a figure, so that nobody mistakes an unchanged curve for a studied one.
 
-**Pregnant** in the Patient Profile is still disabled. The **Serum creatinine** field is live: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin and oxycodone estimate renal function from it, or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
+## No longer a placeholder
+
+Nothing in the Patient Profile is now visible but inactive. The **Serum creatinine** field is live: mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin and oxycodone estimate renal function from it, or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
 
 ## Provisional values flagged in the code
 
@@ -45,7 +47,7 @@ From the project README:
 1. Oral opioids with good pharmacokinetics for each; only first-order absorption is currently supported.
 2. Improved models of pediatric pharmacokinetics.
 3. Improved models of drug interaction.
-4. Pharmacokinetic changes with pregnancy and renal function.
+4. Pharmacokinetic changes with renal function beyond the drugs that read the creatinine, and with pregnancy beyond the eight drugs the 2016 review quantifies.
 
 A second-generation metabolite link (morphine-6-glucuronide from codeine, for example) would need a two-stage cascade, which the engine does not yet do.
 

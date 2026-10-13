@@ -64,8 +64,12 @@ full account, with worked examples, is in
 **Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin)
 use it to estimate renal function; left blank, they assume a normal creatinine for
 the patient's age and sex (in a child, the median for age; see
-`R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** appears in the interface but is **currently
-disabled**: no drug in the library yet responds to it.
+`R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** (shown for a woman of 12 to 59 years)
+applies the pharmacokinetic changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood
+(*Anesth Analg* 2016;122:786-804) to the eight drugs for which the review gives a magnitude: morphine (clearance
+× 1.7), remifentanil (× 2, on the Minto companion too), oxycodone (× 3.8/2.6), methadone (× 24/14), dexamethasone
+(× 2), and cefazolin, gentamicin and vancomycin (the renal function their clearance terms read × 1.5). No other drug
+responds to it, including those the review describes without a figure; the help's Pregnancy page lists them all.
 
 ---
 
@@ -690,9 +694,10 @@ output. Off by default in production.
   ranges — the very young, the very old, the very large, the critically ill —
   produces numbers, but the numbers deserve less confidence than the plot's
   crispness suggests.
-- **Disabled covariates.** Pregnancy does not yet influence any prediction,
-  even though the field exists. A blank serum creatinine means an assumed normal
-  one, not a measured one.
+- **Fields only some drugs read.** Pregnancy changes eight drugs and no other,
+  and the help's Pregnancy page says which drugs the review it follows describes
+  without a figure. A blank serum creatinine means an assumed normal one, not a
+  measured one.
 - **The interaction panel is one model of one stimulus.** Bouillon's surface
   describes response to laryngoscopy. It is not a general-purpose depth monitor.
 - **The shaded band is orientation, not a target.** It is a published typical

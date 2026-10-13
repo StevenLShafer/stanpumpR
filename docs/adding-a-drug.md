@@ -90,6 +90,21 @@ overestimate a child's renal function from the child's own creatinine. Pass
 equation to children's own creatinine, as pregabalin's did. Say so in the model's header
 and in its `reference` string. See `R/drugs_vancomycin.R` and `R/renalFunction.R`.
 
+**Pregnancy.** A model whose source, or the review the library follows for pregnancy (Ansari,
+Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804; `R/pregnancy.R`), gives a
+**magnitude** for the change in pregnancy adds `pregnant = FALSE` to its signature and applies
+that factor, documented in a `PREGNANCY` section of its header with the review's wording and
+the arithmetic, with a named constant (`MORPHINE_PREGNANCY_CL_FACTOR`) and the citation
+appended to its `reference` string through `pregnancyReference()` only when the flag is on. A
+renally cleared model carries the review's 50% rise in glomerular filtration through the renal
+function its clearance term reads (`PREGNANCY_GFR_FACTOR`, as cefazolin, gentamicin and
+vancomycin do). A change the review describes only in direction is **not** applied: add the
+drug to `pregnancyFindings()` with the review's wording instead, so the help's Pregnancy page
+says what is known. `test-pregnancy.R` checks that exactly the drugs marked `applied` there
+name `pregnant`, that the flag off changes nothing, and that each factor is what the header
+says; the drug's own test pins its parameters with the flag on. Add a `### Pregnancy` section
+to the drug's help narrative and list the drug on the Cautions page.
+
 **What the engine cannot represent.** The closed-form engine is linear and mammillary, with
 first-order extravascular absorption. A source model with saturable protein binding
 (cefazolin, hydrocortisone), reversible interconversion (prednisone and prednisolone) or an
