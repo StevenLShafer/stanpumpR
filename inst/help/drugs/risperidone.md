@@ -6,7 +6,7 @@ CL/F = [4.2 + 23.2 × (allele activities)] × [1 − 0.009 × (age − 34)] L/h,
 
 with the age term applying only above 34. Risperidone forms [9-hydroxyrisperidone](help:drugs/hydroxyrisperidone), which carries the larger share of the active moiety.
 
-The structure, the allele activities and both age terms were checked against the paper. The volumes and the metabolite's clearance (Table 2) could not be read and come from the brief.
+The structure, the allele activities, both age terms, the volumes and the metabolite's clearance were all checked against the paper (Table 2).
 
 ### CYP 2D6
 

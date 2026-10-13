@@ -23,9 +23,9 @@
 #   bolus would start at 2700 ng/mL.
 #
 # Barr 2001 (24 surgical ICU patients; Steven L. Shafer a co-author) fitted a
-# two-compartment model whose full parameters were not retrievable here; Swart
-# quotes its CL 6.4 L/h, Q 112 L/h and Vss 143 L.  It would be the natural
-# replacement for the disposition below.
+# two-compartment model with no covariates (Table 4): V1 40.8 L, V2 102 L,
+# Cl1 0.107 L/min (6.4 L/h) and Cl2 1.86 L/min (112 L/h), Vss 143 L, as Swart
+# quotes.  It would be the natural replacement for the disposition below.
 #
 # DISPOSITION
 # ===========

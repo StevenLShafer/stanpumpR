@@ -79,9 +79,12 @@
 # 400 mg intravenously over 30 min.
 #
 # Not used: Li 2012 (adults after third-molar extraction, effect-site EC50
-# 10.2 mg/L), whose equilibration rate could not be retrieved; and Hannam and
-# Anderson 2011 (published adult dental data, EC50 5.07 mg/L, Hill 2), which
-# also could not be read beyond its abstract.
+# 10.2 mg/L, keo 1.49 /h or a half-time of 28 min, Table II), fitted with a
+# one-compartment PK model to interpolated plasma concentrations; and Hannam
+# and Anderson 2011 (published adult dental data, EC50 5.07 mg/L, Hill 2,
+# t1/2keo 1.16 h, 95% CI 0.96-1.93, Table 1), fitted to digitised mean curves
+# with PK fixed from the literature.  Hannam and Anderson's adult half-time
+# supports the 1.04 h used here; Li's is about half of it.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================

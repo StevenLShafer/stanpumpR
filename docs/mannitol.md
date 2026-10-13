@@ -56,10 +56,12 @@ below were checked against the abstract and match the prototype:
 |---|---|---|---|---|---|---|
 | Kaneda population mean | 2.80 L | 8.86 L | 12.0 L | 0.04 / 0.07 L/min | 2.07 L/min | 0.16 L/min |
 
-Kaneda found weight to be a covariate on V2 and dose on CL1. Only the abstract
-was available to us, so those covariate equations, the variability and the
-reference weight are not reconstructed. The prototype's documentation says the
-same.
+Kaneda found weight to be a covariate on V2 and dose on CL1. The full paper
+gives V2 = 8.86 × exp(0.0136 × (WT − 87)) L, so its 8.86 L belongs to an
+87 kg patient (7.03 L at 70 kg); the dose term multiplies CL1 by (1 − 0.344)
+in the 0.5 g/kg group (0.0448 against 0.0683 L/min). stanpumpR does not apply these
+equations: it takes the population means as the 70 kg reference adult's and
+scales them to fat-free mass (see the size-scaling note in `R/drugs_mannitol.R`).
 
 ### 2. Clearance: 0.07 L/min, not 0.04 — changed
 

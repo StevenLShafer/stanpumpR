@@ -74,12 +74,11 @@
 # independent of concentration (0.981 at 2 mg/L and 0.966 at 10 mg/L in
 # spiked plasma).  It replaces the uncited "about 0.85" this header used to
 # give; the labels' "less than 20% bound" is a bound, not a measurement.
-# Dorn's free fraction is quoted from the article; its abstract gives only
-# total concentrations, and the full text could not be read when this was
-# written, so it is worth checking against the paper.  Any credible value
-# (0.80-1.0) moves the threshold by less than a fifth.  See
-# R/antibioticThresholds.R.  (Free fraction 0.96 confirmed by Steven L.
-# Shafer, 2026-10-07.)
+# Dorn's free fraction (0.964 +/- 0.044 by ultrafiltration, n = 16), its
+# independence of concentration and the spiked-plasma values above have been
+# checked against the full text.  Any credible value (0.80-1.0) moves the
+# threshold by less than a fifth.  See R/antibioticThresholds.R.  (Free
+# fraction 0.96 also confirmed by Steven L. Shafer, 2026-10-07.)
 #
 # References
 # ----------

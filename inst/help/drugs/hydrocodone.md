@@ -16,7 +16,7 @@ Hydrocodone forms **hydromorphone** by CYP2D6. The formation constant is calibra
 
 ### Covariates
 
-The apparent disposition deliberately carries no weight term: the source fitted creatinine clearance and body surface area but its reference values were not recoverable, so no normaliser exists. Weight enters only through the formation constant, which is scaled to track the weight-scaled hydromorphone model it feeds. The [fat-free-mass switch](help:models/fat-free-mass) therefore does not change hydrocodone's own curve.
+The apparent disposition carries no weight term: the source fitted creatinine clearance on clearance (reference 91.48 mL/min/1.73 m², power 0.223) and body surface area on the central volume (reference 1.87 m², power 0.486), and neither is applied. Weight enters only through the formation constant, which is scaled to track the weight-scaled hydromorphone model it feeds. The [fat-free-mass switch](help:models/fat-free-mass) therefore does not change hydrocodone's own curve.
 
 ### Where to be careful
 

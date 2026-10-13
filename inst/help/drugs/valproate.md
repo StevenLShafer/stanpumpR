@@ -8,7 +8,7 @@ One disposition, a product-specific input: the delayed-release (enteric divalpro
 
 ### What is not modelled
 
-The published age term is omitted until its equation can be read (the paper's own worked examples do not reproduce the exponent the handoff gave). Co-medication is not applied, so the curve is valproate **without** phenytoin, phenobarbital or carbamazepine, each of which raises clearance by 40 to 65 per cent. Valproate's binding to albumin saturates in the therapeutic range, so the unbound concentration rises faster than the total; only total valproate is plotted.
+The published age term, (age/15)<sup>−0.0154</sup>, is omitted: it changes clearance by under 5% between 5 and 80 years, and the paper's own worked examples do not reproduce it. Co-medication is not applied, so the curve is valproate **without** phenytoin, phenobarbital or carbamazepine, each of which raises clearance by 40 to 65 per cent. Valproate's binding to albumin saturates in the therapeutic range, so the unbound concentration rises faster than the total; only total valproate is plotted.
 
 ### Band
 

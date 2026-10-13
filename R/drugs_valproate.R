@@ -26,12 +26,11 @@
 #
 # WHAT IS LEFT OUT, AND WHY
 # =========================
-# The AGE term.  The handoff gave (AGE/15)^-0.0154, but the equation is in a
-# table the session could not retrieve, and the paper's own worked examples
-# do not reproduce that exponent (1.484 L/h at 35 y and 73.5 kg in
-# monotherapy, where -0.0154 gives 0.66).  Until the published equation is
-# read, the age term is omitted: the model is CL/F = 0.646 x (WT/70)^0.75.
-# If the exponent is -0.0154 the omission changes clearance by under 5%
+# The AGE term.  Equation 1 and Table 2 print it as (AGE/15)^-0.0154 (RSE
+# 64%), as the handoff gave, but the paper's own worked examples do not
+# reproduce it (1.484 L/h at 35 y and 73.5 kg in monotherapy, where -0.0154
+# gives 0.66).  The age term is omitted: the model is
+# CL/F = 0.646 x (WT/70)^0.75.  The omission changes clearance by under 5%
 # between 5 and 80 years.
 #
 # CO-MEDICATION.  The app has no co-medication field, so the inducer

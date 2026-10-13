@@ -21,17 +21,17 @@ The **CYP 2C19** field in the Patient Profile scales clearance by the multiplier
 ### What is gated
 
 - **Age.** Liu reports an age coefficient (0.0077) on clearance, but the exact form of the equation was not recovered, so **no age effect is applied**: the same parameters are used at every age. A guessed form could move an older patient's clearance by tens of percent in either direction.
-- **Body size.** The source has no size covariate, so its values are taken as the 70 kg reference man's and scaled to [fat-free mass](help:models/fat-free-mass) (volume by the fat-free-mass ratio, clearance by that ratio to the 0.75 power); with the switch off they are used exactly as published at any size. The cohort's weights were not available to re-anchor the reference, and a Chinese psychiatric cohort was probably lighter than 70 kg.
+- **Body size.** The source has no size covariate, so its values are taken as the 70 kg reference man's and scaled to [fat-free mass](help:models/fat-free-mass) (volume by the fat-free-mass ratio, clearance by that ratio to the 0.75 power); with the switch off they are used exactly as published at any size. Liu's cohort was lighter than that (median 61 kg and 165 cm), and the reference has not been re-anchored to it, so the scaled values somewhat overstate clearance and volume.
 - **The desmethyl metabolite** is not modelled.
 
 ### No effect site
 
-The antidepressant effect develops over weeks, not minutes, and no equilibration rate constant exists, so there is no effect site: the plot shows plasma escitalopram. The shaded band is the AGNP consensus therapeutic reference range, 15 to 80 ng/mL (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62), with 40 ng/mL as the typical line. Serotonin-transporter occupancy from PET (Kim and colleagues 2017) is not plotted, because the units of the published EC50 values could not be verified.
+The antidepressant effect develops over weeks, not minutes, and no equilibration rate constant exists, so there is no effect site: the plot shows plasma escitalopram. The shaded band is the AGNP consensus therapeutic reference range, 15 to 80 ng/mL (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62), with 40 ng/mL as the typical line. Serotonin-transporter occupancy from PET (Kim and colleagues 2017) is not plotted. Kim's EC50s are 4.30 ng/mL (putamen) and 2.89 ng/mL (raphe) of plasma escitalopram, from 12 young men given single doses, with the maximum occupancy fixed at 100%.
 
 ### Where to be careful
 
 - An external evaluation of ten published escitalopram models, Liu's among them, in 193 Chinese patients (Yan and colleagues, *Drug Des Devel Ther* 2025;19:10937-10951, [doi:10.2147/DDDT.S546904](https://doi.org/10.2147/DDDT.S546904)) found that population predictions, without a measured concentration to calibrate them, were unreliable for individual patients. Treat the curve as the typical patient's, not a prediction for the one in front of you.
-- Other published models were not mixed with this one. Jin and colleagues (2010) fitted adults with major depression (CL/F 23.5 L/h, V/F 884 L; their covariates were not verified). Poweleit and colleagues (2023) fitted children and adolescents (CL/F 14.2 L/h × body surface area / 1.73 m² × a CYP2C19 factor, V/F 428 L, ka 0.8 /h); for a child that is the better source, and the child and infant in the table above are extrapolation of an adult model.
+- Other published models were not mixed with this one. Jin and colleagues (2010) fitted adults with major depression (CL/F 23.5 L/h and V/F 884 L without covariates; 26 L/h and 947 L in their final model, which adds age, weight, body-mass index and CYP2C19 genotype). Poweleit and colleagues (2023) fitted children and adolescents (CL/F 14.2 L/h × body surface area / 1.73 m² × a CYP2C19 factor, V/F 428 L, ka 0.8 /h); for a child that is the better source, and the child and infant in the table above are extrapolation of an adult model.
 - For racemic citalopram see [citalopram](help:drugs/citalopram).
 
 The model was implemented by Claude Code at the request of Steven L. Shafer, from the published parameters.
