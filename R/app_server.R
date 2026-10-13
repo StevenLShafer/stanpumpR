@@ -1,8 +1,7 @@
 ####################################################
 # stanpumpR                                        #
-# Copyright, 2023, Steven L. Shafer, MD            #
-# May be freely distributed, modified, or adapted  #
-# in derivative works for non-commercial purposes. #
+# Copyright 2019-2026 Steven L. Shafer, MD,        #
+# and contributors. MIT License: see LICENSE.md.   #
 ####################################################
 
 app_server <- function(input, output, session) {

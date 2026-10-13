@@ -32,6 +32,7 @@ The **MAC equivalents** panel shows the patient's alveolar concentration *as a m
 - **Ventilation must be greater than zero** whenever a gas is being given; without it nothing carries gas to the alveoli. If you enter a gas and there is no ventilation row, one is added: 5.7 L/min at 70 kg, scaled to the patient by (weight/70)^0.75. That is the minute ventilation whose alveolar part is Gas Man's default of 4 L/min.
 - **Entering nitrous oxide adds an oxygen row** at 21 per cent of the fresh gas if there is none.
 - Gas flows and ventilation are **rounded to 0.1 L/min**.
+- Inhaled agents are simulated only on plots of **7 days or less**. On a longer plot nothing is simulated, and a message asks you to remove the gas rows or choose a shorter Max time; see [Time display](help:time-display).
 
 Ventilation is **minute ventilation**. Thirty per cent of it is taken to be dead space, so the alveolar ventilation, which exchanges gas, is 70 per cent of what you enter.
 

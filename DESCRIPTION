@@ -14,8 +14,7 @@ Description: Open-source software for pharmacokinetic and pharmacodynamic
     perioperative patient care, teaching, and research. Calculates and plots
     predicted plasma and effect-site concentrations for intravenous and
     extravascular anesthetics using analytical closed-form three-compartment
-    solutions. May be freely downloaded and used without restriction for
-    non-commercial purposes.
+    solutions.
 License: MIT + file LICENSE
 Imports:
     bslib,
