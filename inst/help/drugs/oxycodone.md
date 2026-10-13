@@ -27,3 +27,7 @@ MEAC is 12 ng/mL, unchanged from the earlier model: a compromise between the low
 ### Active metabolite
 
 Oxycodone forms **oxymorphone** by CYP2D6, so a dose of oxycodone adds an [oxymorphone](help:drugs/oxymorphone) row. Oxymorphone was undetectable or barely detectable after intravenous oxycodone in the Finnish studies. The model sets its AUC at 1 per cent of oxycodone's after an intravenous dose. After an oral dose, more forms on the first pass through the liver. The model puts that AUC at 3.35 per cent, between Balyan's 2.7 per cent in genotyped normal metabolisers and Lalovic's 4 per cent. The **CYP 2D6** field scales both. Balyan found intermediate metabolisers at about 0.63 of normal, and the model uses 0.65. See [Active metabolites](help:models/metabolites).
+
+### Pregnancy
+
+With **Pregnant** ticked, the elimination clearance is multiplied by 3.8/2.6 = 1.46. The review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) reports a shorter elimination half-time in labouring women, 2.6 hours against 3.8, from the higher glomerular filtration rate and induction of CYP3A4 and CYP2D6; the ratio of half-times is the factor, with the volumes unchanged. The renal factor above is not touched (it is capped at normal renal function), and oxymorphone formation is left as it is, as the review gives no figure for the metabolite. See [Pregnancy](help:models/pregnancy).

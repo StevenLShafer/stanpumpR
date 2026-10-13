@@ -202,6 +202,8 @@ helpConcentrationUnits <- function(units) {
          "%" = "% of one atmosphere",
          # An osmotic agent is plotted as the serum osmolality it produces.
          "mOsm" = "mOsm/kg (serum osmolality)",
+         # Intravenous calcium is plotted as the change in ionized calcium.
+         "mmol" = "mmol/L (change in ionized calcium)",
          as.character(units))
 }
 

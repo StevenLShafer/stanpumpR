@@ -138,6 +138,8 @@ field.
     "height": 170,           // required
     "age": 50,               // required
     "sex": "male",           // required: "male" | "female"
+    "pregnant": false,       // late-pregnancy kinetics for the drugs that read it (default false);
+                             //   true needs sex "female"; inst/help/models/pregnancy.md
     "weightUnit": "kg",      // "kg" (default) | "lb"
     "heightUnit": "cm",      // "cm" (default) | "in"
     "ageUnit": "years",      // "years" (default) | "months"
@@ -226,7 +228,9 @@ written in order to read its answer.
 `EffectSite` is null (or empty in CSV and XML) for a prodrug that has no
 effect site of its own. For example, tramadol's effect appears in the
 `desmetramadol` rows. For mannitol, `Plasma` is the serum osmolality in
-mOsm/kg.
+mOsm/kg. For calcium chloride and calcium gluconate, `Plasma` is the change
+in ionized calcium above the patient's baseline, in mmol/L (`ConcentrationUnits`
+is `mmol/L`).
 
 ### The time grid
 

@@ -10,12 +10,11 @@ Each model was fitted to a particular population: often healthy volunteers or el
 
 Some models have no covariates at all: the same dose in milligrams gives the same curve in a 20 kg child and a 120 kg adult. The drug page says so. Dose in per-kilogram units if you want size taken into account, and remember that per-kilogram dosing is itself an assumption the model did not test.
 
-## Disabled covariates
+## Which drugs each field reaches
 
-Pregnancy appears in the interface but does not influence any prediction.
+The Patient Profile fields beyond age, weight, height and sex reach only the models that name them, and a field left blank or at its default silently gives the typical value, so it is worth knowing which drugs each one affects. (A test checks that this list names every model that reads the field.)
 
-The other Patient Profile fields reach only the models that name them, and a field left blank or at its default silently gives the typical value, so it is worth knowing which drugs each one affects. (A test checks that this list names every model that reads the field.)
-
+- **Pregnant** is read by cefazolin, dexamethasone, gentamicin, methadone, morphine, oxycodone, remifentanil and vancomycin (and by the Minto remifentanil companion model), which apply the changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood (2016). For every other drug, including those the review describes without a figure, it has no effect; see [Pregnancy](help:models/pregnancy).
 - **Serum creatinine** is read by cefazolin, gabapentin, gentamicin, lacosamide, levetiracetam, mannitol, intravenous meloxicam, oxycodone, pregabalin, sugammadex and vancomycin. Left blank, they assume a normal creatinine for the patient's age and sex, and a patient with impaired kidneys will then clear these drugs more slowly than the plot shows.
 - **Baseline serum osmolality** is read by mannitol alone, which is plotted as the osmolality it produces on top of it.
 - **CYP 2D6** is read by aripiprazole, codeine, haloperidol, hydrocodone, oxycodone, risperidone and tramadol: the four opioids through their active metabolites, the antipsychotics through their clearance. For every other drug it has no effect.

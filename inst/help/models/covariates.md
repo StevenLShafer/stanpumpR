@@ -63,7 +63,7 @@ Eleveld's propofol model gives women a higher clearance than men (2.10 against 1
 
 **CYP2C9 diplotype** (`*1/*1`, the reference, to `*3/*3`) is read by [phenytoin](help:drugs/phenytoin), whose maximal elimination rate it scales through the CPIC activity score, and by the oral [meloxicam](help:drugs/meloxicam) model, whose clearance falls with each `*2` or `*3` allele.
 
-Pregnancy remains in the interface but unused.
+**Pregnant** applies the changes of late pregnancy to the eight drugs for which the 2016 review of Ansari, Carvalho, Shafer and Flood gives a magnitude, and nothing to the rest. See [Pregnancy](help:models/pregnancy).
 
 ## Renal function
 

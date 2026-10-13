@@ -97,6 +97,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           creatinine = NULL,
                           cyp2c19 = CYP2C19_DEFAULT,
                           cyp2c9 = CYP2C9_DEFAULT,
+                          pregnant = FALSE,
                           alternativeModels = FALSE) {
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
@@ -121,6 +122,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         cyp2c9 = cyp2c9,
         osmolality = osmolality,
         creatinine = creatinine,
+        pregnant = pregnant,
         adjustToFFM = adjustToFFM
       )
     )
@@ -163,7 +165,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     {
       idx <- which(drugDefaults$Drug == drug)[1]
       entry <- alternativeModelEntry(
-        drug, weight, height, age, sex, drugDefaults[idx, ], adjustToFFM
+        drug, weight, height, age, sex, drugDefaults[idx, ], adjustToFFM,
+        pregnant = pregnant
       )
       if (is.null(entry)) next
       outputComments("Getting PK for", entry$drug)

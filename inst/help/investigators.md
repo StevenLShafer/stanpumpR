@@ -97,6 +97,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | neostigmine | **T. N. Calvey** and colleagues (1979); **T. Heier** and colleagues (2002) | One patient's two-compartment fit; the time to peak effect |
 | glycopyrrolate | **C. Bartels** and colleagues (2013) | Three-compartment kinetics of the active cation |
 | mannitol | **K. Kaneda** and colleagues (2010); **A. Rudehill** and colleagues (1993) | Three-compartment kinetics; the conversion to serum osmolality (Rudehill); clearance scaled by creatinine clearance, a stanpumpR assumption |
+| calcium chloride, calcium gluconate | **J. R. Ansari** and colleagues (2025) | Two-compartment kinetics of the rise in ionized calcium above baseline, fitted in parturients at cesarean delivery; one model for both salts, with gluconate's dose scaled by the fitted bioequivalence ratio |
 | amiodarone, desethylamiodarone | **P. Timothy Pollak**, **Thomas Bouillon** and Shafer (2000) | Apparent oral two-compartment kinetics of the parent and its metabolite in long-term therapy, with each day's oral dose as a constant rate |
 | amiodaroneIV | **J. M. Korth-Bradley** and colleagues (1996) | Per-kilogram two-compartment kinetics of acute intravenous amiodarone, for the first one to three days |
 | ondansetron (18 and over) | **M. D. Chiang** and colleagues (2021) | Two-compartment intravenous kinetics in adults, with age on central volume |

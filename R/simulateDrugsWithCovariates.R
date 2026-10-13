@@ -26,6 +26,10 @@
 #' @param adjustToFFM scale each model's volumes and clearances to the patient's
 #'   fat-free mass (the default) rather than total body weight; see
 #'   `docs/weight-adjustment.md`.
+#' @param pregnant is the patient pregnant?  TRUE or FALSE (the default); TRUE
+#'   requires \code{sex = "female"}.  Only the models that name it apply the
+#'   changes of late pregnancy described by Ansari, Carvalho, Shafer and Flood
+#'   (Anesth Analg 2016;122:786-804); see \code{getDrugPK()}.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -40,7 +44,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          osmolality = OSMOLALITY_DEFAULT,
                                          creatinine = NULL,
                                          cyp2c19 = CYP2C19_DEFAULT,
-                                         cyp2c9 = CYP2C9_DEFAULT)
+                                         cyp2c9 = CYP2C9_DEFAULT,
+                                         pregnant = FALSE)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -72,7 +77,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
                     cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
                     osmolality = osmolality, creatinine = creatinine,
-                    adjustToFFM = adjustToFFM)
+                    pregnant = pregnant, adjustToFFM = adjustToFFM)
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
 
@@ -105,7 +110,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
                           cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
                           osmolality = osmolality,
-                          creatinine = creatinine, adjustToFFM = adjustToFFM)
+                          creatinine = creatinine, pregnant = pregnant,
+                          adjustToFFM = adjustToFFM)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

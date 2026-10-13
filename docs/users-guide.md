@@ -64,8 +64,12 @@ full account, with worked examples, is in
 **Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin)
 use it to estimate renal function; left blank, they assume a normal creatinine for
 the patient's age and sex (in a child, the median for age; see
-`R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** appears in the interface but is **currently
-disabled**: no drug in the library yet responds to it.
+`R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** (shown for a woman of 12 to 59 years)
+applies the pharmacokinetic changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood
+(*Anesth Analg* 2016;122:786-804) to the eight drugs for which the review gives a magnitude: morphine (clearance
+× 1.7), remifentanil (× 2, on the Minto companion too), oxycodone (× 3.8/2.6), methadone (× 24/14), dexamethasone
+(× 2), and cefazolin, gentamicin and vancomycin (the renal function their clearance terms read × 1.5). No other drug
+responds to it, including those the review describes without a figure; the help's Pregnancy page lists them all.
 
 ---
 
@@ -395,6 +399,8 @@ what the literature offers.
 | Prednisolone | Xu J, Winkler J, Derendorf H. *J Pharmacokinet Pharmacodyn* 2007;34:355–372. [DOI 10.1007/s10928-007-9050-8](https://doi.org/10.1007/s10928-007-9050-8) (reversible pair reduced to its exact mammillary equivalent; **free** prednisolone) |
 | Prednisone | Xu J, Winkler J, Derendorf H, as above (oral prodrug; total prednisone, with prednisolone on the prednisolone row) |
 | Mannitol | Kaneda K et al., *J Clin Pharmacol* 2010;50(5):536–543. [PMID 20051588](https://pubmed.ncbi.nlm.nih.gov/20051588/)<br>Osmolality: Rudehill A et al., *J Neurosurg Anesthesiol* 1993;5(1):4–12. [PMID 8431668](https://pubmed.ncbi.nlm.nih.gov/8431668/). See [docs/mannitol.md](mannitol.md). |
+| Calcium chloride | Ansari JR et al., *Anesthesiology* 2025;142:121–131. [DOI 10.1097/ALN.0000000000005248](https://doi.org/10.1097/ALN.0000000000005248) (parturients at cesarean delivery; plotted as the change in ionized calcium, mmol/L; offered to every patient as an extrapolation) |
+| Calcium gluconate | Ansari JR et al., as above (the calcium chloride model through the fitted dose ratio, 3.11 g per gram of calcium chloride) |
 | Amiodarone | Pollak PT, Bouillon T, Shafer SL. *Clin Pharmacol Ther* 2000;67:642–652. [PMID 10872646](https://pubmed.ncbi.nlm.nih.gov/10872646/) (long-term oral; apparent parameters, constant daily input) |
 | Desethylamiodarone | Pollak PT, Bouillon T, Shafer SL, as above (formed from all amiodarone cleared, mass basis; not dosed directly) |
 | Amiodarone IV | Korth-Bradley JM et al. *J Clin Pharmacol* 1996;36:715–719. [PMID 8877675](https://pubmed.ncbi.nlm.nih.gov/8877675/) (acute intravenous therapy, first one to three days; no metabolite) |
@@ -690,9 +696,10 @@ output. Off by default in production.
   ranges — the very young, the very old, the very large, the critically ill —
   produces numbers, but the numbers deserve less confidence than the plot's
   crispness suggests.
-- **Disabled covariates.** Pregnancy does not yet influence any prediction,
-  even though the field exists. A blank serum creatinine means an assumed normal
-  one, not a measured one.
+- **Fields only some drugs read.** Pregnancy changes eight drugs and no other,
+  and the help's Pregnancy page says which drugs the review it follows describes
+  without a figure. A blank serum creatinine means an assumed normal one, not a
+  measured one.
 - **The interaction panel is one model of one stimulus.** Bouillon's surface
   describes response to laryngoscopy. It is not a general-purpose depth monitor.
 - **The shaded band is orientation, not a target.** It is a published typical

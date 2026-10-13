@@ -60,3 +60,20 @@ test_that("the unbound AUC after a dose is dose / CLu", {
   auc <- PK$p_coef_bolus_l1 / PK$lambda_1 + PK$p_coef_bolus_l2 / PK$lambda_2
   expect_equal(auc, 1 / PK$cl1)
 })
+
+test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  Creatinine clearance x 1.5, so CLu x 1.5^0.586.
+  # The values are those the model gives with the flag on; test-pregnancy.R
+  # checks the ratio against the flag off and that nothing else moves.
+  actual <- cefazolin(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(29.50307895, actual$v1)
+  expect_equal_rounded(34.01721124, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(0.7249970217, actual$cl1)
+  expect_equal_rounded(0.7713248818, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+  expect_equal(cefazolin(70, 165, 30, "female")$PK$default,
+               cefazolin(70, 165, 30, "female", pregnant = FALSE)$PK$default)
+  expect_match(cefazolin(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
+  expect_no_match(cefazolin(70, 165, 30, "female")$reference, "Ansari")
+})

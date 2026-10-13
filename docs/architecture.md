@@ -245,7 +245,10 @@ into the fat-free-mass multipliers that most drug models apply to their volumes 
 Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally cleared
 models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
-adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `recoveryCalc()` computes
+adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `pregnancy.R` holds the
+Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, the review's findings per drug in
+`pregnancyFindings()`), which `getDrugPK()` passes only to the eight models that name `pregnant`, each applying
+the factor its header documents from Ansari 2016; `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 
