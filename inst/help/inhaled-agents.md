@@ -8,7 +8,7 @@ The inhaled anesthetics are entered in the dose table like any other drug. Seven
 
 Set the flows, the vaporizer and the ventilation, and the program simulates alveolar and brain tensions for each agent, the inspired and alveolar oxygen, and a **MAC equivalents** panel. Nitrogen is carried implicitly and washes out; you do not enter it.
 
-The model is Gas Man®'s, the model of inhaled anesthetic uptake and distribution developed by James H. Philip, with a handful of deliberate differences listed under [Where the gas engine differs from Gas Man](help:models/gas-differences). The equations are under [The inhaled-gas engine](help:models/gas-engine).
+The model is GasMan®'s, the model of inhaled anesthetic uptake and distribution developed by James H. Philip, with a handful of deliberate differences listed under [Where the gas engine differs from GasMan](help:models/gas-differences). The equations are under [The inhaled-gas engine](help:models/gas-engine).
 
 ## What is plotted
 
@@ -29,21 +29,21 @@ The **MAC equivalents** panel shows the patient's alveolar concentration *as a m
 
 ## Rules the dose table enforces
 
-- **Ventilation must be greater than zero** whenever a gas is being given; without it nothing carries gas to the alveoli. If you enter a gas and there is no ventilation row, one is added: 5.7 L/min at 70 kg, scaled to the patient by (weight/70)^0.75. That is the minute ventilation whose alveolar part is Gas Man's default of 4 L/min.
+- **Ventilation must be greater than zero** whenever a gas is being given; without it nothing carries gas to the alveoli. If you enter a gas and there is no ventilation row, one is added: 5.7 L/min at 70 kg, scaled to the patient by (weight/70)^0.75. That is the minute ventilation whose alveolar part is GasMan's default of 4 L/min.
 - **Entering nitrous oxide adds an oxygen row** at 21 per cent of the fresh gas if there is none.
 - Gas flows and ventilation are **rounded to 0.1 L/min**.
 
 Ventilation is **minute ventilation**. Thirty per cent of it is taken to be dead space, so the alveolar ventilation, which exchanges gas, is 70 per cent of what you enter.
 
-Cardiac output is fixed at Gas Man's default of 5 L/min at 70 kg, scaled by (weight/70)^0.75, and is not currently a user input.
+Cardiac output is fixed at GasMan's default of 5 L/min at 70 kg, scaled by (weight/70)^0.75, and is not currently a user input.
 
 ## Fresh gas flow and rebreathing
 
-The breathing circuit is the "ideal" circle system: once the fresh gas flow reaches the minute ventilation plus the gas being taken up from the alveoli, there is no rebreathing and the patient inspires fresh gas and nothing else. Below that, the shortfall is made up with exhaled gas. The uptake term is small, about 0.05 L/min on oxygen and a volatile agent, so the familiar rule of thumb, no rebreathing at a fresh gas flow equal to the minute ventilation, is nearly right; early in a nitrous oxide induction it can be close to 1 L/min. See [Where the gas engine differs from Gas Man](help:models/gas-differences) for the exact rule. There is no circuit volume, so a change at the vaporizer reaches the patient at once. At low flows the alveolar concentration lags the vaporizer setting and the oxygen consumed (3.5 mL/kg/min) is no longer there to dilute what remains, so concentrations run higher than the fresh gas would suggest. [The sevoflurane wash-in scenario](scenario:sevoflurane-washin) shows this.
+The breathing circuit is the "ideal" circle system: once the fresh gas flow reaches the minute ventilation plus the gas being taken up from the alveoli, there is no rebreathing and the patient inspires fresh gas and nothing else. Below that, the shortfall is made up with exhaled gas. The uptake term is small, about 0.05 L/min on oxygen and a volatile agent, so the familiar rule of thumb, no rebreathing at a fresh gas flow equal to the minute ventilation, is nearly right; early in a nitrous oxide induction it can be close to 1 L/min. See [Where the gas engine differs from GasMan](help:models/gas-differences) for the exact rule. There is no circuit volume, so a change at the vaporizer reaches the patient at once. At low flows the alveolar concentration lags the vaporizer setting and the oxygen consumed (3.5 mL/kg/min) is no longer there to dilute what remains, so concentrations run higher than the fresh gas would suggest. [The sevoflurane wash-in scenario](scenario:sevoflurane-washin) shows this.
 
 ## The concentration and second gas effects
 
-Nitrous oxide taken up in bulk concentrates whatever else is in the alveolus, so sevoflurane rises faster in its presence. The engine reproduces this coupling, as Gas Man does. [The second gas effect scenario](scenario:second-gas-effect) shows it.
+Nitrous oxide taken up in bulk concentrates whatever else is in the alveolus, so sevoflurane rises faster in its presence. The engine reproduces this coupling, as GasMan does. [The second gas effect scenario](scenario:second-gas-effect) shows it.
 
 ## Opioids and MAC
 
@@ -64,4 +64,4 @@ The thresholds can be changed in the Drug Thresholds dialog, where the volatile 
 
 ## Validation
 
-The engine has been checked against Gas Man itself across five scenarios, with each disagreement traced to its cause. Richard H. Epstein ran the Gas Man side of the comparison. The record is in the repository at `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).
+The engine has been checked against GasMan itself across five scenarios, with each disagreement traced to its cause. Richard H. Epstein ran the GasMan side of the comparison. The record is in the repository at `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).

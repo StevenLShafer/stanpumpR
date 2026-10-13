@@ -11,7 +11,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `inst/help/` | The hand-written pages of this help, as Markdown |
 | `inst/api/` | The TCI API's deployment entry point (`entrypoint.R`, for Posit Connect) and its OpenAPI document (`openapi.json`) |
 | `inst/www/` | The app's stylesheet and JavaScript |
-| `inst/validation/` | The Gas Man validation record, the scenario drivers and their results |
+| `inst/validation/` | The GasMan validation record, the scenario drivers and their results |
 | `tests/testthat/` | The unit tests, one file per drug and per source file |
 | `vignettes/` | Two worked examples of the scripting interface |
 | `docs/` | Developer documentation: architecture, adding a drug, the user's guide draft (not shipped in the package) |
@@ -32,7 +32,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **Pharmacodynamics and derived quantities.** `modelInteraction.R` (propofol-opioid), `recoveryCalc.R` (time until threshold), `opioidMacInteraction.R`, `setLinetypes.R`.
 
-**The inhaled-gas engine.** `gasProperties.R` (parameters and provenance), `advanceClosedFormGas.R` (the model and its matrix-exponential advance), `gasDrugEntries.R` (how gas results become plot series), `gasRecovery.R` (time until threshold for gases and MAC), `advanceGasManBaseline.R` (a transcription of Gas Man's own update, kept as the reference the engine is compared to).
+**The inhaled-gas engine.** `gasProperties.R` (parameters and provenance), `advanceClosedFormGas.R` (the model and its matrix-exponential advance), `gasDrugEntries.R` (how gas results become plot series), `gasRecovery.R` (time until threshold for gases and MAC), `advanceGasManBaseline.R` (a transcription of GasMan's own update, kept as the reference the engine is compared to).
 
 **Output.** `simulationPlot.R` assembles the figure; `suggest.R` is Suggest Dosing; `sendSlide.R` builds and mails the PowerPoint slide.
 

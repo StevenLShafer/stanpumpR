@@ -263,7 +263,7 @@ test_that("extravascular routes and events are described where the model has the
   expect_false(grepl("Events that change the kinetics", prop, fixed = TRUE))
 })
 
-test_that("gas pages carry Gas Man's parameters and the MAC table", {
+test_that("gas pages carry GasMan's parameters and the MAC table", {
   for (gas in gasDrugs) {
     html <- helpDrugPageHTML(gas, drugDefaults)
     expect_match(html, "At a glance", fixed = TRUE, info = gas)

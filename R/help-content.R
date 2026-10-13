@@ -34,7 +34,7 @@
 # forwards to Shiny as input$help_goto and input$help_scenario_load.  The
 # names of the investigators in inst/help/investigators.md are linked on every
 # page to a pop-up about them by helpLinkInvestigators()
-# (R/help-investigators.R), which also links "Gas Man" to its website.
+# (R/help-investigators.R), which also links "GasMan" to its website.
 #
 # Adding a page: add a row to helpStaticPages() and create the .md file.
 # Adding a drug: the page exists as soon as the drug is in the defaults CSV;
@@ -94,7 +94,7 @@ helpStaticPages <- function() {
     "models/normalization",     "Normalization",                   "models",
     "models/suggest-algorithm", "How Suggest Dosing searches",     "models",
     "models/gas-engine",        "The inhaled-gas engine",          "models",
-    "models/gas-differences",   "Where the gas engine differs from Gas Man", "models",
+    "models/gas-differences",   "Where the gas engine differs from GasMan", "models",
     "models/opioid-mac",        "Opioid reduction of MAC",         "models",
 
     "scenarios/index",          "All scenarios",                   "scenarios",
@@ -338,7 +338,8 @@ helpPageUI <- function(id, drugDefaults = getDrugDefaultsGlobal()) {
       " › ",
       row$sectionTitle
     ),
-    tags$h1(class = "help-title", row$title),
+    # The title gets the same links as the body ("...differs from GasMan")
+    tags$h1(class = "help-title", HTML(helpLinkInvestigators(htmltools::htmlEscape(row$title), "prose"))),
     tocUI,
     tags$div(class = "help-body", HTML(body))
   )

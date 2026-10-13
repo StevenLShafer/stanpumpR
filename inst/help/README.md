@@ -29,7 +29,7 @@ other half is generated from the code at run time (see `R/help-content.R`,
   Eleveld", "Eleveld DJ", "Jim Philip"), and by surname alone when nobody
   else on that page shares the surname. Two people with one surname are told
   apart by their first initial, so a bare "Kim" links to no one. Shafer is
-  linked only in citations. "Gas Man" links to the Gas Man website.
+  linked only in citations. "GasMan" links to the GasMan website.
 * To add an investigator, write their name in **bold** on
   `investigators.md`, in a paragraph, list item or table row that says what
   of theirs is used; that text is their pop-up.

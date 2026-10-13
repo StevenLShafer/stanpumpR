@@ -72,7 +72,7 @@ test_that("given names and initials are part of the link", {
   expect_match(link("Eleveld DJ et al., Br J Anaesth 2018"), '>Eleveld DJ</a> et al.', fixed = TRUE)
   expect_match(link("James H. Philip at Brigham"), '>James H. Philip</a> at', fixed = TRUE)
   expect_match(link("by Jim Philip"), 'data-investigator="philip-j">Jim Philip</a>', fixed = TRUE)
-  expect_match(link("Philip JH. Gas Man: an example"), 'data-investigator="philip-j">Philip JH</a>', fixed = TRUE)
+  expect_match(link("Philip JH. GasMan: an example"), 'data-investigator="philip-j">Philip JH</a>', fixed = TRUE)
   expect_match(link("Alfred L. van Steveninck"), '>Alfred L. van Steveninck</a>', fixed = TRUE)
   expect_match(link("Van Steveninck AL, Cohen AF"), '>Van Steveninck AL</a>', fixed = TRUE)
   expect_match(link("Tom De Smet and Michel M. R. F. Struys"), '>Tom De Smet</a> and <a[^>]*>Michel M. R. F. Struys</a>')
@@ -116,11 +116,11 @@ test_that("Shafer is linked in citations and nowhere else", {
   expect_match(cite, 'data-investigator="varvel-j">Varvel JR</a>', fixed = TRUE)
 })
 
-test_that("Gas Man links to its website", {
-  html <- link("follows Gas Man®, and Gas Man's output; GasMan too")
+test_that("GasMan links to its website", {
+  html <- link("follows GasMan®, and GasMan's output; GasMan too")
   expect_equal(lengths(regmatches(html, gregexpr("gasmanweb.com", html))), 3)
-  expect_match(html, '<a href="https://www.gasmanweb.com/" class="help-term-link" target="_blank" rel="noreferrer">Gas Man®</a>,', fixed = TRUE)
-  expect_match(html, '>Gas Man</a>\'s output', fixed = TRUE)
+  expect_match(html, '<a href="https://www.gasmanweb.com/" class="help-term-link" target="_blank" rel="noreferrer">GasMan®</a>,', fixed = TRUE)
+  expect_match(html, '>GasMan</a>\'s output', fixed = TRUE)
 })
 
 test_that("text already in a link, in code or in a tag is left alone", {
@@ -131,7 +131,7 @@ test_that("text already in a link, in code or in a tag is left alone", {
   expect_match(html, '<pre>Kim TK</pre>', fixed = TRUE)
   expect_match(html, '<p title="Eleveld"><a href="#" class="investigator-link" data-investigator="eleveld-d">Eleveld</a></p>', fixed = TRUE)
   # So that linking twice is linking once
-  once <- link("<p>Douglas J. Eleveld, Eleveld DJ, Kim TK, Gas Man, Shafer SL</p>", "citation")
+  once <- link("<p>Douglas J. Eleveld, Eleveld DJ, Kim TK, GasMan, Shafer SL</p>", "citation")
   expect_identical(link(once, "citation"), once)
   expect_false(grepl("[\x01-\x06]", once))
   # An excluded person is not linked
@@ -159,10 +159,12 @@ test_that("every help page links its investigators, and the drug pages their cit
   # The TOC's heading text is plain
   expect_false(grepl("<a[^>]*><a", propofol))
 
+  title <- as.character(helpPageUI("models/gas-differences"))
+  expect_match(title, '<h1 class="help-title">Where the gas engine differs from <a href="https://www.gasmanweb.com/" class="help-term-link" target="_blank" rel="noreferrer">GasMan</a></h1>', fixed = TRUE)
   gas <- as.character(helpPageUI("models/gas-engine"))
   expect_match(gas, linkTo("philip-j"), fixed = TRUE)
   expect_match(gas, 'href="https://www.gasmanweb.com/"', fixed = TRUE)
-  # "Gas Man" inside an existing help link is not linked again
+  # "GasMan" inside an existing help link is not linked again
   expect_false(grepl('<a[^>]*data-help-page[^>]*>[^<]*<a', gas))
 })
 

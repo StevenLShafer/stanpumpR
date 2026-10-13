@@ -807,7 +807,7 @@ helpGasPageHTML <- function(gas, row) {
     )
     propsHTML <- paste0(
       helpH2("Physical properties"),
-      "<p>These are Gas Man\u00ae's values, carried unchanged so that the engine can be checked against Gas Man; see ",
+      "<p>These are GasMan\u00ae's values, carried unchanged so that the engine can be checked against GasMan; see ",
       helpPageLink("models/gas-engine"), ".</p>",
       helpTableHTML(tab)
     )

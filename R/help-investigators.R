@@ -31,7 +31,7 @@
 # HELP_INVESTIGATORS_CITATION_ONLY (Shafer, who wrote the program and is
 # named all through the help) are linked only in citations: context =
 # "citation" is the bibliography and the citation strings, context = "prose"
-# is everything else.  The same pass links every "Gas Man" to the Gas Man
+# is everything else.  The same pass links every "GasMan" to the GasMan
 # website (HELP_TERM_LINKS).
 #
 # Clicking a link sends the key to Shiny as input$investigator_show (one
@@ -155,7 +155,7 @@ helpBoldNames <- function(text) {
 #' Does a bold token look like a person's name?
 #'
 #' One to six words, each starting with a letter, none all lower case except a
-#' particle.  "Gas Man" would pass; the registry is read only from
+#' particle.  "GasMan" would pass; the registry is read only from
 #' investigators.md, where every bold token is a name.
 #' @noRd
 helpLooksLikeName <- function(x) {

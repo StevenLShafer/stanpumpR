@@ -14,4 +14,4 @@ Hover on the alveolar line just before and a few minutes after 15 minutes.
 
 ## Background
 
-[Inhaled anesthetics](help:inhaled-agents) explains the ideal circuit, the dead-space fraction and why oxygen consumption matters at low flows; [Where the gas engine differs from Gas Man](help:models/gas-differences) explains why the picture differs from Gas Man's semi-closed circuit. [Sevoflurane](help:drugs/sevoflurane) has the parameters.
+[Inhaled anesthetics](help:inhaled-agents) explains the ideal circuit, the dead-space fraction and why oxygen consumption matters at low flows; [Where the gas engine differs from GasMan](help:models/gas-differences) explains why the picture differs from GasMan's semi-closed circuit. [Sevoflurane](help:drugs/sevoflurane) has the parameters.

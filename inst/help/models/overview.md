@@ -1,4 +1,4 @@
-stanpumpR uses no numerical ODE solver. Every intravenous drug is a mammillary three-compartment model with an effect-site link, solved analytically once per patient and then evaluated at every time point as a sum of exponentials. The inhaled agents use a separate engine that advances the Gas Man model by matrix exponential in short steps: each step is exact with the uptake that couples the gases held at its value at the start of the step, and that coupling is updated from step to step, which leaves a small error that shrinks with the step (see [The inhaled-gas engine](help:models/gas-engine)). This page is the map; the pages that follow are the territory.
+stanpumpR uses no numerical ODE solver. Every intravenous drug is a mammillary three-compartment model with an effect-site link, solved analytically once per patient and then evaluated at every time point as a sum of exponentials. The inhaled agents use a separate engine that advances the GasMan model by matrix exponential in short steps: each step is exact with the uptake that couples the gases held at its value at the start of the step, and that coupling is updated from step to step, which leaves a small error that shrinks with the step (see [The inhaled-gas engine](help:models/gas-engine)). This page is the map; the pages that follow are the territory.
 
 ## From covariates to a curve
 
@@ -27,7 +27,7 @@ stanpumpR uses no numerical ODE solver. Every intravenous drug is a mammillary t
 
 ## The inhaled agents
 
-The inhaled-gas engine is a separate model: four compartments (alveolar gas, vessel-rich group, muscle, fat) for each of several gases, coupled through the total uptake so that the concentration and second gas effects appear, with a breathing circuit in front. Its parameters and defaults are Gas Man®'s, and it has been validated against Gas Man. See [The inhaled-gas engine](help:models/gas-engine), [Where the gas engine differs from Gas Man](help:models/gas-differences) and [Opioid reduction of MAC](help:models/opioid-mac).
+The inhaled-gas engine is a separate model: four compartments (alveolar gas, vessel-rich group, muscle, fat) for each of several gases, coupled through the total uptake so that the concentration and second gas effects appear, with a breathing circuit in front. Its parameters and defaults are GasMan®'s, and it has been validated against GasMan. See [The inhaled-gas engine](help:models/gas-engine), [Where the gas engine differs from GasMan](help:models/gas-differences) and [Opioid reduction of MAC](help:models/opioid-mac).
 
 ## Why closed form
 

@@ -96,12 +96,12 @@ No report found an adverse event caused by the TCI algorithm. They concluded tha
 
 stanpumpR uses very little of the original STANPUMP code. Conceptually it is identical: an open-source program that makes complex pharmacokinetic algorithms available to support patient care, teaching and research. The difference is that **stanpumpR does not control drug administration**. It is a web-based simulator, written in R with the Shiny framework, that shows the expected concentrations from any dosing regimen.
 
-The R package was begun by Steven Shafer in 2019. Dean Attali rebuilt it as a maintainable Shiny application with a test suite and automated deployment. In 2026 it gained an engine for the inhaled anesthetics following Gas Man®, validated by Richard Epstein. The same year STANPUMP's targeting algorithm returned as two dose-table units, *Plasma target* and *Effect site target*, which simulate a TCI pump using Shafer and Gregg's method; see [Target-controlled infusion](help:tci).
+The R package was begun by Steven Shafer in 2019. Dean Attali rebuilt it as a maintainable Shiny application with a test suite and automated deployment. In 2026 it gained an engine for the inhaled anesthetics following GasMan®, validated by Richard Epstein. The same year STANPUMP's targeting algorithm returned as two dose-table units, *Plasma target* and *Effect site target*, which simulate a TCI pump using Shafer and Gregg's method; see [Target-controlled infusion](help:tci).
 
 ## Licence and use
 
 stanpumpR may be freely downloaded and used without restriction for non-commercial purposes. It is hoped that it will encourage device manufacturers to develop the next generation of drug delivery systems and anesthesia information management systems; companies seeking to develop such systems should contact Dr Shafer for written permission before incorporating stanpumpR into a product.
 
-## Gas Man
+## GasMan
 
-Gas Man® was developed by James H. Philip at Brigham and Women's Hospital and Harvard Medical School, and has taught a generation of anesthesiologists how the inhaled agents behave: a four-compartment model of uptake and distribution with a breathing circuit in front, animated on screen. stanpumpR's inhaled-gas engine follows its structure and parameters and departs from it only deliberately; see [The inhaled-gas engine](help:models/gas-engine).
+GasMan® was developed by James H. Philip at Brigham and Women's Hospital and Harvard Medical School, and has taught a generation of anesthesiologists how the inhaled agents behave: a four-compartment model of uptake and distribution with a breathing circuit in front, animated on screen. stanpumpR's inhaled-gas engine follows its structure and parameters and departs from it only deliberately; see [The inhaled-gas engine](help:models/gas-engine).
