@@ -41,6 +41,12 @@ Near-term future developments in stanpumpR will include
   covariates and a duration (over HTTP from any language, or from R) and get the concentrations
   back as JSON, CSV, Excel or XML. The page is rendered from
   [`inst/apidocs/api.md`](inst/apidocs/api.md).
+- [`docs/tci-api.md`](docs/tci-api.md) — the TCI API: a stateless web service, `/tci/v1`,
+  that hands a real target-controlled infusion pump its next rate from the pump's own record
+  of what it has delivered (`run_tci_api()`, or `tciNextRate()` from R).
+  [FauxTCI](https://stevenlshafer.github.io/FauxTCI/) is a simulated pump in the browser
+  built to it, showing every request and response as it runs
+  ([source](https://github.com/StevenLShafer/FauxTCI)).
 - **The in-app help** — the **Help** tab in the running app: a user's guide, a generated page
   for every drug (parameters at reference patients, citation, units), the models and methods,
   loadable teaching scenarios, the investigators, and a map of this repository. The hand-written
