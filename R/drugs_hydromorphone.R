@@ -14,8 +14,8 @@ hydromorphone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 19.6
   MEAC <- 1.5/1000
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   reference <- paste0(
     "Drover DR et al., Anesthesiology 2002;97(4):827-836. ",
     "https://pubmed.ncbi.nlm.nih.gov/12357147/ (disposition); ",

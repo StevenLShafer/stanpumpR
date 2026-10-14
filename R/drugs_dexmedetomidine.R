@@ -21,8 +21,8 @@ dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
     tPeak <- 10 # Just a guess
     typical <- 0.6 # midpoint of the 0.4-0.8 ng/mL sedation range (the app reads drugDefaults_global.csv)
-    upperTypical <- 0.4
-    lowerTypical <- 0.8
+    lowerTypical <- 0.4
+    upperTypical <- 0.8
     MEAC <- 0
     reference <- "Dyck JB et al., Anesthesiology 1993;78(5):821-828. https://pubmed.ncbi.nlm.nih.gov/8098191/"
 
@@ -172,10 +172,14 @@ dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
       cl3 = cl3
     )
 
-    # After cardiopulmonary bypass:
+    # After cardiopulmonary bypass.  Clearance matures with postnatal age in
+    # days, PNA / (1.77 + PNA), which is zero at birth: a newborn entered as
+    # age 0 would have no clearance at all (issue #310), so postnatal age is
+    # floored at one day.
     v1 <-  155 * Fv # liters
     v2 <-  105 * Fv # liters
-    cl1 <- 623 * Fcl * (age * 365) / (1.77 + age * 365) / 1000 # (L / min)
+    postnatalDays <- max(age * 365, 1)
+    cl1 <- 623 * Fcl * postnatalDays / (1.77 + postnatalDays) / 1000 # (L / min)
     cl2 <- 209 * Fcl / 1000 # (L / min)
     CPBEnd <- list(
       v1 = v1,
@@ -189,8 +193,8 @@ dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
     tPeak <- 2 # Just a guess
     typical <- 0.6 # midpoint of the 0.4-0.8 ng/mL sedation range (the app reads drugDefaults_global.csv)
-    upperTypical <- 0.4
-    lowerTypical <- 0.8
+    lowerTypical <- 0.4
+    upperTypical <- 0.8
     MEAC <- 0
     reference <- "Zuppa AF et al., Br J Anaesth 2019;123(6):839-852. https://pubmed.ncbi.nlm.nih.gov/31623840/"
   }

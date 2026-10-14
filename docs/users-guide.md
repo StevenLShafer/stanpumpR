@@ -670,8 +670,9 @@ notification rather than a longer plot.
 ## Email Slide
 
 Enter a recipient and optional comments, press **Send**, and the app emails a
-PowerPoint slide of the current simulation, including the dose table and the
-pharmacokinetic parameters used.
+PowerPoint deck of the current simulation (the whole plot on the first slide,
+then one slide per panel), including the dose table and the pharmacokinetic
+parameters used.
 
 Requires the mail settings in `config.yml` to be filled in. A local development
 copy made from `config.yml.sample` will not send mail until you do.

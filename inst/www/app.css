@@ -385,6 +385,21 @@ a.investigator-link:hover {
   padding: 0 0.1em;
   background: #fff3b0;
 }
+/* While a search runs (the first one builds the index) say so, rather than
+   leaving the box blank or fading the previous results to nothing. */
+#help_search_results.recalculating {
+  opacity: 1;
+}
+#help_search_results.recalculating > * {
+  opacity: 0.4;
+}
+#help_search_results.recalculating::before {
+  content: "Searching the help\2026";
+  display: block;
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.85rem;
+  color: #7b8a8b;
+}
 
 /* screenshots in the help */
 .help-body .help-figure {

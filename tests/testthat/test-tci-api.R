@@ -15,7 +15,7 @@ local_mocked_bindings(outputComments = function(...) {})
 START <- as.numeric(lubridate::ymd_hms("2026-10-11T14:00:00Z", tz = "UTC"))
 noEvents <- data.frame(Time = double(), Event = character())
 TCI_DRUGS <- c("propofol", "remifentanil", "fentanyl", "alfentanil", "sufentanil",
-               "hydromorphone", "ketamine", "etomidate", "lidocaine")
+               "hydromorphone", "oxycodone", "ketamine", "etomidate", "lidocaine")
 
 atMin <- function(min) tciApiFormatTime(START + min * 60)
 minutesOf <- function(stamp) (as.numeric(lubridate::ymd_hms(stamp, tz = "UTC")) - START) / 60
@@ -313,14 +313,17 @@ test_that("every TCI drug reaches its target at intervals of 1, 5 and 10 s with 
 })
 
 # At 30 and 60 s the loop still reaches the target, but the fast drugs
-# overshoot by up to 2.7%: once the effect site is within 5% of the target --
-# which happens before the peak -- the controller hands off to the plasma,
-# whose plan only lands Cp on the target at the END of the interval, and over
-# a long interval the plasma above target meanwhile pushes Ce over.  That is
-# the Shafer-Gregg hand-off at a long interval, not the search grid (the test
-# above shows one plan touching the target exactly at 60 and 120 s), and it
-# is why the response warns INTERVAL_LONG above tPeak / 3.  The measured
-# figures are pinned here so that a change in either direction is noticed.
+# overshoot: once the effect site is within 5% of the target -- which happens
+# before the peak -- the controller hands off to the plasma, whose plan only
+# lands Cp on the target at the END of the interval, and over a long interval
+# the plasma above target meanwhile pushes Ce over.  That is the Shafer-Gregg
+# hand-off at a long interval, not the search grid (the test above shows one
+# plan touching the target exactly at 60 and 120 s), and it is why the
+# response warns INTERVAL_LONG above tPeak / 3.  Measured on 2026-10-14:
+# propofol and remifentanil up to 2.6% at 60 s, and etomidate 4.2% at 60 s
+# (1.4% at 30 s) since its ke0 became Arden's 0.433 /min with a 1.9 min peak,
+# the slowest of the fast drugs against a 60 s interval.  The figures are
+# pinned here so that a change in either direction is noticed.
 test_that("at 30 and 60 s every TCI drug reaches its target within the hand-off's excursion", {
   for (drug in TCI_DRUGS) {
     PK <- pkOf(drug)
@@ -328,10 +331,16 @@ test_that("at 30 and 60 s every TCI drug reaches its target within the hand-off'
     for (I in c(30, 60)) {
       loop <- simulatePump(drug = drug, target = PK$typical, interval = I, rateUnits = rateUnits,
                            minutes = PK$tPeak + 1.5, follow = "nextRequestAt")
-      expect_lte(loop$maxCe, PK$typical * 1.03, label = sprintf("%s at %d s", drug, I))
+      bound <- if (drug == "etomidate" && I == 60) 1.045 else 1.03
+      expect_lte(loop$maxCe, PK$typical * bound, label = sprintf("%s at %d s", drug, I))
       expect_gt(loop$maxCe, PK$typical * 0.99, label = sprintf("%s at %d s reaches the target", drug, I))
     }
   }
+  etoPK <- pkOf("etomidate")
+  etomidate60 <- simulatePump(drug = "etomidate", target = etoPK$typical, interval = 60,
+                              rateUnits = paste0(massUnitOf(etoPK), "/min"),
+                              minutes = etoPK$tPeak + 1.5, follow = "nextRequestAt")
+  expect_equal(etomidate60$maxCe / etoPK$typical, 1.042, tolerance = 0.005)
   propofol60 <- simulatePump(interval = 60, minutes = 5)
   expect_equal(pct(propofol60$maxCe, 3), 1.56, tolerance = 0.05)
   expect_true("INTERVAL_LONG" %in% warningCodes(propofol60$responses[[1]]))

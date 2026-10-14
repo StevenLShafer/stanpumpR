@@ -141,12 +141,17 @@ lisdexamfetamine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
+  # d-Amphetamine after lisdexamfetamine in pediatric ADHD; non-Japanese
+  # clearance; the dose converted to d-amphetamine base, 0.2968 mg/mg, checked
+  # against Boellner SW et al., Clin Ther 2010;32:252-264.  The second DOI is
+  # not followed by a closing parenthesis: one was once read as part of the
+  # URL and the link returned 404.
   reference <- paste0(
     "Tsuda Y et al., Drug Metab Pharmacokinet 2020;35:548-554. ",
     "https://doi.org/10.1016/j.dmpk.2020.08.005 (d-amphetamine after ",
     "lisdexamfetamine in pediatric ADHD; non-Japanese clearance; dose converted ",
     "to d-amphetamine base, 0.2968 mg/mg, checked against Boellner SW et al., ",
-    "Clin Ther 2010;32:252-264, https://doi.org/10.1016/j.clinthera.2010.02.011)"
+    "Clin Ther 2010;32:252-264). https://doi.org/10.1016/j.clinthera.2010.02.011"
   )
 
   return(

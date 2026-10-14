@@ -18,8 +18,12 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   cl2 <- 37.5 / 60 * size$clearance
   cl3 <- 0 #NA
 
-# these are returned but not used except tPeak
-# those from the drugDefaults table are
+# The concentrations below are returned but not used: those in the drug
+# library (drugDefaults_global.csv) are.  There, MEAC 27.9 ng/mL is Dahan's
+# ANALGESIC potency (the effect-site concentration for a 50% rise in cold
+# pressor hand-withdrawal latency), and the band's typical value 27.4 ng/mL
+# is the RESPIRATORY potency (a 25% fall in the hypercapnic ventilatory
+# response); the two happen to coincide.
 
   typical <- NA
   upperTypical <- NA
@@ -27,7 +31,15 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC <- NA
   reference <- "Dahan A et al., Anesthesiology 2020;133(3):559-568. https://pubmed.ncbi.nlm.nih.gov/32788558/"
 
-  tPeak <- 0.25*60
+  # Effect site.  Dahan 2020 estimated the plasma-effect-site equilibration
+  # of the VENTILATORY effect (hypercapnic ventilatory response) with a
+  # half-life of 0.25 h, and did not quantify one for analgesia.  That is a
+  # half-life, so ke0 = ln 2 / 15 min = 0.0462 /min is supplied directly and
+  # getDrugPK() solves the time to peak effect after a bolus from it, about
+  # 26 min with these kinetics.  Until 2026-10-14 the 15 min was read as the
+  # time to peak effect itself, which implied an equilibration half-life of
+  # about 6 min; test-drugs-oliceridine.R pins the solved peak.
+  ke0 <- log(2) / 15
 
   default <- list(
     v1 = v1,
@@ -44,7 +56,7 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   return(
     list(
       PK = PK,
-      tPeak = tPeak,
+      ke0 = ke0,
       MEAC = MEAC,
       typical = typical,
       upperTypical = upperTypical,

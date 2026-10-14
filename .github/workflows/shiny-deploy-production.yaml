@@ -1,7 +1,23 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # see https://www.tidyverse.org/blog/2022/06/actions-2-0-0/ for info on setup-r-dependencies@v2
+#
+# Production deploys once R-CMD-check has passed on a push to master (the
+# workflow_run trigger), and installs exactly the commit that was checked.
+# Until 2026-10-14 the deploy started on the push itself, in parallel with the
+# check, so a commit could reach production before, or without, a green check;
+# and it installed the default branch at install time rather than the
+# checked-out commit, so a merge in the meantime could put a different revision
+# in the live package than in the deployment run.  A manual run
+# (workflow_dispatch) deploys the commit it is run on, unchecked, for the case
+# where the check is red for a reason unrelated to the app.  The deployed
+# commit is written into config.yml (`commit`), which the app shows in its
+# debug log and the Source link's tooltip (stanpumpRBuild()); shinyapps.io
+# installs the package from the manifest, so the DESCRIPTION's RemoteSha is
+# not there to read on the server.
 on:
-  push:
+  workflow_run:
+    workflows: [R-CMD-check]
+    types: [completed]
     branches: [main, master]
   workflow_dispatch:
 
@@ -19,16 +35,32 @@ concurrency:
 
 jobs:
   deployment-production:
+    # The check runs on pull requests too; only a successful check of a push
+    # to master deploys.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-24.04
     environment:
       name: production
       url: https://stanpumpr.io
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # The commit to deploy: the one the check ran on, or the one a manual
+      # run was started on.
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.DEPLOY_SHA }}
           persist-credentials: false
+
+      - name: Record the commit being deployed
+        run: |
+          echo "Deploying ${{ github.repository }}@${DEPLOY_SHA}"
+          echo "### Production deploy" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`${DEPLOY_SHA}\` (checked out and installed)" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: r-lib/actions/setup-pandoc@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
 
@@ -42,11 +74,14 @@ jobs:
 
       - uses: r-lib/actions/setup-renv@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
 
-      - name: Install stanpumpR from GitHub
+      - name: Install stanpumpR from GitHub at the deployed commit
         run: |
-          pkg_ref <- "${{ github.repository }}"
+          pkg_ref <- paste0("${{ github.repository }}@", Sys.getenv("DEPLOY_SHA"))
           remotes::install_github(pkg_ref, upgrade = "never", force = TRUE)
           find.package("stanpumpR") # force a failure if package didn't install so GHA won't continue
+          installed <- utils::packageDescription("stanpumpR")$RemoteSha
+          if (!identical(installed, Sys.getenv("DEPLOY_SHA")))
+            stop("Installed commit ", installed, " is not the deployed commit ", Sys.getenv("DEPLOY_SHA"))
         shell: Rscript {0}
 
       - name: Remove renv lockfile
@@ -60,7 +95,8 @@ jobs:
             default = list(
               email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
               email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
-              debug = 0
+              debug = 0,
+              commit = Sys.getenv("DEPLOY_SHA")
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")

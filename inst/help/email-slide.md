@@ -8,7 +8,7 @@ The **Email Slide** panel at the bottom of the sidebar mails you the current sim
 
 The message carries:
 
-- a PowerPoint file with one slide: the plot as an editable vector graphic, the title and the date;
+- a PowerPoint file: the whole plot on the first slide as an editable vector graphic, with the title and the date, then one slide per panel (each drug, a TCI pump rate, the % MEAC sum, the interaction), so that a simulation with many drugs is still readable;
 - a PNG of the plot;
 - an Excel workbook with the patient's covariates, the dose table (with any TCI rates and scheduled repeats merged in), the simulated concentrations and the pharmacokinetic parameters used for every drug.
 

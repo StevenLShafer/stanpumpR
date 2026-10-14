@@ -38,7 +38,15 @@ rocuronium <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  tPeak = 2.2 # tPeak per Cortinez LI et al., Br J Anaesth 2007;99(5):679-685. https://pubmed.ncbi.nlm.nih.gov/17681967/
+  # Time to peak effect at the adductor pollicis: the population median time
+  # to maximum block after 0.15 mg/kg in Cortinez LI et al., Br J Anaesth
+  # 2007;99(5):679-685 (https://pubmed.ncbi.nlm.nih.gov/17681967/), 4.5 min
+  # (range 2.0-7.7), whose ke0 by every method was 0.19-0.20 /min.  With
+  # Plaud's kinetics the solved ke0 is about 0.19 /min, and Plaud's own
+  # adductor pollicis ke0 (k41 above, 0.168 /min, unused) agrees.  Until
+  # 2026-10-14 this was 2.2 min, the time of one illustrated subject, which
+  # implied a ke0 near 0.7 /min; test-drugs-rocuronium.R pins the ke0.
+  tPeak = 4.5
   typical <- 1.5
   upperTypical <- 2.2
   lowerTypical <- 1

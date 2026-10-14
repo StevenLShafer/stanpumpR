@@ -26,8 +26,8 @@ sufentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 5.8		# from Shafer/Varvel, t_peaks.xls
   MEAC <- 0.056
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   reference <- "Gepts E et al., Anesthesiology 1995;83(6):1194-1204. https://pubmed.ncbi.nlm.nih.gov/8533912/"
   
   return(

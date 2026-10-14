@@ -27,14 +27,16 @@ Several models reason about size through a measure of lean tissue rather than to
 
 **BMI** = weight / (height/100)². Remifentanil switches models at BMI 30.
 
-**Lean body mass (James, 1976).** Used by the Schnider propofol model and the Minto remifentanil model, which run beside the library's Eleveld models when *Minto / Schnider* is ticked under Graph Options ([The Minto and Schnider models](help:models/minto-schnider)), and by the central volume of Aoyama's oral [meloxicam](help:drugs/meloxicam) model:
+**Lean body mass (James, 1976).** Used by the Schnider propofol model and the Minto remifentanil model, which run beside the library's Eleveld models when *Minto / Schnider* is ticked under Graph Options ([The Minto and Schnider models](help:models/minto-schnider)):
 
 ```
 men:   LBM = 1.10 weight - 128 (weight/height)²
 women: LBM = 1.07 weight - 148 (weight/height)²
 ```
 
-The James equation has a known flaw: it reaches a maximum and then falls as weight rises, so for very obese patients it gives a lean body mass that decreases with weight. The code comments call it "unfortunate" for this reason, and the models that relied on it have been replaced where better ones exist.
+The James equation is a **parabola**. At a given height it is a quadratic in weight that opens downward: written as LBM = weight × (1.10 − 0.0128 × BMI) for a man, or (1.07 − 0.0148 × BMI) for a woman, it rises with weight ever more slowly, peaks at a BMI of 43.0 in men and 36.1 in women whatever the height, then falls, and is zero at twice that BMI (85.9 and 72.3). Past the peak a heavier patient is credited with less lean tissue, an artifact of the equation that Bouillon and Shafer described in 1998. It is why the pumps limit the Schnider and Minto models to a BMI below 42 in men and 35 in women, just short of the peak.
+
+stanpumpR keeps James in the Schnider and Minto models deliberately, so that they behave as the pumps that run them do, failure in the obese included: the scenario [Obesity: why the Schnider and Minto models fail at the extremes of weight](scenario:james-lean-body-mass) shows it. Everywhere else it uses the Al-Sallami fat-free mass (below), which rises with weight at every weight; Aoyama's oral [meloxicam](help:drugs/meloxicam) model, published with James, takes Al-Sallami in its place.
 
 **Fat-free mass (Al-Sallami, 2015).** Used by the Eleveld propofol and remifentanil models, and by the fat-free-mass scaling applied to most other models (below). It is well behaved in obesity and includes a maturation term for children:
 
@@ -80,6 +82,8 @@ Most of the models above describe a 70 kg adult and scaled, if at all, with tota
 ## References
 
 James WPT. *Research on Obesity.* London: HMSO, 1976.
+
+Bouillon T, Shafer SL. Does size matter? *Anesthesiology* 1998;89:557-560.
 
 Al-Sallami HS, Goulding A, Grant A, Taylor R, Holford N, Duffull SB. Prediction of fat-free mass in children. *Clin Pharmacokinet* 2015;54:1169-1178.
 

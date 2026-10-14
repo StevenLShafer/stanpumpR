@@ -18,9 +18,13 @@
 #     Q/F  = 1.24 L/h       Vp/F = 2.73 L
 #
 # n*2 and n*3 count CYP2C9 *2 and *3 alleles (so *1/*3 is 0.600 of the *1/*1
-# clearance and *3/*3 0.200).  LBM is the James lean body mass, centred on
-# the population median of 55 kg; the library's reference man (70 kg,
-# 170 cm) has 55.3 kg.  Half-lives at the reference man 1.1 h and 19 h.
+# clearance and *3/*3 0.200).  LBM in the source is the James lean body mass,
+# centred on the population median of 55 kg.  stanpumpR uses the Al-Sallami
+# fat-free mass in its place (ffmAlSallami()): James's equation falls with
+# weight in obesity and goes negative (a 160 cm woman of 200 kg), where Vc/F
+# would be undefined.  The two agree within about 1 kg for a typical man (55.3
+# against 54.5 kg in the reference man, 70 kg and 170 cm), and the centring
+# value of 55 kg is kept.  Half-lives at the reference man 1.1 h and 19 h.
 #
 # The parameters are divided by an unmeasured bioavailability, so they take
 # the oral doses only, and bioavailability_PO is 1: the apparent scale
@@ -147,7 +151,7 @@ meloxicam <- function(weight, height, age, sex, adjustToFFM = TRUE,
   n3 <- sum(alleles == "*3")
 
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
-  lbm  <- lbmJames(weight, height, sex)
+  lbm  <- ffmAlSallami(weight, height, age, sex)   # in place of James's LBM
 
   # Apparent parameters: the whole dose, F = 1.  Path 1 (zero-order over DT
   # in the source) as first-order with the same mean absorption time.

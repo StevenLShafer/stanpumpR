@@ -32,6 +32,8 @@ app_server <- function(input, output, session) {
   })
   # Register the comments log with this user's session, to use outside the server
   session$userData$commentsLog <- commentsLog
+  # The first line of the log names the build (stanpumpRBuild())
+  outputComments(stanpumpRBuild()$label)
 
   profileRecords <- reactiveVal(data.frame(name = character(0), ms = numeric(0), time = character(0)))
 
@@ -2226,7 +2228,10 @@ app_server <- function(input, output, session) {
                              REFERENCE_TIME_NONE)
 
         if (is.null(testTable)) {
+          # No target fell between the start and the end time (issue #270):
+          # say so rather than close the dialog with nothing done.
           shinycssloaders::hidePageSpinner()
+          showNotification(SUGGEST_NO_TARGETS_MESSAGE, type = "warning", duration = 10)
           return()
         }
 

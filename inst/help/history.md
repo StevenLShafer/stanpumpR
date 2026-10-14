@@ -57,9 +57,11 @@ The early versions advanced the compartments numerically, step by step (Euler's 
 
 STANPUMP also served as a test bed for:
 
-- carrying **time to peak effect** rather than ke0 between models (Shafer and Varvel, 1991), so that a pharmacodynamic study done with one kinetic model could be used with another;
+- carrying **time to peak effect** rather than ke0 between models, so that a pharmacodynamic study done with one kinetic model could be used with another. Shafer and Varvel reported the times to peak effect of the opioids in 1991, but their use in place of ke0 was appreciated only a decade later (Minto, Schnider, Gregg, Henthorn and Shafer, 2003), and STANPUMP took the time of peak effect as its descriptor of plasma-effect equilibration from 1995;
 - a real-time Bayesian update of the pharmacokinetic parameters from observations made during drug administration;
 - output files ready for pharmacokinetic and pharmacodynamic model fitting, drug files read from disk, multiple syringe sizes and a batch mode for research. Its library included the hypnotics, opioids, benzodiazepines, local anesthetics and muscle relaxants, and kinetics for dogs, rats and horses as well as humans.
+
+STANPUMP was written to study pharmacokinetics, and the first two published studies with it, in 1990, were of which parameters a pump should be given. Running them, Shafer added to the program a *look-ahead concentration*: at every update, the time it would take the concentration to fall to a wake-up level if the pump were stopped now. That led directly to a series of papers on the relationship between the duration of drug delivery and the time for the offset of drug effect, all built on target-controlled infusion: the recovery curves of Shafer and Varvel (*Pharmacokinetics, pharmacodynamics, and rational opioid selection*, *Anesthesiology* 1991;74:53-63), the context-sensitive half-time of Hughes, Glass and Jacobs (*Anesthesiology* 1992;76:334-341), and the decrement times of Youngs and Shafer (*Pharmacokinetic parameters relevant to recovery from opioids*, *Anesthesiology* 1994;81:833-842). The story, and why target-controlled infusion was the key to it, is told in [TCI and the offset of drug effect](help:offset); its descendant in stanpumpR is [Time until threshold](help:models/recovery).
 
 STANPUMP was distributed freely: its source and executable code could be copied and shared by anyone, though not sold. It was used in 268 of the 559 studies that Absalom and colleagues counted, nearly half. Its principles, and its pharmacokinetic engine, were taken into later research systems and into the commercial open TCI pumps. The original C source is kept in the repository, in `Original Stanpump/Stanpump.zip`, with its documentation; see [What is in the repository](help:repository).
 
@@ -73,7 +75,7 @@ Propofol was launched in Europe in 1986. In 1990 ICI Pharmaceuticals brought the
 
 The first pump containing it received the CE mark in 1996. TCI was launched commercially at the World Congress in Sydney that year, and the Diprifusor pumps from Graseby, Alaris and Fresenius, and later Terumo, followed. About 25,000 were sold, and approval came in more than 50 countries. Their two limits were that they could not target the effect site, which arrived after the design was settled, and that they would give only branded propofol.
 
-## Open TCI
+## Open TCI pumps
 
 Once generic propofol appeared, clinicians wanted pumps that would take any syringe, give other drugs (remifentanil above all) and target the effect site. Carefusion and Fresenius launched the first "open" TCI pumps, beginning in 2002; second-generation pumps were first approved in 2003. They carry a library of published models for propofol, remifentanil, sufentanil, alfentanil and, in some, fentanyl and midazolam, in plasma and effect-site modes. More than 36,000 were sold from 2004 to 2013. By 2015 TCI was approved or available in at least 96 countries, and Absalom and colleagues estimated that about 2.6 million patients a year in Europe, and perhaps 5 million worldwide, received a drug by TCI. Their verdict was in their title: a mature technology.
 
@@ -92,9 +94,19 @@ After about 20 years and millions of patients, Schnider and colleagues searched 
 
 No report found an adverse event caused by the TCI algorithm. They concluded that TCI is at least as safe as a constant-rate infusion, with an upper 95 per cent bound on a serious TCI-related event of less than 1 in 7 million.
 
+## The Open TCI initiative
+
+The name "open TCI" was used twice. The pumps above are open in that they take any syringe. The **Open TCI initiative** ([opentci.org](https://opentci.org)) is open in the other sense: it is a public home for the raw data of pharmacokinetic and pharmacodynamic studies, so that models need not be the last word of the investigators who happened to collect the data.
+
+Steven Shafer uploaded to it all of the data from the Stanford studies behind Schnider's propofol models (1998, 1999) and Minto's remifentanil model (1997), with further data from his Stanford laboratory. Other investigators contributed their studies too. The point was to put the data together in one place, in the hope that someone would come along and build better models from the whole than any one group could build from its part.
+
+Douglas Eleveld did. His propofol model (Eleveld, Colin, Absalom and Struys, 2018) was fitted to 30 studies, 1,033 people from premature neonates to the elderly and from 0.68 to 160 kg, and his remifentanil model (Eleveld and colleagues, 2017) to a pool of earlier studies including Minto's. Both rest primarily on the same Stanford data as the Schnider and Minto models. The Eleveld models are therefore not a rival to Schnider's and Minto's but their successors: a superset of the same data, extended to the children, the elderly and the obese that the Stanford volunteers did not include, and scaled to a measure of body size, Al-Sallami's fat-free mass, that does not fail at the extremes of weight as the James lean body mass does.
+
+That is why stanpumpR's own propofol and remifentanil models are Eleveld's, and why it can run Schnider's and Minto's beside them (the **Minto / Schnider** box under [Graph Options](help:graph-options)): to show what the pumps compute, where it agrees with Eleveld, and where it does not. See [The Minto and Schnider models](help:models/minto-schnider), and the scenario [Obesity: why the Schnider and Minto models fail at the extremes of weight](scenario:james-lean-body-mass).
+
 ## stanpumpR
 
-stanpumpR uses very little of the original STANPUMP code. Conceptually it is identical: an open-source program that makes complex pharmacokinetic algorithms available to support patient care, teaching and research. The difference is that **the stanpumpR app does not control drug administration**. It is a web-based simulator, written in R with the Shiny framework, that shows the expected concentrations from any dosing regimen.
+stanpumpR uses very little of the original STANPUMP code. Conceptually it is identical: an open-source program that makes complex pharmacokinetic algorithms available to support patient care, teaching and research. The difference is that **the stanpumpR app does not control drug administration**. It is also in the spirit of the Open TCI initiative: it puts the published models, and the data-driven models built from pooled data, in the hands of clinicians, to bring the science of clinical pharmacology to the people who give the drugs and its benefits to their patients. It is a web-based simulator, written in R with the Shiny framework, that shows the expected concentrations from any dosing regimen.
 
 The R package was begun by Steven Shafer in 2019. Dean Attali rebuilt it as a maintainable Shiny application with a test suite and automated deployment. In 2026 it gained an engine for the inhaled anesthetics following GasMan®, validated by Richard Epstein. The same year STANPUMP's targeting algorithm returned as two dose-table units, *Plasma target* and *Effect site target*, which simulate a TCI pump using Shafer and Gregg's method; see [Target-controlled infusion](help:tci). The same controller is offered to real pumps by [the TCI API](help:tci-api), a stateless web service that computes the next rate for a pump's host computer, while the pump keeps its own limits and decides what to run.
 

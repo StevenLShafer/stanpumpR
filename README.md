@@ -24,7 +24,7 @@ stanpumpR is a collaborative research project. Individuals interested in adding 
 
 Near-term future developments in stanpumpR will include
 
-1. Oral opioids. StanpumpR is programmed for PO, IM, and IN delivery. Need to get good PK for the opioids. Note that only first order absorption pk is currently supported.
+1. More oral models. stanpumpR simulates PO, SL, IM, IN and regional (RA) delivery by first-order absorption; the oral opioids in the library (morphine, hydromorphone, methadone, oxycodone, oxymorphone, codeine, hydrocodone, tramadol) each rest on one published fit, and better-characterised absorption models are welcome.
 2. Improved models of pediatric pharmacokinetics
 3. Improved models of drug interaction
 4. PK changes with pregnancy beyond the eight drugs that now read the Patient Profile's Pregnant field (`R/pregnancy.R`, from Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804), and with renal function beyond the drugs that read the serum creatinine. (Each field reaches only the models that name it, the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes included; the help's [Cautions](inst/help/cautions.md) page lists which.)
@@ -41,6 +41,12 @@ Near-term future developments in stanpumpR will include
   covariates and a duration (over HTTP from any language, or from R) and get the concentrations
   back as JSON, CSV, Excel or XML. The page is rendered from
   [`inst/apidocs/api.md`](inst/apidocs/api.md).
+- [`docs/tci-api.md`](docs/tci-api.md) — the TCI API: a stateless web service, `/tci/v1`,
+  that hands a real target-controlled infusion pump its next rate from the pump's own record
+  of what it has delivered (`run_tci_api()`, or `tciNextRate()` from R).
+  [FauxTCI](https://stevenlshafer.github.io/FauxTCI/) is a simulated pump in the browser
+  built to it, showing every request and response as it runs
+  ([source](https://github.com/StevenLShafer/FauxTCI)).
 - **The in-app help** — the **Help** tab in the running app: a user's guide, a generated page
   for every drug (parameters at reference patients, citation, units), the models and methods,
   loadable teaching scenarios, the investigators, and a map of this repository. The hand-written
@@ -71,16 +77,36 @@ Near-term future developments in stanpumpR will include
 
 #### Using stanpumpR as a library
 
-A limited number of functions have been exported for use by your own code. To install:
-  
-1. `library(devtools)`
-2. `devtools::install(build_vignettes = TRUE)`
+A limited number of functions have been exported for use by your own code.
 
-On Windows, a ready-made package is rebuilt from `master` on every change and published as the
-[`windows-binary` release](https://github.com/StevenLShafer/stanpumpR/releases/tag/windows-binary)
-(one zip for x64 and ARM, built with the current R release); its release notes give the two
-lines that install it. It needs no build step, so it avoids installs from source that fail with
-"lazy loading failed". Workflow: `.github/workflows/windows-binary.yaml`.
+**On Windows, install the ready-made package.** It is rebuilt from `master` on every change and
+published as the [`windows-binary` release](https://github.com/StevenLShafer/stanpumpR/releases/tag/windows-binary):
+one zip for x64 and ARM, built with the current R release (install it in the same R minor version).
+
+```r
+zip <- file.path(tempdir(), "stanpumpR.zip")
+download.file("https://github.com/StevenLShafer/stanpumpR/releases/download/windows-binary/stanpumpR.zip",
+              zip, mode = "wb")
+install.packages(zip, repos = NULL, type = "win.binary")
+library(stanpumpR)
+```
+
+Install the CRAN packages in `Imports` first if you don't have them; the release notes list them.
+Installing from source on Windows (`remotes::install_github()`, `pak`, `devtools::install()`) can
+fail with nothing but `ERROR: lazy loading failed for package 'stanpumpR'`. On Windows 11 the
+cause has been **Smart App Control**, which blocked a DLL during the build because it could not
+verify where the DLL came from. The zip is already built, so installing it skips that step. It is built by
+`.github/workflows/windows-binary.yaml`, which also installs it into an empty library and runs a
+simulation before publishing it.
+
+**On macOS or Linux**, install from GitHub:
+
+```r
+# install.packages("remotes")
+remotes::install_github("StevenLShafer/stanpumpR")
+```
+
+or, from a clone of the repository, `devtools::install(build_vignettes = TRUE)`.
 
 To simulate a dose table from a script, call `apiSimulate()`, or start the HTTP service with
 `run_api()` (needs the `plumber` package). Both are described at

@@ -26,8 +26,8 @@ alfentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 1.4		# see t_peaks.xls
   MEAC <- 39
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   reference <- "Scott JC, Stanski DR. J Pharmacol Exp Ther 1987;240(1):159-166. https://pubmed.ncbi.nlm.nih.gov/3100765/"
 
   return(

@@ -17,6 +17,7 @@ Portions of the code written since 2026, including the inhaled-gas engine, the t
 The first target-controlled infusion was given in Bonn in 1979, and STANPUMP was one of several programs that, in the 1980s and 1990s, followed it in using pharmacokinetic models to control infusion pumps. Their authors exchanged concepts and algorithms freely:
 
 - **Donald R. Stanski** and Steven Shafer, Stanford (STANPUMP). Stanski's laboratory also produced the fentanyl and alfentanil kinetics (with **Jeffrey C. Scott**) and, with Lewis Sheiner, the effect-compartment model itself.
+- **Daniel B. Raemer**, Brigham and Women's Hospital, whose 1990 alfentanil study with the Stanford group introduced the median performance error and median absolute performance error as the measures of a pump's bias and inaccuracy.
 - **Jürgen Schüttler** and **Helmut Schwilden**, University of Bonn (CATIA).
 - **Martin Ausems** and **Carl C. Hug**, University of Leiden and Emory (TIAC).
 - **Joseph G. Reves** and **J. Michael Alvis**, University of Alabama (CACI), and **James R. Jacobs** and Reves at Duke (CACI II).
@@ -66,7 +67,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | naloxone | **J. Dowling** and colleagues (2008); **C. M. Laffont** and colleagues (2024); **A. Yassen** and colleagues (2007) | Intravenous kinetics with clearance on lean body weight; the nasal route; the effect-site rate constant |
 | oxytocin | **James C. Eisenach** (unpublished); Tanaka and colleagues | Human kinetics from unpublished data; a rat model |
 | oxycodone | **Reino Pöyhiä** and colleagues (1991); **Maija Kirvelä** and colleagues (1996); **Antti Liukas** and colleagues (2011); **Bojan Lalovic** and colleagues (2006); **Rajiv Balyan** and colleagues (2017); Mandema; Kokki | Pooled intravenous kinetics with age (Liukas) and renal (Kirvelä) effects on clearance; oral absorption and the effect-site rate constant (Lalovic); CYP2D6 and oxymorphone (Balyan, Lalovic); the MEAC from Mandema and Kokki |
-| oliceridine | **Albert Dahan** and colleagues (2020) | Two-compartment kinetics and the respiratory end point used for MEAC |
+| oliceridine | **Albert Dahan** and colleagues (2020) | Two-compartment kinetics, the analgesic potency used for MEAC, the respiratory potency used as the typical concentration, and the ventilatory ke0 |
 | remimazolam | Eleveld and colleagues (2025) | Kinetics with size, age and sex covariates |
 | codeine | **Kristin Persson**, **David R. Guay** and colleagues; **Muhammad W. Ashraf** and colleagues (2024) | One-compartment disposition; CYP2D6-dependent formation of morphine |
 | tramadol, desmetramadol | **Sophie Holford** and colleagues (2014); **N. Brvar** and colleagues (2014); **Ulrike M. Stamer** and colleagues (2007) | Joint parent-and-metabolite kinetics; oral input timing (Brvar); CYP2D6 phenotype weights |
@@ -134,13 +135,14 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 ## Pharmacodynamics and methods
 
 - **Lewis B. Sheiner**, Stanski and colleagues (1979): the effect compartment.
-- Shafer and Varvel (1991), Minto and colleagues (2003): time to peak effect as the model-independent way to carry ke0. Vecuronium and cisatracurium are the worked cases: each drug's ke0 is converted to the time to peak effect it gives with the kinetics it was fitted with, then solved again against the kinetics the library uses.
+- Minto, Schnider, Gregg, Henthorn and Shafer (2003): time to peak effect as the model-independent way to carry ke0. Shafer and Varvel had reported the opioids' times to peak effect in 1991; the use in place of ke0 came a decade later. Vecuronium and cisatracurium are the worked cases: each drug's ke0 is converted to the time to peak effect it gives with the kinetics it was fitted with, then solved again against the kinetics the library uses.
 - **Keith M. Gregg** and Shafer (1992): the effect-site targeting algorithm, implemented in STANPUMP and in stanpumpR's [target-controlled infusion](help:tci).
 - **James M. Bailey** and Shafer (1991): the plasma targeting algorithm.
 - **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time.
+- **Elizabeth J. Youngs** and Shafer (1994): decrement times, the context-sensitive half-time generalised to any percentage decrease.
 - **Thomas W. Bouillon** and colleagues (2004): the propofol-remifentanil response surface.
 - **Kay L. Austin**, **John V. Stapleton**, **Laurence E. Mather** (1980) and **Geoffrey K. Gourlay** and colleagues (1988): the minimum effective analgesic concentration.
-- **W. P. T. James** (1976): lean body mass. **Hesham S. Al-Sallami**, **Nick Holford**, **Stephen Duffull** and colleagues (2015) and **Sarayut Janmahasatian** and colleagues (2005): fat-free mass, used to [scale most of the models](help:models/fat-free-mass). **Brian J. Anderson** and Holford (2008): allometry and maturation.
+- **W. P. T. James** (1976): the lean body mass of the Schnider and Minto models, a parabola in weight. **Thomas W. Bouillon** and Shafer (1998) showed where it turns over. **Hesham S. Al-Sallami**, **Nick Holford**, **Stephen Duffull** and colleagues (2015) and **Sarayut Janmahasatian** and colleagues (2005): fat-free mass, used to [scale most of the models](help:models/fat-free-mass). **Brian J. Anderson** and Holford (2008): allometry and maturation.
 - **Brunner**, **Katoh**, **Lang**, **Westmoreland**, **Sebel** and their colleagues (1992 to 1999): the opioid reduction of MAC that the approximate interaction model is fitted to.
 
 ## The inhaled anesthetics

@@ -147,6 +147,30 @@ test_that("search finds pages and ranks title matches first", {
   expect_true("drugs/remifentanil" %in% helpSearch("Kim", index)$id)
 })
 
+test_that("search finds the drugs and the gas engine without fitting every drug model", {
+  # Fitting every model at the reference patients made the first search take
+  # half a minute, so long that it looked broken; the index reads a drug
+  # page's words (title, units, citation, narrative) without fitting.
+  local({
+    fits <- 0
+    local_mocked_bindings(getDrugPK = function(...) {
+      fits <<- fits + 1
+      stop("the search fitted a model")
+    })
+    text <- helpPageSearchText("drugs/remifentanil")
+    expect_equal(fits, 0)
+    expect_match(text, "Remifentanil", fixed = TRUE)
+    expect_match(text, "mcg/kg/min", fixed = TRUE)
+    expect_match(text, "Kim", fixed = TRUE)
+    expect_match(helpPageSearchText("drugs/index"), "Sevoflurane", fixed = TRUE)
+  })
+
+  index <- helpSearchIndex()
+  expect_equal(helpSearch("sevoflurane", index)$id[1], "drugs/sevoflurane")
+  gasman <- helpSearch("GasMan", index)$id
+  expect_true(all(c("models/gas-differences", "models/gas-engine", "drugs/sevoflurane") %in% gasman))
+})
+
 test_that("search is safe with short, empty and regex-like terms", {
   index <- helpSearchIndex()
   expect_equal(nrow(helpSearch("", index)), 0)

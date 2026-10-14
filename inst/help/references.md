@@ -10,6 +10,10 @@ Shafer SL, Gregg KM. Algorithms to rapidly achieve and maintain stable drug conc
 
 Hughes MA, Glass PSA, Jacobs JR. Context-sensitive half-time in multicompartment pharmacokinetic models for intravenous anesthetic drugs. *Anesthesiology* 1992;76:334-341.
 
+Shafer SL, Stanski DR. Improving the clinical utility of anesthetic drug pharmacokinetics. *Anesthesiology* 1992;76:327-330. *(The editorial accompanying Hughes, Glass and Jacobs.)*
+
+Youngs EJ, Shafer SL. Pharmacokinetic parameters relevant to recovery from opioids. *Anesthesiology* 1994;81:833-842. *(Decrement times: the context-sensitive half-time generalised to any percentage decrease, and which volumes and clearances shorten them.)*
+
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
 ## Pregnancy
@@ -50,6 +54,8 @@ Alvis JM, Reves JG, Govier AV, Menkhaus PG, Henling CE, Spain JA, Bradley E. Com
 
 Shafer SL, Siegel LC, Cooke JE, Scott JC. Testing computer-controlled infusion pumps by simulation. *Anesthesiology* 1988;68:261-266.
 
+Raemer DB, Buschman A, Varvel JR, Philip BK, Johnson MD, Stein DA, Shafer SL. The prospective use of population pharmacokinetics in a computer-driven infusion system for alfentanil. *Anesthesiology* 1990;73:66-72. *(The first of the two 1990 STANPUMP-era pump studies; introduced MDPE and MDAPE.)*
+
 Jacobs JR. Analytical solution to the three-compartment pharmacokinetic model. *IEEE Trans Biomed Eng* 1988;35:763-765.
 
 Jacobs JR. Algorithm for optimal linear model-based control with application to pharmacokinetic model-driven drug delivery. *IEEE Trans Biomed Eng* 1990;37:107-109.
@@ -89,6 +95,8 @@ Persson K, Hammarlund-Udenaes M, Mortimer O, Rane A. The postoperative pharmacok
 ## Body size and maturation
 
 James WPT. *Research on Obesity: A Report of the DHSS/MRC Group.* London: HMSO, 1976.
+
+Bouillon T, Shafer SL. Does size matter? *Anesthesiology* 1998;89:557-560. *(The James lean body mass falls with weight past a peak at each height.)*
 
 Janmahasatian S, Duffull SB, Ash S, Ward LC, Byrne NM, Green B. Quantification of lean bodyweight. *Clin Pharmacokinet* 2005;44:1051-1065.
 
