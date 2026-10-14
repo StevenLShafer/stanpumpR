@@ -79,9 +79,10 @@ throughout and flags the extrapolation here.
 
 This is the same fat-free mass that the Eleveld propofol and remifentanil
 models already use internally. The James lean body mass formula that appears in
-older models (Schnider propofol) is **not** used for this scaling: it is a
-parabola in weight that turns downward above about 120 kg and gives nonsense
-for heavy patients.
+older models (Schnider propofol, Minto remifentanil, Aoyama's meloxicam) is
+**not** used anywhere: it is a parabola in weight that turns downward above
+about 120 kg and gives nonsense for heavy patients, so those models take the
+Al-Sallami fat-free mass in its place, with their published centring values.
 
 ## How stanpumpR applies it
 

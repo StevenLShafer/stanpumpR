@@ -14,7 +14,7 @@ For teaching it helps to see both at once. The **Minto / Schnider** box under [G
 
 ## The Schnider propofol model
 
-Schnider and colleagues (1998) studied 24 volunteers aged 25 to 81 years, 44 to 123 kg and 155 to 196 cm, given propofol as a bolus and as infusions. The model is written exactly as the original STANPUMP ran it. Volumes are in litres, clearances in litres per minute, weight in kg, height in cm, age in years, and LBM is the James lean body mass (see [Covariates and body size](help:models/covariates)):
+Schnider and colleagues (1998) studied 24 volunteers aged 25 to 81 years, 44 to 123 kg and 155 to 196 cm, given propofol as a bolus and as infusions. The model is written exactly as the original STANPUMP ran it. Volumes are in litres, clearances in litres per minute, weight in kg, height in cm, age in years, and LBM is lean body mass. Schnider, Minto, STANPUMP and the pumps compute it with the James equation; stanpumpR uses the Al-Sallami fat-free mass in its place (see [Where the models are not defined](#where-the-models-are-not-defined) and [Covariates and body size](help:models/covariates)):
 
 ```
 V1  = 4.27
@@ -45,7 +45,9 @@ Here ke0 is the paper's own, a function of age, which is what the pumps implemen
 
 ## Where the models are not defined
 
-Both models use linear covariate terms and the James lean body mass, and outside the populations they were fitted to those terms can give a volume or clearance that is zero or negative. The James formula falls with weight above about 125 kg in a man of 170 cm (105 kg in a woman), so the Schnider clearance, which falls with lean body mass, rises there, and far enough out the Minto volumes go negative; in a small child the Schnider clearance intercepts make CL1 negative. This is why the pumps restrict these models to adults within a range of body mass index.
+Both models use linear covariate terms, and outside the populations they were fitted to those terms can give a volume or clearance that is zero or negative. The papers' James lean body mass makes this worse: it falls with weight above about 125 kg in a man of 170 cm (105 kg in a woman), so the Schnider clearance, which falls with lean body mass, rises there, and far enough out the Minto volumes go negative. This is why the pumps restrict these models to adults within a range of body mass index.
+
+stanpumpR therefore uses the Al-Sallami fat-free mass, the size covariate of the library's own models, in place of the James lean body mass. It rises with weight at every weight, so the obese patient gets a defined line on both models. For a typical adult the two agree within about a kilogram (54.5 against 55.3 kg in a 70 kg, 170 cm man), and the papers' centring values of 59 and 55 kg are kept. The cost is that for an obese patient the Schnider and Minto lines are not quite what a pump would compute. The weight and height terms of the Schnider clearance still make CL1 negative in a small child.
 
 Where a volume, clearance or ke0 comes out zero or negative for the patient entered, that model is not drawn and the app says so in a notice; the library's model is shown alone. Where the numbers are positive but the patient is outside the study population, a child on Minto's model for instance, the line is drawn and is an extrapolation.
 

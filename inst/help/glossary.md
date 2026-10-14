@@ -46,7 +46,7 @@
 
 **ke0.** The rate constant for equilibration between plasma and effect site, 1/min. Its half-time is ln(2)/ke0.
 
-**Lean body mass (LBM).** Body mass excluding fat, by the James equations.
+**Lean body mass (LBM).** Body mass excluding fat. The older models were published with the James equations, which fail in obesity; stanpumpR computes it as the Al-Sallami fat-free mass.
 
 **MAC.** Minimum alveolar concentration: the alveolar concentration of an inhaled agent at which half of patients do not move to incision. A property of the agent, falling with age.
 
