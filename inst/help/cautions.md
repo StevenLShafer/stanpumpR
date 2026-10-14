@@ -20,7 +20,7 @@ The Patient Profile fields beyond age, weight, height and sex reach only the mod
 - **CYP 2D6** is read by aripiprazole, codeine, haloperidol, hydrocodone, oxycodone, risperidone and tramadol: the four opioids through their active metabolites, the antipsychotics through their clearance. For every other drug it has no effect.
 - **CYP 2C19** is read by citalopram and escitalopram.
 - **CYP 2C9** is read by meloxicam and phenytoin.
-- **CYP 2B6** is read by methadone, whose non-renal clearance of each enantiomer falls in reduced-function phenotypes. The rapid and ultrarapid categories are given the normal metaboliser's clearance, because no systemic-clearance estimate for the increased-function allele was retrievable. CPIC does not recommend changing methadone dosing on CYP2B6 genotype; the field shows the pharmacokinetic difference, which is measured, not a dosing rule.
+- **CYP 2B6** is read by methadone, whose non-renal clearance of each enantiomer falls in reduced-function phenotypes. The rapid and ultrarapid categories are given the normal metaboliser's clearance, because the only group carrying the increased-function allele was four subjects of two different CPIC phenotypes, with no significance test. CPIC does not recommend changing methadone dosing on CYP2B6 genotype; the field shows the pharmacokinetic difference, which is measured, not a dosing rule.
 
 ## Provisional parameters in the newer drugs
 

@@ -58,7 +58,9 @@
 #
 #   Kharasch ED, Regina KJ, Blood J, Friedel C.  Methadone pharmacogenetics:
 #   CYP2B6 polymorphisms determine plasma concentrations, clearance, and
-#   metabolism.  Anesthesiology 2015;123:1142-1153.
+#   metabolism.  Anesthesiology 2015;123:1142-1153 (PMID 26389554), read in
+#   full on 2026-10-13.  The hepatic clearances below are quoted from p. 1146,
+#   where the sentence names the genotypes in the order it gives the values.
 #
 # Cohorts of CYP2B6 *1/*1 (n = 21), *1/*6 (n = 20) and *6/*6 (n = 17) healthy
 # volunteers received simultaneous intravenous and oral methadone.  HEPATIC
@@ -79,13 +81,32 @@
 # belongs.
 #
 # Kharasch reported no hepatic clearance for the *1/*6 heterozygotes.  Their
-# effect is set to the fraction of the homozygote effect that his apparent
-# ORAL clearances show (S 35% against 45% lower, R 25% against 35% lower), so
+# effect is set to the fraction of the homozygote effect that his abstract's
+# apparent ORAL clearances show (S 35% against 45% lower, R 25% against 35%
+# lower), so
 #
 #     S: 1 - (35/45) x (1 - 0.615) = 0.701      R: 1 - (25/35) x (1 - 0.769) = 0.835
 #
-# That interpolation is an INFERENCE, not an estimate, and is recorded as one
-# here and on the drug's help page.
+# That interpolation is an INFERENCE, not an estimate, and it is recorded as
+# one here and on the drug's help page.  THE FRACTION DEPENDS ON WHICH MEASURE
+# IT IS TAKEN FROM, which matters because it is applied to a systemic
+# clearance (the paper was read in full on 2026-10-13):
+#
+#     abstract, apparent oral, % lower     0.78     the values above
+#     Results, apparent oral clearances    0.64     S 2.3, 1.6, 1.2 mL/kg/min
+#     Results, systemic clearances         0.56     S 1.5, 1.2, 0.96 mL/kg/min
+#
+# Apparent oral clearance amplifies the genotype effect, because CL/F falls
+# both from the lower clearance and from the higher bioavailability that less
+# first-pass metabolism gives; the systemic figure, 0.56, is almost exactly
+# linear in allele count.  The oral-derived values above are kept: they are
+# the most conservative of the three, and a single-dose study understates the
+# steady state, because CYP2B6 is less inducible in *6 carriers and methadone
+# autoinduces.  All three agree qualitatively, and the mechanism is the
+# extraction ratio: Kharasch measured 0.08 in *1/*1 and 0.05 in *6/*6
+# (Results), so methadone is restrictively cleared, its hepatic clearance
+# tracks intrinsic clearance almost one for one, and there is no flow-limited
+# reserve to absorb the loss of one allele.
 #
 # CROSS-CHECK.  Through Henthorn's clearance split these multipliers give
 # total systemic clearances, relative to the normal metaboliser, of 0.75
@@ -101,11 +122,18 @@
 # genotyping laboratories report CYP2B6: *1/*1 is a normal metaboliser, *1/*6
 # an intermediate, *6/*6 a poor one.  CPIC's rapid and ultrarapid categories
 # (an increased-function *4 allele) are given the NORMAL metaboliser's
-# clearance: Kharasch's *4 carriers had 3- to 4-fold higher APPARENT ORAL
-# clearance, but there were only four of them, no significance test was done,
-# and a change of that size is first-pass, which cannot be read as a systemic
-# clearance.  CPIC's own recommendation for rapid metabolisers is standard
-# dosing on limited evidence.
+# clearance.  Kharasch does report figures for his *4 carriers -- systemic
+# clearances of 2.4 (R) and 2.7 (S) mL/kg/min against 1.5 for S in *1/*1, and
+# apparent oral clearances of 7.4 and 8.6 against 2.4 and 2.3 -- but they
+# cannot set a multiplier for a CPIC phenotype.  The group is FOUR subjects,
+# pooling one *1/*4 with three *4/*6, which CPIC classes as two different
+# phenotypes: rapid, and intermediate for one increased-function allele with
+# one decreased-function allele.  The paper calls these differences
+# "numerically greater" and runs no significance test on them.  CPIC's own
+# recommendation for rapid metabolisers is standard dosing on limited
+# evidence.  (Before the paper was read in full, this file and its help pages
+# said no systemic estimate was retrievable.  That was wrong, and was
+# corrected on 2026-10-13: the conclusion is unchanged, the reason is not.)
 #
 # CPIC does not advise changing methadone dosing on CYP2B6 genotype, because
 # the exposure difference has not been shown to change efficacy or QTc
