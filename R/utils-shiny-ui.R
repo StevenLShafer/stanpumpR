@@ -2,45 +2,84 @@ attachClass <- function(tag, class) {
   htmltools::tagAppendAttributes(tag, class = class)
 }
 
-citationItemHTML <- function(drug, reference, color) {
-  text <- reference
-  url <- NULL
-  label <- NULL
-  link <- NULL
+# The links in a citation: every https URL on one of the CITATION_WEBSITES
+# hosts, wherever it stands in the string, not only at its end.  Punctuation
+# that closes the sentence or a parenthesis around the URL is left to the
+# text: a DOI's own parentheses ("S0140-6736(99)01234-5") are balanced and
+# are kept, a closing one with no opening one inside the URL is not part of
+# it.  Returns a data frame of url (as written), link (trimmed), label and
+# the character positions, or NULL.  (Claude Code, 2026-10-14, at the request
+# of Steven L. Shafer: a trailing ")" once made a DOI link return 404, and a
+# URL followed by any text was not linked at all.)
+citationLinks <- function(reference) {
+  hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
+  pattern <- paste0("https://(", hosts, ")/[^[:space:]]+")
+  m <- gregexpr(pattern, reference, perl = TRUE)[[1]]
+  if (m[1] == -1) return(NULL)
+  urls <- regmatches(reference, list(m))[[1]]
+  trimmed <- vapply(urls, citationTrimURL, character(1), USE.NAMES = FALSE)
+  host <- sub("^https://([^/]+)/.*$", "\\1", trimmed)
+  data.frame(
+    url   = urls,
+    link  = trimmed,
+    label = names(CITATION_WEBSITES)[match(host, CITATION_WEBSITES)],
+    start = as.integer(m),
+    end   = as.integer(m) + nchar(trimmed) - 1L,
+    stringsAsFactors = FALSE
+  )
+}
 
-  if (is.null(reference) || !nzchar(reference)) {
-    text <- "Not Available"
-  } else {
-    hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
-    pattern <- paste0("\\s+https://(", hosts, ")/\\S+$")
-    res <- regmatches(reference, regexec(pattern, reference))[[1]]
-    if (length(res) > 0) {
-      text <- sub(pattern, "", reference)
-      url <- trimws(res[1])
-      label <- names(CITATION_WEBSITES)[match(res[2], CITATION_WEBSITES)]
-    }
+citationTrimURL <- function(url) {
+  repeat {
+    before <- url
+    url <- sub("[.,;:]+$", "", url)
+    unbalanced <- function(open, close)
+      lengths(regmatches(url, gregexpr(close, url, fixed = TRUE))) >
+      lengths(regmatches(url, gregexpr(open, url, fixed = TRUE)))
+    if (endsWith(url, ")") && unbalanced("(", ")")) url <- sub("\\)$", "", url)
+    if (endsWith(url, "]") && unbalanced("[", "]")) url <- sub("\\]$", "", url)
+    if (identical(url, before)) return(url)
   }
+}
 
-  if (!is.null(url)) {
-    link <- tagList(" ", tags$a(
-      label,
-      href = url,
+# A citation as HTML: the text escaped, each recognised URL replaced by a
+# link labelled with its site (citationLinks()), the investigators named in
+# it linked to their pop-ups.
+citationHTML <- function(reference) {
+  links <- citationLinks(reference)
+  if (is.null(links)) return(htmltools::htmlEscape(reference))
+  pieces <- character(0)
+  pos <- 1L
+  for (i in seq_len(nrow(links))) {
+    pieces <- c(pieces, htmltools::htmlEscape(substr(reference, pos, links$start[i] - 1L)))
+    pieces <- c(pieces, as.character(tags$a(
+      links$label[i],
+      href = links$link[i],
       target = "_blank",
       rel = "noreferrer"
-    ))
+    )))
+    pos <- links$end[i] + 1L
   }
+  pieces <- c(pieces, htmltools::htmlEscape(substr(reference, pos, nchar(reference))))
+  paste(pieces, collapse = "")
+}
 
-  # The investigators named in the citation link to their pop-ups
-  # (R/help-investigators.R); a citation is where the program's own author
-  # is linked too.
-  text <- HTML(helpLinkInvestigators(htmltools::htmlEscape(text), "citation"))
+citationItemHTML <- function(drug, reference, color) {
+  text <- if (is.null(reference) || !nzchar(reference)) {
+    "Not Available"
+  } else {
+    # The investigators named in the citation link to their pop-ups
+    # (R/help-investigators.R); a citation is where the program's own
+    # author is linked too.  Text inside the site links is left alone.
+    HTML(helpLinkInvestigators(citationHTML(reference), "citation"))
+  }
 
   tags$div(
     tags$strong(
       style = paste0("color:", if (is.null(color)) "inherit" else color, ";"),
       helpDrugTitle(drug)
     ),
-    ": ", text, link
+    ": ", text
   )
 }
 

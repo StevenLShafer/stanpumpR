@@ -139,6 +139,14 @@ tciKinetics <- function(PK)
 #           base/min, Dt the time the rate is held, Bolus TRUE for the rapid
 #           loading infusion that starts a target increase
 #   boluses data.frame(Time, Amount): the loading infusions, in base units
+# The logical per-dose route flags simCpCe() adds to a dose table before it
+# calls tciSchedule(): Bolus (IV bolus), the extravascular depots, the
+# duplicated second depots and the regional infusion.  The TCI rows carry
+# none of them.  A new flag in simCpCe() is added here too, and the test in
+# test-tci.R that every flag of a simulated table is listed fails until it is.
+tciRouteFlags <- function()
+  c("Bolus", "PO", "IM", "IN", "SL", "RA", "RAslow", "RArate", "PO2")
+
 tciSchedule <- function(dose, PK, maximum,
                         interval = TCI_INTERVAL, maxRate = TCI_MAX_RATE)
 {
@@ -271,11 +279,17 @@ tciSchedule <- function(dose, PK, maximum,
     tciRows$Time  <- rates$Time
     tciRows$Dose  <- rates$Rate
     tciRows$Units <- "TCI"
-    tciRows$Bolus <- FALSE
-    tciRows$PO <- tciRows$IM <- tciRows$IN <- tciRows$RA <- FALSE
-    if (!is.null(tciRows$SL)) tciRows$SL <- FALSE
-    if (!is.null(tciRows$RAslow)) tciRows$RAslow <- FALSE
-    if (!is.null(tciRows$PO2)) tciRows$PO2 <- FALSE
+    # The rows are copies of the first row of the table, so they inherit its
+    # route.  A TCI row is an intravenous infusion whatever that row was:
+    # every route flag simCpCe() sets (tciRouteFlags()) is cleared, by name,
+    # so that a flag added later cannot leak through.  A regional infusion
+    # ("mg/hr RA", flagged RArate) entered before a plasma target once did:
+    # the flag survived the copy, advanceClosedFormPO_IM_IN() delivered the
+    # controller's infusion into the tissue depot, and the plasma stayed
+    # well below the target.  (Claude Code, 2026-10-14, at the request of
+    # Steven L. Shafer.)
+    for (flag in intersect(tciRouteFlags(), names(tciRows)))
+      tciRows[[flag]] <- FALSE
     tciRows$Target <- FALSE
     keep <- rbind(keep, tciRows)
   }

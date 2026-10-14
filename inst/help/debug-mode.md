@@ -16,7 +16,7 @@ The level stays in the address bar, ahead of the saved simulation, so reloading 
 
 ## The log
 
-The left column is a running log written by `outputComments()` calls throughout the server. It shows the dose table after cleaning, the pharmacokinetic parameters calculated for each drug, the events applied, and the state restored from a URL. It is the first place to look when a simulation does not do what you expected.
+The left column is a running log written by `outputComments()` calls throughout the server. Its first line names the build: the package version and, when the deployment recorded it, the commit it was built from (the same text is the tooltip of the **Source** link in the navigation bar, so it can be read without debug mode). It then shows the dose table after cleaning, the pharmacokinetic parameters calculated for each drug, the events applied, and the state restored from a URL. It is the first place to look when a simulation does not do what you expected.
 
 ## The profiler
 

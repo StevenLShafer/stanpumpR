@@ -397,12 +397,13 @@ DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
 DEBUG_LEVEL_VERBOSE <- 2
 
-# If a drug reference contains a URL at the very end of the citation, and the URL
-# is one of the following websites and is served over https, then it will be
-# shown in the UI as a link.
+# Every https URL on one of these websites in a drug reference, wherever it
+# stands in the citation, is shown in the UI as a link labelled with the
+# site's name (citationLinks() in R/utils-shiny-ui.R).
 CITATION_WEBSITES <- c(
   "PubMed" = "pubmed.ncbi.nlm.nih.gov",
-  "DOI"    = "doi.org"
+  "DOI"    = "doi.org",
+  "PAGE"   = "www.page-meeting.org"
 )
 
 DEFAULT_CONFIG <- list(
