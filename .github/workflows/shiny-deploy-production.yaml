@@ -9,9 +9,11 @@
 # checked-out commit, so a merge in the meantime could put a different revision
 # in the live package than in the deployment run.  A manual run
 # (workflow_dispatch) deploys the commit it is run on, unchecked, for the case
-# where the check is red for a reason unrelated to the app.  The installed
-# commit is recorded in the package's DESCRIPTION (RemoteSha), which the app
-# shows in its debug log and the Source link's tooltip (stanpumpRBuild()).
+# where the check is red for a reason unrelated to the app.  The deployed
+# commit is written into config.yml (`commit`), which the app shows in its
+# debug log and the Source link's tooltip (stanpumpRBuild()); shinyapps.io
+# installs the package from the manifest, so the DESCRIPTION's RemoteSha is
+# not there to read on the server.
 on:
   workflow_run:
     workflows: [R-CMD-check]
@@ -93,7 +95,8 @@ jobs:
             default = list(
               email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
               email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
-              debug = 0
+              debug = 0,
+              commit = Sys.getenv("DEPLOY_SHA")
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")
