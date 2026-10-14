@@ -49,7 +49,7 @@ Per-kilogram units use the weight in the Patient Profile at the time of simulati
 
 ## Scheduled doses
 
-For drugs given on a schedule (the analgesic opioids, the oral analgesics and benzodiazepines, the antibiotics, the steroids, the antidepressants, antipsychotics, stimulants and antiseizure drugs, ondansetron and mannitol), their bolus, oral, sublingual, intramuscular and intranasal units also come with the frequencies the drug is usually given at, from:
+For drugs given on a schedule (the analgesic opioids, the oral analgesics and benzodiazepines, the antibiotics, the steroids, the antidepressants, antipsychotics, stimulants and antiseizure drugs and ondansetron), their bolus, oral, sublingual, intramuscular and intranasal units also come with the frequencies the drug is usually given at, from:
 
 | Suffix | Meaning | Interval |
 |---|---|---|
