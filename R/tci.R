@@ -298,17 +298,21 @@ tciDisplay <- function(schedule, PK)
   mass <- if (PK$Concentration.Units == "ng") "mcg" else "mg"
   weight <- PK$weight
   rates <- data.frame(
-    Drug  = PK$drug,
+    Drug  = rep_len(PK$drug, nrow(schedule$rates)),
     Time  = schedule$rates$Time,
     Rate  = schedule$rates$Rate / weight,
-    Units = paste0(mass, "/kg/min"),
+    Units = rep_len(paste0(mass, "/kg/min"), nrow(schedule$rates)),
     Bolus = schedule$rates$Bolus
   )
+  # There may be no loading dose at all: a manual bolus or infusion given with
+  # the target can put the concentration above it from the start, so the pump
+  # only ever holds the target.  The scalar columns are recycled explicitly,
+  # because data.frame() refuses a length-1 column beside zero-length ones.
   boluses <- data.frame(
-    Drug   = PK$drug,
+    Drug   = rep_len(PK$drug, nrow(schedule$boluses)),
     Time   = schedule$boluses$Time,
     Amount = schedule$boluses$Amount,
-    Units  = mass
+    Units  = rep_len(mass, nrow(schedule$boluses))
   )
   list(rates = rates, boluses = boluses)
 }
