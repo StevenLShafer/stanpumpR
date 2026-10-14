@@ -565,7 +565,9 @@ app_ui <- function() {
           icon("github"),
           "Source",
           href = config$source_link,
-          target = "_blank"
+          target = "_blank",
+          # The installed version and commit, as a tooltip (stanpumpRBuild())
+          title = stanpumpRBuild()$label
         )
       )
     )

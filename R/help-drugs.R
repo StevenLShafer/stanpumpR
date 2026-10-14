@@ -207,8 +207,20 @@ helpConcentrationUnits <- function(units) {
          as.character(units))
 }
 
+# The citation as plain text, for the drug index: a URL that ends it is
+# dropped, one inside it is replaced by its site's name, as citationHTML()
+# shows it (R/utils-shiny-ui.R); an unrecognised URL stays as written.
 helpReferenceShort <- function(reference) {
   if (is.null(reference) || is.na(reference) || !nzchar(reference)) return("Not available")
+  links <- citationLinks(reference)
+  if (!is.null(links)) {
+    for (i in rev(seq_len(nrow(links)))) {
+      after <- substr(reference, links$end[i] + 1L, nchar(reference))
+      trailing <- !nzchar(trimws(after))
+      reference <- paste0(substr(reference, 1L, links$start[i] - 1L),
+                          if (trailing) "" else links$label[i], after)
+    }
+  }
   trimws(sub("\\s+https?://\\S+$", "", reference))
 }
 

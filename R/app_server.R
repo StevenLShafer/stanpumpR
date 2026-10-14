@@ -32,6 +32,8 @@ app_server <- function(input, output, session) {
   })
   # Register the comments log with this user's session, to use outside the server
   session$userData$commentsLog <- commentsLog
+  # The first line of the log names the build (stanpumpRBuild())
+  outputComments(stanpumpRBuild()$label)
 
   profileRecords <- reactiveVal(data.frame(name = character(0), ms = numeric(0), time = character(0)))
 

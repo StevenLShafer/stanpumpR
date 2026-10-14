@@ -40,4 +40,4 @@ Add it to `DESCRIPTION` first, then `renv::install()` and `renv::snapshot()`, an
 
 - Every parameter traceable to a citation, or marked as a guess in the code and in the help.
 - Every change covered by a test. `devtools::test()` must pass; the continuous-integration check runs it on every pull request.
-- Pull requests are deployed to a test copy of the app for review before merging.
+- Pull requests are deployed to a test copy of the app for review before merging. A merge to `master` reaches production only after the continuous-integration check has passed on it, and the deployment installs that exact commit; the installed commit is named in the [debug log](help:debug-mode).
