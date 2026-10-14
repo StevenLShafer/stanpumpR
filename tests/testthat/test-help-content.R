@@ -47,7 +47,8 @@ test_that("every page renders", {
     expect_true(nchar(html) > 50, info = paste("page", id, "is nearly empty"))
     ui <- helpPageUI(id)
     expect_s3_class(ui, "shiny.tag")
-    rendered <- as.character(ui)
+    # A title may carry an investigator or GasMan link ("Pollak's regimen")
+    rendered <- gsub("<a [^>]*>|</a>", "", as.character(ui))
     expect_true(grepl(reg$title[reg$id == id], rendered, fixed = TRUE),
                 info = paste("title missing from", id))
   }

@@ -30,6 +30,11 @@ citationItemHTML <- function(drug, reference, color) {
     ))
   }
 
+  # The investigators named in the citation link to their pop-ups
+  # (R/help-investigators.R); a citation is where the program's own author
+  # is linked too.
+  text <- HTML(helpLinkInvestigators(htmltools::htmlEscape(text), "citation"))
+
   tags$div(
     tags$strong(
       style = paste0("color:", if (is.null(color)) "inherit" else color, ";"),

@@ -240,6 +240,30 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
 .help-citations li {
   margin-bottom: 0.4rem;
 }
+/* An investigator's name, anywhere in the help or the References panel,
+   opens a pop-up about them (R/help-investigators.R) */
+a.investigator-link {
+  color: #0d6efd;
+  text-decoration: none;
+  cursor: pointer;
+}
+a.investigator-link:hover {
+  text-decoration: underline;
+}
+.help-investigator h6 {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4a5764;
+}
+.help-investigator h6:first-child {
+  margin-top: 0;
+}
+.help-investigator p {
+  margin-bottom: 0.6rem;
+}
 .help-breadcrumb {
   margin-bottom: 0.25rem;
 }
