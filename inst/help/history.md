@@ -57,7 +57,7 @@ The early versions advanced the compartments numerically, step by step (Euler's 
 
 STANPUMP also served as a test bed for:
 
-- carrying **time to peak effect** rather than ke0 between models (Shafer and Varvel, 1991), so that a pharmacodynamic study done with one kinetic model could be used with another;
+- carrying **time to peak effect** rather than ke0 between models, so that a pharmacodynamic study done with one kinetic model could be used with another. Shafer and Varvel reported the times to peak effect of the opioids in 1991, but their use in place of ke0 was appreciated only a decade later (Minto, Schnider, Gregg, Henthorn and Shafer, 2003), and STANPUMP took the time of peak effect as its descriptor of plasma-effect equilibration from 1995;
 - a real-time Bayesian update of the pharmacokinetic parameters from observations made during drug administration;
 - output files ready for pharmacokinetic and pharmacodynamic model fitting, drug files read from disk, multiple syringe sizes and a batch mode for research. Its library included the hypnotics, opioids, benzodiazepines, local anesthetics and muscle relaxants, and kinetics for dogs, rats and horses as well as humans.
 

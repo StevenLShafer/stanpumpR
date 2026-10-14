@@ -133,7 +133,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 ## Pharmacodynamics and methods
 
 - **Lewis B. Sheiner**, Stanski and colleagues (1979): the effect compartment.
-- Shafer and Varvel (1991), Minto and colleagues (2003): time to peak effect as the model-independent way to carry ke0.
+- Minto, Schnider, Gregg, Henthorn and Shafer (2003): time to peak effect as the model-independent way to carry ke0. Shafer and Varvel had reported the opioids' times to peak effect in 1991; the use in place of ke0 came a decade later.
 - **Keith M. Gregg** and Shafer (1992): the effect-site targeting algorithm, implemented in STANPUMP and in stanpumpR's [target-controlled infusion](help:tci).
 - **James M. Bailey** and Shafer (1991): the plasma targeting algorithm.
 - **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time.
