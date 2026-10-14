@@ -47,7 +47,7 @@ Not plotted. It is about a quarter of the base, its concentrations tracked d-amp
 
 - **Food:** a high-fat meal delays the XR peak by about 2.5 hours without changing the amount absorbed (label).
 - **Urine pH:** acid urine speeds and alkaline urine slows the renal elimination of amphetamine.
-- **CYP2D6:** not modelled.
+- **CYP2D6:** not modelled; the Patient Profile's **CYP 2D6** field does not change this model.
 - **Adolescents and adults:** extrapolations. The label gives longer half-lives in both (11 and 10 hours).
 - **Other products:** Mydayis, Evekeo and dextroamphetamine products are different products, and entering them here would use the wrong dose basis or release.
 

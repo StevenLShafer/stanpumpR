@@ -66,9 +66,9 @@ plasmaOnly <- c(
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
   "olanzapine", "droperidol", "droperidolIM",
-  # Calcium chloride and calcium gluconate (2026-10-13): plotted as the change
-  # in ionized calcium, which is the end point itself; no ke0.
-  "calciumChloride", "calciumGluconate"
+  # Intravenous calcium (2026-10-13): plotted as the change in ionized
+  # calcium, which is the end point itself; no ke0.
+  "calcium"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

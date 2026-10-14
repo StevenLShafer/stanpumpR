@@ -396,9 +396,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
     "olanzapine", "droperidol", "droperidolIM",
-    # Calcium chloride and calcium gluconate joined on 2026-10-13: the ionized
-    # calcium itself is the end point, no ke0, no metabolite.
-    "calciumChloride", "calciumGluconate"
+    # Intravenous calcium joined on 2026-10-13: the ionized calcium itself
+    # is the end point, no ke0, no metabolite.
+    "calcium"
   ))
 })
 

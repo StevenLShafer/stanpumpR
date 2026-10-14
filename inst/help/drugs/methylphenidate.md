@@ -12,7 +12,7 @@ The parameters are **apparent** d-MPH parameters, and the paper does not say whe
 
 ### Oral only
 
-Apparent parameters predict oral concentrations but not intravenous ones, so only oral units are offered. **mg PO** is the immediate-release tablet (Ritalin), and the frequencies (bid, tid) repeat it. **mg PO XR** is Concerta (below). Ritalin LA, Aptensio XR, Metadate CD and the other extended-release products are different inputs and are not represented: **mg PO XR here means Concerta only**.
+Apparent parameters predict oral concentrations but not intravenous ones, so only oral units are offered. **mg PO** is the immediate-release tablet (Ritalin), and the frequencies (qd, bid, tid, qid) repeat it. **mg PO XR** is Concerta (below), also offered once daily as **mg PO XR qd**. Ritalin LA, Aptensio XR, Metadate CD and the other extended-release products are different inputs and are not represented: **mg PO XR here means Concerta only**.
 
 ### Concerta
 

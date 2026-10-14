@@ -14,7 +14,7 @@ gasSettingsAt(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 \item{deadSpace}{dead space as a fraction of minute ventilation.  The
 "ventilation" row of the dose table is MINUTE ventilation, and alveolar
 ventilation is \code{MV * (1 - deadSpace)}.  Zero makes the row alveolar
-ventilation, as it is in Gas Man.}
+ventilation, as it is in GasMan.}
 }
 \value{
 a list with total fresh gas flow \code{Q}, minute ventilation

@@ -65,8 +65,8 @@ values are the more accurate ones.**
   the source wrongly concluded GasMan did not implement.
 * **The tissue coefficients are tissue:GAS.** Epstein hard-coded the per-agent
   constants in his scenario; this side let `gasman.ini` supply them. Agreement to
-  1e-06 settles a question that could not be settled by reading, because Gas
-  Man's own scenario template documents `lambdaVrg` / `lambdaMus` / `lambdaFat`
+  1e-06 settles a question that could not be settled by reading, because
+  GasMan's own scenario template documents `lambdaVrg` / `lambdaMus` / `lambdaFat`
   as tissue:*blood* while supplying tissue:*gas* values.
 * **`GetVA` reports inspired ventilation, not the setting.** GasMan returned
   VA 4.170708179 against a setting of 4; the difference, 0.170708 L/min, is the
@@ -215,8 +215,8 @@ them:
 3. **Oxygen is modelled**, with metabolic consumption (3.5 mL/kg/min) and a
    floor at zero; GasMan does not model oxygen, so there is no reference for
    it. Oxygen is excluded from the uptake coupling, as before.
-4. **Starting nitrogen is 78.07%**, alongside 20.93% oxygen, rather than Gas
-   Man's `Ambient=80`.
+4. **Starting nitrogen is 78.07%**, alongside 20.93% oxygen, rather than
+   GasMan's `Ambient=80`.
 5. **Exact integration.** Each sub-step is advanced by matrix exponential where
    GasMan splits it. The two converge as the step shrinks and do not agree
    digit for digit at a fixed step; see `tests/testthat/test-gas-convergence.R`.
@@ -509,8 +509,8 @@ ventilation whose alveolar part is GasMan's default alveolar ventilation:
 
 **Every comparison with GasMan in this directory is run with `deadSpace = 0`**,
 so that the ventilation in a scenario is alveolar on both sides. The earlier
-results in this file are therefore unchanged. The dead space itself has no Gas
-Man counterpart to check against; it is covered by the engine's own tests: the
+results in this file are therefore unchanged. The dead space itself has no
+GasMan counterpart to check against; it is covered by the engine's own tests: the
 fresh-gas fraction and its limits, agreement with an independent integration,
 and the oxygen mass balance (below the threshold the mixed-expired oxygen
 settles at the delivered fraction less 100 x VO2 / fresh gas flow).

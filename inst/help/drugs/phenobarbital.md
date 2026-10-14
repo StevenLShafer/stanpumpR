@@ -4,7 +4,7 @@ From a 2025 study of 37 critically ill adults in refractory status epilepticus (
 
 ### Routes and size
 
-Oral (`mg PO`, with daily schedules) and intravenous (`mg`, `mg/hr`). Ideal body weight is Devine's; in children and short adults it is meaningless, so below 18 years the model uses the [pharmacokinetic weight](help:models/fat-free-mass) instead, which is an **extrapolation** of an adult critically-ill model. With the fat-free-mass switch off, total body weight is used.
+Oral (`mg PO`, with daily schedules) and intravenous (`mg`, `mg/kg`, `mg/hr`). Ideal body weight is Devine's; in children and short adults it is meaningless, so below 18 years, or wherever the ideal weight is less than half the patient's weight, the model uses the [pharmacokinetic weight](help:models/fat-free-mass) instead, which is an **extrapolation** of an adult critically-ill model. With the fat-free-mass switch off, total body weight is used.
 
 ### What is not modelled
 
