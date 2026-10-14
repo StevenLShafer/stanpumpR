@@ -18,9 +18,13 @@
 # it in both switch positions, and the other five parameters are the
 # published values with the switch off and take the fat-free-mass scaling
 # with it on.  Body surface area is Du Bois (bsaDuBois(), R/renalFunction.R).
-# CAVEAT: a fourth power of body surface area from eight young adults is an
-# extrapolation outside roughly 1.5 to 2.2 m2; in a small child Q3 is tiny
-# and the deep compartment hardly fills.  The help says so.
+# BOUNDED: a fourth power of body surface area from eight young adults is an
+# extrapolation outside the adult range, and in a small child it would make
+# Q3 tiny (0.6 L/h at 0.8 m2) so that the deep compartment hardly filled.
+# The covariate is therefore evaluated at the body surface area clamped to
+# MORPHINE_BSA_RANGE, 1.5 to 2.2 m2: below 1.5 m2 Q3 holds its 1.5 m2 value,
+# 8.8 L/h, and above 2.2 m2 its 2.2 m2 value, 40.7 L/h.  (Steven L. Shafer's
+# decision, 2026-10-14, on the PR that introduced the covariate.)
 #
 # EFFECT SITE AND MEAC are not from Lotsch 2002, which measured no effect.
 # tPeak 93.8 min is the library's own value, carried from the program's
@@ -119,6 +123,11 @@
 # 2016, "clearance >70% increased" (see the header).
 MORPHINE_PREGNANCY_CL_FACTOR <- 1.7
 
+# The body surface area range, m2, over which Lotsch's fourth-power covariate
+# on Q3 is applied; outside it the covariate holds its value at the nearer
+# bound (see the header).
+MORPHINE_BSA_RANGE <- c(1.5, 2.2)
+
 morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
                      pregnant = FALSE)
 {
@@ -142,7 +151,8 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   reference <- paste0(
     "Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162. ",
     "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous, Model A, ",
-    "Q3 x (BSA/1.83)^4; tPeak and MEAC are library values, not the paper's); ",
+    "Q3 x (BSA/1.83)^4 with BSA bounded to 1.5-2.2 m2; tPeak and MEAC are ",
+    "library values, not the paper's); ",
     "Atrux-Tallau N et al., Clin Drug Investig 2022;42:1101-1112. ",
     "https://pubmed.ncbi.nlm.nih.gov/36331670/ (oral tablet and liquid: ",
     "pivotal tablet Cmax, tmax and AUC; liquid absorption rate from the ",
@@ -167,7 +177,8 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # with fat-free mass relative to the 70 kg, 170 cm reference male and the
   # clearances with that ratio ^ 0.75 (Al-Sallami 2015); with it off they are
   # used as published (legacyVolume = 1, legacyClearance = 1).  Q3 carries the
-  # model's own covariate in both positions: 19.5 L/h x (BSA / 1.83)^4.
+  # model's own covariate in both positions, 19.5 L/h x (BSA / 1.83)^4, at
+  # the body surface area clamped to MORPHINE_BSA_RANGE.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
   v1 <- v1Ref * size$volume
@@ -177,7 +188,8 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   clPregnancy <- if (isTRUE(pregnant)) MORPHINE_PREGNANCY_CL_FACTOR else 1
   cl1 <- cl1Ref * size$clearance * clPregnancy
   cl2 <- cl2Ref * size$clearance
-  cl3 <- cl3At183 * (bsaDuBois(weight, height) / 1.83)^4
+  bsa <- min(max(bsaDuBois(weight, height), MORPHINE_BSA_RANGE[1]), MORPHINE_BSA_RANGE[2])
+  cl3 <- cl3At183 * (bsa / 1.83)^4
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
       paste0("clearance x ", MORPHINE_PREGNANCY_CL_FACTOR)))

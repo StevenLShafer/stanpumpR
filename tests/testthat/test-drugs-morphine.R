@@ -47,8 +47,9 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
   # volumes x 1.3049067 and CL and Q2 x 1.3049067^0.75 = 1.2209126 (worked out
   # from the Al-Sallami formula by hand, not from the code under test).  Q3
-  # keeps the paper's covariate: Du Bois BSA 2.2756 m2, 0.325 x (2.2756/1.83)^4
-  # = 0.325 x 2.39095 = 0.77706 L/min.
+  # keeps the paper's covariate at the body surface area bounded to 2.2 m2
+  # (Du Bois BSA is 2.2756 m2): 0.325 x (2.2/1.83)^4 = 0.325 x 2.08875 =
+  # 0.67884 L/min.
   actual <- morphine(120, 170, 50, "male")
   expected <- list(
         v1 = 22.835866,
@@ -56,7 +57,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
         v3 = 255.29977,
         cl1 = 1.5057922,
         cl2 = 2.7206003,
-        cl3 = 0.77705952
+        cl3 = 0.67884360
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
@@ -193,9 +194,18 @@ test_that("the slow intercompartmental clearance follows Lotsch's body-surface-a
                19.5 * (bsaDuBois(70, 171) / 1.83)^4)
   expect_equal(q3(70, 171, 50, "male", adjustToFFM = TRUE),
                q3(70, 171, 50, "male", adjustToFFM = FALSE))
-  expect_equal(q3(120, 170, 50, "male") / q3(70, 171, 50, "male"),
-               (bsaDuBois(120, 170) / bsaDuBois(70, 171))^4)
+  expect_equal(q3(60, 175, 40, "male") / q3(70, 171, 50, "male"),
+               (bsaDuBois(60, 175) / bsaDuBois(70, 171))^4)
   expect_equal((2.2 / 1.83)^4, 2.089, tolerance = 1e-3)
+  # Bounded to the adult range, 1.5 to 2.2 m2 (MORPHINE_BSA_RANGE): a 120 kg
+  # man (2.28 m2) gets the 2.2 m2 value and a 20 kg child (0.78 m2) the 1.5
+  # m2 value, in both switch positions.
+  expect_gt(bsaDuBois(120, 170), 2.2)
+  expect_equal(q3(120, 170, 50, "male"), 19.5 * (2.2 / 1.83)^4)
+  expect_lt(bsaDuBois(20, 110), 1.5)
+  expect_equal(q3(20, 110, 5, "male"), 19.5 * (1.5 / 1.83)^4)
+  expect_equal(q3(20, 110, 5, "male", adjustToFFM = FALSE), 19.5 * (1.5 / 1.83)^4)
+  expect_equal(q3(20, 110, 5, "male"), 8.80, tolerance = 1e-3)
   # The other parameters are absolute with the switch off: the same at 50 kg
   off <- morphine(50, 160, 30, "female", adjustToFFM = FALSE)$PK$default
   expect_equal(unlist(off[c("v1", "v2", "v3", "cl1", "cl2")]),
