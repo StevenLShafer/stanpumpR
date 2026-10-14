@@ -102,7 +102,7 @@ head(result$timeseries)
 apiWriteResult(result, "simulation.xlsx")   # or .csv, .json, .xml
 ```
 
-Unlike `simCpCe()`, it takes times in the unit named by `timeUnit`. It runs `simulateDrugsWithCovariates()`, so its numbers are the app's. `apiFormatResult()` returns the result as JSON, CSV, Excel or XML, `apiDrugCatalog()` lists the drugs it can simulate, and `run_api()` serves it over HTTP (`POST /simulate`) for other languages; like the TCI API it needs `plumber`. The request and every option are documented in `docs/api.md` in the repository.
+Unlike `simCpCe()`, it takes times in the unit named by `timeUnit`. It runs `simulateDrugsWithCovariates()`, so its numbers are the app's. `apiFormatResult()` returns the result as JSON, CSV, Excel or XML, `apiDrugCatalog()` lists the drugs it can simulate, and `run_api()` serves it over HTTP (`POST /simulate`) for other languages; like the TCI API it needs `plumber`. The request and every option are documented at [stanpumpr.io/api](https://stanpumpr.io/api) and summarised under [The Simulation API](help:simulation-api).
 
 ## The TCI API
 

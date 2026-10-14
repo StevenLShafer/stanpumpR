@@ -21,7 +21,8 @@
 #   inst/plumber/plumber.R        the HTTP service (run_api()): POST /simulate,
 #                                 GET /drugs, GET /health.
 #
-# The request and the result are specified in docs/api.md.  The simulation
+# The request and the result are specified in inst/apidocs/api.md, served
+# as a web page at https://stanpumpr.io/api (R/api-docs.R).  The simulation
 # itself is simulateDrugsWithCovariates(), the same Shiny-free entry point the
 # tests and vignettes use, so the API returns what the app plots.
 #
@@ -124,7 +125,7 @@ apiFlag <- function(x, what) {
 apiParseRequest <- function(text) {
   if (is.raw(text)) text <- rawToChar(text)
   if (is.null(text) || length(text) == 0 || !nzchar(paste(text, collapse = ""))) {
-    apiError("The request body is empty; send the request as JSON (see docs/api.md).")
+    apiError("The request body is empty; send the request as JSON (see https://stanpumpr.io/api).")
   }
   request <- tryCatch(
     jsonlite::fromJSON(paste(text, collapse = "\n"), simplifyVector = TRUE),
@@ -362,7 +363,7 @@ apiConcentrationUnits <- function(units) {
 #' Simulate a dose table for one patient
 #'
 #' The engine behind the HTTP API (`run_api()`), callable directly from R.
-#' The request format is specified in `docs/api.md`; in short:
+#' The request format is specified at <https://stanpumpr.io/api>; in short:
 #'
 #' ```
 #' list(
@@ -674,7 +675,8 @@ apiNegotiateFormat <- function(query = NULL, request = NULL, accept = NULL) {
 #' Run the simulation API as an HTTP service
 #'
 #' Serves `POST /simulate`, `GET /drugs` and `GET /health` (see
-#' `docs/api.md`), with interactive documentation at `/__docs__/`.  Needs the
+#' <https://stanpumpr.io/api>, also served at `/`), with interactive
+#' documentation at `/__docs__/`.  Needs the
 #' plumber package.
 #'
 #' @param host,port where to listen

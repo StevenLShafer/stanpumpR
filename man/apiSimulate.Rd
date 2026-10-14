@@ -23,7 +23,7 @@ request are signalled with class \code{stanpumpr_api_error}.
 }
 \description{
 The engine behind the HTTP API (\code{run_api()}), callable directly from R.
-The request format is specified in \code{docs/api.md}; in short:
+The request format is specified at \url{https://stanpumpr.io/api}; in short:
 }
 \details{
 \if{html}{\out{<div class="sourceCode">}}\preformatted{list(

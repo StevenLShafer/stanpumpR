@@ -26,7 +26,7 @@ haemoglobin nonlinearly and has no meaningful partition coefficient.}
 gasman.ini gives them (VRG, MUS, FAT).  These are what the equations
 need; they are NOT tissue:blood and must not be multiplied by
 \code{lambda_blood} again -- see \code{gasPartitionTissueGas()}.}
-\item{MAC40}{minimum alveolar concentration at age 40, in \\% of 1 atm.
+\item{MAC40}{minimum alveolar concentration at age 40, in \% of 1 atm.
 NA for gases with no anaesthetic potency in this context.}
 \item{potent}{TRUE if the gas contributes to the MAC sum}
 \item{flagged, flagNote}{provenance: TRUE, with a note, for a value used
