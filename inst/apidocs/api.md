@@ -385,10 +385,24 @@ The service is part of the stanpumpR R package. Install the package and the
 `plumber` package, then start the server:
 
 ```r
+# Windows: the ready-made package (x64 and ARM), rebuilt on every change
+zip <- file.path(tempdir(), "stanpumpR.zip")
+download.file("https://github.com/StevenLShafer/stanpumpR/releases/download/windows-binary/stanpumpR.zip",
+              zip, mode = "wb")
+install.packages(zip, repos = NULL, type = "win.binary")
+
+# macOS or Linux: from GitHub
 # install.packages("remotes"); remotes::install_github("StevenLShafer/stanpumpR")
-# install.packages("plumber")
+
+install.packages("plumber")
 stanpumpR::run_api(host = "127.0.0.1", port = 8000)
 ```
+
+On Windows, use the ready-made package rather than installing from source: on
+Windows 11, Smart App Control can stop a source install with nothing but
+`lazy loading failed`. The
+[release page](https://github.com/StevenLShafer/stanpumpR/releases/tag/windows-binary)
+lists the CRAN packages stanpumpR needs.
 
 The service is defined in `inst/plumber/plumber.R` in the package, so it can
 also be hosted with `plumber::pr()` on Posit Connect or in a Docker image

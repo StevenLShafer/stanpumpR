@@ -154,6 +154,8 @@ jobs:
 
           Built with R ${rversion}: install it in R ${rminor}.x. The same file works on Windows x64 and on Windows ARM.
 
+          Use it instead of installing from source: on Windows 11, Smart App Control can stop a source install with nothing but "lazy loading failed".
+
           Install it from R (or RStudio):
 
           \`\`\`r

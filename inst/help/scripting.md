@@ -2,9 +2,23 @@ The simulation engine can be driven from R without the app, for research, for ba
 
 ## Installing as a library
 
+On Windows, install the ready-made package, which is rebuilt from the current version of stanpumpR on every change (one file for x64 and ARM; use the current R release):
+
 ```r
-# from a clone of the repository
-devtools::install(build_vignettes = TRUE)
+zip <- file.path(tempdir(), "stanpumpR.zip")
+download.file("https://github.com/StevenLShafer/stanpumpR/releases/download/windows-binary/stanpumpR.zip",
+              zip, mode = "wb")
+install.packages(zip, repos = NULL, type = "win.binary")
+library(stanpumpR)
+```
+
+Installing from source on Windows can stop with only `ERROR: lazy loading failed`: Windows 11's Smart App Control has blocked a DLL during the build because it could not verify where the DLL came from. The ready-made package needs no build step. Its [release page](https://github.com/StevenLShafer/stanpumpR/releases/tag/windows-binary) lists the CRAN packages it needs, if any are missing.
+
+On macOS or Linux, install from GitHub:
+
+```r
+# install.packages("remotes")
+remotes::install_github("StevenLShafer/stanpumpR")
 library(stanpumpR)
 ```
 
