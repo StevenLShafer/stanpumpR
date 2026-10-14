@@ -4,7 +4,15 @@
 \alias{gentamicin}
 \title{Gentamicin pharmacokinetics}
 \usage{
-gentamicin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+gentamicin(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,10 @@ peripheral parameters.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
 assumed normal value for the patient's age and sex (R/renalFunction.R)}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the eGFR
+the clearance reads by 1.5, the rise in glomerular filtration of
+pregnancy (Ansari 2016; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

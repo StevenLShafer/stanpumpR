@@ -35,7 +35,7 @@ a setting that persists until the next row for the same drug.}
 weight-scaled standard.}
 
 \item{cardiacOutput}{cardiac output in L/min.  Defaults to the covariate
-value in \code{body} (Gas Man's 5 L/min at 70 kg, allometric).  Accepted per call so that a
+value in \code{body} (GasMan's 5 L/min at 70 kg, allometric).  Accepted per call so that a
 time-varying cardiac output can be added later without changing the
 engine; note that letting it vary would logically require the intravenous
 pharmacokinetics to respond to it as well, which stanpumpR does not model.}
@@ -45,32 +45,32 @@ over which the uptake coupling is held fixed, and so, when
 \code{uptakeEffect} is TRUE, the accuracy: the error is first order in the
 sub-step, about \code{maximum / resolution} (see the file header).}
 
-\item{uptakeEffect}{if TRUE (the default, as in Gas Man, whose m_bUptEnb
+\item{uptakeEffect}{if TRUE (the default, as in GasMan, whose m_bUptEnb
 defaults true), couple the gases through their summed uptake, giving the
 concentration and second gas effect.  Set FALSE to isolate that term: with
 it off the gases do not influence one another at all, which is what makes
 the effect measurable as a difference rather than asserted.}
 
 \item{circuit}{"ideal", the default: no rebreathing once fresh gas flow
-reaches minute ventilation, and no circuit volume.  "semi-closed": Gas
-Man's default, the circuit as one well-mixed volume.  See the file header.}
+reaches minute ventilation, and no circuit volume.  "semi-closed":
+GasMan's default, the circuit as one well-mixed volume.  See the file header.}
 
 \item{deadSpace}{dead space as a fraction of minute ventilation, 0.3 by
 default.  The "ventilation" rows are minute ventilation; alveolar
 ventilation is that times \code{1 - deadSpace}.  Pass 0 to treat the rows
-as alveolar ventilation, as Gas Man does.}
+as alveolar ventilation, as GasMan does.}
 
 \item{oxygenUptake}{if TRUE (the default), oxygen consumed shrinks the gas
 volume: its net volume, after the carbon dioxide that replaces it in the
 alveoli, joins the summed uptake that couples the gases, oxygen itself
 takes that coupling, and the absorber removes carbon dioxide from
 rebreathed gas.  See (4a) in the file header.  FALSE restores the earlier
-behaviour, in which oxygen was a sink with no effect on volume; Gas Man has
+behaviour, in which oxygen was a sink with no effect on volume; GasMan has
 no oxygen, so comparisons with it pass FALSE.  Has no effect when
 \code{uptakeEffect} is FALSE, and is switched off for the semi-closed
 circuit, whose well-mixed-box model has no carbon dioxide absorber to put
-the volume balance in: that circuit exists only for comparison with Gas
-Man, which has no oxygen.}
+the volume balance in: that circuit exists only for comparison with
+GasMan, which has no oxygen.}
 }
 \value{
 a list with \code{results}, a tidy data frame of
@@ -80,7 +80,7 @@ appears as \code{Drug == "MAC"}; and \code{state}, the full state
 trajectory as a matrix, for testing.
 }
 \description{
-Closed-form solution of the Gas Man(R)-style model documented at the top of
+Closed-form solution of the GasMan(R)-style model documented at the top of
 this file.  All the gases are simulated together, because they share one
 breathing circuit and one alveolar ventilation: the total fresh gas flow is
 the sum of the air, oxygen and nitrous oxide rows, so changing any one of

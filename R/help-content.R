@@ -80,6 +80,7 @@ helpStaticPages <- function() {
     "models/effect-site",       "The effect site and ke0",         "models",
     "models/covariates",        "Covariates and body size",        "models",
     "models/fat-free-mass",     "Scaling to fat-free mass",        "models",
+    "models/pregnancy",         "Pregnancy",                       "models",
     "models/minto-schnider",    "The Minto and Schnider models",   "models",
     "models/absorption",        "Oral, intramuscular, intranasal and regional anesthesia doses", "models",
     "models/metabolites",       "Active metabolites",              "models",
@@ -91,7 +92,7 @@ helpStaticPages <- function() {
     "models/normalization",     "Normalization",                   "models",
     "models/suggest-algorithm", "How Suggest Dosing searches",     "models",
     "models/gas-engine",        "The inhaled-gas engine",          "models",
-    "models/gas-differences",   "Where the gas engine differs from Gas Man", "models",
+    "models/gas-differences",   "Where the gas engine differs from GasMan", "models",
     "models/opioid-mac",        "Opioid reduction of MAC",         "models",
 
     "scenarios/index",          "All scenarios",                   "scenarios",
@@ -116,6 +117,10 @@ helpStaticPages <- function() {
              stringsAsFactors = FALSE)
 }
 
+#' The order that sorts titles alphabetically, ignoring case
+#' @noRd
+helpTitleOrder <- function(titles) order(tolower(titles), titles, method = "radix")
+
 #' Display title for a drug or gas name
 #'
 #' "nitrousOxide" becomes "Nitrous Oxide"; "propofol" becomes "Propofol".
@@ -139,6 +144,8 @@ helpPageRegistry <- function(drugDefaults = getDrugDefaultsGlobal()) {
     section = "drugs",
     stringsAsFactors = FALSE
   )
+  # Alphabetical by title, so a drug added anywhere in the CSV lands in place
+  drugs <- drugs[helpTitleOrder(drugs$title), ]
   scen <- helpScenarios()
   scenarios <- data.frame(
     id = paste0("scenarios/", vapply(scen, `[[`, character(1), "id")),
@@ -512,7 +519,9 @@ helpColorSwatch <- function(color) {
 helpPageLink <- function(id, text = NULL) {
   if (is.null(text)) {
     registry <- helpStaticPages()
-    text <- if (id %in% registry$id) registry$title[registry$id == id] else id
+    text <- if (id %in% registry$id) registry$title[registry$id == id]
+      else if (startsWith(id, "drugs/")) helpDrugTitle(sub("^drugs/", "", id))
+      else id
   }
   sprintf('<a href="#" data-help-page="%s">%s</a>',
           htmltools::htmlEscape(id, attribute = TRUE), htmltools::htmlEscape(text))

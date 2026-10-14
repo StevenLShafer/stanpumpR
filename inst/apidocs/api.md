@@ -94,7 +94,7 @@ The response (JSON):
   },
   "patient": {
     "weight": 70, "weightUnit": "kg", "height": 170, "heightUnit": "cm",
-    "age": 50, "ageUnit": "years", "sex": "male", "adjustToFFM": true,
+    "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "adjustToFFM": true,
     "osmolality": 280, "creatinine": null,
     "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1"
   },
@@ -172,6 +172,8 @@ A request is a JSON object. Field names ignore case and any `_`, space or
     "height": 170,           // required
     "age": 50,               // required
     "sex": "male",           // required: "male" | "female"
+    "pregnant": false,       // late-pregnancy kinetics for the drugs that read it (default false);
+                             //   true needs sex "female"
     "weightUnit": "kg",      // "kg" (default) | "lb"
     "heightUnit": "cm",      // "cm" (default) | "in"
     "ageUnit": "years",      // "years" (default) | "months"
@@ -220,6 +222,7 @@ A request is a JSON object. Field names ignore case and any `_`, space or
 | `height` | yes | 10–200 cm (after conversion from `in`) |
 | `age` | yes | 0–90 years (after conversion from `months`) |
 | `sex` | yes | `male`, `female` |
+| `pregnant` | no | `false` (default) or `true`, which needs `sex` `female`. Only the drugs with a late-pregnancy model read it. |
 | `creatinine` | no | 0.2–15 mg/dL. If it is omitted, each renally cleared model assumes the normal value for the patient's age and sex. |
 | `osmolality` | no | 200–400 mOsm/kg. The default is 280. |
 | `cyp2d6`, `cyp2c19`, `cyp2c9` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
@@ -308,6 +311,10 @@ A few values need explaining:
   effect site of its own. Tramadol is one: its effect appears in the
   `desmetramadol` rows.
 - For mannitol, `Plasma` is the serum osmolality in mOsm/kg.
+- For calcium, `Plasma` is the rise in ionized calcium above the patient's
+  baseline, in mmol/L (`ConcentrationUnits` is `mmol/L`). Its dose units name
+  the salt (`g chloride`, `mg/min gluconate`); a request with a bare `g` is
+  refused.
 
 ### The time grid
 

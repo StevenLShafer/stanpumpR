@@ -4,7 +4,7 @@ Immediate-release quetiapine, from Zheng and colleagues (*Front Psychiatry* 2024
 
 ### Oral only, immediate release only
 
-The parameters are **apparent**, divided by an unmeasured oral bioavailability, so quetiapine is offered as **mg PO** only and bioavailability is carried as 1. Extended-release quetiapine absorbs through a chain of transit compartments, and its published model (Brogren and Nyberg 2010) lacks the transit number, intercompartmental clearance and volumes, so it is **not** offered. Do not use this curve for an XR tablet.
+The parameters are **apparent**, divided by an unmeasured oral bioavailability, so quetiapine is offered as **mg PO** only (also as a qd, bid or tid [scheduled dose](help:dose-table)) and bioavailability is carried as 1. Extended-release quetiapine absorbs through a chain of transit compartments, and its published model (Brogren and Nyberg 2010) lacks the transit number, intercompartmental clearance and volumes, so it is **not** offered. Do not use this curve for an XR tablet.
 
 ### Covariates
 

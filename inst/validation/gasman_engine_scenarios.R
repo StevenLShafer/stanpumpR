@@ -1,12 +1,12 @@
 # =============================================================================
-# Five scenarios demonstrating the app's inhaled-gas engine against Gas Man
+# Five scenarios demonstrating the app's inhaled-gas engine against GasMan
 # =============================================================================
 #
 # Provenance
 # ----------
 # Drafted by Claude Code (Claude Fable 5.1), 2026-10-05, at the request of
 # Steven L. Shafer, after reading the six weeks of correspondence with Richard
-# Epstein about the Gas Man validation.  Run on R 4.6.1; its output is
+# Epstein about the GasMan validation.  Run on R 4.6.1; its output is
 # gasman_engine_scenarios_results.csv and gasman_engine_scenarios_settings.csv
 # in this directory, and tests/testthat/test-gas-scenarios.R holds a fast subset
 # as a regression test.
@@ -14,33 +14,33 @@
 # What this is for
 # ----------------
 # The earlier five-case grid (gasman_validation_grid.R) established that
-# advanceGasManBaseline() -- Gas Man's stepping scheme restated in R -- IS Gas
-# Man, to the limit of Gas Man's float32 arithmetic (worst 6.2e-04, in FAT).
+# advanceGasManBaseline() -- GasMan's stepping scheme restated in R -- IS
+# GasMan, to the limit of GasMan's float32 arithmetic (worst 6.2e-04, in FAT).
 # What the app actually runs is a different routine, advanceClosedFormGas().
-# These scenarios put THAT routine, at the resolution the app uses, beside Gas
-# Man.
+# These scenarios put THAT routine, at the resolution the app uses, beside
+# GasMan.
 #
 # Three numbers are reported for every compartment and time:
 #
-#   gasman   Gas Man as it runs: the baseline at its native 6-second tick.
-#   limit    What Gas Man's equations converge to as the tick shrinks, by
+#   gasman   GasMan as it runs: the baseline at its native 6-second tick.
+#   limit    What GasMan's equations converge to as the tick shrinks, by
 #            Richardson extrapolation of the baseline (it converges first order,
 #            so limit ~ 2 f(h/2) - f(h)).  This is the answer both programs are
 #            approximating.
 #   engine   advanceClosedFormGas() at the app's own resolution (601 points).
 #
-# The engine and Gas Man do not agree digit for digit at a fixed step and are
-# not meant to: Gas Man splits each tick into sequential updates, the engine
+# The engine and GasMan do not agree digit for digit at a fixed step and are
+# not meant to: GasMan splits each tick into sequential updates, the engine
 # advances each step exactly.  The demonstration is that the engine lands on
-# the limit, and that the gap between the engine and Gas Man is Gas Man's own
+# the limit, and that the gap between the engine and GasMan is GasMan's own
 # distance from that limit.
 #
 # Why these five
 # --------------
 #   1. Sevoflurane wash-in at high flow.  The anchor: Epstein has already run
-#      this in Gas Man (his Scenario 1).
+#      this in GasMan (his Scenario 1).
 #   2. The same with 70% nitrous oxide.  The second gas effect; also already run
-#      in Gas Man (his Scenario 2).  The flows are chosen so that DELIVERED
+#      in GasMan (his Scenario 2).  The flows are chosen so that DELIVERED
 #      nitrous oxide is exactly 70% after the vaporiser displaces 2% of carrier.
 #   3. A whole anaesthetic over three hours: a target, a step up, a step down at
 #      low flow, then vaporiser off at high flow.  Epstein proposed this on
@@ -49,7 +49,7 @@
 #      coupling changes sign.
 #   4. Desflurane, wash-in at 4 L/min then low-flow maintenance at 0.5 L/min.
 #      The circuit equation dominates and rebreathing matters most.
-#   5. A 100 kg patient at Gas Man's own weight-scaled defaults.  Nothing other
+#   5. A 100 kg patient at GasMan's own weight-scaled defaults.  Nothing other
 #      than 70 kg has been compared before, and the allometric defaults adopted
 #      on 2026-10-05 are live here.  Same dial and flow as the old grid's case 3,
 #      so the difference from that case is the weight scaling alone.
@@ -82,7 +82,7 @@ gasScenarioRows <- function(...)
 #' and the times at which to report them.
 gasEngineScenarios <- function()
 {
-  # Gas Man's defaults at a given weight: VA 4 and CO 5 at 70 kg, scaled by
+  # GasMan's defaults at a given weight: VA 4 and CO 5 at 70 kg, scaled by
   # (weight / 70)^0.75.  Written out rather than taken from getGasBody() so the
   # scenario does not silently move if the app's defaults are changed later.
   allo <- function(x70, weight) x70 * (weight / 70)^0.75
@@ -133,7 +133,7 @@ gasEngineScenarios <- function()
         list(10, "oxygen", 0.5), list(10, "desflurane", 8))
     ),
     list(
-      id = 5, name = "100 kg patient at Gas Man's weight-scaled defaults",
+      id = 5, name = "100 kg patient at GasMan's weight-scaled defaults",
       weight = 100, CO = allo(5, 100), maximum = 30,
       agents = "isoflurane",
       times = c(1, 2, 5, 10, 15, 20, 30),
@@ -145,13 +145,13 @@ gasEngineScenarios <- function()
 }
 
 
-# The two circuit models, and what Gas Man calls them in a scenario file.  The
-# app engine defaults to "ideal" (since 2026-10-05); Gas Man defaults to
+# The two circuit models, and what GasMan calls them in a scenario file.  The
+# app engine defaults to "ideal" (since 2026-10-05); GasMan defaults to
 # "semi-closed".  Every comparison below is like with like: the same circuit on
 # both sides.
 GAS_SCENARIO_CIRCUITS <- c(ideal = "Ideal", "semi-closed" = "Semi")
 
-# The engine's five states, named as Gas Man names them.  Gas Man's VEN has no
+# The engine's five states, named as GasMan names them.  GasMan's VEN has no
 # counterpart: the engine mixes venous blood instantaneously.
 GAS_SCENARIO_COMPARTMENTS <- c("CKT", "ALV", "VRG", "MUS", "FAT")
 
@@ -164,10 +164,10 @@ GAS_SCENARIO_COMPARTMENTS <- c("CKT", "ALV", "VRG", "MUS", "FAT")
 #' @returns data frame of Agent, Time and the five compartments
 gasScenarioEngine <- function(s, resolution = 601, circuit = "ideal")
 {
-  # deadSpace = 0: the scenarios give ALVEOLAR ventilation, as Gas Man takes
+  # deadSpace = 0: the scenarios give ALVEOLAR ventilation, as GasMan takes
   # it.  The app's own default treats the ventilation row as minute ventilation
-  # with a 30% dead space, which Gas Man has no counterpart for.
-  # oxygenUptake = FALSE: Gas Man has no oxygen, so none of its volume is lost
+  # with a 30% dead space, which GasMan has no counterpart for.
+  # oxygenUptake = FALSE: GasMan has no oxygen, so none of its volume is lost
   # to oxygen consumption.
   sim <- advanceClosedFormGas(s$DT, weight = s$weight, maximum = s$maximum,
                               cardiacOutput = s$CO, resolution = resolution,
@@ -183,13 +183,13 @@ gasScenarioEngine <- function(s, resolution = 601, circuit = "ideal")
 }
 
 
-#' Run the Gas Man baseline on one scenario
+#' Run the GasMan baseline on one scenario
 #'
-#' Nitrogen starts at the engine's 78.07% rather than Gas Man's 80%, so that
+#' Nitrogen starts at the engine's 78.07% rather than GasMan's 80%, so that
 #' the comparison is of the integration and not of that documented difference.
 #'
 #' @param s one element of \code{gasEngineScenarios()}
-#' @param dt tick in minutes; 0.1 is Gas Man's 6000 ms
+#' @param dt tick in minutes; 0.1 is GasMan's 6000 ms
 #' @param circuit "ideal" or "semi-closed"
 #' @returns data frame of Agent, Time and the five compartments
 gasScenarioBaseline <- function(s, dt = 0.1, circuit = "ideal")
@@ -213,7 +213,7 @@ gasScenarioBaseline <- function(s, dt = 0.1, circuit = "ideal")
 }
 
 
-#' The limit Gas Man's equations converge to as the tick shrinks
+#' The limit GasMan's equations converge to as the tick shrinks
 #'
 #' Richardson extrapolation of the first-order baseline.
 #'
@@ -231,9 +231,9 @@ gasScenarioLimit <- function(s, refine = 16, circuit = "ideal")
 }
 
 
-#' The settings to enter in Gas Man for each scenario
+#' The settings to enter in GasMan for each scenario
 #'
-#' Gas Man takes DELIVERED tensions, where the app takes flowmeter and vaporiser
+#' GasMan takes DELIVERED tensions, where the app takes flowmeter and vaporiser
 #' settings, so each segment's settings are converted here.  One row per
 #' scenario, segment and agent.
 gasScenarioSettings <- function(scenarios = gasEngineScenarios(), circuit = "ideal")
@@ -246,9 +246,9 @@ gasScenarioSettings <- function(scenarios = gasEngineScenarios(), circuit = "ide
     ends   <- c(starts[-1], s$maximum)
     do.call(rbind, lapply(seq_along(starts), function(i) {
       st <- gasSettingsAt(bySetting, starts[i], deadSpace = 0)
-      # NITROGEN MUST BE ADDED AS AN AGENT IN GAS MAN, at its delivered value
+      # NITROGEN MUST BE ADDED AS AN AGENT IN GASMAN, at its delivered value
       # (0 unless air is flowing).  The app engine always carries nitrogen, and
-      # its washout feeds the uptake coupling.  Gas Man only does so if nitrogen
+      # its washout feeds the uptake coupling.  GasMan only does so if nitrogen
       # is one of the agents in the run; Epstein's September runs did not
       # include it, which by itself moves alveolar sevoflurane by 0.3-0.5%.
       do.call(rbind, lapply(c(s$agents, "nitrogen"), function(g) data.frame(
@@ -266,9 +266,9 @@ gasScenarioSettings <- function(scenarios = gasEngineScenarios(), circuit = "ide
 
 
 # -----------------------------------------------------------------------------
-# Running Gas Man itself
+# Running GasMan itself
 # -----------------------------------------------------------------------------
-# Gas Man's C++ engine is published at github.com/rasman/gasmanonline (GPL-3.0).
+# GasMan's C++ engine is published at github.com/rasman/gasmanonline (GPL-3.0).
 # Its gasman_api directory builds a self-contained command-line runner,
 # gasman_run, which reads a sections-based CSV scenario and gasman.ini.  Built
 # here on 2026-10-05 from commit d3a2dd3 with the Rtools 4.5 g++ and cmake:
@@ -286,11 +286,11 @@ GAS_SCENARIO_GASMAN_NAMES <- c(
   nitrogen = "Nitrogen")
 
 
-#' One scenario as a Gas Man CSV scenario file
+#' One scenario as a GasMan CSV scenario file
 #'
 #' Nitrogen is always included as the last agent, so that its washout feeds the
 #' uptake coupling as it does in the app engine.  dt_ms is pinned at 6000:
-#' left alone, Gas Man derives its tick from the patient's weight.
+#' left alone, GasMan derives its tick from the patient's weight.
 #'
 #' @param s one element of \code{gasEngineScenarios()}
 #' @param circuit "ideal" or "semi-closed"
@@ -326,12 +326,12 @@ gasScenarioGasManCsv <- function(s, circuit = "ideal")
 }
 
 
-#' Run one scenario through Gas Man's own gasman_run
+#' Run one scenario through GasMan's own gasman_run
 #'
 #' @param s one element of \code{gasEngineScenarios()}
 #' @param exe path to gasman_run
 #' @param ini path to gasman.ini
-#' @param nitrogenAmbient starting nitrogen.  Gas Man's own is 80; the default
+#' @param nitrogenAmbient starting nitrogen.  GasMan's own is 80; the default
 #'   here matches the app engine's room air, by writing a private copy of the
 #'   ini with \code{Ambient} changed.  That is a setting, not a code change.
 #' @param workdir where the scenario, ini copy and raw output are written
@@ -389,8 +389,8 @@ gasScenarioGasManCpp <- function(s, exe, ini,
 #'
 #' @param outdir where to write the CSV files; NULL to write nothing
 #' @param refine passed to \code{gasScenarioLimit()}
-#' @param gasmanExe,gasmanIni optional paths to Gas Man's gasman_run and its
-#'   gasman.ini.  When given, Gas Man itself is run and reported as
+#' @param gasmanExe,gasmanIni optional paths to GasMan's gasman_run and its
+#'   gasman.ini.  When given, GasMan itself is run and reported as
 #'   \code{gasman_cpp}.
 #' @param circuits which circuit models to run: both by default
 #' @returns long data frame: one row per circuit, scenario, agent, time and
@@ -422,7 +422,7 @@ runGasEngineScenarios <- function(outdir = "inst/validation", refine = 16,
       d$engine_vs_limit_pct  <- 100 * (d$engine - d$limit)  / peak
       d$gasman_vs_limit_pct  <- 100 * (d$gasman - d$limit)  / peak
       d$engine_vs_gasman_pct <- 100 * (d$engine - d$gasman) / peak
-      # Against Gas Man itself: how faithfully the R baseline restates it, and
+      # Against GasMan itself: how faithfully the R baseline restates it, and
       # how far the app engine is from the real program.
       d$baseline_vs_cpp_pct  <- 100 * (d$gasman - d$gasman_cpp) / peak
       d$engine_vs_cpp_pct    <- 100 * (d$engine - d$gasman_cpp) / peak
@@ -439,7 +439,7 @@ runGasEngineScenarios <- function(outdir = "inst/validation", refine = 16,
                        gasScenarioSettings(scenarios, circuit))),
                      file.path(outdir, "gasman_engine_scenarios_settings.csv"),
                      row.names = FALSE)
-    # The scenario files in Gas Man's own CSV format, ready for gasman_run.
+    # The scenario files in GasMan's own CSV format, ready for gasman_run.
     scdir <- file.path(outdir, "scenarios_engine")
     dir.create(scdir, showWarnings = FALSE)
     for (circuit in circuits) for (s in scenarios)

@@ -1,8 +1,7 @@
 ####################################################
 # stanpumpR                                        #
-# Copyright, 2023, Steven L. Shafer, MD            #
-# May be freely distributed, modified, or adapted  #
-# in derivative works for non-commercial purposes. #
+# Copyright 2019-2026 Steven L. Shafer, MD,        #
+# and contributors. MIT License: see LICENSE.md.   #
 ####################################################
 
 app_server <- function(input, output, session) {
@@ -731,9 +730,10 @@ app_server <- function(input, output, session) {
     problems <- character(0)
     DT <- tryCatch(doseTableIV(), error = function(e) NULL)
     if (mintoSchnider() && !is.null(DT)) {
-      patient <- tryCatch(list(weight(), height(), age(), sex()), error = function(e) NULL)
+      patient <- tryCatch(list(weight(), height(), age(), sex(), pregnant()), error = function(e) NULL)
       if (!is.null(patient)) {
-        problems <- alternativeModelProblems(DT$Drug, patient[[1]], patient[[2]], patient[[3]], patient[[4]])
+        problems <- alternativeModelProblems(DT$Drug, patient[[1]], patient[[2]], patient[[3]], patient[[4]],
+                                            pregnant = patient[[5]])
       }
     }
     if (length(problems) == 0) {
@@ -748,6 +748,15 @@ app_server <- function(input, output, session) {
     # The default until the control reports, and for bookmarks made before it
     # existed (Shiny restores only the inputs a bookmark saved).
     if (is.null(input$osmolality)) OSMOLALITY_DEFAULT else input$osmolality
+  })
+
+  # The Pregnant control reports "TRUE" or "FALSE" (NULL before it reports,
+  # and in a bookmark made before it was live).  The flag is on only while
+  # the control says so AND the patient is a woman of child-bearing age, the
+  # rule that shows the control (R/pregnancy.R): a control hidden by a change
+  # of age or sex keeps its last value, which must not keep the flag on.
+  pregnant <- reactive({
+    isTRUE(as.logical(input$pregnant)) && pregnancyPossible(age(), sex())
   })
 
   # NULL when the field is blank: the renal models then assume a normal value.
@@ -866,6 +875,7 @@ app_server <- function(input, output, session) {
         cyp2c9 = if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9,
         osmolality = osmolality(),
         creatinine = creatinine(),
+        pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
         alternativeModels = mintoSchnider()
       ) |> profileCode("recalculatePK() in drugs()")
@@ -1238,6 +1248,7 @@ app_server <- function(input, output, session) {
         weight = weight(),
         height = height(),
         sex = sex(),
+        pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
         osmolality = osmolality(),
         creatinine = creatinine(),

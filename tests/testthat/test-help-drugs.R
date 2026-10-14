@@ -61,7 +61,10 @@ plasmaOnly <- c(
   # Antipsychotics: occupancy is a direct function of plasma, or no effect is
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
-  "olanzapine", "droperidol", "droperidolIM"
+  "olanzapine", "droperidol", "droperidolIM",
+  # Intravenous calcium (2026-10-13): plotted as the change in ionized
+  # calcium, which is the end point itself; no ke0.
+  "calcium"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -258,7 +261,7 @@ test_that("extravascular routes and events are described where the model has the
   expect_false(grepl("Events that change the kinetics", prop, fixed = TRUE))
 })
 
-test_that("gas pages carry Gas Man's parameters and the MAC table", {
+test_that("gas pages carry GasMan's parameters and the MAC table", {
   for (gas in gasDrugs) {
     html <- helpDrugPageHTML(gas, drugDefaults)
     expect_match(html, "At a glance", fixed = TRUE, info = gas)

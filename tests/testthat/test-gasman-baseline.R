@@ -1,11 +1,11 @@
-# Tests for advanceGasManBaseline(), the faithful restatement of Gas Man's own
+# Tests for advanceGasManBaseline(), the faithful restatement of GasMan's own
 # integration scheme.
 #
-# The purpose of this routine is to BE Gas Man, so these tests check that it
-# reproduces Gas Man's structure and its documented behaviours -- including the
+# The purpose of this routine is to BE GasMan, so these tests check that it
+# reproduces GasMan's structure and its documented behaviours -- including the
 # ones the matrix-exponential engine does differently on purpose.
 #
-# What they cannot check is agreement with Gas Man itself.  That needs Gas Man's
+# What they cannot check is agreement with GasMan itself.  That needs GasMan's
 # CSV export and is the whole point of the exercise.
 
 baseDT <- function(...) {
@@ -30,13 +30,13 @@ valueAt <- function(b, drug, site, t) {
 }
 
 
-test_that("the baseline carries Gas Man's compartments and agents", {
+test_that("the baseline carries GasMan's compartments and agents", {
   b <- advanceGasManBaseline(simpleDT(), maximum = 10, dt = 1/60)
 
   expect_setequal(unique(b$results$Site),
                   c("CKT", "ALV", "VRG", "MUS", "FAT", "VEN"))
 
-  # Oxygen is not one of Gas Man's agents, so the baseline leaves it out
+  # Oxygen is not one of GasMan's agents, so the baseline leaves it out
   expect_false("oxygen" %in% b$results$Drug)
   expect_setequal(unique(b$results$Drug),
                   c("nitrousOxide", "sevoflurane", "isoflurane", "desflurane",
@@ -44,7 +44,7 @@ test_that("the baseline carries Gas Man's compartments and agents", {
 })
 
 
-test_that("Gas Man's volumes and blood flow ratios are used as published", {
+test_that("GasMan's volumes and blood flow ratios are used as published", {
   # [Volumes] and [Ratio] in gasman.ini
   expect_equal(unname(GASMAN_VOLUME[c("CKT","ALV","VRG","MUS","FAT","VEN")]),
                c(8, 2.5, 6, 33, 14.5, 1))
@@ -62,7 +62,7 @@ test_that("Gas Man's volumes and blood flow ratios are used as published", {
 })
 
 
-test_that("nitrogen starts at Gas Man's ambient and washes out", {
+test_that("nitrogen starts at GasMan's ambient and washes out", {
   b <- advanceGasManBaseline(simpleDT(), maximum = 30, dt = 1/60)
   n2 <- seriesOf(b, "nitrogen", "ALV")
 
@@ -72,7 +72,7 @@ test_that("nitrogen starts at Gas Man's ambient and washes out", {
 })
 
 
-test_that("the circuit settles on Gas Man's algebraic target", {
+test_that("the circuit settles on GasMan's algebraic target", {
   # target[CKT] = (effCKT*DEL + effALV*ALV) / (effCKT + effALV)
   FGF <- 8; VA <- 4; DEL <- 2
   b <- advanceGasManBaseline(simpleDT(), maximum = 120, dt = 1/60)
@@ -92,7 +92,7 @@ test_that("an open circuit fixes the circuit at the delivered tension", {
 
 
 test_that("an ideal circuit has an explicit threshold at FGF equal to VA", {
-  # Gas Man's IDEAL_CKT mixes only while effCKT < effALV; at or above it the
+  # GasMan's IDEAL_CKT mixes only while effCKT < effALV; at or above it the
   # circuit simply is the delivered gas.  This is the discrete threshold the
   # semi-closed differential form does not have.
   mk <- function(fgf) data.frame(
@@ -192,7 +192,7 @@ test_that("tensions stay physical throughout", {
 
 
 test_that("weight scales the alveolus and tissues but not the circuit", {
-  # Gas Man's ComputeTerms divides the ALVEOLAR and TISSUE rate constants by
+  # GasMan's ComputeTerms divides the ALVEOLAR and TISSUE rate constants by
   # fWtFactor = weight/70, equivalent to multiplying those effective volumes.
   # The circuit is machine, not patient, and is left alone.  Uptake carries the
   # same factor.  This engine previously applied the factor to uptake only,

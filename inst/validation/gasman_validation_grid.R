@@ -1,15 +1,15 @@
 # =============================================================================
-# Gas Man validation grid -- driver script
+# GasMan validation grid -- driver script
 # =============================================================================
 #
 # Run this after sourcing gasman_baseline_standalone.R.  It defines a five-case
-# grid, runs our advance routine over it, and writes one Gas Man scenario file
-# per case so the identical cases can be pushed through the Gas Man API.
+# grid, runs our advance routine over it, and writes one GasMan scenario file
+# per case so the identical cases can be pushed through the GasMan API.
 #
 #   1. Put both files in the same directory and open this one in RStudio.
 #   2. Run it.  It writes scenarios/case_001.csv ... case_005.csv and holds our
 #      results in `run$ours`.
-#   3. Convert and run each scenario through Gas Man, saving its CSV export.
+#   3. Convert and run each scenario through GasMan, saving its CSV export.
 #      Either route works:
 #
 #        gasman_convert scenarios/case_001.csv --format json --output c1.json
@@ -50,7 +50,7 @@
 #
 # THINGS THAT ARE NOT YET PINNED DOWN, so do not read them as findings
 # --------------------------------------------------------------------
-#   * dt_ms is now 6000, Gas Man's breath period, matching their scenario
+#   * dt_ms is now 6000, GasMan's breath period, matching their scenario
 #     template.  An earlier version guessed 1000.  Note this is NOT a large
 #     effect: measured, dt 1000 against 6000 differs by 6.4% at 1 min and under
 #     0.2% by 20 min, and the curves converge as dt shrinks.  dt does not
@@ -67,7 +67,7 @@ if (!exists("gasman_simulate")) {
   source("gasman_baseline_standalone.R")
 }
 
-DT_MS   <- 6000     # base tick, ms -- Gas Man's breath period (10 breaths/min)
+DT_MS   <- 6000     # base tick, ms -- GasMan's breath period (10 breaths/min)
 MINUTES <- 30       # length of every case
 OUTDIR  <- "scenarios"
 
@@ -100,7 +100,7 @@ gasman_validation_grid <- function() data.frame(
 
 grid <- gasman_validation_grid()
 
-cat("Gas Man validation grid\n")
+cat("GasMan validation grid\n")
 cat("=======================\n\n")
 print(grid[, c("case", "agent1", "del1", "agent2", "del2", "fgf", "va", "co")],
       row.names = FALSE)
@@ -110,7 +110,7 @@ run <- gasman_grid(grid, outdir = OUTDIR, every_seconds = 1)
 
 cat("Wrote", length(run$files), "scenario files to", normalizePath(OUTDIR), "\n\n")
 
-# Our answers, for reference while running the Gas Man side.
+# Our answers, for reference while running the GasMan side.
 cat("Our alveolar tensions (percent of 1 atm):\n\n")
 for (r in seq_len(nrow(grid))) {
   o <- run$ours[run$ours$Case == r & run$ours$Agent == grid$agent1[r], ]
@@ -132,7 +132,7 @@ for (t in c(1, 2, 5, 10, 20, 30)) {
 # ---------------------------------------------------------------------------
 # FIRST DIAGNOSTIC: Delivered has no model in it
 # ---------------------------------------------------------------------------
-# Gas Man accumulates fResults[DEL] += fDEL * fFGF * subdt / 100, and
+# GasMan accumulates fResults[DEL] += fDEL * fFGF * subdt / 100, and
 # GetDelivered returns it unchanged.  So the Delivered column is a pure function
 # of the dial, the fresh gas flow and elapsed time -- no compartments, no
 # solubilities, no integration scheme, no weight.  It separates two very
@@ -144,7 +144,7 @@ for (t in c(1, 2, 5, 10, 20, 30)) {
 #   Delivered DISAGREES                 -> FGF or the dial is not what we think
 #                                          it is, and everything downstream
 #                                          follows from that.  CHECK THIS FIRST.
-cat("\nDelivered at 30 min -- model-free, should match Gas Man exactly:\n")
+cat("\nDelivered at 30 min -- model-free, should match GasMan exactly:\n")
 for (r in seq_len(nrow(grid))) {
   o <- run$ours[run$ours$Case == r & run$ours$Agent == grid$agent1[r], ]
   expected <- grid$del1[r] * grid$fgf[r] * MINUTES / 100

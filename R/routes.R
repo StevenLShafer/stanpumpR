@@ -40,6 +40,33 @@ doseFormulation <- function(units) {
   formulation
 }
 
+#' Product named by dose units
+#'
+#' A drug given as more than one product, each with its own conversion to
+#' what is plotted, names the product as a word of the unit after the mass
+#' ("g chloride", "mg/min gluconate": intravenous calcium, `calciumUnits`).
+#' The word is matched as a whole word anywhere after the first, so a route
+#' or frequency may follow it.
+#'
+#' @param units Character vector of dose units, as in the dose table.
+#' @param products Character vector of the product words to look for.
+#' @returns Character vector the same length as `units`: the product each
+#'   unit names, or NA for a unit that names none.  A unit naming two is an
+#'   error.
+#' @noRd
+doseProduct <- function(units, products) {
+  units <- as.character(units)
+  product <- rep(NA_character_, length(units))
+  for (p in products) {
+    hit <- grepl(paste0(" ", p, "( |$)"), units)
+    twice <- hit & !is.na(product)
+    if (any(twice))
+      stop("Dose unit names two products: ", paste(unique(units[twice]), collapse = ", "))
+    product[hit] <- p
+  }
+  product
+}
+
 #' Is a dose unit an input rate rather than an amount?
 #'
 #' A rate -- mass per minute, hour or day, with or without per kg -- sets a

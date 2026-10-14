@@ -8,9 +8,11 @@ The **Email Slide** panel at the bottom of the sidebar mails you the current sim
 
 The message carries:
 
-- a PowerPoint file with one slide: the plot as an editable vector graphic, the title and date, and the URL that reconstructs the simulation (see [Sharing a simulation by URL](help:sharing));
+- a PowerPoint file with one slide: the plot as an editable vector graphic, the title and the date;
 - a PNG of the plot;
-- an Excel workbook with the dose table, the simulated concentrations and the pharmacokinetic parameters used for every drug.
+- an Excel workbook with the patient's covariates, the dose table (with any TCI rates and scheduled repeats merged in), the simulated concentrations and the pharmacokinetic parameters used for every drug.
+
+The body of the email describes the patient and links to the URL that reconstructs the simulation (see [Sharing a simulation by URL](help:sharing)).
 
 Every time in the workbook is in minutes. When the plot is shown in hours, days or weeks (**Time units**, in the Time card), each time column is followed by the same times in that unit, for example `Time (days)`, and the Covariates sheet and the email say which unit the plot was in and how long it ran.
 

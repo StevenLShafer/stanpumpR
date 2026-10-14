@@ -16,4 +16,4 @@ The shaded band is 1 to 2.2 mcg/mL and the default recovery threshold 1 mcg/mL. 
 
 ### Where to be careful
 
-Rocuronium's duration is prolonged by hepatic and renal dysfunction, by the inhaled agents (a pharmacodynamic potentiation) and by hypothermia, and shortened by sugammadex, none of which is modelled. Plaud's patients were adults under propofol-opioid anesthesia.
+Rocuronium's duration is prolonged by hepatic and renal dysfunction, by the inhaled agents (a pharmacodynamic potentiation) and by hypothermia, and shortened by sugammadex, none of which is modelled. [Sugammadex](help:drugs/sugammadex) can be given in the dose table, but only its own concentration is simulated: it does not change the rocuronium row. Plaud's patients were adults under propofol-opioid anesthesia.

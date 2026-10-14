@@ -255,6 +255,9 @@ simulationPlot <- function(
       unitText[gasRow] <- plotTable$Concentration.Units[gasRow]
       # An osmotic agent is plotted as serum osmolality (drugs_mannitol.R).
       unitText[plotTable$Concentration.Units == "mOsm"] <- "mOsm/kg"
+      # A molar drug (intravenous calcium) is plotted in mmol/L, the change
+      # in ionized calcium (drugs_calcium.R).
+      unitText[plotTable$Concentration.Units == "mmol"] <- "mmol/L"
       plotTable$Wrap <- paste0(panelName, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical

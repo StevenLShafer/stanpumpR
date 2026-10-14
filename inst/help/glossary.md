@@ -2,7 +2,7 @@
 
 **Alveolar concentration.** For an inhaled agent, the tension in alveolar gas, which the end-tidal monitor measures. Plotted as the gas's "plasma" line.
 
-**Bioavailability (F).** The fraction of an oral, intramuscular or intranasal dose that reaches the systemic circulation.
+**Bioavailability (F).** The fraction of an oral, sublingual, intramuscular, intranasal or regional anesthesia dose that reaches the systemic circulation.
 
 **Bolus.** A dose given all at once. In the dose table, any row with a mass unit.
 
@@ -16,13 +16,15 @@
 
 **Context-sensitive half-time.** The time for the plasma concentration to halve after an infusion stops, which depends on how long the infusion ran. See [Time until threshold](help:models/recovery).
 
-**Covariate.** A patient characteristic (age, weight, height, sex) that a model uses to adjust its parameters.
+**Covariate.** A patient characteristic (age, weight, height, sex, and for some models serum creatinine, a CYP genotype or the baseline osmolality) that a model uses to adjust its parameters.
 
 **Cp.** Plasma concentration.
 
 **CYP2C19.** A liver enzyme with common genetic variants that clears escitalopram and the S enantiomer of citalopram. The field in the Patient Profile changes those two drugs' clearance across the poor, intermediate, normal, rapid and ultrarapid phenotypes. See [Antidepressant models and their limits](help:models/antidepressants).
 
-**CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of codeine, tramadol, hydrocodone and oxycodone. The field in the Patient Profile scales that formation across the poor, intermediate, normal and ultrarapid phenotypes. See [Active metabolites](help:models/metabolites).
+**CYP2C9.** A liver enzyme with common genetic variants (the \*2 and \*3 alleles) that clears meloxicam and phenytoin. The field in the Patient Profile takes the diplotype, \*1/\*1 by default, and changes meloxicam's clearance and phenytoin's maximal elimination rate.
+
+**CYP2D6.** A liver enzyme with common genetic variants that forms the active metabolites of codeine, tramadol, hydrocodone and oxycodone, and clears aripiprazole, haloperidol and risperidone. The field in the Patient Profile scales that formation, and those clearances, across the poor, intermediate, normal and ultrarapid phenotypes. See [Active metabolites](help:models/metabolites).
 
 **Dead space.** The part of each breath that does not reach the alveoli; 30 per cent of minute ventilation in the gas model.
 
@@ -66,13 +68,17 @@
 
 **PK/PD.** Pharmacokinetics (what the body does to the drug: concentration over time) and pharmacodynamics (what the drug does to the body: effect at a given concentration).
 
-**Prodrug.** A drug with little effect of its own whose action is that of a metabolite the body forms from it. Codeine (through morphine) and, as modelled here, tramadol (through desmetramadol) are the examples. See [Active metabolites](help:models/metabolites).
+**Prodrug.** A drug with little effect of its own whose action is that of a metabolite the body forms from it. Codeine (through morphine) and, as modelled here, tramadol (through desmetramadol) are examples. See [Active metabolites](help:models/metabolites).
 
 **Rate constant (k).** A first-order rate, 1/min: k10 elimination, k12 and k21 transfer to and from the fast compartment, k13 and k31 to and from the slow one.
 
 **Rebreathing.** Inspiring exhaled gas; in the gas model it stops once fresh gas flow reaches minute ventilation plus the gas being taken up from the alveoli, a little above the minute ventilation.
 
+**Regional anesthesia (RA).** A local anesthetic injected into tissue, as a nerve block or infiltration, and absorbed into the circulation from a depot; the `RA` units. See [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption).
+
 **Response surface.** A model of the combined effect of two drugs as a function of both concentrations. See [Propofol-opioid interaction](help:models/interaction).
+
+**Scheduled dose.** A dose whose unit ends in `qd`, `bid`, `tid` or `qid`, repeated every 24, 12, 8 or 6 hours to the end of the plot. See [The dose table](help:dose-table).
 
 **Second gas effect.** The faster rise of a second inhaled agent in the presence of nitrous oxide, because nitrous oxide's bulk uptake concentrates it.
 
