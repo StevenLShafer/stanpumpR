@@ -46,7 +46,7 @@ gasManCalc(
 \item{wtFactor}{weight / 70, which scales the alveolar and tissue effective
 volumes (GasMan's fWtFactor); the circuit is not scaled}
 
-\item{checkFastDecay}{apply the rejection test for more than 90\\% of the
+\item{checkFastDecay}{apply the rejection test for more than 90\% of the
 circuit or alveolar value decaying in one sub-step.  GasMan applies it
 only within VERNIER_TICKS ticks of a settings change.}
 }

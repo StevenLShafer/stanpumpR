@@ -7,14 +7,14 @@
 macForAge(MAC40, age)
 }
 \arguments{
-\item{MAC40}{MAC at age 40, \\% of 1 atm}
+\item{MAC40}{MAC at age 40, \% of 1 atm}
 
 \item{age}{patient age in years}
 }
 \value{
-age-adjusted MAC, \\% of 1 atm
+age-adjusted MAC, \% of 1 atm
 }
 \description{
-Mapleson's relation: MAC declines about 6\\% per decade of age.
+Mapleson's relation: MAC declines about 6\% per decade of age.
 \deqn{MAC(age) = MAC_{40} \times 10^{-0.00269 (age - 40)}}
 }

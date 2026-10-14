@@ -14,6 +14,6 @@ logical vector
 }
 \description{
 Covers the gases themselves plus the synthetic MAC series.  Used by
-\code{simulationPlot()} to label their facets in \\% or MAC rather than
+\code{simulationPlot()} to label their facets in \% or MAC rather than
 appending the "/ml" that an intravenous concentration carries.
 }

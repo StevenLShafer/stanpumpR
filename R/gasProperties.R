@@ -48,7 +48,7 @@
 #'     gasman.ini gives them (VRG, MUS, FAT).  These are what the equations
 #'     need; they are NOT tissue:blood and must not be multiplied by
 #'     \code{lambda_blood} again -- see \code{gasPartitionTissueGas()}.}
-#'   \item{MAC40}{minimum alveolar concentration at age 40, in \% of 1 atm.
+#'   \item{MAC40}{minimum alveolar concentration at age 40, in % of 1 atm.
 #'     NA for gases with no anaesthetic potency in this context.}
 #'   \item{potent}{TRUE if the gas contributes to the MAC sum}
 #'   \item{flagged, flagNote}{provenance: TRUE, with a note, for a value used
@@ -228,12 +228,12 @@ getGasBody <- function(weight = 70, circuitVolume = 8)
 
 #' Age-adjusted MAC
 #'
-#' Mapleson's relation: MAC declines about 6\% per decade of age.
+#' Mapleson's relation: MAC declines about 6% per decade of age.
 #' \deqn{MAC(age) = MAC_{40} \times 10^{-0.00269 (age - 40)}}
 #'
-#' @param MAC40 MAC at age 40, \% of 1 atm
+#' @param MAC40 MAC at age 40, % of 1 atm
 #' @param age patient age in years
-#' @returns age-adjusted MAC, \% of 1 atm
+#' @returns age-adjusted MAC, % of 1 atm
 #' @export
 macForAge <- function(MAC40, age)
 {
@@ -295,7 +295,7 @@ GAS_DEFAULT_VA_WEIGHT_EXPO <- 0.75
 #'
 #' The minute ventilation whose alveolar part is GasMan's default alveolar
 #' ventilation: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.  With a
-#' dead space of 30\% that is 5.7 L/min at 70 kg.
+#' dead space of 30% that is 5.7 L/min at 70 kg.
 #'
 #' @param weight patient weight, kg.  Falls back to 70 kg if missing or invalid.
 #' @param deadSpace dead space as a fraction of minute ventilation
