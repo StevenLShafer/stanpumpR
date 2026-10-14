@@ -341,8 +341,9 @@ All files are flat in `R/`.
   calls, the companion's colour and name-to-parent mapping, and `alternativeModelProblems()`,
   which says when a model is not defined for the patient.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
-- `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
-  `emayili`.
+- `sendSlide.R` — renders an `officer` PowerPoint deck from `Template.pptx` (the whole plot on
+  the first slide, then one slide per panel from `panelPlots()`, which cuts every layer of the
+  ggplot down to one facet) and emails it via `emayili`.
 
 **Help — the Help tab**
 - `help-content.R` — page registry (`helpStaticPages()`), Markdown rendering via `shiny::markdown()`,
@@ -422,7 +423,8 @@ All files are flat in `R/`.
   time. The dialog offers only `suggestDrugChoices()`: an effect site and IV bolus and infusion
   units.
 - **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current
-  simulation and mails it: plot, dose table, and a URL that reconstructs the exact state.
+  simulation and mails it: the plot on the first slide and each panel on a slide of its own,
+  the dose table, and a URL that reconstructs the exact state.
 - **Editors & modals** (`app_server.R`) — in-app Drug Library and Drug Thresholds editors, plus
   click-to-add-dose / double-click-to-edit driven from plot coordinates.
 - **URL bookmarking** (`app_globals.R`) — `enableBookmarking = "url"` encodes inputs into a
