@@ -30,7 +30,8 @@ test_that("returns Lotsch's published parameters with the switch off", {
     reference = paste0(
       "Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162. ",
       "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous, Model A, ",
-      "Q3 x (BSA/1.83)^4; tPeak and MEAC are library values, not the paper's); ",
+      "Q3 x (BSA/1.83)^4 with BSA bounded to 1.5-2.2 m2; tPeak and MEAC are ",
+      "library values, not the paper's); ",
       "Atrux-Tallau N et al., Clin Drug Investig 2022;42:1101-1112. ",
       "https://pubmed.ncbi.nlm.nih.gov/36331670/ (oral tablet and liquid: ",
       "pivotal tablet Cmax, tmax and AUC; liquid absorption rate from the ",
