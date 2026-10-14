@@ -11,7 +11,7 @@ Two limits matter here more than in most scenarios. The first-minute plasma is t
 
 ## Try next
 
-- Change the units to **mg RA**: the block as intended. The plasma rises over 40 minutes to about 1.8 mcg/mL and the effect site follows to the same level about 20 minutes later, nowhere near 5.
+- Change the units to **mg RA**: the block as intended. The plasma rises over 40 minutes to about 1.8 mcg/mL and the effect site follows to the same level about 10 minutes later, nowhere near 5.
 - Make the first row **100 mg** (the first 5 mL) and add a row of **300 mg RA** at 1 minute: an incremental injection in which the first increment went into the vein, the injection was stopped, and the rest was placed correctly. The effect site peaks below 2.2 mcg/mL. Injecting in small increments, with aspiration and observation between them, is what keeps the intravascular part to one increment.
 - Turn the log axis off to see how far above the block's curve the first minutes of plasma are on an ordinary scale.
 

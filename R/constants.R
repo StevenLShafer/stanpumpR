@@ -197,8 +197,21 @@ poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATION
 # carries the conversion (R/drugs_phenytoin.R, R/advanceMichaelisMenten.R).
 peUnits <- c("mg PE", "mg/kg PE", "mg PE IM", "mg/kg PE IM", "mg PE/min")
 
+# Intravenous calcium (R/drugs_calcium.R): one drug, two salts, and every
+# dose must say which, because 1 g of calcium gluconate carries a third of
+# the calcium in 1 g of calcium chloride and the substitution has killed
+# patients (Ansari 2025).  The salt is a word after the mass unit, as "PE"
+# names the prodrug; it carries no route word, so doseRoute() reads these
+# as intravenous, and isRateUnit() still finds "/min" and "/hr".  The
+# `molar` block of the drug names the grams of each salt per mole of what is
+# plotted, keyed by these words (validateMolar() in R/getDrugPK.R).  All
+# of one salt's units, then all of the other's.
+CALCIUM_SALTS <- c("chloride", "gluconate")
+calciumBaseUnits <- c("g", "mg", "mg/kg", "mg/min", "mg/hr", "mg/kg/hr", "g/hr")
+calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
-              slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits)
+              slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.

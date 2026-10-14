@@ -4,7 +4,7 @@ Cefalexin's parameters are from Haynes and colleagues (*Antimicrob Agents Chemot
 
 ### Oral only
 
-The parameters are **apparent**: clearance and volume divided by an unmeasured bioavailability. They predict oral concentrations correctly because the bioavailability cancels, and would predict intravenous ones wrong by one over that bioavailability, so cefalexin is offered as **mg PO** only and bioavailability is carried as 1. There is no intravenous cefalexin product in any case.
+The parameters are **apparent**: clearance and volume divided by an unmeasured bioavailability. They predict oral concentrations correctly because the bioavailability cancels, and would predict intravenous ones wrong by one over that bioavailability, so cefalexin is offered by mouth only (**mg PO** or **mg/kg PO**, single or on a daily schedule) and bioavailability is carried as 1. There is no intravenous cefalexin product in any case.
 
 ### A pediatric model used in adults
 
@@ -12,7 +12,7 @@ The 70 kg normalisation is a convention of the fit, not evidence that the model 
 
 ### Covariates
 
-Weight, as allometry: volumes linear, clearance to the 0.75 power, on the fat-free-mass ratio by default and on total weight with the switch off. No renal covariate was fitted (the children had normal kidneys), and the weight term does not stand in for one.
+Weight, as allometry: volumes linear, clearance to the 0.75 power, on the fat-free-mass ratio by default and on total weight with the switch off. No renal covariate was fitted (the children had normal kidneys), so the model does not read the Patient Profile's serum creatinine, and the weight term does not stand in for it.
 
 ### Effect site
 

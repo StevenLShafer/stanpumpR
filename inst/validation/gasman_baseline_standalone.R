@@ -1,5 +1,5 @@
 # =============================================================================
-# Gas Man baseline -- self-contained R implementation for independent testing
+# GasMan baseline -- self-contained R implementation for independent testing
 # =============================================================================
 #
 # Written for Rich Epstein, 2026-09-03, at the request of Steven L. Shafer.
@@ -7,21 +7,21 @@
 #
 # WHAT THIS IS
 # ------------
-# A restatement in R of Gas Man's own integration scheme, transcribed from
-# GasDoc.cpp::Calc and GasDoc.cpp::CalcUptake in the Gas Man source released
+# A restatement in R of GasMan's own integration scheme, transcribed from
+# GasDoc.cpp::Calc and GasDoc.cpp::CalcUptake in the GasMan source released
 # under GPL-3.0 at github.com/rasman/gasmanonline.  No C++ code is copied; the
 # algorithm is re-expressed from the published source.
 #
 # The point is NOT to be a better simulator.  It is to be the SAME simulator,
-# so that any disagreement with Gas Man is a real disagreement rather than a
-# difference of method.  Where Gas Man does something questionable it is
+# so that any disagreement with GasMan is a real disagreement rather than a
+# difference of method.  Where GasMan does something questionable it is
 # reproduced here and the oddity is noted, not corrected.
 #
 # HOW TO USE IT
 # -------------
 #   1. source("gasman_baseline_standalone.R")   in RStudio.  Base R only, no
 #      packages required.
-#   2. Run the same case through the Gas Man API, exporting its CSV.
+#   2. Run the same case through the GasMan API, exporting its CSV.
 #   3. Compare:
 #
 #        ours   <- gasman_simulate(
@@ -33,7 +33,7 @@
 #        cmp    <- gasman_compare(ours, theirs)
 #        print(cmp$summary)
 #
-# The interface deliberately matches Gas Man's own inputs -- a delivered tension
+# The interface deliberately matches GasMan's own inputs -- a delivered tension
 # per agent, with fresh gas flow, alveolar ventilation and cardiac output shared
 # -- rather than the flowmeter-based dose table stanpumpR uses.  The flowmeter
 # layer is stanpumpR's addition and would confound this comparison.
@@ -43,14 +43,14 @@
 #   * ALV early (0-5 min), where the integration scheme matters most.
 #   * The Uptake and Delivered columns, which integrate the whole trajectory
 #     and so accumulate any systematic error.
-#   * VA.  Gas Man reports INSPIRED ventilation, the setting plus the volume
+#   * VA.  GasMan reports INSPIRED ventilation, the setting plus the volume
 #     drawn in to replace uptake, and this code now does the same.  It is worth
 #     comparing because it is the only column exposing the INSTANTANEOUS uptake
 #     rate -- Uptake itself is cumulative, so a rate error there is smeared.
 #   * A case with nitrous oxide AND a volatile, which exercises the uptake
 #     ("second gas") coupling between gases.
-#   * dt_ms.  Gas Man's m_fdt is m_cMSec_dx/60000.  The value is 6000 ms, which
-#     is Gas Man's BREATH PERIOD -- its own comment says Calc is called
+#   * dt_ms.  GasMan's m_fdt is m_cMSec_dx/60000.  The value is 6000 ms, which
+#     is GasMan's BREATH PERIOD -- its own comment says Calc is called
 #     "2^nVerner times per breath to advance one full breath period", and 6000 ms
 #     is 10 breaths per minute.  Their scenario template sets dt_ms,6000.  An
 #     earlier version of this file defaulted to 1000, which was simply wrong.
@@ -65,14 +65,14 @@
 #
 # KNOWN GAPS, stated up front so they are not mistaken for findings
 # ------------------------------------------------------------------
-#   * ART.  Gas Man's export has an arterial column.  This code reports
+#   * ART.  GasMan's export has an arterial column.  This code reports
 #     ART = ALV, on the assumption that blood leaving the lung equilibrates
 #     with alveolar gas.  That is an ASSUMPTION and has not been checked
 #     against GetART().  If ART disagrees but ALV agrees, this is why.
 #   * m_bVapEnb is CONFIRMED false by default (InitDocument sets
 #     m_bVapEnb = false), so `vaporizer_effect = FALSE` here is right.
-#   * Weight.  CORRECTED 2026-09-03.  An earlier version of this file said Gas
-#     Man does not scale compartment volumes by weight.  It does, but not by
+#   * Weight.  CORRECTED 2026-09-03.  An earlier version of this file said
+#     GasMan does not scale compartment volumes by weight.  It does, but not by
 #     scaling m_fVolume -- which is why it was missed.  ComputeTerms divides the
 #     ALVEOLAR and TISSUE rate constants by fWtFactor = weight/70, which is
 #     equivalent to multiplying those effective volumes by it.  The CIRCUIT is
@@ -94,8 +94,8 @@
 # Ambient           starting tension, % of 1 atm
 #
 # NOTE ON NITROGEN MAC: gasman.ini gives 200, i.e. 2 atmospheres.  Eger put the
-# MAC of nitrogen at 110 ATMOSPHERES.  Gas Man's figure is low by about 55-fold.
-# It is carried here unchanged so that this code matches Gas Man; it is not used
+# MAC of nitrogen at 110 ATMOSPHERES.  GasMan's figure is low by about 55-fold.
+# It is carried here unchanged so that this code matches GasMan; it is not used
 # in any calculation below.
 # -----------------------------------------------------------------------------
 
@@ -209,7 +209,7 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
     }
   }
 
-  # Alveolar target.  The uptake term here is Gas Man's "Correct for constant
+  # Alveolar target.  The uptake term here is GasMan's "Correct for constant
   # lung capacity": gas taken up by blood leaves a volume deficit that draws
   # replacement in from the circuit on induction, and pushes alveolar gas out on
   # emergence.  tot_uptake is summed over ALL agents, so nitrous oxide's uptake
@@ -233,7 +233,7 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
   #   k = effective_flow / (volume * solubility)
   f_ckt <- exp(-subdt / (GASMAN_VOLUME[["CKT"]] * sol[["CKT"]]) * (eff_ckt + eff_alv))
   # ALV and the tissues carry the weight factor; the circuit does not, because
-  # the circuit is machine rather than patient.  Gas Man does this by dividing
+  # the circuit is machine rather than patient.  GasMan does this by dividing
   # the rate constant by fWtFactor (ComputeTerms), which is the same thing as
   # multiplying the effective volume by it.
   f_alv <- exp(-subdt / (GASMAN_VOLUME[["ALV"]] * sol[["ALV"]] * wt_factor) *
@@ -250,19 +250,19 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
   }
 
   # More than 90% of the circuit or alveolar value gone in one sub-step means
-  # the step is too coarse to trust.  Gas Man applies this test ONLY within
+  # the step is too coarse to trust.  GasMan applies this test ONLY within
   # VERNIER_TICKS ticks of a settings change -- see the guard in Calc:
   #   int i = VERNIER_TICKS - int((dwTime - samp.m_dwBaseTime) / m_cMSec_dx);
   #   if (i > 0) { if (fExpCKT < 0.1F || fExpALV < 0.1F) bMyRet = false; }
   # so once a setting has been in force a while it stops sub-stepping on this
   # criterion even if the step is coarse.  Applying it unconditionally would
-  # make this code MORE accurate than Gas Man, which is the wrong direction for
+  # make this code MORE accurate than GasMan, which is the wrong direction for
   # a baseline.
   if (check_fast_decay && (f_ckt < 0.1 || f_alv < 0.1)) ok <- FALSE
 
   # Venous is algebraic, not differential: the blood-flow-weighted mean of the
   # NEW tissue tensions.  The alveolar target above therefore used the PREVIOUS
-  # sub-step's value, a one-sub-step lag that is Gas Man's, not an oversight.
+  # sub-step's value, a one-sub-step lag that is GasMan's, not an oversight.
   state[["VEN"]] <- if (recirculation)
     sum(state[c("VRG", "MUS", "FAT")] * GASMAN_RATIO) else 0
 
@@ -280,14 +280,14 @@ gasman_calc <- function(state, sol, lambda, del, fgf, va, co,
 #' @param weight kg
 #' @param minutes length of simulation
 #' @param circuit "semi-closed", "open" or "ideal"
-#' @param uptake_effect   Gas Man's m_bUptEnb; default TRUE as Gas Man does
-#' @param recirculation   Gas Man's m_bRtnEnb; default TRUE as Gas Man does
-#' @param vaporizer_effect Gas Man's m_bVapEnb; default FALSE, see KNOWN GAPS
-#' @param dt_ms  base tick in milliseconds; Gas Man's m_cMSec_dx
-#' @param every_seconds output row spacing, to match the Gas Man export
+#' @param uptake_effect   GasMan's m_bUptEnb; default TRUE as GasMan does
+#' @param recirculation   GasMan's m_bRtnEnb; default TRUE as GasMan does
+#' @param vaporizer_effect GasMan's m_bVapEnb; default FALSE, see KNOWN GAPS
+#' @param dt_ms  base tick in milliseconds; GasMan's m_cMSec_dx
+#' @param every_seconds output row spacing, to match the GasMan export
 #'
 #' @return data frame with one row per agent per output time, columns matching
-#'   Gas Man's CSV export
+#'   GasMan's CSV export
 gasman_simulate <- function(agents,
                             fgf = 8, va = 4, co = 5, weight = 70,
                             minutes = 30,
@@ -300,7 +300,7 @@ gasman_simulate <- function(agents,
 
   stopifnot(is.list(agents), length(agents) > 0)
   circuit <- match.arg(circuit, c("semi-closed", "open", "ideal"))
-  dt <- dt_ms / 60000                       # minutes, as Gas Man's m_fdt
+  dt <- dt_ms / 60000                       # minutes, as GasMan's m_fdt
 
   names_in <- vapply(agents, function(a) a$name, character(1))
   unknown  <- setdiff(names_in, GASMAN_AGENTS$name)
@@ -317,8 +317,8 @@ gasman_simulate <- function(agents,
   state <- lapply(rows, function(r)
     stats::setNames(rep(r$ambient, length(GASMAN_COMPARTMENTS)), GASMAN_COMPARTMENTS))
 
-  cum_uptake    <- rep(0, length(agents))    # litres, Gas Man's fResults[UPT]
-  cum_delivered <- rep(0, length(agents))    # litres, Gas Man's fResults[DEL]
+  cum_uptake    <- rep(0, length(agents))    # litres, GasMan's fResults[UPT]
+  cum_delivered <- rep(0, length(agents))    # litres, GasMan's fResults[DEL]
 
   out_times <- seq(0, minutes, by = every_seconds / 60)
   n_out     <- length(out_times)
@@ -327,14 +327,14 @@ gasman_simulate <- function(agents,
            dimnames = list(NULL, c(GASMAN_COMPARTMENTS, "Uptake", "Delivered"))))
   for (i in seq_along(agents)) rec[[i]][1, ] <- c(state[[i]], 0, 0)
 
-  # VA is RECORDED as the run proceeds, not reconstructed afterwards.  Gas Man's
+  # VA is RECORDED as the run proceeds, not reconstructed afterwards.  GasMan's
   # GetVA is (sum over gases of UPT(t) - UPT(t - one tick)) / dt + m_fVA, i.e.
   # the uptake rate over the LAST TICK.  An earlier version recovered that by
   # interpolating cumulative uptake on the OUTPUT grid, which made the reported
   # number depend on how often output was written -- 4.0110 at one-second output
   # against 4.0022 at five-second output for the same run.  The tick is the only
   # correct window, so record it here.
-  va_rec    <- rep(va, n_out)     # Gas Man returns the setting on tick 1
+  va_rec    <- rep(va, n_out)     # GasMan returns the setting on tick 1
 
   n_ticks   <- max(1, ceiling(minutes / dt))
   next_out  <- 2
@@ -364,7 +364,7 @@ gasman_simulate <- function(agents,
       for (sub in seq_len(n_sub)) {
 
         # Uptake for every agent from the CURRENT state, then summed, exactly as
-        # Gas Man's caller does before advancing any of them.
+        # GasMan's caller does before advancing any of them.
         upt <- vapply(seq_along(agents), function(i)
           gasman_uptake(state[[i]], sol[[i]], lam[i], exp_tissue[[i]], subdt,
                         weight, co, recirculation), numeric(1))
@@ -414,7 +414,7 @@ gasman_simulate <- function(agents,
                                  sum(miss), ncol(rec[[i]]), byrow = TRUE)
   }
 
-  # Gas Man's VA column is INSPIRED ventilation, not the setting.  GetVA returns
+  # GasMan's VA column is INSPIRED ventilation, not the setting.  GetVA returns
   #     (sum over gases of UPT(t) - UPT(t - one tick)) / dt  +  m_fVA
   # when uptake is enabled: the expired setting plus the extra volume drawn in to
   # replace what blood took up.  Reporting the setting instead would make the
@@ -438,9 +438,9 @@ gasman_simulate <- function(agents,
 
 
 # -----------------------------------------------------------------------------
-# Comparison against a Gas Man CSV export
+# Comparison against a GasMan CSV export
 # -----------------------------------------------------------------------------
-# Gas Man writes Time as "H:M:S".  Pass `time_parser` if the export differs.
+# GasMan writes Time as "H:M:S".  Pass `time_parser` if the export differs.
 gasman_compare <- function(ours, theirs,
                            columns = c("CKT", "ALV", "VRG", "MUS", "FAT", "VEN",
                                        "Uptake", "Delivered", "VA"),
@@ -496,7 +496,7 @@ gasman_compare <- function(ours, theirs,
 # Example -- delete or edit freely
 # -----------------------------------------------------------------------------
 if (identical(environment(), globalenv()) && !exists("GASMAN_QUIET")) {
-  cat("Gas Man baseline loaded.\n\n")
+  cat("GasMan baseline loaded.\n\n")
   demo <- gasman_simulate(
     agents  = list(list(name = "Sevoflurane",   del = 2.0),
                    list(name = "Nitrous Oxide", del = 70)),
@@ -508,7 +508,7 @@ if (identical(environment(), globalenv()) && !exists("GASMAN_QUIET")) {
   print(round(show, 4), row.names = FALSE)
   cat("\nmax vernier level used:", attr(demo, "max_vernier"),
       " (0 means the base tick was never rejected)\n")
-  cat("\nNext: run the same case through the Gas Man API, then\n")
+  cat("\nNext: run the same case through the GasMan API, then\n")
   cat("  cmp <- gasman_compare(demo, read.csv(\"gasman_export.csv\"))\n")
   cat("  print(cmp$summary)\n")
 }
@@ -519,14 +519,14 @@ if (identical(environment(), globalenv()) && !exists("GASMAN_QUIET")) {
 # =============================================================================
 #
 # The point of this section is that ONE scenario definition drives BOTH engines.
-# gasman_scenario_csv() emits the Gas Man scenario CSV, and gasman_simulate()
+# gasman_scenario_csv() emits the GasMan scenario CSV, and gasman_simulate()
 # takes the same arguments, so the two cannot drift apart through a
 # transcription slip.
 #
 # TWO THINGS TO KNOW BEFORE RUNNING A GRID
 # ----------------------------------------
 # 1. PER-AGENT CONSTANTS ARE DELIBERATELY OMITTED from the generated scenario,
-#    so that Gas Man falls back to gasman.ini.  Their own template documents
+#    so that GasMan falls back to gasman.ini.  Their own template documents
 #    lambdaVrg / lambdaMus / lambdaFat as "VRG/blood", "muscle/blood" and
 #    "fat/blood" partition coefficients, but the values it supplies for
 #    sevoflurane (1.1, 2.4, 34) are the ini's tissue:GAS numbers, not
@@ -543,7 +543,7 @@ if (identical(environment(), globalenv()) && !exists("GASMAN_QUIET")) {
 # =============================================================================
 
 
-#' Build a Gas Man scenario CSV from the same arguments gasman_simulate() takes
+#' Build a GasMan scenario CSV from the same arguments gasman_simulate() takes
 #'
 #' @param schedule optional data frame of setting changes with columns
 #'   time_min, and any of va, fgf, co, and del1..delN.  The first row is the
@@ -553,8 +553,8 @@ gasman_scenario_csv <- function(agents, fgf = 8, va = 4, co = 5, weight = 70,
                                 circuit = "semi-closed", dt_ms = 6000,
                                 schedule = NULL) {
 
-  # The same three circuits gasman_simulate() implements, under the names Gas
-  # Man's scenario parser accepts, so that a grid row cannot run through one
+  # The same three circuits gasman_simulate() implements, under the names
+  # GasMan's scenario parser accepts, so that a grid row cannot run through one
   # engine and not the other.
   ckt <- switch(circuit,
                 "semi-closed" = "Semi",
@@ -647,10 +647,10 @@ gasman_grid <- function(grid, outdir = "gasman_scenarios",
 }
 
 
-#' Compare a grid run against Gas Man CSV outputs
+#' Compare a grid run against GasMan CSV outputs
 #'
 #' @param gridrun the value returned by gasman_grid()
-#' @param gasman_files character vector of Gas Man CSV outputs, in the same
+#' @param gasman_files character vector of GasMan CSV outputs, in the same
 #'   order as gridrun$files
 #' @param tolerance_pct flag any column whose worst disagreement exceeds this
 #'   percentage of that column's range

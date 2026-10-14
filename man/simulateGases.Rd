@@ -26,7 +26,7 @@ minutes, and \code{Dose}.  Non-gas rows are ignored.}
 
 \item{maximum}{simulation length in minutes}
 
-\item{cardiacOutput}{optional override in L/min; defaults to Gas Man's 5 L/min at 70 kg, scaled by (weight/70)^0.75}
+\item{cardiacOutput}{optional override in L/min; defaults to GasMan's 5 L/min at 70 kg, scaled by (weight/70)^0.75}
 
 \item{uptakeEffect, circuit, deadSpace, oxygenUptake}{passed to
 \code{advanceClosedFormGas()}}

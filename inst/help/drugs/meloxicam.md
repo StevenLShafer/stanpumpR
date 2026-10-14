@@ -4,7 +4,7 @@ Meloxicam kinetics are from Aoyama and colleagues (*CPT Pharmacometrics Syst Pha
 
 ### Covariates
 
-Apparent clearance falls with each **CYP2C9** variant allele: by 14.7% per \*2 and 40% per \*3, so \*1/\*3 is 60% and \*3/\*3 20% of the \*1/\*1 value. The app has no CYP2C9 input and always simulates \*1/\*1. A script can pass `cyp2c9` to `meloxicam()` directly. Vc/F follows James lean body mass, (LBM / 55)^1.05, in either position of the [fat-free-mass switch](help:models/fat-free-mass). The source found no size effect on the other three parameters. They take the library's fat-free-mass scaling with the switch on and are left as published with it off. There is no CYP2D6 term, because none was fitted.
+Apparent clearance falls with each **CYP2C9** variant allele: by 14.7% per \*2 and 40% per \*3, so \*1/\*3 is 60% and \*3/\*3 20% of the \*1/\*1 value. Choose the diplotype in the **CYP 2C9** field of the [Patient Profile](help:patient-profile); it is \*1/\*1 by default. Vc/F follows James lean body mass, (LBM / 55)^1.05, in either position of the [fat-free-mass switch](help:models/fat-free-mass). The source found no size effect on the other three parameters. They take the library's fat-free-mass scaling with the switch on and are left as published with it off. There is no CYP2D6 term, because none was fitted.
 
 ### Route and absorption
 

@@ -1,4 +1,4 @@
-# The five scenarios that demonstrate the app's gas engine against Gas Man.
+# The five scenarios that demonstrate the app's gas engine against GasMan.
 #
 # The scenarios, and the reasoning behind each, live in
 # inst/validation/gasman_engine_scenarios.R; the full run (every compartment,
@@ -6,10 +6,10 @@
 # runGasEngineScenarios() there and takes a few minutes.  This file is the fast
 # subset that guards the result:
 #
-#   * against Gas Man as it runs, at its native 6-second tick, the engine is
-#     within a few percent of each compartment's peak -- the gap being Gas Man's
+#   * against GasMan as it runs, at its native 6-second tick, the engine is
+#     within a few percent of each compartment's peak -- the gap being GasMan's
 #     own operator-splitting error, largest in the first minutes of a change;
-#   * against the limit Gas Man's equations converge to as the tick shrinks, the
+#   * against the limit GasMan's equations converge to as the tick shrinks, the
 #     engine at the APP'S resolution agrees to about a thousandth of the peak.
 #
 # (Claude Code, Claude Fable 5.1, 2026-10-05; run on R 4.6.1.)
@@ -27,8 +27,8 @@ gasScenarioEnv <- function() {
 
 pctOfPeak <- function(a, b, ref) 100 * max(abs(a - b)) / max(abs(ref))
 
-# How far the engine may sit from Gas Man at Gas Man's own 6-second tick, as a
-# percentage of each compartment's peak.  The gap is Gas Man's distance from
+# How far the engine may sit from GasMan at GasMan's own 6-second tick, as a
+# percentage of each compartment's peak.  The gap is GasMan's distance from
 # the limit of its own equations, largest just after a setting changes.
 GAS_SCENARIO_NATIVE_TOLERANCE <- 4
 
@@ -46,18 +46,18 @@ test_that("there are five scenarios, each well formed", {
     expect_true(all(s$times <= s$maximum))
   }
   # Scenario 2 delivers exactly 70% nitrous oxide once the vaporiser has
-  # displaced 2% of the carrier, matching the Gas Man run it is compared with.
+  # displaced 2% of the carrier, matching the GasMan run it is compared with.
   set <- env$gasScenarioSettings(sc)
   expect_equal(unique(set$Circuit), "Ideal")
   expect_equal(unique(env$gasScenarioSettings(sc, "semi-closed")$Circuit), "Semi-closed")
   expect_equal(set$DEL_percent[set$Scenario == 2 & set$Agent == "Nitrous Oxide"], 70)
-  # Scenario 5 uses Gas Man's allometric defaults at 100 kg.
+  # Scenario 5 uses GasMan's allometric defaults at 100 kg.
   expect_equal(unique(set$VA_L_min[set$Scenario == 5]), 5.2268)
   expect_equal(unique(set$CO_L_min[set$Scenario == 5]), 6.5335)
 })
 
 
-test_that("the engine tracks Gas Man at its native tick in all five scenarios, in both circuits", {
+test_that("the engine tracks GasMan at its native tick in all five scenarios, in both circuits", {
   env <- gasScenarioEnv()
   for (circuit in c("ideal", "semi-closed")) for (s in env$gasEngineScenarios()) {
     eng <- env$gasScenarioEngine(s, circuit = circuit)
@@ -71,7 +71,7 @@ test_that("the engine tracks Gas Man at its native tick in all five scenarios, i
 })
 
 
-test_that("the engine lands on the limit Gas Man converges to", {
+test_that("the engine lands on the limit GasMan converges to", {
   env <- gasScenarioEnv()
   sc <- env$gasEngineScenarios()
   # The 70 kg anchor and the 100 kg case: between them the plain wash-in and

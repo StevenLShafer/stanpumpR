@@ -1057,7 +1057,7 @@ getDrugPK <- function(
   # intravenous calcium, plotted as the change in ionized calcium) carries
   # the grams of the product as dosed per mole of what is plotted, which
   # simCpCe() uses to turn a dose in grams into millimoles.  See
-  # R/drugs_calciumChloride.R.
+  # R/drugs_calcium.R, whose two salts carry one weight each.
   out$molar <- validateMolar(X$molar, drug, drugDefaults$Concentration.Units)
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
@@ -1372,9 +1372,13 @@ CE <- function(t, e_coef_bolus_1, e_coef_bolus_2, e_coef_bolus_3, e_coef_bolus_4
 #' A drug whose CSV `Concentration.Units` is `mmol` is plotted in millimoles
 #' per litre, and its model must return `molar = list(molecularWeight = g)`,
 #' the grams of the product as dosed per mole of what is plotted, so that
-#' `simCpCe()` can turn a dose in grams into millimoles.  The block is refused
-#' for any other concentration unit, where it would be ignored silently.
-#' Intravenous calcium is the example (`R/drugs_calciumChloride.R`).
+#' `simCpCe()` can turn a dose in grams into millimoles.  A drug given as
+#' more than one product, each with its own weight, returns a named vector,
+#' one weight per product, named by the word the product's units carry
+#' (intravenous calcium, `R/drugs_calcium.R`: `chloride` and `gluconate`);
+#' every dose of such a drug must then name its product, which
+#' `molarWeightOfDoses()` enforces.  The block is refused for any other
+#' concentration unit, where it would be ignored silently.
 #'
 #' @param molar the model's `molar` field, or NULL
 #' @param drug the drug name, for the message
@@ -1394,8 +1398,43 @@ validateMolar <- function(molar, drug, concentrationUnits)
     stop("Invalid molar block for ", drug, ": only a drug with ",
          "Concentration.Units \"mmol\" may return one.")
   mw <- if (is.list(molar)) molar$molecularWeight else NULL
-  if (is.null(mw) || !is.numeric(mw) || length(mw) != 1 || !is.finite(mw) || mw <= 0)
-    stop("Invalid molar block for ", drug, ": molecularWeight must be a single ",
-         "positive number (grams per mole).")
+  if (is.null(mw) || !is.numeric(mw) || length(mw) < 1 || any(!is.finite(mw)) || any(mw <= 0))
+    stop("Invalid molar block for ", drug, ": molecularWeight must be a positive ",
+         "number (grams per mole), or a vector of them named by product.")
+  if (length(mw) > 1 || !is.null(names(mw))) {
+    products <- names(mw)
+    if (is.null(products) || any(is.na(products) | !nzchar(products)) ||
+        any(duplicated(products)) || any(grepl(" ", products)))
+      stop("Invalid molar block for ", drug, ": a molecularWeight for more than one ",
+           "product must be named by the product words the units carry, each a ",
+           "single word, no two alike.")
+  }
   list(molecularWeight = mw)
+}
+
+#' Grams per mole for each dose of a molar drug
+#'
+#' One weight per dose row: the block's single weight, or for a drug given
+#' as several products the weight of the product each unit names (see
+#' `validateMolar()`).  A dose of such a drug whose unit names no product
+#' is refused rather than guessed: for intravenous calcium a bare "g" would
+#' be either 6.8 or 2.2 mmol, and the difference is the dosing error the
+#' source study was prompted by.
+#'
+#' @param molar a validated `molar` block
+#' @param units the dose rows' units
+#' @param drug the drug name, for the message
+#' @returns numeric vector the length of `units`
+#' @keywords internal
+molarWeightOfDoses <- function(molar, units, drug = "")
+{
+  mw <- molar$molecularWeight
+  if (length(mw) == 1 && is.null(names(mw))) return(rep(mw, length(units)))
+  product <- doseProduct(units, names(mw))
+  missing <- is.na(product)
+  if (any(missing))
+    stop("Dose unit for ", drug, " must name the product, one of ",
+         paste(names(mw), collapse = ", "), ": ",
+         paste(unique(as.character(units)[missing]), collapse = ", "))
+  unname(mw[product])
 }

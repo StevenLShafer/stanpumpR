@@ -4,15 +4,15 @@
 # Drafted by Claude Code (Claude Opus 5), 2026-09-03, at the request of
 # Steven L. Shafer.
 #
-# This is a deliberate REIMPLEMENTATION OF GAS MAN'S OWN INTEGRATION SCHEME,
-# transcribed from GasDoc.cpp::Calc and GasDoc.cpp::CalcUptake in the Gas Man
+# This is a deliberate REIMPLEMENTATION OF GASMAN'S OWN INTEGRATION SCHEME,
+# transcribed from GasDoc.cpp::Calc and GasDoc.cpp::CalcUptake in the GasMan
 # source released under GPL-3.0 at github.com/rasman/gasmanonline.  No code is
 # copied; the algorithm is restated in R from the published source.
 #
 # WHY THIS EXISTS ALONGSIDE advanceClosedFormGas()
 # ------------------------------------------------
 # Shafer's plan, 2026-09-03: start from an implementation as close to identical
-# with Gas Man as we can make it, so that agreement with Gas Man output
+# with GasMan as we can make it, so that agreement with GasMan output
 # validates the whole chain -- parameters, structure and arithmetic together.
 # Only then move away from that baseline, in documented steps: parameters
 # corrected against the peer-reviewed literature, and the per-compartment
@@ -20,14 +20,14 @@
 # advanceClosedFormGas().  Each step auditable in git.
 #
 # So this file is not meant to be the better routine.  It is meant to be the
-# SAME routine.  Where Gas Man does something questionable it is reproduced
+# SAME routine.  Where GasMan does something questionable it is reproduced
 # here, with the oddity noted rather than corrected.
 #
 # STATUS: run and verified on R 4.6.1 by tests/testthat/test-gasman-baseline.R.
-# NOT YET compared against Gas Man's own CSV export, which is the point of it.
+# NOT YET compared against GasMan's own CSV export, which is the point of it.
 # -----------------------------------------------------------------------------
 #
-# THE ALGORITHM, as Gas Man states it
+# THE ALGORITHM, as GasMan states it
 # ===================================
 #
 # GasDoc.cpp:692 --
@@ -37,7 +37,7 @@
 #    This is sometimes called differential extrapolation -- it is NOT Euler
 #    forward-difference and NOT Runge-Kutta."
 #
-# Compartment order is Gas Man's: CKT, ALV, VRG, MUS, FAT, VEN.
+# Compartment order is GasMan's: CKT, ALV, VRG, MUS, FAT, VEN.
 #
 # Effective flows, all carrying the compartment's solubility:
 #
@@ -58,7 +58,7 @@
 # Added to the alveolar numerator before dividing, and to the circuit numerator
 # on emergence.  totUptake is summed across ALL gases and handed to each one, so
 # nitrous oxide's uptake augments a volatile's alveolar tension.  This is the
-# second gas effect; Gas Man calls it "Correct for constant lung capacity".
+# second gas effect; GasMan calls it "Correct for constant lung capacity".
 #
 #     if uptakeEffect:
 #         if totUptake > 0:  alvNumerator <- alvNumerator + CKT * totUptake
@@ -83,14 +83,14 @@
 # ODDITIES REPRODUCED RATHER THAN FIXED
 # -------------------------------------
 #   * CORRECTED 2026-09-03: an earlier version of this note said compartment
-#     volumes are not weight-scaled.  They are.  Gas Man does not scale
+#     volumes are not weight-scaled.  They are.  GasMan does not scale
 #     m_fVolume, which is why it was missed; ComputeTerms instead divides the
 #     ALVEOLAR and TISSUE rate constants by fWtFactor = weight/70, which is the
 #     same as multiplying those effective volumes.  The CIRCUIT is deliberately
 #     unscaled, being machine rather than patient.  Uptake carries the same
 #     factor, consistently.  This engine previously applied the factor to uptake
 #     only, which was internally inconsistent at any weight other than 70.
-#   * Gas Man's uptake sum runs over VRG, MUS and FAT only, and when
+#   * GasMan's uptake sum runs over VRG, MUS and FAT only, and when
 #     recirculation is disabled it adds back CO * lambdaBloodGas * mixedVenous.
 # -----------------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ GASMAN_RATIO <- c(VRG = 0.76, MUS = 0.18, FAT = 0.06)
 GASMAN_VOLUME <- c(CKT = 8, ALV = 2.5, VRG = 6, MUS = 33, FAT = 14.5, VEN = 1)
 
 
-#' Per-compartment solubilities for one gas, in Gas Man's ordering
+#' Per-compartment solubilities for one gas, in GasMan's ordering
 #'
 #' The circuit and alveolus are gas phase, so their solubility is 1.  The tissue
 #' values are the tissue:gas coefficients from the properties table, and the
@@ -141,7 +141,7 @@ gasManUptake <- function(state, sol, lambdaBlood, fExpTissue, subdt,
   tissues <- c("VRG", "MUS", "FAT")
 
   # Amount moved into each tissue over this sub-step, divided by its length to
-  # give a rate.  Gas Man divides by 100 because tensions are percentages.
+  # give a rate.  GasMan divides by 100 because tensions are percentages.
   moved <- sum(GASMAN_VOLUME[tissues] * sol[tissues] *
                  (state[["ALV"]] - state[tissues]) * (1 - fExpTissue[tissues]))
   uptake <- moved * (weight / GASMAN_STD_WEIGHT) / subdt / 100
@@ -172,9 +172,9 @@ gasManUptake <- function(state, sol, lambdaBlood, fExpTissue, subdt,
 #' @param totUptake uptake summed over every gas, L/min
 #' @param opts list of circuit, uptakeEffect, recirculation
 #' @param wtFactor weight / 70, which scales the alveolar and tissue effective
-#'   volumes (Gas Man's fWtFactor); the circuit is not scaled
-#' @param checkFastDecay apply the rejection test for more than 90\% of the
-#'   circuit or alveolar value decaying in one sub-step.  Gas Man applies it
+#'   volumes (GasMan's fWtFactor); the circuit is not scaled
+#' @param checkFastDecay apply the rejection test for more than 90% of the
+#'   circuit or alveolar value decaying in one sub-step.  GasMan applies it
 #'   only within VERNIER_TICKS ticks of a settings change.
 #' @returns list of \code{state} and \code{ok}, where ok is FALSE when the
 #'   sub-step should be rejected and retried at finer resolution
@@ -238,7 +238,7 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
 
   fCKT <- exp(-subdt / (GASMAN_VOLUME[["CKT"]] * sol[["CKT"]]) * (effCKT + effALV))
   # The weight factor scales the ALVEOLUS and the TISSUES but not the CIRCUIT,
-  # which is machine rather than patient.  Gas Man does it by dividing the rate
+  # which is machine rather than patient.  GasMan does it by dividing the rate
   # constant by fWtFactor in ComputeTerms, equivalent to multiplying the
   # effective volume.
   fALV <- exp(-subdt / (GASMAN_VOLUME[["ALV"]] * sol[["ALV"]] * wtFactor) *
@@ -256,10 +256,10 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
   }
 
   # More than 90% of the circuit or alveolar value gone in one sub-step means
-  # the step is too coarse to trust.  Gas Man applies this ONLY within
+  # the step is too coarse to trust.  GasMan applies this ONLY within
   # VERNIER_TICKS ticks of a settings change, so once a setting has been in
   # force a while it stops sub-stepping on this criterion.  Applying it always
-  # would make this MORE accurate than Gas Man, the wrong direction here.
+  # would make this MORE accurate than GasMan, the wrong direction here.
   if (checkFastDecay && (fCKT < 0.1 || fALV < 0.1)) ok <- FALSE
 
   state[["VEN"]] <- if (opts$recirculation) {
@@ -270,14 +270,14 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
 }
 
 
-#' Simulate the inhaled gases using Gas Man's own integration scheme
+#' Simulate the inhaled gases using GasMan's own integration scheme
 #'
-#' A faithful restatement of Gas Man's stepping, for validating this package
-#' against Gas Man output.  \code{advanceClosedFormGas()} remains the routine
+#' A faithful restatement of GasMan's stepping, for validating this package
+#' against GasMan output.  \code{advanceClosedFormGas()} remains the routine
 #' the application uses: it solves the fully coupled system exactly and is far
 #' faster.  This one exists to establish that we started from the same place.
 #'
-#' OXYGEN IS NOT SIMULATED HERE.  Gas Man's agent list is Desflurane, Ether,
+#' OXYGEN IS NOT SIMULATED HERE.  GasMan's agent list is Desflurane, Ether,
 #' Enflurane, Halothane, Isoflurane, Nitrogen, Nitrous Oxide, Sevoflurane and
 #' Xenon; oxygen is not among them.  Modelling oxygen with a metabolic sink is
 #' stanpumpR's addition, so it is left out of the baseline to keep the
@@ -286,22 +286,22 @@ gasManCalc <- function(state, sol, lambdaBlood, DEL, FGF, VA, CO,
 #' @param gasDose dose-table rows for the gases, with Time, Drug and Dose
 #' @param weight patient weight in kg
 #' @param maximum simulation length in minutes
-#' @param cardiacOutput cardiac output in L/min; defaults to Gas Man's 5
-#' @param dt base tick in minutes.  Gas Man's m_fdt is m_cMSec_dx/60000, and
+#' @param cardiacOutput cardiac output in L/min; defaults to GasMan's 5
+#' @param dt base tick in minutes.  GasMan's m_fdt is m_cMSec_dx/60000, and
 #'   m_cMSec_dx is 6000 ms -- its breath period, 10 breaths per minute -- so the
 #'   default here is 0.1.  dt does not multiply ventilation; it only sets how
 #'   stale the targets are between sub-steps.
 #' @param circuit one of "semi-closed", "open" or "ideal"
 #' @param uptakeEffect apply the constant-lung-capacity correction, which is the
-#'   concentration and second gas effect.  Gas Man defaults it on.
-#' @param recirculation model venous return.  Gas Man defaults it on.
+#'   concentration and second gas effect.  GasMan defaults it on.
+#' @param recirculation model venous return.  GasMan defaults it on.
 #' @param resolution number of output time points
-#' @param nitrogenAmbient starting nitrogen tension, percent.  Gas Man's
+#' @param nitrogenAmbient starting nitrogen tension, percent.  GasMan's
 #'   \code{Ambient} is 80, the default.  \code{advanceClosedFormGas()} starts at
 #'   78.07 because it also models oxygen, so pass \code{AIR_FRACTION_N2 * 100}
 #'   when the two engines are to be compared like with like.
 #'
-#' @returns a list with \code{results} (tidy Drug/Time/Site/Y over the Gas Man
+#' @returns a list with \code{results} (tidy Drug/Time/Site/Y over the GasMan
 #'   compartments), \code{state}, \code{timeLine} and \code{maxVernier}
 #' @export
 advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
@@ -315,7 +315,7 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
                recirculation = recirculation)
 
   props <- getGasProperties()
-  agents <- props$gas[props$soluble]          # oxygen excluded: not a Gas Man agent
+  agents <- props$gas[props$soluble]          # oxygen excluded: not a GasMan agent
 
   sol <- lapply(agents, function(g) gasManSolubility(props[props$gas == g, ]))
   names(sol) <- agents
@@ -346,7 +346,7 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
   for (tick in seq_len(nTicks))
   {
     t0 <- (tick - 1) * dt
-    # deadSpace = 0: Gas Man has none, so the "ventilation" row is alveolar
+    # deadSpace = 0: GasMan has none, so the "ventilation" row is alveolar
     # ventilation here, whatever the app engine makes of it.
     s  <- gasSettingsAt(bySetting, t0, deadSpace = 0)
 

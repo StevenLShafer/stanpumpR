@@ -1,4 +1,4 @@
-# The simulation API (R/api.R, inst/plumber/plumber.R; docs/api.md).
+# The simulation API (R/api.R, inst/plumber/plumber.R; inst/apidocs/api.md).
 
 apiRequest <- function(...) {
   base <- list(
@@ -298,6 +298,22 @@ test_that("the HTTP service answers /health, /drugs and /simulate", {
   malformed <- call("POST", "/simulate", "", "{not json")
   expect_equal(malformed$status, 400L)
   expect_match(jsonlite::fromJSON(text(malformed))$error, "not valid JSON")
+
+  # The documentation page is the service's front page.
+  page <- call("GET", "/")
+  expect_equal(page$status, 200L)
+  expect_match(page$headers[["Content-Type"]], "text/html", fixed = TRUE)
+  expect_match(text(page), "<title>stanpumpR Simulation API</title>", fixed = TRUE)
+
+  # The layout, like the format, takes the query parameter over the body.
+  wideBody <- as.character(jsonlite::toJSON(
+    apiRequest(output = list(interval = 10, layout = "wide")),
+    dataframe = "rows", auto_unbox = TRUE))
+  wide <- utils::read.csv(text = text(call("POST", "/simulate", "?format=csv", wideBody)),
+                          check.names = FALSE)
+  expect_true("fentanyl Plasma" %in% names(wide))
+  long <- utils::read.csv(text = text(call("POST", "/simulate", "?format=csv&layout=long", wideBody)))
+  expect_true(all(c("Drug", "Plasma") %in% names(long)))
 })
 
 test_that("patient.pregnant reaches the models that read it and is echoed back", {
