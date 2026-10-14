@@ -4,7 +4,15 @@
 \alias{methadone}
 \title{Methadone pharmacokinetics}
 \usage{
-methadone(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
+methadone(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  pregnant = FALSE,
+  cyp2b6 = CYP2B6_DEFAULT
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -22,6 +30,11 @@ weight.  No other parameter is size scaled.}
 \item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
 clearance of both enantiomers by 24/14 before the racemic reduction
 (Ansari 2016; see the file's header).}
+
+\item{cyp2b6}{CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
+It scales the non-renal clearance of each enantiomer, from Kharasch et
+al. (2015); the rapid and ultrarapid categories take the normal
+metaboliser's values.  See the file's header.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

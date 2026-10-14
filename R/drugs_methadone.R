@@ -47,9 +47,111 @@
 # and at total body weight with it off, as alprazolam does.  The study's
 # weight range was roughly 50 to 100 kg; children are extrapolation.
 #
-# CYP2B6 genotype changed clearance to EDDP, but the authors recommend the
-# wild-type (*1/*1) parameters for practical use, which is what is here; the
-# app has no CYP2B6 input.
+# CYP2B6
+# ======
+# Methadone is cleared principally by hepatic CYP2B6-catalysed N-demethylation
+# to EDDP, and the CYP2B6 gene is highly polymorphic.  Henthorn's final model
+# keeps CYP2B6 genotype as a covariate but recommends the normal-metaboliser
+# (*1/*1) values for practical use, which is what its typical values above
+# are.  The genotype effect here is taken from the study that measured it
+# directly in these same 64 subjects:
+#
+#   Kharasch ED, Regina KJ, Blood J, Friedel C.  Methadone pharmacogenetics:
+#   CYP2B6 polymorphisms determine plasma concentrations, clearance, and
+#   metabolism.  Anesthesiology 2015;123:1142-1153 (PMID 26389554), read in
+#   full on 2026-10-13.  The hepatic clearances below are quoted from p. 1146,
+#   where the sentence names the genotypes in the order it gives the values.
+#
+# Cohorts of CYP2B6 *1/*1 (n = 21), *1/*6 (n = 20) and *6/*6 (n = 17) healthy
+# volunteers received simultaneous intravenous and oral methadone.  HEPATIC
+# clearance (mL/kg/min, intravenous drug, Results) was:
+#
+#                      *1/*1      *6/*6     ratio
+#     S(+)-methadone     1.3        0.8      0.615
+#     R(-)-methadone     1.3        1.0      0.769
+#
+# Renal clearance was NOT affected by genotype ("Intravenous methadone renal
+# clearance was not affected by genotype"), so the multiplier is applied to
+# each enantiomer's NON-RENAL clearance -- Henthorn's clearance to EDDP plus
+# his "other" clearance -- and his renal clearance is left alone.  It is not
+# put on the EDDP branch alone, which is 23% (R) and 34% (S) of clearance:
+# for S(+) that branch is too small to carry the measured 36% fall in
+# systemic clearance at all, and Henthorn's "other" clearance is non-renal,
+# so on the evidence available the hepatic share is where a CYP2B6 effect
+# belongs.
+#
+# Kharasch reported no hepatic clearance for the *1/*6 heterozygotes.  Their
+# effect is set to the fraction of the homozygote effect that his abstract's
+# apparent ORAL clearances show (S 35% against 45% lower, R 25% against 35%
+# lower), so
+#
+#     S: 1 - (35/45) x (1 - 0.615) = 0.701      R: 1 - (25/35) x (1 - 0.769) = 0.835
+#
+# That interpolation is an INFERENCE, not an estimate, and it is recorded as
+# one here and on the drug's help page.  THE FRACTION DEPENDS ON WHICH MEASURE
+# IT IS TAKEN FROM, which matters because it is applied to a systemic
+# clearance (the paper was read in full on 2026-10-13):
+#
+#     abstract, apparent oral, % lower     0.78     the values above
+#     Results, apparent oral clearances    0.64     S 2.3, 1.6, 1.2 mL/kg/min
+#     Results, systemic clearances         0.56     S 1.5, 1.2, 0.96 mL/kg/min
+#
+# Apparent oral clearance amplifies the genotype effect, because CL/F falls
+# both from the lower clearance and from the higher bioavailability that less
+# first-pass metabolism gives; the systemic figure, 0.56, is almost exactly
+# linear in allele count.  The oral-derived values above are kept: they are
+# the most conservative of the three, and a single-dose study understates the
+# steady state, because CYP2B6 is less inducible in *6 carriers and methadone
+# autoinduces.  All three agree qualitatively, and the mechanism is the
+# extraction ratio: Kharasch measured 0.08 in *1/*1 and 0.05 in *6/*6
+# (Results), so methadone is restrictively cleared, its hepatic clearance
+# tracks intrinsic clearance almost one for one, and there is no flow-limited
+# reserve to absorb the loss of one allele.
+#
+# CROSS-CHECK.  Through Henthorn's clearance split these multipliers give
+# total systemic clearances, relative to the normal metaboliser, of 0.75
+# (*1/*6) and 0.68 (*6/*6) for S(+) and 0.88 and 0.83 for R(-).  Kharasch
+# measured S(+) systemic clearances of 1.5, 1.2 and 0.96 mL/kg/min in the
+# three cohorts, that is 0.80 and 0.64 of the normal metaboliser, and found
+# R(-) systemic clearance not significantly changed.  The model is within
+# 0.05 of the measured S(+) ratios and moves R(-) less than S(+), as every
+# source does.
+#
+# PHENOTYPE, NOT DIPLOTYPE.  The app's field carries the five CPIC categories
+# (Robinson et al., Clin Pharmacol Ther 2024;116:932-938), which is how
+# genotyping laboratories report CYP2B6: *1/*1 is a normal metaboliser, *1/*6
+# an intermediate, *6/*6 a poor one.  CPIC's rapid and ultrarapid categories
+# (an increased-function *4 allele) are given the NORMAL metaboliser's
+# clearance.  Kharasch does report figures for his *4 carriers -- systemic
+# clearances of 2.4 (R) and 2.7 (S) mL/kg/min against 1.5 for S in *1/*1, and
+# apparent oral clearances of 7.4 and 8.6 against 2.4 and 2.3 -- but they
+# cannot set a multiplier for a CPIC phenotype.  The group is FOUR subjects,
+# pooling one *1/*4 with three *4/*6, which CPIC classes as two different
+# phenotypes: rapid, and intermediate for one increased-function allele with
+# one decreased-function allele.  The paper calls these differences
+# "numerically greater" and runs no significance test on them.  CPIC's own
+# recommendation for rapid metabolisers is standard dosing on limited
+# evidence.  (Before the paper was read in full, this file and its help pages
+# said no systemic estimate was retrievable.  That was wrong, and was
+# corrected on 2026-10-13: the conclusion is unchanged, the reason is not.)
+#
+# CPIC does not advise changing methadone dosing on CYP2B6 genotype, because
+# the exposure difference has not been shown to change efficacy or QTc
+# prolongation.  The covariate is here to show the pharmacokinetic effect,
+# which is real and measured, not to prescribe with.
+#
+# Genotype is not the whole of CYP2B6 activity: the enzyme is induced by
+# rifampin, phenobarbital, carbamazepine, efavirenz and by chronic methadone
+# itself, and inhibited by others.  None of that is modelled.
+#
+# WITH PREGNANCY.  The two covariates multiply: pregnancy scales all three
+# clearance components by 24/14 and the phenotype then scales the non-renal
+# part.  Treat a pregnant reduced-function metaboliser as the softest corner
+# of this model.  Ansari attributes pregnancy's higher methadone clearance
+# partly to induction of CYP2B6 itself, and CYP2B6 activity is LESS
+# inducible in *6 carriers (Kharasch's discussion), so the product of the
+# two factors probably overstates her clearance.  No source quantifies the
+# interaction, so none is applied.
 #
 # REDUCTION TO THE LINEAR ENGINE
 # ==============================
@@ -122,6 +224,10 @@
 #   https://doi.org/10.1002/cpt.70147
 # Kharasch ED et al., Clin Pharmacol Ther 2004;76:250-269.
 #   https://doi.org/10.1016/j.clpt.2004.05.003
+# Kharasch ED, Regina KJ, Blood J, Friedel C, Anesthesiology 2015;123:1142-1153.
+#   https://doi.org/10.1097/ALN.0000000000000867
+# Robinson KM et al. (CPIC), Clin Pharmacol Ther 2024;116:932-938.
+#   https://doi.org/10.1002/cpt.3338
 # Eap CB, Buclin T, Baumann P, Clin Pharmacokinet 2002;41:1153-1193.
 #   https://doi.org/10.2165/00003088-200241140-00003
 # Inturrisi CE et al., Clin Pharmacol Ther 1987;41:392-401.
@@ -142,6 +248,21 @@ METHADONE_R <- list(
 METHADONE_S_OVER_R <- list(v = 0.60, q = 0.77, clRenal = 0.57, clEddp = 1.30)
 METHADONE_S_CL_OTHER <- 0.045              # L/min, Table 2
 METHADONE_V3_WT_EXPONENT <- 1.23
+
+# Non-renal (hepatic) clearance multiplier by CYP2B6 phenotype, per enantiomer.
+# Kharasch 2015 measured hepatic clearances for the poor metaboliser (*6/*6);
+# the intermediate (*1/*6) is interpolated from his apparent oral clearances,
+# and the rapid and ultrarapid categories take the normal metaboliser's
+# values.  See the CYP2B6 section of the header.
+METHADONE_CYP2B6_POOR <- c(R = 1.0 / 1.3, S = 0.8 / 1.3)
+METHADONE_CYP2B6_HEPATIC <- list(
+  poor         = METHADONE_CYP2B6_POOR,
+  intermediate = c(R = 1 - (25 / 35) * (1 - METHADONE_CYP2B6_POOR[["R"]]),
+                   S = 1 - (35 / 45) * (1 - METHADONE_CYP2B6_POOR[["S"]])),
+  normal       = c(R = 1, S = 1),
+  rapid        = c(R = 1, S = 1),
+  ultrarapid   = c(R = 1, S = 1)
+)
 METHADONE_WT_REF <- 70                     # kg, see the header
 METHADONE_BASE_FRACTION <- 309.45 / 345.91 # base / hydrochloride
 # Clearance of both enantiomers in pregnancy relative to Henthorn's values:
@@ -163,20 +284,25 @@ methadoneUdf <- function(vc, v2, v3, cl, q2, q3)
   list(coef = coef, lambda = lambda)
 }
 
-# R(-) and S(+) unit disposition functions with V3 at `v3Weight` kg, and
-# every elimination clearance multiplied by `clFactor` (pregnancy).
-methadoneEnantiomers <- function(v3Weight, clFactor = 1)
+# R(-) and S(+) unit disposition functions with V3 at `v3Weight` kg, at the
+# CYP2B6 phenotype's hepatic clearance (the header's CYP2B6 section: that
+# multiplier scales the non-renal clearance only), with every elimination
+# clearance then multiplied by `clFactor` (pregnancy, which the review
+# assigns to no one component; see the PREGNANCY section).
+methadoneEnantiomers <- function(v3Weight, clFactor = 1,
+                                 cyp2b6 = CYP2B6_DEFAULT)
 {
   r <- METHADONE_R
   s <- METHADONE_S_OVER_R
+  g <- METHADONE_CYP2B6_HEPATIC[[cyp2b6]]
+  if (is.null(g)) stop("Invalid cyp2b6 for methadone: ", paste(cyp2b6, collapse = ", "))
   v3 <- r$v3 * (v3Weight / METHADONE_WT_REF)^METHADONE_V3_WT_EXPONENT
+  clR <- g[["R"]] * (r$clEddp + r$clOther) + r$clRenal
+  clS <- g[["S"]] * (r$clEddp * s$clEddp + METHADONE_S_CL_OTHER) +
+    r$clRenal * s$clRenal
   list(
-    R = methadoneUdf(r$vc, r$v2, v3,
-                     (r$clEddp + r$clRenal + r$clOther) * clFactor,
-                     r$q2, r$q3),
-    S = methadoneUdf(r$vc * s$v, r$v2 * s$v, v3 * s$v,
-                     (r$clEddp * s$clEddp + r$clRenal * s$clRenal +
-                        METHADONE_S_CL_OTHER) * clFactor,
+    R = methadoneUdf(r$vc, r$v2, v3, clR * clFactor, r$q2, r$q3),
+    S = methadoneUdf(r$vc * s$v, r$v2 * s$v, v3 * s$v, clS * clFactor,
                      r$q2 * s$q, r$q3 * s$q)
   )
 }
@@ -189,13 +315,15 @@ methadoneFitCache <- new.env(parent = emptyenv())
 # Steps 1 to 3 of the header's reduction: the three-compartment model whose
 # bolus response best matches the mean of the R(-) and S(+) responses, with
 # equal area.  Returns v1, v2, v3, cl1, cl2, cl3 per unit of base.
-methadoneRacemicPK <- function(v3Weight, clFactor = 1)
+methadoneRacemicPK <- function(v3Weight, clFactor = 1,
+                               cyp2b6 = CYP2B6_DEFAULT)
 {
-  key <- paste(format(v3Weight, digits = 15), format(clFactor, digits = 15))
+  key <- paste(format(v3Weight, digits = 15), format(clFactor, digits = 15),
+               cyp2b6)
   cached <- methadoneFitCache[[key]]
   if (!is.null(cached)) return(cached)
 
-  e <- methadoneEnantiomers(v3Weight, clFactor)
+  e <- methadoneEnantiomers(v3Weight, clFactor, cyp2b6)
   udf <- function(coef, lambda, t) colSums(coef * exp(-outer(lambda, t)))
   t <- exp(seq(log(0.5), log(7 * 1440), length.out = 300))
   y <- 0.5 * (udf(e$R$coef, e$R$lambda, t) + udf(e$S$coef, e$S$lambda, t))
@@ -271,19 +399,27 @@ methadoneRacemicPK <- function(v3Weight, clFactor = 1)
 #' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
 #'   clearance of both enantiomers by 24/14 before the racemic reduction
 #'   (Ansari 2016; see the file's header).
+#' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
+#'   It scales the non-renal clearance of each enantiomer, from Kharasch et
+#'   al. (2015); the rapid and ultrarapid categories take the normal
+#'   metaboliser's values.  See the file's header.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 methadone <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                      pregnant = FALSE)
+                      pregnant = FALSE, cyp2b6 = CYP2B6_DEFAULT)
 {
+  if (length(cyp2b6) != 1 || !isTRUE(cyp2b6 %in% CYP2B6_VALUES))
+    stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
+         ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
   # Size scaling (see the header): Henthorn's own weight term on V3 only, at
   # the pharmacokinetic weight with the switch on, total weight with it off.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
-  # Pregnancy (see the header): both enantiomers' clearances, then the fit.
+  # Pregnancy and CYP2B6 (see the header): both act on the enantiomers'
+  # clearances, then the racemic model is fitted at the result.
   clPregnancy <- if (isTRUE(pregnant)) METHADONE_PREGNANCY_CL_FACTOR else 1
-  base <- methadoneRacemicPK(pkW, clPregnancy)
+  base <- methadoneRacemicPK(pkW, clPregnancy, cyp2b6)
   # Hydrochloride doses, base concentrations (see the header).
   f <- METHADONE_BASE_FRACTION
 
@@ -316,7 +452,9 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "R(-) and S(+) methadone models summed to racemate; ",
     "oral bioavailability 0.70 from Kharasch ED et al., ",
     "Clin Pharmacol Ther 2004;76:250-269; absorption from ",
-    "Eap CB et al., Clin Pharmacokinet 2002;41:1153-1193. ",
+    "Eap CB et al., Clin Pharmacokinet 2002;41:1153-1193; ",
+    "CYP2B6 phenotype on non-renal clearance from Kharasch ED et al., ",
+    "Anesthesiology 2015;123:1142-1153 (normal metaboliser unless given). ",
     "https://doi.org/10.1002/cpt.70147"
   )
   if (isTRUE(pregnant)) {

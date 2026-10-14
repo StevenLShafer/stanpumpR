@@ -314,3 +314,20 @@ test_that("drug pages reflect a library edited in the session", {
   html <- helpDrugPageHTML("propofol", edited)
   expect_match(html, "1.25 to 9 mcg/mL", fixed = TRUE)
 })
+
+# A model that declares cyp2b6 (methadone) gets a generated clearance-by-
+# phenotype table from cypSection(), as the cyp2c9 and cyp2d6 drugs do.
+test_that("the methadone page tabulates clearance by CYP2B6 phenotype", {
+  html <- helpDrugPageHTML("methadone")
+  expect_match(html, "Effect of CYP2B6 phenotype", fixed = TRUE)
+  expect_match(html, "Clearance CL1 (L/min)", fixed = TRUE)
+  expect_match(html, "Relative to normal", fixed = TRUE)
+  for (label in c("Poor", "Intermediate", "Normal", "Rapid", "Ultrarapid")) {
+    expect_match(html, label, fixed = TRUE, info = label)
+  }
+  # the narrative says where the multipliers come from and what the field is not
+  expect_match(html, "Anesthesiology", fixed = TRUE)
+  expect_match(html, "not a dosing rule", fixed = TRUE)
+  # a drug that does not declare it gets no such table
+  expect_false(grepl("Effect of CYP2B6 phenotype", helpDrugPageHTML("fentanyl"), fixed = TRUE))
+})

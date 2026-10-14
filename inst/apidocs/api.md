@@ -96,7 +96,7 @@ The response (JSON):
     "weight": 70, "weightUnit": "kg", "height": 170, "heightUnit": "cm",
     "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "adjustToFFM": true,
     "osmolality": 280, "creatinine": null,
-    "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1"
+    "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1", "cyp2b6": "normal"
   },
   "drugs": [
     {
@@ -182,7 +182,8 @@ A request is a JSON object. Field names ignore case and any `_`, space or
     "osmolality": 280,       // baseline serum osmolality, mOsm/kg (read only by mannitol)
     "cyp2d6": "normal",      // poor | intermediate | normal | ultrarapid
     "cyp2c19": "normal",     // poor | intermediate | normal | rapid | ultrarapid
-    "cyp2c9": "*1/*1"        // *1/*1 | *1/*2 | *1/*3 | *2/*2 | *2/*3 | *3/*3
+    "cyp2c9": "*1/*1",       // *1/*1 | *1/*2 | *1/*3 | *2/*2 | *2/*3 | *3/*3
+    "cyp2b6": "normal"       // poor | intermediate | normal | rapid | ultrarapid
   },
 
   "duration": 6,             // required: length of the simulation, in timeUnit
@@ -225,7 +226,7 @@ A request is a JSON object. Field names ignore case and any `_`, space or
 | `pregnant` | no | `false` (default) or `true`, which needs `sex` `female`. Only the drugs with a late-pregnancy model read it. |
 | `creatinine` | no | 0.2–15 mg/dL. If it is omitted, each renally cleared model assumes the normal value for the patient's age and sex. |
 | `osmolality` | no | 200–400 mOsm/kg. The default is 280. |
-| `cyp2d6`, `cyp2c19`, `cyp2c9` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
+| `cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
 | `adjustToFFM` | no | `true` (default) or `false` |
 
 ### The dose table

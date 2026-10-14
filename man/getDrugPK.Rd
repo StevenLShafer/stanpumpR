@@ -19,6 +19,7 @@ getDrugPK(
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
+  cyp2b6 = CYP2B6_DEFAULT,
   pregnant = FALSE,
   model = NULL
 )
@@ -63,6 +64,9 @@ Passed only to drug models that declare it (escitalopram, citalopram).}
 
 \item{cyp2c9}{CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES};
 passed only to models that name it (phenytoin).}
+
+\item{cyp2b6}{CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
+passed only to models that name it (methadone).}
 
 \item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default).
 Passed only to the models that name it (R/pregnancy.R lists them), which

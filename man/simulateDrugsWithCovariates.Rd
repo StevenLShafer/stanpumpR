@@ -19,6 +19,7 @@ simulateDrugsWithCovariates(
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
+  cyp2b6 = CYP2B6_DEFAULT,
   pregnant = FALSE
 )
 }
@@ -60,6 +61,9 @@ Only drugs whose model declares it are affected.}
 
 \item{cyp2c9}{CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES}.
 Only drugs whose model declares it (phenytoin) are affected.}
+
+\item{cyp2b6}{CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
+Only drugs whose model declares it (methadone) are affected.}
 
 \item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default); TRUE
 requires \code{sex = "female"}.  Only the models that name it apply the

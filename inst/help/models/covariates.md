@@ -55,7 +55,7 @@ The Kim remifentanil model for obesity uses the Janmahasatian fat-free mass inst
 
 Eleveld's propofol model gives women a higher clearance than men (2.10 against 1.79 L/min at reference size); Eleveld's remifentanil model increases clearance and V2 in women between puberty and the menopause; remimazolam's clearance and V3 are larger in women. Several of the later models carry a sex term of their own (citalopram, duloxetine, fluoxetine and lacosamide among them), as each drug's page says. Elsewhere sex enters only through lean or fat-free mass.
 
-## CYP2D6, CYP2C19 and CYP2C9, and the disabled covariates
+## CYP2D6, CYP2C19, CYP2C9 and CYP2B6, and the disabled covariates
 
 **CYP2D6 phenotype** is now a live covariate: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone, and the apparent clearance of risperidone, aripiprazole and haloperidol (for risperidone and aripiprazole, the clearance that forms their active metabolites). See [Active metabolites](help:models/metabolites).
 
@@ -63,7 +63,9 @@ Eleveld's propofol model gives women a higher clearance than men (2.10 against 1
 
 **CYP2C9 diplotype** (`*1/*1`, the reference, to `*3/*3`) is read by [phenytoin](help:drugs/phenytoin), whose maximal elimination rate it scales through the CPIC activity score, and by the oral [meloxicam](help:drugs/meloxicam) model, whose clearance falls with each `*2` or `*3` allele.
 
-**Pregnant** applies the changes of late pregnancy to the eight drugs for which the 2016 review of Ansari, Carvalho, Shafer and Flood gives a magnitude, and nothing to the rest. See [Pregnancy](help:models/pregnancy).
+**CYP2B6 phenotype** is read by [methadone](help:drugs/methadone). CYP2B6 catalyses the N-demethylation that accounts for most of methadone's clearance, and the multipliers come from Kharasch and colleagues (*Anesthesiology* 2015;123:1142-1153), who measured clearance in cohorts of volunteers chosen for their genotype. The effect is larger on S(+)- than on R(-)-methadone, as every source finds, and it is applied to non-renal clearance only, because that study found renal clearance unchanged by genotype. [The methadone genotype scenario](scenario:methadone-cyp2b6) shows why a difference in clearance is nearly invisible after one dose and obvious at steady state.
+
+**Pregnant** applies the changes of late pregnancy to the eight drugs for which the 2016 review of Ansari, Carvalho, Shafer and Flood gives a magnitude, and nothing to the rest. See [Pregnancy](help:models/pregnancy). Methadone reads both that flag and the CYP2B6 phenotype, and its page says why a pregnant reduced-function metaboliser is the softest corner of that model.
 
 ## Renal function
 

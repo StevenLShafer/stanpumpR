@@ -162,7 +162,9 @@ test_that("every scenario runs through the simulation engine", {
       out <- simulateDrugsWithCovariates(iv, helpScenarioEventTable(s), p$weight, p$height, p$age, p$sex,
                                          s$options$maximum, s$options$showThreshold,
                                          cyp2d6 = p$cyp2d6, cyp2c19 = p$cyp2c19,
-                                         adjustToFFM = p$adjustToFFM, pregnant = p$pregnant)
+                                         cyp2c9 = p$cyp2c9, cyp2b6 = p$cyp2b6,
+                                         adjustToFFM = p$adjustToFFM,
+                                         pregnant = p$pregnant)
       # every dosed drug has a row; a drug that forms an active metabolite adds
       # the metabolite's row too
       expect_true(all(unique(iv$Drug) %in% names(out)), info = s$id)
@@ -261,7 +263,8 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
   for (s in scenarios) {
     expect_true(setequal(names(s$patient),
                          c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
-                           "adjustToFFM", "creatinine", "osmolality", "pregnant")), info = s$id)
+                           "cyp2b6", "adjustToFFM", "creatinine", "osmolality",
+                           "pregnant")), info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
     expect_true(is.logical(s$patient$pregnant) && length(s$patient$pregnant) == 1, info = s$id)
     expect_equal(s$patient$osmolality, OSMOLALITY_DEFAULT, info = s$id)
@@ -305,8 +308,8 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   expect_equal(as.numeric(session$messages$osmolality$value), OSMOLALITY_DEFAULT)
   # and the rest of the profile goes too, the Pregnant control included (off
   # for this patient, so a parturient loaded earlier does not linger)
-  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "adjustToFFM",
-                    "pregnant")
+  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6",
+                    "adjustToFFM", "pregnant")
                   %in% names(session$messages)))
   expect_identical(session$messages$pregnant$selected, "FALSE")
   session <- recordingSession()

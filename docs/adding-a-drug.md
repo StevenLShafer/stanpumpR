@@ -198,6 +198,12 @@ CPIC terms (`poor`, `intermediate`, `normal`, `rapid`, `ultrarapid`). A source t
 fewer groups says in the drug file which group each of the five is given (escitalopram,
 citalopram). The drug's help page tabulates its clearance by phenotype automatically.
 
+So do `cyp2b6 = CYP2B6_DEFAULT` (`CYP2B6_VALUES`, the same five CPIC terms; read by methadone,
+whose help page gets a generated clearance-by-phenotype table) and `cyp2c9 = CYP2C9_DEFAULT`
+(`CYP2C9_VALUES`, the six common diplotypes rather than phenotypes; read by phenytoin and
+meloxicam). A phenotype a source did not estimate is given the reference group's parameters
+and the drug file says so: never interpolate silently.
+
 **Optional — an osmotic agent.** A drug reported as the serum osmolality it produces, rather
 than as its own concentration, adds `osmolality` to its signature (the patient's baseline,
 mOsm/kg, passed only to models that name it) and returns an `osmotic` block:

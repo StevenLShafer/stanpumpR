@@ -215,6 +215,20 @@ app_ui <- function() {
                   selected = CYP2C9_DEFAULT
                 ),
 
+                # Read by methadone, whose non-renal clearance of each
+                # enantiomer depends on CYP2B6 (R/drugs_methadone.R).  The five
+                # CPIC categories; "normal" (*1/*1) is the reference.
+                selectInput(
+                  inputId = "cyp2b6",
+                  label = "CYP 2B6",
+                  c("Ultrarapid"   = CYP2B6_ULTRARAPID,
+                    "Rapid"        = CYP2B6_RAPID,
+                    "Normal"       = CYP2B6_NORMAL,
+                    "Intermediate" = CYP2B6_INTERMEDIATE,
+                    "Poor"         = CYP2B6_POOR),
+                  selected = CYP2B6_DEFAULT
+                ),
+
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
                 bslib::tooltip(

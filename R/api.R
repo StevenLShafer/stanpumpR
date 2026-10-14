@@ -235,7 +235,8 @@ apiPatient <- function(patient) {
     creatinine  = creatinine,
     cyp2d6      = apiChoice(get("cyp2d6", CYP2D6_DEFAULT), "patient.cyp2d6", CYP2D6_VALUES),
     cyp2c19     = apiChoice(get("cyp2c19", CYP2C19_DEFAULT), "patient.cyp2c19", CYP2C19_VALUES),
-    cyp2c9      = apiChoice(get("cyp2c9", CYP2C9_DEFAULT), "patient.cyp2c9", CYP2C9_VALUES)
+    cyp2c9      = apiChoice(get("cyp2c9", CYP2C9_DEFAULT), "patient.cyp2c9", CYP2C9_VALUES),
+    cyp2b6      = apiChoice(get("cyp2b6", CYP2B6_DEFAULT), "patient.cyp2b6", CYP2B6_VALUES)
   )
 }
 
@@ -422,6 +423,7 @@ apiSimulate <- function(request) {
         DT, ET, patient$weight, patient$height, patient$age, patient$sex,
         maximum, recovery,
         cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
+        cyp2b6 = patient$cyp2b6,
         adjustToFFM = patient$adjustToFFM, osmolality = patient$osmolality,
         creatinine = patient$creatinine, pregnant = patient$pregnant)),
       error = function(e) {
@@ -489,7 +491,8 @@ apiSimulate <- function(request) {
       adjustToFFM = patient$adjustToFFM,
       osmolality  = patient$osmolality,
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,
-      cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9
+      cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
+      cyp2b6 = patient$cyp2b6
     ),
     drugs      = drugs,
     doses      = doses,

@@ -603,7 +603,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   }
   cypOtherHTML <- paste0(
     if (is.null(metabolite)) cypSection("cyp2d6", CYP2D6_VALUES, CYP2D6_NORMAL, "CYP2D6", "CYP 2D6") else "",
-    cypSection("cyp2c9", CYP2C9_VALUES, CYP2C9_DEFAULT, "CYP2C9", "CYP 2C9")
+    cypSection("cyp2c9", CYP2C9_VALUES, CYP2C9_DEFAULT, "CYP2C9", "CYP 2C9"),
+    cypSection("cyp2b6", CYP2B6_VALUES, CYP2B6_DEFAULT, "CYP2B6", "CYP 2B6")
   )
 
   # --- Renal function --------------------------------------------------------

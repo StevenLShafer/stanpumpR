@@ -54,6 +54,23 @@ CYP2C19_VALUES  <- c(CYP2C19_POOR, CYP2C19_INTERMEDIATE, CYP2C19_NORMAL,
                      CYP2C19_RAPID, CYP2C19_ULTRARAPID)
 CYP2C19_DEFAULT <- CYP2C19_NORMAL
 
+# CYP2B6 metaboliser phenotype, the five CPIC categories (Robinson et al.,
+# Clin Pharmacol Ther 2024;116:932-938, Table 1), read by the models that name
+# it (methadone, whose hepatic clearance of each enantiomer depends on it;
+# R/drugs_methadone.R).  "normal" (*1/*1) is the reference: Henthorn and
+# Kharasch fitted their typical values in normal metabolisers.  CPIC's rapid
+# and ultrarapid categories carry no transportable estimate for methadone, so
+# a model may legitimately give them the normal metaboliser's parameters; the
+# drug file says so where it does.
+CYP2B6_POOR         <- "poor"
+CYP2B6_INTERMEDIATE <- "intermediate"
+CYP2B6_NORMAL       <- "normal"
+CYP2B6_RAPID        <- "rapid"
+CYP2B6_ULTRARAPID   <- "ultrarapid"
+CYP2B6_VALUES  <- c(CYP2B6_POOR, CYP2B6_INTERMEDIATE, CYP2B6_NORMAL,
+                    CYP2B6_RAPID, CYP2B6_ULTRARAPID)
+CYP2B6_DEFAULT <- CYP2B6_NORMAL
+
 # CYP2C9 DIPLOTYPE, read by the models that name it: meloxicam, whose genotype
 # effect on clearance is estimated per allele (Aoyama 2017), and phenytoin,
 # which maps the diplotype to a maximal-elimination-rate multiplier through the

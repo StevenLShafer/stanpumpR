@@ -76,7 +76,8 @@ helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
-                         cyp2c9 = CYP2C9_DEFAULT, creatinine = NULL,
+                         cyp2c9 = CYP2C9_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
+                         creatinine = NULL,
                          osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
@@ -98,7 +99,7 @@ helpScenario <- function(id, title, group, summary,
     # and osmolality of the previous patient surviving a load).
     patient = list(age = age, weight = weight, height = height, sex = sex,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                   adjustToFFM = adjustToFFM,
+                   cyp2b6 = cyp2b6, adjustToFFM = adjustToFFM,
                    creatinine = creatinine, osmolality = osmolality,
                    pregnant = pregnant),
     doses = doses, events = events, options = options
@@ -263,6 +264,21 @@ helpScenarios <- function() {
         c("fentanyl", 0, 100, "mcg")
       ),
       maximum = 240, addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
+      "methadone-cyp2b6",
+      "Methadone and CYP2B6: the same dose, two steady states",
+      "Opioids",
+      "Ten milligrams of oral methadone twice a day for a fortnight in a CYP2B6 poor metaboliser, whose methadone clearance is about a quarter lower than a normal metaboliser's.",
+      cyp2b6 = CYP2B6_POOR,
+      doses = helpDoses(
+        c("methadone", 0, 10, "mg PO bid")
+      ),
+      # Accumulation over days is the point, so the plot is in days and the
+      # plasma line carries it; the effect site lies on top at this scale.
+      timeUnits = "days", maximum = 14 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      addedPlots = PLOT_ID_MEAC
     ),
     helpScenario(
       "tci-propofol",
@@ -742,6 +758,21 @@ helpScenarios <- function() {
       ),
       timeUnits = "days", maximum = 525600,
       showThreshold = TRUE
+    ),
+    helpScenario(
+      "phenytoin-saturable-metabolism",
+      "Phenytoin: three equal dose steps, three unequal steady states",
+      "Long-term therapy",
+      "Saturable elimination: 200, then 300, then 400 mg of phenytoin a day, where each equal increment raises the steady state further than the one before.",
+      doses = helpDoses(
+        c("phenytoin",     0, 200, "mg PO ER qd"),
+        c("phenytoin", 40320, 300, "mg PO ER qd"),
+        c("phenytoin", 80640, 400, "mg PO ER qd")
+      ),
+      # Phenytoin has no effect site (the plasma line carries the curve), and
+      # each dose rate needs weeks to settle: four weeks per step, in days.
+      timeUnits = "days", maximum = 91 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
     )
   )
 }
@@ -778,6 +809,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$cyp2d6 %in% CYP2D6_VALUES) say("invalid cyp2d6: ", p$cyp2d6)
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
+  if (!p$cyp2b6 %in% CYP2B6_VALUES) say("invalid cyp2b6: ", p$cyp2b6)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
   if (!is.logical(p$pregnant) || length(p$pregnant) != 1 || is.na(p$pregnant)) {
     say("pregnant is not a single logical")
@@ -931,6 +963,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
+  updateSelectInput(session, "cyp2b6", selected = p$cyp2b6)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
   # A blank field is the state the renal models read as "assume a normal
   # creatinine".  updateNumericInput() would send NA as the string "NA" and
@@ -994,6 +1027,7 @@ helpScenarioPageHTML <- function(id) {
     `CYP 2D6` = tools::toTitleCase(p$cyp2d6),
     `CYP 2C19` = tools::toTitleCase(p$cyp2c19),
     `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
+    `CYP 2B6` = tools::toTitleCase(p$cyp2b6),
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     `Serum creatinine` = if (is.null(p$creatinine)) "blank (normal for age and sex assumed)" else sprintf("%s mg/dL", helpFormatNumber(p$creatinine)),
     `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),
