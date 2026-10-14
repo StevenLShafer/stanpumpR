@@ -22,12 +22,15 @@
 # Source.  Ansari JR, Conti DJ, Michel G, Yarmosh A, Cole NM, Shafer SL.
 # Bioequivalence and pharmacokinetics of intravenous calcium during cesarean
 # delivery.  Anesthesiology 2025;142:121-31.  A two-compartment model fitted
-# by NONMEM to 311 ionized calcium measurements from 70 parturients who
-# received 0.5 or 1 g of calcium chloride or 1.5, 2 or 3 g of calcium
-# gluconate by 10-minute infusion after umbilical cord clamping at cesarean
-# delivery (three trials: a bioequivalence trial, NCT05973747, and two
-# placebo-controlled trials of calcium chloride for uterine atony,
-# NCT03867383 and NCT05027048).  Sampling ran to 60 to 90 minutes.  Table 2:
+# by NONMEM to the ionized calcium of 55 parturients who received 0.5 or 1 g
+# of calcium chloride or 1.5, 2 or 3 g of calcium gluconate by 10-minute
+# infusion after umbilical cord clamping at cesarean delivery (three trials:
+# a bioequivalence trial, NCT05973747, and two placebo-controlled trials of
+# calcium chloride for uterine atony, NCT03867383 and NCT05027048).  The
+# initial model also took the trials' 15 saline-placebo recipients, 311
+# measurements from 70 patients in all; the final model omitted them, and
+# its number of measurements is not given.  Sampling ran to 60 to 90
+# minutes.  Table 2:
 #
 #   systemic clearance       CL1  0.183 L/min   (95% CI 0.067 to 0.266)
 #   central volume           V1   10.9  L       (9.27 to 12.6)
@@ -53,17 +56,22 @@
 # identically to 1 g of calcium chloride, and the usual 3 g dose is 96% of
 # it.
 #
-# Population.  All 70 patients were pregnant women, 18 to 55 years, at or
-# after 34 weeks' gestation, 55 to 100 kg (mean 79.8 kg, BMI 30.6 kg/m2,
-# mean age 34), with a serum creatinine of 1.0 mg/dL or less, no cardiac
-# disease, no digoxin or calcium channel blocker, no magnesium infusion, and
+# Population.  All 70 patients, the 55 given calcium and the 15 given
+# placebo, were parturients at cesarean delivery (Table 1: mean age 34,
+# weight 79.8 +/- 12.0 kg, BMI 30.6 kg/m2, median gestation 39 weeks), and
 # they were bleeding (median blood loss about 800 mL) while the samples were
-# drawn.  Maternal age, weight, blood loss and venous pH were tested as
-# covariates and none improved the fit.  No men, children, elderly patients
-# or patients with renal insufficiency were studied: the model is offered for
-# every patient the app accepts, as the only pharmacokinetic description of
-# intravenous calcium in adults, and every patient outside that population is
-# an extrapolation (see the help page).  The authors note that their findings
+# drawn.  The paper states eligibility for the bioequivalence trial (34
+# patients) only: 18 to 45 years, at or after 34 weeks' gestation, excluding
+# a serum creatinine above 1.0 mg/dL, cardiac disease, digoxin or a calcium
+# channel blocker, a weight below 55 or above 100 kg, magnesium infusion and
+# severe hypertension; the two atony trials report their own criteria.
+# Maternal age, weight, blood loss and venous pH were tested as covariates
+# and none improved the fit.  The authors name men, the elderly and patients
+# with renal insufficiency as not studied, and no child was.  The model is
+# offered for every patient the app accepts because, as the paper says, no
+# earlier study had modelled the time course of ionized calcium after an
+# intravenous dose in adults; every patient outside that population is an
+# extrapolation (see the help page).  The authors note that their findings
 # agree with the calcium kinetics Cote and colleagues (Anesthesiology
 # 1987;66:465-70) reported in burned children and dogs.
 #
@@ -75,14 +83,14 @@
 # hour or two; beyond that the curve returns to zero faster than it should.
 #
 # Size scaling (see docs/weight-adjustment.md).  The source has no size
-# covariate and found none, over 55 to 100 kg.  The published parameters are
-# taken to describe the 70 kg reference adult and are scaled to fat-free mass
-# in the library's usual way, so that a child or a very large patient gets a
-# proportionate volume; this is the library's assumption, not the paper's.
-# With the switch off the published values apply unscaled to everyone, which
-# is how the paper reads: a typical study parturient (80 kg, 34 years,
-# female) with the switch on has volumes 13% smaller than published and peaks
-# about 15% higher than the paper's figure 5.
+# covariate and found none (weights 79.8 +/- 12.0 kg).  The published
+# parameters are taken to describe the 70 kg reference adult and are scaled to
+# fat-free mass in the library's usual way, so that a child or a very large
+# patient gets a proportionate volume; this is the library's assumption, not
+# the paper's.  With the switch off the published values apply unscaled to
+# everyone, which is how the paper reads: a typical study parturient (80 kg,
+# 34 years, female) with the switch on has volumes 15% smaller than published
+# and peaks about 15% higher than the paper's figure 5.
 #
 # Drafted by Claude Code, 2026-10-13, at the request of Steven L. Shafer.
 

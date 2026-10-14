@@ -11,4 +11,4 @@ A woman at term, 30 years, 80 kg, 165 cm, with **Pregnant** ticked, receiving re
 
 ## Background
 
-[Pregnancy](help:models/pregnancy) lists every drug of the review that is in the library and what, if anything, the field changes. [Remifentanil](help:drugs/remifentanil) describes the Eleveld and Kim models. The fetus is not modelled: remifentanil crosses the placenta but is cleared by the fetus's own esterases, which is why it is favoured over other systemic opioids in labour.
+[Pregnancy](help:models/pregnancy) lists every drug of the review's tables that is in the library and what, if anything, the field changes. [Remifentanil](help:drugs/remifentanil) describes the Eleveld and Kim models. The fetus is not modelled: remifentanil crosses the placenta but is cleared by the fetus's own esterases, which is why it is favoured over other systemic opioids in labour.

@@ -143,7 +143,7 @@ app_ui <- function() {
                   selected = defaultSex
                 ),
 
-                # Read only by the models the pregnancy review quantifies
+                # Read only by the eight models R/pregnancy.R adjusts
                 # (R/pregnancy.R; the help's Cautions page lists them).
                 # Offered for a woman of PREGNANCY_MIN_AGE to PREGNANCY_MAX_AGE
                 # years, whatever unit the age is entered in; the server
@@ -168,12 +168,13 @@ app_ui <- function() {
                     ),
                     paste(
                       "Applies the pharmacokinetic changes of late pregnancy",
-                      "to the drugs for which the review the library follows",
-                      "(Ansari, Carvalho, Shafer and Flood 2016) gives a",
-                      "magnitude: morphine, remifentanil, oxycodone,",
-                      "methadone, dexamethasone, cefazolin, gentamicin and",
-                      "vancomycin. Every other drug is unchanged; the Help's",
-                      "Pregnancy page says what the review found for each."
+                      "from the review the library follows (Ansari, Carvalho,",
+                      "Shafer and Flood 2016): its figures for morphine,",
+                      "remifentanil, oxycodone, methadone and dexamethasone,",
+                      "and its 50% rise in glomerular filtration for",
+                      "cefazolin, gentamicin and vancomycin. Every other drug",
+                      "is unchanged; the Help's Pregnancy page says what the",
+                      "review found for each."
                     ),
                     placement = "right"
                   )

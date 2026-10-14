@@ -2,7 +2,7 @@ Pregnancy changes how the body handles drugs. Plasma volume rises by about half,
 
 ## The Pregnant field
 
-**Pregnant** in the Patient Profile is offered for a woman of 12 to 59 years. Ticked, it applies the review's findings to the drugs for which the review gives a magnitude, listed in the first table below, and does nothing to any other drug. The adjustments describe **late pregnancy and labour**, where nearly all of the review's data were collected; the field makes no distinction between trimesters, and a woman early in pregnancy is closer to the unticked state. While the field is changing a drug, the References panel names the review beside that drug's own citation.
+**Pregnant** in the Patient Profile is offered for a woman of 12 to 59 years. Ticked, it applies the review's figures to the five drugs for which it gives one, and its 50% rise in glomerular filtration to three renally cleared antibiotics, all listed in the first table below, and does nothing to any other drug. The adjustments describe **late pregnancy and labour**, where nearly all of the review's data were collected; the field makes no distinction between trimesters, and a woman early in pregnancy is closer to the unticked state. While the field is changing a drug, the References panel names the review beside that drug's own citation.
 
 The weight entered should be the woman's actual weight. Pregnancy weight is mostly fat-free, which is why the fat-free-mass scaling may be turned off for her; see [Scaling to fat-free mass](help:models/fat-free-mass).
 
@@ -16,7 +16,7 @@ A control hidden by a change of age or sex leaves the flag off: a man, or a woma
 
 The review gives most of its findings as a direction and some as a figure, and the library applies only the figures, each in the simplest way that reproduces the review's statement:
 
-- **Morphine.** "Volume of distribution unchanged, clearance >70% increased." Elimination clearance is multiplied by 1.7; the volumes and distribution clearances are as published, so the half-life falls, as the review says.
+- **Morphine.** "Volume of distribution unchanged, clearance >70%" (Table 3; an increase is meant). Elimination clearance is multiplied by 1.7; the volumes and distribution clearances are as published, so the half-life falls, as the review says.
 - **Remifentanil.** "Clearance more than doubles." Elimination clearance is doubled, on the Eleveld and Kim models and on the Minto companion model, so the two lines of the panel move together. "More than" is not carried, because the review gives no further figure.
 - **Oxycodone.** The review's figure is a pair of elimination half-times, 3.8 hours in nonpregnant women and 2.6 in labour. Elimination clearance is multiplied by 3.8/2.6 = 1.46, which reproduces that ratio when the volumes are unchanged. The renal factor already in the model is not touched (it is capped at normal renal function), and oxymorphone formation is left as it is.
 - **Methadone.** A half-life of 8 to 20 hours against 24 hours when not pregnant. The clearance of both enantiomers is multiplied by 24/14 = 1.71, the nonpregnant half-life over the midpoint, before the racemic reduction described on the [methadone page](help:drugs/methadone) is fitted again.
