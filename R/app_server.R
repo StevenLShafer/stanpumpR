@@ -2228,7 +2228,10 @@ app_server <- function(input, output, session) {
                              REFERENCE_TIME_NONE)
 
         if (is.null(testTable)) {
+          # No target fell between the start and the end time (issue #270):
+          # say so rather than close the dialog with nothing done.
           shinycssloaders::hidePageSpinner()
+          showNotification(SUGGEST_NO_TARGETS_MESSAGE, type = "warning", duration = 10)
           return()
         }
 

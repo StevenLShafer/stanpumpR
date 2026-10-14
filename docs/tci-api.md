@@ -74,8 +74,8 @@ logged request can therefore be replayed in the app.
 
 * One drug per request, from the drugs whose library row offers target units
   (`isTciUnit()` on `getDrugDefaults(drug)$Units[[1]]`): today propofol,
-  remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, ketamine,
-  etomidate, lidocaine. A two-channel pump calls twice.
+  remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone
+  (added October 2026, issue #131), ketamine, etomidate, lidocaine. A two-channel pump calls twice.
 * Intravenous delivery only (boluses and infusions), the default PK set of the
   drug (no TCI drug has event-dependent kinetics).
 * Not in v1: Bayesian update from measured concentrations; multi-drug

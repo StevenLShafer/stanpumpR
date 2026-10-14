@@ -191,8 +191,8 @@ default <- list(
   tPeak = 1.6 # Opioid simulation spreadsheet
   MEAC <- 1
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   # The citation is set in the branch above, so that the References panel
   # names the model actually computed: Eleveld 2017 below BMI 30 and in every
   # child, Kim 2017 for an adult at BMI 30 and above.  Minto 1997 (Anesthesiology 86:10-23, PMID 9009935), the

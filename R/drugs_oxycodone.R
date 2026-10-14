@@ -333,8 +333,8 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
 
   MEAC <- 12
   typical      <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
 
   reference <- paste0(
     "Poyhia R et al., Br J Clin Pharmacol 1991;32:516-518; ",

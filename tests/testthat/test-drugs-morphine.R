@@ -25,8 +25,8 @@ test_that("returns Lotsch's published parameters with the switch off", {
     tPeak = 93.8,
     MEAC = 0.008,
     typical = 0.0096,
-    upperTypical = 0.0064,
-    lowerTypical = 0.016,
+    upperTypical = 0.016,
+    lowerTypical = 0.0064,
     reference = paste0(
       "Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162. ",
       "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous, Model A, ",
