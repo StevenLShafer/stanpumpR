@@ -14,6 +14,18 @@ error codes, statuses and bounds are implemented exactly as written here; the
 tests in `tests/testthat/test-tci-api.R` and `test-tci-api-http.R` hold the
 code to it.
 
+**Reference client.** [FauxTCI](https://stevenlshafer.github.io/FauxTCI/)
+(source: [github.com/StevenLShafer/FauxTCI](https://github.com/StevenLShafer/FauxTCI))
+is a simulated syringe pump that runs in the browser and implements the §7
+contract against this API: set the pump's limits, pick propofol or
+remifentanil, enter a target and press Start, and it shows every request it
+sends and every response it receives as the case runs. Its controller is a
+JavaScript port of `tciNextRate()`, validated against fixtures that its
+`test/fixtures/generate.R` produces from this package (the drug models to
+1e-10 relative, the responses to 1e-8, closed-loop traces to 1e-6); its
+Controller switch calls a real `run_tci_api()` server instead when one is
+reachable. It is the working example of a pump built to this document.
+
 ## 1. Purpose and principles
 
 A **stateless HTTP API** that a TCI controller (the host computer driving a
@@ -888,4 +900,7 @@ A controller then applies the response under the rules of §7: check it
 against the request, program `rate.value` as a segment of
 `segment.holdSeconds`, fall back to `fallback.rate` for at most
 `fallback.maxSeconds` if nothing newer has arrived by `holdUntil`, and ask
-again no later than `nextRequestAt`, or at once on any local event.
+again no later than `nextRequestAt`, or at once on any local event. A
+complete controller that does all of this, in JavaScript, is
+[FauxTCI](https://github.com/StevenLShafer/FauxTCI) (`js/pump.js` holds the
+pump's state machine, `js/transport.js` the HTTP client).
