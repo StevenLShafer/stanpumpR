@@ -20,8 +20,8 @@ test_that("returns the published parameters with total-body-weight scaling", {
     tPeak = 5.8,
     MEAC = 0.056,
     typical = 0.0672,
-    upperTypical = 0.0448,
-    lowerTypical = 0.112,
+    upperTypical = 0.112,
+    lowerTypical = 0.0448,
     reference = "Gepts E et al., Anesthesiology 1995;83(6):1194-1204. https://pubmed.ncbi.nlm.nih.gov/8533912/"
   )
 

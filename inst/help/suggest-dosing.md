@@ -13,7 +13,7 @@ The suggested regimen is applied directly to the dose table, bypassing the draft
 ## How the targets are read
 
 - **A row with a blank time is ignored**, and so is a row whose target is blank or zero. A time of **0** is a real target, at the start of the plot.
-- **Targets at or after the End Time are ignored.** If none is left, no doses are suggested.
+- **Targets at or after the End Time are ignored.** If none is left, no doses are suggested, and a notice says so. With clock times, a time earlier than the start of the plot is read as the next day, so it falls after the End Time and is ignored too.
 - **Two rows at the same time:** the one lower in the table is used, as for a target-controlled infusion.
 - **Decreasing targets are not supported.** A row that asks for a lower concentration than the one before is raised to the previous value. Falling to a lower concentration cannot be hurried by dosing, only by waiting, and the search does not model turning the infusion off and on again.
 - **Nothing runs past the End Time.** Every rate change falls before it, and the last row is an infusion rate of zero at the End Time. A target that leaves less time before the next target (or the end) than the drug takes to reach its peak effect gets a bolus with no infusion of its own.

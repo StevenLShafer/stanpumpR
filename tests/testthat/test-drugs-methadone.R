@@ -25,8 +25,8 @@ test_that("reference man: reduced parameters, oral route and pharmacodynamics", 
   expect_equal(actual$tPeak, 11.3)
   expect_equal(actual$MEAC, 0.06)
   expect_equal(actual$typical, 0.072)
-  expect_equal(actual$upperTypical, 0.048)
-  expect_equal(actual$lowerTypical, 0.12)
+  expect_equal(actual$lowerTypical, 0.048)
+  expect_equal(actual$upperTypical, 0.12)
   expect_match(actual$reference, "Henthorn")
 })
 

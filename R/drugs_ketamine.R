@@ -12,8 +12,8 @@ ketamine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   k31 <- 0.0146
   
   typical <- 0.12  # Moen 2013 review
-  upperTypical <- 0.1 # mcg/ml - Moen 2013 review
-  lowerTypical <- 0.16 # mcg/ml - Moen 2013 review
+  lowerTypical <- 0.1 # mcg/ml - Moen 2013 review
+  upperTypical <- 0.16 # mcg/ml - Moen 2013 review
   tPeak <- 3 # Just a guess
   MEAC <- 0
   reference <- "Domino EF et al., Clin Pharmacol Ther 1984;36(5):645-653. https://pubmed.ncbi.nlm.nih.gov/6488686/"
