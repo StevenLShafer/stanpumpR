@@ -1433,16 +1433,47 @@ test_that("times are parsed from any RFC 3339 offset and formatted in UTC with m
 # One plumber process serves one request at a time, so a request with
 # TCI_API_MAX_HISTORY events, and one whose look-ahead cannot reach the target,
 # must each compute well under 100 ms: about 70 ms for the 20000-event history
-# on a 4-core sandbox, 10 ms for the look-ahead cases.  Before the history
-# validation was vectorised and the look-ahead bounded they took 250-450 ms and
-# 1-3 s.  These tests are regression guards against THAT, not a benchmark: the
-# budget is five times the measured cost, two calls warm the byte-code compiler
-# (R compiles a closure on its second call) and the least of three is measured,
-# and the tests are skipped on CI, whose shared runners cannot keep a
-# wall-clock promise.  The full suite running beside them on one machine was
-# enough to fail a 100 ms budget once.
-TIME_BUDGET <- 0.5
+# on a 4-core sandbox, 10 ms for the look-ahead cases that decide at once.
+# Before the history validation was vectorised and the look-ahead bounded they
+# took 250-450 ms and 1-3 s.  These tests are regression guards against THAT,
+# not a benchmark: two calls warm the byte-code compiler (R compiles a closure
+# on its second call) and the least of three is measured, and they are skipped
+# on CI, whose shared runners cannot keep a wall-clock promise.  The full suite
+# running beside them on one machine was enough to fail a 100 ms budget once.
+#
+# A wall-clock budget alone, though, is not portable, and the look-ahead test
+# had been failing on a Windows desktop (R 4.6.1) since the day it was
+# written, outside CI, where nothing was watching.  What the look-ahead costs
+# is PLANS -- tciApiPlan() calls, one tciRate() each -- and two of its four
+# cases walk the whole horizon rather than deciding at once: the propofol
+# ceiling just above the maintenance requirement costs 757 plans and the
+# capped hydromorphone 634, against the bound the algorithm guarantees,
+# TCI_API_LOOKAHEAD_EXACT_STEPS plans at the interval, about forty while the
+# step grows by a tenth, and the rest of the horizon at
+# TCI_API_LOOKAHEAD_MAX_STEP, so fewer than 900 whatever the interval.  Those
+# are the same numbers on every machine, so they are what the test asserts;
+# the clock is only a ceiling beside them.  Hydromorphone's 634 plans are the
+# dear ones -- tciRate() searches the effect site one second apart out to
+# tPeak, 1187 grid points for its 19.6 min against propofol's 107 for 1.6 min
+# -- and cost 0.58 s on that desktop against a 0.5 s budget while every other
+# case stayed under 0.2 s.  Hence a second, looser ceiling for the two cases
+# that walk the horizon: still well inside the 1-3 s the unbounded search
+# cost, and the plan counts carry the real guard.
+# (Claude Code, 2026-10-14, at the request of Steven L. Shafer.)
+TIME_BUDGET <- 0.5           # s: a request that decides in a handful of plans
+HORIZON_TIME_BUDGET <- 2     # s: one that walks the look-ahead horizon
+HORIZON_PLANS <- 900L        # plans: "a few", against one per interval of the
+                             # horizon, thirty thousand at a 1 s interval
 budget <- function(req) { for (i in 1:2) api(req); min(replicate(3, system.time(api(req))[["elapsed"]])) }
+
+# The plans one request costs, the same count on every machine.
+plansFor <- function(req)
+{
+  real <- tciApiPlan
+  n <- 0L
+  with_mocked_bindings(api(req), tciApiPlan = function(...) { n <<- n + 1L; real(...) })
+  n
+}
 
 test_that("a history of TCI_API_MAX_HISTORY events computes within the time budget", {
   skip_on_cran()
@@ -1478,19 +1509,26 @@ test_that("targetReachedAt costs a few plans, not one per second of the horizon"
   expect_equal(r$rate$value, 20)
   K <- tciKinetics(pkOf("propofol"))
   expect_lt(20 / 60 * 10 * sum(K$pinf), 3 * (1 - TCI_API_ON_TARGET))      # the steady state the ceiling can hold
+  expect_lt(plansFor(capped), 10L)
   expect_lt(budget(capped), TIME_BUDGET)
-  # A ceiling just above it: reached, hours later, within the budget.
+  # A ceiling just above it: reached, hours later, within the budget.  This one
+  # walks the horizon, asymptotically, on the growing step.
   slow <- capped
   slow$pump$maxRate <- 30
   r <- api(slow)
   expect_gt(minutesOf(r$prediction$targetReachedAt), 60)
-  expect_lt(budget(slow), TIME_BUDGET)
-  # The slowest TCI drug at the shortest interval, unlimited and capped.
+  expect_lt(plansFor(slow), HORIZON_PLANS)
+  expect_lt(budget(slow), HORIZON_TIME_BUDGET)
+  # The slowest TCI drug at the shortest interval, unlimited and capped.  The
+  # cap makes the approach asymptotic again, so it too walks the horizon, and
+  # at hydromorphone's tPeak each plan is a long effect-site search.
   hm <- baseRequest(drug = "hydromorphone", target = 4, units = "ng/mL", rateUnits = "mcg/min",
                     interval = 1, latency = 0.2)
   expect_false(is.null(api(hm)$prediction$targetReachedAt))
+  expect_lt(plansFor(hm), 10L)
   expect_lt(budget(hm), TIME_BUDGET)
   hm$pump$maxRate <- 10
   expect_false(is.null(api(hm)$prediction$targetReachedAt))
-  expect_lt(budget(hm), TIME_BUDGET)
+  expect_lt(plansFor(hm), HORIZON_PLANS)
+  expect_lt(budget(hm), HORIZON_TIME_BUDGET)
 })
