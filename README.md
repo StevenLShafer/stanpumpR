@@ -74,6 +74,12 @@ A limited number of functions have been exported for use by your own code. To in
 1. `library(devtools)`
 2. `devtools::install(build_vignettes = TRUE)`
 
+On Windows, a ready-made package is rebuilt from `master` on every change and published as the
+[`windows-binary` release](https://github.com/StevenLShafer/stanpumpR/releases/tag/windows-binary)
+(one zip for x64 and ARM, built with the current R release); its release notes give the two
+lines that install it. It needs no build step, so it avoids installs from source that fail with
+"lazy loading failed". Workflow: `.github/workflows/windows-binary.yaml`.
+
 To simulate a dose table from a script, call `apiSimulate()`, or start the HTTP service with
 `run_api()` (needs the `plumber` package). Both are described at
 [stanpumpr.io/api](https://stanpumpr.io/api).
