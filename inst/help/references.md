@@ -12,6 +12,8 @@ Hughes MA, Glass PSA, Jacobs JR. Context-sensitive half-time in multicompartment
 
 Shafer SL, Stanski DR. Improving the clinical utility of anesthetic drug pharmacokinetics. *Anesthesiology* 1992;76:327-330. *(The editorial accompanying Hughes, Glass and Jacobs.)*
 
+Youngs EJ, Shafer SL. Pharmacokinetic parameters relevant to recovery from opioids. *Anesthesiology* 1994;81:833-842. *(Decrement times: the context-sensitive half-time generalised to any percentage decrease, and which volumes and clearances shorten them.)*
+
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
 ## Pregnancy

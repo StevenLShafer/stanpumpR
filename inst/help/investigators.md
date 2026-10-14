@@ -137,6 +137,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 - **Keith M. Gregg** and Shafer (1992): the effect-site targeting algorithm, implemented in STANPUMP and in stanpumpR's [target-controlled infusion](help:tci).
 - **James M. Bailey** and Shafer (1991): the plasma targeting algorithm.
 - **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time.
+- **Elizabeth J. Youngs** and Shafer (1994): decrement times, the context-sensitive half-time generalised to any percentage decrease.
 - **Thomas W. Bouillon** and colleagues (2004): the propofol-remifentanil response surface.
 - **Kay L. Austin**, **John V. Stapleton**, **Laurence E. Mather** (1980) and **Geoffrey K. Gourlay** and colleagues (1988): the minimum effective analgesic concentration.
 - **W. P. T. James** (1976): the lean body mass of the Schnider and Minto models, a parabola in weight. **Thomas W. Bouillon** and Shafer (1998) showed where it turns over. **Hesham S. Al-Sallami**, **Nick Holford**, **Stephen Duffull** and colleagues (2015) and **Sarayut Janmahasatian** and colleagues (2005): fat-free mass, used to [scale most of the models](help:models/fat-free-mass). **Brian J. Anderson** and Holford (2008): allometry and maturation.
