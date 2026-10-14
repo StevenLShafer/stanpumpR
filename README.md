@@ -77,16 +77,36 @@ Near-term future developments in stanpumpR will include
 
 #### Using stanpumpR as a library
 
-A limited number of functions have been exported for use by your own code. To install:
-  
-1. `library(devtools)`
-2. `devtools::install(build_vignettes = TRUE)`
+A limited number of functions have been exported for use by your own code.
 
-On Windows, a ready-made package is rebuilt from `master` on every change and published as the
-[`windows-binary` release](https://github.com/StevenLShafer/stanpumpR/releases/tag/windows-binary)
-(one zip for x64 and ARM, built with the current R release); its release notes give the two
-lines that install it. It needs no build step, so it avoids installs from source that fail with
-"lazy loading failed". Workflow: `.github/workflows/windows-binary.yaml`.
+**On Windows, install the ready-made package.** It is rebuilt from `master` on every change and
+published as the [`windows-binary` release](https://github.com/StevenLShafer/stanpumpR/releases/tag/windows-binary):
+one zip for x64 and ARM, built with the current R release (install it in the same R minor version).
+
+```r
+zip <- file.path(tempdir(), "stanpumpR.zip")
+download.file("https://github.com/StevenLShafer/stanpumpR/releases/download/windows-binary/stanpumpR.zip",
+              zip, mode = "wb")
+install.packages(zip, repos = NULL, type = "win.binary")
+library(stanpumpR)
+```
+
+Install the CRAN packages in `Imports` first if you don't have them; the release notes list them.
+Installing from source on Windows (`remotes::install_github()`, `pak`, `devtools::install()`) can
+fail with nothing but `ERROR: lazy loading failed for package 'stanpumpR'`. On Windows 11 the
+cause has been **Smart App Control**, which blocked a DLL during the build because it could not
+verify where the DLL came from. The zip is already built, so installing it skips that step. It is built by
+`.github/workflows/windows-binary.yaml`, which also installs it into an empty library and runs a
+simulation before publishing it.
+
+**On macOS or Linux**, install from GitHub:
+
+```r
+# install.packages("remotes")
+remotes::install_github("StevenLShafer/stanpumpR")
+```
+
+or, from a clone of the repository, `devtools::install(build_vignettes = TRUE)`.
 
 To simulate a dose table from a script, call `apiSimulate()`, or start the HTTP service with
 `run_api()` (needs the `plumber` package). Both are described at
