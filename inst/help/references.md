@@ -10,6 +10,10 @@ Shafer SL, Gregg KM. Algorithms to rapidly achieve and maintain stable drug conc
 
 Hughes MA, Glass PSA, Jacobs JR. Context-sensitive half-time in multicompartment pharmacokinetic models for intravenous anesthetic drugs. *Anesthesiology* 1992;76:334-341.
 
+Shafer SL, Stanski DR. Improving the clinical utility of anesthetic drug pharmacokinetics. *Anesthesiology* 1992;76:327-330. *(The editorial accompanying Hughes, Glass and Jacobs.)*
+
+Youngs EJ, Shafer SL. Pharmacokinetic parameters relevant to recovery from opioids. *Anesthesiology* 1994;81:833-842. *(Decrement times: the context-sensitive half-time generalised to any percentage decrease, and which volumes and clearances shorten them.)*
+
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
 ## Pregnancy
@@ -49,6 +53,8 @@ Ausems ME, Stanski DR, Hug CC. An evaluation of the accuracy of pharmacokinetic 
 Alvis JM, Reves JG, Govier AV, Menkhaus PG, Henling CE, Spain JA, Bradley E. Computer-assisted continuous infusions of fentanyl during cardiac anesthesia: comparison with a manual method. *Anesthesiology* 1985;63:41-49.
 
 Shafer SL, Siegel LC, Cooke JE, Scott JC. Testing computer-controlled infusion pumps by simulation. *Anesthesiology* 1988;68:261-266.
+
+Raemer DB, Buschman A, Varvel JR, Philip BK, Johnson MD, Stein DA, Shafer SL. The prospective use of population pharmacokinetics in a computer-driven infusion system for alfentanil. *Anesthesiology* 1990;73:66-72. *(The first of the two 1990 STANPUMP-era pump studies; introduced MDPE and MDAPE.)*
 
 Jacobs JR. Analytical solution to the three-compartment pharmacokinetic model. *IEEE Trans Biomed Eng* 1988;35:763-765.
 

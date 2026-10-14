@@ -221,7 +221,7 @@ registry <- rbind(
       "tiagabine base", "tiagabine (apparent, oral)",
       "1C first-order", "pk_only", "tiagabine",
       "https://doi.org/10.1016/s0928-0987(00)00109-3",
-      "Ingwersen 2000 monotherapy implemented; height covariate replaced by FFM scaling."),
+      "Ingwersen 2000 monotherapy implemented with its height covariates on CL/F and V/F; V/F 52 L (the abstract's 62 L is a misprint)."),
   reg("Topiramate", "oral IR/sprinkle; ER capsules", L, FIT,
       "topiramate base", "topiramate (absolute; oral F 1)",
       "3C linear, allometric", "pk_only", "topiramate",
@@ -311,8 +311,8 @@ parameters <- rbind(
   par("zonisamide", "V/F", "48.10", "L", E, "Silva 2025", "https://doi.org/10.1016/j.ejps.2025.107023"),
   par("zonisamide", "ka", "0.671", "1/h", E, "Silva 2025", "https://doi.org/10.1016/j.ejps.2025.107023"),
 
-  par("tiagabine", "CL/F", "6.10", "L/h at 170 cm", E, "Ingwersen 2000, 130 patients", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
-  par("tiagabine", "V/F", "62.0", "L at 170 cm", E, "Ingwersen 2000", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
+  par("tiagabine", "CL/F", "6.10 x (height/170)^2.13", "L/h", E, "Ingwersen 2000, 130 patients, final model", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
+  par("tiagabine", "V/F", "52.0 x (height/170)^3.44", "L", E, "Ingwersen 2000, final model (Table 4; the abstract's 62 L is a misprint)", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
   par("tiagabine", "ka", "1.25", "1/h", E, "Ingwersen 2000", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
 
   par("levetiracetam", "CL (total, reference)", "3.9", "L/h", E, "Rhee 2017, 425 adults", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
