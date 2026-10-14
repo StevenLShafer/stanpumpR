@@ -229,8 +229,9 @@ test_that("every intravenous drug page carries its citation, units and tables", 
     html <- helpDrugPageHTML(drug, drugDefaults)
     row <- drugDefaults[drugDefaults$Drug == drug, ]
     pk <- helpDrugPK(drug, helpReferencePatients()[1, ], drugDefaults)
-    # The investigators in the citation are links (R/help-investigators.R)
-    expect_match(withoutLinks(html), htmltools::htmlEscape(helpReferenceShort(pk$reference)), fixed = TRUE, info = drug)
+    # The investigators in the citation are links (R/help-investigators.R),
+    # and each PubMed or DOI URL is a link labelled with the site's name
+    expect_match(withoutLinks(html), htmltools::htmlEscape(citationText(pk$reference)), fixed = TRUE, info = drug)
     # desmetramadol has no dosing unit at all (it appears only as a metabolite)
     if (!is.na(row$Default.Units) && nzchar(row$Default.Units)) {
       expect_match(html, row$Default.Units, fixed = TRUE, info = drug)
@@ -299,7 +300,8 @@ test_that("the bibliography lists every model citation once, with its drugs", {
   cites <- withoutLinks(html)
   refs <- unique(unlist(lapply(ivDrugs, function(d) helpDrugParameterTable(d, drugDefaults)$reference)))
   for (r in refs) {
-    short <- htmltools::htmlEscape(helpReferenceShort(r))
+    # As the panel shows it: each PubMed or DOI URL becomes a labelled link
+    short <- htmltools::htmlEscape(citationText(r))
     expect_equal(lengths(regmatches(cites, gregexpr(short, cites, fixed = TRUE))), 1, info = r)
   }
   expect_match(html, 'data-help-page="drugs/fentanyl"', fixed = TRUE)

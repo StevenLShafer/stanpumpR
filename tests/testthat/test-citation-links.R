@@ -37,6 +37,12 @@ test_that("URLs that are not on a listed site, or not https, stay as text", {
   expect_match(html, "https://example.org/paper and http://pubmed.ncbi.nlm.nih.gov/111/", fixed = TRUE)
 })
 
+test_that("citationText() reads the citation with each listed URL as its site's name", {
+  expect_equal(citationText("Smith A. J 2001. https://pubmed.ncbi.nlm.nih.gov/111/ (intravenous); Jones B. https://doi.org/10.1/x)."),
+               "Smith A. J 2001. PubMed (intravenous); Jones B. DOI).")
+  expect_equal(citationText("Smith A. https://example.org/paper"), "Smith A. https://example.org/paper")
+})
+
 test_that("a missing reference reads Not Available, and the text is HTML-escaped", {
   expect_match(item(NULL), "Not Available", fixed = TRUE)
   expect_match(item(""), "Not Available", fixed = TRUE)

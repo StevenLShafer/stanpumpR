@@ -2,13 +2,33 @@ attachClass <- function(tag, class) {
   htmltools::tagAppendAttributes(tag, class = class)
 }
 
-# One citation of the References panel under the plot: the drug's name in
-# its plot colour, then the reference text.  Every https URL on one of the
-# CITATION_WEBSITES (R/constants.R) becomes a link labelled with that site's
-# name, wherever it sits in the citation, so a reference that cites several
-# papers ("... /12189362/ (intravenous); ... /36331670/ (oral)") links each
-# of them in place.  Any other URL is left as text.  Punctuation that closes
-# a sentence or a parenthesis after the URL is not part of it.
+# The References panel under the plot, and the bibliography, show each
+# citation with every https URL on one of the CITATION_WEBSITES
+# (R/constants.R) replaced by a link labelled with that site's name,
+# wherever the URL sits, so a reference that cites several papers
+# ("... /12189362/ (intravenous); ... /36331670/ (oral)") links each of
+# them in place.  Any other URL is left as text.  Punctuation that closes a
+# sentence or a parenthesis after the URL is not part of it.
+citationURLPattern <- function() {
+  hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
+  paste0("https://(", hosts, ")/[^\\s<]*[^\\s<.,;:)]")
+}
+
+# The site names of listed URLs, in their order
+citationSiteLabels <- function(urls) {
+  names(CITATION_WEBSITES)[match(sub("^https://([^/]+)/.*$", "\\1", urls), CITATION_WEBSITES)]
+}
+
+# The citation as it reads: each listed URL replaced by its site's name
+citationText <- function(reference) {
+  found <- gregexpr(citationURLPattern(), reference, perl = TRUE)
+  urls <- regmatches(reference, found)[[1]]
+  if (length(urls) > 0) regmatches(reference, found) <- list(citationSiteLabels(urls))
+  reference
+}
+
+# One citation of the References panel: the drug's name in its plot colour,
+# then the reference with its URLs as links
 citationItemHTML <- function(drug, reference, color) {
   if (is.null(reference) || !nzchar(reference)) reference <- "Not Available"
 
@@ -17,14 +37,11 @@ citationItemHTML <- function(drug, reference, color) {
   # is linked too.
   text <- helpLinkInvestigators(htmltools::htmlEscape(reference), "citation")
 
-  hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
-  pattern <- paste0("https://(", hosts, ")/[^\\s<]*[^\\s<.,;:)]")
-  found <- gregexpr(pattern, text, perl = TRUE)
+  found <- gregexpr(citationURLPattern(), text, perl = TRUE)
   urls <- regmatches(text, found)[[1]]
   if (length(urls) > 0) {
-    labels <- names(CITATION_WEBSITES)[match(sub("^https://([^/]+)/.*$", "\\1", urls), CITATION_WEBSITES)]
     regmatches(text, found) <- list(sprintf(
-      '<a href="%s" target="_blank" rel="noreferrer">%s</a>', urls, labels
+      '<a href="%s" target="_blank" rel="noreferrer">%s</a>', urls, citationSiteLabels(urls)
     ))
   }
 
