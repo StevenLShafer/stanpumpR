@@ -24,7 +24,7 @@ stanpumpR is a collaborative research project. Individuals interested in adding 
 
 Near-term future developments in stanpumpR will include
 
-1. Oral opioids. StanpumpR is programmed for PO, IM, and IN delivery. Need to get good PK for the opioids. Note that only first order absorption pk is currently supported.
+1. More oral models. stanpumpR simulates PO, SL, IM, IN and regional (RA) delivery by first-order absorption; the oral opioids in the library (morphine, hydromorphone, methadone, oxycodone, oxymorphone, codeine, hydrocodone, tramadol) each rest on one published fit, and better-characterised absorption models are welcome.
 2. Improved models of pediatric pharmacokinetics
 3. Improved models of drug interaction
 4. PK changes with pregnancy beyond the eight drugs that now read the Patient Profile's Pregnant field (`R/pregnancy.R`, from Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804), and with renal function beyond the drugs that read the serum creatinine. (Each field reaches only the models that name it, the CYP2D6, CYP2C19, CYP2C9 and CYP2B6 phenotypes included; the help's [Cautions](inst/help/cautions.md) page lists which.)

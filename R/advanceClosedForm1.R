@@ -269,12 +269,20 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   # Wrap up, calculate Ce
   Cp <- p_state_l1 + p_state_l2 + p_state_l3
-  if (sum(is.na(Cp)) + sum(is.nan(Cp)) > 0)
+  # A bounded record of a failed calculation: how many points, the first and
+  # its time and PK set.  The whole Cp vector (thousands of points on a long
+  # plot) went to the log before 2026-10-14; it is still there at the
+  # verbose debug level.
+  bad <- which(is.na(Cp))   # is.na() is TRUE for NaN too
+  if (length(bad) > 0)
   {
-    message("Problem with calculation of Cp")
-    print(Cp)
-    message("pkLine:")
-    print(pkLine)
+    first <- bad[1]
+    message("Problem with calculation of Cp for ", dose$Drug[1], ": ",
+            length(bad), " of ", length(Cp), " points are NA or NaN; the first at ",
+            "step ", first, ", time ", signif(timeLine[first], 6),
+            ", PK set \"", pkLine[first], "\"")
+    outputComments("Cp:", paste(signif(Cp, 4), collapse = " "), level = DEBUG_LEVEL_VERBOSE)
+    outputComments("pkLine:", paste(pkLine, collapse = " "), level = DEBUG_LEVEL_VERBOSE)
   }
   # ke0 is a per-step vector here, because the PK set can change on an event.
   # A drug with no tPeak carries zero throughout, and calculateCe() divides by

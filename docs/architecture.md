@@ -438,4 +438,7 @@ All files are flat in `R/`.
 - **Reproducibility** (`renv.lock`, `DESCRIPTION`) — `renv.lock` pins exact package versions so
   production matches local; deps declared in `DESCRIPTION`.
 - **Tests / CI** (`tests/testthat/`, `.github/`) — one test file per drug and per R file;
-  R-CMD-check and shinyapps.io deploy run via GitHub Actions.
+  R-CMD-check and shinyapps.io deploy run via GitHub Actions. The production deploy starts
+  only when R-CMD-check has passed on the pushed commit and installs that commit by SHA;
+  the app reports the installed version and commit (`stanpumpRBuild()`) in the debug log
+  and the Source link's tooltip.

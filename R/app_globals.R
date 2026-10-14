@@ -97,6 +97,21 @@ bookmarksToExclude <- c(
   "help_scenario_load"
 )
 
+# The installed build: the package version and, when the package was installed
+# from GitHub (remotes::install_github(), as the production deploy does), the
+# commit it was installed from, which remotes records in the DESCRIPTION as
+# RemoteSha.  Shown in the debug log at the start of every session and as the
+# tooltip of the Source link, so that a browser session can be matched to a
+# commit: a successful deploy run is not by itself the revision that is live.
+# (Claude Code, 2026-10-14, at the request of Steven L. Shafer.)
+stanpumpRBuild <- function(description = utils::packageDescription("stanpumpR")) {
+  version <- if (is.list(description) && !is.null(description$Version)) as.character(description$Version) else NA_character_
+  commit  <- if (is.list(description) && !is.null(description$RemoteSha)) as.character(description$RemoteSha) else NA_character_
+  label <- paste0("stanpumpR ", version,
+                  if (!is.na(commit)) paste0(", commit ", substr(commit, 1, 7)) else ", commit not recorded")
+  list(version = version, commit = commit, label = label)
+}
+
 outputComments <- function(
     ...,
     level = DEBUG_LEVEL_NORMAL,

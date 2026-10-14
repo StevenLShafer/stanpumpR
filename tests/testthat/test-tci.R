@@ -305,3 +305,56 @@ test_that("the plot gets a rate panel per TCI drug, coloured like the drug", {
   expect_s3_class(p$plotObject, "ggplot")
   expect_no_error(ggplot2::ggplot_build(p$plotObject))
 })
+
+# A regional infusion entered before a plasma target (lidocaine "mg/hr RA" at
+# 0, "Plasma target" at 5 min).  The TCI rows are copies of the first row of
+# the table, and the RArate flag once survived the copy: the controller's
+# intravenous schedule was then delivered into the tissue depot and the plasma
+# plotted at about half the target an hour later, with no error.  Found in a
+# production audit on 2026-10-13.  (Claude Code, 2026-10-14, at the request of
+# Steven L. Shafer.)
+test_that("a regional infusion before a plasma target does not leak its route into the TCI rows", {
+  dd <- getDrugDefaultsGlobal()
+  lidoPK <- getDrugPK("lidocaine", 70, 170, 50, "male", dd[dd$Drug == "lidocaine", ])
+  expect_gt(lidoPK$PK$default$ka_RA, 0)
+
+  # The dose table as the engine receives it, captured from the engine call
+  seen <- list()
+  origDepot <- advanceClosedFormPO_IM_IN
+  origIV    <- advanceClosedForm0
+  local_mocked_bindings(
+    advanceClosedFormPO_IM_IN = function(dose, ...) { seen$depot <<- dose; origDepot(dose, ...) },
+    advanceClosedForm0        = function(dose, ...) { seen$iv    <<- dose; origIV(dose, ...) }
+  )
+  lido <- function(unit) data.frame(
+    Drug = "lidocaine", Time = c(0, 5), Dose = c(100, 1),
+    Units = c(unit, TCI_UNIT_PLASMA))
+
+  raFirst <- simCpCe(lido("mg/hr RA"), noEvents, lidoPK, 60, FALSE)
+  engineDose <- seen$depot
+  expect_false(is.null(engineDose))
+  # Every logical per-dose flag the engine sees is one tciSchedule() clears;
+  # a new flag in simCpCe() is added to tciRouteFlags() or this fails.
+  flags <- names(engineDose)[vapply(engineDose, is.logical, logical(1))]
+  expect_setequal(flags, tciRouteFlags())
+  tciRows <- engineDose[engineDose$Units == "TCI", ]
+  expect_gt(nrow(tciRows), 0)
+  for (flag in tciRouteFlags()) expect_false(any(tciRows[[flag]]), info = flag)
+  # The regional infusion itself keeps its route and runs on, as entered
+  raRow <- engineDose[engineDose$Units != "TCI", ]
+  expect_equal(nrow(raRow), 1)
+  expect_true(raRow$RArate)
+
+  # The trajectory: the controller knows nothing of the depot, so the plasma
+  # is the target plus what the regional infusion alone contributes.
+  raOnly  <- simCpCe(lido("mg/hr RA")[1, ], noEvents, lidoPK, 60, FALSE)
+  ivFirst <- simCpCe(lido("mg/hr"), noEvents, lidoPK, 60, FALSE)
+  late <- seq(5 + 2 * TCI_INTERVAL, 60, by = 1)
+  expect_equal(at(series(raFirst, "Plasma"), late),
+               1 + at(series(raOnly, "Plasma"), late), tolerance = 0.002)
+  expect_equal(at(series(ivFirst, "Plasma"), late), rep(1, length(late)), tolerance = 0.002)
+  # Before the fix the regional-first plasma was 0.49 at 60 min
+  expect_gt(at(series(raFirst, "Plasma"), 60), 1)
+  # Both schedules are the same intravenous pump, in the same units
+  expect_equal(raFirst$tci$rates$Units, ivFirst$tci$rates$Units)
+})
