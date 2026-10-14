@@ -17,6 +17,7 @@ Portions of the code written since 2026, including the inhaled-gas engine, the t
 The first target-controlled infusion was given in Bonn in 1979, and STANPUMP was one of several programs that, in the 1980s and 1990s, followed it in using pharmacokinetic models to control infusion pumps. Their authors exchanged concepts and algorithms freely:
 
 - **Donald R. Stanski** and Steven Shafer, Stanford (STANPUMP). Stanski's laboratory also produced the fentanyl and alfentanil kinetics (with **Jeffrey C. Scott**) and, with Lewis Sheiner, the effect-compartment model itself.
+- **Daniel B. Raemer**, Brigham and Women's Hospital, whose 1990 alfentanil study with the Stanford group introduced the median performance error and median absolute performance error as the measures of a pump's bias and inaccuracy.
 - **Jürgen Schüttler** and **Helmut Schwilden**, University of Bonn (CATIA).
 - **Martin Ausems** and **Carl C. Hug**, University of Leiden and Emory (TIAC).
 - **Joseph G. Reves** and **J. Michael Alvis**, University of Alabama (CACI), and **James R. Jacobs** and Reves at Duke (CACI II).
