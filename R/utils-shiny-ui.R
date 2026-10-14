@@ -2,45 +2,38 @@ attachClass <- function(tag, class) {
   htmltools::tagAppendAttributes(tag, class = class)
 }
 
+# One citation of the References panel under the plot: the drug's name in
+# its plot colour, then the reference text.  Every https URL on one of the
+# CITATION_WEBSITES (R/constants.R) becomes a link labelled with that site's
+# name, wherever it sits in the citation, so a reference that cites several
+# papers ("... /12189362/ (intravenous); ... /36331670/ (oral)") links each
+# of them in place.  Any other URL is left as text.  Punctuation that closes
+# a sentence or a parenthesis after the URL is not part of it.
 citationItemHTML <- function(drug, reference, color) {
-  text <- reference
-  url <- NULL
-  label <- NULL
-  link <- NULL
-
-  if (is.null(reference) || !nzchar(reference)) {
-    text <- "Not Available"
-  } else {
-    hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
-    pattern <- paste0("\\s+https://(", hosts, ")/\\S+$")
-    res <- regmatches(reference, regexec(pattern, reference))[[1]]
-    if (length(res) > 0) {
-      text <- sub(pattern, "", reference)
-      url <- trimws(res[1])
-      label <- names(CITATION_WEBSITES)[match(res[2], CITATION_WEBSITES)]
-    }
-  }
-
-  if (!is.null(url)) {
-    link <- tagList(" ", tags$a(
-      label,
-      href = url,
-      target = "_blank",
-      rel = "noreferrer"
-    ))
-  }
+  if (is.null(reference) || !nzchar(reference)) reference <- "Not Available"
 
   # The investigators named in the citation link to their pop-ups
   # (R/help-investigators.R); a citation is where the program's own author
   # is linked too.
-  text <- HTML(helpLinkInvestigators(htmltools::htmlEscape(text), "citation"))
+  text <- helpLinkInvestigators(htmltools::htmlEscape(reference), "citation")
+
+  hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
+  pattern <- paste0("https://(", hosts, ")/[^\\s<]*[^\\s<.,;:)]")
+  found <- gregexpr(pattern, text, perl = TRUE)
+  urls <- regmatches(text, found)[[1]]
+  if (length(urls) > 0) {
+    labels <- names(CITATION_WEBSITES)[match(sub("^https://([^/]+)/.*$", "\\1", urls), CITATION_WEBSITES)]
+    regmatches(text, found) <- list(sprintf(
+      '<a href="%s" target="_blank" rel="noreferrer">%s</a>', urls, labels
+    ))
+  }
 
   tags$div(
     tags$strong(
       style = paste0("color:", if (is.null(color)) "inherit" else color, ";"),
       helpDrugTitle(drug)
     ),
-    ": ", text, link
+    ": ", HTML(text)
   )
 }
 
