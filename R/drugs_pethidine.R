@@ -14,8 +14,8 @@ pethidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 10
   MEAC <- 250/1000
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   reference <- "Bjorkman S, J Pharmacokinet Pharmacodyn 2003;30(4):285-307. https://pubmed.ncbi.nlm.nih.gov/14650375/"
   
   # Size scaling (see docs/weight-adjustment.md): the published parameters

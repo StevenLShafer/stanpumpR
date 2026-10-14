@@ -445,8 +445,8 @@ methadone <- function(weight, height, age, sex, adjustToFFM = TRUE,
   tPeak <- 11.3
   MEAC <- 60/1000
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   reference <- paste0(
     "Henthorn TK, Kharasch ED, Clin Pharmacol Ther 2026;119(3):739-750. ",
     "R(-) and S(+) methadone models summed to racemate; ",

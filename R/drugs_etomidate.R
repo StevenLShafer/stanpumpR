@@ -13,8 +13,8 @@ etomidate <- function(weight, height, age, sex, adjustToFFM = TRUE)
   k41 <- .693/1.6
   
   typical <- 0.5  # Journal of Clinical Pharmacology, 2011;51:482-491
-  upperTypical <- 0.4 # Journal of Clinical Pharmacology, 2011;51:482-491
-  lowerTypical <- 0.8 # Journal of Clinical Pharmacology, 2011;51:482-491
+  lowerTypical <- 0.4 # Journal of Clinical Pharmacology, 2011;51:482-491
+  upperTypical <- 0.8 # Journal of Clinical Pharmacology, 2011;51:482-491
   tPeak <- 1.6
   MEAC <- 0
   reference <- "Arden JR et al., Anesthesiology 1986;65(1):19-27. https://pubmed.ncbi.nlm.nih.gov/3729056/"

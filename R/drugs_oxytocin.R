@@ -17,8 +17,8 @@ oxytocin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     tPeak <- 5 # guess
     MEAC <- 0
     typical <-  0.1
-    upperTypical <- 0.05
-    lowerTypical <- 0.2
+    lowerTypical <- 0.05
+    upperTypical <- 0.2
     reference <- "Eisenach (unpublished data)" # Initial Eisenach Data
     v1	<- 10.1 # l
     v2	<- 7.03 # l
@@ -31,8 +31,8 @@ oxytocin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     tPeak <- 5 # guess
     MEAC <- 0
     typical <-  0.1
-    upperTypical <- 0.05
-    lowerTypical <- 0.2
+    lowerTypical <- 0.05
+    upperTypical <- 0.2
     # V1 = 0.10 L, V2 = 0.02 L, CL1 = 0.017 L/min, and CL2 = 0.000524
     reference <- "Tanaka et al" # Paper using LC/MS Assay
     # V1 = 0.10 L, V2 = 0.02 L, CL1 = 0.017 L/min, and CL2 = 0.000524

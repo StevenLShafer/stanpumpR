@@ -20,8 +20,8 @@ test_that("returns the published parameters with total-body-weight scaling", {
     tPeak = 1.4,
     MEAC = 39,
     typical = 46.8,
-    upperTypical = 31.2,
-    lowerTypical = 78,
+    upperTypical = 78,
+    lowerTypical = 31.2,
     reference = "Scott JC, Stanski DR. J Pharmacol Exp Ther 1987;240(1):159-166. https://pubmed.ncbi.nlm.nih.gov/3100765/"
   )
 

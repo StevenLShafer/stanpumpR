@@ -26,8 +26,8 @@ test_that("returns the correct calculations if BMI is > 30 and male", {
     tPeak = 1.6,
     MEAC = 1,
     typical = 1.2,
-    upperTypical = 0.8,
-    lowerTypical = 2,
+    upperTypical = 2,
+    lowerTypical = 0.8,
     reference = "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
   )
   expect_equal_rounded(actual, expected)
@@ -57,8 +57,8 @@ test_that("returns the correct calculations if BMI is <= 30 and male", {
     tPeak = 1.6,
     MEAC = 1,
     typical = 1.2,
-    upperTypical = 0.8,
-    lowerTypical = 2,
+    upperTypical = 2,
+    lowerTypical = 0.8,
     reference = "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
   )
   expect_equal_rounded(actual, expected)
@@ -89,8 +89,8 @@ test_that("returns the correct calculations if BMI is > 30 and female", {
     tPeak = 1.6,
     MEAC = 1,
     typical = 1.2,
-    upperTypical = 0.8,
-    lowerTypical = 2,
+    upperTypical = 2,
+    lowerTypical = 0.8,
     reference = "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
   )
   expect_equal_rounded(actual, expected)
@@ -121,8 +121,8 @@ test_that("returns the correct calculations if BMI is <= 30 and female", {
     tPeak = 1.6,
     MEAC = 1,
     typical = 1.2,
-    upperTypical = 0.8,
-    lowerTypical = 2,
+    upperTypical = 2,
+    lowerTypical = 0.8,
     reference = "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
   )
   expect_equal_rounded(actual, expected)

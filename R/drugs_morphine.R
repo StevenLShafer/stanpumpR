@@ -104,8 +104,8 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   tPeak <- 93.8
   MEAC <- 8/1000
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   reference <- paste0(
     "Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162. ",
     "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous); ",
