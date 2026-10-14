@@ -92,6 +92,28 @@ test_that("a lower target turns the pump off until the effect site has fallen to
   expect_equal(nrow(X$tci$boluses), 1)
 })
 
+test_that("a target already exceeded by a manual bolus and infusion gives no loading dose, and still simulates", {
+  # The table that crashed the app: a 150 mg bolus and 100 mcg/kg/min with a
+  # 3 mcg/ml effect-site target, all at time 0.  The bolus puts the effect
+  # site above the target before the pump could load it, so the TCI schedule
+  # has rates but no boluses, and tciDisplay() must build an empty bolus
+  # table rather than fail on a length-1 Drug column beside zero-length ones.
+  DT <- data.frame(
+    Drug  = "propofol",
+    Time  = c(0, 0, 0),
+    Dose  = c(150, 100, 3),
+    Units = c("mg", "mcg/kg/min", TCI_UNIT_EFFECT)
+  )
+  X <- simCpCe(DT, noEvents, propofolPK, 60, FALSE)
+  expect_gt(nrow(X$tci$rates), 0)
+  expect_equal(nrow(X$tci$boluses), 0)
+  expect_equal(names(X$tci$boluses), c("Drug", "Time", "Amount", "Units"))
+  expect_false(any(X$tci$rates$Bolus))
+  ce <- series(X, "Effect Site")
+  expect_gt(max(ce$Y), 3)
+  expect_equal(ce$Y[ce$Time > 40], rep(3, sum(ce$Time > 40)), tolerance = 0.01)
+})
+
 test_that("a higher target during maintenance gives a second loading dose", {
   X <- simCpCe(tciDose(c(0, 20), c(3, 4), TCI_UNIT_EFFECT), noEvents, propofolPK, 60, FALSE)
   b <- X$tci$boluses
