@@ -372,10 +372,30 @@ helpNotFoundUI <- function(id) {
 #' @noRd
 helpSearchIndex <- function(drugDefaults = getDrugDefaultsGlobal()) {
   registry <- helpPageRegistry(drugDefaults)
-  registry$text <- vapply(registry$id, function(id) {
-    helpPlainText(helpPageHTML(id, drugDefaults))
-  }, character(1), USE.NAMES = FALSE)
+  scenarios <- helpScenarios()
+  registry$text <- vapply(registry$id, helpPageSearchText, character(1),
+                          drugDefaults = drugDefaults, scenarios = scenarios,
+                          USE.NAMES = FALSE)
   registry
+}
+
+#' The text of one page, as the search sees it
+#'
+#' Every page is searched by its rendered text, except the generated drug
+#' pages and the drug index.  Rendering those runs every drug model at the
+#' reference patients, which made the first search take 20 to 35 seconds; their
+#' searchable words are in the drug's title, units, citation, narrative and
+#' scenarios, which are read without running the model (helpDrugSearchText()).
+#' @noRd
+helpPageSearchText <- function(id, drugDefaults = getDrugDefaultsGlobal(),
+                               scenarios = helpScenarios()) {
+  if (id == "drugs/index") {
+    return(paste(helpDrugTitle(drugDefaults$Drug), collapse = " "))
+  }
+  if (startsWith(id, "drugs/") && !isGasDrug(sub("^drugs/", "", id))) {
+    return(helpDrugSearchText(sub("^drugs/", "", id), drugDefaults, scenarios))
+  }
+  helpPlainText(helpPageHTML(id, drugDefaults))
 }
 
 helpSearchIndexCached <- function() {

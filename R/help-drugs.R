@@ -225,8 +225,8 @@ helpH2 <- function(text) sprintf("<h2>%s</h2>", htmltools::htmlEscape(text))
 
 #' The teaching scenarios that give a drug, as a Markdown-free HTML list
 #' @noRd
-helpScenariosUsingDrugHTML <- function(drug) {
-  scen <- Filter(function(s) drug %in% s$doses$Drug, helpScenarios())
+helpScenariosUsingDrugHTML <- function(drug, scenarios = helpScenarios()) {
+  scen <- Filter(function(s) drug %in% s$doses$Drug, scenarios)
   if (length(scen) == 0) return("")
   items <- vapply(scen, function(s) {
     sprintf('<li><a href="#" data-help-page="scenarios/%s">%s</a> \u2014 %s</li>',
@@ -246,6 +246,27 @@ helpDrugPageHTML <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
   }
   row <- row[1, ]
   if (isGasDrug(drug)) helpGasPageHTML(drug, row) else helpIvDrugPageHTML(drug, row, drugDefaults)
+}
+
+#' The searchable text of a drug's page, without running the model
+#'
+#' The title, the drug's name, its category and units, the citation its model
+#' function returns, its narrative and the scenarios that use it.  What is
+#' left out is numbers: the parameter tables and half-lives.
+#' @noRd
+helpDrugSearchText <- function(drug, drugDefaults = getDrugDefaultsGlobal(),
+                               scenarios = helpScenarios()) {
+  row <- drugDefaults[drugDefaults$Drug == drug, ]
+  if (nrow(row) == 0) return("")
+  row <- row[1, ]
+  modelOut <- helpDrugModelOutput(drug, helpReferencePatients()[1, ])
+  reference <- if (is.character(modelOut$reference)) modelOut$reference else ""
+  narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("drugs/", drug)))
+  helpPlainText(paste(
+    helpDrugTitle(drug), drug, as.character(row$Category),
+    paste(helpDrugUnits(row), collapse = ", "),
+    reference, narrative, helpScenariosUsingDrugHTML(drug, scenarios)
+  ))
 }
 
 helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
@@ -1047,9 +1068,11 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   cites <- list()
   for (drug in iv) {
     for (i in seq_len(nrow(patients))) {
-      pk <- helpDrugPK(drug, patients[i, ], drugDefaults)
-      if (is.null(pk)) next
-      ref <- pk$reference
+      # The citation is the model function's own; getDrugPK() passes it
+      # through unchanged, so the model is not fitted just to read it.
+      out <- helpDrugModelOutput(drug, patients[i, ])
+      ref <- out$reference
+      if (!is.character(ref) || length(ref) != 1 || !nzchar(ref)) next
       cites[[ref]] <- unique(c(cites[[ref]], drug))
     }
   }
