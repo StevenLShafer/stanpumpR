@@ -13,7 +13,7 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE)
     v1 = 4.27,
     v2 = 18.9-0.391*(age-53),
     v3 = 238,
-    cl1 = 1.89+0.0456*(weight-77)-0.0681*(ffmAlSallami(weight, height, age, sex)-59)+0.0264*(height-177),
+    cl1 = 1.89+0.0456*(weight-77)-0.0681*(lbmJames(weight, height, sex)-59)+0.0264*(height-177),
     cl2 = 1.29-0.024*(age-53),
     cl3 = 0.836
   )

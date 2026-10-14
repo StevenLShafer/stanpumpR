@@ -46,7 +46,7 @@
 
 **ke0.** The rate constant for equilibration between plasma and effect site, 1/min. Its half-time is ln(2)/ke0.
 
-**Lean body mass (LBM).** Body mass excluding fat. The older models were published with the James equations, which fail in obesity; stanpumpR computes it as the Al-Sallami fat-free mass.
+**Lean body mass (LBM).** Body mass excluding fat. The James equations, used by the Schnider and Minto models, are a parabola in weight that peaks at a BMI of 43 in men and 36 in women and then falls; the library's own models use the Al-Sallami fat-free mass.
 
 **MAC.** Minimum alveolar concentration: the alveolar concentration of an inhaled agent at which half of patients do not move to incision. A property of the agent, falling with age.
 

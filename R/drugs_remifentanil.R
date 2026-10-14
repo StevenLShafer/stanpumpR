@@ -38,7 +38,7 @@ remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   # Schnider
 
-  # lbm <- ffmAlSallami(weight, height, age, sex)  # Minto used James's LBM
+  # lbm <- lbmJames(weight, height, sex)
   # v1 <- 5.1-0.0201*(age-40)+0.072*(lbm-55)
   # v2 <- 9.82-0.0811*(age-40)+0.108*(lbm-55)
   # v3 <- 5.42

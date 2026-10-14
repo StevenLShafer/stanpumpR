@@ -8,11 +8,12 @@
 #
 # Thomas Schnider and Charles Minto developed the first population models of
 # propofol (Schnider 1998) and remifentanil (Minto 1997), and those two models
-# are the ones most target-controlled infusion devices run today.  Douglas
-# Eleveld later pooled those data, through the Open TCI initiative, with many
-# other studies to build the general-purpose models that extend to children
-# and to the extremes of weight; those are the library's own propofol and
-# remifentanil models (R/drugs_propofol.R, R/drugs_remifentanil.R).
+# are the ones most target-controlled infusion devices run today.  Their
+# Stanford data were uploaded to the Open TCI initiative, with other
+# investigators' studies, and Douglas Eleveld built from that pool the
+# general-purpose models that extend to children and to the extremes of
+# weight; those are the library's own propofol and remifentanil models
+# (R/drugs_propofol.R, R/drugs_remifentanil.R).  See inst/help/history.md.
 #
 # For teaching it helps to see both.  The "Minto / Schnider" box under Graph
 # Options (input$mintoSchnider) runs the Schnider and Minto models BESIDE the
@@ -55,19 +56,21 @@
 # 0.595 - 0.007 (age - 40) per minute, which is what the pumps implement;
 # getDrugPK() then solves the time to peak effect from that ke0.
 #
-# The papers, STANPUMP and the pumps compute lean body mass with the James
-# (1976) equation, which reaches a maximum and then falls as weight rises
-# (above about 125 kg in a man of 170 cm, 105 kg in a woman), so the pumps
-# limit these models to a range of body mass index.  stanpumpR uses the
-# Al-Sallami (2015) fat-free mass in its place (ffmAlSallami(), the size
-# covariate of the library's own models), which rises with weight at every
-# weight; the centring values of 59 and 55 kg are kept, since the two agree
-# within about 1 kg for a typical adult (55.3 against 54.5 kg in the 70 kg,
-# 170 cm man).  So for an obese patient these lines are not what a pump would
-# compute.  Where a volume, clearance or ke0 still comes out zero or negative
-# (the Schnider clearance, whose weight and height terms take it below zero
-# in a small child) the model is not defined for that patient, no companion
-# is built, and the app says so (alternativeModelProblems()).
+# Both use the James (1976) lean body mass, as the papers, STANPUMP and the
+# pumps do (lbmJames()), and that is deliberate.  The library's own models
+# use the Al-Sallami fat-free mass; these two are here to show what the pumps
+# compute, and part of what they teach is why the pumps should run the
+# Eleveld models instead.  James's lean body mass is a parabola in weight: it
+# peaks at a BMI of 43 in men and 36 in women and then falls (above about
+# 125 kg in a man of 170 cm, 92 kg in a woman of 160 cm), so the Schnider
+# clearance, which falls with lean body mass, rises steeply in the obese,
+# and far enough out Minto's V1 goes negative; in a small child the
+# Schnider clearance intercepts make CL1 negative.  Where a volume, clearance
+# or ke0 comes out zero or negative the model is not defined for that
+# patient, no companion is built, and the app says so
+# (alternativeModelProblems()).  The same limit is why the pumps restrict
+# these models to a BMI below 42 in men and 35 in women.  Scenario
+# `james-lean-body-mass`.
 # -----------------------------------------------------------------------------
 
 #' The alternative models, keyed by the library drug each is a second model of
@@ -143,14 +146,12 @@ alternativeModelColor <- function(color, amount = 0.45) {
 #' that paper reported for its typical patient.
 #'
 #' `adjustToFFM` is accepted for the uniform signature and ignored: the model
-#' carries its own lean-body-mass covariate, here the Al-Sallami fat-free
-#' mass in place of the James lean body mass the paper used (see above).  The
-#' same arithmetic is written out, and then overwritten, at the top of
-#' R/drugs_propofol.R.
+#' carries its own lean-body-mass covariate, James's, kept deliberately (see
+#' above).  The same arithmetic is written out, and then overwritten, at the top of R/drugs_propofol.R.
 #' @noRd
 propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  lbm <- ffmAlSallami(weight, height, age, sex)
+  lbm <- lbmJames(weight, height, sex)
   default <- list(
     v1  = 4.27,
     v2  = 18.9 - 0.391 * (age - 53),
@@ -180,9 +181,8 @@ propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE)
 #' time to peak effect from ke0 and the disposition for the patient.
 #'
 #' `adjustToFFM` is accepted for the uniform signature and ignored: the model
-#' carries its own lean-body-mass covariate, here the Al-Sallami fat-free
-#' mass in place of the James lean body mass the paper used (see above).  The
-#' same arithmetic is in the comments at the top of R/drugs_remifentanil.R.
+#' carries its own lean-body-mass covariate, James's, kept deliberately (see
+#' above).  The same arithmetic is in the comments at the top of R/drugs_remifentanil.R.
 #'
 #' `pregnant` applies the same factor as the library's remifentanil model:
 #' clearance x REMIFENTANIL_PREGNANCY_CL_FACTOR (Ansari 2016, "clearance more
@@ -192,7 +192,7 @@ propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE)
 remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
                               pregnant = FALSE)
 {
-  lbm <- ffmAlSallami(weight, height, age, sex)
+  lbm <- lbmJames(weight, height, sex)
   clPregnancy <- if (isTRUE(pregnant)) REMIFENTANIL_PREGNANCY_CL_FACTOR else 1
   default <- list(
     v1  = 5.1  - 0.0201  * (age - 40) + 0.072 * (lbm - 55),

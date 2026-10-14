@@ -50,36 +50,34 @@ seriesAtTime <- function(entry, site, t) {
 
 # --- The models ---------------------------------------------------------------
 
-test_that("the Schnider propofol model is the one STANPUMP ran, on Al-Sallami's fat-free mass", {
+test_that("the Schnider propofol model is the one STANPUMP ran, with Schnider 1999's tPeak", {
   X <- propofolSchnider(70, 170, 40, "male")
   k <- X$PK[[PK_EVENT_DEFAULT]]
-  # Al-Sallami's fat-free mass in place of the James lean body mass
-  lbm <- ffmAlSallami(70, 170, 40, "male")
-  expect_equal_rounded(9270 * 70 / (6680 + 216 * 70 / 1.7^2), lbm)
+  lbm <- lbmJames(70, 170, "male")
   expect_equal_rounded(4.27, k$v1)
   expect_equal_rounded(18.9 - 0.391 * (40 - 53), k$v2)
   expect_equal_rounded(238, k$v3)
   expect_equal_rounded(1.89 + 0.0456 * (70 - 77) - 0.0681 * (lbm - 59) + 0.0264 * (170 - 177), k$cl1)
-  expect_equal_rounded(1.694137, k$cl1, tolerance = 1e-6)
+  expect_equal_rounded(1.638135, k$cl1, tolerance = 1e-6)
   expect_equal_rounded(1.29 - 0.024 * (40 - 53), k$cl2)
   expect_equal_rounded(0.836, k$cl3)
   expect_equal(X$tPeak, 1.6)
   expect_null(X$ke0)
   expect_match(X$reference, "Schnider TW et al., Anesthesiology 1998")
-  # A woman's fat-free mass is Al-Sallami's other line
+  # A woman's lean body mass is James's other line
   Xf <- propofolSchnider(60, 165, 40, "female")
-  expect_equal_rounded(1.89 + 0.0456 * (60 - 77) - 0.0681 * (ffmAlSallami(60, 165, 40, "female") - 59) + 0.0264 * (165 - 177),
+  expect_equal_rounded(1.89 + 0.0456 * (60 - 77) - 0.0681 * (lbmJames(60, 165, "female") - 59) + 0.0264 * (165 - 177),
                        Xf$PK[[1]]$cl1)
   # Solved through getDrugPK(): ke0 near the 0.456/min Schnider 1999 reported
   entry <- alternativeModelEntry("propofol", 70, 170, 40, "male", rowOf("propofol"))
-  expect_equal_rounded(0.4005384, entry$PK[[1]]$ke0, tolerance = 1e-5)
+  expect_equal_rounded(0.4079307, entry$PK[[1]]$ke0, tolerance = 1e-5)
   expect_equal(entry$tPeak, 1.6)
 })
 
 test_that("the Minto remifentanil model is the one STANPUMP ran, with its age-dependent ke0", {
   X <- remifentanilMinto(70, 170, 40, "male")
   k <- X$PK[[PK_EVENT_DEFAULT]]
-  lbm <- ffmAlSallami(70, 170, 40, "male")
+  lbm <- lbmJames(70, 170, "male")
   expect_equal_rounded(5.1 - 0.0201 * (40 - 40) + 0.072 * (lbm - 55), k$v1)
   expect_equal_rounded(9.82 - 0.0811 * (40 - 40) + 0.108 * (lbm - 55), k$v2)
   expect_equal_rounded(5.42, k$v3)
@@ -97,7 +95,7 @@ test_that("getDrugPK() takes Minto's ke0 as given and solves the time to peak ef
   entry <- alternativeModelEntry("remifentanil", 70, 170, 40, "male", rowOf("remifentanil"))
   k <- entry$PK[[1]]
   expect_equal_rounded(0.595, k$ke0)
-  expect_equal_rounded(1.428618, entry$tPeak, tolerance = 1e-5)
+  expect_equal_rounded(1.433857, entry$tPeak, tolerance = 1e-5)
   # tPeak is where the unit-bolus effect site peaks
   ce <- function(t) CE(t, k$e_coef_bolus_l1, k$e_coef_bolus_l2, k$e_coef_bolus_l3, k$e_coef_bolus_ke0,
                        k$lambda_1, k$lambda_2, k$lambda_3, k$ke0)
@@ -164,7 +162,7 @@ test_that("companion names, their parents and their colours", {
 test_that("a model whose terms give a non-positive parameter is reported, not simulated", {
   expect_length(alternativeModelProblems(c("propofol", "remifentanil", "fentanyl"), 70, 170, 40, "male"), 0)
   # A six-month-old infant: Schnider's clearance intercepts make CL1 negative.
-  # (A five-year-old of 20 kg is still positive: 0.46 L/min.)
+  # (A five-year-old of 20 kg is still, just, positive: 0.33 L/min.)
   problems <- alternativeModelProblems(c("propofol", "remifentanil"), 7, 65, 0.5, "male")
   expect_length(problems, 1)
   expect_match(problems, "Schnider's propofol model is not defined")
@@ -172,18 +170,43 @@ test_that("a model whose terms give a non-positive parameter is reported, not si
   expect_null(alternativeModelEntry("propofol", 7, 65, 0.5, "male", rowOf("propofol")))
   expect_false(is.null(alternativeModelEntry("remifentanil", 7, 65, 0.5, "male", rowOf("remifentanil"))))
   expect_gt(propofolSchnider(20, 110, 5, "male")$PK[[1]]$cl1, 0)
-  # Al-Sallami's fat-free mass rises with weight at every weight, so an obese
-  # adult is defined in both (James's lean body mass, which the papers used,
-  # fell below zero at 500 kg and took Minto's volumes with it)
-  expect_length(alternativeModelProblems(c("propofol", "remifentanil"), 500, 200, 40, "male"), 0)
-  expect_length(alternativeModelProblems(c("propofol", "remifentanil"), 200, 160, 50, "female"), 0)
-  expect_gt(remifentanilMinto(500, 200, 40, "male")$PK[[1]]$v1, remifentanilMinto(150, 200, 40, "male")$PK[[1]]$v1)
+  # James's lean body mass at 500 kg: Minto's volumes go negative too
+  problems <- alternativeModelProblems(c("propofol", "remifentanil"), 500, 200, 40, "male")
+  expect_match(problems, "Minto's remifentanil model is not defined", all = FALSE)
+  expect_match(problems, "V1, V2 and CL1", all = FALSE)
   # Drugs without an alternative model are ignored
   expect_length(alternativeModelProblems("fentanyl", 7, 65, 0.5, "male"), 0)
   # ... and the pipeline skips the undefined model silently
   drugs <- simulate(dosesIV, age = 0.5, weight = 7, height = 65)
   expect_false("propofol (Schnider)" %in% names(drugs))
   expect_true("remifentanil (Minto)" %in% names(drugs))
+})
+
+test_that("the James lean body mass is kept, and fails the obese patient as the pumps do", {
+  # A 160 cm, 40-year-old woman: James's lean body mass peaks at 92.5 kg
+  # (BMI 36) and then falls, so past it Schnider's clearance climbs steeply
+  # and Minto's volumes shrink
+  cl1 <- function(w) propofolSchnider(w, 160, 40, "female")$PK[[1]]$cl1
+  v1 <- function(w) remifentanilMinto(w, 160, 40, "female")$PK[[1]]$v1
+  expect_equal_rounded(c(cl1(60), cl1(92.5), cl1(150)), c(1.729211, 2.794325, 6.716170))
+  expect_equal_rounded(c(v1(60), v1(92.5), v1(150)), c(4.263900, 4.704661, 3.330375))
+  expect_lt(v1(150), v1(92.5))
+  # At 200 kg (BMI 78) James's lean body mass is negative and so is Minto's V1
+  expect_lt(lbmJames(200, 160, "female"), 0)
+  problems <- alternativeModelProblems(c("propofol", "remifentanil"), 200, 160, 40, "female")
+  expect_length(problems, 1)
+  expect_match(problems, "Minto's remifentanil model is not defined")
+  # The scenario james-lean-body-mass: at 150 kg the Schnider pump gives far
+  # more propofol over the hour than the Eleveld pump, and the Minto pump less
+  # remifentanil than the library's (Kim's, at this BMI)
+  d <- simulate(dosesTCI, age = 40, weight = 150, height = 160, sex = "female")
+  totalOf <- function(n) {
+    tci <- d[[n]]$tci
+    r <- tci$rates[!tci$rates$Bolus & tci$rates$Time < 60, ]
+    sum(tci$boluses$Amount) + sum(r$Rate * diff(c(r$Time, 60))) * 150
+  }
+  expect_gt(totalOf("propofol (Schnider)"), 1.7 * totalOf("propofol"))
+  expect_lt(totalOf("remifentanil (Minto)"), 0.7 * totalOf("remifentanil"))
 })
 
 # --- The pipeline -------------------------------------------------------------

@@ -79,10 +79,13 @@ throughout and flags the extrapolation here.
 
 This is the same fat-free mass that the Eleveld propofol and remifentanil
 models already use internally. The James lean body mass formula that appears in
-older models (Schnider propofol, Minto remifentanil, Aoyama's meloxicam) is
-**not** used anywhere: it is a parabola in weight that turns downward above
-about 120 kg and gives nonsense for heavy patients, so those models take the
-Al-Sallami fat-free mass in its place, with their published centring values.
+older models is **not** used for this scaling: it is a parabola in weight
+that peaks at a BMI of 43 in men and 36 in women and then falls, giving
+nonsense for heavy patients (Bouillon & Shafer, Anesthesiology 1998). Aoyama's
+meloxicam model takes the Al-Sallami fat-free mass in its place, with its
+published centring value. The Schnider propofol and Minto remifentanil
+companions (`R/alternativeModels.R`) keep James deliberately, to show what the
+pumps compute and why they fail in the obese.
 
 ## How stanpumpR applies it
 
