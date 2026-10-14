@@ -34,7 +34,7 @@ Shafer and Varvel showed in 1991 that tPeak is the right quantity to carry from 
 | hydromorphone | 19.6 | |
 | rocuronium | 4.5 | Cortínez 2007 (population median at the adductor pollicis) |
 | midazolam | 3 | Bührer 1990 |
-| etomidate | 1.6 | |
+| etomidate | 1.9 (solved from Arden 1986's t½ke0 of 1.6 min) | Arden 1986 |
 | ketamine, dexmedetomidine, oxytocin | 3, 10, 5 | described in the code as guesses or clinical observation |
 
 The drug pages carry the current values; this table is illustrative. Where the code says a tPeak is a guess, the drug page says so too.
