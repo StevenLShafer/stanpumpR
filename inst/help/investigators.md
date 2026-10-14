@@ -138,7 +138,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 - **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time.
 - **Thomas W. Bouillon** and colleagues (2004): the propofol-remifentanil response surface.
 - **Kay L. Austin**, **John V. Stapleton**, **Laurence E. Mather** (1980) and **Geoffrey K. Gourlay** and colleagues (1988): the minimum effective analgesic concentration.
-- **W. P. T. James** (1976): the lean body mass the Schnider and Minto models were published with, which stanpumpR replaces with fat-free mass. **Hesham S. Al-Sallami**, **Nick Holford**, **Stephen Duffull** and colleagues (2015) and **Sarayut Janmahasatian** and colleagues (2005): fat-free mass, used to [scale most of the models](help:models/fat-free-mass). **Brian J. Anderson** and Holford (2008): allometry and maturation.
+- **W. P. T. James** (1976): the lean body mass of the Schnider and Minto models, a parabola in weight. **Thomas W. Bouillon** and Shafer (1998) showed where it turns over. **Hesham S. Al-Sallami**, **Nick Holford**, **Stephen Duffull** and colleagues (2015) and **Sarayut Janmahasatian** and colleagues (2005): fat-free mass, used to [scale most of the models](help:models/fat-free-mass). **Brian J. Anderson** and Holford (2008): allometry and maturation.
 - **Brunner**, **Katoh**, **Lang**, **Westmoreland**, **Sebel** and their colleagues (1992 to 1999): the opioid reduction of MAC that the approximate interaction model is fitted to.
 
 ## The inhaled anesthetics

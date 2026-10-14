@@ -612,6 +612,21 @@ helpScenarioDefinitions <- function() {
       maximum = 240, plasmaLinetype = "dashed"
     ),
     helpScenario(
+      "james-lean-body-mass",
+      "Obesity: why the Schnider and Minto models fail at the extremes of weight",
+      "Special populations",
+      "The same effect-site targets in a 150 kg woman on the Eleveld models and on the pumps' Schnider and Minto models, whose James lean body mass is a parabola that falls with weight past a BMI of 36.",
+      age = 40, weight = 150, height = 160, sex = SEX_FEMALE,
+      doses = helpDoses(
+        c("propofol", 0, 3, "Effect site target"),
+        c("propofol", 60, 0, "Effect site target"),
+        c("remifentanil", 0, 4, "Effect site target"),
+        c("remifentanil", 60, 0, "Effect site target")
+      ),
+      maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE,
+      mintoSchnider = TRUE
+    ),
+    helpScenario(
       "mac-and-age",
       "MAC and age",
       "Inhaled anesthetics",

@@ -90,6 +90,8 @@ Persson K, Hammarlund-Udenaes M, Mortimer O, Rane A. The postoperative pharmacok
 
 James WPT. *Research on Obesity: A Report of the DHSS/MRC Group.* London: HMSO, 1976.
 
+Bouillon T, Shafer SL. Does size matter? *Anesthesiology* 1998;89:557-560. *(The James lean body mass falls with weight past a peak at each height.)*
+
 Janmahasatian S, Duffull SB, Ash S, Ward LC, Byrne NM, Green B. Quantification of lean bodyweight. *Clin Pharmacokinet* 2005;44:1051-1065.
 
 Anderson BJ, Holford NHG. Mechanism-based concepts of size and maturity in pharmacokinetics. *Annu Rev Pharmacol Toxicol* 2008;48:303-332.
