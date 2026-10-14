@@ -22,11 +22,12 @@
 #
 # WHAT IS APPLIED, AND WHAT IS NOT
 # ================================
-# The review states a magnitude for eight drugs in the library, and each of
-# those models applies it, documented in its own file with the review's
-# wording and the arithmetic:
+# Eight drugs in the library are adjusted.  The review gives a figure for
+# the first five; the three antibiotics take its general rise in glomerular
+# filtration (below).  Each model documents what it applies in its own file,
+# with the review's wording and the arithmetic:
 #
-#   morphine        clearance x 1.7 ("clearance >70% increased", volume
+#   morphine        clearance x 1.7 (Table 3, "clearance >70%", volume
 #                   unchanged)
 #   remifentanil    clearance x 2 ("clearance more than doubles"), on the
 #                   Eleveld and Kim models and on the Minto companion
@@ -48,7 +49,9 @@
 # hydrocodone, midazolam, clindamycin, aspirin) is left unchanged, and the
 # help's pregnancy page says what the review found.  So is every drug the
 # review reports as unchanged or unknown.  pregnancyFindings() is that table,
-# one row per drug of the review in the library, and a test keeps it in step
+# one row per drug of the review's tables that is in the library (drugs the
+# review names only in its text, such as phenytoin, valproate, prednisone,
+# naproxen and amiodarone, have no row), and a test keeps it in step
 # with the models that name the flag.
 #
 # NOT MODELLED
@@ -117,13 +120,13 @@ checkPregnant <- function(pregnant, sex) {
 
 #' What the pregnancy review found for each of its drugs in the library
 #'
-#' One row per drug of Ansari 2016 that is in the drug library, in the order
-#' of the review's tables: what the review reports, and what the model applies
-#' (nothing, for a change the review gives no magnitude for, or reports as
-#' absent or unknown).  The help's pregnancy page tabulates it beside the
-#' factors measured from the models themselves (R/help-generated.R), and
-#' test-pregnancy.R checks that exactly the drugs with an `applied` entry
-#' name `pregnant` in their signature.
+#' One row per drug of Ansari 2016's tables that is in the drug library, in
+#' the order of those tables: what the review reports, and what the model
+#' applies (nothing, for a change the review gives no magnitude for, or
+#' reports as absent or unknown).  The help's pregnancy page tabulates it
+#' beside the factors measured from the models themselves
+#' (R/help-generated.R), and test-pregnancy.R checks that exactly the drugs
+#' with an `applied` entry name `pregnant` in their signature.
 #'
 #' @returns a data frame: `drug`, `group` (one of "applied", "unquantified",
 #'   "unchanged", "unknown"), `finding` (the review's statement) and

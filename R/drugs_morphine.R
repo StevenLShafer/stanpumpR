@@ -90,8 +90,9 @@
 # PREGNANCY
 # =========
 # Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 3,
-# from Gerdin 1990): "Volume of distribution unchanged, clearance >70%
-# increased, decreased half-life, glucuronide conjugation by UGT".  With the
+# from Gerdin 1990): "Volume of distribution unchanged, clearance >70%,
+# decreased half-life, glucuronide conjugation by UGT" (the table omits the
+# word, but an increase is meant).  With the
 # Patient Profile's Pregnant field on, the elimination clearance CL1 is
 # multiplied by MORPHINE_PREGNANCY_CL_FACTOR = 1.7 and nothing else moves:
 # the volumes and the distribution clearances stay as published, so the
@@ -120,7 +121,7 @@
 # -----------------------------------------------------------------------------
 
 # Elimination clearance in pregnancy relative to the published value: Ansari
-# 2016, "clearance >70% increased" (see the header).
+# 2016, Table 3, "clearance >70%", an increase (see the header).
 MORPHINE_PREGNANCY_CL_FACTOR <- 1.7
 
 # The body surface area range, m2, over which Lotsch's fourth-power covariate

@@ -210,7 +210,7 @@ helpPregnancyTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
             c("Drug", "What the review found"),
             function(r) sprintf("| %s | %s |", link(r$drug), r$finding)),
     section("unknown", "Unknown: not adjusted",
-            "The review found no usable human pharmacokinetic data in pregnancy.",
+            "The review's tables give the pharmacokinetic change in pregnancy as unknown.",
             c("Drug", "What the review found"),
             function(r) sprintf("| %s | %s |", link(r$drug), r$finding))
   ) |> paste(collapse = "\n")

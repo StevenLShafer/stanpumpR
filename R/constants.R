@@ -463,7 +463,7 @@ TCI_API_TIME_PATTERN <- paste0(
 PREGNANCY_MIN_AGE <- 12
 PREGNANCY_MAX_AGE <- 60
 # Renal blood flow and the glomerular filtration rate "are increased 50% by
-# the second trimester and remain unchanged until 3 months postpartum"
+# the second trimester and remain increased until 3 months postpartum"
 # (Ansari 2016, Clearance).  The renally cleared antibiotics the review lists
 # with an increased clearance (cefazolin, gentamicin, vancomycin) apply it to
 # the renal function their published clearance terms read.

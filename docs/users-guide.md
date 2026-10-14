@@ -66,9 +66,10 @@ use it to estimate renal function; left blank, they assume a normal creatinine f
 the patient's age and sex (in a child, the median for age; see
 `R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** (shown for a woman of 12 to 59 years)
 applies the pharmacokinetic changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood
-(*Anesth Analg* 2016;122:786-804) to the eight drugs for which the review gives a magnitude: morphine (clearance
+(*Anesth Analg* 2016;122:786-804) to eight drugs. Five take the figure the review gives: morphine (clearance
 × 1.7), remifentanil (× 2, on the Minto companion too), oxycodone (× 3.8/2.6), methadone (× 24/14), dexamethasone
-(× 2), and cefazolin, gentamicin and vancomycin (the renal function their clearance terms read × 1.5). No other drug
+(× 2). Cefazolin, gentamicin and vancomycin, for which the review gives no figure, take its 50% rise in glomerular
+filtration (the renal function their clearance terms read × 1.5). No other drug
 responds to it, including those the review describes without a figure; the help's Pregnancy page lists them all.
 
 ---

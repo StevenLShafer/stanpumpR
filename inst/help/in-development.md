@@ -29,7 +29,7 @@ And for plots longer than a day:
 
 **CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes, and the clearance of aripiprazole, haloperidol and risperidone. Beside it, **CYP 2C19** is read by citalopram and escitalopram, and **CYP 2C9** by meloxicam and phenytoin.
 
-**Pregnant** in the Patient Profile is now active (October 2026): it applies the changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood (*Anesth Analg* 2016;122:786-804) to the eight drugs for which the review gives a magnitude (morphine, remifentanil, oxycodone, methadone, dexamethasone, cefazolin, gentamicin and vancomycin) and nothing to the rest. See [Pregnancy](help:models/pregnancy), which also lists the drugs the review describes without a figure, so that nobody mistakes an unchanged curve for a studied one.
+**Pregnant** in the Patient Profile is now active (October 2026): it applies the changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood (*Anesth Analg* 2016;122:786-804) to eight drugs: the five for which the review gives a figure (morphine, remifentanil, oxycodone, methadone and dexamethasone), and three renally cleared antibiotics (cefazolin, gentamicin and vancomycin), which take its 50% rise in glomerular filtration. It changes nothing else. See [Pregnancy](help:models/pregnancy), which also lists the drugs the review describes without a figure, so that nobody mistakes an unchanged curve for a studied one.
 
 ## No longer a placeholder
 
@@ -48,7 +48,7 @@ From the project README:
 1. Oral opioids with good pharmacokinetics for each; only first-order absorption is currently supported.
 2. Improved models of pediatric pharmacokinetics.
 3. Improved models of drug interaction.
-4. Pharmacokinetic changes with renal function beyond the drugs that read the creatinine, and with pregnancy beyond the eight drugs the 2016 review quantifies.
+4. Pharmacokinetic changes with renal function beyond the drugs that read the creatinine, and with pregnancy beyond the eight drugs the Pregnant field adjusts.
 5. Expanding the in-app help: more teaching scenarios, and screenshots.
 
 A second-generation metabolite link (morphine-6-glucuronide from codeine, for example) would need a two-stage cascade, which the engine does not yet do.
