@@ -15,7 +15,9 @@ osmolality(t) = baseline + 0.555 × Cp(t)
 - 0.555 is the net rise in measured osmolality per mOsm/L of plasma mannitol
   (see *The pharmacodynamic link*, below).
 
-Doses are entered in g, g/kg, g/hr or g/kg/hr. The shaded band is 300–320
+Doses are entered as infusions only, in g/hr or g/kg/hr: mannitol is run in
+over 15 to 60 minutes, never pushed, and the library offers no bolus unit for
+it (a dose is a rate, stopped with a rate of zero). The shaded band is 300–320
 mOsm/kg, the usual target range during osmotherapy, with 320 the conventional
 ceiling. Mannitol has no effect site, so only the plasma line is drawn, and the
 panel's y-axis starts just below the baseline instead of at zero.
