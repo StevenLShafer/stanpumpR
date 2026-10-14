@@ -6,7 +6,31 @@
 # DISPOSITION
 # ===========
 # Lotsch 2002 (Model A), three compartments from intravenous morphine in eight
-# young volunteers, with tPeak 93.8 min after an intravenous bolus.
+# young volunteers (four men, four women, 23-30 years).  The model's
+# parameters are ABSOLUTE, not per kilogram: V1 17.5 L, V2 85.8 L, V3 195.6
+# L, CL 74.0 L/h, Q2 133.7 L/h, and Q3 19.5 L/h at a body surface area of
+# 1.83 m2 with the paper's one covariate, Q3 = 19.5 x (BSA / 1.83)^4 L/h.
+# Until 2026-10-14 the file held the median rate constants, so the slow
+# intercompartmental clearance could not follow the covariate (at 2.2 m2 the
+# paper's Q3 is 2.1 times its 1.83 m2 value), and the help called the model
+# per-kilogram.  The covariate is now applied, as the library does for every
+# model with a size covariate of its own (naloxone, acetaminophen): Q3 takes
+# it in both switch positions, and the other five parameters are the
+# published values with the switch off and take the fat-free-mass scaling
+# with it on.  Body surface area is Du Bois (bsaDuBois(), R/renalFunction.R).
+# CAVEAT: a fourth power of body surface area from eight young adults is an
+# extrapolation outside roughly 1.5 to 2.2 m2; in a small child Q3 is tiny
+# and the deep compartment hardly fills.  The help says so.
+#
+# EFFECT SITE AND MEAC are not from Lotsch 2002, which measured no effect.
+# tPeak 93.8 min is the library's own value, carried from the program's
+# opioid tables.  For context, Lotsch 2001 (pupil, Anesthesiology
+# 95:1329-1338) found a morphine transfer half-life of 2.8 h (range 1.8-4.4),
+# and Skarke 2003 (Clin Pharmacol Ther 73:107-121) 2.6 h for pain tolerance
+# and 2.8 h for the pupil, which with these kinetics would put the peak later
+# still.  MEAC 8 ng/mL is likewise the library's value; Dahlstrom 1982 (Clin
+# Pharmacokinet 7:266-279) measured a postoperative minimum effective
+# concentration of 16 +/- 9 ng/mL.
 #
 # ORAL: IMMEDIATE-RELEASE TABLET AND LIQUID
 # =========================================
@@ -75,6 +99,14 @@
 # ----------
 # Lotsch J, Skarke C, Schmidt H, Liefhold J, Geisslinger G.  Clin Pharmacol
 #   Ther 2002;72:151-162.  https://doi.org/10.1067/mcp.2002.126172
+# Lotsch J, Skarke C, Schmidt H, Grosch S, Geisslinger G.  Anesthesiology
+#   2001;95:1329-1338.  https://doi.org/10.1097/00000542-200112000-00009
+#   (pupil: morphine transfer half-life 2.8 h; context for tPeak)
+# Skarke C, Darimont J, Schmidt H, Geisslinger G, Lotsch J.  Clin Pharmacol
+#   Ther 2003;73:107-121.  https://doi.org/10.1067/mcp.2003.5 (context)
+# Dahlstrom B, Tamsen A, Paalzow L, Hartvig P.  Clin Pharmacokinet
+#   1982;7:266-279.  https://doi.org/10.2165/00003088-198207030-00006
+#   (postoperative MEC 16 +/- 9 ng/mL; context for MEAC)
 # Atrux-Tallau N, Naimi Z, Jaudinot EO.  Clin Drug Investig 2022;42:1101-1112.
 #   https://doi.org/10.1007/s40261-022-01214-x
 # Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
@@ -94,21 +126,23 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # Time: Minutes
   # Volume: Liters
   
-  v1Ref <- 0.25 * 70   # 0.25 L/kg at the 70 kg reference
-  k10 <- 0.070505618
-  k12 <- 0.127340824
-  k13 <- 0.018258427
-  k21 <- 0.025964108
-  k31 <- 0.001633166
+  # Lotsch 2002 Model A, absolute values (see the header).  Litres and L/min.
+  v1Ref  <- 17.5
+  v2Ref  <- 85.82865
+  v3Ref  <- 195.646
+  cl1Ref <- 74.0 / 60          # 1.2333 L/min
+  cl2Ref <- 133.7 / 60         # 2.2283 L/min
+  cl3At183 <- 19.5 / 60        # L/min at BSA 1.83 m2; x (BSA / 1.83)^4
   
-  tPeak <- 93.8
-  MEAC <- 8/1000
+  tPeak <- 93.8                # library value, not Lotsch 2002; see the header
+  MEAC <- 8/1000               # library value, not Lotsch 2002; see the header
   typical <- MEAC * 1.2
   upperTypical <- MEAC * 0.8
   lowerTypical <- MEAC * 2.0
   reference <- paste0(
     "Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162. ",
-    "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous); ",
+    "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous, Model A, ",
+    "Q3 x (BSA/1.83)^4; tPeak and MEAC are library values, not the paper's); ",
     "Atrux-Tallau N et al., Clin Drug Investig 2022;42:1101-1112. ",
     "https://pubmed.ncbi.nlm.nih.gov/36331670/ (oral tablet and liquid: ",
     "pivotal tablet Cmax, tmax and AUC; liquid absorption rate from the ",
@@ -128,21 +162,22 @@ morphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
     )
   )
   
-  # Size scaling (see docs/weight-adjustment.md): the published parameters
-  # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the
-  # 70 kg, 170 cm reference male, clearances with that ratio ^ 0.75
-  # (Al-Sallami 2015).  adjustToFFM = FALSE reproduces the former behaviour
-  # exactly: V1 proportional to weight with fixed rate
-  # constants, so volumes and clearances both scaled with weight/70.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # Size (see docs/weight-adjustment.md and the header).  The published
+  # values are absolute, for young adults.  With the switch on, volumes scale
+  # with fat-free mass relative to the 70 kg, 170 cm reference male and the
+  # clearances with that ratio ^ 0.75 (Al-Sallami 2015); with it off they are
+  # used as published (legacyVolume = 1, legacyClearance = 1).  Q3 carries the
+  # model's own covariate in both positions: 19.5 L/h x (BSA / 1.83)^4.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                        legacyVolume = 1, legacyClearance = 1)
   v1 <- v1Ref * size$volume
-  v2 <- v1Ref * k12 / k21 * size$volume
-  v3 <- v1Ref * k13 / k31 * size$volume
+  v2 <- v2Ref * size$volume
+  v3 <- v3Ref * size$volume
   # Pregnancy (see the header): elimination clearance only.
   clPregnancy <- if (isTRUE(pregnant)) MORPHINE_PREGNANCY_CL_FACTOR else 1
-  cl1 <- v1Ref * k10 * size$clearance * clPregnancy
-  cl2 <- v1Ref * k12 * size$clearance
-  cl3 <- v1Ref * k13 * size$clearance
+  cl1 <- cl1Ref * size$clearance * clPregnancy
+  cl2 <- cl2Ref * size$clearance
+  cl3 <- cl3At183 * (bsaDuBois(weight, height) / 1.83)^4
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
       paste0("clearance x ", MORPHINE_PREGNANCY_CL_FACTOR)))

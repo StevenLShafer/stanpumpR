@@ -1,6 +1,6 @@
 ### The model
 
-Morphine's parameters are from Lötsch and colleagues (*Clin Pharmacol Ther* 2002;72:151-162), a study of morphine and its glucuronide metabolites in volunteers. The model is written as a central volume of 0.25 L/kg with fixed rate constants; at 70 kg the volumes are 17.5, 86 and 196 L and the clearances 1.23, 2.23 and 0.32 L/min.
+Morphine's parameters are from Lötsch and colleagues (*Clin Pharmacol Ther* 2002;72:151-162), a population study of morphine and morphine-6-glucuronide after an intravenous bolus in eight young volunteers (four men and four women, 23 to 30 years). The library uses their Model A, a standard three-compartment model whose parameters are **absolute**, not per kilogram: volumes of 17.5, 86 and 196 L, an elimination clearance of 74 L/h (1.23 L/min), a rapid intercompartmental clearance of 134 L/h and a slow one of 19.5 L/h at a body surface area of 1.83 m². The slow clearance carries the paper's one covariate, the fourth power of body surface area: Q3 = 19.5 × (BSA/1.83)⁴ L/h, so at 2.2 m² it is 2.1 times its value at 1.83 m². Until October 2026 the library held the median rate constants and could not follow that covariate.
 
 ### Oral: tablet and liquid
 
@@ -12,15 +12,15 @@ Modified-release morphine is not modelled, nor is food, which slows absorption. 
 
 ### Covariates
 
-Weight. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the volumes scale with the patient's fat-free mass and the clearances with that ratio to the 0.75 power; with the switch off, every volume and clearance scales linearly with weight, as Lötsch's per-kilogram model did.
+Body surface area on the slow intercompartmental clearance, as above, in both positions of the switch, as the library does for every model with a size covariate of its own. The other five parameters are the published values with the switch off, and under the default [fat-free-mass scaling](help:models/fat-free-mass) the volumes scale with the patient's fat-free mass and the clearances with that ratio to the 0.75 power. **Be careful outside roughly 1.5 to 2.2 m²**: a fourth power fitted to eight young adults is an extrapolation there. In a small child the slow clearance becomes tiny (about 0.6 L/h at 0.8 m²) and the deep compartment hardly fills, which raises the predicted plasma concentration a little during an infusion; the paper's subjects were adults.
 
 ### Effect site
 
-The time to peak effect is 93.8 minutes, the slowest in the library by far. Morphine is relatively hydrophilic and crosses the blood-brain barrier slowly, so its effect-site concentration lags the plasma by well over an hour. A bolus of morphine therefore never achieves an effect-site concentration near its plasma peak, and the clinical corollary is that titrating morphine to effect every five minutes overshoots: the effect of the previous dose has barely begun.
+The time to peak effect is 93.8 minutes, the slowest in the library by far. It is the library's own value, carried from the program's opioid tables, not from Lötsch 2002, which measured no effect. The same group's pupil measurements (Lötsch and colleagues, *Anesthesiology* 2001;95:1329-1338) gave morphine a plasma-to-effect-site transfer half-life of 2.8 hours (range 1.8 to 4.4), and Skarke and colleagues (*Clin Pharmacol Ther* 2003;73:107-121) 2.6 hours for pain tolerance, which with these kinetics would put the peak later still. Morphine is relatively hydrophilic and crosses the blood-brain barrier slowly, so its effect-site concentration lags the plasma by well over an hour. A bolus of morphine therefore never achieves an effect-site concentration near its plasma peak, and the clinical corollary is that titrating morphine to effect every five minutes overshoots: the effect of the previous dose has barely begun.
 
 ### MEAC and typical concentrations
 
-MEAC is 8 ng/mL (0.008 mcg/mL in the plotted units) and the shaded band 6.4 to 16 ng/mL.
+MEAC is 8 ng/mL (0.008 mcg/mL in the plotted units) and the shaded band 6.4 to 16 ng/mL. These are the library's values, not Lötsch's. For comparison, Dahlström and colleagues (*Clin Pharmacokinet* 1982;7:266-279) measured a mean minimum effective concentration of 16 ± 9 ng/mL in patients using morphine patient-controlled analgesia after abdominal surgery, which is the top of the band.
 
 ### Active metabolite
 

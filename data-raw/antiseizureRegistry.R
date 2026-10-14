@@ -155,7 +155,7 @@ registry <- rbind(
       "levetiracetam base", "levetiracetam (oral ~absolute; IV 1:1)",
       "1C first-order, renal/non-renal clearance split", "pk_only", "levetiracetam",
       "https://doi.org/10.1016/j.eplepsyres.2017.02.011",
-      "Rhee 2017 structure with a 66/34 renal split (reduction); ER not offered."),
+      "Rhee 2017 clearance and absorption, the label's volume (0.6 L/kg) and a 66/34 renal split (reduction); ER not offered."),
   reg("Lorazepam", "IV (status); oral off-label", L, FIT,
       "lorazepam base", "lorazepam (plasma)",
       "see library model", "pk_only", "lorazepam",
@@ -317,7 +317,7 @@ parameters <- rbind(
 
   par("levetiracetam", "CL (total, reference)", "3.9", "L/h", E, "Rhee 2017, 425 adults", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
   par("levetiracetam", "renal fraction of CL", "0.66", "unitless", LD, "label/mass balance (66% unchanged)", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
-  par("levetiracetam", "V/F", "65.3", "L at 70 kg", E, "Rhee 2017", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
+  par("levetiracetam", "V", "42", "L at 70 kg (0.6 L/kg)", LD, "Keppra label: 0.5-0.7 L/kg, half-life 7 +/- 1 h (Rhee's sparse-data V/F 65.3 L gave 11.6 h)", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
   par("levetiracetam", "ka", "2.44", "1/h", FX, "Rhee 2017", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
 
   par("eslicarbazepine", "CL/F", "2.43", "L/h at 70 kg (x ^0.75)", E, "Falcao 2012 / poster, 641 patients", "https://doi.org/10.2165/11596290-000000000-00000"),

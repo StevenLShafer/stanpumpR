@@ -178,8 +178,8 @@ helpScenarioDefinitions <- function() {
       "Intravenous basics",
       "Holding a sub-anesthetic analgesic concentration with a small bolus and a low-rate infusion.",
       doses = helpDoses(
-        c("ketamine", 0, 0.5, "mg/kg"),
-        c("ketamine", 0, 0.25, "mg/kg/hr"),
+        c("ketamine", 0, 0.25, "mg/kg"),
+        c("ketamine", 0, 0.12, "mg/kg/hr"),
         c("ketamine", 120, 0, "mg/kg/hr")
       ),
       maximum = 240, plasmaLinetype = "dashed"
