@@ -241,7 +241,8 @@ optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
 **Covariate helpers.** `pkSizeFactors()` (`pkSizeFactors.R`) turns weight, height, age and sex
 into the fat-free-mass multipliers that most drug models apply to their volumes and clearances
 (`ffmAlSallami()` is the Al-Sallami 2015 fat-free mass; see `docs/weight-adjustment.md`);
-`lbmJames()` computes the older James lean body mass; `renalFunction.R` supplies
+it is also the lean-body-mass covariate of the Schnider, Minto and meloxicam models, in place of
+the James equation they were published with; `renalFunction.R` supplies
 Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally cleared
 models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
@@ -307,7 +308,7 @@ All files are flat in `R/`.
 - `calculateCe.R` — effect-site concentration approximated from a plasma curve; used only by
   the event-driven solver. The `ke0` fit itself
   (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
-- `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
+- `modelInteraction.R`, `recoveryCalc.R` — interaction surface, recovery
   thresholds, body-size scaling.
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
 - `ig_absorption.R` — *experimental, tracked, not yet integrated.* Closed-form Inverse Gaussian
@@ -388,8 +389,7 @@ All files are flat in `R/`.
   is not a second opioid); the hover reports both models and a click goes to the parent. Minto's
   ke0 is the paper's function of age, so `getDrugPK()` accepts a model with `ke0` and no `tPeak`
   and solves the time to peak effect from it. A model whose covariate terms give a non-positive
-  volume or clearance for the patient (James lean body mass at extremes; a small child on
-  Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
+  volume or clearance for the patient (a small child on Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
   `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
   `eleveld-vs-minto-schnider` and `tci-eleveld-vs-minto-schnider`; tests `test-minto-schnider.R`.
 - **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under

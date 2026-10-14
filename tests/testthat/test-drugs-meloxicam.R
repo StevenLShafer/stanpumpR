@@ -6,9 +6,10 @@
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
 test_that("returns the published parameters with the fat-free-mass switch off", {
-  # 70 kg, 171 cm man: James LBM 70 x 1.10 - 128 x (70 / 171)^2 = 55.5502 kg
+  # 70 kg, 171 cm man: Al-Sallami fat-free mass, in place of the source's
+  # James lean body mass, 9270 x 70 / (6680 + 216 x BMI) = 54.6 kg
   actual <- meloxicam(70, 171, 50, "male", adjustToFFM = FALSE)
-  lbm <- 77 - 128 * (70 / 171)^2
+  lbm <- 9270 * 70 / (6680 + 216 * 70 / 1.71^2)
   expected <- list(
     PK = list(
       default = list(
@@ -40,10 +41,10 @@ test_that("CYP2C9 alleles reduce apparent clearance per allele", {
 
 test_that("scales the size-free parameters to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126;
-  # Vc/F on James LBM, 132 - 128 x (120 / 170)^2 = 68.2215 kg, either way
+  # Vc/F on the Al-Sallami fat-free mass, 70.7 kg, either way
   actual <- meloxicam(120, 170, 50, "male")$PK$default
   expected <- list(
-    v1 = 7.79 * ((132 - 128 * (120 / 170)^2) / 55)^1.05,
+    v1 = 7.79 * ((9270 * 120 / (6680 + 216 * 120 / 1.7^2)) / 55)^1.05,
     v2 = 2.73 * 1.3049067,
     cl1 = 0.391 / 60 * 1.2209126,
     cl2 = 1.24 / 60 * 1.2209126
@@ -52,6 +53,17 @@ test_that("scales the size-free parameters to fat-free mass for a 120 kg man", {
   off <- meloxicam(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(off$v1, actual$v1)
   expect_equal(off$cl1, 0.391 / 60)
+})
+
+test_that("Vc/F is defined at every weight, where James's lean body mass was not", {
+  # A 200 kg woman of 160 cm: James's lean body mass is negative (-200 kg),
+  # which made Vc/F undefined and getDrugPK() fail; the fat-free mass is 79 kg
+  expect_equal_rounded(9270 * 200 / (8780 + 244 * 200 / 1.6^2) *
+                         (1.11 - 0.11 / (1 + (50 / 7.1)^(-1.1))),
+                       ffmAlSallami(200, 160, 50, "female"))
+  pk <- getDrugPK("meloxicam", 200, 160, 50, "female")$PK$default
+  expect_true(is.finite(pk$v1) && pk$v1 > 0)
+  expect_gt(pk$v1, getDrugPK("meloxicam", 100, 160, 50, "female")$PK$default$v1)
 })
 
 test_that("the two absorption paths take the whole dose, F = 1", {
@@ -66,8 +78,10 @@ test_that("7.5 mg peaks near the published structure's peak", {
     noEvents, 70, 170, 40, "male", 72 * 60, TRUE)$meloxicam$results
   x <- x[x$Site == "Plasma", ]
   # Published structure (zero-order path solved numerically): 0.733 mg/L at
-  # 3.1 h; the first-order approximation: 0.720 mg/L at 3.2 h
-  expect_equal(max(x$Y), 0.720, tolerance = 0.005)
+  # 3.1 h; the first-order approximation: 0.720 mg/L at 3.2 h on the James
+  # lean body mass (55.3 kg), 0.729 mg/L on the Al-Sallami fat-free mass
+  # (54.5 kg) that stanpumpR uses in its place
+  expect_equal(max(x$Y), 0.729, tolerance = 0.005)
   expect_equal(x$Time[which.max(x$Y)] / 60, 3.17, tolerance = 0.02)
   # Terminal half-life about 19 h
   late <- x[x$Time >= 48 * 60, ]

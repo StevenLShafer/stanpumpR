@@ -129,9 +129,18 @@ helpEvents <- function(...) {
 
 #' The teaching scenarios
 #'
+#' Built once per R session: the list is constant, and the help asks for it
+#' once per page it renders (every drug page lists the scenarios using it).
 #' @returns a list of scenarios, in the order they appear in the help
 #' @noRd
 helpScenarios <- function() {
+  if (is.null(.sprglobals$helpScenarios)) {
+    .sprglobals$helpScenarios <- helpScenarioDefinitions()
+  }
+  .sprglobals$helpScenarios
+}
+
+helpScenarioDefinitions <- function() {
   list(
     # --- Intravenous basics --------------------------------------------------
     helpScenario(

@@ -27,14 +27,14 @@ Several models reason about size through a measure of lean tissue rather than to
 
 **BMI** = weight / (height/100)². Remifentanil switches models at BMI 30.
 
-**Lean body mass (James, 1976).** Used by the Schnider propofol model and the Minto remifentanil model, which run beside the library's Eleveld models when *Minto / Schnider* is ticked under Graph Options ([The Minto and Schnider models](help:models/minto-schnider)), and by the central volume of Aoyama's oral [meloxicam](help:drugs/meloxicam) model:
+**Lean body mass (James, 1976).** The covariate of the Schnider propofol model, the Minto remifentanil model and the central volume of Aoyama's oral [meloxicam](help:drugs/meloxicam) model, as published:
 
 ```
 men:   LBM = 1.10 weight - 128 (weight/height)²
 women: LBM = 1.07 weight - 148 (weight/height)²
 ```
 
-The James equation has a known flaw: it reaches a maximum and then falls as weight rises, so for very obese patients it gives a lean body mass that decreases with weight. The code comments call it "unfortunate" for this reason, and the models that relied on it have been replaced where better ones exist.
+The James equation has a known flaw: it reaches a maximum and then falls as weight rises, so for very obese patients it gives a lean body mass that decreases with weight, and eventually a negative one. stanpumpR therefore does not use it. Those three models take the Al-Sallami fat-free mass (below) in its place, with their published centring values; for a typical adult the two agree within about a kilogram. For an obese patient the Schnider and Minto lines ([The Minto and Schnider models](help:models/minto-schnider)) are then not quite what a TCI pump, which uses James, would compute.
 
 **Fat-free mass (Al-Sallami, 2015).** Used by the Eleveld propofol and remifentanil models, and by the fat-free-mass scaling applied to most other models (below). It is well behaved in obesity and includes a maturation term for children:
 
