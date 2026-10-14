@@ -1,9 +1,11 @@
-test_that("returns the published parameters with total-body-weight scaling", {
+test_that("returns Lotsch's published parameters with the switch off", {
   weight <- 70
   height <- 171
   age <- 50
   sex <- "male"
-  # The switch off reproduces the pre-fat-free-mass output exactly.
+  # The switch off gives Model A as published: absolute volumes and
+  # clearances, and Q3 = 19.5 L/h x (BSA / 1.83)^4 with Du Bois BSA 1.8174 m2
+  # for 70 kg and 171 cm, so 0.325 x 0.97279 = 0.31615 L/min.
   actual <- morphine(weight, height, age, sex, adjustToFFM = FALSE)
 
   expected <- list(
@@ -12,9 +14,9 @@ test_that("returns the published parameters with total-body-weight scaling", {
         v1 = 17.5,
         v2 = 85.82865,
         v3 = 195.646,
-        cl1 = 1.233848,
-        cl2 = 2.228464,
-        cl3 = 0.3195225,
+        cl1 = 1.2333333,
+        cl2 = 2.2283333,
+        cl3 = 0.31615473,
         ka_PO = 0.013,
         bioavailability_PO = 0.29,
         tlag_PO = 17.6
@@ -27,7 +29,9 @@ test_that("returns the published parameters with total-body-weight scaling", {
     lowerTypical = 0.0064,
     reference = paste0(
       "Lotsch J et al., Clin Pharmacol Ther 2002;72(2):151-162. ",
-      "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous); ",
+      "https://pubmed.ncbi.nlm.nih.gov/12189362/ (intravenous, Model A, ",
+      "Q3 x (BSA/1.83)^4 with BSA bounded to 1.5-2.2 m2; tPeak and MEAC are ",
+      "library values, not the paper's); ",
       "Atrux-Tallau N et al., Clin Drug Investig 2022;42:1101-1112. ",
       "https://pubmed.ncbi.nlm.nih.gov/36331670/ (oral tablet and liquid: ",
       "pivotal tablet Cmax, tmax and AUC; liquid absorption rate from the ",
@@ -42,16 +46,19 @@ test_that("returns the published parameters with total-body-weight scaling", {
 
 test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
-  # volumes x 1.3049067 and clearances x 1.3049067^0.75 = 1.2209126 (worked out
-  # from the Al-Sallami formula by hand, not from the code under test).
+  # volumes x 1.3049067 and CL and Q2 x 1.3049067^0.75 = 1.2209126 (worked out
+  # from the Al-Sallami formula by hand, not from the code under test).  Q3
+  # keeps the paper's covariate at the body surface area bounded to 2.2 m2
+  # (Du Bois BSA is 2.2756 m2): 0.325 x (2.2/1.83)^4 = 0.325 x 2.08875 =
+  # 0.67884 L/min.
   actual <- morphine(120, 170, 50, "male")
   expected <- list(
         v1 = 22.835866,
         v2 = 111.99838,
         v3 = 255.29977,
-        cl1 = 1.5064206,
-        cl2 = 2.7207598,
-        cl3 = 0.39010905
+        cl1 = 1.5057922,
+        cl2 = 2.7206003,
+        cl3 = 0.67884360
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
@@ -170,11 +177,38 @@ test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
   expect_equal_rounded(14.10666343, actual$v1)
   expect_equal_rounded(69.18605273, actual$v2)
   expect_equal_rounded(157.7093109, actual$v3)
-  expect_equal_rounded(1.784433573, actual$cl1)
-  expect_equal_rounded(1.895812561, actual$cl2)
-  expect_equal_rounded(0.2718260662, actual$cl3)
+  expect_equal_rounded(1.783688789, actual$cl1)
+  expect_equal_rounded(1.895701042, actual$cl2)
+  expect_equal_rounded(0.2850456403, actual$cl3)   # Q3 by BSA, 1.7710 m2
   expect_equal(morphine(70, 165, 30, "female")$PK$default,
                morphine(70, 165, 30, "female", pregnant = FALSE)$PK$default)
   expect_match(morphine(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
   expect_no_match(morphine(70, 165, 30, "female")$reference, "Ansari")
+})
+
+test_that("the slow intercompartmental clearance follows Lotsch's body-surface-area covariate", {
+  # Q3 = 19.5 L/h x (BSA / 1.83)^4, in both switch positions; at 2.2 m2 it is
+  # 2.09 times its 1.83 m2 value.  Du Bois BSA for 70 kg and 171 cm is
+  # 1.8174 m2 (bsaDuBois(), R/renalFunction.R).
+  q3 <- function(...) morphine(...)$PK$default$cl3 * 60
+  expect_equal(q3(70, 171, 50, "male", adjustToFFM = FALSE),
+               19.5 * (bsaDuBois(70, 171) / 1.83)^4)
+  expect_equal(q3(70, 171, 50, "male", adjustToFFM = TRUE),
+               q3(70, 171, 50, "male", adjustToFFM = FALSE))
+  expect_equal(q3(60, 175, 40, "male") / q3(70, 171, 50, "male"),
+               (bsaDuBois(60, 175) / bsaDuBois(70, 171))^4)
+  expect_equal((2.2 / 1.83)^4, 2.089, tolerance = 1e-3)
+  # Bounded to the adult range, 1.5 to 2.2 m2 (MORPHINE_BSA_RANGE): a 120 kg
+  # man (2.28 m2) gets the 2.2 m2 value and a 20 kg child (0.78 m2) the 1.5
+  # m2 value, in both switch positions.
+  expect_gt(bsaDuBois(120, 170), 2.2)
+  expect_equal(q3(120, 170, 50, "male"), 19.5 * (2.2 / 1.83)^4)
+  expect_lt(bsaDuBois(20, 110), 1.5)
+  expect_equal(q3(20, 110, 5, "male"), 19.5 * (1.5 / 1.83)^4)
+  expect_equal(q3(20, 110, 5, "male", adjustToFFM = FALSE), 19.5 * (1.5 / 1.83)^4)
+  expect_equal(q3(20, 110, 5, "male"), 8.80, tolerance = 1e-3)
+  # The other parameters are absolute with the switch off: the same at 50 kg
+  off <- morphine(50, 160, 30, "female", adjustToFFM = FALSE)$PK$default
+  expect_equal(unlist(off[c("v1", "v2", "v3", "cl1", "cl2")]),
+               c(v1 = 17.5, v2 = 85.82865, v3 = 195.646, cl1 = 74 / 60, cl2 = 133.7 / 60))
 })

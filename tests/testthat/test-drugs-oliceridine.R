@@ -16,7 +16,10 @@ test_that("returns the published parameters with total-body-weight scaling", {
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
-  expect_equal(actual$tPeak, 15)
+  # Dahan's ventilatory equilibration half-life, 0.25 h, is supplied as ke0;
+  # no tPeak is returned, getDrugPK() solves it (below).
+  expect_null(actual$tPeak)
+  expect_equal(actual$ke0, log(2) / 15)
   expect_equal(actual$reference, "Dahan A et al., Anesthesiology 2020;133(3):559-568. https://pubmed.ncbi.nlm.nih.gov/32788558/")
 })
 
@@ -34,4 +37,16 @@ test_that("scales to fat-free mass for a 120 kg man", {
     cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
+})
+
+test_that("the time to peak effect is solved from the ventilatory ke0, about 26 min", {
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("oliceridine", 70, 170, 50, "male", dd[dd$Drug == "oliceridine", ])
+  expect_equal(PK$PK$default$ke0, log(2) / 15, tolerance = 1e-6)
+  expect_equal(PK$tPeak, 26, tolerance = 0.03)
+  # The library's MEAC is Dahan's analgesic potency and the typical
+  # concentration his respiratory potency (drugDefaults_global.csv).
+  row <- dd[dd$Drug == "oliceridine", ]
+  expect_equal(row$MEAC, 27.9)
+  expect_equal(row$Typical, 27.4)
 })

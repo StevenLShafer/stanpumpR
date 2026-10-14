@@ -8,11 +8,11 @@ None in the source. The parameters take the default [fat-free-mass scaling](help
 
 ### Effect site
 
-The time to peak effect is 15 minutes.
+Dahan and colleagues estimated the equilibration between plasma and the effect site for the **ventilatory** effect only, with a half-life of 0.25 hours (15 minutes), and did not quantify one for analgesia. The drug file supplies that ke0 (0.046/min) and the time to peak effect after a bolus is solved from it, about 26 minutes with these kinetics. Until October 2026 the 15 minutes was read as the time to peak effect itself, which implied an equilibration half-life of about 6 minutes.
 
 ### MEAC and typical concentrations
 
-MEAC is 27.9 ng/mL and the shaded band 18.3 to 37.5 ng/mL, both from the drug library rather than the drug file, which returns no values of its own for them. Oliceridine is a biased μ-agonist developed for a wider margin between analgesia and respiratory depression; the model is pharmacokinetic and says nothing about that margin.
+MEAC is 27.9 ng/mL, Dahan's **analgesic** potency: the effect-site concentration at which the probability of a 50 per cent increase in cold-pressor hand-withdrawal latency is one half (morphine's was 34.3 ng/mL). The band's typical value, 27.4 ng/mL, is a different end point, the **respiratory** potency: the concentration for a 25 per cent fall in the hypercapnic ventilatory response (morphine's, for a 50 per cent fall, was 33.7 ng/mL). The two coincide numerically, which is the paper's point: over 0 to 35 ng/mL the probability of analgesia exceeds that of respiratory depression for oliceridine and not for morphine. The band, 18.3 to 37.5 ng/mL, and both values are in the drug library, not the drug file, which returns none of its own. Only one concentration curve is drawn; the two end points are labels on it, not separate effect curves.
 
 ### Where to be careful
 
