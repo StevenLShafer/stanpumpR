@@ -8,17 +8,19 @@ The first panel in the left sidebar. These covariates are passed to every drug's
 | Weight | kg or lb | 0.1 to 500 kg | |
 | Height | in or cm | 10 to 200 cm | |
 | Sex | male or female | | |
-| CYP 2D6 | phenotype | | Scales the active metabolites of codeine, tramadol, hydrocodone and oxycodone. |
+| CYP 2D6 | phenotype | | Scales the active metabolites of codeine, tramadol, hydrocodone and oxycodone, and the clearance of aripiprazole, haloperidol and risperidone. |
 | CYP 2C19 | phenotype | | Changes the clearance of escitalopram and citalopram. |
+| CYP 2C9 | diplotype | | Changes the clearance of meloxicam and the maximal elimination rate of phenytoin. |
+| CYP 2B6 | phenotype | | Changes the clearance of methadone. |
 | Adjust weight to fat-free mass | checkbox | | On by default; scales most models to fat-free mass. |
-| Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin and oxycodone. Blank means an assumed normal creatinine for the patient's age and sex: 1.0 in men and 0.8 in women, and in a child the normal for age (about 0.25 in infancy, 0.35 at five, 0.5 at ten). See [Renal function](help:models/covariates). |
+| Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by cefazolin, gabapentin, gentamicin, lacosamide, levetiracetam, mannitol, intravenous meloxicam, oxycodone, pregabalin, sugammadex and vancomycin. Blank means an assumed normal creatinine for the patient's age and sex: 1.0 in men and 0.8 in women, and in a child the normal for age (about 0.25 in infancy, 0.35 at five, 0.5 at ten). See [Renal function](help:models/covariates). |
 | Baseline serum osmolality | mOsm/kg | 200 to 400 | The patient's starting value, 280 by default. Read only by [mannitol](help:drugs/mannitol), which is plotted as the serum osmolality it produces on top of this value. |
 
 If Age, Weight or Height is blank or not a number (a lone `.`, say), the plot area says which field needs a number, and the plot returns as soon as it has one. A number outside the range is reported in a message.
 
 Changing a covariate re-simulates every drug at once; there is no Apply step for the patient.
 
-**Adjust weight to fat-free mass** scales most of the models to the patient's fat-free mass rather than total body weight; it is on by default. **CYP 2D6**, with the phenotypes the genotyping laboratories report (poor, intermediate, normal, ultrarapid), scales the formation of the active metabolites. **CYP 2C19** (poor, intermediate, normal, rapid, ultrarapid) changes the clearance of escitalopram and citalopram. See [Antidepressant models and their limits](help:models/antidepressants), [Scaling to fat-free mass](help:models/fat-free-mass) and [Active metabolites](help:models/metabolites).
+**Adjust weight to fat-free mass** scales most of the models to the patient's fat-free mass rather than total body weight; it is on by default. **CYP 2D6**, with the phenotypes the genotyping laboratories report (poor, intermediate, normal, ultrarapid), scales the formation of the active metabolites, and the clearance of three antipsychotics. **CYP 2C19** (poor, intermediate, normal, rapid, ultrarapid) changes the clearance of escitalopram and citalopram. **CYP 2C9**, entered as the diplotype of the common \*1, \*2 and \*3 alleles (\*1/\*1 by default), changes the clearance of [meloxicam](help:drugs/meloxicam) and the maximal elimination rate of [phenytoin](help:drugs/phenytoin). **CYP 2B6** (the same five phenotypes as CYP 2C19) changes the clearance of [methadone](help:drugs/methadone); [the methadone genotype scenario](scenario:methadone-cyp2b6) is a worked example. See [Antidepressant models and their limits](help:models/antidepressants), [Scaling to fat-free mass](help:models/fat-free-mass) and [Active metabolites](help:models/metabolites).
 
 ## What the models do with them
 
@@ -34,9 +36,9 @@ A few models switch between parameter sets on a covariate:
 
 An age of 90 or above is protected health information under the HIPAA Safe Harbor rule, so the field stops at 90 and a note appears if you reach it. For the purposes of these models the difference between 90 and 95 is small.
 
-## The disabled field
+## Pregnant, and the fields only some drugs read
 
-**Pregnant** (shown for women of child-bearing age) is present but greyed out. It was added ahead of the models that will use it, so that the interface shows the intent, and no drug responds to it. The **Serum creatinine** field replaced the greyed-out Renal Function selector: leave it blank and the renal models assume a normal creatinine, which represents renal decline with age but not renal impairment. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
+**Pregnant** (shown for a woman of 12 to 59 years) applies the pharmacokinetic changes of late pregnancy to the drugs for which the review the library follows (Ansari, Carvalho, Shafer and Flood 2016) gives a magnitude: morphine, remifentanil, oxycodone, methadone, dexamethasone, cefazolin, gentamicin and vancomycin. Every other drug is unchanged, and the References panel names the review while the field is changing a drug. See [Pregnancy](help:models/pregnancy). The **Serum creatinine** field replaced the greyed-out Renal Function selector: leave it blank and the renal models assume a normal creatinine, which represents renal decline with age but not renal impairment. **CYP 2D6** is no longer among them: it is now active, scaling the active metabolites described under [Active metabolites](help:models/metabolites).
 
 ## Default patient
 

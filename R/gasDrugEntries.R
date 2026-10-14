@@ -189,7 +189,7 @@ gasTypicalBand <- function(drug, props)
 #' @param alveolar,brain data frames of Time and Y
 #' @param xout equispaced output times
 #' @param drugDefaults drug defaults table
-#' @param unitLabel axis-label units for the facet, e.g. "\%" for a gas or
+#' @param unitLabel axis-label units for the facet, e.g. "%" for a gas or
 #'   "age-adjusted" for the MAC-equivalents series
 #' @param typical named vector of lower, typical, upper for the shaded band
 #' @param color optional colour override
@@ -269,7 +269,7 @@ gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
 #' Is this plotted series produced by the inhaled-gas engine?
 #'
 #' Covers the gases themselves plus the synthetic MAC series.  Used by
-#' \code{simulationPlot()} to label their facets in \% or MAC rather than
+#' \code{simulationPlot()} to label their facets in % or MAC rather than
 #' appending the "/ml" that an intravenous concentration carries.
 #'
 #' @param drug one or more series names

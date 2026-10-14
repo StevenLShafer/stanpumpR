@@ -71,7 +71,8 @@ test_that("returns the correct calculations", {
     typical = 0,
     upperTypical = 0,
     lowerTypical = 0,
-    reference = actual$reference
+    reference = actual$reference,
+    oralPulses = actual$oralPulses    # Concerta; tested on its own below
   )
 
   expect_equal_rounded(actual, expected)
@@ -156,7 +157,8 @@ test_that("the lag-time reduction tracks the published transit model", {
 test_that("methylphenidate is offered orally only, because the parameters are apparent", {
   dd <- getDrugDefaultsGlobal(FALSE)
   units <- strsplit(dd$Units[dd$Drug == "methylphenidate"], ",")[[1]]
-  expect_equal(units, c("mg PO", paste("mg PO", names(SCHEDULE_INTERVALS))))
+  expect_equal(units, c("mg PO", paste("mg PO", names(SCHEDULE_INTERVALS)),
+                        "mg PO XR", "mg PO XR qd"))
   expect_true(all(doseRoute(units) == "PO"))
   expect_equal(dd$Category[dd$Drug == "methylphenidate"], "Stimulants")
 })
@@ -167,4 +169,73 @@ test_that("no effect site and no therapeutic band are claimed", {
   row <- dd[dd$Drug == "methylphenidate", ]
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC, row$endCe), rep(0, 5))
   expect_equal(methylphenidate(70, 170, 35, "male")$tPeak, 0)
+})
+
+
+# Concerta ("mg PO XR"): input fitted to the shape of Childress 2025's mean
+# curves (OROS reference arms, fasted healthy adults).
+
+concertaCurve <- function(mg, maximum = 2880) {
+  simulateDrugsWithCovariates(
+    data.frame(Drug = "methylphenidate", Time = 0, Dose = mg, Units = "mg PO XR"),
+    noEvents, 70, 170, 35, "male", maximum, FALSE, adjustToFFM = FALSE
+  )$methylphenidate$wide
+}
+aucBetween <- function(w, t1, t2) {
+  i <- w$Time >= t1 * 60 & w$Time <= t2 * 60
+  trapz(w$Time[i], w$Plasma[i]) / 60
+}
+
+
+test_that("Concerta's input is 22% at once and 78% over 2 to 15 h, falling", {
+  p <- methylphenidate(70, 170, 35, "male")$oralPulses$XR
+  expect_equal(sum(p$fraction), 1)
+  expect_equal(p$fraction[1], 0.22)
+  expect_equal(p$delay[1], 0)
+  core <- p$delay[-1]
+  expect_true(all(core > 2 * 60 & core < 15 * 60))
+  expect_equal(length(core), 52)                  # every 15 min
+  expect_true(all(diff(p$fraction[-1]) < 0))      # the rate falls
+  expect_equal(sum(p$fraction[-1]), 0.78)
+})
+
+
+test_that("Concerta reproduces the shape of Childress's mean curves", {
+  # Fractions of AUC0-inf in 0-3, 3-7, 7-12 h and after 12 h; observed after
+  # 54 mg 0.103 / 0.257 / 0.329 / 0.311 and after 2 x 36 mg 0.113 / 0.298 /
+  # 0.340 / 0.249.  The model is held between the two, within 15% of either.
+  w <- concertaCurve(54, maximum = 4320)
+  total <- trapz(w$Time, w$Plasma) / 60
+  f <- c(aucBetween(w, 0, 3), aucBetween(w, 3, 7), aucBetween(w, 7, 12)) / total
+  f <- c(f, 1 - sum(f))
+  expect_equal(f, c(0.108, 0.278, 0.335, 0.280), tolerance = 0.15)
+  # Tmax: median 7.0 h (54 mg) and 6.5 h (2 x 36 mg)
+  tmax <- w$Time[which.max(w$Plasma)] / 60
+  expect_gt(tmax, 6)
+  expect_lt(tmax, 7.5)
+  # The overcoat gives an early shoulder: well above zero by 1 h
+  expect_gt(w$Plasma[which.min(abs(w$Time - 60))], 0.25 * max(w$Plasma))
+})
+
+
+test_that("Concerta delivers the whole dose, and its level is Lyauk's", {
+  # AUC = d-MPH dose / CL/F, whatever the input: 27 mg / 233 L/h after 54 mg
+  w <- concertaCurve(54, maximum = 4320)
+  expect_equal(trapz(w$Time, w$Plasma) / 60 / (27000 / 233), 1, tolerance = 0.01)
+  # The recorded shortfall against Childress (total MPH, AUC 173.8 and Cmax
+  # 14.6 after 54 mg): about a third low.  If this changes, the help page and
+  # the header must change with it.
+  expect_equal(trapz(w$Time, w$Plasma) / 60 / 173.8, 0.67, tolerance = 0.05)
+  expect_equal(max(w$Plasma) / 14.6, 0.61, tolerance = 0.08)
+})
+
+
+test_that("Concerta once daily equals its scheduled repeats", {
+  one <- simulateDrugsWithCovariates(
+    data.frame(Drug = "methylphenidate", Time = c(0, 1440), Dose = 36, Units = "mg PO XR"),
+    noEvents, 70, 170, 35, "male", 2880, FALSE)$methylphenidate$wide
+  qd <- simulateDrugsWithCovariates(
+    data.frame(Drug = "methylphenidate", Time = 0, Dose = 36, Units = "mg PO XR qd"),
+    noEvents, 70, 170, 35, "male", 2880, FALSE)$methylphenidate$wide
+  expect_equal(qd$Plasma, approx(one$Time, one$Plasma, qd$Time)$y, tolerance = 1e-8)
 })

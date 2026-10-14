@@ -1,6 +1,6 @@
 ## What to look for
 
-Sixty milligrams of codeine by mouth. The codeine line (dashed) rises over about an hour and falls slowly, but codeine itself has no effect site: its row is plasma only, because its analgesia is the [morphine](help:drugs/morphine) formed from it. Watch the **morphine** row, which appears although no morphine was given. It rises later than codeine and peaks low, around 1.4 ng/mL near two hours, and it is the morphine effect site, not the codeine, that the MEAC panel scores.
+Sixty milligrams of codeine by mouth. The codeine line (dashed) rises over about an hour and falls slowly, but codeine itself has no effect site: its row is plasma only, because its analgesia is the [morphine](help:drugs/morphine) formed from it. Watch the **morphine** row, which appears although no morphine was given. It rises later than codeine and peaks low, around 1.4 ng/mL (0.0014 mcg/mL, in the morphine panel's units) near two hours; its effect site, which lags far behind, peaks at about 0.9 ng/mL at five hours. It is the morphine effect site, not the codeine, that the MEAC panel scores.
 
 ## Try next
 

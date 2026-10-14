@@ -13,6 +13,10 @@
 #'   Passed only to drug models that declare it; the rest ignore it.
 #' @param cyp2c19 CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
 #'   Passed only to drug models that declare it (escitalopram, citalopram).
+#' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES};
+#'   passed only to models that name it (phenytoin).
+#' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
+#'   passed only to models that name it (methadone).
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
@@ -28,6 +32,11 @@
 #'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
 #'   sugammadex, gabapentin, pregabalin, oxycodone, meloxicam intravenous); see
 #'   `R/renalFunction.R`.
+#' @param pregnant is the patient pregnant?  TRUE or FALSE (the default).
+#'   Passed only to the models that name it (R/pregnancy.R lists them), which
+#'   apply the changes of late pregnancy described by Ansari, Carvalho, Shafer
+#'   and Flood (Anesth Analg 2016;122:786-804); every other model ignores it.
+#'   TRUE requires \code{sex = "female"}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -62,6 +71,9 @@ getDrugPK <- function(
   osmolality = OSMOLALITY_DEFAULT,
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
+  cyp2c9 = CYP2C9_DEFAULT,
+  cyp2b6 = CYP2B6_DEFAULT,
+  pregnant = FALSE,
   model = NULL
 )
 {
@@ -79,6 +91,15 @@ getDrugPK <- function(
     stop("Invalid cyp2c19: ", paste(cyp2c19, collapse = ", "),
          ". Must be one of: ", paste(CYP2C19_VALUES, collapse = ", "))
   }
+  if (length(cyp2c9) != 1 || !cyp2c9 %in% CYP2C9_VALUES) {
+    stop("Invalid cyp2c9: ", paste(cyp2c9, collapse = ", "),
+         ". Must be one of: ", paste(CYP2C9_VALUES, collapse = ", "))
+  }
+  if (length(cyp2b6) != 1 || !cyp2b6 %in% CYP2B6_VALUES) {
+    stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
+         ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
+  }
+  pregnant <- checkPregnant(pregnant, sex)
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
          ". Must be a number between ", MIN_OSMOLALITY, " and ",
@@ -124,6 +145,12 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "cyp2c19" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2c19 <- cyp2c19
+  if (exists(drug, mode = "function") &&
+      "cyp2c9" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp2c9 <- cyp2c9
+  if (exists(drug, mode = "function") &&
+      "cyp2b6" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp2b6 <- cyp2b6
   # Likewise the fat-free-mass switch: every drug model in the library
   # declares it, but a mocked model taking only ... need not.
   if (exists(drug, mode = "function") &&
@@ -137,12 +164,32 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "creatinine" %in% names(formals(get(drug, mode = "function"))))
     covariates["creatinine"] <- list(creatinine)
+  # And the pregnancy flag, which only the models the pregnancy review
+  # quantifies read (R/pregnancy.R).
+  if (exists(drug, mode = "function") &&
+      "pregnant" %in% names(formals(get(drug, mode = "function"))))
+    covariates$pregnant <- pregnant
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
   # function", which is what test-gas-routing.R pins.
   X <- if (is.null(model)) do.call(drug, covariates) else model
   tPeak <- X$tPeak
+  # A model that supplies ke0 directly may leave tPeak out altogether (NULL):
+  # the time to peak effect is then solved below, per PK set, as the moment
+  # the effect site peaks after a bolus with that ke0 and that disposition.
+  # The TCI controller searches out to tPeak and vdPeakEffect is read at it,
+  # so a model with a published ke0 still gets a true tPeak rather than a
+  # placeholder.  Minto's remifentanil, whose ke0 is a function of age
+  # (R/alternativeModels.R), is the case.  A tPeak of 0 beside a ke0
+  # (desmetramadol) still means what it did: no tPeak is reported.
+  solveTPeak <- is.null(tPeak)
+  if (solveTPeak) {
+    if (is.null(X$ke0) || !is_valid_number(X$ke0) || X$ke0 <= 0)
+      stop("No tPeak for ", drug, ": a model may leave tPeak out only when it supplies ke0.")
+    tPeak <- 0
+  }
+  tPeakSolved <- list()
   # Which curve tPeak was measured against.  Defaults to the intravenous
   # bolus, which is what every drug in the library assumed before oral-only
   # drugs arrived, so no existing model changes.
@@ -479,6 +526,27 @@ getDrugPK <- function(
     if (lambda_2 > 0) p_coef_infusion_l2 <- p_coef_bolus_l2 / lambda_2
     if (lambda_3 > 0) p_coef_infusion_l3 <- p_coef_bolus_l3 / lambda_3
 
+    # Every closed-form coefficient below divides by a difference of two rate
+    # constants (ka - lambda_i, ke0 - lambda_i, ka - ke0): an exact tie is a
+    # division by zero, and the t exp(-lambda t) form it would need is not
+    # carried.  So each absorption and effect-site rate constant is nudged off
+    # any rate it ties with (separateEigenvalues(), a relative 1e-8, far below
+    # the precision of any published parameter) HERE, once, and the nudged
+    # values go into the returned PK set, so that every engine, the recovery
+    # search, the TCI schedule and the metabolite fold all see rates that are
+    # already separate.  (Steven L. Shafer, 2026-10-12: "exponents cannot be
+    # identical or you get a divide by zero"; generalised from the ka guard in
+    # advanceClosedForm1() and the metabolite convolution.)  ke0 gets the same
+    # treatment once it is known, below.
+    lambdas <- c(lambda_1, lambda_2, lambda_3)
+    ka_PO     <- separateEigenvalues(ka_PO,     lambdas)
+    ka_PO2    <- separateEigenvalues(ka_PO2,    lambdas)
+    ka_IM     <- separateEigenvalues(ka_IM,     lambdas)
+    ka_IN     <- separateEigenvalues(ka_IN,     lambdas)
+    ka_SL     <- separateEigenvalues(ka_SL,     lambdas)
+    ka_RA     <- separateEigenvalues(ka_RA,     lambdas)
+    ka_RAslow <- separateEigenvalues(ka_RAslow, lambdas)
+
     # find ke0 from tPeak
     #
     # ke0 is whatever makes the peak EFFECT SITE concentration fall at tPeak.
@@ -534,6 +602,17 @@ getDrugPK <- function(
 
     if (ke0 > 0)
     {
+      # See the note above: ke0 off the eigenvalues, and the absorption rates
+      # off ke0 as well (a ka that ties with ke0 divides e_coef_*_ke0 by zero).
+      ke0       <- separateEigenvalues(ke0, lambdas)
+      ka_PO     <- separateEigenvalues(ka_PO,     ke0)
+      ka_PO2    <- separateEigenvalues(ka_PO2,    ke0)
+      ka_IM     <- separateEigenvalues(ka_IM,     ke0)
+      ka_IN     <- separateEigenvalues(ka_IN,     ke0)
+      ka_SL     <- separateEigenvalues(ka_SL,     ke0)
+      ka_RA     <- separateEigenvalues(ka_RA,     ke0)
+      ka_RAslow <- separateEigenvalues(ka_RAslow, ke0)
+
       e_coef_bolus_l1 <- p_coef_bolus_l1 / (ke0 - lambda_1) * ke0
       e_coef_infusion_l1 <- e_coef_bolus_l1 / lambda_1
 
@@ -549,6 +628,17 @@ getDrugPK <- function(
       }
       e_coef_bolus_ke0 <- - e_coef_bolus_l1 - e_coef_bolus_l2 - e_coef_bolus_l3
       e_coef_infusion_ke0 <- e_coef_bolus_ke0 / ke0
+    }
+
+    # The time to peak effect of a model that gave ke0 and no tPeak (above)
+    if (solveTPeak && ke0 > 0)
+    {
+      tPeak <- effectSitePeakTime(
+        c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+        c(lambda_1, lambda_2, lambda_3),
+        ke0
+      )
+      tPeakSolved[[event]] <- tPeak
     }
 
     if (ka_PO > 0)
@@ -823,14 +913,19 @@ getDrugPK <- function(
 
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # The second oral depot is carried by advanceClosedFormPO_IM_IN() and
-  # advanceClosedForm1(), not by the metabolite engine or the per-formulation
-  # runs, and an oral tPeak is solved against the first depot alone.
+  # The reported tPeak of a model that gave ke0 and no tPeak is the default
+  # PK set's (each set solved its own above, for its vdPeakEffect).
+  if (solveTPeak && length(tPeakSolved) > 0)
+  {
+    tPeak <- if (!is.null(tPeakSolved[[PK_EVENT_DEFAULT]])) tPeakSolved[[PK_EVENT_DEFAULT]] else tPeakSolved[[1]]
+  }
+
+  # The second oral depot is carried by advanceClosedFormPO_IM_IN(),
+  # advanceClosedForm1() and advanceClosedFormMetabolite() (aspirin), not by
+  # the per-formulation runs, and an oral tPeak is solved against the first
+  # depot alone.
   if (any(vapply(PK, function(s) isTRUE(s$ka_PO2 > 0), logical(1))))
   {
-    if (resolveMetabolite && !is.null(X$metabolite))
-      stop("Invalid second oral depot for ", drug, ": a drug that forms an ",
-           "active metabolite cannot have one.")
     if (!is.null(X$oralFormulations))
       stop("Invalid second oral depot for ", drug, ": a drug with more than ",
            "one oral formulation cannot have one.")
@@ -880,8 +975,11 @@ getDrugPK <- function(
       drugDefaults = metaboliteDefaults,
       cyp2d6 = cyp2d6,
       cyp2c19 = cyp2c19,
+      cyp2c9 = cyp2c9,
+      cyp2b6 = cyp2b6,
       osmolality = osmolality,
       creatinine = creatinine,
+      pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE
     )
@@ -955,6 +1053,12 @@ getDrugPK <- function(
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
   out$osmotic <- X$osmotic
+  # A drug reported in millimoles per litre (Concentration.Units "mmol":
+  # intravenous calcium, plotted as the change in ionized calcium) carries
+  # the grams of the product as dosed per mole of what is plotted, which
+  # simCpCe() uses to turn a dose in grams into millimoles.  See
+  # R/drugs_calcium.R, whose two salts carry one weight each.
+  out$molar <- validateMolar(X$molar, drug, drugDefaults$Concentration.Units)
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
@@ -964,6 +1068,11 @@ getDrugPK <- function(
   # A drug with more than one oral formulation: the PK sets of each further
   # one, which simCpCe() uses for that formulation's doses.
   out$oralFormulations <- oralFormulations
+  # A drug with saturable (Michaelis-Menten) elimination: simCpCe() runs it
+  # through the numerical engine, R/advanceMichaelisMenten.R.  The linear PK
+  # set above carries the low-concentration limit, CL = Vmax / Km, for the
+  # parts of the app that need one (the help tables).
+  out$michaelisMenten <- validateMichaelisMenten(X$michaelisMenten, drug)
   # A drug plotted as the sum of independent linear systems that share its
   # doses: ketorolac, whose S and R enantiomers have dispositions of their own
   # (R/drugs_ketorolac.R).  The model's own PK is the first system; each entry
@@ -1074,6 +1183,7 @@ parallelSystemSets <- function(X, PK, events, tPeakRoute, drug, covariates)
 oralCoefficients <- function(pkSet, ka, bioavailability)
 {
   lambda <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3)
+  ka     <- separateEigenvalues(ka, c(lambda, pkSet$ke0))   # no division by zero
   scale  <- ka / (ka - lambda) * bioavailability
   p <- c(pkSet$p_coef_bolus_l1, pkSet$p_coef_bolus_l2, pkSet$p_coef_bolus_l3) * scale
   e <- c(pkSet$e_coef_bolus_l1, pkSet$e_coef_bolus_l2, pkSet$e_coef_bolus_l3) * scale
@@ -1147,6 +1257,7 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
   use <- lambda > 0
   coef <- coef[use]
   lambda <- lambda[use]
+  ke0 <- separateEigenvalues(ke0, lambda)   # no division by zero
   e <- coef * ke0 / (ke0 - lambda)
   stats::optimize(
     function(t) sum(e * exp(-lambda * t)) - sum(e) * exp(-ke0 * t),
@@ -1223,6 +1334,9 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 # site concentration
 tPeakError <-   function(lambda_4, tPeak, p_coef_bolus_1,p_coef_bolus_2,p_coef_bolus_3, lambda_1, lambda_2, lambda_3)
 {
+  # lambda_4 is the trial ke0; the optimiser may land it exactly on an
+  # eigenvalue, where the coefficients below divide by zero.
+  lambda_4 <- separateEigenvalues(lambda_4, c(lambda_1, lambda_2, lambda_3))
   e_coef_bolus_1 <- p_coef_bolus_1 / (lambda_4 - lambda_1) * lambda_4
 
   if (lambda_2 > 0)
@@ -1252,3 +1366,75 @@ CE <- function(t, e_coef_bolus_1, e_coef_bolus_2, e_coef_bolus_3, e_coef_bolus_4
     e_coef_bolus_4 * exp(-lambda_4 * t)
 }
 
+
+#' Validate a drug's `molar` block
+#'
+#' A drug whose CSV `Concentration.Units` is `mmol` is plotted in millimoles
+#' per litre, and its model must return `molar = list(molecularWeight = g)`,
+#' the grams of the product as dosed per mole of what is plotted, so that
+#' `simCpCe()` can turn a dose in grams into millimoles.  A drug given as
+#' more than one product, each with its own weight, returns a named vector,
+#' one weight per product, named by the word the product's units carry
+#' (intravenous calcium, `R/drugs_calcium.R`: `chloride` and `gluconate`);
+#' every dose of such a drug must then name its product, which
+#' `molarWeightOfDoses()` enforces.  The block is refused for any other
+#' concentration unit, where it would be ignored silently.
+#'
+#' @param molar the model's `molar` field, or NULL
+#' @param drug the drug name, for the message
+#' @param concentrationUnits the CSV's `Concentration.Units`
+#' @returns the block, or NULL when the drug has none
+#' @keywords internal
+validateMolar <- function(molar, drug, concentrationUnits)
+{
+  molarUnits <- identical(as.character(concentrationUnits), "mmol")
+  if (is.null(molar)) {
+    if (molarUnits)
+      stop("Invalid molar block for ", drug, ": a drug with Concentration.Units ",
+           "\"mmol\" must return molar = list(molecularWeight = ...).")
+    return(NULL)
+  }
+  if (!molarUnits)
+    stop("Invalid molar block for ", drug, ": only a drug with ",
+         "Concentration.Units \"mmol\" may return one.")
+  mw <- if (is.list(molar)) molar$molecularWeight else NULL
+  if (is.null(mw) || !is.numeric(mw) || length(mw) < 1 || any(!is.finite(mw)) || any(mw <= 0))
+    stop("Invalid molar block for ", drug, ": molecularWeight must be a positive ",
+         "number (grams per mole), or a vector of them named by product.")
+  if (length(mw) > 1 || !is.null(names(mw))) {
+    products <- names(mw)
+    if (is.null(products) || any(is.na(products) | !nzchar(products)) ||
+        any(duplicated(products)) || any(grepl(" ", products)))
+      stop("Invalid molar block for ", drug, ": a molecularWeight for more than one ",
+           "product must be named by the product words the units carry, each a ",
+           "single word, no two alike.")
+  }
+  list(molecularWeight = mw)
+}
+
+#' Grams per mole for each dose of a molar drug
+#'
+#' One weight per dose row: the block's single weight, or for a drug given
+#' as several products the weight of the product each unit names (see
+#' `validateMolar()`).  A dose of such a drug whose unit names no product
+#' is refused rather than guessed: for intravenous calcium a bare "g" would
+#' be either 6.8 or 2.2 mmol, and the difference is the dosing error the
+#' source study was prompted by.
+#'
+#' @param molar a validated `molar` block
+#' @param units the dose rows' units
+#' @param drug the drug name, for the message
+#' @returns numeric vector the length of `units`
+#' @keywords internal
+molarWeightOfDoses <- function(molar, units, drug = "")
+{
+  mw <- molar$molecularWeight
+  if (length(mw) == 1 && is.null(names(mw))) return(rep(mw, length(units)))
+  product <- doseProduct(units, names(mw))
+  missing <- is.na(product)
+  if (any(missing))
+    stop("Dose unit for ", drug, " must name the product, one of ",
+         paste(names(mw), collapse = ", "), ": ",
+         paste(unique(as.character(units)[missing]), collapse = ", "))
+  unname(mw[product])
+}

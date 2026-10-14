@@ -150,6 +150,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Height",
       "Height Unit",
       "Sex",
+      "Pregnant",
       "Adjust weight to fat-free mass",
       "Baseline serum osmolality (mOsm/kg)",
       "Serum creatinine (mg/dL)"
@@ -162,6 +163,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       values$height / values$heightUnit,
       heightUnit,
       values$sex,
+      if (isTRUE(values$pregnant)) "yes" else "no",
       if (isTRUE(values$adjustToFFM)) "yes" else "no",
       if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
       if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine
@@ -188,11 +190,13 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
 
   outputComments("Writing PK parameters")
   sheet = 5
-  for (drug in sort(unique(as.character(DT$Drug))))
+  # One sheet per dosed drug, then one per alternative-model companion that
+  # was simulated beside it ("propofol (Schnider) PK"; R/alternativeModels.R)
+  companions <- names(drugs)[vapply(drugs, isAlternativeModelEntry, logical(1))]
+  for (drug in c(sort(unique(as.character(DT$Drug))), sort(companions)))
   {
-    thisDrug <- which(drugDefaults$Drug == drug)
-
     pkSets <- drugs[[drug]]$PK
+    if (is.null(pkSets)) next
     parameters <-   as.data.frame(
       cbind(
         v1 = purrr::map_dbl(pkSets, "v1"),

@@ -42,6 +42,17 @@
 # the reference male, clearances with that ratio ^ 0.75; the switch off uses
 # them as published.
 #
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 8,
+# from Tsuei 1980 and Pacheco 2007): "Clearance doubled in single gestation",
+# by the placenta's own metabolism of the synthetic glucocorticoids, with a
+# multiple gestation needing more still.  With the Patient Profile's Pregnant
+# field on, the elimination clearance CL1 is multiplied by
+# DEXAMETHASONE_PREGNANCY_CL_FACTOR = 2; the volumes, Q and the absorption
+# parameters are unchanged.  A singleton pregnancy is assumed.  See
+# R/pregnancy.R.
+#
 # References
 # ----------
 # Hong Y et al., Pharm Res 2007;24:1088-1097.
@@ -50,7 +61,13 @@
 #   https://doi.org/10.1111/bcp.12295
 # Krzyzanski W et al., J Pharmacokinet Pharmacodyn 2021;48:261-272.
 #   https://doi.org/10.1007/s10928-020-09730-z
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
 # -----------------------------------------------------------------------------
+
+# Elimination clearance in pregnancy relative to Hong's value: Ansari 2016,
+# "clearance doubled in single gestation" (see the header).
+DEXAMETHASONE_PREGNANCY_CL_FACTOR <- 2
 
 #' Dexamethasone pharmacokinetics
 #'
@@ -58,9 +75,12 @@
 #' @param adjustToFFM scale volumes to the patient's fat-free mass and
 #'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
 #'   published fixed parameters unscaled.
+#' @param pregnant is the patient pregnant?  \code{TRUE} doubles the
+#'   elimination clearance (Ansari 2016; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-dexamethasone <- function(weight, height, age, sex, adjustToFFM = TRUE)
+dexamethasone <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                          pregnant = FALSE)
 {
   # Size scaling (see the header): fixed published parameters, unscaled
   # with the switch off.
@@ -74,7 +94,9 @@ dexamethasone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v1  <- vcRef * size$volume
   v2  <- vcRef * k12 / k21 * size$volume          # 44.45 L at the reference
   v3  <- 1                                        # no third compartment
-  cl1 <- 18.1 / 60 * size$clearance               # L/min
+  # Pregnancy (see the header): elimination clearance only.
+  clPregnancy <- if (isTRUE(pregnant)) DEXAMETHASONE_PREGNANCY_CL_FACTOR else 1
+  cl1 <- 18.1 / 60 * size$clearance * clPregnancy # L/min
   cl2 <- vcRef * k12 / 60 * size$clearance        # Q = 45.34 L/h
   cl3 <- 0
 
@@ -118,6 +140,10 @@ dexamethasone <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "and intramuscular absorption from Krzyzanski 2021. ",
     "https://doi.org/10.1007/s11095-006-9232-x"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", DEXAMETHASONE_PREGNANCY_CL_FACTOR)))
+  }
 
   return(
     list(

@@ -2,6 +2,8 @@
 
 Oxycodone 10 mg by mouth at time zero and again at six hours. The plasma line (dashed) rises to a peak at about 35 minutes rather than peaking at once: the rise is set by absorption from the gut, not by distribution. The effect site (solid) peaks later, at about an hour. Oxycodone's own effect site equilibrates quickly (half-time 11 minutes), so much of that delay is absorption still going on.
 
+An **oxymorphone** row appears although none was given: it is the oxymorphone formed from the oxycodone, which stays below 1 ng/mL, peaking a little under two hours after each dose; see [Active metabolites](help:models/metabolites).
+
 Two thirds of the dose reaches the circulation (bioavailability 0.67). Compare the plasma peak with what 10 mg intravenously (`mg`) gives.
 
 The second dose at six hours arrives when the first has fallen to about half its peak, so the second peak is higher than the first. With regular dosing the troughs rise until input and elimination balance.
@@ -10,8 +12,8 @@ The second dose at six hours arrives when the first has fallen to about half its
 
 - Change the interval to four hours (doses at 0, 240 and 480 minutes) and see the accumulation.
 - Set *Time units* to days and *Max time* to 2 days, and give 10 mg every six hours for a day: a `mg PO qid` row at `0`, and a `0 mg PO qid` row at `1`. How many doses until the troughs stop rising?
-- Add hydromorphone 2 mg PO at the same times and compare the absorption: the two have the same absorption half-time (about 70 minutes), but hydromorphone's parameters are provisional.
+- Add hydromorphone 2 mg PO at the same times and compare the absorption: the two have the same absorption half-time (about 70 minutes). Hydromorphone's oral bioavailability is 0.225, calibrated to Lohela 2021, so 2 mg by mouth stays below its minimum effective concentration in an opioid-naive adult.
 
 ## Background
 
-[Oral, intramuscular and intranasal doses](help:models/absorption) explains the first-order absorption model and flip-flop kinetics. [Oxycodone](help:drugs/oxycodone) records where the absorption rate, lag and bioavailability came from.
+[Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption) explains the first-order absorption model and flip-flop kinetics. [Oxycodone](help:drugs/oxycodone) records where the absorption rate, lag and bioavailability came from.

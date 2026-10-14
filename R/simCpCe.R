@@ -281,18 +281,32 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- PK$osmotic$molecularWeight * 1000
         ng_Conv  <- PK$osmotic$molecularWeight * 1000000
       },
+      mmol = {                 # A molar drug: amounts in mmol, Cp in mmol/L
+        # molecularWeight is grams of the product as dosed per mole of what
+        # is plotted, so a dose in mg divided by it is a dose in mmol.  A
+        # drug given as several products (intravenous calcium,
+        # R/drugs_calcium.R: "g chloride", "g gluconate") has one weight per
+        # product, and each dose takes the weight its unit names.
+        mg_Conv  <- molarWeightOfDoses(PK$molar, dose$Units, PK$drug)
+        mcg_Conv <- mg_Conv * 1000
+        ng_Conv  <- mg_Conv * 1000000
+      },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
+    # One factor per dose row (the molar branch may differ row by row).
+    mg_Conv  <- rep_len(mg_Conv,  nrow(dose))
+    mcg_Conv <- rep_len(mcg_Conv, nrow(dose))
+    ng_Conv  <- rep_len(ng_Conv,  nrow(dose))
 
     # Grams.  Anchored, because "mg" and every other mass unit contain a "g".
     use <- grep("^g( |/|$)", dose$Units)
-    dose$Dose[use] <- dose$Dose[use] * 1000 / mg_Conv
+    dose$Dose[use] <- dose$Dose[use] * 1000 / mg_Conv[use]
     use <- grep("mg",dose$Units)
-    dose$Dose[use] <- dose$Dose[use] / mg_Conv
+    dose$Dose[use] <- dose$Dose[use] / mg_Conv[use]
     use <- grep("mcg",dose$Units)
-    dose$Dose[use] <- dose$Dose[use] / mcg_Conv
+    dose$Dose[use] <- dose$Dose[use] / mcg_Conv[use]
     use <- grep("ng",dose$Units)
-    dose$Dose[use] <- dose$Dose[use] / ng_Conv
+    dose$Dose[use] <- dose$Dose[use] / ng_Conv[use]
 
     # Convert dose per kg  to absolute dose
     use <- grep("kg",dose$Units)
@@ -482,7 +496,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (!is.null(routes)) dose$Dose[!doseRoute(dose$Units) %in% routes] <- 0
       dose
     }
-    if (!is.null(PK$parallelSystems))
+    if (!is.null(PK$michaelisMenten))
+    {
+      # Saturable elimination (phenytoin): the whole dose table at once, by
+      # numerical integration, because superposition does not hold; see
+      # R/advanceMichaelisMenten.R.  No clinical-event PK switching, no
+      # parallel systems or extra oral formulations (getDrugPK() refuses them).
+      results <- advanceMichaelisMenten(dose, PK, maximum, plotRecovery, emerge)
+    } else if (!is.null(PK$parallelSystems))
     {
       parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))
       for (sys in PK$parallelSystems)

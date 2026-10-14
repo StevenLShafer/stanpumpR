@@ -53,7 +53,11 @@ full mechanism.
 `drugs()` is a reactive that gets re-calculated whenever the dose table changes (more specifically,
 when `doseTableClean()` is updated). It runs `recalculatePK()`, which in turn runs `getDrugPK()` in a loop
 for each drug in the doses table. This turns the patient's covariates into a full set of rate constants,
-eigenvalues, and closed-form coefficients.
+eigenvalues, and closed-form coefficients. With the **Minto / Schnider** box ticked
+(`input$mintoSchnider`), `recalculatePK(alternativeModels = TRUE)` also appends a *companion entry*
+for each dosed drug that has an alternative model (`R/alternativeModels.R`: `propofol (Schnider)`,
+`remifentanil (Minto)`), built through the same `getDrugPK()` from the alternative model's output
+and marked with `$companionOf` and `$modelLabel`.
 
 ### 04 — Simulate concentrations
 
@@ -65,7 +69,8 @@ stored with a key (`simulationKey()`: its resolved PK, its dose rows, its PK eve
 more than one PK set, the plot length and the recovery switch); a drug whose key is unchanged
 reuses its stored simulation. `foldMetabolites()` then runs on every call, so a metabolite drug's
 plotted series always reflects its parents' current doses. Output is a tidy time × site table
-per drug.
+per drug. A companion entry is simulated on its parent's dose rows, cached under its own name, and
+never with the time until threshold, which stays on the library's model.
 
 ### 05 — Assemble the plot
 
@@ -240,7 +245,10 @@ into the fat-free-mass multipliers that most drug models apply to their volumes 
 Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally cleared
 models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
-adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `recoveryCalc()` computes
+adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `pregnancy.R` holds the
+Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, the review's findings per drug in
+`pregnancyFindings()`), which `getDrugPK()` passes only to the eight models that name `pregnant`, each applying
+the factor its header documents from Ansari 2016; `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 
@@ -311,9 +319,26 @@ All files are flat in `R/`.
 - `tci.R` — target-controlled infusion: turns "Plasma target" / "Effect site target" dose rows
   into the infusion schedule a TCI pump would run (Shafer & Gregg 1992, as in STANPUMP), using
   the same closed-form coefficients as the solvers. Called from `simCpCe()`.
+- `tci-api.R` — the TCI API's computation, pure R (no Shiny, no plumber): `tciNextRate()` turns
+  a parsed request body (covariates, target, pump limits, delivery history) into the next-rate
+  response, rebuilding the seven-amplitude model state from the history, projecting it through
+  the declared latency, calling `tciRate()`, applying the pump's `maxRate` / `minRate` /
+  `rateResolution` and predicting what follows; `tciApiDrugs()`, `tciApiModel()` and
+  `tciApiHealth()` are the other endpoints' bodies. Validation signals the classed condition
+  `tci_api_error`. Reference: `docs/tci-api.md`.
+- `tci-api-server.R` — `tciApiRouter()` builds the Plumber router that serves `/tci/v1`
+  (`health`, `drugs`, `drugs/{drug}/model`, `drugs/{drug}/rate`, `openapi.json`) with
+  full-precision unboxed JSON and the API's error shape; `run_tci_api()` runs it. Plumber is a
+  `Suggests` dependency guarded by `requireNamespace()`, and the router shares nothing with
+  `run_app()`. `inst/api/entrypoint.R` (for `rsconnect::deployAPI()`) and the hand-written
+  `inst/api/openapi.json` go with it.
 - `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` dose row into its
   repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
   `exportDoseTable()`, which merges the TCI rows and the repeats into the exported dose table.
+- `alternativeModels.R` — the Minto / Schnider switch: Schnider's propofol and Minto's
+  remifentanil models (as STANPUMP ran them), the companion-entry builder `recalculatePK()`
+  calls, the companion's colour and name-to-parent mapping, and `alternativeModelProblems()`,
+  which says when a model is not defined for the patient.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
 - `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
   `emayili`.
@@ -321,6 +346,9 @@ All files are flat in `R/`.
 **Help — the Help tab**
 - `help-content.R` — page registry (`helpStaticPages()`), Markdown rendering via `shiny::markdown()`,
   `help:`/`scenario:` link rewriting, heading ids and table of contents, full-text search.
+- `help-investigators.R` — the investigators named in bold on `inst/help/investigators.md`: the registry,
+  the links to them in every page and citation (`helpLinkInvestigators()`), and the pop-up about each
+  (`helpInvestigatorModal()`, shown on `input$investigator_show`).
 - `help-drugs.R` — pages generated from the drug library: each drug model run at six reference
   patients, with its citation, units and thresholds; the drug index; the bibliography.
 - `help-scenarios.R` — the teaching-scenario registry (`helpScenarios()`), its validator, the
@@ -348,6 +376,32 @@ All files are flat in `R/`.
   infusion row. Its rate rows never enter the dose table: `simCpCe()` returns them as `$tci`,
   `simulationPlot()` draws them as a per-drug rate panel with the loading dose written as a
   number, and `sendSlide()` merges them into the exported dose table.
+- **Minto / Schnider** (`alternativeModels.R`) — a Graph Options box, enabled while propofol or
+  remifentanil is in the dose table, that runs Schnider's 1998 propofol model and Minto's 1997
+  remifentanil model (the models in most TCI pumps, written as the original STANPUMP ran them)
+  beside the library's Eleveld models. Each is a *companion entry* of the drug list
+  (`recalculatePK(alternativeModels = TRUE)`), simulated by `processdoseTable()` on the parent's
+  doses without recovery, and drawn by `simulationPlot()` as a second line in the parent's panel
+  in a derived colour with its own legend entry; under TCI the companion's pump is a second line
+  on the parent's rate panel with its loading dose labelled by model. Companions are kept out of
+  the MEAC sum, the interaction panel and the opioid-MAC interaction (a second remifentanil line
+  is not a second opioid); the hover reports both models and a click goes to the parent. Minto's
+  ke0 is the paper's function of age, so `getDrugPK()` accepts a model with `ke0` and no `tPeak`
+  and solves the time to peak effect from it. A model whose covariate terms give a non-positive
+  volume or clearance for the patient (James lean body mass at extremes; a small child on
+  Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
+  `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
+  `eleveld-vs-minto-schnider` and `tci-eleveld-vs-minto-schnider`; tests `test-minto-schnider.R`.
+- **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under
+  `/tci/v1` that returns the next infusion rate for one TCI drug in one patient from the
+  controller's record of what the pump has delivered (the STANPUMP principle: the model state is
+  re-derived from the delivery record on every request, so nothing is lost and every request is
+  a reproducible record). It uses the same `tciRate()` as the TCI rows, and adds the pump's
+  `maxRate` / `minRate` / `rateResolution`, a projection through the declared latency, a bounded
+  segment with a `fallback` rate and a hard stop at `holdUntil`, and predictions (peak, time to
+  target, decrement time, syringe empty). It is not deployed with the Shiny app (shinyapps.io
+  does not host Plumber): `run_tci_api()` or `rsconnect::deployAPI()` serve it. The normative
+  reference is `docs/tci-api.md`.
 - **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM or IN unit with a frequency suffix
   (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 h (qd / bid /
   tid / qid) until the end of the X axis. A scheduled dose of 0 for the same route stops the

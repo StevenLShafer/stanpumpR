@@ -90,6 +90,21 @@ overestimate a child's renal function from the child's own creatinine. Pass
 equation to children's own creatinine, as pregabalin's did. Say so in the model's header
 and in its `reference` string. See `R/drugs_vancomycin.R` and `R/renalFunction.R`.
 
+**Pregnancy.** A model whose source, or the review the library follows for pregnancy (Ansari,
+Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804; `R/pregnancy.R`), gives a
+**magnitude** for the change in pregnancy adds `pregnant = FALSE` to its signature and applies
+that factor, documented in a `PREGNANCY` section of its header with the review's wording and
+the arithmetic, with a named constant (`MORPHINE_PREGNANCY_CL_FACTOR`) and the citation
+appended to its `reference` string through `pregnancyReference()` only when the flag is on. A
+renally cleared model carries the review's 50% rise in glomerular filtration through the renal
+function its clearance term reads (`PREGNANCY_GFR_FACTOR`, as cefazolin, gentamicin and
+vancomycin do). A change the review describes only in direction is **not** applied: add the
+drug to `pregnancyFindings()` with the review's wording instead, so the help's Pregnancy page
+says what is known. `test-pregnancy.R` checks that exactly the drugs marked `applied` there
+name `pregnant`, that the flag off changes nothing, and that each factor is what the header
+says; the drug's own test pins its parameters with the flag on. Add a `### Pregnancy` section
+to the drug's help narrative and list the drug on the Cautions page.
+
 **What the engine cannot represent.** The closed-form engine is linear and mammillary, with
 first-order extravascular absorption. A source model with saturable protein binding
 (cefazolin, hydrocortisone), reversible interconversion (prednisone and prednisolone) or an
@@ -127,8 +142,10 @@ if absent) beside `ka_PO`, `bioavailability_PO` and `tlag_PO`. `bioavailability_
 absolute bioavailability of the whole dose, applied once; `getDrugPK()` splits it between the
 depots, and `simCpCe()` duplicates each oral dose row into the internal route `PO2`, as it
 does for the slow RA depot. Diclofenac is the example (`R/drugs_diclofenac.R`); meloxicam uses
-it with apparent parameters and `bioavailability_PO = 1`. Not available with an active
-metabolite, several oral formulations, or a `tPeak` measured after an oral dose.
+it with apparent parameters and `bioavailability_PO = 1`. With an active metabolite the
+metabolite engine carries both depots, splitting the first-pass fraction between them in
+proportion to their bioavailabilities (aspirin, `R/drugs_aspirin.R`). Not available with several
+oral formulations, or a `tPeak` measured after an oral dose.
 
 **Optional — parallel systems.** A drug whose plotted concentration is the sum of independent
 linear systems sharing its doses (ketorolac: the S and R enantiomers, fitted separately)
@@ -181,6 +198,12 @@ CPIC terms (`poor`, `intermediate`, `normal`, `rapid`, `ultrarapid`). A source t
 fewer groups says in the drug file which group each of the five is given (escitalopram,
 citalopram). The drug's help page tabulates its clearance by phenotype automatically.
 
+So do `cyp2b6 = CYP2B6_DEFAULT` (`CYP2B6_VALUES`, the same five CPIC terms; read by methadone,
+whose help page gets a generated clearance-by-phenotype table) and `cyp2c9 = CYP2C9_DEFAULT`
+(`CYP2C9_VALUES`, the six common diplotypes rather than phenotypes; read by phenytoin and
+meloxicam). A phenotype a source did not estimate is given the reference group's parameters
+and the drug file says so: never interpolate silently.
+
 **Optional — an osmotic agent.** A drug reported as the serum osmolality it produces, rather
 than as its own concentration, adds `osmolality` to its signature (the patient's baseline,
 mOsm/kg, passed only to models that name it) and returns an `osmotic` block:
@@ -193,6 +216,34 @@ Its CSV row uses `mOsm` as `Concentration.Units`, so doses in g or mg are conver
 with the molecular weight, and `simCpCe()` plots `baseline + fraction * Cp`. The panel is
 labelled mOsm/kg and its y-axis is not anchored at zero. `R/drugs_mannitol.R` is the example,
 and [mannitol.md](mannitol.md) explains where its fraction comes from.
+
+**Optional — a drug reported in millimoles.** A drug whose source reports it in mmol/L
+(intravenous calcium, modelled as the change in ionized calcium) uses `mmol` as its CSV
+`Concentration.Units` and returns a `molar` block:
+
+```r
+molar = list(molecularWeight = 147.01)   # grams of the product as dosed per mole of what is plotted
+```
+
+`simCpCe()` converts a dose in g, mg, mcg or ng to millimoles with it, so dividing by the
+volumes in litres gives mmol/L; the panel is labelled mmol/L and starts at zero as usual.
+The weight is "grams of the product as dosed per mole of what is plotted", which need not be
+a true molecular weight. A drug given as more than one product returns one weight per
+product, named by a word its units carry:
+
+```r
+molar = list(molecularWeight = c(chloride = 147.01, gluconate = 147.01 * 3.11))
+```
+
+Intravenous calcium (`R/drugs_calcium.R`) is one drug for both salts, because both raise the
+same ionized calcium: its units are `g chloride`, `mg/min gluconate` and so on
+(`calciumUnits` in `R/constants.R`, built from `CALCIUM_SALTS`; there is no bare `g`),
+`doseProduct()` in `R/routes.R` reads the word, and `molarWeightOfDoses()` in
+`R/getDrugPK.R` gives `simCpCe()` the weight for each dose row, refusing a unit that names
+no product rather than guessing. Calcium gluconate's weight is calcium chloride's 147.01
+times the fitted dose ratio of 3.11, so a dose of either salt becomes millimoles of calcium
+chloride equivalent and runs through the one model. `validateMolar()` requires the block
+when the units are `mmol` and refuses it otherwise.
 
 **Optional — an active metabolite.** A drug whose effect is carried by a metabolite returns
 a `metabolite` block alongside the usual fields:
@@ -323,7 +374,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
 - `Concentration.Units` — `mcg` or `ng` per mL (sets the internal unit scaling in `simCpCe`),
-  or `mOsm` for an osmotic agent (see above).
+  `mOsm` for an osmotic agent, or `mmol` for a drug reported in mmol/L (see above).
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
@@ -344,10 +395,15 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Category` — the group the drug is listed under in the menu the app opens with: one of
   `DRUG_CATEGORIES` in `R/constants.R` (`Hypnotics and sedatives`, `Opioids`,
   `Oral analgesics`, `Neuromuscular blockade`, `Inhaled anesthetics`, `Antibiotics`,
-  `Corticosteroids`, `Antidepressants`, `Stimulants`, `Local anesthetics`, `Other`). Left blank, the drug is not offered there; only a metabolite with no units of its
+  `Corticosteroids`, `Antidepressants`, `Stimulants`, `Local anesthetics`, `Antiemetics`, `Antipsychotics`, `Other`, `Illicit drugs`). Left blank, the drug is not offered there; only a metabolite with no units of its
   own, and the carrier gases and ventilation, are blank. A new category goes into
   `DRUG_CATEGORIES`, and its checkbox id (`startupDrugs_<n>`) into `bookmarksToExclude` in
   `R/app_globals.R`. `test-startup-drugs.R` fails until both are done.
+  `Illicit drugs` (`ILLICIT_DRUG_CATEGORY`) is special: it is the category of the
+  opt-in drug-of-abuse research models (`R/illicit-drugs.R`). Those drugs are hidden
+  unless the user turns on **Show illicit drugs** (off by default), are shown in red in
+  the dose table, and are never offered in the startup menu. Give a drug this category
+  only if it is such a research model; diamorphine is the first (`R/drugs_diamorphine.R`).
 
 Example row (remifentanil):
 

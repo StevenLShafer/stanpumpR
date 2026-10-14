@@ -16,4 +16,4 @@ The shaded band, 4.1 to 9.4 mcg/mL, is the average concentration at the doses th
 
 ## Background
 
-[Gabapentin](help:drugs/gabapentin) records where the model comes from and how it was changed from the published one. [Oral, intramuscular and intranasal doses](help:models/absorption) explains first-order absorption, and how each oral dose of a drug with saturable absorption is scaled by its own fraction absorbed.
+[Gabapentin](help:drugs/gabapentin) records where the model comes from and how it was changed from the published one. [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption) explains first-order absorption, and how each oral dose of a drug with saturable absorption is scaled by its own fraction absorbed.

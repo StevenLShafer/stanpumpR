@@ -21,8 +21,9 @@ hydromorphone <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "https://pubmed.ncbi.nlm.nih.gov/12357147/ (disposition); ",
     "Coda BA et al., Anesth Analg 2003;97(1):117-123. ",
     "https://pubmed.ncbi.nlm.nih.gov/12818953/ (intranasal); ",
-    "Ritschel WA et al., J Clin Pharmacol 1987;27(9):647-653. ",
-    "https://pubmed.ncbi.nlm.nih.gov/2445789/ (oral bioavailability)"
+    "Lohela TJ et al., Anesth Analg 2021;133(2):423-434. ",
+    "https://pubmed.ncbi.nlm.nih.gov/33177323/ (oral: apparent oral ",
+    "clearance and time course of immediate-release hydromorphone)"
   )
   
   # Size scaling (see docs/weight-adjustment.md): the published parameters
@@ -39,14 +40,42 @@ hydromorphone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   cl2 <- v1Ref * k12 * size$clearance
   cl3 <- v1Ref * k13 * size$clearance
   
-  # Oral.  NOTE: the comment that used to sit here cited Lamminsalo and
-  # Mandema, which are OXYCODONE references; it was inherited from
-  # drugs_oxycodone.R and does not describe these numbers.  The values are
-  # left as they were.  For what it is worth, Ritschel 1987 measured absolute
-  # oral bioavailability at 51.4% (SD 29.3) in eight volunteers, so 0.6 sits
-  # at the upper end of a very wide observed range.
-  ka_PO <- 0.01                  # 1/min; gives a plasma peak at 46 min
-  bioavailability_PO <- 0.6
+  # Oral, recalibrated 2026-10-10 (Claude Code, at the request of Steven L.
+  # Shafer; see docs/meac-exposure.md section 4.2.1).
+  #
+  # The bioavailability used to be 0.6, which had no source: the comment
+  # beside it cited Lamminsalo and Mandema, OXYCODONE references copied from
+  # drugs_oxycodone.R.  At 0.6 an oral dose ran two to three times above the
+  # measured concentrations, and oral hydromorphone came out about nine times
+  # as potent as oral morphine against the CDC's five.
+  #
+  # Calibrated to Lohela 2021: 12 healthy fasted volunteers, 2.6 mg
+  # immediate-release hydromorphone hydrochloride (Palladon capsules), IV
+  # 0.02 mg/kg in the same subjects; placebo phase, geometric means: Cmax
+  # 1.48 ng/mL, median tmax 1.0 h (0.5-1.5), AUC0-last 6.60 ng.h/mL, CL/F
+  # 5.78 L/min, IV CL 1.88 L/min, F 0.33.
+  #
+  # F is NOT Lohela's 0.33.  Oral exposure is set by F / CL, and Lohela's
+  # subjects cleared hydromorphone faster (1.88 L/min) than Drover's, whose
+  # 1.30 L/min this model uses.  Lohela's F with Drover's clearance would
+  # overstate oral exposure by about 45%.  So, as for oral morphine, F is set
+  # so that the model's apparent oral clearance matches the one observed:
+  #     F = CL_model / (CL/F)_Lohela = 1.2992 / 5.78 = 0.225
+  # which agrees with the DILAUDID label (about 24% for the 8 mg tablet) and
+  # with Drover's own 0.19, measured in the subjects this disposition comes
+  # from.  Ritschel 1987 (51.4%, SD 29.3, n = 8) and Parab 1988 (same group)
+  # are at the high end of a range Lohela gives as 13% to 62%.
+  #
+  # ka was then fitted to Lohela's mean oral curve (Figure 1A, read from the
+  # plot, 0.5 to 8 h) with F fixed at 0.225.  The best fit is 0.0100 /min,
+  # the value the model already had, and it reproduces the curve to within
+  # about 15% at every sample: peak 1.18 ng/mL at 46 min against a mean
+  # curve of 1.18 to 1.30 ng/mL between the 0.5 and 1 h samples.  (The 1.48
+  # ng/mL Cmax in Lohela's table is the mean of individual peaks, which
+  # always exceeds the peak of the mean curve.)  No lag: the 0.5 h sample is
+  # already near the peak.
+  ka_PO <- 0.01                  # 1/min; plasma peak at 46 min
+  bioavailability_PO <- 0.225
   #
   # Oral liquid ("mg PO liquid", "mg/kg PO liquid").  The DILAUDID label
   # states that "bioequivalence between the DILAUDID 8 mg Tablet and an

@@ -4,11 +4,13 @@ Lidocaine's parameters are from Schnider and colleagues (*Anesthesiology* 1996;8
 
 ### Covariates
 
-Weight only, scaling the volumes and clearances linearly.
+Size only. By default, with *Adjust weight to fat-free mass* ticked, the volumes scale with the patient's fat-free mass relative to the 70 kg, 170 cm reference man and the clearances with that ratio to the 0.75 power, so height, age and sex enter through fat-free mass ([fat-free-mass scaling](help:models/fat-free-mass)). Schnider's model is per kilogram of total body weight, with fixed rate constants: unticking the box restores that, scaling the volumes and clearances linearly with weight.
 
 ### Regional anesthesia (RA)
 
 A dose in **mg RA** is a tissue injection (a nerve block or an infiltration). It enters a depot that is absorbed into the circulation by first-order kinetics, with the whole dose assumed to arrive (bioavailability 1) and no lag. The absorption rate, 0.0111/min (a half-time of 62 minutes), is the single rate that best reproduces, with this model's disposition, the arterial plasma curve after 600 mg of 1.5% lidocaine with epinephrine 5 mcg/mL for axillary block (Simon and colleagues, 2002; mean peak 2.87 mcg/mL at 26 minutes). The model peaks at 2.76 mcg/mL at about 42 minutes. Simon's own absorption half-time, 8.4 minutes, was fitted with their own disposition and does not transfer: with an independent intravenous model it predicts a peak of 6.9 mcg/mL. The rate describes axillary block with epinephrine; other sites and plain solutions absorb at different rates.
+
+A perineural catheter infusion is entered as **mg/hr RA**, a constant rate into the same tissue depot; see [the perineural infusion scenario](help:scenarios/lidocaine-perineural-infusion). For a block dose injected into a vein by mistake, see [the intravascular-injection scenario](help:scenarios/lidocaine-intravascular-injection).
 
 ### Effect site
 

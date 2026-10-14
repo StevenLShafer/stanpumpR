@@ -18,9 +18,9 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         cl1 = 0.78803912,
         cl2 = 3.1,
         cl3 = 1.005,
-        ka_SL = 0.0129498493,
+        ka_SL = 0.0171905401,
         bioavailability_SL = 0.422692,
-        tlag_SL = 0,
+        tlag_SL = 17.587178,
         ka_IN = 0.0227053660,
         bioavailability_IN = 0.482,
         tlag_IN = 0
@@ -119,16 +119,33 @@ simBup <- function(units, dose, maximum = 1440) {
 }
 
 test_that("16 mg sublingual peaks where the fitted single input does", {
-  # Hand calculation on the same disposition at F 0.14: Cmax 4.932 ng/mL at
-  # 49.65 min (published two-pathway input: 6.09 ng/mL at 52 min).  The
-  # dose-dependent fraction at 16 mg is 0.13843, so 4.932 x 0.13843 / 0.14.
+  # Hand calculation on the same disposition at F 0.14, with the fitted lag:
+  # Cmax 5.8589 ng/mL at 55.59 min (published two-pathway input: 6.09 ng/mL
+  # at 52 min).  The dose-dependent fraction at 16 mg is 0.13843, so
+  # 5.8589 x 0.13843 / 0.14 = 5.7933.
   r <- simBup("mg SL", 16)
   cp <- r[r$Site == "Plasma", ]
   i <- which.max(cp$Y)
-  expect_equal(cp$Y[i], 4.8768, tolerance = 0.005)
-  expect_true(abs(cp$Time[i] - 49.65) < 2)
-  # The concentration at 24 h, 0.2837 x 0.98880 (published 0.338)
-  expect_equal(cp$Y[cp$Time == 1440], 0.2805, tolerance = 0.005)
+  expect_equal(cp$Y[i], 5.7933, tolerance = 0.005)
+  # The time grid is geometric from the dose, so the true peak time lies
+  # between the grid points either side of the plotted maximum
+  expect_true(cp$Time[i - 1] < 55.59 && 55.59 < cp$Time[i + 1])
+  # Nothing reaches the plasma until the lag has passed
+  expect_true(all(cp$Y[cp$Time < 17.5] == 0))
+  # The concentration at 24 h, 0.2835 x 0.98880 (published 0.338)
+  expect_equal(cp$Y[cp$Time == 1440], 0.2803, tolerance = 0.005)
+})
+
+test_that("the time until threshold is blank during the sublingual lag only", {
+  # The cost of the lag (see the header): no state for the dose until it has
+  # passed, so the readout is NA for 17.6 min after the dose, then a time.
+  d <- data.frame(Drug = "buprenorphine", Time = 0, Dose = 16, Units = "mg SL")
+  r <- simulateDrugsWithCovariates(d, noEvents, 72.4, 170, 35, "male",
+                                   600, TRUE, adjustToFFM = FALSE)
+  rec <- r$buprenorphine$results
+  rec <- rec[rec$Site == "Recovery", ]
+  expect_true(all(is.na(rec$Y[rec$Time > 0 & rec$Time < 17.5])))
+  expect_false(anyNA(rec$Y[rec$Time > 18]))
 })
 
 test_that("0.3 mg intranasal peaks at Eriksen's 30.6 minutes", {

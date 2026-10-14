@@ -123,7 +123,10 @@ opioidMacReduction <- function(U, Emax = OPIOID_MAC_EMAX, U50 = OPIOID_MAC_U50,
 #' @export
 totalOpioidMEAC <- function(drugs)
 {
-  es <- lapply(drugs, function(d) d$equiSpace)
+  # A companion entry (the Minto model drawn beside the library's
+  # remifentanil; R/alternativeModels.R) is a second line of the same drug,
+  # not a second opioid, so it is left out of the sum.
+  es <- lapply(drugs, function(d) if (isAlternativeModelEntry(d)) NULL else d$equiSpace)
   es <- es[!vapply(es, is.null, logical(1))]
   es <- es[vapply(es, function(e) any(e$MEAC > 0, na.rm = TRUE), logical(1))]
   if (length(es) == 0) return(NULL)

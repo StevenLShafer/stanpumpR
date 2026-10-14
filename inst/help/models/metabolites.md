@@ -1,4 +1,4 @@
-Several opioids, and amiodarone, act partly or wholly through a metabolite the body forms from them. stanpumpR models this with a **metabolite link**: a drug's model may name another drug as its active metabolite, and then a dose of the parent produces a second curve for the metabolite, on the metabolite's own row.
+Several opioids, and a number of other drugs (amiodarone, aspirin, prednisone, three antidepressants and two antipsychotics), act partly or wholly through a metabolite the body forms from them. stanpumpR models this with a **metabolite link**: a drug's model may name another drug as its active metabolite, and then a dose of the parent produces a second curve for the metabolite, on the metabolite's own row.
 
 ## Which drugs form which
 
@@ -10,7 +10,12 @@ Several opioids, and amiodarone, act partly or wholly through a metabolite the b
 | [oxycodone](help:drugs/oxycodone) | [oxymorphone](help:drugs/oxymorphone) | Oxymorphone is also a drug in its own right. |
 | [amiodarone](help:drugs/amiodarone) | [desethylamiodarone](help:drugs/desethylamiodarone) | Not a prodrug: both are active and appear equally potent, and neither has an effect site. All of amiodarone's clearance forms the metabolite, mass for mass, as Pollak and colleagues modelled it. Oral only, as a constant daily rate. Not CYP2D6-dependent. |
 | [fluoxetine](help:drugs/fluoxetine) | [norfluoxetine](help:drugs/norfluoxetine) | Not a prodrug: both are active, and neither has an effect site. All of fluoxetine's clearance forms the metabolite, mass for mass (Han and colleagues). Oral only. Fitted to steady-state troughs alone: the half-lives are hours, not days, so only the trough is valid. |
+| [venlafaxine](help:drugs/venlafaxine) | [desvenlafaxine](help:drugs/desvenlafaxine) | Not a prodrug: both are active, and neither has an effect site. All of venlafaxine's clearance forms ODV, mole for mole, and 4.8% of each oral dose is converted during first pass (Wang and colleagues). Oral only. |
 | [bupropion](help:drugs/bupropion) | [hydroxybupropion](help:drugs/hydroxybupropion) | Not a prodrug: both are active, and neither has an effect site. A fixed tenth of bupropion's clearance forms the metabolite (Ghimire and colleagues), which makes the metabolite's tiny apparent volumes conditional on that assumption, so hydroxybupropion cannot be dosed. Oral only; the sustained-release tablet. Not CYP2D6-dependent (CYP2B6 forms it; no field). |
+| [aspirin](help:drugs/aspirin) | [salicylate](help:drugs/salicylate) | Not a prodrug: both are active, and neither has an effect site. All of aspirin's elimination forms salicylate, and 19.7% of each oral dose reaches the circulation already as salicylate (first pass). Oral only, the low-dose enteric-coated tablet. Not CYP2D6-dependent. |
+| [prednisone](help:drugs/prednisone) | [prednisolone](help:drugs/prednisolone) | A prodrug: prednisone has no effect site, and prednisolone is also a drug in its own right. The two interconvert; the one-way link is calibrated so that both exposures are exact and the shapes approximate. Oral only. Not CYP2D6-dependent. |
+| [risperidone](help:drugs/risperidone) | [hydroxyrisperidone](help:drugs/hydroxyrisperidone) | Not a prodrug: both are active, and neither has an effect site. Apparent oral parameters: all of risperidone's apparent clearance forms the metabolite, whose parameters are scaled by the unknown fraction formed, so hydroxyrisperidone cannot be dosed. Oral only. CYP2D6-dependent. |
+| [aripiprazole](help:drugs/aripiprazole) | [dehydroaripiprazole](help:drugs/dehydroaripiprazole) | Aripiprazole has an effect site (D2 receptor occupancy); the metabolite has none. Apparent oral parameters scaled as for risperidone, so dehydroaripiprazole cannot be dosed. Oral only. CYP2D6-dependent. |
 
 ## How it is computed
 
@@ -22,9 +27,9 @@ Because a contribution crosses from one drug's row to another's, the metabolite 
 
 ## A prodrug has no effect site
 
-Codeine and tramadol are given a time to peak effect of zero, so they have no effect site: only the plasma concentration is plotted, their MEAC is zero, and the effect appears entirely on the metabolite's row. Their shaded bands are plasma-concentration ranges, not therapeutic effect-site ranges. See [The effect site and ke0](help:models/effect-site).
+Codeine, tramadol and prednisone are given a time to peak effect of zero, so they have no effect site: only the plasma concentration is plotted, their MEAC is zero, and the effect appears entirely on the metabolite's row. Their shaded bands are plasma-concentration ranges, not therapeutic effect-site ranges. See [The effect site and ke0](help:models/effect-site).
 
-Amiodarone has no effect site either, but it is **not** a prodrug: it is active itself, and simply has no published equilibration model for its antiarrhythmic effect. Its row and its metabolite's both plot serum concentrations, and its shaded band is the therapeutic window for serum amiodarone.
+Amiodarone has no effect site either, but it is **not** a prodrug: it is active itself, and simply has no published equilibration model for its antiarrhythmic effect. Its row and its metabolite's both plot serum concentrations, and its shaded band is the therapeutic window for serum amiodarone. Aspirin, the three antidepressant parents and risperidone are likewise active themselves with no effect site.
 
 ## Time until threshold across the link
 
@@ -34,7 +39,7 @@ The sum is exact at every point of the merged row, because the whole intravenous
 
 ## CYP2D6 phenotype
 
-All four opioid links are CYP2D6-dependent, so the **CYP 2D6** field in the Patient Profile scales formation; amiodarone's link is not, and the field does not change it. The phenotypes are the terms the genotyping laboratories report: poor, intermediate, normal and ultrarapid, with normal as the reference the formation parameters are published against. Each parent's page shows the effect of phenotype on its formation rate, and on its own clearance where formation is a branch of it. This is the work that activated the CYP 2D6 field, which was present but disabled before.
+All four opioid links are CYP2D6-dependent, so the **CYP 2D6** field in the Patient Profile scales formation. So are risperidone's and aripiprazole's, through the parent's apparent clearance, all of which forms the metabolite. The other links (amiodarone, aspirin, prednisone, and the antidepressants) are not, and the field does not change them. The phenotypes are the terms the genotyping laboratories report: poor, intermediate, normal and ultrarapid, with normal as the reference the formation parameters are published against. Each parent's page shows the effect of phenotype on its formation rate, and on its own clearance where formation is a branch of it. This is the work that activated the CYP 2D6 field, which was present but disabled before.
 
 ## What is not modelled
 

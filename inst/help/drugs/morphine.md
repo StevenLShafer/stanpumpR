@@ -29,3 +29,7 @@ Morphine-6-glucuronide is an active metabolite that accumulates in renal failure
 ### Where to be careful
 
 Renal function, which governs the metabolite, is not a covariate. The model describes young healthy volunteers; the elderly and the renally impaired lie outside it. The naloxone scenario shows how morphine's slow kinetics outlast its antagonist: [Naloxone after morphine](scenario:naloxone-morphine).
+
+### Pregnancy
+
+With **Pregnant** ticked, the elimination clearance is multiplied by 1.7 and nothing else moves. The review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) reports morphine's volume of distribution unchanged in pregnancy and its clearance increased by more than 70 per cent, by glucuronidation, so the half-life falls. The data are from late pregnancy and labour. Morphine-6-glucuronide, whose formation rises with the clearance, is not modelled. See [Pregnancy](help:models/pregnancy).

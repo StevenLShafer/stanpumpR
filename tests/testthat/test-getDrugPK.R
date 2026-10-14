@@ -290,6 +290,15 @@ test_that("getDrugPK() carries the library's endCe, so direct recovery works", {
 })
 
 test_that("the CYP2C19 phenotype is validated and reaches only the models that name it", {
+  expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = "fast"),
+               "Invalid cyp2b6")
+  expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = CYP2B6_VALUES),
+               "Invalid cyp2b6")
+  # A drug that does not name it is unaffected; methadone, which does, is not
+  expect_equal(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = "poor")$PK,
+               getDrugPK("remifentanil", 70, 170, 50, "male")$PK)
+  expect_lt(getDrugPK("methadone", 70, 170, 50, "male", cyp2b6 = "poor")$PK$default$cl1,
+            getDrugPK("methadone", 70, 170, 50, "male")$PK$default$cl1)
   expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = "extensive"),
                "Invalid cyp2c19")
   expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = CYP2C19_VALUES),

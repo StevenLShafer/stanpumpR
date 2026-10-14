@@ -7,7 +7,7 @@ Opens the table behind every drug. The columns are:
 | Column | Meaning |
 |---|---|
 | Drug | The name, as it appears in the dose table |
-| Concentration.Units | `mcg` or `ng`: the drug is plotted in these units per mL (`%` for the gases) |
+| Concentration.Units | `mcg` or `ng`: the drug is plotted in these units per mL (`%` for the gases, `mOsm` for mannitol, plotted as mOsm/kg) |
 | Bolus.Units, Infusion.Units | The units a bolus and an infusion are expressed in internally; also used by Suggest Dosing |
 | Default.Units | The unit a new row starts with |
 | Units | The comma-separated list offered in the dose table |

@@ -344,6 +344,10 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     }
     if (hasCe)
     {
+      # getDrugPK() already keeps ke0 off its own set's eigenvalues; this is
+      # the same guard for a parameter table built by other means.
+      tie <- abs(lam - ke0) < 1e-10 * pmax(abs(lam), ke0)
+      ke0 <- ifelse(apply(tie, 1, any), ke0 * (1 + 1e-8), ke0)
       a <- P * ke0 / (ke0 - lam)
       recoveryStates <- recoveryStateSet(timeLine, cbind(a, Ce - rowSums(a)), cbind(lam, ke0),
                                          pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine))

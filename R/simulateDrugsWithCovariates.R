@@ -16,6 +16,10 @@
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 #' @param cyp2c19 CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
 #'   Only drugs whose model declares it are affected.
+#' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES}.
+#'   Only drugs whose model declares it (phenytoin) are affected.
+#' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
+#'   Only drugs whose model declares it (methadone) are affected.
 #' @param osmolality baseline serum osmolality in mOsm/kg.  Only an osmotic
 #'   agent (mannitol), which is reported as serum osmolality, is affected.
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
@@ -24,6 +28,10 @@
 #' @param adjustToFFM scale each model's volumes and clearances to the patient's
 #'   fat-free mass (the default) rather than total body weight; see
 #'   `docs/weight-adjustment.md`.
+#' @param pregnant is the patient pregnant?  TRUE or FALSE (the default); TRUE
+#'   requires \code{sex = "female"}.  Only the models that name it apply the
+#'   changes of late pregnancy described by Ansari, Carvalho, Shafer and Flood
+#'   (Anesth Analg 2016;122:786-804); see \code{getDrugPK()}.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -37,7 +45,10 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          adjustToFFM = TRUE,
                                          osmolality = OSMOLALITY_DEFAULT,
                                          creatinine = NULL,
-                                         cyp2c19 = CYP2C19_DEFAULT)
+                                         cyp2c19 = CYP2C19_DEFAULT,
+                                         cyp2c9 = CYP2C9_DEFAULT,
+                                         cyp2b6 = CYP2B6_DEFAULT,
+                                         pregnant = FALSE)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -67,9 +78,9 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   {
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
-                    cyp2c19 = cyp2c19,
+                    cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
-                    adjustToFFM = adjustToFFM)
+                    pregnant = pregnant, adjustToFFM = adjustToFFM)
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
 
@@ -100,9 +111,10 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     if (target %in% drugList) next
     targetDefaults <- getDrugDefaults(target)
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
-                          cyp2d6 = cyp2d6, cyp2c19 = cyp2c19,
-                          osmolality = osmolality,
-                          creatinine = creatinine, adjustToFFM = adjustToFFM)
+                          cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+                          cyp2b6 = cyp2b6, osmolality = osmolality,
+                          creatinine = creatinine, pregnant = pregnant,
+                          adjustToFFM = adjustToFFM)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

@@ -201,14 +201,14 @@ test_that("the continuous RA infusion unit is RA by route and a rate by kind", {
   expect_false(any(raRateUnits %in% c(infusionUnits, raUnits, scheduledUnits)))
   dd <- getDrugDefaultsGlobal()
   offers <- dd$Drug[vapply(dd$Units, function(u) any(u %in% raRateUnits), logical(1))]
-  expect_setequal(offers, c("bupivacaine", "ropivacaine"))
+  expect_setequal(offers, c("bupivacaine", "ropivacaine", "lidocaine"))
 })
 
 test_that("a continuous RA infusion runs into the depot, matching an independent solution", {
-  # Bupivacaine and ropivacaine (one depot), and mepivacaine (two depots),
-  # which does not offer the unit but whose slow depot the engine must
-  # carry the same way.  A bolus and 12 mg/hr from 0, stopped at 240 min.
-  for (drug in c("bupivacaine", "ropivacaine", "mepivacaine")) {
+  # Bupivacaine, ropivacaine and lidocaine (one depot), and mepivacaine (two
+  # depots), which does not offer the unit but whose slow depot the engine
+  # must carry the same way.  A bolus and 12 mg/hr from 0, stopped at 240 min.
+  for (drug in c("bupivacaine", "ropivacaine", "lidocaine", "mepivacaine")) {
     PK <- raPK(drug)
     s <- PK$PK$default
     DT <- data.frame(Drug = drug, Time = c(0, 0, 240), Dose = c(50, 12, 0),
@@ -228,6 +228,18 @@ test_that("a long continuous RA infusion settles at F x rate / CL", {
   w <- simCpCe(DT, noEvents, PK, 4320, FALSE)$wide
   expect_equal(utils::tail(w$Plasma, 1), s$bioavailability_RA * (10 / 60) / s$cl1,
                tolerance = 1e-6)
+})
+
+test_that("a continuous RA infusion carries a drug with an effect site to the same plateau", {
+  # Lidocaine has a ke0, so the effect site rides on the RA infusion too: at
+  # steady state both settle at F x rate / CL.
+  PK <- raPK("lidocaine")
+  s <- PK$PK$default
+  DT <- data.frame(Drug = "lidocaine", Time = 0, Dose = 100, Units = "mg/hr RA")
+  w <- simCpCe(DT, noEvents, PK, 2880, FALSE)$wide
+  css <- s$bioavailability_RA * (100 / 60) / s$cl1
+  expect_equal(utils::tail(w$Plasma, 1), css, tolerance = 1e-6)
+  expect_equal(utils::tail(w$Effect, 1), css, tolerance = 1e-6)
 })
 
 test_that("a continuous RA infusion is not run as an intravenous infusion", {

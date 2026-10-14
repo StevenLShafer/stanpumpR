@@ -162,8 +162,8 @@
 # is for miosis, not analgesia.
 #
 # TO BE CHECKED: kept at 12 by decision of Steven L. Shafer (2026-10-10),
-# pending a separate review of the MEAC of every opioid in the library for
-# outliers.  With this model's 11-minute ke0 the effect site runs much closer
+# pending a separate audit of the MEAC and tPeak of every opioid in the
+# library for outliers, to be done as its own piece of work.  With this model's 11-minute ke0 the effect site runs much closer
 # to plasma than under the old 60-minute tPeak, so 10 mg by mouth now peaks
 # at about 18 ng/mL in the effect site, against 12.
 #
@@ -201,10 +201,27 @@
 # in a poor/intermediate group of 13 intermediate and one poor metaboliser,
 # which corroborates it.
 #
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 3,
+# from Kokki 2012, intravenous oxycodone in the first stage of labour):
+# "Increased clearance via increased GFR as well as induction of CYP3A4 and
+# CYP2D6 ... Shorter elimination half-time in laboring women (decreased from
+# 3.8 to 2.6 h)".  The review's only figure is the pair of half-times, so
+# with the Patient Profile's Pregnant field on the elimination clearance CL1
+# is multiplied by OXYCODONE_PREGNANCY_CL_FACTOR = 3.8 / 2.6 = 1.46, which
+# reproduces that ratio of half-times if the volumes are unchanged, as
+# nothing in the review says otherwise.  The renal factor above is not
+# touched: it is capped at an eGFR of 100, so the higher filtration of
+# pregnancy would not move it, and the half-time ratio already contains
+# whatever the kidney contributed.  Oxymorphone formation is left as it is;
+# the review attributes part of the faster clearance to CYP2D6 induction but
+# gives no figure for the metabolite.  See R/pregnancy.R.
+#
 # References
 # ----------
 # Poyhia R, Olkkola KT, Seppala T, Kalso E. Br J Clin Pharmacol
-#   1991;32:516-518.  https://doi.org/10.1111/j.1365-2125.1991.tb03943.x
+#   1991;32:516-518.  https://doi.org/10.1111/j.1365-2125.1991.tb03942.x
 # Kirvela M, Lindgren L, Seppala T, Olkkola KT. J Clin Anesth 1996;8:13-18.
 #   https://doi.org/10.1016/0952-8180(95)00092-5
 # Liukas A, Kuusniemi K, Aantaa R, et al. Drugs Aging 2011;28:41-50.
@@ -215,7 +232,14 @@
 #   2017;18:337-348.  https://doi.org/10.2217/pgs-2016-0183
 # Samer CF et al. Br J Pharmacol 2010;160:919-930.
 #   https://doi.org/10.1111/j.1476-5381.2010.00709.x
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
 # -----------------------------------------------------------------------------
+
+# Elimination clearance in pregnancy relative to the pooled value: the
+# nonpregnant over the labouring elimination half-time in Ansari 2016 (see
+# the header).
+OXYCODONE_PREGNANCY_CL_FACTOR <- 3.8 / 2.6
 
 # Relative CYP2D6 activity for oxymorphone formation, normal = 1 (see header)
 OXYCODONE_CYP2D6_WEIGHT <- c(
@@ -242,11 +266,13 @@ OXYCODONE_CYP2D6_WEIGHT <- c(
 #'   0.75 power; when \code{FALSE}, scale both linearly with total weight
 #' @param creatinine serum creatinine in mg/dL, or NULL for an assumed normal
 #'   value for age and sex
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   elimination clearance by 3.8/2.6 (Ansari 2016; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   oxymorphone as the formed active metabolite
 #' @export
 oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
-                      adjustToFFM = TRUE, creatinine = NULL)
+                      adjustToFFM = TRUE, creatinine = NULL, pregnant = FALSE)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
@@ -269,6 +295,8 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   ageFactor <- 1 - AGE_SLOPE * max(0, age - AGE_REF)
   eGFR <- egfrCKDEPI2009(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
   renalFactor <- 1 - RENAL_FRACTION * (1 - min(eGFR, EGFR_NORMAL) / EGFR_NORMAL)
+  # Pregnancy (see the header): elimination clearance only.
+  clPregnancy <- if (isTRUE(pregnant)) OXYCODONE_PREGNANCY_CL_FACTOR else 1
 
   # Size scaling (see docs/weight-adjustment.md).  The published values are
   # per kilogram, so with the switch off both scale with total weight / 70.
@@ -279,7 +307,7 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   v2  <- vss - v1
   v3  <- 1                      # no third compartment
   clRef <- CL_PER_KG * 70 * size$clearance
-  cl1 <- clRef * ageFactor * renalFactor
+  cl1 <- clRef * ageFactor * renalFactor * clPregnancy
   cl2 <- Q_OVER_CL * clRef      # distribution is not adjusted for age or renal function
   cl3 <- 0
 
@@ -287,6 +315,18 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   bioavailability_PO <- 0.67
   ka_PO   <- 0.01               # 1/min, absorption half-time 69 min
   tlag_PO <- 0                  # no lag (see header)
+  #
+  # Oral liquid ("mg PO liquid", "mg/kg PO liquid") takes these same oral
+  # parameters, exactly as "mg PO" does, and is deliberately not listed in
+  # oralFormulations.  Two head-to-head comparisons find solution and
+  # immediate-release tablet equivalent.  The ROXICODONE label, 15 mg fasted,
+  # single dose: solution Cmax 21.1, AUC 130.6 ng.h/mL, tmax 1.9 h; tablet
+  # 22.2, 128.2, 1.4 h.  FDA clinical pharmacology review of NDA 200535,
+  # 15 mg of the 20 mg/mL solution against a 15 mg ROXICODONE tablet,
+  # fasted: geometric mean ratios 105.2% (Cmax), 108.5% (AUCt) and 107.6%
+  # (AUCinf), inside the 80-125% bioequivalence limits.  The liquid is not
+  # absorbed faster, unlike morphine's.  (Claude Code, 2026-10-10, at the
+  # request of Steven L. Shafer.)
 
   # --- Effect site, Lalovic 2006: t1/2 ke0 11 min ---
   tPeak <- 12.35                # min after an IV bolus, reference patient
@@ -306,6 +346,10 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
     "Pharmacogenomics 2017;18:337-348 (CYP2D6). ",
     "https://doi.org/10.1016/j.clpt.2006.01.009"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      "clearance x 3.8/2.6 (elimination half-time 3.8 to 2.6 h in labour)"))
+  }
 
   default <- list(
     v1 = v1,

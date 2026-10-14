@@ -87,6 +87,10 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # Oral doses appear after their absorption lag.
   givenAt <- dose$Time
   if (hasPO) dose$Time[dose$PO] <- dose$Time[dose$PO] + pkSet$tlag_PO
+  # The second oral depot (getDrugPK()), whose rows simCpCe() flags PO2, with
+  # its own lag.
+  hasPO2 <- !is.null(dose$PO2) && any(dose$PO2)
+  if (hasPO2) dose$Time[dose$PO2] <- dose$Time[dose$PO2] + pkSet$tlag_PO2
 
   # Timeline: dose times, the instant before each dose, and a geometric fill so
   # the early curvature is drawn smoothly.
@@ -108,6 +112,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   # metabolite's own ke0, which is what the plotted effect actually follows.
   before <- dose$Bolus
   if (hasPO) before <- before | dose$PO
+  if (hasPO2) before <- before | dose$PO2
   timeLine <- simulationTimeGrid(
     c(dose$Time, dose$Time[before] - PRE_DOSE_OFFSET,
       givenAt[givenAt < dose$Time]),
@@ -119,9 +124,16 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
 
   # The oral line is all zero when there is no oral dose, and an oral row is
   # never an infusion, which is what the loop this replaced did with hasPO.
-  inputs    <- doseLines(dose, timeLine, "PO")
+  inputs    <- doseLines(dose, timeLine, c("PO", "PO2"))
   bolusLine <- inputs$bolus
   poLine    <- inputs$PO
+  po2Line   <- inputs$PO2
+  # Oral input to the parent's disposition states: both depots feed them.
+  poIn <- function(prefix, j) {
+    x <- pkSet[[paste0(prefix, "_coef_PO_", j)]] * poLine
+    if (hasPO2) x <- x + pkSet[[paste0(prefix, "_coef_PO2_", j)]] * po2Line
+    x
+  }
   rate      <- inputs$rate
   dt        <- inputs$dt
 
@@ -134,15 +146,15 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
   p_state_l1 <- advanceStatePO(l1_dt,
                                pkSet$p_coef_bolus_l1 * bolusLine,
                                pkSet$p_coef_infusion_l1 * rate * (1 - l1_dt),
-                               pkSet$p_coef_PO_l1 * poLine, doseNA, doseNA, L)
+                               poIn("p", "l1"), doseNA, doseNA, L)
   p_state_l2 <- advanceStatePO(l2_dt,
                                pkSet$p_coef_bolus_l2 * bolusLine,
                                pkSet$p_coef_infusion_l2 * rate * (1 - l2_dt),
-                               pkSet$p_coef_PO_l2 * poLine, doseNA, doseNA, L)
+                               poIn("p", "l2"), doseNA, doseNA, L)
   p_state_l3 <- advanceStatePO(l3_dt,
                                pkSet$p_coef_bolus_l3 * bolusLine,
                                pkSet$p_coef_infusion_l3 * rate * (1 - l3_dt),
-                               pkSet$p_coef_PO_l3 * poLine, doseNA, doseNA, L)
+                               poIn("p", "l3"), doseNA, doseNA, L)
 
   Cp <- p_state_l1 + p_state_l2 + p_state_l3
   if (hasPO && pkSet$ka_PO > 0)
@@ -150,6 +162,14 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     ka_dt <- exp(-pkSet$ka_PO * dt)
     Cp <- Cp + advanceStatePO(ka_dt, doseNA, doseNA,
                               pkSet$p_coef_PO_ka * poLine, doseNA, doseNA, L)
+  }
+  # The second depot's own state, kept apart for the time until threshold.
+  p_state_ka2 <- doseNA
+  if (hasPO2)
+  {
+    p_state_ka2 <- advanceStatePO(exp(-pkSet$ka_PO2 * dt), doseNA, doseNA,
+                                  pkSet$p_coef_PO2_ka * po2Line, doseNA, doseNA, L)
+    Cp <- Cp + p_state_ka2
   }
 
   # The parent's effect site is worked out below, from its own states,
@@ -173,7 +193,7 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
         lk_dt,
         coefs$bolus[k] * bolusLine,
         coefs$infusion[k] * rate * (1 - lk_dt),
-        coefs$PO[k] * poLine,
+        coefs$PO[k] * poLine + (if (is.null(coefs$PO2)) 0 else coefs$PO2[k] * po2Line),
         doseNA, doseNA, L
       )
     }
@@ -251,19 +271,19 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     e_state_l1 <- advanceStatePO(l1_dt,
                                  pkSet$e_coef_bolus_l1 * bolusLine,
                                  pkSet$e_coef_infusion_l1 * rate * (1 - l1_dt),
-                                 pkSet$e_coef_PO_l1 * poLine, doseNA, doseNA, L)
+                                 poIn("e", "l1"), doseNA, doseNA, L)
     e_state_l2 <- advanceStatePO(l2_dt,
                                  pkSet$e_coef_bolus_l2 * bolusLine,
                                  pkSet$e_coef_infusion_l2 * rate * (1 - l2_dt),
-                                 pkSet$e_coef_PO_l2 * poLine, doseNA, doseNA, L)
+                                 poIn("e", "l2"), doseNA, doseNA, L)
     e_state_l3 <- advanceStatePO(l3_dt,
                                  pkSet$e_coef_bolus_l3 * bolusLine,
                                  pkSet$e_coef_infusion_l3 * rate * (1 - l3_dt),
-                                 pkSet$e_coef_PO_l3 * poLine, doseNA, doseNA, L)
+                                 poIn("e", "l3"), doseNA, doseNA, L)
     e_state_ke0 <- advanceStatePO(ke0_dt,
                                   pkSet$e_coef_bolus_ke0 * bolusLine,
                                   pkSet$e_coef_infusion_ke0 * rate * (1 - ke0_dt),
-                                  pkSet$e_coef_PO_ke0 * poLine, doseNA, doseNA, L)
+                                  poIn("e", "ke0"), doseNA, doseNA, L)
     states  <- list(e_state_l1, e_state_l2, e_state_l3, e_state_ke0)
     lambdas <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3, pkSet$ke0)
     if (hasPO && pkSet$ka_PO > 0)
@@ -272,6 +292,13 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
       states[[5]] <- advanceStatePO(ka_dt, doseNA, doseNA,
                                     pkSet$e_coef_PO_ka * poLine, doseNA, doseNA, L)
       lambdas <- c(lambdas, pkSet$ka_PO)
+    }
+    if (hasPO2)
+    {
+      states[[length(states) + 1]] <- advanceStatePO(
+        exp(-pkSet$ka_PO2 * dt), doseNA, doseNA,
+        pkSet$e_coef_PO2_ka * po2Line, doseNA, doseNA, L)
+      lambdas <- c(lambdas, pkSet$ka_PO2)
     }
     recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending)
     Ce <- rowSums(recoveryStates$state)
@@ -283,8 +310,13 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     lambdas <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3)
     if (hasPO && pkSet$ka_PO > 0)
     {
-      states[[4]] <- Cp - p_state_l1 - p_state_l2 - p_state_l3
+      states[[4]] <- Cp - p_state_l1 - p_state_l2 - p_state_l3 - p_state_ka2
       lambdas <- c(lambdas, pkSet$ka_PO)
+    }
+    if (hasPO2)
+    {
+      states[[length(states) + 1]] <- p_state_ka2
+      lambdas <- c(lambdas, pkSet$ka_PO2)
     }
     recoveryStates <- recoveryStateSet(timeLine, states, lambdas, pending,
                                        horizon = recoveryHorizonPlasma(maximum))

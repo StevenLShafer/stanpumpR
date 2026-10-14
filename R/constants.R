@@ -54,11 +54,43 @@ CYP2C19_VALUES  <- c(CYP2C19_POOR, CYP2C19_INTERMEDIATE, CYP2C19_NORMAL,
                      CYP2C19_RAPID, CYP2C19_ULTRARAPID)
 CYP2C19_DEFAULT <- CYP2C19_NORMAL
 
+# CYP2B6 metaboliser phenotype, the five CPIC categories (Robinson et al.,
+# Clin Pharmacol Ther 2024;116:932-938, Table 1), read by the models that name
+# it (methadone, whose hepatic clearance of each enantiomer depends on it;
+# R/drugs_methadone.R).  "normal" (*1/*1) is the reference: Henthorn and
+# Kharasch fitted their typical values in normal metabolisers.  CPIC's rapid
+# and ultrarapid categories carry no transportable estimate for methadone, so
+# a model may legitimately give them the normal metaboliser's parameters; the
+# drug file says so where it does.
+CYP2B6_POOR         <- "poor"
+CYP2B6_INTERMEDIATE <- "intermediate"
+CYP2B6_NORMAL       <- "normal"
+CYP2B6_RAPID        <- "rapid"
+CYP2B6_ULTRARAPID   <- "ultrarapid"
+CYP2B6_VALUES  <- c(CYP2B6_POOR, CYP2B6_INTERMEDIATE, CYP2B6_NORMAL,
+                    CYP2B6_RAPID, CYP2B6_ULTRARAPID)
+CYP2B6_DEFAULT <- CYP2B6_NORMAL
+
+# CYP2C9 DIPLOTYPE, read by the models that name it: meloxicam, whose genotype
+# effect on clearance is estimated per allele (Aoyama 2017), and phenytoin,
+# which maps the diplotype to a maximal-elimination-rate multiplier through the
+# CPIC activity score (Karnes et al., Clin Pharmacol Ther 2021;109:302-309;
+# Odani 1997 measured the *1/*3 effect).  The six common *1/*2/*3 diplotypes;
+# *1/*1 (two normal-function alleles) is the reference.  Kept apart from CYP2D6
+# and CYP2C19, and from any drug interaction: each is its own field.
+CYP2C9_VALUES  <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
+CYP2C9_DEFAULT <- "*1/*1"
+
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
 # their own contribution on top of it.  The default, 280, is within the normal
 # adult range (about 275 to 295); the user enters the patient's measured value.
 OSMOLALITY_DEFAULT <- 280
+
+# Remifentanil switches from Eleveld's model to Kim's obesity model at BMI 30,
+# but only from this age: Kim's subjects were adults (20 to 85 years), while
+# Eleveld's model was fitted down to infancy (R/drugs_remifentanil.R).
+REMIFENTANIL_KIM_MIN_AGE <- 18
 MIN_OSMOLALITY <- 200
 MAX_OSMOLALITY <- 400
 
@@ -146,15 +178,40 @@ poRateUnits <- c("mg/day PO")
 # "mg PO" does (hydromorphone's liquid).  (Claude Code, 2026-10-10, at the
 # request of Steven L. Shafer.)
 #
+# The antiseizure drugs added "ER" (extended release) and "DR" (delayed
+# release, enteric coated): one drug, one systemic disposition, and an input
+# of each product's own, so a patient switched from immediate- to extended-
+# release is one row each on the same drug rather than two drugs.  (Claude
+# Code, 2026-10-10, at the request of Steven L. Shafer.)
+#
 # "XR" is an extended-release product released in pulses: a drug that lists
 # it in `oralPulses` gives each XR dose as fixed fractions at fixed delays,
 # each absorbed as its default oral form (R/oral-pulses.R; first user:
 # mixedAmphetamineSalts, Adderall XR).
-ORAL_FORMULATIONS <- c("tablet", "liquid", "XR")
+ORAL_FORMULATIONS <- c("tablet", "liquid", "ER", "DR", "XR")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
 
+# Prodrug equivalents: fosphenytoin is prescribed in phenytoin sodium
+# equivalents (PE), and its units say so, so a dose is never read as mg of
+# fosphenytoin.  Offered only by a drug with a Michaelis-Menten block that
+# carries the conversion (R/drugs_phenytoin.R, R/advanceMichaelisMenten.R).
+peUnits <- c("mg PE", "mg/kg PE", "mg PE IM", "mg/kg PE IM", "mg PE/min")
+
+# Intravenous calcium (R/drugs_calcium.R): one drug, two salts, and every
+# dose must say which, because 1 g of calcium gluconate carries a third of
+# the calcium in 1 g of calcium chloride and the substitution has killed
+# patients (Ansari 2025).  The salt is a word after the mass unit, as "PE"
+# names the prodrug; it carries no route word, so doseRoute() reads these
+# as intravenous, and isRateUnit() still finds "/min" and "/hr".  The
+# `molar` block of the drug names the grams of each salt per mole of what is
+# plotted, keyed by these words (validateMolar() in R/getDrugPK.R).  All
+# of one salt's units, then all of the other's.
+CALCIUM_SALTS <- c("chloride", "gluconate")
+calciumBaseUnits <- c("g", "mg", "mg/kg", "mg/min", "mg/hr", "mg/kg/hr", "g/hr")
+calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
-              slUnits, inUnits, imUnits, raUnits, raRateUnits)
+              slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -196,8 +253,15 @@ DRUG_CATEGORIES <- c(
   "Stimulants",
   "Local anesthetics",
   "Antiemetics",
-  "Other"
+  "Antiseizure",
+  "Antipsychotics",
+  "Other",
+  "Illicit drugs"
 )
+# The category of the opt-in research models of drugs of abuse
+# (R/illicit-drugs.R).  Hidden unless the user turns on input$showIllicitDrugs,
+# and never offered in the startup menu.
+ILLICIT_DRUG_CATEGORY <- "Illicit drugs"
 # Ticked when the menu opens: the four drugs the app opened with before it
 # had a menu.
 STARTUP_DRUGS_DEFAULT <- c("propofol", "fentanyl", "remifentanil", "rocuronium")
@@ -347,3 +411,59 @@ DEFAULT_CONFIG <- list(
   debug = DEBUG_LEVEL_OFF,
   long_title = FALSE
 )
+
+# TCI API (tci-api.R).  The stateless HTTP API that hands a pump controller its
+# next infusion rate; docs/tci-api.md is the specification (version 1.0), and
+# GET /tci/v1/drugs publishes these values under `limits`.  Within version 1
+# nothing here changes meaning: a token, a drug or a bound may only be added.
+TCI_API_VERSION <- "1.0"
+TCI_API_MIN_INTERVAL <- 1              # s: the controller's update interval, the time a rate is held
+TCI_API_MAX_INTERVAL <- 60             # s; above tPeak / 3 for the drug the response warns INTERVAL_LONG
+TCI_API_MAX_HISTORY <- 20000L          # events in one request; longer is 413 HISTORY_TOO_LONG
+TCI_API_LOOKAHEAD_MAX <- 30000         # s: how far the predictions look, STANPUMP's look_ahead() horizon
+TCI_API_LOOKAHEAD_EXACT_STEPS <- 300L  # plans targetReachedAt runs at the controller's own interval before ...
+TCI_API_LOOKAHEAD_MAX_STEP <- 60       # ... its step grows by a tenth per plan, up to this many seconds
+TCI_API_CLOCK_SKEW <- 2                # s a history event may lie after `now` and be clamped to it
+TCI_API_SERVER_SKEW <- 30              # s between the controller's clock and the server's before CLOCK_SKEW
+TCI_API_MAX_RATE <- 1e5                # ceiling on pump.maxRate, in the pump's own rate units
+TCI_API_TARGET_CEILING <- 5            # x the library's Upper: a higher target is refused
+TCI_API_ON_TARGET <- 0.01              # within this fraction of the target counts as on target
+TCI_API_DELIVERY_TOLERANCE <- 0.02     # the pump's totaliser may differ from the history by this fraction ...
+TCI_API_DELIVERY_TOLERANCE_ML <- 0.5   # ... or by this many mL of the syringe, whichever is larger
+TCI_API_MIN_INFUSATE <- 1e-3           # least syringe concentration, in its own units (0.001 mg/mL or 0.001 mcg/mL)
+TCI_API_PK_CACHE_SIZE <- 256L          # distinct covariate sets whose PK the server keeps (tciApiPK())
+# The unit tokens: one closed, case-sensitive list in the library's spellings.
+TCI_API_RATE_UNITS <- c("mL/hr", "mg/hr", "mg/min", "mcg/hr", "mcg/min",
+                        "mg/kg/hr", "mg/kg/min", "mcg/kg/hr", "mcg/kg/min")
+TCI_API_AMOUNT_UNITS <- c("mL", "mg", "mcg")
+TCI_API_BOLUS_UNITS <- c(TCI_API_AMOUNT_UNITS, "mg/kg", "mcg/kg")
+TCI_API_INFUSATE_UNITS <- c("mg/mL", "mcg/mL")
+TCI_API_CONCENTRATION_UNITS <- c("mcg/mL", "ng/mL")   # the drug decides which
+TCI_API_VOLUME_UNITS <- "mL"
+TCI_API_PUMP_STATES <- c("running", "paused", "alarm", "occlusion",
+                         "syringeEmpty", "purging", "standby")
+# An RFC 3339 time as the API accepts it: date and clock fields within their
+# ranges (the 60th second for a leap second), optional fractional seconds, and
+# a mandatory Z or numeric offset.  Mirrored in inst/api/openapi.json.
+TCI_API_TIME_PATTERN <- paste0(
+  "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])",
+  "[Tt ]([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?",
+  "([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$")
+
+# PREGNANCY.  The Patient Profile's Pregnant field, read only by the models
+# that name `pregnant` in their signature (R/pregnancy.R lists them, and the
+# help's Cautions page says which).  The field is offered for a woman from
+# PREGNANCY_MIN_AGE up to but not including PREGNANCY_MAX_AGE years; outside
+# that, or for a man, the flag is FALSE whatever the control last said.
+# The factors each model applies are from the review the library follows for
+# pregnancy, Ansari, Carvalho, Shafer and Flood, Anesth Analg 2016;122:786-804
+# (PREGNANCY_REFERENCE in R/pregnancy.R), and describe late pregnancy, where
+# nearly all of its data were collected.
+PREGNANCY_MIN_AGE <- 12
+PREGNANCY_MAX_AGE <- 60
+# Renal blood flow and the glomerular filtration rate "are increased 50% by
+# the second trimester and remain unchanged until 3 months postpartum"
+# (Ansari 2016, Clearance).  The renally cleared antibiotics the review lists
+# with an increased clearance (cefazolin, gentamicin, vancomycin) apply it to
+# the renal function their published clearance terms read.
+PREGNANCY_GFR_FACTOR <- 1.5

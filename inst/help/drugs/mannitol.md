@@ -12,9 +12,13 @@ The baseline is the **Baseline serum osmolality** field in the Patient Profile, 
 
 The factor 0.555 is less than 1 because mannitol stays in the extracellular fluid and draws water out of cells. That water dilutes sodium, so the measured osmolality rises by only about half the mannitol concentration. The osmolal gap still equals the mannitol concentration. Rudehill measured both in the same patients: plasma mannitol peaked at 32.4 mOsm/L while osmolality rose from 292 to 310 mOsm/kg. Treating mannitol as an ideal solute (factor 1) would overpredict the peak rise by about 80%.
 
+### Dosing
+
+Mannitol is given only by infusion, in **g/hr** or **g/kg/hr**, as it is in practice: a 20% solution is run in over 15 to 60 minutes, never pushed. The library offers no bolus unit, so a dose is entered as a rate and stopped with a rate of zero. For 1 g/kg over 30 minutes, enter 2 g/kg/hr at the start time and 0 g/kg/hr 30 minutes later. The studies behind the model, Kaneda's and Rudehill's, infused their doses the same way.
+
 ### Covariates
 
-The published means are taken to describe the 70 kg reference adult and are scaled to fat-free mass. With *Adjust weight to fat-free mass* off they are used unscaled. Kaneda found that weight-based dosing gave higher than expected concentrations in obese patients, which is consistent with this scaling. The baseline osmolality affects nothing but the starting point of the curve.
+The published means are taken to describe the 70 kg reference adult. The volumes and distribution clearances are scaled to fat-free mass; elimination clearance follows creatinine clearance instead (see *Where to be careful*). With *Adjust weight to fat-free mass* off the volumes and distribution clearances are used unscaled, and creatinine clearance is computed from total body weight. Kaneda found that weight-based dosing gave higher than expected concentrations in obese patients, which is consistent with this scaling. The baseline osmolality affects nothing but the starting point of the curve.
 
 ### Effect site
 

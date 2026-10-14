@@ -110,7 +110,7 @@ simulationTimeGrid <- function(knots, maximum, start = 1)
     gap <- rep(seq_along(distance), each = length(newTimes))
     tau <- rep(newTimes, times = length(distance))
     keep <- tau <= distance[gap]
-    return(sort(unique(c(knots, gapStart[gap[keep]] + tau[keep]))))
+    return(withGridOutputTimes(sort(unique(c(knots, gapStart[gap[keep]] + tau[keep]))), maximum))
   }
 
   h    <- maximum / GRID_UNIFORM_POINTS
@@ -145,7 +145,38 @@ simulationTimeGrid <- function(knots, maximum, start = 1)
     fill <- c(fill, gapStart[long][g] + tauK + j * (span / n)[g])
   }
 
-  sort(unique(c(knots, fill)))
+  withGridOutputTimes(sort(unique(c(knots, fill))), maximum)
+}
+
+
+# Times a caller wants reported exactly, added to every time line built while
+# withOutputTimes() runs.  They are points, not knots: an input is constant
+# between neighbouring knots, so the engines stay exact at a point added
+# anywhere between them, and the fill is left as it is.  The API
+# (R/api.R) uses this so that the regular grid it returns is simulated, not
+# interpolated.  Outside withOutputTimes() nothing is added, so the app's
+# time lines are unchanged.
+withGridOutputTimes <- function(timeLine, maximum)
+{
+  extra <- .sprglobals$gridOutputTimes
+  if (is.null(extra)) return(timeLine)
+  extra <- extra[extra >= 0 & extra <= maximum]
+  sort(unique(c(timeLine, extra)))
+}
+
+#' Evaluate code with extra points on every simulation time line
+#'
+#' @param times times (minutes) every engine should report, in addition to
+#'   its own time line; see \code{withGridOutputTimes()}
+#' @param code the code to run
+#' @returns the value of \code{code}
+#' @keywords internal
+withOutputTimes <- function(times, code)
+{
+  old <- .sprglobals$gridOutputTimes
+  .sprglobals$gridOutputTimes <- times
+  on.exit(.sprglobals$gridOutputTimes <- old, add = TRUE)
+  force(code)
 }
 
 

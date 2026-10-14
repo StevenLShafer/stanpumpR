@@ -13,4 +13,4 @@ The shaded band, 3 to 15 mcg/mL, is the effect-site range that adult doses reach
 
 ## Background
 
-[Acetaminophen](help:drugs/acetaminophen) records where the model comes from: Morse and colleagues' kinetics and Anderson's effect site, and what they leave out. [The effect site and ke0](help:models/effect-site) explains why the effect lags the plasma. [Oral, intramuscular and intranasal doses](help:models/absorption) explains the absorption lag and first-order absorption.
+[Acetaminophen](help:drugs/acetaminophen) records where the model comes from: Morse and colleagues' kinetics and Anderson's effect site, and what they leave out. [The effect site and ke0](help:models/effect-site) explains why the effect lags the plasma. [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption) explains the absorption lag and first-order absorption.

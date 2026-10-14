@@ -2,23 +2,23 @@
 #
 # There are two implementations of the same physiology in this package:
 #
-#   advanceGasManBaseline()  Gas Man's own stepping scheme restated in R.  Its
-#                            purpose is to BE Gas Man, splitting error and all.
-#                            Validated against Gas Man itself to 6e-04, limited
-#                            by Gas Man's float32 -- see inst/validation.
+#   advanceGasManBaseline()  GasMan's own stepping scheme restated in R.  Its
+#                            purpose is to BE GasMan, splitting error and all.
+#                            Validated against GasMan itself to 6e-04, limited
+#                            by GasMan's float32 -- see inst/validation.
 #
 #   advanceClosedFormGas()   the engine the app actually runs.  Solves the same
 #                            equations with a matrix exponential that is exact
 #                            within each sub-step.
 #
 # They must NOT agree digit-for-digit at any fixed step size.  The baseline
-# carries Gas Man's operator-splitting error on purpose, and the closed form
+# carries GasMan's operator-splitting error on purpose, and the closed form
 # does not, so at dt = 6000 ms they differ by around 1%.  What must be true is
 # that they converge to the SAME limit as dt shrinks, because that is the
 # statement that they integrate the same equations.  Convergence to a common
-# limit is what closes the chain to Gas Man transitively.
+# limit is what closes the chain to GasMan transitively.
 #
-# This test is why the blood-flow fractions in getGasBody() are Gas Man's
+# This test is why the blood-flow fractions in getGasBody() are GasMan's
 # 0.76/0.18/0.06 rather than the undocumented 0.75/0.20/0.05 they used to be:
 # that difference showed up here as a residual that did not shrink with dt,
 # which is the signature of a structural difference rather than a numerical one.
@@ -32,7 +32,7 @@ skip_if_no_baseline <- function() {
 }
 
 # The two engines take different inputs by design: the baseline takes delivered
-# tensions, as Gas Man does, while the engine takes flowmeter settings and
+# tensions, as GasMan does, while the engine takes flowmeter settings and
 # derives the tensions.  Matching them requires care, and getting it wrong looks
 # exactly like a modelling disagreement -- so the mapping is spelled out here.
 #
@@ -41,7 +41,7 @@ skip_if_no_baseline <- function() {
 #   F_fgf,N2O = 100 * 0.98 * 5.6/8 = 68.6%, NOT 70%.
 #   Nitrogen must be present on both sides, starting at the same ambient.
 #   Cardiac output must be equal on both sides.  It is forced here; since
-#   2026-10-05 getGasBody() also defaults to Gas Man's 5.0 L/min at 70 kg
+#   2026-10-05 getGasBody() also defaults to GasMan's 5.0 L/min at 70 kg
 #   (it was 75 mL/kg = 5.25 L/min when this test was written).
 matchedDoseTable <- function() data.frame(
   Time = c(0, 0, 0, 0),
@@ -96,7 +96,7 @@ test_that("the two engines converge to the same limit", {
   # The baseline converges FIRST ORDER in dt, so extrapolate: limit ~ 2f(h/2)-f(h).
   lim <- 2 * baselineAt(188, 30) - baselineAt(375, 30)
 
-  # The standalone baseline runs Gas Man's semi-closed circuit and takes its
+  # The standalone baseline runs GasMan's semi-closed circuit and takes its
   # ventilation as alveolar, so the engine is asked for the same; its own
   # defaults are the ideal circuit and a 30% dead space.
   eng <- alvAt(advanceClosedFormGas(matchedDoseTable(), weight = 70,
@@ -170,7 +170,7 @@ test_that("uncoupled, the gases do not influence one another at all", {
 })
 
 
-test_that("the blood flow fractions are Gas Man's, and sum to one", {
+test_that("the blood flow fractions are GasMan's, and sum to one", {
   body <- getGasBody(70)
   # Pinned deliberately: these are gasman.ini [Ratio].  Changing them breaks the
   # convergence test above, which is the point -- see the note in getGasBody().

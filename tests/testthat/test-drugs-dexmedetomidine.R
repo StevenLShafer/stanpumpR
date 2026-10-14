@@ -151,3 +151,24 @@ test_that("the infant (Zuppa) model scales to fat-free mass across its bypass ev
   expect_equal(actual$PK$CPBStart$v3, 1)
   expect_equal(actual$PK$CPBStart$cl3, 0)
 })
+
+# The boundary between Zuppa's infant model (age <= 1) and the Dyck adult
+# model (age > 1) is a step, and a large one: the help page says so, with the
+# numbers pinned here.  This test documents the step so that a change to
+# either side is deliberate (an audit of 2026-10-12 asked for it); the model
+# choice itself is Steven L. Shafer's decision of 2026-10-09.
+test_that("the step at one year is the one the help page describes", {
+  infant <- dexmedetomidine(9, 75, 1,     "male")
+  child  <- dexmedetomidine(9, 75, 1.001, "male")
+  expect_equal_rounded(infant$PK$default$v1, 17.55146)
+  expect_equal_rounded(child$PK$default$v1,  1.071357)
+  # "about 16 times higher" immediately after a bolus, with fat-free-mass scaling
+  expect_equal(infant$PK$default$v1 / child$PK$default$v1, 16.38, tolerance = 0.01)
+
+  infantLegacy <- dexmedetomidine(9, 75, 1,     "male", adjustToFFM = FALSE)
+  childLegacy  <- dexmedetomidine(9, 75, 1.001, "male", adjustToFFM = FALSE)
+  expect_equal_rounded(infantLegacy$PK$default$v1, 16.97143)
+  expect_equal_rounded(childLegacy$PK$default$v1,  8.0574)
+  # "about twice as high" with the published scaling
+  expect_equal(infantLegacy$PK$default$v1 / childLegacy$PK$default$v1, 2.11, tolerance = 0.01)
+})

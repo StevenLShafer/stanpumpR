@@ -14,8 +14,7 @@ Description: Open-source software for pharmacokinetic and pharmacodynamic
     perioperative patient care, teaching, and research. Calculates and plots
     predicted plasma and effect-site concentrations for intravenous and
     extravascular anesthetics using analytical closed-form three-compartment
-    solutions. May be freely downloaded and used without restriction for
-    non-commercial purposes.
+    solutions.
 License: MIT + file LICENSE
 Imports:
     bslib,
@@ -24,6 +23,7 @@ Imports:
     emayili,
     glue,
     ggplot2  (>= 3.4),
+    grDevices,
     grid,
     htmltools,
     htmlwidgets,
@@ -49,10 +49,12 @@ Imports:
 Suggests:
     devtools,
     knitr,
+    plumber,
     remotes,
     rmarkdown,
     rsconnect,
     testthat (>= 3.0.0), 
+    xml2,
     yaml
 Depends:
     R (>= 4.1)
@@ -62,3 +64,4 @@ Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0
+RoxygenNote: 7.3.1

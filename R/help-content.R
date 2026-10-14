@@ -31,7 +31,10 @@
 # Links between pages are written in Markdown as [text](help:page-id); a link
 # that loads a teaching scenario into the simulator is [text](scenario:id).
 # helpRewriteLinks() turns these into data attributes that inst/www/app.js
-# forwards to Shiny as input$help_goto and input$help_scenario_load.
+# forwards to Shiny as input$help_goto and input$help_scenario_load.  The
+# names of the investigators in inst/help/investigators.md are linked on every
+# page to a pop-up about them by helpLinkInvestigators()
+# (R/help-investigators.R), which also links "GasMan" to its website.
 #
 # Adding a page: add a row to helpStaticPages() and create the .md file.
 # Adding a drug: the page exists as soon as the drug is in the defaults CSV;
@@ -80,6 +83,8 @@ helpStaticPages <- function() {
     "models/effect-site",       "The effect site and ke0",         "models",
     "models/covariates",        "Covariates and body size",        "models",
     "models/fat-free-mass",     "Scaling to fat-free mass",        "models",
+    "models/pregnancy",         "Pregnancy",                       "models",
+    "models/minto-schnider",    "The Minto and Schnider models",   "models",
     "models/absorption",        "Oral, intramuscular, intranasal and regional anesthesia doses", "models",
     "models/metabolites",       "Active metabolites",              "models",
     "models/antidepressants",   "Antidepressant models and their limits", "models",
@@ -90,7 +95,7 @@ helpStaticPages <- function() {
     "models/normalization",     "Normalization",                   "models",
     "models/suggest-algorithm", "How Suggest Dosing searches",     "models",
     "models/gas-engine",        "The inhaled-gas engine",          "models",
-    "models/gas-differences",   "Where the gas engine differs from Gas Man", "models",
+    "models/gas-differences",   "Where the gas engine differs from GasMan", "models",
     "models/opioid-mac",        "Opioid reduction of MAC",         "models",
 
     "scenarios/index",          "All scenarios",                   "scenarios",
@@ -101,6 +106,8 @@ helpStaticPages <- function() {
     "repository",               "What is in the repository",       "project",
     "contributing",             "Contributing a drug or a model",  "project",
     "scripting",                "Driving the engine from R",       "project",
+    "simulation-api",           "The Simulation API",              "project",
+    "tci-api",                  "The TCI API",                     "project",
     "validation",               "Testing and validation",          "project",
     "in-development",           "In development",                  "project",
 
@@ -112,6 +119,10 @@ helpStaticPages <- function() {
   data.frame(id = m[, 1], title = m[, 2], section = m[, 3],
              stringsAsFactors = FALSE)
 }
+
+#' The order that sorts titles alphabetically, ignoring case
+#' @noRd
+helpTitleOrder <- function(titles) order(tolower(titles), titles, method = "radix")
 
 #' Display title for a drug or gas name
 #'
@@ -136,6 +147,8 @@ helpPageRegistry <- function(drugDefaults = getDrugDefaultsGlobal()) {
     section = "drugs",
     stringsAsFactors = FALSE
   )
+  # Alphabetical by title, so a drug added anywhere in the CSV lands in place
+  drugs <- drugs[helpTitleOrder(drugs$title), ]
   scen <- helpScenarios()
   scenarios <- data.frame(
     id = paste0("scenarios/", vapply(scen, `[[`, character(1), "id")),
@@ -309,6 +322,9 @@ helpPageUI <- function(id, drugDefaults = getDrugDefaultsGlobal()) {
   row <- registry[registry$id == id, ][1, ]
 
   rendered <- helpHeadingIds(helpPageHTML(id, drugDefaults))
+  # Every investigator named on the page becomes a link to their pop-up
+  # (R/help-investigators.R); citations were linked when they were built.
+  body <- helpLinkInvestigators(rendered$html, "prose")
   toc <- rendered$toc[rendered$toc$level == 2, ]
   tocUI <- NULL
   if (nrow(toc) >= 3) {
@@ -330,9 +346,10 @@ helpPageUI <- function(id, drugDefaults = getDrugDefaultsGlobal()) {
       " › ",
       row$sectionTitle
     ),
-    tags$h1(class = "help-title", row$title),
+    # The title gets the same links as the body ("...differs from GasMan")
+    tags$h1(class = "help-title", HTML(helpLinkInvestigators(htmltools::htmlEscape(row$title), "prose"))),
     tocUI,
-    tags$div(class = "help-body", HTML(rendered$html))
+    tags$div(class = "help-body", HTML(body))
   )
 }
 
@@ -509,7 +526,9 @@ helpColorSwatch <- function(color) {
 helpPageLink <- function(id, text = NULL) {
   if (is.null(text)) {
     registry <- helpStaticPages()
-    text <- if (id %in% registry$id) registry$title[registry$id == id] else id
+    text <- if (id %in% registry$id) registry$title[registry$id == id]
+      else if (startsWith(id, "drugs/")) helpDrugTitle(sub("^drugs/", "", id))
+      else id
   }
   sprintf('<a href="#" data-help-page="%s">%s</a>',
           htmltools::htmlEscape(id, attribute = TRUE), htmltools::htmlEscape(text))

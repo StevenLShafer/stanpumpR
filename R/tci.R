@@ -34,6 +34,21 @@
 #   or tPeak away (a tiny rate), so the rate aliases between maximum and zero.
 #   Both the paper and STANPUMP switch at 5%.
 #
+#   The search grid.  The effect site after an infusion lasting dt peaks up to
+#   tPeak after the infusion ENDS, so the touching point lies anywhere in
+#   [dt, dt + tPeak] and tciRate() searches that span (plus a 10 s margin) one
+#   second apart.  Until 2026-10-12 the grid was fixed by tciKinetics() at 1 s
+#   to tPeak + 10 s from the START of the interval, which covers the span only
+#   for the app's 10 s step: one plan from zero then pump off (propofol, target
+#   3) overshot by 0.0% at a 10 s interval, 3.5% at 60 s and 21.6% at 120 s.
+#   The TCI API (tci-api.R) lets a pump choose its interval up to 60 s, so the
+#   grid now depends on dt.  At 10 s the new grid contains the old one and only
+#   adds the points beyond tPeak + 10 s, where, for any state produced by
+#   non-negative inputs, the effect site is already falling and the quotient
+#   (CT - B)/E is increasing, so the minimum and hence the schedule are
+#   unchanged (verified by test-tci.R and the API's equivalence test).
+#   (Claude Code, 2026-10-12, at the request of Steven L. Shafer.)
+#
 # Everything is the exact closed form on the eigenvalues and coefficients that
 # getDrugPK() already provides; nothing is integrated numerically.  Time is in
 # minutes and amounts are in the "base" mass unit of simCpCe() (mg for drugs
@@ -76,8 +91,9 @@ tciRate <- function(p, e, CT, site, dt, K)
     Pu <- sum(K$pinf * (1 - decay))
     rate <- (CT - Pd) / Pu
   } else {
-    # tau from the end of the coming interval out to tPeak, one second apart.
-    tau <- unique(c(dt, K$tau[K$tau > dt]))
+    # tau from the end of the coming interval out to dt + tPeak (plus a 10 s
+    # margin), one second apart, dt itself first; see "The search grid" above.
+    tau <- unique(c(dt, seq(dt, dt + K$tPeak + 10 / 60, by = 1 / 60)))
     M <- exp(-outer(K$lambda4, tau))                   # 4 x J
     B <- as.vector(e %*% M)
     E <- as.vector((K$einf * (exp(K$lambda4 * dt) - 1)) %*% M)
@@ -102,10 +118,9 @@ tciKinetics <- function(PK)
     pbolus  = c(k$p_coef_bolus_l1, k$p_coef_bolus_l2, k$p_coef_bolus_l3),
     pinf    = c(k$p_coef_infusion_l1, k$p_coef_infusion_l2, k$p_coef_infusion_l3),
     ebolus  = c(k$e_coef_bolus_l1, k$e_coef_bolus_l2, k$e_coef_bolus_l3, k$e_coef_bolus_ke0),
-    einf    = c(k$e_coef_infusion_l1, k$e_coef_infusion_l2, k$e_coef_infusion_l3, k$e_coef_infusion_ke0),
-    # The effect site after any input peaks within tPeak of that input, so
-    # the touching point is never further away than tPeak (plus a margin).
-    tau     = seq_len(ceiling(tPeak * 60) + 10) / 60
+    einf    = c(k$e_coef_infusion_l1, k$e_coef_infusion_l2, k$e_coef_infusion_l3, k$e_coef_infusion_ke0)
+    # The search grid is no longer stored here: it depends on the interval, so
+    # tciRate() builds it from dt and tPeak.
   )
 }
 
@@ -283,17 +298,21 @@ tciDisplay <- function(schedule, PK)
   mass <- if (PK$Concentration.Units == "ng") "mcg" else "mg"
   weight <- PK$weight
   rates <- data.frame(
-    Drug  = PK$drug,
+    Drug  = rep_len(PK$drug, nrow(schedule$rates)),
     Time  = schedule$rates$Time,
     Rate  = schedule$rates$Rate / weight,
-    Units = paste0(mass, "/kg/min"),
+    Units = rep_len(paste0(mass, "/kg/min"), nrow(schedule$rates)),
     Bolus = schedule$rates$Bolus
   )
+  # There may be no loading dose at all: a manual bolus or infusion given with
+  # the target can put the concentration above it from the start, so the pump
+  # only ever holds the target.  The scalar columns are recycled explicitly,
+  # because data.frame() refuses a length-1 column beside zero-length ones.
   boluses <- data.frame(
-    Drug   = PK$drug,
+    Drug   = rep_len(PK$drug, nrow(schedule$boluses)),
     Time   = schedule$boluses$Time,
     Amount = schedule$boluses$Amount,
-    Units  = mass
+    Units  = rep_len(mass, nrow(schedule$boluses))
   )
   list(rates = rates, boluses = boluses)
 }

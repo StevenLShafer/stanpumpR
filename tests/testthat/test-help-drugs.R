@@ -4,6 +4,10 @@ drugDefaults <- getDrugDefaultsGlobal()
 ivDrugs <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug)]
 gasDrugs <- drugDefaults$Drug[isGasDrug(drugDefaults$Drug)]
 
+# The investigators named in a citation are links (R/help-investigators.R);
+# a citation is compared with the links taken off.
+withoutLinks <- function(html) gsub("<a [^>]*>|</a>", "", html)
+
 test_that("every drug in the library has a narrative", {
   for (drug in drugDefaults$Drug) {
     expect_true(helpHasMarkdown(paste0("drugs/", drug)),
@@ -38,15 +42,33 @@ plasmaOnly <- c(
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
   # The antidepressants: response lags weeks, no ke0 exists
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
-  "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine",
+  "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
   "clonazepam", "zolpidem", "temazepam",
-  "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts",
+  "methylphenidate", "lisdexamfetamine", "mixedAmphetamineSalts", "methylphenidatePediatric",
   # no equilibration model for antiemesis (2026-10-10)
   "ondansetron", "aprepitant", "fosaprepitant",
   # systemic plasma concentration, not the nerve block (2026-10-10)
   "bupivacaine", "ropivacaine", "mepivacaine",
-  # NSAIDs with no published ke0 (2026-10-10)
-  "diclofenac", "meloxicam", "ketorolac"
+  # NSAIDs with no published ke0 (2026-10-10; diclofenacEC 2026-10-11);
+  # naproxen's effect follows its plasma with no delay (Bjornsson 2011,
+  # R/drugs_naproxen.R)
+  "diclofenac", "diclofenacEC", "meloxicam", "ketorolac", "naproxen",
+  # aspirin and the salicylate it forms (2026-10-10): no ke0
+  "aspirin", "salicylate",
+  # the antiseizure drugs: plotted as plasma, no established concentration-
+  # linked effect site (2026-10-10)
+  "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",
+  "topiramate", "lacosamide", "lamotrigine", "zonisamide", "tiagabine",
+  "levetiracetam", "eslicarbazepine", "carbamazepine",
+  # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
+  "diamorphine",
+  # Antipsychotics: occupancy is a direct function of plasma, or no effect is
+  # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
+  "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
+  "olanzapine", "droperidol", "droperidolIM",
+  # Intravenous calcium (2026-10-13): plotted as the change in ionized
+  # calcium, which is the end point itself; no ke0.
+  "calcium"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -207,7 +229,8 @@ test_that("every intravenous drug page carries its citation, units and tables", 
     html <- helpDrugPageHTML(drug, drugDefaults)
     row <- drugDefaults[drugDefaults$Drug == drug, ]
     pk <- helpDrugPK(drug, helpReferencePatients()[1, ], drugDefaults)
-    expect_match(html, htmltools::htmlEscape(helpReferenceShort(pk$reference)), fixed = TRUE, info = drug)
+    # The investigators in the citation are links (R/help-investigators.R)
+    expect_match(withoutLinks(html), htmltools::htmlEscape(helpReferenceShort(pk$reference)), fixed = TRUE, info = drug)
     # desmetramadol has no dosing unit at all (it appears only as a metabolite)
     if (!is.na(row$Default.Units) && nzchar(row$Default.Units)) {
       expect_match(html, row$Default.Units, fixed = TRUE, info = drug)
@@ -220,7 +243,7 @@ test_that("every intravenous drug page carries its citation, units and tables", 
 
 test_that("the propofol page reads from the code, not from a hand-written table", {
   html <- helpDrugPageHTML("propofol")
-  expect_match(html, "Eleveld DJ et al., Br J Anaesth 2018", fixed = TRUE)
+  expect_match(html, 'data-investigator="eleveld-d">Eleveld DJ</a> et al., Br J Anaesth 2018', fixed = TRUE)
   expect_match(html, "pubmed.ncbi.nlm.nih.gov/29661412", fixed = TRUE)
   expect_match(html, "mcg/mL", fixed = TRUE)
   expect_match(html, "this model has covariates", fixed = TRUE)
@@ -243,7 +266,7 @@ test_that("extravascular routes and events are described where the model has the
   expect_false(grepl("Events that change the kinetics", prop, fixed = TRUE))
 })
 
-test_that("gas pages carry Gas Man's parameters and the MAC table", {
+test_that("gas pages carry GasMan's parameters and the MAC table", {
   for (gas in gasDrugs) {
     html <- helpDrugPageHTML(gas, drugDefaults)
     expect_match(html, "At a glance", fixed = TRUE, info = gas)
@@ -264,7 +287,7 @@ test_that("the drug index links every drug", {
   for (drug in drugDefaults$Drug) {
     expect_match(html, sprintf('data-help-page="drugs/%s"', drug), fixed = TRUE, info = drug)
   }
-  expect_match(html, "Eleveld DJ et al.", fixed = TRUE)
+  expect_match(withoutLinks(html), "Eleveld DJ et al.", fixed = TRUE)
   expect_match(html, "Anesthetic agent", fixed = TRUE)
   expect_match(html, "Ventilator setting", fixed = TRUE)
   expect_match(html, "metabolite only", fixed = TRUE)
@@ -273,10 +296,11 @@ test_that("the drug index links every drug", {
 
 test_that("the bibliography lists every model citation once, with its drugs", {
   html <- helpReferencesHTML(drugDefaults)
+  cites <- withoutLinks(html)
   refs <- unique(unlist(lapply(ivDrugs, function(d) helpDrugParameterTable(d, drugDefaults)$reference)))
   for (r in refs) {
     short <- htmltools::htmlEscape(helpReferenceShort(r))
-    expect_equal(lengths(regmatches(html, gregexpr(short, html, fixed = TRUE))), 1, info = r)
+    expect_equal(lengths(regmatches(cites, gregexpr(short, cites, fixed = TRUE))), 1, info = r)
   }
   expect_match(html, 'data-help-page="drugs/fentanyl"', fixed = TRUE)
   expect_match(html, 'data-help-page="drugs/alfentanil"', fixed = TRUE)
@@ -289,4 +313,21 @@ test_that("drug pages reflect a library edited in the session", {
   edited$Upper[edited$Drug == "propofol"] <- 9
   html <- helpDrugPageHTML("propofol", edited)
   expect_match(html, "1.25 to 9 mcg/mL", fixed = TRUE)
+})
+
+# A model that declares cyp2b6 (methadone) gets a generated clearance-by-
+# phenotype table from cypSection(), as the cyp2c9 and cyp2d6 drugs do.
+test_that("the methadone page tabulates clearance by CYP2B6 phenotype", {
+  html <- helpDrugPageHTML("methadone")
+  expect_match(html, "Effect of CYP2B6 phenotype", fixed = TRUE)
+  expect_match(html, "Clearance CL1 (L/min)", fixed = TRUE)
+  expect_match(html, "Relative to normal", fixed = TRUE)
+  for (label in c("Poor", "Intermediate", "Normal", "Rapid", "Ultrarapid")) {
+    expect_match(html, label, fixed = TRUE, info = label)
+  }
+  # the narrative says where the multipliers come from and what the field is not
+  expect_match(html, "Anesthesiology", fixed = TRUE)
+  expect_match(html, "not a dosing rule", fixed = TRUE)
+  # a drug that does not declare it gets no such table
+  expect_false(grepl("Effect of CYP2B6 phenotype", helpDrugPageHTML("fentanyl"), fixed = TRUE))
 })

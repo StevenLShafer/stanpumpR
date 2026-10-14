@@ -12,6 +12,12 @@ Hughes MA, Glass PSA, Jacobs JR. Context-sensitive half-time in multicompartment
 
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
+## Pregnancy
+
+The review the [Pregnant](help:models/pregnancy) field follows:
+
+Ansari J, Carvalho B, Shafer SL, Flood P. Pharmacokinetics and pharmacodynamics of drugs commonly used in pregnancy and parturition. *Anesth Analg* 2016;122:786-804. [DOI 10.1213/ANE.0000000000001143](https://doi.org/10.1213/ANE.0000000000001143)
+
 ## History of target-controlled infusion
 
 The three companion reviews on which [From CATIA to stanpumpR](help:history) draws:
@@ -132,20 +138,24 @@ Katoh T, Kobayashi S, Suzuki A, Iwamoto T, Bito H, Ikeda K. The effect of fentan
 
 ## Inhaled anesthetics
 
-Philip JH. Gas Man: an example of goal oriented computer-assisted teaching which results in learning. *Int J Clin Monit Comput* 1986;3:165-173.
+Philip JH. GasMan: an example of goal oriented computer-assisted teaching which results in learning. *Int J Clin Monit Comput* 1986;3:165-173.
 
 Mapleson WW. Effect of age on MAC in humans: a meta-analysis. *Br J Anaesth* 1996;76:179-185.
 
 Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. *BMC Anesthesiol* 2006;6:7.
 
-Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensitive decrement times for inhaled anesthetics in obese patients explored with Gas Man®. *J Clin Monit Comput* 2021 (PMC7943506).
+Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensitive decrement times for inhaled anesthetics in obese patients explored with GasMan®. *J Clin Monit Comput* 2021 (PMC7943506).
 
 Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? *APSF Newsletter*, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>
 
+## The Minto and Schnider models
+
+Run beside the library's propofol and remifentanil models when **Minto / Schnider** is ticked under Graph Options; see [The Minto and Schnider models](help:models/minto-schnider).
+
+Minto CF, Schnider TW, Egan TD, Youngs E, Lemmens HJM, Gambus PL, Billard V, Hoke JF, Moore KHP, Hermann DJ, Muir KT, Mandema JW, Shafer SL. Influence of age and gender on the pharmacokinetics and pharmacodynamics of remifentanil. I. Model development. *Anesthesiology* 1997;86:10-23. *(The Minto remifentanil model, with its age-dependent ke0.)*
+
+Schnider TW, Minto CF, Gambus PL, Andresen C, Goodale DB, Shafer SL, Youngs EJ. The influence of method of administration and covariates on the pharmacokinetics of propofol in adult volunteers. *Anesthesiology* 1998;88:1170-1182. *(The Schnider propofol model; its time to peak effect is Schnider 1999's.)*
+
 ## Models present in the drug files but not the ones cited
 
-Minto CF, Schnider TW, Egan TD, Youngs E, Lemmens HJM, Gambus PL, Billard V, Hoke JF, Moore KHP, Hermann DJ, Muir KT, Mandema JW, Shafer SL. Influence of age and gender on the pharmacokinetics and pharmacodynamics of remifentanil. I. Model development. *Anesthesiology* 1997;86:10-23. *(In the remifentanil file as comments; the parameters computed are Eleveld's and Kim's.)*
-
 Shafer SL, Varvel JR, Aziz N, Scott JC. Pharmacokinetics of fentanyl administered by computer-controlled infusion pump. *Anesthesiology* 1990;73:1091-1102. *(The pooled fentanyl parameters.)*
-
-Schnider TW, Minto CF, Gambus PL, Andresen C, Goodale DB, Shafer SL, Youngs EJ. The influence of method of administration and covariates on the pharmacokinetics of propofol in adult volunteers. *Anesthesiology* 1998;88:1170-1182. *(Present in the propofol file; superseded by Eleveld 2018.)*

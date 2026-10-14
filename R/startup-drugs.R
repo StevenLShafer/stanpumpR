@@ -52,16 +52,19 @@ startupDrugInputId <- function(category) {
 #' @param drugDefaults the drug library
 #' @returns a named list, one character vector of drug names for each category
 #'   that has any, in DRUG_CATEGORIES order, each sorted by displayed name.  A
-#'   drug with no category, or one not in DRUG_CATEGORIES, is not offered.
+#'   drug with no category, or one not in DRUG_CATEGORIES, is not offered.  The
+#'   illicit-drug category (ILLICIT_DRUG_CATEGORY) is left out: those are opt-in
+#'   research models (R/illicit-drugs.R), never ticked at startup.
 #' @noRd
 startupDrugChoices <- function(drugDefaults = getDrugDefaultsGlobal()) {
   if (is.null(drugDefaults$Category)) return(list())
+  categories <- setdiff(DRUG_CATEGORIES, ILLICIT_DRUG_CATEGORY)
   category <- as.character(drugDefaults$Category)
-  choices <- lapply(DRUG_CATEGORIES, function(cat) {
+  choices <- lapply(categories, function(cat) {
     drugs <- drugDefaults$Drug[!is.na(category) & category == cat]
     drugs[order(tolower(helpDrugTitle(drugs)))]
   })
-  names(choices) <- DRUG_CATEGORIES
+  names(choices) <- categories
   choices[lengths(choices) > 0]
 }
 

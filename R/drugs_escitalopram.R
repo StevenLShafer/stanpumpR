@@ -82,9 +82,10 @@
 # Jin 2010 (adult MDD: CL/F 23.5 L/h, V/F 884 L; covariates not verified);
 # Poweleit 2023 (pediatric: CL/F 14.2 x (BSA/1.73) x CYP2C19 factor, V/F
 # 428 L, ka 0.8 /h), never mixed with Liu's parameters; Kim 2017 PET
-# occupancy EC50s (units unverified; not plotted).  Liu 2025's external
-# validation (doi 10.2147/DDDT.S546904) found the uncalibrated population
-# predictions unreliable for individuals.
+# occupancy EC50s (units unverified; not plotted).  Yan 2025's external
+# evaluation of ten escitalopram models, this one among them (Drug Des Devel
+# Ther 2025;19:10937-10951, doi 10.2147/DDDT.S546904), found the
+# uncalibrated population predictions unreliable for individuals.
 #
 # References
 # ----------
@@ -92,6 +93,8 @@
 #   https://doi.org/10.3389/fphar.2022.964758
 # Hiemke C et al., Pharmacopsychiatry 2018;51:9-62 (AGNP consensus).
 #   https://doi.org/10.1055/s-0043-116492
+# Yan K et al., Drug Des Devel Ther 2025;19:10937-10951.
+#   https://doi.org/10.2147/DDDT.S546904
 # -----------------------------------------------------------------------------
 
 ESCITALOPRAM_CL <- 16.3   # L/h, CL/F, CYP2C19 normal (EM)

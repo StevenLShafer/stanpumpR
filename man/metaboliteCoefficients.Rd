@@ -40,7 +40,9 @@ absorption constant.}
 a list with \code{lambda} (the union of eigenvalues: parent, then
 metabolite, then the absorption constant when there is one),
 \code{bolus}, \code{infusion} and \code{PO} coefficients on each, and the
-scalar \code{K} used to form them
+scalar \code{K} used to form them.  A parent with a second oral depot
+(\code{ka_PO2}) adds its absorption constant after the first and a
+\code{PO2} vector for the doses that take that path.
 }
 \description{
 Returns the metabolite's concentration as a sum of exponentials over the

@@ -77,6 +77,12 @@ test_that("carries the baseline osmolality it is given", {
 test_that("the CSV row matches the model's units and band", {
   defaults <- getDrugDefaults("mannitol")
   expect_identical(defaults$Concentration.Units, "mOsm")
+  # Infusion only: mannitol is run in over 15 to 60 minutes, never pushed, so
+  # the library offers no bolus unit and no scheduled (qd, bid, ...) unit.
+  expect_true(is.na(defaults$Bolus.Units) || !nzchar(defaults$Bolus.Units))
+  expect_identical(defaults$Infusion.Units, "g/hr")
+  expect_identical(defaults$Default.Units, "g/hr")
+  expect_identical(defaults$Units[[1]], c("g/hr", "g/kg/hr"))
   expect_identical(defaults$MEAC, 0)
   expect_identical(c(defaults$Lower, defaults$Typical, defaults$Upper), c(300, 310, 320))
 })
@@ -107,24 +113,23 @@ test_that("predicts serum osmolality after 1 g/kg over 30 minutes", {
 })
 
 test_that("the baseline osmolality shifts the curve and nothing else", {
-  dose <- data.frame(Drug = "mannitol", Time = 0, Dose = 50, Units = "g")
+  dose <- data.frame(Drug = "mannitol", Time = c(0, 30), Dose = c(100, 0), Units = "g/hr")
   normal <- simulateMannitol(dose, osmolality = 290)
   high   <- simulateMannitol(dose, osmolality = 310)
   expect_equal(high$Plasma - normal$Plasma, rep(20, nrow(normal)))
 })
 
-test_that("gram, per-kilogram and infusion units agree", {
-  grams   <- simulateMannitol(data.frame(Drug = "mannitol", Time = 0, Dose = 70, Units = "g"))
-  perKg   <- simulateMannitol(data.frame(Drug = "mannitol", Time = 0, Dose = 1,  Units = "g/kg"))
-  expect_equal(perKg$Plasma, grams$Plasma)
-
+test_that("per-hour and per-kilogram-per-hour units agree", {
   perHour <- simulateMannitol(data.frame(Drug = "mannitol", Time = c(0, 30), Dose = c(140, 0), Units = "g/hr"))
   perKgHr <- simulateMannitol(data.frame(Drug = "mannitol", Time = c(0, 30), Dose = c(2, 0),   Units = "g/kg/hr"))
   expect_equal(perKgHr$Plasma, perHour$Plasma)
 
-  # A 70 g bolus is 384.26 mOsm in a 2.8 L central volume: 137.24 mOsm/L at
-  # time zero, so the osmolality jumps by 0.55483249 times that.
-  expect_equal_rounded(max(grams$Plasma), 280 + 0.55483249 * 70000 / 182.17 / 2.8)
+  # 70 g over 30 minutes is 384.26 mOsm.  The osmolality peaks when the
+  # infusion stops, 0.55483249 times the 26.622358 mOsm/L above (not at the
+  # 137 mOsm/L a bolus of the same amount would give in the 2.8 L central
+  # volume: mannitol is never pushed, and the library offers no bolus unit).
+  expect_equal(which.max(perHour$Plasma), which(perHour$Time == 30))
+  expect_equal_rounded(max(perHour$Plasma), 280 + 0.55483249 * 26.622358)
 })
 
 test_that("an invalid baseline osmolality is rejected", {

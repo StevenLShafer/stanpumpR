@@ -9,6 +9,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
   # Not offered: the metabolites with no units of their own, and the carrier gases
   # and ventilation, which the gas rules add themselves
   notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
+                  "desvenlafaxine", "salicylate", "hydroxyrisperidone", "dehydroaripiprazole",
                   "air", "oxygen", "ventilation")
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))
@@ -20,7 +21,10 @@ test_that("every drug that can be dosed has a category the menu knows", {
 
 test_that("the menu lists the categories in order, each sorted by name", {
   choices <- startupDrugChoices(dd)
-  expect_identical(names(choices), DRUG_CATEGORIES)
+  # The illicit-drug category is opt-in and never offered in the startup menu
+  expect_identical(names(choices), setdiff(DRUG_CATEGORIES, ILLICIT_DRUG_CATEGORY))
+  expect_false(ILLICIT_DRUG_CATEGORY %in% names(choices))
+  expect_false("diamorphine" %in% unlist(choices))
   for (drugs in choices) {
     titles <- tolower(helpDrugTitle(drugs))
     expect_identical(titles, sort(titles))
@@ -28,17 +32,19 @@ test_that("the menu lists the categories in order, each sorted by name", {
   # The non-opioid analgesics given by mouth (acetaminophen, ibuprofen,
   # diclofenac and ketorolac IV too); the oral opioids stay under Opioids
   expect_identical(choices[["Oral analgesics"]],
-                   c("acetaminophen", "diclofenac", "gabapentin", "ibuprofen",
-                     "ketorolac", "meloxicam", "pregabalin"))
+                   c("acetaminophen", "celecoxib", "diclofenac", "diclofenacEC",
+                     "gabapentin", "ibuprofen", "ketorolac", "meloxicam", "naproxen",
+                     "pregabalin"))
   expect_identical(choices[["Hypnotics and sedatives"]],
                    c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "etomidate",
                      "ketamine", "lorazepam", "midazolam", "propofol",
                      "remimazolam", "temazepam", "zolpidem"))
   expect_identical(choices[["Antidepressants"]],
                    c("bupropion", "citalopram", "duloxetine", "escitalopram",
-                     "fluoxetine", "mirtazapine", "paroxetine", "sertraline"))
+                     "fluoxetine", "mirtazapine", "paroxetine", "sertraline",
+                     "venlafaxine"))
   expect_true(all(STARTUP_DRUGS_DEFAULT %in% unlist(choices)))
-  expect_false(any(c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
+  expect_false(any(c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine", "desvenlafaxine",
                      "air", "oxygen", "ventilation") %in% unlist(choices)))
   # A library without the column (an old edited copy) offers nothing, quietly
   expect_identical(startupDrugChoices(dd[, names(dd) != "Category"]), list())
@@ -144,9 +150,12 @@ test_that("the menu's inputs are kept out of the bookmark URL", {
 
 test_that("the menu ticks the defaults and has no way out but Start", {
   html <- as.character(startupDrugModal(startupDrugChoices(dd)))
-  for (category in DRUG_CATEGORIES) {
+  # Every offered category is in the menu; the opt-in illicit category is not
+  for (category in names(startupDrugChoices(dd))) {
     expect_match(html, sprintf('id="%s"', startupDrugInputId(category)), fixed = TRUE)
   }
+  expect_false(grepl(sprintf('id="%s"', startupDrugInputId(ILLICIT_DRUG_CATEGORY)),
+                     html, fixed = TRUE))
   ticked <- regmatches(html, gregexpr('value="[^"]+" checked', html))[[1]]
   expect_setequal(sub('value="([^"]+)" checked', "\\1", ticked), STARTUP_DRUGS_DEFAULT)
   expect_match(html, 'id="startup_ok"', fixed = TRUE)

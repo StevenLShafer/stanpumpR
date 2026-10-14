@@ -2,7 +2,7 @@ The dose table is the main way you talk to the program. It sits to the right of 
 
 ## Columns
 
-**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row.
+**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine) are offered only while **Show illicit drugs**, in the Doses card header, is ticked, and their names are shown in red.
 
 **Time.** When it happens, in the **Time units** chosen in the Time card above the table (the card header says which: *Doses (times in hours)*). The field is forgiving:
 
@@ -26,9 +26,12 @@ A regimen written in days goes in most easily with the Time units set to days. D
 |---|---|---|
 | mass, or mass per kg | **bolus** at that time | `mg`, `mcg/kg` |
 | mass per minute or hour, with or without per kg | **infusion** from that time | `mcg/kg/min`, `mg/hr` |
-| mass with `PO`, `SL`, `IM` or `IN` | **extravascular dose** at that time | `mg PO`, `mg IN` |
+| mass with `PO`, `SL`, `IM`, `IN` or `RA` (regional anesthesia), the oral ones sometimes naming a form (`tablet`, `liquid`, `ER`, `DR`, `XR`) | **extravascular dose** at that time; see [absorption](help:models/absorption) | `mg PO`, `mg IN`, `mg RA`, `mg PO liquid` |
 | mass per day with `PO` | **oral rate**: the daily dose spread evenly over each day, from that time | `mg/day PO` (amiodarone) |
-| any of the above doses followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
+| `mg/hr RA` | **perineural infusion** into the tissue depot, from that time | bupivacaine, ropivacaine, lidocaine |
+| `mg PE` and its rate and IM forms | **fosphenytoin**, in phenytoin sodium equivalents | `mg PE`, `mg PE/min`, `mg PE IM` (phenytoin) |
+| `Plasma target`, `Effect site target` | **target-controlled infusion**: the dose is the target concentration | see [Target-controlled infusion](help:tci) |
+| a bolus, oral, sublingual, intramuscular or intranasal dose followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
 | `L/min` | fresh gas flow or ventilation setting | inhaled agents |
 | `%` | vaporizer setting | inhaled agents |
 
@@ -40,13 +43,13 @@ Nothing else is guessed at. An entry with a minus sign, a letter or a unit (`-5`
 
 ## Infusions
 
-An infusion runs from its time until the next row for that same drug changes it, or until the end of the simulation. To stop one, add a row for the same drug at the stop time with a dose of 0. A bolus row does not interrupt an infusion; the two add. An oral rate (`mg/day PO`) behaves the same way: each row sets the daily dose from its time, and `0 mg/day PO` stops it.
+An infusion runs from its time until the next row for that same drug changes it, or until the end of the simulation. To stop one, add a row for the same drug at the stop time with a dose of 0. A bolus row does not interrupt an infusion; the two add. An oral rate (`mg/day PO`) behaves the same way: each row sets the daily dose from its time, and `0 mg/day PO` stops it. So does a perineural infusion (`mg/hr RA`), which runs into the tissue depot rather than the vein.
 
 Per-kilogram units use the weight in the Patient Profile at the time of simulation, so changing the weight changes the delivered amount.
 
 ## Scheduled doses
 
-For drugs given on a schedule (the analgesic opioids, the antibiotics, the steroids and mannitol), each bolus, oral, sublingual, intramuscular and intranasal unit also comes with a frequency:
+For drugs given on a schedule (the analgesic opioids, the oral analgesics and benzodiazepines, the antibiotics, the steroids, the antidepressants, antipsychotics, stimulants and antiseizure drugs and ondansetron), their bolus, oral, sublingual, intramuscular and intranasal units also come with the frequencies the drug is usually given at, from:
 
 | Suffix | Meaning | Interval |
 |---|---|---|

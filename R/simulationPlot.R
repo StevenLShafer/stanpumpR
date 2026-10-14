@@ -61,6 +61,27 @@ simulationPlot <- function(
 
   outputComments("plotTable created", level = DEBUG_LEVEL_VERBOSE)
 
+  # Step D1b: set the alternative-model companions aside
+
+  # A companion entry (R/alternativeModels.R: the Schnider propofol or Minto
+  # remifentanil model run beside the library's) is drawn as a second line in
+  # its PARENT's panel.  plotTable has one row per panel, so the companions
+  # come out of it here and are kept for their colours and legend entries;
+  # their series take the parent's Wrap at Step C3, and their TCI rates go on
+  # the parent's rate panel at Step B4b.  They never reach anything that
+  # aggregates over drugs (the MEAC sum, the interaction panel, the recovery
+  # overlay), which all read plotTable.
+  companionOf <- purrr::map_chr(drugs, \(x) {
+    parent <- purrr::pluck(x, "companionOf")
+    if (is.null(parent)) NA_character_ else parent
+  })
+  companions <- data.frame(
+    Drug = plotTable$Drug, drugColor = plotTable$drugColor, Parent = companionOf,
+    stringsAsFactors = FALSE
+  )
+  companions <- companions[!is.na(companions$Parent), ]
+  plotTable <- plotTable[is.na(companionOf), ]
+
   # Step C1: create allResults from `drugs`
 
   allResults <- purrr::map_dfr(drugs, "results")
@@ -71,6 +92,9 @@ simulationPlot <- function(
   # Step D2: extend plotTable
 
   plotTable <- plotTable[plotTable$Drug %in% allResults$Drug,]
+  # A companion is drawn only beside a parent that is drawn
+  companions <- companions[companions$Parent %in% plotTable$Drug &
+                           companions$Drug %in% allResults$Drug, ]
   plotTable$typical <- as.numeric(plotTable$typical)
   plotTable$lowerTypical <- as.numeric(plotTable$lowerTypical)
   plotTable$upperTypical <- as.numeric(plotTable$upperTypical)
@@ -231,6 +255,9 @@ simulationPlot <- function(
       unitText[gasRow] <- plotTable$Concentration.Units[gasRow]
       # An osmotic agent is plotted as serum osmolality (drugs_mannitol.R).
       unitText[plotTable$Concentration.Units == "mOsm"] <- "mOsm/kg"
+      # A molar drug (intravenous calcium) is plotted in mmol/L, the change
+      # in ionized calcium (drugs_calcium.R).
+      unitText[plotTable$Concentration.Units == "mmol"] <- "mmol/L"
       plotTable$Wrap <- paste0(panelName, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical
@@ -256,7 +283,13 @@ simulationPlot <- function(
 
   # Step C3: finish allResults
 
-  allResults$Wrap <- plotTable$Wrap[match(allResults$Drug, plotTable$Drug)]
+  # Each series goes on its own drug's panel; a companion's on its parent's.
+  panelOf <- allResults$Drug
+  isCompanion <- panelOf %in% companions$Drug
+  panelOf[isCompanion] <- companions$Parent[match(panelOf[isCompanion], companions$Drug)]
+  allResults$Wrap <- plotTable$Wrap[match(panelOf, plotTable$Drug)]
+  # A companion whose parent is not drawn has no panel to go on
+  allResults <- allResults[!is.na(allResults$Wrap), ]
 
   # Step B1: create plotResults
 
@@ -451,33 +484,56 @@ simulationPlot <- function(
   # without colliding with the concentration series; the loading dose is
   # written on the panel as a number rather than drawn, since its rate would
   # flatten the rest of the panel to zero.
+  # A companion's pump (the same targets run on the Schnider or Minto model;
+  # R/alternativeModels.R) is a second line on the parent's rate panel, in the
+  # companion's colour, with its loading dose written below the parent's and
+  # named for the model.
   tciRates   <- purrr::map_dfr(drugs, \(x) purrr::pluck(x, "tci", "rates"))
   tciBoluses <- purrr::map_dfr(drugs, \(x) purrr::pluck(x, "tci", "boluses"))
+  modelLabel <- purrr::map_chr(drugs, \(x) {
+    label <- purrr::pluck(x, "modelLabel")
+    if (is.null(label)) "" else label
+  })
+  names(modelLabel) <- purrr::map_chr(drugs, "drug")
   tciLabels  <- NULL
   if (nrow(tciRates) > 0)
   {
-    tciRates <- tciRates[tciRates$Drug %in% plotTable$Drug, ]
-    for (drug in unique(tciRates$Drug))
+    tciPanel <- tciRates$Drug
+    isCompanion <- tciPanel %in% companions$Drug
+    tciPanel[isCompanion] <- companions$Parent[match(tciPanel[isCompanion], companions$Drug)]
+    keep <- tciPanel %in% plotTable$Drug
+    tciRates <- tciRates[keep, ]
+    tciPanel <- tciPanel[keep]
+    for (drug in unique(tciPanel))
     {
-      r <- tciRates[tciRates$Drug == drug, ]
-      r <- r[order(r$Time), ]
-      # A loading interval is drawn at the rate that follows it; the number
-      # on the panel says what was given.
-      for (k in rev(which(r$Bolus))) r$Rate[k] <- if (k < nrow(r)) r$Rate[k + 1] else 0
-      # Hold the last rate out to the end of the plot.
-      r <- rbind(r, r[nrow(r), ])
-      r$Time[nrow(r)] <- maximum
+      # The panel's series: the library's own pump first, then its companions'
+      series <- unique(tciRates$Drug[tciPanel == drug])
+      series <- c(intersect(drug, series), setdiff(series, drug))
+      units <- tciRates$Units[tciPanel == drug][1]
+      wrap <- paste0(drug, " TCI
+(", units, ")")
+      top <- 0
+      for (s in series)
+      {
+        r <- tciRates[tciRates$Drug == s, ]
+        r <- r[order(r$Time), ]
+        # A loading interval is drawn at the rate that follows it; the number
+        # on the panel says what was given.
+        for (k in rev(which(r$Bolus))) r$Rate[k] <- if (k < nrow(r)) r$Rate[k + 1] else 0
+        # Hold the last rate out to the end of the plot.
+        r <- rbind(r, r[nrow(r), ])
+        r$Time[nrow(r)] <- maximum
+        top <- max(top, r$Rate)
+
+        plotResults <- rbind(plotResults, data.frame(
+          Drug = paste(s, "TCI"), Time = r$Time, Y = r$Rate, Site = "Rate", Wrap = wrap, Label = ""
+        ))
+      }
 
       name <- paste(drug, "TCI")
-      wrap <- paste0(drug, " TCI
-(", r$Units[1], ")")
-      plotResults <- rbind(plotResults, data.frame(
-        Drug = name, Time = r$Time, Y = r$Rate, Site = "Rate", Wrap = wrap, Label = ""
-      ))
-
       newplotTable <- plotTable[plotTable$Drug == drug, ][1, ]
       newplotTable$Drug <- name
-      newplotTable$Concentration.Units <- r$Units[1]
+      newplotTable$Concentration.Units <- units
       newplotTable$typical <- 0
       newplotTable$lowerTypical <- 0
       newplotTable$upperTypical <- 0
@@ -489,20 +545,36 @@ simulationPlot <- function(
       newplotTable$MaxRecovery <- 0
       plotTable <- rbind(plotTable, newplotTable)
 
-      b <- tciBoluses[tciBoluses$Drug == drug, ]
-      if (nrow(b) > 0)
+      if (top == 0) top <- 1
+      for (j in seq_along(series))
       {
-        top <- max(r$Rate, 0)
-        if (top == 0) top <- 1
+        s <- series[j]
+        b <- tciBoluses[tciBoluses$Drug == s, ]
+        if (nrow(b) == 0) next
+        label <- paste(signif(b$Amount, 3), b$Units)
+        if (s != drug && nzchar(modelLabel[[s]])) label <- paste0(label, " (", modelLabel[[s]], ")")
         tciLabels <- rbind(tciLabels, data.frame(
-          Drug = name,
+          Drug = paste(s, "TCI"),
           Time = b$Time,
           y = top,
-          Label = paste(signif(b$Amount, 3), b$Units),
-          Wrap = wrap
+          Label = label,
+          Wrap = wrap,
+          # Each further series' label one label-height below the one before
+          vjust = 1 + 1.15 * (j - 1)
         ))
       }
     }
+  }
+
+  # The companions' rate series take their colours and legend order from the
+  # companion table too, under the parent's rate series
+  if (nrow(companions) > 0)
+  {
+    tciCompanions <- companions
+    tciCompanions$Drug <- paste(companions$Drug, "TCI")
+    tciCompanions$Parent <- paste(companions$Parent, "TCI")
+    companions <- rbind(companions, tciCompanions)
+    companions <- companions[companions$Parent %in% plotTable$Drug, ]
   }
 
   # Step B5 and D8: finalize plotResults and plotTable
@@ -518,9 +590,15 @@ simulationPlot <- function(
   plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
   plotTable <- plotTable[order(plotTable$Factor),]
 
-  drugFactors <- c(plotTable$Drug, "Recovery")
+  # Each panel's own series, followed by its companions', so that the legend
+  # lists "propofol (Schnider)" under propofol and the colour scale knows
+  # every series drawn.
+  withCompanions <- function(d) c(d, companions$Drug[companions$Parent == d])
+  drugFactors <- c(unlist(lapply(plotTable$Drug, withCompanions)), "Recovery")
   wrapFactors <- plotTable$Wrap
-  drugColors <-  c(plotTable$drugColor, "black")
+  colorOf <- c(stats::setNames(plotTable$drugColor, plotTable$Drug),
+               stats::setNames(companions$drugColor, companions$Drug))
+  drugColors <-  c(unname(colorOf[drugFactors[-length(drugFactors)]]), "black")
   # Named, so that a colour scale with explicit breaks (the TCI rate series
   # are kept out of the legend) still colours every series.
   names(drugColors) <- drugFactors
@@ -599,10 +677,9 @@ simulationPlot <- function(
       ) +
       ggplot2::geom_label(
         data = tciLabels,
-        ggplot2::aes(x = Time, y = y, label = Label),
+        ggplot2::aes(x = Time, y = y, label = Label, vjust = vjust),
         color = "black",
         hjust = -0.05,
-        vjust = 1,
         size = 3.5,
         inherit.aes = FALSE,
         show.legend = FALSE,

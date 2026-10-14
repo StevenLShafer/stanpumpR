@@ -143,20 +143,40 @@ app_ui <- function() {
                   selected = defaultSex
                 ),
 
+                # Read only by the models the pregnancy review quantifies
+                # (R/pregnancy.R; the help's Cautions page lists them).
+                # Offered for a woman of PREGNANCY_MIN_AGE to PREGNANCY_MAX_AGE
+                # years, whatever unit the age is entered in; the server
+                # applies the same rule (pregnancyPossible()), so a control
+                # hidden by a change of age or sex leaves the flag off.
                 conditionalPanel(
-                  condition = "input.age && input.ageUnit && input.ageUnit == 1 && input.age > 11 & input.age < 60 && input.sex == 'female'",
-                  shinyWidgets::radioGroupButtons(
-                    inputId = "pregnant",
-                    label = "Pregnant",
-                    choiceNames = list(
-                      span(icon("check"), "Yes"),
-                      span(icon("xmark"), "No")
+                  condition = sprintf(
+                    "input.age && input.ageUnit && input.sex == 'female' && (input.age * input.ageUnit) >= %s && (input.age * input.ageUnit) < %s",
+                    PREGNANCY_MIN_AGE, PREGNANCY_MAX_AGE
+                  ),
+                  bslib::tooltip(
+                    shinyWidgets::radioGroupButtons(
+                      inputId = "pregnant",
+                      label = "Pregnant",
+                      choiceNames = list(
+                        span(icon("check"), "Yes"),
+                        span(icon("xmark"), "No")
+                      ),
+                      choiceValues = c(TRUE, FALSE),
+                      justified = TRUE,
+                      selected = FALSE
                     ),
-                    choiceValues = c(TRUE, FALSE),
-                    justified = TRUE,
-                    selected = FALSE
-                  ) |>
-                    shinyjs::disabled()
+                    paste(
+                      "Applies the pharmacokinetic changes of late pregnancy",
+                      "to the drugs for which the review the library follows",
+                      "(Ansari, Carvalho, Shafer and Flood 2016) gives a",
+                      "magnitude: morphine, remifentanil, oxycodone,",
+                      "methadone, dexamethasone, cefazolin, gentamicin and",
+                      "vancomycin. Every other drug is unchanged; the Help's",
+                      "Pregnancy page says what the review found for each."
+                    ),
+                    placement = "right"
+                  )
                 ),
 
                 # Four categories, not three, and named the way the
@@ -185,6 +205,30 @@ app_ui <- function() {
                   selected = CYP2C19_DEFAULT
                 ),
 
+                # Read by phenytoin, whose maximal elimination rate depends on
+                # CYP2C9 diplotype, read by meloxicam and phenytoin (see
+                # CYP2C9_VALUES in R/constants.R).  *1/*1 is the reference.
+                selectInput(
+                  inputId = "cyp2c9",
+                  label = "CYP 2C9",
+                  CYP2C9_VALUES,
+                  selected = CYP2C9_DEFAULT
+                ),
+
+                # Read by methadone, whose non-renal clearance of each
+                # enantiomer depends on CYP2B6 (R/drugs_methadone.R).  The five
+                # CPIC categories; "normal" (*1/*1) is the reference.
+                selectInput(
+                  inputId = "cyp2b6",
+                  label = "CYP 2B6",
+                  c("Ultrarapid"   = CYP2B6_ULTRARAPID,
+                    "Rapid"        = CYP2B6_RAPID,
+                    "Normal"       = CYP2B6_NORMAL,
+                    "Intermediate" = CYP2B6_INTERMEDIATE,
+                    "Poor"         = CYP2B6_POOR),
+                  selected = CYP2B6_DEFAULT
+                ),
+
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
                 bslib::tooltip(
@@ -204,10 +248,11 @@ app_ui <- function() {
                   placement = "right"
                 ),
 
-                # Read only by the renally cleared models (mannitol, vancomycin,
-                # gentamicin, cefazolin, sugammadex, gabapentin, pregabalin).
-                # Blank means an assumed normal creatinine for the patient's age
-                # and sex; see R/renalFunction.R.
+                # Read only by the models that name `creatinine` in their
+                # signature (the help's Cautions page lists them, and a test
+                # keeps that list complete).  Blank means an assumed normal
+                # creatinine for the patient's age and sex; see
+                # R/renalFunction.R.
                 bslib::tooltip(
                   numericInput(
                     inputId = "creatinine",
@@ -218,8 +263,8 @@ app_ui <- function() {
                     step = 0.1
                   ),
                   paste(
-                    "Used by the renally cleared drugs: mannitol, vancomycin,",
-                    "gentamicin, cefazolin, sugammadex, gabapentin and pregabalin.",
+                    "Used by the renally cleared drugs (the Cautions page of the",
+                    "Help lists them).",
                     "Leave blank to assume a normal creatinine for the patient's",
                     "age and sex (1.0 mg/dL for a man, 0.8 for a woman, and the",
                     "normal for age in a child); renal impairment is then not",
@@ -275,6 +320,30 @@ app_ui <- function() {
                   inputId = "opioidMacInteraction",
                   label = "Include opioid - MAC interaction",
                   value = FALSE
+                ),
+                # The Schnider propofol and Minto remifentanil models, the
+                # models in most TCI pumps, run beside the library's Eleveld
+                # models and drawn as a second line in the same panels
+                # (R/alternativeModels.R).  The server enables the box while
+                # propofol or remifentanil is in the dose table.
+                bslib::tooltip(
+                  checkboxInput(
+                    inputId = "mintoSchnider",
+                    label = ALTERNATIVE_MODELS_LABEL,
+                    value = FALSE
+                  ) |>
+                    shinyjs::disabled(),
+                  paste(
+                    "Also run the Schnider (1998) propofol and Minto (1997)",
+                    "remifentanil models, the models in most TCI pumps, and",
+                    "draw them beside the Eleveld curves as a second line in",
+                    "the drug's panel. Under a target-controlled infusion the",
+                    "second model drives a pump of its own, drawn as a second",
+                    "line in the TCI rate panel. Time until threshold stays on",
+                    "the Eleveld model. Available when propofol or remifentanil",
+                    "is in the dose table."
+                  ),
+                  placement = "right"
                 ),
               ),
 
@@ -383,7 +452,28 @@ app_ui <- function() {
                     textOutput("doseTimeUnits", inline = TRUE) |>
                       htmltools::tagAppendAttributes(class = "small text-muted")
                   ),
-                  actionLink("setTarget", "Suggest Dosing", class = "small")
+                  div(
+                    class = "d-flex align-items-center gap-3",
+                    # Opt-in for the drug-of-abuse research models (off by
+                    # default); when on, they are offered in the dose table and
+                    # the Add a dose dialog, with their names shown in red.
+                    bslib::tooltip(
+                      checkboxInput(
+                        "showIllicitDrugs",
+                        "Show illicit drugs",
+                        value = FALSE
+                      ) |>
+                        htmltools::tagAppendAttributes(class = "micro mb-0"),
+                      paste(
+                        "Show evidence-labelled research models of drugs of",
+                        "abuse (for example diamorphine). Off by default. These",
+                        "are plasma-exposure estimates for research, not dosing",
+                        "advice or safety thresholds."
+                      ),
+                      placement = "left"
+                    ),
+                    actionLink("setTarget", "Suggest Dosing", class = "small")
+                  )
                 ),
 
                 rhandsontable::rHandsontableOutput("doseTableHTML"),

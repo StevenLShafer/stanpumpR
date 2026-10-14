@@ -16,4 +16,4 @@ The shaded band, 1.3 to 5.4 mcg/mL, is the average concentration at steady state
 
 ## Background
 
-[Pregabalin](help:drugs/pregabalin) records where the model comes from, how its absorption rate was read, and where the effect site comes from. [Oral, intramuscular and intranasal doses](help:models/absorption) explains first-order absorption and the lag.
+[Pregabalin](help:drugs/pregabalin) records where the model comes from, how its absorption rate was read, and where the effect site comes from. [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption) explains first-order absorption and the lag.

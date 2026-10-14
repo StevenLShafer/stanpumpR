@@ -109,11 +109,19 @@
 # ============================
 # Feng 2006 (171 elderly North Americans, 1970 concentrations, two
 # compartments with Michaelis-Menten elimination, CYP2D6 genotype on Vmax):
-# BLOCKED.  Its Vmax for extensive metabolisers, 454-474 ug/h, is at most
+# NOT USED, decided after reading the full paper (Steven L. Shafer,
+# 2026-10-11).  Its Vmax for extensive metabolisers, 454-474 ug/h, is at most
 # 10.9-11.4 mg/day of elimination, below the doses of up to 40 mg/day its
-# patients took without accumulating without limit; the input and
-# bioavailability convention that would reconcile the two could not be
-# resolved.
+# patients took, yet its population predictions (Figure 2a, c) stay below
+# about 300 ng/mL over up to 25,000 h.  The paper prints its covariate code
+# but no bioavailability or dose-scaling term, and no reading of the units
+# reconciles the two at typical concentrations (50-100 ng/mL on 20 mg/day in
+# the elderly): ug/h accumulates without limit; ug/L/h x V2 gives 1.6 ng/mL;
+# ug/min 6.5 ng/mL; a near-linear Vm/Km of 2.2 L/h about 380 ng/mL.  With all
+# of the dose absorbed (833 ug/h at 20 mg/day), Kim's 46 ng/mL would need
+# Vmax = 833 x (205 + 46) / 46, about 4,550 ug/h, ten times the printed
+# value (70 ng/mL would need about 3,300 ug/h).  Table 5 also puts
+# the weight exponent (1.83) on V2 while the printed code applies it to Vmax.
 # Shigetome 2025 (179 Japanese patients with major depression) has a
 # population PK model and a MADRS PK/PD module that needs the measured
 # week-1 MADRS score as an input; not implemented.

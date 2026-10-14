@@ -4,7 +4,7 @@ Midazolam's parameters were fitted to the data of Bührer and colleagues (*Clin 
 
 ### Covariates
 
-None. The parameters are for a typical adult. Midazolam's clearance is known to fall with age and with CYP3A4 inhibition, and its volume to rise with obesity; none of this is in the model.
+None in the source. The parameters are for a typical adult; they take the default [fat-free-mass scaling](help:models/fat-free-mass) and are used as published with the switch off. Midazolam's clearance is known to fall with age and with CYP3A4 inhibition, and its volume to rise with obesity; none of this is in the model.
 
 ### Effect site
 

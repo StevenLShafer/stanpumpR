@@ -48,7 +48,10 @@ helpScenarioDefaultOptions <- function() {
     addedPlots = character(0),
     showThreshold = FALSE,
     logY = FALSE,
-    opioidMacInteraction = FALSE
+    opioidMacInteraction = FALSE,
+    # Run the Schnider propofol and Minto remifentanil models beside the
+    # library's (R/alternativeModels.R); needs one of those drugs dosed
+    mintoSchnider = FALSE
   )
 }
 
@@ -60,6 +63,11 @@ helpScenarioDefaultOptions <- function() {
 #' @param group one of HELP_SCENARIO_GROUPS
 #' @param summary one sentence: the point the scenario makes
 #' @param age,weight,height,sex the patient (years, kg, cm, "male"/"female")
+#' @param creatinine serum creatinine in mg/dL, or NULL for a blank field (the
+#'   renal models then assume a normal value for the patient's age and sex)
+#' @param osmolality baseline serum osmolality in mOsm/kg (mannitol)
+#' @param pregnant is the patient pregnant?  Only for a woman of child-bearing
+#'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
 #' @param events data frame with Time (minutes) and Event, or NULL
 #' @param ... graph options overriding helpScenarioDefaultOptions()
@@ -67,7 +75,10 @@ helpScenarioDefaultOptions <- function() {
 helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
-                         doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT, ...) {
+                         doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
+                         cyp2c9 = CYP2C9_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
+                         creatinine = NULL,
+                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -82,8 +93,15 @@ helpScenario <- function(id, title, group, summary,
   }
   list(
     id = id, title = title, group = group, summary = summary,
+    # Every Patient Profile field is here, so that loading a scenario leaves
+    # nothing of the previous patient behind: a field the scenario does not
+    # name is reset to its default (an audit of 2026-10-12 found the creatinine
+    # and osmolality of the previous patient surviving a load).
     patient = list(age = age, weight = weight, height = height, sex = sex,
-                   cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, adjustToFFM = adjustToFFM),
+                   cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+                   cyp2b6 = cyp2b6, adjustToFFM = adjustToFFM,
+                   creatinine = creatinine, osmolality = osmolality,
+                   pregnant = pregnant),
     doses = doses, events = events, options = options
   )
 }
@@ -197,6 +215,25 @@ helpScenarios <- function() {
       ),
       timeUnits = "hours", maximum = 1440
     ),
+    # The substitution error that prompted Ansari 2025: calcium chloride and
+    # calcium gluconate are one drug whose units name the salt, so the reader
+    # changes "mg/min chloride" to "mg/min gluconate" and watches the same
+    # gram give a third of the rise (Claude Code, 2026-10-13, at the request
+    # of Steven L. Shafer)
+    helpScenario(
+      "calcium-salt-substitution",
+      "Calcium chloride is not calcium gluconate",
+      "Intravenous basics",
+      "1 g of calcium chloride over 10 minutes raises the ionized calcium by 0.4 mmol/L and it halves within half an hour; change the units to gluconate and the same gram gives a third of it.",
+      # A typical parturient of Ansari 2025, with the switch off so that the
+      # published parameters apply and the plot reproduces the paper
+      age = 34, weight = 80, height = 162, sex = SEX_FEMALE, adjustToFFM = FALSE,
+      doses = helpDoses(
+        c("calcium",  0, 100, "mg/min chloride"),
+        c("calcium", 10,   0, "mg/min chloride")
+      ),
+      maximum = 60, plasmaLinetype = "solid"
+    ),
 
     # --- Opioids -------------------------------------------------------------
     helpScenario(
@@ -229,6 +266,21 @@ helpScenarios <- function() {
       maximum = 240, addedPlots = PLOT_ID_MEAC
     ),
     helpScenario(
+      "methadone-cyp2b6",
+      "Methadone and CYP2B6: the same dose, two steady states",
+      "Opioids",
+      "Ten milligrams of oral methadone twice a day for a fortnight in a CYP2B6 poor metaboliser, whose methadone clearance is about a quarter lower than a normal metaboliser's.",
+      cyp2b6 = CYP2B6_POOR,
+      doses = helpDoses(
+        c("methadone", 0, 10, "mg PO bid")
+      ),
+      # Accumulation over days is the point, so the plot is in days and the
+      # plasma line carries it; the effect site lies on top at this scale.
+      timeUnits = "days", maximum = 14 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
       "tci-propofol",
       "Target-controlled infusion of propofol",
       "Intravenous basics",
@@ -239,6 +291,38 @@ helpScenarios <- function() {
         c("propofol", 60, 0, "Effect site target")
       ),
       maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE
+    ),
+    # The library's Eleveld models beside the Schnider and Minto models most
+    # TCI pumps run (R/alternativeModels.R), in ordinary simulation and under
+    # TCI.  (Claude Code, 2026-10-12, at the request of Steven L. Shafer.)
+    helpScenario(
+      "eleveld-vs-minto-schnider",
+      "Eleveld beside Schnider and Minto: propofol and remifentanil",
+      "Intravenous basics",
+      "The same propofol and remifentanil doses run through the Eleveld models and through the Schnider and Minto models most TCI pumps use, drawn as two lines in each panel.",
+      doses = helpDoses(
+        c("propofol", 0, 2, "mg/kg"),
+        c("propofol", 0, 100, "mcg/kg/min"),
+        c("propofol", 60, 0, "mcg/kg/min"),
+        c("remifentanil", 0, 1, "mcg/kg"),
+        c("remifentanil", 0, 0.2, "mcg/kg/min"),
+        c("remifentanil", 60, 0, "mcg/kg/min")
+      ),
+      maximum = 120, plasmaLinetype = "dashed", mintoSchnider = TRUE
+    ),
+    helpScenario(
+      "tci-eleveld-vs-minto-schnider",
+      "TCI: the same targets on Eleveld and on Schnider and Minto",
+      "Intravenous basics",
+      "Effect-site targets of 3 mcg/mL propofol and 4 ng/mL remifentanil, held for an hour by a pump on each model: each pump hits its own target, and the rate panels show how much drug each thinks that takes.",
+      doses = helpDoses(
+        c("propofol", 0, 3, "Effect site target"),
+        c("propofol", 60, 0, "Effect site target"),
+        c("remifentanil", 0, 4, "Effect site target"),
+        c("remifentanil", 60, 0, "Effect site target")
+      ),
+      maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE,
+      mintoSchnider = TRUE
     ),
 
     # --- Oral analgesics -----------------------------------------------------
@@ -331,6 +415,19 @@ helpScenarios <- function() {
       timeUnits = "hours", maximum = 720, plasmaLinetype = "dashed",
       showThreshold = TRUE
     ),
+    helpScenario(
+      "naproxen-twice-daily",
+      "Naproxen 500 mg twice a day: three days to a steady state",
+      "Oral analgesics",
+      "A half-life of nearly a day against a twelve-hour interval: the concentration doubles over three days, and the first night it dips below the analgesic threshold.",
+      doses = helpDoses(
+        c("naproxen", 0, 500, "mg PO bid")
+      ),
+      # Naproxen has no effect site, so the plasma line carries the curve.
+      # Four days, so in days.
+      timeUnits = "days", maximum = 5760, plasmaLinetype = "solid",
+      showThreshold = TRUE
+    ),
 
     # --- Interactions --------------------------------------------------------
     helpScenario(
@@ -403,6 +500,18 @@ helpScenarios <- function() {
         c("dexmedetomidine", 120, 0, "mcg/kg/hr")
       ),
       maximum = 240, plasmaLinetype = "dashed", showThreshold = TRUE
+    ),
+    helpScenario(
+      "remifentanil-labour",
+      "Remifentanil in labour: the parturient's doubled clearance",
+      "Special populations",
+      "A remifentanil infusion in a woman at term with Pregnant ticked: her clearance is twice the model's, so the plateau is half as high. Untick Pregnant to compare.",
+      age = 30, weight = 80, height = 165, sex = SEX_FEMALE, pregnant = TRUE,
+      doses = helpDoses(
+        c("remifentanil", 0, 0.1, "mcg/kg/min"),
+        c("remifentanil", 60, 0, "mcg/kg/min")
+      ),
+      maximum = 120, plasmaLinetype = "dashed"
     ),
 
     # --- Recovery and emergence ----------------------------------------------
@@ -567,6 +676,39 @@ helpScenarios <- function() {
       timeUnits = "days", maximum = 4320,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    helpScenario(
+      "ropivacaine-perineural-infusion",
+      "Ropivacaine: a continuous perineural infusion",
+      "Regional anesthesia",
+      "A 150 mg block followed by a 48-hour catheter infusion of 16 mg/hr: slow absorption delays the block's peak to 3 hours, the infusion settles at rate / clearance, and the concentration falls slowly after it stops.",
+      # 65 years: the ropivacaine disposition is that of patients 61 and over.
+      age = 65,
+      doses = helpDoses(
+        c("ropivacaine", 0, 150, "mg RA"),
+        c("ropivacaine", 0, 16, "mg/hr RA"),
+        c("ropivacaine", 2880, 0, "mg/hr RA")
+      ),
+      # Ropivacaine has no effect site, so the plasma line carries the curve.
+      # Three days, in days: the infusion stops at 2.
+      timeUnits = "days", maximum = 4320,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
+    helpScenario(
+      "lidocaine-perineural-infusion",
+      "Lidocaine: a continuous perineural infusion",
+      "Regional anesthesia",
+      "A 300 mg block followed by a 48-hour catheter infusion of 100 mg/hr: high clearance needs a high rate for a plateau in the systemic analgesic range, and absorption from the tissue, not elimination, sets how fast it falls after the pump stops.",
+      doses = helpDoses(
+        c("lidocaine", 0, 300, "mg RA"),
+        c("lidocaine", 0, 100, "mg/hr RA"),
+        c("lidocaine", 2880, 0, "mg/hr RA")
+      ),
+      # The scenario is about the systemic plasma concentration; on a plot in
+      # days the effect site lies on top of it.  Three days: the infusion
+      # stops at 2.
+      timeUnits = "days", maximum = 4320,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # --- Long-term therapy ---------------------------------------------------
     helpScenario(
       "amiodarone-pollak-regimen",
@@ -616,6 +758,21 @@ helpScenarios <- function() {
       ),
       timeUnits = "days", maximum = 525600,
       showThreshold = TRUE
+    ),
+    helpScenario(
+      "phenytoin-saturable-metabolism",
+      "Phenytoin: three equal dose steps, three unequal steady states",
+      "Long-term therapy",
+      "Saturable elimination: 200, then 300, then 400 mg of phenytoin a day, where each equal increment raises the steady state further than the one before.",
+      doses = helpDoses(
+        c("phenytoin",     0, 200, "mg PO ER qd"),
+        c("phenytoin", 40320, 300, "mg PO ER qd"),
+        c("phenytoin", 80640, 400, "mg PO ER qd")
+      ),
+      # Phenytoin has no effect site (the plasma line carries the curve), and
+      # each dose rate needs weeks to settle: four weeks per step, in days.
+      timeUnits = "days", maximum = 91 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
     )
   )
 }
@@ -651,7 +808,18 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$sex %in% SEX_VALUES) say("invalid sex: ", p$sex)
   if (!p$cyp2d6 %in% CYP2D6_VALUES) say("invalid cyp2d6: ", p$cyp2d6)
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
+  if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
+  if (!p$cyp2b6 %in% CYP2B6_VALUES) say("invalid cyp2b6: ", p$cyp2b6)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
+  if (!is.logical(p$pregnant) || length(p$pregnant) != 1 || is.na(p$pregnant)) {
+    say("pregnant is not a single logical")
+  } else if (p$pregnant && !pregnancyPossible(p$age, p$sex)) {
+    say("pregnant, but not a woman of ", PREGNANCY_MIN_AGE, " to ", PREGNANCY_MAX_AGE, " years")
+  }
+  if (!is.null(p$creatinine) && !is_valid_number(p$creatinine, MIN_CREATININE, MAX_CREATININE)) {
+    say("creatinine out of range: ", p$creatinine)
+  }
+  if (!is_valid_number(p$osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) say("osmolality out of range: ", p$osmolality)
 
   o <- s$options
   if (!identical(validTimeUnit(o$timeUnits), o$timeUnits)) say("invalid timeUnits: ", o$timeUnits)
@@ -669,7 +837,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (o$logY && (o$showThreshold || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
     say("logY is unavailable with the threshold, events or interaction panels")
   }
-  for (name in c("showThreshold", "logY", "opioidMacInteraction")) {
+  for (name in c("showThreshold", "logY", "opioidMacInteraction", "mintoSchnider")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
 
@@ -701,6 +869,15 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
     if (PLOT_ID_INTERACTION %in% o$addedPlots) {
       opioids <- drugDefaults$Drug[!is.na(drugDefaults$MEAC) & drugDefaults$MEAC > 0]
       if (!"propofol" %in% d$Drug || !any(d$Drug %in% opioids)) say("the interaction panel needs propofol and an opioid")
+    }
+    # The Minto / Schnider box is enabled only while one of those drugs is dosed
+    if (isTRUE(o$mintoSchnider) && !any(d$Drug %in% ALTERNATIVE_MODEL_DRUGS)) {
+      say("Minto / Schnider needs ", paste(ALTERNATIVE_MODEL_DRUGS, collapse = " or "))
+    }
+    if (isTRUE(o$mintoSchnider)) {
+      p <- s$patient
+      for (problem in alternativeModelProblems(d$Drug, p$weight, p$height, p$age, p$sex,
+                                               pregnant = isTRUE(p$pregnant))) say(problem)
     }
   }
 
@@ -779,9 +956,24 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateNumericInput(session, "height", value = p$height)
   updateRadioButtons(session, "heightUnit", selected = as.character(UNIT_CM))
   shinyWidgets::updateRadioGroupButtons(session, "sex", selected = p$sex)
+  # The control holds "TRUE" / "FALSE"; it is sent even when hidden, so a
+  # later patient does not inherit the flag.
+  shinyWidgets::updateRadioGroupButtons(session, "pregnant",
+                                        selected = if (isTRUE(p$pregnant)) "TRUE" else "FALSE")
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
+  updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
+  updateSelectInput(session, "cyp2b6", selected = p$cyp2b6)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
+  # A blank field is the state the renal models read as "assume a normal
+  # creatinine".  updateNumericInput() would send NA as the string "NA" and
+  # leave the browser to sanitise it, so the blank is sent explicitly.
+  if (is.null(p$creatinine)) {
+    session$sendInputMessage("creatinine", list(value = ""))
+  } else {
+    updateNumericInput(session, "creatinine", value = p$creatinine)
+  }
+  updateNumericInput(session, "osmolality", value = p$osmolality)
 
   if (is.null(timeApi)) {
     updateSelectInput(session, "maximum", selected = maxTimeValue(o$maximum))
@@ -794,6 +986,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateCheckboxInput(session, "showThreshold", value = o$showThreshold)
   updateCheckboxInput(session, "logY", value = o$logY)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
+  updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
 
   eventTable(helpScenarioEventTable(s))
   if (is.null(timeApi)) {
@@ -811,7 +1004,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
 helpScenarioLoadButton <- function(s) {
   sprintf(
     '<p><a href="#" class="btn btn-primary help-scenario-btn" data-help-scenario="%s">%s Load into the simulator</a>
-     <span class="small text-muted help-scenario-hint">Replaces the current patient, doses, events and graph options.</span></p>',
+     <span class="small text-muted help-scenario-hint">Replaces the current patient (every Patient Profile field), doses, events and graph options.</span></p>',
     s$id, as.character(icon("play"))
   )
 }
@@ -833,9 +1026,15 @@ helpScenarioPageHTML <- function(id) {
     Sex = p$sex,
     `CYP 2D6` = tools::toTitleCase(p$cyp2d6),
     `CYP 2C19` = tools::toTitleCase(p$cyp2c19),
+    `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
+    `CYP 2B6` = tools::toTitleCase(p$cyp2b6),
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
+    `Serum creatinine` = if (is.null(p$creatinine)) "blank (normal for age and sex assumed)" else sprintf("%s mg/dL", helpFormatNumber(p$creatinine)),
+    `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),
     check.names = FALSE, stringsAsFactors = FALSE
   )
+  # Shown only when set: "Pregnant: no" beside a man's age would be noise.
+  if (isTRUE(p$pregnant)) patient$Pregnant <- "yes"
   # Times as the dose table will show them: in the scenario's time unit, in
   # full (helpFormatNumber()'s three significant figures would print 30240
   # minutes as 30,200)
@@ -860,7 +1059,8 @@ helpScenarioPageHTML <- function(id) {
     "Additional plots" = if (length(o$addedPlots)) paste(o$addedPlots, collapse = ", ") else "none",
     "Time until threshold" = if (o$showThreshold) "on" else "off",
     "Log Y axis" = if (o$logY) "on" else "off",
-    "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off"
+    "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off",
+    "Minto / Schnider" = if (o$mintoSchnider) "on" else "off"
   )
   optionsTable <- data.frame(Option = names(optionRows), Setting = unname(optionRows),
                              stringsAsFactors = FALSE)

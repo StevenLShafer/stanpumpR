@@ -11,13 +11,14 @@ The **Antidepressants** in the startup menu are a library of named, source-speci
 | [duloxetine](help:drugs/duloxetine) | Zhong and colleagues, 2026 | 325 Chinese depressed inpatients | One compartment, apparent oral; sex |
 | [mirtazapine](help:drugs/mirtazapine) | Yan and colleagues, 2026 | 105 Chinese depressed inpatients | One compartment, apparent oral; BMI of 28 or more. The abstract and Table 2 disagree; Table 2 is used |
 | [fluoxetine](help:drugs/fluoxetine) | Han and colleagues, 2025 | 198 Chinese psychiatric patients, steady-state troughs only | One compartment, apparent oral, with [norfluoxetine](help:drugs/norfluoxetine) formed from it; sex. **Only the trough at steady state is valid**: the half-lives are hours, not days |
+| [venlafaxine](help:drugs/venlafaxine) | Wang and colleagues, 2022 | 24 healthy volunteers (rich profiles) and 127 psychiatric patients (troughs) | One compartment, apparent oral, with [desvenlafaxine](help:drugs/desvenlafaxine) formed from it and by first pass; the patients' clearance |
 | [bupropion](help:drugs/bupropion) | Ghimire and colleagues, 2026 | 19 adults, one 150 mg sustained-release dose | Two compartments for bupropion and two for [hydroxybupropion](help:drugs/hydroxybupropion), formed from it |
 
-All are given by mouth only (`mg PO`, with once- and twice-daily schedules). Most are **apparent** models, fitted to oral data alone, which predict oral concentrations correctly and intravenous ones not at all. See [Oral, intramuscular and intranasal doses](help:models/absorption).
+All are given by mouth only (`mg PO`, with once-daily schedules, twice-daily ones for all but fluoxetine, and three times daily for venlafaxine). Most are **apparent** models, fitted to oral data alone, which predict oral concentrations correctly and intravenous ones not at all. See [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption).
 
 ## What a curve can and cannot tell you
 
-**Population, not patient.** Every curve is the typical patient of its source population. No model is offered as transferable beyond that population without calibration. When ten published escitalopram models were tested against an independent cohort, none gave reliable population predictions without it (Liu and colleagues, 2025).
+**Population, not patient.** Every curve is the typical patient of its source population. No model is offered as transferable beyond that population without calibration. When ten published escitalopram models were tested against an independent cohort, none gave reliable population predictions without it (Yan and colleagues, 2025).
 
 **Trough data shape the half-lives.** Most of these models were fitted to one or two concentrations per patient, drawn just before a dose at steady state. Such data pin down the average steady-state concentration (dose rate divided by clearance) well and the shape within a dosing interval poorly. Several apparent half-lives therefore differ from the product label's: mirtazapine's is about 7 hours against the label's 20 to 40, paroxetine's about 54 hours at 71 years against the label's 21, and fluoxetine's about 6 hours against the label's 4 to 6 days, with norfluoxetine's 20 minutes against 4 to 16 days. Fluoxetine's model was held back until its units were checked: its source's own simulated troughs confirm that the printed parameters are what the authors used, so the troughs are right and the time course is not. Each drug's page says where this applies.
 
@@ -29,20 +30,19 @@ All are given by mouth only (`mg PO`, with once- and twice-daily schedules). Mos
 
 ## What is deliberately absent
 
-These were assessed and left out until their sources are reconciled. They are not forgotten:
+These were assessed and left out. They are not forgotten:
 
-- **Venlafaxine** with O-desmethylvenlafaxine (Wang and colleagues, 2022). The paper's main table omits the parent-to-metabolite rate constant its own scheme requires, and its immediate-release absorption cannot stand in for the extended-release product most patients take.
-- **Paroxetine, Feng and colleagues' Michaelis-Menten model** (2006). Its sole elimination route, at its printed Vmax of 454 to 474 µg/h, can remove at most about 11 mg a day, below the up to 40 mg a day the study gave. The model as printed cannot reach a steady state, so the source's input convention must be recovered first. Kim's model is used instead.
+- **Paroxetine, Feng and colleagues' Michaelis-Menten model** (2006). Left out after reading the full paper, which does not resolve it. Its structure is printed (two compartments, saturable elimination from the central one, NONMEM's general nonlinear model) and so is its covariate code, but no bioavailability or dose-scaling term. Its own population predictions (Figure 2) stay below about 300 ng/mL over nearly three years on 10 to 40 mg a day, so its elimination capacity must exceed the dose. No reading of the printed Vmax (454 to 474) and Km (205) does that and lands near the concentrations seen in practice: as µg/h, elimination stops at about 11 mg a day and the model accumulates without limit; as a rate per litre of central volume or per minute, 20 mg a day gives under 7 ng/mL; as a near-linear clearance of 2.2 L/h, it gives about 380 ng/mL. An elderly patient on 20 mg a day typically has 50 to 100. With all of the dose absorbed, matching that would need a Vmax of about 3,300 to 4,550 µg/h, seven to ten times the printed value. The paper also places its weight exponent on V2 in Table 5 and on Vmax in its code. Kim's model is used instead.
 - **Symptom-score models.** Shigetome and colleagues' paroxetine MADRS model needs the patient's measured week-1 response, so it cannot forecast from a baseline. No other model links concentration to remission.
-- **Metabolites** other than hydroxybupropion and norfluoxetine: desmethylcitalopram, desmethylsertraline and the others. Their sources' conversion conventions were not recovered.
+- **Metabolites** other than hydroxybupropion, norfluoxetine and desvenlafaxine: desmethylcitalopram, desmethylsertraline and the others. Their sources' conversion conventions were not recovered.
 - **Co-medication.** Mirtazapine's interactions with paroxetine and fluvoxamine are in its source, but the app has no field for co-medication.
 
 ## References
 
 Hiemke C, Bergemann N, Clement HW, et al. Consensus guidelines for therapeutic drug monitoring in neuropsychopharmacology: update 2017. *Pharmacopsychiatry* 2018;51:9-62. https://doi.org/10.1055/s-0043-116492
 
-Liu and colleagues, external evaluation of ten escitalopram population models, *Drug Des Devel Ther* 2025, https://doi.org/10.2147/DDDT.S546904.
+Yan K, Xie X, Shao Q, Wang N, Yang M. A step toward precision dosing of escitalopram in Chinese patients: an external evaluation of published population pharmacokinetic models. *Drug Des Devel Ther* 2025;19:10937-10951. https://doi.org/10.2147/DDDT.S546904.
 
 Meyer JH, Wilson AA, Sagrati S, et al. Serotonin transporter occupancy of five selective serotonin reuptake inhibitors at different doses: an [11C]DASB positron emission tomography study. *Am J Psychiatry* 2004;161:826-835. https://doi.org/10.1176/appi.ajp.161.5.826
 
-Wang and colleagues, *Front Pharmacol* 2022, https://doi.org/10.3389/fphar.2022.978202; Feng and colleagues, *Br J Clin Pharmacol* 2006, https://doi.org/10.1111/j.1365-2125.2006.02629.x; Shigetome and colleagues, *CPT Pharmacometrics Syst Pharmacol* 2025, https://doi.org/10.1002/psp4.70032.
+Feng and colleagues, *Br J Clin Pharmacol* 2006, https://doi.org/10.1111/j.1365-2125.2006.02629.x; Shigetome and colleagues, *CPT Pharmacometrics Syst Pharmacol* 2025, https://doi.org/10.1002/psp4.70032.

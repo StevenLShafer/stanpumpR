@@ -12,6 +12,9 @@
 #   input$help_goto           a page id; clicked on any [data-help-page] link
 #   input$help_scenario_load  a scenario id; clicked on any [data-help-scenario]
 #   input$help_search         the search box
+#   input$investigator_show   an investigator key; clicked on any
+#                             [data-investigator] link, in the help or in the
+#                             References panel (R/help-investigators.R)
 #
 # The page ids come from the browser, so they are checked against the
 # registry before anything is read from disk.
@@ -89,6 +92,13 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
               tags$span(class = "small", "Press Apply Changes after editing the dose table to see your own variations.")),
       type = "message", duration = 8
     )
+  })
+
+  observeEvent(input$investigator_show, {
+    modal <- helpInvestigatorModal(input$investigator_show)
+    if (is.null(modal)) return()
+    outputComments("Showing investigator", input$investigator_show, level = DEBUG_LEVEL_VERBOSE)
+    showModal(modal)
   })
 
   invisible(helpPage)
