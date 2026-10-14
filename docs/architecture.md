@@ -392,8 +392,8 @@ All files are flat in `R/`.
   is not a second opioid); the hover reports both models and a click goes to the parent. Minto's
   ke0 is the paper's function of age, so `getDrugPK()` accepts a model with `ke0` and no `tPeak`
   and solves the time to peak effect from it. A model whose covariate terms give a non-positive
-  volume or clearance for the patient (James lean body mass past zero; a small child on
-  Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
+  volume or clearance for the patient (a James lean body mass far enough below zero to take
+  Minto's V1 negative, about -16 kg at age 40; a small child on Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
   `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
   `eleveld-vs-minto-schnider`, `tci-eleveld-vs-minto-schnider` and `james-lean-body-mass`; tests `test-minto-schnider.R`.
 - **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under

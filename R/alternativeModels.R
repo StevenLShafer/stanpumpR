@@ -64,7 +64,7 @@
 # peaks at a BMI of 43 in men and 36 in women and then falls (above about
 # 125 kg in a man of 170 cm, 92 kg in a woman of 160 cm), so the Schnider
 # clearance, which falls with lean body mass, rises steeply in the obese,
-# and far enough out the Minto volumes go negative; in a small child the
+# and far enough out Minto's V1 goes negative; in a small child the
 # Schnider clearance intercepts make CL1 negative.  Where a volume, clearance
 # or ke0 comes out zero or negative the model is not defined for that
 # patient, no companion is built, and the app says so
