@@ -16,6 +16,7 @@ does not return while the service runs
 }
 \description{
 Serves \code{POST /simulate}, \code{GET /drugs} and \code{GET /health} (see
-\code{docs/api.md}), with interactive documentation at \verb{/__docs__/}.  Needs the
+\url{https://stanpumpr.io/api}, also served at \code{/}), with interactive
+documentation at \verb{/__docs__/}.  Needs the
 plumber package.
 }

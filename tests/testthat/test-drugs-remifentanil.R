@@ -26,8 +26,8 @@ test_that("returns the correct calculations if BMI is > 30 and male", {
     tPeak = 1.6,
     MEAC = 1,
     typical = 1.2,
-    upperTypical = 0.8,
-    lowerTypical = 2,
+    upperTypical = 2,
+    lowerTypical = 0.8,
     reference = "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
   )
   expect_equal_rounded(actual, expected)
@@ -57,8 +57,8 @@ test_that("returns the correct calculations if BMI is <= 30 and male", {
     tPeak = 1.6,
     MEAC = 1,
     typical = 1.2,
-    upperTypical = 0.8,
-    lowerTypical = 2,
+    upperTypical = 2,
+    lowerTypical = 0.8,
     reference = "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
   )
   expect_equal_rounded(actual, expected)
@@ -89,8 +89,8 @@ test_that("returns the correct calculations if BMI is > 30 and female", {
     tPeak = 1.6,
     MEAC = 1,
     typical = 1.2,
-    upperTypical = 0.8,
-    lowerTypical = 2,
+    upperTypical = 2,
+    lowerTypical = 0.8,
     reference = "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
   )
   expect_equal_rounded(actual, expected)
@@ -121,8 +121,8 @@ test_that("returns the correct calculations if BMI is <= 30 and female", {
     tPeak = 1.6,
     MEAC = 1,
     typical = 1.2,
-    upperTypical = 0.8,
-    lowerTypical = 2,
+    upperTypical = 2,
+    lowerTypical = 0.8,
     reference = "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
   )
   expect_equal_rounded(actual, expected)
@@ -158,4 +158,21 @@ test_that("an adult at BMI 30 is on Kim's model from the age the rule names", {
   expect_equal_rounded(adult$PK$default$cl1, 2.589623)
   expect_equal_rounded(adult$PK$default$v1, 3.325649)
   expect_equal_rounded(lean$PK$default$cl1, 2.203018)
+})
+
+test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  Eleveld, CL1 x 2.
+  # The values are those the model gives with the flag on; test-pregnancy.R
+  # checks the ratio against the flag off and that nothing else moves.
+  actual <- remifentanil(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(4.812838479, actual$v1)
+  expect_equal_rounded(10.34103066, actual$v2)
+  expect_equal_rounded(4.742054499, actual$v3)
+  expect_equal_rounded(6.374084526, actual$cl1)
+  expect_equal_rounded(2.844531893, actual$cl2)
+  expect_equal_rounded(0.1225004483, actual$cl3)
+  expect_equal(remifentanil(70, 165, 30, "female")$PK$default,
+               remifentanil(70, 165, 30, "female", pregnant = FALSE)$PK$default)
+  expect_match(remifentanil(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
+  expect_no_match(remifentanil(70, 165, 30, "female")$reference, "Ansari")
 })

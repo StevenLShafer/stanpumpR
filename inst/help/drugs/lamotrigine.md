@@ -4,7 +4,7 @@ The base model of Milosheska and colleagues (*Br J Clin Pharmacol* 2016;82:399-4
 
 ### Why this model
 
-The specification proposed a model with a fixed volume of 1.8 L/kg, which would give a monotherapy half-life near 48 hours against the 24 to 33 observed; Cohen and colleagues measured 1.2 L/kg. Milosheska's base model is complete in one source and consistent with the observed half-life.
+Chavez-Castillo and colleagues' model (*J Pharm Sci* 2020) fixes the volume at 1.8 L/kg, which would give a monotherapy half-life near 48 hours against the 24 to 33 observed; Cohen and colleagues measured 1.2 L/kg. Milosheska's base model is complete in one source and consistent with the observed half-life.
 
 ### What is not modelled
 

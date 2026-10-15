@@ -1,6 +1,6 @@
 ### The model
 
-From Bamgboye and colleagues (*J Clin Pharmacol* 2026), who gave 20 adults a stable-isotope-labelled intravenous microdose alongside their oral topiramate: three compartments, linear, allometric on weight, with a clearance of 1.31 L/h, a central volume of 9.84 L and steady-state volume near 58 L at 70 kg. The terminal half-life is about 30 hours.
+From Bamgboye and colleagues (*J Clin Pharmacol* 2026), who gave 20 adults a stable-isotope-labelled intravenous microdose alongside their oral topiramate: three compartments, linear, allometric on weight (the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass), total body weight with the switch off), with a clearance of 1.31 L/h, a central volume of 9.84 L and steady-state volume near 58 L at 70 kg. The terminal half-life is about 30 hours.
 
 ### Route
 

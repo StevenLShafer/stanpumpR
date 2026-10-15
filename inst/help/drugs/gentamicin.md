@@ -17,3 +17,7 @@ The shaded band runs from a trough ceiling of about 1 mcg/mL to the historical p
 ### Where to be careful
 
 The training range of eGFR was about 6 to 216 mL/min and renal replacement was excluded. Nothing here predicts nephrotoxicity or ototoxicity; a trough is a surrogate, not a probability.
+
+### Pregnancy
+
+With **Pregnant** ticked, the eGFR the clearance reads is multiplied by 1.5, the rise in glomerular filtration the review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) gives for pregnancy; Smit's clearance is proportional to it, so the clearance rises by 1.5. The review reports a larger volume of distribution and a higher clearance in pregnancy, giving low peaks, and a dosing interval of 6 hours rather than 8; it prints no factor for gentamicin itself. The larger volume is not applied, so the simulated peak in a parturient is too high and the trough about right. See [Pregnancy](help:models/pregnancy).

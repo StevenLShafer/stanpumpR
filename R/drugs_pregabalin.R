@@ -36,7 +36,7 @@
 # the supplement.
 #
 # The library's reference patient (70 kg, 170 cm, 35 y man, assumed creatinine
-# 1.0 mg/dL) has NCLcr 97.6, above the breakpoint, so he receives Chan's
+# 0.9 mg/dL) has NCLcr 108.4, above the breakpoint, so he receives Chan's
 # typical values exactly: CL/F 4.96 L/h, V/F 39.8 L, half-life 5.6 h.
 #
 # ABSORPTION: ka READ AS PUBLISHED

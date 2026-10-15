@@ -2,7 +2,7 @@
 % Please edit documentation in R/advanceGasManBaseline.R
 \name{gasManSolubility}
 \alias{gasManSolubility}
-\title{Per-compartment solubilities for one gas, in Gas Man's ordering}
+\title{Per-compartment solubilities for one gas, in GasMan's ordering}
 \usage{
 gasManSolubility(props)
 }

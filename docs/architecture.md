@@ -241,11 +241,18 @@ optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
 **Covariate helpers.** `pkSizeFactors()` (`pkSizeFactors.R`) turns weight, height, age and sex
 into the fat-free-mass multipliers that most drug models apply to their volumes and clearances
 (`ffmAlSallami()` is the Al-Sallami 2015 fat-free mass; see `docs/weight-adjustment.md`);
-`lbmJames()` computes the older James lean body mass; `renalFunction.R` supplies
+it is also the lean-body-mass covariate of Aoyama's meloxicam model, in place of the James
+equation it was published with. `lbmJames()` computes the James lean body mass, a parabola in
+weight that falls past a BMI of 43 (men) or 36 (women), kept deliberately for the Schnider and
+Minto companions so that they fail at the extremes of weight as the pumps do (scenario
+`james-lean-body-mass`); `renalFunction.R` supplies
 Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally cleared
 models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
-adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `recoveryCalc()` computes
+adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `pregnancy.R` holds the
+Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, the review's findings per drug in
+`pregnancyFindings()`), which `getDrugPK()` passes only to the eight models that name `pregnant`, each applying
+the factor its header documents from Ansari 2016; `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 
@@ -337,12 +344,16 @@ All files are flat in `R/`.
   calls, the companion's colour and name-to-parent mapping, and `alternativeModelProblems()`,
   which says when a model is not defined for the patient.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
-- `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
-  `emayili`.
+- `sendSlide.R` — renders an `officer` PowerPoint deck from `Template.pptx` (the whole plot on
+  the first slide, then one slide per panel from `panelPlots()`, which cuts every layer of the
+  ggplot down to one facet) and emails it via `emayili`.
 
 **Help — the Help tab**
 - `help-content.R` — page registry (`helpStaticPages()`), Markdown rendering via `shiny::markdown()`,
   `help:`/`scenario:` link rewriting, heading ids and table of contents, full-text search.
+- `help-investigators.R` — the investigators named in bold on `inst/help/investigators.md`: the registry,
+  the links to them in every page and citation (`helpLinkInvestigators()`), and the pop-up about each
+  (`helpInvestigatorModal()`, shown on `input$investigator_show`).
 - `help-drugs.R` — pages generated from the drug library: each drug model run at six reference
   patients, with its citation, units and thresholds; the drug index; the bibliography.
 - `help-scenarios.R` — the teaching-scenario registry (`helpScenarios()`), its validator, the
@@ -382,10 +393,10 @@ All files are flat in `R/`.
   is not a second opioid); the hover reports both models and a click goes to the parent. Minto's
   ke0 is the paper's function of age, so `getDrugPK()` accepts a model with `ke0` and no `tPeak`
   and solves the time to peak effect from it. A model whose covariate terms give a non-positive
-  volume or clearance for the patient (James lean body mass at extremes; a small child on
-  Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
+  volume or clearance for the patient (a James lean body mass far enough below zero to take
+  Minto's V1 negative, about -16 kg at age 40; a small child on Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
   `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
-  `eleveld-vs-minto-schnider` and `tci-eleveld-vs-minto-schnider`; tests `test-minto-schnider.R`.
+  `eleveld-vs-minto-schnider`, `tci-eleveld-vs-minto-schnider` and `james-lean-body-mass`; tests `test-minto-schnider.R`.
 - **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under
   `/tci/v1` that returns the next infusion rate for one TCI drug in one patient from the
   controller's record of what the pump has delivered (the STANPUMP principle: the model state is
@@ -416,11 +427,15 @@ All files are flat in `R/`.
   time. The dialog offers only `suggestDrugChoices()`: an effect site and IV bolus and infusion
   units.
 - **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current
-  simulation and mails it: plot, dose table, and a URL that reconstructs the exact state.
+  simulation and mails it: the plot on the first slide and each panel on a slide of its own,
+  the dose table, and a URL that reconstructs the exact state.
 - **Editors & modals** (`app_server.R`) — in-app Drug Library and Drug Thresholds editors, plus
   click-to-add-dose / double-click-to-edit driven from plot coordinates.
 - **URL bookmarking** (`app_globals.R`) — `enableBookmarking = "url"` encodes inputs into a
   shareable link; `bookmarksToExclude` keeps transient UI state out.
+- **Deep links** (`deep-links.R`) — `?scenario=<id>` loads a teaching scenario and
+  `?help=<page-id>` opens the Help tab on a page, both read once at startup and both skipping
+  the startup drug menu; see `inst/help/sharing.md`.
 - **Debug & profiler** (`app_globals.R`, `app_server.R`) — `?debug=1` reveals a live log
   (`outputComments()`) and a per-reactive profiler (`profileCode()`).
 - **Front-end assets** (`inst/www/`) — `app.css`, `app.js`, `hot_funs.js` (Handsontable
@@ -432,4 +447,7 @@ All files are flat in `R/`.
 - **Reproducibility** (`renv.lock`, `DESCRIPTION`) — `renv.lock` pins exact package versions so
   production matches local; deps declared in `DESCRIPTION`.
 - **Tests / CI** (`tests/testthat/`, `.github/`) — one test file per drug and per R file;
-  R-CMD-check and shinyapps.io deploy run via GitHub Actions.
+  R-CMD-check and shinyapps.io deploy run via GitHub Actions. The production deploy starts
+  only when R-CMD-check has passed on the pushed commit and installs that commit by SHA;
+  the deploy writes that SHA into `config.yml` as `commit`, and the app reports the version and
+  commit (`stanpumpRBuild()`) in the debug log and the Source link's tooltip.

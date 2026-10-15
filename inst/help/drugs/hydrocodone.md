@@ -20,4 +20,4 @@ The apparent disposition carries no weight term: the source fitted creatinine cl
 
 ### Where to be careful
 
-Part of hydrocodone's effect is its own, not the metabolite's: Otton found poor metabolisers still report opioid effects. The model understates this, because its effect site waits on the provisional tPeak and MEAC above, and the metabolite's contribution appears on the hydromorphone row. Norhydrocodone and hydromorphone-3-glucuronide are not modelled.
+Part of hydrocodone's effect is its own, not the metabolite's: Otton found poor metabolisers still report opioid effects. The model represents the parent's share only through the provisional tPeak and MEAC above; the metabolite's contribution appears on the hydromorphone row. Norhydrocodone and hydromorphone-3-glucuronide are not modelled.

@@ -15,7 +15,9 @@ osmolality(t) = baseline + 0.555 × Cp(t)
 - 0.555 is the net rise in measured osmolality per mOsm/L of plasma mannitol
   (see *The pharmacodynamic link*, below).
 
-Doses are entered in g, g/kg, g/hr or g/kg/hr. The shaded band is 300–320
+Doses are entered as infusions only, in g/hr or g/kg/hr: mannitol is run in
+over 15 to 60 minutes, never pushed, and the library offers no bolus unit for
+it (a dose is a rate, stopped with a rate of zero). The shaded band is 300–320
 mOsm/kg, the usual target range during osmotherapy, with 320 the conventional
 ceiling. Mannitol has no effect site, so only the plasma line is drawn, and the
 panel's y-axis starts just below the baseline instead of at zero.
@@ -142,14 +144,14 @@ clearance, and it has not been validated in children.
 Mannitol is filtered at the glomerulus and not reabsorbed, and nearly all of a
 dose is excreted unchanged, so its clearance tracks GFR. stanpumpR scales CL1 by
 the patient's Cockcroft-Gault creatinine clearance over the reference patient's
-(70 kg, 35 years, male, creatinine 1.0 mg/dL: 102 mL/min):
+(70 kg, 35 years, male, creatinine 0.9 mg/dL: 113 mL/min):
 
 ```
 CL1 = 0.07 L/min × CrCl / 102
 ```
 
 CrCl is computed from the **Serum creatinine** field in the Patient Profile, or
-from an assumed normal creatinine (1.0 mg/dL in men, 0.8 in women) when the field
+from an assumed normal creatinine (0.9 mg/dL in men, 0.8 in women) when the field
 is blank. A child's creatinine, entered or assumed, is read against the normal for
 age and put on the adult scale (`R/renalFunction.R`), so a blank field gives a child
 the adult value. Cockcroft-Gault carries body size, so this factor replaces the

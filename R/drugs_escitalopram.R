@@ -75,8 +75,9 @@
 # switch off the published values unscaled (legacyVolume = 1).  Liu's Table 1
 # gives the cohort's median weight as 61 kg (37-97) and height as 165 cm
 # (150-180), lighter than the 70 kg reference man.  The reference has not
-# been re-anchored to that cohort, so the scaled values somewhat overstate
-# clearance and volume for everyone.
+# been re-anchored to that cohort: a patient of the cohort's median size
+# receives the published values scaled down by the fat-free-mass ratio of
+# 61 kg, 165 cm to the 70 kg, 170 cm reference.
 #
 # NOT IMPLEMENTED (alternatives, documented in the help)
 # ======================================================

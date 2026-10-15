@@ -23,6 +23,16 @@
 # a second.
 SUGGEST_ITERATION_LIMIT <- 1000L
 
+# What the app says when suggest() returns NULL because suggestTargets() left
+# no target (issue #270): before, the dialog closed with nothing done.  A
+# clock time earlier than the start is read as the next day, and is dropped
+# when that puts it at or after the end time.
+SUGGEST_NO_TARGETS_MESSAGE <- paste(
+  "Suggest Dosing found no target to work from. Each target needs a",
+  "concentration above 0 and a time before the end time; a clock time",
+  "earlier than the start of the plot is read as the next day."
+)
+
 suggest <- function(
     targetDrug,
     targetTable,

@@ -3,8 +3,11 @@ test_that("returns the published parameters with total-body-weight scaling", {
   height <- 171
   age <- 50
   sex <- "male"
-  # The switch off reproduces the pre-fat-free-mass output exactly.
+  # The switch off reproduces the pre-fat-free-mass output exactly.  Arden's
+  # equilibration half-life of 1.6 min is supplied as ke0; no tPeak is
+  # returned, getDrugPK() solves it (below).
   actual <- etomidate(weight, height, age, sex, adjustToFFM = FALSE)
+  expect_null(actual$tPeak)
 
   expected <- list(
     PK = list(
@@ -17,11 +20,11 @@ test_that("returns the published parameters with total-body-weight scaling", {
         cl3 = 1.3167
       )
     ),
-    tPeak = 1.6,
+    ke0 = log(2) / 1.6,
     MEAC = 0,
     typical = 0.5,
-    upperTypical = 0.4,
-    lowerTypical = 0.8,
+    upperTypical = 0.8,
+    lowerTypical = 0.4,
     reference = "Arden JR et al., Anesthesiology 1986;65(1):19-27. https://pubmed.ncbi.nlm.nih.gov/3729056/"
   )
 
@@ -42,4 +45,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
         cl3 = 1.6075756
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
+})
+
+test_that("the time to peak effect is solved from Arden's ke0, about 1.9 min", {
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("etomidate", 70, 170, 50, "male", dd[dd$Drug == "etomidate", ])
+  expect_equal(PK$PK$default$ke0, log(2) / 1.6, tolerance = 1e-6)
+  expect_equal(PK$tPeak, 1.91, tolerance = 0.01)
 })

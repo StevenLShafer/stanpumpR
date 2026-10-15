@@ -337,7 +337,10 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
-    "olanzapine", "droperidol", "droperidolIM"
+    "olanzapine", "droperidol", "droperidolIM",
+    # Intravenous calcium (2026-10-13): the ionized calcium itself is the
+    # end point, no ke0 (R/drugs_calcium.R).
+    "calcium"
   ))
 })
 

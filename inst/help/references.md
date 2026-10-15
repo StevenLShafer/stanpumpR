@@ -10,7 +10,17 @@ Shafer SL, Gregg KM. Algorithms to rapidly achieve and maintain stable drug conc
 
 Hughes MA, Glass PSA, Jacobs JR. Context-sensitive half-time in multicompartment pharmacokinetic models for intravenous anesthetic drugs. *Anesthesiology* 1992;76:334-341.
 
+Shafer SL, Stanski DR. Improving the clinical utility of anesthetic drug pharmacokinetics. *Anesthesiology* 1992;76:327-330. *(The editorial accompanying Hughes, Glass and Jacobs.)*
+
+Youngs EJ, Shafer SL. Pharmacokinetic parameters relevant to recovery from opioids. *Anesthesiology* 1994;81:833-842. *(Decrement times: the context-sensitive half-time generalised to any percentage decrease, and which volumes and clearances shorten them.)*
+
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
+
+## Pregnancy
+
+The review the [Pregnant](help:models/pregnancy) field follows:
+
+Ansari J, Carvalho B, Shafer SL, Flood P. Pharmacokinetics and pharmacodynamics of drugs commonly used in pregnancy and parturition. *Anesth Analg* 2016;122:786-804. [DOI 10.1213/ANE.0000000000001143](https://doi.org/10.1213/ANE.0000000000001143)
 
 ## History of target-controlled infusion
 
@@ -43,6 +53,8 @@ Ausems ME, Stanski DR, Hug CC. An evaluation of the accuracy of pharmacokinetic 
 Alvis JM, Reves JG, Govier AV, Menkhaus PG, Henling CE, Spain JA, Bradley E. Computer-assisted continuous infusions of fentanyl during cardiac anesthesia: comparison with a manual method. *Anesthesiology* 1985;63:41-49.
 
 Shafer SL, Siegel LC, Cooke JE, Scott JC. Testing computer-controlled infusion pumps by simulation. *Anesthesiology* 1988;68:261-266.
+
+Raemer DB, Buschman A, Varvel JR, Philip BK, Johnson MD, Stein DA, Shafer SL. The prospective use of population pharmacokinetics in a computer-driven infusion system for alfentanil. *Anesthesiology* 1990;73:66-72. *(The first of the two 1990 STANPUMP-era pump studies; introduced MDPE and MDAPE.)*
 
 Jacobs JR. Analytical solution to the three-compartment pharmacokinetic model. *IEEE Trans Biomed Eng* 1988;35:763-765.
 
@@ -84,6 +96,8 @@ Persson K, Hammarlund-Udenaes M, Mortimer O, Rane A. The postoperative pharmacok
 
 James WPT. *Research on Obesity: A Report of the DHSS/MRC Group.* London: HMSO, 1976.
 
+Bouillon T, Shafer SL. Does size matter? *Anesthesiology* 1998;89:557-560. *(The James lean body mass falls with weight past a peak at each height.)*
+
 Janmahasatian S, Duffull SB, Ash S, Ward LC, Byrne NM, Green B. Quantification of lean bodyweight. *Clin Pharmacokinet* 2005;44:1051-1065.
 
 Anderson BJ, Holford NHG. Mechanism-based concepts of size and maturity in pharmacokinetics. *Annu Rev Pharmacol Toxicol* 2008;48:303-332.
@@ -92,7 +106,7 @@ Al-Sallami HS, Goulding A, Grant A, Taylor R, Holford N, Duffull SB. Prediction 
 
 ## Renal function
 
-Several models estimate renal function from the entered serum creatinine, or from an assumed normal creatinine when none is entered: 1.0 mg/dL in men and 0.8 in women, and in children the median for age (Boer, then Pottel), read on the adult scale by the equations fitted in adults (after Björk).
+Several models estimate renal function from the entered serum creatinine, or from an assumed normal creatinine when none is entered: 0.9 mg/dL in men and 0.8 in women, and in children the median for age (Boer, then Pottel), read on the adult scale by the equations fitted in adults (after Björk).
 
 Cockcroft DW, Gault MH. Prediction of creatinine clearance from serum creatinine. *Nephron* 1976;16:31-41.
 
@@ -132,13 +146,13 @@ Katoh T, Kobayashi S, Suzuki A, Iwamoto T, Bito H, Ikeda K. The effect of fentan
 
 ## Inhaled anesthetics
 
-Philip JH. Gas Man: an example of goal oriented computer-assisted teaching which results in learning. *Int J Clin Monit Comput* 1986;3:165-173.
+Philip JH. GasMan: an example of goal oriented computer-assisted teaching which results in learning. *Int J Clin Monit Comput* 1986;3:165-173.
 
 Mapleson WW. Effect of age on MAC in humans: a meta-analysis. *Br J Anaesth* 1996;76:179-185.
 
 Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. *BMC Anesthesiol* 2006;6:7.
 
-Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensitive decrement times for inhaled anesthetics in obese patients explored with Gas Man®. *J Clin Monit Comput* 2021 (PMC7943506).
+Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensitive decrement times for inhaled anesthetics in obese patients explored with GasMan®. *J Clin Monit Comput* 2021 (PMC7943506).
 
 Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? *APSF Newsletter*, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>
 

@@ -18,8 +18,11 @@ stanpumpR holds one MEAC per opioid in the drug library:
 | methadone | 0.06 | mcg/mL |
 | oxycodone | 12 | ng/mL |
 | oliceridine | 27.9 | ng/mL |
+| hydrocodone | 8 | ng/mL |
+| oxymorphone | 0.8 | ng/mL |
+| desmetramadol | 84 | ng/mL |
 
-The drug pages carry the current values and their provenance. Several (oxycodone, oliceridine) are compromises between discordant sources, and the drug pages say so.
+The drug pages carry the current values and their provenance. Several (oxycodone, oliceridine) are compromises between discordant sources, and several (hydrocodone, oxymorphone, desmetramadol) are provisional or await verification; the drug pages say so. The prodrugs codeine and tramadol have no MEAC of their own: their analgesia is counted on the morphine and desmetramadol rows. Buprenorphine, a high-affinity partial agonist that does not add to full agonists, has none and is not on the panel.
 
 ## The panel
 
@@ -29,7 +32,7 @@ The same sum, as a fraction rather than a percentage, is the opioid "U" that dri
 
 ## The shaded band and the threshold
 
-For the opioids, the drug library's typical range is expressed in MEACs: 0.8 to 2 MEAC, with 1.2 MEAC as the typical value. The default recovery threshold for *Time until threshold* is 1 MEAC: the moment analgesia is expected to become inadequate (or, for a ventilated patient, the moment spontaneous ventilation is expected to resume, which is near the same concentration).
+For the opioids from remifentanil to methadone in the table, the drug library's typical range is expressed in MEACs: 0.8 to 2 MEAC, with 1.2 MEAC as the typical value; the later opioids take their bands from their own sources. The default recovery threshold for *Time until threshold* is 1 MEAC (oxycodone's, 10 ng/mL, and oliceridine's, 27.4 ng/mL, sit a little below theirs): the moment analgesia is expected to become inadequate (or, for a ventilated patient, the moment spontaneous ventilation is expected to resume, which is near the same concentration).
 
 ## What to look for
 
