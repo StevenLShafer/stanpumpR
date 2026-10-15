@@ -330,16 +330,17 @@ test_that("under TCI the companion's pump is a second line on the parent's rate 
 
   p <- plotOf(drugs, plotRecovery = TRUE, plotMEAC = TRUE, plotInteraction = TRUE)
   wraps <- levels(p$plotResults$Wrap)
-  expect_equal(wraps, c("propofol\n(mcg/ml)", "remifentanil\n(ng/ml)",
-                        "propofol TCI\n(mg/kg/min)", "remifentanil TCI\n(mcg/kg/min)",
+  # Each rate panel directly under its own drug's panel
+  expect_equal(wraps, c("propofol\n(mcg/ml)", "propofol TCI\n(mg/kg/min)",
+                        "remifentanil\n(ng/ml)", "remifentanil TCI\n(mcg/kg/min)",
                         PLOT_NAME_MEAC, PLOT_NAME_INTERACTION))
   rate <- p$plotResults[as.character(p$plotResults$Site) == "Rate", ]
   expect_setequal(unique(as.character(rate$Drug)),
                   c("propofol TCI", "propofol (Schnider) TCI", "remifentanil TCI", "remifentanil (Minto) TCI"))
   expect_true(all(as.character(rate$Wrap[as.character(rate$Drug) == "propofol (Schnider) TCI"]) == "propofol TCI\n(mg/kg/min)"))
   expect_equal(levels(p$plotResults$Drug)[1:8],
-               c("propofol", "propofol (Schnider)", "remifentanil", "remifentanil (Minto)",
-                 "propofol TCI", "propofol (Schnider) TCI", "remifentanil TCI", "remifentanil (Minto) TCI"))
+               c("propofol", "propofol (Schnider)", "propofol TCI", "propofol (Schnider) TCI",
+                 "remifentanil", "remifentanil (Minto)", "remifentanil TCI", "remifentanil (Minto) TCI"))
   # The loading-dose labels: the library's pump first, the companion's named for its model
   labels <- Filter(function(l) inherits(l$geom, "GeomLabel"), p$plotObject$layers)
   expect_length(labels, 1)

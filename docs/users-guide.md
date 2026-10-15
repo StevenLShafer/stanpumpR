@@ -248,7 +248,7 @@ takes over:
   running for that drug, and entering an infusion row stops the TCI infusion:
   the two cannot run together.
 
-A **TCI rate panel** appears below the concentration panels for each drug under
+A **TCI rate panel** appears directly below the drug's own concentration panel for each drug under
 TCI, in mg/kg/min or mcg/kg/min. Hover over it for the rate at any moment. The
 rate changes every 10 seconds, so these rows are kept out of the dose table,
 where they would make it unusable; they are merged back in when a slide is

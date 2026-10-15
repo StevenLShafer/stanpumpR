@@ -17,7 +17,7 @@ Enter a dose-table row for the drug with units **Plasma target** or **Effect sit
 
 ## The rate panel
 
-A **TCI rate panel** appears below the concentration panels for each drug under TCI, in the drug's colour, showing the pump rate the controller ran. Hover over it for the rate at any moment. The loading dose is written as a number rather than drawn, because its rate over a ten-second interval would flatten the rest of the panel. These rate rows are kept out of the dose table, where the ten-second changes would make it unusable, but they are merged back in when a slide is emailed, so the exported dose table lists the pump's complete programme.
+A **TCI rate panel** appears directly below the drug's own concentration panel for each drug under TCI, in the drug's colour, showing the pump rate the controller ran. Hover over it for the rate at any moment. The loading dose is written as a number rather than drawn, because its rate over a ten-second interval would flatten the rest of the panel. These rate rows are kept out of the dose table, where the ten-second changes would make it unusable, but they are merged back in when a slide is emailed, so the exported dose table lists the pump's complete programme.
 
 ## A second pump on the Minto or Schnider model
 

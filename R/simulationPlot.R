@@ -233,7 +233,6 @@ simulationPlot <- function(
   plotTable$xmin <- minimum
   plotTable$xmax <- maximum
 
-  nplotTable <- nrow(plotTable)
   addPlots <- plotMEAC + plotInteraction + plotCost + plotEvents
 
   # Step D4: finish plotTable apart from extensions below
@@ -478,8 +477,9 @@ simulationPlot <- function(
 
   # Step B4b and D7b: add the TCI infusion-rate panels
 
-  # One panel per drug under target-controlled infusion, directly below the
-  # concentration panels, showing the pump rate the controller ran (tci.R).
+  # One panel per drug under target-controlled infusion, directly below that
+  # drug's concentration panel, showing the pump rate the controller ran
+  # (tci.R).
   # The series is named "<drug> TCI" so that it can take the drug's colour
   # without colliding with the concentration series; the loading dose is
   # written on the panel as a number rather than drawn, since its rate would
@@ -586,7 +586,11 @@ simulationPlot <- function(
 
   # Convert $Drug and $Wrap to factors to preserve order from plotTable
 
-  drugFactors <- c(drugDefaults$Drug, paste(drugDefaults$Drug, "TCI"), "total opioid", PLOT_NAME_INTERACTION, "Recovery", PLOT_NAME_EVENTS)
+  # Each drug's TCI rate panel directly under its own concentration panel
+  # (propofol, propofol TCI, remifentanil, ...), not after every drug's: a
+  # drug added below once pushed the pump away from the curve it ran.
+  drugFactors <- c(rbind(drugDefaults$Drug, paste(drugDefaults$Drug, "TCI")),
+                   "total opioid", PLOT_NAME_INTERACTION, "Recovery", PLOT_NAME_EVENTS)
   plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
   plotTable <- plotTable[order(plotTable$Factor),]
 
@@ -871,7 +875,9 @@ simulationPlot <- function(
       Wrap = ""
     )
     start <- 1
-    for (i in 1:nplotTable)
+    # Every row of plotTable, in its final order: the TCI rate panels, now
+    # sorted in beside their drugs, have no recovery and fall to the else.
+    for (i in seq_len(nrow(plotTable)))
     {
       USE <- recovery$Drug == as.character(plotTable$Drug[i])
       if (isTRUE(plotTable$MaxRecovery[i] > 0))

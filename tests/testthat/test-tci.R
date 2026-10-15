@@ -296,9 +296,11 @@ test_that("the plot gets a rate panel per TCI drug, coloured like the drug", {
   wraps <- levels(p$plotResults$Wrap)
   expect_true("propofol TCI\n(mg/kg/min)" %in% wraps)
   expect_false(any(grepl("fentanyl TCI", wraps)))
-  # The rate panel sits after the concentration panels and before Events.
-  expect_lt(which(wraps == "fentanyl\n(ng/ml)"), which(wraps == "propofol TCI\n(mg/kg/min)"))
-  expect_lt(which(wraps == "propofol TCI\n(mg/kg/min)"), which(wraps == PLOT_NAME_EVENTS))
+  # The rate panel sits directly under its own drug's concentration panel,
+  # so a drug added after propofol does not come between them; Events last.
+  expect_equal(which(wraps == "propofol TCI\n(mg/kg/min)"), which(wraps == "propofol\n(mcg/ml)") + 1)
+  expect_lt(which(wraps == "propofol TCI\n(mg/kg/min)"), which(wraps == "fentanyl\n(ng/ml)"))
+  expect_lt(which(wraps == "fentanyl\n(ng/ml)"), which(wraps == PLOT_NAME_EVENTS))
   rate <- p$plotResults[p$plotResults$Site == "Rate", ]
   expect_true(all(rate$Drug == "propofol TCI"))
   expect_equal(max(rate$Time), 60)

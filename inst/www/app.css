@@ -48,8 +48,32 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
   vertical-align: middle;
 }
 
-#doseTableHTML, #doseTableHTML .handsontable, #doseTableHTML .wtHolder {
+/* The dose table scrolls in Handsontable's own holder, which fills the Doses
+card, and nowhere else.  Handsontable fits a dropdown (the Units list) into
+the space left inside the nearest scrolling ancestor, and places the cell
+editor against the scroll position of the element it found scrollable when
+it was built.  Left to the stylesheets, the holder (overflow: auto, from
+Handsontable's) is only as tall as the table, so in a short table, a
+scenario's one dose and three blank rows, the list under the second row was
+cut to a single item and looked empty; and the widget (overflow: auto, from
+rhandsontable's) scrolled a table taller than the card, which Handsontable
+does not allow for, so the editor and its list opened a scroll-length above
+the cell being edited.  Giving the holder the widget's full height, the
+setup Handsontable supports, means the list has the card's height to open
+into (flipping upward near the bottom), the holder itself scrolls a long
+table with the editor on its cell and the column headers held at the top,
+and the widget never scrolls.  Horizontal overflow stays hidden, as it
+always was. */
+#doseTableHTML {
+  overflow: hidden;
+}
+#doseTableHTML .ht_master {
+  height: 100%;
+}
+#doseTableHTML .ht_master .wtHolder {
+  height: 100%;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #dosetable_apply {

@@ -99,7 +99,8 @@ test_that("panelPlots() draws each panel of the plot alone, in the plot's order"
   # One per panel but the events, in the plot's order, titled by the first
   # line of the strip (the units stay on the strip)
   expect_equal(names(panels), panelTitle(full[-8]))
-  expect_equal(names(panels)[c(1, 5, 6, 7)],
+  # The TCI rate panel directly under its drug's, the other drugs after it
+  expect_equal(names(panels)[c(1, 2, 6, 7)],
                c("propofol", "propofol TCI", PLOT_NAME_MEAC, PLOT_NAME_INTERACTION))
   fullBuild <- ggplot2::ggplot_build(plotObject)
   yRange <- function(built, i) built$layout$panel_params[[i]]$y.range
@@ -128,7 +129,7 @@ test_that("panelPlots() draws each panel of the plot alone, in the plot's order"
   }
   # The TCI rate panel is the one those constants reached: its rates are well
   # below 1
-  expect_lt(yRange(fullBuild, 5)[2], 0.5)
+  expect_lt(yRange(fullBuild, 2)[2], 0.5)
 
   # The original is untouched: the layers were copied, not edited in place
   expect_equal(panelsOf(plotObject), full)
