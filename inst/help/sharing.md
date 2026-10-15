@@ -23,6 +23,23 @@ Copy the address bar and paste it into an email, a document, or a teaching hando
 
 The email that carries the PowerPoint slide includes the same URL as a link, so a simulation can be reopened months later and reconstructed. See [Email a slide](help:email-slide).
 
+## Linking to a scenario or a help page
+
+The URL above carries a whole simulation. Two shorter links open the app on something it already knows:
+
+| Link | Opens |
+|---|---|
+| `https://stanpumpr.io/?scenario=propofol-bolus` | the simulator with that [teaching scenario](help:scenarios/index) loaded, as its **Load** button does; the startup drug menu is skipped |
+| `https://stanpumpr.io/?help=models/effect-site` | the Help tab on that page, with the default drugs in the simulator behind it |
+| `https://stanpumpr.io/?help=scenarios/propofol-bolus` | a scenario's help page, with its Load button |
+| `https://stanpumpr.io/?scenario=propofol-bolus&help=scenarios/propofol-bolus` | both: the scenario loaded, and the help open on its page |
+
+The scenario id is the last part of the scenario's page address in this help, and every scenario page shows its own link under the Load button. A help page's id is its file name: `tci`, `models/effect-site`, `drugs/propofol`. A copy of the app served elsewhere takes the same parameters after its own address.
+
+Once the link has opened, the address bar is rewritten into the ordinary long URL, so a reload keeps what was loaded, and your edits are bookmarked as usual.
+
+Put a run of these links on the slides of a lecture, each opening in a new browser tab, and the talk steps from a slide to a live simulation and back without touching the dose table.
+
 ## Teaching
 
 Every [teaching scenario](help:scenarios/index) is a simulation you can load, modify, and then share by URL. Build a worked example, copy its URL into your lecture notes, and students open the exact state.

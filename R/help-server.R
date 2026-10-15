@@ -31,6 +31,9 @@
 #' @param timeApi the app_server()'s time-units functions (setDoseTable,
 #'   showTimeSettings), through which a scenario sets its time unit and writes
 #'   its dose table; NULL writes the tables directly
+#' @returns a list: `page`, the reactiveVal() holding the current page id, and
+#'   `loadScenario(s)`, which loads a scenario into the simulator (used for a
+#'   ?scenario= link, R/deep-links.R)
 #' @noRd
 helpServer <- function(input, output, session, doseTable, eventTable, drugDefaults,
                        navId = "mainNav", timeApi = NULL) {
@@ -66,11 +69,13 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
     helpSearchResultsUI(trimws(term), helpSearch(trimws(term)))
   })
 
-  observeEvent(input$help_scenario_load, {
-    s <- helpScenarioById(input$help_scenario_load)
+  # Load a scenario into the simulator: from the Load buttons, and from a
+  # ?scenario= link as the session starts (R/deep-links.R).  Returns TRUE when
+  # the scenario was loaded.
+  loadScenario <- function(s) {
     if (is.null(s)) {
       showNotification("That scenario does not exist.", type = "error")
-      return()
+      return(FALSE)
     }
     problems <- helpScenarioCheck(s, drugDefaults())
     if (length(problems) > 0) {
@@ -82,7 +87,7 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
               problems[1]),
         type = "error", duration = 10
       )
-      return()
+      return(FALSE)
     }
     outputComments("Loading help scenario", s$id)
     applyHelpScenario(session, s, doseTable, eventTable, timeApi)
@@ -92,6 +97,11 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
               tags$span(class = "small", "Press Apply Changes after editing the dose table to see your own variations.")),
       type = "message", duration = 8
     )
+    TRUE
+  }
+
+  observeEvent(input$help_scenario_load, {
+    loadScenario(helpScenarioById(input$help_scenario_load))
   })
 
   observeEvent(input$investigator_show, {
@@ -101,5 +111,5 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
     showModal(modal)
   })
 
-  invisible(helpPage)
+  invisible(list(page = helpPage, loadScenario = loadScenario))
 }

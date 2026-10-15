@@ -1026,10 +1026,19 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
 # --- Pages -------------------------------------------------------------------
 
 helpScenarioLoadButton <- function(s) {
-  sprintf(
-    '<p><a href="#" class="btn btn-primary help-scenario-btn" data-help-scenario="%s">%s Load into the simulator</a>
+  paste0(
+    sprintf(
+      '<p><a href="#" class="btn btn-primary help-scenario-btn" data-help-scenario="%s">%s Load into the simulator</a>
      <span class="small text-muted help-scenario-hint">Replaces the current patient (every Patient Profile field), doses, events and graph options.</span></p>',
-    s$id, as.character(icon("play"))
+      s$id, as.character(icon("play"))
+    ),
+    # A link that opens a fresh session on this scenario (R/deep-links.R), for
+    # a slide or a syllabus.  Relative, so the browser fills in the app's own
+    # address; it opens in a new tab so the session in this one is kept.
+    sprintf(
+      '<p class="small text-muted help-scenario-link">Link to this scenario: <a href="%s" target="_blank" rel="noopener"><code>%s</code></a> added to the app\'s address opens it straight onto this simulation (right-click, copy link, for the full address; see %s).</p>',
+      deepLinkToScenario(s$id), deepLinkToScenario(s$id), helpPageLink("sharing")
+    )
   )
 }
 

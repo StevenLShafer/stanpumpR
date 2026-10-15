@@ -433,6 +433,9 @@ All files are flat in `R/`.
   click-to-add-dose / double-click-to-edit driven from plot coordinates.
 - **URL bookmarking** (`app_globals.R`) — `enableBookmarking = "url"` encodes inputs into a
   shareable link; `bookmarksToExclude` keeps transient UI state out.
+- **Deep links** (`deep-links.R`) — `?scenario=<id>` loads a teaching scenario and
+  `?help=<page-id>` opens the Help tab on a page, both read once at startup and both skipping
+  the startup drug menu; see `inst/help/sharing.md`.
 - **Debug & profiler** (`app_globals.R`, `app_server.R`) — `?debug=1` reveals a live log
   (`outputComments()`) and a per-reactive profiler (`profileCode()`).
 - **Front-end assets** (`inst/www/`) — `app.css`, `app.js`, `hot_funs.js` (Handsontable
