@@ -95,6 +95,8 @@
 # Bergan T et al., 1984. https://pubmed.ncbi.nlm.nih.gov/6588489/
 # Loft S et al., 1986. https://pubmed.ncbi.nlm.nih.gov/3743624/
 # Experimental-tablet study, 2022. https://pmc.ncbi.nlm.nih.gov/articles/PMC9024553/
+# Devine BJ. Gentamicin therapy.  Drug Intell Clin Pharm 1974;8(11):650-655
+#   (the ideal body weight formula).
 # -----------------------------------------------------------------------------
 
 # Devine ideal body weight, kg.  50 (men) or 45.5 (women) plus 2.3 kg per inch

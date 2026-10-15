@@ -51,7 +51,7 @@
 # ----------
 # Falcao A et al., CNS Drugs 2012;26:79-91.
 #   https://doi.org/10.2165/11596290-000000000-00000
-# Sunkaraneni S et al., J Pharmacokinet Pharmacodyn 2018;45:265-276.
+# Sunkaraneni S et al., J Pharmacokinet Pharmacodyn 2018;45(4):649-658.
 #   https://doi.org/10.1007/s10928-018-9596-7
 # Patsalos PN et al., Ther Drug Monit 2018;40:526-548.
 #   https://doi.org/10.1097/FTD.0000000000000546

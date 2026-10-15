@@ -91,6 +91,10 @@
 #   https://doi.org/10.1093/ofid/ofad058
 # Gordon RC et al., Antimicrob Agents Chemother 1972;2:214-216.
 #   https://doi.org/10.1128/AAC.2.3.214
+# van der Mast JE et al., Pharmacol Res Perspect 2019;7:e00483.
+#   https://doi.org/10.1002/prp2.483
+# Myers DR et al., Clin Pharmacol Ther 1978;23:356-360.
+#   https://doi.org/10.1002/cpt1978233356
 # -----------------------------------------------------------------------------
 
 #' Gentamicin pharmacokinetics

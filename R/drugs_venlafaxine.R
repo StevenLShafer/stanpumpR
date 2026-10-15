@@ -99,7 +99,7 @@
 #
 # References
 # ----------
-# Wang X, et al. Joint population pharmacokinetic modeling of venlafaxine and
+# Wang Z, et al. Joint population pharmacokinetic modeling of venlafaxine and
 #   O-desmethyl venlafaxine in healthy volunteers and patients to evaluate the
 #   impact of morbidity and concomitant medication. Front Pharmacol
 #   2022;13:978202. https://doi.org/10.3389/fphar.2022.978202
@@ -114,7 +114,7 @@ VENLAFAXINE_FP         <- 0.048    # first-pass fraction to ODV
 VENLAFAXINE_MW_RATIO   <- 263.38 / 277.40   # ODV / venlafaxine, g/mol
 
 VENLAFAXINE_REFERENCE <- paste0(
-  "Wang X, et al. Joint population pharmacokinetic modeling of venlafaxine ",
+  "Wang Z, et al. Joint population pharmacokinetic modeling of venlafaxine ",
   "and O-desmethyl venlafaxine in healthy volunteers and patients to evaluate ",
   "the impact of morbidity and concomitant medication. Front Pharmacol ",
   "2022;13:978202 (psychiatric-patient clearance; K23 = CL/V from Figure 1). ",

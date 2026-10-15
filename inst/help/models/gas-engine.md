@@ -25,7 +25,7 @@ The capacity of a tissue for a gas is its volume times its tissue:gas partition 
 | desflurane | 0.42 | 0.54 | 0.97 | 13 | 6.0 |
 | nitrogen | 0.014 | 0.010 | 0.014 | 0.070 | (200, flagged) |
 
-Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: Eger's estimate is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
+Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
 
 ## Equations
 

@@ -97,7 +97,8 @@ getGasProperties <- function()
     # known to be wrong.  FALSE means "not yet checked", not "verified".
     flagged = c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE),
     flagNote = c(NA, NA, NA, NA,
-                 paste("MAC 200 (2 atm) contradicts Eger's estimate of 110 atm,",
+                 paste("MAC 200 (2 atm) contradicts Eger's estimate of 110 atm",
+                       "(Koblin, Eger et al., Anesth Analg 1998;87:419-424, rats),",
                        "i.e. 11000% of one atmosphere: low by about 55-fold.",
                        "Room air is 0.79 atm nitrogen, so the true contribution",
                        "is about 0.007 MAC, not the 0.4 MAC this figure implies."),

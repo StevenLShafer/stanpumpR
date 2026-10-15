@@ -106,7 +106,7 @@
 # Moriguchi S et al. 2017 (NET occupancy, healthy men); Moriguchi S et al.
 #   2025 (NET occupancy, major depressive disorder).
 # Lobo ED et al. Clin Pharmacokinet 2009 (pooled adult model; not used).
-# Shibata M et al. 2023 (pediatric MDD; not used).
+# Shibata RY et al. 2023 (pediatric MDD; not used).
 # Yuen E et al. 2013 (neuropathic pain PD; not used).
 # -----------------------------------------------------------------------------
 

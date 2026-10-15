@@ -14,6 +14,8 @@ Shafer SL, Stanski DR. Improving the clinical utility of anesthetic drug pharmac
 
 Youngs EJ, Shafer SL. Pharmacokinetic parameters relevant to recovery from opioids. *Anesthesiology* 1994;81:833-842. *(Decrement times: the context-sensitive half-time generalised to any percentage decrease, and which volumes and clearances shorten them.)*
 
+Minto CF, Schnider TW, Shafer SL. Pharmacokinetics and pharmacodynamics of remifentanil. II. Model application. *Anesthesiology* 1997;86:24-33.
+
 Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maximum effect site concentration to combine pharmacokinetics and pharmacodynamics. *Anesthesiology* 2003;99:324-333.
 
 ## Pregnancy
@@ -49,6 +51,8 @@ Schüttler J, Schwilden H, Stoeckel H. Infusion strategies to investigate the ph
 Schüttler J, Kloos S, Schwilden H, Stoeckel H. Total intravenous anaesthesia with propofol and alfentanil by computer-assisted infusion. *Anaesthesia* 1988;43(suppl):2-7.
 
 Ausems ME, Stanski DR, Hug CC. An evaluation of the accuracy of pharmacokinetic data for the computer assisted infusion of alfentanil. *Br J Anaesth* 1985;57:1217-1225.
+
+Ausems ME, Vuyk J, Hug CC, Stanski DR. Comparison of a computer-assisted infusion versus intermittent bolus administration of alfentanil as a supplement to nitrous oxide for lower abdominal surgery. *Anesthesiology* 1988;68:851-861.
 
 Alvis JM, Reves JG, Govier AV, Menkhaus PG, Henling CE, Spain JA, Bradley E. Computer-assisted continuous infusions of fentanyl during cardiac anesthesia: comparison with a manual method. *Anesthesiology* 1985;63:41-49.
 
@@ -149,6 +153,8 @@ Katoh T, Kobayashi S, Suzuki A, Iwamoto T, Bito H, Ikeda K. The effect of fentan
 Philip JH. GasMan: an example of goal oriented computer-assisted teaching which results in learning. *Int J Clin Monit Comput* 1986;3:165-173.
 
 Mapleson WW. Effect of age on MAC in humans: a meta-analysis. *Br J Anaesth* 1996;76:179-185.
+
+Koblin DD, Fang Z, Eger EI II, Laster MJ, Gong D, Ionescu P, Halsey MJ, Trudell JR. Minimum alveolar concentrations of noble gases, nitrogen, and sulfur hexafluoride in rats: helium and neon as nonimmobilizers (nonanesthetics). *Anesth Analg* 1998;87:419-424.
 
 Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. *BMC Anesthesiol* 2006;6:7.
 

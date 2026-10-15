@@ -94,7 +94,8 @@
 # Ambient           starting tension, % of 1 atm
 #
 # NOTE ON NITROGEN MAC: gasman.ini gives 200, i.e. 2 atmospheres.  Eger put the
-# MAC of nitrogen at 110 ATMOSPHERES.  GasMan's figure is low by about 55-fold.
+# MAC of nitrogen at 110 ATMOSPHERES (Koblin, Eger et al., Anesth Analg
+# 1998;87:419-424; rats, by additivity with desflurane).  GasMan's figure is low by about 55-fold.
 # It is carried here unchanged so that this code matches GasMan; it is not used
 # in any calculation below.
 # -----------------------------------------------------------------------------

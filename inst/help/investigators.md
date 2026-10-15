@@ -19,7 +19,7 @@ The first target-controlled infusion was given in Bonn in 1979, and STANPUMP was
 - **Donald R. Stanski** and Steven Shafer, Stanford (STANPUMP). Stanski's laboratory also produced the fentanyl and alfentanil kinetics (with **Jeffrey C. Scott**) and, with Lewis Sheiner, the effect-compartment model itself.
 - **Daniel B. Raemer**, Brigham and Women's Hospital, whose 1990 alfentanil study with the Stanford group introduced the median performance error and median absolute performance error as the measures of a pump's bias and inaccuracy.
 - **Jürgen Schüttler** and **Helmut Schwilden**, University of Bonn (CATIA).
-- **Martin Ausems** and **Carl C. Hug**, University of Leiden and Emory (TIAC).
+- **Max E. Ausems** and **Carl C. Hug**, University of Leiden and Emory (TIAC): the accuracy of alfentanil kinetics under computer-assisted infusion (1985) and, with **Jaap Vuyk** and Stanski, its comparison with intermittent boluses (1988).
 - **Joseph G. Reves** and **J. Michael Alvis**, University of Alabama (CACI), and **James R. Jacobs** and Reves at Duke (CACI II).
 - **Johan F. Coetzee** and Pina, Stellenbosch University (STELPUMP).
 - **Tom De Smet** and **Michel M. R. F. Struys**, University of Ghent (RUGLOOP).
@@ -138,7 +138,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 - Minto, Schnider, Gregg, Henthorn and Shafer (2003): time to peak effect as the model-independent way to carry ke0. Shafer and Varvel had reported the opioids' times to peak effect in 1991; the use in place of ke0 came a decade later. Vecuronium and cisatracurium are the worked cases: each drug's ke0 is converted to the time to peak effect it gives with the kinetics it was fitted with, then solved again against the kinetics the library uses.
 - **Keith M. Gregg** and Shafer (1992): the effect-site targeting algorithm, implemented in STANPUMP and in stanpumpR's [target-controlled infusion](help:tci).
 - **James M. Bailey** and Shafer (1991): the plasma targeting algorithm.
-- **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time.
+- **Michael A. Hughes**, **Peter S. A. Glass** and James Jacobs (1992): the context-sensitive half-time. Minto, Schnider and Shafer (1997): the effect-site decrement times showing that remifentanil's stays at a few minutes however long the infusion.
 - **Elizabeth J. Youngs** and Shafer (1994): decrement times, the context-sensitive half-time generalised to any percentage decrease.
 - **Thomas W. Bouillon** and colleagues (2004): the propofol-remifentanil response surface.
 - **Kay L. Austin**, **John V. Stapleton**, **Laurence E. Mather** (1980) and **Geoffrey K. Gourlay** and colleagues (1988): the minimum effective analgesic concentration.
@@ -149,8 +149,8 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 
 - **James H. Philip**, Brigham and Women's Hospital and Harvard Medical School: GasMan®, whose structure and parameters the inhaled-gas engine follows and against which it is validated.
 - **William W. Mapleson** (1996): the decline of MAC with age.
-- **Edmond I. Eger II**: MAC itself, and the nitrogen estimate that flags GasMan's value.
-- **Jan F. A. Hendrickx**, **Hendrikus J. M. Lemmens** and Shafer (2006): tissue volumes and blood flows in the four-compartment gas model.
+- **Edmond I. Eger II**, with Saidman and Brandstater (1965): MAC as the standard of anesthetic potency; and, with **Donald D. Koblin** and colleagues (1998), the nitrogen MAC of 110 atmospheres in rats that flags GasMan's value.
+- **Jan F. A. Hendrickx**, **Hendrikus J. M. Lemmens** and Shafer (2006): the four-compartment structure of the gas model, and the demonstration that fitted volumes and clearances need not equal tissue volumes and blood flows.
 - **Jeffrey M. Feldman**, **Samsun Lampotang** and Hendrickx (2022): the rule of thumb that rebreathing stops when fresh gas flow reaches minute ventilation, which the gas model follows with the threshold raised by the gas being taken up.
 
 ## Becoming a maintainer

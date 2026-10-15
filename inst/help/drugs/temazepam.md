@@ -25,7 +25,7 @@ None in the source, which dosed by weight. With the [fat-free-mass switch](help:
 
 ### Effect site
 
-None; only the plasma concentration is plotted. van Steveninck and colleagues found no equilibration delay: saccadic eye velocity and EEG beta activity were linear in the plasma concentration, and their concentration-effect plots showed proteresis, the effect waning while the concentration was still high, rather than the lag an effect site produces (*Clin Pharmacol Ther* 1994;55:535-545).
+None; only the plasma concentration is plotted. van Steveninck and colleagues found no equilibration delay: saccadic eye velocity and EEG beta activity were linear in the plasma concentration, and their concentration-effect plots showed proteresis, the effect waning while the concentration was still high, rather than the lag an effect site produces (*Clin Pharmacol Ther* 1994;55:546-555, part II of the study whose infusions are described in part I, 1994;55:535-545).
 
 ### Typical concentrations and the threshold
 

@@ -61,6 +61,8 @@
 #   https://doi.org/10.1093/jac/dkac400
 # Stoeckel K et al., Clin Pharmacol Ther 1981;29:650-657 (free fraction 0.04
 #   to 0.17, rising with concentration).  https://doi.org/10.1038/clpt.1981.90
+# Heffernan AJ et al., Antimicrob Agents Chemother 2022;66(6):e02189-21
+#   (critically ill; not used).  https://doi.org/10.1128/aac.02189-21
 # CLSI M100, 36th ed., 2026; EUCAST Clinical Breakpoint Tables v16.1, 2026:
 #   ceftriaxone, Enterobacterales, S <= 1 mg/L.
 # -----------------------------------------------------------------------------

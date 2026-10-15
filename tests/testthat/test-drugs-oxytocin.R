@@ -48,7 +48,11 @@ test_that("returns the correct calculations if weight is <= 1", {
     typical = 0.1,
     upperTypical = 0.2,
     lowerTypical = 0.05,
-    reference = "Tanaka et al"
+    reference = paste0(
+      "Tanaka A et al. Delivery of oxytocin to the brain for the treatment of ",
+      "autism spectrum disorder by nasal application. Mol Pharm ",
+      "2018;15(3):1105-1111. PMID 29338251."
+    )
   )
   expect_equal_rounded(actual, expected)
 })

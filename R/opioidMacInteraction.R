@@ -67,7 +67,7 @@
 # using stanpumpR's MEAC values:
 #
 #   study                 opioid, plasma conc.      U     observed  these  Gemini
-#   Brunner 1994 (cited)  fentanyl      1.67 ng/mL   2.78    50       55     41
+#   McEwan 1993 (cited)   fentanyl      1.67 ng/mL   2.78    50       55     41
 #   Katoh 1999            fentanyl      3    ng/mL   5.00    61       67     55
 #   Katoh 1999            fentanyl      6    ng/mL  10.00    74       77     64
 #   Brunner 1994          sufentanil    0.145 ng/mL  2.59    50       54     39

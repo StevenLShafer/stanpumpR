@@ -99,7 +99,7 @@
 #   https://doi.org/10.1016/j.ijpharm.2014.07.013
 # Stamer UM et al., Clin Pharmacol Ther 2007;82:41-47.
 #   https://doi.org/10.1038/sj.clpt.6100152
-# Lee J et al., Drug Des Devel Ther 2019.
+# Lee J et al., Drug Des Devel Ther 2019;13:1751-1761.
 #   https://doi.org/10.2147/DDDT.S199574
 # Allegaert K et al., Clin Pharmacokinet 2015;54:167-178.
 #   https://doi.org/10.1007/s40262-014-0191-9
