@@ -52,8 +52,8 @@ midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "1990;48(5):555-567. https://pubmed.ncbi.nlm.nih.gov/9856717/"
   )
   typical <- .100 
-  upperTypical <- .040
-  lowerTypical <- .120
+  lowerTypical <- .040
+  upperTypical <- .120
   MEAC <- 0
   tPeak <- 3.0
   return(

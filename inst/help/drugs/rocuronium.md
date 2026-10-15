@@ -8,7 +8,7 @@ Size only. By default, with *Adjust weight to fat-free mass* ticked, the volumes
 
 ### Effect site
 
-The time to peak effect is 2.2 minutes, from Cortínez and colleagues (*Br J Anaesth* 2007;99:679-685). Plaud's own ke0 at the adductor pollicis (0.168/min, present in the file as `k41` but unused) would give a much later peak; the two sites of effect differ, the vocal cords equilibrating faster, and the library uses the faster value.
+The time to peak effect is 4.5 minutes, the population median time to maximum block at the adductor pollicis after 0.15 mg/kg in Cortínez and colleagues (*Br J Anaesth* 2007;99:679-685; range 2.0 to 7.7 minutes), whose ke0 was 0.19 to 0.20/min by three methods. Solved against Plaud's kinetics the library's ke0 is about 0.19/min, and Plaud's own adductor pollicis ke0 (0.168/min, present in the file as `k41` but unused) agrees. Until October 2026 the library used 2.2 minutes, the time of one illustrated subject in that paper, which implied a ke0 near 0.7/min. Onset at the vocal cords is faster than at the adductor pollicis, and is not what the curve shows.
 
 ### Typical concentrations and recovery
 
@@ -16,4 +16,4 @@ The shaded band is 1 to 2.2 mcg/mL and the default recovery threshold 1 mcg/mL. 
 
 ### Where to be careful
 
-Rocuronium's duration is prolonged by hepatic and renal dysfunction, by the inhaled agents (a pharmacodynamic potentiation) and by hypothermia, and shortened by sugammadex, none of which is modelled. Plaud's patients were adults under propofol-opioid anesthesia.
+Rocuronium's duration is prolonged by hepatic and renal dysfunction, by the inhaled agents (a pharmacodynamic potentiation) and by hypothermia, and shortened by sugammadex, none of which is modelled. [Sugammadex](help:drugs/sugammadex) can be given in the dose table, but only its own concentration is simulated: it does not change the rocuronium row. Plaud's patients were adults under propofol-opioid anesthesia.

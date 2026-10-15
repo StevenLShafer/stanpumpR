@@ -182,6 +182,33 @@ test_that("a model whose terms give a non-positive parameter is reported, not si
   expect_true("remifentanil (Minto)" %in% names(drugs))
 })
 
+test_that("the James lean body mass is kept, and fails the obese patient as the pumps do", {
+  # A 160 cm, 40-year-old woman: James's lean body mass peaks at 92.5 kg
+  # (BMI 36) and then falls, so past it Schnider's clearance climbs steeply
+  # and Minto's volumes shrink
+  cl1 <- function(w) propofolSchnider(w, 160, 40, "female")$PK[[1]]$cl1
+  v1 <- function(w) remifentanilMinto(w, 160, 40, "female")$PK[[1]]$v1
+  expect_equal_rounded(c(cl1(60), cl1(92.5), cl1(150)), c(1.729211, 2.794325, 6.716170))
+  expect_equal_rounded(c(v1(60), v1(92.5), v1(150)), c(4.263900, 4.704661, 3.330375))
+  expect_lt(v1(150), v1(92.5))
+  # At 200 kg (BMI 78) James's lean body mass is negative and so is Minto's V1
+  expect_lt(lbmJames(200, 160, "female"), 0)
+  problems <- alternativeModelProblems(c("propofol", "remifentanil"), 200, 160, 40, "female")
+  expect_length(problems, 1)
+  expect_match(problems, "Minto's remifentanil model is not defined")
+  # The scenario james-lean-body-mass: at 150 kg the Schnider pump gives far
+  # more propofol over the hour than the Eleveld pump, and the Minto pump less
+  # remifentanil than the library's (Kim's, at this BMI)
+  d <- simulate(dosesTCI, age = 40, weight = 150, height = 160, sex = "female")
+  totalOf <- function(n) {
+    tci <- d[[n]]$tci
+    r <- tci$rates[!tci$rates$Bolus & tci$rates$Time < 60, ]
+    sum(tci$boluses$Amount) + sum(r$Rate * diff(c(r$Time, 60))) * 150
+  }
+  expect_gt(totalOf("propofol (Schnider)"), 1.7 * totalOf("propofol"))
+  expect_lt(totalOf("remifentanil (Minto)"), 0.7 * totalOf("remifentanil"))
+})
+
 # --- The pipeline -------------------------------------------------------------
 
 test_that("recalculatePK() appends a companion for each dosed drug that has one, after the library drugs", {
@@ -303,16 +330,17 @@ test_that("under TCI the companion's pump is a second line on the parent's rate 
 
   p <- plotOf(drugs, plotRecovery = TRUE, plotMEAC = TRUE, plotInteraction = TRUE)
   wraps <- levels(p$plotResults$Wrap)
-  expect_equal(wraps, c("propofol\n(mcg/ml)", "remifentanil\n(ng/ml)",
-                        "propofol TCI\n(mg/kg/min)", "remifentanil TCI\n(mcg/kg/min)",
+  # Each rate panel directly under its own drug's panel
+  expect_equal(wraps, c("propofol\n(mcg/ml)", "propofol TCI\n(mg/kg/min)",
+                        "remifentanil\n(ng/ml)", "remifentanil TCI\n(mcg/kg/min)",
                         PLOT_NAME_MEAC, PLOT_NAME_INTERACTION))
   rate <- p$plotResults[as.character(p$plotResults$Site) == "Rate", ]
   expect_setequal(unique(as.character(rate$Drug)),
                   c("propofol TCI", "propofol (Schnider) TCI", "remifentanil TCI", "remifentanil (Minto) TCI"))
   expect_true(all(as.character(rate$Wrap[as.character(rate$Drug) == "propofol (Schnider) TCI"]) == "propofol TCI\n(mg/kg/min)"))
   expect_equal(levels(p$plotResults$Drug)[1:8],
-               c("propofol", "propofol (Schnider)", "remifentanil", "remifentanil (Minto)",
-                 "propofol TCI", "propofol (Schnider) TCI", "remifentanil TCI", "remifentanil (Minto) TCI"))
+               c("propofol", "propofol (Schnider)", "propofol TCI", "propofol (Schnider) TCI",
+                 "remifentanil", "remifentanil (Minto)", "remifentanil TCI", "remifentanil (Minto) TCI"))
   # The loading-dose labels: the library's pump first, the companion's named for its model
   labels <- Filter(function(l) inherits(l$geom, "GeomLabel"), p$plotObject$layers)
   expect_length(labels, 1)

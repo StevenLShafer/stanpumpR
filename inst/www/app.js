@@ -60,7 +60,14 @@ $(document).on('shiny:value', function(event) {
 // the help needs no per-link inputs.
 $(document).on('click', '[data-help-page]', function(e) {
   e.preventDefault();
+  // A help link inside a modal (the investigator pop-up) closes it first
+  if ($(this).closest('#shiny-modal').length) $('#shiny-modal').modal('hide');
   Shiny.setInputValue('help_goto', $(this).attr('data-help-page'), {priority: 'event'});
+});
+// An investigator's name (R/help-investigators.R) opens a pop-up about them
+$(document).on('click', '[data-investigator]', function(e) {
+  e.preventDefault();
+  Shiny.setInputValue('investigator_show', $(this).attr('data-investigator'), {priority: 'event'});
 });
 $(document).on('click', '[data-help-scenario]', function(e) {
   e.preventDefault();

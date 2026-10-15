@@ -21,3 +21,7 @@ None; the glucocorticoid effect is genomic and takes hours. Only the plasma conc
 ### Where to be careful
 
 Five healthy men. No dependence on age, sex, weight beyond fat-free mass, or CYP3A4 induction is represented, and the antiemetic and analgesic-sparing effects for which anaesthetists give dexamethasone have no concentration-effect model here.
+
+### Pregnancy
+
+With **Pregnant** ticked, the elimination clearance is doubled. The review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) reports dexamethasone clearance doubled in a singleton pregnancy, by the placenta's own metabolism of the synthetic glucocorticoids, and higher still with a multiple gestation, which is not represented. The volumes and the absorption parameters are unchanged. See [Pregnancy](help:models/pregnancy).

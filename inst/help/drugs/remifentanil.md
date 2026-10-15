@@ -12,7 +12,7 @@ Weight, height, age and sex all enter through fat-free mass, the allometric term
 
 ### Effect site
 
-The time to peak effect is 1.6 minutes, from the opioid simulation spreadsheet that accompanied the original comparisons; Minto's own ke0 of 0.595/min at age 40 corresponds to a similar peak. The resulting equilibration half-time of about a minute is the fastest in the library.
+The time to peak effect is 1.6 minutes, from the opioid simulation spreadsheet that accompanied the original comparisons; Minto's own ke0 of 0.595/min at age 40 corresponds to a similar peak. The resulting equilibration half-time of about a minute is among the fastest in the library.
 
 ### MEAC and typical concentrations
 
@@ -21,3 +21,7 @@ The MEAC of 1 ng/mL is the unit in which the other opioids are expressed on the 
 ### Where to be careful
 
 Remifentanil's metabolism by non-specific esterases makes its kinetics unusually independent of organ function, and its offset barely depends on infusion duration. That is the model's great teaching value; see [the context-sensitive decrement scenario](scenario:context-sensitive-opioids). The pharmacokinetics are the easy part. The hyperalgesia, the chest-wall rigidity after a fast bolus and the abrupt loss of analgesia at the end of a case are pharmacodynamic and are not in the model.
+
+### Pregnancy
+
+With **Pregnant** ticked, the elimination clearance of whichever model is in use is doubled, and so is the Minto companion model's, so the two lines of the panel move together. The review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) reports that remifentanil clearance more than doubles in pregnancy, attributed to the larger plasma volume, cardiac output and renal blood flow; "more than" is not carried, because the review gives no further figure. The volumes are unchanged. See [Pregnancy](help:models/pregnancy) and [the labour scenario](scenario:remifentanil-labour).

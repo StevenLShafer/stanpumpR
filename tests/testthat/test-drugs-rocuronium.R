@@ -17,7 +17,7 @@ test_that("returns the published parameters with total-body-weight scaling", {
         cl3 = 0
       )
     ),
-    tPeak = 2.2,
+    tPeak = 4.5,
     MEAC = 0,
     typical = 1.5,
     upperTypical = 2.2,
@@ -44,4 +44,15 @@ test_that("scales to fat-free mass for a 120 kg man", {
         cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
+})
+
+test_that("the time to peak effect is Cortinez's median and solves to his ke0", {
+  # Cortinez 2007: median time to maximum block 4.5 min at the adductor
+  # pollicis, ke0 0.19-0.20 /min by three methods; Plaud's own adductor
+  # pollicis ke0 is 0.168 /min.  Solved against Plaud's kinetics.
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("rocuronium", 70, 170, 50, "male", dd[dd$Drug == "rocuronium", ])
+  expect_equal(PK$tPeak, 4.5)
+  expect_gt(PK$PK$default$ke0, 0.16)
+  expect_lt(PK$PK$default$ke0, 0.21)
 })

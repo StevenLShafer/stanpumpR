@@ -4,3 +4,4 @@ default:
   email_password: "<gmail app password>"
   source_link: "https://github.com/StevenLShafer/stanpumpR"
   debug: 2   # 0 = off, 1 = normal, 2 = verbose
+  # commit: "<git SHA>"   # written by the deploy workflows; shown in the debug log and the Source link's tooltip

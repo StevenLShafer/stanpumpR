@@ -4,7 +4,7 @@ Vancomycin's parameters are from Thomson and colleagues (*J Antimicrob Chemother
 
 ### Covariates
 
-Clearance follows Cockcroft-Gault creatinine clearance, from the **Serum creatinine** in the Patient Profile (floored at 0.68 mg/dL, 60 µmol/L, as in the source). Left blank, the creatinine is **assumed normal** for the patient's age and sex (in a child, read on the adult scale; see [Renal function](help:models/covariates)): renal decline with age is then represented but renal impairment is not, and for accumulation in a patient with a raised creatinine, which is the vancomycin question that matters most, the model would be optimistic. Enter it. Both volumes scale linearly with weight, which is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total weight with the switch off.
+Clearance follows Cockcroft-Gault creatinine clearance, from the **Serum creatinine** in the Patient Profile (floored at 0.68 mg/dL, 60 µmol/L, as in the source). Left blank, the creatinine is **assumed normal** for the patient's age and sex (in a child, read on the adult scale; see [Renal function](help:models/covariates)): renal decline with age is then represented but renal impairment is not, and for accumulation in a patient with a raised creatinine, which is the vancomycin question that matters most, the model would be optimistic. Enter it. Both volumes scale linearly with weight, which is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total weight with the switch off; the same weight enters Cockcroft-Gault. The intercompartmental clearance, fixed in the source, scales with the fat-free-mass ratio to the 0.75 power when the switch is on and is fixed when it is off.
 
 ### Effect site
 
@@ -17,3 +17,7 @@ The shaded band is the traditional trough range, 10 to 20 mcg/mL. The 2020 conse
 ### Where to be careful
 
 The clearance equation is linear in creatinine clearance and reaches zero at 1.06 mL/min; it is not a model of anuria or dialysis, and the code refuses rather than clamps if driven there. Loading doses by weight, nephrotoxicity and the vancomycin infusion reaction are outside the model.
+
+### Pregnancy
+
+With **Pregnant** ticked, the creatinine clearance Thomson's clearance term reads is multiplied by 1.5, the rise in glomerular filtration the review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) gives for pregnancy; the term is linear with a small negative intercept, so the clearance rises by slightly more than 1.5. The review reports a larger volume of distribution and a higher clearance in pregnancy, with the change in half-life unknown; it prints no factor for vancomycin itself. The larger volume is not applied, so the simulated peak in a parturient is too high. See [Pregnancy](help:models/pregnancy).

@@ -80,6 +80,21 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location_type ("dt"))
   PPTX <- officer::ph_with(PPTX, slide, location = officer::ph_location_type ("sldNum"))
   PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location_type ("ftr"))
+
+  # The first slide holds the whole plot, as it always has; with many drugs
+  # its panels are too small to read.  So each panel then gets a slide of its
+  # own (panelPlots()), numbered by its place in the deck.
+  panels <- panelPlots(plotObject)
+  for (i in seq_along(panels))
+  {
+    outputComments("Adding slide for", names(panels)[i])
+    PPTX <- officer::add_slide(PPTX, layout = "Title and Content", master = MASTER)
+    PPTX <- officer::ph_with(PPTX, names(panels)[i], location = officer::ph_location_type("title"))
+    PPTX <- officer::ph_with(PPTX, rvg::dml(ggobj = panels[[i]]), location = officer::ph_location_type("body"))
+    PPTX <- officer::ph_with(PPTX, DATE, location = officer::ph_location_type ("dt"))
+    PPTX <- officer::ph_with(PPTX, i + 1, location = officer::ph_location_type ("sldNum"))
+    PPTX <- officer::ph_with(PPTX, "From StanpumpR", location = officer::ph_location_type ("ftr"))
+  }
   pptxfileName <- paste0("Slides/From stanpumpR.", slide, ".", TIMESTAMP, ".pptx")
 
   outputComments("Saving PPTX")
@@ -150,6 +165,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Height",
       "Height Unit",
       "Sex",
+      "Pregnant",
       "Adjust weight to fat-free mass",
       "Baseline serum osmolality (mOsm/kg)",
       "Serum creatinine (mg/dL)"
@@ -162,6 +178,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       values$height / values$heightUnit,
       heightUnit,
       values$sex,
+      if (isTRUE(values$pregnant)) "yes" else "no",
       if (isTRUE(values$adjustToFFM)) "yes" else "no",
       if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
       if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine
@@ -351,6 +368,63 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
     "</div></body></html>"
   ))
  }
+
+# One ggplot per panel of the simulation plot, for the slides that follow the
+# full plot in the PowerPoint deck (generateEmail()).
+#
+# simulationPlot() draws every panel -- each drug, a TCI pump rate, the % MEAC
+# sum, the interaction, the events -- as one facet of a single ggplot, and
+# every layer's data carries the facet in its Wrap column.  Each panel's plot
+# is that ggplot with every layer's data cut down to the panel's rows, so it
+# is drawn exactly as it was in the full plot (same colours, bands, labels,
+# recovery overlay), alone, and with no fixed aspect ratio, so that it fills
+# the slide.  A layer with no rows on the panel is left out rather than kept
+# empty: ggplot draws a layer whose data is empty but whose aesthetics are
+# constants (the white rectangle behind the event labels, ymin 0 to ymax 1)
+# on the first panel anyway, which blanked everything below 1 on every slide.
+# A layer is never changed in place: the layers are ggproto objects, which
+# are environments, so a copy of the plot shares them with the original,
+# which the app goes on using.  The Events panel is labels only and gets no
+# plot of its own.
+#
+# Named by the panel's first line (the drug, "propofol TCI", "% MEAC"), the
+# slide's title; the strip on the panel keeps the units.  Empty when the plot
+# has no facetted layer.
+panelPlots <- function(plotObject)
+{
+  if (is.null(plotObject)) return(list())
+  layerData <- lapply(plotObject$layers, function(layer) layer$data)
+  wrapped <- vapply(layerData, function(d) is.data.frame(d) && "Wrap" %in% names(d), logical(1))
+  if (!any(wrapped)) return(list())
+
+  # The facets in the plot's order: the levels of the Wrap factor, kept to
+  # those that some layer draws on
+  wraps <- unlist(lapply(layerData[wrapped], function(d) levels(as.factor(d$Wrap))))
+  drawn <- unlist(lapply(layerData[wrapped], function(d) as.character(d$Wrap)))
+  wraps <- unique(wraps)
+  wraps <- wraps[wraps %in% drawn & wraps != PLOT_NAME_EVENTS]
+
+  plots <- lapply(wraps, function(wrap) {
+    layers <- lapply(plotObject$layers, function(layer) {
+      d <- layer$data
+      if (!is.data.frame(d) || !"Wrap" %in% names(d)) return(layer)
+      d <- d[as.character(d$Wrap) == wrap, , drop = FALSE]
+      if (nrow(d) == 0) return(NULL)
+      ggplot2::ggproto(NULL, layer, data = d)
+    })
+    panel <- plotObject
+    panel$layers <- Filter(Negate(is.null), layers)
+    panel + ggplot2::theme(aspect.ratio = NULL)
+  })
+  names(plots) <- panelTitle(wraps)
+  plots
+}
+
+# A panel's strip label is "drug\n(units)"; the slide title is the first line
+panelTitle <- function(wrap)
+{
+  sub("\n.*$", "", wrap)
+}
 
 # The plot's time settings as rows for the Covariates sheet: the unit the plot
 # was shown in and how long it ran, in that unit and in minutes.  The length

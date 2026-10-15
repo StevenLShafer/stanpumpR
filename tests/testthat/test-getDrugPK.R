@@ -188,6 +188,21 @@ test_that("every drug in the library supplies a reference", {
   expect_equal(missing, character(0))
 })
 
+test_that("no drug function returns its typical band upside down", {
+  # getDrugPK() overwrites the band from drugDefaults_global.csv, so a model's
+  # own lowerTypical / upperTypical are read only by a direct call; 14 of them
+  # once had the two swapped (issue #312).
+  ivDrugs <- getDrugDefaultsGlobal()$Drug
+  ivDrugs <- ivDrugs[!isGasDrug(ivDrugs)]
+  swapped <- Filter(function(drug) {
+    X <- get(drug, envir = asNamespace("stanpumpR"))(70, 170, 50, "male")
+    lower <- suppressWarnings(as.numeric(X$lowerTypical))
+    upper <- suppressWarnings(as.numeric(X$upperTypical))
+    length(lower) == 1 && length(upper) == 1 && isTRUE(lower > upper)
+  }, ivDrugs)
+  expect_equal(swapped, character(0))
+})
+
 test_that("getDrugPK accepts both documented sex values", {
   dd <- getDrugDefaults("propofol")
   expect_no_error(getDrugPK("propofol", 70, 170, 50, "male", dd))
@@ -290,6 +305,15 @@ test_that("getDrugPK() carries the library's endCe, so direct recovery works", {
 })
 
 test_that("the CYP2C19 phenotype is validated and reaches only the models that name it", {
+  expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = "fast"),
+               "Invalid cyp2b6")
+  expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = CYP2B6_VALUES),
+               "Invalid cyp2b6")
+  # A drug that does not name it is unaffected; methadone, which does, is not
+  expect_equal(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = "poor")$PK,
+               getDrugPK("remifentanil", 70, 170, 50, "male")$PK)
+  expect_lt(getDrugPK("methadone", 70, 170, 50, "male", cyp2b6 = "poor")$PK$default$cl1,
+            getDrugPK("methadone", 70, 170, 50, "male")$PK$default$cl1)
   expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = "extensive"),
                "Invalid cyp2c19")
   expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = CYP2C19_VALUES),

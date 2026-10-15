@@ -19,8 +19,8 @@
 # follows muscle mass: about 0.25 mg/dL through most of infancy, 0.35 at five
 # years, 0.5 at ten, and 0.8 in boys and 0.7 in girls at seventeen
 # (normalCreatinineChild()).  Under 18 that is the assumed value; at 18 it
-# steps up to the adult value below, which sits above the adolescents' medians
-# (0.82 and 0.68 just under 18).  But Cockcroft-Gault and CKD-EPI were
+# steps up to the adult value below, which sits just above the adolescents'
+# medians (0.82 and 0.68 just under 18).  But Cockcroft-Gault and CKD-EPI were
 # developed in adults, and given a child's own creatinine they overestimate
 # renal function badly: a five-year-old boy of 20 kg and 110 cm at his normal
 # 0.35 mg/dL has a Cockcroft-Gault clearance of 106 mL/min, against a normal
@@ -31,12 +31,12 @@
 # divided by the normal value for the child's age and multiplied by the adult
 # assumed value, after the age-adjusted creatinine of Bjork et al. (Kidney Int
 # 2021;99:940-947).  A child at the normal creatinine for age then gets the
-# adult assumed value (Cockcroft-Gault 38 mL/min for the boy above), and a
+# adult assumed value (Cockcroft-Gault 42 mL/min for the boy above), and a
 # child at twice the normal for age gets half that clearance; the CKD-EPI eGFR
 # (gentamicin) falls to about 0.43 of its value instead, 2^-1.209, since both
 # creatinines are above its kappa.  At a blank field the step at 18 cancels
 # for these models (both sides get the adult value), but an entered
-# creatinine reads 18-22% higher on the adult scale just under 18 than just
+# creatinine reads 10-18% higher on the adult scale just under 18 than just
 # over it.  Only the pregabalin model, whose source estimated children's renal
 # function from their own creatinine (Schwartz under 13, Cockcroft-Gault from
 # 13), takes the unscaled value.
@@ -49,10 +49,12 @@
 # and lean weight is the usual correction, so this is consistent with the
 # switch rather than a separate decision.
 
-# Assumed serum creatinine of an adult when the app has none, mg/dL.
-# Population medians for adults with normal kidneys: about 0.9-1.0 in men and
-# 0.7-0.8 in women.
-SCR_ASSUMED_MALE   <- 1.0
+# Assumed serum creatinine of an adult when the app has none, mg/dL: 0.9 in
+# men and 0.8 in women, the population medians for adults with normal kidneys
+# (about 0.9-1.0 in men and 0.7-0.8 in women).  These are what the Patient
+# Profile's tooltip quotes (R/patient-fields.R), so the tooltip reads them
+# from here.
+SCR_ASSUMED_MALE   <- 0.9
 SCR_ASSUMED_FEMALE <- 0.8
 
 # Under this age the assumed creatinine is the normal value for the child's

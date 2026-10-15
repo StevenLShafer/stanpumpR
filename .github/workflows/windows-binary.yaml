@@ -1,0 +1,197 @@
+# Builds a ready-made Windows package (a binary .zip) on every push to master
+# and publishes it as the rolling GitHub Release "windows-binary", replacing the
+# previous one, so the download link always gives the current master:
+#
+#   https://github.com/StevenLShafer/stanpumpR/releases/download/windows-binary/stanpumpR.zip
+#
+# Installing the zip needs no build step (no lazy loading, no Rtools), which is
+# where installs from source have been failing on some Windows machines.
+#
+# stanpumpR is pure R (no compiled code), so the one zip serves both x64 and
+# ARM (aarch64) Windows; the second job installs it on an ARM runner to show
+# that.  A binary is tied to the R minor version it was built with (4.6.x here,
+# the current release), so it is rebuilt whenever R's release moves.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+    paths:
+      - '.github/workflows/windows-binary.yaml'
+      - '.github/scripts/windows-smoke-test.R'
+  workflow_dispatch:
+
+name: Windows binary
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: windows-binary
+  # Named stanpumpR.zip because install.packages() takes the package name
+  # from the file name of a local zip.
+  ASSET: stanpumpR.zip
+
+jobs:
+  build:
+    name: Build (windows x64)
+    runs-on: windows-latest
+    timeout-minutes: 60
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      RENV_CONFIG_AUTOLOADER_ENABLED: FALSE
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: r-lib/actions/setup-pandoc@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+
+      - uses: r-lib/actions/setup-r@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          dependencies: '"hard"'
+          extra-packages: any::knitr, any::rmarkdown
+
+      - name: Build the source package and the Windows binary
+        shell: bash
+        run: |
+          mkdir -p build && cd build
+          R CMD build --no-build-vignettes --no-manual ..
+          R CMD INSTALL --build stanpumpR_*.tar.gz
+          ls -l
+          cp stanpumpR_*.zip "../$ASSET"
+          Rscript -e 'cat(paste(R.version$major, R.version$minor, sep = "."))' > ../r-version.txt
+
+      - name: Install the zip into an empty library and simulate
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          mkdir -p smoke-lib
+          Rscript -e "install.packages('$ASSET', repos = NULL, type = 'win.binary', lib = 'smoke-lib')"
+          R_LIBS="smoke-lib" Rscript .github/scripts/windows-smoke-test.R
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stanpumpR-windows
+          path: |
+            ${{ env.ASSET }}
+            r-version.txt
+          retention-days: 30
+
+  arm:
+    name: Install on windows ARM
+    needs: build
+    runs-on: windows-11-arm
+    timeout-minutes: 90
+    # Shows whether the x64-built zip works on ARM R; it does not hold back the
+    # release, since CRAN has fewer ready-made ARM binaries for the dependencies.
+    continue-on-error: true
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      RENV_CONFIG_AUTOLOADER_ENABLED: FALSE
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: r-lib/actions/setup-r@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          r-version: release
+
+      - uses: r-lib/actions/setup-r-dependencies@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        with:
+          dependencies: '"hard"'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: stanpumpR-windows
+
+      - name: Install the zip into an empty library and simulate
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          mkdir -p smoke-lib
+          Rscript -e "install.packages('$ASSET', repos = NULL, type = 'win.binary', lib = 'smoke-lib')"
+          R_LIBS="smoke-lib" Rscript .github/scripts/windows-smoke-test.R
+
+  release:
+    name: Publish the release
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # One publish at a time, so two quick merges cannot replace the release
+    # at once; the step below then skips any build master has moved past, so
+    # an older build that publishes last cannot replace a newer one.
+    concurrency:
+      group: windows-binary-release
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: stanpumpR-windows
+
+      - name: Write the release notes
+        shell: bash
+        run: |
+          imports=$(sed -n '/^Imports:/,/^[A-Z][A-Za-z]*:/p' DESCRIPTION | sed '1d;$d' \
+            | sed 's/(.*)//; s/,//; s/^ *//; s/ *$//' \
+            | grep -v -x -E 'grDevices|grid|stats|tools|utils|' \
+            | sed 's/.*/"&"/' | paste -sd, - | sed 's/,/, /g')
+          version=$(sed -n 's/^Version: *//p' DESCRIPTION)
+          rversion=$(cat r-version.txt)
+          rminor=${rversion%.*}
+          cat > notes.md <<NOTES
+          Ready-made Windows package of stanpumpR ${version}, built from master at ${GITHUB_SHA::7} on $(date -u '+%Y-%m-%d %H:%M UTC'). Rebuilt on every change to master; the link below always gives the current build.
+
+          Built with R ${rversion}: install it in R ${rminor}.x. The same file works on Windows x64 and on Windows ARM.
+
+          Use it instead of installing from source: on Windows 11, Smart App Control can stop a source install with nothing but "lazy loading failed".
+
+          Install it from R (or RStudio):
+
+          \`\`\`r
+          # The packages stanpumpR needs, from CRAN (once; skip any already installed)
+          install.packages(c(${imports}))
+
+          # stanpumpR itself
+          zip <- file.path(tempdir(), "stanpumpR.zip")
+          download.file("https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${ASSET}",
+                        zip, mode = "wb")
+          install.packages(zip, repos = NULL, type = "win.binary")
+
+          library(stanpumpR)
+          run_app()
+          \`\`\`
+          NOTES
+          cat notes.md
+
+      - name: Replace the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tip=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_REF_NAME" --jq .sha)
+          if [ "$tip" != "$GITHUB_SHA" ]; then
+            echo "master is now at ${tip::7}, past this build (${GITHUB_SHA::7}); its own run publishes it."
+            exit 0
+          fi
+          # Delete and recreate, so the tag moves to this commit.
+          gh release delete "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create "$RELEASE_TAG" "$ASSET" --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "stanpumpR for Windows (current master)" --notes-file notes.md

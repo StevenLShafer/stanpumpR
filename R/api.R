@@ -21,7 +21,8 @@
 #   inst/plumber/plumber.R        the HTTP service (run_api()): POST /simulate,
 #                                 GET /drugs, GET /health.
 #
-# The request and the result are specified in docs/api.md.  The simulation
+# The request and the result are specified in inst/apidocs/api.md, served
+# as a web page at https://stanpumpr.io/api (R/api-docs.R).  The simulation
 # itself is simulateDrugsWithCovariates(), the same Shiny-free entry point the
 # tests and vignettes use, so the API returns what the app plots.
 #
@@ -124,7 +125,7 @@ apiFlag <- function(x, what) {
 apiParseRequest <- function(text) {
   if (is.raw(text)) text <- rawToChar(text)
   if (is.null(text) || length(text) == 0 || !nzchar(paste(text, collapse = ""))) {
-    apiError("The request body is empty; send the request as JSON (see docs/api.md).")
+    apiError("The request body is empty; send the request as JSON (see https://stanpumpr.io/api).")
   }
   request <- tryCatch(
     jsonlite::fromJSON(paste(text, collapse = "\n"), simplifyVector = TRUE),
@@ -215,18 +216,27 @@ apiPatient <- function(patient) {
   if (!is.null(creatinine)) {
     creatinine <- apiNumber(creatinine, "patient.creatinine", MIN_CREATININE, MAX_CREATININE)
   }
+  sex <- apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES)
+  # Read only by the models the pregnancy review quantifies (R/pregnancy.R);
+  # getDrugPK() would refuse it for a man, but the request is told why first.
+  pregnant <- apiFlag(get("pregnant", FALSE), "patient.pregnant")
+  if (pregnant && sex != SEX_FEMALE) {
+    apiError("patient.pregnant is true, so patient.sex must be 'female'.")
+  }
   list(
     weight      = weight,
     height      = height,
     age         = age,
-    sex         = apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES),
+    sex         = sex,
+    pregnant    = pregnant,
     adjustToFFM = apiFlag(get("adjustToFFM", TRUE), "patient.adjustToFFM"),
     osmolality  = apiNumber(get("osmolality", OSMOLALITY_DEFAULT), "patient.osmolality",
                             MIN_OSMOLALITY, MAX_OSMOLALITY),
     creatinine  = creatinine,
     cyp2d6      = apiChoice(get("cyp2d6", CYP2D6_DEFAULT), "patient.cyp2d6", CYP2D6_VALUES),
     cyp2c19     = apiChoice(get("cyp2c19", CYP2C19_DEFAULT), "patient.cyp2c19", CYP2C19_VALUES),
-    cyp2c9      = apiChoice(get("cyp2c9", CYP2C9_DEFAULT), "patient.cyp2c9", CYP2C9_VALUES)
+    cyp2c9      = apiChoice(get("cyp2c9", CYP2C9_DEFAULT), "patient.cyp2c9", CYP2C9_VALUES),
+    cyp2b6      = apiChoice(get("cyp2b6", CYP2B6_DEFAULT), "patient.cyp2b6", CYP2B6_VALUES)
   )
 }
 
@@ -347,13 +357,14 @@ apiSeries <- function(wide, times, recovery) {
 apiConcentrationUnits <- function(units) {
   switch(as.character(units),
          "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL", "mOsm" = "mOsm/kg",
+         "mmol" = "mmol/L",
          as.character(units))
 }
 
 #' Simulate a dose table for one patient
 #'
 #' The engine behind the HTTP API (`run_api()`), callable directly from R.
-#' The request format is specified in `docs/api.md`; in short:
+#' The request format is specified at <https://stanpumpr.io/api>; in short:
 #'
 #' ```
 #' list(
@@ -412,8 +423,9 @@ apiSimulate <- function(request) {
         DT, ET, patient$weight, patient$height, patient$age, patient$sex,
         maximum, recovery,
         cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
+        cyp2b6 = patient$cyp2b6,
         adjustToFFM = patient$adjustToFFM, osmolality = patient$osmolality,
-        creatinine = patient$creatinine)),
+        creatinine = patient$creatinine, pregnant = patient$pregnant)),
       error = function(e) {
         if (inherits(e, "stanpumpr_api_error")) stop(e)
         apiError("The simulation failed: ", conditionMessage(e), status = 422L)
@@ -475,10 +487,12 @@ apiSimulate <- function(request) {
       height = patient$height, heightUnit = "cm",
       age    = patient$age,    ageUnit    = "years",
       sex    = patient$sex,
+      pregnant = patient$pregnant,
       adjustToFFM = patient$adjustToFFM,
       osmolality  = patient$osmolality,
       creatinine  = if (is.null(patient$creatinine)) NA_real_ else patient$creatinine,
-      cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9
+      cyp2d6 = patient$cyp2d6, cyp2c19 = patient$cyp2c19, cyp2c9 = patient$cyp2c9,
+      cyp2b6 = patient$cyp2b6
     ),
     drugs      = drugs,
     doses      = doses,
@@ -664,7 +678,8 @@ apiNegotiateFormat <- function(query = NULL, request = NULL, accept = NULL) {
 #' Run the simulation API as an HTTP service
 #'
 #' Serves `POST /simulate`, `GET /drugs` and `GET /health` (see
-#' `docs/api.md`), with interactive documentation at `/__docs__/`.  Needs the
+#' <https://stanpumpr.io/api>, also served at `/`), with interactive
+#' documentation at `/__docs__/`.  Needs the
 #' plumber package.
 #'
 #' @param host,port where to listen

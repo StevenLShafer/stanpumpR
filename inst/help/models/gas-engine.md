@@ -1,4 +1,4 @@
-The inhaled anesthetics are simulated by a separate engine whose structure and parameters follow **Gas Man®**, the model of inhaled anesthetic uptake and distribution developed by James H. Philip at Brigham and Women's Hospital and Harvard Medical School. Gas Man is closed source; the engine was written from the published description of its model and then validated against Gas Man's own output. This page gives the model; the deliberate departures from Gas Man are on [their own page](help:models/gas-differences).
+The inhaled anesthetics are simulated by a separate engine whose structure and parameters follow **GasMan®**, the model of inhaled anesthetic uptake and distribution developed by James H. Philip at Brigham and Women's Hospital and Harvard Medical School. GasMan is closed source; the engine was written from the published description of its model and then validated against GasMan's own output. This page gives the model; the deliberate departures from GasMan are on [their own page](help:models/gas-differences).
 
 ## Compartments
 
@@ -11,11 +11,11 @@ For each soluble gas (nitrous oxide, sevoflurane, isoflurane, desflurane, and ni
 | Muscle group | 33 L | 0.18 |
 | Fat group | 14.5 L | 0.06 |
 
-Volumes scale linearly with weight. Cardiac output is 5 L/min at 70 kg, scaled by (weight/70)^0.75. The blood-flow fractions are Gas Man's `[Ratio]` values, carried unchanged because they are part of the validation chain; the code notes that no source for them has been established. Oxygen is modelled in the gas phase only, with a metabolic sink of 3.5 mL/kg/min: it binds haemoglobin non-linearly and has no meaningful partition coefficient.
+Volumes scale linearly with weight. Cardiac output is 5 L/min at 70 kg, scaled by (weight/70)^0.75. The blood-flow fractions are GasMan's `[Ratio]` values, carried unchanged because they are part of the validation chain; the code notes that no source for them has been established. Oxygen is modelled in the gas phase only, with a metabolic sink of 3.5 mL/kg/min: it binds haemoglobin non-linearly and has no meaningful partition coefficient.
 
 ## Partition coefficients
 
-The capacity of a tissue for a gas is its volume times its tissue:gas partition coefficient. The table stores tissue:gas coefficients directly, as Gas Man's configuration does:
+The capacity of a tissue for a gas is its volume times its tissue:gas partition coefficient. The table stores tissue:gas coefficients directly, as GasMan's configuration does:
 
 | Gas | Blood:gas | Brain:gas | Muscle:gas | Fat:gas | MAC at 40 (%) |
 |---|---|---|---|---|---|
@@ -25,7 +25,7 @@ The capacity of a tissue for a gas is its volume times its tissue:gas partition 
 | desflurane | 0.42 | 0.54 | 0.97 | 13 | 6.0 |
 | nitrogen | 0.014 | 0.010 | 0.014 | 0.070 | (200, flagged) |
 
-Nitrogen's MAC of 200 per cent is Gas Man's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
+Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
 
 ## Equations
 
@@ -54,11 +54,11 @@ where the last term is the **concentration and second gas effect**: gas taken up
 
 ## Integration
 
-Between dose-table changes the settings are constant, and every equation above would be linear with constant coefficients but for one term: the total uptake that couples the gases depends on the state. The engine therefore advances in short steps. Within each step the total uptake (and with it the circuit blend) is held at its value at the start of the step, which makes the step linear, and the step is then solved exactly by matrix exponential (a Padé approximation with scaling and squaring). The uptake is recomputed at the start of the next step. So the propagation within a step is exact, but the coupling between steps is an approximation of first order in the step size: the answer depends slightly on the step and converges as it shrinks. Gas Man holds its total uptake per step in the same way and in addition splits each step into sequential sub-updates; the two converge to the same answer as the step shrinks, and the repository's convergence test checks that they do.
+Between dose-table changes the settings are constant, and every equation above would be linear with constant coefficients but for one term: the total uptake that couples the gases depends on the state. The engine therefore advances in short steps. Within each step the total uptake (and with it the circuit blend) is held at its value at the start of the step, which makes the step linear, and the step is then solved exactly by matrix exponential (a Padé approximation with scaling and squaring). The uptake is recomputed at the start of the next step. So the propagation within a step is exact, but the coupling between steps is an approximation of first order in the step size: the answer depends slightly on the step and converges as it shrinks. GasMan holds its total uptake per step in the same way and in addition splits each step into sequential sub-updates; the two converge to the same answer as the step shrinks, and the repository's convergence test checks that they do.
 
 The step is about the plot length divided by 600: 0.1 minute on a one-hour plot, 0.4 minute on a four-hour plot, 2.4 minutes on a day. Measured against the same engine at a 40-times finer step:
 
-- **Without nitrous oxide** the coupling is weak. In the teaching scenarios and the Gas Man validation scenarios that use no nitrous oxide, on their own plot lengths of half an hour to four hours, the alveolar tensions agree to within 0.003 percentage points, under 0.1 per cent of the agent's peak.
+- **Without nitrous oxide** the coupling is weak. In the teaching scenarios and the GasMan validation scenarios that use no nitrous oxide, on their own plot lengths of half an hour to four hours, the alveolar tensions agree to within 0.003 percentage points, under 0.1 per cent of the agent's peak.
 - **During a nitrous oxide wash-in** the coupling is strong. In [the second gas effect scenario](scenario:second-gas-effect) (4 L/min nitrous oxide in 6 L/min, with 2 per cent sevoflurane) the alveolar nitrous oxide and sevoflurane run low at the first plotted points, by about 1.5 per cent of their value on a one-hour plot, 6 per cent on a four-hour plot and 13 per cent on a 24-hour plot. The error fades as uptake slows, to under 1 per cent after about 1, 2 and 12 minutes respectively, and roughly halves when the step is halved.
 
 To read the first minutes of a nitrous oxide induction closely, use a short plot.
@@ -69,13 +69,13 @@ MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269
 
 ## Validation
 
-Richard H. Epstein ran Gas Man through its API for the same scenarios and the outputs were compared column by column. In the first concordance run the two agreed to one part in a million on the alveolar tension, with the residual traced to Gas Man's single-precision arithmetic. Five further scenarios covering low flows, other agents, other weights and changing settings followed. The record is `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).
+Richard H. Epstein ran GasMan through its API for the same scenarios and the outputs were compared column by column. In the first concordance run the two agreed to one part in a million on the alveolar tension, with the residual traced to GasMan's single-precision arithmetic. Five further scenarios covering low flows, other agents, other weights and changing settings followed. The record is `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).
 
 ## References
 
-Philip JH. Gas Man: an example of goal oriented computer-assisted teaching which results in learning. *Int J Clin Monit Comput* 1986;3:165-173.
+Philip JH. GasMan: an example of goal oriented computer-assisted teaching which results in learning. *Int J Clin Monit Comput* 1986;3:165-173.
 
-Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensitive decrement times for inhaled anesthetics in obese patients explored with Gas Man®. *J Clin Monit Comput* 2021 (PMC7943506).
+Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensitive decrement times for inhaled anesthetics in obese patients explored with GasMan®. *J Clin Monit Comput* 2021 (PMC7943506).
 
 Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. *BMC Anesthesiol* 2006;6:7.
 

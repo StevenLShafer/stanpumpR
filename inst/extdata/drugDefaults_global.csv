@@ -17,9 +17,11 @@ bupivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#6A5ACD,0,0,0,0,0,IV,Loca
 ropivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA,mg/hr RA",#2F8F9D,0,0,0,0,0,IV,Local anesthetics
 mepivacaine,mcg,mg,,mg RA,"mg,mg RA,mg/kg RA",#A0522D,0,0,0,0,0,IV,Local anesthetics
 rocuronium,mcg,mg,mg/kg/hr,mg,"mg,mg/kg/hr",#F9423A,1,2.2,1.5,0,1,IV,Neuromuscular blockade
+vecuronium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#8B4513,110,155,135,0,110,IV,Neuromuscular blockade
+cisatracurium,ng,mg,mcg/kg/min,mg,"mg,mg/kg,mcg/kg/min",#556B2F,130,200,165,0,130,IV,Neuromuscular blockade
 naloxone,ng,mcg,mcg/min,mcg,"mcg,mcg/kg,mg,mg/kg,mcg/min,mcg/kg/min,mg/min,mg/kg/min,mg IN",#404040,1,10,3,0,1,IV,Other
 oxytocin,ng,mcg,mcg/min,mcg,"mcg,mg,mg/kg,mcg/min",#008F7D,0.05,0.2,0.1,0,0.05,IV,Other
-oxycodone,ng,,,mg PO,"mg,mg PO,mg PO liquid,mg/kg PO liquid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid",#032FED,10,20,14,12,10,IV,Opioids
+oxycodone,ng,mg,mg/hr,mg PO,"mg,mg/hr,Plasma target,Effect site target,mg PO,mg PO liquid,mg/kg PO liquid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid",#032FED,10,20,14,12,10,IV,Opioids
 oliceridine,ng,mg,mcg/kg/min,mg,"mg,mcg/kg/min",#FF00CC,18.296,37.504,27.4,27.9,27.4,IV,Opioids
 remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.3,0.6,0.45,0,0.2,IV,Hypnotics and sedatives
 diazepam,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg IM,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#B5651D,150,600,300,0,150,IV,Hypnotics and sedatives
@@ -61,7 +63,8 @@ prednisone,ng,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/
 sugammadex,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#7B68EE,5,30,10,0,0,IV,Neuromuscular blockade
 neostigmine,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#9370DB,30,300,100,0,30,IV,Neuromuscular blockade
 glycopyrrolate,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#8A2BE2,1,10,3,0,0,IV,Neuromuscular blockade
-mannitol,mOsm,g,g/hr,g,"g,g/kg,g/hr,g/kg/hr,g qd,g bid,g tid,g qid,g/kg qd,g/kg bid,g/kg tid,g/kg qid",#00A3AD,300,320,310,0,0,IV,Other
+mannitol,mOsm,,g/hr,g/hr,"g/hr,g/kg/hr",#00A3AD,300,320,310,0,0,IV,Other
+calcium,mmol,g chloride,mg/min chloride,g chloride,"g chloride,mg chloride,mg/kg chloride,mg/min chloride,mg/hr chloride,mg/kg/hr chloride,g/hr chloride,g gluconate,mg gluconate,mg/kg gluconate,mg/min gluconate,mg/hr gluconate,mg/kg/hr gluconate,g/hr gluconate",#C77C2B,0,0,0,0,0,IV,Other
 amiodarone,mcg,,,mg/day PO,"mg/day PO",#B22222,1,2.5,1.5,0,1,IV,Other
 desethylamiodarone,mcg,,,,,#E9967A,0,0,0,0,0,IV,
 amiodaroneIV,mcg,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#C2185B,0,0,0,0,0,IV,Other

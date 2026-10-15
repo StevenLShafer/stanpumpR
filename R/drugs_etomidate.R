@@ -10,12 +10,18 @@ etomidate <- function(weight, height, age, sex, adjustToFFM = TRUE)
   k13 <- 0.209
   k21 <- 0.131
   k31 <- 0.00479
-  k41 <- .693/1.6
   
   typical <- 0.5  # Journal of Clinical Pharmacology, 2011;51:482-491
-  upperTypical <- 0.4 # Journal of Clinical Pharmacology, 2011;51:482-491
-  lowerTypical <- 0.8 # Journal of Clinical Pharmacology, 2011;51:482-491
-  tPeak <- 1.6
+  lowerTypical <- 0.4 # Journal of Clinical Pharmacology, 2011;51:482-491
+  upperTypical <- 0.8 # Journal of Clinical Pharmacology, 2011;51:482-491
+  # Effect site.  Arden 1986 fitted the EEG median frequency with an effect
+  # compartment whose mean plasma-effect-site equilibration HALF-LIFE was
+  # 1.6 min, so ke0 = ln 2 / 1.6 = 0.433 /min is supplied directly and
+  # getDrugPK() solves the time to peak effect after a bolus from it (1.9 min
+  # with these kinetics).  Until 2026-10-14 the 1.6 min was read as
+  # the time to peak effect itself, with this ke0 present as an unused k41,
+  # which implied a faster equilibration than Arden measured.
+  ke0 <- log(2) / 1.6
   MEAC <- 0
   reference <- "Arden JR et al., Anesthesiology 1986;65(1):19-27. https://pubmed.ncbi.nlm.nih.gov/3729056/"
   
@@ -48,7 +54,7 @@ etomidate <- function(weight, height, age, sex, adjustToFFM = TRUE)
   return(
     list(
       PK = PK, 
-      tPeak = tPeak, 
+      ke0 = ke0, 
       MEAC = MEAC, 
       typical = typical, 
       upperTypical = upperTypical, 

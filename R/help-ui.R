@@ -30,7 +30,10 @@ helpNavPanel <- function() {
         textInput("help_search", NULL, "", placeholder = "Search the help") |>
           addInputAttributes(maxlength = 100, autocomplete = "off",
                              `aria-label` = "Search the help"),
-        uiOutput("help_search_results"),
+        # A polite live region, so a screen reader announces the result ("18
+        # pages match", "Nothing found") when a search finishes.
+        tagAppendAttributes(uiOutput("help_search_results"),
+                            role = "status", `aria-live` = "polite"),
         uiOutput("help_nav")
       ),
       div(class = "help-main", uiOutput("help_content"))

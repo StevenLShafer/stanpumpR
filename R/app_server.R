@@ -1,8 +1,7 @@
 ####################################################
 # stanpumpR                                        #
-# Copyright, 2023, Steven L. Shafer, MD            #
-# May be freely distributed, modified, or adapted  #
-# in derivative works for non-commercial purposes. #
+# Copyright 2019-2026 Steven L. Shafer, MD,        #
+# and contributors. MIT License: see LICENSE.md.   #
 ####################################################
 
 app_server <- function(input, output, session) {
@@ -33,6 +32,8 @@ app_server <- function(input, output, session) {
   })
   # Register the comments log with this user's session, to use outside the server
   session$userData$commentsLog <- commentsLog
+  # The first line of the log names the build (stanpumpRBuild())
+  outputComments(stanpumpRBuild()$label)
 
   profileRecords <- reactiveVal(data.frame(name = character(0), ms = numeric(0), time = character(0)))
 
@@ -332,8 +333,9 @@ app_server <- function(input, output, session) {
   # The Help tab: see R/help-server.R.  Loading a teaching scenario from the
   # help writes doseTable() and eventTable() directly, as a URL restore does,
   # and sets the time settings through timeApi.
-  helpPage <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
-                         timeApi = timeApi)
+  helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
+                        timeApi = timeApi)
+  helpPage <- helpApi$page
 
   ###########
   # Startup #
@@ -343,9 +345,22 @@ app_server <- function(input, output, session) {
   # carries its own dose table, which onRestored() puts in, so it skips the
   # menu unless that table is empty.  Shown now, as the session starts, rather
   # than in reply to the browser.
-  startupMenuOpen <- opensOnStartupMenu(session$restoreContext$values)
+  #
+  # A ?scenario= or ?help= link (R/deep-links.R) opens on the scenario or the
+  # page instead of the menu.  A bookmark's own dose table wins over
+  # ?scenario=.  The link is acted on below, once the dose table's history
+  # exists; here it only decides whether the menu opens.
+  restoreValues <- session$restoreContext$values
+  deepLink <- deepLinkFromQuery(isolate(session$clientData$url_search),
+                                isolate(drugDefaults()))
+  if (isBookmarkRestore(restoreValues)) deepLink$scenario <- NULL
+  startupMenuOpen <- opensOnStartupMenu(restoreValues) && !deepLinkOpens(deepLink)
   if (startupMenuOpen) {
     showModal(startupDrugModal(startupDrugChoices(isolate(drugDefaults()))))
+  }
+  for (problem in deepLink$problems) {
+    outputComments("Link:", problem)
+    showNotification(problem, type = "warning", duration = 10)
   }
 
   # app.js asks for the welcome on a first visit, or when a week has passed
@@ -359,7 +374,9 @@ app_server <- function(input, output, session) {
   observeEvent(input$show_intro_modal, {
     if (startupMenuOpen) {
       startupWelcome(TRUE)
-    } else {
+    } else if (!deepLinkOpens(deepLink)) {
+      # Someone sent to a scenario or a page by a link is not greeted with
+      # the welcome on top of it
       showIntroModal()
     }
   }, once = TRUE)
@@ -537,6 +554,26 @@ app_server <- function(input, output, session) {
   doseTableHistory <- undomanager::undomanager(type = "data.frame")$reactive()
 
   doseTableDraft <- reactive(doseTableHistory()$value)
+
+  # Open on what a ?scenario= or ?help= link asks for (R/deep-links.R).  Done
+  # here rather than at Startup because setDoseTable() writes the history
+  # above.  A ?help= link alone starts with the default drugs behind the help,
+  # as the tour does; a bookmark keeps its own table (onRestored()).
+  if (!startupMenuOpen && deepLinkOpens(deepLink) && !isBookmarkRestore(restoreValues)) {
+    isolate({
+      if (!is.null(deepLink$scenario)) {
+        outputComments("Opening on scenario", deepLink$scenario$id, "from the URL")
+        helpApi$loadScenario(deepLink$scenario)
+      } else {
+        setDoseTable(startupDoseTable(STARTUP_DRUGS_DEFAULT, drugDefaults()), doseTableFormat())
+      }
+    })
+  }
+  if (!is.null(deepLink$help)) {
+    outputComments("Opening on help page", deepLink$help, "from the URL")
+    helpPage(deepLink$help)
+    bslib::nav_select("mainNav", "Help", session = session)
+  }
 
   # Bumped to force the dose table to re-render when applyGasTableRules()
   # puts back exactly what the draft already held (e.g. the user deleted the
@@ -731,9 +768,10 @@ app_server <- function(input, output, session) {
     problems <- character(0)
     DT <- tryCatch(doseTableIV(), error = function(e) NULL)
     if (mintoSchnider() && !is.null(DT)) {
-      patient <- tryCatch(list(weight(), height(), age(), sex()), error = function(e) NULL)
+      patient <- tryCatch(list(weight(), height(), age(), sex(), pregnant()), error = function(e) NULL)
       if (!is.null(patient)) {
-        problems <- alternativeModelProblems(DT$Drug, patient[[1]], patient[[2]], patient[[3]], patient[[4]])
+        problems <- alternativeModelProblems(DT$Drug, patient[[1]], patient[[2]], patient[[3]], patient[[4]],
+                                            pregnant = patient[[5]])
       }
     }
     if (length(problems) == 0) {
@@ -748,6 +786,15 @@ app_server <- function(input, output, session) {
     # The default until the control reports, and for bookmarks made before it
     # existed (Shiny restores only the inputs a bookmark saved).
     if (is.null(input$osmolality)) OSMOLALITY_DEFAULT else input$osmolality
+  })
+
+  # The Pregnant control reports "TRUE" or "FALSE" (NULL before it reports,
+  # and in a bookmark made before it was live).  The flag is on only while
+  # the control says so AND the patient is a woman of child-bearing age, the
+  # rule that shows the control (R/pregnancy.R): a control hidden by a change
+  # of age or sex keeps its last value, which must not keep the flag on.
+  pregnant <- reactive({
+    isTRUE(as.logical(input$pregnant)) && pregnancyPossible(age(), sex())
   })
 
   # NULL when the field is blank: the renal models then assume a normal value.
@@ -864,8 +911,10 @@ app_server <- function(input, output, session) {
         cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
         cyp2c19 = if (is.null(input$cyp2c19)) CYP2C19_DEFAULT else input$cyp2c19,
         cyp2c9 = if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9,
+        cyp2b6 = if (is.null(input$cyp2b6)) CYP2B6_DEFAULT else input$cyp2b6,
         osmolality = osmolality(),
         creatinine = creatinine(),
+        pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
         alternativeModels = mintoSchnider()
       ) |> profileCode("recalculatePK() in drugs()")
@@ -1238,6 +1287,7 @@ app_server <- function(input, output, session) {
         weight = weight(),
         height = height(),
         sex = sex(),
+        pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
         osmolality = osmolality(),
         creatinine = creatinine(),
@@ -2214,7 +2264,10 @@ app_server <- function(input, output, session) {
                              REFERENCE_TIME_NONE)
 
         if (is.null(testTable)) {
+          # No target fell between the start and the end time (issue #270):
+          # say so rather than close the dialog with nothing done.
           shinycssloaders::hidePageSpinner()
+          showNotification(SUGGEST_NO_TARGETS_MESSAGE, type = "warning", duration = 10)
           return()
         }
 

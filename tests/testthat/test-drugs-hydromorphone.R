@@ -32,8 +32,8 @@ test_that("returns the published parameters with total-body-weight scaling", {
     tPeak = 19.6,
     MEAC = 0.0015,
     typical = 0.0018,
-    upperTypical = 0.0012,
-    lowerTypical = 0.003,
+    upperTypical = 0.003,
+    lowerTypical = 0.0012,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)

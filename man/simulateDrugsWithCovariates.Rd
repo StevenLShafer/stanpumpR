@@ -17,7 +17,10 @@ simulateDrugsWithCovariates(
   adjustToFFM = TRUE,
   osmolality = OSMOLALITY_DEFAULT,
   creatinine = NULL,
-  cyp2c19 = CYP2C19_DEFAULT
+  cyp2c19 = CYP2C19_DEFAULT,
+  cyp2c9 = CYP2C9_DEFAULT,
+  cyp2b6 = CYP2B6_DEFAULT,
+  pregnant = FALSE
 )
 }
 \arguments{
@@ -55,6 +58,17 @@ affected.}
 
 \item{cyp2c19}{CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
 Only drugs whose model declares it are affected.}
+
+\item{cyp2c9}{CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES}.
+Only drugs whose model declares it (phenytoin) are affected.}
+
+\item{cyp2b6}{CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
+Only drugs whose model declares it (methadone) are affected.}
+
+\item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default); TRUE
+requires \code{sex = "female"}.  Only the models that name it apply the
+changes of late pregnancy described by Ansari, Carvalho, Shafer and Flood
+(Anesth Analg 2016;122:786-804); see \code{getDrugPK()}.}
 }
 \value{
 a list of data frames with the output of the a single drug

@@ -162,7 +162,9 @@ test_that("every scenario runs through the simulation engine", {
       out <- simulateDrugsWithCovariates(iv, helpScenarioEventTable(s), p$weight, p$height, p$age, p$sex,
                                          s$options$maximum, s$options$showThreshold,
                                          cyp2d6 = p$cyp2d6, cyp2c19 = p$cyp2c19,
-                                         adjustToFFM = p$adjustToFFM)
+                                         cyp2c9 = p$cyp2c9, cyp2b6 = p$cyp2b6,
+                                         adjustToFFM = p$adjustToFFM,
+                                         pregnant = p$pregnant)
       # every dosed drug has a row; a drug that forms an active metabolite adds
       # the metabolite's row too
       expect_true(all(unique(iv$Drug) %in% names(out)), info = s$id)
@@ -261,8 +263,10 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
   for (s in scenarios) {
     expect_true(setequal(names(s$patient),
                          c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
-                           "adjustToFFM", "creatinine", "osmolality")), info = s$id)
+                           "cyp2b6", "adjustToFFM", "creatinine", "osmolality",
+                           "pregnant")), info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
+    expect_true(is.logical(s$patient$pregnant) && length(s$patient$pregnant) == 1, info = s$id)
     expect_equal(s$patient$osmolality, OSMOLALITY_DEFAULT, info = s$id)
   }
   s <- helpScenario("x-y", "T", HELP_SCENARIO_GROUPS[1], "S",
@@ -302,9 +306,15 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   expect_true(all(c("creatinine", "osmolality") %in% names(session$messages)))
   expect_identical(session$messages$creatinine$value, "")
   expect_equal(as.numeric(session$messages$osmolality$value), OSMOLALITY_DEFAULT)
-  # and the rest of the profile goes too
-  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "adjustToFFM")
+  # and the rest of the profile goes too, the Pregnant control included (off
+  # for this patient, so a parturient loaded earlier does not linger)
+  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6",
+                    "adjustToFFM", "pregnant")
                   %in% names(session$messages)))
+  expect_identical(session$messages$pregnant$selected, "FALSE")
+  session <- recordingSession()
+  applyHelpScenario(session, helpScenarioById("remifentanil-labour"), doseTable, eventTable)
+  expect_identical(session$messages$pregnant$selected, "TRUE")
 
   s <- helpScenario("x-y", "T", HELP_SCENARIO_GROUPS[1], "S",
                     doses = helpDoses(c("pregabalin", 0, 150, "mg PO")),
@@ -320,4 +330,23 @@ test_that("the scenario page shows the creatinine and osmolality the load will s
   expect_match(html, "Serum creatinine", fixed = TRUE)
   expect_match(html, "blank (normal for age and sex assumed)", fixed = TRUE)
   expect_match(html, "280 mOsm/kg", fixed = TRUE)
+  # Pregnant is shown only when it is set
+  expect_no_match(html, "Pregnant", fixed = TRUE)
+  expect_match(helpScenarioPageHTML("remifentanil-labour"), "Pregnant", fixed = TRUE)
+})
+
+test_that("a scenario's pregnancy flag is validated against the patient", {
+  s <- helpScenario("x-y", "T", HELP_SCENARIO_GROUPS[1], "S",
+                    doses = helpDoses(c("morphine", 0, 5, "mg")),
+                    age = 30, sex = SEX_FEMALE, pregnant = TRUE)
+  expect_true(s$patient$pregnant)
+  expect_length(helpScenarioCheck(s), 0)
+  s$patient$sex <- SEX_MALE
+  expect_true(any(grepl("pregnant, but not a woman", helpScenarioCheck(s))))
+  s$patient$sex <- SEX_FEMALE
+  s$patient$age <- 65
+  expect_true(any(grepl("pregnant, but not a woman", helpScenarioCheck(s))))
+  s$patient$age <- 30
+  s$patient$pregnant <- NA
+  expect_true(any(grepl("pregnant is not a single logical", helpScenarioCheck(s))))
 })

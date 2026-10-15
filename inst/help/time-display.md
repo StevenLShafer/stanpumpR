@@ -52,4 +52,4 @@ If a dose or an event falls near or after the end of the plot, the plot is lengt
 
 - **Target-controlled infusions and inhaled agents** are simulated only on plots of 7 days or less. With a TCI target row or an inhaled agent in the table and a longer plot, the plot area says so instead of drawing, until you remove those rows or choose a Max time of 7 days or less.
 - **Suggest Dosing** is offered when the time unit is minutes or hours.
-- **A drug that acts over weeks to months**, added to a plot shorter than a week, brings a notification offering to show 365 days.
+- **Amiodarone**, which acts over weeks to months, added to a plot shorter than a week, brings a notification offering to show 365 days.

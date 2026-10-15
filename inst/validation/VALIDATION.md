@@ -1,11 +1,11 @@
-# Gas Man validation record
+# GasMan validation record
 
-A running record of comparisons between this package's Gas Man baseline
+A running record of comparisons between this package's GasMan baseline
 (`R/advanceGasManBaseline.R`, and the standalone
-`inst/validation/gasman_baseline_standalone.R`) and Gas Man itself, run through
-the Gas Man API.
+`inst/validation/gasman_baseline_standalone.R`) and GasMan itself, run through
+the GasMan API.
 
-The point of the baseline is to *be* Gas Man, so that any later divergence is a
+The point of the baseline is to *be* GasMan, so that any later divergence is a
 deliberate, documented change rather than a transcription error. This file
 records what has actually been checked, and — just as importantly — what has
 not.
@@ -14,7 +14,7 @@ not.
 
 ## 2026-09-04 — first concordance run
 
-**Run by:** Richard Epstein, using the Gas Man API.
+**Run by:** Richard Epstein, using the GasMan API.
 **Scenario:**
 
 ```r
@@ -26,7 +26,7 @@ gasman_simulate(
 
 semi-closed circuit, `dt_ms = 6000`. Values at 30 minutes, sevoflurane:
 
-| column | ours (double) | Gas Man (float32) | relative difference |
+| column | ours (double) | GasMan (float32) | relative difference |
 |---|---|---|---|
 | CKT | 1.896201603 | 1.896202445 | 4.4e-07 |
 | ALV | 1.689227888 | 1.689230442 | 1.5e-06 |
@@ -38,14 +38,14 @@ semi-closed circuit, `dt_ms = 6000`. Values at 30 minutes, sevoflurane:
 | Uptake | 0.433974079 | 0.434033245 | 1.4e-04 |
 | Delivered | 4.800000000 | 4.799994946 | 1.1e-06 |
 
-### The residual is Gas Man's float32 accumulation, not a modelling difference
+### The residual is GasMan's float32 accumulation, not a modelling difference
 
 `Delivered` proves it. That column has no model and no parameters in it: it is
-300 additions of `2.0 * 8 * 0.1 / 100 = 0.016`. The exact answer is 4.8. Gas Man
+300 additions of `2.0 * 8 * 0.1 / 100 = 0.016`. The exact answer is 4.8. GasMan
 returns 4.799994946, a relative error of 1.1e-06 on a pure sum of identical
 terms, where no partition coefficient, volume or blood flow appears at all.
 
-Gas Man stores results in C++ `float` (`typedef float COMP_ARRAY[MAX_COMPART]`).
+GasMan stores results in C++ `float` (`typedef float COMP_ARRAY[MAX_COMPART]`).
 Float32 epsilon is 1.19e-07 and the run is 300 ticks. No change to any parameter
 can move that number.
 
@@ -57,18 +57,18 @@ values are the more accurate ones.**
 ### What this run establishes
 
 * The transcription of `GasDoc.cpp::Calc` and `CalcUptake` is correct for this
-  scenario, to the limit of Gas Man's own arithmetic.
+  scenario, to the limit of GasMan's own arithmetic.
 * **The cross-gas uptake coupling is validated.** This scenario ran nitrous
   oxide at 50% alongside sevoflurane, so `totUptake` carried both agents and the
   "Correct for constant lung capacity" term was exercised. That term is the
   concentration and second gas effect, and it is the one an earlier reading of
-  the source wrongly concluded Gas Man did not implement.
+  the source wrongly concluded GasMan did not implement.
 * **The tissue coefficients are tissue:GAS.** Epstein hard-coded the per-agent
   constants in his scenario; this side let `gasman.ini` supply them. Agreement to
-  1e-06 settles a question that could not be settled by reading, because Gas
-  Man's own scenario template documents `lambdaVrg` / `lambdaMus` / `lambdaFat`
+  1e-06 settles a question that could not be settled by reading, because
+  GasMan's own scenario template documents `lambdaVrg` / `lambdaMus` / `lambdaFat`
   as tissue:*blood* while supplying tissue:*gas* values.
-* **`GetVA` reports inspired ventilation, not the setting.** Gas Man returned
+* **`GetVA` reports inspired ventilation, not the setting.** GasMan returned
   VA 4.170708179 against a setting of 4; the difference, 0.170708 L/min, is the
   summed uptake rate, matching `GetVA`'s `totalUptakeRate + m_fVA`. A reporting
   difference, not an error. `gasman_compare()` does not compare VA.
@@ -77,7 +77,7 @@ values are the more accurate ones.**
 
 ### What this run does NOT establish
 
-One scenario, at Gas Man's default flows, at 70 kg, on a semi-closed circuit,
+One scenario, at GasMan's default flows, at 70 kg, on a semi-closed circuit,
 for 30 minutes, with settings constant throughout. Untested:
 
 * Low fresh gas flow and near-closed circuits, where the circuit equation
@@ -92,13 +92,13 @@ for 30 minutes, with settings constant throughout. Untested:
 * Runs long enough for the fat compartment to matter.
 
 `inst/validation/gasman_validation_grid.R` covers the first four of these and
-writes the Gas Man scenario files for them.
+writes the GasMan scenario files for them.
 
 ### Open question
 
-Epstein initially reported uptake "MUCH faster" in this code than in Gas Man.
+Epstein initially reported uptake "MUCH faster" in this code than in GasMan.
 That report preceded this run and is not reproduced by it. The base tick was
-wrong at the time (1000 ms against Gas Man's 6000), but measurement put that at
+wrong at the time (1000 ms against GasMan's 6000), but measurement put that at
 about 6% at one minute and under 0.2% by twenty — too small to be the whole
 cause. What changed between the two runs has not been established.
 
@@ -107,7 +107,7 @@ cause. What changed between the two runs has not been established.
 ## 2026-09-04 — the five-case grid, our side
 
 **Run by:** this repository, on `newryzen`, via
-`inst/validation/gasman_export_results.R`. Gas Man has **not** yet been run
+`inst/validation/gasman_export_results.R`. GasMan has **not** yet been run
 against these; this section records our answers so that when it is, the
 comparison is against a fixed, dated reference rather than a moving one.
 
@@ -129,12 +129,12 @@ and ventilation, differing only in whether nitrous oxide is running and so
 whether `totUptake` carries a second gas. It reaches 1.376 against 1.185 at
 five minutes, a ratio of 1.16.
 
-### Checks that passed before Gas Man is involved
+### Checks that passed before GasMan is involved
 
 * **`Delivered` is exact.** All five cases reproduce `dial x FGF x t / 100` to
   between 0 and 2e-15. That column has no model, no parameters and no
   integration scheme in it, so it isolates input handling from modelling: if it
-  ever disagrees with Gas Man, the dial or the flow is being read differently
+  ever disagrees with GasMan, the dial or the flow is being read differently
   and nothing downstream is worth looking at until that is fixed.
 * Every tension finite, non-negative, and never above the dial that produced it.
 * `VA` reports inspired ventilation in every case, above the setting by the
@@ -144,7 +144,7 @@ five minutes, a ratio of 1.16.
 
 ### Still not established
 
-Gas Man has not been run on any of these. Cases 3, 4 and 5 are the first to
+GasMan has not been run on any of these. Cases 3, 4 and 5 are the first to
 exercise low flow, a near-closed circuit, a soluble agent, desflurane and
 reduced cardiac output, none of which the 2026-09-04 concordance run touched.
 Weight is still 70 throughout, so the scaling corrected in `4185455` remains
@@ -173,24 +173,24 @@ is the window `GetVA` actually uses:
 
 Two things this does not change. The model is untouched — every tension, and
 `Uptake` and `Delivered`, are identical before and after; only the reported `VA`
-moves. And the agreement with Gas Man stands: on Epstein's scenario the
+moves. And the agreement with GasMan stands: on Epstein's scenario the
 corrected figure is 4.170709095 against his 4.170708179, a relative difference
 of 2.2e-07, now independent of output spacing where before it was not.
 
 The bug was confined to `inst/validation/gasman_baseline_standalone.R`.
 `R/advanceGasManBaseline.R` takes VA as an input and never reconstructs it.
 
-## 2026-10-05 — defaults aligned with Gas Man; deliberate differences recorded
+## 2026-10-05 — defaults aligned with GasMan; deliberate differences recorded
 
 Recorded by Claude Code (Claude Fable 5.1) at the direction of S. Shafer, who
-stated the policy: *identical with Gas Man for now, to be updated with more
-current data later.* The Gas Man source was read directly for the first time on
+stated the policy: *identical with GasMan for now, to be updated with more
+current data later.* The GasMan source was read directly for the first time on
 this machine, from `github.com/rasman/gasmanonline`, `gasman_api/gasmanAPI`
 (`gasman.ini`, `GasDoc.cpp`, `GasGlobal.h`).
 
-### Changed to match Gas Man
+### Changed to match GasMan
 
-| Quantity | Was | Now | Gas Man source |
+| Quantity | Was | Now | GasMan source |
 |---|---|---|---|
 | Default alveolar ventilation | none (0, i.e. apnea, unless a row was entered) | 4 L/min at 70 kg x (weight/70)^0.75 | `[Defaults] VA=4`; `m_fVA = m_fDfltVA * factor` |
 | Cardiac output | 75 mL/kg, linear (5.25 L/min at 70 kg) | 5 L/min at 70 kg x (weight/70)^0.75 | `[Defaults] CO=5`; `m_fCO = m_fDfltCO * factor` |
@@ -205,27 +205,27 @@ side, so their results are unaffected by the change of default.
 ### Deliberate differences, confirmed and retained
 
 Shafer reviewed these on 2026-10-05 and judged each a good decision. They are
-not defects to be reconciled, and a comparison against Gas Man must allow for
+not defects to be reconciled, and a comparison against GasMan must allow for
 them:
 
-1. **Age-adjusted MAC.** `macForAge()` applies Mapleson's relation; Gas Man uses
+1. **Age-adjusted MAC.** `macForAge()` applies Mapleson's relation; GasMan uses
    `m_fMAC` raw. Compare at age 40, where the adjustment is exactly 1.
-2. **Summed MAC.** One MAC series, additive across potent agents; Gas Man emits
+2. **Summed MAC.** One MAC series, additive across potent agents; GasMan emits
    one row per agent and never sums them. Nitrogen is excluded from the sum.
 3. **Oxygen is modelled**, with metabolic consumption (3.5 mL/kg/min) and a
-   floor at zero; Gas Man does not model oxygen, so there is no reference for
+   floor at zero; GasMan does not model oxygen, so there is no reference for
    it. Oxygen is excluded from the uptake coupling, as before.
-4. **Starting nitrogen is 78.07%**, alongside 20.93% oxygen, rather than Gas
-   Man's `Ambient=80`.
+4. **Starting nitrogen is 78.07%**, alongside 20.93% oxygen, rather than
+   GasMan's `Ambient=80`.
 5. **Exact integration.** Each sub-step is advanced by matrix exponential where
-   Gas Man splits it. The two converge as the step shrinks and do not agree
+   GasMan splits it. The two converge as the step shrinks and do not agree
    digit for digit at a fixed step; see `tests/testthat/test-gas-convergence.R`.
 
 ### Not established by this entry
 
-No new run against Gas Man itself was made today. In particular the allometric
+No new run against GasMan itself was made today. In particular the allometric
 defaults have been transcribed from the source and unit-tested, but not checked
-against Gas Man output at a weight other than 70 kg.
+against GasMan output at a weight other than 70 kg.
 
 ---
 
@@ -234,11 +234,11 @@ against Gas Man output at a weight other than 70 kg.
 Recorded by Claude Code (Claude Fable 5.1) at the request of S. Shafer, after
 reading the correspondence with Epstein from 2026-09-01 onward.
 
-Everything above this entry validates the **baseline** — Gas Man's stepping
+Everything above this entry validates the **baseline** — GasMan's stepping
 restated in R. The app runs a different routine, `advanceClosedFormGas()`. These
 five scenarios put that routine, at the resolution the app uses (601 points),
-beside Gas Man. They are defined in `gasman_engine_scenarios.R`; the numbers are
-in `gasman_engine_scenarios_results.csv`, and the settings to enter in Gas Man
+beside GasMan. They are defined in `gasman_engine_scenarios.R`; the numbers are
+in `gasman_engine_scenarios_results.csv`, and the settings to enter in GasMan
 are in `gasman_engine_scenarios_settings.csv`.
 
 | # | Scenario | Why |
@@ -247,7 +247,7 @@ are in `gasman_engine_scenarios_settings.csv`.
 | 2 | Sevoflurane 2% + N2O 70% delivered, FGF 8, 30 min | Second gas effect; Epstein's Scenario 2 |
 | 3 | Sevoflurane over 180 min: 2% at FGF 6, 3% from 30 min, 1.5% at FGF 2 from 60 min, vaporiser off at FGF 10 from 150 min | Setting changes and emergence, proposed by Epstein 2026-09-06; nothing before this was other than constant-setting wash-in |
 | 4 | Desflurane 6% at FGF 4 for 10 min, then 8% at FGF 0.5 to 60 min | Low flow, where the circuit equation dominates |
-| 5 | 100 kg, isoflurane 1.2%, FGF 2, VA 5.227, CO 6.534, 30 min | First comparison away from 70 kg; Gas Man's allometric defaults |
+| 5 | 100 kg, isoflurane 1.2%, FGF 2, VA 5.227, CO 6.534, 30 min | First comparison away from 70 kg; GasMan's allometric defaults |
 
 All: uptake and return on, ventilation 4 L/min and cardiac output 5 L/min
 except scenario 5. The tables in this entry are for the **semi-closed** circuit,
@@ -256,7 +256,7 @@ added later the same day and has its own entry below.
 
 ### Result
 
-Three values per compartment and time: **gasman**, the baseline at Gas Man's
+Three values per compartment and time: **gasman**, the baseline at GasMan's
 native 6-second tick; **limit**, what the baseline converges to as the tick
 shrinks (Richardson extrapolation from 0.1/16 and 0.1/32 min); **engine**, the
 app engine. Worst difference over all five compartments and all reported times,
@@ -271,8 +271,8 @@ as a percentage of that compartment's peak:
 | 4 | desflurane | 0.004% | 2.3% |
 | 5 | isoflurane | 0.001% | 1.7% |
 
-The engine sits on the limit. The 1–3% between the engine and Gas Man at its
-native tick is Gas Man's own distance from that limit: it is largest in the
+The engine sits on the limit. The 1–3% between the engine and GasMan at its
+native tick is GasMan's own distance from that limit: it is largest in the
 first minutes after a setting changes and decays (scenario 1, alveolar: 2.1% of
 peak at 1 min, 0.07% at 30 min). The engine's own worst case, 0.17%, is the
 circuit one minute after the vaporiser is turned off in scenario 3, where the
@@ -280,31 +280,31 @@ app's output step is 0.3 min; alveolar at that instant is within 0.12%.
 
 ### What this does and does not establish
 
-* When this table was first written no run of Gas Man itself had been made;
-  "gasman" above is the baseline. Gas Man itself was run later the same day --
+* When this table was first written no run of GasMan itself had been made;
+  "gasman" above is the baseline. GasMan itself was run later the same day --
   see the next section.
-* **Nitrogen must be added as an agent in Gas Man for a like-for-like run.** The
+* **Nitrogen must be added as an agent in GasMan for a like-for-like run.** The
   app engine always carries nitrogen and its washout feeds the uptake coupling.
-  Gas Man does so only if nitrogen is one of the agents. Epstein's September
+  GasMan does so only if nitrogen is one of the agents. Epstein's September
   runs of Scenarios 1 and 2 did not include it, so they are not directly
   comparable with the "gasman" column here: with nitrogen, alveolar sevoflurane
   in scenario 1 is 1.1791 at 5 min and 1.5887 at 30 min; without, as in the
   September grid, 1.1852 and 1.5931. That is a sixth difference between the app
-  and Gas Man as usually run, beyond the five recorded earlier today. **Shafer
+  and GasMan as usually run, beyond the five recorded earlier today. **Shafer
   reviewed it the same day and decided the app will retain nitrogen**; it is
   recorded with the other five in `docs/users-guide.md`.
 * For the comparison the baseline's nitrogen starts at 78.07%, as the engine's
-  does, not Gas Man's 80%. A run in Gas Man itself would start at 80 unless
+  does, not GasMan's 80%. A run in GasMan itself would start at 80 unless
   `Ambient` is edited.
-* Oxygen is not part of the comparison; Gas Man does not model it.
+* Oxygen is not part of the comparison; GasMan does not model it.
 * `tests/testthat/test-gas-scenarios.R` guards a fast subset: all five against
   the native tick (within 4%), and scenarios 1 and 5 against the limit (within
   0.1%).
 
-### Run against Gas Man itself, the same day
+### Run against GasMan itself, the same day
 
-Shafer asked for scenarios 3, 4 and 5 to be tested against the Gas Man C++.
-Claude Code (Claude Fable 5.1) built Gas Man's own command-line runner,
+Shafer asked for scenarios 3, 4 and 5 to be tested against the GasMan C++.
+Claude Code (Claude Fable 5.1) built GasMan's own command-line runner,
 `gasman_run`, from source -- `github.com/rasman/gasmanonline`, `gasman_api`,
 commit `d3a2dd3` -- on `Grey` with the Rtools 4.5 g++ and cmake, and ran all
 five scenarios through it. Neither the source nor the binary is in this
@@ -316,11 +316,11 @@ delivered, and `Ambient` for nitrogen set to 78.07 in a private copy of
 `gasman.ini` so that both sides start from room air. Output read at the 6-second
 ticks; `gasman_run` prints six significant figures.
 
-**Check that the build is Gas Man.** Scenario 1 without nitrogen, on the stock
+**Check that the build is GasMan.** Scenario 1 without nitrogen, on the stock
 `gasman.ini`, gives alveolar sevoflurane 1.1852 at 5 min and 1.59315 at 30 min,
 which are Epstein's September values (1.185200, 1.593143) from the web edition.
 
-**The R baseline restates Gas Man on the new scenarios too.** Worst difference
+**The R baseline restates GasMan on the new scenarios too.** Worst difference
 between `advanceGasManBaseline()` and `gasman_run`, as a percentage of each
 compartment's peak:
 
@@ -333,14 +333,14 @@ compartment's peak:
 | 5 | 0.0001 | 0.0002 | 0.0002 | 0.0031 | 0.060 |
 
 That is the same picture as September -- agreement to the printed precision
-everywhere but fat, where Gas Man's float32 accumulation shows -- now extended
+everywhere but fat, where GasMan's float32 accumulation shows -- now extended
 to setting changes, emergence, low flow after a flow change, and 100 kg. These
 had been listed as untested since the first entry in this file.
 
-**The app engine against Gas Man itself.** Worst difference over all
+**The app engine against GasMan itself.** Worst difference over all
 compartments and times, percent of peak:
 
-| # | Agent | engine vs Gas Man C++ | engine vs limit |
+| # | Agent | engine vs GasMan C++ | engine vs limit |
 |---|---|---|---|
 | 1 | sevoflurane | 2.1% | 0.001% |
 | 2 | sevoflurane | 2.4% | 0.08% |
@@ -353,7 +353,7 @@ These are the baseline figures of the table above to two digits, as they must
 be given how closely the baseline tracks the real program. Scenario 3, alveolar
 sevoflurane, percent of one atmosphere:
 
-| min | engine | Gas Man C++ | limit |
+| min | engine | GasMan C++ | limit |
 |---|---|---|---|
 | 30 | 1.5514 | 1.5500 | 1.5514 |
 | 60 | 2.3875 | 2.3861 | 2.3875 |
@@ -362,8 +362,8 @@ sevoflurane, percent of one atmosphere:
 | 180 | 0.1390 | 0.1396 | 0.1390 |
 
 The largest gap in relative terms is in emergence: five minutes after the
-vaporiser is turned off Gas Man reads 3% above the engine, and the engine is on
-the limit. That is Gas Man's 6-second tick lagging a fast change, not a
+vaporiser is turned off GasMan reads 3% above the engine, and the engine is on
+the limit. That is GasMan's 6-second tick lagging a fast change, not a
 modelling difference.
 
 **Observed in passing:** `gasman_run` looked for `gasman.ini` in the current
@@ -384,7 +384,7 @@ ideal circuit is real life."
 
 ### What changed and why
 
-Until today the app engine implemented only Gas Man's default, "Semi-closed", in
+Until today the app engine implemented only GasMan's default, "Semi-closed", in
 which the whole breathing circuit is a single well-mixed 8 L volume:
 
     V_circ dF_circ/dt = Q (F_fgf - F_circ) + VA (F_alv - F_circ)
@@ -396,15 +396,15 @@ the "no rebreathing" reference for the time-until-threshold tests needed a flush
 of 100,000 L/min to converge.
 
 A circle system does not behave like that: once fresh gas flow reaches minute
-ventilation there is no rebreathing. Gas Man has this as its "Ideal" circuit,
+ventilation there is no rebreathing. GasMan has this as its "Ideal" circuit,
 
     Q >= VA:   F_circ = F_fgf
     Q <  VA:   F_circ = f F_fgf + (1 - f) F_alv,   f = Q / VA
 
 and `advanceClosedFormGas()` now implements it and uses it by default. The
 semi-closed model remains available as `circuit = "semi-closed"`. This is a
-seventh deliberate difference from Gas Man *as shipped* -- its default -- though
-not from Gas Man, which offers both.
+seventh deliberate difference from GasMan *as shipped* -- its default -- though
+not from GasMan, which offers both.
 
 ### Validation
 
@@ -415,7 +415,7 @@ the semi-closed ones are now `scenario_N_semiclosed.csv`. Results for both
 circuits are in `gasman_engine_scenarios_results.csv`, which has gained a
 `Circuit` column.
 
-**The R baseline restates Gas Man's Ideal circuit.** Worst difference between
+**The R baseline restates GasMan's Ideal circuit.** Worst difference between
 `advanceGasManBaseline(circuit = "ideal")` and `gasman_run`, percent of each
 compartment's peak, over all five scenarios:
 
@@ -429,7 +429,7 @@ untested since the first entry in this file.
 **The app engine, ideal circuit.** Worst difference over all compartments and
 times, percent of peak:
 
-| # | Agent | engine vs Gas Man C++ (Ideal) | engine vs limit |
+| # | Agent | engine vs GasMan C++ (Ideal) | engine vs limit |
 |---|---|---|---|
 | 1 | sevoflurane | 1.1% | 0.002% |
 | 2 | sevoflurane | 1.4% | 0.25% |
@@ -438,7 +438,7 @@ times, percent of peak:
 | 4 | desflurane | 1.5% | 0.02% |
 | 5 | isoflurane | 1.2% | 0.0004% |
 
-As before, the gap to Gas Man at its 6-second tick is Gas Man's distance from
+As before, the gap to GasMan at its 6-second tick is GasMan's distance from
 the limit of its own equations, and the engine sits on the limit. The gap is
 smaller than with the semi-closed circuit because there is no circuit volume to
 integrate.
@@ -469,9 +469,9 @@ Reference supplied by Shafer: Feldman JM, Lampotang S, Hendrickx J. Is rebreathi
   lag between the vaporiser and the inspired gas; a real circuit has some, and
   the reference above says so.
 * Where the threshold belongs was open when this entry was first written: the
-  reference puts it at MINUTE ventilation, Gas Man's Ideal circuit at the
+  reference puts it at MINUTE ventilation, GasMan's Ideal circuit at the
   ALVEOLAR ventilation it is given. Resolved the same day; see the next entry.
-* The oxygen model with the ideal circuit has no Gas Man counterpart, as before.
+* The oxygen model with the ideal circuit has no GasMan counterpart, as before.
   Below fresh gas flow = ventilation its alveolar steady state is the delivered
   fraction less 100 x VO2 / fresh gas flow, by mass balance.
 
@@ -486,7 +486,7 @@ user sets minute ventilation, not alveolar ventilation. Let's set dead space at
 ### Ventilation and dead space
 
 The "ventilation" row of the dose table is now MINUTE ventilation, MV. Alveolar
-ventilation is VA = MV (1 - d) with d = 0.3. Gas Man has no dead space; what it
+ventilation is VA = MV (1 - d) with d = 0.3. GasMan has no dead space; what it
 calls ventilation is alveolar ventilation. This is an eighth deliberate
 difference.
 
@@ -501,16 +501,16 @@ alveolar gas diluted by the dead-space gas that came back unchanged:
         F_circ = F_fgf                                           for Q >= MV
 
 f reaches exactly 1 at Q = MV, so the threshold is at minute ventilation, as the
-APSF reference has it. With d = 0 this is Gas Man's ideal circuit, f = Q / VA.
+APSF reference has it. With d = 0 this is GasMan's ideal circuit, f = Q / VA.
 
 The default ventilation, used when a gas is entered without one, is the minute
-ventilation whose alveolar part is Gas Man's default alveolar ventilation:
+ventilation whose alveolar part is GasMan's default alveolar ventilation:
 4 / 0.7 = 5.7 L/min at 70 kg, scaled by (weight / 70)^0.75.
 
-**Every comparison with Gas Man in this directory is run with `deadSpace = 0`**,
+**Every comparison with GasMan in this directory is run with `deadSpace = 0`**,
 so that the ventilation in a scenario is alveolar on both sides. The earlier
-results in this file are therefore unchanged. The dead space itself has no Gas
-Man counterpart to check against; it is covered by the engine's own tests: the
+results in this file are therefore unchanged. The dead space itself has no
+GasMan counterpart to check against; it is covered by the engine's own tests: the
 fresh-gas fraction and its limits, agreement with an independent integration,
 and the oxygen mass balance (below the threshold the mixed-expired oxygen
 settles at the delivered fraction less 100 x VO2 / fresh gas flow).
@@ -549,7 +549,7 @@ ventilation is the limit.
 Recorded by Claude Code (Claude Fable 5.1) at the direction of S. Shafer: "as
 oxygen is consumed, the gas volume shrinks. CO2 is added as oxygen is consumed,
 but is removed by the CO2 absorber." Oxygen consumption is 3.5 mL/kg/min. A
-ninth deliberate difference from Gas Man, which has no oxygen.
+ninth deliberate difference from GasMan, which has no oxygen.
 
 ### The problem
 
@@ -595,10 +595,10 @@ plus carbon dioxide and nothing else, and inspired gas is 100% oxygen.
 
 These are in `tests/testthat/test-gas-engine.R`.
 
-### Effect on the Gas Man comparisons
+### Effect on the GasMan comparisons
 
 None. They are run with `oxygenUptake = FALSE`, as they are with `deadSpace = 0`,
-because Gas Man has neither. The app's own defaults now differ from Gas Man in
+because GasMan has neither. The app's own defaults now differ from GasMan in
 both respects, and at low flows by a good deal.
 
 ### Not established
