@@ -22,6 +22,8 @@ other half is generated from the code at run time (see `R/help-content.R`,
   `shiny::markdown()` (commonmark); no pandoc, no MathJax. Write equations as
   text or in a code block.
 * Link to another page as `[text](help:page-id)`.
+* From outside the app, `<app>/?help=page-id` opens the Help tab on a page and
+  `<app>/?scenario=id` loads a scenario (`R/deep-links.R`; `sharing.md` lists the forms).
 * Add a button that loads a scenario as `[text](scenario:scenario-id)`.
 * External links open in a new tab automatically.
 * Investigators need no markup: a name on `investigators.md` is linked

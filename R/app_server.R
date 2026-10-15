@@ -333,8 +333,9 @@ app_server <- function(input, output, session) {
   # The Help tab: see R/help-server.R.  Loading a teaching scenario from the
   # help writes doseTable() and eventTable() directly, as a URL restore does,
   # and sets the time settings through timeApi.
-  helpPage <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
-                         timeApi = timeApi)
+  helpApi <- helpServer(input, output, session, doseTable, eventTable, drugDefaults,
+                        timeApi = timeApi)
+  helpPage <- helpApi$page
 
   ###########
   # Startup #
@@ -344,9 +345,22 @@ app_server <- function(input, output, session) {
   # carries its own dose table, which onRestored() puts in, so it skips the
   # menu unless that table is empty.  Shown now, as the session starts, rather
   # than in reply to the browser.
-  startupMenuOpen <- opensOnStartupMenu(session$restoreContext$values)
+  #
+  # A ?scenario= or ?help= link (R/deep-links.R) opens on the scenario or the
+  # page instead of the menu.  A bookmark's own dose table wins over
+  # ?scenario=.  The link is acted on below, once the dose table's history
+  # exists; here it only decides whether the menu opens.
+  restoreValues <- session$restoreContext$values
+  deepLink <- deepLinkFromQuery(isolate(session$clientData$url_search),
+                                isolate(drugDefaults()))
+  if (isBookmarkRestore(restoreValues)) deepLink$scenario <- NULL
+  startupMenuOpen <- opensOnStartupMenu(restoreValues) && !deepLinkOpens(deepLink)
   if (startupMenuOpen) {
     showModal(startupDrugModal(startupDrugChoices(isolate(drugDefaults()))))
+  }
+  for (problem in deepLink$problems) {
+    outputComments("Link:", problem)
+    showNotification(problem, type = "warning", duration = 10)
   }
 
   # app.js asks for the welcome on a first visit, or when a week has passed
@@ -360,7 +374,9 @@ app_server <- function(input, output, session) {
   observeEvent(input$show_intro_modal, {
     if (startupMenuOpen) {
       startupWelcome(TRUE)
-    } else {
+    } else if (!deepLinkOpens(deepLink)) {
+      # Someone sent to a scenario or a page by a link is not greeted with
+      # the welcome on top of it
       showIntroModal()
     }
   }, once = TRUE)
@@ -538,6 +554,26 @@ app_server <- function(input, output, session) {
   doseTableHistory <- undomanager::undomanager(type = "data.frame")$reactive()
 
   doseTableDraft <- reactive(doseTableHistory()$value)
+
+  # Open on what a ?scenario= or ?help= link asks for (R/deep-links.R).  Done
+  # here rather than at Startup because setDoseTable() writes the history
+  # above.  A ?help= link alone starts with the default drugs behind the help,
+  # as the tour does; a bookmark keeps its own table (onRestored()).
+  if (!startupMenuOpen && deepLinkOpens(deepLink) && !isBookmarkRestore(restoreValues)) {
+    isolate({
+      if (!is.null(deepLink$scenario)) {
+        outputComments("Opening on scenario", deepLink$scenario$id, "from the URL")
+        helpApi$loadScenario(deepLink$scenario)
+      } else {
+        setDoseTable(startupDoseTable(STARTUP_DRUGS_DEFAULT, drugDefaults()), doseTableFormat())
+      }
+    })
+  }
+  if (!is.null(deepLink$help)) {
+    outputComments("Opening on help page", deepLink$help, "from the URL")
+    helpPage(deepLink$help)
+    bslib::nav_select("mainNav", "Help", session = session)
+  }
 
   # Bumped to force the dose table to re-render when applyGasTableRules()
   # puts back exactly what the draft already held (e.g. the user deleted the
