@@ -15,7 +15,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         v1 = 16.6,
         v2 = 13.4,
         v3 = 1,
-        cl1 = 0.072972888,
+        cl1 = 0.082886221,
         cl2 = 0.024666667,
         cl3 = 0
       )
@@ -35,7 +35,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
     v1 = 21.66145,
     v2 = 17.485749,
     v3 = 1,
-    cl1 = 0.081364711,
+    cl1 = 0.092418069,
     cl2 = 0.030115845,
     cl3 = 0
   )

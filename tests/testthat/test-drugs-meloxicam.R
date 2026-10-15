@@ -135,7 +135,7 @@ test_that("each route goes to its own fit and the two add", {
   auc <- sum(diff(iv$Time) * (head(iv$Y, -1) + tail(iv$Y, -1)) / 2)
   tail72 <- iv$Y[nrow(iv)] / min(PK$lambda_1, PK$lambda_2, PK$lambda_3)
   expect_equal(auc + tail72, 30 / PK$cl1, tolerance = 0.01)
-  expect_equal(iv$Y[which.min(abs(iv$Time - 60))], 3.91, tolerance = 0.005)
+  expect_equal(iv$Y[which.min(abs(iv$Time - 60))], 3.89, tolerance = 0.005)
 
   po <- sim(data.frame(Drug = "meloxicam", Time = 60, Dose = 7.5, Units = "mg PO"))
   both <- sim(data.frame(Drug = "meloxicam", Time = c(0, 60), Dose = c(30, 7.5),

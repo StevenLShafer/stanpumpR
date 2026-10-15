@@ -18,14 +18,14 @@ gabapentinDose <- function(time, dose, units = "mg PO") {
 
 
 test_that("returns the re-anchored Tran parameters with the fat-free-mass switch off", {
-  # 70 kg, 50 y man at the assumed creatinine of 1.0 mg/dL: Cockcroft-Gault
-  # 87.5 mL/min, so CL = 11.1 x 58/81 x 87.5/106.3 L/h.
+  # 70 kg, 50 y man at the assumed creatinine of 0.9 mg/dL: Cockcroft-Gault
+  # 97.22 mL/min, so CL = 11.1 x 58/81 x 97.2222/106.3 L/h.
   actual <- gabapentin(70, 171, 50, "male", adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(default = list(
       v1 = 58, v2 = 1, v3 = 1,
-      cl1 = 0.1090409161, cl2 = 0, cl3 = 0,
+      cl1 = 0.1211565735, cl2 = 0, cl3 = 0,
       ka_PO = 0.860 / 60,
       bioavailability_PO = 1,
       tlag_PO = 18.66
@@ -46,14 +46,15 @@ test_that("returns the re-anchored Tran parameters with the fat-free-mass switch
 
 test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: FFM 71.09 kg against the 54.48 kg reference, so
-  # V x 1.3049066; Cockcroft-Gault at the pharmacokinetic weight 91.34 kg is
-  # 114.18 mL/min, and clearance takes no further size factor.
+  # V x 1.3049066; Cockcroft-Gault at the pharmacokinetic weight 91.34 kg and
+  # the assumed creatinine of 0.9 mg/dL is 126.87 mL/min, and clearance takes
+  # no further size factor.
   actual <- gabapentin(120, 170, 50, "male")
   expected <- list(
     v1 = 75.68458549,
     v2 = 1,
     v3 = 1,
-    cl1 = 0.1422882161,
+    cl1 = 0.1580980245,
     cl2 = 0,
     cl3 = 0
   )
@@ -146,7 +147,7 @@ test_that("each oral dose is scaled by its own bioavailability", {
     maximum = 2880
   )
   V   <- 58
-  CL  <- 11.1 * 58 / 81 * 87.5 / 106.3 / 60        # L/min
+  CL  <- 11.1 * 58 / 81 * ((140 - 50) * 70 / (72 * 0.9)) / 106.3 / 60   # L/min, CrCL 97.22
   k   <- CL / V
   ka  <- 0.860 / 60
   lag <- 0.311 * 60
@@ -160,15 +161,15 @@ test_that("each oral dose is scaled by its own bioavailability", {
 })
 
 
-test_that("the reference patient's oral peak falls at 3.0 h", {
+test_that("the reference patient's oral peak falls at 2.9 h", {
   # Analytically, off the coefficients rather than the plotted grid: lag
-  # 0.311 h plus ln(ka/k)/(ka - k) with k = CL/V at CrCL 87.5 mL/min.
+  # 0.311 h plus ln(ka/k)/(ka - k) with k = CL/V at CrCL 97.22 mL/min.
   pk <- getDrugPK("gabapentin", 70, 171, 50, "male", adjustToFFM = FALSE)
   d  <- pk$PK$default
   k  <- d$cl1 / d$v1
   peak <- d$tlag_PO + log(d$ka_PO / k) / (d$ka_PO - k)
-  expect_equal(peak / 60, 3.02956, tolerance = 1e-5)
-  expect_equal(log(2) / k / 60, 6.14487, tolerance = 1e-5)
+  expect_equal(peak / 60, 2.93253, tolerance = 1e-5)
+  expect_equal(log(2) / k / 60, 5.53038, tolerance = 1e-5)
   expect_equal(pk$PK$default$ke0, 0)     # plasma only, see GABAPENTIN_TPEAK
 })
 
@@ -199,8 +200,9 @@ test_that("the re-anchored model reproduces the Western single-dose data", {
 test_that("the saturable-absorption scenario says what the model does", {
   # inst/help/scenarios/gabapentin-saturable-absorption.md quotes these
   # numbers; if the model changes, the narrative has to change with it.
-  # Worked out by hand: 40 y, 70 kg man, CrCL 97.2 mL/min, half-life 5.53 h;
-  # peaks 3.99 and 5.80 mcg/mL (the second carrying 0.07 left from the first).
+  # Worked out by hand: 40 y, 70 kg man, CrCL 108.0 mL/min at the assumed
+  # creatinine of 0.9 mg/dL, half-life 4.98 h; peaks 3.90 and 5.65 mcg/mL
+  # (the second carrying 0.05 left from the first).
   s <- helpScenarioById("gabapentin-saturable-absorption")
   p <- s$patient
   out <- simulateDrugsWithCovariates(
@@ -210,12 +212,12 @@ test_that("the saturable-absorption scenario says what the model does", {
   w <- out$gabapentin$wide
   first  <- max(w$Plasma[w$Time < 2160])
   second <- max(w$Plasma[w$Time >= 2160])
-  expect_equal(first, 3.99, tolerance = 0.01)
-  expect_equal(second, 5.80, tolerance = 0.01)
+  expect_equal(first, 3.90, tolerance = 0.01)
+  expect_equal(second, 5.65, tolerance = 0.01)
   expect_equal(second / first, 1.45, tolerance = 0.01)
 
   pk <- getDrugPK("gabapentin", p$weight, p$height, p$age, p$sex)
-  expect_equal(log(2) * pk$PK$default$v1 / (pk$PK$default$cl1 * 60), 5.53, tolerance = 0.01)
+  expect_equal(log(2) * pk$PK$default$v1 / (pk$PK$default$cl1 * 60), 4.98, tolerance = 0.01)
   absorbed <- c(600, 1200) * oralSaturationFraction(c(600, 1200), pk$oralSaturation)
   expect_equal(round(absorbed), c(321, 463))
   expect_equal(round(2 * 600 * oralSaturationFraction(600, pk$oralSaturation)), 643)

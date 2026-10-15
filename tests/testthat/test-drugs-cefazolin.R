@@ -15,7 +15,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         v1 = 36.6,
         v2 = 42.2,
         v3 = 1,
-        cl1 = 0.55655186,
+        cl1 = 0.59199703,
         cl2 = 0.90666667,
         cl3 = 0
       )
@@ -35,7 +35,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
     v1 = 47.759583,
     v2 = 55.06706,
     v3 = 1,
-    cl1 = 0.65048186,
+    cl1 = 0.69190916,
     cl2 = 1.1069608,
     cl3 = 0
   )
@@ -46,7 +46,7 @@ test_that("the unbound model is Komatsu's, with creatinine clearance from the co
   x <- cefazolin(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   # Komatsu 2024: Vcu 36.6, Vpu 42.2, Qu 54.4 L/h; CLu 29.3 (CrCL/70)^0.586 L/h
   expect_equal(x$v1, 36.6); expect_equal(x$v2, 42.2); expect_equal(x$cl2 * 60, 54.4)
-  crcl <- creatinineClearanceCG(70, 50, "male")           # 87.5 mL/min
+  crcl <- creatinineClearanceCG(70, 50, "male")           # 97.22 mL/min at the assumed 0.9 mg/dL
   expect_equal(x$cl1 * 60, 29.3 * (crcl / 70)^0.586)
   # An older patient has a lower creatinine clearance and a lower CLu
   expect_lt(cefazolin(70, 171, 80, "male", adjustToFFM = FALSE)$PK$default$cl1, x$cl1)

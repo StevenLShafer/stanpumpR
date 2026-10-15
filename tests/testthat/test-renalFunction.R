@@ -3,20 +3,20 @@
 # from the published formulas, not from the code under test.
 
 test_that("Cockcroft-Gault reproduces the textbook formula", {
-  # (140 - 35) x 70 / (72 x 1.0)
-  expect_equal(creatinineClearanceCG(70, 35, "male"), 102.0833333, tolerance = 1e-7)
+  # (140 - 35) x 70 / (72 x 0.9), at the assumed creatinine of a man
+  expect_equal(creatinineClearanceCG(70, 35, "male"), 113.4259259, tolerance = 1e-7)
   # Woman: assumed creatinine 0.8 and the 0.85 factor
   expect_equal(creatinineClearanceCG(60, 50, "female"), (90 * 60 / (72 * 0.8)) * 0.85)
   # An explicit creatinine overrides the assumption
-  expect_equal(creatinineClearanceCG(70, 35, "male", scr = 2), 102.0833333 / 2, tolerance = 1e-7)
+  expect_equal(creatinineClearanceCG(70, 35, "male", scr = 2), 105 * 70 / (72 * 2), tolerance = 1e-7)
   # Falls with age
   expect_lt(creatinineClearanceCG(70, 80, "male"), creatinineClearanceCG(70, 35, "male"))
 })
 
 test_that("an adult's assumed creatinine depends on sex only", {
-  expect_equal(assumedCreatinine(40, "male"), 1.0)
+  expect_equal(assumedCreatinine(40, "male"), 0.9)
   expect_equal(assumedCreatinine(40, "female"), 0.8)
-  expect_equal(assumedCreatinine(18, "male"), 1.0)
+  expect_equal(assumedCreatinine(18, "male"), 0.9)
   expect_equal(assumedCreatinine(90, "female"), 0.8)
 })
 
@@ -81,8 +81,8 @@ test_that("the adult renal equations see a child's creatinine on the adult scale
   # A child at the normal creatinine for age reads as an adult at the
   # adult's; at twice it, as twice the adult's
   q5 <- assumedCreatinine(5, "male")
-  expect_equal(adultEquivalentCreatinine(q5, 5, "male"), 1.0)
-  expect_equal(adultEquivalentCreatinine(2 * q5, 5, "male"), 2.0)
+  expect_equal(adultEquivalentCreatinine(q5, 5, "male"), 0.9)
+  expect_equal(adultEquivalentCreatinine(2 * q5, 5, "male"), 1.8)
   q10 <- assumedCreatinine(10, "female")
   expect_equal(adultEquivalentCreatinine(q10, 10, "female"), 0.8)
   # From 18 the entered value passes through
@@ -110,13 +110,13 @@ test_that("Cockcroft-Gault on a child's own creatinine overstates renal function
   # The example in R/renalFunction.R: a 5 y boy of 20 kg and 110 cm.  At his
   # normal creatinine Cockcroft-Gault is 106 mL/min, where the normal GFR for
   # his size is 107.3 mL/min/1.73 m^2 x 0.78 m^2 = 48 mL/min.  On the adult
-  # scale he gets (140 - 5) x 20 / 72 = 37.5.
+  # scale he gets (140 - 5) x 20 / (72 x 0.9) = 41.7.
   q <- assumedCreatinine(5, "male")
   expect_equal(round(creatinineClearanceCG(20, 5, "male", q)), 106)
   expect_equal(round(bsaDuBois(20, 110), 2), 0.78)
   expect_equal(round(107.3 * bsaDuBois(20, 110) / 1.73), 48)
   expect_equal(creatinineClearanceCG(20, 5, "male", adultEquivalentCreatinine(NULL, 5, "male")),
-               135 * 20 / 72)
+               135 * 20 / (72 * 0.9))
 })
 
 test_that("Du Bois body surface area", {
@@ -124,8 +124,10 @@ test_that("Du Bois body surface area", {
 })
 
 test_that("CKD-EPI 2009 without the race term", {
-  # Male, 35 y, creatinine 1.0: 141 x (1/0.9)^-1.209 x 0.993^35
-  expect_equal(egfrCKDEPI2009(35, "male"), 97.07826, tolerance = 1e-6)
+  # Male, 35 y, at the assumed creatinine of 0.9, which is kappa, so both
+  # power terms are 1: 141 x 0.993^35 = 110.27
+  expect_equal(egfrCKDEPI2009(35, "male"), 141 * 0.993^35, tolerance = 1e-9)
+  expect_equal(egfrCKDEPI2009(35, "male"), 110.2663, tolerance = 1e-6)
   # Female, 50 y, creatinine 0.8: ratio 0.8/0.7 > 1, so the -1.209 branch,
   # times 1.018
   expect_equal(egfrCKDEPI2009(50, "female"),
@@ -134,5 +136,5 @@ test_that("CKD-EPI 2009 without the race term", {
   expect_equal(egfrCKDEPI2009(35, "male", scr = 0.6),
                141 * (0.6 / 0.9)^(-0.411) * 0.993^35, tolerance = 1e-9)
   # De-indexing multiplies by BSA / 1.73
-  expect_equal(egfrDeindexed(70, 170, 35, "male"), 97.07826 * 1.809708 / 1.73, tolerance = 1e-5)
+  expect_equal(egfrDeindexed(70, 170, 35, "male"), 141 * 0.993^35 * 1.809708 / 1.73, tolerance = 1e-5)
 })

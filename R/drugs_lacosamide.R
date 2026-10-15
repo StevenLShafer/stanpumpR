@@ -34,8 +34,8 @@
 # the adult scale) or, if none is entered, an assumed normal creatinine for
 # age and sex (R/renalFunction.R).  About 40% of a dose is excreted unchanged.
 #
-# CHECKS (70 kg, 40 y man, assumed creatinine: CLCR 107)
-# =======================================================
+# CHECKS (70 kg, 40 y man, assumed creatinine 0.9 mg/dL: CLCR 108)
+# =================================================================
 # CL/F 1.80 L/h, V 42 L, half-life 16 h (label 13 h).  Healthy Korean men,
 # 100 and 200 mg twice daily: CL/F 1.92 and 1.78 L/h (AUC over the interval
 # 52.1 and 112.4 mg.h/L; the model gives 55.5 and 111).

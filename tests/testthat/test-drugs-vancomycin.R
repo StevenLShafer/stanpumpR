@@ -15,7 +15,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         v1 = 47.25,
         v2 = 51.24,
         v3 = 1,
-        cl1 = 0.06633315,
+        cl1 = 0.07379431,
         cl2 = 0.038,
         cl3 = 0
       )
@@ -35,7 +35,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
     v1 = 61.656839,
     v2 = 66.863417,
     v3 = 1,
-    cl1 = 0.086807758,
+    cl1 = 0.096543872,
     cl2 = 0.04639468,
     cl3 = 0
   )
@@ -49,8 +49,8 @@ test_that("Thomson's covariate equations are reproduced, Q as a clearance", {
   expect_equal(x$v1, 0.675 * 70); expect_equal(x$v2, 0.732 * 70)
   expect_equal(x$cl2 * 60, 2.28)
   # The source's own reference point: CrCL 66 gives CL 2.99 L/h.  That is a
-  # 70 kg man of 72.1 years at the assumed creatinine.
-  y <- vancomycin(70, 171, 140 - 66 * 72 / 70, "male", adjustToFFM = FALSE)$PK$default
+  # 70 kg man of 78.9 years at the assumed creatinine of 0.9 mg/dL.
+  y <- vancomycin(70, 171, 140 - 66 * 72 * SCR_ASSUMED_MALE / 70, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(y$cl1 * 60, 2.99, tolerance = 1e-9)
   # Refuses rather than clamps where the equation is not defined
   expect_error(vancomycin(70, 171, 139.5, "male", adjustToFFM = FALSE), "not defined")

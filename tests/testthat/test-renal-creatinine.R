@@ -71,7 +71,7 @@ test_that("a child's creatinine is read against the normal for age", {
   reference <- creatinineClearanceCG(FFM_REFERENCE_WEIGHT, FFM_REFERENCE_AGE,
                                      FFM_REFERENCE_SEX, SCR_ASSUMED_MALE)
   expect_equal(normal / mannitol(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default$cl1,
-               creatinineClearanceCG(20, 5, "male", 1.0) / reference)
+               creatinineClearanceCG(20, 5, "male", SCR_ASSUMED_MALE) / reference)
 })
 
 test_that("a raised creatinine lowers every renal clearance", {

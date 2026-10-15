@@ -77,7 +77,7 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   crcl <- creatinineClearanceCG(crclWeight, age, sex,
                                 adultEquivalentCreatinine(creatinine, age, sex))
   # Kaneda's clearance is taken to belong to the reference patient (70 kg,
-  # 35 years, male, creatinine 1.0 mg/dL; Cockcroft-Gault 102 mL/min), so his
+  # 35 years, male, creatinine 0.9 mg/dL; Cockcroft-Gault 113 mL/min), so his
   # renal factor is exactly 1.  Computed here rather than at the top level
   # because R/pkSizeFactors.R and R/renalFunction.R are sourced after this file.
   crclReference <- creatinineClearanceCG(FFM_REFERENCE_WEIGHT, FFM_REFERENCE_AGE,

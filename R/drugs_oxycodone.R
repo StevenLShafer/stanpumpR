@@ -93,8 +93,8 @@
 # the adult scale for a child.  A blank creatinine is an ASSUMED NORMAL
 # creatinine for age and sex (assumedCreatinine()), so renal impairment is
 # represented only when a creatinine is entered.  The assumed creatinine
-# still lowers eGFR with age (69 mL/min/1.73 m^2 for a man of 84 at
-# 1.0 mg/dL, against the 64 Liukas measured), and the age factor above was
+# still lowers eGFR with age (78 mL/min/1.73 m^2 for a man of 84 at
+# 0.9 mg/dL, against the 64 Liukas measured), and the age factor above was
 # derived net of exactly that.
 #
 # Kirvela's uraemic patients also had a larger Vss (3.99 against 2.39 L/kg).

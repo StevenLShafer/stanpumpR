@@ -331,7 +331,7 @@ Three things to know about the antibiotics and steroids:
   gentamicin, sugammadex), mannitol, gabapentin and pregabalin carry a
   creatinine-clearance or eGFR
   covariate, computed from the **Serum creatinine** field. Left blank, it is an
-  assumed normal creatinine (1.0 mg/dL in men, 0.8 in women, and the normal for
+  assumed normal creatinine (0.9 mg/dL in men, 0.8 in women, and the normal for
   age in children): the decline of
   renal function with age is represented, renal impairment is not, and a patient
   with a raised creatinine will clear these drugs more slowly than the plot

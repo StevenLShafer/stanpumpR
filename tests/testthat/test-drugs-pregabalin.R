@@ -33,8 +33,8 @@ oneCompOralCe <- function(t, D, V, k, ka, lag, ke0) {
 
 
 test_that("the reference patient receives Chan's typical parameters", {
-  # 70 kg, 170 cm, 35 y man at the assumed creatinine of 1.0 mg/dL:
-  # Cockcroft-Gault 102.08 mL/min, Du Bois 1.8097 m^2, NCLcr 97.59 mL/min/1.73
+  # 70 kg, 170 cm, 35 y man at the assumed creatinine of 0.9 mg/dL:
+  # Cockcroft-Gault 113.43 mL/min, Du Bois 1.8097 m^2, NCLcr 108.4 mL/min/1.73
   # m^2, above the breakpoint of 96.4, so CL/F is 4.96 L/h and V/F 39.8 L.
   # His pharmacokinetic weight is 70 kg, so the switch changes nothing.
   for (adjust in c(TRUE, FALSE)) {
@@ -69,7 +69,7 @@ test_that("Chan's weight terms run on the pharmacokinetic weight with the switch
                        list(v1 = 58.0418593288, cl1 = 0.1094091624))
 
   # Switch on, at the pharmacokinetic weight 91.343 kg: Cockcroft-Gault
-  # 114.18 mL/min, NCLcr 97.48, still above the breakpoint.
+  # 126.87 mL/min, NCLcr 108.3, still above the breakpoint.
   on <- pregabalin(120, 170, 50, "male")$PK$default
   expect_equal_rounded(on[c("v1", "cl1")],
                        list(v1 = 47.9500078081, cl1 = 0.0949361764))
@@ -258,34 +258,35 @@ test_that("the model reproduces the single-dose data it is checked against", {
 test_that("the linear-absorption scenario says what the model does", {
   # inst/help/scenarios/pregabalin-linear-absorption.md quotes these numbers;
   # if the model changes, the narrative has to change with it.  Worked out by
-  # hand: 40 y, 70 kg man, NCLcr 92.9 (below the breakpoint), CL/F 4.78 L/h,
-  # half-life 5.77 h.
+  # hand: 40 y, 70 kg man at the assumed creatinine of 0.9 mg/dL, NCLcr 103.2
+  # (above the breakpoint, so Chan's typical CL/F of 4.96 L/h), half-life
+  # 5.56 h.
   s <- helpScenarioById("pregabalin-linear-absorption")
   p <- s$patient
   pk <- getDrugPK("pregabalin", p$weight, p$height, p$age, p$sex)
   d  <- pk$PK$default
   k  <- d$cl1 / d$v1
-  expect_equal(log(2) / k / 60, 5.769, tolerance = 1e-3)
+  expect_equal(log(2) / k / 60, 5.562, tolerance = 1e-3)
 
   cp <- function(t, D) oneCompOral(t, D, d$v1, k, d$ka_PO, d$tlag_PO)
   ce <- function(t, D) oneCompOralCe(t, D, d$v1, k, d$ka_PO, d$tlag_PO, d$ke0)
   both   <- function(f) function(t) f(t, 300) + f(t + 2160, 150)
   first  <- stats::optimize(function(t) cp(t, 150), c(0, 300), maximum = TRUE)
   second <- stats::optimize(both(cp), c(0, 300), maximum = TRUE)
-  expect_equal(c(first$objective, second$objective), c(3.5715, 7.1909), tolerance = 1e-4)
-  expect_equal(second$objective / first$objective, 2.013, tolerance = 1e-3)
-  expect_equal(first$maximum, 46.05, tolerance = 1e-3)           # minutes
+  expect_equal(c(first$objective, second$objective), c(3.5660, 7.1726), tolerance = 1e-4)
+  expect_equal(second$objective / first$objective, 2.011, tolerance = 1e-3)
+  expect_equal(first$maximum, 45.84, tolerance = 1e-3)           # minutes
 
-  # The effect site: 4.7 h after each dose, 2.2 and 4.5 mcg/mL
+  # The effect site: 4.7 h after each dose, 2.2 and 4.4 mcg/mL
   e1 <- stats::optimize(function(t) ce(t, 150), c(0, 1000), maximum = TRUE)
   e2 <- stats::optimize(both(ce), c(0, 1000), maximum = TRUE)
   expect_equal(e1$maximum, 283, tolerance = 1e-4)
-  expect_equal(c(e1$objective, e2$objective), c(2.2492, 4.5411), tolerance = 1e-4)
+  expect_equal(c(e1$objective, e2$objective), c(2.2064, 4.4494), tolerance = 1e-4)
 
   # One and two hours after 300 mg: plasma 7.0, effect site a third and 71%
   # of its own peak
-  expect_equal(cp(60, 300), 7.0223, tolerance = 1e-4)
-  expect_equal(ce(c(60, 120), 300) / ce(283, 300), c(0.3338, 0.7077), tolerance = 1e-3)
+  expect_equal(cp(60, 300), 7.0041, tolerance = 1e-4)
+  expect_equal(ce(c(60, 120), 300) / ce(283, 300), c(0.3324, 0.7062), tolerance = 1e-3)
 
   # The simulation agrees with the analytic curves at its own time points
   out <- simulateDrugsWithCovariates(
@@ -295,13 +296,13 @@ test_that("the linear-absorption scenario says what the model does", {
   expect_equal(out$Plasma, cp(out$Time, 150) + cp(out$Time - 2160, 300), tolerance = 1e-8)
 
   # Try next: a creatinine of 2.0 mg/dL doubles the half-life and leaves 0.44
-  # mcg/mL at 36 h; 150 mg twice daily peaks at 4.68, 1.31 times the first.
+  # mcg/mL at 36 h; 150 mg twice daily peaks at 4.60, 1.29 times the first.
   d2 <- getDrugPK("pregabalin", p$weight, p$height, p$age, p$sex, creatinine = 2)$PK$default
   k2 <- d2$cl1 / d2$v1
   expect_equal(log(2) / k2 / 60, 11.538, tolerance = 1e-4)
   expect_equal(oneCompOral(2160, 150, d2$v1, k2, d2$ka_PO, d2$tlag_PO), 0.4446, tolerance = 1e-3)
   bid <- function(t) cp(t, 150) + cp(t - 720, 150) + cp(t - 1440, 150) + cp(t - 2160, 150)
   fourth <- stats::optimize(bid, c(2160, 2400), maximum = TRUE)$objective
-  expect_equal(fourth, 4.6784, tolerance = 1e-4)
-  expect_equal(fourth / first$objective, 1.31, tolerance = 1e-2)
+  expect_equal(fourth, 4.5991, tolerance = 1e-4)
+  expect_equal(fourth / first$objective, 1.29, tolerance = 1e-2)
 })

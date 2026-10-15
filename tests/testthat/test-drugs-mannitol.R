@@ -4,7 +4,8 @@ test_that("returns the published parameters with the switch off", {
   # patient's size; CL1 still carries renal function, Cockcroft-Gault on total
   # weight at the assumed creatinine (0.8 for a woman):
   #   (140 - 50) x 95 / (72 x 0.8) x 0.85 = 126.17 mL/min, against the
-  #   reference man's (140 - 35) x 70 / 72 = 102.08, so CL1 = 0.07 x 1.23597.
+  #   reference man's (140 - 35) x 70 / (72 x 0.9) = 113.43, so
+  #   CL1 = 0.07 x 1.112372.
   actual <- mannitol(95, 160, 50, "female", adjustToFFM = FALSE)
 
   expected <- list(
@@ -13,7 +14,7 @@ test_that("returns the published parameters with the switch off", {
         v1 = 2.80,
         v2 = 8.86,
         v3 = 12.0,
-        cl1 = 0.086517857,
+        cl1 = 0.077866071,
         cl2 = 2.07,
         cl3 = 0.16
       )
@@ -44,8 +45,8 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, distribution clearances
   # x 1.2209126 (the factors pinned in test-drugs-alfentanil.R, worked out by
   # hand).  CL1 is renal: Cockcroft-Gault at the pharmacokinetic weight
-  # 70 x 1.3049067 = 91.343 kg, (140 - 50) x 91.343 / 72 = 114.18 mL/min,
-  # over the reference man's 102.08, so CL1 = 0.07 x 1.118491.
+  # 70 x 1.3049067 = 91.343 kg, (140 - 50) x 91.343 / (72 x 0.9) = 126.87
+  # mL/min, over the reference man's 113.43, so CL1 = 0.07 x 1.118491.
   actual <- mannitol(120, 170, 50, "male")
   expected <- list(
     v1 = 3.6537388,
@@ -60,7 +61,8 @@ test_that("scales to fat-free mass for a 120 kg man", {
 
 test_that("the reference man receives the published parameters", {
   # Kaneda's means, unscaled: his fat-free mass is the reference, and his
-  # Cockcroft-Gault clearance at creatinine 1.0 is the reference 102.08 mL/min.
+  # Cockcroft-Gault clearance at the assumed creatinine of 0.9 mg/dL is the
+  # reference 113.43 mL/min.
   published <- list(v1 = 2.80, v2 = 8.86, v3 = 12.0, cl1 = 0.07, cl2 = 2.07, cl3 = 0.16)
   actual <- mannitol(70, 170, 35, "male")
   expect_equal_rounded(actual$PK$default, published)
@@ -205,11 +207,11 @@ test_that("clearance follows the entered serum creatinine", {
   # creatinine, so CL1 is too, and nothing else changes.
   normal <- mannitol(70, 170, 50, "male")
   high   <- mannitol(70, 170, 50, "male", creatinine = 2.0)
-  # Blank means the assumed value, 1.0 mg/dL for a man.
-  expect_equal(mannitol(70, 170, 50, "male", creatinine = 1.0)$PK, normal$PK)
+  # Blank means the assumed value, 0.9 mg/dL for a man.
+  expect_equal(mannitol(70, 170, 50, "male", creatinine = SCR_ASSUMED_MALE)$PK, normal$PK)
   expect_equal(mannitol(70, 170, 50, "male", creatinine = NA)$PK, normal$PK)
-  # (140 - 50) x 70 / (72 x 2) = 43.75 mL/min over 102.08: CL1 = 0.07 x 0.428571
-  expect_equal_rounded(high$PK$default$cl1, 0.03)
+  # (140 - 50) x 70 / (72 x 2) = 43.75 mL/min over 113.43: CL1 = 0.07 x 0.385714
+  expect_equal_rounded(high$PK$default$cl1, 0.027)
   expect_equal(high$PK$default[c("v1", "v2", "v3", "cl2", "cl3")],
                normal$PK$default[c("v1", "v2", "v3", "cl2", "cl3")])
 })
@@ -221,13 +223,13 @@ test_that("a high creatinine prolongs the osmolality rise", {
                                      creatinine = creatinine)$mannitol$wide
     w$Plasma[w$Time == 480]
   }
-  # The reference man with a creatinine of 4 mg/dL has a quarter of the
-  # reference creatinine clearance, so CL1 = 0.0175 L/min.  Eight hours after
-  # 1 g/kg over 30 minutes his plasma mannitol is 10.954746 mOsm/L, from an
-  # independent matrix-exponential solution (not this code), against
-  # 3.7288398 with normal kidneys.
-  expect_equal_rounded(run(4), 280 + 0.55483249 * 10.954746)  # 286.08
-  expect_gt(run(4), run(NULL))
+  # The reference man with a creatinine of 3.6 mg/dL, four times the assumed
+  # 0.9, has a quarter of the reference creatinine clearance, so CL1 = 0.0175
+  # L/min.  Eight hours after 1 g/kg over 30 minutes his plasma mannitol is
+  # 10.954746 mOsm/L, from an independent matrix-exponential solution (not
+  # this code), against 3.7288398 with normal kidneys.
+  expect_equal_rounded(run(4 * SCR_ASSUMED_MALE), 280 + 0.55483249 * 10.954746)  # 286.08
+  expect_gt(run(4 * SCR_ASSUMED_MALE), run(NULL))
 })
 
 test_that("an invalid creatinine is rejected and a blank one is not", {

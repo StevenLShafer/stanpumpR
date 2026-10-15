@@ -35,8 +35,9 @@
 #     injection is interchangeable with the tablet mg for mg) uses them with
 #     F = 1.
 #
-# The reference patient (70 kg, 40 y man, assumed creatinine) has a Cockcroft-
-# Gault clearance of 107 mL/min, at which total clearance is Rhee's 3.9 L/h.
+# The reference patient (70 kg, 40 y man, assumed creatinine 0.9 mg/dL) has a
+# Cockcroft-Gault clearance of 108 mL/min, at which total clearance is Rhee's
+# 3.9 L/h.
 #
 # CHECKS (70 kg adult)
 # ====================
