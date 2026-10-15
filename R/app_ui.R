@@ -180,54 +180,75 @@ app_ui <- function() {
                   )
                 ),
 
+                # The four pharmacogenetic fields and the serum creatinine
+                # each carry a hover tip naming the drugs that read them,
+                # built from the model signatures (R/patient-fields.R), so
+                # the tips follow the code.
+                #
                 # Four categories, not three, and named the way the
                 # genotyping laboratories report them.  Codeine is the first
                 # drug whose kinetics read this, so it is no longer disabled.
-                selectInput(
-                  inputId = "cyp2d6",
-                  label = "CYP 2D6",
-                  c("Ultrarapid"   = CYP2D6_ULTRARAPID,
-                    "Normal"       = CYP2D6_NORMAL,
-                    "Intermediate" = CYP2D6_INTERMEDIATE,
-                    "Poor"         = CYP2D6_POOR),
-                  selected = CYP2D6_DEFAULT
+                bslib::tooltip(
+                  selectInput(
+                    inputId = "cyp2d6",
+                    label = "CYP 2D6",
+                    c("Ultrarapid"   = CYP2D6_ULTRARAPID,
+                      "Normal"       = CYP2D6_NORMAL,
+                      "Intermediate" = CYP2D6_INTERMEDIATE,
+                      "Poor"         = CYP2D6_POOR),
+                    selected = CYP2D6_DEFAULT
+                  ),
+                  patientFieldTooltip("cyp2d6"),
+                  placement = "right"
                 ),
 
                 # Read by escitalopram and citalopram, whose published
                 # clearances differ by CYP2C19 phenotype.  The five CPIC terms.
-                selectInput(
-                  inputId = "cyp2c19",
-                  label = "CYP 2C19",
-                  c("Ultrarapid"   = CYP2C19_ULTRARAPID,
-                    "Rapid"        = CYP2C19_RAPID,
-                    "Normal"       = CYP2C19_NORMAL,
-                    "Intermediate" = CYP2C19_INTERMEDIATE,
-                    "Poor"         = CYP2C19_POOR),
-                  selected = CYP2C19_DEFAULT
+                bslib::tooltip(
+                  selectInput(
+                    inputId = "cyp2c19",
+                    label = "CYP 2C19",
+                    c("Ultrarapid"   = CYP2C19_ULTRARAPID,
+                      "Rapid"        = CYP2C19_RAPID,
+                      "Normal"       = CYP2C19_NORMAL,
+                      "Intermediate" = CYP2C19_INTERMEDIATE,
+                      "Poor"         = CYP2C19_POOR),
+                    selected = CYP2C19_DEFAULT
+                  ),
+                  patientFieldTooltip("cyp2c19"),
+                  placement = "right"
                 ),
 
                 # Read by phenytoin, whose maximal elimination rate depends on
                 # CYP2C9 diplotype, read by meloxicam and phenytoin (see
                 # CYP2C9_VALUES in R/constants.R).  *1/*1 is the reference.
-                selectInput(
-                  inputId = "cyp2c9",
-                  label = "CYP 2C9",
-                  CYP2C9_VALUES,
-                  selected = CYP2C9_DEFAULT
+                bslib::tooltip(
+                  selectInput(
+                    inputId = "cyp2c9",
+                    label = "CYP 2C9",
+                    CYP2C9_VALUES,
+                    selected = CYP2C9_DEFAULT
+                  ),
+                  patientFieldTooltip("cyp2c9"),
+                  placement = "right"
                 ),
 
                 # Read by methadone, whose non-renal clearance of each
                 # enantiomer depends on CYP2B6 (R/drugs_methadone.R).  The five
                 # CPIC categories; "normal" (*1/*1) is the reference.
-                selectInput(
-                  inputId = "cyp2b6",
-                  label = "CYP 2B6",
-                  c("Ultrarapid"   = CYP2B6_ULTRARAPID,
-                    "Rapid"        = CYP2B6_RAPID,
-                    "Normal"       = CYP2B6_NORMAL,
-                    "Intermediate" = CYP2B6_INTERMEDIATE,
-                    "Poor"         = CYP2B6_POOR),
-                  selected = CYP2B6_DEFAULT
+                bslib::tooltip(
+                  selectInput(
+                    inputId = "cyp2b6",
+                    label = "CYP 2B6",
+                    c("Ultrarapid"   = CYP2B6_ULTRARAPID,
+                      "Rapid"        = CYP2B6_RAPID,
+                      "Normal"       = CYP2B6_NORMAL,
+                      "Intermediate" = CYP2B6_INTERMEDIATE,
+                      "Poor"         = CYP2B6_POOR),
+                    selected = CYP2B6_DEFAULT
+                  ),
+                  patientFieldTooltip("cyp2b6"),
+                  placement = "right"
                 ),
 
                 # Read only by the osmotic agents (mannitol), which plot the
@@ -250,9 +271,9 @@ app_ui <- function() {
                 ),
 
                 # Read only by the models that name `creatinine` in their
-                # signature (the help's Cautions page lists them, and a test
-                # keeps that list complete).  Blank means an assumed normal
-                # creatinine for the patient's age and sex; see
+                # signature (the hover tip and the help's Cautions page list
+                # them, and tests keep both complete).  Blank means an assumed
+                # normal creatinine for the patient's age and sex; see
                 # R/renalFunction.R.
                 bslib::tooltip(
                   numericInput(
@@ -263,14 +284,7 @@ app_ui <- function() {
                     max = MAX_CREATININE,
                     step = 0.1
                   ),
-                  paste(
-                    "Used by the renally cleared drugs (the Cautions page of the",
-                    "Help lists them).",
-                    "Leave blank to assume a normal creatinine for the patient's",
-                    "age and sex (1.0 mg/dL for a man, 0.8 for a woman, and the",
-                    "normal for age in a child); renal impairment is then not",
-                    "represented."
-                  ),
+                  patientFieldTooltip("creatinine"),
                   placement = "right"
                 )
               ),

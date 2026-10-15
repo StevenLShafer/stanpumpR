@@ -1,10 +1,10 @@
 ## What to look for
 
-Gabapentin 600 mg by mouth at time zero, then 1200 mg at 36 hours (1.5 in the dose table, which is in **days** for this two-day plot), by which time the first dose has all but gone: its half-life in this 40-year-old man is 5.5 hours. If absorption were linear, the second peak would be twice the first. It is about 1.45 times: 5.8 against 4.0 mcg/mL.
+Gabapentin 600 mg by mouth at time zero, then 1200 mg at 36 hours (1.5 in the dose table, which is in **days** for this two-day plot), by which time the first dose has all but gone: its half-life in this 40-year-old man is 5.0 hours. If absorption were linear, the second peak would be twice the first. It is about 1.45 times: 5.7 against 3.9 mcg/mL.
 
 The reason is the carrier that absorbs gabapentin from the small intestine, which saturates. About 54 per cent of a 600 mg dose is absorbed, but only 39 per cent of 1200 mg, so doubling the dose raises the amount absorbed from 321 mg to 463 mg. The drug's page tabulates the fraction absorbed at each dose.
 
-Both peaks fall about 2.9 hours after their dose. Saturation changes how much is absorbed, not how fast. The flat start to each curve is the absorption lag of about 19 minutes.
+Both peaks fall about 2.8 hours after their dose. Saturation changes how much is absorbed, not how fast. The flat start to each curve is the absorption lag of about 19 minutes.
 
 The shaded band, 4.1 to 9.4 mcg/mL, is the average concentration at the doses that work in chronic postherpetic neuralgia. A single 600 mg dose, the usual preoperative dose, peaks at its lower edge, and doubling the dose does not double the concentration.
 

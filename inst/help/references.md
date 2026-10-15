@@ -106,7 +106,7 @@ Al-Sallami HS, Goulding A, Grant A, Taylor R, Holford N, Duffull SB. Prediction 
 
 ## Renal function
 
-Several models estimate renal function from the entered serum creatinine, or from an assumed normal creatinine when none is entered: 1.0 mg/dL in men and 0.8 in women, and in children the median for age (Boer, then Pottel), read on the adult scale by the equations fitted in adults (after Björk).
+Several models estimate renal function from the entered serum creatinine, or from an assumed normal creatinine when none is entered: 0.9 mg/dL in men and 0.8 in women, and in children the median for age (Boer, then Pottel), read on the adult scale by the equations fitted in adults (after Björk).
 
 Cockcroft DW, Gault MH. Prediction of creatinine clearance from serum creatinine. *Nephron* 1976;16:31-41.
 
