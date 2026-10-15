@@ -20,8 +20,8 @@
 # has no co-medication field).  Age, sex and creatinine clearance were not
 # significant.  This replaces the model the handoff proposed (Lee 2024,
 # PMC10863906), whose clearance carries a power of the daily dose a linear
-# engine cannot hold, whose exponents were not retrievable, and which gives
-# neither V/F nor ka.
+# engine cannot hold (p. 428: x (CLcr/90)^0.277 x (dose/100)^0.193), and
+# whose main text gives neither V/F nor ka.
 #
 # ORAL ROUTE
 # ==========

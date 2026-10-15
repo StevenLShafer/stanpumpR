@@ -56,8 +56,8 @@ test_that("the apparent disposition is the published one", {
   expect_equal(x$v1, 714)
   expect_equal(x$v2, 151)
 
-  # It carries no weight term, because the source covariate normalisers were
-  # not recoverable.  Unusual for this package, and deliberate.
+  # It carries no weight term: the source's creatinine-clearance and BSA
+  # covariates (Melhem Eqs 11-12) are not applied.  Unusual for this package.
   y <- hydrocodone(35, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(y$v1, x$v1)
   expect_equal(y$cl1, x$cl1)

@@ -5,7 +5,7 @@
 # ----------
 # Drafted by Claude Code, 2026-10-08, at the request of Steven L. Shafer.
 # Every number below was checked against the abstract of the source on
-# PubMed (PMID 8877675); the full text was not available.  Verified by
+# PubMed (PMID 8877675) and against Table I of the full text.  Verified by
 # tests/testthat/test-drugs-amiodaroneIV.R, which derives its expectations
 # independently of this file.
 #
@@ -120,8 +120,9 @@
 # the fat-free-mass ratio and clearances by that ratio ^ 0.75 by default, and
 # with the switch off volumes and clearances both scale by weight / 70
 # (pkSizeFactors()'s default legacy factors), which reproduces the published
-# per-kilogram model exactly.  The abstract does not give the cohort's
-# weights or heights, so the 70 kg reference cannot be checked against them.
+# per-kilogram model exactly.  The full text gives the cohort as 78 +/- 17 kg,
+# 172 +/- 9 cm and 64 +/- 11 years (73% men), so the 70 kg reference man is
+# somewhat lighter than the mean patient.
 # The help page's child and infant are extrapolation, evaluated only because
 # every model in the library is tabulated at them.
 #

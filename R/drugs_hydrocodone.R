@@ -28,10 +28,14 @@
 # not 91.0; the review prints the decimal.
 #
 # These carry no weight or body-surface scaling.  The source fitted creatinine
-# clearance on CL and body surface area on Vc, but its reference values were
-# not recovered, so no normaliser exists to apply them against.  Inventing one
-# would be worse than leaving the model weight-independent, which is unusual
-# for this package and deliberate here.
+# clearance on CL and body surface area on Vc (Eqs 11-12):
+#
+#     CL/F = 64.4 L/h x (CLCR / 91.48 mL/min/1.73 m2)^0.223
+#     Vc/F = 714 L    x (BSA / 1.87 m2)^0.486
+#
+# Neither is applied, so the model is weight-independent, which is unusual
+# for this package.  Both exponents are small, and the authors judged that
+# neither warrants a dose adjustment.
 #
 # The two eigenvalues are 0.0916 and 0.00594 per hour, half-times 7.6 h and
 # 117 h.  The slow one carries only 1.6% of the area, so the model is nearly
@@ -42,10 +46,12 @@
 # ABSORPTION
 # ==========
 # ka is set so the plasma peak falls at 78 min, the 1.3 h that clinical
-# references give for a standard oral dose.  The source absorption model was a
-# multi-phase extended-release structure whose routing was not recoverable, so
-# it could not be transferred; a product-specific extended-release input is a
-# separate piece of work.
+# references give for a standard oral dose.  The source absorption model
+# (Fig 1, Eqs 3-10, Table 2) describes the extended-release capsule only: a
+# fraction 0.382 absorbed through four transit compartments (ktr 8.52 /h,
+# ka1 2.27 /h) and the rest first-order (ka2 0.434 /h) after a 2.39 h lag.
+# It does not describe an immediate-release dose, so it is not transferred;
+# a product-specific extended-release input is a separate piece of work.
 #
 # HYDROMORPHONE FORMATION
 # =======================

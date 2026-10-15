@@ -151,11 +151,12 @@
 # mg/L).  When the drug stimulates the production of the response in
 # proportion to the concentration, a turnover model IS an effect site: the
 # response is baseline x (1 + slope x Ce), with dCe/dt = kout (Cp - Ce), so
-# ke0 = kout exactly.  When the drug instead slows the loss of the response,
-# the equivalence is approximate.  The paper's equations are in a figure and a
-# supplement that could not be retrieved, so which applies is not known; the
-# delay, a half-time of 1.8 h, is the same order either way.  The electrical
-# stimulation threshold gave a similar kout, 0.49 /h.  These are the only
+# ke0 = kout exactly.  (Were the drug instead to slow the loss of the
+# response, the equivalence would be approximate.)  The paper's main text
+# (p. 576) puts the linear drug effect on kin, so here ke0 = kout exactly, a
+# half-time of 1.8 h.  Its model also carries a slow placebo drift in the
+# baseline (-0.07 s/h), which an effect site does not represent.  The
+# electrical stimulation threshold gave a similar kout, 0.49 /h.  These are the only
 # estimated human delays for pregabalin.
 #
 # Pregabalin in CSF peaks about 8 h after a 300 mg dose and reaches about a

@@ -5,8 +5,10 @@
 # ----------
 # Drafted by Claude Code, 2026-10-09, at the request of Steven L. Shafer, from
 # the antipsychotic implementation brief.  Every Table 3 value used here was
-# checked against the full text of Sun 2021.  Not checked: whether age enters
-# Vc/F as a power, as written below; the equation images were not readable.
+# checked against the full text of Sun 2021, and so is the power form of the
+# age term on Vc/F: the Methods write every continuous covariate as
+# ln(TVP) = ln(theta) + theta_cov x ln(cov / reference), and the reference
+# subject is 36 years old (also the median age).
 #
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL.  The source reports L/h, 1/h and h.

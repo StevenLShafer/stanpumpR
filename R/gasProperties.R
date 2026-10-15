@@ -23,11 +23,11 @@
 #
 # STATUS: the ODE structure has been verified numerically (see
 # tests/testthat/test-gas-engine.R -- closed form vs. RK4, mass balance, and
-# analytic single-compartment limits).  The PARTITION COEFFICIENTS AND MAC
-# VALUES BELOW ARE LITERATURE VALUES, NOT YET RECONCILED AGAINST GASMAN 4.2's
-# own tables (Weber et al. Table 1).  They must be replaced with the GasMan
-# values before any claim of fidelity to GasMan is made.  Marked TODO(fixture)
-# at each site.
+# analytic single-compartment limits).  The partition coefficients and MAC
+# values below for sevoflurane, isoflurane and desflurane equal GasMan's own
+# (Weber et al. 2021, J Clin Monit Comput 35:343-354, Table 1).  Nitrous
+# oxide and nitrogen are not in that table.  The circuit volume is marked
+# TODO(fixture) in getGasBody().
 # -----------------------------------------------------------------------------
 
 
@@ -210,11 +210,13 @@ getGasBody <- function(weight = 70, circuitVolume = 8)
     # step size shrank, which is how it was found.  See
     # tests/testthat/test-gas-convergence.R.
     #
-    # PROVENANCE NOT YET ESTABLISHED.  GasMan supplies these numbers but no
-    # source for them.  They are carried unchanged so that this engine can be
-    # checked against GasMan; replacing them with values supported by the
-    # peer-reviewed literature is a later, separate, documented step.  Do not
-    # change them casually -- doing so breaks the validation chain.
+    # PROVENANCE.  Weber et al. 2021 (Table 2) publish exactly these fractions,
+    # 76 / 18 / 6%, for GasMan's 70 kg standard patient, but give no primary
+    # physiological source for them.  They are carried unchanged so that this
+    # engine can be checked against GasMan; replacing them with values
+    # supported by the physiological literature is a later, separate,
+    # documented step.  Do not change them casually -- doing so breaks the
+    # validation chain.
     f_brain    = 0.76,
     f_muscle   = 0.18,
     f_fat      = 0.06,

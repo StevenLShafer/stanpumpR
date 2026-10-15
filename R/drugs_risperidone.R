@@ -8,8 +8,8 @@
 # Storset 2024: ka, the structure, the serum matrix, the CYP2D6 allele
 # activities, the NFIB effect, both age terms, the formation convention and
 # the typical CL/F of 4.2 (two deficient alleles), 27.4 (*1/deficient) and
-# 50.6 L/h (*1/*1).  Table 2 itself did not render, so parent V/F (333 L) and
-# the metabolite's V (96 L) and CL (8.0 L/h) are the brief's, UNVERIFIED.
+# 50.6 L/h (*1/*1).  Table 2, read from the archived full text, confirms
+# parent V/F (333 L) and the metabolite's V (96 L) and CL (8.0 L/h).
 #
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL (serum).

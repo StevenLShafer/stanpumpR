@@ -91,9 +91,8 @@ antipsychoticProfiles <- function() list(
     sourcePopulation = "512 genotyped adults in therapeutic drug monitoring",
     analyte = c("risperidone", "9-hydroxyrisperidone"), matrix = "serum",
     pkSource = "Storset 2024, doi:10.1007/s00228-024-03721-6",
-    modelStatus = "implemented", pkVerified = FALSE,
-    warnings = c("V/F, Vm and CLm not yet checked against Table 2.",
-                 "Serum PK; the occupancy fits were calibrated in plasma.",
+    modelStatus = "implemented", pkVerified = TRUE,
+    warnings = c("Serum PK; the occupancy fits were calibrated in plasma.",
                  "Mostly 9-30 h samples: early peaks are poorly informed.",
                  "Ultrarapid CYP2D6 is an extrapolation; NFIB not applied."),
     pd = list(
@@ -137,8 +136,7 @@ antipsychoticProfiles <- function() list(
     analyte = "olanzapine", matrix = "plasma",
     pkSource = "Sun 2021, doi:10.1002/jcph.1911",
     modelStatus = "implemented", pkVerified = TRUE,
-    warnings = c("Nonsmoker, fasted, no interacting drugs: smoking raises CL/F 30%.",
-                 "Power form of the age term on Vc/F not confirmed."),
+    warnings = c("Nonsmoker, fasted, no interacting drugs: smoking raises CL/F 30%."),
     pd = list(
       occupancyFit("Kapur 1998", "parent_plasma", Emax = 100, EC50 = 10.3,
                    source = "Kapur 1998, doi:10.1176/ajp.155.7.921",

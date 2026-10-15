@@ -89,8 +89,10 @@
 #
 # NOT IMPLEMENTED
 # ===============
-# Lobo et al. 2009 pooled adult model (sex, smoking, age and dose effects):
-# its fixed-effect table could not be verified, so it is not used.  Shibata
+# Lobo et al. 2009 pooled adult model (sex and smoking on F, age and dose on
+# CL/F, Hispanic ethnicity on V/F): its Table II is legible in the full text
+# (CL/F 45.1 L/h, V/F 814 L, ka 0.168 /h for a 49-year-old female nonsmoker
+# on 40 mg), but it is a different model and is not used.  Shibata
 # et al. 2023, Japanese children and adolescents with major depressive
 # disorder (CL/F 81.4 L/h, V/F 1170 L, ka 0.168 /h): a separate population.
 # Neither is mixed with Zhong's estimates.
