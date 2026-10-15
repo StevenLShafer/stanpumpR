@@ -13,7 +13,7 @@ Each drug is plotted in the concentration units given in the drug library: **mcg
 | Drugs | Plotted in |
 |---|---|
 | propofol, ketamine, midazolam, etomidate, remimazolam, morphine, pethidine, methadone, rocuronium, sugammadex, the local anesthetics, the antibiotics, hydrocortisone, methylprednisolone, amiodarone, and the oral analgesics and antiseizure drugs other than celecoxib and tiagabine | mcg/mL |
-| remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics | ng/mL |
+| remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, vecuronium, cisatracurium, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics | ng/mL |
 
 Internally, doses of a drug plotted in mcg/mL are converted to milligrams and doses of one plotted in ng/mL to micrograms before simulation; volumes are in litres, so concentration comes out in the plotted unit.
 

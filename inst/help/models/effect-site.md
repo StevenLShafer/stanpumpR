@@ -33,6 +33,8 @@ Minto, Schnider, Gregg, Henthorn and Shafer showed in 2003 that tPeak is the rig
 | methadone | 11.3 | |
 | hydromorphone | 19.6 | |
 | rocuronium | 4.5 | Cortínez 2007 (population median at the adductor pollicis) |
+| vecuronium | 5.37 (to age 40), 4.80 (from 70) | Rupp 1987 ke0, with its own kinetics |
+| cisatracurium | 12.3 (young), 12.9 (elderly) | Sorooshian 1996 ke0, with its own kinetics |
 | midazolam | 3 | Bührer 1990 |
 | etomidate | 1.9 (solved from Arden 1986's t½ke0 of 1.6 min) | Arden 1986 |
 | ketamine, dexmedetomidine, oxytocin | 3, 10, 5 | described in the code as guesses or clinical observation |
