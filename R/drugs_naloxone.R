@@ -42,12 +42,16 @@
 #
 #   - F = 75.4 / 396 = 0.190.  This is the bioavailability that makes the
 #     reference man's nasal AUC equal Laffont's fitted D / (CL/F), which is
-#     the one quantity the apparent model determines absolutely.  It is also
-#     the FDA review's own route to F (fixing intravenous clearance), and it
-#     agrees with the Narcan label's exposure (4 mg gives an AUC near
-#     7.9 ng.h/mL, i.e. CL/F about 500 L/h).  It is much lower than the
-#     0.47-0.52 "relative to intramuscular" figures on labels, which assume
-#     complete intramuscular absorption that Dowling (F_IM 0.36) did not find.
+#     the one quantity the apparent model determines absolutely.  It agrees
+#     with the exposure in the FDA's clinical pharmacology review of NARCAN
+#     (NDA 208411, 2015, Table 2.4.1b: 4 mg gives an AUC of 7.9 ng.h/mL,
+#     i.e. CL/F about 500 L/h).  It is much lower than that review's
+#     bioavailability relative to intramuscular naloxone, 0.47 for 4 mg and
+#     0.44 for 8 mg, which assumes complete intramuscular absorption that
+#     Dowling (F_IM 0.36) did not find.  (Until 2026-10 this note called the
+#     exposure the Narcan label's and the derivation "the FDA review's own
+#     route to F"; the review has no intravenous arm and no absolute F, and
+#     no NARCAN prescribing information is in the reference archive.)
 #   - ka = 1.064 /h, no lag: one exponential whose mean input time equals
 #     that of the whole published mixture (0.94 h), the moment-matching the
 #     specification uses for its own inverse-Gaussian initialisers.  Laffont's
