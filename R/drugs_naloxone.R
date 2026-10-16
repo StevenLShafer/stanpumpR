@@ -46,8 +46,9 @@
 #     with the exposure in the FDA's clinical pharmacology review of NARCAN
 #     (NDA 208411, 2015, Table 2.4.1b: 4 mg gives an AUC of 7.9 ng.h/mL,
 #     i.e. CL/F about 500 L/h).  It is much lower than that review's
-#     bioavailability relative to intramuscular naloxone, 0.47 for 4 mg and
-#     0.44 for 8 mg, which assumes complete intramuscular absorption that
+#     dose-normalized bioavailability relative to 0.4 mg intramuscular
+#     naloxone, 0.47 for 4 mg and 0.44 for 8 mg; reading either as an
+#     absolute F assumes complete intramuscular absorption (F_IM = 1), which
 #     Dowling (F_IM 0.36) did not find.  (Until 2026-10 this note called the
 #     exposure the Narcan label's and the derivation "the FDA review's own
 #     route to F"; the review has no intravenous arm and no absolute F, and
