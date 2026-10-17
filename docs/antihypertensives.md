@@ -614,13 +614,18 @@ injection route is the nearer of its two to being portable.
 
 ### Tier 2 -- completes a record or settles a question
 
-- **Ericsson 1999** (PMID 10336577, Br J Clin Pharmacol 1999;47:531-8, doi
-  10.1046/j.1365-2125.1999.00933.x). Clevidipine's own source, already
-  implemented from its abstract. Three gains: the five PK numbers rise from
-  `primary_abstract` to `primary_full_text`; the Emax and EC50 of the MAP-over-HR
-  resistance proxy become available; and -- the one most wanted -- the derived
-  V1, V2 and Q of section 5 can be checked against anything the paper prints,
-  where at present they rest on a single out-of-sample cross-check.
+- **Ericsson 1999, the BJCP one** (PMID 10336577, Br J Clin Pharmacol
+  1999;47:531-8, doi 10.1046/j.1365-2125.1999.00933.x). Clevidipine's own
+  implemented source, still read only from its abstract. **Promoted to the
+  top of Tier 2 on 2026-10-17**, by a result rather than by a guess: the third
+  gain listed here -- checking the derived V1, V2 and Q -- arrived from the
+  *other* Ericsson 1999 paper instead (section 11), and the check passed to
+  1.1%. That makes the remaining gap sharper, not smaller. The derivation is
+  now validated while its four INPUTS are still abstract-only, which leaves
+  clevidipine the one live curve in this library whose own parameters have
+  never been read in a full text. The other two gains stand: the five PK
+  numbers rise from `primary_abstract` to `primary_full_text`, and the Emax
+  and EC50 of the MAP-over-HR resistance proxy become available.
 - **Bailey 2002** (PMID 11981147, Anesthesiology 2002;96:1086-94, doi
   10.1097/00000542-200205000-00010). A second, independent clevidipine dataset
   in cardiac surgery patients: three compartments, V 32.4 L, CL 4.3 L/min,
