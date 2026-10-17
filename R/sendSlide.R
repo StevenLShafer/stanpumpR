@@ -173,7 +173,9 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "CYP2C19",
       "CYP2C9",
       "CYP2B6",
-      "Minto / Schnider models shown"
+      "VKORC1",
+      "Minto / Schnider models shown",
+      "Hamberg model shown"
     ),
     Value = c(
       values$age / values$ageUnit,
@@ -194,7 +196,9 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       if (is.null(values$cyp2c19)) CYP2C19_DEFAULT else values$cyp2c19,
       if (is.null(values$cyp2c9)) CYP2C9_DEFAULT else values$cyp2c9,
       if (is.null(values$cyp2b6)) CYP2B6_DEFAULT else values$cyp2b6,
-      if (isTRUE(values$mintoSchnider)) "yes" else "no"
+      if (is.null(values$vkorc1)) VKORC1_DEFAULT else values$vkorc1,
+      if (isTRUE(values$mintoSchnider)) "yes" else "no",
+      if (isTRUE(values$hamberg)) "yes" else "no"
     ))
   covariates <- rbind(covariates, plotTimeSettings(values$maximum, timeUnit))
   outputComments("Writing covariates")

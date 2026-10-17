@@ -85,6 +85,7 @@ helpStaticPages <- function() {
     "models/fat-free-mass",     "Scaling to fat-free mass",        "models",
     "models/pregnancy",         "Pregnancy",                       "models",
     "models/minto-schnider",    "The Minto and Schnider models",   "models",
+    "models/hamberg",            "The Hamberg warfarin genotype model", "models",
     "models/absorption",        "Oral, intramuscular, intranasal, subcutaneous and regional anesthesia doses", "models",
     "models/metabolites",       "Active metabolites",              "models",
     "models/antidepressants",   "Antidepressant models and their limits", "models",

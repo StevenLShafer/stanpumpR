@@ -15,6 +15,7 @@ PATIENT_FIELD_LABELS <- c(
   cyp2c19    = "CYP 2C19",
   cyp2c9     = "CYP 2C9",
   cyp2b6     = "CYP 2B6",
+  vkorc1     = "VKORC1",
   creatinine = "Serum creatinine"
 )
 
@@ -101,6 +102,12 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "It sets the non-renal clearance of each methadone enantiomer;",
       "the rapid and ultrarapid phenotypes take the normal metaboliser's",
       "values."
+    ),
+    vkorc1 = paste(
+      "VKORC1 -1639G>A genotype (GG is the wild-type reference).",
+      "It sets warfarin sensitivity: the A allele lowers the S-warfarin",
+      "C50, so the INR rises on less drug. Read by the library (Xue) model",
+      "and, with CYP2C9 and age, by the Hamberg companion model."
     ),
     creatinine = paste(
       "The patient's serum creatinine, from which the renally cleared",

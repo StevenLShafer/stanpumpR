@@ -31,7 +31,7 @@ specification gave them:
 | Fattinger 2000, cocaine | Mucosal fraction 19% (95% CI 11-26), contributing 31% of exposure (23-37); oral median bioavailability 33%; input peaks near 10 and 45 min |
 | Harris 2003, methamphetamine | Clearance 272 mL/h/kg, steady-state volume 4.2 L/kg, mean residence time 16 h, intravenous half-life 11.4 h, intranasal bioavailability 79% with the peak at 2.7 h, smoked 67% of delivered or 37.4% of pipe load |
 | Huestis 2025, MDMA | CL/F 41.5 L/h (37.7-45.8), V/F 462 L (429-496), ka 1.17 /h, ALAG1 0.322 h, D1 0.304 h, MDA formation fraction **0.1 FIXED**, and the fed/fasted comparison |
-| The smoked cannabis model (*Br J Clin Pharmacol* 2020;86(7):1334-1345) | Steady-state volume 3401 L and clearance 0.72 L/min for THC, 50% of THC clearance going to 11-OH-THC, 11-OH-THC volume 415.2 L, THC-COOH volume 29.1 L and clearance 0.12 L/min, six participants, plasma, 168 h |
+| The smoked cannabis model (Sempio 2020, *Br J Clin Pharmacol* 86(3):611-619) | Steady-state volume 3401 L and clearance 0.72 L/min for THC, 50% of THC clearance going to 11-OH-THC, 11-OH-THC volume 415.2 L, THC-COOH volume 29.1 L and clearance 0.12 L/min, six participants, plasma, 168 h |
 
 The specification's central design argument — that a parameter set belongs to an analyte,
 a dose basis, a route, a formulation, a matrix and a source rather than to a drug name —
@@ -150,18 +150,65 @@ engine cannot represent is recorded and refused rather than aliased to another.
 
 ## 5. What was deliberately not built, and why
 
-- **Δ9-THC.** Still not built, and the reason is sharper than it was. Two things are
-  missing and only one of them is stanpumpR's. The engine has neither a pulmonary route
-  nor the two metabolite levels the smoked model needs; that is the known gap. The harder
-  one is the source: its abstract gives only the steady-state volume (3,401 L) and the
-  clearance (0.72 L/min), and **those two numbers do not identify a three-compartment
-  model**. The five compartment parameters this implementation would need exist in the
-  specification's transcription alone, which this container could not verify, and the full
-  text also holds the thing that matters most — how a smoked dose was entered into the
-  model, and whether bioavailability really was fixed at 0.25. Three routes to the full
-  text were tried and all are blocked here (the PubMed Central connector returns an empty
-  body for this article, and direct fetches of PubMed Central and Europe PMC fail to
-  resolve). Supplying the paper would unblock it; inventing the input would not.
+- **Δ9-THC.** Still not built. The reason has changed: it is no longer one
+  missing route, it is that the published evidence splits into models that fix THC's
+  disposition on a route stanpumpR does not have, and a model on the route it does have
+  that cannot fix the disposition. A full survey of the population models was done on
+  2026-10-17 and is recorded here so it does not have to be repeated.
+
+  | Source | Route(s) | Structure | What blocks it |
+  |---|---|---|---|
+  | Heuberger 2015, *Clin Pharmacokinet* 54(2):209-219 ([10.1007/s40262-014-0195-5](https://doi.org/10.1007/s40262-014-0195-5)) | oral + intravenous + pulmonary, one fit | three compartments, absolute, clearance 38.8 L/h, apparent terminal half-life 21.5 h, built to characterise the long terminal phase | **Nothing but access.** This is the model the library wants: three compartments is what the closed form has, and an absolute parameter set fitted across oral and intravenous doses would let both routes be offered. Springer is unreachable from this container and the parameter table is not in the abstract. |
+  | Li & An 2025, *J Clin Pharmacol* 65(5):535-549 ([10.1002/jcph.6181](https://doi.org/10.1002/jcph.6181)) | oral (with three intravenous studies in the fit) | **four** compartments for the parent: central, two peripherals, and an adipose pool off the second peripheral through a permeability-surface-area product (5.5 L/h) and a partition coefficient (14); two further levels for 11-OH-THC and THC-COOH | Structure and identifiability. Four compartments is one more than the closed form. The central volume is 204 L with an **RSE of 186%** — the source could not estimate it — while every other parameter in the table carries an RSE under 9% and most under 1%, which is the signature of a fit to digitised *mean* curves rather than to subject data (the paper says so). The implied terminal half-life is 203 h against a literature value of 21.5 h, and the paper concedes it "could not fully capture the accumulation characteristics of THC". |
+  | Marsot 2017, *J Pharmacol Toxicol Methods* 85:49-54 ([10.1016/j.vascn.2017.02.003](https://doi.org/10.1016/j.vascn.2017.02.003)) | pulmonary (smoked) | three compartments in micro-constants, central volume 19.1 L (39.7% RSE); the abstract prints five rate constants — 0.408, 4.070, 0.022, 1.070 and 1.060 /h — but the retrievable text strips their subscripts, so which is which is an inference from the order, not something read | Route, and a dose denominator. Subjects smoked *ad libitum*, so every parameter is apparent on an unmeasured pulmonary bioavailability. No pulmonary route exists, and smoke must never be aliased to the intranasal route. |
+  | Sempio 2020, *Br J Clin Pharmacol* 86(3):611-619 ([10.1111/bcp.14170](https://doi.org/10.1111/bcp.14170)) | pulmonary (smoked) | three compartments with both metabolites, steady-state volume 3,401 L, clearance 0.72 L/min, 6 subjects, 168 h | Route, as above, plus two metabolite levels the engine does not carry. |
+  | Alvarez 2021, *Br J Clin Pharmacol* 87(8):3139-3149 ([10.1111/bcp.14724](https://doi.org/10.1111/bcp.14724)) | pulmonary (smoked) | three compartments with **zero-order** absorption, two-compartment metabolites, 15 chronic and 15 occasional users | Route, as above. Wiley is unreachable here in any case. |
+  | Storgaard 2025, *Br J Clin Pharmacol* 92(2):504-514 ([10.1002/bcp.70284](https://doi.org/10.1002/bcp.70284)) | oromucosal (Sativex) | one compartment with **three transit compartments**, apparent: V/F 1,669 L, total CL/F 927 L/h | Not the drug's disposition. Sampling stopped 4 h after the last dose, so the terminal phase was never observed; the authors say the apparent clearance reflects distribution still in progress, the fit is unstable (33.8% of bootstrap runs converged), and the input is an Erlang transit chain the engine does not have. |
+  | Wolowich 2019, *Eur J Drug Metab Pharmacokinet* 44:691-711 ([10.1007/s13318-019-00559-7](https://doi.org/10.1007/s13318-019-00559-7)) | intravenous + oral | minimal PBPK: hepatic extraction, liver blood flow, a hepatic diffusional barrier, CYP2C9 genotype | Not a mammillary model, so not reducible to the engine without refitting it, which would make the numbers this library's rather than the source's. Springer, so unreachable too. |
+
+  Two things follow, and both are worth writing down.
+
+  First, **the spread, and how much of it is real.** Three of these models report
+  *apparent* parameters on an unmeasured pulmonary bioavailability (Marsot, Sempio,
+  Alvarez) and one on an unmeasured oromucosal one (Storgaard), so their volumes and
+  clearances cannot be set beside an absolute number without knowing the F they hide:
+  Sempio's 3,401 L and Marsot's implied 3,572 L are Vss/F, not Vss. Stripping those out
+  leaves exactly two absolute parameter sets, and they still disagree badly — Heuberger
+  at a clearance of 38.8 L/h on a steady-state volume of 236 L, against Li & An at 87 L/h
+  on 1,608 L (counting the adipose pool at its partition coefficient). A factor of 2.2 in
+  clearance and 6.8 in volume. So there is no consensus parameter set to fall back on, and
+  no way to assemble one: taking absorption from the oral paper and disposition from a
+  smoked one would be an invention with a citation attached, which is the single thing
+  this scheme exists to prevent.
+
+  Second, **Li & An was tested before it was refused**, so the refusal is not an argument
+  from the abstract. Both readings of its topology (the adipose pool off the second
+  peripheral, as the figure legend describes, and off the central compartment, as one
+  sentence in the results implies — the displayed differential equations are images and
+  could not be read) were built and integrated numerically. They agree to within 5% through
+  8 h and diverge by 60% at 24 h. The oral predictions are reasonable where the model was
+  fitted: 10 mg orally gives a peak of 3.6 ng/mL at 1.06 h, which matches the published
+  oral curves. The disposition behind them is not: the four rate constants are
+  0.29, 1.09, 2.95 and 202.9 h in half-life, the slowest carrying 5.3% of the area, and a
+  5 mg intravenous dose would start at 24.5 ng/mL where the intravenous literature implies
+  a central volume several times smaller. A model may be offered with a documented caveat
+  — LSD's half-life is shorter than later studies found, and cocaine's intranasal
+  absorption is one path where deconvolution shows two — but not when the source itself
+  reports that it could not estimate the parameter the offered route's first hour depends
+  on.
+
+  There is also a structural point about where THC could be *recorded*. Unlike the
+  antiseizure, anticoagulant and antihypertensive registries, which carry unimplemented
+  entries as an implementation queue, `illicitRouteRegistry.csv` is keyed to drugs the
+  library offers: `test-illicit-registry.R` asserts that the registry covers *exactly* the
+  illicit category and that every drug in it offers at least one route. So an unoffered THC
+  has no row to live in, and this document and the help page are its record. That is the
+  right boundary for a registry whose job is to justify the routes that *are* offered, and
+  it should not be widened to make room for a drug with no curve.
+
+  Supplying Heuberger 2015 would unblock a full implementation, with no new engine and no
+  reduction: three compartments, fitted across the oral and intravenous routes the library
+  already has.
 - ~~**GHB.** Non-linear absorption and elimination, with no identified human parameter set
   covering route, volume and the non-linear terms together. It needs a non-linear engine
   first.~~ **Built, 2026-10-17.** Both halves of this were wrong by the time it was
