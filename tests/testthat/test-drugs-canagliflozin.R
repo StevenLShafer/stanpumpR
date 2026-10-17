@@ -1,15 +1,18 @@
-# canagliflozin: see R/drugs_canagliflozin.R (Hoeben 2016, Table 5).
+# canagliflozin: see R/drugs_canagliflozin.R (Hoeben 2016, Table 5; the
+# reference values from the supplement's Table 2).
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 # creatinine giving an MDRD eGFR of 87 (the reference) at 45 years
 scr87 <- function(sex) uniroot(function(s) egfrMDRD(45, sex, s) - 87, c(0.3, 3),
                                tol = 1e-12)$root
-w75 <- 26 * 1.7^2    # 75.14 kg: BMI 26 at 170 cm, the reference values
+wRef <- 75.8                       # kg, the phase I median weight
+hRef <- 100 * sqrt(wRef / 26.1)    # cm: the median BMI, 26.1, at that weight
 
 test_that("Table 5 at the reference values: CL/F 14.4 L/h in men, 12.0 in women", {
-  m <- canagliflozin(w75, 170, 45, "male", FALSE, creatinine = scr87("male"))
-  f <- canagliflozin(w75, 170, 45, "female", FALSE, creatinine = scr87("female"))
+  m <- canagliflozin(wRef, hRef, 45, "male", FALSE, creatinine = scr87("male"))
+  f <- canagliflozin(wRef, hRef, 45, "female", FALSE, creatinine = scr87("female"))
   pm <- m$PK$default
-  expect_equal(pm$cl1 * 60, 0.145 * 99.3 * (w75 / 75)^0.583, tolerance = 1e-8)
+  expect_equal(pm$cl1 * 60, 0.145 * 99.3, tolerance = 1e-8)
+  expect_equal(f$PK$default$v1, 82.6, tolerance = 1e-12)
   expect_equal(round(pm$cl1 * 60, 1), 14.4)
   expect_equal(round(f$PK$default$cl1 * 60, 1), 12.0)
   expect_equal(pm$cl2 / pm$v1 * 60, 0.101)
@@ -21,11 +24,11 @@ test_that("Table 5 at the reference values: CL/F 14.4 L/h in men, 12.0 in women"
 
 test_that("covariates: weight and age on Vc/F, eGFR on ke, BMI on ka and lag", {
   p <- canagliflozin(90, 160, 70, "female", FALSE, creatinine = 1.4)$PK$default
-  vc <- 82.6 * (90 / 75)^0.583 * (70 / 45)^-0.167
+  vc <- 82.6 * (90 / 75.8)^0.583 * (70 / 45)^-0.167
   egfr <- egfrMDRD(70, "female", 1.4)
   expect_equal(p$v1, vc)
   expect_equal(p$cl1 * 60, 0.145 * (egfr / 87)^0.261 * vc)
-  b <- 90 / 1.6^2 / 26
+  b <- 90 / 1.6^2 / 26.1
   expect_equal(p$ka_PO * 60, 3.68 * b^-1.41)
   expect_equal(p$tlag_PO, 0.147 * b^1.41 * 60)
   # a higher BMI absorbs later and more slowly (Table 2)
@@ -35,17 +38,22 @@ test_that("covariates: weight and age on Vc/F, eGFR on ke, BMI on ka and lag", {
   # switch on: the pharmacokinetic weight on Vc/F; BMI stays the patient's own
   size <- pkSizeFactors(120, 175, 50, "male", TRUE)
   on <- canagliflozin(120, 175, 50, "male", creatinine = 1)$PK$default
-  expect_equal(on$v1, 99.3 * (size$pkWeight / 75)^0.583 * (50 / 45)^-0.167)
+  expect_equal(on$v1, 99.3 * (size$pkWeight / 75.8)^0.583 * (50 / 45)^-0.167)
   expect_equal(on$ka_PO,
                canagliflozin(120, 175, 50, "male", FALSE, creatinine = 1)$PK$default$ka_PO)
   # age held at 18
   expect_equal(canagliflozin(40, 150, 12, "male", FALSE, creatinine = 0.6)$PK$default$v1,
-               99.3 * (40 / 75)^0.583 * (18 / 45)^-0.167)
-  expect_equal_rounded(canagliflozin(70, 170, 40, "male")$PK$default$cl1 * 60, 14.3717493)
+               99.3 * (40 / 75.8)^0.583 * (18 / 45)^-0.167)
+  # BMI held to the phase I range, 18.0 to 44.5
+  expect_equal(canagliflozin(160, 170, 50, "male", FALSE)$PK$default$ka_PO * 60,
+               3.68 * (44.5 / 26.1)^-1.41)
+  expect_equal(canagliflozin(45, 170, 50, "male", FALSE)$PK$default$tlag_PO,
+               0.147 * (18.0 / 26.1)^1.41 * 60)
+  expect_equal_rounded(canagliflozin(70, 170, 40, "male")$PK$default$cl1 * 60, 14.2831238)
 })
 
 test_that("the lag, then a zero-order release into the gut, matches a numerical solution", {
-  PK <- getDrugPK("canagliflozin", w75, 170, 45, "male", adjustToFFM = FALSE,
+  PK <- getDrugPK("canagliflozin", wRef, hRef, 45, "male", adjustToFFM = FALSE,
                   creatinine = scr87("male"))
   expect_true(PK$zeroOrderPO)
   w <- simCpCe(data.frame(Drug = "canagliflozin", Time = 0, Dose = 100, Units = "mg PO"),

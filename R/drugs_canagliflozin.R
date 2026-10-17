@@ -41,27 +41,25 @@
 # ka falls and Tlag rises with BMI, so the exponent is applied with a minus
 # sign to ka and a plus sign to Tlag.
 #
-# THE REFERENCE VALUES (Eq. 1 divides each covariate by its median, which
-# the paper does not print; its supplement, with the demographics, was not
-# available):
+# THE REFERENCE VALUES.  Eq. 1 divides each covariate by its median, which
+# the paper does not print; the supplement's Table 2 (ESM 2,
+# 40262_2015_307_MOESM2_ESM, supplied by Steven L. Shafer) does.  The
+# absorption and distribution covariates were fitted to the phase I data and
+# take its medians; ke's were fitted to the pooled data:
 #
-#   * eGFR0 = 87 mL/min/1.73 m^2: the median of the pooled data on which ke's
-#     covariates were fitted (section 3.1).  Stated.
-#   * AGE0 = 45 years: the median of the phase I data on which Vc/F's were
-#     fitted (section 3.1).  Stated.
-#   * BMI0 = 26 kg/m^2: ASSUMED.  The phase I tertiles were 24.2 and 28.0
-#     (Table 2); 26 is between them.  Within that span ka and Tlag change by
-#     at most 11%.
-#   * WT0 = 75 kg: ASSUMED, the weight at a BMI of 26 and the phase I
-#     population's height (63% men; Japanese, Indian and Western subjects).
-#     An error of 5 kg changes Vc/F and CL/F by 4%.
-#   * DOSE0: the median total daily dose of the pooled data, not stated.  The
-#     dose term is not applied (the model is at its reference dose for every
-#     dose); Table 6 puts the exposure at 300 mg a day 7% above that at 100
-#     mg (300 / 100)^0.0631 = 1.07).
+#   * WT0   = 75.8 kg (phase I; range 47.6 to 151)
+#   * AGE0  = 45 years (phase I; range 18 to 77)
+#   * BMI0  = 26.1 kg/m^2 (phase I; range 18.0 to 44.5)
+#   * eGFR0 = 87 mL/min/1.73 m^2 (pooled; range 9 to 194)
+#   * DOSE0: the median total daily dose of the pooled data, which neither
+#     the paper nor the supplement prints.  The dose term is not applied (the
+#     model is at its reference dose for every dose); the paper's Table 6 puts
+#     the exposure at 300 mg a day 7% above that at 100 mg ((300 / 100)^0.0631
+#     = 1.07).
 #
-# The supplement (ESM 1, 40262_2015_307_MOESM1_ESM) would replace the
-# assumed values.
+# ESM 1 (40262_2015_307_MOESM1_ESM, the response to a regulator) confirms the
+# parameterisation: CL/F = ke x Vc/F, so the weight, sex and age effects on
+# Vc/F act on CL/F too.
 #
 # NOT APPLIED.  UGT1A9*3 carriers (1% of subjects, 26% higher AUC) were not
 # kept in the final model; no field exists.  The dose term, above.
@@ -76,8 +74,9 @@
 # BODY SIZE: the model's own weight covariate on Vc/F (and so on CL/F and the
 # distribution), evaluated at the pharmacokinetic weight with the switch on and
 # at total weight with it off.  BMI acts on the absorption, not on the size,
-# and is the patient's own (total weight / height^2) in both positions.  Age
-# is held at 18 or over: every study enrolled adults.
+# and is the patient's own (total weight / height^2) in both positions, held
+# within the phase I range (18.0 to 44.5) where its steep exponent was
+# fitted.  Age is held at 18 or over: every study enrolled adults.
 #
 # CHECKS
 # ======
@@ -89,7 +88,7 @@
 # 10.6 and 13.1 h at 100 and 300 mg are non-compartmental, from the first
 # days after a dose.  300 mg once daily at steady state, averaged over a
 # 60-year-old man and woman of 90 and 78 kg with eGFR 80: AUC over a day
-# 23,200 ng.h/mL (paper: 24,941 for its typical patient with type 2
+# 23,300 ng.h/mL (paper: 24,941 for its typical patient with type 2
 # diabetes).  See tests/testthat/test-drugs-canagliflozin.R.
 #
 # References
@@ -100,8 +99,9 @@
 
 CANAGLIFLOZIN_EGFR_REF   <- 87    # mL/min/1.73 m^2, pooled median (stated)
 CANAGLIFLOZIN_AGE_REF    <- 45    # years, phase I median (stated)
-CANAGLIFLOZIN_BMI_REF    <- 26    # kg/m^2, assumed; see the header
-CANAGLIFLOZIN_WEIGHT_REF <- 75    # kg, assumed; see the header
+CANAGLIFLOZIN_BMI_REF    <- 26.1  # kg/m^2, phase I median (ESM 2)
+CANAGLIFLOZIN_WEIGHT_REF <- 75.8  # kg, phase I median (ESM 2)
+CANAGLIFLOZIN_BMI_RANGE  <- c(18.0, 44.5)   # kg/m^2, phase I
 
 #' Canagliflozin pharmacokinetics (oral)
 #'
@@ -119,6 +119,7 @@ canagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   pkW  <- if (isTRUE(adjustToFFM))
     pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
   bmi  <- weight / (height / 100)^2
+  bmi  <- min(max(bmi, CANAGLIFLOZIN_BMI_RANGE[1]), CANAGLIFLOZIN_BMI_RANGE[2])
   egfr <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
 
   vc <- (if (sex == SEX_FEMALE) 82.6 else 99.3) *
@@ -146,11 +147,11 @@ canagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     zeroOrderPO = list(duration = 0.604 * 60),
     reference = paste0(
       "Hoeben 2016 (1616 healthy volunteers and patients with type 2 diabetes): two ",
-      "compartments, Vc/F 99.3 L (men) or 82.6 L (women) x (weight/75)^0.583 x ",
+      "compartments, Vc/F 99.3 L (men) or 82.6 L (women) x (weight/75.8)^0.583 x ",
       "(age/45)^-0.167, ke 0.145/h x (MDRD eGFR/87)^0.261 from the entered or an ",
       "assumed normal creatinine, k23 0.101/h, k32 0.0856/h; lag 0.147 h, release ",
-      "into the gut over 0.604 h, ka 3.68/h, BMI on ka and lag; reference weight and ",
-      "BMI assumed, dose term not applied; concentration only. ",
+      "into the gut over 0.604 h, ka 3.68/h x (BMI/26.1)^-1.41 and lag x (BMI/26.1)^1.41; ",
+      "dose term not applied (its reference dose is not printed); concentration only. ",
       "https://doi.org/10.1007/s40262-015-0307-x"
     )
   )
