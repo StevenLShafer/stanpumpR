@@ -130,8 +130,11 @@ PSILOCYBIN_V_F  <- PSILOCYBIN_V_F_SRC  / PSILOCIN_PER_PSILOCYBIN       # L
 #' @param age patient age (years)
 #' @param sex \code{"male"} or \code{"female"}
 #' @param adjustToFFM scale to the Al-Sallami fat-free mass; when \code{FALSE},
-#'   use the published parameters unscaled (the source fitted no size
-#'   covariate)
+#'   apply no size scaling at all (the source fitted no size covariate).  It
+#'   does not restore the source's published numbers: the apparent parameters
+#'   carry the psilocybin dose basis either way, so they are 623.4 L and
+#'   239.3 L/h rather than Holze's 448 L and 172 L/h on his psilocin-equivalent
+#'   basis (see the header)
 #' @returns a list in the shape \code{getDrugPK()} expects; free plasma
 #'   psilocin after an oral psilocybin dose, no effect site (see the header)
 #' @export

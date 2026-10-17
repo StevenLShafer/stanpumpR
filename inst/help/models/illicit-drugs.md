@@ -51,4 +51,6 @@ Models for several further drugs were specified but not implemented, each for a 
 
 ### Reading these curves
 
-Read them as exposure, within the studied population, route, formulation and dose range, and nothing else. Where a number in a source is an anchor rather than a model — a bioavailability with no absorption rate, a peak time with no rate constant — stanpumpR's rule is to record it and refuse the route, rather than to fill the gap with an assumption that would look exactly like evidence on the plot.
+Read them as exposure, within the studied population, route, formulation and dose range, and nothing else.
+
+Where a number in a source is an anchor rather than a model, stanpumpR's rule turns on whether the anchor **identifies** what is missing. A peak time does, once the model is chosen and its disposition is fixed: in a one-compartment model with a known elimination rate, the time of the peak determines the absorption rate uniquely, which is how methamphetamine's intranasal route is offered. A bioavailability with no absorption rate does not, and neither does a peak time measured on a different formulation from the one being simulated. Where the anchor does not identify the missing parameter, the rule is to record it and refuse the route, rather than to fill the gap with an assumption that would look exactly like evidence on the plot. Either way the registry says which it was, and a derived parameter is marked `derived_approximation` rather than a published fit.

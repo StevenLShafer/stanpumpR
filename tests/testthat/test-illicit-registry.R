@@ -26,7 +26,13 @@ OFFERABLE_PARAMETER_STATUS <- c("published_fit", "measured_summary",
 
 test_that("every row is fully classified, with a source", {
   for (col in names(registry))
+  {
+    # nzchar(NA) is TRUE, so a missing field would pass the test below:
+    # read.csv turns an empty field into NA, and that is exactly the
+    # incompleteness this test exists to catch.
+    expect_false(anyNA(registry[[col]]), info = col)
     expect_true(all(nzchar(registry[[col]])), info = col)
+  }
   expect_true(all(registry$route_status %in% ROUTE_STATUS))
   expect_true(all(registry$parameter_status %in% PARAMETER_STATUS))
   expect_true(all(registry$offered %in% c("yes", "no")))
