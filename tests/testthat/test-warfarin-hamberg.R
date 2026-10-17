@@ -111,6 +111,14 @@ test_that("recalculatePK builds the Hamberg companion only when its group is on"
   # The Minto / Schnider box does not build a warfarin companion.
   other <- do.call(recalculatePK, c(common, list(alternativeModels = "mintoSchnider")))
   expect_false("warfarin (Hamberg)" %in% names(other))
+  # With the box on but warfarin absent from the dose table, no companion is
+  # built -- which is what the export's "Hamberg model shown" reads, so a
+  # ticked-but-disabled box does not claim a line that is not drawn.
+  noWarf <- utils::modifyList(common, list(
+    doseTable = data.frame(Drug = "propofol", Time = 0, Dose = 2, Units = "mg/kg",
+                           stringsAsFactors = FALSE)))
+  none <- do.call(recalculatePK, c(noWarf, list(alternativeModels = "hamberg")))
+  expect_false(any(vapply(none, isAlternativeModelEntry, logical(1))))
 })
 
 test_that("the simulated INR starts at the baseline, rises, and has no effect site", {

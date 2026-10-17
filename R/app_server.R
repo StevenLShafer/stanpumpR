@@ -748,6 +748,18 @@ app_server <- function(input, output, session) {
     if (hamberg()) "hamberg"
   ))
 
+  # The companion groups actually drawn, as opposed to merely switched on: a
+  # group counts only when a companion entry for one of its drugs was built (the
+  # box is on, a group drug is dosed, and the model is defined for the patient).
+  # The export reports this, so a ticked-but-disabled box -- left checked after
+  # its drug was removed -- does not claim a line that is not on the plot.
+  companionGroupsShown <- reactive({
+    entries <- tryCatch(Filter(isAlternativeModelEntry, drugs()),
+                        error = function(e) list())
+    unique(vapply(entries, function(e) companionModelGroup(e$companionOf),
+                  character(1)))
+  })
+
   # The companion entries of a drug in the current simulation (none unless
   # the switch is on and the drug has an alternative model)
   companionsOf <- function(drug) {
@@ -1322,8 +1334,10 @@ app_server <- function(input, output, session) {
         cyp2c9 = input$cyp2c9,
         vkorc1 = input$vkorc1,
         cyp2b6 = input$cyp2b6,
-        mintoSchnider = mintoSchnider(),
-        hamberg = hamberg(),
+        # Whether each companion model was actually drawn, not just its box
+        # ticked (companionGroupsShown()).
+        mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),
+        hamberg = "hamberg" %in% companionGroupsShown(),
         # The workbook's times stay in minutes; these add the display unit
         # beside them and say what the plot showed (sendSlide.R).
         timeUnit = timeUnit(),
