@@ -305,7 +305,7 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
   for (i in seq_len(nrow(dd))) {
     units <- dd$Units[[i]]
     units <- units[!is.na(units) & nzchar(units)]
-    units <- unique(sub(" (qd|bid|tid|qid)$", "", units))
+    units <- unique(sub(" (qd|bid|tid|qid|qwk)$", "", units))
     route <- doseRoute(units)
     if (!any(route %in% names(column))) next
     title <- helpDrugTitle(dd$Drug[i])
@@ -324,6 +324,7 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
   expect_match(cellOf("gabapentin", "PO"), "saturable absorption", fixed = TRUE)
   expect_match(cellOf("amiodarone", "PO"), "constant daily rate", fixed = TRUE)
   expect_false(grepl("saturable", cellOf("oxycodone", "PO"), fixed = TRUE))
+  expect_match(cellOf("insulinLispro", "SC"), "insulin pump", fixed = TRUE)
 })
 
 # The Cautions page tells the user which drugs each Patient Profile field

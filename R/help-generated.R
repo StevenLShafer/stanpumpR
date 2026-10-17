@@ -58,7 +58,7 @@ helpExpandGenerated <- function(text, drugDefaults = getDrugDefaultsGlobal()) {
 #' @param drugDefaults the drug library
 #' @returns a list with one element per such drug, in library order: a list of
 #'   `drug`, `iv` (TRUE when the drug is also given intravenously) and, named
-#'   PO, SL, IM, IN and RA, a list of `units` (empty when the route is not offered) and
+#'   PO, SL, IM, IN, SC and RA, a list of `units` (empty when the route is not offered) and
 #'   `notes`
 #' @noRd
 helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
@@ -83,6 +83,7 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
       list(units = u,
            notes = c(if (any(isRateUnit(u)))
                        if (r == ROUTE_RA) "continuous infusion into the depot"
+                       else if (r == ROUTE_SC) "insulin pump: continuous infusion into the depot"
                        else "constant daily rate, no depot",
                      if (length(u) > 0) notes[[r]]))
     })
@@ -264,9 +265,7 @@ helpIllicitPKTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
     # One absorption constant per extravascular route the drug offers.  Keep
     # this in step with DOSE_ROUTES: a route missing here reads as no
     # absorption at all rather than as an error.
-    kaOf <- function(r) switch(r, PO = set$ka_PO, SL = set$ka_SL, IN = set$ka_IN,
-                               IM = set$ka_IM, SC = set$ka_SC, RA = set$ka_RA,
-                               NULL)
+    kaOf <- function(r) set[[routeKaField(r)]]
     kas <- unlist(lapply(route, kaOf))
     kas <- kas[!is.na(kas) & kas > 0]
     routes <- paste(route, collapse = ", ")

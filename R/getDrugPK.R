@@ -186,6 +186,23 @@ getDrugPK <- function(
   # and never reaches here -- still fails with R's own "could not find
   # function", which is what test-gas-routing.R pins.
   X <- if (is.null(model)) do.call(drug, covariates) else model
+  # A subcutaneous model writes its absorption as ka_SC and the rest; the
+  # engines carry it on the tissue-depot (RA) fields.  See R/subcutaneous.R.
+  tissueRoute <- modelTissueRoute(X$PK)
+  # Exenatide's subcutaneous absorption is in its Michaelis-Menten block.
+  if (!is.null(X$michaelisMenten$saturableSC)) tissueRoute <- ROUTE_SC
+  X$PK <- lapply(X$PK, subcutaneousToTissueDepot, drug = drug)
+  # An oral dose released at a constant rate into the gut before it is
+  # absorbed (canagliflozin, Hoeben 2016): carried on the tissue depot, whose
+  # zero-order release into the depot is already exact.  See
+  # oralReleaseToTissueDepot() in R/subcutaneous.R.
+  zeroOrderPO <- validateZeroOrderPO(X$zeroOrderPO, X, drug)
+  if (!is.null(zeroOrderPO))
+  {
+    X$PK <- lapply(X$PK, oralReleaseToTissueDepot)
+    X$zeroOrderSC <- list(fraction = 1, duration = zeroOrderPO$duration, into = "depot")
+  }
+  zeroOrderSC <- validateZeroOrderSC(X$zeroOrderSC, X$PK, drug)
 
   # Zero-order oral release (carvedilol, R/oral-zero-order.R): validated and
   # its incompatibilities refused up front, before the absorption checks
@@ -340,18 +357,6 @@ getDrugPK <- function(
       tlag_SL <- if (is.null(X$PK[[event]]$tlag_SL)) 0 else X$PK[[event]]$tlag_SL
     }
 
-    # Set up PK for subcutaneous delivery, exactly as the routes above
-    if (is.null(X$PK[[event]]$ka_SC))
-    {
-      ka_SC <- 0
-      bioavailability_SC <- 0
-      tlag_SC <- 0
-    } else {
-      ka_SC <- X$PK[[event]]$ka_SC
-      bioavailability_SC <- if (is.null(X$PK[[event]]$bioavailability_SC)) 1 else X$PK[[event]]$bioavailability_SC
-      tlag_SC <- if (is.null(X$PK[[event]]$tlag_SC)) 0 else X$PK[[event]]$tlag_SC
-    }
-
     # Set up PK for regional anesthesia (RA): a local anesthetic injected into
     # tissue and absorbed first-order into the systemic circulation.
     if (is.null(X$PK[[event]]$ka_RA))
@@ -396,7 +401,25 @@ getDrugPK <- function(
       ka_RAslow <- X$PK[[event]]$ka_RA_slow
       bioavailability_RAslow <- bioavailability_RA * slow
       bioavailability_RA <- bioavailability_RA * (1 - slow)
-      tlag_RAslow <- tlag_RA
+      # The slow depot's own lag, when it has one (a premixed insulin whose
+      # two components are absorbed with different lags); otherwise the fast
+      # depot's.
+      tlag_RAslow <- if (is.null(X$PK[[event]]$tlag_RA_slow)) tlag_RA else
+        X$PK[[event]]$tlag_RA_slow
+      if (!is_valid_number(tlag_RAslow, 0, Inf))
+        stop("Invalid slow tissue depot lag for ", drug, ".")
+    }
+
+    # A zero-order share of each subcutaneous dose that enters the
+    # circulation directly (R/subcutaneous.R): the depots get the rest of the
+    # dose, and simCpCe() adds the share as a rate into the central
+    # compartment.
+    if (!is.null(zeroOrderSC) && zeroOrderSC$into == "central")
+    {
+      zeroOrderSC$share <- bioavailability_RA + bioavailability_RAslow
+      bioavailability_RA     <- bioavailability_RA     * (1 - zeroOrderSC$fraction)
+      bioavailability_RAslow <- bioavailability_RAslow * (1 - zeroOrderSC$fraction)
+      zeroOrderSC$share <- zeroOrderSC$share * zeroOrderSC$fraction
     }
 
     # An optional second oral depot (parallel first-order absorption with a
@@ -513,18 +536,6 @@ getDrugPK <- function(
     e_coef_SL_ke0 <- 0
     e_coef_SL_ka  <- 0
 
-    # SC Delivery
-    p_coef_SC_l1  <- 0
-    p_coef_SC_l2  <- 0
-    p_coef_SC_l3  <- 0
-    p_coef_SC_ka  <- 0
-
-    e_coef_SC_l1  <- 0
-    e_coef_SC_l2  <- 0
-    e_coef_SC_l3  <- 0
-    e_coef_SC_ke0 <- 0
-    e_coef_SC_ka  <- 0
-
     # RA Delivery
     p_coef_RA_l1  <- 0
     p_coef_RA_l2  <- 0
@@ -610,7 +621,6 @@ getDrugPK <- function(
     ka_IM     <- separateEigenvalues(ka_IM,     lambdas)
     ka_IN     <- separateEigenvalues(ka_IN,     lambdas)
     ka_SL     <- separateEigenvalues(ka_SL,     lambdas)
-    ka_SC     <- separateEigenvalues(ka_SC,     lambdas)
     ka_RA     <- separateEigenvalues(ka_RA,     lambdas)
     ka_RAslow <- separateEigenvalues(ka_RAslow, lambdas)
 
@@ -673,7 +683,6 @@ getDrugPK <- function(
       ka_IM     <- separateEigenvalues(ka_IM,     ke0)
       ka_IN     <- separateEigenvalues(ka_IN,     ke0)
       ka_SL     <- separateEigenvalues(ka_SL,     ke0)
-      ka_SC     <- separateEigenvalues(ka_SC,     ke0)
       ka_RA     <- separateEigenvalues(ka_RA,     ke0)
       ka_RAslow <- separateEigenvalues(ka_RAslow, ke0)
 
@@ -759,20 +768,6 @@ getDrugPK <- function(
       e_coef_SL_l3  <- e_coef_bolus_l3 / (ka_SL - lambda_3) * ka_SL * bioavailability_SL
       e_coef_SL_ke0 <- e_coef_bolus_ke0 / (ka_SL - ke0) *     ka_SL * bioavailability_SL
       e_coef_SL_ka  <- - e_coef_SL_l1 - e_coef_SL_l2 - e_coef_SL_l3 - e_coef_SL_ke0
-    }
-
-    if (ka_SC > 0)
-    {
-      p_coef_SC_l1  <- p_coef_bolus_l1 / (ka_SC - lambda_1) * ka_SC * bioavailability_SC
-      p_coef_SC_l2  <- p_coef_bolus_l2 / (ka_SC - lambda_2) * ka_SC * bioavailability_SC
-      p_coef_SC_l3  <- p_coef_bolus_l3 / (ka_SC - lambda_3) * ka_SC * bioavailability_SC
-      p_coef_SC_ka  <- - p_coef_SC_l1 - p_coef_SC_l2 - p_coef_SC_l3
-
-      e_coef_SC_l1  <- e_coef_bolus_l1 / (ka_SC - lambda_1) * ka_SC * bioavailability_SC
-      e_coef_SC_l2  <- e_coef_bolus_l2 / (ka_SC - lambda_2) * ka_SC * bioavailability_SC
-      e_coef_SC_l3  <- e_coef_bolus_l3 / (ka_SC - lambda_3) * ka_SC * bioavailability_SC
-      e_coef_SC_ke0 <- e_coef_bolus_ke0 / (ka_SC - ke0) *     ka_SC * bioavailability_SC
-      e_coef_SC_ka  <- - e_coef_SC_l1 - e_coef_SC_l2 - e_coef_SC_l3 - e_coef_SC_ke0
     }
 
     if (ka_RA > 0)
@@ -862,10 +857,6 @@ getDrugPK <- function(
         bioavailability_SL = bioavailability_SL,
         tlag_SL = tlag_SL,
 
-        ka_SC = ka_SC,
-        bioavailability_SC = bioavailability_SC,
-        tlag_SC = tlag_SC,
-
         ka_RA = ka_RA,
         bioavailability_RA = bioavailability_RA,
         tlag_RA = tlag_RA,
@@ -953,18 +944,6 @@ getDrugPK <- function(
         e_coef_SL_l3 = e_coef_SL_l3,
         e_coef_SL_ke0 = e_coef_SL_ke0,
         e_coef_SL_ka = e_coef_SL_ka,
-
-        # SC Coefficients
-        p_coef_SC_l1 = p_coef_SC_l1,
-        p_coef_SC_l2 = p_coef_SC_l2,
-        p_coef_SC_l3 = p_coef_SC_l3,
-        p_coef_SC_ka = p_coef_SC_ka,
-
-        e_coef_SC_l1 = e_coef_SC_l1,
-        e_coef_SC_l2 = e_coef_SC_l2,
-        e_coef_SC_l3 = e_coef_SC_l3,
-        e_coef_SC_ke0 = e_coef_SC_ke0,
-        e_coef_SC_ka = e_coef_SC_ka,
 
         # RA Coefficients
         p_coef_RA_l1 = p_coef_RA_l1,
@@ -1197,6 +1176,30 @@ getDrugPK <- function(
   # A pulsed extended-release formulation (Adderall XR): the fractions and
   # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
   out$oralPulses <- validateOralPulses(X$oralPulses, drug)
+  # Which route the tissue depot carries, subcutaneous or regional
+  # anesthesia, for the help; and the zero-order share of each SC dose, with
+  # the fraction of the dose it delivers (`share`: F x fraction into the
+  # circulation, the whole dose into the depot), which simCpCe() adds as a
+  # rate.  See R/subcutaneous.R.
+  out$tissueRoute <- tissueRoute
+  if (!is.null(zeroOrderSC) && zeroOrderSC$into == "depot") zeroOrderSC$share <- 1
+  out$zeroOrderSC <- zeroOrderSC
+  # TRUE when that release takes the oral doses (simCpCe() moves them onto
+  # the tissue depot); absent otherwise, so every other drug's PK is as it was.
+  if (!is.null(zeroOrderPO)) out$zeroOrderPO <- TRUE
+  # Dose covariates, a property of each injection (the Tham insulins,
+  # R/insulinTham.R): a bioavailability that scales each SC dose by its own
+  # size, and, for a model whose disposition or ka depends on the dose, the
+  # covariates simCpCe() needs to rebuild the PK for each dose size
+  # (doseSizePK()).
+  out$scDoseBioavailability <- validateDoseBioavailability(X$scDoseBioavailability, drug)
+  if (isTRUE(X$doseDependent))
+  {
+    if (!"dose" %in% names(formals(get(drug, mode = "function"))))
+      stop("Invalid model for ", drug, ": doseDependent needs a dose argument.")
+    out$doseDependent <- TRUE
+    out$covariates <- covariates
+  }
 
   # Zero-order oral release (carvedilol): the dose enters at a constant rate
   # over a fitted duration after a lag, which simCpCe() turns into the rate
@@ -1205,6 +1208,43 @@ getDrugPK <- function(
   # zero-order release leaves no row flagged PO for those paths to act on.
   out$oralZeroOrder <- zeroOrder
   return(out)
+}
+
+#' Check a model's dose-dependent SC bioavailability block
+#'
+#' Each SC dose is scaled by (amount / reference)^power, the amount in the
+#' drug's dose unit (U for an insulin) held within `range` when given.
+#'
+#' @param x the block, or NULL
+#' @param drug the drug's name, for the error message
+#' @returns `x`, if valid
+#' @keywords internal
+validateDoseBioavailability <- function(x, drug)
+{
+  if (is.null(x)) return(NULL)
+  ok <- is.list(x) && is_valid_number(x$reference) && x$reference > 0 &&
+    is_valid_number(x$power) &&
+    (is.null(x$range) || (is.numeric(x$range) && length(x$range) == 2 &&
+                            all(x$range > 0) && x$range[1] <= x$range[2]))
+  if (!ok)
+    stop("Invalid scDoseBioavailability for ", drug, ": needs a positive ",
+         "reference, a power, and optionally a positive range.")
+  x
+}
+
+#' The PK of a dose-dependent drug for one dose size
+#'
+#' Re-evaluates the drug's model with `dose` and processes it as
+#' getDrugPK() does, with the patient's covariates as recorded on `PK`.
+#'
+#' @param PK the drug's PK from getDrugPK(), with `doseDependent`
+#' @param dose units of one injection
+#' @returns the PK for that dose
+#' @keywords internal
+doseSizePK <- function(PK, dose)
+{
+  X <- do.call(PK$drug, c(PK$covariates, list(dose = dose)))
+  do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates, list(model = X)))
 }
 
 #' Check the share of each dose a parallel system receives
