@@ -14,7 +14,7 @@ Douglas Eleveld built general-purpose models of both drugs from that pool: propo
 
 ## Where the original models fail
 
-The Schnider and Minto models take body size from the James lean body mass (1976):
+The Schnider and Minto models take body size from the James lean body mass (1976), with weight and lean body mass in kg and height in cm:
 
 ```
 men:   LBM = 1.10 weight - 128 (weight/height)²
