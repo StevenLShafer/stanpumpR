@@ -97,6 +97,19 @@ test_that("renal clearance follows the paper's own ladder", {
   normal <- refPK()$PK[[PK_EVENT_DEFAULT]]$cl1 * 60
   expect_gt(normal / anuric, 5.5)
   expect_lt(normal / anuric, 6.5)
+
+  # TWO RANGES THAT ARE EASY TO CONFUSE, pinned because a help page did
+  # confuse them (CodeRabbit on PR #532).  The sixfold figure above is this
+  # program's own range, from an assumed normal creatinine to the highest
+  # value the Patient Profile accepts.  Across the range the PAPER tabulates,
+  # 120 down to 30 mL/min, total clearance falls only about FOURfold, because
+  # the non-renal floor does not move; it is the RENAL term that falls almost
+  # sevenfold there.  Any text quoting one of these numbers has to say which.
+  totalAt <- function(crcl)
+    refPK(creatinine = (140 - 50) * 70 / (72 * crcl))$PK[[PK_EVENT_DEFAULT]]$cl1 * 60
+  renalAt <- function(crcl) HCTZ_CL_R * (crcl / HCTZ_CRCL_REF)^HCTZ_CL_R_EXP
+  expect_lt(abs(totalAt(120) / totalAt(30) - 4.03), 0.05)
+  expect_lt(abs(renalAt(120) / renalAt(30) - 6.77), 0.05)
 })
 
 test_that("a blank creatinine is an assumed normal value, not impairment", {

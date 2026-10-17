@@ -31,7 +31,9 @@ non-renal part that depends on nothing:
 
 Creatinine clearance is Cockcroft-Gault, the estimator the paper used, taken
 from the **Serum creatinine** field in the Patient Profile. Across the
-paper's own ladder that is a sevenfold range:
+paper's own ladder the renal term falls almost sevenfold — and *total*
+clearance, which is what sets the half-life, falls about fourfold, because
+the non-renal 2.44 L/h does not move:
 
 | Creatinine clearance | Renal CL/F | Terminal half-life |
 |---|---|---|

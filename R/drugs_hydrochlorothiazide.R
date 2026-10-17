@@ -129,10 +129,13 @@
 # since Cockcroft-Gault was fitted in adults.  A BLANK creatinine field is an
 # assumed normal value for the patient's age and sex, so renal impairment is
 # then NOT represented -- and for this drug that matters more than for most,
-# because renal function is the only covariate it has: the paper's clearance
-# ladder runs 18.3, 10.5, 5.47 and 2.70 L/h at creatinine clearances of 120,
-# 80, 50 and 30 mL/min, a sevenfold range, and the terminal half-life rises
-# from 14.8 h to 29 and 42 h in moderate and severe impairment.
+# because renal function is the only covariate it has: the paper's RENAL
+# clearance ladder runs 18.3, 10.5, 5.47 and 2.70 L/h at creatinine clearances
+# of 120, 80, 50 and 30 mL/min, an almost sevenfold range.  TOTAL clearance
+# over that same range falls about fourfold only, 20.7 to 5.14 L/h, because
+# the non-renal 2.44 L/h does not move -- the two ratios are easy to confuse
+# and only the second sets the half-life, which rises from 14.8 h to 29 and
+# 42 h in moderate and severe impairment.
 #
 # Non-renal clearance is a constant with no covariate, and is the floor: even
 # at an anuric creatinine clearance the drug still clears at 2.44 L/h.
