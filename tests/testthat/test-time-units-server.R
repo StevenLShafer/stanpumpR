@@ -86,18 +86,19 @@ withTimes <- function(...) {
   dt
 }
 
-test_that("the Time panel's header follows the selectors and the procedure start", {
+test_that("the Time panel's header follows the selectors", {
   shiny::testServer(app_server, {
     sent <- recordMessages(session)
     startApp(session)
-    expect_equal(output$timeSummary, "(minutes, actual time from 08:00)")
+    expect_equal(output$timeSummary, "(minutes, Actual time)")
+    # the procedure start is not part of the header
     session$setInputs(referenceTime = "09:30")
-    expect_equal(output$timeSummary, "(minutes, actual time from 09:30)")
+    expect_equal(output$timeSummary, "(minutes, Actual time)")
     session$setInputs(timeMode = "relative")
-    expect_equal(output$timeSummary, "(minutes, elapsed time)")
+    expect_equal(output$timeSummary, "(minutes, Elapsed time)")
     session$setInputs(timeUnits = "days")
     echo(session, sent)
-    expect_equal(output$timeSummary, "(days, elapsed time)")
+    expect_equal(output$timeSummary, "(days, Elapsed time)")
   })
 })
 
@@ -504,6 +505,54 @@ test_that("the Add new drug button opens the add-dose dialog on an unused drug a
     session$setInputs(addNewDrug = 2)
     modal <- sent$modals[[length(sent$modals)]]
     expect_match(as.character(modal$message$html), 'id="addDoseTime"[^>]*value="08:00"')
+  })
+})
+
+# A drug with TCI target units enters a concentration in the dose field when
+# a target unit is chosen, so its dialogs say "Dose or Target"; the table's
+# column is headed "Dose/Target" for every drug, over the data column "Dose"
+test_that("the dose field is labelled Dose or Target for a drug with TCI units", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    doseTable(withTimes("0"))
+    session$flushReact()
+    expect_equal(doseFieldLabel("propofol"), "Dose or Target")
+    expect_equal(doseFieldLabel("rocuronium"), "Dose")
+
+    showAddDrugModal("propofol", 0)
+    html <- as.character(sent$modals[[length(sent$modals)]]$message$html)
+    expect_match(html, "Dose or Target")
+    showAddDrugModal("rocuronium", 0)
+    html <- as.character(sent$modals[[length(sent$modals)]]$message$html)
+    expect_false(grepl("Dose or Target", html, fixed = TRUE))
+    # changing the drug in the dialog relabels the field (a newer shiny sends
+    # the label as rendered HTML, an older one as the string)
+    sentLabel <- function() {
+      label <- lastSent(sent, "addDoseAmount")$label
+      if (is.list(label)) label <- label$html
+      as.character(label)
+    }
+    session$setInputs(addDoseDrug = "propofol")
+    expect_equal(sentLabel(), "Dose or Target")
+    session$setInputs(addDoseDrug = "rocuronium")
+    expect_equal(sentLabel(), "Dose")
+
+    # the dose table's grid: display header over the unchanged data column
+    hot <- createHOT(doseTable(), drugDefaults(), doseTableFormat())
+    expect_equal(hot$x$colHeaders, c("Drug", "Time", DOSE_COLUMN_HEADER, "Units"))
+    expect_equal(unlist(hot$x$rColHeaders), c("Drug", "Time", "Dose", "Units"))
+
+    # the Edit doses dialog's grid (an output is computed at a flush, and is
+    # the widget's JSON here)
+    editHeaders <- function() {
+      session$flushReact()
+      jsonlite::fromJSON(output$editPriorDosesTable)$x$colHeaders
+    }
+    DrugTimeUnits(list(drug = "propofol"))
+    expect_equal(editHeaders(), c("Delete", "Time", "Dose or Target", "Units"))
+    DrugTimeUnits(list(drug = "rocuronium"))
+    expect_equal(editHeaders(), c("Delete", "Time", "Dose", "Units"))
   })
 })
 

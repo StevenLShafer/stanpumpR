@@ -4,7 +4,7 @@ Røge and colleagues' integrated analysis of 29 adults with type 2 diabetes (*CP
 
 ### Routes
 
-Subcutaneous, `mg SC` and once daily `mg SC qd`. Watson and colleagues' pooled model (2010), with a sequential zero- and first-order absorption, is held in the registry until its parameters are transcribed.
+Subcutaneous, `mg SC` and once daily `mg SC qd`. Watson and colleagues' pooled model (2010), with a sequential zero- and first-order absorption, is a separate drug: [liraglutide (Watson)](help:drugs/liraglutideWatson). The two models are not mixed.
 
 ### Renal impairment
 

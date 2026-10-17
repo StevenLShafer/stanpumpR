@@ -28,7 +28,7 @@ Several of the recently added opioids carry parameters that are explicitly provi
 
 ## Illicit-drug models are research estimates
 
-The research models of drugs of abuse (diamorphine, cocaine, methamphetamine, LSD, psilocybin and MDMA) are hidden until **Show illicit drugs** above the dose table is ticked. Their curves are plasma-exposure estimates for research and teaching, not dosing advice or safety thresholds. Each is plasma only, with no effect site, and each offers only the routes whose input model the human evidence identifies. See [Research models of drugs of abuse](help:models/illicit-drugs).
+The research models of drugs of abuse (diamorphine, cocaine, methamphetamine, LSD, psilocybin and MDMA) are hidden until **Show illicit drugs**, in the *Dose table* panel of the left sidebar, is ticked. Their curves are plasma-exposure estimates for research and teaching, not dosing advice or safety thresholds. Each is plasma only, with no effect site, and each offers only the routes whose input model the human evidence identifies. See [Research models of drugs of abuse](help:models/illicit-drugs).
 
 ## The shaded band is orientation, not a target
 

@@ -1,4 +1,4 @@
-**Suggest Dosing**, the link in the header of the dose table, works backwards: you say what effect-site concentration you want and when, and it finds doses that get you there.
+**Suggest Dosing**, the link in the *Dose table* panel of the left sidebar, works backwards: you say what effect-site concentration you want and when, and it finds doses that get you there.
 
 ## Using it
 

@@ -71,6 +71,11 @@ createHOT <- function(doseTable, drugDefaults, timeFormat = NULL, drugChoices = 
       allowInvalid = FALSE
     )
 
+  # The header shown for the Dose column (DOSE_COLUMN_HEADER); set after
+  # hot_col(), which finds columns by header, and apart from rColHeaders,
+  # which hot_to_r() names the columns by.
+  HOT$x$colHeaders[HOT$x$colHeaders == "Dose"] <- DOSE_COLUMN_HEADER
+
   if (!is.null(timeFormat)) HOT$x$timeFormat <- timeFormatString(timeFormat)
 
   # Disable context menu options that aren't relevant
