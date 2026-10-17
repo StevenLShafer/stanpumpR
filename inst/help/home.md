@@ -14,7 +14,7 @@ stanpumpR predicts drug concentrations. You describe a patient and a dosing regi
 | Region | What it does | Help page |
 |---|---|---|
 | Left sidebar | Patient covariates, graph options, additional plots, email | [Patient profile](help:patient-profile), [Graph options](help:graph-options) |
-| Plot | Predicted concentrations; hover, click and double-click act on it | [Reading the plot](help:reading-the-plot) |
+| Plot | Predicted concentrations; hover, click and double-click act on it; *Add new drug* below it | [Reading the plot](help:reading-the-plot) |
 | Dose table | Where you describe the regimen | [The dose table](help:dose-table) |
 | Time panel | Time units (minutes to weeks), elapsed or clock time; collapsed by default, click to open | [Time display](help:time-display) |
 | References | The citation for every drug being simulated | [Bibliography](help:references) |

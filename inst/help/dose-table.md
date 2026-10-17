@@ -70,7 +70,7 @@ Edits go into a **draft**. Nothing recalculates until you press **Apply Changes*
 
 **Undo** and **Redo** step through your edit history. The history is cleared whenever the table is set by another route, because there is then no earlier draft worth returning to.
 
-Three routes bypass the draft and apply at once: clicking the plot to add a dose, the *Edit doses* dialog opened by double-clicking a curve, and *Suggest Dosing*. Loading a teaching scenario from the help does the same.
+Four routes bypass the draft and apply at once: clicking the plot to add a dose, the *Add new drug* button under the plot (the same dialog, for a drug not yet in the table), the *Edit doses* dialog opened by double-clicking a curve, and *Suggest Dosing*. Loading a teaching scenario from the help does the same.
 
 ## Adding and removing rows
 

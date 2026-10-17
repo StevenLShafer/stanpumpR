@@ -48,6 +48,7 @@ bookmarksToExclude <- c(
   "clickEvent",
   "clickEvent-selectized",
   "addDoseBtn",
+  "addNewDrug",
   "addEventBtn",
   "addDoseTime",
   "clickTimeEvent",

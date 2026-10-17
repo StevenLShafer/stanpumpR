@@ -57,6 +57,7 @@ Each drug gets its own panel. The solid line is the **effect-site** concentratio
 
 - **Hover** for the exact concentration at any time.
 - **Click** to add a dose at that time (applied immediately).
+- **Add new drug** (the button at the lower left of the plot) to add a drug that is not yet plotted, without going to the dose table.
 - **Double-click** a drug's curve to edit or delete its doses.
 
 See [Reading the plot](help:reading-the-plot).
