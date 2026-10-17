@@ -78,6 +78,16 @@ registry <- rbind(
       "IV", "research_ready", "argatroban",
       "Full Table II final model read from the paper (CL = 22.0 + 0.018 x (WT-87), V1 11, V2 13, Q 10); PCI patients on a GP IIb/IIIa antagonist; no hepatic covariate (under-predicts in liver disease); ACT Emax not plotted.",
       "https://doi.org/10.1177/0091270004267651"),
+  reg("enox_berges_2007_elderly", "low molecular weight heparin",
+      "SC, elderly prophylaxis", "anti-Xa activity (IU/mL)", "none plotted",
+      "SC", "research_ready", "enoxaparin",
+      "Full Table 3 final model read from the paper (ka 0.63/h; CL 0.70 x (WT/65)^0.78 x (CLcr/69)^0.25; V2 6.43 x (WT/65)^1.25; Q 0.34; V3 8.18); subcutaneous anti-Xa in IU, simplified-MDRD CLcr; elderly (>75) prophylaxis population; apparent parameters.",
+      "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
+  reg("fonda_delavenne_2010", "factor Xa inhibitor (pentasaccharide)",
+      "SC, orthopedic prophylaxis", "fondaparinux (mg/L)", "none plotted",
+      "SC", "research_ready", "fondaparinux",
+      "Full Table 2 / Eqs 4-5 final model read from the paper (ka 0.716/h; Cl/F 0.278 x (WT/68)^0.534 x (CLcr/87)^0.532 x (Age/74)^-0.461; V2/F 8.14 x (WT/68)^0.522; Q/F 0.082; V3/F 15.6); subcutaneous, simplified-MDRD CLcr; post-orthopedic-surgery population; apparent parameters.",
+      "https://doi.org/10.1160/TH10-02-0127"),
 
   # --- Provisional (published, but a material gap) ---------------------------
   reg("ufh_delavenne_2017_cpb", "unfractionated heparin",
@@ -86,20 +96,10 @@ registry <- rbind(
       "Numeric PK and Emax/EC50 table not available from a verified publisher source; never combine with Jia anti-IIa.",
       "https://doi.org/10.1093/bja/aex044"),
   reg("enox_barras_2009", "low molecular weight heparin",
-      "SC, adult therapeutic", "anti-Xa activity (IU/mL)", "LMWH anti-Xa",
+      "SC, bleeding/bruising PD", "enoxaparin-induced bleeding/bruising", "PD (not plotted)",
       "SC", "pending", NA,
-      "Full-text parameter table (ka, CL/F renal+nonrenal coefficients, Q, V, LBW/CG form) not retrievable; needs an SC route and IU dosing.",
+      "A bleeding/bruising occurrence-and-severity PD model; the project's rule forbids plotting a bleeding probability, so it stays documentation-only (the enoxaparin PK curve is the Berges 2007 model).",
       "https://doi.org/10.1111/j.1365-2125.2009.03518.x"),
-  reg("enox_berges_2007_elderly", "low molecular weight heparin",
-      "SC, elderly prophylaxis", "anti-Xa activity (IU/mL)", "LMWH anti-Xa",
-      "SC", "pending", NA,
-      "PMC2048556 is Berges 2007 (PROPHRE.75), not Siguret; renal covariate is simplified MDRD, not CrCl; parameter table unread; needs an SC route.",
-      "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
-  reg("fonda_delavenne_2010", "factor Xa inhibitor (pentasaccharide)",
-      "SC, orthopedic prophylaxis", "fondaparinux (mg/L)", "drug-calibrated anti-Xa",
-      "SC", "pending", NA,
-      "Numeric table is in an author thesis; publisher Table 2 unconfirmed; weakly identified peripheral volume; needs an SC route.",
-      "https://doi.org/10.1160/TH10-02-0127"),
   reg("biva_label_pci", "direct thrombin inhibitor",
       "IV, PCI", "bivalirudin plasma", "ACT/ECT",
       "IV", "pending", NA,
@@ -183,6 +183,8 @@ XUE  <- "264 cardiac-surgery patients, Xue 2017"
 NIE  <- "4130 individuals (13 phase 1 + Hokusai-VTE), Niebecker 2015"
 LIE  <- "9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011"
 COX  <- "152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004"
+BER  <- "189 patients over 75 (PROPHRE.75), Berges 2007"
+DEL  <- "orthopaedic-surgery patients (GETHCAM/POP-A-RIX), Delavenne 2010"
 
 parameters <- rbind(
   par("heparin", "CL", 1.18, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
@@ -243,7 +245,19 @@ parameters <- rbind(
   par("argatroban", "V1", 11.0, "L", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
   par("argatroban", "V2", 13.0, "L", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
   par("argatroban", "Q", 10.0, "L/h", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
-  par("argatroban", "WT on CL", 0.018, "L/h per kg (linear, about 87 kg median)", "estimated", COX, "https://doi.org/10.1177/0091270004267651")
+  par("argatroban", "WT on CL", 0.018, "L/h per kg (linear, about 87 kg median)", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
+
+  par("enoxaparin", "ka", 0.63, "1/h (SC)", "estimated", BER, "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
+  par("enoxaparin", "CL", 0.70, "L/h (x (WT/65)^0.78 x (CLcr/69)^0.25)", "estimated", BER, "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
+  par("enoxaparin", "V2 (central)", 6.43, "L (x (WT/65)^1.25)", "estimated", BER, "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
+  par("enoxaparin", "Q", 0.34, "L/h", "fixed", BER, "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
+  par("enoxaparin", "V3 (peripheral)", 8.18, "L", "estimated", BER, "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
+
+  par("fondaparinux", "Ka", 0.716, "1/h (SC)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
+  par("fondaparinux", "Cl/F", 0.278, "L/h (x (WT/68)^0.534 x (CLcr/87)^0.532 x (Age/74)^-0.461)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
+  par("fondaparinux", "V2/F (central)", 8.14, "L (x (WT/68)^0.522)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
+  par("fondaparinux", "Q/F", 0.082, "L/h", "fixed", DEL, "https://doi.org/10.1160/TH10-02-0127"),
+  par("fondaparinux", "V3/F (peripheral)", 15.6, "L", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127")
 )
 
 utils::write.csv(registry,

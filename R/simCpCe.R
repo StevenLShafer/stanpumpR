@@ -363,6 +363,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IM <- route == ROUTE_IM & !rate
     dose$IN <- route == ROUTE_IN & !rate
     dose$SL <- route == ROUTE_SL & !rate
+    dose$SC <- route == ROUTE_SC & !rate
     dose$RA <- route == ROUTE_RA & !rate
     # A continuous perineural infusion ("mg/hr RA", raRateUnits): a rate into
     # the tissue depot, not into the vein.  Only advanceClosedFormPO_IM_IN()
@@ -471,7 +472,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         {
           results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
         } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) +
-                   sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
+                   sum(dose$SC) + sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
                    sum(dose$PO2) == 0)
         {
           results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)

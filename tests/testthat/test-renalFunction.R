@@ -138,3 +138,13 @@ test_that("CKD-EPI 2009 without the race term", {
   # De-indexing multiplies by BSA / 1.73
   expect_equal(egfrDeindexed(70, 170, 35, "male"), 141 * 0.993^35 * 1.809708 / 1.73, tolerance = 1e-5)
 })
+
+test_that("simplified MDRD eGFR (four-variable, non-black)", {
+  # 175 x Scr^-1.154 x age^-0.203 x 0.742 (female); race term omitted.
+  expect_equal(egfrMDRD(60, "male", 1.0), 175 * 1^-1.154 * 60^-0.203, tolerance = 1e-9)
+  expect_equal(egfrMDRD(60, "female", 1.0),
+               175 * 1^-1.154 * 60^-0.203 * 0.742, tolerance = 1e-9)
+  # Falls as creatinine rises and as age rises.
+  expect_gt(egfrMDRD(70, "male", 0.8), egfrMDRD(70, "male", 1.5))
+  expect_gt(egfrMDRD(50, "male", 1.0), egfrMDRD(85, "male", 1.0))
+})

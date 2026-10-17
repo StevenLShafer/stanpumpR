@@ -310,6 +310,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   route <- doseRoute(units)
   routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "sublingual",
               if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
+              if (ROUTE_SC %in% route) "subcutaneous",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
   intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits))
   tci <- any(units %in% tciUnits)
@@ -1015,13 +1016,15 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",
                 if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
+                if (ROUTE_SC %in% route) "SC",
                 if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else {
         # No intravenous unit: name the routes it does have
         route <- unique(doseRoute(units))
         paste(c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM", if (ROUTE_IN %in% route) "IN",
-                if (ROUTE_RA %in% route) "RA"), collapse = ", ")
+                if (ROUTE_RA %in% route) "RA", if (ROUTE_SC %in% route) "SC"),
+              collapse = ", ")
       }
     metabolite <- if (is.null(pk$metaboliteName)) "" else
       sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))

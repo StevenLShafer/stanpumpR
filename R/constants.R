@@ -21,11 +21,17 @@ ROUTE_SL <- "SL"
 # nerve block or a wound infiltration), absorbed first-order from the tissue
 # into the systemic circulation.
 ROUTE_RA <- "RA"
+# Subcutaneous: a drug injected under the skin and absorbed first-order into
+# the systemic circulation, exactly as the intramuscular route, with its own
+# ka_SC, bioavailability_SC and tlag_SC (the low-molecular-weight heparins and
+# fondaparinux).
+ROUTE_SC <- "SC"
 TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
 
 # Every route a dose can take, in the order the units dropdowns list them.  A
 # dose's route is carried by its Units string; see doseRoute() in R/routes.R.
-DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA)
+DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA,
+                 ROUTE_SC)
 
 # CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
 # genotyping laboratories report, rather than the three the UI carried before
@@ -219,9 +225,19 @@ calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
 # Shafer.)
 iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 
+# Subcutaneous units (ROUTE_SC): a single injection under the skin, absorbed
+# first-order through the drug's ka_SC.  Mass units for a drug plotted by mass
+# (fondaparinux, "mg SC"), and IU activity units for one plotted as anti-Xa
+# activity (enoxaparin, "IU SC"); the activity units start with "IU" so
+# simCpCe()'s international-unit check reads them, and carry no mass.  No
+# scheduled frequencies and no rate (these are single injections).  (Claude
+# Code, 2026-10-17, at the request of Steven L. Shafer.)
+scUnits   <- c("mg SC", "mg/kg SC", "mcg SC", "mcg/kg SC")
+iuScUnits <- c("IU SC", "IU/kg SC")
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
-              iuUnits)
+              iuUnits, scUnits, iuScUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
