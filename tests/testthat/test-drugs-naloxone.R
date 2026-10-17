@@ -112,7 +112,8 @@ test_that("a nasal dose is accepted and peaks within the first hour", {
   w <- o$naloxone$wide
   expect_gt(w$Time[which.max(w$Plasma)], 2)
   expect_lt(w$Time[which.max(w$Plasma)], 60)
-  # Narcan 4 mg: label peak about 4.8 ng/mL; this input is a little faster
+  # Narcan 4 mg: peak about 4.8 ng/mL (FDA clinical pharmacology review,
+  # NDA 208411, Table 2.4.1b); this input is a little faster
   expect_gt(max(w$Plasma), 3)
   expect_lt(max(w$Plasma), 10)
 })
