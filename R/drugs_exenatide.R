@@ -66,6 +66,15 @@
 # 38% lower (paper: 18% and 34%).  Twice daily, the third day's peak is 5%
 # above the first.  See tests/testthat/test-drugs-exenatide.R.
 #
+# SINGLE LOW DOSES, AN EXTERNAL CHECK.  Knop, Bronden and Vilsboll's review
+# (Expert Opin Pharmacother 2017;18:555-571, citing Kolterman 2005) gives
+# peaks of 56 and 85 pg/mL and AUCs of 159 and 340 pg.h/mL after 2.5 and 5
+# mcg, and a peak at about 2 h.  The model, 75 kg, eGFR 90: peaks of 65 and
+# 129 pg/mL and AUCs of 330 and 673, about twice the exposure; those AUCs
+# imply a CL/F near 15 L/h, against this model's 7.8 L/h at low
+# concentrations, which agrees with Scheen's pooled 8.14 L/h (below).  The
+# difference is between studies, and the model is kept as published.
+#
 # RENAL IMPAIRMENT, AN EXTERNAL CHECK.  Scheen 2015 (Clin Pharmacokinet
 # 54:1-21) tabulates the dedicated renal study (Linnebjerg 2007) and its
 # pooled CL/F: 8.14, 5.19, 7.11 and 1.3 L/h with normal renal function, mild

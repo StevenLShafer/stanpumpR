@@ -22,7 +22,9 @@ Byetta, `mcg SC` and `mcg SC bid`. Each dose has its own 1.35-hour constant-rate
 
 A 10 mcg dose in a 75 kg man with an eGFR of 90 peaks at 263 pg/mL at 1.35 hours, the end of the constant-rate phase. The paper's simulations, which include between-subject variability, give 287 pg/mL for the typical 75 kg subject, and the observed peaks came at about 2 hours. The peak is 22% lower at 100 kg and 38% lower at 125 kg (paper: 18% and 34%).
 
-The extended-release products (Bydureon, Bydureon BCise) are different formulations and are not modelled.
+A review by Knop and colleagues (*Expert Opin Pharmacother* 2017, citing an early study) reports peaks of 56 and 85 pg/mL and exposures of 159 and 340 pg·h/mL after single doses of 2.5 and 5 mcg. The model gives about twice that exposure (330 and 673 pg·h/mL at 75 kg): its clearance at low concentrations, 7.8 L/h, agrees with the renal study below rather than with the roughly 15 L/h those figures imply.
+
+The extended-release products (Bydureon, Bydureon BCise) are different formulations and are not modelled. Their microspheres release exenatide in three phases (an initial release over 48 hours, diffusion over about 2 weeks and erosion over about 7 weeks), and steady state takes 6 to 7 weeks; no published model of that release was available.
 
 ### Renal impairment: not reliable in end-stage disease
 
