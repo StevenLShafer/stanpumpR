@@ -402,7 +402,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
     "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
     "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
-    "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin",
+    "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson",
     # Intravenous calcium joined on 2026-10-13: the ionized calcium itself
     # is the end point, no ke0, no metabolite.
     "calcium"

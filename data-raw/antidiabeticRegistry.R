@@ -86,9 +86,9 @@ registry <- rbind(
       "https://doi.org/10.1002/psp4.11",
       "1C, V/F 0.112 L/kg, CL/F 1.83e-4 L/min/kg, ka 9.41e-4/min, all x weight: Table 1 and the supplement NONMEM control stream (THETA 20-22). Scheen 2015 check (Jacobsen 2009, 0.75 mg): CL/F 0.79 L/h vs model 0.77 at 70 kg; no renal trend, as modelled."),
   reg("liraglutide_sc_watson2010", "liraglutide", "SC model version (sequential zero/first order)", SC, "core", "study formulation",
-      FIT, AUD, "PD-TEMPLATE", DTPL, "none", NA, NA, FALSE,
+      FIT, FIT, "PD-TEMPLATE", DTPL, "none", NA, "liraglutideWatson", TRUE,
       "https://doi.org/10.1177/0091270009354996",
-      "Abstract only; CL/F, V/F, durations and ka not readable. The engine supports the sequential input (zeroOrderSC into depot)."),
+      "Watson 2010 Table II (all studies): 1C, CL/F 0.013 L/h/kg, V/F 0.16 L/kg; sequential dual absorption (Eqs 1-2), T2D T0 8.0 h and kA 0.154/h (HV 6.0 h, 0.104/h), run as zeroOrderSC into the central volume (share kA T0/(1+kA T0) over T0) beside a depot lagged by T0. F 0.51 (study A) inside the apparent values. A second model of Victoza beside Roge 2015, not mixed."),
   reg("liraglutide_sc_saxenda", "liraglutide", "Saxenda injection", SC, "core", "US",
       CON, CON, "PD-TEMPLATE", DTPL, "body weight", NA, NA, FALSE,
       "https://doi.org/10.1002/psp4.11",
@@ -336,6 +336,7 @@ tham   <- "https://doi.org/10.1002/jcph.899"
 chae   <- "https://doi.org/10.1111/j.1365-2125.2012.04260.x"
 baron  <- "https://doi.org/10.1007/s13300-016-0174-y"
 cirin  <- "https://doi.org/10.1111/bcp.13135"
+watson <- "https://doi.org/10.1177/0091270009354996"
 retl   <- "https://doi.org/10.1007/s40262-014-0232-4"
 vild   <- "https://doi.org/10.1111/j.1365-2125.2011.04108.x"
 fediuk <- "https://doi.org/10.1002/cpdd.970"
@@ -494,6 +495,12 @@ parameters <- rbind(
   par("vildagliptin", "kdeg", "0.110", "1/h", E, "Landersdorfer 2012", vild, "Table 1"),
   par("vildagliptin", "RmaxC", "5.0", "nmol (x library FFM factor)", E, "Landersdorfer 2012", vild, "Table 1"),
   par("vildagliptin", "RmaxP", "13.0", "umol (x library FFM factor)", E, "Landersdorfer 2012", vild, "Table 1"),
+
+  par("liraglutideWatson", "CL/F", "0.013", "L/h/kg", E, "Watson 2010, HV and T2D (studies A-D)", watson, "Table II"),
+  par("liraglutideWatson", "V/F", "0.16", "L/kg", E, "Watson 2010", watson, "Table II"),
+  par("liraglutideWatson", "kA (T2D)", "0.154", "1/h", E, "Watson 2010", watson, "Table II"),
+  par("liraglutideWatson", "T0 (T2D)", "8.0", "h", E, "Watson 2010", watson, "Table II"),
+  par("liraglutideWatson", "absorption structure", "zero order for T0 (share kA T0/(1+kA T0)), then first order", "-", ST, "Watson 2010", watson, "Equations 1-2; Figure 2"),
 
   par("glyburide", "ka", "0.53", "1/h", E, "Rambiritch 2016, 24 adults with T2D", ramb, "Results"),
   par("glyburide", "CL/F", "2.16", "L/h", E, "Rambiritch 2016", ramb, "Results"),

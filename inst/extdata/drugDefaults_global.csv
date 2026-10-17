@@ -121,6 +121,7 @@ diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit 
 semaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#2E7D5B,0,0,0,0,0,IV,Antidiabetic
 tirzepatide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#5B2A86,0,0,0,0,0,IV,Antidiabetic
 liraglutide,ng,,,mg SC qd,"mg SC,mg SC qd",#0E8C8C,0,0,0,0,0,IV,Antidiabetic
+liraglutideWatson,ng,,,mg SC qd,"mg SC,mg SC qd",#2A9D8F,0,0,0,0,0,IV,Antidiabetic
 insulinRegular,mcU,,,U SC,"U SC,U/kg SC,U SC bid,U SC tid",#E0A800,0,0,0,0,0,IV,Antidiabetic
 insulinRegularU500,mcU,,,U SC bid,"U SC,U SC bid,U SC tid",#C25A00,0,0,0,0,0,IV,Antidiabetic
 insulinNPH,mcU,,,U SC bid,"U SC,U/kg SC,U SC qd,U SC bid",#7A5230,0,0,0,0,0,IV,Antidiabetic
