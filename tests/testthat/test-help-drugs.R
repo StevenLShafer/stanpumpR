@@ -76,7 +76,7 @@ plasmaOnly <- c(
   "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
   "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
   "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
-  "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson"
+  "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

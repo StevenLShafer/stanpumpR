@@ -15,7 +15,8 @@ The **Antidiabetic** drugs in the startup menu are named, source-specific popula
 | [insulin glargine](help:drugs/insulinGlargine) | Glargine U-100 (Basaglar fit), SC | Tham and colleagues, 2017 | 209 healthy volunteers | One compartment, parallel zero-order input, immunoreactive assay |
 | [metformin](help:drugs/metformin) | Immediate release, oral | Chae and colleagues, 2012 | 42 healthy adults, 500 mg | One compartment, apparent; creatinine clearance |
 | [empagliflozin](help:drugs/empagliflozin) | Oral | Baron and colleagues, 2016 | 2761 adults with type 2 diabetes | Two compartments, apparent, lagged; renal function |
-| [dapagliflozin](help:drugs/dapagliflozin) | Oral | Kobuchi and colleagues, 2025 | 85 Japanese adults with type 2 diabetes, troughs only | One compartment, apparent; weight. Only the steady-state trough is fitted |
+| [dapagliflozin](help:drugs/dapagliflozin) | Farxiga, oral | Melin and colleagues, 2023 | 2744 people: heart failure, type 2 diabetes, adolescents, healthy | Two compartments, apparent, lagged; CKD-EPI eGFR, sex, weight |
+| [dapagliflozin (Kobuchi)](help:drugs/dapagliflozinKobuchi) | Oral | Kobuchi and colleagues, 2025 | 85 Japanese adults with type 2 diabetes, troughs only | One compartment, apparent; weight. Only the steady-state trough is fitted |
 | [ertugliflozin](help:drugs/ertugliflozin) | Oral | Fediuk and colleagues, 2021 | 2276 subjects, 15 studies | Two compartments, apparent, lagged; weight, eGFR, age, sex, type 2 diabetes |
 | [pioglitazone](help:drugs/pioglitazone) | Oral | Kadam and colleagues, 2013 | 31 healthy Caucasian adults, 15 mg | Two compartments, apparent; CYP2C8\*1/\*1 (no CYP2C8 field) |
 | [pramlintide (intravenous)](help:drugs/pramlintideIV) | Intravenous research route; the product is SC | Fang and colleagues, 2013 | 25 men with type 1 diabetes | Two compartments, true scale |

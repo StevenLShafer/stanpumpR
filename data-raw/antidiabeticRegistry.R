@@ -221,9 +221,12 @@ registry <- rbind(
   reg("empagliflozin_baron2016", "empagliflozin", "Jardiance", PO, "core", "US",
       FIT, FIT, "PD-FIT", DAUD, "FPG/HbA1c", NA, "empagliflozin", TRUE,
       "https://doi.org/10.1007/s13300-016-0174-y", "Fixed 0.5 h lag (missing from the specification); Table S1 (supplement) applied for age, sex, BMI and MDRD eGFR (exponent 0.333, as derived earlier from the AUCs); smoking, race, total protein and liver enzymes at reference."),
-  reg("dapagliflozin_kobuchi2025", "dapagliflozin", "Farxiga", PO, "core", "US",
-      FIT, FIT, "PD-FIT", DAUD, "HbA1c (Japanese T2D)", NA, "dapagliflozin", TRUE,
-      "https://doi.org/10.7150/ijms.111519", "Table 2 / Eq. 6: CL/F 229.3 L/day x (BW/77.0)^0.41, V/F 73.9 L and ka 57.4/day fixed from Melin 2024. Troughs only: the steady-state trough is fitted, not the shape within a day."),
+  reg("dapagliflozin_melin2023", "dapagliflozin", "Farxiga", PO, "core", "US",
+      FIT, FIT, "PD-AUDIT", DAUD, "none", NA, "dapagliflozin", TRUE,
+      "https://doi.org/10.1111/bcp.15939", "Melin 2023 (Br J Clin Pharmacol 2024;90:606-612) Supplementary Table 4 and NONMEM control stream: 2C, ka 2.39/h, lag 0.248 h fixed, CL/F 23.0 L/h x (eGFR/83)^0.584 x exp(-0.174 female), Vc/F 73.9 L x (BW/89)^0.570, Q/F 8.92 L/h, Vp/F 143 L; eGFR CKD-EPI 2009 (adults), bedside Schwartz (adolescents). 2744 people (HFrEF, T2D adults and adolescents, healthy)."),
+  reg("dapagliflozin_kobuchi2025", "dapagliflozin", "Farxiga (Japanese T2D model version)", PO, "international", "Japan",
+      FIT, FIT, "PD-FIT", DAUD, "HbA1c (Japanese T2D)", NA, "dapagliflozinKobuchi", TRUE,
+      "https://doi.org/10.7150/ijms.111519", "Table 2 / Eq. 6: CL/F 229.3 L/day x (BW/77.0)^0.41, V/F 73.9 L and ka 57.4/day fixed from Melin 2024 (the dapagliflozin model). Troughs only: the steady-state trough is fitted, not the shape within a day; CL/F 9.6 L/h at 77 kg against Melin's 23.0 L/h. Kept as dapagliflozinKobuchi."),
   reg("canagliflozin_dewinter2017", "canagliflozin", "Invokana", PO, "core", "US",
       AUD, AUD, "PD-AUDIT", DAUD, "HbA1c", NA, NA, FALSE,
       "https://doi.org/10.1111/bcp.13180", "de Winter 2017 read (with its supplement): an HbA1c turnover model (t1/2 HbA1c 28.2 d, Emax -0.738%, log EC50 4.12 log(ng/mL)) driven by the two-compartment PK model of Hoeben et al., Clin Pharmacokinet 2016;55:209-223 (cited as 2014), whose parameters it does not reprint. The PK needs Hoeben 2016."),
@@ -340,6 +343,7 @@ tham   <- "https://doi.org/10.1002/jcph.899"
 chae   <- "https://doi.org/10.1111/j.1365-2125.2012.04260.x"
 baron  <- "https://doi.org/10.1007/s13300-016-0174-y"
 cirin  <- "https://doi.org/10.1111/bcp.13135"
+melinUrl <- "https://doi.org/10.1111/bcp.15939"
 watson <- "https://doi.org/10.1177/0091270009354996"
 retl   <- "https://doi.org/10.1007/s40262-014-0232-4"
 vild   <- "https://doi.org/10.1111/j.1365-2125.2011.04108.x"
@@ -442,10 +446,19 @@ parameters <- rbind(
   par("dulaglutide", "Vc", "2.25", "L", E, "Geiser 2016", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6"),
   par("dulaglutide", "Vp", "3.75", "L", E, "Geiser 2016", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6"),
 
-  par("dapagliflozin", "CL/F", "229.3", "L/day x (BW/77.0)^0.41", E, "Kobuchi 2025, 85 Japanese adults with T2D", "https://doi.org/10.7150/ijms.111519", "Table 2; Equation 6"),
-  par("dapagliflozin", "weight exponent on CL/F", "0.41", "unitless", E, "Kobuchi 2025", "https://doi.org/10.7150/ijms.111519", "Table 2"),
-  par("dapagliflozin", "V/F", "73.9", "L (x library FFM factor)", FX, "fixed from Melin 2024", "https://doi.org/10.7150/ijms.111519", "Table 2"),
-  par("dapagliflozin", "ka", "57.4", "1/day", FX, "fixed from Melin 2024", "https://doi.org/10.7150/ijms.111519", "Table 2"),
+  par("dapagliflozin", "CL/F", "23.0", "L/h x (eGFR/83)^0.584 x exp(-0.174 if female)", E, "Melin 2023, 2744 people", melinUrl, "Supplementary Table 4; control stream THETA(2)"),
+  par("dapagliflozin", "eGFR exponent on CL/F", "0.584", "unitless (CKD-EPI 2009; bedside Schwartz under 18)", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
+  par("dapagliflozin", "female on CL/F", "-0.174", "exp(theta) = 0.840", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
+  par("dapagliflozin", "Vc/F", "73.9", "L x (BW/89)^0.570", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
+  par("dapagliflozin", "Vp/F", "143", "L", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
+  par("dapagliflozin", "Q/F", "8.92", "L/h", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
+  par("dapagliflozin", "ka", "2.39", "1/h", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
+  par("dapagliflozin", "lag", "0.248", "h", FX, "Melin 2023 (fixed from the previous model)", melinUrl, "Supplementary Table 4"),
+
+  par("dapagliflozinKobuchi", "CL/F", "229.3", "L/day x (BW/77.0)^0.41", E, "Kobuchi 2025, 85 Japanese adults with T2D", "https://doi.org/10.7150/ijms.111519", "Table 2; Equation 6"),
+  par("dapagliflozinKobuchi", "weight exponent on CL/F", "0.41", "unitless", E, "Kobuchi 2025", "https://doi.org/10.7150/ijms.111519", "Table 2"),
+  par("dapagliflozinKobuchi", "V/F", "73.9", "L (x library FFM factor)", FX, "fixed from Melin 2024", "https://doi.org/10.7150/ijms.111519", "Table 2"),
+  par("dapagliflozinKobuchi", "ka", "57.4", "1/day", FX, "fixed from Melin 2024", "https://doi.org/10.7150/ijms.111519", "Table 2"),
 
   par("pioglitazone", "CL/F", "2.12", "L/h (+1.09 in a CYP2C8*3 carrier; not applied)", E, "Kadam 2013, 31 healthy Caucasian adults", "https://doi.org/10.1248/bpb.b12-00657", "Table 3; final model equation"),
   par("pioglitazone", "Vc/F", "21.4", "L (x library FFM factor)", E, "Kadam 2013", "https://doi.org/10.1248/bpb.b12-00657", "Table 3"),

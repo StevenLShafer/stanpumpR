@@ -80,6 +80,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "celecoxib", "aspirin",
                     # lagged oral absorption (2026-10-17)
                     "empagliflozin", "ertugliflozin",
+                    # Melin 2023's fixed 0.248 h lag (dapagliflozin)
+                    "dapagliflozin",
                     # enteric-coated lag (2026-10-11)
                     "diclofenacEC",
                     # sublingual lag fitted with ka (2026-10-10)

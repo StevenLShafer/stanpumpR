@@ -215,6 +215,21 @@ egfrSchwartz <- function(height, age, scr)
   k * height / scr
 }
 
+#' Bedside Schwartz estimated glomerular filtration rate in children
+#'
+#' `0.413 x height / SCr` (Schwartz et al., J Am Soc Nephrol 2009;20:629),
+#' in mL/min/1.73 m^2, for an enzymatic (IDMS-traceable) creatinine.  The
+#' estimator the dapagliflozin model (Melin 2023) used for its adolescents.
+#'
+#' @param height height in cm
+#' @param scr serum creatinine in mg/dL
+#' @return eGFR in mL/min/1.73 m^2
+#' @keywords internal
+egfrBedsideSchwartz <- function(height, scr)
+{
+  0.413 * height / scr
+}
+
 #' Du Bois body surface area
 #'
 #' @param weight weight in kg

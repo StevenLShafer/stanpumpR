@@ -4,7 +4,7 @@
 \alias{dapagliflozin}
 \title{Dapagliflozin pharmacokinetics (oral)}
 \usage{
-dapagliflozin(weight, height, age, sex, adjustToFFM = TRUE)
+dapagliflozin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,11 +21,14 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{creatinine}{serum creatinine, mg/dL, or NULL for an assumed normal
+value}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-One compartment, first-order absorption (Kobuchi 2025); see the header of
-the file.
+Two compartments with a lagged first-order absorption (Melin 2023); see
+the header of the file.
 }
