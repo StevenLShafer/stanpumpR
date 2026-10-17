@@ -112,9 +112,10 @@ warfarinFFM <- function(weight, height, sex)
 #' @param height height in cm
 #' @param age age in years
 #' @param sex sex as a string, "female" or "male"
-#' @param adjustToFFM scale volumes to the patient's fat-free mass and
-#'   clearances to that ratio to the 0.75 power (the default); when
-#'   \code{FALSE}, use the published parameters unscaled
+#' @param adjustToFFM accepted for a common signature but not used: warfarin
+#'   carries its own fat-free-mass covariate (clearance as FFM^0.75, volume as
+#'   FFM), which the source fitted as the only body-size term, so it is applied
+#'   in both positions of the switch, as meloxicam's lean-body-mass volume is
 #' @param cyp2c9 CYP2C9 diplotype, one of \code{CYP2C9_VALUES}. Only
 #'   \code{"*1/*3"} was estimated in the source; every other diplotype takes
 #'   the \code{"*1/*1"} reference clearance (the app passes this field).

@@ -27,9 +27,10 @@ warfarin(
 
 \item{sex}{sex as a string, "female" or "male"}
 
-\item{adjustToFFM}{scale volumes to the patient's fat-free mass and
-clearances to that ratio to the 0.75 power (the default); when
-\code{FALSE}, use the published parameters unscaled}
+\item{adjustToFFM}{accepted for a common signature but not used: warfarin
+carries its own fat-free-mass covariate (clearance as FFM^0.75, volume as
+FFM), which the source fitted as the only body-size term, so it is applied
+in both positions of the switch, as meloxicam's lean-body-mass volume is}
 
 \item{cyp2c9}{CYP2C9 diplotype, one of \code{CYP2C9_VALUES}. Only
 \code{"*1/*3"} was estimated in the source; every other diplotype takes
