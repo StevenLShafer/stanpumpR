@@ -53,9 +53,12 @@ app_ui <- function() {
         "Simulator",
         icon = icon("chart-line"),
         bslib::layout_sidebar(
+          # The options, in a sidebar that its arrow collapses; open on a desktop
+          # (closed on a phone), as the dose table's sidebar at the right is.
           sidebar = bslib::sidebar(
             width = 300,
             resizable = FALSE,
+            open = "desktop",
             bslib::accordion(
               open = FALSE,
 
@@ -372,6 +375,68 @@ app_ui <- function() {
                 )
               ),
 
+              # The time settings.  The header reads them out while the panel
+              # is closed: "Time (hours, Actual time)".
+              bslib::accordion_panel(
+                span(
+                  "Time",
+                  textOutput("timeSummary", inline = TRUE) |>
+                    htmltools::tagAppendAttributes(class = "small text-muted")
+                ),
+                value = "time",
+                icon = icon("clock"),
+
+                # Time units: what a number typed in the dose table means, and
+                # the unit of the time axis.  Changing it converts the dose
+                # table (R/utils-time.R).  Actual (clock) time is offered for
+                # minutes and hours only.
+                selectizeInput(
+                  "timeUnits",
+                  "Time units",
+                  stats::setNames(names(TIME_UNITS), tools::toTitleCase(names(TIME_UNITS))),
+                  selected = timeUnit0,
+                  options = list(dropdownParent = "body")
+                ),
+                selectizeInput(
+                  "timeMode",
+                  "Time Display",
+                  timeModeChoices(timeUnit0),
+                  options = list(dropdownParent = "body")
+                ),
+                conditionalPanel(
+                  sprintf(
+                    "input.timeMode == 'clock' && %s.indexOf(input.timeUnits) >= 0",
+                    jsonlite::toJSON(CLOCK_TIME_UNITS)
+                  ),
+                  textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                )
+              ),
+
+              # The dose table's options, so the table's own sidebar holds
+              # nothing but the table.
+              bslib::accordion_panel(
+                "Dose table",
+                icon = icon("syringe"),
+                # Opt-in for the drug-of-abuse research models (off by
+                # default); when on, they are offered in the dose table and
+                # the Add a dose dialog, with their names shown in red.
+                bslib::tooltip(
+                  checkboxInput(
+                    "showIllicitDrugs",
+                    "Show illicit drugs",
+                    value = FALSE
+                  ),
+                  paste(
+                    "Show evidence-labelled research models of drugs of",
+                    "abuse (for example cocaine or psilocybin). Off by default. These",
+                    "are plasma-exposure estimates for research, not dosing",
+                    "advice or safety thresholds."
+                  ),
+                  placement = "right"
+                ),
+                actionLink("setTarget", "Suggest Dosing")
+              ),
+
               bslib::accordion_panel(
                 "Email Slide",
                 icon = icon("envelope"),
@@ -395,8 +460,39 @@ app_ui <- function() {
             )
           ),
 
-          bslib::layout_columns(
-            style = "grid-template-columns: 1fr 450px;",
+          # The plot, with the dose table in a sidebar at its right that its
+          # arrow collapses (open on a desktop, closed on a phone), so the plot
+          # can have the whole width once the doses are in.  That sidebar holds
+          # the table and its Apply, Undo and Redo buttons and nothing else:
+          # the time settings and the table's options are panels of the left
+          # sidebar.  The table fills the sidebar's height and scrolls inside
+          # it (.dose-sidebar in app.css).
+          bslib::layout_sidebar(
+            fillable = TRUE,
+            border = FALSE,
+            padding = 0,
+            sidebar = bslib::sidebar(
+              position = "right",
+              width = 450,
+              open = "desktop",
+              class = "dose-sidebar",
+              title = span(
+                icon("syringe"), "Doses",
+                # "(times in days)": the unit of the times in the table
+                textOutput("doseTimeUnits", inline = TRUE) |>
+                  htmltools::tagAppendAttributes(class = "small text-muted")
+              ),
+
+              rhandsontable::rHandsontableOutput("doseTableHTML"),
+
+              div(
+                class = "d-grid mt-2",
+                style = "grid-template-columns: 1fr auto auto; gap: 0.25rem",
+                actionButton("dosetable_apply", "Apply Changes", icon = icon("circle-check"), class = "btn-primary my-0 btn-lg"),
+                actionButton("dosetable_undo", NULL, icon = icon("undo"), title = "Undo", class = "my-0 btn-lg btn-outline-primary"),
+                actionButton("dosetable_redo", NULL, icon = icon("redo"), title = "Redo", class = "my-0 btn-lg btn-outline-primary")
+              )
+            ),
 
             bslib::card(
               id = "plotContainer",
@@ -433,104 +529,7 @@ app_ui <- function() {
                 ),
                 span("Hover for precise concentration. Click to add new dose. Double click to edit or delete a drug's doses.")
               )
-            ),
-
-            div(
-              # The time settings, in a collapsible panel like the sidebar's,
-              # closed by default so the dose table has the column's height on
-              # a small screen.  The header reads the settings out while it is
-              # closed: "Time (hours, actual time from 08:00)".
-              bslib::accordion(
-                open = FALSE,
-                class = "mb-3",
-                bslib::accordion_panel(
-                  span(
-                    "Time",
-                    textOutput("timeSummary", inline = TRUE) |>
-                      htmltools::tagAppendAttributes(class = "small text-muted")
-                  ),
-                  value = "time",
-                  icon = icon("clock"),
-
-                  # Time units: what a number typed in the dose table means, and
-                  # the unit of the time axis.  Changing it converts the dose
-                  # table (R/utils-time.R).  Actual (clock) time is offered for
-                  # minutes and hours only.
-                  bslib::layout_columns(
-                    selectizeInput(
-                      "timeUnits",
-                      "Time units",
-                      stats::setNames(names(TIME_UNITS), tools::toTitleCase(names(TIME_UNITS))),
-                      selected = timeUnit0,
-                      options = list(dropdownParent = "body")
-                    ),
-                    selectizeInput(
-                      "timeMode",
-                      "Time Display",
-                      timeModeChoices(timeUnit0),
-                      options = list(dropdownParent = "body")
-                    ),
-                    conditionalPanel(
-                      sprintf(
-                        "input.timeMode == 'clock' && %s.indexOf(input.timeUnits) >= 0",
-                        jsonlite::toJSON(CLOCK_TIME_UNITS)
-                      ),
-                      textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
-                    )
-                  )
-                )
-              ),
-
-              bslib::card(
-                # The title and the controls each stay on one line; when the
-                # column cannot hold both, the controls drop under the title
-                # (.doses-header in app.css).
-                bslib::card_header(
-                  class = "doses-header",
-                  span(
-                    icon("syringe"), "Doses",
-                    # "(times in days)": the unit of the times in the table
-                    textOutput("doseTimeUnits", inline = TRUE) |>
-                      htmltools::tagAppendAttributes(class = "micro text-muted")
-                  ),
-                  div(
-                    class = "doses-controls d-flex align-items-center gap-2",
-                    # Opt-in for the drug-of-abuse research models (off by
-                    # default); when on, they are offered in the dose table and
-                    # the Add a dose dialog, with their names shown in red.
-                    bslib::tooltip(
-                      checkboxInput(
-                        "showIllicitDrugs",
-                        "Show illicit drugs",
-                        value = FALSE
-                      ) |>
-                        htmltools::tagAppendAttributes(class = "micro mb-0"),
-                      paste(
-                        "Show evidence-labelled research models of drugs of",
-                        "abuse (for example cocaine or psilocybin). Off by default. These",
-                        "are plasma-exposure estimates for research, not dosing",
-                        "advice or safety thresholds."
-                      ),
-                      placement = "left"
-                    ),
-                    actionLink("setTarget", "Suggest Dosing", class = "micro")
-                  )
-                ),
-
-                rhandsontable::rHandsontableOutput("doseTableHTML"),
-
-                bslib::card_footer(
-                  div(
-                    class = "d-grid",
-                    style = "grid-template-columns: 1fr auto auto; gap: 0.25rem",
-                    actionButton("dosetable_apply", "Apply Changes", icon = icon("circle-check"), class = "btn-primary my-0 btn-lg"),
-                    actionButton("dosetable_undo", NULL, icon = icon("undo"), title = "Undo", class = "my-0 btn-lg btn-outline-primary"),
-                    actionButton("dosetable_redo", NULL, icon = icon("redo"), title = "Redo", class = "my-0 btn-lg btn-outline-primary")
-                  )
-                )
-              )
-            ) |>
-              bslib::as_fill_carrier()
+            )
           ),
 
           bslib::accordion(
