@@ -106,7 +106,8 @@ test_that("only concentration records are executable, and they are the library's
   # drug, or an endpoint relation evaluable against a supplied concentration
   implemented <- ready[ready$endpoint == "concentration", ]
   expect_setequal(implemented$stanpumpr_drug,
-                  c("clevidipine", "fenoldopamPediatric", "carvedilol"))
+                  c("clevidipine", "fenoldopamPediatric", "carvedilol",
+                    "azilsartan", "chlorthalidone"))
   dd <- getDrugDefaultsGlobal()
   for (d in implemented$stanpumpr_drug) {
     expect_true(d %in% dd$Drug, info = d)
@@ -127,12 +128,28 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
   expect_gt(nrow(gated), 20)
   expect_true(all(is.na(gated$stanpumpr_drug) |
                     gated$stanpumpr_drug %in%
-                      c("clevidipine", "fenoldopamPediatric", "carvedilol")))
-  # The four the handoff asked to be ported first, and why each is not
+                      c("clevidipine", "fenoldopamPediatric", "carvedilol",
+                    "azilsartan", "chlorthalidone")))
+  # The four the handoff asked to be ported first.  Azilsartan was on that
+  # list and has since been ported, from the full text supplied on
+  # 2026-10-17; so has chlorthalidone, from the same paper.  What is gated
+  # now is the INACTIVE metabolite record, and for a reason that is no
+  # longer about access: every number in it is verified, and an inactive
+  # metabolite is simply not worth a curve.
   azl <- registry[registry$model_id ==
     "azilsartan__medoxomil_tablet__oral__stage2_hypertension__concentration__tsai2016", ]
-  expect_identical(azl$execution_status, "requires_source_extraction")
-  expect_match(azl$limitations, "ka")
+  expect_identical(azl$execution_status, "ready_for_source_reproduction")
+  expect_identical(azl$stanpumpr_drug, "azilsartan")
+  m2 <- registry[registry$model_id ==
+    "azilsartan__m2_metabolite__oral__stage2_hypertension__concentration__tsai2016", ]
+  expect_identical(m2$execution_status, "requires_source_extraction")
+  expect_match(m2$limitations, "DELIBERATELY")
+  # Hydrochlorothiazide is the one whose obstacle MOVED: its numbers are all
+  # verified now, and what blocks it is an input shape the engine lacks.
+  hctz <- registry[registry$model_id ==
+    "hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013", ]
+  expect_identical(hctz$execution_status, "requires_source_extraction")
+  expect_match(hctz$limitations, "[Ww]eibull")
   # Carvedilol was on that list and has since been ported: the zero-order
   # oral release mode it needed is R/oral-zero-order.R, and its full text was
   # reached through PubMed Central.  Its PK record is no longer gated; only
@@ -202,7 +219,9 @@ test_that("a number printed in its own abstract is verified against it", {
     list(id = "hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
          parameter = "non-renal CL", value = 2.44),
     list(id = "hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
-         parameter = "renal CL", value = 18.3),
+         # Table 2's own name: it is the coefficient of a power function of
+         # creatinine clearance, 18.3 x (CL_CR/120)^1.38, not a clearance.
+         parameter = "renal CL coefficient", value = 18.3),
     list(id = "furosemide__tablet_and_injection__oral__pooled_adults__concentration_and_urine__popPK",
          parameter = "F", value = 0.591))
   for (x in abstractVerified) {
@@ -210,8 +229,12 @@ test_that("a number printed in its own abstract is verified against it", {
                         parameters$parameter == x$parameter, ]
     expect_equal(nrow(row), 1, info = x$parameter)
     expect_equal(row$value, x$value, info = x$parameter)
-    expect_equal(row$verification, "primary_abstract", info = x$parameter)
-    expect_equal(row$source_table_or_page, "abstract", info = x$parameter)
+    # These began as abstract verifications.  Van Wart's full text arrived on
+    # 2026-10-17 and upgraded them, which is a strengthening: the guard here
+    # is against a rebuild sending them BACK to handoff_unverified, so any
+    # primary reading passes and an unverified one does not.
+    expect_true(row$verification %in% c("primary_abstract", "primary_full_text"),
+                info = x$parameter)
   }
   # Hydrochlorothiazide's two half-lives came from the abstract as well, and
   # they are the reason section 4 can say that record is short by exactly one
@@ -220,7 +243,14 @@ test_that("a number printed in its own abstract is verified against it", {
                        grepl("^half-life", parameters$parameter), ]
   expect_equal(nrow(hctz), 2)
   expect_equal(sort(hctz$value), c(1.6, 14.8))
-  expect_true(all(hctz$verification == "primary_abstract"))
+  expect_true(all(hctz$verification %in%
+                    c("primary_abstract", "primary_full_text")))
+  # And the volume they left the record short of is now in hand, so the
+  # two-compartment system closes: section 4's row says determined.
+  v1 <- parameters[grepl("vanwart2013", parameters$model_id) &
+                     parameters$parameter == "V1", ]
+  expect_equal(nrow(v1), 1)
+  expect_equal(v1$value, 97.3)
 })
 
 test_that("an uncertainty keeps the type its source names, or says it was not reported", {
