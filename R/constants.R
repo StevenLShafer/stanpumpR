@@ -243,9 +243,18 @@ iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 scUnits   <- c("mg SC", "mg/kg SC", "mcg SC", "mcg/kg SC")
 iuScUnits <- c("IU SC", "IU/kg SC")
 
+# GHB (R/drugs_GHB.R).  The dose is SODIUM OXYBATE and the curve is GHB, the
+# free acid, which are 21% apart by mass, and both bases are in common use, so
+# the unit names the salt that is swallowed rather than leaving it to prose.
+# "oxybate" is not in ORAL_FORMULATIONS, so doseFormulation() reads no
+# formulation from it, and doseRoute() still finds the PO; the conversion is
+# the michaelisMenten saltFactor of the drug.
+GHB_SALT <- "oxybate"
+ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
-              iuUnits, scUnits, iuScUnits)
+              iuUnits, scUnits, iuScUnits, ghbUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.

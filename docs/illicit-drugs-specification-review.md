@@ -162,9 +162,27 @@ engine cannot represent is recorded and refused rather than aliased to another.
   text were tried and all are blocked here (the PubMed Central connector returns an empty
   body for this article, and direct fetches of PubMed Central and Europe PMC fail to
   resolve). Supplying the paper would unblock it; inventing the input would not.
-- **GHB.** Non-linear absorption and elimination, with no identified human parameter set
+- ~~**GHB.** Non-linear absorption and elimination, with no identified human parameter set
   covering route, volume and the non-linear terms together. It needs a non-linear engine
-  first.
+  first.~~ **Built, 2026-10-17.** Both halves of this were wrong by the time it was
+  written. The non-linear engine already existed — `advanceMichaelisMenten.R` landed for
+  phenytoin on 2026-10-10 — and it needed only an optional peripheral compartment, which
+  leaves every other drug on it bit-for-bit unchanged. And a complete human parameter set
+  does exist: Chen 2020 (*Clin Transl Sci* 13:932-940) fitted two compartments with
+  Michaelis-Menten elimination to 3,775 observations from 174 people, and its Table S4
+  gives Vmax, Km, the central volume, both distribution rate constants, the absorption
+  rate constant and the allometric exponents. The table is in the supplement rather than
+  the paper, which is why a search of abstracts found nothing.
+
+  Two cautions the registry now carries. Bioavailability was *fixed* at 1 while the label
+  reports 88%, so the parameters are apparent and the route is oral only. And the dose
+  basis genuinely does differ from the plotted analyte — the source doses and reports
+  sodium oxybate, the literature reports the free acid, 21% apart — so the unit names the
+  salt and the mass-carrying parameters are rescaled exactly.
+
+  What is still missing is the *saturable absorption* Palatini documented: Chen fitted a
+  single first-order rate, so above about 4.5 g the model peaks earlier and higher than
+  the real drug. That is recorded on the help page rather than patched.
 - **Diamorphine's full parent → 6-MAM → morphine cascade**, the fentanyl product route
   layer and the ketamine parent-norketamine extension. All three need the engine work the
   specification calls Stage 2 (more routes, multiple simultaneous input paths, two

@@ -156,8 +156,11 @@ tciSchedule <- function(dose, PK, maximum,
 
   targets   <- dose[dose$Target & dose$Time >= 0 & dose$Time < maximum, ]
   isSL      <- if (is.null(dose$SL)) rep(FALSE, nrow(dose)) else dose$SL
+  # A subcutaneous dose is a depot input like an intramuscular one, never a
+  # manual intravenous infusion.  (Claude Code, 2026-10-17.)
+  isSC      <- if (is.null(dose$SC)) rep(FALSE, nrow(dose)) else dose$SC
   manual    <- which(!dose$Target & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN &
-                     !isSL & !dose$RA & !dose$RAslow & !dose$PO2 &
+                     !isSL & !isSC & !dose$RA & !dose$RAslow & !dose$PO2 &
                      !(if (is.null(dose$RArate)) FALSE else dose$RArate))
   bolusRows <- dose[dose$Bolus & !dose$Target, ]
 

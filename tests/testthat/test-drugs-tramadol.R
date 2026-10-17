@@ -336,7 +336,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "diamorphine",
     # The opt-in illicit research models (2026-10-17) are plasma only: see
     # inst/extdata/illicitRouteRegistry.csv and each drug's header.
-    "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA",
+    "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
