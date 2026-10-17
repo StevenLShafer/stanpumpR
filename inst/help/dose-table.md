@@ -2,7 +2,7 @@ The dose table is the main way you talk to the program. It sits to the right of 
 
 ## Columns
 
-**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine, cocaine, methamphetamine, LSD and psilocybin) are offered only while **Show illicit drugs**, in the Doses card header, is ticked, and their names are shown in red.
+**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine, cocaine, methamphetamine, LSD, psilocybin and MDMA) are offered only while **Show illicit drugs**, in the Doses card header, is ticked, and their names are shown in red.
 
 **Time.** When it happens, in the **Time units** chosen in the Time card above the table (the card header says which: *Doses (times in hours)*). The field is forgiving:
 

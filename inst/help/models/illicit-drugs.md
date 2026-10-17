@@ -32,6 +32,7 @@ and a **parameter status**: *published fit*, *measured summary*, *derived approx
 | [methamphetamine](help:drugs/methamphetamine) | parent d-methamphetamine | intranasal | intravenous, oral, smoked |
 | [LSD](help:drugs/LSD) | parent LSD | oral | intravenous |
 | [psilocybin](help:drugs/psilocybin) | free plasma psilocin | oral | intravenous |
+| [MDMA](help:drugs/MDMA) | parent MDMA | oral | intravenous, intranasal; the MDA metabolite |
 
 ### Three reasons a route is refused
 
@@ -46,7 +47,7 @@ and a **parameter status**: *published fit*, *measured summary*, *derived approx
 Models for several further drugs were specified but not implemented, each for a stated reason rather than an oversight:
 
 - **MDMA.** The published population model (Huestis MA, Smith WB, Leonowens C, et al. *CPT Pharmacometrics Syst Pharmacol* 2025;14(2):376-388) is a one-compartment fit with a **zero-order input followed by first-order absorption**, which the closed-form engine cannot represent, and MDMA inhibits its own CYP2D6 metabolism, so a linear model is confined to the single-dose calibration. Its dose basis is settled: the paper doses MDMA hydrochloride throughout.
-- **Δ9-THC.** The directly implementable model is a three-compartment fit to *smoked* cannabis with its parent and two metabolites, and stanpumpR has neither a pulmonary route nor two metabolite levels. Its absolute bioavailability was also fixed as an identifying assumption, so every absolute volume and clearance in it is conditional on that assumption.
+- **Δ9-THC.** Two things are missing, and only one of them is stanpumpR's. The directly implementable source is a three-compartment fit to *smoked* cannabis with its parent and two metabolites (6 subjects, 168 h of plasma), and the engine has neither a pulmonary route nor two metabolite levels. But the deeper problem is the source itself: its abstract gives only the steady-state volume (3,401 L) and clearance (0.72 L/min), which do **not** identify a three-compartment model, and the full text that holds the compartment table — and, crucially, the way a smoked dose was entered into it — could not be read from here. Without that input model, offering a smoked route would mean inventing the step from a dose to a concentration, which is the one thing this scheme exists to prevent. A copy of the paper would settle it.
 - **GHB.** Absorption and elimination are both non-linear across ordinary doses, and no identified human parameter set covering a route, a volume and the non-linear terms together was found. A non-linear engine would be needed first.
 
 ### Reading these curves
@@ -54,3 +55,5 @@ Models for several further drugs were specified but not implemented, each for a 
 Read them as exposure, within the studied population, route, formulation and dose range, and nothing else.
 
 Where a number in a source is an anchor rather than a model, stanpumpR's rule turns on whether the anchor **identifies** what is missing. A peak time does, once the model is chosen and its disposition is fixed: in a one-compartment model with a known elimination rate, the time of the peak determines the absorption rate uniquely, which is how methamphetamine's intranasal route is offered. A bioavailability with no absorption rate does not, and neither does a peak time measured on a different formulation from the one being simulated. Where the anchor does not identify the missing parameter, the rule is to record it and refuse the route, rather than to fill the gap with an assumption that would look exactly like evidence on the plot. Either way the registry says which it was, and a derived parameter is marked `derived_approximation` rather than a published fit.
+
+A different case is an input *shape* the engine cannot express, where every parameter is published and only the arithmetic has to be reorganised. MDMA's dose fills its depot at a constant rate over a fixed window before first-order absorption begins, which no single first-order depot reproduces. There stanpumpR **discretises** rather than approximates: the dose is split across the window, and the result is measured against a numerical evaluation of the exact solution with the agreement pinned in the drug's test. That is a port, not an anchor, so it stays a published fit.
