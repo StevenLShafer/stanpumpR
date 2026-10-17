@@ -4,7 +4,7 @@ This is a research and teaching model of plasma concentration. It is **not** val
 
 ### The model
 
-Argatroban kinetics are from Cox and colleagues (*J Clin Pharmacol* 2004;44:981-990), a two-compartment intravenous model fitted to 152 patients undergoing percutaneous coronary intervention who received argatroban (a 250–300 mcg/kg bolus then a 15 mcg/kg/min infusion) together with a platelet glycoprotein IIb/IIIa antagonist (abciximab or eptifibatide). The clearance is 22.0 L/h at the 87 kg population median, the central volume 11.0 L, the peripheral volume 13.0 L and the inter-compartmental clearance 10.0 L/h; the half-lives are about 15 and 50 minutes. Doses are given intravenously as a bolus and/or an infusion, in micrograms or micrograms per kilogram.
+Argatroban kinetics are from Cox and colleagues (*J Clin Pharmacol* 2004;44:981-990), a two-compartment intravenous model fitted to 152 patients undergoing percutaneous coronary intervention who received argatroban (a 250–300 mcg/kg bolus then a 15 mcg/kg/min infusion) together with a platelet glycoprotein IIb/IIIa antagonist (abciximab or eptifibatide). The clearance is 22.0 L/h at the 87 kg population median, the central volume 11.0 L, the peripheral volume 13.0 L and the inter-compartmental clearance 10.0 L/h; the half-lives are about 13 and 86 minutes. Doses are given intravenously as a bolus and/or an infusion, in micrograms or micrograms per kilogram.
 
 ### Covariates
 
