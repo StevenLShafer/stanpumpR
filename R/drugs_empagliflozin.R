@@ -23,28 +23,38 @@
 # The paper prints ka in "L/h", a typographical error for /h.  Vc/F is poorly
 # identified (its interval runs almost to zero); the early curve is uncertain.
 #
-# REFERENCE PATIENT AND COVARIATES.  A 50-year-old non-smoking, non-Asian man,
-# BMI 25, eGFR 100 mL/min/1.73 m^2 (MDRD).  Each continuous covariate enters
-# as a power of its value over the reference, (cov / ref)^theta, and each
-# categorical one as theta^indicator (Methods, the TVP equation).  The
-# coefficients are in the supplement's Table S1, which was not available.
+# COVARIATES: Table S1 of the supplement (supplied by Steven L. Shafer) and
+# its equations.  The reference patient is a 50-year-old non-smoking,
+# non-Asian man, BMI 25 kg/m^2, eGFR 100 mL/min/1.73 m^2 (MDRD), total
+# protein 70 g/L, ALT and AST 20, AP 70 and LDH 160 U/L:
 #
-# RENAL FUNCTION IS APPLIED, with a DERIVED exponent.  The paper reports the
-# reference patient's AUC 18.5%, 49.2% and 88.1% higher at an eGFR of 60, 30
-# and 15.  On its power form, CL/F x (eGFR / 100)^theta, those give theta =
-# 0.3323, 0.3323 and 0.3330: one exponent, 0.333, reproduces all three to
-# within 0.2%, so the model uses it (marked derived in the parameter audit)
-# until Table S1 is transcribed.  eGFR is the four-variable MDRD
-# (egfrMDRD(), R/renalFunction.R) at the patient's creatinine (a child's on
-# the adult scale) or an assumed normal creatinine for age and sex.
+#     CL/F = 10.6 x (age/50)^-0.241 x (BMI/25)^0.320 x (eGFR/100)^0.333
+#            x 0.886 (female) x [smoking, Asian race, total protein, liver
+#            enzymes]
+#     Vc/F = 3.14 x (age/50)^0.795 x (BMI/25)^1.04 x 1.25 (female) x [...]
+#     Vp/F = 70.6 x (age/50)^0.135 x (BMI/25)^0.672 x 0.831 (female) x [...]
+#     ka   = 0.196 x (age/50)^0.108 x 1.17 (female) x 1.23 (Asian)
+#     Q/F  = 6.34 L/h, no covariate; lag 0.5 h, fixed
 #
-# NOT APPLIED: BMI, total protein, age, sex, smoking, race and alkaline
-# phosphatase on CL/F, and the covariates on the volumes and ka.  All change
-# exposure by less than 25% (the paper's Figure 1: within 0.8 to 1.25 at the
-# extremes).
+# The eGFR exponent, 0.333, is the one this model had derived from the
+# paper's AUCs at eGFR 60, 30 and 15 before the table was in hand.  Table S1
+# writes Vc/F's BMI term as (BMI/20)^1.04 while the equation below it writes
+# (BMI/25); the equation, which the other BMI terms share, is followed (Vc/F
+# is poorly identified in any case: its interval runs almost to zero).
+# Applied: age, sex, BMI and eGFR, the covariates the Patient Profile
+# carries.  At their reference values, with no field: smoking, race, total
+# protein, ALT, AST, alkaline phosphatase and LDH (each changes exposure by
+# less than 25%, the paper's Figure 1).  Age is held at 18 and above (an
+# adult model) and BMI within 20.8 to 42.4 kg/m^2, the widest of the 95%
+# intervals the paper reports for its populations (Table 2).
 #
-# BODY SIZE: the reference parameters are scaled by the library's fat-free-
-# mass factors; fixed with the switch off (legacyVolume = 1).
+# RENAL FUNCTION: eGFR is the four-variable MDRD (egfrMDRD(),
+# R/renalFunction.R) at the patient's creatinine (a child's on the adult
+# scale) or an assumed normal creatinine for age and sex.
+#
+# BODY SIZE: the model's own BMI terms, with BMI from the pharmacokinetic
+# weight with the switch on and from total weight with it off; no other size
+# scaling.
 #
 # References
 # ----------
@@ -52,9 +62,9 @@
 #   https://doi.org/10.1007/s13300-016-0174-y
 # -----------------------------------------------------------------------------
 
-# The exponent of (eGFR / 100) on CL/F, derived from the paper's AUC at an
-# eGFR of 60, 30 and 15; see the header.
+# The exponent of (eGFR / 100) on CL/F, Table S1
 EMPAGLIFLOZIN_EGFR_EXPONENT <- 0.333
+EMPAGLIFLOZIN_BMI_RANGE <- c(20.8, 42.4)   # kg/m^2; see the header
 
 #' Empagliflozin pharmacokinetics (oral)
 #'
@@ -67,14 +77,23 @@ EMPAGLIFLOZIN_EGFR_EXPONENT <- 0.333
 empagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                           creatinine = NULL)
 {
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  pkW  <- if (isTRUE(adjustToFFM))
+    pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
+  bmi  <- pkW / (height / 100)^2
+  bmi  <- min(max(bmi, EMPAGLIFLOZIN_BMI_RANGE[1]), EMPAGLIFLOZIN_BMI_RANGE[2])
+  a    <- max(age, 18) / 50
+  b    <- bmi / 25
+  fem  <- sex == SEX_FEMALE
   egfr <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
   renal <- (egfr / 100)^EMPAGLIFLOZIN_EGFR_EXPONENT
 
   default <- list(
-    v1  = 3.14 * size$volume, v2 = 70.6 * size$volume, v3 = 1,
-    cl1 = 10.6 * size$clearance * renal / 60, cl2 = 6.34 * size$clearance / 60, cl3 = 0,
-    ka_PO = 0.196 / 60,
+    v1  = 3.14 * a^0.795 * b^1.04 * (if (fem) 1.25 else 1),
+    v2  = 70.6 * a^0.135 * b^0.672 * (if (fem) 0.831 else 1),
+    v3  = 1,
+    cl1 = 10.6 * a^-0.241 * b^0.320 * renal * (if (fem) 0.886 else 1) / 60,
+    cl2 = 6.34 / 60, cl3 = 0,
+    ka_PO = 0.196 * a^0.108 * (if (fem) 1.17 else 1) / 60,
     bioavailability_PO = 1,   # apparent parameters
     tlag_PO = 0.5 * 60
   )
@@ -86,10 +105,11 @@ empagliflozin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     typical = 0, upperTypical = 0, lowerTypical = 0,
     reference = paste0(
       "Baron 2016 (2761 adults with type 2 diabetes): two compartments, CL/F 10.6 ",
-      "L/h x (MDRD eGFR/100)^0.333 from the entered or an assumed normal creatinine ",
-      "(exponent derived from the paper's AUC at eGFR 60, 30 and 15), Vc/F 3.14 L, ",
-      "Q/F 6.34 L/h, Vp/F 70.6 L, ka 0.196/h, lag 0.5 h; other covariates not ",
-      "applied; concentration only. ",
+      "L/h x (age/50)^-0.241 x (BMI/25)^0.320 x (MDRD eGFR/100)^0.333 from the ",
+      "entered or an assumed normal creatinine x 0.886 in women, Vc/F 3.14 L, ",
+      "Q/F 6.34 L/h, Vp/F 70.6 L, ka 0.196/h, lag 0.5 h, with Table S1's age, sex ",
+      "and BMI terms on the volumes and ka; smoking, race, protein and liver ",
+      "enzymes at reference; concentration only. ",
       "https://doi.org/10.1007/s13300-016-0174-y"
     )
   )

@@ -86,7 +86,8 @@ test_that("every implemented model's numbers are in the audit with provenance an
   }
   # the derived values are marked derived
   derived <- parameters[parameters$provenance == "derived", ]
-  expect_true(any(derived$drug == "empagliflozin" & grepl("eGFR exponent", derived$parameter)))
+  # empagliflozin's eGFR exponent, once derived, is Table S1's estimate
+  expect_false(any(derived$drug == "empagliflozin"))
   expect_true(any(derived$drug == "tirzepatide" & derived$parameter == "F"))
 })
 
