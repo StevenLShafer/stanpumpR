@@ -18,4 +18,4 @@ This is the kinetics of **high-dose heparin during bypass**, with its hemodiluti
 
 ### Provenance note
 
-The four parameter values are transcribed from the paper's Table 2 as supplied in a specification; the table itself had not been re-read against the source when this was written (2026-10-17). They reproduce the paper's reported initial half-life, end-of-bypass activity and the size and timing of the rebound after protamine.
+The four parameter values are the final-model estimates of the paper's Table 2 (CL 1.18 L/h, central volume 3.04 L, intercompartmental clearance 0.171 L/h, peripheral volume 8.01 L), confirmed against the published article. They also reproduce the paper's reported initial half-life, end-of-bypass activity and the size and timing of the rebound after protamine.

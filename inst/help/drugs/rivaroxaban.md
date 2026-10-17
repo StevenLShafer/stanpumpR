@@ -8,7 +8,7 @@ Rivaroxaban kinetics are from Willmann and colleagues (*CPT Pharmacometrics Syst
 
 ### The patient this represents
 
-The indication factor is fixed to **atrial fibrillation**, the patient for whom rivaroxaban is most often held before surgery. The model has no input for comedication (a strong CYP3A4 inhibitor raised exposure only about 2%, and is not applied).
+The indication factor is fixed to **atrial fibrillation**, the patient for whom rivaroxaban is most often held before surgery. The model has no input for comedication, so none of Willmann's interacting-drug factors on clearance is applied — not the strong CYP3A4 inhibitor, nor the moderate CYP3A4 inhibitor (which lowered clearance to about 0.86) or the inducer (which raised it to about 1.30). A patient on any of these is not represented.
 
 ### Covariates
 

@@ -19,6 +19,18 @@ warfarin(
 )
 }
 \arguments{
+\item{weight}{weight in kg}
+
+\item{height}{height in cm}
+
+\item{age}{age in years}
+
+\item{sex}{sex as a string, "female" or "male"}
+
+\item{adjustToFFM}{scale volumes to the patient's fat-free mass and
+clearances to that ratio to the 0.75 power (the default); when
+\code{FALSE}, use the published parameters unscaled}
+
 \item{cyp2c9}{CYP2C9 diplotype, one of \code{CYP2C9_VALUES}. Only
 \code{"*1/*3"} was estimated in the source; every other diplotype takes
 the \code{"*1/*1"} reference clearance (the app passes this field).}

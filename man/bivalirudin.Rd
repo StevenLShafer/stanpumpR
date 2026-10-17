@@ -6,6 +6,19 @@
 \usage{
 bivalirudin(weight, height, age, sex, adjustToFFM = TRUE)
 }
+\arguments{
+\item{weight}{weight in kg}
+
+\item{height}{height in cm}
+
+\item{age}{age in years}
+
+\item{sex}{sex as a string, "female" or "male"}
+
+\item{adjustToFFM}{scale volumes to the patient's fat-free mass and
+clearances to that ratio to the 0.75 power (the default); when
+\code{FALSE}, use the published parameters unscaled}
+}
 \value{
 a list in the shape \code{getDrugPK()} expects
 }

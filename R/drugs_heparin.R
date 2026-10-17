@@ -21,19 +21,18 @@
 #
 #     CL = 1.18 L/h     V1 = 3.04 L     Q = 0.171 L/h     V2 = 8.01 L
 #
-# PROVENANCE: THE TABLE WAS NOT SEEN
-# ==================================
-# These four values are the paper's Table 2 as transcribed in a specification
-# Steven L. Shafer supplied (16 October 2026).  The table itself could not be
-# read here (2026-10-17); the text could.  They reproduce three results the
-# text states: an initial half-life of about 90 min (these give 93 min); a
-# rebound after protamine, which the authors modelled by emptying the central
-# compartment, that peaks at 0.04 IU/mL about 8 h after bypass and stays
-# above 0.02 IU/mL at 24 h (these give 0.039 IU/mL at 8 h and 0.030 at 24 h);
-# and a median of 4.8 IU/mL at the end of bypass (about 4 IU/mL for the
-# study's doses in a 70 kg patient).  The rebound depends on all four
-# parameters together, which is the strongest of the three checks.  They
-# await a check against Table 2.
+# PROVENANCE
+# ==========
+# These four values are the final-model estimates of the paper's Table 2,
+# confirmed against the published article: CL 1.18 L/h, V(UFH-C) 3.04 L,
+# Q(UFH) 0.171 L/h and V(UFH-P) 8.01 L, with the V terms the apparent central
+# and peripheral distribution volumes (2026-10-17).  They also reproduce three
+# results the text states: an initial half-life of about 90 min (these give
+# 93 min); a rebound after protamine, which the authors modelled by emptying
+# the central compartment, that peaks at 0.04 IU/mL about 8 h after bypass and
+# stays above 0.02 IU/mL at 24 h (these give 0.039 IU/mL at 8 h and 0.030 at
+# 24 h); and a median of 4.8 IU/mL at the end of bypass (about 4 IU/mL for the
+# study's doses in a 70 kg patient).
 #
 # WHAT THIS MODEL IS
 # ==================
@@ -71,7 +70,13 @@
 #'
 #' Jia 2015; see the header of \code{R/drugs_heparin.R}.
 #'
-#' @inheritParams alfentanil
+#' @param weight weight in kg
+#' @param height height in cm
+#' @param age age in years
+#' @param sex sex as a string, "female" or "male"
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power (the default); when
+#'   \code{FALSE}, use the published parameters unscaled
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 heparin <- function(weight, height, age, sex, adjustToFFM = TRUE)
@@ -99,9 +104,9 @@ heparin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     lowerTypical = 0,
     reference = paste0(
       "Jia Z et al., J Transl Med 2015;13:45 (two-compartment model of ",
-      "anti-IIa activity during and after cardiopulmonary bypass in 41 Chinese ",
-      "adults; Table 2 values as transcribed, awaiting a check against the ",
-      "table). https://doi.org/10.1186/s12967-015-0404-5"
+      "anti-IIa activity during and after cardiopulmonary bypass in cardiac ",
+      "surgery; final-model Table 2 estimates). ",
+      "https://doi.org/10.1186/s12967-015-0404-5"
     )
   )
 }

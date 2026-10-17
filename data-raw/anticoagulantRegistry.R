@@ -41,7 +41,7 @@ registry <- rbind(
   reg("ufh_jia_2015_cpb", "unfractionated heparin",
       "IV, cardiopulmonary bypass", "anti-IIa activity", "chromogenic anti-IIa (IU/mL)",
       "IV", "research_ready", "heparin",
-      "Table 2 transcribed from a supplied specification, not re-read against the source; no ACT fit.",
+      "Final-model Table 2 estimates, confirmed against the published article; no ACT fit, and no ward/low-dose or hemodilution covariate.",
       "https://doi.org/10.1186/s12967-015-0404-5"),
   reg("biva_zhang_2012_healthy", "direct thrombin inhibitor",
       "IV, young healthy volunteers", "bivalirudin plasma", "ACT (not plotted)",
@@ -175,7 +175,7 @@ par <- function(drug, parameter, value, units, provenance, population, source_ur
   data.frame(drug, parameter, value = as.character(value), units, provenance,
              population, source_url, stringsAsFactors = FALSE)
 
-JIA  <- "41 cardiac-bypass patients, Jia 2015"
+JIA  <- "41 enrolled (32 completed) cardiac-bypass patients, Jia 2015"
 ZH   <- "36 young healthy Chinese volunteers, Zhang 2012"
 CIR  <- "4385 subjects (phase I-III), Cirincione 2018 NVAF reference"
 WIL  <- "4918 patients, 7 trials, Willmann 2018 (population means)"

@@ -58,7 +58,13 @@
 #'
 #' Zhang 2012; see the header of \code{R/drugs_bivalirudin.R}.
 #'
-#' @inheritParams alfentanil
+#' @param weight weight in kg
+#' @param height height in cm
+#' @param age age in years
+#' @param sex sex as a string, "female" or "male"
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power (the default); when
+#'   \code{FALSE}, use the published parameters unscaled
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 bivalirudin <- function(weight, height, age, sex, adjustToFFM = TRUE)
