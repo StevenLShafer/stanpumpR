@@ -37,7 +37,11 @@ test_that("every row is fully classified, with a source", {
   expect_true(all(registry$parameter_status %in% PARAMETER_STATUS))
   expect_true(all(registry$offered %in% c("yes", "no")))
   expect_true(all(grepl("^https://", registry$source_url)))
-  expect_false(any(duplicated(registry[, c("drug", "route", "formulation")])))
+  # One row per drug, ANALYTE, route and formulation: a single dose can have
+  # more than one analyte worth recording (MDMA records both the parent and
+  # the MDA metabolite it was fitted with on the same oral dose).
+  expect_false(any(duplicated(
+    registry[, c("drug", "analyte", "route", "formulation")])))
 })
 
 test_that("the registry covers exactly the library's illicit drugs", {
