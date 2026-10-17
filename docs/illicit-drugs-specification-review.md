@@ -63,14 +63,24 @@ one-compartment model with a lag time fits oral methamphetamine best.
 V/F were fitted to hydrochloride salt mass or base mass, and makes that a release gate.
 The paper doses MDMA hydrochloride throughout ("120 mg MDMA HCl", "a single oral dose of
 100 mg MDMA HCl"), so the apparent parameters are on the **hydrochloride salt mass**
-basis. No rescaling is needed if the dose is entered as salt.
+basis. No rescaling is needed if the dose is entered as salt. The implementation takes its
+dose that way.
 
 **Its MDMA absorption question resolves two-to-one.** The specification is right that the
 paper contradicts itself. The Methods list "sequential zero-order, followed by
 first-order" among the models evaluated, the Results say "MDMA had a parallel first- and
 zero-order absorption model", and the Discussion says "sequential zero- and first-order
 absorption". Two of three say sequential, and so does the reported parameter set: it has
-ALAG1, D1 and ka but **no mixing fraction**, which a parallel model would require.
+ALAG1, D1 and ka but **no mixing fraction**, which a parallel model would require. The
+sequential reading is the one implemented.
+
+**Its engine objection to MDMA was right but not decisive.** The specification treats the
+zero-order depot filling as a blocker, and it is true that no first-order depot reproduces
+it. But the parameters are all published, so only the arithmetic needed reorganising: the
+dose is split across the input window and absorbed through the two depots the engine
+already has. Measured against a numerical evaluation of the exact solution, two half doses
+at the quarter points reproduce the peak to 0.01% and the whole curve to 0.53%, against a
+clearance confidence interval of about ±10%. A blocker worth testing before accepting.
 
 **It does not mention that its LSD source is an outlier.** Dolder 2017's half-life of
 2.6 h is shorter than the same group's later measurements: Holze 2024 (85 and 170 µg,
@@ -111,9 +121,10 @@ predicts lower peaks than were observed. They are not observed values to validat
 
 ## 4. What was implemented
 
-Four new drugs, all in the opt-in `Illicit drugs` category, all plasma only (`tPeak` 0,
+Five new drugs, all in the opt-in `Illicit drugs` category, all plasma only (`tPeak` 0,
 `MEAC` 0, no band), each offering **only** the routes whose input model the evidence
-identifies:
+identifies. The first four shipped together; MDMA followed, on 2026-10-17, once a way to
+carry its input exactly enough had been measured rather than assumed.
 
 | Drug | Analyte | Route offered | Parameters |
 |---|---|---|---|
@@ -121,6 +132,7 @@ identifies:
 | methamphetamine | parent d-methamphetamine | intranasal | Harris's clearance and steady-state volume as one compartment, bioavailability 0.79, absorption rate derived from his observed 2.7 h peak |
 | LSD | parent LSD | oral | Dolder's 100 µg arm: ka 1.4 /h, CL/F 12.3 L/h, V/F 46 L, no lag |
 | psilocybin | free plasma psilocin | oral | Holze's nominal 15 mg arm: ka 0.89 /h, lag 0.30 h, CL/F 172 L/h, V/F 448 L, rescaled from a psilocin-equivalent to a psilocybin dose basis |
+| MDMA | parent MDMA | oral | Huestis's fit on a hydrochloride dose basis: CL/F 41.5 L/h, V/F 462 L, ka 1.17 /h, with the published zero-order depot filling (lag 0.322 h, duration 0.304 h) discretised as two lagged half doses |
 
 Each reproduces its source's published summaries, and the tests pin that rather than only
 the parameters: cocaine's half-life falls between Javaid's 41.4 min and Chow's 48 min;
@@ -138,14 +150,18 @@ engine cannot represent is recorded and refused rather than aliased to another.
 
 ## 5. What was deliberately not built, and why
 
-- **MDMA.** The published fit's input is zero-order into the depot followed by first-order
-  absorption, which the closed-form engine cannot represent, and MDMA inhibits its own
-  CYP2D6 metabolism, so a linear model is confined to the single-dose calibration. Its
-  dose basis is now settled (hydrochloride), so what remains is engine work.
-- **Δ9-THC.** The implementable model is a three-compartment fit to **smoked** cannabis
-  with two metabolite levels. stanpumpR has neither a pulmonary route nor two metabolite
-  levels, and a route that cannot be represented must not be aliased to the intranasal
-  one.
+- **Δ9-THC.** Still not built, and the reason is sharper than it was. Two things are
+  missing and only one of them is stanpumpR's. The engine has neither a pulmonary route
+  nor the two metabolite levels the smoked model needs; that is the known gap. The harder
+  one is the source: its abstract gives only the steady-state volume (3,401 L) and the
+  clearance (0.72 L/min), and **those two numbers do not identify a three-compartment
+  model**. The five compartment parameters this implementation would need exist in the
+  specification's transcription alone, which this container could not verify, and the full
+  text also holds the thing that matters most — how a smoked dose was entered into the
+  model, and whether bioavailability really was fixed at 0.25. Three routes to the full
+  text were tried and all are blocked here (the PubMed Central connector returns an empty
+  body for this article, and direct fetches of PubMed Central and Europe PMC fail to
+  resolve). Supplying the paper would unblock it; inventing the input would not.
 - **GHB.** Non-linear absorption and elimination, with no identified human parameter set
   covering route, volume and the non-linear terms together. It needs a non-linear engine
   first.

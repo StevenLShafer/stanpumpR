@@ -87,7 +87,11 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "olanzapine",
                     # Holze 2023's fitted 0.30 h oral lag; plasma only
                     # (2026-10-17)
-                    "psilocybin"))
+                    "psilocybin",
+                    # MDMA (2026-10-17): the source's zero-order depot input,
+                    # discretised as two lagged half doses, so BOTH oral
+                    # depots carry a lag (R/drugs_MDMA.R)
+                    "MDMA"))
 })
 
 
