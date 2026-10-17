@@ -14,7 +14,11 @@ sufentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
   default <- list(
     v1 = 14.3      * size$volume,
     v2 = 63.38694  * size$volume,
-    v3 = 251.9     * size$volume,
+    # Gepts 1995's slowly equilibrating volume, 261.6 L (95% CI 260.2-262.9;
+    # Vss 339 L).  Until 2026-10-17 this was 251.9 L, the volume implied by
+    # k31 rounded to 0.0013 /min (0.32747 / 0.0013).  Changed by decision of
+    # Steven L. Shafer, from an external review.
+    v3 = 261.6     * size$volume,
     cl1 = 0.92235 * size$clearance,
     cl2 = 1.55298 * size$clearance,
     cl3 = 0.32747 * size$clearance
