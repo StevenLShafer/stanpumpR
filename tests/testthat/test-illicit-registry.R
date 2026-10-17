@@ -85,9 +85,11 @@ test_that("every drug the registry covers offers at least one route", {
 })
 
 test_that("the apparent-parameter drugs refuse the intravenous route", {
-  # LSD and psilocybin are fitted as clearance and volume over an unmeasured
-  # bioavailability, which predicts intravenous concentrations wrong by 1/F.
-  for (drug in c("LSD", "psilocybin")) {
+  # LSD, psilocybin and GHB are fitted as clearance (or Vmax) and volume over
+  # an unmeasured bioavailability, which predicts intravenous concentrations
+  # wrong by 1/F.  GHB fixed its bioavailability at 1 while the label reports
+  # 88%, which is the same situation.
+  for (drug in c("LSD", "psilocybin", "GHB")) {
     iv <- registry[registry$drug == drug & registry$route == "IV", ]
     expect_equal(nrow(iv), 1, info = drug)
     expect_equal(iv$offered, "no", info = drug)

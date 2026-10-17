@@ -3,6 +3,7 @@
 import(shiny)
 importFrom(magrittr,"%>%")
 importFrom(memoise,memoise)
+export(GHB)
 export(LSD)
 export(MDMA)
 export(acetaminophen)

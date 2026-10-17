@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Numerical engine: one compartment with Michaelis-Menten elimination
+# Numerical engine: one or two compartments with Michaelis-Menten elimination
 # -----------------------------------------------------------------------------
 # Provenance
 # ----------
@@ -27,6 +27,30 @@
 # method, and nothing upstream may split the table into parts that are run
 # separately and added (simCpCe() dispatches here before it splits oral
 # formulations).
+#
+# THE PERIPHERAL COMPARTMENT (OPTIONAL)
+# =====================================
+# A model may declare first-order distribution to one peripheral compartment
+# with the rate constants k23 and k32 (the source's own naming, central = 2
+# and peripheral = 3), which adds
+#
+#     dA/dt  <- ... - k23 A + k32 Ap,     dAp/dt = k23 A - k32 Ap
+#
+# to the system above.  Saturable elimination still acts on the CENTRAL
+# concentration only.  Both constants are optional and default to zero, which
+# leaves the peripheral compartment permanently empty and every one-
+# compartment drug's numbers bit-for-bit unchanged (test-michaelis-menten.R
+# pins that).  A drug declaring one must declare both, and the peripheral
+# volume is implied by k23/k32 x V rather than given: the source that needed
+# this (GHB, Chen 2020) reports the rate constants and derives the volume the
+# same way.
+#
+# WHY NOT A LINEAR TWO-COMPARTMENT FIT INSTEAD
+# ============================================
+# The peripheral compartment is linear, so it alone would not need this
+# engine.  It is here because the ELIMINATION is saturable: a drug needing
+# both (GHB) cannot use any closed-form engine, and could not be reduced to
+# one compartment without losing the distribution phase its source fitted.
 #
 # THE INPUTS
 # ==========
@@ -95,6 +119,16 @@ validateMichaelisMenten <- function(mm, drug)
   if (!is.null(mm$kConversion) &&
       !(is_valid_number(mm$kConversion) && mm$kConversion > 0))
     stop("Invalid michaelisMenten for ", drug, ": kConversion must be positive.")
+  # The optional peripheral compartment: both rate constants or neither, since
+  # one alone is a one-way compartment that silently swallows the dose.
+  peripheral <- c("k23", "k32")
+  given <- peripheral[vapply(peripheral, function(k) !is.null(mm[[k]]), logical(1))]
+  if (length(given) == 1L)
+    stop("Invalid michaelisMenten for ", drug, ": a peripheral compartment ",
+         "needs both k23 and k32; only ", given, " was given.")
+  for (k in given)
+    if (!(is_valid_number(mm[[k]]) && mm[[k]] > 0))
+      stop("Invalid michaelisMenten for ", drug, ": ", k, " must be positive.")
   mm
 }
 
@@ -158,6 +192,9 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   iIM <- nOral + 1
   iConv <- nOral + 2
   iC <- nOral + 3
+  iP <- nOral + 4                  # the optional peripheral compartment
+  k23 <- if (is.null(mm$k23)) 0 else mm$k23
+  k32 <- if (is.null(mm$k32)) 0 else mm$k32
   ka <- c(vapply(absorption, function(a) a$ka, numeric(1)),
           if (is.null(mm$ka_IM)) 0 else mm$ka_IM)
   kc <- if (is.null(mm$kConversion)) 0 else mm$kConversion
@@ -228,12 +265,17 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     out <- ka * x[seq_len(iIM)]
     dx[seq_len(iIM)] <- -out
     dx[iConv] <- out[iIM] + rPE - kc * x[iConv]
+    # Distribution is linear and acts on amounts; saturable elimination acts
+    # on the CENTRAL concentration only.  With k23 = k32 = 0 (every drug but
+    # GHB) both terms vanish and the peripheral compartment stays empty.
+    distribute <- k23 * x[iC] - k32 * x[iP]
     dx[iC] <- sum(out[seq_len(nOral)]) + kc * x[iConv] + rIV -
-      vmax * C / (km + C)
+      vmax * C / (km + C) - distribute
+    dx[iP] <- distribute
     dx
   }
 
-  x <- numeric(iC)
+  x <- numeric(iP)
   Cp <- numeric(L)
   for (i in seq_len(L)) {
     if (i > 1) {
