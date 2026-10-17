@@ -1,6 +1,6 @@
 ### The model
 
-Chae and colleagues' analysis of 42 healthy adults given one 500 mg immediate-release tablet (*Br J Clin Pharmacol* 2012): one compartment, apparent clearance 52.6 L/h times creatinine clearance over 106.5 mL/min to the power 0.782, apparent volume 113 L (poorly estimated, with a relative standard error of 57%), absorption 0.41/h. Creatinine clearance is Cockcroft-Gault, the usual method, which the available text does not state, from the entered serum creatinine (a child's on the adult scale) or an [assumed normal](help:models/covariates) one. Metformin is cleared by the kidney unchanged, so a lower creatinine clearance raises the curve.
+Chae and colleagues' analysis of 42 healthy adults given one 500 mg immediate-release tablet (*Br J Clin Pharmacol* 2012): one compartment, apparent clearance 52.6 L/h times creatinine clearance over 106.5 mL/min to the power 0.782, apparent volume 113 L, absorption 0.41/h, no lag. (Table 2 prints the volume's relative standard error as 57%, but the text and the bootstrap interval give about 4%.) The paper does not say how creatinine clearance was obtained; here it is Cockcroft-Gault, the usual method, from the entered serum creatinine (a child's on the adult scale) or an [assumed normal](help:models/covariates) one. Metformin is cleared by the kidney unchanged, so a lower creatinine clearance raises the curve. The subjects were young (21 to 31 years) with creatinine clearances of 90 to 123 mL/min, so the curve in renal impairment extrapolates the fitted power term.
 
 ### Routes
 

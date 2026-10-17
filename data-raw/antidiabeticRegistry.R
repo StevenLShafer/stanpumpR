@@ -210,7 +210,7 @@ registry <- rbind(
   # --- Oral agents -------------------------------------------------------------
   reg("metformin_ir_chae2012", "metformin", "Immediate-release tablets", PO, "core", "US",
       FIT, FIT, "PD-FIT", DFIT, "single-dose glucose response, healthy adults", NA, "metformin", TRUE,
-      "https://doi.org/10.1111/j.1365-2125.2012.04260.x", "Abstract verified; CrCl taken as Cockcroft-Gault (method not stated in the available text)."),
+      "https://doi.org/10.1111/j.1365-2125.2012.04260.x", "Full text verified (Table 2, equations): one compartment, no lag; CrCl method not stated in the paper, taken as Cockcroft-Gault; fitted on CLcr 90-123 mL/min."),
   reg("metformin_ir_alternative", "metformin", "Immediate release, 2C model version", PO, "core", "study",
       FIT, AUD, "PD-TEMPLATE", DTPL, "none", NA, NA, FALSE,
       "https://pmc.ncbi.nlm.nih.gov/articles/PMC4171106/", "Not re-read; must not be spliced with Chae."),
@@ -398,10 +398,10 @@ parameters <- rbind(
                                                        lispro("insulinLisproMix50")), "lispro"),
   thamRows("insulinGlargine", "768", "74.5", ab("insulinGlargine", "glargine", "0.0830", NULL, "0.822", "0.612"), "glargine"),
 
-  par("metformin", "CL/F", "52.6", "L/h (x (CrCl/106.5)^0.782)", E, "Chae 2012, 42 healthy adults", chae, "Abstract"),
-  par("metformin", "V/F", "113", "L (x library FFM factor)", E, "Chae 2012", chae, "Abstract"),
-  par("metformin", "ka", "0.41", "1/h", E, "Chae 2012", chae, "Abstract"),
-  par("metformin", "CrCl method", "Cockcroft-Gault", "mL/min", AS, "not stated in the available text", chae, "-"),
+  par("metformin", "CL/F", "52.6", "L/h (x (CrCl/106.5)^0.782)", E, "Chae 2012, 42 healthy adults, CLcr 90-123 mL/min", chae, "Table 2; final-model equations"),
+  par("metformin", "V/F", "113", "L (x library FFM factor)", E, "Chae 2012", chae, "Table 2 (its 56.6% RSE is 4.18% in the text)"),
+  par("metformin", "ka", "0.41", "1/h", E, "Chae 2012", chae, "Table 2"),
+  par("metformin", "CrCl method", "Cockcroft-Gault", "mL/min", AS, "not stated in the paper", chae, "Methods (silent)"),
 
   par("empagliflozin", "CL/F", "10.6", "L/h at the reference patient", E, "Baron 2016, 2761 adults with T2D", baron, "Table S1"),
   par("empagliflozin", "Vc/F", "3.14", "L", E, "Baron 2016", baron, "Table S1"),

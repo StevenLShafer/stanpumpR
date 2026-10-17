@@ -11,17 +11,26 @@
 # ======
 # Chae JW, Baek IH, Lee BY, Cho SK, Kwon KI.  Population PK/PD analysis of
 # metformin using the signal transduction model.  Br J Clin Pharmacol
-# 2012;74:815-823 (PMC3495146).  42 healthy adults, one 500 mg tablet.
-# From the abstract:
+# 2012;74:815-823 (PMC3495146).  42 healthy Korean adults (age 21-31,
+# 61-78 kg, CLcr 90-123 mL/min; Table 1), one 500 mg tablet.  "A one
+# compartment body model with first order absorption and elimination", no
+# lag; Table 2 and the final-model equations (full text, supplied by Steven
+# L. Shafer):
 #
 #     CL/F = 52.6 L/h x (CLcr / 106.5)^0.782
-#     V/F  = 113 L     (RSE 56.6%)
+#     V/F  = 113 L
 #     ka   = 0.41 /h
 #
-# CLcr in mL/min.  The available text does not say how it was computed; the
-# model uses Cockcroft-Gault, the usual choice, at the patient's creatinine
-# (a child's on the adult scale) or, with the field blank, an assumed normal
-# creatinine for age and sex (R/renalFunction.R).  No lag was reported.
+# Table 2 prints V/F's relative standard error as 56.6%, but the text gives
+# 4.18% and the bootstrap interval (100 to 126 L) agrees with the text.
+#
+# CLcr in mL/min.  The paper does not say how it was obtained; the model
+# uses Cockcroft-Gault, the usual choice, at the patient's creatinine (a
+# child's on the adult scale) or, with the field blank, an assumed normal
+# creatinine for age and sex (R/renalFunction.R).  The subjects' CLcr ran
+# from 90 to 123 mL/min only, so in renal impairment the power term is an
+# extrapolation; it is not capped, because metformin's clearance is mostly
+# renal and falls with renal function.
 #
 # NOT EXTENDED-RELEASE.  The extended-release tablets are a different input
 # (a PAGE 2017 abstract, not a complete model) and are not offered; ER doses
