@@ -6,7 +6,7 @@ The four body covariates in the Patient Profile reach the models in fixed units:
 
 **Linear weight scaling.** Etomidate, ketamine, lidocaine, morphine, pethidine, hydromorphone, rocuronium and naloxone take V1 (or every parameter) proportional to weight, with the rate constants fixed. Volumes and clearances then both scale linearly with weight. This is how the original papers reported them.
 
-**Allometric and covariate models.** Methadone (Henthorn and Kharasch) scales only its deep peripheral volume, to weight to the power 1.23. Fentanyl scales volumes linearly and clearances to the 0.75 power of weight. Propofol (Eleveld), remifentanil (Eleveld, and Kim for obesity) and remimazolam (Eleveld) use allometric scaling together with age, sex and maturation terms.
+**Allometric and covariate models.** Methadone (Henthorn and Kharasch) scales only its deep peripheral volume, to weight to the power 1.23. Fentanyl scales volumes linearly and clearances to the 0.75 power of weight. Propofol (Eleveld) and remifentanil (Eleveld, and Kim for obesity) use allometric scaling together with age, sex and maturation terms; remimazolam (Eleveld) uses allometric scaling with age and sex terms but no maturation.
 
 These three kinds describe the models as published, which is what stanpumpR runs with *Adjust weight to fat-free mass* unticked. By default the box is ticked and most of them, the fixed-parameter models included, are rescaled to the patient's fat-free mass, as described at the end of this page and in [Scaling to fat-free mass](help:models/fat-free-mass).
 
@@ -19,7 +19,7 @@ CL = CL_70 × (weight / 70)^0.75
 V  = V_70  × (weight / 70)
 ```
 
-A 35 kg patient has half the volume of a 70 kg one but 59 per cent of the clearance, so a per-kilogram dose gives a higher concentration and a per-kilogram infusion is relatively too much. This is the main reason children appear to need more drug per kilogram.
+A 35 kg patient has half the volume of a 70 kg one but 59 per cent of the clearance, so a per-kilogram bolus gives the same initial concentration, but a per-kilogram infusion reaches a steady state about 16 per cent lower (0.5/0.59): relatively too little. This is the main reason children appear to need more drug per kilogram.
 
 ## Body mass index, lean body mass and fat-free mass
 
@@ -51,7 +51,7 @@ The Kim remifentanil model for obesity uses the Janmahasatian fat-free mass inst
 
 **Maturation** describes the rise of clearance from birth to adult values. The Eleveld propofol model uses a sigmoid in post-menstrual age, with half-maximal clearance at about 42 weeks post-menstrual age; the app has no gestational-age input, so the model takes post-menstrual age as 40 weeks plus the age entered. Intercompartmental clearance to the slow compartment matures separately.
 
-**Ageing** describes the decline in adults. The Eleveld models reduce V2 and clearance exponentially with age; remifentanil's volumes and clearances decline with age; remimazolam's V3 grows with age. Two neuromuscular blockers carry an age effect taken from a second study, because the model supplying their kinetics had none: vecuronium's volumes and clearances fall by Rupp's published elderly ratios between ages 40 and 70, and cisatracurium's peripheral volume grows 37% between 50 and 65, as Sorooshian found. Each also shifts its time to peak effect across the same span. The adult dexmedetomidine, Minto-era and fixed-parameter models have no age term. [The age and propofol scenario](scenario:age-and-propofol) shows how large the effect is.
+**Ageing** describes the decline in adults. The Eleveld propofol model reduces V2, V3 and clearance exponentially with age (the V3 and clearance terms are those Eleveld estimated with opioids co-administered, which the app always applies); remifentanil's volumes and clearances decline with age; remimazolam's V3 grows with age. Two neuromuscular blockers carry an age effect taken from a second study, because the model supplying their kinetics had none: vecuronium's volumes and clearances fall by Rupp's published elderly ratios between ages 40 and 70, and cisatracurium's peripheral volume grows 37% between 50 and 65, as Sorooshian found. Each also shifts its time to peak effect across the same span. The adult dexmedetomidine, Minto-era and fixed-parameter models have no age term. [The age and propofol scenario](scenario:age-and-propofol) shows how large the effect is.
 
 ## Sex
 

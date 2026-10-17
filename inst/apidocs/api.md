@@ -102,7 +102,7 @@ The response (JSON):
     {
       "Drug": "fentanyl", "Dosed": true, "ConcentrationUnits": "ng/mL", "MEAC": 0.6,
       "PeakPlasma": 8.264457841, "TimePeakPlasma": 0,
-      "PeakEffectSite": 2.184310272, "TimePeakEffectSite": 3.53716025
+      "PeakEffectSite": 2.184312665, "TimePeakEffectSite": 3.537154731
     }
   ],
   "doses": [
@@ -111,8 +111,8 @@ The response (JSON):
   "events": [],
   "timeseries": [
     {"Drug": "fentanyl", "Time": 0,  "Plasma": 8.264457841,  "EffectSite": 0,           "ConcentrationUnits": "ng/mL"},
-    {"Drug": "fentanyl", "Time": 5,  "Plasma": 1.554401881,  "EffectSite": 2.099509718, "ConcentrationUnits": "ng/mL"},
-    {"Drug": "fentanyl", "Time": 10, "Plasma": 0.7994632409, "EffectSite": 1.384793615, "ConcentrationUnits": "ng/mL"}
+    {"Drug": "fentanyl", "Time": 5,  "Plasma": 1.554401881,  "EffectSite": 2.099511418, "ConcentrationUnits": "ng/mL"},
+    {"Drug": "fentanyl", "Time": 10, "Plasma": 0.7994632409, "EffectSite": 1.384793358, "ConcentrationUnits": "ng/mL"}
   ],
   "warnings": []
 }

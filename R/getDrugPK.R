@@ -586,15 +586,11 @@ getDrugPK <- function(
           lag = tlag_PO
         )
       } else {
-        ke0 <- stats::optimize(
-          tPeakError, c(0,200),tPeak,
-          p_coef_bolus_l1,
-          p_coef_bolus_l2,
-          p_coef_bolus_l3,
-          lambda_1,
-          lambda_2,
-          lambda_3
-        )$minimum
+        ke0 <- ke0FromTPeakBolus(
+          tPeak = tPeak,
+          coef = c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+          lambda = c(lambda_1, lambda_2, lambda_3)
+        )
       }
     } else {
       ke0 <- 0
@@ -1330,32 +1326,39 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 }
 
 
-# Calculate the error between the predicted and actual time of peak effect
-# site concentration
-tPeakError <-   function(lambda_4, tPeak, p_coef_bolus_1,p_coef_bolus_2,p_coef_bolus_3, lambda_1, lambda_2, lambda_3)
+#' Back-solve ke0 from a time to peak effect observed after an IV bolus
+#'
+#' The intravenous counterpart of ke0FromTPeak(): the plasma curve peaks at
+#' the moment of the bolus, so every positive time to peak effect is
+#' reachable, and the peak time falls monotonically as ke0 rises.  The root is
+#' bracketed and found with uniroot().
+#'
+#' This replaced a nested optimize(), ke0 searched over 0-200 per minute by
+#' the squared error of a peak searched over 0-100 minutes.  The inner range
+#' meant that a time to peak effect of 100 minutes or more could not be
+#' reached and returned a wrong ke0 without an error, and the squared error
+#' left morphine's 93.8 min solved to 93.83 min.  (Claude Code, 2026-10-17, from
+#' an external review.)
+#'
+#' @param tPeak observed time to peak effect after a bolus, in minutes
+#' @param coef plasma bolus coefficients on the drug's eigenvalues
+#' @param lambda those eigenvalues; zeros mark absent compartments
+#' @returns ke0, per minute
+#' @keywords internal
+ke0FromTPeakBolus <- function(tPeak, coef, lambda)
 {
-  # lambda_4 is the trial ke0; the optimiser may land it exactly on an
-  # eigenvalue, where the coefficients below divide by zero.
-  lambda_4 <- separateEigenvalues(lambda_4, c(lambda_1, lambda_2, lambda_3))
-  e_coef_bolus_1 <- p_coef_bolus_1 / (lambda_4 - lambda_1) * lambda_4
+  peakAt <- function(ke0) effectSitePeakTime(coef, lambda, ke0)
 
-  if (lambda_2 > 0)
-  {
-    e_coef_bolus_2 <-  p_coef_bolus_2 / (lambda_4 - lambda_2) * lambda_4
-  } else {
-    e_coef_bolus_2 <- 0
-  }
-  if (lambda_3 > 0)
-  {
-    e_coef_bolus_3 <- p_coef_bolus_3 / (lambda_4 - lambda_3) * lambda_4
-  } else {
-    e_coef_bolus_3 <- 0
-  }
-  e_coef_bolus_4 <- - e_coef_bolus_1 - e_coef_bolus_2 - e_coef_bolus_3
-
-  predPeak <- stats::optimize(CE,c(0,100), e_coef_bolus_1, e_coef_bolus_2, e_coef_bolus_3, e_coef_bolus_4, lambda_1, lambda_2, lambda_3, lambda_4, maximum=TRUE)$maximum
-  return((tPeak-predPeak)^2)
+  # Bracket: widen downwards until the peak is later than the target, and
+  # upwards until it is earlier.
+  lo <- 1e-3
+  hi <- 1
+  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
+  while (peakAt(hi) > tPeak && hi < 1e6) hi <- hi * 10
+  stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
+                 tol = .Machine$double.eps^0.5)$root
 }
+
 
 # calculate c3 based on 4 coefficients, 4 exponents, and time
 CE <- function(t, e_coef_bolus_1, e_coef_bolus_2, e_coef_bolus_3, e_coef_bolus_4, lambda_1, lambda_2, lambda_3, lambda_4)

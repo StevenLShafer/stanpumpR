@@ -128,12 +128,15 @@ TRAMADOL_CYP2D6_WEIGHT <- c(
 #' statement about the drug.
 #'
 #' @param weight weight in kg
-#' @param height height in cm (not used)
-#' @param age age in years (not used)
-#' @param sex sex as a string (not used)
+#' @param height height in cm (fat-free mass only)
+#' @param age age in years (fat-free mass only)
+#' @param sex sex as a string (fat-free mass only)
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 #'   Scales formation of desmetramadol, and with it the parent's own total
 #'   clearance.
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published fixed parameters unscaled.
 #'
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   desmetramadol as the formed active species

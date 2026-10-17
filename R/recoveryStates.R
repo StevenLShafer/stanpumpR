@@ -437,6 +437,11 @@ effectSiteCoefficients <- function(coefs, ke0)
 
   bolus <- link(coefs$bolus)
   out <- list(lambda = c(lambda, ke0), bolus = bolus, PO = link(coefs$PO))
+  # A parent with a second oral depot carries PO2 (metaboliteCoefficients());
+  # without it here, those doses never reached the metabolite's effect site.
+  # No drug has both yet (aspirin's salicylate is plasma only).
+  # (Claude Code, 2026-10-17.)
+  out$PO2 <- link(coefs$PO2)
   out$infusion <- if (is.null(bolus)) NULL else bolus / out$lambda
   out
 }
