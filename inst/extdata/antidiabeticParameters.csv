@@ -12,7 +12,7 @@
 "tirzepatide","Vc","2.47","L/70 kg (x (FFM + 0.482 FM)/70)","estimated","Schneck 2024","https://doi.org/10.1002/psp4.13099","Table 3, footnote e"
 "tirzepatide","Vp","3.98","L/70 kg (x (FFM + 0.482 FM)/70)","estimated","Schneck 2024","https://doi.org/10.1002/psp4.13099","Table 3, footnote e"
 "tirzepatide","fat-mass fraction on V","0.482","unitless","estimated","Schneck 2024","https://doi.org/10.1002/psp4.13099","Table 3"
-"tirzepatide","F","0.655","unitless (0.8 x (1 - 0.181))","derived","reproduces the reported 0.061 L/h apparent CL in T2D","https://doi.org/10.1002/psp4.13099","Table 3 (0.8 fixed; -0.181 between studies)"
+"tirzepatide","F","0.655","unitless (0.8 x (1 - 0.181))","estimated","Schneck 2024: every study but the phase 1 bioavailability study","https://doi.org/10.1002/psp4.13099","Table 3; supplement control stream (BIOPHS = 1 + THETA(10) unless STUDYN 4)"
 "liraglutide","V/F","0.112","L/kg","estimated","Roge 2015, 29 adults with T2D","https://doi.org/10.1002/psp4.11","Table 1"
 "liraglutide","CL/F","1.83e-4","L/min/kg","estimated","Roge 2015","https://doi.org/10.1002/psp4.11","Table 1 (power of ten from the specification)"
 "liraglutide","ka","9.41e-4","1/min","estimated","Roge 2015","https://doi.org/10.1002/psp4.11","Table 1 (power of ten from the specification)"

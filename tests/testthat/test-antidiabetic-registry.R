@@ -84,11 +84,10 @@ test_that("every implemented model's numbers are in the audit with provenance an
     expect_match(paste(rows$parameter, collapse = " "), "CL", info = d)
     expect_match(paste(rows$parameter, collapse = " "), "V", info = d)
   }
-  # the derived values are marked derived
+  # values once derived are now read from the supplements: empagliflozin's
+  # eGFR exponent (Table S1) and tirzepatide's F (its control stream)
   derived <- parameters[parameters$provenance == "derived", ]
-  # empagliflozin's eGFR exponent, once derived, is Table S1's estimate
-  expect_false(any(derived$drug == "empagliflozin"))
-  expect_true(any(derived$drug == "tirzepatide" & derived$parameter == "F"))
+  expect_false(any(derived$drug %in% c("empagliflozin", "tirzepatide")))
 })
 
 test_that("the implemented insulins' structure is verified against Tham's Figure 1", {

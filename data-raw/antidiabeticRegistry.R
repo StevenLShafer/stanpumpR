@@ -72,7 +72,7 @@ registry <- rbind(
   reg("tirzepatide_sc_mounjaro", "tirzepatide", "Mounjaro injection", SC, "core", "US",
       FIT, FIT, "PD-AUDIT", DAUD, "FPG/HbA1c (FDA linked model)", NA, "tirzepatide", TRUE,
       "https://doi.org/10.1002/psp4.13099",
-      "Schneck 2024 Table 3 verified. F 0.8 x (1 - 0.181) = 0.655 derived: reproduces the paper's 0.061 L/h apparent CL in T2D."),
+      "Schneck 2024 Table 3 and the supplement's NONMEM control stream: F 0.8 x (1 - 0.181) = 0.655 in every study but the phase 1 bioavailability study (STUDYN 4); reproduces the paper's 0.061 L/h apparent CL in T2D."),
   reg("tirzepatide_sc_zepbound", "tirzepatide", "Zepbound injection", SC, "core", "US",
       FIT, AUD, "PD-AUDIT", DAUD, "body weight", NA, NA, FALSE,
       "https://doi.org/10.1002/psp4.13099",
@@ -378,7 +378,7 @@ parameters <- rbind(
   par("tirzepatide", "Vc", "2.47", "L/70 kg (x (FFM + 0.482 FM)/70)", E, "Schneck 2024", schneck, "Table 3, footnote e"),
   par("tirzepatide", "Vp", "3.98", "L/70 kg (x (FFM + 0.482 FM)/70)", E, "Schneck 2024", schneck, "Table 3, footnote e"),
   par("tirzepatide", "fat-mass fraction on V", "0.482", "unitless", E, "Schneck 2024", schneck, "Table 3"),
-  par("tirzepatide", "F", "0.655", "unitless (0.8 x (1 - 0.181))", DV, "reproduces the reported 0.061 L/h apparent CL in T2D", schneck, "Table 3 (0.8 fixed; -0.181 between studies)"),
+  par("tirzepatide", "F", "0.655", "unitless (0.8 x (1 - 0.181))", E, "Schneck 2024: every study but the phase 1 bioavailability study", schneck, "Table 3; supplement control stream (BIOPHS = 1 + THETA(10) unless STUDYN 4)"),
 
   par("liraglutide", "V/F", "0.112", "L/kg", E, "Roge 2015, 29 adults with T2D", roge, "Table 1"),
   par("liraglutide", "CL/F", "1.83e-4", "L/min/kg", E, "Roge 2015", roge, "Table 1 (power of ten from the specification)"),

@@ -25,12 +25,16 @@
 # 9270 W / (6680 + 216 BMI), female 9270 W / (8780 + 244 BMI)) and FM = W - FFM.
 #
 # BIOAVAILABILITY.  The paper writes F = 0.8 x (1 + fraction), with fraction
-# -0.181 in some studies, without listing which.  With F = 0.8 x 0.819 =
-# 0.655 a 90 kg patient's apparent clearance is 0.0329 x (90/70)^0.8 / 0.655
-# = 0.061 L/h, exactly the apparent clearance the paper reports for patients
-# with type 2 diabetes, so the model uses F = 0.655 for the commercial
-# product in diabetes: a DERIVED value, recorded as such.  The 0.8 is the
-# absolute bioavailability of the intravenous-comparison study.
+# -0.181 "between studies".  The NONMEM control stream in the supplement
+# (Supplementary Attachment 2) says which: BIOPHS = 1 + THETA(10) for every
+# study, and BIOPHS = 1 only for STUDYN 4, "Other studies relative to Ph1
+# bioavailability study".  So every study but the phase 1 bioavailability
+# study, the type 2 diabetes trials among them, has F = 0.8 x 0.819 = 0.655,
+# the value the model uses.  It agrees with the paper's apparent clearance in
+# type 2 diabetes: 0.0329 x (90/70)^0.8 / 0.655 = 0.061 L/h at 90 kg.  The
+# 0.8 is the absolute bioavailability of the intravenous-comparison study.
+# The control stream's $THETA for Vp reads 3.97 (an initial value); Table 3's
+# final estimate, 3.98, is used.
 #
 # BODY SIZE: the model carries its own size covariates (total weight on the
 # clearances, fat-weighted mass on the volumes, the paper having estimated

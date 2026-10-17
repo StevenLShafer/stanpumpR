@@ -4,7 +4,7 @@ Schneck and Urva's population analysis of 19 studies and 5802 participants (*CPT
 
 ### Bioavailability
 
-The paper fixes the absolute bioavailability at 0.8 and estimates a relative change of −0.181 between studies without listing them. With 0.8 × (1 − 0.181) = 0.655 a 90 kg patient's apparent clearance is 0.061 L/h, exactly the apparent clearance the paper reports in type 2 diabetes, so that value is used here. It is a derived value, not a separate estimate. The half-life is about five and a half days.
+The paper fixes the absolute bioavailability at 0.8 and estimates a relative change of −0.181 between studies. Its supplement's NONMEM code shows that the change applies to every study except the phase 1 bioavailability study, the type 2 diabetes trials included. So the bioavailability here is 0.8 × (1 − 0.181) = 0.655. With it, a 90 kg patient's apparent clearance is 0.061 L/h, the value the paper reports in type 2 diabetes. The half-life is about five and a half days.
 
 ### What is not plotted
 
