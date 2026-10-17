@@ -20,18 +20,22 @@ The plasma concentration is what a blood sample measures; the effect-site concen
 
 ke0 cannot be measured directly. It is estimated from the time course of a measured effect, usually the processed EEG, during a bolus or a rapid infusion. A model-independent way to report the result is the **time to peak effect** after a bolus, tPeak: the moment at which the rising effect-site concentration meets the falling plasma concentration.
 
-Minto, Schnider, Gregg, Henthorn and Shafer showed in 2003 that tPeak is the right quantity to carry from one pharmacokinetic model to another (Shafer and Varvel had reported the opioids' times to peak effect in 1991, but the use of tPeak in place of ke0 was appreciated only a decade later). ke0 itself depends on which disposition model it was fitted with, so taking a published ke0 and pairing it with a different model gives the wrong time course. tPeak does not have that problem. stanpumpR therefore stores **tPeak** for each drug and solves for the ke0 that, with this drug's disposition parameters for this patient, makes the effect site after a bolus peak at exactly tPeak. The search is a one-dimensional optimisation in `getDrugPK()`, repeated for every patient because the disposition parameters change with the covariates. Each drug's page shows the resulting ke0 and its half-time at six reference patients, and the tPeak it was solved from.
+Minto, Schnider, Gregg, Henthorn and Shafer showed in 2003 (*Anesthesiology* 99:324-333) that tPeak is the right quantity to carry from one pharmacokinetic model to another (Shafer and Varvel had reported the opioids' times to peak effect in 1991, but the use of tPeak in place of ke0 was appreciated only a decade later). ke0 itself depends on which disposition model it was fitted with, so taking a published ke0 and pairing it with a different model gives the wrong time course. tPeak does not have that problem. stanpumpR therefore stores **tPeak** for each drug and solves for the ke0 that, with this drug's disposition parameters for this patient, makes the effect site after a bolus peak at exactly tPeak. The search is a one-dimensional optimisation in `getDrugPK()`, repeated for every patient because the disposition parameters change with the covariates. Each drug's page shows the resulting ke0 and its half-time at six reference patients, and the tPeak it was solved from.
 
 | Drug | tPeak (min) | Source noted in the code |
 |---|---|---|
 | propofol | 1.6 | Schnider 1999 |
 | remifentanil | 1.6 | opioid simulation spreadsheet |
 | alfentanil | 1.4 | Shafer/Varvel t_peaks analysis |
-| fentanyl | 3.7 | Shafer/Varvel t_peaks analysis |
-| sufentanil | 5.8 | Shafer/Varvel t_peaks analysis |
+| fentanyl | 3.6 | Shafer/Varvel 1991 |
+| sufentanil | 5.6 | Shafer/Varvel 1991 |
 | morphine | 93.8 | |
-| methadone | 11.3 | |
+| methadone | 10 | Kharasch 2004 peak miosis 10-15 min, within Inturrisi 1987's range |
 | hydromorphone | 19.6 | |
+| oxycodone | 12.35 | Lalovic 2006 (pupil) t½ke0 11 min |
+| oliceridine | 4.4 | Dahan 2020: analgesia too fast to measure, taken as t½ke0 1 min |
+| buprenorphine | 61.2 | Yassen 2006 ke0, carried as tPeak |
+| naloxone | 3.58 | Yassen 2007 ke0, carried as tPeak |
 | rocuronium | 4.5 | Cortínez 2007 (population median at the adductor pollicis) |
 | vecuronium | 5.37 (to age 40), 4.80 (from 70) | Rupp 1987 ke0, with its own kinetics |
 | cisatracurium | 12.3 (young), 12.9 (elderly) | Sorooshian 1996 ke0, with its own kinetics |

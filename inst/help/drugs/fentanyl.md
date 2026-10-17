@@ -10,7 +10,7 @@ Size only. By default, with *Adjust weight to fat-free mass* ticked, the volumes
 
 ### Effect site
 
-The time to peak effect is 3.7 minutes, from the Shafer and Varvel time-to-peak analysis. Fentanyl's effect site thus lags the plasma more than remifentanil's or alfentanil's, and a bolus reaches a lower fraction of its plasma peak at the effect site.
+The time to peak effect is 3.6 minutes, from Shafer and Varvel (*Anesthesiology* 1991;74:53-63, Figure 2, EEG). Fentanyl's effect site thus lags the plasma more than remifentanil's or alfentanil's, and a bolus reaches a lower fraction of its plasma peak at the effect site.
 
 ### MEAC and typical concentrations
 

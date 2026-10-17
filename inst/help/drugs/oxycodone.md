@@ -22,7 +22,7 @@ Lalovic measured pupil constriction after oral oxycodone and found that the pare
 
 ### MEAC and typical concentrations
 
-MEAC is 12 ng/mL, unchanged from the earlier model: a compromise between the lower values suggested by Mandema and the 45 to 50 ng/mL suggested by Kokki in 2012. None of the five studies behind this model measured analgesia. Lalovic's EC50 of 30 ng/mL is for miosis. The shaded band is 10 to 20 ng/mL. This value is to be checked in a separate audit of the MEAC and time to peak effect of every opioid in the library.
+MEAC is 12 ng/mL, set for consistency with morphine's 8 ng/mL. None of the five studies behind this model measured analgesia, and Lalovic's EC50 of 30 ng/mL is for miosis. At equal intravenous doses this model reaches about 1.4 times morphine's concentration, and intravenous oxycodone takes 1 to 1.3 times as many milligrams as morphine for the same analgesia, which puts a MEAC consistent with morphine's at 11 to 15 ng/mL. Measured directly, the values are higher. Kokki and colleagues (*Basic Clin Pharmacol Toxicol* 2012;110:469-475) titrated intravenous oxycodone after laparoscopic cholecystectomy. Pain returned at a mean of 21 ng/mL (range 16 to 31), and relief came at 45 to 50 ng/mL. Morphine's 8 ng/mL sits at the low end of morphine's own literature in the same way, so the two are kept together. The audit of the MEAC and time to peak effect of every opioid in the library (October 2026) confirmed 12 on this basis. The shaded band is 10 to 20 ng/mL.
 
 ### Active metabolite
 
