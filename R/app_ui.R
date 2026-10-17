@@ -472,16 +472,19 @@ app_ui <- function() {
               ),
 
               bslib::card(
+                # The title and the controls each stay on one line; when the
+                # column cannot hold both, the controls drop under the title
+                # (.doses-header in app.css).
                 bslib::card_header(
-                  class = "justify-content-between",
+                  class = "doses-header",
                   span(
                     icon("syringe"), "Doses",
                     # "(times in days)": the unit of the times in the table
                     textOutput("doseTimeUnits", inline = TRUE) |>
-                      htmltools::tagAppendAttributes(class = "small text-muted")
+                      htmltools::tagAppendAttributes(class = "micro text-muted")
                   ),
                   div(
-                    class = "d-flex align-items-center gap-3",
+                    class = "doses-controls d-flex align-items-center gap-2",
                     # Opt-in for the drug-of-abuse research models (off by
                     # default); when on, they are offered in the dose table and
                     # the Add a dose dialog, with their names shown in red.
@@ -500,7 +503,7 @@ app_ui <- function() {
                       ),
                       placement = "left"
                     ),
-                    actionLink("setTarget", "Suggest Dosing", class = "small")
+                    actionLink("setTarget", "Suggest Dosing", class = "micro")
                   )
                 ),
 

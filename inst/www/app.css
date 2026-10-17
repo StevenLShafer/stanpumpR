@@ -76,6 +76,31 @@ always was. */
   overflow-y: auto;
 }
 
+/* The Doses card header: the title ("Doses (HH:MM or minutes)") and the
+controls (Show illicit drugs, Suggest Dosing) each stay on one line.  When
+the column cannot hold both, the controls drop under the title, still at the
+right, rather than the title being squeezed into a stack of words. */
+.doses-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.25rem;
+  row-gap: 0.25rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.doses-header > * {
+  white-space: nowrap;
+}
+.doses-header .doses-controls {
+  margin-left: auto;
+}
+/* Shiny gives an input container a fixed width of 300px; the checkbox is
+as wide as its label here. */
+.doses-header .shiny-input-container {
+  width: auto;
+}
+
 #dosetable_apply {
   width: 100%;
   margin: -5px 0 10px;
