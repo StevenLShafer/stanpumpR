@@ -240,14 +240,16 @@ registry <- rbind(
       CON, CON, "PD-TEMPLATE", DTPL, "DPP-4 inhibition", NA, NA, FALSE,
       "https://dailymed.nlm.nih.gov/dailymed/fda/fdaDrugXsl.cfm?setid=6e8d8c4f-96eb-4b64-9c8c-4a5448a23a78&type=display", "Half-lives only."),
   reg("linagliptin", "linagliptin", "Tradjenta", PO, "core", "US",
-      AUD, AUD, "PD-FIT", DAUD, "plasma DPP-4 inhibition", NA, NA, FALSE,
-      "https://link.springer.com/article/10.1007/s40262-014-0232-4", "Target-mediated disposition: needs a binding solver. The supplied Retlich 2015 supplement (MOESM1) holds the covariate-selection tables; its model equations are images, and the final parameter table is in the main paper, not supplied."),
+      AUD, FIT, "PD-FIT", DAUD, "plasma DPP-4 inhibition", NA, "linagliptin", TRUE,
+      "https://doi.org/10.1007/s40262-014-0232-4",
+      "Retlich 2015 Table 4 and Fig. 1: two compartments with equilibrium binding to DPP-4 (Bmax,C 4.97 nmol/L + 0.457 in women, x age; Amax,P 1650 nmol; Kd 0.0652 nmol/L), CL/F 258 L/h on the unbound drug, VC/F 715 L, QP/F 412 L/h, VP/F 1650 L, Ka 0.441/h (phase 2b tablet), F x (1 - 0.00958 (WT - 88)). Run by the numerical engine (rapidBinding). DPP-4 activity, GGT and the dose terms at their medians / 5 mg. The supplement (MOESM1) holds covariate-selection tables and figures, no equations."),
   reg("alogliptin", "alogliptin", "Nesina", PO, "core", "US",
       CON, CON, "PD-FIT", DAUD, "plasma DPP-4 inhibition", NA, NA, FALSE,
       "https://www.ema.europa.eu/en/documents/assessment-report/vipidia-epar-public-assessment-report_en.pdf", "No complete compatible table."),
   reg("vildagliptin", "vildagliptin", "Galvus", PO, "international", "EU and others",
-      AUD, AUD, "PD-AUDIT", DAUD, "DPP-4 readout", NA, NA, FALSE,
-      "https://pmc.ncbi.nlm.nih.gov/articles/PMC3370343/", "Target-mediated (tight binding to DPP-4 in plasma and tissue, with hydrolysis by DPP-4). The supplied Landersdorfer 2012 paper (Br J Clin Pharmacol 73:373-390) is the PD half (GLP-1, glucose, insulin); its PK parameters are in the companion article (Landersdorfer, He, Jusko, Br J Clin Pharmacol 2012;73:391-401), not supplied."),
+      AUD, FIT, "PD-AUDIT", DAUD, "DPP-4 readout", NA, "vildagliptin", TRUE,
+      "https://doi.org/10.1111/j.1365-2125.2011.04108.x",
+      "Landersdorfer, He, Jusko 2012 (Br J Clin Pharmacol 73:391-401) Table 1 and equations: two compartments, CL 36.4 L/h, VC 22.2 L, CLic 40.1 L/h, VP 97.3 L, two sequential absorption compartments (1.26, 1.05/h), F 0.772; target-mediated binding (k2 23.4/h, Kd 71.9 nmol/L, koff 0.612/h, kdeg 0.110/h, RmaxC 5 nmol, RmaxP 13 umol). Run by the numerical engine (targetBinding). The PD companion (Br J Clin Pharmacol 73:373-390: GLP-1, glucose, insulin) is not plotted."),
   reg("gliclazide_ir", "gliclazide", "Immediate release", PO, "international", "outside US",
       FIT, AUD, "PD-FIT", DAUD, "insulin (empirical)", NA, NA, FALSE,
       "https://doi.org/10.1111/bcpt.13868", "Mim 2023 Table 3: CL/F 1.08 L/h, V/F 19.6 L, ka 3.78/h, N 5.50 transit compartments, MTT 2.06 h (verified); the noninteger transit chain needs a gamma kernel the engine does not have, and is not rounded. Not US-marketed."),
@@ -334,6 +336,8 @@ tham   <- "https://doi.org/10.1002/jcph.899"
 chae   <- "https://doi.org/10.1111/j.1365-2125.2012.04260.x"
 baron  <- "https://doi.org/10.1007/s13300-016-0174-y"
 cirin  <- "https://doi.org/10.1111/bcp.13135"
+retl   <- "https://doi.org/10.1007/s40262-014-0232-4"
+vild   <- "https://doi.org/10.1111/j.1365-2125.2011.04108.x"
 fediuk <- "https://doi.org/10.1002/cpdd.970"
 ramb   <- "https://doi.org/10.2147/CPAA.S102676"
 thamPop <- "Tham 2017, 16 studies, mostly healthy volunteers"
@@ -451,6 +455,32 @@ parameters <- rbind(
   par("exenatide", "F", "1", "-", FX, "Cirincione 2017", cirin, "Table 2"),
   par("exenatide", "fr", "0.628", "-", E, "Cirincione 2017", cirin, "Table 2; Eqs 4-5"),
   par("exenatide", "shared depot across doses", "-", "-", AS, "the equations are written for one dose", cirin, "Eqs 1-5"),
+
+  par("linagliptin", "CL/F (unbound)", "258", "L/h", E, "Retlich 2015, 462 patients with T2D", retl, "Table 4"),
+  par("linagliptin", "VC/F", "715", "L", E, "Retlich 2015", retl, "Table 4"),
+  par("linagliptin", "QP/F", "412", "L/h", FX, "Retlich 2015 (fixed from Retlich 2010)", retl, "Table 4"),
+  par("linagliptin", "VP/F", "1650", "L", FX, "Retlich 2015 (fixed from Retlich 2010)", retl, "Table 4"),
+  par("linagliptin", "Bmax,C", "4.97 (+0.457 in women) x (1 + 0.00561 (age - 60))", "nmol/L", E, "Retlich 2015", retl, "Table 4"),
+  par("linagliptin", "Amax,P/F", "1650", "nmol", FX, "Retlich 2015 (fixed from Retlich 2010)", retl, "Table 4"),
+  par("linagliptin", "Kd", "0.0652", "nmol/L", FX, "Retlich 2015 (fixed from Retlich 2010)", retl, "Table 4"),
+  par("linagliptin", "Ka", "0.441", "1/h (studies 3/4, tablet formulation 2)", E, "Retlich 2015", retl, "Table 4"),
+  par("linagliptin", "F", "1 x (1 - 0.00958 (WT - 88)), WT held to 57-132 kg", "relative", E, "Retlich 2015", retl, "Table 4"),
+  par("linagliptin", "dose terms on Ka and Bmax,C", "at 5 mg", "-", AS, "the only marketed strength", retl, "Table 4"),
+  par("linagliptin", "binding at equilibrium", "-", "-", ST, "Fig. 1 (Kd only, no rate constants)", retl, "Fig. 1"),
+
+  par("vildagliptin", "CL", "36.4", "L/h (x library FFM factor^0.75)", E, "Landersdorfer 2012, 13 patients with T2D", vild, "Table 1"),
+  par("vildagliptin", "VC", "22.2", "L (x library FFM factor)", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "VP", "97.3", "L", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "CLic", "40.1", "L/h", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "ka1", "1.26", "1/h", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "ka2", "1.05", "1/h", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "F", "0.772", "-", FX, "Landersdorfer 2012 (from the model with intravenous data)", vild, "Table 1"),
+  par("vildagliptin", "Kd", "71.9", "nmol/L", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "k2", "23.4", "1/h", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "koff", "0.612", "1/h", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "kdeg", "0.110", "1/h", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "RmaxC", "5.0", "nmol (x library FFM factor)", E, "Landersdorfer 2012", vild, "Table 1"),
+  par("vildagliptin", "RmaxP", "13.0", "umol (x library FFM factor)", E, "Landersdorfer 2012", vild, "Table 1"),
 
   par("glyburide", "ka", "0.53", "1/h", E, "Rambiritch 2016, 24 adults with T2D", ramb, "Results"),
   par("glyburide", "CL/F", "2.16", "L/h", E, "Rambiritch 2016", ramb, "Results"),

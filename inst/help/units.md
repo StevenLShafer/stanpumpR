@@ -13,7 +13,7 @@ Each drug is plotted in the concentration units given in the drug library: **mcg
 | Drugs | Plotted in |
 |---|---|
 | propofol, ketamine, midazolam, etomidate, remimazolam, morphine, pethidine, methadone, rocuronium, sugammadex, the local anesthetics, the antibiotics, hydrocortisone, methylprednisolone, amiodarone, and the oral analgesics and antiseizure drugs other than celecoxib and tiagabine | mcg/mL |
-| remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, vecuronium, cisatracurium, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics; semaglutide, tirzepatide, liraglutide, empagliflozin, ertugliflozin and glyburide | ng/mL |
+| remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, vecuronium, cisatracurium, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics; semaglutide, tirzepatide, liraglutide, empagliflozin, ertugliflozin, glyburide, linagliptin and vildagliptin | ng/mL |
 | metformin | mcg/mL |
 | exenatide | pg/mL |
 | the insulins | mcU/mL |

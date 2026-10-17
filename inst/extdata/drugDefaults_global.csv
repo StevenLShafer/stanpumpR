@@ -138,3 +138,5 @@ dapagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#6A51A3,0,0,0,0,0,IV,Antidiabetic
 pioglitazone,ng,,,mg PO qd,"mg PO,mg PO qd",#6FA83A,0,0,0,0,0,IV,Antidiabetic
 pramlintideIV,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#9C4DB8,0,0,0,0,0,IV,Antidiabetic
 exenatide,pg,,,mcg SC bid,"mcg SC,mcg SC bid",#C46210,0,0,0,0,0,IV,Antidiabetic
+linagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#3E8E9E,0,0,0,0,0,IV,Antidiabetic
+vildagliptin,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#7D6B2E,0,0,0,0,0,IV,Antidiabetic

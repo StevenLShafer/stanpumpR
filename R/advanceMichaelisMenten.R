@@ -65,7 +65,27 @@
 # parallel linear one.  A PK set with a positive cl2 adds a peripheral
 # compartment of volume v2 (exenatide); phenytoin's cl2 is 0, which leaves
 # it out.  The PK set's cl1 is not read: it holds the low-concentration
-# limit for the help tables.
+# limit for the help tables.  Elimination and distribution act on the
+# UNBOUND concentrations, which are the amounts over the volumes unless the
+# drug binds a target:
+#
+#   - rapidBinding (linagliptin, R/drugs_linagliptin.R; Retlich 2015): the
+#     drug binds at equilibrium, with dissociation constant kd, to a
+#     capacity bmaxCentral (a concentration) in the central compartment and
+#     amaxPeripheral (an amount) in the peripheral one.  The states are the
+#     total amounts; the unbound concentration is the root of the binding
+#     equilibrium (unboundAtEquilibrium()), and the plasma concentration
+#     plotted is the total, bound and unbound, as the assay measured it.
+#   - targetBinding (vildagliptin, R/drugs_vildagliptin.R; Landersdorfer
+#     2012): binding is a process, at a rate (rmax - DR) k2 C / (kd + C)
+#     into a drug-target complex DR in each compartment, which dissociates
+#     at koff and is hydrolysed at kdeg (freeing the target).  The central
+#     and peripheral states are the free drug, and the plasma concentration
+#     is the free drug, as the paper's output equation has it.
+#
+# An oral dose of a drug whose block carries kaTransit (vildagliptin's two
+# sequential absorption compartments) passes through a transit compartment,
+# emptied at kaTransit, before the default oral depot.
 #
 # STEP SIZE
 # =========
@@ -74,9 +94,12 @@
 # Kutta steps of at most MM_MAX_STEP minutes between its points.  The fastest
 # process is the conversion of fosphenytoin (half-time about 8 to 15 minutes);
 # at a 2 minute step the method's local error on it is below 1e-7 of the dose.
-# Elimination is slower still.  A jump (a bolus, a dose arriving in a depot)
-# and a change of rate happen only at points of the time line, which always
-# carries every dose time, so no step straddles one.
+# Elimination is slower still.  The fastest process of all is vildagliptin's
+# binding to tissue DPP-4 while the target is free (a rate constant near
+# 0.7/min, inside the method's stability limit of 2.78 / 2 min): against a
+# 0.05 minute step its concentrations differ by about 1e-5.  A jump (a bolus, a dose
+# arriving in a depot) and a change of rate happen only at points of the
+# time line, which always carries every dose time, so no step straddles one.
 #
 # NO EFFECT SITE AND NO TIME UNTIL THRESHOLD
 # ==========================================
@@ -99,11 +122,13 @@ validateMichaelisMenten <- function(mm, drug)
 {
   if (is.null(mm)) return(NULL)
   ok <- is.list(mm) &&
-    is_valid_number(mm$vmax) && mm$vmax > 0 &&
-    is_valid_number(mm$km) && mm$km > 0
+    is_valid_number(mm$vmax) && mm$vmax >= 0 &&
+    is_valid_number(mm$km) && mm$km > 0 &&
+    (mm$vmax > 0 || (is_valid_number(mm$clLinear) && mm$clLinear > 0))
   if (!ok)
-    stop("Invalid michaelisMenten for ", drug, ": needs a positive vmax ",
-         "(mass per minute) and a positive km (concentration).")
+    stop("Invalid michaelisMenten for ", drug, ": needs a vmax (mass per ",
+         "minute) and a positive km (concentration), and a positive vmax ",
+         "unless clLinear is positive.")
   for (s in names(mm$saltFactor))
     if (!is_valid_number(mm$saltFactor[[s]], 0, 1) || mm$saltFactor[[s]] <= 0)
       stop("Invalid michaelisMenten for ", drug, ": salt factor '", s,
@@ -127,7 +152,47 @@ validateMichaelisMenten <- function(mm, drug)
            "and a bioavailability in [0, 1] (bioavailability above 0), and a ",
            "positive duration (min), kaMax (mass/min) and kmKa (mass).")
   }
+  positive <- function(v) is_valid_number(v) && v > 0
+  rb <- mm$rapidBinding
+  if (!is.null(rb) && !(is.list(rb) && positive(rb$kd) &&
+                        is_valid_number(rb$bmaxCentral) && rb$bmaxCentral >= 0 &&
+                        is_valid_number(rb$amaxPeripheral) && rb$amaxPeripheral >= 0))
+    stop("Invalid michaelisMenten for ", drug, ": rapidBinding needs a positive ",
+         "kd and a bmaxCentral (concentration) and amaxPeripheral (amount) of ",
+         "zero or more.")
+  tb <- mm$targetBinding
+  if (!is.null(tb) && !(is.list(tb) && positive(tb$kd) && positive(tb$k2) &&
+                        is_valid_number(tb$koff) && tb$koff >= 0 &&
+                        is_valid_number(tb$kdeg) && tb$kdeg >= 0 &&
+                        is_valid_number(tb$rmaxCentral) && tb$rmaxCentral >= 0 &&
+                        is_valid_number(tb$rmaxPeripheral) && tb$rmaxPeripheral >= 0))
+    stop("Invalid michaelisMenten for ", drug, ": targetBinding needs a positive ",
+         "kd and k2, and koff, kdeg, rmaxCentral and rmaxPeripheral of zero or more.")
+  if (!is.null(rb) && !is.null(tb))
+    stop("Invalid michaelisMenten for ", drug, ": rapidBinding and targetBinding ",
+         "are alternatives.")
+  if (!is.null(mm$kaTransit) && !positive(mm$kaTransit))
+    stop("Invalid michaelisMenten for ", drug, ": kaTransit must be positive.")
   mm
+}
+
+#' Unbound concentration at rapid binding equilibrium
+#'
+#' Solves total = Cu + B Cu / (kd + Cu) for Cu, the positive root of
+#' Cu^2 + (B + kd - total) Cu - total kd = 0, in the form that does not
+#' cancel when total is small.
+#'
+#' @param total total concentration (amount over volume)
+#' @param B binding capacity as a concentration
+#' @param kd dissociation constant
+#' @returns the unbound concentration
+#' @keywords internal
+unboundAtEquilibrium <- function(total, B, kd)
+{
+  if (total <= 0) return(0)
+  b <- B + kd - total
+  root <- sqrt(b * b + 4 * total * kd)
+  if (b > 0) 2 * total * kd / (b + root) else (root - b) / 2
 }
 
 #' Is a dose unit given in prodrug equivalents ("mg PE", fosphenytoin)?
@@ -164,9 +229,16 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   km <- mm$km
   clLinear <- if (is.null(mm$clLinear)) 0 else mm$clLinear
   q <- if (is.null(pkSet$cl2)) 0 else pkSet$cl2
-  k12 <- if (q > 0) q / V else 0
-  k21 <- if (q > 0) q / pkSet$v2 else 0
   sc <- mm$saturableSC
+  rb <- mm$rapidBinding
+  tb <- mm$targetBinding
+  # Unbound concentrations from the amounts: the amount over the volume, or,
+  # with rapid binding, the root of the binding equilibrium.
+  V2 <- if (is.null(pkSet$v2)) 1 else pkSet$v2
+  unboundC <- if (is.null(rb)) function(a) a / V else
+    function(a) unboundAtEquilibrium(a / V, rb$bmaxCentral, rb$kd)
+  unboundP <- if (is.null(rb)) function(a) a / V2 else
+    function(a) unboundAtEquilibrium(a / V2, rb$amaxPeripheral / V2, rb$kd)
   salt <- function(key) {
     s <- mm$saltFactor[[key]]
     if (is.null(s)) 1 else s
@@ -200,6 +272,10 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   iC <- nOral + 3
   iP <- nOral + 4
   iS <- nOral + 5
+  iT <- nOral + 6      # transit compartment before the default oral depot
+  iDRC <- nOral + 7    # drug-target complex, central (targetBinding)
+  iDRP <- nOral + 8    # drug-target complex, peripheral
+  kT <- if (is.null(mm$kaTransit)) 0 else mm$kaTransit
   ka <- c(vapply(absorption, function(a) a$ka, numeric(1)),
           if (is.null(mm$ka_IM)) 0 else mm$ka_IM)
   kc <- if (is.null(mm$kConversion)) 0 else mm$kConversion
@@ -219,7 +295,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     j <- match(oralForm, forms)
     lag <- vapply(absorption, function(a) a$tlag, numeric(1))[j]
     Fo  <- vapply(absorption, function(a) a$F * a$salt, numeric(1))[j]
-    addJump(isOral, t0 + lag, j, D * Fo)
+    # With a transit compartment the default form's doses enter it first.
+    addJump(isOral, t0 + lag, ifelse(j == 1 & kT > 0, iT, j), D * Fo)
   }
   ivBolus <- route == ROUTE_IV & !rate & !pe
   addJump(ivBolus, t0, rep(iC, length(t0)), D * salt("IV"))
@@ -285,21 +362,38 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   scAbsorption <- if (is.null(sc)) function(S) 0 else
     function(S) sc$bioavailability * sc$fraction * sc$kaMax * S / (sc$kmKa + S)
 
+  # Elimination and distribution act on the unbound concentrations.  With
+  # targetBinding the central and peripheral amounts are the free drug, and
+  # binding to the target (k2, saturable in the free target, Rmax - DR),
+  # dissociation (koff) and hydrolysis of the complex (kdeg, which frees the
+  # target) are states of their own (Landersdorfer 2012, vildagliptin).
   deriv <- function(x, rIV, rPE) {
-    C <- x[iC] / V
+    Cu <- unboundC(x[iC])
+    Cpu <- unboundP(x[iP])
     dx <- numeric(length(x))
     out <- ka * x[seq_len(iIM)]
     dx[seq_len(iIM)] <- -out
+    dx[iT] <- -kT * x[iT]
+    dx[1] <- dx[1] + kT * x[iT]
     dx[iConv] <- out[iIM] + rPE - kc * x[iConv]
     fromS <- scAbsorption(x[iS])
     dx[iS] <- -fromS
-    dx[iP] <- k12 * x[iC] - k21 * x[iP]
+    toP <- q * (Cu - Cpu)
+    dx[iP] <- toP
     dx[iC] <- sum(out[seq_len(nOral)]) + kc * x[iConv] + rIV + fromS -
-      vmax * C / (km + C) - clLinear * C - k12 * x[iC] + k21 * x[iP]
+      vmax * Cu / (km + Cu) - clLinear * Cu - toP
+    if (!is.null(tb)) {
+      bindC <- (tb$rmaxCentral - x[iDRC]) * tb$k2 * Cu / (tb$kd + Cu)
+      bindP <- (tb$rmaxPeripheral - x[iDRP]) * tb$k2 * Cpu / (tb$kd + Cpu)
+      dx[iDRC] <- bindC - (tb$koff + tb$kdeg) * x[iDRC]
+      dx[iDRP] <- bindP - (tb$koff + tb$kdeg) * x[iDRP]
+      dx[iC] <- dx[iC] - bindC + tb$koff * x[iDRC]
+      dx[iP] <- dx[iP] - bindP + tb$koff * x[iDRP]
+    }
     dx
   }
 
-  x <- numeric(iS)
+  x <- numeric(iDRP)
   Cp <- numeric(L)
   for (i in seq_len(L)) {
     if (i > 1) {

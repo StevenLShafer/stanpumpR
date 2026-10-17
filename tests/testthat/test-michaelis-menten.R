@@ -166,3 +166,96 @@ test_that("an SC rate, or SC without the block, is refused", {
   bad <- scPK(); bad$michaelisMenten$clLinear <- -1
   expect_error(validateMichaelisMenten(bad$michaelisMenten, "x"), "clLinear")
 })
+
+# Target binding (R/drugs_linagliptin.R, R/drugs_vildagliptin.R) and the
+# oral transit compartment.
+bindPK <- function(v1 = 10, v2 = 30, cl2 = 0.5, clLinear = 0.2, ka = 0.02,
+                   rapid = NULL, target = NULL, kaTransit = NULL)
+{
+  list(
+    PK = list(default = list(v1 = v1, v2 = v2, cl2 = cl2, ka_PO = ka,
+                             bioavailability_PO = 1, tlag_PO = 0)),
+    michaelisMenten = list(vmax = 0, km = 1, clLinear = clLinear,
+                           rapidBinding = rapid, targetBinding = target,
+                           kaTransit = kaTransit)
+  )
+}
+
+test_that("the unbound concentration solves the binding equilibrium", {
+  for (total in c(1e-9, 1e-3, 0.5, 5, 500)) {
+    cu <- unboundAtEquilibrium(total, B = 4.97, kd = 0.0652)
+    expect_equal(cu + 4.97 * cu / (0.0652 + cu), total, tolerance = 1e-12)
+  }
+  expect_equal(unboundAtEquilibrium(0, 1, 1), 0)
+  expect_equal(unboundAtEquilibrium(2, 0, 1), 2)
+})
+
+test_that("rapid binding with no capacity is the unbound two-compartment model", {
+  plain <- advanceMichaelisMenten(mmDose(0, 100, "mg PO"), bindPK(), 2000)
+  none <- advanceMichaelisMenten(mmDose(0, 100, "mg PO"),
+                                 bindPK(rapid = list(bmaxCentral = 0, amaxPeripheral = 0,
+                                                     kd = 1)), 2000)
+  expect_equal(none$Cp, plain$Cp, tolerance = 1e-12)
+})
+
+test_that("rapid binding keeps the mass and ends at one unbound concentration", {
+  rb <- list(bmaxCentral = 2, amaxPeripheral = 50, kd = 0.1)
+  PK <- bindPK(clLinear = 1e-12, rapid = rb)
+  out <- advanceMichaelisMenten(mmDose(0, 100, "mg"), PK, 20000)
+  total <- tail(out$Cp, 1)                     # plotted: total, central
+  cu <- unboundAtEquilibrium(total, 2, 0.1)
+  # the peripheral compartment holds the same unbound concentration
+  amountP <- 30 * cu + 50 * cu / (0.1 + cu)
+  expect_equal(total * 10 + amountP, 100, tolerance = 1e-6)
+  # binding: the clearance of the total is far below the unbound clearance
+  bound <- advanceMichaelisMenten(mmDose(0, 1, "mg"), bindPK(rapid = rb), 600)
+  free <- advanceMichaelisMenten(mmDose(0, 1, "mg"), bindPK(), 600)
+  expect_gt(tail(bound$Cp, 1), 10 * tail(free$Cp, 1))
+})
+
+test_that("target binding keeps the mass and reaches the binding steady state", {
+  tb <- list(rmaxCentral = 1, rmaxPeripheral = 40, kd = 2, k2 = 0.4,
+             koff = 0.01, kdeg = 0)
+  PK <- bindPK(clLinear = 1e-12, target = tb)
+  out <- advanceMichaelisMenten(mmDose(0, 100, "mg"), PK, 30000)
+  c <- tail(out$Cp, 1)                         # plotted: free, central
+  a <- tb$k2 * c / (tb$kd + c)
+  complex <- (tb$rmaxCentral + tb$rmaxPeripheral) * a / (a + tb$koff)
+  expect_equal(c * (10 + 30) + complex, 100, tolerance = 1e-6)
+  # hydrolysis by the target is a second way out
+  gone <- advanceMichaelisMenten(mmDose(0, 100, "mg"),
+                                 bindPK(clLinear = 1e-12,
+                                        target = modifyList(tb, list(kdeg = 0.01))),
+                                 30000)
+  expect_lt(tail(gone$Cp, 1), 0.01 * c)
+})
+
+test_that("a transit compartment puts a second first-order step before the depot", {
+  V <- 10; CL <- 0.1; k <- CL / V; a <- 0.03; b <- 0.02
+  PK <- bindPK(cl2 = 0, clLinear = CL, ka = b, kaTransit = a)
+  out <- advanceMichaelisMenten(mmDose(0, 100, "mg PO"), PK, 1440)
+  t <- out$Time
+  exact <- 100 * a * b * (exp(-a * t) / ((b - a) * (k - a)) +
+                            exp(-b * t) / ((a - b) * (k - b)) +
+                            exp(-k * t) / ((a - k) * (b - k))) / V
+  expect_equal(out$Cp, exact, tolerance = 1e-6)
+})
+
+test_that("binding blocks are validated", {
+  mm <- bindPK()$michaelisMenten
+  expect_error(validateMichaelisMenten(modifyList(mm, list(clLinear = 0)), "x"), "vmax")
+  expect_error(validateMichaelisMenten(
+    modifyList(mm, list(rapidBinding = list(bmaxCentral = 1, amaxPeripheral = 1, kd = 0))),
+    "x"), "rapidBinding")
+  expect_error(validateMichaelisMenten(
+    modifyList(mm, list(targetBinding = list(rmaxCentral = 1, rmaxPeripheral = 1, kd = 1,
+                                             k2 = 0, koff = 0, kdeg = 0))),
+    "x"), "targetBinding")
+  expect_error(validateMichaelisMenten(
+    modifyList(mm, list(rapidBinding = list(bmaxCentral = 1, amaxPeripheral = 1, kd = 1),
+                        targetBinding = list(rmaxCentral = 1, rmaxPeripheral = 1, kd = 1,
+                                             k2 = 1, koff = 0, kdeg = 0))),
+    "x"), "alternatives")
+  expect_error(validateMichaelisMenten(modifyList(mm, list(kaTransit = -1)), "x"),
+               "kaTransit")
+})

@@ -18,6 +18,8 @@ The **Antidiabetic** drugs in the startup menu are named, source-specific popula
 | [ertugliflozin](help:drugs/ertugliflozin) | Oral | Fediuk and colleagues, 2021 | 2276 subjects, 15 studies | Two compartments, apparent, lagged; weight, eGFR, age, sex, type 2 diabetes |
 | [pioglitazone](help:drugs/pioglitazone) | Oral | Kadam and colleagues, 2013 | 31 healthy Caucasian adults, 15 mg | Two compartments, apparent; CYP2C8\*1/\*1 (no CYP2C8 field) |
 | [pramlintide (intravenous)](help:drugs/pramlintideIV) | Intravenous research route; the product is SC | Fang and colleagues, 2013 | 25 men with type 1 diabetes | Two compartments, true scale |
+| [linagliptin](help:drugs/linagliptin) | Tradjenta, oral | Retlich and colleagues, 2015 | 462 adults with type 2 diabetes | Two compartments, apparent, with equilibrium binding to DPP-4; total concentration. Run by numerical integration |
+| [vildagliptin](help:drugs/vildagliptin) | Galvus (outside the US), oral | Landersdorfer, He and Jusko, 2012 | 13 adults with type 2 diabetes | Two compartments with slow binding to DPP-4 and hydrolysis by it. Run by numerical integration |
 | [glyburide](help:drugs/glyburide) | Glibenclamide, oral | Rambiritch and colleagues, 2016 | 24 adults with type 2 diabetes | Two compartments, apparent |
 
 The weekly peptides (semaglutide, dulaglutide, tirzepatide) offer `mg SC qwk`, and exenatide `mcg SC bid`, plotted in pg/mL; the insulins are dosed in units (`U SC`, `U/kg SC`) and plotted in mcU/mL; insulin lispro alone also offers an insulin pump (`U/hr SC`). See [subcutaneous doses](help:models/absorption).
