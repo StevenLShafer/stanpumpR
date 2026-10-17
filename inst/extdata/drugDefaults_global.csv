@@ -137,6 +137,7 @@ glyburide,ng,,,mg PO qd,"mg PO,mg PO qd,mg PO bid",#8F8C1E,0,0,0,0,0,IV,Antidiab
 dulaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#B0306A,0,0,0,0,0,IV,Antidiabetic
 dapagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#6A51A3,0,0,0,0,0,IV,Antidiabetic
 dapagliflozinKobuchi,ng,,,mg PO qd,"mg PO,mg PO qd",#9467BD,0,0,0,0,0,IV,Antidiabetic
+canagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#B15928,0,0,0,0,0,IV,Antidiabetic
 pioglitazone,ng,,,mg PO qd,"mg PO,mg PO qd",#6FA83A,0,0,0,0,0,IV,Antidiabetic
 pramlintideIV,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#9C4DB8,0,0,0,0,0,IV,Antidiabetic
 exenatide,pg,,,mcg SC bid,"mcg SC,mcg SC bid",#C46210,0,0,0,0,0,IV,Antidiabetic

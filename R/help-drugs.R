@@ -668,6 +668,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
                    IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
                    RA = if (slowRA) paste0(tissue, ", fast depot") else tissue,
                    RAslow = paste0(tissue, ", slow depot"))
+    # An oral release into the gut rides on the tissue depot (R/subcutaneous.R):
+    # its depot is the oral one, shown once, as oral.
+    if (isTRUE(pkRef$zeroOrderPO)) routes$RA <- routes$RAslow <- NULL
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -711,7 +714,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     }, character(1)), collapse = "") else ""
     # Zero-order subcutaneous input (R/subcutaneous.R)
     zero <- pkRef$zeroOrderSC
-    zeroOrderNote <- if (is.null(zero)) "" else if (zero$into == "central") sprintf(paste0(
+    zeroOrderNote <- if (is.null(zero)) "" else if (isTRUE(pkRef$zeroOrderPO)) sprintf(paste0(
+      "Each oral dose is released into the gut at a constant rate over %s minutes, starting at ",
+      "the lag, and absorbed from it first order (sequential zero- and first-order absorption). "),
+      helpFormatNumber(zero$duration)) else if (zero$into == "central") sprintf(paste0(
       "Besides the depot%s, %s%% of each SC dose enters the circulation directly at a constant ",
       "rate over %s minutes from the moment of injection (zero-order absorption); the depot ",
       "bioavailability shown is the share it absorbs. "),

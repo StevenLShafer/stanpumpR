@@ -227,9 +227,12 @@ registry <- rbind(
   reg("dapagliflozin_kobuchi2025", "dapagliflozin", "Farxiga (Japanese T2D model version)", PO, "international", "Japan",
       FIT, FIT, "PD-FIT", DAUD, "HbA1c (Japanese T2D)", NA, "dapagliflozinKobuchi", TRUE,
       "https://doi.org/10.7150/ijms.111519", "Table 2 / Eq. 6: CL/F 229.3 L/day x (BW/77.0)^0.41, V/F 73.9 L and ka 57.4/day fixed from Melin 2024 (the dapagliflozin model). Troughs only: the steady-state trough is fitted, not the shape within a day; CL/F 9.6 L/h at 77 kg against Melin's 23.0 L/h. Kept as dapagliflozinKobuchi."),
+  reg("canagliflozin_hoeben2016", "canagliflozin", "Invokana", PO, "core", "US",
+      FIT, FIT, "PD-AUDIT", DAUD, "none (HbA1c in de Winter 2017, on this PK)", NA, "canagliflozin", TRUE,
+      "https://doi.org/10.1007/s40262-015-0307-x", "Hoeben 2016 (Clin Pharmacokinet 55:209-223) Table 5: 2C as rate constants, Vc/F 99.3 L (men) / 82.6 L (women) x (WT/WT0)^0.583 x (AGE/45)^-0.167, ke 0.145/h x (MDRD eGFR/87)^0.261 x (DOSE/DOSE0)^-0.0631, k23 0.101/h, k32 0.0856/h, Tlag 0.147 h (non-encapsulated tablet), zero-order release into the gut over D1 0.604 h, ka 3.68/h, BMI exponent 1.41 (minus on ka, plus on Tlag, from the text and Table 2). Medians of eGFR (87) and phase I age (45) are stated; WT0 75 kg and BMI0 26 assumed (ESM demographics not available); dose term not applied (7% from 100 to 300 mg). CL/F 14.4 / 12.0 L/h reproduced. UGT1A9*3 not in the final model."),
   reg("canagliflozin_dewinter2017", "canagliflozin", "Invokana", PO, "core", "US",
       AUD, AUD, "PD-AUDIT", DAUD, "HbA1c", NA, NA, FALSE,
-      "https://doi.org/10.1111/bcp.13180", "de Winter 2017 read (with its supplement): an HbA1c turnover model (t1/2 HbA1c 28.2 d, Emax -0.738%, log EC50 4.12 log(ng/mL)) driven by the two-compartment PK model of Hoeben et al., Clin Pharmacokinet 2016;55:209-223 (cited as 2014), whose parameters it does not reprint. The PK needs Hoeben 2016."),
+      "https://doi.org/10.1111/bcp.13180", "de Winter 2017 read (with its supplement): an HbA1c turnover model (t1/2 HbA1c 28.2 d, Emax -0.738%, log EC50 4.12 log(ng/mL)) driven by the two-compartment PK model of Hoeben et al., Clin Pharmacokinet 2016;55:209-223 (cited as 2014), whose parameters it does not reprint. The PK is now Hoeben 2016 (canagliflozin_hoeben2016); the HbA1c model is not plotted."),
   reg("sglt2_yao2023_class", "dapagliflozin, canagliflozin, empagliflozin", "Yao 2023 class reanalysis", PO, "core", "study",
       AUD, AUD, "PD-AUDIT", DAUD, "24-h UGE (AUC50)", NA, NA, FALSE,
       "https://ascpt.onlinelibrary.wiley.com/doi/10.1002/psp4.12934", "Transit absorption; not re-read; never spliced with Baron or Kobuchi."),
@@ -344,6 +347,9 @@ chae   <- "https://doi.org/10.1111/j.1365-2125.2012.04260.x"
 baron  <- "https://doi.org/10.1007/s13300-016-0174-y"
 cirin  <- "https://doi.org/10.1111/bcp.13135"
 melinUrl <- "https://doi.org/10.1111/bcp.15939"
+hoeben <- "https://doi.org/10.1007/s40262-015-0307-x"
+hoebenPop <- "Hoeben 2016, 1616 healthy volunteers and adults with type 2 diabetes"
+hoebenPhase1 <- "Hoeben 2016, 245 phase I subjects (fixed in the final model)"
 watson <- "https://doi.org/10.1177/0091270009354996"
 retl   <- "https://doi.org/10.1007/s40262-014-0232-4"
 vild   <- "https://doi.org/10.1111/j.1365-2125.2011.04108.x"
@@ -454,6 +460,24 @@ parameters <- rbind(
   par("dapagliflozin", "Q/F", "8.92", "L/h", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
   par("dapagliflozin", "ka", "2.39", "1/h", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
   par("dapagliflozin", "lag", "0.248", "h", FX, "Melin 2023 (fixed from the previous model)", melinUrl, "Supplementary Table 4"),
+  par("canagliflozin", "Vc/F", "99.3", "L (men) x (WT/75)^0.583 x (AGE/45)^-0.167", E, hoebenPhase1, hoeben, "Table 5 (Table 3)"),
+  par("canagliflozin", "Vc/F, women", "82.6", "L", E, hoebenPhase1, hoeben, "Table 5 (Table 3)"),
+  par("canagliflozin", "weight exponent on Vc/F", "0.583", "unitless", E, hoebenPhase1, hoeben, "Table 5"),
+  par("canagliflozin", "age exponent on Vc/F", "-0.167", "unitless, age held at 18 or over", E, hoebenPhase1, hoeben, "Table 5"),
+  par("canagliflozin", "ke", "0.145", "1/h x (MDRD eGFR/87)^0.261; CL/F = ke x Vc/F", E, hoebenPop, hoeben, "Table 5"),
+  par("canagliflozin", "CL/F", "14.4", "L/h in men (12.0 in women) at the reference values, = ke x Vc/F", DV, hoebenPop, hoeben, "section 3.5"),
+  par("canagliflozin", "eGFR exponent on ke", "0.261", "unitless (MDRD)", E, hoebenPop, hoeben, "Table 5"),
+  par("canagliflozin", "dose exponent on ke", "-0.0631", "unitless; not applied (reference dose for every dose)", E, hoebenPop, hoeben, "Table 5; Table 6"),
+  par("canagliflozin", "k23", "0.101", "1/h (cl2 = k23 Vc)", E, hoebenPhase1, hoeben, "Table 5"),
+  par("canagliflozin", "k32", "0.0856", "1/h (v2 = Vc k23 / k32)", E, hoebenPhase1, hoeben, "Table 5"),
+  par("canagliflozin", "ka", "3.68", "1/h x (BMI/26)^-1.41", E, hoebenPhase1, hoeben, "Table 5"),
+  par("canagliflozin", "Tlag", "0.147", "h x (BMI/26)^1.41 (non-encapsulated tablet)", E, hoebenPhase1, hoeben, "Table 5"),
+  par("canagliflozin", "BMI exponent on ka and Tlag", "1.41", "unitless; sign from section 3.2 and Table 2", E, hoebenPhase1, hoeben, "Table 5; Table 2"),
+  par("canagliflozin", "D1", "0.604", "h, zero-order release into the gut", E, hoebenPhase1, hoeben, "Table 5; Fig. 1"),
+  par("canagliflozin", "reference eGFR", "87", "mL/min/1.73 m^2, pooled median", DV, hoebenPop, hoeben, "section 3.1"),
+  par("canagliflozin", "reference age", "45", "years, phase I median", DV, hoebenPhase1, hoeben, "section 3.1"),
+  par("canagliflozin", "reference weight", "75", "kg; median not printed", AS, hoebenPhase1, hoeben, "R/drugs_canagliflozin.R header"),
+  par("canagliflozin", "reference BMI", "26", "kg/m^2, between the phase I tertiles 24.2 and 28.0", AS, hoebenPhase1, hoeben, "Table 2 footnotes"),
 
   par("dapagliflozinKobuchi", "CL/F", "229.3", "L/day x (BW/77.0)^0.41", E, "Kobuchi 2025, 85 Japanese adults with T2D", "https://doi.org/10.7150/ijms.111519", "Table 2; Equation 6"),
   par("dapagliflozinKobuchi", "weight exponent on CL/F", "0.41", "unitless", E, "Kobuchi 2025", "https://doi.org/10.7150/ijms.111519", "Table 2"),

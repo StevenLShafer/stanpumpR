@@ -31,8 +31,11 @@
 #     F x share x D / duration from the dose time for `duration` minutes.
 #   * "depot": the whole dose is released into the depot at a constant rate
 #     over a fixed time, and absorbed from it first-order (sequential zero- and
-#     first-order absorption, Watson 2010 for liraglutide).  Added here as a
-#     rate into the depot, D / duration, for `duration` minutes.
+#     first-order absorption; used by canagliflozin's oral release, below).
+#     Added here as a rate into the depot, D / duration, for `duration`
+#     minutes.  (Watson 2010's "sequential" liraglutide input is the
+#     "central" form: its depot empties at a constant rate into the
+#     circulation for T0; R/drugs_liraglutideWatson.R.)
 #
 # Both are exact: every dose's zero-order input is a box, the boxes of all the
 # doses add to one piecewise-constant rate, and each engine carries a
@@ -42,6 +45,17 @@
 # the pump's delivery, given at the middle of the portion, which a continuous
 # rate would smooth into a ramp.  Its first-order share is exact, a rate into
 # the depot.
+#
+# AN ORAL RELEASE
+# ===============
+# Canagliflozin's oral fit (Hoeben 2016) has the same "depot" form: after the
+# lag, each tablet is released into the gut at a constant rate over D1 and
+# absorbed from it first-order.  A drug declares it as zeroOrderPO =
+# list(duration); getDrugPK() copies its oral absorption onto the tissue-depot
+# fields (oralReleaseToTissueDepot()) and gives it a "depot" zeroOrderSC
+# block, and simCpCe() moves its oral rows onto the tissue depot before
+# expandZeroOrderSC() runs, so the release is exact in the same way.  Such a
+# drug offers no tissue route of its own.
 # -----------------------------------------------------------------------------
 
 # Minutes of pump delivery whose zero-order share is given as one box; see
@@ -84,6 +98,55 @@ modelTissueRoute <- function(pkSets)
 {
   sc <- vapply(pkSets, function(s) any(grepl("_SC(_slow)?$", names(s))), logical(1))
   if (any(sc)) ROUTE_SC else ROUTE_RA
+}
+
+#' Check a drug model's zero-order oral release block
+#'
+#' A drug whose oral dose is released into the gut at a constant rate before
+#' it is absorbed first order (canagliflozin, Hoeben 2016: NONMEM's modelled
+#' duration D1 into the depot, after the lag) declares
+#' `zeroOrderPO = list(duration = <minutes>)`.  The release starts at the
+#' oral lag.  The engines carry it on the tissue depot (see
+#' `oralReleaseToTissueDepot()`), so the drug may have no tissue route of its
+#' own, no second oral depot and no dose-dependent oral bioavailability.
+#'
+#' @param block the model's `zeroOrderPO`, or NULL
+#' @param X the whole model list, for its PK sets and other blocks
+#' @param drug the drug's name, for the error message
+#' @returns `block`, unchanged, if it is valid; otherwise an error
+#' @keywords internal
+validateZeroOrderPO <- function(block, X, drug)
+{
+  if (is.null(block)) return(NULL)
+  bad <- function(why) stop("Invalid zeroOrderPO for ", drug, ": ", why)
+  if (!is.list(block) || !is_valid_number(block$duration) || block$duration <= 0)
+    bad("needs a positive duration in minutes.")
+  for (s in X$PK)
+  {
+    if (!isTRUE(s$ka_PO > 0)) bad("the drug must be absorbed orally (ka_PO).")
+    if (any(grepl("_(RA|SC)(_slow)?$", names(s))))
+      bad("the drug may have no tissue route: the release rides on the tissue depot.")
+    if (!is.null(s$ka_PO2)) bad("the release cannot feed a second oral depot.")
+  }
+  if (!is.null(X$zeroOrderSC)) bad("a drug cannot also declare zeroOrderSC.")
+  if (!is.null(X$oralSaturation) || !is.null(X$oralFormulations))
+    bad("not with a dose-dependent oral bioavailability or other oral forms.")
+  block
+}
+
+#' Carry a PK set's oral absorption on the tissue-depot fields
+#'
+#' @param pkSet one PK set of a drug declaring `zeroOrderPO`
+#' @returns `pkSet` with `ka_RA`, `bioavailability_RA` and `tlag_RA` equal to
+#'   its oral values; the oral fields are kept, for the help
+#' @keywords internal
+oralReleaseToTissueDepot <- function(pkSet)
+{
+  pkSet$ka_RA <- pkSet$ka_PO
+  pkSet$bioavailability_RA <- if (is.null(pkSet$bioavailability_PO)) 1 else
+    pkSet$bioavailability_PO
+  pkSet$tlag_RA <- if (is.null(pkSet$tlag_PO)) 0 else pkSet$tlag_PO
+  pkSet
 }
 
 #' Check a drug model's zero-order subcutaneous input block

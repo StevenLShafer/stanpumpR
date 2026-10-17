@@ -434,6 +434,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # premixes with lispro):
     # the zero-order share of each SC dose becomes a piecewise-constant rate,
     # into the circulation or into the depot; see R/subcutaneous.R.
+    # An oral release into the gut (canagliflozin) rides on the same
+    # machinery: the oral doses become tissue-depot doses, whose depot carries
+    # the oral absorption (getDrugPK(), oralReleaseToTissueDepot()).
+    if (isTRUE(PK$zeroOrderPO) && any(dose$PO))
+    {
+      dose$RA <- dose$RA | dose$PO
+      dose$PO <- FALSE
+    }
     dose <- expandZeroOrderSC(dose, PK$zeroOrderSC, maximum)
 
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"

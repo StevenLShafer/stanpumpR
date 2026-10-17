@@ -180,6 +180,16 @@ getDrugPK <- function(
   # Exenatide's subcutaneous absorption is in its Michaelis-Menten block.
   if (!is.null(X$michaelisMenten$saturableSC)) tissueRoute <- ROUTE_SC
   X$PK <- lapply(X$PK, subcutaneousToTissueDepot, drug = drug)
+  # An oral dose released at a constant rate into the gut before it is
+  # absorbed (canagliflozin, Hoeben 2016): carried on the tissue depot, whose
+  # zero-order release into the depot is already exact.  See
+  # oralReleaseToTissueDepot() in R/subcutaneous.R.
+  zeroOrderPO <- validateZeroOrderPO(X$zeroOrderPO, X, drug)
+  if (!is.null(zeroOrderPO))
+  {
+    X$PK <- lapply(X$PK, oralReleaseToTissueDepot)
+    X$zeroOrderSC <- list(fraction = 1, duration = zeroOrderPO$duration, into = "depot")
+  }
   zeroOrderSC <- validateZeroOrderSC(X$zeroOrderSC, X$PK, drug)
   tPeak <- X$tPeak
   # A model that supplies ke0 directly may leave tPeak out altogether (NULL):
@@ -1124,6 +1134,9 @@ getDrugPK <- function(
   out$tissueRoute <- tissueRoute
   if (!is.null(zeroOrderSC) && zeroOrderSC$into == "depot") zeroOrderSC$share <- 1
   out$zeroOrderSC <- zeroOrderSC
+  # TRUE when that release takes the oral doses (simCpCe() moves them onto
+  # the tissue depot).
+  out$zeroOrderPO <- !is.null(zeroOrderPO)
   # Dose covariates, a property of each injection (the Tham insulins,
   # R/insulinTham.R): a bioavailability that scales each SC dose by its own
   # size, and, for a model whose disposition or ka depends on the dose, the

@@ -35,10 +35,8 @@
 #
 # WATSON 2010.  The pooled healthy-volunteer and diabetes fit of Watson et al.
 # (J Clin Pharmacol 2010;50:886-894; sequential zero- and first-order
-# absorption) is the other published model.  Its parameters could not be read
-# from the available abstract, so it stays in the registry; the engine can
-# carry its sequential input (zeroOrderSC, into = "depot", R/subcutaneous.R)
-# once they are transcribed.
+# absorption) is the other published model, in the library as
+# liraglutideWatson (R/drugs_liraglutideWatson.R).  The two are not mixed.
 #
 # BODY SIZE: per kilogram, evaluated at the pharmacokinetic weight with the
 # switch on and at total weight with it off.
