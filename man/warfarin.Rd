@@ -11,7 +11,7 @@ warfarin(
   sex,
   adjustToFFM = TRUE,
   cyp2c9 = "*1/*1",
-  vkorc1 = "GA",
+  vkorc1 = VKORC1_DEFAULT,
   cyp4f2 = "TT",
   amiodarone = FALSE,
   fluconazole = FALSE,

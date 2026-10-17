@@ -35,8 +35,10 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   # the unnormalised plot shows, are left alone.
   plasmaRise <- results$Plasma
   if (!is.null(PK$osmotic)) plasmaRise <- plasmaRise - PK$osmotic$baseline
-  # Likewise the INR (warfarin, R/inr.R), which starts at 1 / PCA0.
-  if (!is.null(PK$inr)) plasmaRise <- plasmaRise - 1 / PK$inr$pca0
+  # Likewise the INR (warfarin, R/inr.R), which starts at its drug-free
+  # baseline (1 / PCA0 for the turnover model, the fitted baseline for the
+  # transit model).
+  if (!is.null(PK$inr)) plasmaRise <- plasmaRise - inrBaseline(PK$inr)
   maxRise <- max(plasmaRise)
   results$CpNormCp <- if (maxRise > 0) plasmaRise          / maxRise * 100 else 0
   results$CeNormCp <- if (maxCp > 0) results$"Effect Site" / maxCp * 100 else 0

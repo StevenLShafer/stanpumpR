@@ -251,6 +251,20 @@ app_ui <- function() {
                   placement = "right"
                 ),
 
+                # Read by warfarin: the -1639G>A genotype sets the sensitivity
+                # (the S-warfarin C50 / EC50).  GG is the wild-type reference
+                # (see VKORC1_VALUES in R/constants.R).
+                bslib::tooltip(
+                  selectInput(
+                    inputId = "vkorc1",
+                    label = "VKORC1",
+                    VKORC1_VALUES,
+                    selected = VKORC1_DEFAULT
+                  ),
+                  patientFieldTooltip("vkorc1"),
+                  placement = "right"
+                ),
+
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
                 bslib::tooltip(
@@ -357,6 +371,27 @@ app_ui <- function() {
                     "line in the TCI rate panel. Time until threshold stays on",
                     "the Eleveld model. Available when propofol or remifentanil",
                     "is in the dose table."
+                  ),
+                  placement = "right"
+                ),
+                # The Hamberg (2007) warfarin genotype model runs beside the
+                # library's (Xue) model as a second INR line in warfarin's
+                # panel (R/alternativeModels.R).  The server enables the box
+                # while warfarin is in the dose table.
+                bslib::tooltip(
+                  checkboxInput(
+                    inputId = "hamberg",
+                    label = COMPANION_MODEL_GROUPS$hamberg$label,
+                    value = FALSE
+                  ) |>
+                    shinyjs::disabled(),
+                  paste(
+                    "Also run the Hamberg (2007) warfarin model, built to show",
+                    "how age, CYP2C9 and VKORC1 genotype shape the INR, and",
+                    "draw it beside the library's INR curve as a second line.",
+                    "Set the CYP2C9 and VKORC1 fields in the Patient Profile.",
+                    "A research and teaching model, not dosing guidance.",
+                    "Available when warfarin is in the dose table."
                   ),
                   placement = "right"
                 ),

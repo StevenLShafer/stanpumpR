@@ -15,6 +15,8 @@
 #'   Passed only to drug models that declare it (escitalopram, citalopram).
 #' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES};
 #'   passed only to models that name it (phenytoin).
+#' @param vkorc1 VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};
+#'   passed only to models that name it (warfarin).
 #' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
 #'   passed only to models that name it (methadone).
 #' @param resolveMetabolite should a drug that names an active metabolite have
@@ -74,6 +76,9 @@ getDrugPK <- function(
   cyp2c9 = CYP2C9_DEFAULT,
   cyp2b6 = CYP2B6_DEFAULT,
   pregnant = FALSE,
+  # Appended after the pre-existing arguments so a positional call that passed
+  # cyp2b6 or pregnant keeps its binding (getDrugPK() is exported).
+  vkorc1 = VKORC1_DEFAULT,
   model = NULL
 )
 {
@@ -94,6 +99,10 @@ getDrugPK <- function(
   if (length(cyp2c9) != 1 || !cyp2c9 %in% CYP2C9_VALUES) {
     stop("Invalid cyp2c9: ", paste(cyp2c9, collapse = ", "),
          ". Must be one of: ", paste(CYP2C9_VALUES, collapse = ", "))
+  }
+  if (length(vkorc1) != 1 || !vkorc1 %in% VKORC1_VALUES) {
+    stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "),
+         ". Must be one of: ", paste(VKORC1_VALUES, collapse = ", "))
   }
   if (length(cyp2b6) != 1 || !cyp2b6 %in% CYP2B6_VALUES) {
     stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
@@ -148,6 +157,9 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "cyp2c9" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2c9 <- cyp2c9
+  if (exists(drug, mode = "function") &&
+      "vkorc1" %in% names(formals(get(drug, mode = "function"))))
+    covariates$vkorc1 <- vkorc1
   if (exists(drug, mode = "function") &&
       "cyp2b6" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2b6 <- cyp2b6
@@ -1173,9 +1185,13 @@ getDrugPK <- function(
   # Warfarin: the S- and R-enantiomer systems drive the INR through the
   # turnover of the clotting factors rather than being added; simCpCe()
   # combines them (R/inr.R).
-  # Skipped on the internal build of a parallel system (model supplied): the
-  # system's PK is all that is read from it, and it carries no inr block.
-  out$inr <- if (is.null(model))
+  # A supplied model carries its own inr block only when it is a companion of
+  # an INR drug (Hamberg beside warfarin, R/alternativeModels.R); that block is
+  # validated and kept.  The internal build of a parallel system also supplies
+  # a model, but one with no inr block: its PK is all that is read from it, so
+  # the validation (which would see the parent's "INR" units with no block) is
+  # skipped there.
+  out$inr <- if (is.null(model) || !is.null(model$inr))
     validateINR(X$inr, drug, drugDefaults$Concentration.Units, X$parallelSystems)
     else NULL
   # A pulsed extended-release formulation (Adderall XR): the fractions and

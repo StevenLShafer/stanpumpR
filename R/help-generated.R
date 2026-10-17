@@ -122,7 +122,9 @@ helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
 helpAlternativeModelTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
   patients <- helpReferencePatients()
   num <- function(x, digits = 3) if (is.null(x) || is.na(x)) "—" else helpFormatNumber(x, digits)
-  tables <- vapply(ALTERNATIVE_MODEL_DRUGS, function(drug) {
+  # This block is the Minto / Schnider help page's table, so it covers that
+  # group's drugs only; the Hamberg companion has its own hand-written page.
+  tables <- vapply(companionGroupDrugs("mintoSchnider"), function(drug) {
     spec <- ALTERNATIVE_MODELS[[drug]]
     row <- drugDefaults[drugDefaults$Drug == drug, ][1, ]
     lines <- vapply(seq_len(nrow(patients)), function(i) {

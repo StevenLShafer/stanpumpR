@@ -51,7 +51,10 @@ helpScenarioDefaultOptions <- function() {
     opioidMacInteraction = FALSE,
     # Run the Schnider propofol and Minto remifentanil models beside the
     # library's (R/alternativeModels.R); needs one of those drugs dosed
-    mintoSchnider = FALSE
+    mintoSchnider = FALSE,
+    # Run the Hamberg warfarin genotype model beside the library's (Xue);
+    # needs warfarin dosed
+    hamberg = FALSE
   )
 }
 
@@ -76,7 +79,8 @@ helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
-                         cyp2c9 = CYP2C9_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
+                         cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
+                         cyp2b6 = CYP2B6_DEFAULT,
                          creatinine = NULL,
                          osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
@@ -99,7 +103,7 @@ helpScenario <- function(id, title, group, summary,
     # and osmolality of the previous patient surviving a load).
     patient = list(age = age, weight = weight, height = height, sex = sex,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                   cyp2b6 = cyp2b6, adjustToFFM = adjustToFFM,
+                   vkorc1 = vkorc1, cyp2b6 = cyp2b6, adjustToFFM = adjustToFFM,
                    creatinine = creatinine, osmolality = osmolality,
                    pregnant = pregnant),
     doses = doses, events = events, options = options
@@ -797,6 +801,26 @@ helpScenarioDefinitions <- function() {
       # each dose rate needs weeks to settle: four weeks per step, in days.
       timeUnits = "days", maximum = 91 * MINS_PER_DAY,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
+    # Warfarin's INR drawn by the library's Xue model and the Hamberg genotype
+    # model together, on a CYP2C9- and VKORC1-sensitive elderly patient, to show
+    # why a fixed 5 mg/day start overshoots and how the genotype fields move the
+    # Hamberg line.  A research and teaching comparison, not dosing guidance.
+    # (Claude Code, 2026-10-17, at the request of Steven L. Shafer.)
+    helpScenario(
+      "warfarin-hamberg-genotype",
+      "Warfarin: how CYP2C9, VKORC1 and age shape the INR",
+      "Long-term therapy",
+      "A fixed 5 mg/day warfarin start in a 75-year-old who is a slow metaboliser (CYP2C9 *2/*3) and warfarin-sensitive (VKORC1 AA): the library (Xue) and Hamberg (2007) INR lines climb together over eight weeks, and changing the CYP2C9 and VKORC1 fields moves the Hamberg line.",
+      age = 75, weight = 75, height = 172, sex = SEX_MALE,
+      cyp2c9 = "*2/*3", vkorc1 = "AA",
+      doses = helpDoses(
+        c("warfarin", 0, 5, "mg PO qd")
+      ),
+      # The INR is the plotted curve (no effect site); it builds over weeks.
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      hamberg = TRUE
     )
   )
 }
@@ -833,6 +857,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$cyp2d6 %in% CYP2D6_VALUES) say("invalid cyp2d6: ", p$cyp2d6)
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
+  if (!p$vkorc1 %in% VKORC1_VALUES) say("invalid vkorc1: ", p$vkorc1)
   if (!p$cyp2b6 %in% CYP2B6_VALUES) say("invalid cyp2b6: ", p$cyp2b6)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
   if (!is.logical(p$pregnant) || length(p$pregnant) != 1 || is.na(p$pregnant)) {
@@ -861,7 +886,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (o$logY && (o$showThreshold || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
     say("logY is unavailable with the threshold, events or interaction panels")
   }
-  for (name in c("showThreshold", "logY", "opioidMacInteraction", "mintoSchnider")) {
+  for (name in c("showThreshold", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
 
@@ -894,14 +919,19 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
       opioids <- drugDefaults$Drug[!is.na(drugDefaults$MEAC) & drugDefaults$MEAC > 0]
       if (!"propofol" %in% d$Drug || !any(d$Drug %in% opioids)) say("the interaction panel needs propofol and an opioid")
     }
-    # The Minto / Schnider box is enabled only while one of those drugs is dosed
-    if (isTRUE(o$mintoSchnider) && !any(d$Drug %in% ALTERNATIVE_MODEL_DRUGS)) {
-      say("Minto / Schnider needs ", paste(ALTERNATIVE_MODEL_DRUGS, collapse = " or "))
-    }
-    if (isTRUE(o$mintoSchnider)) {
+    # Each companion box is enabled only while a drug in its group is dosed
+    for (group in names(COMPANION_MODEL_GROUPS)) {
+      if (!isTRUE(o[[group]])) next
+      drugsInGroup <- companionGroupDrugs(group)
+      if (!any(d$Drug %in% drugsInGroup)) {
+        say(COMPANION_MODEL_GROUPS[[group]]$label, " needs ",
+            paste(drugsInGroup, collapse = " or "))
+      }
       p <- s$patient
-      for (problem in alternativeModelProblems(d$Drug, p$weight, p$height, p$age, p$sex,
-                                               pregnant = isTRUE(p$pregnant))) say(problem)
+      for (problem in alternativeModelProblems(
+        d$Drug[companionModelGroup(d$Drug) %in% group],
+        p$weight, p$height, p$age, p$sex, pregnant = isTRUE(p$pregnant),
+        cyp2c9 = p$cyp2c9, vkorc1 = p$vkorc1)) say(problem)
     }
   }
 
@@ -987,6 +1017,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
+  updateSelectInput(session, "vkorc1", selected = p$vkorc1)
   updateSelectInput(session, "cyp2b6", selected = p$cyp2b6)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
   # A blank field is the state the renal models read as "assume a normal
@@ -1011,6 +1042,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateCheckboxInput(session, "logY", value = o$logY)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
   updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
+  updateCheckboxInput(session, "hamberg", value = o$hamberg)
 
   eventTable(helpScenarioEventTable(s))
   if (is.null(timeApi)) {
@@ -1061,6 +1093,7 @@ helpScenarioPageHTML <- function(id) {
     `CYP 2C19` = tools::toTitleCase(p$cyp2c19),
     `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
     `CYP 2B6` = tools::toTitleCase(p$cyp2b6),
+    VKORC1 = p$vkorc1,
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     `Serum creatinine` = if (is.null(p$creatinine)) "blank (normal for age and sex assumed)" else sprintf("%s mg/dL", helpFormatNumber(p$creatinine)),
     `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),
@@ -1093,7 +1126,8 @@ helpScenarioPageHTML <- function(id) {
     "Time until threshold" = if (o$showThreshold) "on" else "off",
     "Log Y axis" = if (o$logY) "on" else "off",
     "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off",
-    "Minto / Schnider" = if (o$mintoSchnider) "on" else "off"
+    "Minto / Schnider" = if (o$mintoSchnider) "on" else "off",
+    "Hamberg" = if (o$hamberg) "on" else "off"
   )
   optionsTable <- data.frame(Option = names(optionRows), Setting = unname(optionRows),
                              stringsAsFactors = FALSE)
