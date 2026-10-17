@@ -11,7 +11,7 @@ parameters <- utils::read.csv(
 PK_STATUS <- c("PK-FIT", "PK-AUDIT", "PK-CONSTRAINT", "PK-TEMPLATE")
 PD_STATUS <- c("PD-FIT", "PD-AUDIT", "PD-CONSTRAINT", "PD-TEMPLATE")
 TIERS <- c("core", "international", "optional", "out_of_scope")
-PROVENANCE <- c("estimated", "fixed", "derived", "assumed", "library")
+PROVENANCE <- c("estimated", "fixed", "derived", "assumed", "library", "structural")
 
 test_that("every registry row is one product key, fully classified, with a source", {
   expect_false(any(duplicated(registry$key)))
@@ -65,7 +65,7 @@ test_that("the specification's product keys are present and kept apart", {
               "exenatide_ir_sc", "exenatide_er_bydureon", "exenatide_er_bcise",
               "insulin_glargine_lantus_u100", "insulin_glargine_u300_toujeo",
               "insulin_human_inhaled_afrezza", "metformin_er", "soliqua_100_33",
-              "xultophy_100_3_6", "dulaglutide_sc", "pioglitazone_kadam2013"))
+              "xultophy_100_3_6", "pioglitazone_kadam2013"))
     expect_true(k %in% registry$key, info = k)
   expect_true(all(is.na(registry$stanpumpr_drug[grepl("^exenatide|toujeo|lantus|semglee|rezvoglar",
                                                        registry$key)])))
@@ -86,15 +86,27 @@ test_that("every implemented model's numbers are in the audit with provenance an
   }
   # the derived values are marked derived
   derived <- parameters[parameters$provenance == "derived", ]
-  expect_true(any(derived$drug == "semaglutide" & grepl("weight exponent", derived$parameter)))
+  expect_true(any(derived$drug == "empagliflozin" & grepl("eGFR exponent", derived$parameter)))
   expect_true(any(derived$drug == "tirzepatide" & derived$parameter == "F"))
+})
+
+test_that("the implemented insulins' structure is verified against Tham's Figure 1", {
+  tham <- registry[registry$stanpumpr_drug %in% c("insulinLispro", "insulinLisproMix75",
+                                                  "insulinLisproMix50", "insulinGlargine"), ]
+  expect_equal(nrow(tham), 4)
+  expect_true(all(tham$structure_verified))
 })
 
 test_that("the audited numbers are the ones the models use", {
   sema <- semaglutide(85, 165, 50, "female", adjustToFFM = FALSE)$PK$default
   expect_equal(sema$cl1 * 60, 0.0478)
   expect_equal(sema$ka_SC * 60, 0.0286)
-  expect_equal(SEMAGLUTIDE_WEIGHT_EXPONENT, 0.78)
+  expect_equal(SEMAGLUTIDE_WEIGHT_EXPONENT,
+               as.numeric(parameters$value[parameters$drug == "semaglutide" &
+                                           parameters$parameter == "weight exponent on CL/F"]))
+  expect_equal(EMPAGLIFLOZIN_EGFR_EXPONENT,
+               as.numeric(parameters$value[parameters$drug == "empagliflozin" &
+                                           parameters$parameter == "eGFR exponent on CL/F"]))
   expect_equal(TIRZEPATIDE_BIOAVAILABILITY,
                as.numeric(parameters$value[parameters$drug == "tirzepatide" & parameters$parameter == "F"]),
                tolerance = 1e-3)

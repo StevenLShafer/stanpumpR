@@ -4,18 +4,22 @@ The **Antidiabetic** drugs in the startup menu are named, source-specific popula
 
 | Drug | Product and route | Source | Population | What the curve is |
 |---|---|---|---|---|
-| [semaglutide](help:drugs/semaglutide) | Ozempic, SC once weekly | Carlsson Petri and colleagues, 2018 | Phase 3 trials, type 2 diabetes | One compartment, apparent; weight on clearance |
+| [semaglutide](help:drugs/semaglutide) | Ozempic, SC once weekly | Carlsson Petri and colleagues, 2018 | Phase 3 trials, type 2 diabetes | One compartment, apparent; weight, sex and age on clearance |
 | [tirzepatide](help:drugs/tirzepatide) | Mounjaro, SC once weekly | Schneck and Urva, 2024 | 5802 participants, 19 studies | Two compartments, true scale; weight and fat mass |
+| [dulaglutide](help:drugs/dulaglutide) | Trulicity, SC once weekly | Geiser and colleagues, 2016 | 1067 adults with type 2 diabetes (phase 3) | Two compartments, true scale; weight on bioavailability |
 | [liraglutide](help:drugs/liraglutide) | Victoza, SC once daily | Røge and colleagues, 2015 | 29 adults with type 2 diabetes | One compartment, apparent, per kilogram |
 | [insulin regular](help:drugs/insulinRegular), [regular U-500](help:drugs/insulinRegularU500), [NPH](help:drugs/insulinNPH), [human 70/30](help:drugs/insulinHumanMix70) | Human insulins, SC | Tham and colleagues, 2017 | Clamp and PK studies, mostly healthy | One compartment, apparent, per formulation |
 | [insulin lispro](help:drugs/insulinLispro), [lispro Mix75/25](help:drugs/insulinLisproMix75), [lispro Mix50/50](help:drugs/insulinLisproMix50) | Humalog U-100 (also by pump), Humalog Mix, SC | Tham and colleagues, 2017 | Healthy volunteers | One compartment; lispro with parallel zero-order input |
 | [insulin glargine](help:drugs/insulinGlargine) | Glargine U-100 (Basaglar fit), SC | Tham and colleagues, 2017 | 209 healthy volunteers | One compartment, parallel zero-order input, immunoreactive assay |
 | [metformin](help:drugs/metformin) | Immediate release, oral | Chae and colleagues, 2012 | 42 healthy adults, 500 mg | One compartment, apparent; creatinine clearance |
-| [empagliflozin](help:drugs/empagliflozin) | Oral | Baron and colleagues, 2016 | 2761 adults with type 2 diabetes | Two compartments, apparent, lagged; reference patient |
-| [ertugliflozin](help:drugs/ertugliflozin) | Oral | Fediuk and colleagues, 2021 | 2276 subjects, 15 studies | Two compartments, apparent, lagged; weight, eGFR, sex |
+| [empagliflozin](help:drugs/empagliflozin) | Oral | Baron and colleagues, 2016 | 2761 adults with type 2 diabetes | Two compartments, apparent, lagged; renal function |
+| [dapagliflozin](help:drugs/dapagliflozin) | Oral | Kobuchi and colleagues, 2025 | 85 Japanese adults with type 2 diabetes, troughs only | One compartment, apparent; weight. Only the steady-state trough is fitted |
+| [ertugliflozin](help:drugs/ertugliflozin) | Oral | Fediuk and colleagues, 2021 | 2276 subjects, 15 studies | Two compartments, apparent, lagged; weight, eGFR, age, sex, type 2 diabetes |
+| [pioglitazone](help:drugs/pioglitazone) | Oral | Kadam and colleagues, 2013 | 31 healthy Caucasian adults, 15 mg | Two compartments, apparent; CYP2C8\*1/\*1 (no CYP2C8 field) |
+| [pramlintide (intravenous)](help:drugs/pramlintideIV) | Intravenous research route; the product is SC | Fang and colleagues, 2013 | 25 men with type 1 diabetes | Two compartments, true scale |
 | [glyburide](help:drugs/glyburide) | Glibenclamide, oral | Rambiritch and colleagues, 2016 | 24 adults with type 2 diabetes | Two compartments, apparent |
 
-The weekly peptides offer `mg SC qwk`; the insulins are dosed in units (`U SC`, `U/kg SC`) and plotted in mcU/mL; insulin lispro alone also offers an insulin pump (`U/hr SC`). See [subcutaneous doses](help:models/absorption).
+The weekly peptides (semaglutide, dulaglutide, tirzepatide) offer `mg SC qwk`; the insulins are dosed in units (`U SC`, `U/kg SC`) and plotted in mcU/mL; insulin lispro alone also offers an insulin pump (`U/hr SC`). See [subcutaneous doses](help:models/absorption).
 
 ## A product is not a molecule
 
@@ -34,9 +38,8 @@ Adding the effects of two drugs, or of exogenous and endogenous insulin, is not 
 
 ## What each curve leaves out
 
-- **Assumed structure.** Where the zero-order share of an insulin lispro or glargine dose enters, and which branch the lispro lag delays, are in Tham's supplement, which could not be read; the usual form is used (see [subcutaneous doses](help:models/absorption)).
-- **Covariates not applied.** Tham's dose and weight effects, Baron's empagliflozin covariates (renal function among them), and ertugliflozin's diabetes, race, age and food effects have reference values or equations in supplements that could not be read. Each drug's page lists what is applied and what is not.
-- **Derived values.** Semaglutide's weight exponent (0.78) is derived from the paper's published exposures at 55 and 127 kg, and tirzepatide's bioavailability in diabetes (0.655) from its published apparent clearance; both are marked derived in the parameter audit.
+- **Covariates not applied.** Tham's dose and weight effects (their reference values were in supplement equations missing from the published PDF), empagliflozin's covariates other than renal function, and ertugliflozin's race and food effects. Each drug's page lists what is applied and what is not.
+- **Derived values.** Tirzepatide's bioavailability in diabetes (0.655) is derived from its published apparent clearance, and empagliflozin's renal exponent (0.333) from its published exposures at an eGFR of 60, 30 and 15, which it reproduces within 0.2%; both are marked derived in the parameter audit.
 - **Insulin is the exogenous insulin alone.** Endogenous secretion, the baseline Tham estimated, and the C-peptide correction are not added, and an insulin unit is never converted into another insulin's.
 
 ## The registry

@@ -24,7 +24,8 @@
 # pump-permitted implemented products offer "U/hr SC".
 #
 # The parameter audit gives every number of the implemented models with its
-# units, provenance (estimated, fixed, derived, assumed, library), population,
+# units, provenance (estimated, fixed, derived, assumed, library, structural),
+# population,
 # source and locator.
 #
 # Run with: Rscript data-raw/antidiabeticRegistry.R
@@ -51,7 +52,7 @@ registry <- rbind(
   reg("semaglutide_sc_ozempic_petri2018", "semaglutide", "Ozempic injection", SC, "core", "US",
       FIT, FIT, "PD-AUDIT", DAUD, "HbA1c at week 26/30 (exposure-response)", NA, "semaglutide", TRUE,
       "https://doi.org/10.1007/s13300-018-0458-5",
-      "Carlsson Petri 2018, 1C, ka fixed 0.0286/h, CL/F 0.0478 L/h, V/F 12.2 L at 85 kg; weight exponent 0.78 derived from the published 55/127 kg exposures (supplement not read). Reproduces Cavg 29.8 nmol/L at 1 mg."),
+      "Carlsson Petri 2018, 1C, ka fixed 0.0286/h, CL/F 0.0478 L/h x (WT/85)^0.774 x 1.04 (male) x age-group factors, V/F 12.2 L (ESM Table S3, read). Reproduces Cavg 29.8 nmol/L at 1 mg."),
   reg("semaglutide_sc_overgaard2019", "semaglutide", "SC model version (1.34 mg/mL reference)", SC, "core", "study formulation",
       FIT, AUD, "PD-AUDIT", DAUD, "none", NA, NA, FALSE,
       "https://doi.org/10.1007/s13300-019-0581-y",
@@ -77,9 +78,9 @@ registry <- rbind(
       "https://doi.org/10.1002/psp4.13099",
       "Separate product alias; formulation and population evidence required before it shares the Mounjaro model."),
   reg("dulaglutide_sc", "dulaglutide", "Trulicity injection", SC, "core", "US",
-      FIT, AUD, "PD-AUDIT", DAUD, "FPG/HbA1c (FDA)", NA, NA, FALSE,
+      FIT, FIT, "PD-AUDIT", DAUD, "FPG/HbA1c (FDA)", NA, "dulaglutide", TRUE,
       "https://doi.org/10.1007/s40262-015-0338-3",
-      "FDA review Table 5 not reachable; Geiser 2016 abstract: 2C, CL 0.126 L/h, half-life 5 days (not 4.7)."),
+      "Geiser 2016 Table 6 (phase 3), the FDA review's Table 5 values: 2C, F 0.47 x exp(-0.00877 (WT-92.5)), ka 0.00769/h, CL 0.0593, Q 0.0201 L/h, Vc 2.25, Vp 3.75 L. F for 1.5 mg used at every dose."),
   reg("liraglutide_sc_victoza_roge2015", "liraglutide", "Victoza injection", SC, "core", "US",
       FIT, FIT, "PD-FIT", DAUD, "T2D meal-test glucose/insulin (Roge 2015)", NA, "liraglutide", TRUE,
       "https://doi.org/10.1002/psp4.11",
@@ -109,9 +110,9 @@ registry <- rbind(
       "https://www.scitechnol.com/2325-9604/2325-9604-2-112.pdf",
       "Frank 2013 not retrievable or indexed; dose-dependent MAT would need per-dose ka."),
   reg("pramlintide_iv_research", "pramlintide", "IV study (research)", "IV", "core", "study",
-      FIT, AUD, "PD-FIT", DAUD, "T1D meal EGP", NA, NA, FALSE,
+      FIT, FIT, "PD-FIT", DAUD, "T1D meal EGP", NA, "pramlintideIV", TRUE,
       "https://doi.org/10.1208/s12248-012-9409-7",
-      "Fang 2013 abstract only (2C IV); Table II not readable."),
+      "Fang 2013 Table II: 2C IV, CL 0.955 L/min, V1 19.1 L, CLD 0.283 L/min, V2 11.0 L, no covariates; lag 0.43 min and bolus D1 not applied. Research route only."),
   reg("pramlintide_sc", "pramlintide", "Symlin injection", SC, "core", "US",
       CON, CON, "PD-AUDIT", DAUD, "gastric emptying/meal", NA, NA, FALSE,
       "https://www.accessdata.fda.gov/drugsatfda_docs/label/2015/021332s025lbl.pdf",
@@ -137,9 +138,9 @@ registry <- rbind(
       FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinHumanMix70", TRUE,
       "https://doi.org/10.1002/jcph.899", "Component sum, 70% NPH + 30% regular, as Tham."),
   reg("insulin_lispro_humalog_u100", "insulin lispro", "Humalog U-100", SC, "core", "US",
-      FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", TRUE, "insulinLispro", FALSE,
+      FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", TRUE, "insulinLispro", TRUE,
       "https://doi.org/10.1002/jcph.899",
-      "Zero-order routing (into the circulation, unlagged) and lag on the depot ASSUMED: Tham's supplement and Figure 1 not readable. Pump: U/hr SC."),
+      "Zero-order input into the central volume, unlagged, and the lag on the first-order depot: Tham Figure 1 and supplement abbreviations. Pump: U/hr SC."),
   reg("insulin_lispro_humalog_u200", "insulin lispro", "Humalog U-200", SC, "core", "US",
       FIT, CON, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, NA, FALSE,
       fdaRoutes, "Tham's external SC-injection check only; must not be used in a pump."),
@@ -152,11 +153,11 @@ registry <- rbind(
   reg("insulin_lispro_aabc_lyumjev_u200", "insulin lispro-aabc", "Lyumjev U-200", SC, "core", "US",
       CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, NA, FALSE, fdaRoutes, "Not for pumps."),
   reg("insulin_lispro_mix_75_25", "insulin lispro", "Humalog Mix75/25", SC, "core", "US",
-      FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinLisproMix75", FALSE,
-      "https://doi.org/10.1002/jcph.899", "Component sum, 75% lispro protamine + 25% lispro; lispro's assumed zero-order form."),
+      FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinLisproMix75", TRUE,
+      "https://doi.org/10.1002/jcph.899", "Component sum, 75% lispro protamine + 25% lispro (Tham Figure 1)."),
   reg("insulin_lispro_mix_50_50", "insulin lispro", "Humalog Mix50/50", SC, "core", "US",
-      FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinLisproMix50", FALSE,
-      "https://doi.org/10.1002/jcph.899", "Component sum, 50/50; lispro's assumed zero-order form."),
+      FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinLisproMix50", TRUE,
+      "https://doi.org/10.1002/jcph.899", "Component sum, 50% lispro protamine + 50% lispro (Tham Figure 1)."),
   reg("insulin_aspart_novolog", "insulin aspart", "NovoLog", SC, "core", "US",
       CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", TRUE, NA, FALSE,
       "https://pubmed.ncbi.nlm.nih.gov/12518253/", "No complete fit in hand."),
@@ -170,9 +171,9 @@ registry <- rbind(
   reg("insulin_glulisine_apidra", "insulin glulisine", "Apidra", SC, "core", "US",
       CON, CON, "PD-CONSTRAINT", DCON, "clamp GIR", NA, NA, FALSE, fdaRoutes, "Pump use only where the label permits; not checked here."),
   reg("insulin_glargine_basaglar_u100", "insulin glargine", "Basaglar U-100", SC, "core", "US",
-      FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR (M1 active)", FALSE, "insulinGlargine", FALSE,
+      FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR (M1 active)", FALSE, "insulinGlargine", TRUE,
       "https://doi.org/10.1002/jcph.899",
-      "Immunoreactive assay, C-peptide corrected; zero-order routing assumed as lispro's; dose effect on F not applied."),
+      "Immunoreactive assay, C-peptide corrected; zero-order input into the central volume (Figure 1); dose effect on F not applied (reference dose in the supplement's lost equations)."),
   reg("insulin_glargine_lantus_u100", "insulin glargine", "Lantus U-100", SC, "core", "US",
       FIT, AUD, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, NA, FALSE,
       "https://doi.org/10.1002/jcph.899", "Tham external check only; product equivalence mapping required."),
@@ -219,10 +220,10 @@ registry <- rbind(
       "Conference abstract; incomplete."),
   reg("empagliflozin_baron2016", "empagliflozin", "Jardiance", PO, "core", "US",
       FIT, FIT, "PD-FIT", DAUD, "FPG/HbA1c", NA, "empagliflozin", TRUE,
-      "https://doi.org/10.1007/s13300-016-0174-y", "Fixed 0.5 h lag (missing from the specification); covariates in supplement Table S1 not applied."),
+      "https://doi.org/10.1007/s13300-016-0174-y", "Fixed 0.5 h lag (missing from the specification); CL/F x (MDRD eGFR/100)^0.333, exponent derived from the paper's AUC at eGFR 60/30/15 (Table S1 not available); other covariates not applied."),
   reg("dapagliflozin_kobuchi2025", "dapagliflozin", "Farxiga", PO, "core", "US",
-      FIT, AUD, "PD-FIT", DAUD, "HbA1c (Japanese T2D)", NA, NA, FALSE,
-      "https://doi.org/10.7150/ijms.111519", "CL/F 229.3 L/day, weight exponent 0.41 verified; fixed V/F, ka, their source and the reference weight (mean, not the 77 kg median) not readable."),
+      FIT, FIT, "PD-FIT", DAUD, "HbA1c (Japanese T2D)", NA, "dapagliflozin", TRUE,
+      "https://doi.org/10.7150/ijms.111519", "Table 2 / Eq. 6: CL/F 229.3 L/day x (BW/77.0)^0.41, V/F 73.9 L and ka 57.4/day fixed from Melin 2024. Troughs only: the steady-state trough is fitted, not the shape within a day."),
   reg("canagliflozin_dewinter2017", "canagliflozin", "Invokana", PO, "core", "US",
       AUD, AUD, "PD-AUDIT", DAUD, "HbA1c", NA, NA, FALSE,
       "https://bpspubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1111/bcp.13180", "Not re-read."),
@@ -231,7 +232,7 @@ registry <- rbind(
       "https://ascpt.onlinelibrary.wiley.com/doi/10.1002/psp4.12934", "Transit absorption; not re-read; never spliced with Baron or Kobuchi."),
   reg("ertugliflozin_fediuk2021", "ertugliflozin", "Steglatro", PO, "core", "US",
       FIT, FIT, "PD-CONSTRAINT", DCON, "UGE", NA, "ertugliflozin", TRUE,
-      "https://doi.org/10.1002/cpdd.970", "Data set 1; weight, MDRD eGFR and sex applied; T2D, race, age-on-Vc and food not."),
+      "https://doi.org/10.1002/cpdd.970", "Data set 1, supplement equations: weight, MDRD eGFR, T2DM, sex and age applied; race and food not."),
   reg("sitagliptin", "sitagliptin", "Januvia", PO, "core", "US",
       CON, CON, "PD-FIT", DAUD, "plasma DPP-4 inhibition", NA, NA, FALSE,
       "https://www.pmda.go.jp/files/000153174.pdf", "Label constraints only."),
@@ -249,7 +250,7 @@ registry <- rbind(
       "https://pmc.ncbi.nlm.nih.gov/articles/PMC3370343/", "Target-mediated."),
   reg("gliclazide_ir", "gliclazide", "Immediate release", PO, "international", "outside US",
       FIT, AUD, "PD-FIT", DAUD, "insulin (empirical)", NA, NA, FALSE,
-      "https://doi.org/10.1111/bcpt.13868", "Abstract has no parameters; noninteger transit chain not in the engine."),
+      "https://doi.org/10.1111/bcpt.13868", "Mim 2023 Table 3: CL/F 1.08 L/h, V/F 19.6 L, ka 3.78/h, N 5.50 transit compartments, MTT 2.06 h (verified); the noninteger transit chain needs a gamma kernel the engine does not have, and is not rounded. Not US-marketed."),
   reg("gliclazide_mr", "gliclazide", "Modified release", PO, "international", "outside US",
       AUD, AUD, "PD-AUDIT", DAUD, "insulin", NA, NA, FALSE, "https://doi.org/10.1111/bcpt.13868", "Distinct absorption."),
   reg("glyburide_rambiritch2016", "glyburide (glibenclamide)", "Tablets", PO, "core", "US",
@@ -265,8 +266,8 @@ registry <- rbind(
   reg("nateglinide", "nateglinide", "Starlix", PO, "core", "US",
       CON, CON, "PD-TEMPLATE", DTPL, "meal-linked secretion", NA, NA, FALSE, "https://pubmed.ncbi.nlm.nih.gov/11563410/", "Half-life only."),
   reg("pioglitazone_kadam2013", "pioglitazone", "Actos", PO, "core", "US",
-      FIT, AUD, "PD-TEMPLATE", DTPL, "insulin sensitivity (delayed)", NA, NA, FALSE,
-      "https://doi.org/10.1248/bpb.b12-00657", "Kadam 2013 abstract only; table not readable, and the claimed Q/F with its +1.03 effect gives +295%, not the abstract's 286%."),
+      FIT, FIT, "PD-TEMPLATE", DTPL, "insulin sensitivity (delayed)", NA, "pioglitazone", TRUE,
+      "https://doi.org/10.1248/bpb.b12-00657", "Kadam 2013 Table 3: CL/F 2.12 (+1.09 CYP2C8*3), Vc/F 21.4, Q/F 0.349 (+1.03), Vp/F 26.3 fixed, ka 1.82; the abstract's 286% is the same model rounded. Non-carrier curve (no CYP2C8 field); parent only."),
   reg("rosiglitazone", "rosiglitazone", "Avandia", PO, "core", "US",
       CON, CON, "PD-TEMPLATE", DTPL, "insulin sensitivity", NA, NA, FALSE,
       "https://dailymed.nlm.nih.gov/dailymed/getFile.cfm?setid=ef14122b-7fff-45fa-b13b-0ea9e48bd57d", "Constants from different analyses."),
@@ -325,6 +326,7 @@ par <- function(drug, parameter, value, units, provenance, population, source_ur
   data.frame(drug, parameter, value, units, provenance, population, source_url, locator,
              stringsAsFactors = FALSE)
 E <- "estimated"; FX <- "fixed"; DV <- "derived"; AS <- "assumed"; LB <- "library"
+ST <- "structural"
 petri  <- "https://doi.org/10.1007/s13300-018-0458-5"
 schneck <- "https://doi.org/10.1002/psp4.13099"
 roge   <- "https://doi.org/10.1002/psp4.11"
@@ -339,20 +341,23 @@ thamRows <- function(drug, v, cl, absorption) rbind(
   par(drug, "V/F", v, "L (x library FFM factor)", E, thamPop, tham, "Table 2"),
   par(drug, "CL/F", cl, "L/h (x library FFM factor^0.75)", E, thamPop, tham, "Table 2"),
   absorption,
-  par(drug, "dose and weight covariates", "not applied", "-", AS, thamPop, tham, "Table 2; equations in supplement (not read)"))
+  par(drug, "dose and weight covariates", "not applied", "-", AS, thamPop, tham, "Table 2; power forms per the supplement's abbreviations; reference values in its equations, missing from the published PDF"))
 ab <- function(drug, name, ka, lag = NULL, f1 = NULL, d0 = NULL) rbind(
   par(drug, paste0("ka (", name, ")"), ka, "1/h", E, thamPop, tham, "Table 2"),
   if (!is.null(lag)) par(drug, paste0("lag (", name, ")"), lag, "h", E, thamPop, tham, "Table 2"),
   if (!is.null(f1)) par(drug, paste0("first-order fraction (", name, ")"), f1, "unitless", E, thamPop, tham, "Table 2"),
   if (!is.null(d0)) par(drug, paste0("zero-order duration (", name, ")"), d0, "h", E, thamPop, tham, "Table 2"),
-  if (!is.null(d0)) par(drug, paste0("zero-order routing (", name, ")"), "into the circulation, unlagged", "-", AS, thamPop, tham, "Figure 1 and supplement not read"))
+  if (!is.null(d0)) par(drug, paste0("zero-order routing (", name, ")"), "into the central volume, unlagged", "-", ST, thamPop, tham, "Figure 1; supplement abbreviations (lag on first-order absorption; K0 for t <= DUR)"))
 lispro <- function(drug) ab(drug, "lispro", "0.989", "0.265", "0.729", "1.06")
 
 parameters <- rbind(
   par("semaglutide", "CL/F", "0.0478", "L/h at 85 kg", E, "Carlsson Petri 2018, phase 3 T2D", petri, "Results, Model Qualification (Table S3)"),
   par("semaglutide", "V/F", "12.2", "L (x library FFM factor)", E, "Carlsson Petri 2018", petri, "Results, Model Qualification"),
   par("semaglutide", "ka", "0.0286", "1/h", FX, "Carlsson Petri 2018 (rich clinical pharmacology data)", petri, "Methods"),
-  par("semaglutide", "weight exponent on CL/F", "0.78", "unitless (x (WT/85)^0.78)", DV, "from the published 55 kg (+40%) and 127 kg (-27%) exposures", petri, "Results"),
+  par("semaglutide", "weight exponent on CL/F", "0.774", "unitless (x (WT/85)^0.774)", E, "Carlsson Petri 2018", petri, "ESM Table S3; Methods equation"),
+  par("semaglutide", "male on CL/F", "1.04", "x CL/F", E, "Carlsson Petri 2018", petri, "ESM Table S3"),
+  par("semaglutide", "age 65-74 y on CL/F", "0.988", "x CL/F", E, "Carlsson Petri 2018", petri, "ESM Table S3"),
+  par("semaglutide", "age 75 y and over on CL/F", "0.961", "x CL/F", E, "Carlsson Petri 2018", petri, "ESM Table S3"),
 
   par("tirzepatide", "ka", "0.0373", "1/h", E, "Schneck 2024, 5802 participants", schneck, "Table 3"),
   par("tirzepatide", "CL", "0.0329", "L/h/70 kg (x (WT/70)^0.8)", E, "Schneck 2024", schneck, "Table 3, footnote d"),
@@ -389,7 +394,8 @@ parameters <- rbind(
   par("empagliflozin", "Vp/F", "70.6", "L", E, "Baron 2016", baron, "Results"),
   par("empagliflozin", "ka", "0.196", "1/h (printed L/h)", E, "Baron 2016", baron, "Results"),
   par("empagliflozin", "lag", "0.5", "h", FX, "Baron 2016", baron, "Methods"),
-  par("empagliflozin", "covariates on CL/F", "not applied", "-", AS, "Baron 2016", baron, "Table S1 (not read)"),
+  par("empagliflozin", "eGFR exponent on CL/F", "0.333", "unitless (x (MDRD eGFR/100)^0.333)", DV, "from the published AUC +18.5/+49.2/+88.1% at eGFR 60/30/15", baron, "Results; Methods TVP equation"),
+  par("empagliflozin", "other covariates on CL/F", "not applied", "-", AS, "Baron 2016", baron, "Table S1 (not available)"),
   par("empagliflozin", "size scaling", "library FFM factors", "-", LB, "reference patient", baron, "-"),
 
   par("ertugliflozin", "CL/F", "11.9", "L/h at 85 kg (x (WT/85)^0.75)", E, "Fediuk 2021, data set 1", fediuk, "Table 2"),
@@ -397,11 +403,38 @@ parameters <- rbind(
   par("ertugliflozin", "female on CL/F", "0.960", "x CL/F", E, "Fediuk 2021", fediuk, "Table 2"),
   par("ertugliflozin", "Vc/F", "6.51", "L at 85 kg (x WT/85)", E, "Fediuk 2021", fediuk, "Table 2"),
   par("ertugliflozin", "female on Vc/F", "1.46", "x Vc/F", E, "Fediuk 2021", fediuk, "Table 2"),
+  par("ertugliflozin", "age exponent on Vc/F", "-0.192", "unitless (x (AGE/65)^-0.192)", E, "Fediuk 2021", fediuk, "Table 2; supplementary appendix equation"),
+  par("ertugliflozin", "T2DM on CL/F", "0.921", "x CL/F (applied)", E, "Fediuk 2021", fediuk, "Table 2"),
   par("ertugliflozin", "Q/F", "7.76", "L/h at 85 kg (x (WT/85)^0.75)", E, "Fediuk 2021", fediuk, "Table 2"),
   par("ertugliflozin", "Vp/F", "107", "L at 85 kg (x WT/85)", E, "Fediuk 2021", fediuk, "Table 2"),
   par("ertugliflozin", "ka (fasted)", "0.329", "1/h", E, "Fediuk 2021", fediuk, "Table 2"),
   par("ertugliflozin", "lag", "0.226", "h", E, "Fediuk 2021", fediuk, "Table 2 (ALAG1)"),
-  par("ertugliflozin", "covariate forms", "power (continuous), factor (categorical)", "-", AS, "table labels; equations in supplement", fediuk, "Supplementary appendix (not read)"),
+  par("ertugliflozin", "covariate forms", "power (continuous), factor (categorical)", "-", ST, "Fediuk 2021 and 2020", fediuk, "Supplementary appendix equations"),
+
+  par("dulaglutide", "F (1.5 mg)", "0.470", "unitless at 92.5 kg", FX, "Geiser 2016, absolute bioavailability study", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6"),
+  par("dulaglutide", "weight on F", "-0.00877", "per kg (x exp(theta x (WT - 92.5)))", E, "Geiser 2016, phase 3, 1067 adults with T2D", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6, footnote a"),
+  par("dulaglutide", "ka", "0.00769", "1/h", E, "Geiser 2016", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6"),
+  par("dulaglutide", "CL", "0.0593", "L/h", E, "Geiser 2016", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6"),
+  par("dulaglutide", "Q", "0.0201", "L/h", E, "Geiser 2016", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6"),
+  par("dulaglutide", "Vc", "2.25", "L", E, "Geiser 2016", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6"),
+  par("dulaglutide", "Vp", "3.75", "L", E, "Geiser 2016", "https://doi.org/10.1007/s40262-015-0338-3", "Table 6"),
+
+  par("dapagliflozin", "CL/F", "229.3", "L/day x (BW/77.0)^0.41", E, "Kobuchi 2025, 85 Japanese adults with T2D", "https://doi.org/10.7150/ijms.111519", "Table 2; Equation 6"),
+  par("dapagliflozin", "weight exponent on CL/F", "0.41", "unitless", E, "Kobuchi 2025", "https://doi.org/10.7150/ijms.111519", "Table 2"),
+  par("dapagliflozin", "V/F", "73.9", "L (x library FFM factor)", FX, "fixed from Melin 2024", "https://doi.org/10.7150/ijms.111519", "Table 2"),
+  par("dapagliflozin", "ka", "57.4", "1/day", FX, "fixed from Melin 2024", "https://doi.org/10.7150/ijms.111519", "Table 2"),
+
+  par("pioglitazone", "CL/F", "2.12", "L/h (+1.09 in a CYP2C8*3 carrier; not applied)", E, "Kadam 2013, 31 healthy Caucasian adults", "https://doi.org/10.1248/bpb.b12-00657", "Table 3; final model equation"),
+  par("pioglitazone", "Vc/F", "21.4", "L (x library FFM factor)", E, "Kadam 2013", "https://doi.org/10.1248/bpb.b12-00657", "Table 3"),
+  par("pioglitazone", "Q/F", "0.349", "L/h (+1.03 in a CYP2C8*3 carrier; not applied)", E, "Kadam 2013", "https://doi.org/10.1248/bpb.b12-00657", "Table 3"),
+  par("pioglitazone", "Vp/F", "26.3", "L", FX, "Kadam 2013 (fixed to the base-model mean)", "https://doi.org/10.1248/bpb.b12-00657", "Table 3"),
+  par("pioglitazone", "ka", "1.82", "1/h", E, "Kadam 2013", "https://doi.org/10.1248/bpb.b12-00657", "Table 3"),
+
+  par("pramlintideIV", "CL", "0.955", "L/min (x library FFM factor^0.75)", E, "Fang 2013, 25 men with T1D, IV", "https://doi.org/10.1208/s12248-012-9409-7", "Table II"),
+  par("pramlintideIV", "V1", "19.1", "L", E, "Fang 2013", "https://doi.org/10.1208/s12248-012-9409-7", "Table II"),
+  par("pramlintideIV", "CLD", "0.283", "L/min", E, "Fang 2013", "https://doi.org/10.1208/s12248-012-9409-7", "Table II"),
+  par("pramlintideIV", "V2", "11.0", "L", E, "Fang 2013", "https://doi.org/10.1208/s12248-012-9409-7", "Table II"),
+  par("pramlintideIV", "Tlag", "0.430 (not applied)", "min", AS, "Fang 2013", "https://doi.org/10.1208/s12248-012-9409-7", "Table II"),
 
   par("glyburide", "ka", "0.53", "1/h", E, "Rambiritch 2016, 24 adults with T2D", ramb, "Results"),
   par("glyburide", "CL/F", "2.16", "L/h", E, "Rambiritch 2016", ramb, "Results"),

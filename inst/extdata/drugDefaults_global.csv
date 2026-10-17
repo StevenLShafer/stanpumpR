@@ -126,10 +126,14 @@ insulinRegularU500,mcU,,,U SC bid,"U SC,U SC bid,U SC tid",#E65100,0,0,0,0,0,IV,
 insulinNPH,mcU,,,U SC bid,"U SC,U/kg SC,U SC qd,U SC bid",#6D4C41,0,0,0,0,0,IV,Antidiabetic
 insulinHumanMix70,mcU,,,U SC bid,"U SC,U SC bid",#8D6E63,0,0,0,0,0,IV,Antidiabetic
 insulinLispro,mcU,,,U SC,"U SC,U/kg SC,U SC tid,U/hr SC",#D81B60,0,0,0,0,0,IV,Antidiabetic
-insulinLisproMix75,mcU,,,U SC bid,"U SC,U SC bid",#AD1457,0,0,0,0,0,IV,Antidiabetic
+insulinLisproMix75,mcU,,,U SC bid,"U SC,U SC bid",#C2185B,0,0,0,0,0,IV,Antidiabetic
 insulinLisproMix50,mcU,,,U SC bid,"U SC,U SC bid",#880E4F,0,0,0,0,0,IV,Antidiabetic
 insulinGlargine,mcU,,,U SC qd,"U SC,U/kg SC,U SC qd",#283593,0,0,0,0,0,IV,Antidiabetic
 metformin,mcg,,,mg PO bid,"mg PO,mg PO qd,mg PO bid,mg PO tid",#455A64,0,0,0,0,0,IV,Antidiabetic
 empagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#0277BD,0,0,0,0,0,IV,Antidiabetic
 ertugliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidiabetic
 glyburide,ng,,,mg PO qd,"mg PO,mg PO qd,mg PO bid",#9E9D24,0,0,0,0,0,IV,Antidiabetic
+dulaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#AD1457,0,0,0,0,0,IV,Antidiabetic
+dapagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#5E35B1,0,0,0,0,0,IV,Antidiabetic
+pioglitazone,ng,,,mg PO qd,"mg PO,mg PO qd",#7CB342,0,0,0,0,0,IV,Antidiabetic
+pramlintideIV,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#8E24AA,0,0,0,0,0,IV,Antidiabetic

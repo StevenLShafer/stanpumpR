@@ -38,26 +38,28 @@
 # contain 7 U of NPH and 3 U of regular insulin"; Mix 75/25 and 50/50 are
 # lispro protamine and lispro).
 #
-# WHAT IS ASSUMED, AND WHAT IS LEFT OUT
-# =====================================
-# * Where the zero-order input goes, and which branch the lispro lag delays,
-#   are in the paper's supplement and Figure 1, which could not be read.  The
-#   model takes the usual NONMEM form of parallel zero- and first-order
-#   absorption: the first-order fraction into a depot, absorbed with the lag;
-#   the rest straight into the central compartment at a constant rate over
-#   the zero-order duration, from the moment of injection.  "The rapid onset
-#   of insulin lispro's activity was best described by adding a 0-order
-#   absorption model" supports an unlagged zero-order branch.  The registry
-#   records the assumption (structure_verified FALSE).
-# * Table 2 also has dose effects (on regular insulin's ka, -0.275, and on the
-#   human insulins' CL/F, -0.282; on glargine's F, -0.300) and weight effects
-#   on V/F (1.62 regular, 2.48 lispro, 0.00728 glargine), whose reference
-#   dose, reference weight and functional form are in the same supplement.
-#   They are NOT applied: every product uses Table 2's typical values, as the
-#   specification asks until the equations are transcribed.  The typical
-#   values are taken as the 70 kg reference adult's and scaled by the
-#   library's fat-free-mass factors (legacyVolume = 1: fixed with the switch
-#   off).
+# THE STRUCTURE, AND WHAT IS LEFT OUT
+# ===================================
+# * The zero-order input enters the central compartment directly, beside the
+#   first-order depot: the paper's Figure 1 draws k0 from the subcutaneous
+#   site into the central volume next to ka, for lispro and for glargine.
+#   The supplement ("Supplement Methods: Pharmacokinetic Model Equations")
+#   defines the lag as "lag time for insulin lispro first-order absorption"
+#   (and NPH's likewise), and the zero-order input as running "when t <=
+#   DUR" with t the time after the dose: the depot is lagged, the
+#   zero-order input is not.  That is the structure implemented
+#   (zeroOrderSC, into = "central", R/subcutaneous.R).
+# * Table 2 also has dose effects (a power of the dose on regular insulin's
+#   ka, -0.275, on the human insulins' CL/F, -0.282, and on glargine's F,
+#   -0.300) and weight effects on V/F (powers of weight for regular insulin,
+#   1.62, and lispro, 2.48; a linear slope for glargine, 0.00728), as the
+#   supplement's abbreviations define them.  Their reference dose and weight
+#   are in the supplement's equations, which did not survive its conversion
+#   to PDF (Word equation objects), so they are NOT applied: every product
+#   uses Table 2's typical values.  The typical values are taken as the 70 kg
+#   reference adult's and scaled by the library's fat-free-mass factors
+#   (legacyVolume = 1: fixed with the switch off); Tham's study populations
+#   averaged 68.5 to 100 kg (Table 1).
 # * The endogenous-insulin baseline Tham estimated (regular and NPH) and the
 #   C-peptide correction of the glargine data are not added: the curve is
 #   the exogenous insulin alone.  The glargine row was fitted to Basaglar

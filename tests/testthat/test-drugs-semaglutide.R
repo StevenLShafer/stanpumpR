@@ -1,4 +1,4 @@
-# semaglutide: see R/drugs_semaglutide.R (Carlsson Petri 2018).
+# semaglutide: see R/drugs_semaglutide.R (Carlsson Petri 2018, ESM Table S3).
 test_that("the reference subject, switch off, has the published parameters", {
   pk <- semaglutide(85, 165, 50, "female", adjustToFFM = FALSE)$PK$default
   expect_equal(pk$cl1, 0.0478 / 60)
@@ -6,17 +6,25 @@ test_that("the reference subject, switch off, has the published parameters", {
   expect_equal(pk$ka_SC, 0.0286 / 60)
   expect_equal(pk$bioavailability_SC, 1)
 })
-test_that("weight acts on clearance as (WT/85)^0.78, reproducing the paper's exposures", {
+test_that("weight acts on clearance as (WT/85)^0.774, reproducing the paper's exposures", {
   cl <- function(w) semaglutide(w, 170, 50, "female", adjustToFFM = FALSE)$PK$default$cl1
-  expect_equal(cl(85) / cl(55), 1.40, tolerance = 0.01)   # 55 kg: 40% more exposure
-  expect_equal(cl(85) / cl(127), 0.73, tolerance = 0.01)  # 127 kg: 27% less
+  expect_equal(cl(85) / cl(55), 1.40, tolerance = 0.005)  # 55 kg: 40% more exposure
+  expect_equal(cl(85) / cl(127), 0.73, tolerance = 0.005) # 127 kg: 27% less
+})
+test_that("men 1.04, and the two older age groups", {
+  cl <- function(age, sex) semaglutide(85, 170, age, sex, adjustToFFM = FALSE)$PK$default$cl1 * 60
+  expect_equal(cl(50, "male"), 0.0478 * 1.04)
+  expect_equal(cl(64.9, "female"), 0.0478)
+  expect_equal(cl(65, "female"), 0.0478 * 0.988)
+  expect_equal(cl(74.9, "female"), 0.0478 * 0.988)
+  expect_equal(cl(75, "female"), 0.0478 * 0.961)
 })
 test_that("switch on: the pharmacokinetic weight and the library volume factor", {
   size <- pkSizeFactors(85, 165, 50, "female", TRUE, legacyVolume = 1)
   pk <- semaglutide(85, 165, 50, "female")$PK$default
-  expect_equal(pk$cl1, 0.0478 * (size$pkWeight / 85)^0.78 / 60)
+  expect_equal(pk$cl1, 0.0478 * (size$pkWeight / 85)^0.774 / 60)
   expect_equal(pk$v1, 12.2 * size$volume)
-  expect_equal_rounded(pk$cl1 * 60, 0.0375863)
+  expect_equal_rounded(pk$cl1 * 60, 0.0376559)
 })
 test_that("steady state at 1 mg weekly matches the published 29.8 nmol/L", {
   PK <- getDrugPK("semaglutide", 85, 165, 50, "female", adjustToFFM = FALSE)
