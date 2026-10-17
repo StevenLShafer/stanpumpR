@@ -16,6 +16,10 @@ None; the study had 13 patients. The volumes, clearances and amounts of DPP-4 ar
 
 Galvus, marketed outside the United States: `mg PO`, `mg PO qd` and `mg PO bid` (the usual dose is 50 mg once or twice daily). At steady state on 10, 25 and 100 mg twice daily the model's peaks are 40, 107 and 461 ng/mL, against medians of about 45, 120 and 500 read from the paper's Figure 2.
 
+### Renal impairment: not in the model
+
+The study's 13 patients gave no covariates. Scheen's review of incretin-based therapies in chronic kidney disease (*Clin Pharmacokinet* 2015) gives the dedicated study: 50 mg once daily for 14 days reached a steady-state AUC of 990 ng·h/mL and a peak of 251 ng/mL with normal renal function, against the model's 844 and 209 for an 80 kg man. Exposure was 1.40, 1.71 and 2.00 times higher in mild, moderate and severe impairment, which the curve does not show. The label halves the daily dose in moderate and severe impairment.
+
 ### What is not plotted
 
 Concentration only, in ng/mL. The DPP-4 activity fitted alongside, and the GLP-1, glucose and insulin of the companion paper, are not drawn. See [Antidiabetic models and their limits](help:models/antidiabetics).

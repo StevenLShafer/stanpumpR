@@ -58,6 +58,12 @@
 # (the visual predictive check's median).  See
 # tests/testthat/test-drugs-linagliptin.R.
 #
+# RENAL IMPAIRMENT is not in the model; Retlich found no renal covariate.
+# Scheen 2015 (Clin Pharmacokinet 54:1-21, Table 1; Graefe-Mody et al.)
+# gives single-dose AUC ratios of 1.29, 1.56 and 1.41 in mild, moderate and
+# severe impairment and steady-state ratios of 1.08 and 1.71 in mild and
+# moderate: modest, as linagliptin is cleared mainly by the bile.
+#
 # References
 # ----------
 # Retlich S et al., Clin Pharmacokinet 2015;54:737-750.

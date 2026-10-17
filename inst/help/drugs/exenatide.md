@@ -24,6 +24,10 @@ A 10 mcg dose in a 75 kg man with an eGFR of 90 peaks at 263 pg/mL at 1.35 hours
 
 The extended-release products (Bydureon, Bydureon BCise) are different formulations and are not modelled.
 
+### Renal impairment: not reliable in end-stage disease
+
+Scheen's review of incretin-based therapies in chronic kidney disease (*Clin Pharmacokinet* 2015) tabulates the dedicated renal study. Its pooled apparent clearance was 8.14 L/h with normal renal function and 1.3 L/h in end-stage renal disease on dialysis. At low concentrations the model gives 7.8 L/h at an eGFR of 90, which agrees. But at an eGFR of 10 it still gives 3.5 L/h, because the saturable pathway carries no renal term. In end-stage renal disease the curve therefore understates exposure about 2.7-fold. Exenatide is not recommended in severe renal impairment.
+
 ### What is not plotted
 
 Concentration only, in pg/mL. Neither glucose, insulin nor gastric emptying is drawn. The time-until-threshold column is blank, as for every drug run by the numerical engine. See [Antidiabetic models and their limits](help:models/antidiabetics).

@@ -66,6 +66,17 @@
 # 38% lower (paper: 18% and 34%).  Twice daily, the third day's peak is 5%
 # above the first.  See tests/testthat/test-drugs-exenatide.R.
 #
+# RENAL IMPAIRMENT, AN EXTERNAL CHECK.  Scheen 2015 (Clin Pharmacokinet
+# 54:1-21) tabulates the dedicated renal study (Linnebjerg 2007) and its
+# pooled CL/F: 8.14, 5.19, 7.11 and 1.3 L/h with normal renal function, mild
+# and moderate impairment and end-stage renal disease on dialysis.  At low
+# concentrations, where the saturable pathway runs at Vmax/Km = 2.7 L/h, the
+# model gives 7.8 L/h at eGFR 90 but still 3.5 L/h at eGFR 10: in end-stage
+# renal disease it overstates clearance about 2.7-fold and so understates
+# exposure.  The saturable pathway carries no renal term in Cirincione's
+# model.  Exenatide is not recommended in severe impairment; the help page
+# says the curve is not reliable there.
+#
 # References
 # ----------
 # Cirincione B, Mager DE, Br J Clin Pharmacol 2017;83:517-526.

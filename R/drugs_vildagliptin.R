@@ -57,6 +57,13 @@
 # scale, are about 45, 120 and 500.  See
 # tests/testthat/test-drugs-vildagliptin.R.
 #
+# RENAL IMPAIRMENT is not in the model (13 patients, no covariates).
+# Scheen 2015 (Clin Pharmacokinet 54:1-21, Table 1; He et al.) gives 50 mg
+# once daily for 14 days: steady-state AUC 990 ng.h/mL and peak 251 ng/mL
+# with normal renal function (the model, 80 kg: 844 and 209), and AUC 1.40,
+# 1.71 and 2.00 times higher in mild, moderate and severe impairment, which
+# the model does not reproduce.
+#
 # References
 # ----------
 # Landersdorfer CB, He Y-L, Jusko WJ, Br J Clin Pharmacol 2012;73:391-401.

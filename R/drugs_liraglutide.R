@@ -43,6 +43,11 @@
 # BODY SIZE: per kilogram, evaluated at the pharmacokinetic weight with the
 # switch on and at total weight with it off.
 #
+# RENAL IMPAIRMENT: none in the model, as observed.  Scheen 2015 (Clin
+# Pharmacokinet 54:1-21, Table 2; Jacobsen 2009, 0.75 mg) gives CL/F 0.79
+# L/h with normal renal function (the model at 70 kg: 0.77 L/h) and no trend
+# across mild to severe impairment and dialysis.
+#
 # References
 # ----------
 # Roge RM et al., CPT Pharmacometrics Syst Pharmacol 2015;4:e00011.

@@ -22,6 +22,10 @@ The paper's dose terms (absorption 6.5% slower and binding sites 3.4% more plent
 
 Tradjenta, `mg PO` and `mg PO qd`. On 5 mg daily, a 60-year-old 88 kg man reaches a steady-state trough of 5.0 nmol/L (2.37 ng/mL) and a peak of 9.0 nmol/L (4.27 ng/mL). The paper's median trough is 5.29 nmol/L, and its predictive check shows a median peak near 9.
 
+### Renal impairment
+
+Retlich found no renal covariate, and the model has none. Scheen's review of incretin-based therapies in chronic kidney disease (*Clin Pharmacokinet* 2015) gives single-dose exposure 1.29, 1.56 and 1.41 times higher in mild, moderate and severe impairment, and 1.08 and 1.71 times higher at steady state in mild and moderate impairment. These are modest changes, because linagliptin is cleared mainly in the bile, and no dose adjustment is recommended.
+
 ### What is not plotted
 
 Concentration only, in ng/mL (1 nmol/L is 0.4725 ng/mL). Plasma DPP-4 inhibition, which the paper relates directly to the concentration with an Emax model, is not drawn, and neither is glucose. See [Antidiabetic models and their limits](help:models/antidiabetics).

@@ -61,3 +61,15 @@ test_that("units: oral, once or twice daily", {
   expect_equal(defaults$Units[[1]], c("mg PO", "mg PO qd", "mg PO bid"))
   expect_equal(defaults$Category, "Antidiabetic")
 })
+test_that("50 mg once daily matches the renal study's normal-function group within 20%", {
+  # Scheen 2015 (Clin Pharmacokinet 54:1-21), Table 1, He et al.: 50 mg once
+  # daily for 14 days, AUCtau 990 ng.h/mL, Cmax 251 ng/mL, normal function
+  PK <- getDrugPK("vildagliptin", 80, 170, 55, "male", adjustToFFM = FALSE)
+  d <- data.frame(Drug = "vildagliptin", Time = 0, Dose = 50, Units = "mg PO qd")
+  w <- simCpCe(d, noEvents, PK, 14 * MINS_PER_DAY, FALSE)$wide
+  last <- w$Time >= 13 * MINS_PER_DAY
+  t <- w$Time[last]; cp <- w$Plasma[last]
+  auc <- sum(diff(t) * (head(cp, -1) + tail(cp, -1)) / 2) / 60
+  expect_equal(auc, 990, tolerance = 0.2)
+  expect_equal(max(cp), 251, tolerance = 0.2)
+})
