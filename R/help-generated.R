@@ -252,8 +252,8 @@ helpIllicitPKTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
     structure <- paste0(if (peripheral) "Two compartments" else "One compartment",
                         if (!is.null(mm)) ", saturable" else "")
     elimination <- if (!is.null(mm)) {
-      sprintf("Vmax %s mg/min, Km %s", helpFormatNumber(mm$vmax),
-              helpFormatNumber(mm$km))
+      sprintf("Vmax %s mg/min, Km %s %s", helpFormatNumber(mm$vmax),
+              helpFormatNumber(mm$km), helpConcentrationUnits(row$Concentration.Units))
     } else {
       sprintf("CL %s L/min", helpFormatNumber(set$cl1))
     }

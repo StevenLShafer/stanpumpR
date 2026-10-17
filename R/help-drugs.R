@@ -241,6 +241,35 @@ helpDrugUnits <- function(row) {
   u
 }
 
+#' The terminal half-life a saturable model approaches at low concentration
+#'
+#' Below Km the Michaelis-Menten term Vmax C / (Km + C) becomes (Vmax/Km) C,
+#' an ordinary first-order clearance, so the model is linear in that limit and
+#' has a terminal half-life.  It is NOT the half-life in the parameter table
+#' above: that one is computed from the linear compartments alone, and a drug
+#' whose peripheral compartment is declared inside the saturable block (GHB's
+#' k23/k32) has v2 = 1 there, so the table reports its one-compartment value.
+#' GHB's is 17.9 minutes against a true low-concentration terminal half-life of
+#' 82 minutes, which is why this is computed rather than borrowed.
+#'
+#' @param X a drug model's output, carrying a `michaelisMenten` block
+#' @returns the terminal half-life in minutes, or NA when the block is absent
+#' @noRd
+helpSaturableTerminalHalfLife <- function(X) {
+  mm <- X$michaelisMenten
+  if (is.null(mm)) return(NA_real_)
+  v1 <- X$PK[[PK_EVENT_DEFAULT]]$v1
+  if (!isTRUE(v1 > 0) || !isTRUE(mm$km > 0)) return(NA_real_)
+  k10 <- (mm$vmax / mm$km) / v1                 # CL/V1 in the low-C limit
+  k12 <- if (is.null(mm$k23)) 0 else mm$k23
+  k21 <- if (is.null(mm$k32)) 0 else mm$k32
+  if (k12 <= 0 || k21 <= 0) return(log(2) / k10)
+  # The slower root of the two-compartment characteristic equation
+  s <- k10 + k12 + k21
+  beta <- (s - sqrt(s^2 - 4 * k10 * k21)) / 2
+  log(2) / beta
+}
+
 #' Section heading as an HTML string
 #' @noRd
 helpH2 <- function(text) sprintf("<h2>%s</h2>", htmltools::htmlEscape(text))
@@ -501,11 +530,14 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       # the two tables above would be read as saying something they do not.
       # Say so here rather than leaving it to the section further down.
       if (!is.null(modelOut$michaelisMenten))
-        paste0("<strong>This drug's elimination saturates</strong>, so CL1 and the half-lives above are ",
-               "not fixed properties of it: they are the limits approached at concentrations far ",
-               "BELOW Km, and at the doses the drug is actually given both are smaller and longer. ",
-               "A peripheral compartment declared through the saturable block appears there rather ",
-               "than as V2 above. See <em>Saturable elimination</em> below. ") else "",
+        paste0("<strong>This drug's elimination saturates</strong>, so neither CL1 nor the half-lives ",
+               "above are fixed properties of it. CL1 is the central clearance approached at ",
+               "concentrations far BELOW Km, and falls from there as the dose rises. The half-lives ",
+               "are computed from the linear compartments alone, so for a drug whose peripheral ",
+               "compartment is declared inside the saturable block they are <strong>not</strong> ",
+               "that drug's terminal half-life even at vanishing concentration: the ",
+               "<em>Saturable elimination</em> section below gives the right one, and the peripheral ",
+               "volume that explains the difference. ") else "",
       effectNote, "</p>"
     )
   }
@@ -904,11 +936,12 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       data.frame(
         Patient = p$label,
         `Vmax (mg/min)` = helpFormatNumber(X$michaelisMenten$vmax),
-        `Km (concentration units)` = helpFormatNumber(X$michaelisMenten$km),
-        `Concentration at half maximal rate` = helpFormatNumber(X$michaelisMenten$km),
+        Km = helpFormatNumber(X$michaelisMenten$km),
         `Peripheral volume (L)` =
           if (is.null(k23) || is.null(k32)) "—"
           else helpFormatNumber(k23 / k32 * v1),
+        `Terminal t½ below Km (min)` =
+          helpFormatHalfLife(helpSaturableTerminalHalfLife(X)),
         check.names = FALSE, stringsAsFactors = FALSE)
     })
     mmTab <- do.call(rbind, rowsMM[!vapply(rowsMM, is.null, logical(1))])
@@ -945,11 +978,14 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         "Vmax/Km, which is the CL1 given in the table above. That is the fastest this drug is ever ",
         "cleared; at the doses it is given, it is slower.</p>",
         helpTableHTML(mmTab, "Saturable elimination parameters"),
-        "<p class='small text-muted'>Km is in the drug's own concentration units, shown under ",
-        "<em>At a glance</em>. A peripheral compartment, where one is declared, is given by the ratio ",
-        "of the two distribution rate constants times the central volume; elimination saturates on the ",
-        "<strong>central</strong> concentration only. A dash means the drug has no peripheral ",
-        "compartment.</p>",
+        "<p class='small text-muted'>Km is in ", concUnits, ", this drug's own concentration ",
+        "units. A peripheral compartment, where one is declared, is the ratio of the two ",
+        "distribution rate constants times the central volume; elimination saturates on the ",
+        "<strong>central</strong> concentration only, and a dash means the drug has none. The ",
+        "terminal half-life is the one the model approaches at concentrations far below Km, where ",
+        "the saturable term becomes an ordinary clearance of Vmax/Km: it is computed from the ",
+        "central volume AND that peripheral compartment, so it is the half-life the table of ",
+        "half-lives above cannot give. At the doses the drug is given it is longer still.</p>",
         saltNote
       )
     }

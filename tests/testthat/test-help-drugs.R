@@ -389,3 +389,38 @@ test_that("helpDrugUnits gives the same units whichever drug library it is hande
     expect_gt(length(a), 0)
   }
 })
+
+test_that("a saturable drug's terminal half-life is its own, not the linear tables'", {
+  # The parameter table's half-lives come from the linear compartments alone,
+  # so a drug whose peripheral compartment lives in the saturable block's
+  # k23/k32 (GHB) is reported there as one-compartment.  GHB's displayed
+  # t-half is 17.9 min; its true low-concentration terminal half-life is 82,
+  # because the peripheral compartment the table cannot see slows the tail.
+  # Caught by CodeRabbit on #528, after this page's own warning claimed the
+  # displayed value WAS the below-Km limit.
+  ghb <- helpDrugModelOutput("GHB", helpReferencePatients()[1, ])
+  expect_equal(helpSaturableTerminalHalfLife(ghb), 81.7, tolerance = 0.01)
+  shown <- helpDrugParameterTable("GHB")$halfLife1[1]
+  expect_equal(shown, 17.9, tolerance = 0.01)
+  expect_gt(helpSaturableTerminalHalfLife(ghb) / shown, 4)
+
+  # With no peripheral compartment the two agree, since the linear limit is
+  # then genuinely one-compartment (phenytoin).
+  phen <- helpDrugModelOutput("phenytoin", helpReferencePatients()[1, ])
+  expect_equal(helpSaturableTerminalHalfLife(phen),
+               helpDrugParameterTable("phenytoin")$halfLife1[1], tolerance = 1e-6)
+
+  # and the page states it rather than only disclaiming the other one
+  html <- helpDrugPageHTML("GHB")
+  expect_true(grepl("Terminal", html, fixed = TRUE))
+  expect_true(grepl("81.7", html, fixed = TRUE))
+})
+
+test_that("Km is shown with the drug's own concentration units, not a fixed one", {
+  # Hardcoding mg/L would be right for GHB and phenytoin and wrong for any
+  # drug reported in ng/mL.
+  expect_true(grepl("Km is in mcg/mL", helpDrugPageHTML("GHB"), fixed = TRUE))
+  md <- helpIllicitPKTableMarkdown(getDrugDefaultsGlobal(FALSE))
+  ghb <- grep("GHB", strsplit(md, "\n", fixed = TRUE)[[1]], value = TRUE)
+  expect_true(grepl("Km 18.2 mcg/mL", ghb, fixed = TRUE))
+})
