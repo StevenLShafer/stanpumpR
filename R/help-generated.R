@@ -259,8 +259,12 @@ helpIllicitPKTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
     }
     # The route actually offered, and the rate constant that drives it.
     route <- unique(doseRoute(units))
+    # One absorption constant per extravascular route the drug offers.  Keep
+    # this in step with DOSE_ROUTES: a route missing here reads as no
+    # absorption at all rather than as an error.
     kaOf <- function(r) switch(r, PO = set$ka_PO, SL = set$ka_SL, IN = set$ka_IN,
-                               IM = set$ka_IM, RA = set$ka_RA, NULL)
+                               IM = set$ka_IM, SC = set$ka_SC, RA = set$ka_RA,
+                               NULL)
     kas <- unlist(lapply(route, kaOf))
     kas <- kas[!is.na(kas) & kas > 0]
     routes <- paste(route, collapse = ", ")

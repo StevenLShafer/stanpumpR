@@ -84,3 +84,14 @@ test_that("the models page carries the generated table", {
   expect_true(grepl("Vmax", as.character(html), fixed = TRUE))
   expect_false(grepl("generated:", as.character(html), fixed = TRUE))
 })
+
+test_that("the PK table knows every extravascular route the library has", {
+  # A route missing from the table's absorption lookup reads as no absorption
+  # rather than failing, so the lookup is checked against DOSE_ROUTES itself:
+  # adding a route to the library (SC arrived with enoxaparin) must not leave
+  # a silently blank column behind.
+  set <- getDrugPK("GHB", 70, 170, 40, "male")$PK[[PK_EVENT_DEFAULT]]
+  for (r in setdiff(DOSE_ROUTES, ROUTE_IV))
+    expect_true(paste0("ka_", r) %in% names(set),
+                info = paste(r, "has no ka_ field in the PK set"))
+})
