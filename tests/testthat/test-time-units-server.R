@@ -526,11 +526,17 @@ test_that("the dose field is labelled Dose or Target for a drug with TCI units",
     showAddDrugModal("rocuronium", 0)
     html <- as.character(sent$modals[[length(sent$modals)]]$message$html)
     expect_false(grepl("Dose or Target", html, fixed = TRUE))
-    # changing the drug in the dialog relabels the field
+    # changing the drug in the dialog relabels the field (a newer shiny sends
+    # the label as rendered HTML, an older one as the string)
+    sentLabel <- function() {
+      label <- lastSent(sent, "addDoseAmount")$label
+      if (is.list(label)) label <- label$html
+      as.character(label)
+    }
     session$setInputs(addDoseDrug = "propofol")
-    expect_equal(lastSent(sent, "addDoseAmount")$label, "Dose or Target")
+    expect_equal(sentLabel(), "Dose or Target")
     session$setInputs(addDoseDrug = "rocuronium")
-    expect_equal(lastSent(sent, "addDoseAmount")$label, "Dose")
+    expect_equal(sentLabel(), "Dose")
 
     # the dose table's grid: display header over the unchanged data column
     hot <- createHOT(doseTable(), drugDefaults(), doseTableFormat())
