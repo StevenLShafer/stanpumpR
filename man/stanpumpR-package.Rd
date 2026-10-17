@@ -6,14 +6,13 @@
 \alias{stanpumpR-package}
 \title{stanpumpR: Pharmacokinetic and Pharmacodynamic Simulation}
 \description{
-Open-source software for pharmacokinetic and pharmacodynamic simulation, intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. Calculates and plots predicted plasma and effect-site concentrations for intravenous and extravascular anesthetics using analytical closed-form three-compartment solutions.
+Open-source software for pharmacokinetic and pharmacodynamic simulation, intended to make pharmacokinetics accessible to facilitate perioperative patient care, teaching, and research. Calculates and plots predicted plasma and effect-site concentrations for intravenous and extravascular drugs using analytical closed-form three-compartment solutions, with a numerical engine for saturable (Michaelis-Menten) elimination and a multi-compartment uptake model for the inhaled anesthetics; simulates target-controlled infusion.
 }
 \author{
 \strong{Maintainer}: Steven Shafer \email{steven.shafer@stanford.edu} (\href{https://orcid.org/0000-0002-0289-7793}{ORCID})
 
 Authors:
 \itemize{
-  \item Steven Shafer \email{steven.shafer@stanford.edu} (\href{https://orcid.org/0000-0002-0289-7793}{ORCID})
   \item Dean Attali \email{daattali@gmail.com} (\href{https://orcid.org/0000-0002-5645-3493}{ORCID})
 }
 

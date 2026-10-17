@@ -332,3 +332,21 @@ test_that("parallel-system routes must be dose routes", {
   expect_error(parallelRoutes("oral", "x"), "Invalid routes for x")
   expect_error(parallelRoutes(character(0), "x"), "Invalid routes for x")
 })
+
+test_that("an intravenous tPeak is solved exactly, including past 100 minutes", {
+  # ke0FromTPeakBolus() replaced a nested optimize() whose inner peak search
+  # stopped at 100 min, so a later tPeak returned a wrong ke0 without an
+  # error, and whose squared error left morphine's 93.8 min at 93.83.
+  pk <- getDrugPK("fentanyl", 70, 170, 40, "male")$PK$default
+  coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
+  lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
+  for (tPeak in c(1, 3.694, 93.8, 150)) {
+    ke0 <- ke0FromTPeakBolus(tPeak, coef, lambda)
+    expect_equal(effectSitePeakTime(coef, lambda, ke0), tPeak, tolerance = 1e-5,
+                 info = paste("tPeak", tPeak))
+  }
+  m <- getDrugPK("morphine", 70, 170, 40, "male")$PK$default
+  expect_equal(effectSitePeakTime(c(m$p_coef_bolus_l1, m$p_coef_bolus_l2, m$p_coef_bolus_l3),
+                                  c(m$lambda_1, m$lambda_2, m$lambda_3), m$ke0),
+               93.8, tolerance = 1e-5)
+})

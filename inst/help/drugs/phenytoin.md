@@ -2,7 +2,7 @@
 
 Phenytoin is the one drug in the library with **saturable (Michaelis-Menten) elimination**: its clearance falls as the concentration rises, so a modest dose increase can raise the steady-state level out of proportion. It is simulated by a numerical engine (see the model notes), not by the closed-form solver the other drugs use.
 
-The parameters are from Odani and colleagues (*Biol Pharm Bull* 1996;19:444-448), who fitted 531 steady-state levels from 116 Japanese patients with epilepsy, children and adults: one compartment, total phenytoin, with a volume of 1.23 L/kg, a maximal elimination rate of 9.80 mg/day/kg and a Michaelis constant of 9.19 mg/L, each scaled by weight to the power 0.463. Odani assumed oral bioavailability was complete. At 300 mg/day a typical 70 kg adult reaches about 12 mg/L; at 400 mg/day, about 30.
+The parameters are from Odani and colleagues (*Biol Pharm Bull* 1996;19:444-448), who fitted 531 steady-state levels from 116 Japanese patients with epilepsy, children and adults: one compartment, total phenytoin, with a volume of 1.23 L/kg and a maximal elimination rate of 9.80 mg/day/kg, both per kilogram at Odani's typical 42 kg and scaled by weight to the power 0.463, and a Michaelis constant of 9.19 mg/L that does not change with weight. Odani assumed oral bioavailability was complete. At 300 mg/day a typical 70 kg adult reaches about 12 mg/L; at 400 mg/day, about 30.
 
 ### Dose basis and routes
 
