@@ -145,7 +145,7 @@ tciKinetics <- function(PK)
 # none of them.  A new flag in simCpCe() is added here too, and the test in
 # test-tci.R that every flag of a simulated table is listed fails until it is.
 tciRouteFlags <- function()
-  c("Bolus", "PO", "IM", "IN", "SL", "RA", "RAslow", "RArate", "PO2")
+  c("Bolus", "PO", "IM", "IN", "SL", "SC", "RA", "RAslow", "RArate", "PO2")
 
 tciSchedule <- function(dose, PK, maximum,
                         interval = TCI_INTERVAL, maxRate = TCI_MAX_RATE)
@@ -156,8 +156,11 @@ tciSchedule <- function(dose, PK, maximum,
 
   targets   <- dose[dose$Target & dose$Time >= 0 & dose$Time < maximum, ]
   isSL      <- if (is.null(dose$SL)) rep(FALSE, nrow(dose)) else dose$SL
+  # A subcutaneous dose is a depot input like an intramuscular one, never a
+  # manual intravenous infusion.  (Claude Code, 2026-10-17.)
+  isSC      <- if (is.null(dose$SC)) rep(FALSE, nrow(dose)) else dose$SC
   manual    <- which(!dose$Target & !dose$Bolus & !dose$PO & !dose$IM & !dose$IN &
-                     !isSL & !dose$RA & !dose$RAslow & !dose$PO2 &
+                     !isSL & !isSC & !dose$RA & !dose$RAslow & !dose$PO2 &
                      !(if (is.null(dose$RArate)) FALSE else dose$RArate))
   bolusRows <- dose[dose$Bolus & !dose$Target, ]
 
