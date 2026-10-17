@@ -319,6 +319,13 @@ app_server <- function(input, output, session) {
     if (!is.null(note)) showNotification(note, id = "timeConverted", type = "message")
   })
 
+  # The Time panel's header reads its settings out while it is collapsed:
+  # "(minutes, actual time from 08:00)", "(days, elapsed time)".  It follows
+  # the selectors, as the axis does.
+  output$timeSummary <- renderText({
+    timeSettingsText(selectorFormat(), input$referenceTime)
+  })
+
   # The Doses card header says what the times in the table are:
   # "(times in days)", "(HH:MM or minutes)"
   output$doseTimeUnits <- renderText({
@@ -1678,6 +1685,22 @@ app_server <- function(input, output, session) {
       )
     )
   }
+
+  # The Add new drug button under the plot: the same dialog as a click on
+  # the plot, offered on the first drug (alphabetically) not yet in the dose
+  # table, or the first drug when every one is, at the start of the plot.
+  # The drug and time are the dialog's suggestions; both can be changed.
+  newDrugSuggestion <- function() {
+    choices <- drugChoices()
+    unused <- setdiff(choices, doseTable()$Drug)
+    if (length(unused)) unused[1] else choices[1]
+  }
+
+  observeEvent(input$addNewDrug, {
+    profileCode({
+      showAddDrugModal(newDrugSuggestion(), 0)
+    }, name = "input$addNewDrug observer")
+  })
 
   observeEvent(input$addDoseDrug, {
     req(input$addDoseDrug)

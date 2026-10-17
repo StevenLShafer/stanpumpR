@@ -62,13 +62,20 @@ plasmaOnly <- c(
   "levetiracetam", "eslicarbazepine", "carbamazepine",
   # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
   "diamorphine",
+  # The opt-in illicit research models (2026-10-17) are plasma only: see
+  # inst/extdata/illicitRouteRegistry.csv and each drug's header.
+  "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA",
   # Antipsychotics: occupancy is a direct function of plasma, or no effect is
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
   "olanzapine", "droperidol", "droperidolIM",
   # Intravenous calcium (2026-10-13): plotted as the change in ionized
   # calcium, which is the end point itself; no ke0.
-  "calcium"
+  "calcium",
+  # The antihypertensives (2026-10-17): concentration only.  Neither source
+  # publishes an equilibration rate constant, and no blood pressure is
+  # plotted for any drug in the library (docs/antihypertensives.md).
+  "clevidipine", "fenoldopamPediatric"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

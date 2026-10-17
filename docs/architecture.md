@@ -27,8 +27,10 @@ The sidebar groups inputs into a few categories — patient covariates, graph/di
 options, optional extra plot facets, and the email-slide form.
 
 The **dose table** is a `rhandsontable` editable table, with `Apply` / `Undo` / `Redo`
-controls, and above it a *Time units* selector (minutes, hours, days, weeks) and a display toggle
-for elapsed vs. clock time (clock for minutes and hours only). Its full edit → apply lifecycle
+controls, and above it a collapsible *Time* panel (a `bslib::accordion`, closed by default, its
+header showing the current settings through `output$timeSummary`) holding a *Time units* selector
+(minutes, hours, days, weeks) and a display toggle for elapsed vs. clock time (clock for minutes
+and hours only). Its full edit → apply lifecycle
 is covered in [The dose table lifecycle](#the-dose-table-lifecycle), and the time units in
 [Time units](#time-units).
 
