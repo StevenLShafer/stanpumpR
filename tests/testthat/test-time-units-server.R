@@ -86,6 +86,21 @@ withTimes <- function(...) {
   dt
 }
 
+test_that("the Time panel's header follows the selectors and the procedure start", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session)
+    expect_equal(output$timeSummary, "(minutes, actual time from 08:00)")
+    session$setInputs(referenceTime = "09:30")
+    expect_equal(output$timeSummary, "(minutes, actual time from 09:30)")
+    session$setInputs(timeMode = "relative")
+    expect_equal(output$timeSummary, "(minutes, elapsed time)")
+    session$setInputs(timeUnits = "days")
+    echo(session, sent)
+    expect_equal(output$timeSummary, "(days, elapsed time)")
+  })
+})
+
 test_that("a change of unit converts the table, keeps the minutes and starts a fresh history", {
   shiny::testServer(app_server, {
     sent <- recordMessages(session)

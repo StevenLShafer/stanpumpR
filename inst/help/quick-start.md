@@ -1,7 +1,7 @@
 Five steps produce a simulation. Everything else in this help is refinement.
 
 <figure class="help-figure">
-<img src="stanpumpr-assets/help/quick-start-simulator.png" alt="The simulator: sidebar on the left, the plot in the middle, the Time card and the dose table on the right">
+<img src="stanpumpr-assets/help/quick-start-simulator.png" alt="The simulator: sidebar on the left, the plot in the middle, the Time panel and the dose table on the right">
 <figcaption>The simulator. Patient and graph settings on the left, the plot in the middle, the dose table on the right.</figcaption>
 </figure>
 
@@ -29,7 +29,7 @@ Open **Patient Profile** in the left sidebar. Enter age, weight, height and sex.
 
 ## 2. Enter the doses
 
-The **Doses** table is to the right of the plot. In the *Drug* column, start typing a drug name and choose from the list. Enter a *Time*, a *Dose*, and pick *Units*. Times are in the **Time units** chosen in the *Time* card above the table: minutes when the app opens, or hours, days or weeks for longer courses (changing the unit converts the table). With the *Actual time* display, a time like `09:30` is a clock time.
+The **Doses** table is to the right of the plot. In the *Drug* column, start typing a drug name and choose from the list. Enter a *Time*, a *Dose*, and pick *Units*. Times are in the **Time units** chosen in the *Time* panel above the table (collapsed by default; click its header to open it): minutes when the app opens, or hours, days or weeks for longer courses (changing the unit converts the table). With the *Actual time* display, a time like `09:30` is a clock time.
 
 <figure class="help-figure help-figure-medium">
 <img src="stanpumpr-assets/help/quick-start-doses.png" alt="The dose table with four propofol rows: a 2 mg/kg bolus, an infusion of 150 then 100 mcg/kg/min, and a stop at 90 minutes; below it the Apply Changes, Undo and Redo buttons">

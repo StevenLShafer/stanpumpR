@@ -426,49 +426,65 @@ app_ui <- function() {
             ),
 
             div(
-              bslib::card(
-                fill = FALSE,
-                bslib::card_header(icon("clock"), "Time"),
+              # The time settings, in a collapsible panel like the sidebar's,
+              # closed by default so the dose table has the column's height on
+              # a small screen.  The header reads the settings out while it is
+              # closed: "Time (hours, actual time from 08:00)".
+              bslib::accordion(
+                open = FALSE,
+                class = "mb-3",
+                bslib::accordion_panel(
+                  span(
+                    "Time",
+                    textOutput("timeSummary", inline = TRUE) |>
+                      htmltools::tagAppendAttributes(class = "small text-muted")
+                  ),
+                  value = "time",
+                  icon = icon("clock"),
 
-                # Time units: what a number typed in the dose table means, and
-                # the unit of the time axis.  Changing it converts the dose
-                # table (R/utils-time.R).  Actual (clock) time is offered for
-                # minutes and hours only.
-                bslib::layout_columns(
-                  selectizeInput(
-                    "timeUnits",
-                    "Time units",
-                    stats::setNames(names(TIME_UNITS), tools::toTitleCase(names(TIME_UNITS))),
-                    selected = timeUnit0,
-                    options = list(dropdownParent = "body")
-                  ),
-                  selectizeInput(
-                    "timeMode",
-                    "Time Display",
-                    timeModeChoices(timeUnit0),
-                    options = list(dropdownParent = "body")
-                  ),
-                  conditionalPanel(
-                    sprintf(
-                      "input.timeMode == 'clock' && %s.indexOf(input.timeUnits) >= 0",
-                      jsonlite::toJSON(CLOCK_TIME_UNITS)
+                  # Time units: what a number typed in the dose table means, and
+                  # the unit of the time axis.  Changing it converts the dose
+                  # table (R/utils-time.R).  Actual (clock) time is offered for
+                  # minutes and hours only.
+                  bslib::layout_columns(
+                    selectizeInput(
+                      "timeUnits",
+                      "Time units",
+                      stats::setNames(names(TIME_UNITS), tools::toTitleCase(names(TIME_UNITS))),
+                      selected = timeUnit0,
+                      options = list(dropdownParent = "body")
                     ),
-                    textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                    selectizeInput(
+                      "timeMode",
+                      "Time Display",
+                      timeModeChoices(timeUnit0),
+                      options = list(dropdownParent = "body")
+                    ),
+                    conditionalPanel(
+                      sprintf(
+                        "input.timeMode == 'clock' && %s.indexOf(input.timeUnits) >= 0",
+                        jsonlite::toJSON(CLOCK_TIME_UNITS)
+                      ),
+                      textInput("referenceTime", "Procedure start", placeholder = "HH:MM")
+                    )
                   )
                 )
               ),
 
               bslib::card(
+                # The title and the controls each stay on one line; when the
+                # column cannot hold both, the controls drop under the title
+                # (.doses-header in app.css).
                 bslib::card_header(
-                  class = "justify-content-between",
+                  class = "doses-header",
                   span(
                     icon("syringe"), "Doses",
                     # "(times in days)": the unit of the times in the table
                     textOutput("doseTimeUnits", inline = TRUE) |>
-                      htmltools::tagAppendAttributes(class = "small text-muted")
+                      htmltools::tagAppendAttributes(class = "micro text-muted")
                   ),
                   div(
-                    class = "d-flex align-items-center gap-3",
+                    class = "doses-controls d-flex align-items-center gap-2",
                     # Opt-in for the drug-of-abuse research models (off by
                     # default); when on, they are offered in the dose table and
                     # the Add a dose dialog, with their names shown in red.
@@ -487,7 +503,7 @@ app_ui <- function() {
                       ),
                       placement = "left"
                     ),
-                    actionLink("setTarget", "Suggest Dosing", class = "small")
+                    actionLink("setTarget", "Suggest Dosing", class = "micro")
                   )
                 ),
 
