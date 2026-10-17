@@ -277,6 +277,29 @@ test_that("a generated-block marker is replaced, and an unknown one is an error"
   expect_error(helpExpandGenerated("<!-- generated: no-such-block -->"), "no-such-block")
 })
 
+# The Open TCI page's figure is drawn from lbmJames() and ffmAlSallami(), so
+# its marked peak and zero are the function's, not quoted numbers: the James
+# lean body mass of a woman peaks at a BMI of 36.1 and is zero at 72.3,
+# whatever her height.
+test_that("the Open TCI page draws the James parabola from the model", {
+  html <- helpPageHTML("opentci")
+  expect_false(grepl("<!--", html, fixed = TRUE))
+  expect_match(html, "<figure class=\"help-figure\">\n<svg", fixed = FALSE)
+  expect_match(html, "Peak, 49.5 kg at BMI 36.1", fixed = TRUE)
+  expect_match(html, "Zero at BMI 72.3", fixed = TRUE)
+  expect_match(html, "Above BMI 35", fixed = TRUE)
+  # One HTML block: commonmark wraps nothing inside the figure in a paragraph
+  figure <- regmatches(html, regexpr("(?s)<figure.*?</figure>", html, perl = TRUE))
+  expect_false(grepl("<p>", sub("(?s)<figcaption>.*", "", figure, perl = TRUE), fixed = TRUE))
+  # The investigator pass links the caption's names but not the SVG's labels
+  ui <- as.character(helpPageUI("opentci"))
+  svg <- regmatches(ui, regexpr("(?s)<svg.*?</svg>", ui, perl = TRUE))
+  expect_false(grepl("investigator-link", svg, fixed = TRUE))
+  expect_match(ui, "<figcaption>.*investigator-link.*</figcaption>")
+  # The history page links to it
+  expect_true("opentci" %in% helpLinkTargets(helpReadMarkdown("history"))$pages)
+})
+
 # The absorption page's route table is generated from the drug library.  This
 # checks the rendered page against the library independently of the generator:
 # every drug offering a PO, IM or IN unit has a row, each route's cell lists
