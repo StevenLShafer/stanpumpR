@@ -124,15 +124,21 @@ test_that("a brief excursion above the threshold between grid points is found (F
   # The audit's independent solution (amount-matrix propagation, bounded
   # maximum search and a Brent root) puts the downward crossing at
   # 1.6051526509 min; the old search returned 0.
+  # Re-derived 2026-10-17 when ke0 began to be solved exactly for tPeak 1.6
+  # (ke0FromTPeakBolus(); 0.6367691 -> 0.6367604 /min, which left this
+  # peak 2e-6 below the threshold).  The same amount-matrix method, which
+  # reproduces the audit's crossing to 3e-10 at the old ke0, gives the dose
+  # that restores the audit's peak, 16.9986989741 mg, and the crossing
+  # 1.6051641202 min.
   PK <- getDrugPK("propofol", 70, 170, 40, "male", getDrugDefaults("propofol"))
   PK$endCe <- 1
-  dose <- data.frame(Drug = "propofol", Time = 0, Dose = 16.9985840174,
+  dose <- data.frame(Drug = "propofol", Time = 0, Dose = 16.9986989741,
                      Units = "mg")
   noEvents <- data.frame(Time = numeric(0), Event = character(0))
   X <- simCpCe(dose, noEvents, PK, 60, TRUE)
 
   # Through the app's own path: the Recovery column at the bolus.
-  expectWithin(X$wide$Recovery[X$wide$Time == 0], 1.6051526509, RECOVERY_TOL)
+  expectWithin(X$wide$Recovery[X$wide$Time == 0], 1.6051641202, RECOVERY_TOL)
 
   # And directly, with the evidence that the old grid could not see it.
   s <- X$recoveryStates
@@ -142,7 +148,7 @@ test_that("a brief excursion above the threshold between grid points is found (F
   expect_lt(peak$objective, 1 + 1e-5)
   expect_true(all(vapply(oldRecoveryGrid, C, numeric(1)) < 1))
   t1 <- recoveryCalc(s$state[1, ], s$lambda, 1)
-  expectWithin(t1, 1.6051526509, RECOVERY_TOL)
+  expectWithin(t1, 1.6051641202, RECOVERY_TOL)
   expect_gt(C(t1 - 1e-5), 1)
   expect_lt(C(t1 + 1e-5), 1)
 })

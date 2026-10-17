@@ -4,7 +4,12 @@
 renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex",
                 "gabapentin", "pregabalin", "oxycodone", "meloxicam",
                 "lacosamide", "levetiracetam", "metformin", "ertugliflozin", "empagliflozin",
-                "exenatide", "dapagliflozin", "canagliflozin")
+                "exenatide", "dapagliflozin", "canagliflozin",
+                # Anticoagulants with a renal clearance term (R/drugs_apixaban.R,
+                # R/drugs_rivaroxaban.R, R/drugs_edoxaban.R, R/drugs_dabigatran.R,
+                # R/drugs_enoxaparin.R and R/drugs_fondaparinux.R, which use MDRD)
+                "apixaban", "rivaroxaban", "edoxaban", "dabigatran",
+                "enoxaparin", "fondaparinux")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).

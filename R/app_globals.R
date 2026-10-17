@@ -48,6 +48,7 @@ bookmarksToExclude <- c(
   "clickEvent",
   "clickEvent-selectized",
   "addDoseBtn",
+  "addNewDrug",
   "addEventBtn",
   "addDoseTime",
   "clickTimeEvent",
@@ -82,6 +83,7 @@ bookmarksToExclude <- c(
   "startupDrugs_5", "startupDrugs_6", "startupDrugs_7", "startupDrugs_8",
   "startupDrugs_9", "startupDrugs_10", "startupDrugs_11", "startupDrugs_12",
   "startupDrugs_13", "startupDrugs_14", "startupDrugs_15", "startupDrugs_16",
+  "startupDrugs_17", "startupDrugs_18",
   "client_time",
   "dosetable_apply",
   "dosetable_undo",
@@ -94,7 +96,8 @@ bookmarksToExclude <- c(
   "mainNav",
   "help_goto",
   "help_search",
-  "help_scenario_load"
+  "help_scenario_load",
+  "investigator_show"
 )
 
 # The installed build: the package version and the commit it was built from.

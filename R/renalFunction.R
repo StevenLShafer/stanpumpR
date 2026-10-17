@@ -276,17 +276,21 @@ egfrDeindexed <- function(weight, height, age, sex, scr = adultCreatinine(sex))
   egfrCKDEPI2009(age, sex, scr) * bsaDuBois(weight, height) / 1.73
 }
 
-#' Four-variable MDRD eGFR, in mL/min/1.73 m^2
+#' Simplified (four-variable) MDRD estimated glomerular filtration rate
 #'
 #' The IDMS-traceable form (Levey et al., Clin Chem 2007;53:766-772):
-#' 175 x Scr^-1.154 x age^-0.203, x 0.742 in women.  The race coefficient is
-#' not applied: the Patient Profile carries no race.  Read by ertugliflozin,
-#' whose population model used it (Fediuk 2021), capped there at 120.
+#' eGFR = 175 x Scr^-1.154 x age^-0.203 x 0.742 (female).  The race term
+#' (x 1.212 for a Black patient) is omitted: race is not a Patient Profile
+#' field.  Indexed to 1.73 m^2 and used as given, not de-indexed.  Read by
+#' the low-molecular-weight heparin and fondaparinux anti-Xa models, which
+#' used it as their "creatinine clearance" (Berges 2007; Delavenne 2010), and
+#' by ertugliflozin (Fediuk 2021, capped there at 120), canagliflozin,
+#' empagliflozin and exenatide among the antidiabetics.
 #'
 #' @inheritParams creatinineClearanceCG
-#' @return eGFR, indexed to 1.73 m^2 of body surface
+#' @return eGFR in mL/min/1.73 m^2
 #' @keywords internal
 egfrMDRD <- function(age, sex, scr = adultCreatinine(sex))
 {
-  175 * scr^-1.154 * age^-0.203 * (if (sex == SEX_FEMALE) 0.742 else 1)
+  175 * scr^(-1.154) * age^(-0.203) * (if (sex == SEX_FEMALE) 0.742 else 1)
 }

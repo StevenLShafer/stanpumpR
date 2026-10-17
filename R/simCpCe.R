@@ -35,6 +35,8 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   # the unnormalised plot shows, are left alone.
   plasmaRise <- results$Plasma
   if (!is.null(PK$osmotic)) plasmaRise <- plasmaRise - PK$osmotic$baseline
+  # Likewise the INR (warfarin, R/inr.R), which starts at 1 / PCA0.
+  if (!is.null(PK$inr)) plasmaRise <- plasmaRise - 1 / PK$inr$pca0
   maxRise <- max(plasmaRise)
   results$CpNormCp <- if (maxRise > 0) plasmaRise          / maxRise * 100 else 0
   results$CeNormCp <- if (maxCp > 0) results$"Effect Site" / maxCp * 100 else 0
@@ -261,6 +263,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # oral doses at fixed delays; see R/oral-pulses.R.
     dose <- expandOralPulses(dose, PK$oralPulses, maximum)
 
+    # Zero-order oral release (carvedilol): each dose of the default oral form
+    # becomes the constant-rate rows that deliver it over the fitted duration,
+    # after its lag.  Those rows are rate units with the PO route word, so the
+    # classification below makes them an infusion on the drug's apparent oral
+    # parameters -- no absorption constant and no bioavailability, both being
+    # inside the apparent scale.  See R/oral-zero-order.R.
+    dose <- expandOralZeroOrder(dose, PK$oralZeroOrder, maximum)
+
     # Convert all doses to base units
     switch(
       PK$Concentration.Units,  # Units (per ml)
@@ -303,6 +313,22 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
           stop("A dose of ", PK$drug, " must be in units (U), not by mass.")
         mg_Conv <- mcg_Conv <- ng_Conv <- NA_real_
       },
+      IU = {                   # Activity: amounts in IU, Cp in IU/mL (heparin)
+        # 1 IU/mL = 1000 IU/L, so the base amount is 1000 IU and a dose in IU
+        # is divided by 1000 below.  Activity has no conversion to a mass, so
+        # every mass factor is missing; a mass unit is refused below.
+        mg_Conv  <- NA_real_
+        mcg_Conv <- NA_real_
+        ng_Conv  <- NA_real_
+      },
+      INR = {                  # Warfarin: R and S in mg/L, plotted as INR
+        # The enantiomer concentrations are simulated in mg/L (= mcg/mL), as
+        # for any drug in mcg/mL, and turned into the INR after the engines
+        # have run; see inrEngineResults().
+        mg_Conv  <- 1
+        mcg_Conv <- 1000
+        ng_Conv  <- 1000000
+      },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
     # Insulin units: U to mU, so that dividing by litres gives mU/L, which is
@@ -313,6 +339,18 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (!identical(PK$Concentration.Units, "mcU"))
         stop("A dose in units (U) needs a drug reported in mcU/mL; ", PK$drug, " is not.")
       dose$Dose[use] <- dose$Dose[use] * 1000
+    }
+    # A drug dosed in international units takes only those, and only it does.
+    # Checked before the mass conversions, which would turn a mass unit on an
+    # activity drug into NA silently.
+    iuDose <- grepl("^IU( |/|$)", dose$Units)
+    if (identical(PK$Concentration.Units, "IU")) {
+      if (!all(iuDose))
+        stop(PK$drug, " is dosed in international units (IU), not ",
+             paste(unique(dose$Units[!iuDose]), collapse = ", "), ".")
+      dose$Dose <- dose$Dose / 1000
+    } else if (any(iuDose)) {
+      stop(PK$drug, " is not dosed in international units (IU).")
     }
     # One factor per dose row (the molar branch may differ row by row).
     mg_Conv  <- rep_len(mg_Conv,  nrow(dose))
@@ -367,6 +405,37 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # RA in one table stopped with an error, or, when the lengths happened to
     # divide, had its rows mislabelled.  (Claude Code, 2026-10-10.)
     dose$Bolus <- route == ROUTE_IV & !rate
+    # Saturable oral absorption (gabapentin): each oral dose is scaled by the
+    # fraction absorbed at its own size, in mg per administration.  The dose is
+    # in the base unit here, and the base unit times mg_Conv is mg for every
+    # concentration unit.  Scaled once, here, each dose is then an ordinary
+    # input to whichever engine runs; see oralSaturationFraction().  Each dose
+    # takes its own row's mg_Conv, and this runs before the slow RA depot
+    # below adds rows, while mg_Conv still has one entry per row: multiplied
+    # whole, mg_Conv was recycled against the oral rows, which warned whenever
+    # the table held other routes too.  (Claude Code, 2026-10-17.)
+    if (!is.null(PK$oralSaturation) && any(dose$PO))
+      dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
+        oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv[dose$PO],
+                               PK$oralSaturation)
+    # The same for sublingual doses whose bioavailability falls with the dose
+    # (buprenorphine): bioavailability_SL is the small-dose limit.
+    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
+      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
+        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv[dose$SL],
+                               PK$sublingualSaturation)
+
+    # A subcutaneous bioavailability that depends on the size of each
+    # injection (insulin glargine, Tham 2017: (dose / 35 U)^-0.300): each SC
+    # dose is scaled by the factor for its own size, before the slow-depot
+    # copy below is made (so it carries the scaled dose) and before the
+    # zero-order share is split off, as Tham's equations apply F to both
+    # parts.
+    if (!is.null(PK$scDoseBioavailability) && any(dose$RA))
+      dose$Dose[dose$RA] <- dose$Dose[dose$RA] *
+        doseSizeFactor(doseInDosingUnits(dose$Dose[dose$RA], PK, mg_Conv[dose$RA]),
+                       PK$scDoseBioavailability)
+
     # A drug with a slow second RA depot (ka_RA_slow in its model; see
     # getDrugPK()) absorbs each RA dose through two parallel depots.  The
     # dose rows are duplicated, the copy flagged as the internal route
@@ -383,34 +452,6 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       slowRows$Bolus <- FALSE
       dose <- rbind(dose, slowRows)
       dose <- dose[order(dose$Time), , drop = FALSE]
-    }
-
-    # Saturable oral absorption (gabapentin): each oral dose is scaled by the
-    # fraction absorbed at its own size, in mg per administration.  The dose is
-    # in the base unit here, and the base unit times mg_Conv is mg for every
-    # concentration unit.  Scaled once, here, each dose is then an ordinary
-    # input to whichever engine runs; see oralSaturationFraction().
-    if (!is.null(PK$oralSaturation) && any(dose$PO))
-      dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
-        oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv, PK$oralSaturation)
-    # The same for sublingual doses whose bioavailability falls with the dose
-    # (buprenorphine): bioavailability_SL is the small-dose limit.
-    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
-      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
-        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv, PK$sublingualSaturation)
-
-    # A subcutaneous bioavailability that depends on the size of each
-    # injection (insulin glargine, Tham 2017: (dose / 35 U)^-0.300): each SC
-    # dose, and its slow-depot copy, is scaled by the factor for its own
-    # size, before the zero-order share is split off, as Tham's equations
-    # apply F to both parts.
-    if (!is.null(PK$scDoseBioavailability))
-    {
-      sc <- dose$RA | dose$RAslow
-      if (any(sc))
-        dose$Dose[sc] <- dose$Dose[sc] *
-          doseSizeFactor(doseInDosingUnits(dose$Dose[sc], PK, mg_Conv[sc]),
-                         PK$scDoseBioavailability)
     }
 
     # A drug with a second oral depot (ka_PO2 in its model; see getDrugPK())
@@ -581,7 +622,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       for (sys in PK$parallelSystems)
         parts[[length(parts) + 1]] <- runEngines(
           shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
-      results <- superposeEngineResults(parts, plotRecovery, emerge)
+      # Warfarin's two enantiomers are not added: they drive the turnover of
+      # the clotting factors, and the INR is plotted (R/inr.R).
+      results <- if (!is.null(PK$inr)) inrEngineResults(parts, PK$inr)
+                 else superposeEngineResults(parts, plotRecovery, emerge)
     } else if (!any(other))
     {
       results <- runEngines(shareOf(dose, PK$doseFraction), pkSets)

@@ -6,7 +6,7 @@ This model replaced the Papathanasiou 2019 weight-proportional model in October 
 
 ### Nasal spray
 
-The **mg IN** unit is the 4 mg per 0.1 mL concentrated spray. Dowling's own nasal arm used a dilute solution through an atomiser and does not describe it; Laffont and colleagues (*Front Psychiatry* 2024;15:1399803) modelled the spray in 60 adults during a remifentanil challenge, but on an apparent scale (CL/F 396 L/h) with no absolute bioavailability. The route here is **derived**: bioavailability 0.19 makes the reference man's nasal AUC equal Laffont's fitted dose over CL/F (and agrees with the Narcan label's exposure, which implies a CL/F near 500 L/h), and the absorption constant (1.06/h, no lag) matches the mean input time of Laffont's whole published input. Both are initialisers rather than fitted values. The 0.47 to 0.52 figures on labels are relative to intramuscular, which Dowling found incompletely absorbed (F 0.36).
+The **mg IN** unit is the 4 mg per 0.1 mL concentrated spray. Dowling's own nasal arm used a dilute solution through an atomiser and does not describe it; Laffont and colleagues (*Front Psychiatry* 2024;15:1399803) modelled the spray in 60 adults during a remifentanil challenge, but on an apparent scale (CL/F 396 L/h) with no absolute bioavailability. The route here is **derived**: bioavailability 0.19 makes the reference man's nasal AUC equal Laffont's fitted dose over CL/F (and agrees with the exposure in the FDA's clinical pharmacology review of NARCAN, which implies a CL/F near 500 L/h), and the absorption constant (1.06/h, no lag) matches the mean input time of Laffont's whole published input. Both are initialisers rather than fitted values. That review's bioavailability figures, 0.47 for 4 mg and 0.44 for 8 mg, are dose-normalized and relative to 0.4 mg of intramuscular naloxone; reading them as absolute assumes the intramuscular dose was completely absorbed, which Dowling did not find (F 0.36).
 
 ### Covariates
 
@@ -14,7 +14,7 @@ Clearance carries its own lean-body-weight covariate, in either switch position.
 
 ### Effect site
 
-ke0 is supplied directly from Yassen and colleagues (*Clin Pharmacokinet* 2007;46:965-980), who fitted an equilibration half-time of 6.5 minutes in the reversal of buprenorphine-induced respiratory depression. Against this disposition that puts the peak effect of a bolus at about 3.4 minutes. No antagonism model is attached: the row shows naloxone alone, not the opioid it reverses.
+The effect site comes from Yassen and colleagues (*Clin Pharmacokinet* 2007;46:965-980), who fitted ke0 0.106/min (an equilibration half-time of 6.5 minutes) in the reversal of buprenorphine-induced respiratory depression. They estimated it with their own naloxone disposition, so it is carried as the time to peak effect it gives there, 3.6 minutes after a bolus, and ke0 is solved again for Dowling's disposition (the method of Minto and colleagues, *Anesthesiology* 2003;99:324-333). For the reference man that is 0.095/min. No antagonism model is attached: the row shows naloxone alone, not the opioid it reverses.
 
 ### Typical concentrations
 

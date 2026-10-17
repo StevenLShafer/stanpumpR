@@ -98,16 +98,16 @@
 # research handoff on local anesthetic tissue-injection pharmacokinetics.)
 # -----------------------------------------------------------------------------
 
+# TRUE: RA doses are absorbed through two parallel depots (the default);
+# FALSE: through one, at ka 0.0272/min.  See the header.
+MEPIVACAINE_RA_TWO_DEPOT <- TRUE
+
 #' Mepivacaine pharmacokinetics (intravenous and regional anesthesia)
 #'
 #' Burm et al. (1997) enantiomer disposition, reduced exactly to a
 #' two-compartment model for the racemate, with a first-order absorption rate
 #' for tissue injection (RA).  See the header.
 #'
-# TRUE: RA doses are absorbed through two parallel depots (the default);
-# FALSE: through one, at ka 0.0272/min.  See the header.
-MEPIVACAINE_RA_TWO_DEPOT <- TRUE
-
 #' @inheritParams bupivacaine
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export

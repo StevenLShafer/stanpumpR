@@ -375,6 +375,57 @@ reports the dependence in another form (buprenorphine's power law) is fitted to 
 over the dose range the source covers, and the fit is documented in the drug header
 (`R/drugs_buprenorphine.R`).
 
+### Saturable elimination — the `michaelisMenten` block
+
+A drug whose elimination saturates at the concentrations it is used at cannot use any
+closed-form engine, because superposition fails: the second dose is cleared more slowly
+because the first is still there. Such a drug returns a `michaelisMenten` block and is
+dispatched to `R/advanceMichaelisMenten.R`, which integrates the whole dose table at once.
+
+```r
+michaelisMenten = list(
+  vmax = vmax,                 # mass per minute, at this patient's size
+  km = km,                     # concentration at half vmax, plot units
+  k23 = ..., k32 = ...,        # optional: ONE peripheral compartment, both or neither
+  saltFactor = list(default = ...)   # mass of the modelled moiety per unit dosed
+)
+```
+
+`k23`/`k32` add one linear peripheral compartment; elimination still saturates on the
+**central** concentration only, and a drug that declares neither is bit-for-bit unchanged.
+Set `v2`, `v3` to 1 and `cl2`, `cl3` to 0 in the PK list, and `cl1` to `vmax / km`, the
+low-concentration limit, which the generated help tables read. Two compartments plus
+saturable elimination is GHB (`R/drugs_GHB.R`); one compartment is phenytoin.
+
+Because superposition fails, nothing upstream may split such a drug's dose table into
+parts that are simulated separately and added: `simCpCe()` dispatches here *before* it
+splits oral formulations, and `getDrugPK()` refuses `parallelSystems` alongside it.
+
+### When the dose basis is not the plotted analyte
+
+A model's parameters are fitted on a particular mass, which is not always the one the
+plot reports. Three patterns, in increasing order of how loudly they must be said:
+
+- The factor is **stoichiometry and the gap is unavoidable**: psilocybin is swallowed and
+  psilocin is measured, so both apparent parameters are rescaled by the molecular weight
+  ratio and the header derives it (`R/drugs_psilocybin.R`).
+- The source uses **one basis throughout and the other is plausible**: MDMA's source doses
+  the hydrochloride, so the header, help page and registry all say the dose is the salt
+  (`R/drugs_MDMA.R`).
+- **Both bases are in common use and the gap is large**: then the *unit itself* names the
+  basis. GHB is dosed in `g PO oxybate` rather than a bare `g PO`, because its source
+  doses and reports sodium oxybate while the independent literature reports the free acid,
+  21% apart. Add the units to `allUnits` in `R/constants.R` — a unit missing from it
+  simulates correctly in every scripted test and then fails in the app with "Dose table
+  contains unknown dose units", since `simulateDrugsWithCovariates()` does not go through
+  `validateDoseTableInput()`. A product word is safe in an oral unit as long as it is not
+  in `ORAL_FORMULATIONS`, which `doseFormulation()` matches against.
+
+Rescaling `vmax` and `km` by the same factor as the dose is exact, not an approximation,
+and should be pinned as such. Where independent human data exist, validate against a study
+the model was **not** fitted to: that is what catches a basis error, which otherwise makes
+a model wrong by a constant factor while every internal check still passes.
+
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 
 Add one row. Columns:
@@ -415,6 +466,16 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   unless the user turns on **Show illicit drugs** (off by default), are shown in red in
   the dose table, and are never offered in the startup menu. Give a drug this category
   only if it is such a research model; diamorphine is the first (`R/drugs_diamorphine.R`).
+  Such a drug needs one more file than any other: a row in
+  `inst/extdata/illicitRouteRegistry.csv` for **every** route the literature describes,
+  offered or not, carrying its analyte, matrix, input and parameter dose bases, population,
+  `route_status` (calibrated / anchored / observed / unsupported), `parameter_status`
+  (published fit / measured summary / derived approximation / not identified) and source.
+  `test-illicit-registry.R` then holds the line: a route may carry dose units only if its
+  row says `offered` with an identified input model, and a route the engine cannot
+  represent (anything pulmonary) must be recorded and refused rather than aliased to `IN`.
+  These models are plasma only: `tPeak` 0, `MEAC` 0 and no band, as the sources support no
+  effect site. See `inst/help/models/illicit-drugs.md`.
 
 Example row (remifentanil):
 

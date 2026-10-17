@@ -3,14 +3,15 @@
 
 mmPK <- function(v = 50, vmax = 0.5, km = 5, ka = 0.01, F = 1, tlag = 0,
                  kConversion = NULL, ka_IM = NULL, saltFactor = list(),
-                 oralFormulations = NULL)
+                 oralFormulations = NULL, k23 = NULL, k32 = NULL)
 {
   list(
     PK = list(default = list(v1 = v, ka_PO = ka, bioavailability_PO = F,
                              tlag_PO = tlag)),
     oralFormulations = oralFormulations,
     michaelisMenten = list(vmax = vmax, km = km, kConversion = kConversion,
-                           ka_IM = ka_IM, saltFactor = saltFactor)
+                           ka_IM = ka_IM, saltFactor = saltFactor,
+                           k23 = k23, k32 = k32)
   )
 }
 
@@ -258,4 +259,72 @@ test_that("binding blocks are validated", {
     "x"), "alternatives")
   expect_error(validateMichaelisMenten(modifyList(mm, list(kaTransit = -1)), "x"),
                "kaTransit")
+})
+
+# -----------------------------------------------------------------------------
+# The optional peripheral compartment (k23/k32), added for GHB.  Every drug
+# that declares neither must be unchanged, which the tests above still pin;
+# these check that the new states are right when a drug does declare them.
+# Claude Code, 2026-10-17, at the request of Steven L. Shafer.
+# -----------------------------------------------------------------------------
+
+test_that("declaring neither rate constant leaves the peripheral compartment empty", {
+  # The same model with and without the fields present but NULL: identical.
+  V <- 40; CL <- 0.05; km <- 1e7
+  dose <- mmDose(c(0, 300), c(100, 50), c("mg", "mg PO"))
+  bare <- advanceMichaelisMenten(dose, mmPK(v = V, vmax = CL * km, km = km), 900)
+  nulls <- advanceMichaelisMenten(
+    dose, mmPK(v = V, vmax = CL * km, km = km, k23 = NULL, k32 = NULL), 900)
+  expect_identical(bare$Cp, nulls$Cp)
+})
+
+test_that("with Km far above the concentrations it is the linear TWO-compartment model", {
+  # The exact bi-exponential solution of an intravenous bolus, written here
+  # from the micro constants rather than taken from the engine.
+  V <- 30; CL <- 1.2; km <- 1e9; k12 <- 0.0016; k21 <- 0.0089; D <- 2000
+  k10 <- CL / V
+  s <- k10 + k12 + k21
+  alpha <- (s + sqrt(s^2 - 4 * k10 * k21)) / 2
+  beta  <- (s - sqrt(s^2 - 4 * k10 * k21)) / 2
+  exact <- function(t) D / V * ((k21 - alpha) / (beta - alpha) * exp(-alpha * t) +
+                                (k21 - beta) / (alpha - beta) * exp(-beta * t))
+
+  r <- advanceMichaelisMenten(mmDose(0, D, "mg"),
+                              mmPK(v = V, vmax = CL * km, km = km,
+                                   k23 = k12, k32 = k21), 600)
+  keep <- r$Time > 0
+  expect_equal(r$Cp[keep], exact(r$Time[keep]), tolerance = 1e-4)
+  # And it is genuinely two-compartment: dropping the peripheral compartment
+  # changes the curve, most visibly late, when drug returns from it.
+  one <- advanceMichaelisMenten(mmDose(0, D, "mg"),
+                                mmPK(v = V, vmax = CL * km, km = km), 600)
+  late <- r$Time > 120
+  expect_gt(max(abs(one$Cp[late] - r$Cp[late]) / r$Cp[late]), 0.2)
+})
+
+test_that("the peripheral compartment conserves mass and equilibrates at k23/k32", {
+  # With no elimination at all, the whole dose must end up distributed in the
+  # ratio the rate constants set, and none of it may vanish.
+  V <- 25; k23 <- 0.01; k32 <- 0.04; D <- 500
+  r <- advanceMichaelisMenten(mmDose(0, D, "mg"),
+                              mmPK(v = V, vmax = 1e-12, km = 1e6,
+                                   k23 = k23, k32 = k32), 3000)
+  central <- r$Cp[nrow(r)] * V
+  # Ap/Ac -> k23/k32 at equilibrium, so Ac -> D * k32 / (k23 + k32)
+  expect_equal(central, D * k32 / (k23 + k32), tolerance = 1e-3)
+})
+
+test_that("a peripheral compartment needs both rate constants, both positive", {
+  expect_error(validateMichaelisMenten(list(vmax = 1, km = 1, k23 = 0.01), "x"),
+               "needs both k23 and k32")
+  expect_error(validateMichaelisMenten(list(vmax = 1, km = 1, k32 = 0.01), "x"),
+               "needs both k23 and k32")
+  expect_error(
+    validateMichaelisMenten(list(vmax = 1, km = 1, k23 = 0, k32 = 0.01), "x"),
+    "k23 must be positive")
+  expect_error(
+    validateMichaelisMenten(list(vmax = 1, km = 1, k23 = 0.01, k32 = -1), "x"),
+    "k32 must be positive")
+  expect_silent(
+    validateMichaelisMenten(list(vmax = 1, km = 1, k23 = 0.01, k32 = 0.04), "x"))
 })

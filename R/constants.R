@@ -21,7 +21,8 @@ ROUTE_SL <- "SL"
 # nerve block or a wound infiltration), absorbed first-order from the tissue
 # into the systemic circulation.
 ROUTE_RA <- "RA"
-# Subcutaneous injection (the incretin peptides, the insulins): absorbed
+# Subcutaneous injection (the incretin peptides, the insulins, the
+# low-molecular-weight heparins and fondaparinux): absorbed
 # first-order from a tissue depot, as an RA dose is.  The engines carry both
 # on the same internal tissue-depot states ("RA" in getDrugPK() and the
 # engines), which is why a drug may offer SC or RA but not both; see
@@ -36,7 +37,8 @@ TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
 
 # Every route a dose can take, in the order the units dropdowns list them.  A
 # dose's route is carried by its Units string; see doseRoute() in R/routes.R.
-DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_SC, ROUTE_RA)
+DOSE_ROUTES <- c(ROUTE_IV, ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA,
+                 ROUTE_SC)
 
 # CYP2D6 metaboliser phenotype.  Four categories, using the CPIC terms the
 # genotyping laboratories report, rather than the three the UI carried before
@@ -236,9 +238,34 @@ CALCIUM_SALTS <- c("chloride", "gluconate")
 calciumBaseUnits <- c("g", "mg", "mg/kg", "mg/min", "mg/hr", "mg/kg/hr", "g/hr")
 calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
 
+# International units of activity: a drug whose CSV Concentration.Units is
+# "IU" (unfractionated heparin, R/drugs_heparin.R) is dosed in IU, and its
+# curve is activity in IU/mL.  Heparin's potency is defined by its activity,
+# not its mass, so these units have no conversion to mg, and simCpCe() refuses
+# a mass unit for such a drug and an IU unit for any other.  No route word:
+# they are intravenous.  (Claude Code, 2026-10-17, at the request of Steven L.
+# Shafer.)
+iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
+
+# Subcutaneous activity units (ROUTE_SC) for a drug plotted as anti-Xa
+# activity (enoxaparin, "IU SC"); the mass units are scUnits, above.  They
+# start with "IU" so simCpCe()'s international-unit check reads them, and
+# carry no mass.  No scheduled frequencies and no rate.  (Claude Code,
+# 2026-10-17, at the request of Steven L. Shafer.)
+iuScUnits <- c("IU SC", "IU/kg SC")
+
+# GHB (R/drugs_GHB.R).  The dose is SODIUM OXYBATE and the curve is GHB, the
+# free acid, which are 21% apart by mass, and both bases are in common use, so
+# the unit names the salt that is swallowed rather than leaving it to prose.
+# "oxybate" is not in ORAL_FORMULATIONS, so doseFormulation() reads no
+# formulation from it, and doseRoute() still finds the PO; the conversion is
+# the michaelisMenten saltFactor of the drug.
+GHB_SALT <- "oxybate"
+ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
-              scUnits, insulinUnits, insulinRateUnits)
+              iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -292,6 +319,8 @@ DRUG_CATEGORIES <- c(
   "Antiseizure",
   "Antipsychotics",
   "Antidiabetic",
+  "Anticoagulants",
+  "Antihypertensives",
   "Other",
   "Illicit drugs"
 )

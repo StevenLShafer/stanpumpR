@@ -31,7 +31,7 @@ clonazepam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#9C4A1A,20,
 zolpidem,ng,,,mg PO,"mg PO,mg PO qd",#6A1B9A,80,200,120,0,50,IV,Hypnotics and sedatives
 temazepam,ng,,,mg PO,"mg PO,mg PO qd",#7F3F00,250,600,400,0,250,IV,Hypnotics and sedatives
 codeine,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#4A6FE3,50,150,100,0,0,IV,Opioids
-hydrocodone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#2C5FB8,10,30,20,8,8,IV,Opioids
+hydrocodone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#2C5FB8,10,30,20,12,12,IV,Opioids
 oxymorphone,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#B5468C,1,4,2,0.8,0.8,IV,Opioids
 buprenorphine,ng,mg,mcg/hr,mg,"mg,mcg,mcg/kg,mcg/hr,mcg/kg/hr,mg SL,mcg SL,mg IN,mcg IN,mg qd,mg bid,mg tid,mg qid,mg SL qd,mg SL bid,mg SL tid,mg SL qid",#5D4037,1.25,3,2.2,0,1.25,IV,Opioids
 tramadol,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid",#7E57C2,100,600,300,0,0,IV,Opioids
@@ -143,3 +143,22 @@ pramlintideIV,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#9C4DB8,0,0,0,0,0,IV,Antidiabetic
 exenatide,pg,,,mcg SC bid,"mcg SC,mcg SC bid",#C46210,0,0,0,0,0,IV,Antidiabetic
 linagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#3E8E9E,0,0,0,0,0,IV,Antidiabetic
 vildagliptin,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#7D6B2E,0,0,0,0,0,IV,Antidiabetic
+heparin,IU,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#B71C1C,0,0,0,0,0,IV,Anticoagulants
+bivalirudin,mcg,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg/min,mg/kg/min",#AD1457,0,0,0,0,0,IV,Anticoagulants
+argatroban,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min,mcg/hr,mcg/kg/hr",#E65100,0,0,0,0,0,IV,Anticoagulants
+enoxaparin,IU,IU SC,,IU SC,"IU SC,IU/kg SC",#00695C,0,0,0,0,0,IV,Anticoagulants
+fondaparinux,mcg,mg SC,,mg SC,"mg SC,mg/kg SC",#5D4037,0,0,0,0,0,IV,Anticoagulants
+apixaban,ng,mg,,mg PO,"mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Anticoagulants
+rivaroxaban,ng,mg,,mg PO,"mg PO,mg PO qd,mg PO bid",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
+edoxaban,ng,mg,,mg PO qd,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Anticoagulants
+dabigatran,ng,mg,,mg PO bid,"mg PO,mg PO bid",#558B2F,0,0,0,0,0,IV,Anticoagulants
+warfarin,INR,mg,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Anticoagulants
+cocaine,ng,,,mg IN,"mg IN,mcg IN",#A52A2A,0,0,0,0,0,IV,Illicit drugs
+methamphetamine,ng,,,mg IN,"mg IN,mcg IN",#CD5C5C,0,0,0,0,0,IV,Illicit drugs
+LSD,ng,,,mcg PO,mcg PO,#4A148C,0,0,0,0,0,IV,Illicit drugs
+psilocybin,ng,,,mg PO,mg PO,#673AB7,0,0,0,0,0,IV,Illicit drugs
+MDMA,ng,,,mg PO,mg PO,#004D40,0,0,0,0,0,IV,Illicit drugs
+clevidipine,ng,mg,mg/hr,mg/hr,"mg,mcg/kg/min,mg/hr",#B71C1C,0,0,0,0,0,IV,Antihypertensives
+fenoldopamPediatric,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min",#311B92,15.7,23.5,19.6,0,0,IV,Antihypertensives
+carvedilol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#01579B,0,0,0,0,0,IV,Antihypertensives
+GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs

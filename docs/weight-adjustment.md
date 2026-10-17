@@ -158,7 +158,7 @@ before fat-free mass was introduced:
 | Metronidazole (da Silva Neto 2021) | volume 0.556 L/kg × the patient's adjusted body weight on Devine ideal weight (total body weight under 18 years, or where the ideal weight is not positive), clearance × (weight / 70)<sup>0.75</sup> on total weight, as published |
 | Own weight or renal covariates (vancomycin, gentamicin, sugammadex, cefazolin, naloxone, gabapentin, pregabalin, acetaminophen, ibuprofen, alprazolam, methadone, citalopram) | the published equations on total body weight; size-free parameters fixed |
 
-Propofol, remifentanil, oxytocin and tiagabine (Ingwersen 2000, whose clearance and volume are powers of height, its own size covariate) do not respond to the switch.
+Propofol, remifentanil, oxytocin and tiagabine (Ingwersen 2000, whose clearance and volume are powers of height, its own size covariate) do not respond to the switch. Nor does meloxicam's intravenous (ANJESO) system, which keeps its own published weight covariate on total weight in both positions; its oral system does respond.
 
 The switch exists for three reasons: to show, live, how far per-kilogram dosing
 departs from fat-free-mass dosing in an obese or female patient; to regenerate

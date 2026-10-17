@@ -54,7 +54,7 @@
 # Clark AM et al., Epilepsia 2013;54:1099-1105.  https://doi.org/10.1111/epi.12134
 # Ahmed GF et al., Br J Clin Pharmacol 2015;79:820-830.
 #   https://doi.org/10.1111/bcp.12556
-# Lim JS et al., J Clin Pharmacol 2016.  https://doi.org/10.1002/jcph.646
+# Lim CN et al., J Clin Pharmacol 2016;56:714-722.  https://doi.org/10.1002/jcph.646
 # -----------------------------------------------------------------------------
 
 #' Topiramate pharmacokinetics (oral)

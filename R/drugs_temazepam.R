@@ -71,7 +71,7 @@
 # parameters are reproducible from the table, the figure and the script, and
 # the test file checks that they are the fit's least-squares minimum.  Kept
 # as is by decision of Steven L. Shafer, 2026-10-09.  The
-# research formulations (polyethylene glycol, salicylate) are not products,
+# research formulations (propylene glycol, salicylate) are not products,
 # and both of Halliday's caused "an unacceptably high incidence of venous
 # thrombosis", so the route offered is oral; the intravenous data set the
 # systemic disposition under it.

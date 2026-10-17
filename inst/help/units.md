@@ -54,7 +54,7 @@ Some conversions that come up:
 
 ## Time
 
-The calculation works in minutes. Times are entered and displayed in the **Time units** chosen in the Time card (minutes, hours, days or weeks), and the dose table also accepts `HH:MM`. Max time runs from an hour to a year (365 days, or 52 weeks), with choices that follow the unit. Infusion rates stay per minute or per hour whatever the time unit. See [Time display](help:time-display).
+The calculation works in minutes. Times are entered and displayed in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), and the dose table also accepts `HH:MM`. Max time runs from an hour to a year (365 days, or 52 weeks), with choices that follow the unit. Infusion rates stay per minute or per hour whatever the time unit. See [Time display](help:time-display).
 
 ## Rate constants and half-lives
 

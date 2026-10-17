@@ -128,7 +128,8 @@ validateZeroOrderPO <- function(block, X, drug)
       bad("the drug may have no tissue route: the release rides on the tissue depot.")
     if (!is.null(s$ka_PO2)) bad("the release cannot feed a second oral depot.")
   }
-  if (!is.null(X$zeroOrderSC)) bad("a drug cannot also declare zeroOrderSC.")
+  if (!is.null(X$zeroOrderSC) || !is.null(X$oralZeroOrder))
+    bad("a drug cannot also declare zeroOrderSC or oralZeroOrder.")
   if (!is.null(X$oralSaturation) || !is.null(X$oralFormulations))
     bad("not with a dose-dependent oral bioavailability or other oral forms.")
   block

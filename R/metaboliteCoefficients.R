@@ -147,7 +147,7 @@ dispositionTerms <- function(pkSet)
 #' published parameter set.  getDrugPK() applies it to ke0 and every ka once,
 #' so the PK set it returns already has its rates separate; the helpers that
 #' take a rate from elsewhere (oralCoefficients(), effectSitePeakTime(),
-#' tPeakError(), effectSiteCoefficients()) apply it again, cheaply.
+#' effectSiteCoefficients()) apply it again, cheaply.
 #'
 #' @param lamM rate constants to adjust; a zero (no such route or effect site)
 #'   is left alone

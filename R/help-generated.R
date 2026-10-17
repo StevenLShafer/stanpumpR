@@ -63,7 +63,7 @@ helpExpandGenerated <- function(text, drugDefaults = getDrugDefaultsGlobal()) {
 #' @noRd
 helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
   adult <- helpReferencePatients()[1, ]
-  extravascular <- c(ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_SC, ROUTE_RA)
+  extravascular <- c(ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA, ROUTE_SC)
   rows <- lapply(seq_len(nrow(drugDefaults)), function(i) {
     row <- drugDefaults[i, ]
     if (isGasDrug(row$Drug)) return(NULL)
@@ -74,7 +74,9 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
     satNote <- function(sat) if (!is.null(sat)) switch(oralSaturationForm(sat),
       saturable = "saturable absorption",
       rising    = "bioavailability rises with dose",
-      power     = "exposure more than dose-proportional")
+      power     = "exposure more than dose-proportional",
+      reduction = "bioavailability falls with dose",
+      exponential = "bioavailability falls with dose")
     notes <- list(PO = satNote(model$oralSaturation), SL = satNote(model$sublingualSaturation))
     byRoute <- lapply(stats::setNames(extravascular, extravascular), function(r) {
       u <- units[route == r]
@@ -101,10 +103,10 @@ helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
   body <- vapply(helpRouteInventory(drugDefaults), function(d) {
     sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s | %s |", helpDrugTitle(d$drug), d$drug,
             cell(d[[ROUTE_PO]]), cell(d[[ROUTE_SL]]), cell(d[[ROUTE_IM]]), cell(d[[ROUTE_IN]]),
-            cell(d[[ROUTE_SC]]), cell(d[[ROUTE_RA]]), if (d$iv) "yes" else "no")
+            cell(d[[ROUTE_RA]]), cell(d[[ROUTE_SC]]), if (d$iv) "yes" else "no")
   }, character(1))
   paste(c(paste("| Drug | Oral (PO) | Sublingual (SL) | Intramuscular (IM) | Intranasal (IN) |",
-                "Subcutaneous (SC) | Regional anesthesia (RA) | Also intravenous |"),
+                "Regional anesthesia (RA) | Subcutaneous (SC) | Also intravenous |"),
           "|---|---|---|---|---|---|---|---|",
           body), collapse = "\n")
 }

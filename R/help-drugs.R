@@ -206,6 +206,9 @@ helpConcentrationUnits <- function(units) {
          "mmol" = "mmol/L (change in ionized calcium)",
          # The insulins are dosed in units and plotted in microunits per mL.
          "mcU" = "mcU/mL (microunits per mL, = mU/L)",
+         # Heparin is measured by its activity, warfarin by the INR.
+         "IU" = "IU/mL (activity)",
+         "INR" = "INR (international normalized ratio)",
          as.character(units))
 }
 
@@ -311,7 +314,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
               if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
               if (ROUTE_SC %in% route) "subcutaneous",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
-  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits))
+  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
     paste0("Not dosed directly: appears only as the active metabolite of ",
@@ -750,7 +753,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         helpTableHTML(do.call(rbind, rows))
       )
       # Dose-dependent absorption: each oral or sublingual dose is scaled by
-      # its own fraction (oralSaturationFraction()), in one of three forms.
+      # its own fraction (oralSaturationFraction()), in one of five forms.
       saturable <- list(
         list(sat = pkRef$oralSaturation, F = d$bioavailability_PO, route = "Oral",
              doses = c(300, 600, 900, 1200)),
@@ -782,7 +785,20 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
             "</sup> with D the dose in mg. This carries the source's empirical power of the daily dose ",
             "on apparent clearance, and reproduces its steady-state exposure for once-daily dosing; the ",
             "\"fraction\" can exceed 1 above the reference dose, because it is an exposure scale on ",
-            "apparent parameters, not a physical bioavailability. ")
+            "apparent parameters, not a physical bioavailability. "),
+          reduction = paste0(
+            "<p>", s$route, " bioavailability <strong>falls with the dose</strong> above ",
+            helpFormatNumber(sat$D0), " mg, as 1 &minus; ", helpFormatNumber(sat$I50),
+            " &times; ((D &minus; ", helpFormatNumber(sat$D0), ") / ",
+            helpFormatNumber(sat$D50 - sat$D0), ")<sup>", helpFormatNumber(sat$exponent),
+            "</sup> with D the dose in mg, relative to a dose of ", helpFormatNumber(sat$D0),
+            " mg or less. "),
+          exponential = paste0(
+            "<p>", s$route, " bioavailability <strong>falls with the dose</strong>, as ",
+            helpFormatNumber(sat$Fmin), " + ", helpFormatNumber(sat$Fmax - sat$Fmin),
+            " &times; exp(&minus;ln 2 &times; D / ", helpFormatNumber(sat$D50),
+            ") with D the dose in mg. It is relative bioavailability on the apparent scale, ",
+            "and can exceed 1 for a small dose. ")
         )
         absorptionHTML <- paste0(
           absorptionHTML,
@@ -1022,19 +1038,20 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     conc <- helpConcentrationUnits(row$Concentration.Units)
     units <- helpDrugUnits(row)
     given <- if (length(units) == 0) "metabolite only"
-      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits))) {
+      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits))) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",
-                if (ROUTE_IN %in% route) "IN", if (ROUTE_SC %in% route) "SC",
-                if (ROUTE_RA %in% route) "RA",
+                if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
+                if (ROUTE_SC %in% route) "SC",
                 if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else {
         # No intravenous unit: name the routes it does have
         route <- unique(doseRoute(units))
         paste(c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM", if (ROUTE_IN %in% route) "IN",
-                if (ROUTE_SC %in% route) "SC", if (ROUTE_RA %in% route) "RA"), collapse = ", ")
+                if (ROUTE_RA %in% route) "RA", if (ROUTE_SC %in% route) "SC"),
+              collapse = ", ")
       }
     metabolite <- if (is.null(pk$metaboliteName)) "" else
       sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))
