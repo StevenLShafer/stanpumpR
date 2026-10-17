@@ -197,6 +197,16 @@ poRateUnits <- c("mg/day PO")
 ORAL_FORMULATIONS <- c("tablet", "liquid", "ER", "DR", "XR")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
 
+# A pulsed release does not have to be a named formulation.  An
+# immediate-release tablet has no formulation word in its unit -- it is dosed
+# as plain "mg PO" -- and a drug whose published absorption is a shape the
+# engine lacks may still be reproduced by pulses of the default oral form.
+# `oralPulses` therefore accepts this reserved name alongside
+# ORAL_FORMULATIONS, keyed to every plain oral row (hydrochlorothiazide, whose
+# source fits a Weibull input; R/oral-pulses.R).  It is not a formulation and
+# never appears in a dose unit, so it can never collide with one.
+ORAL_PULSE_DEFAULT_FORM <- "default"
+
 # Prodrug equivalents: fosphenytoin is prescribed in phenytoin sodium
 # equivalents (PE), and its units say so, so a dose is never read as mg of
 # fosphenytoin.  Offered only by a drug with a Michaelis-Menten block that

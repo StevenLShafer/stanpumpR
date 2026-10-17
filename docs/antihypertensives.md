@@ -84,9 +84,13 @@ asking anyone for the paper.
 Every number is therefore labelled in
 `inst/extdata/antihypertensiveParameters.csv` with how it was checked:
 `primary_full_text`, `primary_abstract`, `derived_here` or
-`handoff_unverified`. Of the 101 catalogued numbers, 56 are verified or derived
-from verified numbers -- 17 from a primary full text, 34 from a primary
-abstract and 5 derived here -- and 45 are not. A test asserts that **no record
+`handoff_unverified`. Of the 125 catalogued numbers, 89 are verified or
+derived from verified numbers -- 56 from a primary full text, 25 from a
+primary abstract and 8 derived here -- and 36 are not. When this section was first
+written the counts were 56 of 101 verified; the three papers that have since
+arrived moved nine numbers out of `handoff_unverified` and added twenty-four
+more that were verified on the way in. Every one of the remaining 36 belongs
+to a record the package does not execute, and a test asserts that **no record
 this package executes depends on an unverified number**.
 
 This is not a complaint about the environment. It is the reason the
@@ -273,7 +277,7 @@ independent reported quantities, and the decomposition must also be stable.
 | Fenoldopam, adults (Frederickson) | >1C | CL, Vd, half-life, mutually inconsistent in 1C | Underdetermined. Not implemented |
 | Clevidipine, postoperative (Bailey) | 3C, 6 parameters | CL, one volume of unstated kind, one half-life = **3** | Underdetermined. Not implemented |
 | Nicardipine infusion (label) | 3C, 6 parameters | 3 half-lives, CL, non-compartmental Vd = 5, and the Vd is not a compartment | Underdetermined. Not implemented |
-| Hydrochlorothiazide (Van Wart) | 2C, 4 parameters | the full table: CL, V1 97.3 L, V2 178 L, Q 17.2 L/h | **Determined and internally consistent.** Blocked instead by a Weibull input, section 10 |
+| Hydrochlorothiazide (Van Wart) | 2C, 4 parameters | the full table: CL, V1 97.3 L, V2 178 L, Q 17.2 L/h | **Determined, internally consistent and ported.** Was blocked instead by a Weibull input, discretised in section 12 |
 | Furosemide (Van Wart) | 3C, 6 parameters | non-renal CL, renal CL, F = **3**, no half-life and no volume | Underdetermined. Not implemented |
 
 The useful generalisation: for a two-compartment model, clearance and
@@ -293,8 +297,10 @@ consistent as well as determined.
 
 What the identifiability check could not see is that the obstacle lay
 somewhere else entirely. Hydrochlorothiazide's absorption is a **Weibull**
-function, not first order, and no count of parameters reveals that. Section 10
-records what it costs. The caution raised here was answered too: the
+function, not first order, and no count of parameters reveals that.
+Sections 10.4 and 12 record what it costs and how it was got round:
+**identifiability and representability are different questions, and this
+section had only been asking the first.** The caution raised here was answered too: the
 supplementary control stream has no bioavailability term at all, so every
 volume and clearance in that model is apparent in F, exactly as carvedilol's
 are.
@@ -303,28 +309,42 @@ are.
 
 ## 5. What was implemented
 
-**Three drugs, all plotting concentration.** `clevidipine` (whole blood,
-ng/mL, `R/drugs_clevidipine.R`), `fenoldopamPediatric` (plasma, ng/mL,
-`R/drugs_fenoldopamPediatric.R`) and `carvedilol` (plasma, ng/mL,
-`R/drugs_carvedilol.R`, added 2026-10-17 together with the zero-order release
-mode of section 8), in a new `Antihypertensives` category. The
-paediatric fenoldopam model is named for its population, following
+**Six drugs, all plotting concentration**, in a new `Antihypertensives`
+category:
+
+| Drug | Matrix | Source | What it needed |
+|---|---|---|---|
+| `clevidipine` | whole blood | Ericsson 1999 (BJCP) | V1, V2 and Q derived from four reported quantities (section 4); externally validated in section 11 |
+| `fenoldopamPediatric` | plasma | Hammer 2008 | nothing; named for its population |
+| `carvedilol` | plasma | Hwang 2023 | the zero-order oral release mode of section 8 |
+| `azilsartan` | plasma | Tsai 2016 | the full text, and a dose basis the paper never states (section 10.2) |
+| `chlorthalidone` | plasma | Tsai 2016 | the full text; two of its four covariates deliberately left out (section 10.3) |
+| `hydrochlorothiazide` | plasma | Van Wart 2013 | the full text, and the default-form pulse discretisation of section 12 |
+
+The paediatric fenoldopam model is named for its population, following
 `methylphenidatePediatric`, so it cannot be selected as an adult default;
-there is deliberately no adult `fenoldopam` entry. None of the three has an
-effect site, a MEAC, or a blood-pressure output. Tests pin both switch positions of
-the fat-free-mass scaling, the published half-lives, and the analytic fixtures
-the specification asks for: a bolus starting at dose over central volume
-(38.73 ng/mL per mg in the reference man) and an infusion approaching
-rate over clearance (19.68 ng/mL at 10 mg/h).
+there is deliberately no adult `fenoldopam` entry. **None of the six has an
+effect site, a MEAC, or a blood-pressure output.** Tests pin both switch
+positions of the fat-free-mass scaling, the published half-lives, and the
+analytic fixtures the specification asks for: a bolus starting at dose over
+central volume (38.73 ng/mL per mg in the reference man) and an infusion
+approaching rate over clearance (19.68 ng/mL at 10 mg/h).
 
-**A registry of 105 model records** (`inst/extdata/antihypertensiveRegistry.csv`,
+Worth noticing about that table: of the four drugs added after the first
+pass, **three were blocked by the engine rather than by the evidence** — a
+release mode, an input shape, and a dose basis that had to be recovered
+arithmetically. None of the four brought a blood pressure with it.
+
+**A registry of 106 model records** (`inst/extdata/antihypertensiveRegistry.csv`,
 built by `data-raw/antihypertensiveRegistry.R`): 69 catalog records
-establishing product and route identity from the official label, and 36 source
-records, one per publication, population and endpoint. Six are executable.
-`bp_simulation_enabled` is `FALSE` on all 105 and
-`external_validation_status` is `none` on all 105.
+establishing product and route identity from the official label, and 37 source
+records, one per publication, population and endpoint. Ten are executable, one
+is `complete_not_implemented` (section 11.2).
+`bp_simulation_enabled` is `FALSE` on all 106.
+`external_validation_status` is `none` on 105 of them and
+`external_population` on exactly one, clevidipine (section 11).
 
-**A parameter audit of 101 numbers**
+**A parameter audit of 125 numbers**
 (`inst/extdata/antihypertensiveParameters.csv`) with unit, matrix, population,
 endpoint, fitted/fixed/derived status, uncertainty, the uncertainty type the
 source itself names, the source URL, and the verification state of section 2.
@@ -365,12 +385,23 @@ blood-pressure endpoint exists for it to optimise against.
 1. **Get the PDFs, in the order section 9 sets out.** That list replaces the
    one this item used to carry, which was assembled before the abstracts were
    read systematically and had its priorities wrong in two places. Each paper
-   unblocks a named record and none needs new modelling. Hwang 2023 has come
-   off the list entirely: it is open access in PubMed Central, which the
-   PubMed server reaches even though the publisher's own host is blocked, and
-   section 8 records what its full text settled.
+   unblocks a named record and none needs new modelling. Two of the three
+   Tier 1 papers have since arrived and are sections 10 to 12; **the Van Wart
+   2013 furosemide paper is now the top of the list**, and the
+   hydrochlorothiazide work makes it a better prospect than it was, since
+   furosemide's input is a Weibull too and the machinery for one now exists.
+   Hwang 2023 has come off the list entirely: it is open access in PubMed
+   Central, which the PubMed server reaches even though the publisher's own
+   host is blocked, and section 8 records what its full text settled.
 2. ~~**Add a zero-order oral release mode.**~~ **Done**, 2026-10-17, and the
    guess above was right: it is an expansion, not a new solver. See section 8.
+2a. ~~**Let `expandOralPulses()` pulse the default oral form.**~~ **Done**,
+   2026-10-17, which is what hydrochlorothiazide needed. Also an expansion
+   rather than a solver, and the pattern is now twice confirmed: **an input
+   shape the engine lacks has so far always been a rewrite of the dose rows,
+   never a new engine.** Section 12. The one case that genuinely needed a new
+   engine was Michaelis-Menten elimination, and it needed one because it is
+   not superposable — which is the test to apply next time.
 3. **Settle esmolol.** It is the antihypertensive an anaesthesiologist
    titrates most often. Its obstacle is conditioning rather than access -- the
    abstract alone formally closes the system, as section 4 records -- so what
@@ -550,12 +581,13 @@ the same as being readable.
 they settled. They are kept here, struck through, because the reasoning that
 ranked them is worth checking against the outcome: it was right about
 Tsai and right about what hydrochlorothiazide was missing, and wrong about
-hydrochlorothiazide being implementable once it had it.**
+hydrochlorothiazide being implementable once it had it — which cost one
+engine extension rather than one paper, and is section 12.**
 
 | Paper | Identifier | What is missing | What it yields |
 |---|---|---|---|
 | ~~**Tsai 2016**~~ **RECEIVED** | PMID 26632101, J Clin Pharmacol 2016;56:988-98, doi 10.1002/jcph.684 | ~~`ka`, `Q`, `V2/F` for both drugs~~ | **Both drugs ported.** Section 10.1 |
-| ~~**Van Wart 2013**, hydrochlorothiazide~~ **RECEIVED** | PMID 24123104, Biopharm Drug Dispos 2013;34:527-39, doi 10.1002/bdd.1863 | ~~one volume, V1 or Vss~~ — supplied, and the real obstacle is a Weibull input | Not yet a drug. Section 10.4 |
+| ~~**Van Wart 2013**, hydrochlorothiazide~~ **RECEIVED** | PMID 24123104, Biopharm Drug Dispos 2013;34:527-39, doi 10.1002/bdd.1863 | ~~one volume, V1 or Vss~~ — supplied, and the real obstacle was a Weibull input | **Ported**, once `expandOralPulses()` accepted the default oral form. Sections 10.4 and 12 |
 | **Van Wart 2013**, furosemide | PMID 24151207, doi 10.1002/bdd.1874 | the volumes and the Weibull parameters | furosemide |
 
 **Tsai 2016** is the largest single block, 11 unverified numbers across five
@@ -781,23 +813,285 @@ which is the lesson: **identifiability and representability are different
 questions, and this registry had only been asking the first.**
 
 How much that costs was measured, against a numerical integration of the
-exact system, using the discretisation standard MDMA set:
+exact system, using the discretisation standard MDMA set. **These are the
+scoping figures, superseded by section 12:** each was fitted at one renal
+function with the depot rate constant free, and the drug that shipped is
+fitted across the paper's whole clearance ladder with that constant fixed.
 
 | Approximation | Peak error | Max error over the curve | AUC ratio |
 |---|---|---|---|
 | One lagged first-order depot | −1.14% | 12.15% | 0.99986 |
 | Two lagged depots (`ka_PO2`) | −0.31% | 2.96% | 0.99999 |
-| Five lagged pulses | **−0.03%** | **0.52%** | 1.00001 |
+| Five lagged pulses | −0.03% | 0.52% | 1.00001 |
 
-Five lagged fractions reach the fidelity MDMA's zero-order depot was held to
-(0.01% at the peak, 0.53% over the curve), and the fitted rate constant
-converges to 1.0 /h — the Weibull's own asymptotic value, which is evidence
-the approximation has found the real structure rather than overfitting.
+Even as a scoping exercise two things were already clear. Lagged fractions
+reach the fidelity MDMA's zero-order depot was held to (0.01% at the peak,
+0.53% over the curve), and the fitted rate constant converges to 1.0 /h — the
+Weibull's own asymptotic value, which is evidence the approximation has found
+the real structure rather than overfitting. Both survived the proper fit;
+what did not survive was the pulse count, which went from five to six once
+the criterion covered every patient rather than one.
 
-So hydrochlorothiazide is **one small engine extension away, not blocked**:
+So hydrochlorothiazide was **one small engine extension away, not blocked**:
 `expandOralPulses()` is keyed by a formulation word in the dose unit, and an
-immediate-release tablet has none, so it would need to accept the default
-oral form. That is the next step, and it is a smaller change than the
-zero-order mode of section 8. Until then the record stays
-`requires_source_extraction` with every number verified, which is an honest
-description of where it is.
+immediate-release tablet has none, so it needed to accept the default oral
+form. That extension and the drug are now both in, and section 12 is what
+they came to. The numbers in the table above were measured at one renal
+function and with the depot rate constant fitted; section 12 replaces them
+with figures measured across the paper's whole clearance ladder, which is the
+form the drug's test pins.
+
+## 11. Clevidipine's derived volumes, checked against a measurement (2026-10-17)
+
+Section 5 implemented clevidipine by *deriving* V1, V2 and Q from the four
+quantities Ericsson's 1999 *Br J Clin Pharmacol* population analysis reports.
+The derivation is unique and the drug header argues for it at length, but an
+argument is not a measurement, and the registry's
+`external_validation_status` field had been `none` on every record in it.
+
+It is now `external_population` on one of them, because of a **second**
+Ericsson 1999 paper, in a different journal:
+
+> Ericsson H, Fakt C, Höglund L, Jolin-Mellgård Å, Nordlander M, Sunzel M,
+> Regårdh CG. Pharmacokinetics and pharmacodynamics of clevidipine in healthy
+> volunteers after intravenous infusion. *Eur J Clin Pharmacol*
+> 1999;55:61–67 (doi 10.1007/s002280050594).
+
+A different study, not a reprint: **eight** volunteers rather than
+twenty-five, **one hour** of infusion rather than twenty minutes, blood
+sampled frequently out to **thirty-two hours** rather than sparsely within a
+dosing period, with a tritiated tracer dose and a mass balance. And its
+Table 1 prints, as measurements, the very quantities the implemented record
+has to derive: **V1, k10, both bolus intercepts, and the fast phase's share
+of the area under the curve.**
+
+It is worth saying what this paper does *not* contain, since its title
+promises pharmacodynamics: no concentration-effect model of any kind. Blood
+pressure and heart rate are reported as time courses and group means — mean
+arterial pressure fell from 87 to 77 mmHg at the highest rate and returned to
+pre-dose values within fifteen minutes of stopping — and nothing relates
+either to a concentration. Its `pd_evidence` is `proposed_unfitted`, and
+those two pressures live in the record's limitations field rather than the
+parameter audit, because an observed group mean is not a parameter.
+
+That turns the derivation into something testable. Apply it to *this* study's
+own CL, Vss and two half-lives — 0.142 L/min/kg, 0.58 L/kg, 1.6 min and
+15.5 min — and compare what comes out against what the same table reports:
+
+| Quantity | Derived from its four numbers | Its own reported value | Difference |
+|---|---|---|---|
+| V1 | 0.3561 L/kg | 0.36 L/kg (SD 0.12) | **−1.1%** |
+| k10 | 0.3988 /min | 0.40 /min (SD 0.05) | **−0.3%** |
+| Bolus intercept, initial phase | 99.01% | 98.9% (SD 0.8) | +0.1% |
+| Fast phase's share of AUC | 91.1% | 92.0% (SD 4.3) | −0.9% |
+| Bolus intercept, terminal phase | 0.99% | 1.1% (SD 0.8) | −9.7% |
+
+Four of the five land within about a percent. The fifth is the terminal
+intercept, where −9.7% *relative* is 0.13 of that mean's own standard
+deviation: a quantity whose between-subject SD is 73% of its mean cannot
+discriminate at that resolution, and it is in any case the complement of the
+initial intercept rather than an independent statement. V1's agreement is
+**0.09 of the standard error** of the reported mean (0.12/√8 = 0.042 L/kg).
+
+A second, weaker check falls out of the same table. The implemented record's
+own derived V1, from the *other* study's numbers, is 0.369 L/kg — 2.5% from
+this study's measured 0.36, in different subjects under a different infusion.
+
+So the method that fills in clevidipine's missing volumes recovers a measured
+V1 when a measured V1 exists to recover. That is the strongest claim this
+registry can currently make about any of its records, and it is why
+clevidipine is the one row whose validation field is not `none`.
+
+### 11.1 Why the validating study is not the implemented one
+
+It would be tempting to switch to the paper with the richer sampling. The
+library does not, for a reason worth recording: the twenty-five-subject
+analysis covers a **400-fold range of dose rates** (0.12 to 48
+nmol/min/kg) and found concentration linear across all of it, while this one
+is a single rate in eight people. For a drug given as an infusion titrated
+over a wide range, the dose-range coverage is worth more than the tail.
+
+The estimates do differ, and in a direction that is itself informative:
+
+| | BJCP, 25 subjects (implemented) | EJCP, 8 subjects (validation) |
+|---|---|---|
+| CL | 0.121 L/min/kg | 0.142 L/min/kg |
+| Vss | 0.56 L/kg | 0.58 L/kg |
+| Initial half-life | 1.8 min | 1.6 min |
+| Terminal half-life | **9.5 min** | **15.5 min** |
+
+The terminal half-life is the one that moves, and it moves the way sampling
+duration predicts: the study that followed the drug for thirty-two hours saw
+a longer tail than the study that did not follow it past a dosing period.
+That is the same lesson azilsartan's 26-hour tail teaches in section 10.2a,
+arriving from the opposite direction — and it says plainly which part of the
+implemented clevidipine curve is the weaker part. It is recorded in the
+drug's header.
+
+### 11.2 A word the registry needed
+
+This paper could not be filed. It is a complete, verified, primary-fitted
+model, so `descriptive_only` would deny that it has a vector; but the library
+deliberately does not plot it, so `ready_for_source_reproduction` — which
+this registry's tests read as "is an implemented drug" — would promise a
+second clevidipine curve.
+
+`execution_status` therefore gained a fifth value,
+**`complete_not_implemented`**: a model read in full and verified, whose
+numbers may be used to *check* an implemented record and are never an input
+to one. The gap it fills is not a one-off. Most of these drugs have several
+published models, and a registry that can only say "usable" or "descriptive"
+has nowhere to put the good paper it chose against. Its test asserts both
+halves: that such a record carries fully verified parameters, and that none
+of them reaches a curve.
+
+## 12. Hydrochlorothiazide, and discretising an input shape (2026-10-17)
+
+Section 10.4 left hydrochlorothiazide verified in full and unimplementable,
+blocked not by a missing number but by a missing input **shape**: a Weibull
+oral absorption with a shape parameter of 2.84, whose depot rate constant
+rises with time where `ka_PO` is a constant. It is now a drug, and getting
+there needed one small engine change and one decision about what accuracy to
+hold an approximation to.
+
+### 12.1 The engine change
+
+`expandOralPulses()` already gave a dose as fixed fractions at fixed delays —
+that is how Adderall XR's two bead populations are modelled. It was keyed by
+a **formulation word** in the dose unit (`mg PO XR`), and an immediate-release
+tablet has none. So `oralPulses` gained a reserved key,
+`ORAL_PULSE_DEFAULT_FORM` (`"default"`), which matches every plain oral row
+and leaves its unit exactly as entered.
+
+The code is a dozen lines. The distinction it introduces is worth more than
+the code, and `R/oral-pulses.R` now states it: **the same mechanism is doing
+two different jobs.**
+
+| | A formulation's pulses | The default form's pulses |
+|---|---|---|
+| What they are | a model of a real product's release | a discretisation of a published curve |
+| Evidence | the beads exist; the unit names the product | the source's own input function |
+| Example | Adderall XR (Tulloch 2002) | hydrochlorothiazide's Weibull |
+| What the header owes | the product and its bioequivalence data | the shape stood in for, and the measured cost |
+
+A block may not declare both at once: an `mg PO XR` row is also an oral row,
+so which pulses applied would depend on the order the block was written in.
+The validator refuses it rather than resolving it by declaration order.
+
+One other row the default form has to leave alone, which is easy to miss: a
+standing oral **rate**, `mg/day PO` (amiodarone's unit). It is an oral row
+with no formulation word, so the naive match would catch it — and splitting a
+constant rate into fractions at delays would turn one infusion into several
+starting at different times, which is not what it means. A rate has no
+release to discretise; it is already continuous. It is skipped rather than
+refused, because the pulses emit amount rows and so coexist with a rate row
+correctly, unlike the zero-order release of section 8, whose terminating zero
+would replace it. No drug in the library declares both today; the guard is
+there so that the first one to try does not get a silently wrong curve.
+
+### 12.2 What to fix and what to fit
+
+The depot rate constant is **not fitted**. The bracket multiplying the depot
+amount, 1 − e<sup>−(k<sub>a</sub>t)<sup>γ</sup></sup>, is dimensionless and
+tends to 1 as *t* grows, and the source writes the equation in hours, so
+**one per hour is the exact asymptotic rate constant of the source's own
+Weibull depot** — a property of the published model rather than of any fit to
+it.
+
+Fitting it freely gives 0.982, 0.993 and 0.996 /h at two, three and four
+pulses — it converges there, which is the evidence that fixing it forces
+nothing. What fixing it costs, at four pulses, is a tenth of a percent: the
+worst point on the curve moves from 0.92% to 1.02% of the peak and the peak
+itself from −0.04% to +0.06%. So it is fixed at 1.0 /h and only the fractions
+and delays are fitted, which removes a number from the model and replaces it
+with a property of the source.
+
+Two choices about the fit itself turned out to matter more than the number of
+pulses.
+
+**Fit the curve you plot, not the input.** Fitting the pulses to the Weibull's
+*input rate function* is the more obviously principled thing to do — the
+input is a property of the release alone, so the fractions cannot absorb a
+disposition difference. It is also substantially worse: five pulses fitted to
+the input rate leave 2.25% of peak error in plasma, where five fitted to
+plasma leave 0.61% — and that comparison is if anything kind to the rate fit,
+since it had the depot rate constant free where the plasma fit had it fixed. The reason is that the central compartment integrates the
+input, so a least-squares fit to the rate spends its effort matching the
+spiky rises of a sum of lagged exponentials against a smooth curve, errors
+that then partly cancel in the convolution. The error that matters is in the
+plotted concentration, so that is the criterion.
+
+**Fit every patient at once.** One pulse set is stored as a constant and has
+to serve everyone, so it is fitted to the plasma curves at all four
+creatinine clearances the paper tabulates (120, 80, 50 and 30 mL/min), each
+normalised by its own peak, rather than to a typical patient. That it works
+is itself the evidence the discretisation is describing the release: the
+residual error is **essentially flat across a sevenfold range of clearance**,
+which it would not be if the fractions had absorbed something that belongs to
+disposition.
+
+### 12.3 What it costs, measured
+
+Against a midpoint integration of the exact three-state Weibull system,
+pooled fit, ka fixed at 1.0 /h, as a percentage of the peak concentration:
+
+| Pulses | Peak error | Worst point on the curve | AUC ratio |
+|---|---|---|---|
+| 2 | +0.26% | 3.75% | 1.00002 |
+| 3 | +0.11% | 1.63% | 1.00001 |
+| 4 | +0.06% | 1.02% | 1.00000 |
+| 5 | +0.04% | 0.61% | 1.00000 |
+| **6** | **+0.02%** | **0.45%** | **1.00000** |
+
+Six is what shipped, because six is where the worst point on the curve comes
+inside the **0.53%** that MDMA's zero-order discretisation was held to — and
+it does so at *every* renal function, the worst of the four being 0.45% and
+the best 0.38%. Five would have been 0.61%, outside it. The worst point falls
+on the rising limb, where the pulse structure is still visible; by the peak
+the error is 0.02% and the area is exact to a thousandth of a percent.
+
+The drug's test checks this directly: it writes out the three-state Weibull
+integration independently of the package and compares it with what
+`simulateDrugsWithCovariates()` returns, at all four renal functions. It does
+*not* check the fractions. If a later change to them or to
+`expandOralPulses()` degrades the curve, the test fails on the curve, which
+is the thing worth protecting.
+
+### 12.4 What the drug inherits from its source
+
+Renal function is the entire covariate model — the paper fitted no body-size
+covariate at all, so weight reaches the drug only through Cockcroft-Gault,
+which contains it. That makes the **Serum creatinine** field the most
+consequential input on the page for this drug, and makes the usual rule bite
+harder than usual: a blank field is an assumed normal creatinine for age and
+sex, so it models a patient with **no** renal impairment. The help page and
+the drug header both say so.
+
+The non-renal clearance of 2.44 L/h carries no covariate and acts as a floor.
+At the highest creatinine the Patient Profile accepts, the renal term has
+fallen roughly fiftyfold while total clearance has fallen about sixfold; the
+half-life lengthens a long way and never without limit. The paper's own
+figures agree — a terminal half-life of 14.8 h at a creatinine clearance of
+120 mL/min, 29 h at 50 and 42 h at 30.
+
+### 12.5 One part of the source left on the table
+
+Van Wart fits plasma and urine jointly — 137 urinary amounts beside 823
+plasma concentrations — and the paper's own stated conclusion is that the
+model predicts the **rate of urinary excretion of the drug** from dosing
+history and creatinine clearance. That is not implemented, because the
+program has no urinary-amount output to draw it in.
+
+Worth recording for whoever wants it, with two observations. First, leaving
+it out costs no accuracy in what *is* plotted: the urine compartment
+accumulates what renal clearance has already removed from plasma, so it is a
+sub-partition of the elimination in `cl1` rather than a pathway competing
+with it, and the plasma curve is bit-for-bit what the full model gives.
+Second, it is a genuinely separate feature rather than a missing parameter —
+an output channel, not a model term — and the one drug class where it would
+earn its keep is this one, since a diuretic's urinary recovery is closer to
+its effect than its plasma concentration is. Furosemide's record (section 9)
+is a plasma-and-urine fit too.
+
+Ten of the registry's 106 records are now executable. None of them plots a
+blood pressure.
