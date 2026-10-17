@@ -11,13 +11,17 @@ function uniq(a) {
   });
 }
 
-// return the index of a column in a HOT based on its name
+// return the index of a column in a HOT based on its name.  A header may
+// carry a qualifier after the name ("Dose/Target" in the dose table, "Dose or
+// Target" in the Edit doses dialog of a drug with TCI units): the name is
+// what comes before a "/" or an "or".
 function findColByHeader(hot, headerName) {
   let headers = hot.getSettings().colHeaders;
 
   if (Array.isArray(headers)) {
     for (let i = 0; i < headers.length; i++) {
-      if (headers[i].trim() === headerName) return i;
+      let name = String(headers[i]).trim().split(/\s*(?:\/|\bor\b)\s*/)[0].trim();
+      if (name === headerName) return i;
     }
     return null;
   }

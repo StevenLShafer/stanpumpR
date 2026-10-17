@@ -1,10 +1,10 @@
-The dose table is the main way you talk to the program. It sits to the right of the plot. Each row is one thing done to the patient: a bolus, a change of infusion rate, an oral dose, a vaporizer setting.
+The dose table is the main way you talk to the program. It sits in a panel to the right of the plot, open when the app starts; the arrow at the top of the panel hides and shows it, so the plot can have the whole width once the doses are in. Each row is one thing done to the patient: a bolus, a change of infusion rate, an oral dose, a vaporizer setting.
 
 ## Columns
 
-**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine, cocaine, methamphetamine, LSD, psilocybin and MDMA) are offered only while **Show illicit drugs**, in the Doses card header, is ticked, and their names are shown in red.
+**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine, cocaine, methamphetamine, LSD, psilocybin and MDMA) are offered only while **Show illicit drugs**, in the *Dose table* panel of the left sidebar, is ticked, and their names are shown in red.
 
-**Time.** When it happens, in the **Time units** chosen in the Time panel above the table (the Doses header says which: *Doses (times in hours)*). The field is forgiving:
+**Time.** When it happens, in the **Time units** chosen in the *Time* panel of the left sidebar (the dose table's header says which: *Doses (times in hours)*). The field is forgiving:
 
 | You type | It means |
 |---|---|
@@ -18,7 +18,7 @@ Times are never negative. With *Actual time*, a number without a colon is counte
 
 A regimen written in days goes in most easily with the Time units set to days. Day 1 begins at time 0, so day *n* begins at *n* − 1: "1600 mg a day on days 1 and 2, then 1200 mg a day on days 3 to 7" is three rows of a once-a-day unit, 1600 at `0`, 1200 at `2`, and a stop (0) at `7`. See *Scheduled doses* below.
 
-**Dose.** A number, never negative. The unit goes in the Units column, not here.
+**Dose/Target.** A number, never negative. The unit goes in the Units column, not here. The column is headed *Dose/Target* because, for a drug that offers target-controlled infusion, the number is a target concentration when the unit is *Plasma target* or *Effect site target* (see [Target-controlled infusion](help:tci)); the dialogs opened from the plot say *Dose or Target* for those drugs.
 
 **Units.** A drop-down whose contents depend on the drug in that row. The list, and the default, come from the drug library and are shown on each drug's page. The unit decides what kind of row it is:
 

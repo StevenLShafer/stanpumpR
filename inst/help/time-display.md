@@ -1,4 +1,4 @@
-The **Time** panel above the dose table chooses how times are entered and displayed. It is collapsed by default, like the sidebar's panels, so the dose table has the room on a small screen: its header reads the settings out, for example *Time (hours, actual time from 08:00)*, and clicking it opens the selectors. The simulation is identical whatever you choose: the calculation itself always works in minutes.
+The **Time** panel of the left sidebar chooses how times are entered and displayed. Like the sidebar's other panels it opens when its header is clicked, and the header reads the settings out while it is closed, for example *Time (hours, actual time from 08:00)*. The simulation is identical whatever you choose: the calculation itself always works in minutes.
 
 ## Time units
 

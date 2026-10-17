@@ -507,6 +507,48 @@ test_that("the Add new drug button opens the add-dose dialog on an unused drug a
   })
 })
 
+# A drug with TCI target units enters a concentration in the dose field when
+# a target unit is chosen, so its dialogs say "Dose or Target"; the table's
+# column is headed "Dose/Target" for every drug, over the data column "Dose"
+test_that("the dose field is labelled Dose or Target for a drug with TCI units", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    doseTable(withTimes("0"))
+    session$flushReact()
+    expect_equal(doseFieldLabel("propofol"), "Dose or Target")
+    expect_equal(doseFieldLabel("rocuronium"), "Dose")
+
+    showAddDrugModal("propofol", 0)
+    html <- as.character(sent$modals[[length(sent$modals)]]$message$html)
+    expect_match(html, "Dose or Target")
+    showAddDrugModal("rocuronium", 0)
+    html <- as.character(sent$modals[[length(sent$modals)]]$message$html)
+    expect_false(grepl("Dose or Target", html, fixed = TRUE))
+    # changing the drug in the dialog relabels the field
+    session$setInputs(addDoseDrug = "propofol")
+    expect_equal(lastSent(sent, "addDoseAmount")$label, "Dose or Target")
+    session$setInputs(addDoseDrug = "rocuronium")
+    expect_equal(lastSent(sent, "addDoseAmount")$label, "Dose")
+
+    # the dose table's grid: display header over the unchanged data column
+    hot <- createHOT(doseTable(), drugDefaults(), doseTableFormat())
+    expect_equal(hot$x$colHeaders, c("Drug", "Time", DOSE_COLUMN_HEADER, "Units"))
+    expect_equal(unlist(hot$x$rColHeaders), c("Drug", "Time", "Dose", "Units"))
+
+    # the Edit doses dialog's grid (an output is computed at a flush, and is
+    # the widget's JSON here)
+    editHeaders <- function() {
+      session$flushReact()
+      jsonlite::fromJSON(output$editPriorDosesTable)$x$colHeaders
+    }
+    DrugTimeUnits(list(drug = "propofol"))
+    expect_equal(editHeaders(), c("Delete", "Time", "Dose or Target", "Units"))
+    DrugTimeUnits(list(drug = "rocuronium"))
+    expect_equal(editHeaders(), c("Delete", "Time", "Dose", "Units"))
+  })
+})
+
 # Audit finding F01 (October 2026): "-5" was added as 5 and "1e3" as 13.  An
 # entry validateTime() or validateDose() cannot read leaves the dialog open.
 test_that("the add-dose and edit-doses dialogs refuse a time or dose they cannot read", {

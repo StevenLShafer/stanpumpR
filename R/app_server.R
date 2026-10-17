@@ -1636,6 +1636,14 @@ app_server <- function(input, output, session) {
   #################################### Single Click Response ##################################
 
 
+  # The label of a dose field: "Dose or Target" for a drug that offers TCI
+  # target units (tciUnits), since the number is then a concentration when a
+  # target unit is chosen; "Dose" otherwise.
+  doseFieldLabel <- function(drug) {
+    units <- unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])
+    if (any(isTciUnit(units))) "Dose or Target" else "Dose"
+  }
+
   # `time` is in minutes (imgDrugTime()); the dialog shows it, and the dose
   # table stores what is typed, in the dose table's format.
   showAddDrugModal <- function(drug, time) {
@@ -1663,7 +1671,7 @@ app_server <- function(input, output, session) {
         ),
         textInput(
           inputId = "addDoseAmount",
-          label = "Dose",
+          label = doseFieldLabel(drug),
           placeholder = "Enter dose"
         ) |> modalFocus(),
         selectInput(
@@ -1708,6 +1716,7 @@ app_server <- function(input, output, session) {
     units        <- unlist(drugDefaults()$Units[thisDrug])
     selectedUnit <- drugDefaults()$Default.Units[thisDrug]
     updateSelectInput(session, "addDoseUnits", choices = units, selected = selectedUnit)
+    updateTextInput(session, "addDoseAmount", label = doseFieldLabel(input$addDoseDrug))
   })
 
   # validateTime() for a dose time, but "" also for a time that names no time
@@ -1863,6 +1872,10 @@ app_server <- function(input, output, session) {
         rhandsontable::hot_rows(rowHeights = 10) %>%
         rhandsontable::hot_cols(colWidths = c(50,55,55,90)) %>%
         addHotHooks(filterKeys = TRUE, sanitize = TRUE)
+      # "Dose or Target" for a drug with TCI units (as the Add a dose dialog);
+      # the data column stays "Dose", which hot_to_r() names it by
+      editPriorDosesTableHOT$x$colHeaders[editPriorDosesTableHOT$x$colHeaders == "Dose"] <-
+        doseFieldLabel(drug)
 
       editPriorDosesTableHOT
     }, name = "output$editPriorDosesTable")
