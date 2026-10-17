@@ -106,7 +106,7 @@ test_that("only concentration records are executable, and they are the library's
   # drug, or an endpoint relation evaluable against a supplied concentration
   implemented <- ready[ready$endpoint == "concentration", ]
   expect_setequal(implemented$stanpumpr_drug,
-                  c("clevidipine", "fenoldopamPediatric"))
+                  c("clevidipine", "fenoldopamPediatric", "carvedilol"))
   dd <- getDrugDefaultsGlobal()
   for (d in implemented$stanpumpr_drug) {
     expect_true(d %in% dd$Drug, info = d)
@@ -126,15 +126,23 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
                       !grepl("__catalog__none__", registry$model_id), ]
   expect_gt(nrow(gated), 20)
   expect_true(all(is.na(gated$stanpumpr_drug) |
-                    gated$stanpumpr_drug %in% c("clevidipine", "fenoldopamPediatric")))
+                    gated$stanpumpr_drug %in%
+                      c("clevidipine", "fenoldopamPediatric", "carvedilol")))
   # The four the handoff asked to be ported first, and why each is not
   azl <- registry[registry$model_id ==
     "azilsartan__medoxomil_tablet__oral__stage2_hypertension__concentration__tsai2016", ]
   expect_identical(azl$execution_status, "requires_source_extraction")
   expect_match(azl$limitations, "ka")
+  # Carvedilol was on that list and has since been ported: the zero-order
+  # oral release mode it needed is R/oral-zero-order.R, and its full text was
+  # reached through PubMed Central.  Its PK record is no longer gated; only
+  # its isoproterenol-challenge endpoint is, and for a different reason.
   carv <- registry[registry$model_id ==
     "carvedilol__ir_tablet__oral__healthy_korean_men__concentration__hwang2023", ]
-  expect_match(carv$limitations, "zero-order")
+  expect_identical(carv$execution_status, "ready_for_source_reproduction")
+  carvHR <- registry[registry$model_id ==
+    "carvedilol__ir_tablet__oral__healthy_korean_men__iso_hr__hwang2023", ]
+  expect_match(carvHR$limitations, "isoproterenol")
   nic <- registry[registry$model_id ==
     "nicardipine__injection__iv__cardiac_surgery_adults__concentration__page2007", ]
   expect_match(nic$limitations, "gated")

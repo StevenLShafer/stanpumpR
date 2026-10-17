@@ -268,9 +268,11 @@ unavailable.
 
 ## 5. What was implemented
 
-**Two drugs, both plotting concentration.** `clevidipine` (whole blood, ng/mL,
-`R/drugs_clevidipine.R`) and `fenoldopamPediatric` (plasma, ng/mL,
-`R/drugs_fenoldopamPediatric.R`), in a new `Antihypertensives` category. The
+**Three drugs, all plotting concentration.** `clevidipine` (whole blood,
+ng/mL, `R/drugs_clevidipine.R`), `fenoldopamPediatric` (plasma, ng/mL,
+`R/drugs_fenoldopamPediatric.R`) and `carvedilol` (plasma, ng/mL,
+`R/drugs_carvedilol.R`, added 2026-10-17 together with the zero-order release
+mode of section 8), in a new `Antihypertensives` category. The
 paediatric fenoldopam model is named for its population, following
 `methylphenidatePediatric`, so it cannot be selected as an adult default;
 there is deliberately no adult `fenoldopam` entry. Neither drug has an effect
@@ -325,18 +327,18 @@ blood-pressure endpoint exists for it to optimise against.
 
 ## 6. What to do next, in order of value per unit of work
 
-1. **Get six PDFs.** Tsai 2016 (J Clin Pharmacol 56:988-998) for `ka`, `Q`,
+1. **Get five PDFs.** Tsai 2016 (J Clin Pharmacol 56:988-998) for `ka`, `Q`,
    `V2/F`, the metabolite block, the covariate equations and the matrix; Sum
    1983 for esmolol's individual-level volumes; Bailey 2002 for the logistic
    slope and the kind of the 32.4 L volume; Ericsson 1999 for the response
    coefficients; Campanero 2008 for the uncertainty type and the oral
    parameters; Tatipalli 2021's table and differential-equation block. Each
-   unblocks a named record, and none needs new modelling.
-2. **Add a zero-order oral release mode.** Carvedilol's fit is complete and
-   blocked only by the engine: a lagged zero-order input is representable as a
-   short infusion of the apparent dose, so the natural home is an expansion in
-   `R/routes.R` alongside `expandOralPulses()`, not a new solver. That one
-   addition also opens the door to several extended-release products.
+   unblocks a named record, and none needs new modelling. Hwang 2023 has come
+   off this list: it is open access in PubMed Central, which the PubMed server
+   reaches even though the publisher's own host is blocked, and section 8
+   records what its full text settled.
+2. ~~**Add a zero-order oral release mode.**~~ **Done**, 2026-10-17, and the
+   guess above was right: it is an expansion, not a new solver. See section 8.
 3. **Settle esmolol.** It is the antihypertensive an anaesthesiologist
    titrates most often, and the only obstacle is one paper's individual data.
 4. **Leave the blood-pressure layer until a record earns it.** The nearest
@@ -352,3 +354,115 @@ the specification's own list, 69 products across the classes it names, and it
 should not be described as complete coverage of any formulary. Doing that
 comparison needs a formulary to compare against, which is a question for the
 clinician rather than the programmer.
+
+---
+
+## 8. The zero-order oral release mode, and carvedilol (2026-10-17)
+
+Added at the user's request, after the work above. Two separate things
+happened: a source turned out to be reachable, and the engine gained a
+capability.
+
+### 8.1 The source was verifiable after all
+
+Section 2 put Hwang 2023 among the unreachable papers, because the publisher's
+host is blocked here. It is open access and deposited in PubMed Central as
+PMC10244018, which the PubMed server does serve, so its full text was read and
+Tables 2 and 3 transcribed from it.
+
+Every one of the handoff's carvedilol numbers is **confirmed**: apparent
+clearance 153 L/h, apparent volumes 440 and 754 L, apparent intercompartmental
+clearance 41.3 L/h, release duration 0.383 h, lag 0.215 h, the clearance
+multiplier (the paper fits the effect as 0.328, so the multiplier is
+1 − 0.328 = 0.672) and the inhibitory concentration of 16.5 ng/mL. The
+relative standard errors and bootstrap intervals are now recorded alongside
+them. This is the one record in this work whose transcription could be checked
+in full, and it was right throughout.
+
+Three corrections to the handoff's *description*, none to its numbers:
+
+| Handoff said | The paper says |
+|---|---|
+| "healthy Korean men, single 20 mg" | **21** healthy Korean men, a single **12.5 mg** dose then once-daily **25 mg** |
+| clearance multiplier 0.672 for the `*10/*10` group | the fitted parameter is 0.328 for the group the paper calls intermediate metaboliser 2; the allele names could not be read from the machine-readable text, so the registry names the group rather than the diplotype |
+| nothing about covariates | age, height and weight were all screened and **none** was significant, so a port must supply its own body-size convention |
+
+The paper also reports the clearance effect as 32.8% in its results and
+abstract and 32.7% in its discussion, a small internal inconsistency worth
+knowing before quoting either.
+
+### 8.2 The engine capability, which needed no new solver
+
+A zero-order oral fit releases the dose at a constant rate over a duration
+instead of with a rate constant, and the first-order extravascular path cannot
+represent that. The guess in section 6 was that this would be an expansion
+rather than a solver, and that proved right.
+
+The package already classifies a rate unit carrying the PO route word
+(`mg/day PO`, which amiodarone uses) as an infusion on the drug's apparent oral
+parameters, with neither an absorption constant nor a bioavailability applied.
+A zero-order oral dose is exactly that infusion, of finite length. So
+`R/oral-zero-order.R` rewrites each such dose into the rate rows that deliver
+it, in the same place and the same way that `expandScheduledDoses()` and
+`expandOralPulses()` rewrite theirs, and the dose then reaches the
+already-tested infusion path. A drug declares
+`oralZeroOrder = list(duration = <minutes>, lag = <minutes>)`.
+
+One subtlety was worth getting right rather than discovering later. The
+infusion rate on the time line is a **step** function: `simulationTimeGrid()`
+sums the rate rows falling at one instant and then holds the latest value. Two
+releases that overlap, which happens whenever the dosing interval is shorter
+than the release, therefore cannot be written as two independent pairs of rows,
+because the second pair's start would *replace* the first release instead of
+adding to it and silently lose drug. The expansion computes the total rate
+active at every breakpoint instead, and a test pins that the integrated rate
+still equals the dose given.
+
+The mode is refused alongside an active metabolite, several oral formulations,
+saturable oral or sublingual absorption, parallel systems, Michaelis-Menten
+elimination, or an osmotic or molar dose basis. Each of those reads or rewrites
+the oral dose rows itself, and a zero-order release leaves no row flagged `PO`
+for them to act on, so saturable absorption in particular would silently do
+nothing. The check runs before the other absorption checks so that a drug
+declaring both is told which combination is the problem.
+
+### 8.3 Verification
+
+- The simulated curve matches an **independent** closed-form solution of the
+  two-compartment constant-rate input, written from the micro constants rather
+  than taken from the engine, to 2 parts in 10^14.
+- The area under the curve equals dose over apparent clearance, which is the
+  handoff's own fixture for an apparent model: the full dose arrives, with no
+  second multiplication by F.
+- The peak falls exactly at the end of release, as a constant input into a
+  linear system requires, and nothing is absorbed before the lag.
+- Overlapping, simultaneous, zero and text-valued doses each behave, and the
+  scheduled expansion composes with it, so `mg PO qd` releases every repeat.
+
+### 8.4 What is still not modelled for carvedilol
+
+The **CYP2D6 effect** is fitted, verified and deliberately not applied. The
+paper splits intermediate metabolisers into two groups and finds reduced
+clearance in only one of them, while the Patient Profile has a single
+`intermediate` value that cannot separate them; applying the reduction to every
+intermediate metaboliser would impose a third less clearance on the patients
+the source found normal. It is recorded in the audit as an unapplied covariate.
+
+The **pharmacodynamic endpoint** is the heart-rate rise caused by an injected
+dose of isoproterenol, modelled as competitive antagonism. Its coefficients are
+complete and verified (baseline 60.4 bpm, isoproterenol ED50 0.685 mcg, maximum
+effect 30.7 bpm, carvedilol IC50 16.5 ng/mL), but predicting it needs that
+challenge dose as a second input, which the package has no way to express. So
+the record is catalogued rather than offered, and its `execution_status` is
+`descriptive_only` with `pd_evidence` of `primary_fitted_full` — the one place
+in this registry where the evidence is complete and the obstacle is purely that
+the endpoint is not expressible here. It is not a blood pressure, and no
+antihypertensive in the library plots one.
+
+The **active metabolite** 4'-hydroxyphenyl carvedilol is thirteen times more
+potent than the parent at about a tenth of its concentration. The source
+measured metabolic ratios below 0.1 and modelled the parent alone; this model
+follows it, so the metabolite's contribution is absent rather than zero. The
+plotted analyte is **racemic** parent carvedilol, while beta-blocking activity
+belongs to the S enantiomer, so an S-enantiomer estimate from another study
+(the paper mentions 7.7 ng/mL) refers to a different quantity.

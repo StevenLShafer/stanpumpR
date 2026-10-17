@@ -174,6 +174,23 @@ getDrugPK <- function(
   # and never reaches here -- still fails with R's own "could not find
   # function", which is what test-gas-routing.R pins.
   X <- if (is.null(model)) do.call(drug, covariates) else model
+
+  # Zero-order oral release (carvedilol, R/oral-zero-order.R): validated and
+  # its incompatibilities refused up front, before the absorption checks
+  # below, so that a drug declaring both gets told which combination is the
+  # problem rather than that it has no first-order oral absorption.  Each of
+  # these paths reads or rewrites the oral dose rows itself, and a zero-order
+  # release leaves no row flagged PO for them to act on.
+  zeroOrder <- validateOralZeroOrder(X$oralZeroOrder, drug)
+  if (!is.null(zeroOrder) &&
+      (!is.null(X$metabolite) || !is.null(X$oralFormulations) ||
+       !is.null(X$oralSaturation) || !is.null(X$sublingualSaturation) ||
+       !is.null(X$parallelSystems) || !is.null(X$michaelisMenten) ||
+       !is.null(X$osmotic) || !is.null(X$molar)))
+    stop("Invalid oralZeroOrder for ", drug, ": not available with an active ",
+         "metabolite, several oral formulations, saturable oral or ",
+         "sublingual absorption, parallel systems, Michaelis-Menten ",
+         "elimination, or an osmotic or molar dose basis.")
   tPeak <- X$tPeak
   # A model that supplies ke0 directly may leave tPeak out altogether (NULL):
   # the time to peak effect is then solved below, per PK set, as the moment
@@ -1087,6 +1104,13 @@ getDrugPK <- function(
   # A pulsed extended-release formulation (Adderall XR): the fractions and
   # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
   out$oralPulses <- validateOralPulses(X$oralPulses, drug)
+
+  # Zero-order oral release (carvedilol): the dose enters at a constant rate
+  # over a fitted duration after a lag, which simCpCe() turns into the rate
+  # rows of that release; see R/oral-zero-order.R.  It is refused alongside
+  # anything that reads or rewrites the oral dose rows itself, because a
+  # zero-order release leaves no row flagged PO for those paths to act on.
+  out$oralZeroOrder <- zeroOrder
   return(out)
 }
 
