@@ -357,7 +357,7 @@ apiSeries <- function(wide, times, recovery) {
 apiConcentrationUnits <- function(units) {
   switch(as.character(units),
          "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL", "mOsm" = "mOsm/kg",
-         "mmol" = "mmol/L",
+         "mmol" = "mmol/L", "IU" = "IU/mL", "INR" = "INR",
          as.character(units))
 }
 

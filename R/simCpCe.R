@@ -35,6 +35,8 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   # the unnormalised plot shows, are left alone.
   plasmaRise <- results$Plasma
   if (!is.null(PK$osmotic)) plasmaRise <- plasmaRise - PK$osmotic$baseline
+  # Likewise the INR (warfarin, R/inr.R), which starts at 1 / PCA0.
+  if (!is.null(PK$inr)) plasmaRise <- plasmaRise - 1 / PK$inr$pca0
   maxRise <- max(plasmaRise)
   results$CpNormCp <- if (maxRise > 0) plasmaRise          / maxRise * 100 else 0
   results$CeNormCp <- if (maxCp > 0) results$"Effect Site" / maxCp * 100 else 0
@@ -299,8 +301,36 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- mg_Conv * 1000
         ng_Conv  <- mg_Conv * 1000000
       },
+      IU = {                   # Activity: amounts in IU, Cp in IU/mL (heparin)
+        # 1 IU/mL = 1000 IU/L, so the base amount is 1000 IU and a dose in IU
+        # is divided by 1000 below.  Activity has no conversion to a mass, so
+        # every mass factor is missing; a mass unit is refused below.
+        mg_Conv  <- NA_real_
+        mcg_Conv <- NA_real_
+        ng_Conv  <- NA_real_
+      },
+      INR = {                  # Warfarin: R and S in mg/L, plotted as INR
+        # The enantiomer concentrations are simulated in mg/L (= mcg/mL), as
+        # for any drug in mcg/mL, and turned into the INR after the engines
+        # have run; see inrEngineResults().
+        mg_Conv  <- 1
+        mcg_Conv <- 1000
+        ng_Conv  <- 1000000
+      },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
+    # A drug dosed in international units takes only those, and only it does.
+    # Checked before the mass conversions, which would turn a mass unit on an
+    # activity drug into NA silently.
+    iuDose <- grepl("^IU( |/|$)", dose$Units)
+    if (identical(PK$Concentration.Units, "IU")) {
+      if (!all(iuDose))
+        stop(PK$drug, " is dosed in international units (IU), not ",
+             paste(unique(dose$Units[!iuDose]), collapse = ", "), ".")
+      dose$Dose <- dose$Dose / 1000
+    } else if (any(iuDose)) {
+      stop(PK$drug, " is not dosed in international units (IU).")
+    }
     # One factor per dose row (the molar branch may differ row by row).
     mg_Conv  <- rep_len(mg_Conv,  nrow(dose))
     mcg_Conv <- rep_len(mcg_Conv, nrow(dose))
@@ -341,6 +371,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IM <- route == ROUTE_IM & !rate
     dose$IN <- route == ROUTE_IN & !rate
     dose$SL <- route == ROUTE_SL & !rate
+    dose$SC <- route == ROUTE_SC & !rate
     dose$RA <- route == ROUTE_RA & !rate
     # A continuous perineural infusion ("mg/hr RA", raRateUnits): a rate into
     # the tissue depot, not into the vein.  Only advanceClosedFormPO_IM_IN()
@@ -455,7 +486,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         {
           results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
         } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) +
-                   sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
+                   sum(dose$SC) + sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
                    sum(dose$PO2) == 0)
         {
           results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
@@ -523,7 +554,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       for (sys in PK$parallelSystems)
         parts[[length(parts) + 1]] <- runEngines(
           shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
-      results <- superposeEngineResults(parts, plotRecovery, emerge)
+      # Warfarin's two enantiomers are not added: they drive the turnover of
+      # the clotting factors, and the INR is plotted (R/inr.R).
+      results <- if (!is.null(PK$inr)) inrEngineResults(parts, PK$inr)
+                 else superposeEngineResults(parts, plotRecovery, emerge)
     } else if (!any(other))
     {
       results <- runEngines(shareOf(dose, PK$doseFraction), pkSets)

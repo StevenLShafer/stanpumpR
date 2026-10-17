@@ -23,11 +23,12 @@ test_that("the known readers are in their lists", {
                     "aripiprazole", "haloperidol", "risperidone") %in%
                     patientFieldReaders("cyp2d6")))
   expect_setequal(patientFieldReaders("cyp2c19"), c("citalopram", "escitalopram"))
-  expect_setequal(patientFieldReaders("cyp2c9"), c("meloxicam", "phenytoin"))
+  expect_setequal(patientFieldReaders("cyp2c9"), c("meloxicam", "phenytoin", "warfarin"))
   expect_identical(patientFieldReaders("cyp2b6"), "methadone")
   expect_true(all(c("cefazolin", "gentamicin", "mannitol", "vancomycin",
                     "sugammadex", "gabapentin", "pregabalin", "oxycodone",
-                    "meloxicam", "lacosamide", "levetiracetam") %in%
+                    "meloxicam", "lacosamide", "levetiracetam",
+                    "apixaban", "rivaroxaban") %in%
                     patientFieldReaders("creatinine")))
 })
 

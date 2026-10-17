@@ -328,6 +328,18 @@ getDrugPK <- function(
       tlag_SL <- if (is.null(X$PK[[event]]$tlag_SL)) 0 else X$PK[[event]]$tlag_SL
     }
 
+    # Set up PK for subcutaneous delivery, exactly as the routes above
+    if (is.null(X$PK[[event]]$ka_SC))
+    {
+      ka_SC <- 0
+      bioavailability_SC <- 0
+      tlag_SC <- 0
+    } else {
+      ka_SC <- X$PK[[event]]$ka_SC
+      bioavailability_SC <- if (is.null(X$PK[[event]]$bioavailability_SC)) 1 else X$PK[[event]]$bioavailability_SC
+      tlag_SC <- if (is.null(X$PK[[event]]$tlag_SC)) 0 else X$PK[[event]]$tlag_SC
+    }
+
     # Set up PK for regional anesthesia (RA): a local anesthetic injected into
     # tissue and absorbed first-order into the systemic circulation.
     if (is.null(X$PK[[event]]$ka_RA))
@@ -489,6 +501,18 @@ getDrugPK <- function(
     e_coef_SL_ke0 <- 0
     e_coef_SL_ka  <- 0
 
+    # SC Delivery
+    p_coef_SC_l1  <- 0
+    p_coef_SC_l2  <- 0
+    p_coef_SC_l3  <- 0
+    p_coef_SC_ka  <- 0
+
+    e_coef_SC_l1  <- 0
+    e_coef_SC_l2  <- 0
+    e_coef_SC_l3  <- 0
+    e_coef_SC_ke0 <- 0
+    e_coef_SC_ka  <- 0
+
     # RA Delivery
     p_coef_RA_l1  <- 0
     p_coef_RA_l2  <- 0
@@ -574,6 +598,7 @@ getDrugPK <- function(
     ka_IM     <- separateEigenvalues(ka_IM,     lambdas)
     ka_IN     <- separateEigenvalues(ka_IN,     lambdas)
     ka_SL     <- separateEigenvalues(ka_SL,     lambdas)
+    ka_SC     <- separateEigenvalues(ka_SC,     lambdas)
     ka_RA     <- separateEigenvalues(ka_RA,     lambdas)
     ka_RAslow <- separateEigenvalues(ka_RAslow, lambdas)
 
@@ -636,6 +661,7 @@ getDrugPK <- function(
       ka_IM     <- separateEigenvalues(ka_IM,     ke0)
       ka_IN     <- separateEigenvalues(ka_IN,     ke0)
       ka_SL     <- separateEigenvalues(ka_SL,     ke0)
+      ka_SC     <- separateEigenvalues(ka_SC,     ke0)
       ka_RA     <- separateEigenvalues(ka_RA,     ke0)
       ka_RAslow <- separateEigenvalues(ka_RAslow, ke0)
 
@@ -721,6 +747,20 @@ getDrugPK <- function(
       e_coef_SL_l3  <- e_coef_bolus_l3 / (ka_SL - lambda_3) * ka_SL * bioavailability_SL
       e_coef_SL_ke0 <- e_coef_bolus_ke0 / (ka_SL - ke0) *     ka_SL * bioavailability_SL
       e_coef_SL_ka  <- - e_coef_SL_l1 - e_coef_SL_l2 - e_coef_SL_l3 - e_coef_SL_ke0
+    }
+
+    if (ka_SC > 0)
+    {
+      p_coef_SC_l1  <- p_coef_bolus_l1 / (ka_SC - lambda_1) * ka_SC * bioavailability_SC
+      p_coef_SC_l2  <- p_coef_bolus_l2 / (ka_SC - lambda_2) * ka_SC * bioavailability_SC
+      p_coef_SC_l3  <- p_coef_bolus_l3 / (ka_SC - lambda_3) * ka_SC * bioavailability_SC
+      p_coef_SC_ka  <- - p_coef_SC_l1 - p_coef_SC_l2 - p_coef_SC_l3
+
+      e_coef_SC_l1  <- e_coef_bolus_l1 / (ka_SC - lambda_1) * ka_SC * bioavailability_SC
+      e_coef_SC_l2  <- e_coef_bolus_l2 / (ka_SC - lambda_2) * ka_SC * bioavailability_SC
+      e_coef_SC_l3  <- e_coef_bolus_l3 / (ka_SC - lambda_3) * ka_SC * bioavailability_SC
+      e_coef_SC_ke0 <- e_coef_bolus_ke0 / (ka_SC - ke0) *     ka_SC * bioavailability_SC
+      e_coef_SC_ka  <- - e_coef_SC_l1 - e_coef_SC_l2 - e_coef_SC_l3 - e_coef_SC_ke0
     }
 
     if (ka_RA > 0)
@@ -810,6 +850,10 @@ getDrugPK <- function(
         bioavailability_SL = bioavailability_SL,
         tlag_SL = tlag_SL,
 
+        ka_SC = ka_SC,
+        bioavailability_SC = bioavailability_SC,
+        tlag_SC = tlag_SC,
+
         ka_RA = ka_RA,
         bioavailability_RA = bioavailability_RA,
         tlag_RA = tlag_RA,
@@ -897,6 +941,18 @@ getDrugPK <- function(
         e_coef_SL_l3 = e_coef_SL_l3,
         e_coef_SL_ke0 = e_coef_SL_ke0,
         e_coef_SL_ka = e_coef_SL_ka,
+
+        # SC Coefficients
+        p_coef_SC_l1 = p_coef_SC_l1,
+        p_coef_SC_l2 = p_coef_SC_l2,
+        p_coef_SC_l3 = p_coef_SC_l3,
+        p_coef_SC_ka = p_coef_SC_ka,
+
+        e_coef_SC_l1 = e_coef_SC_l1,
+        e_coef_SC_l2 = e_coef_SC_l2,
+        e_coef_SC_l3 = e_coef_SC_l3,
+        e_coef_SC_ke0 = e_coef_SC_ke0,
+        e_coef_SC_ka = e_coef_SC_ka,
 
         # RA Coefficients
         p_coef_RA_l1 = p_coef_RA_l1,
@@ -1114,6 +1170,14 @@ getDrugPK <- function(
   if (!is.null(X$parallelSystems))
     out$parallelSystems <- parallelSystemSets(X, PK, events, tPeakRoute, drug,
                                               covariates)
+  # Warfarin: the S- and R-enantiomer systems drive the INR through the
+  # turnover of the clotting factors rather than being added; simCpCe()
+  # combines them (R/inr.R).
+  # Skipped on the internal build of a parallel system (model supplied): the
+  # system's PK is all that is read from it, and it carries no inr block.
+  out$inr <- if (is.null(model))
+    validateINR(X$inr, drug, drugDefaults$Concentration.Units, X$parallelSystems)
+    else NULL
   # A pulsed extended-release formulation (Adderall XR): the fractions and
   # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
   out$oralPulses <- validateOralPulses(X$oralPulses, drug)

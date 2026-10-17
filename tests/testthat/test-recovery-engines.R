@@ -402,6 +402,11 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # Intravenous calcium joined on 2026-10-13: the ionized calcium itself
     # is the end point, no ke0, no metabolite.
     "calcium",
+    # Anticoagulants (2026-10-17): plasma activity or concentration, or the
+    # INR; no effect site (R/drugs_heparin.R and the others).
+    "heparin", "bivalirudin", "apixaban", "rivaroxaban",
+    "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
+    "warfarin",
     # The antihypertensives joined on 2026-10-17: concentration only, no
     # published equilibration constant, and no blood pressure is plotted for
     # any drug in the library (docs/antihypertensives.md).
