@@ -261,6 +261,11 @@ allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnit
 TCI_UNIT_PLASMA <- "Plasma target"
 TCI_UNIT_EFFECT <- "Effect site target"
 tciUnits <- c(TCI_UNIT_PLASMA, TCI_UNIT_EFFECT)
+# The dose table's Dose column is headed "Dose/Target": a target row's number
+# is a concentration.  The data column is still "Dose" (rColHeaders); the
+# grid's hooks match the header's first word (findColByHeader() in
+# inst/www/hot_funs.js).
+DOSE_COLUMN_HEADER <- "Dose/Target"
 TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP)
 TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
 TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute

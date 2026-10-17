@@ -256,19 +256,13 @@ test_that("timeFormat, its string form, and the Time Display choices", {
 })
 
 test_that("timeSettingsText: the collapsed Time panel's header", {
-  expect_equal(timeSettingsText(timeFormat("days", "relative")), "(days, elapsed time)")
-  # The procedure start is read only in clock mode
-  expect_equal(timeSettingsText(timeFormat("weeks", "relative"), "08:00"), "(weeks, elapsed time)")
-  expect_equal(timeSettingsText(timeFormat("hours", "clock"), "08:00"),
-               "(hours, actual time from 08:00)")
-  # Until the browser's clock arrives the start is empty or NULL
-  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), ""), "(minutes, actual time)")
-  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), " "), "(minutes, actual time)")
-  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), NULL), "(minutes, actual time)")
-  # A start the plot cannot use (half typed, or no time of day) is not shown
-  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), "08:"), "(minutes, actual time)")
-  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), "08:75"), "(minutes, actual time)")
-  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), "25:00"), "(minutes, actual time)")
+  # the display is named as the Time Display selector names it, without the
+  # procedure start, so the header stays one line
+  expect_equal(timeSettingsText(timeFormat("days", "relative")), "(days, Elapsed time)")
+  expect_equal(timeSettingsText(timeFormat("weeks", "relative")), "(weeks, Elapsed time)")
+  expect_equal(timeSettingsText(timeFormat("hours", "clock")), "(hours, Actual time)")
+  expect_equal(timeSettingsText(timeFormat("minutes", "clock")), "(minutes, Actual time)")
+  expect_equal(timeSettingsText(timeFormat("minutes", "relative")), "(minutes, Elapsed time)")
 })
 
 test_that("displayTimeToMinutes: bare numbers are in the unit", {
