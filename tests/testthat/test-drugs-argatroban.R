@@ -31,6 +31,10 @@ test_that("the fat-free-mass switch evaluates the weight covariate at the pk wei
   expect_equal(on$PK$default$cl1 * 60, 22.0 + 0.018 * (size$pkWeight - 87),
                tolerance = 1e-8)
   expect_equal(on$PK$default$v1, 11.0 * size$volume, tolerance = 1e-8)
+  # V2, V3 and Q have no size term in the source, so they take the library
+  # fat-free-mass factors.
+  expect_equal(on$PK$default$v2, 13.0 * size$volume, tolerance = 1e-8)
+  expect_equal(on$PK$default$cl2 * 60, 10.0 * size$clearance, tolerance = 1e-8)
 })
 
 test_that("the plotted concentration is plasma only, with no effect site", {
