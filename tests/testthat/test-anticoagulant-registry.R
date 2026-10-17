@@ -14,7 +14,8 @@ READINESS <- c("research_ready", "provisional", "pending")
 PROVENANCE <- c("estimated", "fixed", "label-derived", "derived", "calibration")
 
 # The drugs implemented new for this registry.
-IMPLEMENTED <- c("heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin")
+IMPLEMENTED <- c("heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
+                 "edoxaban", "dabigatran")
 
 test_that("every registry row is fully classified with a clickable source", {
   for (col in c("model_id", "drug_class", "context", "analyte", "assay",

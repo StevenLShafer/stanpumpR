@@ -29,12 +29,22 @@ test_that("returns the reference NVAF parameters with the switch off", {
   expect_equal(cl, 3.09, tolerance = 0.005)
 })
 
-test_that("creatinine clearance is capped at 150 mL/min", {
-  # A very low creatinine would give CrCL above 150; CL_R is then held there.
-  high <- apixaban(70, 176, 40, "male", adjustToFFM = FALSE, creatinine = 0.3)$PK$default$cl1
-  cap  <- apixaban(70, 176, 40, "male", adjustToFFM = FALSE, creatinine = NULL)
-  crclCap <- min(creatinineClearanceCG(70, 40, "male", 0.3), 150)
-  expect_equal(crclCap, 150)
+test_that("renal clearance is linear and unbounded in creatinine clearance", {
+  # The published model (Cirincione 2018 Supplementary Eq. 1b) fixes the cCrCL
+  # exponent at 1 with no cap, so CL_R scales as (cCrCL / 80) with no ceiling:
+  # a very low creatinine (high CrCL, here ~230 mL/min) gives a higher renal
+  # clearance than CrCL 80, by exactly the CrCL ratio.
+  scr <- 0.3
+  crcl <- creatinineClearanceCG(70, 40, "male", adultEquivalentCreatinine(scr, 40, "male"))
+  expect_gt(crcl, 150)                                   # well above the old cap
+  high <- apixaban(70, 176, 40, "male", adjustToFFM = FALSE, creatinine = scr)$PK$default$cl1
+  ref  <- apixaban(70, 176, 40, "male", adjustToFFM = FALSE,
+                   creatinine = (140 - 40) * 70 / (72 * 80))$PK$default$cl1  # CrCL 80
+  # CL_R rises by the full CrCL ratio; CL_NR is unchanged, so total CL rises.
+  expect_gt(high, ref)
+  clR_high <- 1.57 * (crcl / 80)
+  clR_ref  <- 1.57
+  expect_equal((high - ref) * 60, (clR_high - clR_ref) * (1 - 0.139), tolerance = 1e-6)
 })
 
 test_that("relative bioavailability falls with the dose, anchored at 2.5 mg", {

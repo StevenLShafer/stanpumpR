@@ -36,12 +36,13 @@
 #
 # PHARMACODYNAMICS (NOT PLOTTED)
 # ==============================
-# The study fitted the activated clotting time, ACT = 134 + 318 C / (2.44 + C)
-# seconds with C in mg/L, with the EC50 depending on the red cell count
-# (coefficient 1.70; the form and reference value are in the full text, not
-# the abstract).  It is not plotted: the device and reagent decide the ACT,
-# and the fit is the study's.  tPeak = 0, so the curve is plasma.  No band and
-# no time until threshold.
+# The study fitted the activated clotting time (measured on a Hemochron
+# Response device) as a sigmoid Emax without a Hill coefficient,
+# ACT = 134 + (318 - 134) C / (2.44 + C) seconds with C in mg/L, the
+# half-maximal concentration depending on the red cell count (coefficient
+# 1.70).  It is not plotted: the device and reagent decide the ACT, and the
+# fit is the study's.  tPeak = 0, so the curve is plasma.  No band and no time
+# until threshold.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================

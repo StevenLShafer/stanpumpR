@@ -71,7 +71,8 @@ plasmaOnly <- c(
   "calcium",
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
-  "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin"
+  "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
+  "edoxaban", "dabigatran"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

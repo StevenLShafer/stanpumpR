@@ -51,18 +51,28 @@ registry <- rbind(
   reg("apix_cirincione_2018_nvaf", "factor Xa inhibitor",
       "oral, nonvalvular atrial fibrillation", "apixaban plasma (ng/mL)", "none plotted",
       "PO", "research_ready", "apixaban",
-      "Indication/race/comedication/clock-time fixed to the NVAF morning-dose patient; CrCl>150 cap and F(dose) form inferred from the text (equation image not seen).",
+      "Indication/race/comedication/clock-time fixed to the NVAF morning-dose patient; renal term and F(dose) equation confirmed against the published supplement (no CrCl cap, fixed exponent 1).",
       "https://doi.org/10.1002/psp4.12347"),
   reg("riva_willmann_2018", "factor Xa inhibitor",
       "oral, pooled indications (AF here)", "rivaroxaban plasma (ng/mL)", "none plotted",
       "PO", "research_ready", "rivaroxaban",
-      "Covariate centring taken as the published means (supplement unread); F(dose) form recovered from later papers; indication fixed to AF; fed dosing.",
+      "Covariate centring (medians 81 kg / 93 mL/min / 61 y) and F(dose) equation confirmed against the published NONMEM control stream; indication fixed to AF; fed dosing.",
       "https://doi.org/10.1002/psp4.12288"),
   reg("warf_xue_2017_cardiac", "vitamin K antagonist",
       "oral, cardiac surgery", "S/R-warfarin (mg/L) -> INR", "INR (theory-based 1/PCA)",
       "PO", "research_ready", "warfarin",
-      "Erratum text unread (Eq.2 form confirmed by the paper's worked example); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
+      "Eq.2 multiplicative C50_app confirmed against the published erratum (BCP 2017;83:1602); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
       "https://doi.org/10.1111/bcp.13157"),
+  reg("edox_niebecker_2015", "factor Xa inhibitor",
+      "oral, VTE (Hokusai)", "edoxaban plasma (ng/mL)", "none plotted",
+      "PO", "research_ready", "edoxaban",
+      "Full Table 3 final-model parameters read from the paper; phase 3 above-90 renal slope is 0.0321 x 2.74 (274% applied multiplicatively, per the footnote), fixed to the non-Asian non-dose-reduced patient on no P-gp inhibitor; allometric exponents taken as the conventional 0.75/1.",
+      "https://doi.org/10.1111/bcp.12727"),
+  reg("dabi_liesenfeld_2011_rely", "direct thrombin inhibitor",
+      "oral, NVAF (RE-LY)", "total active dabigatran (ng/mL)", "none plotted",
+      "PO", "research_ready", "dabigatran",
+      "Full Table 5 final-model parameters and equations read from the paper; Emax CrCl-CL/F reproduces the 69.6 L/h typical clearance; fixed to the non-South-Asian no-heart-failure median-haemoglobin patient on no interacting co-medication; doses as mg dabigatran etexilate.",
+      "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
 
   # --- Provisional (published, but a material gap) ---------------------------
   reg("ufh_delavenne_2017_cpb", "unfractionated heparin",
@@ -100,16 +110,6 @@ registry <- rbind(
       "PO", "provisional", NA,
       "A separate VTE fit and assay map (0.0159 IU/mL per ng/mL); not the NVAF PK vector, and the assay slope is one reagent only.",
       "https://doi.org/10.1002/psp4.12184"),
-  reg("edox_niebecker_2015", "factor Xa inhibitor",
-      "oral, VTE", "edoxaban plasma (ng/mL)", "none portable",
-      "PO", "pending", NA,
-      "Renal slope-2 patient scaling is x3.74 (+274%), not the supplied x2.74; CrCl breakpoint, cap and weight exponents not confirmed against the paper's equations.",
-      "https://doi.org/10.1111/bcp.12727"),
-  reg("dabi_liesenfeld_2011_rely", "direct thrombin inhibitor",
-      "oral, NVAF", "total active dabigatran (ng/mL)", "none portable",
-      "PO", "pending", NA,
-      "JTH full text not accessible; ka, Vc/F and the age/sex/weight/PPI coefficients conflict with the FDA review; CrCl<30 outside the fit.",
-      "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
   reg("dabi_liesenfeld_2006_hip", "direct thrombin inhibitor",
       "oral, post-hip-surgery", "total active dabigatran -> aPTT/ECT", "aPTT/ECT",
       "PO", "pending", NA,
@@ -180,6 +180,8 @@ ZH   <- "36 young healthy Chinese volunteers, Zhang 2012"
 CIR  <- "4385 subjects (phase I-III), Cirincione 2018 NVAF reference"
 WIL  <- "4918 patients, 7 trials, Willmann 2018 (population means)"
 XUE  <- "264 cardiac-surgery patients, Xue 2017"
+NIE  <- "4130 individuals (13 phase 1 + Hokusai-VTE), Niebecker 2015"
+LIE  <- "9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011"
 
 parameters <- rbind(
   par("heparin", "CL", 1.18, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
@@ -216,7 +218,24 @@ parameters <- rbind(
   par("warfarin", "Hill", 2.720, "dimensionless", "estimated", XUE, "https://doi.org/10.1111/bcp.13157"),
   par("warfarin", "T2PCA", 11.4, "h (turnover half-life)", "estimated", XUE, "https://doi.org/10.1111/bcp.13157"),
   par("warfarin", "RIC50", 2.387, "mg/L (R competition)", "estimated", XUE, "https://doi.org/10.1111/bcp.13157"),
-  par("warfarin", "Emax", 1, "fixed", "fixed", XUE, "https://doi.org/10.1111/bcp.13157")
+  par("warfarin", "Emax", 1, "fixed", "fixed", XUE, "https://doi.org/10.1111/bcp.13157"),
+
+  par("edoxaban", "CL_NR/F", 15.2, "L/h (x (WT/70)^0.75)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "CL_R/F slope1", 0.202, "L/h per mL/min (CLcr<=90)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "CL_R/F slope2 (phase 3)", 0.0880, "L/h per mL/min (CLcr>90, 0.0321x2.74)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "Vc/F", 209, "L (x WT/70, x1.226 Asian)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "Vp/F", 92.3, "L (x WT/70)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "Q/F", 5.91, "L/h (x (WT/70)^0.75)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "ka", 3.36, "1/h", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "tlag", 0.250, "h", "fixed", NIE, "https://doi.org/10.1111/bcp.12727"),
+
+  par("dabigatran", "CLmax/F", 124, "L/h (Emax; x (1-0.0041 (age-72)) x0.917 female)", "estimated", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+  par("dabigatran", "EC50_CrCl, power", "56.7, 1.29", "mL/min, Hill", "estimated", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+  par("dabigatran", "V2/F", 673, "L (x (1+0.0077 (WT-80.3)))", "estimated", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+  par("dabigatran", "Q/F", 35.5, "L/h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+  par("dabigatran", "V3/F", 345, "L", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+  par("dabigatran", "ka", 0.754, "1/h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+  par("dabigatran", "ALAG", 0.634, "h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x")
 )
 
 utils::write.csv(registry,

@@ -52,10 +52,14 @@
 # Patient Profile's serum creatinine, put on the adult scale by
 # adultEquivalentCreatinine(); with the field blank it is the ASSUMED NORMAL
 # creatinine for age and sex, so renal impairment is then not represented.
-# The paper switches the renal term at 150 mL/min (an indicator FLAG for
-# CrCL > 150) and reports a single CrCL exponent, so CrCL is held at 150
-# above it.  That reading of FLAG is not printed in the text; it affects only
-# patients above 150 mL/min.
+# The renal term is CL_R/F = 1.57 x (cCrCL / 80)^1, with the exponent fixed
+# at 1 and NO cap: the supplement's equations (Cirincione 2018 Supplementary
+# Material, Eq. 1b and Table S1/S2) show a single cCrCL exponent of 1 FIXED
+# with no FLAG or truncation term, so clearance is linear and unbounded in
+# creatinine clearance.  (An earlier version capped it at 150 mL/min on the
+# strength of the handoff specification; the published model has no such cap,
+# confirmed against the supplement on 2026-10-17.)  The model was fitted over
+# cCrCL 12-320 mL/min; above that range it extrapolates linearly.
 #
 # DOSE-DEPENDENT RELATIVE BIOAVAILABILITY
 # =======================================
@@ -66,9 +70,11 @@
 #
 #     F_rel(D) = 1 - 0.420 x ((D - 2.5) / 47.5)^0.857,   D in mg
 #
-# which is 0.966 at 5 mg, 0.914 at 10 mg and 0.580 at 50 mg.  This form fits
-# every definition the text gives; the printed equation (an image) was not
-# seen.  Doses above 50 mg were not studied.  The parameters are apparent
+# which is 0.966 at 5 mg, 0.914 at 10 mg and 0.580 at 50 mg.  This is the
+# supplement's Eq. 1n exactly (E(F_rel) = 1 - I50 x ((DOSE - 2.5) / 47.5)^gamma,
+# with gamma = 0.857 and I50 the logit of theta9 = -0.322), confirmed against
+# Cirincione 2018 Supplementary Material (2026-10-17).  Doses above 50 mg were
+# not studied.  The parameters are apparent
 # (CL/F, V/F), so bioavailability_PO is 1: the label's absolute F of about
 # 50% is already inside them and is not applied again.
 #
@@ -95,7 +101,6 @@
 
 APIXABAN_NVAF_CL  <- 1 - 0.139    # NVAF on total CL/F
 APIXABAN_NVAF_VC  <- 1 - 0.0405   # NVAF on Vc/F
-APIXABAN_CRCL_CAP <- 150          # mL/min
 
 #' Apixaban pharmacokinetics (apparent oral, nonvalvular atrial fibrillation)
 #'
@@ -119,7 +124,6 @@ apixaban <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   crcl <- creatinineClearanceCG(pkW, age, sex,                 # mL/min
                                 adultEquivalentCreatinine(creatinine, age, sex))
-  crcl <- min(crcl, APIXABAN_CRCL_CAP)
 
   clR  <- 1.57 * (crcl / 80)                                   # L/h
   clNR <- 2.02 * (age / 65)^-0.429 * (1 - 0.216 * female) * size$clearance
@@ -157,7 +161,8 @@ apixaban <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "(stage 2 apparent oral two-compartment model; a non-Asian patient with ",
       "nonvalvular atrial fibrillation on no CYP3A4/P-gp inhibitor, morning ",
       "dosing; Cockcroft-Gault creatinine clearance from the entered creatinine ",
-      "or an assumed normal value for age and sex, held at 150 mL/min above it). ",
+      "or an assumed normal value for age and sex; renal term fixed exponent 1, ",
+      "no cap). ",
       "https://doi.org/10.1002/psp4.12347"
     )
   )

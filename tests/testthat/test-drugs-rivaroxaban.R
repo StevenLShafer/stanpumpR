@@ -4,11 +4,12 @@
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
 test_that("returns the reference parameters with the switch off", {
-  # Covariates centred on the population means: 82.48 kg, 97.17 mL/min, 60.53
-  # y.  The creatinine giving Cockcroft-Gault 97.17 at 82.48 kg, 60.53 y male
-  # (below the Tietz truncation for this BSA) anchors CL at its reference.
-  scr <- (140 - 60.53) * 82.48 / (72 * 97.17)
-  actual <- rivaroxaban(82.48, 176, 60.53, "male", adjustToFFM = FALSE,
+  # Covariates centred on the population medians (NONMEM control stream):
+  # 81 kg, 93 mL/min, 61 y.  The creatinine giving Cockcroft-Gault 93 at
+  # 81 kg, 61 y male (below the Tietz truncation for this BSA) anchors CL at
+  # its reference.
+  scr <- (140 - 61) * 81 / (72 * 93)
+  actual <- rivaroxaban(81, 176, 61, "male", adjustToFFM = FALSE,
                         creatinine = scr)
   expected <- list(
     PK = list(default = list(
@@ -33,16 +34,16 @@ test_that("relative bioavailability is 1 at 10 mg and falls with the dose", {
 
 test_that("creatinine clearance is Tietz-truncated", {
   # A low creatinine is held at 140 x BSA / 1.73.
-  cl <- rivaroxaban(82.48, 176, 60.53, "male", adjustToFFM = FALSE,
+  cl <- rivaroxaban(81, 176, 61, "male", adjustToFFM = FALSE,
                     creatinine = 0.3)$PK$default$cl1
-  crcl <- min(creatinineClearanceCG(82.48, 60.53, "male", 0.3),
-              140 * bsaDuBois(82.48, 176) / 1.73)
-  expected <- 6.58 * (crcl / 97.17)^0.406 * (82.48 / 82.48)^-0.278 * 0.849 / 60
+  crcl <- min(creatinineClearanceCG(81, 61, "male", 0.3),
+              140 * bsaDuBois(81, 176) / 1.73)
+  expected <- 6.58 * (crcl / 93)^0.406 * (81 / 81)^-0.278 * 0.849 / 60
   expect_equal(cl, expected, tolerance = 1e-8)
 })
 
 test_that("the female volume term applies", {
-  f <- rivaroxaban(82.48, 165, 60.53, "female", adjustToFFM = FALSE)$PK$default$v1
-  m <- 62.5 * (82.48 / 82.48)^0.216 * (60.53 / 60.53)^-0.189 * 0.889
+  f <- rivaroxaban(81, 165, 61, "female", adjustToFFM = FALSE)$PK$default$v1
+  m <- 62.5 * (81 / 81)^0.216 * (61 / 61)^-0.189 * 0.889
   expect_equal(f, m, tolerance = 1e-8)
 })

@@ -29,14 +29,15 @@
 # (strong CYP3A4 inhibitor 0.978, and others) are not applied: the library
 # has no input for them.
 #
-# CENTRING: AN ASSUMPTION
-# =======================
-# The covariates enter as (X / X_ref)^theta with X_ref "the population mean or
-# median", and the values are in the supplement, which could not be read.
-# The population MEANS of Table 1 are used: 82.48 kg, 97.17 mL/min, 60.53 y.
-# The same group's paediatric analysis (Willmann 2021) took 82.48 kg as the
-# adult reference weight.  If the medians were used instead, the error is a
-# few percent: a reference 5% away moves CL/F by 2% (CrCL) or 1.4% (weight).
+# CENTRING
+# ========
+# The covariates enter as (X / X_ref)^theta, with X_ref the population MEDIAN
+# of each distribution (the paper: "relative to the median of the respective
+# distribution").  The medians are hard-coded in the published NONMEM control
+# stream (Supplementary Material, suppinfo09): WT 81 kg, Tietz-truncated CrCL
+# 93 mL/min, AGE 61 y.  (An earlier version used the Table 1 means,
+# 82.48 / 97.17 / 60.53, as a placeholder; the control stream resolved it to
+# the medians on 2026-10-17.)
 #
 # RELATIVE BIOAVAILABILITY
 # ========================
@@ -46,10 +47,9 @@
 #
 #     F(D) = 0.590 + (1.25 - 0.590) x exp(-ln 2 x D / 14.4),   D in mg
 #
-# was recovered from the group's later papers, which reuse it, and checked
-# against the paediatric paper's printed values (100%, 79.1% and 68.1% at
-# 9.9, 24.7 and 41.2 mg adult-equivalent doses; this form gives 1.000, 0.791
-# and 0.681; an Emax form does not).  It is 0.998 at 10 mg, 0.84 at 20 mg.
+# is the published NONMEM control stream's F1 line exactly (Supplementary
+# Material, suppinfo09: F1 = F1MIN + (F1MAX - F1MIN) * EXP(-LOG(2)/D50*DOSE)),
+# confirmed on 2026-10-17.  It is 0.998 at 10 mg, 0.84 at 20 mg.
 # As the oralSaturation form "exponential" (R/routes.R), each dose by its
 # own size.  It is RELATIVE bioavailability on the apparent scale, and the
 # trial doses were taken as labelled (15 and 20 mg with food), so it
@@ -87,9 +87,9 @@
 # (Claude Code, 2026-10-17, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
 
-RIVAROXABAN_WT_REF   <- 82.48    # kg, Table 1 mean (assumed centring)
-RIVAROXABAN_CRCL_REF <- 97.17    # mL/min, Table 1 mean Tietz-truncated CrCL
-RIVAROXABAN_AGE_REF  <- 60.53    # y, Table 1 mean
+RIVAROXABAN_WT_REF   <- 81    # kg, population median (NONMEM control stream)
+RIVAROXABAN_CRCL_REF <- 93    # mL/min, population median Tietz-truncated CrCL
+RIVAROXABAN_AGE_REF  <- 61    # y, population median
 RIVAROXABAN_AF_CL    <- 0.849    # atrial fibrillation on CL/F
 
 #' Rivaroxaban pharmacokinetics (apparent oral, atrial fibrillation)
