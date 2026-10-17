@@ -33,10 +33,11 @@ and a **parameter status**: *published fit*, *measured summary*, *derived approx
 | [LSD](help:drugs/LSD) | parent LSD | oral | intravenous |
 | [psilocybin](help:drugs/psilocybin) | free plasma psilocin | oral | intravenous |
 | [MDMA](help:drugs/MDMA) | parent MDMA | oral | intravenous, intranasal; the MDA metabolite |
+| [GHB](help:drugs/GHB) | GHB free acid | oral | intravenous |
 
 ### Three reasons a route is refused
 
-**Apparent parameters cannot cross to the intravenous route.** LSD and psilocybin are fitted as clearance and volume *over an unmeasured bioavailability*. Those predict oral concentrations correctly, because the unknown factor cancels, and intravenous ones wrong by 1/F. Both are oral only.
+**Apparent parameters cannot cross to the intravenous route.** LSD, psilocybin and GHB are fitted as clearance (or a maximum metabolic rate) and volume *over an unmeasured bioavailability*. Those predict oral concentrations correctly, because the unknown factor cancels, and intravenous ones wrong by 1/F. All three are oral only. GHB's source fixed bioavailability at 1 while its label reports 88%, which is the same situation reached by a different route — and it holds even though GHB was once given intravenously as an anaesthetic.
 
 **A one-compartment reduction cannot start at the needle.** Cocaine's and methamphetamine's disposition parameters come from intravenous studies that published summaries — a steady-state volume, a clearance, a terminal half-life — rather than micro-constants. Used as a one-compartment model, those reproduce an absorption-limited curve well and the first minutes after an intravenous bolus badly, because the true central volume is much smaller than the steady-state volume. So the intranasal route is offered and the intravenous route is not.
 
@@ -46,9 +47,8 @@ and a **parameter status**: *published fit*, *measured summary*, *derived approx
 
 Models for several further drugs were specified but not implemented, each for a stated reason rather than an oversight:
 
-- **MDMA.** The published population model (Huestis MA, Smith WB, Leonowens C, et al. *CPT Pharmacometrics Syst Pharmacol* 2025;14(2):376-388) is a one-compartment fit with a **zero-order input followed by first-order absorption**, which the closed-form engine cannot represent, and MDMA inhibits its own CYP2D6 metabolism, so a linear model is confined to the single-dose calibration. Its dose basis is settled: the paper doses MDMA hydrochloride throughout.
 - **Δ9-THC.** Two things are missing, and only one of them is stanpumpR's. The directly implementable source is a three-compartment fit to *smoked* cannabis with its parent and two metabolites (6 subjects, 168 h of plasma), and the engine has neither a pulmonary route nor two metabolite levels. But the deeper problem is the source itself: its abstract gives only the steady-state volume (3,401 L) and clearance (0.72 L/min), which do **not** identify a three-compartment model, and the full text that holds the compartment table — and, crucially, the way a smoked dose was entered into it — could not be read from here. Without that input model, offering a smoked route would mean inventing the step from a dose to a concentration, which is the one thing this scheme exists to prevent. A copy of the paper would settle it.
-- **GHB.** Absorption and elimination are both non-linear across ordinary doses, and no identified human parameter set covering a route, a volume and the non-linear terms together was found. A non-linear engine would be needed first.
+GHB was on this list until 2026-10-17 for a reason that turned out to be wrong twice over, which is worth recording: the non-linear engine already existed, and a complete human parameter set existed too, in a supplementary table rather than in the paper. Searching abstracts found nothing because the numbers were never in one.
 
 ### Reading these curves
 
@@ -57,3 +57,15 @@ Read them as exposure, within the studied population, route, formulation and dos
 Where a number in a source is an anchor rather than a model, stanpumpR's rule turns on whether the anchor **identifies** what is missing. A peak time does, once the model is chosen and its disposition is fixed: in a one-compartment model with a known elimination rate, the time of the peak determines the absorption rate uniquely, which is how methamphetamine's intranasal route is offered. A bioavailability with no absorption rate does not, and neither does a peak time measured on a different formulation from the one being simulated. Where the anchor does not identify the missing parameter, the rule is to record it and refuse the route, rather than to fill the gap with an assumption that would look exactly like evidence on the plot. Either way the registry says which it was, and a derived parameter is marked `derived_approximation` rather than a published fit.
 
 A different case is an input *shape* the engine cannot express, where every parameter is published and only the arithmetic has to be reorganised. MDMA's dose fills its depot at a constant rate over a fixed window before first-order absorption begins, which no single first-order depot reproduces. There stanpumpR **discretises** rather than approximates: the dose is split across the window, and the result is measured against a numerical evaluation of the exact solution with the agreement pinned in the drug's test. That is a port, not an anchor, so it stays a published fit.
+
+A third case is a *structure* the library does not yet have, and there the answer is to build it rather than to approximate around it. GHB's source is two compartments with saturable elimination, so the numerical engine that already existed for phenytoin gained an optional peripheral compartment, with every other drug on that engine left bit-for-bit unchanged. Saturable elimination is not a detail that could have been smoothed away: it is why a second gram of GHB adds more than the first did.
+
+### The dose basis, and where the unit names it
+
+A model's parameters are fitted on a particular *mass*, and that mass is not always the one the plot reports or the one a reader has in mind. Three of these drugs make the point. Psilocybin is swallowed but psilocin is measured, and the two differ by their molecular weights. MDMA's source doses the hydrochloride throughout, so entering a free-base mass would under-predict. GHB is the sharpest: its source doses *and reports* sodium oxybate, while every independent study and the whole forensic literature report the free acid, 21% apart.
+
+Where the gap is large and both bases are in common use, the **unit itself names the basis** — GHB is dosed in `g PO oxybate`, not a bare `g PO` — and the model's mass-carrying parameters are rescaled onto the plotted analyte by exact arithmetic that the drug's test pins. The registry records the input dose basis and the parameter dose basis as separate fields for every route, offered or not, so a mismatch is visible without reading any code.
+
+### Validating against something the model never saw
+
+Where independent human data exist, a new model here is checked against studies it was **not** fitted to, because that is what catches a dose-basis error — the error that makes a model wrong by a constant factor while every internal consistency check still passes. GHB's model reproduces its own source's simulated adult peak, which is reassuring but circular; the test that matters is that it also lands within 6% and 1% of the two peak concentrations Liechti measured in 32 volunteers a decade earlier, and tracks Palatini's 1993 dose-ranging series well enough to show exactly where its missing saturable absorption begins to bite.

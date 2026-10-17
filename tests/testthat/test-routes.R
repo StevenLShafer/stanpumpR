@@ -197,3 +197,29 @@ test_that("a further oral formulation must be valid and share the default lag", 
   expect_error(oralFormulationSet(set, list(ka_PO = 0.02, tlag_PO = set$tlag_PO), "x", "syrup"),
                "not one of")
 })
+
+test_that("every unit any drug offers is one the dose table will accept", {
+  # A drug whose CSV Units name a unit missing from allUnits simulates
+  # correctly in every scripted test and then fails in the app with "Dose
+  # table contains unknown dose units", because simulateDrugsWithCovariates()
+  # does not go through validateDoseTableInput().  GHB's salt-named units
+  # ("g PO oxybate") were added with exactly that gap, so this closes it for
+  # every drug at once.  Claude Code, 2026-10-17.
+  dd <- getDrugDefaultsGlobal(FALSE)
+  accepted <- c(allUnits, gasUnits, tciUnits, scheduledUnits)
+  tested <- 0L
+  for (i in seq_len(nrow(dd))) {
+    # A metabolite (desmetramadol, salicylate, norfluoxetine and the rest) is
+    # never dosed directly, so its Units are NA and it offers nothing to check.
+    if (is.na(dd$Units[i])) next
+    units <- trimws(strsplit(dd$Units[i], ",")[[1]])
+    units <- units[nzchar(units)]
+    expect_true(all(units %in% accepted), info = dd$Drug[i])
+    # the default unit must be one the drug actually offers
+    if (!is.na(dd$Default.Units[i]) && nzchar(dd$Default.Units[i]))
+      expect_true(dd$Default.Units[i] %in% units, info = dd$Drug[i])
+    tested <- tested + 1L
+  }
+  # guard against the loop silently testing nothing
+  expect_gt(tested, 100)
+})
