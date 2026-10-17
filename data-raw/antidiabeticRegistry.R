@@ -226,7 +226,7 @@ registry <- rbind(
       "https://doi.org/10.7150/ijms.111519", "Table 2 / Eq. 6: CL/F 229.3 L/day x (BW/77.0)^0.41, V/F 73.9 L and ka 57.4/day fixed from Melin 2024. Troughs only: the steady-state trough is fitted, not the shape within a day."),
   reg("canagliflozin_dewinter2017", "canagliflozin", "Invokana", PO, "core", "US",
       AUD, AUD, "PD-AUDIT", DAUD, "HbA1c", NA, NA, FALSE,
-      "https://bpspubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1111/bcp.13180", "Not re-read."),
+      "https://doi.org/10.1111/bcp.13180", "de Winter 2017 read (with its supplement): an HbA1c turnover model (t1/2 HbA1c 28.2 d, Emax -0.738%, log EC50 4.12 log(ng/mL)) driven by the two-compartment PK model of Hoeben et al., Clin Pharmacokinet 2016;55:209-223 (cited as 2014), whose parameters it does not reprint. The PK needs Hoeben 2016."),
   reg("sglt2_yao2023_class", "dapagliflozin, canagliflozin, empagliflozin", "Yao 2023 class reanalysis", PO, "core", "study",
       AUD, AUD, "PD-AUDIT", DAUD, "24-h UGE (AUC50)", NA, NA, FALSE,
       "https://ascpt.onlinelibrary.wiley.com/doi/10.1002/psp4.12934", "Transit absorption; not re-read; never spliced with Baron or Kobuchi."),
