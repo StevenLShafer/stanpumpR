@@ -79,7 +79,8 @@ plasmaOnly <- c(
   # The antihypertensives (2026-10-17): concentration only.  Neither source
   # publishes an equilibration rate constant, and no blood pressure is
   # plotted for any drug in the library (docs/antihypertensives.md).
-  "clevidipine", "fenoldopamPediatric", "carvedilol"
+  "clevidipine", "fenoldopamPediatric", "carvedilol",
+    "azilsartan", "chlorthalidone"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

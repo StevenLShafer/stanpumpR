@@ -136,4 +136,6 @@ MDMA,ng,,,mg PO,mg PO,#004D40,0,0,0,0,0,IV,Illicit drugs
 clevidipine,ng,mg,mg/hr,mg/hr,"mg,mcg/kg/min,mg/hr",#B71C1C,0,0,0,0,0,IV,Antihypertensives
 fenoldopamPediatric,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min",#311B92,15.7,23.5,19.6,0,0,IV,Antihypertensives
 carvedilol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#01579B,0,0,0,0,0,IV,Antihypertensives
+azilsartan,ng,,,mg PO,"mg PO,mg PO qd",#E65100,0,0,0,0,0,IV,Antihypertensives
+chlorthalidone,ng,,,mg PO,"mg PO,mg PO qd",#33691E,0,0,0,0,0,IV,Antihypertensives
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs
