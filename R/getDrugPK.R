@@ -177,6 +177,8 @@ getDrugPK <- function(
   # A subcutaneous model writes its absorption as ka_SC and the rest; the
   # engines carry it on the tissue-depot (RA) fields.  See R/subcutaneous.R.
   tissueRoute <- modelTissueRoute(X$PK)
+  # Exenatide's subcutaneous absorption is in its Michaelis-Menten block.
+  if (!is.null(X$michaelisMenten$saturableSC)) tissueRoute <- ROUTE_SC
   X$PK <- lapply(X$PK, subcutaneousToTissueDepot, drug = drug)
   zeroOrderSC <- validateZeroOrderSC(X$zeroOrderSC, X$PK, drug)
   tPeak <- X$tPeak

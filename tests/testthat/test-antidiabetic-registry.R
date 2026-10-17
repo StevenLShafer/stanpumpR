@@ -67,7 +67,7 @@ test_that("the specification's product keys are present and kept apart", {
               "insulin_human_inhaled_afrezza", "metformin_er", "soliqua_100_33",
               "xultophy_100_3_6", "pioglitazone_kadam2013"))
     expect_true(k %in% registry$key, info = k)
-  expect_true(all(is.na(registry$stanpumpr_drug[grepl("^exenatide|toujeo|lantus|semglee|rezvoglar",
+  expect_true(all(is.na(registry$stanpumpr_drug[grepl("^exenatide_er|toujeo|lantus|semglee|rezvoglar",
                                                        registry$key)])))
 })
 

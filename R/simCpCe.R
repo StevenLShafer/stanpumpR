@@ -274,6 +274,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- 1        # Native unit
         ng_Conv  <- 1000
       },
+      pg = {                   # 1 pg/ml = 1 ng/L: amounts in ng (exenatide)
+        mg_Conv  <- 1e-6
+        mcg_Conv <- 1e-3
+        ng_Conv  <- 1
+      },
       mOsm = {                 # An osmotic agent: amounts in mOsm, Cp in mOsm/L
         # 1 mOsm is molecularWeight mg of a solute that does not dissociate,
         # so a dose in mg divided by mg_Conv is a dose in mOsm.

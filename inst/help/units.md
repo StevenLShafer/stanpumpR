@@ -8,16 +8,17 @@
 
 ## Concentrations
 
-Each drug is plotted in the concentration units given in the drug library: **mcg/mL** (micrograms per millilitre, equal to mg/L) or **ng/mL** (nanograms per millilitre, equal to mcg/L). The inhaled agents are in **per cent of one atmosphere**, and MAC equivalents are dimensionless. Mannitol is plotted as the serum osmolality it produces, in **mOsm/kg**. The insulins, dosed in units, are plotted in **mcU/mL** (microunits per millilitre, equal to mU/L; about 6 pmol/L of human insulin). Each drug's page gives its unit; broadly:
+Each drug is plotted in the concentration units given in the drug library: **mcg/mL** (micrograms per millilitre, equal to mg/L) or **ng/mL** (nanograms per millilitre, equal to mcg/L); exenatide, whose concentrations are a thousand times lower, is in **pg/mL** (picograms per millilitre, equal to ng/L). The inhaled agents are in **per cent of one atmosphere**, and MAC equivalents are dimensionless. Mannitol is plotted as the serum osmolality it produces, in **mOsm/kg**. The insulins, dosed in units, are plotted in **mcU/mL** (microunits per millilitre, equal to mU/L; about 6 pmol/L of human insulin). Each drug's page gives its unit; broadly:
 
 | Drugs | Plotted in |
 |---|---|
 | propofol, ketamine, midazolam, etomidate, remimazolam, morphine, pethidine, methadone, rocuronium, sugammadex, the local anesthetics, the antibiotics, hydrocortisone, methylprednisolone, amiodarone, and the oral analgesics and antiseizure drugs other than celecoxib and tiagabine | mcg/mL |
 | remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, vecuronium, cisatracurium, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics; semaglutide, tirzepatide, liraglutide, empagliflozin, ertugliflozin and glyburide | ng/mL |
 | metformin | mcg/mL |
+| exenatide | pg/mL |
 | the insulins | mcU/mL |
 
-Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses of one plotted in ng/mL to micrograms, and insulin units to milliunits before simulation; volumes are in litres, so concentration comes out in the plotted unit.
+Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses of one plotted in ng/mL to micrograms, doses of one plotted in pg/mL to nanograms, and insulin units to milliunits before simulation; volumes are in litres, so concentration comes out in the plotted unit.
 
 ## Dose units
 

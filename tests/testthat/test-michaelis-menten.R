@@ -97,3 +97,72 @@ test_that("units it cannot represent are refused", {
   PK <- mmPK()
   expect_error(advanceMichaelisMenten(mmDose(0, 10, "mg IN"), PK, 100), "cannot simulate")
 })
+
+# The extensions for exenatide (R/drugs_exenatide.R): a parallel linear
+# clearance, a peripheral compartment, and the sequential zero-order then
+# saturable subcutaneous absorption.
+scPK <- function(v1 = 5, v2 = 7, cl2 = 0, clLinear = 0.08, vmax = 1e-9,
+                 km = 1e9, fr = 0.6, tau = 80, kaMax = 200, kmKa = 2e4, F = 1)
+{
+  list(
+    PK = list(default = list(v1 = v1, v2 = v2, cl2 = cl2)),
+    michaelisMenten = list(
+      vmax = vmax, km = km, clLinear = clLinear,
+      saturableSC = list(fraction = fr, duration = tau, kaMax = kaMax,
+                         kmKa = kmKa, bioavailability = F)
+    )
+  )
+}
+scDose <- function(Time, Dose, Units)
+{
+  d <- mmDose(Time, Dose, Units)
+  d$RA <- doseRoute(Units) == ROUTE_SC
+  d
+}
+
+test_that("with kmKa and Km far above the amounts, SC is a box then a Bateman curve", {
+  V <- 5; CL <- 0.08; k <- CL / V
+  fr <- 0.6; tau <- 80; D <- 10000
+  kmKa <- 1e12; kaMax <- 0.01 * kmKa / fr     # ka = F fr kaMax / kmKa = 0.01
+  ka <- 0.01
+  PK <- scPK(v1 = V, clLinear = CL, fr = fr, tau = tau, kaMax = kaMax, kmKa = kmKa)
+  out <- advanceMichaelisMenten(scDose(0, D, "mcg SC"), PK, 1440)
+  R <- D * (1 - fr) / tau
+  box <- function(t) ifelse(t <= tau, R / CL * (1 - exp(-k * t)),
+                            R / CL * (1 - exp(-k * tau)) * exp(-k * (t - tau)))
+  depot <- function(t) ifelse(t >= tau, fr * D * ka / (V * (ka - k)) *
+                                (exp(-k * (t - tau)) - exp(-ka * (t - tau))), 0)
+  expect_equal(out$Cp, box(out$Time) + depot(out$Time), tolerance = 1e-6)
+})
+
+test_that("the peripheral compartment is the linear two-compartment model", {
+  v1 <- 5; v2 <- 7; CL <- 0.08; Q <- 0.06
+  PK <- scPK(v1 = v1, v2 = v2, cl2 = Q, clLinear = CL)
+  out <- advanceMichaelisMenten(scDose(0, 1000, "mg"), PK, 1440)
+  k10 <- CL / v1; k12 <- Q / v1; k21 <- Q / v2
+  b <- k10 + k12 + k21
+  l <- c(b + sqrt(b^2 - 4 * k10 * k21), b - sqrt(b^2 - 4 * k10 * k21)) / 2
+  A <- c((k21 - l[1]) / (l[2] - l[1]), (k21 - l[2]) / (l[1] - l[2])) / v1
+  exact <- 1000 * (A[1] * exp(-l[1] * out$Time) + A[2] * exp(-l[2] * out$Time))
+  expect_equal(out$Cp, exact, tolerance = 1e-6)
+})
+
+test_that("without elimination every SC dose reaches the body in full", {
+  PK <- scPK(v1 = 5, v2 = 7, cl2 = 0.06, clLinear = 0, kmKa = 16900, kaMax = 213)
+  out <- advanceMichaelisMenten(scDose(c(0, 720), c(10000, 5000), c("mcg SC", "mcg SC")),
+                                PK, 14 * 1440)
+  # at equilibrium the two compartments share one concentration
+  expect_equal(tail(out$Cp, 1) * (5 + 7), 15000, tolerance = 1e-6)
+})
+
+test_that("an SC rate, or SC without the block, is refused", {
+  PK <- scPK()
+  expect_error(advanceMichaelisMenten(scDose(0, 1, "mcg/hr SC"), PK, 600),
+               "cannot simulate")
+  expect_error(advanceMichaelisMenten(scDose(0, 1, "mcg SC"), mmPK(), 600),
+               "cannot simulate")
+  bad <- scPK(); bad$michaelisMenten$saturableSC$duration <- 0
+  expect_error(validateMichaelisMenten(bad$michaelisMenten, "x"), "saturableSC")
+  bad <- scPK(); bad$michaelisMenten$clLinear <- -1
+  expect_error(validateMichaelisMenten(bad$michaelisMenten, "x"), "clLinear")
+})

@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Numerical engine: one compartment with Michaelis-Menten elimination
+# Numerical engine: Michaelis-Menten elimination (one or two compartments)
 # -----------------------------------------------------------------------------
 # Provenance
 # ----------
@@ -45,11 +45,27 @@
 #     intramuscular depot absorbed at ka_IM; given as a rate ("mg PE/min") it
 #     is a running input to the conversion compartment until the next such row.
 #
+#   - a subcutaneous dose, for a drug whose block carries saturableSC
+#     (exenatide, R/drugs_exenatide.R; Cirincione 2017): a share F (1 - fr)
+#     of the dose enters the central compartment at a constant rate over the
+#     next `duration` minutes, and the rest, D (1 - F (1 - fr)), then enters
+#     a depot that empties into the central compartment at the saturable rate
+#     F fr kaMax S / (kmKa + S).  The doses share the depot.
+#
 # Each dose is multiplied by its SALT FACTOR before it enters: the mass of the
 # modelled moiety in a unit of what was given (phenytoin sodium is 0.92
 # phenytoin acid by mass; see R/drugs_phenytoin.R).  The factors are in the
 # model's michaelisMenten block, keyed "IV", "PE", "default" (the default oral
 # form) and the names of the further oral formulations.
+#
+# DISPOSITION
+# ===========
+# The central compartment is the PK set's v1, eliminated by the saturable
+# pathway and, when the block carries clLinear (volume per minute), by a
+# parallel linear one.  A PK set with a positive cl2 adds a peripheral
+# compartment of volume v2 (exenatide); phenytoin's cl2 is 0, which leaves
+# it out.  The PK set's cl1 is not read: it holds the low-concentration
+# limit for the help tables.
 #
 # STEP SIZE
 # =========
@@ -95,6 +111,22 @@ validateMichaelisMenten <- function(mm, drug)
   if (!is.null(mm$kConversion) &&
       !(is_valid_number(mm$kConversion) && mm$kConversion > 0))
     stop("Invalid michaelisMenten for ", drug, ": kConversion must be positive.")
+  if (!is.null(mm$clLinear) &&
+      !(is_valid_number(mm$clLinear) && mm$clLinear >= 0))
+    stop("Invalid michaelisMenten for ", drug, ": clLinear must be zero or positive.")
+  sc <- mm$saturableSC
+  if (!is.null(sc)) {
+    ok <- is.list(sc) &&
+      is_valid_number(sc$fraction, 0, 1) &&
+      is_valid_number(sc$duration) && sc$duration > 0 &&
+      is_valid_number(sc$kaMax) && sc$kaMax > 0 &&
+      is_valid_number(sc$kmKa) && sc$kmKa > 0 &&
+      is_valid_number(sc$bioavailability, 0, 1) && sc$bioavailability > 0
+    if (!ok)
+      stop("Invalid michaelisMenten for ", drug, ": saturableSC needs a fraction ",
+           "and a bioavailability in [0, 1] (bioavailability above 0), and a ",
+           "positive duration (min), kaMax (mass/min) and kmKa (mass).")
+  }
   mm
 }
 
@@ -130,6 +162,11 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   V <- pkSet$v1
   vmax <- mm$vmax
   km <- mm$km
+  clLinear <- if (is.null(mm$clLinear)) 0 else mm$clLinear
+  q <- if (is.null(pkSet$cl2)) 0 else pkSet$cl2
+  k12 <- if (q > 0) q / V else 0
+  k21 <- if (q > 0) q / pkSet$v2 else 0
+  sc <- mm$saturableSC
   salt <- function(key) {
     s <- mm$saltFactor[[key]]
     if (is.null(s)) 1 else s
@@ -145,19 +182,24 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   forms <- c("default", names(PK$oralFormulations))
   absorption <- lapply(forms, function(f) {
     set <- if (f == "default") pkSet else PK$oralFormulations[[f]][[PK_EVENT_DEFAULT]]
-    list(ka = set$ka_PO, F = set$bioavailability_PO, tlag = set$tlag_PO,
-         salt = salt(f))
+    # A drug with no oral route (exenatide) has no oral depot to fill.
+    orZero <- function(v, zero = 0) if (is.null(v)) zero else v
+    list(ka = orZero(set$ka_PO), F = orZero(set$bioavailability_PO, 1),
+         tlag = orZero(set$tlag_PO), salt = salt(f))
   })
   names(absorption) <- forms
   oralForm <- ifelse(!is.na(formulation) & formulation %in% forms, formulation,
                      "default")
 
   # States: the oral depots, the intramuscular depot of the prodrug, the
-  # prodrug's conversion compartment, and the central amount.
+  # prodrug's conversion compartment, the central amount, the peripheral
+  # amount and the saturable subcutaneous depot.
   nOral <- length(forms)
   iIM <- nOral + 1
   iConv <- nOral + 2
   iC <- nOral + 3
+  iP <- nOral + 4
+  iS <- nOral + 5
   ka <- c(vapply(absorption, function(a) a$ka, numeric(1)),
           if (is.null(mm$ka_IM)) 0 else mm$ka_IM)
   kc <- if (is.null(mm$kConversion)) 0 else mm$kConversion
@@ -189,7 +231,16 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     fIM <- if (is.null(mm$bioavailability_IM)) 1 else mm$bioavailability_IM
     addJump(peIM, t0 + lagIM, rep(iIM, length(t0)), D * fIM * salt("PE"))
   }
-  other <- !(isOral | ivBolus | peBolus | peIM | rate)
+  # A subcutaneous dose: its zero-order share is a box of rate (scRateAt()
+  # below), the rest arrives in the saturable depot when the box ends.
+  isSC <- route == ROUTE_SC & !rate & !is.null(sc)
+  if (any(isSC)) {
+    tau <- sc$duration
+    addJump(isSC, t0 + tau, rep(iS, length(t0)),
+            D * salt("SC") * (1 - sc$bioavailability * (1 - sc$fraction)))
+  }
+  other <- !(isOral | ivBolus | peBolus | peIM | isSC | rate) |
+    (rate & route != ROUTE_IV)
   if (any(other & D != 0))
     stop("The Michaelis-Menten engine cannot simulate units: ",
          paste(unique(units[other & D != 0]), collapse = ", "))
@@ -197,8 +248,8 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # Two running rates, each set by its own rows until the next: the drug
   # intravenously (into the central compartment) and the prodrug (into the
   # conversion compartment).
-  ivRate <- rate & !pe
-  peRate <- rate & pe
+  ivRate <- rate & !pe & route == ROUTE_IV
+  peRate <- rate & pe & route == ROUTE_IV
 
   # The time line: every dose time and arrival, and the instant before each.
   knots <- unique(c(t0, jumps$time))
@@ -217,10 +268,22 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   }
   ivRateLine <- rateAt(ivRate, timeLine) * salt("IV")
   peRateLine <- rateAt(peRate, timeLine) * salt("PE")
+  # The subcutaneous boxes add: each runs over [t0, t0 + duration).  Every
+  # box edge is on the time line (the depot arrivals are jumps), so the rate
+  # at the start of a step holds through it.
+  scRateLine <- rep(0, L)
+  for (k in which(isSC & D != 0)) {
+    inBox <- timeLine >= t0[k] & timeLine < t0[k] + sc$duration
+    scRateLine[inBox] <- scRateLine[inBox] + D[k] * salt("SC") *
+      sc$bioavailability * (1 - sc$fraction) / sc$duration
+  }
 
   jumpAt <- match(jumps$time, timeLine)
   if (anyNA(jumpAt[jumps$time <= maximum]))
     stop("Internal error: a dose time is missing from the time line.")
+
+  scAbsorption <- if (is.null(sc)) function(S) 0 else
+    function(S) sc$bioavailability * sc$fraction * sc$kaMax * S / (sc$kmKa + S)
 
   deriv <- function(x, rIV, rPE) {
     C <- x[iC] / V
@@ -228,19 +291,22 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     out <- ka * x[seq_len(iIM)]
     dx[seq_len(iIM)] <- -out
     dx[iConv] <- out[iIM] + rPE - kc * x[iConv]
-    dx[iC] <- sum(out[seq_len(nOral)]) + kc * x[iConv] + rIV -
-      vmax * C / (km + C)
+    fromS <- scAbsorption(x[iS])
+    dx[iS] <- -fromS
+    dx[iP] <- k12 * x[iC] - k21 * x[iP]
+    dx[iC] <- sum(out[seq_len(nOral)]) + kc * x[iConv] + rIV + fromS -
+      vmax * C / (km + C) - clLinear * C - k12 * x[iC] + k21 * x[iP]
     dx
   }
 
-  x <- numeric(iC)
+  x <- numeric(iS)
   Cp <- numeric(L)
   for (i in seq_len(L)) {
     if (i > 1) {
       dt <- timeLine[i] - timeLine[i - 1]
       n <- max(1L, ceiling(dt / MM_MAX_STEP))
       h <- dt / n
-      rIV <- ivRateLine[i - 1]
+      rIV <- ivRateLine[i - 1] + scRateLine[i - 1]
       rPE <- peRateLine[i - 1]
       for (k in seq_len(n)) {
         k1 <- deriv(x, rIV, rPE)
