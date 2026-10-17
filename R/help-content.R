@@ -105,6 +105,7 @@ helpStaticPages <- function() {
 
     "investigators",            "The investigators",               "people",
     "history",                  "From CATIA to stanpumpR",         "people",
+    "opentci",                  "stanpumpR and Open TCI",          "people",
     "offset",                   "TCI and the offset of drug effect", "people",
 
     "repository",               "What is in the repository",       "project",
