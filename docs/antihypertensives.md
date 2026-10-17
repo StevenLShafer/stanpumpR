@@ -51,7 +51,12 @@ four cases examined it is decisive, and in one it is not.
 The specification's implementation sequence asks for the Tsai azilsartan and
 chlorthalidone model, the Hwang carvedilol model and the Tatipalli
 spironolactone model to be ported "from one internally consistent source at a
-time". That cannot be done from this container.
+time". Two of those three cannot be done from this container. The Hwang
+carvedilol model **can**, and was: it is open access in PubMed Central, the one
+channel that works here, and section 8 records the port and what its full text
+settled. This section was written before that was discovered, and the first
+lesson of it is that "unreachable" deserves re-testing per paper rather than
+per publisher.
 
 `WebFetch` fails DNS resolution for every host, and the egress proxy returns
 a policy denial for Wiley, PubMed, PubMed Central, NCBI E-utilities, MDPI,
@@ -63,22 +68,33 @@ So the sources split three ways:
 
 | Reachability | Sources | Consequence |
 |---|---|---|
-| Full text read | Hammer 2008 paediatric fenoldopam; Tatipalli 2021 spironolactone (narrative only, tables stripped) | Numbers verified, or structure verified with the table missing |
-| Abstract only | Ericsson 1999 clevidipine; Bailey 2002 clevidipine; Campanero 2008 terazosin; Donnelly 1993 amlodipine; Sum 1983 esmolol; Tsai 2016 azilsartan/chlorthalidone | Whatever is in the abstract is verified; the parameter tables are not |
+| Full text read | Hammer 2008 paediatric fenoldopam; **Hwang 2023 carvedilol**; Tatipalli 2021 spironolactone (narrative only, tables stripped) | Numbers verified, or structure verified with the table missing |
+| Abstract only | Ericsson 1999 clevidipine; Bailey 2002 clevidipine; Campanero 2008 terazosin; Donnelly 1993 amlodipine; Sum 1983 esmolol; Tsai 2016 azilsartan/chlorthalidone; Van Wart 2013 hydrochlorothiazide and furosemide | Whatever is in the abstract is verified; the parameter tables are not |
 | Unreachable | everything else in the ledger | The handoff's transcription stands unchecked |
+
+Two cautions about that table, both learned the hard way. A paper can be **in**
+PubMed Central and still have no full text there: Ericsson 1999 is PMC2014189
+and the server returns its abstract with an empty body, so deposition is not
+readability. And the "abstract only" row is worth more than it sounds --
+reading those abstracts systematically, rather than treating the whole Wiley
+set as lost, verified five numbers and supplied two the handoff never had.
+Section 9 records which, and the rule it suggests: read the abstract before
+asking anyone for the paper.
 
 Every number is therefore labelled in
 `inst/extdata/antihypertensiveParameters.csv` with how it was checked:
 `primary_full_text`, `primary_abstract`, `derived_here` or
-`handoff_unverified`. 39 of the 95 catalogued numbers are verified or derived
-from verified numbers; 56 are not. A test asserts that **no record this
-package executes depends on an unverified number**.
+`handoff_unverified`. Of the 101 catalogued numbers, 56 are verified or derived
+from verified numbers -- 17 from a primary full text, 34 from a primary
+abstract and 5 derived here -- and 45 are not. A test asserts that **no record
+this package executes depends on an unverified number**.
 
 This is not a complaint about the environment. It is the reason the
-implemented surface is two drugs and four endpoint relations rather than the
+implemented surface is three drugs and four endpoint relations rather than the
 six or seven ports the specification sketches, and it is the single thing to
-fix before the next round: library copies of about six PDFs would move more
-records than any amount of further work here.
+fix before the next round: library copies of a handful of PDFs would move more
+records than any amount of further work here. **Section 9 says which, in what
+order, and what each one unblocks.**
 
 ---
 
@@ -257,6 +273,8 @@ independent reported quantities, and the decomposition must also be stable.
 | Fenoldopam, adults (Frederickson) | >1C | CL, Vd, half-life, mutually inconsistent in 1C | Underdetermined. Not implemented |
 | Clevidipine, postoperative (Bailey) | 3C, 6 parameters | CL, one volume of unstated kind, one half-life = **3** | Underdetermined. Not implemented |
 | Nicardipine infusion (label) | 3C, 6 parameters | 3 half-lives, CL, non-compartmental Vd = 5, and the Vd is not a compartment | Underdetermined. Not implemented |
+| Hydrochlorothiazide (Van Wart) | 2C, 4 parameters | non-renal CL 2.44 + renal CL 18.3 L/h, both half-lives 1.6 and 14.8 h = **3** | Short by exactly **one volume**. Not implemented |
+| Furosemide (Van Wart) | 3C, 6 parameters | non-renal CL, renal CL, F = **3**, no half-life and no volume | Underdetermined. Not implemented |
 
 The useful generalisation: for a two-compartment model, clearance and
 steady-state volume plus **both** half-lives is enough and plus only the
@@ -264,17 +282,28 @@ terminal half-life is not. That is the difference between clevidipine and
 hydralazine, and it is worth checking before concluding that any record is
 unavailable.
 
+The hydrochlorothiazide row is the clearest example of the rule paying off.
+The two clearances and the two half-lives were in the abstract all along; the
+one quantity missing is a volume, V1 or Vss, either of which closes the system.
+It is also the reason that record is worth a PDF rather than a re-reading: a
+single number finishes it. One caution before anyone finishes it from a table:
+with oral-only dosing, a volume is apparent in F unless the urinary data pin F
+independently, and whether this fit's volumes are apparent or absolute is
+itself one of the things the parameter table has to settle.
+
 ---
 
 ## 5. What was implemented
 
-**Two drugs, both plotting concentration.** `clevidipine` (whole blood, ng/mL,
-`R/drugs_clevidipine.R`) and `fenoldopamPediatric` (plasma, ng/mL,
-`R/drugs_fenoldopamPediatric.R`), in a new `Antihypertensives` category. The
+**Three drugs, all plotting concentration.** `clevidipine` (whole blood,
+ng/mL, `R/drugs_clevidipine.R`), `fenoldopamPediatric` (plasma, ng/mL,
+`R/drugs_fenoldopamPediatric.R`) and `carvedilol` (plasma, ng/mL,
+`R/drugs_carvedilol.R`, added 2026-10-17 together with the zero-order release
+mode of section 8), in a new `Antihypertensives` category. The
 paediatric fenoldopam model is named for its population, following
 `methylphenidatePediatric`, so it cannot be selected as an adult default;
-there is deliberately no adult `fenoldopam` entry. Neither drug has an effect
-site, a MEAC, or a blood-pressure output. Tests pin both switch positions of
+there is deliberately no adult `fenoldopam` entry. None of the three has an
+effect site, a MEAC, or a blood-pressure output. Tests pin both switch positions of
 the fat-free-mass scaling, the published half-lives, and the analytic fixtures
 the specification asks for: a bolus starting at dose over central volume
 (38.73 ng/mL per mg in the reference man) and an infusion approaching
@@ -287,7 +316,7 @@ records, one per publication, population and endpoint. Six are executable.
 `bp_simulation_enabled` is `FALSE` on all 105 and
 `external_validation_status` is `none` on all 105.
 
-**A parameter audit of 95 numbers**
+**A parameter audit of 101 numbers**
 (`inst/extdata/antihypertensiveParameters.csv`) with unit, matrix, population,
 endpoint, fitted/fixed/derived status, uncertainty, the uncertainty type the
 source itself names, the source URL, and the verification state of section 2.
@@ -325,20 +354,20 @@ blood-pressure endpoint exists for it to optimise against.
 
 ## 6. What to do next, in order of value per unit of work
 
-1. **Get six PDFs.** Tsai 2016 (J Clin Pharmacol 56:988-998) for `ka`, `Q`,
-   `V2/F`, the metabolite block, the covariate equations and the matrix; Sum
-   1983 for esmolol's individual-level volumes; Bailey 2002 for the logistic
-   slope and the kind of the 32.4 L volume; Ericsson 1999 for the response
-   coefficients; Campanero 2008 for the uncertainty type and the oral
-   parameters; Tatipalli 2021's table and differential-equation block. Each
-   unblocks a named record, and none needs new modelling.
-2. **Add a zero-order oral release mode.** Carvedilol's fit is complete and
-   blocked only by the engine: a lagged zero-order input is representable as a
-   short infusion of the apparent dose, so the natural home is an expansion in
-   `R/routes.R` alongside `expandOralPulses()`, not a new solver. That one
-   addition also opens the door to several extended-release products.
+1. **Get the PDFs, in the order section 9 sets out.** That list replaces the
+   one this item used to carry, which was assembled before the abstracts were
+   read systematically and had its priorities wrong in two places. Each paper
+   unblocks a named record and none needs new modelling. Hwang 2023 has come
+   off the list entirely: it is open access in PubMed Central, which the
+   PubMed server reaches even though the publisher's own host is blocked, and
+   section 8 records what its full text settled.
+2. ~~**Add a zero-order oral release mode.**~~ **Done**, 2026-10-17, and the
+   guess above was right: it is an expansion, not a new solver. See section 8.
 3. **Settle esmolol.** It is the antihypertensive an anaesthesiologist
-   titrates most often, and the only obstacle is one paper's individual data.
+   titrates most often. Its obstacle is conditioning rather than access -- the
+   abstract alone formally closes the system, as section 4 records -- so what
+   the full text is wanted for is the individual-level data, which would allow
+   a decomposition per subject instead of one from rounded summary half-lives.
 4. **Leave the blood-pressure layer until a record earns it.** The nearest
    candidates are not the famous drugs but the ones whose chain is almost
    complete in a single source.
@@ -352,3 +381,245 @@ the specification's own list, 69 products across the classes it names, and it
 should not be described as complete coverage of any formulary. Doing that
 comparison needs a formulary to compare against, which is a question for the
 clinician rather than the programmer.
+
+---
+
+## 8. The zero-order oral release mode, and carvedilol (2026-10-17)
+
+Added at the user's request, after the work above. Two separate things
+happened: a source turned out to be reachable, and the engine gained a
+capability.
+
+### 8.1 The source was verifiable after all
+
+Section 2 put Hwang 2023 among the unreachable papers, because the publisher's
+host is blocked here. It is open access and deposited in PubMed Central as
+PMC10244018, which the PubMed server does serve, so its full text was read and
+Tables 2 and 3 transcribed from it.
+
+Every one of the handoff's carvedilol numbers is **confirmed**: apparent
+clearance 153 L/h, apparent volumes 440 and 754 L, apparent intercompartmental
+clearance 41.3 L/h, release duration 0.383 h, lag 0.215 h, the clearance
+multiplier (the paper fits the effect as 0.328, so the multiplier is
+1 − 0.328 = 0.672) and the inhibitory concentration of 16.5 ng/mL. The
+relative standard errors and bootstrap intervals are now recorded alongside
+them. This is the one record in this work whose transcription could be checked
+in full, and it was right throughout.
+
+Three corrections to the handoff's *description*, none to its numbers:
+
+| Handoff said | The paper says |
+|---|---|
+| "healthy Korean men, single 20 mg" | **21** healthy Korean men, a single **12.5 mg** dose then once-daily **25 mg** |
+| clearance multiplier 0.672 for the `*10/*10` group | the fitted parameter is 0.328 for the group the paper calls intermediate metaboliser 2; the allele names could not be read from the machine-readable text, so the registry names the group rather than the diplotype |
+| nothing about covariates | age, height and weight were all screened and **none** was significant, so a port must supply its own body-size convention |
+
+The paper also reports the clearance effect as 32.8% in its results and
+abstract and 32.7% in its discussion, a small internal inconsistency worth
+knowing before quoting either.
+
+### 8.2 The engine capability, which needed no new solver
+
+A zero-order oral fit releases the dose at a constant rate over a duration
+instead of with a rate constant, and the first-order extravascular path cannot
+represent that. The guess in section 6 was that this would be an expansion
+rather than a solver, and that proved right.
+
+The package already classifies a rate unit carrying the PO route word
+(`mg/day PO`, which amiodarone uses) as an infusion on the drug's apparent oral
+parameters, with neither an absorption constant nor a bioavailability applied.
+A zero-order oral dose is exactly that infusion, of finite length. So
+`R/oral-zero-order.R` rewrites each such dose into the rate rows that deliver
+it, in the same place and the same way that `expandScheduledDoses()` and
+`expandOralPulses()` rewrite theirs, and the dose then reaches the
+already-tested infusion path. A drug declares
+`oralZeroOrder = list(duration = <minutes>, lag = <minutes>)`.
+
+One subtlety was worth getting right rather than discovering later. The
+infusion rate on the time line is a **step** function: `simulationTimeGrid()`
+sums the rate rows falling at one instant and then holds the latest value. Two
+releases that overlap, which happens whenever the dosing interval is shorter
+than the release, therefore cannot be written as two independent pairs of rows,
+because the second pair's start would *replace* the first release instead of
+adding to it and silently lose drug. The expansion computes the total rate
+active at every breakpoint instead, and a test pins that the integrated rate
+still equals the dose given.
+
+The mode is refused alongside an active metabolite, several oral formulations,
+saturable oral or sublingual absorption, parallel systems, Michaelis-Menten
+elimination, an osmotic or molar dose basis, pulsed oral release, or an active
+first-order oral depot. Each of those reads or rewrites the oral dose rows
+itself, and a zero-order release leaves no row flagged `PO` for them to act
+on, so saturable absorption in particular would silently do nothing, a
+declared `ka_PO` would simply never be applied, and a pulse -- which
+`expandOralPulses()` turns into ordinary `PO` rows before this expansion sees
+them -- would be released at a constant rate rather than with its own
+absorption. Only a *positive* `ka_PO` or `ka_PO2` is a depot: a model writing
+`ka_PO = 0` to say it has none is not declaring two absorption models, and
+`tlag_PO` alone opens no depot, so neither is refused. The check runs before
+the other absorption checks so that a drug declaring both is told which
+combination is the problem.
+
+One combination the expansion refuses itself, rather than `getDrugPK()`,
+because it is a property of the dose table and not of the model: a standing
+oral **rate** row given at the same time as a release. The rows the expansion
+writes include the zero that ends the last release, and on a step function
+those would replace the standing rate rather than add to it, so the simulation
+would quietly lose the infusion. Totalling the two would be the fuller answer
+and no drug needs it, so the combination errors rather than being computed
+wrongly. A drug dosed only by an oral rate is untouched, which is how
+amiodarone's `mg/day PO` keeps working.
+
+### 8.3 Verification
+
+- The simulated curve matches an **independent** closed-form solution of the
+  two-compartment constant-rate input, written from the micro constants rather
+  than taken from the engine, to 2 parts in 10^14.
+- The area under the curve equals dose over apparent clearance, which is the
+  handoff's own fixture for an apparent model: the full dose arrives, with no
+  second multiplication by F.
+- The peak falls exactly at the end of release, as a constant input into a
+  linear system requires, and nothing is absorbed before the lag.
+- Overlapping, simultaneous, zero and text-valued doses each behave, and the
+  scheduled expansion composes with it, so `mg PO qd` releases every repeat.
+
+### 8.4 What is still not modelled for carvedilol
+
+The **CYP2D6 effect** is fitted, verified and deliberately not applied. The
+paper splits intermediate metabolisers into two groups and finds reduced
+clearance in only one of them, while the Patient Profile has a single
+`intermediate` value that cannot separate them; applying the reduction to every
+intermediate metaboliser would impose a third less clearance on the patients
+the source found normal. It is recorded in the audit as an unapplied covariate.
+
+The **pharmacodynamic endpoint** is the heart-rate rise caused by an injected
+dose of isoproterenol, modelled as competitive antagonism. Its coefficients are
+complete and verified (baseline 60.4 bpm, isoproterenol ED50 0.685 mcg, maximum
+effect 30.7 bpm, carvedilol IC50 16.5 ng/mL), but predicting it needs that
+challenge dose as a second input, which the package has no way to express. So
+the record is catalogued rather than offered, and its `execution_status` is
+`descriptive_only` with `pd_evidence` of `primary_fitted_full` — the one place
+in this registry where the evidence is complete and the obstacle is purely that
+the endpoint is not expressible here. It is not a blood pressure, and no
+antihypertensive in the library plots one.
+
+The **active metabolite** 4'-hydroxyphenyl carvedilol is thirteen times more
+potent than the parent at about a tenth of its concentration. The source
+measured metabolic ratios below 0.1 and modelled the parent alone; this model
+follows it, so the metabolite's contribution is absent rather than zero. The
+plotted analyte is **racemic** parent carvedilol, while beta-blocking activity
+belongs to the S enantiomer, so an S-enantiomer estimate from another study
+(the paper mentions 7.7 ng/mL) refers to a different quantity.
+
+---
+
+## 9. Which papers to obtain, and what each one unblocks (2026-10-17)
+
+Derived from the registry rather than from recollection, and after reading
+every abstract that PubMed serves. Ordered by what each PDF produces, not by
+how many unverified numbers it carries. Two entries moved from where the
+earlier list in section 6 put them, and both moves are noted.
+
+### The structural fact that explains the whole list
+
+This container's outbound proxy refuses Wiley, PubMed, PMC and MDPI at the
+tunnel. The one literature route that works is the PubMed MCP server, which
+serves **PubMed Central full text**. That is the whole explanation of which
+records are verified and which are not: anything deposited in PMC with a
+full-text body has been read, and anything behind Wiley has not. Hwang 2023
+(carvedilol) was read that way after being written off as unreachable, which
+is why section 8 exists. So the request to a human is narrow and specific:
+**the Wiley papers.**
+
+One trap worth recording, because it cost a false assumption: a paper can be
+*in* PMC and still have no full text there. Ericsson 1999 is PMC2014189, and
+the PubMed server returns its abstract with an empty body. Being in PMC is not
+the same as being readable.
+
+### Tier 1 -- each produces a new drug curve
+
+| Paper | Identifier | What is missing | What it yields |
+|---|---|---|---|
+| **Tsai 2016** | PMID 26632101, J Clin Pharmacol 2016;56:988-98, doi 10.1002/jcph.684 | `ka`, `Q`, `V2/F` for both drugs | azilsartan **and** chlorthalidone as concentration drugs |
+| **Van Wart 2013**, hydrochlorothiazide | PMID 24123104, Biopharm Drug Dispos 2013;34:527-39, doi 10.1002/bdd.1863 | one volume, V1 or Vss | hydrochlorothiazide, with a creatinine-clearance term |
+| **Van Wart 2013**, furosemide | PMID 24151207, doi 10.1002/bdd.1874 | the volumes and the Weibull parameters | furosemide |
+
+**Tsai 2016** is the largest single block, 11 unverified numbers across five
+records. The abstract already pins azilsartan's CL/F at 1.47 L/h and V1/F at
+3.98 L, chlorthalidone's at 4.13 L/h and 62.1 L, and the two Emax values at
+-15.6 and -23.9 mmHg. What it does not print is `ka`, and `ka` governs the
+shape of the entire oral curve: it appears in no accessible text or search
+result, which is why neither drug can be built from the abstract. Chlorthalidone
+is the bigger prize of the two, being a first-line thiazide-type diuretic with
+nothing in the library.
+
+**Hydrochlorothiazide** is new to this list and goes near the top, because
+section 4's identifiability rule says it is short by exactly one number. Its
+two clearances and both half-lives are in the abstract and have now been
+verified there; a single volume closes it. Before spending the effort, note
+that the oral input is a **Weibull** function, a shape this package's engine
+does not have, so part of the work is judging how far a first-order or
+zero-order approximation sits from it -- which needs the paper's figures, not
+only its table.
+
+**Furosemide** is the same group and the same obstacle. Its intravenous input
+is zero order, which the package already represents as an infusion, so the
+injection route is the nearer of its two to being portable.
+
+### Tier 2 -- completes a record or settles a question
+
+- **Ericsson 1999** (PMID 10336577, Br J Clin Pharmacol 1999;47:531-8, doi
+  10.1046/j.1365-2125.1999.00933.x). Clevidipine's own source, already
+  implemented from its abstract. Three gains: the five PK numbers rise from
+  `primary_abstract` to `primary_full_text`; the Emax and EC50 of the MAP-over-HR
+  resistance proxy become available; and -- the one most wanted -- the derived
+  V1, V2 and Q of section 5 can be checked against anything the paper prints,
+  where at present they rest on a single out-of-sample cross-check.
+- **Bailey 2002** (PMID 11981147, Anesthesiology 2002;96:1086-94, doi
+  10.1097/00000542-200205000-00010). A second, independent clevidipine dataset
+  in cardiac surgery patients: three compartments, V 32.4 L, CL 4.3 L/min,
+  early half-life 0.6 min, and C50 of 9.7 mcg/L for a MAP fall of 10% or more
+  and 26.3 for 20% or more. Wanted as an **external validation target** for the
+  healthy-volunteer model, and for the logistic slope. It would still not plot
+  a pressure: its endpoint is the probability of crossing a threshold.
+- **Sum 1983** (PMID 6617063, Clin Pharmacol Ther 1983;34:427-34, doi
+  10.1038/clpt.1983.193). Esmolol. This is the second entry that moved, and it
+  moved **down** from the earlier list and then back up to here, so the
+  reasoning is worth stating. Its abstract prints both half-lives (2.03 and
+  9.19 min), clearance 285 mL/min/kg, and an apparent volume of 3.43 L/kg that
+  it states is four times the central volume -- which formally closes a
+  two-compartment system, so the record is not blocked for want of numbers.
+  What it is blocked by is conditioning: that half-life pair with that
+  clearance puts V2 and Q on a knife edge where rounding in the printed
+  summaries swings them widely. A PDF cannot fix conditioning, which is why the
+  first instinct was to drop this paper. But the full text's value is not its
+  summary table: it is the **individual-level data**, which would allow a
+  decomposition per subject rather than one from rounded means, and that is a
+  different and better input. Worth obtaining, for that reason and not the
+  obvious one.
+- **Tatipalli 2021** (PMC8228864), the tables and Figure 1. The handoff's
+  labelling here is wrong in a way that would invert the model: it calls the
+  paper's V2 and V3 "V1/F and V2/F" when V2 is the parent's central volume.
+
+### Tier 3 -- not worth obtaining
+
+- **PAGE nicardipine 2007.** Six unverified numbers, the second-largest block,
+  and deliberately skipped: the specification itself said not to port it from
+  partial anchors, and the abstract and the poster disagree on clearance.
+- **Campanero 2008** and **Donnelly 1993.** These would settle whether a
+  printed plus-or-minus is a standard error, a standard deviation or a
+  coefficient of variation. They change a metadata field, not a number.
+
+### What reading the abstracts settled without any PDF
+
+Three numbers that the handoff supplied unverified are printed in their own
+abstracts and match exactly, so they are now `primary_abstract` rather than
+`handoff_unverified`: hydrochlorothiazide's non-renal clearance of 2.44 L/h and
+renal clearance of 18.3 L/h, and furosemide's bioavailability of 0.591. The
+supporting ladders match too -- hydrochlorothiazide's renal clearance of 10.5,
+5.47 and 2.70 L/h and furosemide's of 4.67, 3.11, 1.95 and 1.17 L/h, across
+creatinine clearances of 80, 50 and 30 and of 120, 80, 50 and 30 mL/min. Two
+further numbers, hydrochlorothiazide's two half-lives, were in the abstract and
+not in the handoff at all; they are now recorded, and they are what moved that
+record up Tier 1. The lesson for the next registry entry is to read the
+abstract before asking anyone for the paper.

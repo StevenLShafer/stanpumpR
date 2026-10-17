@@ -261,6 +261,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # oral doses at fixed delays; see R/oral-pulses.R.
     dose <- expandOralPulses(dose, PK$oralPulses, maximum)
 
+    # Zero-order oral release (carvedilol): each dose of the default oral form
+    # becomes the constant-rate rows that deliver it over the fitted duration,
+    # after its lag.  Those rows are rate units with the PO route word, so the
+    # classification below makes them an infusion on the drug's apparent oral
+    # parameters -- no absorption constant and no bioavailability, both being
+    # inside the apparent scale.  See R/oral-zero-order.R.
+    dose <- expandOralZeroOrder(dose, PK$oralZeroOrder, maximum)
+
     # Convert all doses to base units
     switch(
       PK$Concentration.Units,  # Units (per ml)

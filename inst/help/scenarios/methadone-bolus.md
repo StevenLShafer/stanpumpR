@@ -1,10 +1,10 @@
 ## What to look for
 
-The time axis runs for 24 hours. The effect site peaks at about **12 minutes**, as fast as fentanyl, and the plasma falls steeply for the first hour as methadone distributes into tissue. Then both lines flatten: methadone's clearance is about 0.1 L/min against a volume of several hundred litres, and its terminal half-life is well over a day.
+The time axis runs for 24 hours. The effect site peaks at about **10 minutes**, a little slower than fentanyl, and the plasma falls steeply for the first hour as methadone distributes into tissue. Then both lines flatten: methadone's clearance is about 0.1 L/min against a volume of several hundred litres, and its terminal half-life is well over a day.
 
 Hover at 1 hour and at 24 hours. The concentration is about 48 ng/mL at 1 hour (the plot gives methadone in mcg/mL, so the hover reads 0.048) and still about 17 ng/mL at 24 hours, a third of it, although almost all of the fall in the first hour was distribution, not elimination.
 
-A single 10 mg dose in a 70 kg patient peaks at about 56 ng/mL in the effect site, just short of MEAC (60 ng/mL), yet the drug is still largely in the body a day later. A second dose adds to what remains. This is why methadone accumulates with repeated dosing and why its steady state takes days to reach.
+A single 10 mg dose in a 70 kg patient peaks at about 57 ng/mL in the effect site, just short of MEAC (60 ng/mL), yet the drug is still largely in the body a day later. A second dose adds to what remains. This is why methadone accumulates with repeated dosing and why its steady state takes days to reach.
 
 ## Try next
 

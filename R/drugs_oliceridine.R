@@ -31,15 +31,17 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC <- NA
   reference <- "Dahan A et al., Anesthesiology 2020;133(3):559-568. https://pubmed.ncbi.nlm.nih.gov/32788558/"
 
-  # Effect site.  Dahan 2020 estimated the plasma-effect-site equilibration
-  # of the VENTILATORY effect (hypercapnic ventilatory response) with a
-  # half-life of 0.25 h, and did not quantify one for analgesia.  That is a
-  # half-life, so ke0 = ln 2 / 15 min = 0.0462 /min is supplied directly and
-  # getDrugPK() solves the time to peak effect after a bolus from it, about
-  # 26 min with these kinetics.  Until 2026-10-14 the 15 min was read as the
-  # time to peak effect itself, which implied an equilibration half-life of
-  # about 6 min; test-drugs-oliceridine.R pins the solved peak.
-  ke0 <- log(2) / 15
+  # Effect site.  Dahan 2020's library MEAC (27.9 ng/mL, drugDefaults) is the
+  # concentration that doubled cold-pressor tolerance, an analgesic end point,
+  # and for that end point the paper found oliceridine's equilibration too fast
+  # to estimate.  Its 0.25 h is the t1/2 ke0 of the ventilatory response, not
+  # a time to peak; read as one until 2026-10-12 it gave tPeak 15 min (as a
+  # t1/2 ke0 on this disposition it would give 26 min).  The tPeak now carries
+  # "too fast to measure" as a t1/2 ke0 of 1 min, which peaks a bolus at
+  # 4.4 min on this disposition: a stated assumption, not a measurement.
+  # Set by decision of Steven L. Shafer, 2026-10-12, in the opioid MEAC and
+  # tPeak audit.
+  tPeak <- 4.4
 
   default <- list(
     v1 = v1,
@@ -56,7 +58,7 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   return(
     list(
       PK = PK,
-      ke0 = ke0,
+      tPeak = tPeak,
       MEAC = MEAC,
       typical = typical,
       upperTypical = upperTypical,

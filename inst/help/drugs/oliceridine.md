@@ -8,7 +8,7 @@ None in the source. The parameters take the default [fat-free-mass scaling](help
 
 ### Effect site
 
-Dahan and colleagues estimated the equilibration between plasma and the effect site for the **ventilatory** effect only, with a half-life of 0.25 hours (15 minutes), and did not quantify one for analgesia. The drug file supplies that ke0 (0.046/min) and the time to peak effect after a bolus is solved from it, about 26 minutes with these kinetics. Until October 2026 the 15 minutes was read as the time to peak effect itself, which implied an equilibration half-life of about 6 minutes.
+The time to peak effect is 4.4 minutes. Dahan found oliceridine's analgesia (cold-pressor tolerance) equilibrated too fast to estimate; the model carries that as an equilibration half-time of 1 minute, which on this disposition peaks a bolus at 4.4 minutes. That is a stated assumption, not a measurement. The 0.25 hours (15 minutes) in the paper is the equilibration half-time of the ventilatory response, which the model used as a time to peak until October 2026.
 
 ### MEAC and typical concentrations
 

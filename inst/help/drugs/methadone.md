@@ -30,11 +30,11 @@ Two limits are worth stating plainly. First, the genotype here scales systemic c
 
 ### Effect site
 
-The time to peak effect is 11.3 minutes, kept from the earlier model, as Henthorn's study measured no effect. The combination is unusual: an effect site that equilibrates within minutes, like fentanyl's, attached to a disposition that takes days to clear. A dose of methadone works quickly and then stays. See [the methadone scenario](scenario:methadone-bolus).
+Henthorn's study measured no effect. The time to peak effect is 10 minutes after an intravenous bolus, from Kharasch and colleagues (*Clin Pharmacol Ther* 2004;76:250-269), whose volunteers reached peak pupil constriction 10 to 15 minutes after intravenous methadone; 10 minutes is the early edge of that window. It also lies inside the range Inturrisi and colleagues (*Clin Pharmacol Ther* 1987;41:392-401) found for analgesia in cancer patients: their typical equilibration half-time was 3.6 minutes, but individual values ran from 1.3 to 23 minutes, and with Inturrisi's own kinetics a 10-minute peak corresponds to 15 minutes, toward the slow end. ke0 is solved for Henthorn's disposition from that time to peak. (Until October 2026 the model used 11.3 minutes, attributed to Inturrisi but not in the paper.) The combination is unusual: an effect site that equilibrates within minutes, like fentanyl's, attached to a disposition that takes days to clear. A dose of methadone works quickly and then stays. See [the methadone scenario](scenario:methadone-bolus).
 
 ### MEAC and typical concentrations
 
-MEAC is 60 ng/mL of racemic methadone (0.06 mcg/mL in the plotted units); the shaded band is 48 to 120 ng/mL.
+MEAC is 60 ng/mL of racemic methadone (0.06 mcg/mL in the plotted units); the shaded band is 48 to 120 ng/mL. It is Gourlay's postoperative value, as quoted by Inturrisi; Inturrisi's own concentration for half-maximal analgesia, in opioid-tolerant cancer patients, was 290 ng/mL.
 
 ### Where to be careful
 
