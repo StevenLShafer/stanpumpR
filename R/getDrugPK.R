@@ -1135,8 +1135,8 @@ getDrugPK <- function(
   if (!is.null(zeroOrderSC) && zeroOrderSC$into == "depot") zeroOrderSC$share <- 1
   out$zeroOrderSC <- zeroOrderSC
   # TRUE when that release takes the oral doses (simCpCe() moves them onto
-  # the tissue depot).
-  out$zeroOrderPO <- !is.null(zeroOrderPO)
+  # the tissue depot); absent otherwise, so every other drug's PK is as it was.
+  if (!is.null(zeroOrderPO)) out$zeroOrderPO <- TRUE
   # Dose covariates, a property of each injection (the Tham insulins,
   # R/insulinTham.R): a bioavailability that scales each SC dose by its own
   # size, and, for a model whose disposition or ka depends on the dose, the
