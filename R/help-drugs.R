@@ -204,6 +204,9 @@ helpConcentrationUnits <- function(units) {
          "mOsm" = "mOsm/kg (serum osmolality)",
          # Intravenous calcium is plotted as the change in ionized calcium.
          "mmol" = "mmol/L (change in ionized calcium)",
+         # Heparin is measured by its activity, warfarin by the INR.
+         "IU" = "IU/mL (activity)",
+         "INR" = "INR (international normalized ratio)",
          as.character(units))
 }
 
@@ -722,7 +725,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         helpTableHTML(do.call(rbind, rows))
       )
       # Dose-dependent absorption: each oral or sublingual dose is scaled by
-      # its own fraction (oralSaturationFraction()), in one of three forms.
+      # its own fraction (oralSaturationFraction()), in one of five forms.
       saturable <- list(
         list(sat = pkRef$oralSaturation, F = d$bioavailability_PO, route = "Oral",
              doses = c(300, 600, 900, 1200)),
@@ -754,7 +757,20 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
             "</sup> with D the dose in mg. This carries the source's empirical power of the daily dose ",
             "on apparent clearance, and reproduces its steady-state exposure for once-daily dosing; the ",
             "\"fraction\" can exceed 1 above the reference dose, because it is an exposure scale on ",
-            "apparent parameters, not a physical bioavailability. ")
+            "apparent parameters, not a physical bioavailability. "),
+          reduction = paste0(
+            "<p>", s$route, " bioavailability <strong>falls with the dose</strong> above ",
+            helpFormatNumber(sat$D0), " mg, as 1 &minus; ", helpFormatNumber(sat$I50),
+            " &times; ((D &minus; ", helpFormatNumber(sat$D0), ") / ",
+            helpFormatNumber(sat$D50 - sat$D0), ")<sup>", helpFormatNumber(sat$exponent),
+            "</sup> with D the dose in mg, relative to a dose of ", helpFormatNumber(sat$D0),
+            " mg or less. "),
+          exponential = paste0(
+            "<p>", s$route, " bioavailability <strong>falls with the dose</strong>, as ",
+            helpFormatNumber(sat$Fmin), " + ", helpFormatNumber(sat$Fmax - sat$Fmin),
+            " &times; exp(&minus;ln 2 &times; D / ", helpFormatNumber(sat$D50),
+            ") with D the dose in mg. It is relative bioavailability on the apparent scale, ",
+            "and can exceed 1 for a small dose. ")
         )
         absorptionHTML <- paste0(
           absorptionHTML,

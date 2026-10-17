@@ -1088,6 +1088,14 @@ getDrugPK <- function(
   if (!is.null(X$parallelSystems))
     out$parallelSystems <- parallelSystemSets(X, PK, events, tPeakRoute, drug,
                                               covariates)
+  # Warfarin: the S- and R-enantiomer systems drive the INR through the
+  # turnover of the clotting factors rather than being added; simCpCe()
+  # combines them (R/inr.R).
+  # Skipped on the internal build of a parallel system (model supplied): the
+  # system's PK is all that is read from it, and it carries no inr block.
+  out$inr <- if (is.null(model))
+    validateINR(X$inr, drug, drugDefaults$Concentration.Units, X$parallelSystems)
+    else NULL
   # A pulsed extended-release formulation (Adderall XR): the fractions and
   # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
   out$oralPulses <- validateOralPulses(X$oralPulses, drug)

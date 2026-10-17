@@ -74,7 +74,9 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
     satNote <- function(sat) if (!is.null(sat)) switch(oralSaturationForm(sat),
       saturable = "saturable absorption",
       rising    = "bioavailability rises with dose",
-      power     = "exposure more than dose-proportional")
+      power     = "exposure more than dose-proportional",
+      reduction = "bioavailability falls with dose",
+      exponential = "bioavailability falls with dose")
     notes <- list(PO = satNote(model$oralSaturation), SL = satNote(model$sublingualSaturation))
     byRoute <- lapply(stats::setNames(extravascular, extravascular), function(r) {
       u <- units[route == r]

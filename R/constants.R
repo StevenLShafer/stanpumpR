@@ -210,8 +210,18 @@ CALCIUM_SALTS <- c("chloride", "gluconate")
 calciumBaseUnits <- c("g", "mg", "mg/kg", "mg/min", "mg/hr", "mg/kg/hr", "g/hr")
 calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
 
+# International units of activity: a drug whose CSV Concentration.Units is
+# "IU" (unfractionated heparin, R/drugs_heparin.R) is dosed in IU, and its
+# curve is activity in IU/mL.  Heparin's potency is defined by its activity,
+# not its mass, so these units have no conversion to mg, and simCpCe() refuses
+# a mass unit for such a drug and an IU unit for any other.  No route word:
+# they are intravenous.  (Claude Code, 2026-10-17, at the request of Steven L.
+# Shafer.)
+iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
-              slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits)
+              slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
+              iuUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -255,6 +265,7 @@ DRUG_CATEGORIES <- c(
   "Antiemetics",
   "Antiseizure",
   "Antipsychotics",
+  "Anticoagulants",
   "Other",
   "Illicit drugs"
 )

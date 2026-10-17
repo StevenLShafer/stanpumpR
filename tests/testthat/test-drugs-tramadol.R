@@ -340,7 +340,10 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "olanzapine", "droperidol", "droperidolIM",
     # Intravenous calcium (2026-10-13): the ionized calcium itself is the
     # end point, no ke0 (R/drugs_calcium.R).
-    "calcium"
+    "calcium",
+    # Anticoagulants (2026-10-17): plasma activity or concentration, or the
+    # INR; no effect site (R/drugs_heparin.R and the others).
+    "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin"
   ))
 })
 
