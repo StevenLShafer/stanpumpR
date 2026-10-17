@@ -1,4 +1,4 @@
-The **Time** panel of the left sidebar chooses how times are entered and displayed. Like the sidebar's other panels it opens when its header is clicked, and the header reads the settings out while it is closed, for example *Time (hours, actual time from 08:00)*. The simulation is identical whatever you choose: the calculation itself always works in minutes.
+The **Time** panel of the left sidebar chooses how times are entered and displayed. Like the sidebar's other panels it opens when its header is clicked, and the header reads the settings out while it is closed, for example *Time (hours, Actual time)*. The simulation is identical whatever you choose: the calculation itself always works in minutes.
 
 ## Time units
 

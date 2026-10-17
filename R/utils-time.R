@@ -173,17 +173,14 @@ timeEntryUnitText <- function(format) {
 }
 
 # The time settings in a few words, for the header of the collapsed Time
-# panel: "(days, elapsed time)", "(hours, actual time from 08:00)", or
-# "(hours, actual time)" while no procedure start can be read (the box is
-# empty, or holds a half-typed or impossible time such as 08:75, which the
-# plot does not use either: reqReference() in app_server.R).
-timeSettingsText <- function(format, referenceTime = NULL) {
-  display <- if (isClockFormat(format)) {
-    start <- if (is.character(referenceTime)) trimws(referenceTime[1]) else ""
-    if (isValidReferenceTime(start)) paste("actual time from", start) else "actual time"
-  } else {
-    "elapsed time"
-  }
+# panel: "(days, Elapsed time)", "(hours, Actual time)".  The display is
+# named as the Time Display selector names it (timeModeChoices()); the
+# procedure start is not repeated here, to keep the header to one line in
+# the sidebar.
+timeSettingsText <- function(format) {
+  choices <- timeModeChoices(format[["unit"]])
+  display <- names(choices)[match(format[["mode"]], choices)]
+  if (is.na(display)) display <- names(choices)[1]
   paste0("(", format[["unit"]], ", ", display, ")")
 }
 

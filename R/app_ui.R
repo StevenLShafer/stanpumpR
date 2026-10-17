@@ -376,7 +376,7 @@ app_ui <- function() {
               ),
 
               # The time settings.  The header reads them out while the panel
-              # is closed: "Time (hours, actual time from 08:00)".
+              # is closed: "Time (hours, Actual time)".
               bslib::accordion_panel(
                 span(
                   "Time",

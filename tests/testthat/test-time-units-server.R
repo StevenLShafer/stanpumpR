@@ -86,18 +86,19 @@ withTimes <- function(...) {
   dt
 }
 
-test_that("the Time panel's header follows the selectors and the procedure start", {
+test_that("the Time panel's header follows the selectors", {
   shiny::testServer(app_server, {
     sent <- recordMessages(session)
     startApp(session)
-    expect_equal(output$timeSummary, "(minutes, actual time from 08:00)")
+    expect_equal(output$timeSummary, "(minutes, Actual time)")
+    # the procedure start is not part of the header
     session$setInputs(referenceTime = "09:30")
-    expect_equal(output$timeSummary, "(minutes, actual time from 09:30)")
+    expect_equal(output$timeSummary, "(minutes, Actual time)")
     session$setInputs(timeMode = "relative")
-    expect_equal(output$timeSummary, "(minutes, elapsed time)")
+    expect_equal(output$timeSummary, "(minutes, Elapsed time)")
     session$setInputs(timeUnits = "days")
     echo(session, sent)
-    expect_equal(output$timeSummary, "(days, elapsed time)")
+    expect_equal(output$timeSummary, "(days, Elapsed time)")
   })
 })
 

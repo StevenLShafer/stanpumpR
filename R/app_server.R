@@ -320,10 +320,10 @@ app_server <- function(input, output, session) {
   })
 
   # The Time panel's header reads its settings out while it is collapsed:
-  # "(minutes, actual time from 08:00)", "(days, elapsed time)".  It follows
-  # the selectors, as the axis does.
+  # "(minutes, Actual time)", "(days, Elapsed time)".  It follows the
+  # selectors, as the axis does.
   output$timeSummary <- renderText({
-    timeSettingsText(selectorFormat(), input$referenceTime)
+    timeSettingsText(selectorFormat())
   })
 
   # The Doses card header says what the times in the table are:
