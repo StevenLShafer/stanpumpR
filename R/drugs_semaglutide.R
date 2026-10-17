@@ -41,13 +41,16 @@
 # WHY NOT THE TWO-COMPARTMENT FIT
 # ===============================
 # Overgaard et al. (Diabetes Ther 2019;10:649-662) fitted intravenous and
-# subcutaneous data together (two compartments, F 0.85).  Its 0.0348 L/h is
-# the clearance of a typical subject WITH type 2 diabetes at 85 kg, although
-# its reference profile is healthy, so a further x1.12 for diabetes would
-# count the effect twice; and its absorption rate and intercompartmental
-# clearance could not be read from the available text.  It stays in the
-# registry until its table is transcribed.  The oral tablets (Rybelsus) are a
-# different product with their own bioavailability and are not this drug.
+# subcutaneous data together: two compartments, F 0.847, CL 0.0348 L/h
+# (x 1.12 in type 2 diabetes), Vc 3.59 L, Q 0.304 L/h, Vp 4.10 L at 85 kg,
+# and a ka for each study strength of the product (0.0253/h at 1.34 mg/mL,
+# x 0.544 in diabetes).  Its reference is the healthy subject: the oral
+# paper built on it (Overgaard 2021) reports typical values that follow from
+# applying the diabetes factor once.  It is not added as a second
+# subcutaneous semaglutide because its absorption is fitted per study
+# formulation; it stays in the registry as the disposition model of oral
+# semaglutide.  The oral tablets (Rybelsus) are a different product with
+# their own bioavailability and are not this drug.
 #
 # CHECKS (reference subject, switch off)
 # ======================================
