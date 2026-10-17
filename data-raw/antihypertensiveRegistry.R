@@ -1206,8 +1206,6 @@ NIC_ID  <- "nicardipine__injection__iv__cardiac_surgery_adults__concentration__p
 NIC_URL <- "https://www.page-meeting.org/Abstracts/pharmacokinetics-pharmacodynamics-of-intravenous-bolus-nicardipine-in-adults-undergoing-cardiovascular-surgery/"
 SNP_ID  <- "nitroprusside__injection__iv__anaesthetised_children__map__barrett2015"
 SNP_URL <- "https://doi.org/10.3389/fphar.2015.00151"
-CARV_ID <- "carvedilol__ir_tablet__oral__healthy_korean_men__concentration__hwang2023"
-CARV_URL <- "https://jkms.org/pdf/10.3346/jkms.2023.38.e173"
 
 parameters <- rbind(parameters,
   # -- nicardipine: two irreconcilable sets ---------------------------------
@@ -1437,9 +1435,15 @@ parameters <- rbind(parameters,
 # Assemble, check and write
 # -----------------------------------------------------------------------------
 registry <- rbind(catalog, sources)
-registry <- registry[order(registry$drug, registry$model_id), ]
+# Radix order, so that the generated files are byte-identical whatever the
+# collation locale of the machine that rebuilds them: the default order() is
+# locale-dependent, and a C-locale and a UTF-8 run otherwise shuffle the rows
+# of a file under version control.
+registry <- registry[order(registry$drug, registry$model_id,
+                           method = "radix"), ]
 rownames(registry) <- NULL
-parameters <- parameters[order(parameters$model_id, parameters$parameter), ]
+parameters <- parameters[order(parameters$model_id, parameters$parameter,
+                               method = "radix"), ]
 rownames(parameters) <- NULL
 
 # Internal consistency, so the CSVs cannot be written in a broken state.  The

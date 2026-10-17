@@ -420,11 +420,28 @@ still equals the dose given.
 
 The mode is refused alongside an active metabolite, several oral formulations,
 saturable oral or sublingual absorption, parallel systems, Michaelis-Menten
-elimination, or an osmotic or molar dose basis. Each of those reads or rewrites
-the oral dose rows itself, and a zero-order release leaves no row flagged `PO`
-for them to act on, so saturable absorption in particular would silently do
-nothing. The check runs before the other absorption checks so that a drug
-declaring both is told which combination is the problem.
+elimination, an osmotic or molar dose basis, pulsed oral release, or an active
+first-order oral depot. Each of those reads or rewrites the oral dose rows
+itself, and a zero-order release leaves no row flagged `PO` for them to act
+on, so saturable absorption in particular would silently do nothing, a
+declared `ka_PO` would simply never be applied, and a pulse -- which
+`expandOralPulses()` turns into ordinary `PO` rows before this expansion sees
+them -- would be released at a constant rate rather than with its own
+absorption. Only a *positive* `ka_PO` or `ka_PO2` is a depot: a model writing
+`ka_PO = 0` to say it has none is not declaring two absorption models, and
+`tlag_PO` alone opens no depot, so neither is refused. The check runs before
+the other absorption checks so that a drug declaring both is told which
+combination is the problem.
+
+One combination the expansion refuses itself, rather than `getDrugPK()`,
+because it is a property of the dose table and not of the model: a standing
+oral **rate** row given at the same time as a release. The rows the expansion
+writes include the zero that ends the last release, and on a step function
+those would replace the standing rate rather than add to it, so the simulation
+would quietly lose the infusion. Totalling the two would be the fuller answer
+and no drug needs it, so the combination errors rather than being computed
+wrongly. A drug dosed only by an oral rate is untouched, which is how
+amiodarone's `mg/day PO` keeps working.
 
 ### 8.3 Verification
 

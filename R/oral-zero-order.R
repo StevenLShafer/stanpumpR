@@ -66,11 +66,15 @@
 # ============================
 # getDrugPK() refuses oralZeroOrder together with an active metabolite,
 # several oral formulations, saturable oral or sublingual absorption, parallel
-# systems, Michaelis-Menten elimination, or an osmotic or molar dose basis.
-# Each of those reads or rewrites the oral dose rows itself -- saturable
-# absorption scales rows flagged PO, which a rate row is not, so it would
-# silently do nothing -- and each needs its own thought about what a
-# rectangular input means for it.  None is needed for carvedilol.
+# systems, Michaelis-Menten elimination, an osmotic or molar dose basis,
+# pulsed oral release, or an active first-order oral depot (a positive ka_PO
+# or ka_PO2).  Each of those reads or rewrites the oral dose rows itself --
+# saturable absorption scales rows flagged PO, which a rate row is not, so it
+# would silently do nothing -- and each needs its own thought about what a
+# rectangular input means for it.  None is needed for carvedilol.  The one
+# combination the expansion itself refuses, because it is a property of the
+# dose table rather than of the model, is a standing oral RATE row beside a
+# release; see expandOralZeroOrder().
 # -----------------------------------------------------------------------------
 
 #' Check a drug's zero-order oral release block
@@ -129,6 +133,17 @@ expandOralZeroOrder <- function(dose, zeroOrder, maximum)
   isZero <- doseRoute(dose$Units) == ROUTE_PO & !isRateUnit(dose$Units) &
     is.na(doseFormulation(dose$Units))
   if (!any(isZero)) return(dose)
+  # A standing oral RATE row cannot be carried alongside a release.  The rate
+  # on the time line is a step function, so the rows written below -- which
+  # include the zero that ends the last release -- would replace that rate
+  # rather than add to it, and the simulation would quietly lose the
+  # infusion.  Totalling the two would be the fuller answer, and no drug
+  # needs it: refuse the combination rather than compute it wrongly.  Checked
+  # after the early return above, so a drug dosed only by an oral rate keeps
+  # the ordinary behaviour.
+  if (any(doseRoute(dose$Units) == ROUTE_PO & isRateUnit(dose$Units)))
+    stop("A zero-order oral release cannot be given with an oral rate at ",
+         "the same time.")
 
   duration <- zeroOrder$duration
   amountUnit <- unique(doseAmountUnit(dose$Units[isZero]))

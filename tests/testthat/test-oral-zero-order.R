@@ -192,10 +192,47 @@ test_that("the mode is refused alongside anything that rewrites the oral rows", 
         list(parallelSystems = list(list(name = "a", PK = list()))),
         list(michaelisMenten = list(vmax = 1, km = 1)),
         list(osmotic = list(molecularWeight = 182)),
-        list(molar = list(molecularWeight = 147))))
+        list(molar = list(molecularWeight = 147)),
+        list(oralPulses = list(list(fraction = 0.5, delay = 0),
+                               list(fraction = 0.5, delay = 240)))))
     expect_error(
       getDrugPK("carvedilol", 70, 170, 35, "male", model = base(extra)),
       "oralZeroOrder", info = names(extra)[1])
+})
+
+test_that("an active first-order oral depot is refused, a zero one is not", {
+  # A positive ka_PO beside a release would be silently ignored, because the
+  # expansion leaves no row flagged PO for the depot to act on.  A model that
+  # writes ka_PO = 0 to say it has no depot is not declaring two absorption
+  # models, and tlag_PO alone opens none, so neither is refused.
+  model <- function(...) list(
+    PK = list(default = c(list(v1 = 10, v2 = 10, v3 = 1,
+                               cl1 = 1, cl2 = 1, cl3 = 0), list(...))),
+    tPeak = 0,
+    oralZeroOrder = list(duration = 20)
+  )
+  expect_error(
+    getDrugPK("carvedilol", 70, 170, 35, "male", model = model(ka_PO = 0.02)),
+    "first-order oral depot")
+  expect_error(
+    getDrugPK("carvedilol", 70, 170, 35, "male", model = model(ka_PO2 = 0.02)),
+    "first-order oral depot")
+  expect_silent(
+    getDrugPK("carvedilol", 70, 170, 35, "male",
+              model = model(ka_PO = 0, tlag_PO = 10)))
+})
+
+test_that("a standing oral rate beside a release is refused", {
+  # The rate on the time line is a step function, so the rows the expansion
+  # writes would replace the standing rate rather than add to it.
+  dose <- data.frame(Drug = "x", Time = c(0, 0), Dose = c(25, 1),
+                     Units = c("mg PO", "mg/day PO"), stringsAsFactors = FALSE)
+  expect_error(expandOralZeroOrder(dose, list(duration = 20, lag = 0), 600),
+               "oral rate")
+  # An oral rate on its own is untouched: the early return comes first.
+  only <- dose[2, , drop = FALSE]
+  expect_equal(expandOralZeroOrder(only, list(duration = 20, lag = 0), 600),
+               only)
 })
 
 test_that("a dose table's own column types are tolerated", {
