@@ -481,7 +481,7 @@ app_ui <- function() {
                         htmltools::tagAppendAttributes(class = "micro mb-0"),
                       paste(
                         "Show evidence-labelled research models of drugs of",
-                        "abuse (for example diamorphine). Off by default. These",
+                        "abuse (for example cocaine or psilocybin). Off by default. These",
                         "are plasma-exposure estimates for research, not dosing",
                         "advice or safety thresholds."
                       ),

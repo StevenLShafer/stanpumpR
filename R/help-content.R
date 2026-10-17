@@ -88,6 +88,7 @@ helpStaticPages <- function() {
     "models/absorption",        "Oral, intramuscular, intranasal and regional anesthesia doses", "models",
     "models/metabolites",       "Active metabolites",              "models",
     "models/antidepressants",   "Antidepressant models and their limits", "models",
+    "models/illicit-drugs",     "Research models of drugs of abuse", "models",
     "models/pk-events",         "Events that change the kinetics", "models",
     "models/meac",              "MEAC: comparing opioids",         "models",
     "models/interaction",       "Propofol-opioid interaction",     "models",

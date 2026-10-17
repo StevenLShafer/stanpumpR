@@ -22,6 +22,6 @@ stanpumpR predicts drug concentrations. You describe a patient and a dosing regi
 
 ## A note on scope
 
-The library holds anesthetic and analgesic drugs, the inhaled anesthetics, local anesthetics, and perioperative antibiotics, corticosteroids, antiemetics and reversal agents, along with drugs taken over days to months: antidepressants, antipsychotics, stimulants, antiseizure drugs and amiodarone. Research models of drugs of abuse (diamorphine) are hidden unless **Show illicit drugs** above the dose table is ticked. See [All drugs](help:drugs/index). A few features are visible but not yet active; see [In development](help:in-development) for an honest list of what is done and what is not.
+The library holds anesthetic and analgesic drugs, the inhaled anesthetics, local anesthetics, and perioperative antibiotics, corticosteroids, antiemetics and reversal agents, along with drugs taken over days to months: antidepressants, antipsychotics, stimulants, antiseizure drugs and amiodarone. Research models of drugs of abuse (diamorphine, cocaine, methamphetamine, LSD and psilocybin) are hidden unless **Show illicit drugs** above the dose table is ticked; see [Research models of drugs of abuse](help:models/illicit-drugs). See [All drugs](help:drugs/index). A few features are visible but not yet active; see [In development](help:in-development) for an honest list of what is done and what is not.
 
 stanpumpR is a collaborative research project. If you would like to add a drug, a data set or an algorithm, see [Contributing](help:contributing).

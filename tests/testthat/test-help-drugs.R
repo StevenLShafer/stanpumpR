@@ -62,6 +62,9 @@ plasmaOnly <- c(
   "levetiracetam", "eslicarbazepine", "carbamazepine",
   # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
   "diamorphine",
+  # The opt-in illicit research models (2026-10-17) are plasma only: see
+  # inst/extdata/illicitRouteRegistry.csv and each drug's header.
+  "cocaine", "methamphetamine", "LSD", "psilocybin",
   # Antipsychotics: occupancy is a direct function of plasma, or no effect is
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
