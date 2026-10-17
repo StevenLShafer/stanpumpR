@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # Remifentanil: Eleveld 2017 below BMI 30 and in children, Kim 2017 for the
-# obese adult; Minto 1997 kept in the comments and run as a companion model
+# obese adult (Eleveld again where Kim's parameters are not positive); Minto 1997 kept in the comments and run as a companion model
 # (R/alternativeModels.R)
 # -----------------------------------------------------------------------------
 # PREGNANCY
@@ -48,14 +48,98 @@ remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   BMI <-  weight / (height / 100)^2
 
-  # Kim's model (below) is used at BMI 30 and above, the NIH obesity cutoff,
-  # but only in adults: Kim pooled adults aged 20 to 85, and Eleveld's model
-  # was fitted to ages from five days up, so an obese child stays on Eleveld,
-  # which scales with fat-free mass.  Before 2026-10-12 the switch had no age
+  # Kim's model is used at BMI 30 and above, the NIH obesity cutoff, but only
+  # in adults: Kim pooled adults aged 20 to 85, and Eleveld's model was fitted
+  # to ages from five days up, so an obese child stays on Eleveld, which
+  # scales with fat-free mass.  Before 2026-10-12 the switch had no age
   # condition, and a 5-year-old's clearance jumped 67% at BMI 30 (an audit
   # finding).  18 is stanpumpR's rule for "adult" here, not Kim's lower bound.
-  if (BMI < 30 || age < REMIFENTANIL_KIM_MIN_AGE)
+  #
+  # Kim's age terms are linear, so at the extremes (a short, light, elderly
+  # woman of BMI 30 or more: 100 cm, 35 kg, 88 years) V2 comes out negative.
+  # Where any of Kim's volumes or clearances is zero or negative the patient
+  # gets Eleveld's model instead, and the citation says why (issue #310).
+  useKim <- BMI >= 30 && age >= REMIFENTANIL_KIM_MIN_AGE
+  kimUndefined <- character(0)
+  if (useKim)
   {
+    kim <- remifentanilKim(weight, height, age, sex)
+    if (all(unlist(kim$parameters) > 0)) {
+      parameters <- kim$parameters
+      reference <- kim$reference
+    } else {
+      useKim <- FALSE
+      kimUndefined <- names(kim$parameters)[unlist(kim$parameters) <= 0]
+    }
+  }
+  if (!useKim)
+  {
+    parameters <- remifentanilEleveld(weight, height, age, sex)
+    reference <- "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
+    if (length(kimUndefined) > 0) {
+      reference <- paste0(reference, " (Kim's model for obesity gives a non-positive ",
+                          paste(toupper(kimUndefined), collapse = ", "),
+                          " for this patient, so Eleveld's is used)")
+    }
+  }
+  v1  <- parameters$v1
+  v2  <- parameters$v2
+  v3  <- parameters$v3
+  cl1 <- parameters$cl1
+  cl2 <- parameters$cl2
+  cl3 <- parameters$cl3
+
+  # Pregnancy (see the header): elimination clearance of either model.
+  if (isTRUE(pregnant)) {
+    cl1 <- cl1 * REMIFENTANIL_PREGNANCY_CL_FACTOR
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", REMIFENTANIL_PREGNANCY_CL_FACTOR)))
+  }
+
+default <- list(
+    v1 = v1,
+    v2 = v2,
+    v3 = v3,
+    cl1 = cl1,
+    cl2 = cl2,
+    cl3 = cl3
+  )
+
+  events <- c(PK_EVENT_DEFAULT)
+  PK <- sapply(events, function(x) list(get0(x)))
+
+  infusate_concentration <- 50
+  awake_concentration <- 1	# Desired Cp on emergence
+  weightAdjust <- TRUE
+  tPeak = 1.6 # Opioid simulation spreadsheet
+  MEAC <- 1
+  typical <- MEAC * 1.2
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
+  # The citation is set in the branch above, so that the References panel
+  # names the model actually computed: Eleveld 2017 below BMI 30, in every
+  # child, and where Kim's model is not defined; Kim 2017 for an adult at BMI
+  # 30 and above.  Minto 1997 (Anesthesiology 86:10-23, PMID 9009935), the
+  # model STANPUMP used, remains in the comments at the top of this file.
+
+  return(
+    list(
+      PK = PK,
+      tPeak = tPeak,
+      MEAC = MEAC,
+      typical = typical,
+      upperTypical = upperTypical,
+      lowerTypical = lowerTypical,
+      reference = reference
+    )
+  )
+}
+
+# Eleveld's remifentanil model (Anesthesiology 2017;126:1005-1018), from the
+# NONMEM control file of its digital supplement: volumes and clearances in L
+# and L/min for the patient.
+remifentanilEleveld <- function(weight, height, age, sex)
+{
   # Eleveld
   if (sex == SEX_MALE)
   {
@@ -133,10 +217,15 @@ remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE,
   cl2 =exp(THETA05) * M5
   cl3 =exp(THETA06) * M6
 
-  reference <- "Eleveld DJ et al., Anesthesiology 2017;126(6):1005-1018. https://pubmed.ncbi.nlm.nih.gov/28509794/"
 
-  } else {
+  list(v1 = v1, v2 = v2, v3 = v3, cl1 = cl1, cl2 = cl2, cl3 = cl3)
+}
 
+# Kim's remifentanil model for obesity (Anesthesiology 2017;126:1019-1032):
+# the parameters, which can be non-positive at the extremes of age and size,
+# and the citation.
+remifentanilKim <- function(weight, height, age, sex)
+{
   # Kim Model
   # Kim TK, Obara S, Egan TD, et al. Disposition of remifentanil in obesity: a
   # new pharmacokinetic model incorporating the influence of body mass.
@@ -162,51 +251,9 @@ remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE,
   cl2 <- 1.94 - 0.028 * (age - 37)
   cl3 <- 0.197
 
-  reference <- "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
 
-  }
-
-  # Pregnancy (see the header): elimination clearance of either model.
-  if (isTRUE(pregnant)) {
-    cl1 <- cl1 * REMIFENTANIL_PREGNANCY_CL_FACTOR
-    reference <- paste0(reference, "; ", pregnancyReference(
-      paste0("clearance x ", REMIFENTANIL_PREGNANCY_CL_FACTOR)))
-  }
-
-default <- list(
-    v1 = v1,
-    v2 = v2,
-    v3 = v3,
-    cl1 = cl1,
-    cl2 = cl2,
-    cl3 = cl3
-  )
-
-  events <- c(PK_EVENT_DEFAULT)
-  PK <- sapply(events, function(x) list(get0(x)))
-
-  infusate_concentration <- 50
-  awake_concentration <- 1	# Desired Cp on emergence
-  weightAdjust <- TRUE
-  tPeak = 1.6 # Opioid simulation spreadsheet
-  MEAC <- 1
-  typical <- MEAC * 1.2
-  lowerTypical <- MEAC * 0.8
-  upperTypical <- MEAC * 2.0
-  # The citation is set in the branch above, so that the References panel
-  # names the model actually computed: Eleveld 2017 below BMI 30 and in every
-  # child, Kim 2017 for an adult at BMI 30 and above.  Minto 1997 (Anesthesiology 86:10-23, PMID 9009935), the
-  # model STANPUMP used, remains in the comments at the top of this file.
-
-  return(
-    list(
-      PK = PK,
-      tPeak = tPeak,
-      MEAC = MEAC,
-      typical = typical,
-      upperTypical = upperTypical,
-      lowerTypical = lowerTypical,
-      reference = reference
-    )
+  list(
+    parameters = list(v1 = v1, v2 = v2, v3 = v3, cl1 = cl1, cl2 = cl2, cl3 = cl3),
+    reference = "Kim TK et al., Anesthesiology 2017;126(6):1019-1032. https://pubmed.ncbi.nlm.nih.gov/28509796/"
   )
 }

@@ -36,6 +36,26 @@ illicitDrugNames <- function(drugDefaults = getDrugDefaultsGlobal()) {
   drugDefaults$Drug[isIllicitDrug(drugDefaults$Drug, drugDefaults)]
 }
 
+#' The route and evidence registry for the illicit-drug models
+#'
+#' `inst/extdata/illicitRouteRegistry.csv`: one row per drug, analyte, route
+#' and formulation, saying what the human evidence for that route is and
+#' whether the library offers it.  Read by the help system (the models page
+#' names the analyte each drug plots) and by `test-illicit-registry.R`, which
+#' is the gate that keeps it honest.
+#'
+#' @returns the registry as a data frame, or an empty one when the file is
+#'   missing (an installed package without the extdata, which no test hits)
+#' @noRd
+illicitRouteRegistry <- function() {
+  path <- system.file("extdata", "illicitRouteRegistry.csv", package = "stanpumpR")
+  if (!nzchar(path) || !file.exists(path))
+    return(data.frame(drug = character(0), analyte = character(0),
+                      route = character(0), offered = character(0),
+                      stringsAsFactors = FALSE))
+  utils::read.csv(path, stringsAsFactors = FALSE)
+}
+
 #' The drugs offered when a drug is chosen, given the opt-in
 #'
 #' @param showIllicit is the illicit-drug opt-in on?

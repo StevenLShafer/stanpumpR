@@ -176,3 +176,22 @@ test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
   expect_match(remifentanil(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
   expect_no_match(remifentanil(70, 165, 30, "female")$reference, "Ansari")
 })
+
+test_that("an obese adult for whom Kim's model is not defined gets Eleveld's (issue #310)", {
+  # A woman of 100 cm, 35 kg (BMI 35), 88 years: Kim's linear age term takes
+  # V2 below zero, so Eleveld's model is used, and the citation says why.
+  kim <- remifentanilKim(35, 100, 88, "female")
+  expect_lt(kim$parameters$v2, 0)
+  x <- remifentanil(35, 100, 88, "female")
+  expect_equal(x$PK[[PK_EVENT_DEFAULT]], remifentanilEleveld(35, 100, 88, "female"))
+  expect_true(all(unlist(x$PK[[PK_EVENT_DEFAULT]]) > 0))
+  expect_match(x$reference, "^Eleveld DJ")
+  expect_match(x$reference, "Kim's model for obesity gives a non-positive V2", fixed = TRUE)
+  # getDrugPK() builds it without complaint
+  pk <- getDrugPK("remifentanil", 35, 100, 88, "female")$PK[[1]]
+  expect_true(all(c(pk$lambda_1, pk$lambda_2, pk$lambda_3) > 0))
+  # An ordinary obese adult keeps Kim's model, unchanged
+  y <- remifentanil(120, 170, 50, "male")
+  expect_match(y$reference, "^Kim TK")
+  expect_equal(y$PK[[PK_EVENT_DEFAULT]], remifentanilKim(120, 170, 50, "male")$parameters)
+})

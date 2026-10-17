@@ -88,6 +88,19 @@ subcutaneousToTissueDepot <- function(pkSet, drug)
   pkSet
 }
 
+#' The PK-set field holding a route's absorption rate constant
+#'
+#' `ka_<route>`, except that the tissue routes (SC and RA) share the tissue
+#' depot, whose rate is `ka_RA` (see the header of this file).
+#'
+#' @param route one of `DOSE_ROUTES` other than IV
+#' @returns the field name
+#' @keywords internal
+routeKaField <- function(route)
+{
+  if (route %in% TISSUE_ROUTES) "ka_RA" else paste0("ka_", route)
+}
+
 #' Which tissue route a drug model's PK sets use
 #'
 #' @param pkSets the `PK` list a drug model returns
