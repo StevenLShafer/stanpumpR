@@ -316,7 +316,7 @@ records, one per publication, population and endpoint. Six are executable.
 `bp_simulation_enabled` is `FALSE` on all 105 and
 `external_validation_status` is `none` on all 105.
 
-**A parameter audit of 95 numbers**
+**A parameter audit of 101 numbers**
 (`inst/extdata/antihypertensiveParameters.csv`) with unit, matrix, population,
 endpoint, fitted/fixed/derived status, uncertainty, the uncertainty type the
 source itself names, the source URL, and the verification state of section 2.
