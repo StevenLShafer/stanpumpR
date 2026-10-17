@@ -193,6 +193,36 @@ test_that("nothing this package executes rests on an unverified transcription", 
   expect_true(all(missing$estimate_status %in% ESTIMATE))
 })
 
+test_that("a number printed in its own abstract is verified against it", {
+  # Three of the handoff's numbers turned out to be in their abstracts, which
+  # PubMed serves even where the publisher's host is blocked, and they matched
+  # exactly.  They are evidence now, not pending transcription, and a rebuild
+  # must not quietly send them back to handoff_unverified.
+  abstractVerified <- list(
+    list(id = "hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
+         parameter = "non-renal CL", value = 2.44),
+    list(id = "hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
+         parameter = "renal CL", value = 18.3),
+    list(id = "furosemide__tablet_and_injection__oral__pooled_adults__concentration_and_urine__popPK",
+         parameter = "F", value = 0.591))
+  for (x in abstractVerified) {
+    row <- parameters[parameters$model_id == x$id &
+                        parameters$parameter == x$parameter, ]
+    expect_equal(nrow(row), 1, info = x$parameter)
+    expect_equal(row$value, x$value, info = x$parameter)
+    expect_equal(row$verification, "primary_abstract", info = x$parameter)
+    expect_equal(row$source_table_or_page, "abstract", info = x$parameter)
+  }
+  # Hydrochlorothiazide's two half-lives came from the abstract as well, and
+  # they are the reason section 4 can say that record is short by exactly one
+  # volume: with the clearances they give both eigenvalues.
+  hctz <- parameters[grepl("vanwart2013", parameters$model_id) &
+                       grepl("^half-life", parameters$parameter), ]
+  expect_equal(nrow(hctz), 2)
+  expect_equal(sort(hctz$value), c(1.6, 14.8))
+  expect_true(all(hctz$verification == "primary_abstract"))
+})
+
 test_that("an uncertainty keeps the type its source names, or says it was not reported", {
   # Hammer's are approximate standard errors, by the paper's own words
   hammer <- parameters[grepl("hammer2008", parameters$model_id) &
