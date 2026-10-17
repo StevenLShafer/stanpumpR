@@ -19,6 +19,7 @@ getDrugPK(
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
+  vkorc1 = VKORC1_DEFAULT,
   cyp2b6 = CYP2B6_DEFAULT,
   pregnant = FALSE,
   model = NULL
@@ -64,6 +65,9 @@ Passed only to drug models that declare it (escitalopram, citalopram).}
 
 \item{cyp2c9}{CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES};
 passed only to models that name it (phenytoin).}
+
+\item{vkorc1}{VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};
+passed only to models that name it (warfarin).}
 
 \item{cyp2b6}{CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
 passed only to models that name it (methadone).}

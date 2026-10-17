@@ -8,9 +8,11 @@
 # specification, with its predicted output, route, analyte and assay, its
 # readiness, the gate that must close before a pending model becomes a curve,
 # and a clickable primary source.  A model is marked implemented only where a
-# full, source-checked model is in the library (R/drugs_<name>.R, a row in
-# drugDefaults_global.csv, a unit test and a help page); everything else is a
-# research placeholder with an explicit readiness and a named blocking issue,
+# full, source-checked model is in the library: either its own selectable drug
+# (R/drugs_<name>.R, a row in drugDefaults_global.csv, a unit test and a help
+# page) or a companion overlay of one (R/alternativeModels.R, a unit test and a
+# help page), such as Hamberg's warfarin model beside Xue's.  Everything else is
+# a research placeholder with an explicit readiness and a named blocking issue,
 # never a plausible default.  This mirrors inst/extdata/antiseizureRegistry.csv.
 #
 # The parameter audit lists every numeric field of the implemented models with
@@ -63,6 +65,11 @@ registry <- rbind(
       "PO", "research_ready", "warfarin",
       "Eq.2 multiplicative C50_app confirmed against the published erratum (BCP 2017;83:1602); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
       "https://doi.org/10.1111/bcp.13157"),
+  reg("warf_hamberg_2007", "vitamin K antagonist",
+      "oral", "S/R-warfarin (mg/L) -> INR", "INR (two-chain transit compartments)",
+      "PO", "research_ready", "warfarin",
+      "Implemented as the Hamberg companion of warfarin (Graph Options, R/alternativeModels.R), a second INR line, not a separate selectable curve; Tables 2-4 and Appendix eq 8-10 read from the typeset original (CYP2C9 and age on CL_S, VKORC1 on EC50, ktr = 1/MTT, INR = BASE + 20(1-A6 A7)^3.61 with INR_MAX fixed at 20).",
+      "https://doi.org/10.1038/sj.clpt.6100084"),
   reg("edox_niebecker_2015", "factor Xa inhibitor",
       "oral, VTE (Hokusai)", "edoxaban plasma (ng/mL)", "none plotted",
       "PO", "research_ready", "edoxaban",
@@ -115,12 +122,6 @@ registry <- rbind(
       "PO", "pending", NA,
       "aPTT Emax verified from the abstract, but the post-surgery PK (Troconiz 2007) needs serum gastrin, not a routine covariate; full parameter set unread.",
       "https://doi.org/10.1111/j.1365-2125.2006.02667.x"),
-  reg("warf_hamberg_2007", "vitamin K antagonist",
-      "oral", "S/R-warfarin -> INR", "INR (transit chain)",
-      "PO", "provisional", NA,
-      "Numbers verified only against a source-traced reproducer (nlmixr2lib), not the typeset original; age functional form needs the appendix.",
-      "https://doi.org/10.1038/sj.clpt.6100084"),
-
   # --- Pending: label-only or specialty extensions, no portable fit ----------
   reg("dalteparin_label", "low molecular weight heparin",
       "SC", "anti-Xa activity (IU/mL)", "LMWH anti-Xa",

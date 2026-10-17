@@ -737,6 +737,16 @@ app_server <- function(input, output, session) {
   # companion entries of the drug list.  FALSE until the box reports, and for
   # bookmarks made before it existed.
   mintoSchnider <- reactive(isTRUE(input$mintoSchnider))
+  # The Hamberg box (R/alternativeModels.R): run Hamberg's warfarin genotype
+  # model beside the library's (Xue), a second INR line.  FALSE until the box
+  # reports, and for bookmarks made before it existed.
+  hamberg <- reactive(isTRUE(input$hamberg))
+  # The companion groups the user has turned on, as group keys for
+  # recalculatePK() and the problem notices.
+  companionGroupsOn <- reactive(c(
+    if (mintoSchnider()) "mintoSchnider",
+    if (hamberg()) "hamberg"
+  ))
 
   # The companion entries of a drug in the current simulation (none unless
   # the switch is on and the drug has an alternative model)
@@ -744,14 +754,16 @@ app_server <- function(input, output, session) {
     Filter(function(entry) identical(entry$companionOf, drug), drugs())
   }
 
-  # The box is usable only while a drug that has an alternative model is in
-  # the dose table; ticked while it is not, it simply has nothing to add.
+  # Each companion box is usable only while a drug in its group is in the dose
+  # table; ticked while it is not, it simply has nothing to add.
   observe({
     DT <- tryCatch(doseTableClean(), error = function(e) NULL)
-    shinyjs::toggleState(
-      "mintoSchnider",
-      condition = !is.null(DT) && any(DT$Drug %in% ALTERNATIVE_MODEL_DRUGS)
-    )
+    for (group in names(COMPANION_MODEL_GROUPS)) {
+      shinyjs::toggleState(
+        COMPANION_MODEL_GROUPS[[group]]$input,
+        condition = !is.null(DT) && any(DT$Drug %in% companionGroupDrugs(group))
+      )
+    }
   })
 
   # Vaporisers that together exceed 100% are a fresh gas that cannot exist.
@@ -774,11 +786,17 @@ app_server <- function(input, output, session) {
   observe({
     problems <- character(0)
     DT <- tryCatch(doseTableIV(), error = function(e) NULL)
-    if (mintoSchnider() && !is.null(DT)) {
+    groups <- companionGroupsOn()
+    if (length(groups) > 0 && !is.null(DT)) {
       patient <- tryCatch(list(weight(), height(), age(), sex(), pregnant()), error = function(e) NULL)
       if (!is.null(patient)) {
-        problems <- alternativeModelProblems(DT$Drug, patient[[1]], patient[[2]], patient[[3]], patient[[4]],
-                                            pregnant = patient[[5]])
+        # Only the drugs whose group is turned on; a drug in a switched-off
+        # group is not drawn, so its model is not in question.
+        drugsOn <- DT$Drug[companionModelGroup(DT$Drug) %in% groups]
+        cyp2c9 <- if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9
+        vkorc1 <- if (is.null(input$vkorc1)) VKORC1_DEFAULT else input$vkorc1
+        problems <- alternativeModelProblems(drugsOn, patient[[1]], patient[[2]], patient[[3]], patient[[4]],
+                                             pregnant = patient[[5]], cyp2c9 = cyp2c9, vkorc1 = vkorc1)
       }
     }
     if (length(problems) == 0) {
@@ -918,12 +936,13 @@ app_server <- function(input, output, session) {
         cyp2d6 = if (is.null(input$cyp2d6)) CYP2D6_DEFAULT else input$cyp2d6,
         cyp2c19 = if (is.null(input$cyp2c19)) CYP2C19_DEFAULT else input$cyp2c19,
         cyp2c9 = if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9,
+        vkorc1 = if (is.null(input$vkorc1)) VKORC1_DEFAULT else input$vkorc1,
         cyp2b6 = if (is.null(input$cyp2b6)) CYP2B6_DEFAULT else input$cyp2b6,
         osmolality = osmolality(),
         creatinine = creatinine(),
         pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
-        alternativeModels = mintoSchnider()
+        alternativeModels = companionGroupsOn()
       ) |> profileCode("recalculatePK() in drugs()")
 
       newDrugs <- processdoseTable(
@@ -1301,8 +1320,10 @@ app_server <- function(input, output, session) {
         cyp2d6 = input$cyp2d6,
         cyp2c19 = input$cyp2c19,
         cyp2c9 = input$cyp2c9,
+        vkorc1 = input$vkorc1,
         cyp2b6 = input$cyp2b6,
         mintoSchnider = mintoSchnider(),
+        hamberg = hamberg(),
         # The workbook's times stay in minutes; these add the display unit
         # beside them and say what the plot showed (sendSlide.R).
         timeUnit = timeUnit(),
@@ -1360,8 +1381,9 @@ app_server <- function(input, output, session) {
     items <- lapply(names(simulatedDrugs), function(drug) {
       entry <- simulatedDrugs[[drug]]
       # Opens the drug's page in the Help tab (handled in app.js); a companion
-      # entry (the Schnider or Minto model) opens the page about those models.
-      page <- if (isAlternativeModelEntry(entry)) ALTERNATIVE_MODELS_HELP_PAGE else paste0("drugs/", drug)
+      # entry (the Schnider, Minto or Hamberg model) opens the page about its
+      # group of models.
+      page <- if (isAlternativeModelEntry(entry)) companionHelpPage(entry) else paste0("drugs/", drug)
       tagList(
         citationItemHTML(drug, entry$reference, entry$Color),
         tags$a(href = "#", class = "small ms-1", `data-help-page` = page,

@@ -18,6 +18,8 @@
 #'   Only drugs whose model declares it are affected.
 #' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES}.
 #'   Only drugs whose model declares it (phenytoin) are affected.
+#' @param vkorc1 VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES}.
+#'   Only drugs whose model declares it (warfarin) are affected.
 #' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
 #'   Only drugs whose model declares it (methadone) are affected.
 #' @param osmolality baseline serum osmolality in mOsm/kg.  Only an osmotic
@@ -47,6 +49,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          creatinine = NULL,
                                          cyp2c19 = CYP2C19_DEFAULT,
                                          cyp2c9 = CYP2C9_DEFAULT,
+                                         vkorc1 = VKORC1_DEFAULT,
                                          cyp2b6 = CYP2B6_DEFAULT,
                                          pregnant = FALSE)
 {
@@ -78,7 +81,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   {
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
-                    cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, cyp2b6 = cyp2b6,
+                    cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, vkorc1 = vkorc1,
+                    cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
                     pregnant = pregnant, adjustToFFM = adjustToFFM)
     currentDT <- dose[dose$Drug == drug,]
@@ -112,6 +116,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     targetDefaults <- getDrugDefaults(target)
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
                           cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+                          vkorc1 = vkorc1,
                           cyp2b6 = cyp2b6, osmolality = osmolality,
                           creatinine = creatinine, pregnant = pregnant,
                           adjustToFFM = adjustToFFM)

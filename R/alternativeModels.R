@@ -76,17 +76,57 @@
 #' The alternative models, keyed by the library drug each is a second model of
 #'
 #' `label` names the model in the legend and the hover ("propofol (Schnider)"),
-#' `model` is the model function, with the signature every drug model has.
+#' `model` is the model function (with the signature every drug model has), and
+#' `group` is the Graph Options switch that turns it on (a key of
+#' `COMPANION_MODEL_GROUPS`).  The Minto / Schnider box runs the Schnider and
+#' Minto models beside the library's; the Hamberg box runs the Hamberg genotype
+#' model of warfarin's INR beside the library's (Xue) model.
 #' @noRd
 ALTERNATIVE_MODELS <- list(
-  propofol     = list(label = "Schnider", model = "propofolSchnider"),
-  remifentanil = list(label = "Minto",    model = "remifentanilMinto")
+  propofol     = list(label = "Schnider", model = "propofolSchnider", group = "mintoSchnider"),
+  remifentanil = list(label = "Minto",    model = "remifentanilMinto", group = "mintoSchnider"),
+  warfarin     = list(label = "Hamberg",  model = "warfarinHamberg",   group = "hamberg")
 )
 ALTERNATIVE_MODEL_DRUGS <- names(ALTERNATIVE_MODELS)
 
-# The checkbox under Graph Options, and the help page about the models
-ALTERNATIVE_MODELS_LABEL     <- "Minto / Schnider"
-ALTERNATIVE_MODELS_HELP_PAGE <- "models/minto-schnider"
+#' The Graph Options switches that turn companion models on
+#'
+#' Each is a checkbox (`input`), a label for the box, the legend and the export,
+#' and the help page a companion's "About this model" link opens.  A group is
+#' usable only while one of its drugs is in the dose table.
+#' @noRd
+COMPANION_MODEL_GROUPS <- list(
+  mintoSchnider = list(input = "mintoSchnider", label = "Minto / Schnider",
+                       helpPage = "models/minto-schnider"),
+  hamberg       = list(input = "hamberg",       label = "Hamberg",
+                       helpPage = "models/hamberg")
+)
+
+# Kept for the Minto / Schnider box and its scenarios, which name them directly.
+ALTERNATIVE_MODELS_LABEL     <- COMPANION_MODEL_GROUPS$mintoSchnider$label
+ALTERNATIVE_MODELS_HELP_PAGE <- COMPANION_MODEL_GROUPS$mintoSchnider$helpPage
+
+#' The companion group a drug's alternative model belongs to, or NA
+#' @noRd
+companionModelGroup <- function(drug) {
+  vapply(drug, function(d) {
+    spec <- ALTERNATIVE_MODELS[[d]]
+    if (is.null(spec)) NA_character_ else spec$group
+  }, character(1), USE.NAMES = FALSE)
+}
+
+#' The drugs whose alternative model is turned on by a given group
+#' @noRd
+companionGroupDrugs <- function(group) {
+  names(Filter(function(spec) identical(spec$group, group), ALTERNATIVE_MODELS))
+}
+
+#' The help page a companion entry's "About this model" link opens
+#' @noRd
+companionHelpPage <- function(entry) {
+  group <- companionModelGroup(entry$companionOf)
+  if (is.na(group)) ALTERNATIVE_MODELS_HELP_PAGE else COMPANION_MODEL_GROUPS[[group]]$helpPage
+}
 
 #' The name of a drug's companion entry: "propofol (Schnider)"
 #' @noRd
@@ -216,18 +256,109 @@ remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
   )
 }
 
+#' Hamberg's warfarin genotype model (Hamberg 2007), beside the library's Xue
+#'
+#' Hamberg A-K, Wadelius M, Lindh JD, Dahl M-L, Padrini R, Deloukas P, Rane A,
+#' Jonsson EN.  A pharmacometric model describing the relationship between
+#' warfarin dose and INR response with respect to variations in CYP2C9, VKORC1,
+#' and age.  Clin Pharmacol Ther 2007;81:529-538.  150 patients (Tables 2-4,
+#' Figure 2, Appendix equations 8-10), read from the full text on 2026-10-17.
+#'
+#' A companion of warfarin that draws a second INR line beside the library's
+#' Xue 2017 model (R/drugs_warfarin.R, R/inr.R).  S- and R-warfarin are fitted
+#' separately; the INR is driven by S-warfarin only, through two parallel
+#' transit-compartment chains (the "transit" inr block, integrated by
+#' inrTransit() in R/inr.R).  A racemic dose of D mg adds D/2 mg to each
+#' enantiomer's absorption depot (F = 1).  Units: time in minutes, volumes in
+#' litres, clearances in L/min (apparent, /F; the model has no body-size
+#' covariate), concentrations in mg/L, and the plotted curve is the INR.
+#'
+#'   S-warfarin, two-compartment (Table 2):
+#'     CL_S = 0.314 L/h x (1 - 0.0091 (age - 71)) x genotype factor
+#'     V1 = 13.8 L   Q = 0.131 L/h   V2 = 6.59 L   Ka = 2 /h (fixed)
+#'   genotype factor = 1 - the per-diplotype % reduction on CL_S:
+#'     *1/*1 0, *1/*2 31.5%, *1/*3 45.3%, *2/*2 72.2%, *2/*3 69.0%, *3/*3 85.2%
+#'   R-warfarin, one-compartment (Table 3):
+#'     CL_R = 0.139 L/h x (1 - 0.0098 (age - 71))   V = 12.8 L   Ka = 2 /h
+#'   PD (Table 4, Appendix eq 8-10):
+#'     Emax = 1, gamma = 0.424, EC50 by VKORC1 (GG 4.61, GA 3.02, AA 2.20 mg/L),
+#'     a six-compartment chain with MTT1 = 11.6 h and a one-compartment chain
+#'     with MTT2 = 120 h (ktr = 1/MTT), INR = BASE + 20 (1 - A6 A7)^3.61, with
+#'     INR_MAX = 20 fixed, lambda = 3.61, and BASE the drug-free baseline INR,
+#'     1 for a typical patient.
+#'
+#' `adjustToFFM` is accepted for the uniform signature and ignored: the model
+#' has no body-size covariate (sex and weight were not significant).
+#' @noRd
+warfarinHamberg <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                            cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT)
+{
+  if (length(cyp2c9) != 1 || !cyp2c9 %in% CYP2C9_VALUES)
+    stop("Invalid cyp2c9: ", paste(cyp2c9, collapse = ", "), ". Must be one of: ",
+         paste(CYP2C9_VALUES, collapse = ", "))
+  if (length(vkorc1) != 1 || !vkorc1 %in% VKORC1_VALUES)
+    stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "), ". Must be one of: ",
+         paste(VKORC1_VALUES, collapse = ", "))
+
+  # CYP2C9 % reduction on CL_S (Table 2); *1/*1 is the reference, factor 1.
+  reduction <- c("*1/*1" = 0, "*1/*2" = 0.315, "*1/*3" = 0.453,
+                 "*2/*2" = 0.722, "*2/*3" = 0.690, "*3/*3" = 0.852)
+  clS <- 0.314 * (1 - 0.0091 * (age - 71)) * (1 - reduction[[cyp2c9]])   # L/h
+  clR <- 0.139 * (1 - 0.0098 * (age - 71))                              # L/h
+  ka  <- 2 / 60                                                         # 1/min
+
+  sSet <- list(
+    v1 = 13.8, v2 = 6.59, v3 = 1,
+    cl1 = clS / 60, cl2 = 0.131 / 60, cl3 = 0,
+    ka_PO = ka, tlag_PO = 0, bioavailability_PO = 1
+  )
+  rSet <- list(
+    v1 = 12.8, v2 = 1, v3 = 1,
+    cl1 = clR / 60, cl2 = 0, cl3 = 0,
+    ka_PO = ka, tlag_PO = 0, bioavailability_PO = 1
+  )
+
+  ec50 <- c("GG" = 4.61, "GA" = 3.02, "AA" = 2.20)[[vkorc1]]            # mg/L
+
+  events <- c(PK_EVENT_DEFAULT)
+  PK <- sapply(events, function(x) list(sSet))
+
+  list(
+    PK = PK,
+    doseFraction = 0.5,                                   # S gets half the dose
+    parallelSystems = list(
+      list(name = "R-warfarin", doseFraction = 0.5,
+           PK = list(default = rSet))
+    ),
+    inr = list(type = "transit", c50 = ec50, gamma = 0.424,
+               mtt1 = 11.6 * 60, mtt2 = 120 * 60, n1 = 6L,
+               baseline = 1, inrMax = 20, lambda = 3.61),
+    tPeak = 0,
+    reference = paste0(
+      "Hamberg A-K et al., Clin Pharmacol Ther 2007;81:529-538 (S- and ",
+      "R-warfarin PK and a two-chain transit-compartment INR model with ",
+      "CYP2C9, VKORC1 and age; 150 patients). https://doi.org/10.1038/sj.clpt.6100084"
+    )
+  )
+}
+
 #' Run an alternative model's function for a patient
 #'
 #' @param pregnant the pregnancy flag, passed on when the model names it
 #'   (R/pregnancy.R)
+#' @param cyp2c9,vkorc1 the pharmacogenetic covariates, passed on when the model
+#'   names them (warfarin's Hamberg companion reads both)
 #' @returns the model function's output (PK sets, tPeak or ke0, reference)
 #' @noRd
-alternativeModelOutput <- function(drug, weight, height, age, sex, pregnant = FALSE) {
+alternativeModelOutput <- function(drug, weight, height, age, sex, pregnant = FALSE,
+                                   cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT) {
   spec <- ALTERNATIVE_MODELS[[drug]]
   if (is.null(spec)) stop("No alternative model for ", drug)
   fn <- get(spec$model, mode = "function")
   args <- list(weight = weight, height = height, age = age, sex = sex)
   if ("pregnant" %in% names(formals(fn))) args$pregnant <- isTRUE(pregnant)
+  if ("cyp2c9"  %in% names(formals(fn))) args$cyp2c9  <- cyp2c9
+  if ("vkorc1"  %in% names(formals(fn))) args$vkorc1  <- vkorc1
   do.call(fn, args)
 }
 
@@ -241,16 +372,26 @@ alternativeModelOutput <- function(drug, weight, height, age, sex, pregnant = FA
 #' @param drug a drug in `ALTERNATIVE_MODEL_DRUGS`
 #' @returns NULL when the model is defined, else one sentence
 #' @noRd
-alternativeModelProblem <- function(drug, weight, height, age, sex, pregnant = FALSE) {
+alternativeModelProblem <- function(drug, weight, height, age, sex, pregnant = FALSE,
+                                    cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT) {
   spec <- ALTERNATIVE_MODELS[[drug]]
   if (is.null(spec)) return(NULL)
-  X <- tryCatch(alternativeModelOutput(drug, weight, height, age, sex, pregnant),
+  X <- tryCatch(alternativeModelOutput(drug, weight, height, age, sex, pregnant,
+                                       cyp2c9 = cyp2c9, vkorc1 = vkorc1),
                 error = function(e) NULL)
   if (is.null(X)) return(sprintf("%s's %s model could not be evaluated for this patient.", spec$label, drug))
   set <- X$PK[[PK_EVENT_DEFAULT]]
   values <- c(V1 = set$v1, V2 = set$v2, V3 = set$v3, CL1 = set$cl1, CL2 = set$cl2, CL3 = set$cl3)
   if (!is.null(X$ke0)) values <- c(values, ke0 = X$ke0)
-  bad <- names(values)[!is.finite(values) | values <= 0]
+  # The central volume, the elimination clearance and ke0 must be positive; the
+  # peripheral volumes and intercompartmental clearances only need to be
+  # non-negative, so a one- or two-compartment companion (Hamberg's warfarin)
+  # with no third compartment is not flagged, while a covariate term that turns
+  # one of them negative (Minto's CL3 at a high age) still is.  The order of the
+  # names is kept for the message.
+  strict <- names(values) %in% c("V1", "CL1", "ke0")
+  bad <- names(values)[!is.finite(values) |
+                         (strict & values <= 0) | (!strict & values < 0)]
   if (length(bad) == 0) return(NULL)
   listed <- if (length(bad) == 1) bad else
     paste(paste(bad[-length(bad)], collapse = ", "), "and", bad[length(bad)])
@@ -267,10 +408,12 @@ alternativeModelProblem <- function(drug, weight, height, age, sex, pregnant = F
 #'   alternative model are ignored)
 #' @returns a character vector, empty when every alternative model is defined
 #' @noRd
-alternativeModelProblems <- function(drugs, weight, height, age, sex, pregnant = FALSE) {
+alternativeModelProblems <- function(drugs, weight, height, age, sex, pregnant = FALSE,
+                                     cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT) {
   out <- character(0)
   for (drug in intersect(unique(drugs), ALTERNATIVE_MODEL_DRUGS)) {
-    problem <- alternativeModelProblem(drug, weight, height, age, sex, pregnant)
+    problem <- alternativeModelProblem(drug, weight, height, age, sex, pregnant,
+                                       cyp2c9 = cyp2c9, vkorc1 = vkorc1)
     if (!is.null(problem)) out <- c(out, problem)
   }
   out
@@ -289,10 +432,13 @@ alternativeModelProblems <- function(drugs, weight, height, age, sex, pregnant =
 #' @returns the entry, as recalculatePK() stores it, or NULL
 #' @noRd
 alternativeModelEntry <- function(drug, weight, height, age, sex, drugDefaults,
-                                  adjustToFFM = TRUE, pregnant = FALSE) {
-  if (!is.null(alternativeModelProblem(drug, weight, height, age, sex, pregnant))) return(NULL)
+                                  adjustToFFM = TRUE, pregnant = FALSE,
+                                  cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT) {
+  if (!is.null(alternativeModelProblem(drug, weight, height, age, sex, pregnant,
+                                       cyp2c9 = cyp2c9, vkorc1 = vkorc1))) return(NULL)
   spec <- ALTERNATIVE_MODELS[[drug]]
-  model <- alternativeModelOutput(drug, weight, height, age, sex, pregnant)
+  model <- alternativeModelOutput(drug, weight, height, age, sex, pregnant,
+                                  cyp2c9 = cyp2c9, vkorc1 = vkorc1)
   entry <- getDrugPK(
     drug = drug,
     weight = weight, height = height, age = age, sex = sex,

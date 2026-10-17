@@ -21,6 +21,11 @@ exactly one, R-warfarin}
 \code{inr}, unchanged, if it is valid; otherwise an error
 }
 \description{
-Check a drug model's INR block
+Two forms are allowed.  The default, \code{type = "turnover"}, is the Xue
+2017 single-compartment prothrombin-complex turnover (R/drugs_warfarin.R).
+The second, \code{type = "transit"}, is the Hamberg 2007 two-chain
+transit-compartment model (R/alternativeModels.R); both drive the INR from
+the S-warfarin concentration and both keep R-warfarin as the one parallel
+system.
 }
 \keyword{internal}

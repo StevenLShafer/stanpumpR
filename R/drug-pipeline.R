@@ -97,6 +97,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           creatinine = NULL,
                           cyp2c19 = CYP2C19_DEFAULT,
                           cyp2c9 = CYP2C9_DEFAULT,
+                          vkorc1 = VKORC1_DEFAULT,
                           cyp2b6 = CYP2B6_DEFAULT,
                           pregnant = FALSE,
                           alternativeModels = FALSE) {
@@ -121,6 +122,7 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         cyp2d6 = cyp2d6,
         cyp2c19 = cyp2c19,
         cyp2c9 = cyp2c9,
+        vkorc1 = vkorc1,
         cyp2b6 = cyp2b6,
         osmolality = osmolality,
         creatinine = creatinine,
@@ -154,26 +156,29 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     drugs[[target]]$metaboliteRecoveryStates <- NULL
   }
 
-  # The alternative models (R/alternativeModels.R): with the Minto / Schnider
-  # switch on, each dosed drug that has one gets a companion entry, named
-  # "<drug> (<model>)", which processdoseTable() simulates on the parent's
-  # doses and simulationPlot() draws in the parent's panel.  Appended after
-  # every library drug, so that a panel's first series is always the library's
-  # own.  A model that is not defined for this patient (a negative clearance,
-  # say) gives no entry; alternativeModelProblems() says why.
-  if (isTRUE(alternativeModels))
+  # The alternative models (R/alternativeModels.R): for each Graph Options
+  # companion switch that is on (the Minto / Schnider box, the Hamberg box),
+  # each dosed drug in that group gets a companion entry, named "<drug>
+  # (<model>)", which processdoseTable() simulates on the parent's doses and
+  # simulationPlot() draws in the parent's panel.  Appended after every library
+  # drug, so that a panel's first series is always the library's own.  A model
+  # that is not defined for this patient (a negative clearance, say) gives no
+  # entry; alternativeModelProblems() says why.  `alternativeModels` is the set
+  # of enabled group keys; TRUE means every group (for scripts and tests).
+  enabledGroups <- if (isTRUE(alternativeModels)) names(COMPANION_MODEL_GROUPS)
+                   else if (is.character(alternativeModels)) alternativeModels
+                   else character(0)
+  for (drug in intersect(dosed, ALTERNATIVE_MODEL_DRUGS))
   {
-    for (drug in intersect(dosed, ALTERNATIVE_MODEL_DRUGS))
-    {
-      idx <- which(drugDefaults$Drug == drug)[1]
-      entry <- alternativeModelEntry(
-        drug, weight, height, age, sex, drugDefaults[idx, ], adjustToFFM,
-        pregnant = pregnant
-      )
-      if (is.null(entry)) next
-      outputComments("Getting PK for", entry$drug)
-      drugs[[entry$drug]] <- entry
-    }
+    if (!companionModelGroup(drug) %in% enabledGroups) next
+    idx <- which(drugDefaults$Drug == drug)[1]
+    entry <- alternativeModelEntry(
+      drug, weight, height, age, sex, drugDefaults[idx, ], adjustToFFM,
+      pregnant = pregnant, cyp2c9 = cyp2c9, vkorc1 = vkorc1
+    )
+    if (is.null(entry)) next
+    outputComments("Getting PK for", entry$drug)
+    drugs[[entry$drug]] <- entry
   }
 
   drugs

@@ -145,7 +145,7 @@ tciKinetics <- function(PK)
 # none of them.  A new flag in simCpCe() is added here too, and the test in
 # test-tci.R that every flag of a simulated table is listed fails until it is.
 tciRouteFlags <- function()
-  c("Bolus", "PO", "IM", "IN", "SL", "RA", "RAslow", "RArate", "PO2")
+  c("Bolus", "PO", "IM", "IN", "SL", "SC", "RA", "RAslow", "RArate", "PO2")
 
 tciSchedule <- function(dose, PK, maximum,
                         interval = TCI_INTERVAL, maxRate = TCI_MAX_RATE)

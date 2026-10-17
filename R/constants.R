@@ -87,6 +87,14 @@ CYP2B6_DEFAULT <- CYP2B6_NORMAL
 CYP2C9_VALUES  <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
 CYP2C9_DEFAULT <- "*1/*1"
 
+# VKORC1 -1639G>A GENOTYPE, read by the models that name it: warfarin, where
+# the A allele lowers the S-warfarin C50 (the Xue 2017 library model) and sets
+# the EC50 of the Hamberg 2007 companion model (R/alternativeModels.R).  Three
+# genotypes; GG (two wild-type alleles, the least sensitive) is the reference.
+# Its own Patient Profile field, kept apart from the CYP phenotypes.
+VKORC1_VALUES  <- c("GG", "GA", "AA")
+VKORC1_DEFAULT <- "GG"
+
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
 # their own contribution on top of it.  The default, 280, is within the normal
