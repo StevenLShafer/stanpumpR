@@ -23,11 +23,15 @@
 #     CL/F = 1.83e-4 L/min/kg   (0.77 L/h at 70 kg)
 #     ka   = 9.41e-4 /min       (0.056 /h)
 #
-# The mantissas were read from the paper's table; its powers of ten were lost
-# in the available text and are the ones the specification gives, which the
-# label's 13-hour half-life confirms (the model: elimination half-life 7.1 h,
-# absorption half-time 12.3 h, so a flip-flop 12 h apparent half-life, and a
-# peak 13 h after a dose).
+# The supplement's NONMEM control stream (Supporting Information 1, supplied
+# by Steven L. Shafer) gives the same values in full, "$THETA 1.83E-04 FIX
+# ;20 CL/F [L/min/kg]", "0.112 FIX ;21 V/F [L/kg]", "9.41E-4 FIX ;22 KA
+# [/min]", with CL = THETA(20) x WT and V = THETA(21) x WT: estimated in the
+# paper's first, pharmacokinetic step (relative standard errors 9-14%) and
+# then fixed for the glucose-insulin model.  The label's 13-hour half-life
+# agrees (the model: elimination half-life 7.1 h, absorption half-time
+# 12.3 h, so a flip-flop 12 h apparent half-life, and a peak 13 h after a
+# dose).
 #
 # WATSON 2010.  The pooled healthy-volunteer and diabetes fit of Watson et al.
 # (J Clin Pharmacol 2010;50:886-894; sequential zero- and first-order

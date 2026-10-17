@@ -84,7 +84,7 @@ registry <- rbind(
   reg("liraglutide_sc_victoza_roge2015", "liraglutide", "Victoza injection", SC, "core", "US",
       FIT, FIT, "PD-FIT", DAUD, "T2D meal-test glucose/insulin (Roge 2015)", NA, "liraglutide", TRUE,
       "https://doi.org/10.1002/psp4.11",
-      "1C, V/F 0.112 L/kg, CL/F 1.83e-4 L/min/kg, ka 9.41e-4/min; mantissas read, powers of ten from the specification (stripped in the available text)."),
+      "1C, V/F 0.112 L/kg, CL/F 1.83e-4 L/min/kg, ka 9.41e-4/min, all x weight: Table 1 and the supplement NONMEM control stream (THETA 20-22)."),
   reg("liraglutide_sc_watson2010", "liraglutide", "SC model version (sequential zero/first order)", SC, "core", "study formulation",
       FIT, AUD, "PD-TEMPLATE", DTPL, "none", NA, NA, FALSE,
       "https://doi.org/10.1177/0091270009354996",
@@ -381,8 +381,8 @@ parameters <- rbind(
   par("tirzepatide", "F", "0.655", "unitless (0.8 x (1 - 0.181))", E, "Schneck 2024: every study but the phase 1 bioavailability study", schneck, "Table 3; supplement control stream (BIOPHS = 1 + THETA(10) unless STUDYN 4)"),
 
   par("liraglutide", "V/F", "0.112", "L/kg", E, "Roge 2015, 29 adults with T2D", roge, "Table 1"),
-  par("liraglutide", "CL/F", "1.83e-4", "L/min/kg", E, "Roge 2015", roge, "Table 1 (power of ten from the specification)"),
-  par("liraglutide", "ka", "9.41e-4", "1/min", E, "Roge 2015", roge, "Table 1 (power of ten from the specification)"),
+  par("liraglutide", "CL/F", "1.83e-4", "L/min/kg", E, "Roge 2015", roge, "Table 1; supplement control stream THETA(20)"),
+  par("liraglutide", "ka", "9.41e-4", "1/min", E, "Roge 2015", roge, "Table 1; supplement control stream THETA(22)"),
 
   thamRows("insulinRegular", "178", "127", ab("insulinRegular", "regular U100", "0.67"), "human"),
   thamRows("insulinRegularU500", "178", "127", ab("insulinRegularU500", "regular U500", "0.185"), "human"),
