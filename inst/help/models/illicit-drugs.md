@@ -35,6 +35,14 @@ and a **parameter status**: *published fit*, *measured summary*, *derived approx
 | [MDMA](help:drugs/MDMA) | parent MDMA | oral | intravenous, intranasal; the MDA metabolite |
 | [GHB](help:drugs/GHB) | GHB free acid | oral | intravenous |
 
+### The pharmacokinetics, side by side
+
+These seven models differ from one another more than the rest of the library does: one compartment or two, linear elimination or saturable, a parent or a metabolite plotted, apparent parameters or absolute. The table below is built from the models themselves, at the reference adult (40 years, 70 kg, 170 cm, male) with *Adjust weight to fat-free mass* as the app ships it, so it cannot drift from the code. Each drug's own page gives the same parameters at six reference patients, with the source and its limits.
+
+<!-- generated: illicit-pk-table -->
+
+Two of these need reading carefully. **GHB's elimination saturates**, so it has no fixed clearance and no fixed half-life — both depend on the dose, which is the whole point of the drug, and its page says what the numbers in the table above mean. **Every one of these is plasma only**: no effect site, no MEAC and no band, so none of them plots an effect.
+
 ### Three reasons a route is refused
 
 **Apparent parameters cannot cross to the intravenous route.** LSD, psilocybin and GHB are fitted as clearance (or a maximum metabolic rate) and volume *over an unmeasured bioavailability*. Those predict oral concentrations correctly, because the unknown factor cancels, and intravenous ones wrong by 1/F. All three are oral only. GHB's source fixed bioavailability at 1 while its label reports 88%, which is the same situation reached by a different route — and it holds even though GHB was once given intravenously as an anaesthetic.

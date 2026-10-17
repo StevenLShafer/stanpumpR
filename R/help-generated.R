@@ -216,8 +216,90 @@ helpPregnancyTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
   ) |> paste(collapse = "\n")
 }
 
+#' The pharmacokinetics of every illicit-drug research model, at one patient
+#'
+#' These models differ from one another more than the rest of the library does
+#' — one compartment or two, linear elimination or saturable, a parent or a
+#' metabolite plotted, apparent parameters or absolute — and the thing a reader
+#' most often wants is to compare them. Each drug's own page carries its
+#' parameters at six reference patients; this is the one-screen summary, built
+#' from the models so that it cannot drift from them.
+#'
+#' Everything is evaluated at the reference adult with the fat-free-mass switch
+#' as the app ships it, which is why a value here may differ slightly from the
+#' published number its page quotes.
+#'
+#' @param drugDefaults the drug library
+#' @returns one Markdown table, as a single string
+#' @noRd
+helpIllicitPKTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  drugs <- illicitDrugNames(drugDefaults)
+  p <- helpReferencePatients()[1, ]
+  columns <- c("Drug", "Plotted", "Structure", "V1 (L)", "Elimination",
+               "Absorption", "Half-life")
+  cells <- function(drug) {
+    row <- drugDefaults[drugDefaults$Drug == drug, ][1, ]
+    X <- getDrugPK(drug, p$weight, p$height, p$age, p$sex, row)
+    set <- X$PK[[PK_EVENT_DEFAULT]]
+    mm <- X$michaelisMenten
+    units <- helpDrugUnits(row)
+    # Two compartments can come from v2 or, on the saturable engine, from the
+    # pair of distribution rate constants.
+    peripheral <- isTRUE(set$v2 > 1) ||
+      (!is.null(mm) && !is.null(mm$k23) && !is.null(mm$k32))
+    structure <- paste0(if (peripheral) "Two compartments" else "One compartment",
+                        if (!is.null(mm)) ", saturable" else "")
+    elimination <- if (!is.null(mm)) {
+      sprintf("Vmax %s mg/min, Km %s", helpFormatNumber(mm$vmax),
+              helpFormatNumber(mm$km))
+    } else {
+      sprintf("CL %s L/min", helpFormatNumber(set$cl1))
+    }
+    # The route actually offered, and the rate constant that drives it.
+    route <- unique(doseRoute(units))
+    kaOf <- function(r) switch(r, PO = set$ka_PO, SL = set$ka_SL, IN = set$ka_IN,
+                               IM = set$ka_IM, RA = set$ka_RA, NULL)
+    kas <- unlist(lapply(route, kaOf))
+    kas <- kas[!is.na(kas) & kas > 0]
+    routes <- paste(route, collapse = ", ")
+    absorption <- if (length(kas) == 0) {
+      "—"
+    } else if (length(unique(round(kas, 9))) > 1) {
+      # Each route absorbs at its own rate; one number here would be a lie.
+      sprintf("%s, each at its own rate", routes)
+    } else {
+      sprintf("%s, ka %s /h (t&frac12; %s min)", routes,
+              helpFormatNumber(kas[1] * 60), helpFormatNumber(log(2) / kas[1]))
+    }
+    # For a saturable drug the terminal half-life is not a constant; say so
+    # rather than printing the limit as though it were one.
+    halfLife <- if (!is.null(mm)) "Not fixed: rises with the dose" else {
+      k <- set$cl1 / set$v1
+      sprintf("%s min", helpFormatNumber(log(2) / k))
+    }
+    sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s |",
+            drug, drug, helpIllicitAnalyte(drug),
+            structure, helpFormatNumber(set$v1), elimination, absorption, halfLife)
+  }
+  paste(c(
+    sprintf("| %s |", paste(columns, collapse = " | ")),
+    sprintf("|%s", strrep("---|", length(columns))),
+    vapply(drugs, cells, character(1))
+  ), collapse = "\n")
+}
+
+#' What each illicit-drug model plots, where the drug and the analyte differ
+#' @noRd
+helpIllicitAnalyte <- function(drug) {
+  registry <- illicitRouteRegistry()
+  rows <- registry[registry$drug == drug & registry$offered == "yes", ]
+  if (nrow(rows) == 0) return("—")
+  paste(unique(rows$analyte), collapse = ", ")
+}
+
 HELP_GENERATED_BLOCKS <- list(
   "route-table" = helpRouteTableMarkdown,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,
-  "pregnancy-table" = helpPregnancyTableMarkdown
+  "pregnancy-table" = helpPregnancyTableMarkdown,
+  "illicit-pk-table" = helpIllicitPKTableMarkdown
 )

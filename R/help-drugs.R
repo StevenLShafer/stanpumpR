@@ -227,6 +227,13 @@ helpReferenceShort <- function(reference) {
 helpDrugUnits <- function(row) {
   u <- row$Units
   if (is.list(u)) u <- u[[1]]
+  # getDrugDefaultsGlobal() gives Units as a list column, already split; with
+  # splitUnits = FALSE it is the raw comma-joined string.  Splitting here makes
+  # the helper give the same answer either way: without it doseRoute() reads
+  # "mg IM,mcg IM,mg IN,mcg IN" as one unit and finds only the last route, so a
+  # drug offering two routes silently loses one.
+  u <- unlist(strsplit(as.character(u), ",", fixed = TRUE))
+  u <- trimws(u)
   u <- u[!is.na(u) & nzchar(u)]
   u
 }
@@ -486,6 +493,15 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       "<p class='small text-muted'>The disposition half-lives are ln(2) divided by the ",
       "eigenvalues of the compartment model (\u03b1 fastest, \u03b3 slowest); a dash means the ",
       "compartment is absent, and a half-life of a day or more also gives its length in days (d). ",
+      # A saturable model has no fixed clearance and no fixed half-life, so
+      # the two tables above would be read as saying something they do not.
+      # Say so here rather than leaving it to the section further down.
+      if (!is.null(modelOut$michaelisMenten))
+        paste0("<strong>This drug's elimination saturates</strong>, so CL1 and the half-lives above are ",
+               "not fixed properties of it: they are the limits approached at concentrations far ",
+               "BELOW Km, and at the doses the drug is actually given both are smaller and longer. ",
+               "A peripheral compartment declared through the saturable block appears there rather ",
+               "than as V2 above. See <em>Saturable elimination</em> below. ") else "",
       effectNote, "</p>"
     )
   }
@@ -855,12 +871,80 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- Saturable (Michaelis-Menten) elimination ------------------------------
+  # Without this the two tables above describe a saturable drug as a linear
+  # one: its Vmax and Km appear nowhere, and a peripheral compartment declared
+  # through k23/k32 reads as absent.  Phenytoin and GHB.
+  michaelisHTML <- ""
+  if (!is.null(modelOut$michaelisMenten)) {
+    mm <- modelOut$michaelisMenten
+    rowsMM <- lapply(seq_len(nrow(helpReferencePatients())), function(i) {
+      p <- helpReferencePatients()[i, ]
+      X <- helpDrugModelOutput(drug, p)
+      if (is.null(X) || is.null(X$michaelisMenten)) return(NULL)
+      v1 <- X$PK[[PK_EVENT_DEFAULT]]$v1
+      k23 <- X$michaelisMenten$k23; k32 <- X$michaelisMenten$k32
+      data.frame(
+        Patient = p$label,
+        `Vmax (mg/min)` = helpFormatNumber(X$michaelisMenten$vmax),
+        `Km (concentration units)` = helpFormatNumber(X$michaelisMenten$km),
+        `Concentration at half maximal rate` = helpFormatNumber(X$michaelisMenten$km),
+        `Peripheral volume (L)` =
+          if (is.null(k23) || is.null(k32)) "—"
+          else helpFormatNumber(k23 / k32 * v1),
+        check.names = FALSE, stringsAsFactors = FALSE)
+    })
+    mmTab <- do.call(rbind, rowsMM[!vapply(rowsMM, is.null, logical(1))])
+    if (!is.null(mmTab)) {
+      mmTab[["Concentration at half maximal rate"]] <- NULL
+      salts <- mm$saltFactor
+      # The block keys a factor by route or oral form; "default" is the form
+      # dosed as plain "mg PO", which means nothing to a reader as it stands.
+      saltLabel <- function(key) switch(key,
+        default = "the default oral form",
+        IV = "intravenous",
+        PE = "doses in drug equivalents (PE)",
+        key)
+      saltNote <- if (length(salts)) paste0(
+        "<p>A dose is multiplied by a <strong>salt factor</strong> before it enters: the mass of the ",
+        "modelled substance in a unit of what was given, so that a dose of a salt or a prodrug is ",
+        "counted as the substance this page plots. Here ",
+        paste(sprintf("<strong>%s</strong>, %s",
+                      vapply(names(salts), saltLabel, character(1)),
+                      vapply(salts, helpFormatNumber, character(1))), collapse = "; "),
+        ".</p>") else ""
+      michaelisHTML <- paste0(
+        helpH2("Saturable elimination"),
+        "<p>This drug is <strong>not</strong> eliminated by a fixed clearance. It is removed at a rate ",
+        "that approaches a ceiling, Vmax, as the concentration rises, and reaches half that ceiling ",
+        "at a concentration Km:</p>",
+        "<p class='text-center'><em>rate = Vmax &times; C / (Km + C)</em></p>",
+        "<p>Two consequences, and they are the reason the drug is modelled this way. Exposure rises ",
+        "<strong>faster than the dose</strong>: doubling a dose more than doubles the area under the ",
+        "curve once concentrations approach Km. And doses do not add independently — a second dose ",
+        "is cleared more slowly because the first is still present — so this drug is simulated by ",
+        "numerical integration of the whole dose table at once rather than by adding exponentials.</p>",
+        "<p>Below Km the rate becomes Vmax &times; C / Km, an ordinary first-order clearance of ",
+        "Vmax/Km, which is the CL1 given in the table above. That is the fastest this drug is ever ",
+        "cleared; at the doses it is given, it is slower.</p>",
+        helpTableHTML(mmTab, "Saturable elimination parameters"),
+        "<p class='small text-muted'>Km is in the drug's own concentration units, shown under ",
+        "<em>At a glance</em>. A peripheral compartment, where one is declared, is given by the ratio ",
+        "of the two distribution rate constants times the central volume; elimination saturates on the ",
+        "<strong>central</strong> concentration only. A dash means the drug has no peripheral ",
+        "compartment.</p>",
+        saltNote
+      )
+    }
+  }
+
   narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("drugs/", drug)))
 
   paste0(
     helpH2("At a glance"), glanceHTML,
     helpH2("Model source"), sourceHTML,
     helpH2("Parameters at reference patients"), paramsHTML, renalHTML,
+    michaelisHTML,
     cyp2c19HTML,
     cypOtherHTML,
     absorptionHTML,
