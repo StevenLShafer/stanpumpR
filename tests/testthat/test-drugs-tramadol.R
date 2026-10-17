@@ -353,7 +353,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # published equilibration constant, and no blood pressure is plotted for
     # any drug in the library (docs/antihypertensives.md).
     "clevidipine", "fenoldopamPediatric", "carvedilol",
-    "azilsartan", "chlorthalidone"
+    "azilsartan", "chlorthalidone", "hydrochlorothiazide"
   ))
 })
 

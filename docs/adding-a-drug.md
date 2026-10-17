@@ -326,6 +326,37 @@ given in split doses; a continuous release (an osmotic pump) is not represented 
 The drug's help page must say how the pulses were chosen. `R/drugs_mixedAmphetamineSalts.R`
 is the example.
 
+**Optional — discretising an input shape the engine lacks.** The same block keyed to
+`ORAL_PULSE_DEFAULT_FORM` (the reserved name `"default"`) instead applies to every plain
+oral row — `mg PO`, `mg/kg PO` and their scheduled repeats — and leaves the unit exactly as
+entered:
+
+```r
+oralPulses = stats::setNames(list(list(fraction = f, delay = d)), ORAL_PULSE_DEFAULT_FORM)
+```
+
+Use this, and only this, when the source's own absorption is a shape no constant `ka` can
+represent and the pulses stand in for it. Hydrochlorothiazide is the case: Van Wart 2013
+fits a Weibull input whose depot rate constant rises with time, so
+`R/drugs_hydrochlorothiazide.R` gives each dose as six lagged fractions at a rate constant
+of 1.0 /h — the Weibull's own asymptotic value, not a fitted number.
+
+The two uses are not interchangeable, and a reviewer will ask which one a block is. A
+formulation's pulses are a **model of a product**, evidenced by the product; the default
+form's are a **numerical approximation**, evidenced by the published curve they
+approximate. So a drug using the default form owes its header two things that a formulation
+does not: the input shape being stood in for, written out, and the **measured** cost of
+standing in for it — against a numerical integration of the exact system, across the
+covariate range, reported as a number. The standard is the one MDMA's zero-order depot set:
+within about 0.5% of the peak concentration over the whole curve. The test must check the
+curve against that integration, not the fractions, so that a later change to either is
+caught by the thing worth protecting
+(`tests/testthat/test-drugs-hydrochlorothiazide.R`).
+
+A block may not name the default form and a formulation at once: an `mg PO XR` row is also
+an oral row, so which pulses applied would depend on the order the block was written in.
+`validateOralPulses()` refuses it.
+
 **Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
 that the fraction of an oral dose absorbed falls as the dose rises, returns an
 `oralSaturation` block alongside the usual fields:
