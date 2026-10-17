@@ -396,6 +396,12 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
     "olanzapine", "droperidol", "droperidolIM",
+    # The antidiabetic drugs (2026-10-17): concentration only, no ke0, no
+    # metabolite (inst/help/models/antidiabetics.md)
+    "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
+    "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
+    "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
+    "empagliflozin", "ertugliflozin", "glyburide",
     # Intravenous calcium joined on 2026-10-13: the ionized calcium itself
     # is the end point, no ke0, no metabolite.
     "calcium"

@@ -147,7 +147,10 @@ test_that("it returns the same value", {
     Infusion.Units      = drugDefaults$Infusion.Units,
     Units               = drugDefaults$Units,
     Default.Units       = drugDefaults$Default.Units,
-    endCe               = drugDefaults$endCe
+    endCe               = drugDefaults$endCe,
+    # The tissue depot's route (R/subcutaneous.R): regional anesthesia for
+    # every drug that is not subcutaneous
+    tissueRoute         = ROUTE_RA
   )
 
   expect_equal_rounded(actual, expected)
