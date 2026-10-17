@@ -255,6 +255,7 @@ DRUG_CATEGORIES <- c(
   "Antiemetics",
   "Antiseizure",
   "Antipsychotics",
+  "Antihypertensives",
   "Other",
   "Illicit drugs"
 )
