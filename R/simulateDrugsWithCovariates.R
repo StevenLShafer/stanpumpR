@@ -49,9 +49,12 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          creatinine = NULL,
                                          cyp2c19 = CYP2C19_DEFAULT,
                                          cyp2c9 = CYP2C9_DEFAULT,
-                                         vkorc1 = VKORC1_DEFAULT,
                                          cyp2b6 = CYP2B6_DEFAULT,
-                                         pregnant = FALSE)
+                                         pregnant = FALSE,
+                                         # Appended last so a positional call
+                                         # that passed cyp2b6/pregnant keeps its
+                                         # binding (this function is exported).
+                                         vkorc1 = VKORC1_DEFAULT)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),

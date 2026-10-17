@@ -186,6 +186,7 @@ LIE  <- "9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011"
 COX  <- "152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004"
 BER  <- "189 patients over 75 (PROPHRE.75), Berges 2007"
 DEL  <- "orthopaedic-surgery patients (GETHCAM/POP-A-RIX), Delavenne 2010"
+HAM  <- "150 patients (Study I+II), Hamberg 2007"
 
 parameters <- rbind(
   par("heparin", "CL", 1.18, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
@@ -223,6 +224,25 @@ parameters <- rbind(
   par("warfarin", "T2PCA", 11.4, "h (turnover half-life)", "estimated", XUE, "https://doi.org/10.1111/bcp.13157"),
   par("warfarin", "RIC50", 2.387, "mg/L (R competition)", "estimated", XUE, "https://doi.org/10.1111/bcp.13157"),
   par("warfarin", "Emax", 1, "fixed", "fixed", XUE, "https://doi.org/10.1111/bcp.13157"),
+
+  # The Hamberg (2007) companion of warfarin (Graph Options), a second INR line
+  # (R/alternativeModels.R, warfarinHamberg). S- and R-warfarin PK and a
+  # two-chain transit-compartment INR model; apparent (/F) parameters, no
+  # body-size covariate.
+  par("warfarin (Hamberg)", "CL_S", 0.314, "L/h (x (1 - 0.0091 (age-71)) x CYP2C9 factor)", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "V1_S", 13.8, "L", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "Q_S", 0.131, "L/h", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "V2_S", 6.59, "L", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "ka", 2, "1/h (both enantiomers)", "fixed", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "CL_R", 0.139, "L/h (x (1 - 0.0098 (age-71)))", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "V_R", 12.8, "L", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "EC50", "4.61 / 3.02 / 2.20", "mg/L (VKORC1 GG / GA / AA)", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "gamma", 0.424, "dimensionless", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "MTT1", 11.6, "h (six-compartment chain; ktr = 1/MTT)", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "MTT2", 120, "h (one-compartment chain; ktr = 1/MTT)", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "lambda", 3.61, "dimensionless", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "Emax", 1, "fixed", "fixed", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "INR_max", 20, "fixed (INR = baseline + 20 (1 - A6 A7)^lambda)", "fixed", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
 
   par("edoxaban", "CL_NR/F", 15.2, "L/h (x (WT/70)^0.75)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
   par("edoxaban", "CL_R/F slope1", 0.202, "L/h per mL/min (CLcr<=90)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),

@@ -74,9 +74,11 @@ getDrugPK <- function(
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
-  vkorc1 = VKORC1_DEFAULT,
   cyp2b6 = CYP2B6_DEFAULT,
   pregnant = FALSE,
+  # Appended after the pre-existing arguments so a positional call that passed
+  # cyp2b6 or pregnant keeps its binding (getDrugPK() is exported).
+  vkorc1 = VKORC1_DEFAULT,
   model = NULL
 )
 {
