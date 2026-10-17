@@ -84,7 +84,10 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "buprenorphine",
                     # Sun 2021's fixed 0.782 h lag; plasma only, so no
                     # effect-site recovery to blank
-                    "olanzapine"))
+                    "olanzapine",
+                    # Holze 2023's fitted 0.30 h oral lag; plasma only
+                    # (2026-10-17)
+                    "psilocybin"))
 })
 
 
