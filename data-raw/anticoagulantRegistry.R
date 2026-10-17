@@ -66,7 +66,7 @@ registry <- rbind(
   reg("edox_niebecker_2015", "factor Xa inhibitor",
       "oral, VTE (Hokusai)", "edoxaban plasma (ng/mL)", "none plotted",
       "PO", "research_ready", "edoxaban",
-      "Full Table 3 final-model parameters read from the paper; phase 3 above-90 renal slope is 0.0321 x 2.74 (274% applied multiplicatively, per the footnote), fixed to the non-Asian non-dose-reduced patient on no P-gp inhibitor; allometric exponents taken as the conventional 0.75/1.",
+      "Full Table 3 final-model parameters read from the paper; phase 3 above-90 renal slope is 0.0321 x (1 + 2.74) = 0.120 (the abstract's +274% increase; nlmixr2lib agrees) and Q/F x (1 + 0.646) = 9.73 (+64.6%); CLcr truncated at 150 mL/min; allometric exponents per the footnote (CL/F and Vp/F ^0.75, Vc/F and Q/F ^1); fixed to the non-Asian non-dose-reduced patient on no P-gp inhibitor.",
       "https://doi.org/10.1111/bcp.12727"),
   reg("dabi_liesenfeld_2011_rely", "direct thrombin inhibitor",
       "oral, NVAF (RE-LY)", "total active dabigatran (ng/mL)", "none plotted",
@@ -222,10 +222,11 @@ parameters <- rbind(
 
   par("edoxaban", "CL_NR/F", 15.2, "L/h (x (WT/70)^0.75)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
   par("edoxaban", "CL_R/F slope1", 0.202, "L/h per mL/min (CLcr<=90)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
-  par("edoxaban", "CL_R/F slope2 (phase 3)", 0.0880, "L/h per mL/min (CLcr>90, 0.0321x2.74)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "CL_R/F slope2 (phase 3)", 0.120, "L/h per mL/min (CLcr>90, 0.0321x(1+2.74), +274%)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "CLcr cap", 150, "mL/min (CLcr truncated here)", "fixed", NIE, "https://doi.org/10.1111/bcp.12727"),
   par("edoxaban", "Vc/F", 209, "L (x WT/70, x1.226 Asian)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
-  par("edoxaban", "Vp/F", 92.3, "L (x WT/70)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
-  par("edoxaban", "Q/F", 5.91, "L/h (x (WT/70)^0.75)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "Vp/F", 92.3, "L (x (WT/70)^0.75)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
+  par("edoxaban", "Q/F (phase 3)", 9.73, "L/h (5.91 x1.646, +64.6%; x WT/70)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
   par("edoxaban", "ka", 3.36, "1/h", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
   par("edoxaban", "tlag", 0.250, "h", "fixed", NIE, "https://doi.org/10.1111/bcp.12727"),
 

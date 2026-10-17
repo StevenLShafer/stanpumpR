@@ -5,8 +5,8 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "gabapentin", "pregabalin", "oxycodone", "meloxicam",
                 "lacosamide", "levetiracetam",
                 # Anticoagulants with a renal clearance term (R/drugs_apixaban.R,
-                # R/drugs_rivaroxaban.R)
-                "apixaban", "rivaroxaban")
+                # R/drugs_rivaroxaban.R, R/drugs_edoxaban.R, R/drugs_dabigatran.R)
+                "apixaban", "rivaroxaban", "edoxaban", "dabigatran")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).
