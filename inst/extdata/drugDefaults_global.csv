@@ -120,6 +120,7 @@ eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,26,15,0,0,IV,Antiseizu
 diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs
 heparin,IU,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#B71C1C,0,0,0,0,0,IV,Anticoagulants
 bivalirudin,mcg,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg/min,mg/kg/min",#AD1457,0,0,0,0,0,IV,Anticoagulants
+argatroban,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min,mcg/hr,mcg/kg/hr",#E65100,0,0,0,0,0,IV,Anticoagulants
 apixaban,ng,mg,,mg PO,"mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Anticoagulants
 rivaroxaban,ng,mg,,mg PO,"mg PO,mg PO qd,mg PO bid",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
 edoxaban,ng,mg,,mg PO qd,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Anticoagulants

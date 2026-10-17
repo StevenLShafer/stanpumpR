@@ -46,3 +46,8 @@
 "dabigatran","V3/F","345","L","fixed","9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011","https://doi.org/10.1111/j.1538-7836.2011.04498.x"
 "dabigatran","ka","0.754","1/h","fixed","9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011","https://doi.org/10.1111/j.1538-7836.2011.04498.x"
 "dabigatran","ALAG","0.634","h","fixed","9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011","https://doi.org/10.1111/j.1538-7836.2011.04498.x"
+"argatroban","CL","22","L/h (+ 0.018 x (WT-87))","estimated","152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004","https://doi.org/10.1177/0091270004267651"
+"argatroban","V1","11","L","estimated","152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004","https://doi.org/10.1177/0091270004267651"
+"argatroban","V2","13","L","estimated","152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004","https://doi.org/10.1177/0091270004267651"
+"argatroban","Q","10","L/h","estimated","152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004","https://doi.org/10.1177/0091270004267651"
+"argatroban","WT on CL","0.018","L/h per kg (linear, about 87 kg median)","estimated","152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004","https://doi.org/10.1177/0091270004267651"

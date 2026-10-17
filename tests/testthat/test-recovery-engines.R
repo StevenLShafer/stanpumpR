@@ -402,7 +402,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # Anticoagulants (2026-10-17): plasma activity or concentration, or the
     # INR; no effect site (R/drugs_heparin.R and the others).
     "heparin", "bivalirudin", "apixaban", "rivaroxaban",
-    "edoxaban", "dabigatran", "warfarin"
+    "edoxaban", "dabigatran", "argatroban", "warfarin"
   ))
 })
 

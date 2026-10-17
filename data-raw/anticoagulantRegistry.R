@@ -73,6 +73,11 @@ registry <- rbind(
       "PO", "research_ready", "dabigatran",
       "Full Table 5 final-model parameters and equations read from the paper; Emax CrCl-CL/F reproduces the 69.6 L/h typical clearance; fixed to the non-South-Asian no-heart-failure median-haemoglobin patient on no interacting co-medication; doses as mg dabigatran etexilate.",
       "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+  reg("arg_cox_2004_pci", "direct thrombin inhibitor",
+      "IV, PCI", "argatroban plasma (ng/mL)", "none plotted",
+      "IV", "research_ready", "argatroban",
+      "Full Table II final model read from the paper (CL = 22.0 + 0.018 x (WT-87), V1 11, V2 13, Q 10); PCI patients on a GP IIb/IIIa antagonist; no hepatic covariate (under-predicts in liver disease); ACT Emax not plotted.",
+      "https://doi.org/10.1177/0091270004267651"),
 
   # --- Provisional (published, but a material gap) ---------------------------
   reg("ufh_delavenne_2017_cpb", "unfractionated heparin",
@@ -100,11 +105,6 @@ registry <- rbind(
       "IV", "pending", NA,
       "Label CL (0.204 L/h/kg) differs from the healthy-volunteer fit; no full V/Q/PD vector for PCI patients.",
       "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=72c5413f-882a-4784-9be6-312c0a0a2a97"),
-  reg("arg_label_pk", "direct thrombin inhibitor",
-      "IV", "argatroban plasma", "aPTT/ACT",
-      "IV", "pending", NA,
-      "Label gives CL, half-life and Vss only; a one-compartment V must be derived; no portable Emax/EC50; published popPK full vectors (Cox 2004, Akimoto 2011) not retrievable.",
-      "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=270dbb59-e080-4a64-91d9-a68bed4bd2e5"),
   reg("apix_byon_2017_vte", "factor Xa inhibitor",
       "oral, VTE", "apixaban plasma -> anti-Xa (IU/mL)", "Rotachrom on STA-Compact",
       "PO", "provisional", NA,
@@ -182,6 +182,7 @@ WIL  <- "4918 patients, 7 trials, Willmann 2018 (population means)"
 XUE  <- "264 cardiac-surgery patients, Xue 2017"
 NIE  <- "4130 individuals (13 phase 1 + Hokusai-VTE), Niebecker 2015"
 LIE  <- "9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011"
+COX  <- "152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004"
 
 parameters <- rbind(
   par("heparin", "CL", 1.18, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
@@ -236,7 +237,13 @@ parameters <- rbind(
   par("dabigatran", "Q/F", 35.5, "L/h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
   par("dabigatran", "V3/F", 345, "L", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
   par("dabigatran", "ka", 0.754, "1/h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
-  par("dabigatran", "ALAG", 0.634, "h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x")
+  par("dabigatran", "ALAG", 0.634, "h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+
+  par("argatroban", "CL", 22.0, "L/h (+ 0.018 x (WT-87))", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
+  par("argatroban", "V1", 11.0, "L", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
+  par("argatroban", "V2", 13.0, "L", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
+  par("argatroban", "Q", 10.0, "L/h", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
+  par("argatroban", "WT on CL", 0.018, "L/h per kg (linear, about 87 kg median)", "estimated", COX, "https://doi.org/10.1177/0091270004267651")
 )
 
 utils::write.csv(registry,
