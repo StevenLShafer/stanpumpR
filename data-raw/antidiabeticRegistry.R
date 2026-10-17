@@ -106,9 +106,9 @@ registry <- rbind(
       "https://www.fda.gov/media/152135/download",
       "MCT vehicle; cannot inherit the microsphere release constants without comparability audit."),
   reg("lixisenatide_sc", "lixisenatide", "Adlyxin injection", SC, "core", "US",
-      FIT, AUD, "PD-TEMPLATE", DTPL, "none", NA, NA, FALSE,
-      "https://www.scitechnol.com/2325-9604/2325-9604-2-112.pdf",
-      "Frank 2013 not retrievable or indexed; dose-dependent MAT would need per-dose ka. Scheen 2015 (Liu et al., 5 mcg single dose) constraints: CL/F 20.0, 19.0, 16.0 and 14.0 L/h with normal function and mild, moderate and severe CKD; t1/2 2.6-4.4 h. Frank 2013 full text (web print, supplied) read: one compartment, first-order absorption parameterised by MAT (3.25 h), V/CL 1.07 h, WT on V/F, Cockcroft-Gault CLcr on CL/F (-9.9% per 1 L/h at 82.1 kg), dose on MAT, covariates as theta_x (1 + theta_y (cov - median)); but its Table 2 (CL/F, V/F and the covariate thetas) is a collapsed link in the print and could not be fetched, so the model is not complete."),
+      FIT, FIT, "PD-TEMPLATE", DTPL, "none", NA, "lixisenatide", TRUE,
+      "https://doi.org/10.4172/2325-9604.1000112",
+      "Frank 2013, Table 2 (supplied as an image): 1C, ADVAN2, MAT = 1/ka 3.25 h x (dose/15 mcg)^0.236, CL/F 38.6 L/h x (1 + 0.099 (Cockcroft-Gault CLCR - 6.21 L/h)), V/F 41.2 L x (WT/82.1)^1.56; antibody-negative visits only. Reproduces V/CL 1.07 h and the 1.5- to 1.8-fold exposure at CLCR 1.8-3.0 L/h. Dose on MAT applied per injection (doseDependent). Table 1 (studied ranges) not available, so nothing is held to a range. Scheen 2015 (Liu et al., 5 mcg single dose): CL/F 20.0, 19.0, 16.0 and 14.0 L/h with normal function and mild, moderate and severe CKD, lower than this pooled model."),
   reg("pramlintide_iv_research", "pramlintide", "IV study (research)", "IV", "core", "study",
       FIT, FIT, "PD-FIT", DAUD, "T1D meal EGP", NA, "pramlintideIV", TRUE,
       "https://doi.org/10.1208/s12248-012-9409-7",
@@ -348,6 +348,8 @@ baron  <- "https://doi.org/10.1007/s13300-016-0174-y"
 cirin  <- "https://doi.org/10.1111/bcp.13135"
 melinUrl <- "https://doi.org/10.1111/bcp.15939"
 hoeben <- "https://doi.org/10.1007/s40262-015-0307-x"
+frank  <- "https://doi.org/10.4172/2325-9604.1000112"
+frankPop <- "Frank 2013, 1223 healthy subjects and adults with type 2 diabetes (antibody-negative)"
 hoebenPop <- "Hoeben 2016, 1616 healthy volunteers and adults with type 2 diabetes"
 hoebenPhase1 <- "Hoeben 2016, 245 phase I subjects (fixed in the final model)"
 watson <- "https://doi.org/10.1177/0091270009354996"
@@ -460,6 +462,14 @@ parameters <- rbind(
   par("dapagliflozin", "Q/F", "8.92", "L/h", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
   par("dapagliflozin", "ka", "2.39", "1/h", E, "Melin 2023", melinUrl, "Supplementary Table 4"),
   par("dapagliflozin", "lag", "0.248", "h", FX, "Melin 2023 (fixed from the previous model)", melinUrl, "Supplementary Table 4"),
+  par("lixisenatide", "CL/F", "38.6", "L/h x (1 + 0.099 (CLCR - 6.21))", E, frankPop, frank, "Table 2"),
+  par("lixisenatide", "CLCR on CL/F", "0.099", "fractional change per L/h of Cockcroft-Gault CLCR", E, frankPop, frank, "Table 2"),
+  par("lixisenatide", "reference CLCR", "6.21", "L/h, population median (103.5 mL/min)", DV, frankPop, frank, "Table 2"),
+  par("lixisenatide", "V/F", "41.2", "L x (WT/82.1)^1.56", E, frankPop, frank, "Table 2"),
+  par("lixisenatide", "weight exponent on V/F", "1.56", "unitless", E, frankPop, frank, "Table 2"),
+  par("lixisenatide", "reference weight", "82.1", "kg, population median", DV, frankPop, frank, "Table 2"),
+  par("lixisenatide", "MAT", "3.25", "h at 15 mcg; ka = 1/MAT", E, frankPop, frank, "Table 2; Methods"),
+  par("lixisenatide", "dose exponent on MAT", "0.236", "unitless, per injection, reference 15 mcg", E, frankPop, frank, "Table 2"),
   par("canagliflozin", "Vc/F", "99.3", "L (men) x (WT/75.8)^0.583 x (AGE/45)^-0.167", E, hoebenPhase1, hoeben, "Table 5 (Table 3)"),
   par("canagliflozin", "Vc/F, women", "82.6", "L", E, hoebenPhase1, hoeben, "Table 5 (Table 3)"),
   par("canagliflozin", "weight exponent on Vc/F", "0.583", "unitless", E, hoebenPhase1, hoeben, "Table 5"),

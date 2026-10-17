@@ -141,6 +141,7 @@ canagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#B15928,0,0,0,0,0,IV,Antidiabetic
 pioglitazone,ng,,,mg PO qd,"mg PO,mg PO qd",#6FA83A,0,0,0,0,0,IV,Antidiabetic
 pramlintideIV,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#9C4DB8,0,0,0,0,0,IV,Antidiabetic
 exenatide,pg,,,mcg SC bid,"mcg SC,mcg SC bid",#C46210,0,0,0,0,0,IV,Antidiabetic
+lixisenatide,pg,,,mcg SC qd,"mcg SC,mcg SC qd",#7A3E9D,0,0,0,0,0,IV,Antidiabetic
 linagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#3E8E9E,0,0,0,0,0,IV,Antidiabetic
 vildagliptin,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#7D6B2E,0,0,0,0,0,IV,Antidiabetic
 heparin,IU,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#B71C1C,0,0,0,0,0,IV,Anticoagulants
