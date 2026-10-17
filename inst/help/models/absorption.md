@@ -1,4 +1,4 @@
-A dose with `PO`, `SL`, `IM`, `IN` or `RA` in its unit is not injected into the central compartment. It is placed in an absorption depot from which it enters the central compartment by first-order kinetics, after a lag, with only a fraction of the dose arriving at all.
+A dose with `PO`, `SL`, `IM`, `IN`, `SC` or `RA` in its unit is not injected into the central compartment. It is placed in an absorption depot from which it enters the central compartment by first-order kinetics, after a lag, with only a fraction of the dose arriving at all.
 
 The one exception is a **rate** with a route word, `mg/day PO`, which only [amiodarone](help:drugs/amiodarone) offers. It is a constant-rate (zero-order) oral input, the way Pollak and colleagues modelled a daily oral dose: there is no depot, absorption rate constant, lag or bioavailability, and the daily dose enters the central compartment evenly over the day, on the drug's apparent oral parameters, until the drug's next rate row, exactly as an infusion would.
 
@@ -18,7 +18,7 @@ Boluses of the same drug given intravenously add to the same compartments, so or
 
 ## Which drugs have routes
 
-The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, sublingual, intramuscular, intranasal and regional anesthesia unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid` and so on; see [The dose table](help:dose-table)), which are not listed separately.
+The table is built from the drug library, the same list the dose table's Units selector reads, so it shows every oral, sublingual, intramuscular, intranasal, subcutaneous and regional anesthesia unit on offer. Most of these drugs also offer their units as repeating doses (`mg PO bid`, `mg SC qwk` and so on; see [The dose table](help:dose-table)), which are not listed separately.
 
 <!-- generated: route-table -->
 
@@ -51,6 +51,21 @@ Each drug's absorption is site- and solution-specific: it was chosen from one st
 
 A **continuous perineural infusion** through a catheter is entered as **mg/hr RA** ([bupivacaine](help:drugs/bupivacaine), [ropivacaine](help:drugs/ropivacaine) and [lidocaine](help:drugs/lidocaine)). It runs from its row's time at that rate into the tissue depot, until the next **mg/hr RA** row for the drug (a rate of 0 stops it), and is absorbed from the depot exactly as a single injection is. At steady state the plasma concentration is the bioavailability times the rate divided by the clearance, whatever the absorption rate; absorption sets only how fast it gets there and how slowly it falls after the infusion stops. The clearance is constant in the model, so the rise in total (bound) concentration over days of infusion, as alpha-1-acid glycoprotein rises after surgery, is not represented. A continuous RA infusion cannot be combined with a clinical event that changes the PK.
 
+## Subcutaneous injection (SC)
+
+`SC` is a subcutaneous injection: the incretin peptides ([semaglutide](help:drugs/semaglutide), [tirzepatide](help:drugs/tirzepatide), [liraglutide](help:drugs/liraglutide)), dosed in mg, and the insulins, dosed in units (`U SC`, `U/kg SC`). The dose enters a tissue depot and is absorbed first-order, as an RA dose is; the engine carries the two routes on the same depot, so a drug offers one or the other. The weekly peptides offer `mg SC qwk`, a dose repeated every 7 days to the end of the plot.
+
+An insulin unit (U) is a potency unit of each preparation, not a mass, so the insulins are plotted in **mcU/mL** (microunits per mL, the same as mU/L; for human insulin 1 mcU/mL is about 6 pmol/L), and a unit of one insulin is not converted into another. A premixed insulin (human 70/30, lispro Mix75/25 and Mix50/50) is one drug whose dose is split between its two components, each absorbed from its own depot with its own rate and lag, as Tham and colleagues modelled them.
+
+Two inputs go beyond a single first-order depot:
+
+- **Parallel zero-order input.** In Tham's models of [insulin lispro](help:drugs/insulinLispro) and [insulin glargine](help:drugs/insulinGlargine) a fixed share of each dose (27.1% and 17.8%) enters the circulation at a constant rate over a fixed time (1.06 h and 0.612 h) beside the first-order depot. Where that share enters and which branch the lispro lag delays are in the paper's supplement, which could not be read; the app uses the usual form (the zero-order share straight into the circulation from the moment of injection, the lag on the depot), and the drug pages say so.
+- **Sequential zero-order input**, the whole dose released into the depot at a constant rate and then absorbed first-order, is supported by the engine for a model that needs it (Watson's liraglutide fit, not yet transcribed).
+
+An **insulin pump** (continuous subcutaneous insulin infusion) is entered as **U/hr SC**: a rate into the SC depot from its row's time until the drug's next U/hr SC row (0 stops it), as `mg/hr RA` is. It is offered only where the product's label permits pump use, which in the library means insulin lispro U-100 (Humalog U-100); concentrated, premixed and long-acting insulins are not. For lispro, the zero-order share of the pump's delivery is given as the zero-order input of each 2-minute portion of it, a close approximation to the ramp a continuous rate would give; the depot share is exact.
+
+These models are concentration only. Glucose, the glucose infusion rate of a clamp, HbA1c, urinary glucose excretion and DPP-4 inhibition are separate endpoints with fits of their own, none of which is plotted; see [Antidiabetic models and their limits](help:models/antidiabetics).
+
 ## Saturable absorption
 
 Gabapentin is absorbed by a carrier in the small intestine that saturates, so the larger the dose, the smaller the fraction absorbed. Such a drug declares the saturation, and each oral dose is scaled by its own fraction absorbed before it reaches the engine:
@@ -71,4 +86,4 @@ Give oxycodone 10 mg PO and turn the plasma line on. The concentration rises to 
 
 ## Limits
 
-First-order absorption from a depot is the only absorption model, scaled per dose where it saturates, split between two depots or released in pulses where a drug declares it. The exception is amiodarone's `mg/day PO`, a constant-rate input on apparent oral parameters that runs as an infusion; a zero-order absorption model for an oral dose given as an amount is not offered. Enterohepatic recirculation and saturation shared between overlapping doses are not modelled. An inverse Gaussian absorption model is drafted in the repository (`R/ig_absorption.R`) but is not wired in. Oral doses are invisible to Suggest Dosing and to [target-controlled infusion](help:tci), both of which treat them, as a real pump would, as unexpected additions.
+First-order absorption from a depot is the only absorption model, scaled per dose where it saturates, split between two depots, released in pulses, or given a zero-order share (the subcutaneous insulins) where a drug declares it. The exception is amiodarone's `mg/day PO`, a constant-rate input on apparent oral parameters that runs as an infusion; a zero-order absorption model for an oral dose given as an amount is not offered. Enterohepatic recirculation and saturation shared between overlapping doses are not modelled. An inverse Gaussian absorption model is drafted in the repository (`R/ig_absorption.R`) but is not wired in. Oral doses are invisible to Suggest Dosing and to [target-controlled infusion](help:tci), both of which treat them, as a real pump would, as unexpected additions.

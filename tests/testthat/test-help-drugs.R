@@ -68,7 +68,14 @@ plasmaOnly <- c(
   "olanzapine", "droperidol", "droperidolIM",
   # Intravenous calcium (2026-10-13): plotted as the change in ionized
   # calcium, which is the end point itself; no ke0.
-  "calcium"
+  "calcium",
+  # The antidiabetic drugs (2026-10-17): concentration only; glucose,
+  # HbA1c, UGE and DPP-4 inhibition are endpoints of their own, with no ke0
+  # (inst/help/models/antidiabetics.md)
+  "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
+  "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
+  "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
+  "empagliflozin", "ertugliflozin", "glyburide"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

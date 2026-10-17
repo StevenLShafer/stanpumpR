@@ -27,12 +27,13 @@ test_that("doseRoute() agrees with every unit the app offers", {
   dd <- getDrugDefaultsGlobal()
   units <- unique(unlist(dd$Units))
   # The substring tests simCpCe() used before doseRoute(), with RA (regional
-  # anesthesia, 2026-10-10) added
+  # anesthesia, 2026-10-10) and SC (subcutaneous, 2026-10-17) added
   old <- ifelse(grepl("PO", units), "PO",
                 ifelse(grepl("IM", units), "IM",
                        ifelse(grepl("IN", units), "IN",
                               ifelse(grepl("SL", units), "SL",
-                                     ifelse(grepl("RA", units), "RA", "IV")))))
+                                     ifelse(grepl("SC", units), "SC",
+                                            ifelse(grepl("RA", units), "RA", "IV"))))))
   expect_equal(doseRoute(units), old)
 })
 
@@ -56,10 +57,11 @@ test_that("every unit offered before the oral rate keeps its exact classificatio
   # "mg/day PO" can be a rate; for every other unit the answer must be the
   # one it always was.
   # The rate units that arrived later (the oral daily rate, the continuous
-  # RA infusion) are rates by design and are left out.
-  units <- unique(c(setdiff(allUnits, c(poRateUnits, raRateUnits)), gasUnits, tciUnits, scheduledUnits,
+  # RA infusion, the insulin pump) are rates by design and are left out.
+  later <- c(poRateUnits, raRateUnits, insulinRateUnits)
+  units <- unique(c(setdiff(allUnits, later), gasUnits, tciUnits, scheduledUnits,
                     unlist(getDrugDefaultsGlobal()$Units)))
-  units <- setdiff(units, c(poRateUnits, raRateUnits))
+  units <- setdiff(units, later)
   route <- doseRoute(units)
   oldBolus <- route == ROUTE_IV & !(grepl("min", units) | grepl("hr", units))
   newBolus <- route == ROUTE_IV & !isRateUnit(units)
@@ -92,9 +94,10 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
   unscheduled <- hydromorphone[!isScheduledUnit(hydromorphone)]
   expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV],
                c("mg PO", "mg PO liquid", "mg/kg PO liquid", "mg IM", "mg IN"))
-  # Every route but sublingual and regional anesthesia, which hydromorphone
-  # does not offer
-  expect_equal(unique(doseRoute(hydromorphone)), setdiff(DOSE_ROUTES, c(ROUTE_SL, ROUTE_RA)))
+  # Every route but sublingual, subcutaneous and regional anesthesia, which
+  # hydromorphone does not offer
+  expect_equal(unique(doseRoute(hydromorphone)),
+               setdiff(DOSE_ROUTES, c(ROUTE_SL, ROUTE_SC, ROUTE_RA)))
   lidocaine <- dd$Units[[which(dd$Drug == "lidocaine")]]
   expect_equal(unique(doseRoute(lidocaine)), c(ROUTE_IV, ROUTE_RA))
   expect_true(all(c("Plasma target", "Effect site target") %in%

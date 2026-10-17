@@ -174,6 +174,11 @@ getDrugPK <- function(
   # and never reaches here -- still fails with R's own "could not find
   # function", which is what test-gas-routing.R pins.
   X <- if (is.null(model)) do.call(drug, covariates) else model
+  # A subcutaneous model writes its absorption as ka_SC and the rest; the
+  # engines carry it on the tissue-depot (RA) fields.  See R/subcutaneous.R.
+  tissueRoute <- modelTissueRoute(X$PK)
+  X$PK <- lapply(X$PK, subcutaneousToTissueDepot, drug = drug)
+  zeroOrderSC <- validateZeroOrderSC(X$zeroOrderSC, X$PK, drug)
   tPeak <- X$tPeak
   # A model that supplies ke0 directly may leave tPeak out altogether (NULL):
   # the time to peak effect is then solved below, per PK set, as the moment
@@ -342,7 +347,25 @@ getDrugPK <- function(
       ka_RAslow <- X$PK[[event]]$ka_RA_slow
       bioavailability_RAslow <- bioavailability_RA * slow
       bioavailability_RA <- bioavailability_RA * (1 - slow)
-      tlag_RAslow <- tlag_RA
+      # The slow depot's own lag, when it has one (a premixed insulin whose
+      # two components are absorbed with different lags); otherwise the fast
+      # depot's.
+      tlag_RAslow <- if (is.null(X$PK[[event]]$tlag_RA_slow)) tlag_RA else
+        X$PK[[event]]$tlag_RA_slow
+      if (!is_valid_number(tlag_RAslow, 0, Inf))
+        stop("Invalid slow tissue depot lag for ", drug, ".")
+    }
+
+    # A zero-order share of each subcutaneous dose that enters the
+    # circulation directly (R/subcutaneous.R): the depots get the rest of the
+    # dose, and simCpCe() adds the share as a rate into the central
+    # compartment.
+    if (!is.null(zeroOrderSC) && zeroOrderSC$into == "central")
+    {
+      zeroOrderSC$share <- bioavailability_RA + bioavailability_RAslow
+      bioavailability_RA     <- bioavailability_RA     * (1 - zeroOrderSC$fraction)
+      bioavailability_RAslow <- bioavailability_RAslow * (1 - zeroOrderSC$fraction)
+      zeroOrderSC$share <- zeroOrderSC$share * zeroOrderSC$fraction
     }
 
     # An optional second oral depot (parallel first-order absorption with a
@@ -1091,6 +1114,14 @@ getDrugPK <- function(
   # A pulsed extended-release formulation (Adderall XR): the fractions and
   # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
   out$oralPulses <- validateOralPulses(X$oralPulses, drug)
+  # Which route the tissue depot carries, subcutaneous or regional
+  # anesthesia, for the help; and the zero-order share of each SC dose, with
+  # the fraction of the dose it delivers (`share`: F x fraction into the
+  # circulation, the whole dose into the depot), which simCpCe() adds as a
+  # rate.  See R/subcutaneous.R.
+  out$tissueRoute <- tissueRoute
+  if (!is.null(zeroOrderSC) && zeroOrderSC$into == "depot") zeroOrderSC$share <- 1
+  out$zeroOrderSC <- zeroOrderSC
   return(out)
 }
 

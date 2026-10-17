@@ -260,3 +260,18 @@ egfrDeindexed <- function(weight, height, age, sex, scr = adultCreatinine(sex))
 {
   egfrCKDEPI2009(age, sex, scr) * bsaDuBois(weight, height) / 1.73
 }
+
+#' Four-variable MDRD eGFR, in mL/min/1.73 m^2
+#'
+#' The IDMS-traceable form (Levey et al., Clin Chem 2007;53:766-772):
+#' 175 x Scr^-1.154 x age^-0.203, x 0.742 in women.  The race coefficient is
+#' not applied: the Patient Profile carries no race.  Read by ertugliflozin,
+#' whose population model used it (Fediuk 2021), capped there at 120.
+#'
+#' @inheritParams creatinineClearanceCG
+#' @return eGFR, indexed to 1.73 m^2 of body surface
+#' @keywords internal
+egfrMDRD <- function(age, sex, scr = adultCreatinine(sex))
+{
+  175 * scr^-1.154 * age^-0.203 * (if (sex == SEX_FEMALE) 0.742 else 1)
+}

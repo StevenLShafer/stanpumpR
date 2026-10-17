@@ -118,3 +118,18 @@ tiagabine,ng,,,mg PO tid,"mg PO,mg PO bid,mg PO tid,mg PO qid",#00838F,20,200,50
 levetiracetam,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid",#2E7D32,12,46,30,0,0,IV,Antiseizure
 eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,26,15,0,0,IV,Antiseizure
 diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs
+semaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#1B5E20,0,0,0,0,0,IV,Antidiabetic
+tirzepatide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#4A148C,0,0,0,0,0,IV,Antidiabetic
+liraglutide,ng,,,mg SC qd,"mg SC,mg SC qd",#00838F,0,0,0,0,0,IV,Antidiabetic
+insulinRegular,mcU,,,U SC,"U SC,U/kg SC,U SC bid,U SC tid",#F9A825,0,0,0,0,0,IV,Antidiabetic
+insulinRegularU500,mcU,,,U SC bid,"U SC,U SC bid,U SC tid",#E65100,0,0,0,0,0,IV,Antidiabetic
+insulinNPH,mcU,,,U SC bid,"U SC,U/kg SC,U SC qd,U SC bid",#6D4C41,0,0,0,0,0,IV,Antidiabetic
+insulinHumanMix70,mcU,,,U SC bid,"U SC,U SC bid",#8D6E63,0,0,0,0,0,IV,Antidiabetic
+insulinLispro,mcU,,,U SC,"U SC,U/kg SC,U SC tid,U/hr SC",#D81B60,0,0,0,0,0,IV,Antidiabetic
+insulinLisproMix75,mcU,,,U SC bid,"U SC,U SC bid",#AD1457,0,0,0,0,0,IV,Antidiabetic
+insulinLisproMix50,mcU,,,U SC bid,"U SC,U SC bid",#880E4F,0,0,0,0,0,IV,Antidiabetic
+insulinGlargine,mcU,,,U SC qd,"U SC,U/kg SC,U SC qd",#283593,0,0,0,0,0,IV,Antidiabetic
+metformin,mcg,,,mg PO bid,"mg PO,mg PO qd,mg PO bid,mg PO tid",#455A64,0,0,0,0,0,IV,Antidiabetic
+empagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#0277BD,0,0,0,0,0,IV,Antidiabetic
+ertugliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidiabetic
+glyburide,ng,,,mg PO qd,"mg PO,mg PO qd,mg PO bid",#9E9D24,0,0,0,0,0,IV,Antidiabetic

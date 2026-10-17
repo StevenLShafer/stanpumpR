@@ -58,12 +58,12 @@ helpExpandGenerated <- function(text, drugDefaults = getDrugDefaultsGlobal()) {
 #' @param drugDefaults the drug library
 #' @returns a list with one element per such drug, in library order: a list of
 #'   `drug`, `iv` (TRUE when the drug is also given intravenously) and, named
-#'   PO, SL, IM, IN and RA, a list of `units` (empty when the route is not offered) and
+#'   PO, SL, IM, IN, SC and RA, a list of `units` (empty when the route is not offered) and
 #'   `notes`
 #' @noRd
 helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
   adult <- helpReferencePatients()[1, ]
-  extravascular <- c(ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_RA)
+  extravascular <- c(ROUTE_PO, ROUTE_SL, ROUTE_IM, ROUTE_IN, ROUTE_SC, ROUTE_RA)
   rows <- lapply(seq_len(nrow(drugDefaults)), function(i) {
     row <- drugDefaults[i, ]
     if (isGasDrug(row$Drug)) return(NULL)
@@ -81,6 +81,7 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
       list(units = u,
            notes = c(if (any(isRateUnit(u)))
                        if (r == ROUTE_RA) "continuous infusion into the depot"
+                       else if (r == ROUTE_SC) "insulin pump: continuous infusion into the depot"
                        else "constant daily rate, no depot",
                      if (length(u) > 0) notes[[r]]))
     })
@@ -98,13 +99,13 @@ helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
            if (length(x$notes) > 0) paste0(" (", paste(x$notes, collapse = "; "), ")") else "")
   }
   body <- vapply(helpRouteInventory(drugDefaults), function(d) {
-    sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s |", helpDrugTitle(d$drug), d$drug,
+    sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s | %s |", helpDrugTitle(d$drug), d$drug,
             cell(d[[ROUTE_PO]]), cell(d[[ROUTE_SL]]), cell(d[[ROUTE_IM]]), cell(d[[ROUTE_IN]]),
-            cell(d[[ROUTE_RA]]), if (d$iv) "yes" else "no")
+            cell(d[[ROUTE_SC]]), cell(d[[ROUTE_RA]]), if (d$iv) "yes" else "no")
   }, character(1))
   paste(c(paste("| Drug | Oral (PO) | Sublingual (SL) | Intramuscular (IM) | Intranasal (IN) |",
-                "Regional anesthesia (RA) | Also intravenous |"),
-          "|---|---|---|---|---|---|---|",
+                "Subcutaneous (SC) | Regional anesthesia (RA) | Also intravenous |"),
+          "|---|---|---|---|---|---|---|---|",
           body), collapse = "\n")
 }
 

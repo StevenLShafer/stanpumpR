@@ -291,8 +291,24 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- mg_Conv * 1000
         ng_Conv  <- mg_Conv * 1000000
       },
+      mcU = {                  # Insulin: amounts in mU, Cp in mU/L = mcU/mL
+        # Dosed in units (U) of the preparation, never by mass; the U rows are
+        # converted below.
+        if (any(grepl("^(g|mg|mcg|ng)( |/|$)", dose$Units)))
+          stop("A dose of ", PK$drug, " must be in units (U), not by mass.")
+        mg_Conv <- mcg_Conv <- ng_Conv <- NA_real_
+      },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
+    # Insulin units: U to mU, so that dividing by litres gives mU/L, which is
+    # mcU/mL.  A U dose of a drug reported by mass would have no conversion.
+    use <- grep("^U( |/|$)", dose$Units)
+    if (length(use) > 0)
+    {
+      if (!identical(PK$Concentration.Units, "mcU"))
+        stop("A dose in units (U) needs a drug reported in mcU/mL; ", PK$drug, " is not.")
+      dose$Dose[use] <- dose$Dose[use] * 1000
+    }
     # One factor per dose row (the molar branch may differ row by row).
     mg_Conv  <- rep_len(mg_Conv,  nrow(dose))
     mcg_Conv <- rep_len(mcg_Conv, nrow(dose))
@@ -318,7 +334,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("/day", dose$Units)
     dose$Dose[use] <- dose$Dose[use] / MINS_PER_DAY
 
-    # Identify extravascular (PO, SL, IM, IN, RA) and IV bolus doses.  A rate unit
+    # Identify extravascular (PO, SL, IM, IN, SC, RA) and IV bolus doses.  A rate unit
     # (isRateUnit(), R/routes.R) is an input rate whatever its route word, so
     # it is neither: a "mg/day PO" row, the constant-rate oral input of
     # poRateUnits, becomes an infusion row on the drug's apparent oral
@@ -333,11 +349,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IM <- route == ROUTE_IM & !rate
     dose$IN <- route == ROUTE_IN & !rate
     dose$SL <- route == ROUTE_SL & !rate
-    dose$RA <- route == ROUTE_RA & !rate
+    # A subcutaneous dose shares the tissue depot with RA (R/subcutaneous.R):
+    # a drug offers one or the other, so the flags cannot collide.
+    dose$RA <- route %in% TISSUE_ROUTES & !rate
     # A continuous perineural infusion ("mg/hr RA", raRateUnits): a rate into
     # the tissue depot, not into the vein.  Only advanceClosedFormPO_IM_IN()
     # carries it; see there.
-    dose$RArate <- route == ROUTE_RA & rate
+    dose$RArate <- route %in% TISSUE_ROUTES & rate
     # Set before the slow-depot rows below are added: `route` and `rate` are
     # per row of the table as entered.  Set after, they no longer matched the
     # longer table, so a drug with a slow RA depot given intravenously and by
@@ -392,6 +410,12 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose <- rbind(dose, secondRows)
       dose <- dose[order(dose$Time), , drop = FALSE]
     }
+
+    # Zero-order subcutaneous input (insulin lispro and glargine, and the
+    # premixes with lispro):
+    # the zero-order share of each SC dose becomes a piecewise-constant rate,
+    # into the circulation or into the depot; see R/subcutaneous.R.
+    dose <- expandZeroOrderSC(dose, PK$zeroOrderSC, maximum)
 
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp

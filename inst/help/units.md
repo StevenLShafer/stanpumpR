@@ -8,14 +8,16 @@
 
 ## Concentrations
 
-Each drug is plotted in the concentration units given in the drug library: **mcg/mL** (micrograms per millilitre, equal to mg/L) or **ng/mL** (nanograms per millilitre, equal to mcg/L). The inhaled agents are in **per cent of one atmosphere**, and MAC equivalents are dimensionless. Mannitol is plotted as the serum osmolality it produces, in **mOsm/kg**. Each drug's page gives its unit; broadly:
+Each drug is plotted in the concentration units given in the drug library: **mcg/mL** (micrograms per millilitre, equal to mg/L) or **ng/mL** (nanograms per millilitre, equal to mcg/L). The inhaled agents are in **per cent of one atmosphere**, and MAC equivalents are dimensionless. Mannitol is plotted as the serum osmolality it produces, in **mOsm/kg**. The insulins, dosed in units, are plotted in **mcU/mL** (microunits per millilitre, equal to mU/L; about 6 pmol/L of human insulin). Each drug's page gives its unit; broadly:
 
 | Drugs | Plotted in |
 |---|---|
 | propofol, ketamine, midazolam, etomidate, remimazolam, morphine, pethidine, methadone, rocuronium, sugammadex, the local anesthetics, the antibiotics, hydrocortisone, methylprednisolone, amiodarone, and the oral analgesics and antiseizure drugs other than celecoxib and tiagabine | mcg/mL |
-| remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, vecuronium, cisatracurium, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics | ng/mL |
+| remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, vecuronium, cisatracurium, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics; semaglutide, tirzepatide, liraglutide, empagliflozin, ertugliflozin and glyburide | ng/mL |
+| metformin | mcg/mL |
+| the insulins | mcU/mL |
 
-Internally, doses of a drug plotted in mcg/mL are converted to milligrams and doses of one plotted in ng/mL to micrograms before simulation; volumes are in litres, so concentration comes out in the plotted unit.
+Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses of one plotted in ng/mL to micrograms, and insulin units to milliunits before simulation; volumes are in litres, so concentration comes out in the plotted unit.
 
 ## Dose units
 
@@ -31,9 +33,12 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams and do
 | Intranasal | the same with IN | |
 | Regional anesthesia | g RA, mg RA, mcg RA; and each per kg | An injection into tissue, absorbed from a depot (the local anesthetics) |
 | Perineural infusion | mg/hr RA | A rate into the tissue depot, from that time until the drug's next mg/hr RA row |
+| Subcutaneous | mg SC, mcg SC; and each per kg | An injection under the skin, absorbed from a depot (the incretin peptides) |
+| Insulin | U SC, U/kg SC | Units of that insulin preparation, injected under the skin; a unit is a potency unit of the product, not a mass |
+| Insulin pump | U/hr SC | A rate into the subcutaneous depot, from that time until the drug's next U/hr SC row (insulin lispro only); see [absorption](help:models/absorption) |
 | Phenytoin equivalents | mg PE, mg PE IM, mg PE/min; and per kg | Fosphenytoin, prescribed in phenytoin sodium equivalents (see [phenytoin](help:drugs/phenytoin)) |
 | Target | Plasma target, Effect site target | A target concentration in the plotted unit; see [Target-controlled infusion](help:tci) |
-| Scheduled | a bolus, PO (including the oral forms), SL, IM or IN unit followed by qd, bid, tid or qid | Repeated every 24, 12, 8 or 6 hours; see [The dose table](help:dose-table) |
+| Scheduled | a bolus, PO (including the oral forms), SL, IM, IN or SC unit followed by qd, bid, tid or qid, or an SC unit followed by qwk | Repeated every 24, 12, 8 or 6 hours, or every week; see [The dose table](help:dose-table) |
 | Gas flow | L/min | A flowmeter or ventilation setting |
 | Vaporizer | % | A vaporizer setting |
 

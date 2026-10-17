@@ -204,6 +204,8 @@ helpConcentrationUnits <- function(units) {
          "mOsm" = "mOsm/kg (serum osmolality)",
          # Intravenous calcium is plotted as the change in ionized calcium.
          "mmol" = "mmol/L (change in ionized calcium)",
+         # The insulins are dosed in units and plotted in microunits per mL.
+         "mcU" = "mcU/mL (microunits per mL, = mU/L)",
          as.character(units))
 }
 
@@ -307,6 +309,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   route <- doseRoute(units)
   routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "sublingual",
               if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
+              if (ROUTE_SC %in% route) "subcutaneous",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
   intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits))
   tci <- any(units %in% tciUnits)
@@ -656,11 +659,15 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
     slowRA <- isTRUE(d$ka_RAslow > 0)
     secondPO <- isTRUE(d$ka_PO2 > 0)
+    # A subcutaneous drug's absorption rides on the tissue-depot (RA) fields
+    # (R/subcutaneous.R), so its rows are named for the route it really has.
+    tissue <- if (identical(pkRef$tissueRoute, ROUTE_SC)) "Subcutaneous (SC)" else
+      "Regional anesthesia (RA)"
     routes <- list(PO = if (secondPO) "Oral (PO), first depot" else "Oral (PO)",
                    PO2 = "Oral (PO), second depot", SL = "Sublingual (SL)",
                    IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
-                   RA = if (slowRA) "Regional anesthesia (RA), fast depot" else "Regional anesthesia (RA)",
-                   RAslow = "Regional anesthesia (RA), slow depot")
+                   RA = if (slowRA) paste0(tissue, ", fast depot") else tissue,
+                   RAslow = paste0(tissue, ", slow depot"))
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -702,20 +709,35 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
               paste(sprintf("%s%%", helpFormatNumber(100 * p$fraction)), collapse = ", "),
               paste(helpFormatNumber(p$delay), collapse = ", "))
     }, character(1)), collapse = "") else ""
+    # Zero-order subcutaneous input (R/subcutaneous.R)
+    zero <- pkRef$zeroOrderSC
+    zeroOrderNote <- if (is.null(zero)) "" else if (zero$into == "central") sprintf(paste0(
+      "Besides the depot%s, %s%% of each SC dose enters the circulation directly at a constant ",
+      "rate over %s minutes from the moment of injection (zero-order absorption); the depot ",
+      "bioavailability shown is the share it absorbs. "),
+      if (slowRA) "s" else "", helpFormatNumber(100 * zero$fraction), helpFormatNumber(zero$duration)) else
+      sprintf(paste0("Each SC dose is released into the depot at a constant rate over %s minutes ",
+                     "(sequential zero- and first-order absorption). "), helpFormatNumber(zero$duration))
     if (length(rows) > 0) {
       absorptionHTML <- paste0(
         helpH2("Extravascular routes"),
-        "<p>Doses with PO, SL, IM, IN or RA units are absorbed by first-order kinetics into the central ",
-        "compartment after a lag, with the fraction shown reaching the circulation. RA is a ",
-        "local anesthetic injected into tissue (a nerve block or an infiltration)",
-        if (any(units %in% raRateUnits)) ", or infused into it through a perineural catheter (mg/hr RA), which feeds the same depot" else "",
-        ". ",
+        "<p>Doses with PO, SL, IM, IN, SC or RA units are absorbed by first-order kinetics into the central ",
+        "compartment after a lag, with the fraction shown reaching the circulation. ",
+        if (identical(pkRef$tissueRoute, ROUTE_SC)) paste0(
+          "SC is a subcutaneous injection",
+          if (any(units %in% insulinRateUnits)) ", or a continuous subcutaneous infusion from an insulin pump (U/hr SC), which feeds the same depot" else "",
+          ". ") else if (any(doseRoute(units) == ROUTE_RA)) paste0(
+          "RA is a local anesthetic injected into tissue (a nerve block or an infiltration)",
+          if (any(units %in% raRateUnits)) ", or infused into it through a perineural catheter (mg/hr RA), which feeds the same depot" else "",
+          ". ") else "",
+        zeroOrderNote,
         if (length(formRows)) paste0("A unit naming an oral form listed in the table uses that form's ",
                                      "absorption; plain mg PO, and any other form offered, use the default. ") else "",
         pulseNote,
         if (secondPO) paste0("Each oral dose is absorbed through two depots in parallel, each with ",
                              "its own lag; the bioavailability of each is its share of the dose. ") else "",
-        if (slowRA) paste0("Each RA dose is absorbed through a fast and a slow depot in parallel; ",
+        if (slowRA) paste0("Each ", if (identical(pkRef$tissueRoute, ROUTE_SC)) "SC" else "RA",
+                           " dose is absorbed through a fast and a slow depot in parallel; ",
                            "the bioavailability of each is its share of the dose. ") else "",
         "See ",
         helpPageLink("models/absorption"), ".</p>",
@@ -998,14 +1020,15 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",
-                if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
+                if (ROUTE_IN %in% route) "IN", if (ROUTE_SC %in% route) "SC",
+                if (ROUTE_RA %in% route) "RA",
                 if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else {
         # No intravenous unit: name the routes it does have
         route <- unique(doseRoute(units))
         paste(c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM", if (ROUTE_IN %in% route) "IN",
-                if (ROUTE_RA %in% route) "RA"), collapse = ", ")
+                if (ROUTE_SC %in% route) "SC", if (ROUTE_RA %in% route) "RA"), collapse = ", ")
       }
     metabolite <- if (is.null(pk$metaboliteName)) "" else
       sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))
