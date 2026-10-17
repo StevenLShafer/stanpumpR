@@ -265,6 +265,10 @@ test_that("timeSettingsText: the collapsed Time panel's header", {
   expect_equal(timeSettingsText(timeFormat("minutes", "clock"), ""), "(minutes, actual time)")
   expect_equal(timeSettingsText(timeFormat("minutes", "clock"), " "), "(minutes, actual time)")
   expect_equal(timeSettingsText(timeFormat("minutes", "clock"), NULL), "(minutes, actual time)")
+  # A start the plot cannot use (half typed, or no time of day) is not shown
+  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), "08:"), "(minutes, actual time)")
+  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), "08:75"), "(minutes, actual time)")
+  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), "25:00"), "(minutes, actual time)")
 })
 
 test_that("displayTimeToMinutes: bare numbers are in the unit", {
