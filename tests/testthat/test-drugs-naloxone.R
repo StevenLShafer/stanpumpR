@@ -1,6 +1,6 @@
 # Naloxone: Dowling 2008 intravenous disposition with clearance on lean body
 # weight, a nasal-spray route derived from Laffont 2024, and ke0 from Yassen
-# 2007.  See the header of R/drugs_naloxone.R.  Pins were worked out from the
+# 2007 carried as a tPeak.  See the header of R/drugs_naloxone.R.  Pins were worked out from the
 # published numbers by hand (Python), not from the code under test.
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
@@ -28,8 +28,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         tlag_IN = 0
       )
     ),
-    tPeak = 0,
-    ke0 = 0.1066380,
+    tPeak = 3.58,
     MEAC = 0,
     typical = 3,
     upperTypical = 10,
@@ -85,15 +84,19 @@ test_that("the nasal route reproduces Laffont's fitted exposure for the referenc
   expect_equal(aucIN / 60, 1 / 396, tolerance = 1e-6)
 })
 
-test_that("ke0 is Yassen's, and the effect site peaks a few minutes after a bolus", {
+test_that("Yassen's ke0 is carried as a tPeak, and the effect site peaks a few minutes after a bolus", {
+  # Yassen 2007: ke0 0.106 /min with their own disposition (V1 12.1, V2 102 L,
+  # CL 3.45, Q 4.74 L/min) peaks a bolus at 3.5768 min.  Carried as tPeak
+  # 3.58 (Minto 2003), it solves to ke0 0.094885 /min on Dowling's
+  # disposition for the reference man (worked out by hand from the sums of
+  # exponentials).  The naive pairing put 0.1066 /min here, peaking at 3.43.
   PK <- getDrugPK("naloxone", 70, 170, 35, "male", getDrugDefaults("naloxone"))
   pk <- PK$PK$default
-  expect_equal(pk$ke0, 6.39828 / 60)
-  expect_equal(log(2) / pk$ke0, 6.5, tolerance = 1e-3)      # half-time, min
+  expect_equal(pk$ke0, 0.094885, tolerance = 1e-3)  # within the solver's tolerance
   tPeak <- effectSitePeakTime(
     c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3),
     c(pk$lambda_1, pk$lambda_2, pk$lambda_3), pk$ke0)
-  expect_equal(tPeak, 3.43, tolerance = 0.01)
+  expect_equal(tPeak, 3.58, tolerance = 0.01)
   o <- simulateDrugsWithCovariates(
     data.frame(Drug = "naloxone", Time = 0, Dose = 0.4, Units = "mg"),
     noEvents, 70, 170, 35, "male", 120, TRUE)

@@ -69,10 +69,16 @@
 #
 # EFFECT SITE
 # ===========
-# ke0 is supplied directly from Yassen 2007, who fitted a naloxone
-# equilibration half-time of 6.5 min (ke0 6.40 /h) in the reversal of
-# buprenorphine-induced respiratory depression.  Against this disposition
-# that puts the peak effect of a bolus at 3.4 min.  No antagonism model is
+# From Yassen 2007, who fitted a naloxone ke0 of 0.106 /min (Table IV; t1/2
+# 6.5 min) in the reversal of buprenorphine-induced respiratory depression,
+# with their own two-compartment naloxone disposition (V1 12.1, V2 102 L;
+# CL 3.45, Q 4.74 L/min; Table III).  That ke0 belongs to that disposition,
+# not to Dowling's, so it is carried as the time to peak it gives there
+# (Minto 2003): 3.58 min after a bolus.  getDrugPK() solves ke0 against
+# Dowling's disposition from that, 0.095 /min for the 70 kg reference.  Until
+# 2026-10-12 the ke0 (6.40 /h) was put directly on Dowling's disposition,
+# which peaked a bolus at 3.4 min; changed by decision of Steven L. Shafer,
+# 2026-10-12, in the opioid MEAC and tPeak audit.  No antagonism model is
 # attached; the row shows naloxone alone, not the opioid it reverses.
 #
 # BODY SIZE (docs/weight-adjustment.md)
@@ -93,7 +99,9 @@
 #   https://doi.org/10.2165/00003088-200746110-00004
 # -----------------------------------------------------------------------------
 
-NALOXONE_KE0 <- 6.39828 / 60     # /min; Yassen 2007, t1/2 6.5 min
+# Yassen 2007's ke0 (0.106 /min) as the bolus peak time on Yassen's own
+# disposition; see the header.
+NALOXONE_TPEAK <- 3.58           # min after an intravenous bolus
 NALOXONE_LAFFONT_CL_F <- 396     # L/h, apparent clearance of the 4 mg spray
 
 #' Naloxone pharmacokinetics
@@ -155,16 +163,16 @@ naloxone <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Dowling J et al., Ther Drug Monit 2008;30:490-496 (intravenous ",
     "three-compartment model, clearance on lean body weight); intranasal ",
     "route derived from Laffont CM et al., Front Psychiatry 2024;15:1399803; ",
-    "ke0 from Yassen A et al., Clin Pharmacokinet 2007;46:965-980. ",
+    "effect site from Yassen A et al., Clin Pharmacokinet 2007;46:965-980 ",
+    "(ke0 carried as a 3.58 min time to peak). ",
     "https://doi.org/10.1097/FTD.0b013e3181816214"
   )
 
   return(
     list(
       PK = PK,
-      # No tPeak: ke0 is supplied directly.  See the header.
-      tPeak = 0,
-      ke0 = NALOXONE_KE0,
+      # Yassen's ke0 as a time to peak; getDrugPK() solves ke0.  See the header.
+      tPeak = NALOXONE_TPEAK,
       MEAC = MEAC,
       typical = typical,
       upperTypical = upperTypical,

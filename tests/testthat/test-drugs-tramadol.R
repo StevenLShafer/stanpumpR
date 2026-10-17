@@ -334,13 +334,20 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # diamorphine (2026-10-10): the opt-in illicit research model plots parent
     # plasma only, with 6-MAM and morphine not modelled, so it has no effect site.
     "diamorphine",
+    # The opt-in illicit research models (2026-10-17) are plasma only: see
+    # inst/extdata/illicitRouteRegistry.csv and each drug's header.
+    "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA",
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
     "olanzapine", "droperidol", "droperidolIM",
     # Intravenous calcium (2026-10-13): the ionized calcium itself is the
     # end point, no ke0 (R/drugs_calcium.R).
-    "calcium"
+    "calcium",
+    # The antihypertensives joined on 2026-10-17: concentration only, no
+    # published equilibration constant, and no blood pressure is plotted for
+    # any drug in the library (docs/antihypertensives.md).
+    "clevidipine", "fenoldopamPediatric"
   ))
 })
 

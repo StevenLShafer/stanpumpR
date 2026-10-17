@@ -735,11 +735,7 @@ what was intended. Places worth a second look:
   plot code; someone who uses it should check the wording.
 - No screenshots. The guide would be much better with four or five.
 - The **model source table** was extracted from the `reference` field in each
-  `R/drugs_*.R`. Those fields are correct on the `drug-reference-citations`
-  branch but NOT on `master`, where several are still placeholders -- propofol's
-  reads "Anesthesiology 1998" while the model implemented is Eleveld 2018. That
-  branch should be merged before this guide is published, or the table will
-  describe something the code does not say.
+  `R/drugs_*.R`.
 - Better still, the table should be GENERATED from the drug files rather than
   hand-maintained here, so it cannot drift. It drifted once already.
 - Nothing here covers the vignettes (`stanpumpR-single-PK`, `stanpumpR-multi-PK`)

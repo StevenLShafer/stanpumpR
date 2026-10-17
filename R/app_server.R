@@ -319,6 +319,13 @@ app_server <- function(input, output, session) {
     if (!is.null(note)) showNotification(note, id = "timeConverted", type = "message")
   })
 
+  # The Time panel's header reads its settings out while it is collapsed:
+  # "(minutes, actual time from 08:00)", "(days, elapsed time)".  It follows
+  # the selectors, as the axis does.
+  output$timeSummary <- renderText({
+    timeSettingsText(selectorFormat(), input$referenceTime)
+  })
+
   # The Doses card header says what the times in the table are:
   # "(times in days)", "(HH:MM or minutes)"
   output$doseTimeUnits <- renderText({
@@ -1291,6 +1298,11 @@ app_server <- function(input, output, session) {
         adjustToFFM = adjustToFFM(),
         osmolality = osmolality(),
         creatinine = creatinine(),
+        cyp2d6 = input$cyp2d6,
+        cyp2c19 = input$cyp2c19,
+        cyp2c9 = input$cyp2c9,
+        cyp2b6 = input$cyp2b6,
+        mintoSchnider = mintoSchnider(),
         # The workbook's times stay in minutes; these add the display unit
         # beside them and say what the plot showed (sendSlide.R).
         timeUnit = timeUnit(),
@@ -1673,6 +1685,22 @@ app_server <- function(input, output, session) {
       )
     )
   }
+
+  # The Add new drug button under the plot: the same dialog as a click on
+  # the plot, offered on the first drug (alphabetically) not yet in the dose
+  # table, or the first drug when every one is, at the start of the plot.
+  # The drug and time are the dialog's suggestions; both can be changed.
+  newDrugSuggestion <- function() {
+    choices <- drugChoices()
+    unused <- setdiff(choices, doseTable()$Drug)
+    if (length(unused)) unused[1] else choices[1]
+  }
+
+  observeEvent(input$addNewDrug, {
+    profileCode({
+      showAddDrugModal(newDrugSuggestion(), 0)
+    }, name = "input$addNewDrug observer")
+  })
 
   observeEvent(input$addDoseDrug, {
     req(input$addDoseDrug)
@@ -2381,6 +2409,14 @@ app_server <- function(input, output, session) {
         rhandsontable::hot_col(col = 10, halign = "htRight") %>%
         rhandsontable::hot_col(col = 11, halign = "htRight") %>%
         rhandsontable::hot_table(contextMenu = FALSE)
+      # mcg and ng differ only by the factor shown, so the dropdown offers
+      # those two.  A drug in %, mmol or mOsm (an inhaled agent, calcium,
+      # mannitol) is simulated in those units by its own engine or
+      # conversion, and switching it to mcg or ng would break the dose
+      # conversion in simCpCe(), so its cell is read-only.
+      # (Claude Code, 2026-10-17, from an external review.)
+      for (row in which(!x$Concentration.Units %in% c("mcg", "ng")))
+        drugsHOT <- rhandsontable::hot_cell(drugsHOT, row, 2, readOnly = TRUE)
       drugsHOT
     }, name = "output$editDrugsHTML")
   })

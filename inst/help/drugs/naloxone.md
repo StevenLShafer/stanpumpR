@@ -14,7 +14,7 @@ Clearance carries its own lean-body-weight covariate, in either switch position.
 
 ### Effect site
 
-ke0 is supplied directly from Yassen and colleagues (*Clin Pharmacokinet* 2007;46:965-980), who fitted an equilibration half-time of 6.5 minutes in the reversal of buprenorphine-induced respiratory depression. Against this disposition that puts the peak effect of a bolus at about 3.4 minutes. No antagonism model is attached: the row shows naloxone alone, not the opioid it reverses.
+The effect site comes from Yassen and colleagues (*Clin Pharmacokinet* 2007;46:965-980), who fitted ke0 0.106/min (an equilibration half-time of 6.5 minutes) in the reversal of buprenorphine-induced respiratory depression. They estimated it with their own naloxone disposition, so it is carried as the time to peak effect it gives there, 3.6 minutes after a bolus, and ke0 is solved again for Dowling's disposition (the method of Minto and colleagues, *Anesthesiology* 2003;99:324-333). For the reference man that is 0.095/min. No antagonism model is attached: the row shows naloxone alone, not the opioid it reverses.
 
 ### Typical concentrations
 

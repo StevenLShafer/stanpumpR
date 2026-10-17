@@ -17,7 +17,7 @@ test_that("returns the published parameters with total-body-weight scaling", {
         cl3 = 1.55
       )
     ),
-    tPeak = 3.694,
+    tPeak = 3.6,
     MEAC = 0.6,
     typical = 0.72,
     upperTypical = 1.2,

@@ -35,7 +35,7 @@ fentanyl <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  tPeak <- 3.694		# from Shafer/Varvel, t_peaks.xls
+  tPeak <- 3.6		# Shafer & Varvel 1991, Fig 2 (EEG); 3.694 until 2026-10-12, changed by decision of Steven L. Shafer
   MEAC <- 0.6
   typical <- MEAC * 1.2
   lowerTypical <- MEAC * 0.8

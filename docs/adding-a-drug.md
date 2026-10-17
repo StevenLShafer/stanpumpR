@@ -404,6 +404,16 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   unless the user turns on **Show illicit drugs** (off by default), are shown in red in
   the dose table, and are never offered in the startup menu. Give a drug this category
   only if it is such a research model; diamorphine is the first (`R/drugs_diamorphine.R`).
+  Such a drug needs one more file than any other: a row in
+  `inst/extdata/illicitRouteRegistry.csv` for **every** route the literature describes,
+  offered or not, carrying its analyte, matrix, input and parameter dose bases, population,
+  `route_status` (calibrated / anchored / observed / unsupported), `parameter_status`
+  (published fit / measured summary / derived approximation / not identified) and source.
+  `test-illicit-registry.R` then holds the line: a route may carry dose units only if its
+  row says `offered` with an identified input model, and a route the engine cannot
+  represent (anything pulmonary) must be recorded and refused rather than aliased to `IN`.
+  These models are plasma only: `tPeak` 0, `MEAC` 0 and no band, as the sources support no
+  effect site. See `inst/help/models/illicit-drugs.md`.
 
 Example row (remifentanil):
 
