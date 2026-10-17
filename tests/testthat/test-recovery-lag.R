@@ -91,7 +91,10 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # MDMA (2026-10-17): the source's zero-order depot input,
                     # discretised as two lagged half doses, so BOTH oral
                     # depots carry a lag (R/drugs_MDMA.R)
-                    "MDMA"))
+                    "MDMA",
+                    # fitted oral lags (2026-10-17): edoxaban 0.25 h
+                    # (Niebecker 2015), dabigatran 0.634 h; plasma only
+                    "edoxaban", "dabigatran"))
 })
 
 

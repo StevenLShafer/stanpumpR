@@ -257,6 +257,9 @@ simulationPlot <- function(
       # A molar drug (intravenous calcium) is plotted in mmol/L, the change
       # in ionized calcium (drugs_calcium.R).
       unitText[plotTable$Concentration.Units == "mmol"] <- "mmol/L"
+      # Warfarin is plotted as the INR it produces, which has no unit
+      # (R/inr.R).
+      unitText[plotTable$Concentration.Units == "INR"] <- "INR"
       plotTable$Wrap <- paste0(panelName, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical
