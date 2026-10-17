@@ -1,4 +1,33 @@
-remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
+# -----------------------------------------------------------------------------
+# Remifentanil: Eleveld 2017 below BMI 30 and in children, Kim 2017 for the
+# obese adult; Minto 1997 kept in the comments and run as a companion model
+# (R/alternativeModels.R)
+# -----------------------------------------------------------------------------
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 3,
+# from Kan 1998): "Clearance more than doubles, likely due to larger blood
+# plasma volume, increased cardiac output, and increased renal blood flow".
+# With the Patient Profile's Pregnant field on, the elimination clearance CL1
+# of whichever model is in use is multiplied by
+# REMIFENTANIL_PREGNANCY_CL_FACTOR = 2, the "doubles" of the review's
+# statement; "more than" is not carried, as the review gives no further
+# figure.  The volumes and the distribution clearances are unchanged.  The
+# Minto companion model applies the same factor, so the two lines of the
+# panel move together.  Kan's parturients were at caesarean delivery.  See
+# R/pregnancy.R.
+#
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143
+# -----------------------------------------------------------------------------
+
+# Elimination clearance in pregnancy relative to the model's value: Ansari
+# 2016, "clearance more than doubles" (see the header).  Read by the Minto
+# companion model too.
+REMIFENTANIL_PREGNANCY_CL_FACTOR <- 2
+
+remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                         pregnant = FALSE)
 {
   # Units **************
   # Time: Minutes
@@ -137,6 +166,13 @@ remifentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   }
 
+  # Pregnancy (see the header): elimination clearance of either model.
+  if (isTRUE(pregnant)) {
+    cl1 <- cl1 * REMIFENTANIL_PREGNANCY_CL_FACTOR
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", REMIFENTANIL_PREGNANCY_CL_FACTOR)))
+  }
+
 default <- list(
     v1 = v1,
     v2 = v2,
@@ -155,8 +191,8 @@ default <- list(
   tPeak = 1.6 # Opioid simulation spreadsheet
   MEAC <- 1
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   # The citation is set in the branch above, so that the References panel
   # names the model actually computed: Eleveld 2017 below BMI 30 and in every
   # child, Kim 2017 for an adult at BMI 30 and above.  Minto 1997 (Anesthesiology 86:10-23, PMID 9009935), the

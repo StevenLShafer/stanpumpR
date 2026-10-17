@@ -9,14 +9,18 @@ codeine(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE)
 \arguments{
 \item{weight}{weight in kg}
 
-\item{height}{height in cm (not used)}
+\item{height}{height in cm (fat-free mass only)}
 
-\item{age}{age in years (not used)}
+\item{age}{age in years (fat-free mass only)}
 
-\item{sex}{sex as a string (not used)}
+\item{sex}{sex as a string (fat-free mass only)}
 
 \item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 Scales morphine formation by both the systemic and the first-pass route.}
+
+\item{adjustToFFM}{scale volumes to the patient's fat-free mass and
+clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+published fixed parameters unscaled.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, carrying an

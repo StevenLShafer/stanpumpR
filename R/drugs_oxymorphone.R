@@ -153,9 +153,12 @@ OXYMORPHONE_MEAC  <- 0.8  # ng/mL; provisional, see above
 #' Oxymorphone pharmacokinetics
 #'
 #' @param weight weight in kg
-#' @param height height in cm (not used)
-#' @param age age in years (not used)
-#' @param sex sex as a string (not used)
+#' @param height height in cm (fat-free mass only)
+#' @param age age in years (fat-free mass only)
+#' @param sex sex as a string (fat-free mass only)
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published fixed parameters unscaled.
 #'
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export

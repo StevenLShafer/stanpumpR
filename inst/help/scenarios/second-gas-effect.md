@@ -16,4 +16,4 @@ The nitrous oxide panel shows its own alveolar tension approaching the inspired 
 
 ## Background
 
-[The inhaled-gas engine](help:models/gas-engine) describes the uptake coupling that produces the effect, which was one of the points validated against Gas Man. [Nitrous oxide](help:drugs/nitrousOxide) and [sevoflurane](help:drugs/sevoflurane) have the parameters.
+[The inhaled-gas engine](help:models/gas-engine) describes the uptake coupling that produces the effect, which was one of the points validated against GasMan. [Nitrous oxide](help:drugs/nitrousOxide) and [sevoflurane](help:drugs/sevoflurane) have the parameters.

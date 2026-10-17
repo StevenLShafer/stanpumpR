@@ -64,16 +64,37 @@
 # and magnesium), which would raise the threshold to 2.5 mg/L.  Around surgery it is given for Gram-negative cover.  See
 # R/antibioticThresholds.R.
 #
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 7
+# and text, from Zaske 1980 and others): "Increased volume of distribution
+# and increased clearance result in low peak concentrations", so that "the
+# typical dosing interval should be 6 hours, not 8 hours".  The review
+# prints no factor for gentamicin itself; its physiological statement is
+# that renal blood flow and glomerular filtration are "increased 50% by the
+# second trimester".  With the Patient Profile's Pregnant field on, the
+# de-indexed eGFR the published clearance reads is multiplied by
+# PREGNANCY_GFR_FACTOR = 1.5 (R/constants.R), and Smit's clearance is linear
+# in it, so CL rises by 1.5.  The larger volume is NOT applied, as the review
+# gives no figure, so the simulated peak in a parturient is too high and the
+# trough about right.  See R/pregnancy.R.
+#
 # References
 # ----------
 # Smit C et al., J Antimicrob Chemother 2020;75:3286-3292.
 #   https://doi.org/10.1093/jac/dkaa312
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
 # Kashuba ADM et al., Antimicrob Agents Chemother 1999;43:623-629.
 #   https://doi.org/10.1128/AAC.43.3.623
 # Sader HS et al., Open Forum Infect Dis 2023;10:ofad058.
 #   https://doi.org/10.1093/ofid/ofad058
 # Gordon RC et al., Antimicrob Agents Chemother 1972;2:214-216.
 #   https://doi.org/10.1128/AAC.2.3.214
+# van der Mast JE et al., Pharmacol Res Perspect 2019;7:e00483.
+#   https://doi.org/10.1002/prp2.483
+# Myers DR et al., Clin Pharmacol Ther 1978;23:356-360.
+#   https://doi.org/10.1002/cpt1978233356
 # -----------------------------------------------------------------------------
 
 #' Gentamicin pharmacokinetics
@@ -85,10 +106,13 @@
 #'   scale the peripheral volume and intercompartmental clearance to fat-free
 #'   mass; when \code{FALSE}, use total body weight and the published fixed
 #'   peripheral parameters.
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the eGFR
+#'   the clearance reads by 1.5, the rise in glomerular filtration of
+#'   pregnancy (Ansari 2016; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                       creatinine = NULL)
+                       creatinine = NULL, pregnant = FALSE)
 {
   # Size scaling (see the header): size$volume is the weight ratio the
   # published Vc and the body surface area see; size$clearance scales the
@@ -99,6 +123,8 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   G <- egfrDeindexed(pkW, height, age, sex,         # mL/min
                      adultEquivalentCreatinine(creatinine, age, sex))
+  # Pregnancy (see the header): the renal term alone.
+  if (isTRUE(pregnant)) G <- G * PREGNANCY_GFR_FACTOR
   ICU <- 0                                         # not an input; not in ICU
 
   cl1 <- 3.53 * (G / 74) * 0.751^ICU / 60          # L/min
@@ -135,6 +161,10 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "from the entered creatinine or an assumed normal one; not in ICU. ",
     "https://doi.org/10.1093/jac/dkaa312"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("eGFR x ", PREGNANCY_GFR_FACTOR)))
+  }
 
   return(
     list(

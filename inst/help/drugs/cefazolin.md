@@ -8,7 +8,7 @@ stanpumpR's engine is linear, so it simulates the linear half of that model and 
 
 ### Covariates
 
-Clearance follows Cockcroft-Gault creatinine clearance to the power 0.586. Creatinine clearance comes from the **Serum creatinine** in the Patient Profile; left blank, it is estimated at an **assumed normal creatinine** (1.0 mg/dL in men, 0.8 in women; a child's creatinine is read on the adult scale, see [Renal function](help:models/covariates)), when the fall of renal function with age and the sex difference are represented but **renal impairment is not**. The volumes and the intercompartmental clearance carry no size term in the source and take the default [fat-free-mass scaling](help:models/fat-free-mass); the renal term sees the pharmacokinetic weight with the switch on and total weight with it off.
+Clearance follows Cockcroft-Gault creatinine clearance to the power 0.586. Creatinine clearance comes from the **Serum creatinine** in the Patient Profile; left blank, it is estimated at an **assumed normal creatinine** (0.9 mg/dL in men, 0.8 in women; a child's creatinine is read on the adult scale, see [Renal function](help:models/covariates)), when the fall of renal function with age and the sex difference are represented but **renal impairment is not**. The volumes and the intercompartmental clearance carry no size term in the source and take the default [fat-free-mass scaling](help:models/fat-free-mass); the renal term sees the pharmacokinetic weight with the switch on and total weight with it off.
 
 ### Effect site
 
@@ -17,3 +17,7 @@ None. An antibiotic's effect is its exposure relative to the MIC, and there is n
 ### Where to be careful
 
 Enter the **Serum creatinine** for a patient with impaired renal function: left blank, a raised creatinine is simulated as if it were normal, and the curve declines too fast. Albumin, which sets the binding capacity, plays no part in the unbound curve. The model was fitted in surgical prophylaxis with 15-minute infusions; it has not been validated for prolonged treatment courses.
+
+### Pregnancy
+
+With **Pregnant** ticked, the creatinine clearance the renal term reads is multiplied by 1.5, the rise in glomerular filtration the review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) gives for pregnancy, so the unbound clearance rises by 1.5 to the power 0.586, or 1.27. The review reports cefazolin cleared faster in pregnancy by increased renal excretion, with a larger volume of distribution, and recommends 2 g with a 3- to 6-hour interval; it prints no factor for cefazolin itself. The larger volume is not applied, so the simulated peak in a parturient is too high. See [Pregnancy](help:models/pregnancy).

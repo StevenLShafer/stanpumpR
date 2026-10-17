@@ -33,8 +33,8 @@ fentanyl <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 3.6		# Shafer & Varvel 1991, Fig 2 (EEG); 3.694 until 2026-10-12, changed by decision of Steven L. Shafer
   MEAC <- 0.6
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
   reference <- "Scott JC, Stanski DR. J Pharmacol Exp Ther 1987;240(1):159-166. https://pubmed.ncbi.nlm.nih.gov/3100765/"
 
   return(

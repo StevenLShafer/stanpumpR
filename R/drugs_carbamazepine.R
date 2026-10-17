@@ -33,9 +33,10 @@
 # THE EPOXIDE IS NOT PLOTTED
 # ==========================
 # Carbamazepine-10,11-epoxide is active and accumulates (about 10-15% of the
-# parent).  A joint parent-epoxide model exists (PICME, Br J Clin Pharmacol
-# 2021), but the epoxide is not a drug in the library and the engine's single
-# metabolite link is not built here; the curve is the parent only.
+# parent).  A joint parent-epoxide model exists (PICME: Yip VLM et al., Br J
+# Clin Pharmacol 2021;87:2572-2588), but the epoxide is not a drug in the
+# library and the engine's single metabolite link is not built here; the
+# curve is the parent only.
 #
 # FORMULATIONS: suspension, immediate-release and chewable tablets share these
 # parameters; the extended-release tablet (Tegretol-XR) is given a slower
@@ -59,10 +60,12 @@
 #   (PMID 9545146)
 # Magnusson MO et al., Clin Pharmacol Ther 2008;84:52-62.
 #   https://doi.org/10.1038/sj.clpt.6100431
-# Marino SE et al., Clin Pharmacol Ther 2012;91:483-491.
+# Marino SE et al., Clin Pharmacol Ther 2012;91:483-488.
 #   https://doi.org/10.1038/clpt.2011.251
 # Patsalos PN et al., Epilepsia 2008;49:1239-1276.
 #   https://doi.org/10.1111/j.1528-1167.2008.01561.x
+# Yip VLM et al., Br J Clin Pharmacol 2021;87:2572-2588 (PICME; not used).
+#   https://doi.org/10.1111/bcp.14667
 # -----------------------------------------------------------------------------
 
 #' Carbamazepine pharmacokinetics (oral, chronic autoinduced state)

@@ -15,6 +15,8 @@
 #'   Passed only to drug models that declare it (escitalopram, citalopram).
 #' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES};
 #'   passed only to models that name it (phenytoin).
+#' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
+#'   passed only to models that name it (methadone).
 #' @param resolveMetabolite should a drug that names an active metabolite have
 #'   that metabolite's coefficients built?  Set FALSE when resolving the
 #'   metabolite itself, which stops a cascade from recursing.
@@ -30,6 +32,11 @@
 #'   models that declare it (mannitol, vancomycin, gentamicin, cefazolin,
 #'   sugammadex, gabapentin, pregabalin, oxycodone, meloxicam intravenous); see
 #'   `R/renalFunction.R`.
+#' @param pregnant is the patient pregnant?  TRUE or FALSE (the default).
+#'   Passed only to the models that name it (R/pregnancy.R lists them), which
+#'   apply the changes of late pregnancy described by Ansari, Carvalho, Shafer
+#'   and Flood (Anesth Analg 2016;122:786-804); every other model ignores it.
+#'   TRUE requires \code{sex = "female"}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
@@ -65,6 +72,8 @@ getDrugPK <- function(
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
+  cyp2b6 = CYP2B6_DEFAULT,
+  pregnant = FALSE,
   model = NULL
 )
 {
@@ -86,6 +95,11 @@ getDrugPK <- function(
     stop("Invalid cyp2c9: ", paste(cyp2c9, collapse = ", "),
          ". Must be one of: ", paste(CYP2C9_VALUES, collapse = ", "))
   }
+  if (length(cyp2b6) != 1 || !cyp2b6 %in% CYP2B6_VALUES) {
+    stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
+         ". Must be one of: ", paste(CYP2B6_VALUES, collapse = ", "))
+  }
+  pregnant <- checkPregnant(pregnant, sex)
   if (!is_valid_number(osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) {
     stop("Invalid osmolality: ", paste(osmolality, collapse = ", "),
          ". Must be a number between ", MIN_OSMOLALITY, " and ",
@@ -134,6 +148,9 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "cyp2c9" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2c9 <- cyp2c9
+  if (exists(drug, mode = "function") &&
+      "cyp2b6" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp2b6 <- cyp2b6
   # Likewise the fat-free-mass switch: every drug model in the library
   # declares it, but a mocked model taking only ... need not.
   if (exists(drug, mode = "function") &&
@@ -147,6 +164,11 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "creatinine" %in% names(formals(get(drug, mode = "function"))))
     covariates["creatinine"] <- list(creatinine)
+  # And the pregnancy flag, which only the models the pregnancy review
+  # quantifies read (R/pregnancy.R).
+  if (exists(drug, mode = "function") &&
+      "pregnant" %in% names(formals(get(drug, mode = "function"))))
+    covariates$pregnant <- pregnant
   # Dispatch on the name, not the resolved function, so that a drug with no
   # covariate function at all -- an inhaled gas, which belongs on the gas path
   # and never reaches here -- still fails with R's own "could not find
@@ -564,15 +586,11 @@ getDrugPK <- function(
           lag = tlag_PO
         )
       } else {
-        ke0 <- stats::optimize(
-          tPeakError, c(0,200),tPeak,
-          p_coef_bolus_l1,
-          p_coef_bolus_l2,
-          p_coef_bolus_l3,
-          lambda_1,
-          lambda_2,
-          lambda_3
-        )$minimum
+        ke0 <- ke0FromTPeakBolus(
+          tPeak = tPeak,
+          coef = c(p_coef_bolus_l1, p_coef_bolus_l2, p_coef_bolus_l3),
+          lambda = c(lambda_1, lambda_2, lambda_3)
+        )
       }
     } else {
       ke0 <- 0
@@ -954,8 +972,10 @@ getDrugPK <- function(
       cyp2d6 = cyp2d6,
       cyp2c19 = cyp2c19,
       cyp2c9 = cyp2c9,
+      cyp2b6 = cyp2b6,
       osmolality = osmolality,
       creatinine = creatinine,
+      pregnant = pregnant,
       adjustToFFM = adjustToFFM,
       resolveMetabolite = FALSE
     )
@@ -1029,6 +1049,12 @@ getDrugPK <- function(
   # concentration: simCpCe() reads the baseline, the fraction and the molecular
   # weight from here.  See R/drugs_mannitol.R.
   out$osmotic <- X$osmotic
+  # A drug reported in millimoles per litre (Concentration.Units "mmol":
+  # intravenous calcium, plotted as the change in ionized calcium) carries
+  # the grams of the product as dosed per mole of what is plotted, which
+  # simCpCe() uses to turn a dose in grams into millimoles.  See
+  # R/drugs_calcium.R, whose two salts carry one weight each.
+  out$molar <- validateMolar(X$molar, drug, drugDefaults$Concentration.Units)
   # A drug whose oral absorption saturates scales each oral dose by its own
   # fraction absorbed: simCpCe() applies it.  See oralSaturationFraction().
   out$oralSaturation <- validateOralSaturation(X$oralSaturation, drug)
@@ -1300,32 +1326,39 @@ ke0FromTPeak <- function(tPeak, coef, lambda, ka, drug = "this drug", lag = 0)
 }
 
 
-# Calculate the error between the predicted and actual time of peak effect
-# site concentration
-tPeakError <-   function(lambda_4, tPeak, p_coef_bolus_1,p_coef_bolus_2,p_coef_bolus_3, lambda_1, lambda_2, lambda_3)
+#' Back-solve ke0 from a time to peak effect observed after an IV bolus
+#'
+#' The intravenous counterpart of ke0FromTPeak(): the plasma curve peaks at
+#' the moment of the bolus, so every positive time to peak effect is
+#' reachable, and the peak time falls monotonically as ke0 rises.  The root is
+#' bracketed and found with uniroot().
+#'
+#' This replaced a nested optimize(), ke0 searched over 0-200 per minute by
+#' the squared error of a peak searched over 0-100 minutes.  The inner range
+#' meant that a time to peak effect of 100 minutes or more could not be
+#' reached and returned a wrong ke0 without an error, and the squared error
+#' left morphine's 93.8 min solved to 93.83 min.  (Claude Code, 2026-10-17, from
+#' an external review.)
+#'
+#' @param tPeak observed time to peak effect after a bolus, in minutes
+#' @param coef plasma bolus coefficients on the drug's eigenvalues
+#' @param lambda those eigenvalues; zeros mark absent compartments
+#' @returns ke0, per minute
+#' @keywords internal
+ke0FromTPeakBolus <- function(tPeak, coef, lambda)
 {
-  # lambda_4 is the trial ke0; the optimiser may land it exactly on an
-  # eigenvalue, where the coefficients below divide by zero.
-  lambda_4 <- separateEigenvalues(lambda_4, c(lambda_1, lambda_2, lambda_3))
-  e_coef_bolus_1 <- p_coef_bolus_1 / (lambda_4 - lambda_1) * lambda_4
+  peakAt <- function(ke0) effectSitePeakTime(coef, lambda, ke0)
 
-  if (lambda_2 > 0)
-  {
-    e_coef_bolus_2 <-  p_coef_bolus_2 / (lambda_4 - lambda_2) * lambda_4
-  } else {
-    e_coef_bolus_2 <- 0
-  }
-  if (lambda_3 > 0)
-  {
-    e_coef_bolus_3 <- p_coef_bolus_3 / (lambda_4 - lambda_3) * lambda_4
-  } else {
-    e_coef_bolus_3 <- 0
-  }
-  e_coef_bolus_4 <- - e_coef_bolus_1 - e_coef_bolus_2 - e_coef_bolus_3
-
-  predPeak <- stats::optimize(CE,c(0,100), e_coef_bolus_1, e_coef_bolus_2, e_coef_bolus_3, e_coef_bolus_4, lambda_1, lambda_2, lambda_3, lambda_4, maximum=TRUE)$maximum
-  return((tPeak-predPeak)^2)
+  # Bracket: widen downwards until the peak is later than the target, and
+  # upwards until it is earlier.
+  lo <- 1e-3
+  hi <- 1
+  while (peakAt(lo) < tPeak && lo > 1e-12) lo <- lo / 10
+  while (peakAt(hi) > tPeak && hi < 1e6) hi <- hi * 10
+  stats::uniroot(function(ke0) peakAt(ke0) - tPeak, c(lo, hi),
+                 tol = .Machine$double.eps^0.5)$root
 }
+
 
 # calculate c3 based on 4 coefficients, 4 exponents, and time
 CE <- function(t, e_coef_bolus_1, e_coef_bolus_2, e_coef_bolus_3, e_coef_bolus_4, lambda_1, lambda_2, lambda_3, lambda_4)
@@ -1336,3 +1369,75 @@ CE <- function(t, e_coef_bolus_1, e_coef_bolus_2, e_coef_bolus_3, e_coef_bolus_4
     e_coef_bolus_4 * exp(-lambda_4 * t)
 }
 
+
+#' Validate a drug's `molar` block
+#'
+#' A drug whose CSV `Concentration.Units` is `mmol` is plotted in millimoles
+#' per litre, and its model must return `molar = list(molecularWeight = g)`,
+#' the grams of the product as dosed per mole of what is plotted, so that
+#' `simCpCe()` can turn a dose in grams into millimoles.  A drug given as
+#' more than one product, each with its own weight, returns a named vector,
+#' one weight per product, named by the word the product's units carry
+#' (intravenous calcium, `R/drugs_calcium.R`: `chloride` and `gluconate`);
+#' every dose of such a drug must then name its product, which
+#' `molarWeightOfDoses()` enforces.  The block is refused for any other
+#' concentration unit, where it would be ignored silently.
+#'
+#' @param molar the model's `molar` field, or NULL
+#' @param drug the drug name, for the message
+#' @param concentrationUnits the CSV's `Concentration.Units`
+#' @returns the block, or NULL when the drug has none
+#' @keywords internal
+validateMolar <- function(molar, drug, concentrationUnits)
+{
+  molarUnits <- identical(as.character(concentrationUnits), "mmol")
+  if (is.null(molar)) {
+    if (molarUnits)
+      stop("Invalid molar block for ", drug, ": a drug with Concentration.Units ",
+           "\"mmol\" must return molar = list(molecularWeight = ...).")
+    return(NULL)
+  }
+  if (!molarUnits)
+    stop("Invalid molar block for ", drug, ": only a drug with ",
+         "Concentration.Units \"mmol\" may return one.")
+  mw <- if (is.list(molar)) molar$molecularWeight else NULL
+  if (is.null(mw) || !is.numeric(mw) || length(mw) < 1 || any(!is.finite(mw)) || any(mw <= 0))
+    stop("Invalid molar block for ", drug, ": molecularWeight must be a positive ",
+         "number (grams per mole), or a vector of them named by product.")
+  if (length(mw) > 1 || !is.null(names(mw))) {
+    products <- names(mw)
+    if (is.null(products) || any(is.na(products) | !nzchar(products)) ||
+        any(duplicated(products)) || any(grepl(" ", products)))
+      stop("Invalid molar block for ", drug, ": a molecularWeight for more than one ",
+           "product must be named by the product words the units carry, each a ",
+           "single word, no two alike.")
+  }
+  list(molecularWeight = mw)
+}
+
+#' Grams per mole for each dose of a molar drug
+#'
+#' One weight per dose row: the block's single weight, or for a drug given
+#' as several products the weight of the product each unit names (see
+#' `validateMolar()`).  A dose of such a drug whose unit names no product
+#' is refused rather than guessed: for intravenous calcium a bare "g" would
+#' be either 6.8 or 2.2 mmol, and the difference is the dosing error the
+#' source study was prompted by.
+#'
+#' @param molar a validated `molar` block
+#' @param units the dose rows' units
+#' @param drug the drug name, for the message
+#' @returns numeric vector the length of `units`
+#' @keywords internal
+molarWeightOfDoses <- function(molar, units, drug = "")
+{
+  mw <- molar$molecularWeight
+  if (length(mw) == 1 && is.null(names(mw))) return(rep(mw, length(units)))
+  product <- doseProduct(units, names(mw))
+  missing <- is.na(product)
+  if (any(missing))
+    stop("Dose unit for ", drug, " must name the product, one of ",
+         paste(names(mw), collapse = ", "), ": ",
+         paste(unique(as.character(units)[missing]), collapse = ", "))
+  unname(mw[product])
+}

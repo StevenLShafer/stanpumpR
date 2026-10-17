@@ -1,10 +1,10 @@
 ### The model
 
-Sufentanil's parameters are from Gepts and colleagues (*Anesthesiology* 1995;83:1194-1204), who gave sufentanil by infusion to surgical patients and fitted a three-compartment model. The volumes are 14.3, 63.4 and 252 L and the clearances 0.922, 1.55 and 0.327 L/min.
+Sufentanil's parameters are from Gepts and colleagues (*Anesthesiology* 1995;83:1194-1204), who gave sufentanil by infusion to surgical patients and fitted a three-compartment model. The volumes are 14.3, 63.4 and 262 L and the clearances 0.922, 1.55 and 0.327 L/min.
 
 ### Covariates
 
-None. The parameters are for a typical adult. Gepts found no significant covariates in the population studied.
+None. The parameters are for a typical adult. Gepts found no significant covariates in the population studied. They are taken to be the 70 kg reference man's and scaled to the patient's [fat-free mass](help:models/fat-free-mass) with the switch on, as it is by default; with it off everyone receives the published values.
 
 ### Effect site
 

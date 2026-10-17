@@ -202,11 +202,25 @@ helpConcentrationUnits <- function(units) {
          "%" = "% of one atmosphere",
          # An osmotic agent is plotted as the serum osmolality it produces.
          "mOsm" = "mOsm/kg (serum osmolality)",
+         # Intravenous calcium is plotted as the change in ionized calcium.
+         "mmol" = "mmol/L (change in ionized calcium)",
          as.character(units))
 }
 
+# The citation as plain text, for the drug index: a URL that ends it is
+# dropped, one inside it is replaced by its site's name, as citationHTML()
+# shows it (R/utils-shiny-ui.R); an unrecognised URL stays as written.
 helpReferenceShort <- function(reference) {
   if (is.null(reference) || is.na(reference) || !nzchar(reference)) return("Not available")
+  links <- citationLinks(reference)
+  if (!is.null(links)) {
+    for (i in rev(seq_len(nrow(links)))) {
+      after <- substr(reference, links$end[i] + 1L, nchar(reference))
+      trailing <- !nzchar(trimws(after))
+      reference <- paste0(substr(reference, 1L, links$start[i] - 1L),
+                          if (trailing) "" else links$label[i], after)
+    }
+  }
   trimws(sub("\\s+https?://\\S+$", "", reference))
 }
 
@@ -223,8 +237,8 @@ helpH2 <- function(text) sprintf("<h2>%s</h2>", htmltools::htmlEscape(text))
 
 #' The teaching scenarios that give a drug, as a Markdown-free HTML list
 #' @noRd
-helpScenariosUsingDrugHTML <- function(drug) {
-  scen <- Filter(function(s) drug %in% s$doses$Drug, helpScenarios())
+helpScenariosUsingDrugHTML <- function(drug, scenarios = helpScenarios()) {
+  scen <- Filter(function(s) drug %in% s$doses$Drug, scenarios)
   if (length(scen) == 0) return("")
   items <- vapply(scen, function(s) {
     sprintf('<li><a href="#" data-help-page="scenarios/%s">%s</a> \u2014 %s</li>',
@@ -244,6 +258,27 @@ helpDrugPageHTML <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
   }
   row <- row[1, ]
   if (isGasDrug(drug)) helpGasPageHTML(drug, row) else helpIvDrugPageHTML(drug, row, drugDefaults)
+}
+
+#' The searchable text of a drug's page, without running the model
+#'
+#' The title, the drug's name, its category and units, the citation its model
+#' function returns, its narrative and the scenarios that use it.  What is
+#' left out is numbers: the parameter tables and half-lives.
+#' @noRd
+helpDrugSearchText <- function(drug, drugDefaults = getDrugDefaultsGlobal(),
+                               scenarios = helpScenarios()) {
+  row <- drugDefaults[drugDefaults$Drug == drug, ]
+  if (nrow(row) == 0) return("")
+  row <- row[1, ]
+  modelOut <- helpDrugModelOutput(drug, helpReferencePatients()[1, ])
+  reference <- if (is.character(modelOut$reference)) modelOut$reference else ""
+  narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("drugs/", drug)))
+  helpPlainText(paste(
+    helpDrugTitle(drug), drug, as.character(row$Category),
+    paste(helpDrugUnits(row), collapse = ", "),
+    reference, narrative, helpScenariosUsingDrugHTML(drug, scenarios)
+  ))
 }
 
 helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
@@ -273,7 +308,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "sublingual",
               if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
-  intravenous <- any(units %in% c(bolusUnits, infusionUnits))
+  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
     paste0("Not dosed directly: appears only as the active metabolite of ",
@@ -407,8 +442,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     }
     ffmNote <- if (isTRUE(ffm)) {
       paste0("These values are with <em>Adjust weight to fat-free mass</em> ticked, as it is by default: ",
-             "the model's volumes are scaled by the patient's fat-free mass relative to a 70 kg, 170 cm man, ",
-             "and its clearances by that ratio to the 0.75 power. The 70 kg reference man is unchanged. ",
+             "the model is scaled to the patient's fat-free mass rather than total weight. For most models ",
+             "that means volumes by the ratio of the patient's fat-free mass to a 70 kg, 170 cm man's, and ",
+             "clearances by that ratio to the 0.75 power; a model with its own size term applies it to the ",
+             "fat-free-mass weight instead, as its notes describe. The 70 kg reference man is unchanged. ",
              "Unticking the box restores the scaling the published model used. See ",
              helpPageLink("models/fat-free-mass"), ".")
     } else if (isFALSE(ffm)) {
@@ -558,6 +595,61 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     }
   }
 
+  # --- CYP2D6 (without a metabolite) and CYP2C9 ------------------------------
+  # A model may read a genotype field for its own clearance rather than for a
+  # metabolite's formation (haloperidol and aripiprazole: CYP2D6; meloxicam
+  # and phenytoin: CYP2C9).  Tabulate what moves at the reference adult: the
+  # clearance, or for a Michaelis-Menten model its Vmax.
+  cypSection <- function(arg, values, normal, gene, field) {
+    if (!helpDrugDeclares(drug, arg)) return("")
+    rowsCyp <- lapply(values, function(v) {
+      X <- do.call(helpDrugModelOutput, c(list(drug, adult), stats::setNames(list(v), arg)))
+      if (is.null(X)) return(NULL)
+      data.frame(value = v, cl1 = X$PK[[PK_EVENT_DEFAULT]]$cl1,
+                 vmax = if (is.null(X$michaelisMenten$vmax)) NA_real_ else X$michaelisMenten$vmax,
+                 stringsAsFactors = FALSE)
+    })
+    byValue <- do.call(rbind, rowsCyp[!vapply(rowsCyp, is.null, logical(1))])
+    if (is.null(byValue) || sum(byValue$value == normal) != 1) return("")
+    ref <- byValue[byValue$value == normal, ]
+    varies <- function(x) length(unique(round(x, 9))) > 1
+    useVmax <- !is.na(ref$vmax) && varies(byValue$vmax)
+    moving <- if (useVmax) byValue$vmax else byValue$cl1
+    if (!varies(moving)) return("")
+    tab <- data.frame(
+      byValue$value,
+      helpFormatNumber(moving),
+      helpFormatNumber(moving / (if (useVmax) ref$vmax else ref$cl1)),
+      stringsAsFactors = FALSE
+    )
+    names(tab) <- c(if (arg == "cyp2c9") "CYP2C9 genotype" else paste(gene, "phenotype"),
+                    if (useVmax) "Vmax (mg/min)" else "Clearance CL1 (L/min)",
+                    paste("Relative to", normal))
+    if (arg != "cyp2c9") tab[[1]] <- tools::toTitleCase(tab[[1]])
+    paste0(
+      helpH2(paste(gene, if (arg == "cyp2c9") "genotype" else "phenotype")),
+      "<p>This model's ", if (useVmax) "maximal elimination rate" else "clearance",
+      " depends on ", gene, ", so the <strong>", field, "</strong> field in the Patient Profile changes it. ",
+      "At the reference adult:</p>",
+      helpTableHTML(tab, paste("Effect of", gene, if (arg == "cyp2c9") "genotype" else "phenotype"))
+    )
+  }
+  cypOtherHTML <- paste0(
+    if (is.null(metabolite)) cypSection("cyp2d6", CYP2D6_VALUES, CYP2D6_NORMAL, "CYP2D6", "CYP 2D6") else "",
+    cypSection("cyp2c9", CYP2C9_VALUES, CYP2C9_DEFAULT, "CYP2C9", "CYP 2C9"),
+    cypSection("cyp2b6", CYP2B6_VALUES, CYP2B6_DEFAULT, "CYP2B6", "CYP 2B6")
+  )
+
+  # --- Renal function --------------------------------------------------------
+  # A model that reads the Patient Profile's serum creatinine is tabulated
+  # above with the field blank: at an assumed normal creatinine for the
+  # reference patient's age and sex (R/renalFunction.R).
+  renalHTML <- if (helpDrugDeclares(drug, "creatinine")) paste0(
+    "<p>This model reads the <strong>Serum creatinine</strong> field in the Patient Profile to estimate ",
+    "renal function. The tables on this page leave the field blank, so they are at the normal creatinine ",
+    "assumed for each reference patient's age and sex; a higher creatinine lowers the renal part of the ",
+    "clearance. See ", helpPageLink("patient-profile"), ".</p>") else ""
+
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""
   if (!is.null(pkRef)) {
@@ -581,13 +673,46 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         check.names = FALSE, stringsAsFactors = FALSE
       )
     })
+    # Oral forms with absorption of their own (getDrugPK()'s oralFormulations):
+    # a unit naming one ("mg PO liquid") uses its row; plain "mg PO", and a
+    # form the drug offers without listing it, use the default oral row.
+    forms <- names(pkRef$oralFormulations)
+    formRows <- lapply(forms, function(f) {
+      fd <- pkRef$oralFormulations[[f]][[PK_EVENT_DEFAULT]]
+      if (is.null(fd) || !isTRUE(fd$ka_PO > 0)) return(NULL)
+      data.frame(
+        Route = sprintf("Oral, %s (mg PO %s)", f, f),
+        `ka (1/min)` = helpFormatNumber(fd$ka_PO),
+        `Absorption half-time (min)` = helpFormatNumber(log(2) / fd$ka_PO),
+        `Bioavailability` = helpFormatNumber(fd$bioavailability_PO),
+        `Lag time (min)` = helpFormatNumber(fd$tlag_PO),
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+    })
+    formRows <- formRows[!vapply(formRows, is.null, logical(1))]
+    if (length(formRows) && length(rows) && identical(rows[[1]]$Route, routes$PO))
+      rows[[1]]$Route <- "Oral (PO), default form"
+    rows <- c(rows[1], formRows, rows[-1])
     rows <- rows[!vapply(rows, is.null, logical(1))]
+    pulses <- pkRef$oralPulses
+    pulseNote <- if (length(pulses)) paste(vapply(names(pulses), function(f) {
+      p <- pulses[[f]]
+      sprintf("An <strong>mg PO %s</strong> dose is released in %d parts (%s of the dose at %s minutes after it is given), each absorbed as the default form. ",
+              f, length(p$fraction),
+              paste(sprintf("%s%%", helpFormatNumber(100 * p$fraction)), collapse = ", "),
+              paste(helpFormatNumber(p$delay), collapse = ", "))
+    }, character(1)), collapse = "") else ""
     if (length(rows) > 0) {
       absorptionHTML <- paste0(
         helpH2("Extravascular routes"),
         "<p>Doses with PO, SL, IM, IN or RA units are absorbed by first-order kinetics into the central ",
         "compartment after a lag, with the fraction shown reaching the circulation. RA is a ",
-        "local anesthetic injected into tissue (a nerve block or an infiltration). ",
+        "local anesthetic injected into tissue (a nerve block or an infiltration)",
+        if (any(units %in% raRateUnits)) ", or infused into it through a perineural catheter (mg/hr RA), which feeds the same depot" else "",
+        ". ",
+        if (length(formRows)) paste0("A unit naming an oral form listed in the table uses that form's ",
+                                     "absorption; plain mg PO, and any other form offered, use the default. ") else "",
+        pulseNote,
         if (secondPO) paste0("Each oral dose is absorbed through two depots in parallel, each with ",
                              "its own lag; the bioavailability of each is its share of the dose. ") else "",
         if (slowRA) paste0("Each RA dose is absorbed through a fast and a slow depot in parallel; ",
@@ -735,9 +860,16 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   paste0(
     helpH2("At a glance"), glanceHTML,
     helpH2("Model source"), sourceHTML,
-    helpH2("Parameters at reference patients"), paramsHTML,
+    helpH2("Parameters at reference patients"), paramsHTML, renalHTML,
     cyp2c19HTML,
+    cypOtherHTML,
     absorptionHTML,
+    if (any(units %in% poRateUnits)) paste0(
+      if (!nzchar(absorptionHTML)) helpH2("Oral dosing") else "",
+      "<p>An <strong>mg/day PO</strong> dose is a constant oral input from its time until the next ",
+      "mg/day PO row for the drug: it is applied to the model's apparent oral parameters as a steady ",
+      "rate, with no absorption step and no separate bioavailability, which those parameters already ",
+      "contain. See ", helpPageLink("models/absorption"), ".</p>") else "",
     parallelHTML,
     metaboliteHTML,
     formedHTML,
@@ -807,7 +939,7 @@ helpGasPageHTML <- function(gas, row) {
     )
     propsHTML <- paste0(
       helpH2("Physical properties"),
-      "<p>These are Gas Man\u00ae's values, carried unchanged so that the engine can be checked against Gas Man; see ",
+      "<p>These are GasMan\u00ae's values, carried unchanged so that the engine can be checked against GasMan; see ",
       helpPageLink("models/gas-engine"), ".</p>",
       helpTableHTML(tab)
     )
@@ -852,6 +984,7 @@ helpGasPageHTML <- function(gas, row) {
 #' @noRd
 helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   adult <- helpReferencePatients()[1, ]
+  drugDefaults <- drugDefaults[helpTitleOrder(helpDrugTitle(drugDefaults$Drug)), ]
   iv <- drugDefaults[!isGasDrug(drugDefaults$Drug), ]
   gas <- drugDefaults[isGasDrug(drugDefaults$Drug), ]
 
@@ -861,7 +994,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     conc <- helpConcentrationUnits(row$Concentration.Units)
     units <- helpDrugUnits(row)
     given <- if (length(units) == 0) "metabolite only"
-      else if (any(units %in% c(bolusUnits, infusionUnits))) {
+      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits))) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",
@@ -879,7 +1012,9 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     data.frame(
       Drug = sprintf('<a href="#" data-help-page="drugs/%s">%s%s</a>', row$Drug,
                      as.character(helpColorSwatch(row$Color)), helpDrugTitle(row$Drug)),
-      `Model source` = htmltools::htmlEscape(if (is.null(pk)) "Not available" else helpReferenceShort(pk$reference)),
+      `Model source` = helpLinkInvestigators(
+        htmltools::htmlEscape(if (is.null(pk)) "Not available" else helpReferenceShort(pk$reference)),
+        "citation"),
       `Given as` = given,
       `Active metabolite` = metabolite,
       `Default unit` = htmltools::htmlEscape(if (!is.na(row$Default.Units) && nzchar(as.character(row$Default.Units)))
@@ -890,7 +1025,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
       check.names = FALSE, stringsAsFactors = FALSE
     )
   })
-  ivTable <- helpRawTableHTML(do.call(rbind, ivRows), "Intravenous drugs")
+  ivTable <- helpRawTableHTML(do.call(rbind, ivRows), "Drugs, by any route")
 
   gasRows <- lapply(seq_len(nrow(gas)), function(i) {
     row <- gas[i, ]
@@ -915,7 +1050,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     "accept target-controlled infusion units (", helpPageLink("tci"), ").</p>",
     "<p>The library can be edited for the current session under ",
     helpPageLink("drug-library", "Settings \u2192 Drug Library"), ".</p>",
-    helpH2("Intravenous drugs"), ivTable,
+    helpH2("Drugs"), ivTable,
     helpH2("Inhaled anesthetics"), gasTable,
     "<p>How to add a drug is described under ", helpPageLink("contributing"), ".</p>"
   )
@@ -945,9 +1080,11 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   cites <- list()
   for (drug in iv) {
     for (i in seq_len(nrow(patients))) {
-      pk <- helpDrugPK(drug, patients[i, ], drugDefaults)
-      if (is.null(pk)) next
-      ref <- pk$reference
+      # The citation is the model function's own; getDrugPK() passes it
+      # through unchanged, so the model is not fitted just to read it.
+      out <- helpDrugModelOutput(drug, patients[i, ])
+      ref <- out$reference
+      if (!is.character(ref) || length(ref) != 1 || !nzchar(ref)) next
       cites[[ref]] <- unique(c(cites[[ref]], drug))
     }
   }
@@ -966,6 +1103,6 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     "<p>These are the citations the drug model functions return, collected across the reference ",
     "patients, so a drug that switches models with age or size appears under each.</p>",
     "<ul class='help-citations'>", paste(items, collapse = ""), "</ul>",
-    helpMarkdownToHTML(helpReadMarkdown("references"))
+    helpLinkInvestigators(helpMarkdownToHTML(helpReadMarkdown("references")), "citation")
   )
 }

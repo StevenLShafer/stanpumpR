@@ -13,9 +13,9 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
     PK = list(
       default = list(
         v1 = 4.4904106,
-        v2 = 6.9903443,
+        v2 = 6.7861043,
         v3 = 1,
-        cl1 = 0.073842137,
+        cl1 = 0.079718088,
         cl2 = 0.206,
         cl3 = 0
       )
@@ -33,9 +33,9 @@ test_that("scales to fat-free mass for a 120 kg man", {
   actual <- sugammadex(120, 170, 50, "male")
   expected <- list(
     v1 = 5.423784,
-    v2 = 8.4088889,
+    v2 = 8.0897291,
     v3 = 1,
-    cl1 = 0.09629097,
+    cl1 = 0.10302249,
     cl2 = 0.251508,
     cl3 = 0
   )
@@ -44,8 +44,9 @@ test_that("scales to fat-free mass for a 120 kg man", {
 
 test_that("the source's derived covariate scenario is reproduced", {
   # W = 74.5 kg and CR = 119 mL/min: Cockcroft-Gault at the assumed creatinine
-  # gives 119 for a 74.5 kg man of (140 - 119 x 72 / 74.5) = 25.0 years.
-  x <- sugammadex(74.5, 175, 140 - 119 * 72 / 74.5, "male", adjustToFFM = FALSE)$PK$default
+  # of 0.9 mg/dL gives 119 for a 74.5 kg man of (140 - 119 x 72 x 0.9 / 74.5)
+  # = 36.5 years.
+  x <- sugammadex(74.5, 175, 140 - 119 * 72 * SCR_ASSUMED_MALE / 74.5, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(x$cl1 * 60, 5.58, tolerance = 1e-9)
   expect_equal(x$v1, 4.704143, tolerance = 1e-6)
   expect_equal(x$cl2 * 60, 12.951264, tolerance = 1e-6)

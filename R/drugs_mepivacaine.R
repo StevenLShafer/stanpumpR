@@ -90,12 +90,17 @@
 # ----------
 # Burm AG et al., Anesth Analg 1997;84:85-89.
 #   https://doi.org/10.1097/00000539-199701000-00016
-# Simon MJ et al., 2002, axillary brachial plexus block with lidocaine and
-#   mepivacaine (arterial plasma).
+# Simon MAM et al., ScientificWorldJournal 2002;2:1306-1319, axillary
+#   brachial plexus block with lidocaine and mepivacaine (arterial plasma).
+#   https://doi.org/10.1100/tsw.2002.180
 #   https://pdfs.semanticscholar.org/4623/591309e36ca59b5673f2370e6376704da390.pdf
 # (Claude Code, 2026-10-10, at the request of Steven L. Shafer, from a
 # research handoff on local anesthetic tissue-injection pharmacokinetics.)
 # -----------------------------------------------------------------------------
+
+# TRUE: RA doses are absorbed through two parallel depots (the default);
+# FALSE: through one, at ka 0.0272/min.  See the header.
+MEPIVACAINE_RA_TWO_DEPOT <- TRUE
 
 #' Mepivacaine pharmacokinetics (intravenous and regional anesthesia)
 #'
@@ -103,10 +108,6 @@
 #' two-compartment model for the racemate, with a first-order absorption rate
 #' for tissue injection (RA).  See the header.
 #'
-# TRUE: RA doses are absorbed through two parallel depots (the default);
-# FALSE: through one, at ka 0.0272/min.  See the header.
-MEPIVACAINE_RA_TWO_DEPOT <- TRUE
-
 #' @inheritParams bupivacaine
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export

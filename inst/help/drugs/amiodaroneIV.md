@@ -31,7 +31,7 @@ No shaded band is drawn. The familiar therapeutic window of 1.0 to 2.5 mg/L, whi
 
 ### Covariates and body size
 
-Weight only, through the per-kilogram parameters. Age, gender, height, serum creatinine, serum alkaline phosphatase, ejection fraction and the response to treatment did not contribute to the variability. The model is therefore scaled like the other per-kilogram models (ketamine, etomidate): by default the 70 kg values above are the reference man's and are [scaled to fat-free mass](help:models/fat-free-mass); with the switch off, every volume and clearance is multiplied by weight / 70, which is the published per-kilogram model exactly. The abstract does not give the patients' weights, heights or ages, so the child and infant in the table above are extrapolation.
+Weight only, through the per-kilogram parameters. Age, gender, height, serum creatinine, serum alkaline phosphatase, ejection fraction and the response to treatment did not contribute to the variability. The model is therefore scaled like the other per-kilogram models (ketamine, etomidate): by default the 70 kg values above are the reference man's and are [scaled to fat-free mass](help:models/fat-free-mass); with the switch off, every volume and clearance is multiplied by weight / 70, which is the published per-kilogram model exactly. The patients averaged 78 kg, 172 cm and 64 years (73% men), so the child and infant in the table above are extrapolation.
 
 ### Cross-checks against published observations
 

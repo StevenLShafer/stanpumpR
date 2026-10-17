@@ -10,21 +10,25 @@ Each model was fitted to a particular population: often healthy volunteers or el
 
 Some models have no covariates at all: the same dose in milligrams gives the same curve in a 20 kg child and a 120 kg adult. The drug page says so. Dose in per-kilogram units if you want size taken into account, and remember that per-kilogram dosing is itself an assumption the model did not test.
 
-## Disabled covariates
+## Which drugs each field reaches
 
-Pregnancy appears in the interface but does not influence any prediction.
+The Patient Profile fields beyond age, weight, height and sex reach only the models that name them, and a field left blank or at its default silently gives the typical value, so it is worth knowing which drugs each one affects. (A test checks that this list names every model that reads the field.)
 
-The other Patient Profile fields reach only the models that name them, and a field left blank or at its default silently gives the typical value, so it is worth knowing which drugs each one affects. (A test checks that this list names every model that reads the field.)
-
-- **Serum creatinine** is read by cefazolin, gabapentin, gentamicin, lacosamide, levetiracetam, mannitol, meloxicam, oxycodone, pregabalin, sugammadex and vancomycin. Left blank, they assume a normal creatinine for the patient's age and sex, and a patient with impaired kidneys will then clear these drugs more slowly than the plot shows.
+- **Pregnant** is read by cefazolin, dexamethasone, gentamicin, methadone, morphine, oxycodone, remifentanil and vancomycin (and by the Minto remifentanil companion model), which apply the changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood (2016). For every other drug, including those the review describes without a figure, it has no effect; see [Pregnancy](help:models/pregnancy).
+- **Serum creatinine** is read by cefazolin, gabapentin, gentamicin, lacosamide, levetiracetam, mannitol, intravenous meloxicam, oxycodone, pregabalin, sugammadex and vancomycin. Left blank, they assume a normal creatinine for the patient's age and sex, and a patient with impaired kidneys will then clear these drugs more slowly than the plot shows.
 - **Baseline serum osmolality** is read by mannitol alone, which is plotted as the osmolality it produces on top of it.
 - **CYP 2D6** is read by aripiprazole, codeine, haloperidol, hydrocodone, oxycodone, risperidone and tramadol: the four opioids through their active metabolites, the antipsychotics through their clearance. For every other drug it has no effect.
 - **CYP 2C19** is read by citalopram and escitalopram.
 - **CYP 2C9** is read by meloxicam and phenytoin.
+- **CYP 2B6** is read by methadone, whose non-renal clearance of each enantiomer falls in reduced-function phenotypes. The rapid and ultrarapid categories are given the normal metaboliser's clearance, because the only group carrying the increased-function allele was four subjects of two different CPIC phenotypes, with no significance test. CPIC does not recommend changing methadone dosing on CYP2B6 genotype; the field shows the pharmacokinetic difference, which is measured, not a dosing rule.
 
 ## Provisional parameters in the newer drugs
 
 Several of the recently added opioids carry parameters that are explicitly provisional and uncited: the time to peak effect of hydrocodone and oxymorphone, the effect-site rate constant of desmetramadol, and the minimum effective concentrations of hydrocodone and oxymorphone. Their pages say so. They are working values, not validated ones.
+
+## Illicit-drug models are research estimates
+
+The research models of drugs of abuse (diamorphine) are hidden until **Show illicit drugs** above the dose table is ticked. Their curves are plasma-exposure estimates for research and teaching, not dosing advice or safety thresholds. See [diamorphine](help:drugs/diamorphine).
 
 ## The shaded band is orientation, not a target
 

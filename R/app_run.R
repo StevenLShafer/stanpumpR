@@ -37,6 +37,12 @@ run_app <- function(config_file = "config.yml") {
   )
 
   shiny::addResourcePath("stanpumpr-assets", system.file("www", package = "stanpumpR"))
+  # The Simulation API's documentation, at <app>/api (R/api-docs.R).  A page
+  # that fails to render must not stop the app.
+  tryCatch(
+    shiny::addResourcePath(API_DOCS_PATH, apiDocsDir()),
+    error = function(e) warning("API documentation not served: ", conditionMessage(e))
+  )
 
   shiny::shinyApp(app_ui(), app_server, enableBookmarking = "url")
 }

@@ -8,7 +8,7 @@ Size only. By default, with *Adjust weight to fat-free mass* ticked, the volumes
 
 ### Effect site
 
-The time to peak effect is 1.6 minutes, the same as propofol's.
+Arden and colleagues fitted the EEG median frequency with an effect compartment whose mean plasma-to-effect-site equilibration half-life was 1.6 minutes. The drug file supplies that ke0 (0.43/min) and the time to peak effect after a bolus is solved from it, about 1.9 minutes with these kinetics. Until October 2026 the 1.6 minutes was read as the time to peak effect itself, which implied a faster equilibration than Arden measured.
 
 ### Typical concentrations
 

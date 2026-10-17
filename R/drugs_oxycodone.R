@@ -93,8 +93,8 @@
 # the adult scale for a child.  A blank creatinine is an ASSUMED NORMAL
 # creatinine for age and sex (assumedCreatinine()), so renal impairment is
 # represented only when a creatinine is entered.  The assumed creatinine
-# still lowers eGFR with age (69 mL/min/1.73 m^2 for a man of 84 at
-# 1.0 mg/dL, against the 64 Liukas measured), and the age factor above was
+# still lowers eGFR with age (78 mL/min/1.73 m^2 for a man of 84 at
+# 0.9 mg/dL, against the 64 Liukas measured), and the age factor above was
 # derived net of exactly that.
 #
 # Kirvela's uraemic patients also had a larger Vss (3.99 against 2.39 L/kg).
@@ -220,6 +220,23 @@
 # in a poor/intermediate group of 13 intermediate and one poor metaboliser,
 # which corroborates it.
 #
+# PREGNANCY
+# =========
+# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 3,
+# from Kokki 2012, intravenous oxycodone in the first stage of labour):
+# "Increased clearance via increased GFR as well as induction of CYP3A4 and
+# CYP2D6 ... Shorter elimination half-time in laboring women (decreased from
+# 3.8 to 2.6 h)".  The review's only figure is the pair of half-times, so
+# with the Patient Profile's Pregnant field on the elimination clearance CL1
+# is multiplied by OXYCODONE_PREGNANCY_CL_FACTOR = 3.8 / 2.6 = 1.46, which
+# reproduces that ratio of half-times if the volumes are unchanged, as
+# nothing in the review says otherwise.  The renal factor above is not
+# touched: it is capped at an eGFR of 100, so the higher filtration of
+# pregnancy would not move it, and the half-time ratio already contains
+# whatever the kidney contributed.  Oxymorphone formation is left as it is;
+# the review attributes part of the faster clearance to CYP2D6 induction but
+# gives no figure for the metabolite.  See R/pregnancy.R.
+#
 # References
 # ----------
 # Poyhia R, Olkkola KT, Seppala T, Kalso E. Br J Clin Pharmacol
@@ -232,9 +249,19 @@
 #   2006;79:461-479.  https://doi.org/10.1016/j.clpt.2006.01.009
 # Balyan R, Mecoli M, Venkatasubramanian R, et al. Pharmacogenomics
 #   2017;18:337-348.  https://doi.org/10.2217/pgs-2016-0183
-# Samer CF et al. Br J Pharmacol 2010;160:919-930.
-#   https://doi.org/10.1111/j.1476-5381.2010.00709.x
+# Samer CF et al. Br J Pharmacol 2010;160:907-918 (pharmacokinetics; the
+#   oxymorphone Cmax figures).  PMID 20590587.
+#   https://doi.org/10.1111/j.1476-5381.2010.00673.x
+# Samer CF et al. Br J Pharmacol 2010;160:919-930 (the companion
+#   pharmacodynamic paper).  https://doi.org/10.1111/j.1476-5381.2010.00709.x
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
 # -----------------------------------------------------------------------------
+
+# Elimination clearance in pregnancy relative to the pooled value: the
+# nonpregnant over the labouring elimination half-time in Ansari 2016 (see
+# the header).
+OXYCODONE_PREGNANCY_CL_FACTOR <- 3.8 / 2.6
 
 # Relative CYP2D6 activity for oxymorphone formation, normal = 1 (see header)
 OXYCODONE_CYP2D6_WEIGHT <- c(
@@ -261,11 +288,13 @@ OXYCODONE_CYP2D6_WEIGHT <- c(
 #'   0.75 power; when \code{FALSE}, scale both linearly with total weight
 #' @param creatinine serum creatinine in mg/dL, or NULL for an assumed normal
 #'   value for age and sex
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   elimination clearance by 3.8/2.6 (Ansari 2016; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   oxymorphone as the formed active metabolite
 #' @export
 oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
-                      adjustToFFM = TRUE, creatinine = NULL)
+                      adjustToFFM = TRUE, creatinine = NULL, pregnant = FALSE)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
@@ -288,6 +317,8 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   ageFactor <- 1 - AGE_SLOPE * max(0, age - AGE_REF)
   eGFR <- egfrCKDEPI2009(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
   renalFactor <- 1 - RENAL_FRACTION * (1 - min(eGFR, EGFR_NORMAL) / EGFR_NORMAL)
+  # Pregnancy (see the header): elimination clearance only.
+  clPregnancy <- if (isTRUE(pregnant)) OXYCODONE_PREGNANCY_CL_FACTOR else 1
 
   # Size scaling (see docs/weight-adjustment.md).  The published values are
   # per kilogram, so with the switch off both scale with total weight / 70.
@@ -298,7 +329,7 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   v2  <- vss - v1
   v3  <- 1                      # no third compartment
   clRef <- CL_PER_KG * 70 * size$clearance
-  cl1 <- clRef * ageFactor * renalFactor
+  cl1 <- clRef * ageFactor * renalFactor * clPregnancy
   cl2 <- Q_OVER_CL * clRef      # distribution is not adjusted for age or renal function
   cl3 <- 0
 
@@ -324,8 +355,8 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
 
   MEAC <- 12
   typical      <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
 
   reference <- paste0(
     "Poyhia R et al., Br J Clin Pharmacol 1991;32:516-518; ",
@@ -337,6 +368,10 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
     "Pharmacogenomics 2017;18:337-348 (CYP2D6). ",
     "https://doi.org/10.1016/j.clpt.2006.01.009"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      "clearance x 3.8/2.6 (elimination half-time 3.8 to 2.6 h in labour)"))
+  }
 
   default <- list(
     v1 = v1,

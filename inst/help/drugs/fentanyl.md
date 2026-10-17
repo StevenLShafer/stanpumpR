@@ -1,12 +1,12 @@
 ### The model
 
-The fentanyl parameters are a pooled analysis from the Stanford laboratory: the code lists its sources as McClain and Hug (1980), Scott and Stanski (1987), Hudson (1986), Varvel (1989) and Shafer (1990), the last being the model fitted to computer-controlled infusion data (Shafer SL, Varvel JR, Aziz N, Scott JC. *Anesthesiology* 1990;73:1091-1102). The citation returned by the model function is Scott and Stanski's 1987 study of fentanyl and alfentanil pharmacokinetics and EEG pharmacodynamics across age.
+The fentanyl parameters are a pooled analysis of several studies: the code lists its sources as McClain and Hug (1980), Scott and Stanski (1987), Hudson (1986), Varvel (1989) and Shafer (1990), the last being the model fitted to computer-controlled infusion data (Shafer SL, Varvel JR, Aziz N, Scott JC. *Anesthesiology* 1990;73:1091-1102). The citation returned by the model function is Scott and Stanski's 1987 study of fentanyl and alfentanil pharmacokinetics and EEG pharmacodynamics across age.
 
 At 70 kg the volumes are 12.1, 35.7 and 224 L and the clearances 0.632, 2.8 and 1.55 L/min.
 
 ### Covariates
 
-Weight only: volumes scale linearly and clearances allometrically to the 0.75 power. There is no age term, although Scott and Stanski found fentanyl's pharmacodynamic sensitivity to increase with age, and no sex or height term.
+Size only. By default, with *Adjust weight to fat-free mass* ticked, the volumes scale with the patient's fat-free mass relative to the 70 kg, 170 cm reference man and the clearances with that ratio to the 0.75 power, so height, age and sex enter through fat-free mass ([fat-free-mass scaling](help:models/fat-free-mass)). Unticking the box restores the original scaling on total weight: volumes linearly and clearances allometrically to the 0.75 power. The model has no age term of its own, although Scott and Stanski found fentanyl's pharmacodynamic sensitivity to increase with age.
 
 ### Effect site
 

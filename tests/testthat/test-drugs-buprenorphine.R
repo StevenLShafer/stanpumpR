@@ -186,3 +186,21 @@ test_that("each sublingual dose is scaled by its own fraction, and scheduled dos
   # The second day starts from a non-zero trough and peaks higher than the first
   expect_gt(max(cp$Y[cp$Time > 1440 & cp$Time < 2880]), max(cp$Y[cp$Time < 1440]))
 })
+
+test_that("sublingual saturation is unaffected by intravenous rows in the same table", {
+  # The saturation step once multiplied the sublingual doses by a conversion
+  # vector one entry per row of the whole table, which R recycled with a
+  # warning whenever other routes were present.  The mixed table must run
+  # clean and equal the sum of its parts.
+  run <- function(rows) {
+    d <- data.frame(Drug = "buprenorphine", Time = c(0, 60, 120)[rows],
+                    Dose = c(0.3, 8, 2)[rows],
+                    Units = c("mg", "mg SL", "mg SL")[rows])
+    r <- simulateDrugsWithCovariates(d, noEvents, 72.4, 170, 35, "male",
+                                     600, FALSE, adjustToFFM = FALSE)$buprenorphine$results
+    r <- r[r$Site == "Plasma", ]
+    approx(r$Time, r$Y, c(100, 200, 400))$y
+  }
+  expect_no_warning(mixed <- run(1:3))
+  expect_equal(mixed, run(1) + run(2:3), tolerance = 1e-3)
+})

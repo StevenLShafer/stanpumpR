@@ -136,6 +136,8 @@
 #   https://doi.org/10.1016/s0920-1211(01)00311-4
 # Urban TJ et al., Clin Pharmacol Ther 2008;83:416-421.
 #   https://doi.org/10.1038/sj.clpt.6100271
+# Gidal BE et al., Epilepsy Res 1996;23:71-76 (high-protein meal).
+#   https://doi.org/10.1016/0920-1211(95)00051-8
 # Gidal BE et al., Epilepsy Res 2000;40:123-127.
 #   https://doi.org/10.1016/s0920-1211(00)00117-0
 # Healy P et al., Pharmacol Res Perspect 2023;11:e01138.

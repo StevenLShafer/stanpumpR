@@ -49,13 +49,13 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   cl2Ref <- 2.07
   cl3Ref <- 0.16
 
-  # Size scaling (see docs/weight-adjustment.md): Kaneda reports population
-  # means without the reference weight, and only the abstract's covariates
-  # (weight on V2, dose on CL1) are known, not their equations.  The means are
-  # taken to describe the 70 kg reference adult and scaled to fat-free mass in
-  # the usual way.  That is consistent with the study's own finding that
-  # weight-based dosing gave higher than expected concentrations in obese
-  # patients.  adjustToFFM = FALSE gives the published volumes and
+  # Size scaling (see docs/weight-adjustment.md): Kaneda's full paper puts
+  # weight on V2 as 8.86 x exp(0.0136 x (WT - 87)), so its 8.86 L is an 87 kg
+  # patient's, and dose on CL1 as a factor of (1 - 0.344) at 0.5 g/kg.  Those
+  # equations are not applied: the means are taken to describe the 70 kg
+  # reference adult and scaled to fat-free mass in the usual way.  That is
+  # consistent with the study's own finding that weight-based dosing gave
+  # higher than expected concentrations in obese patients.  adjustToFFM = FALSE gives the published volumes and
   # distribution clearances unscaled.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
 
@@ -77,7 +77,7 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   crcl <- creatinineClearanceCG(crclWeight, age, sex,
                                 adultEquivalentCreatinine(creatinine, age, sex))
   # Kaneda's clearance is taken to belong to the reference patient (70 kg,
-  # 35 years, male, creatinine 1.0 mg/dL; Cockcroft-Gault 102 mL/min), so his
+  # 35 years, male, creatinine 0.9 mg/dL; Cockcroft-Gault 113 mL/min), so his
   # renal factor is exactly 1.  Computed here rather than at the top level
   # because R/pkSizeFactors.R and R/renalFunction.R are sourced after this file.
   crclReference <- creatinineClearanceCG(FFM_REFERENCE_WEIGHT, FFM_REFERENCE_AGE,

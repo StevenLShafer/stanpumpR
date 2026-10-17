@@ -29,8 +29,8 @@ test_that("returns the pooled per-kilogram parameters with weight scaling", {
     tPeak = 12.35,
     MEAC = 12,
     typical = 14.4,
-    upperTypical = 9.6,
-    lowerTypical = 24,
+    upperTypical = 24,
+    lowerTypical = 9.6,
     reference = actual$reference,
     metabolite = list(
       name = "oxymorphone",
@@ -154,4 +154,45 @@ test_that("oral liquid is the tablet's absorption, entered as prescribed", {
   units <- getDrugDefaults("oxycodone")$Units[[1]]
   expect_true(all(c("mg PO liquid", "mg/kg PO liquid", "mg PO liquid qid",
                     "mg/kg PO liquid qid") %in% units))
+})
+
+test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  CL1 x 3.8/2.6.
+  # The values are those the model gives with the flag on; test-pregnancy.R
+  # checks the ratio against the flag off and that nothing else moves.
+  actual <- oxycodone(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(21.6582425, actual$v1)
+  expect_equal_rounded(143.6718529, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(1.14555649, actual$cl1)
+  expect_equal_rounded(1.831544961, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+  expect_equal(oxycodone(70, 165, 30, "female")$PK$default,
+               oxycodone(70, 165, 30, "female", pregnant = FALSE)$PK$default)
+  expect_match(oxycodone(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
+  expect_no_match(oxycodone(70, 165, 30, "female")$reference, "Ansari")
+})
+
+test_that("intravenous infusion and target-controlled infusion are offered (issue #131)", {
+  defaults <- getDrugDefaults("oxycodone")
+  expect_equal(defaults$Bolus.Units, "mg")
+  expect_equal(defaults$Infusion.Units, "mg/hr")
+  expect_true(all(c("mg", "mg/hr", TCI_UNIT_PLASMA, TCI_UNIT_EFFECT) %in% defaults$Units[[1]]))
+  PK <- getDrugPK("oxycodone", 70, 170, 40, "male")
+  expect_true(suggestSupported(PK))
+  # A 6 mg/hr infusion for an hour is 6 mg: the plasma AUC is the dose over
+  # clearance, run through the metabolite engine with oxymorphone attached
+  infusion <- simCpCe(
+    data.frame(Drug = "oxycodone", Time = c(0, 60), Dose = c(6, 0), Units = "mg/hr"),
+    noEvents, PK, 48 * 60, plotRecovery = FALSE)
+  plasma <- infusion$results[infusion$results$Site == "Plasma", ]
+  expect_equal(trapz(plasma$Time, plasma$Y) / 1000,
+               6 / PK$PK[[1]]$cl1, tolerance = 0.01)   # mg.min/L over L/min
+  # An effect-site target of 20 ng/mL is reached and held
+  tci <- simCpCe(
+    data.frame(Drug = "oxycodone", Time = c(0, 120), Dose = c(20, 0), Units = TCI_UNIT_EFFECT),
+    noEvents, PK, 180, plotRecovery = FALSE)
+  ce <- tci$results[tci$results$Site == "Effect Site", ]
+  expect_equal(stats::approx(ce$Time, ce$Y, c(30, 60, 110))$y, c(20, 20, 20), tolerance = 1e-3)
+  expect_lte(max(ce$Y[ce$Time <= 120]), 20 * 1.001)
 })

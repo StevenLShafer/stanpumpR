@@ -32,7 +32,7 @@ The shaded band, 30 to 120 ng/mL, with 60 as the typical value, is the AGNP cons
 
 ### Not used
 
-Lobo and colleagues' pooled adult model (2009), with sex, smoking, age and dose effects, was not used because its fixed-effect table could not be verified. Shibata and colleagues (2023) described Japanese children and adolescents with major depressive disorder (CL/F 81.4 L/h, V/F 1170 L, ka 0.168 /h); that is a separate population, and its values are not mixed with Zhong's.
+Lobo and colleagues' pooled adult model (2009) was not used. Its fixed effects have been read from the full paper (CL/F 45.1 L/h, V/F 814 L, ka 0.168 /h): sex and smoking act on bioavailability, age and dose on clearance, and Hispanic ethnicity on volume. Shibata and colleagues (2023) described Japanese children and adolescents with major depressive disorder (CL/F 81.4 L/h, V/F 1170 L, ka 0.168 /h); that is a separate population, and its values are not mixed with Zhong's.
 
 ### Where to be careful
 

@@ -1,5 +1,5 @@
 # =============================================================================
-# Export our Gas Man baseline results over the validation grid, as a workbook
+# Export our GasMan baseline results over the validation grid, as a workbook
 # =============================================================================
 #
 # Produces gasman_baseline_results.xlsx: our answers for every case in the
@@ -11,8 +11,8 @@
 #
 #   1. Run gasman_validation_grid.R yourself.  Your numbers should reproduce the
 #      Case_n sheets exactly, to the last digit, on any machine.  If they do not,
-#      something differs in the R environment before Gas Man is even involved.
-#   2. Run the same scenarios through the Gas Man API and compare against the
+#      something differs in the R environment before GasMan is even involved.
+#   2. Run the same scenarios through the GasMan API and compare against the
 #      Case_n sheets, or use gasman_verify() on the live objects.
 #
 # Requires the openxlsx package, which is only needed for this export -- the
@@ -97,12 +97,12 @@ add("R version",        R.version.string)
 add("stanpumpR commit", if (is.na(gitrev)) "not a git checkout" else gitrev)
 add("", "")
 add("Source",           "gasman_baseline_standalone.R + gasman_validation_grid.R")
-add("What it is",       paste("An R restatement of Gas Man's own integration",
+add("What it is",       paste("An R restatement of GasMan's own integration",
                               "scheme, transcribed from GasDoc.cpp::Calc and",
                               "CalcUptake (GPL-3.0, github.com/rasman/gasmanonline)."))
 add("", "")
 add("dt_ms",            DT_MS)
-add("",                 "Gas Man's breath period, GasGlobal.h: #define DT 6000")
+add("",                 "GasMan's breath period, GasGlobal.h: #define DT 6000")
 add("Circuit",          "semi-closed for every case")
 add("Weight",           "70 kg for every case (the reference weight)")
 add("uptake_effect",    "TRUE  (m_bUptEnb; the concentration and second gas effect)")
@@ -111,12 +111,12 @@ add("vaporizer_effect", "FALSE (m_bVapEnb; confirmed false in InitDocument)")
 add("", "")
 add("Precision",        paste("10 significant digits. The arithmetic is",
                               "double throughout; this is the reporting",
-                              "boundary only. Gas Man stores results in C++",
+                              "boundary only. GasMan stores results in C++",
                               "float, about 7 digits."))
 add("Tensions",         "percent of one atmosphere")
 add("Uptake",           "cumulative litres of agent taken up by the tissues")
 add("Delivered",        "cumulative litres of agent delivered")
-add("VA",               paste("INSPIRED ventilation, matching Gas Man's GetVA:",
+add("VA",               paste("INSPIRED ventilation, matching GasMan's GetVA:",
                               "the setting plus the volume drawn in to replace",
                               "uptake. Not the setting itself."))
 add("ART",              "reported as ALV; not verified against GetART()")
@@ -144,11 +144,11 @@ summary <- do.call(rbind, lapply(seq_len(nrow(grid)), function(r) {
 }))
 
 # Report 10 significant digits.  Our arithmetic is double precision and stays
-# double throughout; this rounding is at the REPORTING boundary only.  Gas Man
+# double throughout; this rounding is at the REPORTING boundary only.  GasMan
 # stores its results in C++ float (typedef float COMP_ARRAY[MAX_COMPART]), whose
 # epsilon is 1.19e-07, so it carries about 7 significant digits.  Printing 15
 # against a 7-digit target is false precision, and 10 leaves three digits of
-# headroom below anything Gas Man can resolve -- enough that a real disagreement
+# headroom below anything GasMan can resolve -- enough that a real disagreement
 # is still visible well before the rounding is.
 roundOut <- function(d) {
   num <- vapply(d, is.numeric, logical(1))
@@ -175,4 +175,4 @@ cat("Wrote", OUTFILE, "--", length(sheets), "sheets,",
     nrow(run$ours), "rows of results\n")
 cat("Wrote", CSVFILE, "--", nrow(csv), "rows
 ")
-cat("Scenario files for Gas Man are in scenarios/\n")
+cat("Scenario files for GasMan are in scenarios/\n")

@@ -92,6 +92,28 @@ test_that("a lower target turns the pump off until the effect site has fallen to
   expect_equal(nrow(X$tci$boluses), 1)
 })
 
+test_that("a target already exceeded by a manual bolus and infusion gives no loading dose, and still simulates", {
+  # The table that crashed the app: a 150 mg bolus and 100 mcg/kg/min with a
+  # 3 mcg/ml effect-site target, all at time 0.  The bolus puts the effect
+  # site above the target before the pump could load it, so the TCI schedule
+  # has rates but no boluses, and tciDisplay() must build an empty bolus
+  # table rather than fail on a length-1 Drug column beside zero-length ones.
+  DT <- data.frame(
+    Drug  = "propofol",
+    Time  = c(0, 0, 0),
+    Dose  = c(150, 100, 3),
+    Units = c("mg", "mcg/kg/min", TCI_UNIT_EFFECT)
+  )
+  X <- simCpCe(DT, noEvents, propofolPK, 60, FALSE)
+  expect_gt(nrow(X$tci$rates), 0)
+  expect_equal(nrow(X$tci$boluses), 0)
+  expect_equal(names(X$tci$boluses), c("Drug", "Time", "Amount", "Units"))
+  expect_false(any(X$tci$rates$Bolus))
+  ce <- series(X, "Effect Site")
+  expect_gt(max(ce$Y), 3)
+  expect_equal(ce$Y[ce$Time > 40], rep(3, sum(ce$Time > 40)), tolerance = 0.01)
+})
+
 test_that("a higher target during maintenance gives a second loading dose", {
   X <- simCpCe(tciDose(c(0, 20), c(3, 4), TCI_UNIT_EFFECT), noEvents, propofolPK, 60, FALSE)
   b <- X$tci$boluses
@@ -274,12 +296,67 @@ test_that("the plot gets a rate panel per TCI drug, coloured like the drug", {
   wraps <- levels(p$plotResults$Wrap)
   expect_true("propofol TCI\n(mg/kg/min)" %in% wraps)
   expect_false(any(grepl("fentanyl TCI", wraps)))
-  # The rate panel sits after the concentration panels and before Events.
-  expect_lt(which(wraps == "fentanyl\n(ng/ml)"), which(wraps == "propofol TCI\n(mg/kg/min)"))
-  expect_lt(which(wraps == "propofol TCI\n(mg/kg/min)"), which(wraps == PLOT_NAME_EVENTS))
+  # The rate panel sits directly under its own drug's concentration panel,
+  # so a drug added after propofol does not come between them; Events last.
+  expect_equal(which(wraps == "propofol TCI\n(mg/kg/min)"), which(wraps == "propofol\n(mcg/ml)") + 1)
+  expect_lt(which(wraps == "propofol TCI\n(mg/kg/min)"), which(wraps == "fentanyl\n(ng/ml)"))
+  expect_lt(which(wraps == "fentanyl\n(ng/ml)"), which(wraps == PLOT_NAME_EVENTS))
   rate <- p$plotResults[p$plotResults$Site == "Rate", ]
   expect_true(all(rate$Drug == "propofol TCI"))
   expect_equal(max(rate$Time), 60)
   expect_s3_class(p$plotObject, "ggplot")
   expect_no_error(ggplot2::ggplot_build(p$plotObject))
+})
+
+# A regional infusion entered before a plasma target (lidocaine "mg/hr RA" at
+# 0, "Plasma target" at 5 min).  The TCI rows are copies of the first row of
+# the table, and the RArate flag once survived the copy: the controller's
+# intravenous schedule was then delivered into the tissue depot and the plasma
+# plotted at about half the target an hour later, with no error.  Found in a
+# production audit on 2026-10-13.  (Claude Code, 2026-10-14, at the request of
+# Steven L. Shafer.)
+test_that("a regional infusion before a plasma target does not leak its route into the TCI rows", {
+  dd <- getDrugDefaultsGlobal()
+  lidoPK <- getDrugPK("lidocaine", 70, 170, 50, "male", dd[dd$Drug == "lidocaine", ])
+  expect_gt(lidoPK$PK$default$ka_RA, 0)
+
+  # The dose table as the engine receives it, captured from the engine call
+  seen <- list()
+  origDepot <- advanceClosedFormPO_IM_IN
+  origIV    <- advanceClosedForm0
+  local_mocked_bindings(
+    advanceClosedFormPO_IM_IN = function(dose, ...) { seen$depot <<- dose; origDepot(dose, ...) },
+    advanceClosedForm0        = function(dose, ...) { seen$iv    <<- dose; origIV(dose, ...) }
+  )
+  lido <- function(unit) data.frame(
+    Drug = "lidocaine", Time = c(0, 5), Dose = c(100, 1),
+    Units = c(unit, TCI_UNIT_PLASMA))
+
+  raFirst <- simCpCe(lido("mg/hr RA"), noEvents, lidoPK, 60, FALSE)
+  engineDose <- seen$depot
+  expect_false(is.null(engineDose))
+  # Every logical per-dose flag the engine sees is one tciSchedule() clears;
+  # a new flag in simCpCe() is added to tciRouteFlags() or this fails.
+  flags <- names(engineDose)[vapply(engineDose, is.logical, logical(1))]
+  expect_setequal(flags, tciRouteFlags())
+  tciRows <- engineDose[engineDose$Units == "TCI", ]
+  expect_gt(nrow(tciRows), 0)
+  for (flag in tciRouteFlags()) expect_false(any(tciRows[[flag]]), info = flag)
+  # The regional infusion itself keeps its route and runs on, as entered
+  raRow <- engineDose[engineDose$Units != "TCI", ]
+  expect_equal(nrow(raRow), 1)
+  expect_true(raRow$RArate)
+
+  # The trajectory: the controller knows nothing of the depot, so the plasma
+  # is the target plus what the regional infusion alone contributes.
+  raOnly  <- simCpCe(lido("mg/hr RA")[1, ], noEvents, lidoPK, 60, FALSE)
+  ivFirst <- simCpCe(lido("mg/hr"), noEvents, lidoPK, 60, FALSE)
+  late <- seq(5 + 2 * TCI_INTERVAL, 60, by = 1)
+  expect_equal(at(series(raFirst, "Plasma"), late),
+               1 + at(series(raOnly, "Plasma"), late), tolerance = 0.002)
+  expect_equal(at(series(ivFirst, "Plasma"), late), rep(1, length(late)), tolerance = 0.002)
+  # Before the fix the regional-first plasma was 0.49 at 60 min
+  expect_gt(at(series(raFirst, "Plasma"), 60), 1)
+  # Both schedules are the same intravenous pump, in the same units
+  expect_equal(raFirst$tci$rates$Units, ivFirst$tci$rates$Units)
 })

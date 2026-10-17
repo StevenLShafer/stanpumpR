@@ -11,7 +11,7 @@ test_that("returns the published parameters with total-body-weight scaling", {
       default = list(
         v1 = 14.3,
         v2 = 63.38694,
-        v3 = 251.9,
+        v3 = 261.6,
         cl1 = 0.92235,
         cl2 = 1.55298,
         cl3 = 0.32747
@@ -20,8 +20,8 @@ test_that("returns the published parameters with total-body-weight scaling", {
     tPeak = 5.6,
     MEAC = 0.056,
     typical = 0.0672,
-    upperTypical = 0.0448,
-    lowerTypical = 0.112,
+    upperTypical = 0.112,
+    lowerTypical = 0.0448,
     reference = "Gepts E et al., Anesthesiology 1995;83(6):1194-1204. https://pubmed.ncbi.nlm.nih.gov/8533912/"
   )
 
@@ -36,7 +36,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
   expected <- list(
         v1 = 18.660165,
         v2 = 82.71404,
-        v3 = 328.70599,
+        v3 = 341.36359,
         cl1 = 1.1261088,
         cl2 = 1.8960529,
         cl3 = 0.39981226

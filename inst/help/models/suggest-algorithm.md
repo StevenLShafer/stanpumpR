@@ -2,7 +2,7 @@
 
 ## Which drugs
 
-The dialog lists only the drugs the search can target: those whose model has an effect site (ke0 greater than zero), with intravenous bolus and infusion units in the drug library. A drug with no effect site (the antibiotics, the corticosteroids, mannitol, and the prodrugs codeine and tramadol) has no effect-site concentration to fit; an oral-only drug or an inhaled agent has no bolus and infusion to fit it with.
+The dialog lists only the drugs the search can target: those whose model has an effect site (ke0 greater than zero), with intravenous bolus and infusion units in the drug library. A drug with no effect site (the antibiotics, the corticosteroids, mannitol and the prodrugs codeine and tramadol, for example; see [The effect site and ke0](help:models/effect-site)) has no effect-site concentration to fit; an oral-only drug or an inhaled agent has no bolus and infusion to fit it with.
 
 ## Cleaning the targets
 

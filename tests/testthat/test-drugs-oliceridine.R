@@ -38,3 +38,19 @@ test_that("scales to fat-free mass for a 120 kg man", {
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
+
+test_that("the analgesic tPeak of 4.4 min is an equilibration half-time of about 1 min", {
+  # Dahan 2020 found analgesic equilibration too fast to estimate; the tPeak
+  # carries that as a t1/2 ke0 of 1 min (opioid MEAC and tPeak audit,
+  # 2026-10-12, kept over the ventilatory ke0 by decision of Steven L. Shafer
+  # when the audit was merged, 2026-10-17).
+  dd <- getDrugDefaultsGlobal()
+  PK <- getDrugPK("oliceridine", 70, 170, 50, "male", dd[dd$Drug == "oliceridine", ])
+  expect_equal(PK$tPeak, 4.4)
+  expect_equal(log(2) / PK$PK$default$ke0, 1, tolerance = 0.01)
+  # The library's MEAC is Dahan's analgesic potency and the typical
+  # concentration his respiratory potency (drugDefaults_global.csv).
+  row <- dd[dd$Drug == "oliceridine", ]
+  expect_equal(row$MEAC, 27.9)
+  expect_equal(row$Typical, 27.4)
+})

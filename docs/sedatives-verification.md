@@ -29,12 +29,12 @@ Drafted with Claude Code, 2026-10-09.
 |---|---|---|
 | alprazolam | DeVane 1993: CL 0.05 L/h/kg, V 0.7 L/kg, ka 1.1/h, women +59%, over 60 −23%, multiple illness −26% | **Correct** (full paper: equations 1-3, Tables II and IV). The parameters are apparent (oral). |
 | alprazolam | Burkat 2023 receptor table | Plausible but unverifiable: two of three rows reproduce the abstract's potentiation at 59 nM. Not used: it is a receptor end point. |
-| diazepam | McCann 2025, Table 3: V1 58.2 L, with the prose saying 52.8 L | **The prose's 52.8 L is the consistent one.** It matches the abstract's "26% increase" over 42 L. The table could not be read. The "IIV CV" values appear to be variances. |
+| diazepam | McCann 2025, Table 3: V1 58.2 L, with the prose saying 52.8 L | **The prose's 52.8 L is the consistent one.** It matches the abstract's "26% increase" over 42 L. The PMC manuscript's Table 3 is readable and does print 58.2 L; its IIV column is CV%, not variances. |
 | diazepam | McCann as the parent model | **Wrong population for this library.** At 70 kg it predicts a 10 mg oral peak of 90-145 ng/mL; adults reach 290-400 ng/mL at about 1 h. Its oral ka and F are fixed assumptions. |
 | lorazepam | Gonzalez 2017 equations | **Correct** (abstract). Paediatric only. |
 | lorazepam | Swart 2004, Table 4: V1 0.743 L, Vss 156 − 2.07 (age − 58) L, Q 36.3 L/h; abstract conflicts | **Correct, including the conflict** (PDF). The abstract misprints Vss as 56 and Q as 10 L/h. A central volume of 0.74 L, from long-infusion data, puts a 2 mg bolus at 2700 ng/mL, so the model is unusable for bolus dosing. |
-| lorazepam | Barr 2001 C50s for Ramsay ≥ 2-6: 34, 51, 104, 152, 188 ng/mL | **Correct** (abstract). Plasma, steady state. |
-| lorazepam | Blin 1999: CL/F 5.4 L/h, Vss/F 111.6 L, EC50 12.2-15.3 ng/mL | EC50 correct; the others plausible, from a search excerpt. |
+| lorazepam | Barr 2001 C50s for Ramsay ≥ 2-6: 34, 51, 104, 152, 188 ng/mL | **Correct** (full text, model H). Plasma, steady state, for a 71-year-old without fentanyl (× 0.82 with fentanyl). |
+| lorazepam | Blin 1999: CL/F 5.4 L/h, Vss/F 111.6 L, EC50 12.2-15.3 ng/mL | **Correct** (full text): EC50 in Table 1, CL/F and Vss/F in the Results. |
 | clonazepam | Kruizinga 2022, Table 2: every value | **Correct** (PDF). Doses were 0.5 and 1 mg of oral solution, sampled to 48 h. No lag. Not used: it fits tablets less well (below). |
 | clonazepam | dos Santos 2009: two compartments with a lag; sigmoid Emax with tolerance; numbers unavailable | **Obtained** (PDF). Table 1 and Table 2 read in full. This is the model implemented. |
 | clonazepam | Berlin and Dahlström 1975: IV compartments | **Obtained** (PDF). Sampling began at 10 min, so the IV central volume is not identified (48-241 L). Oral F averaged 0.98. |
@@ -140,7 +140,8 @@ McCann 2025.
 
 ## Not yet implemented, and what would unblock them
 
-- **Barr 2001** (lorazepam ICU PK, ke0 and sedation model) would replace the
+- **Barr 2001** (lorazepam ICU PK, Table 4, and a sedation model driven by the
+  plasma concentration; it has no ke0) would replace the
   derived lorazepam disposition. **Venkatakrishnan 2005** would allow IV
   alprazolam (no product exists). IV clonazepam would need a study sampled in
   the first minutes after injection; Berlin and Dahlström 1975 is not one.

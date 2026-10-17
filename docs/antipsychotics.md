@@ -38,8 +38,8 @@ primary text, as far as the network allowed (2026-10-09).
 | Drug | Checked in primary text | Still to check |
 |---|---|---|
 | quetiapine | Zheng 2024 full text: all PK and the weight equations; Nord 2011: 1369 nmol/L, Emax fixed | none |
-| olanzapine | Sun 2021 Table 3: all values; Vp and Q carry no covariates | power form of the age term; Kapur 1998 EC50 10.3 ng/mL (abstract gives occupancy by dose only) |
-| risperidone | Størset 2024 text: structure, ka, serum, allele activities, NFIB, both age terms, phenotype anchors 4.2 / 27.4 / 50.6 L/h; Emax 100% / EC50 8.2 ng/mL (Lindauer 2025) | V/F 333 L, Vm 96 L, CLm 8.0 L/h (Table 2); Emax 88% / EC50 4.9 ng/mL |
+| olanzapine | Sun 2021 Table 3: all values; Vp and Q carry no covariates; Methods: the power form of the age term, referenced to 36 y | Kapur 1998 EC50 10.3 ng/mL (abstract gives occupancy by dose only) |
+| risperidone | Størset 2024 text and Table 2: structure, ka, serum, allele activities, NFIB, both age terms, phenotype anchors 4.2 / 27.4 / 50.6 L/h, V/F 333 L, Vm 96 L, CLm 8.0 L/h; Emax 100% / EC50 8.2 ng/mL (Lindauer 2025) | Emax 88% / EC50 4.9 ng/mL |
 | aripiprazole | Kim 2008 abstract: structure, ka, V/F **192 L** (the brief said 193), intermediate CL about 60% of normal; Kim 2012 abstract: EC50 8.63 ng/mL | genotype-class CL/F, CLm/fm, Vm/fm, the formation convention, ke0 0.725 /h, Emax |
 | haloperidol | abstract only: two compartments, 122 subjects; full texts of Park 2006 (CYP2D6 0.77), Lim 2013 (ke0 0.213/h, Ce50 0.791 ng/mL) and Kim 1996 (rifampin, documented only) | every Pilla Reddy parameter (indirectly supported by Li 2022's citation of CL/F 88, total V 3169 L) |
 | haloperidolIV | Li 2022 text: CL 51.7 L/h, V 1490 L, IIV 29.9%, IV route | CRP function (not applied) |

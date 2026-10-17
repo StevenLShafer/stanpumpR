@@ -89,8 +89,10 @@
 #
 # NOT IMPLEMENTED
 # ===============
-# Lobo et al. 2009 pooled adult model (sex, smoking, age and dose effects):
-# its fixed-effect table could not be verified, so it is not used.  Shibata
+# Lobo et al. 2009 pooled adult model (sex and smoking on F, age and dose on
+# CL/F, Hispanic ethnicity on V/F): its Table II is legible in the full text
+# (CL/F 45.1 L/h, V/F 814 L, ka 0.168 /h for a 49-year-old female nonsmoker
+# on 40 mg), but it is a different model and is not used.  Shibata
 # et al. 2023, Japanese children and adolescents with major depressive
 # disorder (CL/F 81.4 L/h, V/F 1170 L, ka 0.168 /h): a separate population.
 # Neither is mixed with Zhong's estimates.
@@ -106,7 +108,7 @@
 # Moriguchi S et al. 2017 (NET occupancy, healthy men); Moriguchi S et al.
 #   2025 (NET occupancy, major depressive disorder).
 # Lobo ED et al. Clin Pharmacokinet 2009 (pooled adult model; not used).
-# Shibata M et al. 2023 (pediatric MDD; not used).
+# Shibata RY et al. 2023 (pediatric MDD; not used).
 # Yuen E et al. 2013 (neuropathic pain PD; not used).
 # -----------------------------------------------------------------------------
 

@@ -8,11 +8,12 @@
 #
 # Thomas Schnider and Charles Minto developed the first population models of
 # propofol (Schnider 1998) and remifentanil (Minto 1997), and those two models
-# are the ones most target-controlled infusion devices run today.  Douglas
-# Eleveld later pooled those data, through the Open TCI initiative, with many
-# other studies to build the general-purpose models that extend to children
-# and to the extremes of weight; those are the library's own propofol and
-# remifentanil models (R/drugs_propofol.R, R/drugs_remifentanil.R).
+# are the ones most target-controlled infusion devices run today.  Their
+# Stanford data were uploaded to the Open TCI initiative, with other
+# investigators' studies, and Douglas Eleveld built from that pool the
+# general-purpose models that extend to children and to the extremes of
+# weight; those are the library's own propofol and remifentanil models
+# (R/drugs_propofol.R, R/drugs_remifentanil.R).  See inst/help/history.md.
 #
 # For teaching it helps to see both.  The "Minto / Schnider" box under Graph
 # Options (input$mintoSchnider) runs the Schnider and Minto models BESIDE the
@@ -53,16 +54,23 @@
 # is.  Minto's remifentanil model is written exactly as STANPUMP ran it
 # ("Minto/Schnider"), including its ke0 as a published function of age,
 # 0.595 - 0.007 (age - 40) per minute, which is what the pumps implement;
-# getDrugPK() then solves the time to peak effect from that ke0.  Both use
-# the James (1976) lean body mass, as the papers did, and that formula is why
-# neither model is defined for every patient: James's lean body mass falls
-# with weight above about 125 kg in a man of 170 cm (105 kg in a woman), and
-# the Schnider clearance, which falls with lean body mass, then rises; in a
-# small child the Schnider clearance intercepts make it negative.  Where a
-# volume, clearance or ke0 comes out zero or negative the model is not
-# defined for that patient, no companion is built, and the app says so
+# getDrugPK() then solves the time to peak effect from that ke0.
+#
+# Both use the James (1976) lean body mass, as the papers, STANPUMP and the
+# pumps do (lbmJames()), and that is deliberate.  The library's own models
+# use the Al-Sallami fat-free mass; these two are here to show what the pumps
+# compute, and part of what they teach is why the pumps should run the
+# Eleveld models instead.  James's lean body mass is a parabola in weight: it
+# peaks at a BMI of 43 in men and 36 in women and then falls (above about
+# 125 kg in a man of 170 cm, 92 kg in a woman of 160 cm), so the Schnider
+# clearance, which falls with lean body mass, rises steeply in the obese,
+# and far enough out Minto's V1 goes negative; in a small child the
+# Schnider clearance intercepts make CL1 negative.  Where a volume, clearance
+# or ke0 comes out zero or negative the model is not defined for that
+# patient, no companion is built, and the app says so
 # (alternativeModelProblems()).  The same limit is why the pumps restrict
-# these models to adults within a range of body mass index.
+# these models to a BMI below 42 in men and 35 in women.  Scenario
+# `james-lean-body-mass`.
 # -----------------------------------------------------------------------------
 
 #' The alternative models, keyed by the library drug each is a second model of
@@ -138,8 +146,8 @@ alternativeModelColor <- function(color, amount = 0.45) {
 #' that paper reported for its typical patient.
 #'
 #' `adjustToFFM` is accepted for the uniform signature and ignored: the model
-#' carries its own lean-body-mass covariate (James).  The same arithmetic is
-#' written out, and then overwritten, at the top of R/drugs_propofol.R.
+#' carries its own lean-body-mass covariate, James's, kept deliberately (see
+#' above).  The same arithmetic is written out, and then overwritten, at the top of R/drugs_propofol.R.
 #' @noRd
 propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
@@ -173,38 +181,54 @@ propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE)
 #' time to peak effect from ke0 and the disposition for the patient.
 #'
 #' `adjustToFFM` is accepted for the uniform signature and ignored: the model
-#' carries its own lean-body-mass covariate (James).  The same arithmetic is
-#' in the comments at the top of R/drugs_remifentanil.R.
+#' carries its own lean-body-mass covariate, James's, kept deliberately (see
+#' above).  The same arithmetic is in the comments at the top of R/drugs_remifentanil.R.
+#'
+#' `pregnant` applies the same factor as the library's remifentanil model:
+#' clearance x REMIFENTANIL_PREGNANCY_CL_FACTOR (Ansari 2016, "clearance more
+#' than doubles"; see R/drugs_remifentanil.R), so that the two lines of the
+#' remifentanil panel move together for a parturient.
 #' @noRd
-remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE)
+remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                              pregnant = FALSE)
 {
   lbm <- lbmJames(weight, height, sex)
+  clPregnancy <- if (isTRUE(pregnant)) REMIFENTANIL_PREGNANCY_CL_FACTOR else 1
   default <- list(
     v1  = 5.1  - 0.0201  * (age - 40) + 0.072 * (lbm - 55),
     v2  = 9.82 - 0.0811  * (age - 40) + 0.108 * (lbm - 55),
     v3  = 5.42,
-    cl1 = 2.6  - 0.0162  * (age - 40) + 0.0191 * (lbm - 55),
+    cl1 = (2.6  - 0.0162  * (age - 40) + 0.0191 * (lbm - 55)) * clPregnancy,
     cl2 = 2.05 - 0.0301  * (age - 40),
     cl3 = 0.076 - 0.00113 * (age - 40)
   )
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
+  reference <- "Minto CF et al., Anesthesiology 1997;86(1):10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", REMIFENTANIL_PREGNANCY_CL_FACTOR)))
+  }
   list(
     PK = PK,
     ke0 = 0.595 - 0.007 * (age - 40),
-    reference = "Minto CF et al., Anesthesiology 1997;86(1):10-23. https://pubmed.ncbi.nlm.nih.gov/9009935/"
+    reference = reference
   )
 }
 
 #' Run an alternative model's function for a patient
 #'
+#' @param pregnant the pregnancy flag, passed on when the model names it
+#'   (R/pregnancy.R)
 #' @returns the model function's output (PK sets, tPeak or ke0, reference)
 #' @noRd
-alternativeModelOutput <- function(drug, weight, height, age, sex) {
+alternativeModelOutput <- function(drug, weight, height, age, sex, pregnant = FALSE) {
   spec <- ALTERNATIVE_MODELS[[drug]]
   if (is.null(spec)) stop("No alternative model for ", drug)
   fn <- get(spec$model, mode = "function")
-  fn(weight = weight, height = height, age = age, sex = sex)
+  args <- list(weight = weight, height = height, age = age, sex = sex)
+  if ("pregnant" %in% names(formals(fn))) args$pregnant <- isTRUE(pregnant)
+  do.call(fn, args)
 }
 
 #' Why an alternative model is not defined for a patient, or NULL
@@ -217,10 +241,10 @@ alternativeModelOutput <- function(drug, weight, height, age, sex) {
 #' @param drug a drug in `ALTERNATIVE_MODEL_DRUGS`
 #' @returns NULL when the model is defined, else one sentence
 #' @noRd
-alternativeModelProblem <- function(drug, weight, height, age, sex) {
+alternativeModelProblem <- function(drug, weight, height, age, sex, pregnant = FALSE) {
   spec <- ALTERNATIVE_MODELS[[drug]]
   if (is.null(spec)) return(NULL)
-  X <- tryCatch(alternativeModelOutput(drug, weight, height, age, sex),
+  X <- tryCatch(alternativeModelOutput(drug, weight, height, age, sex, pregnant),
                 error = function(e) NULL)
   if (is.null(X)) return(sprintf("%s's %s model could not be evaluated for this patient.", spec$label, drug))
   set <- X$PK[[PK_EVENT_DEFAULT]]
@@ -243,10 +267,10 @@ alternativeModelProblem <- function(drug, weight, height, age, sex) {
 #'   alternative model are ignored)
 #' @returns a character vector, empty when every alternative model is defined
 #' @noRd
-alternativeModelProblems <- function(drugs, weight, height, age, sex) {
+alternativeModelProblems <- function(drugs, weight, height, age, sex, pregnant = FALSE) {
   out <- character(0)
   for (drug in intersect(unique(drugs), ALTERNATIVE_MODEL_DRUGS)) {
-    problem <- alternativeModelProblem(drug, weight, height, age, sex)
+    problem <- alternativeModelProblem(drug, weight, height, age, sex, pregnant)
     if (!is.null(problem)) out <- c(out, problem)
   }
   out
@@ -265,15 +289,16 @@ alternativeModelProblems <- function(drugs, weight, height, age, sex) {
 #' @returns the entry, as recalculatePK() stores it, or NULL
 #' @noRd
 alternativeModelEntry <- function(drug, weight, height, age, sex, drugDefaults,
-                                  adjustToFFM = TRUE) {
-  if (!is.null(alternativeModelProblem(drug, weight, height, age, sex))) return(NULL)
+                                  adjustToFFM = TRUE, pregnant = FALSE) {
+  if (!is.null(alternativeModelProblem(drug, weight, height, age, sex, pregnant))) return(NULL)
   spec <- ALTERNATIVE_MODELS[[drug]]
-  model <- alternativeModelOutput(drug, weight, height, age, sex)
+  model <- alternativeModelOutput(drug, weight, height, age, sex, pregnant)
   entry <- getDrugPK(
     drug = drug,
     weight = weight, height = height, age = age, sex = sex,
     drugDefaults = drugDefaults,
     adjustToFFM = adjustToFFM,
+    pregnant = pregnant,
     model = model
   )
   entry$drug        <- alternativeModelName(drug)

@@ -8,12 +8,12 @@
 
 ## Concentrations
 
-Each drug is plotted in the concentration units given in the drug library: **mcg/mL** (micrograms per millilitre, equal to mg/L) or **ng/mL** (nanograms per millilitre, equal to mcg/L). The inhaled agents are in **per cent of one atmosphere**, and MAC equivalents are dimensionless.
+Each drug is plotted in the concentration units given in the drug library: **mcg/mL** (micrograms per millilitre, equal to mg/L) or **ng/mL** (nanograms per millilitre, equal to mcg/L). The inhaled agents are in **per cent of one atmosphere**, and MAC equivalents are dimensionless. Mannitol is plotted as the serum osmolality it produces, in **mOsm/kg**. Each drug's page gives its unit; broadly:
 
-| Drug | Plotted in |
+| Drugs | Plotted in |
 |---|---|
-| propofol, morphine, pethidine, methadone, ketamine, midazolam, etomidate, lidocaine, rocuronium, remimazolam, amiodarone, desethylamiodarone, amiodaroneIV | mcg/mL |
-| remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, dexmedetomidine, naloxone, oxytocin, oxycodone, oliceridine | ng/mL |
+| propofol, ketamine, midazolam, etomidate, remimazolam, morphine, pethidine, methadone, rocuronium, sugammadex, the local anesthetics, the antibiotics, hydrocortisone, methylprednisolone, amiodarone, and the oral analgesics and antiseizure drugs other than celecoxib and tiagabine | mcg/mL |
+| remifentanil, fentanyl, alfentanil, sufentanil, hydromorphone, oxycodone, codeine, hydrocodone, oxymorphone, buprenorphine, tramadol, oliceridine, dexmedetomidine, the benzodiazepines other than midazolam and remimazolam, zolpidem, neostigmine, glycopyrrolate, vecuronium, cisatracurium, naloxone, oxytocin, dexamethasone, prednisolone, prednisone, and the antidepressants, antipsychotics, stimulants and antiemetics | ng/mL |
 
 Internally, doses of a drug plotted in mcg/mL are converted to milligrams and doses of one plotted in ng/mL to micrograms before simulation; volumes are in litres, so concentration comes out in the plotted unit.
 
@@ -22,13 +22,18 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams and do
 | Family | Units | Meaning |
 |---|---|---|
 | Bolus | g, mg, mcg, ng; and each per kg | An amount at that time |
-| Infusion | mg/min, mg/hr, mcg/min, mcg/hr; and each per kg | A rate from that time |
+| Infusion | g/min, g/hr, mg/min, mg/hr, mcg/min, mcg/hr; and per kg | A rate from that time |
 | Oral | g PO, mg PO, mcg PO; and each per kg | An oral dose at that time |
+| Oral form | mg PO tablet, liquid, ER, DR or XR; and per kg | An oral dose of that product, with its own absorption where the drug's forms differ; see [absorption](help:models/absorption) |
 | Oral rate | mg/day PO | A daily oral dose spread evenly over each day, from that time until the drug's next rate row (amiodarone; see [its page](help:drugs/amiodarone)) |
 | Sublingual | mg SL, mcg SL; and each per kg | A dose under the tongue at that time (buprenorphine) |
 | Intramuscular | the same with IM | |
 | Intranasal | the same with IN | |
-| Scheduled | any bolus, PO, SL, IM or IN unit followed by qd, bid, tid or qid | Repeated every 24, 12, 8 or 6 hours; see [The dose table](help:dose-table) |
+| Regional anesthesia | g RA, mg RA, mcg RA; and each per kg | An injection into tissue, absorbed from a depot (the local anesthetics) |
+| Perineural infusion | mg/hr RA | A rate into the tissue depot, from that time until the drug's next mg/hr RA row |
+| Phenytoin equivalents | mg PE, mg PE IM, mg PE/min; and per kg | Fosphenytoin, prescribed in phenytoin sodium equivalents (see [phenytoin](help:drugs/phenytoin)) |
+| Target | Plasma target, Effect site target | A target concentration in the plotted unit; see [Target-controlled infusion](help:tci) |
+| Scheduled | a bolus, PO (including the oral forms), SL, IM or IN unit followed by qd, bid, tid or qid | Repeated every 24, 12, 8 or 6 hours; see [The dose table](help:dose-table) |
 | Gas flow | L/min | A flowmeter or ventilation setting |
 | Vaporizer | % | A vaporizer setting |
 

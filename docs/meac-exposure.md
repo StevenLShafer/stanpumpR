@@ -290,8 +290,7 @@ drug would be a new CSV or a new column.
 
 MEAC is an analgesic potency. Respiratory depression has its own potency, and
 the ratio of the two is not the same across opioids (it is the premise of
-oliceridine; Dahan 2020 measured both, and the library MEAC is its analgesic
-C100, 27.9 ng/mL, not the respiratory C25 of 27.4 ng/mL).
+oliceridine, whose library MEAC is Dahan's analgesic potency, 27.9 ng/mL, while its typical concentration, 27.4 ng/mL, is his respiratory potency).
 Using U for safety makes both mistakes at once.
 
 Proposal:

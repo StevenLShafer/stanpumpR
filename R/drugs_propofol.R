@@ -7,7 +7,10 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # adjustToFFM is accepted for a uniform signature but not used: the Eleveld
   # model below carries its own Al-Sallami fat-free-mass covariate.
 
-  # Schnider
+  # Schnider (1998), as STANPUMP ran it.  Not used: `default` is overwritten
+  # by the Eleveld model below.  Kept for reference; the Schnider model the
+  # app draws is propofolSchnider() in R/alternativeModels.R, behind the
+  # Minto / Schnider box under Graph Options.
 
   default <- list(
     v1 = 4.27,

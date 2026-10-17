@@ -18,7 +18,7 @@
 # clearances scaled by (W / 70)^0.75 and volumes by W / 70.  The intravenous
 # evidence is 65 concentrations from 10 children; the 70 kg intravenous
 # disposition is an allometric extrapolation, not an adult intravenous
-# validation.  Terminal half-life at the reference man about 1.9 h.
+# validation.  Terminal half-life at the reference man 3.3 h (0.5% of a bolus); dominant elimination half-life 0.55 h.
 #
 # ORAL ROUTE
 # ==========

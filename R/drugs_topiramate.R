@@ -20,8 +20,8 @@
 # has no co-medication field).  Age, sex and creatinine clearance were not
 # significant.  This replaces the model the handoff proposed (Lee 2024,
 # PMC10863906), whose clearance carries a power of the daily dose a linear
-# engine cannot hold, whose exponents were not retrievable, and which gives
-# neither V/F nor ka.
+# engine cannot hold (p. 428: x (CLcr/90)^0.277 x (dose/100)^0.193), and
+# whose main text gives neither V/F nor ka.
 #
 # ORAL ROUTE
 # ==========
@@ -54,7 +54,7 @@
 # Clark AM et al., Epilepsia 2013;54:1099-1105.  https://doi.org/10.1111/epi.12134
 # Ahmed GF et al., Br J Clin Pharmacol 2015;79:820-830.
 #   https://doi.org/10.1111/bcp.12556
-# Lim JS et al., J Clin Pharmacol 2016.  https://doi.org/10.1002/jcph.646
+# Lim CN et al., J Clin Pharmacol 2016;56:714-722.  https://doi.org/10.1002/jcph.646
 # -----------------------------------------------------------------------------
 
 #' Topiramate pharmacokinetics (oral)

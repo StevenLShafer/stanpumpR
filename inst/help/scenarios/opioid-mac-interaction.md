@@ -1,6 +1,6 @@
 ## What to look for
 
-Sevoflurane 1.5 per cent in 4 L/min of oxygen with a remifentanil bolus and infusion. On the **MAC equivalents** panel the sevoflurane counts for well over its raw fraction of MAC, because *Include opioid - MAC interaction* is ticked: the remifentanil (about 1.6 ng/mL at steady state, 1.6 MEAC) reduces the MAC in force by about 40 per cent, and 1.5 per cent sevoflurane is a larger multiple of a smaller MAC.
+Sevoflurane 1.5 per cent in 4 L/min of oxygen with a remifentanil bolus and infusion. On the **MAC equivalents** panel the sevoflurane counts for well over its raw fraction of MAC, because *Include opioid - MAC interaction* is ticked: the remifentanil (about 2.7 ng/mL at steady state, 2.7 MEAC) reduces the MAC in force by about 55 per cent, and 1.5 per cent sevoflurane is a larger multiple of a smaller MAC: about 1.3 MAC equivalents at 30 minutes, against 0.6 without the interaction.
 
 The **% MEAC** panel shows the opioid level, U, that drives the reduction. Hover on it and on the MAC-equivalents panel at 30 minutes; the relation between them is the sigmoid under [Opioid reduction of MAC](help:models/opioid-mac).
 

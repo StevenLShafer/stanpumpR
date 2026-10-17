@@ -48,7 +48,7 @@
 # ----------
 # J Clin Pharmacol 2026, pentobarbital in critically ill children.
 #   https://doi.org/10.1002/jcph.70204
-# Ketharanathan N et al., Clin Pharmacokinet 2023;62:1137-1149.
+# Ketharanathan N et al., Clin Pharmacokinet 2023;62:1011-1022.
 #   https://doi.org/10.1007/s40262-023-01249-z
 # -----------------------------------------------------------------------------
 

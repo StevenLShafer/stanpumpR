@@ -8,7 +8,7 @@ Prednisone has little glucocorticoid activity of its own; its effect is predniso
 
 ### Oral only
 
-Xu's oral prednisone enters 0.105 as prednisone and 0.645 as prednisolone formed before reaching the circulation. Those cannot be used directly, because most of the prednisone in plasma after an oral dose is regenerated from that prednisolone and a one-way parent row cannot receive it; the code solves two effective coefficients from the source's AUC identities instead (oral bioavailability 0.42 for the prednisone row, first-pass fraction 0.50 for the prednisolone link), so that both the total prednisone and the free prednisolone exposures are exact. Intravenous prednisone has been given in research, but no routine product was verified, so the row is **mg PO** only.
+Xu's oral prednisone enters 0.105 as prednisone and 0.645 as prednisolone formed before reaching the circulation. Those cannot be used directly, because most of the prednisone in plasma after an oral dose is regenerated from that prednisolone and a one-way parent row cannot receive it; the code solves two effective coefficients from the source's AUC identities instead (oral bioavailability 0.42 for the prednisone row, first-pass fraction 0.50 for the prednisolone link), so that both the total prednisone and the free prednisolone exposures are exact. Intravenous prednisone has been given in research, but no routine product was verified, so the row is oral only: **mg PO** or **mg/kg PO**, with qd, bid, tid and qid schedules.
 
 ### Covariates
 

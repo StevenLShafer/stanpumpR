@@ -1,6 +1,6 @@
 ### The model
 
-Ketamine's parameters are from Domino and colleagues (*Clin Pharmacol Ther* 1984;36:645-653), who gave racemic ketamine intravenously to volunteers. The model is a central volume of 0.063 L/kg with fixed rate constants; the elimination rate constant of 0.44/min from a small central volume gives a high clearance, about 1.9 L/min at 70 kg.
+Ketamine's parameters are from Domino and colleagues (*Clin Pharmacol Ther* 1984;36:645-653), who gave 2.2 mg/kg of racemic ketamine intravenously to eight healthy men, with and without diazepam. The paper reports means of individually fitted quantities: a central volume of 0.063 L/kg, a clearance of 0.848 L/kg/h (0.99 L/min at 70 kg), a deep volume of about 1.51 L/kg and three half-lives of 24 seconds, 4.7 minutes and 2.2 hours. The library's rate constants are the one set that reproduces all of these at once; they imply a steady-state volume of 1.7 L/kg. Until October 2026 the library multiplied the paper's mean central volume by its mean elimination rate constant, which gave a clearance of 1.9 L/min at 70 kg, twice the paper's, and a deep volume of 2.5 L/kg; means of individually fitted volumes and rate constants do not multiply into the mean clearance. The placebo arm is modelled; diazepam premedication slowed redistribution.
 
 ### Covariates
 
@@ -8,7 +8,7 @@ Size only. By default, with *Adjust weight to fat-free mass* ticked, the volumes
 
 ### Effect site
 
-The time to peak effect is 3 minutes and is described in the code as a guess.
+The time to peak effect is 3 minutes. It is an assumption: Domino measured no effect, and no separately sourced equilibration has been adopted.
 
 ### Typical concentrations
 

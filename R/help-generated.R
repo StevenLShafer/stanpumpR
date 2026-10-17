@@ -155,7 +155,69 @@ helpAlternativeModelTableMarkdown <- function(drugDefaults = getDrugDefaultsGlob
   paste(tables, collapse = "\n")
 }
 
+#' The reference parturient at which the pregnancy factors are measured
+#' @noRd
+helpPregnancyPatient <- function() {
+  list(age = 30, weight = 70, height = 165, sex = SEX_FEMALE)
+}
+
+#' The pregnancy review's drugs, as Markdown
+#'
+#' One table per group of pregnancyFindings() (R/pregnancy.R): the drugs the
+#' review quantifies, with what each model applies and the ratio of its
+#' elimination clearance and central volume with the Pregnant field on to
+#' off, measured from the model itself at helpPregnancyPatient(); then the
+#' drugs the review describes without a magnitude, reports as unchanged, or
+#' reports as unknown, with its finding for each.  The page states what the
+#' code computes, and test-pregnancy.R checks the groups against the models.
+#' @noRd
+helpPregnancyTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  findings <- pregnancyFindings()
+  findings <- findings[findings$drug %in% drugDefaults$Drug, ]
+  p <- helpPregnancyPatient()
+  ratios <- function(drug) {
+    row <- drugDefaults[drugDefaults$Drug == drug, ][1, ]
+    set <- function(pregnant) getDrugPK(drug, p$weight, p$height, p$age, p$sex, row,
+                                        pregnant = pregnant)$PK[[PK_EVENT_DEFAULT]]
+    on <- set(TRUE)
+    off <- set(FALSE)
+    sprintf("%s | %s", helpFormatNumber(on$cl1 / off$cl1), helpFormatNumber(on$v1 / off$v1))
+  }
+  link <- function(drug) sprintf("[%s](help:drugs/%s)", helpDrugTitle(drug), drug)
+  section <- function(group, heading, intro, columns, cells) {
+    rows <- findings[findings$group == group, ]
+    if (nrow(rows) == 0) return(character(0))
+    c(sprintf("**%s**", heading), "", intro, "",
+      sprintf("| %s |", paste(columns, collapse = " | ")),
+      sprintf("|%s", strrep("---|", length(columns))),
+      vapply(seq_len(nrow(rows)), function(i) cells(rows[i, ]), character(1)),
+      "")
+  }
+  patient <- sprintf("%s years, %s kg, %s cm", p$age, p$weight, p$height)
+  c(
+    section("applied", "Adjusted when Pregnant is ticked",
+            sprintf(paste("The last two columns are measured from the model itself: its elimination clearance",
+                          "and its central volume with the field on, divided by the same with it off, for a",
+                          "woman of %s with a normal creatinine."), patient),
+            c("Drug", "What the review found", "What the model applies", "CL1 ratio", "V1 ratio"),
+            function(r) sprintf("| %s | %s | %s | %s |", link(r$drug), r$finding, r$applied, ratios(r$drug))),
+    section("unquantified", "Described by the review, but without a magnitude: not adjusted",
+            "The review reports a direction for these and no figure, so the models are left as published and the field has no effect on them.",
+            c("Drug", "What the review found"),
+            function(r) sprintf("| %s | %s |", link(r$drug), r$finding)),
+    section("unchanged", "Reported as unchanged: not adjusted",
+            "The review found no pharmacokinetic change to apply.",
+            c("Drug", "What the review found"),
+            function(r) sprintf("| %s | %s |", link(r$drug), r$finding)),
+    section("unknown", "Unknown: not adjusted",
+            "The review's tables give the pharmacokinetic change in pregnancy as unknown.",
+            c("Drug", "What the review found"),
+            function(r) sprintf("| %s | %s |", link(r$drug), r$finding))
+  ) |> paste(collapse = "\n")
+}
+
 HELP_GENERATED_BLOCKS <- list(
   "route-table" = helpRouteTableMarkdown,
-  "minto-schnider-table" = helpAlternativeModelTableMarkdown
+  "minto-schnider-table" = helpAlternativeModelTableMarkdown,
+  "pregnancy-table" = helpPregnancyTableMarkdown
 )

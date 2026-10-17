@@ -1,6 +1,6 @@
 ### The model
 
-Diclofenac kinetics are from Standing and colleagues (*Paediatr Anaesth* 2011;21:316-324), a pooled NONMEM analysis of 375 samples from 111 children aged 1 to 14 years given diclofenac intravenously, as an oral suspension and as suppositories, with published adult dispersible-tablet and suspension data added. Disposition is three-compartment. Per 70 kg: clearance 16.5 L/h, central volume 3.68 L, intercompartmental clearances 1.75 and 7.21 L/h, peripheral volumes 7.48 and 3.79 L. The terminal half-time at the reference man is about 1.9 hours. The concentrations are total plasma diclofenac.
+Diclofenac kinetics are from Standing and colleagues (*Paediatr Anaesth* 2011;21:316-324), a pooled NONMEM analysis of 375 samples from 111 children aged 1 to 14 years given diclofenac intravenously, as an oral suspension and as suppositories, with published adult dispersible-tablet and suspension data added. Disposition is three-compartment. Per 70 kg: clearance 16.5 L/h, central volume 3.68 L, intercompartmental clearances 1.75 and 7.21 L/h, peripheral volumes 7.48 and 3.79 L. At the reference man the terminal half-life is about 3.3 hours, but that phase carries under 1 per cent of an intravenous bolus; the elimination phase that dominates has a half-life of about 33 minutes. The concentrations are total plasma diclofenac.
 
 ### Routes
 

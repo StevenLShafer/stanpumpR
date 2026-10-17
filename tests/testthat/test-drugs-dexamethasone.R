@@ -61,3 +61,20 @@ test_that("Hong's microconstants give the published macroparameters", {
   expect_equal(x$bioavailability_PO, 0.81); expect_equal(x$ka_PO * 60, 0.936)
   expect_equal(x$bioavailability_IM, 0.81 / 1.04); expect_equal(x$ka_IM * 60, 0.460)
 })
+
+test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  CL1 x 2.
+  # The values are those the model gives with the flag on; test-pregnancy.R
+  # checks the ratio against the flag off and that nothing else moves.
+  actual <- dexamethasone(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(33.53355421, actual$v1)
+  expect_equal_rounded(35.83487656, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(0.5132713368, actual$cl1)
+  expect_equal_rounded(0.642921975, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+  expect_equal(dexamethasone(70, 165, 30, "female")$PK$default,
+               dexamethasone(70, 165, 30, "female", pregnant = FALSE)$PK$default)
+  expect_match(dexamethasone(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
+  expect_no_match(dexamethasone(70, 165, 30, "female")$reference, "Ansari")
+})

@@ -3,7 +3,9 @@ test_that("reference patient has total clearance 3.9 L/h", {
   a <- levetiracetam(70, 40, 40, "male", adjustToFFM = FALSE)
   # at the reference creatinine clearance, renal + non-renal = 3.9 L/h
   expect_equal(a$PK$default$cl1, 3.9 / 60, tolerance = 1e-8)
-  expect_equal(a$PK$default$v1, 65.3)
+  # The label's 0.6 L/kg, 42 L at 70 kg, so the half-life is the label's 7 h
+  expect_equal(a$PK$default$v1, 42)
+  expect_equal(log(2) * a$PK$default$v1 / (a$PK$default$cl1 * 60), 7.46, tolerance = 1e-3)
   expect_equal(a$PK$default$ka_PO, 2.44 / 60)
 })
 test_that("clearance falls with renal function", {

@@ -14,7 +14,7 @@ Formation of desmetramadol is CYP2D6-mediated, which is the whole reason phenoty
 
 ### Covariates
 
-Weight, by Holford's allometry. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the same exponents apply to the fat-free-mass ratio instead of total weight; tramadol and desmetramadol make this calculation identically, because the pair was fitted jointly. Age, height and sex do not enter.
+Weight, by Holford's allometry. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the same exponents apply to the fat-free-mass ratio instead of total weight; tramadol and desmetramadol make this calculation identically, because the pair was fitted jointly. Age, height and sex do not enter, except through fat-free mass when that scaling is on.
 
 ### Where to be careful
 

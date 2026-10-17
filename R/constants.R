@@ -54,6 +54,23 @@ CYP2C19_VALUES  <- c(CYP2C19_POOR, CYP2C19_INTERMEDIATE, CYP2C19_NORMAL,
                      CYP2C19_RAPID, CYP2C19_ULTRARAPID)
 CYP2C19_DEFAULT <- CYP2C19_NORMAL
 
+# CYP2B6 metaboliser phenotype, the five CPIC categories (Robinson et al.,
+# Clin Pharmacol Ther 2024;116:932-938, Table 1), read by the models that name
+# it (methadone, whose hepatic clearance of each enantiomer depends on it;
+# R/drugs_methadone.R).  "normal" (*1/*1) is the reference: Henthorn and
+# Kharasch fitted their typical values in normal metabolisers.  CPIC's rapid
+# and ultrarapid categories carry no transportable estimate for methadone, so
+# a model may legitimately give them the normal metaboliser's parameters; the
+# drug file says so where it does.
+CYP2B6_POOR         <- "poor"
+CYP2B6_INTERMEDIATE <- "intermediate"
+CYP2B6_NORMAL       <- "normal"
+CYP2B6_RAPID        <- "rapid"
+CYP2B6_ULTRARAPID   <- "ultrarapid"
+CYP2B6_VALUES  <- c(CYP2B6_POOR, CYP2B6_INTERMEDIATE, CYP2B6_NORMAL,
+                    CYP2B6_RAPID, CYP2B6_ULTRARAPID)
+CYP2B6_DEFAULT <- CYP2B6_NORMAL
+
 # CYP2C9 DIPLOTYPE, read by the models that name it: meloxicam, whose genotype
 # effect on clearance is estimated per allele (Aoyama 2017), and phenytoin,
 # which maps the diplotype to a maximal-elimination-rate multiplier through the
@@ -180,8 +197,21 @@ poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATION
 # carries the conversion (R/drugs_phenytoin.R, R/advanceMichaelisMenten.R).
 peUnits <- c("mg PE", "mg/kg PE", "mg PE IM", "mg/kg PE IM", "mg PE/min")
 
+# Intravenous calcium (R/drugs_calcium.R): one drug, two salts, and every
+# dose must say which, because 1 g of calcium gluconate carries a third of
+# the calcium in 1 g of calcium chloride and the substitution has killed
+# patients (Ansari 2025).  The salt is a word after the mass unit, as "PE"
+# names the prodrug; it carries no route word, so doseRoute() reads these
+# as intravenous, and isRateUnit() still finds "/min" and "/hr".  The
+# `molar` block of the drug names the grams of each salt per mole of what is
+# plotted, keyed by these words (validateMolar() in R/getDrugPK.R).  All
+# of one salt's units, then all of the other's.
+CALCIUM_SALTS <- c("chloride", "gluconate")
+calciumBaseUnits <- c("g", "mg", "mg/kg", "mg/min", "mg/hr", "mg/kg/hr", "g/hr")
+calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
+
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
-              slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits)
+              slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -367,12 +397,13 @@ DEBUG_LEVEL_OFF <- 0
 DEBUG_LEVEL_NORMAL <- 1
 DEBUG_LEVEL_VERBOSE <- 2
 
-# If a drug reference contains a URL at the very end of the citation, and the URL
-# is one of the following websites and is served over https, then it will be
-# shown in the UI as a link.
+# Every https URL on one of these websites in a drug reference, wherever it
+# stands in the citation, is shown in the UI as a link labelled with the
+# site's name (citationLinks() in R/utils-shiny-ui.R).
 CITATION_WEBSITES <- c(
   "PubMed" = "pubmed.ncbi.nlm.nih.gov",
-  "DOI"    = "doi.org"
+  "DOI"    = "doi.org",
+  "PAGE"   = "www.page-meeting.org"
 )
 
 DEFAULT_CONFIG <- list(
@@ -419,3 +450,21 @@ TCI_API_TIME_PATTERN <- paste0(
   "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])",
   "[Tt ]([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\\.[0-9]+)?",
   "([Zz]|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$")
+
+# PREGNANCY.  The Patient Profile's Pregnant field, read only by the models
+# that name `pregnant` in their signature (R/pregnancy.R lists them, and the
+# help's Cautions page says which).  The field is offered for a woman from
+# PREGNANCY_MIN_AGE up to but not including PREGNANCY_MAX_AGE years; outside
+# that, or for a man, the flag is FALSE whatever the control last said.
+# The factors each model applies are from the review the library follows for
+# pregnancy, Ansari, Carvalho, Shafer and Flood, Anesth Analg 2016;122:786-804
+# (PREGNANCY_REFERENCE in R/pregnancy.R), and describe late pregnancy, where
+# nearly all of its data were collected.
+PREGNANCY_MIN_AGE <- 12
+PREGNANCY_MAX_AGE <- 60
+# Renal blood flow and the glomerular filtration rate "are increased 50% by
+# the second trimester and remain increased until 3 months postpartum"
+# (Ansari 2016, Clearance).  The renally cleared antibiotics the review lists
+# with an increased clearance (cefazolin, gentamicin, vancomycin) apply it to
+# the renal function their published clearance terms read.
+PREGNANCY_GFR_FACTOR <- 1.5

@@ -18,8 +18,12 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   cl2 <- 37.5 / 60 * size$clearance
   cl3 <- 0 #NA
 
-# these are returned but not used except tPeak
-# those from the drugDefaults table are
+# The concentrations below are returned but not used: those in the drug
+# library (drugDefaults_global.csv) are.  There, MEAC 27.9 ng/mL is Dahan's
+# ANALGESIC potency (the effect-site concentration for a 50% rise in cold
+# pressor hand-withdrawal latency), and the band's typical value 27.4 ng/mL
+# is the RESPIRATORY potency (a 25% fall in the hypercapnic ventilatory
+# response); the two happen to coincide.
 
   typical <- NA
   upperTypical <- NA

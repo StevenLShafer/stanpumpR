@@ -4,7 +4,7 @@
 \alias{dexamethasone}
 \title{Dexamethasone pharmacokinetics}
 \usage{
-dexamethasone(weight, height, age, sex, adjustToFFM = TRUE)
+dexamethasone(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -18,6 +18,9 @@ dexamethasone(weight, height, age, sex, adjustToFFM = TRUE)
 \item{adjustToFFM}{scale volumes to the patient's fat-free mass and
 clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
 published fixed parameters unscaled.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} doubles the
+elimination clearance (Ansari 2016; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

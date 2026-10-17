@@ -4,7 +4,7 @@ Oliceridine's parameters are from Dahan and colleagues (*Anesthesiology* 2020;13
 
 ### Covariates
 
-None.
+None in the source. The parameters take the default [fat-free-mass scaling](help:models/fat-free-mass) and are used as published with the switch off.
 
 ### Effect site
 
@@ -12,7 +12,7 @@ The time to peak effect is 4.4 minutes. Dahan found oliceridine's analgesia (col
 
 ### MEAC and typical concentrations
 
-MEAC is 27.9 ng/mL and the shaded band 18.3 to 37.5 ng/mL, both from the drug library rather than the drug file, which returns no values of its own for them. The MEAC is Dahan's C100 for analgesia, the concentration that doubled cold-pressor tolerance (morphine's was 34.3 ng/mL in the same study). Oliceridine is a biased μ-agonist developed for a wider margin between analgesia and respiratory depression; the model is pharmacokinetic and says nothing about that margin.
+MEAC is 27.9 ng/mL, Dahan's **analgesic** potency: the effect-site concentration at which the probability of a 50 per cent increase in cold-pressor hand-withdrawal latency is one half (morphine's was 34.3 ng/mL). The band's typical value, 27.4 ng/mL, is a different end point, the **respiratory** potency: the concentration for a 25 per cent fall in the hypercapnic ventilatory response (morphine's, for a 50 per cent fall, was 33.7 ng/mL). The two coincide numerically, which is the paper's point: over 0 to 35 ng/mL the probability of analgesia exceeds that of respiratory depression for oliceridine and not for morphine. The band, 18.3 to 37.5 ng/mL, and both values are in the drug library, not the drug file, which returns none of its own. Only one concentration curve is drawn; the two end points are labels on it, not separate effect curves.
 
 ### Where to be careful
 

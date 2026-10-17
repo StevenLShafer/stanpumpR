@@ -4,7 +4,7 @@ Lorazepam's disposition is a two-compartment model built from the means reported
 
 Building a model from mean half-lives is an approximation. It is checked against the labels: in the reference man, 4 mg intravenously gives 74 ng/mL at 15 minutes (label: about 70 initially), 2 mg by mouth peaks at 19.7 ng/mL (label: about 20) and 4 mg intramuscularly at 53 ng/mL (label: about 48).
 
-Two other models were checked and set aside. Gonzalez and colleagues' model (*Clin Pharmacokinet* 2017;56:941-951) was fitted in children. Swart and colleagues' model of critically ill adults (*Br J Clin Pharmacol* 2004;57:135-145) has a central volume of 0.74 L, which long infusions cannot identify; it would put a 2 mg bolus at 2700 ng/mL. Barr and colleagues' ICU model (*Anesthesiology* 2001;95:286-298) would be the natural replacement, once its full parameters are in hand.
+Two other models were checked and set aside. Gonzalez and colleagues' model (*Clin Pharmacokinet* 2017;56:941-951) was fitted in children. Swart and colleagues' model of critically ill adults (*Br J Clin Pharmacol* 2004;57:135-145) has a central volume of 0.74 L, which long infusions cannot identify; it would put a 2 mg bolus at 2700 ng/mL. Barr and colleagues' ICU model (*Anesthesiology* 2001;95:286-298: central volume 40.8 L, peripheral volume 102 L, clearance 0.107 L/min, intercompartmental clearance 1.86 L/min, no covariates) would be the natural replacement; it has not yet been substituted.
 
 ### Routes
 

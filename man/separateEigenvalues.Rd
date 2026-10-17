@@ -2,23 +2,29 @@
 % Please edit documentation in R/metaboliteCoefficients.R
 \name{separateEigenvalues}
 \alias{separateEigenvalues}
-\title{Separate eigenvalues that coincide}
+\title{Separate rate constants that coincide}
 \usage{
 separateEigenvalues(lamM, lamP)
 }
 \arguments{
-\item{lamM}{eigenvalues to adjust}
+\item{lamM}{rate constants to adjust; a zero (no such route or effect site)
+is left alone}
 
-\item{lamP}{eigenvalues to separate them from}
+\item{lamP}{rate constants to separate them from; zeros are ignored}
 }
 \value{
 \code{lamM}, with any exact tie nudged
 }
 \description{
-The convolution divides by (mu - lambda), so an exact tie is a division by
-zero.  Two independently fitted drugs never share an eigenvalue exactly, and
-the degenerate case takes a t*exp(-lambda t) form that is not worth carrying,
-so a tie is broken by a relative hair.  The perturbation is far below the
-precision of any published parameter set.
+Every closed-form coefficient in the library divides by a difference of two
+rate constants: (mu - lambda) in the metabolite convolution, (ke0 - lambda)
+and (ka - lambda) and (ka - ke0) in getDrugPK()'s effect-site and absorption
+coefficients.  An exact tie is a division by zero, and the degenerate case
+takes a t*exp(-lambda t) form that is not worth carrying, so a tie is broken
+by a relative hair.  The perturbation is far below the precision of any
+published parameter set.  getDrugPK() applies it to ke0 and every ka once,
+so the PK set it returns already has its rates separate; the helpers that
+take a rate from elsewhere (oralCoefficients(), effectSitePeakTime(),
+effectSiteCoefficients()) apply it again, cheaply.
 }
 \keyword{internal}

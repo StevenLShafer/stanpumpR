@@ -30,9 +30,40 @@ $(document).on('shiny:sessioninitialized', function(event) {
 
 // Track mouse position so hover tooltip can be positioned correctly when scrolled
 let lastMouseX = 0, lastMouseY = 0;
+// Where the hover tip was last placed, and how far the pointer may move
+// before it is taken down.  The tip is drawn by the server from a debounced
+// hover (hoverOpts() in R/app_ui.R), so a new one arrives only once the
+// pointer has rested; without this the old tip stayed on screen, at the old
+// place, for as long as the pointer kept moving.  Hiding it here is
+// immediate; the next tip the server sends is shown afresh.
+let hoverTipX = null, hoverTipY = null;
+const HOVER_TIP_MOVE_PX = 6;
 $(document).on('mousemove', function(e) {
   lastMouseX = e.clientX;
   lastMouseY = e.clientY;
+  if (hoverTipX !== null &&
+      Math.hypot(e.clientX - hoverTipX, e.clientY - hoverTipY) > HOVER_TIP_MOVE_PX) {
+    hideHoverTip();
+  }
+});
+
+function hideHoverTip() {
+  hoverTipX = null;
+  hoverTipY = null;
+  let tooltip = document.querySelector('#hover_info_box');
+  if (tooltip) tooltip.style.display = 'none';
+}
+
+// Leaving the plot takes the tip down too: the hover input is not nulled
+// outside the plot (nullOutside = FALSE), so the server would not.  A tip
+// still on its way from the server when the pointer left (the debounce had
+// already fired) is dropped on arrival rather than drawn beside the pointer
+// wherever it is now.
+let pointerInPlot = false;
+$(document).on('mouseenter', '#PlotSimulation', function() { pointerInPlot = true; });
+$(document).on('mouseleave', '#PlotSimulation', function() {
+  pointerInPlot = false;
+  hideHoverTip();
 });
 
 // auto-scroll to the bottom of the logs, and fix hover tooltip scroll position
@@ -46,9 +77,17 @@ $(document).on('shiny:value', function(event) {
   if (event.target.id === 'hover_info') {
     setTimeout(function() {
       let tooltip = document.querySelector('#hover_info_box');
-      if (tooltip) {
+      if (tooltip && !pointerInPlot) {
+        hideHoverTip();
+      } else if (tooltip) {
         tooltip.style.left = (lastMouseX + 10) + 'px';
         tooltip.style.top = (lastMouseY + 10) + 'px';
+        tooltip.style.display = '';
+        hoverTipX = lastMouseX;
+        hoverTipY = lastMouseY;
+      } else {
+        hoverTipX = null;
+        hoverTipY = null;
       }
     }, 0);
   }
@@ -60,7 +99,14 @@ $(document).on('shiny:value', function(event) {
 // the help needs no per-link inputs.
 $(document).on('click', '[data-help-page]', function(e) {
   e.preventDefault();
+  // A help link inside a modal (the investigator pop-up) closes it first
+  if ($(this).closest('#shiny-modal').length) $('#shiny-modal').modal('hide');
   Shiny.setInputValue('help_goto', $(this).attr('data-help-page'), {priority: 'event'});
+});
+// An investigator's name (R/help-investigators.R) opens a pop-up about them
+$(document).on('click', '[data-investigator]', function(e) {
+  e.preventDefault();
+  Shiny.setInputValue('investigator_show', $(this).attr('data-investigator'), {priority: 'event'});
 });
 $(document).on('click', '[data-help-scenario]', function(e) {
   e.preventDefault();

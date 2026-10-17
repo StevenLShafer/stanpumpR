@@ -281,18 +281,32 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- PK$osmotic$molecularWeight * 1000
         ng_Conv  <- PK$osmotic$molecularWeight * 1000000
       },
+      mmol = {                 # A molar drug: amounts in mmol, Cp in mmol/L
+        # molecularWeight is grams of the product as dosed per mole of what
+        # is plotted, so a dose in mg divided by it is a dose in mmol.  A
+        # drug given as several products (intravenous calcium,
+        # R/drugs_calcium.R: "g chloride", "g gluconate") has one weight per
+        # product, and each dose takes the weight its unit names.
+        mg_Conv  <- molarWeightOfDoses(PK$molar, dose$Units, PK$drug)
+        mcg_Conv <- mg_Conv * 1000
+        ng_Conv  <- mg_Conv * 1000000
+      },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
+    # One factor per dose row (the molar branch may differ row by row).
+    mg_Conv  <- rep_len(mg_Conv,  nrow(dose))
+    mcg_Conv <- rep_len(mcg_Conv, nrow(dose))
+    ng_Conv  <- rep_len(ng_Conv,  nrow(dose))
 
     # Grams.  Anchored, because "mg" and every other mass unit contain a "g".
     use <- grep("^g( |/|$)", dose$Units)
-    dose$Dose[use] <- dose$Dose[use] * 1000 / mg_Conv
+    dose$Dose[use] <- dose$Dose[use] * 1000 / mg_Conv[use]
     use <- grep("mg",dose$Units)
-    dose$Dose[use] <- dose$Dose[use] / mg_Conv
+    dose$Dose[use] <- dose$Dose[use] / mg_Conv[use]
     use <- grep("mcg",dose$Units)
-    dose$Dose[use] <- dose$Dose[use] / mcg_Conv
+    dose$Dose[use] <- dose$Dose[use] / mcg_Conv[use]
     use <- grep("ng",dose$Units)
-    dose$Dose[use] <- dose$Dose[use] / ng_Conv
+    dose$Dose[use] <- dose$Dose[use] / ng_Conv[use]
 
     # Convert dose per kg  to absolute dose
     use <- grep("kg",dose$Units)
@@ -330,6 +344,26 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # RA in one table stopped with an error, or, when the lengths happened to
     # divide, had its rows mislabelled.  (Claude Code, 2026-10-10.)
     dose$Bolus <- route == ROUTE_IV & !rate
+    # Saturable oral absorption (gabapentin): each oral dose is scaled by the
+    # fraction absorbed at its own size, in mg per administration.  The dose is
+    # in the base unit here, and the base unit times mg_Conv is mg for every
+    # concentration unit.  Scaled once, here, each dose is then an ordinary
+    # input to whichever engine runs; see oralSaturationFraction().  Each dose
+    # takes its own row's mg_Conv, and this runs before the slow RA depot
+    # below adds rows, while mg_Conv still has one entry per row: multiplied
+    # whole, mg_Conv was recycled against the oral rows, which warned whenever
+    # the table held other routes too.  (Claude Code, 2026-10-17.)
+    if (!is.null(PK$oralSaturation) && any(dose$PO))
+      dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
+        oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv[dose$PO],
+                               PK$oralSaturation)
+    # The same for sublingual doses whose bioavailability falls with the dose
+    # (buprenorphine): bioavailability_SL is the small-dose limit.
+    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
+      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
+        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv[dose$SL],
+                               PK$sublingualSaturation)
+
     # A drug with a slow second RA depot (ka_RA_slow in its model; see
     # getDrugPK()) absorbs each RA dose through two parallel depots.  The
     # dose rows are duplicated, the copy flagged as the internal route
@@ -347,20 +381,6 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose <- rbind(dose, slowRows)
       dose <- dose[order(dose$Time), , drop = FALSE]
     }
-
-    # Saturable oral absorption (gabapentin): each oral dose is scaled by the
-    # fraction absorbed at its own size, in mg per administration.  The dose is
-    # in the base unit here, and the base unit times mg_Conv is mg for every
-    # concentration unit.  Scaled once, here, each dose is then an ordinary
-    # input to whichever engine runs; see oralSaturationFraction().
-    if (!is.null(PK$oralSaturation) && any(dose$PO))
-      dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
-        oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv, PK$oralSaturation)
-    # The same for sublingual doses whose bioavailability falls with the dose
-    # (buprenorphine): bioavailability_SL is the small-dose limit.
-    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
-      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
-        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv, PK$sublingualSaturation)
 
     # A drug with a second oral depot (ka_PO2 in its model; see getDrugPK())
     # absorbs each oral dose through two parallel depots, each with its own
