@@ -101,6 +101,21 @@ as wide as its label here. */
   width: auto;
 }
 
+/* The plot card's footer: the Add new drug button at the left, the hint
+text beside it, wrapping under it when the card is narrow. */
+.plot-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.plot-footer .btn {
+  white-space: nowrap;
+}
+.plot-footer > span {
+  flex: 1 1 12rem;
+}
+
 #dosetable_apply {
   width: 100%;
   margin: -5px 0 10px;

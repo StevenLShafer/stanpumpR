@@ -31,6 +31,7 @@ Each panel's labels are in whichever unit suits the longest time on that panel, 
 
 - **Hover** over any curve for the time and concentration at that point. The time is in the **Time units** chosen in the Time panel ("3.5 days"), or the time of day under **Actual time**. The concentration is read at exactly that time from the full simulation: the effect-site concentration (`Ce`) for a drug with an effect site, and the plasma concentration (`Cp`) for one without, such as an antibiotic or a prodrug. With **Minto / Schnider** ticked, the hover adds the second model's concentration on the propofol and remifentanil panels, and both pumps' rates on a TCI rate panel. With the time-until-threshold line on, the hover adds that time too, in the same unit as the panel's labels. On the MEAC and interaction panels the hover shows the summed value or the probability, also read at the hovered time.
 - **Click** anywhere on a drug's panel to add a dose of that drug at that time. A small dialog asks for the amount and unit, and the dose is applied immediately, bypassing the draft.
+- **Add new drug**, the button at the lower left of the plot, opens the same dialog for a drug that is not yet on the plot, at the start of the plot: pick the drug, change the time if you like, and enter the dose. It saves a trip to the dose table.
 - **Double-click** a drug's panel to edit or delete that drug's doses in a compact table.
 - On the **Events** panel, click to add an event and double-click to edit the event list.
 

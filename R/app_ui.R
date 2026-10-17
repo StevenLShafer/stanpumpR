@@ -419,9 +419,19 @@ app_ui <- function() {
                 bslib::as_fill_carrier(),  # TODO this is a temporary hack until shinycssloaders v > 1.1.0 is released
               uiOutput("hover_info"),
 
+              # The footer is the plot's lower-left corner: the Add new drug
+              # button opens the Add a dose dialog for a drug not yet in the
+              # table (input$addNewDrug observer in app_server.R), so a drug
+              # can be added without going back to the dose table; the hint
+              # text follows it (.plot-footer in app.css).
               bslib::card_footer(
-                class = "small text-muted",
-                "Hover for precise concentration. Click to add new dose. Double click to edit or delete a drug's doses."
+                class = "plot-footer small text-muted",
+                actionButton(
+                  "addNewDrug", "Add new drug",
+                  icon = icon("plus"),
+                  class = "btn-sm btn-outline-primary"
+                ),
+                span("Hover for precise concentration. Click to add new dose. Double click to edit or delete a drug's doses.")
               )
             ),
 
