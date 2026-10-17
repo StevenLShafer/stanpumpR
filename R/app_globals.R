@@ -48,6 +48,7 @@ bookmarksToExclude <- c(
   "clickEvent",
   "clickEvent-selectized",
   "addDoseBtn",
+  "addNewDrug",
   "addEventBtn",
   "addDoseTime",
   "clickTimeEvent",
@@ -94,7 +95,8 @@ bookmarksToExclude <- c(
   "mainNav",
   "help_goto",
   "help_search",
-  "help_scenario_load"
+  "help_scenario_load",
+  "investigator_show"
 )
 
 # The installed build: the package version and the commit it was built from.

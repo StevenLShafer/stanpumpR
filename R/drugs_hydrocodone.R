@@ -169,21 +169,23 @@
 # this number.
 HYDROCODONE_TPEAK <- 90  # minutes after an ORAL dose; provisional, see above
 
-# MEAC: PROVISIONAL, SET EQUAL TO MORPHINE'S, AND NEEDS LITERATURE VALIDATION
-# --------------------------------------------------------------------------
-# Set by Steven L. Shafer on 2026-10-06 to morphine's minimum effective
-# analgesic concentration as a working value, pending a hydrocodone-specific
-# one.
-#
-# Morphine's is 0.008 in its own row, which is mcg/mL because morphine is
-# reported in mcg/mL.  Hydrocodone is reported in ng/mL, so the same
-# CONCENTRATION is 8, not 0.008.  Anyone revisiting this should check the unit
-# before comparing the two numbers.
+# MEAC: PROVISIONAL, SET EQUAL TO OXYCODONE'S, AND NEEDS LITERATURE VALIDATION
+# ---------------------------------------------------------------------------
+# Set to oxycodone's 12 ng/mL by decision of Steven L. Shafer, 2026-10-12, in
+# the opioid MEAC and tPeak audit, as a working value pending a
+# hydrocodone-specific one.  By mouth hydrocodone and oxycodone are about
+# equipotent milligram for milligram (Kapil 2015 cites both at about twice
+# oral morphine), and their apparent clearances are similar, so equianalgesic
+# doses reach similar concentrations: 30 mg of hydrocodone and 20 mg of
+# oxycodone by mouth both peak near 37 ng/mL here.  The value first set
+# (2026-10-06) was morphine's 8 ng/mL, which left 30 mg by mouth above MEAC
+# for about 20 hours at 4.6 MEAC, against 8 hours at 3.1 MEAC for 20 mg of
+# oxycodone: the clearest outlier in the audit.
 #
 # What would validate or replace it:
 #   - A human concentration-effect study for hydrocodone.  None was found;
 #     this remains the gap that keeps HYDROCODONE_TPEAK at zero.
-#   - Equipotency with morphine is the assumption being made, and it is an
+#   - Equipotency with oxycodone is the assumption being made, and it is an
 #     assumption about ORAL analgesic equivalence carried over to a plasma
 #     concentration, which is not the same thing.
 #   - Hydrocodone's effect is shared with the hydromorphone it forms, and this
@@ -193,7 +195,7 @@ HYDROCODONE_TPEAK <- 90  # minutes after an ORAL dose; provisional, see above
 #
 # This value does nothing until HYDROCODONE_TPEAK is also set: with no effect
 # site there is no effect-site concentration to compare against it.
-HYDROCODONE_MEAC  <- 8   # ng/mL; provisional, see above
+HYDROCODONE_MEAC  <- 12  # ng/mL; provisional, equal to oxycodone's, see above
 # -----------------------------------------------------------------------------
 
 
@@ -215,10 +217,13 @@ HYDROCODONE_CYP2D6_WEIGHT <- c(
 #'
 #' @param weight weight in kg (used only to scale metabolite formation, since
 #'   the apparent disposition carries no weight term)
-#' @param height height in cm (not used)
-#' @param age age in years (not used)
-#' @param sex sex as a string (not used)
+#' @param height height in cm (fat-free mass only)
+#' @param age age in years (fat-free mass only)
+#' @param sex sex as a string (fat-free mass only)
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published fixed parameters unscaled.
 #'
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   hydromorphone as the formed active species

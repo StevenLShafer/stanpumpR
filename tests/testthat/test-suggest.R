@@ -159,7 +159,7 @@ test_that("every rate change is inside its interval and the window", {
   regimen <- suggestRegimen(data.frame(Time = c(0, 0.25), Target = c(3, 3)), 60, PK)
   expect_equal(regimen$Time, c(0, 0.25, 2, 14))
   expect_equal(regimen$Units, c("mg", "mg", "mcg/kg/min", "mcg/kg/min"))
-  # tPeak = 0 (naloxone's model gives ke0 directly): the infusion starts with
+  # tPeak = 0 (a model that gives ke0 directly, as alprazolam's does): the infusion starts with
   # the bolus, and is not duplicated
   regimen <- suggestRegimen(data.frame(Time = 0, Target = 2), 60,
                             list(tPeak = 0, Bolus.Units = "mcg", Infusion.Units = "mcg/min"))

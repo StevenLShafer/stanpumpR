@@ -1,6 +1,6 @@
 # Buprenorphine: Bjornsson 2023 disposition, one first-order sublingual input
 # fitted to the published two-pathway one, intranasal from Eriksen 1989, ke0
-# from Yassen 2006.  See the header of R/drugs_buprenorphine.R.  Pins were
+# from Yassen 2006 carried as a tPeak.  See the header of R/drugs_buprenorphine.R.  Pins were
 # worked out from the published numbers by hand (Python), not from the code
 # under test.  (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
 
@@ -26,8 +26,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         tlag_IN = 0
       )
     ),
-    tPeak = 0,
-    ke0 = 0.00447,
+    tPeak = 61.2,
     MEAC = 0,
     typical = 2.2,
     upperTypical = 3,
@@ -156,14 +155,20 @@ test_that("0.3 mg intranasal peaks at Eriksen's 30.6 minutes", {
   expect_equal(cp$Y[i], 0.4471, tolerance = 0.005)
 })
 
-test_that("the effect site peaks about 134 minutes after an intravenous bolus", {
-  # ke0 0.00447 /min against this disposition; Escher 2007 saw maximum
-  # antinociception at 120 min after 0.15 mg.  Peak Ce per mg 1.1715 ng/mL.
+test_that("the effect site peaks 61.2 minutes after an intravenous bolus", {
+  # Yassen 2006's ke0 0.00447 /min peaks the effect site at 61.18 min on
+  # Yassen's own disposition (V 8.39/23.3/127 L, CL 1.45, Q 1.55/0.953 L/min);
+  # carried as that tPeak (Minto 2003), it solves to ke0 0.010678 /min on
+  # Bjornsson's.  Peak Ce per mg 1.9611 ng/mL (worked out by hand from the
+  # sums of exponentials).  The naive pairing peaked at 134 min.
+  expect_equal(getDrugPK("buprenorphine", 72.4, 170, 35, "male",
+                         adjustToFFM = FALSE)$PK$default$ke0,
+               0.010678, tolerance = 0.001)
   r <- simBup("mg", 1, 600)
   ce <- r[r$Site == "Effect Site", ]
   i <- which.max(ce$Y)
-  expect_equal(ce$Y[i], 1.1715, tolerance = 0.002)
-  expect_true(abs(ce$Time[i] - 134.2) < 15)
+  expect_equal(ce$Y[i], 1.9611, tolerance = 0.002)
+  expect_true(abs(ce$Time[i] - 61.2) < 5)
 })
 
 test_that("each sublingual dose is scaled by its own fraction, and scheduled doses repeat", {
@@ -180,4 +185,22 @@ test_that("each sublingual dose is scaled by its own fraction, and scheduled dos
   cp <- daily[daily$Site == "Plasma", ]
   # The second day starts from a non-zero trough and peaks higher than the first
   expect_gt(max(cp$Y[cp$Time > 1440 & cp$Time < 2880]), max(cp$Y[cp$Time < 1440]))
+})
+
+test_that("sublingual saturation is unaffected by intravenous rows in the same table", {
+  # The saturation step once multiplied the sublingual doses by a conversion
+  # vector one entry per row of the whole table, which R recycled with a
+  # warning whenever other routes were present.  The mixed table must run
+  # clean and equal the sum of its parts.
+  run <- function(rows) {
+    d <- data.frame(Drug = "buprenorphine", Time = c(0, 60, 120)[rows],
+                    Dose = c(0.3, 8, 2)[rows],
+                    Units = c("mg", "mg SL", "mg SL")[rows])
+    r <- simulateDrugsWithCovariates(d, noEvents, 72.4, 170, 35, "male",
+                                     600, FALSE, adjustToFFM = FALSE)$buprenorphine$results
+    r <- r[r$Site == "Plasma", ]
+    approx(r$Time, r$Y, c(100, 200, 400))$y
+  }
+  expect_no_warning(mixed <- run(1:3))
+  expect_equal(mixed, run(1) + run(2:3), tolerance = 1e-3)
 })

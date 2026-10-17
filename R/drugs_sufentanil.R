@@ -14,7 +14,11 @@ sufentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
   default <- list(
     v1 = 14.3      * size$volume,
     v2 = 63.38694  * size$volume,
-    v3 = 251.9     * size$volume,
+    # Gepts 1995's slowly equilibrating volume, 261.6 L (95% CI 260.2-262.9;
+    # Vss 339 L).  Until 2026-10-17 this was 251.9 L, the volume implied by
+    # k31 rounded to 0.0013 /min (0.32747 / 0.0013).  Changed by decision of
+    # Steven L. Shafer, from an external review.
+    v3 = 261.6     * size$volume,
     cl1 = 0.92235 * size$clearance,
     cl2 = 1.55298 * size$clearance,
     cl3 = 0.32747 * size$clearance
@@ -23,7 +27,7 @@ sufentanil <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
   
-  tPeak <- 5.8		# from Shafer/Varvel, t_peaks.xls
+  tPeak <- 5.6		# Shafer & Varvel 1991, Fig 2 (EEG); 5.8 until 2026-10-12, changed by decision of Steven L. Shafer
   MEAC <- 0.056
   typical <- MEAC * 1.2
   lowerTypical <- MEAC * 0.8

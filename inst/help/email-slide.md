@@ -14,7 +14,7 @@ The message carries:
 
 The body of the email describes the patient and links to the URL that reconstructs the simulation (see [Sharing a simulation by URL](help:sharing)).
 
-Every time in the workbook is in minutes. When the plot is shown in hours, days or weeks (**Time units**, in the Time card), each time column is followed by the same times in that unit, for example `Time (days)`, and the Covariates sheet and the email say which unit the plot was in and how long it ran.
+Every time in the workbook is in minutes. When the plot is shown in hours, days or weeks (**Time units**, in the Time panel), each time column is followed by the same times in that unit, for example `Time (days)`, and the Covariates sheet and the email say which unit the plot was in and how long it ran.
 
 A session may send at most 25 emails, to limit abuse.
 

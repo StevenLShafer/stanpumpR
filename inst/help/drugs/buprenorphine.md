@@ -24,7 +24,9 @@ The **mg IN** unit follows Eriksen 1989: 0.3 mg by nasal spray in nine volunteer
 
 ### Effect site
 
-ke0 is 0.00447/min (equilibration half-time 155 minutes), from Yassen and colleagues' model of buprenorphine's antinociceptive effect in healthy volunteers (*Anesthesiology* 2006;104:1232-1242). Their model also had slow receptor binding. They found that equilibration with the biophase, not receptor kinetics, limits the rate of onset and offset, so a single effect compartment can stand in for it. The effect site peaks about 2¼ hours after an intravenous bolus. Escher 2007 observed maximum antinociception at 2 hours after 0.15 mg.
+The effect site comes from Yassen and colleagues' model of buprenorphine's antinociceptive effect in healthy volunteers (*Anesthesiology* 2006;104:1232-1242): ke0 0.00447/min, an equilibration half-time of 155 minutes. Their model also had slow receptor binding. They found that equilibration with the biophase, not receptor kinetics, limits the rate of onset and offset, so a single effect compartment can stand in for it.
+
+That ke0 was estimated with Yassen's own disposition, not Björnsson's. So it is carried as the time to peak effect it gives there, 61 minutes after an intravenous bolus, and the ke0 is solved again for Björnsson's disposition (the method of Minto and colleagues, *Anesthesiology* 2003;99:324-333). Put directly on Björnsson's disposition, the same ke0 would delay the peak to about 2¼ hours. Yassen observed peak effect at 70 to 100 minutes; the receptor-binding step accounts for the small extra delay. Escher 2007's maximum at 2 hours is for the RIII reflex and electrical thresholds; cold-pressor tolerance peaked at 30 minutes.
 
 ### Typical concentrations
 

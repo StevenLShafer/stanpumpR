@@ -86,6 +86,21 @@ withTimes <- function(...) {
   dt
 }
 
+test_that("the Time panel's header follows the selectors and the procedure start", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session)
+    expect_equal(output$timeSummary, "(minutes, actual time from 08:00)")
+    session$setInputs(referenceTime = "09:30")
+    expect_equal(output$timeSummary, "(minutes, actual time from 09:30)")
+    session$setInputs(timeMode = "relative")
+    expect_equal(output$timeSummary, "(minutes, elapsed time)")
+    session$setInputs(timeUnits = "days")
+    echo(session, sent)
+    expect_equal(output$timeSummary, "(days, elapsed time)")
+  })
+})
+
 test_that("a change of unit converts the table, keeps the minutes and starts a fresh history", {
   shiny::testServer(app_server, {
     sent <- recordMessages(session)
@@ -440,6 +455,55 @@ test_that("the long-term prompt is not offered again while the table is unreadab
     doseTable(dt)
     session$flushReact()
     expect_length(notifications(sent, "longTermPrompt"), 2)
+  })
+})
+
+# The Add new drug button under the plot opens the Add a dose dialog on a
+# drug not yet in the table, at the start of the plot, in the table's format
+test_that("the Add new drug button opens the add-dose dialog on an unused drug at time 0", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    doseTable(withTimes("0"))
+    session$flushReact()
+    inTable <- unique(doseTable()$Drug[nzchar(doseTable()$Drug)])
+    suggested <- newDrugSuggestion()
+    expect_false(suggested %in% inTable)
+    expect_equal(suggested, setdiff(drugChoices(), inTable)[1])
+
+    session$setInputs(addNewDrug = 1)
+    modal <- sent$modals[[length(sent$modals)]]
+    expect_equal(modal$type, "show")
+    html <- as.character(modal$message$html)
+    expect_match(html, "Add a dose")
+    expect_match(html, sprintf('<option value="%s" selected>', suggested), fixed = TRUE)
+    expect_match(html, 'id="addDoseTime"[^>]*value="0"')
+
+    # the dialog adds the dose as a click on the plot would; the suggestion
+    # then moves on to the next drug not in the table
+    session$setInputs(addDoseDrug = suggested, addDoseTime = "0", addDoseAmount = "2",
+                      addDoseUnits = unlist(drugDefaults()$Units[drugDefaults()$Drug == suggested])[1],
+                      addDoseBtn = 1)
+    added <- doseTable()[doseTable()$Drug == suggested & doseTable()$Time == "0", ]
+    expect_equal(nrow(added), 1)
+    expect_equal(added$Dose, "2")
+    expect_false(newDrugSuggestion() %in% c(inTable, suggested))
+
+    # with every visible drug in the table, the first drug is suggested
+    dt <- doseTable()
+    dt <- dt[nzchar(dt$Drug), ]
+    all <- data.frame(Drug = drugChoices(), Time = "0", Dose = "0",
+                      Units = vapply(drugChoices(), function(d) unlist(drugDefaults()$Units[drugDefaults()$Drug == d])[1], character(1)),
+                      stringsAsFactors = FALSE)
+    doseTable(all)
+    expect_equal(newDrugSuggestion(), drugChoices()[1])
+
+    # in clock mode the time is the procedure start
+    session$setInputs(timeMode = "clock")
+    echo(session, sent)
+    session$setInputs(addNewDrug = 2)
+    modal <- sent$modals[[length(sent$modals)]]
+    expect_match(as.character(modal$message$html), 'id="addDoseTime"[^>]*value="08:00"')
   })
 })
 

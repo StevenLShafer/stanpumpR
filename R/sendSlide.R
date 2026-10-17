@@ -168,7 +168,12 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "Pregnant",
       "Adjust weight to fat-free mass",
       "Baseline serum osmolality (mOsm/kg)",
-      "Serum creatinine (mg/dL)"
+      "Serum creatinine (mg/dL)",
+      "CYP2D6",
+      "CYP2C19",
+      "CYP2C9",
+      "CYP2B6",
+      "Minto / Schnider models shown"
     ),
     Value = c(
       values$age / values$ageUnit,
@@ -181,7 +186,15 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       if (isTRUE(values$pregnant)) "yes" else "no",
       if (isTRUE(values$adjustToFFM)) "yes" else "no",
       if (is.null(values$osmolality)) OSMOLALITY_DEFAULT else values$osmolality,
-      if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine
+      if (is.null(values$creatinine)) "not entered (assumed normal)" else values$creatinine,
+      # The phenotypes and the companion models change what was simulated,
+      # so the sheet records them.  (Claude Code, 2026-10-17, from an
+      # external review.)
+      if (is.null(values$cyp2d6)) CYP2D6_DEFAULT else values$cyp2d6,
+      if (is.null(values$cyp2c19)) CYP2C19_DEFAULT else values$cyp2c19,
+      if (is.null(values$cyp2c9)) CYP2C9_DEFAULT else values$cyp2c9,
+      if (is.null(values$cyp2b6)) CYP2B6_DEFAULT else values$cyp2b6,
+      if (isTRUE(values$mintoSchnider)) "yes" else "no"
     ))
   covariates <- rbind(covariates, plotTimeSettings(values$maximum, timeUnit))
   outputComments("Writing covariates")
