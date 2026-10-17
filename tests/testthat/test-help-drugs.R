@@ -71,7 +71,11 @@ plasmaOnly <- c(
   "olanzapine", "droperidol", "droperidolIM",
   # Intravenous calcium (2026-10-13): plotted as the change in ionized
   # calcium, which is the end point itself; no ke0.
-  "calcium"
+  "calcium",
+  # The antihypertensives (2026-10-17): concentration only.  Neither source
+  # publishes an equilibration rate constant, and no blood pressure is
+  # plotted for any drug in the library (docs/antihypertensives.md).
+  "clevidipine", "fenoldopamPediatric"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

@@ -234,6 +234,10 @@ getGasBody <- function(weight = 70, circuitVolume = 8)
 #' Mapleson's relation: MAC declines about 6% per decade of age.
 #' \deqn{MAC(age) = MAC_{40} \times 10^{-0.00269 (age - 40)}}
 #'
+#' Mapleson (Br J Anaesth 1996;76:179-185) fitted ages from 1 year up.  Below
+#' 1 year the relation is extrapolated, and changes MAC by under 1% from its
+#' value at 1 year; it does not model the lower MAC of neonates.
+#'
 #' @param MAC40 MAC at age 40, % of 1 atm
 #' @param age patient age in years
 #' @returns age-adjusted MAC, % of 1 atm

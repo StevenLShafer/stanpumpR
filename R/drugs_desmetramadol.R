@@ -57,9 +57,9 @@
 # -----------------------------------------------------------------------------
 # TO BE SUPPLIED
 # -----------------------------------------------------------------------------
-# Until these are set, desmetramadol is plotted as plasma only and contributes
-# nothing to the opioid MEAC total, which means a tramadol dose currently
-# shows concentrations but no effect.
+# Provisional values are set below (DESMETRAMADOL_KE0, DESMETRAMADOL_MEAC),
+# so desmetramadol has an effect site and counts toward the opioid MEAC
+# total; both still need a primary source.
 #
 # There IS a published human analgesia model, and it still cannot be used
 # here unchanged.  Chun 2025 fitted chronic neuropathic pain against UNBOUND
@@ -151,9 +151,12 @@ DESMETRAMADOL_MEAC  <- 84  # ng/mL; provisional, see above
 #' directly administered dose is not identified by this parameter set.
 #'
 #' @param weight weight in kg
-#' @param height height in cm (not used)
-#' @param age age in years (not used)
-#' @param sex sex as a string (not used)
+#' @param height height in cm (fat-free mass only)
+#' @param age age in years (fat-free mass only)
+#' @param sex sex as a string (fat-free mass only)
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published fixed parameters unscaled.
 #'
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export

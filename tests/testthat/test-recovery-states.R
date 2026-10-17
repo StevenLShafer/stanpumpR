@@ -149,6 +149,18 @@ test_that("effectSiteCoefficients agrees with getDrugPK by the oral route too", 
 })
 
 
+test_that("effectSiteCoefficients links a second oral depot like the first", {
+  # A parent with two oral depots gives its metabolite a PO2 vector
+  # (metaboliteCoefficients()); it must reach the metabolite's effect site.
+  lambda <- c(0.2, 0.01, 0.05, 0.03)
+  coefs <- list(lambda = lambda, PO = c(1, 2, 0, -3), PO2 = c(0.5, 1, -1.5, 0))
+  got <- effectSiteCoefficients(coefs, 0.1)
+  expect_false(is.null(got$PO2))
+  expect_equal(got$PO2, effectSiteCoefficients(list(lambda = lambda, PO = coefs$PO2), 0.1)$PO)
+  expect_null(effectSiteCoefficients(coefs[c("lambda", "PO")], 0.1)$PO2)
+})
+
+
 test_that("recoveryFromStates is recoveryCalc, one point at a time", {
   lambda <- c(0.2, 0.01, 0.05)
   S <- rbind(c(1, 2, -3), c(0.5, 1.8, -0.4), c(0, 0, 0))

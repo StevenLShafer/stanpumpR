@@ -343,7 +343,11 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "olanzapine", "droperidol", "droperidolIM",
     # Intravenous calcium (2026-10-13): the ionized calcium itself is the
     # end point, no ke0 (R/drugs_calcium.R).
-    "calcium"
+    "calcium",
+    # The antihypertensives joined on 2026-10-17: concentration only, no
+    # published equilibration constant, and no blood pressure is plotted for
+    # any drug in the library (docs/antihypertensives.md).
+    "clevidipine", "fenoldopamPediatric"
   ))
 })
 
