@@ -2,7 +2,7 @@
 
 Morphine 10 mg at time zero; naloxone 400 mcg at 60 minutes, as might be given to a patient found with a low respiratory rate. The two drugs differ in concentration a thousandfold, so the curves are **normalized to each drug's peak effect site** to put them on one picture. What the picture compares is how long each drug stays at its effect site: it is a kinetic comparison of durations. The program has no model of receptor competition or of breathing, so the curves do not show when reversal is achieved, when it ends, or whether another dose is needed; they show only that the antagonist leaves long before the agonist does.
 
-Naloxone's effect site peaks about three and a half minutes after the dose (its effect-site equilibration half-time is about 6.5 minutes) and is down to half its peak about a quarter of an hour after the dose. Morphine's effect site, which peaks at about an hour and a half, is still near its peak when the naloxone has largely gone. By two hours the antagonist has left and the agonist remains: the pharmacokinetics of **renarcotization**.
+Naloxone's effect site peaks about three and a half minutes after the dose (its effect-site equilibration half-time is about 7 minutes) and is down to half its peak about a quarter of an hour after the dose. Morphine's effect site, which peaks at about an hour and a half, is still near its peak when the naloxone has largely gone. By two hours the antagonist has left and the agonist remains: the pharmacokinetics of **renarcotization**.
 
 The picture understates the problem, because morphine's effect site is still *rising* when the naloxone is given at 60 minutes.
 

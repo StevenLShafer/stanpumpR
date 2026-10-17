@@ -22,7 +22,7 @@
 # additively about the 87 kg median, and its effect is small (CL moves from
 # 21.7 to 22.2 L/h across 70-100 kg).  Age appeared to affect V1 in the
 # screening but was not kept in the final model; race and gender had no effect.
-# The half-lives are about 13 and 86 min.  The paper notes the population PK
+# The half-lives are about 13 and 86 min at the 87 kg median.  The paper notes the population PK
 # parameters are consistent with argatroban in healthy subjects, so the GP
 # IIb/IIIa co-administration is not expected to change the kinetics materially.
 #

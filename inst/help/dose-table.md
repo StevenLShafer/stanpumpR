@@ -2,9 +2,9 @@ The dose table is the main way you talk to the program. It sits to the right of 
 
 ## Columns
 
-**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine) are offered only while **Show illicit drugs**, in the Doses card header, is ticked, and their names are shown in red.
+**Drug.** Autocompletes from the drug library and accepts only names in it. Type a few letters and choose. Removing the drug name removes the row. The illicit-drug research models (diamorphine, cocaine, methamphetamine, LSD, psilocybin and MDMA) are offered only while **Show illicit drugs**, in the Doses card header, is ticked, and their names are shown in red.
 
-**Time.** When it happens, in the **Time units** chosen in the Time card above the table (the card header says which: *Doses (times in hours)*). The field is forgiving:
+**Time.** When it happens, in the **Time units** chosen in the Time panel above the table (the Doses header says which: *Doses (times in hours)*). The field is forgiving:
 
 | You type | It means |
 |---|---|
@@ -70,7 +70,7 @@ Edits go into a **draft**. Nothing recalculates until you press **Apply Changes*
 
 **Undo** and **Redo** step through your edit history. The history is cleared whenever the table is set by another route, because there is then no earlier draft worth returning to.
 
-Three routes bypass the draft and apply at once: clicking the plot to add a dose, the *Edit doses* dialog opened by double-clicking a curve, and *Suggest Dosing*. Loading a teaching scenario from the help does the same.
+Four routes bypass the draft and apply at once: clicking the plot to add a dose, the *Add new drug* button under the plot (the same dialog, for a drug not yet in the table), the *Edit doses* dialog opened by double-clicking a curve, and *Suggest Dosing*. Loading a teaching scenario from the help does the same.
 
 ## Adding and removing rows
 

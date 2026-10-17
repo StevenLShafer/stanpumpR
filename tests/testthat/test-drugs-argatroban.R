@@ -37,6 +37,11 @@ test_that("the fat-free-mass switch evaluates the weight covariate at the pk wei
   expect_equal(on$PK$default$cl2 * 60, 10.0 * size$clearance, tolerance = 1e-8)
 })
 
+test_that("the half-lives at the 87 kg median are about 13 and 86 min", {
+  p <- getDrugPK("argatroban", 87, 176, 63, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(log(2) / c(p$lambda_1, p$lambda_2), c(13.0, 86.4), tolerance = 0.005)
+})
+
 test_that("the plotted concentration is plasma only, with no effect site", {
   r <- getDrugPK("argatroban", 87, 176, 63, "male")
   expect_equal(r$tPeak, 0)

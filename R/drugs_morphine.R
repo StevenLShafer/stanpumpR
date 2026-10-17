@@ -35,6 +35,12 @@
 # still.  MEAC 8 ng/mL is likewise the library's value; Dahlstrom 1982 (Clin
 # Pharmacokinet 7:266-279) measured a postoperative minimum effective
 # concentration of 16 +/- 9 ng/mL.
+# On this disposition 93.8 min is a t1/2 ke0 of about 138 min, inside the
+# 1.6-4.8 h range of Lotsch's review (as cited by Atrux-Tallau 2022) but
+# slower than the 0.6 h Dahan 2020 found for cold-pressor analgesia (1.24 h
+# for ventilation).  Oxycodone's, hydrocodone's and oxymorphone's MEACs are
+# tied to this one, so a change here should move them together (opioid MEAC
+# and tPeak audit, 2026-10-12).
 #
 # ORAL: IMMEDIATE-RELEASE TABLET AND LIQUID
 # =========================================

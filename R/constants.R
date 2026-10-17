@@ -282,6 +282,7 @@ DRUG_CATEGORIES <- c(
   "Antiseizure",
   "Antipsychotics",
   "Anticoagulants",
+  "Antihypertensives",
   "Other",
   "Illicit drugs"
 )

@@ -25,9 +25,8 @@ test_that("the oral, peak-time and tPeak helpers are finite at an exact tie", {
   }
   expect_true(is.finite(effectSitePeakTime(
     c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3), lambda, pk$lambda_2)))
-  expect_true(is.finite(tPeakError(
-    pk$lambda_1, 2, pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3,
-    pk$lambda_1, pk$lambda_2, pk$lambda_3)))
+  expect_true(is.finite(ke0FromTPeakBolus(
+    2, c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3), lambda)))
 })
 
 test_that("getDrugPK separates ke0 and every ka from the eigenvalues it returns", {

@@ -263,6 +263,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # oral doses at fixed delays; see R/oral-pulses.R.
     dose <- expandOralPulses(dose, PK$oralPulses, maximum)
 
+    # Zero-order oral release (carvedilol): each dose of the default oral form
+    # becomes the constant-rate rows that deliver it over the fitted duration,
+    # after its lag.  Those rows are rate units with the PO route word, so the
+    # classification below makes them an infusion on the drug's apparent oral
+    # parameters -- no absorption constant and no bioavailability, both being
+    # inside the apparent scale.  See R/oral-zero-order.R.
+    dose <- expandOralZeroOrder(dose, PK$oralZeroOrder, maximum)
+
     # Convert all doses to base units
     switch(
       PK$Concentration.Units,  # Units (per ml)
@@ -375,6 +383,26 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # RA in one table stopped with an error, or, when the lengths happened to
     # divide, had its rows mislabelled.  (Claude Code, 2026-10-10.)
     dose$Bolus <- route == ROUTE_IV & !rate
+    # Saturable oral absorption (gabapentin): each oral dose is scaled by the
+    # fraction absorbed at its own size, in mg per administration.  The dose is
+    # in the base unit here, and the base unit times mg_Conv is mg for every
+    # concentration unit.  Scaled once, here, each dose is then an ordinary
+    # input to whichever engine runs; see oralSaturationFraction().  Each dose
+    # takes its own row's mg_Conv, and this runs before the slow RA depot
+    # below adds rows, while mg_Conv still has one entry per row: multiplied
+    # whole, mg_Conv was recycled against the oral rows, which warned whenever
+    # the table held other routes too.  (Claude Code, 2026-10-17.)
+    if (!is.null(PK$oralSaturation) && any(dose$PO))
+      dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
+        oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv[dose$PO],
+                               PK$oralSaturation)
+    # The same for sublingual doses whose bioavailability falls with the dose
+    # (buprenorphine): bioavailability_SL is the small-dose limit.
+    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
+      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
+        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv[dose$SL],
+                               PK$sublingualSaturation)
+
     # A drug with a slow second RA depot (ka_RA_slow in its model; see
     # getDrugPK()) absorbs each RA dose through two parallel depots.  The
     # dose rows are duplicated, the copy flagged as the internal route
@@ -392,20 +420,6 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose <- rbind(dose, slowRows)
       dose <- dose[order(dose$Time), , drop = FALSE]
     }
-
-    # Saturable oral absorption (gabapentin): each oral dose is scaled by the
-    # fraction absorbed at its own size, in mg per administration.  The dose is
-    # in the base unit here, and the base unit times mg_Conv is mg for every
-    # concentration unit.  Scaled once, here, each dose is then an ordinary
-    # input to whichever engine runs; see oralSaturationFraction().
-    if (!is.null(PK$oralSaturation) && any(dose$PO))
-      dose$Dose[dose$PO] <- dose$Dose[dose$PO] *
-        oralSaturationFraction(dose$Dose[dose$PO] * mg_Conv, PK$oralSaturation)
-    # The same for sublingual doses whose bioavailability falls with the dose
-    # (buprenorphine): bioavailability_SL is the small-dose limit.
-    if (!is.null(PK$sublingualSaturation) && any(dose$SL))
-      dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
-        oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv, PK$sublingualSaturation)
 
     # A drug with a second oral depot (ka_PO2 in its model; see getDrugPK())
     # absorbs each oral dose through two parallel depots, each with its own

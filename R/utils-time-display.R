@@ -4,7 +4,7 @@
 # Everything the engines produce is in MINUTES, and stays in minutes all the
 # way to the plot: the curves, the dose and event times, Max time, the TCI
 # rates and the recovery line are all drawn on a minute axis.  The Time units
-# selector (Time card) changes only how those minutes are WRITTEN -- the tick
+# selector (Time panel) changes only how those minutes are WRITTEN -- the tick
 # labels and the axis title, the hover, the recovery labels and an extra
 # column in the export.  Shiny reports a hover or a click in data coordinates,
 # so e$x is minutes as well, and nothing that reads it needs converting.

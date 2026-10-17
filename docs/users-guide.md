@@ -365,7 +365,7 @@ what the literature offers.
 |---|---|
 | Propofol | Eleveld DJ et al., *Br J Anaesth* 2018;120(5):942–959. [PMID 29661412](https://pubmed.ncbi.nlm.nih.gov/29661412/). With *Minto / Schnider* ticked, also Schnider TW et al., *Anesthesiology* 1998;88(5):1170–1182. [PMID 9605675](https://pubmed.ncbi.nlm.nih.gov/9605675/) |
 | Remifentanil | BMI below 30: Eleveld DJ et al., *Anesthesiology* 2017;126(6):1005–1018. [PMID 28509794](https://pubmed.ncbi.nlm.nih.gov/28509794/); BMI 30 and above: Kim TK et al., *Anesthesiology* 2017;126(6):1019–1032. [PMID 28509796](https://pubmed.ncbi.nlm.nih.gov/28509796/). With *Minto / Schnider* ticked, also Minto CF et al., *Anesthesiology* 1997;86:10–23. [PMID 9009935](https://pubmed.ncbi.nlm.nih.gov/9009935/) |
-| Fentanyl | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
+| Fentanyl | A pooled parameter set from five studies, whose values none of them prints: McClain and Hug 1980, Scott and Stanski 1987 ([PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/)), Hudson 1986, Varvel 1989 and Shafer 1990 ([PMID 2248388](https://pubmed.ncbi.nlm.nih.gov/2248388/)). |
 | Alfentanil | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
 | Sufentanil | Gepts E et al., *Anesthesiology* 1995;83(6):1194–1204. [PMID 8533912](https://pubmed.ncbi.nlm.nih.gov/8533912/) |
 | Morphine | Lötsch J et al., *Clin Pharmacol Ther* 2002;72(2):151–162. [PMID 12189362](https://pubmed.ncbi.nlm.nih.gov/12189362/) |
@@ -735,11 +735,7 @@ what was intended. Places worth a second look:
   plot code; someone who uses it should check the wording.
 - No screenshots. The guide would be much better with four or five.
 - The **model source table** was extracted from the `reference` field in each
-  `R/drugs_*.R`. Those fields are correct on the `drug-reference-citations`
-  branch but NOT on `master`, where several are still placeholders -- propofol's
-  reads "Anesthesiology 1998" while the model implemented is Eleveld 2018. That
-  branch should be merged before this guide is published, or the table will
-  describe something the code does not say.
+  `R/drugs_*.R`.
 - Better still, the table should be GENERATED from the drug files rather than
   hand-maintained here, so it cannot drift. It drifted once already.
 - Nothing here covers the vignettes (`stanpumpR-single-PK`, `stanpumpR-multi-PK`)
