@@ -110,9 +110,10 @@ test_that("the audited numbers are the ones the models use", {
   expect_equal(TIRZEPATIDE_BIOAVAILABILITY,
                as.numeric(parameters$value[parameters$drug == "tirzepatide" & parameters$parameter == "F"]),
                tolerance = 1e-3)
+  # at each insulin's reference weight (80 kg; glargine 71.4 kg) and dose
   for (d in c("insulinRegular", "insulinLispro", "insulinGlargine")) {
     rows <- parameters[parameters$drug == d, ]
-    pk <- get(d)(70, 170, 35, "male")$PK$default
+    pk <- get(d)(if (d == "insulinGlargine") 71.4 else 80, 170, 35, "male", FALSE)$PK$default
     expect_equal(pk$v1, as.numeric(rows$value[rows$parameter == "V/F"]), info = d)
     expect_equal(pk$cl1 * 60, as.numeric(rows$value[rows$parameter == "CL/F"]), info = d)
   }

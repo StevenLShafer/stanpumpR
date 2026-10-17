@@ -4,7 +4,7 @@
 \alias{insulinHumanMix70}
 \title{Human insulin 70/30 premix (Humulin 70/30, Novolin 70/30): 70\% NPH, 30\% regular: pharmacokinetics}
 \usage{
-insulinHumanMix70(weight, height, age, sex, adjustToFFM = TRUE)
+insulinHumanMix70(weight, height, age, sex, adjustToFFM = TRUE, dose = NULL)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,9 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{dose}{units of one injection, for Tham's dose covariates (CL/F
+and regular insulin's ka); NULL is the 10 U reference dose}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

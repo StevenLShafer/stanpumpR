@@ -399,6 +399,20 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
         oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv, PK$sublingualSaturation)
 
+    # A subcutaneous bioavailability that depends on the size of each
+    # injection (insulin glargine, Tham 2017: (dose / 35 U)^-0.300): each SC
+    # dose, and its slow-depot copy, is scaled by the factor for its own
+    # size, before the zero-order share is split off, as Tham's equations
+    # apply F to both parts.
+    if (!is.null(PK$scDoseBioavailability))
+    {
+      sc <- dose$RA | dose$RAslow
+      if (any(sc))
+        dose$Dose[sc] <- dose$Dose[sc] *
+          doseSizeFactor(doseInDosingUnits(dose$Dose[sc], PK, mg_Conv[sc]),
+                         PK$scDoseBioavailability)
+    }
+
     # A drug with a second oral depot (ka_PO2 in its model; see getDrugPK())
     # absorbs each oral dose through two parallel depots, each with its own
     # lag.  As for the slow RA depot, the dose rows are duplicated, the copy
@@ -525,7 +539,28 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (!is.null(routes)) dose$Dose[!doseRoute(dose$Units) %in% routes] <- 0
       dose
     }
-    if (!is.null(PK$michaelisMenten))
+    if (isTRUE(PK$doseDependent))
+    {
+      # Parameters that depend on the size of each injection (the Tham human
+      # insulins: CL/F and regular insulin's ka): each dose size is its own
+      # linear system, simulated with the PK for that size (doseSizePK(),
+      # R/getDrugPK.R) on the doses of that size, the others given as zero
+      # so that every run is on the same time line, and the runs are added.
+      sc <- dose$RA | dose$RAslow
+      if (any(!sc & dose$Dose != 0))
+        stop("A dose-dependent model takes subcutaneous injections only: ",
+             paste(unique(dose$Units[!sc & dose$Dose != 0]), collapse = ", "))
+      size <- round(doseInDosingUnits(dose$Dose, PK, mg_Conv), 9)
+      parts <- list()
+      for (d in unique(size[sc & dose$Dose != 0]))
+      {
+        own <- dose
+        own$Dose[!(sc & size == d)] <- 0
+        parts[[length(parts) + 1]] <- runEngines(own, doseSizePK(PK, d)$PK)
+      }
+      if (length(parts) == 0) parts <- list(runEngines(dose, pkSets))
+      results <- superposeEngineResults(parts, plotRecovery, emerge)
+    } else if (!is.null(PK$michaelisMenten))
     {
       # Saturable elimination (phenytoin): the whole dose table at once, by
       # numerical integration, because superposition does not hold; see

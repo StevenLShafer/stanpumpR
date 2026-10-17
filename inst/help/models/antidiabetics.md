@@ -41,7 +41,7 @@ Adding the effects of two drugs, or of exogenous and endogenous insulin, is not 
 
 ## What each curve leaves out
 
-- **Covariates not applied.** Tham's dose and weight effects (their reference values were in supplement equations missing from the published PDF), empagliflozin's covariates other than renal function, and ertugliflozin's race and food effects. Each drug's page lists what is applied and what is not.
+- **Covariates not applied.** Tham's endogenous-insulin baseline, empagliflozin's covariates other than renal function, and ertugliflozin's race and food effects. Each drug's page lists what is applied and what is not.
 - **Derived values.** Tirzepatide's bioavailability in diabetes (0.655) is derived from its published apparent clearance, and empagliflozin's renal exponent (0.333) from its published exposures at an eGFR of 60, 30 and 15, which it reproduces within 0.2%; both are marked derived in the parameter audit.
 - **Insulin is the exogenous insulin alone.** Endogenous secretion, the baseline Tham estimated, and the C-peptide correction are not added, and an insulin unit is never converted into another insulin's.
 

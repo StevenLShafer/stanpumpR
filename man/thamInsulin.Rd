@@ -12,7 +12,8 @@ thamInsulin(
   adjustToFFM,
   insulin,
   components,
-  product
+  product,
+  dose = NULL
 )
 }
 \arguments{
@@ -39,6 +40,9 @@ dose: a named numeric vector, names from \code{THAM_ABSORPTION}, summing to 1
 most one with a zero-order share.}
 
 \item{product}{the product as the reference string names it}
+
+\item{dose}{units of one injection, for the dose covariates, or NULL for
+the reference dose}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

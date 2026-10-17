@@ -4,7 +4,7 @@
 \alias{insulinRegular}
 \title{Human regular insulin U-100 (Humulin R U-100, Novolin R): pharmacokinetics}
 \usage{
-insulinRegular(weight, height, age, sex, adjustToFFM = TRUE)
+insulinRegular(weight, height, age, sex, adjustToFFM = TRUE, dose = NULL)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,9 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{dose}{units of one injection, for Tham's dose covariates (CL/F
+and regular insulin's ka); NULL is the 10 U reference dose}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

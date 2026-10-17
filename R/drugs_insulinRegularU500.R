@@ -14,10 +14,14 @@
 #' The Tham 2017 one-compartment model for human insulin, regular U-500, absorbed first-order more slowly than U-100; see R/insulinTham.R.
 #'
 #' @inheritParams cefazolin
+#' @param dose units of one injection, for Tham's dose covariates (CL/F
+#'   and regular insulin's ka); NULL is the 10 U reference dose
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-insulinRegularU500 <- function(weight, height, age, sex, adjustToFFM = TRUE)
+insulinRegularU500 <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                               dose = NULL)
 {
   thamInsulin(weight, height, age, sex, adjustToFFM, insulin = "human",
-              components = c(regularU500 = 1), product = "regular U500")
+              components = c(regularU500 = 1), product = "regular U500",
+              dose = dose)
 }

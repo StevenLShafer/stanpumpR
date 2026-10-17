@@ -120,7 +120,7 @@ registry <- rbind(
   # --- Insulins ---------------------------------------------------------------
   reg("insulin_regular_u100_sc", "human insulin", "Regular U-100 (Humulin R, Novolin R)", SC, "core", "US",
       FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, "insulinRegular", TRUE,
-      "https://doi.org/10.1002/jcph.899", "Tham 2017 Table 2 typical values; dose effects on ka and CL/F not applied."),
+      "https://doi.org/10.1002/jcph.899", "Tham 2017 Table 2 with the supplement's covariate equations: weight on V/F, dose on ka and CL/F, each injection by its own size."),
   reg("insulin_regular_iv", "human insulin", "Regular U-100 intravenous", "IV", "core", "US",
       TPL, TPL, "PD-TEMPLATE", DTPL, "none", NA, NA, FALSE,
       "https://doi.org/10.1177/0091270010378520", "Kept separate from SC; Potocka 2011 has an IV arm (abstract only)."),
@@ -173,7 +173,7 @@ registry <- rbind(
   reg("insulin_glargine_basaglar_u100", "insulin glargine", "Basaglar U-100", SC, "core", "US",
       FIT, FIT, "PD-CONSTRAINT", DCON, "clamp GIR (M1 active)", FALSE, "insulinGlargine", TRUE,
       "https://doi.org/10.1002/jcph.899",
-      "Immunoreactive assay, C-peptide corrected; zero-order input into the central volume (Figure 1); dose effect on F not applied (reference dose in the supplement's lost equations)."),
+      "Immunoreactive assay, C-peptide corrected; zero-order input into the central volume (Figure 1); weight on V and dose on F per the supplement's equations."),
   reg("insulin_glargine_lantus_u100", "insulin glargine", "Lantus U-100", SC, "core", "US",
       FIT, AUD, "PD-CONSTRAINT", DCON, "clamp GIR", FALSE, NA, FALSE,
       "https://doi.org/10.1002/jcph.899", "Tham external check only; product equivalence mapping required."),
@@ -342,11 +342,19 @@ fediuk <- "https://doi.org/10.1002/cpdd.970"
 ramb   <- "https://doi.org/10.2147/CPAA.S102676"
 thamPop <- "Tham 2017, 16 studies, mostly healthy volunteers"
 
-thamRows <- function(drug, v, cl, absorption) rbind(
-  par(drug, "V/F", v, "L (x library FFM factor)", E, thamPop, tham, "Table 2"),
-  par(drug, "CL/F", cl, "L/h (x library FFM factor^0.75)", E, thamPop, tham, "Table 2"),
+thamSupp <- "Table 2; supplement (Word) equations"
+thamWeight <- list(
+  human = list("weight on V/F", "(BW/80)^1.62, BW held to 53.1-124 kg", "power"),
+  lispro = list("weight on V/F", "(BW/80)^2.48, BW held to 52.6-86 kg", "power"),
+  glargine = list("weight on V", "1 + 0.00728 (BW - 71.4), BW held to 42.8-110 kg", "linear slope per kg"))
+thamRows <- function(drug, v, cl, absorption, insulin) rbind(
+  par(drug, "V/F", v, "L at the reference weight", E, thamPop, tham, "Table 2"),
+  par(drug, "CL/F", cl, if (insulin == "human") "L/h at the 10 U reference dose" else "L/h", E, thamPop, tham, "Table 2"),
   absorption,
-  par(drug, "dose and weight covariates", "not applied", "-", AS, thamPop, tham, "Table 2; power forms per the supplement's abbreviations; reference values in its equations, missing from the published PDF"))
+  par(drug, thamWeight[[insulin]][[1]], thamWeight[[insulin]][[2]], thamWeight[[insulin]][[3]], E, thamPop, tham, thamSupp),
+  if (insulin == "human") par(drug, "dose on CL/F", "(Dose/10)^-0.282, Dose held to 3-100 U", "power", E, thamPop, tham, thamSupp),
+  if (insulin == "glargine") par(drug, "dose on F", "(Dose/35)^-0.300, Dose held to 14-58 U", "power", E, thamPop, tham, thamSupp),
+  par(drug, "dose covariates per injection", "each dose size its own linear system", "-", AS, thamPop, tham, "the model was fitted to single doses"))
 ab <- function(drug, name, ka, lag = NULL, f1 = NULL, d0 = NULL) rbind(
   par(drug, paste0("ka (", name, ")"), ka, "1/h", E, thamPop, tham, "Table 2"),
   if (!is.null(lag)) par(drug, paste0("lag (", name, ")"), lag, "h", E, thamPop, tham, "Table 2"),
@@ -376,17 +384,19 @@ parameters <- rbind(
   par("liraglutide", "CL/F", "1.83e-4", "L/min/kg", E, "Roge 2015", roge, "Table 1 (power of ten from the specification)"),
   par("liraglutide", "ka", "9.41e-4", "1/min", E, "Roge 2015", roge, "Table 1 (power of ten from the specification)"),
 
-  thamRows("insulinRegular", "178", "127", ab("insulinRegular", "regular U100", "0.67")),
-  thamRows("insulinRegularU500", "178", "127", ab("insulinRegularU500", "regular U500", "0.185")),
-  thamRows("insulinNPH", "178", "127", ab("insulinNPH", "NPH", "0.129", "0.378")),
+  thamRows("insulinRegular", "178", "127", ab("insulinRegular", "regular U100", "0.67"), "human"),
+  thamRows("insulinRegularU500", "178", "127", ab("insulinRegularU500", "regular U500", "0.185"), "human"),
+  thamRows("insulinNPH", "178", "127", ab("insulinNPH", "NPH", "0.129", "0.378"), "human"),
   thamRows("insulinHumanMix70", "178", "127", rbind(ab("insulinHumanMix70", "NPH, 70%", "0.129", "0.378"),
-                                                     ab("insulinHumanMix70", "regular, 30%", "0.67"))),
-  thamRows("insulinLispro", "43.0", "30.5", lispro("insulinLispro")),
+                                                     ab("insulinHumanMix70", "regular, 30%", "0.67")), "human"),
+  par("insulinRegular", "dose on ka (regular U100)", "(Dose/10)^-0.275, Dose held to 3-100 U", "power", E, thamPop, tham, thamSupp),
+  par("insulinHumanMix70", "dose on ka (regular, 30%)", "(regular share of Dose/10)^-0.275, held to 3-100 U", "power", E, thamPop, tham, thamSupp),
+  thamRows("insulinLispro", "43.0", "30.5", lispro("insulinLispro"), "lispro"),
   thamRows("insulinLisproMix75", "43.0", "30.5", rbind(ab("insulinLisproMix75", "lispro protamine, 75%", "0.0365"),
-                                                       lispro("insulinLisproMix75"))),
+                                                       lispro("insulinLisproMix75")), "lispro"),
   thamRows("insulinLisproMix50", "43.0", "30.5", rbind(ab("insulinLisproMix50", "lispro protamine, 50%", "0.0365"),
-                                                       lispro("insulinLisproMix50"))),
-  thamRows("insulinGlargine", "768", "74.5", ab("insulinGlargine", "glargine", "0.0830", NULL, "0.822", "0.612")),
+                                                       lispro("insulinLisproMix50")), "lispro"),
+  thamRows("insulinGlargine", "768", "74.5", ab("insulinGlargine", "glargine", "0.0830", NULL, "0.822", "0.612"), "glargine"),
 
   par("metformin", "CL/F", "52.6", "L/h (x (CrCl/106.5)^0.782)", E, "Chae 2012, 42 healthy adults", chae, "Abstract"),
   par("metformin", "V/F", "113", "L (x library FFM factor)", E, "Chae 2012", chae, "Abstract"),

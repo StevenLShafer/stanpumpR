@@ -1124,7 +1124,57 @@ getDrugPK <- function(
   out$tissueRoute <- tissueRoute
   if (!is.null(zeroOrderSC) && zeroOrderSC$into == "depot") zeroOrderSC$share <- 1
   out$zeroOrderSC <- zeroOrderSC
+  # Dose covariates, a property of each injection (the Tham insulins,
+  # R/insulinTham.R): a bioavailability that scales each SC dose by its own
+  # size, and, for a model whose disposition or ka depends on the dose, the
+  # covariates simCpCe() needs to rebuild the PK for each dose size
+  # (doseSizePK()).
+  out$scDoseBioavailability <- validateDoseBioavailability(X$scDoseBioavailability, drug)
+  if (isTRUE(X$doseDependent))
+  {
+    if (!"dose" %in% names(formals(get(drug, mode = "function"))))
+      stop("Invalid model for ", drug, ": doseDependent needs a dose argument.")
+    out$doseDependent <- TRUE
+    out$covariates <- covariates
+  }
   return(out)
+}
+
+#' Check a model's dose-dependent SC bioavailability block
+#'
+#' Each SC dose is scaled by (amount / reference)^power, the amount in the
+#' drug's dose unit (U for an insulin) held within `range` when given.
+#'
+#' @param x the block, or NULL
+#' @param drug the drug's name, for the error message
+#' @returns `x`, if valid
+#' @keywords internal
+validateDoseBioavailability <- function(x, drug)
+{
+  if (is.null(x)) return(NULL)
+  ok <- is.list(x) && is_valid_number(x$reference) && x$reference > 0 &&
+    is_valid_number(x$power) &&
+    (is.null(x$range) || (is.numeric(x$range) && length(x$range) == 2 &&
+                            all(x$range > 0) && x$range[1] <= x$range[2]))
+  if (!ok)
+    stop("Invalid scDoseBioavailability for ", drug, ": needs a positive ",
+         "reference, a power, and optionally a positive range.")
+  x
+}
+
+#' The PK of a dose-dependent drug for one dose size
+#'
+#' Re-evaluates the drug's model with `dose` and processes it as
+#' getDrugPK() does, with the patient's covariates as recorded on `PK`.
+#'
+#' @param PK the drug's PK from getDrugPK(), with `doseDependent`
+#' @param dose units of one injection
+#' @returns the PK for that dose
+#' @keywords internal
+doseSizePK <- function(PK, dose)
+{
+  X <- do.call(PK$drug, c(PK$covariates, list(dose = dose)))
+  do.call(getDrugPK, c(list(drug = PK$drug), PK$covariates, list(model = X)))
 }
 
 #' Check the share of each dose a parallel system receives

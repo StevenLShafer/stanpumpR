@@ -49,17 +49,37 @@
 #   DUR" with t the time after the dose: the depot is lagged, the
 #   zero-order input is not.  That is the structure implemented
 #   (zeroOrderSC, into = "central", R/subcutaneous.R).
-# * Table 2 also has dose effects (a power of the dose on regular insulin's
-#   ka, -0.275, on the human insulins' CL/F, -0.282, and on glargine's F,
-#   -0.300) and weight effects on V/F (powers of weight for regular insulin,
-#   1.62, and lispro, 2.48; a linear slope for glargine, 0.00728), as the
-#   supplement's abbreviations define them.  Their reference dose and weight
-#   are in the supplement's equations, which did not survive its conversion
-#   to PDF (Word equation objects), so they are NOT applied: every product
-#   uses Table 2's typical values.  The typical values are taken as the 70 kg
-#   reference adult's and scaled by the library's fat-free-mass factors
-#   (legacyVolume = 1: fixed with the switch off); Tham's study populations
-#   averaged 68.5 to 100 kg (Table 1).
+# * COVARIATES (Table 2, with the equations of the supplement's Word file,
+#   whose equation objects the PDF had lost):
+#
+#     human insulins  V/F  = 178 x (BW / 80)^1.62
+#                     CL/F = 127 x (Dose / 10)^-0.282
+#     regular U100    ka   = 0.67 x (Dose / 10)^-0.275
+#     lispro          V/F  = 43.0 x (BW / 80)^2.48
+#     glargine        V    = 768 x (1 + 0.00728 (BW - 71.4))
+#                     F    = (Dose / 35)^-0.300
+#
+#   Table 2 prints the weight power 1.62 in the regular U100 column only,
+#   but the supplement's equation puts it on the volume all the human
+#   insulins share, "Vd_Reg/NPH"; the equation is followed.  "Dose" is the
+#   units of one injection: for regular U100's ka the regular share of it
+#   (a 10 U dose of Mix 70/30 "contain[s] 7 U of NPH and 3 U of regular"),
+#   and for the human insulins' CL/F the whole human-insulin dose.
+#   Weight and dose are held within the ranges Table 1 studied for each
+#   insulin (THAM_WEIGHT_RANGE, THAM_DOSE_RANGE): lispro's steep power, for
+#   one, was fitted to 52.6 to 86 kg.  Weight is the pharmacokinetic weight
+#   with the fat-free-mass switch on and the total weight with it off; no
+#   other size scaling is applied, since the source's own terms are the
+#   size model.
+#
+#   A dose covariate is a property of each injection: Tham fitted single
+#   doses.  Glargine's F scales each dose by its own size
+#   (scDoseBioavailability, applied in simCpCe()).  The human insulins' ka
+#   and CL/F make each dose size its own linear system: simCpCe() simulates
+#   the doses of each size with the parameters for that size and adds the
+#   results (doseDependent), which reproduces Tham's single doses exactly and
+#   superposes repeated ones.  With no dose given, the model is at the
+#   reference dose (10 U), which is what the help tables show.
 # * The endogenous-insulin baseline Tham estimated (regular and NPH) and the
 #   C-peptide correction of the glargine data are not added: the curve is
 #   the exogenous insulin alone.  The glargine row was fitted to Basaglar
@@ -76,12 +96,28 @@
 
 THAM_INSULIN_REFERENCE <- "https://doi.org/10.1002/jcph.899"
 
-# Apparent disposition per insulin (Table 2): V/F in L, CL/F in L/h
+# Apparent disposition per insulin (Table 2): V/F in L at the reference
+# weight, CL/F in L/h at the reference dose, and the weight covariate on V/F
+# (a power of BW/reference, or glargine's linear slope per kg)
 THAM_DISPOSITION <- list(
-  human    = list(v = 178,  cl = 127),
-  lispro   = list(v = 43.0, cl = 30.5),
-  glargine = list(v = 768,  cl = 74.5)
+  human    = list(v = 178,  cl = 127,  weight = list(power = 1.62, reference = 80),
+                  clDose = list(power = -0.282, reference = 10)),
+  lispro   = list(v = 43.0, cl = 30.5, weight = list(power = 2.48, reference = 80)),
+  glargine = list(v = 768,  cl = 74.5, weight = list(slope = 0.00728, reference = 71.4))
 )
+
+# The weights (kg) and single doses (U) Table 1 studied, pooled over each
+# insulin's formulations; covariates are held within them
+THAM_WEIGHT_RANGE <- list(human = c(53.1, 124), lispro = c(52.6, 86),
+                          glargine = c(42.8, 110))
+THAM_DOSE_RANGE <- list(human = c(3, 100), glargine = c(14, 58))
+
+# Glargine's dose-dependent bioavailability, (Dose / 35)^-0.300
+THAM_GLARGINE_F_DOSE <- list(reference = 35, power = -0.300,
+                             range = THAM_DOSE_RANGE$glargine)
+
+# Regular U100's dose-dependent ka, (Dose / 10)^-0.275
+THAM_REGULAR_KA_DOSE <- list(reference = 10, power = -0.275)
 
 # Absorption per formulation (Table 2): ka /h, lag h, the fraction absorbed
 # first-order, and the duration (h) of the zero-order rest
@@ -105,15 +141,37 @@ THAM_ABSORPTION <- list(
 #'   (`c(nph = 0.7, regularU100 = 0.3)` for human 70/30).  At most two, and at
 #'   most one with a zero-order share.
 #' @param product the product as the reference string names it
+#' @param dose units of one injection, for the dose covariates, or NULL for
+#'   the reference dose
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @keywords internal
 thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
-                        components, product)
+                        components, product, dose = NULL)
 {
   stopifnot(abs(sum(components) - 1) < 1e-12, length(components) <= 2)
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
   disposition <- THAM_DISPOSITION[[insulin]]
   absorption <- THAM_ABSORPTION[names(components)]
+  clamp <- function(x, range) min(max(x, range[1]), range[2])
+
+  # Body weight on V/F, held within the studied range
+  pkW <- if (isTRUE(adjustToFFM))
+    pkSizeFactors(weight, height, age, sex, TRUE)$pkWeight else weight
+  w <- clamp(pkW, THAM_WEIGHT_RANGE[[insulin]])
+  vw <- disposition$weight
+  v <- disposition$v * if (is.null(vw$slope)) (w / vw$reference)^vw$power else
+    1 + vw$slope * (w - vw$reference)
+
+  # The dose of one injection on the human insulins' CL/F and regular U100's
+  # ka, held within the studied range; NULL is the reference dose
+  doseFactor <- function(effect, units) {
+    if (is.null(effect) || is.null(dose)) return(1)
+    (clamp(units, THAM_DOSE_RANGE[[insulin]]) / effect$reference)^effect$power
+  }
+  cl <- disposition$cl * doseFactor(disposition$clDose, dose)
+  regular <- names(components) == "regularU100"
+  for (i in which(regular))
+    absorption[[i]]$ka <- absorption[[i]]$ka *
+      doseFactor(THAM_REGULAR_KA_DOSE, components[[i]] * dose)
 
   # The zero-order share of each dose, and the first-order depots, fastest
   # first
@@ -128,8 +186,8 @@ thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
   byKa <- order(ka, decreasing = TRUE)
 
   default <- list(
-    v1  = disposition$v * size$volume, v2 = 1, v3 = 1,
-    cl1 = disposition$cl * size$clearance / 60, cl2 = 0, cl3 = 0,
+    v1  = v, v2 = 1, v3 = 1,
+    cl1 = cl / 60, cl2 = 0, cl3 = 0,
     ka_SC = ka[byKa[1]] / 60,
     bioavailability_SC = 1,   # apparent CL/F and V/F
     tlag_SC = tlag[byKa[1]] * 60
@@ -159,14 +217,24 @@ thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
                                     format(100 * (1 - a$firstOrder)), format(a$zeroOrder)) else "")
   }, character(1)), collapse = "; ")
 
+  covariateText <- switch(insulin,
+    human = "V/F x (weight/80)^1.62, CL/F x (dose/10)^-0.282",
+    lispro = "V/F x (weight/80)^2.48",
+    glargine = "V x (1 + 0.00728 (weight - 71.4)), F (dose/35)^-0.300")
+  if (any(regular)) covariateText <- paste0(covariateText, ", regular ka x (dose/10)^-0.275")
+
   list(
     PK = PK, tPeak = 0, MEAC = 0,
     typical = 0, upperTypical = 0, lowerTypical = 0,
     zeroOrderSC = zeroOrderSC,
+    # Glargine: each injection's bioavailability by its own size
+    scDoseBioavailability = if (insulin == "glargine") THAM_GLARGINE_F_DOSE,
+    # The human insulins: each dose size is its own linear system
+    doseDependent = insulin == "human",
     reference = paste0(
       "Tham 2017, ", product, ": one compartment, V/F ", format(disposition$v),
-      " L, CL/F ", format(disposition$cl), " L/h, ", absorbed,
-      "; Table 2 typical values (dose and weight effects not applied); ",
+      " L, CL/F ", format(disposition$cl), " L/h, ", absorbed, "; ",
+      covariateText, " (weight and dose held to the studied ranges); ",
       "exogenous insulin, concentration only. ", THAM_INSULIN_REFERENCE
     )
   )

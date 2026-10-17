@@ -194,3 +194,34 @@ expandZeroOrderSC <- function(dose, block, maximum)
   rownames(out) <- NULL
   out
 }
+
+#' A dose in the unit the drug is dosed in
+#'
+#' Doses reach the engines in base units: milliunits for an insulin
+#' (Concentration.Units "mcU"), and otherwise the mass unit whose product
+#' with `mgConv` is mg.
+#'
+#' @param amount doses in base units
+#' @param PK the drug's PK
+#' @param mgConv simCpCe()'s mg conversion factor (its first element is used)
+#' @returns the doses in U for an insulin, else in mg
+#' @keywords internal
+doseInDosingUnits <- function(amount, PK, mgConv)
+{
+  if (identical(PK$Concentration.Units, "mcU")) amount / 1000 else amount * mgConv[1]
+}
+
+#' Bioavailability factor for each dose's size
+#'
+#' (amount / reference)^power, the amount held within the block's range.
+#'
+#' @param amount doses in the drug's dose unit
+#' @param block a validated scDoseBioavailability block
+#' @returns one factor per dose
+#' @keywords internal
+doseSizeFactor <- function(amount, block)
+{
+  if (!is.null(block$range))
+    amount <- pmin(pmax(amount, block$range[1]), block$range[2])
+  (amount / block$reference)^block$power
+}

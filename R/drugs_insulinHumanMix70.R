@@ -14,10 +14,14 @@
 #' The Tham 2017 one-compartment model for human 70/30 premix: 70% NPH and 30% regular, each with its own absorption; see R/insulinTham.R.
 #'
 #' @inheritParams cefazolin
+#' @param dose units of one injection, for Tham's dose covariates (CL/F
+#'   and regular insulin's ka); NULL is the 10 U reference dose
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-insulinHumanMix70 <- function(weight, height, age, sex, adjustToFFM = TRUE)
+insulinHumanMix70 <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                              dose = NULL)
 {
   thamInsulin(weight, height, age, sex, adjustToFFM, insulin = "human",
-              components = c(nph = 0.7, regularU100 = 0.3), product = "human 70/30 (70% NPH, 30% regular)")
+              components = c(nph = 0.7, regularU100 = 0.3), product = "human 70/30 (70% NPH, 30% regular)",
+              dose = dose)
 }
