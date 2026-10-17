@@ -51,7 +51,12 @@ four cases examined it is decisive, and in one it is not.
 The specification's implementation sequence asks for the Tsai azilsartan and
 chlorthalidone model, the Hwang carvedilol model and the Tatipalli
 spironolactone model to be ported "from one internally consistent source at a
-time". That cannot be done from this container.
+time". Two of those three cannot be done from this container. The Hwang
+carvedilol model **can**, and was: it is open access in PubMed Central, the one
+channel that works here, and section 8 records the port and what its full text
+settled. This section was written before that was discovered, and the first
+lesson of it is that "unreachable" deserves re-testing per paper rather than
+per publisher.
 
 `WebFetch` fails DNS resolution for every host, and the egress proxy returns
 a policy denial for Wiley, PubMed, PubMed Central, NCBI E-utilities, MDPI,
@@ -63,22 +68,33 @@ So the sources split three ways:
 
 | Reachability | Sources | Consequence |
 |---|---|---|
-| Full text read | Hammer 2008 paediatric fenoldopam; Tatipalli 2021 spironolactone (narrative only, tables stripped) | Numbers verified, or structure verified with the table missing |
-| Abstract only | Ericsson 1999 clevidipine; Bailey 2002 clevidipine; Campanero 2008 terazosin; Donnelly 1993 amlodipine; Sum 1983 esmolol; Tsai 2016 azilsartan/chlorthalidone | Whatever is in the abstract is verified; the parameter tables are not |
+| Full text read | Hammer 2008 paediatric fenoldopam; **Hwang 2023 carvedilol**; Tatipalli 2021 spironolactone (narrative only, tables stripped) | Numbers verified, or structure verified with the table missing |
+| Abstract only | Ericsson 1999 clevidipine; Bailey 2002 clevidipine; Campanero 2008 terazosin; Donnelly 1993 amlodipine; Sum 1983 esmolol; Tsai 2016 azilsartan/chlorthalidone; Van Wart 2013 hydrochlorothiazide and furosemide | Whatever is in the abstract is verified; the parameter tables are not |
 | Unreachable | everything else in the ledger | The handoff's transcription stands unchecked |
+
+Two cautions about that table, both learned the hard way. A paper can be **in**
+PubMed Central and still have no full text there: Ericsson 1999 is PMC2014189
+and the server returns its abstract with an empty body, so deposition is not
+readability. And the "abstract only" row is worth more than it sounds --
+reading those abstracts systematically, rather than treating the whole Wiley
+set as lost, verified five numbers and supplied two the handoff never had.
+Section 9 records which, and the rule it suggests: read the abstract before
+asking anyone for the paper.
 
 Every number is therefore labelled in
 `inst/extdata/antihypertensiveParameters.csv` with how it was checked:
 `primary_full_text`, `primary_abstract`, `derived_here` or
-`handoff_unverified`. 39 of the 95 catalogued numbers are verified or derived
-from verified numbers; 56 are not. A test asserts that **no record this
-package executes depends on an unverified number**.
+`handoff_unverified`. Of the 101 catalogued numbers, 56 are verified or derived
+from verified numbers -- 17 from a primary full text, 34 from a primary
+abstract and 5 derived here -- and 45 are not. A test asserts that **no record
+this package executes depends on an unverified number**.
 
 This is not a complaint about the environment. It is the reason the
-implemented surface is two drugs and four endpoint relations rather than the
+implemented surface is three drugs and four endpoint relations rather than the
 six or seven ports the specification sketches, and it is the single thing to
-fix before the next round: library copies of about six PDFs would move more
-records than any amount of further work here.
+fix before the next round: library copies of a handful of PDFs would move more
+records than any amount of further work here. **Section 9 says which, in what
+order, and what each one unblocks.**
 
 ---
 
@@ -286,8 +302,8 @@ ng/mL, `R/drugs_clevidipine.R`), `fenoldopamPediatric` (plasma, ng/mL,
 mode of section 8), in a new `Antihypertensives` category. The
 paediatric fenoldopam model is named for its population, following
 `methylphenidatePediatric`, so it cannot be selected as an adult default;
-there is deliberately no adult `fenoldopam` entry. Neither drug has an effect
-site, a MEAC, or a blood-pressure output. Tests pin both switch positions of
+there is deliberately no adult `fenoldopam` entry. None of the three has an
+effect site, a MEAC, or a blood-pressure output. Tests pin both switch positions of
 the fat-free-mass scaling, the published half-lives, and the analytic fixtures
 the specification asks for: a bolus starting at dose over central volume
 (38.73 ng/mL per mg in the reference man) and an infusion approaching
