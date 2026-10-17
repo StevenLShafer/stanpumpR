@@ -1298,6 +1298,11 @@ app_server <- function(input, output, session) {
         adjustToFFM = adjustToFFM(),
         osmolality = osmolality(),
         creatinine = creatinine(),
+        cyp2d6 = input$cyp2d6,
+        cyp2c19 = input$cyp2c19,
+        cyp2c9 = input$cyp2c9,
+        cyp2b6 = input$cyp2b6,
+        mintoSchnider = mintoSchnider(),
         # The workbook's times stay in minutes; these add the display unit
         # beside them and say what the plot showed (sendSlide.R).
         timeUnit = timeUnit(),
@@ -2388,6 +2393,14 @@ app_server <- function(input, output, session) {
         rhandsontable::hot_col(col = 10, halign = "htRight") %>%
         rhandsontable::hot_col(col = 11, halign = "htRight") %>%
         rhandsontable::hot_table(contextMenu = FALSE)
+      # mcg and ng differ only by the factor shown, so the dropdown offers
+      # those two.  A drug in %, mmol or mOsm (an inhaled agent, calcium,
+      # mannitol) is simulated in those units by its own engine or
+      # conversion, and switching it to mcg or ng would break the dose
+      # conversion in simCpCe(), so its cell is read-only.
+      # (Claude Code, 2026-10-17, from an external review.)
+      for (row in which(!x$Concentration.Units %in% c("mcg", "ng")))
+        drugsHOT <- rhandsontable::hot_cell(drugsHOT, row, 2, readOnly = TRUE)
       drugsHOT
     }, name = "output$editDrugsHTML")
   })

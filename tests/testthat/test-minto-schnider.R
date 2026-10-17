@@ -70,7 +70,7 @@ test_that("the Schnider propofol model is the one STANPUMP ran, with Schnider 19
                        Xf$PK[[1]]$cl1)
   # Solved through getDrugPK(): ke0 near the 0.456/min Schnider 1999 reported
   entry <- alternativeModelEntry("propofol", 70, 170, 40, "male", rowOf("propofol"))
-  expect_equal_rounded(0.4079307, entry$PK[[1]]$ke0, tolerance = 1e-5)
+  expect_equal_rounded(0.4079446, entry$PK[[1]]$ke0, tolerance = 1e-5)
   expect_equal(entry$tPeak, 1.6)
 })
 

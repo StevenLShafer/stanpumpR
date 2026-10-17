@@ -55,7 +55,7 @@
 #   https://doi.org/10.1038/clpt.1980.216
 # Buchanan RA et al., Clin Pharmacol Ther 1976;19:143-147.
 #   https://doi.org/10.1002/cpt1976192143
-# Mizuno T et al., Clin Pharmacol Ther 2023;114:459-469.
+# Mizuno K et al., Clin Pharmacol Ther 2023;114:459-469.
 #   https://doi.org/10.1002/cpt.2965
 # -----------------------------------------------------------------------------
 

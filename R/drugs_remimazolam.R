@@ -2,7 +2,7 @@ remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Eleveld British Journal of Anaesthesia, 135 (1): 206e217 (2025)
   # Units **************
-  # Time: Hours
+  # Time: Minutes
   # Volume: Liters
 
   # Size scaling (see docs/weight-adjustment.md): the published parameters

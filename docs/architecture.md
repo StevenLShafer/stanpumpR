@@ -159,8 +159,8 @@ time point as a sum of exponentials.
    `tPeak`, `MEAC`.
 2. Volumes & clearances → micro rate constants `k10, k12, k13, k21, k31`.
 3. `cube()` solves the characteristic cubic → eigenvalues `lambda_1, lambda_2, lambda_3`.
-4. `tPeakError()` + `CE()` + `optimize()` back-solve the effect-site rate `ke0` from
-   time-to-peak-effect.
+4. `ke0FromTPeakBolus()` (or `ke0FromTPeak()` for an oral `tPeak`) back-solves the effect-site
+   rate `ke0` from time-to-peak-effect with `uniroot()`.
 5. Precompute per-route (bolus / infusion / PO / SL / IM / IN) exponential coefficients `p_coef_*`,
    `e_coef_*`.
 
@@ -312,7 +312,7 @@ All files are flat in `R/`.
   `antibioticThresholds.R`).
 - `calculateCe.R` — effect-site concentration approximated from a plasma curve; used only by
   the event-driven solver. The `ke0` fit itself
-  (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
+  (`ke0FromTPeakBolus()`, `ke0FromTPeak()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
   thresholds, body-size scaling.
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
