@@ -1,4 +1,4 @@
-The dose table is the main way you talk to the program. It sits in a panel to the right of the plot, open when the app starts; the arrow at the top of the panel hides and shows it, so the plot can have the whole width once the doses are in. Each row is one thing done to the patient: a bolus, a change of infusion rate, an oral dose, a vaporizer setting.
+The dose table is the main way you talk to the program. It sits in a panel to the right of the plot, open when the app starts on a desktop and closed on a phone; the arrow at the top of the panel hides and shows it, so on a phone open it before entering doses, and on any screen the plot can have the whole width once the doses are in. Each row is one thing done to the patient: a bolus, a change of infusion rate, an oral dose, a vaporizer setting.
 
 ## Columns
 
