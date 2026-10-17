@@ -29,7 +29,7 @@ Each panel's labels are in whichever unit suits the longest time on that panel, 
 
 ## Interacting with the plot
 
-- **Hover** over any curve for the time and concentration at that point. The time is in the **Time units** chosen in the Time card ("3.5 days"), or the time of day under **Actual time**. The concentration is read at exactly that time from the full simulation: the effect-site concentration (`Ce`) for a drug with an effect site, and the plasma concentration (`Cp`) for one without, such as an antibiotic or a prodrug. With **Minto / Schnider** ticked, the hover adds the second model's concentration on the propofol and remifentanil panels, and both pumps' rates on a TCI rate panel. With the time-until-threshold line on, the hover adds that time too, in the same unit as the panel's labels. On the MEAC and interaction panels the hover shows the summed value or the probability, also read at the hovered time.
+- **Hover** over any curve for the time and concentration at that point. The time is in the **Time units** chosen in the Time panel ("3.5 days"), or the time of day under **Actual time**. The concentration is read at exactly that time from the full simulation: the effect-site concentration (`Ce`) for a drug with an effect site, and the plasma concentration (`Cp`) for one without, such as an antibiotic or a prodrug. With **Minto / Schnider** ticked, the hover adds the second model's concentration on the propofol and remifentanil panels, and both pumps' rates on a TCI rate panel. With the time-until-threshold line on, the hover adds that time too, in the same unit as the panel's labels. On the MEAC and interaction panels the hover shows the summed value or the probability, also read at the hovered time.
 - **Click** anywhere on a drug's panel to add a dose of that drug at that time. A small dialog asks for the amount and unit, and the dose is applied immediately, bypassing the draft.
 - **Double-click** a drug's panel to edit or delete that drug's doses in a compact table.
 - On the **Events** panel, click to add an event and double-click to edit the event list.
@@ -49,7 +49,7 @@ See [Additional plots](help:additional-plots).
 
 ## Axes
 
-The y axis of each panel is linear by default; **Log Y axis** switches to logarithmic where that is meaningful. The x axis runs to **Max time** and is labelled in the **Time units** chosen in the Time card (minutes, hours, days or weeks), or with times of day under **Actual time**; see [Time display](help:time-display). The unit changes only the labels: the simulation itself is always computed in minutes. Panel height is set by the **Y axis height** slider.
+The y axis of each panel is linear by default; **Log Y axis** switches to logarithmic where that is meaningful. The x axis runs to **Max time** and is labelled in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), or with times of day under **Actual time**; see [Time display](help:time-display). The unit changes only the labels: the simulation itself is always computed in minutes. Panel height is set by the **Y axis height** slider.
 
 ## Resolution
 

@@ -255,6 +255,18 @@ test_that("timeFormat, its string form, and the Time Display choices", {
   expect_match(timeEntryLabel(timeFormat("minutes", "clock")), "HH:MM")
 })
 
+test_that("timeSettingsText: the collapsed Time panel's header", {
+  expect_equal(timeSettingsText(timeFormat("days", "relative")), "(days, elapsed time)")
+  # The procedure start is read only in clock mode
+  expect_equal(timeSettingsText(timeFormat("weeks", "relative"), "08:00"), "(weeks, elapsed time)")
+  expect_equal(timeSettingsText(timeFormat("hours", "clock"), "08:00"),
+               "(hours, actual time from 08:00)")
+  # Until the browser's clock arrives the start is empty or NULL
+  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), ""), "(minutes, actual time)")
+  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), " "), "(minutes, actual time)")
+  expect_equal(timeSettingsText(timeFormat("minutes", "clock"), NULL), "(minutes, actual time)")
+})
+
 test_that("displayTimeToMinutes: bare numbers are in the unit", {
   expect_identical(displayTimeToMinutes(c("0", "90", "1.5", ".5"), unit = "minutes"),
                    c(0, 90, 1.5, 0.5))
