@@ -336,7 +336,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "diamorphine",
     # The opt-in illicit research models (2026-10-17) are plasma only: see
     # inst/extdata/illicitRouteRegistry.csv and each drug's header.
-    "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA",
+    "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
@@ -344,6 +344,11 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # Intravenous calcium (2026-10-13): the ionized calcium itself is the
     # end point, no ke0 (R/drugs_calcium.R).
     "calcium",
+    # Anticoagulants (2026-10-17): plasma activity or concentration, or the
+    # INR; no effect site (R/drugs_heparin.R and the others).
+    "heparin", "bivalirudin", "apixaban", "rivaroxaban",
+    "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
+    "warfarin",
     # The antihypertensives joined on 2026-10-17: concentration only, no
     # published equilibration constant, and no blood pressure is plotted for
     # any drug in the library (docs/antihypertensives.md).

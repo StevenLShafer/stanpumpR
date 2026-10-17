@@ -124,6 +124,17 @@ groupUnitsByRoute <- function(units) {
 #'   same as that of the scaled dose on the reference clearance.  Paroxetine
 #'   (Kim 2015).  The fraction may exceed 1 above Dref; it is an exposure
 #'   scale on apparent parameters, not a physical bioavailability.
+#' * `form = "reduction"`, `list(form, I50, D0, D50, exponent)`: the fraction
+#'   is 1 at and below the anchor dose D0 and falls as a power of the dose
+#'   above it, 1 - I50 x ((D - D0) / (D50 - D0))^exponent, so that it is
+#'   1 - I50 at D50.  The stage 2 relative bioavailability of apixaban
+#'   (Cirincione 2018: anchored at 2.5 mg, I50 the fall at 50 mg).  Floored
+#'   at zero, which a dose about 2.7 times D50 would otherwise pass.
+#' * `form = "exponential"`, `list(form, Fmin, Fmax, D50)`: the fraction is
+#'   Fmin + (Fmax - Fmin) exp(-ln 2 D / D50), falling from Fmax at a small
+#'   dose towards Fmin, halfway at D50.  Rivaroxaban (Willmann 2018, relative
+#'   to a 10 mg dose, at which it is 0.998).  It may exceed 1: relative, not
+#'   absolute, bioavailability.
 #'
 #' Each dose is scaled once, by its own size, and is then an independent input
 #' to the linear engines, so superposition still holds.  What this cannot
@@ -141,7 +152,11 @@ oralSaturationFraction <- function(doseMg, saturation)
   switch(oralSaturationForm(saturation),
     saturable = 1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg),
     rising    = doseMg / (saturation$D50 + doseMg),
-    power     = (doseMg / saturation$Dref)^saturation$exponent
+    power     = (doseMg / saturation$Dref)^saturation$exponent,
+    reduction = pmax(0, 1 - saturation$I50 *
+      (pmax(doseMg - saturation$D0, 0) / (saturation$D50 - saturation$D0))^saturation$exponent),
+    exponential = saturation$Fmin + (saturation$Fmax - saturation$Fmin) *
+      exp(-log(2) * doseMg / saturation$D50)
   )
 }
 
@@ -155,8 +170,11 @@ oralSaturationForm <- function(saturation)
 ORAL_SATURATION_SATURABLE <- "saturable"
 ORAL_SATURATION_RISING    <- "rising"
 ORAL_SATURATION_POWER     <- "power"
+ORAL_SATURATION_REDUCTION <- "reduction"
+ORAL_SATURATION_EXPONENTIAL <- "exponential"
 ORAL_SATURATION_FORMS <- c(ORAL_SATURATION_SATURABLE, ORAL_SATURATION_RISING,
-                           ORAL_SATURATION_POWER)
+                           ORAL_SATURATION_POWER, ORAL_SATURATION_REDUCTION,
+                           ORAL_SATURATION_EXPONENTIAL)
 
 #' Check a drug model's dose-dependent absorption block
 #'
@@ -189,12 +207,27 @@ validateOralSaturation <- function(saturation, drug, block = "oralSaturation")
     if (!(is_valid_number(saturation$D50) && saturation$D50 > 0))
       stop("Invalid ", block, " for ", drug, ": the rising form needs a ",
            "positive D50 in mg.")
-  } else {
+  } else if (form == ORAL_SATURATION_POWER) {
     ok <- is_valid_number(saturation$exponent) &&
       is_valid_number(saturation$Dref) && saturation$Dref > 0
     if (!ok)
       stop("Invalid ", block, " for ", drug, ": the power form needs an ",
            "exponent and a positive reference dose Dref in mg.")
+  } else if (form == ORAL_SATURATION_REDUCTION) {
+    ok <- is_valid_number(saturation$I50, 0, 1) &&
+      is_valid_number(saturation$exponent) && saturation$exponent > 0 &&
+      is_valid_number(saturation$D0, 0, Inf) &&
+      is_valid_number(saturation$D50) && saturation$D50 > saturation$D0
+    if (!ok)
+      stop("Invalid ", block, " for ", drug, ": the reduction form needs I50 ",
+           "between 0 and 1, a positive exponent, and doses D0 >= 0 and D50 > D0 in mg.")
+  } else {
+    ok <- is_valid_number(saturation$Fmin, 0, Inf) &&
+      is_valid_number(saturation$Fmax, 0, Inf) &&
+      is_valid_number(saturation$D50) && saturation$D50 > 0
+    if (!ok)
+      stop("Invalid ", block, " for ", drug, ": the exponential form needs ",
+           "Fmin and Fmax >= 0 and a positive D50 in mg.")
   }
   saturation
 }

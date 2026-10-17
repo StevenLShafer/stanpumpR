@@ -64,7 +64,7 @@ plasmaOnly <- c(
   "diamorphine",
   # The opt-in illicit research models (2026-10-17) are plasma only: see
   # inst/extdata/illicitRouteRegistry.csv and each drug's header.
-  "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA",
+  "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
   # Antipsychotics: occupancy is a direct function of plasma, or no effect is
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
@@ -72,6 +72,10 @@ plasmaOnly <- c(
   # Intravenous calcium (2026-10-13): plotted as the change in ionized
   # calcium, which is the end point itself; no ke0.
   "calcium",
+  # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
+  # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
+  "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
+  "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
   # The antihypertensives (2026-10-17): concentration only.  Neither source
   # publishes an equilibration rate constant, and no blood pressure is
   # plotted for any drug in the library (docs/antihypertensives.md).

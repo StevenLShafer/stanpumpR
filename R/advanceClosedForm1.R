@@ -48,9 +48,9 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
   # route columns simCpCe() adds.
   # "RAslow" is the slow second depot of an RA dose (see getDrugPK()).
   # "PO2" is the second depot of an oral dose (see getDrugPK()).
-  routes <- c("PO", "IM", "IN", "SL", "RA", "RAslow", "PO2")
+  routes <- c("PO", "IM", "IN", "SL", "SC", "RA", "RAslow", "PO2")
   for (r in routes) if (is.null(dose[[r]])) dose[[r]] <- rep(FALSE, nrow(dose))
-  extravascular <- dose$PO | dose$IM | dose$IN | dose$SL | dose$RA | dose$RAslow | dose$PO2
+  extravascular <- dose$PO | dose$IM | dose$IN | dose$SL | dose$SC | dose$RA | dose$RAslow | dose$PO2
   # A continuous perineural infusion ("mg/hr RA") is a rate into the tissue
   # depot, which this engine does not carry; it would otherwise be run as an
   # intravenous infusion.  No drug that offers it has a PK event.
