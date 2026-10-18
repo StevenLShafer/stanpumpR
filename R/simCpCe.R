@@ -286,6 +286,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- 1        # Native unit
         ng_Conv  <- 1000
       },
+      pg = {                   # 1 pg/ml = 1 ng/L: amounts in ng (exenatide)
+        mg_Conv  <- 1e-6
+        mcg_Conv <- 1e-3
+        ng_Conv  <- 1
+      },
       mOsm = {                 # An osmotic agent: amounts in mOsm, Cp in mOsm/L
         # 1 mOsm is molecularWeight mg of a solute that does not dissociate,
         # so a dose in mg divided by mg_Conv is a dose in mOsm.
@@ -302,6 +307,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mg_Conv  <- molarWeightOfDoses(PK$molar, dose$Units, PK$drug)
         mcg_Conv <- mg_Conv * 1000
         ng_Conv  <- mg_Conv * 1000000
+      },
+      mcU = {                  # Insulin: amounts in mU, Cp in mU/L = mcU/mL
+        # Dosed in units (U) of the preparation, never by mass; the U rows are
+        # converted below.
+        if (any(grepl("^(g|mg|mcg|ng)( |/|$)", dose$Units)))
+          stop("A dose of ", PK$drug, " must be in units (U), not by mass.")
+        mg_Conv <- mcg_Conv <- ng_Conv <- NA_real_
       },
       IU = {                   # Activity: amounts in IU, Cp in IU/mL (heparin)
         # 1 IU/mL = 1000 IU/L, so the base amount is 1000 IU and a dose in IU
@@ -321,6 +333,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
+    # Insulin units: U to mU, so that dividing by litres gives mU/L, which is
+    # mcU/mL.  A U dose of a drug reported by mass would have no conversion.
+    use <- grep("^U( |/|$)", dose$Units)
+    if (length(use) > 0)
+    {
+      if (!identical(PK$Concentration.Units, "mcU"))
+        stop("A dose in units (U) needs a drug reported in mcU/mL; ", PK$drug, " is not.")
+      dose$Dose[use] <- dose$Dose[use] * 1000
+    }
     # A drug dosed in international units takes only those, and only it does.
     # Checked before the mass conversions, which would turn a mass unit on an
     # activity drug into NA silently.
@@ -358,7 +379,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     use <- grep("/day", dose$Units)
     dose$Dose[use] <- dose$Dose[use] / MINS_PER_DAY
 
-    # Identify extravascular (PO, SL, IM, IN, RA) and IV bolus doses.  A rate unit
+    # Identify extravascular (PO, SL, IM, IN, SC, RA) and IV bolus doses.  A rate unit
     # (isRateUnit(), R/routes.R) is an input rate whatever its route word, so
     # it is neither: a "mg/day PO" row, the constant-rate oral input of
     # poRateUnits, becomes an infusion row on the drug's apparent oral
@@ -373,12 +394,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     dose$IM <- route == ROUTE_IM & !rate
     dose$IN <- route == ROUTE_IN & !rate
     dose$SL <- route == ROUTE_SL & !rate
-    dose$SC <- route == ROUTE_SC & !rate
-    dose$RA <- route == ROUTE_RA & !rate
+    # A subcutaneous dose shares the tissue depot with RA (R/subcutaneous.R):
+    # a drug offers one or the other, so the flags cannot collide.
+    dose$RA <- route %in% TISSUE_ROUTES & !rate
     # A continuous perineural infusion ("mg/hr RA", raRateUnits): a rate into
     # the tissue depot, not into the vein.  Only advanceClosedFormPO_IM_IN()
     # carries it; see there.
-    dose$RArate <- route == ROUTE_RA & rate
+    dose$RArate <- route %in% TISSUE_ROUTES & rate
     # Set before the slow-depot rows below are added: `route` and `rate` are
     # per row of the table as entered.  Set after, they no longer matched the
     # longer table, so a drug with a slow RA depot given intravenously and by
@@ -404,6 +426,17 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose$Dose[dose$SL] <- dose$Dose[dose$SL] *
         oralSaturationFraction(dose$Dose[dose$SL] * mg_Conv[dose$SL],
                                PK$sublingualSaturation)
+
+    # A subcutaneous bioavailability that depends on the size of each
+    # injection (insulin glargine, Tham 2017: (dose / 35 U)^-0.300): each SC
+    # dose is scaled by the factor for its own size, before the slow-depot
+    # copy below is made (so it carries the scaled dose) and before the
+    # zero-order share is split off, as Tham's equations apply F to both
+    # parts.
+    if (!is.null(PK$scDoseBioavailability) && any(dose$RA))
+      dose$Dose[dose$RA] <- dose$Dose[dose$RA] *
+        doseSizeFactor(doseInDosingUnits(dose$Dose[dose$RA], PK, mg_Conv[dose$RA]),
+                       PK$scDoseBioavailability)
 
     # A drug with a slow second RA depot (ka_RA_slow in its model; see
     # getDrugPK()) absorbs each RA dose through two parallel depots.  The
@@ -439,6 +472,20 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       dose <- rbind(dose, secondRows)
       dose <- dose[order(dose$Time), , drop = FALSE]
     }
+
+    # Zero-order subcutaneous input (insulin lispro and glargine, and the
+    # premixes with lispro):
+    # the zero-order share of each SC dose becomes a piecewise-constant rate,
+    # into the circulation or into the depot; see R/subcutaneous.R.
+    # An oral release into the gut (canagliflozin) rides on the same
+    # machinery: the oral doses become tissue-depot doses, whose depot carries
+    # the oral absorption (getDrugPK(), oralReleaseToTissueDepot()).
+    if (isTRUE(PK$zeroOrderPO) && any(dose$PO))
+    {
+      dose$RA <- dose$RA | dose$PO
+      dose$PO <- FALSE
+    }
+    dose <- expandZeroOrderSC(dose, PK$zeroOrderSC, maximum)
 
     # Target-controlled infusion.  A "Plasma target" or "Effect site target"
     # row (Dose = the target concentration, which is already in the units Cp
@@ -488,7 +535,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         {
           results <- advanceClosedFormMetabolite(dose, pkSets[[1]], maximum, plotRecovery, emerge)
         } else if (sum(dose$PO) + sum(dose$IM) + sum(dose$IN) + sum(dose$SL) +
-                   sum(dose$SC) + sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
+                   sum(dose$RA) + sum(dose$RAslow) + sum(dose$RArate) +
                    sum(dose$PO2) == 0)
         {
           results <- advanceClosedForm0(dose,pkSets[[1]], maximum, plotRecovery, emerge)
@@ -543,7 +590,28 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       if (!is.null(routes)) dose$Dose[!doseRoute(dose$Units) %in% routes] <- 0
       dose
     }
-    if (!is.null(PK$michaelisMenten))
+    if (isTRUE(PK$doseDependent))
+    {
+      # Parameters that depend on the size of each injection (the Tham human
+      # insulins: CL/F and regular insulin's ka): each dose size is its own
+      # linear system, simulated with the PK for that size (doseSizePK(),
+      # R/getDrugPK.R) on the doses of that size, the others given as zero
+      # so that every run is on the same time line, and the runs are added.
+      sc <- dose$RA | dose$RAslow
+      if (any(!sc & dose$Dose != 0))
+        stop("A dose-dependent model takes subcutaneous injections only: ",
+             paste(unique(dose$Units[!sc & dose$Dose != 0]), collapse = ", "))
+      size <- round(doseInDosingUnits(dose$Dose, PK, mg_Conv), 9)
+      parts <- list()
+      for (d in unique(size[sc & dose$Dose != 0]))
+      {
+        own <- dose
+        own$Dose[!(sc & size == d)] <- 0
+        parts[[length(parts) + 1]] <- runEngines(own, doseSizePK(PK, d)$PK)
+      }
+      if (length(parts) == 0) parts <- list(runEngines(dose, pkSets))
+      results <- superposeEngineResults(parts, plotRecovery, emerge)
+    } else if (!is.null(PK$michaelisMenten))
     {
       # Saturable elimination (phenytoin): the whole dose table at once, by
       # numerical integration, because superposition does not hold; see

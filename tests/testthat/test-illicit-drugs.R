@@ -90,8 +90,10 @@ test_that("the PK table knows every extravascular route the library has", {
   # rather than failing, so the lookup is checked against DOSE_ROUTES itself:
   # adding a route to the library (SC arrived with enoxaparin) must not leave
   # a silently blank column behind.
+  # SC and RA share the tissue depot, whose rate is ka_RA (routeKaField()).
   set <- getDrugPK("GHB", 70, 170, 40, "male")$PK[[PK_EVENT_DEFAULT]]
   for (r in setdiff(DOSE_ROUTES, ROUTE_IV))
-    expect_true(paste0("ka_", r) %in% names(set),
+    expect_true(routeKaField(r) %in% names(set),
                 info = paste(r, "has no ka_ field in the PK set"))
+  expect_equal(routeKaField(ROUTE_SC), "ka_RA")
 })

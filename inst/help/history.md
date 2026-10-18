@@ -104,6 +104,8 @@ Douglas Eleveld did. His propofol model (Eleveld, Colin, Absalom and Struys, 201
 
 That is why stanpumpR's own propofol and remifentanil models are Eleveld's, and why it can run Schnider's and Minto's beside them (the **Minto / Schnider** box under [Graph Options](help:graph-options)): to show what the pumps compute, where it agrees with Eleveld, and where it does not. See [The Minto and Schnider models](help:models/minto-schnider), and the scenario [Obesity: why the Schnider and Minto models fail at the extremes of weight](scenario:james-lean-body-mass).
 
+Shafer's commentary for the initiative on what stanpumpR has made of the pooled data is [stanpumpR and Open TCI](help:opentci).
+
 ## stanpumpR
 
 stanpumpR uses very little of the original STANPUMP code. Conceptually it is identical: an open-source program that makes complex pharmacokinetic algorithms available to support patient care, teaching and research. The difference is that **the stanpumpR app does not control drug administration**. It is also in the spirit of the Open TCI initiative: it puts the published models, and the data-driven models built from pooled data, in the hands of clinicians, to bring the science of clinical pharmacology to the people who give the drugs and its benefits to their patients. It is a web-based simulator, written in R with the Shiny framework, that shows the expected concentrations from any dosing regimen.

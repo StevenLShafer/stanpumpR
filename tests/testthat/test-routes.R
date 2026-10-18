@@ -57,10 +57,11 @@ test_that("every unit offered before the oral rate keeps its exact classificatio
   # "mg/day PO" can be a rate; for every other unit the answer must be the
   # one it always was.
   # The rate units that arrived later (the oral daily rate, the continuous
-  # RA infusion) are rates by design and are left out.
-  units <- unique(c(setdiff(allUnits, c(poRateUnits, raRateUnits)), gasUnits, tciUnits, scheduledUnits,
+  # RA infusion, the insulin pump) are rates by design and are left out.
+  later <- c(poRateUnits, raRateUnits, insulinRateUnits)
+  units <- unique(c(setdiff(allUnits, later), gasUnits, tciUnits, scheduledUnits,
                     unlist(getDrugDefaultsGlobal()$Units)))
-  units <- setdiff(units, c(poRateUnits, raRateUnits))
+  units <- setdiff(units, later)
   route <- doseRoute(units)
   oldBolus <- route == ROUTE_IV & !(grepl("min", units) | grepl("hr", units))
   newBolus <- route == ROUTE_IV & !isRateUnit(units)

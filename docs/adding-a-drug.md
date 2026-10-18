@@ -120,6 +120,7 @@ dose: the engine applies that itself, dose by dose (see *saturable oral absorpti
 |---|---|
 | `PK` | named list of PK sets, one per event; each has `v1,v2,v3,cl1,cl2,cl3` (liters, L/min). A single-model drug uses one set named `default`. |
 | `tPeak` | time (min) to peak effect site; `getDrugPK()` back-solves `ke0` from it. `0` means no effect-site model. |
+| `ke0` | optional (1/min), for a source that measured the equilibration rate rather than a time to peak effect. Supply it *instead* of `tPeak`, leaving `tPeak` out altogether, and `getDrugPK()` solves the true time to peak effect from this `ke0` and the disposition (`R/drugs_etomidate.R`). |
 | `MEAC` | reference effect concentration used for the MEAC plot / normalization (`0` if not applicable). |
 | `typical`, `upperTypical`, `lowerTypical` | the shaded "typical range" band on the plot. |
 | `reference` | literature citation (string). |
@@ -134,6 +135,17 @@ An RA drug may add a slow second tissue depot absorbing in parallel: `ka_RA_slow
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
 The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
+
+**Optional — subcutaneous injection.** An SC drug writes `ka_SC`, `bioavailability_SC` and
+`tlag_SC` (and optionally `ka_SC_slow`, `fraction_SC_slow` and `tlag_SC_slow` for a second,
+slower depot with a lag of its own), and lists `mg SC` / `mg SC qwk`, or for an insulin `U SC`
+and, only if the product's label permits pump use, `U/hr SC`. `getDrugPK()` moves the fields onto
+the RA tissue depot, so a drug may offer SC or RA but not both. An insulin uses `mcU` as its
+`Concentration.Units` (doses in U, concentrations in mcU/mL). A source with zero-order
+absorption returns a `zeroOrderSC` block, `list(fraction, duration, into)`: `into = "central"`
+for a share of each dose entering the circulation at a constant rate beside the depot (Tham's
+insulin lispro and glargine), `into = "depot"` with `fraction = 1` for a sequential release into
+the depot. See `R/subcutaneous.R` and `R/insulinTham.R`.
 
 **Optional — a second oral depot.** A formulation absorbed through two parallel first-order
 paths, each with its own lag, adds `ka_PO2` (1/min), `fraction_PO2` (the share of the
@@ -325,6 +337,52 @@ absorption, and suits a product shown to be bioequivalent to its immediate-relea
 given in split doses; a continuous release (an osmotic pump) is not represented this way.
 The drug's help page must say how the pulses were chosen. `R/drugs_mixedAmphetamineSalts.R`
 is the example.
+
+**Optional — discretising an input shape the engine lacks.** The same block keyed to
+`ORAL_PULSE_DEFAULT_FORM` (the reserved name `"default"`) instead applies to every plain
+oral row — `mg PO`, `mg/kg PO` and their scheduled repeats — and leaves the unit exactly as
+entered:
+
+```r
+oralPulses = stats::setNames(list(list(fraction = f, delay = d)), ORAL_PULSE_DEFAULT_FORM)
+```
+
+Use this, and only this, when the source's own absorption is a shape no constant `ka` can
+represent and the pulses stand in for it. Hydrochlorothiazide is the case: Van Wart 2013
+fits a Weibull input whose depot rate constant rises with time, so
+`R/drugs_hydrochlorothiazide.R` gives each dose as eight lagged fractions at a rate constant
+of 1.0 /h — the Weibull's own asymptotic value, not a fitted number.
+
+The two uses are not interchangeable, and a reviewer will ask which one a block is. A
+formulation's pulses are a **model of a product**, evidenced by the product; the default
+form's are a **numerical approximation**, evidenced by the published curve they
+approximate. So a drug using the default form owes its header two things that a formulation
+does not: the input shape being stood in for, written out, and the **measured** cost of
+standing in for it — against a numerical integration of the exact system, across the
+covariate range, reported as a number. The standard is the pair MDMA's zero-order depot met:
+**0.53% of the peak concentration over the whole curve, and 0.01% at the peak**. Hold both,
+each against its own limit, or a fit will buy one with the other — minimising curve error
+alone let a seven-pulse hydrochlorothiazide reach 0.34% on the curve while drifting to six
+times MDMA's figure at the peak.
+
+**Measure that error AT THE PULSE TIMES.** Each lagged depot starts abruptly, so the
+approximation kinks at every pulse time and deviates most there, while the exact curve it
+approximates is smooth. `simulationTimeGrid()` puts a point at every dose time, so those
+kinks are what a user actually sees. A uniform grid steps over them and flatters the
+approximation: on hydrochlorothiazide a 0.02 h grid reported 0.45% where the truth was
+0.64%, and the six-pulse set it appeared to validate was outside the standard. If you fit
+the delays, the grid must be rebuilt per candidate, because a grid laid out from the
+starting delays goes stale as they move.
+
+The test must check the curve against that integration, not the fractions, so that a later
+change to either is caught by the thing worth protecting — and **its bounds must be the
+documented standard, not a loose fence around whatever the fit achieved.** A bound three
+times the claim is how the 0.64% above survived into review
+(`tests/testthat/test-drugs-hydrochlorothiazide.R`).
+
+A block may not name the default form and a formulation at once: an `mg PO XR` row is also
+an oral row, so which pulses applied would depend on the order the block was written in.
+`validateOralPulses()` refuses it.
 
 **Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
 that the fraction of an oral dose absorbed falls as the dose rises, returns an

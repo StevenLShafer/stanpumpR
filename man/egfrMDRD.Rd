@@ -20,15 +20,14 @@ scale at any age.}
 eGFR in mL/min/1.73 m^2
 }
 \description{
-The abbreviated MDRD Study equation, which the low-molecular-weight heparin
-and fondaparinux anti-Xa models used as their "creatinine clearance" (Berges
-2007; Delavenne 2010): eGFR = 175 x Scr^-1.154 x age^-0.203 x 0.742 (female).
-The race term (x 1.212 for a Black patient) is omitted, as both source
-cohorts were European and race is not a Patient Profile field; the 175
-coefficient is the IDMS-traceable form (the papers name only "simplified
-MDRD").  Indexed to 1.73 m^2, which is the value the source models centred
-their covariate on (69 and 87 mL/min), so it is used as given, not
-de-indexed.
+The IDMS-traceable form (Levey et al., Clin Chem 2007;53:766-772):
+eGFR = 175 x Scr^-1.154 x age^-0.203 x 0.742 (female).  The race term
+(x 1.212 for a Black patient) is omitted: race is not a Patient Profile
+field.  Indexed to 1.73 m^2 and used as given, not de-indexed.  Read by
+the low-molecular-weight heparin and fondaparinux anti-Xa models, which
+used it as their "creatinine clearance" (Berges 2007; Delavenne 2010), and
+by ertugliflozin (Fediuk 2021, capped there at 120), canagliflozin,
+empagliflozin and exenatide among the antidiabetics.
 
 The age term is a negative power, infinite at an age of 0 and steep in
 infancy, and the equation was fitted in adults, so the age it sees is

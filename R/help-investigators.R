@@ -274,7 +274,8 @@ helpLinkInvestigators <- function(html, context = c("prose", "citation"), exclud
   # Tags and text, alternating; text inside a link or code is left alone
   tokens <- regmatches(html, gregexpr("<[^>]*>|[^<]+", html, perl = TRUE))[[1]]
   isTag <- startsWith(tokens, "<")
-  skipTags <- "(a|code|pre|script|style)"
+  # An <a> is not valid inside an SVG <text>, so a figure's labels are left alone
+  skipTags <- "(a|code|pre|script|style|svg)"
   opens <- grepl(paste0("^<", skipTags, "(\\s|>)"), tokens, perl = TRUE, ignore.case = TRUE)
   closes <- grepl(paste0("^</", skipTags, "\\s*>"), tokens, perl = TRUE, ignore.case = TRUE)
   depth <- cumsum(opens) - cumsum(closes)

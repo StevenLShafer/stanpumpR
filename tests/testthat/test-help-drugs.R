@@ -65,6 +65,9 @@ plasmaOnly <- c(
   # The opt-in illicit research models (2026-10-17) are plasma only: see
   # inst/extdata/illicitRouteRegistry.csv and each drug's header.
   "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
+  # carfentanil (2026-10-18) borrows sufentanil's DISPOSITION only, so
+  # sufentanil's tPeak deliberately does not come with it: R/drugs_carfentanil.R
+  "carfentanil",
   # Antipsychotics: occupancy is a direct function of plasma, or no effect is
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
@@ -72,6 +75,14 @@ plasmaOnly <- c(
   # Intravenous calcium (2026-10-13): plotted as the change in ionized
   # calcium, which is the end point itself; no ke0.
   "calcium",
+  # The antidiabetic drugs (2026-10-17): concentration only; glucose,
+  # HbA1c, UGE and DPP-4 inhibition are endpoints of their own, with no ke0
+  # (inst/help/models/antidiabetics.md)
+  "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
+  "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
+  "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
+  "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
+  "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
   "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
@@ -80,7 +91,7 @@ plasmaOnly <- c(
   # publishes an equilibration rate constant, and no blood pressure is
   # plotted for any drug in the library (docs/antihypertensives.md).
   "clevidipine", "fenoldopamPediatric", "carvedilol",
-    "azilsartan", "chlorthalidone"
+    "azilsartan", "chlorthalidone", "hydrochlorothiazide"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -415,6 +426,25 @@ test_that("a saturable drug's terminal half-life is its own, not the linear tabl
   html <- helpDrugPageHTML("GHB")
   expect_true(grepl("Terminal", html, fixed = TRUE))
   expect_true(grepl("81.7", html, fixed = TRUE))
+})
+
+test_that("the saturable section reads the antidiabetics' engine fields", {
+  # Exenatide's low-concentration limit includes its parallel linear clearance
+  # and its peripheral compartment, declared as the PK set's cl2 and v2: the
+  # slower root of the linear two-compartment system, as its parameter table
+  # computes it.
+  ex <- helpDrugModelOutput("exenatide", helpReferencePatients()[1, ])
+  set <- ex$PK[[PK_EVENT_DEFAULT]]
+  expect_equal(helpSaturableTerminalHalfLife(ex),
+               helpDrugParameterTable("exenatide")$halfLife2[1], tolerance = 1e-3)
+  html <- helpDrugPageHTML("exenatide")
+  expect_true(grepl("Vmax (ng/min)", html, fixed = TRUE))
+  # Saturable binding (the DPP-4 inhibitors) has no Vmax/Km limit and is
+  # described as binding, not elimination.
+  lin <- helpDrugModelOutput("linagliptin", helpReferencePatients()[1, ])
+  expect_true(is.na(helpSaturableTerminalHalfLife(lin)))
+  expect_true(grepl("Saturable binding", helpDrugPageHTML("linagliptin"), fixed = TRUE))
+  expect_false(grepl("Saturable elimination", helpDrugPageHTML("vildagliptin"), fixed = TRUE))
 })
 
 test_that("Km is shown with the drug's own concentration units, not a fixed one", {

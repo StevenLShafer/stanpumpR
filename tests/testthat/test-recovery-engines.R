@@ -395,10 +395,20 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # The opt-in illicit research models (2026-10-17) are plasma only: see
     # inst/extdata/illicitRouteRegistry.csv and each drug's header.
     "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
+    # carfentanil (2026-10-18): sufentanil's DISPOSITION only, so its
+    # tPeak deliberately does not come with it (R/drugs_carfentanil.R)
+    "carfentanil",
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
     "olanzapine", "droperidol", "droperidolIM",
+    # The antidiabetic drugs (2026-10-17): concentration only, no ke0, no
+    # metabolite (inst/help/models/antidiabetics.md)
+    "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
+    "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
+    "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
+    "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
+    "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
     # Intravenous calcium joined on 2026-10-13: the ionized calcium itself
     # is the end point, no ke0, no metabolite.
     "calcium",
@@ -411,7 +421,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # published equilibration constant, and no blood pressure is plotted for
     # any drug in the library (docs/antihypertensives.md).
     "clevidipine", "fenoldopamPediatric", "carvedilol",
-    "azilsartan", "chlorthalidone"
+    "azilsartan", "chlorthalidone", "hydrochlorothiazide"
   ))
 })
 

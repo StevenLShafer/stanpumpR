@@ -35,9 +35,6 @@ test_that("it returns the same value", {
         ka_SL = 0,
         bioavailability_SL = 0,
         tlag_SL = 0,
-        ka_SC = 0,
-        bioavailability_SC = 0,
-        tlag_SC = 0,
         ka_RA = 0,
         bioavailability_RA = 0,
         tlag_RA = 0,
@@ -102,15 +99,6 @@ test_that("it returns the same value", {
         e_coef_SL_l3 = 0,
         e_coef_SL_ke0 = 0,
         e_coef_SL_ka = 0,
-        p_coef_SC_l1 = 0,
-        p_coef_SC_l2 = 0,
-        p_coef_SC_l3 = 0,
-        p_coef_SC_ka = 0,
-        e_coef_SC_l1 = 0,
-        e_coef_SC_l2 = 0,
-        e_coef_SC_l3 = 0,
-        e_coef_SC_ke0 = 0,
-        e_coef_SC_ka = 0,
         p_coef_RA_l1 = 0,
         p_coef_RA_l2 = 0,
         p_coef_RA_l3 = 0,
@@ -159,7 +147,10 @@ test_that("it returns the same value", {
     Infusion.Units      = drugDefaults$Infusion.Units,
     Units               = drugDefaults$Units,
     Default.Units       = drugDefaults$Default.Units,
-    endCe               = drugDefaults$endCe
+    endCe               = drugDefaults$endCe,
+    # The tissue depot's route (R/subcutaneous.R): regional anesthesia for
+    # every drug that is not subcutaneous
+    tissueRoute         = ROUTE_RA
   )
 
   expect_equal_rounded(actual, expected)
