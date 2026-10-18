@@ -337,6 +337,52 @@ given in split doses; a continuous release (an osmotic pump) is not represented 
 The drug's help page must say how the pulses were chosen. `R/drugs_mixedAmphetamineSalts.R`
 is the example.
 
+**Optional — discretising an input shape the engine lacks.** The same block keyed to
+`ORAL_PULSE_DEFAULT_FORM` (the reserved name `"default"`) instead applies to every plain
+oral row — `mg PO`, `mg/kg PO` and their scheduled repeats — and leaves the unit exactly as
+entered:
+
+```r
+oralPulses = stats::setNames(list(list(fraction = f, delay = d)), ORAL_PULSE_DEFAULT_FORM)
+```
+
+Use this, and only this, when the source's own absorption is a shape no constant `ka` can
+represent and the pulses stand in for it. Hydrochlorothiazide is the case: Van Wart 2013
+fits a Weibull input whose depot rate constant rises with time, so
+`R/drugs_hydrochlorothiazide.R` gives each dose as eight lagged fractions at a rate constant
+of 1.0 /h — the Weibull's own asymptotic value, not a fitted number.
+
+The two uses are not interchangeable, and a reviewer will ask which one a block is. A
+formulation's pulses are a **model of a product**, evidenced by the product; the default
+form's are a **numerical approximation**, evidenced by the published curve they
+approximate. So a drug using the default form owes its header two things that a formulation
+does not: the input shape being stood in for, written out, and the **measured** cost of
+standing in for it — against a numerical integration of the exact system, across the
+covariate range, reported as a number. The standard is the pair MDMA's zero-order depot met:
+**0.53% of the peak concentration over the whole curve, and 0.01% at the peak**. Hold both,
+each against its own limit, or a fit will buy one with the other — minimising curve error
+alone let a seven-pulse hydrochlorothiazide reach 0.34% on the curve while drifting to six
+times MDMA's figure at the peak.
+
+**Measure that error AT THE PULSE TIMES.** Each lagged depot starts abruptly, so the
+approximation kinks at every pulse time and deviates most there, while the exact curve it
+approximates is smooth. `simulationTimeGrid()` puts a point at every dose time, so those
+kinks are what a user actually sees. A uniform grid steps over them and flatters the
+approximation: on hydrochlorothiazide a 0.02 h grid reported 0.45% where the truth was
+0.64%, and the six-pulse set it appeared to validate was outside the standard. If you fit
+the delays, the grid must be rebuilt per candidate, because a grid laid out from the
+starting delays goes stale as they move.
+
+The test must check the curve against that integration, not the fractions, so that a later
+change to either is caught by the thing worth protecting — and **its bounds must be the
+documented standard, not a loose fence around whatever the fit achieved.** A bound three
+times the claim is how the 0.64% above survived into review
+(`tests/testthat/test-drugs-hydrochlorothiazide.R`).
+
+A block may not name the default form and a formulation at once: an `mg PO XR` row is also
+an oral row, so which pulses applied would depend on the order the block was written in.
+`validateOralPulses()` refuses it.
+
 **Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
 that the fraction of an oral dose absorbed falls as the dose rises, returns an
 `oralSaturation` block alongside the usual fields:
