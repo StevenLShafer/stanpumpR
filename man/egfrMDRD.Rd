@@ -28,5 +28,10 @@ the low-molecular-weight heparin and fondaparinux anti-Xa models, which
 used it as their "creatinine clearance" (Berges 2007; Delavenne 2010), and
 by ertugliflozin (Fediuk 2021, capped there at 120), canagliflozin,
 empagliflozin and exenatide among the antidiabetics.
+
+The age term is a negative power, infinite at an age of 0 and steep in
+infancy, and the equation was fitted in adults, so the age it sees is
+floored at \code{ADULT_AGE_TERM_FLOOR} (18): a child gets the value of an
+18-year-old at the same (adult-scale) creatinine.
 }
 \keyword{internal}

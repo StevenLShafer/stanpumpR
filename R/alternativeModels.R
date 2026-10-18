@@ -287,8 +287,14 @@ remifentanilMinto <- function(weight, height, age, sex, adjustToFFM = TRUE,
 #'     INR_MAX = 20 fixed, lambda = 3.61, and BASE the drug-free baseline INR,
 #'     1 for a typical patient.
 #'
-#' `adjustToFFM` is accepted for the uniform signature and ignored: the model
-#' has no body-size covariate (sex and weight were not significant).
+#' Body size (docs/weight-adjustment.md): Hamberg found neither weight nor sex
+#' significant and published no size term, so, as for every library model
+#' without one (heparin, say), the published values are taken as the 70 kg,
+#' 170 cm reference man's: volumes scale with fat-free mass and clearances with
+#' that ratio to the 0.75 power while `adjustToFFM` is on, and are used as
+#' published, unscaled, when it is off.  The library's own warfarin model (Xue)
+#' carries its own fat-free-mass covariate, so with the switch on the two INR
+#' lines treat body size alike and the gap between them is the genotype.
 #' @noRd
 warfarinHamberg <- function(weight, height, age, sex, adjustToFFM = TRUE,
                             cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT)
@@ -306,15 +312,16 @@ warfarinHamberg <- function(weight, height, age, sex, adjustToFFM = TRUE,
   clS <- 0.314 * (1 - 0.0091 * (age - 71)) * (1 - reduction[[cyp2c9]])   # L/h
   clR <- 0.139 * (1 - 0.0098 * (age - 71))                              # L/h
   ka  <- 2 / 60                                                         # 1/min
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
 
   sSet <- list(
-    v1 = 13.8, v2 = 6.59, v3 = 1,
-    cl1 = clS / 60, cl2 = 0.131 / 60, cl3 = 0,
+    v1 = 13.8 * size$volume, v2 = 6.59 * size$volume, v3 = 1,
+    cl1 = clS / 60 * size$clearance, cl2 = 0.131 / 60 * size$clearance, cl3 = 0,
     ka_PO = ka, tlag_PO = 0, bioavailability_PO = 1
   )
   rSet <- list(
-    v1 = 12.8, v2 = 1, v3 = 1,
-    cl1 = clR / 60, cl2 = 0, cl3 = 0,
+    v1 = 12.8 * size$volume, v2 = 1, v3 = 1,
+    cl1 = clR / 60 * size$clearance, cl2 = 0, cl3 = 0,
     ka_PO = ka, tlag_PO = 0, bioavailability_PO = 1
   )
 
@@ -348,14 +355,18 @@ warfarinHamberg <- function(weight, height, age, sex, adjustToFFM = TRUE,
 #'   (R/pregnancy.R)
 #' @param cyp2c9,vkorc1 the pharmacogenetic covariates, passed on when the model
 #'   names them (warfarin's Hamberg companion reads both)
+#' @param adjustToFFM the fat-free-mass switch, passed on when the model names
+#'   it (every companion does; Schnider and Minto ignore it, Hamberg scales)
 #' @returns the model function's output (PK sets, tPeak or ke0, reference)
 #' @noRd
 alternativeModelOutput <- function(drug, weight, height, age, sex, pregnant = FALSE,
-                                   cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT) {
+                                   cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
+                                   adjustToFFM = TRUE) {
   spec <- ALTERNATIVE_MODELS[[drug]]
   if (is.null(spec)) stop("No alternative model for ", drug)
   fn <- get(spec$model, mode = "function")
   args <- list(weight = weight, height = height, age = age, sex = sex)
+  if ("adjustToFFM" %in% names(formals(fn))) args$adjustToFFM <- isTRUE(adjustToFFM)
   if ("pregnant" %in% names(formals(fn))) args$pregnant <- isTRUE(pregnant)
   if ("cyp2c9"  %in% names(formals(fn))) args$cyp2c9  <- cyp2c9
   if ("vkorc1"  %in% names(formals(fn))) args$vkorc1  <- vkorc1
@@ -438,7 +449,8 @@ alternativeModelEntry <- function(drug, weight, height, age, sex, drugDefaults,
                                        cyp2c9 = cyp2c9, vkorc1 = vkorc1))) return(NULL)
   spec <- ALTERNATIVE_MODELS[[drug]]
   model <- alternativeModelOutput(drug, weight, height, age, sex, pregnant,
-                                  cyp2c9 = cyp2c9, vkorc1 = vkorc1)
+                                  cyp2c9 = cyp2c9, vkorc1 = vkorc1,
+                                  adjustToFFM = adjustToFFM)
   entry <- getDrugPK(
     drug = drug,
     weight = weight, height = height, age = age, sex = sex,

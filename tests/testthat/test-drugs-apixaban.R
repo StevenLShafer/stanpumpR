@@ -72,3 +72,18 @@ test_that("the plotted concentration is plasma only, with no effect site", {
   expect_equal(r$tPeak, 0)
   expect_equal(r$MEAC, 0)
 })
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).  Worked out by hand from
+  # the published equations, not from the code under test.
+  # Cockcroft-Gault at the assumed 0.9 mg/dL: 90 x 91.343469 / 64.8 = 126.866
+  # mL/min.  CL_R/F = 1.57 x 126.866/80; CL_NR/F = 2.02 x (50/65)^-0.429 x
+  # 1.2209126; both x 0.861 (NVAF).  Vc/F = 30 x (91.343469/70)^0.790 x 0.9595;
+  # Vp/F = 27 x 1.3049067; Q/F = 1.91 x 1.2209126.
+  actual <- apixaban(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
+                       list(v1 = 35.520086, v2 = 35.232481,
+                            cl1 = 0.075334605, cl2 = 0.038865718))
+})

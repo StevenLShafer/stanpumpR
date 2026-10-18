@@ -50,7 +50,7 @@
 # phase 1 renal-impairment study, are not used.  Race is fixed to non-Asian;
 # Asian patients had a 22.6% higher Vc/F (on the volume, not the clearance, so
 # the same steady-state exposure).  The typical Hokusai patient (80.5 kg, CLcr
-# 99 mL/min) then has CL/F about 38 L/h and a half-life of roughly 10-12 h,
+# 99 mL/min) then has CL/F about 38 L/h and a terminal half-life of 9.7 h,
 # reproducing the ~70-90 ng/mL steady-state exposure the paper's covariate
 # plots show for 60 mg once daily.
 #

@@ -1,9 +1,11 @@
 # Renal function for the drug models that need it.
 #
 # Several models carry a renal covariate (Cockcroft-Gault creatinine
-# clearance, or a CKD-EPI eGFR): mannitol, vancomycin, gentamicin, cefazolin,
-# sugammadex, gabapentin, pregabalin, oxycodone and (intravenous only)
-# meloxicam.  Each takes an optional
+# clearance, a CKD-EPI eGFR, or the simplified MDRD eGFR): mannitol,
+# vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin,
+# oxycodone, (intravenous only) meloxicam, lacosamide, levetiracetam, and the
+# anticoagulants apixaban, rivaroxaban, edoxaban, dabigatran, enoxaparin and
+# fondaparinux.  Each takes an optional
 # `creatinine` argument, the patient's serum creatinine from the Patient
 # Profile.
 #
@@ -178,8 +180,10 @@ adultEquivalentCreatinine <- function(creatinine, age, sex)
 #'
 #' `(140 - age) x weight / (72 x SCr)`, times 0.85 for a woman, in mL/min.
 #' This is the estimator the vancomycin (Thomson 2009), cefazolin (Komatsu
-#' 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017) and pregabalin
-#' (Chan 2021, from 13 years of age; Schwartz below) models were fitted with.
+#' 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017), pregabalin
+#' (Chan 2021, from 13 years of age; Schwartz below), apixaban (Cirincione
+#' 2018), rivaroxaban (Willmann 2018), edoxaban (Niebecker 2015) and
+#' dabigatran (Liesenfeld 2011) models were fitted with.
 #'
 #' @param weight the weight the calling model scales on, kg
 #' @param age age in years
@@ -287,10 +291,16 @@ egfrDeindexed <- function(weight, height, age, sex, scr = adultCreatinine(sex))
 #' by ertugliflozin (Fediuk 2021, capped there at 120), canagliflozin,
 #' empagliflozin and exenatide among the antidiabetics.
 #'
+#' The age term is a negative power, infinite at an age of 0 and steep in
+#' infancy, and the equation was fitted in adults, so the age it sees is
+#' floored at `ADULT_AGE_TERM_FLOOR` (18): a child gets the value of an
+#' 18-year-old at the same (adult-scale) creatinine.
+#'
 #' @inheritParams creatinineClearanceCG
 #' @return eGFR in mL/min/1.73 m^2
 #' @keywords internal
 egfrMDRD <- function(age, sex, scr = adultCreatinine(sex))
 {
+  age <- max(age, ADULT_AGE_TERM_FLOOR)
   175 * scr^(-1.154) * age^(-0.203) * (if (sex == SEX_FEMALE) 0.742 else 1)
 }

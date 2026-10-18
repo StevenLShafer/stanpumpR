@@ -123,6 +123,13 @@ MAX_CREATININE <- 15
 
 MIN_AGE <- 0
 MAX_AGE <- 90
+# The youngest age the adult-fitted covariate terms see.  Several models carry
+# age as a negative power ((age / 65)^-0.429, say), which is infinite at an age
+# of 0 (a legal entry) and steep in infancy, where none of them was fitted; a
+# child below this age receives the term's value at this age, as buprenorphine
+# already does (BUPRENORPHINE_MIN_AGE).  Read by apixaban, rivaroxaban,
+# fondaparinux and paroxetine, and by egfrMDRD() in R/renalFunction.R.
+ADULT_AGE_TERM_FLOOR <- 18
 MIN_WEIGHT <- 0.1
 MAX_WEIGHT <- 500
 MIN_HEIGHT <- 10

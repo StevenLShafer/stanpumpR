@@ -59,9 +59,10 @@
 #     C50_app = C50_S x (1 + C_R / RIC50)
 # (R/inr.R).  This is the competitive antagonism of the paper's Equation 2 as
 # the erratum corrects it; the erratum text could not be read here, but this
-# form reproduces the paper's worked example (apparent C50 0.530 mg/L against
-# 0.378, a 36% rise, at a maintenance dose giving C_R near 0.86 mg/L), which
-# test-drugs-warfarin.R pins.  The authors found the R effect minor.
+# form reproduces the paper's worked example: at a maintenance dose giving
+# C_R near 0.86 mg/L the apparent C50 is 0.378 x (1 + 0.86 / 2.387) = 0.514
+# mg/L, a 36% rise, which test-drugs-warfarin.R pins.  The authors found the
+# R effect minor.
 #
 # BODY SIZE: FAT-FREE MASS, THE MODEL'S OWN
 # =========================================

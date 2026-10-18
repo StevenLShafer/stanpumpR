@@ -21,4 +21,4 @@ Renal function enters through the Cockcroft–Gault creatinine clearance, from t
 
 ### Dose-dependent bioavailability
 
-Relative bioavailability falls as the dose rises, 1 at 2.5 mg to 0.58 at 50 mg, following the paper's power model. Each dose is scaled by its own size before the engine, so superposition still holds for doses given apart in time.
+Relative bioavailability falls as the dose rises, 1 at 2.5 mg to 0.58 at 50 mg, following the paper's power model. Above 50 mg, the largest dose the paper fitted, it is held at 0.58: the power would otherwise fall through zero at about 137 mg, so that a very large dose simulated as no drug at all. Each dose is scaled by its own size before the engine, so superposition still holds for doses given apart in time.

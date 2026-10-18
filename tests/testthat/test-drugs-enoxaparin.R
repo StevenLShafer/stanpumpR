@@ -62,3 +62,17 @@ test_that("a mass unit is refused for this activity drug", {
     "international units"
   )
 })
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).  Worked out by hand from
+  # the published equations, not from the code under test.
+  # Simplified MDRD at the assumed 0.9 mg/dL and 50 y: 89.321 mL/min/1.73 m^2.
+  # CL = 0.70 x (91.343469/65)^0.78 x (89.321/69)^0.25; V2 = 6.43 x
+  # (91.343469/65)^1.25; V3 = 8.18 x 1.3049067; Q = 0.34 x 1.2209126.
+  actual <- enoxaparin(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
+                       list(v1 = 9.8382115, v2 = 10.674137,
+                            cl1 = 0.016226631, cl2 = 0.0069185047))
+})

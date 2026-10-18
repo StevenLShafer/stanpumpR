@@ -63,7 +63,7 @@ registry <- rbind(
   reg("warf_xue_2017_cardiac", "vitamin K antagonist",
       "oral, cardiac surgery", "S/R-warfarin (mg/L) -> INR", "INR (theory-based 1/PCA)",
       "PO", "research_ready", "warfarin",
-      "Eq.2 multiplicative C50_app confirmed against the published erratum (BCP 2017;83:1602); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
+      "Eq.2 multiplicative C50_app is the form that reproduces the paper's worked example (the erratum, BCP 2017;83:1602, was not itself read); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
       "https://doi.org/10.1111/bcp.13157"),
   reg("warf_hamberg_2007", "vitamin K antagonist",
       "oral", "S/R-warfarin (mg/L) -> INR", "INR (two-chain transit compartments)",
@@ -179,7 +179,7 @@ par <- function(drug, parameter, value, units, provenance, population, source_ur
 JIA  <- "41 enrolled (32 completed) cardiac-bypass patients, Jia 2015"
 ZH   <- "36 young healthy Chinese volunteers, Zhang 2012"
 CIR  <- "4385 subjects (phase I-III), Cirincione 2018 NVAF reference"
-WIL  <- "4918 patients, 7 trials, Willmann 2018 (population means)"
+WIL  <- "4918 patients, 7 trials, Willmann 2018 (population medians: 81 kg, 93 mL/min, 61 y)"
 XUE  <- "264 cardiac-surgery patients, Xue 2017"
 NIE  <- "4130 individuals (13 phase 1 + Hokusai-VTE), Niebecker 2015"
 LIE  <- "9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011"
@@ -208,8 +208,8 @@ parameters <- rbind(
   par("apixaban", "ka", 0.473, "1/h", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "F(dose) I50, gamma", "0.420, 0.857", "logit I50 -0.322", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
 
-  par("rivaroxaban", "CL/F", 6.58, "L/h (x (CrCl/97.2)^0.406 x (WT/82.5)^-0.278 x0.849 AF)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
-  par("rivaroxaban", "V/F", 62.5, "L (x (WT/82.5)^0.216 x (age/60.5)^-0.189 x0.889 female)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
+  par("rivaroxaban", "CL/F", 6.58, "L/h (x (CrCl/93)^0.406 x (WT/81)^-0.278 x0.849 AF)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
+  par("rivaroxaban", "V/F", 62.5, "L (x (WT/81)^0.216 x (age/61)^-0.189 x0.889 female)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
   par("rivaroxaban", "ka", 0.821, "1/h", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
   par("rivaroxaban", "F(dose) Fmin,Fmax,D50", "0.590, 1.25, 14.4", "exp(-ln2 D/D50)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
 
