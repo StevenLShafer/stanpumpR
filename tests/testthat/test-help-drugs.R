@@ -93,7 +93,7 @@ plasmaOnly <- c(
   "clevidipine", "fenoldopamPediatric", "carvedilol",
     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
-    "epinephrine"
+    "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

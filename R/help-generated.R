@@ -401,10 +401,53 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
   ), collapse = "\n")
 }
 
+#' The vasoactive registry as a Markdown table
+#'
+#' One row per drug and candidate source in
+#' \code{inst/extdata/vasoactiveRegistry.csv}: what it is, whether it is in
+#' the library, and what stands in the way if it is not.  Built from the
+#' registry so the help cannot drift from it.
+#' @noRd
+helpVasoactiveRegistryMarkdown <- function(registry = vasoactiveRegistry()) {
+  status <- c(implemented = "In the library",
+              needs_full_text = "Needs the paper",
+              no_suitable_model = "No usable model")
+  read <- c(full_text = "full text", abstract = "abstract", none = "citation only")
+  registry <- registry[order(tolower(registry$drug),
+                             match(registry$readiness, names(status))), ]
+  drugCell <- ifelse(
+    is.na(registry$stanpumpr_drug), registry$drug,
+    sprintf("[%s](help:drugs/%s)", registry$drug, registry$stanpumpr_drug))
+  # "Abboud 2009": the first author's surname and the year of publication
+  short <- paste(sub("^(.+?) [A-Z][A-Za-z]{0,2}[,. ].*$", "\\1", registry$source),
+                 sub(";$", "", regmatches(registry$source,
+                                          regexpr("(19|20)[0-9]{2};", registry$source))))
+  rows <- sprintf("| %s | %s | %s (%s) | [%s](%s) | %s |",
+                  drugCell, status[registry$readiness], registry$population,
+                  read[registry$evidence_read],
+                  short, registry$source_url,
+                  registry$blocking_issue)
+  paste(c("| Drug | Status | Population (what was read) | Source | Notes |",
+          "|---|---|---|---|---|", rows), collapse = "\n")
+}
+
+#' The papers that would unblock a vasoactive model, as a Markdown list
+#' @noRd
+helpVasoactiveToObtainMarkdown <- function(registry = vasoactiveRegistry()) {
+  want <- registry[!is.na(registry$to_obtain) & nzchar(registry$to_obtain), ]
+  want <- want[order(want$readiness != "needs_full_text", tolower(want$drug)), ]
+  paste(sprintf("- **%s**%s: %s", want$drug,
+                ifelse(want$readiness == "implemented",
+                       " (in the library, to confirm)", ""),
+                want$to_obtain), collapse = "\n")
+}
+
 HELP_GENERATED_BLOCKS <- list(
   "route-table" = helpRouteTableMarkdown,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,
   "pregnancy-table" = helpPregnancyTableMarkdown,
   "illicit-pk-table" = helpIllicitPKTableMarkdown,
-  "james-lbm-figure" = helpJamesLBMFigure
+  "james-lbm-figure" = helpJamesLBMFigure,
+  "vasoactive-registry-table" = helpVasoactiveRegistryMarkdown,
+  "vasoactive-to-obtain" = helpVasoactiveToObtainMarkdown
 )

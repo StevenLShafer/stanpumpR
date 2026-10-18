@@ -88,6 +88,14 @@ EPINEPHRINE_R0       <- 43.5    # nmol/h, endogenous input (not plotted)
 EPINEPHRINE_SAPS_REF <- 50      # the reference score, used for every patient
 EPINEPHRINE_MW       <- 183.2   # g/mol, the base
 
+#' Epinephrine (Abboud 2009)
+#'
+#' One compartment in adult septic shock; see the header of
+#' \code{R/drugs_epinephrine.R}.
+#'
+#' @inheritParams cefazolin
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
 epinephrine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)

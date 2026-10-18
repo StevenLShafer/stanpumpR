@@ -1,0 +1,330 @@
+# -----------------------------------------------------------------------------
+# Build inst/extdata/vasoactiveRegistry.csv and vasoactiveParameters.csv
+# -----------------------------------------------------------------------------
+# Drafted by Claude Code, 2026-10-18, at the request of Steven L. Shafer, who
+# asked for the intravenous vasoactive drugs of intensive care: clevidipine,
+# sodium nitroprusside, nitroglycerin, epinephrine, norepinephrine,
+# vasopressin, ephedrine, phenylephrine, hydralazine, nicardipine, dopamine,
+# methylene blue, atropine, adenosine, sodium bicarbonate, magnesium sulfate,
+# procainamide, verapamil, diltiazem, propranolol, metoprolol, esmolol and
+# labetalol, with references, and the references still to be obtained.
+#
+# The registry has one row per drug and candidate source.  A row is
+# "implemented" only where a complete model is in the library as a
+# selectable drug (R/drugs_<name>.R, a CSV row, a test and a help page).
+# Every other row says what blocks it and, where a paper would unblock it,
+# names that paper in `to_obtain`.  Readiness:
+#
+#   implemented        in the library
+#   needs_full_text    a candidate model exists, but the numbers that fix it
+#                      could not be read here (abstract only, or a full text
+#                      whose tables were stripped)
+#   no_suitable_model  no published model this engine can represent: the
+#                      drug is not measured (nitroprusside), its kinetics are
+#                      sub-second and dose-dependent (adenosine), or it has no
+#                      pharmacokinetics in the usual sense (bicarbonate)
+#
+# `evidence_read` records what was actually read in this environment: the
+# full text (from PubMed Central), the abstract only, or nothing beyond a
+# citation.  Literature access from here is the PubMed server alone; scanned
+# PubMed Central papers (most British Journal of Clinical Pharmacology papers
+# before 2000) return an empty body, although they are free to download.
+#
+# Run with: Rscript data-raw/vasoactiveRegistry.R
+# Checked by tests/testthat/test-vasoactive-registry.R.
+# -----------------------------------------------------------------------------
+
+READINESS <- c("implemented", "needs_full_text", "no_suitable_model")
+EVIDENCE  <- c("full_text", "abstract", "none")
+
+pubmed <- function(pmid) paste0("https://pubmed.ncbi.nlm.nih.gov/", pmid, "/")
+doi    <- function(d) paste0("https://doi.org/", d)
+
+reg <- function(model_id, drug, population, analyte, matrix, readiness,
+                stanpumpr_drug, evidence_read, blocking_issue, to_obtain,
+                source, source_url, antihypertensive_model_id = NA)
+  data.frame(model_id, drug, route = "IV", population, analyte, matrix,
+             readiness, stanpumpr_drug, evidence_read, blocking_issue,
+             to_obtain, source, source_url, antihypertensive_model_id,
+             stringsAsFactors = FALSE)
+
+registry <- rbind(
+  # --- Implemented ------------------------------------------------------------
+  reg("epinephrine__septic_shock__abboud2009", "epinephrine",
+      "38 adults in septic shock, 0.026-1.7 mcg/kg/min", "epinephrine (exogenous)", "plasma",
+      "implemented", "epinephrine", "full_text",
+      "None for the curve.  SAPS II (on clearance) has no Patient Profile field and is held at 50; the volume is poorly determined (SE 36%) because the data are steady-state.",
+      NA,
+      "Abboud I, Lerolle N, Urien S, et al. Pharmacokinetics of epinephrine in patients with septic shock: modelization and interaction with endogenous neurohormonal status. Crit Care 2009;13:R120. PMID 19622169, PMC2750169.",
+      doi("10.1186/cc7972")),
+  reg("magnesium_sulfate__preeclampsia__du2019", "magnesium sulfate",
+      "92 women with preeclampsia, 4 g over 20 min then 2 g/h", "rise in serum magnesium above baseline", "serum",
+      "implemented", "magnesiumSulfate", "full_text",
+      "None for the curve.  Fitted in pregnancy; other adults are an extrapolation.  The paper's 24-hour exposure and all six Table 4 maintenance doses are reproduced.",
+      NA,
+      "Du L, Wenning LA, Carvalho B, et al. Population pharmacokinetic modeling to evaluate standard magnesium sulfate treatments and alternative dosing regimens for women with preeclampsia. J Clin Pharmacol 2019;59:374-385. PMID 30422321, PMC6518930.",
+      doi("10.1002/jcph.1328")),
+  reg("labetalol__healthy__kanto1981", "labetalol",
+      "4 healthy volunteers, 1.5 mg/kg", "labetalol", "plasma",
+      "implemented", "labetalol", "abstract",
+      "Built from the abstract's clearance, central volume and two half-lives; the printed Vss checks it to 4%.  Dose basis (HCl or base) and assay are unread.  Surgical patients clear it about half as fast.",
+      "Kanto J, Allonen H, Kleimola T, Mantyla R. Pharmacokinetics of labetalol in healthy volunteers. Int J Clin Pharmacol Ther Toxicol 1981;19:41-44. PMID 7203731 (full text, to confirm dose basis and assay).",
+      "Kanto J, Allonen H, Kleimola T, Mantyla R. Pharmacokinetics of labetalol in healthy volunteers. Int J Clin Pharmacol Ther Toxicol 1981;19:41-44. PMID 7203731.",
+      pubmed(7203731), "labetalol__injection__iv__catalog__none__label"),
+  reg("diltiazem__healthy__hoglund1988", "diltiazem",
+      "10 healthy volunteers, 20 mg over 20 min", "diltiazem", "plasma",
+      "implemented", "diltiazem", "abstract",
+      "Built from the abstract's clearance, central volume and two half-lives; the printed Vss checks it to 2.6%.  Clearance falls at higher infusion rates (label; Dias 1992), so long high-rate infusions run higher than plotted.  Dose basis unread.",
+      "Hoglund P, Nilsson LG. Physiological disposition of intravenously administered 14C-labeled diltiazem in healthy volunteers. Ther Drug Monit 1988;10:401-409. PMID 3201524 (full text, to confirm dose basis and weights).",
+      "Hoglund P, Nilsson LG. Physiological disposition of intravenously administered 14C-labeled diltiazem in healthy volunteers. Ther Drug Monit 1988;10:401-409. PMID 3201524.",
+      doi("10.1097/00007691-198804000-00006")),
+  reg("nitroglycerin__ccf__armstrong1983", "nitroglycerin",
+      "10 patients with congestive cardiac failure, 21 mcg/min", "glyceryl trinitrate", "plasma",
+      "implemented", "nitroglycerin", "abstract",
+      "One compartment from the abstract's clearance (6.2 L/min) and time constant (8.1 min).  Healthy volunteers' clearance is 3 to 10 times higher (McNiff 1981); PVC tubing adsorption and sampling site are unread.",
+      "Armstrong PW, Watts DG, Moffat JA. Steady state pharmacokinetic haemodynamic studies of intravenous nitroglycerin in congestive cardiac failure. Br J Clin Pharmacol 1983;16:385-390. PMID 6414501; free scan PMC1428029.",
+      "Armstrong PW, Watts DG, Moffat JA. Br J Clin Pharmacol 1983;16:385-390. PMID 6414501.",
+      doi("10.1111/j.1365-2125.1983.tb02182.x"), "nitroglycerin__injection__iv__catalog__none__label"),
+  reg("clevidipine__healthy__ericsson1999", "clevidipine",
+      "25 healthy men, 20-min infusions", "clevidipine", "whole blood",
+      "implemented", "clevidipine", "abstract",
+      "Implemented earlier, in the Antihypertensives category (R/drugs_clevidipine.R; docs/antihypertensives.md).",
+      NA,
+      "Ericsson H, Fakt C, Jolin-Mellgard A, et al. Br J Clin Pharmacol 1999;47:531-538.",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC2014189/",
+      "clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999"),
+
+  # --- A candidate model exists; the paper is needed ---------------------------
+  reg("norepinephrine__volunteers__li2024", "norepinephrine",
+      "36 healthy volunteers, with and without propofol", "norepinephrine", "plasma",
+      "needs_full_text", NA, "full_text",
+      "Full text read from PubMed Central but every table and equation was stripped: two compartments with an endogenous production rate, a 10-16 s lag, allometric exponents and propofol on clearance, and no typical value readable.  The lag also needs a mechanism the IV engines lack.",
+      "Li Y et al. Population pharmacokinetic modelling of norepinephrine in healthy volunteers prior to and during general anesthesia. Clin Pharmacokinet 2024;63:1597-1608. PMID 39465453, doi 10.1007/s40262-024-01430-y: the PDF for Table 3 and Equations 1-4, and the supplement.",
+      "Li Y et al. Clin Pharmacokinet 2024;63:1597-1608. PMID 39465453, PMC11573843.",
+      doi("10.1007/s40262-024-01430-y")),
+  reg("norepinephrine__septic_trauma__beloeil2005", "norepinephrine",
+      "12 septic shock and 11 trauma patients", "norepinephrine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "One compartment with SAPS II on clearance, but the covariate equation is not in the abstract.",
+      "Beloeil H et al. Norepinephrine kinetics and dynamics in septic shock and trauma patients. Br J Anaesth 2005;95:782-788. PMID 16227334, doi 10.1093/bja/aei259.",
+      "Beloeil H et al. Br J Anaesth 2005;95:782-788. PMID 16227334.",
+      doi("10.1093/bja/aei259")),
+  reg("norepinephrine__children__oualha2014", "norepinephrine",
+      "critically ill children", "norepinephrine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "One compartment with weight^0.75 on clearance and endogenous production; no typical values in the abstract and the PubMed Central body came back empty.",
+      "Oualha M et al. Population pharmacokinetics and haemodynamic effects of norepinephrine in hypotensive critically ill children. Br J Clin Pharmacol 2014;78:886-897. PMID 24802558, doi 10.1111/bcp.12412 (PMC4239982).",
+      "Oualha M et al. Br J Clin Pharmacol 2014;78:886-897. PMID 24802558.",
+      doi("10.1111/bcp.12412")),
+  reg("norepinephrine__joachim2024", "norepinephrine",
+      "adults", "norepinephrine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Two compartments with a depot; no numbers in the abstract.",
+      "Joachim J et al. Br J Clin Pharmacol 2024;90:2861-2869. PMID 39039779, doi 10.1111/bcp.16180.",
+      "Joachim J et al. Br J Clin Pharmacol 2024;90:2861-2869. PMID 39039779.",
+      doi("10.1111/bcp.16180")),
+  reg("phenylephrine__pooled__anderson2017", "phenylephrine",
+      "pooled children and 4 adult volunteers given IV", "phenylephrine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "The abstract prints a complete two-compartment set (CL 160 L/h, V1 13.3 L, Q 25.3 L/h, V2 225 L at 70 kg) but labels it for the nasal formulation, prints no allometric exponents or dose basis, and its 7-hour terminal half-life conflicts with Hengstmann's 2-3 h.",
+      "Anderson BJ et al. The phenylephrine concentration-response relationship for blood pressure after nasal delivery. Paediatr Anaesth 2017;27:1050-1055. PMID 28868789, doi 10.1111/pan.13221 (top priority).",
+      "Anderson BJ et al. Paediatr Anaesth 2017;27:1050-1055. PMID 28868789.",
+      doi("10.1111/pan.13221")),
+  reg("phenylephrine__healthy__hengstmann1982", "phenylephrine",
+      "healthy volunteers", "phenylephrine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Half-life 2-3 h and V 340 L in the abstract; its printed clearance (2 L/h) is evidently a misprint for 2 L/min, and no distribution phase is given.",
+      "Hengstmann JH et al. Pharmacokinetics of 3H-phenylephrine in man. Eur J Clin Pharmacol 1982;21:335-341. PMID 7056280, doi 10.1007/BF00637623.",
+      "Hengstmann JH et al. Eur J Clin Pharmacol 1982;21:335-341. PMID 7056280.",
+      doi("10.1007/BF00637623")),
+  reg("dopamine__healthy__macgregor2000", "dopamine",
+      "9 healthy men", "dopamine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Two compartments with weight, fitted in NONMEM, but no parameter values in the abstract; dopamine is also endogenous.",
+      "MacGregor DA et al. Pharmacokinetics of dopamine in healthy male subjects. Anesthesiology 2000;92:338-346. PMID 10691218, doi 10.1097/00000542-200002000-00013.",
+      "MacGregor DA et al. Anesthesiology 2000;92:338-346. PMID 10691218.",
+      doi("10.1097/00000542-200002000-00013")),
+  reg("dopamine__critically_ill__lecorre1993", "dopamine",
+      "critically ill adults, 3 and 6 mcg/kg/min", "dopamine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "CL, Vss and the terminal half-life only (underdetermined), and Vss and half-life roughly double between the two rates, so the kinetics are dose-dependent.",
+      "Le Corre P et al. Steady-state pharmacokinetics of dopamine in adult patients. Crit Care Med 1993;21:1652-1657. PMID 8222680, doi 10.1097/00003246-199311000-00013.",
+      "Le Corre P et al. Crit Care Med 1993;21:1652-1657. PMID 8222680.",
+      doi("10.1097/00003246-199311000-00013")),
+  reg("nicardipine__cardiac_surgery__cheung1999", "nicardipine",
+      "40 adults undergoing cardiac surgery, boluses 0.25-2 mg", "nicardipine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Two compartments with rapid redistribution from a small central volume, but the parameter table is not in the abstract.  Clearance is concentration-dependent at higher exposure.",
+      "Cheung AT et al. Nicardipine intravenous bolus dosing for acutely decreasing arterial blood pressure during general anesthesia for cardiac operations. Anesth Analg 1999;89:1116-1123. PMID 10553821 (top priority for nicardipine).",
+      "Cheung AT et al. Anesth Analg 1999;89:1116-1123. PMID 10553821.",
+      pubmed(10553821), "nicardipine__injection__iv__cardiac_surgery_adults__concentration__page2007"),
+  reg("nicardipine__healthy__guerret1989", "nicardipine",
+      "healthy volunteers", "nicardipine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Three compartments (CL about 800 mL/min, Vd about 1 L/kg, terminal half-life 4-5 h) without a printed volume and clearance set.",
+      "Guerret M et al. Simultaneous study of the pharmacokinetics of intravenous and oral nicardipine using a stable isotope. Eur J Clin Pharmacol 1989;37:381-385. PMID 2598970, doi 10.1007/BF00558504.  Also Modi 1993, J Pharm Sci 82:705-713, PMID 8360844, doi 10.1002/jps.2600820707.",
+      "Guerret M et al. Eur J Clin Pharmacol 1989;37:381-385. PMID 2598970.",
+      doi("10.1007/BF00558504")),
+  reg("methylene_blue__healthy__walter_sack2009", "methylene blue",
+      "healthy volunteers, IV and oral", "methylene blue", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Multiphasic disposition, but only AUC, half-life and bioavailability in the abstracts; whole blood and plasma differ (red-cell uptake).  A three-compartment adult population model is reported in the EMA ProveBlue paediatric assessment, which could not be opened.",
+      "Walter-Sack I et al. High absolute bioavailability of methylene blue given as an aqueous oral formulation. Eur J Clin Pharmacol 2009;65:179-189. PMID 18810398, doi 10.1007/s00228-008-0563-x; Peter C et al. Pharmacokinetics and organ distribution of intravenous and oral methylene blue. Eur J Clin Pharmacol 2000;56:247-250. PMID 10952480, doi 10.1007/s002280000124; EMA ProveBlue (methylthioninium chloride) Article 46 assessment report P46-010; FDA ProvayBlue NDA 204630 clinical pharmacology review.",
+      "Walter-Sack I et al. Eur J Clin Pharmacol 2009;65:179-189. PMID 18810398.",
+      doi("10.1007/s00228-008-0563-x")),
+  reg("atropine__healthy__hinderling1985", "atropine",
+      "3 healthy men, 1.35 and 2.15 mg", "atropine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Two compartments (half-lives 1 and 140 min, Vss 210 L, renal clearance 660 mL/min, 57% excreted unchanged), so identifiable in principle, but the micro constants are in the full text, n is 3, and immunoassay and radioreceptor assays differ about twofold.",
+      "Hinderling PH, Gundert-Remy U, Schmidlin O. Integrated pharmacokinetics and pharmacodynamics of atropine in healthy humans. J Pharm Sci 1985;74:703-710 (Part I, PMID 4032240, doi 10.1002/jps.2600740702) and Part II (PMID 4032241, doi 10.1002/jps.2600740703).",
+      "Hinderling PH et al. J Pharm Sci 1985;74:703-710. PMID 4032240.",
+      doi("10.1002/jps.2600740702")),
+  reg("atropine__parturients__kanto1981", "atropine",
+      "32 parturients given IV atropine", "atropine", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Half-lives 1.02 min and 2.56 h, Vd 1.0 L/kg and CL 6.36 mL/min/kg in the abstract, but which volume is meant is unread, and the population is pregnant.",
+      "Kanto J et al. Placental transfer and pharmacokinetics of atropine after a single maternal intravenous and intramuscular administration. Acta Anaesthesiol Scand 1981;25:85-88. PMID 7324829, doi 10.1111/j.1399-6576.1981.tb01613.x.",
+      "Kanto J et al. Acta Anaesthesiol Scand 1981;25:85-88. PMID 7324829.",
+      doi("10.1111/j.1399-6576.1981.tb01613.x")),
+  reg("procainamide__clinical__grasela1984", "procainamide",
+      "39 patients, routine clinical data", "procainamide (NAPA in urine)", "plasma",
+      "needs_full_text", NA, "abstract",
+      "One compartment with renal, acetylation and other clearances (14.4, 10.1 and 1.2 L/h) and V 136 L at 70 kg with normal renal function, linear in weight, but the renal-function equation is only in the full text, and 56% of clearance is renal.  A NAPA metabolite model would need a second source (Galeazzi 1981).",
+      "Grasela TH, Sheiner LB. Population pharmacokinetics of procainamide from routine clinical data. Clin Pharmacokinet 1984;9:545-554. PMID 6509861, doi 10.2165/00003088-198409060-00004.",
+      "Grasela TH, Sheiner LB. Clin Pharmacokinet 1984;9:545-554. PMID 6509861.",
+      doi("10.2165/00003088-198409060-00004")),
+  reg("verapamil__healthy__dominic1981", "verapamil",
+      "8 healthy men", "racemic verapamil", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Two compartments, but the abstract's V (178 L) exceeds CL/beta and so cannot be Vss: three usable numbers for four parameters, and no central volume.  Enantiomer kinetics differ (Eichelbaum 1984).",
+      "Dominic JA et al. The pharmacology of verapamil. III. Pharmacokinetics in normal subjects after intravenous and oral dosing. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352, doi 10.1097/00005344-198101000-00003.  Also Kates 1981 (Clin Pharmacol Ther 30:44, doi 10.1038/clpt.1981.125), McAllister 1982 (doi 10.1038/clpt.1982.54), Eichelbaum 1984 (PMC1463390).",
+      "Dominic JA et al. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352.",
+      doi("10.1097/00005344-198101000-00003")),
+  reg("diltiazem__healthy__kolle1983", "diltiazem",
+      "6 healthy subjects, 20 mg over 20 min", "diltiazem", "plasma",
+      "needs_full_text", NA, "abstract",
+      "An alternative to the implemented model: three half-lives, V1, Vss and CL fix a three-compartment model exactly, but with no number left to check it, and the companion paper gives a different infusion time.",
+      "Kolle EU, Ochs HR, Vollmer KO. Pharmacokinetic model of diltiazem. Arzneimittelforschung 1983;33:972-977. PMID 6684932; Ochs HR, Knuchel M. Klin Wochenschr 1984;62:303 (doi 10.1007/BF01716446); Dias VC et al. Circulation 1992;86:1421 (doi 10.1161/01.cir.86.5.1421).",
+      "Kolle EU, Ochs HR, Vollmer KO. Arzneimittelforschung 1983;33:972-977. PMID 6684932.",
+      pubmed(6684932)),
+  reg("propranolol__controls__cheymol1987", "propranolol",
+      "12 control subjects, 8 mg IV", "propranolol", "plasma",
+      "needs_full_text", NA, "abstract",
+      "CL 75.9 L/h, Vss 318.6 L and terminal half-life 3.1 h: one distribution half-life short of a two-compartment model.",
+      "Fagan TC et al. Early kinetics of intravenous propranolol. Br J Clin Pharmacol 1982;13:571-574 (free scan PMC1402040; doi 10.1111/j.1365-2125.1982.tb01424.x); Cheymol G et al. Comparative pharmacokinetics of intravenous propranolol in obese and normal volunteers. J Clin Pharmacol 1987;27:874-879 (doi 10.1002/j.1552-4604.1987.tb05582.x).",
+      "Cheymol G et al. J Clin Pharmacol 1987;27:874-879. PMID 3429695.",
+      doi("10.1002/j.1552-4604.1987.tb05582.x")),
+  reg("metoprolol__cyp2d6__leemann1993", "metoprolol",
+      "healthy extensive and poor metabolisers", "metoprolol", "plasma",
+      "needs_full_text", NA, "abstract",
+      "Every reachable abstract gives at most CL and the terminal half-life, or Vss alone.  CYP2D6 phenotype changes Vss as well as clearance after IV dosing.",
+      "Leemann TD, Devi KP, Dayer P. Eur J Clin Pharmacol 1993;45:65-71 (IV metoprolol by debrisoquine phenotype). PMID 8405032, doi 10.1007/BF00315352; Regardh 1974, J Pharmacokinet Biopharm 2:347-364 (doi 10.1007/BF01061407).",
+      "Leemann TD, Devi KP, Dayer P. Eur J Clin Pharmacol 1993;45:65-71. PMID 8405032.",
+      doi("10.1007/BF00315352"), "metoprolol__tartrate_injection__iv__catalog__none__label"),
+  reg("esmolol__cabg__debruijn1987", "esmolol",
+      "19 patients anaesthetised for CABG on chronic beta blockers", "esmolol", "blood",
+      "needs_full_text", NA, "abstract",
+      "Half-lives, CL and two volumes would fix a well-conditioned model, but whether 'V epsilon' is the central volume is unread: both readings give an admissible model, with Vss 0.97 or 0.41 L/kg.  Arterial esmolol is about five times venous, and the sampling site is unread.",
+      "de Bruijn NP, Reves JG, Croughwell N, et al. Pharmacokinetics of esmolol in anesthetized patients receiving chronic beta blocker therapy. Anesthesiology 1987;66:323-326. PMID 2881504.",
+      "de Bruijn NP et al. Anesthesiology 1987;66:323-326. PMID 2881504.",
+      doi("10.1097/00000542-198703000-00010"), "esmolol__injection__iv__healthy_adults__concentration__sum1983"),
+
+  # --- No model this engine can represent --------------------------------------
+  reg("nitroprusside__review__schulz1984", "sodium nitroprusside",
+      "review", "none measured (nitroprusside decomposes in blood within minutes)", "not applicable",
+      "no_suitable_model", NA, "abstract",
+      "Intact nitroprusside is not measured; its cyanide and thiocyanate products have kinetics of their own (thiocyanate Vd about 0.25 L/kg, half-life about 3 days) but no transferable dose-to-cyanide input model.  The children's model (Barrett 2015) is kinetic-dynamic with a nominal volume.",
+      NA,
+      "Schulz V. Clinical pharmacokinetics of nitroprusside, cyanide, thiosulphate and thiocyanate. Clin Pharmacokinet 1984;9:239-251. PMID 6375932.",
+      doi("10.2165/00003088-198409030-00005"), "nitroprusside__injection__iv__anaesthetised_children__map__barrett2015"),
+  reg("vasopressin__healthy__baumann1976", "vasopressin",
+      "hydrated normal subjects (tracer)", "arginine vasopressin", "plasma",
+      "no_suitable_model", NA, "abstract",
+      "No compartmental population model of IV vasopressin in humans was found: a metabolic clearance (4.1 mL/min/kg) and half-life (24 min) in volunteers, and the label's 9-25 mL/min/kg in vasodilatory shock.  Dosed in units, endogenous, and with no reachable units-to-mass conversion.",
+      NA,
+      "Baumann G, Dingman JF. Distribution, blood transport, and degradation of antidiuretic hormone in man. J Clin Invest 1976;57:1109-1116. PMID 1262458, PMC436762.",
+      doi("10.1172/JCI108377")),
+  reg("ephedrine__oral__csajka2005", "ephedrine",
+      "oral only", "ephedrine", "plasma",
+      "no_suitable_model", NA, "abstract",
+      "No human intravenous pharmacokinetics was found; the FDA review for the IV product (NDA 208289) itself extrapolates from oral data.  Csajka 2005 is oral, a four-compartment ephedrine-norephedrine model with saturable conversion (ephedrine CL 0.34 L/min, V 181 L).",
+      NA,
+      "Csajka C, Haller CA, Benowitz NL, Verotta D. Mechanistic pharmacokinetic modelling of ephedrine, norephedrine and caffeine in healthy subjects. Br J Clin Pharmacol 2005;59:335-345. PMID 15752380, PMC1884794.",
+      doi("10.1111/j.1365-2125.2005.02254.x")),
+  reg("hydralazine__hypertensive__ludden1980", "hydralazine",
+      "8 hypertensive patients, 0.3 mg/kg, specific assay", "hydralazine", "plasma",
+      "no_suitable_model", NA, "abstract",
+      "CL, Vss and the terminal half-life only (Varea is implied by the other two): one number short of a two-compartment model, and the paper reports no distribution phase, so its full text would not close it either.",
+      NA,
+      "Ludden TM, Shepherd AM, McNay JL, Lin MS. Hydralazine kinetics in hypertensive patients after intravenous administration. Clin Pharmacol Ther 1980;28:736-742. PMID 7438689.",
+      doi("10.1038/clpt.1980.229"), "hydralazine__injection__iv__hypertensive_adults__concentration__ludden1980"),
+  reg("adenosine__healthy__blardi1993", "adenosine",
+      "healthy volunteers, 1-min infusions", "adenosine", "plasma",
+      "no_suitable_model", NA, "abstract",
+      "Whole-blood half-life of seconds (red-cell and endothelial uptake), and a clearance that falls with dose (10.7 to 4.1 L/min): neither linear nor on the engine's time scale.",
+      NA,
+      "Blardi P et al. Pharmacokinetics of exogenous adenosine in man after infusion. Eur J Clin Pharmacol 1993;44:505-507. PMID 8359193; Moser GH, Schrader J, Deussen A. Turnover of adenosine in plasma of human and dog blood. Am J Physiol 1989;256:C799-C806 (doi 10.1152/ajpcell.1989.256.4.C799).",
+      doi("10.1007/BF00315554")),
+  reg("sodium_bicarbonate__space__adrogue1983", "sodium bicarbonate",
+      "physiology (dogs and patients)", "bicarbonate", "plasma",
+      "no_suitable_model", NA, "abstract",
+      "No clearance-and-volume model exists: the apparent bicarbonate space itself changes with the baseline bicarbonate and PCO2, and elimination is buffering, CO2 exhalation and renal handling.",
+      NA,
+      "Adrogue HJ, Brensilver J, Cohen JJ, Madias NE. Influence of steady-state alterations in acid-base equilibrium on the fate of administered bicarbonate in the dog. J Clin Invest 1983;71:867-883. PMID 6300190; and Am J Nephrol 2020 (PMID 32069452).",
+      doi("10.1172/jci110841"))
+)
+
+stopifnot(all(registry$readiness %in% READINESS),
+          all(registry$evidence_read %in% EVIDENCE),
+          !any(duplicated(registry$model_id)))
+
+par <- function(drug, parameter, value, units, provenance, evidence, source_url)
+  data.frame(drug, parameter, value = as.character(value), units, provenance,
+             evidence, source_url, stringsAsFactors = FALSE)
+
+AB  <- doi("10.1186/cc7972")
+DU  <- doi("10.1002/jcph.1328")
+KA  <- pubmed(7203731)
+HO  <- doi("10.1097/00007691-198804000-00006")
+AR  <- doi("10.1111/j.1365-2125.1983.tb02182.x")
+
+parameters <- rbind(
+  par("epinephrine", "CL", 127, "L/h at 70 kg, SAPS II 50", "estimated", "full_text", AB),
+  par("epinephrine", "BW exponent on CL", 0.60, "(BW/70)^0.60", "estimated", "full_text", AB),
+  par("epinephrine", "SAPS II exponent on CL", -0.67, "(SAPS II/50)^-0.67; held at 50", "estimated", "full_text", AB),
+  par("epinephrine", "V", 7.9, "L", "estimated", "full_text", AB),
+  par("epinephrine", "R0", 43.5, "nmol/h endogenous input (not plotted)", "estimated", "full_text", AB),
+
+  par("magnesiumSulfate", "CL", 3.72, "L/h at 85 kg, creatinine 0.8 mg/dL", "estimated", "full_text", DU),
+  par("magnesiumSulfate", "creatinine exponent on CL", -0.731, "(Cr/0.8)^-0.731", "estimated", "full_text", DU),
+  par("magnesiumSulfate", "Vc", 15.4, "L at 85 kg (x WT/85)", "estimated", "full_text", DU),
+  par("magnesiumSulfate", "Q", 3.66, "L/h at 85 kg (x (WT/85)^0.75)", "estimated", "full_text", DU),
+  par("magnesiumSulfate", "Vp", 17.0, "L at 85 kg (x WT/85)", "estimated", "full_text", DU),
+  par("magnesiumSulfate", "weight exponents", "0.75 (CL, Q); 1 (Vc, Vp)", "fixed", "fixed", "full_text", DU),
+  par("magnesiumSulfate", "MgSO4.7H2O per mol Mg", 246.47, "g/mol", "derived", "full_text", DU),
+
+  par("labetalol", "CL", 24.80, "mL/min/kg", "estimated", "abstract", KA),
+  par("labetalol", "V1 (Vdc)", 1.1, "L/kg", "estimated", "abstract", KA),
+  par("labetalol", "distribution half-life", 4.9, "min", "estimated", "abstract", KA),
+  par("labetalol", "elimination half-life", 4.9, "h", "estimated", "abstract", KA),
+  par("labetalol", "Vss (check only)", 9.41, "L/kg", "estimated", "abstract", KA),
+  par("labetalol", "V2", 7.918, "L/kg", "derived", "abstract", KA),
+  par("labetalol", "Q", 0.1171, "L/min/kg", "derived", "abstract", KA),
+
+  par("diltiazem", "CL", 992, "mL/min", "estimated", "abstract", HO),
+  par("diltiazem", "V1", 119, "L", "estimated", "abstract", HO),
+  par("diltiazem", "alpha half-life", 0.40, "h", "estimated", "abstract", HO),
+  par("diltiazem", "beta half-life", 2.77, "h", "estimated", "abstract", HO),
+  par("diltiazem", "Vss (check only)", 209, "L", "estimated", "abstract", HO),
+  par("diltiazem", "V2", 84.6, "L", "derived", "abstract", HO),
+  par("diltiazem", "Q", 1.222, "L/min", "derived", "abstract", HO),
+
+  par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "abstract", AR),
+  par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "abstract", AR),
+  par("nitroglycerin", "V", 50.2, "L", "derived", "abstract", AR)
+)
+
+utils::write.csv(registry, "inst/extdata/vasoactiveRegistry.csv", row.names = FALSE)
+utils::write.csv(parameters, "inst/extdata/vasoactiveParameters.csv", row.names = FALSE)
+message("Wrote ", nrow(registry), " registry rows and ", nrow(parameters),
+        " parameter rows.")
