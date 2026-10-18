@@ -627,14 +627,17 @@ the intended maintenance step, not a weakening of the test.
 | needs a new `Category` | `DRUG_CATEGORIES` in `R/constants.R` **and** `bookmarksToExclude` in `R/app_globals.R` |
 | is a long-acting weekly product | `LONG_TERM_DRUGS` |
 
-A quick way to find any roster you might owe, before CI does:
+A quick way to find any roster you might owe, before CI does: search the suite for a drug
+**already in the same situation as yours** — another plasma-only drug, another TCI drug,
+another illicit one — since every list that names it will need yours too. Substitute that
+drug for `codeine` below, which is plasma-only and in all three of its rosters:
 
 ```sh
-grep -rln 'expect_setequal' tests/testthat/ | xargs grep -ln '"<a drug like yours>"'
+grep -rln 'expect_setequal' tests/testthat/ | xargs grep -ln '"codeine"'
 ```
 
-Searching for a drug already in the same situation as yours — another plasma-only drug,
-another TCI drug — turns up the lists that will need yours too.
+That returns the three rosters plus a few files that merely mention the drug, so read the
+hits rather than trusting the count.
 
 ### One more trap
 
