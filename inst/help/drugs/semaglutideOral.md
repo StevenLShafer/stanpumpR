@@ -18,7 +18,7 @@ This model describes doses taken exactly as instructed. In the PIONEER phase 3 t
 
 ### Covariates
 
-Body weight only. Hepatic and renal impairment, age 65 and over, and sex were tested and removed. Weight acts on every parameter. A heavier patient absorbs a larger fraction of the dose, but clearance rises faster, so exposure still falls with weight. The weight term on bioavailability is held to the oral trials' range, 51.1 to 122 kg.
+Body weight only. Hepatic and renal impairment, age 65 and over, and sex were tested and removed. Weight acts on clearance, intercompartmental clearance, both volumes and bioavailability, not on the absorption rate. A heavier patient absorbs a larger fraction of the dose, but clearance rises faster, so exposure still falls with weight. The weight term on bioavailability is held to the oral trials' range, 51.1 to 122 kg.
 
 ### Variability
 
