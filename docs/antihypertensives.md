@@ -335,13 +335,17 @@ pass, **three were blocked by the engine rather than by the evidence** — a
 release mode, an input shape, and a dose basis that had to be recovered
 arithmetically. None of the four brought a blood pressure with it.
 
-**A registry of 106 model records** (`inst/extdata/antihypertensiveRegistry.csv`,
-built by `data-raw/antihypertensiveRegistry.R`): 69 catalog records
-establishing product and route identity from the official label, and 37 source
-records, one per publication, population and endpoint. Ten are executable, one
-is `complete_not_implemented` (section 11.2).
-`bp_simulation_enabled` is `FALSE` on all 106.
-`external_validation_status` is `none` on 105 of them and
+**A registry of 127 model records** (`inst/extdata/antihypertensiveRegistry.csv`,
+built by `data-raw/antihypertensiveRegistry.R`) over 81 drugs: 90 catalog
+records establishing product and route identity, of which 66 were written with
+an official label open, 3 with another source document open (a journal paper
+for azilsartan medoxomil, a regional registration for canrenone, a regional
+monograph for urapidil), and 21 assert ingredient identity only because no
+document could be retrieved at all (section 13), and 37 source records, one
+per publication, population and endpoint. Ten are executable, one is
+`complete_not_implemented` (section 11.2).
+`bp_simulation_enabled` is `FALSE` on all 127.
+`external_validation_status` is `none` on 126 of them and
 `external_population` on exactly one, clevidipine (section 11).
 
 **A parameter audit of 125 numbers**
@@ -415,11 +419,21 @@ blood-pressure endpoint exists for it to optimise against.
 
 The specification asks, before calling the library "all commonly used", for
 the catalog to be compared against an intended formulary and a dated United
-States utilisation list. That comparison has **not** been done: the catalog is
-the specification's own list, 69 products across the classes it names, and it
-should not be described as complete coverage of any formulary. Doing that
-comparison needs a formulary to compare against, which is a question for the
-clinician rather than the programmer.
+States utilisation list. That comparison has **not** been done: the catalog
+began as the specification's own list, 69 products across the classes it
+names, and it should not be described as complete coverage of any formulary.
+Doing that comparison needs a formulary to compare against, which is a
+question for the clinician rather than the programmer.
+
+**Partly closed on 2026-10-18.** Section 13 enumerates the five classes the
+registry exists for — angiotensin-receptor blockers, ACE inhibitors,
+calcium-channel blockers, beta blockers and diuretics — adding 21 records and
+arguing each deliberate exclusion. The inventory it is measured against is
+the approved ingredients **as section 13.1 assembles them**, which no FDA
+register was reachable to confirm (13.2): so a molecule's absence from those
+five classes is a claim this program makes, not yet one the Orange Book or
+DailyMed has agreed to. It is still not a formulary comparison, and the
+paragraph above still stands for every other class.
 
 ---
 
@@ -1128,5 +1142,153 @@ earn its keep is this one, since a diuretic's urinary recovery is closer to
 its effect than its plasma concentration is. Furosemide's record (section 9)
 is a plasma-and-urine fit too.
 
-Ten of the registry's 106 records are now executable. None of them plots a
+Ten of the registry's 127 records are now executable. None of them plots a
 blood pressure.
+
+---
+
+## 13. Closing the five classes, and a weaker kind of citation (2026-10-18)
+
+Section 7 said the catalog was the specification's own list of 69 products and
+should not be called complete coverage of anything. This section closes that
+for the five classes the registry exists to enumerate — angiotensin-receptor
+blockers, ACE inhibitors, calcium-channel blockers, beta blockers and
+diuretics — and is explicit about the one thing that got worse in doing it.
+
+### 13.1 What was missing
+
+Comparing the 60 molecules already in the registry against the FDA-approved US
+systemic products in those five classes left 19 molecules, 21 records.
+
+**The list compared against was not retrieved.** No FDA register is reachable
+from here (13.2), so the set of approved ingredients was assembled from
+knowledge of the products rather than read off a register, and it carries the
+same caveat as the rows themselves: it is a claim, not a transcription. That
+matters most at the edges — an ingredient approved only in a fixed
+combination, an old product withdrawn before electronic listing — so the
+enumeration is written down somewhere executable rather than only in prose.
+`test-antihypertensive-registry.R` holds the five class lists and fails if a
+member is missing, which makes them a *checkable* assertion for anyone who can
+reach a register: correct the list, and the test says what the registry lacks.
+
+The 21:
+
+| Class | Added |
+|---|---|
+| ARB | eprosartan |
+| ACE inhibitor | moexipril |
+| Dihydropyridine CCB | isradipine, levamlodipine, nisoldipine |
+| Beta blocker | acebutolol, betaxolol, carteolol, penbutolol, pindolol, timolol |
+| Thiazide / thiazide-type | chlorothiazide (oral **and** intravenous), methyclothiazide, hydroflumethiazide, trichlormethiazide, polythiazide, bendroflumethiazide, quinethazone |
+| Loop | ethacrynic acid (oral) and ethacrynate sodium (intravenous) |
+
+The registry is now 127 records over 81 `drug` values, of which 90 are catalog
+rows and 10 are executable. The 81 exceeds 60 + 19 because a salt is its own
+`drug` string, as `metoprolol tartrate` and `metoprolol succinate` already
+were: 19 counts molecules, 81 counts the field. Every one of the five classes is enumerated, which means
+something it did not mean before: **a molecule's absence from the registry is
+now a claim**, not a gap — either it is not an approved US systemic
+antihypertensive, or it is one of the exclusions argued in 13.3.
+
+Three of the new rows are there to prevent a specific error rather than to fill
+a hole:
+
+- **levamlodipine** is a separate record from amlodipine on purpose. It is the
+  (S)-enantiomer, and the racemate's published parameters are not the
+  enantiomer's. Whether the racemate's disposition is carried by the (S) form
+  is exactly the question a source would have to answer, so reading
+  amlodipine's records across to it is the mistake the separate row exists to
+  make visible.
+- **acebutolol** has an active metabolite, diacetolol, that accumulates. That
+  makes it a two-moiety problem of the kind cefazolin and aspirin are elsewhere
+  in this library, so a single-analyte curve would be the wrong *structure*,
+  not merely an incomplete one.
+- **chlorothiazide** and **ethacrynic acid** each get two rows, one per route,
+  as furosemide already does. For chlorothiazide the intravenous salt is the
+  only parenteral thiazide there is, and it would be the cleaner identification
+  of the disposition if either route were ever fitted, because it asks no
+  absorption question. For ethacrynate sodium the point is the **dose basis**:
+  the salt is dosed and the acid circulates, so a future record owes a salt
+  factor, as calcium gluconate and GHB oxybate do.
+
+### 13.2 The citation is weaker, and it says so
+
+Every one of the 69 earlier catalog rows was written with a source document
+open — 66 a US official label and three something else, which is why the
+honest contrast is *document opened* against *no document opened* rather than
+label against no label: azilsartan medoxomil's row cites a journal paper,
+canrenone's a regional registration, urapidil's a regional monograph. Each of
+the 69 quotes the descriptors found in whatever it opened. These 21 opened
+nothing. DailyMed
+(`dailymed.nlm.nih.gov`) and the openFDA API (`api.fda.gov`) are both
+unreachable from the environment this registry is built in — `curl` returns no
+response at all, not a refusal — and `accessdata.fda.gov` does answer but
+serves 404 on the Orange Book paths, so no approval or marketing record was
+retrieved from there either.
+
+There were three ways to handle that and only one of them is defensible.
+
+1. Invent a setid so the new rows match the old ones. This is a fabricated
+   identifier for a document nobody opened, and it is the single thing this
+   registry cannot afford, because its whole value is that a reader can check
+   any row against its source.
+2. Write the rows with label descriptors recalled rather than read. Same
+   failure, less visibly: a half-life nobody verified, indistinguishable in the
+   CSV from 125 that were.
+3. Record exactly what is known and make the difference machine-readable.
+
+So these rows carry a new `source_type`, **`ingredient_catalog`**, and their
+`pk_evidence` is `proposed_unfitted` rather than `official_label_descriptive` —
+because the latter would assert descriptors nobody read. Their `source_url` is
+a DailyMed **ingredient search**, a real resolvable URL that points at whatever
+documents exist instead of naming one that was never opened. Each row asserts
+four things: the ingredient exists as a US-approved systemic product, its
+class, its route, its formulation. Its `matrix` is deliberately `NA`, because
+a matrix is a source-specific property — clevidipine's is whole blood,
+chlorthalidone's is plasma although most of the drug in blood is inside the
+erythrocytes — and naming one for a row with no source would be the same kind
+of unearned claim as a recalled half-life. It asserts nothing numeric, and
+nothing about **current marketing**, because approval is not availability and several
+of these are long-superseded products — oral carteolol and penbutolol most
+doubtfully, and the older thiazides generally. `bendroflumethiazide` is
+recorded as an ingredient although the surviving US product is a fixed
+combination with nadolol, which is a dosing constraint rather than a
+pharmacokinetic one: a combination tablet does not make a disposition
+unidentifiable, it makes the dose non-independent.
+
+Closing one of these rows is a small, well-defined job for anyone who can
+reach DailyMed: open the label, replace the search URL with that document's
+setid, move `source_type` to `official_label` and `pk_evidence` to
+`official_label_descriptive`, and record what the label says.
+`test-antihypertensive-registry.R` counts the two kinds — 69 and 21 — so the
+remaining work cannot quietly disappear, and asserts that no
+`ingredient_catalog` row carries a parameter, a setid, or a `stanpumpr_drug`.
+
+That test is also the thing that stops the weaker rows drifting into the
+stronger set by accident. It is the same lesson as section 12's: the registry's
+protection is never the care taken when a row is written, it is the assertion
+that fails when the row changes.
+
+### 13.3 What is deliberately absent
+
+An exclusion is a claim too, so each one is argued here rather than left as an
+omission:
+
+| Not a record | Why |
+|---|---|
+| **sotalol**, **landiolol** | Beta blockers whose US indications are arrhythmia, not hypertension. Esmolol is in the registry because its label and its perioperative use are about pressure as well as rate; these two are not |
+| **nimodipine** | A dihydropyridine indicated for subarachnoid haemorrhage only. It lowers pressure; that is an adverse effect in its label, not an indication |
+| **levobunolol**, **metipranolol**, and the ophthalmic products of betaxolol, timolol and carteolol | Ophthalmic only. Their systemic absorption is real and is a drug-interaction problem, not an antihypertensive model. The three oral products are in the registry and their rows say which product they are |
+| **finerenone** | A nonsteroidal mineralocorticoid-receptor antagonist indicated for chronic kidney disease in type 2 diabetes, with **no** hypertension indication — unlike spironolactone and eplerenone, which both carry one and are both in the registry |
+| **acetazolamide**, **methazolamide** | Carbonic-anhydrase inhibitors. Diuretics, not antihypertensives |
+| **tolvaptan**, **conivaptan** | Vasopressin antagonists for hyponatraemia |
+
+What section 7 still says stands: this closes the five classes against the
+approved ingredients as 13.1 enumerates them, and it is **not** a comparison
+against an intended formulary or a dated utilisation list. Enumerating what exists and knowing what is used are
+different questions, and the second one is the clinician's.
+
+And the number that matters has not moved. Of 127 records, 10 are executable,
+`bp_simulation_enabled` is `FALSE` on every one, and **no drug in stanpumpR
+plots a blood pressure.** All twenty-one new rows are a statement about what
+the published evidence does not contain.

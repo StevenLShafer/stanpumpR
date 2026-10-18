@@ -20,6 +20,8 @@ A **registry**, keyed by model record rather than by drug name. A record is a mo
 
 Alongside it sits a **parameter audit**: every number, with its unit, matrix, population, endpoint, whether it was fitted, fixed or derived, the uncertainty, the *type* of uncertainty the source itself names, and whether the number was read in the primary source or taken on trust. Several of these papers print a plus-or-minus and never say what it is; the audit records that as not reported rather than guessing at a standard deviation.
 
+In five classes — angiotensin-receptor blockers, ACE inhibitors, calcium-channel blockers, beta blockers and diuretics — the registry is **complete at the ingredient level** against the approved US systemic products as this program enumerates them — an inventory assembled here and not yet checked against an FDA register such as the Orange Book — so a molecule's absence from it is a statement rather than an oversight: it is either an exclusion with a reason, such as a beta blocker approved only for arrhythmia or only as eye drops, or a molecule the inventory itself is missing, which is a gap in the inventory as much as a fact about the molecule. Completeness of that kind is cheap and worth having, and it is worth being clear what it is not: twenty-one of those records assert the ingredient, its class, its route and its formulation and nothing else, because the label itself could not be retrieved, and they are marked so that they can never be mistaken for the ones that were read.
+
 Both are available from the console, as `antihypertensiveRegistry()` and `antihypertensiveParameters()`.
 
 ### The four relations you can evaluate

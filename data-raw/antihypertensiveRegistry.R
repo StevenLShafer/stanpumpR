@@ -52,6 +52,12 @@
 #   external_validation_status  none | in_population | external_population
 #   stanpumpr_drug    the library drug implementing this record, or NA.  A
 #                     named drug plots CONCENTRATION only.
+#   source_type       how the row was sourced.  official_label and the
+#                     fitted/abstract/monograph values mean a document was
+#                     opened; ingredient_catalog means it was NOT, and the
+#                     row therefore asserts ingredient, class, route and
+#                     formulation identity only (section 13 of
+#                     docs/antihypertensives.md).
 #
 # Run with: Rscript data-raw/antihypertensiveRegistry.R
 # Checked by tests/testthat/test-antihypertensive-registry.R.
@@ -78,6 +84,9 @@ DESC  <- "descriptive_only"
 # implemented record (Ericsson EJCP 1999 against clevidipine) but are never
 # an input to one.
 NOIMP <- "complete_not_implemented"
+# source_type: an INGREDIENT-IDENTITY row, whose label was never opened.
+# See the INGR note below the catalog records.
+INGR <- "ingredient_catalog"
 
 rec <- function(model_id, drug, active_moiety, route, formulation,
                 population = NA, endpoint = "none", analyte = NA,
@@ -459,6 +468,212 @@ catalog <- rbind(catalog,
       source_type = "regional_monograph",
       source_url = "https://m.base-donnees-publique.medicaments.gouv.fr/rcp-67632060-11",
       limitations = "An optional regional record, not US-marketed. The primary severe-hypertension study gives Vz 0.80 L/kg, clearance 2.53 mL/min/kg and a half-life of 4.0 h; a second study shows infusion/offset hysteresis, so an effect delay and possible tolerance would both need fitting."))
+
+# -----------------------------------------------------------------------------
+# INGREDIENT-IDENTITY RECORDS: the classes closed out, without a label in hand
+# -----------------------------------------------------------------------------
+# The records above were each written with a SOURCE DOCUMENT open -- 66 of
+# them a US official label, and three something else (azilsartan medoxomil a
+# journal paper, canrenone a regional registration, urapidil a regional
+# monograph) -- so each quotes the descriptors it found in whatever it opened.
+# The contrast with the rows below is therefore document opened against no
+# document opened, not label against no label.  The rows below close the remaining
+# gaps in the five classes the registry is meant to enumerate -- angiotensin-
+# receptor blockers, ACE inhibitors, calcium-channel blockers, beta blockers
+# and diuretics -- and they were written WITHOUT the label, because
+# dailymed.nlm.nih.gov and api.fda.gov are both unreachable from the
+# environment this registry was built in.
+#
+# That is a real difference in evidence and it gets its own source_type,
+# INGR, rather than being hidden inside official_label.  An INGR row asserts
+# exactly four things: the ingredient exists as a US-approved systemic
+# product, its class, its route, and its formulation.  It asserts NOTHING
+# numeric -- so pk_evidence is proposed_unfitted, not
+# official_label_descriptive, which would claim descriptors nobody read --
+# and it asserts nothing about CURRENT MARKETING, because approval is not
+# availability and no approval record could be read either: accessdata.fda.gov
+# answers but serves 404 on the Orange Book paths.  Several of these are
+# long-superseded products that are probably no longer marketed in the US.
+#
+# The source_url is therefore a DailyMed INGREDIENT SEARCH, which is a real
+# resolvable URL that points at whatever documents exist rather than naming
+# one that was never opened.  Inventing a setid to make these rows look like
+# the rows above would be a fabrication, and the one thing this registry
+# cannot afford.
+#
+# Closing an INGR row means opening its label, replacing the search URL with
+# that document's setid, moving source_type to official_label and
+# pk_evidence to official_label_descriptive, and recording what the label
+# actually says.  test-antihypertensive-registry.R counts the two kinds so
+# the remaining work stays visible.
+#
+# The APPROVED-INGREDIENT LIST these rows were measured against was not
+# retrieved either, for the same reason, so it is knowledge of the products
+# rather than a transcription of a register.  It is written down in
+# test-antihypertensive-registry.R as five class lists that fail when a member
+# is missing, so that it can be corrected and re-checked by anyone who can
+# reach a register, rather than living only in prose.
+#
+# WHAT IS DELIBERATELY ABSENT, and why, is in docs/antihypertensives.md
+# section 13: arrhythmia-only beta blockers (sotalol, landiolol), the
+# subarachnoid-haemorrhage-only dihydropyridine (nimodipine), ophthalmic-only
+# beta blockers, finerenone (chronic kidney disease in type 2 diabetes, with
+# no hypertension indication, unlike spironolactone and eplerenone), the
+# carbonic-anhydrase inhibitors and the vasopressin antagonists.
+
+ING_NOTE <- paste(
+  "INGREDIENT IDENTITY ONLY. The label document was NOT retrieved: DailyMed",
+  "and the openFDA API are unreachable from the environment this registry was",
+  "built in, so this row cites an ingredient search and records no label",
+  "descriptor, no PK and no PD. Current US marketing status is unverified --",
+  "approval is not availability. See the INGR note in",
+  "data-raw/antihypertensiveRegistry.R.")
+
+# search defaults to the drug name and is given explicitly for a salt, whose
+# label is filed under the ingredient rather than the salt.
+ingr <- function(model_id, drug, active_moiety, route, formulation,
+                 analyte, klass, extra = NULL, search = drug)
+  # matrix is left NA deliberately.  It is a SOURCE-SPECIFIC property --
+  # clevidipine's is whole blood, chlorthalidone's is plasma although 95% of
+  # the drug in blood is in the erythrocytes -- so asserting one for a row
+  # with no source would be exactly the unearned claim these rows avoid.
+  rec(model_id, drug, active_moiety, route, formulation,
+      analyte = analyte,
+      pk_evidence = PRO, pd_evidence = PRO, execution_status = DESC,
+      source_type = INGR,
+      source_url = paste0("https://dailymed.nlm.nih.gov/dailymed/search.cfm",
+                          "?labeltype=all&query=", utils::URLencode(search)),
+      limitations = paste(klass, ING_NOTE, extra))
+
+catalog <- rbind(catalog,
+  # -- angiotensin-receptor blocker: the one molecule still missing ----------
+  ingr("eprosartan__tablet__oral__catalog__none__ingredient", "eprosartan",
+       "eprosartan", "oral", "tablet", "eprosartan",
+       "Angiotensin II receptor blocker, dosed as the mesylate.",
+       "With this row the eight US-approved ARBs are all enumerated."),
+
+  # -- ACE inhibitor: the one molecule still missing -------------------------
+  ingr("moexipril__tablet__oral__catalog__none__ingredient", "moexipril",
+       "moexiprilat", "oral", "tablet", "moexiprilat",
+       "ACE inhibitor prodrug, dosed as the hydrochloride and hydrolysed to moexiprilat.",
+       paste("Prodrug identity only, as for fosinopril, perindopril,",
+             "quinapril and trandolapril above; neither the parent nor the",
+             "active moiety has a vector here.")),
+
+  # -- dihydropyridine calcium-channel blockers ------------------------------
+  ingr("isradipine__capsule__oral__catalog__none__ingredient", "isradipine",
+       "isradipine", "oral", "immediate-release capsule", "isradipine",
+       "Dihydropyridine calcium-channel blocker.", NULL),
+  ingr("levamlodipine__tablet__oral__catalog__none__ingredient",
+       "levamlodipine", "levamlodipine ((S)-amlodipine)", "oral", "tablet",
+       "levamlodipine",
+       "Dihydropyridine calcium-channel blocker: the (S)-enantiomer of amlodipine, dosed as the maleate.",
+       paste("A SEPARATE RECORD FROM AMLODIPINE ON PURPOSE. The racemate's",
+             "parameters are not this enantiomer's, and the registry's",
+             "amlodipine records must not be read across to it; whether the",
+             "published racemate disposition is carried by the (S) form is",
+             "exactly the question an eventual source has to answer.")),
+  ingr("nisoldipine__er_tablet__oral__catalog__none__ingredient",
+       "nisoldipine", "nisoldipine", "oral", "extended-release tablet",
+       "nisoldipine",
+       "Dihydropyridine calcium-channel blocker, US product extended-release only.",
+       paste("As for felodipine above, an ER formulation's release profile is",
+             "not identified by anything in this row.")),
+
+  # -- beta blockers ---------------------------------------------------------
+  ingr("acebutolol__capsule__oral__catalog__none__ingredient", "acebutolol",
+       "acebutolol (with diacetolol as an active metabolite)", "oral",
+       "capsule", "acebutolol and diacetolol",
+       "Cardioselective beta blocker with intrinsic sympathomimetic activity, dosed as the hydrochloride.",
+       paste("An active metabolite that accumulates makes this a two-moiety",
+             "problem, as cefazolin's and aspirin's are elsewhere in the",
+             "library: a single-analyte curve would be the wrong structure.")),
+  ingr("betaxolol__tablet__oral__catalog__none__ingredient", "betaxolol",
+       "betaxolol", "oral", "tablet", "betaxolol",
+       "Cardioselective beta blocker, dosed as the hydrochloride.",
+       paste("The ORAL hypertension product only. Ophthalmic betaxolol is a",
+             "different product for a different indication and is not a",
+             "record here.")),
+  ingr("carteolol__tablet__oral__catalog__none__ingredient", "carteolol",
+       "carteolol", "oral", "tablet", "carteolol",
+       "Non-selective beta blocker with intrinsic sympathomimetic activity, dosed as the hydrochloride.",
+       paste("The ORAL hypertension product only; ophthalmic carteolol is a",
+             "different product and indication. The oral product is the one",
+             "in this class whose current US availability is most doubtful,",
+             "and nothing here establishes it either way.")),
+  ingr("penbutolol__tablet__oral__catalog__none__ingredient", "penbutolol",
+       "penbutolol", "oral", "tablet", "penbutolol",
+       "Non-selective beta blocker with intrinsic sympathomimetic activity, dosed as the sulfate.",
+       NULL),
+  ingr("pindolol__tablet__oral__catalog__none__ingredient", "pindolol",
+       "pindolol", "oral", "tablet", "pindolol",
+       "Non-selective beta blocker with marked intrinsic sympathomimetic activity.",
+       NULL),
+  ingr("timolol__tablet__oral__catalog__none__ingredient", "timolol",
+       "timolol", "oral", "tablet", "timolol",
+       "Non-selective beta blocker, dosed as the maleate.",
+       paste("The ORAL hypertension product only. Ophthalmic timolol is a",
+             "different product for a different indication, and its systemic",
+             "absorption, which is real, is not this record.")),
+
+  # -- thiazide and thiazide-type diuretics ---------------------------------
+  ingr("chlorothiazide__tablet__oral__catalog__none__ingredient",
+       "chlorothiazide", "chlorothiazide", "oral",
+       "tablet or oral suspension", "chlorothiazide",
+       "Thiazide diuretic, the parent of the class.",
+       paste("The oral product. Its intravenous sodium salt is a separate",
+             "record below, as furosemide's two routes are two records.")),
+  ingr("chlorothiazide__injection__iv__catalog__none__ingredient",
+       "chlorothiazide sodium", "chlorothiazide", "iv",
+       "injection for infusion", "chlorothiazide",
+       "Thiazide diuretic, intravenous sodium salt: the only parenteral thiazide.",
+       search = "chlorothiazide",
+       extra = paste("A SEPARATE RECORD FROM THE ORAL TABLET, because a thiazide",
+             "given intravenously answers no absorption question at all and",
+             "would be the cleaner identification of the disposition if",
+             "either were ever fitted.")),
+  ingr("methyclothiazide__tablet__oral__catalog__none__ingredient",
+       "methyclothiazide", "methyclothiazide", "oral", "tablet",
+       "methyclothiazide", "Thiazide diuretic.", NULL),
+  ingr("hydroflumethiazide__tablet__oral__catalog__none__ingredient",
+       "hydroflumethiazide", "hydroflumethiazide", "oral", "tablet",
+       "hydroflumethiazide", "Thiazide diuretic.", NULL),
+  ingr("trichlormethiazide__tablet__oral__catalog__none__ingredient",
+       "trichlormethiazide", "trichlormethiazide", "oral", "tablet",
+       "trichlormethiazide", "Thiazide diuretic.", NULL),
+  ingr("polythiazide__tablet__oral__catalog__none__ingredient",
+       "polythiazide", "polythiazide", "oral", "tablet", "polythiazide",
+       "Thiazide diuretic.", NULL),
+  ingr("bendroflumethiazide__tablet__oral__catalog__none__ingredient",
+       "bendroflumethiazide", "bendroflumethiazide", "oral", "tablet",
+       "bendroflumethiazide", "Thiazide diuretic.",
+       paste("Recorded as an ingredient because the surviving US product is",
+             "a FIXED COMBINATION with nadolol, which is a dosing constraint",
+             "and not a pharmacokinetic one: a combination tablet does not",
+             "make the ingredient's disposition unidentifiable, it makes the",
+             "dose non-independent.")),
+  ingr("quinethazone__tablet__oral__catalog__none__ingredient",
+       "quinethazone", "quinethazone", "oral", "tablet", "quinethazone",
+       "Thiazide-type (quinazolinone) diuretic, structurally a relative of metolazone.",
+       NULL),
+
+  # -- loop diuretic: the one molecule still missing, in both routes ---------
+  ingr("ethacrynic_acid__tablet__oral__catalog__none__ingredient",
+       "ethacrynic acid", "ethacrynic acid", "oral", "tablet",
+       "ethacrynic acid",
+       "Loop diuretic, the one in the class that is not a sulfonamide.",
+       paste("The oral acid. Its intravenous sodium salt is a separate",
+             "record below. Being a non-sulfonamide is the whole clinical",
+             "point of the molecule and has no bearing on its kinetics.")),
+  ingr("ethacrynate_sodium__injection__iv__catalog__none__ingredient",
+       "ethacrynate sodium", "ethacrynic acid", "iv",
+       "injection for infusion", "ethacrynic acid",
+       "Loop diuretic, intravenous sodium salt of ethacrynic acid.",
+       search = "ethacrynic acid",
+       extra = paste("A SEPARATE RECORD FROM THE ORAL ACID, and note the DOSE BASIS:",
+             "the salt is dosed and the acid is what circulates, so any",
+             "future record here owes a salt factor, as calcium gluconate",
+             "and GHB oxybate do elsewhere in this library.")))
 
 # -----------------------------------------------------------------------------
 # SOURCE RECORDS: one row per publication, population and endpoint
@@ -1694,6 +1909,11 @@ stopifnot(
   all(registry$pk_evidence %in% c(FULL, PART, STRU, LAB, PRO)),
   all(registry$pd_evidence %in% c(FULL, PART, STRU, LAB, PRO, SEC)),
   all(registry$execution_status %in% c(READY, EXTR, FITP, DESC, NOIMP)),
+  # An ingredient-identity row must never claim a label descriptor it does
+  # not have, nor a document URL for a label nobody opened.
+  all(registry$pk_evidence[registry$source_type == INGR] == PRO),
+  all(registry$execution_status[registry$source_type == INGR] == DESC),
+  all(grepl("search\\.cfm", registry$source_url[registry$source_type == INGR])),
   all(registry$external_validation_status %in%
         c("none", "in_population", "external_population")),
   all(grepl("^https?://", registry$source_url)),
