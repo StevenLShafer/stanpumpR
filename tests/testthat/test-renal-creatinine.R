@@ -14,7 +14,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # (R/drugs_hydrochlorothiazide.R, Van Wart 2013): the source
                 # fitted no body-size term either, so weight reaches it only
                 # through Cockcroft-Gault.
-                "hydrochlorothiazide")
+                "hydrochlorothiazide",
+                # Serum creatinine itself, not an estimate of its clearance,
+                # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
+                "magnesiumSulfate")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).
