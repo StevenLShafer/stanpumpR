@@ -8,10 +8,11 @@ The two models answer different questions. Xue's was fitted to cardiac-surgery p
 
 ## The pharmacokinetics
 
-Hamberg fitted S- and R-warfarin separately: S-warfarin as a two-compartment model and R-warfarin as a one-compartment model, each with first-order oral absorption (the absorption rate constant fixed at 2 /h, as the paper could not estimate it from its sampling). The anticoagulant effect is driven by **S-warfarin only** — R-warfarin was not a significant predictor of the INR and is carried only so its concentration can be drawn.
+Hamberg fitted S- and R-warfarin separately: S-warfarin as a two-compartment model and R-warfarin as a one-compartment model, each with first-order oral absorption (the absorption rate constant fixed at 2 /h, as the paper could not estimate it from its sampling). The anticoagulant effect is driven by **S-warfarin only** — R-warfarin was not a significant predictor of the INR; it is carried as the second enantiomer system the INR machinery expects, and is not drawn.
 
 - **CYP2C9** genotype and **age** act on S-warfarin clearance. Relative to a 71-year-old with the wild-type `*1/*1` genotype (clearance 0.314 L/h), clearance falls by 31% for `*1/*2`, 45% for `*1/*3`, 72% for `*2/*2`, 69% for `*2/*3` and 85% for `*3/*3`, and by about 0.9% per year of age. A `*3/*3` patient clears S-warfarin about seven times more slowly.
 - Age also lowers R-warfarin clearance by about 1% per year.
+- **Body size.** Hamberg found neither weight nor sex significant and published no size term. As for every library model without one, the volumes and clearances are scaled to the patient's fat-free mass relative to the 70 kg, 170 cm reference man while *Adjust weight to fat-free mass* is ticked, and used as published when it is not. The library's own warfarin model carries its own fat-free-mass covariate, so with the switch on the two INR lines treat body size alike and the gap between them is the genotype.
 
 ## The pharmacodynamics
 

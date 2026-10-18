@@ -49,3 +49,12 @@ test_that("the PCI regimen gives concentrations near the study's range", {
   expect_equal(max(cp), 0.75 * 70 / (0.086 * 70), tolerance = 1e-6)  # bolus peak
   expect_true(all(cp >= 0))
 })
+
+test_that("the half-lives at 70 kg are the ones the header and help page state", {
+  # Two compartments: 7.7 and 35 min from CL 22.6 L/h, V1 6.02 L, Q 6.70 L/h,
+  # V2 3.88 L (the label's terminal half-life is 25 min).
+  p <- bivalirudin(70, 170, 40, "male", adjustToFFM = FALSE)$PK$default
+  k10 <- p$cl1 / p$v1; k12 <- p$cl2 / p$v1; k21 <- p$cl2 / p$v2
+  s <- k10 + k12 + k21; d <- sqrt(s^2 - 4 * k10 * k21)
+  expect_equal(log(2) / c((s + d) / 2, (s - d) / 2), c(7.71, 34.57), tolerance = 1e-3)
+})

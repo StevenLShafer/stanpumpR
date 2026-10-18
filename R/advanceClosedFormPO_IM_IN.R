@@ -13,6 +13,17 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
   # may carry no SL, SC or RA column.
   if (is.null(dose$SL)) dose$SL <- rep(FALSE, nrow(dose))
   if (is.null(dose$SC)) dose$SC <- rep(FALSE, nrow(dose))
+  # A PK set from before the subcutaneous route existed (a hand-built one in a
+  # test or a script) has none of its fields; give it the empty route.
+  if (is.null(pkSet$ka_SC))
+  {
+    pkSet$ka_SC <- 0
+    pkSet$tlag_SC <- 0
+    for (x in c("p_coef_SC_l1", "p_coef_SC_l2", "p_coef_SC_l3", "p_coef_SC_ka",
+                "e_coef_SC_l1", "e_coef_SC_l2", "e_coef_SC_l3", "e_coef_SC_ke0",
+                "e_coef_SC_ka"))
+      pkSet[[x]] <- 0
+  }
   if (is.null(dose$RA)) dose$RA <- rep(FALSE, nrow(dose))
   if (is.null(dose$RAslow)) dose$RAslow <- rep(FALSE, nrow(dose))
   if (is.null(dose$RArate)) dose$RArate <- rep(FALSE, nrow(dose))

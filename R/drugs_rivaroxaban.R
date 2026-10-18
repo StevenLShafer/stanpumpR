@@ -61,8 +61,8 @@
 # ==================
 # The indication factor is atrial fibrillation's, 0.849: the patient for whom
 # rivaroxaban is most often held before surgery.  The typical such patient
-# (82.5 kg, 60.5 y, CrCL 97 mL/min, a man) has CL/F 5.59 L/h, V/F 62.5 L and
-# a half-life of 7.8 h.
+# (the medians: 81 kg, 61 y, CrCL 93 mL/min, a man) has CL/F 6.58 x 0.849 =
+# 5.59 L/h, V/F 62.5 L and a half-life of 7.8 h.
 #
 # CREATININE CLEARANCE
 # ====================
@@ -111,8 +111,11 @@ rivaroxaban <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   cl <- 6.58 * (crcl / RIVAROXABAN_CRCL_REF)^0.406 *
     (pkW / RIVAROXABAN_WT_REF)^-0.278 * RIVAROXABAN_AF_CL      # L/h
+  # The age term is a negative power, infinite at age 0 and fitted in adults:
+  # it sees the age floored at ADULT_AGE_TERM_FLOOR (18), as for every such term.
+  ageTerm <- max(age, ADULT_AGE_TERM_FLOOR)
   v  <- 62.5 * (pkW / RIVAROXABAN_WT_REF)^0.216 *
-    (age / RIVAROXABAN_AGE_REF)^-0.189 * (if (sex == SEX_FEMALE) 0.889 else 1)
+    (ageTerm / RIVAROXABAN_AGE_REF)^-0.189 * (if (sex == SEX_FEMALE) 0.889 else 1)
 
   default <- list(
     v1  = v,
@@ -143,7 +146,8 @@ rivaroxaban <- function(weight, height, age, sex, adjustToFFM = TRUE,
     reference = paste0(
       "Willmann S et al., CPT Pharmacometrics Syst Pharmacol 2018;7:309-320 ",
       "(apparent oral one-compartment model, atrial fibrillation; covariates ",
-      "centred on the population means; Cockcroft-Gault creatinine clearance, ",
+      "centred on the population medians, 81 kg, 93 mL/min and 61 y; ",
+      "Cockcroft-Gault creatinine clearance, ",
       "Tietz-truncated, from the entered creatinine or an assumed normal value ",
       "for age and sex). https://doi.org/10.1002/psp4.12288"
     )

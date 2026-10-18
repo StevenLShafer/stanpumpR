@@ -1,5 +1,5 @@
 # The route of a dose is not stored separately: it is a word in its Units
-# string ("mg PO", "mg/kg IM", "mg IN", "mg RA").  Units with no route word (bolus and
+# string ("mg PO", "mg/kg IM", "mg IN", "mg RA", "mg SC").  Units with no route word (bolus and
 # infusion units, the TCI targets, the gases' L/min and %) are intravenous, or
 # for the gases, treated with them.
 #
@@ -11,7 +11,7 @@
 #'
 #' @param units Character vector of dose units, as in the dose table.
 #' @returns Character vector the same length as `units`: one of `DOSE_ROUTES`
-#'   (`"IV"`, `"PO"`, `"IM"`, `"IN"`, `"RA"`).
+#'   (`"IV"`, `"PO"`, `"SL"`, `"IM"`, `"IN"`, `"RA"`, `"SC"`).
 #' @noRd
 doseRoute <- function(units) {
   units <- as.character(units)
@@ -127,9 +127,11 @@ groupUnitsByRoute <- function(units) {
 #' * `form = "reduction"`, `list(form, I50, D0, D50, exponent)`: the fraction
 #'   is 1 at and below the anchor dose D0 and falls as a power of the dose
 #'   above it, 1 - I50 x ((D - D0) / (D50 - D0))^exponent, so that it is
-#'   1 - I50 at D50.  The stage 2 relative bioavailability of apixaban
-#'   (Cirincione 2018: anchored at 2.5 mg, I50 the fall at 50 mg).  Floored
-#'   at zero, which a dose about 2.7 times D50 would otherwise pass.
+#'   1 - I50 at D50, and is HELD at 1 - I50 above D50: the source fitted
+#'   doses up to D50, and the power would otherwise fall through zero (at
+#'   about 2.7 times D50), so that a large dose simulated as no drug at all.
+#'   The stage 2 relative bioavailability of apixaban (Cirincione 2018:
+#'   anchored at 2.5 mg, I50 the fall at 50 mg).
 #' * `form = "exponential"`, `list(form, Fmin, Fmax, D50)`: the fraction is
 #'   Fmin + (Fmax - Fmin) exp(-ln 2 D / D50), falling from Fmax at a small
 #'   dose towards Fmin, halfway at D50.  Rivaroxaban (Willmann 2018, relative
@@ -153,8 +155,9 @@ oralSaturationFraction <- function(doseMg, saturation)
     saturable = 1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg),
     rising    = doseMg / (saturation$D50 + doseMg),
     power     = (doseMg / saturation$Dref)^saturation$exponent,
-    reduction = pmax(0, 1 - saturation$I50 *
-      (pmax(doseMg - saturation$D0, 0) / (saturation$D50 - saturation$D0))^saturation$exponent),
+    reduction = 1 - saturation$I50 *
+      (pmin(pmax(doseMg - saturation$D0, 0), saturation$D50 - saturation$D0) /
+         (saturation$D50 - saturation$D0))^saturation$exponent,
     exponential = saturation$Fmin + (saturation$Fmax - saturation$Fmin) *
       exp(-log(2) * doseMg / saturation$D50)
   )

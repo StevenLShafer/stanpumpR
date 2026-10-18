@@ -24,8 +24,11 @@
 # with the paper's V2/F the central volume and V3/F the peripheral, so here
 # v1 = V2/F and v2 = V3/F.  CLcr is the simplified MDRD estimate (egfrMDRD(),
 # R/renalFunction.R), which the paper found more accurate than Cockcroft-Gault,
-# centred on 87 mL/min; weight on 68 kg and age on 74 y.  The terminal
-# half-life is about 17-21 h.
+# centred on 87 mL/min; weight on 68 kg and age on 74 y.  The half-lives of
+# the two exponentials at the reference patient are 15 h and 176 h; the slow
+# one carries only 3% of a dose's initial amplitude (27% of its area), so the
+# curve falls with an effective half-life near the label's 17-21 h but keeps
+# a small tail for days, which a long plot shows.
 #
 # WHAT THIS REPRESENTS
 # ====================
@@ -82,7 +85,9 @@ fondaparinux <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   cl <- 0.278 * (pkW / FONDAPARINUX_WT_REF)^0.534 *
     (crcl / FONDAPARINUX_CLCR_REF)^0.532 *
-    (age / FONDAPARINUX_AGE_REF)^-0.461                        # L/h
+    (max(age, ADULT_AGE_TERM_FLOOR) / FONDAPARINUX_AGE_REF)^-0.461   # L/h
+  # (the age term is a negative power, infinite at age 0 and fitted in adults,
+  # so it sees the age floored at 18, as does egfrMDRD() above)
 
   default <- list(
     v1  = 8.14 * (pkW / FONDAPARINUX_WT_REF)^0.522,            # central (V2/F)

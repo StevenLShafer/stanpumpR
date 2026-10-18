@@ -164,7 +164,9 @@ paroxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v1  <- 1020 * size$volume
   # CL/F at the reference daily dose of 25 mg (the dose term is carried by
   # oralSaturation below), age as published
-  cl1 <- 13.1 * (age / 71)^-0.702 / 60 * size$clearance   # L/min
+  # The age term is a negative power, infinite at age 0 and fitted in adults:
+  # it sees the age floored at ADULT_AGE_TERM_FLOOR (18), as for every such term.
+  cl1 <- 13.1 * (max(age, ADULT_AGE_TERM_FLOOR) / 71)^-0.702 / 60 * size$clearance   # L/min
   v2  <- 1                                                 # one compartment
   v3  <- 1
   cl2 <- 0

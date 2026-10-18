@@ -86,9 +86,16 @@ test_that("R-warfarin raises the apparent C50, lowering inhibition", {
   i0 <- inrInhibition(0.5, 0,   inr)
   iR <- inrInhibition(0.5, 2.0, inr)
   expect_lt(iR, i0)
-  # The worked-example direction: C_R near the RIC50 roughly doubles C50_app.
-  c50app <- inr$c50 * (1 + inr$ric50 / inr$ric50)
-  expect_equal(c50app, 2 * inr$c50)
+  # The paper's worked example, as the headers of R/drugs_warfarin.R and
+  # R/inr.R state it: at the C_R of about 0.86 mg/L a maintenance dose gives,
+  # the apparent C50 is 0.378 x (1 + 0.86 / 2.387) = 0.514 mg/L, a 36% rise.
+  c50app <- inr$c50 * (1 + 0.86 / inr$ric50)
+  expect_equal(c50app, 0.5142, tolerance = 1e-3)
+  expect_equal(c50app / inr$c50 - 1, 0.360, tolerance = 1e-2)
+  # And inrInhibition() applies exactly that apparent C50 (Hill form)
+  cS <- 0.7
+  expect_equal(inrInhibition(cS, 0.86, inr),
+               cS^inr$hill / (c50app^inr$hill + cS^inr$hill), tolerance = 1e-12)
 })
 
 test_that("INR turnover is solved exactly against a fine numerical reference", {

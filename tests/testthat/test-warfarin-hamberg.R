@@ -15,8 +15,9 @@ simulateINR <- function(entry, maximum = 56 * 1440) {
 
 test_that("warfarinHamberg returns the published parameters at the reference patient", {
   # A 71-year-old wild-type (*1/*1), VKORC1 GG patient is the reference: the age
-  # and genotype terms are both 1, so the pins are the Table 2 / Table 3 values.
-  actual <- warfarinHamberg(70, 176, 71, "male", cyp2c9 = "*1/*1", vkorc1 = "GG")
+  # and genotype terms are both 1, so with the fat-free-mass switch off (no
+  # size scaling) the pins are the Table 2 / Table 3 values.
+  actual <- warfarinHamberg(70, 176, 71, "male", adjustToFFM = FALSE, cyp2c9 = "*1/*1", vkorc1 = "GG")
   ka <- 2 / 60
   expect_equal_rounded(actual$PK$default, list(
     v1 = 13.8, v2 = 6.59, v3 = 1,
@@ -38,19 +39,19 @@ test_that("warfarinHamberg returns the published parameters at the reference pat
 })
 
 test_that("CYP2C9 and age act on the S-warfarin clearance only", {
-  base <- warfarinHamberg(70, 176, 71, "male", cyp2c9 = "*1/*1", vkorc1 = "GG")
+  base <- warfarinHamberg(70, 176, 71, "male", adjustToFFM = FALSE, cyp2c9 = "*1/*1", vkorc1 = "GG")
   # The six CYP2C9 % reductions on CL_S (Table 2).
   reduction <- c("*1/*1" = 0, "*1/*2" = 0.315, "*1/*3" = 0.453,
                  "*2/*2" = 0.722, "*2/*3" = 0.690, "*3/*3" = 0.852)
   for (g in names(reduction)) {
-    vk <- warfarinHamberg(70, 176, 71, "male", cyp2c9 = g, vkorc1 = "GG")
+    vk <- warfarinHamberg(70, 176, 71, "male", adjustToFFM = FALSE, cyp2c9 = g, vkorc1 = "GG")
     expect_equal(vk$PK$default$cl1, 0.314 * (1 - reduction[[g]]) / 60,
                  info = g, tolerance = 1e-8)
     # R-warfarin clearance does not move with CYP2C9.
     expect_equal(vk$parallelSystems[[1]]$PK$default$cl1, base$parallelSystems[[1]]$PK$default$cl1)
   }
   # Age: 0.91%/year on CL_S, 0.98%/year on CL_R (both centred at 71).
-  young <- warfarinHamberg(70, 176, 51, "male", cyp2c9 = "*1/*1", vkorc1 = "GG")
+  young <- warfarinHamberg(70, 176, 51, "male", adjustToFFM = FALSE, cyp2c9 = "*1/*1", vkorc1 = "GG")
   expect_equal(young$PK$default$cl1, 0.314 * (1 - 0.0091 * (51 - 71)) / 60, tolerance = 1e-8)
   expect_equal(young$parallelSystems[[1]]$PK$default$cl1,
                0.139 * (1 - 0.0098 * (51 - 71)) / 60, tolerance = 1e-8)
@@ -59,7 +60,7 @@ test_that("CYP2C9 and age act on the S-warfarin clearance only", {
 test_that("VKORC1 sets the EC50 only", {
   for (v in c(GG = 4.61, GA = 3.02, AA = 2.20)) {
     name <- names(which(c(GG = 4.61, GA = 3.02, AA = 2.20) == v))
-    m <- warfarinHamberg(70, 176, 71, "male", cyp2c9 = "*1/*1", vkorc1 = name)
+    m <- warfarinHamberg(70, 176, 71, "male", adjustToFFM = FALSE, cyp2c9 = "*1/*1", vkorc1 = name)
     expect_equal(m$inr$c50, unname(v), info = name)
     # the PK is untouched by VKORC1
     expect_equal(m$PK$default$cl1, 0.314 / 60)
@@ -67,7 +68,7 @@ test_that("VKORC1 sets the EC50 only", {
 })
 
 test_that("invalid genotypes are rejected", {
-  expect_error(warfarinHamberg(70, 176, 71, "male", cyp2c9 = "*9/*9"), "cyp2c9")
+  expect_error(warfarinHamberg(70, 176, 71, "male", adjustToFFM = FALSE, cyp2c9 = "*9/*9"), "cyp2c9")
   expect_error(warfarinHamberg(70, 176, 71, "male", vkorc1 = "ZZ"), "vkorc1")
 })
 
@@ -192,4 +193,26 @@ test_that("the Hamberg teaching scenario is valid and turns the box on", {
   expect_true(s$options$hamberg)
   expect_equal(s$patient$vkorc1, "AA")
   expect_equal(s$patient$cyp2c9, "*2/*3")
+})
+
+test_that("the Hamberg companion scales to fat-free mass like any model without a size term", {
+  # 120 kg, 170 cm, 50 y man: volumes x 1.3049067, clearances x 1.2209126 (the
+  # factors pinned in test-drugs-alfentanil.R), on the published values at
+  # 50 y: CL_S = 0.314 x (1 - 0.0091 x (50 - 71)) L/h, CL_R = 0.139 x
+  # (1 - 0.0098 x (50 - 71)) L/h.  Worked out by hand.
+  on <- warfarinHamberg(120, 170, 50, "male", cyp2c9 = "*1/*1", vkorc1 = "GG")
+  expect_equal_rounded(on$PK$default[c("v1", "v2", "cl1", "cl2")],
+                       list(v1 = 18.007712, v2 = 8.5993352,
+                            cl1 = 0.0076104651, cl2 = 0.0026656592))
+  expect_equal_rounded(on$parallelSystems[[1]]$PK$default[c("v1", "cl1")],
+                       list(v1 = 16.702806, cl1 = 0.0034105420))
+  # With the switch off the published values are used at any size
+  off <- warfarinHamberg(120, 170, 50, "male", adjustToFFM = FALSE)
+  expect_equal(off$PK$default$v1, 13.8)
+  expect_equal(off$PK$default$cl1, 0.314 * (1 - 0.0091 * (50 - 71)) / 60)
+  # And the companion entry built by the app passes the switch through
+  dd <- getDrugDefaults("warfarin")
+  entryOn  <- alternativeModelEntry("warfarin", 120, 170, 50, "male", dd, adjustToFFM = TRUE)
+  entryOff <- alternativeModelEntry("warfarin", 120, 170, 50, "male", dd, adjustToFFM = FALSE)
+  expect_equal(entryOn$PK$default$v1 / entryOff$PK$default$v1, 1.3049067, tolerance = 1e-6)
 })

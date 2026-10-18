@@ -29,5 +29,10 @@ coefficient is the IDMS-traceable form (the papers name only "simplified
 MDRD").  Indexed to 1.73 m^2, which is the value the source models centred
 their covariate on (69 and 87 mL/min), so it is used as given, not
 de-indexed.
+
+The age term is a negative power, infinite at an age of 0 and steep in
+infancy, and the equation was fitted in adults, so the age it sees is
+floored at \code{ADULT_AGE_TERM_FLOOR} (18): a child gets the value of an
+18-year-old at the same (adult-scale) creatinine.
 }
 \keyword{internal}
