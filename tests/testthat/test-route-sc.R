@@ -1,7 +1,8 @@
 # The subcutaneous route (ROUTE_SC): a first-order depot into the central
-# compartment, exactly as the intramuscular route, added for the
-# low-molecular-weight heparins and fondaparinux.  See R/constants.R and the
-# depot machinery in getDrugPK.R / advanceClosedFormPO_IM_IN.R.
+# compartment, exactly as the intramuscular route, used by the
+# low-molecular-weight heparins and fondaparinux.  The engines carry it on the
+# tissue-depot (RA) states (R/subcutaneous.R): getDrugPK() moves ka_SC and
+# the rest onto the _RA fields and simCpCe() flags SC rows as RA.
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
@@ -19,12 +20,13 @@ test_that("the SC depot reproduces the IM depot for identical parameters", {
   # A subcutaneous dose and an intramuscular dose with the same ka, F, lag and
   # disposition must give the same plasma curve: the two depots share the math.
   ds <- getDrugPK("fondaparinux", 68, 170, 74, "male", creatinine = 0.9)$PK$default
+  expect_gt(ds$ka_RA, 0)
   imset <- ds
-  for (fld in grep("_SC", names(imset), value = TRUE)) {
-    imset[[sub("_SC", "_IM", fld)]] <- imset[[fld]]
+  for (fld in grep("_RA(_|$)", names(imset), value = TRUE)) {
+    imset[[sub("_RA", "_IM", fld)]] <- imset[[fld]]
     imset[[fld]] <- 0
   }
-  scDose <- data.frame(Time = 0, Dose = 2.5, Bolus = FALSE, SC = TRUE)
+  scDose <- data.frame(Time = 0, Dose = 2.5, Bolus = FALSE, RA = TRUE)
   imDose <- data.frame(Time = 0, Dose = 2.5, Bolus = FALSE, IM = TRUE)
   rSC <- advanceClosedFormPO_IM_IN(scDose, ds,    4320, FALSE, 0)
   rIM <- advanceClosedFormPO_IM_IN(imDose, imset, 4320, FALSE, 0)
@@ -45,11 +47,12 @@ test_that("an SC dose builds a depot that peaks after the injection", {
   expect_gt(max(pl$Y), 0)
 })
 
-test_that("a tlag_SC delays the subcutaneous absorption", {
-  # Build two PK sets differing only in tlag_SC and confirm the curve shifts.
+test_that("a lag delays the subcutaneous absorption", {
+  # Build two PK sets differing only in the depot's lag (tlag_SC, carried as
+  # tlag_RA) and confirm the curve shifts.
   base <- getDrugPK("fondaparinux", 68, 170, 74, "male", creatinine = 0.9)$PK$default
-  lagged <- base; lagged$tlag_SC <- 120
-  dose <- data.frame(Time = 0, Dose = 2.5, Bolus = FALSE, SC = TRUE)
+  lagged <- base; lagged$tlag_RA <- 120
+  dose <- data.frame(Time = 0, Dose = 2.5, Bolus = FALSE, RA = TRUE)
   r0 <- advanceClosedFormPO_IM_IN(dose, base,   2880, FALSE, 0)
   rL <- advanceClosedFormPO_IM_IN(dose, lagged, 2880, FALSE, 0)
   # At 60 min the unlagged curve has drug and the lagged one has essentially none.

@@ -7,7 +7,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `app.R` | One line, `stanpumpR::run_app()`: the deployment entry point |
 | `DESCRIPTION`, `NAMESPACE` | Package metadata and exports |
 | `R/` | All the code, in flat files (below) |
-| `inst/extdata/` | The drug library (`drugDefaults_global.csv`), the event list (`eventDefaults.csv`), the antiseizure registry (`antiseizureRegistry.csv`, `antiseizureParameters.csv`) and the PowerPoint template |
+| `inst/extdata/` | The drug library (`drugDefaults_global.csv`), the event list (`eventDefaults.csv`), the antiseizure and antidiabetic registries (`antiseizureRegistry.csv`, `antiseizureParameters.csv`, `antidiabeticRegistry.csv`, `antidiabeticParameters.csv`) and the PowerPoint template |
 | `inst/help/` | The hand-written pages of this help, as Markdown |
 | `inst/plumber/` | The simulation API's `plumber` file (`plumber.R`), which `run_api()` serves |
 | `inst/api/` | The TCI API's deployment entry point (`entrypoint.R`, for Posit Connect) and its OpenAPI document (`openapi.json`) |
@@ -16,7 +16,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 | `tests/testthat/` | The unit tests: one file per drug (a metabolite or prodrug is tested with its parent), and files for the engines, the inputs, the server and the help |
 | `vignettes/` | Two worked examples of the scripting interface |
 | `docs/` | Developer documentation: architecture, adding a drug, body-size scaling, the simulation and TCI APIs, notes on individual models, the user's guide draft (not shipped in the package) |
-| `data-raw/` | Scripts that derive model parameters or data from published sources, such as the temazepam fit and the antiseizure registry (not shipped in the package) |
+| `data-raw/` | Scripts that derive model parameters or data from published sources, such as the temazepam fit and the antiseizure and antidiabetic registries (not shipped in the package) |
 | `renv.lock` | Pinned package versions for reproducible deployment |
 | `Original Stanpump/` | The original STANPUMP C source and documentation, zipped. Third-party library headers and drivers it was built with (Greenleaf CommLib, Ring Zero) are not included; `REMOVED.TXT` in the archive lists them |
 | `.github/workflows/` | Continuous integration and deployment |

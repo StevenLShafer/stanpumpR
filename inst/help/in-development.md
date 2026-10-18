@@ -34,7 +34,7 @@ And for plots longer than a day:
 
 ## No longer a placeholder
 
-Nothing in the Patient Profile is now visible but inactive. The **Serum creatinine** field is live: cefazolin, gabapentin, gentamicin, lacosamide, levetiracetam, mannitol, intravenous meloxicam, oxycodone, pregabalin, sugammadex and vancomycin estimate renal function from it (see [Cautions](help:cautions)), or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
+Nothing in the Patient Profile is now visible but inactive. The **Serum creatinine** field is live: canagliflozin, cefazolin, dapagliflozin, empagliflozin, ertugliflozin, exenatide, gabapentin, gentamicin, lacosamide, levetiracetam, lixisenatide, mannitol, intravenous meloxicam, metformin, oxycodone, pregabalin, sugammadex and vancomycin estimate renal function from it (see [Cautions](help:cautions)), or from an assumed normal creatinine when it is blank. Renal function also governs the glucuronide metabolites of morphine and hydromorphone, which are not yet modelled.
 
 ## Provisional values flagged in the code
 

@@ -86,9 +86,10 @@ helpStaticPages <- function() {
     "models/pregnancy",         "Pregnancy",                       "models",
     "models/minto-schnider",    "The Minto and Schnider models",   "models",
     "models/hamberg",            "The Hamberg warfarin genotype model", "models",
-    "models/absorption",        "Oral, intramuscular, intranasal and regional anesthesia doses", "models",
+    "models/absorption",        "Oral, intramuscular, intranasal, subcutaneous and regional anesthesia doses", "models",
     "models/metabolites",       "Active metabolites",              "models",
     "models/antidepressants",   "Antidepressant models and their limits", "models",
+    "models/antidiabetics",     "Antidiabetic models and their limits", "models",
     "models/illicit-drugs",     "Research models of drugs of abuse", "models",
     "models/antihypertensives", "Antihypertensives: why so few, and no blood pressure", "models",
     "models/pk-events",         "Events that change the kinetics", "models",
@@ -105,6 +106,7 @@ helpStaticPages <- function() {
 
     "investigators",            "The investigators",               "people",
     "history",                  "From CATIA to stanpumpR",         "people",
+    "opentci",                  "stanpumpR and Open TCI",          "people",
     "offset",                   "TCI and the offset of drug effect", "people",
 
     "repository",               "What is in the repository",       "project",

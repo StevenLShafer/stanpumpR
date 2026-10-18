@@ -1,4 +1,5 @@
-# Scheduled (repeating) doses: qd, bid, tid and qid
+# Scheduled (repeating) doses: qd, bid, tid and qid, and qwk (once weekly) on
+# the subcutaneous units
 #
 # Drafted by Claude Code, 2026-10-07, at the request of Steven L. Shafer;
 # tests/testthat/test-scheduled.R.
@@ -25,12 +26,12 @@ isScheduledUnit <- function(units) as.character(units) %in% scheduledUnits
 
 # "mg PO bid" -> "mg PO"
 scheduleBaseUnit <- function(units) {
-  sub(paste0(" (", paste(names(SCHEDULE_INTERVALS), collapse = "|"), ")$"), "", units)
+  sub(paste0(" (", paste(names(ALL_SCHEDULE_INTERVALS), collapse = "|"), ")$"), "", units)
 }
 
 # "mg PO bid" -> 720
 scheduleInterval <- function(units) {
-  unname(SCHEDULE_INTERVALS[sub("^.* ", "", units)])
+  unname(ALL_SCHEDULE_INTERVALS[sub("^.* ", "", units)])
 }
 
 # Expand one drug's scheduled rows.

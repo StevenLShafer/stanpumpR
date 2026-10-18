@@ -198,12 +198,14 @@ helpDrugParameterTable <- function(drug, drugDefaults = getDrugDefaultsGlobal(),
 
 helpConcentrationUnits <- function(units) {
   switch(as.character(units),
-         "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL",
+         "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL", "pg" = "pg/mL",
          "%" = "% of one atmosphere",
          # An osmotic agent is plotted as the serum osmolality it produces.
          "mOsm" = "mOsm/kg (serum osmolality)",
          # Intravenous calcium is plotted as the change in ionized calcium.
          "mmol" = "mmol/L (change in ionized calcium)",
+         # The insulins are dosed in units and plotted in microunits per mL.
+         "mcU" = "mcU/mL (microunits per mL, = mU/L)",
          # Heparin is measured by its activity, warfarin by the INR.
          "IU" = "IU/mL (activity)",
          "INR" = "INR (international normalized ratio)",
@@ -258,11 +260,27 @@ helpDrugUnits <- function(row) {
 helpSaturableTerminalHalfLife <- function(X) {
   mm <- X$michaelisMenten
   if (is.null(mm)) return(NA_real_)
-  v1 <- X$PK[[PK_EVENT_DEFAULT]]$v1
+  # Saturable binding (linagliptin, vildagliptin) makes even the
+  # low-concentration limit depend on the target's capacity: not computed.
+  if (!is.null(mm$rapidBinding) || !is.null(mm$targetBinding)) return(NA_real_)
+  set <- X$PK[[PK_EVENT_DEFAULT]]
+  v1 <- set$v1
   if (!isTRUE(v1 > 0) || !isTRUE(mm$km > 0)) return(NA_real_)
-  k10 <- (mm$vmax / mm$km) / v1                 # CL/V1 in the low-C limit
-  k12 <- if (is.null(mm$k23)) 0 else mm$k23
-  k21 <- if (is.null(mm$k32)) 0 else mm$k32
+  # CL/V1 in the low-C limit, with any parallel linear clearance (exenatide)
+  clLinear <- if (is.null(mm$clLinear)) 0 else mm$clLinear
+  k10 <- (mm$vmax / mm$km + clLinear) / v1
+  if (!isTRUE(k10 > 0)) return(NA_real_)
+  # The peripheral compartment, declared as k23/k32 (GHB) or as the PK set's
+  # cl2 and v2 (exenatide)
+  if (!is.null(mm$k23)) {
+    k12 <- mm$k23
+    k21 <- mm$k32
+  } else if (isTRUE(set$cl2 > 0) && isTRUE(set$v2 > 0)) {
+    k12 <- set$cl2 / v1
+    k21 <- set$cl2 / set$v2
+  } else {
+    k12 <- k21 <- 0
+  }
   if (k12 <= 0 || k21 <= 0) return(log(2) / k10)
   # The slower root of the two-compartment characteristic equation
   s <- k10 + k12 + k21
@@ -529,7 +547,13 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       # A saturable model has no fixed clearance and no fixed half-life, so
       # the two tables above would be read as saying something they do not.
       # Say so here rather than leaving it to the section further down.
-      if (!is.null(modelOut$michaelisMenten))
+      if (!is.null(modelOut$michaelisMenten) &&
+          (!is.null(modelOut$michaelisMenten$rapidBinding) ||
+           !is.null(modelOut$michaelisMenten$targetBinding)))
+        paste0("<strong>This drug's binding to its target saturates</strong>, so the clearance and ",
+               "half-lives above are those of the unbound drug, not of the total concentration ",
+               "plotted; see <em>Saturable binding</em> below. ")
+      else if (!is.null(modelOut$michaelisMenten))
         paste0("<strong>This drug's elimination saturates</strong>, so neither CL1 nor the half-lives ",
                "above are fixed properties of it. CL1 is the central clearance approached at ",
                "concentrations far BELOW Km, and falls from there as the dose rises. The half-lives ",
@@ -708,11 +732,18 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
     slowRA <- isTRUE(d$ka_RAslow > 0)
     secondPO <- isTRUE(d$ka_PO2 > 0)
+    # A subcutaneous drug's absorption rides on the tissue-depot (RA) fields
+    # (R/subcutaneous.R), so its rows are named for the route it really has.
+    tissue <- if (identical(pkRef$tissueRoute, ROUTE_SC)) "Subcutaneous (SC)" else
+      "Regional anesthesia (RA)"
     routes <- list(PO = if (secondPO) "Oral (PO), first depot" else "Oral (PO)",
                    PO2 = "Oral (PO), second depot", SL = "Sublingual (SL)",
                    IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
-                   RA = if (slowRA) "Regional anesthesia (RA), fast depot" else "Regional anesthesia (RA)",
-                   RAslow = "Regional anesthesia (RA), slow depot")
+                   RA = if (slowRA) paste0(tissue, ", fast depot") else tissue,
+                   RAslow = paste0(tissue, ", slow depot"))
+    # An oral release into the gut rides on the tissue depot (R/subcutaneous.R):
+    # its depot is the oral one, shown once, as oral.
+    if (isTRUE(pkRef$zeroOrderPO)) routes$RA <- routes$RAslow <- NULL
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -754,20 +785,38 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
               paste(sprintf("%s%%", helpFormatNumber(100 * p$fraction)), collapse = ", "),
               paste(helpFormatNumber(p$delay), collapse = ", "))
     }, character(1)), collapse = "") else ""
+    # Zero-order subcutaneous input (R/subcutaneous.R)
+    zero <- pkRef$zeroOrderSC
+    zeroOrderNote <- if (is.null(zero)) "" else if (isTRUE(pkRef$zeroOrderPO)) sprintf(paste0(
+      "Each oral dose is released into the gut at a constant rate over %s minutes, starting at ",
+      "the lag, and absorbed from it first order (sequential zero- and first-order absorption). "),
+      helpFormatNumber(zero$duration)) else if (zero$into == "central") sprintf(paste0(
+      "Besides the depot%s, %s%% of each SC dose enters the circulation directly at a constant ",
+      "rate over %s minutes from the moment of injection (zero-order absorption); the depot ",
+      "bioavailability shown is the share it absorbs. "),
+      if (slowRA) "s" else "", helpFormatNumber(100 * zero$fraction), helpFormatNumber(zero$duration)) else
+      sprintf(paste0("Each SC dose is released into the depot at a constant rate over %s minutes ",
+                     "(sequential zero- and first-order absorption). "), helpFormatNumber(zero$duration))
     if (length(rows) > 0) {
       absorptionHTML <- paste0(
         helpH2("Extravascular routes"),
-        "<p>Doses with PO, SL, IM, IN or RA units are absorbed by first-order kinetics into the central ",
-        "compartment after a lag, with the fraction shown reaching the circulation. RA is a ",
-        "local anesthetic injected into tissue (a nerve block or an infiltration)",
-        if (any(units %in% raRateUnits)) ", or infused into it through a perineural catheter (mg/hr RA), which feeds the same depot" else "",
-        ". ",
+        "<p>Doses with PO, SL, IM, IN, SC or RA units are absorbed by first-order kinetics into the central ",
+        "compartment after a lag, with the fraction shown reaching the circulation. ",
+        if (identical(pkRef$tissueRoute, ROUTE_SC)) paste0(
+          "SC is a subcutaneous injection",
+          if (any(units %in% insulinRateUnits)) ", or a continuous subcutaneous infusion from an insulin pump (U/hr SC), which feeds the same depot" else "",
+          ". ") else if (any(doseRoute(units) == ROUTE_RA)) paste0(
+          "RA is a local anesthetic injected into tissue (a nerve block or an infiltration)",
+          if (any(units %in% raRateUnits)) ", or infused into it through a perineural catheter (mg/hr RA), which feeds the same depot" else "",
+          ". ") else "",
+        zeroOrderNote,
         if (length(formRows)) paste0("A unit naming an oral form listed in the table uses that form's ",
                                      "absorption; plain mg PO, and any other form offered, use the default. ") else "",
         pulseNote,
         if (secondPO) paste0("Each oral dose is absorbed through two depots in parallel, each with ",
                              "its own lag; the bioavailability of each is its share of the dose. ") else "",
-        if (slowRA) paste0("Each RA dose is absorbed through a fast and a slow depot in parallel; ",
+        if (slowRA) paste0("Each ", if (identical(pkRef$tissueRoute, ROUTE_SC)) "SC" else "RA",
+                           " dose is absorbed through a fast and a slow depot in parallel; ",
                            "the bioavailability of each is its share of the dose. ") else "",
         "See ",
         helpPageLink("models/absorption"), ".</p>",
@@ -923,28 +972,54 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   # --- Saturable (Michaelis-Menten) elimination ------------------------------
   # Without this the two tables above describe a saturable drug as a linear
   # one: its Vmax and Km appear nowhere, and a peripheral compartment declared
-  # through k23/k32 reads as absent.  Phenytoin and GHB.
+  # through k23/k32 reads as absent.  Phenytoin, GHB and exenatide; the DPP-4
+  # inhibitors' saturation is in their binding, described separately below.
   michaelisHTML <- ""
-  if (!is.null(modelOut$michaelisMenten)) {
+  mmBinding <- !is.null(modelOut$michaelisMenten$rapidBinding) ||
+    !is.null(modelOut$michaelisMenten$targetBinding)
+  if (!is.null(modelOut$michaelisMenten) && mmBinding) {
+    michaelisHTML <- paste0(
+      helpH2("Saturable binding"),
+      "<p>This drug binds its target, dipeptidyl peptidase-4, in the plasma and the tissues, and ",
+      "the target's capacity is small: at low concentrations most of the drug is bound, and as ",
+      "the concentration rises the unbound fraction rises with it. Elimination and distribution ",
+      "act on the unbound drug, so the clearance of the total concentration falls as doses fall ",
+      "and the terminal phase is long. Doses therefore do not add independently, and the drug is ",
+      "simulated by numerical integration of the whole dose table at once. The clearance in the ",
+      "table above is that of the unbound drug, not of the total concentration plotted. See the ",
+      "model description below.</p>")
+  } else if (!is.null(modelOut$michaelisMenten)) {
     mm <- modelOut$michaelisMenten
+    # Vmax is an amount per minute, in the mass that the concentration unit
+    # holds per litre (mcg/mL is mg/L; exenatide's pg/mL is ng/L)
+    amountUnit <- switch(as.character(row$Concentration.Units),
+                         mcg = "mg", ng = "mcg", pg = "ng", mg = "g", "mg")
     rowsMM <- lapply(seq_len(nrow(helpReferencePatients())), function(i) {
       p <- helpReferencePatients()[i, ]
       X <- helpDrugModelOutput(drug, p)
       if (is.null(X) || is.null(X$michaelisMenten)) return(NULL)
       v1 <- X$PK[[PK_EVENT_DEFAULT]]$v1
       k23 <- X$michaelisMenten$k23; k32 <- X$michaelisMenten$k32
-      data.frame(
+      set <- X$PK[[PK_EVENT_DEFAULT]]
+      vmaxCol <- sprintf("Vmax (%s/min)", amountUnit)
+      out <- data.frame(
         Patient = p$label,
-        `Vmax (mg/min)` = helpFormatNumber(X$michaelisMenten$vmax),
+        Vmax = helpFormatNumber(X$michaelisMenten$vmax),
         Km = helpFormatNumber(X$michaelisMenten$km),
         `Peripheral volume (L)` =
-          if (is.null(k23) || is.null(k32)) "—"
-          else helpFormatNumber(k23 / k32 * v1),
+          if (!is.null(k23) && !is.null(k32)) helpFormatNumber(k23 / k32 * v1)
+          else if (isTRUE(set$cl2 > 0)) helpFormatNumber(set$v2)
+          else "—",
         `Terminal t½ below Km (min)` =
           helpFormatHalfLife(helpSaturableTerminalHalfLife(X)),
         check.names = FALSE, stringsAsFactors = FALSE)
+      names(out)[names(out) == "Vmax"] <- vmaxCol
+      out
     })
     mmTab <- do.call(rbind, rowsMM[!vapply(rowsMM, is.null, logical(1))])
+    linearNote <- if (isTRUE(mm$clLinear > 0)) paste0(
+      "<p>A linear clearance runs in parallel with the saturable one, so the clearance never falls ",
+      "below it; the CL1 above is the sum of the two at low concentrations.</p>") else ""
     if (!is.null(mmTab)) {
       mmTab[["Concentration at half maximal rate"]] <- NULL
       salts <- mm$saltFactor
@@ -986,6 +1061,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         "the saturable term becomes an ordinary clearance of Vmax/Km: it is computed from the ",
         "central volume AND that peripheral compartment, so it is the half-life the table of ",
         "half-lives above cannot give. At the doses the drug is given it is longer still.</p>",
+        linearNote,
         saltNote
       )
     }
