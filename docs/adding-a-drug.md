@@ -120,6 +120,7 @@ dose: the engine applies that itself, dose by dose (see *saturable oral absorpti
 |---|---|
 | `PK` | named list of PK sets, one per event; each has `v1,v2,v3,cl1,cl2,cl3` (liters, L/min). A single-model drug uses one set named `default`. |
 | `tPeak` | time (min) to peak effect site; `getDrugPK()` back-solves `ke0` from it. `0` means no effect-site model. |
+| `ke0` | optional (1/min), for a source that measured the equilibration rate rather than a time to peak effect. Supply it *instead* of `tPeak`, leaving `tPeak` out altogether, and `getDrugPK()` solves the true time to peak effect from this `ke0` and the disposition (`R/drugs_etomidate.R`, `R/drugs_trefentanil.R`). |
 | `MEAC` | reference effect concentration used for the MEAC plot / normalization (`0` if not applicable). |
 | `typical`, `upperTypical`, `lowerTypical` | the shaded "typical range" band on the plot. |
 | `reference` | literature citation (string). |
