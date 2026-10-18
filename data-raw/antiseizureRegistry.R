@@ -74,7 +74,7 @@ registry <- rbind(
       "cenobamate base", "cenobamate (apparent, oral)",
       "2C first-order with lag", "pk_only", "cenobamate",
       "https://doi.org/10.1016/j.eplepsyres.2023.107185",
-      "Vashi 2023 sponsor model (960 subjects) implemented from the FDA NDA 212839 clinical pharmacology review, Table 2; dose, BSA, weight, bilirubin, ethnicity and co-medication terms not applied (equations and centring values unprinted); single-dose nonlinearity not reproduced."),
+      "Vashi 2023 sponsor model (960 subjects) implemented from the FDA NDA 212839 clinical pharmacology review, Table 2; dose, BSA, weight, bilirubin, ethnicity and co-medication terms not applied (equations and centring values unprinted); single-dose nonlinearity not reproduced; Vernillet 2020 healthy volunteers: first day matched, steady state ~20% above the model; AES 2025 model (CL/F 0.282 L/h) not used, incomplete."),
   reg("Clobazam", "oral tablet/suspension/film", L, PRO,
       "clobazam + N-desmethylclobazam", "clobazam and N-desmethylclobazam",
       "tandem 1C parent + metabolite; CYP2C19 on metabolite", "pk_only", NA,

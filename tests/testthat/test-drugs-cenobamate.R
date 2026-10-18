@@ -53,3 +53,40 @@ test_that("200 mg once daily reaches the phase 3 steady state", {
   # nothing before the 0.24 h lag on the first day
   expect_equal(w$Plasma[w$Time > 0 & w$Time < 14][1], 0)
 })
+
+# Vernillet 2020 (healthy volunteers, capsules), geometric means.  These
+# studies are probably within the pooled fit, so they check consistency; the
+# header gives the numbers.
+cenobamateCurve <- function(dose, units, days) {
+  w <- simulateDrugsWithCovariates(
+    data.frame(Drug = "cenobamate", Time = 0, Dose = dose, Units = units),
+    noEvents, 70, 170, 35, "male", days * 1440, TRUE)$cenobamate$wide
+  w[, c("Time", "Plasma")]
+}
+cenobamateAUC <- function(w, from, to) {
+  s <- w[w$Time >= from & w$Time <= to, ]
+  sum(diff(s$Time) * (head(s$Plasma, -1) + tail(s$Plasma, -1)) / 2) / 60
+}
+
+test_that("the first day of daily dosing matches Vernillet's Supplemental Table 5", {
+  # the model is linear, so one 100 mg curve scales to every dose
+  w <- cenobamateCurve(100, "mg PO", 1)
+  perMg <- cenobamateAUC(w, 0, 1440) / 100
+  dose <- c(50, 100, 150, 150, 200, 250, 300)
+  observed <- c(21.0, 40.3, 70.3, 73.0, 93.1, 104, 142)   # AUC0-24, mcg h/mL
+  ratio <- dose * perMg / observed
+  expect_true(all(ratio > 0.85 & ratio < 1.07))
+})
+
+test_that("steady state is about 20% below Vernillet's healthy volunteers", {
+  # Table 3: AUCtau on day 14 of daily dosing; the gap is the healthy-versus-
+  # patient difference the header describes, and it does not depend on dose
+  dose <- c(50, 200, 500)
+  observed <- c(96.7, 482, 1110)
+  ratio <- sapply(seq_along(dose), function(i) {
+    w <- cenobamateCurve(dose[i], "mg PO qd", 14)
+    cenobamateAUC(w, 13 * 1440, 14 * 1440) / observed[i]
+  })
+  expect_true(all(ratio > 0.72 & ratio < 0.96))
+  expect_equal(exp(mean(log(ratio))), 0.84, tolerance = 0.05)
+})

@@ -30,12 +30,16 @@
 #   - daily dose on CL/F, "exponential", -0.0280.  Neither the form nor the
 #     reference dose is printed.  Read as a power of the daily dose about
 #     200 mg it moves CL/F by under 4% between 100 and 400 mg/day, which
-#     agrees with the multiple-dose studies (AUC proportional to dose from 50
-#     to 500 mg/day; Vernillet 2020) and with the label.  The single-dose
-#     nonlinearity (AUC rising faster than dose, apparent clearance falling
-#     from about 1.4 to 0.5 L/h; Vernillet 2020) is not reproduced: after a
-#     single small dose the model, fitted mostly at steady state,
-#     overpredicts exposure.
+#     agrees with the multiple-dose studies: apparent clearance at steady
+#     state was 0.40-0.52 L/h at every daily dose from 50 to 500 mg, with no
+#     trend (AUC proportional to dose; Vernillet 2020, Table 3 and
+#     Supplemental Table 4, power-model slope 1.04).  The single-dose
+#     nonlinearity is not reproduced: after one dose the apparent clearance
+#     fell from 1.26-1.42 L/h at 5-10 mg to 0.40-0.48 L/h at 400-750 mg
+#     (Vernillet 2020, Table 2), so the model overpredicts the total exposure
+#     to a single small dose (AUC0-inf 2.2 times at 5 mg, 1.2 at 100 mg) and
+#     underpredicts it after a single large one (0.73 times at 750 mg).  The
+#     first day of daily dosing is reproduced (below), and dosing is daily.
 #   - body surface area on CL/F (linear, 0.611 per m^2) and weight on V1/F
 #     (linear, 0.0120 per kg), centring values unprinted.  Replaced by the
 #     library's fat-free-mass scaling, as for ethosuximide.
@@ -54,13 +58,34 @@
 # (label median Tmax 1-4 h).  At 200 mg once daily the steady-state average
 # is 15.6 mg/L, trough 13.7 and peak 17.9.  The phase 3 mean steady-state
 # concentration at 200 mg/day was 15.5 mg/L (as quoted by Greene 2022), the
-# population the model mostly describes.  Healthy volunteers run higher: a
-# median trough of 18.4 mg/L at 200 mg/day after titration (Greene 2022, two
-# thirds African American) and 19.0 mg/L in the ascending-dose study, and a
+# population the model mostly describes.
+#
+# Healthy volunteers (Vernillet 2020: ascending-dose studies, capsules; these
+# are probably among the eight phase 1 studies in the pooled fit, so this is
+# a consistency check, not an independent validation):
+#   - the first day of daily dosing (Supplemental Table 5, 50-300 mg): the
+#     model's AUC0-24 is 0.87-1.05 of the observed geometric means and its
+#     peak 0.75-0.95, so absorption and distribution are right;
+#   - steady state (Table 3, day 14 or 17, 50-500 mg/day): the model's AUCtau
+#     is 0.73-0.94 of observed (geometric mean ratio 0.80), its peak 0.74 and
+#     its trough 0.76, with no trend with dose.  The observed steady-state
+#     clearance is about 0.43 L/h against the model's 0.533.
+# Other healthy-volunteer studies agree: a median trough of 18.4 mg/L at
+# 200 mg/day after titration (Greene 2022, two thirds African American) and a
 # mean peak of 23.1 mg/L at 200 mg/day and 64.0 at 500 mg/day (Darpo 2022).
-# The model is 20 to 30% below those, which is the size of the source's own
-# ethnicity terms and of the healthy-versus-patient difference; a healthy
-# volunteer or an African American patient is underpredicted.
+# So the curve is about 20% low for a healthy adult and right for a patient
+# on adjunctive therapy, whose other antiseizure drugs (phenytoin among them,
+# not a covariate) raise cenobamate clearance; the source's ethnicity terms
+# are of the same size.
+#
+# NOT USED: the later sponsor model (Krishna, Jonsson, Abdallah and Vashi, AES
+# 2025 abstract 2.366; 1101 subjects, two compartments, no lag) prints CL/F
+# 0.282 L/h, V1/F 38.6 L and V2/F 6.72 L and nothing else (no ka, Q or
+# covariate equations).  Taken as typical values those give a terminal
+# half-life of at least 95 h (V1/F x ln 2 / CL/F, whatever Q is) and a
+# steady-state average of 30 mg/L at 200 mg/day, about twice
+# every observation above, so they must be conditional on covariate
+# reference values the abstract does not give.
 #
 # Steady state takes about two weeks (label).  The label titration is 12.5
 # mg/day for two weeks, then 25, 50, 100, 150 and 200 mg/day, each for two
@@ -85,8 +110,10 @@
 #   https://doi.org/10.1016/j.eplepsyres.2023.107185
 # FDA, NDA 212839 Clinical Pharmacology Review (Xcopri), 2019, Table 2.
 #   https://www.accessdata.fda.gov/drugsatfda_docs/nda/2019/212839Orig1s000ClinPharmR.pdf
-# Vernillet L et al., Clin Pharmacol Drug Dev 2020;9:428-443.
-#   https://doi.org/10.1002/cpdd.769
+# Vernillet L et al., Clin Pharmacol Drug Dev 2020;9:428-443, and its
+#   supplement.  https://doi.org/10.1002/cpdd.769
+# Krishna G et al., AES 2025 abstract 2.366 (not used; see above).
+#   https://aesnet.org/abstractslisting/cenobamate-population-pharmacokinetic-analyses-exposures-in-adult-and-elderly-focal-seizure-subjects
 # Greene SA et al., Clin Transl Sci 2022;15:899-911.
 #   https://doi.org/10.1111/cts.13204
 # Darpo B et al., Clin Pharmacol Drug Dev 2022;11:523-534.
