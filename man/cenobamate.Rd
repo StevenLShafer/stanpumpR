@@ -27,6 +27,6 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 The sponsor's population model (Vashi et al., 2023), two compartments,
-apparent oral, with an absorption lag; parameters from the FDA clinical
-pharmacology review of NDA 212839.  See the header of the file.
+apparent oral, with an absorption lag; parameters from its Supplemental
+Table 2.  See the header of the file.
 }

@@ -1,9 +1,9 @@
 # cenobamate: see R/drugs_cenobamate.R (Vashi 2023, the sponsor's population
-# model, parameters from the FDA clinical pharmacology review of NDA 212839;
+# model, Supplemental Table 2 = the FDA review of NDA 212839, Table 2;
 # FFM in place of the source's linear weight and body-surface-area terms).
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
-test_that("reference patient, switch off: the review's Table 2", {
+test_that("reference patient, switch off: Supplemental Table 2", {
   a <- cenobamate(70, 170, 40, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(a$v1, 42.4); expect_equal(a$v2, 7.27)
   expect_equal(a$cl1, 0.533 / 60); expect_equal(a$cl2, 1.84 / 60)
@@ -55,8 +55,8 @@ test_that("200 mg once daily reaches the phase 3 steady state", {
 })
 
 # Vernillet 2020 (healthy volunteers, capsules), geometric means.  These
-# studies are probably within the pooled fit, so they check consistency; the
-# header gives the numbers.
+# studies are within the pooled fit (Vashi 2023 Table 1), so they check
+# consistency; the header gives the numbers.
 cenobamateCurve <- function(dose, units, days) {
   w <- simulateDrugsWithCovariates(
     data.frame(Drug = "cenobamate", Time = 0, Dose = dose, Units = units),

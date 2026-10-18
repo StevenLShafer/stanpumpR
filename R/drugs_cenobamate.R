@@ -13,10 +13,10 @@
 # special populations, two phase 2 trials and one phase 3 trial in adults with
 # focal seizures; single doses of 5 to 750 mg and daily doses of 50 to 600 mg,
 # two thirds of the subjects at 200 mg/day.  Published by Vashi and colleagues
-# (Epilepsy Res 2023;195:107185), whose full text was not retrievable here.
-# The parameter table is transcribed from the FDA clinical pharmacology review
-# of NDA 212839 (2019, Reference ID 4488162), Table 2 and Figure 6, which
-# reproduce the report's pages 53-54:
+# (Epilepsy Res 2023;195:107185; read in full with its supplement).  The
+# parameters are the paper's Supplemental Table 2, identical to Table 2 of the
+# FDA clinical pharmacology review of NDA 212839 (2019, Reference ID 4488162),
+# which reproduces the report's pages 53-54:
 #
 #     ka 2.74 /h   lag 0.240 h   CL/F 0.533 L/h   V1/F 42.4 L
 #     Q/F 1.84 L/h   V2/F 7.27 L
@@ -25,10 +25,14 @@
 #
 # COVARIATES NOT APPLIED
 # ======================
-# The review prints the covariate coefficients but not the equations or the
-# centring values, so none can be evaluated exactly:
-#   - daily dose on CL/F, "exponential", -0.0280.  Neither the form nor the
-#     reference dose is printed.  Read as a power of the daily dose about
+# Every continuous covariate enters linearly about a centring value,
+# P = P_TV x (1 + theta x (X - X~)), and every categorical one as
+# P_TV x (1 + theta) (Supplemental Methods).  X~ is "typically the median",
+# and no median is printed anywhere in the paper, its supplement or the FDA
+# review, so no continuous term can be evaluated exactly:
+#   - daily dose on CL/F, "exponential", -0.0280 (Supplemental Table 2 gives
+#     its unit as m^-2, copied from the BSA row).  The exponential form is
+#     not written out and the reference dose is not printed.  Read as a power of the daily dose about
 #     200 mg it moves CL/F by under 4% between 100 and 400 mg/day, which
 #     agrees with the multiple-dose studies: apparent clearance at steady
 #     state was 0.40-0.52 L/h at every daily dose from 50 to 500 mg, with no
@@ -40,11 +44,21 @@
 #     to a single small dose (AUC0-inf 2.2 times at 5 mg, 1.2 at 100 mg) and
 #     underpredicts it after a single large one (0.73 times at 750 mg).  The
 #     first day of daily dosing is reproduced (below), and dosing is daily.
-#   - body surface area on CL/F (linear, 0.611 per m^2) and weight on V1/F
-#     (linear, 0.0120 per kg), centring values unprinted.  Replaced by the
-#     library's fat-free-mass scaling, as for ethosuximide.
-#   - bilirubin on CL/F, African American (CL/F -14.7%, V1/F -9.35%) and
-#     Hispanic (CL/F -13.3%) ethnicity: no Patient Profile fields.
+#   - body surface area on CL/F (0.611 per m^2) and weight on V1/F (0.0120
+#     per kg), medians unprinted.  Replaced by the library's fat-free-mass
+#     scaling, as for ethosuximide.  Centred on the 70 kg, 170 cm reference
+#     man (Du Bois BSA), the published slopes and the fat-free-mass factors
+#     agree within 5% for men near that size (80 kg: V1 x1.12 against x1.08,
+#     CL/F x1.07 against x1.06; 60 kg: x0.88 against x0.92, x0.93 against
+#     x0.94).  They part for women, whom the source gave no sex term (60 kg,
+#     160 cm: V1 x0.88 against x0.72), and in obesity (110 kg: V1 x1.48
+#     against x1.26), where the fat-free-mass scaling is the library's choice.
+#   - bilirubin on CL/F (units given as "IU"), African American (CL/F
+#     -14.7%, V1/F -9.35%) and Hispanic (-13.3%) ethnicity: no Patient
+#     Profile fields.  Supplemental Table 2 labels the Hispanic effect as on
+#     CL/F, but in Supplemental Table 1 it improved the fit on V1/F (run 22,
+#     dOFV -22.8) and not on CL/F (runs 19 and 23, -0.2 and -0.7), so the
+#     label is probably wrong.
 #   - clobazam (CL/F -19%) and carbamazepine (+15%): no co-medication field.
 #     Phenytoin lowers cenobamate exposure 27-28% (label) and is not a model
 #     covariate either.  The curve is cenobamate without these drugs, in a
@@ -60,9 +74,10 @@
 # concentration at 200 mg/day was 15.5 mg/L (as quoted by Greene 2022), the
 # population the model mostly describes.
 #
-# Healthy volunteers (Vernillet 2020: ascending-dose studies, capsules; these
-# are probably among the eight phase 1 studies in the pooled fit, so this is
-# a consistency check, not an independent validation):
+# Healthy volunteers (Vernillet 2020: ascending-dose studies, capsules).
+# These studies are in the pooled fit (Vashi Table 1; the single-dose study
+# alone gave 5895 of the 8700 concentrations), so this is a consistency
+# check, not an independent validation:
 #   - the first day of daily dosing (Supplemental Table 5, 50-300 mg): the
 #     model's AUC0-24 is 0.87-1.05 of the observed geometric means and its
 #     peak 0.75-0.95, so absorption and distribution are right;
@@ -107,7 +122,8 @@
 # References
 # ----------
 # Vashi V et al., Epilepsy Res 2023;195:107185.
-#   https://doi.org/10.1016/j.eplepsyres.2023.107185
+#   https://doi.org/10.1016/j.eplepsyres.2023.107185  (and Supplementary
+#   Material: Methods, Tables 1-2)
 # FDA, NDA 212839 Clinical Pharmacology Review (Xcopri), 2019, Table 2.
 #   https://www.accessdata.fda.gov/drugsatfda_docs/nda/2019/212839Orig1s000ClinPharmR.pdf
 # Vernillet L et al., Clin Pharmacol Drug Dev 2020;9:428-443, and its
@@ -127,8 +143,8 @@
 #' Cenobamate pharmacokinetics (oral)
 #'
 #' The sponsor's population model (Vashi et al., 2023), two compartments,
-#' apparent oral, with an absorption lag; parameters from the FDA clinical
-#' pharmacology review of NDA 212839.  See the header of the file.
+#' apparent oral, with an absorption lag; parameters from its Supplemental
+#' Table 2.  See the header of the file.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
@@ -151,8 +167,7 @@ cenobamate <- function(weight, height, age, sex, adjustToFFM = TRUE)
     PK = PK, tPeak = 0, MEAC = 0,
     typical = 0, upperTypical = 0, lowerTypical = 0,
     reference = paste0(
-      "Vashi V et al., Epilepsy Res 2023;195:107185, parameters from the FDA ",
-      "clinical pharmacology review of NDA 212839 (Table 2): two ",
+      "Vashi V et al., Epilepsy Res 2023;195:107185, Supplemental Table 2: two ",
       "compartments, apparent oral, lag 0.24 h, CL/F 0.533 L/h, V1/F 42.4 L, ",
       "Q/F 1.84 L/h, V2/F 7.27 L, ka 2.74/h; dose, size, bilirubin, ",
       "ethnicity and co-medication terms not applied. ",
