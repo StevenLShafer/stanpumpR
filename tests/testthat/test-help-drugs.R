@@ -84,6 +84,7 @@ plasmaOnly <- c(
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
   "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
   "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
+  "fluindione", "acenocoumarol",
   # The antihypertensives (2026-10-17): concentration only.  Neither source
   # publishes an equilibration rate constant, and no blood pressure is
   # plotted for any drug in the library (docs/antihypertensives.md).

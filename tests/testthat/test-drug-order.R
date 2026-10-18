@@ -20,7 +20,7 @@ test_that("the dose table's Drug column lists the drugs alphabetically", {
   hot <- createHOT(doseTableInit, dd)
   drugColumn <- hot$x$columns[[which(names(doseTableInit) == "Drug")]]
   expect_identical(drugColumn$source, sortDrugNames(dd$Drug))
-  expect_identical(head(drugColumn$source, 3), c("acetaminophen", "air", "alfentanil"))
+  expect_identical(head(drugColumn$source, 3), c("acenocoumarol", "acetaminophen", "air"))
 })
 
 oldConfig <- .sprglobals$config

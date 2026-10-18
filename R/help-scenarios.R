@@ -821,6 +821,27 @@ helpScenarioDefinitions <- function() {
       timeUnits = "days", maximum = 56 * MINS_PER_DAY,
       plasmaLinetype = "solid", effectsiteLinetype = "blank",
       hamberg = TRUE
+    ),
+    # The two European vitamin-K antagonists (Verstuyft 2012) begun together, to
+    # show how different their INR time courses are: fluindione accumulates
+    # slowly to a sustained INR while acenocoumarol, which clears fast, swings
+    # day to day.  Both are indirect-response INR models.  A research and
+    # teaching comparison, not dosing guidance.
+    # (Claude Code, 2026-10-18, at the request of Steven L. Shafer.)
+    helpScenario(
+      "vka-fluindione-acenocoumarol",
+      "Fluindione and acenocoumarol: two INR time courses",
+      "Long-term therapy",
+      "Fluindione 20 mg/day and acenocoumarol 4 mg/day begun together in a CYP2C9 wild-type, VKORC1-sensitive (AA) patient: the slowly cleared fluindione builds to a steady INR near its Table IV value while the fast-clearing acenocoumarol swings between doses. Change the CYP2C9 and VKORC1 fields to see a *3 carrier or a less-sensitive genotype shift both lines.",
+      age = 60, weight = 69, height = 170, sex = SEX_MALE,
+      cyp2c9 = "*1/*1", vkorc1 = "AA",
+      doses = helpDoses(
+        c("fluindione", 0, 20, "mg PO qd"),
+        c("acenocoumarol", 0, 4, "mg PO qd")
+      ),
+      # The INR is the plotted curve (no effect site); it builds over weeks.
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
     )
   )
 }

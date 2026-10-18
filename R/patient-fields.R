@@ -94,8 +94,9 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     ),
     cyp2c9 = paste(
       "CYP2C9 genotype, as a diplotype (*1/*1 is the reference).",
-      "It sets the clearance of meloxicam and the maximal elimination",
-      "rate of phenytoin."
+      "It sets the clearance of meloxicam, the maximal elimination",
+      "rate of phenytoin, and the clearance of the vitamin-K antagonists",
+      "(a *3 allele lowers it, so the INR rises on less drug)."
     ),
     cyp2b6 = paste(
       "CYP2B6 metaboliser phenotype, the five CPIC categories.",
@@ -105,9 +106,10 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     ),
     vkorc1 = paste(
       "VKORC1 -1639G>A genotype (GG is the wild-type reference).",
-      "It sets warfarin sensitivity: the A allele lowers the S-warfarin",
-      "C50, so the INR rises on less drug. Read by the library (Xue) model",
-      "and, with CYP2C9 and age, by the Hamberg companion model."
+      "It sets sensitivity to the vitamin-K antagonists: the A allele lowers",
+      "the C50, so the INR rises on less drug. Read by the library warfarin",
+      "(Xue) model, the Hamberg companion model (with CYP2C9 and age), and",
+      "fluindione and acenocoumarol."
     ),
     creatinine = paste(
       "The patient's serum creatinine, from which the renally cleared",
