@@ -351,6 +351,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
     "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
     "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
+    "semaglutideOral", "cetagliptin",
     # Intravenous calcium (2026-10-13): the ionized calcium itself is the
     # end point, no ke0 (R/drugs_calcium.R).
     "calcium",

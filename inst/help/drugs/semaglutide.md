@@ -4,7 +4,7 @@ Carlsson Petri and colleagues' population analysis of the phase 3 trials in type
 
 ### Product and route
 
-Ozempic injection only (`mg SC`, `mg SC qwk`), at the 0.5 and 1 mg the source studied. Wegovy (2.4 mg, in obesity) is outside the fitted doses and population and is held in the registry. The oral tablets are a different product with a bioavailability under 1% and are not this drug. Overgaard and colleagues' two-compartment fit of intravenous and subcutaneous data (2019) is held in the registry: its absorption is fitted separately for each study strength of the product, and it is the disposition model on which the oral tablets' analysis is built.
+Ozempic injection only (`mg SC`, `mg SC qwk`), at the 0.5 and 1 mg the source studied. Wegovy (2.4 mg, in obesity) is outside the fitted doses and population and is held in the registry. The oral tablets are a different product with a bioavailability under 1%: [oral semaglutide](help:drugs/semaglutideOral), a separate model. Overgaard and colleagues' two-compartment fit of intravenous and subcutaneous data (2019) is held in the registry: its absorption is fitted separately for each study strength of the product, and it is the disposition model on which the oral tablets' analysis is built.
 
 ### What is not plotted
 

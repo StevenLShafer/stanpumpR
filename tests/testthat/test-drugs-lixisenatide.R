@@ -63,3 +63,14 @@ test_that("units: subcutaneous micrograms, daily", {
   expect_equal(getDrugDefaults("lixisenatide")$Units[[1]], c("mcg SC", "mcg SC qd"))
   expect_true(all(c("creatinine", "dose") %in% names(formals(lixisenatide))))
 })
+
+test_that("weight on V/F and dose on MAT are held to Table 1's studied ranges", {
+  v <- function(w) lixisenatide(w, 175, 50, "male", FALSE, creatinine = 1)$PK$default$v1
+  expect_equal(v(200), 41.2 * (163 / 82.1)^1.56)
+  expect_equal(v(35), 41.2 * (43.8 / 82.1)^1.56)
+  expect_equal(v(100), 41.2 * (100 / 82.1)^1.56)
+  ka <- function(dose) lixisenatide(80, 175, 50, "male", FALSE, creatinine = 1, dose = dose)$PK$default$ka_SC
+  expect_equal(ka(0.040), 1 / (3.25 * (30 / 15)^0.236 * 60))
+  expect_equal(ka(0.002), 1 / (3.25 * (5 / 15)^0.236 * 60))
+  expect_equal(ka(0.020), 1 / (3.25 * (20 / 15)^0.236 * 60))
+})
