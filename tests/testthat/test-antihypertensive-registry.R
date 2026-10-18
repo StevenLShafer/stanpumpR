@@ -250,6 +250,23 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
   err <- disc[grepl("error", disc$parameter), ]
   expect_equal(nrow(err), 1)
   expect_lt(err$value, 0.53)      # inside the standard MDMA's set
+
+  # The audit's prose must quote the SAME fractions the model uses.  It did
+  # not: when the drug went from six pulses to eight, the limitations and the
+  # error row were updated and this note was left behind, so the audit
+  # contradicted the model it documents (CodeRabbit, PR #532).  A note that
+  # repeats numbers has to be checked against them.
+  frRow <- disc[grepl("fractions", disc$parameter), ]
+  expect_equal(nrow(frRow), 1)
+  pulses <- getDrugPK("hydrochlorothiazide", 70, 175, 50, "male",
+                      adjustToFFM = FALSE)$oralPulses[[ORAL_PULSE_DEFAULT_FORM]]
+  for (x in sprintf("%.6f", pulses$fraction))
+    expect_true(grepl(x, frRow$notes, fixed = TRUE), info = x)
+  for (x in sprintf("%.4f", pulses$delay))
+    expect_true(grepl(x, frRow$notes, fixed = TRUE), info = x)
+  # and the count it names in words
+  expect_match(frRow$notes, "^Eight fractions")
+  expect_equal(length(pulses$fraction), 8)
   # Carvedilol was on that list and has since been ported: the zero-order
   # oral release mode it needed is R/oral-zero-order.R, and its full text was
   # reached through PubMed Central.  Its PK record is no longer gated; only
