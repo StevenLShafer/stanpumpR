@@ -166,4 +166,5 @@ carvedilol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#01579B,0,0,0,0,0,IV,Antihypert
 azilsartan,ng,,,mg PO,"mg PO,mg PO qd",#E65100,0,0,0,0,0,IV,Antihypertensives
 chlorthalidone,ng,,,mg PO,"mg PO,mg PO qd",#33691E,0,0,0,0,0,IV,Antihypertensives
 hydrochlorothiazide,ng,,,mg PO,"mg PO,mg PO qd",#3E2723,0,0,0,0,0,IV,Antihypertensives
+epinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#C62828,0,0,0,0,0,IV,Vasoactive and resuscitation
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs

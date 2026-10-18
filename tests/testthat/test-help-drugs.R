@@ -91,7 +91,9 @@ plasmaOnly <- c(
   # publishes an equilibration rate constant, and no blood pressure is
   # plotted for any drug in the library (docs/antihypertensives.md).
   "clevidipine", "fenoldopamPediatric", "carvedilol",
-    "azilsartan", "chlorthalidone", "hydrochlorothiazide"
+    "azilsartan", "chlorthalidone", "hydrochlorothiazide",
+    # vasoactive and resuscitation drugs (2026-10-18): plasma only
+    "epinephrine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

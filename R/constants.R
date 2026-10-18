@@ -351,9 +351,14 @@ DRUG_CATEGORIES <- c(
   "Antidiabetic",
   "Anticoagulants",
   "Antihypertensives",
+  "Vasoactive and resuscitation",
   "Other",
   "Illicit drugs"
 )
+# The category of the intravenous vasoactive, antiarrhythmic and resuscitation
+# drugs of intensive care (inst/help/models/vasoactive.md): concentration
+# only, every one catalogued in inst/extdata/vasoactiveRegistry.csv.
+VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # The category of the opt-in research models of drugs of abuse
 # (R/illicit-drugs.R).  Hidden unless the user turns on input$showIllicitDrugs,
 # and never offered in the startup menu.
