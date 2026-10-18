@@ -155,6 +155,8 @@ rivaroxaban,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6A1B9A,0,0,0,0,0,IV,Anticoagu
 edoxaban,ng,,,mg PO qd,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Anticoagulants
 dabigatran,ng,,,mg PO bid,"mg PO,mg PO bid",#558B2F,0,0,0,0,0,IV,Anticoagulants
 warfarin,INR,,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Anticoagulants
+fluindione,INR,,,mg PO qd,"mg PO,mg PO qd",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
+acenocoumarol,INR,,,mg PO qd,"mg PO,mg PO qd",#AD1457,0,0,0,0,0,IV,Anticoagulants
 cocaine,ng,,,mg IN,"mg IN,mcg IN",#A52A2A,0,0,0,0,0,IV,Illicit drugs
 methamphetamine,ng,,,mg IN,"mg IN,mcg IN",#CD5C5C,0,0,0,0,0,IV,Illicit drugs
 LSD,ng,,,mcg PO,mcg PO,#4A148C,0,0,0,0,0,IV,Illicit drugs

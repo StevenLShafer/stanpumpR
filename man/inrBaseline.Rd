@@ -9,6 +9,8 @@ inrBaseline(inr)
 \description{
 The turnover model starts at \code{1 / pca0}; the transit model starts at
 its fitted \code{baseline} (at steady state every transit amount is 1, so
-\code{(1 - A6 A7) = 0} and the INR is \code{baseline}).
+\code{(1 - A6 A7) = 0} and the INR is \code{baseline}); the indirect model
+starts at \code{kout / kin} (the drug-free steady state of 1/INR is
+\code{kin / kout}, so the INR is its reciprocal).
 }
 \keyword{internal}

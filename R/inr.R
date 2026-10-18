@@ -37,9 +37,15 @@
 # A second form, the Hamberg 2007 transit-compartment model, rides the same
 # path as a companion of warfarin (R/alternativeModels.R).  It is declared by
 # an inr block with `type = "transit"` and integrated by inrTransit() below;
-# its INR is driven by S-warfarin only.  Both forms keep R-warfarin as the one
-# parallel system, and inrBaseline() gives the drug-free INR each one starts
-# from.
+# its INR is driven by S-warfarin only.  Both warfarin forms keep R-warfarin as
+# the one parallel system.
+#
+# A third form, `type = "indirect"`, is the single-compartment indirect-
+# response model of Verstuyft 2012 on 1/INR (inrIndirect() below), for the two
+# other vitamin-K antagonists fluindione and acenocoumarol (R/drugs_fluindione.R,
+# R/drugs_acenocoumarol.R).  Their INR is driven by the drug's own concentration
+# alone, so the model has NO parallel system.  inrBaseline() gives the drug-free
+# INR each form starts from.
 #
 # What is plotted is the INR.  The concentrations are not, and there is no
 # effect site, no MEAC and no time until threshold: the INR falls after
@@ -55,12 +61,14 @@ inrType <- function(inr) if (is.null(inr$type)) "turnover" else inr$type
 
 #' Check a drug model's INR block
 #'
-#' Two forms are allowed.  The default, \code{type = "turnover"}, is the Xue
+#' Three forms are allowed.  The default, \code{type = "turnover"}, is the Xue
 #' 2017 single-compartment prothrombin-complex turnover (R/drugs_warfarin.R).
 #' The second, \code{type = "transit"}, is the Hamberg 2007 two-chain
 #' transit-compartment model (R/alternativeModels.R); both drive the INR from
 #' the S-warfarin concentration and both keep R-warfarin as the one parallel
-#' system.
+#' system.  The third, \code{type = "indirect"}, is the Verstuyft 2012
+#' indirect-response model on 1/INR (fluindione, acenocoumarol), driven by the
+#' drug's own concentration alone, with no parallel system.
 #'
 #' @param inr the block a drug model returned, or NULL
 #' @param drug the drug's name, for the error message
@@ -83,7 +91,7 @@ validateINR <- function(inr, drug, concentrationUnits, parallelSystems)
     stop("Invalid INR model for ", drug, ": only a drug with ",
          "Concentration.Units \"INR\" may return an inr block.")
   type <- inrType(inr)
-  if (!type %in% c("turnover", "transit"))
+  if (!type %in% c("turnover", "transit", "indirect"))
     stop("Invalid INR model for ", drug, ": unknown type \"", type, "\".")
   if (type == "turnover") {
     ok <- is.list(inr) &&
@@ -95,7 +103,7 @@ validateINR <- function(inr, drug, concentrationUnits, parallelSystems)
     if (!ok)
       stop("Invalid INR model for ", drug, ": needs pca0 in (0, 1], and ",
            "positive c50, hill, ric50 (mg/L) and halfLife (min).")
-  } else {
+  } else if (type == "transit") {
     ok <- is.list(inr) &&
       is_valid_number(inr$c50) && inr$c50 > 0 &&
       is_valid_number(inr$gamma) && inr$gamma > 0 &&
@@ -109,10 +117,23 @@ validateINR <- function(inr, drug, concentrationUnits, parallelSystems)
       stop("Invalid transit INR model for ", drug, ": needs positive c50 ",
            "(mg/L), gamma, mtt1, mtt2 (min), a positive integer n1, and ",
            "positive baseline, inrMax and lambda.")
+  } else {
+    ok <- is.list(inr) &&
+      is_valid_number(inr$c50) && inr$c50 > 0 &&
+      is_valid_number(inr$gamma) && inr$gamma > 0 &&
+      is_valid_number(inr$kin) && inr$kin > 0 &&
+      is_valid_number(inr$kout) && inr$kout > 0
+    if (!ok)
+      stop("Invalid indirect INR model for ", drug, ": needs positive c50 ",
+           "(mg/L), gamma, kin and kout (1/min).")
   }
-  if (length(parallelSystems) != 1)
-    stop("Invalid INR model for ", drug, ": the drug's own system is ",
-         "S-warfarin and it needs exactly one parallel system, R-warfarin.")
+  # The turnover and transit forms carry R-warfarin as one parallel system; the
+  # indirect form (fluindione, acenocoumarol) is driven by the drug's own
+  # concentration alone, with no parallel system.
+  wanted <- if (type == "indirect") 0L else 1L
+  if (length(parallelSystems) != wanted)
+    stop("Invalid INR model for ", drug, ": a \"", type, "\" INR model needs ",
+         wanted, " parallel system(s).")
   inr
 }
 
@@ -120,11 +141,16 @@ validateINR <- function(inr, drug, concentrationUnits, parallelSystems)
 #'
 #' The turnover model starts at \code{1 / pca0}; the transit model starts at
 #' its fitted \code{baseline} (at steady state every transit amount is 1, so
-#' \code{(1 - A6 A7) = 0} and the INR is \code{baseline}).
+#' \code{(1 - A6 A7) = 0} and the INR is \code{baseline}); the indirect model
+#' starts at \code{kout / kin} (the drug-free steady state of 1/INR is
+#' \code{kin / kout}, so the INR is its reciprocal).
 #' @keywords internal
 inrBaseline <- function(inr)
 {
-  if (inrType(inr) == "transit") inr$baseline else 1 / inr$pca0
+  switch(inrType(inr),
+         transit  = inr$baseline,
+         indirect = inr$kout / inr$kin,
+         1 / inr$pca0)
 }
 
 #' Inhibition of prothrombin complex synthesis
@@ -184,14 +210,20 @@ inrPCA <- function(time, inhibition, inr)
 inrEngineResults <- function(parts, inr)
 {
   s <- parts[[1]]
-  r <- parts[[2]]
-  if (!identical(s$Time, r$Time))
-    stop("Cannot combine S- and R-warfarin runs on different time lines.")
-  cp <- if (inrType(inr) == "transit") {
-    # Hamberg 2007: S-warfarin only; R-warfarin is not a predictor of the INR.
-    inrTransit(s$Time, s$Cp, inr)
+  type <- inrType(inr)
+  cp <- if (type == "indirect") {
+    # Fluindione / acenocoumarol: the drug's own concentration drives an
+    # indirect-response model of the INR; there is no parallel system.
+    inrIndirect(s$Time, s$Cp, inr)
   } else {
-    1 / inrPCA(s$Time, inrInhibition(s$Cp, r$Cp, inr), inr)
+    r <- parts[[2]]
+    if (!identical(s$Time, r$Time))
+      stop("Cannot combine S- and R-warfarin runs on different time lines.")
+    if (type == "transit")
+      # Hamberg 2007: S-warfarin only; R-warfarin is not a predictor of the INR.
+      inrTransit(s$Time, s$Cp, inr)
+    else
+      1 / inrPCA(s$Time, inrInhibition(s$Cp, r$Cp, inr), inr)
   }
   data.frame(
     Time = s$Time,
@@ -199,6 +231,37 @@ inrEngineResults <- function(parts, inr)
     Ce = rep(NA_real_, nrow(s)),
     Recovery = rep(NA_real_, nrow(s))
   )
+}
+
+#' The INR from a coumarin concentration by the Verstuyft 2012 indirect model
+#'
+#' The indirect-response model of Verstuyft et al., Clin Pharmacokinet
+#' 2012;51:41-53 (their Equation 1, after Mentre et al. 1998), written on the
+#' INVERSE of the INR, R = 1/INR:
+#'
+#'     E      = C^gamma / (C^gamma + C50^gamma)        (maximal effect fixed at 1)
+#'     dR/dt  = kin (1 - E) - kout R
+#'     R0     = kin / kout      INR = 1 / R
+#'
+#' The drug inhibits the production of 1/INR, so 1/INR falls and the INR rises.
+#' The equation is linear in R with the same form as the turnover model, so it
+#' is solved exactly over each step by \code{inrPCA()} with \code{pca0 = R0} and
+#' a turnover half-life of \code{ln 2 / kout}; the INR is then its reciprocal.
+#'
+#' @param time times, minutes, increasing
+#' @param cDrug the coumarin concentration at those times, mg/L (fluindione, or
+#'   S-acenocoumarol)
+#' @param inr the drug's INR block (type "indirect")
+#' @returns the INR at \code{time}
+#' @keywords internal
+inrIndirect <- function(time, cDrug, inr)
+{
+  cDrug <- pmax(cDrug, 0)
+  inhibition <- cDrug^inr$gamma / (inr$c50^inr$gamma + cDrug^inr$gamma)
+  r0 <- inr$kin / inr$kout
+  response <- inrPCA(time, inhibition,
+                     list(pca0 = r0, halfLife = log(2) / inr$kout))
+  1 / response
 }
 
 #' The INR from S-warfarin by the Hamberg 2007 transit-compartment model

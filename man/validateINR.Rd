@@ -21,11 +21,13 @@ exactly one, R-warfarin}
 \code{inr}, unchanged, if it is valid; otherwise an error
 }
 \description{
-Two forms are allowed.  The default, \code{type = "turnover"}, is the Xue
+Three forms are allowed.  The default, \code{type = "turnover"}, is the Xue
 2017 single-compartment prothrombin-complex turnover (R/drugs_warfarin.R).
 The second, \code{type = "transit"}, is the Hamberg 2007 two-chain
 transit-compartment model (R/alternativeModels.R); both drive the INR from
 the S-warfarin concentration and both keep R-warfarin as the one parallel
-system.
+system.  The third, \code{type = "indirect"}, is the Verstuyft 2012
+indirect-response model on 1/INR (fluindione, acenocoumarol), driven by the
+drug's own concentration alone, with no parallel system.
 }
 \keyword{internal}
