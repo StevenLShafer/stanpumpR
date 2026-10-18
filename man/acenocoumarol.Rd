@@ -17,11 +17,17 @@ acenocoumarol(
 \arguments{
 \item{weight}{weight in kg}
 
-\item{height}{height in cm (not used; accepted for the common signature)}
+\item{height}{height in cm; no published covariate of its own, but used by
+\code{pkSizeFactors()} to find the fat-free mass when \code{adjustToFFM} is
+\code{TRUE}, so it can shift the PK then}
 
-\item{age}{age in years (not used; the model has no age covariate)}
+\item{age}{age in years; no published covariate of its own, but used by
+\code{pkSizeFactors()} for the fat-free mass when \code{adjustToFFM} is
+\code{TRUE}}
 
-\item{sex}{sex as a string (not used)}
+\item{sex}{sex as a string; no published covariate of its own, but used by
+\code{pkSizeFactors()} for the fat-free mass when \code{adjustToFFM} is
+\code{TRUE}}
 
 \item{adjustToFFM}{when \code{TRUE} the source's weight covariate on V1 is
 evaluated at the fat-free-mass pharmacokinetic weight and the size-free CL,
