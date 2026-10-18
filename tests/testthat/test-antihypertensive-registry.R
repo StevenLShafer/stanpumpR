@@ -454,3 +454,103 @@ test_that("an endpoint that is not a blood pressure is never described as one", 
   expect_false(any(notBP$model_id %in% antihypertensiveEndpointsAvailable()$model_id))
   expect_false(any(notBP$bp_simulation_enabled))
 })
+
+test_that("the five classes are enumerated, and a class gap is a missing row", {
+  # The registry's job in these five classes is to be COMPLETE at the
+  # ingredient level, so that a drug's absence from it means "not an
+  # approved US systemic antihypertensive" rather than "nobody looked".
+  # These are the molecules, by class, that the catalog must account for.
+  #
+  # THIS LIST IS THE ASSERTION, not a transcription: no FDA register was
+  # reachable from the environment the registry was built in, so it was
+  # assembled from knowledge of the approved products.  It lives here rather
+  # than only in prose precisely so that it can be corrected: add a molecule
+  # anyone verifies against a register, and this test says what the registry
+  # is missing.
+  # A deliberate exclusion is NOT in this list and is argued in
+  # docs/antihypertensives.md section 13: the arrhythmia-only beta blockers
+  # (sotalol, landiolol), the subarachnoid-haemorrhage-only dihydropyridine
+  # (nimodipine), ophthalmic-only beta blockers, finerenone (no hypertension
+  # indication), the carbonic-anhydrase inhibitors and the vasopressin
+  # antagonists.
+  classes <- list(
+    arb = c("azilsartan medoxomil", "candesartan cilexetil", "eprosartan",
+            "irbesartan", "losartan", "olmesartan medoxomil", "telmisartan",
+            "valsartan"),
+    acei = c("benazepril", "captopril", "enalapril", "enalaprilat",
+             "fosinopril", "lisinopril", "moexipril", "perindopril",
+             "quinapril", "ramipril", "trandolapril"),
+    ccb = c("amlodipine", "clevidipine", "diltiazem", "felodipine",
+            "isradipine", "levamlodipine", "nicardipine", "nifedipine",
+            "nisoldipine", "verapamil"),
+    beta = c("acebutolol", "atenolol", "betaxolol", "bisoprolol",
+             "carteolol", "carvedilol", "esmolol", "labetalol",
+             "metoprolol succinate", "metoprolol tartrate", "nadolol",
+             "nebivolol", "penbutolol", "pindolol", "propranolol",
+             "timolol"),
+    diuretic = c("amiloride", "bendroflumethiazide", "bumetanide",
+                 "chlorothiazide", "chlorothiazide sodium", "chlorthalidone",
+                 "eplerenone", "ethacrynate sodium", "ethacrynic acid",
+                 "furosemide", "hydrochlorothiazide", "hydroflumethiazide",
+                 "indapamide", "methyclothiazide", "metolazone",
+                 "polythiazide", "quinethazone", "spironolactone",
+                 "torsemide", "triamterene", "trichlormethiazide"))
+  for (cls in names(classes))
+    expect_true(all(classes[[cls]] %in% registry$drug),
+                info = paste(cls,
+                             paste(setdiff(classes[[cls]], registry$drug),
+                                   collapse = " / ")))
+  # Not one of them smuggled in a curve or a pressure
+  inClasses <- registry[registry$drug %in% unlist(classes), ]
+  expect_false(any(inClasses$bp_simulation_enabled))
+})
+
+test_that("an ingredient-identity row claims identity and nothing else", {
+  # These rows were written WITHOUT the label, because DailyMed and the
+  # openFDA API are unreachable from the environment the registry is built
+  # in.  That is a weaker citation than the rows around them and it carries
+  # its own source_type so the difference cannot be lost: an
+  # ingredient_catalog row asserts ingredient, class, route and formulation,
+  # and asserts nothing numeric and nothing about current marketing.
+  ingr <- registry[registry$source_type == "ingredient_catalog", ]
+  expect_gt(nrow(ingr), 15)
+  # Nothing fitted and nothing read from a label: it must NOT claim
+  # official_label_descriptive, which would assert descriptors nobody opened
+  expect_true(all(ingr$pk_evidence == "proposed_unfitted"))
+  expect_true(all(ingr$pd_evidence == "proposed_unfitted"))
+  expect_true(all(ingr$execution_status == "descriptive_only"))
+  expect_true(all(is.na(ingr$stanpumpr_drug)))
+  expect_false(any(ingr$bp_simulation_enabled))
+  expect_equal(sum(parameters$model_id %in% ingr$model_id), 0)
+  # A matrix is source-specific -- clevidipine's is whole blood,
+  # chlorthalidone's is plasma although the drug sits in the erythrocytes --
+  # so a row with no source must not name one
+  expect_true(all(is.na(ingr$matrix)))
+  # Every one of them is in the catalog half of the registry, so the
+  # catalog invariants above apply to it too
+  expect_true(all(grepl("__catalog__none__", ingr$model_id)))
+  # The citation is an ingredient SEARCH, never a document: a setid here
+  # would be an invented identifier for a label that was never opened
+  expect_true(all(grepl("^https://dailymed\\.nlm\\.nih\\.gov/dailymed/search\\.cfm\\?",
+                        ingr$source_url)))
+  expect_false(any(grepl("setid", ingr$source_url)))
+  # and the row says so in words, where a reader will see it
+  expect_true(all(grepl("INGREDIENT IDENTITY ONLY", ingr$limitations,
+                        fixed = TRUE)))
+  expect_true(all(grepl("marketing status is unverified", ingr$limitations,
+                        fixed = TRUE)))
+})
+
+test_that("the two kinds of catalog row are counted, so the gap stays visible", {
+  # Closing an ingredient-identity row means opening its label and giving it
+  # a setid.  This test is the progress bar: it fails if the counts move
+  # without someone saying so, in either direction.
+  catalog <- registry[grepl("__catalog__none__", registry$model_id), ]
+  withLabel <- catalog[catalog$source_type != "ingredient_catalog", ]
+  ingredientOnly <- catalog[catalog$source_type == "ingredient_catalog", ]
+  expect_equal(nrow(withLabel), 69)
+  expect_equal(nrow(ingredientOnly), 21)
+  # A row read from a label does record descriptors, which is the whole
+  # difference between the two kinds
+  expect_true(all(withLabel$pk_evidence == "official_label_descriptive"))
+})
