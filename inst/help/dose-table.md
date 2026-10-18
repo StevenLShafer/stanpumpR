@@ -49,7 +49,7 @@ Per-kilogram units use the weight in the Patient Profile at the time of simulati
 
 ## Scheduled doses
 
-For drugs given on a schedule (the analgesic opioids, the oral analgesics and benzodiazepines, the antibiotics, the steroids, the antidepressants, antipsychotics, stimulants and antiseizure drugs and ondansetron), their bolus, oral, sublingual, intramuscular and intranasal units also come with the frequencies the drug is usually given at, from:
+For drugs given on a schedule (the analgesic opioids, the oral analgesics and benzodiazepines, the antibiotics, the steroids, the antidepressants, antipsychotics, stimulants, antiseizure and antidiabetic drugs and ondansetron), their bolus, oral, sublingual, intramuscular, intranasal and subcutaneous units also come with the frequencies the drug is usually given at, from:
 
 | Suffix | Meaning | Interval |
 |---|---|---|
@@ -57,6 +57,7 @@ For drugs given on a schedule (the analgesic opioids, the oral analgesics and be
 | `bid` | twice a day | 12 hours |
 | `tid` | three times a day | 8 hours |
 | `qid` | four times a day | 6 hours |
+| `qwk` | once a week (subcutaneous units only: semaglutide, dulaglutide, tirzepatide) | 7 days |
 
 The first dose is given at the time in the row, and the same dose is then repeated at that interval until the end of the X axis, so lengthening the axis extends the schedule. The repeats are not added to the dose table, which would fill with rows, but they are merged back in when a slide is emailed, so the exported dose table lists the full dose sequence.
 

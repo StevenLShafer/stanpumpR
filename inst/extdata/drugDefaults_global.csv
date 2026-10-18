@@ -118,6 +118,32 @@ tiagabine,ng,,,mg PO tid,"mg PO,mg PO bid,mg PO tid,mg PO qid",#00838F,20,200,50
 levetiracetam,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid",#2E7D32,12,46,30,0,0,IV,Antiseizure
 eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,26,15,0,0,IV,Antiseizure
 diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs
+semaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#2E7D5B,0,0,0,0,0,IV,Antidiabetic
+tirzepatide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#5B2A86,0,0,0,0,0,IV,Antidiabetic
+liraglutide,ng,,,mg SC qd,"mg SC,mg SC qd",#0E8C8C,0,0,0,0,0,IV,Antidiabetic
+liraglutideWatson,ng,,,mg SC qd,"mg SC,mg SC qd",#2A9D8F,0,0,0,0,0,IV,Antidiabetic
+insulinRegular,mcU,,,U SC,"U SC,U/kg SC,U SC bid,U SC tid",#E0A800,0,0,0,0,0,IV,Antidiabetic
+insulinRegularU500,mcU,,,U SC bid,"U SC,U SC bid,U SC tid",#C25A00,0,0,0,0,0,IV,Antidiabetic
+insulinNPH,mcU,,,U SC bid,"U SC,U/kg SC,U SC qd,U SC bid",#7A5230,0,0,0,0,0,IV,Antidiabetic
+insulinHumanMix70,mcU,,,U SC bid,"U SC,U SC bid",#A07850,0,0,0,0,0,IV,Antidiabetic
+insulinLispro,mcU,,,U SC,"U SC,U/kg SC,U SC tid,U/hr SC",#E23D6E,0,0,0,0,0,IV,Antidiabetic
+insulinLisproMix75,mcU,,,U SC bid,"U SC,U SC bid",#B8225A,0,0,0,0,0,IV,Antidiabetic
+insulinLisproMix50,mcU,,,U SC bid,"U SC,U SC bid",#8C1546,0,0,0,0,0,IV,Antidiabetic
+insulinGlargine,mcU,,,U SC qd,"U SC,U/kg SC,U SC qd",#3A4BA8,0,0,0,0,0,IV,Antidiabetic
+metformin,mcg,,,mg PO bid,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4F6372,0,0,0,0,0,IV,Antidiabetic
+empagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#1F78B4,0,0,0,0,0,IV,Antidiabetic
+ertugliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#11806A,0,0,0,0,0,IV,Antidiabetic
+glyburide,ng,,,mg PO qd,"mg PO,mg PO qd,mg PO bid",#8F8C1E,0,0,0,0,0,IV,Antidiabetic
+dulaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#B0306A,0,0,0,0,0,IV,Antidiabetic
+dapagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#6A51A3,0,0,0,0,0,IV,Antidiabetic
+dapagliflozinKobuchi,ng,,,mg PO qd,"mg PO,mg PO qd",#9467BD,0,0,0,0,0,IV,Antidiabetic
+canagliflozin,ng,,,mg PO qd,"mg PO,mg PO qd",#B15928,0,0,0,0,0,IV,Antidiabetic
+pioglitazone,ng,,,mg PO qd,"mg PO,mg PO qd",#6FA83A,0,0,0,0,0,IV,Antidiabetic
+pramlintideIV,ng,mcg,mcg/min,mcg,"mcg,mcg/min",#9C4DB8,0,0,0,0,0,IV,Antidiabetic
+exenatide,pg,,,mcg SC bid,"mcg SC,mcg SC bid",#C46210,0,0,0,0,0,IV,Antidiabetic
+lixisenatide,pg,,,mcg SC qd,"mcg SC,mcg SC qd",#7A3E9D,0,0,0,0,0,IV,Antidiabetic
+linagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#3E8E9E,0,0,0,0,0,IV,Antidiabetic
+vildagliptin,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#7D6B2E,0,0,0,0,0,IV,Antidiabetic
 heparin,IU,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#B71C1C,0,0,0,0,0,IV,Anticoagulants
 bivalirudin,mcg,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg/min,mg/kg/min",#AD1457,0,0,0,0,0,IV,Anticoagulants
 argatroban,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min,mcg/hr,mcg/kg/hr",#E65100,0,0,0,0,0,IV,Anticoagulants
