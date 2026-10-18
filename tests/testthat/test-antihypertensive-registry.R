@@ -233,7 +233,9 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
   # entirely when expandOralPulses() learned the default oral form.  It is a
   # drug now, and its record still has to say what shape it stands in for --
   # a reader who cannot see the Weibull in the record cannot tell that the
-  # six fractions in the model are a discretisation rather than a product.
+  # fractions in the model are a discretisation rather than a product.  (No
+  # count here on purpose: it was "six" and went stale when the count became
+  # eight, which is the same drift the assertion below now guards against.)
   hctz <- registry[registry$model_id ==
     "hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013", ]
   expect_identical(hctz$execution_status, "ready_for_source_reproduction")
