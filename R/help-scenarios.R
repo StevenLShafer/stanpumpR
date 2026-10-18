@@ -47,6 +47,9 @@ helpScenarioDefaultOptions <- function() {
     effectsiteLinetype = "solid",
     addedPlots = character(0),
     showThreshold = FALSE,
+    # Each opioid's % MEAC on its own panel (R/meacOverlay.R); not with
+    # showThreshold
+    showMEAC = FALSE,
     logY = FALSE,
     opioidMacInteraction = FALSE,
     # Run the Schnider propofol and Minto remifentanil models beside the
@@ -369,6 +372,20 @@ helpScenarioDefinitions <- function() {
         c("tramadol", 0, 100, "mg PO")
       ),
       maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
+    ),
+    # The % MEAC overlay (R/meacOverlay.R): one scale on both panels, so the
+    # parent's and the metabolite's shares of the analgesia can be compared
+    # at a glance.  (Claude Code, 2026-10-18, at the request of Steven L.
+    # Shafer.)
+    helpScenario(
+      "hydrocodone-hydromorphone-meac",
+      "Hydrocodone and hydromorphone: which carries the analgesia?",
+      "Oral analgesics",
+      "Ten milligrams of oral hydrocodone with each opioid's % MEAC drawn on its own panel, on one scale, so the parent's and the metabolite's shares of the analgesia can be compared directly.",
+      doses = helpDoses(
+        c("hydrocodone", 0, 10, "mg PO")
+      ),
+      maximum = 720, showMEAC = TRUE
     ),
     helpScenario(
       "gabapentin-saturable-absorption",
@@ -883,10 +900,12 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (o$plasmaLinetype == "blank" && o$effectsiteLinetype == "blank") say("both lines are blank")
   if (!all(o$addedPlots %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION, PLOT_ID_EVENTS))) say("invalid addedPlots")
   if (o$showThreshold && o$normalization != NORMALIZE_NONE) say("showThreshold needs normalization none")
-  if (o$logY && (o$showThreshold || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
-    say("logY is unavailable with the threshold, events or interaction panels")
+  if (o$showMEAC && o$normalization != NORMALIZE_NONE) say("showMEAC needs normalization none")
+  if (o$showMEAC && o$showThreshold) say("showMEAC and showThreshold are mutually exclusive")
+  if (o$logY && (o$showThreshold || o$showMEAC || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
+    say("logY is unavailable with the threshold, % MEAC, events or interaction panels")
   }
-  for (name in c("showThreshold", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg")) {
+  for (name in c("showThreshold", "showMEAC", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
 
@@ -1039,6 +1058,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   shinyWidgets::updateRadioGroupButtons(session, "effectsiteLinetype", selected = o$effectsiteLinetype)
   updateCheckboxGroupInput(session, "addedPlots", selected = o$addedPlots)
   updateCheckboxInput(session, "showThreshold", value = o$showThreshold)
+  updateCheckboxInput(session, "showMEAC", value = o$showMEAC)
   updateCheckboxInput(session, "logY", value = o$logY)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
   updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
@@ -1124,6 +1144,7 @@ helpScenarioPageHTML <- function(id) {
     "Effect site line" = o$effectsiteLinetype,
     "Additional plots" = if (length(o$addedPlots)) paste(o$addedPlots, collapse = ", ") else "none",
     "Time until threshold" = if (o$showThreshold) "on" else "off",
+    "% MEAC on opioid panels" = if (o$showMEAC) "on" else "off",
     "Log Y axis" = if (o$logY) "on" else "off",
     "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off",
     "Minto / Schnider" = if (o$mintoSchnider) "on" else "off",

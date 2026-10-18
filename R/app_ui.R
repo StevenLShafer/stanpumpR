@@ -336,10 +336,30 @@ app_ui <- function() {
                     "showThreshold",
                     "Time until threshold",
                     value = FALSE
+                  ),
+                  # Each opioid's % MEAC on its own panel, on one scale shared
+                  # by all of them, read at the right-hand edge where the time
+                  # until threshold's labels go; ticking either unticks the
+                  # other (R/meacOverlay.R).
+                  bslib::tooltip(
+                    checkboxInput(
+                      "showMEAC",
+                      "% MEAC on opioid panels",
+                      value = FALSE
+                    ),
+                    paste(
+                      "Draw each opioid's effect-site concentration as a",
+                      "percentage of its MEAC on that opioid's panel, read at",
+                      "the right-hand edge. One scale is shared by every opioid",
+                      "panel, set by the highest % MEAC any of them reaches, so",
+                      "the line that rises highest is the opioid carrying the",
+                      "analgesia. Cannot be shown with Time until threshold."
+                    ),
+                    placement = "right"
                   )
                 ),
                 conditionalPanel(
-                  condition = sprintf("!(input.showThreshold || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
+                  condition = sprintf("!(input.showThreshold || input.showMEAC || input.addedPlots.includes('%s') || input.addedPlots.includes('%s'))", PLOT_ID_EVENTS, PLOT_ID_INTERACTION),
                   checkboxInput(
                     inputId = "logY",
                     label = "Log Y axis",

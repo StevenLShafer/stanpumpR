@@ -32,7 +32,7 @@ Because they are. Propofol is in micrograms per millilitre and remifentanil in n
 
 ## Why can I not turn on the log axis?
 
-It is unavailable while *Time until threshold*, the Events panel or the Interaction panel is showing, because those panels have no meaningful log form.
+It is unavailable while *Time until threshold*, the *% MEAC* line, the Events panel or the Interaction panel is showing, because those panels have no meaningful log form.
 
 ## Why does the plot say "MAC equivalents" rather than MAC?
 

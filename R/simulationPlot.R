@@ -16,6 +16,7 @@ simulationPlot <- function(
   plotCost = FALSE,
   plotEvents = FALSE,
   plotRecovery = FALSE,
+  plotMEACOverlay = FALSE,
   typical = c("Mid"),
   logY = FALSE,
   yAxisHeight = 150,
@@ -137,6 +138,7 @@ simulationPlot <- function(
       allResults$Site[allResults$Site == "CeNormCp"] <- "Effect Site"
       plotRecovery <- FALSE
       plotMEAC <- FALSE
+      plotMEACOverlay <- FALSE
       plotInteraction <- FALSE
     },
     "Peak effect site" = {
@@ -145,12 +147,18 @@ simulationPlot <- function(
       allResults$Site[allResults$Site == "CeNormCe"] <- "Effect Site"
       plotRecovery <- FALSE
       plotMEAC <- FALSE
+      plotMEACOverlay <- FALSE
       plotInteraction <- FALSE
     }
   )
 
   if (!plotRecovery)
     allResults <- allResults[allResults$Site != "Recovery",]
+
+  # The % MEAC overlay and the time until threshold both read against labels
+  # at the panel's right-hand edge, so only one is drawn; the app unticks the
+  # other when either is ticked (R/meacOverlay.R).
+  if (plotRecovery) plotMEACOverlay <- FALSE
 
   # Step D3: extend plotTable
 
@@ -299,7 +307,9 @@ simulationPlot <- function(
 
   # Step B2 and D5: add MEAC and Interaction
 
-  if (plotMEAC | plotInteraction)
+  # Each opioid's % MEAC is also what the overlay at Step A8 draws.
+  resultsMEAC <- NULL
+  if (plotMEAC | plotInteraction | plotMEACOverlay)
   {
     # Both panels are read on one set of times dense enough to keep each
     # drug's peaks; see R/derivedSeries.R.
@@ -1002,6 +1012,15 @@ simulationPlot <- function(
        linetype = "solid",
        linewidth = 0.5
      )
+  }
+
+  # Step A8: each opioid's % MEAC on its own panel, on one scale shared by
+  # every opioid panel (R/meacOverlay.R)
+
+  if (plotMEACOverlay)
+  {
+    plotObject <- addMEACOverlay(plotObject, resultsMEAC, plotTable, wrapFactors,
+                                 minimum, maximum)
   }
 
 #  plotObject
