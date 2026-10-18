@@ -65,6 +65,10 @@ test_that("the dose is given as pulses of the default oral form", {
   expect_gt(p$delay[1], 0)
   expect_lt(max(p$delay), 180)
   expect_equal(length(p$fraction), length(p$delay))
+  # Eight, and the count is not arbitrary: six cannot meet the standard
+  # (0.59% on the curve even fitted minimax) and seven only just (0.52%,
+  # 3% of headroom).  docs/antihypertensives.md section 12.3 has the ladder.
+  expect_equal(length(p$fraction), 8)
 })
 
 test_that("renal clearance follows the paper's own ladder", {
@@ -201,12 +205,19 @@ test_that("the pulses reproduce the exact Weibull system at every renal function
     w <- w[w$Time > 0, ]
     ex <- exactCp(w$Time / 60, clR)
     peak <- max(ex)
-    # The peak concentration and the area are reproduced to well under a
-    # tenth of a percent; the worst point anywhere on the curve, which falls
-    # on the rising limb where the pulse structure is visible, to under 1.5%
-    # of the peak.  The measured figures are in docs/antihypertensives.md.
-    expect_lt(abs(max(w$Plasma) - peak) / peak, 0.005, label = paste("peak", crcl))
-    expect_lt(max(abs(w$Plasma - ex)) / peak, 0.015, label = paste("curve", crcl))
+    # These bounds ARE the documented standard, not a loose fence around the
+    # current numbers: docs/adding-a-drug.md holds a default-form
+    # discretisation to the two figures MDMA's zero-order depot met, 0.53%
+    # over the whole curve and 0.01% at the peak.  An earlier version of this
+    # test allowed 1.5% on the curve, three times the promise, and that gap
+    # is exactly why a real 0.64% error shipped unnoticed until CodeRabbit
+    # questioned the mismatch (PR #532).  A bound looser than the documented
+    # claim does not test the claim.
+    #
+    # The eight-pulse set reaches 0.344% and 0.0061% here, each about 65% of
+    # its limit, so there is real headroom without the bound being decorative.
+    expect_lt(max(abs(w$Plasma - ex)) / peak, 0.0053, label = paste("curve", crcl))
+    expect_lt(abs(max(w$Plasma) - peak) / peak, 0.0001, label = paste("peak", crcl))
     auc    <- sum(diff(w$Time) * (head(w$Plasma, -1) + tail(w$Plasma, -1)) / 2)
     aucEx  <- sum(diff(w$Time) * (head(ex, -1) + tail(ex, -1)) / 2)
     expect_lt(abs(auc - aucEx) / aucEx, 0.002, label = paste("AUC", crcl))

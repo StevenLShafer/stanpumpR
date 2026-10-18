@@ -36,9 +36,15 @@
 # represent, and the pulses stand in for it.  Hydrochlorothiazide (Van Wart
 # 2013) is the case -- its absorption is a Weibull with a shape of 2.84, so
 # the depot's rate constant rises with time instead of being constant, and
-# six lagged fractions reproduce the exact system to 0.45% of the peak, and
-# to 0.02% at the peak itself (docs/antihypertensives.md section 12, measured
-# against the standard MDMA's zero-order depot set).
+# eight lagged fractions reproduce the exact system to 0.34% of the peak over
+# the whole curve and 0.006% at the peak itself, against the 0.53% and 0.01%
+# MDMA's zero-order depot met (docs/antihypertensives.md section 12).
+#
+# MEASURE THAT ERROR AT THE PULSE TIMES.  It peaks exactly where a lagged
+# depot starts and the approximation kinks, and simulationTimeGrid() puts a
+# point at every dose time, so that is what a user sees.  A uniform grid steps
+# over the kinks and flatters the approximation: on hydrochlorothiazide a
+# 0.02 h grid said 0.45% where the truth was 0.64%.
 #
 # A drug using it this way owes the reader two things, in its own header: the
 # published input it is standing in for, and the measured error of standing in

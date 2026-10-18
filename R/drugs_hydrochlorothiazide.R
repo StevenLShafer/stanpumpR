@@ -177,15 +177,32 @@ HCTZ_WEIBULL_SHAPE <- 2.84   # gamma
 # pooled over the paper's four renal functions.
 HCTZ_KA <- 1.0           # 1/h, exact: the limit of 1 - exp(-(ka t)^gamma)
 
-# Fitted to the plasma curve pooled over creatinine clearances of 120, 80, 50
-# and 30 mL/min, against a numerical integration of the exact Weibull system.
-# The accuracy these buy is in the test and in docs/antihypertensives.md
-# section 12; they are a numerical stand-in for a published shape and describe
-# nothing about how the tablet is made.
-HCTZ_PULSE_FRACTION <- c(0.12149, 0.22965, 0.24606,
-                         0.20037, 0.13567, 0.06676)
-HCTZ_PULSE_DELAY    <- c(14.878, 27.028, 36.612,
-                         45.712, 54.641, 68.049)   # minutes
+# Eight fractions, fitted MINIMAX: the objective is the WORST point of the
+# plotted curve, not the sum of squares, because the worst point is what the
+# standard limits.  Two things had to be right about the measurement, and the
+# first attempt got both wrong (PR #532, found in review):
+#
+#   - the error peaks EXACTLY AT A PULSE TIME, where a lagged depot starts and
+#     the approximation kinks.  A uniform grid steps over the kinks: a 0.02 h
+#     grid reported 0.45% where the truth was 0.64%.  simulationTimeGrid() puts
+#     a point at every dose time, so the app evaluates precisely there -- the
+#     figure a user can see was the one not being measured.
+#   - the delays MOVE during the fit, so no fixed grid is safe.  The objective
+#     rebuilds its grid per candidate: a uniform backbone plus a neighbourhood
+#     of that candidate's own pulse times, with the exact system integrated
+#     once at h = 1/4000 and interpolated (it is smooth -- only the
+#     approximation kinks).
+#
+# Both of MDMA's figures are held, each normalised by its own limit so the fit
+# cannot buy one with the other: 0.53% over the curve and 0.01% at the peak.
+# Six pulses cannot do it (0.59% on the curve even fitted optimally) and seven
+# only just (0.52%, 3% of headroom).  Eight reaches 0.341% and 0.0064%, each
+# about 64% of its limit.  They are a numerical stand-in for a published shape
+# and describe nothing about how the tablet is made.
+HCTZ_PULSE_FRACTION <- c(0.084971, 0.170064, 0.155185, 0.085600,
+                         0.189206, 0.145831, 0.112379, 0.056764)
+HCTZ_PULSE_DELAY    <- c(12.4524, 23.7416, 31.7669, 35.8427,
+                         40.5300, 49.3181, 55.1718, 69.7187)   # minutes
 
 #' Hydrochlorothiazide pharmacokinetics (apparent oral, plasma)
 #'
@@ -256,10 +273,10 @@ hydrochlorothiazide <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "age and sex, which represents no renal impairment. The source's oral ",
     "input is a WEIBULL function (scale 1.34 /h, shape 2.84), a shape this ",
     "package's first-order depot cannot represent; it is discretised into ",
-    "six",
+    "eight",
     " lagged fractions absorbed at 1.0 /h, the Weibull's own asymptotic rate ",
     "constant, which reproduces a numerical integration of the exact system ",
-    "to 0.45% of the peak at every renal function the paper ",
+    "to 0.34% of the peak, and 0.006% at the peak itself, at every renal function the paper ",
     "tabulates. Plasma. No blood pressure, no diuresis and no therapeutic ",
     "range are predicted. https://doi.org/10.1002/bdd.1863"
   )

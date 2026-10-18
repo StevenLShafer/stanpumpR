@@ -82,15 +82,21 @@ This package's extravascular path has a constant `ka`, so it cannot
 represent that shape. The library's rule for a published input shape it
 lacks — set when MDMA's zero-order depot arrived — is to **discretise the
 published shape and measure what the discretisation costs**, never to
-substitute a different shape and hope. So the dose is given as lagged
-fractions, all absorbed at **1.0 per hour**, which is not a fitted number:
-it is the exact limit the Weibull's own rate constant approaches.
+substitute a different shape and hope. So the dose is given as **eight**
+lagged fractions, all absorbed at **1.0 per hour**, which is not a fitted
+number: it is the exact limit the Weibull's own rate constant approaches.
 
-The result tracks a numerical integration of the exact system to a fraction
-of a percent of the peak concentration, equally well at every renal function
-the paper tabulates. The measured figures are in
+The result tracks a numerical integration of the exact system to **a third of
+a percent** of the peak concentration at its worst point, and to six
+thousandths of a percent at the peak itself, equally well at every renal
+function the paper tabulates. The measured figures are in
 `docs/antihypertensives.md`, and the package's tests check the curve against
 that integration rather than against the fractions themselves.
+
+Why eight and not fewer: the approximation deviates most **at the pulse
+times**, where each fraction's absorption begins abruptly, and six fractions
+cannot keep that deviation inside the accuracy the library requires of such a
+stand-in. Seven only just manages it. Eight leaves real margin.
 
 ### Dosing, and a check against the label
 

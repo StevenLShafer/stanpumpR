@@ -833,9 +833,11 @@ Even as a scoping exercise two things were already clear. Lagged fractions
 reach the fidelity MDMA's zero-order depot was held to (0.01% at the peak,
 0.53% over the curve), and the fitted rate constant converges to 1.0 /h — the
 Weibull's own asymptotic value, which is evidence the approximation has found
-the real structure rather than overfitting. Both survived the proper fit;
-what did not survive was the pulse count, which went from five to six once
-the criterion covered every patient rather than one.
+the real structure rather than overfitting. Both survived the proper fit. What did not
+survive was the pulse count, nor the accuracy figures: the count went from
+five to six once the criterion covered every patient, and then to **eight**
+once the error was measured at the pulse times rather than between them, which
+is section 12.3.
 
 So hydrochlorothiazide was **one small engine extension away, not blocked**:
 `expandOralPulses()` is keyed by a formulation word in the dose unit, and an
@@ -1035,32 +1037,60 @@ residual error is **essentially flat across a sevenfold range of clearance**,
 which it would not be if the fractions had absorbed something that belongs to
 disposition.
 
-### 12.3 What it costs, measured
+### 12.3 What it costs, measured — and the measurement that was wrong
 
-Against a midpoint integration of the exact three-state Weibull system,
-pooled fit, ka fixed at 1.0 /h, as a percentage of the peak concentration:
+**This section replaces a wrong one.** Its first version reported six pulses at
+0.45% of peak and called the standard met. That number came from evaluating
+the error on a uniform 0.02 h grid, and it was wrong by a third: the true
+figure for that pulse set is **0.64%**, outside the standard. The error is
+worth more than the correction.
 
-| Pulses | Peak error | Worst point on the curve | AUC ratio |
+**Where a discretisation's error actually lives.** Each lagged depot starts
+abruptly, so the approximation has a **kink at every pulse time**, and that is
+where it deviates most from the smooth exact curve. A uniform grid steps over
+the kinks and reports whatever it happens to sample between them. The app does
+not: `simulationTimeGrid()` puts a point at every dose time, so a user sees
+precisely the worst points. **The figure being published was the one not being
+measured.** CodeRabbit found it on PR #532, from the other end — it noticed the
+test allowed 1.5% where the doc promised 0.5%, and tightening the bound to the
+promise is what made the real error visible. A bound looser than the claim does
+not test the claim.
+
+**Two corrections to the method.** First, the error is measured at the pulse
+times. Second — and this is the subtler one — the delays *move during the fit*,
+so no fixed grid is safe, not even a dense one: a grid built from the starting
+delays goes stale as they shift. The objective therefore rebuilds its grid for
+every candidate (a uniform backbone plus a neighbourhood of that candidate's
+own pulse times), with the exact system integrated once per renal function at
+h = 1/4000 and interpolated, which is legitimate because the exact curve is
+smooth — only the approximation kinks. And the objective is the **maximum**,
+not the sum of squares, because the maximum is what the standard limits.
+
+**Both of MDMA's figures are held**, each normalised by its own limit so the
+fit cannot buy one with the other. That matters: a curve-only minimax at seven
+pulses reaches 0.343% on the curve but lets the peak drift to 0.063%, six times
+MDMA's figure. Minimising the worse *ratio* prevents that trade.
+
+The honest ladder, measured on the package's own output grid:
+
+| Pulses | Worst point on the curve (limit 0.53%) | Peak (limit 0.01%) | Verdict |
 |---|---|---|---|
-| 2 | +0.26% | 3.75% | 1.00002 |
-| 3 | +0.11% | 1.63% | 1.00001 |
-| 4 | +0.06% | 1.02% | 1.00000 |
-| 5 | +0.04% | 0.61% | 1.00000 |
-| **6** | **+0.02%** | **0.45%** | **1.00000** |
+| 6 | 0.593% | 0.006% | **fails the curve**, even fitted minimax |
+| 7 | 0.516% | 0.008% | passes with 3% of headroom — too thin to defend |
+| **8** | **0.344%** | **0.0061%** | **both met, 35% and 39% headroom** |
 
-Six is what shipped, because six is where the worst point on the curve comes
-inside the **0.53%** that MDMA's zero-order discretisation was held to — and
-it does so at *every* renal function, the worst of the four being 0.45% and
-the best 0.38%. Five would have been 0.61%, outside it. The worst point falls
-on the rising limb, where the pulse structure is still visible; by the peak
-the error is 0.02% and the area is exact to a thousandth of a percent.
+Eight is what shipped. The worst point sits at 0.82 h in every patient, and the
+area is exact to a thousandth of a percent. The fit's own estimate (0.341% and
+0.0064%) and the package measurement (0.344% and 0.0061%) now agree, which is
+the cross-check that the grid problem is gone — under the old method they
+disagreed by a third and nothing noticed.
 
 The drug's test checks this directly: it writes out the three-state Weibull
 integration independently of the package and compares it with what
-`simulateDrugsWithCovariates()` returns, at all four renal functions. It does
-*not* check the fractions. If a later change to them or to
-`expandOralPulses()` degrades the curve, the test fails on the curve, which
-is the thing worth protecting.
+`simulateDrugsWithCovariates()` returns, at all four renal functions, and it
+does *not* check the fractions. Its bounds **are** the documented standard,
+0.53% and 0.01%, not a loose fence around the current numbers — which is the
+one change that would have caught this before review.
 
 ### 12.4 What the drug inherits from its source
 
