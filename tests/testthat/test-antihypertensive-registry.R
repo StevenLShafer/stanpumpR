@@ -545,12 +545,29 @@ test_that("the two kinds of catalog row are counted, so the gap stays visible", 
   # Closing an ingredient-identity row means opening its label and giving it
   # a setid.  This test is the progress bar: it fails if the counts move
   # without someone saying so, in either direction.
+  #
+  # The real division is DOCUMENT OPENED against NO DOCUMENT OPENED, which is
+  # not the same as label against no label: three of the 69 opened something
+  # that is not a US official label, and calling all 69 label-bearing was an
+  # error in the first version of this test and of the prose around it.
   catalog <- registry[grepl("__catalog__none__", registry$model_id), ]
-  withLabel <- catalog[catalog$source_type != "ingredient_catalog", ]
+  withDocument <- catalog[catalog$source_type != "ingredient_catalog", ]
+  officialLabel <- catalog[catalog$source_type == "official_label", ]
+  otherDocument <- catalog[!catalog$source_type %in%
+                             c("ingredient_catalog", "official_label"), ]
   ingredientOnly <- catalog[catalog$source_type == "ingredient_catalog", ]
-  expect_equal(nrow(withLabel), 69)
+  expect_equal(nrow(withDocument), 69)
+  expect_equal(nrow(officialLabel), 66)
   expect_equal(nrow(ingredientOnly), 21)
-  # A row read from a label does record descriptors, which is the whole
-  # difference between the two kinds
-  expect_true(all(withLabel$pk_evidence == "official_label_descriptive"))
+  # The three that opened something else, named so that a reader of the
+  # 66/69 split can see exactly what the difference is
+  expect_equal(nrow(otherDocument), 3)
+  expect_setequal(otherDocument$source_type,
+                  c("primary_fitted", "regional_monograph",
+                    "regional_registration"))
+  expect_setequal(otherDocument$drug,
+                  c("azilsartan medoxomil", "canrenone", "urapidil"))
+  # A row that opened a document records descriptors, whichever document it
+  # was: that is the whole difference between the two kinds
+  expect_true(all(withDocument$pk_evidence == "official_label_descriptive"))
 })

@@ -472,8 +472,12 @@ catalog <- rbind(catalog,
 # -----------------------------------------------------------------------------
 # INGREDIENT-IDENTITY RECORDS: the classes closed out, without a label in hand
 # -----------------------------------------------------------------------------
-# The records above were written with the official label open, so each one
-# quotes the descriptors it found there.  The rows below close the remaining
+# The records above were each written with a SOURCE DOCUMENT open -- 66 of
+# them a US official label, and three something else (azilsartan medoxomil a
+# journal paper, canrenone a regional registration, urapidil a regional
+# monograph) -- so each quotes the descriptors it found in whatever it opened.
+# The contrast with the rows below is therefore document opened against no
+# document opened, not label against no label.  The rows below close the remaining
 # gaps in the five classes the registry is meant to enumerate -- angiotensin-
 # receptor blockers, ACE inhibitors, calcium-channel blockers, beta blockers
 # and diuretics -- and they were written WITHOUT the label, because

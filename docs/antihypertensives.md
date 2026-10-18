@@ -337,10 +337,12 @@ arithmetically. None of the four brought a blood pressure with it.
 
 **A registry of 127 model records** (`inst/extdata/antihypertensiveRegistry.csv`,
 built by `data-raw/antihypertensiveRegistry.R`) over 81 drugs: 90 catalog
-records establishing product and route identity, of which 69 were written with
-the official label open and 21 assert ingredient identity only because the
-label could not be retrieved (section 13), and 37 source records, one per
-publication, population and endpoint. Ten are executable, one is
+records establishing product and route identity, of which 66 were written with
+an official label open, 3 with another source document open (a journal paper
+for azilsartan medoxomil, a regional registration for canrenone, a regional
+monograph for urapidil), and 21 assert ingredient identity only because no
+document could be retrieved at all (section 13), and 37 source records, one
+per publication, population and endpoint. Ten are executable, one is
 `complete_not_implemented` (section 11.2).
 `bp_simulation_enabled` is `FALSE` on all 127.
 `external_validation_status` is `none` on 126 of them and
@@ -425,11 +427,13 @@ question for the clinician rather than the programmer.
 
 **Partly closed on 2026-10-18.** Section 13 enumerates the five classes the
 registry exists for — angiotensin-receptor blockers, ACE inhibitors,
-calcium-channel blockers, beta blockers and diuretics — against the FDA
-approval list, adding 21 records and arguing each deliberate exclusion. That
-makes a molecule's absence from those five classes a claim rather than a gap.
-It is still not a formulary comparison, and the paragraph above still stands
-for every other class.
+calcium-channel blockers, beta blockers and diuretics — adding 21 records and
+arguing each deliberate exclusion. The inventory it is measured against is
+the approved ingredients **as section 13.1 assembles them**, which no FDA
+register was reachable to confirm (13.2): so a molecule's absence from those
+five classes is a claim this program makes, not yet one the Orange Book or
+DailyMed has agreed to. It is still not a formulary comparison, and the
+paragraph above still stands for every other class.
 
 ---
 
@@ -1209,8 +1213,13 @@ a hole:
 
 ### 13.2 The citation is weaker, and it says so
 
-Every one of the 69 earlier catalog rows was written with the label open, and
-each quotes the descriptors found there. These 21 were not. DailyMed
+Every one of the 69 earlier catalog rows was written with a source document
+open — 66 a US official label and three something else, which is why the
+honest contrast is *document opened* against *no document opened* rather than
+label against no label: azilsartan medoxomil's row cites a journal paper,
+canrenone's a regional registration, urapidil's a regional monograph. Each of
+the 69 quotes the descriptors found in whatever it opened. These 21 opened
+nothing. DailyMed
 (`dailymed.nlm.nih.gov`) and the openFDA API (`api.fda.gov`) are both
 unreachable from the environment this registry is built in — `curl` returns no
 response at all, not a refusal — and `accessdata.fda.gov` does answer but
