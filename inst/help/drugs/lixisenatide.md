@@ -11,7 +11,7 @@ Frank's population analysis of lixisenatide (*J Pharm Drug Deliv Res* 2013): 122
 - **Weight:** volume × (weight/82.1)<sup>1.56</sup>. With **Adjust weight to fat-free mass** ticked, the pharmacokinetic weight is used, in the volume and in Cockcroft-Gault.
 - **Dose:** mean absorption time × (dose/15 mcg)<sup>0.236</sup>, a property of each injection: 2.95 hours after 10 mcg and 3.48 hours after 20 mcg. Each injection size is simulated with its own absorption and the results are added.
 
-The paper's table of studied ranges was not available, so no weight or creatinine clearance is held to one. A dedicated renal study tabulated in a later review (Scheen 2015) found a lower clearance after a single 5 mcg dose (20 L/h with normal renal function) than this pooled model gives.
+The weight term on the volume is held to the studied weights, 43.8 to 163 kg, and the dose term on the absorption time to the studied doses, 5 to 30 mcg per injection (the paper's Table 1). Creatinine clearance is not held: the table gives no numeric range, only that the renal study included severe impairment. A dedicated renal study tabulated in a later review (Scheen 2015) found a lower clearance after a single 5 mcg dose (20 L/h with normal renal function) than this pooled model gives.
 
 At the medians, 20 mcg peaks at about 88 pg/mL 1.8 hours after the injection.
 

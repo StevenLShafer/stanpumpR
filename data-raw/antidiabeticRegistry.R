@@ -62,9 +62,9 @@ registry <- rbind(
       "https://doi.org/10.1007/s13300-018-0458-5",
       "2.4 mg in obesity: outside the doses and population of the implemented fit; product-specific analysis required."),
   reg("semaglutide_po_rybelsus", "semaglutide", "Rybelsus tablets", PO, "core", "US",
-      AUD, AUD, "PD-AUDIT", DAUD, "HbA1c at week 26", NA, NA, FALSE,
+      AUD, FIT, "PD-AUDIT", DAUD, "HbA1c at week 26", NA, "semaglutideOral", TRUE,
       "https://doi.org/10.1007/s40262-021-01025-x",
-      "Overgaard 2021 (Clin Pharmacokinet 60:1335-1348) read: Overgaard 2019 s.c./i.v. two-compartment disposition fixed, oral first-order absorption with ka = (ka_ref - ka_longfast) exp(-theta (Tfast - 30)) + ka_longfast and F_ref x (WT/85)^theta x water(240 mL) x fasting-time factor, intra-individual (occasion) variability on F. Table 2 typical values at the recommended conditions: F 0.76% (healthy) / 0.69% (T2D), ka 2.09/h, CL 0.033 / 0.039 L/h, Vc 3.4 / 3.7 L, Vp 3.9 / 4.2 L, Q 0.28 / 0.31 L/h, t1/2 158 / 145 h; mean F 0.795% in the text. The theta values (F_ref, ka_ref, ka_longfast, the fasting rate, the water factor, weight on F) are in ESM Table 1, not supplied; Overgaard 2021 Cell Rep Med (Methods S1) refits F on PIONEER data, also in a supplement not supplied. Not selectable until those are read."),
+      "Overgaard 2021 (Clin Pharmacokinet 60:1335-1348) and its ESM Table 1 (supplied): Overgaard 2019 s.c./i.v. two-compartment disposition fixed (CL 0.0348 L/h x (WT/85)^1.01 x 1.09 in T2D, Q 0.304 L/h x (WT/85)^1.01, Vc 3.59 L and Vp 4.1 L x (WT/85)^0.923), oral first-order absorption ka = (2.09 - 1.35) exp(-0.112 (Tfast - 30)) + 1.35 /h and F = 0.795% x (WT/85)^0.741 x 0.637^(240 mL) x (1 - exp(-0.0266 Tfast))/(1 - exp(-0.0266 x 30)); IIV 53.5% and IOV 137% on F. Implemented at the recommended conditions (30 min fasting, up to 120 mL), T2D applied on CL; the separate T2D re-estimate's 0.841 on F (not significant) not applied. Reproduces Table 2 (healthy CL 0.033, Vc 3.4, Vp 3.9, F 0.76%, t1/2 158 h; T2D 145 h). External: Overgaard 2021 Cell Rep Med (PIONEER, unsupervised outpatient dosing) geometric mean Cavg 14.6 nmol/L at 14 mg; the model gives 29.4 nmol/L (88 kg, T2D), twice as much. The PIONEER refit of F is in its Methods S1, not supplied."),
   reg("semaglutide_po_ozempic_tablets", "semaglutide", "Ozempic tablets (2026)", PO, "core", "US",
       AUD, CON, "PD-AUDIT", DAUD, "HbA1c", NA, NA, FALSE,
       "https://dailymed.nlm.nih.gov/dailymed/fda/fdaDrugXsl.cfm?setid=27f15fac-7d98-4114-a2ec-92494a91da98",
@@ -108,7 +108,7 @@ registry <- rbind(
   reg("lixisenatide_sc", "lixisenatide", "Adlyxin injection", SC, "core", "US",
       FIT, FIT, "PD-TEMPLATE", DTPL, "none", NA, "lixisenatide", TRUE,
       "https://doi.org/10.4172/2325-9604.1000112",
-      "Frank 2013, Table 2 (supplied as an image): 1C, ADVAN2, MAT = 1/ka 3.25 h x (dose/15 mcg)^0.236, CL/F 38.6 L/h x (1 + 0.099 (Cockcroft-Gault CLCR - 6.21 L/h)), V/F 41.2 L x (WT/82.1)^1.56; antibody-negative visits only. Reproduces V/CL 1.07 h and the 1.5- to 1.8-fold exposure at CLCR 1.8-3.0 L/h. Dose on MAT applied per injection (doseDependent). Table 1 (studied ranges) not available, so nothing is held to a range. Scheen 2015 (Liu et al., 5 mcg single dose): CL/F 20.0, 19.0, 16.0 and 14.0 L/h with normal function and mild, moderate and severe CKD, lower than this pooled model."),
+      "Frank 2013, Table 2 (supplied as an image): 1C, ADVAN2, MAT = 1/ka 3.25 h x (dose/15 mcg)^0.236, CL/F 38.6 L/h x (1 + 0.099 (Cockcroft-Gault CLCR - 6.21 L/h)), V/F 41.2 L x (WT/82.1)^1.56; antibody-negative visits only. Reproduces V/CL 1.07 h and the 1.5- to 1.8-fold exposure at CLCR 1.8-3.0 L/h. Dose on MAT applied per injection (doseDependent). Table 1 (supplied): weight 43.8-163 kg, age 20-82 y, doses 5-30 mcg; V/F's weight and MAT's dose are held to those ranges, CLCR (no numeric range; severe impairment enrolled) is not. Scheen 2015 (Liu et al., 5 mcg single dose): CL/F 20.0, 19.0, 16.0 and 14.0 L/h with normal function and mild, moderate and severe CKD, lower than this pooled model."),
   reg("pramlintide_iv_research", "pramlintide", "IV study (research)", "IV", "core", "study",
       FIT, FIT, "PD-FIT", DAUD, "T1D meal EGP", NA, "pramlintideIV", TRUE,
       "https://doi.org/10.1208/s12248-012-9409-7",
@@ -242,10 +242,10 @@ registry <- rbind(
   reg("sitagliptin", "sitagliptin", "Januvia", PO, "core", "US",
       CON, CON, "PD-FIT", DAUD, "plasma DPP-4 inhibition", NA, NA, FALSE,
       "https://www.pmda.go.jp/files/000153174.pdf", "Label constraints only. Sangle 2018 (Eur J Clin Pharmacol 74:561-569; 100 mg single dose, healthy Indian men, fasted/fed) and the sitagliptin arm of Zhou 2024 (Front Endocrinol 15:1359407) are noncompartmental only: constraints (t1/2 about 10 h; fasted Cmax 492 ng/mL), no population model. Scheen 2015: AUC x1.61/2.26/3.77/4.50 in mild/moderate/severe CKD and dialysis."),
-  reg("cetagliptin", "cetagliptin", "Cetagliptin (China)", PO, "international", "China",
-      AUD, AUD, "PD-AUDIT", DAUD, "plasma DPP-4 inhibition", NA, NA, FALSE,
+  reg("cetagliptin", "cetagliptin", "Cetagliptin (investigational, China)", PO, "international", "China",
+      AUD, FIT, "PD-AUDIT", DAUD, "plasma DPP-4 inhibition (sigmoid Emax: Emax 91.78%, EC50 5.120, gamma 1.008; unit of EC50 not stated)", NA, "cetagliptin", TRUE,
       "https://doi.org/10.3389/fendo.2024.1359407",
-      "Zhou 2024 (32 Chinese adults with T2D, 50 and 100 mg): two-compartment population PK with total bilirubin on V2, and a sigmoid Emax DPP-4 model; the parameter estimates are in Supplementary Table 1, not supplied. Not in the specification."),
+      "Zhou 2024 (20 Chinese adults with T2D, 50 and 100 mg daily for 14 days) and Supplementary Table 1 (Data Sheet 1, supplied): two compartments with saturable elimination (the text says only 'two-compartment'; the table has Km 171.5 ug/L and Vmax 9373 ug/h and no CL), V 8.668 L, V2 558.0 L, Cl2 9.671 L/h, ka 0.06521/h, apparent. Total bilirubin on V2 (coefficient 0.3723, form and reference not printed; no field): not applied. Reproduces Table 2: day-1 AUC0-24 751 and 1819 ng.h/mL at 50 and 100 mg (observed 717, 1830), steady-state Cmax 299 ng/mL at 100 mg (300), terminal t1/2 about 40 h (34.9-41.9). Investigational; not in the specification."),
   reg("saxagliptin", "saxagliptin", "Onglyza (with active metabolite)", PO, "core", "US",
       CON, CON, "PD-TEMPLATE", DTPL, "DPP-4 inhibition", NA, NA, FALSE,
       "https://dailymed.nlm.nih.gov/dailymed/fda/fdaDrugXsl.cfm?setid=6e8d8c4f-96eb-4b64-9c8c-4a5448a23a78&type=display", "Half-lives only."),
@@ -348,6 +348,10 @@ baron  <- "https://doi.org/10.1007/s13300-016-0174-y"
 cirin  <- "https://doi.org/10.1111/bcp.13135"
 melinUrl <- "https://doi.org/10.1111/bcp.15939"
 hoeben <- "https://doi.org/10.1007/s40262-015-0307-x"
+og2021 <- "https://doi.org/10.1007/s40262-021-01025-x"
+ogPop  <- "Overgaard 2021, 376 subjects, supervised oral dosing"
+zhou   <- "https://doi.org/10.3389/fendo.2024.1359407"
+zhouPop <- "Zhou 2024, 20 Chinese adults with T2D"
 frank  <- "https://doi.org/10.4172/2325-9604.1000112"
 frankPop <- "Frank 2013, 1223 healthy subjects and adults with type 2 diabetes (antibody-negative)"
 hoebenPop <- "Hoeben 2016, 1616 healthy volunteers and adults with type 2 diabetes"
@@ -558,7 +562,31 @@ parameters <- rbind(
   par("glyburide", "Vc/F", "11.70", "L", E, "Rambiritch 2016", ramb, "Results"),
   par("glyburide", "Q/F", "3.84", "L/h", E, "Rambiritch 2016", ramb, "Results"),
   par("glyburide", "Vp/F", "68.1", "L", E, "Rambiritch 2016", ramb, "Results"),
-  par("glyburide", "size scaling", "library FFM factors", "-", LB, "no covariate analysis in the source", ramb, "-")
+  par("glyburide", "size scaling", "library FFM factors", "-", LB, "no covariate analysis in the source", ramb, "-"),
+
+  par("semaglutideOral", "CL", "0.0348", "L/h x (WT/85)^1.01", FX, ogPop, og2021, "ESM Table 1 (fixed from Overgaard 2019)"),
+  par("semaglutideOral", "weight exponent on CL and Q", "1.01", "unitless", FX, ogPop, og2021, "ESM Table 1"),
+  par("semaglutideOral", "T2D factor on CL", "1.09", "-", FX, ogPop, og2021, "ESM Table 1"),
+  par("semaglutideOral", "Q", "0.304", "L/h x (WT/85)^1.01", FX, ogPop, og2021, "ESM Table 1"),
+  par("semaglutideOral", "Vc", "3.59", "L x (WT/85)^0.923", FX, ogPop, og2021, "ESM Table 1"),
+  par("semaglutideOral", "Vp", "4.1", "L x (WT/85)^0.923", FX, ogPop, og2021, "ESM Table 1"),
+  par("semaglutideOral", "weight exponent on Vc and Vp", "0.923", "unitless", FX, ogPop, og2021, "ESM Table 1"),
+  par("semaglutideOral", "ka", "2.09", "1/h at 30 min post-dose fasting", E, ogPop, og2021, "ESM Table 1; Eq. 1"),
+  par("semaglutideOral", "ka at long-term fasting", "1.35", "1/h; not applied (recommended conditions)", E, ogPop, og2021, "ESM Table 1; Eq. 1"),
+  par("semaglutideOral", "fasting time exponent for ka", "0.112", "1/min; not applied", E, ogPop, og2021, "ESM Table 1; Eq. 1"),
+  par("semaglutideOral", "F", "0.795", "% at 85 kg, 30 min fasting, up to 120 mL water", E, ogPop, og2021, "ESM Table 1; Eq. 6"),
+  par("semaglutideOral", "weight exponent on F", "0.741", "unitless; weight held to 51.1-122 kg", E, ogPop, og2021, "ESM Table 1; Eq. 10"),
+  par("semaglutideOral", "water volume factor on F (240 mL)", "0.637", "-; not applied", E, ogPop, og2021, "ESM Table 1; Eq. 11"),
+  par("semaglutideOral", "fasting time exponent on F", "0.0266", "1/min; not applied", E, ogPop, og2021, "ESM Table 1; Eq. 12"),
+
+  par("cetagliptin", "Vmax", "9373", "ug/h (x library FFM clearance factor)", E, zhouPop, zhou, "Supplementary Table 1"),
+  par("cetagliptin", "Km", "171.5", "ug/L", E, zhouPop, zhou, "Supplementary Table 1"),
+  par("cetagliptin", "CL/F below Km", "54.65", "L/h, = Vmax/Km", DV, zhouPop, zhou, "Supplementary Table 1"),
+  par("cetagliptin", "V/F", "8.668", "L (x library FFM volume factor)", E, zhouPop, zhou, "Supplementary Table 1"),
+  par("cetagliptin", "V2/F", "558.0", "L; total bilirubin term (0.3723) not applied", E, zhouPop, zhou, "Supplementary Table 1"),
+  par("cetagliptin", "Cl2/F", "9.671", "L/h", E, zhouPop, zhou, "Supplementary Table 1"),
+  par("cetagliptin", "ka", "0.06521", "1/h", E, zhouPop, zhou, "Supplementary Table 1"),
+  par("cetagliptin", "elimination structure", "Michaelis-Menten from the central compartment", "-", ST, zhouPop, zhou, "Supplementary Table 1 (Km, Vmax, no CL)")
 )
 
 utils::write.csv(parameters, file.path(outdir, "antidiabeticParameters.csv"),

@@ -83,6 +83,7 @@ plasmaOnly <- c(
   "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
   "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
   "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
+  "semaglutideOral", "cetagliptin",
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
   "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",

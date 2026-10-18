@@ -110,6 +110,15 @@ test_that("the audited numbers are the ones the models use", {
   expect_equal(TIRZEPATIDE_BIOAVAILABILITY,
                as.numeric(parameters$value[parameters$drug == "tirzepatide" & parameters$parameter == "F"]),
                tolerance = 1e-3)
+  val <- function(d, p) as.numeric(parameters$value[parameters$drug == d & parameters$parameter == p])
+  so <- semaglutideOral(85, 175, 50, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(100 * so$bioavailability_PO, val("semaglutideOral", "F"))
+  expect_equal(so$v1, val("semaglutideOral", "Vc"))
+  expect_equal(SEMAGLUTIDE_ORAL_T2D_CL, val("semaglutideOral", "T2D factor on CL"))
+  ce <- cetagliptin(70, 170, 46, "male", adjustToFFM = FALSE)
+  expect_equal(ce$michaelisMenten$vmax * 60, val("cetagliptin", "Vmax"))
+  expect_equal(ce$michaelisMenten$km, val("cetagliptin", "Km"))
+  expect_equal(ce$PK$default$v2, val("cetagliptin", "V2/F"))
   # at each insulin's reference weight (80 kg; glargine 71.4 kg) and dose
   for (d in c("insulinRegular", "insulinLispro", "insulinGlargine")) {
     rows <- parameters[parameters$drug == d, ]

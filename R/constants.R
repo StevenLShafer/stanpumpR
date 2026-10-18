@@ -402,7 +402,8 @@ ACUTE_MAX_PLOT_MINUTES <- MINS_PER_WEEK
 
 # Drugs that are only meaningful over weeks to months.  Adding one to a plot
 # shorter than a week offers to switch the Time units to days, 365 days.
-LONG_TERM_DRUGS <- c("amiodarone", "semaglutide", "dulaglutide", "tirzepatide")
+LONG_TERM_DRUGS <- c("amiodarone", "semaglutide", "semaglutideOral", "dulaglutide",
+                     "tirzepatide")
 LONG_TERM_PLOT_MINUTES <- 365 * MINS_PER_DAY
 
 # The Max time choices for each time unit: the durations (minutes) and the
