@@ -395,6 +395,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # The opt-in illicit research models (2026-10-17) are plasma only: see
     # inst/extdata/illicitRouteRegistry.csv and each drug's header.
     "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
+    # carfentanil (2026-10-18): sufentanil's DISPOSITION only, so its
+    # tPeak deliberately does not come with it (R/drugs_carfentanil.R)
+    "carfentanil",
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
