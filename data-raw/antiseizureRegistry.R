@@ -70,11 +70,11 @@ registry <- rbind(
       "1C first-order, chronic autoinduced state", "pk_only", "carbamazepine",
       "https://pubmed.ncbi.nlm.nih.gov/9545146/",
       "Graves 1998 maintenance model implemented; epoxide and single-dose naive state not modelled; Carnexiv IV withdrawn 2026."),
-  reg("Cenobamate", "oral tablet", L, PRO,
+  reg("Cenobamate", "oral tablet", L, FIT,
       "cenobamate base", "cenobamate (apparent, oral)",
-      "2C first-order with lag; dose-dependent (nonlinear) CL", "pk_only", NA,
-      "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=565c2126-57ae-4e29-b443-723bbe7e2072",
-      "Nonlinear CL (1.4 to 0.4 L/h with dose); handoff poster values unconfirmed; a single linear CL is only locally valid."),
+      "2C first-order with lag", "pk_only", "cenobamate",
+      "https://doi.org/10.1016/j.eplepsyres.2023.107185",
+      "Vashi 2023 sponsor model (960 subjects) implemented from the FDA NDA 212839 clinical pharmacology review, Table 2; dose, BSA, weight, bilirubin, ethnicity and co-medication terms not applied (equations and centring values unprinted); single-dose nonlinearity not reproduced."),
   reg("Clobazam", "oral tablet/suspension/film", L, PRO,
       "clobazam + N-desmethylclobazam", "clobazam and N-desmethylclobazam",
       "tandem 1C parent + metabolite; CYP2C19 on metabolite", "pk_only", NA,
@@ -255,6 +255,7 @@ E <- "estimated"; FX <- "fixed"; LD <- "label-derived"; GD <- "guideline-derived
 CA <- "calibration"; DR <- "derived"
 
 odani <- "https://doi.org/10.1248/bpb.19.444"
+cenoFDA <- "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2019/212839Orig1s000ClinPharmR.pdf"
 parameters <- rbind(
   par("phenytoin", "V", "1.23", "L/kg (x weight^0.463)", E, "Odani 1996, 116 Japanese epilepsy patients", odani),
   par("phenytoin", "Vmax", "9.80", "mg/day/kg (x weight^0.463)", E, "Odani 1996", odani),
@@ -330,7 +331,14 @@ parameters <- rbind(
   par("carbamazepine", "V/F", "1.97", "L/kg", E, "Graves 1998", "https://pubmed.ncbi.nlm.nih.gov/9545146/"),
   par("carbamazepine", "ka", "0.441", "1/h", E, "Graves 1998", "https://pubmed.ncbi.nlm.nih.gov/9545146/"),
   par("carbamazepine", "age>=70 CL factor", "0.749", "x CL/F", E, "Graves 1998", "https://pubmed.ncbi.nlm.nih.gov/9545146/"),
-  par("carbamazepine", "relative F (ER)", "0.89", "unitless", LD, "Tegretol-XR label", "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2a8c7366-ce89-47ce-8123-96f26812fca0")
+  par("carbamazepine", "relative F (ER)", "0.89", "unitless", LD, "Tegretol-XR label", "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2a8c7366-ce89-47ce-8123-96f26812fca0"),
+
+  par("cenobamate", "CL/F", "0.533", "L/h", E, "Vashi 2023 / SK16007, 960 subjects (FDA review Table 2)", cenoFDA),
+  par("cenobamate", "V1/F", "42.4", "L", E, "Vashi 2023 / SK16007", cenoFDA),
+  par("cenobamate", "Q/F", "1.84", "L/h", E, "Vashi 2023 / SK16007", cenoFDA),
+  par("cenobamate", "V2/F", "7.27", "L", E, "Vashi 2023 / SK16007", cenoFDA),
+  par("cenobamate", "ka", "2.74", "1/h", E, "Vashi 2023 / SK16007", cenoFDA),
+  par("cenobamate", "lag time", "0.240", "h", E, "Vashi 2023 / SK16007", cenoFDA)
 )
 
 utils::write.csv(parameters, file.path(outdir, "antiseizureParameters.csv"),

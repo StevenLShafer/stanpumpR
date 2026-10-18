@@ -59,7 +59,7 @@ plasmaOnly <- c(
   # linked effect site (2026-10-10)
   "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",
   "topiramate", "lacosamide", "lamotrigine", "zonisamide", "tiagabine",
-  "levetiracetam", "eslicarbazepine", "carbamazepine",
+  "levetiracetam", "eslicarbazepine", "carbamazepine", "cenobamate",
   # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
   "diamorphine",
   # The opt-in illicit research models (2026-10-17) are plasma only: see
