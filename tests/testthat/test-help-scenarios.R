@@ -263,7 +263,7 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
   for (s in scenarios) {
     expect_true(setequal(names(s$patient),
                          c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
-                           "cyp2b6", "adjustToFFM", "creatinine", "osmolality",
+                           "vkorc1", "cyp2b6", "adjustToFFM", "creatinine", "osmolality",
                            "pregnant")), info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
     expect_true(is.logical(s$patient$pregnant) && length(s$patient$pregnant) == 1, info = s$id)
@@ -308,8 +308,8 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   expect_equal(as.numeric(session$messages$osmolality$value), OSMOLALITY_DEFAULT)
   # and the rest of the profile goes too, the Pregnant control included (off
   # for this patient, so a parturient loaded earlier does not linger)
-  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6",
-                    "adjustToFFM", "pregnant")
+  expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "vkorc1",
+                    "cyp2b6", "adjustToFFM", "pregnant")
                   %in% names(session$messages)))
   expect_identical(session$messages$pregnant$selected, "FALSE")
   session <- recordingSession()

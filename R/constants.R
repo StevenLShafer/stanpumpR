@@ -21,11 +21,18 @@ ROUTE_SL <- "SL"
 # nerve block or a wound infiltration), absorbed first-order from the tissue
 # into the systemic circulation.
 ROUTE_RA <- "RA"
-# Subcutaneous: a drug injected under the skin and absorbed first-order into
-# the systemic circulation, exactly as the intramuscular route, with its own
-# ka_SC, bioavailability_SC and tlag_SC (the low-molecular-weight heparins and
-# fondaparinux).
+# Subcutaneous injection (the incretin peptides, the insulins, the
+# low-molecular-weight heparins and fondaparinux): absorbed
+# first-order from a tissue depot, as an RA dose is.  The engines carry both
+# on the same internal tissue-depot states ("RA" in getDrugPK() and the
+# engines), which is why a drug may offer SC or RA but not both; see
+# TISSUE_ROUTES.  An SC drug writes its absorption as ka_SC,
+# bioavailability_SC and tlag_SC (optionally ka_SC_slow, fraction_SC_slow and
+# tlag_SC_slow for a second, slower depot), and getDrugPK() moves them onto
+# the tissue-depot fields.  (Claude Code, 2026-10-17, at the request of
+# Steven L. Shafer.)
 ROUTE_SC <- "SC"
+TISSUE_ROUTES <- c(ROUTE_RA, ROUTE_SC)
 TPEAK_ROUTES <- c(ROUTE_IV, ROUTE_PO)
 
 # Every route a dose can take, in the order the units dropdowns list them.  A
@@ -86,6 +93,14 @@ CYP2B6_DEFAULT <- CYP2B6_NORMAL
 # and CYP2C19, and from any drug interaction: each is its own field.
 CYP2C9_VALUES  <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
 CYP2C9_DEFAULT <- "*1/*1"
+
+# VKORC1 -1639G>A GENOTYPE, read by the models that name it: warfarin, where
+# the A allele lowers the S-warfarin C50 (the Xue 2017 library model) and sets
+# the EC50 of the Hamberg 2007 companion model (R/alternativeModels.R).  Three
+# genotypes; GG (two wild-type alleles, the least sensitive) is the reference.
+# Its own Patient Profile field, kept apart from the CYP phenotypes.
+VKORC1_VALUES  <- c("GG", "GA", "AA")
+VKORC1_DEFAULT <- "GG"
 
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
@@ -172,6 +187,21 @@ raRateUnits <- c("mg/hr RA")
 # 2026-10-07, at the request of Steven L. Shafer.)
 poRateUnits <- c("mg/day PO")
 
+# Subcutaneous injection (ROUTE_SC): the whole dose into the SC depot.  The
+# peptides are dosed by mass; the insulins in units (U), which are a potency
+# unit of each preparation, not a mass, so a drug offering them carries
+# concentrations in microunits per mL ("mcU" in drugDefaults_global.csv) and
+# no mass unit at all.  "U/hr SC" is continuous subcutaneous insulin
+# infusion (an insulin pump): a rate into the SC depot, which the engines
+# carry as they carry "mg/hr RA".  Only a product whose label permits pump
+# use offers it; a product that must not be used in a pump (Humalog U200,
+# the fixed-ratio pens) simply has no such unit, and the dose table refuses
+# a unit the drug does not list.  (Claude Code, 2026-10-17, at the request
+# of Steven L. Shafer.)
+scUnits <- c("mg SC", "mg/kg SC", "mcg SC", "mcg/kg SC")
+insulinUnits <- c("U SC", "U/kg SC")
+insulinRateUnits <- c("U/hr SC")
+
 # Oral formulations.  A drug whose tablets and liquid are absorbed at different
 # rates offers a unit per formulation, "mg PO tablet" and "mg PO liquid".  The
 # formulation word follows the route, so doseRoute() still reads these as PO
@@ -235,14 +265,11 @@ calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
 # Shafer.)
 iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 
-# Subcutaneous units (ROUTE_SC): a single injection under the skin, absorbed
-# first-order through the drug's ka_SC.  Mass units for a drug plotted by mass
-# (fondaparinux, "mg SC"), and IU activity units for one plotted as anti-Xa
-# activity (enoxaparin, "IU SC"); the activity units start with "IU" so
-# simCpCe()'s international-unit check reads them, and carry no mass.  No
-# scheduled frequencies and no rate (these are single injections).  (Claude
-# Code, 2026-10-17, at the request of Steven L. Shafer.)
-scUnits   <- c("mg SC", "mg/kg SC", "mcg SC", "mcg/kg SC")
+# Subcutaneous activity units (ROUTE_SC) for a drug plotted as anti-Xa
+# activity (enoxaparin, "IU SC"); the mass units are scUnits, above.  They
+# start with "IU" so simCpCe()'s international-unit check reads them, and
+# carry no mass.  No scheduled frequencies and no rate.  (Claude Code,
+# 2026-10-17, at the request of Steven L. Shafer.)
 iuScUnits <- c("IU SC", "IU/kg SC")
 
 # GHB (R/drugs_GHB.R).  The dose is SODIUM OXYBATE and the curve is GHB, the
@@ -256,13 +283,18 @@ ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
-              iuUnits, scUnits, iuScUnits, ghbUnits)
+              iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
 TCI_UNIT_PLASMA <- "Plasma target"
 TCI_UNIT_EFFECT <- "Effect site target"
 tciUnits <- c(TCI_UNIT_PLASMA, TCI_UNIT_EFFECT)
+# The dose table's Dose column is headed "Dose/Target": a target row's number
+# is a concentration.  The data column is still "Dose" (rColHeaders); the
+# grid's hooks match the header's first word (findColByHeader() in
+# inst/www/hot_funs.js).
+DOSE_COLUMN_HEADER <- "Dose/Target"
 TCI_INTERVAL <- 10 / 60        # minutes between rate changes (10 s, as STANPUMP)
 TCI_PLASMA_SWITCH <- 0.05      # effect site this close to target: hold the plasma
 TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
@@ -271,10 +303,19 @@ TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 # one of these suffixes, e.g. "mg PO bid", gives the dose at the entered time
 # and then again every interval (minutes) until the end of the plot.
 SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60)
-scheduledUnits <- as.vector(t(outer(
-  c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
-  names(SCHEDULE_INTERVALS), paste
-)))
+# Once weekly ("qwk"), offered only on the subcutaneous units: semaglutide,
+# dulaglutide and tirzepatide are injected once a week.  Kept out of
+# SCHEDULE_INTERVALS, the daily frequencies every other scheduled drug offers;
+# scheduled.R reads ALL_SCHEDULE_INTERVALS.
+WEEKLY_SCHEDULE_INTERVAL <- c(qwk = 7 * 24 * 60)
+ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)
+scheduledUnits <- c(
+  as.vector(t(outer(
+    c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
+    names(SCHEDULE_INTERVALS), paste
+  ))),
+  as.vector(t(outer(c(scUnits, insulinUnits), names(ALL_SCHEDULE_INTERVALS), paste)))
+)
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
 # gases are flowmeter settings in L/min, potent agents are vaporizer settings in %.
@@ -300,6 +341,7 @@ DRUG_CATEGORIES <- c(
   "Antiemetics",
   "Antiseizure",
   "Antipsychotics",
+  "Antidiabetic",
   "Anticoagulants",
   "Antihypertensives",
   "Other",
@@ -353,7 +395,7 @@ ACUTE_MAX_PLOT_MINUTES <- MINS_PER_WEEK
 
 # Drugs that are only meaningful over weeks to months.  Adding one to a plot
 # shorter than a week offers to switch the Time units to days, 365 days.
-LONG_TERM_DRUGS <- c("amiodarone")
+LONG_TERM_DRUGS <- c("amiodarone", "semaglutide", "dulaglutide", "tirzepatide")
 LONG_TERM_PLOT_MINUTES <- 365 * MINS_PER_DAY
 
 # The Max time choices for each time unit: the durations (minutes) and the

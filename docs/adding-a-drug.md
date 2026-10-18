@@ -135,6 +135,17 @@ those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug
 The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
 
+**Optional — subcutaneous injection.** An SC drug writes `ka_SC`, `bioavailability_SC` and
+`tlag_SC` (and optionally `ka_SC_slow`, `fraction_SC_slow` and `tlag_SC_slow` for a second,
+slower depot with a lag of its own), and lists `mg SC` / `mg SC qwk`, or for an insulin `U SC`
+and, only if the product's label permits pump use, `U/hr SC`. `getDrugPK()` moves the fields onto
+the RA tissue depot, so a drug may offer SC or RA but not both. An insulin uses `mcU` as its
+`Concentration.Units` (doses in U, concentrations in mcU/mL). A source with zero-order
+absorption returns a `zeroOrderSC` block, `list(fraction, duration, into)`: `into = "central"`
+for a share of each dose entering the circulation at a constant rate beside the depot (Tham's
+insulin lispro and glargine), `into = "depot"` with `fraction = 1` for a sequential release into
+the depot. See `R/subcutaneous.R` and `R/insulinTham.R`.
+
 **Optional — a second oral depot.** A formulation absorbed through two parallel first-order
 paths, each with its own lag, adds `ka_PO2` (1/min), `fraction_PO2` (the share of the
 **absorbed** oral dose that takes the second path) and optionally `tlag_PO2` (min; the oral lag

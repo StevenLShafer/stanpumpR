@@ -20,7 +20,8 @@ simulateDrugsWithCovariates(
   cyp2c19 = CYP2C19_DEFAULT,
   cyp2c9 = CYP2C9_DEFAULT,
   cyp2b6 = CYP2B6_DEFAULT,
-  pregnant = FALSE
+  pregnant = FALSE,
+  vkorc1 = VKORC1_DEFAULT
 )
 }
 \arguments{
@@ -69,6 +70,9 @@ Only drugs whose model declares it (methadone) are affected.}
 requires \code{sex = "female"}.  Only the models that name it apply the
 changes of late pregnancy described by Ansari, Carvalho, Shafer and Flood
 (Anesth Analg 2016;122:786-804); see \code{getDrugPK()}.}
+
+\item{vkorc1}{VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES}.
+Only drugs whose model declares it (warfarin) are affected.}
 }
 \value{
 a list of data frames with the output of the a single drug

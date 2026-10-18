@@ -58,7 +58,7 @@ helpExpandGenerated <- function(text, drugDefaults = getDrugDefaultsGlobal()) {
 #' @param drugDefaults the drug library
 #' @returns a list with one element per such drug, in library order: a list of
 #'   `drug`, `iv` (TRUE when the drug is also given intravenously) and, named
-#'   PO, SL, IM, IN and RA, a list of `units` (empty when the route is not offered) and
+#'   PO, SL, IM, IN, SC and RA, a list of `units` (empty when the route is not offered) and
 #'   `notes`
 #' @noRd
 helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
@@ -83,6 +83,7 @@ helpRouteInventory <- function(drugDefaults = getDrugDefaultsGlobal()) {
       list(units = u,
            notes = c(if (any(isRateUnit(u)))
                        if (r == ROUTE_RA) "continuous infusion into the depot"
+                       else if (r == ROUTE_SC) "insulin pump: continuous infusion into the depot"
                        else "constant daily rate, no depot",
                      if (length(u) > 0) notes[[r]]))
     })
@@ -122,7 +123,9 @@ helpRouteTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
 helpAlternativeModelTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
   patients <- helpReferencePatients()
   num <- function(x, digits = 3) if (is.null(x) || is.na(x)) "—" else helpFormatNumber(x, digits)
-  tables <- vapply(ALTERNATIVE_MODEL_DRUGS, function(drug) {
+  # This block is the Minto / Schnider help page's table, so it covers that
+  # group's drugs only; the Hamberg companion has its own hand-written page.
+  tables <- vapply(companionGroupDrugs("mintoSchnider"), function(drug) {
     spec <- ALTERNATIVE_MODELS[[drug]]
     row <- drugDefaults[drugDefaults$Drug == drug, ][1, ]
     lines <- vapply(seq_len(nrow(patients)), function(i) {
@@ -218,8 +221,190 @@ helpPregnancyTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
   ) |> paste(collapse = "\n")
 }
 
+#' The pharmacokinetics of every illicit-drug research model, at one patient
+#'
+#' These models differ from one another more than the rest of the library does
+#' — one compartment or two, linear elimination or saturable, a parent or a
+#' metabolite plotted, apparent parameters or absolute — and the thing a reader
+#' most often wants is to compare them. Each drug's own page carries its
+#' parameters at six reference patients; this is the one-screen summary, built
+#' from the models so that it cannot drift from them.
+#'
+#' Everything is evaluated at the reference adult with the fat-free-mass switch
+#' as the app ships it, which is why a value here may differ slightly from the
+#' published number its page quotes.
+#'
+#' @param drugDefaults the drug library
+#' @returns one Markdown table, as a single string
+#' @noRd
+helpIllicitPKTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  drugs <- illicitDrugNames(drugDefaults)
+  p <- helpReferencePatients()[1, ]
+  columns <- c("Drug", "Plotted", "Structure", "V1 (L)", "Elimination",
+               "Absorption", "Half-life")
+  cells <- function(drug) {
+    row <- drugDefaults[drugDefaults$Drug == drug, ][1, ]
+    X <- getDrugPK(drug, p$weight, p$height, p$age, p$sex, row)
+    set <- X$PK[[PK_EVENT_DEFAULT]]
+    mm <- X$michaelisMenten
+    units <- helpDrugUnits(row)
+    # Two compartments can come from v2 or, on the saturable engine, from the
+    # pair of distribution rate constants.
+    peripheral <- isTRUE(set$v2 > 1) ||
+      (!is.null(mm) && !is.null(mm$k23) && !is.null(mm$k32))
+    structure <- paste0(if (peripheral) "Two compartments" else "One compartment",
+                        if (!is.null(mm)) ", saturable" else "")
+    elimination <- if (!is.null(mm)) {
+      sprintf("Vmax %s mg/min, Km %s %s", helpFormatNumber(mm$vmax),
+              helpFormatNumber(mm$km), helpConcentrationUnits(row$Concentration.Units))
+    } else {
+      sprintf("CL %s L/min", helpFormatNumber(set$cl1))
+    }
+    # The route actually offered, and the rate constant that drives it.
+    route <- unique(doseRoute(units))
+    # One absorption constant per extravascular route the drug offers.  Keep
+    # this in step with DOSE_ROUTES: a route missing here reads as no
+    # absorption at all rather than as an error.
+    kaOf <- function(r) set[[routeKaField(r)]]
+    kas <- unlist(lapply(route, kaOf))
+    kas <- kas[!is.na(kas) & kas > 0]
+    routes <- paste(route, collapse = ", ")
+    absorption <- if (length(kas) == 0) {
+      "—"
+    } else if (length(unique(round(kas, 9))) > 1) {
+      # Each route absorbs at its own rate; one number here would be a lie.
+      sprintf("%s, each at its own rate", routes)
+    } else {
+      sprintf("%s, ka %s /h (t&frac12; %s min)", routes,
+              helpFormatNumber(kas[1] * 60), helpFormatNumber(log(2) / kas[1]))
+    }
+    # For a saturable drug the terminal half-life is not a constant; say so
+    # rather than printing the limit as though it were one.
+    halfLife <- if (!is.null(mm)) "Not fixed: rises with the dose" else {
+      k <- set$cl1 / set$v1
+      sprintf("%s min", helpFormatNumber(log(2) / k))
+    }
+    sprintf("| [%s](help:drugs/%s) | %s | %s | %s | %s | %s | %s |",
+            drug, drug, helpIllicitAnalyte(drug),
+            structure, helpFormatNumber(set$v1), elimination, absorption, halfLife)
+  }
+  paste(c(
+    sprintf("| %s |", paste(columns, collapse = " | ")),
+    sprintf("|%s", strrep("---|", length(columns))),
+    vapply(drugs, cells, character(1))
+  ), collapse = "\n")
+}
+
+#' What each illicit-drug model plots, where the drug and the analyte differ
+#' @noRd
+helpIllicitAnalyte <- function(drug) {
+  registry <- illicitRouteRegistry()
+  rows <- registry[registry$drug == drug & registry$offered == "yes", ]
+  if (nrow(rows) == 0) return("—")
+  paste(unique(rows$analyte), collapse = ", ")
+}
+
+#' The James lean body mass against the Al-Sallami fat-free mass, as a figure
+#'
+#' An inline SVG line chart for the Open TCI page (inst/help/opentci.md): both
+#' measures of body size for one woman across weight, drawn from lbmJames()
+#' and ffmAlSallami() themselves, with the James peak and zero found from the
+#' function rather than quoted, and the pumps' BMI limit for women shaded.  The
+#' block is one HTML block with no blank line, so commonmark passes it through
+#' whole.
+#'
+#' @param drugDefaults unused; every block takes it
+#' @returns the figure, as one HTML string
+#' @noRd
+helpJamesLBMFigure <- function(drugDefaults = NULL) {
+  height <- 160; age <- 40; sex <- SEX_FEMALE
+  bmiLimit <- 35    # the pumps' limit for the Schnider and Minto models in women
+  weights <- seq(40, 200, by = 1)
+  james <- vapply(weights, lbmJames, numeric(1), height = height, sex = sex)
+  ffm <- vapply(weights, ffmAlSallami, numeric(1), height = height, age = age, sex = sex)
+  lbm <- function(w) lbmJames(w, height, sex)
+  peak <- stats::optimize(lbm, c(40, 200), maximum = TRUE, tol = 1e-8)$maximum
+  zero <- stats::uniroot(lbm, c(peak, 400), tol = 1e-8)$root
+  bmi <- function(w) w / (height / 100)^2
+  limitWeight <- bmiLimit * (height / 100)^2
+
+  # Plot area, in SVG units
+  W <- 640; H <- 360; left <- 56; right <- 30; top <- 16; bottom <- 64
+  xr <- c(40, 200); yr <- c(-20, 70)
+  sx <- function(x) left + (x - xr[1]) / diff(xr) * (W - left - right)
+  sy <- function(y) H - bottom - (y - yr[1]) / diff(yr) * (H - top - bottom)
+  f <- function(v) sprintf("%.1f", v)
+  path <- function(x, y) paste0("M", paste(f(sx(x)), f(sy(y)), sep = ",", collapse = " L"))
+
+  xTicks <- seq(40, 200, by = 20)
+  yTicks <- seq(-20, 70, by = 10)
+  grid <- c(
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#e3e8ec"/>',
+            f(sx(xr[1])), f(sy(yTicks)), f(sx(xr[2])), f(sy(yTicks))),
+    sprintf('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="#4a5764"/>',
+            f(sx(xr[1])), f(sy(0)), f(sx(xr[2])), f(sy(0))),
+    sprintf('<text x="%s" y="%s" text-anchor="end" dominant-baseline="middle">%d</text>',
+            f(sx(xr[1]) - 6), f(sy(yTicks)), as.integer(yTicks)),
+    sprintf('<text x="%s" y="%s" text-anchor="middle">%d</text>',
+            f(sx(xTicks)), f(sy(yr[1]) + 16), as.integer(xTicks)),
+    sprintf('<text x="%s" y="%s" text-anchor="middle" fill="#7b8a8b">BMI %d</text>',
+            f(sx(xTicks)), f(sy(yr[1]) + 30), as.integer(round(bmi(xTicks))))
+  )
+  band <- sprintf(paste0(
+    '<rect x="%s" y="%s" width="%s" height="%s" fill="#f4f6f8"/>',
+    '<text x="%s" y="%s" fill="#7b8a8b">Above BMI %d: past the pumps\' limit for women</text>'),
+    f(sx(limitWeight)), f(top), f(sx(xr[2]) - sx(limitWeight)), f(sy(yr[1]) - top),
+    f(sx(limitWeight) + 6), f(sy(yr[1]) - 8), bmiLimit)
+  marks <- c(
+    sprintf('<circle cx="%s" cy="%s" r="4" fill="#c0392b"/>', f(sx(peak)), f(sy(lbm(peak)))),
+    sprintf('<text x="%s" y="%s" text-anchor="middle" fill="#c0392b">Peak, %s kg at BMI %s</text>',
+            f(sx(peak) + 8), f(sy(lbm(peak)) + 36), helpFormatNumber(lbm(peak)),
+            helpFormatNumber(bmi(peak))),
+    sprintf('<circle cx="%s" cy="%s" r="4" fill="#c0392b"/>', f(sx(zero)), f(sy(0))),
+    sprintf('<text x="%s" y="%s" text-anchor="end" fill="#c0392b">Zero at BMI %s</text>',
+            f(sx(zero) - 8), f(sy(0) + 16), helpFormatNumber(bmi(zero)))
+  )
+  lines <- c(
+    sprintf('<path d="%s" fill="none" stroke="#2c3e50" stroke-width="2.5"/>', path(weights, ffm)),
+    sprintf('<path d="%s" fill="none" stroke="#c0392b" stroke-width="2.5"/>', path(weights, james)),
+    # The legend sits above both lines, left of the shaded band
+    sprintf(paste0('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2.5"/>',
+                   '<text x="%s" y="%s" dominant-baseline="middle" fill="%s">%s</text>'),
+            f(sx(xr[1]) + 10), c(30, 48), f(sx(xr[1]) + 34), c(30, 48),
+            c("#c0392b", "#2c3e50"), f(sx(xr[1]) + 40), c(30, 48), c("#c0392b", "#2c3e50"),
+            c("James lean body mass", "Al-Sallami fat-free mass"))
+  )
+  axes <- c(
+    sprintf('<text x="%s" y="%s" text-anchor="middle">Weight (kg)</text>',
+            f((sx(xr[1]) + sx(xr[2])) / 2), f(H - 8)),
+    sprintf('<text transform="translate(14,%s) rotate(-90)" text-anchor="middle">Body size measure (kg)</text>',
+            f((sy(yr[1]) + sy(yr[2])) / 2))
+  )
+  label <- sprintf(paste(
+    "James lean body mass and Al-Sallami fat-free mass of a %d-year-old woman, %d cm tall,",
+    "from 40 to 200 kg. The James value peaks at %s kg at a BMI of %s and is zero at a BMI of %s;",
+    "the fat-free mass rises at every weight."), age, height, helpFormatNumber(lbm(peak)),
+    helpFormatNumber(bmi(peak)), helpFormatNumber(bmi(zero)))
+  svg <- c(
+    sprintf('<svg viewBox="0 0 %d %d" role="img" aria-label="%s" font-size="12" font-family="inherit" style="width:100%%;max-width:640px;height:auto">',
+            W, H, label),
+    band, grid, lines, marks, axes, "</svg>")
+  paste(c(
+    '<figure class="help-figure">',
+    svg,
+    sprintf(paste(
+      "<figcaption>Lean body mass of a %d-year-old woman, %d cm tall, by the James equation",
+      "(used by the Schnider and Minto models) and the Al-Sallami fat-free mass (used by",
+      "Eleveld's). Drawn by stanpumpR from the same functions its models call.</figcaption>"),
+      age, height),
+    "</figure>"
+  ), collapse = "\n")
+}
+
 HELP_GENERATED_BLOCKS <- list(
   "route-table" = helpRouteTableMarkdown,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,
-  "pregnancy-table" = helpPregnancyTableMarkdown
+  "pregnancy-table" = helpPregnancyTableMarkdown,
+  "illicit-pk-table" = helpIllicitPKTableMarkdown,
+  "james-lbm-figure" = helpJamesLBMFigure
 )

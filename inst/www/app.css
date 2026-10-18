@@ -49,7 +49,7 @@ the screen https://github.com/handsontable/handsontable/issues/3815 */
 }
 
 /* The dose table scrolls in Handsontable's own holder, which fills the Doses
-card, and nowhere else.  Handsontable fits a dropdown (the Units list) into
+sidebar, and nowhere else.  Handsontable fits a dropdown (the Units list) into
 the space left inside the nearest scrolling ancestor, and places the cell
 editor against the scroll position of the element it found scrollable when
 it was built.  Left to the stylesheets, the holder (overflow: auto, from
@@ -76,44 +76,20 @@ always was. */
   overflow-y: auto;
 }
 
-/* The Doses card header: the title ("Doses (HH:MM or minutes)") and the
-controls (Show illicit drugs, Suggest Dosing) each stay on one line.  When
-the column cannot hold both, the controls drop under the title, still at the
-right, rather than the title being squeezed into a stack of words. */
-.doses-header {
+/* The dose table's sidebar (bslib::sidebar at the right of the plot): the
+grid fills the height left under the title and scrolls inside itself, so the
+Apply, Undo and Redo buttons under it stay in view. */
+.dose-sidebar .sidebar-content {
+  height: 100%;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: 0.25rem;
-  row-gap: 0.25rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  flex-direction: column;
 }
-.doses-header > * {
-  white-space: nowrap;
+.dose-sidebar #doseTableHTML {
+  flex: 1 1 auto;
+  min-height: 0;
 }
-.doses-header .doses-controls {
-  margin-left: auto;
-}
-/* Shiny gives an input container a fixed width of 300px; the checkbox is
-as wide as its label here. */
-.doses-header .shiny-input-container {
-  width: auto;
-}
-
-/* The plot card's footer: the Add new drug button at the left, the hint
-text beside it, wrapping under it when the card is narrow. */
-.plot-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-}
-.plot-footer .btn {
-  white-space: nowrap;
-}
-.plot-footer > span {
-  flex: 1 1 12rem;
+.dose-sidebar #dosetable_apply {
+  margin: 0;
 }
 
 #dosetable_apply {

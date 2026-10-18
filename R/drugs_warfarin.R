@@ -88,7 +88,8 @@
 # (Claude Code, 2026-10-17, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
 
-WARFARIN_VKORC1_VALUES <- c("GG", "GA", "AA")
+# VKORC1 genotypes are the shared VKORC1_VALUES (R/constants.R), read from the
+# Patient Profile; CYP4F2 is warfarin's own (no Patient Profile field yet).
 WARFARIN_CYP4F2_VALUES <- c("TT", "CT", "CC")
 # Janmahasatian fat-free mass of the paper's standard subject (70 kg, 176 cm
 # male): 9270 x 70 / (6680 + 216 x 22.60) = 56.1 kg.
@@ -129,16 +130,16 @@ warfarinFFM <- function(weight, height, sex)
 #'   a parallel system and an \code{inr} block
 #' @export
 warfarin <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                     cyp2c9 = "*1/*1", vkorc1 = "GA", cyp4f2 = "TT",
+                     cyp2c9 = "*1/*1", vkorc1 = VKORC1_DEFAULT, cyp4f2 = "TT",
                      amiodarone = FALSE, fluconazole = FALSE,
                      bioprosthetic = FALSE)
 {
   if (length(cyp2c9) != 1 || !cyp2c9 %in% CYP2C9_VALUES)
     stop("Invalid cyp2c9: ", paste(cyp2c9, collapse = ", "), ". Must be one of: ",
          paste(CYP2C9_VALUES, collapse = ", "))
-  if (length(vkorc1) != 1 || !vkorc1 %in% WARFARIN_VKORC1_VALUES)
+  if (length(vkorc1) != 1 || !vkorc1 %in% VKORC1_VALUES)
     stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "), ". Must be one of: ",
-         paste(WARFARIN_VKORC1_VALUES, collapse = ", "))
+         paste(VKORC1_VALUES, collapse = ", "))
   if (length(cyp4f2) != 1 || !cyp4f2 %in% WARFARIN_CYP4F2_VALUES)
     stop("Invalid cyp4f2: ", paste(cyp4f2, collapse = ", "), ". Must be one of: ",
          paste(WARFARIN_CYP4F2_VALUES, collapse = ", "))
