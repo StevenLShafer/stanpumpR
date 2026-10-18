@@ -120,6 +120,7 @@ dose: the engine applies that itself, dose by dose (see *saturable oral absorpti
 |---|---|
 | `PK` | named list of PK sets, one per event; each has `v1,v2,v3,cl1,cl2,cl3` (liters, L/min). A single-model drug uses one set named `default`. |
 | `tPeak` | time (min) to peak effect site; `getDrugPK()` back-solves `ke0` from it. `0` means no effect-site model. |
+| `ke0` | optional (1/min), for a source that measured the equilibration rate rather than a time to peak effect. Supply it *instead* of `tPeak`, leaving `tPeak` out altogether, and `getDrugPK()` solves the true time to peak effect from this `ke0` and the disposition (`R/drugs_etomidate.R`). |
 | `MEAC` | reference effect concentration used for the MEAC plot / normalization (`0` if not applicable). |
 | `typical`, `upperTypical`, `lowerTypical` | the shaded "typical range" band on the plot. |
 | `reference` | literature citation (string). |
@@ -337,6 +338,52 @@ given in split doses; a continuous release (an osmotic pump) is not represented 
 The drug's help page must say how the pulses were chosen. `R/drugs_mixedAmphetamineSalts.R`
 is the example.
 
+**Optional — discretising an input shape the engine lacks.** The same block keyed to
+`ORAL_PULSE_DEFAULT_FORM` (the reserved name `"default"`) instead applies to every plain
+oral row — `mg PO`, `mg/kg PO` and their scheduled repeats — and leaves the unit exactly as
+entered:
+
+```r
+oralPulses = stats::setNames(list(list(fraction = f, delay = d)), ORAL_PULSE_DEFAULT_FORM)
+```
+
+Use this, and only this, when the source's own absorption is a shape no constant `ka` can
+represent and the pulses stand in for it. Hydrochlorothiazide is the case: Van Wart 2013
+fits a Weibull input whose depot rate constant rises with time, so
+`R/drugs_hydrochlorothiazide.R` gives each dose as eight lagged fractions at a rate constant
+of 1.0 /h — the Weibull's own asymptotic value, not a fitted number.
+
+The two uses are not interchangeable, and a reviewer will ask which one a block is. A
+formulation's pulses are a **model of a product**, evidenced by the product; the default
+form's are a **numerical approximation**, evidenced by the published curve they
+approximate. So a drug using the default form owes its header two things that a formulation
+does not: the input shape being stood in for, written out, and the **measured** cost of
+standing in for it — against a numerical integration of the exact system, across the
+covariate range, reported as a number. The standard is the pair MDMA's zero-order depot met:
+**0.53% of the peak concentration over the whole curve, and 0.01% at the peak**. Hold both,
+each against its own limit, or a fit will buy one with the other — minimising curve error
+alone let a seven-pulse hydrochlorothiazide reach 0.34% on the curve while drifting to six
+times MDMA's figure at the peak.
+
+**Measure that error AT THE PULSE TIMES.** Each lagged depot starts abruptly, so the
+approximation kinks at every pulse time and deviates most there, while the exact curve it
+approximates is smooth. `simulationTimeGrid()` puts a point at every dose time, so those
+kinks are what a user actually sees. A uniform grid steps over them and flatters the
+approximation: on hydrochlorothiazide a 0.02 h grid reported 0.45% where the truth was
+0.64%, and the six-pulse set it appeared to validate was outside the standard. If you fit
+the delays, the grid must be rebuilt per candidate, because a grid laid out from the
+starting delays goes stale as they move.
+
+The test must check the curve against that integration, not the fractions, so that a later
+change to either is caught by the thing worth protecting — and **its bounds must be the
+documented standard, not a loose fence around whatever the fit achieved.** A bound three
+times the claim is how the 0.64% above survived into review
+(`tests/testthat/test-drugs-hydrochlorothiazide.R`).
+
+A block may not name the default form and a formulation at once: an `mg PO XR` row is also
+an oral row, so which pulses applied would depend on the order the block was written in.
+`validateOralPulses()` refuses it.
+
 **Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
 that the fraction of an oral dose absorbed falls as the dose rises, returns an
 `oralSaturation` block alongside the usual fields:
@@ -439,6 +486,15 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   `mOsm` for an osmotic agent, or `mmol` for a drug reported in mmol/L (see above).
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
+  **Some unit strings enrol the drug in machinery elsewhere, so this column reaches
+  further than the dose grid.** `Plasma target` / `Effect site target` put the drug in the
+  TCI API's drug list, which `docs/tci-api.md` publishes, `TCI_DRUGS` in `test-tci-api.R`
+  pins and [FauxTCI](https://github.com/StevenLShafer/FauxTCI) is built against: adding
+  them means updating that roster and the API documentation, and it is a change to a
+  published contract rather than a local one. A `qd`/`bid`/`tid`/`qid`/`qwk` suffix opts
+  into `scheduled.R`'s repeats, an `SC` suffix into the tissue depot, and a unit naming a
+  salt or product into `doseProduct()`. Offer only what the drug's evidence supports: an
+  investigational or research model usually wants a bare mass unit and nothing else.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
 - `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and the "time until threshold"
   level: the effect-site concentration for a drug with an effect site, the plasma concentration
@@ -541,12 +597,52 @@ Optionally, add a teaching scenario that uses the drug: a `helpScenario()` entry
 
 ## Verify
 
+**Run the whole suite before you push, not a filtered selection.**
+
 ```r
 devtools::load_all(".")
-devtools::test(filter = "drugs-<name>")   # unit test
-devtools::test(filter = "help")           # the help pages, including the new drug's
+devtools::test()                           # all of it
 run_app()                                  # confirm it appears in the dose-grid dropdown and plots
 ```
 
-Also run the broader `test-multi-PK` / `test-single-PK` suites, which exercise the full
-`getDrugPK → simCpCe` path against the library.
+A filter chosen from "which files did I edit" is the wrong shape for this change, because
+a new drug reaches shared state that names neither the drug nor the files you touched.
+Two such misses cost CI cycles on 2026-10-18 alone (PR #534), and neither would have been
+caught by any filter derived from the diff.
+
+### What else a new drug touches
+
+Beyond the four files above, a new drug may need registering in places that enumerate the
+library by hand. These are **deliberately** hardcoded — `test-drugs-tramadol.R` says so:
+"because the count has been got wrong by hand more than once" — so adding yours to them is
+the intended maintenance step, not a weakening of the test.
+
+| If the drug … | Register it in |
+|---|---|
+| has no effect site (`tPeak` 0 / `ke0` 0) | **three** rosters: the `plasmaOnly` vector in `test-help-drugs.R`, and the pinned lists in `test-drugs-tramadol.R` and `test-recovery-engines.R` |
+| offers `Plasma target` / `Effect site target` | `TCI_DRUGS` in `test-tci-api.R`, and `docs/tci-api.md` — a published contract |
+| is in the `Illicit drugs` category | `inst/extdata/illicitRouteRegistry.csv`, one row per route, offered or not |
+| reads a CYP or creatinine covariate | it joins the Patient Profile hover tip by itself, but `PATIENT_FIELD_READER_NOTES` in `R/patient-fields.R` may need a note |
+| is an antibiotic with an `endCe` | `antibioticMicTable()` in `R/antibioticThresholds.R` |
+| needs a new `Category` | `DRUG_CATEGORIES` in `R/constants.R` **and** `bookmarksToExclude` in `R/app_globals.R` |
+| is a long-acting weekly product | `LONG_TERM_DRUGS` |
+
+A quick way to find any roster you might owe, before CI does: search the suite for a drug
+**already in the same situation as yours** — another plasma-only drug, another TCI drug,
+another illicit one — since every list that names it will need yours too. Substitute that
+drug for `codeine` below, which is plasma-only and in all three of its rosters:
+
+```sh
+grep -rln 'expect_setequal' tests/testthat/ | xargs grep -ln '"codeine"'
+```
+
+That returns the three rosters plus a few files that merely mention the drug, so read the
+hits rather than trusting the count.
+
+### One more trap
+
+**Do not edit test files while a suite is running against them.** testthat reads each file
+as it reaches it, against a package image loaded at the start, so a run spanning your edit
+can report a failure that corresponds to no actual state of the tree. One did exactly that
+on 2026-10-18 and cost an hour of investigation before it turned out not to be
+reproducible. Let the run finish, or stop it, then edit.

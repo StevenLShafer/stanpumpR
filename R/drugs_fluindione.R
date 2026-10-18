@@ -49,8 +49,16 @@
 #     shift the response.  There is no CYP1A2 / smoking field in the Patient
 #     Profile, so the ratio is fixed at the population median 0.42, i.e. the term
 #     drops out; the app therefore does not show the smoking effect on fluindione.
-#     Body weight is the model's OWN covariate, used in both positions of the
-#     adjustToFFM switch, as warfarin's fat-free mass is.
+#
+# BODY SIZE (docs/weight-adjustment.md)
+# =====================================
+# The source's allometric weight covariate acts on CL (as (WT/69)^0.75) and V1
+# (as WT/69); both are the model's OWN covariate and are evaluated at the
+# pharmacokinetic weight with the adjustToFFM switch on (size$pkWeight) and at
+# total body weight with it off, as edoxaban and dabigatran are.  Q and V2 carry
+# no weight term in the source and take the library's fat-free-mass factors with
+# the switch on (size$clearance / size$volume); with it off they are as published
+# (legacyVolume = 1), so the switch-off position reproduces the source's values.
 #
 # VKORC1 GENOTYPE: 1173C>T vs the -1639G>A FIELD
 # ==============================================
@@ -81,8 +89,10 @@
 #' @param height height in cm (not used; accepted for the common signature)
 #' @param age age in years (not used; the model has no age covariate)
 #' @param sex sex as a string (not used)
-#' @param adjustToFFM accepted for a common signature but not used: fluindione
-#'   carries its own body-weight covariate, applied in both switch positions
+#' @param adjustToFFM when \code{TRUE} the source's weight covariate on CL and
+#'   V1 is evaluated at the fat-free-mass pharmacokinetic weight and the
+#'   size-free Q and V2 take the library factors; when \code{FALSE} total body
+#'   weight is used and Q and V2 are the published values
 #' @param cyp2c9 CYP2C9 diplotype, one of \code{CYP2C9_VALUES}. A \code{*3}
 #'   carrier has reduced clearance; every other diplotype takes the wild-type
 #'   clearance (the app passes this field).
@@ -102,12 +112,15 @@ fluindione <- function(weight, height, age, sex, adjustToFFM = TRUE,
     stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "), ". Must be one of: ",
          paste(VKORC1_VALUES, collapse = ", "))
 
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
+
   cyp2c9Factor <- if (grepl("\\*3", cyp2c9)) 1 - 0.363 else 1   # beta_CL = -0.363
-  CL <- 0.17 * (weight / 69)^0.75 * cyp2c9Factor                # L/h (PAX/CAF median)
-  V1 <- 5.19 * (weight / 69)                                    # L
-  Q  <- 0.173                                                   # L/h
-  V2 <- 2.77                                                    # L
-  ka <- 1.83 / 60                                               # 1/min
+  CL <- 0.17 * (pkW / 69)^0.75 * cyp2c9Factor                  # L/h (PAX/CAF median)
+  V1 <- 5.19 * (pkW / 69)                                      # L
+  Q  <- 0.173 * size$clearance                                # L/h (size-free source)
+  V2 <- 2.77 * size$volume                                    # L  (size-free source)
+  ka <- 1.83 / 60                                              # 1/min
 
   sSet <- list(
     v1 = V1, v2 = V2, v3 = 1,

@@ -5,7 +5,9 @@ noEvents <- data.frame(Time = numeric(0), Event = character(0))
 fluDefaults <- getDrugDefaults("fluindione")
 
 test_that("returns the published parameters at the 69 kg reference subject", {
-  actual <- fluindione(69, 170, 40, "male", cyp2c9 = "*1/*1", vkorc1 = "AA")
+  # Switch off reproduces the published values at the reference weight.
+  actual <- fluindione(69, 170, 40, "male", cyp2c9 = "*1/*1", vkorc1 = "AA",
+                       adjustToFFM = FALSE)
   expect_equal_rounded(actual$PK$default, list(
     v1 = 5.19, v2 = 2.77, v3 = 1,
     cl1 = 0.17 / 60, cl2 = 0.173 / 60, cl3 = 0,
@@ -20,12 +22,15 @@ test_that("returns the published parameters at the 69 kg reference subject", {
 })
 
 test_that("CYP2C9 *3 carriage lowers clearance; the rest act as wild type", {
-  base <- fluindione(69, 170, 40, "male", cyp2c9 = "*1/*1", vkorc1 = "AA")
+  base <- fluindione(69, 170, 40, "male", cyp2c9 = "*1/*1", vkorc1 = "AA",
+                     adjustToFFM = FALSE)
   for (g in c("*1/*1", "*1/*2", "*2/*2"))
-    expect_equal(fluindione(69, 170, 40, "male", cyp2c9 = g)$PK$default$cl1,
+    expect_equal(fluindione(69, 170, 40, "male", cyp2c9 = g,
+                            adjustToFFM = FALSE)$PK$default$cl1,
                  base$PK$default$cl1, info = g)
   for (g in c("*1/*3", "*2/*3", "*3/*3"))
-    expect_equal(fluindione(69, 170, 40, "male", cyp2c9 = g)$PK$default$cl1,
+    expect_equal(fluindione(69, 170, 40, "male", cyp2c9 = g,
+                            adjustToFFM = FALSE)$PK$default$cl1,
                  0.17 * (1 - 0.363) / 60, tolerance = 1e-9, info = g)
 })
 
@@ -35,12 +40,25 @@ test_that("VKORC1 raises the C50 for GG or GA; AA is the sensitive reference", {
   expect_equal(fluindione(69, 170, 40, "male", vkorc1 = "GA")$inr$c50, 3.63 * 1.3)
 })
 
-test_that("body weight scales V1 and CL, in both adjustToFFM positions", {
-  for (ffm in c(TRUE, FALSE)) {
-    m <- fluindione(90, 180, 40, "male", adjustToFFM = ffm)
-    expect_equal(m$PK$default$v1, 5.19 * (90 / 69), tolerance = 1e-9)
-    expect_equal(m$PK$default$cl1, 0.17 * (90 / 69)^0.75 / 60, tolerance = 1e-9)
-  }
+test_that("the switch off scales the own weight covariate by total body weight", {
+  m <- fluindione(90, 180, 40, "male", adjustToFFM = FALSE)
+  expect_equal(m$PK$default$v1, 5.19 * (90 / 69), tolerance = 1e-9)
+  expect_equal(m$PK$default$cl1, 0.17 * (90 / 69)^0.75 / 60, tolerance = 1e-9)
+  # Q and V2 carry no source weight term, so the switch off leaves them published
+  expect_equal(m$PK$default$cl2, 0.173 / 60, tolerance = 1e-9)
+  expect_equal(m$PK$default$v2, 2.77, tolerance = 1e-9)
+})
+
+test_that("the switch on uses the fat-free-mass weight and library factors", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).
+  pkW <- 91.343469; vol <- 1.3049067; clr <- 1.2209126
+  m <- fluindione(120, 170, 50, "male")
+  expect_equal(m$PK$default$v1, 5.19 * (pkW / 69), tolerance = 1e-6)
+  expect_equal(m$PK$default$cl1, 0.17 * (pkW / 69)^0.75 / 60, tolerance = 1e-6)
+  expect_equal(m$PK$default$cl2, 0.173 * clr / 60, tolerance = 1e-6)  # size-free Q
+  expect_equal(m$PK$default$v2, 2.77 * vol, tolerance = 1e-6)         # size-free V2
 })
 
 test_that("invalid genotypes are rejected", {
@@ -66,9 +84,10 @@ test_that("the steady-state INR follows Table IV's covariate directions", {
   endOf <- function(cyp, vk) {
     dose <- data.frame(Drug = "fluindione", Time = 0, Dose = 20, Units = "mg PO qd",
                        stringsAsFactors = FALSE)
+    # The paper's Table IV used total body weight, so compare with the switch off.
     X <- simulateDrugsWithCovariates(dose, noEvents, 69, 170, 40, "male",
                                      maximum = 20 * 1440, plotRecovery = FALSE,
-                                     cyp2c9 = cyp, vkorc1 = vk)
+                                     adjustToFFM = FALSE, cyp2c9 = cyp, vkorc1 = vk)
     p <- X$fluindione$results
     max(p$Y[p$Site == "Plasma"])
   }

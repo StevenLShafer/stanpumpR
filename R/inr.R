@@ -21,8 +21,9 @@
 # The R-warfarin term is the competitive antagonism of Equation 2 as
 # corrected by the erratum (Br J Clin Pharmacol 2017;83:1602).  The erratum
 # itself could not be read here; the form above is the one that reproduces
-# the paper's worked example, an apparent C50 of 0.530 against 0.391 mg/L
-# (36% higher) at 5 mg a day, which test-drugs-warfarin.R checks.
+# the paper's worked example, an apparent C50 of 0.514 against 0.378 mg/L
+# (36% higher) at the C_R of about 0.86 mg/L a maintenance dose gives, which
+# test-drugs-warfarin.R checks.
 #
 # This is not an effect site.  The INR is a nonlinear function of the two
 # concentrations, delayed by the turnover of the clotting factors, so it

@@ -43,9 +43,18 @@
 #   * VKORC1: a carrier of the less-sensitive allele has C50 x (1 + 1.29) = x 2.29,
 #     so the sensitive genotype has the lower C50 and the higher INR, as Table IV
 #     shows (TT INRmax 4.1 vs CT/CC 1.9 at *1/*3).  (beta_C50 = +1.29, theta10.)
-#   * Body weight acts on V1 and is the model's OWN covariate, used in both
-#     positions of the adjustToFFM switch.  There is no CYP1A2 effect on
-#     acenocoumarol.
+#   * Body weight acts on V1 and is the model's OWN covariate.  There is no
+#     CYP1A2 effect on acenocoumarol.
+#
+# BODY SIZE (docs/weight-adjustment.md)
+# =====================================
+# The source's weight covariate acts on V1 alone (as WT/69); it is the model's
+# OWN covariate and is evaluated at the pharmacokinetic weight with the
+# adjustToFFM switch on (size$pkWeight) and at total body weight with it off, as
+# edoxaban and dabigatran are.  CL, Q and V2 carry no weight term in the source
+# and take the library's fat-free-mass factors with the switch on
+# (size$clearance / size$volume); with it off they are as published
+# (legacyVolume = 1), so the switch-off position reproduces the source's values.
 #
 # The VKORC1 1173C>T genotype maps onto the -1639G>A Patient Profile field through
 # their linkage disequilibrium (AA = the sensitive 1173 TT, base C50; GG or GA =
@@ -80,9 +89,10 @@
 #' @param height height in cm (not used; accepted for the common signature)
 #' @param age age in years (not used; the model has no age covariate)
 #' @param sex sex as a string (not used)
-#' @param adjustToFFM accepted for a common signature but not used:
-#'   acenocoumarol carries its own body-weight covariate, applied in both switch
-#'   positions
+#' @param adjustToFFM when \code{TRUE} the source's weight covariate on V1 is
+#'   evaluated at the fat-free-mass pharmacokinetic weight and the size-free CL,
+#'   Q and V2 take the library factors; when \code{FALSE} total body weight is
+#'   used and CL, Q and V2 are the published values
 #' @param cyp2c9 CYP2C9 diplotype, one of \code{CYP2C9_VALUES}. A \code{*3}
 #'   carrier has reduced clearance; every other diplotype takes the wild-type
 #'   clearance (the app passes this field).
@@ -103,13 +113,16 @@ acenocoumarol <- function(weight, height, age, sex, adjustToFFM = TRUE,
     stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "), ". Must be one of: ",
          paste(VKORC1_VALUES, collapse = ", "))
 
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
+
   cyp2c9Factor <- if (grepl("\\*3", cyp2c9)) 1 - 0.3 else 1     # beta_CL = -0.3
-  CL  <- 15.3 * cyp2c9Factor                                   # L/h
-  V1  <- 24.7 * (weight / 69)                                  # L
-  Q   <- 4.85                                                  # L/h
-  V2  <- 52.5                                                  # L
-  ka  <- 0.936 / 60                                            # 1/min
-  lag <- 0.269 * 60                                            # min
+  CL  <- 15.3 * cyp2c9Factor * size$clearance                 # L/h (size-free source)
+  V1  <- 24.7 * (pkW / 69)                                     # L
+  Q   <- 4.85 * size$clearance                                # L/h (size-free source)
+  V2  <- 52.5 * size$volume                                   # L  (size-free source)
+  ka  <- 0.936 / 60                                           # 1/min
+  lag <- 0.269 * 60                                           # min
 
   sSet <- list(
     v1 = V1, v2 = V2, v3 = 1,

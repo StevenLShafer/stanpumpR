@@ -65,3 +65,18 @@ test_that("the plotted concentration is plasma only, with no effect site", {
   expect_equal(r$tPeak, 0)
   expect_equal(r$MEAC, 0)
 })
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).  Worked out by hand from
+  # the published equations, not from the code under test.
+  # Cockcroft-Gault 126.866 mL/min: CL/F = 124 x 126.866^1.29 / (56.7^1.29 +
+  # 126.866^1.29) x (1 - 0.0041 x (50 - 72)) x 1.2209126; V2/F = 673 x
+  # (1 + 0.0077 x (91.343469 - 80.3)); V3/F = 345 x 1.3049067; Q/F = 35.5 x
+  # 1.2209126.
+  actual <- dabigatran(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
+                       list(v1 = 730.22836, v2 = 450.19281,
+                            cl1 = 2.0318601, cl2 = 0.72237329))
+})

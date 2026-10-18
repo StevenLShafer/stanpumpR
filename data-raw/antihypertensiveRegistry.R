@@ -42,6 +42,9 @@
 #                                          from a secondary transcription
 #   execution_status  ready_for_source_reproduction | requires_source_extraction
 #                     | requires_parameter_fit | descriptive_only
+#                     | complete_not_implemented  a complete fitted model the
+#                       library does not plot, because another record of the
+#                       same drug is the implemented one
 #   bp_simulation_enabled  TRUE only when the whole dose -> PK -> blood
 #                     pressure chain, its baseline and its measurement context
 #                     are populated AND source reproduction passes.  Nothing
@@ -49,6 +52,12 @@
 #   external_validation_status  none | in_population | external_population
 #   stanpumpr_drug    the library drug implementing this record, or NA.  A
 #                     named drug plots CONCENTRATION only.
+#   source_type       how the row was sourced.  official_label and the
+#                     fitted/abstract/monograph values mean a document was
+#                     opened; ingredient_catalog means it was NOT, and the
+#                     row therefore asserts ingredient, class, route and
+#                     formulation identity only (section 13 of
+#                     docs/antihypertensives.md).
 #
 # Run with: Rscript data-raw/antihypertensiveRegistry.R
 # Checked by tests/testthat/test-antihypertensive-registry.R.
@@ -66,6 +75,18 @@ READY <- "ready_for_source_reproduction"
 EXTR  <- "requires_source_extraction"
 FITP  <- "requires_parameter_fit"
 DESC  <- "descriptive_only"
+# A complete, verified, primary-fitted model that the library deliberately
+# does NOT implement, because another record of the same drug already is.
+# Every drug has competing published models, and the registry needed a word
+# for the ones it reads but does not plot: calling such a record descriptive
+# would deny that it has a fitted vector, and calling it ready would imply a
+# second curve for the same drug.  Its numbers may be used to CHECK an
+# implemented record (Ericsson EJCP 1999 against clevidipine) but are never
+# an input to one.
+NOIMP <- "complete_not_implemented"
+# source_type: an INGREDIENT-IDENTITY row, whose label was never opened.
+# See the INGR note below the catalog records.
+INGR <- "ingredient_catalog"
 
 rec <- function(model_id, drug, active_moiety, route, formulation,
                 population = NA, endpoint = "none", analyte = NA,
@@ -220,7 +241,7 @@ catalog <- rbind(catalog,
       "hydrochlorothiazide", "hydrochlorothiazide", "oral",
       "tablet or capsule", analyte = "hydrochlorothiazide", matrix = "plasma",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=a3eb7294-f913-434b-896c-da028bfebc73",
-      limitations = "Label F 65-75%, Tmax 1-5 h. The fitted population record (two compartments, Weibull oral input, renal-function-dependent clearance) is separate and incompletely transcribed; chronic BP coefficients are missing."),
+      limitations = "Label F 65-75%, Tmax 1-5 h, which is the independent check on the implemented model's 2.3 h. The fitted population record (two compartments, Weibull oral input, renal-function-dependent clearance) is separate, fully transcribed and implemented as the drug hydrochlorothiazide; chronic BP coefficients are missing from both and exist in neither source."),
   rec("chlorthalidone__tablet__oral__catalog__none__label", "chlorthalidone",
       "chlorthalidone", "oral", "tablet",
       analyte = "chlorthalidone", matrix = "plasma (marked erythrocyte partition)",
@@ -449,6 +470,212 @@ catalog <- rbind(catalog,
       limitations = "An optional regional record, not US-marketed. The primary severe-hypertension study gives Vz 0.80 L/kg, clearance 2.53 mL/min/kg and a half-life of 4.0 h; a second study shows infusion/offset hysteresis, so an effect delay and possible tolerance would both need fitting."))
 
 # -----------------------------------------------------------------------------
+# INGREDIENT-IDENTITY RECORDS: the classes closed out, without a label in hand
+# -----------------------------------------------------------------------------
+# The records above were each written with a SOURCE DOCUMENT open -- 66 of
+# them a US official label, and three something else (azilsartan medoxomil a
+# journal paper, canrenone a regional registration, urapidil a regional
+# monograph) -- so each quotes the descriptors it found in whatever it opened.
+# The contrast with the rows below is therefore document opened against no
+# document opened, not label against no label.  The rows below close the remaining
+# gaps in the five classes the registry is meant to enumerate -- angiotensin-
+# receptor blockers, ACE inhibitors, calcium-channel blockers, beta blockers
+# and diuretics -- and they were written WITHOUT the label, because
+# dailymed.nlm.nih.gov and api.fda.gov are both unreachable from the
+# environment this registry was built in.
+#
+# That is a real difference in evidence and it gets its own source_type,
+# INGR, rather than being hidden inside official_label.  An INGR row asserts
+# exactly four things: the ingredient exists as a US-approved systemic
+# product, its class, its route, and its formulation.  It asserts NOTHING
+# numeric -- so pk_evidence is proposed_unfitted, not
+# official_label_descriptive, which would claim descriptors nobody read --
+# and it asserts nothing about CURRENT MARKETING, because approval is not
+# availability and no approval record could be read either: accessdata.fda.gov
+# answers but serves 404 on the Orange Book paths.  Several of these are
+# long-superseded products that are probably no longer marketed in the US.
+#
+# The source_url is therefore a DailyMed INGREDIENT SEARCH, which is a real
+# resolvable URL that points at whatever documents exist rather than naming
+# one that was never opened.  Inventing a setid to make these rows look like
+# the rows above would be a fabrication, and the one thing this registry
+# cannot afford.
+#
+# Closing an INGR row means opening its label, replacing the search URL with
+# that document's setid, moving source_type to official_label and
+# pk_evidence to official_label_descriptive, and recording what the label
+# actually says.  test-antihypertensive-registry.R counts the two kinds so
+# the remaining work stays visible.
+#
+# The APPROVED-INGREDIENT LIST these rows were measured against was not
+# retrieved either, for the same reason, so it is knowledge of the products
+# rather than a transcription of a register.  It is written down in
+# test-antihypertensive-registry.R as five class lists that fail when a member
+# is missing, so that it can be corrected and re-checked by anyone who can
+# reach a register, rather than living only in prose.
+#
+# WHAT IS DELIBERATELY ABSENT, and why, is in docs/antihypertensives.md
+# section 13: arrhythmia-only beta blockers (sotalol, landiolol), the
+# subarachnoid-haemorrhage-only dihydropyridine (nimodipine), ophthalmic-only
+# beta blockers, finerenone (chronic kidney disease in type 2 diabetes, with
+# no hypertension indication, unlike spironolactone and eplerenone), the
+# carbonic-anhydrase inhibitors and the vasopressin antagonists.
+
+ING_NOTE <- paste(
+  "INGREDIENT IDENTITY ONLY. The label document was NOT retrieved: DailyMed",
+  "and the openFDA API are unreachable from the environment this registry was",
+  "built in, so this row cites an ingredient search and records no label",
+  "descriptor, no PK and no PD. Current US marketing status is unverified --",
+  "approval is not availability. See the INGR note in",
+  "data-raw/antihypertensiveRegistry.R.")
+
+# search defaults to the drug name and is given explicitly for a salt, whose
+# label is filed under the ingredient rather than the salt.
+ingr <- function(model_id, drug, active_moiety, route, formulation,
+                 analyte, klass, extra = NULL, search = drug)
+  # matrix is left NA deliberately.  It is a SOURCE-SPECIFIC property --
+  # clevidipine's is whole blood, chlorthalidone's is plasma although 95% of
+  # the drug in blood is in the erythrocytes -- so asserting one for a row
+  # with no source would be exactly the unearned claim these rows avoid.
+  rec(model_id, drug, active_moiety, route, formulation,
+      analyte = analyte,
+      pk_evidence = PRO, pd_evidence = PRO, execution_status = DESC,
+      source_type = INGR,
+      source_url = paste0("https://dailymed.nlm.nih.gov/dailymed/search.cfm",
+                          "?labeltype=all&query=", utils::URLencode(search)),
+      limitations = paste(klass, ING_NOTE, extra))
+
+catalog <- rbind(catalog,
+  # -- angiotensin-receptor blocker: the one molecule still missing ----------
+  ingr("eprosartan__tablet__oral__catalog__none__ingredient", "eprosartan",
+       "eprosartan", "oral", "tablet", "eprosartan",
+       "Angiotensin II receptor blocker, dosed as the mesylate.",
+       "With this row the eight US-approved ARBs are all enumerated."),
+
+  # -- ACE inhibitor: the one molecule still missing -------------------------
+  ingr("moexipril__tablet__oral__catalog__none__ingredient", "moexipril",
+       "moexiprilat", "oral", "tablet", "moexiprilat",
+       "ACE inhibitor prodrug, dosed as the hydrochloride and hydrolysed to moexiprilat.",
+       paste("Prodrug identity only, as for fosinopril, perindopril,",
+             "quinapril and trandolapril above; neither the parent nor the",
+             "active moiety has a vector here.")),
+
+  # -- dihydropyridine calcium-channel blockers ------------------------------
+  ingr("isradipine__capsule__oral__catalog__none__ingredient", "isradipine",
+       "isradipine", "oral", "immediate-release capsule", "isradipine",
+       "Dihydropyridine calcium-channel blocker.", NULL),
+  ingr("levamlodipine__tablet__oral__catalog__none__ingredient",
+       "levamlodipine", "levamlodipine ((S)-amlodipine)", "oral", "tablet",
+       "levamlodipine",
+       "Dihydropyridine calcium-channel blocker: the (S)-enantiomer of amlodipine, dosed as the maleate.",
+       paste("A SEPARATE RECORD FROM AMLODIPINE ON PURPOSE. The racemate's",
+             "parameters are not this enantiomer's, and the registry's",
+             "amlodipine records must not be read across to it; whether the",
+             "published racemate disposition is carried by the (S) form is",
+             "exactly the question an eventual source has to answer.")),
+  ingr("nisoldipine__er_tablet__oral__catalog__none__ingredient",
+       "nisoldipine", "nisoldipine", "oral", "extended-release tablet",
+       "nisoldipine",
+       "Dihydropyridine calcium-channel blocker, US product extended-release only.",
+       paste("As for felodipine above, an ER formulation's release profile is",
+             "not identified by anything in this row.")),
+
+  # -- beta blockers ---------------------------------------------------------
+  ingr("acebutolol__capsule__oral__catalog__none__ingredient", "acebutolol",
+       "acebutolol (with diacetolol as an active metabolite)", "oral",
+       "capsule", "acebutolol and diacetolol",
+       "Cardioselective beta blocker with intrinsic sympathomimetic activity, dosed as the hydrochloride.",
+       paste("An active metabolite that accumulates makes this a two-moiety",
+             "problem, as cefazolin's and aspirin's are elsewhere in the",
+             "library: a single-analyte curve would be the wrong structure.")),
+  ingr("betaxolol__tablet__oral__catalog__none__ingredient", "betaxolol",
+       "betaxolol", "oral", "tablet", "betaxolol",
+       "Cardioselective beta blocker, dosed as the hydrochloride.",
+       paste("The ORAL hypertension product only. Ophthalmic betaxolol is a",
+             "different product for a different indication and is not a",
+             "record here.")),
+  ingr("carteolol__tablet__oral__catalog__none__ingredient", "carteolol",
+       "carteolol", "oral", "tablet", "carteolol",
+       "Non-selective beta blocker with intrinsic sympathomimetic activity, dosed as the hydrochloride.",
+       paste("The ORAL hypertension product only; ophthalmic carteolol is a",
+             "different product and indication. The oral product is the one",
+             "in this class whose current US availability is most doubtful,",
+             "and nothing here establishes it either way.")),
+  ingr("penbutolol__tablet__oral__catalog__none__ingredient", "penbutolol",
+       "penbutolol", "oral", "tablet", "penbutolol",
+       "Non-selective beta blocker with intrinsic sympathomimetic activity, dosed as the sulfate.",
+       NULL),
+  ingr("pindolol__tablet__oral__catalog__none__ingredient", "pindolol",
+       "pindolol", "oral", "tablet", "pindolol",
+       "Non-selective beta blocker with marked intrinsic sympathomimetic activity.",
+       NULL),
+  ingr("timolol__tablet__oral__catalog__none__ingredient", "timolol",
+       "timolol", "oral", "tablet", "timolol",
+       "Non-selective beta blocker, dosed as the maleate.",
+       paste("The ORAL hypertension product only. Ophthalmic timolol is a",
+             "different product for a different indication, and its systemic",
+             "absorption, which is real, is not this record.")),
+
+  # -- thiazide and thiazide-type diuretics ---------------------------------
+  ingr("chlorothiazide__tablet__oral__catalog__none__ingredient",
+       "chlorothiazide", "chlorothiazide", "oral",
+       "tablet or oral suspension", "chlorothiazide",
+       "Thiazide diuretic, the parent of the class.",
+       paste("The oral product. Its intravenous sodium salt is a separate",
+             "record below, as furosemide's two routes are two records.")),
+  ingr("chlorothiazide__injection__iv__catalog__none__ingredient",
+       "chlorothiazide sodium", "chlorothiazide", "iv",
+       "injection for infusion", "chlorothiazide",
+       "Thiazide diuretic, intravenous sodium salt: the only parenteral thiazide.",
+       search = "chlorothiazide",
+       extra = paste("A SEPARATE RECORD FROM THE ORAL TABLET, because a thiazide",
+             "given intravenously answers no absorption question at all and",
+             "would be the cleaner identification of the disposition if",
+             "either were ever fitted.")),
+  ingr("methyclothiazide__tablet__oral__catalog__none__ingredient",
+       "methyclothiazide", "methyclothiazide", "oral", "tablet",
+       "methyclothiazide", "Thiazide diuretic.", NULL),
+  ingr("hydroflumethiazide__tablet__oral__catalog__none__ingredient",
+       "hydroflumethiazide", "hydroflumethiazide", "oral", "tablet",
+       "hydroflumethiazide", "Thiazide diuretic.", NULL),
+  ingr("trichlormethiazide__tablet__oral__catalog__none__ingredient",
+       "trichlormethiazide", "trichlormethiazide", "oral", "tablet",
+       "trichlormethiazide", "Thiazide diuretic.", NULL),
+  ingr("polythiazide__tablet__oral__catalog__none__ingredient",
+       "polythiazide", "polythiazide", "oral", "tablet", "polythiazide",
+       "Thiazide diuretic.", NULL),
+  ingr("bendroflumethiazide__tablet__oral__catalog__none__ingredient",
+       "bendroflumethiazide", "bendroflumethiazide", "oral", "tablet",
+       "bendroflumethiazide", "Thiazide diuretic.",
+       paste("Recorded as an ingredient because the surviving US product is",
+             "a FIXED COMBINATION with nadolol, which is a dosing constraint",
+             "and not a pharmacokinetic one: a combination tablet does not",
+             "make the ingredient's disposition unidentifiable, it makes the",
+             "dose non-independent.")),
+  ingr("quinethazone__tablet__oral__catalog__none__ingredient",
+       "quinethazone", "quinethazone", "oral", "tablet", "quinethazone",
+       "Thiazide-type (quinazolinone) diuretic, structurally a relative of metolazone.",
+       NULL),
+
+  # -- loop diuretic: the one molecule still missing, in both routes ---------
+  ingr("ethacrynic_acid__tablet__oral__catalog__none__ingredient",
+       "ethacrynic acid", "ethacrynic acid", "oral", "tablet",
+       "ethacrynic acid",
+       "Loop diuretic, the one in the class that is not a sulfonamide.",
+       paste("The oral acid. Its intravenous sodium salt is a separate",
+             "record below. Being a non-sulfonamide is the whole clinical",
+             "point of the molecule and has no bearing on its kinetics.")),
+  ingr("ethacrynate_sodium__injection__iv__catalog__none__ingredient",
+       "ethacrynate sodium", "ethacrynic acid", "iv",
+       "injection for infusion", "ethacrynic acid",
+       "Loop diuretic, intravenous sodium salt of ethacrynic acid.",
+       search = "ethacrynic acid",
+       extra = paste("A SEPARATE RECORD FROM THE ORAL ACID, and note the DOSE BASIS:",
+             "the salt is dosed and the acid is what circulates, so any",
+             "future record here owes a salt factor, as calcium gluconate",
+             "and GHB oxybate do elsewhere in this library.")))
+
+# -----------------------------------------------------------------------------
 # SOURCE RECORDS: one row per publication, population and endpoint
 # -----------------------------------------------------------------------------
 # These are the records that fitted something.  A record is "ready" only when
@@ -474,9 +701,10 @@ sources <- rbind(
       endpoint = "concentration", analyte = "clevidipine",
       matrix = "whole blood", pk_evidence = FULL, pd_evidence = PRO,
       execution_status = READY, stanpumpr_drug = "clevidipine",
+      external_validation_status = "external_population",
       source_type = "primary_fitted",
       source_url = "https://pmc.ncbi.nlm.nih.gov/articles/PMC2014189/",
-      limitations = "Two-compartment whole-blood population model. V1, V2 and Q are DERIVED, uniquely, from the reported CL, Vss and the two half-lives; the split reproduces the paper's own 'more than 80% of the AUC in the initial phase' (81.7%), which the derivation does not use. Healthy young men with an intact baroreflex: the paper notes the BP effect was marginal for that reason."),
+      limitations = "Two-compartment whole-blood population model. V1, V2 and Q are DERIVED, uniquely, from the reported CL, Vss and the two half-lives; the split reproduces the paper's own 'more than 80% of the AUC in the initial phase' (81.7%), which the derivation does not use. Healthy young men with an intact baroreflex: the paper notes the BP effect was marginal for that reason. EXTERNALLY VALIDATED, the first record in this registry that is: Ericsson EJCP 1999 (the separate record below) is an independent, richly sampled study that REPORTS V1, k10, the bolus intercepts and the fast phase's share of AUC, the very quantities this record has to derive. Applied to that study's own CL, Vss and half-lives the derivation returns its measured V1 to -1.1% (0.09 of its standard error), k10 to -0.3%, C1 to +0.1% and the AUC fraction to -0.9%; and this record's own derived V1 of 0.369 L/kg sits 2.5% from that study's measured 0.36. See docs/antihypertensives.md section 11."),
   rec("fenoldopam__injection__iv__anaesthetised_children__concentration__hammer2008",
       "fenoldopam", "fenoldopam", "iv", "injection for infusion",
       population = "76 anaesthetised children 3 weeks-12.75 y, deliberate hypotension",
@@ -601,6 +829,24 @@ sources <- rbind(
 
 sources <- rbind(sources,
   # -- records whose endpoint is not a blood pressure ------------------------
+  # -- read and verified in full, deliberately not implemented --------------
+  # The external check on the implemented clevidipine record above.  A second
+  # Ericsson 1999 paper, in a different journal: eight volunteers rather than
+  # twenty-five, one hour of infusion rather than twenty minutes, blood
+  # sampled frequently out to thirty-two hours rather than sparsely, and a
+  # tracer dose of tritiated drug.  Its Table 1 prints V1, k10, both bolus
+  # intercepts and the fast phase's share of AUC -- precisely what the
+  # implemented record must derive -- so the derivation can be tested against
+  # measurements instead of being argued for.
+  rec("clevidipine__emulsion__iv__healthy_men_infusion__concentration__ericssonejcp1999",
+      "clevidipine", "clevidipine", "iv", "injectable emulsion",
+      population = "8 healthy men, 1 h infusion of 1030 nmol/min with a 3H tracer, blood sampled to 32 h",
+      endpoint = "concentration", analyte = "clevidipine",
+      matrix = "whole blood", pk_evidence = FULL, pd_evidence = PRO,
+      execution_status = NOIMP, stanpumpr_drug = NA,
+      source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1007/s002280050594",
+      limitations = "NOT the implemented model, by choice: the library plots one clevidipine curve and it is the 25-subject population analysis, which covers a 400-fold range of dose rates rather than one. This record is read in full, every number verified from the PDF, and used only to CHECK that one. Its own estimates run higher: CL 0.142 against 0.121 L/min/kg, Vss 0.58 against 0.56 L/kg, terminal half-life 15.5 against 9.5 min -- a longer tail seen because it sampled to 32 h, which is itself the reason the implemented record's tail is the weaker part of it. Its blood-pressure and heart-rate results are reported as time courses and group means with NO concentration-effect model fitted anywhere in the paper -- mean arterial pressure fell from 87 (8) to 77 (6) mmHg at the highest rate and was back to pre-dose values within 15 min of stopping -- so pd_evidence is proposed_unfitted and there is no PD vector here either. Those two numbers are an observed group mean, not a parameter, which is why they are recorded in this field rather than in the parameter audit."),
   rec("clevidipine__emulsion__iv__healthy_men__svr_proxy__ericsson1999",
       "clevidipine", "clevidipine", "iv", "injectable emulsion",
       population = "25 healthy men", endpoint = "svr_proxy_map_over_hr",
@@ -728,12 +974,13 @@ sources <- rbind(sources,
   rec("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "hydrochlorothiazide", "hydrochlorothiazide", "oral",
       "tablet or capsule",
-      population = "pooled population meta-analysis across renal function",
+      population = "26 pooled studies, oral doses 10-500 mg, normal renal function to severe impairment; 78.6% of the profiles are aggregate curves entering as meta-individuals",
       endpoint = "concentration", analyte = "hydrochlorothiazide",
-      matrix = "plasma", pk_evidence = PART, pd_evidence = PRO,
-      execution_status = EXTR, source_type = "primary_fitted",
+      matrix = "plasma", pk_evidence = FULL, pd_evidence = PRO,
+      execution_status = READY, stanpumpr_drug = "hydrochlorothiazide",
+      source_type = "primary_fitted",
       source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
-      limitations = "Two compartments with a WEIBULL oral input, which this package's first-order extravascular path cannot represent, and renal clearance as a function of creatinine clearance (18.3 L/h at 120 mL/min falling to 2.70 at 30). The Weibull and compartment table were not transcribed. Chronic blood-pressure coefficients do not exist in this source."),
+      limitations = "Two compartments, apparent throughout (the supplementary NONMEM control stream has no bioavailability term), with renal clearance as a power of Cockcroft-Gault creatinine clearance -- 18.3 L/h at 120 mL/min falling to 10.5, 5.47 and 2.70 at 80, 50 and 30 -- over a non-renal floor of 2.44 L/h that carries no covariate. No body-size covariate was fitted. The oral input is a WEIBULL function (shape 2.84), which no constant ka can represent: it is DISCRETISED into eight lagged fractions of the default oral form absorbed at 1.0 /h, the Weibull\'s own asymptotic rate constant, fitted MINIMAX against a numerical integration of the exact system over the paper\'s four renal functions and reproducing it to 0.34% of the peak over the whole curve and 0.006% at the peak at every one of them, against the 0.53% and 0.01% MDMA\'s zero-order depot met. Chronic blood-pressure coefficients do not exist in this source; no pharmacodynamic model of any kind was fitted."),
   rec("furosemide__tablet_and_injection__oral__pooled_adults__concentration_and_urine__popPK",
       "furosemide", "furosemide", "oral", "tablet and injection",
       population = "pooled population analysis of plasma and urine",
@@ -807,6 +1054,12 @@ par <- function(model_id, parameter, value, unit, estimate_status,
 
 CLEV_ID  <- "clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999"
 CLEV_URL <- "https://pmc.ncbi.nlm.nih.gov/articles/PMC2014189/"
+# The external validation study, read in full from the PDF: Ericsson H, Fakt
+# C, Hoglund L, Jolin-Mellgard A, Nordlander M, Sunzel M, Regardh CG, Eur J
+# Clin Pharmacol 1999;55:61-67.
+CLEJ_ID  <- "clevidipine__emulsion__iv__healthy_men_infusion__concentration__ericssonejcp1999"
+CLEJ_URL <- "https://doi.org/10.1007/s002280050594"
+CLEJ_POP <- "8 healthy men, 1 h infusion"
 FENO_ID  <- "fenoldopam__injection__iv__anaesthetised_children__concentration__hammer2008"
 FENO_MAP <- "fenoldopam__injection__iv__anaesthetised_children__map__hammer2008"
 FENO_URL <- "https://pmc.ncbi.nlm.nih.gov/articles/PMC2576052/"
@@ -814,6 +1067,9 @@ TSAI_URL <- "https://accp1.onlinelibrary.wiley.com/doi/full/10.1002/jcph.684"
 CARV_ID  <- "carvedilol__ir_tablet__oral__healthy_korean_men__concentration__hwang2023"
 CARV_HR  <- "carvedilol__ir_tablet__oral__healthy_korean_men__iso_hr__hwang2023"
 CARV_URL <- "https://pmc.ncbi.nlm.nih.gov/articles/PMC10244018/"
+HCTZ_ID  <- "hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013"
+HCTZ_URL <- "https://pubmed.ncbi.nlm.nih.gov/24123104/"
+HCTZ_POP <- "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function"
 
 parameters <- rbind(
   # -- clevidipine, Ericsson 1999: reported, then derived -------------------
@@ -857,6 +1113,69 @@ parameters <- rbind(
       endpoint = "concentration", source_url = CLEV_URL,
       verification = "derived_here",
       notes = "Q = k12 V1 with k21 = l1 l2 V1 / CL and k12 = k21 V2 / V1."),
+  # -- clevidipine, Ericsson EJCP 1999: the external check -------------------
+  # Table 1, mean (SD), n = 8, every value read from the PDF.  The first four
+  # are the same quantities the implemented record reports; the last five are
+  # what it has to derive, which is what makes this a test rather than a
+  # second opinion.  The SD is the between-subject SD the table prints, so
+  # the standard error of each mean is that over sqrt(8).
+  par(CLEJ_ID, "CL", 0.142, "L/min/kg", "fitted", uncertainty = 0.033,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "Mean blood clearance; median 0.144, range 0.089-0.188. Higher than the implemented record's 0.121 L/min/kg, which is a population estimate over a 400-fold range of dose rates."),
+  par(CLEJ_ID, "Vss", 0.58, "L/kg", "fitted", uncertainty = 0.13,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "Median 0.58, range 0.38-0.72. The abstract rounds it to 0.6 (0.1)."),
+  par(CLEJ_ID, "half-life, initial", 1.6, "min", "fitted", uncertainty = 0.3,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "Range 1.2-2.0. Virtually identical to log(2)/k10, which is why the authors read the initial decline as elimination rather than distribution."),
+  par(CLEJ_ID, "half-life, terminal", 15.5, "min", "fitted", uncertainty = 4.7,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "Median 15.3, range 9.6-22.4. The abstract rounds it to 15 (5). Longer than the implemented record's 9.5 min because this study sampled to 32 h rather than sparsely within a dosing period."),
+  par(CLEJ_ID, "V1", 0.36, "L/kg", "fitted", uncertainty = 0.12,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "THE NUMBER THAT MAKES THIS A VALIDATION: reported, not derived. Applying the implemented record's derivation to THIS study's own CL, Vss and two half-lives returns 0.3561 L/kg, which is 1.1% from this measured mean and 0.09 of its standard error (0.042 L/kg). Median 0.36, range 0.21-0.51."),
+  par(CLEJ_ID, "k10", 0.40, "1/min", "fitted", uncertainty = 0.05,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "The derivation applied to this study's own numbers returns 0.3988 /min, 0.3% away. Median 0.40, range 0.32-0.49."),
+  par(CLEJ_ID, "bolus intercept, initial phase", 98.9, "percent", "fitted",
+      uncertainty = 0.8,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "The paper's C1. The derivation applied to this study's numbers returns 99.01%, 0.1% away."),
+  par(CLEJ_ID, "bolus intercept, terminal phase", 1.1, "percent", "fitted",
+      uncertainty = 0.8,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "The paper's C2, and the complement of C1 rather than an independent statement. The derivation returns 0.99%, which is 9.7% below 1.1 in relative terms and 0.13 of this mean's own standard deviation of 0.8 -- a quantity whose between-subject SD is 73% of its mean cannot discriminate at that resolution."),
+  par(CLEJ_ID, "fraction of AUC in the initial phase", 92.0, "percent",
+      "fitted", uncertainty = 4.3,
+      uncertainty_type = "standard deviation between subjects",
+      matrix = "whole blood", population = CLEJ_POP,
+      endpoint = "concentration", source_url = CLEJ_URL,
+      source_table_or_page = "Table 1", verification = "primary_full_text",
+      notes = "The paper's AUClambda1, reported in the text as 'more than 90%'. The derivation applied to this study's numbers returns 91.1%, 0.9% away. The implemented record's own split gives 81.7% against its own 'more than 80%', so each study's fast-phase share is reproduced from that study's own four numbers."),
   par("clevidipine__emulsion__iv__healthy_men__svr_proxy__ericsson1999",
       "Emax", 45.4, "% reduction in MAP/HR", "fitted",
       matrix = "whole blood", population = "25 healthy men",
@@ -1465,7 +1784,7 @@ parameters <- rbind(parameters,
       notes = "NEGATIVE as printed, which is not a conventional Hill coefficient: the rendered equation must be verified before any code, and p must not be silently treated as a Hill exponent."),
   par("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "renal CL coefficient", 18.3, "L/h", "fitted", matrix = "plasma",
-      population = "43 individuals and meta-individuals, pooled meta-analysis across renal function",
+      population = "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function",
       endpoint = "concentration", source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       source_table_or_page = "Table 2",
       uncertainty = 12.1, uncertainty_type = "standard error of the mean, %",
@@ -1473,7 +1792,7 @@ parameters <- rbind(parameters,
       notes = "Population mean CL_R = 18.3 x (CL_CR/120)^1.38, the paper's own footnote and the control stream's TVCLR=THETA(1)*(CRCL/120)**THETA(7). At creatinine clearance 120 mL/min it is 18.3 L/h, falling to 10.5, 5.47 and 2.70 at 80, 50 and 30. Creatinine clearance is by Cockcroft-Gault."),
   par("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "renal CL exponent on creatinine clearance", 1.38, "exponent", "fitted", matrix = "plasma",
-      population = "43 individuals and meta-individuals, pooled meta-analysis across renal function",
+      population = "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function",
       endpoint = "concentration", source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       source_table_or_page = "Table 2",
       uncertainty = 8.65, uncertainty_type = "standard error of the mean, %",
@@ -1481,7 +1800,7 @@ parameters <- rbind(parameters,
       notes = "The power on CL_CR/120. VERIFIED from the full text and the supplemental NONMEM control stream; the abstract gives only the clearance ladder, not the functional form."),
   par("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "non-renal CL", 2.44, "L/h", "fitted", matrix = "plasma",
-      population = "43 individuals and meta-individuals, pooled meta-analysis across renal function",
+      population = "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function",
       endpoint = "concentration", source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       source_table_or_page = "Table 2",
       uncertainty = 22.2, uncertainty_type = "standard error of the mean, %",
@@ -1489,15 +1808,29 @@ parameters <- rbind(parameters,
       notes = "Constant, with no covariate. Matches the abstract, which the registry had already verified."),
   par("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "V1", 97.3, "L", "fitted", matrix = "plasma",
-      population = "43 individuals and meta-individuals, pooled meta-analysis across renal function",
+      population = "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function",
       endpoint = "concentration", source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       source_table_or_page = "Table 2",
       uncertainty = 10.5, uncertainty_type = "standard error of the mean, %",
       verification = "primary_full_text",
       notes = "THE NUMBER THAT WAS MISSING. With the two clearances and the two half-lives already in the abstract, one volume closes the two-compartment system, and this is it. DISCREPANCY: Table 2 prints 97.3 and the supplemental control stream's $THETA prints 97.5, while its other seven thetas match Table 2 exactly. The table is taken as the final estimate and the difference is 0.2%, which moves no curve."),
+  par(HCTZ_ID, "discretised depot ka", 1.0, "1/h", "derived", "derived",
+      matrix = "plasma", population = HCTZ_POP, endpoint = "concentration",
+      source_url = HCTZ_URL, verification = "derived_here",
+      notes = "NOT fitted and not rounded: 1 - exp(-(ka t)^gamma) tends to 1 as t grows, so one per hour is the exact asymptotic rate constant of the source\'s own Weibull depot. The bracket is dimensionless and the source writes the equation in hours, so the limit is exactly 1 /h. Fitting it freely gives 0.982, 0.993 and 0.996 /h at two, three and four pulses, converging there; fixing it costs a tenth of a percent, moving the worst point on the curve from 0.92% to 1.02% of the peak at four pulses."),
+  par(HCTZ_ID, "discretised release fractions", NA, "fraction", "derived",
+      "derived", matrix = "plasma", population = HCTZ_POP,
+      endpoint = "concentration", source_url = HCTZ_URL,
+      verification = "derived_here",
+      notes = "Eight fractions, 0.084971 0.170064 0.155185 0.085600 0.189206 0.145831 0.112379 0.056764, at 12.4524 23.7416 31.7669 35.8427 40.5300 49.3181 55.1718 69.7187 minutes, in R/drugs_hydrochlorothiazide.R rather than here because they are a vector; HCTZ_PULSE_FRACTION and HCTZ_PULSE_DELAY are the authoritative copy and this note has to be changed with them. Fitted MINIMAX -- the objective is the worst point of the plotted curve, which is what the standard limits -- over creatinine clearances of 120, 80, 50 and 30 mL/min, against a numerical integration of the exact Weibull system, with the evaluation grid rebuilt per candidate around its own pulse times, because the error peaks at those kinks and the delays move during the fit. An earlier SIX fraction set was recorded here and was outside the standard; the error row below says what that cost. They describe a numerical stand-in for a published input shape, NOT a product: hydrochlorothiazide is an ordinary immediate-release tablet."),
+  par(HCTZ_ID, "discretisation error, worst point on the curve", 0.344,
+      "percent of peak concentration", "derived", "derived",
+      matrix = "plasma", population = HCTZ_POP, endpoint = "concentration",
+      source_url = HCTZ_URL, verification = "derived_here",
+      notes = "Worst of the four renal functions, measured ON THE PACKAGE\'S OWN OUTPUT GRID: 0.344, 0.315, 0.295 and 0.284% at creatinine clearances of 120, 80, 50 and 30 mL/min, against the 0.53% MDMA\'s zero-order discretisation met. The peak is reproduced to 0.0061% (limit 0.01%) and the area to 0.001%. THE MEASUREMENT MATTERS AS MUCH AS THE NUMBER: the error peaks exactly at a pulse time, where a lagged depot starts and the approximation kinks, and simulationTimeGrid() puts a point at every dose time. A first version of this record said 0.45% from a uniform 0.02 h grid that stepped over the kinks; the truth on that six-pulse set was 0.64%, outside the standard, which is why it is now eight pulses fitted minimax. Checked in tests/testthat/test-drugs-hydrochlorothiazide.R against an integration written independently of the package."),
   par("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "V2", 178, "L", "fitted", matrix = "plasma",
-      population = "43 individuals and meta-individuals, pooled meta-analysis across renal function",
+      population = "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function",
       endpoint = "concentration", source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       source_table_or_page = "Table 2",
       uncertainty = 41.1, uncertainty_type = "standard error of the mean, %",
@@ -1505,7 +1838,7 @@ parameters <- rbind(parameters,
       notes = "Apparent peripheral volume. The weakest parameter in the model at 41% standard error. Vss = V1 + V2 = 275 L, which the paper reads as moderately strong tissue binding or transporter uptake."),
   par("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "Q", 17.2, "L/h", "fitted", matrix = "plasma",
-      population = "43 individuals and meta-individuals, pooled meta-analysis across renal function",
+      population = "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function",
       endpoint = "concentration", source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       source_table_or_page = "Table 2",
       uncertainty = 2.79, uncertainty_type = "standard error of the mean, %",
@@ -1513,7 +1846,7 @@ parameters <- rbind(parameters,
       notes = "Distribution clearance, the paper's CL_d."),
   par("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "ka", 1.34, "1/h", "fitted", matrix = "plasma",
-      population = "43 individuals and meta-individuals, pooled meta-analysis across renal function",
+      population = "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function",
       endpoint = "concentration", source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       source_table_or_page = "Table 2",
       uncertainty = 17.0, uncertainty_type = "standard error of the mean, %",
@@ -1521,7 +1854,7 @@ parameters <- rbind(parameters,
       notes = "The scale parameter of a WEIBULL absorption, not a first-order rate constant: the depot empties as dA/dt = -(1 - exp(-(ka x TSLD)^gamma)) x A, so the rate constant itself rises from zero towards 1/h over about 1.5 h. It reduces to first order only at gamma = 1."),
   par("hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013",
       "Weibull shape gamma", 2.84, "dimensionless", "fitted", matrix = "plasma",
-      population = "43 individuals and meta-individuals, pooled meta-analysis across renal function",
+      population = "43 individuals or meta-individuals from 26 pooled studies, across the whole range of renal function",
       endpoint = "concentration", source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       source_table_or_page = "Table 2",
       uncertainty = 15.9, uncertainty_type = "standard error of the mean, %",
@@ -1575,7 +1908,12 @@ stopifnot(
   !any(duplicated(registry$model_id)),
   all(registry$pk_evidence %in% c(FULL, PART, STRU, LAB, PRO)),
   all(registry$pd_evidence %in% c(FULL, PART, STRU, LAB, PRO, SEC)),
-  all(registry$execution_status %in% c(READY, EXTR, FITP, DESC)),
+  all(registry$execution_status %in% c(READY, EXTR, FITP, DESC, NOIMP)),
+  # An ingredient-identity row must never claim a label descriptor it does
+  # not have, nor a document URL for a label nobody opened.
+  all(registry$pk_evidence[registry$source_type == INGR] == PRO),
+  all(registry$execution_status[registry$source_type == INGR] == DESC),
+  all(grepl("search\\.cfm", registry$source_url[registry$source_type == INGR])),
   all(registry$external_validation_status %in%
         c("none", "in_population", "external_population")),
   all(grepl("^https?://", registry$source_url)),

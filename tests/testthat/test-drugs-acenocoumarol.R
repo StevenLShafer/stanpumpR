@@ -5,7 +5,9 @@
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
 test_that("returns the published parameters at the 69 kg reference subject", {
-  actual <- acenocoumarol(69, 170, 40, "male", cyp2c9 = "*1/*1", vkorc1 = "AA")
+  # Switch off reproduces the published values at the reference weight.
+  actual <- acenocoumarol(69, 170, 40, "male", cyp2c9 = "*1/*1", vkorc1 = "AA",
+                          adjustToFFM = FALSE)
   expect_equal_rounded(actual$PK$default, list(
     v1 = 24.7, v2 = 52.5, v3 = 1,
     cl1 = 15.3 / 60, cl2 = 4.85 / 60, cl3 = 0,
@@ -20,12 +22,15 @@ test_that("returns the published parameters at the 69 kg reference subject", {
 })
 
 test_that("CYP2C9 *3 carriage lowers clearance; the rest act as wild type", {
-  base <- acenocoumarol(69, 170, 40, "male", cyp2c9 = "*1/*1", vkorc1 = "AA")
+  base <- acenocoumarol(69, 170, 40, "male", cyp2c9 = "*1/*1", vkorc1 = "AA",
+                        adjustToFFM = FALSE)
   for (g in c("*1/*1", "*1/*2", "*2/*2"))
-    expect_equal(acenocoumarol(69, 170, 40, "male", cyp2c9 = g)$PK$default$cl1,
+    expect_equal(acenocoumarol(69, 170, 40, "male", cyp2c9 = g,
+                               adjustToFFM = FALSE)$PK$default$cl1,
                  base$PK$default$cl1, info = g)
   for (g in c("*1/*3", "*2/*3", "*3/*3"))
-    expect_equal(acenocoumarol(69, 170, 40, "male", cyp2c9 = g)$PK$default$cl1,
+    expect_equal(acenocoumarol(69, 170, 40, "male", cyp2c9 = g,
+                               adjustToFFM = FALSE)$PK$default$cl1,
                  15.3 * (1 - 0.3) / 60, tolerance = 1e-9, info = g)
 })
 
@@ -37,11 +42,24 @@ test_that("VKORC1 raises the C50 for GG or GA; AA is the sensitive reference", {
                0.0023 * (1 + 1.29))
 })
 
-test_that("body weight scales V1, in both adjustToFFM positions", {
-  for (ffm in c(TRUE, FALSE)) {
-    m <- acenocoumarol(90, 180, 40, "male", adjustToFFM = ffm)
-    expect_equal(m$PK$default$v1, 24.7 * (90 / 69), tolerance = 1e-9)
-  }
+test_that("the switch off scales V1 by total body weight; CL, Q, V2 published", {
+  m <- acenocoumarol(90, 180, 40, "male", adjustToFFM = FALSE)
+  expect_equal(m$PK$default$v1, 24.7 * (90 / 69), tolerance = 1e-9)
+  expect_equal(m$PK$default$cl1, 15.3 / 60, tolerance = 1e-9)   # size-free CL
+  expect_equal(m$PK$default$cl2, 4.85 / 60, tolerance = 1e-9)   # size-free Q
+  expect_equal(m$PK$default$v2, 52.5, tolerance = 1e-9)         # size-free V2
+})
+
+test_that("the switch on uses the fat-free-mass weight and library factors", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).
+  pkW <- 91.343469; vol <- 1.3049067; clr <- 1.2209126
+  m <- acenocoumarol(120, 170, 50, "male")
+  expect_equal(m$PK$default$v1, 24.7 * (pkW / 69), tolerance = 1e-6)  # own covariate
+  expect_equal(m$PK$default$cl1, 15.3 * clr / 60, tolerance = 1e-6)   # size-free CL
+  expect_equal(m$PK$default$cl2, 4.85 * clr / 60, tolerance = 1e-6)   # size-free Q
+  expect_equal(m$PK$default$v2, 52.5 * vol, tolerance = 1e-6)         # size-free V2
 })
 
 test_that("invalid genotypes are rejected", {

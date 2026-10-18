@@ -94,9 +94,11 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     ),
     cyp2c9 = paste(
       "CYP2C9 genotype, as a diplotype (*1/*1 is the reference).",
-      "It sets the clearance of meloxicam, the maximal elimination",
-      "rate of phenytoin, and the clearance of the vitamin-K antagonists",
-      "(a *3 allele lowers it, so the INR rises on less drug)."
+      "It sets the clearance of meloxicam and the maximal elimination",
+      "rate of phenytoin. It also lowers vitamin-K-antagonist clearance,",
+      "so the INR rises on less drug: the warfarin model distinguishes only",
+      "*1/*3 from *1/*1, while fluindione and acenocoumarol apply the fall",
+      "to any *3 carrier."
     ),
     cyp2b6 = paste(
       "CYP2B6 metaboliser phenotype, the five CPIC categories.",

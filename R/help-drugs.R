@@ -780,8 +780,14 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     pulses <- pkRef$oralPulses
     pulseNote <- if (length(pulses)) paste(vapply(names(pulses), function(f) {
       p <- pulses[[f]]
-      sprintf("An <strong>mg PO %s</strong> dose is released in %d parts (%s of the dose at %s minutes after it is given), each absorbed as the default form. ",
-              f, length(p$fraction),
+      # The reserved default form is every plain oral dose and names no
+      # formulation, so it is described as the dose rather than as a product.
+      sprintf("%s is released in %d parts (%s of the dose at %s minutes after it is given), each absorbed as the default form. ",
+              if (identical(f, ORAL_PULSE_DEFAULT_FORM))
+                "Each <strong>mg PO</strong> dose"
+              else
+                sprintf("An <strong>mg PO %s</strong> dose", f),
+              length(p$fraction),
               paste(sprintf("%s%%", helpFormatNumber(100 * p$fraction)), collapse = ", "),
               paste(helpFormatNumber(p$delay), collapse = ", "))
     }, character(1)), collapse = "") else ""

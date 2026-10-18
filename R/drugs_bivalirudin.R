@@ -20,8 +20,10 @@
 #
 # Every parameter is per kilogram of total body weight with no estimated
 # exponent; at 70 kg CL is 22.6 L/h, V1 6.02 L, Q 6.70 L/h, V2 3.88 L, and the
-# half-lives are 6.4 and 27 min.  The label's terminal half-life in patients
-# with normal renal function is 25 min.
+# half-lives of the two exponentials are 7.7 and 35 min (test-drugs-
+# bivalirudin.R pins them).  The label's terminal half-life in patients with
+# normal renal function is 25 min; the model's terminal phase is somewhat
+# slower.
 #
 # WHERE IT IS EXTRAPOLATED
 # ========================

@@ -1,6 +1,8 @@
 ## What to look for
 
-A 60-year-old, 69 kg man is started on two European vitamin-K antagonists at once — **fluindione 20 mg once a day** and **acenocoumarol 4 mg once a day** — and followed for four weeks. He is CYP2C9 wild-type (**\*1/\*1**) and VKORC1-sensitive (**AA**), the genotype set in the Patient Profile. Each drug's INR is drawn in its own panel; both come from the same indirect-response model (Verstuyft 2012) but behave very differently.
+This is a **hypothetical side-by-side comparison** of the two 2012 research models, not a treatment plan — no one is given two vitamin-K antagonists together, and new fluindione starts are no longer permitted in France. A 60-year-old, 69 kg man is modelled on each of two European vitamin-K antagonists — **fluindione 20 mg once a day** and **acenocoumarol 4 mg once a day** — for four weeks, CYP2C9 wild-type (**\*1/\*1**) and VKORC1-sensitive (**AA**), the genotype set in the Patient Profile.
+
+Each drug gets its **own INR panel**, and each panel is that one drug's prediction alone: the simulator computes each drug's INR independently, so **neither panel is the INR of taking both drugs together**. The two panels come from the same indirect-response model (Verstuyft 2012) but behave very differently, which is the point of putting them side by side.
 
 - Neither INR jumps. Both **climb over days** as the drug inhibits the production of clotting-factor activity: the plotted quantity is 1/(a turnover pool), so it moves at the pace of that turnover (half-lives near 18 hours), not with the plasma concentration.
 - **Fluindione** clears slowly, so it accumulates over the first week to a sustained INR near 2.9 — the paper's steady-state value for this genotype — with only a small daily ripple.

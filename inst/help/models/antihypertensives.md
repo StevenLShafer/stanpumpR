@@ -1,6 +1,6 @@
 ## Antihypertensives: why so few, and no blood pressure
 
-Two antihypertensives are in the drug library: [clevidipine](help:drugs/clevidipine) and [fenoldopam in children](help:drugs/fenoldopamPediatric). Both plot a **concentration**. No drug in stanpumpR plots a blood pressure, and this page explains why that is a statement about the published evidence rather than a gap in the program.
+Six antihypertensives are in the drug library: [clevidipine](help:drugs/clevidipine), [fenoldopam in children](help:drugs/fenoldopamPediatric), [carvedilol](help:drugs/carvedilol), [azilsartan](help:drugs/azilsartan), [chlorthalidone](help:drugs/chlorthalidone) and [hydrochlorothiazide](help:drugs/hydrochlorothiazide). Every one of them plots a **concentration**. No drug in stanpumpR plots a blood pressure, and this page explains why that is a statement about the published evidence rather than a gap in the program.
 
 ### The problem is not the engine
 
@@ -20,6 +20,8 @@ A **registry**, keyed by model record rather than by drug name. A record is a mo
 
 Alongside it sits a **parameter audit**: every number, with its unit, matrix, population, endpoint, whether it was fitted, fixed or derived, the uncertainty, the *type* of uncertainty the source itself names, and whether the number was read in the primary source or taken on trust. Several of these papers print a plus-or-minus and never say what it is; the audit records that as not reported rather than guessing at a standard deviation.
 
+In five classes — angiotensin-receptor blockers, ACE inhibitors, calcium-channel blockers, beta blockers and diuretics — the registry is **complete at the ingredient level** against the approved US systemic products as this program enumerates them — an inventory assembled here and not yet checked against an FDA register such as the Orange Book — so a molecule's absence from it is a statement rather than an oversight: it is either an exclusion with a reason, such as a beta blocker approved only for arrhythmia or only as eye drops, or a molecule the inventory itself is missing, which is a gap in the inventory as much as a fact about the molecule. Completeness of that kind is cheap and worth having, and it is worth being clear what it is not: twenty-one of those records assert the ingredient, its class, its route and its formulation and nothing else, because the label itself could not be retrieved, and they are marked so that they can never be mistaken for the ones that were read.
+
 Both are available from the console, as `antihypertensiveRegistry()` and `antihypertensiveParameters()`.
 
 ### The four relations you can evaluate
@@ -32,6 +34,10 @@ A paper that reports a maximum effect of -27 mmHg is reporting a fall. Store tha
 
 ### What would change this page
 
-For a drug to get a pressure, one source would have to supply the whole chain: dose to concentration, concentration to pressure, a baseline, and a stated measurement context, with the population and the formulation matching. Then the chain would have to reproduce that study's own published trajectory, and only afterwards would an independent validation in another population be worth discussing. Several records are two steps away rather than ten. The nearest are the ones whose obstacle is mechanical rather than evidential: carvedilol's oral fit is complete but uses a zero-order release this engine cannot yet represent, and two more need nothing but a library copy of a paywalled paper.
+For a drug to get a pressure, one source would have to supply the whole chain: dose to concentration, concentration to pressure, a baseline, and a stated measurement context, with the population and the formulation matching. Then the chain would have to reproduce that study's own published trajectory, and only afterwards would an independent validation in another population be worth discussing. Several records are two steps away rather than ten — but notice that the steps taken so far have all been on the *pharmacokinetic* side. Four drugs have joined this page since it was written, and each was blocked by something mechanical rather than evidential: carvedilol needed a zero-order oral release the engine did not have, hydrochlorothiazide needed its Weibull absorption discretised into pulses, and azilsartan and chlorthalidone needed a copy of a paywalled paper. All four now plot a concentration, and **not one of them brought a blood pressure with it.** The azilsartan and chlorthalidone paper does contain a fitted systolic model, and it is driven by eight-week exposure rather than by a concentration, which is exactly the pattern described above.
 
-See also [the drug pages](help:drugs/index) for the two implemented models, and `docs/antihypertensives.md` in the source tree for the full audit, including where the specification this work came from had to be corrected.
+That is the honest state of this field: the pharmacokinetic obstacles yield to work, and the pharmacodynamic one has not moved at all.
+
+One record has since acquired an **external validation**, the registry's first. Clevidipine's individual volumes are not printed in its source and had to be derived from the four quantities that are; a second study, in a different journal and different subjects, turned out to report the derived quantities as measurements, and the derivation recovers its measured central volume to about a percent. The source tree records that in full.
+
+See also [the drug pages](help:drugs/index) for the six implemented models, and `docs/antihypertensives.md` in the source tree for the full audit, including where the specification this work came from had to be corrected.

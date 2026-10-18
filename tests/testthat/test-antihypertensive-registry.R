@@ -17,7 +17,8 @@ EVIDENCE <- c("primary_fitted_full", "primary_fitted_partial",
               "proposed_unfitted")
 PD_EVIDENCE <- c(EVIDENCE, "secondary_transcription_unverified")
 STATUS <- c("ready_for_source_reproduction", "requires_source_extraction",
-            "requires_parameter_fit", "descriptive_only")
+            "requires_parameter_fit", "descriptive_only",
+            "complete_not_implemented")
 VALIDATION <- c("none", "in_population", "external_population")
 ESTIMATE <- c("fitted", "fixed", "derived", "label_descriptive", "proposed")
 VERIFICATION <- c("primary_full_text", "primary_abstract", "derived_here",
@@ -41,13 +42,96 @@ test_that("every record is uniquely keyed and fully classified", {
   expect_true(all(grepl("^https?://", registry$source_url)))
 })
 
-test_that("no blood pressure is simulated anywhere, and nothing is externally validated", {
+test_that("no blood pressure is simulated anywhere", {
   # The central gate: the package plots concentrations.  A record may only
   # turn this on when the whole dose-to-pressure chain, its baseline and its
   # measurement context are populated AND source reproduction passes, and
   # nothing qualifies.
   expect_false(any(registry$bp_simulation_enabled))
-  expect_true(all(registry$external_validation_status == "none"))
+})
+
+test_that("exactly one record is externally validated, and it is clevidipine", {
+  # This assertion used to read "nothing is externally validated", which was
+  # a true description of the registry until Ericsson's second 1999 paper was
+  # read.  It is pinned as a count rather than loosened, so the next record
+  # to claim external validation has to come here and say so.
+  validated <- registry[registry$external_validation_status != "none", ]
+  expect_equal(nrow(validated), 1)
+  expect_identical(validated$model_id,
+                   "clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999")
+  expect_identical(validated$external_validation_status, "external_population")
+  # The validating study is its own record, read in full and NOT implemented:
+  # the library plots one clevidipine curve, the 25-subject population one.
+  ext <- registry[registry$model_id ==
+    "clevidipine__emulsion__iv__healthy_men_infusion__concentration__ericssonejcp1999", ]
+  expect_equal(nrow(ext), 1)
+  expect_identical(ext$execution_status, "complete_not_implemented")
+  expect_true(is.na(ext$stanpumpr_drug))
+  expect_identical(ext$pk_evidence, "primary_fitted_full")
+  expect_false(ext$bp_simulation_enabled)
+})
+
+test_that("a complete-but-unimplemented record plots nothing and feeds nothing", {
+  # The vocabulary's newest word has to stay honest in both directions: such
+  # a record carries a full fitted vector, and none of it reaches a curve.
+  notImplemented <- registry[registry$execution_status ==
+                               "complete_not_implemented", ]
+  expect_gt(nrow(notImplemented), 0)
+  expect_true(all(is.na(notImplemented$stanpumpr_drug)))
+  expect_false(any(notImplemented$bp_simulation_enabled))
+  # Every one of its numbers is verified from the primary source, since the
+  # only use for them is checking a record the package does execute.
+  own <- parameters[parameters$model_id %in% notImplemented$model_id, ]
+  expect_gt(nrow(own), 5)
+  expect_true(all(own$verification == "primary_full_text"))
+  # And the drug it belongs to is implemented from the OTHER record
+  for (d in unique(notImplemented$drug)) {
+    other <- registry[registry$drug == d &
+                        registry$execution_status == "ready_for_source_reproduction", ]
+    expect_gt(nrow(other), 0, label = d)
+  }
+})
+
+test_that("the clevidipine derivation recovers an independently measured V1", {
+  # The external validation itself, recomputed here rather than quoted: the
+  # same formula R/drugs_clevidipine.R uses, applied to the OTHER study's own
+  # four reported quantities, against the five Table 1 numbers that study
+  # reports and the implemented record has to derive.
+  reported <- function(what) {
+    r <- parameters[parameters$model_id ==
+      "clevidipine__emulsion__iv__healthy_men_infusion__concentration__ericssonejcp1999" &
+        parameters$parameter == what, ]
+    expect_equal(nrow(r), 1, label = what)
+    r$value
+  }
+  CL <- reported("CL"); Vss <- reported("Vss")
+  l1 <- log(2) / reported("half-life, initial")
+  l2 <- log(2) / reported("half-life, terminal")
+  V1 <- CL / (l1 + l2 - l1 * l2 * Vss / CL)
+  k21 <- l1 * l2 * V1 / CL
+  A <- (l1 - k21) / (l1 - l2); B <- (k21 - l2) / (l1 - l2)
+
+  # V1 to 1.1% of the measured mean, and within a tenth of its standard error
+  expect_lt(abs(V1 - reported("V1")) / reported("V1"), 0.02)
+  sem <- 0.12 / sqrt(8)                      # Table 1's SD over sqrt(n)
+  expect_lt(abs(V1 - reported("V1")) / sem, 0.25)
+  # k10, the fast phase's share of AUC, and the initial bolus intercept
+  expect_lt(abs(CL / V1 - reported("k10")) / reported("k10"), 0.01)
+  aucFast <- (A / l1) / (A / l1 + B / l2)
+  expect_lt(abs(100 * aucFast - reported("fraction of AUC in the initial phase")) /
+              reported("fraction of AUC in the initial phase"), 0.02)
+  expect_lt(abs(100 * A - reported("bolus intercept, initial phase")) /
+              reported("bolus intercept, initial phase"), 0.01)
+  # Physically admissible, which is the condition the derivation needs
+  expect_true(V1 > 0 && Vss - V1 > 0 && k21 > l2 && k21 < l1)
+
+  # And the implemented record's OWN derived V1, from its own study's
+  # numbers, lands near the other study's measurement: 0.369 against 0.36
+  impl <- parameters[parameters$model_id ==
+    "clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999" &
+      parameters$parameter == "V1", ]
+  expect_identical(impl$estimate_status, "derived")
+  expect_lt(abs(impl$value - reported("V1")) / reported("V1"), 0.05)
 })
 
 test_that("formulation and route are separate records where the specification demands it", {
@@ -107,7 +191,7 @@ test_that("only concentration records are executable, and they are the library's
   implemented <- ready[ready$endpoint == "concentration", ]
   expect_setequal(implemented$stanpumpr_drug,
                   c("clevidipine", "fenoldopamPediatric", "carvedilol",
-                    "azilsartan", "chlorthalidone"))
+                    "azilsartan", "chlorthalidone", "hydrochlorothiazide"))
   dd <- getDrugDefaultsGlobal()
   for (d in implemented$stanpumpr_drug) {
     expect_true(d %in% dd$Drug, info = d)
@@ -129,7 +213,7 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
   expect_true(all(is.na(gated$stanpumpr_drug) |
                     gated$stanpumpr_drug %in%
                       c("clevidipine", "fenoldopamPediatric", "carvedilol",
-                    "azilsartan", "chlorthalidone")))
+                    "azilsartan", "chlorthalidone", "hydrochlorothiazide")))
   # The four the handoff asked to be ported first.  Azilsartan was on that
   # list and has since been ported, from the full text supplied on
   # 2026-10-17; so has chlorthalidone, from the same paper.  What is gated
@@ -144,12 +228,47 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
     "azilsartan__m2_metabolite__oral__stage2_hypertension__concentration__tsai2016", ]
   expect_identical(m2$execution_status, "requires_source_extraction")
   expect_match(m2$limitations, "DELIBERATELY")
-  # Hydrochlorothiazide is the one whose obstacle MOVED: its numbers are all
-  # verified now, and what blocks it is an input shape the engine lacks.
+  # Hydrochlorothiazide is the one whose obstacle MOVED twice: first from a
+  # missing volume to an input shape the engine lacked, then out of the way
+  # entirely when expandOralPulses() learned the default oral form.  It is a
+  # drug now, and its record still has to say what shape it stands in for --
+  # a reader who cannot see the Weibull in the record cannot tell that the
+  # fractions in the model are a discretisation rather than a product.  (No
+  # count here on purpose: it was "six" and went stale when the count became
+  # eight, which is the same drift the assertion below now guards against.)
   hctz <- registry[registry$model_id ==
     "hydrochlorothiazide__tablet__oral__pooled_adults__concentration__vanwart2013", ]
-  expect_identical(hctz$execution_status, "requires_source_extraction")
+  expect_identical(hctz$execution_status, "ready_for_source_reproduction")
+  expect_identical(hctz$stanpumpr_drug, "hydrochlorothiazide")
   expect_match(hctz$limitations, "[Ww]eibull")
+  expect_match(hctz$limitations, "DISCRETISED")
+  # And the discretisation is itself in the parameter audit, derived, with
+  # the error it costs recorded as a number rather than as an adjective
+  disc <- parameters[parameters$model_id == hctz$model_id &
+                       grepl("^discretis", parameters$parameter), ]
+  expect_gte(nrow(disc), 3)
+  expect_true(all(disc$estimate_status == "derived"))
+  expect_true(all(disc$verification == "derived_here"))
+  err <- disc[grepl("error", disc$parameter), ]
+  expect_equal(nrow(err), 1)
+  expect_lt(err$value, 0.53)      # inside the standard MDMA's set
+
+  # The audit's prose must quote the SAME fractions the model uses.  It did
+  # not: when the drug went from six pulses to eight, the limitations and the
+  # error row were updated and this note was left behind, so the audit
+  # contradicted the model it documents (CodeRabbit, PR #532).  A note that
+  # repeats numbers has to be checked against them.
+  frRow <- disc[grepl("fractions", disc$parameter), ]
+  expect_equal(nrow(frRow), 1)
+  pulses <- getDrugPK("hydrochlorothiazide", 70, 175, 50, "male",
+                      adjustToFFM = FALSE)$oralPulses[[ORAL_PULSE_DEFAULT_FORM]]
+  for (x in sprintf("%.6f", pulses$fraction))
+    expect_true(grepl(x, frRow$notes, fixed = TRUE), info = x)
+  for (x in sprintf("%.4f", pulses$delay))
+    expect_true(grepl(x, frRow$notes, fixed = TRUE), info = x)
+  # and the count it names in words
+  expect_match(frRow$notes, "^Eight fractions")
+  expect_equal(length(pulses$fraction), 8)
   # Carvedilol was on that list and has since been ported: the zero-order
   # oral release mode it needed is R/oral-zero-order.R, and its full text was
   # reached through PubMed Central.  Its PK record is no longer gated; only
@@ -334,4 +453,121 @@ test_that("an endpoint that is not a blood pressure is never described as one", 
   # None of them is evaluable, so none can be mistaken for a pressure
   expect_false(any(notBP$model_id %in% antihypertensiveEndpointsAvailable()$model_id))
   expect_false(any(notBP$bp_simulation_enabled))
+})
+
+test_that("the five classes are enumerated, and a class gap is a missing row", {
+  # The registry's job in these five classes is to be COMPLETE at the
+  # ingredient level, so that a drug's absence from it means "not an
+  # approved US systemic antihypertensive" rather than "nobody looked".
+  # These are the molecules, by class, that the catalog must account for.
+  #
+  # THIS LIST IS THE ASSERTION, not a transcription: no FDA register was
+  # reachable from the environment the registry was built in, so it was
+  # assembled from knowledge of the approved products.  It lives here rather
+  # than only in prose precisely so that it can be corrected: add a molecule
+  # anyone verifies against a register, and this test says what the registry
+  # is missing.
+  # A deliberate exclusion is NOT in this list and is argued in
+  # docs/antihypertensives.md section 13: the arrhythmia-only beta blockers
+  # (sotalol, landiolol), the subarachnoid-haemorrhage-only dihydropyridine
+  # (nimodipine), ophthalmic-only beta blockers, finerenone (no hypertension
+  # indication), the carbonic-anhydrase inhibitors and the vasopressin
+  # antagonists.
+  classes <- list(
+    arb = c("azilsartan medoxomil", "candesartan cilexetil", "eprosartan",
+            "irbesartan", "losartan", "olmesartan medoxomil", "telmisartan",
+            "valsartan"),
+    acei = c("benazepril", "captopril", "enalapril", "enalaprilat",
+             "fosinopril", "lisinopril", "moexipril", "perindopril",
+             "quinapril", "ramipril", "trandolapril"),
+    ccb = c("amlodipine", "clevidipine", "diltiazem", "felodipine",
+            "isradipine", "levamlodipine", "nicardipine", "nifedipine",
+            "nisoldipine", "verapamil"),
+    beta = c("acebutolol", "atenolol", "betaxolol", "bisoprolol",
+             "carteolol", "carvedilol", "esmolol", "labetalol",
+             "metoprolol succinate", "metoprolol tartrate", "nadolol",
+             "nebivolol", "penbutolol", "pindolol", "propranolol",
+             "timolol"),
+    diuretic = c("amiloride", "bendroflumethiazide", "bumetanide",
+                 "chlorothiazide", "chlorothiazide sodium", "chlorthalidone",
+                 "eplerenone", "ethacrynate sodium", "ethacrynic acid",
+                 "furosemide", "hydrochlorothiazide", "hydroflumethiazide",
+                 "indapamide", "methyclothiazide", "metolazone",
+                 "polythiazide", "quinethazone", "spironolactone",
+                 "torsemide", "triamterene", "trichlormethiazide"))
+  for (cls in names(classes))
+    expect_true(all(classes[[cls]] %in% registry$drug),
+                info = paste(cls,
+                             paste(setdiff(classes[[cls]], registry$drug),
+                                   collapse = " / ")))
+  # Not one of them smuggled in a curve or a pressure
+  inClasses <- registry[registry$drug %in% unlist(classes), ]
+  expect_false(any(inClasses$bp_simulation_enabled))
+})
+
+test_that("an ingredient-identity row claims identity and nothing else", {
+  # These rows were written WITHOUT the label, because DailyMed and the
+  # openFDA API are unreachable from the environment the registry is built
+  # in.  That is a weaker citation than the rows around them and it carries
+  # its own source_type so the difference cannot be lost: an
+  # ingredient_catalog row asserts ingredient, class, route and formulation,
+  # and asserts nothing numeric and nothing about current marketing.
+  ingr <- registry[registry$source_type == "ingredient_catalog", ]
+  expect_gt(nrow(ingr), 15)
+  # Nothing fitted and nothing read from a label: it must NOT claim
+  # official_label_descriptive, which would assert descriptors nobody opened
+  expect_true(all(ingr$pk_evidence == "proposed_unfitted"))
+  expect_true(all(ingr$pd_evidence == "proposed_unfitted"))
+  expect_true(all(ingr$execution_status == "descriptive_only"))
+  expect_true(all(is.na(ingr$stanpumpr_drug)))
+  expect_false(any(ingr$bp_simulation_enabled))
+  expect_equal(sum(parameters$model_id %in% ingr$model_id), 0)
+  # A matrix is source-specific -- clevidipine's is whole blood,
+  # chlorthalidone's is plasma although the drug sits in the erythrocytes --
+  # so a row with no source must not name one
+  expect_true(all(is.na(ingr$matrix)))
+  # Every one of them is in the catalog half of the registry, so the
+  # catalog invariants above apply to it too
+  expect_true(all(grepl("__catalog__none__", ingr$model_id)))
+  # The citation is an ingredient SEARCH, never a document: a setid here
+  # would be an invented identifier for a label that was never opened
+  expect_true(all(grepl("^https://dailymed\\.nlm\\.nih\\.gov/dailymed/search\\.cfm\\?",
+                        ingr$source_url)))
+  expect_false(any(grepl("setid", ingr$source_url)))
+  # and the row says so in words, where a reader will see it
+  expect_true(all(grepl("INGREDIENT IDENTITY ONLY", ingr$limitations,
+                        fixed = TRUE)))
+  expect_true(all(grepl("marketing status is unverified", ingr$limitations,
+                        fixed = TRUE)))
+})
+
+test_that("the two kinds of catalog row are counted, so the gap stays visible", {
+  # Closing an ingredient-identity row means opening its label and giving it
+  # a setid.  This test is the progress bar: it fails if the counts move
+  # without someone saying so, in either direction.
+  #
+  # The real division is DOCUMENT OPENED against NO DOCUMENT OPENED, which is
+  # not the same as label against no label: three of the 69 opened something
+  # that is not a US official label, and calling all 69 label-bearing was an
+  # error in the first version of this test and of the prose around it.
+  catalog <- registry[grepl("__catalog__none__", registry$model_id), ]
+  withDocument <- catalog[catalog$source_type != "ingredient_catalog", ]
+  officialLabel <- catalog[catalog$source_type == "official_label", ]
+  otherDocument <- catalog[!catalog$source_type %in%
+                             c("ingredient_catalog", "official_label"), ]
+  ingredientOnly <- catalog[catalog$source_type == "ingredient_catalog", ]
+  expect_equal(nrow(withDocument), 69)
+  expect_equal(nrow(officialLabel), 66)
+  expect_equal(nrow(ingredientOnly), 21)
+  # The three that opened something else, named so that a reader of the
+  # 66/69 split can see exactly what the difference is
+  expect_equal(nrow(otherDocument), 3)
+  expect_setequal(otherDocument$source_type,
+                  c("primary_fitted", "regional_monograph",
+                    "regional_registration"))
+  expect_setequal(otherDocument$drug,
+                  c("azilsartan medoxomil", "canrenone", "urapidil"))
+  # A row that opened a document records descriptors, whichever document it
+  # was: that is the whole difference between the two kinds
+  expect_true(all(withDocument$pk_evidence == "official_label_descriptive"))
 })

@@ -47,3 +47,17 @@ test_that("the female volume term applies", {
   m <- 62.5 * (81 / 81)^0.216 * (61 / 61)^-0.189 * 0.889
   expect_equal(f, m, tolerance = 1e-8)
 })
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).  Worked out by hand from
+  # the published equations, not from the code under test.
+  # Cockcroft-Gault at the assumed 0.9 mg/dL is 126.866 mL/min, below the
+  # Tietz cap of 140 x BSA(91.34 kg, 170 cm)/1.73 = 164 mL/min.
+  # CL/F = 6.58 x (126.866/93)^0.406 x (91.343469/81)^-0.278 x 0.849;
+  # V/F  = 62.5 x (91.343469/81)^0.216 x (50/61)^-0.189.
+  actual <- rivaroxaban(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(actual[c("v1", "cl1")],
+                       list(v1 = 66.600210, cl1 = 0.10214728))
+})

@@ -832,7 +832,7 @@ helpScenarioDefinitions <- function() {
       "vka-fluindione-acenocoumarol",
       "Fluindione and acenocoumarol: two INR time courses",
       "Long-term therapy",
-      "Fluindione 20 mg/day and acenocoumarol 4 mg/day begun together in a CYP2C9 wild-type, VKORC1-sensitive (AA) patient: the slowly cleared fluindione builds to a steady INR near its Table IV value while the fast-clearing acenocoumarol swings between doses. Change the CYP2C9 and VKORC1 fields to see a *3 carrier or a less-sensitive genotype shift both lines.",
+      "A hypothetical side-by-side comparison of the two 2012 research models (not a treatment plan, and not a combined response): fluindione 20 mg/day and acenocoumarol 4 mg/day, each in its own INR panel, for a CYP2C9 wild-type, VKORC1-sensitive (AA) patient. The slowly cleared fluindione builds to a steady INR near its Table IV value while the fast-clearing acenocoumarol swings between doses. Change the CYP2C9 and VKORC1 fields to see a *3 carrier or a less-sensitive genotype shift both.",
       age = 60, weight = 69, height = 170, sex = SEX_MALE,
       cyp2c9 = "*1/*1", vkorc1 = "AA",
       doses = helpDoses(

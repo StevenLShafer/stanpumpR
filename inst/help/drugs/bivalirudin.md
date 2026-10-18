@@ -4,7 +4,7 @@ This is a research and teaching model of concentration. It is **not** validated 
 
 ### The model
 
-Bivalirudin kinetics are from Zhang and colleagues (*Acta Pharmacol Sin* 2012;33:1387-1394), a two-compartment model fitted to 36 young healthy Chinese volunteers given 0.5, 0.75 or 1.05 mg/kg as an intravenous bolus, or the percutaneous-intervention regimen of a 0.75 mg/kg bolus followed by 1.75 mg/kg/h for four hours. Every parameter is per kilogram of body weight, with no estimated covariate: clearance 0.323 L/h/kg, central volume 0.086 L/kg, intercompartmental clearance 0.0957 L/h/kg and peripheral volume 0.0554 L/kg. At 70 kg the half-lives are about 6 and 27 minutes; the label's terminal half-life in normal renal function is 25 minutes.
+Bivalirudin kinetics are from Zhang and colleagues (*Acta Pharmacol Sin* 2012;33:1387-1394), a two-compartment model fitted to 36 young healthy Chinese volunteers given 0.5, 0.75 or 1.05 mg/kg as an intravenous bolus, or the percutaneous-intervention regimen of a 0.75 mg/kg bolus followed by 1.75 mg/kg/h for four hours. Every parameter is per kilogram of body weight, with no estimated covariate: clearance 0.323 L/h/kg, central volume 0.086 L/kg, intercompartmental clearance 0.0957 L/h/kg and peripheral volume 0.0554 L/kg. At 70 kg the model's two half-lives are about 8 and 35 minutes; the label's terminal half-life in normal renal function is 25 minutes, so the model's terminal phase is somewhat slower than the label's.
 
 ### Covariates
 

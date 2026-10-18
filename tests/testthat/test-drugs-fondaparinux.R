@@ -53,3 +53,18 @@ test_that("a subcutaneous mg dose reaches a sensible concentration", {
   expect_gt(ss, 0.3)
   expect_lt(ss, 1.0)
 })
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).  Worked out by hand from
+  # the published equations, not from the code under test.
+  # Simplified MDRD at the assumed 0.9 mg/dL and 50 y: 89.321 mL/min/1.73 m^2.
+  # Cl/F = 0.278 x (91.343469/68)^0.534 x (89.321/87)^0.532 x (50/74)^-0.461;
+  # V2/F = 8.14 x (91.343469/68)^0.522; V3/F = 15.6 x 1.3049067; Q/F = 0.082 x
+  # 1.2209126.
+  actual <- fondaparinux(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
+                       list(v1 = 9.4957311, v2 = 20.356545,
+                            cl1 = 0.0065903437, cl2 = 0.0016685806))
+})

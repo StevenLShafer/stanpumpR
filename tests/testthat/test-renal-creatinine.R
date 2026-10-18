@@ -9,7 +9,12 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # R/drugs_rivaroxaban.R, R/drugs_edoxaban.R, R/drugs_dabigatran.R,
                 # R/drugs_enoxaparin.R and R/drugs_fondaparinux.R, which use MDRD)
                 "apixaban", "rivaroxaban", "edoxaban", "dabigatran",
-                "enoxaparin", "fondaparinux")
+                "enoxaparin", "fondaparinux",
+                # Renal function is hydrochlorothiazide's ONLY covariate
+                # (R/drugs_hydrochlorothiazide.R, Van Wart 2013): the source
+                # fitted no body-size term either, so weight reaches it only
+                # through Cockcroft-Gault.
+                "hydrochlorothiazide")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).

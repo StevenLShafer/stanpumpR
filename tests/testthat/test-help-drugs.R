@@ -65,6 +65,9 @@ plasmaOnly <- c(
   # The opt-in illicit research models (2026-10-17) are plasma only: see
   # inst/extdata/illicitRouteRegistry.csv and each drug's header.
   "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
+  # carfentanil (2026-10-18) borrows sufentanil's DISPOSITION only, so
+  # sufentanil's tPeak deliberately does not come with it: R/drugs_carfentanil.R
+  "carfentanil",
   # Antipsychotics: occupancy is a direct function of plasma, or no effect is
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
@@ -89,7 +92,7 @@ plasmaOnly <- c(
   # publishes an equilibration rate constant, and no blood pressure is
   # plotted for any drug in the library (docs/antihypertensives.md).
   "clevidipine", "fenoldopamPediatric", "carvedilol",
-    "azilsartan", "chlorthalidone"
+    "azilsartan", "chlorthalidone", "hydrochlorothiazide"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

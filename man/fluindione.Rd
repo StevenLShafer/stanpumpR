@@ -23,8 +23,10 @@ fluindione(
 
 \item{sex}{sex as a string (not used)}
 
-\item{adjustToFFM}{accepted for a common signature but not used: fluindione
-carries its own body-weight covariate, applied in both switch positions}
+\item{adjustToFFM}{when \code{TRUE} the source's weight covariate on CL and
+V1 is evaluated at the fat-free-mass pharmacokinetic weight and the
+size-free Q and V2 take the library factors; when \code{FALSE} total body
+weight is used and Q and V2 are the published values}
 
 \item{cyp2c9}{CYP2C9 diplotype, one of \code{CYP2C9_VALUES}. A \code{*3}
 carrier has reduced clearance; every other diplotype takes the wild-type
