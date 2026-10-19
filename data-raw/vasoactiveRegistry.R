@@ -19,6 +19,10 @@
 #   needs_full_text    a candidate model exists, but the numbers that fix it
 #                      could not be read here (abstract only, or a full text
 #                      whose tables were stripped)
+#   complete_not_implemented
+#                      a complete model, read and checked, of a drug the
+#                      library already offers from another source; kept as
+#                      the record of an alternative, not a second curve
 #   no_suitable_model  no published model this engine can represent: the
 #                      drug is not measured (nitroprusside), its kinetics are
 #                      sub-second and dose-dependent (adenosine), or it has no
@@ -34,7 +38,8 @@
 # Checked by tests/testthat/test-vasoactive-registry.R.
 # -----------------------------------------------------------------------------
 
-READINESS <- c("implemented", "needs_full_text", "no_suitable_model")
+READINESS <- c("implemented", "needs_full_text", "complete_not_implemented",
+               "no_suitable_model")
 EVIDENCE  <- c("full_text", "abstract", "none")
 
 pubmed <- function(pmid) paste0("https://pubmed.ncbi.nlm.nih.gov/", pmid, "/")
@@ -103,18 +108,18 @@ registry <- rbind(
       "Li Y, Koomen JV, Eleveld DJ, et al. Population pharmacokinetic modelling of norepinephrine in healthy volunteers prior to and during general anesthesia. Clin Pharmacokinet 2024;63:1597-1608. PMID 39465453, PMC11573843.",
       doi("10.1007/s40262-024-01430-y")),
   reg("norepinephrine__septic_trauma__beloeil2005", "norepinephrine",
-      "12 septic shock and 11 trauma patients", "norepinephrine", "plasma",
-      "needs_full_text", NA, "abstract",
-      "One compartment with SAPS II on clearance, but the covariate equation is not in the abstract.",
-      "Beloeil H et al. Norepinephrine kinetics and dynamics in septic shock and trauma patients. Br J Anaesth 2005;95:782-788. PMID 16227334, doi 10.1093/bja/aei259.",
-      "Beloeil H et al. Br J Anaesth 2005;95:782-788. PMID 16227334.",
+      "12 septic shock and 11 trauma patients, sedated and ventilated", "norepinephrine", "plasma (arterial)",
+      "complete_not_implemented", NA, "full_text",
+      "Read from the supplied article: one compartment, CL = 59 600 / SAPS II mL/min and V 8840 mL (Table 3), which reproduces the paper's three worked clearances and half-lives (SAPS II 20, 30, 66).  Not offered beside Li 2024: SAPS II is not a Patient Profile field, and the dose basis is unstated in a French study, where norepinephrine is often dosed as the tartrate, twice the base.  Clearance at SAPS II 50 is 1.19 L/min, about half the healthy volunteers' 2.1.",
+      NA,
+      "Beloeil H, Mazoit JX, Benhamou D, Duranteau J. Norepinephrine kinetics and dynamics in septic shock and trauma patients. Br J Anaesth 2005;95:782-788. PMID 16227334.",
       doi("10.1093/bja/aei259")),
   reg("norepinephrine__children__oualha2014", "norepinephrine",
-      "critically ill children", "norepinephrine", "plasma",
-      "needs_full_text", NA, "abstract",
-      "One compartment with weight^0.75 on clearance and endogenous production; no typical values in the abstract and the PubMed Central body came back empty.",
-      "Oualha M et al. Population pharmacokinetics and haemodynamic effects of norepinephrine in hypotensive critically ill children. Br J Clin Pharmacol 2014;78:886-897. PMID 24802558, doi 10.1111/bcp.12412 (PMC4239982).",
-      "Oualha M et al. Br J Clin Pharmacol 2014;78:886-897. PMID 24802558.",
+      "38 hypotensive critically ill children, 2-85 kg (median 6.7)", "norepinephrine", "plasma",
+      "complete_not_implemented", NA, "full_text",
+      "Read from the supplied article and supplement (definitions only): one compartment, CL 6.6 L/h x BW^0.75, endogenous production 3.12 mcg/h x BW^0.75, V fixed at the circulating volume 0.08 L/kg (Table 2); it reproduces its own 10 kg example and Figure 8.  A candidate for a paediatric norepinephrine; not offered yet because the dose basis is unstated and the product used (noradrenaline 2 mg/mL, Renaudin) may be labelled as the tartrate, a factor of two.",
+      NA,
+      "Oualha M, Treluyer JM, Lesage F, et al. Population pharmacokinetics and haemodynamic effects of norepinephrine in hypotensive critically ill children. Br J Clin Pharmacol 2014;78:886-897. PMID 24802558.",
       doi("10.1111/bcp.12412")),
   reg("norepinephrine__joachim2024", "norepinephrine",
       "adults", "norepinephrine", "plasma",
@@ -203,8 +208,8 @@ registry <- rbind(
   reg("verapamil__healthy__dominic1981", "verapamil",
       "8 healthy men", "racemic verapamil", "plasma",
       "needs_full_text", NA, "abstract",
-      "Two compartments, but the abstract's V (178 L) exceeds CL/beta and so cannot be Vss: three usable numbers for four parameters, and no central volume.  Enantiomer kinetics differ (Eichelbaum 1984).",
-      "Dominic JA et al. The pharmacology of verapamil. III. Pharmacokinetics in normal subjects after intravenous and oral dosing. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352, doi 10.1097/00005344-198101000-00003.  Also Kates 1981 (Clin Pharmacol Ther 30:44, doi 10.1038/clpt.1981.125), McAllister 1982 (doi 10.1038/clpt.1982.54), Eichelbaum 1984 (PMC1463390).",
+      "Two compartments, but the abstract's V (178 L) exceeds CL/beta and so cannot be Vss: three usable numbers for four parameters, and no central volume.  Enantiomer kinetics differ (Eichelbaum 1984).  Two supplied papers, Fuenmayor 1992 (Drugs 44 Suppl 1:1-11) and Saseen 2013 (J Clin Pharmacol), are oral steady-state studies and give no intravenous model.",
+      "Schomerus M, Spiegelhalder B, Stieren B, Eichelbaum M. Physiological disposition of verapamil in man. Cardiovasc Res 1976;10:605-612; Dominic JA et al. The pharmacology of verapamil. III. Pharmacokinetics in normal subjects after intravenous and oral dosing. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352, doi 10.1097/00005344-198101000-00003.  Also Kates 1981 (Clin Pharmacol Ther 30:44, doi 10.1038/clpt.1981.125), McAllister 1982 (doi 10.1038/clpt.1982.54), Eichelbaum 1984 (PMC1463390).",
       "Dominic JA et al. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352.",
       doi("10.1097/00005344-198101000-00003")),
   reg("diltiazem__healthy__kolle1983", "diltiazem",
@@ -214,19 +219,26 @@ registry <- rbind(
       "Kolle EU, Ochs HR, Vollmer KO. Pharmacokinetic model of diltiazem. Arzneimittelforschung 1983;33:972-977. PMID 6684932; Ochs HR, Knuchel M. Klin Wochenschr 1984;62:303 (doi 10.1007/BF01716446); Dias VC et al. Circulation 1992;86:1421 (doi 10.1161/01.cir.86.5.1421).",
       "Kolle EU, Ochs HR, Vollmer KO. Arzneimittelforschung 1983;33:972-977. PMID 6684932.",
       pubmed(6684932)),
-  reg("propranolol__controls__cheymol1987", "propranolol",
-      "12 control subjects, 8 mg IV", "propranolol", "plasma",
-      "needs_full_text", NA, "abstract",
-      "CL 75.9 L/h, Vss 318.6 L and terminal half-life 3.1 h: one distribution half-life short of a two-compartment model.",
-      "Fagan TC et al. Early kinetics of intravenous propranolol. Br J Clin Pharmacol 1982;13:571-574 (free scan PMC1402040; doi 10.1111/j.1365-2125.1982.tb01424.x); Cheymol G et al. Comparative pharmacokinetics of intravenous propranolol in obese and normal volunteers. J Clin Pharmacol 1987;27:874-879 (doi 10.1002/j.1552-4604.1987.tb05582.x).",
-      "Cheymol G et al. J Clin Pharmacol 1987;27:874-879. PMID 3429695.",
+  reg("propranolol__healthy__fagan1982", "propranolol",
+      "6 healthy men, 0.05 mg/kg at 1 mg/min", "propranolol (racemic)", "plasma",
+      "implemented", "propranolol", "full_text",
+      "Read from the supplied letter: three compartments derived exactly from Table 1's mean triexponential (V1 11.1 L, CL 1.11 L/min, Vss 264 L); the mean curve's AUC matches the printed 57.6 ng h/mL.  Checked against Cheymol 1987's normal-weight controls (CL 75.9 L/h, Vss 318.6 L, 3.1 h), all within 17%.  Six young men; clearance follows hepatic blood flow.",
+      NA,
+      "Fagan TC, Walle T, Walle UK, Conradi EC, Harmon G, Gaffney TE. Early kinetics of intravenous propranolol. Br J Clin Pharmacol 1982;13:571-574. PMID 7066173.",
+      doi("10.1111/j.1365-2125.1982.tb01424.x")),
+  reg("propranolol__obese_controls__cheymol1987", "propranolol",
+      "12 obese and 12 normal-weight volunteers, 8 mg over 10 min", "propranolol (racemic)", "plasma",
+      "complete_not_implemented", NA, "full_text",
+      "Read from the supplied article: two compartments, but only CL, Vss, V-beta and the terminal half-life (Table II), one short of a model.  Used as the external check on Fagan 1982, and its obese subjects' lower clearance and volume support scaling to fat-free mass.",
+      NA,
+      "Cheymol G, Poirier JM, Barre J, Pradalier A, Dry J. Comparative pharmacokinetics of intravenous propranolol in obese and normal volunteers. J Clin Pharmacol 1987;27:874-879. PMID 3429695.",
       doi("10.1002/j.1552-4604.1987.tb05582.x")),
   reg("metoprolol__cyp2d6__leemann1993", "metoprolol",
-      "healthy extensive and poor metabolisers", "metoprolol", "plasma",
-      "needs_full_text", NA, "abstract",
-      "Every reachable abstract gives at most CL and the terminal half-life, or Vss alone.  CYP2D6 phenotype changes Vss as well as clearance after IV dosing.",
-      "Leemann TD, Devi KP, Dayer P. Eur J Clin Pharmacol 1993;45:65-71 (IV metoprolol by debrisoquine phenotype). PMID 8405032, doi 10.1007/BF00315352; Regardh 1974, J Pharmacokinet Biopharm 2:347-364 (doi 10.1007/BF01061407).",
-      "Leemann TD, Devi KP, Dayer P. Eur J Clin Pharmacol 1993;45:65-71. PMID 8405032.",
+      "7 healthy men, 4 extensive and 3 poor CYP2D6 metabolisers, 20 mg tartrate over 20 min", "metoprolol (racemic)", "whole blood",
+      "needs_full_text", NA, "full_text",
+      "Read from the supplied article: biexponential fits, but only clearance and Vss are reported (Table 1; extensive 1.08 L/h/kg and 4.84 L/kg, poor 0.43 and 2.83), not the coefficients and exponents, so no model can be rebuilt.  It does show that a CYP2D6 covariate must act on volume as well as clearance.",
+      "Regardh CG, Johnsson G. Clinical pharmacokinetics of metoprolol. Clin Pharmacokinet 1980;5:557-569; Regardh CG, Johnsson G, Jordo L, et al. Plasma concentrations and beta-blocking effects in normal volunteers after intravenous doses of metoprolol and propranolol. J Cardiovasc Pharmacol 1980;2:715-723; Richard J, Cardot J, Godbillon J. Inter- and intra-subject variability of metoprolol kinetics after intravenous administration. Eur J Drug Metab Pharmacokinet 1994;19:157-162 (doi 10.1007/BF03188836); Regardh 1974 (PMID 4155762) was unavailable.  Zamir 2022's systematic review (Clin Pharmacokinet 61:1095, read in full) tabulates only CL and ke for the IV studies, and its ke of 1.01 /h beside CL 48 L/h is not a disposition rate.",
+      "Leemann TD, Devi KP, Dayer P. Similar effect of oxidation deficiency (debrisoquine polymorphism) and quinidine on the apparent volume of distribution of (+/-)-metoprolol. Eur J Clin Pharmacol 1993;45:65-71. PMID 8405032.",
       doi("10.1007/BF00315352"), "metoprolol__tartrate_injection__iv__catalog__none__label"),
   reg("esmolol__cabg__debruijn1987", "esmolol",
       "13 of 19 patients anaesthetised for CABG on chronic beta blockers", "esmolol", "whole blood (internal jugular)",
@@ -299,6 +311,7 @@ GS  <- doi("10.2165/00003088-198409060-00004")
 DB  <- doi("10.1097/00000542-198703000-00010")
 MG  <- doi("10.1097/00000542-200002000-00013")
 HI  <- doi("10.1002/jps.2600740702")
+FA  <- doi("10.1111/j.1365-2125.1982.tb01424.x")
 
 parameters <- rbind(
   par("epinephrine", "CL", 127, "L/h at 70 kg, SAPS II 50", "estimated", "full_text", AB),
@@ -370,6 +383,15 @@ parameters <- rbind(
   par("atropine", "Vdss (check only)", 210, "L", "estimated", "full_text", HI),
   par("atropine", "V2", 192.0, "L", "derived", "full_text", HI),
   par("atropine", "base per sulfate", 0.8329, "2 x 289.37/694.83", "derived", "full_text", HI),
+
+  par("propranolol", "P", 317, "ng/mL per 3.8 mg (bolus-equivalent)", "estimated", "full_text", FA),
+  par("propranolol", "A", 17.2, "ng/mL per 3.8 mg", "estimated", "full_text", FA),
+  par("propranolol", "B", 9.3, "ng/mL per 3.8 mg", "estimated", "full_text", FA),
+  par("propranolol", "pi", 0.856, "/min", "estimated", "full_text", FA),
+  par("propranolol", "alpha", 0.0548, "/min", "estimated", "full_text", FA),
+  par("propranolol", "beta", 0.203, "/h", "estimated", "full_text", FA),
+  par("propranolol", "V1", 11.06, "L", "derived", "full_text", FA),
+  par("propranolol", "CL", 1.107, "L/min", "derived", "full_text", FA),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "abstract", AR),
   par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "abstract", AR),

@@ -411,6 +411,7 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
 helpVasoactiveRegistryMarkdown <- function(registry = vasoactiveRegistry()) {
   status <- c(implemented = "In the library",
               needs_full_text = "Needs the paper",
+              complete_not_implemented = "Read; not offered",
               no_suitable_model = "No usable model")
   read <- c(full_text = "full text", abstract = "abstract", none = "citation only")
   registry <- registry[order(tolower(registry$drug),

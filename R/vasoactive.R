@@ -68,3 +68,44 @@ twoCompartmentFromCentralVolume <- function(CL, V1, thalf1, thalf2)
     stop("These numbers have no physically admissible two-compartment model")
   list(v1 = V1, v2 = k12 * V1 / k21, cl1 = CL, cl2 = k12 * V1)
 }
+
+#' Three-compartment parameters from a triexponential disposition function
+#'
+#' The unique mammillary model whose unit-bolus response is
+#' \eqn{\sum_i c_i e^{-\lambda_i t}}.  The central volume is
+#' \eqn{1/\sum c_i}; the two return rate constants \eqn{k_{21}} and
+#' \eqn{k_{31}} are the roots of the numerator of the Laplace transform,
+#' \eqn{\sum_i c_i \prod_{j \ne i} (s + \lambda_j) = (s + k_{21})(s + k_{31})/V_1};
+#' then \eqn{k_{10} = \lambda_1 \lambda_2 \lambda_3 / (k_{21} k_{31})}, and
+#' \eqn{k_{12}}, \eqn{k_{13}} follow from the sum and the pairwise products of
+#' the exponents.  Used by propranolol (Fagan 1982).  Refuses a
+#' triexponential with no admissible mammillary model.
+#'
+#' @param coefficients the three coefficients per unit dose (1/volume)
+#' @param exponents the three exponents (1/time), in any order matching the
+#'   coefficients
+#' @returns a list of \code{v1}, \code{v2}, \code{v3}, \code{cl1},
+#'   \code{cl2}, \code{cl3}, with compartment 2 the faster peripheral
+#' @keywords internal
+threeCompartmentFromTriexponential <- function(coefficients, exponents)
+{
+  c1 <- coefficients; l <- exponents
+  V1 <- 1 / sum(c1)
+  b1 <- V1 * (c1[1] * (l[2] + l[3]) + c1[2] * (l[1] + l[3]) + c1[3] * (l[1] + l[2]))
+  b0 <- V1 * (c1[1] * l[2] * l[3] + c1[2] * l[1] * l[3] + c1[3] * l[1] * l[2])
+  disc <- b1^2 - 4 * b0
+  if (!(disc > 0))
+    stop("This triexponential has no physically admissible three-compartment model")
+  k21 <- (b1 + sqrt(disc)) / 2
+  k31 <- (b1 - sqrt(disc)) / 2
+  k10 <- prod(l) / (k21 * k31)
+  s1 <- sum(l) - k10 - k21 - k31                                      # k12 + k13
+  s2 <- l[1] * l[2] + l[1] * l[3] + l[2] * l[3] -
+    k10 * k21 - k10 * k31 - k21 * k31                                 # k12 k31 + k13 k21
+  k12 <- (s2 - s1 * k21) / (k31 - k21)
+  k13 <- s1 - k12
+  if (!all(c(k10, k12, k13, k21, k31) > 0))
+    stop("This triexponential has no physically admissible three-compartment model")
+  list(v1 = V1, v2 = V1 * k12 / k21, v3 = V1 * k13 / k31,
+       cl1 = V1 * k10, cl2 = V1 * k12, cl3 = V1 * k13)
+}

@@ -1,6 +1,6 @@
 ## Vasoactive and resuscitation drugs
 
-The intravenous vasopressors, vasodilators, rate-control and antiarrhythmic drugs, and resuscitation drugs of intensive care are listed under **Vasoactive and resuscitation** in the startup menu: [atropine](help:drugs/atropine), [diltiazem](help:drugs/diltiazem), [dopamine](help:drugs/dopamine), [epinephrine](help:drugs/epinephrine), [esmolol](help:drugs/esmolol), [labetalol](help:drugs/labetalol), [magnesium sulfate](help:drugs/magnesiumSulfate), [nitroglycerin](help:drugs/nitroglycerin), [norepinephrine](help:drugs/norepinephrine) and [procainamide](help:drugs/procainamide). [Clevidipine](help:drugs/clevidipine) was already in the library and stays under **Antihypertensives**. Every one is a **concentration model only**: no blood pressure, heart rate or rhythm is predicted, and no drug in the group has an effect site or a shaded band.
+The intravenous vasopressors, vasodilators, rate-control and antiarrhythmic drugs, and resuscitation drugs of intensive care are listed under **Vasoactive and resuscitation** in the startup menu: [atropine](help:drugs/atropine), [diltiazem](help:drugs/diltiazem), [dopamine](help:drugs/dopamine), [epinephrine](help:drugs/epinephrine), [esmolol](help:drugs/esmolol), [labetalol](help:drugs/labetalol), [magnesium sulfate](help:drugs/magnesiumSulfate), [nitroglycerin](help:drugs/nitroglycerin), [norepinephrine](help:drugs/norepinephrine), [procainamide](help:drugs/procainamide) and [propranolol](help:drugs/propranolol). [Clevidipine](help:drugs/clevidipine) was already in the library and stays under **Antihypertensives**. Every one is a **concentration model only**: no blood pressure, heart rate or rhythm is predicted, and no drug in the group has an effect site or a shaded band.
 
 ### Why not all of them
 
@@ -14,7 +14,7 @@ A drug is offered only where a published model could be read and checked. That r
 
 ### Where each drug stands
 
-One row per drug and candidate source, from `inst/extdata/vasoactiveRegistry.csv`. "Needs the paper" means a model exists whose numbers could not be read here; "no usable model" means none exists that this engine could represent.
+One row per drug and candidate source, from `inst/extdata/vasoactiveRegistry.csv`. "Needs the paper" means a model exists whose numbers could not be read here; "read; not offered" is a complete model of a drug already offered from another source, kept as the record of an alternative; "no usable model" means none exists that this engine could represent.
 
 <!-- generated: vasoactive-registry-table -->
 

@@ -5,13 +5,14 @@
 registry   <- vasoactiveRegistry()
 parameters <- vasoactiveParameters()
 
-READINESS <- c("implemented", "needs_full_text", "no_suitable_model")
+READINESS <- c("implemented", "needs_full_text", "complete_not_implemented",
+               "no_suitable_model")
 EVIDENCE  <- c("full_text", "abstract", "none")
 
 # The drugs implemented new for this registry, in its own category.
 IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "nitroglycerin", "norepinephrine", "procainamide", "esmolol",
-                 "dopamine", "atropine")
+                 "dopamine", "atropine", "propranolol")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -77,6 +78,14 @@ test_that("a model built from an abstract says so, and names the paper to obtain
   expect_true(all(grepl("PMID|doi|PMC|NDA", waiting$to_obtain)))
 })
 
+test_that("a complete model that is not offered is a second source for an offered drug", {
+  alt <- registry[registry$readiness == "complete_not_implemented", ]
+  expect_gt(nrow(alt), 0)
+  expect_true(all(alt$evidence_read == "full_text"))
+  offered <- unique(registry$drug[registry$readiness == "implemented"])
+  expect_true(all(alt$drug %in% offered))
+})
+
 test_that("a drug with no suitable model gives the reason", {
   none <- registry[registry$readiness == "no_suitable_model", ]
   expect_setequal(none$drug, c("sodium nitroprusside", "vasopressin", "ephedrine",
@@ -138,6 +147,10 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(round(esm$v2, 3), value("esmolol", "V2"))
   expect_equal(round(esm$cl2, 4), value("esmolol", "Q"))
   expect_equal(round(ATROPINE_VP * ATROPINE_KPT / ATROPINE_KTP, 1), value("atropine", "V2"))
+  prop <- threeCompartmentFromTriexponential(PROPRANOLOL_COEF / 1000 / PROPRANOLOL_DOSE,
+                                             PROPRANOLOL_EXP)
+  expect_equal(round(prop$v1, 2), value("propranolol", "V1"))
+  expect_equal(round(prop$cl1, 3), value("propranolol", "CL"))
   expect_equal(value("nitroglycerin", "CL"), NITROGLYCERIN_CL)
   expect_equal(value("nitroglycerin", "time constant"), NITROGLYCERIN_TAU)
   # The derived values, to their printed precision
