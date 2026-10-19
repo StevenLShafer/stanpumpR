@@ -64,10 +64,10 @@ See [Reading the plot](help:reading-the-plot).
 
 ## 5. Refine
 
-**Graph Options** sets how far the simulation runs (*Max time*, whose choices follow the time units), line styles, normalization, a log axis, the *Time until threshold* lines, and the *Minto / Schnider* switch that draws those propofol and remifentanil models beside the library's own.
+The **Time** panel sets the time units and how far the simulation runs (*Max time*, whose choices follow the units). **Graph Options** sets line styles, normalization, a log axis, the *Time until threshold* lines, and the *Minto / Schnider* switch that draws those propofol and remifentanil models beside the library's own.
 
 <figure class="help-figure help-figure-narrow">
-<img src="stanpumpr-assets/help/quick-start-graph-options.png" alt="The Graph Options panel: Show typical, Normalize to, Max time, plasma and effect-site line styles, Y axis height, Time until threshold, the opioid-MAC interaction checkbox and the Minto / Schnider switch">
+<img src="stanpumpr-assets/help/quick-start-graph-options.png" alt="The Graph Options panel: Show typical, Normalize to, plasma and effect-site line styles, Y axis height, Time until threshold, the opioid-MAC interaction checkbox and the Minto / Schnider switch">
 <figcaption>The Graph Options panel.</figcaption>
 </figure>
 
