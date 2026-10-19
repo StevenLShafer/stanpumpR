@@ -172,6 +172,20 @@
 # low-concentration limit Vmax / Km, rises 1.1 / 0.48 = 2.3-fold, which is a
 # consequence of the two factors and not a measured clearance.
 #
+# INDEPENDENT CHECK (Dam 1979, read in full, 2026-10-19): Dam, Christiansen,
+# Munck and Mygind (Clin Pharmacokinet 1979;4:53-62, Table II) give each
+# woman's apparent phenytoin clearance, the daily dose over the trough level,
+# through pregnancy and after delivery, with the doses ADJUSTED to keep the
+# level in the therapeutic range.  Because the level was held, the ratio of
+# dose over level in late pregnancy to the same after delivery is the ratio
+# of the elimination rate at about the same total concentration, which the
+# two factors predict without any further assumption: at 15 mg/L,
+# 1.1 x (9.19 + 15) / (9.19 x 0.48 + 15) = 1.37.  In Dam's seven women with
+# data at both times (weeks 37-40 against the latest postpartum values,
+# weeks 8-20 where measured), the ratios were 1.08, 1.14, 3.33, 2.02, 1.61,
+# 1.37 and 1.22: median 1.37, geometric mean 1.56.  The factors were fitted
+# to Tomson's constant-dose data and reproduce Dam's dose-adjusted median.
+#
 # WHAT THIS MEANS FOR THE CURVE: the library plots TOTAL phenytoin, and the
 # 10-20 mg/L band is a total-concentration band.  In late pregnancy the
 # plotted total falls below the band while the unbound, active concentration

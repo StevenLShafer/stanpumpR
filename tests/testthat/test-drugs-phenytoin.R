@@ -113,3 +113,20 @@ test_that("pregnancy: Km (total) x 0.48 and Vmax x 1.1, on every route", {
   expect_match(on$reference, "Tomson")
   expect_no_match(off$reference, "Tomson")
 })
+
+test_that("pregnancy: the factors reproduce Dam 1979's dose-adjusted clearance ratio", {
+  # Dam 1979 Table II: daily dose over trough level (mL/min) at weeks 37-40
+  # and after delivery (weeks 8-20 where measured), the dose adjusted to hold
+  # the level, so the ratio is the rise in elimination rate at about the same
+  # total concentration.  Not used to fit the factors (Tomson 1994).
+  late <- list(c(11, 14, 14, 14), c(24, 21, 19, 20), c(31, 33, 31), c(38, 39, 46),
+               c(41, 43, 45, 37), c(33, 27, 33, 38), c(22, 21, 19))
+  post <- list(c(7, 11, 16, 15), c(18, 19), c(12, 7), c(21, 21, 19),
+               c(26, 21, 28, 28), c(17, 31), c(15, 19))
+  dam <- median(mapply(function(a, b) mean(a) / mean(b), late, post))
+  expect_equal(dam, 1.365, tolerance = 1e-3)
+  on  <- getDrugPK("phenytoin", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)$michaelisMenten
+  off <- getDrugPK("phenytoin", 70, 165, 30, SEX_FEMALE)$michaelisMenten
+  rate <- function(mm, C) mm$vmax * C / (mm$km + C)
+  expect_equal(rate(on, 15) / rate(off, 15), dam, tolerance = 0.01)
+})
