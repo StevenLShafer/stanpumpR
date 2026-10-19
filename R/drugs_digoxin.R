@@ -42,7 +42,12 @@
 # oral dose, so the model is offered, as amiodarone is, only as a constant
 # oral daily rate ("mg/day PO"), applied to the apparent parameters as it
 # stands.  That reproduces the steady-state average concentration the source
-# was built to predict, and the week it takes to get there; the rise and
+# was built to predict.  The approach to it is slow: the published V2/F,
+# 22.6 L/kg (95% interval -7.8 to 53, Table IV), is about four times the
+# steady-state volume of every other digoxin source on record (3-7 L/kg), so
+# the terminal half-life is 126 h at a normal creatinine and 90% of steady
+# state takes about 16 days (4 weeks at a creatinine of 2 mg/dL), where the
+# other sources put it near a week; the rise and
 # fall after each daily tablet are not drawn.  (The source's own structure,
 # each tablet a bolus into a central volume of 1.83 L/kg, would put a spike
 # of dose / V1 on every dose that real absorption does not produce, so it is

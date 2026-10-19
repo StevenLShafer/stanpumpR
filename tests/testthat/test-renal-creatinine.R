@@ -24,7 +24,12 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "digoxin",
                 # Bedside Schwartz, CKD-EPI from 18, on clearance
                 # (R/drugs_milrinonePediatric.R, Hornik 2019)
-                "milrinonePediatric")
+                "milrinonePediatric",
+                # Cheng 1997's regressions on Cockcroft-Gault (R/drugs_digoxinIV.R)
+                "digoxinIV",
+                # el-Desoky 2005's serum creatinine term
+                # (R/drugs_digoxinIVPediatric.R)
+                "digoxinIVPediatric")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).

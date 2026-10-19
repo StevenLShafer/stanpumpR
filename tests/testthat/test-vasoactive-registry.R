@@ -14,7 +14,7 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "nitroglycerin", "norepinephrine", "procainamide", "esmolol",
                  "dopamine", "atropine", "propranolol", "digoxin",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
-                 "metoprolol", "nicardipine")
+                 "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -61,13 +61,15 @@ test_that("the category holds exactly the implemented drugs, concentration only"
     expect_equal(row$endCe, 0, info = d)
     # No band, except the published therapeutic ranges of digoxin and
     # milrinone
-    if (!d %in% c("digoxin", "milrinone", "milrinonePediatric")) {
+    if (!d %in% c("digoxin", "digoxinIV", "digoxinIVPediatric", "milrinone",
+                   "milrinonePediatric")) {
       expect_equal(row$Lower, 0, info = d)
       expect_equal(row$Upper, 0, info = d)
     }
     # Plasma only, except where a source measured the time of peak effect
     PK <- getDrugPK(d, 70, 170, 50, "male")
-    expected <- switch(d, milrinone = MILRINONE_TPEAK, atropine = ATROPINE_TPEAK, 0)
+    expected <- switch(d, milrinone = MILRINONE_TPEAK, atropine = ATROPINE_TPEAK,
+                       digoxinIV = DIGOXIN_IV_TPEAK, 0)
     expect_equal(PK$tPeak, expected, info = d)
   }
   # Clevidipine was already in the library, in the Antihypertensives category,
@@ -197,4 +199,9 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("nicardipine", "CL"), NICARDIPINE_CL)
   expect_equal(value("nicardipine", "Q"), NICARDIPINE_Q)
   expect_equal(value("nicardipine", "Vss"), NICARDIPINE_VSS)
+  expect_equal(value("digoxinIV", "CL slope"), DIGOXIN_IV_CL_SLOPE)
+  expect_equal(value("digoxinIV", "Q"), DIGOXIN_IV_Q)
+  expect_equal(value("digoxinIV", "tPeak"), DIGOXIN_IV_TPEAK)
+  expect_equal(value("digoxinIVPediatric", "CL"), DIGOXIN_IV_PED_CL)
+  expect_equal(value("digoxinIVPediatric", "SCr coefficient"), DIGOXIN_IV_PED_SCR)
 })

@@ -98,7 +98,8 @@ plasmaOnly <- c(
     "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin",
     "norepinephrine", "procainamide", "esmolol", "dopamine",
     "propranolol", "digoxin", "verapamil", "phenylephrine",
-    "milrinonePediatric", "metoprolol", "nicardipine"
+    "milrinonePediatric", "metoprolol", "nicardipine",
+    "digoxinIVPediatric"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

@@ -182,6 +182,8 @@ dopamine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#EF6C00,0,0,0,0,0,IV,
 atropine,ng,mg,mg/hr,mg,"mg,mcg/kg",#558B2F,0,0,0,0,0,IV,Vasoactive and resuscitation
 propranolol,ng,mg,mg/hr,mg,"mg,mcg/kg",#37474F,0,0,0,0,0,IV,Vasoactive and resuscitation
 digoxin,ng,,,mg/day PO,"mg/day PO",#7B1FA2,0.5,2,1,0,0,IV,Vasoactive and resuscitation
+digoxinIV,ng,mg,mcg/kg,mg,"mg,mcg,mcg/kg",#9C27B0,0.5,2,1,0,0,IV,Vasoactive and resuscitation
+digoxinIVPediatric,ng,mcg/kg,mcg/kg,mcg/kg,"mcg/kg,mcg,mg",#CE93D8,0.5,2,1,0,0,IV,Vasoactive and resuscitation
 verapamil,ng,mg,mg/hr,mg,"mg,mcg/kg,mg/hr",#00695C,0,0,0,0,0,IV,Vasoactive and resuscitation
 phenylephrine,ng,mcg,mcg/min,mcg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#5D4037,0,0,0,0,0,IV,Vasoactive and resuscitation
 milrinone,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#0277BD,100,300,167,0,0,IV,Vasoactive and resuscitation
