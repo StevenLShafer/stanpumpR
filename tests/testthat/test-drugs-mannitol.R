@@ -240,3 +240,32 @@ test_that("an invalid creatinine is rejected and a blank one is not", {
                    getDrugPK("mannitol", 70, 170, 35, "male"))
   expect_error(getDrugPK("mannitol", 70, 170, 35, "male", creatinine = NaN), "Invalid creatinine")
 })
+
+test_that("pregnancy: creatinine clearance x 1.5 when the creatinine is blank", {
+  # A woman of 30 years, 70 kg, 165 cm, creatinine blank: the Cockcroft-Gault
+  # creatinine clearance in CL1's renal factor x PREGNANCY_GFR_FACTOR, so CL1 x
+  # 1.5 (R/drugs_mannitol.R, PREGNANCY); volumes and Q unchanged.
+  on  <- getDrugPK("mannitol", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("mannitol", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("mannitol", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK[[1]]; b <- off$PK[[1]]
+  expect_equal(a$cl1 / b$cl1, PREGNANCY_GFR_FACTOR, tolerance = 1e-6)
+  same <- c("v1", "v2", "v3", "cl2", "cl3")
+  expect_true(all(same %in% names(a)))
+  expect_identical(a[same], b[same])
+  # A measured creatinine already carries the rise: no pregnancy change
+  cr <- function(p) getDrugPK("mannitol", 70, 165, 30, SEX_FEMALE, pregnant = p,
+                              creatinine = 0.6)
+  expect_identical(cr(TRUE)$PK, cr(FALSE)$PK)
+  expect_no_match(cr(TRUE)$reference, "Deferm", fixed = TRUE)
+  expect_match(on$reference, "Deferm", fixed = TRUE)
+  expect_no_match(off$reference, "Deferm", fixed = TRUE)
+  # The values the model gives with the flag on
+  actual <- mannitol(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(2.257066149, actual$v1)
+  expect_equal_rounded(7.142002171, actual$v2)
+  expect_equal_rounded(9.673140638, actual$v3)
+  expect_equal_rounded(0.0847911234, actual$cl1)
+  expect_equal_rounded(1.761002763, actual$cl2)
+  expect_equal_rounded(0.1361161556, actual$cl3)
+})

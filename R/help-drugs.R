@@ -305,6 +305,68 @@ helpScenariosUsingDrugHTML <- function(drug, scenarios = helpScenarios()) {
          "<ul>", paste(items, collapse = ""), "</ul>")
 }
 
+#' A short label for a pregnancy source: the first author's surname and year
+#'
+#' From the registry's `source` field, a semicolon-separated list of
+#' citations; the first is the one the table links.
+#' @noRd
+helpPregnancySourceShort <- function(source) {
+  first <- trimws(strsplit(source, ";", fixed = TRUE)[[1]][1])
+  if (is.na(first) || !nzchar(first)) return("")
+  author <- regmatches(first, regexpr("^[[:alpha:]'-]+", first))
+  year <- regmatches(first, regexpr("(19|20)[0-9]{2}", first))
+  label <- paste(c(author, year), collapse = " ")
+  if (nzchar(label)) label else substr(first, 1, 40)
+}
+
+#' Registry text made safe for Markdown: a literal asterisk (CYP2C9*1/*1)
+#' must not open an emphasis
+#' @noRd
+helpPregnancyEscape <- function(x) gsub("*", "\\*", x, fixed = TRUE)
+
+#' What each pregnancy group means, as the drug pages and the pregnancy page say it
+#' @noRd
+PREGNANCY_GROUP_LABELS <- c(
+  applied = "Adjusted when Pregnant is ticked.",
+  unquantified = "Changed in pregnancy, but not by an amount the library can apply: not adjusted.",
+  unchanged = "Studied in pregnancy, with no meaningful change: not adjusted.",
+  unknown = "No human pharmacokinetic data in pregnancy were found: not adjusted.",
+  source_pregnant = "The model was fitted in pregnant women, so it already describes them: Pregnant changes nothing.",
+  not_applicable = "Pregnant changes nothing for this drug."
+)
+
+#' The Pregnancy section of a drug's page
+#'
+#' The drug's row of the pregnancy registry (pregnancyFindings(),
+#' R/pregnancy.R): what is known, what the model applies, and the sources,
+#' so every drug's page says what the literature review found for it.
+#'
+#' @param drug the drug's name
+#' @returns HTML, or "" for a drug with no row
+#' @noRd
+helpDrugPregnancyHTML <- function(drug) {
+  f <- pregnancyFindings()
+  r <- f[f$drug == drug, ]
+  if (nrow(r) == 0) return("")
+  r <- r[1, ]
+  evidence <- paste(c(
+    if (nzchar(r$design)) r$design,
+    if (!is.na(r$n)) sprintf("n = %s", r$n),
+    if (nzchar(r$trimester)) sprintf("trimester: %s", r$trimester),
+    if (nzchar(r$comparator)) sprintf("compared with %s", r$comparator),
+    if (nzchar(r$confidence)) sprintf("confidence %s", r$confidence)
+  ), collapse = "; ")
+  md <- c(
+    sprintf("**%s** %s", PREGNANCY_GROUP_LABELS[[r$group]], helpPregnancyEscape(r$finding)),
+    if (nzchar(r$applied)) c("", sprintf("**What the model applies:** %s", helpPregnancyEscape(r$applied))),
+    if (nzchar(evidence)) c("", sprintf("*Evidence:* %s.", helpPregnancyEscape(evidence))),
+    if (nzchar(r$source)) c("", sprintf("*Sources:* %s%s", helpPregnancyEscape(r$source),
+                                        if (nzchar(r$source_url)) sprintf(" (<%s>)", r$source_url) else "")),
+    "", "See [Pregnancy](help:models/pregnancy)."
+  )
+  paste0(helpH2("Pregnancy"), helpMarkdownToHTML(paste(md, collapse = "\n")))
+}
+
 #' The generated page for one drug or gas, as an HTML string
 #' @noRd
 helpDrugPageHTML <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
@@ -1095,6 +1157,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     micHTML,
     eventsHTML,
     if (nzchar(narrative)) paste0(helpH2("About this model"), narrative) else "",
+    helpDrugPregnancyHTML(drug),
     helpScenariosUsingDrugHTML(drug),
     helpH2("See also"),
     "<ul>",
@@ -1188,6 +1251,7 @@ helpGasPageHTML <- function(gas, row) {
     helpH2("At a glance"), glanceHTML,
     propsHTML,
     if (nzchar(narrative)) paste0(helpH2("Notes"), narrative) else "",
+    helpDrugPregnancyHTML(gas),
     helpScenariosUsingDrugHTML(gas),
     helpH2("See also"),
     "<ul>",

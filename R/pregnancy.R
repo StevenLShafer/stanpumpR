@@ -9,58 +9,66 @@
 # used in pregnancy and parturition.  Anesth Analg 2016;122:786-804, to the
 # drugs of that review that are in the library.
 #
+# Claude Code, 2026-10-19, at the same request extended to every drug: the
+# literature was reviewed for the pharmacokinetics of pregnancy of each drug
+# model in the library (PubMed abstracts and PubMed Central full text), and
+# the findings are inst/extdata/pregnancyRegistry.csv, one row per drug,
+# built by data-raw/pregnancyRegistry.R.  docs/pregnancy.md describes the
+# review and lists the papers still to be obtained.
+#
 # HOW THE FLAG TRAVELS
 # ====================
 # `pregnant` is a single TRUE or FALSE.  Like the serum creatinine and the
 # CYP phenotypes it reaches only the drug models that name it in their
-# signature (getDrugPK()), so a drug the review does not quantify is not
-# touched, and the library's existing simulations do not move while the flag
-# is off.  getDrugPK() refuses TRUE for a man.  The app sets it from the
-# Pregnant control, which is shown only for a woman of PREGNANCY_MIN_AGE to
+# signature (getDrugPK()), so a drug with nothing to apply is not touched,
+# and the library's existing simulations do not move while the flag is off.
+# getDrugPK() refuses TRUE for a man.  The app sets it from the Pregnant
+# control, which is shown only for a woman of PREGNANCY_MIN_AGE to
 # PREGNANCY_MAX_AGE years (R/constants.R); pregnancyPossible() applies the
 # same rule on the server, so a hidden control cannot leave the flag on.
 #
 # WHAT IS APPLIED, AND WHAT IS NOT
 # ================================
-# Eight drugs in the library are adjusted.  The review gives a figure for
-# the first five; the three antibiotics take its general rise in glomerular
-# filtration (below).  Each model documents what it applies in its own file,
-# with the review's wording and the arithmetic:
+# The flag describes LATE PREGNANCY (the third trimester and term), where
+# most of the data were collected; where a source reports trimesters, the
+# third-trimester value is the one applied.  A model applies a factor when
+# the registry's group is "applied": a measured human ratio (a population
+# model with a pregnancy covariate, a paired pregnant-against-postpartum
+# study, a controlled comparison or a therapeutic-drug-monitoring series of
+# useful size), or a change derived from one with documented arithmetic
+# (midazolam, metoprolol, phenytoin, valproate), or, for a drug cleared
+# mostly unchanged by filtration whose model reads renal function, the 50%
+# rise in glomerular filtration (PREGNANCY_GFR_FACTOR).  Each model documents
+# what it applies in a PREGNANCY section of its own file, with the source and
+# the arithmetic, and test-pregnancy.R checks that exactly the "applied"
+# drugs name `pregnant` and that the clearance and volume factors in the
+# registry are what the models do.
 #
-#   morphine        clearance x 1.7 (Table 3, "clearance >70%", volume
-#                   unchanged)
-#   remifentanil    clearance x 2 ("clearance more than doubles"), on the
-#                   Eleveld and Kim models and on the Minto companion
-#   oxycodone       clearance x 3.8/2.6 (elimination half-time 3.8 to 2.6 h)
-#   methadone       clearance x 24/14 (half-life 8-20 h against 24 h)
-#   dexamethasone   clearance x 2 ("clearance doubled in single gestation")
-#   cefazolin       creatinine clearance x 1.5 in its renal term
-#   gentamicin      eGFR x 1.5 in its renal term
-#   vancomycin      creatinine clearance x 1.5 in its renal term
+# A change known only in direction, or measured too weakly (a handful of
+# subjects, no control group, a PBPK prediction alone), is recorded and not
+# applied; so is a drug reported as unchanged or never studied.  A model fitted
+# in pregnant women (calcium, magnesium sulfate, oxytocin) already describes
+# them, and the flag does nothing to it.
 #
-# The three antibiotics carry the review's physiological statement, a 50%
-# rise in glomerular filtration (PREGNANCY_GFR_FACTOR), through the renal
-# function their published clearance equations read; the review says each of
-# them clears faster in pregnancy but prints no factor.  The larger volume of
-# distribution the review describes for them is unquantified and NOT applied,
-# so their simulated peaks in a parturient are too high.
-#
-# A drug the review describes only in direction (buprenorphine, codeine,
-# hydrocodone, midazolam, clindamycin, aspirin) is left unchanged, and the
-# help's pregnancy page says what the review found.  So is every drug the
-# review reports as unchanged or unknown.  pregnancyFindings() is that table,
-# one row per drug of the review's tables that is in the library (drugs the
-# review names only in its text, such as phenytoin, valproate, prednisone,
-# naproxen and amiodarone, have no row), and a test keeps it in step
-# with the models that name the flag.
+# THE RISE IN FILTRATION AND THE MEASURED CREATININE
+# ==================================================
+# Serum creatinine falls in pregnancy because filtration rises.  A model that
+# reads the Patient Profile's creatinine through Cockcroft-Gault or eGFR
+# therefore already sees the rise when a pregnant woman's measured creatinine
+# is entered, and multiplying again would count it twice.  The rise is
+# applied only when the creatinine is left blank, the case in which the model
+# assumes a normal NONPREGNANT creatinine: pregnancyGfrFactor().
 #
 # NOT MODELLED
 # ============
 # The fall in albumin and the higher free fraction of highly bound drugs
-# (the review names midazolam, phenytoin and valproate), placental transfer,
-# the fetus, labour's effect on gastric emptying, and the return of each
-# change after delivery.  The weight entered is the woman's actual weight;
-# the fat-free-mass page says why the scaling may be turned off for her.
+# except where the plotted total concentration is changed by it (phenytoin,
+# valproate), placental transfer, the fetus, labour's effect on gastric
+# emptying, the return of each change after delivery, and the trimesters
+# before the third.  The fall in MAC of the volatile anesthetics is a
+# pharmacodynamic change and is recorded, not applied.  The weight entered
+# is the woman's actual weight; the fat-free-mass page says why the scaling
+# may be turned off for her.
 # -----------------------------------------------------------------------------
 
 #' The review the library's pregnancy adjustments follow
@@ -120,95 +128,72 @@ checkPregnant <- function(pregnant, sex) {
   pregnant
 }
 
-#' What the pregnancy review found for each of its drugs in the library
+#' The pregnancy registry
 #'
-#' One row per drug of Ansari 2016's tables that is in the drug library, in
-#' the order of those tables: what the review reports, and what the model
-#' applies (nothing, for a change the review gives no magnitude for, or
-#' reports as absent or unknown).  The help's pregnancy page tabulates it
-#' beside the factors measured from the models themselves
-#' (R/help-generated.R), and test-pregnancy.R checks that exactly the drugs
-#' with an `applied` entry name `pregnant` in their signature.
+#' One row per drug of the library (every drug with a Category in
+#' drugDefaults_global.csv): what is known of its pharmacokinetics in
+#' pregnancy, what the model applies, the sources and the papers still to be
+#' obtained.  Built by data-raw/pregnancyRegistry.R.
 #'
-#' @returns a data frame: `drug`, `group` (one of "applied", "unquantified",
-#'   "unchanged", "unknown"), `finding` (the review's statement) and
-#'   `applied` (what the model does; "" when nothing)
+#' @returns a data frame read from \code{inst/extdata/pregnancyRegistry.csv}:
+#'   `drug`, `category`, `group` (one of PREGNANCY_GROUPS), `finding`,
+#'   `applied` ("" unless the group is "applied"), the factors `cl_factor`,
+#'   `v_factor`, `f_factor` and `gfr_factor` (NA where none), `trimester`,
+#'   `comparator`, `design`, `n`, `confidence`, `evidence_read`, `source`,
+#'   `source_url`, `to_obtain` and `notes`
+#' @keywords internal
+pregnancyRegistry <- function()
+  utils::read.csv(
+    system.file("extdata", "pregnancyRegistry.csv", package = "stanpumpR"),
+    stringsAsFactors = FALSE, na.strings = "NA", encoding = "UTF-8")
+
+#' The registry's groups, in the order the help tabulates them
+#' @noRd
+PREGNANCY_GROUPS <- c("applied", "unquantified", "unchanged", "unknown",
+                      "source_pregnant", "not_applicable")
+
+#' What is known for each drug in pregnancy
+#'
+#' The registry (pregnancyRegistry()), with `NA` text read as "".  The help's
+#' pregnancy page tabulates it beside the factors measured from the models
+#' themselves (R/help-generated.R), each drug's page carries its row
+#' (R/help-drugs.R), and test-pregnancy.R checks that exactly the drugs with
+#' an `applied` entry name `pregnant` in their signature.
+#'
+#' @returns a data frame: one row per drug, the registry's columns
 #' @noRd
 pregnancyFindings <- function() {
-  row <- function(drug, group, finding, applied = "") {
-    data.frame(drug = drug, group = group, finding = finding, applied = applied,
-               stringsAsFactors = FALSE)
-  }
-  rbind(
-    # --- Table 3, opioids ---------------------------------------------------
-    row("alfentanil", "unchanged",
-        "No change in volume of distribution or clearance."),
-    row("buprenorphine", "unquantified",
-        "Increased metabolism to inactive metabolites by induction of CYP3A4; a dose increase is needed in the third trimester. No magnitude is given."),
-    row("codeine", "unquantified",
-        "A prodrug: CYP2D6, which forms its morphine, is induced in pregnancy, so morphine forms faster and peaks higher, most of all in ultrarapid metabolisers. No magnitude is given."),
-    row("fentanyl", "unknown", "Unknown."),
-    row("hydrocodone", "unquantified",
-        "Increased CYP2D6 activity increases conversion to hydromorphone. No magnitude is given."),
-    row("hydromorphone", "unknown", "Unknown."),
-    row("pethidine", "unchanged",
-        "Increased inactivation by CYP3A4 is expected but is likely counterbalanced by decreased clearance; no change in half-life."),
-    row("methadone", "applied",
-        "Clearance increased by induction of CYP3A4 and CYP2B6; the elimination half-life is 8 to 20 hours against 24 hours when not pregnant, so a higher dose and a shorter interval are needed.",
-        "Clearance of both enantiomers × 24/14 = 1.71, the 24-hour half-life over the midpoint of 8 to 20 hours; volumes unchanged."),
-    row("morphine", "applied",
-        "Volume of distribution unchanged; clearance increased by more than 70% (glucuronidation by UGT); half-life decreased.",
-        "Elimination clearance × 1.7; volumes and distribution clearances unchanged."),
-    row("oxycodone", "applied",
-        "Clearance increased through the higher glomerular filtration rate and induction of CYP3A4 and CYP2D6; the elimination half-time in labouring women fell from 3.8 to 2.6 hours.",
-        "Elimination clearance × 3.8/2.6 = 1.46; volumes and oxymorphone formation unchanged."),
-    row("remifentanil", "applied",
-        "Clearance more than doubles, attributed to the larger plasma volume, cardiac output and renal blood flow.",
-        "Elimination clearance × 2, on the Eleveld and Kim models and on the Minto companion model."),
-    # --- Table 4, sedative hypnotics ------------------------------------------
-    row("diazepam", "unchanged", "No change in clearance."),
-    row("etomidate", "unknown", "Unknown."),
-    row("ketamine", "unknown", "No human data; unchanged in the pregnant ewe."),
-    row("midazolam", "unquantified",
-        "Peak plasma concentration reduced after oral and parenteral dosing with an unchanged half-life, from CYP3A-induced hepatic metabolism. No magnitude is given."),
-    row("propofol", "unchanged",
-        "The C50 for loss of consciousness is unchanged in the first trimester; the pharmacokinetics have not been well studied, and free propofol is expected to be higher as albumin falls."),
-    # --- Table 5, muscle relaxants ------------------------------------------
-    row("rocuronium", "unknown",
-        "Pharmacokinetics unknown; onset unchanged, with a possibly prolonged clinical duration."),
-    # --- Table 6, local anaesthetics ----------------------------------------
-    row("bupivacaine", "unchanged",
-        "No change in absorption or peak concentration; some change in metabolism (less 4'-hydroxylation, more N-dealkylation)."),
-    row("lidocaine", "unknown", "Unknown."),
-    row("mepivacaine", "unknown", "Unknown."),
-    row("ropivacaine", "unknown", "Unknown."),
-    # --- Table 7, antibiotics -----------------------------------------------
-    row("cefazolin", "applied",
-        "Clearance and volume of distribution increased, the clearance by increased renal excretion; a 2 g dose and a 3- to 6-hour interval are recommended.",
-        "Creatinine clearance × 1.5, the review's rise in glomerular filtration, in the published renal term, so unbound clearance × 1.27; volumes unchanged."),
-    row("ceftriaxone", "unchanged",
-        "Not significantly altered (the table queries a longer half-life)."),
-    row("clindamycin", "unquantified",
-        "Decreased AUC/MIC ratio. No magnitude is given."),
-    row("gentamicin", "applied",
-        "Increased volume of distribution and clearance, giving low peak concentrations; the dosing interval should be 6 hours, not 8.",
-        "eGFR × 1.5, the review's rise in glomerular filtration, in the published renal term, so clearance × 1.5; volumes unchanged."),
-    row("metronidazole", "unchanged", "Unchanged."),
-    row("vancomycin", "applied",
-        "Increased volume of distribution and clearance; the change in half-life is unknown.",
-        "Creatinine clearance × 1.5, the review's rise in glomerular filtration, in the published clearance term; volumes unchanged."),
-    # --- Table 8, antiemetics -----------------------------------------------
-    row("dexamethasone", "applied",
-        "Clearance doubled in a singleton pregnancy, by placental metabolism; a multiple gestation needs more.",
-        "Elimination clearance × 2; volumes unchanged."),
-    row("ondansetron", "unchanged",
-        "No change in steady-state concentrations in the first trimester."),
-    # --- Table 2 and the text, analgesics ----------------------------------
-    row("aspirin", "unquantified",
-        "Slower uptake and a lower peak plasma concentration after a single dose. No magnitude is given."),
-    row("acetaminophen", "unchanged",
-        "Maternal absorption, metabolism and clearance of oral acetaminophen are unchanged.")
-  )
+  f <- pregnancyRegistry()
+  text <- vapply(f, is.character, logical(1))
+  f[text] <- lapply(f[text], function(x) ifelse(is.na(x), "", x))
+  f
+}
+
+#' The drugs the registry must cover
+#'
+#' Every drug of the library a user can dose: the rows of the drug table with
+#' a Category, which leaves out the metabolites (formed, never dosed) and the
+#' carrier gases (air, oxygen, ventilation).
+#' @noRd
+pregnancyCoveredDrugs <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  category <- drugDefaults$Category
+  drugDefaults$Drug[!is.na(category) & nzchar(category)]
+}
+
+#' The rise in filtration a renal term applies in pregnancy
+#'
+#' PREGNANCY_GFR_FACTOR when the patient is pregnant and the serum creatinine
+#' is left blank, so that the model's assumed creatinine is the normal one for
+#' a woman who is NOT pregnant; 1 otherwise.  A measured creatinine already
+#' carries the rise in filtration, since creatinine falls as filtration rises.
+#'
+#' @param pregnant the pregnancy flag
+#' @param creatinine the serum creatinine as the model received it (NULL when
+#'   the field is blank)
+#' @returns one number
+#' @noRd
+pregnancyGfrFactor <- function(pregnant, creatinine) {
+  if (isTRUE(pregnant) && is.null(creatinine)) PREGNANCY_GFR_FACTOR else 1
 }
 
 #' The drugs whose models read the pregnancy flag

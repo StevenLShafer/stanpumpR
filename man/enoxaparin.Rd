@@ -4,7 +4,15 @@
 \alias{enoxaparin}
 \title{Enoxaparin pharmacokinetics (subcutaneous, anti-Xa, elderly)}
 \usage{
-enoxaparin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+enoxaparin(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +29,10 @@ size-free parameters to fat-free mass}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal
 value for age and sex}
+
+\item{pregnant}{when \code{TRUE}, apply the changes of late pregnancy:
+apparent clearance x 1.5 and apparent central volume x 1.4 (see the
+file's header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

@@ -77,6 +77,50 @@
 # No effect site.  The band is the paper's therapeutic range, 0.5 to
 # 2.0 mcg/L, which is serum concentration, as plotted; current practice
 # targets the lower half of it in heart failure.
+#
+# PREGNANCY
+# =========
+# Hebert and colleagues gave 0.25 mg of oral digoxin to 13 women at 28 to 32
+# weeks of gestation and again to the same women 6 to 10 weeks postpartum.
+# The unbound renal clearance of digoxin was 272 +/- 45 mL/min in pregnancy
+# against 183 +/- 37 mL/min postpartum (x 1.49), and its unbound net
+# secretion 109 against 58 mL/min (x 1.88): filtration and renal
+# P-glycoprotein both rise.  Digoxin is only 20 to 30% bound (Iisalo 1977), so
+# the total renal clearance changes almost as the unbound one does.  Luxford
+# and Kellaway (15 women, third trimester against 6 to 12 weeks postpartum)
+# found digoxin renal clearance and creatinine clearance both higher in
+# pregnancy, but the serum digoxin higher too, which they put down to greater
+# absorption; their abstract gives no numbers, and that is not applied.
+#
+# With the Patient Profile's Pregnant field on and the serum creatinine left
+# blank, the creatinine clearance in Yukawa's renal term is multiplied by
+# PREGNANCY_GFR_FACTOR = 1.5 (pregnancyGfrFactor(), R/pregnancy.R), which
+# reproduces Hebert's x 1.49 in renal clearance; the weight (nonrenal) term,
+# the volumes and Q are unchanged.  At 60 kg and a creatinine clearance of
+# 100 mL/min, CL/F = 2.16 + 11.2 = 13.4 L/h becomes 2.16 + 16.8 = 19.0 L/h,
+# x 1.42.  A measured creatinine is not multiplied: a pregnant woman's
+# creatinine is already low, and the Cockcroft-Gault estimate made from it
+# already carries the rise.  The bioavailability of digoxin in pregnancy is
+# not known, and Yukawa's parameters are all apparent, so none is applied.
+# Digoxin-like immunoreactive substances rise in pregnancy and cross-react in
+# some immunoassays, so a measured serum digoxin in a pregnant woman may read
+# higher than the curve.  Late pregnancy is the reference state.  (Claude
+# Code, 2026-10-19.)
+#
+# References
+# ----------
+# Yukawa E, Suematu F, Yukawa M, et al.  Clin Pharmacokinet 2001;40:773-781.
+#   https://doi.org/10.2165/00003088-200140100-00005
+# Hebert MF, Easterling TR, Kirby B, et al.  Effects of pregnancy on CYP3A
+#   and P-glycoprotein activities as measured by disposition of midazolam and
+#   digoxin: a University of Washington specialized center of research
+#   study.  Clin Pharmacol Ther 2008;84:248-253.
+#   https://doi.org/10.1038/clpt.2008.1 (pregnancy)
+# Luxford AM, Kellaway GS.  Pharmacokinetics of digoxin in pregnancy.  Eur J
+#   Clin Pharmacol 1983;25:117-121.  https://doi.org/10.1007/BF00544027
+#   (pregnancy)
+# Iisalo E.  Clinical pharmacokinetics of digoxin.  Clin Pharmacokinet
+#   1977;2:1-16.  https://doi.org/10.2165/00003088-197702010-00001
 # -----------------------------------------------------------------------------
 
 # Yukawa 2001, Table IV
@@ -96,15 +140,21 @@ DIGOXIN_CCB     <- 0.784    # with a calcium antagonist (theta 7), held at none
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
 #'   value for age and sex
+#' @param pregnant is the patient pregnant?  \code{TRUE}, with the creatinine
+#'   left blank, multiplies the creatinine clearance of the renal term by 1.5
+#'   (Hebert 2008; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 digoxin <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                    creatinine = NULL)
+                    creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
   crcl <- creatinineClearanceCG(pkW, age, sex, scr)              # mL/min
+  # Pregnancy (see the header): the renal term alone.
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  crcl <- crcl * gfrPregnancy
   spironolactone <- 0
   calciumAntagonist <- 0
 
@@ -136,6 +186,12 @@ digoxin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     creatinineNote, ".  Oral daily rate only. ",
     "https://doi.org/10.2165/00003088-200140100-00005"
   )
+  if (gfrPregnancy != 1) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR),
+      paste0("Hebert MF et al., Clin Pharmacol Ther 2008;84:248-253. ",
+             "https://doi.org/10.1038/clpt.2008.1")))
+  }
 
   list(
     PK = PK,

@@ -14,10 +14,14 @@
 #' The Tham 2017 one-compartment model for insulin lispro, parallel first- and zero-order absorption; see R/insulinTham.R.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant when \code{TRUE}, apply the rise in insulin clearance of
+#'   late pregnancy, CL/F x 1.19 (see R/insulinTham.R)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-insulinLispro <- function(weight, height, age, sex, adjustToFFM = TRUE)
+insulinLispro <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                          pregnant = FALSE)
 {
   thamInsulin(weight, height, age, sex, adjustToFFM, insulin = "lispro",
-              components = c(lispro = 1), product = "lispro (Humalog U100)")
+              components = c(lispro = 1), product = "lispro (Humalog U100)",
+              pregnant = pregnant)
 }

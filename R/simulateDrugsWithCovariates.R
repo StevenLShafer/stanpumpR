@@ -32,8 +32,8 @@
 #'   `docs/weight-adjustment.md`.
 #' @param pregnant is the patient pregnant?  TRUE or FALSE (the default); TRUE
 #'   requires \code{sex = "female"}.  Only the models that name it apply the
-#'   changes of late pregnancy described by Ansari, Carvalho, Shafer and Flood
-#'   (Anesth Analg 2016;122:786-804); see \code{getDrugPK()}.
+#'   changes of late pregnancy measured for that drug
+#'   (inst/extdata/pregnancyRegistry.csv); see \code{getDrugPK()}.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution

@@ -276,3 +276,29 @@ test_that("the four-times-a-day scenario says what the model does", {
   expect_equal(ct$ce(1440), 1.74, tolerance = 2e-3)
   expect_equal(mean(ct$ce(t24) >= 5), 0.38, tolerance = 0.02)
 })
+
+test_that("pregnancy: clearance x 1.4 and both volumes x 1.14", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on: CL1 x 1.4,
+  # V1 and V2 x 1.14 (R/drugs_acetaminophen.R, PREGNANCY); Q, absorption and
+  # ke0 unchanged.
+  on  <- getDrugPK("acetaminophen", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("acetaminophen", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("acetaminophen", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK[[1]]; b <- off$PK[[1]]
+  expect_equal(a$cl1 / b$cl1, ACETAMINOPHEN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(a$v1 / b$v1, ACETAMINOPHEN_PREGNANCY_V_FACTOR, tolerance = 1e-6)
+  expect_equal(a$v2 / b$v2, ACETAMINOPHEN_PREGNANCY_V_FACTOR, tolerance = 1e-6)
+  same <- c("v3", "cl2", "cl3", "ke0", "ka_PO", "bioavailability_PO", "tlag_PO")
+  expect_true(all(same %in% names(a)))
+  expect_identical(a[same], b[same])
+  expect_match(on$reference, "Allegaert", fixed = TRUE)
+  expect_no_match(off$reference, "Allegaert", fixed = TRUE)
+  # The values the model gives with the flag on
+  actual <- acetaminophen(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(40.15804336, actual$v1)
+  expect_equal_rounded(27.29276631, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(0.5459449625, actual$cl1)
+  expect_equal_rounded(0.6167763301, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+})

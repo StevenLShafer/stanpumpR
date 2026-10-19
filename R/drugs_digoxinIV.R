@@ -61,6 +61,50 @@
 # ====
 # 0.5-2 ng/mL, the serum range used for the oral digoxin, meaningful after
 # distribution (6 h or more after a dose).
+#
+# PREGNANCY
+# =========
+# Hebert and colleagues gave 0.25 mg of oral digoxin to 13 women at 28 to 32
+# weeks of gestation and again to the same women 6 to 10 weeks postpartum:
+# the unbound renal clearance was 272 +/- 45 mL/min in pregnancy against
+# 183 +/- 37 mL/min postpartum (x 1.49), and the unbound net secretion 109
+# against 58 mL/min (x 1.88), so both filtration and renal P-glycoprotein
+# rise.  Digoxin is only 20 to 30% bound, and 25 to 28% of it is cleared by
+# nonrenal routes in healthy adults (Iisalo 1977), so with about 73% renal
+# the total clearance rises by 0.73 x 1.49 + 0.27 = 1.36.  With the Patient
+# Profile's Pregnant field on, the elimination clearance CL1 is multiplied by
+# DIGOXIN_IV_PREGNANCY_CL_FACTOR = 1.35, directly; V1, V2 and Q are
+# unchanged.
+#
+# The factor is NOT carried through Cheng's regressions on creatinine
+# clearance, for two reasons.  Cheng's slope gives renal function only about
+# 31% of the clearance at 100 mL/min (0.03 of 0.0976 L/h/kg), so a 1.5-fold
+# creatinine clearance would raise the clearance only about 1.15-fold, less
+# than the measured renal change, which includes the rise in secretion that
+# creatinine does not see; and Cheng's Vss rises with creatinine clearance
+# too, which the rise in filtration of pregnancy should not do.  For the same
+# reason the factor is applied whatever the creatinine field holds: a
+# pregnant woman's own low creatinine moves Cheng's clearance only by its
+# small renal slope (and moves Vss with it, as it does for anyone).  The
+# 87-minute time to peak effect is unchanged.  Digoxin-like immunoreactive
+# substances rise in pregnancy and cross-react in some immunoassays, so a
+# measured serum digoxin may read higher than the curve.  Late pregnancy is
+# the reference state.  (Claude Code, 2026-10-19.)
+#
+# References
+# ----------
+# Cheng JW, Charland SL, Shaw LM, et al.  Pharmacotherapy 1997;17:584-590.
+#   https://pubmed.ncbi.nlm.nih.gov/9165563/
+# Hornestam B, Jerling M, Karlsson MO, Held P.  Eur J Clin Pharmacol
+#   2003;58:747-755.  https://doi.org/10.1007/s00228-002-0553-3
+# Hebert MF, Easterling TR, Kirby B, et al.  Effects of pregnancy on CYP3A
+#   and P-glycoprotein activities as measured by disposition of midazolam and
+#   digoxin: a University of Washington specialized center of research
+#   study.  Clin Pharmacol Ther 2008;84:248-253.
+#   https://doi.org/10.1038/clpt.2008.1 (pregnancy)
+# Iisalo E.  Clinical pharmacokinetics of digoxin.  Clin Pharmacokinet
+#   1977;2:1-16.  https://doi.org/10.2165/00003088-197702010-00001
+#   (pregnancy: the nonrenal fraction)
 # -----------------------------------------------------------------------------
 
 # Cheng 1997
@@ -74,6 +118,12 @@ DIGOXIN_IV_CRCL_RANGE <- c(0, 140)  # mL/min
 # Hornestam 2003
 DIGOXIN_IV_TPEAK <- 87              # min
 
+# Elimination clearance in late pregnancy relative to the published value:
+# Hebert 2008's x 1.49 in renal clearance on the 73% of clearance that is
+# renal (Iisalo 1977), 0.73 x 1.49 + 0.27 = 1.36, taken as 1.35 (see the
+# header).
+DIGOXIN_IV_PREGNANCY_CL_FACTOR <- 1.35
+
 #' Digoxin, intravenous (Cheng 1997; Hornestam 2003's time to peak effect)
 #'
 #' Two compartments per kilogram with clearance and steady-state volume
@@ -83,10 +133,12 @@ DIGOXIN_IV_TPEAK <- 87              # min
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
 #'   value
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   elimination clearance by 1.35 (Hebert 2008; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 digoxinIV <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                      creatinine = NULL)
+                      creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
@@ -96,12 +148,15 @@ digoxinIV <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   clPerKg  <- DIGOXIN_IV_CL_INTERCEPT + DIGOXIN_IV_CL_SLOPE * crcl     # L/h/kg
   vssPerKg <- DIGOXIN_IV_VSS_INTERCEPT + DIGOXIN_IV_VSS_SLOPE * crcl   # L/kg
+  # Pregnancy (see the header): elimination clearance only, not through the
+  # regressions on creatinine clearance.
+  clPregnancy <- if (isTRUE(pregnant)) DIGOXIN_IV_PREGNANCY_CL_FACTOR else 1
 
   default <- list(
     v1  = DIGOXIN_IV_V1 * pkW,
     v2  = (vssPerKg - DIGOXIN_IV_V1) * pkW,
     v3  = 1,                          # placeholder: a two-compartment model
-    cl1 = clPerKg * pkW / 60,
+    cl1 = clPerKg * pkW / 60 * clPregnancy,
     cl2 = DIGOXIN_IV_Q * pkW / 60,
     cl3 = 0
   )
@@ -120,6 +175,12 @@ digoxinIV <- function(weight, height, age, sex, adjustToFFM = TRUE,
     creatinineNote, ").  Time to peak effect 87 min from Hornestam B et al., ",
     "Eur J Clin Pharmacol 2003;58:747-755. https://pubmed.ncbi.nlm.nih.gov/9165563/"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", DIGOXIN_IV_PREGNANCY_CL_FACTOR),
+      paste0("Hebert MF et al., Clin Pharmacol Ther 2008;84:248-253. ",
+             "https://doi.org/10.1038/clpt.2008.1")))
+  }
 
   list(
     PK = PK,

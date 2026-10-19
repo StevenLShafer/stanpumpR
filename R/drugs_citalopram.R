@@ -121,12 +121,48 @@
 # Fitted to oral data alone: oral units only, bioavailability_PO = 1, no lag
 # (docs/adding-a-drug.md, "Apparent parameters restrict the route").
 #
+# PREGNANCY
+# =========
+# Westin 2017 followed the dose-adjusted serum concentrations of 58
+# citalopram pregnancies through routine therapeutic drug monitoring, each
+# against the same woman's own baseline outside pregnancy: total (R + S)
+# citalopram was 24% lower in the middle of the third trimester (95% CI -38%
+# to -7%, p = 0.007).  Heikkinen 2002 (11 pregnancies) found a larger fall,
+# 42%, and the Schoretsanitis 2020 meta-analysis a combined ratio of 0.70.
+# With the Patient Profile's Pregnant field on, the clearance of BOTH
+# enantiomers is multiplied by CITALOPRAM_PREGNANCY_CL_FACTOR = 1.32 (1 /
+# 0.76 = 1.316, rounded as the registry gives it) BEFORE the reduction above.
+# The reduced CL1 is the harmonic mean of the two clearances, so it rises by
+# exactly 1.32 and the total exposure falls by 24%; because every rate
+# constant of the two enantiomers is multiplied alike, the reduced volumes V1
+# and V2 do not move, and the reduced intercompartmental clearance CL2, which
+# is not a physiological distribution clearance but a term of the exact
+# reduction, rises with CL1 by the same 1.32.  (Multiplying the reduced CL1
+# alone would give a curve that is no longer the sum of any two enantiomers.)
+# The absorption is unchanged.
+# NOT APPLIED: the split between the enantiomers.  Westin attributes most of
+# the fall to the inactive R-enantiomer (CYP2D6, induced in pregnancy), while
+# the active S-enantiomer, cleared by CYP2C19, changes little; the plotted
+# total therefore overstates the change in the active drug, and Westin does
+# not advise raising the dose on the total alone.  No enantiomer-specific
+# pregnancy ratio was measured, so one factor is applied to both, which
+# reproduces the measured total.  Late pregnancy (the third trimester) is the
+# state described.  (Claude Code, 2026-10-19, at the request of Steven L.
+# Shafer; see R/pregnancy.R and inst/extdata/pregnancyRegistry.csv.)
+#
 # References
 # ----------
 # Akil A, Bies RR, Pollock BG et al., J Pharmacokinet Pharmacodyn
 #   2016;43:99-109.  https://doi.org/10.1007/s10928-015-9457-6
 # Meyer JH et al., Am J Psychiatry 2004;161:826-835 (SERT occupancy).
 # Hiemke C et al., Pharmacopsychiatry 2018;51:9-62 (AGNP consensus).
+# Westin AA, Brekke M, Molden E, Skogvoll E, Spigset O.  PLoS One
+#   2017;12:e0181082.  https://doi.org/10.1371/journal.pone.0181082
+#   (pregnancy)
+# Heikkinen T, Ekblad U, Kero P, Ekblad S, Laine K.  Clin Pharmacol Ther
+#   2002;72:184-191.  https://doi.org/10.1067/mcp.2002.126181 (pregnancy)
+# Schoretsanitis G et al.  Expert Opin Drug Metab Toxicol 2020;16:431-440.
+#   https://doi.org/10.1080/17425255.2020.1750598 (pregnancy)
 # -----------------------------------------------------------------------------
 
 CITALOPRAM_KA       <- 1       # 1/h, common to both enantiomers, fixed
@@ -144,6 +180,11 @@ CITALOPRAM_CL_S <- c(
   rapid        = 22.1,
   ultrarapid   = 22.1
 )
+# Clearance of both enantiomers in pregnancy relative to the published values:
+# Westin 2017, total citalopram 24% lower in the third trimester, 1 / 0.76 =
+# 1.32 (see the header).
+CITALOPRAM_PREGNANCY_CL_FACTOR <- 1.32
+
 # Relative separation of the two elimination rate constants below which the
 # reduced model is collapsed to one compartment.  See the header.
 CITALOPRAM_COINCIDENT <- 1e-4
@@ -187,10 +228,13 @@ citalopramReduce <- function(A, B, l1, l2)
 #'   the pharmacokinetic weight and scale the size-free parameters to fat-free
 #'   mass; when \code{FALSE}, use total body weight and the published
 #'   size-free parameters unscaled.
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   clearance of both enantiomers by 1.32 (Westin 2017; see the file's
+#'   header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 citalopram <- function(weight, height, age, sex, cyp2c19 = CYP2C19_DEFAULT,
-                       adjustToFFM = TRUE)
+                       adjustToFFM = TRUE, pregnant = FALSE)
 {
   if (length(cyp2c19) != 1 || !cyp2c19 %in% CYP2C19_VALUES) {
     stop("Invalid cyp2c19: ", paste(cyp2c19, collapse = ", "),
@@ -211,6 +255,12 @@ citalopram <- function(weight, height, age, sex, cyp2c19 = CYP2C19_DEFAULT,
   vS  <- CITALOPRAM_V_S * size$volume
   clR <- CITALOPRAM_CL_R[[sex]] * (age / 60)^CITALOPRAM_CL_R_AGE * size$clearance
   clS <- CITALOPRAM_CL_S[[cyp2c19]] * (age / 60)^CITALOPRAM_CL_S_AGE * (pkW / 70)^0.75
+  # Pregnancy (see the header): both enantiomers' clearances, before the
+  # reduction, so the reduced CL1 rises by exactly the factor.
+  if (isTRUE(pregnant)) {
+    clR <- clR * CITALOPRAM_PREGNANCY_CL_FACTOR
+    clS <- clS * CITALOPRAM_PREGNANCY_CL_FACTOR
+  }
 
   # Exact reduction of the total (R + S) to two compartments; each racemic
   # dose is half R, half S.  See the header.
@@ -243,6 +293,12 @@ citalopram <- function(weight, height, age, sex, cyp2c19 = CYP2C19_DEFAULT,
     "racemate; band: AGNP consensus, Hiemke C et al., Pharmacopsychiatry ",
     "2018;51:9-62). https://doi.org/10.1007/s10928-015-9457-6"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance of both enantiomers x ", CITALOPRAM_PREGNANCY_CL_FACTOR),
+      paste0("Westin AA et al., PLoS One 2017;12:e0181082. ",
+             "https://doi.org/10.1371/journal.pone.0181082")))
+  }
 
   list(
     PK = PK,

@@ -100,3 +100,30 @@ test_that("procainamide is a vasoactive and resuscitation drug with no band", {
   expect_equal(row$MEAC, 0)
   expect_equal(row$Lower, 0)
 })
+
+test_that("pregnancy: renal clearance x 1.5, only with a blank creatinine", {
+  # The rise in glomerular filtration on CL_R alone.  A woman of 30 years,
+  # 70 kg, 165 cm, fat-free-mass scaling on, creatinine blank.
+  on  <- getDrugPK("procainamide", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("procainamide", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("procainamide", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default; b <- off$PK$default
+  # Acetylation and other clearance are unchanged; CL_R rises by 1.5
+  w <- pkSizeFactors(70, 165, 30, SEX_FEMALE, TRUE)$pkWeight / 70
+  nonRenal <- (CLA + CLO) * w / 60 / BASE
+  expect_equal((a$cl1 - nonRenal) / (b$cl1 - nonRenal), PREGNANCY_GFR_FACTOR,
+               tolerance = 1e-6)
+  # FR = 110 / (113 x 0.8): 61% renal, so the total rises by about 1.30
+  expect_equal(round(a$cl1 / b$cl1, 2), 1.30)
+  expect_equal_rounded(0.583156037, a$cl1)
+  expect_identical(a[c("v1", "v2", "v3", "cl2", "cl3")],
+                   b[c("v1", "v2", "v3", "cl2", "cl3")])
+  expect_match(on$reference, "pregnancy", fixed = TRUE)
+  expect_no_match(off$reference, "pregnancy", fixed = TRUE)
+  # A measured creatinine already carries the rise: no change
+  m1 <- getDrugPK("procainamide", 70, 165, 30, SEX_FEMALE, creatinine = 0.6,
+                  pregnant = TRUE)
+  m0 <- getDrugPK("procainamide", 70, 165, 30, SEX_FEMALE, creatinine = 0.6)
+  expect_identical(m1$PK, m0$PK)
+  expect_no_match(m1$reference, "pregnancy", fixed = TRUE)
+})

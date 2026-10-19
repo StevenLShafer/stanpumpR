@@ -4,7 +4,7 @@
 \alias{buprenorphine}
 \title{Buprenorphine pharmacokinetics}
 \usage{
-buprenorphine(weight, height, age, sex, adjustToFFM = TRUE)
+buprenorphine(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -20,6 +20,9 @@ the volumes and intercompartmental clearances to fat-free mass; when
 \code{FALSE}, evaluate clearance at total body weight and use the
 published fixed volumes. Clearance always takes the model's own age
 covariate.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+elimination clearance by 1.83 (Zhu 2025; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

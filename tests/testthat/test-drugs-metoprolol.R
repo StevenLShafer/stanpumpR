@@ -67,3 +67,39 @@ test_that("metoprolol is a plasma-only vasoactive drug", {
   expect_equal(c(row$MEAC, row$Lower, row$Upper), c(0, 0, 0))
   expect_true(all(c("mg", "mg PO", "mg PO bid") %in% unlist(row$Units)))
 })
+
+test_that("pregnancy: clearance x 1.5 and oral bioavailability x 0.5, not in a poor metaboliser", {
+  # Ryu 2015's CL/F x 2.96 split by a well-stirred liver at extraction 0.5.
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.
+  on  <- getDrugPK("metoprolol", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("metoprolol", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("metoprolol", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default; b <- off$PK$default
+  expect_equal(a$cl1 / b$cl1, METOPROLOL_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(a$bioavailability_PO / b$bioavailability_PO,
+               METOPROLOL_PREGNANCY_F_FACTOR, tolerance = 1e-6)
+  expect_equal(c(METOPROLOL_PREGNANCY_CL_FACTOR, METOPROLOL_PREGNANCY_F_FACTOR),
+               c(1.5, 0.5))
+  expect_equal_rounded(1.399444225, a$cl1)
+  expect_equal_rounded(0.225, a$bioavailability_PO)
+  expect_identical(a[c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "tlag_PO")],
+                   b[c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "tlag_PO")])
+  expect_match(on$reference, "Ryu", fixed = TRUE)
+  expect_no_match(off$reference, "Ryu", fixed = TRUE)
+  # The other phenotypes take the factors on top of their own
+  for (phenotype in c("intermediate", "ultrarapid")) {
+    p1 <- getDrugPK("metoprolol", 70, 165, 30, SEX_FEMALE, cyp2d6 = phenotype,
+                    pregnant = TRUE)$PK$default
+    p0 <- getDrugPK("metoprolol", 70, 165, 30, SEX_FEMALE,
+                    cyp2d6 = phenotype)$PK$default
+    expect_equal(p1$cl1 / p0$cl1, METOPROLOL_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+    expect_equal(p1$bioavailability_PO / p0$bioavailability_PO,
+                 METOPROLOL_PREGNANCY_F_FACTOR, tolerance = 1e-6)
+  }
+  # Pregnancy cannot induce an absent enzyme: a poor metaboliser is unchanged
+  poor1 <- getDrugPK("metoprolol", 70, 165, 30, SEX_FEMALE, cyp2d6 = "poor",
+                     pregnant = TRUE)
+  poor0 <- getDrugPK("metoprolol", 70, 165, 30, SEX_FEMALE, cyp2d6 = "poor")
+  expect_identical(poor1, poor0)
+  expect_no_match(poor1$reference, "Ryu", fixed = TRUE)
+})

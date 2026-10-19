@@ -558,15 +558,17 @@ TCI_API_TIME_PATTERN <- paste0(
 # help's Cautions page says which).  The field is offered for a woman from
 # PREGNANCY_MIN_AGE up to but not including PREGNANCY_MAX_AGE years; outside
 # that, or for a man, the flag is FALSE whatever the control last said.
-# The factors each model applies are from the review the library follows for
-# pregnancy, Ansari, Carvalho, Shafer and Flood, Anesth Analg 2016;122:786-804
-# (PREGNANCY_REFERENCE in R/pregnancy.R), and describe late pregnancy, where
-# nearly all of its data were collected.
+# The factors each model applies are from that drug's own pregnancy sources
+# (inst/extdata/pregnancyRegistry.csv; the first eight from the review of
+# Ansari, Carvalho, Shafer and Flood, Anesth Analg 2016;122:786-804,
+# PREGNANCY_REFERENCE in R/pregnancy.R), and describe late pregnancy, the
+# third trimester and term, where most of the data were collected.
 PREGNANCY_MIN_AGE <- 12
 PREGNANCY_MAX_AGE <- 60
 # Renal blood flow and the glomerular filtration rate "are increased 50% by
 # the second trimester and remain increased until 3 months postpartum"
-# (Ansari 2016, Clearance).  The renally cleared antibiotics the review lists
-# with an increased clearance (cefazolin, gentamicin, vancomycin) apply it to
-# the renal function their published clearance terms read.
+# (Ansari 2016, Clearance).  The models of drugs cleared mostly by filtration
+# apply it to the renal function their published clearance terms read, and
+# only when the serum creatinine is blank (pregnancyGfrFactor()): a measured
+# pregnant creatinine already carries the rise.
 PREGNANCY_GFR_FACTOR <- 1.5

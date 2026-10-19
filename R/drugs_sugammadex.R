@@ -45,19 +45,57 @@
 #
 # Doses are sugammadex equivalents, as the Bridion label states them.
 #
+# PREGNANCY
+# =========
+# Sugammadex is cleared almost entirely unchanged by the kidney.  Hodge 2026
+# fitted a population model to 10 women at term given sugammadex after
+# general anaesthesia for caesarean delivery (median 78 kg; no control
+# group; only the abstract was read): V 13.9 L and CL 8.0 L/h, "at the upper
+# end of published ranges from non-pregnant patients".  This model, for a
+# 30-year-old 78 kg woman at the library's assumed creatinine of 0.8 mg/dL
+# (Cockcroft-Gault 126.6 mL/min; the fat-free-mass switch off, so W is total
+# weight), gives CL = 5.58 x [1 +
+# 0.00378 x 3.5] x [2 x 126.6 / (126.6 + 119)]^1.29 = 5.88 L/h, so Hodge's
+# women cleared it 1.36 times faster.  With the Patient Profile's Pregnant
+# field on and the serum creatinine left blank, the creatinine clearance CR
+# that the CLEARANCE term reads is multiplied by PREGNANCY_GFR_FACTOR = 1.5
+# (R/constants.R), the rise in glomerular filtration of pregnancy (Ansari
+# 2016): for that woman CR becomes 189.9 mL/min and CL = 5.58 x 1.0132 x
+# 1.2295^1.29 = 7.38 L/h, within 8% of Hodge's 8.0 L/h.  Because the renal
+# term saturates, CL rises by less than 1.5 (by 1.26 at that CR).
+# The peripheral-volume term, exp[-0.00305 (CR - 119)], keeps the UNADJUSTED
+# CR: passing the raised CR to it would shrink Vp from 6.9 to 5.7 L, against
+# Hodge's larger volume (13.9 L, against Vc + Vp = 11.8 L here).  The volumes
+# are otherwise unchanged; the 18% larger volume Hodge reports is not
+# applied, being from one uncontrolled study whose Vc and Vp were not read.
+# A measured creatinine already carries the rise in filtration (creatinine
+# falls in pregnancy), so with one entered nothing is multiplied
+# (pregnancyGfrFactor(), R/pregnancy.R).  Late pregnancy (term) is the state
+# described.  (Claude Code, 2026-10-19, at the request of Steven L. Shafer;
+# see R/pregnancy.R and inst/extdata/pregnancyRegistry.csv.)
+#
 # References
 # ----------
 # Kleijn HJ et al., Br J Clin Pharmacol 2011;72:415-433.
 #   https://doi.org/10.1111/j.1365-2125.2011.04000.x
+# Hodge AT, Tognolini AR, Liu X et al.  Int J Obstet Anesth 2026;66:104874.
+#   https://doi.org/10.1016/j.ijoa.2026.104874 (pregnancy)
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy: the rise in
+#   filtration)
 # -----------------------------------------------------------------------------
 
 #' Sugammadex pharmacokinetics (total)
 #'
 #' @inheritParams cefazolin
+#' @param pregnant is the patient pregnant?  \code{TRUE}, with the serum
+#'   creatinine blank, multiplies the creatinine clearance the clearance term
+#'   reads by 1.5, the rise in filtration of pregnancy (see the file's
+#'   header); the peripheral-volume term keeps the unadjusted value.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                       creatinine = NULL)
+                       creatinine = NULL, pregnant = FALSE)
 {
   # Size scaling (see the header): the model's own weight terms are
   # evaluated at the pharmacokinetic weight with the switch on, total body
@@ -67,8 +105,12 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
   CR <- creatinineClearanceCG(W, age, sex,     # mL/min
                               adultEquivalentCreatinine(creatinine, age, sex))
   rS <- 1
+  # Pregnancy (see the header): the clearance term alone reads the raised
+  # creatinine clearance; the peripheral-volume term keeps CR.
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  crCL <- CR * gfrPregnancy
 
-  cl1 <- 5.58 * (1 + 0.00378 * (W - 74.5)) * (2 * CR / (CR + 119))^1.29 / 60
+  cl1 <- 5.58 * (1 + 0.00378 * (W - 74.5)) * (2 * crCL / (crCL + 119))^1.29 / 60
   v1  <- 4.42 * (1 - 0.00354 * (W - 74.5)) * rS * (W / 70)
   cl2 <- 12.36 * (W / 70)^0.75 / 60
   v2  <- 6.35 * exp(-0.00305 * (CR - 119)) * (W / 70)
@@ -105,6 +147,14 @@ sugammadex <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "assumed normal one; rocuronium binding not modelled. ",
     "https://doi.org/10.1111/j.1365-2125.2011.04000.x"
   )
+  if (gfrPregnancy != 1) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR,
+             " in the clearance term only"),
+      paste0(PREGNANCY_REFERENCE, "; checked against Hodge AT et al., ",
+             "Int J Obstet Anesth 2026;66:104874. ",
+             "https://doi.org/10.1016/j.ijoa.2026.104874")))
+  }
 
   return(
     list(

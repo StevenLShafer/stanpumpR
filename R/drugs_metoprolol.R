@@ -47,6 +47,55 @@
 # NO EFFECT SITE, NO BAND
 # =======================
 # The source measured no effect.  Plasma only.
+#
+# PREGNANCY
+# =========
+# Ryu and colleagues (2015) measured steady-state oral metoprolol across
+# pregnancy, each woman paired with herself 3 months or more postpartum: the
+# apparent oral clearance CL/F was 568 +/- 273 L/h in late pregnancy (34-38
+# weeks, n = 8) against 192 +/- 98 L/h postpartum, x 2.96 (361 against 200,
+# x 1.8, in mid-pregnancy, n = 5), with the metabolic ratio falling, as
+# induction of CYP2D6 would make it; in the women on the same dose in both
+# periods the ratio was 551/194 = 2.84.  Protein binding was low and
+# unchanged (9% against 11%).  Hogstedt 1985 gave intravenous and oral doses
+# to 5 women in late pregnancy and again 3 to 6 months postpartum: oral
+# bioavailability was 1.3 to 3.7 times higher after pregnancy, while the
+# systemic clearance after pregnancy, 26 to 97% of the pregnant value, did not
+# differ significantly; Hogstedt 1983 (n = 5) found CL/F 4.4 times higher in
+# late pregnancy.  The change is therefore mostly in hepatic first pass.
+#
+# Lammers' model has a systemic clearance and an oral bioavailability, so
+# Ryu's 2.96 is split between them with a well-stirred liver at the hepatic
+# extraction ratio Ryu gives, 0.5: a 2.96-fold intrinsic clearance raises the
+# extraction to 2.96 / 3.96 = 0.75, so the systemic clearance rises by
+# 0.75 / 0.5 = 1.5 (METOPROLOL_PREGNANCY_CL_FACTOR) and the bioavailability
+# falls to 0.25 / 0.5 = 0.5 of its value (METOPROLOL_PREGNANCY_F_FACTOR), and
+# CL/F rises by 1.5 / 0.5 = 3.0.  That agrees with Hogstedt's range of
+# bioavailability and with his small, non-significant rise in systemic
+# clearance.  With the Patient Profile's Pregnant field on, CL1 and the oral
+# bioavailability take those factors; V1, V2, Q and ka are unchanged.  They
+# are NOT applied to a CYP2D6 poor metaboliser, since pregnancy cannot induce
+# an enzyme that is absent (Ryu's one poor metaboliser had a very low CL/F in
+# pregnancy, 0.37-0.41 L/h/kg); they are applied to the intermediate, normal
+# and ultrarapid phenotypes, on top of their own factors.  Ryu also reports a
+# weight-adjusted ratio of 2.6 (which would give 1.45 and 0.55 by the same
+# split); the model already scales clearance with size, but the difference
+# is within the uncertainty and the unadjusted ratio is applied.  Late
+# pregnancy is the reference state.  (Claude Code, 2026-10-19.)
+#
+# References
+# ----------
+# Lammers LA, Achterbergh R, van Schaik RHN, Romijn JA, Mathot RAA.  Clin
+#   Pharmacokinet 2017;56:1231-1244.  https://doi.org/10.1007/s40262-017-0515-7
+# Ryu RJ, Eyal S, Easterling TR, et al.  Pharmacokinetics of metoprolol
+#   during pregnancy and lactation.  J Clin Pharmacol 2016;56:581-589.
+#   https://doi.org/10.1002/jcph.631 (pregnancy)
+# Hogstedt S, Lindberg B, Peng DR, Regardh CG, Rane A.  Pregnancy-induced
+#   increase in metoprolol metabolism.  Clin Pharmacol Ther 1985;37:688-692.
+#   https://doi.org/10.1038/clpt.1985.114 (pregnancy)
+# Hogstedt S, Lindberg B, Rane A.  Increased oral clearance of metoprolol in
+#   pregnancy.  Eur J Clin Pharmacol 1983;24:217-220.
+#   https://doi.org/10.1007/BF00613820 (pregnancy)
 # -----------------------------------------------------------------------------
 
 # Lammers 2017, Table 3, control (overnight fast)
@@ -62,6 +111,13 @@ METOPROLOL_CYP2D6_CL <- c(poor = 0.44, intermediate = 1, normal = 1,
 METOPROLOL_CYP2D6_F  <- c(poor = 2.28, intermediate = 1, normal = 1,
                           ultrarapid = 0.43)
 
+# Late pregnancy relative to the published values, not for a CYP2D6 poor
+# metaboliser: Ryu 2015's CL/F ratio 2.96 split by a well-stirred liver at
+# extraction 0.5 (extraction 2.96 / 3.96 = 0.75), systemic clearance
+# 0.75 / 0.5 = 1.5 and bioavailability 0.25 / 0.5 = 0.5 (see the header).
+METOPROLOL_PREGNANCY_CL_FACTOR <- 1.5
+METOPROLOL_PREGNANCY_F_FACTOR  <- 0.5
+
 #' Metoprolol, intravenous and oral (Lammers 2017)
 #'
 #' Two compartments with first-order oral absorption in healthy men, with
@@ -70,26 +126,35 @@ METOPROLOL_CYP2D6_F  <- c(poor = 2.28, intermediate = 1, normal = 1,
 #'
 #' @inheritParams cefazolin
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   clearance by 1.5 and the oral bioavailability by 0.5, except in a CYP2D6
+#'   poor metaboliser (Ryu 2015; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                       cyp2d6 = CYP2D6_DEFAULT)
+                       cyp2d6 = CYP2D6_DEFAULT, pregnant = FALSE)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
          ". Must be one of: ", paste(CYP2D6_VALUES, collapse = ", "))
   }
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Pregnancy (see the header): induced CYP2D6, so not in a poor metaboliser.
+  pregnancyApplied <- isTRUE(pregnant) && cyp2d6 != CYP2D6_POOR
+  clPregnancy <- if (pregnancyApplied) METOPROLOL_PREGNANCY_CL_FACTOR else 1
+  fPregnancy  <- if (pregnancyApplied) METOPROLOL_PREGNANCY_F_FACTOR else 1
 
   default <- list(
     v1  = METOPROLOL_V1 * size$volume,
     v2  = METOPROLOL_V2 * size$volume,
     v3  = 1,                          # placeholder: a two-compartment model
-    cl1 = METOPROLOL_CL * METOPROLOL_CYP2D6_CL[[cyp2d6]] / 60 * size$clearance,
+    cl1 = METOPROLOL_CL * METOPROLOL_CYP2D6_CL[[cyp2d6]] / 60 * size$clearance *
+      clPregnancy,
     cl2 = METOPROLOL_Q / 60 * size$clearance,
     cl3 = 0,
     ka_PO = METOPROLOL_KA / 60,
-    bioavailability_PO = min(1, METOPROLOL_F * METOPROLOL_CYP2D6_F[[cyp2d6]]),
+    bioavailability_PO = min(1, METOPROLOL_F * METOPROLOL_CYP2D6_F[[cyp2d6]]) *
+      fPregnancy,
     tlag_PO = 0
   )
 
@@ -104,6 +169,13 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "F x 0.43 (one subject each); CYP2D6 ", cyp2d6, ". ",
     "https://doi.org/10.1007/s40262-017-0515-7"
   )
+  if (pregnancyApplied) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", METOPROLOL_PREGNANCY_CL_FACTOR,
+             ", oral bioavailability x ", METOPROLOL_PREGNANCY_F_FACTOR),
+      paste0("Ryu RJ et al., J Clin Pharmacol 2016;56:581-589. ",
+             "https://doi.org/10.1002/jcph.631")))
+  }
 
   list(
     PK = PK,

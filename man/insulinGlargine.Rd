@@ -4,7 +4,7 @@
 \alias{insulinGlargine}
 \title{Insulin glargine U-100, fitted to Basaglar: pharmacokinetics}
 \usage{
-insulinGlargine(weight, height, age, sex, adjustToFFM = TRUE)
+insulinGlargine(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,9 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{when \code{TRUE}, apply the rise in insulin clearance of
+late pregnancy, CL/F x 1.19 (see R/insulinTham.R)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

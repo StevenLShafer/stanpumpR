@@ -49,6 +49,27 @@
 # by ultrafiltration), so the threshold is MIC / fu = 4 / 0.85 = 4.7 mg/L.
 # See R/antibioticThresholds.R.
 #
+# PREGNANCY
+# =========
+# No study of cefalexin's pharmacokinetics in pregnancy with a non-pregnant
+# comparator was found: Creatsas 1980 measured serum and amniotic levels
+# after 1 g orally in 60 pregnant women with no control group.  The closest
+# analogue, cephradine (oral, renally cleared, little bound, nearly the same
+# structure), was studied by Philipson and colleagues in 12 women during and
+# after pregnancy: its intravenous AUC was 39% smaller in pregnancy, a
+# clearance ratio of 1 / (1 - 0.39) = 1.64, its half-life 26% shorter, and its
+# oral bioavailability did not differ.  Cefalexin itself is 70 to 100%
+# excreted unchanged in the urine (Griffith 1983), so it should follow the
+# 50% rise in glomerular filtration of pregnancy.  With the Patient Profile's
+# Pregnant field on, the apparent clearance CL/F is multiplied by
+# CEFALEXIN_PREGNANCY_CL_FACTOR = 1.5: the rise in filtration applied to the
+# whole clearance, since this model has no renal term, and smaller than
+# cephradine's 1.64.  V/F and the absorption are unchanged (cephradine's
+# bioavailability did not change).  This is an extrapolation by analogy, with
+# no cefalexin data behind it, and, the model having no creatinine input, it
+# applies whatever the patient's renal function.  Late pregnancy is the
+# reference state.  (Claude Code, 2026-10-19.)
+#
 # References
 # ----------
 # Haynes AS et al., Antimicrob Agents Chemother 2024;68:e00182-24.
@@ -58,7 +79,20 @@
 # Singhvi SM et al., J Lab Clin Med 1977;89:414-420.  PMID 833477.
 # Ryder JH et al., Pharmacotherapy 2026;46(7):e70179.
 #   https://doi.org/10.1002/phar.70179
+# Philipson A, Stiernstedt G, Ehrnebo M.  Comparison of the pharmacokinetics
+#   of cephradine and cefazolin in pregnant and non-pregnant women.  Clin
+#   Pharmacokinet 1987;12:136-144.
+#   https://doi.org/10.2165/00003088-198712020-00004 (pregnancy)
+# Griffith RS.  The pharmacology of cephalexin.  Postgrad Med J 1983;59
+#   Suppl 5:16-27.  PMID 6364086.  (pregnancy: urinary excretion)
+# Creatsas G et al.  A study of the kinetics of cephapirin and cephalexin in
+#   pregnancy.  Curr Med Res Opin 1980;7:43-46.  PMID 7428412.  (pregnancy)
 # -----------------------------------------------------------------------------
+
+# Apparent clearance in late pregnancy relative to the published value: the
+# 50% rise in glomerular filtration, by analogy with cephradine's paired
+# clearance ratio 1 / (1 - 0.39) = 1.64 (Philipson 1987; see the header).
+CEFALEXIN_PREGNANCY_CL_FACTOR <- 1.5
 
 #' Cefalexin pharmacokinetics (oral, apparent)
 #'
@@ -67,9 +101,13 @@
 #'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
 #'   published allometry on total body weight (volumes linear, clearances to the
 #'   0.75 power). No renal-function estimate.
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   apparent clearance by 1.5, by analogy with cephradine (Philipson 1987;
+#'   see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-cefalexin <- function(weight, height, age, sex, adjustToFFM = TRUE)
+cefalexin <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                      pregnant = FALSE)
 {
   # Size scaling (see the header): published allometry on total weight,
   # reproduced exactly with the switch off.
@@ -78,7 +116,9 @@ cefalexin <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   # Haynes 2024, apparent: CL/F 13.98 L/h, V/F 26.63 L at 70 kg
   v1  <- 26.63 * size$volume
-  cl1 <- 13.98 * size$clearance / 60    # L/min
+  # Pregnancy (see the header): the apparent clearance only.
+  clPregnancy <- if (isTRUE(pregnant)) CEFALEXIN_PREGNANCY_CL_FACTOR else 1
+  cl1 <- 13.98 * size$clearance / 60 * clPregnancy    # L/min
   v2  <- 1                              # one compartment
   v3  <- 1
   cl2 <- 0
@@ -118,6 +158,13 @@ cefalexin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Apparent (CL/F, V/F) oral model fitted in children and extrapolated to ",
     "adults; oral only. https://doi.org/10.1128/aac.00182-24"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("apparent clearance x ", CEFALEXIN_PREGNANCY_CL_FACTOR,
+             ", by analogy with cephradine"),
+      paste0("Philipson A et al., Clin Pharmacokinet 1987;12:136-144. ",
+             "https://doi.org/10.2165/00003088-198712020-00004")))
+  }
 
   return(
     list(

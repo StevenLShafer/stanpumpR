@@ -69,3 +69,47 @@ test_that("equal daily dose steps give unequal steady states", {
   # the first, which is the teaching point of the scenario's table
   expect_gt(css(400) - css(300), 2 * (css(300) - css(200)))
 })
+
+test_that("pregnancy: Km (total) x 0.48 and Vmax x 1.1, on every route", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  See the
+  # PREGNANCY section of R/drugs_phenytoin.R (Tomson 1994).
+  on  <- getDrugPK("phenytoin", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("phenytoin", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("phenytoin", 70, 165, 30, SEX_FEMALE))
+  expect_equal(on$michaelisMenten$km / off$michaelisMenten$km,
+               PHENYTOIN_PREGNANCY_KM_FACTOR, tolerance = 1e-6)
+  expect_equal(on$michaelisMenten$vmax / off$michaelisMenten$vmax,
+               PHENYTOIN_PREGNANCY_VMAX_FACTOR, tolerance = 1e-6)
+  expect_equal(PHENYTOIN_PREGNANCY_KM_FACTOR, 0.48)
+  expect_equal(PHENYTOIN_PREGNANCY_VMAX_FACTOR, 1.1)
+  # The help tables' low-concentration limit follows the block
+  expect_equal(on$PK$default$cl1, on$michaelisMenten$vmax / on$michaelisMenten$km,
+               tolerance = 1e-12)
+  # The block's other fields (fosphenytoin conversion and IM absorption, the
+  # salt factors) and the volume and oral absorption are untouched
+  for (k in setdiff(names(off$michaelisMenten), c("vmax", "km")))
+    expect_identical(on$michaelisMenten[[k]], off$michaelisMenten[[k]], info = k)
+  for (k in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO"))
+    expect_identical(on$PK$default[[k]], off$PK$default[[k]], info = k)
+  for (form in names(off$oralFormulations))
+    for (k in c("ka_PO", "bioavailability_PO", "tlag_PO"))
+      expect_identical(on$oralFormulations[[form]]$default[[k]],
+                       off$oralFormulations[[form]]$default[[k]], info = paste(form, k))
+  # Pinned with the flag on
+  expect_equal_rounded(59.22801933, on$PK$default$v1)
+  expect_equal_rounded(0.3604776696, on$michaelisMenten$vmax)
+  expect_equal_rounded(4.4112, on$michaelisMenten$km)
+  expect_equal_rounded(0.08171873177, on$PK$default$cl1)
+  # The point of the two factors: at the dose rate that holds the total at
+  # 15 mg/L outside pregnancy, the total falls to about 38% (Tomson: 39%)
+  # while the unbound, km(unbound) x r / (1 - r) with km(unbound) unchanged,
+  # stays at about 79% (Tomson: 82%)
+  css <- function(mm, R) mm$km * R / (mm$vmax - R)
+  R <- off$michaelisMenten$vmax * 15 / (15 + off$michaelisMenten$km)
+  expect_equal(css(off$michaelisMenten, R), 15, tolerance = 1e-10)
+  expect_equal(css(on$michaelisMenten, R) / 15, 0.380, tolerance = 2e-3)
+  unbound <- css(on$michaelisMenten, R) / PHENYTOIN_PREGNANCY_KM_FACTOR / 15
+  expect_equal(unbound, 0.792, tolerance = 2e-3)
+  expect_match(on$reference, "Tomson")
+  expect_no_match(off$reference, "Tomson")
+})

@@ -75,6 +75,39 @@
 # CYP2D6 adjustment: the model fitted none.  Target-controlled infusion is not
 # offered: the controller inverts a single system.
 #
+# PREGNANCY
+# =========
+# Kulo et al. gave 30 mg of racemic ketorolac intravenously after cesarean
+# delivery (Int J Obstet Anesth 2012; n = 39, 8 of them studied again 4-5
+# months postpartum, and 8 nonpregnant controls).  Clearance was 2.11 L/h/m2
+# at delivery against 1.43 late postpartum and 1.07 in the controls, and the
+# volume of distribution 0.24 L/kg against 0.16 and 0.17.  In the eight
+# paired women (J Biomed Biotechnol 2012) clearance fell from 3.80 to 2.53
+# L/h after the pregnancy.  Their enantiomer-specific analysis of the same
+# cohort (Bosn J Basic Med Sci 2017) found the clearance and the steady-state
+# volume of both S and R higher at delivery, S more than R, with the
+# half-lives unchanged.
+#
+# The comparator is the late-postpartum women, whose clearance equals that
+# of healthy men (1.48 L/h/m2) and who are among Cloesmeijer's adults, so
+# they are this model's own population: clearance 2.11 / 1.43 = 1.48, paired
+# 3.80 / 2.53 = 1.50; volume 0.24 / 0.16 = 1.50.  Against the nonpregnant
+# controls the clearance ratio would be 2.11 / 1.07 = 1.97, but that group's
+# clearance is low against every other adult reference and is not used.
+# KETOROLAC_PREGNANCY_FACTOR = 1.5.
+#
+# With the Patient Profile's Pregnant field on, CL, every volume and every
+# distribution clearance are multiplied by 1.5 in BOTH systems, S and R, so
+# every rate constant, and therefore every half-life, is unchanged, as Kulo
+# observed: the curve after a dose is the nonpregnant one divided by 1.5.
+# (The R system's placeholder third volume, with no clearance to it, stays
+# 1.)  One factor serves both enantiomers because the per-enantiomer ratios
+# were not retrieved, although S rose more than R.  The oral absorption is
+# unchanged.  Ketorolac is highly bound to albumin, which falls in
+# pregnancy; part of the rise may be a higher free fraction, in which case
+# the unbound concentration changes less than the total plotted here, and
+# surgery may contribute.  Claude Code, 2026-10-19.  See R/pregnancy.R.
+#
 # References
 # ----------
 # Cloesmeijer ME et al., Br J Clin Pharmacol 2021;87:1443-1454.
@@ -83,6 +116,15 @@
 #   crossover). https://doi.org/10.1007/BF00561376
 # Mroszczak EJ et al., Pharmacotherapy 1990;10:33S-39S.
 #   https://pubmed.ncbi.nlm.nih.gov/2082311/
+# Kulo A et al.  Pharmacokinetics of intravenous ketorolac following
+#   caesarean delivery.  Int J Obstet Anesth 2012;21:334-338.
+#   https://doi.org/10.1016/j.ijoa.2012.06.001 (pregnancy)
+# Kulo A et al.  The impact of caesarean delivery on paracetamol and
+#   ketorolac pharmacokinetics: a paired analysis.  J Biomed Biotechnol
+#   2012;2012:437639.  https://doi.org/10.1155/2012/437639 (pregnancy)
+# Kulo A et al.  Enantiomer-specific ketorolac pharmacokinetics in young
+#   women, including pregnancy and postpartum period.  Bosn J Basic Med Sci
+#   2017;17:54-60.  https://doi.org/10.17305/bjbms.2016.1515 (pregnancy)
 # (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
 
@@ -92,16 +134,32 @@ KETOROLAC_MW_BASE         <- 255.273   # g/mol, ketorolac free acid
 KETOROLAC_ENANTIOMER_FRACTION <- 0.5 * KETOROLAC_MW_BASE / KETOROLAC_MW_TROMETHAMINE
 KETOROLAC_KA_PO <- log(2) / 3.8        # 1/min, Mroszczak 1990, provisional
 
+# Pregnancy (see the header): clearance, every volume and every distribution
+# clearance of both enantiomers.  Kulo 2012, against the late-postpartum
+# women: clearance 2.11 / 1.43 = 1.48 L/h/m2 (paired 3.80 / 2.53 = 1.50 L/h),
+# volume 0.24 / 0.16 = 1.50 L/kg.
+KETOROLAC_PREGNANCY_FACTOR <- 1.5
+
 #' Ketorolac pharmacokinetics (S + R enantiomers)
 #'
 #' @inheritParams cefazolin
+#' @param pregnant when \code{TRUE}, apply the changes of late pregnancy:
+#'   every clearance and volume of both enantiomers x 1.5 (see the file's
+#'   header)
 #' @returns a list in the shape \code{getDrugPK()} expects, with the R
 #'   enantiomer as a parallel system
 #' @export
-ketorolac <- function(weight, height, age, sex, adjustToFFM = TRUE)
+ketorolac <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                      pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyClearance = (weight / 70)^0.75)
+  # Pregnancy (see the header): every clearance and volume of both systems,
+  # so the rate constants are unchanged.
+  if (isTRUE(pregnant)) {
+    size$volume    <- size$volume * KETOROLAC_PREGNANCY_FACTOR
+    size$clearance <- size$clearance * KETOROLAC_PREGNANCY_FACTOR
+  }
 
   oral <- list(ka_PO = KETOROLAC_KA_PO, bioavailability_PO = 1, tlag_PO = 0)
 
@@ -134,6 +192,12 @@ ketorolac <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "oral absorption provisional, Mroszczak 1990). ",
     "https://doi.org/10.1111/bcp.14547"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearances and volumes of S and R x ", KETOROLAC_PREGNANCY_FACTOR),
+      paste0("Kulo A et al., Int J Obstet Anesth 2012;21:334-338. ",
+             "https://doi.org/10.1016/j.ijoa.2012.06.001")))
+  }
 
   list(
     PK = PK,

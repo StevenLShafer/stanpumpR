@@ -14,10 +14,14 @@
 #' The Tham 2017 one-compartment model for insulin glargine U-100 (Basaglar fit), parallel first- and zero-order absorption; see R/insulinTham.R.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant when \code{TRUE}, apply the rise in insulin clearance of
+#'   late pregnancy, CL/F x 1.19 (see R/insulinTham.R)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-insulinGlargine <- function(weight, height, age, sex, adjustToFFM = TRUE)
+insulinGlargine <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                            pregnant = FALSE)
 {
   thamInsulin(weight, height, age, sex, adjustToFFM, insulin = "glargine",
-              components = c(glargine = 1), product = "glargine U100 (Basaglar)")
+              components = c(glargine = 1), product = "glargine U100 (Basaglar)",
+              pregnant = pregnant)
 }

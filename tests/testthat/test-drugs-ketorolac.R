@@ -114,3 +114,41 @@ test_that("target-controlled infusion is refused for a sum of systems", {
     "not available"
   )
 })
+
+test_that("pregnancy: every clearance and volume of S and R x 1.5", {
+  # A woman of 30 years, 70 kg, 165 cm: CL, every volume and every
+  # distribution clearance x 1.5 in both enantiomers, so the rate constants
+  # and half-lives are unchanged (R/drugs_ketorolac.R, PREGNANCY).
+  on  <- getDrugPK("ketorolac", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("ketorolac", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("ketorolac", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK[[1]]; b <- off$PK[[1]]
+  expect_equal(a$v1 / b$v1, KETOROLAC_PREGNANCY_FACTOR, tolerance = 1e-6)
+  expect_equal(a$v2 / b$v2, KETOROLAC_PREGNANCY_FACTOR, tolerance = 1e-6)
+  expect_equal(a$v3 / b$v3, KETOROLAC_PREGNANCY_FACTOR, tolerance = 1e-6)
+  expect_equal(a$cl1 / b$cl1, KETOROLAC_PREGNANCY_FACTOR, tolerance = 1e-6)
+  expect_equal(a$cl2 / b$cl2, KETOROLAC_PREGNANCY_FACTOR, tolerance = 1e-6)
+  expect_equal(a$cl3 / b$cl3, KETOROLAC_PREGNANCY_FACTOR, tolerance = 1e-6)
+  # the rate constants, and so the half-lives, are unchanged
+  same <- c("k10", "k12", "k13", "k21", "k31", "lambda_1", "lambda_2",
+            "lambda_3", "ka_PO", "bioavailability_PO", "tlag_PO")
+  expect_true(all(same %in% names(a)))
+  expect_equal(a[same], b[same], tolerance = 1e-12)
+  r <- on$parallelSystems[[1]]$PK[[1]]; s <- off$parallelSystems[[1]]$PK[[1]]
+  for (p in c("v1", "v2", "cl1", "cl2"))
+    expect_equal(r[[p]] / s[[p]], KETOROLAC_PREGNANCY_FACTOR, tolerance = 1e-6)
+  # the R system's placeholder third volume, with no clearance to it, stays 1
+  rSame <- c("v3", "cl3", "k10", "k12", "k21", "lambda_1", "lambda_2")
+  expect_true(all(rSame %in% names(r)))
+  expect_equal(r[rSame], s[rSame], tolerance = 1e-12)
+  expect_match(on$reference, "Kulo", fixed = TRUE)
+  expect_no_match(off$reference, "Kulo", fixed = TRUE)
+  # The values the model gives with the flag on
+  actual <- ketorolac(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(4.872844596, actual$v1)
+  expect_equal_rounded(52.3558737, actual$v2)
+  expect_equal_rounded(7.13394122, actual$v3)
+  expect_equal_rounded(0.08443455278, actual$cl1)
+  expect_equal_rounded(0.03955875773, actual$cl2)
+  expect_equal_rounded(0.4189825415, actual$cl3)
+})

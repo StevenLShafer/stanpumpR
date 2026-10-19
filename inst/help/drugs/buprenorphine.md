@@ -45,3 +45,7 @@ Intramuscular and swallowed oral doses are not offered: no usable human study wa
 ### Where to be careful
 
 This is a research simulation. Its parameters are typical values, and the spread between patients is wide: the central volume alone varies by about 80%. Norbuprenorphine is not modelled. The respiratory "ceiling" seen in volunteer studies does not mean an overdose is safe, especially with benzodiazepines or other sedatives.
+
+### Pregnancy
+
+With **Pregnant** ticked, the elimination clearance is multiplied by 1.83; the volumes, the distribution clearances and the sublingual and intranasal absorption are unchanged. Caritis's group studied women on maintenance buprenorphine in pregnancy and again after delivery: Bastian and colleagues (*Am J Obstet Gynecol* 2017;216:64.e1-64.e7) found the dose-normalised exposure about 50% lower in pregnancy, with the time to peak unchanged, and Zhu and colleagues (*J Addict Med* 2025;19:129-134; 22 women) found it 119 against 218 in the second half of pregnancy, a ratio of 1.83. The cause is faster metabolism by CYP3A and glucuronidation, not a change in absorption, so the factor is applied to the clearance of the intravenous disposition and every route is changed alike. The time to peak effect is held, so the effect site equilibrates a little more slowly. See [Pregnancy](help:models/pregnancy).
