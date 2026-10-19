@@ -359,6 +359,21 @@ DRUG_CATEGORIES <- c(
 # drugs of intensive care (inst/help/models/vasoactive.md): concentration
 # only, every one catalogued in inst/extdata/vasoactiveRegistry.csv.
 VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
+# The categories whose every drug, and every metabolite of one, must have a
+# row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
+# range the band draws, or why there is none.  Checked by
+# test-therapeutic-ranges.R.
+THERAPEUTIC_RANGE_CATEGORIES <- c("Antiseizure", "Antidepressants", "Antipsychotics")
+# What a therapeutic-range row may say about the band (R/therapeuticRanges.R).
+THERAPEUTIC_RANGE_STATUSES <- c(
+  "drawn",                # the band is this range, on this drug's row
+  "drawn_on_metabolite",  # the range is drawn on band_drug's row instead
+  "sum_not_drawn",        # the range is for a parent plus a metabolite whose
+                          # shares vary, so it cannot be drawn on either row
+  "pending_verification", # a candidate range not yet read in a primary source
+  "not_applicable",       # a range exists, but not for the use this model plots
+  "none_established"      # no range has been established
+)
 # The category of the opt-in research models of drugs of abuse
 # (R/illicit-drugs.R).  Hidden unless the user turns on input$showIllicitDrugs,
 # and never offered in the startup menu.

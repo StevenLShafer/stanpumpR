@@ -12,7 +12,7 @@ test_that("the reference patient receives Sun's published values", {
         ka_PO = 0.861 / 60, bioavailability_PO = 1, tlag_PO = 0.782 * 60
       )),
       tPeak = 0, MEAC = 0,
-      typical = 0, upperTypical = 0, lowerTypical = 0,
+      typical = 30, upperTypical = 40, lowerTypical = 20,
       reference = actual$reference
     )
   expect_equal_rounded(actual, expected)

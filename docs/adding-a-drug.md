@@ -7,6 +7,10 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > Every model must handle body size the stanpumpR way — see
 > [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
 
+> Every model must also carry its **therapeutic reference range** as the band, wherever one is
+> established for the analyte it plots, and its help page must say where the range came from —
+> or, when there is none, why. See *The therapeutic range* in step 2. This too is a requirement.
+
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 
@@ -533,6 +537,47 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   These models are plasma only: `tPeak` 0, `MEAC` 0 and no band, as the sources support no
   effect site. See `inst/help/models/illicit-drugs.md`.
 
+### The therapeutic range (required where one exists)
+
+The band is how a user compares a curve with the concentrations that work, so **a drug model is
+not finished until its band is either set or its absence is explained**. Before writing the
+row, look for a therapeutic reference range, in this order:
+
+1. **A consensus guideline for the drug's class**: for psychiatric drugs the AGNP-TDM
+   consensus guideline (Hiemke 2018, update 2017; superseded by the update 2026, Hart 2026,
+   *Pharmacopsychiatry* 59:166-295, doi 10.1055/a-2860-7861) and the AGNP task force's
+   drug-by-drug systematic reviews that revise it (aripiprazole, olanzapine, escitalopram,
+   duloxetine, venlafaxine so far); for antiseizure drugs the ILAE position paper (Patsalos 2008,
+   *Epilepsia* 49:1239-1276) and its 2018 update (Patsalos 2018, *Ther Drug Monit* 40:526-548),
+   with national harmonizations such as Reimers 2018 (*Drug Des Devel Ther* 12:271-280);
+   for antibiotics the MIC (`antibioticMicTable()`, above); for anaesthetics and analgesics
+   the effect-site concentrations of the clinical literature.
+2. **The product monograph**: the FDA label (Drugs@FDA, DailyMed) and the EMA SmPC. Older
+   drugs often state a range (phenytoin, carbamazepine, valproate, ethosuximide, digoxin);
+   most newer ones say none is established, which is itself worth recording.
+3. **Exposure-response analyses** of the source or the regulatory review, as for gabapentin.
+
+Then check that the range describes **what the row plots**: the same analyte (a parent, not a
+parent plus metabolite; total or unbound), the same matrix (serum, plasma, whole blood) and the
+same use (a chronic trough window does not describe intravenous loading). Draw it only when it
+does. A range for a parent plus a metabolite is drawn on the row carrying most of the sum only
+when that share is stable (bupropion on hydroxybupropion); otherwise neither row carries it.
+Set `Typical` inside the band (its midpoint unless the source names a target), and say on the
+help page that it is not a target.
+
+For a drug in `THERAPEUTIC_RANGE_CATEGORIES` (`R/constants.R`: antiseizure, antidepressant,
+antipsychotic), and for any metabolite of one, add a row to
+`inst/extdata/therapeuticRanges.csv` (`R/therapeuticRanges.R`): the analyte, matrix,
+sampling time, limits in the plotted units (`mg/L` for a `mcg` drug, `ng/mL` for `ng`), the
+source and DOI, **how far the source was read** (`verification`: full text, abstract, or a
+secondary quotation — never a number from memory), the range it replaced, what the FDA or EMA
+product information says, and a `band_status` from `THERAPEUTIC_RANGE_STATUSES`: `drawn`,
+`drawn_on_metabolite`, `sum_not_drawn`, `pending_verification`, `not_applicable` or
+`none_established`. `test-therapeutic-ranges.R` fails until every such drug has a row and the
+band columns agree with it, and the drug's help page prints the row. Recording a range in
+the registry for a drug of any other category is encouraged; add the category to
+`THERAPEUTIC_RANGE_CATEGORIES` once all its drugs have rows.
+
 Example row (remifentanil):
 
 ```
@@ -587,7 +632,10 @@ The in-app help (the **Help** tab) generates a page for every drug in the CSV: i
 at six reference patients, its citation, its units and typical range, all computed from the
 files above so they cannot drift. What it cannot generate is the narrative — the population
 the model was fitted in, which covariates it uses and how, where it is extrapolated, who did
-the work. That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
+the work, and **where the band comes from**: the range, its source with a DOI, the analyte and
+sampling time it applies to, and the range it replaced if it was revised — or, when no band is
+drawn, why not (no range established, a range for a parent plus metabolite, a range for a
+different use). That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
 under an "About this model" heading). `tests/testthat/test-help-drugs.R` fails if the file is
 missing. See `inst/help/README.md` for the Markdown conventions and `inst/help/drugs/fentanyl.md`
 for a short example.

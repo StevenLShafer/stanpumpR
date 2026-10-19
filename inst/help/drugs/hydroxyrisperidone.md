@@ -8,4 +8,4 @@ Neither risperidone's bioavailability nor the fraction converted to the metaboli
 
 ### Effect
 
-No effect site and no band. D2 occupancy is a function of the risperidone and 9-hydroxyrisperidone concentrations added together; see [risperidone](help:drugs/risperidone).
+No effect site and no band: the 20 to 60 ng/mL therapeutic reference range is for risperidone plus 9-hydroxyrisperidone. D2 occupancy is a function of the risperidone and 9-hydroxyrisperidone concentrations added together; see [risperidone](help:drugs/risperidone).

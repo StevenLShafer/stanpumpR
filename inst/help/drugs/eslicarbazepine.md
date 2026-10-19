@@ -12,4 +12,4 @@ Enzyme inducers add about 1.4 L/h to clearance (Falcao and colleagues), not appl
 
 ### Band
 
-3 to 26 mg/L, the eslicarbazepine-specific range (Patsalos and colleagues, 2018).
+3 to 26 mg/L (12 to 100 µmol/L), the eslicarbazepine-specific range proposed by Svendsen and colleagues (*Epilepsy Res* 2017;129:125-131) and adopted in Norway's national reference ranges (Reimers and colleagues, *Drug Des Devel Ther* 2018;12:271-280, https://doi.org/10.2147/DDDT.S154388). The wider 3 to 36 mg/L of Patsalos and Berry is the range for racemic licarbazepine, oxcarbazepine's active metabolite, about 80% of which is eslicarbazepine.

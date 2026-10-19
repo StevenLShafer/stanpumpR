@@ -8,4 +8,4 @@ The fraction of aripiprazole converted could not be identified, so these paramet
 
 ### Effect
 
-No effect site and no band. Kim 2012's occupancy model is of parent aripiprazole only, so this row does not enter it.
+No effect site and no band. Kim 2012's occupancy model is of parent aripiprazole only, so this row does not enter it. The therapeutic reference range of the active moiety, aripiprazole plus dehydroaripiprazole, is 180 to 380 ng/mL (Hart and colleagues, *Psychopharmacology* 2022;239:3377-3391); add the aripiprazole row to compare with it. The parent's own range is drawn on the aripiprazole row.

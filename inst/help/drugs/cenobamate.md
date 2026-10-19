@@ -37,4 +37,4 @@ Cenobamate itself changes other drugs' kinetics (it inhibits CYP2C19, raising ph
 
 ### Band
 
-None. No therapeutic reference range has been established. In an Italian cohort, patients who responded at 100 mg/day or less had plasma concentrations from 0.5 to 17.6 mg/L, median about 5 to 6 (Operto 2025). There is no effect site.
+None. No therapeutic reference range has been established: among 101 patients on 100 to 400 mg a day, with plasma levels from 3.8 to 54.6 mg/L, neither the dose nor the level separated the seizure-free from the non-responders, or those with adverse events from those without, and the authors conclude that "a general therapeutic range cannot be defined" (Steinhoff and colleagues, *J Clin Med* 2024;13:2757, https://doi.org/10.3390/jcm13102757). In an Italian cohort, patients who responded at 100 mg/day or less had plasma concentrations from 0.5 to 17.6 mg/L, median about 5 to 6 (Operto 2025). There is no effect site.

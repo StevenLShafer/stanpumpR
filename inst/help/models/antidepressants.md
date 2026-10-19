@@ -22,7 +22,7 @@ All are given by mouth only (`mg PO`, with once-daily schedules, twice-daily one
 
 **Trough data shape the half-lives.** Most of these models were fitted to one or two concentrations per patient, drawn just before a dose at steady state. Such data pin down the average steady-state concentration (dose rate divided by clearance) well and the shape within a dosing interval poorly. Several apparent half-lives therefore differ from the product label's: mirtazapine's is about 7 hours against the label's 20 to 40, paroxetine's about 54 hours at 71 years against the label's 21, and fluoxetine's about 6 hours against the label's 4 to 6 days, with norfluoxetine's 20 minutes against 4 to 16 days. Fluoxetine's model was held back until its units were checked: its source's own simulated troughs confirm that the printed parameters are what the authors used, so the troughs are right and the time course is not. Each drug's page says where this applies.
 
-**The shaded band** is the therapeutic reference range of the AGNP consensus guideline (Hiemke and colleagues, 2018) for trough concentrations at steady state. For bupropion the guideline's range is for bupropion plus hydroxybupropion, and is drawn on the hydroxybupropion row, which carries most of the sum.
+**The shaded band** is the therapeutic reference range for trough concentrations at steady state: the AGNP consensus guideline's (Hiemke and colleagues, 2018), or, where the AGNP task force has since revised it in a systematic review, the revision: escitalopram 20 to 40 ng/mL (Eichentopf and colleagues, 2022), duloxetine 20 to 120 ng/mL (Amann and colleagues, 2024) and, for venlafaxine, 140 to 600 ng/mL for the active moiety with 85 to 380 ng/mL for ODV alone (Lense and colleagues, 2024). For bupropion the guideline's range is for bupropion plus hydroxybupropion, and is drawn on the hydroxybupropion row, which carries most of the sum; for fluoxetine and for venlafaxine's active moiety the parent and metabolite share the sum too evenly for either row to carry it, so no band is drawn and the drug's page gives the range. Every range, its source, and how far the source was read are in `inst/extdata/therapeuticRanges.csv`. The AGNP guideline was updated again in July 2026 (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295), revising 88 ranges; its table has not yet been read, so the ranges here may lag it.
 
 **No effect site.** Antidepressant response develops over weeks and does not follow plasma concentration with a delay that a ke0 can describe. There is no effect-site curve, and *Time until threshold* is not computed.
 
@@ -40,6 +40,14 @@ These were assessed and left out. They are not forgotten:
 ## References
 
 Hiemke C, Bergemann N, Clement HW, et al. Consensus guidelines for therapeutic drug monitoring in neuropsychopharmacology: update 2017. *Pharmacopsychiatry* 2018;51:9-62. https://doi.org/10.1055/s-0043-116492
+
+Hart XM, Gründer G, Hiemke C, et al. Consensus guidelines for therapeutic drug monitoring in neuropsychopharmacology: update 2026. *Pharmacopsychiatry* 2026;59:166-295. https://doi.org/10.1055/a-2860-7861
+
+Eichentopf L, Hiemke C, Conca A, et al. Systematic review and meta-analysis on the therapeutic reference range for escitalopram. *Front Psychiatry* 2022;13:972141. https://doi.org/10.3389/fpsyt.2022.972141
+
+Amann F, Kochtyrew M, Zernig G, Gründer G, Hart XM. Therapeutic reference range for duloxetine in the treatment of depression revised. *Neurosci Appl* 2024;3:104077. https://doi.org/10.1016/j.nsa.2024.104077
+
+Lense XM, Hiemke C, Funk CSM, et al. Venlafaxine's therapeutic reference range in the treatment of depression revised. *Psychopharmacology* 2024;241:275-289. https://doi.org/10.1007/s00213-023-06484-7
 
 Yan K, Xie X, Shao Q, Wang N, Yang M. A step toward precision dosing of escitalopram in Chinese patients: an external evaluation of published population pharmacokinetic models. *Drug Des Devel Ther* 2025;19:10937-10951. https://doi.org/10.2147/DDDT.S546904.
 
