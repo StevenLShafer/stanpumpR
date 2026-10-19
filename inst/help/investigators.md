@@ -136,6 +136,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | tiagabine | **S. H. Ingwersen** and colleagues (2000) | One compartment, apparent oral, on monotherapy |
 | levetiracetam | **S. J. Rhee** and colleagues (2017) | One compartment, with clearance split into a renal part (on Cockcroft-Gault creatinine clearance) and a non-renal part; intravenous doses on the label's 1:1 conversion |
 | eslicarbazepine | **A. Falcão** and colleagues (2012) | One compartment, apparent oral, for the active eslicarbazepine formed from eslicarbazepine acetate, with absorption from a 2013 Simulations Plus poster |
+| cenobamate | **V. Vashi** and colleagues (2023) | Two compartments, apparent oral, with an absorption lag; the sponsor's model of healthy volunteers and adults with focal seizures, without its dose, size, ethnicity or co-medication terms; checked against the ascending-dose studies in healthy volunteers of **L. Vernillet** and colleagues (2020) |
 
 ## Pharmacodynamics and methods
 

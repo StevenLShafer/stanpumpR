@@ -84,6 +84,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "dapagliflozin",
                     # Hoeben 2016's lag before the release into the gut
                     "canagliflozin",
+                    # the sponsor's 0.24 h lag (cenobamate, 2026-10-18)
+                    "cenobamate",
                     # enteric-coated lag (2026-10-11)
                     "diclofenacEC",
                     # sublingual lag fitted with ka (2026-10-10)
