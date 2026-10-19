@@ -12,7 +12,8 @@ EVIDENCE  <- c("full_text", "abstract", "none")
 # The drugs implemented new for this registry, in its own category.
 IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "nitroglycerin", "norepinephrine", "procainamide", "esmolol",
-                 "dopamine", "atropine", "propranolol", "digoxin")
+                 "dopamine", "atropine", "propranolol", "digoxin",
+                 "verapamil")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",

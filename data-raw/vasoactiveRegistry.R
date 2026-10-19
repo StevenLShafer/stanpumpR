@@ -212,11 +212,25 @@ registry <- rbind(
       NA,
       "Grasela TH, Sheiner LB. Population pharmacokinetics of procainamide from routine clinical data. Clin Pharmacokinet 1984;9:545-554. PMID 6509861.",
       doi("10.2165/00003088-198409060-00004")),
+  reg("verapamil__af__kates1981", "verapamil",
+      "12 patients with chronic atrial fibrillation on digoxin, 15 mg at 1 mg/min", "verapamil (racemic)", "plasma",
+      "implemented", "verapamil", "full_text",
+      "Read from the supplied article.  Each patient's three-compartment fit is in Table II; the model is the mean of their per-kilogram volumes and clearances, which reproduces the paper's own mean CL 12.5 mL/min/kg and Vss 3.50 L/kg.  Patient 2's Vc is misprinted (92.72 for 9.272 L), as its own derived columns show.  Checked against Eichelbaum 1984's racemic subjects.  Dose basis unstated (hydrochloride assumed, as labelled).",
+      NA,
+      "Kates RE, Keefe DL, Schwartz J, Harapat S, Kirsten EB, Harrison DC. Verapamil disposition kinetics in chronic atrial fibrillation. Clin Pharmacol Ther 1981;30:44-51. PMID 7237897.",
+      doi("10.1038/clpt.1981.125")),
+  reg("verapamil__healthy__eichelbaum1984", "verapamil",
+      "5 healthy young men, (+)-, (-)- and racemic verapamil IV", "verapamil and its enantiomers", "plasma",
+      "complete_not_implemented", NA, "full_text",
+      "Read from the supplied article: every subject's triexponential for each isomer (Table 1) and the derived parameters (Table 2).  Used as the external check on Kates 1981; its Table 1 shows the doses were the hydrochloride and Table 2 the base.  Not offered as a second curve; the enantiomers could be, as parallel systems, if wanted.",
+      NA,
+      "Eichelbaum M, Mikus G, Vogelgesang B. Pharmacokinetics of (+)-, (-)- and (+/-)-verapamil after intravenous administration. Br J Clin Pharmacol 1984;17:453-458. PMID 6721991, PMC1463390.",
+      doi("10.1111/j.1365-2125.1984.tb02371.x")),
   reg("verapamil__healthy__dominic1981", "verapamil",
       "8 healthy men", "racemic verapamil", "plasma",
       "needs_full_text", NA, "abstract",
-      "Two compartments, but the abstract's V (178 L) exceeds CL/beta and so cannot be Vss: three usable numbers for four parameters, and no central volume.  Enantiomer kinetics differ (Eichelbaum 1984).  Three supplied papers, Fuenmayor 1992 (Drugs 44 Suppl 1:1-11), Saseen 2013 (J Clin Pharmacol) and Kang 2003 (Clin Pharmacol Ther 73:31-40, a population model of oral sustained-release verapamil that estimates only an apparent steady-state clearance, 23.8 mL/min/kg in women and 18.6 in men), give no intravenous model.  Kang's references include Schwartz 1990, \"Aging alters verapamil elimination and dynamics: single dose and steady-state responses\" (J Pharmacol Exp Ther 255:364-373).",
-      "Schomerus M, Spiegelhalder B, Stieren B, Eichelbaum M. Physiological disposition of verapamil in man. Cardiovasc Res 1976;10:605-612; Dominic JA et al. The pharmacology of verapamil. III. Pharmacokinetics in normal subjects after intravenous and oral dosing. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352, doi 10.1097/00005344-198101000-00003.  Also Kates 1981 (Clin Pharmacol Ther 30:44, doi 10.1038/clpt.1981.125), McAllister 1982 (doi 10.1038/clpt.1982.54), Eichelbaum 1984 (PMC1463390).",
+      "Superseded by Kates 1981.  Two compartments, but the abstract's V (178 L) exceeds CL/beta and so cannot be Vss: three usable numbers for four parameters, and no central volume.  Three supplied papers, Fuenmayor 1992 (Drugs 44 Suppl 1:1-11), Saseen 2013 (J Clin Pharmacol) and Kang 2003 (Clin Pharmacol Ther 73:31-40, a population model of oral sustained-release verapamil that estimates only an apparent steady-state clearance, 23.8 mL/min/kg in women and 18.6 in men), give no intravenous model.  Kang's references include Schwartz 1990, \"Aging alters verapamil elimination and dynamics: single dose and steady-state responses\" (J Pharmacol Exp Ther 255:364-373).",
+      "Schomerus M, Spiegelhalder B, Stieren B, Eichelbaum M. Physiological disposition of verapamil in man. Cardiovasc Res 1976;10:605-612; Dominic JA et al. The pharmacology of verapamil. III. Pharmacokinetics in normal subjects after intravenous and oral dosing. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352, doi 10.1097/00005344-198101000-00003 (no longer needed: Kates 1981 is implemented).",
       "Dominic JA et al. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352.",
       doi("10.1097/00005344-198101000-00003")),
   reg("diltiazem__healthy__kolle1983", "diltiazem",
@@ -320,6 +334,7 @@ MG  <- doi("10.1097/00000542-200002000-00013")
 HI  <- doi("10.1002/jps.2600740702")
 FA  <- doi("10.1111/j.1365-2125.1982.tb01424.x")
 YU  <- doi("10.2165/00003088-200140100-00005")
+KA81 <- doi("10.1038/clpt.1981.125")
 
 parameters <- rbind(
   par("epinephrine", "CL", 127, "L/h at 70 kg, SAPS II 50", "estimated", "full_text", AB),
@@ -408,6 +423,14 @@ parameters <- rbind(
   par("digoxin", "V2/F", 22.6, "L/kg", "estimated", "full_text", YU),
   par("digoxin", "spironolactone on CL", 0.770, "factor; held at none", "estimated", "full_text", YU),
   par("digoxin", "calcium antagonist on CL", 0.784, "factor; held at none", "estimated", "full_text", YU),
+
+  par("verapamil", "V1", 0.2751, "L/kg (mean of 12 per-kg fits)", "derived", "full_text", KA81),
+  par("verapamil", "V2", 0.8594, "L/kg", "derived", "full_text", KA81),
+  par("verapamil", "V3", 2.3560, "L/kg", "derived", "full_text", KA81),
+  par("verapamil", "CL", 12.52, "mL/min/kg (paper: 12.5)", "derived", "full_text", KA81),
+  par("verapamil", "Q2", 0.0382, "L/min/kg", "derived", "full_text", KA81),
+  par("verapamil", "Q3", 0.01408, "L/min/kg", "derived", "full_text", KA81),
+  par("verapamil", "patient 2 Vc", 9.272, "L (printed 92.72; corrected)", "estimated", "full_text", KA81),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "abstract", AR),
   par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "abstract", AR),
