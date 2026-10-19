@@ -131,16 +131,16 @@ registry <- rbind(
   reg("phenylephrine__pooled__anderson2017", "phenylephrine",
       "pooled children and 4 adult volunteers given IV", "phenylephrine", "plasma",
       "needs_full_text", NA, "abstract",
-      "The abstract prints a complete two-compartment set (CL 160 L/h, V1 13.3 L, Q 25.3 L/h, V2 225 L at 70 kg) but labels it for the nasal formulation, prints no allometric exponents or dose basis, and its 7-hour terminal half-life conflicts with Hengstmann's 2-3 h.",
-      "Anderson BJ et al. The phenylephrine concentration-response relationship for blood pressure after nasal delivery. Paediatr Anaesth 2017;27:1050-1055. PMID 28868789, doi 10.1111/pan.13221 (top priority).",
+      "An alternative to the implemented Hengstmann 1982 model.  The abstract prints a complete two-compartment set (CL 160 L/h, V1 13.3 L, Q 25.3 L/h, V2 225 L at 70 kg) but labels it for the nasal formulation, prints no allometric exponents or dose basis, and its 7-hour terminal half-life differs from Hengstmann's 2-3 h.",
+      "Anderson BJ et al. The phenylephrine concentration-response relationship for blood pressure after nasal delivery. Paediatr Anaesth 2017;27:1050-1055. PMID 28868789, doi 10.1111/pan.13221 (optional now).",
       "Anderson BJ et al. Paediatr Anaesth 2017;27:1050-1055. PMID 28868789.",
       doi("10.1111/pan.13221")),
   reg("phenylephrine__healthy__hengstmann1982", "phenylephrine",
-      "healthy volunteers", "phenylephrine", "plasma",
-      "needs_full_text", NA, "abstract",
-      "Half-life 2-3 h and V 340 L in the abstract; its printed clearance (2 L/h) is evidently a misprint for 2 L/min, and no distribution phase is given.",
-      "Hengstmann JH et al. Pharmacokinetics of 3H-phenylephrine in man. Eur J Clin Pharmacol 1982;21:335-341. PMID 7056280, doi 10.1007/BF00637623.",
-      "Hengstmann JH et al. Eur J Clin Pharmacol 1982;21:335-341. PMID 7056280.",
+      "4 healthy volunteers, 0.84 mg 3H-phenylephrine IV over 12.5-20 min", "phenylephrine (free)", "serum",
+      "implemented", "phenylephrine", "full_text",
+      "Read from the supplied article.  Two compartments, the mean of the four subjects' fits in Table 3, which reproduces the paper's mean CL (2095 mL/min) and Vdss (340 L); the end-of-infusion concentration matches Table 2.  The abstract's 'CL 2 l/h' is the misprint it looked like (2 L/min).  Dose basis unstated (hydrochloride assumed, as labelled; 22% if wrong).",
+      NA,
+      "Hengstmann JH, Goronzy J. Pharmacokinetics of 3H-phenylephrine in man. Eur J Clin Pharmacol 1982;21:335-341. PMID 7056280.",
       doi("10.1007/BF00637623")),
   reg("dopamine__healthy__macgregor2000", "dopamine",
       "9 healthy men, 10 then 3 mcg/kg/min", "dopamine", "plasma (radial arterial)",
@@ -163,6 +163,13 @@ registry <- rbind(
       NA,
       "Cheung AT, Guvakov DV, Weiss SJ, Savino JS, Salgo IS, Meng QC. Nicardipine intravenous bolus dosing for acutely decreasing arterial blood pressure during general anesthesia for cardiac operations. Anesth Analg 1999;89:1116-1123. PMID 10553821.",
       pubmed(10553821), "nicardipine__injection__iv__cardiac_surgery_adults__concentration__page2007"),
+  reg("nicardipine__pbpk__ayub2025", "nicardipine",
+      "PBPK simulation, healthy, renal and hepatic impairment", "nicardipine", "plasma",
+      "no_suitable_model", NA, "full_text",
+      "Read from the supplied article: a whole-body PBPK model in PK-Sim, which a mammillary compartment model cannot represent, with no compartmental parameters.  Its Table 1 lists the intravenous studies a compartmental model would come from (Campbell 1985, Graham 1985, Wagner 1987, Hirota 1998, Rocha 1990, Modi 1993).",
+      "Wagner JG et al. Single intravenous dose and steady-state oral dose pharmacokinetics of nicardipine in healthy subjects. Biopharm Drug Dispos 1987;8:133-148; Graham DJ et al. The metabolism and pharmacokinetics of nicardipine hydrochloride in man. Br J Clin Pharmacol 1985;20:23S-28S; Modi NB et al. J Pharm Sci 1993;82:705-713 (PMID 8360844).",
+      "Ayub A, Zamir A, Rasool MF, Arshad U, Alqahtani F. A PBPK modeling approach for personalized dose optimization of nicardipine in renal and hepatic dysfunction. Sci Rep 2025;15:19752.",
+      doi("10.1038/s41598-025-03829-4")),
   reg("nicardipine__healthy__guerret1989", "nicardipine",
       "healthy volunteers", "nicardipine", "plasma",
       "needs_full_text", NA, "abstract",
@@ -335,6 +342,7 @@ HI  <- doi("10.1002/jps.2600740702")
 FA  <- doi("10.1111/j.1365-2125.1982.tb01424.x")
 YU  <- doi("10.2165/00003088-200140100-00005")
 KA81 <- doi("10.1038/clpt.1981.125")
+HE  <- doi("10.1007/BF00637623")
 
 parameters <- rbind(
   par("epinephrine", "CL", 127, "L/h at 70 kg, SAPS II 50", "estimated", "full_text", AB),
@@ -431,6 +439,11 @@ parameters <- rbind(
   par("verapamil", "Q2", 0.0382, "L/min/kg", "derived", "full_text", KA81),
   par("verapamil", "Q3", 0.01408, "L/min/kg", "derived", "full_text", KA81),
   par("verapamil", "patient 2 Vc", 9.272, "L (printed 92.72; corrected)", "estimated", "full_text", KA81),
+
+  par("phenylephrine", "V1", 41.1, "L (mean of 4)", "estimated", "full_text", HE),
+  par("phenylephrine", "V2", 300.0, "L (mean of V1 k12/k21)", "derived", "full_text", HE),
+  par("phenylephrine", "CL", 2.092, "L/min (paper: 2095 mL/min)", "derived", "full_text", HE),
+  par("phenylephrine", "Q", 3.744, "L/min (mean of V1 k12)", "derived", "full_text", HE),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "abstract", AR),
   par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "abstract", AR),
