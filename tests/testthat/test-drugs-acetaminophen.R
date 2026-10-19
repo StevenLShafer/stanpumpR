@@ -277,8 +277,8 @@ test_that("the four-times-a-day scenario says what the model does", {
   expect_equal(mean(ct$ce(t24) >= 5), 0.38, tolerance = 0.02)
 })
 
-test_that("pregnancy: clearance x 1.4 and both volumes x 1.14", {
-  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on: CL1 x 1.4,
+test_that("pregnancy: clearance x 1.5 and both volumes x 1.14", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on: CL1 x 1.5,
   # V1 and V2 x 1.14 (R/drugs_acetaminophen.R, PREGNANCY); Q, absorption and
   # ke0 unchanged.
   on  <- getDrugPK("acetaminophen", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
@@ -298,7 +298,7 @@ test_that("pregnancy: clearance x 1.4 and both volumes x 1.14", {
   expect_equal_rounded(40.15804336, actual$v1)
   expect_equal_rounded(27.29276631, actual$v2)
   expect_equal_rounded(1, actual$v3)
-  expect_equal_rounded(0.5459449625, actual$cl1)
+  expect_equal_rounded(0.5849410313, actual$cl1)
   expect_equal_rounded(0.6167763301, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
 })

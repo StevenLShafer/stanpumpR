@@ -88,25 +88,29 @@
 # volume of both S and R higher at delivery, S more than R, with the
 # half-lives unchanged.
 #
-# The comparator is the late-postpartum women, whose clearance equals that
-# of healthy men (1.48 L/h/m2) and who are among Cloesmeijer's adults, so
-# they are this model's own population: clearance 2.11 / 1.43 = 1.48, paired
-# 3.80 / 2.53 = 1.50; volume 0.24 / 0.16 = 1.50.  Against the nonpregnant
-# controls the clearance ratio would be 2.11 / 1.07 = 1.97, but that group's
-# clearance is low against every other adult reference and is not used.
-# KETOROLAC_PREGNANCY_FACTOR = 1.5.
+# The per-enantiomer factors are the BSA- and weight-normalised ratios of
+# Kulo 2017's Table (delivery, n = 31, against the healthy female
+# volunteers, n = 8), which remove the weight difference between the 73 kg
+# delivery group and the 63 kg volunteers:
+#     S-ketorolac: CL/BSA 3.47 / 2.06 = 1.68, Vss/BW 0.18 / 0.15 = 1.20
+#     R-ketorolac: CL/BSA 1.18 / 0.59 = 2.00, Vss/BW 0.12 / 0.09 = 1.33
+# S-ketorolac carries the analgesia, and its clearance rises less than R's.
+# (The racemic 2012 ratio was a flat 1.5; the 2017 enantiomer analysis of
+# the same cohort supersedes it.)
 #
-# With the Patient Profile's Pregnant field on, CL, every volume and every
-# distribution clearance are multiplied by 1.5 in BOTH systems, S and R, so
-# every rate constant, and therefore every half-life, is unchanged, as Kulo
-# observed: the curve after a dose is the nonpregnant one divided by 1.5.
-# (The R system's placeholder third volume, with no clearance to it, stays
-# 1.)  One factor serves both enantiomers because the per-enantiomer ratios
-# were not retrieved, although S rose more than R.  The oral absorption is
-# unchanged.  Ketorolac is highly bound to albumin, which falls in
-# pregnancy; part of the rise may be a higher free fraction, in which case
-# the unbound concentration changes less than the total plotted here, and
-# surgery may contribute.  Claude Code, 2026-10-19.  See R/pregnancy.R.
+# With the Patient Profile's Pregnant field on, each enantiomer's clearance
+# is multiplied by its own CL factor and each volume by its own V factor;
+# the intercompartmental (distribution) clearances scale with the volume, so
+# the distribution phase is unchanged and only the elimination clearance and
+# the steady-state volume move.  Because clearance rises more than volume,
+# the terminal half-life shortens a little (S x 1.20/1.68, R x 1.33/2.00),
+# matching Kulo's delivery half-life point estimates (numerically shorter,
+# not significant in n = 8).  (The R system's placeholder third volume, with
+# no clearance to it, stays 1.)  The oral absorption is unchanged.  Ketorolac
+# is highly bound to albumin, which falls in pregnancy; part of the rise may
+# be a higher free fraction, in which case the unbound concentration changes
+# less than the total plotted here, and surgery may contribute.  Claude Code,
+# 2026-10-19.  See R/pregnancy.R.
 #
 # References
 # ----------
@@ -134,11 +138,13 @@ KETOROLAC_MW_BASE         <- 255.273   # g/mol, ketorolac free acid
 KETOROLAC_ENANTIOMER_FRACTION <- 0.5 * KETOROLAC_MW_BASE / KETOROLAC_MW_TROMETHAMINE
 KETOROLAC_KA_PO <- log(2) / 3.8        # 1/min, Mroszczak 1990, provisional
 
-# Pregnancy (see the header): clearance, every volume and every distribution
-# clearance of both enantiomers.  Kulo 2012, against the late-postpartum
-# women: clearance 2.11 / 1.43 = 1.48 L/h/m2 (paired 3.80 / 2.53 = 1.50 L/h),
-# volume 0.24 / 0.16 = 1.50 L/kg.
-KETOROLAC_PREGNANCY_FACTOR <- 1.5
+# Pregnancy (see the header): enantiomer-specific, Kulo 2017's BSA/weight-
+# normalised delivery-vs-volunteer ratios.  Clearance scales each enantiomer's
+# elimination clearance; volume scales its volumes and distribution clearances.
+KETOROLAC_PREGNANCY_S_CL_FACTOR <- 1.68   # S CL/BSA 3.47 / 2.06
+KETOROLAC_PREGNANCY_S_V_FACTOR  <- 1.20   # S Vss/BW 0.18 / 0.15
+KETOROLAC_PREGNANCY_R_CL_FACTOR <- 2.00   # R CL/BSA 1.18 / 0.59
+KETOROLAC_PREGNANCY_R_V_FACTOR  <- 1.33   # R Vss/BW 0.12 / 0.09
 
 #' Ketorolac pharmacokinetics (S + R enantiomers)
 #'
@@ -154,32 +160,38 @@ ketorolac <- function(weight, height, age, sex, adjustToFFM = TRUE,
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyClearance = (weight / 70)^0.75)
-  # Pregnancy (see the header): every clearance and volume of both systems,
-  # so the rate constants are unchanged.
+  # Pregnancy (see the header): enantiomer-specific factors, Kulo 2017.  The
+  # elimination clearance carries the CL factor; the volumes and the
+  # intercompartmental (distribution) clearances carry the V factor, so the
+  # distribution phase is unchanged and the terminal half-life shortens
+  # because clearance rises more than volume.
+  sClF <- sVF <- rClF <- rVF <- 1
   if (isTRUE(pregnant)) {
-    size$volume    <- size$volume * KETOROLAC_PREGNANCY_FACTOR
-    size$clearance <- size$clearance * KETOROLAC_PREGNANCY_FACTOR
+    sClF <- KETOROLAC_PREGNANCY_S_CL_FACTOR
+    sVF  <- KETOROLAC_PREGNANCY_S_V_FACTOR
+    rClF <- KETOROLAC_PREGNANCY_R_CL_FACTOR
+    rVF  <- KETOROLAC_PREGNANCY_R_V_FACTOR
   }
 
   oral <- list(ka_PO = KETOROLAC_KA_PO, bioavailability_PO = 1, tlag_PO = 0)
 
   # S-ketorolac, three compartments
   default <- c(list(
-    v1  = 4.03 * size$volume,
-    v2  = 43.3 * size$volume,
-    v3  = 5.90 * size$volume,
-    cl1 = 3.97 / 60 * size$clearance,
-    cl2 = 1.86 / 60 * size$clearance,
-    cl3 = 19.7 / 60 * size$clearance
+    v1  = 4.03 * size$volume * sVF,
+    v2  = 43.3 * size$volume * sVF,
+    v3  = 5.90 * size$volume * sVF,
+    cl1 = 3.97 / 60 * size$clearance * sClF,
+    cl2 = 1.86 / 60 * size$clearance * sVF,
+    cl3 = 19.7 / 60 * size$clearance * sVF
   ), oral)
 
   # R-ketorolac, two compartments
   rSet <- c(list(
-    v1  = 4.43 * size$volume,
-    v2  = 5.18 * size$volume,
+    v1  = 4.43 * size$volume * rVF,
+    v2  = 5.18 * size$volume * rVF,
     v3  = 1,
-    cl1 = 1.45 / 60 * size$clearance,
-    cl2 = 1.90 / 60 * size$clearance,
+    cl1 = 1.45 / 60 * size$clearance * rClF,
+    cl2 = 1.90 / 60 * size$clearance * rVF,
     cl3 = 0
   ), oral)
 
@@ -194,9 +206,12 @@ ketorolac <- function(weight, height, age, sex, adjustToFFM = TRUE,
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
-      paste0("clearances and volumes of S and R x ", KETOROLAC_PREGNANCY_FACTOR),
-      paste0("Kulo A et al., Int J Obstet Anesth 2012;21:334-338. ",
-             "https://doi.org/10.1016/j.ijoa.2012.06.001")))
+      paste0("S-ketorolac CL x ", KETOROLAC_PREGNANCY_S_CL_FACTOR, " and V x ",
+             KETOROLAC_PREGNANCY_S_V_FACTOR, ", R-ketorolac CL x ",
+             KETOROLAC_PREGNANCY_R_CL_FACTOR, " and V x ",
+             KETOROLAC_PREGNANCY_R_V_FACTOR),
+      paste0("Kulo A et al., Bosn J Basic Med Sci 2017;17:54-60. ",
+             "https://doi.org/10.17305/bjbms.2016.1515")))
   }
 
   list(

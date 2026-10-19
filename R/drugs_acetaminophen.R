@@ -89,27 +89,35 @@
 # cesarean delivery, after a single 2 g intravenous dose, Beleyn 2014 found a
 # median clearance of 11.9 L/h/m2 against 8.4 in nonpregnant women (11.9 /
 # 8.4 = 1.42) and 6.42 early postpartum.  Allegaert 2015 pooled 69 young
-# women in one population model: clearance to the glucuronide at delivery was
-# 2.03 times that of healthy female volunteers (15.8 against 7.33 L/h), while
-# sulfation was unchanged; added to Morse's 24.0 L/h, that increment gives
-# (24.0 + 15.8 - 7.33) / 24.0 = 1.35.  Orally in the third trimester (Miners
-# 1986, against nonpregnant controls) the apparent clearance was 58% higher
-# and the half-life 28% shorter.  The median of 1.42, 1.35 and 1.58 is 1.42,
-# rounded to ACETAMINOPHEN_PREGNANCY_CL_FACTOR = 1.4.  Paired ratios against
-# the same women early postpartum (Kulo 2012 and 2013, about 1.8 to 2.0) are
-# NOT used: early-postpartum glucuronidation is itself low (Allegaert: x 0.55
-# of nonpregnant women), so they overstate the change from the nonpregnant
+# women in one population model (read in full): clearance to the glucuronide
+# at delivery was 2.03 times that of healthy female volunteers (14.9 against
+# 7.33 L/h), sulfation unchanged, so the net total clearance (adding the
+# unchanged oxidation and renal pathways) is about 1.6 times the nonpregnant.
+# Orally in the third trimester (Miners 1986, against nonpregnant controls)
+# the apparent clearance was 58% higher and the half-life 28% shorter.  The
+# three cross-sectional nonpregnant comparisons are 1.42 (Beleyn), 1.58
+# (Miners) and ~1.6 (Allegaert): median ~1.58, tempered to
+# ACETAMINOPHEN_PREGNANCY_CL_FACTOR = 1.5 for the surgery mixed into the
+# intravenous delivery data and for Miners' two women at 38 weeks, whose
+# clearance was only 1.22 times.  Paired ratios against the same women early
+# postpartum (Kulo 2012, 2013 and 2014, about 1.8 to 2.0) are NOT used:
+# early-postpartum glucuronidation is itself low (Allegaert: x 0.55 of
+# nonpregnant women), so they overstate the change from the nonpregnant
 # state that Morse's healthy adults represent.
 #
-# Volume: Miners' figures give a volume proportional to clearance x
-# half-life, 1.58 x 0.72 = 1.14 (ACETAMINOPHEN_PREGNANCY_V_FACTOR), and
-# Rayburn 1986 also attributed the lower exposure in pregnancy to a larger
-# volume.  Morse's model has two volumes, V1 and V2; both are multiplied by
-# 1.14.  The distribution clearance Q, the oral bioavailability, ka and the
-# lag are unchanged (Rayburn found absorption unchanged).  The effect site
+# Volume: kept at 1.14 (Miners' clearance x half-life, 1.58 x 0.72 = 1.14, on
+# V1 and V2).  Allegaert's CENTRAL volume V1 was 1.86 times higher at delivery
+# (34.4 against 18.5 L, weight-standardised), but that is the central
+# compartment of a different model, inflated by the plasma-volume expansion
+# and the fetal-amniotic sink, whereas Kulo 2014's steady-state volume per
+# kilogram was unchanged (0.69 against 0.74 L/kg).  The two reconcile as a
+# larger central volume with an unchanged volume per body weight, so the
+# library keeps the modest 1.14 rather than the central-compartment 1.86.
+# The distribution clearance Q, the oral bioavailability, ka and the lag are
+# unchanged (Rayburn found absorption unchanged).  The effect site
 # (Anderson 2001) is not changed.
 #
-# With the Patient Profile's Pregnant field on, CL1 x 1.4 and V1 and V2 x
+# With the Patient Profile's Pregnant field on, CL1 x 1.5 and V1 and V2 x
 # 1.14.  The intravenous data were taken within hours of a cesarean delivery,
 # so surgery is mixed in with the end of pregnancy.  This replaces the
 # "unchanged" of Ansari 2016, which rests on Rayburn's six women studied
@@ -143,11 +151,13 @@
 ACETAMINOPHEN_KE0 <- log(2) / 53            # /min; Anderson 2001, t1/2 53 min
 ACETAMINOPHEN_FFAT_CL <- 0.816              # Morse 2022, fat fraction in NFM
 
-# Pregnancy (see the header).  Clearance: the median of Beleyn 2014 (11.9 /
-# 8.4 = 1.42), Allegaert 2015 ((24.0 + 15.8 - 7.33) / 24.0 = 1.35) and Miners
-# 1986 (1.58) is 1.42, rounded to 1.4.  Volumes: Miners' clearance x
-# half-life, 1.58 x 0.72 = 1.14, on V1 and V2.
-ACETAMINOPHEN_PREGNANCY_CL_FACTOR <- 1.4
+# Pregnancy (see the header).  Clearance: the cross-sectional nonpregnant
+# comparisons are Beleyn 2014 (1.42), Miners 1986 (1.58) and Allegaert 2015
+# (net ~1.6); the median ~1.58 is tempered to 1.5 for the surgery in the
+# intravenous delivery data and Miners' 1.22 at 38 weeks.  Volumes: Miners'
+# clearance x half-life, 1.58 x 0.72 = 1.14, on V1 and V2 (not Allegaert's
+# central-volume 1.86; see the header).
+ACETAMINOPHEN_PREGNANCY_CL_FACTOR <- 1.5
 ACETAMINOPHEN_PREGNANCY_V_FACTOR  <- 1.14
 
 #' Acetaminophen pharmacokinetics
@@ -158,7 +168,7 @@ ACETAMINOPHEN_PREGNANCY_V_FACTOR  <- 1.14
 #'   weight; when \code{FALSE}, at total body weight. Clearance follows its own
 #'   normal-fat-mass covariate either way.
 #' @param pregnant when \code{TRUE}, apply the changes of late pregnancy:
-#'   clearance x 1.4 and both volumes x 1.14 (see the file's header)
+#'   clearance x 1.5 and both volumes x 1.14 (see the file's header)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE,
