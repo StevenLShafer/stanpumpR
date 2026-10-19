@@ -92,6 +92,7 @@ helpStaticPages <- function() {
     "models/antidiabetics",     "Antidiabetic models and their limits", "models",
     "models/illicit-drugs",     "Research models of drugs of abuse", "models",
     "models/antihypertensives", "Antihypertensives: why so few, and no blood pressure", "models",
+    "models/vasoactive",        "Vasoactive and resuscitation drugs", "models",
     "models/pk-events",         "Events that change the kinetics", "models",
     "models/meac",              "MEAC: comparing opioids",         "models",
     "models/interaction",       "Propofol-opioid interaction",     "models",

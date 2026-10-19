@@ -171,4 +171,24 @@ carvedilol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#01579B,0,0,0,0,0,IV,Antihypert
 azilsartan,ng,,,mg PO,"mg PO,mg PO qd",#E65100,0,0,0,0,0,IV,Antihypertensives
 chlorthalidone,ng,,,mg PO,"mg PO,mg PO qd",#33691E,0,0,0,0,0,IV,Antihypertensives
 hydrochlorothiazide,ng,,,mg PO,"mg PO,mg PO qd",#3E2723,0,0,0,0,0,IV,Antihypertensives
+epinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#C62828,0,0,0,0,0,IV,Vasoactive and resuscitation
+magnesiumSulfate,mmol,g,g/hr,g,"g,mg,mg/kg,g/hr,mg/min,mg/kg/hr",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
+labetalol,ng,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#6A1B9A,0,0,0,0,0,IV,Vasoactive and resuscitation
+diltiazem,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E7D32,0,0,0,0,0,IV,Vasoactive and resuscitation
+nitroglycerin,ng,mcg,mcg/min,mcg/min,"mcg,mcg/min,mcg/kg/min",#F9A825,0,0,0,0,0,IV,Vasoactive and resuscitation
+norepinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#AD1457,0,0,0,0,0,IV,Vasoactive and resuscitation
+procainamide,mcg,mg,mg/min,mg/min,"mg,mg/kg,mg/min,mg/kg/hr",#4E342E,0,0,0,0,0,IV,Vasoactive and resuscitation
+esmolol,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mcg/kg/min",#283593,0,0,0,0,0,IV,Vasoactive and resuscitation
+dopamine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#EF6C00,0,0,0,0,0,IV,Vasoactive and resuscitation
+atropine,ng,mg,mg/hr,mg,"mg,mcg/kg",#558B2F,0,0,0,0,0,IV,Vasoactive and resuscitation
+propranolol,ng,mg,mg/hr,mg,"mg,mcg/kg",#37474F,0,0,0,0,0,IV,Vasoactive and resuscitation
+digoxin,ng,,,mg/day PO,"mg/day PO",#7B1FA2,0.5,2,1,0,0,IV,Vasoactive and resuscitation
+digoxinIV,ng,mg,mcg/kg,mg,"mg,mcg,mcg/kg",#9C27B0,0.5,2,1,0,0,IV,Vasoactive and resuscitation
+digoxinIVPediatric,ng,mcg/kg,mcg/kg,mcg/kg,"mcg/kg,mcg,mg",#CE93D8,0.5,2,1,0,0,IV,Vasoactive and resuscitation
+verapamil,ng,mg,mg/hr,mg,"mg,mcg/kg,mg/hr",#00695C,0,0,0,0,0,IV,Vasoactive and resuscitation
+phenylephrine,ng,mcg,mcg/min,mcg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#5D4037,0,0,0,0,0,IV,Vasoactive and resuscitation
+milrinone,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#0277BD,100,300,167,0,0,IV,Vasoactive and resuscitation
+milrinonePediatric,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#4FC3F7,100,300,167,0,0,IV,Vasoactive and resuscitation
+metoprolol,ng,mg,mg/min,mg,"mg,mg/min,mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Vasoactive and resuscitation
+nicardipine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mcg/kg/min",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs

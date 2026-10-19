@@ -363,7 +363,10 @@ test_that("the cautions page names every model that reads a patient field", {
     readers <- Filter(function(drug) helpDrugDeclares(drug, arg), getDrugDefaultsGlobal()$Drug)
     expect_gt(length(readers), 0, label = arg)
     for (drug in readers) {
-      expect_true(grepl(tolower(drug), text, fixed = TRUE),
+      # by its name or, for a camel-case name, the title the help shows
+      # ("magnesiumSulfate" is "Magnesium Sulfate")
+      expect_true(grepl(tolower(drug), text, fixed = TRUE) ||
+                    grepl(tolower(helpDrugTitle(drug)), text, fixed = TRUE),
                   info = paste(drug, "reads", arg, "but the cautions page does not say so"))
     }
   }
