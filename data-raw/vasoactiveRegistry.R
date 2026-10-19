@@ -84,11 +84,11 @@ registry <- rbind(
       "Hoglund P, Nilsson LG. Physiological disposition of intravenously administered 14C-labeled diltiazem in healthy volunteers. Ther Drug Monit 1988;10:401-409. PMID 3201524.",
       doi("10.1097/00007691-198804000-00006")),
   reg("nitroglycerin__ccf__armstrong1983", "nitroglycerin",
-      "10 patients with congestive cardiac failure, 21 mcg/min", "glyceryl trinitrate", "plasma",
-      "implemented", "nitroglycerin", "abstract",
-      "One compartment from the abstract's clearance (6.2 L/min) and time constant (8.1 min).  Healthy volunteers' clearance is 3 to 10 times higher (McNiff 1981); PVC tubing adsorption and sampling site are unread.",
-      "Armstrong PW, Watts DG, Moffat JA. Steady state pharmacokinetic haemodynamic studies of intravenous nitroglycerin in congestive cardiac failure. Br J Clin Pharmacol 1983;16:385-390. PMID 6414501; free scan PMC1428029.",
-      "Armstrong PW, Watts DG, Moffat JA. Br J Clin Pharmacol 1983;16:385-390. PMID 6414501.",
+      "10 patients with congestive cardiac failure, 21 mcg/min", "glyceryl trinitrate", "plasma (radial arterial)",
+      "implemented", "nitroglycerin", "full_text",
+      "One compartment from the clearance (6.2 L/min) and the time constant of the rise (8.1 min); the supplied full text confirms Teflon tubing (no adsorption) and arterial sampling.  After a stop the measured half-life was 1-3 min, faster than the model's 5.6, so the offset is drawn too slowly.  Healthy volunteers' venous clearance is 3 to 10 times higher (McNiff 1981).",
+      NA,
+      "Armstrong PW, Watts DG, Moffat JA. Steady state pharmacokinetic haemodynamic studies of intravenous nitroglycerin in congestive cardiac failure. Br J Clin Pharmacol 1983;16:385-390. PMID 6414501.",
       doi("10.1111/j.1365-2125.1983.tb02182.x"), "nitroglycerin__injection__iv__catalog__none__label"),
   reg("clevidipine__healthy__ericsson1999", "clevidipine",
       "25 healthy men, 20-min infusions", "clevidipine", "whole blood",
@@ -445,9 +445,9 @@ parameters <- rbind(
   par("phenylephrine", "CL", 2.092, "L/min (paper: 2095 mL/min)", "derived", "full_text", HE),
   par("phenylephrine", "Q", 3.744, "L/min (mean of V1 k12)", "derived", "full_text", HE),
 
-  par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "abstract", AR),
-  par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "abstract", AR),
-  par("nitroglycerin", "V", 50.2, "L", "derived", "abstract", AR)
+  par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
+  par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "full_text", AR),
+  par("nitroglycerin", "V", 50.2, "L", "derived", "full_text", AR)
 )
 
 utils::write.csv(registry, "inst/extdata/vasoactiveRegistry.csv", row.names = FALSE)

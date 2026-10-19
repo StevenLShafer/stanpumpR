@@ -75,8 +75,7 @@ test_that("a model built from an abstract says so, and names the paper to obtain
   fromAbstract <- registry[registry$readiness == "implemented" &
                              registry$evidence_read == "abstract" &
                              registry$stanpumpr_drug %in% IMPLEMENTED, ]
-  expect_setequal(fromAbstract$stanpumpr_drug,
-                  c("labetalol", "diltiazem", "nitroglycerin"))
+  expect_setequal(fromAbstract$stanpumpr_drug, c("labetalol", "diltiazem"))
   expect_true(all(!is.na(fromAbstract$to_obtain) & nzchar(fromAbstract$to_obtain)))
   # and every row still waiting on a paper names it
   waiting <- registry[registry$readiness == "needs_full_text", ]
