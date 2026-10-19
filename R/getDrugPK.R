@@ -1076,6 +1076,11 @@ getDrugPK <- function(
       PK[[event]]$metabolite <- list(
         name  = metaboliteName,
         ke0   = metaboliteSet$ke0,
+        # The metabolite's own return rate constants, for its peripheral
+        # concentrations (R/compartments.R); zero where it has no such
+        # compartment.
+        k21   = if (compartmentCount(metaboliteSet) >= 2) metaboliteSet$k21 else 0,
+        k31   = if (compartmentCount(metaboliteSet) >= 3) metaboliteSet$k31 else 0,
         coefs = metaboliteCoefficients(
           parent            = PK[[event]],
           metabolite        = metaboliteSet,

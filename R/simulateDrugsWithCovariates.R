@@ -108,6 +108,10 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
     output[[drug]]$tci                 <- X$tci
     output[[drug]]$scheduled           <- X$scheduled
+    # The peripheral concentrations and the depot; see R/compartments.R.
+    output[[drug]]$compartmentsOwn        <- X$compartments
+    output[[drug]]$compartments           <- X$compartments
+    output[[drug]]$metaboliteCompartments <- X$metaboliteCompartments
   }
 
   # A metabolite that was never given directly still needs a row to appear in.
