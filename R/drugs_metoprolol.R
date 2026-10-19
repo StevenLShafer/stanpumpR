@@ -72,8 +72,19 @@
 # falls to 0.25 / 0.5 = 0.5 of its value (METOPROLOL_PREGNANCY_F_FACTOR), and
 # CL/F rises by 1.5 / 0.5 = 3.0.  That agrees with Hogstedt's range of
 # bioavailability and with his small, non-significant rise in systemic
-# clearance.  With the Patient Profile's Pregnant field on, CL1 and the oral
-# bioavailability take those factors; V1, V2, Q and ka are unchanged.  They
+# clearance.  Hogstedt 1985, read in full (2026-10-19), measured both halves
+# of the split directly: bioavailability 0.21 +/- 0.06 in pregnancy against
+# 0.42 +/- 0.05 after it (P < 0.01), exactly the factor 0.5, and systemic
+# clearance 1.38 against 0.65 L/min (the postpartum value 55% +/- 13% of the
+# pregnant one, not significant).  It also found the half-lives identical,
+# 5.38 against 5.36 h intravenously and 3.42 against 3.42 h orally, with a
+# larger volume in pregnancy (6.87 against 3.85 L/kg, not significant):
+# clearance and volume rose together.  So the volumes and the distribution
+# clearance take the clearance's factor as well
+# (METOPROLOL_PREGNANCY_V_FACTOR = 1.5), which leaves every rate constant,
+# and so the half-lives, unchanged, as Hogstedt measured.  With the Patient
+# Profile's Pregnant field on, CL1, V1, V2 and Q take 1.5 and the oral
+# bioavailability 0.5; ka is unchanged.  They
 # are NOT applied to a CYP2D6 poor metaboliser, since pregnancy cannot induce
 # an enzyme that is absent (Ryu's one poor metaboliser had a very low CL/F in
 # pregnancy, 0.37-0.41 L/h/kg); they are applied to the intermediate, normal
@@ -117,6 +128,9 @@ METOPROLOL_CYP2D6_F  <- c(poor = 2.28, intermediate = 1, normal = 1,
 # 0.75 / 0.5 = 1.5 and bioavailability 0.25 / 0.5 = 0.5 (see the header).
 METOPROLOL_PREGNANCY_CL_FACTOR <- 1.5
 METOPROLOL_PREGNANCY_F_FACTOR  <- 0.5
+# The volumes and Q with the clearance, so the half-lives are unchanged, as
+# Hogstedt 1985 measured.
+METOPROLOL_PREGNANCY_V_FACTOR  <- 1.5
 
 #' Metoprolol, intravenous and oral (Lammers 2017)
 #'
@@ -127,7 +141,8 @@ METOPROLOL_PREGNANCY_F_FACTOR  <- 0.5
 #' @inheritParams cefazolin
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}.
 #' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
-#'   clearance by 1.5 and the oral bioavailability by 0.5, except in a CYP2D6
+#'   clearance, the volumes and Q by 1.5 and the oral bioavailability by 0.5,
+#'   except in a CYP2D6
 #'   poor metaboliser (Ryu 2015; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
@@ -143,14 +158,15 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   pregnancyApplied <- isTRUE(pregnant) && cyp2d6 != CYP2D6_POOR
   clPregnancy <- if (pregnancyApplied) METOPROLOL_PREGNANCY_CL_FACTOR else 1
   fPregnancy  <- if (pregnancyApplied) METOPROLOL_PREGNANCY_F_FACTOR else 1
+  vPregnancy  <- if (pregnancyApplied) METOPROLOL_PREGNANCY_V_FACTOR else 1
 
   default <- list(
-    v1  = METOPROLOL_V1 * size$volume,
-    v2  = METOPROLOL_V2 * size$volume,
+    v1  = METOPROLOL_V1 * size$volume * vPregnancy,
+    v2  = METOPROLOL_V2 * size$volume * vPregnancy,
     v3  = 1,                          # placeholder: a two-compartment model
     cl1 = METOPROLOL_CL * METOPROLOL_CYP2D6_CL[[cyp2d6]] / 60 * size$clearance *
       clPregnancy,
-    cl2 = METOPROLOL_Q / 60 * size$clearance,
+    cl2 = METOPROLOL_Q / 60 * size$clearance * vPregnancy,
     cl3 = 0,
     ka_PO = METOPROLOL_KA / 60,
     bioavailability_PO = min(1, METOPROLOL_F * METOPROLOL_CYP2D6_F[[cyp2d6]]) *
@@ -171,7 +187,7 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   )
   if (pregnancyApplied) {
     reference <- paste0(reference, "; ", pregnancyReference(
-      paste0("clearance x ", METOPROLOL_PREGNANCY_CL_FACTOR,
+      paste0("clearance, volumes and Q x ", METOPROLOL_PREGNANCY_CL_FACTOR,
              ", oral bioavailability x ", METOPROLOL_PREGNANCY_F_FACTOR),
       paste0("Ryu RJ et al., J Clin Pharmacol 2016;56:581-589. ",
              "https://doi.org/10.1002/jcph.631")))

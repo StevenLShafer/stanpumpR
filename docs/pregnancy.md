@@ -39,7 +39,7 @@ series; a PBPK prediction; a review.
   first-pass; phenytoin's Km and Vmax and valproate's total CL/F from the rise in free
   fraction). A direction alone, a handful of women, no comparator, or a PBPK prediction alone
   is recorded as `unquantified` and not applied (lorazepam, risperidone, haloperidol, aspirin,
-  fentanyl, codeine, tramadol, the neuromuscular blockers, heparin).
+  fentanyl, codeine, tramadol, rocuronium, cisatracurium, heparin).
 - **Filtration.** A drug cleared mostly unchanged by filtration whose model reads renal function
   takes the 50% rise in GFR on that renal term (cefazolin, gentamicin, vancomycin, sugammadex,
   digoxin, fondaparinux, mannitol, hydrochlorothiazide, procainamide), unless drug-specific data
@@ -113,9 +113,9 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | procainamide |  |  |  | 1.5 | Ansari 2016 | low |
 | digoxin |  |  |  | 1.5 | Hebert 2008 | moderate |
 | digoxinIV | 1.350 |  |  |  | Hebert 2008 | low |
-| metoprolol | 1.500 |  | 0.5 |  | Ryu 2016 | moderate |
+| metoprolol | 1.500 | 1.50 | 0.5 |  | Ryu 2016 | moderate |
 
-Not adjusted: 17 `unquantified`, 18 `unchanged`, 87 `unknown` (mostly drugs contraindicated or
+Not adjusted: 16 `unquantified`, 19 `unchanged`, 87 `unknown` (mostly drugs contraindicated or
 rarely used in pregnancy: the DOACs and vitamin K antagonists, the GLP-1, SGLT2 and DPP-4
 drugs, the illicit-drug models, most vasoactive infusions), 3 `source_pregnant` and 9
 `not_applicable` (pediatric models, azilsartan, and the inhaled anesthetics).
@@ -131,6 +131,8 @@ drugs, the illicit-drug models, most vasoactive infusions), 3 `source_pregnant` 
 - **Propofol** (and its Schnider companion), "unchanged" in Ansari 2016, now × 1.28 from Gin 1990
   and 1991 set against the Eleveld model, which reproduces their nonpregnant women.
 - **Glycopyrrolate** × 1.9 (Ali-Melkkilä 1990, against the same laboratory's nonpregnant patients).
+- **Metoprolol** now also scales both volumes and Q by 1.5, so its half-lives are unchanged, as Hogstedt
+  1985 measured; the bioavailability factor 0.5 is now measured, not derived.
 - **Acetaminophen**, "unchanged" in Ansari 2016 (Rayburn 1986, six women, oral), now has
   clearance × 1.4 from the larger intravenous studies at delivery (Beleyn 2014, Kulo 2012-2013,
   Allegaert 2015) and Miners 1986.
@@ -201,76 +203,58 @@ paywalled. The first list matters most, since each would check a factor the libr
 14. Hodge AT et al. Int J Obstet Anesth 2026;66:104874 [PMID 41747364](https://pubmed.ncbi.nlm.nih.gov/41747364/) · [doi:10.1016/j.ijoa.2026.104874](https://doi.org/10.1016/j.ijoa.2026.104874)  
    *Drugs:* rocuronium, sugammadex. *Why:* rocuronium: Full two-compartment rocuronium parameter set (V1, V2, Q) and which 'volume of distribution' the abstract reports; would allow a direct comparison with a non-pregnant model. sugammadex: Full parameter set (Vc, Vp, Q), serum creatinine/CrCl of the women and whether 13.9 L is Vc or Vss; needed to confirm the GFR-only adjustment and the volume comparison.
 
-15. Hogstedt S, Lindberg B, Peng DR, Regardh CG, Rane A. Pregnancy-induced increase in metoprolol metabolism. Clin Pharmacol Ther 1985;37:688-692 [PMID 4006368](https://pubmed.ncbi.nlm.nih.gov/4006368/) · [doi:10.1038/clpt.1985.114](https://doi.org/10.1038/clpt.1985.114)  
-   *Drugs:* metoprolol. *Why:* The only study with IV and oral metoprolol in the same pregnant women. Its tables give systemic CL, F and Vss in pregnancy vs postpartum, which would replace the well-stirred split (cl1 x1.5, F x0.5) with measured ratios.
-
-16. Koerner M, Yerby M, Friel P, McCormick K. Valproic acid disposition and protein binding in pregnancy. Ther Drug Monit 1989;11:228-230 (no PMID found; cited from another paper)  
+15. Koerner M, Yerby M, Friel P, McCormick K. Valproic acid disposition and protein binding in pregnancy. Ther Drug Monit 1989;11:228-230 (no PMID found; cited from another paper)  
    *Drugs:* valproate. *Why:* Cited from memory (not retrieved this session): a direct study of valproate total and unbound disposition across pregnancy; PMID not verified.
 
-17. Krzyzanski W et al. J Pharmacokinet Pharmacodyn 2026 (cohort population analysis, dexamethasone in parturients) [PMID 42406183](https://pubmed.ncbi.nlm.nih.gov/42406183/) · [doi:10.1007/s10928-026-10048-5](https://doi.org/10.1007/s10928-026-10048-5)  
+16. Krzyzanski W et al. J Pharmacokinet Pharmacodyn 2026 (cohort population analysis, dexamethasone in parturients) [PMID 42406183](https://pubmed.ncbi.nlm.nih.gov/42406183/) · [doi:10.1007/s10928-026-10048-5](https://doi.org/10.1007/s10928-026-10048-5)  
    *Drugs:* dexamethasone. *Why:* PMC13337934 exists but was not retrieved; gives one-compartment CL and V for dexamethasone in parturient women at birth that could replace the volume inference.
 
-18. Kulo A et al. Bosn J Basic Med Sci 2017;17:54-60 [PMID 27968707](https://pubmed.ncbi.nlm.nih.gov/27968707/) · [doi:10.17305/bjbms.2016.1515](https://doi.org/10.17305/bjbms.2016.1515)  
+17. Kulo A et al. Bosn J Basic Med Sci 2017;17:54-60 [PMID 27968707](https://pubmed.ncbi.nlm.nih.gov/27968707/) · [doi:10.17305/bjbms.2016.1515](https://doi.org/10.17305/bjbms.2016.1515)  
    *Drugs:* ketorolac. *Why:* Open-access PMC5341779 but tool returned no body text: S- and R-ketorolac CL and Vss at delivery vs postpartum/controls, to give separate factors for the S and R systems.
 
-19. Kulo A et al. Br J Clin Pharmacol 2013;75:850-60 [PMID 22845052](https://pubmed.ncbi.nlm.nih.gov/22845052/) · [doi:10.1111/j.1365-2125.2012.04402.x](https://doi.org/10.1111/j.1365-2125.2012.04402.x)  
+18. Kulo A et al. Br J Clin Pharmacol 2013;75:850-60 [PMID 22845052](https://pubmed.ncbi.nlm.nih.gov/22845052/) · [doi:10.1111/j.1365-2125.2012.04402.x](https://doi.org/10.1111/j.1365-2125.2012.04402.x)  
    *Drugs:* acetaminophen. *Why:* PMC record returned no body text; popPK volumes at delivery vs postpartum.
 
-20. Kulo A et al. Int J Obstet Anesth 2012;21:334-8 [PMID 22901775](https://pubmed.ncbi.nlm.nih.gov/22901775/) · [doi:10.1016/j.ijoa.2012.06.001](https://doi.org/10.1016/j.ijoa.2012.06.001)  
+19. Kulo A et al. Int J Obstet Anesth 2012;21:334-8 [PMID 22901775](https://pubmed.ncbi.nlm.nih.gov/22901775/) · [doi:10.1016/j.ijoa.2012.06.001](https://doi.org/10.1016/j.ijoa.2012.06.001)  
    *Drugs:* ketorolac. *Why:* Absolute CL (L/h) and V (L) by group, weights, to confirm the BSA-normalized ratios.
 
-21. Kulo A et al. Weight, pregnancy and oral contraceptives affect intravenous paracetamol clearance in young women. Eur Rev Med Pharmacol Sci 2014 [PMID 24668698](https://pubmed.ncbi.nlm.nih.gov/24668698/)  
+20. Kulo A et al. Weight, pregnancy and oral contraceptives affect intravenous paracetamol clearance in young women. Eur Rev Med Pharmacol Sci 2014 [PMID 24668698](https://pubmed.ncbi.nlm.nih.gov/24668698/)  
    *Drugs:* acetaminophen. *Why:* Pooled n=73; abstract says CL and distribution volume higher at delivery but gives no numbers for V.
 
-22. Lazebnik N et al. Postgrad Med J 1985;61:979-81 [PMID 4070116](https://pubmed.ncbi.nlm.nih.gov/4070116/) · [doi:10.1136/pgmj.61.721.979](https://doi.org/10.1136/pgmj.61.721.979)  
-   *Drugs:* gentamicin. *Why:* Free PMC scan exists (PMC2418464) but the API returned no text; the half-lives of pregnant vs non-pregnant women would give a second within-study ratio.
-
-23. Li Y, et al. Br J Clin Pharmacol 2023;89:1152-1161 [PMID 36260320](https://pubmed.ncbi.nlm.nih.gov/36260320/) · [doi:10.1111/bcp.15572](https://doi.org/10.1111/bcp.15572)  
+21. Li Y, et al. Br J Clin Pharmacol 2023;89:1152-1161 [PMID 36260320](https://pubmed.ncbi.nlm.nih.gov/36260320/) · [doi:10.1111/bcp.15572](https://doi.org/10.1111/bcp.15572)  
    *Drugs:* levetiracetam. *Why:* A popPK model fitted only in pregnant women with a trimester covariate on CL/F; Table of final estimates needed for a trimester-specific factor (abstract gives only CL/F 3.82 L/h).
 
-24. Liao MZ, Flood Nichols SK, Ahmed M, et al. Effects of pregnancy on the pharmacokinetics of metformin. Drug Metab Dispos 2020;48:264-271 [PMID 31980499](https://pubmed.ncbi.nlm.nih.gov/31980499/) · [doi:10.1124/dmd.119.088435](https://doi.org/10.1124/dmd.119.088435)  
+22. Liao MZ, Flood Nichols SK, Ahmed M, et al. Effects of pregnancy on the pharmacokinetics of metformin. Drug Metab Dispos 2020;48:264-271 [PMID 31980499](https://pubmed.ncbi.nlm.nih.gov/31980499/) · [doi:10.1124/dmd.119.088435](https://doi.org/10.1124/dmd.119.088435)  
    *Drugs:* metformin. *Why:* PMC7076518 exists but the tool returned no body: need gestational age at study, the CL/F and V/F means (L/h, L) at 500 mg, and the estimated F, to confirm the 1.27/1.33 ratios and decide whether F should be modelled separately.
 
-25. Luxford AM, Kellaway GS. Pharmacokinetics of digoxin in pregnancy. Eur J Clin Pharmacol 1983;25:117-121 [PMID 6617713](https://pubmed.ncbi.nlm.nih.gov/6617713/) · [doi:10.1007/BF00544027](https://doi.org/10.1007/BF00544027)  
-   *Drugs:* digoxin. *Why:* The abstract has no numbers. Its finding of higher serum digoxin in pregnancy despite higher renal clearance needs the tables, and possibly an assay explanation (cross-reacting endogenous digoxin-like substances).
-
-26. Monfort A et al. Br J Clin Pharmacol 2024;90(11):2849-2860 (ConcePTION perinatal sertraline popPK, 38 women) [PMID 39030897](https://pubmed.ncbi.nlm.nih.gov/39030897/) · [doi:10.1111/bcp.16177](https://doi.org/10.1111/bcp.16177)  
+23. Monfort A et al. Br J Clin Pharmacol 2024;90(11):2849-2860 (ConcePTION perinatal sertraline popPK, 38 women) [PMID 39030897](https://pubmed.ncbi.nlm.nih.gov/39030897/) · [doi:10.1111/bcp.16177](https://doi.org/10.1111/bcp.16177)  
    *Drugs:* sertraline. *Why:* Perinatal popPK model; abstract reports CL reduced 42% in CYP2C19 poor metabolizers but gives no explicit gestational-age covariate on CL. Full text/supplement needed to see whether a quantitative pregnancy (not genotype) clearance effect was estimated that could be mapped directly to cl1.
 
-27. Murphy HR et al. (Cambridge) closed-loop insulin delivery in type 1 diabetes pregnancy, Diabetes Care ~2011 - the source of the ~30 min gestational delay in aspart time-to-peak cited by Goudie 2015 (no PMID found; cited from another paper)  
+24. Murphy HR et al. (Cambridge) closed-loop insulin delivery in type 1 diabetes pregnancy, Diabetes Care ~2011 - the source of the ~30 min gestational delay in aspart time-to-peak cited by Goudie 2015 (no PMID found; cited from another paper)  
    *Drugs:* insulinRegular, insulinRegularU500, insulinNPH, insulinHumanMix70, insulinLispro, insulinLisproMix75, insulinLisproMix50, insulinGlargine. *Why:* Original early-vs-late pregnancy aspart time-to-peak data (citation known only from Goudie's reference to it; PMID not retrieved in this session).
 
-28. Pennell PB, Karanam A, Meador KJ, et al. Antiseizure Medication Concentrations During Pregnancy: Results From the MONEAD Study. JAMA Neurol 2022;79:370-379 (PMC8845026) [PMID 35157004](https://pubmed.ncbi.nlm.nih.gov/35157004/) · [doi:10.1001/jamaneurol.2021.5487](https://doi.org/10.1001/jamaneurol.2021.5487)  
+25. Pennell PB, Karanam A, Meador KJ, et al. Antiseizure Medication Concentrations During Pregnancy: Results From the MONEAD Study. JAMA Neurol 2022;79:370-379 (PMC8845026) [PMID 35157004](https://pubmed.ncbi.nlm.nih.gov/35157004/) · [doi:10.1001/jamaneurol.2021.5487](https://doi.org/10.1001/jamaneurol.2021.5487)  
    *Drugs:* carbamazepine, lacosamide, zonisamide, levetiracetam. *Why:* PMC full text returned empty through the tool; need trimester-by-trimester dose-normalized concentrations (Table 2 / eTables) for every ASM, because the abstract gives only the 'up to' (maximal) decrease without saying which trimester; also the carbamazepine figure in the abstract is internally inconsistent (11.56 -> 7.97 is a 31% fall, not the stated 17.3%).
 
-29. Petrenaite V, Ohman I, Thi Nguyen Larsen P, et al. Pregnancy-induced changes in the pharmacokinetics of oxcarbazepine/MHD (Epilepsia/Epilepsy Res 2018, as named in the task brief) (no PMID found; cited from another paper)  
+26. Petrenaite V, Ohman I, Thi Nguyen Larsen P, et al. Pregnancy-induced changes in the pharmacokinetics of oxcarbazepine/MHD (Epilepsia/Epilepsy Res 2018, as named in the task brief) (no PMID found; cited from another paper)  
    *Drugs:* eslicarbazepine. *Why:* Named in the brief from memory; not located this session. A prospective study of MHD (with enantiomers) during pregnancy would firm up the surrogate factor.
 
-30. Philipson A, Stiernstedt G, Ehrnebo M. Clin Pharmacokinet 1987;12:136-44 [PMID 3829560](https://pubmed.ncbi.nlm.nih.gov/3829560/) · [doi:10.2165/00003088-198712020-00004](https://doi.org/10.2165/00003088-198712020-00004)  
-   *Drugs:* cefazolin, cefalexin. *Why:* cefazolin: Paired during/after pregnancy study; tables give CL, V and the serum-albumin/unbound fraction for cefazolin, which would let the TOTAL clearance ratio (1.45) be split into its unbound-clearance and binding parts for this unbound model. cefalexin: Same paper as for cefazolin: the cephradine tables (oral and IV, paired) are the only direct basis for an oral cephalosporin factor.
-
-31. Polepally AR, et al. Ann Clin Transl Neurol 2014;1:99-106 (PMC4038031) [PMID 24883336](https://pubmed.ncbi.nlm.nih.gov/24883336/) · [doi:10.1002/acn3.29](https://doi.org/10.1002/acn3.29)  
+27. Polepally AR, et al. Ann Clin Transl Neurol 2014;1:99-106 (PMC4038031) [PMID 24883336](https://pubmed.ncbi.nlm.nih.gov/24883336/) · [doi:10.1002/acn3.29](https://doi.org/10.1002/acn3.29)  
    *Drugs:* lamotrigine. *Why:* Open access (PMC4038031) but only the abstract was read here; its model equations would give the gestational-week slope (0.118 L/h/week) form for a time-varying option.
 
-32. Popovic J, Grujic Z, Sabo A. J Clin Pharm Ther 2007;32:595-602 [PMID 18021337](https://pubmed.ncbi.nlm.nih.gov/18021337/) · [doi:10.1111/j.1365-2710.2007.00864.x](https://doi.org/10.1111/j.1365-2710.2007.00864.x)  
+28. Popovic J, Grujic Z, Sabo A. J Clin Pharm Ther 2007;32:595-602 [PMID 18021337](https://pubmed.ncbi.nlm.nih.gov/18021337/) · [doi:10.1111/j.1365-2710.2007.00864.x](https://doi.org/10.1111/j.1365-2710.2007.00864.x)  
    *Drugs:* gentamicin. *Why:* Primary table of gentamicin (and ceftriaxone, cefazolin) CL, V, k in caesarean vs non-pregnant women; only a secondary summary was read.
 
-33. Reimers A, et al. Epilepsy Res 2018;144:25-29 [PMID 29751353](https://pubmed.ncbi.nlm.nih.gov/29751353/) · [doi:10.1016/j.eplepsyres.2018.05.002](https://doi.org/10.1016/j.eplepsyres.2018.05.002)  
+29. Reimers A, et al. Epilepsy Res 2018;144:25-29 [PMID 29751353](https://pubmed.ncbi.nlm.nih.gov/29751353/) · [doi:10.1016/j.eplepsyres.2018.05.002](https://doi.org/10.1016/j.eplepsyres.2018.05.002)  
    *Drugs:* zonisamide. *Why:* Mean (not nadir) C/D by trimester; the abstract gives only the minimum.
 
-34. Tomson T, Lindbom U, Ekqvist B, Sundqvist A. Disposition of carbamazepine and phenytoin in pregnancy. Epilepsia 1994;35:131-135 [PMID 8112235](https://pubmed.ncbi.nlm.nih.gov/8112235/) · [doi:10.1111/j.1528-1157.1994.tb02922.x](https://doi.org/10.1111/j.1528-1157.1994.tb02922.x)  
+30. Tomson T, Lindbom U, Ekqvist B, Sundqvist A. Disposition of carbamazepine and phenytoin in pregnancy. Epilepsia 1994;35:131-135 [PMID 8112235](https://pubmed.ncbi.nlm.nih.gov/8112235/) · [doi:10.1111/j.1528-1157.1994.tb02922.x](https://doi.org/10.1111/j.1528-1157.1994.tb02922.x)  
    *Drugs:* phenytoin, carbamazepine. *Why:* phenytoin: Gives the total and unbound phenytoin clearances per trimester; the abstract gives direction only. Would confirm the Vmax factor (unbound clearance rise) directly. carbamazepine: Trimester values of total and unbound carbamazepine clearance (abstract says 'slightly decreased' only).
 
-35. Tomson T, Lindbom U, Ekqvist B, Sundqvist A. Epilepsy and pregnancy: a prospective study of seizure control in relation to free and total plasma concentrations of carbamazepine and phenytoin. Epilepsia 1994;35:122-130 [PMID 8112234](https://pubmed.ncbi.nlm.nih.gov/8112234/) · [doi:10.1111/j.1528-1157.1994.tb02921.x](https://doi.org/10.1111/j.1528-1157.1994.tb02921.x)  
-   *Drugs:* phenytoin. *Why:* Number of phenytoin pregnancies, the per-trimester free and total values with SDs, and the measured free fractions (to check the 2.1-fold fu rise derived here from the ratio of means).
-
-36. Tsuei SE et al. Clin Pharmacol Ther 1980;28:88-98 [PMID 7389259](https://pubmed.ncbi.nlm.nih.gov/7389259/) · [doi:10.1038/clpt.1980.136](https://doi.org/10.1038/clpt.1980.136)  
-   *Drugs:* dexamethasone. *Why:* Only the abstract was read. The full text gives V (Vss or Varea) for pregnant and non-pregnant women and the source of the non-pregnant comparator (probably part I of the series), needed to confirm the volume factor of about 2 and whether the 2.3x clearance ratio is like-for-like (blood/plasma ratio 0.92 vs 0.81 differs).
-
-37. Voinescu PE, Park S, Chen LQ, et al. Antiepileptic drug clearances during pregnancy and clinical implications for women with epilepsy. Neurology 2018;91:e1228-e1236 (PMC6161546) [PMID 30185446](https://pubmed.ncbi.nlm.nih.gov/30185446/) · [doi:10.1212/WNL.0000000000006240](https://doi.org/10.1212/WNL.0000000000006240)  
+31. Voinescu PE, Park S, Chen LQ, et al. Antiepileptic drug clearances during pregnancy and clinical implications for women with epilepsy. Neurology 2018;91:e1228-e1236 (PMC6161546) [PMID 30185446](https://pubmed.ncbi.nlm.nih.gov/30185446/) · [doi:10.1212/WNL.0000000000006240](https://doi.org/10.1212/WNL.0000000000006240)  
    *Drugs:* phenytoin, valproate, topiramate. *Why:* PMC full text returned empty through the tool; its tables give trimester clearance ratios for phenytoin (n=7) and valproate (n=5), which are not in the abstract, and the third-trimester (not just maximal) ratios for levetiracetam and topiramate.
 
-38. Yerby MS, Friel PN, McCormick K. Antiepileptic drug disposition during pregnancy. Neurology 1992;42(4 Suppl 5):12-16 [PMID 1574166](https://pubmed.ncbi.nlm.nih.gov/1574166/)  
+32. Yerby MS, Friel PN, McCormick K. Antiepileptic drug disposition during pregnancy. Neurology 1992;42(4 Suppl 5):12-16 [PMID 1574166](https://pubmed.ncbi.nlm.nih.gov/1574166/)  
    *Drugs:* valproate. *Why:* Total and free valproate concentrations per trimester with doses; would replace the derived 1.6 with a measured total-clearance ratio.
 
 ### Papers that could turn a recorded finding into an applied factor, or confirm that none is needed
@@ -287,43 +271,31 @@ paywalled. The first list matters most, since each would check a factor the libr
 4. Chen et al. J Clin Pharmacol 2026;66:e70205 [PMID 42130310](https://pubmed.ncbi.nlm.nih.gov/42130310/) · [doi:10.1002/jcph.70205](https://doi.org/10.1002/jcph.70205)  
    *Drugs:* ceftriaxone. *Why:* Gives which observed pregnancy data the PBPK model was calibrated to and the predicted CL and V separately; would decide whether CL x 1.2 is worth applying.
 
-5. Dailey PA et al. Anesthesiology 1984;60:569-574 [PMID 6145374](https://pubmed.ncbi.nlm.nih.gov/6145374/) · [doi:10.1097/00000542-198406000-00009](https://doi.org/10.1097/00000542-198406000-00009)  
-   *Drugs:* vecuronium. *Why:* Volumes and individual curves at caesarean; could be simulated against the Vega-Villa model over 0-4 h to see whether early concentrations differ.
-
-6. Gin T, Chan MT. Anesthesiology 1994;81:829-832 [PMID 7943833](https://pubmed.ncbi.nlm.nih.gov/7943833/) · [doi:10.1097/00000542-199410000-00009](https://doi.org/10.1097/00000542-199410000-00009)  
-   *Drugs:* isoflurane, sevoflurane, desflurane, nitrousOxide. *Why:* Human first-trimester isoflurane MAC; check the methods (tetanic stimulus vs skin incision) before applying to a MAC40 defined by incision.
-
-7. Leutritz AL et al. Br J Clin Pharmacol 2023;89(2):737-750 [PMID 36103361](https://pubmed.ncbi.nlm.nih.gov/36103361/) · [doi:10.1111/bcp.15533](https://doi.org/10.1111/bcp.15533)  
+5. Leutritz AL et al. Br J Clin Pharmacol 2023;89(2):737-750 [PMID 36103361](https://pubmed.ncbi.nlm.nih.gov/36103361/) · [doi:10.1111/bcp.15533](https://doi.org/10.1111/bcp.15533)  
    *Drugs:* duloxetine. *Why:* Full text may contain a quantitative trimester-by-trimester dose-adjusted concentration ratio for duloxetine that would let a cl1 factor be derived; the abstract gives direction only.
 
-8. Matsumura H, Takagi K, Seki H, et al. Hypertens Pregnancy 2014;33:93-101 [PMID 24131296](https://pubmed.ncbi.nlm.nih.gov/24131296/) · [doi:10.3109/10641955.2013.846367](https://doi.org/10.3109/10641955.2013.846367)  
+6. Matsumura H, Takagi K, Seki H, et al. Hypertens Pregnancy 2014;33:93-101 [PMID 24131296](https://pubmed.ncbi.nlm.nih.gov/24131296/) · [doi:10.3109/10641955.2013.846367](https://doi.org/10.3109/10641955.2013.846367)  
    *Drugs:* nicardipine. *Why:* The full text should give the dose/maternal-plasma-concentration regression for continuous IV nicardipine in 18 preeclamptic women. Its slope is 1/CL and could be compared directly with the model's clearance.
 
-9. Muller AE et al. Antimicrob Agents Chemother 2010;54:2175-81 [PMID 20176904](https://pubmed.ncbi.nlm.nih.gov/20176904/) · [doi:10.1128/AAC.01017-09](https://doi.org/10.1128/AAC.01017-09)  
+7. Muller AE et al. Antimicrob Agents Chemother 2010;54:2175-81 [PMID 20176904](https://pubmed.ncbi.nlm.nih.gov/20176904/) · [doi:10.1128/AAC.01017-09](https://doi.org/10.1128/AAC.01017-09)  
    *Drugs:* clindamycin. *Why:* PMC copy (PMC2863651) returned no text; the full paper gives the per-kg values, the body weights and the comparison the authors drew, needed to judge whether 10 L/h reflects pregnancy or the sampling design.
 
-10. Ngan Kee WD, Khaw KS, Tan PE, Ng FF, Karmakar MK. Anesthesiology 2009;111:506-512 [PMID 19672175](https://pubmed.ncbi.nlm.nih.gov/19672175/) · [doi:10.1097/ALN.0b013e3181b160a3](https://doi.org/10.1097/ALN.0b013e3181b160a3)  
+8. Ngan Kee WD, Khaw KS, Tan PE, Ng FF, Karmakar MK. Anesthesiology 2009;111:506-512 [PMID 19672175](https://pubmed.ncbi.nlm.nih.gov/19672175/) · [doi:10.1097/ALN.0b013e3181b160a3](https://doi.org/10.1097/ALN.0b013e3181b160a3)  
    *Drugs:* phenylephrine. *Why:* The full text has maternal arterial phenylephrine concentrations at delivery together with the infusion doses. An apparent steady-state clearance (rate/Css) could be derived from it and compared with Hengstmann's 2.0 L/min in non-pregnant volunteers. This is the only route to a parturient number.
 
-11. O'Hare MF, et al. (propranolol pharmacokinetics in pregnancy, oral; named in the brief). Citation not retrieved in this session. (no PMID found; cited from another paper)  
+9. O'Hare MF, et al. (propranolol pharmacokinetics in pregnancy, oral; named in the brief). Citation not retrieved in this session. (no PMID found; cited from another paper)  
    *Drugs:* propranolol. *Why:* An oral study would show whether first-pass (CL/F) changes as for metoprolol. That does not affect this IV model, but would matter for an oral propranolol. The paper could not be located by PubMed search here.
 
-12. Pacheco LD et al. Am J Perinatol 2007;24:79-82 [PMID 17260328](https://pubmed.ncbi.nlm.nih.gov/17260328/) · [doi:10.1055/s-2006-958162](https://doi.org/10.1055/s-2006-958162)  
+10. Pacheco LD et al. Am J Perinatol 2007;24:79-82 [PMID 17260328](https://pubmed.ncbi.nlm.nih.gov/17260328/) · [doi:10.1055/s-2006-958162](https://doi.org/10.1055/s-2006-958162)  
    *Drugs:* hydrocortisone. *Why:* Narrative review of corticosteroid PK in pregnancy; its reference list may point to older tracer studies of cortisol metabolic clearance in pregnancy (Migeon/Beitins era) that PubMed searches did not surface with abstracts.
 
-13. Palahniuk RJ, Shnider SM, Eger EI 2nd. Anesthesiology 1974;41:82-83 [PMID 4857789](https://pubmed.ncbi.nlm.nih.gov/4857789/) · [doi:10.1097/00000542-197407000-00021](https://doi.org/10.1097/00000542-197407000-00021)  
-   *Drugs:* isoflurane, sevoflurane, desflurane, nitrousOxide. *Why:* Original term-pregnancy MAC reduction (ewes: halothane, methoxyflurane, isoflurane); no abstract in PubMed, figures known only from memory (about 25-40%).
-
-14. Papini O et al. J Pharm Biomed Anal 2005;40:397-403 [PMID 16143486](https://pubmed.ncbi.nlm.nih.gov/16143486/) · [doi:10.1016/j.jpba.2005.07.021](https://doi.org/10.1016/j.jpba.2005.07.021)  
+11. Papini O et al. J Pharm Biomed Anal 2005;40:397-403 [PMID 16143486](https://pubmed.ncbi.nlm.nih.gov/16143486/) · [doi:10.1016/j.jpba.2005.07.021](https://doi.org/10.1016/j.jpba.2005.07.021)  
    *Drugs:* lorazepam. *Why:* Actual maternal weights (the 77.9 kg used here is back-calculated), the non-pregnant reference values the authors compared against, and whether CL/F is per kg of pregnant weight.
 
-15. Rubin PC, Butters L, Kelman AW, Fitzsimons C, Reid JL. Br J Clin Pharmacol 1983;15:465-470 (free in PMC: PMC1427790) [PMID 6849783](https://pubmed.ncbi.nlm.nih.gov/6849783/) · [doi:10.1111/j.1365-2125.1983.tb01531.x](https://doi.org/10.1111/j.1365-2125.1983.tb01531.x)  
-   *Drugs:* labetalol. *Why:* Only the abstract was read. The full text (free in PMC) would give per-kg values and the half-lives, to confirm that per-kg IV clearance is also unchanged, since the model scales by weight.
-
-16. Shanmugalingam R et al. Am J Obstet Gynecol 2019;221:255.e1-255.e9 [PMID 31051121](https://pubmed.ncbi.nlm.nih.gov/31051121/) · [doi:10.1016/j.ajog.2019.04.027](https://doi.org/10.1016/j.ajog.2019.04.027)  
+12. Shanmugalingam R et al. Am J Obstet Gynecol 2019;221:255.e1-255.e9 [PMID 31051121](https://pubmed.ncbi.nlm.nih.gov/31051121/) · [doi:10.1016/j.ajog.2019.04.027](https://doi.org/10.1016/j.ajog.2019.04.027)  
    *Drugs:* aspirin. *Why:* Gestational age at sampling, V/F of salicylate, whether the 44% is CL/F of SA, and the enteric-coated arm (the library's model is enteric-coated low-dose aspirin).
 
-17. Wang X et al. J Matern Fetal Neonatal Med 2011;24:444-8 (PMC3033962) [PMID 20608802](https://pubmed.ncbi.nlm.nih.gov/20608802/) · [doi:10.3109/14767058.2010.497573](https://doi.org/10.3109/14767058.2010.497573)  
+13. Wang X et al. J Matern Fetal Neonatal Med 2011;24:444-8 (PMC3033962) [PMID 20608802](https://pubmed.ncbi.nlm.nih.gov/20608802/) · [doi:10.3109/14767058.2010.497573](https://doi.org/10.3109/14767058.2010.497573)  
    *Drugs:* metronidazole. *Why:* Free in PMC (not retrieved this session); the tables give CL/F in L/h by trimester, which could be set against da Silva Neto's 3.22 L/h for a numeric check.
 
 ### Received from the Stanford library
@@ -361,3 +333,31 @@ paywalled. The first list matters most, since each would check a factor the libr
   gynaecological women, each against the model at its own age and weight; labour is lower (0.91).
 - **Miners JO et al.** *Br J Clin Pharmacol* 1986;22:359-362 (PMID 3768250): oral paracetamol CL/F
   1.58 times and V/F 1.14 times in the third trimester, supporting acetaminophen's × 1.4 and × 1.14.
+- **Hogstedt S et al.** *Clin Pharmacol Ther* 1985;37:688-692 (PMID 4006368): metoprolol IV and oral in
+  the same 5 women: bioavailability 0.21 vs 0.42 (the model's × 0.5, now measured), systemic
+  clearance 1.38 vs 0.65 L/min, identical half-lives; volumes and Q now × 1.5 with the clearance.
+- **Philipson A et al.** *Clin Pharmacokinet* 1987;12:136-144 (PMID 3829560): cephradine in the
+  women at 24 weeks or later 1.50 times (cefalexin's × 1.5 confirmed), oral bioavailability
+  unchanged; cefazolin total clearance 1.57 times, half-life 0.65 times.
+- **Lazebnik N et al.** *Postgrad Med J* 1985;61:979-981 (PMID 4070116): creatinine clearance 1.50
+  times at 28-34 weeks, gentamicin half-life 93.5 vs 158.9 min; gentamicin's × 1.5 confirmed.
+- **Palahniuk RJ, Shnider SM, Eger EI.** *Anesthesiology* 1974;41:82-83 (PMID 4857789): MAC 25-40%
+  lower in pregnant ewes near term (isoflurane 1.01 vs 1.58%); recorded on the gas pages, not applied.
+- **Dailey PA et al.** *Anesthesiology* 1984;60:569-574 (PMID 6145374): vecuronium clearance 6.4
+  mL/kg/min at term caesarean, against 5.7-6.2 from this library's model for a nonpregnant woman:
+  vecuronium moved from `unquantified` to `unchanged`.
+- **Luxford AM, Kellaway GS.** *Eur J Clin Pharmacol* 1983;25:117-121 (PMID 6617713): digoxin renal
+  clearance 1.21 times and creatinine clearance 1.39 times in the third trimester, the two rising
+  together (no change in tubular handling); confirms digoxin's GFR-term adjustment.
+- **Tsuei SE et al.** *Clin Pharmacol Ther* 1980;28:88-98 (PMID 7389259): dexamethasone clearance
+  559 vs 243 mL/min at term with an unchanged half-life, so the volume doubles with the clearance,
+  confirming both of dexamethasone's factors.
+- **Rubin PC et al.** *Br J Clin Pharmacol* 1983;15:465-470 (PMID 6849783): intravenous labetalol
+  clearance 2.16 (pregnant) vs 2.35 (postpartum) vs 1.96 (controls) L/min, no difference: labetalol
+  stays `unchanged` for its IV model.
+- **Tomson T et al.** *Epilepsia* 1994;35:122-130 (PMID 8112234): phenytoin free fraction rose from
+  6.1% to 13.2% in the third trimester (factor 2.15, the Km factor uses 2.10); carbamazepine free
+  concentration essentially unchanged. Confirms both.
+- **Gin T, Chan MTV.** *Anesthesiology* 1994;81:829-832 (PMID 7943833): isoflurane MAC 28% lower at
+  8-12 weeks (0.775 vs 1.075%) by a tetanic stimulus; recorded on the gas pages, not applied (MAC40
+  in the library is defined by incision).

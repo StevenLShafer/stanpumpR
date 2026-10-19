@@ -28,7 +28,7 @@ Albumin falls to 70 to 80 per cent of its prepregnancy value by term, so the fre
 
 - **Trimesters.** The field is the third trimester. Earlier in pregnancy most changes are smaller.
 - **After delivery.** The changes reverse over days (lamotrigine, levetiracetam) to months (renal function by three months postpartum); the field is simply on or off.
-- **Volumes of distribution**, where the source gives no figure. Most applied changes are to clearance; the volumes change only for acetaminophen, dexamethasone, enoxaparin, glyburide, ketorolac and metformin.
+- **Volumes of distribution**, where the source gives no figure. Most applied changes are to clearance; the volumes change only for acetaminophen, dexamethasone, enoxaparin, glyburide, ketorolac, metformin and metoprolol (with their distribution clearances where the half-life was found unchanged).
 - **The anesthetic gases.** MAC falls by about 28% in early pregnancy and in the first hours after delivery (isoflurane; Gin and Chan 1994), a pharmacodynamic change the library records on each gas's page and does not apply.
 - **The fetus and the placenta.** Placental transfer, fetal metabolism and fetal-to-maternal ratios are not modelled; the curves are maternal.
 - **Labour.** Pain, anxiety and opioids delay gastric emptying during labour, which slows oral absorption; the oral absorption parameters are unchanged.

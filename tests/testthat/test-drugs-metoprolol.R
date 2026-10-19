@@ -68,7 +68,7 @@ test_that("metoprolol is a plasma-only vasoactive drug", {
   expect_true(all(c("mg", "mg PO", "mg PO bid") %in% unlist(row$Units)))
 })
 
-test_that("pregnancy: clearance x 1.5 and oral bioavailability x 0.5, not in a poor metaboliser", {
+test_that("pregnancy: clearance, volumes and Q x 1.5 and oral bioavailability x 0.5, not in a poor metaboliser", {
   # Ryu 2015's CL/F x 2.96 split by a well-stirred liver at extraction 0.5.
   # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.
   on  <- getDrugPK("metoprolol", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
@@ -82,8 +82,13 @@ test_that("pregnancy: clearance x 1.5 and oral bioavailability x 0.5, not in a p
                c(1.5, 0.5))
   expect_equal_rounded(1.399444225, a$cl1)
   expect_equal_rounded(0.225, a$bioavailability_PO)
-  expect_identical(a[c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "tlag_PO")],
-                   b[c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "tlag_PO")])
+  for (p in c("v1", "v2", "cl2"))
+    expect_equal(a[[p]] / b[[p]], METOPROLOL_PREGNANCY_V_FACTOR, tolerance = 1e-12, info = p)
+  expect_identical(a[c("v3", "cl3", "ka_PO", "tlag_PO")], b[c("v3", "cl3", "ka_PO", "tlag_PO")])
+  # Every rate constant is unchanged, so the half-lives are (Hogstedt 1985:
+  # 5.38 vs 5.36 h intravenously, 3.42 vs 3.42 h orally)
+  expect_equal(c(a$cl1 / a$v1, a$cl2 / a$v1, a$cl2 / a$v2),
+               c(b$cl1 / b$v1, b$cl2 / b$v1, b$cl2 / b$v2), tolerance = 1e-12)
   expect_match(on$reference, "Ryu", fixed = TRUE)
   expect_no_match(off$reference, "Ryu", fixed = TRUE)
   # The other phenotypes take the factors on top of their own
