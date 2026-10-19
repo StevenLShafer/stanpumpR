@@ -9,9 +9,14 @@
 # PDF) and quoted verbatim in the working notes; where only a class analogue,
 # an abstract or a secondary summary was available the source string says so.
 # Primary documents that could not be opened from the build environment
-# (EUCAST rationale documents, CLSI M100, FDA STIC pages, EMA referral
-# reports, several 1970s-1980s MBC tables) are listed in
-# docs/antibiotic-mbc.md as the literature that would firm these bands up.
+# (EUCAST rationale documents, CLSI M100, FDA STIC pages, the harmonised EMA
+# SmPCs, several 1970s-1980s MBC tables) are listed in
+# inst/help/models/antibiotics.md as the literature that would firm these
+# bands up.  Documents Steven Shafer supplied on 2026-10-19 and read in full:
+# the Cleocin HCl and Cleocin Phosphate labels, which add to the clindamycin
+# rows, and the EMA's public outcomes of the Rocephin (Article 30) and
+# vancomycin (Article 31) referrals, which give no MIC, MBC or PK/PD target
+# and change no band.
 #
 # STATUS: verified on R 4.3.3 by tests/testthat/test-antibiotic-mbc.R, which
 # checks this table against drugDefaults_global.csv.
