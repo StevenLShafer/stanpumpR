@@ -77,10 +77,12 @@ PREGNANCY_REFERENCE <- paste0(
 #' applied.
 #'
 #' @param applied what the model changed, e.g. "clearance x 1.7"
+#' @param source the citation the factor is from: the review by default, or
+#'   the drug's own pregnancy study
 #' @returns one string
 #' @noRd
-pregnancyReference <- function(applied) {
-  paste0("pregnancy: ", applied, " (", PREGNANCY_REFERENCE, ")")
+pregnancyReference <- function(applied, source = PREGNANCY_REFERENCE) {
+  paste0("pregnancy: ", applied, " (", source, ")")
 }
 
 #' Can the patient be pregnant?
