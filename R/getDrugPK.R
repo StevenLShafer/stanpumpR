@@ -200,9 +200,16 @@ getDrugPK <- function(
   if (!is.null(zeroOrderPO))
   {
     X$PK <- lapply(X$PK, oralReleaseToTissueDepot)
-    X$zeroOrderSC <- list(fraction = 1, duration = zeroOrderPO$duration, into = "depot")
+    X$zeroOrderSC <- list(fraction = zeroOrderPO$fraction, duration = zeroOrderPO$duration,
+                          into = zeroOrderPO$into)
   }
   zeroOrderSC <- validateZeroOrderSC(X$zeroOrderSC, X$PK, drug)
+  # A continuous enteral infusion through the gut's absorption (levodopa
+  # intestinal gel), carried on the tissue depot like the oral release above,
+  # and one transit compartment before a depot (levodopa); see R/transit.R.
+  enteralInfusion <- validateEnteralInfusion(X$enteralInfusion, X, drug)
+  if (enteralInfusion) X$PK <- lapply(X$PK, enteralToTissueDepot)
+  validateTransit(X, drug)
 
   # Zero-order oral release (carvedilol, R/oral-zero-order.R): validated and
   # its incompatibilities refused up front, before the absorption checks
@@ -714,6 +721,32 @@ getDrugPK <- function(
       tPeakSolved[[event]] <- tPeak
     }
 
+    # One transit compartment before the oral or tissue depot: two equal
+    # first-order steps, carried as the limit of two parallel depots, the
+    # second with a negative share (R/transit.R).  After every rate has been
+    # separated, so the weights are those of the rates the engines use.
+    transit <- NULL
+    if (isTRUE(X$PK[[event]]$transit_PO))
+    {
+      transit <- list(route = ROUTE_PO, ka = ka_PO, bioavailability = bioavailability_PO,
+                      tlag = tlag_PO)
+      chain <- transitChainDepots(ka_PO, c(lambdas, ke0))
+      ka_PO2 <- chain$k2
+      bioavailability_PO2 <- bioavailability_PO * chain$w2
+      bioavailability_PO  <- bioavailability_PO * chain$w1
+      tlag_PO2 <- tlag_PO
+    }
+    if (isTRUE(X$PK[[event]]$transit_RA))
+    {
+      transit <- list(route = if (enteralInfusion) ROUTE_PO else tissueRoute,
+                      ka = ka_RA, bioavailability = bioavailability_RA, tlag = tlag_RA)
+      chain <- transitChainDepots(ka_RA, c(lambdas, ke0))
+      ka_RAslow <- chain$k2
+      bioavailability_RAslow <- bioavailability_RA * chain$w2
+      bioavailability_RA     <- bioavailability_RA * chain$w1
+      tlag_RAslow <- tlag_RA
+    }
+
     if (ka_PO > 0)
     {
       p_coef_PO_l1   <- p_coef_bolus_l1 / (ka_PO - lambda_1) * ka_PO * bioavailability_PO
@@ -982,6 +1015,14 @@ getDrugPK <- function(
         e_coef_PO2_ka = e_coef_PO2_ka
       )
     )
+    # What a transit model declared, for the help (R/transit.R); absent for
+    # every other drug, so their PK sets are as they were
+    if (!is.null(transit))
+    {
+      withTransit <- get(event)
+      withTransit$transit <- transit
+      assign(event, withTransit)
+    }
   }
 
   PK <- sapply(events, function(x) list(get0(x)))
@@ -1187,6 +1228,9 @@ getDrugPK <- function(
   # TRUE when that release takes the oral doses (simCpCe() moves them onto
   # the tissue depot); absent otherwise, so every other drug's PK is as it was.
   if (!is.null(zeroOrderPO)) out$zeroOrderPO <- TRUE
+  # TRUE for a drug infused into the gut (R/transit.R): simCpCe() moves its
+  # oral rows and its enteral rate rows onto the tissue depot.
+  if (enteralInfusion) out$enteralInfusion <- TRUE
   # Dose covariates, a property of each injection (the Tham insulins,
   # R/insulinTham.R): a bioavailability that scales each SC dose by its own
   # size, and, for a model whose disposition or ka depends on the dose, the

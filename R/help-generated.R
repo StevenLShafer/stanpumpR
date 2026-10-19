@@ -403,12 +403,17 @@ helpJamesLBMFigure <- function(drugDefaults = NULL) {
 
 #' The vasoactive registry as a Markdown table
 #'
+#' Like every builder in \code{HELP_GENERATED_BLOCKS}, it is called with the
+#' drug library as its first argument (\code{helpExpandGenerated()}), which it
+#' does not need; the registry comes second.  Taken first, the registry was
+#' the drug library, and the page's tables came out empty.
+#'
 #' One row per drug and candidate source in
 #' \code{inst/extdata/vasoactiveRegistry.csv}: what it is, whether it is in
 #' the library, and what stands in the way if it is not.  Built from the
 #' registry so the help cannot drift from it.
 #' @noRd
-helpVasoactiveRegistryMarkdown <- function(registry = vasoactiveRegistry()) {
+helpVasoactiveRegistryMarkdown <- function(drugDefaults = NULL, registry = vasoactiveRegistry()) {
   status <- c(implemented = "In the library",
               needs_full_text = "Needs the paper",
               complete_not_implemented = "Read; not offered",
@@ -434,7 +439,65 @@ helpVasoactiveRegistryMarkdown <- function(registry = vasoactiveRegistry()) {
 
 #' The papers that would unblock a vasoactive model, as a Markdown list
 #' @noRd
-helpVasoactiveToObtainMarkdown <- function(registry = vasoactiveRegistry()) {
+helpVasoactiveToObtainMarkdown <- function(drugDefaults = NULL, registry = vasoactiveRegistry()) {
+  want <- registry[!is.na(registry$to_obtain) & nzchar(registry$to_obtain), ]
+  want <- want[order(want$readiness != "needs_full_text", tolower(want$drug)), ]
+  paste(sprintf("- **%s**%s: %s", want$drug,
+                ifelse(want$readiness == "implemented",
+                       " (in the library, to confirm)", ""),
+                want$to_obtain), collapse = "\n")
+}
+
+#' The Parkinson's disease product summary as Markdown tables, one per class
+#'
+#' Built from \code{parkinsonsProducts()} so the help cannot drift from it.
+#' @noRd
+helpParkinsonsProductsMarkdown <- function(drugDefaults = NULL, products = parkinsonsProducts()) {
+  cell <- function(x) ifelse(is.na(x), "", gsub("\\|", "/", x))
+  name <- ifelse(is.na(products$stanpumpr_drug), products$product,
+                 sprintf("%s ([model](help:drugs/%s))", products$product,
+                         products$stanpumpr_drug))
+  name <- ifelse(is.na(products$label_url), name,
+                 sprintf("%s, [US label](%s)", name, products$label_url))
+  classes <- unique(products$drug_class)
+  paste(vapply(classes, function(cls) {
+    p <- products$drug_class == cls
+    rows <- sprintf("| %s | %s | %s | %s | %s | %s | %s |",
+                    name[p], cell(products$tmax[p]), cell(products$half_life[p]),
+                    cell(products$peak_effect[p]), cell(products$therapeutic_range[p]),
+                    cell(products$covariates[p]), cell(products$genotype[p]))
+    paste(c(sprintf("#### %s", tools::toTitleCase(cls)), "",
+            "| Product | Time to peak concentration | Half-life | Onset and peak effect | Therapeutic range | Covariates | Genotype |",
+            "|---|---|---|---|---|---|---|", rows), collapse = "\n")
+  }, character(1)), collapse = "\n\n")
+}
+
+#' The Parkinson's disease model registry as a Markdown table
+#' @noRd
+helpParkinsonsRegistryMarkdown <- function(drugDefaults = NULL, registry = parkinsonsRegistry()) {
+  status <- c(implemented = "In the library",
+              complete_not_implemented = "Read; not offered",
+              needs_full_text = "Needs the paper",
+              needs_engine = "Needs an engine feature",
+              no_suitable_model = "No usable model")
+  read <- c(full_text = "full text", abstract = "abstract",
+            label_only = "label", none = "citation only")
+  registry <- registry[order(tolower(registry$drug),
+                             match(registry$readiness, names(status))), ]
+  drugCell <- ifelse(
+    is.na(registry$stanpumpr_drug), registry$drug,
+    sprintf("[%s](help:drugs/%s)", registry$drug, registry$stanpumpr_drug))
+  rows <- sprintf("| %s | %s | %s (%s) | [source](%s) | %s |",
+                  drugCell, status[registry$readiness], registry$population,
+                  read[registry$evidence_read], registry$source_url,
+                  gsub("\\|", "/", registry$blocking_issue))
+  paste(c("| Drug | Status | Population (what was read) | Source | Notes |",
+          "|---|---|---|---|---|", rows), collapse = "\n")
+}
+
+#' The papers that would unblock a Parkinson's disease model, as a list
+#' @noRd
+helpParkinsonsToObtainMarkdown <- function(drugDefaults = NULL, registry = parkinsonsRegistry()) {
   want <- registry[!is.na(registry$to_obtain) & nzchar(registry$to_obtain), ]
   want <- want[order(want$readiness != "needs_full_text", tolower(want$drug)), ]
   paste(sprintf("- **%s**%s: %s", want$drug,
@@ -450,5 +513,8 @@ HELP_GENERATED_BLOCKS <- list(
   "illicit-pk-table" = helpIllicitPKTableMarkdown,
   "james-lbm-figure" = helpJamesLBMFigure,
   "vasoactive-registry-table" = helpVasoactiveRegistryMarkdown,
-  "vasoactive-to-obtain" = helpVasoactiveToObtainMarkdown
+  "vasoactive-to-obtain" = helpVasoactiveToObtainMarkdown,
+  "parkinsons-products-table" = helpParkinsonsProductsMarkdown,
+  "parkinsons-registry-table" = helpParkinsonsRegistryMarkdown,
+  "parkinsons-to-obtain" = helpParkinsonsToObtainMarkdown
 )

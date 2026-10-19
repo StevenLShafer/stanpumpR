@@ -192,3 +192,12 @@ milrinonePediatric,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/mi
 metoprolol,ng,mg,mg/min,mg,"mg,mg/min,mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Vasoactive and resuscitation
 nicardipine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mcg/kg/min",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs
+pramipexole,ng,,,mg PO tid,"mg PO,mg PO tid",#6A1B9A,0,0,0,0,0,IV,Parkinson disease
+pramipexoleER,ng,,,mg PO ER qd,"mg PO ER,mg PO ER qd",#8E24AA,0,0,0,0,0,IV,Parkinson disease
+safinamide,ng,,,mg PO qd,"mg PO,mg PO qd",#4527A0,0,0,0,0,0,IV,Parkinson disease
+istradefylline,ng,,,mg PO qd,"mg PO,mg PO qd",#5E35B1,0,0,0,0,0,IV,Parkinson disease
+pimavanserin,ng,,,mg PO qd,"mg PO,mg PO qd",#7E57C2,0,0,0,0,0,IV,Parkinson disease
+levodopa,mcg,,,mg PO,"mg PO,mg PO tid,mg PO qid",#311B92,0.9,2,1.4,0,0.81,IV,Parkinson disease
+levodopaIntestinalGel,mcg,,,mg/hr PO,"mg PO,mg/hr PO",#512DA8,0.9,2,1.4,0,0.81,IV,Parkinson disease
+opicapone,ng,,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Parkinson disease
+amantadineER,ng,,,mg PO qd,"mg PO,mg PO qd",#3949AB,300,600,450,0,0,IV,Parkinson disease
