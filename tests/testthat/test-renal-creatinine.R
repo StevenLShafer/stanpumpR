@@ -19,7 +19,9 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",
                 # Grasela and Sheiner's Equation 7 (R/drugs_procainamide.R)
-                "procainamide")
+                "procainamide",
+                # Cockcroft-Gault on clearance (R/drugs_digoxin.R, Yukawa 2001)
+                "digoxin")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).

@@ -198,6 +198,13 @@ registry <- rbind(
       "Kanto J et al. Placental transfer and pharmacokinetics of atropine after a single maternal intravenous and intramuscular administration. Acta Anaesthesiol Scand 1981;25:85-88. PMID 7324829, doi 10.1111/j.1399-6576.1981.tb01613.x.",
       "Kanto J et al. Acta Anaesthesiol Scand 1981;25:85-88. PMID 7324829.",
       doi("10.1111/j.1399-6576.1981.tb01613.x")),
+  reg("digoxin__hf_af__yukawa2001", "digoxin",
+      "106 Japanese patients with heart failure and atrial fibrillation, oral tablets", "digoxin", "serum",
+      "implemented", "digoxin", "full_text",
+      "Read from the supplied article.  Apparent (/F) parameters with no absorption phase, so offered only as a constant oral daily rate (mg/day PO), with no intravenous unit.  Reproduces Table VI's clearances and doses.  Spironolactone and calcium antagonists held at none.  An intravenous model needs an intravenous study.",
+      "Cheng JW, Charland SL, Shaw LM, et al. Is the volume of distribution of digoxin reduced in patients with renal dysfunction? Pharmacotherapy 1997;17:584-590 (PMID 9165563; intravenous, two compartments by renal function); Koup JR et al. Clin Pharmacol Ther 1975;18:9-21; Kramer WG et al. J Pharmacokinet Biopharm 1974;2:299-312.",
+      "Yukawa E, Suematu F, Yukawa M, et al. Population pharmacokinetics of digoxin in Japanese patients: a 2-compartment pharmacokinetic model. Clin Pharmacokinet 2001;40:773-781. PMID 11707062.",
+      doi("10.2165/00003088-200140100-00005")),
   reg("procainamide__clinical__grasela1984", "procainamide",
       "39 inpatients, routine clinical data", "procainamide (NAPA in urine)", "plasma",
       "implemented", "procainamide", "full_text",
@@ -312,6 +319,7 @@ DB  <- doi("10.1097/00000542-198703000-00010")
 MG  <- doi("10.1097/00000542-200002000-00013")
 HI  <- doi("10.1002/jps.2600740702")
 FA  <- doi("10.1111/j.1365-2125.1982.tb01424.x")
+YU  <- doi("10.2165/00003088-200140100-00005")
 
 parameters <- rbind(
   par("epinephrine", "CL", 127, "L/h at 70 kg, SAPS II 50", "estimated", "full_text", AB),
@@ -392,6 +400,14 @@ parameters <- rbind(
   par("propranolol", "beta", 0.203, "/h", "estimated", "full_text", FA),
   par("propranolol", "V1", 11.06, "L", "derived", "full_text", FA),
   par("propranolol", "CL", 1.107, "L/min", "derived", "full_text", FA),
+
+  par("digoxin", "CL/F per weight", 0.036, "L/h per kg total body weight", "estimated", "full_text", YU),
+  par("digoxin", "CL/F per CLcr", 0.112, "L/h per mL/min (Cockcroft-Gault)", "estimated", "full_text", YU),
+  par("digoxin", "V1/F", 1.83, "L/kg", "estimated", "full_text", YU),
+  par("digoxin", "Q/F", 0.629, "L/h/kg", "estimated", "full_text", YU),
+  par("digoxin", "V2/F", 22.6, "L/kg", "estimated", "full_text", YU),
+  par("digoxin", "spironolactone on CL", 0.770, "factor; held at none", "estimated", "full_text", YU),
+  par("digoxin", "calcium antagonist on CL", 0.784, "factor; held at none", "estimated", "full_text", YU),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "abstract", AR),
   par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "abstract", AR),

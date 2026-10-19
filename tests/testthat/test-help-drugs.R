@@ -95,7 +95,7 @@ plasmaOnly <- c(
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
     "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin",
     "norepinephrine", "procainamide", "esmolol", "dopamine", "atropine",
-    "propranolol"
+    "propranolol", "digoxin"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

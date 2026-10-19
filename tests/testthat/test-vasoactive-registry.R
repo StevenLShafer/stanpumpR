@@ -12,7 +12,7 @@ EVIDENCE  <- c("full_text", "abstract", "none")
 # The drugs implemented new for this registry, in its own category.
 IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "nitroglycerin", "norepinephrine", "procainamide", "esmolol",
-                 "dopamine", "atropine", "propranolol")
+                 "dopamine", "atropine", "propranolol", "digoxin")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -20,7 +20,9 @@ REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
                "phenylephrine", "hydralazine", "nicardipine", "dopamine",
                "methylene blue", "atropine", "adenosine", "sodium bicarbonate",
                "magnesium sulfate", "procainamide", "verapamil", "diltiazem",
-               "propranolol", "metoprolol", "esmolol", "labetalol")
+               "propranolol", "metoprolol", "esmolol", "labetalol",
+               # asked for on 2026-10-19, with the paper
+               "digoxin")
 
 test_that("every row is fully classified with a clickable source", {
   for (col in c("model_id", "drug", "route", "population", "analyte", "matrix",
@@ -55,8 +57,11 @@ test_that("the category holds exactly the implemented drugs, concentration only"
     row <- dd[dd$Drug == d, ]
     expect_equal(row$MEAC, 0, info = d)
     expect_equal(row$endCe, 0, info = d)
-    expect_equal(row$Lower, 0, info = d)
-    expect_equal(row$Upper, 0, info = d)
+    # No band, except digoxin's published therapeutic range
+    if (d != "digoxin") {
+      expect_equal(row$Lower, 0, info = d)
+      expect_equal(row$Upper, 0, info = d)
+    }
     PK <- getDrugPK(d, 70, 170, 50, "male")
     expect_equal(PK$tPeak, 0, info = d)
   }
