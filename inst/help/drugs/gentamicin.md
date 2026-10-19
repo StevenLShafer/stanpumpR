@@ -12,7 +12,7 @@ None; only the plasma concentration is plotted. *Time until threshold* is theref
 
 ### Typical concentrations
 
-The shaded band (0.5 to 8 mcg/mL) marks gentamicin at the expected **MBC** of the common pathogens: from the MBC50 of the Enterobacterales, 0.5 mg/L, through their MBC90 of 2 mg/L, to the MBC90 of *Pseudomonas aeruginosa*, 8 mg/L. Gentamicin is not bound, and an aminoglycoside's MBC is about its MIC. Aminoglycoside killing depends on the peak, not on time above a level: the clinical target is a peak of 8 to 10 times the MIC (Kashuba and colleagues, *Antimicrob Agents Chemother* 1999;43:623-629, a peak extrapolated to 30 minutes after a 30-minute infusion, not the end-of-infusion maximum this two-compartment model shows), and a trough below the band is expected and wanted. See *Shaded band: free drug at the MBC* above.
+The shaded band (0.5 to 2 mcg/mL) marks gentamicin at the expected **MBC** of the Enterobacterales, from their MBC50 of 0.5 mg/L to their MBC90 of 2 mg/L. *Pseudomonas aeruginosa* is not in it: the EMA and EUCAST breakpoint tables give insufficient evidence for gentamicin against *Pseudomonas*, although its MBC90, 8 mg/L, is within reach of a once-daily peak. Gentamicin is not bound, and an aminoglycoside's MBC is about its MIC. Aminoglycoside killing depends on the peak, not on time above a level: the clinical target is a peak of 8 to 10 times the MIC (Kashuba and colleagues, *Antimicrob Agents Chemother* 1999;43:623-629, a peak extrapolated to 30 minutes after a 30-minute infusion, not the end-of-infusion maximum this two-compartment model shows), and a trough below the band is expected and wanted. See *Shaded band: free drug at the MBC* above.
 
 ### Where to be careful
 

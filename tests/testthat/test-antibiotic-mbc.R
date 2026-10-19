@@ -72,7 +72,7 @@ test_that("the shipped bands are the ones researched on 2026-10-19", {
     cefalexin     = list(free = c(2, 4, 4),       plotted = c(2.4, 4.7, 4.7)),
     ceftriaxone   = list(free = c(0.5, 2, 2),     plotted = c(7.8, 30, 30)),
     clindamycin   = list(free = c(0.25, 0.25, 1.6), plotted = c(3.1, 3.1, 9.9)),
-    gentamicin    = list(free = c(0.5, 2, 8),     plotted = c(0.5, 2, 8)),
+    gentamicin    = list(free = c(0.5, 2, 2),     plotted = c(0.5, 2, 2)),
     metronidazole = list(free = c(1, 4, 4),       plotted = c(1, 4.2, 4.2)),
     vancomycin    = list(free = c(2, 8, 8),       plotted = c(2.9, 11, 11))
   )
