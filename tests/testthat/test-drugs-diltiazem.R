@@ -73,3 +73,20 @@ test_that("diltiazem is a vasoactive and resuscitation drug with no band", {
   expect_equal(row$Lower, 0)
   expect_false(any(grepl("PO", unlist(row$Units))))
 })
+
+test_that("healthy volunteers' 24-hour infusions (Weir 1989, quoted by Dias 1992) agree", {
+  # Dias VC et al., Circulation 1992;86:1421, Discussion: in normal volunteers
+  # given 10 and 15 mg/h for 24 hours, the mean maximum concentrations were
+  # 170 and 270 ng/mL.  The model never saw these.  (Dias's own atrial
+  # fibrillation patients reached 242 and 470: lower clearance with age and
+  # disease, and a clearance that falls at the higher rate.)
+  peak <- function(rate) {
+    wide <- simulateDrugsWithCovariates(
+      data.frame(Drug = "diltiazem", Time = c(0, 1440), Dose = c(rate, 0),
+                 Units = "mg/hr"),
+      events, 70, 175, 35, "male", 1500, FALSE, adjustToFFM = FALSE)$diltiazem$wide
+    max(wide$Plasma)
+  }
+  expect_lt(abs(peak(10) / 170 - 1), 0.05)
+  expect_lt(abs(peak(15) / 270 - 1), 0.10)
+})

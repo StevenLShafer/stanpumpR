@@ -79,3 +79,19 @@ test_that("labetalol is a vasoactive and resuscitation drug with no band", {
   # Intravenous only: the model is the intravenous one
   expect_false(any(grepl("PO", unlist(row$Units))))
 })
+
+test_that("after surgery the measured plateau is about twice the model's (Chauvin 1987)", {
+  # Chauvin M et al., Br J Anaesth 1987;59:1250: 1.5 mg/kg over 5 min, then
+  # 0.2 mg/kg/h from 30 min, in six patients after aortobifemoral bypass,
+  # plateau 264 +/- 46 ng/mL and clearance 13.1 mL/kg/min.  This healthy
+  # volunteers' model clears labetalol about twice as fast, so it predicts
+  # about half the postoperative plateau: the caution its help page gives.
+  dose <- data.frame(Drug = "labetalol", Time = c(0, 5, 30, 360),
+                     Dose = c(1.5 / 5, 0, 0.2 / 60, 0), Units = "mg/kg/min")
+  wide <- simulateDrugsWithCovariates(dose, events, 64, 170, 57, "male", 400,
+                                      FALSE, adjustToFFM = FALSE)$labetalol$wide
+  plateau <- wide$Plasma[wide$Time == 360][1]
+  expect_gt(264 / plateau, 1.5)
+  expect_lt(264 / plateau, 2.5)
+  expect_equal(round(CL * 1000 / 13.1, 1), 1.9)
+})

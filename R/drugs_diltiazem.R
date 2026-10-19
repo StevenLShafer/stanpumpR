@@ -51,7 +51,10 @@
 # and Dias 1992 found 42 L/h at 10 mg/h and 31 L/h at 15 mg/h in atrial
 # fibrillation.  This model's 59.5 L/h is the low-dose value, so it suits a
 # bolus and a short or low-rate infusion; a long infusion at 15 mg/h will run
-# higher than plotted.
+# higher than plotted.  Dias 1992 (supplied, read in full) also quotes
+# healthy volunteers' mean peaks after 24-hour infusions of 10 and 15 mg/h,
+# 170 and 270 ng/mL (Weir 1989); this model gives 168 and 252, which the
+# test checks.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
