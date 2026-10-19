@@ -29,7 +29,13 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "digoxinIV",
                 # el-Desoky 2005's serum creatinine term
                 # (R/drugs_digoxinIVPediatric.R)
-                "digoxinIVPediatric")
+                "digoxinIVPediatric",
+                # Cockcroft-Gault in a hockey stick on clearance, both tablets
+                # (R/drugs_pramipexole.R, FDA review of NDA 22-421)
+                "pramipexole", "pramipexoleER",
+                # MDRD eGFR, proportional, on the elimination rate constant
+                # (R/drugs_amantadineER.R, FDA review of NDA 209410)
+                "amantadineER")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).
