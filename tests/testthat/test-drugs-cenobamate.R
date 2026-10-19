@@ -99,3 +99,27 @@ test_that("the size scaling gives the weight effect the EMA report describes", {
   expect_equal(auc(50) / ref, 1.16, tolerance = 0.02)
   expect_equal(auc(110) / ref, 0.84, tolerance = 0.02)
 })
+
+test_that("the concentration per dose matches two clinic TDM series", {
+  # Kork (Steinhoff 2024) and Oslo (Johannessen Landmark 2026), adults with
+  # refractory epilepsy, not in the fit: mean concentration / mean dose,
+  # mg/L per mg/day.  The model's steady-state average is 1 / (CL/F x 24 h).
+  perDose <- 1 / (cenobamate(70, 170, 35, "male")$PK$default$cl1 * 1440)
+  expect_equal(perDose, 0.0782, tolerance = 1e-3)
+  observed <- c(
+    korkSeizureFree  = 17.8 / 240.3,
+    korkNonResponder = 20.9 / 260.8,
+    oslo             = 53.7 * 267.67 / 1000 / 164   # umol/L to mg/L
+  )
+  expect_true(all(abs(perDose / observed - 1) < 0.12))
+})
+
+test_that("the band holds the steady-state troughs from 100 to 400 mg/day", {
+  row <- getDrugDefaults("cenobamate")   # the defaults row draws the band
+  expect_equal(c(row$Lower, row$Typical, row$Upper), c(5, 15, 35))
+  x <- cenobamate(70, 170, 35, "male")
+  expect_equal(c(x$lowerTypical, x$typical, x$upperTypical), c(5, 15, 35))
+  # linear model: troughs scale with dose from the 200 mg steady state
+  troughs <- 13.68 * c(100, 200, 400) / 200
+  expect_true(all(troughs > row$Lower & troughs < row$Upper))
+})

@@ -119,7 +119,11 @@
 #     clearance was tested in SK16007 and not retained, so the model reads
 #     no creatinine; the label caps renal impairment at 300 mg/day.
 #   - hepatic impairment: AUC 1.9 times normal (mild) and 2.3 times
-#     (moderate) after 200 mg; not modelled (no hepatic field).
+#     (moderate) after 200 mg; not modelled (no hepatic field).  The FDA
+#     label of August 2025 adds the post-marketing study in severe (Child-
+#     Pugh C) impairment: 4.2 times normal after a single 100 mg dose, so
+#     use there is not recommended (both agencies cap Child-Pugh A and B at
+#     200 mg/day).
 #   - "multiple late peaks were observed suggesting enterohepatic
 #     recirculation" (p 52); not modelled.
 #
@@ -136,9 +140,48 @@
 # linear weight and body-surface-area terms; with the switch off, the
 # published values for everyone (legacyVolume = 1).
 #
-# BAND: none.  No therapeutic reference range has been established (median
-# plasma concentration at first response about 5-6 mg/L at <= 100 mg/day,
-# range 0.5-17.6; Operto 2025).  Plasma only, no effect site.
+# PATIENTS IN CLINICS (independent of the fit)
+# ============================================
+# Two therapeutic drug monitoring series, in adults with refractory epilepsy
+# on other antiseizure drugs, give the concentration per mg/day of dose.  The
+# model's steady-state average is 1 / (0.533 L/h x 24 h) = 0.078 mg/L per
+# mg/day at every dose:
+#   - Kork, Germany (Steinhoff 2024; 101 patients, 100-400 mg/day, morning
+#     samples, which the authors measured to be within 10% of the day's
+#     other levels): seizure-free patients 17.8 mg/L at a mean 240.3 mg/day
+#     (0.074), non-responders 20.9 mg/L at 260.8 mg/day (0.080);
+#     concentration linear in dose (r 0.70).
+#   - Oslo, Norway (Johannessen Landmark 2026; 258 patients, 672 samples):
+#     53.7 umol/L at a mean 164 mg/day, which is 14.4 mg/L at 267.67 g/mol
+#     (0.088).  Strong inducers lowered the concentration per dose 9% and
+#     inhibitors raised it 14%; the within-patient coefficient of variation
+#     was 18% and the between-patient range 34-fold.
+# These are ratios of means, not means of ratios, so they check the typical
+# clearance only; the model is within 12% of all three.
+#
+# BAND: 5-35 mg/L, typical 15.  More than 95% of the patients with a 50% or
+# greater reduction in seizures in two pivotal trials had trough
+# concentrations between 5 and 35 mg/L (sponsor's abstract, AAN 2021, as
+# quoted by Steinhoff 2024).  It is a reference range in the sense of the
+# ILAE (the concentrations at which patients respond), not a therapeutic
+# range: in the Kork series seizure-free patients (3.8-33.7 mg/L, mean 17.8)
+# and non-responders (3.9-54.6, mean 20.9) did not differ, adverse effects
+# did not track the concentration, and the authors concluded that no
+# general therapeutic range can be defined and recommended individual
+# reference concentrations instead.  Patients responding at 100 mg/day or
+# less in an Italian cohort had 0.5-17.6 mg/L, median about 5-6 (Operto
+# 2025).  Typical 15: the phase 3 mean at 200 mg/day, the usual target dose.
+# At 100, 200 and 400 mg once daily the model's steady-state troughs are 6.8,
+# 13.7 and 27.4 mg/L, all inside the band.
+#
+# EFFECT SITE: none, deliberately.  The one study that timed an effect
+# (photoparoxysmal EEG response, 6 evaluable patients, single doses of
+# 100-400 mg; Kasteleijn-Nolst Trenite 2019) found the response already
+# reduced 1 h after 250 and 400 mg, before the plasma peak, and still
+# reduced more than 24 h later.  No hysteresis is visible on that time
+# scale and no ke0 can be estimated, and with a 65 h half-life an
+# equilibration of minutes would not change any curve a daily-dosed drug
+# draws.  Plasma only.
 #
 # References
 # ----------
@@ -161,6 +204,14 @@
 #   https://doi.org/10.1002/jcph.2439
 # Operto FF et al., Front Pharmacol 2025;16:1668382.
 #   https://doi.org/10.3389/fphar.2025.1668382
+# FDA, Xcopri prescribing information, revised 8/2025 (Reference ID 5644857).
+#   https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/212839s013lbl.pdf
+# Steinhoff BJ et al., J Clin Med 2024;13:2757.
+#   https://doi.org/10.3390/jcm13102757
+# Johannessen Landmark C et al., Epilepsia 2026;67:2820-2835.
+#   https://doi.org/10.1002/epi.70184
+# Kasteleijn-Nolst Trenite DGA et al., Neurology 2019;93:e559-e567.
+#   https://doi.org/10.1212/WNL.0000000000007894
 # -----------------------------------------------------------------------------
 
 #' Cenobamate pharmacokinetics (oral)
@@ -188,7 +239,7 @@ cenobamate <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 0, upperTypical = 0, lowerTypical = 0,
+    typical = 15, upperTypical = 35, lowerTypical = 5,
     reference = paste0(
       "Vashi V et al., Epilepsy Res 2023;195:107185, Supplemental Table 2: two ",
       "compartments, apparent oral, lag 0.24 h, CL/F 0.533 L/h, V1/F 42.4 L, ",
