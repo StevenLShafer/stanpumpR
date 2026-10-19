@@ -100,7 +100,10 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "MDMA",
                     # fitted oral lags (2026-10-17): edoxaban 0.25 h
                     # (Niebecker 2015), dabigatran 0.634 h; plasma only
-                    "edoxaban", "dabigatran"))
+                    "edoxaban", "dabigatran",
+                    # acenocoumarol's 0.269 h lag (Verstuyft 2012); the INR
+                    # is plotted, so no effect-site recovery (2026-10-18)
+                    "acenocoumarol"))
 })
 
 

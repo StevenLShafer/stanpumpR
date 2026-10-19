@@ -15,7 +15,8 @@ PROVENANCE <- c("estimated", "fixed", "label-derived", "derived", "calibration")
 
 # The drugs implemented new for this registry.
 IMPLEMENTED <- c("heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
-                 "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux")
+                 "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
+                 "fluindione", "acenocoumarol")
 
 test_that("every registry row is fully classified with a clickable source", {
   for (col in c("model_id", "drug_class", "context", "analyte", "assay",
@@ -50,11 +51,11 @@ test_that("every Anticoagulants-category drug is a research-ready registry entry
 test_that("the common perioperative agents are all catalogued", {
   # The specification's priority agents, by drug class or model id stem.
   for (stem in c("ufh", "enox", "fonda", "biva", "arg",
-                 "apix", "riva", "dabi", "edox", "warf"))
+                 "apix", "riva", "dabi", "edox", "warf", "flu", "aceno"))
     expect_true(any(grepl(paste0("^", stem), registry$model_id)), info = stem)
   # and the pending LMWH/VKA extensions the spec names
-  for (m in c("dalteparin_label", "tinzaparin_label", "acenocoumarol",
-              "phenprocoumon", "fluindione", "nadroparin", "danaparoid",
+  for (m in c("dalteparin_label", "tinzaparin_label",
+              "phenprocoumon", "nadroparin", "danaparoid",
               "desirudin"))
     expect_true(m %in% registry$model_id, info = m)
 })
