@@ -93,10 +93,15 @@ test_that("a complete model that is not offered is a second source for an offere
 
 test_that("a drug with no suitable model gives the reason", {
   none <- registry[registry$readiness == "no_suitable_model", ]
-  expect_setequal(none$drug, c("sodium nitroprusside", "vasopressin", "ephedrine",
-                               "hydralazine", "adenosine", "sodium bicarbonate",
-                               "nicardipine", "methylene blue"))
   expect_true(all(nchar(none$blocking_issue) > 60))
+  # The drugs with no usable source at all: nothing implemented, nothing
+  # waiting on a paper
+  hopeless <- setdiff(unique(registry$drug),
+                      registry$drug[registry$readiness %in%
+                                      c("implemented", "needs_full_text",
+                                        "complete_not_implemented")])
+  expect_setequal(hopeless, c("sodium nitroprusside", "vasopressin", "ephedrine",
+                              "hydralazine", "adenosine", "sodium bicarbonate"))
 })
 
 test_that("cross-references to the antihypertensive registry resolve", {
