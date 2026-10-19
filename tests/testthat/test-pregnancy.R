@@ -62,7 +62,7 @@ test_that("a model that does not read the flag is untouched by it", {
   # (Codeine is not in this list: its own disposition ignores the flag, but
   # the morphine it forms is resolved with it, so its metabolite coefficients
   # move.  That path is checked below through the simulation.)
-  for (drug in c("fentanyl", "propofol", "lorazepam", "labetalol", "bupivacaine", "ondansetron")) {
+  for (drug in c("fentanyl", "ketamine", "lorazepam", "labetalol", "bupivacaine", "ondansetron")) {
     expect_equal(pkOf(drug, TRUE)$PK, pkOf(drug, FALSE)$PK, info = drug)
     expect_no_match(pkOf(drug, TRUE)$reference, "pregnancy:", info = drug)
   }
@@ -222,10 +222,14 @@ test_that("the Minto companion doubles its clearance with the library model", {
   for (p in c("v1", "v2", "v3", "cl2", "cl3", "ke0")) expect_equal(setOf(on)[[p]], setOf(off)[[p]], info = p)
   expect_match(on$reference, "Ansari", fixed = TRUE)
   expect_no_match(off$reference, "Ansari")
-  # Schnider's propofol does not read it
+  # Schnider's propofol takes the library propofol's factor (Gin 1990, 1991)
   rowP <- getDrugDefaults("propofol")
-  expect_equal(alternativeModelEntry("propofol", 70, 165, 30, SEX_FEMALE, rowP, pregnant = TRUE)$PK,
-               alternativeModelEntry("propofol", 70, 165, 30, SEX_FEMALE, rowP)$PK)
+  onP  <- alternativeModelEntry("propofol", 70, 165, 30, SEX_FEMALE, rowP, pregnant = TRUE)
+  offP <- alternativeModelEntry("propofol", 70, 165, 30, SEX_FEMALE, rowP)
+  expect_equal(setOf(onP)$cl1 / setOf(offP)$cl1, PROPOFOL_PREGNANCY_CL_FACTOR)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3")) expect_equal(setOf(onP)[[p]], setOf(offP)[[p]], info = p)
+  expect_match(onP$reference, "Gin T", fixed = TRUE)
+  expect_no_match(offP$reference, "Gin T")
   expect_length(alternativeModelProblems(c("propofol", "remifentanil"), 70, 165, 30, SEX_FEMALE, pregnant = TRUE), 0)
 })
 

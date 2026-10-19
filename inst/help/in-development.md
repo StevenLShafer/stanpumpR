@@ -30,7 +30,7 @@ And for plots longer than a day:
 
 **CYP 2D6** in the Patient Profile is now active: it scales the formation of the active metabolites of codeine, tramadol, hydrocodone and oxycodone across the poor, intermediate, normal and ultrarapid phenotypes, and the clearance of aripiprazole, haloperidol and risperidone. Beside it, **CYP 2C19** is read by citalopram and escitalopram, and **CYP 2C9** by meloxicam and phenytoin.
 
-**Pregnant** in the Patient Profile is active (October 2026). It first applied the changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood (*Anesth Analg* 2016;122:786-804) to eight drugs; on 19 October 2026 the literature was reviewed for every drug in the library, and the field now adjusts the 46 drugs whose change in late pregnancy has been measured, each from its own source. It changes nothing else. Every drug's page has a **Pregnancy** section saying what is known, so that nobody mistakes an unchanged curve for a studied one; see [Pregnancy](help:models/pregnancy).
+**Pregnant** in the Patient Profile is active (October 2026). It first applied the changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood (*Anesth Analg* 2016;122:786-804) to eight drugs; on 19 October 2026 the literature was reviewed for every drug in the library, and the field now adjusts the 48 drugs whose change in late pregnancy has been measured, each from its own source. It changes nothing else. Every drug's page has a **Pregnancy** section saying what is known, so that nobody mistakes an unchanged curve for a studied one; see [Pregnancy](help:models/pregnancy).
 
 ## No longer a placeholder
 

@@ -58,3 +58,21 @@ test_that("the published cation parameters are recovered through the bromide fac
              c(PK$lambda_1, PK$lambda_2, PK$lambda_3))
   expect_equal(auc / 60 * 120 / f, 120 / 44.9, tolerance = 1e-8)   # auc is min/L per mcg
 })
+
+test_that("pregnancy: clearance x 1.9 (Ali-Melkkila 1990), nothing else", {
+  on  <- getDrugPK("glycopyrrolate", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("glycopyrrolate", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("glycopyrrolate", 70, 165, 30, SEX_FEMALE))
+  expect_equal(GLYCOPYRROLATE_PREGNANCY_CL_FACTOR, 1.9)
+  expect_equal(on$PK$default$cl1 / off$PK$default$cl1, GLYCOPYRROLATE_PREGNANCY_CL_FACTOR,
+               tolerance = 1e-12)
+  for (k in c("v1", "v2", "v3", "cl2", "cl3"))
+    expect_identical(on$PK$default[[k]], off$PK$default[[k]], info = k)
+  # The model reproduces the nonpregnant reference the factor is taken
+  # against: 0.54-0.58 L/h/kg of cation for a woman of the parturients' size
+  ref <- getDrugPK("glycopyrrolate", 69.8, 163.1, 30.4, SEX_FEMALE)$PK$default$cl1
+  expect_equal(ref * 60 * GLYCOPYRROLATE_CATION_FRACTION / 69.8, 0.56, tolerance = 0.05)
+  expect_equal(1.12 / 0.58, GLYCOPYRROLATE_PREGNANCY_CL_FACTOR, tolerance = 0.02)
+  expect_match(on$reference, "Ali-Melkkila", fixed = TRUE)
+  expect_no_match(off$reference, "Ali-Melkkila")
+})

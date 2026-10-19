@@ -34,21 +34,34 @@
 # (0.5352 L/min is this model's CL1 at the 70 kg reference.)  The same
 # assumptions predict an ORAL ratio of 1.6 x 1.2 = 1.92, the gut wall being
 # unchanged, against the 1.83 observed, so they are consistent with Hebert's
-# data.  With the Patient Profile's Pregnant field on, the elimination
-# clearance CL1 is multiplied by MIDAZOLAM_PREGNANCY_CL_FACTOR = 1.45, the
-# same factor for every patient; the volumes and the distribution clearances
-# are unchanged (Quinney's model raised the volume but was insensitive to it
-# and printed no value).  The factor depends on the assumed hepatic blood
-# flow (with QH 2.0 L/min the same arithmetic gives 1.54) and on Quinney's
-# assumption that it is unchanged in pregnancy.  The plotted concentration is
+# data.  That derivation depends on the assumed hepatic blood flow (with QH
+# 2.0 L/min the same arithmetic gives 1.54) and on Quinney's assumption that
+# it is unchanged in pregnancy, so it is the corroboration, not the factor.
+#
+# The factor is from the one INTRAVENOUS comparison, Wilson 1987 (read in
+# full, 2026-10-19): 5 mg intravenously, plasma sampled for 2 h,
+# non-compartmental, in women in active labour (n = 12, 71 kg), awaiting
+# caesarean section 3 h before surgery (n = 10, 73 kg), at the start of
+# caesarean section (n = 8) and two gynaecological groups (n = 10 each, 60
+# kg, one given oxytocin).  Clearance 6.5, 9.0, 13.9, 8.7 and 7.0 mL/min/kg.
+# The women awaiting caesarean section, pregnant but neither labouring nor
+# anaesthetised, are the state the flag describes.  This model scales
+# clearance with size, so each group is set against the model's clearance
+# for a nonpregnant woman of its age and weight: the awaiting group cleared
+# 1.425 times the model's, the two gynaecological groups 1.238 and 0.996
+# (mean 1.117), so the pregnancy ratio is 1.425 / 1.117 = 1.28 (1.15 against
+# the group without oxytocin alone; oxytocin did not change the
+# gynaecological levels significantly).  With the Patient Profile's Pregnant
+# field on, CL1 is multiplied by MIDAZOLAM_PREGNANCY_CL_FACTOR = 1.28, below
+# the oral derivation's 1.45 and in the same direction; the volumes and the
+# distribution clearances are unchanged.  In ACTIVE LABOUR the same
+# arithmetic gives 0.91: labour lowers the clearance and shrinks the volume,
+# and the flag does not represent it.  The plotted concentration is
 # total midazolam; with the unbound fraction 20% higher, unbound midazolam
 # falls less than the total.  The time to peak effect, 3.0 min, is held, as
 # it is for every covariate, so getDrugPK() solves a ke0 about 12% smaller
 # on the faster-clearing disposition.
 #
-# The intravenous data in pregnancy are older and disagree.  Wilson 1987 (5
-# mg intravenously, sampled for 2 h) found the LOWEST clearance and smallest
-# volume in women in active labour, so labour itself may reduce clearance;
 # Kanto 1984 (six women just after caesarean delivery, radioreceptor assay)
 # found a clearance of 13.18 mL/min/kg, 1.72 times this model's 7.64
 # mL/min/kg at 70 kg.  Ansari 2016 lists midazolam by direction only (a lower
@@ -69,17 +82,18 @@
 #   the mechanism carried to the intravenous clearance)
 # Wilson CM, Dundee JW, Moore J, Howard PJ, Collier PS.  Anaesthesia
 #   1987;42:1057-1062.  https://doi.org/10.1111/j.1365-2044.1987.tb05168.x
-#   (pregnancy, intravenous, in labour)
+#   (pregnancy, intravenous: the factor)
 # Kanto J, Aaltonen L, Erkkola R, Aarimaa L.  Acta Anaesthesiol Scand
 #   1984;28:116-118.  https://doi.org/10.1111/j.1399-6576.1984.tb02024.x
 #   (pregnancy, intravenous, after caesarean delivery)
 # -----------------------------------------------------------------------------
 
-# Elimination clearance in pregnancy relative to the published value: Hebert
-# 2008's paired oral data carried to the intravenous clearance through
-# Quinney 2012's mechanism (hepatic CYP3A x 1.6, unbound fraction x 1.2) and
-# a well-stirred liver at 1.5 L/min: 0.774 / 0.535 = 1.45 (see the header).
-MIDAZOLAM_PREGNANCY_CL_FACTOR <- 1.45
+# Elimination clearance in pregnancy relative to the published value: Wilson
+# 1987's women awaiting caesarean section against its gynaecological women,
+# each against this model at its own age and weight (1.425 / 1.117 = 1.28);
+# Hebert 2008's oral data through a well-stirred liver give 1.45 (see the
+# header).
+MIDAZOLAM_PREGNANCY_CL_FACTOR <- 1.28
 
 midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE,
                       pregnant = FALSE)
@@ -139,9 +153,10 @@ midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE,
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
-      paste0("clearance x ", MIDAZOLAM_PREGNANCY_CL_FACTOR, ", from oral data ",
-             "through a well-stirred liver"),
-      paste0("Hebert MF et al., Clin Pharmacol Ther 2008;84:248-253. ",
+      paste0("clearance x ", MIDAZOLAM_PREGNANCY_CL_FACTOR),
+      paste0("Wilson CM et al., Anaesthesia 1987;42:1057-1062. ",
+             "https://doi.org/10.1111/j.1365-2044.1987.tb05168.x; ",
+             "Hebert MF et al., Clin Pharmacol Ther 2008;84:248-253. ",
              "https://doi.org/10.1038/clpt.2008.1; Quinney SK et al., CPT ",
              "Pharmacometrics Syst Pharmacol 2012;1:e2. ",
              "https://doi.org/10.1038/psp.2012.5")))
