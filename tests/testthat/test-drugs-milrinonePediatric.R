@@ -1,0 +1,69 @@
+# Milrinone in children (R/drugs_milrinonePediatric.R): Hornik 2019's one
+# compartment with allometric weight, maturation and creatinine clearance.
+# Drafted by Claude Code, 2026-10-19.
+
+# Hornik 2019, Table 2
+cl70 <- 15.9; v70 <- 32.2; tm50 <- 67.7; hill <- 1.12; crclExp <- 0.522
+
+hornikCL <- function(wt, pma, crcl)
+  cl70 * (wt / 70)^0.75 * pma^hill / (tm50^hill + pma^hill) * (crcl / 117)^crclExp
+
+test_that("clearance and volume are the final model's, from the bedside Schwartz CrCl", {
+  # A 2-year-old, 13 kg, 88 cm, creatinine 0.3 mg/dL
+  crcl <- 0.413 * 88 / 0.3
+  pma  <- 40 + 52 * 2
+  set <- milrinonePediatric(13, 88, 2, "male", adjustToFFM = FALSE,
+                            creatinine = 0.3)$PK$default
+  expect_equal_rounded(hornikCL(13, pma, crcl) / 60, set$cl1)
+  expect_equal_rounded(v70 * 13 / 70, set$v1)
+  expect_equal(set$cl2, 0)
+})
+
+test_that("a 70 kg adult at the median CrCl is 97% mature, 15.5 of the 15.9 L/h", {
+  # The maturation at 1600 weeks PMA (the paper's 30-year-old) is 0.972
+  expect_equal(round(hornikCL(70, 1600, 117), 1), 15.5)
+})
+
+test_that("renal function is clamped to the studied 13-261 mL/min/1.73 m2", {
+  lo <- milrinonePediatric(13, 88, 2, "male", adjustToFFM = FALSE,
+                           creatinine = 10)$PK$default
+  expect_equal_rounded(hornikCL(13, 144, 13.1) / 60, lo$cl1)
+  hi <- milrinonePediatric(13, 88, 2, "male", adjustToFFM = FALSE,
+                           creatinine = 0.05)$PK$default
+  expect_equal_rounded(hornikCL(13, 144, 261.3) / 60, hi$cl1)
+})
+
+test_that("from 18 the renal estimate is CKD-EPI 2009", {
+  scr <- adultEquivalentCreatinine(1.0, 40, "male")
+  crcl <- egfrCKDEPI2009(40, "male", scr)
+  set <- milrinonePediatric(70, 175, 40, "male", adjustToFFM = FALSE,
+                            creatinine = 1.0)$PK$default
+  expect_equal_rounded(hornikCL(70, 40 + 52 * 40, crcl) / 60, set$cl1)
+})
+
+test_that("a blank creatinine is an assumed normal one, and getDrugPK passes it", {
+  blank <- milrinonePediatric(13, 88, 2, "male", adjustToFFM = FALSE)$PK$default
+  given <- milrinonePediatric(13, 88, 2, "male", adjustToFFM = FALSE,
+                              creatinine = assumedCreatinine(2, "male"))$PK$default
+  expect_equal(blank$cl1, given$cl1)
+  PK <- getDrugPK("milrinonePediatric", 13, 88, 2, "male", adjustToFFM = FALSE,
+                  creatinine = 0.6)$PK$default
+  direct <- milrinonePediatric(13, 88, 2, "male", adjustToFFM = FALSE,
+                               creatinine = 0.6)$PK$default
+  expect_equal(PK$cl1, direct$cl1)
+})
+
+test_that("weight is the pharmacokinetic weight with the switch on", {
+  size <- pkSizeFactors(60, 160, 14, "female", TRUE)
+  on <- milrinonePediatric(60, 160, 14, "female", adjustToFFM = TRUE,
+                           creatinine = 0.6)$PK$default
+  expect_equal_rounded(v70 * size$pkWeight / 70, on$v1)
+})
+
+test_that("it is plasma only, with the 100-300 ng/mL target range", {
+  PK <- getDrugPK("milrinonePediatric", 13, 88, 2, "male")
+  expect_equal(PK$tPeak, 0)
+  dd <- getDrugDefaultsGlobal()
+  row <- dd[dd$Drug == "milrinonePediatric", ]
+  expect_equal(c(row$Lower, row$Upper), c(100, 300))
+})

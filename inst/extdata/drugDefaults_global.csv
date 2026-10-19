@@ -184,4 +184,8 @@ propranolol,ng,mg,mg/hr,mg,"mg,mcg/kg",#37474F,0,0,0,0,0,IV,Vasoactive and resus
 digoxin,ng,,,mg/day PO,"mg/day PO",#7B1FA2,0.5,2,1,0,0,IV,Vasoactive and resuscitation
 verapamil,ng,mg,mg/hr,mg,"mg,mcg/kg,mg/hr",#00695C,0,0,0,0,0,IV,Vasoactive and resuscitation
 phenylephrine,ng,mcg,mcg/min,mcg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#5D4037,0,0,0,0,0,IV,Vasoactive and resuscitation
+milrinone,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#0277BD,100,300,167,0,0,IV,Vasoactive and resuscitation
+milrinonePediatric,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#4FC3F7,100,300,167,0,0,IV,Vasoactive and resuscitation
+metoprolol,ng,mg,mg/min,mg,"mg,mg/min,mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Vasoactive and resuscitation
+nicardipine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mcg/kg/min",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs

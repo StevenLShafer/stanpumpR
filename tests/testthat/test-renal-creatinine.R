@@ -21,7 +21,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # Grasela and Sheiner's Equation 7 (R/drugs_procainamide.R)
                 "procainamide",
                 # Cockcroft-Gault on clearance (R/drugs_digoxin.R, Yukawa 2001)
-                "digoxin")
+                "digoxin",
+                # Bedside Schwartz, CKD-EPI from 18, on clearance
+                # (R/drugs_milrinonePediatric.R, Hornik 2019)
+                "milrinonePediatric")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).

@@ -13,7 +13,8 @@ EVIDENCE  <- c("full_text", "abstract", "none")
 IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "nitroglycerin", "norepinephrine", "procainamide", "esmolol",
                  "dopamine", "atropine", "propranolol", "digoxin",
-                 "verapamil", "phenylephrine")
+                 "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
+                 "metoprolol", "nicardipine")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -22,8 +23,8 @@ REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
                "methylene blue", "atropine", "adenosine", "sodium bicarbonate",
                "magnesium sulfate", "procainamide", "verapamil", "diltiazem",
                "propranolol", "metoprolol", "esmolol", "labetalol",
-               # asked for on 2026-10-19, with the paper
-               "digoxin")
+               # asked for on 2026-10-19
+               "digoxin", "milrinone")
 
 test_that("every row is fully classified with a clickable source", {
   for (col in c("model_id", "drug", "route", "population", "analyte", "matrix",
@@ -58,13 +59,16 @@ test_that("the category holds exactly the implemented drugs, concentration only"
     row <- dd[dd$Drug == d, ]
     expect_equal(row$MEAC, 0, info = d)
     expect_equal(row$endCe, 0, info = d)
-    # No band, except digoxin's published therapeutic range
-    if (d != "digoxin") {
+    # No band, except the published therapeutic ranges of digoxin and
+    # milrinone
+    if (!d %in% c("digoxin", "milrinone", "milrinonePediatric")) {
       expect_equal(row$Lower, 0, info = d)
       expect_equal(row$Upper, 0, info = d)
     }
+    # Plasma only, except where a source measured the time of peak effect
     PK <- getDrugPK(d, 70, 170, 50, "male")
-    expect_equal(PK$tPeak, 0, info = d)
+    expected <- switch(d, milrinone = MILRINONE_TPEAK, atropine = ATROPINE_TPEAK, 0)
+    expect_equal(PK$tPeak, expected, info = d)
   }
   # Clevidipine was already in the library, in the Antihypertensives category,
   # and stays there
@@ -176,4 +180,21 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(round(dil$cl2, 3), value("diltiazem", "Q"))
   expect_equal(round(NITROGLYCERIN_CL * NITROGLYCERIN_TAU, 1),
                value("nitroglycerin", "V"))
+  expect_equal(value("milrinone", "V1"), MILRINONE_V1)
+  expect_equal(value("milrinone", "V3"), MILRINONE_V3)
+  expect_equal(value("milrinone", "CL") / 1000, MILRINONE_CL1)
+  expect_equal(value("milrinone", "Q2") / 1000, MILRINONE_CL2)
+  expect_equal(value("milrinone", "tPeak"), MILRINONE_TPEAK)
+  expect_equal(value("milrinonePediatric", "CL"), MILRINONE_PED_CL)
+  expect_equal(value("milrinonePediatric", "V"), MILRINONE_PED_V)
+  expect_equal(value("milrinonePediatric", "CrCl exponent"),
+               MILRINONE_PED_CRCL_EXPONENT)
+  expect_equal(value("metoprolol", "CL"), METOPROLOL_CL)
+  expect_equal(value("metoprolol", "V1"), METOPROLOL_V1)
+  expect_equal(value("metoprolol", "F"), METOPROLOL_F)
+  expect_equal(value("metoprolol", "CYP2D6 poor CL factor"),
+               METOPROLOL_CYP2D6_CL[["poor"]])
+  expect_equal(value("nicardipine", "CL"), NICARDIPINE_CL)
+  expect_equal(value("nicardipine", "Q"), NICARDIPINE_Q)
+  expect_equal(value("nicardipine", "Vss"), NICARDIPINE_VSS)
 })

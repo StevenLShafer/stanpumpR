@@ -14,8 +14,17 @@ test_that("the model is Table I's, on a sulfate dose", {
   expect_equal_rounded(VP * KPT / KTP / BASE, set$v2)
   expect_equal_rounded(0.8329, round(BASE, 4))
   expect_identical(PK$Concentration.Units, "ng")
-  expect_equal(PK$tPeak, 0)
-  expect_equal(set$ke0, 0)
+})
+
+test_that("the effect site peaks 90 seconds after a bolus", {
+  PK <- getDrugPK("atropine", 70, 175, 22, "male")
+  expect_equal(PK$tPeak, 1.5)
+  expect_gt(PK$PK$default$ke0, 0)
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "atropine", Time = 0, Dose = 1, Units = "mg"),
+    data.frame(Time = double(), Event = character()),
+    70, 175, 22, "male", 20, FALSE)$atropine$wide
+  expect_lt(abs(wide$Time[which.max(wide$`Effect Site`)] - 1.5), 0.2)
 })
 
 test_that("Table I's other means, which the model does not use, check it", {

@@ -56,12 +56,24 @@
 # switch on; with it off they are the published values for everyone
 # (legacyVolume = 1).
 #
-# NO EFFECT SITE, NO BAND
-# =======================
-# Part II related heart rate and saliva flow to the amount in the PERIPHERAL
-# compartment, a structure the library's effect site does not represent, so
-# no effect is drawn.
+# EFFECT SITE: tPeak 1.5 MINUTES; NO BAND
+# =======================================
+# The heart-rate effect of an intravenous bolus peaks within about 90
+# seconds (Steven L. Shafer, 2026-10-19, from clinical practice), and ke0 is
+# solved from that time to peak.  Two published estimates were set aside as
+# inconsistent with it.  Part II related heart rate and saliva flow to the
+# amount in the PERIPHERAL compartment, a structure the library's effect site
+# does not represent, with a heart-rate peak near 7-8 minutes after a 3-minute
+# infusion.  Scheinin H et al., Ther Drug Monit 1999;21:141-151 (read in
+# full), fitted an effect compartment to a heart-rate-variability index (the
+# Hayano index of high-frequency power, not heart rate) after 10 mcg/kg in
+# eight volunteers: ke0 11.0 /h (equilibration half-time 4.7 min, EC50 1.35
+# ng/mL), which with this model's plasma curve puts the peak at 3.2 minutes,
+# twice the clinical time; its heart rate peaked at its 10-minute sample.
+# No band.
 # -----------------------------------------------------------------------------
+
+ATROPINE_TPEAK <- 1.5     # min, time to peak heart-rate effect after a bolus
 
 # Hinderling 1985, Table I, overall means (base)
 ATROPINE_VP  <- 19.1      # L
@@ -101,12 +113,13 @@ atropine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Two compartments in 3 healthy men (6 experiments): V_P 19.1 L, CL ",
     "1175 mL/min, k_PT 0.560 and k_TP 0.0557 /min (Vss 211 L, terminal ",
     "half-life 136 min).  Doses as atropine sulfate (the model's base x ",
-    "694.83/578.74). https://doi.org/10.1002/jps.2600740702"
+    "694.83/578.74).  Time to peak effect 1.5 min, the clinical time to peak ",
+    "heart rate. https://doi.org/10.1002/jps.2600740702"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = ATROPINE_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,
