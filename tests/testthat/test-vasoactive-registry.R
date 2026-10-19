@@ -10,7 +10,7 @@ EVIDENCE  <- c("full_text", "abstract", "none")
 
 # The drugs implemented new for this registry, in its own category.
 IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
-                 "nitroglycerin")
+                 "nitroglycerin", "norepinephrine")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -118,6 +118,11 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("labetalol", "V1 (Vdc)"), LABETALOL_V1)
   expect_equal(value("diltiazem", "CL") / 1000, DILTIAZEM_CL)
   expect_equal(value("diltiazem", "V1"), DILTIAZEM_V1)
+  expect_equal(value("norepinephrine", "CL"), NOREPINEPHRINE_CL)
+  expect_equal(value("norepinephrine", "Vc"), NOREPINEPHRINE_VC)
+  expect_equal(value("norepinephrine", "Q"), NOREPINEPHRINE_Q)
+  expect_equal(value("norepinephrine", "Vp"), NOREPINEPHRINE_VP)
+  expect_equal(value("norepinephrine", "Prod"), NOREPINEPHRINE_PROD)
   expect_equal(value("nitroglycerin", "CL"), NITROGLYCERIN_CL)
   expect_equal(value("nitroglycerin", "time constant"), NITROGLYCERIN_TAU)
   # The derived values, to their printed precision

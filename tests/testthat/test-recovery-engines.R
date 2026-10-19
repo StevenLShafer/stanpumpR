@@ -423,7 +423,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "clevidipine", "fenoldopamPediatric", "carvedilol",
     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
-    "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin"
+    "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin",
+    "norepinephrine"
   ))
 })
 

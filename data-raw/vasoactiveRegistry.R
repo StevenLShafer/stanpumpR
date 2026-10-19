@@ -96,11 +96,11 @@ registry <- rbind(
 
   # --- A candidate model exists; the paper is needed ---------------------------
   reg("norepinephrine__volunteers__li2024", "norepinephrine",
-      "36 healthy volunteers, with and without propofol", "norepinephrine", "plasma",
-      "needs_full_text", NA, "full_text",
-      "Full text read from PubMed Central but every table and equation was stripped: two compartments with an endogenous production rate, a 10-16 s lag, allometric exponents and propofol on clearance, and no typical value readable.  The lag also needs a mechanism the IV engines lack.",
-      "Li Y et al. Population pharmacokinetic modelling of norepinephrine in healthy volunteers prior to and during general anesthesia. Clin Pharmacokinet 2024;63:1597-1608. PMID 39465453, doi 10.1007/s40262-024-01430-y: the PDF for Table 3 and Equations 1-4, and the supplement.",
-      "Li Y et al. Clin Pharmacokinet 2024;63:1597-1608. PMID 39465453, PMC11573843.",
+      "36 healthy volunteers, 18-70 y, 0.04-0.20 mcg/kg/min, awake and anaesthetised", "norepinephrine (exogenous)", "plasma (radial arterial)",
+      "implemented", "norepinephrine", "full_text",
+      "None for the curve.  Read from the published PDF and supplement (the PubMed Central copy is stripped).  Evaluated awake: the library cannot feed a propofol concentration into clearance, which falls 11.8% at 3.53 mcg/mL.  The 13.7 s lag is not represented.  Covariate coefficients read as per 100 and the reference weight as 70 kg, both checked against the text.",
+      NA,
+      "Li Y, Koomen JV, Eleveld DJ, et al. Population pharmacokinetic modelling of norepinephrine in healthy volunteers prior to and during general anesthesia. Clin Pharmacokinet 2024;63:1597-1608. PMID 39465453, PMC11573843.",
       doi("10.1007/s40262-024-01430-y")),
   reg("norepinephrine__septic_trauma__beloeil2005", "norepinephrine",
       "12 septic shock and 11 trauma patients", "norepinephrine", "plasma",
@@ -287,6 +287,7 @@ DU  <- doi("10.1002/jcph.1328")
 KA  <- pubmed(7203731)
 HO  <- doi("10.1097/00007691-198804000-00006")
 AR  <- doi("10.1111/j.1365-2125.1983.tb02182.x")
+LI  <- doi("10.1007/s40262-024-01430-y")
 
 parameters <- rbind(
   par("epinephrine", "CL", 127, "L/h at 70 kg, SAPS II 50", "estimated", "full_text", AB),
@@ -318,6 +319,15 @@ parameters <- rbind(
   par("diltiazem", "Vss (check only)", 209, "L", "estimated", "abstract", HO),
   par("diltiazem", "V2", 84.6, "L", "derived", "abstract", HO),
   par("diltiazem", "Q", 1.222, "L/min", "derived", "abstract", HO),
+
+  par("norepinephrine", "CL", 2.1, "L/min at 70 kg, age 35, awake (x (BW/70)^0.75)", "estimated", "full_text", LI),
+  par("norepinephrine", "Vc", 2.4, "L at 70 kg (x BW/70)", "estimated", "full_text", LI),
+  par("norepinephrine", "Q", 0.6, "L/min at 70 kg (x (BW/70)^0.75)", "estimated", "full_text", LI),
+  par("norepinephrine", "Vp", 3.6, "L at 70 kg (x BW/70)", "estimated", "full_text", LI),
+  par("norepinephrine", "Prod", 497.7, "ng/min endogenous production (not plotted)", "estimated", "full_text", LI),
+  par("norepinephrine", "AGE~CL", -0.344, "exp(-0.344/100 (age - 35))", "estimated", "full_text", LI),
+  par("norepinephrine", "CPROP~CL", -3.57, "exp(-3.57/100 propofol mcg/mL); held at no propofol", "estimated", "full_text", LI),
+  par("norepinephrine", "lag time", 13.7, "s (not represented)", "estimated", "full_text", LI),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "abstract", AR),
   par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "abstract", AR),
