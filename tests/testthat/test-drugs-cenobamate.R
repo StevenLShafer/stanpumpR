@@ -112,6 +112,12 @@ test_that("the concentration per dose matches two clinic TDM series", {
     oslo             = 53.7 * 267.67 / 1000 / 164   # umol/L to mg/L
   )
   expect_true(all(abs(perDose / observed - 1) < 0.12))
+  # Oslo, Figure 1D: means of the patients' own ratios, umol/L per mg/day,
+  # without a strong inducer or inhibitor, and with an inducer
+  osloGroups <- c(neutral = 0.339, inducer = 0.311) * 267.67 / 1000
+  expect_true(all(perDose / osloGroups > 0.85 & perDose / osloGroups < 1))
+  # with valproate or cannabidiol (0.384) the inhibition is not modelled
+  expect_equal(perDose / (0.384 * 267.67 / 1000), 0.76, tolerance = 0.02)
 })
 
 test_that("the band holds the steady-state troughs from 100 to 400 mg/day", {
@@ -122,4 +128,16 @@ test_that("the band holds the steady-state troughs from 100 to 400 mg/day", {
   # linear model: troughs scale with dose from the 200 mg steady state
   troughs <- 13.68 * c(100, 200, 400) / 200
   expect_true(all(troughs > row$Lower & troughs < row$Upper))
+  # Greene and Kamin, AAN 2021: central 90% of the maintenance troughs in
+  # the 50% responders and in the seizure-free, at 100, 200, 400 mg/day
+  responders  <- rbind(c(4.6, 9.3), c(11.3, 18.7), c(20.8, 35.2))
+  seizureFree <- rbind(c(5.1, 9.7), c(10.8, 19.8), c(21.9, 35.8))
+  for (r in list(responders, seizureFree)) {
+    expect_true(all(troughs > r[, 1] & troughs < r[, 2]))
+    expect_true(all(troughs / rowMeans(r) > 0.88 & troughs / rowMeans(r) < 1))
+  }
+  # C021 (AAN 2022): mean troughs on 200 mg/day, all patients, 50%
+  # responders, seizure-free for 12 months or more
+  expect_true(all(troughs[2] / c(15.1, 15.2, 14.5) > 0.88 &
+                  troughs[2] / c(15.1, 15.2, 14.5) < 0.96))
 })
