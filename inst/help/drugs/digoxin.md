@@ -16,4 +16,7 @@ The shaded band is the paper's therapeutic range, 0.5 to 2.0 mcg/L of serum. Cur
 
 ### Where to be careful
 
+A newer and larger Japanese study (Hirai and colleagues, *Br J Clin Pharmacol* 2025; 368 patients with atrial fibrillation and heart failure) estimated only the apparent clearance, 5.92 L/h scaled by creatinine clearance to the power 0.281, and found amiodarone's metabolite desethylamiodarone lowers it further. Its simulated troughs on 0.125 mg/day are 15 to 30% higher than this model's average concentrations for a similar patient, so this model may understate the level, particularly with normal renal function.
+
+
 Japanese patients with a mean weight of 50 kg, sampled by immunoassay, which can cross-react with digoxin-like substances and with spironolactone's metabolites. The distribution volumes are poorly determined (the peripheral volume's confidence interval includes zero), so how fast the curve reaches steady state is less certain than where it ends. See [the vasoactive and resuscitation drugs](help:models/vasoactive).
