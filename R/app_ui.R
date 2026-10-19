@@ -348,6 +348,25 @@ app_ui <- function() {
                       "analgesia. Cannot be shown with Time until threshold."
                     ),
                     placement = "right"
+                  ),
+                  # V2 and V3 (an inhaled agent's muscle and fat groups) and
+                  # the depot of an absorbed dose, each a panel of its own
+                  # directly under the drug's (R/compartments.R).
+                  bslib::tooltip(
+                    checkboxInput(
+                      "showCompartments",
+                      "Peripheral compartments",
+                      value = FALSE
+                    ),
+                    paste(
+                      "Under each drug's panel, which is the plasma (V1), draw",
+                      "the concentrations in its peripheral compartments, V2",
+                      "and V3, or for an inhaled agent the muscle (MRG) and fat",
+                      "(FG) groups, and, for a dose given by mouth, under the",
+                      "tongue, intramuscularly, intranasally, subcutaneously or",
+                      "by tissue injection, the amount still in the depot."
+                    ),
+                    placement = "right"
                   )
                 ),
                 conditionalPanel(

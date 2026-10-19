@@ -119,6 +119,13 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
       recovery     = recovery,
       endCe        = if (is.null(recovery)) 0 else endCe
     )
+    # The muscle group (state 4) and the fat group (state 5), the gas's
+    # counterparts of V2 and V3, as tensions in % of an atmosphere, for the
+    # compartment panels (R/compartments.R).  Oxygen has no tissue states.
+    state <- sim$state[[g]]
+    if (!is.null(state) && ncol(state) >= 5 && !is.null(sim$timeLine))
+      out[[g]]$compartments <- data.frame(Time = sim$timeLine,
+                                          MRG = state[, 4], FG = state[, 5])
   }
 
   # MAC gets its own series when any potent agent is running.

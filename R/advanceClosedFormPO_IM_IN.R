@@ -291,11 +291,35 @@ advanceClosedFormPO_IM_IN <- function(dose, pkSet, maximum, plotRecovery, emerge
       )
 
       recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else doseNA
+
+      # The peripheral concentrations, read off every plasma state, the
+      # absorption states included, and the amount still in the depots; see
+      # R/compartments.R.  The continuous RA infusion feeds both tissue depots.
+      plasmaStates <- list(p_state_l1, p_state_l2, p_state_l3, p_state_ka_PO,
+                           p_state_ka_IM, p_state_ka_IN, p_state_ka_RA,
+                           p_state_ka_RAslow, p_state_ka_SL, p_state_ka_PO2)
+      modes <- c(lambda_1, lambda_2, lambda_3, ka_PO, ka_IM, ka_IN, ka_RA,
+                 ka_RAslow, ka_SL, ka_PO2)
+      depot <- doseNA
+      addDepot <- function(ka, line, F, infusion = 0)
+        if (any(line != 0) || any(infusion != 0))
+          depot <<- depot + depotAmount(ka, dt, F * line, F * infusion)
+      addDepot(ka_PO, poLine, bioavailability_PO)
+      addDepot(ka_PO2, po2Line, bioavailability_PO2)
+      addDepot(ka_IM, imLine, bioavailability_IM)
+      addDepot(ka_IN, inLine, bioavailability_IN)
+      addDepot(ka_SL, slLine, bioavailability_SL)
+      addDepot(ka_RA, raLine, bioavailability_RA, raInfusion)
+      addDepot(ka_RAslow, raSlowLine, bioavailability_RAslow, raInfusion)
+
       results <- data.frame(
         Time = timeLine,
         Cp = Cp,
         Ce = Ce,
-        Recovery = recovery
+        Recovery = recovery,
+        C2 = peripheralConcentration(plasmaStates, modes, k21),
+        C3 = peripheralConcentration(plasmaStates, modes, k31),
+        Depot = depot
       )
       attr(results, "recoveryStates") <- if (plotRecovery) recoveryStates else NULL
       return(results)

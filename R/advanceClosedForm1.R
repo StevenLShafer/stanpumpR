@@ -370,11 +370,22 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     recovery <- rep(0, L)
   }
 
+  # The peripheral concentrations, read off the disposition states with the
+  # PK set in force at each point (the states are in its coordinates; the
+  # depots' input is carried in them as an infusion is), and the amount still
+  # in the depots; see R/compartments.R.
+  plasmaStates <- cbind(p_state_l1, p_state_l2, p_state_l3)
+  lambdas <- cbind(lambda_1, lambda_2, lambda_3)
+  depotTotal <- if (length(depot) > 0) Reduce(`+`, depot) else rep(0, L)
+
   results <- data.frame(
     Time = timeLine,
     Cp = Cp,
     Ce = Ce,
-    Recovery = recovery
+    Recovery = recovery,
+    C2 = peripheralConcentration(plasmaStates, lambdas, k21),
+    C3 = peripheralConcentration(plasmaStates, lambdas, k31),
+    Depot = depotTotal
   )
   attr(results, "recoveryStates") <- recoveryStates
   return(results)
