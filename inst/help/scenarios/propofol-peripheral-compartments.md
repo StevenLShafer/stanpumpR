@@ -6,7 +6,7 @@ Propofol 2 mg/kg (140 mg) at time zero and 100 mcg/kg/min for an hour, in a 70 k
 
 **V3 is still filling when the infusion stops.** Its k31 is about 0.0047 per minute, a half-time of about two and a half hours, and its volume, 157 L, is twenty-five times V1's. After an hour it has reached 0.84 mcg/mL, about a quarter of the plasma.
 
-**Then the gradient reverses.** The moment the infusion stops the plasma falls below V2, which starts to give drug back. V3 goes on rising for another twenty minutes, to a peak of 0.89 mcg/mL at about 82 minutes, rises above the plasma at about 80 minutes and above V2 at about 100. From then on the slow compartment is the reservoir that holds the plasma up: at four hours the plasma is 0.19 mcg/mL and V3 still 0.58.
+**Then the gradient reverses.** The moment the infusion stops the plasma falls below V2, which starts to give drug back. V3 goes on rising for another twenty minutes, until the falling plasma meets it: it peaks at 0.89 mcg/mL at about 80 minutes, the moment it crosses the plasma (a compartment rises only while the plasma is above it), and passes V2 at about 100. From then on the slow compartment is the reservoir that holds the plasma up: at four hours the plasma is 0.19 mcg/mL and V3 still 0.58.
 
 Hover over either compartment panel to read its concentration at that moment.
 
