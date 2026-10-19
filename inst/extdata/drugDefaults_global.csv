@@ -119,6 +119,7 @@ levetiracetam,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid",#2E7D32,12,46,30
 eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,26,15,0,0,IV,Antiseizure
 cenobamate,mcg,,,mg PO qd,"mg PO,mg PO qd",#00796B,0,0,0,0,0,IV,Antiseizure
 diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs
+carfentanil,ng,mcg,,mcg,"mcg,mcg/kg",#3E2723,0,0,0,0,0,IV,Illicit drugs
 semaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#2E7D5B,0,0,0,0,0,IV,Antidiabetic
 tirzepatide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#5B2A86,0,0,0,0,0,IV,Antidiabetic
 liraglutide,ng,,,mg SC qd,"mg SC,mg SC qd",#0E8C8C,0,0,0,0,0,IV,Antidiabetic
@@ -145,16 +146,20 @@ exenatide,pg,,,mcg SC bid,"mcg SC,mcg SC bid",#C46210,0,0,0,0,0,IV,Antidiabetic
 lixisenatide,pg,,,mcg SC qd,"mcg SC,mcg SC qd",#7A3E9D,0,0,0,0,0,IV,Antidiabetic
 linagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#3E8E9E,0,0,0,0,0,IV,Antidiabetic
 vildagliptin,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#7D6B2E,0,0,0,0,0,IV,Antidiabetic
+semaglutideOral,ng,,,mg PO qd,"mg PO,mg PO qd",#3F8F5F,0,0,0,0,0,IV,Antidiabetic
+cetagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#6A7F2A,0,0,0,0,0,IV,Antidiabetic
 heparin,IU,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#B71C1C,0,0,0,0,0,IV,Anticoagulants
 bivalirudin,mcg,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg/min,mg/kg/min",#AD1457,0,0,0,0,0,IV,Anticoagulants
 argatroban,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min,mcg/hr,mcg/kg/hr",#E65100,0,0,0,0,0,IV,Anticoagulants
 enoxaparin,IU,IU SC,,IU SC,"IU SC,IU/kg SC",#00695C,0,0,0,0,0,IV,Anticoagulants
 fondaparinux,mcg,mg SC,,mg SC,"mg SC,mg/kg SC",#5D4037,0,0,0,0,0,IV,Anticoagulants
-apixaban,ng,mg,,mg PO,"mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Anticoagulants
-rivaroxaban,ng,mg,,mg PO,"mg PO,mg PO qd,mg PO bid",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
-edoxaban,ng,mg,,mg PO qd,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Anticoagulants
-dabigatran,ng,mg,,mg PO bid,"mg PO,mg PO bid",#558B2F,0,0,0,0,0,IV,Anticoagulants
-warfarin,INR,mg,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Anticoagulants
+apixaban,ng,,,mg PO,"mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Anticoagulants
+rivaroxaban,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
+edoxaban,ng,,,mg PO qd,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Anticoagulants
+dabigatran,ng,,,mg PO bid,"mg PO,mg PO bid",#558B2F,0,0,0,0,0,IV,Anticoagulants
+warfarin,INR,,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Anticoagulants
+fluindione,INR,,,mg PO qd,"mg PO,mg PO qd",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
+acenocoumarol,INR,,,mg PO qd,"mg PO,mg PO qd",#AD1457,0,0,0,0,0,IV,Anticoagulants
 cocaine,ng,,,mg IN,"mg IN,mcg IN",#A52A2A,0,0,0,0,0,IV,Illicit drugs
 methamphetamine,ng,,,mg IN,"mg IN,mcg IN",#CD5C5C,0,0,0,0,0,IV,Illicit drugs
 LSD,ng,,,mcg PO,mcg PO,#4A148C,0,0,0,0,0,IV,Illicit drugs
@@ -165,4 +170,5 @@ fenoldopamPediatric,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min",#311B92,15.7,23.5,19.
 carvedilol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#01579B,0,0,0,0,0,IV,Antihypertensives
 azilsartan,ng,,,mg PO,"mg PO,mg PO qd",#E65100,0,0,0,0,0,IV,Antihypertensives
 chlorthalidone,ng,,,mg PO,"mg PO,mg PO qd",#33691E,0,0,0,0,0,IV,Antihypertensives
+hydrochlorothiazide,ng,,,mg PO,"mg PO,mg PO qd",#3E2723,0,0,0,0,0,IV,Antihypertensives
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs

@@ -147,4 +147,10 @@ test_that("simplified MDRD eGFR (four-variable, non-black)", {
   # Falls as creatinine rises and as age rises.
   expect_gt(egfrMDRD(70, "male", 0.8), egfrMDRD(70, "male", 1.5))
   expect_gt(egfrMDRD(50, "male", 1.0), egfrMDRD(85, "male", 1.0))
+  # The age term is floored at 18: a child gets an 18-year-old's value, and an
+  # age of 0 (a legal entry) is finite rather than infinite.
+  expect_equal(egfrMDRD(0, "male", 0.9), egfrMDRD(18, "male", 0.9))
+  expect_equal(egfrMDRD(5, "female", 0.9), egfrMDRD(18, "female", 0.9))
+  expect_true(is.finite(egfrMDRD(0, "male", 0.9)))
+  expect_lt(egfrMDRD(19, "male", 0.9), egfrMDRD(18, "male", 0.9))
 })

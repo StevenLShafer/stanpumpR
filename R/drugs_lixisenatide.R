@@ -35,7 +35,8 @@
 # injection size as its own linear system with its own ka (doseSizePK(),
 # R/getDrugPK.R) and adds them.  With no dose the reference, 15 mcg, is used
 # (the help tables).  10 and 20 mcg, the marketed doses, give MAT 2.95 and
-# 3.48 h.
+# 3.48 h.  The term is held to the studied doses, 5 to 30 mcg per injection
+# (Table 1).
 #
 # RENAL FUNCTION: Cockcroft-Gault (creatinineClearanceCG()), as the paper, at
 # the patient's creatinine (a child's on the adult scale) or an assumed normal
@@ -44,10 +45,11 @@
 #
 # BODY SIZE: the model's own weight covariate on V/F, and the weight in the
 # Cockcroft-Gault clearance, evaluated at the pharmacokinetic weight with the
-# switch on and at total weight with it off.  The paper's Table 1 (the studied
-# ranges) is an image the supplied print does not carry, so no weight or
-# CLCR is held to a range: the text reports 22 subjects (1.8%) of 50 kg or
-# less and 652 (53.5%) over 80 kg.
+# switch on and at total weight with it off.  The weight on V/F is held to
+# the studied range, 43.8 to 163 kg (Table 1, all participants; supplied by
+# Steven L. Shafer).  Table 1 gives no numeric range of CLCR, only that the
+# renal study enrolled severe impairment (CLCR below 1.8 L/h), so CLCR is not
+# held; nor is age, which is not a covariate (studied 20 to 82 years).
 #
 # NOT APPLIED.  Anti-lixisenatide antibodies raise exposure markedly; the
 # model describes antibody-negative patients only (the paper excluded every
@@ -70,6 +72,8 @@
 LIXISENATIDE_CLCR_MEDIAN <- 6.21      # L/h
 LIXISENATIDE_WEIGHT_MEDIAN <- 82.1    # kg
 LIXISENATIDE_DOSE_REF <- 15           # mcg per injection
+LIXISENATIDE_WEIGHT_RANGE <- c(43.8, 163)   # kg, studied (Table 1)
+LIXISENATIDE_DOSE_RANGE <- c(5, 30)         # mcg per injection, studied
 
 #' Lixisenatide pharmacokinetics (subcutaneous)
 #'
@@ -91,12 +95,14 @@ lixisenatide <- function(weight, height, age, sex, adjustToFFM = TRUE,
                                 adultEquivalentCreatinine(creatinine, age, sex)) *
     60 / 1000                                                   # L/h
   mcg  <- if (is.null(dose)) LIXISENATIDE_DOSE_REF else dose * 1000
+  mcg  <- min(max(mcg, LIXISENATIDE_DOSE_RANGE[1]), LIXISENATIDE_DOSE_RANGE[2])
+  wV   <- min(max(pkW, LIXISENATIDE_WEIGHT_RANGE[1]), LIXISENATIDE_WEIGHT_RANGE[2])
 
   cl  <- 38.6 * (1 + 0.099 * (clcr - LIXISENATIDE_CLCR_MEDIAN))   # L/h
   mat <- 3.25 * (mcg / LIXISENATIDE_DOSE_REF)^0.236               # h
 
   default <- list(
-    v1  = 41.2 * (pkW / LIXISENATIDE_WEIGHT_MEDIAN)^1.56, v2 = 1, v3 = 1,
+    v1  = 41.2 * (wV / LIXISENATIDE_WEIGHT_MEDIAN)^1.56, v2 = 1, v3 = 1,
     cl1 = cl / 60, cl2 = 0, cl3 = 0,
     ka_SC = 1 / (mat * 60),
     bioavailability_SC = 1,   # apparent parameters

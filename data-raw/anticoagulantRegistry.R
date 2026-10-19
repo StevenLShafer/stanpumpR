@@ -63,7 +63,7 @@ registry <- rbind(
   reg("warf_xue_2017_cardiac", "vitamin K antagonist",
       "oral, cardiac surgery", "S/R-warfarin (mg/L) -> INR", "INR (theory-based 1/PCA)",
       "PO", "research_ready", "warfarin",
-      "Eq.2 multiplicative C50_app confirmed against the published erratum (BCP 2017;83:1602); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
+      "Eq.2 multiplicative C50_app is the form that reproduces the paper's worked example (the erratum, BCP 2017;83:1602, was not itself read); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
       "https://doi.org/10.1111/bcp.13157"),
   reg("warf_hamberg_2007", "vitamin K antagonist",
       "oral", "S/R-warfarin (mg/L) -> INR", "INR (two-chain transit compartments)",
@@ -95,6 +95,16 @@ registry <- rbind(
       "SC", "research_ready", "fondaparinux",
       "Full Table 2 / Eqs 4-5 final model read from the paper (ka 0.716/h; Cl/F 0.278 x (WT/68)^0.534 x (CLcr/87)^0.532 x (Age/74)^-0.461; V2/F 8.14 x (WT/68)^0.522; Q/F 0.082; V3/F 15.6); subcutaneous, simplified-MDRD CLcr; post-orthopedic-surgery population; apparent parameters.",
       "https://doi.org/10.1160/TH10-02-0127"),
+  reg("flu_verstuyft_2012", "vitamin K antagonist",
+      "oral, induction (healthy volunteers)", "fluindione (mg/L) -> INR", "INR (indirect response on 1/INR)",
+      "PO", "research_ready", "fluindione",
+      "Full Tables II and IV and Eq.1 read from the typeset original (apparent two-compartment PK; indirect-response INR, E = C^2.32/(C^2.32 + C50^2.32), kin 0.0385/h, kout 0.0391/h); CYP2C9 *3 on CL (x0.637), VKORC1 on C50 (x1.30 for the less-sensitive genotype); CYP1A2/smoking covariate fixed at the median (no field); single-dose healthy-volunteer fit, not a maintenance model.",
+      "https://doi.org/10.2165/11595560-000000000-00000"),
+  reg("aceno_verstuyft_2012", "vitamin K antagonist",
+      "oral, induction (healthy volunteers)", "S-acenocoumarol (mg/L) -> INR", "INR (indirect response on 1/INR)",
+      "PO", "research_ready", "acenocoumarol",
+      "Full Tables III and IV and Eq.1 read from the typeset original (S-enantiomer only, half the racemic dose; apparent two-compartment PK; indirect-response INR, E = C^1.2/(C^1.2 + C50^1.2), kin 0.0269/h, kout 0.0268/h); CYP2C9 *3 on CL (x0.7), VKORC1 on C50 (x2.29 for the less-sensitive genotype); fast clearance makes the simulated steady-state INR about 20-30% from the paper's Table IV (no stated maintenance dose/definition); single-dose healthy-volunteer fit.",
+      "https://doi.org/10.2165/11595560-000000000-00000"),
 
   # --- Provisional (published, but a material gap) ---------------------------
   reg("ufh_delavenne_2017_cpb", "unfractionated heparin",
@@ -133,21 +143,11 @@ registry <- rbind(
       "SC", "pending", NA,
       "Barrett abstract gives CL/F and Vc/F but not ka, Q or Vp; no full population fit.",
       "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=d3e5fbbf-4a1f-4aa2-8e80-9729f6cf04ee"),
-  reg("acenocoumarol", "vitamin K antagonist",
-      "oral", "acenocoumarol -> INR", "INR",
-      "PO", "pending", NA,
-      "No complete dynamic parameter and observation set; R vs S PD driver unresolved.",
-      "https://base-donnees-publique.medicaments.gouv.fr/medicament/61510352/extrait"),
   reg("phenprocoumon", "vitamin K antagonist",
       "oral", "phenprocoumon -> INR", "INR",
       "PO", "pending", NA,
       "Steady-state genotype CL only; no validated stop/restart dynamic model.",
       "https://pubmed.ncbi.nlm.nih.gov/23519598/"),
-  reg("fluindione", "vitamin K antagonist",
-      "oral", "fluindione -> INR", "INR",
-      "PO", "pending", NA,
-      "A two-compartment candidate exists but its full parameter/observation tables are inaccessible; France-specific.",
-      "https://pubmed.ncbi.nlm.nih.gov/22149257/"),
   reg("nadroparin", "low molecular weight heparin",
       "SC", "anti-Xa activity (IU/mL)", "LMWH anti-Xa",
       "SC", "pending", NA,
@@ -179,7 +179,7 @@ par <- function(drug, parameter, value, units, provenance, population, source_ur
 JIA  <- "41 enrolled (32 completed) cardiac-bypass patients, Jia 2015"
 ZH   <- "36 young healthy Chinese volunteers, Zhang 2012"
 CIR  <- "4385 subjects (phase I-III), Cirincione 2018 NVAF reference"
-WIL  <- "4918 patients, 7 trials, Willmann 2018 (population means)"
+WIL  <- "4918 patients, 7 trials, Willmann 2018 (population medians: 81 kg, 93 mL/min, 61 y)"
 XUE  <- "264 cardiac-surgery patients, Xue 2017"
 NIE  <- "4130 individuals (13 phase 1 + Hokusai-VTE), Niebecker 2015"
 LIE  <- "9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011"
@@ -187,6 +187,7 @@ COX  <- "152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004"
 BER  <- "189 patients over 75 (PROPHRE.75), Berges 2007"
 DEL  <- "orthopaedic-surgery patients (GETHCAM/POP-A-RIX), Delavenne 2010"
 HAM  <- "150 patients (Study I+II), Hamberg 2007"
+VER  <- "24 healthy White subjects (single dose), Verstuyft 2012"
 
 parameters <- rbind(
   par("heparin", "CL", 1.18, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
@@ -208,8 +209,8 @@ parameters <- rbind(
   par("apixaban", "ka", 0.473, "1/h", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "F(dose) I50, gamma", "0.420, 0.857", "logit I50 -0.322", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
 
-  par("rivaroxaban", "CL/F", 6.58, "L/h (x (CrCl/97.2)^0.406 x (WT/82.5)^-0.278 x0.849 AF)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
-  par("rivaroxaban", "V/F", 62.5, "L (x (WT/82.5)^0.216 x (age/60.5)^-0.189 x0.889 female)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
+  par("rivaroxaban", "CL/F", 6.58, "L/h (x (CrCl/93)^0.406 x (WT/81)^-0.278 x0.849 AF)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
+  par("rivaroxaban", "V/F", 62.5, "L (x (WT/81)^0.216 x (age/61)^-0.189 x0.889 female)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
   par("rivaroxaban", "ka", 0.821, "1/h", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
   par("rivaroxaban", "F(dose) Fmin,Fmax,D50", "0.590, 1.25, 14.4", "exp(-ln2 D/D50)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
 
@@ -278,7 +279,31 @@ parameters <- rbind(
   par("fondaparinux", "Cl/F", 0.278, "L/h (x (WT/68)^0.534 x (CLcr/87)^0.532 x (Age/74)^-0.461)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
   par("fondaparinux", "V2/F (central)", 8.14, "L (x (WT/68)^0.522)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
   par("fondaparinux", "Q/F", 0.082, "L/h", "fixed", DEL, "https://doi.org/10.1160/TH10-02-0127"),
-  par("fondaparinux", "V3/F (peripheral)", 15.6, "L", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127")
+  par("fondaparinux", "V3/F (peripheral)", 15.6, "L", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
+
+  par("fluindione", "CL/F", 0.17, "L/h (x (WT/69)^0.75 x 0.637 CYP2C9 *3)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "V1/F", 5.19, "L (x WT/69)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "Q/F", 0.173, "L/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "V2/F", 2.77, "L", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "ka", 1.83, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "C50", 3.63, "mg/L (x1.30 VKORC1 less-sensitive)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "gamma", 2.32, "dimensionless", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "kin", 0.0385, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "kout", 0.0391, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "Emax", 1, "fixed", "fixed", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+
+  par("acenocoumarol", "CL_S/F", 15.3, "L/h (x 0.7 CYP2C9 *3)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "V1_S/F", 24.7, "L (x WT/69)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "Q_S/F", 4.85, "L/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "V2_S/F", 52.5, "L", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "ka", 0.936, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "tlag", 0.269, "h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "dose fraction (S)", 0.5, "fraction of racemate", "fixed", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "C50", 0.0023, "mg/L (x2.29 VKORC1 less-sensitive)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "gamma", 1.2, "dimensionless", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "kin", 0.0269, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "kout", 0.0268, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "Emax", 1, "fixed", "fixed", VER, "https://doi.org/10.2165/11595560-000000000-00000")
 )
 
 utils::write.csv(registry,

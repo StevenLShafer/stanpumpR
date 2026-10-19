@@ -123,6 +123,13 @@ MAX_CREATININE <- 15
 
 MIN_AGE <- 0
 MAX_AGE <- 90
+# The youngest age the adult-fitted covariate terms see.  Several models carry
+# age as a negative power ((age / 65)^-0.429, say), which is infinite at an age
+# of 0 (a legal entry) and steep in infancy, where none of them was fitted; a
+# child below this age receives the term's value at this age, as buprenorphine
+# already does (BUPRENORPHINE_MIN_AGE).  Read by apixaban, rivaroxaban,
+# fondaparinux and paroxetine, and by egfrMDRD() in R/renalFunction.R.
+ADULT_AGE_TERM_FLOOR <- 18
 MIN_WEIGHT <- 0.1
 MAX_WEIGHT <- 500
 MIN_HEIGHT <- 10
@@ -226,6 +233,16 @@ insulinRateUnits <- c("U/hr SC")
 # mixedAmphetamineSalts, Adderall XR).
 ORAL_FORMULATIONS <- c("tablet", "liquid", "ER", "DR", "XR")
 poFormulationUnits <- as.vector(t(outer(c("mg PO", "mg/kg PO"), ORAL_FORMULATIONS, paste)))
+
+# A pulsed release does not have to be a named formulation.  An
+# immediate-release tablet has no formulation word in its unit -- it is dosed
+# as plain "mg PO" -- and a drug whose published absorption is a shape the
+# engine lacks may still be reproduced by pulses of the default oral form.
+# `oralPulses` therefore accepts this reserved name alongside
+# ORAL_FORMULATIONS, keyed to every plain oral row (hydrochlorothiazide, whose
+# source fits a Weibull input; R/oral-pulses.R).  It is not a formulation and
+# never appears in a dose unit, so it can never collide with one.
+ORAL_PULSE_DEFAULT_FORM <- "default"
 
 # Prodrug equivalents: fosphenytoin is prescribed in phenytoin sodium
 # equivalents (PE), and its units say so, so a dose is never read as mg of
@@ -385,7 +402,8 @@ ACUTE_MAX_PLOT_MINUTES <- MINS_PER_WEEK
 
 # Drugs that are only meaningful over weeks to months.  Adding one to a plot
 # shorter than a week offers to switch the Time units to days, 365 days.
-LONG_TERM_DRUGS <- c("amiodarone", "semaglutide", "dulaglutide", "tirzepatide")
+LONG_TERM_DRUGS <- c("amiodarone", "semaglutide", "semaglutideOral", "dulaglutide",
+                     "tirzepatide")
 LONG_TERM_PLOT_MINUTES <- 365 * MINS_PER_DAY
 
 # The Max time choices for each time unit: the durations (minutes) and the

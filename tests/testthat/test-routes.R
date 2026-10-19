@@ -224,3 +224,21 @@ test_that("every unit any drug offers is one the dose table will accept", {
   # guard against the loop silently testing nothing
   expect_gt(tested, 100)
 })
+
+test_that("the reduction and exponential forms, and the hold above D50", {
+  # Apixaban's stage 2 relative F (Cirincione 2018): 1 at and below 2.5 mg,
+  # 1 - I50 at 50 mg, held there above it rather than falling through zero.
+  reduction <- list(form = "reduction", I50 = 0.42, D0 = 2.5, D50 = 50, exponent = 0.857)
+  expect_equal(oralSaturationFraction(c(0, 2.5), reduction), c(1, 1))
+  expect_equal(oralSaturationFraction(50, reduction), 0.58)
+  expect_equal(oralSaturationFraction(10, reduction),
+               1 - 0.42 * (7.5 / 47.5)^0.857)
+  expect_equal(oralSaturationFraction(c(100, 200, 1e6), reduction), rep(0.58, 3))
+  # Rivaroxaban's exponential form (Willmann 2018): Fmax at a small dose,
+  # halfway to Fmin at D50, Fmin in the limit; may exceed 1.
+  expo <- list(form = "exponential", Fmin = 0.59, Fmax = 1.25, D50 = 14.4)
+  expect_equal(oralSaturationFraction(0, expo), 1.25)
+  expect_equal(oralSaturationFraction(14.4, expo), 0.59 + 0.66 / 2)
+  expect_equal(oralSaturationFraction(1e6, expo), 0.59)
+  expect_equal(oralSaturationFraction(10, expo), 0.998, tolerance = 1e-3)
+})

@@ -126,7 +126,10 @@ apixaban <- function(weight, height, age, sex, adjustToFFM = TRUE,
                                 adultEquivalentCreatinine(creatinine, age, sex))
 
   clR  <- 1.57 * (crcl / 80)                                   # L/h
-  clNR <- 2.02 * (age / 65)^-0.429 * (1 - 0.216 * female) * size$clearance
+  # The age term is a negative power, infinite at age 0 and fitted in adults:
+  # it sees the age floored at ADULT_AGE_TERM_FLOOR (18), as for every such term.
+  ageTerm <- max(age, ADULT_AGE_TERM_FLOOR)
+  clNR <- 2.02 * (ageTerm / 65)^-0.429 * (1 - 0.216 * female) * size$clearance
   cl   <- (clR + clNR) * APIXABAN_NVAF_CL
 
   default <- list(

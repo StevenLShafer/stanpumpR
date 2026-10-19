@@ -495,10 +495,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     tci <- NULL
     if (any(isTciUnit(dose$Units)))
     {
-      # The controller inverts one system; it cannot target a sum of them.
-      if (!is.null(PK$parallelSystems))
+      # The controller inverts one system; it cannot target a sum of them, nor
+      # an INR drug (whose plotted curve is not a concentration).
+      if (!is.null(PK$parallelSystems) || !is.null(PK$inr))
         stop("Target-controlled infusion is not available for a drug ",
-             "simulated as several parallel systems.")
+             "simulated as several parallel systems or as an INR.")
       schedule <- tciSchedule(dose, PK, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
@@ -618,16 +619,27 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       # R/advanceMichaelisMenten.R.  No clinical-event PK switching, no
       # parallel systems or extra oral formulations (getDrugPK() refuses them).
       results <- advanceMichaelisMenten(dose, PK, maximum, plotRecovery, emerge)
+    } else if (!is.null(PK$inr))
+    {
+      # An INR drug (R/inr.R).  Warfarin runs its own S-warfarin system and the
+      # R-warfarin parallel system; fluindione and acenocoumarol (the
+      # indirect-response model) have only their own system.  The systems are
+      # not added -- inrEngineResults() turns them into the plotted INR.
+      parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))
+      if (!is.null(PK$parallelSystems))
+        for (sys in PK$parallelSystems)
+          parts[[length(parts) + 1]] <- runEngines(
+            shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
+      results <- inrEngineResults(parts, PK$inr)
     } else if (!is.null(PK$parallelSystems))
     {
       parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))
       for (sys in PK$parallelSystems)
         parts[[length(parts) + 1]] <- runEngines(
           shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
-      # Warfarin's two enantiomers are not added: they drive the turnover of
-      # the clotting factors, and the INR is plotted (R/inr.R).
-      results <- if (!is.null(PK$inr)) inrEngineResults(parts, PK$inr)
-                 else superposeEngineResults(parts, plotRecovery, emerge)
+      # A drug plotted as the sum of independent linear systems (ketorolac's
+      # enantiomers): the parts are added.
+      results <- superposeEngineResults(parts, plotRecovery, emerge)
     } else if (!any(other))
     {
       results <- runEngines(shareOf(dose, PK$doseFraction), pkSets)

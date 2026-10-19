@@ -52,12 +52,19 @@ test_that("creatinine clearance is truncated at 150 mL/min", {
   expect_equal(a$PK$default$cl1 * 60, capped, tolerance = 1e-8)
 })
 
-test_that("the renal slope is continuous at the breakpoint of 90 mL/min", {
-  # Just below and just above CLcr 90 give the same renal clearance.
-  below <- (15.2 + 0.202 * 89.999)
-  s2 <- 0.0321 * (1 + 2.74)
-  above <- (15.2 + (0.202 - s2) * 90 + s2 * 90.001)
-  expect_equal(below, above, tolerance = 1e-2)
+test_that("the renal slope is continuous at the breakpoint of 90 mL/min, and steeper above it", {
+  # Through the model itself: a 70 kg, 40 y man (switch off, so Cockcroft-Gault
+  # is on 70 kg) at the creatinines that put CLcr just either side of 90,
+  # then at 60, 90 and 120 mL/min, where the two slopes should show.
+  scrAt <- function(crcl) (140 - 40) * 70 / (72 * crcl)
+  cl1At <- function(crcl) edoxaban(70, 170, 40, "male", adjustToFFM = FALSE,
+                                   creatinine = scrAt(crcl))$PK$default$cl1
+  expect_equal(cl1At(89.99), cl1At(90.01), tolerance = 1e-4)
+  # Below the break the renal slope is 0.202 L/h per mL/min; above it
+  # 0.0321 x (1 + 2.74) = 0.120 (the phase 3 patient's +274%), on an
+  # allometric factor of 1 at 70 kg.
+  expect_equal((cl1At(90) - cl1At(60)) * 60 / 30, 0.202, tolerance = 1e-6)
+  expect_equal((cl1At(120) - cl1At(90)) * 60 / 30, 0.0321 * 3.74, tolerance = 1e-6)
 })
 
 test_that("allometric weight scales CL/F and Vp/F by 0.75, Vc/F and Q/F by 1", {
@@ -75,4 +82,19 @@ test_that("the plotted concentration is plasma only, with no effect site", {
   r <- getDrugPK("edoxaban", 70, 176, 60, "male")
   expect_equal(r$tPeak, 0)
   expect_equal(r$MEAC, 0)
+})
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).  Worked out by hand from
+  # the published equations, not from the code under test.
+  # Cockcroft-Gault 126.866 mL/min (above the break, below the 150 cap):
+  # CL_R = (0.202 - 0.120054) x 90 + 0.120054 x 126.866 L/h;
+  # CL/F = (15.2 + CL_R) x (91.343469/70)^0.75; Vc/F = 209 x 91.343469/70;
+  # Vp/F = 92.3 x (91.343469/70)^0.75; Q/F = 9.72786 x 91.343469/70.
+  actual <- edoxaban(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
+                       list(v1 = 272.72550, v2 = 112.69024,
+                            cl1 = 0.76929508, cl2 = 0.21156583))
 })

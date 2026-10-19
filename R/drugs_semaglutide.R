@@ -50,7 +50,7 @@
 # subcutaneous semaglutide because its absorption is fitted per study
 # formulation; it stays in the registry as the disposition model of oral
 # semaglutide.  The oral tablets (Rybelsus) are a different product with
-# their own bioavailability and are not this drug.
+# their own bioavailability: semaglutideOral (R/drugs_semaglutideOral.R).
 #
 # CHECKS (reference subject, switch off)
 # ======================================
