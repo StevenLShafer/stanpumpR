@@ -10,7 +10,8 @@ EVIDENCE  <- c("full_text", "abstract", "none")
 
 # The drugs implemented new for this registry, in its own category.
 IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
-                 "nitroglycerin", "norepinephrine")
+                 "nitroglycerin", "norepinephrine", "procainamide", "esmolol",
+                 "dopamine", "atropine")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -79,7 +80,8 @@ test_that("a model built from an abstract says so, and names the paper to obtain
 test_that("a drug with no suitable model gives the reason", {
   none <- registry[registry$readiness == "no_suitable_model", ]
   expect_setequal(none$drug, c("sodium nitroprusside", "vasopressin", "ephedrine",
-                               "hydralazine", "adenosine", "sodium bicarbonate"))
+                               "hydralazine", "adenosine", "sodium bicarbonate",
+                               "nicardipine", "methylene blue"))
   expect_true(all(nchar(none$blocking_issue) > 60))
 })
 
@@ -123,6 +125,19 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("norepinephrine", "Q"), NOREPINEPHRINE_Q)
   expect_equal(value("norepinephrine", "Vp"), NOREPINEPHRINE_VP)
   expect_equal(value("norepinephrine", "Prod"), NOREPINEPHRINE_PROD)
+  expect_equal(value("procainamide", "CL_R"), PROCAINAMIDE_CLR)
+  expect_equal(value("procainamide", "Vd"), PROCAINAMIDE_VD)
+  expect_equal(value("esmolol", "CL") / 1000, ESMOLOL_CL)
+  expect_equal(value("esmolol", "Vc"), ESMOLOL_V1)
+  expect_equal(value("dopamine", "k10"), DOPAMINE_K10)
+  expect_equal(value("dopamine", "V1"), DOPAMINE_V1)
+  expect_equal(value("atropine", "V_P"), ATROPINE_VP)
+  expect_equal(value("atropine", "CL") / 1000, ATROPINE_CL)
+  esm <- twoCompartmentFromCentralVolume(ESMOLOL_CL, ESMOLOL_V1,
+                                         ESMOLOL_THALF_ALPHA, ESMOLOL_THALF_BETA)
+  expect_equal(round(esm$v2, 3), value("esmolol", "V2"))
+  expect_equal(round(esm$cl2, 4), value("esmolol", "Q"))
+  expect_equal(round(ATROPINE_VP * ATROPINE_KPT / ATROPINE_KTP, 1), value("atropine", "V2"))
   expect_equal(value("nitroglycerin", "CL"), NITROGLYCERIN_CL)
   expect_equal(value("nitroglycerin", "time constant"), NITROGLYCERIN_TAU)
   # The derived values, to their printed precision

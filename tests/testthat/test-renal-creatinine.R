@@ -17,7 +17,9 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "hydrochlorothiazide",
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
-                "magnesiumSulfate")
+                "magnesiumSulfate",
+                # Grasela and Sheiner's Equation 7 (R/drugs_procainamide.R)
+                "procainamide")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system).
