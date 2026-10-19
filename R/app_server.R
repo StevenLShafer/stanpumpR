@@ -1194,6 +1194,22 @@ app_server <- function(input, output, session) {
     input$showThreshold
   })
 
+  # The % MEAC overlay (R/meacOverlay.R) and the time until threshold share
+  # the panels' right-hand edge, so ticking either unticks the other.  Until
+  # the untick arrives the threshold wins, as simulationPlot() also enforces.
+  plotMEACOverlay <- reactive({
+    isTRUE(input$showMEAC) && !isTRUE(input$showThreshold) &&
+      identical(input$normalization, NORMALIZE_NONE)
+  })
+  observeEvent(input$showThreshold, {
+    if (isTRUE(input$showThreshold) && isTRUE(input$showMEAC))
+      updateCheckboxInput(session, "showMEAC", value = FALSE)
+  })
+  observeEvent(input$showMEAC, {
+    if (isTRUE(input$showMEAC) && isTRUE(input$showThreshold))
+      updateCheckboxInput(session, "showThreshold", value = FALSE)
+  })
+
   linetypes <- reactive({
     setLinetypes(input$normalization,input$plasmaLinetype,input$effectsiteLinetype)
   })
@@ -1237,7 +1253,7 @@ app_server <- function(input, output, session) {
       normalization          <- input$normalization
       typical                <- input$typical
       logY                   <- input$logY
-      if (plotRecovery() || plotEvents || plotInteraction) logY <- FALSE
+      if (plotRecovery() || plotMEACOverlay() || plotEvents || plotInteraction) logY <- FALSE
 
       plasmaLinetype <- linetypes()$plasmaLinetype
       effectsiteLinetype <- linetypes()$effectsiteLinetype
@@ -1259,6 +1275,7 @@ app_server <- function(input, output, session) {
         plotCost = plotCost,
         plotEvents = plotEvents,
         plotRecovery = plotRecovery(),
+        plotMEACOverlay = plotMEACOverlay(),
         typical = typical,
         logY = logY,
         yAxisHeight = input$yaxisHeight,
@@ -1522,6 +1539,13 @@ app_server <- function(input, output, session) {
           horizon = recoveryHorizonFor(entry, plotMaximum())
         )
       )
+    }
+    # The opioid's own % MEAC, the value the overlay draws (R/meacOverlay.R)
+    if (plotMEACOverlay())
+    {
+      pct <- meacPercentAt(entry, e$x)
+      if (!is.null(pct))
+        returnText <- paste0(returnText, ", ", signif(pct, 3), "% MEAC")
     }
     return(returnText)
   }

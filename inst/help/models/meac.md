@@ -18,7 +18,7 @@ stanpumpR holds one MEAC per opioid in the drug library:
 | methadone | 0.06 | mcg/mL |
 | oxycodone | 12 | ng/mL |
 | oliceridine | 27.9 | ng/mL |
-| hydrocodone | 8 | ng/mL |
+| hydrocodone | 12 | ng/mL |
 | oxymorphone | 0.8 | ng/mL |
 | desmetramadol | 84 | ng/mL |
 
@@ -29,6 +29,10 @@ The drug pages carry the current values and their provenance. Several (oxycodone
 With *Additional Plots → MEAC* ticked, each opioid's effect-site concentration is plotted as a percentage of its MEAC, and a **total opioid** line adds them: a patient at 60 per cent of a fentanyl MEAC and 60 per cent of a morphine MEAC is taken to be at 120 per cent, as if the two were a single opioid. This assumes the opioids act additively at the same receptor, which is a reasonable first approximation for μ agonists.
 
 The same sum, as a fraction rather than a percentage, is the opioid "U" that drives the [propofol-opioid interaction](help:models/interaction) (through remifentanil equivalents) and the [opioid reduction of MAC](help:models/opioid-mac).
+
+## % MEAC on each opioid's own panel
+
+*Graph Options → % MEAC on opioid panels* draws the same percentage as a thin black line on each opioid's own panel, read against labels at the panel's right-hand edge. All the opioid panels share **one** scale: the highest % MEAC any opioid reaches sets its top, rounded up, and each panel maps that scale onto its own height. A line twice as high is twice as many MEACs, whichever panel it is on. This is what shows which moiety carries the analgesia when an opioid forms an active metabolite of very different potency, as oxycodone forms oxymorphone and hydrocodone forms hydromorphone: on their concentration axes the metabolite's curve and the parent's cannot be compared, but their % MEAC lines can. Hovering over an opioid panel adds its % MEAC at that moment. The right-hand edge is also where *Time until threshold* puts its labels, so ticking either turns the other off. See [the hydrocodone scenario](scenario:hydrocodone-hydromorphone-meac).
 
 ## The shaded band and the threshold
 
