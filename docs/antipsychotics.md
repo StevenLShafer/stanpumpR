@@ -15,9 +15,18 @@ pharmacodynamic endpoints (`antipsychoticProfiles()`,
   `droperidolIM`. An apparent drug offers only its own route and carries
   bioavailability 1. `test-antipsychotics.R` checks every profile's units
   against its `parameterBasis`.
-- **No targets.** MEAC, band and `endCe` are zero and no TCI units are offered.
-  D2 occupancy is a receptor biomarker, and no validated clinical target is
-  specified.
+- **No occupancy targets.** MEAC and `endCe` are zero and no TCI units are
+  offered: D2 occupancy is a receptor biomarker, and no validated clinical
+  occupancy target is specified.
+- **The band is a serum therapeutic reference range**, drawn where one exists
+  for the analyte the row plots (`inst/extdata/therapeuticRanges.csv`,
+  `test-therapeutic-ranges.R`): aripiprazole 120-270 ng/mL (Hart 2022),
+  olanzapine 20-40 ng/mL (Wesner 2023), quetiapine 100-500 ng/mL (AGNP). It
+  is a trough at steady state, read against the plasma curve. Risperidone's
+  20-60 ng/mL is for the active moiety, split between two rows by CYP2D6, so it
+  is not drawn; haloperidol's waits on the 2026 AGNP table (2017 gives 1-10,
+  an excerpt of 2026 1-5); haloperidolIV and the droperidols have none that
+  applies to their use.
 - **Occupancy is not plotted.** The Effect Site trace stays a concentration.
   Aripiprazole (Kim 2012) and both haloperidols (Lim 2013) have one, from a
   PET ke0 supplied directly; the rest are plasma only. `antipsychoticOccupancy()` turns a simulated driver

@@ -68,18 +68,18 @@ calcium,mmol,g chloride,mg/min chloride,g chloride,"g chloride,mg chloride,mg/kg
 amiodarone,mcg,,,mg/day PO,"mg/day PO",#B22222,1,2.5,1.5,0,1,IV,Other
 desethylamiodarone,mcg,,,,,#E9967A,0,0,0,0,0,IV,
 amiodaroneIV,mcg,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#C2185B,0,0,0,0,0,IV,Other
-escitalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00838F,15,80,40,0,0,IV,Antidepressants
+escitalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00838F,20,40,30,0,0,IV,Antidepressants
 citalopram,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#26C6DA,50,110,80,0,0,IV,Antidepressants
 sertraline,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#558B2F,10,150,50,0,0,IV,Antidepressants
 paroxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#9E9D24,20,65,40,0,0,IV,Antidepressants
-duloxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#EF6C00,30,120,60,0,0,IV,Antidepressants
+duloxetine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#EF6C00,20,120,60,0,0,IV,Antidepressants
 mirtazapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6D4C41,30,80,50,0,0,IV,Antidepressants
 bupropion,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#283593,0,0,0,0,0,IV,Antidepressants
 hydroxybupropion,ng,,,,,#9575CD,850,1500,1200,0,0,IV,
 fluoxetine,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antidepressants
 norfluoxetine,ng,,,,,#4DB6AC,0,0,0,0,0,IV,
 venlafaxine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#3949AB,0,0,0,0,0,IV,Antidepressants
-desvenlafaxine,ng,,,,,#90A4AE,0,0,0,0,0,IV,
+desvenlafaxine,ng,,,,,#90A4AE,85,380,230,0,0,IV,
 methylphenidate,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO XR,mg PO XR qd",#4527A0,0,0,0,0,0,IV,Stimulants
 methylphenidatePediatric,ng,,,mg PO,"mg PO,mg/kg PO,mg PO bid,mg PO tid,mg/kg PO bid,mg/kg PO tid",#7B1FA2,0,0,0,0,0,IV,Stimulants
 lisdexamfetamine,ng,,,mg PO,"mg PO,mg PO qd",#BF360C,0,0,0,0,0,IV,Stimulants
@@ -87,12 +87,12 @@ mixedAmphetamineSalts,ng,,,mg PO XR,"mg PO,mg PO bid,mg PO XR,mg PO XR qd",#8277
 ondansetron,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#00838F,5,40,20,0,0,IV,Antiemetics
 aprepitant,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#8D6E2F,116,1500,500,0,0,IV,Antiemetics
 fosaprepitant,ng,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#6D4C41,116,1500,500,0,0,IV,Antiemetics
-quetiapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4E342E,0,0,0,0,0,IV,Antipsychotics
+quetiapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#4E342E,100,500,300,0,0,IV,Antipsychotics
 risperidone,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#00ACC1,0,0,0,0,0,IV,Antipsychotics
 hydroxyrisperidone,ng,,,,,#80DEEA,0,0,0,0,0,IV,
-aripiprazole,ng,,,mg PO,"mg PO,mg PO qd",#512DA8,0,0,0,0,0,IV,Antipsychotics
+aripiprazole,ng,,,mg PO,"mg PO,mg PO qd",#512DA8,120,270,195,0,0,IV,Antipsychotics
 dehydroaripiprazole,ng,,,,,#B39DDB,0,0,0,0,0,IV,
-olanzapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#1B5E20,0,0,0,0,0,IV,Antipsychotics
+olanzapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#1B5E20,20,40,30,0,0,IV,Antipsychotics
 haloperidol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#9C27B0,0,0,0,0,0,IV,Antipsychotics
 haloperidolIV,ng,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid",#F48FB1,0,0,0,0,0,IV,Antipsychotics
 droperidol,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#F57F17,0,0,0,0,0,IV,Antipsychotics

@@ -12,7 +12,7 @@ test_that("the reference patient receives Zheng's published values", {
         ka_PO = 1.46 / 60, bioavailability_PO = 1, tlag_PO = 0
       )),
       tPeak = 0, MEAC = 0,
-      typical = 0, upperTypical = 0, lowerTypical = 0,
+      typical = 300, upperTypical = 500, lowerTypical = 100,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)

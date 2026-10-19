@@ -9,7 +9,7 @@ other half is generated from the code at run time (see `R/help-content.R`,
 | Path | What it is |
 |---|---|
 | `<page>.md` | A page. Its id is the file name without `.md`; `models/effect-site.md` is the page `models/effect-site`. |
-| `drugs/<drug>.md` | The narrative appended to the generated page of that drug. One file per row of `inst/extdata/drugDefaults_global.csv`; the tests require it. |
+| `drugs/<drug>.md` | The narrative appended to the generated page of that drug. One file per row of `inst/extdata/drugDefaults_global.csv`; the tests require it. It must say where the shaded band (the therapeutic reference range) comes from, with the source and the analyte and sampling time it applies to, or why there is no band (`docs/adding-a-drug.md`, *The therapeutic range*). |
 | `scenarios/<id>.md` | The narrative appended to the generated page of that teaching scenario, defined in `R/help-scenarios.R`. The tests require it. |
 | `references.md` | The methods bibliography, appended to the generated list of drug-model citations. |
 | `investigators.md` | The investigators whose work the program uses. Every **bold** name on it is an investigator: the name becomes a link, wherever it appears in the help or in the References panel, to a pop-up of what this page says about them (`R/help-investigators.R`). |

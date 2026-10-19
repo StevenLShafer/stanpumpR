@@ -61,7 +61,10 @@
 # 100 x Ce / (8.63 + Ce) -- of parent only.  Adding dehydroaripiprazole to the
 # 8.63 ng/mL denominator would be wrong.  The PK and PD come from different
 # populations, which antipsychoticProfiles() records.  Occupancy is a receptor
-# biomarker, not a target: MEAC and the band are zero.
+# biomarker, not a target: MEAC is zero.  The band is the serum therapeutic
+# reference range of parent aripiprazole, 120 to 270 ng/mL (Hart et al.,
+# Psychopharmacology 2022;239:3377-3391; inst/extdata/therapeuticRanges.csv),
+# a trough concentration at steady state to read against the plasma curve.
 # -----------------------------------------------------------------------------
 
 ARIPIPRAZOLE_V   <- 192     # L, apparent (abstract; the brief says 193)
@@ -125,9 +128,9 @@ aripiprazole <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
     tPeak = 0,                        # ke0 is supplied, not solved
     ke0 = ARIPIPRAZOLE_KE0 / 60,      # 1/min
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 195,                    # Hart 2022, ng/mL; mirrors the CSV
+    upperTypical = 270,
+    lowerTypical = 120,
     reference = reference,
     metabolite = list(
       name              = "dehydroaripiprazole",

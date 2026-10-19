@@ -62,9 +62,12 @@
 # The antidepressant effect develops over weeks and has no equilibration
 # rate constant; there is no human ke0 for escitalopram.  tPeak = 0 (no
 # effect site), MEAC = 0 (not an opioid), and the plot is plasma.  The band
-# in the CSV, 15 to 80 ng/mL with 40 as the typical line, is the AGNP 2018
-# consensus therapeutic reference range (Hiemke et al., Pharmacopsychiatry
-# 2018;51:9-62); typical, upperTypical and lowerTypical mirror it.  The
+# in the CSV, 20 to 40 ng/mL with 30 as the typical line, is the therapeutic
+# reference range of the AGNP TDM task force's systematic review (Eichentopf
+# et al., Front Psychiatry 2022;13:972141; trough, 24 h after a dose), which
+# replaced the AGNP 2017 consensus range of 15 to 80 ng/mL (Hiemke et al.,
+# Pharmacopsychiatry 2018;51:9-62); typical, upperTypical and lowerTypical
+# mirror it, and inst/extdata/therapeuticRanges.csv records both.  The
 # desmethyl metabolite is not modelled.
 #
 # BODY SIZE (docs/weight-adjustment.md)
@@ -164,16 +167,16 @@ escitalopram <- function(weight, height, age, sex, cyp2c19 = CYP2C19_DEFAULT,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL: AGNP 2018 therapeutic reference range.  The plot reads the
-  # CSV; these mirror it.
-  typical      <- 40
-  upperTypical <- 80
-  lowerTypical <- 15
+  # Band, ng/mL: Eichentopf 2022 therapeutic reference range.  The plot reads
+  # the CSV; these mirror it.
+  typical      <- 30
+  upperTypical <- 40
+  lowerTypical <- 20
 
   reference <- paste0(
     "Liu et al., Front Pharmacol 2022;13:964758 (apparent oral one-compartment ",
-    "model with CYP2C19; age effect not implemented; band: AGNP consensus, ",
-    "Hiemke C et al., Pharmacopsychiatry 2018;51:9-62). ",
+    "model with CYP2C19; age effect not implemented; band: Eichentopf L et al., ",
+    "Front Psychiatry 2022;13:972141). ",
     "https://doi.org/10.3389/fphar.2022.964758"
   )
 
