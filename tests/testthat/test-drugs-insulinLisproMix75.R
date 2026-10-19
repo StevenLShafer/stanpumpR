@@ -28,8 +28,8 @@ test_that("10 U of Mix75/25 equals 2.5 U lispro plus 7.5 U protamine-only", {
   expect_equal(at(mix), at(lis) + at(pro), tolerance = 1e-9)
 })
 
-test_that("pregnancy: CL/F x 1.19, absorption and V/F unchanged", {
-  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.19 (Catalano 1998), in
+test_that("pregnancy: CL/F x 1.25, absorption and V/F unchanged", {
+  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.25 (Catalano 1998), in
   # thamInsulin() (R/insulinTham.R, PREGNANCY); V/F and absorption unchanged.
   on  <- getDrugPK("insulinLisproMix75", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
   off <- getDrugPK("insulinLisproMix75", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
@@ -47,7 +47,7 @@ test_that("pregnancy: CL/F x 1.19, absorption and V/F unchanged", {
   expect_equal_rounded(18.09199012, actual$v1)
   expect_equal_rounded(1, actual$v2)
   expect_equal_rounded(1, actual$v3)
-  expect_equal_rounded(0.6049166667, actual$cl1)
+  expect_equal_rounded(0.6354167, actual$cl1)
   expect_equal_rounded(0, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
 })

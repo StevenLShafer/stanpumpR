@@ -25,8 +25,8 @@ test_that("10 U of 70/30 is 7 U NPH plus 3 U regular, cleared as one 10 U dose",
   expect_equal(w$Plasma, exact, tolerance = 1e-9)
 })
 
-test_that("pregnancy: CL/F x 1.19, absorption and V/F unchanged", {
-  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.19 (Catalano 1998), in
+test_that("pregnancy: CL/F x 1.25, absorption and V/F unchanged", {
+  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.25 (Catalano 1998), in
   # thamInsulin() (R/insulinTham.R, PREGNANCY); V/F and absorption unchanged.
   on  <- getDrugPK("insulinHumanMix70", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
   off <- getDrugPK("insulinHumanMix70", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
@@ -47,7 +47,7 @@ test_that("pregnancy: CL/F x 1.19, absorption and V/F unchanged", {
   expect_equal_rounded(101.1157443, actual$v1)
   expect_equal_rounded(1, actual$v2)
   expect_equal_rounded(1, actual$v3)
-  expect_equal_rounded(2.518833333, actual$cl1)
+  expect_equal_rounded(2.645833, actual$cl1)
   expect_equal_rounded(0, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
 })

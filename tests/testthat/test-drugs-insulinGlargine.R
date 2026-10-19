@@ -30,8 +30,8 @@ test_that("once daily: average steady-state concentration is F x dose / (CL x 24
   expect_false(any(getDrugDefaults("insulinGlargine")$Units[[1]] %in% insulinRateUnits))
 })
 
-test_that("pregnancy: CL/F x 1.19, absorption and V/F unchanged", {
-  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.19 (Catalano 1998), in
+test_that("pregnancy: CL/F x 1.25, absorption and V/F unchanged", {
+  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.25 (Catalano 1998), in
   # thamInsulin() (R/insulinTham.R, PREGNANCY); V/F and absorption unchanged.
   on  <- getDrugPK("insulinGlargine", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
   off <- getDrugPK("insulinGlargine", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
@@ -49,7 +49,7 @@ test_that("pregnancy: CL/F x 1.19, absorption and V/F unchanged", {
   expect_equal_rounded(684.283422, actual$v1)
   expect_equal_rounded(1, actual$v2)
   expect_equal_rounded(1, actual$v3)
-  expect_equal_rounded(1.477583333, actual$cl1)
+  expect_equal_rounded(1.552083, actual$cl1)
   expect_equal_rounded(0, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
 })

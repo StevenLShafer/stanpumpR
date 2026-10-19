@@ -104,16 +104,26 @@
 #
 # With the Patient Profile's Pregnant field on, the apparent clearance CL/F
 # of every product (every insulin and every component of a premix, through
-# this one builder) is multiplied by INSULIN_PREGNANCY_CL_FACTOR = 1.19
-# (Catalano).  Absorption (ka, lag, the zero-order input), bioavailability
-# and V/F are unchanged: Goudie's gestational slowing of absorption is in
-# aspart, which the library does not model, and is not carried to these
-# formulations.  Catalano's clearance is the systemic clearance of
-# intravenous insulin at clamp concentrations, per m2 of body surface area
-# (the ratio of absolute clearances is probably a little higher, since body
-# surface area rises); it is applied to the apparent CL/F on the assumption
-# that subcutaneous bioavailability is unchanged, for which there are no
-# data.  Insulin is not bound, so total and free are one.
+# this one builder) is multiplied by INSULIN_PREGNANCY_CL_FACTOR = 1.25
+# (Catalano 1998, read in full: the metabolic clearance rate of insulin at a
+# hyperinsulinaemic-euglycaemic clamp in 16 women was 422 mL/m2/min before
+# conception, 514 at 12-14 weeks and 526 at 34-36 weeks, so 526 / 422 = 1.25
+# late against pregravid, P = 0.0005).  Absorption (ka, lag, the zero-order
+# input), bioavailability and V/F are unchanged: Goudie's gestational slowing
+# of absorption is in aspart, which the library does not model, and is not
+# carried to these formulations.  Insulin is not bound, so total and free are
+# one.
+#
+# PER m2 AGAINST ABSOLUTE.  Catalano's clearance is per m2 of body surface
+# area, and Tham's CL/F carries NO size covariate (only V/F scales with
+# weight), so the absolute systemic clearance is what CL/F represents.  Body
+# surface area rises by about 8% by term (roughly sqrt(82/70) for a 12 kg
+# gain), so the absolute clearance ratio is nearer 1.25 x 1.08 = 1.35.  The
+# per-m2 ratio 1.25 is applied as a measured, conservative lower bound; the
+# factor would be about 1.35 if the body-surface-area rise were added, which
+# the model cannot know from a single entered weight.  Applied on the
+# assumption that subcutaneous bioavailability is unchanged, for which there
+# are no data.
 #
 # NOTE ON WEIGHT.  Tham's V/F scales steeply with weight: (BW/80)^1.62 for
 # the human insulins, (BW/80)^2.48 for lispro, linearly for glargine, held to
@@ -143,8 +153,8 @@ THAM_INSULIN_REFERENCE <- "https://doi.org/10.1002/jcph.899"
 
 # Pregnancy (see the header): CL/F of every product.  Catalano 1998, clamp
 # metabolic clearance rate at 34-36 weeks against before conception, 526 /
-# 442 mL/m2/min = 1.19.
-INSULIN_PREGNANCY_CL_FACTOR <- 1.19
+# 422 mL/m2/min = 1.25 (a per-m2, conservative lower bound; see the header).
+INSULIN_PREGNANCY_CL_FACTOR <- 1.25
 
 # Apparent disposition per insulin (Table 2): V/F in L at the reference
 # weight, CL/F in L/h at the reference dose, and the weight covariate on V/F
