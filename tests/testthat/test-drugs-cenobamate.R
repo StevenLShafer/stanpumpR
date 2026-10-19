@@ -90,3 +90,12 @@ test_that("steady state is about 20% below Vernillet's healthy volunteers", {
   expect_true(all(ratio > 0.72 & ratio < 0.96))
   expect_equal(exp(mean(log(ratio))), 0.84, tolerance = 0.05)
 })
+
+test_that("the size scaling gives the weight effect the EMA report describes", {
+  # EMA/CHMP/160820/2021 p 59: ~25% more exposure at low weights, ~20% less
+  # at high weights than at the mean; exposure at steady state is dose/CL
+  auc <- function(w) 1 / cenobamate(w, 170, 35, "male")$PK$default$cl1
+  ref <- auc(70)
+  expect_equal(auc(50) / ref, 1.16, tolerance = 0.02)
+  expect_equal(auc(110) / ref, 0.84, tolerance = 0.02)
+})

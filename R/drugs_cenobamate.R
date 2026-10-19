@@ -28,8 +28,9 @@
 # Every continuous covariate enters linearly about a centring value,
 # P = P_TV x (1 + theta x (X - X~)), and every categorical one as
 # P_TV x (1 + theta) (Supplemental Methods).  X~ is "typically the median",
-# and no median is printed anywhere in the paper, its supplement or the FDA
-# review, so no continuous term can be evaluated exactly:
+# and no median is printed anywhere in the paper, its supplement, the FDA
+# review or the EMA assessment report, so no continuous term can be
+# evaluated exactly:
 #   - daily dose on CL/F, "exponential", -0.0280 (Supplemental Table 2 gives
 #     its unit as m^-2, copied from the BSA row).  The exponential form is
 #     not written out and the reference dose is not printed.  Read as a power of the daily dose about
@@ -102,6 +103,26 @@
 # every observation above, so they must be conditional on covariate
 # reference values the abstract does not give.
 #
+# EMA ASSESSMENT REPORT (Ontozry, EMA/CHMP/160820/2021, read in full)
+# ====================================================================
+# Summarises SK16007 without equations or medians, so it settles nothing
+# above, but it adds four things the curve does not carry:
+#   - weight: "subjects with low weights may have ~25% higher cenobamate
+#     exposures and those with high weights may have ~20% lower exposures
+#     than those with mean weights" (p 59; the weights are not defined).
+#     The fat-free-mass scaling gives a 50 kg man (170 cm) 16% more
+#     exposure than the 70 kg reference and a 110 kg man 16% less, the same
+#     direction and nearly the same size.
+#   - renal impairment: AUC 1.4-1.5 times normal after 200 mg in mild and
+#     moderate impairment; severe impairment, studied at 100 mg, showed no
+#     increase, which the report calls unexplained (p 49).  Creatinine
+#     clearance was tested in SK16007 and not retained, so the model reads
+#     no creatinine; the label caps renal impairment at 300 mg/day.
+#   - hepatic impairment: AUC 1.9 times normal (mild) and 2.3 times
+#     (moderate) after 200 mg; not modelled (no hepatic field).
+#   - "multiple late peaks were observed suggesting enterohepatic
+#     recirculation" (p 52); not modelled.
+#
 # Steady state takes about two weeks (label).  The label titration is 12.5
 # mg/day for two weeks, then 25, 50, 100, 150 and 200 mg/day, each for two
 # weeks.
@@ -128,6 +149,8 @@
 #   https://www.accessdata.fda.gov/drugsatfda_docs/nda/2019/212839Orig1s000ClinPharmR.pdf
 # Vernillet L et al., Clin Pharmacol Drug Dev 2020;9:428-443, and its
 #   supplement.  https://doi.org/10.1002/cpdd.769
+# EMA, Ontozry assessment report, EMA/CHMP/160820/2021 (2021).
+#   https://www.ema.europa.eu/en/documents/assessment-report/ontozry-epar-public-assessment-report_en.pdf
 # Krishna G et al., AES 2025 abstract 2.366 (not used; see above).
 #   https://aesnet.org/abstractslisting/cenobamate-population-pharmacokinetic-analyses-exposures-in-adult-and-elderly-focal-seizure-subjects
 # Greene SA et al., Clin Transl Sci 2022;15:899-911.
