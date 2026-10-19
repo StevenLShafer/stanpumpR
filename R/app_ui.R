@@ -311,14 +311,6 @@ app_ui <- function() {
                 icon = icon("sliders"),
                 selectInput("typical", "Show typical", c("<none>" = "none", "Mid", "Range"), selected = "Range"),
                 selectInput("normalization", "Normalize to", c("<none>" = NORMALIZE_NONE, "Peak plasma", "Peak effect site")),
-                # Durations in minutes, labelled in the Time units; the server
-                # swaps the list when the unit changes (syncMaxTimeChoices()).
-                selectInput(
-                  inputId = "maximum",
-                  label = "Max time",
-                  choices = maxTimeChoices(timeUnit0),
-                  selected = maxTimeValue(maximum0)
-                ),
                 lineTypeSelector(
                   inputId = "plasmaLinetype",
                   label = "Plasma line",
@@ -430,8 +422,9 @@ app_ui <- function() {
                 )
               ),
 
-              # The time settings.  The header reads them out while the panel
-              # is closed: "Time (hours, Actual time)".
+              # The time settings, with the length of the plot (Max time).
+              # The header reads the units and display out while the panel is
+              # closed: "Time (hours, Actual time)".
               bslib::accordion_panel(
                 span(
                   "Time",
@@ -450,6 +443,16 @@ app_ui <- function() {
                   "Time units",
                   stats::setNames(names(TIME_UNITS), tools::toTitleCase(names(TIME_UNITS))),
                   selected = timeUnit0,
+                  options = list(dropdownParent = "body")
+                ),
+                # How far the simulation runs: durations in minutes, labelled
+                # in the Time units; the server swaps the list when the unit
+                # changes (syncMaxTimeChoices()).
+                selectizeInput(
+                  inputId = "maximum",
+                  label = "Max time",
+                  choices = maxTimeChoices(timeUnit0),
+                  selected = maxTimeValue(maximum0),
                   options = list(dropdownParent = "body")
                 ),
                 selectizeInput(
