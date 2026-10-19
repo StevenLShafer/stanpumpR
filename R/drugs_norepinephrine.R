@@ -94,8 +94,11 @@
 #
 # NO EFFECT SITE, NO BAND
 # =======================
-# Plasma only; the pressure response was reported separately (de Keijzer,
-# Br J Anaesth) and is not modelled here.
+# Plasma only; the pressure response in the same volunteers was reported
+# separately (de Keijzer IN et al. Eur J Anaesthesiol 2026;43:506-516, doi
+# 10.1097/EJA.0000000000002312: MAP linear in DOSE, 103 mmHg per mcg/kg/min
+# awake, 222 under propofol/remifentanil; dose-response fitted better than
+# concentration-response) and is not modelled here.
 # -----------------------------------------------------------------------------
 
 # Li 2024, Table 3
