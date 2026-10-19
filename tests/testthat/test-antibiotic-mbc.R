@@ -130,3 +130,13 @@ test_that("each antibiotic's help page explains its band", {
   page <- helpPageHTML("models/antibiotics")
   for (d in antibioticMicTable()$Drug) expect_true(grepl(sprintf("drugs/%s", d), page, fixed = TRUE), label = d)
 })
+
+test_that("clindamycin's band lies within the label's steady-state levels", {
+  # Cleocin Phosphate label (revised 12/2021), Table 1: 600 mg every 8 hours
+  # in a 70 kg adult gives Cmax,ss 12.0 and Cmin,ss 3.1 mcg/mL total.  The band
+  # is free drug at the MBC of the organisms clindamycin kills, so it should
+  # fall between the trough and the peak the label's usual dose produces.
+  b <- antibioticMbcBand("clindamycin")$plotted
+  expect_gte(b[["lower"]], 3.1)
+  expect_lte(b[["upper"]], 12.0)
+})
