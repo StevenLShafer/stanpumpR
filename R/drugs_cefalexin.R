@@ -106,12 +106,12 @@ cefalexin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, total mg/L: the MICs of 1 to 4 mg/L of the S. aureus isolates in
-  # Haynes 2022; streptococcal MICs are lower (0.06-0.5 mg/L, Ryder 2026).  Orientation only: MICs are free
-  # drug, and with 15% binding the matching totals are about 18% higher.
-  typical      <- 2
-  upperTypical <- 4
-  lowerTypical <- 1
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("cefalexin")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Haynes AS et al., Antimicrob Agents Chemother 2024;68:e00182-24. ",

@@ -154,11 +154,12 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   tPeak <- 0
   MEAC  <- 0
 
-  # Band, unbound mg/L: Komatsu's illustrative MIC scenarios of 0.5 and 1 mg/L
-  # and 2 mg/L, the S. aureus ECOFF and MSSA MIC90.  Orientation only.
-  typical      <- 1
-  upperTypical <- 2
-  lowerTypical <- 0.5
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("cefazolin")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Komatsu T et al., Antimicrob Agents Chemother 2024;68:e00267-24. ",

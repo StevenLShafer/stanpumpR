@@ -104,11 +104,12 @@ ceftriaxone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, TOTAL mg/L.  With 85-95% binding, a free concentration above a
-  # 1-2 mg/L MIC needs a total of roughly 10-40 mg/L.  Orientation only.
-  typical      <- 20
-  upperTypical <- 50
-  lowerTypical <- 10
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("ceftriaxone")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Sanz-Codina M et al., J Antimicrob Chemother 2023;78:380-388. ",

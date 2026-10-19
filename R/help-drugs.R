@@ -409,6 +409,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
       esc(if (helpNoBand(row)) "None: no range applies to this model, so no band is drawn"
+          else if (!is.null(mic)) sprintf("%s to %s %s, free drug at the expected MBC of the common pathogens (see below)",
+                                          helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
       esc(if (helpNoBand(row)) "None" else sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
       esc(meacShown),
@@ -926,6 +928,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- Shaded band: free drug at the MBC -------------------------------------
+  mbcHTML <- helpAntibioticMbcHTML(drug, row, concUnits)
+
   # --- Parallel systems ------------------------------------------------------
   # A drug plotted as the sum of independent systems (ketorolac: S and R
   # enantiomers; meloxicam: the oral and intravenous fits, each limited to
@@ -1093,6 +1098,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     metaboliteHTML,
     formedHTML,
     micHTML,
+    mbcHTML,
     eventsHTML,
     if (nzchar(narrative)) paste0(helpH2("About this model"), narrative) else "",
     helpScenariosUsingDrugHTML(drug),
@@ -1325,5 +1331,90 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     "patients, so a drug that switches models with age or size appears under each.</p>",
     "<ul class='help-citations'>", paste(items, collapse = ""), "</ul>",
     helpLinkInvestigators(helpMarkdownToHTML(helpReadMarkdown("references")), "citation")
+  )
+}
+
+
+#' The antibiotics' help section on the shaded band: free drug at the MBC
+#'
+#' Generated from \code{antibioticMbcTable()} and \code{antibioticMbcBand()}
+#' (R/antibioticMbc.R), so the page and the band cannot drift apart.
+#'
+#' @param drug a drug name
+#' @param row the drug's row of the drug defaults
+#' @param concUnits the plotted concentration unit, for display
+#' @returns HTML, or "" for a drug with no MBC rows
+#' @noRd
+helpAntibioticMbcHTML <- function(drug, row, concUnits) {
+  band <- antibioticMbcBand(drug)
+  if (is.null(band)) return("")
+  esc <- htmltools::htmlEscape
+  mic <- antibioticMic(drug)
+  x <- antibioticMbcTable()
+  x <- x[x$Drug == drug, ]
+  killed <- x[x$Role != "excluded", ]
+  excluded <- x[x$Role == "excluded", ]
+  unbound <- mic$Plotted == "unbound"
+  role <- c(principal = "Principal", core = "Common")
+
+  pathogens <- data.frame(
+    Pathogen = killed$Pathogen,
+    Role = unname(role[killed$Role]),
+    `MIC50 / MIC90` = paste(helpFormatNumber(killed$MIC50), "/", helpFormatNumber(killed$MIC90)),
+    `MBC50 / MBC90 (free)` = paste(helpFormatNumber(killed$MBC50), "/", helpFormatNumber(killed$MBC90)),
+    `How the MBC was obtained` = killed$Basis,
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  edges <- data.frame(
+    Edge = c("Lower edge", "Typical", "Upper edge"),
+    Meaning = c(
+      paste0("MBC50 of the principal pathogen (", band$principal, ")"),
+      "MBC90 of the principal pathogen",
+      "Highest MBC90 among the pathogens in the table above"),
+    `Free drug` = sprintf("%s mg/L", helpFormatNumber(band$free)),
+    `On the plotted curve` = sprintf("%s %s %s", helpFormatNumber(band$plotted), concUnits, mic$Plotted),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  excludedHTML <- if (nrow(excluded)) {
+    paste0("<p>Not in the band, because the drug does not kill them at concentrations the curve reaches, ",
+           "or because plasma is not the concentration that matters:</p><ul>",
+           paste0("<li><strong>", esc(excluded$Pathogen), "</strong>: ", esc(excluded$Note), "</li>",
+                  collapse = ""), "</ul>")
+  } else ""
+  notes <- killed$Note[nzchar(killed$Note)]
+  notesHTML <- if (length(notes)) {
+    paste0("<ul>", paste0("<li><strong>", esc(killed$Pathogen[nzchar(killed$Note)]), "</strong>: ",
+                          esc(notes), "</li>", collapse = ""), "</ul>")
+  } else ""
+
+  paste0(
+    helpH2("Shaded band: free drug at the MBC"),
+    "<p>The MIC is the concentration at which an organism stops growing; the <strong>MBC</strong>, the ",
+    "minimum bactericidal concentration, is the concentration that kills 99.9 per cent of it in 24 hours. ",
+    "The shaded band marks the expected MBCs, as <strong>free</strong> drug, of the common pathogens ",
+    esc(tolower(helpDrugTitle(drug))), " is given against. Its lower edge is the MBC50 of the principal ",
+    "pathogen, below which the drug no longer kills a typical isolate of it; the typical value is that ",
+    "pathogen's MBC90; the upper edge is the highest MBC90 among the common pathogens, above which free drug ",
+    "kills 90 per cent of the isolates of each of them. MBCs are measured in protein-free broth, so they are ",
+    "free-drug values. ",
+    if (unbound) "This curve is unbound drug, so the band is drawn at the MBCs themselves."
+    else if (isTRUE(mic$Saturable))
+      "This curve is total drug and the binding saturates, so each free MBC is placed on the curve through the binding fit given under <em>Time until threshold</em> above."
+    else sprintf("This curve is total drug, so each free MBC is divided by the free fraction, %s.",
+                 helpFormatNumber(mic$FreeFraction)),
+    "</p>",
+    helpTableHTML(edges),
+    helpTableHTML(pathogens),
+    notesHTML,
+    excludedHTML,
+    "<p>Most of these MBCs are not modern measurements. Where none was found the MBC is the MIC times the ",
+    "MBC/MIC ratio reported for the drug or its class against that organism, as the table says. The MBC is ",
+    "poorly reproducible from laboratory to laboratory, rises with the inoculum, and is far higher in ",
+    "biofilm; an isolate's own MIC, where known, is the better guide. The band is orientation for a ",
+    "susceptible isolate, not a dosing target.</p>",
+    "<p class='small text-muted'>Sources: ",
+    esc(paste(unique(x$Source), collapse = " ")),
+    " The rule, and the literature that would firm these values up: ",
+    helpPageLink("models/antibiotics"), ".</p>"
   )
 }

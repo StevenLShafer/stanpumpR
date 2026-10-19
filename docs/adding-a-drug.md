@@ -506,7 +506,11 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   divided by the free fraction if it plots total drug. Add the antibiotic to
   `antibioticMicTable()` in `R/antibioticThresholds.R`, which records the organism, MIC, free
   fraction and sources, feeds the drug's help page, and is checked against this column by
-  `test-antibiotic-thresholds.R`.
+  `test-antibiotic-thresholds.R`. An antibiotic's band (`Lower`, `Typical`, `Upper`) is free drug at the
+  expected MBC of the common pathogens, placed on the plotted curve: add its pathogens to
+  `antibioticMbcTable()` in `R/antibioticMbc.R` (one `principal`, the `core` pathogens it kills,
+  and `excluded` ones with a reason), have the model function read `antibioticMbcBand()`, and
+  copy the band into this row; `test-antibiotic-mbc.R` checks them against each other.
 - `Class` — `IV` for an injected or swallowed drug, `gas` for an inhaled agent. The gases
   take a separate simulation path and have no `drugs_*.R` covariate function, so a new drug
   added by this procedure is `IV`.
@@ -623,7 +627,7 @@ the intended maintenance step, not a weakening of the test.
 | offers `Plasma target` / `Effect site target` | `TCI_DRUGS` in `test-tci-api.R`, and `docs/tci-api.md` — a published contract |
 | is in the `Illicit drugs` category | `inst/extdata/illicitRouteRegistry.csv`, one row per route, offered or not |
 | reads a CYP or creatinine covariate | it joins the Patient Profile hover tip by itself, but `PATIENT_FIELD_READER_NOTES` in `R/patient-fields.R` may need a note |
-| is an antibiotic with an `endCe` | `antibioticMicTable()` in `R/antibioticThresholds.R` |
+| is an antibiotic with an `endCe` | `antibioticMicTable()` in `R/antibioticThresholds.R`, and its pathogens in `antibioticMbcTable()` in `R/antibioticMbc.R` |
 | needs a new `Category` | `DRUG_CATEGORIES` in `R/constants.R` **and** `bookmarksToExclude` in `R/app_globals.R` |
 | is a long-acting weekly product | `LONG_TERM_DRUGS` |
 

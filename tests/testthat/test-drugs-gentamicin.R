@@ -20,7 +20,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         cl3 = 0
       )
     ),
-    tPeak = 0, MEAC = 0, typical = 8, upperTypical = 10, lowerTypical = 1,
+    tPeak = 0, MEAC = 0, typical = 2, upperTypical = 8, lowerTypical = 0.5,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)

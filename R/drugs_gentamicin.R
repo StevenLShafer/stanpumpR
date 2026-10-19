@@ -149,11 +149,12 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, total mg/L: trough ceiling of about 1 mg/L up to the 8-10 mg/L
-  # historical peak benchmark.  Orientation only.
-  typical      <- 8
-  upperTypical <- 10
-  lowerTypical <- 1
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("gentamicin")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Smit C et al., J Antimicrob Chemother 2020;75:3286-3292. ",
