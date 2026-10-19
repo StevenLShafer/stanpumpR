@@ -324,7 +324,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "bupivacaine", "ropivacaine", "mepivacaine",
     "phenytoin", "carbamazepine", "valproate", "phenobarbital", "pentobarbital",
     "ethosuximide", "topiramate", "lacosamide", "lamotrigine", "zonisamide",
-    "tiagabine", "levetiracetam", "eslicarbazepine",
+    "tiagabine", "levetiracetam", "eslicarbazepine", "cenobamate",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
     "ondansetron", "aprepitant", "fosaprepitant",
