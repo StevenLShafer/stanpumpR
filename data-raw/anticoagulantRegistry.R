@@ -123,9 +123,9 @@ registry <- rbind(
       "Label CL (0.204 L/h/kg) differs from the healthy-volunteer fit; no full V/Q/PD vector for PCI patients.",
       "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=72c5413f-882a-4784-9be6-312c0a0a2a97"),
   reg("apix_byon_2017_vte", "factor Xa inhibitor",
-      "oral, VTE", "apixaban plasma -> anti-Xa (IU/mL)", "Rotachrom on STA-Compact",
-      "PO", "provisional", NA,
-      "A separate VTE fit and assay map (0.0159 IU/mL per ng/mL); not the NVAF PK vector, and the assay slope is one reagent only.",
+      "oral, VTE treatment", "apixaban plasma (ng/mL)", "none plotted",
+      "PO", "research_ready", "apixabanVTE",
+      "Final Table 4 read from the full text; a separate VTE-treatment fit from the NVAF model. Race/comedication/clock-time fixed to the non-Asian morning-dose patient; Cockcroft-Gault renal term with a 150 mL/min cap; the >10 mg dose-dependent F (parameters not printed) is not applied, so doses >10 mg over-predict; the anti-Xa map (0.0159 IU/mL per ng/mL, one reagent) is documentation only.",
       "https://doi.org/10.1002/psp4.12184"),
   reg("dabi_troconiz_2007_hip", "direct thrombin inhibitor",
       "oral, post-hip-replacement surgery", "total active dabigatran (ng/mL)", "none plotted",
@@ -179,6 +179,7 @@ par <- function(drug, parameter, value, units, provenance, population, source_ur
 JIA  <- "41 enrolled (32 completed) cardiac-bypass patients, Jia 2015"
 ZH   <- "36 young healthy Chinese volunteers, Zhang 2012"
 CIR  <- "4385 subjects (phase I-III), Cirincione 2018 NVAF reference"
+BYON <- "970 subjects (phase I-III VTE), Byon 2017 reference 60 y, 85 kg, 100 mL/min"
 WIL  <- "4918 patients, 7 trials, Willmann 2018 (population medians: 81 kg, 93 mL/min, 61 y)"
 XUE  <- "264 cardiac-surgery patients, Xue 2017"
 NIE  <- "4130 individuals (13 phase 1 + Hokusai-VTE), Niebecker 2015"
@@ -209,6 +210,14 @@ parameters <- rbind(
   par("apixaban", "Vp/F", 27.0, "L", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "ka", 0.473, "1/h", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "F(dose) I50, gamma", "0.420, 0.857", "logit I50 -0.322", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
+
+  par("apixabanVTE", "CL_R/F", 1.83, "L/h (x min(CrCl,150)/100)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "CL_NR/F", 2.52, "L/h (x (age/60)^-0.267, x0.777 female)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "Vc/F", 32.1, "L (x (WT/85)^0.523)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "Q/F", 1.62, "L/h", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "Vp/F", 19.8, "L", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "ka", 0.440, "1/h (morning; 0.239 evening)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
+  par("apixabanVTE", "anti-Xa slope", 0.0159, "IU/mL per ng/mL (documented, not plotted)", "estimated", BYON, "https://doi.org/10.1002/psp4.12184"),
 
   par("rivaroxaban", "CL/F", 6.58, "L/h (x (CrCl/93)^0.406 x (WT/81)^-0.278 x0.849 AF)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
   par("rivaroxaban", "V/F", 62.5, "L (x (WT/81)^0.216 x (age/61)^-0.189 x0.889 female)", "estimated", WIL, "https://doi.org/10.1002/psp4.12288"),
