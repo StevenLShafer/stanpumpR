@@ -55,6 +55,10 @@ app_ui <- function() {
         bslib::layout_sidebar(
           # The options, in a sidebar that its arrow collapses; open on a desktop
           # (closed on a phone), as the dose table's sidebar at the right is.
+          # On a phone its arrow shares one row with the dose table's
+          # (.simulator-main in app.css; layout_sidebar() puts the class on
+          # its main area).
+          class = "simulator-main",
           sidebar = bslib::sidebar(
             width = 300,
             resizable = FALSE,

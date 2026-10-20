@@ -92,6 +92,18 @@ Apply, Undo and Redo buttons under it stay in view. */
   margin: 0;
 }
 
+/* On a phone, bslib gives each collapsible sidebar layout a row of its own for
+its arrow, above its main area.  The dose table's layout sits in the main area
+of the options' layout, so its arrow (<) fell a row below the options' arrow
+(>).  Starting that main area in the top row puts the two arrows side by side;
+the options' arrow comes later in the page, so it stays on top and clickable. */
+@media (max-width: 575.98px) {
+  .bslib-sidebar-layout[data-collapsible-mobile="true"] > .main.simulator-main {
+    grid-row: 1 / 3;
+    padding-top: 0;
+  }
+}
+
 #dosetable_apply {
   width: 100%;
   margin: -5px 0 10px;
