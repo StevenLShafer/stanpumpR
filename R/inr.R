@@ -19,11 +19,13 @@
 # rejected) and the theory-based INR of Equation 5 (A = 1, B = 0), which the
 # authors found as good as the in-vitro calibration in vivo and recommend.
 # The R-warfarin term is the competitive antagonism of Equation 2 as
-# corrected by the erratum (Br J Clin Pharmacol 2017;83:1602).  The erratum
-# itself could not be read here; the form above is the one that reproduces
-# the paper's worked example, an apparent C50 of 0.514 against 0.378 mg/L
-# (36% higher) at the C_R of about 0.86 mg/L a maintenance dose gives, which
-# test-drugs-warfarin.R checks.
+# corrected by the erratum (Br J Clin Pharmacol 2017;83:1602, PMID 28597521,
+# doi 10.1111/bcp.13325), which moves the R term from the denominator on its
+# own to inside the S-warfarin term and confirms the NM-TRAN models were
+# coded that way; see R/drugs_warfarin.R for how it was read.  The form above
+# also reproduces the paper's worked example, an apparent C50 of 0.514
+# against 0.378 mg/L (36% higher) at the C_R of about 0.86 mg/L a
+# maintenance dose gives, which test-drugs-warfarin.R checks.
 #
 # This is not an effect site.  The INR is a nonlinear function of the two
 # concentrations, delayed by the turnover of the clotting factors, so it
