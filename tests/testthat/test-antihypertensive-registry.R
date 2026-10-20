@@ -386,9 +386,24 @@ test_that("an uncertainty keeps the type its source names, or says it was not re
                           !is.na(parameters$uncertainty), ]
   expect_gt(nrow(untyped), 4)
   expect_true(all(untyped$uncertainty_type == "not_reported"))
-  # Where a type IS named it is spelled out, never abbreviated into ambiguity
+  # Where a type IS named it is spelled out, never abbreviated into ambiguity.
+  # A CLOSED SET rather than a length check: nchar() > 10 passed
+  # "standard_error" happily, and a second spelling of one concept is exactly
+  # what makes a machine-readable audit unfilterable -- a reader who greps for
+  # "standard error" silently misses every snake_case row.  Add a row here
+  # before adding a new label, which is the point (2026-10-20, after
+  # CodeRabbit caught 23 such rows on this branch).
+  expect_setequal(unique(parameters$uncertainty_type),
+                  c("not_reported",
+                    "standard error",
+                    "approximate standard error",
+                    "standard error of the mean, %",
+                    "relative standard error, %",
+                    "standard deviation between subjects"))
   named <- setdiff(unique(parameters$uncertainty_type), "not_reported")
   expect_true(all(nchar(named) > 10))
+  # No label may be a snake_case or camelCase spelling of another
+  expect_false(any(grepl("_", named)))
 })
 
 test_that("the endpoint relations are complete, verified, and signed as falls", {

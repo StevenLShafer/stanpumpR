@@ -1321,7 +1321,8 @@ different reason and so calls for a different next action.
 | **valsartan** | Implemented | Heo 2016, full text and supplement. Zero-order release, no renal term |
 | **enalapril** | Blocked on an **engine**, not on evidence | Faisal 2019 is complete and verified. Repeated eigenvalues (section 14.3) |
 | **losartan** | Blocked on **access** | Lo 1995 is the right study and only its abstract was read (section 14.2) |
-| **captopril**, **fosinopril** | **Not pursued** | Out of clinical use, by the maintainer's decision; and both were weak anyway |
+| **captopril** | **Not pursued** — wrong structure | Out of clinical use, by the maintainer's decision; and saturable enzyme binding makes a linear fit the wrong structure, not an approximation |
+| **fosinopril** | **Not pursued** — not identifiable | Out of clinical use, by the maintainer's decision; and its sources give three independent numbers where two compartments need four |
 | **benazepril** | Blocked on **access** — one PDF needed | Kaiser 1989; the parent closes, the metabolite does not (§14.5) |
 
 ### 14.1 Three implementations, three different lessons
@@ -1504,8 +1505,18 @@ question to ask of the full text — not merely "what are the numbers".
 
 ### 14.6 Where the numbers stand
 
-Of 134 records, 13 are executable, `bp_simulation_enabled` is `FALSE` on every
+Of 135 records, 13 are executable, `bp_simulation_enabled` is `FALSE` on every
 one, and **no drug in stanpumpR plots a blood pressure.** Valsartan's source
 fitted one — an effect compartment with a maximum inhibition of 0.164, plus an
-interaction term with amlodipine — and it is recorded as an endpoint relation
-rather than plotted, like the four before it.
+interaction term with amlodipine — and it is now a **gated** record of its own,
+`valsartan__…__resting_sbp_and_dbp__heo2016`, which is *not* one of the four
+evaluable relations and should not be read as one: only the Imax was
+transcribed, so the relation cannot be evaluated against a concentration at
+all. Two things about it are worth knowing before anyone extracts the rest. The
+authors **fixed** that 0.164 as amlodipine's Imax as well, "assuming that the
+amlodipine and valsartan monotherapy show similar efficacy" — an assumption,
+not a measurement. And the monotherapy arm of the fit is a *naively pooled*
+analysis of mean blood pressures read from two other papers, because this study
+gave both drugs together and has no valsartan-alone arm, so the valsartan
+response is identified from other people's published means rather than from
+these subjects.
