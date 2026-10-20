@@ -34,6 +34,16 @@ At the source's reference individual a 10 mg tablet gives enalapril a peak near 
 
 The practical reading: the parent is a transient, and the metabolite is the exposure. On twice-daily dosing enalaprilat accumulates and enalapril does not.
 
+### An independent study agrees on the metabolite peak, and that settles the dose basis
+
+Arafat and colleagues (*J Clin Pharm Ther* 2005;30:319-28) gave two brands of 10 mg enalapril maleate to healthy volunteers and measured both moieties with **specific enzyme immunoassays**, rather than the ACE-inhibition assay most earlier work used. Their enalaprilat peaks were 54.8 and 57.2 ng/mL. This model predicts **55.7** — between the two, within 3% of each, in a study that was no part of Faisal's fit.
+
+That agreement does more than reassure. It answers the question the next section has to leave open: whether the fitted bioavailability of 0.606 already contains the maleate-to-base mass fraction of 0.764. Getting that wrong in either direction would move the whole curve by a factor of 1.308, and **both alternatives land outside Arafat's measured range.** So an ambiguity the source itself cannot settle is settled by a study that never entered it.
+
+The two studies do **disagree about the tail.** Arafat's metabolite area was 267 and 256 ng·h/mL against this model's 495 — a factor of about 1.9. They report the reason as a finding of their own: enalaprilat concentrations at 12 to 24 hours were "lower than those reported in the literature". So it is their terminal phase that departs from the published picture, not Faisal's. It is recorded rather than reconciled, for the same reason [benazepril](help:drugs/benazepril) keeps its own scale against an independent study that read a third higher: rescaling a primary fit to another study's number is fitting to a result instead of to data.
+
+The **parent** cannot be compared at all, and again the authors are the ones who say so — their enalapril peaks are "about 10 times those published in the literature". Their 314 ng/mL against this model's 75 is an assay-method disagreement they identify themselves, not a target to hit.
+
 ### The dose is entered as prescribed
 
 The source gave two 5 mg tablets of enalapril **maleate**, so its doses are the labelled strength of the salt, which is what a prescription says too. Whether the fitted bioavailability of 0.606 also absorbs the maleate-to-base mass fraction is not resolvable from the text, and does not need to be: the model is used on exactly the basis it was fitted on, so a 10 mg tablet entered as 10 mg reproduces the paper. There is no salt factor and no molar conversion.
@@ -45,6 +55,12 @@ Age, weight, height, sex and total body water were all available and tested. Onl
 So **there is no renal term**, and for this drug that deserves saying twice. Enalapril and enalaprilat are cleared renally and by nothing else — the source's own assumption, and the thing that made its mass balance close — yet a serum creatinine entered in the [Patient Profile](help:patient-profile) does not reach either moiety. The population was 24 healthy young adults, so the study contains no information about renal impairment. It is not that renal function is irrelevant here; it is that renal function is the single most relevant thing and this source cannot speak to it. Enalapril is dose-reduced in renal impairment in practice, and nothing in these curves shows that.
 
 The source's remaining term, a factor of 0.730, describes its child-appropriate orodispersible mini-tablet rather than the conventional tablet. The reference formulation is the one modelled here, for which that factor is exactly 1, so the printed mean transit time already is the right one.
+
+### This is an adult model from a paediatric programme
+
+Worth being explicit about, because the paper invites the opposite conclusion. It was published in a paediatric journal, its title is about child-appropriate mini-tablets, and it belongs to a project whose name is "labelling of enalapril from neonate to adolescence". **Its data are 24 healthy adults.** Not one child was studied.
+
+So the child and infant rows of the table above are the library's own allometric extrapolation from a population of 51.8 to 95.6 kg, not anything this source measured. Enalapril's conversion to enalaprilat is by carboxylesterase 1, whose activity changes with age, and nothing here represents that. Treat the paediatric columns as arithmetic rather than as evidence.
 
 ### Effect site, blood pressure and pregnancy
 

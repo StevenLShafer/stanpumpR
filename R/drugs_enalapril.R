@@ -131,6 +131,36 @@
 # amplitudes the closed-form engines leave in hand, and a defective system has
 # none to leave.
 #
+# EXTERNAL VALIDATION, AND IT SETTLES THE DOSE BASIS
+# ==================================================
+# Arafat T, Awad R, Hamad M, Azzam R, Al-Nasan A, Jehanli A, Matalka K,
+# J Clin Pharm Ther 2005;30:319-328 gave two brands of 10 mg enalapril maleate
+# to healthy volunteers and measured BOTH moieties with specific enzyme
+# immunoassays rather than the ACE-inhibition assay most earlier work used.
+# Nothing of it was an input to Faisal's fit.  Its metabolite peaks were 54.8
+# and 57.2 ng/mL; this model gives 55.7, within 3% of each.
+#
+# That is what decides the dose-basis question the section above has to leave
+# open: a factor of 1.308 in either direction puts the prediction outside the
+# measured range, so entering the dose as the labelled strength is right and
+# not merely self-consistent.  The two studies DISAGREE about the terminal
+# phase -- Arafat's metabolite area is 267 and 256 against this model's 495 --
+# and the disagreement is theirs to report, which they do: their enalaprilat
+# concentrations at 12 to 24 h ran "lower than those reported in the
+# literature".  Recorded, not reconciled.  The PARENT is no check at all,
+# their enalapril peaks being "about 10 times those published in the
+# literature" by their own account.
+#
+# AN ADULT MODEL FROM A PAEDIATRIC PROGRAMME
+# ==========================================
+# The paper is in a paediatric journal, its title is about child-appropriate
+# mini-tablets, and the project is named "labelling of enalapril from neonate
+# to adolescence".  Its DATA are 24 healthy adults, 51.8 to 95.6 kg; not one
+# child was studied.  The paediatric columns of the generated help table are
+# therefore this library's own allometric extrapolation and not anything the
+# source measured -- and the conversion to enalaprilat is by carboxylesterase
+# 1, whose activity changes with age, which nothing here represents.
+#
 # Enalapril is a PREGNANCY CONTRAINDICATION rather than an unstudied drug: the
 # ACE inhibitors carry a boxed warning for fetal toxicity, so no pregnancy
 # pharmacokinetic study exists and none should be expected.

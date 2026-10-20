@@ -369,6 +369,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # any pharmacodynamic model, and valsartan's fitted one is a blood
     # pressure, which nothing in this library plots
     "lisinopril", "olmesartan", "valsartan", "benazepril",
+    "enalapril", "enalaprilat",
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
     "epinephrine", "magnesiumSulfate", "labetalol", "nitroglycerin",
     "procainamide", "dopamine",

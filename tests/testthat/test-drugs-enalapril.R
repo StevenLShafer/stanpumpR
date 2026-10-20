@@ -150,6 +150,50 @@ test_that("the curve reproduces the source's own reported observations", {
   expect_equal(round(max(m$Plasma), 1), 55.9)
 })
 
+test_that("the metabolite peak reproduces a study the model was not fitted to", {
+  # EXTERNAL VALIDATION.  Arafat T, Awad R, Hamad M, Azzam R, Al-Nasan A,
+  # Jehanli A, Matalka K, J Clin Pharm Ther 2005;30:319-328, two brands of
+  # 10 mg enalapril maleate in healthy volunteers, measured with SPECIFIC
+  # enzyme immunoassays for each moiety rather than the ACE-inhibition assay
+  # most earlier studies used.  Nothing of this was an input to Faisal's fit.
+  r <- runOne(10)
+  m <- r$enalaprilat$wide
+  cmax <- max(m$Plasma)
+  # Arafat's two brands: 54.8 +/- 29.5 and 57.2 +/- 29.0 ng/mL
+  expect_gt(cmax, 54.8 * 0.95)
+  expect_lt(cmax, 57.2 * 1.05)
+  # AND THIS IS WHAT PINS THE DOSE BASIS.  Faisal's text does not say whether
+  # F1 = 0.606 also absorbs the maleate-to-base mass fraction (376.45/492.52
+  # = 0.764), and the model is used on the basis it was fitted on.  If that
+  # choice were wrong in either direction the curve would be off by 1.308,
+  # and BOTH alternatives fall outside Arafat's measured range -- so an
+  # ambiguity the source could not settle is settled by a study that never
+  # entered it.
+  salt <- 492.52 / 376.45
+  expect_false(cmax * salt > 54.8 * 0.95 && cmax * salt < 57.2 * 1.05)
+  expect_false(cmax / salt > 54.8 * 0.95 && cmax / salt < 57.2 * 1.05)
+})
+
+test_that("the external study disagrees about the tail, and that is recorded", {
+  # The same study's metabolite AREA is about half the model's, and Arafat
+  # says why in their own abstract: "enalaprilat concentrations at 12-24 h
+  # following a single oral dose of enalapril in healthy volunteers were
+  # LOWER than those reported in the literature", which they report as a
+  # finding of theirs rather than as agreement. So the two studies agree on
+  # the peak and disagree on the terminal phase. Recorded, not reconciled:
+  # rescaling a primary fit to another study's number is fitting to a result,
+  # the same reason benazepril keeps Kaiser's scale against Sun 1994.
+  r <- runOne(10, maximum = 20160)
+  m <- r$enalaprilat$wide
+  auc <- sum(diff(m$Time) * (head(m$Plasma, -1) + tail(m$Plasma, -1)) / 2) / 60
+  expect_equal(round(auc / 266.9, 1), 1.9)      # Arafat brand 1, 266.9 ng.h/mL
+  # The parent cannot be compared at all, and the authors are the ones who
+  # say so: "Cmax values for enalapril are about 10 times those published in
+  # the literature". Their 313.5 ng/mL is an assay disagreement, not a target.
+  p <- r$enalapril$wide
+  expect_lt(max(p$Plasma), 313.5)
+})
+
 test_that("the three rejected readings of the chain are recorded, not hidden", {
   # All four readings reproduce the source's reported peak times, so the
   # choice is a documented rounding decision rather than a fitted result.
