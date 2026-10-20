@@ -206,7 +206,7 @@ liftCompartments <- function(results, PK, dose)
   # A drug plotted as something other than a concentration in V1 (an osmotic
   # agent's serum osmolality, warfarin's INR) has no peripheral concentration
   # to set beside it.
-  if (!is.null(PK$osmotic) || !is.null(PK$inr))
+  if (!is.null(PK$osmotic) || !is.null(PK$inr) || !is.null(PK$act))
     return(list(results = results, compartments = NULL))
 
   sets <- c(PK$PK,

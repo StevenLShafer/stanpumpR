@@ -1182,6 +1182,12 @@ getDrugPK <- function(
   out$inr <- if (is.null(model) || !is.null(model$inr))
     validateINR(X$inr, drug, drugDefaults$Concentration.Units, X$parallelSystems)
     else NULL
+  # The activated clotting time (heparin on bypass, R/act.R): a direct Emax
+  # link on the anti-factor Xa activity, turned into the plotted ACT after the
+  # engine has run.  Validated like the INR block, with the same model skip.
+  out$act <- if (is.null(model) || !is.null(model$act))
+    validateACT(X$act, drug, drugDefaults$Concentration.Units)
+    else NULL
   # A pulsed extended-release formulation (Adderall XR): the fractions and
   # delays simCpCe() splits each of its doses into; see R/oral-pulses.R.
   out$oralPulses <- validateOralPulses(X$oralPulses, drug)
