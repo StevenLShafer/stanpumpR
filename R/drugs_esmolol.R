@@ -73,7 +73,12 @@
 # 10.1007/s00228-016-2176-0, read in full) gave 12 healthy volunteers 0.5, 1
 # and 1.5 mg/kg at 0.5 mg/kg per 15 s: heart rate fell significantly from 2
 # minutes, and after 1 mg/kg its lowest value was the 2-minute one (Table 4),
-# so the time to peak heart-rate effect is 2 minutes.  AV conduction lags
+# so the time to peak heart-rate effect is 2 minutes (heart rate read at 1,
+# 2, 3, 4, 6 and 8 minutes, per the electronic supplement).  Reves JG et al.,
+# J Thorac Cardiovasc Surg 1990;100:221-227 (PMID 1974664, read in full)
+# agrees: in anaesthetised coronary surgical patients on chronic beta
+# blockers, 80 mg over 15 s then 12 mg/min, heart rate read every 15 s, "the
+# peak effect of esmolol (80 mg) occurred in 1.6 minutes".  AV conduction lags
 # further: Sintetos AL, Hulse J, Pritchett EL, Clin Pharmacol Ther
 # 1987;41:112-117 (doi 10.1038/clpt.1987.19, read in full) found the PR
 # interval longest 6 to 10 minutes after a 30-second bolus, when blood
