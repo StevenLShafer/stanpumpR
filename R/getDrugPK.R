@@ -1434,6 +1434,13 @@ oralFormulationSet <- function(pkSet, absorption, drug, formulation)
 #' @param coef coefficients of the plasma curve
 #' @param lambda its eigenvalues, same length
 #' @param ke0 effect site rate constant, per minute
+#' The search is held to 20 time constants of the slowest rate involved
+#' (and to \code{upper}): a curve with no slow phase, such as a fast
+#' one-compartment drug in an infant, is exactly zero long before 4000
+#' minutes, and a golden-section search whose first probes all read zero
+#' wanders into that flat tail instead of finding the early peak.  The peak
+#' always comes well inside that window.
+#'
 #' @param upper longest time to search, in minutes
 #' @returns the time of the maximum, in minutes
 #' @keywords internal
@@ -1444,6 +1451,7 @@ effectSitePeakTime <- function(coef, lambda, ke0, upper = 4000)
   lambda <- lambda[use]
   ke0 <- separateEigenvalues(ke0, lambda)   # no division by zero
   e <- coef * ke0 / (ke0 - lambda)
+  upper <- min(upper, 20 / min(c(lambda, ke0)))
   stats::optimize(
     function(t) sum(e * exp(-lambda * t)) - sum(e) * exp(-ke0 * t),
     c(0, upper), maximum = TRUE

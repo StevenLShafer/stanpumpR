@@ -44,19 +44,22 @@
 # fat-free mass with the switch on; with it off they are the published values
 # for everyone (legacyVolume = 1).
 #
-# EFFECT SITE: tPeak 3.3 MINUTES, FOR HEART RATE (Ritchie 1998); NO BAND
-# ======================================================================
+# EFFECT SITE: tPeak 5 MINUTES, FOR HEART RATE; NO BAND
+# =====================================================
 # Lammers measured no effect.  Ritchie RH, Morgan DJ, Horowitz JD, J Pharm
 # Sci 1998;87:177-182 (doi 10.1021/js9702776, read in full) gave 4 mg
 # intravenously to 12 patients with ischaemic heart disease at cardiac
 # catheterisation and fitted an effect compartment to MYOCARDIAL metoprolol
 # content (uptake 1.85 /min, efflux 0.061 /min), not plasma, so its ke0 is
 # not carried over; but on its own model the reduction in heart rate (ke0
-# 1.30 /min) peaks 3.3 minutes after the bolus, and that time to peak is
-# used.  Its 95% interval is wide (ke0 -0.06 to 2.66 /min).  The paced PR
-# interval and LV dP/dt max (ke0 0.30 and 0.29 /min) peak about 7.3
-# minutes after the bolus, in line with the 5-10 minutes observed in the
-# companion papers; heart rate is the endpoint used here.
+# 1.30 /min) peaks 3.3 minutes after the bolus, with a wide 95% interval
+# (ke0 -0.06 to 2.66 /min), and the paced PR interval and LV dP/dt max (ke0
+# 0.30 and 0.29 /min) about 7.3 minutes after it; the companion papers
+# observed the peak effects 5-10 minutes after the bolus.  The label
+# (Lopressor) puts maximal beta blockade about 20 minutes after a 10-minute
+# infusion in volunteers.  On Steven L. Shafer's decision (2026-10-20) the
+# tPeak is 5 minutes, the start of the observed 5-10 minutes, rather than
+# the 3.3 minutes of the heart-rate fit.
 #
 # PREGNANCY
 # =========
@@ -126,7 +129,7 @@ METOPROLOL_Q  <- 74.5      # L/h
 METOPROLOL_V2 <- 97.6      # L
 METOPROLOL_KA <- 1.19      # /h
 METOPROLOL_F  <- 0.45
-METOPROLOL_TPEAK <- 3.3   # min, heart rate (Ritchie 1998)
+METOPROLOL_TPEAK <- 5     # min, heart rate (Ritchie 1998's observed 5-10 min)
 # Fixed from one poor and one ultrarapid metaboliser
 METOPROLOL_CYP2D6_CL <- c(poor = 0.44, intermediate = 1, normal = 1,
                           ultrarapid = 2.01)
@@ -194,8 +197,8 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "PO): CL 65.8 L/h, V1 187 L, Q 74.5 L/h, V2 97.6 L, ka 1.19 /h, F 0.45; ",
     "CYP2D6 poor metaboliser CL x 0.44 and F x 2.28, ultrarapid CL x 2.01 and ",
     "F x 0.43 (one subject each); CYP2D6 ", cyp2d6, ".  Time to peak ",
-    "heart-rate effect 3.3 min from Ritchie RH et al., J Pharm Sci ",
-    "1998;87:177-182. https://doi.org/10.1007/s40262-017-0515-7"
+    "heart-rate effect 5 min (Ritchie RH et al., J Pharm Sci ",
+    "1998;87:177-182: peak effects 5-10 min). https://doi.org/10.1007/s40262-017-0515-7"
   )
   if (pregnancyApplied) {
     reference <- paste0(reference, "; ", pregnancyReference(

@@ -63,11 +63,17 @@
 # fat-free mass with the switch on and left as published with it off
 # (legacyVolume = 1).
 #
-# NO EFFECT SITE, NO BAND
-# =======================
-# Phenylephrine's pressor effect is immediate, but the source fitted no
-# concentration-effect relation, and no pressure is predicted here.
+# EFFECT SITE: tPeak 42 SECONDS (Schwinn 1989); NO BAND
+# =====================================================
+# Hengstmann fitted no concentration-effect relation.  Schwinn DA, Reves JG,
+# Anesth Analg 1989;68:571-578 (PMID 2541637; abstract) gave 50 randomised
+# boluses of 50 to 200 mcg to 18 anaesthetised coronary surgical patients
+# and recorded MAP, cardiac output and SVR every 5 seconds: at every dose
+# the changes were maximal about 42 seconds after the bolus.  That is the
+# tPeak, 0.7 minutes.  No pressure is predicted.
 # -----------------------------------------------------------------------------
+
+PHENYLEPHRINE_TPEAK <- 0.7   # min, Schwinn 1989 (42 s to the peak rise in MAP)
 
 # Hengstmann 1982, Table 3, subjects He, Al, Se, Gr
 PHENYLEPHRINE_HENGSTMANN <- data.frame(
@@ -122,13 +128,14 @@ phenylephrine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Hengstmann JH, Goronzy J, Eur J Clin Pharmacol 1982;21:335-341. ",
     "Two compartments, the mean of 4 healthy volunteers' IV fits: V1 41.1 L, ",
     "V2 300 L, CL 2.09 L/min, Q 3.74 L/min (the paper's mean CL 2095 mL/min ",
-    "and Vdss 340 L). Doses as the hydrochloride. ",
+    "and Vdss 340 L). Doses as the hydrochloride.  Time to peak effect 42 s ",
+    "(Schwinn DA, Reves JG, Anesth Analg 1989;68:571-578). ",
     "https://doi.org/10.1007/BF00637623"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = PHENYLEPHRINE_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

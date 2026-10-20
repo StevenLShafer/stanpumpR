@@ -8,7 +8,7 @@ Metoprolol is cleared mainly by CYP2D6, and the **CYP 2D6** field of the Patient
 
 ### What is plotted
 
-Plasma metoprolol in ng/mL, for doses of metoprolol tartrate as labelled, intravenous (mg) or oral (mg PO, and mg PO bid for twice-daily dosing). No beta-blockade, heart rate or blood pressure is drawn. The effect site peaks **3.3 minutes** after a bolus, the time to peak reduction in heart rate after 4 mg intravenously in patients at cardiac catheterisation (Ritchie and colleagues, *J Pharm Sci* 1998;87:177-182, whose effect compartment was fitted to the drug's content in the heart, not plasma, so only its time to peak is carried over, and whose uncertainty in it is wide). The PR interval and contractility peak later, about 7 minutes after the bolus; heart rate is the endpoint used.
+Plasma metoprolol in ng/mL, for doses of metoprolol tartrate as labelled, intravenous (mg) or oral (mg PO, and mg PO bid for twice-daily dosing). No beta-blockade, heart rate or blood pressure is drawn. The effect site peaks **5 minutes** after a bolus. After 4 mg intravenously in patients at cardiac catheterisation, Ritchie and colleagues (*J Pharm Sci* 1998;87:177-182) observed the peak effects 5 to 10 minutes after the bolus; their effect compartment, fitted to the drug's content in the heart rather than plasma, put the heart-rate peak at 3.3 minutes with wide uncertainty and the PR interval and contractility at about 7 minutes. The label puts maximal beta blockade about 20 minutes after a 10-minute infusion. Heart rate is the endpoint, at the start of the observed range.
 
 ### Where to be careful
 

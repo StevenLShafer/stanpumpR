@@ -17,7 +17,7 @@ test_that("the parameters are Table 3's, in minutes", {
   expect_equal(set$cl3, 0)
   expect_equal_rounded(KA / 60, set$ka_PO)
   expect_equal_rounded(F, set$bioavailability_PO)
-  expect_equal(PK$tPeak, 3.3)
+  expect_equal(PK$tPeak, 5)
   # Vss 285 L; terminal half-life 3.4 h
   expect_equal(round(log(2) / set$lambda_2 / 60, 1), 3.4)
 })
@@ -109,11 +109,11 @@ test_that("pregnancy: clearance, volumes and Q x 1.5 and oral bioavailability x 
   expect_no_match(poor1$reference, "Ryu", fixed = TRUE)
 })
 
-test_that("the effect site peaks 3.3 min after a bolus (heart rate, Ritchie 1998)", {
+test_that("the effect site peaks 5 min after a bolus (heart rate, Ritchie 1998)", {
   PK <- getDrugPK("metoprolol", 70, 170, 60, "male")
-  expect_equal(PK$tPeak, 3.3)
+  expect_equal(PK$tPeak, 5)
   pk <- PK$PK$default
   coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
   lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
-  expect_equal(effectSitePeakTime(coef, lambda, pk$ke0), 3.3, tolerance = 1e-4)
+  expect_equal(effectSitePeakTime(coef, lambda, pk$ke0), 5, tolerance = 1e-4)
 })
