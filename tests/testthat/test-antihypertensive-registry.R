@@ -20,6 +20,13 @@ STATUS <- c("ready_for_source_reproduction", "requires_source_extraction",
             "requires_parameter_fit", "descriptive_only",
             "complete_not_implemented")
 VALIDATION <- c("none", "in_population", "external_population")
+# Every antihypertensive implemented as a drug, in one place: two assertions
+# below read it, and when they each carried their own copy the second was
+# easy to leave a drug short of the first.
+IMPLEMENTED_ANTIHYPERTENSIVES <- c(
+  "clevidipine", "fenoldopamPediatric", "carvedilol", "azilsartan",
+  "chlorthalidone", "hydrochlorothiazide", "lisinopril", "olmesartan",
+  "valsartan", "benazepril", "enalapril")
 # "observed" is a measured summary statistic -- a Cmax, a median tmax, a
 # urinary recovery -- rather than an estimate of a model parameter.  Added
 # 2026-10-20 for Kaiser 1989, where such numbers CHECK a derived vector
@@ -55,16 +62,28 @@ test_that("no blood pressure is simulated anywhere", {
   expect_false(any(registry$bp_simulation_enabled))
 })
 
-test_that("exactly one record is externally validated, and it is clevidipine", {
-  # This assertion used to read "nothing is externally validated", which was
-  # a true description of the registry until Ericsson's second 1999 paper was
-  # read.  It is pinned as a count rather than loosened, so the next record
-  # to claim external validation has to come here and say so.
+test_that("exactly two records are externally validated, and which two", {
+  # This assertion read "nothing is externally validated" until Ericsson's
+  # second 1999 paper was read, then "exactly one, and it is clevidipine"
+  # until enalapril was validated against Arafat 2005.  It stays pinned as a
+  # count and a set rather than being loosened, which is why each new claim
+  # has had to come here and say so.
+  #
+  # The two are different KINDS of external validation, and the distinction
+  # is worth keeping: clevidipine's check is against a second paper's own
+  # DERIVATION of quantities the implemented record must derive, while
+  # enalapril's is against MEASUREMENTS -- Arafat 2005's metabolite peaks of
+  # 54.8 and 57.2 ng/mL, which the model reproduces at 55.7, and which settle
+  # a dose-basis ambiguity its own source leaves open.
   validated <- registry[registry$external_validation_status != "none", ]
-  expect_equal(nrow(validated), 1)
-  expect_identical(validated$model_id,
-                   "clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999")
-  expect_identical(validated$external_validation_status, "external_population")
+  expect_equal(nrow(validated), 2)
+  expect_setequal(validated$model_id,
+                  c("clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999",
+                    "enalapril__ir_tablet__oral__healthy_adults__concentration_and_urine__faisal2019"))
+  expect_true(all(validated$external_validation_status == "external_population"))
+  # Both are records the library actually plots: an external check is only
+  # worth the name against a curve someone sees.
+  expect_setequal(validated$stanpumpr_drug, c("clevidipine", "enalapril"))
   # The validating study is its own record, read in full and NOT implemented:
   # the library plots one clevidipine curve, the 25-subject population one.
   ext <- registry[registry$model_id ==
@@ -194,10 +213,7 @@ test_that("only concentration records are executable, and they are the library's
   # Every executable record is either a concentration curve implemented as a
   # drug, or an endpoint relation evaluable against a supplied concentration
   implemented <- ready[ready$endpoint == "concentration", ]
-  expect_setequal(implemented$stanpumpr_drug,
-                  c("clevidipine", "fenoldopamPediatric", "carvedilol",
-                    "azilsartan", "chlorthalidone", "hydrochlorothiazide",
-                    "lisinopril", "olmesartan", "valsartan", "benazepril"))
+  expect_setequal(implemented$stanpumpr_drug, IMPLEMENTED_ANTIHYPERTENSIVES)
   dd <- getDrugDefaultsGlobal()
   for (d in implemented$stanpumpr_drug) {
     expect_true(d %in% dd$Drug, info = d)
@@ -217,10 +233,7 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
                       !grepl("__catalog__none__", registry$model_id), ]
   expect_gt(nrow(gated), 20)
   expect_true(all(is.na(gated$stanpumpr_drug) |
-                    gated$stanpumpr_drug %in%
-                      c("clevidipine", "fenoldopamPediatric", "carvedilol",
-                    "azilsartan", "chlorthalidone", "hydrochlorothiazide",
-                    "lisinopril", "olmesartan", "valsartan", "benazepril")))
+                    gated$stanpumpr_drug %in% IMPLEMENTED_ANTIHYPERTENSIVES))
   # The four the handoff asked to be ported first.  Azilsartan was on that
   # list and has since been ported, from the full text supplied on
   # 2026-10-17; so has chlorthalidone, from the same paper.  What is gated

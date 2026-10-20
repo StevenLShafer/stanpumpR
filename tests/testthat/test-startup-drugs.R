@@ -10,6 +10,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
   # and ventilation, which the gas rules add themselves
   notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
                   "desvenlafaxine", "salicylate", "hydroxyrisperidone", "dehydroaripiprazole",
+                  "enalaprilat",
                   "air", "oxygen", "ventilation")
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))

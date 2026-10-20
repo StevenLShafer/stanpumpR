@@ -631,6 +631,19 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       }
       if (length(parts) == 0) parts <- list(runEngines(dose, pkSets))
       results <- superposeEngineResults(parts, plotRecovery, emerge)
+    } else if (!is.null(PK$transitChain))
+    {
+      # Transit-chain absorption (enalapril): the whole dose table at once,
+      # exactly, by matrix exponential, because a chain of N identical
+      # compartments has an eigenvalue repeated N times and the closed-form
+      # coefficients all divide by differences of rate constants.  The engine
+      # advances the parent and its active metabolite together and returns
+      # both, so this dispatch comes before runEngines(), whose metabolite
+      # route convolves exponential amplitudes a defective system does not
+      # have.  No clinical-event PK switching, no parallel systems or extra
+      # oral formulations (getDrugPK() refuses them).
+      # See R/advanceTransitChain.R.
+      results <- advanceTransitChain(dose, PK, maximum, plotRecovery, emerge)
     } else if (!is.null(PK$michaelisMenten))
     {
       # Saturable elimination (phenytoin): the whole dose table at once, by

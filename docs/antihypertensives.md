@@ -1319,7 +1319,7 @@ different reason and so calls for a different next action.
 | **lisinopril** | Implemented | Thomson 1989, full text. The library's first flip-flop model |
 | **olmesartan** | Implemented | Yoshihara 2005, full text. Dose basis resolved from the paper's own words |
 | **valsartan** | Implemented | Heo 2016, full text and supplement. Zero-order release, no renal term |
-| **enalapril** | Blocked on an **engine**, not on evidence | Faisal 2019 is complete and verified. Repeated eigenvalues (section 14.3) |
+| **enalapril** | Implemented, 2026-10-20 | Faisal 2019. Needed an **engine**, not more evidence: repeated eigenvalues (14.3, built in 16) |
 | **losartan** | **Refuted**, not merely underdetermined | Lo 1995, full text read; it prints one area where two are needed (§15) |
 | **captopril** | **Not pursued** — wrong structure | Out of clinical use, by the maintainer's decision; and saturable enzyme binding makes a linear fit the wrong structure, not an approximation |
 | **fosinopril** | **Not pursued** — not identifiable | Out of clinical use, by the maintainer's decision; and its sources give three independent numbers where two compartments need four |
@@ -1402,6 +1402,14 @@ abstract raises: whether the oral conversion fraction differs from the
 intravenous one, which first-pass metabolism to EXP3174 would imply.
 
 ### 14.3 Enalapril: the first case where the obstacle is an engine, and why discretising will not do
+
+> **Superseded in part by section 16.** The engine described here was built on
+> 2026-10-20 and the drug is implemented. The full text, fetched afterwards,
+> also corrected this section on three points: the citation below is wrong
+> (the paper is *Front Pediatr* 2019;7:281), and the transit parameterisation
+> and the formulation covariate are **not** ambiguous — the text resolves
+> both. Read 16.1 to 16.3 before relying on anything in this subsection
+> except its argument about the eigenvalues, which stands.
 
 Faisal 2019 (*Front Pharmacol* 10:973) is complete, verified and not
 implemented, which no other record in this registry has been. It fitted serum
@@ -1679,3 +1687,208 @@ that a printed total was quoted without checking its composition — §13.2's "6
 rows with the label open" was the first, and only 66 were. The builder now
 prints the breakdown instead of one total, because the fix for that mistake is
 not more care in reading, it is output that cannot be misread.
+
+
+## 16. Enalapril: the engine, and what the full text undid (2026-10-20)
+
+Section 14.3 recorded enalapril as this registry's one record blocked by an
+**engine** rather than by evidence. The engine is now built, the drug is in,
+and the full text — fetched from PubMed Central after §14 was written — undid
+three of the things §14.3 said. They are set out below rather than quietly
+corrected, because two of them are the same mistake and it is a mistake worth
+naming.
+
+### 16.1 The citation was wrong
+
+§14.3 and the registry cited **Front Pharmacol 2019;10:973**, doi
+`10.3389/fphar.2019.00973`. There is no such paper. The source is
+
+> Faisal M, Cawello W, Burckhardt BB, de Hoon J, Laer S. Simultaneous
+> semi-mechanistic population pharmacokinetic modeling analysis of enalapril
+> and enalaprilat serum and urine concentrations from child appropriate
+> orodispersible minitablets. **Front Pediatr 2019;7:281.**
+> doi `10.3389/fped.2019.00281`, PMID 31338356, PMC6629781.
+
+Every *number* §14.3 recorded from Table 1 was right, and all twelve verified
+against the full text. Only the identifier was wrong, which is the more
+dangerous failure of the two: a wrong value gets caught by a reproduction
+check, and a wrong identifier gets caught by nobody until someone tries to
+read the paper. AGENTS.md already forbids inventing a source identifier. The
+lesson this adds is narrower and sharper: **a record read from a PDF or a
+screen should have its identifier resolved against the index, not transcribed
+from memory of the header.** A `convert_article_ids` call takes a second.
+
+### 16.2 "Internally inconsistent" was reading less than the text says
+
+§14.3 said the paper's transit parameterisation "is internally inconsistent",
+quoting `MTT1 = (N+1)/KTR` against a separately defined `KA`, and reported that
+four readings all worked so the choice was a documented rounding decision.
+
+The paper is explicit, and had been all along:
+
+> "the rate transfer through these transits was calculated using the
+> expression MTT1 = N+1/KTR … **The rate constant of absorption (KA) was the
+> transfer rate of the drug from the last transit into enalapril central
+> compartment.**"
+
+with the Results adding "**Eight transits (transits = 8)** were added for
+reference and pooled data analysis". That fixes the structure completely: eight
+chain compartments, the first seven emptying at KTR = 9/0.558 = 16.13 /h and
+the eighth at KA = 6.010 /h. Both printed parameters are used exactly as
+defined, and the thirteen-state count §14.3 gave was right.
+
+What survives is a much smaller thing. The formula presumes *nine* steps at one
+rate; the structure has seven at KTR and one at KA. So the model's true mean
+input time is 7/KTR + 1/KA = **0.600 h** against the printed MTT1 of 0.558 h.
+That is an inconsistency in a derived summary, not in any parameter, and
+nothing is free to choose. The three other readings were integrated anyway and
+all four do reproduce the paper's reported peaks — parent 0.82 to 0.95 h
+against its "almost 1 h", metabolite 3.20 to 3.32 h against its "around 3 to
+4 h". The reading the text states is **not** the closest of the four to the
+reported parent peak, and that is worth stating rather than glossing: reading 1
+(nine compartments, a depot emptying at KA) is nearer at 0.95 h against the
+implemented reading's 0.88 h. It means agreement with a reported summary was
+never what chose the reading — the text was. An earlier draft of this section
+claimed the implemented reading was also the closest, which the drug's own test
+disproves, since that test asserts reading 1 has the latest peak. So the
+conclusion §14.3 reached was right and its reason
+was wrong: the readings agreeing made the ambiguity harmless, but there was no
+ambiguity to be harmless about.
+
+### 16.3 The formulation covariate was not ambiguous either
+
+§14.3 recorded `THETA(X) = 0.730` as having an "ambiguous" target, reasoning
+that it should be the formulation effect on MTT1 but that read that way it
+moves absorption 9 minutes earlier where the text says about 5.
+
+Both numbers are in the paper, from **different analyses**. By Equation 7 the
+factor multiplies MTT1 when `FORM = 1`, the orodispersible mini-tablet, and
+that is the pooled covariate model's 9 minutes; the 5 minutes is the Wilcoxon
+comparison of the two formulations fitted *separately*. Neither is in doubt and
+neither applies here, because the reference tablet is `FORM = 0`, so the factor
+is 1 and the printed MTT1 already is the reference formulation's.
+
+**Two of the three errors above are one error**: a quantity was called
+ambiguous when the text resolved it, by a reading that stopped at the parameter
+table. The identifiability discipline of §4 is about what a source *contains*;
+this is about what it *says*, and §4's habit of counting printed numbers does
+not substitute for reading the prose that defines them. §14.2's rule still
+holds — an ambiguous parameterisation is a blocker only when the readings
+disagree with the paper's own figures — but it should be reached for second,
+after checking whether the paper simply answers the question.
+
+### 16.4 The engine, and why it is exact rather than numerical
+
+The obstacle §14.3 identified was real and is the reason this took an engine.
+A chain of N identical compartments has one eigenvalue repeated N times; every
+closed-form coefficient in this library divides by a difference of two rate
+constants; `separateEigenvalues()` nudges accidental ties apart by a relative
+1e-8, and for a structural tie eight deep the partial-fraction coefficients
+would scale as 1/nudge⁷ — the catastrophic cancellation §3.3 rejected esmolol's
+decomposition for. The library's own standard forbids the nudge here.
+
+The system is linear throughout, so §6's test says it needs no numerical
+solver. What it needs is exact handling of a repeated eigenvalue, which is a
+**matrix exponential**: the Jordan structure is never formed, and the
+t^k·exp(−kt) terms the repeated eigenvalue produces fall out of the series by
+themselves. `R/advanceTransitChain.R` is therefore **exact in the same sense
+the closed-form engines are** — to rounding, not to a step size — and unlike
+`advanceMichaelisMenten()` it is not an approximation of anything. That
+distinction matters for the library's self-description: it now has two
+non-closed-form engines and only one of them trades accuracy for generality.
+
+Two implementation points worth keeping. First, the propagator depends on the
+step length alone: augmenting the matrix with a state held at 1 that feeds the
+central compartment at unit rate makes one exponential yield both the
+homogeneous propagator and the rate response, and because the system is linear
+in the rate that response is *scaled* rather than recomputed. Second, that is
+what makes it cheap — `simulationTimeGrid()` fills every gap with the same
+geometric offsets, so a few dozen distinct step lengths serve thousands of
+points, and memoising on the step length turns the whole simulation into a few
+dozen exponentials of a 14×14 matrix. A five-dose, three-day simulation runs in
+about 0.01 s.
+
+Discretising the parent's input as hydrochlorothiazide's Weibull was (§12) is
+closed off, and §14.3's statement of why stands: convolution commutes, so it
+would be exact in the limit for the parent, but the metabolite's own two-transit
+delay means the two moieties would need **different input kernels from one dose
+table**, which the architecture does not allow. An input shape the engine lacks
+has always been a rewrite of the dose rows — until the shape differs between a
+parent and its metabolite.
+
+### 16.5 What this record is worth, beyond enalapril
+
+Almost every oral antihypertensive in this library is **apparent**: its volumes
+and clearances are divided by a bioavailability nobody measured. This one is
+not. Both moieties are cleared renally with no further metabolism, so fitting
+urine with serum closes the mass balance and the bioavailability becomes a
+parameter in its own right — estimated at 0.606 against the literature's
+long-reported 60%, a number the fit was not given. It is the registry's only
+oral record with absolute disposition parameters, and the design that achieved
+that (separate measurement of both moieties in both matrices) is the one worth
+remembering when judging a future candidate.
+
+The gap it cannot close is the one that matters clinically. The source tested
+age, weight, height, sex and total body water and retained **weight on the
+parent's central volume alone**, normalised to the study's mean of 69.76 kg.
+Nothing on any clearance, nothing on the metabolite. So there is no renal term
+although *both* moieties are cleared renally and by nothing else — the sharpest
+form of that gap anywhere in this document, since here the absent covariate is
+the same quantity the model's own identifiability argument rests on. Its
+population was 24 healthy young adults. Enalapril is dose-reduced in renal
+impairment in practice and nothing in these curves shows it, which both help
+pages say twice.
+
+### 16.6 An external check that settles what the source could not
+
+§16.5 says the record's value is its absolute parameters. Its other value is
+that it turned out to be checkable.
+
+Arafat 2005 (*J Clin Pharm Ther* 30:319-28, PMID 15985045) gave two brands of
+10 mg enalapril maleate to healthy volunteers and measured **both moieties with
+specific enzyme immunoassays** rather than the ACE-inhibition assay most earlier
+work used. Nothing of it was an input to Faisal's fit. Its metabolite peaks were
+54.8 and 57.2 ng/mL; the implemented model gives **55.9**, between the two and
+within 3% of each. That is a joint check on the conversion fraction and the
+metabolite's volume, which no internal consistency test could provide.
+
+**It also settles the dose basis, which Faisal's text cannot.** The paper never
+says whether F1 = 0.606 absorbs the maleate-to-base mass fraction of 0.764, and
+§16's position was that it does not matter because the model is used on the
+basis it was fitted on. That position is sound but incomplete — it makes the
+curve right *relative to the paper* without telling you which basis is
+physically correct. Arafat answers it: a factor of 1.308 in either direction
+puts the prediction outside the measured range, so entering the dose as the
+labelled strength is right and not merely self-consistent. **This is the
+general lesson: a basis ambiguity a source leaves open is often decidable from
+a study that never entered the fit, and that is exactly the check the illicit-drug
+rule in AGENTS.md demands for the same reason** — it is what catches a basis
+error.
+
+The two studies **disagree about the terminal phase**: Arafat's metabolite area
+was 267 and 256 ng·h/mL against the model's 495, a factor of 1.9. The
+disagreement belongs to Arafat, who report as a finding of their own that
+enalaprilat concentrations at 12 to 24 hours ran "lower than those reported in
+the literature". Recorded, not reconciled, on §14.5's rule for Sun 1994 against
+benazepril: rescaling a primary fit to another study's number is fitting to a
+result.
+
+The **parent** is not comparable, and the authors say why — their enalapril
+peaks are "about 10 times those published in the literature". A 4-fold
+disagreement against a value its own authors flag as 10-fold high is an assay
+dispute, not a model error. **Worth stating as a rule in its own right: a
+validation source's own caveats about its assay are part of the comparison, and
+a study can be a usable check on one analyte and no check at all on another.**
+
+This makes enalapril the registry's **second** record with
+`external_validation_status` other than `none`, after clevidipine (§11), and
+the first validated against measurements rather than against a second
+derivation.
+
+### 16.7 Where the numbers stand
+
+Of 135 records, **15** are executable and 176 parameters are audited: **107
+checked against a primary full text**, 25 against an abstract, 8 derived here,
+and 36 still carrying the handoff specification's numbers unverified.
+`bp_simulation_enabled` is `FALSE` on every record, and **no drug in stanpumpR
+plots a blood pressure.**

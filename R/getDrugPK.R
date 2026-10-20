@@ -1223,6 +1223,60 @@ getDrugPK <- function(
   # zero-order release leaves no row flagged PO for those paths to act on.
   out$oralZeroOrder <- zeroOrder
 
+  # Transit-chain absorption, with an optional active metabolite formed behind
+  # a second chain (enalapril, Faisal 2019).  A chain of N identical
+  # compartments has one eigenvalue repeated N times, which no closed-form
+  # coefficient in this library can carry, so simCpCe() dispatches such a drug
+  # to the exact matrix-exponential engine; see R/advanceTransitChain.R.
+  #
+  # The metabolite is declared INSIDE the block rather than as X$metabolite,
+  # and that is the point rather than a shortcut: the standard resolution above
+  # convolves the parent's exponential coefficients through the metabolite's
+  # disposition, and a defective system has no such coefficients.  The engine
+  # advances both moieties together instead, so it needs the metabolite's own
+  # parameters rather than a set of amplitudes.
+  if (!is.null(X$transitChain))
+  {
+    if (!is.null(X$metabolite) || !is.null(X$oralFormulations) ||
+        !is.null(X$oralSaturation) || !is.null(X$sublingualSaturation) ||
+        !is.null(X$parallelSystems) || !is.null(X$michaelisMenten) ||
+        !is.null(X$osmotic) || !is.null(X$molar) || !is.null(X$oralPulses) ||
+        !is.null(X$oralZeroOrder) || !is.null(X$dosePhase) ||
+        isTRUE(X$doseDependent) || !is.null(X$inr))
+      stop("Invalid transitChain for ", drug, ": not available with an ",
+           "X$metabolite block, several oral formulations, saturable oral or ",
+           "sublingual absorption, parallel systems, Michaelis-Menten ",
+           "elimination, an osmotic or molar dose basis, pulsed or zero-order ",
+           "oral release, a dose-phase split, dose-dependent parameters or ",
+           "an INR.")
+    tc <- validateTransitChain(X$transitChain, out$PK[[PK_EVENT_DEFAULT]], drug)
+    if (!is.null(tc$metabolite))
+    {
+      formed <- tc$metabolite
+      # A parent and its metabolite need not report in the same units, and the
+      # amounts the engine carries are the parent's; see
+      # metaboliteUnitScale() in R/metaboliteCoefficients.R for why its
+      # absence would be wrong by a thousandfold.
+      tc$metabolite$unitScale <- metaboliteUnitScale(
+        drugDefaults$Concentration.Units,
+        getDrugDefaults(formed$name)$Concentration.Units
+      )
+      out$metaboliteName <- formed$name
+      # What simCpCe() reads to lift the metabolite into a series of its own,
+      # and R/compartments.R to label its peripheral panel.  The engine
+      # returns both moieties' concentrations itself, so no coefficients ride
+      # along, and there is no effect site to carry.
+      for (event in names(out$PK))
+        out$PK[[event]]$metabolite <- list(
+          name = formed$name,
+          ke0  = 0,
+          k21  = if (isTRUE(formed$k21 > 0)) formed$k21 else 0,
+          k31  = 0
+        )
+    }
+    out$transitChain <- tc
+  }
+
   # Dose-time phase split (dabigatran after hip replacement): doses given before
   # dosePhase$at minutes use the default PK set, doses at or after it the set
   # named by dosePhase$late.  simCpCe() runs the two as independent linear
