@@ -990,6 +990,23 @@ sources <- rbind(sources,
       source_type = "primary_fitted",
       source_url = "https://doi.org/10.1111/j.1365-2125.1989.tb05335.x",
       limitations = "One compartment, apparent throughout (oral data only; the paper puts bioavailability at about 29% from earlier work). CL/F = 0.251 x weight x (creatinine/70 umol/L)^-0.887 x (age/65)^-0.451; V/F 36.7 L with NO covariate (weight and body surface area were both tested on it and neither helped, against an interindividual variability in volume above 100%); ka 0.104 /h. ABSORPTION IS SLOWER THAN ELIMINATION by more than fourfold, so the model is FLIP-FLOP and the plotted terminal slope is the absorption rate constant: an apparent half-life read off the curve is an absorption half-life and does not lengthen with renal impairment, although the whole curve rises. Sandra 2023 fitted ka 0.075 /h in 13 hypertensive children, independently confirming that order. The fitted cardiac-failure factor of 0.645 is NOT applied: the Patient Profile has no cardiac failure field, and the authors note the covariate is confounded with cardiac glycoside use. Steady-state design, so the absorption phase is the least well determined part; saturable binding to converting enzyme gives a prolonged low-concentration terminal phase in other studies that this one-compartment linear model does not reach. No pharmacodynamic model was fitted."),
+  rec("valsartan__fdc_tablet__oral__healthy_adults__concentration__heo2016",
+      "valsartan", "valsartan", "oral", "fixed-dose combination tablet",
+      population = "48 healthy Korean subjects (age 29 +/- 6 y, weight 68.7 +/- 7.6 kg) given a single fixed-dose combination tablet of valsartan 160 mg with amlodipine 10 mg in a two-formulation crossover with a 14-day washout; 624 concentrations to 48 h",
+      endpoint = "concentration", analyte = "valsartan",
+      matrix = "plasma", pk_evidence = FULL, pd_evidence = PART,
+      execution_status = READY, stanpumpr_drug = "valsartan",
+      source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1111/bcp.13069",
+      limitations = "Two compartments with first-order elimination and a ZERO-ORDER input of duration D1, apparent throughout (oral data only): CL/F 6.18 L/h, V1/F 25.9 L, Q/F 2.01 L/h, V2/F 17.4 L at a 70 kg standard, D1 4.39 h. The zero-order absorption was CHOSEN ON THE DATA, not by convention -- the objective function was 7712.434 against 7874.858 for first order on the same number of parameters -- so it is run through the oralZeroOrder release mode built for carvedilol, whose source rejected first-order absorption for the same kind of reason. The peak is therefore at the END of the release, at exactly 4.39 h, against the label\'s 2-4 h, and the authors state that the model somewhat underpredicts the median peak concentration: the curve is a fair description of exposure and a blunt one of the peak. Size is theory-based allometry at 70 kg (weight^0.75 on CL/F and Q/F, weight on V1/F and V2/F, the paper\'s Equations 1 and 2), which is the library\'s own scaling, so the switch off reproduces the published model exactly; D1 is NOT scaled, the size equations naming clearance and volume only. BODY WEIGHT WAS THE ONLY SIGNIFICANT COVARIATE: age, serum creatinine, smoking and drinking status were screened by stepwise covariate modelling and rejected (P > 0.001), so THERE IS NO RENAL TERM and the signature does not name creatinine. That is a real limitation rather than a modelling choice -- the population was 48 healthy young adults with a mean creatinine of 0.81 mg/dL and contains no information about renal impairment. Single dose, so nothing here constrains accumulation on chronic daily dosing. The paper also fitted a blood-pressure model (effect compartment, Imax 0.164) and an amlodipine interaction term, which is a separate record."),
+  rec("valsartan__sacubitril_valsartan__oral__healthy_chinese__concentration__yang2022",
+      "valsartan", "valsartan", "oral", "sacubitril/valsartan tablet",
+      population = "healthy Chinese subjects given sacubitril/valsartan",
+      endpoint = "concentration", analyte = "valsartan",
+      matrix = "plasma", pk_evidence = PART, pd_evidence = PRO,
+      execution_status = FITP, source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1002/cpdd.1181",
+      limitations = "READ IN FULL with its supplement on 2026-10-20 and REJECTED, which is recorded here so it is not re-derived: the printed parameters do not reproduce the paper\'s own figures. Simulating the published model gives tmax 7.49 h and Cmax 0.99 mcg/mL against roughly 2-2.5 h and 2.8 mcg/mL in its own Figure 1 visual predictive check; AUC 20.3 does match the figure\'s ~20, so the clearance is sound and the SHAPE is not. Checked twice, with the closed-form solution and with an independent Runge-Kutta integration. Moving the decimal point in Ka (1.9 for the printed 0.19) fixes tmax exactly, at 1.96 h, and still leaves Cmax 1.6-fold low, so AT LEAST TWO printed parameters are irreconcilable and nothing in the paper identifies which -- a single transcription error could have been repaired, two cannot be guessed. Additionally: V2/F is printed as 0.51 L with a 26-fold confidence interval on CL2/F; the Methods describe a BMI allometry that Table 3 does not contain; and the drug studied was sacubitril/valsartan rather than conventional valsartan. Heo 2016 is used instead, which is older and smaller but internally consistent. To settle this record, individual-level data or an author correction would be needed, not another reading of the same tables."),
   rec("olmesartan__medoxomil_tablet__oral__pooled_12_trials__concentration__yoshihara2005",
       "olmesartan medoxomil", "olmesartan", "oral", "medoxomil tablet",
       population = "629 participants in 12 trials -- healthy volunteers and hypertensive patients, 355 Westerners (338 Caucasian, 17 Hispanic) and the remainder Japanese; 5119 concentrations after single and multiple oral doses of olmesartan medoxomil 2.5-80 mg",
@@ -1991,6 +2008,31 @@ parameters <- rbind(parameters,
   olmPar("race coefficient on CL/F", -0.030, "dimensionless", 0.040,
          "Table IV, effect of covariates on CL/F",
          "exp(-0.030 x race) with Japanese 1 and Westerner 0. NOT APPLIED by the drug: there is no race field in the Patient Profile. Not statistically significant (p > 0.05, 131 percent CV, bootstrap interval -0.103 to 0.049), and the difference is 3.0 percent. The authors retained it only because the paper's declared purpose was to evaluate the effect of race and conclude there is none; that absence is the finding and leaving the coefficient out preserves it."))
+
+VAL_ID  <- "valsartan__fdc_tablet__oral__healthy_adults__concentration__heo2016"
+VAL_URL <- "https://doi.org/10.1111/bcp.13069"
+VAL_POP <- "48 healthy Korean subjects, single 160 mg valsartan with 10 mg amlodipine"
+
+valPar <- function(name, value, units, rse, notes)
+  par(VAL_ID, name, value, units, "fitted",
+      uncertainty = rse, uncertainty_type = "relative_standard_error_percent",
+      matrix = "plasma", population = VAL_POP, endpoint = "concentration",
+      source_url = VAL_URL,
+      source_table_or_page = "Supplementary Table S4, valsartan column",
+      verification = "primary_full_text", notes = notes)
+
+parameters <- rbind(parameters,
+  # -- valsartan, Heo 2016 Supplementary Table S4: read from the supplement --
+  valPar("CL/F", 6.18, "L/h per 70 kg", 5.76,
+         "At the paper's 70 kg standard individual, scaled by weight^0.75 (its Equation 1). Quoted in the full text as well as the supplement, which is the one cross-check the table gets."),
+  valPar("V1/F", 25.9, "L per 70 kg", 9.73,
+         "Scaled by weight^1 (Equation 2). Its between-subject variance was 0.519, the largest in the valsartan model."),
+  valPar("Q/F", 2.01, "L/h per 70 kg", 14.5,
+         "Apparent intercompartmental clearance, scaled by weight^0.75."),
+  valPar("V2/F", 17.4, "L per 70 kg", 16.0,
+         "Apparent peripheral volume, scaled by weight^1."),
+  valPar("D1", 4.39, "h", 5.83,
+         "Duration of the ZERO-ORDER absorption, and the single most consequential number in the model: the peak falls at exactly the end of the release, so this is the predicted tmax. The supplement's column header prints the unit as /h/70kg, which is a typo on two counts -- D1 is a duration, and the paper's size equations scale clearance and volume only -- so it is used as 4.39 h, unscaled. Zero-order absorption beat first-order on an objective function 162 lower (7712.434 against 7874.858), which is why it is used rather than approximated by a ka. Its between-subject variability was FIXED at zero in the valsartan model (it was estimated for amlodipine), so the 4.39 h is the whole population's."))
 
 # -----------------------------------------------------------------------------
 # Assemble, check and write

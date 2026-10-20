@@ -192,7 +192,7 @@ test_that("only concentration records are executable, and they are the library's
   expect_setequal(implemented$stanpumpr_drug,
                   c("clevidipine", "fenoldopamPediatric", "carvedilol",
                     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
-                    "lisinopril", "olmesartan"))
+                    "lisinopril", "olmesartan", "valsartan"))
   dd <- getDrugDefaultsGlobal()
   for (d in implemented$stanpumpr_drug) {
     expect_true(d %in% dd$Drug, info = d)
@@ -215,7 +215,7 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
                     gated$stanpumpr_drug %in%
                       c("clevidipine", "fenoldopamPediatric", "carvedilol",
                     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
-                    "lisinopril", "olmesartan")))
+                    "lisinopril", "olmesartan", "valsartan")))
   # The four the handoff asked to be ported first.  Azilsartan was on that
   # list and has since been ported, from the full text supplied on
   # 2026-10-17; so has chlorthalidone, from the same paper.  What is gated
