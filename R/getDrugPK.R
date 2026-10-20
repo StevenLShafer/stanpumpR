@@ -1100,7 +1100,11 @@ getDrugPK <- function(
       PK = PK,
       tPeakRoute = tPeakRoute,
       tPeak = tPeak,
-      pkEvents = events,
+      # A dose-phase drug (dabigatranHip) names its second PK set internally
+      # (e.g. "day2"); the split is by dose time, not a user-entered clinical
+      # event, so do not expose the phase name as a pkEvent (it would otherwise
+      # appear on the help page as an "event" the user can enter).
+      pkEvents = if (is.null(X$dosePhase)) events else PK_EVENT_DEFAULT,
       reference = if (is.null(X$reference)) "Not Available" else X$reference,
       weight = weight,
       height = height,
