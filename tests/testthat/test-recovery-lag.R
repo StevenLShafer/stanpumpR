@@ -78,6 +78,8 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "diclofenac", "meloxicam",
                     # lagged oral depots (2026-10-10)
                     "celecoxib", "aspirin",
+                    # olmesartan's fitted ALAG of 0.427 h (Yoshihara 2005)
+                    "olmesartan",
                     # lagged oral absorption (2026-10-17)
                     "empagliflozin", "ertugliflozin",
                     # Melin 2023's fixed 0.248 h lag (dapagliflozin)

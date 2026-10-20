@@ -21,6 +21,14 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",
+                # The renin-angiotensin drugs whose sources put a power of the
+                # serum creatinine CONCENTRATION, in umol/L, on clearance:
+                # lisinopril (Thomson 1989, ^-0.887 over 70) and olmesartan
+                # (Yoshihara 2005, ^-0.344 over 80, its strongest covariate).
+                # Valsartan is deliberately NOT here: Heo 2016 screened serum
+                # creatinine and rejected it, so its signature does not name
+                # the covariate and this test asserts that it ignores it.
+                "lisinopril", "olmesartan",
                 # Grasela and Sheiner's Equation 7 (R/drugs_procainamide.R)
                 "procainamide",
                 # Cockcroft-Gault on clearance (R/drugs_digoxin.R, Yukawa 2001)
