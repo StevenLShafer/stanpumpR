@@ -9,6 +9,9 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # R/drugs_rivaroxaban.R, R/drugs_edoxaban.R, R/drugs_dabigatran.R,
                 # R/drugs_enoxaparin.R and R/drugs_fondaparinux.R, which use MDRD)
                 "apixaban", "rivaroxaban", "edoxaban", "dabigatran",
+                # dabigatranHip (Trocóniz 2007): Cockcroft-Gault CrCl and serum
+                # creatinine both act on the day-2-to-10 phase (R/drugs_dabigatranHip.R)
+                "dabigatranHip",
                 "enoxaparin", "fondaparinux",
                 # Renal function is hydrochlorothiazide's ONLY covariate
                 # (R/drugs_hydrochlorothiazide.R, Van Wart 2013): the source
@@ -32,10 +35,13 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "digoxinIVPediatric")
 
 # The elimination clearance of each of a drug's systems: its own and those of
-# its parallel systems (meloxicam's renal term is on its intravenous system).
+# its parallel systems (meloxicam's renal term is on its intravenous system),
+# and the later-phase set of a dose-phase drug (dabigatranHip's renal term is on
+# its day-2-to-10 phase, not the day-0-1 default set).
 systemClearances <- function(pk)
   c(pk$PK$default$cl1,
-    vapply(pk$parallelSystems, function(s) s$PK$default$cl1, numeric(1)))
+    vapply(pk$parallelSystems, function(s) s$PK$default$cl1, numeric(1)),
+    if (!is.null(pk$dosePhase)) pk$PK[[pk$dosePhase$late]]$cl1)
 
 test_that("a blank creatinine is the assumed normal value for age and sex", {
   expect_equal(patientCreatinine(NULL, 40, "male"), SCR_ASSUMED_MALE)
