@@ -8,7 +8,7 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # Anticoagulants with a renal clearance term (R/drugs_apixaban.R,
                 # R/drugs_rivaroxaban.R, R/drugs_edoxaban.R, R/drugs_dabigatran.R,
                 # R/drugs_enoxaparin.R and R/drugs_fondaparinux.R, which use MDRD)
-                "apixaban", "rivaroxaban", "edoxaban", "dabigatran",
+                "apixaban", "apixabanVTE", "rivaroxaban", "edoxaban", "dabigatran",
                 # dabigatranHip (Trocóniz 2007): Cockcroft-Gault CrCl and serum
                 # creatinine both act on the day-2-to-10 phase (R/drugs_dabigatranHip.R)
                 "dabigatranHip",

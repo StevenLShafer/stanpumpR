@@ -88,7 +88,7 @@ plasmaOnly <- c(
   "semaglutideOral", "cetagliptin",
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
-  "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
+  "heparin", "bivalirudin", "apixaban", "apixabanVTE", "rivaroxaban", "warfarin",
   "edoxaban", "dabigatran", "dabigatranHip", "argatroban", "enoxaparin", "fondaparinux",
   "fluindione", "acenocoumarol",
   # The antihypertensives (2026-10-17): concentration only.  Neither source
