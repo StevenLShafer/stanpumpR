@@ -1322,7 +1322,7 @@ different reason and so calls for a different next action.
 | **enalapril** | Blocked on an **engine**, not on evidence | Faisal 2019 is complete and verified. Repeated eigenvalues (section 14.3) |
 | **losartan** | Blocked on **access** | Lo 1995 is the right study and only its abstract was read (section 14.2) |
 | **captopril**, **fosinopril** | **Not pursued** | Out of clinical use, by the maintainer's decision; and both were weak anyway |
-| **benazepril** | Not yet searched | — |
+| **benazepril** | Blocked on **access** — one PDF needed | Kaiser 1989; the parent closes, the metabolite does not (§14.5) |
 
 ### 14.1 Three implementations, three different lessons
 
@@ -1468,9 +1468,43 @@ steady-state volume over clearance**, so those are three independent numbers and
 not four. Two compartments need four. It is the third drug in this document to
 fail on that one identity.
 
-### 14.5 Where the numbers stand
+### 14.5 Benazepril: the parent closes and the metabolite does not
 
-Of 133 records, 13 are executable, `bp_simulation_enabled` is `FALSE` on every
+A screen of the 25 benazepril/benazeprilat pharmacokinetic hits shows that the
+Ciba-Geigy series — Kaiser, Waldmeier, Sioufi, 1989 to 1994 — *is* the primary
+literature for this drug; everything else is a special-population comparison, an
+interaction study or a review. **Kaiser 1989** (*Biopharm Drug Dispos*
+10:365-76) is the one to obtain: 62 healthy men on a single 10 mg dose, plus
+steady state in 15 more.
+
+The abstracts are enough to do the identifiability check, and the answer splits
+the two moieties:
+
+**The parent closes.** One compartment for benazepril is determined by Sun
+1994's printed AUC(0-4 h) of 140 ng·h/mL and the reported 0.6 h half-life —
+CL/F about 71 L/h, V/F about 62 L — and `ka` near 2.7 /h follows from the
+0.55 h time to peak against an elimination rate constant of 1.155 /h.
+
+**The metabolite does not.** AUC = f<sub>m</sub> × dose ÷ CL is one equation in
+two unknowns, and the 17% urinary recovery does **not** pin the formation
+fraction: Waldmeier 1991's ¹⁴C mass balance shows a third of the radioactivity
+leaving as glucuronides of both moieties, and the class review reports biliary
+elimination for benazeprilat specifically. So the urinary fraction is a lower
+bound on formation, not a measurement of it.
+
+**And there is a structural caution that matters more than the arithmetic.**
+Benazeprilat's elimination is biphasic with a 22.3 h terminal phase that carries
+only a *minor amount* of the total — which is the signature of saturable binding
+to converting enzyme, the same phenomenon the enalaprilat record already flags,
+and **exactly the reason captopril was dropped** (§14.4). A two-compartment
+linear fit to that tail would be the wrong *structure* rather than an
+approximation of the right one. Kaiser 1989's fitted parameters over 62 subjects
+would say whether the published fit avoids that or inherits it, and that is the
+question to ask of the full text — not merely "what are the numbers".
+
+### 14.6 Where the numbers stand
+
+Of 134 records, 13 are executable, `bp_simulation_enabled` is `FALSE` on every
 one, and **no drug in stanpumpR plots a blood pressure.** Valsartan's source
 fitted one — an effect compartment with a maximum inhibition of 0.164, plus an
 interaction term with amlodipine — and it is recorded as an endpoint relation
