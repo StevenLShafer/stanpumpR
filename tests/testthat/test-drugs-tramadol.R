@@ -358,7 +358,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     # Anticoagulants (2026-10-17): plasma activity or concentration, or the
     # INR; no effect site (R/drugs_heparin.R and the others).
     "heparin", "bivalirudin", "apixaban", "rivaroxaban",
-    "edoxaban", "dabigatran", "dabigatranHip", "apixabanVTE", "argatroban", "enoxaparin", "fondaparinux",
+    "edoxaban", "dabigatran", "dabigatranHip", "apixabanVTE", "heparinCPB", "argatroban", "enoxaparin", "fondaparinux",
     "warfarin", "fluindione", "acenocoumarol",
     # The antihypertensives joined on 2026-10-17: concentration only, no
     # published equilibration constant, and no blood pressure is plotted for

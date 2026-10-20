@@ -209,6 +209,8 @@ helpConcentrationUnits <- function(units) {
          # Heparin is measured by its activity, warfarin by the INR.
          "IU" = "IU/mL (activity)",
          "INR" = "INR (international normalized ratio)",
+         # Heparin on bypass is plotted as the activated clotting time (R/act.R).
+         "ACT" = "ACT (s, activated clotting time)",
          as.character(units))
 }
 

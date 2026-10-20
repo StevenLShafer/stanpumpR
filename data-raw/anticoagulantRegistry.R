@@ -108,9 +108,9 @@ registry <- rbind(
 
   # --- Provisional (published, but a material gap) ---------------------------
   reg("ufh_delavenne_2017_cpb", "unfractionated heparin",
-      "IV, cardiopulmonary bypass", "anti-Xa activity -> ACT", "Hemochron Jr ACT",
-      "IV", "pending", NA,
-      "Numeric PK and Emax/EC50 table not available from a verified publisher source; never combine with Jia anti-IIa.",
+      "IV, cardiopulmonary bypass", "anti-Xa activity -> ACT (plotted, seconds)", "Hemochron Jr ACT",
+      "IV", "research_ready", "heparinCPB",
+      "Table 2 read from the full text; two-compartment anti-Xa PK with a direct Emax link to the ACT (ACT0 116 s, Emax 720 s, C50 3.49 IU/mL), body weight on Vc and CL, no other covariate. A SECOND heparin model, never combined with the Jia anti-IIa model. Small (50 patients), bypass-specific; the ACT is device-dependent and not a validated clinical target.",
       "https://doi.org/10.1093/bja/aex044"),
   reg("enox_barras_2009", "low molecular weight heparin",
       "SC, bleeding/bruising PD", "enoxaparin-induced bleeding/bruising", "PD (not plotted)",
@@ -177,6 +177,7 @@ par <- function(drug, parameter, value, units, provenance, population, source_ur
              population, source_url, stringsAsFactors = FALSE)
 
 JIA  <- "41 enrolled (32 completed) cardiac-bypass patients, Jia 2015"
+DEL17 <- "50 cardiac-bypass patients, Delavenne 2017 (reference 70 kg)"
 ZH   <- "36 young healthy Chinese volunteers, Zhang 2012"
 CIR  <- "4385 subjects (phase I-III), Cirincione 2018 NVAF reference"
 BYON <- "970 subjects (phase I-III VTE), Byon 2017 reference 60 y, 85 kg, 100 mL/min"
@@ -196,6 +197,14 @@ parameters <- rbind(
   par("heparin", "Vc", 3.04, "L", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
   par("heparin", "Q", 0.171, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
   par("heparin", "Vp", 8.01, "L", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
+
+  par("heparinCPB", "CL", 0.841, "L/h (x (WT/70)^0.767)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "Vc", 3.1, "L (x WT/70)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "Q", 4.67, "L/h", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "Vp", 2.23, "L", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "ACT0", 116, "s (baseline clotting time)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "Emax", 720, "s (maximal ACT prolongation)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
+  par("heparinCPB", "C50", 3.49, "IU/mL (anti-Xa for half of Emax)", "estimated", DEL17, "https://doi.org/10.1093/bja/aex044"),
 
   par("bivalirudin", "CL", 0.323, "L/h/kg", "estimated", ZH, "https://doi.org/10.1038/aps.2012.37"),
   par("bivalirudin", "V1", 0.086, "L/kg", "estimated", ZH, "https://doi.org/10.1038/aps.2012.37"),

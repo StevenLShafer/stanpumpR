@@ -273,6 +273,9 @@ simulationPlot <- function(
       # Warfarin is plotted as the INR it produces, which has no unit
       # (R/inr.R).
       unitText[plotTable$Concentration.Units == "INR"] <- "INR"
+      # Heparin on bypass is plotted as the activated clotting time it produces,
+      # in seconds (R/act.R).
+      unitText[plotTable$Concentration.Units == "ACT"] <- "ACT (s)"
       panelUnits <- stats::setNames(unitText, plotTable$Drug)
       plotTable$Wrap <- paste0(panelName, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical

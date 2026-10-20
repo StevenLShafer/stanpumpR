@@ -39,6 +39,9 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   # baseline (1 / PCA0 for the turnover model, the fitted baseline for the
   # transit model).
   if (!is.null(PK$inr)) plasmaRise <- plasmaRise - inrBaseline(PK$inr)
+  # Likewise the ACT (heparin on bypass, R/act.R), which starts at its baseline
+  # clotting time ACT0 before any heparin.
+  if (!is.null(PK$act)) plasmaRise <- plasmaRise - actBaseline(PK$act)
   maxRise <- max(plasmaRise)
   results$CpNormCp <- if (maxRise > 0) plasmaRise          / maxRise * 100 else 0
   results$CeNormCp <- if (maxCp > 0) results$"Effect Site" / maxCp * 100 else 0
@@ -329,6 +332,14 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- NA_real_
         ng_Conv  <- NA_real_
       },
+      ACT = {                  # Heparin anti-Xa (IU/mL) driving the ACT (R/act.R)
+        # The anti-factor Xa activity is simulated exactly as for an "IU" drug
+        # (amounts in IU, divided by 1000 below to give IU/mL); actEngineResults()
+        # then turns the activity into the activated clotting time.
+        mg_Conv  <- NA_real_
+        mcg_Conv <- NA_real_
+        ng_Conv  <- NA_real_
+      },
       INR = {                  # Warfarin: R and S in mg/L, plotted as INR
         # The enantiomer concentrations are simulated in mg/L (= mcg/mL), as
         # for any drug in mcg/mL, and turned into the INR after the engines
@@ -352,7 +363,9 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # Checked before the mass conversions, which would turn a mass unit on an
     # activity drug into NA silently.
     iuDose <- grepl("^IU( |/|$)", dose$Units)
-    if (identical(PK$Concentration.Units, "IU")) {
+    if (PK$Concentration.Units %in% c("IU", "ACT")) {
+      # An ACT drug (heparin on bypass) is dosed in IU like any activity drug;
+      # its anti-Xa activity is simulated the same way before actEngineResults().
       if (!all(iuDose))
         stop(PK$drug, " is dosed in international units (IU), not ",
              paste(unique(dose$Units[!iuDose]), collapse = ", "), ".")
@@ -503,9 +516,9 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     {
       # The controller inverts one system; it cannot target a sum of them, nor
       # an INR drug (whose plotted curve is not a concentration).
-      if (!is.null(PK$parallelSystems) || !is.null(PK$inr))
+      if (!is.null(PK$parallelSystems) || !is.null(PK$inr) || !is.null(PK$act))
         stop("Target-controlled infusion is not available for a drug ",
-             "simulated as several parallel systems or as an INR.")
+             "simulated as several parallel systems or as an INR or ACT.")
       schedule <- tciSchedule(dose, PK, maximum)
       dose <- schedule$dose
       tci <- tciDisplay(schedule, PK)
@@ -661,6 +674,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
           parts[[length(parts) + 1]] <- runEngines(
             shareOf(dose, sys$doseFraction, sys$routes), sys$PK)
       results <- inrEngineResults(parts, PK$inr)
+    } else if (!is.null(PK$act))
+    {
+      # An ACT drug (heparin on bypass, R/act.R): the anti-factor Xa activity is
+      # simulated by the ordinary intravenous engine and then turned, point by
+      # point, into the activated clotting time it produces.
+      base <- runEngines(shareOf(dose, PK$doseFraction), pkSets)
+      results <- actEngineResults(base, PK$act)
     } else if (!is.null(PK$parallelSystems))
     {
       parts <- list(runEngines(shareOf(dose, PK$doseFraction, PK$routes), pkSets))
