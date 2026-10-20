@@ -426,7 +426,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
     "epinephrine", "magnesiumSulfate", "labetalol", "nitroglycerin",
     "procainamide", "dopamine",
-    "propranolol", "digoxin", "phenylephrine",
+    "digoxin", "phenylephrine",
     "milrinonePediatric",
     "digoxinIVPediatric"
   ))

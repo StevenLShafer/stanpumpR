@@ -12,4 +12,6 @@ Doses are propranolol hydrochloride, as labelled. No covariates were fitted; the
 
 ### Where to be careful
 
-Six young healthy men. Propranolol's clearance follows hepatic blood flow, so it falls with cardiac output, in heart failure and in shock. The racemate is measured, and only l-propranolol is a beta blocker. No heart rate is predicted. See [the vasoactive and resuscitation drugs](help:models/vasoactive).
+Six young healthy men. Propranolol's clearance follows hepatic blood flow, so it falls with cardiac output, in heart failure and in shock. The racemate is measured, and only l-propranolol is a beta blocker.
+
+The effect site peaks **5 minutes** after a bolus, the time to the largest reduction in exercise tachycardia after 10 mg intravenously in healthy men (Achong and colleagues, *Clin Pharmacol Ther* 1976;19:148-152); Riva and colleagues (*J Cardiovasc Pharmacol* 1980;2:707-714) saw the effects on heart rate 5 to 8 minutes after an intravenous dose. Both are read so far from their abstracts. No heart rate is predicted. See [the vasoactive and resuscitation drugs](help:models/vasoactive).

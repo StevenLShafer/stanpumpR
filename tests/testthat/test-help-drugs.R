@@ -97,7 +97,7 @@ plasmaOnly <- c(
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
     "epinephrine", "magnesiumSulfate", "labetalol", "nitroglycerin",
     "procainamide", "dopamine",
-    "propranolol", "digoxin", "phenylephrine",
+    "digoxin", "phenylephrine",
     "milrinonePediatric",
     "digoxinIVPediatric"
 )

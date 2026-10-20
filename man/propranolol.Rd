@@ -26,6 +26,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Three compartments from the mean triexponential of six healthy men; see
-the header of \code{R/drugs_propranolol.R}.
+Three compartments from the mean triexponential of six healthy men, with
+a 5-minute time to peak heart-rate effect; see the header of
+\code{R/drugs_propranolol.R}.
 }
