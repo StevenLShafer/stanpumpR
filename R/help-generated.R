@@ -466,6 +466,28 @@ helpVasoactiveToObtainMarkdown <- function(registry = vasoactiveRegistry()) {
                 want$to_obtain), collapse = "\n")
 }
 
+#' The antibiotics' MBC bands, one row per antibiotic, as a Markdown table
+#'
+#' From \code{antibioticMbcBand()} (R/antibioticMbc.R) and the band the
+#' library ships, which the tests hold equal.
+#' @noRd
+helpAntibioticMbcBandMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  drugs <- antibioticMicTable()$Drug
+  rows <- vapply(drugs, function(d) {
+    b <- antibioticMbcBand(d)
+    m <- antibioticMic(d)
+    dd <- drugDefaults[drugDefaults$Drug == d, ]
+    sprintf("| [%s](help:drugs/%s) | %s | %s / %s / %s | %s to %s (typical %s) %s |",
+            d, d, b$principal,
+            helpFormatNumber(b$free[["lower"]]), helpFormatNumber(b$free[["typical"]]),
+            helpFormatNumber(b$free[["upper"]]),
+            helpFormatNumber(dd$Lower), helpFormatNumber(dd$Upper), helpFormatNumber(dd$Typical),
+            m$Plotted)
+  }, character(1))
+  paste(c("| Antibiotic | Principal pathogen | Free MBC, mg/L: lower / typical / upper | Band on the curve, mcg/mL |",
+          "|---|---|---|---|", rows), collapse = "\n")
+}
+
 HELP_GENERATED_BLOCKS <- list(
   "route-table" = helpRouteTableMarkdown,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,
@@ -473,5 +495,6 @@ HELP_GENERATED_BLOCKS <- list(
   "illicit-pk-table" = helpIllicitPKTableMarkdown,
   "james-lbm-figure" = helpJamesLBMFigure,
   "vasoactive-registry-table" = helpVasoactiveRegistryMarkdown,
-  "vasoactive-to-obtain" = helpVasoactiveToObtainMarkdown
+  "vasoactive-to-obtain" = helpVasoactiveToObtainMarkdown,
+  "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown
 )

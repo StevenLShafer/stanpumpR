@@ -12,7 +12,7 @@ None; only the plasma concentration is plotted. *Time until threshold* is theref
 
 ### Typical concentrations
 
-The shaded band is the traditional trough range, 10 to 20 mcg/mL. The 2020 consensus guideline (Rybak and colleagues, *Am J Health Syst Pharm* 2020;77:835-864) recommends instead a total AUC over 24 hours of 400 to 600 mg·h/L at an MIC of 1 mg/L for serious MRSA infection; at steady state that AUC is the daily dose divided by clearance, and can be read off the curve.
+The shaded band (2.9 to 11 mcg/mL total) marks free vancomycin at the measured **MBC** of *Staphylococcus aureus*, from its MBC50 of 2 mg/L to its MBC90 of 8 mg/L (Honda and colleagues, *BMC Infect Dis* 2011;11:335), divided by the free fraction. Enterococci, most viridans streptococci and tolerant staphylococci are not killed by vancomycin at any level the curve reaches and are not in the band. The old trough of 10 to 20 mcg/mL total starts near the top of the band. The 2020 consensus guideline (Rybak and colleagues, *Am J Health Syst Pharm* 2020;77:835-864) recommends instead a total AUC over 24 hours of 400 to 600 mg·h/L at an MIC of 1 mg/L for serious MRSA infection; at steady state that AUC is the daily dose divided by clearance, and can be read off the curve.
 
 ### Where to be careful
 

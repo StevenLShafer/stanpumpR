@@ -56,6 +56,8 @@
 
 **Maturation.** The rise of clearance from birth towards adult values, described as a function of post-menstrual age.
 
+**MBC.** Minimum bactericidal concentration: the lowest concentration of an antibiotic that kills 99.9 per cent of an organism in 24 hours in the laboratory. Like the MIC it is compared with the free drug concentration. The antibiotics' shaded band marks the expected MBCs of the pathogens each is given against. See [Antibiotics: the MIC line and the MBC band](help:models/antibiotics).
+
 **MEAC.** Minimum effective analgesic concentration. See [MEAC: comparing opioids](help:models/meac).
 
 **MIC.** Minimum inhibitory concentration: the lowest concentration of an antibiotic that stops visible growth of an organism in the laboratory. It is compared with the free drug concentration. The antibiotics' *Time until threshold* counts down to it. See [Time until threshold](help:models/recovery).
