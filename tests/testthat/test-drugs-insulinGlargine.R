@@ -29,3 +29,27 @@ test_that("once daily: average steady-state concentration is F x dose / (CL x 24
   expect_equal(avg(20), (20 / 35)^-0.300 * 20000 / (74.5 * 24), tolerance = 0.01)
   expect_false(any(getDrugDefaults("insulinGlargine")$Units[[1]] %in% insulinRateUnits))
 })
+
+test_that("pregnancy: CL/F x 1.25, absorption and V/F unchanged", {
+  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.25 (Catalano 1998), in
+  # thamInsulin() (R/insulinTham.R, PREGNANCY); V/F and absorption unchanged.
+  on  <- getDrugPK("insulinGlargine", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("insulinGlargine", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("insulinGlargine", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK[[1]]; b <- off$PK[[1]]
+  expect_equal(a$cl1 / b$cl1, INSULIN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  same <- c("v1", "v2", "v3", "cl2", "cl3", "ka_RA", "bioavailability_RA",
+            "tlag_RA")
+  expect_true(all(same %in% names(a)))
+  expect_identical(a[same], b[same])
+  expect_match(on$reference, "Catalano", fixed = TRUE)
+  expect_no_match(off$reference, "Catalano", fixed = TRUE)
+  # The values the model gives with the flag on
+  actual <- insulinGlargine(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(684.283422, actual$v1)
+  expect_equal_rounded(1, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(1.552083, actual$cl1)
+  expect_equal_rounded(0, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+})

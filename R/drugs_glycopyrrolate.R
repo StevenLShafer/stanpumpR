@@ -34,6 +34,27 @@
 # rate, secretions and the vagal responses to neostigmine each need their
 # own calibrated relationship.  The row is plasma only.
 #
+# PREGNANCY
+# =========
+# Ali-Melkkila, Kaila, Kanto and Iisalo (Anaesthesia 1990;45:634-637; read in
+# full, 2026-10-19) gave 6 ug/kg into the deltoid of 8 women an hour before
+# caesarean section (69.8 kg) and measured glycopyrronium by radioreceptor
+# assay: systemic clearance (dose / AUC, absorption taken as complete) 1.12
+# (0.23) L/h/kg, half-life 33.4 min, 58% of the dose in the urine by 8 h.  The
+# same group, with the same assay, had found 0.58 L/h/kg after the same
+# intramuscular route and 0.54 L/h/kg intravenously in nonpregnant
+# gynaecological patients; the authors attribute the difference to the
+# higher cardiac output, plasma volume and renal clearance of pregnancy.
+# This model gives 0.54 L/h/kg (cation) for a nonpregnant woman of the
+# parturients' age and size, so it agrees with that nonpregnant reference.
+# With the Patient Profile's Pregnant field on, the clearance is multiplied
+# by GLYCOPYRROLATE_PREGNANCY_CL_FACTOR = 1.9, the like-for-like ratio
+# (intramuscular against intramuscular) 1.12 / 0.58 = 1.93; the volumes and
+# distribution clearances are unchanged.  Confidence is low: eight women,
+# compared across studies (although within one laboratory and assay), with
+# the intramuscular dose taken as wholly absorbed in both.  See
+# R/pregnancy.R.  (Claude Code, 2026-10-19.)
+#
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Fixed published parameters: volumes scale with fat-free mass relative to
@@ -46,9 +67,17 @@
 #   https://doi.org/10.1111/bcp.12118
 # Kirvela M et al., Br J Anaesth 1993;71:437-439.
 #   https://doi.org/10.1093/bja/71.3.437
+# Ali-Melkkila T, Kaila T, Kanto J, Iisalo E.  Pharmacokinetics of
+#   glycopyrronium in parturients.  Anaesthesia 1990;45:634-637.
+#   https://doi.org/10.1111/j.1365-2044.1990.tb14385.x (pregnancy)
 # -----------------------------------------------------------------------------
 
 GLYCOPYRROLATE_CATION_FRACTION <- 318.43 / 398.33   # cation / bromide salt mass
+
+# Clearance in late pregnancy relative to the published value: Ali-Melkkila
+# 1990's parturients over the same group's nonpregnant patients, both
+# intramuscular (1.12 / 0.58; see the header).
+GLYCOPYRROLATE_PREGNANCY_CL_FACTOR <- 1.9
 
 #' Glycopyrrolate pharmacokinetics
 #'
@@ -56,9 +85,13 @@ GLYCOPYRROLATE_CATION_FRACTION <- 318.43 / 398.33   # cation / bromide salt mass
 #' @param adjustToFFM scale volumes to the patient's fat-free mass and
 #'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
 #'   published fixed parameters unscaled.
+#' @param pregnant when \code{TRUE}, multiply the clearance by
+#'   \code{GLYCOPYRROLATE_PREGNANCY_CL_FACTOR} (Ali-Melkkila 1990; see the
+#'   header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-glycopyrrolate <- function(weight, height, age, sex, adjustToFFM = TRUE)
+glycopyrrolate <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                           pregnant = FALSE)
 {
   # Size scaling (see the header): fixed published parameters, unscaled
   # with the switch off.
@@ -69,6 +102,7 @@ glycopyrrolate <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v2  <- 19.0 / f * size$volume
   v3  <- 71.5 / f * size$volume
   cl1 <- 44.9 / f / 60 * size$clearance    # L/min
+  if (isTRUE(pregnant)) cl1 <- cl1 * GLYCOPYRROLATE_PREGNANCY_CL_FACTOR
   cl2 <- 25.6 / f / 60 * size$clearance
   cl3 <- 8.23 / f / 60 * size$clearance
 
@@ -99,6 +133,12 @@ glycopyrrolate <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "rescaled so a bromide-labelled dose plots as cation. ",
     "https://doi.org/10.1111/bcp.12118"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", GLYCOPYRROLATE_PREGNANCY_CL_FACTOR),
+      paste0("Ali-Melkkila T et al., Anaesthesia 1990;45:634-637. ",
+             "https://doi.org/10.1111/j.1365-2044.1990.tb14385.x")))
+  }
 
   return(
     list(

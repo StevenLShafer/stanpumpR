@@ -180,7 +180,12 @@ time point as a sum of exponentials.
    across event boundaries.
 5. Interpolate to an even grid (`equiSpace`), normalize to peak Cp/Ce, and scale against MEAC.
 
-Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `equiSpace` and `max`.
+Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `equiSpace` and `max`,
+and `compartments`: the concentrations in V2 and V3 and the amount still in the absorption depots,
+by time, for the compartments the drug has (`R/compartments.R`). Every engine returns them as
+columns `C2`, `C3` and `Depot`; the peripheral concentrations are read off the plasma states
+exactly (`k21 * sum(s / (k21 - mu))` over the modes), so they cost a few vector operations and
+are computed on every run. The plot draws them only under **Peripheral compartments**.
 
 **The time line.** The closed-form engines are exact at any time, so the points they are asked
 about decide only how the curve is drawn and what a run costs. `simulationTimeGrid()`
@@ -253,9 +258,10 @@ Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally
 models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
 adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `pregnancy.R` holds the
-Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, the review's findings per drug in
-`pregnancyFindings()`), which `getDrugPK()` passes only to the eight models that name `pregnant`, each applying
-the factor its header documents from Ansari 2016; `recoveryCalc()` computes
+Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, `pregnancyGfrFactor()`, and the
+literature review's finding for every drug in `pregnancyFindings()`, read from `inst/extdata/pregnancyRegistry.csv`),
+which `getDrugPK()` passes only to the models that name `pregnant`, each applying the factor its header
+documents from its own source (`docs/pregnancy.md`); `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 

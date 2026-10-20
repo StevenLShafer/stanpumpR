@@ -441,6 +441,13 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
 
   x <- numeric(iDRP)
   Cp <- numeric(L)
+  # The peripheral concentration (on the same footing as Cp: the amount in the
+  # compartment over its volume) and the amount still to be absorbed, in the
+  # oral depots, the transit compartment before them, the intramuscular depot
+  # of the prodrug and the saturable subcutaneous depot; see R/compartments.R.
+  C2 <- numeric(L)
+  depot <- numeric(L)
+  depotStates <- c(seq_len(iIM), iT, iS)
   for (i in seq_len(L)) {
     if (i > 1) {
       dt <- timeLine[i] - timeLine[i - 1]
@@ -462,12 +469,17 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     arriving <- which(jumpAt == i)
     for (j in arriving) x[jumps$state[j]] <- x[jumps$state[j]] + jumps$amount[j]
     Cp[i] <- x[iC] / V
+    if (q > 0) C2[i] <- x[iP] / V2
+    depot[i] <- sum(x[depotStates])
   }
 
   data.frame(
     Time = timeLine,
     Cp = Cp,
     Ce = rep(NA_real_, L),
-    Recovery = rep(NA_real_, L)
+    Recovery = rep(NA_real_, L),
+    C2 = C2,
+    C3 = rep(0, L),
+    Depot = depot
   )
 }

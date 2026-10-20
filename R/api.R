@@ -217,7 +217,7 @@ apiPatient <- function(patient) {
     creatinine <- apiNumber(creatinine, "patient.creatinine", MIN_CREATININE, MAX_CREATININE)
   }
   sex <- apiChoice(tolower(apiScalar(get("sex"), "patient.sex")), "patient.sex", SEX_VALUES)
-  # Read only by the models the pregnancy review quantifies (R/pregnancy.R);
+  # Read only by the models with a measured change in pregnancy (R/pregnancy.R);
   # getDrugPK() would refuse it for a man, but the request is told why first.
   pregnant <- apiFlag(get("pregnant", FALSE), "patient.pregnant")
   if (pregnant && sex != SEX_FEMALE) {

@@ -17,7 +17,22 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # (R/drugs_hydrochlorothiazide.R, Van Wart 2013): the source
                 # fitted no body-size term either, so weight reaches it only
                 # through Cockcroft-Gault.
-                "hydrochlorothiazide")
+                "hydrochlorothiazide",
+                # Serum creatinine itself, not an estimate of its clearance,
+                # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
+                "magnesiumSulfate",
+                # Grasela and Sheiner's Equation 7 (R/drugs_procainamide.R)
+                "procainamide",
+                # Cockcroft-Gault on clearance (R/drugs_digoxin.R, Yukawa 2001)
+                "digoxin",
+                # Bedside Schwartz, CKD-EPI from 18, on clearance
+                # (R/drugs_milrinonePediatric.R, Hornik 2019)
+                "milrinonePediatric",
+                # Cheng 1997's regressions on Cockcroft-Gault (R/drugs_digoxinIV.R)
+                "digoxinIV",
+                # el-Desoky 2005's serum creatinine term
+                # (R/drugs_digoxinIVPediatric.R)
+                "digoxinIVPediatric")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

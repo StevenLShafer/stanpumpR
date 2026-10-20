@@ -32,8 +32,8 @@
 #'   `docs/weight-adjustment.md`.
 #' @param pregnant is the patient pregnant?  TRUE or FALSE (the default); TRUE
 #'   requires \code{sex = "female"}.  Only the models that name it apply the
-#'   changes of late pregnancy described by Ansari, Carvalho, Shafer and Flood
-#'   (Anesth Analg 2016;122:786-804); see \code{getDrugPK()}.
+#'   changes of late pregnancy measured for that drug
+#'   (inst/extdata/pregnancyRegistry.csv); see \code{getDrugPK()}.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -108,6 +108,10 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
     output[[drug]]$tci                 <- X$tci
     output[[drug]]$scheduled           <- X$scheduled
+    # The peripheral concentrations and the depot; see R/compartments.R.
+    output[[drug]]$compartmentsOwn        <- X$compartments
+    output[[drug]]$compartments           <- X$compartments
+    output[[drug]]$metaboliteCompartments <- X$metaboliteCompartments
   }
 
   # A metabolite that was never given directly still needs a row to appear in.

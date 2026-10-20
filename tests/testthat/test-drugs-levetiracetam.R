@@ -14,3 +14,29 @@ test_that("clearance falls with renal function", {
   expect_lt(poor$PK$default$cl1, good$PK$default$cl1)
   # non-renal floor: 34% of 3.9 at the reference remains even at very low CrCl
 })
+
+test_that("pregnancy: total clearance x 1.6, not through the renal split", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  See the
+  # PREGNANCY section of R/drugs_levetiracetam.R.
+  on  <- getDrugPK("levetiracetam", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("levetiracetam", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("levetiracetam", 70, 165, 30, SEX_FEMALE))
+  expect_equal(on$PK$default$cl1 / off$PK$default$cl1,
+               LEVETIRACETAM_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(LEVETIRACETAM_PREGNANCY_CL_FACTOR, 1.6)
+  for (k in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO"))
+    expect_identical(on$PK$default[[k]], off$PK$default[[k]], info = k)
+  # A direct factor on the whole clearance, the same with a measured
+  # creatinine (through the renal split the 50% rise in filtration would give
+  # only 0.66 x 1.5 + 0.34 = 1.33)
+  onC  <- getDrugPK("levetiracetam", 70, 165, 30, SEX_FEMALE, creatinine = 0.6,
+                    pregnant = TRUE)
+  offC <- getDrugPK("levetiracetam", 70, 165, 30, SEX_FEMALE, creatinine = 0.6,
+                    pregnant = FALSE)
+  expect_equal(onC$PK$default$cl1 / offC$PK$default$cl1,
+               LEVETIRACETAM_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal_rounded(33.85599223, on$PK$default$v1)
+  expect_equal_rounded(0.0935606271, on$PK$default$cl1)
+  expect_match(on$reference, "Westin")
+  expect_no_match(off$reference, "Westin")
+})

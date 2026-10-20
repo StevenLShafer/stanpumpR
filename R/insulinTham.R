@@ -88,13 +88,73 @@
 #   external check.  Lispro is Humalog U100; Humalog U200 was a validation set
 #   only and is not offered.
 #
+# PREGNANCY
+# =========
+# Insulin requirements rise in late pregnancy mostly through insulin
+# resistance, a pharmacodynamic change that is not plotted.  The clearance
+# of insulin rises too.  Catalano 1998 measured the metabolic clearance rate
+# of infused insulin by hyperinsulinaemic-euglycaemic clamp in 16 women
+# before conception, at 12-14 weeks and at 34-36 weeks: 442, 514 and 526
+# mL/m2/min (p = 0.0005), the same in women with normal and abnormal glucose
+# tolerance; late against before conception, 526 / 442 = 1.19.  For
+# absorption, Goudie 2015 (Bayesian population model of insulin aspart by
+# pump in 22 women with type 1 diabetes at 12-33 weeks) found the time to
+# peak lengthening by 1.7% per week of gestation and the clearance per kg
+# hardly changing (-0.33% per week).
+#
+# With the Patient Profile's Pregnant field on, the apparent clearance CL/F
+# of every product (every insulin and every component of a premix, through
+# this one builder) is multiplied by INSULIN_PREGNANCY_CL_FACTOR = 1.25
+# (Catalano 1998, read in full: the metabolic clearance rate of insulin at a
+# hyperinsulinaemic-euglycaemic clamp in 16 women was 422 mL/m2/min before
+# conception, 514 at 12-14 weeks and 526 at 34-36 weeks, so 526 / 422 = 1.25
+# late against pregravid, P = 0.0005).  Absorption (ka, lag, the zero-order
+# input), bioavailability and V/F are unchanged: Goudie's gestational slowing
+# of absorption is in aspart, which the library does not model, and is not
+# carried to these formulations.  Insulin is not bound, so total and free are
+# one.
+#
+# PER m2 AGAINST ABSOLUTE.  Catalano's clearance is per m2 of body surface
+# area, and Tham's CL/F carries NO size covariate (only V/F scales with
+# weight), so the absolute systemic clearance is what CL/F represents.  Body
+# surface area rises by about 8% by term (roughly sqrt(82/70) for a 12 kg
+# gain), so the absolute clearance ratio is nearer 1.25 x 1.08 = 1.35.  The
+# per-m2 ratio 1.25 is applied as a measured, conservative lower bound; the
+# factor would be about 1.35 if the body-surface-area rise were added, which
+# the model cannot know from a single entered weight.  Applied on the
+# assumption that subcutaneous bioavailability is unchanged, for which there
+# are no data.
+#
+# NOTE ON WEIGHT.  Tham's V/F scales steeply with weight: (BW/80)^1.62 for
+# the human insulins, (BW/80)^2.48 for lispro, linearly for glargine, held to
+# the studied weights.  A term-pregnant weight entered in the Patient Profile
+# therefore already inflates V/F, by weight alone (70 to 82 kg multiplies
+# the human insulins' V/F by 1.29 and lispro's by 1.48), with no pregnancy
+# evidence behind it: Tham's subjects were not pregnant, and the weight
+# gained in pregnancy (fetus, placenta, amniotic fluid, water) is not the
+# weight his covariate describes.  Entering the pre-pregnancy weight avoids
+# it.  Claude Code, 2026-10-19.  See R/pregnancy.R.
+#
 # References
 # ----------
 # Tham LS et al., J Clin Pharmacol 2017;57:1126-1137.
 #   https://doi.org/10.1002/jcph.899
+# Catalano PM, Drago NM, Amini SB.  Longitudinal changes in pancreatic
+#   beta-cell function and metabolic clearance rate of insulin in pregnant
+#   women with normal and abnormal glucose tolerance.  Diabetes Care
+#   1998;21:403-408.  https://doi.org/10.2337/diacare.21.3.403 (pregnancy)
+# Goudie RJB, Hovorka R, Murphy HR, Lunn D.  Rapid model exploration for
+#   complex hierarchical data: application to pharmacokinetics of insulin
+#   aspart.  Stat Med 2015;34:3144-3158.  https://doi.org/10.1002/sim.6536
+#   (pregnancy, aspart absorption; not applied)
 # -----------------------------------------------------------------------------
 
 THAM_INSULIN_REFERENCE <- "https://doi.org/10.1002/jcph.899"
+
+# Pregnancy (see the header): CL/F of every product.  Catalano 1998, clamp
+# metabolic clearance rate at 34-36 weeks against before conception, 526 /
+# 422 mL/m2/min = 1.25 (a per-m2, conservative lower bound; see the header).
+INSULIN_PREGNANCY_CL_FACTOR <- 1.25
 
 # Apparent disposition per insulin (Table 2): V/F in L at the reference
 # weight, CL/F in L/h at the reference dose, and the weight covariate on V/F
@@ -143,10 +203,12 @@ THAM_ABSORPTION <- list(
 #' @param product the product as the reference string names it
 #' @param dose units of one injection, for the dose covariates, or NULL for
 #'   the reference dose
+#' @param pregnant when \code{TRUE}, CL/F x INSULIN_PREGNANCY_CL_FACTOR (see
+#'   the file's header)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @keywords internal
 thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
-                        components, product, dose = NULL)
+                        components, product, dose = NULL, pregnant = FALSE)
 {
   stopifnot(abs(sum(components) - 1) < 1e-12, length(components) <= 2)
   disposition <- THAM_DISPOSITION[[insulin]]
@@ -168,6 +230,8 @@ thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
     (clamp(units, THAM_DOSE_RANGE[[insulin]]) / effect$reference)^effect$power
   }
   cl <- disposition$cl * doseFactor(disposition$clDose, dose)
+  # Pregnancy (see the header): CL/F alone
+  if (isTRUE(pregnant)) cl <- cl * INSULIN_PREGNANCY_CL_FACTOR
   regular <- names(components) == "regularU100"
   for (i in which(regular))
     absorption[[i]]$ka <- absorption[[i]]$ka *
@@ -223,6 +287,19 @@ thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
     glargine = "V x (1 + 0.00728 (weight - 71.4)), F (dose/35)^-0.300")
   if (any(regular)) covariateText <- paste0(covariateText, ", regular ka x (dose/10)^-0.275")
 
+  reference <- paste0(
+    "Tham 2017, ", product, ": one compartment, V/F ", format(disposition$v),
+    " L, CL/F ", format(disposition$cl), " L/h, ", absorbed, "; ",
+    covariateText, " (weight and dose held to the studied ranges); ",
+    "exogenous insulin, concentration only. ", THAM_INSULIN_REFERENCE
+  )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("CL/F x ", INSULIN_PREGNANCY_CL_FACTOR),
+      paste0("Catalano PM et al., Diabetes Care 1998;21:403-408. ",
+             "https://doi.org/10.2337/diacare.21.3.403")))
+  }
+
   list(
     PK = PK, tPeak = 0, MEAC = 0,
     typical = 0, upperTypical = 0, lowerTypical = 0,
@@ -231,11 +308,6 @@ thamInsulin <- function(weight, height, age, sex, adjustToFFM, insulin,
     scDoseBioavailability = if (insulin == "glargine") THAM_GLARGINE_F_DOSE,
     # The human insulins: each dose size is its own linear system
     doseDependent = insulin == "human",
-    reference = paste0(
-      "Tham 2017, ", product, ": one compartment, V/F ", format(disposition$v),
-      " L, CL/F ", format(disposition$cl), " L/h, ", absorbed, "; ",
-      covariateText, " (weight and dose held to the studied ranges); ",
-      "exogenous insulin, concentration only. ", THAM_INSULIN_REFERENCE
-    )
+    reference = reference
   )
 }

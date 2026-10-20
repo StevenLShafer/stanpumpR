@@ -1,0 +1,15 @@
+### The model
+
+Procainamide's parameters come from Grasela and Sheiner (*Clin Pharmacokinet* 1984;9:545-554), one of the first population analyses of routine clinical data: 116 plasma concentrations and 14 urine collections from 39 inpatients (34 men, 24 with mild heart failure) taking procainamide for ventricular arrhythmias, fitted in NONMEM. One compartment, whose clearance is the sum of three parts: renal, 14.4 L/h; acetylation to N-acetylprocainamide (NAPA), 10.1 L/h; and other metabolism, 1.2 L/h. The volume is 136 L. These are for a healthy 70 kg 20-year-old man, and every one is proportional to weight.
+
+### Covariates
+
+The renal part is scaled by the fraction of normal renal function, the paper's Equation 7, (140 − age) / ((113 + 20 × male) × creatinine), using the Patient Profile's **Serum creatinine**, or an assumed normal creatinine for age and sex when it is blank. The paper calls this a modification of Cockcroft-Gault, but as printed it gives a **woman 18% more** renal clearance than a man at the same creatinine, where Cockcroft-Gault gives her 15% less. The paper's own average patient (Table IV) is reproduced only by the equation as printed, so that is what was fitted and what is used; only five of the 39 patients were women, so treat a woman's curve with extra caution. Heart failure, which lowered renal and acetylation clearance by 11%, is not a Patient Profile field and is not applied. Weight applies to the fat-free-mass weight when [the scaling switch](help:models/fat-free-mass) is on.
+
+### Dose basis
+
+The model was fitted in procainamide **base**: the paper's Figure 2 converts 1000 mg of the hydrochloride to 850 mg of base, and its curve is what the model gives for the base. Injections are labelled as the hydrochloride, so a dose here is entered as labelled, and the model's volumes and clearances are rescaled by 271.79/235.33, which is exact for a linear model.
+
+### Where to be careful
+
+One compartment fitted to routine, mostly oral data: the early distribution phase of an intravenous loading dose is not in it, so give the load as an infusion over 25 to 30 minutes, as labelled, rather than a bolus. Acetylator phenotype, which splits patients into fast and slow acetylators, could not be resolved from these data, so the acetylation clearance is the average. NAPA, which is itself an antiarrhythmic and is cleared by the kidney, is not plotted. The usual therapeutic range of 4 to 10 mg/L is not drawn. See [the vasoactive and resuscitation drugs](help:models/vasoactive).

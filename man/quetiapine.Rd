@@ -4,7 +4,7 @@
 \alias{quetiapine}
 \title{Quetiapine pharmacokinetics (immediate release, oral)}
 \usage{
-quetiapine(weight, height, age, sex, adjustToFFM = TRUE)
+quetiapine(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,9 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+apparent clearance by 4.2 (Westin 2017; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

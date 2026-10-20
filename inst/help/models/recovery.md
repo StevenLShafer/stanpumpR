@@ -29,6 +29,8 @@ stanpumpR does not simulate protein binding. Each antibiotic's curve shows one f
 | Metronidazole | *Bacteroides fragilis* group | 4 | Total drug | 0.96 | 4.2 |
 | Vancomycin | *S. aureus*, including MRSA | 1 | Total drug | 0.70 | 1.4 |
 
+The shaded band is a second marker on the same footing: free drug at the expected **MBC**, the concentration that kills, of the common pathogens each antibiotic is given against. See [Antibiotics: the MIC line and the MBC band](help:models/antibiotics).
+
 Each antibiotic's own page gives the sources. The free fraction is for a typical adult, and binding changes with illness. When albumin is low (critical illness, malnutrition, late pregnancy) the free fraction of the albumin-bound drugs is higher, so at a given total more drug is free; but the extra free drug is also cleared faster, so the total itself falls faster than these models, fitted in healthier people, predict. Clindamycin binds alpha-1 acid glycoprotein instead, which rises after surgery and with inflammation: its free fraction is then lower, and free drug falls below the MIC sooner than the line shows. The MIC is for a susceptible isolate. Against a known isolate with a higher MIC, raise the threshold under **Settings → Drug Thresholds**, multiplying the isolate's MIC by the table's ratio of threshold to MIC.
 
 ## Oral, intramuscular and intranasal doses

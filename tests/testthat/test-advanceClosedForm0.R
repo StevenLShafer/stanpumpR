@@ -91,6 +91,10 @@ test_that("it returns the correct array", {
     Cp = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     Ce = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
     Recovery = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+    # The peripheral concentrations and the depot (R/compartments.R)
+    C2 = 0,
+    C3 = 0,
+    Depot = 0,
     stringsAsFactors = FALSE
   )
 

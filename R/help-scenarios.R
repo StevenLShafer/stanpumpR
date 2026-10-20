@@ -51,6 +51,9 @@ helpScenarioDefaultOptions <- function() {
     # Each opioid's % MEAC on its own panel (R/meacOverlay.R); not with
     # showThreshold
     showMEAC = FALSE,
+    # V2 and V3, or MRG and FG, and the depot, each a panel under its drug's
+    # (R/compartments.R); needs normalization none
+    showCompartments = FALSE,
     logY = FALSE,
     opioidMacInteraction = FALSE,
     # Run the Schnider propofol and Minto remifentanil models beside the
@@ -171,6 +174,20 @@ helpScenarioDefinitions <- function() {
         c("propofol", 90, 0, "mcg/kg/min")
       ),
       maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE
+    ),
+    # The peripheral compartments drawn under the plasma (R/compartments.R).
+    # (Claude Code, 2026-10-19, at the request of Steven L. Shafer.)
+    helpScenario(
+      "propofol-peripheral-compartments",
+      "Propofol: filling and emptying the peripheral compartments",
+      "Intravenous basics",
+      "A propofol bolus and a one-hour infusion with V2 and V3 drawn under the plasma panel: the rapid compartment follows the plasma, the slow one is still filling when the infusion stops and then holds drug above the plasma.",
+      doses = helpDoses(
+        c("propofol", 0, 2, "mg/kg"),
+        c("propofol", 0, 100, "mcg/kg/min"),
+        c("propofol", 60, 0, "mcg/kg/min")
+      ),
+      maximum = 240, plasmaLinetype = "solid", showCompartments = TRUE
     ),
     helpScenario(
       "methadone-bolus",
@@ -387,6 +404,18 @@ helpScenarioDefinitions <- function() {
         c("hydrocodone", 0, 10, "mg PO")
       ),
       maximum = 720, showMEAC = TRUE
+    ),
+    # The amount still in the gut beside the plasma it feeds (R/compartments.R).
+    # (Claude Code, 2026-10-19, at the request of Steven L. Shafer.)
+    helpScenario(
+      "oral-morphine-depot",
+      "Oral morphine: emptying the depot",
+      "Oral analgesics",
+      "Thirty milligrams of oral morphine with its peripheral compartments and its depot drawn under the plasma panel, so the drug still to be absorbed can be read beside the concentration it becomes.",
+      doses = helpDoses(
+        c("morphine", 0, 30, "mg PO tablet")
+      ),
+      maximum = 480, plasmaLinetype = "solid", showCompartments = TRUE
     ),
     helpScenario(
       "gabapentin-saturable-absorption",
@@ -943,10 +972,11 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (o$showThreshold && o$normalization != NORMALIZE_NONE) say("showThreshold needs normalization none")
   if (o$showMEAC && o$normalization != NORMALIZE_NONE) say("showMEAC needs normalization none")
   if (o$showMEAC && o$showThreshold) say("showMEAC and showThreshold are mutually exclusive")
+  if (o$showCompartments && o$normalization != NORMALIZE_NONE) say("showCompartments needs normalization none")
   if (o$logY && (o$showThreshold || o$showMEAC || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
     say("logY is unavailable with the threshold, % MEAC, events or interaction panels")
   }
-  for (name in c("showThreshold", "showMEAC", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg")) {
+  for (name in c("showThreshold", "showMEAC", "showCompartments", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
 
@@ -1100,6 +1130,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateCheckboxGroupInput(session, "addedPlots", selected = o$addedPlots)
   updateCheckboxInput(session, "showThreshold", value = o$showThreshold)
   updateCheckboxInput(session, "showMEAC", value = o$showMEAC)
+  updateCheckboxInput(session, "showCompartments", value = o$showCompartments)
   updateCheckboxInput(session, "logY", value = o$logY)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
   updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
@@ -1186,6 +1217,7 @@ helpScenarioPageHTML <- function(id) {
     "Additional plots" = if (length(o$addedPlots)) paste(o$addedPlots, collapse = ", ") else "none",
     "Time until threshold" = if (o$showThreshold) "on" else "off",
     "% MEAC on opioid panels" = if (o$showMEAC) "on" else "off",
+    "Peripheral compartments" = if (o$showCompartments) "on" else "off",
     "Log Y axis" = if (o$logY) "on" else "off",
     "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off",
     "Minto / Schnider" = if (o$mintoSchnider) "on" else "off",

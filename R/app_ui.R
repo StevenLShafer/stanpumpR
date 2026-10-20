@@ -55,6 +55,10 @@ app_ui <- function() {
         bslib::layout_sidebar(
           # The options, in a sidebar that its arrow collapses; open on a desktop
           # (closed on a phone), as the dose table's sidebar at the right is.
+          # On a phone its arrow shares one row with the dose table's
+          # (.simulator-main in app.css; layout_sidebar() puts the class on
+          # its main area).
+          class = "simulator-main",
           sidebar = bslib::sidebar(
             width = 300,
             resizable = FALSE,
@@ -146,8 +150,8 @@ app_ui <- function() {
                   selected = defaultSex
                 ),
 
-                # Read only by the eight models R/pregnancy.R adjusts
-                # (R/pregnancy.R; the help's Cautions page lists them).
+                # Read only by the models with a measured change in pregnancy
+                # (R/pregnancy.R; the help's Pregnancy page lists them).
                 # Offered for a woman of PREGNANCY_MIN_AGE to PREGNANCY_MAX_AGE
                 # years, whatever unit the age is entered in; the server
                 # applies the same rule (pregnancyPossible()), so a control
@@ -171,13 +175,12 @@ app_ui <- function() {
                     ),
                     paste(
                       "Applies the pharmacokinetic changes of late pregnancy",
-                      "from the review the library follows (Ansari, Carvalho,",
-                      "Shafer and Flood 2016): its figures for morphine,",
-                      "remifentanil, oxycodone, methadone and dexamethasone,",
-                      "and its 50% rise in glomerular filtration for",
-                      "cefazolin, gentamicin and vancomycin. Every other drug",
-                      "is unchanged; the Help's Pregnancy page says what the",
-                      "review found for each."
+                      "(third trimester and term) to every drug whose change",
+                      "has been measured, each from its own source, and the",
+                      "50% rise in filtration to the renal models when the",
+                      "creatinine is blank. Every other drug is unchanged;",
+                      "each drug's Help page says what is known of it in",
+                      "pregnancy."
                     ),
                     placement = "right"
                   )
@@ -311,14 +314,6 @@ app_ui <- function() {
                 icon = icon("sliders"),
                 selectInput("typical", "Show typical", c("<none>" = "none", "Mid", "Range"), selected = "Range"),
                 selectInput("normalization", "Normalize to", c("<none>" = NORMALIZE_NONE, "Peak plasma", "Peak effect site")),
-                # Durations in minutes, labelled in the Time units; the server
-                # swaps the list when the unit changes (syncMaxTimeChoices()).
-                selectInput(
-                  inputId = "maximum",
-                  label = "Max time",
-                  choices = maxTimeChoices(timeUnit0),
-                  selected = maxTimeValue(maximum0)
-                ),
                 lineTypeSelector(
                   inputId = "plasmaLinetype",
                   label = "Plasma line",
@@ -354,6 +349,25 @@ app_ui <- function() {
                       "panel, set by the highest % MEAC any of them reaches, so",
                       "the line that rises highest is the opioid carrying the",
                       "analgesia. Cannot be shown with Time until threshold."
+                    ),
+                    placement = "right"
+                  ),
+                  # V2 and V3 (an inhaled agent's muscle and fat groups) and
+                  # the depot of an absorbed dose, each a panel of its own
+                  # directly under the drug's (R/compartments.R).
+                  bslib::tooltip(
+                    checkboxInput(
+                      "showCompartments",
+                      "Peripheral compartments",
+                      value = FALSE
+                    ),
+                    paste(
+                      "Under each drug's panel, which is the plasma (V1), draw",
+                      "the concentrations in its peripheral compartments, V2",
+                      "and V3, or for an inhaled agent the muscle (MRG) and fat",
+                      "(FG) groups, and, for a dose given by mouth, under the",
+                      "tongue, intramuscularly, intranasally, subcutaneously or",
+                      "by tissue injection, the amount still in the depot."
                     ),
                     placement = "right"
                   )
@@ -430,8 +444,9 @@ app_ui <- function() {
                 )
               ),
 
-              # The time settings.  The header reads them out while the panel
-              # is closed: "Time (hours, Actual time)".
+              # The time settings, with the length of the plot (Max time).
+              # The header reads the units and display out while the panel is
+              # closed: "Time (hours, Actual time)".
               bslib::accordion_panel(
                 span(
                   "Time",
@@ -450,6 +465,16 @@ app_ui <- function() {
                   "Time units",
                   stats::setNames(names(TIME_UNITS), tools::toTitleCase(names(TIME_UNITS))),
                   selected = timeUnit0,
+                  options = list(dropdownParent = "body")
+                ),
+                # How far the simulation runs: durations in minutes, labelled
+                # in the Time units; the server swaps the list when the unit
+                # changes (syncMaxTimeChoices()).
+                selectizeInput(
+                  inputId = "maximum",
+                  label = "Max time",
+                  choices = maxTimeChoices(timeUnit0),
+                  selected = maxTimeValue(maximum0),
                   options = list(dropdownParent = "body")
                 ),
                 selectizeInput(

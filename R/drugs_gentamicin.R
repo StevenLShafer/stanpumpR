@@ -77,7 +77,11 @@
 # PREGNANCY_GFR_FACTOR = 1.5 (R/constants.R), and Smit's clearance is linear
 # in it, so CL rises by 1.5.  The larger volume is NOT applied, as the review
 # gives no figure, so the simulated peak in a parturient is too high and the
-# trough about right.  See R/pregnancy.R.
+# trough about right.
+# The factor is applied only when the serum creatinine is left blank
+# (pregnancyGfrFactor()): a pregnant woman's measured creatinine is already
+# low, and the renal estimate made from it already carries the rise.
+# See R/pregnancy.R.
 #
 # References
 # ----------
@@ -124,7 +128,8 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   G <- egfrDeindexed(pkW, height, age, sex,         # mL/min
                      adultEquivalentCreatinine(creatinine, age, sex))
   # Pregnancy (see the header): the renal term alone.
-  if (isTRUE(pregnant)) G <- G * PREGNANCY_GFR_FACTOR
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  G <- G * gfrPregnancy
   ICU <- 0                                         # not an input; not in ICU
 
   cl1 <- 3.53 * (G / 74) * 0.751^ICU / 60          # L/min
@@ -149,11 +154,12 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, total mg/L: trough ceiling of about 1 mg/L up to the 8-10 mg/L
-  # historical peak benchmark.  Orientation only.
-  typical      <- 8
-  upperTypical <- 10
-  lowerTypical <- 1
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("gentamicin")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Smit C et al., J Antimicrob Chemother 2020;75:3286-3292. ",
@@ -161,7 +167,7 @@ gentamicin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "from the entered creatinine or an assumed normal one; not in ICU. ",
     "https://doi.org/10.1093/jac/dkaa312"
   )
-  if (isTRUE(pregnant)) {
+  if (gfrPregnancy != 1) {
     reference <- paste0(reference, "; ", pregnancyReference(
       paste0("eGFR x ", PREGNANCY_GFR_FACTOR)))
   }

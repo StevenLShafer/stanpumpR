@@ -10,7 +10,8 @@ phenytoin(
   age,
   sex,
   adjustToFFM = TRUE,
-  cyp2c9 = CYP2C9_DEFAULT
+  cyp2c9 = CYP2C9_DEFAULT,
+  pregnant = FALSE
 )
 }
 \arguments{
@@ -30,6 +31,10 @@ file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{cyp2c9}{CYP2C9 diplotype, one of \code{CYP2C9_VALUES}}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies Km (total)
+by \code{PHENYTOIN_PREGNANCY_KM_FACTOR} and Vmax by
+\code{PHENYTOIN_PREGNANCY_VMAX_FACTOR} (Tomson 1994; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, with a

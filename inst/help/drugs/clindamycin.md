@@ -14,7 +14,7 @@ None; only the plasma concentration is plotted. *Time until threshold* is theref
 
 ### Typical concentrations
 
-The shaded band is 1 to 4 mcg/mL total, around the source's working trough criterion of 2 mg/L. Clindamycin is bound to alpha-1 acid glycoprotein, and the binding saturates: about 90 per cent bound at these low levels, less at the peak after a dose. Free concentrations in the band are therefore roughly a tenth of what is plotted.
+Clindamycin is **bacteriostatic** against *Staphylococcus aureus* (the FDA label says so in those words): its MBC is many times the MIC, and serum at usual doses mostly does not kill it. The shaded band (3.1 to 9.9 mcg/mL total) is therefore built from the organisms clindamycin does kill: from 0.25 mg/L free, the one measured MBC of tonsillar streptococci and flora, to 1.6 mg/L free, which killed 80 per cent of susceptible *Bacteroides fragilis*. Clindamycin is bound to alpha-1 acid glycoprotein and the binding saturates, so each free MBC is placed on the total curve through the binding fit: about 90 per cent bound at the low edge, less at the top. For staphylococci the measure is the time-until-threshold line, free drug at the MIC. The band sits where the label's own levels lie: 600 mg every 8 hours gives a steady-state peak of 12.0 and a trough of 3.1 mcg/mL in a 70 kg adult (Table 1 of the Cleocin Phosphate label, revised 12/2021), and the label's continuous-infusion regimens hold serum above 4, 5 or 6 mcg/mL. The *Bacteroides fragilis* edge needs the label's higher doses, 1200 to 2700 mg a day, which it gives for proven or suspected *B. fragilis*. See *Shaded band: free drug at the MBC* above.
 
 ### Where to be careful
 

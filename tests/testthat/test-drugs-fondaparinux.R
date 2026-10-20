@@ -68,3 +68,34 @@ test_that("scales to fat-free mass for a 120 kg man", {
                        list(v1 = 9.4957311, v2 = 20.356545,
                             cl1 = 0.0065903437, cl2 = 0.0016685806))
 })
+
+test_that("pregnancy: creatinine clearance x 1.5 when the creatinine is blank", {
+  # A woman of 30 years, 70 kg, 165 cm, creatinine blank: the MDRD creatinine
+  # clearance in the renal term x PREGNANCY_GFR_FACTOR, so CL/F x 1.5^0.532
+  # (R/drugs_fondaparinux.R, PREGNANCY); nothing else moves.
+  on  <- getDrugPK("fondaparinux", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("fondaparinux", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("fondaparinux", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK[[1]]; b <- off$PK[[1]]
+  expect_equal(a$cl1 / b$cl1, PREGNANCY_GFR_FACTOR^0.532, tolerance = 1e-6)
+  same <- c("v1", "v2", "v3", "cl2", "cl3", "ka_RA", "bioavailability_RA",
+            "tlag_RA")
+  expect_true(all(same %in% names(a)))
+  expect_identical(a[same], b[same])
+  expect_equal(PREGNANCY_GFR_FACTOR^0.532, 1.241, tolerance = 1e-3)
+  # A measured creatinine already carries the rise: no pregnancy change
+  cr <- function(p) getDrugPK("fondaparinux", 70, 165, 30, SEX_FEMALE, pregnant = p,
+                              creatinine = 0.6)
+  expect_identical(cr(TRUE)$PK, cr(FALSE)$PK)
+  expect_no_match(cr(TRUE)$reference, "Wu Y", fixed = TRUE)
+  expect_match(on$reference, "Wu Y", fixed = TRUE)
+  expect_no_match(off$reference, "Wu Y", fixed = TRUE)
+  # The values the model gives with the flag on
+  actual <- fondaparinux(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(7.384643853, actual$v1)
+  expect_equal_rounded(12.57508283, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(0.007754777382, actual$cl1)
+  expect_equal_rounded(0.001162658829, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+})

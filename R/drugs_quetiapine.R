@@ -43,11 +43,50 @@
 # (525 ng/mL).  That is a receptor biomarker, not a therapeutic target, and is
 # carried in antipsychoticProfiles() (R/antipsychotics.R), not in the MEAC or the
 # band, which are zero.  Norquetiapine is not modelled.
+#
+# PREGNANCY
+# =========
+# Westin 2017 (Clin Pharmacol Ther) followed 35 quetiapine pregnancies
+# through routine therapeutic drug monitoring, each against the same woman's
+# own baseline outside pregnancy: dose-adjusted serum quetiapine was 76% lower
+# in the middle of the third trimester (95% CI -83% to -66%, p < 0.001), the
+# largest fall of the antipsychotics, and the authors write that doubling the
+# daily dose may be needed.  Quetiapine is cleared by CYP3A4, which pregnancy
+# induces.  With the Patient Profile's Pregnant field on, the apparent
+# clearance CL/F is multiplied by QUETIAPINE_PREGNANCY_CL_FACTOR = 4.2 (1 /
+# 0.24 = 4.17, rounded as the registry gives it); V/F and ka are unchanged.
+# The plotted concentration is total plasma quetiapine, which is what Westin
+# measured.  The evidence disagrees on the size: Zheng 2020's physiologically
+# based model predicts a third-trimester AUC only 49% lower (a clearance about
+# twice the nonpregnant one).  The direct, paired measurement is the one
+# applied; troughs from routine monitoring may also carry some of the
+# variation of adherence and sampling time.  Late pregnancy (the third
+# trimester) is the state described.  (Claude Code, 2026-10-19, at the
+# request of Steven L. Shafer; see R/pregnancy.R and
+# inst/extdata/pregnancyRegistry.csv.)
+#
+# References
+# ----------
+# Zheng ZQ et al., Front Psychiatry 2024;15:1497119.
+#   https://doi.org/10.3389/fpsyt.2024.1497119
+# Nord M et al., Int J Neuropsychopharmacol 2011;14:1357-1366.
+#   https://doi.org/10.1017/S1461145711000514 (D2 occupancy)
+# Westin AA, Brekke M, Molden E, Skogvoll E, Castberg I, Spigset O.  Clin
+#   Pharmacol Ther 2018;103:477-484.  https://doi.org/10.1002/cpt.770
+#   (pregnancy)
+# Zheng L, Tang S, Tang R, Xu M, Jiang X, Wang L.  Clin Pharmacokinet
+#   2021;60:623-635.  https://doi.org/10.1007/s40262-020-00962-3
+#   (pregnancy, physiologically based model)
 # -----------------------------------------------------------------------------
 
 QUETIAPINE_CL <- 76.1    # L/h, apparent, at 70 kg
 QUETIAPINE_V  <- 530     # L, apparent, at 70 kg
 QUETIAPINE_KA <- 1.46    # 1/h, fixed in the source
+
+# Apparent clearance in pregnancy relative to Zheng's value: Westin 2017,
+# quetiapine 76% lower in the third trimester, 1 / 0.24 = 4.2 (see the
+# header).
+QUETIAPINE_PREGNANCY_CL_FACTOR <- 4.2
 
 #' Quetiapine pharmacokinetics (immediate release, oral)
 #'
@@ -56,19 +95,24 @@ QUETIAPINE_KA <- 1.46    # 1/h, fixed in the source
 #' for the D2 occupancy fit.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   apparent clearance by 4.2 (Westin 2017; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-quetiapine <- function(weight, height, age, sex, adjustToFFM = TRUE)
+quetiapine <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                       pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = weight / 70,
                         legacyClearance = (weight / 70)^0.75)
+  # Pregnancy (see the header): apparent clearance only.
+  clPregnancy <- if (isTRUE(pregnant)) QUETIAPINE_PREGNANCY_CL_FACTOR else 1
 
   default <- list(
     v1 = QUETIAPINE_V * size$volume,
     v2 = 1,                                        # one compartment
     v3 = 1,
-    cl1 = QUETIAPINE_CL / 60 * size$clearance,     # L/min
+    cl1 = QUETIAPINE_CL / 60 * size$clearance * clPregnancy,   # L/min
     cl2 = 0,
     cl3 = 0,
     ka_PO = QUETIAPINE_KA / 60,                    # 1/min
@@ -86,6 +130,12 @@ quetiapine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Int J Neuropsychopharmacol 2011;14:1357-1366. ",
     "https://doi.org/10.1017/S1461145711000514"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("apparent clearance x ", QUETIAPINE_PREGNANCY_CL_FACTOR),
+      paste0("Westin AA et al., Clin Pharmacol Ther 2018;103:477-484. ",
+             "https://doi.org/10.1002/cpt.770")))
+  }
 
   list(
     PK = PK,

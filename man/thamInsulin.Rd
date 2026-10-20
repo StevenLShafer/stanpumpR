@@ -13,7 +13,8 @@ thamInsulin(
   insulin,
   components,
   product,
-  dose = NULL
+  dose = NULL,
+  pregnant = FALSE
 )
 }
 \arguments{
@@ -43,6 +44,9 @@ most one with a zero-order share.}
 
 \item{dose}{units of one injection, for the dose covariates, or NULL for
 the reference dose}
+
+\item{pregnant}{when \code{TRUE}, CL/F x INSULIN_PREGNANCY_CL_FACTOR (see
+the file's header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

@@ -51,8 +51,10 @@
 #'
 #' @returns a data frame of \code{Drug}, \code{Organism}, \code{MIC},
 #'   \code{Plotted} ("unbound" or "total"), \code{FreeFraction} (1 when the
-#'   curve is unbound), \code{Saturable}, \code{Threshold}, \code{MicSource}
-#'   and \code{BindingSource}
+#'   curve is unbound), \code{Saturable}, \code{BindingKd} and
+#'   \code{BindingCapacity} (mg/L, the one-site fit of a saturable binding,
+#'   NA otherwise), \code{Threshold}, \code{MicSource} and
+#'   \code{BindingSource}
 #' @keywords internal
 antibioticMicTable <- function()
 {
@@ -132,6 +134,11 @@ antibioticMicTable <- function()
     Plotted = c("unbound", "total", "total", "total", "total", "total", "total"),
     FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 0.70),
     Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE),
+    # The one-site binding fits named in the binding sources, total = free +
+    # capacity x free / (Kd + free); FreeFraction is that map's free / total
+    # at the MIC, which is what puts the threshold on the curve.
+    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA),
+    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA),
     Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 1.4),
     MicSource = unname(micSource),
     BindingSource = unname(bindingSource),
@@ -155,4 +162,26 @@ antibioticMic <- function(drug)
   i <- match(drug, x$Drug)
   if (is.na(i)) return(NULL)
   as.list(x[i, ])
+}
+
+
+#' Where a free antibiotic concentration lies on the plotted curve
+#'
+#' Maps a FREE (unbound) concentration, in mg/L, onto the quantity the drug's
+#' model plots: itself when the curve is unbound, free / fu when binding is
+#' linear, and through the one-site binding fit, total = free + capacity x
+#' free / (Kd + free), when it saturates.  This is how a free-drug MIC or MBC
+#' becomes a line or a band on a curve of total drug.
+#'
+#' @param drug an antibiotic in \code{antibioticMicTable()}
+#' @param free free concentrations, mg/L
+#' @returns the matching concentrations on the plotted curve, mg/L
+#' @keywords internal
+antibioticPlottedConcentration <- function(drug, free)
+{
+  m <- antibioticMic(drug)
+  if (is.null(m)) stop("not an antibiotic in antibioticMicTable(): ", drug)
+  if (m$Plotted == "unbound") return(free)
+  if (isTRUE(m$Saturable)) return(free + m$BindingCapacity * free / (m$BindingKd + free))
+  free / m$FreeFraction
 }

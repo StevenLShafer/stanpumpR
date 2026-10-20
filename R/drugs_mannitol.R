@@ -8,6 +8,33 @@
 # covariate, mOsm/kg).  simCpCe() applies the transform; see `osmotic` below.
 # The full write-up, including the check against independent data, is in
 # docs/mannitol.md.
+#
+# PREGNANCY
+# =========
+# No study of mannitol pharmacokinetics in pregnancy was found.  Mannitol is
+# filtered at the glomerulus and not reabsorbed, so that its clearance is
+# used as a measure of the glomerular filtration rate (Deferm 2021), and the
+# rise in filtration of late pregnancy is the expected change in its
+# clearance.  With the Patient Profile's Pregnant field on and the serum
+# creatinine left blank, the Cockcroft-Gault creatinine clearance in the
+# renal factor on CL1 is multiplied by PREGNANCY_GFR_FACTOR, 1.5, the
+# library's rise in filtration (pregnancyGfrFactor(), R/pregnancy.R), so CL1
+# is multiplied by 1.5.  This is physiological, not measured for mannitol.
+# With a creatinine entered, the estimate made from a pregnant woman's (low,
+# typically 0.4-0.6 mg/dL at term) creatinine already carries the rise and
+# nothing more is applied.  The volumes are unchanged: the larger
+# extracellular volume of pregnancy would lower the rise in osmolality, but
+# by an amount not quantified.  The baseline osmolality of late pregnancy is
+# about 10 mOsm/kg lower than outside it, which the user sets through the
+# Baseline serum osmolality field; it is not changed by the flag.  Claude
+# Code, 2026-10-19.
+#
+# References (pregnancy)
+# ----------------------
+# Deferm N et al.  Glomerular filtration rate in asphyxiated neonates under
+#   therapeutic whole-body hypothermia, quantified by mannitol clearance.
+#   Clin Pharmacokinet 2021;60:897-906.
+#   https://doi.org/10.1007/s40262-021-00991-6
 
 # 1 mmol of mannitol is 1 mOsm: it does not dissociate.
 MANNITOL_MW <- 182.17   # g/mol
@@ -25,7 +52,8 @@ MANNITOL_MW <- 182.17   # g/mol
 MANNITOL_OSMOTIC_FRACTION <- (310 - 292) / (5.91 * 1000 / MANNITOL_MW)  # 0.555
 
 mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                     osmolality = OSMOLALITY_DEFAULT, creatinine = NULL)
+                     osmolality = OSMOLALITY_DEFAULT, creatinine = NULL,
+                     pregnant = FALSE)
 {
   # Units **************
   # Time: Minutes
@@ -76,6 +104,10 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   crclWeight <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   crcl <- creatinineClearanceCG(crclWeight, age, sex,
                                 adultEquivalentCreatinine(creatinine, age, sex))
+  # Pregnancy (see the header): the renal factor alone, and only when the
+  # creatinine is blank.
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  crcl <- crcl * gfrPregnancy
   # Kaneda's clearance is taken to belong to the reference patient (70 kg,
   # 35 years, male, creatinine 0.9 mg/dL; Cockcroft-Gault 113 mL/min), so his
   # renal factor is exactly 1.  Computed here rather than at the top level
@@ -115,6 +147,13 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "Renal function: stanpumpR assumption, CL1 scaled by Cockcroft-Gault creatinine clearance",
     "over the reference patient's, from the entered creatinine or an assumed normal one."
   )
+  if (gfrPregnancy != 1) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR,
+             " (physiological: mannitol is a filtration marker)"),
+      paste0("Deferm N et al., Clin Pharmacokinet 2021;60:897-906. ",
+             "https://doi.org/10.1007/s40262-021-00991-6")))
+  }
 
   return(
     list(

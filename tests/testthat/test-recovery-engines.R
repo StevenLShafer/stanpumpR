@@ -422,7 +422,13 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # published equilibration constant, and no blood pressure is plotted for
     # any drug in the library (docs/antihypertensives.md).
     "clevidipine", "fenoldopamPediatric", "carvedilol",
-    "azilsartan", "chlorthalidone", "hydrochlorothiazide"
+    "azilsartan", "chlorthalidone", "hydrochlorothiazide",
+    # vasoactive and resuscitation drugs (2026-10-18): plasma only
+    "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin",
+    "norepinephrine", "procainamide", "esmolol", "dopamine",
+    "propranolol", "digoxin", "verapamil", "phenylephrine",
+    "milrinonePediatric", "metoprolol", "nicardipine",
+    "digoxinIVPediatric"
   ))
 })
 

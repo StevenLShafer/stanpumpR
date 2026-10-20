@@ -76,3 +76,31 @@ test_that("scales to fat-free mass for a 120 kg man", {
                        list(v1 = 9.8382115, v2 = 10.674137,
                             cl1 = 0.016226631, cl2 = 0.0069185047))
 })
+
+test_that("pregnancy: apparent clearance x 1.5 and central volume x 1.4, directly", {
+  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.5 and the central V/F x 1.4
+  # (Lebaudy 2008), applied directly, not through the renal term, so a
+  # measured creatinine changes nothing about the factors (R/drugs_enoxaparin.R).
+  on  <- getDrugPK("enoxaparin", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("enoxaparin", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("enoxaparin", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK[[1]]; b <- off$PK[[1]]
+  expect_equal(a$cl1 / b$cl1, ENOXAPARIN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(a$v1 / b$v1, ENOXAPARIN_PREGNANCY_V_FACTOR, tolerance = 1e-6)
+  same <- c("v2", "v3", "cl2", "cl3", "ka_RA", "bioavailability_RA", "tlag_RA")
+  expect_true(all(same %in% names(a)))
+  expect_identical(a[same], b[same])
+  cr <- function(p) getDrugPK("enoxaparin", 70, 165, 30, SEX_FEMALE, pregnant = p,
+                              creatinine = 0.6)$PK[[1]]
+  expect_equal(cr(TRUE)$cl1 / cr(FALSE)$cl1, ENOXAPARIN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_match(on$reference, "Lebaudy", fixed = TRUE)
+  expect_no_match(off$reference, "Lebaudy", fixed = TRUE)
+  # The values the model gives with the flag on
+  actual <- enoxaparin(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(7.543148937, actual$v1)
+  expect_equal_rounded(6.593857535, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(0.01647275474, actual$cl1)
+  expect_equal_rounded(0.004820780511, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+})
