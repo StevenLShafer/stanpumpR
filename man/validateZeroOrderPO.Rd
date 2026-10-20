@@ -21,7 +21,10 @@ A drug whose oral dose is released into the gut at a constant rate before
 it is absorbed first order (canagliflozin, Hoeben 2016: NONMEM's modelled
 duration D1 into the depot, after the lag) declares
 \verb{zeroOrderPO = list(duration = <minutes>)}.  The release starts at the
-oral lag.  The engines carry it on the tissue depot (see
+oral lag.  With \code{into = "central"} and a \code{fraction} below 1, that share of
+each dose instead enters the circulation at a constant rate over the
+duration, from the moment of the dose, beside the first-order depot that
+absorbs the rest (amantadine extended-release tablets).  The engines carry it on the tissue depot (see
 \code{oralReleaseToTissueDepot()}), so the drug may have no tissue route of its
 own, no second oral depot and no dose-dependent oral bioavailability.
 }

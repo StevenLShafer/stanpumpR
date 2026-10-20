@@ -30,6 +30,7 @@ HELP_SCENARIO_GROUPS <- c(
   "Inhaled anesthetics",
   "Regional anesthesia",
   "Long-term therapy",
+  "Parkinson disease",
   "Perioperative"
 )
 
@@ -313,6 +314,18 @@ helpScenarioDefinitions <- function() {
       timeUnits = "days", maximum = 14 * MINS_PER_DAY,
       plasmaLinetype = "solid", effectsiteLinetype = "blank",
       addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
+      "levodopa-wearing-off",
+      "Levodopa: the effect lags the plasma, and wears off",
+      "Parkinson disease",
+      "One 200 mg carbidopa-levodopa tablet in advanced Parkinson's disease: the plasma peaks at 84 minutes, the motor effect site 36 minutes later, and the effect stays above its half-maximal concentration for about three and a half hours.",
+      age = 68, weight = 75, height = 175,
+      doses = helpDoses(
+        c("levodopa", 0, 200, "mg PO")
+      ),
+      timeUnits = "hours", maximum = 6 * MINS_PER_HOUR,
+      plasmaLinetype = "dashed", showThreshold = TRUE
     ),
     helpScenario(
       "tci-propofol",

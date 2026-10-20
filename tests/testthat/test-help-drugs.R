@@ -99,7 +99,11 @@ plasmaOnly <- c(
     "norepinephrine", "procainamide", "esmolol", "dopamine",
     "propranolol", "digoxin", "verapamil", "phenylephrine",
     "milrinonePediatric", "metoprolol", "nicardipine",
-    "digoxinIVPediatric"
+    "digoxinIVPediatric",
+    # Parkinson disease drugs (2026-10-19): plasma only; levodopa and its
+    # intestinal gel alone have an effect site (inst/help/models/parkinsons.md)
+    "pramipexole", "pramipexoleER", "safinamide", "opicapone",
+    "istradefylline", "amantadineER", "pimavanserin", "tolcapone"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
