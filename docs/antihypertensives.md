@@ -1744,8 +1744,14 @@ That is an inconsistency in a derived summary, not in any parameter, and
 nothing is free to choose. The three other readings were integrated anyway and
 all four do reproduce the paper's reported peaks — parent 0.82 to 0.95 h
 against its "almost 1 h", metabolite 3.20 to 3.32 h against its "around 3 to
-4 h" — and the reading the text states is also the closest of the four to the
-reported parent peak. So the conclusion §14.3 reached was right and its reason
+4 h". The reading the text states is **not** the closest of the four to the
+reported parent peak, and that is worth stating rather than glossing: reading 1
+(nine compartments, a depot emptying at KA) is nearer at 0.95 h against the
+implemented reading's 0.88 h. It means agreement with a reported summary was
+never what chose the reading — the text was. An earlier draft of this section
+claimed the implemented reading was also the closest, which the drug's own test
+disproves, since that test asserts reading 1 has the latest peak. So the
+conclusion §14.3 reached was right and its reason
 was wrong: the readings agreeing made the ambiguity harmless, but there was no
 ambiguity to be harmless about.
 
@@ -1842,7 +1848,7 @@ Arafat 2005 (*J Clin Pharm Ther* 30:319-28, PMID 15985045) gave two brands of
 10 mg enalapril maleate to healthy volunteers and measured **both moieties with
 specific enzyme immunoassays** rather than the ACE-inhibition assay most earlier
 work used. Nothing of it was an input to Faisal's fit. Its metabolite peaks were
-54.8 and 57.2 ng/mL; the implemented model gives **55.7**, between the two and
+54.8 and 57.2 ng/mL; the implemented model gives **55.9**, between the two and
 within 3% of each. That is a joint check on the conversion fraction and the
 metabolite's volume, which no internal consistency test could provide.
 

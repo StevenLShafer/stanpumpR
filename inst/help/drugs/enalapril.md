@@ -26,7 +26,7 @@ The source prints a mean transit time of 0.558 h with eight compartments, and se
 
 One derived number cannot survive both statements. The formula assumes nine steps all at the same rate, while the structure has seven at 16.13 and one at 6.01, so the model's true mean input time is 0.60 h rather than the printed 0.558 h. That is an inconsistency in the source's shorthand, not in its parameters.
 
-It was worth checking rather than assuming, so three other readings were built and integrated numerically. **All four reproduce the source's own observations** — it reports the parent peaking in "almost 1 h" and the metabolite "in around 3 to 4 h", and the four readings give 0.82 to 0.95 h and 3.20 to 3.32 h, with peak concentrations varying under 6%. The reading implemented is the one the text states, and it happens also to be the closest of the four to the reported parent peak. An ambiguous parameterisation is only a blocker when the readings disagree with the paper's own figures, which is what separates this case from the [valsartan model this library rejected](help:drugs/valsartan).
+It was worth checking rather than assuming, so three other readings were built and integrated numerically. **All four reproduce the source's own observations** — it reports the parent peaking in "almost 1 h" and the metabolite "in around 3 to 4 h", and the four readings give 0.82 to 0.95 h and 3.20 to 3.32 h, with peak concentrations varying under 6%. The reading implemented is the one the text states, and that is the only reason for it. It is **not** the closest of the four to the reported peak — the nine-compartment reading is nearer, 0.95 h against 0.88 h — which is worth knowing, because it means this curve was not chosen by fitting it to the figure the paper reports. An ambiguous parameterisation is only a blocker when the readings disagree with the paper's own figures, which is what separates this case from the [valsartan model this library rejected](help:drugs/valsartan).
 
 ### What the curve looks like
 
@@ -36,7 +36,7 @@ The practical reading: the parent is a transient, and the metabolite is the expo
 
 ### An independent study agrees on the metabolite peak, and that settles the dose basis
 
-Arafat and colleagues (*J Clin Pharm Ther* 2005;30:319-28) gave two brands of 10 mg enalapril maleate to healthy volunteers and measured both moieties with **specific enzyme immunoassays**, rather than the ACE-inhibition assay most earlier work used. Their enalaprilat peaks were 54.8 and 57.2 ng/mL. This model predicts **55.7** — between the two, within 3% of each, in a study that was no part of Faisal's fit.
+Arafat and colleagues (*J Clin Pharm Ther* 2005;30:319-28) gave two brands of 10 mg enalapril maleate to healthy volunteers and measured both moieties with **specific enzyme immunoassays**, rather than the ACE-inhibition assay most earlier work used. Their enalaprilat peaks were 54.8 and 57.2 ng/mL. This model predicts **55.9** — between the two, within 3% of each, in a study that was no part of Faisal's fit.
 
 That agreement does more than reassure. It answers the question the next section has to leave open: whether the fitted bioavailability of 0.606 already contains the maleate-to-base mass fraction of 0.764. Getting that wrong in either direction would move the whole curve by a factor of 1.308, and **both alternatives land outside Arafat's measured range.** So an ambiguity the source itself cannot settle is settled by a study that never entered it.
 

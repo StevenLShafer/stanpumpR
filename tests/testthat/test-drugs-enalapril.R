@@ -242,8 +242,15 @@ test_that("the three rejected readings of the chain are recorded, not hidden", {
   # section 14.3)
   expect_true(all(parent > 0.8 & parent < 1.0))
   expect_true(all(metab > 3.1 & metab < 3.4))
-  # And the implemented reading is the closest of the four to "almost 1 h"
-  expect_equal(which.max(parent), 1L)         # reading 1 is nearest 1 h
+  # Which reading lands nearest the reported "almost 1 h" is READING 1, not the
+  # implemented one: every peak is below 1 h, so the latest is the nearest.
+  # Pinned explicitly because an earlier draft of the header, the registry, the
+  # documentation and the help page all claimed the implemented reading was the
+  # closest, and this assertion is what disproves it.  The implemented reading
+  # is chosen because the text states it, not because it fits the reported peak
+  # best -- it is the second nearest, ahead of readings 3 and 4.
+  expect_equal(which.max(parent), 1L)
+  expect_gt(r1[1], r2[1])
   expect_gt(r2[1], r3[1]); expect_gt(r2[1], r4[1])
 })
 

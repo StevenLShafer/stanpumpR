@@ -73,8 +73,18 @@
 # four reproduce the source's own reported observations (parent peak 0.82 to
 # 0.95 h against its "almost 1 h"; metabolite peak 3.20 to 3.32 h against its
 # "around 3 to 4 h") with peak concentrations varying under 6%.  This reading
-# is the one the text states, and it is also the closest of the four to the
-# reported parent peak.  test-drugs-enalapril.R pins what it predicts.
+# is the one the text states, and that is the whole reason for it.  It is NOT
+# the closest of the four to the reported peak: reading 1, nine compartments
+# with a depot emptying at KA, is nearer at 0.95 h against this one's 0.88 h.
+# Worth saying rather than glossing, because it means agreement with a
+# reported summary was never what chose the reading -- the text was.
+# test-drugs-enalapril.R integrates all four and pins them.
+#
+# The peak this predicts at the reference individual is 75.8 ng/mL for the
+# parent and 55.9 for the metabolite, evaluated on a 0.01 minute grid.  What
+# the PLOT shows is a hair lower on a long window, because simulationTimeGrid()
+# samples a 14-day plot more coarsely through the peak than a 2-day one (75.3
+# against 75.8); the curve is the same, the sampled maximum is not.
 #
 # THE DOSE IS ENTERED AS PRESCRIBED
 # =================================
@@ -138,7 +148,7 @@
 # to healthy volunteers and measured BOTH moieties with specific enzyme
 # immunoassays rather than the ACE-inhibition assay most earlier work used.
 # Nothing of it was an input to Faisal's fit.  Its metabolite peaks were 54.8
-# and 57.2 ng/mL; this model gives 55.7, within 3% of each.
+# and 57.2 ng/mL; this model gives 55.9, within 3% of each.
 #
 # That is what decides the dose-basis question the section above has to leave
 # open: a factor of 1.308 in either direction puts the prediction outside the
