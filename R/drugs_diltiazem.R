@@ -65,11 +65,30 @@
 # WHAT THIS MODEL IS NOT
 # ======================
 # Ten healthy volunteers, mean values, not a population model; the
-# variability is large (central volume 119 +/- 77 L).  No effect site and no
-# band: the source correlated the PQ interval with the logarithm of the
-# concentration but the abstract gives no coefficients, and no heart rate or
-# conduction effect is predicted here.
+# variability is large (central volume 119 +/- 77 L).  No band: the source
+# correlated the PQ interval with the logarithm of the concentration but the
+# abstract gives no coefficients, and no heart rate or conduction effect is
+# predicted here.
+#
+# EFFECT SITE: tPeak 3.1 MINUTES (Salerno 1989)
+# =============================================
+# Salerno DM, Dias VC, Kleiger RE, et al.  Efficacy and safety of intravenous
+# diltiazem for treatment of atrial fibrillation and atrial flutter.  Am J
+# Cardiol 1989;63:1046-1051 (doi 10.1016/0002-9149(89)90076-3), read in full:
+# in 113 patients with atrial fibrillation or flutter given 0.25 mg/kg over 2
+# minutes, "the median time from start of drug infusion to the maximal
+# decrease in heart rate was 4.3 minutes" (heart rate from 1-minute rhythm
+# strips at the end of the infusion and every 5 minutes after).  That is a
+# peak after a 2-minute infusion, not a bolus, so it is converted: on this
+# plasma model, the ke0 that puts the effect-site peak 4.3 min after the start
+# of a 2-minute infusion is 1.44 /min, and with it a bolus peaks at 3.1 min,
+# which is the tPeak here.  Dias 1992 (read in full) agrees: response began a
+# mean 4.2 min from the start of a 2-minute dose, and over its hours-long
+# infusions heart rate tracked plasma without hysteresis in 27 of 32
+# patients.
 # -----------------------------------------------------------------------------
+
+DILTIAZEM_TPEAK <- 3.1        # min, bolus equivalent of Salerno 1989's 4.3 min
 
 # Hoglund 1988, abstract
 DILTIAZEM_CL  <- 0.992        # L/min
@@ -115,7 +134,7 @@ diltiazem <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = DILTIAZEM_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

@@ -50,7 +50,12 @@
 # ke0 0.184 /h (half-time 3.8 h).  With Hornestam's own typical plasma model
 # (CL 9.88 L/h, Vc 27.8 L, Q 71.8 L/h, Vp 444 L) that ke0 puts the peak
 # effect 87 minutes after a bolus, and the effect site here is solved from
-# that time to peak, so it carries over to Cheng's plasma curve.
+# that time to peak, so it carries over to Cheng's plasma curve.  It is the
+# effect site for RATE CONTROL.  Inotropy is far slower: Weiss M, Kang W,
+# Pharm Res 2004;21:231-236 (doi 10.1023/b:pham.0000016236.36210.a6), fitting
+# Kramer 1979's 1 mg bolus data in healthy men, found an equilibration
+# half-time of 13 h for shortening of electromechanical systole, attributed
+# to slow receptor binding and dependent on the dosing schedule.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================

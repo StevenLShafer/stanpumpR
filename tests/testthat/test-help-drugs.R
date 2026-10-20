@@ -95,10 +95,10 @@ plasmaOnly <- c(
   "clevidipine", "fenoldopamPediatric", "carvedilol",
     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
-    "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin",
-    "norepinephrine", "procainamide", "esmolol", "dopamine",
-    "propranolol", "digoxin", "verapamil", "phenylephrine",
-    "milrinonePediatric", "metoprolol", "nicardipine",
+    "epinephrine", "magnesiumSulfate", "labetalol", "nitroglycerin",
+    "procainamide", "dopamine",
+    "digoxin", "phenylephrine",
+    "milrinonePediatric",
     "digoxinIVPediatric"
 )
 

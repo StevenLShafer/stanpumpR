@@ -4,7 +4,7 @@ Intravenous digoxin's plasma model comes from Cheng and colleagues in Philadelph
 
 ### The effect site
 
-Hornestam and colleagues (*Eur J Clin Pharmacol* 2003;58:747-755) related the fall in ventricular rate to an effect compartment in 105 patients given intravenous digoxin for acute atrial fibrillation. With their own plasma model, that compartment peaks **87 minutes** after a bolus, and the effect site here is solved from that time to peak. Their plasma model is not used because its renal slope was fixed at the boundary that keeps clearance non-negative, giving zero clearance at a creatinine clearance of 20 mL/min; Cheng's clearance has a non-renal floor.
+Hornestam and colleagues (*Eur J Clin Pharmacol* 2003;58:747-755) related the fall in ventricular rate to an effect compartment in 105 patients given intravenous digoxin for acute atrial fibrillation. With their own plasma model, that compartment peaks **87 minutes** after a bolus, and the effect site here is solved from that time to peak. It describes rate control: digoxin's inotropic effect equilibrates far more slowly, with a half-time of about 13 hours in healthy volunteers (Weiss and Kang, *Pharm Res* 2004), because the drug binds its receptor slowly. Their plasma model is not used because its renal slope was fixed at the boundary that keeps clearance non-negative, giving zero clearance at a creatinine clearance of 20 mL/min; Cheng's clearance has a non-renal floor.
 
 ### What is plotted
 

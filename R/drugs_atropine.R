@@ -60,7 +60,13 @@
 # =======================================
 # The heart-rate effect of an intravenous bolus peaks within about 90
 # seconds (Steven L. Shafer, 2026-10-19, from clinical practice), and ke0 is
-# solved from that time to peak.  Two published estimates were set aside as
+# solved from that time to peak.  Libersa CC, Caron JF, Kacet S, et al.
+# Clin Cardiol 1988;11:454-460 (doi 10.1002/clc.4960110704; 0.03 mg/kg IV
+# bolus, Holter) is consistent with it: its trace shows heart rate rising to
+# a plateau within a fraction of a 10-minute tick of the bolus, and the
+# "maximal heart rate peak" the authors mark a few minutes later sits on that
+# nearly flat plateau, where a saturating vagal block leaves the timing of
+# the maximum to noise.  Two published estimates were set aside as
 # inconsistent with it.  Part II related heart rate and saliva flow to the
 # amount in the PERIPHERAL compartment, a structure the library's effect site
 # does not represent, with a heart-rate peak near 7-8 minutes after a 3-minute
