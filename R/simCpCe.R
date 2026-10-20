@@ -625,6 +625,30 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       # R/advanceMichaelisMenten.R.  No clinical-event PK switching, no
       # parallel systems or extra oral formulations (getDrugPK() refuses them).
       results <- advanceMichaelisMenten(dose, PK, maximum, plotRecovery, emerge)
+    } else if (!is.null(PK$dosePhase))
+    {
+      # Dabigatran after total hip replacement (R/drugs_dabigatranHip.R):
+      # absorption and clearance are lower for doses given on the day of surgery
+      # and the next day than for later doses.  Each dose keeps the phase it was
+      # given in (dose-time semantics), so the two phases are independent linear
+      # systems that superpose: doses before the switch run on the day-0-1 PK
+      # set, doses at or after it on the day-2-10 set.
+      d <- shareOf(dose, PK$doseFraction)
+      early <- d; early$Dose[d$Time >= PK$dosePhase$at] <- 0
+      late  <- d; late$Dose[d$Time  < PK$dosePhase$at]  <- 0
+      # Each phase run is a single, constant-parameter system, so it goes
+      # straight to the standard engine rather than through runEngines(), whose
+      # event logic would read the drug's two PK keys as clinical-event sets.
+      runPhase <- function(dsub, set)
+        if (sum(dsub$PO) + sum(dsub$IM) + sum(dsub$IN) + sum(dsub$SL) +
+            sum(dsub$RA) + sum(dsub$RAslow) + sum(dsub$RArate) +
+            sum(dsub$PO2) == 0)
+          advanceClosedForm0(dsub, set, maximum, plotRecovery, emerge)
+        else
+          advanceClosedFormPO_IM_IN(dsub, set, maximum, plotRecovery, emerge)
+      parts <- list(runPhase(early, pkSets[[PK_EVENT_DEFAULT]]),
+                    runPhase(late,  pkSets[[PK$dosePhase$late]]))
+      results <- superposeEngineResults(parts, plotRecovery, emerge)
     } else if (!is.null(PK$inr))
     {
       # An INR drug (R/inr.R).  Warfarin runs its own S-warfarin system and the

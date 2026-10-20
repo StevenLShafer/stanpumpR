@@ -1300,7 +1300,178 @@ approved ingredients as 13.1 enumerates them, and it is **not** a comparison
 against an intended formulary or a dated utilisation list. Enumerating what exists and knowing what is used are
 different questions, and the second one is the clinician's.
 
-And the number that matters has not moved. Of 127 records, 10 are executable,
+And the number that matters has not moved. Of the 127 records as at section 13, 10 were executable,
 `bp_simulation_enabled` is `FALSE` on every one, and **no drug in stanpumpR
 plots a blood pressure.** All twenty-one new rows are a statement about what
 the published evidence does not contain.
+
+## 14. The renin-angiotensin drugs, and where each one actually stops (2026-10-20)
+
+Eight drugs were requested: the three best-known angiotensin receptor blockers
+(losartan, valsartan, olmesartan) and five ACE inhibitors (benazepril,
+captopril, enalapril/enalaprilat, fosinopril, lisinopril). They did not come out
+in two groups, implemented and not. They came out in **six distinct states**,
+and the distinctions are the useful part of this section, because each one is a
+different reason and so calls for a different next action.
+
+| Drug | State | What stops it, or what did not |
+|---|---|---|
+| **lisinopril** | Implemented | Thomson 1989, full text. The library's first flip-flop model |
+| **olmesartan** | Implemented | Yoshihara 2005, full text. Dose basis resolved from the paper's own words |
+| **valsartan** | Implemented | Heo 2016, full text and supplement. Zero-order release, no renal term |
+| **enalapril** | Blocked on an **engine**, not on evidence | Faisal 2019 is complete and verified. Repeated eigenvalues (section 14.3) |
+| **losartan** | Blocked on **access** | Lo 1995 is the right study and only its abstract was read (section 14.2) |
+| **captopril**, **fosinopril** | **Not pursued** | Out of clinical use, by the maintainer's decision; and both were weak anyway |
+| **benazepril** | Not yet searched | — |
+
+### 14.1 Three implementations, three different lessons
+
+**Olmesartan's dose basis was derived from a sentence, not assumed.** Olmesartan
+medoxomil is a prodrug 20% heavier than the olmesartan that is plotted, so a
+model fitted to olmesartan concentrations could have been given its doses on
+either basis and the wrong guess is a flat 20% error in every curve. The paper
+settles it in its Model Evaluation section — the data were *"normalised to a
+dose of olmesartan medoxomil 20mg"* — so the apparent parameters already carry
+the ratio and a dose is entered as prescribed. **The general rule this is a case
+of: for any prodrug, the dose basis is a thing to find in the text, never a
+thing to infer from the analyte.** Azilsartan was the harder version of the same
+question (section 10) and had to be settled by arithmetic on the paper's own
+simulated exposures, because its text never said.
+
+**Olmesartan also parameterises in a way that has to be reproduced rather than
+improved.** The source fits apparent clearance together with the four rate
+constants, so the central volume is not a parameter at all — it is clearance
+over the elimination rate constant — and every covariate sits on clearance. The
+consequence is that each patient's eigenvalues are identical and the entire
+covariate model is a single multiplier on concentration: nothing about the
+shape moves with age, weight, sex, renal function or disease. It would have been
+easy to "fix" this by putting the covariates on clearance alone and holding the
+volume at its typical value. That would be a different model from the published
+one. The drug header, the help page and the test all state the property
+explicitly, and the test pins that the eigenvalues are patient-independent.
+
+**Valsartan's absorption shape is a finding, and so is its missing renal term.**
+Heo 2016 fitted first-order absorption too and it lost by 162 objective-function
+units on the same number of parameters, so the zero-order release mode built for
+carvedilol (section 8) is used — **its second confirmation, and the second time
+a source has rejected first-order absorption outright rather than merely
+preferring something else.** The consequence is pinned rather than smoothed
+over: a constant-rate input into a linear system peaks when the input stops, so
+the predicted peak is at exactly 4.39 h against the label's 2 to 4 h, and the
+authors themselves report that the model underpredicts the median peak. The
+curve describes exposure well and the peak bluntly, and the help page says so.
+
+The absent renal term matters more. Age, serum creatinine, smoking and drinking
+were all screened and rejected; body weight was the only survivor. So the
+signature deliberately does not name `creatinine`, and the test asserts that a
+creatinine of 4 mg/dL changes nothing. **For a drug whose patients' kidneys are
+often the reason they are taking it, a silence like that should be explicit
+rather than merely true**: the population was 48 healthy young adults with a
+mean creatinine of 0.81 mg/dL, so the model is not saying renal function is
+irrelevant, it is saying this study cannot speak to it.
+
+### 14.2 Losartan: the one study that identifies the system, and why its abstract is not enough
+
+A PubMed screen returned 52 hits for losartan population pharmacokinetics and
+122 for losartan with EXP3174, and **not one is a population model with a
+printed parameter table.** For the most prescribed drug in its class that is a
+surprising result, and it is worth recording as a result rather than as a failed
+search: losartan's literature is overwhelmingly CYP2C9 phenotyping, drug
+interactions and ethnic comparisons, which measure metabolic ratios rather than
+fit disposition.
+
+What the screen did find is better than a population model. Lo 1995 (*Clin
+Pharmacol Ther* 58:641-9) gave 18 healthy men **intravenous losartan,
+intravenous EXP3174, and oral losartan**. Separate intravenous arms for both
+moieties make both their clearances and volumes absolute rather than apparent,
+and the 14% conversion fraction it reports closes the parent-to-metabolite link
+that no oral-only study can close at all. That design is exactly what a
+two-moiety model needs, and it is why this is the one source to obtain rather
+than one candidate among many.
+
+Its abstract is still not enough, and the reason is the familiar one. Losartan's
+reported clearance over its reported volume gives a half-life of 0.64 h against
+the reported 2.1 h; EXP3174's gives 2.46 h against the reported 6.3 h. Neither
+moiety is one-compartment on these numbers, so the quoted volumes belong to a
+multi-compartment fit, and the abstract supplies three numbers per moiety where
+two compartments need four — **the same arithmetic that rules out esmolol's
+abstract (section 4) and fosinopril's (section 14.4).** The full text's
+compartmental tables would settle it, and would also answer a question the
+abstract raises: whether the oral conversion fraction differs from the
+intravenous one, which first-pass metabolism to EXP3174 would imply.
+
+### 14.3 Enalapril: the first case where the obstacle is an engine, and why discretising will not do
+
+Faisal 2019 (*Front Pharmacol* 10:973) is complete, verified and not
+implemented, which no other record in this registry has been. It fitted serum
+**and urine** for both moieties simultaneously in 24 healthy adults, which makes
+the system identifiable: bioavailability is a separately estimated parameter
+(0.606, against the literature's 60%), so the volumes and clearances are
+absolute, not apparent. The structure is enalapril in one compartment behind
+**eight Erlang transit compartments**, its elimination splitting into a renal
+and a metabolic path, feeding enalaprilat in two compartments behind **two more
+transit compartments** that delay the metabolite's formation.
+
+The obstacle is specific. **A chain of N identical transit compartments has one
+eigenvalue repeated N times**, and every closed-form coefficient in this library
+divides by a difference of two rate constants — which is why
+`separateEigenvalues()` exists, nudging ties apart by a relative 1e-8. For N = 8
+the partial-fraction coefficients would scale as 1/nudge⁷. That is not merely
+inelegant: it is precisely the catastrophic cancellation of nearly equal large
+numbers that section 3.3 **rejected esmolol's decomposition for**, so the
+library's own standard forbids the nudge here.
+
+Section 6's lesson still holds and points the right way. The system is linear
+throughout, so it is superposable, so by that test it does **not** need a
+numerical solver — what it needs is exact closed-form handling of a repeated
+eigenvalue, and a **matrix-exponential advance** over the 13-state system is
+that. `tests/testthat/test-compartments.R` already carries a dependency-free
+scaling-and-squaring `expmTaylor()`, which shows one costs no new package.
+
+It is worth being clear why the cheaper route is closed, because the cheap route
+has won every previous time. The parent's input shape could have been
+discretised into lagged fractional doses exactly as hydrochlorothiazide's
+Weibull was (section 12). Convolution commutes, so that would be exact in the
+limit. But the metabolite's own 2-transit delay means **the parent and the
+metabolite need different input kernels from one dose table**, and the
+architecture gives them the same one. So: *an input shape the engine lacks has
+always been a rewrite of the dose rows — until the shape differs between a
+parent and its metabolite.* That is the new boundary, and it is a sharper
+version of the old rule rather than a contradiction of it.
+
+**The paper's transit parameterisation is internally inconsistent, and it turns
+out not to matter.** It quotes MTT = (N+1)/KTR, which assumes every step shares
+one rate, while also defining KA as the separate rate out of the last transit.
+Four readings were integrated by Runge-Kutta and **all four reproduce the
+paper's own reported observations**: parent peak at 0.82 to 0.95 h against its
+"almost 1 h", metabolite peak at 3.26 to 3.68 h against its "around 3 to 4 h",
+with peak concentrations varying under 5%. That is the exact opposite of the
+Yang 2022 valsartan case, where no reading worked at all, and the contrast is
+the point: **an ambiguous parameterisation is a blocker only when the readings
+disagree with the paper's own figures.** Testing them costs an afternoon and
+turns a blocker into a documented rounding decision.
+
+### 14.4 Two drugs not pursued, and why that is still a record
+
+Captopril and fosinopril are out of clinical use, which is the maintainer's call
+and the sufficient reason. But an unpursued drug that looks merely unexamined
+invites someone to examine it again, so both rows now carry the evidential
+reason beside the clinical one.
+
+Captopril was the worst candidate in its class regardless: 58 unscreened
+candidate sources, and saturable binding to converting enzyme strong enough that
+a linear fit is the wrong *structure* rather than an approximation of the right
+one. Fosinopril failed the section 4 identifiability check on the very papers
+obtained for it — Gehr 1993 reports clearance, steady-state volume, mean
+residence time and a terminal half-life, but **mean residence time is
+steady-state volume over clearance**, so those are three independent numbers and
+not four. Two compartments need four. It is the third drug in this document to
+fail on that one identity.
+
+### 14.5 Where the numbers stand
+
+Of 133 records, 13 are executable, `bp_simulation_enabled` is `FALSE` on every
+one, and **no drug in stanpumpR plots a blood pressure.** Valsartan's source
+fitted one — an effect compartment with a maximum inhibition of 0.164, plus an
+interaction term with amlodipine — and it is recorded as an endpoint relation
+rather than plotted, like the four before it.
