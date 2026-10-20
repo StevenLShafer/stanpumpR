@@ -60,7 +60,13 @@
 # one-minute bolus and reports that "at the 5-min measurement, most patients
 # had achieved their maximal increase in cardiac index".  That is the time to
 # peak effect, to the precision of its 2.5-minute sampling, and ke0 is solved
-# from it.  Bailey's concentration-response (a 50% rise in cardiac index at
+# from it.  Ritchie RH, Hii JT, Horowitz JD, J Cardiovasc Pharmacol
+# 1998;31:885-893 (doi 10.1097/00005344-199806000-00012; 1 mg bolus, 12 men at
+# cardiac catheterisation, read in full) put the mean individual times of
+# maximal effect at 7.3 min for LV dP/dt max and 8.4 min for mean arterial
+# pressure, but measured them only at 2, 5, 10 and 15 min, so about half its
+# patients peaked at 5 min and half at 10; Butterworth's finer grid is kept,
+# and the true peak may lie a few minutes later.  Bailey's concentration-response (a 50% rise in cardiac index at
 # 167 ng/mL, Hill 1.16) is not plotted; the band is the 100-300 ng/mL target
 # range quoted for adults and children (Hornik 2019), with Bailey's 167 as
 # the typical value.
