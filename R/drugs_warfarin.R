@@ -58,11 +58,17 @@
 # R-warfarin raises the apparent C50 of S-warfarin:
 #     C50_app = C50_S x (1 + C_R / RIC50)
 # (R/inr.R).  This is the competitive antagonism of the paper's Equation 2 as
-# the erratum corrects it; the erratum text could not be read here, but this
-# form reproduces the paper's worked example: at a maintenance dose giving
-# C_R near 0.86 mg/L the apparent C50 is 0.378 x (1 + 0.86 / 2.387) = 0.514
-# mg/L, a 36% rise, which test-drugs-warfarin.R pins.  The authors found the
-# R effect minor.
+# the erratum corrects it (Br J Clin Pharmacol 2017;83:1602, PMID 28597521,
+# doi 10.1111/bcp.13325): the printed equation had the R-warfarin term
+# entering the denominator on its own, the corrected one nests it inside the
+# S-warfarin term, as C50_app does, and the authors confirm the NM-TRAN
+# models were coded as corrected, so the published parameters belong to this
+# form.  The erratum was reached through its PubMed and PubMed Central
+# records and a published summary of its text, not its typeset page; the
+# form is also the one that reproduces the paper's worked example: at a
+# maintenance dose giving C_R near 0.86 mg/L the apparent C50 is
+# 0.378 x (1 + 0.86 / 2.387) = 0.514 mg/L, a 36% rise, which
+# test-drugs-warfarin.R pins.  The authors found the R effect minor.
 #
 # BODY SIZE: FAT-FREE MASS, THE MODEL'S OWN
 # =========================================

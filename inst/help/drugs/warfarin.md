@@ -4,7 +4,7 @@ This is a research and teaching model. The plotted INR is **not** validated clin
 
 ### The model
 
-Warfarin is modelled by Xue and colleagues (*Br J Clin Pharmacol* 2017;83:823-835, with its [erratum](https://doi.org/10.1111/bcp.13325)), who fitted the two enantiomers separately in 264 cardiac-surgery patients. A racemic dose is split equally between **S-** and **R-warfarin**, each a one-compartment model with first-order absorption:
+Warfarin is modelled by Xue and colleagues (*Br J Clin Pharmacol* 2017;83:823-835, with its [erratum](https://doi.org/10.1111/bcp.13325), 2017;83:1602, which corrects the R-warfarin term of Equation 2 to the form used here), who fitted the two enantiomers separately in 264 cardiac-surgery patients. A racemic dose is split equally between **S-** and **R-warfarin**, each a one-compartment model with first-order absorption:
 
 - S-warfarin: clearance 0.224 L/h, volume 24.0 L,
 - R-warfarin: clearance 0.124 L/h, volume 16.2 L,

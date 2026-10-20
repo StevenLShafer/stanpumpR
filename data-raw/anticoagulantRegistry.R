@@ -63,7 +63,7 @@ registry <- rbind(
   reg("warf_xue_2017_cardiac", "vitamin K antagonist",
       "oral, cardiac surgery", "S/R-warfarin (mg/L) -> INR", "INR (theory-based 1/PCA)",
       "PO", "research_ready", "warfarin",
-      "Eq.2 multiplicative C50_app is the form that reproduces the paper's worked example (the erratum, BCP 2017;83:1602, was not itself read); FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
+      "Eq.2 multiplicative C50_app is the form the erratum (BCP 2017;83:1602, PMID 28597521) gives, the R term nested in the S term rather than alone in the denominator, with the NM-TRAN code confirmed as corrected; read from the PubMed/PMC records and a published summary, not the typeset page, and it reproduces the paper's worked example; FFM reference 56.1 vs 56.6 kg resolved to the formula-consistent 56.1; R antagonism study-specific.",
       "https://doi.org/10.1111/bcp.13157"),
   reg("warf_hamberg_2007", "vitamin K antagonist",
       "oral", "S/R-warfarin (mg/L) -> INR", "INR (two-chain transit compartments)",
