@@ -29,7 +29,8 @@ HELP_SCENARIO_GROUPS <- c(
   "Recovery and emergence",
   "Inhaled anesthetics",
   "Regional anesthesia",
-  "Long-term therapy"
+  "Long-term therapy",
+  "Perioperative"
 )
 
 #' Default graph options for a scenario
@@ -858,6 +859,25 @@ helpScenarioDefinitions <- function() {
       ),
       # The INR is the plotted curve (no effect site); it builds over weeks.
       timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
+    # Dabigatran etexilate 150 mg twice daily begun on the day of hip-replacement
+    # surgery, to show the Trocóniz (2007) post-operative model's defining
+    # feature: the doses given on days 0 and 1 are absorbed and cleared slowly
+    # (reduced gut motility after surgery), and the day-2-onward doses faster, so
+    # the trough-to-peak swings grow once the later, faster absorption takes over.
+    # A research and teaching model, not dosing guidance.
+    # (Claude Code, 2026-10-20, at the request of Steven L. Shafer.)
+    helpScenario(
+      "dabigatran-hip-postop",
+      "Dabigatran after hip replacement: the first days are different",
+      "Perioperative",
+      "Dabigatran etexilate 150 mg twice daily started on the day of total hip replacement, in a 66-year-old. The Trocóniz 2007 model absorbs and clears the day-0 and day-1 doses slowly (post-operative gut), then switches to the faster day-2-to-10 kinetics, so the peaks sharpen and the swings grow after the first day. Raise the serum creatinine to see the later clearance fall.",
+      age = 66, weight = 78, height = 172, sex = SEX_MALE,
+      doses = helpDoses(
+        c("dabigatranHip", 0, 150, "mg PO bid")
+      ),
+      timeUnits = "days", maximum = 7 * MINS_PER_DAY,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     )
   )

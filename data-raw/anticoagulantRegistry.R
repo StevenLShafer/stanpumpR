@@ -127,11 +127,11 @@ registry <- rbind(
       "PO", "provisional", NA,
       "A separate VTE fit and assay map (0.0159 IU/mL per ng/mL); not the NVAF PK vector, and the assay slope is one reagent only.",
       "https://doi.org/10.1002/psp4.12184"),
-  reg("dabi_liesenfeld_2006_hip", "direct thrombin inhibitor",
-      "oral, post-hip-surgery", "total active dabigatran -> aPTT/ECT", "aPTT/ECT",
-      "PO", "pending", NA,
-      "aPTT Emax verified from the abstract, but the post-surgery PK (Troconiz 2007) needs serum gastrin, not a routine covariate; full parameter set unread.",
-      "https://doi.org/10.1111/j.1365-2125.2006.02667.x"),
+  reg("dabi_troconiz_2007_hip", "direct thrombin inhibitor",
+      "oral, post-hip-replacement surgery", "total active dabigatran (ng/mL)", "none plotted",
+      "PO", "research_ready", "dabigatranHip",
+      "Full Tables III-IV read from the typeset original; time-varying apparent PK (lower absorption and clearance on days 0-1 than days 2-10), gastrin fixed at the median (no field), Cockcroft-Gault CrCl and serum creatinine and age on the later phase; dose-time phase split at 24 h because the surgery-relative breakpoint is not a simulator input; aPTT/ECT PD not plotted; doses as mg dabigatran etexilate.",
+      "https://doi.org/10.1177/0091270006297228"),
   # --- Pending: label-only or specialty extensions, no portable fit ----------
   reg("dalteparin_label", "low molecular weight heparin",
       "SC", "anti-Xa activity (IU/mL)", "LMWH anti-Xa",
@@ -183,6 +183,7 @@ WIL  <- "4918 patients, 7 trials, Willmann 2018 (population medians: 81 kg, 93 m
 XUE  <- "264 cardiac-surgery patients, Xue 2017"
 NIE  <- "4130 individuals (13 phase 1 + Hokusai-VTE), Niebecker 2015"
 LIE  <- "9522 atrial-fibrillation patients (RE-LY), Liesenfeld 2011"
+TRO  <- "287 total-hip-replacement patients, Trocóniz 2007"
 COX  <- "152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004"
 BER  <- "189 patients over 75 (PROPHRE.75), Berges 2007"
 DEL  <- "orthopaedic-surgery patients (GETHCAM/POP-A-RIX), Delavenne 2010"
@@ -262,6 +263,18 @@ parameters <- rbind(
   par("dabigatran", "V3/F", 345, "L", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
   par("dabigatran", "ka", 0.754, "1/h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
   par("dabigatran", "ALAG", 0.634, "h", "fixed", LIE, "https://doi.org/10.1111/j.1538-7836.2011.04498.x"),
+
+  # The Trocóniz (2007) post-hip-replacement model, a second dabigatran drug
+  # (dabigatranHip).  Time-varying apparent two-compartment PK: days 0-1 and
+  # days 2-10 take different CL/F and ka; gastrin fixed at its median 34.58.
+  par("dabigatranHip", "CL/F (days 0-1)", 43.4, "L/h (x (1 + 0.633 GAST/34.58); 70.9 at median)", "estimated", TRO, "https://doi.org/10.1177/0091270006297228"),
+  par("dabigatranHip", "CL/F (days 2-10)", 82.1, "L/h (x CRCL/76.17 x (1 + 0.294 GAST/34.58); 106.2 at median)", "estimated", TRO, "https://doi.org/10.1177/0091270006297228"),
+  par("dabigatranHip", "V2/F (central)", 30.8, "L", "estimated", TRO, "https://doi.org/10.1177/0091270006297228"),
+  par("dabigatranHip", "Q/F", 13.6, "L/h", "estimated", TRO, "https://doi.org/10.1177/0091270006297228"),
+  par("dabigatranHip", "V3/F (peripheral)", 136, "L", "estimated", TRO, "https://doi.org/10.1177/0091270006297228"),
+  par("dabigatranHip", "ka (days 0-1)", 0.022, "1/h", "estimated", TRO, "https://doi.org/10.1177/0091270006297228"),
+  par("dabigatranHip", "ka (days 2-10)", 0.265, "1/h (x (1-0.363 SCR/0.964) x (1-0.447 AGE/66.97); 0.093 at median)", "estimated", TRO, "https://doi.org/10.1177/0091270006297228"),
+  par("dabigatranHip", "ALAG1", 0.4, "h", "estimated", TRO, "https://doi.org/10.1177/0091270006297228"),
 
   par("argatroban", "CL", 22.0, "L/h (+ 0.018 x (WT-87))", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
   par("argatroban", "V1", 11.0, "L", "estimated", COX, "https://doi.org/10.1177/0091270004267651"),
