@@ -69,7 +69,9 @@ test_that("the category holds exactly the implemented drugs, concentration only"
     # Plasma only, except where a source measured the time of peak effect
     PK <- getDrugPK(d, 70, 170, 50, "male")
     expected <- switch(d, milrinone = MILRINONE_TPEAK, atropine = ATROPINE_TPEAK,
-                       digoxinIV = DIGOXIN_IV_TPEAK, 0)
+                       digoxinIV = DIGOXIN_IV_TPEAK,
+                       norepinephrine = NOREPINEPHRINE_TPEAK,
+                       diltiazem = DILTIAZEM_TPEAK, 0)
     expect_equal(PK$tPeak, expected, info = d)
   }
   # Clevidipine was already in the library, in the Antihypertensives category,
