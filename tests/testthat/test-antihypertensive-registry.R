@@ -20,7 +20,12 @@ STATUS <- c("ready_for_source_reproduction", "requires_source_extraction",
             "requires_parameter_fit", "descriptive_only",
             "complete_not_implemented")
 VALIDATION <- c("none", "in_population", "external_population")
-ESTIMATE <- c("fitted", "fixed", "derived", "label_descriptive", "proposed")
+# "observed" is a measured summary statistic -- a Cmax, a median tmax, a
+# urinary recovery -- rather than an estimate of a model parameter.  Added
+# 2026-10-20 for Kaiser 1989, where such numbers CHECK a derived vector
+# instead of feeding it, so labelling them "fitted" would hide that.
+ESTIMATE <- c("fitted", "fixed", "derived", "observed",
+              "label_descriptive", "proposed")
 VERIFICATION <- c("primary_full_text", "primary_abstract", "derived_here",
                   "handoff_unverified")
 
@@ -192,7 +197,7 @@ test_that("only concentration records are executable, and they are the library's
   expect_setequal(implemented$stanpumpr_drug,
                   c("clevidipine", "fenoldopamPediatric", "carvedilol",
                     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
-                    "lisinopril", "olmesartan", "valsartan"))
+                    "lisinopril", "olmesartan", "valsartan", "benazepril"))
   dd <- getDrugDefaultsGlobal()
   for (d in implemented$stanpumpr_drug) {
     expect_true(d %in% dd$Drug, info = d)
@@ -215,7 +220,7 @@ test_that("a record that cannot be ported says so, and names the obstacle", {
                     gated$stanpumpr_drug %in%
                       c("clevidipine", "fenoldopamPediatric", "carvedilol",
                     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
-                    "lisinopril", "olmesartan", "valsartan")))
+                    "lisinopril", "olmesartan", "valsartan", "benazepril")))
   # The four the handoff asked to be ported first.  Azilsartan was on that
   # list and has since been ported, from the full text supplied on
   # 2026-10-17; so has chlorthalidone, from the same paper.  What is gated
