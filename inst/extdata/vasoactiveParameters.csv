@@ -112,6 +112,7 @@
 "nicardipine","Vss","1.13","L/kg","estimated","full_text","https://doi.org/10.1002/jps.2600820707"
 "nicardipine","Q","0.826","L/h/kg (row C_d)","estimated","full_text","https://doi.org/10.1002/jps.2600820707"
 "diltiazem","tPeak","3.1","min (bolus equivalent of 4.3 min after a 2-min infusion, Salerno 1989)","derived","abstract","https://doi.org/10.1016/0002-9149(89)90076-3"
+"nicardipine","tPeak","1.2","min (Cheung 1999: mean 72 s to the largest fall in MAP after a 5-s bolus)","estimated","full_text","https://pubmed.ncbi.nlm.nih.gov/10553821/"
 "norepinephrine","tPeak","1.233","min (74 s, Joachim 2024 median for MAP)","estimated","full_text","https://doi.org/10.1111/bcp.16180"
 "milrinone","V1","0.102","L/kg (Table 2: 102 mL/kg)","estimated","full_text","https://doi.org/10.1097/00000542-199409000-00014"
 "milrinone","V2","0.198","L/kg","estimated","full_text","https://doi.org/10.1097/00000542-199409000-00014"

@@ -55,11 +55,24 @@
 # Per kilogram, as published: total weight with the switch off, the
 # pharmacokinetic weight with it on.
 #
-# NO EFFECT SITE, NO BAND
-# =======================
-# The source modelled heart rate and mean arterial pressure through
-# conduction functions, not an effect site, and reports no time to peak
-# effect after a bolus; plasma only.
+# EFFECT SITE: tPeak 1.2 MINUTES (Cheung 1999); NO BAND
+# =====================================================
+# Modi modelled heart rate and mean arterial pressure through conduction
+# functions, not an effect site, and reports no time to peak.  Cheung AT,
+# Guvakov DV, Weiss SJ, et al., Anesth Analg 1999;89:1116-1123 (read in full;
+# its pharmacokinetics are unusable, see the registry) gave 0.25 to 2 mg over
+# 5 seconds into the right atrium of 40 anaesthetised cardiac surgical
+# patients and read the radial arterial pressure every 15 seconds: the
+# largest fall in MAP came 66, 63, 56 and 101 s after the four doses, a mean
+# of 72 s, which is the tPeak here (ke0 2.9 /min on this plasma model).
+# Cheung DG, Gasster JL, Neutel JM, Weber MA, Am Heart J 1990;119:438-442
+# (doi 10.1016/s0002-8703(05)80065-1, read in full), in 11 awake
+# hypertensive patients given 0.125 to 7 mg over 2 minutes, put the largest
+# fall 2.5 +/- 0.6 minutes after the end of the injection; with this ke0 a
+# 2-minute injection peaks 0.6 minutes after its end.  Cheung 1990 read the
+# pressure by cuff at 1-minute intervals, so its peak is the less precise of
+# the two, and is kept as evidence the peak may lie later in awake patients
+# (on this plasma model it implies a bolus tPeak of about 3 minutes).
 # -----------------------------------------------------------------------------
 
 # Modi 1993, Table I, means
@@ -67,11 +80,13 @@ NICARDIPINE_CL  <- 0.920   # L/h/kg
 NICARDIPINE_V1  <- 0.291   # L/kg
 NICARDIPINE_VSS <- 1.13    # L/kg
 NICARDIPINE_Q   <- 0.826   # L/h/kg
+NICARDIPINE_TPEAK <- 1.2   # min, Cheung 1999 (72 s to the largest fall in MAP)
 
 #' Nicardipine, intravenous (Modi 1993)
 #'
 #' Two compartments per kilogram from the mean disposition parameters of
-#' seven healthy men; see the header of \code{R/drugs_nicardipine.R}.
+#' seven healthy men, with the time to peak effect from Cheung 1999; see the
+#' header of \code{R/drugs_nicardipine.R}.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
@@ -97,12 +112,14 @@ nicardipine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Modi NB, Veng-Pedersen P, Graham DJ, Dow RJ, J Pharm Sci 1993;82:705-713. ",
     "Two compartments from Table I's means in 7 healthy men: CL 0.920 L/h/kg, ",
     "V1 0.291 L/kg, Vss 1.13 L/kg, distribution clearance 0.826 L/h/kg; doses ",
-    "as nicardipine hydrochloride. https://doi.org/10.1002/jps.2600820707"
+    "as nicardipine hydrochloride.  Time to peak effect 1.2 min (72 s to the ",
+    "largest fall in MAP) from Cheung AT et al., Anesth Analg 1999;89:1116-1123. ",
+    "https://doi.org/10.1002/jps.2600820707"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = NICARDIPINE_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

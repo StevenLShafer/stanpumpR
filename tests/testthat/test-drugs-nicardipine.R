@@ -12,7 +12,7 @@ test_that("the parameters are Table I's means, per kilogram", {
   expect_equal_rounded((VSS - V1) * 74, set$v2)
   expect_equal_rounded(CL / 60 * 74, set$cl1)
   expect_equal_rounded(Q / 60 * 74, set$cl2)
-  expect_equal(PK$tPeak, 0)
+  expect_equal(PK$tPeak, 1.2)
   # Half-lives 6.4 min and 1.45 h
   expect_equal(round(log(2) / set$lambda_1, 1), 6.4)
   expect_equal(round(log(2) / set$lambda_2 / 60, 2), 1.45)
@@ -49,7 +49,22 @@ test_that("weight scales every parameter, or the pharmacokinetic weight", {
   expect_equal_rounded(CL / 60 * size$pkWeight, on$cl1)
 })
 
-test_that("nicardipine is a plasma-only vasoactive drug", {
+test_that("the effect site peaks 72 s after a bolus (Cheung 1999)", {
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "nicardipine", Time = 0, Dose = 1, Units = "mg"),
+    data.frame(Time = double(), Event = character()),
+    70, 170, 60, "male", 20, FALSE)$nicardipine$wide
+  expect_lt(abs(wide$Time[which.max(wide$`Effect Site`)] - 1.2), 0.1)
+  # A 2-minute injection (Cheung 1990) then peaks about 0.6 min after its end
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "nicardipine", Time = c(0, 2), Dose = c(30, 0),
+               Units = "mg/hr"),
+    data.frame(Time = double(), Event = character()),
+    70, 170, 60, "male", 20, FALSE)$nicardipine$wide
+  expect_lt(abs(wide$Time[which.max(wide$`Effect Site`)] - 2.6), 0.15)
+})
+
+test_that("nicardipine is a vasoactive drug with no MEAC or band", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "nicardipine", ]
   expect_identical(row$Category, VASOACTIVE_DRUG_CATEGORY)

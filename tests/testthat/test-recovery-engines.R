@@ -427,7 +427,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "epinephrine", "magnesiumSulfate", "labetalol", "nitroglycerin",
     "procainamide", "esmolol", "dopamine",
     "propranolol", "digoxin", "verapamil", "phenylephrine",
-    "milrinonePediatric", "metoprolol", "nicardipine",
+    "milrinonePediatric", "metoprolol",
     "digoxinIVPediatric"
   ))
 })

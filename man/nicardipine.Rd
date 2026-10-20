@@ -27,5 +27,6 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Two compartments per kilogram from the mean disposition parameters of
-seven healthy men; see the header of \code{R/drugs_nicardipine.R}.
+seven healthy men, with the time to peak effect from Cheung 1999; see the
+header of \code{R/drugs_nicardipine.R}.
 }
