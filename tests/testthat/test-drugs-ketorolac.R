@@ -114,3 +114,57 @@ test_that("target-controlled infusion is refused for a sum of systems", {
     "not available"
   )
 })
+
+test_that("pregnancy: enantiomer-specific CL and V (Kulo 2017)", {
+  # A woman of 30 years, 70 kg, 165 cm.  S-ketorolac CL x 1.68 and V x 1.20,
+  # R-ketorolac CL x 2.00 and V x 1.33; the distribution clearances scale with
+  # volume, so the distribution rate constants are unchanged and only the
+  # elimination rate (and the terminal half-life) moves (R/drugs_ketorolac.R).
+  on  <- getDrugPK("ketorolac", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("ketorolac", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("ketorolac", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK[[1]]; b <- off$PK[[1]]
+  # S-ketorolac: volumes and distribution clearances x 1.20, elimination x 1.68
+  expect_equal(a$v1 / b$v1, KETOROLAC_PREGNANCY_S_V_FACTOR, tolerance = 1e-6)
+  expect_equal(a$v2 / b$v2, KETOROLAC_PREGNANCY_S_V_FACTOR, tolerance = 1e-6)
+  expect_equal(a$v3 / b$v3, KETOROLAC_PREGNANCY_S_V_FACTOR, tolerance = 1e-6)
+  expect_equal(a$cl1 / b$cl1, KETOROLAC_PREGNANCY_S_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(a$cl2 / b$cl2, KETOROLAC_PREGNANCY_S_V_FACTOR, tolerance = 1e-6)
+  expect_equal(a$cl3 / b$cl3, KETOROLAC_PREGNANCY_S_V_FACTOR, tolerance = 1e-6)
+  # the distribution rate constants and absorption are unchanged; only the
+  # elimination rate k10 moves (CL factor over V factor)
+  dist <- c("k12", "k13", "k21", "k31", "ka_PO", "bioavailability_PO", "tlag_PO")
+  expect_true(all(dist %in% names(a)))
+  expect_equal(a[dist], b[dist], tolerance = 1e-12)
+  expect_equal(a$k10 / b$k10,
+               KETOROLAC_PREGNANCY_S_CL_FACTOR / KETOROLAC_PREGNANCY_S_V_FACTOR,
+               tolerance = 1e-6)
+  # R-ketorolac: volumes and distribution clearance x 1.33, elimination x 2.00
+  r <- on$parallelSystems[[1]]$PK[[1]]; s <- off$parallelSystems[[1]]$PK[[1]]
+  expect_equal(r$v1 / s$v1, KETOROLAC_PREGNANCY_R_V_FACTOR, tolerance = 1e-6)
+  expect_equal(r$v2 / s$v2, KETOROLAC_PREGNANCY_R_V_FACTOR, tolerance = 1e-6)
+  expect_equal(r$cl1 / s$cl1, KETOROLAC_PREGNANCY_R_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(r$cl2 / s$cl2, KETOROLAC_PREGNANCY_R_V_FACTOR, tolerance = 1e-6)
+  expect_equal(r$k12 / s$k12, 1, tolerance = 1e-12)
+  expect_equal(r$k21 / s$k21, 1, tolerance = 1e-12)
+  # the R system's placeholder third volume, with no clearance to it, stays 1
+  expect_equal(r$v3, s$v3, tolerance = 1e-12)
+  expect_equal(r$cl3, s$cl3, tolerance = 1e-12)
+  expect_match(on$reference, "Kulo", fixed = TRUE)
+  expect_match(on$reference, "2017", fixed = TRUE)
+  expect_no_match(off$reference, "Kulo", fixed = TRUE)
+  # The values the model gives with the flag on
+  actual <- ketorolac(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(3.898275677, actual$v1)
+  expect_equal_rounded(41.88469896, actual$v2)
+  expect_equal_rounded(5.707152976, actual$v3)
+  expect_equal_rounded(0.09456669911, actual$cl1)
+  expect_equal_rounded(0.03164700618, actual$cl2)
+  expect_equal_rounded(0.3351860332, actual$cl3)
+  rActual <- ketorolac(70, 165, 30, "female",
+                       pregnant = TRUE)$parallelSystems[[1]]$PK$default
+  expect_equal_rounded(4.749431444, rActual$v1)
+  expect_equal_rounded(5.553511259, rActual$v2)
+  expect_equal_rounded(0.04111842201, rActual$cl1)
+  expect_equal_rounded(0.03582974221, rActual$cl2)
+})

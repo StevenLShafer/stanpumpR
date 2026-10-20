@@ -124,12 +124,12 @@ clindamycin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, total mg/L: the source's working trough criterion of 2 mg/L, with
-  # 1 and 4 mg/L either side.  Orientation only; binding is saturable (see the
-  # header), free fraction about 0.1 at these levels.
-  typical      <- 2
-  upperTypical <- 4
-  lowerTypical <- 1
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("clindamycin")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Bouazza N et al., Br J Clin Pharmacol 2012;74:971-977. ",

@@ -20,7 +20,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         cl3 = 0
       )
     ),
-    tPeak = 0, MEAC = 0, typical = 8, upperTypical = 10, lowerTypical = 1,
+    tPeak = 0, MEAC = 0, typical = 2, upperTypical = 2, lowerTypical = 0.5,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)
@@ -67,4 +67,21 @@ test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
                gentamicin(70, 165, 30, "female", pregnant = FALSE)$PK$default)
   expect_match(gentamicin(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
   expect_no_match(gentamicin(70, 165, 30, "female")$reference, "Ansari")
+})
+
+test_that("pregnancy: a measured creatinine gives no pregnancy change", {
+  # The rise in filtration is applied only when the creatinine is blank
+  # (pregnancyGfrFactor()): a pregnant woman's measured creatinine is already
+  # low, and the renal estimate made from it already carries the rise.
+  m1 <- gentamicin(70, 165, 30, "female", creatinine = 0.6, pregnant = TRUE)
+  m0 <- gentamicin(70, 165, 30, "female", creatinine = 0.6, pregnant = FALSE)
+  expect_identical(m1, m0)
+  expect_no_match(m1$reference, "Ansari")
+  # and through getDrugPK(), as the app calls it
+  expect_identical(
+    getDrugPK("gentamicin", 70, 165, 30, SEX_FEMALE, creatinine = 0.6, pregnant = TRUE),
+    getDrugPK("gentamicin", 70, 165, 30, SEX_FEMALE, creatinine = 0.6))
+  # with the creatinine blank the factor is applied
+  expect_gt(gentamicin(70, 165, 30, "female", pregnant = TRUE)$PK$default$cl1,
+            gentamicin(70, 165, 30, "female")$PK$default$cl1)
 })

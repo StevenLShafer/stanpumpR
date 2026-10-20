@@ -23,7 +23,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         tlag_PO = 0
       )
     ),
-    tPeak = 0, MEAC = 0, typical = 2, upperTypical = 4, lowerTypical = 1,
+    tPeak = 0, MEAC = 0, typical = 4.7, upperTypical = 4.7, lowerTypical = 2.4,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)
@@ -60,4 +60,22 @@ test_that("the published allometry on total weight is reproduced with the switch
   expect_equal(y$cl1 / x$cl1, 0.5^0.75); expect_equal(y$v1 / x$v1, 0.5)
   # half-time at 70 kg, 1.32 h
   expect_equal(log(2) / (x$cl1 / x$v1) / 60, 1.32035, tolerance = 1e-5)
+})
+
+test_that("pregnancy: apparent clearance x 1.5, by analogy with cephradine", {
+  # Philipson 1987 (cephradine, CL x 1.64) and the 50% rise in filtration.
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.
+  on  <- getDrugPK("cefalexin", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("cefalexin", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("cefalexin", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default; b <- off$PK$default
+  expect_equal(a$cl1 / b$cl1, CEFALEXIN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(CEFALEXIN_PREGNANCY_CL_FACTOR, 1.5)
+  expect_equal_rounded(0.2973287274, a$cl1)
+  expect_identical(a[c("v1", "v2", "v3", "cl2", "cl3", "ka_PO",
+                       "bioavailability_PO", "tlag_PO")],
+                   b[c("v1", "v2", "v3", "cl2", "cl3", "ka_PO",
+                       "bioavailability_PO", "tlag_PO")])
+  expect_match(on$reference, "Philipson", fixed = TRUE)
+  expect_no_match(off$reference, "Philipson", fixed = TRUE)
 })

@@ -60,7 +60,13 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = 
         recoveryStatesOwn        = X$recoveryStates,
         metaboliteRecoveryStates = X$metaboliteRecoveryStates,
         tci               = X$tci,
-        scheduled         = X$scheduled
+        scheduled         = X$scheduled,
+        # The peripheral concentrations and the depot (R/compartments.R), own
+        # and as plotted, kept apart as wideOwn and wide are, and the formed
+        # metabolite's, which foldMetabolites() adds to the metabolite drug's.
+        compartmentsOwn        = X$compartments,
+        compartments           = X$compartments,
+        metaboliteCompartments = X$metaboliteCompartments
       )
     }
     for (field in names(sim)) drugs[[drug]][[field]] <- sim[[field]]
@@ -154,6 +160,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     drugs[[target]]$wide    <- NULL
     drugs[[target]]$recoveryStatesOwn        <- NULL
     drugs[[target]]$metaboliteRecoveryStates <- NULL
+    drugs[[target]]$compartmentsOwn <- NULL
+    drugs[[target]]$compartments    <- NULL
   }
 
   # The alternative models (R/alternativeModels.R): for each Graph Options

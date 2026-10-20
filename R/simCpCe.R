@@ -231,6 +231,12 @@ superposeEngineResults <- function(parts, plotRecovery, emerge)
 #'   contribution, and its recovery, to the metabolite drug's own row.
 #'   \code{tci} holds the TCI schedule, if any, and \code{scheduled} the
 #'   repeats of any qd/bid/tid/qid dose (Drug, Time, Dose, Units), or NULL.
+#'   \code{compartments} holds the concentrations in the peripheral volumes
+#'   (\code{V2}, \code{V3}) and the amount still in the absorption depots
+#'   (\code{Depot}), by \code{Time}, for the compartments the drug has, or
+#'   NULL; a drug with an active metabolite also carries
+#'   \code{metaboliteCompartments}, the formed metabolite's.  See
+#'   \code{R/compartments.R}.
 #'
 #' @export
 simCpCe <- function(dose, events, PK, maximum, plotRecovery)
@@ -685,6 +691,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   # later, once every drug has been simulated, because the contribution
   # crosses from one drug's entry into another's.
   metaboliteSeries <- NULL
+  metaboliteCompartments <- NULL
   if (hasMetabolite)
   {
     metaboliteSeries <- data.frame(
@@ -692,9 +699,24 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       Cp   = results$CpMetabolite,
       Ce   = results$CeMetabolite
     )
+    # The formed metabolite's own peripheral concentrations, added to the
+    # metabolite drug's by foldMetabolites(); only those its model has.
+    met <- pkSets[[1]]$metabolite
+    metaboliteCompartments <- data.frame(Time = results$Time)
+    if (isTRUE(met$k21 > 0)) metaboliteCompartments$V2 <- results$C2Metabolite
+    if (isTRUE(met$k31 > 0)) metaboliteCompartments$V3 <- results$C3Metabolite
+    if (ncol(metaboliteCompartments) == 1) metaboliteCompartments <- NULL
     results$CpMetabolite <- NULL
     results$CeMetabolite <- NULL
+    results$C2Metabolite <- NULL
+    results$C3Metabolite <- NULL
   }
+
+  # The peripheral concentrations and the depot (R/compartments.R), lifted off
+  # before the columns are renamed, and kept only for the compartments the
+  # drug has.
+  lifted <- liftCompartments(results, PK, dose)
+  results <- lifted$results
 
   # The effect-site states behind the Recovery column, which the engines carry
   # out as attributes.  foldMetabolites() needs them: a drug that also receives
@@ -720,6 +742,8 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   out <- finishDrugSeries(results, PK, maximum, plotRecovery)
   out$wide             <- results
   out$metaboliteSeries <- metaboliteSeries
+  out$compartments     <- lifted$compartments
+  out$metaboliteCompartments <- metaboliteCompartments
   out$metaboliteName   <- PK$metaboliteName
   out$recoveryStates           <- recoveryStates
   out$metaboliteRecoveryStates <- metaboliteRecoveryStates

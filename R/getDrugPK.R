@@ -36,8 +36,8 @@
 #'   `R/renalFunction.R`.
 #' @param pregnant is the patient pregnant?  TRUE or FALSE (the default).
 #'   Passed only to the models that name it (R/pregnancy.R lists them), which
-#'   apply the changes of late pregnancy described by Ansari, Carvalho, Shafer
-#'   and Flood (Anesth Analg 2016;122:786-804); every other model ignores it.
+#'   apply the changes of late pregnancy measured for that drug
+#'   (inst/extdata/pregnancyRegistry.csv); every other model ignores it.
 #'   TRUE requires \code{sex = "female"}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
@@ -176,8 +176,8 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "creatinine" %in% names(formals(get(drug, mode = "function"))))
     covariates["creatinine"] <- list(creatinine)
-  # And the pregnancy flag, which only the models the pregnancy review
-  # quantifies read (R/pregnancy.R).
+  # And the pregnancy flag, which only the models with a measured change in
+  # pregnancy read (R/pregnancy.R, inst/extdata/pregnancyRegistry.csv).
   if (exists(drug, mode = "function") &&
       "pregnant" %in% names(formals(get(drug, mode = "function"))))
     covariates$pregnant <- pregnant
@@ -1117,6 +1117,11 @@ getDrugPK <- function(
       PK[[event]]$metabolite <- list(
         name  = metaboliteName,
         ke0   = metaboliteSet$ke0,
+        # The metabolite's own return rate constants, for its peripheral
+        # concentrations (R/compartments.R); zero where it has no such
+        # compartment.
+        k21   = if (compartmentCount(metaboliteSet) >= 2) metaboliteSet$k21 else 0,
+        k31   = if (compartmentCount(metaboliteSet) >= 3) metaboliteSet$k31 else 0,
         coefs = metaboliteCoefficients(
           parent            = PK[[event]],
           metabolite        = metaboliteSet,

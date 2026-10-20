@@ -13,3 +13,7 @@ Weight is the source's only covariate: clearance with the 0.75 power of weight o
 ### Effect
 
 There is **no effect site** and no band. Nord and colleagues (*Int J Neuropsychopharmacol* 2011;14:1357-1366) related striatal D2 occupancy directly to **plasma** quetiapine in 11 healthy men: occupancy = 100% × C / (525 ng/mL + C) (1369 nmol/L, Emax fixed at 100%). Half of the receptors are occupied at 525 ng/mL and 80% at 2100 ng/mL. That is a receptor biomarker measured in healthy volunteers, not a therapeutic target, and the pharmacokinetics come from a different population. Norquetiapine, which also binds D2, is not modelled.
+
+### Pregnancy
+
+With **Pregnant** ticked, the apparent clearance is multiplied by 4.2; the volume and the absorption are unchanged. Westin and colleagues (*Clin Pharmacol Ther* 2018;103:477-484) followed 35 quetiapine pregnancies through routine drug monitoring and found the dose-adjusted serum concentration 76% lower in the third trimester than the same women's own baseline (95% CI 66 to 83%), the largest fall of the antipsychotics, and 1/0.24 is 4.2. Quetiapine is cleared by CYP3A4, which pregnancy induces. A physiologically based model (Zheng and colleagues, *Clin Pharmacokinet* 2021;60:623-635) predicts about half that change, a 49% lower exposure; the direct, paired measurement is the one applied. See [Pregnancy](help:models/pregnancy).

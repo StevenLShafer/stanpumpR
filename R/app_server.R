@@ -1276,6 +1276,7 @@ app_server <- function(input, output, session) {
         plotEvents = plotEvents,
         plotRecovery = plotRecovery(),
         plotMEACOverlay = plotMEACOverlay(),
+        plotCompartments = isTRUE(input$showCompartments),
         typical = typical,
         logY = logY,
         yAxisHeight = input$yaxisHeight,
@@ -1479,6 +1480,20 @@ app_server <- function(input, output, session) {
     drug <- alternativeModelParent(drug)
     outputComments("Drug identified in xy_str() is", drug)
 
+    # A compartment panel (R/compartments.R): the concentration in V2 or V3,
+    # the tension in the muscle or fat group, or the amount in the depot.
+    compartment <- compartmentSeries(drug)
+    if (!is.na(compartment$drug))
+    {
+      cm <- drugs()[[compartment$drug]]$compartments
+      column <- cm[[compartment$compartment]]
+      if (is.null(column) || length(column) < 2) return(NULL)
+      units <- sub("^.*\\((.*)\\)\\s*$", "\\1", yaxis)
+      shown <- compartmentPanelLabel(paste(drug))
+      return(paste0("Time: ", hoverTime(e$x), ", ", compartment$drug, " ", shown, ": ",
+                    signif(stats::approx(cm$Time, column, e$x, rule = 2)$y, 3), " ", units))
+    }
+
     # A TCI rate panel: report the pump rate in force at that moment, and the
     # companion pump's after it.
     if (grepl(" TCI$", drug))
@@ -1637,6 +1652,9 @@ app_server <- function(input, output, session) {
       # A click on a drug's TCI rate panel is a click on that drug, and a
       # click on a companion's line (R/alternativeModels.R) on its parent.
       drug <- sub(" TCI$", "", drug)
+      # And a click on one of its compartment panels (R/compartments.R)
+      compartment <- compartmentSeries(drug)
+      if (!is.na(compartment$drug)) drug <- compartment$drug
       drug <- alternativeModelParent(drug)
     }
     outputComments("drug from panelvar1", drug)

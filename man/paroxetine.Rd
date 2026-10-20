@@ -4,7 +4,7 @@
 \alias{paroxetine}
 \title{Paroxetine pharmacokinetics (oral)}
 \usage{
-paroxetine(weight, height, age, sex, adjustToFFM = TRUE)
+paroxetine(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -18,6 +18,9 @@ paroxetine(weight, height, age, sex, adjustToFFM = TRUE)
 \item{adjustToFFM}{\code{TRUE} (the default) scales the volume and
 clearance to the patient's fat-free mass; \code{FALSE} uses the
 published values for everyone.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} doubles the apparent
+clearance (Westin 2017; population-typical, see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

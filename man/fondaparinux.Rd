@@ -4,7 +4,15 @@
 \alias{fondaparinux}
 \title{Fondaparinux pharmacokinetics (subcutaneous, orthopaedic prophylaxis)}
 \usage{
-fondaparinux(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+fondaparinux(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +29,10 @@ size-free parameters to fat-free mass}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal
 value for age and sex}
+
+\item{pregnant}{when \code{TRUE} and \code{creatinine} is blank, apply the
+rise in filtration of late pregnancy to the renal term (see the file's
+header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

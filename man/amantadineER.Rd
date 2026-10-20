@@ -4,7 +4,15 @@
 \alias{amantadineER}
 \title{Amantadine, extended-release tablets (Osmolex ER)}
 \usage{
-amantadineER(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+amantadineER(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,10 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal
 value for age and sex}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE}, with the creatinine
+left blank, multiplies the eGFR by the rise in glomerular filtration of
+pregnancy (see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

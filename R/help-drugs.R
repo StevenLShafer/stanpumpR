@@ -305,6 +305,68 @@ helpScenariosUsingDrugHTML <- function(drug, scenarios = helpScenarios()) {
          "<ul>", paste(items, collapse = ""), "</ul>")
 }
 
+#' A short label for a pregnancy source: the first author's surname and year
+#'
+#' From the registry's `source` field, a semicolon-separated list of
+#' citations; the first is the one the table links.
+#' @noRd
+helpPregnancySourceShort <- function(source) {
+  first <- trimws(strsplit(source, ";", fixed = TRUE)[[1]][1])
+  if (is.na(first) || !nzchar(first)) return("")
+  author <- regmatches(first, regexpr("^[[:alpha:]'-]+", first))
+  year <- regmatches(first, regexpr("(19|20)[0-9]{2}", first))
+  label <- paste(c(author, year), collapse = " ")
+  if (nzchar(label)) label else substr(first, 1, 40)
+}
+
+#' Registry text made safe for Markdown: a literal asterisk (CYP2C9*1/*1)
+#' must not open an emphasis
+#' @noRd
+helpPregnancyEscape <- function(x) gsub("*", "\\*", x, fixed = TRUE)
+
+#' What each pregnancy group means, as the drug pages and the pregnancy page say it
+#' @noRd
+PREGNANCY_GROUP_LABELS <- c(
+  applied = "Adjusted when Pregnant is ticked.",
+  unquantified = "Changed in pregnancy, but not by an amount the library can apply: not adjusted.",
+  unchanged = "Studied in pregnancy, with no meaningful change: not adjusted.",
+  unknown = "No human pharmacokinetic data in pregnancy were found: not adjusted.",
+  source_pregnant = "The model was fitted in pregnant women, so it already describes them: Pregnant changes nothing.",
+  not_applicable = "Pregnant changes nothing for this drug."
+)
+
+#' The Pregnancy section of a drug's page
+#'
+#' The drug's row of the pregnancy registry (pregnancyFindings(),
+#' R/pregnancy.R): what is known, what the model applies, and the sources,
+#' so every drug's page says what the literature review found for it.
+#'
+#' @param drug the drug's name
+#' @returns HTML, or "" for a drug with no row
+#' @noRd
+helpDrugPregnancyHTML <- function(drug) {
+  f <- pregnancyFindings()
+  r <- f[f$drug == drug, ]
+  if (nrow(r) == 0) return("")
+  r <- r[1, ]
+  evidence <- paste(c(
+    if (nzchar(r$design)) r$design,
+    if (!is.na(r$n)) sprintf("n = %s", r$n),
+    if (nzchar(r$trimester)) sprintf("trimester: %s", r$trimester),
+    if (nzchar(r$comparator)) sprintf("compared with %s", r$comparator),
+    if (nzchar(r$confidence)) sprintf("confidence %s", r$confidence)
+  ), collapse = "; ")
+  md <- c(
+    sprintf("**%s** %s", PREGNANCY_GROUP_LABELS[[r$group]], helpPregnancyEscape(r$finding)),
+    if (nzchar(r$applied)) c("", sprintf("**What the model applies:** %s", helpPregnancyEscape(r$applied))),
+    if (nzchar(evidence)) c("", sprintf("*Evidence:* %s.", helpPregnancyEscape(evidence))),
+    if (nzchar(r$source)) c("", sprintf("*Sources:* %s%s", helpPregnancyEscape(r$source),
+                                        if (nzchar(r$source_url)) sprintf(" (<%s>)", r$source_url) else "")),
+    "", "See [Pregnancy](help:models/pregnancy)."
+  )
+  paste0(helpH2("Pregnancy"), helpMarkdownToHTML(paste(md, collapse = "\n")))
+}
+
 #' The generated page for one drug or gas, as an HTML string
 #' @noRd
 helpDrugPageHTML <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
@@ -409,6 +471,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
       esc(if (helpNoBand(row)) "None: no range applies to this model, so no band is drawn"
+          else if (!is.null(mic)) sprintf("%s to %s %s, free drug at the expected MBC of the common pathogens (see below)",
+                                          helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
       esc(if (helpNoBand(row)) "None" else sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
       esc(meacShown),
@@ -955,6 +1019,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- Shaded band: free drug at the MBC -------------------------------------
+  mbcHTML <- helpAntibioticMbcHTML(drug, row, concUnits)
+
   # --- Parallel systems ------------------------------------------------------
   # A drug plotted as the sum of independent systems (ketorolac: S and R
   # enantiomers; meloxicam: the oral and intravenous fits, each limited to
@@ -1122,8 +1189,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     metaboliteHTML,
     formedHTML,
     micHTML,
+    mbcHTML,
     eventsHTML,
     if (nzchar(narrative)) paste0(helpH2("About this model"), narrative) else "",
+    helpDrugPregnancyHTML(drug),
     helpScenariosUsingDrugHTML(drug),
     helpH2("See also"),
     "<ul>",
@@ -1217,6 +1286,7 @@ helpGasPageHTML <- function(gas, row) {
     helpH2("At a glance"), glanceHTML,
     propsHTML,
     if (nzchar(narrative)) paste0(helpH2("Notes"), narrative) else "",
+    helpDrugPregnancyHTML(gas),
     helpScenariosUsingDrugHTML(gas),
     helpH2("See also"),
     "<ul>",
@@ -1354,5 +1424,90 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     "patients, so a drug that switches models with age or size appears under each.</p>",
     "<ul class='help-citations'>", paste(items, collapse = ""), "</ul>",
     helpLinkInvestigators(helpMarkdownToHTML(helpReadMarkdown("references")), "citation")
+  )
+}
+
+
+#' The antibiotics' help section on the shaded band: free drug at the MBC
+#'
+#' Generated from \code{antibioticMbcTable()} and \code{antibioticMbcBand()}
+#' (R/antibioticMbc.R), so the page and the band cannot drift apart.
+#'
+#' @param drug a drug name
+#' @param row the drug's row of the drug defaults
+#' @param concUnits the plotted concentration unit, for display
+#' @returns HTML, or "" for a drug with no MBC rows
+#' @noRd
+helpAntibioticMbcHTML <- function(drug, row, concUnits) {
+  band <- antibioticMbcBand(drug)
+  if (is.null(band)) return("")
+  esc <- htmltools::htmlEscape
+  mic <- antibioticMic(drug)
+  x <- antibioticMbcTable()
+  x <- x[x$Drug == drug, ]
+  killed <- x[x$Role != "excluded", ]
+  excluded <- x[x$Role == "excluded", ]
+  unbound <- mic$Plotted == "unbound"
+  role <- c(principal = "Principal", core = "Common")
+
+  pathogens <- data.frame(
+    Pathogen = killed$Pathogen,
+    Role = unname(role[killed$Role]),
+    `MIC50 / MIC90` = paste(helpFormatNumber(killed$MIC50), "/", helpFormatNumber(killed$MIC90)),
+    `MBC50 / MBC90 (free)` = paste(helpFormatNumber(killed$MBC50), "/", helpFormatNumber(killed$MBC90)),
+    `How the MBC was obtained` = killed$Basis,
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  edges <- data.frame(
+    Edge = c("Lower edge", "Typical", "Upper edge"),
+    Meaning = c(
+      paste0("MBC50 of the principal pathogen (", band$principal, ")"),
+      "MBC90 of the principal pathogen",
+      "Highest MBC90 among the pathogens in the table above"),
+    `Free drug` = sprintf("%s mg/L", helpFormatNumber(band$free)),
+    `On the plotted curve` = sprintf("%s %s %s", helpFormatNumber(band$plotted), concUnits, mic$Plotted),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  excludedHTML <- if (nrow(excluded)) {
+    paste0("<p>Not in the band, because the drug does not kill them at concentrations the curve reaches, ",
+           "or because plasma is not the concentration that matters:</p><ul>",
+           paste0("<li><strong>", esc(excluded$Pathogen), "</strong>: ", esc(excluded$Note), "</li>",
+                  collapse = ""), "</ul>")
+  } else ""
+  notes <- killed$Note[nzchar(killed$Note)]
+  notesHTML <- if (length(notes)) {
+    paste0("<ul>", paste0("<li><strong>", esc(killed$Pathogen[nzchar(killed$Note)]), "</strong>: ",
+                          esc(notes), "</li>", collapse = ""), "</ul>")
+  } else ""
+
+  paste0(
+    helpH2("Shaded band: free drug at the MBC"),
+    "<p>The MIC is the concentration at which an organism stops growing; the <strong>MBC</strong>, the ",
+    "minimum bactericidal concentration, is the concentration that kills 99.9 per cent of it in 24 hours. ",
+    "The shaded band marks the expected MBCs, as <strong>free</strong> drug, of the common pathogens ",
+    esc(tolower(helpDrugTitle(drug))), " is given against. Its lower edge is the MBC50 of the principal ",
+    "pathogen, below which the drug no longer kills a typical isolate of it; the typical value is that ",
+    "pathogen's MBC90; the upper edge is the highest MBC90 among the common pathogens, above which free drug ",
+    "kills 90 per cent of the isolates of each of them. MBCs are measured in protein-free broth, so they are ",
+    "free-drug values. ",
+    if (unbound) "This curve is unbound drug, so the band is drawn at the MBCs themselves."
+    else if (isTRUE(mic$Saturable))
+      "This curve is total drug and the binding saturates, so each free MBC is placed on the curve through the binding fit given under <em>Time until threshold</em> above."
+    else sprintf("This curve is total drug, so each free MBC is divided by the free fraction, %s.",
+                 helpFormatNumber(mic$FreeFraction)),
+    "</p>",
+    helpTableHTML(edges),
+    helpTableHTML(pathogens),
+    notesHTML,
+    excludedHTML,
+    "<p>Most of these MBCs are not modern measurements. Where none was found the MBC is the MIC times the ",
+    "MBC/MIC ratio reported for the drug or its class against that organism, as the table says. The MBC is ",
+    "poorly reproducible from laboratory to laboratory, rises with the inoculum, and is far higher in ",
+    "biofilm; an isolate's own MIC, where known, is the better guide. The band is orientation for a ",
+    "susceptible isolate, not a dosing target.</p>",
+    "<p class='small text-muted'>Sources: ",
+    esc(paste(unique(x$Source), collapse = " ")),
+    " The rule, and the literature that would firm these values up: ",
+    helpPageLink("models/antibiotics"), ".</p>"
   )
 }

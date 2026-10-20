@@ -20,7 +20,9 @@ clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
 published fixed parameters unscaled.}
 
 \item{pregnant}{is the patient pregnant?  \code{TRUE} doubles the
-elimination clearance (Ansari 2016; see the file's header).}
+elimination clearance (Ansari 2016) and both volumes, with Q following
+the central volume, so the half-lives are unchanged (Tsuei 1980; see the
+file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

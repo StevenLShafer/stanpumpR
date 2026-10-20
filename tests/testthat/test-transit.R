@@ -105,7 +105,7 @@ test_that("only an enteral drug takes the enteral rate", {
                           maximum = 120), "not given by enteral infusion")
   dd <- getDrugDefaultsGlobal()
   offers <- dd$Drug[vapply(dd$Units, function(u) any(u %in% enteralRateUnits), logical(1))]
-  expect_setequal(offers, "levodopaIntestinalGel")
+  expect_setequal(offers, c("levodopaIntestinalGel", "levodopaEntacaponeIntestinalGel"))
   for (d in offers) expect_true(isTRUE(getDrugPK(d, 70, 170, 60, "male")$enteralInfusion), info = d)
 })
 
@@ -121,4 +121,19 @@ test_that("a zero-order oral share into the circulation is exact", {
   zero <- 0.201 * D / Tz / (V * k) *
     ifelse(t <= Tz, 1 - exp(-k * t), (1 - exp(-k * Tz)) * exp(-k * (t - Tz)))
   expect_lt(max(abs(res$Y[res$Time > 0] - (first + zero) * 1000)) / max((first + zero) * 1000), 1e-8)
+})
+
+test_that("the depot panel shows what is left in the dosing and transit compartments together", {
+  # The two parallel depots, one with a negative share, sum to the chain's
+  # contents, F D exp(-k t) (1 + k t), which Graph Options -> Peripheral
+  # compartments draws as the depot.
+  noE <- data.frame(Time = numeric(0), Event = character(0), Fill = character(0))
+  r <- simulateDrugsWithCovariates(data.frame(Drug = "levodopa", Time = 0, Dose = 200,
+                                              Units = "mg PO"),
+                                   noE, 70, 170, 60, "male", maximum = 480,
+                                   adjustToFFM = FALSE, plotRecovery = FALSE)
+  cmp <- r$levodopa$compartments
+  k <- LEVODOPA_KTR_ORAL / 60
+  expect_equal(cmp$Depot, 200 * exp(-k * cmp$Time) * (1 + k * cmp$Time), tolerance = 1e-5)
+  expect_true("V2" %in% names(cmp))
 })

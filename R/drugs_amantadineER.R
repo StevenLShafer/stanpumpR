@@ -75,6 +75,19 @@
 # renal impairment; an exploratory threshold of 1776 ng/mL for CNS adverse
 # events is in Nagai 2026 (abstract).
 #
+# PREGNANCY
+# =========
+# No study of amantadine's pharmacokinetics in pregnancy was found (PubMed,
+# searched 2026-10-20; inst/extdata/pregnancyRegistry.csv).  Amantadine is
+# eliminated unchanged by the kidneys, and the model's elimination rate is
+# proportional to the eGFR.  With the Patient Profile's Pregnant field on and
+# the serum creatinine left blank, the eGFR is multiplied by
+# PREGNANCY_GFR_FACTOR = 1.5 (pregnancyGfrFactor(), R/pregnancy.R), the rise
+# in glomerular filtration of pregnancy, and so is the clearance; the volume
+# and the absorption are unchanged.  A measured creatinine is not multiplied
+# (it already carries the rise).  A physiological extrapolation with no
+# amantadine data behind it; late pregnancy is the reference state.
+#
 # NOT THIS MODEL: immediate-release amantadine (no full-text model of its
 # absorption was found) and Gocovri, the bedtime extended-release capsules,
 # whose review's model is a two-stage fit in healthy subjects (registry).
@@ -107,14 +120,19 @@ AMANTADINE_BASE_PER_HCL <- 151.25 / 187.71
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
 #'   value for age and sex
+#' @param pregnant is the patient pregnant?  \code{TRUE}, with the creatinine
+#'   left blank, multiplies the eGFR by the rise in glomerular filtration of
+#'   pregnancy (see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 amantadineER <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                         creatinine = NULL)
+                         creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
-  egfr <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  egfr <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex)) *
+    gfrPregnancy
   base <- AMANTADINE_BASE_PER_HCL
   k <- AMANTADINE_ER_K * egfr / AMANTADINE_ER_EGFR_REF                # /h
 
@@ -141,7 +159,10 @@ amantadineER <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "the entered or an assumed normal creatinine; 79.9% of each dose absorbed ",
       "at 0.344/h and 20.1% at a constant rate over 8.79 h (the structure inferred); ",
       "per mg of hydrochloride, so a dose of base is converted. Band 300-600 ng/mL ",
-      "(AGNP). https://www.accessdata.fda.gov/drugsatfda_docs/nda/2018/209410Orig1s000ClinPharmR.pdf"
+      "(AGNP). https://www.accessdata.fda.gov/drugsatfda_docs/nda/2018/209410Orig1s000ClinPharmR.pdf",
+      if (gfrPregnancy != 1) paste0("; ", pregnancyReference(paste0(
+        "eGFR x ", PREGNANCY_GFR_FACTOR,
+        ", the rise in glomerular filtration; no amantadine data"))) else ""
     )
   )
 }

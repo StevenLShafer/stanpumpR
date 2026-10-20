@@ -68,3 +68,27 @@ test_that("with the switch on, weight and Cockcroft-Gault use the pharmacokineti
   expect_equal_rounded((TH1 * w + TH5 * cg(w, 60, "male", 1)) / 60, set$cl1)
   expect_equal_rounded(V1 * w, set$v1)
 })
+
+test_that("pregnancy: creatinine clearance x 1.5 in the renal term, only with a blank creatinine", {
+  # Hebert 2008: renal clearance x 1.49 in the third trimester.  A woman of 30
+  # years, 70 kg, 165 cm, fat-free-mass scaling on, creatinine blank.
+  on  <- getDrugPK("digoxin", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("digoxin", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("digoxin", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default; b <- off$PK$default
+  # The weight (nonrenal) term is unchanged; the CLcr term rises by 1.5
+  w <- pkSizeFactors(70, 165, 30, SEX_FEMALE, TRUE)$pkWeight
+  expect_equal((a$cl1 * 60 - TH1 * w) / (b$cl1 * 60 - TH1 * w),
+               PREGNANCY_GFR_FACTOR, tolerance = 1e-6)
+  expect_equal_rounded(0.2903229704, a$cl1)
+  expect_identical(a[c("v1", "v2", "v3", "cl2", "cl3")],
+                   b[c("v1", "v2", "v3", "cl2", "cl3")])
+  expect_match(on$reference, "Hebert", fixed = TRUE)
+  expect_no_match(off$reference, "Hebert", fixed = TRUE)
+  # A measured creatinine already carries the rise: no change
+  m1 <- getDrugPK("digoxin", 70, 165, 30, SEX_FEMALE, creatinine = 0.6,
+                  pregnant = TRUE)
+  m0 <- getDrugPK("digoxin", 70, 165, 30, SEX_FEMALE, creatinine = 0.6)
+  expect_identical(m1$PK, m0$PK)
+  expect_no_match(m1$reference, "Hebert", fixed = TRUE)
+})

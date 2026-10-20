@@ -90,6 +90,23 @@
 # steady state Cmax 1.01 ng/mL, AUC 17.9 ng.h/mL against Jenner 2009's 1.09
 # and 16.0; IR 1.5 mg tid AUC0-24 108 against 92-94 in study 248.530.
 #
+# PREGNANCY
+# =========
+# No study of pramipexole's pharmacokinetics in pregnancy was found (PubMed,
+# searched 2026-10-20; inst/extdata/pregnancyRegistry.csv).  About 90% of a
+# dose is excreted unchanged, and the model's clearance reads the creatinine
+# clearance.  With the Patient Profile's Pregnant field on and the serum
+# creatinine left blank, the creatinine clearance the hockey stick reads is
+# multiplied by PREGNANCY_GFR_FACTOR = 1.5 (pregnancyGfrFactor(),
+# R/pregnancy.R), the rise in glomerular filtration of pregnancy; volumes,
+# Q and absorption are unchanged.  Above the knee at 121 mL/min the model's
+# clearance does not rise, so the factor's effect stops there: at 30 years,
+# 70 kg and 165 cm (pharmacokinetic weight 56.4 kg), 91.6 mL/min becomes 137
+# and CL/F 22.8 becomes 29.2 L/h of base, x 1.28.  A measured creatinine is
+# not multiplied (it
+# already carries the rise).  A physiological extrapolation with no
+# pramipexole data behind it; late pregnancy is the reference state.
+#
 # NO EFFECT SITE, NO BAND: the population analysis found no relation between
 # concentration and response (review p. 59), the effect builds over days of
 # titration, and no concentration range is published that this review or the
@@ -129,16 +146,22 @@ PRAMIPEXOLE_MIN_WEIGHT <- 40
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
 #'   value for age and sex
-#' @returns a PK set without absorption fields, and the creatinine clearance
+#' @param pregnant is the patient pregnant?  \code{TRUE}, with the creatinine
+#'   left blank, multiplies the creatinine clearance by the rise in glomerular
+#'   filtration of pregnancy (see the file's header).
+#' @returns a PK set without absorption fields, the creatinine clearance, and
+#'   the pregnancy factor applied to it
 #' @keywords internal
 pramipexoleDisposition <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                                   creatinine = NULL)
+                                   creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
   crcl <- creatinineClearanceCG(pkW, age, sex,
-                                adultEquivalentCreatinine(creatinine, age, sex))
+                                adultEquivalentCreatinine(creatinine, age, sex)) *
+    gfrPregnancy
   salt <- PRAMIPEXOLE_SALT_PER_BASE
   cl <- PRAMIPEXOLE_CL *
     (1 + PRAMIPEXOLE_CRCL_SLOPE * (min(crcl, PRAMIPEXOLE_CRCL_REF) - PRAMIPEXOLE_CRCL_REF))
@@ -153,8 +176,21 @@ pramipexoleDisposition <- function(weight, height, age, sex, adjustToFFM = TRUE,
       cl2 = PRAMIPEXOLE_Q * size$clearance * salt / 60,
       cl3 = 0
     ),
-    crcl = crcl
+    crcl = crcl,
+    gfrPregnancy = gfrPregnancy
   )
+}
+
+#' The pregnancy clause of the pramipexole models' reference
+#' @param gfrPregnancy the factor pramipexoleDisposition() applied
+#' @returns "" or the clause, with its separator
+#' @keywords internal
+pramipexolePregnancyReference <- function(gfrPregnancy)
+{
+  if (gfrPregnancy == 1) return("")
+  paste0("; ", pregnancyReference(paste0(
+    "creatinine clearance x ", PREGNANCY_GFR_FACTOR,
+    ", the rise in glomerular filtration; no pramipexole data")))
 }
 
 #' Pramipexole, immediate-release tablets
@@ -167,9 +203,10 @@ pramipexoleDisposition <- function(weight, height, age, sex, adjustToFFM = TRUE,
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 pramipexole <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                        creatinine = NULL)
+                        creatinine = NULL, pregnant = FALSE)
 {
-  d <- pramipexoleDisposition(weight, height, age, sex, adjustToFFM, creatinine)
+  d <- pramipexoleDisposition(weight, height, age, sex, adjustToFFM, creatinine,
+                              pregnant)
   default <- c(d$pk, list(
     ka_PO = PRAMIPEXOLE_KA_IR / 60,
     bioavailability_PO = 1,          # apparent parameters
@@ -188,7 +225,8 @@ pramipexole <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "creatinine, V2/F 35.6 L, Q/F 115 L/h, V3/F 313 L x (1 + 0.0226 (weight - 75)); ",
       "IR ka 0.517/h, lag 0.221 h; doses as the dihydrochloride monohydrate ",
       "(base = salt / 1.431); concentration only. ",
-      "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2010/022421s000ClinPharmR.pdf"
+      "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2010/022421s000ClinPharmR.pdf",
+      pramipexolePregnancyReference(d$gfrPregnancy)
     )
   )
 }

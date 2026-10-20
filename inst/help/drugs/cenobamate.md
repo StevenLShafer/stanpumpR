@@ -30,11 +30,26 @@ The European Medicines Agency's assessment report (Ontozry, 2021) adds four poin
 
 - **Weight.** Exposure is about 25% higher at low weights and 20% lower at high weights than at the mean. The fat-free-mass scaling gives a 50 kg man 16% more exposure than the 70 kg reference and a 110 kg man 16% less, close to the report's figures.
 - **Renal impairment.** Exposure was 1.4 to 1.5 times normal in mild and moderate impairment. In severe impairment there was no increase, a result the report calls unexplained. Creatinine clearance was tested in the population model and not kept, so the curve does not read the creatinine field. The label caps renal impairment at 300 mg/day.
-- **Hepatic impairment.** Exposure was 1.9 times normal in mild and 2.3 times in moderate hepatic impairment. This is not modelled.
+- **Hepatic impairment.** Exposure was 1.9 times normal in mild and 2.3 times in moderate hepatic impairment. The FDA label (revised August 2025) adds a later study in severe (Child-Pugh C) impairment: 4.2 times normal after a single 100 mg dose. Both agencies cap mild and moderate impairment at 200 mg/day and advise against use in severe impairment. None of this is modelled.
 - **Late peaks.** Multiple late peaks suggest enterohepatic recirculation, which is not modelled.
 
 Cenobamate itself changes other drugs' kinetics (it inhibits CYP2C19, raising phenytoin, phenobarbital and N-desmethylclobazam, and induces CYP3A4 and CYP2B6); none of these interactions is modelled.
 
+### Patients in clinics
+
+Two therapeutic drug monitoring series in adults with refractory epilepsy, neither part of the model's data, give the concentration per mg/day of dose. The model's steady-state average is 0.078 mg/L per mg/day at every dose.
+
+- **Kork, Germany** (Steinhoff and colleagues 2024, 101 patients on 100 to 400 mg/day): seizure-free patients had 17.8 mg/L at a mean of 240 mg/day (0.074), and non-responders had 20.9 mg/L at 261 mg/day (0.080). Concentration was linear in dose. Morning samples were within 10% of levels drawn at other times of day.
+- **Oslo, Norway** (Johannessen Landmark and colleagues 2026, 258 patients, morning samples before the day's doses): 53.7 µmol/L, or 14.4 mg/L, at a mean of 164 mg/day (0.088). Averaging each patient's own ratio gives 0.091 for patients taking neither a strong enzyme inducer nor an inhibitor, 0.083 with carbamazepine, phenytoin or phenobarbital, and 0.103 with valproate or cannabidiol. A patient's own ratio varied by 18% from sample to sample, and patients differed 34-fold.
+
+The model is within 12% of the Kork figures and Oslo's overall figure. It is 14% below Oslo's patients on neither an inducer nor an inhibitor and 6% below those on an inducer. The 24% gap for valproate or cannabidiol reflects an inhibition the model has no term for.
+
 ### Band
 
-None. No therapeutic reference range has been established. In an Italian cohort, patients who responded at 100 mg/day or less had plasma concentrations from 0.5 to 17.6 mg/L, median about 5 to 6 (Operto 2025). There is no effect site.
+5 to 35 mg/L, typical 15. The sponsor analysed steady-state trough concentrations in the two controlled trials (Greene and Kamin, AAN 2021). In 95% of the patients whose seizures fell by half or more, or stopped, troughs were between 5 and 35 mg/L, which the authors propose as "a trough plasma concentration reference range (not a target therapeutic range)". The central 90% of those responders were 4.6 to 9.3 mg/L at 100 mg/day, 11.3 to 18.7 at 200 and 20.8 to 35.2 at 400. The model's steady-state troughs, 6.8, 13.7 and 27.4 mg/L, fall inside each range, near its middle. In the phase 3 safety study the mean trough on 200 mg/day was 15.1 mg/L, 15.2 in the patients whose seizures fell by half and 14.5 in those seizure-free for a year or more (AAN 2022), against the model's 13.7. The typical value is the phase 3 mean at 200 mg/day, the usual target dose.
+
+This is the range in which patients respond, not a therapeutic range. In the Kork series, seizure-free patients (3.8 to 33.7 mg/L) and non-responders (3.9 to 54.6 mg/L) did not differ, and adverse effects did not follow the concentration. The authors concluded that no general therapeutic range can be defined and recommended recording each patient's own concentration when they do well. In an Italian cohort, patients who responded at 100 mg/day or less had 0.5 to 17.6 mg/L, median about 5 to 6 (Operto 2025). The Oslo laboratory reports against 15 to 130 µmol/L (4.0 to 34.8 mg/L), taken from the Kork series, and 85% of its measurements fell inside it.
+
+### No effect site
+
+The one study that timed an effect (Kasteleijn-Nolst Trenité and colleagues 2019) measured the EEG response to flashing light in 6 patients with photosensitive epilepsy after single doses of 100 to 400 mg. The response was already reduced 1 hour after 250 and 400 mg, before the plasma peak, and was still reduced more than 24 hours later. No delay between plasma and effect can be seen on that time scale, so no ke0 can be estimated. With a half-life of 65 hours and daily dosing, an equilibration time of minutes would not change the curve anyway. The plot shows plasma only.

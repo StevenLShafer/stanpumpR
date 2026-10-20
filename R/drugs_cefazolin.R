@@ -79,6 +79,9 @@
 # the simulated peak in a parturient is too high.  Komatsu's model is of
 # unbound cefazolin, whose fraction rises as albumin falls in pregnancy; the
 # unbound curve is the one plotted, and the free fraction is not an input.
+# The factor is applied only when the serum creatinine is left blank
+# (pregnancyGfrFactor()): a pregnant woman's measured creatinine is already
+# low, and the renal estimate made from it already carries the rise.
 # See R/pregnancy.R.
 #
 # References
@@ -126,7 +129,8 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   crcl <- creatinineClearanceCG(pkW, age, sex,       # mL/min
                                 adultEquivalentCreatinine(creatinine, age, sex))
   # Pregnancy (see the header): the renal term alone.
-  if (isTRUE(pregnant)) crcl <- crcl * PREGNANCY_GFR_FACTOR
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  crcl <- crcl * gfrPregnancy
 
   # Komatsu 2024, unbound: CLu 29.3 (CrCL/70)^0.586 L/h, Vcu 36.6 L,
   # Qu 54.4 L/h, Vpu 42.2 L
@@ -154,11 +158,12 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   tPeak <- 0
   MEAC  <- 0
 
-  # Band, unbound mg/L: Komatsu's illustrative MIC scenarios of 0.5 and 1 mg/L
-  # and 2 mg/L, the S. aureus ECOFF and MSSA MIC90.  Orientation only.
-  typical      <- 1
-  upperTypical <- 2
-  lowerTypical <- 0.5
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("cefazolin")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Komatsu T et al., Antimicrob Agents Chemother 2024;68:e00267-24. ",
@@ -166,7 +171,7 @@ cefazolin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "cefazolin. Creatinine clearance is from the entered creatinine or an ",
     "assumed normal one. https://doi.org/10.1128/aac.00267-24"
   )
-  if (isTRUE(pregnant)) {
+  if (gfrPregnancy != 1) {
     reference <- paste0(reference, "; ", pregnancyReference(
       paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR)))
   }

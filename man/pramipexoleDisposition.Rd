@@ -10,7 +10,8 @@ pramipexoleDisposition(
   age,
   sex,
   adjustToFFM = TRUE,
-  creatinine = NULL
+  creatinine = NULL,
+  pregnant = FALSE
 )
 }
 \arguments{
@@ -31,9 +32,14 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal
 value for age and sex}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE}, with the creatinine
+left blank, multiplies the creatinine clearance by the rise in glomerular
+filtration of pregnancy (see the file's header).}
 }
 \value{
-a PK set without absorption fields, and the creatinine clearance
+a PK set without absorption fields, the creatinine clearance, and
+the pregnancy factor applied to it
 }
 \description{
 The two-compartment apparent model of the FDA review of NDA 22-421, scaled

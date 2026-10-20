@@ -80,6 +80,7 @@ helpStaticPages <- function() {
 
     "models/overview",          "How stanpumpR computes",          "models",
     "models/three-compartment", "The three-compartment model",     "models",
+    "models/compartments",      "Peripheral compartments and the depot", "models",
     "models/effect-site",       "The effect site and ke0",         "models",
     "models/covariates",        "Covariates and body size",        "models",
     "models/fat-free-mass",     "Scaling to fat-free mass",        "models",
@@ -94,6 +95,7 @@ helpStaticPages <- function() {
     "models/antihypertensives", "Antihypertensives: why so few, and no blood pressure", "models",
     "models/vasoactive",        "Vasoactive and resuscitation drugs", "models",
     "models/parkinsons",        "Parkinson disease drugs",         "models",
+    "models/antibiotics",       "Antibiotics: the MIC line and the MBC band", "models",
     "models/pk-events",         "Events that change the kinetics", "models",
     "models/meac",              "MEAC: comparing opioids",         "models",
     "models/interaction",       "Propofol-opioid interaction",     "models",

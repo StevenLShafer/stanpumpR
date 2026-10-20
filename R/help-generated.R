@@ -166,15 +166,16 @@ helpPregnancyPatient <- function() {
   list(age = 30, weight = 70, height = 165, sex = SEX_FEMALE)
 }
 
-#' The pregnancy review's drugs, as Markdown
+#' What the literature says of each drug in pregnancy, as Markdown
 #'
-#' One table per group of pregnancyFindings() (R/pregnancy.R): the drugs the
-#' review quantifies, with what each model applies and the ratio of its
-#' elimination clearance and central volume with the Pregnant field on to
-#' off, measured from the model itself at helpPregnancyPatient(); then the
-#' drugs the review describes without a magnitude, reports as unchanged, or
-#' reports as unknown, with its finding for each.  The page states what the
-#' code computes, and test-pregnancy.R checks the groups against the models.
+#' One table per group of the pregnancy registry (pregnancyFindings(),
+#' R/pregnancy.R).  The adjusted drugs carry what each model applies and the
+#' ratio of its elimination clearance and central volume with the Pregnant
+#' field on to off, measured from the model itself at helpPregnancyPatient()
+#' with a blank creatinine; the others carry the finding, except the drugs
+#' with no data, which are listed.  Each drug's own page has its full row
+#' (helpDrugPregnancyHTML()).  The page states what the code computes, and
+#' test-pregnancy.R checks the groups against the models.
 #' @noRd
 helpPregnancyTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
   findings <- pregnancyFindings()
@@ -189,6 +190,15 @@ helpPregnancyTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
     sprintf("%s | %s", helpFormatNumber(on$cl1 / off$cl1), helpFormatNumber(on$v1 / off$v1))
   }
   link <- function(drug) sprintf("[%s](help:drugs/%s)", helpDrugTitle(drug), drug)
+  source <- function(r) {
+    label <- helpPregnancySourceShort(r$source)
+    if (nzchar(r$source_url) && nzchar(label)) sprintf("[%s](%s)", label, r$source_url) else label
+  }
+  evidence <- function(r) {
+    paste(c(if (nzchar(r$design)) r$design, if (!is.na(r$n)) sprintf("n = %s", r$n),
+            if (nzchar(r$confidence)) sprintf("%s confidence", r$confidence)), collapse = "; ")
+  }
+  cell <- function(x) gsub("|", "\\|", helpPregnancyEscape(x), fixed = TRUE)
   section <- function(group, heading, intro, columns, cells) {
     rows <- findings[findings$group == group, ]
     if (nrow(rows) == 0) return(character(0))
@@ -199,25 +209,38 @@ helpPregnancyTableMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
       "")
   }
   patient <- sprintf("%s years, %s kg, %s cm", p$age, p$weight, p$height)
+  unknown <- findings$drug[findings$group == "unknown"]
   c(
     section("applied", "Adjusted when Pregnant is ticked",
-            sprintf(paste("The last two columns are measured from the model itself: its elimination clearance",
+            sprintf(paste("The CL1 and V1 ratios are measured from the model itself: its elimination clearance",
                           "and its central volume with the field on, divided by the same with it off, for a",
-                          "woman of %s with a normal creatinine."), patient),
-            c("Drug", "What the review found", "What the model applies", "CL1 ratio", "V1 ratio"),
-            function(r) sprintf("| %s | %s | %s | %s |", link(r$drug), r$finding, r$applied, ratios(r$drug))),
-    section("unquantified", "Described by the review, but without a magnitude: not adjusted",
-            "The review reports a direction for these and no figure, so the models are left as published and the field has no effect on them.",
-            c("Drug", "What the review found"),
-            function(r) sprintf("| %s | %s |", link(r$drug), r$finding)),
-    section("unchanged", "Reported as unchanged: not adjusted",
-            "The review found no pharmacokinetic change to apply.",
-            c("Drug", "What the review found"),
-            function(r) sprintf("| %s | %s |", link(r$drug), r$finding)),
-    section("unknown", "Unknown: not adjusted",
-            "The review's tables give the pharmacokinetic change in pregnancy as unknown.",
-            c("Drug", "What the review found"),
-            function(r) sprintf("| %s | %s |", link(r$drug), r$finding))
+                          "woman of %s with the serum creatinine left blank. Each drug's page gives the",
+                          "finding in full."), patient),
+            c("Drug", "What the model applies", "CL1 ratio", "V1 ratio", "Evidence", "Source"),
+            function(r) sprintf("| %s | %s | %s | %s | %s |", link(r$drug), cell(r$applied),
+                                ratios(r$drug), cell(evidence(r)), source(r))),
+    section("unquantified", "Changed in pregnancy, but not by an amount the library can apply: not adjusted",
+            "The direction of the change is known, or it was measured too weakly to apply (a handful of women, no comparison group, or a PBPK prediction alone). Each finding says which.",
+            c("Drug", "What is known"),
+            function(r) sprintf("| %s | %s |", link(r$drug), cell(r$finding))),
+    section("unchanged", "Studied in pregnancy, with no meaningful change: not adjusted",
+            "The studies found no pharmacokinetic change worth applying.",
+            c("Drug", "What is known"),
+            function(r) sprintf("| %s | %s |", link(r$drug), cell(r$finding))),
+    section("source_pregnant", "Fitted in pregnant women: not adjusted",
+            "The model's own source population was pregnant, so the model already describes a pregnant woman.",
+            c("Drug", "What is known"),
+            function(r) sprintf("| %s | %s |", link(r$drug), cell(r$finding))),
+    section("not_applicable", "Nothing to apply",
+            "Pediatric models, drugs contraindicated in pregnancy with no data, and the inhaled anesthetics, whose change in pregnancy is a lower MAC (a pharmacodynamic change, recorded and not applied).",
+            c("Drug", "What is known"),
+            function(r) sprintf("| %s | %s |", link(r$drug), cell(r$finding))),
+    if (length(unknown) > 0) c(
+      "**No human pharmacokinetic data in pregnancy: not adjusted**", "",
+      paste0("No study of the drug's pharmacokinetics in pregnant women was found for ",
+             paste(vapply(unknown, link, character(1)), collapse = ", "),
+             ". Each drug's page says what was searched for and what is known of its route of elimination."),
+      "")
   ) |> paste(collapse = "\n")
 }
 
@@ -506,6 +529,28 @@ helpParkinsonsToObtainMarkdown <- function(drugDefaults = NULL, registry = parki
                 want$to_obtain), collapse = "\n")
 }
 
+#' The antibiotics' MBC bands, one row per antibiotic, as a Markdown table
+#'
+#' From \code{antibioticMbcBand()} (R/antibioticMbc.R) and the band the
+#' library ships, which the tests hold equal.
+#' @noRd
+helpAntibioticMbcBandMarkdown <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  drugs <- antibioticMicTable()$Drug
+  rows <- vapply(drugs, function(d) {
+    b <- antibioticMbcBand(d)
+    m <- antibioticMic(d)
+    dd <- drugDefaults[drugDefaults$Drug == d, ]
+    sprintf("| [%s](help:drugs/%s) | %s | %s / %s / %s | %s to %s (typical %s) %s |",
+            d, d, b$principal,
+            helpFormatNumber(b$free[["lower"]]), helpFormatNumber(b$free[["typical"]]),
+            helpFormatNumber(b$free[["upper"]]),
+            helpFormatNumber(dd$Lower), helpFormatNumber(dd$Upper), helpFormatNumber(dd$Typical),
+            m$Plotted)
+  }, character(1))
+  paste(c("| Antibiotic | Principal pathogen | Free MBC, mg/L: lower / typical / upper | Band on the curve, mcg/mL |",
+          "|---|---|---|---|", rows), collapse = "\n")
+}
+
 HELP_GENERATED_BLOCKS <- list(
   "route-table" = helpRouteTableMarkdown,
   "minto-schnider-table" = helpAlternativeModelTableMarkdown,
@@ -516,5 +561,6 @@ HELP_GENERATED_BLOCKS <- list(
   "vasoactive-to-obtain" = helpVasoactiveToObtainMarkdown,
   "parkinsons-products-table" = helpParkinsonsProductsMarkdown,
   "parkinsons-registry-table" = helpParkinsonsRegistryMarkdown,
-  "parkinsons-to-obtain" = helpParkinsonsToObtainMarkdown
+  "parkinsons-to-obtain" = helpParkinsonsToObtainMarkdown,
+  "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown
 )

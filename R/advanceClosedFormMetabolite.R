@@ -157,11 +157,13 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
                                poIn("p", "l3"), doseNA, doseNA, L)
 
   Cp <- p_state_l1 + p_state_l2 + p_state_l3
+  p_state_ka <- doseNA
   if (hasPO && pkSet$ka_PO > 0)
   {
     ka_dt <- exp(-pkSet$ka_PO * dt)
-    Cp <- Cp + advanceStatePO(ka_dt, doseNA, doseNA,
-                              pkSet$p_coef_PO_ka * poLine, doseNA, doseNA, L)
+    p_state_ka <- advanceStatePO(ka_dt, doseNA, doseNA,
+                                 pkSet$p_coef_PO_ka * poLine, doseNA, doseNA, L)
+    Cp <- Cp + p_state_ka
   }
   # The second depot's own state, kept apart for the time until threshold.
   p_state_ka2 <- doseNA
@@ -200,7 +202,8 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     states
   }
 
-  Cm <- rowSums(advance(met$coefs))
+  CmAll <- advance(met$coefs)
+  Cm <- rowSums(CmAll)
 
   # The metabolite's effect site, as one state per eigenvalue rather than as a
   # single curve.  It used to come from calculateCe(), which interpolates the
@@ -327,13 +330,34 @@ advanceClosedFormMetabolite <- function(dose, pkSet, maximum, plotRecovery, emer
     recoveryStates <- NULL
   }
 
+  # The peripheral concentrations of parent and metabolite, each read off its
+  # own plasma states, and the parent's depot; see R/compartments.R.  The
+  # metabolite's modes include the parent's and the absorption rate, all of
+  # them inputs into the metabolite's central compartment.  A PK set built
+  # before the metabolite carried its rate constants has no metabolite
+  # compartments to report.
+  parentStates <- list(p_state_l1, p_state_l2, p_state_l3, p_state_ka, p_state_ka2)
+  parentModes  <- c(pkSet$lambda_1, pkSet$lambda_2, pkSet$lambda_3,
+                    if (hasPO) pkSet$ka_PO else 0, if (hasPO2) pkSet$ka_PO2 else 0)
+  orZero <- function(x) if (is.null(x)) 0 else x
+  depot <- doseNA
+  if (hasPO)
+    depot <- depot + depotAmount(pkSet$ka_PO, dt, pkSet$bioavailability_PO * poLine)
+  if (hasPO2)
+    depot <- depot + depotAmount(pkSet$ka_PO2, dt, pkSet$bioavailability_PO2 * po2Line)
+
   results <- data.frame(
     Time         = timeLine,
     Cp           = Cp,
     Ce           = Ce,
     CpMetabolite = Cm,
     CeMetabolite = Cem,
-    Recovery     = recovery
+    Recovery     = recovery,
+    C2           = peripheralConcentration(parentStates, parentModes, pkSet$k21),
+    C3           = peripheralConcentration(parentStates, parentModes, pkSet$k31),
+    Depot        = depot,
+    C2Metabolite = peripheralConcentration(CmAll, met$coefs$lambda, orZero(met$k21)),
+    C3Metabolite = peripheralConcentration(CmAll, met$coefs$lambda, orZero(met$k31))
   )
   attr(results, "recoveryStates")           <- recoveryStates
   attr(results, "metaboliteRecoveryStates") <- metaboliteStates

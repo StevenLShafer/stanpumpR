@@ -1,4 +1,4 @@
-The **Time** panel of the left sidebar chooses how times are entered and displayed. Like the sidebar's other panels it opens when its header is clicked, and the header reads the settings out while it is closed, for example *Time (hours, Actual time)*. The simulation is identical whatever you choose: the calculation itself always works in minutes.
+The **Time** panel of the left sidebar chooses how times are entered and displayed, and how long the simulation runs (**Max time**). Like the sidebar's other panels it opens when its header is clicked, and the header reads the settings out while it is closed, for example *Time (hours, Actual time)*. The simulation is identical whatever you choose: the calculation itself always works in minutes.
 
 ## Time units
 
@@ -36,7 +36,7 @@ The procedure start defaults to the time on your computer when the app opened.
 
 ## Max time
 
-The length of the simulation is set under **Graph Options → Max time**. Its choices follow the time unit:
+The length of the simulation is set by **Max time**, in the Time panel below **Time units**. Its choices follow the time unit:
 
 | Time units | Max time choices |
 |---|---|
@@ -46,7 +46,9 @@ The length of the simulation is set under **Graph Options → Max time**. Its ch
 
 Minutes and hours offer the same lengths, so switching between them keeps Max time. Changing to another unit keeps it if the new unit offers it, otherwise takes the next longer choice, or the unit's longest when there is none longer: going from days or weeks to minutes or hours gives 24 hours, and 365 days becomes 52 weeks (364 days).
 
-If a dose or an event falls near or after the end of the plot, the plot is lengthened to show it, but never past the unit's longest choice (24 hours, 365 days or 52 weeks). A dose beyond that brings a notification: choose a longer Max time or a larger time unit.
+If a dose or an event falls near or after the end of the plot (within half an hour, for minutes and hours), the plot is lengthened to show it, in steps matching the axis, but never past the unit's longest choice (24 hours, 365 days or 52 weeks). A dose beyond that brings a notification: choose a longer Max time or a larger time unit.
+
+**Max time and detail.** The simulation is evaluated at every dose and event time and at points that start close together after each dose and spread out after it. On plots of a day or less that spacing does not depend on Max time; on longer plots it is scaled to Max time, with no step longer than 1/500 of the plot (about 17 hours on a year-long one), and the first point after a dose comes later. A long plot therefore shows less of the fine structure after each bolus. Choose the shortest Max time that holds your question.
 
 ## Restrictions
 

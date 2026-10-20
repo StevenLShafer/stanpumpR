@@ -4,7 +4,15 @@
 \alias{insulinHumanMix70}
 \title{Human insulin 70/30 premix (Humulin 70/30, Novolin 70/30): 70\% NPH, 30\% regular: pharmacokinetics}
 \usage{
-insulinHumanMix70(weight, height, age, sex, adjustToFFM = TRUE, dose = NULL)
+insulinHumanMix70(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  dose = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,9 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{dose}{units of one injection, for Tham's dose covariates (CL/F
 and regular insulin's ka); NULL is the 10 U reference dose}
+
+\item{pregnant}{when \code{TRUE}, apply the rise in insulin clearance of
+late pregnancy, CL/F x 1.19 (see R/insulinTham.R)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

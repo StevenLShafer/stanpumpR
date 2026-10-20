@@ -43,9 +43,10 @@
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 pramipexoleER <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                          creatinine = NULL)
+                          creatinine = NULL, pregnant = FALSE)
 {
-  d <- pramipexoleDisposition(weight, height, age, sex, adjustToFFM, creatinine)
+  d <- pramipexoleDisposition(weight, height, age, sex, adjustToFFM, creatinine,
+                              pregnant)
   default <- c(d$pk, list(
     ka_PO = PRAMIPEXOLE_KA_ER / 60,
     bioavailability_PO = 1,          # apparent parameters
@@ -65,7 +66,8 @@ pramipexoleER <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "creatinine; V2/F 35.6 L, Q/F 115 L/h, V3/F 313 L with weight) and the ER ",
       "tablet's release into the gut over 1.34 h, then ka 0.0873/h; doses as the ",
       "dihydrochloride monohydrate (base = salt / 1.431); concentration only. ",
-      "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2010/022421s000ClinPharmR.pdf"
+      "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2010/022421s000ClinPharmR.pdf",
+      pramipexolePregnancyReference(d$gfrPregnancy)
     )
   )
 }

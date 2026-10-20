@@ -10,7 +10,8 @@ citalopram(
   age,
   sex,
   cyp2c19 = CYP2C19_DEFAULT,
-  adjustToFFM = TRUE
+  adjustToFFM = TRUE,
+  pregnant = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,10 @@ citalopram(
 the pharmacokinetic weight and scale the size-free parameters to fat-free
 mass; when \code{FALSE}, use total body weight and the published
 size-free parameters unscaled.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+clearance of both enantiomers by 1.32 (Westin 2017; see the file's
+header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

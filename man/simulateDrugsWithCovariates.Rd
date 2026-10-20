@@ -68,8 +68,8 @@ Only drugs whose model declares it (methadone) are affected.}
 
 \item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default); TRUE
 requires \code{sex = "female"}.  Only the models that name it apply the
-changes of late pregnancy described by Ansari, Carvalho, Shafer and Flood
-(Anesth Analg 2016;122:786-804); see \code{getDrugPK()}.}
+changes of late pregnancy measured for that drug
+(inst/extdata/pregnancyRegistry.csv); see \code{getDrugPK()}.}
 
 \item{vkorc1}{VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES}.
 Only drugs whose model declares it (warfarin) are affected.}
