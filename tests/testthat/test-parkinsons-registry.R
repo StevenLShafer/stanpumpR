@@ -13,7 +13,8 @@ EVIDENCE  <- c("full_text", "abstract", "label_only", "none")
 # The drugs implemented for this group, in its own category
 IMPLEMENTED <- c("levodopa", "levodopaIntestinalGel", "pramipexole", "pramipexoleER",
                  "safinamide", "opicapone", "istradefylline", "amantadineER",
-                 "pimavanserin")
+                 "pimavanserin", "levodopaSimon", "levodopaEntacaponeIntestinalGel",
+                 "tolcapone", "apomorphine")
 
 # Every drug the registry was asked to cover: the levodopa products, the
 # dopamine agonists, the MAO-B and COMT inhibitors, amantadine, istradefylline,
@@ -40,7 +41,8 @@ test_that("every product row is filled in, with a US label wherever one exists",
   # Only products not approved in the US, unread, or never given an NDA label
   # here go without one
   expect_setequal(products$product_id[!labelled],
-                  c("levodopa_benserazide", "tavapadon", "trihexyphenidyl",
+                  c("levodopa_benserazide", "levodopa_entacapone_carbidopa_intestinal_gel",
+                    "tavapadon", "trihexyphenidyl",
                     "benztropine", "biperiden", "zonisamide_pd"))
   expect_true(all(grepl("^https://www.ema.europa.eu/en/medicines/human/EPAR/",
                         stats::na.omit(products$ema_url))))
@@ -73,7 +75,7 @@ test_that("an implemented row maps to a library drug, and no other row does", {
   expect_true(all(named %in% done$stanpumpr_drug))
 })
 
-test_that("the category holds exactly the implemented drugs; levodopa alone has an effect site", {
+test_that("the category holds exactly the implemented drugs; only levodopa and apomorphine have an effect site", {
   dd <- getDrugDefaultsGlobal()
   expect_setequal(dd$Drug[dd$Category %in% PARKINSONS_DRUG_CATEGORY], IMPLEMENTED)
   expect_true(all(IMPLEMENTED %in% registry$stanpumpr_drug))
@@ -81,15 +83,24 @@ test_that("the category holds exactly the implemented drugs; levodopa alone has 
     row <- dd[dd$Drug == d, ]
     expect_equal(row$MEAC, 0, info = d)
     PK <- getDrugPK(d, 70, 170, 60, "male")
-    if (d %in% c("levodopa", "levodopaIntestinalGel")) {
+    if (d %in% c("levodopa", "levodopaIntestinalGel", "levodopaEntacaponeIntestinalGel")) {
       expect_equal(PK$PK[[1]]$ke0 * 60, 1.80, tolerance = 1e-6, info = d)
       expect_equal(row$endCe, 0.81, info = d)
+    } else if (d == "apomorphine") {
+      # the FDA review's UPDRS III effect site
+      expect_equal(PK$PK[[1]]$ke0 * 60, 5.36, tolerance = 1e-6, info = d)
+      expect_equal(row$endCe, 10.7, info = d)
+    } else if (d == "levodopaSimon") {
+      # Simon 2016's own effect site
+      expect_equal(PK$PK[[1]]$ke0 * 60, 1.37, tolerance = 1e-6, info = d)
+      expect_equal(row$endCe, 1.41, info = d)
     } else {
       expect_equal(PK$tPeak, 0, info = d)
       expect_equal(row$endCe, 0, info = d)
     }
-    # A band only where a range is published (levodopa and amantadine, AGNP)
-    if (!d %in% c("levodopa", "levodopaIntestinalGel", "amantadineER")) {
+    # A band only where a range is published (levodopa, amantadine and
+    # tolcapone, AGNP; apomorphine, van Laar)
+    if (!grepl("^levodopa", d) && !d %in% c("amantadineER", "tolcapone", "apomorphine")) {
       expect_equal(row$Lower, 0, info = d)
       expect_equal(row$Upper, 0, info = d)
     }
@@ -155,6 +166,23 @@ test_that("the parameter audit covers every implemented drug, with the models' n
   expect_equal(value("amantadineER", "F1"), AMANTADINE_ER_F1)
   expect_equal(value("pimavanserin", "CL/F"), PIMAVANSERIN_CL)
   expect_equal(value("pimavanserin", "V/F"), PIMAVANSERIN_V)
+  expect_equal(value("levodopaSimon", "CL/F"), LEVODOPA_SIMON_CL)
+  expect_equal(value("levodopaSimon", "ke0"), LEVODOPA_SIMON_KE0)
+  expect_equal(value("levodopaSimon", "EC50 UPDRS III") / 1000, LEVODOPA_SIMON_UPDRS_EC50)
+  expect_equal(value("levodopaSimon", "Hill UPDRS III"), LEVODOPA_SIMON_UPDRS_HILL)
+  expect_equal(value("levodopaEntacaponeIntestinalGel", "CL/F LCIG"), LECIG_CL_LCIG)
+  expect_equal(value("levodopaEntacaponeIntestinalGel", "CL/F LECIG shift"), LECIG_CL_SHIFT)
+  expect_equal(value("levodopaEntacaponeIntestinalGel", "Vc/F"), LECIG_V)
+  expect_equal(value("apomorphine", "CL/F"), APOMORPHINE_CL)
+  expect_equal(value("apomorphine", "V/F"), APOMORPHINE_V)
+  expect_equal(value("apomorphine", "ka"), APOMORPHINE_KA)
+  expect_equal(value("apomorphine", "ke0 UPDRS III"), APOMORPHINE_KE0)
+  expect_equal(value("apomorphine", "EC50 UPDRS III"), APOMORPHINE_EC50)
+  expect_equal(value("tolcapone", "CL"), TOLCAPONE_CL)
+  expect_equal(value("tolcapone", "Vc"), TOLCAPONE_VC)
+  expect_equal(value("tolcapone", "Vp"), TOLCAPONE_VP)
+  expect_equal(value("tolcapone", "F"), TOLCAPONE_F)
+  expect_equal(value("tolcapone", "dose factor 400 mg on V"), TOLCAPONE_DOSE400_V)
 })
 
 test_that("the help page's generated blocks render from the registry", {
@@ -175,7 +203,7 @@ test_that("the help page renders its generated tables (as the app calls them)", 
   expect_false(grepl("<!-- generated:", md, fixed = TRUE))
   expect_true(grepl("Needs an engine feature", md, fixed = TRUE))
   expect_true(grepl("pramipexole dihydrochloride tablets (Mirapex)", md, fixed = TRUE))
-  expect_true(grepl("Heikkinen", md, fixed = TRUE))
+  expect_true(grepl("Keranen", md, fixed = TRUE))
   # and the vasoactive page, whose builders had the same fault
   va <- helpExpandGenerated(helpReadMarkdown("models/vasoactive"))
   expect_true(grepl("| Drug | Status |", va, fixed = TRUE))

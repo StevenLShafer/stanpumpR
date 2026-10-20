@@ -12,4 +12,4 @@ As for the tablets: the threshold is the half-maximal motor concentration, 0.81 
 
 ### What is not in the model
 
-Levodopa-entacapone-carbidopa gel (Lecigon) lowers levodopa's clearance by about 36% (Senek 2020) and is not modelled. Subcutaneous foslevodopa-foscarbidopa (Vyalev) has no published population model.
+Levodopa-entacapone-carbidopa gel (Lecigon), which lowers levodopa's clearance by 36.5%, is [its own drug](help:drugs/levodopaEntacaponeIntestinalGel) (Senek 2020). Subcutaneous foslevodopa-foscarbidopa (Vyalev) has no published population model.
