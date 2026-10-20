@@ -41,6 +41,13 @@
 # mcg/kg/min the model predicts 141 ng/mL at 6 h and 186 at 16 h, the
 # plateau of its Figure 5.
 #
+# In heart failure the model holds up: Jaski BE et al., J Clin Invest
+# 1985;75:643-649 (doi 10.1172/JCI111742; read in full) gave 12.5, 25, 50
+# and 75 mcg/kg boluses 10 minutes apart to 11 patients and measured serum
+# 7-10 minutes after each: 63-66, 156 and (after the fourth) 427 ng/mL,
+# against the model's 39-45, 103-115 and 397-435.  It runs about a third low
+# after the small early doses and matches at the highest.
+#
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Per kilogram, as published: total weight with the switch off, the
