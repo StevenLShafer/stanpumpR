@@ -41,8 +41,8 @@ test_that("returns Kim's parameters at the reference daily dose, switch off", {
     tPeakRoute = ROUTE_PO,
     MEAC = 0,
     typical = 40,
-    upperTypical = 65,
-    lowerTypical = 20,
+    upperTypical = 80,
+    lowerTypical = 30,
     reference = actual$reference,
     oralSaturation = list(form = "power", exponent = 0.363, Dref = 25,
                           exampleDoses = c(10, 20, 25, 40, 60))

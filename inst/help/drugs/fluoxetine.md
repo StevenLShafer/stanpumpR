@@ -28,7 +28,7 @@ The short half-lives first looked like a units error, and fluoxetine was held ba
 
 ### Dosing and the range
 
-Fluoxetine is offered as **mg PO** and **mg PO qd** only. The AGNP consensus therapeutic reference range (Hiemke and colleagues, 2018), 120 to 500 ng/mL, is for **fluoxetine plus norfluoxetine** at trough; the two contribute about equally, so no band is drawn on either row. Add the two troughs to compare with it: at 20 mg a day about 163 ng/mL in women and 121 in men, at 40 mg about 326 and 242. The source's simulations put 30 mg a day in women and 40 mg in men as the doses most likely to reach the range.
+Fluoxetine is offered as **mg PO** and **mg PO qd** only. The AGNP consensus therapeutic reference range, 150 to 300 ng/mL in the 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; 120 to 500 in the 2017 update), is for **fluoxetine plus norfluoxetine** at trough, and rests on a pharmacokinetic study at 20 mg a day rather than on a concentration-response relation, which was not found. The two contribute about equally, so no band is drawn on either row. Add the two troughs to compare with it: at 20 mg a day about 163 ng/mL in women and 121 in men, at 40 mg about 326 and 242. The source's simulations put 30 mg a day in women and 40 mg in men as the doses most likely to reach the range.
 
 ### Covariates
 

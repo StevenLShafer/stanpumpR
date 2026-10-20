@@ -543,13 +543,14 @@ The band is how a user compares a curve with the concentrations that work, so **
 not finished until its band is either set or its absence is explained**. Before writing the
 row, look for a therapeutic reference range, in this order:
 
-1. **A consensus guideline for the drug's class**: for psychiatric drugs the AGNP-TDM
-   consensus guideline (Hiemke 2018, update 2017; superseded by the update 2026, Hart 2026,
-   *Pharmacopsychiatry* 59:166-295, doi 10.1055/a-2860-7861) and the AGNP task force's
-   drug-by-drug systematic reviews that revise it (aripiprazole, olanzapine, escitalopram,
-   duloxetine, venlafaxine so far); for antiseizure drugs the ILAE position paper (Patsalos 2008,
-   *Epilepsia* 49:1239-1276) and its 2018 update (Patsalos 2018, *Ther Drug Monit* 40:526-548),
-   with national harmonizations such as Reimers 2018 (*Drug Des Devel Ther* 12:271-280);
+1. **A consensus guideline for the drug's class**: for psychiatric and antiseizure drugs,
+   Table 5 of the AGNP-TDM consensus guideline's update 2026 (Hart 2026, *Pharmacopsychiatry*
+   59:166-295, doi 10.1055/a-2860-7861; open access, 160 drugs, each with its sampling time,
+   laboratory alert level and level of recommendation; it supersedes the update 2017, Hiemke
+   2018, and builds on the AGNP task force's drug-by-drug systematic reviews); for an
+   antiseizure drug it omits, the ILAE position paper (Patsalos 2008, *Epilepsia*
+   49:1239-1276) and its 2018 update (Patsalos 2018, *Ther Drug Monit* 40:526-548), with
+   national harmonizations such as Reimers 2018 (*Drug Des Devel Ther* 12:271-280);
    for antibiotics the MIC (`antibioticMicTable()`, above); for anaesthetics and analgesics
    the effect-site concentrations of the clinical literature.
 2. **The product monograph**: the FDA label (Drugs@FDA, DailyMed) and the EMA SmPC. Older
@@ -569,6 +570,7 @@ For a drug in `THERAPEUTIC_RANGE_CATEGORIES` (`R/constants.R`: antiseizure, anti
 antipsychotic), and for any metabolite of one, add a row to
 `inst/extdata/therapeuticRanges.csv` (`R/therapeuticRanges.R`): the analyte, matrix,
 sampling time, limits in the plotted units (`mg/L` for a `mcg` drug, `ng/mL` for `ng`), the
+laboratory alert level and level of recommendation where the guideline gives them, the
 source and DOI, **how far the source was read** (`verification`: full text, abstract, or a
 secondary quotation — never a number from memory), the range it replaced, what the FDA or EMA
 product information says, and a `band_status` from `THERAPEUTIC_RANGE_STATUSES`: `drawn`,

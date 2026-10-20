@@ -28,7 +28,7 @@ Positron emission tomography measures transporter occupancy, a biomarker rather 
 
 ### Typical concentrations
 
-The shaded band, 20 to 120 ng/mL, with 60 as the typical value, is the therapeutic reference range proposed by the AGNP task force's systematic review and meta-analysis (Amann and colleagues, *Neurosci Appl* 2024;3:104077, https://doi.org/10.1016/j.nsa.2024.104077). It replaced the preliminary AGNP 2017 consensus range of 30 to 120 ng/mL (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62; laboratory alert level 240 ng/mL). In a patient not responding below about 60 ng/mL, the review recommends titrating within the range.
+The shaded band, 20 to 120 ng/mL, with 60 as the typical value, is the therapeutic reference range proposed by the AGNP task force's systematic review and meta-analysis (Amann and colleagues, *Neurosci Appl* 2024;3:104077, https://doi.org/10.1016/j.nsa.2024.104077). It replaced the preliminary AGNP 2017 consensus range of 30 to 120 ng/mL (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62; laboratory alert level 240 ng/mL). In a patient not responding below about 60 ng/mL, the review recommends titrating within the range. The AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5) adopts it (laboratory alert level 240 ng/mL).
 
 ### Not used
 

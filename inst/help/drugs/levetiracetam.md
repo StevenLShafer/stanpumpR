@@ -8,4 +8,4 @@ Oral (`mg PO`, with schedules) and intravenous (`mg`, `mg/hr`): bioavailability 
 
 ### Band
 
-12 to 46 mg/L (ILAE; Patsalos and colleagues, 2008).
+6 to 46 mg/L, 12 hours after a dose (the AGNP consensus guidelines' 2026 update, Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; laboratory alert level 50 mg/L), which lowers the ILAE's lower limit of 12 mg/L (Patsalos and colleagues, 2008). A relation between concentration and effect has not been established; the range comes from a pharmacokinetic study at about 2,000 mg a day.

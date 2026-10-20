@@ -60,7 +60,9 @@
 # BODY SIZE: V per kilogram (0.6 L/kg) and the renal clearance through
 # Cockcroft-Gault, both at the pharmacokinetic weight with the switch on.
 #
-# BAND: 12-46 mcg/mL (ILAE, Patsalos 2008), typical 30.
+# BAND: 6-46 mcg/mL, typical 30: the AGNP update 2026 (Hart et al.,
+# Pharmacopsychiatry 2026;59:166-295, Table 5; 12 h after a dose), which
+# lowered ILAE's (Patsalos 2008) lower limit of 12.
 #
 # References
 # ----------
@@ -116,7 +118,7 @@ levetiracetam <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 30, upperTypical = 46, lowerTypical = 12,
+    typical = 30, upperTypical = 46, lowerTypical = 6,
     reference = paste0(
       "Rhee SJ et al., Epilepsy Res 2017;132:8-15 (one compartment, ka 2.44/h ",
       "fixed, CL/F 3.9 L/h), the volume 0.6 L/kg and the 66% renal / 34% ",

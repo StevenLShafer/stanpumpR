@@ -62,8 +62,11 @@
 # saturable binding compartment, CL/F 75 L/h) cannot be run by this engine
 # and is not used; the PD is transferred onto Pilla Reddy's PK, and
 # antipsychoticProfiles() records the transfer.  D2 occupancy is
-# 100 x Ce/(0.791 + Ce): a receptor biomarker, not a target, so there is no
-# band.  Lim's simulations put 2 mg every 12 h near a 65-80% window.
+# 100 x Ce/(0.791 + Ce): a receptor biomarker, not a target.  Lim's
+# simulations put 2 mg every 12 h near a 65-80% window.  The band is the
+# serum therapeutic reference range of the AGNP update 2026, 1-5 ng/mL 12 h
+# after a dose (Hart et al., Pharmacopsychiatry 2026;59:166-295, Table 5;
+# level 1), narrowed from the 2017 update's 1-10.
 #
 # The same paper's PANSS model (Pilla Reddy) drives its drug term with each
 # patient's AVERAGE STEADY-STATE concentration (Emax 0.31, EC50 3.58 ng/mL),
@@ -135,9 +138,9 @@ haloperidol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
     tPeak = 0,                       # ke0 is supplied, not solved
     ke0 = HALOPERIDOL_KE0 / 60,      # 1/min
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 3,                      # AGNP 2026, ng/mL; mirrors the CSV
+    upperTypical = 5,
+    lowerTypical = 1,
     reference = reference
   )
 }

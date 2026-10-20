@@ -33,6 +33,8 @@ test_that("each row is well formed", {
     if (r$band_status %in% c("drawn", "drawn_on_metabolite", "sum_not_drawn")) {
       expect_true(r$lower > 0 && r$upper > r$lower, info = r$drug)
     }
+    # An alert level, where the guideline gives one, is at or above the range
+    if (!is.na(r$alert_level)) expect_gte(r$alert_level, r$upper, label = r$drug)
     # A range that is not drawn says why
     if (!r$band_status %in% c("drawn", "drawn_on_metabolite"))
       expect_true(nzchar(r$notes) || nzchar(r$source), info = r$drug)
@@ -63,7 +65,8 @@ test_that("the drug's help page states the range and its source", {
   page <- helpDrugPageHTML("aripiprazole")
   expect_match(page, "Therapeutic reference range", fixed = TRUE)
   expect_match(page, "120 to 270 ng/mL", fixed = TRUE)
-  expect_match(page, "Hart 2022", fixed = TRUE)
+  expect_match(page, "Hart 2026", fixed = TRUE)
+  expect_match(page, "laboratory alert level 540 ng/mL", fixed = TRUE)
   expect_match(helpDrugPageHTML("risperidone"), "so not drawn on either row", fixed = TRUE)
-  expect_match(helpDrugPageHTML("cenobamate"), "None established", fixed = TRUE)
+  expect_match(helpDrugPageHTML("droperidol"), "None established", fixed = TRUE)
 })

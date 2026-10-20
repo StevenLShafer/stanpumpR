@@ -8,7 +8,8 @@
 # one is established for the analyte the model plots.  The range itself, and
 # where it came from, are recorded in inst/extdata/therapeuticRanges.csv: one
 # row per drug, giving the analyte the range is for (a parent, or a parent
-# plus metabolite), the matrix and sampling time, the limits, the source and
+# plus metabolite), the matrix and sampling time, the limits, the laboratory
+# alert level and level of recommendation for TDM, the source and
 # how far it was read, the range it replaced, what the FDA or EMA product
 # information says, and a band_status (THERAPEUTIC_RANGE_STATUSES) saying
 # whether the band draws it and, if not, why.  Every drug in
@@ -46,7 +47,10 @@ therapeuticRange <- function(drug)
 therapeuticRangeSummary <- function(r)
 {
   limits <- sprintf("%s to %s %s", helpFormatNumber(r$lower), helpFormatNumber(r$upper), r$units)
-  what <- paste0(r$analyte, if (nzchar(r$sampling)) paste0(", ", r$sampling) else "")
+  what <- paste0(r$analyte, if (nzchar(r$sampling)) paste0(", ", r$sampling) else "",
+                 if (!is.na(r$alert_level))
+                   sprintf("; laboratory alert level %s %s", helpFormatNumber(r$alert_level), r$units)
+                 else "")
   switch(r$band_status,
     drawn = sprintf("%s (%s); %s", limits, what, r$source),
     drawn_on_metabolite = sprintf("%s (%s), drawn on the %s row; %s",

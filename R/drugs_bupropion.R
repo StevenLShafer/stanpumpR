@@ -107,11 +107,11 @@
 #
 # THE BAND
 # ========
-# The AGNP 2018 consensus therapeutic reference range (Hiemke et al.,
-# Pharmacopsychiatry 2018;51:9-62) is 850 to 1500 ng/mL for bupropion PLUS
-# hydroxybupropion.  inst/extdata/drugDefaults_global.csv puts it on the
-# hydroxybupropion row, because the metabolite dominates the sum, and draws no
-# band on the bupropion row (0/0/0).  The model mirrors that here.  MEAC and
+# The AGNP therapeutic reference range (update 2026, Hart et al.,
+# Pharmacopsychiatry 2026;59:166-295, Table 5) is 850 to 1500 ng/mL of
+# HYDROXYBUPROPION, the major active compound; bupropion itself is unstable
+# in collected blood.  inst/extdata/drugDefaults_global.csv puts it on the
+# hydroxybupropion row and draws no band on the bupropion row (0/0/0).  The model mirrors that here.  MEAC and
 # endCe are zero: not an opioid, and no threshold.
 #
 # COVARIATES AND BODY SIZE (docs/weight-adjustment.md)
@@ -207,8 +207,8 @@ bupropion <- function(weight, height, age, sex, adjustToFFM = TRUE)
       PK = PK,
       tPeak = 0,        # no effect-site model; see the header
       MEAC = 0,         # not an opioid
-      # No band on the parent: the AGNP range is for the sum and is drawn on
-      # the hydroxybupropion row.  The CSV carries the same zeros.
+      # No band on the parent: the AGNP range is hydroxybupropion's and is
+      # drawn on its row.  The CSV carries the same zeros.
       typical = 0,
       upperTypical = 0,
       lowerTypical = 0,

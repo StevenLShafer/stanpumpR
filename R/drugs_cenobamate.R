@@ -136,9 +136,12 @@
 # linear weight and body-surface-area terms; with the switch off, the
 # published values for everyone (legacyVolume = 1).
 #
-# BAND: none.  No therapeutic reference range has been established (median
-# plasma concentration at first response about 5-6 mg/L at <= 100 mg/day,
-# range 0.5-17.6; Operto 2025).  Plasma only, no effect site.
+# BAND: 10-25 mcg/mL, typical 18 (its midpoint): the AGNP update 2026 (Hart
+# et al., Pharmacopsychiatry 2026;59:166-295, Table 5; trough 24 h after a
+# dose; level of recommendation 4), the mean +/- SD in 36 seizure-free
+# patients at a median 200 mg/day.  Steinhoff 2024 found that no general
+# range separated responders, and responders at <= 100 mg/day had 0.5-17.6
+# mg/L (Operto 2025).  Plasma only, no effect site.
 #
 # References
 # ----------
@@ -188,7 +191,7 @@ cenobamate <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 0, upperTypical = 0, lowerTypical = 0,
+    typical = 18, upperTypical = 25, lowerTypical = 10,
     reference = paste0(
       "Vashi V et al., Epilepsy Res 2023;195:107185, Supplemental Table 2: two ",
       "compartments, apparent oral, lag 0.24 h, CL/F 0.533 L/h, V1/F 42.4 L, ",

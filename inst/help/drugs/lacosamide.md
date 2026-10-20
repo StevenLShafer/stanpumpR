@@ -12,4 +12,4 @@ Carbamazepine raises clearance about 1.5-fold (not applied: no co-medication fie
 
 ### Band
 
-10 to 20 mg/L (Patsalos and colleagues, *Ther Drug Monit* 2018).
+1 to 12 mg/L, 12 hours after a dose, with 6 as the typical value (its midpoint, not a target): the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; laboratory alert level 24 mg/L). There is no clear concentration-efficacy relation; the upper limit comes from an observational study of adverse reactions (Otero Torres and colleagues, 2023), and enzyme-inducing co-medication lowers concentrations. It replaces the 10 to 20 mg/L of Patsalos and colleagues (*Ther Drug Monit* 2018), which was drawn from samples 0 to 3 hours after a dose and so describes peaks.

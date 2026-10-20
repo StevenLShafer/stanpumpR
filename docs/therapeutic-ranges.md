@@ -2,106 +2,113 @@
 
 The shaded band on a drug's panel is its **therapeutic reference range**, wherever one is
 established for the analyte, matrix and use the row plots. This page is the review behind the
-bands of the antiseizure, antidepressant and antipsychotic drugs (2026-10-19). The data are in
-`inst/extdata/therapeuticRanges.csv`, read by `R/therapeuticRanges.R`, printed on each drug's
-help page, and held to the band columns of `drugDefaults_global.csv` by
-`tests/testthat/test-therapeutic-ranges.R`. The rule for new drugs is in
-[adding-a-drug.md](adding-a-drug.md), *The therapeutic range*.
+bands of the antiseizure, antidepressant and antipsychotic drugs (2026-10-19, revised
+2026-10-20 against the AGNP update 2026). The data are in `inst/extdata/therapeuticRanges.csv`,
+read by `R/therapeuticRanges.R`, printed on each drug's help page, and held to the band columns
+of `drugDefaults_global.csv` by `tests/testthat/test-therapeutic-ranges.R`. The rule for new
+drugs is in [adding-a-drug.md](adding-a-drug.md), *The therapeutic range*.
 
-Every range is a trough (or stated) concentration at steady state in serum or plasma. It is a
-population window, not a target: many patients do well outside it, and the band says nothing
-about a single dose.
+Every range is a concentration at steady state in serum or plasma, sampled at the time the
+source states (a trough unless noted). It is a population window, not a target: many patients
+do well outside it, and the band says nothing about a single dose.
 
-## How far each source was read
+## The primary source
 
-The network available to this review reached PubMed, PubMed Central and search excerpts, not
-publishers' sites. So the **verification** column of the CSV says exactly what was read:
-`full text` or `abstract` (PubMed/PMC), a value **quoted** by another paper read in full (the
-ILAE values, as quoted by Reimers 2018), a **search excerpt**, or a value **as recorded in the
-library** before this review and not re-read. Nothing was filled in from memory.
+**Hart XM, Gründer G, Hiemke C, et al. Consensus guidelines for therapeutic drug monitoring in
+neuropsychopharmacology: update 2026.** *Pharmacopsychiatry* 2026;59:166-295, doi
+[10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861). Open access. Its Table 5 (pp.
+184-217 of the journal) gives, for 160 drugs, the time between the last dose and sampling, the
+therapeutic reference range and the indication it is valid for, the laboratory alert level, the
+level of recommendation to use TDM (1 strongly recommended, 2 recommended, 3 useful, 4
+potentially useful) and a comment on where the range comes from; a `+` after a drug's name
+marks a range revised or new since the 2017 update. It supersedes the 2017 update (Hiemke
+2018) and covers the antiseizure drugs as well as the psychiatric ones. Table 5 was read in
+full on 2026-10-20, and every row of the CSV that cites it says so.
 
-The AGNP-TDM consensus guideline was updated in July 2026 (Hart XM et al., *Pharmacopsychiatry*
-2026;59:166-295, doi [10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)): ranges for
-160 drugs, 88 of them revised. **Its Table 5 has not been read.** The antidepressant and
-antipsychotic bands use the AGNP task force's drug-by-drug systematic reviews where they exist
-(they are the evidence the 2026 update was built on) and the 2017 update otherwise; every row
-of those categories should be re-checked against Table 5 when the PDF is in hand.
+For an antiseizure drug Table 5 omits (phenobarbital as a drug of its own, ethosuximide), the
+band is the ILAE position paper's (Patsalos 2008), as quoted in Reimers 2018.
 
 ## Antiseizure drugs
 
-| Drug | Band | Source | Notes |
-|---|---|---|---|
-| phenytoin | 10–20 mg/L total | ILAE 2008 | Unbound 1–2 mg/L. Dilantin label: 10–20 mcg/mL |
-| carbamazepine | 4–12 mg/L | ILAE 2008 | Norway 4–11. Non-US Tegretol leaflet: 4–12 |
-| valproate | 50–100 mg/L total | ILAE 2008 | Depakote label: 50–100 mcg/mL; thrombocytopenia above 110 (women) / 135 (men) |
-| phenobarbital | 10–40 mg/L | ILAE 2008 | Norway 12–30; sedation frequent above 30 |
-| pentobarbital | 20–40 mg/L | **no source read** | Barbiturate coma, titrated to EEG; orientation only |
-| ethosuximide | 40–100 mg/L | ILAE 2008 | Zarontin label: 40–100 mcg/mL |
-| topiramate | 5–20 mg/L | ILAE 2008 | Norway lowered to 2–10 (Reimers 2018); Koristkova 2021 advises no change |
-| lacosamide | 10–20 mg/L | Patsalos 2018 | Based on samples 0–3 h after a dose; trough-based 3–10 (Norway) |
-| lamotrigine | 3–15 mg/L | ILAE 2008 | Norway 3–13 |
-| zonisamide | 10–40 mg/L | ILAE 2008 | |
-| tiagabine | 20–200 ng/mL | ILAE 2008 | Not re-read |
-| levetiracetam | 12–46 mg/L | ILAE 2008 | Norway 5–41; AGNP 2017 10–40 |
-| eslicarbazepine | 3–26 mg/L | Svendsen 2017, adopted by Reimers 2018 | Was attributed to Patsalos 2018, whose 3–36 is racemic licarbazepine's |
-| cenobamate | none | Steinhoff 2024 | "A general therapeutic range cannot be defined" |
-| gabapentin | 4.1–9.4 mg/L | Healy 2023 (analgesic exposure) | Epilepsy: ILAE 2–20, Norway 3–21 |
-| pregabalin | 1.3–5.4 mg/L | Chan 2021 | Norway 2–6 |
-| clonazepam | 20–70 ng/mL | ILAE 2008 | Norway 13–38 |
+| Drug | Band | Alert | Source | Change |
+|---|---|---|---|---|
+| phenytoin | 10–20 mg/L total | 50 | Hart 2026 | Unchanged. Dilantin label: 10–20 mcg/mL |
+| carbamazepine | 4–12 mg/L | 20 | Hart 2026 | Unchanged (4–10 for mania) |
+| valproate | 50–100 mg/L total | 120 | Hart 2026 | Unchanged. Depakote label: 50–100 mcg/mL |
+| phenobarbital | 10–40 mg/L | — | ILAE 2008 | Not its own row; Hart 2026's primidone row gives phenobarbital 10–30 |
+| pentobarbital | 20–40 mg/L | — | **no source read** | Barbiturate coma, titrated to EEG; orientation only |
+| ethosuximide | 40–100 mg/L | — | ILAE 2008 | Not in Table 5. Zarontin label: 40–100 mcg/mL |
+| topiramate | 5–20 mg/L | 30 | Hart 2026 | Unchanged |
+| lacosamide | **1–12 mg/L** | 24 | Hart 2026 | Was 10–20 (Patsalos 2018), which was peak-based |
+| lamotrigine | 3–15 mg/L | 20 | Hart 2026 | Unchanged |
+| zonisamide | 10–40 mg/L | 80 | Hart 2026 | Unchanged |
+| tiagabine | 20–200 ng/mL | 400 | Hart 2026 | Unchanged |
+| levetiracetam | **6–46 mg/L** | 50 | Hart 2026 | Was 12–46 (ILAE) |
+| eslicarbazepine | **3–35 mg/L** | 40 | Hart 2026 | Was 3–26 (Svendsen 2017 / Reimers 2018, eslicarbazepine-specific) |
+| cenobamate | **10–25 mg/L** | 50 | Hart 2026 (level 4) | Newly introduced; Steinhoff 2024 found no general range |
+| gabapentin | 4.1–9.4 mg/L (analgesic) | — | Healy 2023 | Hart 2026 gives 2–20 for epilepsy and pain; not applied |
+| pregabalin | 1.3–5.4 mg/L | — | Chan 2021 | Hart 2026 gives 1.5–8 for epilepsy; not applied |
+| clonazepam | **15–80 ng/mL** | 100 | Hart 2026 | Was 20–70 (ILAE) |
+
+Gabapentin and pregabalin are in the library as analgesics, and their bands are the analgesic
+exposures; the 2026 epilepsy ranges are recorded in the CSV's notes.
 
 ## Antidepressants
 
-| Drug | Band | Source | Replaced |
-|---|---|---|---|
-| escitalopram | **20–40 ng/mL** | Eichentopf 2022 (full text) | 15–80 (AGNP 2017) |
-| citalopram | 50–110 ng/mL | AGNP 2017 | |
-| sertraline | 10–150 ng/mL | AGNP 2017 | |
-| paroxetine | 20–65 ng/mL | AGNP 2017 | |
-| duloxetine | **20–120 ng/mL** | Amann 2024 (full text) | 30–120 (AGNP 2017) |
-| mirtazapine | 30–80 ng/mL | AGNP 2017 | |
-| bupropion | 850–1500 ng/mL bupropion + hydroxybupropion, drawn on hydroxybupropion | AGNP 2017 | |
-| fluoxetine, norfluoxetine | not drawn: 120–500 ng/mL is for the sum | AGNP 2017 | |
-| venlafaxine | not drawn: 140–600 ng/mL is for the active moiety | Lense 2023 (full text) | 100–400 (AGNP 2017) |
-| desvenlafaxine (ODV from venlafaxine) | **85–380 ng/mL** | Lense 2023 (full text) | none |
+| Drug | Band | Alert | Source | Change |
+|---|---|---|---|---|
+| escitalopram | 20–40 ng/mL | 160 | Hart 2026 (from Eichentopf 2022) | Was 15–80 (2017) |
+| citalopram | 50–110 ng/mL | 220 | Hart 2026 | Unchanged |
+| sertraline | **10–50 ng/mL** | 150 | Hart 2026 | Was 10–150 (2017) |
+| paroxetine | **30–80 ng/mL** | 120 | Hart 2026 | Was 20–65 (2017) |
+| duloxetine | 20–120 ng/mL | 240 | Hart 2026 (from Amann 2024) | Was 30–120 (2017) |
+| mirtazapine | 30–80 ng/mL | 160 | Hart 2026 | Unchanged |
+| bupropion | 850–1500 ng/mL **of hydroxybupropion**, drawn on that row | 1500 | Hart 2026 | Was described as a range for the sum |
+| fluoxetine, norfluoxetine | not drawn: **150–300 ng/mL** is for the sum | 1000 | Hart 2026 | Was 120–500 (2017) |
+| venlafaxine | not drawn: 140–600 ng/mL is for the active moiety | 1200 | Hart 2026 (from Lense 2023) | Was 100–400 (2017) |
+| desvenlafaxine (ODV) | 85–380 ng/mL | 450 | Hart 2026 (from Lense 2023) | New |
 
 ## Antipsychotics
 
-| Drug | Band | Source | Replaced |
-|---|---|---|---|
-| aripiprazole | **120–270 ng/mL** parent | Hart 2022 (abstract) | 100–350 (AGNP 2017) |
-| dehydroaripiprazole | not drawn: 180–380 ng/mL is the active moiety | Hart 2022 | 150–500 |
-| olanzapine | **20–40 ng/mL**, 12 h after a dose | Wesner 2023 (abstract) | 20–80 (AGNP 2017) |
-| quetiapine | **100–500 ng/mL** | AGNP 2011, 2017, and a 2026 excerpt | |
-| risperidone, 9-hydroxyrisperidone | not drawn: 20–60 ng/mL is the active moiety, split by CYP2D6 | AGNP 2017 (2026 excerpt agrees) | |
-| haloperidol | **pending**: 1–10 (AGNP 2017) or 1–5 (2026 excerpt) | neither read in full | |
-| haloperidolIV | not applicable: the range is for oral maintenance, not IV delirium | | |
-| droperidol, droperidolIM | none: antiemetic and sedative use has no concentration target | | |
+| Drug | Band | Alert | Source | Change |
+|---|---|---|---|---|
+| aripiprazole | 120–270 ng/mL parent | 540 | Hart 2026 (from Hart 2022) | Was 100–350 (2017) |
+| dehydroaripiprazole | not drawn: 180–380 ng/mL is the active moiety | — | Hart 2026 | Was 150–500 |
+| olanzapine | 20–40 ng/mL, 12–15 h after a dose | 80 | Hart 2026 (from Wesner 2023) | Was 20–80 (2017) |
+| quetiapine | 100–500 ng/mL | 1000 | Hart 2026 | Unchanged |
+| risperidone, 9-hydroxyrisperidone | not drawn: 20–60 ng/mL is the active moiety, split by CYP2D6 | 80 | Hart 2026 | Unchanged |
+| haloperidol | **1–5 ng/mL**, 12 h after a dose | 12 | Hart 2026 (level 1) | Was 1–10 (2017) |
+| haloperidolIV | not applicable: the range is for oral or depot maintenance, not IV delirium | | | |
+| droperidol, droperidolIM | none: not in Table 5; antiemetic and sedative use has no concentration target | | | |
 
 ## Product monographs (FDA, EMA)
 
 Only the older antiseizure drugs' labels state a range: Dilantin (10–20 mcg/mL total,
 1–2 unbound), Depakote (50–100 mcg/mL), Zarontin (40–100 mcg/mL), and Tegretol outside
-the US (about 4–12 mcg/mL). These were read through search excerpts of the labels, and
-the CSV says so. Sezaby (neonatal phenobarbital) gives weight-based dosing and observed
-concentrations, but no target. The other labels were not read in this review, so the
-CSV records them as "Not checked". To my knowledge the newer antiseizure drugs, and
-the antidepressants and antipsychotics, define no therapeutic range in their FDA labels
-or EMA SmPCs, but that is still to be confirmed label by label (DailyMed;
-the EMA product information pages).
+the US (about 4–12 mcg/mL). These were read through search excerpts of the labels, and the CSV
+says so. Sezaby (neonatal phenobarbital) gives weight-based dosing and observed concentrations,
+but no target. Hart 2026 takes primidone's range from its SPC. The other labels were not read
+in this review and are recorded as "Not checked".
 
 ## Open items
 
-1. Read Table 5 of the 2026 AGNP update and re-check every antidepressant and antipsychotic row;
-   then set haloperidol's band.
-2. Find a primary source for pentobarbital's 20–40 mg/L, or remove the band.
-3. Read the labels marked "Not checked".
-4. A summed parent-plus-metabolite line would let the active-moiety ranges (risperidone,
+1. Find a primary source for pentobarbital's 20–40 mg/L, or remove the band.
+2. Read the labels marked "Not checked".
+3. A summed parent-plus-metabolite line would let the active-moiety ranges (risperidone,
    aripiprazole, venlafaxine, fluoxetine) be drawn.
-5. Extend `THERAPEUTIC_RANGE_CATEGORIES` to the other classes. Of the 193 rows of the library,
-   about 109 have no band, many of them correctly; each needs a recorded reason.
+4. Extend `THERAPEUTIC_RANGE_CATEGORIES` to the other classes. Table 5 also covers drugs the
+   library holds under other categories (the benzodiazepines, methadone, morphine, oxycodone,
+   buprenorphine, ketamine, lithium, the stimulants, the antihistamines); their bands have not
+   been checked against it.
 
 ## References
 
+- Hart XM, Gründer G, Hiemke C, et al. Consensus guidelines for therapeutic drug monitoring in
+  neuropsychopharmacology: update 2026. *Pharmacopsychiatry* 2026;59:166-295.
+  doi [10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)
+- Hiemke C, Bergemann N, Clement HW, et al. Consensus guidelines for therapeutic drug
+  monitoring in neuropsychopharmacology: update 2017. *Pharmacopsychiatry* 2018;51:9-62.
+  doi [10.1055/s-0043-116492](https://doi.org/10.1055/s-0043-116492)
 - Patsalos PN, Berry DJ, Bourgeois BFD, et al. Antiepileptic drugs—best practice guidelines for
   therapeutic drug monitoring: a position paper by the subcommission on therapeutic drug
   monitoring, ILAE Commission on Therapeutic Strategies. *Epilepsia* 2008;49:1239-1276.
@@ -118,12 +125,6 @@ the EMA product information pages).
 - Steinhoff BJ, Georgiou D, Dietmann D, Intravooth T. Cenobamate plasma levels in patients with
   epilepsy: correlation with efficacy and tolerability? *J Clin Med* 2024;13:2757.
   doi [10.3390/jcm13102757](https://doi.org/10.3390/jcm13102757)
-- Hiemke C, Bergemann N, Clement HW, et al. Consensus guidelines for therapeutic drug
-  monitoring in neuropsychopharmacology: update 2017. *Pharmacopsychiatry* 2018;51:9-62.
-  doi [10.1055/s-0043-116492](https://doi.org/10.1055/s-0043-116492)
-- Hart XM, Gründer G, Hiemke C, et al. Consensus guidelines for therapeutic drug monitoring in
-  neuropsychopharmacology: update 2026. *Pharmacopsychiatry* 2026;59:166-295.
-  doi [10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)
 - Hart XM, Hiemke C, Eichentopf L, et al. Therapeutic reference range for aripiprazole in
   schizophrenia revised. *Psychopharmacology* 2022;239:3377-3391.
   doi [10.1007/s00213-022-06233-2](https://doi.org/10.1007/s00213-022-06233-2)

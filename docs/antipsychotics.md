@@ -20,13 +20,13 @@ pharmacodynamic endpoints (`antipsychoticProfiles()`,
   occupancy target is specified.
 - **The band is a serum therapeutic reference range**, drawn where one exists
   for the analyte the row plots (`inst/extdata/therapeuticRanges.csv`,
-  `test-therapeutic-ranges.R`): aripiprazole 120-270 ng/mL (Hart 2022),
-  olanzapine 20-40 ng/mL (Wesner 2023), quetiapine 100-500 ng/mL (AGNP). It
-  is a trough at steady state, read against the plasma curve. Risperidone's
+  `test-therapeutic-ranges.R`), from Table 5 of the AGNP update 2026 (Hart
+  2026): aripiprazole 120-270 ng/mL, olanzapine 20-40 ng/mL, quetiapine
+  100-500 ng/mL, haloperidol 1-5 ng/mL (narrowed from 2017's 1-10). It is a
+  trough at steady state, read against the plasma curve. Risperidone's
   20-60 ng/mL is for the active moiety, split between two rows by CYP2D6, so it
-  is not drawn; haloperidol's waits on the 2026 AGNP table (2017 gives 1-10,
-  an excerpt of 2026 1-5); haloperidolIV and the droperidols have none that
-  applies to their use.
+  is not drawn; haloperidolIV and the droperidols (not in the AGNP table) have
+  none that applies to their use.
 - **Occupancy is not plotted.** The Effect Site trace stays a concentration.
   Aripiprazole (Kim 2012) and both haloperidols (Lim 2013) have one, from a
   PET ke0 supplied directly; the rest are plasma only. `antipsychoticOccupancy()` turns a simulated driver

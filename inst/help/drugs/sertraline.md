@@ -19,7 +19,7 @@ None; only the plasma concentration is plotted. The antidepressant effect develo
 
 ### Typical concentrations
 
-The shaded band, 10 to 150 ng/mL, is the therapeutic reference range of the AGNP consensus guidelines for therapeutic drug monitoring (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62). It describes trough concentrations at steady state and is for orientation only.
+The shaded band, 10 to 50 ng/mL with 30 as the typical value (its midpoint, not a target), is the therapeutic reference range of the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861), for troughs 24 hours after a dose. It narrows the 2017 update's 10 to 150 ng/mL (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62): 80% of serotonin transporters are occupied at 10 ng/mL, and above 50 ng/mL efficacy may fall and adverse reactions rise. The laboratory alert level is 150 ng/mL. It is for orientation only.
 
 ### Other models
 

@@ -40,8 +40,8 @@ test_that("the reference patient receives dos Santos's Table 1 values", {
       tPeakRoute = ROUTE_PO,
       MEAC = 0,
       typical = 40,
-      upperTypical = 70,
-      lowerTypical = 20,
+      upperTypical = 80,
+      lowerTypical = 15,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)
