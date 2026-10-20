@@ -21,7 +21,7 @@ The library has no input for race, co-medication or the time of day a dose is ta
 
 ### Covariates
 
-Renal function enters through the Cockcroft–Gault creatinine clearance, from the serum creatinine in the [Patient Profile](help:patient-profile), or an assumed normal value for age and sex when the field is blank — so renal impairment is shown only when a creatinine is entered. Renal clearance rises with creatinine clearance up to a **150 mL/min breakpoint**, above which it is held constant, as the published model does; severe impairment (creatinine clearance 15 mL/min) lowers total clearance by about 36% and raises exposure by about 56%. Age and sex act on the non-renal clearance, weight on the central volume; all are evaluated at the pharmacokinetic weight under the [fat-free-mass switch](help:models/fat-free-mass).
+Renal function enters through the Cockcroft–Gault creatinine clearance, from the serum creatinine in the [Patient Profile](help:patient-profile), or an assumed normal value for age and sex when the field is blank — so renal impairment is shown only when a creatinine is entered. Renal clearance rises with creatinine clearance up to a **150 mL/min breakpoint**, above which it is held constant, as the published model does; severe impairment (creatinine clearance 15 mL/min) lowers total clearance by about 36% and raises exposure by about 56%. Age and sex act on the non-renal clearance, weight on the central volume; and weight, age and sex also enter the Cockcroft–Gault calculation itself, so they move the renal clearance (and therefore the total clearance below the 150 mL/min cap) as well. All are evaluated at the pharmacokinetic weight under the [fat-free-mass switch](help:models/fat-free-mass).
 
 ### What is left out
 
