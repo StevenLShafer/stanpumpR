@@ -1531,31 +1531,44 @@ should therefore have failed, because two compartments need four independent
 numbers and a non-compartmental paper normally prints three — a clearance, a
 volume and a terminal half-life.
 
-One of them closed and the other was refuted, and the difference comes down to
-**how many exponents each paper reports.**
+One of them closed and the other was refuted, and the difference is simply
+**how many of the four numbers each paper prints.**
 
-> **A non-compartmental paper identifies a two-compartment model when it prints
-> BOTH exponents** — and then any fourth number closes it. A clearance with a
-> steady-state volume is one such number, which is how clevidipine was
-> identified (§11). A total area with a *partial* area is another, and it is
-> benazeprilat's: the difference of the two estimates the area under the
-> terminal phase alone, so β times it gives the concentration at the split time
-> and recovers the terminal intercept.
+There is no cleverer rule here than the one §4 and `AGENTS.md` have carried all
+along, and this section's job is to count against it rather than improve it:
 
-An earlier draft of this section stated that as an *if and only if* on the
-partial area. That was wrong, and wrong against a record in this same document:
-clevidipine has no partial area and is identified anyway. **The necessary
-condition is both exponents, not the partial area.** What losartan lacks is not
-a particular fourth number but any fourth number at all — Lo reports only the
-terminal exponent, so there is nothing for a clearance or an area to combine
-with.
+> A two-compartment model has four parameters, so it takes **four independent
+> numbers**. Both exponents supply two of them, and two more must come from
+> somewhere.
 
-Kaiser's Table 2 gives benazeprilat **two** half-lives, α 2.7 h and β 22.3 h,
-and then two areas to close on. Lo's Table I gives each moiety **one** half-life
-and one area. That is the reason one of these drugs is now in the library and
-the other is not, and it is cheap to check before requesting a paper: *ask
-whether the tables carry both exponents, and then what fourth number sits
-beside them.*
+| Record | The four | Verdict |
+|---|---|---|
+| **clevidipine** (§11) | CL, V<sub>ss</sub>, α, β | closed |
+| **benazeprilat** (Kaiser) | α, β, AUC(0–∞), AUC(0–24 h) | closed |
+| **losartan** (Lo) | CL, V<sub>ss</sub>, β — and nothing else | **one short** |
+
+So Kaiser prints both exponents and two areas to close on, while Lo prints a
+clearance, a volume and a *single* exponent. Losartan is one number short, and
+the missing one is specifically the **distribution exponent** α, or an
+intercept that would give it. That is §4's standing sentence exactly: *CL + Vss
++ both half-lives closes the system, CL + Vss + the terminal half-life alone
+does not.*
+
+**Two earlier drafts of this section tried to state that more crisply and got
+it wrong both times**, which is worth leaving on the record because the error
+was the same each time — compressing a count into a slogan. The first said a
+partial area was necessary, which clevidipine refutes. The second said both
+exponents "plus any fourth number" closes it, which miscounts: CL with
+V<sub>ss</sub> is *two* numbers, not one, and so is a total area with a partial
+one. The same draft said losartan "reports only the terminal exponent, so there
+is nothing for a clearance or an area to combine with" — but Lo reports CL and
+V<sub>ss</sub> perfectly well, and losartan's deficit is one number rather than
+all three. The lesson is not about identifiability at all: **a rule that is
+already correct does not need restating, and restating it is where the mistakes
+came from.**
+
+It is still cheap to check a paper before requesting it, just with the plain
+count: *does it print both exponents, and two more independent numbers?*
 
 ### 15.1 Benazeprilat, derived and checked
 
