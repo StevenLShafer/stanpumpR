@@ -4,7 +4,15 @@
 \alias{metformin}
 \title{Metformin pharmacokinetics (oral, immediate release)}
 \usage{
-metformin(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+metformin(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,9 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
 assumed normal value for the patient's age and sex (R/renalFunction.R)}
+
+\item{pregnant}{when \code{TRUE}, apply the changes of late pregnancy:
+CL/F x 1.27 and V/F x 1.33 (see the file's header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

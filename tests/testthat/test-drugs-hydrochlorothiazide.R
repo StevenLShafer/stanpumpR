@@ -294,3 +294,72 @@ test_that("impaired kidneys raise the trough far more than the peak", {
   expect_lt(abs(impaired$trough / normal$trough - 4.5), 0.5)
   expect_lt(impaired$day7 / normal$day7, 2)
 })
+
+test_that("pregnancy: renal clearance x 1.5, only with a blank creatinine", {
+  # The rise in glomerular filtration on CL_R itself, not on the creatinine
+  # clearance it reads (whose power 1.38 would make it 1.75).  A woman of 30
+  # years, 70 kg, 165 cm, fat-free-mass scaling on, creatinine blank.
+  on  <- getDrugPK("hydrochlorothiazide", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("hydrochlorothiazide", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("hydrochlorothiazide", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default; b <- off$PK$default
+  nonRenal <- HCTZ_CL_NR *
+    pkSizeFactors(70, 165, 30, SEX_FEMALE, TRUE, legacyVolume = 1,
+                  legacyClearance = 1)$clearance / 60
+  expect_equal((a$cl1 - nonRenal) / (b$cl1 - nonRenal), PREGNANCY_GFR_FACTOR,
+               tolerance = 1e-6)
+  expect_equal_rounded(0.3497382014, a$cl1)
+  expect_identical(a[c("v1", "v2", "v3", "cl2", "cl3", "ka_PO",
+                       "bioavailability_PO", "tlag_PO")],
+                   b[c("v1", "v2", "v3", "cl2", "cl3", "ka_PO",
+                       "bioavailability_PO", "tlag_PO")])
+  expect_identical(on$oralPulses, off$oralPulses)
+  expect_match(on$reference, "pregnancy", fixed = TRUE)
+  expect_no_match(off$reference, "pregnancy", fixed = TRUE)
+  # A measured creatinine already carries the rise: no change
+  m1 <- getDrugPK("hydrochlorothiazide", 70, 165, 30, SEX_FEMALE,
+                  creatinine = 0.6, pregnant = TRUE)
+  m0 <- getDrugPK("hydrochlorothiazide", 70, 165, 30, SEX_FEMALE,
+                  creatinine = 0.6)
+  expect_identical(m1$PK, m0$PK)
+  expect_no_match(m1$reference, "pregnancy", fixed = TRUE)
+})
+
+test_that("pregnancy: the pulses still meet the standard at the faster clearance", {
+  # The eight pulses were fitted at creatinine clearances of 30 to 120 mL/min;
+  # a pregnant woman's renal clearance is above that range.  The same
+  # independent midpoint integration of the exact Weibull system as above.
+  scr  <- adultEquivalentCreatinine(NULL, 30, SEX_FEMALE)
+  crcl <- creatinineClearanceCG(70, 30, SEX_FEMALE, scr)
+  clR  <- HCTZ_CL_R * (crcl / HCTZ_CRCL_REF)^HCTZ_CL_R_EXP * PREGNANCY_GFR_FACTOR
+  h <- 1/1000
+  k20 <- (clR + HCTZ_CL_NR) / HCTZ_V1
+  k23 <- HCTZ_Q / HCTZ_V1; k32 <- HCTZ_Q / HCTZ_V2
+  w <- simulateDrugsWithCovariates(
+    data.frame(Drug = "hydrochlorothiazide", Time = 0, Dose = 25, Units = "mg PO"),
+    events, 70, 175, 30, SEX_FEMALE, 24 * 60, FALSE,
+    adjustToFFM = FALSE, pregnant = TRUE)$hydrochlorothiazide$wide
+  w <- w[w$Time > 0, ]
+  times <- w$Time / 60
+  A1 <- 25; A2 <- 0; A3 <- 0; t <- 0
+  ex <- numeric(length(times)); j <- 1
+  ka <- HCTZ_WEIBULL_SCALE; gam <- HCTZ_WEIBULL_SHAPE
+  for (i in seq_len(ceiling(max(times) / h))) {
+    w1 <- 1 - exp(-((ka * t)^gam))
+    w2 <- 1 - exp(-((ka * (t + h / 2))^gam))
+    A1m <- A1 + h / 2 * (-w1 * A1)
+    A2m <- A2 + h / 2 * (w1 * A1 + k32 * A3 - (k20 + k23) * A2)
+    A3m <- A3 + h / 2 * (k23 * A2 - k32 * A3)
+    A1n <- A1 + h * (-w2 * A1m)
+    A2n <- A2 + h * (w2 * A1m + k32 * A3m - (k20 + k23) * A2m)
+    A3  <- A3 + h * (k23 * A2m - k32 * A3m)
+    A1 <- A1n; A2 <- A2n; t <- t + h
+    while (j <= length(times) && t >= times[j] - h / 2) {
+      ex[j] <- A2 / HCTZ_V1 * 1000; j <- j + 1
+    }
+  }
+  peak <- max(ex)
+  # The documented standard: 0.53% over the curve, 0.01% at the peak
+  expect_lt(max(abs(w$Plasma - ex)) / peak, 0.0053)
+  expect_lt(abs(max(w$Plasma) - peak) / peak, 0.0001)
+})

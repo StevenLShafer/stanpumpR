@@ -42,3 +42,30 @@ test_that("each injection is simulated with the parameters for its size", {
   units <- getDrugDefaults("insulinRegular")$Units[[1]]
   expect_false(any(units %in% c(insulinRateUnits, bolusUnits, infusionUnits)))
 })
+
+test_that("pregnancy: CL/F x 1.25, absorption and V/F unchanged", {
+  # A woman of 30 years, 70 kg, 165 cm: CL/F x 1.25 (Catalano 1998), in
+  # thamInsulin() (R/insulinTham.R, PREGNANCY); V/F and absorption unchanged.
+  on  <- getDrugPK("insulinRegular", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("insulinRegular", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("insulinRegular", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK[[1]]; b <- off$PK[[1]]
+  expect_equal(a$cl1 / b$cl1, INSULIN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  same <- c("v1", "v2", "v3", "cl2", "cl3", "ka_RA", "bioavailability_RA",
+            "tlag_RA")
+  expect_true(all(same %in% names(a)))
+  expect_identical(a[same], b[same])
+  # Each dose size is its own system (doseSizePK()); the flag reaches it
+  expect_equal(doseSizePK(on, 40)$PK[[1]]$cl1 / doseSizePK(off, 40)$PK[[1]]$cl1,
+               INSULIN_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_match(on$reference, "Catalano", fixed = TRUE)
+  expect_no_match(off$reference, "Catalano", fixed = TRUE)
+  # The values the model gives with the flag on
+  actual <- insulinRegular(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(101.1157443, actual$v1)
+  expect_equal_rounded(1, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(2.645833, actual$cl1)
+  expect_equal_rounded(0, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+})

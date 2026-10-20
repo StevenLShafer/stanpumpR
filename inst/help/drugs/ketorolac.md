@@ -26,3 +26,7 @@ There is no effect site and no shaded band. The *time until threshold* level is 
 ### Where to be careful
 
 Ketorolac is cleared by the kidney, and the label limits dosing in renal impairment and the elderly. Renal function is not in the model. Target-controlled infusion is not offered, because the controller inverts a single system. There is no CYP2D6 term, because none was fitted.
+
+### Pregnancy
+
+With **Pregnant** ticked, the clearance, every volume and every distribution clearance of both enantiomers are multiplied by 1.5, so the half-lives are unchanged and a dose gives a curve two-thirds as high. After cesarean delivery, racemic ketorolac's clearance was 1.48 times, and its volume 1.5 times, that of the same cohort's women 4-5 months postpartum, whose clearance matched healthy men's and who are among the source model's adults; in eight women studied twice the clearance ratio was 1.50, and the half-lives did not differ (Kulo, *Int J Obstet Anesth* 2012 and later papers). The S enantiomer rose more than R, but one factor serves both because separate ratios were not available. Ketorolac is highly bound to albumin, which falls in pregnancy, so the unbound concentration may change less than the total plotted. See [Pregnancy](help:models/pregnancy).

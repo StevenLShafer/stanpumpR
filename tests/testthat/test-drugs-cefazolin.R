@@ -77,3 +77,20 @@ test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
   expect_match(cefazolin(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
   expect_no_match(cefazolin(70, 165, 30, "female")$reference, "Ansari")
 })
+
+test_that("pregnancy: a measured creatinine gives no pregnancy change", {
+  # The rise in filtration is applied only when the creatinine is blank
+  # (pregnancyGfrFactor()): a pregnant woman's measured creatinine is already
+  # low, and the renal estimate made from it already carries the rise.
+  m1 <- cefazolin(70, 165, 30, "female", creatinine = 0.6, pregnant = TRUE)
+  m0 <- cefazolin(70, 165, 30, "female", creatinine = 0.6, pregnant = FALSE)
+  expect_identical(m1, m0)
+  expect_no_match(m1$reference, "Ansari")
+  # and through getDrugPK(), as the app calls it
+  expect_identical(
+    getDrugPK("cefazolin", 70, 165, 30, SEX_FEMALE, creatinine = 0.6, pregnant = TRUE),
+    getDrugPK("cefazolin", 70, 165, 30, SEX_FEMALE, creatinine = 0.6))
+  # with the creatinine blank the factor is applied
+  expect_gt(cefazolin(70, 165, 30, "female", pregnant = TRUE)$PK$default$cl1,
+            cefazolin(70, 165, 30, "female")$PK$default$cl1)
+})

@@ -204,3 +204,27 @@ test_that("sublingual saturation is unaffected by intravenous rows in the same t
   expect_no_warning(mixed <- run(1:3))
   expect_equal(mixed, run(1) + run(2:3), tolerance = 1e-3)
 })
+
+test_that("pregnancy: elimination clearance x 1.83, absorption unchanged (Zhu 2025)", {
+  expect_equal(BUPRENORPHINE_PREGNANCY_CL_FACTOR, round(218 / 119, 2))
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.
+  on  <- getDrugPK("buprenorphine", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("buprenorphine", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_equal(off, getDrugPK("buprenorphine", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default
+  b <- off$PK$default
+  expect_equal(a$cl1 / b$cl1, BUPRENORPHINE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_SL", "bioavailability_SL", "tlag_SL",
+              "ka_IN", "bioavailability_IN", "tlag_IN")) {
+    expect_identical(a[[p]], b[[p]], info = p)
+  }
+  expect_identical(on$sublingualSaturation, off$sublingualSaturation)
+  expect_equal_rounded(1.486028542, a$cl1)
+  expect_equal_rounded(51.83191192, a$v1)
+  # the 61.2 min time to peak effect is held; ke0 is solved again
+  expect_equal(on$tPeak, off$tPeak)
+  expect_equal_rounded(0.007938672353, a$ke0)
+  expect_match(on$reference, "Zhu Y", fixed = TRUE)
+  expect_match(on$reference, "pregnancy:", fixed = TRUE)
+  expect_no_match(off$reference, "Zhu Y")
+})

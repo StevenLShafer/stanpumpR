@@ -89,6 +89,38 @@
 # overstates the late concentration and understates the early one.  Give the
 # loading dose as an infusion over 25-30 minutes, as labelled.  No effect
 # site and no band; the usual therapeutic range of 4-10 mg/L is not drawn.
+#
+# PREGNANCY
+# =========
+# No study of procainamide's pharmacokinetics in pregnancy was found (PubMed,
+# searched 2026-10-19).  In Grasela's standard individual 14.4 of the
+# 25.7 L/h of clearance is renal (56%), by filtration and by active tubular
+# secretion.  With the Patient Profile's Pregnant field on and the serum
+# creatinine left blank, the renal term, CL_R through the renal fraction FR,
+# is multiplied by PREGNANCY_GFR_FACTOR = 1.5 (pregnancyGfrFactor(),
+# R/pregnancy.R), the rise in glomerular filtration of pregnancy; acetylation,
+# other metabolism and the volume are unchanged.  For a 30-year-old woman
+# with the assumed creatinine, FR = 110 / (113 x 0.8) = 1.22, so 61% of her
+# clearance is renal and the total rises by about 1 + 0.61 x 0.5 = 1.30.  A
+# measured creatinine is not multiplied: a pregnant woman's creatinine is
+# already low, and the renal fraction made from it already carries the rise.
+# This is a physiological extrapolation with no procainamide data behind it.
+# Pregnancy also raises renal secretion of other drugs (digoxin's net
+# secretion x 1.88, Hebert 2008), so 1.5 is not unreasonable for a secreted
+# drug, but the change in NAT2 acetylation in pregnancy is unknown, and NAPA
+# is not plotted.  Late pregnancy is the reference state.  (Claude Code,
+# 2026-10-19.)
+#
+# References
+# ----------
+# Grasela TH, Sheiner LB.  Clin Pharmacokinet 1984;9:545-554.
+#   https://doi.org/10.2165/00003088-198409060-00004
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy: the rise in
+#   glomerular filtration)
+# Hebert MF, Easterling TR, Kirby B, et al.  Clin Pharmacol Ther
+#   2008;84:248-253.  https://doi.org/10.1038/clpt.2008.1 (pregnancy: renal
+#   secretion of digoxin)
 # -----------------------------------------------------------------------------
 
 # Grasela 1984, Table III (standard individual, base)
@@ -126,16 +158,21 @@ procainamideRenalFraction <- function(age, sex, scr)
 #' @inheritParams cefazolin
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
 #'   value for age and sex
+#' @param pregnant is the patient pregnant?  \code{TRUE}, with the creatinine
+#'   left blank, multiplies the renal clearance by 1.5, the rise in glomerular
+#'   filtration of pregnancy (see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 procainamide <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                         creatinine = NULL)
+                         creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   w    <- pkW / 70
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
-  fr   <- procainamideRenalFraction(age, sex, scr)
+  # Pregnancy (see the header): the renal fraction alone.
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  fr   <- procainamideRenalFraction(age, sex, scr) * gfrPregnancy
   chf  <- 0
   # A labelled hydrochloride dose carries this fraction of base
   base <- PROCAINAMIDE_BASE_MW / PROCAINAMIDE_HCL_MW
@@ -169,6 +206,11 @@ procainamide <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "(the model's base x 271.79/235.33); ", creatinineNote, ". NAPA is not ",
     "plotted. https://doi.org/10.2165/00003088-198409060-00004"
   )
+  if (gfrPregnancy != 1) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("renal clearance x ", PREGNANCY_GFR_FACTOR,
+             ", the rise in glomerular filtration; no procainamide data")))
+  }
 
   list(
     PK = PK,

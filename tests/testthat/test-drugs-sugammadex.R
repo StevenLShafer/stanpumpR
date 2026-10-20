@@ -53,3 +53,40 @@ test_that("the source's derived covariate scenario is reproduced", {
   expect_equal(x$v2, 6.758214, tolerance = 1e-6)
   expect_equal(x$v1 + x$v2, 11.462357, tolerance = 1e-6)
 })
+
+test_that("pregnancy: creatinine clearance x 1.5 in the clearance term only, with a blank creatinine", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on, creatinine
+  # blank (the assumed nonpregnant normal).
+  on  <- getDrugPK("sugammadex", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("sugammadex", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_equal(off, getDrugPK("sugammadex", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default
+  b <- off$PK$default
+  # Kleijn's renal term at 1.5 x CR; the peripheral volume keeps CR
+  size <- pkSizeFactors(70, 165, 30, SEX_FEMALE, TRUE)
+  W  <- 70 * size$volume
+  CR <- creatinineClearanceCG(W, 30, SEX_FEMALE, adultEquivalentCreatinine(NULL, 30, SEX_FEMALE))
+  term <- function(cr) (2 * cr / (cr + 119))^1.29
+  expect_equal(a$cl1 / b$cl1, term(PREGNANCY_GFR_FACTOR * CR) / term(CR), tolerance = 1e-6)
+  expect_equal(a$cl1, 5.58 * (1 + 0.00378 * (W - 74.5)) * term(1.5 * CR) / 60, tolerance = 1e-12)
+  expect_equal(a$v2, 6.35 * exp(-0.00305 * (CR - 119)) * (W / 70), tolerance = 1e-12)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3")) expect_identical(a[[p]], b[[p]], info = p)
+  expect_equal_rounded(0.09474692731, a$cl1)
+  expect_equal_rounded(1.3089337, a$cl1 / b$cl1)
+  # Hodge 2026's worked comparison: 78 kg at term, switch off, assumed
+  # creatinine: 5.88 L/h without the factor, 7.38 L/h with it (Hodge 8.0 L/h)
+  h0 <- sugammadex(78, 165, 30, SEX_FEMALE, adjustToFFM = FALSE)$PK$default
+  h1 <- sugammadex(78, 165, 30, SEX_FEMALE, adjustToFFM = FALSE, pregnant = TRUE)$PK$default
+  expect_equal(h0$cl1 * 60, 5.881, tolerance = 1e-3)
+  expect_equal(h1$cl1 * 60, 7.381, tolerance = 1e-3)
+  expect_lt(abs(h1$cl1 * 60 / 8.0 - 1), 0.08)
+  expect_identical(h1$v2, h0$v2)
+  # A measured creatinine already carries the rise in filtration: no change
+  expect_equal(getDrugPK("sugammadex", 70, 165, 30, SEX_FEMALE, creatinine = 0.6, pregnant = TRUE)$PK,
+               getDrugPK("sugammadex", 70, 165, 30, SEX_FEMALE, creatinine = 0.6)$PK)
+  expect_no_match(getDrugPK("sugammadex", 70, 165, 30, SEX_FEMALE, creatinine = 0.6,
+                            pregnant = TRUE)$reference, "pregnancy:")
+  expect_match(on$reference, "pregnancy:", fixed = TRUE)
+  expect_match(on$reference, "Hodge", fixed = TRUE)
+  expect_no_match(off$reference, "Hodge")
+})

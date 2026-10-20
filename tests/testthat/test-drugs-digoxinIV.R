@@ -58,3 +58,27 @@ test_that("digoxinIV carries the 0.5-2 ng/mL band and reads creatinine", {
   expect_equal(c(row$Lower, row$Upper), c(0.5, 2))
   expect_true("creatinine" %in% names(formals(digoxinIV)))
 })
+
+test_that("pregnancy: clearance x 1.35, directly, with the volumes unchanged", {
+  # Hebert 2008's renal x 1.49 on the 73% of clearance that is renal.  A woman
+  # of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.
+  on  <- getDrugPK("digoxinIV", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("digoxinIV", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_identical(off, getDrugPK("digoxinIV", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default; b <- off$PK$default
+  expect_equal(a$cl1 / b$cl1, DIGOXIN_IV_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(DIGOXIN_IV_PREGNANCY_CL_FACTOR, 1.35)
+  expect_equal_rounded(0.1207117690, a$cl1)
+  # Not through Cheng's regressions: Vss (V2) does not move
+  expect_identical(a[c("v1", "v2", "v3", "cl2", "cl3")],
+                   b[c("v1", "v2", "v3", "cl2", "cl3")])
+  expect_identical(on$tPeak, off$tPeak)
+  expect_match(on$reference, "Hebert", fixed = TRUE)
+  expect_no_match(off$reference, "Hebert", fixed = TRUE)
+  # Applied whatever the creatinine field holds (see the header)
+  m1 <- getDrugPK("digoxinIV", 70, 165, 30, SEX_FEMALE, creatinine = 0.6,
+                  pregnant = TRUE)$PK$default
+  m0 <- getDrugPK("digoxinIV", 70, 165, 30, SEX_FEMALE, creatinine = 0.6)$PK$default
+  expect_equal(m1$cl1 / m0$cl1, DIGOXIN_IV_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_identical(m1$v2, m0$v2)
+})

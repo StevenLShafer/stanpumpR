@@ -258,9 +258,10 @@ Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally
 models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
 adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `pregnancy.R` holds the
-Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, the review's findings per drug in
-`pregnancyFindings()`), which `getDrugPK()` passes only to the eight models that name `pregnant`, each applying
-the factor its header documents from Ansari 2016; `recoveryCalc()` computes
+Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, `pregnancyGfrFactor()`, and the
+literature review's finding for every drug in `pregnancyFindings()`, read from `inst/extdata/pregnancyRegistry.csv`),
+which `getDrugPK()` passes only to the models that name `pregnant`, each applying the factor its header
+documents from its own source (`docs/pregnancy.md`); `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 

@@ -20,7 +20,7 @@ Minto CF, Schnider TW, Gregg KM, Henthorn TK, Shafer SL. Using the time of maxim
 
 ## Pregnancy
 
-The review the [Pregnant](help:models/pregnancy) field follows:
+The review the [Pregnant](help:models/pregnancy) field first followed (each drug's own pregnancy sources are on its page):
 
 Ansari J, Carvalho B, Shafer SL, Flood P. Pharmacokinetics and pharmacodynamics of drugs commonly used in pregnancy and parturition. *Anesth Analg* 2016;122:786-804. [DOI 10.1213/ANE.0000000000001143](https://doi.org/10.1213/ANE.0000000000001143)
 

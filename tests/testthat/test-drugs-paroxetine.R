@@ -165,3 +165,27 @@ test_that("the CSV row agrees with the drug function", {
   expect_equal(row$endCe, 0)
   expect_equal(row$Concentration.Units, "ng")
 })
+
+test_that("pregnancy: apparent clearance x 2.0, population-typical (Westin 2017)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  V/F, ka
+  # and the daily-dose exposure scale are unchanged.
+  on  <- getDrugPK("paroxetine", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("paroxetine", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_equal(off, getDrugPK("paroxetine", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default
+  b <- off$PK$default
+  expect_equal(PAROXETINE_PREGNANCY_CL_FACTOR, 2.0)
+  expect_equal(a$cl1 / b$cl1, PAROXETINE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO")) {
+    expect_identical(a[[p]], b[[p]], info = p)
+  }
+  expect_identical(on$oralSaturation, off$oralSaturation)
+  expect_equal_rounded(0.6801175363, a$cl1)
+  expect_equal_rounded(822.2169542, a$v1)
+  # The reference says the factor is population-typical and reverses in
+  # CYP2D6 poor and intermediate metabolisers (the model has no CYP2D6 term)
+  expect_false("cyp2d6" %in% names(formals(paroxetine)))
+  expect_match(on$reference, "Westin", fixed = TRUE)
+  expect_match(on$reference, "CYP2D6 poor and intermediate", fixed = TRUE)
+  expect_no_match(off$reference, "Westin")
+})

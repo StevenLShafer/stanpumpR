@@ -90,20 +90,43 @@ overestimate a child's renal function from the child's own creatinine. Pass
 equation to children's own creatinine, as pregabalin's did. Say so in the model's header
 and in its `reference` string. See `R/drugs_vancomycin.R` and `R/renalFunction.R`.
 
-**Pregnancy.** A model whose source, or the review the library follows for pregnancy (Ansari,
-Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804; `R/pregnancy.R`), gives a
-**magnitude** for the change in pregnancy adds `pregnant = FALSE` to its signature and applies
-that factor, documented in a `PREGNANCY` section of its header with the review's wording and
-the arithmetic, with a named constant (`MORPHINE_PREGNANCY_CL_FACTOR`) and the citation
-appended to its `reference` string through `pregnancyReference()` only when the flag is on. A
-renally cleared model carries the review's 50% rise in glomerular filtration through the renal
-function its clearance term reads (`PREGNANCY_GFR_FACTOR`, as cefazolin, gentamicin and
-vancomycin do). A change the review describes only in direction is **not** applied: add the
-drug to `pregnancyFindings()` with the review's wording instead, so the help's Pregnancy page
-says what is known. `test-pregnancy.R` checks that exactly the drugs marked `applied` there
-name `pregnant`, that the flag off changes nothing, and that each factor is what the header
-says; the drug's own test pins its parameters with the flag on. Add a `### Pregnancy` section
-to the drug's help narrative and list the drug on the Cautions page.
+**Pregnancy (required for every model).** Every drug in the library has a row in
+`inst/extdata/pregnancyRegistry.csv`, built by `data-raw/pregnancyRegistry.R`, and
+`test-pregnancy.R` fails for a drug without one. So a new model comes with a search of the
+literature on its pharmacokinetics in pregnancy (PubMed and PubMed Central: "<drug> pregnancy
+pharmacokinetics", "<drug> postpartum", "<drug> third trimester", "<drug> parturients"),
+preferring, in order, a population model with a pregnancy or gestational-age covariate, a paired
+study of the same women during pregnancy and after it, a comparison with nonpregnant women, a
+therapeutic-drug-monitoring series, and only then a PBPK prediction or a review. Record what was
+found in the row: the `group` (below), the `finding` with its numbers, design, n, trimester and
+comparator, the `source` and `source_url`, what was actually read (`evidence_read`: full text,
+abstract, memory or none) and, in `to_obtain`, any paper whose full text would firm up the number
+(the list `docs/pregnancy.md` collects for the library).
+
+- **applied**: a change MEASURED in women with useful strength, or derived from one by documented
+  arithmetic. The model adds `pregnant = FALSE` as its last argument and applies the factor under
+  `isTRUE(pregnant)`, with a named constant (`LAMOTRIGINE_PREGNANCY_CL_FACTOR`), a `PREGNANCY`
+  section in its header giving the source, the numbers and the arithmetic, and
+  `pregnancyReference(applied, source)` appended to its `reference` only when the flag is on. The
+  row's `cl_factor`, `v_factor` and `f_factor` are the ratios `test-pregnancy.R` measures from the
+  model (cl1, v1, bioavailability_PO) at a 30-year-old 70 kg woman. A drug cleared mostly unchanged
+  by filtration whose model reads renal function applies the 50% rise in glomerular filtration
+  through `pregnancyGfrFactor(pregnant, creatinine)` (`gfr_factor` 1.5), which applies it only
+  when the serum creatinine is blank, because a measured pregnant creatinine already carries the
+  rise. The drug's own test pins the flag-on values.
+- **unquantified**: a direction only, or a measurement too weak to apply (a handful of women, no
+  comparison group, a PBPK prediction alone); the finding says which. Not applied.
+- **unchanged**, **unknown**: studied and unchanged, or no human data found. Not applied.
+- **source_pregnant**: the model was fitted in pregnant women (calcium, magnesium sulfate,
+  oxytocin), so the flag does nothing.
+- **not_applicable**: a pediatric model, a drug contraindicated in pregnancy with nothing to
+  apply, or a gas (whose change, a lower MAC, is pharmacodynamic).
+
+The flag describes late pregnancy (third trimester and term): apply the third-trimester value. The
+library plots total concentration; for a highly bound drug say what the fall in albumin does to
+the total and to the unbound concentration. Each drug's help page renders its row
+(`helpDrugPregnancyHTML()` in `R/help-drugs.R`), so a narrative `### Pregnancy` section in
+`inst/help/drugs/<name>.md` is optional, for what the row cannot say.
 
 **What the engine cannot represent.** The closed-form engine is linear and mammillary, with
 first-order extravascular absorption. A source model with saturable protein binding

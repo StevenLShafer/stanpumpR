@@ -13,3 +13,7 @@ Clearance rises with body weight (exponent 0.534) and creatinine clearance (expo
 ### The patient this represents
 
 The fit is in patients **after major orthopaedic surgery** on the 2.5 mg prophylactic dose; clearance falls with age and renal impairment (about 15% lower in moderate and 43% in severe renal impairment). The treatment dose, or a non-surgical population, is outside the data. The concentration is plotted as the model's output, with no therapeutic band and no time-until-threshold.
+
+### Pregnancy
+
+With **Pregnant** ticked and the **Serum creatinine** left blank, the creatinine clearance the renal term reads is multiplied by 1.5, the library's rise in glomerular filtration in late pregnancy, so the apparent clearance rises by 1.5 to the power 0.532, or 1.24. This is physiological: no study of fondaparinux pharmacokinetics in pregnancy with a usable ratio was found, but it is eliminated almost entirely unchanged by the kidney. A pregnant woman's own measured creatinine is already low, and the renal estimate made from it already carries the rise, so with a creatinine entered nothing is multiplied. See [Pregnancy](help:models/pregnancy).

@@ -4,7 +4,15 @@
 \alias{digoxinIV}
 \title{Digoxin, intravenous (Cheng 1997; Hornestam 2003's time to peak effect)}
 \usage{
-digoxinIV(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+digoxinIV(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,9 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal
 value}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+elimination clearance by 1.35 (Hebert 2008; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

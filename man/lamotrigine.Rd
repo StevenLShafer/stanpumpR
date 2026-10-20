@@ -4,7 +4,7 @@
 \alias{lamotrigine}
 \title{Lamotrigine pharmacokinetics (oral, immediate release)}
 \usage{
-lamotrigine(weight, height, age, sex, adjustToFFM = TRUE)
+lamotrigine(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,10 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies CL/F by
+\code{LAMOTRIGINE_PREGNANCY_CL_FACTOR} (Karanam 2025; see the file's
+header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

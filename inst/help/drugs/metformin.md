@@ -9,3 +9,7 @@ Immediate release by mouth (`mg PO`, once, twice or three times daily). The exte
 ### What is not plotted
 
 Concentration only, in mcg/mL. The same paper's model of the single-dose glucose response in healthy adults (a maximum of 19.8 with a potency of 3.68 mcg/mL, through a transit delay of half an hour) is an endpoint of its own, not a chronic effect, and is not drawn. See [Antidiabetic models and their limits](help:models/antidiabetics).
+
+### Pregnancy
+
+With **Pregnant** ticked, the apparent clearance is multiplied by 1.27 and the apparent volume by 1.33, the differences between pregnant women with gestational diabetes and nonpregnant women with type 2 diabetes on 500 mg (Liao, *Drug Metab Dispos* 2020); metformin's renal clearance in late pregnancy was 1.31 times its postpartum value in an earlier study (Eyal 2010). The creatinine clearance in the model's renal term is not also raised, which would count the rise in filtration twice. The factors are meant for a blank **Serum creatinine**: a pregnant woman's measured creatinine is low and raises the clearance by itself, so with one entered the two together overstate it. See [Pregnancy](help:models/pregnancy).

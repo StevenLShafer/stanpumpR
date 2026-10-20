@@ -4,7 +4,15 @@
 \alias{lacosamide}
 \title{Lacosamide pharmacokinetics (oral and intravenous)}
 \usage{
-lacosamide(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+lacosamide(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,10 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
 assumed normal value for the patient's age and sex (R/renalFunction.R)}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the whole
+CL/F by \code{LACOSAMIDE_PREGNANCY_CL_FACTOR}, not through the renal term
+(MONEAD 2022, Barry 2025; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

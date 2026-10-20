@@ -85,7 +85,11 @@
 # (1 - 0.0154 x 66), so CL rises by slightly more than 1.5 (1.51 at a
 # creatinine clearance of 100 mL/min).
 # The larger volume is NOT applied, as the review gives no figure, so the
-# simulated peak in a parturient is too high.  See R/pregnancy.R.
+# simulated peak in a parturient is too high.
+# The factor is applied only when the serum creatinine is left blank
+# (pregnancyGfrFactor()): a pregnant woman's measured creatinine is already
+# low, and the renal estimate made from it already carries the rise.
+# See R/pregnancy.R.
 #
 # References
 # ----------
@@ -126,7 +130,8 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   scr  <- max(adultEquivalentCreatinine(creatinine, age, sex), 60 / 88.42)
   crcl <- creatinineClearanceCG(pkW, age, sex, scr)   # mL/min
   # Pregnancy (see the header): the renal term alone.
-  if (isTRUE(pregnant)) crcl <- crcl * PREGNANCY_GFR_FACTOR
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  crcl <- crcl * gfrPregnancy
 
   cl1 <- 2.99 * (1 + 0.0154 * (crcl - 66)) / 60      # L/min
   if (cl1 <= 0)
@@ -165,7 +170,7 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "clearance, from the entered creatinine or an assumed normal one. ",
     "https://doi.org/10.1093/jac/dkp085"
   )
-  if (isTRUE(pregnant)) {
+  if (gfrPregnancy != 1) {
     reference <- paste0(reference, "; ", pregnancyReference(
       paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR)))
   }

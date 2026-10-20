@@ -4,7 +4,7 @@
 \alias{zonisamide}
 \title{Zonisamide pharmacokinetics (oral)}
 \usage{
-zonisamide(weight, height, age, sex, adjustToFFM = TRUE)
+zonisamide(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,10 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies CL/F by
+\code{ZONISAMIDE_PREGNANCY_CL_FACTOR} (Reimers 2018, MONEAD 2022; see the
+file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
