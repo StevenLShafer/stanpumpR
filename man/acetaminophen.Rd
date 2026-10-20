@@ -21,7 +21,7 @@ weight; when \code{FALSE}, at total body weight. Clearance follows its own
 normal-fat-mass covariate either way.}
 
 \item{pregnant}{when \code{TRUE}, apply the changes of late pregnancy:
-clearance x 1.4 and both volumes x 1.14 (see the file's header)}
+clearance x 1.5 and both volumes x 1.14 (see the file's header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

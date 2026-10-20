@@ -423,6 +423,10 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # any drug in the library (docs/antihypertensives.md).
     "clevidipine", "fenoldopamPediatric", "carvedilol",
     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
+    # The renin-angiotensin drugs (2026-10-20): none of their sources fitted
+    # any pharmacodynamic model, and valsartan's fitted one is a blood
+    # pressure, which nothing in this library plots
+    "lisinopril", "olmesartan", "valsartan", "benazepril",
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
     "epinephrine", "magnesiumSulfate", "labetalol", "nitroglycerin",
     "procainamide", "dopamine",
