@@ -11,7 +11,13 @@ effectSitePeakTime(coef, lambda, ke0, upper = 4000)
 
 \item{lambda}{its eigenvalues, same length}
 
-\item{ke0}{effect site rate constant, per minute}
+\item{ke0}{effect site rate constant, per minute
+The search is held to 20 time constants of the slowest rate involved
+(and to \code{upper}): a curve with no slow phase, such as a fast
+one-compartment drug in an infant, is exactly zero long before 4000
+minutes, and a golden-section search whose first probes all read zero
+wanders into that flat tail instead of finding the early peak.  The peak
+always comes well inside that window.}
 
 \item{upper}{longest time to search, in minutes}
 }

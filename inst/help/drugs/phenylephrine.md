@@ -8,4 +8,4 @@ The paper does not name the salt; doses are entered as phenylephrine hydrochlori
 
 ### Where to be careful
 
-Four healthy volunteers. A second model (Anderson and colleagues, 2017), fitted mostly to children given nasal phenylephrine with a few adult intravenous subjects, has a longer terminal half-life; the early, clinically important part of the curve is similar. Phenylephrine's effect on blood pressure is immediate and not modelled here. See [the vasoactive and resuscitation drugs](help:models/vasoactive).
+Four healthy volunteers. A second model (Anderson and colleagues, 2017), fitted mostly to children given nasal phenylephrine with a few adult intravenous subjects, has a longer terminal half-life; the early, clinically important part of the curve is similar. The effect site peaks **42 seconds** after a bolus: Schwinn and Reves (*Anesth Analg* 1989;68:571-578), recording blood pressure, cardiac output and vascular resistance every 5 seconds after 50 to 200 mcg boluses in anaesthetised coronary surgical patients, found every change maximal at about 42 seconds. No blood pressure is drawn. See [the vasoactive and resuscitation drugs](help:models/vasoactive).
