@@ -44,9 +44,19 @@
 # fat-free mass with the switch on; with it off they are the published values
 # for everyone (legacyVolume = 1).
 #
-# NO EFFECT SITE, NO BAND
-# =======================
-# The source measured no effect.  Plasma only.
+# EFFECT SITE: tPeak 3.3 MINUTES, FOR HEART RATE (Ritchie 1998); NO BAND
+# ======================================================================
+# Lammers measured no effect.  Ritchie RH, Morgan DJ, Horowitz JD, J Pharm
+# Sci 1998;87:177-182 (doi 10.1021/js9702776, read in full) gave 4 mg
+# intravenously to 12 patients with ischaemic heart disease at cardiac
+# catheterisation and fitted an effect compartment to MYOCARDIAL metoprolol
+# content (uptake 1.85 /min, efflux 0.061 /min), not plasma, so its ke0 is
+# not carried over; but on its own model the reduction in heart rate (ke0
+# 1.30 /min) peaks 3.3 minutes after the bolus, and that time to peak is
+# used.  Its 95% interval is wide (ke0 -0.06 to 2.66 /min).  The paced PR
+# interval and LV dP/dt max (ke0 0.30 and 0.29 /min) peak about 7.3
+# minutes after the bolus, in line with the 5-10 minutes observed in the
+# companion papers; heart rate is the endpoint used here.
 #
 # PREGNANCY
 # =========
@@ -116,6 +126,7 @@ METOPROLOL_Q  <- 74.5      # L/h
 METOPROLOL_V2 <- 97.6      # L
 METOPROLOL_KA <- 1.19      # /h
 METOPROLOL_F  <- 0.45
+METOPROLOL_TPEAK <- 3.3   # min, heart rate (Ritchie 1998)
 # Fixed from one poor and one ultrarapid metaboliser
 METOPROLOL_CYP2D6_CL <- c(poor = 0.44, intermediate = 1, normal = 1,
                           ultrarapid = 2.01)
@@ -182,8 +193,9 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "2017;56:1231-1244.  Two compartments in 12 healthy men (20 mg IV, 100 mg ",
     "PO): CL 65.8 L/h, V1 187 L, Q 74.5 L/h, V2 97.6 L, ka 1.19 /h, F 0.45; ",
     "CYP2D6 poor metaboliser CL x 0.44 and F x 2.28, ultrarapid CL x 2.01 and ",
-    "F x 0.43 (one subject each); CYP2D6 ", cyp2d6, ". ",
-    "https://doi.org/10.1007/s40262-017-0515-7"
+    "F x 0.43 (one subject each); CYP2D6 ", cyp2d6, ".  Time to peak ",
+    "heart-rate effect 3.3 min from Ritchie RH et al., J Pharm Sci ",
+    "1998;87:177-182. https://doi.org/10.1007/s40262-017-0515-7"
   )
   if (pregnancyApplied) {
     reference <- paste0(reference, "; ", pregnancyReference(
@@ -195,7 +207,7 @@ metoprolol <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = METOPROLOL_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

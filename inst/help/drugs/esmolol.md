@@ -6,6 +6,8 @@ Esmolol's parameters come from de Bruijn, Reves and colleagues at Duke (*Anesthe
 
 Esmolol in **whole blood**, mcg/mL, as assayed, for doses of esmolol hydrochloride as labelled. Because red-cell esterases hydrolyse esmolol, where the blood is drawn matters: the paper cites an animal study in which arterial concentrations were three to seven times peripheral venous. These samples were central venous. The clearance is less than half that of Sum and colleagues' awake volunteers (285 mL/kg/min, sampling site unreported), which the authors put down to anaesthesia and chronic beta blockade.
 
+The effect site peaks **2 minutes** after a bolus, the time to the largest fall in heart rate after 1 mg/kg given over 30 seconds to healthy volunteers (Krumpl and colleagues, *Eur J Clin Pharmacol* 2017;73:417-428). Slowing of AV conduction comes later: Sintetos and colleagues (*Clin Pharmacol Ther* 1987;41:112-117) found the PR interval longest 6 to 10 minutes after a bolus, when blood esmolol was already negligible. Heart rate is the endpoint used; no heart rate is drawn.
+
 ### Covariates
 
 None in the source; every parameter is per kilogram, applied to the fat-free-mass weight when [the scaling switch](help:models/fat-free-mass) is on.

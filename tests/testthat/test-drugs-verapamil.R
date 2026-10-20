@@ -62,5 +62,14 @@ test_that("verapamil is a vasoactive and resuscitation drug with no band", {
   expect_identical(row$Category, VASOACTIVE_DRUG_CATEGORY)
   expect_equal(row$MEAC, 0)
   PK <- getDrugPK("verapamil", 81, 175, 60, "male")
-  expect_equal(PK$tPeak, 0)
+  expect_equal(PK$tPeak, 4)
+})
+
+test_that("the effect site peaks 4 min after a bolus (the label's 3-5 min)", {
+  PK <- getDrugPK("verapamil", 70, 170, 60, "male")
+  expect_equal(PK$tPeak, 4)
+  pk <- PK$PK$default
+  coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
+  lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
+  expect_equal(effectSitePeakTime(coef, lambda, pk$ke0), 4, tolerance = 1e-4)
 })

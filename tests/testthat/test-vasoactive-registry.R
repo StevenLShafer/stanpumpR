@@ -72,7 +72,9 @@ test_that("the category holds exactly the implemented drugs, concentration only"
                        digoxinIV = DIGOXIN_IV_TPEAK,
                        norepinephrine = NOREPINEPHRINE_TPEAK,
                        diltiazem = DILTIAZEM_TPEAK,
-                       nicardipine = NICARDIPINE_TPEAK, 0)
+                       nicardipine = NICARDIPINE_TPEAK,
+                       esmolol = ESMOLOL_TPEAK, metoprolol = METOPROLOL_TPEAK,
+                       verapamil = VERAPAMIL_TPEAK, 0)
     expect_equal(PK$tPeak, expected, info = d)
   }
   # Clevidipine was already in the library, in the Antihypertensives category,

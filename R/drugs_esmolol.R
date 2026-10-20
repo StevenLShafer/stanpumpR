@@ -66,9 +66,19 @@
 # evaluated at the pharmacokinetic weight with the fat-free-mass switch on
 # (size$pkWeight) and at total body weight with it off.
 #
-# NO EFFECT SITE, NO BAND
-# =======================
-# No concentration-effect relation was fitted; no heart rate is predicted.
+# EFFECT SITE: tPeak 2 MINUTES, FOR HEART RATE (Krumpl 2017); NO BAND
+# ===================================================================
+# de Bruijn fitted no concentration-effect relation.  Krumpl G, Ulc I, Trebs
+# M, Kadlecova P, Hodisch J, Eur J Clin Pharmacol 2017;73:417-428 (doi
+# 10.1007/s00228-016-2176-0, read in full) gave 12 healthy volunteers 0.5, 1
+# and 1.5 mg/kg at 0.5 mg/kg per 15 s: heart rate fell significantly from 2
+# minutes, and after 1 mg/kg its lowest value was the 2-minute one (Table 4),
+# so the time to peak heart-rate effect is 2 minutes.  AV conduction lags
+# further: Sintetos AL, Hulse J, Pritchett EL, Clin Pharmacol Ther
+# 1987;41:112-117 (doi 10.1038/clpt.1987.19, read in full) found the PR
+# interval longest 6 to 10 minutes after a 30-second bolus, when blood
+# esmolol was negligible.  Heart rate is the endpoint used here.  No heart
+# rate is predicted.
 # -----------------------------------------------------------------------------
 
 # de Bruijn 1987, Tables 3 and 4 (means of 13 patients)
@@ -77,6 +87,7 @@ ESMOLOL_V1    <- 0.413   # L/kg
 ESMOLOL_THALF_ALPHA <- 1.34   # min
 ESMOLOL_THALF_BETA  <- 9.9    # min
 ESMOLOL_VBETA <- 1.90    # L/kg, the check, not used to build
+ESMOLOL_TPEAK <- 2       # min, heart rate (Krumpl 2017)
 
 #' Esmolol (de Bruijn 1987)
 #'
@@ -110,13 +121,15 @@ esmolol <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Two compartments in 13 anaesthetised CABG patients on chronic beta ",
     "blockers: CL 128 mL/kg/min, central volume 0.413 L/kg, half-lives 1.34 ",
     "and 9.9 min; V2 and Q derived (CL/beta 1.83 L/kg against V-beta 1.90). ",
-    "Whole blood, central venous; arterial esmolol runs several times higher. ",
+    "Whole blood, central venous; arterial esmolol runs several times higher.  ",
+    "Time to peak heart-rate effect 2 min from Krumpl G et al., Eur J Clin ",
+    "Pharmacol 2017;73:417-428. ",
     "https://doi.org/10.1097/00000542-198703000-00010"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = ESMOLOL_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

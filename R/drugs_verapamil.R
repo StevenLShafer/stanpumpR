@@ -76,7 +76,19 @@
 # conduction, is cleared faster and distributes more widely than the (+)
 # (Eichelbaum 1984), so the racemate's concentration is not the active
 # concentration.  Norverapamil was not detected after the intravenous dose
-# and is not plotted.  No effect site and no band.
+# and is not plotted.  No band.
+#
+# EFFECT SITE: tPeak 4 MINUTES, FOR HEART RATE (the label)
+# ========================================================
+# The label for verapamil hydrochloride injection (Pfizer) states that "peak
+# therapeutic effects occur within 3 to 5 minutes after a bolus injection",
+# the slowing of the ventricular rate and termination of PSVT; the midpoint,
+# 4 minutes, is the tPeak, as atropine's is its clinical time to peak heart
+# rate.  The PR interval lags far behind: Berk SI et al., Pharmacotherapy
+# 1992;12:33-39 (read in full) found it longest 28 +/- 16 minutes after 5 mg
+# over 1 minute in six healthy men (read at 5, 10, 15, 30 and 45 minutes),
+# and Carosella 1989 (Cardiovasc Drugs Ther 3:417) a hysteresis loop.  Heart
+# rate is the endpoint used here.
 # -----------------------------------------------------------------------------
 
 # Kates 1981, Table I (weight, kg) and Table II (rate constants /min, Vc L),
@@ -116,6 +128,8 @@ verapamilTypicalPerKg <- function(k = VERAPAMIL_KATES)
     cl3 = k$Vc * k$k13 / k$weight))
 }
 
+VERAPAMIL_TPEAK <- 4   # min, the label's 3-5 min to peak therapeutic effect
+
 #' Verapamil, intravenous (Kates 1981)
 #'
 #' Three compartments, the typical patient with chronic atrial fibrillation;
@@ -140,12 +154,14 @@ verapamil <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Three compartments, the mean of 12 patients with chronic atrial ",
     "fibrillation given 15 mg IV (patient 2's misprinted Vc corrected): CL ",
     "12.5 mL/min/kg, Vss 3.49 L/kg, as the paper reports; checked against ",
-    "Eichelbaum 1984. Racemic verapamil. https://doi.org/10.1038/clpt.1981.125"
+    "Eichelbaum 1984. Racemic verapamil.  Time to peak effect 4 min, the ",
+    "label's 3-5 min to peak therapeutic effect after a bolus. ",
+    "https://doi.org/10.1038/clpt.1981.125"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = VERAPAMIL_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,
