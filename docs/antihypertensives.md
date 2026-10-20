@@ -162,8 +162,21 @@ nearly equal large numbers. Formal identifiability is not enough; a
 decomposition has to be numerically stable. Clevidipine's is (a 5%
 perturbation of any input moves V1 by at most 4%, V2 by 10%, Q by 13%);
 esmolol's is not. Status: `requires_parameter_fit`, with the arithmetic
-recorded. For an anaesthesia audience this is the most valuable record still
-missing, so it is the first one to settle from the full text.
+recorded.
+
+**Settled, 2026-10-19, and not from this source.** The drug an anaesthesiologist
+titrates most often is now in the library as `esmolol`, under *Vasoactive and
+resuscitation* rather than here, from de Bruijn 1987 (*Anesthesiology*
+66:323-326): whole-blood esmolol in nineteen anaesthetised cardiac surgical
+patients, two compartments fitted by NONLIN with the means printed in Tables 3
+and 4, and the beta-phase volume as an independent check. So the conclusion of
+this section stands -- Sum 1983's abstract cannot be decomposed -- and the
+lesson generalises past it: **when a record is blocked by conditioning rather
+than by access, the answer may be a different study rather than the full text of
+this one.** A second source with four independent numbers beats a first source
+with three, however much better the first source's population looks. Sum 1983's
+record stays `requires_parameter_fit` because the arithmetic in it is worth
+keeping; nothing is waiting on it.
 
 **3.4 The Ericsson response coefficients could not be found anywhere, and
 conflict with their neighbours.** The specification gives Emax 45.4% and EC50
@@ -406,11 +419,10 @@ blood-pressure endpoint exists for it to optimise against.
    never a new engine.** Section 12. The one case that genuinely needed a new
    engine was Michaelis-Menten elimination, and it needed one because it is
    not superposable — which is the test to apply next time.
-3. **Settle esmolol.** It is the antihypertensive an anaesthesiologist
-   titrates most often. Its obstacle is conditioning rather than access -- the
-   abstract alone formally closes the system, as section 4 records -- so what
-   the full text is wanted for is the individual-level data, which would allow
-   a decomposition per subject instead of one from rounded summary half-lives.
+3. ~~**Settle esmolol.**~~ **Done**, 2026-10-19, and by the move section 3.3
+   now records: not from Sum 1983's full text but from de Bruijn 1987, a
+   different study with four independent numbers instead of three. It is in
+   the library as `esmolol`, filed under *Vasoactive and resuscitation*.
 4. **Leave the blood-pressure layer until a record earns it.** The nearest
    candidates are not the famous drugs but the ones whose chain is almost
    complete in a single source.

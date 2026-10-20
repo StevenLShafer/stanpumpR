@@ -171,6 +171,7 @@ carvedilol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#01579B,0,0,0,0,0,IV,Antihypert
 azilsartan,ng,,,mg PO,"mg PO,mg PO qd",#E65100,0,0,0,0,0,IV,Antihypertensives
 chlorthalidone,ng,,,mg PO,"mg PO,mg PO qd",#33691E,0,0,0,0,0,IV,Antihypertensives
 lisinopril,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antihypertensives
+olmesartan,ng,,,mg PO,"mg PO,mg PO qd",#AD1457,0,0,0,0,0,IV,Antihypertensives
 hydrochlorothiazide,ng,,,mg PO,"mg PO,mg PO qd",#3E2723,0,0,0,0,0,IV,Antihypertensives
 epinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#C62828,0,0,0,0,0,IV,Vasoactive and resuscitation
 magnesiumSulfate,mmol,g,g/hr,g,"g,mg,mg/kg,g/hr,mg/min,mg/kg/hr",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
