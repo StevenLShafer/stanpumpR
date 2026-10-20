@@ -32,3 +32,10 @@ The INR is a delayed, non-linear turnover endpoint, so it is computed from the f
 ### Where to be careful
 
 The model was fitted to a single dose in healthy volunteers; the steady-state INR shown here comes from repeated dosing of that single-dose model, not from a maintenance-therapy fit. Fluindione's low clearance lets it accumulate, so its simulated steady-state INR is close to the paper's Table IV values, but the model is not a dosing algorithm and does not represent vitamin K, drug interactions, or the between-patient variability that makes vitamin-K-antagonist dosing individual.
+
+### Further reading
+
+These are not implemented here — the plotted curve is the Verstuyft 2012 healthy-volunteer model — but they inform how the drug behaves in patients and in the elderly, where it is actually used:
+
+- Comets E et al., *Clin Pharmacol Ther* 2012;91(5):777-786 ([doi:10.1038/clpt.2011.309](https://doi.org/10.1038/clpt.2011.309)): the PREPA study of 131 octogenarian inpatients, where clearance falls with age and exposure rises substantially, arguing for a lower dose — the age effect the single-dose healthy-volunteer source does not carry.
+- Mentré F et al., *Clin Pharmacol Ther* 1998;63(1):64-78 ([doi:10.1016/S0009-9236(98)90122-9](https://doi.org/10.1016/S0009-9236(98)90122-9)): the original patient-based, multiple-dose indirect-response PK/PD model, a check of the structure in real patients rather than volunteers.

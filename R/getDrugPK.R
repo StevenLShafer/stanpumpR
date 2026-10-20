@@ -1141,7 +1141,11 @@ getDrugPK <- function(
       PK = PK,
       tPeakRoute = tPeakRoute,
       tPeak = tPeak,
-      pkEvents = events,
+      # A dose-phase drug (dabigatranHip) names its second PK set internally
+      # (e.g. "day2"); the split is by dose time, not a user-entered clinical
+      # event, so do not expose the phase name as a pkEvent (it would otherwise
+      # appear on the help page as an "event" the user can enter).
+      pkEvents = if (is.null(X$dosePhase)) events else PK_EVENT_DEFAULT,
       reference = if (is.null(X$reference)) "Not Available" else X$reference,
       weight = weight,
       height = height,
@@ -1256,6 +1260,29 @@ getDrugPK <- function(
   # anything that reads or rewrites the oral dose rows itself, because a
   # zero-order release leaves no row flagged PO for those paths to act on.
   out$oralZeroOrder <- zeroOrder
+
+  # Dose-time phase split (dabigatran after hip replacement): doses given before
+  # dosePhase$at minutes use the default PK set, doses at or after it the set
+  # named by dosePhase$late.  simCpCe() runs the two as independent linear
+  # systems and sums them; see R/drugs_dabigatranHip.R.  It is refused alongside
+  # anything that is itself a second system or rewrites the oral dose rows.
+  if (!is.null(X$dosePhase))
+  {
+    dp <- X$dosePhase
+    if (!is.list(dp) || !is_valid_number(dp$at) || dp$at <= 0 ||
+        is.null(dp$late) || length(dp$late) != 1 ||
+        !dp$late %in% names(out$PK) || identical(dp$late, PK_EVENT_DEFAULT))
+      stop("Invalid dosePhase for ", drug, ": needs a positive 'at' (minutes) ",
+           "and a 'late' naming a second PK set.")
+    if (!is.null(out$PK[[PK_EVENT_DEFAULT]]$metabolite) ||
+        !is.null(out$parallelSystems) || !is.null(out$michaelisMenten) ||
+        !is.null(out$oralFormulations) || !is.null(out$inr) ||
+        !is.null(out$oralZeroOrder))
+      stop("Invalid dosePhase for ", drug, ": not available with a metabolite, ",
+           "parallel systems, Michaelis-Menten elimination, several oral ",
+           "formulations, an INR or a zero-order oral release.")
+    out$dosePhase <- dp
+  }
   return(out)
 }
 

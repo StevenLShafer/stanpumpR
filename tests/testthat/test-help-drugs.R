@@ -87,7 +87,7 @@ plasmaOnly <- c(
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
   "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
-  "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
+  "edoxaban", "dabigatran", "dabigatranHip", "argatroban", "enoxaparin", "fondaparinux",
   "fluindione", "acenocoumarol",
   # The antihypertensives (2026-10-17): concentration only.  Neither source
   # publishes an equilibration rate constant, and no blood pressure is
