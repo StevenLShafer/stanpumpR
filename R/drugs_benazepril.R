@@ -60,9 +60,16 @@
 # clevidipine's sensitivity (4%, 10%, 13% for a 5% perturbation).  The
 # difference is that the INPUT here is noisier: the tail is a difference of two
 # measured areas, 3185 - 2649, whose standard errors give it about +/- 25%.  At
-# that, V1 carries +/- 13%, V2 +/- 22% and Q +/- 37%.  The apparent CLEARANCE is
-# unaffected, being dose/AUC and independent of the split, so the AREA under the
-# plotted curve is firm and the SHAPE of its distribution phase is the soft part.
+# that, V1 carries +/- 13%, V2 +/- 22% and Q +/- 37%.
+#
+# Treat those as a FLOOR rather than a bound.  The two areas have different
+# subject counts -- AUC(0-24h) is n = 60 and AUC(0-inf) is n = 45, because 15
+# subjects had no 48 or 72 h sample -- so they are not paired subject-level
+# summaries and their difference carries a selection component on top of the
+# sampling error, which nothing printed quantifies.  The apparent CLEARANCE is
+# unaffected either way, being dose/AUC and independent of the split, so the
+# AREA under the plotted curve is firm and the SHAPE of its distribution phase
+# is the soft part.
 #
 # EVERY PARAMETER IS APPARENT IN THE FORMATION FRACTION
 # =====================================================

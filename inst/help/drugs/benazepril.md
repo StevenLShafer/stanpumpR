@@ -27,6 +27,8 @@ The **area** under this curve is firm: it is dose over apparent clearance, and t
 
 The **shape** of the distribution phase is softer, and honesty requires saying by how much. The terminal area that closes the system is a difference of two measured numbers, 3185 − 2649, and their standard errors give that difference roughly ±25%. Propagated, the central volume carries about ±13%, the peripheral volume ±22% and the intercompartmental clearance ±37%. The derivation itself is as stable as clevidipine's per unit of input error; it is the input that is noisier.
 
+Read those as a **floor** rather than a bound. The two areas rest on different subject counts — the 24-hour area on 60 subjects, the total on the 45 who still had samples at 48 and 72 hours — so they are not paired measurements on one group, and their difference carries a selection component that nothing printed lets you quantify.
+
 ### Why the peak is the least reliable part
 
 The model predicts a peak of 156 ng/mL for a 10 mg dose against Kaiser's reported 195 ng/mL — **20% low**. The likely reason is not the model. Kaiser's figure is a *mean of individual peak concentrations* across 60 subjects whose times to peak ranged from 1 to 6 hours, and averaging peaks that happen at different times always exceeds the peak of the averaged curve. A 20% bias is unremarkable for that spread. It cannot be checked from the printed data, so it is stated rather than corrected.

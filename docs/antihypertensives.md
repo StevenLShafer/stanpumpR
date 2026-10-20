@@ -1531,20 +1531,31 @@ should therefore have failed, because two compartments need four independent
 numbers and a non-compartmental paper normally prints three — a clearance, a
 volume and a terminal half-life.
 
-One of them closed and the other was refuted, and **the whole difference is a
-single printed column.**
+One of them closed and the other was refuted, and the difference comes down to
+**how many exponents each paper reports.**
 
-> **A non-compartmental paper identifies a two-compartment model if and only if
-> it prints a partial area alongside the total.** The difference of the two is
-> the area under the terminal phase alone; because that phase is a single
-> exponential, β times that area is the concentration at the split time, and
-> that recovers the terminal intercept — the fourth number.
+> **A non-compartmental paper identifies a two-compartment model when it prints
+> BOTH exponents** — and then any fourth number closes it. A clearance with a
+> steady-state volume is one such number, which is how clevidipine was
+> identified (§11). A total area with a *partial* area is another, and it is
+> benazeprilat's: the difference of the two estimates the area under the
+> terminal phase alone, so β times it gives the concentration at the split time
+> and recovers the terminal intercept.
 
-Kaiser's Table 2 prints AUC(0–24 h) **and** AUC(0–∞) for benazeprilat. Lo's
-Table I prints one AUC column per moiety. That is the entire reason one of
-these drugs is now in the library and the other is not, and it is worth stating
-as a rule because it is cheap to check before requesting a paper: *ask whether
-the tables carry a partial area.*
+An earlier draft of this section stated that as an *if and only if* on the
+partial area. That was wrong, and wrong against a record in this same document:
+clevidipine has no partial area and is identified anyway. **The necessary
+condition is both exponents, not the partial area.** What losartan lacks is not
+a particular fourth number but any fourth number at all — Lo reports only the
+terminal exponent, so there is nothing for a clearance or an area to combine
+with.
+
+Kaiser's Table 2 gives benazeprilat **two** half-lives, α 2.7 h and β 22.3 h,
+and then two areas to close on. Lo's Table I gives each moiety **one** half-life
+and one area. That is the reason one of these drugs is now in the library and
+the other is not, and it is cheap to check before requesting a paper: *ask
+whether the tables carry both exponents, and then what fourth number sits
+beside them.*
 
 ### 15.1 Benazeprilat, derived and checked
 
@@ -1642,6 +1653,16 @@ derivation was never given them. The same reason `execution_status` needed
 
 ### 15.4 Where the numbers stand
 
-Of 135 records, **14** are executable, 160 parameters are audited with 124
-verified against a primary full text, `bp_simulation_enabled` is `FALSE` on
-every record, and **no drug in stanpumpR plots a blood pressure.**
+Of 135 records, **14** are executable and 160 parameters are audited: **91
+checked against a primary full text**, 25 against an abstract, 8 derived here,
+and 36 still carrying the handoff specification's numbers unverified.
+`bp_simulation_enabled` is `FALSE` on every record, and **no drug in stanpumpR
+plots a blood pressure.**
+
+An earlier draft of this line said "124 verified against a primary full text".
+That was wrong: 124 is the registry's count of *not-unverified*, which pools
+three different provenances. It is the second time in this document's history
+that a printed total was quoted without checking its composition — §13.2's "69
+rows with the label open" was the first, and only 66 were. The builder now
+prints the breakdown instead of one total, because the fix for that mistake is
+not more care in reading, it is output that cannot be misread.
