@@ -116,7 +116,7 @@ heparinCPB <- function(weight, height, age, sex, adjustToFFM = TRUE)
       "anti-factor Xa model with a direct Emax link to the activated clotting ",
       "time during cardiopulmonary bypass; body weight on Vc and clearance, no ",
       "other covariate; plotted as the ACT in seconds). ",
-      "https://doi.org/10.1016/j.bja.2017.01.009"
+      "https://doi.org/10.1093/bja/aex044"
     )
   )
 }
