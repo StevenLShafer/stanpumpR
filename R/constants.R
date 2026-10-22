@@ -272,6 +272,15 @@ calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
 # Shafer.)
 iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 
+# Intravenous doses in units (U) of a potency-defined peptide: vasopressin
+# (R/drugs_vasopressin.R), labelled and given in units, a bolus or a rate per
+# minute or hour.  The same unit as the insulins (insulinUnits), so the same
+# rules hold: the drug's Concentration.Units is "mcU", simCpCe() turns U into
+# mU, and refuses a mass unit for it and a U unit for any other drug.  No
+# route word: they are intravenous.  (Claude Code, 2026-10-22, at the request
+# of Steven L. Shafer.)
+ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr")
+
 # Subcutaneous activity units (ROUTE_SC) for a drug plotted as anti-Xa
 # activity (enoxaparin, "IU SC"); the mass units are scUnits, above.  They
 # start with "IU" so simCpCe()'s international-unit check reads them, and
@@ -290,7 +299,8 @@ ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
-              iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits)
+              iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
+              ivPotencyUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
