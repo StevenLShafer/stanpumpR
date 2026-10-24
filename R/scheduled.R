@@ -28,6 +28,10 @@
 #     new dose is a new instruction to the patient.  An oral dose at the same
 #     time as a schedule's first dose (a loading dose taken with it) does not
 #     end it.  The other routes keep the rules above.
+#   - A sublingual dose (Shafer, 2026-10-24) ends a running oral schedule in
+#     the same way: a tablet under the tongue is still a new instruction about
+#     the tablets.  An oral dose does not end a sublingual schedule, which
+#     keeps the rules above.
 #   - A repeat within SCHEDULE_TIME_TOLERANCE of the row that ends its
 #     schedule is not given: that row replaces it.  A time written in hours or
 #     days is read back from the dose table rounded to 0.001 minute, so a row
@@ -73,10 +77,10 @@ scheduledSequences <- function(dose) {
   rows <- rows[!loser]; route <- route[!loser]; time <- time[!loser]
 
   # What ends a schedule: the next scheduled row for its route or, on the
-  # oral route, the next oral dose of any kind.  An oral rate unit (digoxin's
-  # and amiodarone's constant-rate "mg/day PO") is not a dose.
+  # oral route, the next oral or sublingual dose of any kind.  An oral rate
+  # unit (digoxin's and amiodarone's constant-rate "mg/day PO") is not a dose.
   allTimes <- as.numeric(dose$Time)
-  oral <- setdiff(which(doseRoute(dose$Units) == ROUTE_PO & !isRateUnit(dose$Units)), dropped)
+  oral <- setdiff(which(doseRoute(dose$Units) %in% c(ROUTE_PO, ROUTE_SL) & !isRateUnit(dose$Units)), dropped)
 
   out <- lapply(seq_along(rows), function(i) {
     row <- rows[i]

@@ -98,6 +98,28 @@ test_that("an oral dose at the schedule's first dose does not end it", {
   expect_equal(x$scheduled$Time, c(720, 1440, 2160))
 })
 
+test_that("a sublingual dose ends an oral schedule, and not the other way round", {
+  # No drug offers both today (buprenorphine is the only SL drug): the rule
+  # reads the units, so a made-up drug carries it.
+  x <- expandScheduledDoses(
+    doses(c(0, 1000), c(200, 0), c("mg PO tid", "mg SL"), "made-up"),
+    3 * MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, c(480, 960))
+  x <- expandScheduledDoses(
+    doses(c(0, 1000), c(200, 400), c("mg PO tid", "mg SL bid"), "made-up"),
+    2 * MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time[x$scheduled$Units == "mg PO"], c(480, 960))
+  expect_equal(x$scheduled$Time[x$scheduled$Units == "mg SL"], c(1720, 2440))
+  # An oral dose leaves a sublingual schedule running
+  x <- expandScheduledDoses(
+    doses(c(0, 300), c(2, 0), c("mg SL qid", "mg PO"), "made-up"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, c(360, 720, 1080))
+})
+
 test_that("an oral dose leaves other routes' schedules running", {
   x <- expandScheduledDoses(
     doses(c(0, 0, 600), c(100, 200, 0), c("mg bid", "mg PO bid", "mg PO"), "clindamycin"),
