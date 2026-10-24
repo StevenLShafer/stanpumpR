@@ -320,10 +320,6 @@ ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)
 # is replaced by that row (scheduled.R): the 0.001-minute snap of a time
 # written in hours or days (TIME_SNAP_DIGITS).
 SCHEDULE_TIME_TOLERANCE <- 1e-3
-# The routes whose schedules the plot's dose dialogs can skip a dose of
-# (skipNextOralDose() in scheduled.R): the tablets, oral and sublingual, and
-# the intramuscular injection.
-SKIPPABLE_ROUTES <- c(ROUTE_PO, ROUTE_SL, ROUTE_IM)
 scheduledUnits <- c(
   as.vector(t(outer(
     c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),

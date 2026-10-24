@@ -37,9 +37,10 @@
 #     schedule is not given: that row replaces it.  A time written in hours or
 #     days is read back from the dose table rounded to 0.001 minute, so a row
 #     written at a repeat's time can read a hair after it.
-#   - "Skip next dose" (the plot's dose dialogs; skipNextOralDose() below)
-#     writes those rules into the table: a 0 oral dose at the skipped time
-#     and the schedule entered again one interval later.
+#   - "Skip next dose" (the plot's dose dialogs; skipNextScheduledDose() below)
+#     writes those rules into the table, on any route: a 0 dose that stops
+#     the schedule at the skipped time and the schedule entered again one
+#     interval later.
 
 isScheduledUnit <- function(units) as.character(units) %in% scheduledUnits
 
@@ -176,9 +177,10 @@ exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
   addDisplayTimeColumn(out, timeUnit)
 }
 
-# "Skip next dose": the patient misses (or vomits) the next tablet of a
-# running oral or sublingual schedule, or misses the next injection of an
-# intramuscular one, and the schedule then carries on as before.
+# "Skip next dose": the patient misses the next dose of a running schedule
+# (a tablet forgotten or vomited, an injection or a spray missed), and the
+# schedule then carries on as before.  Every route that has schedules: the
+# intravenous bolus, PO, SL, IM, IN and SC.
 #
 # Requested by Steven L. Shafer, 2026-10-24, for the plot's dose dialogs:
 # a patient on an antiseizure drug who misses a dose wants to know whether to
@@ -192,14 +194,14 @@ exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
 # the skipped dose is the row's own first dose, that row becomes the 0 dose.
 # No restart is written when the schedule would have ended before it.  The 0
 # dose is an ordinary one on the oral and sublingual routes, which any later
-# dose ends, but a scheduled 0 on the intramuscular route, where an ordinary
-# dose of 0 does not stop a schedule.
+# dose ends, and a scheduled 0 on every other route, where an ordinary dose
+# of 0 does not stop a schedule.
 #
 # dt:        the dose table as the app holds it (Time strings in `format`,
 #            blank rows allowed)
 # drug:      the drug clicked
 # time:      the time clicked (minutes); the dose skipped is the drug's first
-#            scheduled oral, sublingual or intramuscular dose at or after it
+#            scheduled dose at or after it, on any route
 # maximum:   the end of the plot (minutes); a dose at or after it is not
 #            offered
 # format, reference: the dose table's time format and the procedure start
@@ -207,12 +209,12 @@ exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
 # units:     the units the drug offers; on the oral and sublingual routes
 #            the 0 dose is written in the schedule's base unit ("mg PO",
 #            "mg SL") when the drug offers it, else in the scheduled unit, as
-#            it always is on the intramuscular route ("0 mg IM qid")
+#            it always is on the other routes ("0 mg IM qid", "0 mg SC qwk")
 #
 # Returns NULL when there is no such dose, else list(table, time, resumes,
 # dose, units): the new table, the time of the dose skipped, the time the
 # schedule resumes (NA if it does not), and the schedule's dose and unit.
-skipNextOralDose <- function(dt, drug, time, maximum, format,
+skipNextScheduledDose <- function(dt, drug, time, maximum, format,
                              reference = REFERENCE_TIME_NONE, units = NULL) {
   rows <- which(as.character(dt$Drug) == drug)
   if (length(rows) == 0) return(NULL)
@@ -224,7 +226,6 @@ skipNextOralDose <- function(dt, drug, time, maximum, format,
   ok <- !is.na(d$Time) & !is.na(d$Dose) & !is.na(d$Units) & nzchar(d$Units)
   rows <- rows[ok]; d <- d[ok, , drop = FALSE]
   sequences <- scheduledSequences(d)$sequences
-  sequences <- sequences[sequences$route %in% SKIPPABLE_ROUTES, , drop = FALSE]
   if (nrow(sequences) == 0) return(NULL)
 
   # The first dose of each schedule at or after the click
@@ -242,7 +243,9 @@ skipNextOralDose <- function(dt, drug, time, maximum, format,
 
   scheduledUnit <- as.character(dt$Units[r])
   stopUnit <- scheduleBaseUnit(scheduledUnit)
-  if (s$route == ROUTE_IM || (!is.null(units) && !stopUnit %in% units)) stopUnit <- scheduledUnit
+  if (!s$route %in% c(ROUTE_PO, ROUTE_SL) || (!is.null(units) && !stopUnit %in% units)) {
+    stopUnit <- scheduledUnit
+  }
   resumes <- skipped + s$interval
   if (resumes >= s$stop - SCHEDULE_TIME_TOLERANCE) resumes <- NA_real_
 

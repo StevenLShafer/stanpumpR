@@ -1,5 +1,5 @@
 # "Skip next dose" in the plot's dose dialogs (R/app_server.R; the table
-# rewrite is skipNextOralDose() in R/scheduled.R, tested in
+# rewrite is skipNextScheduledDose() in R/scheduled.R, tested in
 # test-scheduled.R).  Drafted by Claude Code, 2026-10-24, at the request of
 # Steven L. Shafer.  Driven with shiny::testServer(), as
 # test-time-units-server.R.
