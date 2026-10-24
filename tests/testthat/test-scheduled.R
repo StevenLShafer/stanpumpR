@@ -98,6 +98,61 @@ test_that("an oral dose at the schedule's first dose does not end it", {
   expect_equal(x$scheduled$Time, c(720, 1440, 2160))
 })
 
+test_that("oral and sublingual doses end each other's schedules, and their own", {
+  # No drug offers both today (buprenorphine is the only SL drug): the rule
+  # reads the units, so a made-up drug carries it.
+  x <- expandScheduledDoses(
+    doses(c(0, 1000), c(200, 0), c("mg PO tid", "mg SL"), "made-up"),
+    3 * MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, c(480, 960))
+  x <- expandScheduledDoses(
+    doses(c(0, 1000), c(200, 400), c("mg PO tid", "mg SL bid"), "made-up"),
+    2 * MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time[x$scheduled$Units == "mg PO"], c(480, 960))
+  expect_equal(x$scheduled$Time[x$scheduled$Units == "mg SL"], c(1720, 2440))
+  # An oral dose, 0 or not, ends a sublingual schedule
+  x <- expandScheduledDoses(
+    doses(c(0, 700), c(2, 0), c("mg SL qid", "mg PO"), "made-up"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, 360)
+  x <- expandScheduledDoses(
+    doses(c(0, 700), c(2, 200), c("mg SL qid", "mg PO bid"), "made-up"),
+    2 * MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time[x$scheduled$Units == "mg SL"], 360)
+  expect_equal(x$scheduled$Time[x$scheduled$Units == "mg PO"], c(1420, 2140, 2860))
+  # An ordinary sublingual dose ends a sublingual schedule too: 0 stops it,
+  # and an extra dose is given once with no schedule after it
+  x <- expandScheduledDoses(
+    doses(c(0, 700), c(2, 0), c("mg SL qid", "mg SL"), "buprenorphine"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, 360)
+  x <- expandScheduledDoses(
+    doses(c(0, 700), c(2, 4), c("mg SL qid", "mg SL"), "buprenorphine"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, 360)
+  expect_equal(sort(x$dose$Time), c(0, 360, 700))
+  # ...but not one taken with the schedule's first dose
+  x <- expandScheduledDoses(
+    doses(c(0, 0), c(4, 2), c("mg SL", "mg SL qid"), "buprenorphine"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, c(360, 720, 1080))
+})
+
+test_that("an oral or sublingual row with no readable time ends no schedule", {
+  x <- expandScheduledDoses(
+    doses(c("0", "abc", NA), c(200, 0, 0), c("mg PO tid", "mg SL", "mg PO"), "made-up"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, c(480, 960))
+})
+
 test_that("an oral dose leaves other routes' schedules running", {
   x <- expandScheduledDoses(
     doses(c(0, 0, 600), c(100, 200, 0), c("mg bid", "mg PO bid", "mg PO"), "clindamycin"),
@@ -205,7 +260,7 @@ test_that("the scheduled units are offered and validated", {
                c("IV", "PO", "IM", "IN"))
 })
 
-# Skip next dose (skipNextOralDose()): the dialog's button, as a dose table
+# Skip next dose (skipNextScheduledDose()): the dialog's button, as a dose table
 # rewrite.
 skipTable <- function(Time, Dose, Units, drug = "carbamazepine") {
   dt <- data.frame(Drug = c(rep(drug, length(Time)), ""),
@@ -225,7 +280,7 @@ simulatedTimes <- function(dt, maximum) {
 
 test_that("skip next dose drops exactly the next oral dose and resumes the schedule", {
   dt <- skipTable(0, 200, "mg PO tid")
-  skip <- skipNextOralDose(dt, "carbamazepine", 500, 3 * MINS_PER_DAY, minutesFormat, units = cbzUnits)
+  skip <- skipNextScheduledDose(dt, "carbamazepine", 500, 3 * MINS_PER_DAY, minutesFormat, units = cbzUnits)
   expect_equal(skip$time, 960)
   expect_equal(skip$resumes, 1440)
   expect_equal(skip$table$Time[1:3], c("0", "960", "1440"))
@@ -238,7 +293,7 @@ test_that("skip next dose drops exactly the next oral dose and resumes the sched
 
 test_that("skipping a schedule's first dose turns that row into the 0 dose", {
   dt <- skipTable(c(0, 1440), c(200, 400), c("mg PO tid", "mg PO bid"))
-  skip <- skipNextOralDose(dt, "carbamazepine", 1000, 3 * MINS_PER_DAY, minutesFormat, units = cbzUnits)
+  skip <- skipNextScheduledDose(dt, "carbamazepine", 1000, 3 * MINS_PER_DAY, minutesFormat, units = cbzUnits)
   expect_equal(skip$time, 1440)
   expect_equal(skip$resumes, 2160)
   expect_equal(simulatedTimes(skip$table, 3 * MINS_PER_DAY), c(0, 480, 960, 2160, 2880, 3600))
@@ -246,25 +301,87 @@ test_that("skipping a schedule's first dose turns that row into the 0 dose", {
 
 test_that("no restart is written when the next row would end the schedule first", {
   dt <- skipTable(c(0, 1000), c(200, 0), c("mg PO tid", "mg PO"))
-  skip <- skipNextOralDose(dt, "carbamazepine", 500, 3 * MINS_PER_DAY, minutesFormat, units = cbzUnits)
+  skip <- skipNextScheduledDose(dt, "carbamazepine", 500, 3 * MINS_PER_DAY, minutesFormat, units = cbzUnits)
   expect_equal(skip$time, 960)
   expect_true(is.na(skip$resumes))
   expect_equal(nrow(skip$table), nrow(dt) + 1)
   expect_equal(simulatedTimes(skip$table, 3 * MINS_PER_DAY), c(0, 480))
 })
 
-test_that("skip next dose is not offered without a running oral schedule", {
-  expect_null(skipNextOralDose(skipTable(0, 200, "mg PO"), "carbamazepine", 0, MINS_PER_DAY, minutesFormat))
-  expect_null(skipNextOralDose(skipTable(0, 1000, "mg bid", "cefazolin"), "cefazolin", 0, MINS_PER_DAY, minutesFormat))
-  expect_null(skipNextOralDose(skipTable(0, 200, "mg PO tid"), "levetiracetam", 0, MINS_PER_DAY, minutesFormat))
+test_that("skip next dose works on a sublingual schedule", {
+  bupUnits <- c("mg SL", "mcg SL", "mg SL bid", "mg SL tid", "mg SL qid")
+  dt <- skipTable(0, 2, "mg SL tid", "buprenorphine")
+  skip <- skipNextScheduledDose(dt, "buprenorphine", 500, 3 * MINS_PER_DAY, minutesFormat, units = bupUnits)
+  expect_equal(skip$time, 960)
+  expect_equal(skip$resumes, 1440)
+  expect_equal(skip$table$Time[1:3], c("0", "960", "1440"))
+  expect_equal(skip$table$Dose[1:3], c("2", "0", "2"))
+  expect_equal(skip$table$Units[1:3], c("mg SL tid", "mg SL", "mg SL tid"))
+  expect_equal(simulatedTimes(skip$table, 3 * MINS_PER_DAY),
+               setdiff(seq(0, 3 * MINS_PER_DAY - 1, by = 480), 960))
+})
+
+test_that("skip next dose works on an intramuscular schedule, with a scheduled 0", {
+  # An ordinary 0 does not stop an IM schedule, so the skip writes the
+  # schedule's own unit, even when the drug offers the base unit
+  imUnits <- c("mg", "mg IM", "mg IM qid")
+  dt <- skipTable(0, 1, "mg IM qid", "hydromorphone")
+  skip <- skipNextScheduledDose(dt, "hydromorphone", 100, 2 * MINS_PER_DAY, minutesFormat, units = imUnits)
+  expect_equal(skip$time, 360)
+  expect_equal(skip$resumes, 720)
+  expect_equal(skip$table$Time[1:3], c("0", "360", "720"))
+  expect_equal(skip$table$Dose[1:3], c("1", "0", "1"))
+  expect_equal(skip$table$Units[1:3], c("mg IM qid", "mg IM qid", "mg IM qid"))
+  expect_equal(simulatedTimes(skip$table, 2 * MINS_PER_DAY),
+               setdiff(seq(0, 2 * MINS_PER_DAY - 1, by = 360), 360))
+  # The first dose: that row becomes the scheduled 0
+  skip <- skipNextScheduledDose(dt, "hydromorphone", 0, 2 * MINS_PER_DAY, minutesFormat, units = imUnits)
+  expect_equal(skip$table$Units[1:2], c("mg IM qid", "mg IM qid"))
+  expect_equal(skip$table$Dose[1:2], c("0", "1"))
+  expect_equal(simulatedTimes(skip$table, 2 * MINS_PER_DAY), seq(360, 2 * MINS_PER_DAY - 1, by = 360))
+})
+
+test_that("skip next dose works on an intranasal schedule, with a scheduled 0", {
+  # As on IM, an ordinary 0 does not stop an IN schedule
+  dt <- skipTable(0, 1, "mg IN qid", "hydromorphone")
+  skip <- skipNextScheduledDose(dt, "hydromorphone", 400, 2 * MINS_PER_DAY, minutesFormat,
+                           units = c("mg IN", "mg IN qid"))
+  expect_equal(skip$time, 720)
+  expect_equal(skip$table$Units[1:3], c("mg IN qid", "mg IN qid", "mg IN qid"))
+  expect_equal(skip$table$Dose[1:3], c("1", "0", "1"))
+  expect_equal(simulatedTimes(skip$table, 2 * MINS_PER_DAY),
+               setdiff(seq(0, 2 * MINS_PER_DAY - 1, by = 360), 720))
+})
+
+test_that("skip next dose works on intravenous and subcutaneous schedules", {
+  # An intravenous bolus schedule: a scheduled 0
+  dt <- skipTable(0, 1000, "mg bid", "cefazolin")
+  skip <- skipNextScheduledDose(dt, "cefazolin", 100, 2 * MINS_PER_DAY, minutesFormat,
+                                units = c("mg", "mg bid"))
+  expect_equal(skip$time, 720)
+  expect_equal(skip$table$Units[1:3], c("mg bid", "mg bid", "mg bid"))
+  expect_equal(skip$table$Dose[1:3], c("1000", "0", "1000"))
+  expect_equal(simulatedTimes(skip$table, 2 * MINS_PER_DAY), c(0, 1440, 2160))
+  # A weekly subcutaneous injection
+  dt <- skipTable(0, 1, "mg SC qwk", "semaglutide")
+  skip <- skipNextScheduledDose(dt, "semaglutide", 100, 21 * MINS_PER_DAY, minutesFormat)
+  expect_equal(skip$time, MINS_PER_WEEK)
+  expect_equal(skip$resumes, 2 * MINS_PER_WEEK)
+  expect_equal(skip$table$Units[2], "mg SC qwk")
+  expect_equal(simulatedTimes(skip$table, 21 * MINS_PER_DAY), c(0, 2 * MINS_PER_WEEK))
+})
+
+test_that("skip next dose is not offered without a running schedule", {
+  expect_null(skipNextScheduledDose(skipTable(0, 200, "mg PO"), "carbamazepine", 0, MINS_PER_DAY, minutesFormat))
+  expect_null(skipNextScheduledDose(skipTable(0, 200, "mg PO tid"), "levetiracetam", 0, MINS_PER_DAY, minutesFormat))
   # Stopped before the click, or the next dose past the end of the plot
-  expect_null(skipNextOralDose(skipTable(c(0, 600), c(200, 0), c("mg PO tid", "mg PO")),
+  expect_null(skipNextScheduledDose(skipTable(c(0, 600), c(200, 0), c("mg PO tid", "mg PO")),
                                "carbamazepine", 700, MINS_PER_DAY, minutesFormat))
-  expect_null(skipNextOralDose(skipTable(0, 200, "mg PO bid"), "carbamazepine", 1500, 1800, minutesFormat))
+  expect_null(skipNextScheduledDose(skipTable(0, 200, "mg PO bid"), "carbamazepine", 1500, 1800, minutesFormat))
 })
 
 test_that("the 0 dose falls back to the scheduled unit when the base unit is not offered", {
-  skip <- skipNextOralDose(skipTable(0, 500, "mg PO bid", "levetiracetam"), "levetiracetam", 100,
+  skip <- skipNextScheduledDose(skipTable(0, 500, "mg PO bid", "levetiracetam"), "levetiracetam", 100,
                            2 * MINS_PER_DAY, minutesFormat, units = c("mg PO bid"))
   expect_equal(skip$table$Units[2], "mg PO bid")
   expect_equal(skip$table$Dose[2], "0")
@@ -274,9 +391,9 @@ test_that("skip next dose writes times in the table's format and they read back 
   # Days: a tid repeat at a third of a day
   days <- timeFormat("days", "relative")
   dt <- skipTable(0, 200, "mg PO tid")
-  skip <- skipNextOralDose(dt, "carbamazepine", 0, 2 * MINS_PER_DAY, days, units = cbzUnits)
+  skip <- skipNextScheduledDose(dt, "carbamazepine", 0, 2 * MINS_PER_DAY, days, units = cbzUnits)
   expect_equal(skip$time, 0)
-  skip <- skipNextOralDose(dt, "carbamazepine", 400, 2 * MINS_PER_DAY, days, units = cbzUnits)
+  skip <- skipNextScheduledDose(dt, "carbamazepine", 400, 2 * MINS_PER_DAY, days, units = cbzUnits)
   expect_equal(skip$time, 480)
   back <- skip$table
   back$Time[nzchar(back$Drug)] <- displayTimeToMinutes(back$Time[nzchar(back$Drug)], unit = "days")
@@ -285,7 +402,7 @@ test_that("skip next dose writes times in the table's format and they read back 
   # Clock: the dialogs show the procedure start's clock
   clock <- timeFormat("hours", "clock")
   dt <- skipTable("08:00", 200, "mg PO bid")
-  skip <- skipNextOralDose(dt, "carbamazepine", 60, 2 * MINS_PER_DAY, clock, reference = "08:00", units = cbzUnits)
+  skip <- skipNextScheduledDose(dt, "carbamazepine", 60, 2 * MINS_PER_DAY, clock, reference = "08:00", units = cbzUnits)
   expect_equal(skip$time, 720)
   expect_equal(skip$table$Time[2:3], c("20:00", "24"))
 })

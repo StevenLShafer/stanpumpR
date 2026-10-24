@@ -1933,8 +1933,9 @@ app_server <- function(input, output, session) {
     }, name = "input$addDoseBtn observer")
   })
 
-  # "Skip next dose" (R/scheduled.R, skipNextOralDose()): offered in both
-  # dose dialogs while the clicked drug has a scheduled oral dose at or after
+  # "Skip next dose" (R/scheduled.R, skipNextScheduledDose()): offered in both
+  # dose dialogs while the clicked drug has a scheduled dose, on any route, at
+  # or after
   # the time clicked.  skipTarget() is the drug and time the dialog is about;
   # the Add a dose dialog's drug selector moves it to another drug.
   skipTarget <- reactiveVal(NULL)
@@ -1942,7 +1943,7 @@ app_server <- function(input, output, session) {
   skipNextDose <- function(target = skipTarget()) {
     if (is.null(target) || !nzchar(target$drug)) return(NULL)
     format <- doseTableFormat()
-    skipNextOralDose(
+    skipNextScheduledDose(
       doseTable(), target$drug, target$time, plotMaximum(), format,
       referenceFor(format),
       units = unlist(drugDefaults()$Units[drugDefaults()$Drug == target$drug])
@@ -1962,7 +1963,7 @@ app_server <- function(input, output, session) {
       ),
       tags$p(
         class = "small text-muted mt-1 mb-0",
-        "A missed or vomited tablet: the schedule then carries on as before."
+        "A missed or vomited dose: the schedule then carries on as before."
       )
     )
   })
@@ -1980,7 +1981,7 @@ app_server <- function(input, output, session) {
       at <- function(m) minutesToEntryTime(m, format, referenceFor(format))
       showNotification(paste0(
         "Skipped the ", target$drug, " dose at ", at(skip$time), ". ",
-        if (is.na(skip$resumes)) "The next oral dose in the table follows at its own time." else
+        if (is.na(skip$resumes)) "The next dose in the table follows at its own time." else
           paste0("The schedule (", skip$dose, " ", skip$units, ") resumes at ", at(skip$resumes), ".")
       ), type = "message")
     }, name = "input$skipNextDoseBtn observer")
