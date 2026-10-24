@@ -166,7 +166,7 @@ test_that("inducers raise zonisamide and ethosuximide clearance (new victims)", 
   expect_true(ratio > 0.55 && ratio < 0.8)   # roughly 1/1.5 to 1/1.25
   expect_true(!is.null(b$zonisamide$interaction$CL))
 
-  # ethosuximide, induced by phenytoin, modestly (Riva 1996, CL x 1.225)
+  # ethosuximide, induced by phenytoin (Giaccone 1996, CL x 1.66)
   dose2 <- data.frame(Drug = c("ethosuximide", "phenytoin"),
                       Time = c(0, 21 * DAY), Dose = c(500, 300),
                       Units = c("mg PO bid", "mg PO ER qd"))
@@ -174,24 +174,33 @@ test_that("inducers raise zonisamide and ethosuximide clearance (new victims)", 
   b2 <- runASM(dose2, 56 * DAY, TRUE)
   expect_lt(atTime(b2$ethosuximide, 45 * DAY), atTime(a2$ethosuximide, 45 * DAY))
   ratio2 <- atTime(b2$ethosuximide, 45 * DAY) / atTime(a2$ethosuximide, 45 * DAY)
-  expect_true(ratio2 > 0.78 && ratio2 < 0.92)   # modest, ~ 1/1.225
+  expect_true(ratio2 > 0.5 && ratio2 < 0.72)   # ~ 1/1.66, tempered by concentration
   expect_true(!is.null(b2$ethosuximide$interaction$CL))
 })
 
-test_that("valproate does not interact with ethosuximide (recorded negative)", {
+test_that("valproate inhibits ethosuximide; ethosuximide induces lamotrigine", {
   r <- antiseizureInteractionRegistry()
-  vpaEth <- r[r$perpetrator == "valproate" & r$victim == "ethosuximide", ]
-  expect_equal(nrow(vpaEth), 1)
-  expect_equal(vpaEth$status, "recorded")   # Bauer 1982: no direct interaction
-  # ethosuximide + valproate alone: no applied interaction either way
+  vpaEth <- r[r$perpetrator == "valproate" & r$victim == "ethosuximide" &
+              r$status == "applied", ]
+  expect_equal(nrow(vpaEth), 1)   # Pisani 1984: x0.85 inhibition (was "negative")
+  # valproate lowers ethosuximide clearance, so ethosuximide RISES
   dose <- data.frame(Drug = c("ethosuximide", "valproate"),
                      Time = c(0, 21 * DAY), Dose = c(500, 500),
                      Units = c("mg PO bid", "mg PO DR bid"))
   a <- runASM(dose, 56 * DAY, FALSE)
   b <- runASM(dose, 56 * DAY, TRUE)
-  expect_equal(atTime(a$ethosuximide, 45 * DAY), atTime(b$ethosuximide, 45 * DAY),
-               tolerance = 1e-6)
-  expect_null(b$ethosuximide$interaction)
+  expect_equal(atTime(a$ethosuximide, 20 * DAY), atTime(b$ethosuximide, 20 * DAY),
+               tolerance = 1e-3)
+  expect_gt(atTime(b$ethosuximide, 45 * DAY), atTime(a$ethosuximide, 45 * DAY))
+
+  # ethosuximide induces lamotrigine (Hagemann 2024, CL x1.16), so LTG FALLS
+  dose2 <- data.frame(Drug = c("lamotrigine", "ethosuximide"),
+                      Time = c(0, 21 * DAY), Dose = c(100, 500),
+                      Units = c("mg PO bid", "mg PO bid"))
+  a2 <- runASM(dose2, 56 * DAY, FALSE)
+  b2 <- runASM(dose2, 56 * DAY, TRUE)
+  expect_lt(atTime(b2$lamotrigine, 45 * DAY), atTime(a2$lamotrigine, 45 * DAY))
+  expect_true(!is.null(b2$lamotrigine$interaction$CL))
 })
 
 test_that("two inducers add in excess, not multiplicatively", {

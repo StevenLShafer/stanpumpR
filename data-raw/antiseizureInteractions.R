@@ -67,7 +67,8 @@ REF <- list(
   carbamazepine = c(c_ref = 8,  ec50 = 4),
   valproate     = c(c_ref = 75, ec50 = 50),
   phenobarbital = c(c_ref = 20, ec50 = 10),
-  zonisamide    = c(c_ref = 20, ec50 = 10)
+  zonisamide    = c(c_ref = 20, ec50 = 10),
+  ethosuximide  = c(c_ref = 70, ec50 = 40)
 )
 LOWER_EDGE <- "assumed: lower edge of the perpetrator's reference range"
 
@@ -148,6 +149,29 @@ RIVA96 <- list(source = paste0(
   doi = "10.2165/00003088-199631060-00005",
   population = "review of the primary studies (Riva's refs 171-173)",
   evidence_read = "full text (read 2026-10-25): section 3.8 - inducers accelerate ethosuximide clearance; the ethosuximide dose must be 20-25% higher on carbamazepine/phenytoin/phenobarbital/primidone")
+GIACCONE <- list(source = paste0(
+  "Giaccone M, Bartoli A, Gatti G, et al. Effect of enzyme inducing ",
+  "anticonvulsants on ethosuximide pharmacokinetics in epileptic patients. ",
+  "Br J Clin Pharmacol 1996;41:575-579."),
+  source_short = "Giaccone 1996", pmid = "8799524", pmcid = "PMC2042613",
+  doi = "10.1046/j.1365-2125.1996.03601.x",
+  population = "10 epileptic patients on inducers vs 12 healthy controls",
+  evidence_read = "primary abstract (read 2026-10-26): CL/F 15.3 vs 9.2 ml/kg/h (x1.66), half-life 29 vs 54 h; inducers POOLED (phenobarbital/phenytoin/carbamazepine), so not a per-drug coefficient")
+PISANI <- list(source = paste0(
+  "Pisani F, Narbone MC, Trunfio C, et al. Valproic acid-ethosuximide ",
+  "interaction: a pharmacokinetic study. Epilepsia 1984;25:229-233."),
+  source_short = "Pisani 1984", pmid = "6423377",
+  doi = "10.1111/j.1528-1157.1984.tb04180.x",
+  population = "6 healthy volunteers, single-dose ethosuximide before/during valproate",
+  evidence_read = "primary abstract (read 2026-10-26): total clearance 11.2 -> 9.5 ml/min (x0.85), half-life 44 -> 54 h; 2 of 6 showed no interaction")
+HAGEMANN <- list(source = paste0(
+  "Hagemann A, Herting A, Klimpel D, Bien CG, Polster T. Ethosuximide lowers ",
+  "lamotrigine serum concentrations: evidence for a clinically relevant ",
+  "interaction. Epilepsia 2024;65:e73-e78."),
+  source_short = "Hagemann 2024", pmid = "38606683",
+  doi = "10.1111/epi.17952",
+  population = "523 samples, 209 patients (generalized estimating equations)",
+  evidence_read = "full text (read 2026-10-26): Table 2 - ethosuximide lowers lamotrigine 14% in adults (e1 0.86, CL x1.16) and 37% in children (CL x1.59), via UGT1A4 induction")
 
 app <- function(perpetrator, victim, mechanism, enzyme, parameter, fold,
                 onset, src, finding, ..., to_obtain = "no", notes = NA)
@@ -330,22 +354,33 @@ registry <- rbind(
   app("phenobarbital", "zonisamide", "induction", "CYP3A4 (reductive cleavage)", "CL",
       1.63, "turnover", SILVA,
       "CL/F = 0.761 x 1.63^INDDL (Silva 2025, Table 2); INDDL 1 per inducer at one defined daily dose, so CL x 1.63."),
-  # --- Ethosuximide (victim) -------------------------------------------------
-  # Riva 1996 section 3.8: inducers accelerate ethosuximide clearance; the dose
-  # must be 20-25% higher on carbamazepine/phenytoin/phenobarbital/primidone to
-  # hold the concentration.  Applied as CL x 1.225 (the 20-25% midpoint), modest
-  # because ethosuximide is only partly CYP3A4-metabolised.  Valproate has no
-  # clinically significant direct effect (the recorded row below).
+  # --- Ethosuximide (victim and perpetrator) ---------------------------------
+  # Inducers raise ethosuximide clearance: Giaccone 1996 measured CL/F 9.2 ->
+  # 15.3 ml/kg/h (x1.66) in a direct controlled comparison.  The factor is
+  # POOLED (phenobarbital/phenytoin/carbamazepine grouped), so applying it to
+  # each inducer row combines by additive-excess and over-predicts a multi-
+  # inducer regimen - the pooled-covariate limitation shared with topiramate
+  # and tiagabine (docs/antiseizure-interactions-review.md).  Valproate inhibits
+  # ethosuximide modestly but variably (Pisani 1984).  Ethosuximide in turn
+  # induces lamotrigine (Hagemann 2024).
   app("carbamazepine", "ethosuximide", "induction", "CYP3A4", "CL",
-      1.225, "turnover", RIVA96,
-      "Ethosuximide dose must be 20-25% higher on enzyme inducers to hold the concentration (Riva 1996, section 3.8): CL x ~1.225.",
-      notes = "A review synthesis of the primary studies (Riva's refs 171-173); the inducers are grouped (carbamazepine, phenytoin, phenobarbital, primidone), so one factor is applied to each. Spina 1996 and Tanaka 1999 (Table 3) corroborate the direction (carbamazepine/phenytoin lower ethosuximide)."),
+      1.66, "turnover", GIACCONE,
+      "Inducers raised ethosuximide CL/F from 9.2 to 15.3 ml/kg/h (x1.66) in a direct controlled comparison (Giaccone 1996, 10 patients vs 12 controls).",
+      notes = "POOLED FACTOR: Giaccone grouped phenobarbital/phenytoin/carbamazepine, so x1.66 is the any-inducer effect, not a per-drug coefficient; applied to each inducer row the additive-excess combination over-predicts multi-inducer induction (a structural limitation shared with topiramate/tiagabine - see docs/antiseizure-interactions-review.md). Riva 1996 (dose 20-25% higher) is the concordant lower-bound review statement."),
   app("phenytoin", "ethosuximide", "induction", "CYP3A4", "CL",
-      1.225, "turnover", RIVA96,
-      "Ethosuximide dose 20-25% higher on enzyme inducers (Riva 1996, section 3.8): CL x ~1.225."),
+      1.66, "turnover", GIACCONE,
+      "Inducers raised ethosuximide CL/F 9.2 -> 15.3 ml/kg/h (x1.66); pooled inducer factor (Giaccone 1996)."),
   app("phenobarbital", "ethosuximide", "induction", "CYP3A4", "CL",
-      1.225, "turnover", RIVA96,
-      "Ethosuximide dose 20-25% higher on enzyme inducers (Riva 1996, section 3.8): CL x ~1.225."),
+      1.66, "turnover", GIACCONE,
+      "Inducers raised ethosuximide CL/F 9.2 -> 15.3 ml/kg/h (x1.66); pooled inducer factor (Giaccone 1996)."),
+  app("valproate", "ethosuximide", "inhibition", "CYP3A4", "CL",
+      0.85, "immediate", PISANI,
+      "Valproate reduced ethosuximide total clearance 11.2 -> 9.5 ml/min (x0.85) in 6 healthy volunteers (Pisani 1984); half-life 44 -> 54 h.",
+      notes = "VARIABLE in occurrence: 2 of 6 subjects in Pisani showed no change, and Bauer 1982 (6 subjects) found none - so x0.85 is a mean whose magnitude is uncertain (see the Bauer crosscheck row). Mattson & Cramer and the valproic acid label also report inhibition. Replaces the earlier 'no interaction' characterisation (ChatGPT/literature review 2026-10-26)."),
+  app("ethosuximide", "lamotrigine", "induction", "UGT1A4", "CL",
+      1.16, "turnover", HAGEMANN,
+      "Ethosuximide lowered lamotrigine serum concentration 14% in adults (CL x1.16; Hagemann 2024, Table 2, e1 0.86), inducing UGT1A4 as methsuximide does.",
+      notes = "Newly reported (2024); ethosuximide is both a victim of induction and a perpetrator on lamotrigine. AGE-DEPENDENT: the effect is 37% in children/adolescents (CL x1.59) vs 14% in adults; the model's concentration-only interaction form has no age term, so the adult factor (x1.16) is applied (the reference patient is an adult). A review point for the age dependence - docs/antiseizure-interactions-review.md."),
 
   # --- Cross-checks ------------------------------------------------------------
   row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
@@ -428,6 +463,16 @@ registry <- rbind(
       source_short = "Ueshima 2008", pmid = "18211614",
       evidence_read = "full text (read 2026-10-25): Tables 2 and 3",
       notes = "Supports the free-drug refinement material (valproate side) and confirms no binding interaction onto valproate from the inducers."),
+  row("valproate", "ethosuximide", "crosscheck", "inhibition (discordant null)", "CYP3A4",
+      finding = "Bauer 1982 (6 healthy adults): adding valproate to steady-state ethosuximide did NOT change total or nonrenal clearance (11.1 -> 11.2 and 8.3 -> 8.3 ml/h/kg; phases 2 and 3 superimposed). A null that, with Pisani's 2-of-6 non-responders, shows the valproate->ethosuximide inhibition is real but variable in occurrence.",
+      population = "6 healthy adults",
+      source = "Bauer LA, Harris C, Wilensky AJ, Raisys VA, Levy RH. Ethosuximide kinetics: possible interaction with valproic acid. Clin Pharmacol Ther 1982;31:741-745.",
+      source_short = "Bauer 1982", pmid = "6804151",
+      evidence_read = "full text (read 2026-10-25): Table I and Fig. 1",
+      notes = "Discordant with the applied Pisani 1984 row; records the interindividual variability (the applied x0.85 is a mean)."),
+  do.call(row, c(list("carbamazepine", "ethosuximide", "crosscheck", "induction", "CYP3A4",
+      finding = "Consensus review: inducers accelerate ethosuximide clearance; the ethosuximide dose must be 20-25% higher on carbamazepine/phenytoin/phenobarbital/primidone (section 3.8). Concordant with, and a lower bound to, Giaccone 1996's measured x1.66."),
+      RIVA96)),
 
   # --- Recorded: described but not applied -----------------------------------
   # Quantified only in a product label, a moiety not plotted, or a drug not in
@@ -512,19 +557,7 @@ registry <- rbind(
       source = "Moseley BD, Chanteux H, Nicolas JM, et al. A review of the drug-drug interactions of the antiepileptic drug brivaracetam. Epilepsy Res 2020;163:106327.",
       source_short = "Moseley 2020", pmid = "32361205", doi = "10.1016/j.eplepsyres.2020.106327",
       evidence_read = "abstract", to_obtain = "no",
-      notes = "Brivaracetam is not a selectable drug in the library. Listed so the inducer effect on it is recorded."),
-
-  # --- Recorded: a negative result ------------------------------------------
-  # Valproate has no clinically significant DIRECT effect on ethosuximide, so
-  # no valproate->ethosuximide row is applied (the inducer rows above are).
-  row("valproate", "ethosuximide", "recorded", "none (no clinically significant direct interaction)", "CYP3A4",
-      finding = "Bauer 1982 (6 healthy adults): adding valproate to steady-state ethosuximide did not change total or nonrenal clearance (11.1 -> 11.2 and 8.3 -> 8.3 ml/h/kg; phases 2 and 3 superimposed). The 53% ethosuximide rise reported by Mattson & Cramer occurred only in patients also on other antiepileptics - an indirect chain, not a direct valproate effect. Riva 1996 (section 3.8): 'an increase, a decrease or no modification... clinically negligible.' Tanaka 1999 (Table 3): valproate->ethosuximide 'variable'.",
-      population = "6 healthy adults (Bauer 1982, phase 2/3 crossover)",
-      source = "Bauer LA, Harris C, Wilensky AJ, Raisys VA, Levy RH. Ethosuximide kinetics: possible interaction with valproic acid. Clin Pharmacol Ther 1982;31:741-745.",
-      source_short = "Bauer 1982", pmid = "6804151",
-      evidence_read = "full text (read 2026-10-25): Table I and Fig. 1",
-      to_obtain = "no",
-      notes = "Recorded as a NEGATIVE result: no valproate->ethosuximide row is applied. Corroborated by Riva 1996 and Tanaka 1999. (Inducers->ethosuximide IS applied, from Riva 1996.)")
+      notes = "Brivaracetam is not a selectable drug in the library. Listed so the inducer effect on it is recorded.")
 )
 
 stopifnot(all(registry$status %in% STATUSES))

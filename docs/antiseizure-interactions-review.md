@@ -95,17 +95,30 @@ Checked every selectable antiseizure drug as victim and perpetrator:
     2008 (PMID 18641551) found carbamazepine/phenytoin/phenobarbital raised CL/F
     24/28/29% (×~1.25), which matches `1.63^INDDL` at INDDL ≈ 0.4–0.5 (a typical
     maintenance dose is below one DDD). See the combination-rule note below.
-  - **Ethosuximide as victim of inducers — APPLIED.** Riva 1996 (PMID 8968658,
-    §3.8): the ethosuximide dose must be 20–25% higher on inducers to hold the
-    concentration, so **CL × 1.225** (the midpoint) for carbamazepine, phenytoin
-    and phenobarbital. Modest, since ethosuximide is only partly CYP3A4-cleared.
-    Corroborated by Spina 1996 and Tanaka 1999 (Table 3).
-  - **Ethosuximide as victim of valproate — RECORDED, NOT APPLIED (negative).**
-    Bauer 1982 (PMID 6804151, 6 healthy adults): adding valproate to
-    steady-state ethosuximide changed neither total nor nonrenal clearance
-    (11.1→11.2, 8.3→8.3 ml/h/kg). The 53% rise Mattson & Cramer saw was in
-    patients also on other AEDs — an indirect chain, not a direct valproate
-    effect. Riva 1996 and Tanaka 1999 concur.
+  - **Ethosuximide as victim of inducers — APPLIED (revised 2026-10-26).**
+    *Originally ×1.225 from Riva 1996's verbal "dose 20–25% higher"; corrected
+    after the ChatGPT review to the measured value.* Giaccone 1996 (PMID 8799524)
+    is a direct controlled comparison: inducers raised ethosuximide CL/F from 9.2
+    to 15.3 ml/kg/h = **CL × 1.66**, applied for carbamazepine, phenytoin and
+    phenobarbital. **Pooled-covariate caveat:** Giaccone grouped the three
+    inducers, so ×1.66 is an any-inducer factor, not per-drug; applied to each row
+    the additive-excess combination over-predicts a multi-inducer regimen (the
+    same limitation as topiramate/tiagabine — see Assumption 2). Riva 1996 is the
+    concordant lower bound; Spina 1996 and Tanaka 1999 corroborate the direction.
+  - **Ethosuximide as victim of valproate — APPLIED (revised 2026-10-26).**
+    *Originally recorded as "no interaction" from Bauer 1982; corrected after the
+    ChatGPT review.* Pisani 1984 (PMID 6423377, 6 volunteers) found valproate
+    reduced ethosuximide clearance 11.2→9.5 ml/min (**CL × 0.85**), half-life
+    44→54 h, but **2 of 6 showed none** and Bauer 1982 found none — so it is
+    applied as a variable inhibition whose magnitude is uncertain (Bauer kept as a
+    discordant-null crosscheck). The valproic acid label and Mattson & Cramer also
+    report inhibition.
+  - **Ethosuximide as PERPETRATOR on lamotrigine — APPLIED (new 2026-10-26).**
+    Hagemann 2024 (PMID 38606683, 523 samples): ethosuximide induces lamotrigine's
+    UGT1A4, lowering it **14% in adults (CL × 1.16)** and **37% in children (CL ×
+    1.59)**. Applied at the adult factor; the age dependence is a review point
+    (the model's interactions have no age term). So ethosuximide is now both
+    victim and perpetrator.
   - Pentobarbital, levetiracetam: correctly left out (levetiracetam is renally
     cleared and interaction-free; pentobarbital is an acute IV agent).
 - **Cenobamate as perpetrator** — now quantified from the XCOPRI label, pending
