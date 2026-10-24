@@ -1981,7 +1981,7 @@ app_server <- function(input, output, session) {
       at <- function(m) minutesToEntryTime(m, format, referenceFor(format))
       showNotification(paste0(
         "Skipped the ", target$drug, " dose at ", at(skip$time), ". ",
-        if (is.na(skip$resumes)) "The next oral dose in the table follows at its own time." else
+        if (is.na(skip$resumes)) "The next dose in the table follows at its own time." else
           paste0("The schedule (", skip$dose, " ", skip$units, ") resumes at ", at(skip$resumes), ".")
       ), type = "message")
     }, name = "input$skipNextDoseBtn observer")
