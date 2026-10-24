@@ -79,7 +79,8 @@ test_that("the category holds exactly the implemented drugs, concentration only"
                        propranolol = PROPRANOLOL_TPEAK,
                        phenylephrine = PHENYLEPHRINE_TPEAK,
                        epinephrine = EPINEPHRINE_TPEAK,
-                       vasopressin = VASOPRESSIN_TPEAK, 0)
+                       vasopressin = VASOPRESSIN_TPEAK,
+                       hydralazine = HYDRALAZINE_TPEAK, 0)
     expect_equal(PK$tPeak, expected, info = d)
   }
   # Clevidipine was already in the library, in the Antihypertensives category,
@@ -155,6 +156,7 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(round(hyd[["v2"]], 3), value("hydralazine", "V2"))
   expect_equal(round(hyd[["cl1"]] * 60, 3), value("hydralazine", "CL"))
   expect_equal(round(hyd[["cl2"]] * 60, 3), value("hydralazine", "Q"))
+  expect_equal(value("hydralazine", "tPeak"), HYDRALAZINE_TPEAK)
   expect_equal(value("magnesiumSulfate", "CL"), MAGNESIUM_CL)
   expect_equal(value("magnesiumSulfate", "Vc"), MAGNESIUM_VC)
   expect_equal(value("magnesiumSulfate", "Q"), MAGNESIUM_Q)

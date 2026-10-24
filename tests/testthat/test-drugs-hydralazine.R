@@ -47,14 +47,22 @@ test_that("Reece's infusion gives the paper's AUC", {
   expect_equal(aucUmolH, 0.375 / mean(k$CL) / 160.17 * 1000, tolerance = 0.02)
 })
 
-test_that("hydralazine is a vasoactive and resuscitation drug, plasma only, no band", {
+test_that("hydralazine is a vasoactive and resuscitation drug with no band", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "hydralazine", ]
   expect_identical(row$Category, VASOACTIVE_DRUG_CATEGORY)
   expect_equal(row$MEAC, 0)
   expect_equal(row$Lower, 0)
   PK <- getDrugPK("hydralazine", 70, 170, 60, "male")
-  expect_equal(PK$tPeak, 0)
-  expect_equal(PK$PK$default$ke0, 0)
   expect_match(PK$reference, "Reece")
+})
+
+test_that("the effect site peaks 15 min after a bolus (clinical)", {
+  PK <- getDrugPK("hydralazine", 70, 170, 60, "male")
+  expect_equal(PK$tPeak, 15)
+  pk <- PK$PK$default
+  expect_gt(pk$ke0, 0)
+  coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
+  lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
+  expect_equal(effectSitePeakTime(coef, lambda, pk$ke0), 15, tolerance = 1e-4)
 })

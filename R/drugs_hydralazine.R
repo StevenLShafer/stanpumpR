@@ -92,13 +92,18 @@
 # judged its apparent oral clearance comparable to nonpregnant reports; the
 # registry records that, and nothing is applied.
 #
-# NO EFFECT SITE, NO BAND
-# =======================
-# No concentration-effect relation was fitted, and the plasma curve is not
-# the time course of the effect: the fall in diastolic pressure came 15 to 30
-# minutes after the infusion (Reece) and lasts hours after the plasma
-# hydralazine is gone.  No pressure is predicted.
+# EFFECT SITE: tPeak 15 MINUTES (CLINICAL); NO BAND
+# =================================================
+# No concentration-effect relation was fitted.  The fall in diastolic
+# pressure came 15 to 30 minutes after Reece's 5-minute infusion, and the
+# label gives 10 to 80 minutes to the largest fall; neither is a measured
+# time to peak after a bolus.  15 minutes is Dr. Shafer's clinical
+# experience, set on his instruction.  The effect lasts hours after the
+# plasma hydralazine is gone (binding in the arterial wall), which no effect
+# site on this plasma curve reproduces.  No pressure is predicted.
 # -----------------------------------------------------------------------------
+
+HYDRALAZINE_TPEAK <- 15   # min, clinical (S. L. Shafer)
 
 # Reece 1980, Table II: alpha and beta in /h, CL in L/h/kg, V1 in L/kg
 HYDRALAZINE_REECE <- data.frame(
@@ -169,12 +174,13 @@ hydralazine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Two compartments, the mean of 10 healthy volunteers' IV fits with a ",
     "specific assay: V1 2.77 L/kg, V2 3.13 L/kg, CL 8.3 L/h/kg, Q 9.4 L/h/kg. ",
     "Plasma hydralazine (not its hydrazone). Doses as the hydrochloride. ",
+    "Time to peak effect 15 min (clinical experience, S. L. Shafer). ",
     "https://doi.org/10.1038/clpt.1980.234"
   )
 
   list(
     PK = PK,
-    tPeak = 0,
+    tPeak = HYDRALAZINE_TPEAK,
     MEAC = 0,
     typical = 0,
     upperTypical = 0,

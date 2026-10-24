@@ -658,7 +658,7 @@ registry <- rbind(
   reg("hydralazine__acetylators__reece1980", "hydralazine",
       "10 healthy volunteers (5 slow, 5 fast acetylators; 9 men), 0.375 mg/kg IV over 5 min", "hydralazine (specific HPLC-fluorescence assay)", "plasma",
       "implemented", "hydralazine", "full_text",
-      "Read from the supplied article.  Two compartments fitted to each subject; Table II gives each one's alpha, beta, CL and V1, from which his printed half-lives and Varea follow to rounding and his Vss to 2-5%.  The model is the mean of the ten (no acetylator difference intravenously): V1 2.77, V2 3.13 L/kg, CL 8.3, Q 9.4 L/h/kg, reproducing the mean CL and V1 exactly and Vss to 2%.  Clearance is twice Ludden 1980's in older hypertensive patients.  Dose as labelled (Apresoline, the hydrochloride); 23% if the paper's milligrams were the base.  The fall in diastolic pressure came 15-30 min after the infusion; no tPeak is set.",
+      "Read from the supplied article.  Two compartments fitted to each subject; Table II gives each one's alpha, beta, CL and V1, from which his printed half-lives and Varea follow to rounding and his Vss to 2-5%.  The model is the mean of the ten (no acetylator difference intravenously): V1 2.77, V2 3.13 L/kg, CL 8.3, Q 9.4 L/h/kg, reproducing the mean CL and V1 exactly and Vss to 2%.  Clearance is twice Ludden 1980's in older hypertensive patients.  Dose as labelled (Apresoline, the hydrochloride); 23% if the paper's milligrams were the base.  The fall in diastolic pressure came 15-30 min after the infusion; tPeak 15 min is the user's clinical experience.",
       NA,
       "Reece PA, Cozamanis I, Zacest R. Kinetics of hydralazine and its main metabolites in slow and fast acetylators. Clin Pharmacol Ther 1980;28:769-778. PMID 7438692.",
       doi("10.1038/clpt.1980.234")),
@@ -875,6 +875,7 @@ parameters <- rbind(
   par("hydralazine", "V2", 3.132, "L/kg (mean of V1 k12/k21)", "derived", "full_text", RE80),
   par("hydralazine", "CL", 8.315, "L/h/kg (mean of 10)", "estimated", "full_text", RE80),
   par("hydralazine", "Q", 9.433, "L/h/kg (mean of V1 k12)", "derived", "full_text", RE80),
+  par("hydralazine", "tPeak", 15, "min (clinical experience, S. L. Shafer; Reece's diastolic fall came 15-30 min after a 5-min infusion)", "fixed", "full_text", RE80),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "full_text", AR),
