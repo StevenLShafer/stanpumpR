@@ -433,7 +433,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "procainamide", "dopamine",
     "digoxin",
     "milrinonePediatric",
-    "digoxinIVPediatric"
+    "digoxinIVPediatric",
+    "hydralazine"
   ))
 })
 
