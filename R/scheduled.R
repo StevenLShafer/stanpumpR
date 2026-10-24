@@ -29,9 +29,11 @@
 #     time as a schedule's first dose (a loading dose taken with it) does not
 #     end it.  The other routes keep the rules above.
 #   - A sublingual dose (Shafer, 2026-10-24) ends a running oral schedule in
-#     the same way: a tablet under the tongue is still a new instruction about
-#     the tablets.  An oral dose does not end a sublingual schedule, which
-#     keeps the rules above.
+#     the same way, and an oral dose ends a running sublingual schedule: a
+#     tablet swallowed or under the tongue is a new instruction about the
+#     tablets.  Between sublingual rows the rules above still hold, so an
+#     ordinary sublingual dose adds to a sublingual schedule (buprenorphine,
+#     the only sublingual drug, offers no oral units).
 #   - A repeat within SCHEDULE_TIME_TOLERANCE of the row that ends its
 #     schedule is not given: that row replaces it.  A time written in hours or
 #     days is read back from the dose table rounded to 0.001 minute, so a row
@@ -76,16 +78,24 @@ scheduledSequences <- function(dose) {
   dropped <- rows[loser]
   rows <- rows[!loser]; route <- route[!loser]; time <- time[!loser]
 
-  # What ends a schedule: the next scheduled row for its route or, on the
-  # oral route, the next oral or sublingual dose of any kind.  An oral rate
-  # unit (digoxin's and amiodarone's constant-rate "mg/day PO") is not a dose.
+  # What ends a schedule: the next scheduled row for its route; on the oral
+  # route, also the next oral or sublingual dose of any kind; on the
+  # sublingual route, also the next oral dose of any kind.  An oral rate unit
+  # (digoxin's and amiodarone's constant-rate "mg/day PO") is not a dose.
   allTimes <- as.numeric(dose$Time)
-  oral <- setdiff(which(doseRoute(dose$Units) %in% c(ROUTE_PO, ROUTE_SL) & !isRateUnit(dose$Units)), dropped)
+  allRoute <- doseRoute(dose$Units)
+  dosed <- setdiff(which(!isRateUnit(dose$Units)), dropped)
+  oral <- intersect(dosed, which(allRoute == ROUTE_PO))
+  sublingual <- intersect(dosed, which(allRoute == ROUTE_SL))
 
   out <- lapply(seq_along(rows), function(i) {
     row <- rows[i]
     if (dose$Dose[row] <= 0) return(NULL)
-    enders <- if (route[i] == ROUTE_PO) allTimes[oral] else time[route == route[i]]
+    enders <- switch(route[i],
+      PO = allTimes[c(oral, sublingual)],
+      SL = c(time[route == ROUTE_SL], allTimes[oral]),
+      time[route == route[i]]
+    )
     later <- enders[enders > time[i]]
     data.frame(row = row, route = route[i], start = time[i],
                stop = if (length(later)) min(later) else Inf,

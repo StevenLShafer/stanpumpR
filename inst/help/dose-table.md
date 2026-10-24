@@ -63,7 +63,7 @@ The first dose is given at the time in the row, and the same dose is then repeat
 
 - To **stop** a schedule, enter a scheduled dose of **0** for the same drug and route at the stop time, at any frequency. `0 mg PO bid` stops an oral schedule of that drug; an intravenous schedule carries on.
 - To **change** the dose or the frequency, enter a new scheduled row for the same route: it replaces the running schedule from its own time.
-- **Oral schedules** end at the next oral dose of any kind. A new oral row for that drug, scheduled or not, in any oral form, ends the running oral schedule from its own time: a `bid` row entered during a `tid` schedule replaces it, and an ordinary `0 mg PO` stops it, since a new oral dose is a new instruction to the patient. An oral dose entered at the same time as a schedule's first dose (a loading dose taken with it) does not end it. A sublingual dose ends an oral schedule in the same way; an oral dose does not end a sublingual schedule.
+- **Oral schedules** end at the next oral dose of any kind. A new oral row for that drug, scheduled or not, in any oral form, ends the running oral schedule from its own time: a `bid` row entered during a `tid` schedule replaces it, and an ordinary `0 mg PO` stops it, since a new oral dose is a new instruction to the patient. An oral dose entered at the same time as a schedule's first dose (a loading dose taken with it) does not end it. A sublingual dose ends an oral schedule in the same way, and an oral dose ends a sublingual schedule.
 - On the other routes an ordinary dose given alongside a schedule adds to it, and an ordinary dose of 0 does not stop it.
 
 ### Skip next dose
