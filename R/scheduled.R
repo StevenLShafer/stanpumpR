@@ -81,10 +81,11 @@ scheduledSequences <- function(dose) {
   # What ends a schedule: the next scheduled row for its route; on the oral
   # route, also the next oral or sublingual dose of any kind; on the
   # sublingual route, also the next oral dose of any kind.  An oral rate unit
-  # (digoxin's and amiodarone's constant-rate "mg/day PO") is not a dose.
-  allTimes <- as.numeric(dose$Time)
+  # (digoxin's and amiodarone's constant-rate "mg/day PO") is not a dose, and
+  # nor is a row whose time cannot be read (simCpCe() keeps one).
+  allTimes <- suppressWarnings(as.numeric(dose$Time))
   allRoute <- doseRoute(dose$Units)
-  dosed <- setdiff(which(!isRateUnit(dose$Units)), dropped)
+  dosed <- setdiff(which(!isRateUnit(dose$Units) & !is.na(allTimes)), dropped)
   oral <- intersect(dosed, which(allRoute == ROUTE_PO))
   sublingual <- intersect(dosed, which(allRoute == ROUTE_SL))
 

@@ -133,6 +133,14 @@ test_that("a sublingual dose ends an oral schedule, and an oral dose a sublingua
   expect_equal(x$scheduled$Time, c(360, 720, 1080))
 })
 
+test_that("an oral or sublingual row with no readable time ends no schedule", {
+  x <- expandScheduledDoses(
+    doses(c("0", "abc", NA), c(200, 0, 0), c("mg PO tid", "mg SL", "mg PO"), "made-up"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, c(480, 960))
+})
+
 test_that("an oral dose leaves other routes' schedules running", {
   x <- expandScheduledDoses(
     doses(c(0, 0, 600), c(100, 200, 0), c("mg bid", "mg PO bid", "mg PO"), "clindamycin"),
