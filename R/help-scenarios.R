@@ -1155,7 +1155,7 @@ helpScenarioEventTable <- function(s) {
 #' restore does.
 #'
 #' With `timeApi` (app_server()'s), the time unit, elapsed time and Max time
-#' are set through it, and the dose table is written together with the format
+#' are set through it, and Min time is put back to 0, and the dose table is written together with the format
 #' its times are in, so that the app has nothing to convert when the browser
 #' reports the new settings.  The order does not matter: it all reaches the
 #' browser in one message.
@@ -1198,7 +1198,8 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateNumericInput(session, "osmolality", value = p$osmolality)
 
   if (is.null(timeApi)) {
-    updateSelectInput(session, "maximum", selected = maxTimeValue(o$maximum))
+    updateSliderInput(session, "maximum", value = o$maximum)
+    updateSliderInput(session, "minimum", value = 0)
   }
   updateSelectInput(session, "typical", selected = o$typical)
   updateSelectInput(session, "normalization", selected = o$normalization)

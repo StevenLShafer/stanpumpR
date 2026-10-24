@@ -70,6 +70,10 @@ The first dose is given at the time in the row, and the same dose is then repeat
 
 A patient who misses a tablet, or vomits it, wants to know whether to wait for the next dose or take two. Click a drug's curve, or double-click it, while it has an oral schedule running: the dialog then offers **Skip next dose**, naming the time of the first scheduled oral dose after the time clicked. It writes the skip into the dose table by the rules above, where it can be seen and changed: a `0 mg PO` row at the skipped time, which ends the schedule, and the scheduled row again one interval later, which restarts it. To compare the patient's options, change that restart row, for instance to a double dose taken now and the schedule resumed at its usual time.
 
+### Stop
+
+An infusion, a target-controlled infusion, a schedule and an inhaled agent's vaporizer or flow setting all run until a row in the dose table ends them. Click a drug's curve, or double-click it, at a time when any of them is running for that drug, and the dialog offers **Stop**, naming the drug and the time clicked. It adds the row the rules already read as a stop, at that time, with a dose of 0: a rate of 0 in the infusion's units, a target of 0 for a TCI, a scheduled dose of 0 in the schedule's own units (which stops it on every route), or a setting of 0 for an inhaled agent. Everything running for the drug is stopped together, and the rows can be seen and changed in the dose table like any other. A single bolus or oral dose is not ongoing, so a drug given only those offers no Stop.
+
 ## Applying changes
 
 Edits go into a **draft**. Nothing recalculates until you press **Apply Changes**. This is deliberate: it lets you make several related edits and simulate them together, rather than watching the plot flicker through half-finished states. The button is grey when the draft matches what is applied.

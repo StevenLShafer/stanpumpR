@@ -61,6 +61,7 @@ bookmarksToExclude <- c(
   "confirmRemoveInteraction",
   "editDosesOK",
   "skipNextDoseBtn",
+  "stopAdministrationBtn",
   "editEvents",
   "editEventsOK",
   "sendSlide",

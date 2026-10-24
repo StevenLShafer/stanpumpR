@@ -368,8 +368,8 @@ VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # and never offered in the startup menu.
 ILLICIT_DRUG_CATEGORY <- "Illicit drugs"
 # The four drugs the app opened with before it had a menu.  The menu opens
-# with nothing ticked; these are the drugs behind a ?help= link
-# (R/deep-links.R), and ticking them gives doseTableInit.
+# with nothing ticked; ticking these gives doseTableInit, the dose table the
+# tests start from (test-startup-drugs.R holds them equal).
 STARTUP_DRUGS_DEFAULT <- c("propofol", "fentanyl", "remifentanil", "rocuronium")
 # A chosen drug starts with one zero-dose row in its Default.Units, except
 # these, which start with a bolus row and an infusion row, as they always have.
@@ -396,6 +396,9 @@ TIME_UNIT_DEFAULT <- "minutes"
 # start, so it is offered for these units only; days and weeks are elapsed.
 CLOCK_TIME_UNITS <- c("minutes", "hours")
 TIME_MODES <- c("clock", "relative")
+# The Time Display the app opens with: elapsed time, counted from zero.  Actual
+# (clock) time is a choice in the Time panel for minutes and hours.
+TIME_MODE_DEFAULT <- "relative"
 # A time converted to another unit is rounded to TIME_SNAP_DIGITS decimal
 # places of a minute (0.001 min) and written with TIME_STRING_DIGITS
 # significant digits.  Ten digits make every conversion, and any chain of them,
@@ -444,6 +447,21 @@ MAX_TIME_LABEL_UNITS <- c(minutes = "hour", hours = "hour", days = "day", weeks 
 # inside it but not in the current unit's list is a moment when the browser has
 # not yet caught up with a change of unit.
 MAX_TIME_VALUES <- sort(unique(unlist(lapply(MAX_TIMES, `[[`, "times"))))
+# The Max time and Min time sliders (timeSliderRange() in R/utils-time.R):
+# minutes from 0 to the unit's longest Max time, in these steps.  The values
+# stay in minutes whatever the unit, as input$maximum always has; app.js shows
+# them in the unit.
+TIME_SLIDER_STEPS <- c(minutes = 5, hours = 15, days = MINS_PER_DAY, weeks = MINS_PER_WEEK)
+# Tick spacings (minutes) for a plot that is not one of the MAX_TIMES lengths
+# from 0, such as a window from 15 to 16 weeks: the smallest that leaves at
+# most AXIS_MAX_TICK_INTERVALS intervals across the window (axisTimeStep()).
+AXIS_TICK_STEPS <- list(
+  minutes = c(1, 2, 5, 10, 15, 20, 30, 60, 120, 180, 240, 360),
+  hours   = MINS_PER_HOUR * c(0.25, 0.5, 1, 2, 3, 4, 6),
+  days    = MINS_PER_DAY * c(0.25, 0.5, 1, 2, 7, 14, 30, 60),
+  weeks   = MINS_PER_WEEK * c(0.25, 0.5, 1, 2, 4, 8)
+)
+AXIS_MAX_TICK_INTERVALS <- 8
 # How close (minutes) the last dose or event may come to the end of the plot
 # before the plot is lengthened to show what follows it.  30 minutes is the
 # original rule, kept so that the minute and hour plots are unchanged.

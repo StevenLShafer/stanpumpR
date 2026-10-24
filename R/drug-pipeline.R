@@ -6,7 +6,12 @@
 # between reactive invalidations; scripts and tests pass NULL).  A drug is
 # re-simulated only when something simCpCe() reads has changed: its doses, its
 # PK events (for a drug with more than one PK set), its resolved PK (which
-# carries the covariates), the plot length, or the recovery switch.
+# carries the covariates), the plot length, the start of the window drawn, or
+# the recovery switch.
+#
+# `plotMinimum` is where the plot's axis starts (Min time).  Every drug is
+# still simulated from 0; inside the window the time lines are as fine as a
+# plot of the window's length (withGridWindow(), R/simulationTimeGrid.R).
 #
 # The reused outputs are the drug's OWN simulation, saved before folding.  The
 # folded series of a metabolite drug depends on its parents' doses too, so it
@@ -16,8 +21,12 @@
 # $companionOf naming the drug; R/alternativeModels.R) takes its parent's dose
 # rows and is cached under its own name, like any other drug.
 processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = NULL,
-                              antiseizureInteractions = FALSE)
+                              plotMinimum = 0, antiseizureInteractions = FALSE)
 {
+  oldWindow <- .sprglobals$gridMinimum
+  .sprglobals$gridMinimum <- plotMinimum
+  on.exit(.sprglobals$gridMinimum <- oldWindow, add = TRUE)
+
   for (drug in names(drugs))
   {
     # A companion entry (an alternative model of a library drug; see
@@ -32,7 +41,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = 
 
     if (nrow(tempDT) == 0) next  # e.g. a metabolite that was not given directly
 
-    key <- simulationKey(drugs[[drug]], tempDT, tempET, plotMaximum, recovery)
+    key <- simulationKey(drugs[[drug]], tempDT, tempET, plotMaximum, recovery, plotMinimum)
     sim <- cache[[drug]]$sim
     if (is.null(sim) || !identical(cache[[drug]]$simKey, key))
     {
@@ -64,7 +73,7 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = 
 # with the cached copy.  `PK` is the drug's entry as recalculatePK() built it,
 # before any simulation is attached.  Row names are dropped from the tables
 # because they shift when another drug's rows are added or removed above.
-simulationKey <- function(PK, DT, ET, plotMaximum, plotRecovery)
+simulationKey <- function(PK, DT, ET, plotMaximum, plotRecovery, plotMinimum = 0)
 {
   rownames(DT) <- NULL
   rownames(ET) <- NULL
@@ -74,6 +83,7 @@ simulationKey <- function(PK, DT, ET, plotMaximum, plotRecovery)
     # The event table only reaches the engine when the drug switches PK sets.
     ET           = if (length(PK$pkEvents) > 1) ET,
     plotMaximum  = plotMaximum,
+    plotMinimum  = plotMinimum,
     plotRecovery = isTRUE(plotRecovery)
   )
 }

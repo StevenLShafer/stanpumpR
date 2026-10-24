@@ -7,6 +7,7 @@ simulationPlot <- function(
   xBreaks = c(0:6*10),
   xLabels = c(0:6*10),
   xAxisLabel = "Time (Minutes)",
+  xMinimum = NULL,
   xMaximum = NULL,
   plasmaLinetype = "solid",
   effectsiteLinetype = "dashed",
@@ -238,8 +239,9 @@ simulationPlot <- function(
   # The axis runs to xMaximum, the length of the simulation, rather than to
   # the last break: a tick step need not divide Max time, and 365 days ticked
   # every 30 days would otherwise stop at day 360.  Without xMaximum the last
-  # break is the end, as it always was.
-  minimum <- min(xBreaks)
+  # break is the end, as it always was.  Likewise it starts at xMinimum (Min
+  # time), which need not be a break, and without it at the first break.
+  minimum <- if (is.null(xMinimum)) min(xBreaks) else xMinimum
   maximum <- if (is.null(xMaximum)) max(xBreaks) else xMaximum
   plotTable$xmin <- minimum
   plotTable$xmax <- maximum
@@ -713,6 +715,10 @@ simulationPlot <- function(
   # allEquispace.
   data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS & Site != "Rate" & Site != "Recovery")
   rateData <- subset(plotResults, Site == "Rate")
+  # A window that starts after 0 (Min time) is drawn from its start: see
+  # seriesFromMinimum().  plotResults itself keeps the whole run.
+  data <- seriesFromMinimum(data, minimum, by = c("Drug", "Site", "Wrap"))
+  rateData <- seriesFromMinimum(rateData, minimum, by = c("Drug", "Wrap"), step = TRUE)
 
   if (logY) {
     data <- data[data$Y>0,]
@@ -743,7 +749,8 @@ simulationPlot <- function(
         show.legend = FALSE
       )
   }
-  if (!is.null(tciLabels))
+  if (!is.null(tciLabels)) tciLabels <- tciLabels[tciLabels$Time >= minimum, , drop = FALSE]
+  if (!is.null(tciLabels) && nrow(tciLabels) > 0)
   {
     tciLabels$Wrap <- factor(tciLabels$Wrap, levels = wrapFactors, ordered = TRUE)
     tciLabels$Drug <- factor(tciLabels$Drug, levels = drugFactors, ordered = TRUE)
@@ -872,7 +879,7 @@ simulationPlot <- function(
       ggplot2::geom_rect(
         data = subset(plotResults, Wrap == PLOT_NAME_EVENTS),
         ggplot2::aes(
-          xmin = 0, # xmin,
+          xmin = minimum, # xmin,
           xmax = maximum, # xmax,
           ymin = 0, # ymin,
           ymax = 1 # ymax
@@ -884,7 +891,7 @@ simulationPlot <- function(
         show.legend = FALSE
       )
 
-    plotLabels <- subset(plotResults, Label != "")
+    plotLabels <- subset(plotResults, Label != "" & Time >= minimum)
     crows <- match(plotLabels$Label, eventDefaults$Event)
     plotLabels$Color <- eventDefaults$Color[crows]
 
@@ -1022,6 +1029,7 @@ simulationPlot <- function(
     # relying on how the geom happens to treat a missing value.  With nothing
     # missing the group is constant and the line is exactly the one drawn
     # before.
+    recovery <- seriesFromMinimum(recovery, minimum, by = c("Drug", "Wrap"), y = "Recovery")
     recovery$Segment <- cumsum(is.na(recovery$Recovery))
     recovery <- recovery[!is.na(recovery$Recovery), , drop = FALSE]
 
@@ -1089,11 +1097,45 @@ simulationPlot <- function(
 
   if (plotMEACOverlay)
   {
-    plotObject <- addMEACOverlay(plotObject, resultsMEAC, plotTable, wrapFactors,
+    plotObject <- addMEACOverlay(plotObject,
+                                 seriesFromMinimum(resultsMEAC, minimum, by = "Drug"),
+                                 plotTable, wrapFactors,
                                  minimum, maximum)
   }
 
 #  plotObject
   outputComments("Exiting simulationPlot", level = DEBUG_LEVEL_VERBOSE)
   return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, plotHeight = height))
+}
+
+
+# The rows of a long series inside a window that starts at `minimum` (Min
+# time): each series, as grouped by the columns `by`, cut at `minimum`, with a
+# point added there so that its line starts at the axis rather than at its
+# first point inside.  The added point is interpolated, or for a step series
+# (the TCI pump rate) is the value in force.  Needed because the plot's clip
+# is off, for the labels at the right-hand edge: a line left running before
+# the window would be drawn across the y axis, and its values there would set
+# the panel's height.  A window from 0 changes nothing.
+seriesFromMinimum <- function(df, minimum, by, y = "Y", step = FALSE)
+{
+  if (is.null(df) || nrow(df) == 0 || !isTRUE(minimum > 0)) return(df)
+  groups <- split(df, interaction(df[by], drop = TRUE), drop = TRUE)
+  pieces <- lapply(groups, function(g) {
+    g <- g[order(g$Time), , drop = FALSE]
+    inside <- g[g$Time >= minimum, , drop = FALSE]
+    before <- g[g$Time < minimum, , drop = FALSE]
+    if (nrow(before) == 0 || (nrow(inside) > 0 && inside$Time[1] == minimum)) return(inside)
+    edge <- before[nrow(before), , drop = FALSE]
+    if (!step && nrow(inside) > 0) {
+      t0 <- edge$Time
+      t1 <- inside$Time[1]
+      edge[[y]] <- edge[[y]] + (inside[[y]][1] - edge[[y]]) * (minimum - t0) / (t1 - t0)
+    }
+    edge$Time <- minimum
+    rbind(edge, inside)
+  })
+  out <- do.call(rbind, pieces)
+  rownames(out) <- NULL
+  out
 }

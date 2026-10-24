@@ -22,6 +22,8 @@ app_ui <- function() {
       timeUnit0 <- legacyTimeUnit(shiny::restoreInput("maximum", 60))
     }
     maximum0 <- snapMaximum(shiny::restoreInput("maximum", 60), timeUnit0)
+    minimum0 <- snapMinimum(shiny::restoreInput("minimum", 0), maximum0, timeUnit0)
+    slider0 <- timeSliderRange(timeUnit0)
 
     bslib::page_navbar(
       id = "mainNav",
@@ -491,20 +493,33 @@ app_ui <- function() {
                   selected = timeUnit0,
                   options = list(dropdownParent = "body")
                 ),
-                # How far the simulation runs: durations in minutes, labelled
-                # in the Time units; the server swaps the list when the unit
-                # changes (syncMaxTimeChoices()).
-                selectizeInput(
+                # The window plotted: how far the simulation runs (Max time)
+                # and where the axis starts (Min time).  Both hold minutes,
+                # shown in the Time units by app.js; the server resets their
+                # range and step when the unit changes (syncTimeSliders()).
+                sliderInput(
                   inputId = "maximum",
                   label = "Max time",
-                  choices = maxTimeChoices(timeUnit0),
-                  selected = maxTimeValue(maximum0),
-                  options = list(dropdownParent = "body")
+                  min = slider0$step,
+                  max = slider0$max,
+                  value = maximum0,
+                  step = slider0$step,
+                  ticks = FALSE
+                ),
+                sliderInput(
+                  inputId = "minimum",
+                  label = "Min time",
+                  min = slider0$min,
+                  max = slider0$max,
+                  value = minimum0,
+                  step = slider0$step,
+                  ticks = FALSE
                 ),
                 selectizeInput(
                   "timeMode",
                   "Time Display",
                   timeModeChoices(timeUnit0),
+                  selected = TIME_MODE_DEFAULT,
                   options = list(dropdownParent = "body")
                 ),
                 conditionalPanel(
