@@ -33,7 +33,7 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "procainamide",
                 # Cockcroft-Gault on clearance (R/drugs_digoxin.R, Yukawa 2001)
                 "digoxin",
-                # Bedside Schwartz, CKD-EPI from 18, on clearance
+                # Bedside Schwartz at every age, on clearance
                 # (R/drugs_milrinonePediatric.R, Hornik 2019)
                 "milrinonePediatric",
                 # Cheng 1997's regressions on Cockcroft-Gault (R/drugs_digoxinIV.R)

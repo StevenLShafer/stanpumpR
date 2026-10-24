@@ -48,8 +48,15 @@
 # in the twelve normal-weight controls, clearance 75.9 L/h (1.27 L/min),
 # Vss 318.6 L and terminal half-life 3.1 h.  This model gives 1.11 L/min,
 # 264 L and 3.4 h, all within 17%.  The obese subjects of the same paper had
-# LOWER clearance and volume (57.5 L/h, 208.9 L), which is what scaling to
-# fat-free mass predicts and scaling to total weight does not.
+# LOWER absolute clearance and volume (57.5 L/h, 208.9 L), which neither
+# scaling predicts: fat-free mass rises with total weight, so scaling to it
+# raises both, if less than scaling to total weight does.  The obese and
+# control groups also differed in age and sex, and the authors discuss
+# hepatic function and tissue blood flow, so the comparison does not
+# validate either scaling; the library's fat-free-mass scaling is its
+# declared extrapolation.  (Corrected 2026-10-24: this paragraph had claimed
+# the obese result was what fat-free-mass scaling predicts; an adversarial
+# review pointed out that it is not.)
 #
 # DOSE BASIS
 # ==========

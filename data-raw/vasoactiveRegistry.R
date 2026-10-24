@@ -16,16 +16,20 @@
 # names that paper in `to_obtain`.  Readiness:
 #
 #   implemented        in the library
-#   needs_full_text    a candidate model exists, but the numbers that fix it
-#                      could not be read here (abstract only, or a full text
-#                      whose tables were stripped)
+#   needs_full_text    a candidate model may exist, but the numbers that would
+#                      fix it have not been read: the source was read only in
+#                      abstract, its tables were stripped, or (where the source
+#                      itself was read in full, evidence_read "full_text") the
+#                      numbers it lacks may be in ANOTHER document, named in
+#                      to_obtain, which has not been read and may not hold
+#                      them either
 #   complete_not_implemented
 #                      a complete model, read and checked, of a drug the
 #                      library already offers from another source; kept as
 #                      the record of an alternative, not a second curve
 #   no_suitable_model  no published model this engine can represent: the
 #                      drug is not measured (nitroprusside), its kinetics are
-#                      sub-second and dose-dependent (adenosine), or it has no
+#                      dose-dependent (adenosine), or it has no
 #                      pharmacokinetics in the usual sense (bicarbonate)
 #
 # `evidence_read` records what was actually read in this environment: the
@@ -300,7 +304,7 @@ registry <- rbind(
       "16 healthy volunteers, 50 mg IV over 9.5 min and 500 mg oral", "methylene blue", "plasma and whole blood",
       "needs_full_text", NA, "full_text",
       "Read from the supplied article: non-compartmental only (AUC, Cmax, terminal half-life 18.5 h, range 7.7-48).  The plasma curve is clearly multiphasic, so a one-compartment model from CL and the half-life would misplace the early concentrations badly; no compartmental parameters are reported.  A three-compartment adult population model is reported in the EMA ProveBlue assessment.",
-      "EMA ProveBlue (methylthioninium chloride) Article 46 assessment report P46-010; FDA ProvayBlue NDA 204630 clinical pharmacology review (a population model on a modern assay would settle the tenfold conflict with Peter 2000).",
+      "EMA ProveBlue (methylthioninium chloride) Article 46 assessment report P46-010; FDA ProvayBlue NDA 204630 clinical pharmacology review (if either holds a population model on a modern assay, it would settle the tenfold conflict with Peter 2000; neither has been read).",
       "Walter-Sack I, Rengelshausen J, Oberwittler H, et al. High absolute bioavailability of methylene blue given as an aqueous oral formulation. Eur J Clin Pharmacol 2009;65:179-189. PMID 18810398.",
       doi("10.1007/s00228-008-0563-x")),
   reg("methylene_blue__healthy__peter2000", "methylene blue",
@@ -314,7 +318,7 @@ registry <- rbind(
       "label (ProvayBlue, NDA 204630, revised 12/2017): 2 mg/kg IV over 5 min", "methylene blue", "plasma",
       "needs_full_text", NA, "full_text",
       "Read from the supplied label (section 12.3): Cmax 2917 ng/mL (CV 39%) and AUC 13 977 ng h/mL (CV 21%) after 2 mg/kg over 5 min, Vss 255 +/- 58 L, half-life about 24 h, protein binding about 94%, blood-to-plasma ratio 5.1 at 5 min falling to 0.6 at 4 h, about 40% excreted unchanged in urine.  At 70 kg the clearance is about 10 L/h (140 mg / 13.977 mg h/L), which sides with Walter-Sack 2009 (6.5 L/h) against Peter 2000's tenfold larger value.  Four numbers cannot fix the six parameters of the three compartments the curve needs (Peter 2000's triexponential shape); any split of Vss among them is a choice, not a fit.  This label revision gives no renal-impairment exposures (only 'monitor longer'); AUC increases of 52, 116 and 192% in mild, moderate and severe impairment, as quoted by a secondary source, could not be confirmed here.",
-      "FDA ProvayBlue NDA 204630 clinical pharmacology review and the current label (Drugs@FDA; the review should hold the population model, the current label any renal-impairment study); EMA ProveBlue assessment report.",
+      "FDA ProvayBlue NDA 204630 clinical pharmacology review and the current label (Drugs@FDA; the review may hold a population model and the current label a renal-impairment study; neither has been read); EMA ProveBlue assessment report.",
       "PROVAYBLUE (methylene blue) injection prescribing information, NDA 204630, Provepharm, revised 12/2017 (FDA Reference ID 4201611).",
       "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=204630"),
   reg("atropine__healthy__hinderling1985", "atropine",
@@ -376,7 +380,7 @@ registry <- rbind(
   reg("milrinone__paediatric__hornik2019", "milrinone",
       "74 patients from birth to 18 years, opportunistic sampling (PTN POPS)", "milrinone", "plasma",
       "implemented", "milrinonePediatric", "full_text",
-      "Read from the supplied article and supplement.  One compartment: CL 15.9 L/h x (WT/70)^0.75 x PMA^1.12/(67.7^1.12 + PMA^1.12) x (CrCl/117)^0.522, V 32.2 L x WT/70, CrCl by the updated bedside Schwartz equation.  Offered as milrinonePediatric; from 18 the renal estimate is CKD-EPI 2009.  CrCl held to the studied 13-261 mL/min/1.73 m2.",
+      "Read from the supplied article and supplement.  One compartment: CL 15.9 L/h x (WT/70)^0.75 x PMA^1.12/(67.7^1.12 + PMA^1.12) x (CrCl/117)^0.522, V 32.2 L x WT/70, CrCl by the updated bedside Schwartz equation.  Offered as milrinonePediatric, bedside Schwartz at every age as fitted (a switch to CKD-EPI at 18, removed 2026-10-24, made clearance jump 24% on the birthday).  CrCl held to the studied 13-261 mL/min/1.73 m2.",
       NA,
       "Hornik CP, Yogev R, Mourani PM, et al. Population pharmacokinetics of milrinone in infants, children, and adolescents. J Clin Pharmacol 2019;59:1606-1619. PMID 31317556.",
       doi("10.1002/jcph.1499")),
@@ -537,7 +541,7 @@ registry <- rbind(
   reg("propranolol__obese_controls__cheymol1987", "propranolol",
       "12 obese and 12 normal-weight volunteers, 8 mg over 10 min", "propranolol (racemic)", "plasma",
       "no_suitable_model", NA, "full_text",
-      "Read from the supplied article: two compartments, but only CL, Vss, V-beta and the terminal half-life (Table II), one short of a model.  Used as the external check on Fagan 1982, and its obese subjects' lower clearance and volume support scaling to fat-free mass.",
+      "Read from the supplied article: two compartments, but only CL, Vss, V-beta and the terminal half-life (Table II), one short of a model.  Used as the external check on Fagan 1982.  Its obese subjects' lower absolute clearance and volume are not what fat-free-mass scaling predicts (FFM rises with weight), and the groups also differed in age and sex, so it validates no size scaling.",
       NA,
       "Cheymol G, Poirier JM, Barre J, Pradalier A, Dry J. Comparative pharmacokinetics of intravenous propranolol in obese and normal volunteers. J Clin Pharmacol 1987;27:874-879. PMID 3429695.",
       doi("10.1002/j.1552-4604.1987.tb05582.x")),
@@ -672,7 +676,7 @@ registry <- rbind(
   reg("adenosine__healthy__blardi1993", "adenosine",
       "healthy volunteers, 1-min infusions", "adenosine", "plasma",
       "no_suitable_model", NA, "abstract",
-      "Whole-blood half-life of seconds (red-cell and endothelial uptake), and a clearance that falls with dose (10.7 to 4.1 L/min): neither linear nor on the engine's time scale.",
+      "Blardi's PLASMA kinetics are dose-dependent: after 2.5, 5 and 10 mg over 1 min the half-life rose 0.91, 1.24, 1.86 min and the clearance fell 10.7, 4.70, 4.14 L/min, and a 20-min infusion gave yet another (12.1 L/min, 0.63 min), so no single linear model fits.  Separately, in WHOLE BLOOD in vitro (Moser 1989) adenosine turns over in about a second (red-cell and endothelial uptake), so a venous plasma sample may not represent what reaches the heart.  Uematsu 2000 (PMID 10930971) found plasma adenosine not to rise significantly at its doses, so no parameters.",
       NA,
       "Blardi P et al. Pharmacokinetics of exogenous adenosine in man after infusion. Eur J Clin Pharmacol 1993;44:505-507. PMID 8359193; Moser GH, Schrader J, Deussen A. Turnover of adenosine in plasma of human and dog blood. Am J Physiol 1989;256:C799-C806 (doi 10.1152/ajpcell.1989.256.4.C799).",
       doi("10.1007/BF00315554")),
@@ -688,6 +692,11 @@ registry <- rbind(
 stopifnot(all(registry$readiness %in% READINESS),
           all(registry$evidence_read %in% EVIDENCE),
           !any(duplicated(registry$model_id)))
+
+# A parameter's evidence is that of ITS OWN source, which for a time to peak
+# effect is often not the pharmacokinetic paper: "clinical" marks a value
+# that is the clinician-author's observation rather than any paper's.
+PAR_EVIDENCE <- c(EVIDENCE, "clinical")
 
 par <- function(drug, parameter, value, units, provenance, evidence, source_url)
   data.frame(drug, parameter, value = as.character(value), units, provenance,
@@ -785,14 +794,14 @@ parameters <- rbind(
 
   par("atropine", "V_P", 19.1, "L", "estimated", "full_text", HI),
   par("atropine", "CL", 1175, "mL/min", "estimated", "full_text", HI),
-  par("atropine", "tPeak", 1.5, "min (clinical time to peak heart rate)", "fixed", "full_text", HI),
+  par("atropine", "tPeak", 1.5, "min (clinical time to peak heart rate)", "fixed", "clinical", HI),
   par("atropine", "k_PT", 0.560, "/min", "estimated", "full_text", HI),
   par("atropine", "k_TP", 0.0557, "/min", "estimated", "full_text", HI),
   par("atropine", "Vdss (check only)", 210, "L", "estimated", "full_text", HI),
   par("atropine", "V2", 192.0, "L", "derived", "full_text", HI),
   par("atropine", "base per sulfate", 0.8329, "2 x 289.37/694.83", "derived", "full_text", HI),
 
-  par("propranolol", "tPeak", 5, "min (Achong 1976 abstract: maximal fall in exercise tachycardia 5 min after IV propranolol; fixed on the user's instruction)", "fixed", "full_text", doi("10.1002/cpt1976192148")),
+  par("propranolol", "tPeak", 5, "min (Achong 1976 abstract: maximal fall in exercise tachycardia 5 min after IV propranolol; fixed on the user's instruction)", "fixed", "abstract", doi("10.1002/cpt1976192148")),
   par("propranolol", "P", 317, "ng/mL per 3.8 mg (bolus-equivalent)", "estimated", "full_text", FA),
   par("propranolol", "A", 17.2, "ng/mL per 3.8 mg", "estimated", "full_text", FA),
   par("propranolol", "B", 9.3, "ng/mL per 3.8 mg", "estimated", "full_text", FA),
@@ -842,16 +851,18 @@ parameters <- rbind(
   par("metoprolol", "F", 0.45, "fraction", "estimated", "full_text", LA17),
   par("metoprolol", "CYP2D6 poor CL factor", 0.44, "fraction", "fixed", "full_text", LA17),
   par("metoprolol", "CYP2D6 ultrarapid CL factor", 2.01, "fraction", "fixed", "full_text", LA17),
+  par("metoprolol", "CYP2D6 poor F factor", 2.28, "factor on F", "fixed", "full_text", LA17),
+  par("metoprolol", "CYP2D6 ultrarapid F factor", 0.43, "factor on F", "fixed", "full_text", LA17),
   par("nicardipine", "CL", 0.920, "L/h/kg (Table I mean)", "estimated", "full_text", MO93),
   par("nicardipine", "V1", 0.291, "L/kg", "estimated", "full_text", MO93),
   par("nicardipine", "Vss", 1.13, "L/kg", "estimated", "full_text", MO93),
   par("nicardipine", "Q", 0.826, "L/h/kg (row C_d)", "estimated", "full_text", MO93),
-  par("diltiazem", "tPeak", 3.1, "min (bolus equivalent of 4.3 min after a 2-min infusion, Salerno 1989)", "derived", "abstract", SA89),
+  par("diltiazem", "tPeak", 3.1, "min (bolus equivalent of 4.3 min after a 2-min infusion, Salerno 1989)", "derived", "full_text", SA89),
   par("esmolol", "tPeak", 2, "min (Krumpl 2017: lowest heart rate 2 min after 1 mg/kg over 30 s)", "estimated", "full_text", doi("10.1007/s00228-016-2176-0")),
   par("metoprolol", "tPeak", 5, "min (Ritchie 1998: peak effects observed 5-10 min after a bolus; fixed at 5 on the user's decision)", "fixed", "full_text", doi("10.1021/js9702776")),
-  par("phenylephrine", "tPeak", 0.7, "min (Schwinn 1989: MAP, CO and SVR changes maximal about 42 s after a bolus)", "estimated", "full_text", pubmed(2541637)),
-  par("epinephrine", "tPeak", 1, "min (clinical: the immediate tachycardia of a bolus, the user's observation)", "fixed", "full_text", doi("10.1186/cc7972")),
-  par("verapamil", "tPeak", 4, "min (label: peak therapeutic effect within 3-5 min of a bolus; midpoint)", "fixed", "full_text", "https://labeling.pfizer.com/ShowLabeling.aspx?id=4652"),
+  par("phenylephrine", "tPeak", 0.7, "min (Schwinn 1989: MAP, CO and SVR changes maximal about 42 s after a bolus)", "estimated", "abstract", pubmed(2541637)),
+  par("epinephrine", "tPeak", 1, "min (clinical: the immediate tachycardia of a bolus, the user's observation)", "fixed", "clinical", doi("10.1186/cc7972")),
+  par("verapamil", "tPeak", 4, "min (label: peak therapeutic effect within 3-5 min of a bolus; midpoint; the label text was seen in a search excerpt, not read in full)", "fixed", "abstract", "https://labeling.pfizer.com/ShowLabeling.aspx?id=4652"),
   par("nicardipine", "tPeak", 1.2, "min (Cheung 1999: mean 72 s to the largest fall in MAP after a 5-s bolus)", "estimated", "full_text", pubmed(10553821)),
   par("norepinephrine", "tPeak", 1.233, "min (74 s, Joachim 2024 median for MAP)", "estimated", "full_text", JO24),
   par("milrinone", "V1", 0.102, "L/kg (Table 2: 102 mL/kg)", "estimated", "full_text", BA94),
@@ -869,18 +880,20 @@ parameters <- rbind(
 
   par("vasopressin", "V", 8.5, "L (Table 1 median, 95% limits 5.2-11.0)", "estimated", "full_text", FB69),
   par("vasopressin", "CL", 1.0, "L/min (Table 1 median, 95% limits 0.4-1.1)", "estimated", "full_text", FB69),
-  par("vasopressin", "tPeak", 3, "min (provisional clinical observation, S. L. Shafer: the pressor response to a bolus is not immediate; no published time found)", "fixed", "full_text", FB69),
+  par("vasopressin", "tPeak", 3, "min (provisional clinical observation, S. L. Shafer: the pressor response to a bolus is not immediate; no published time found)", "fixed", "clinical", FB69),
 
   par("hydralazine", "V1", 2.768, "L/kg (mean of 10 subjects' plasma compartment)", "estimated", "full_text", RE80),
   par("hydralazine", "V2", 3.132, "L/kg (mean of V1 k12/k21)", "derived", "full_text", RE80),
   par("hydralazine", "CL", 8.315, "L/h/kg (mean of 10)", "estimated", "full_text", RE80),
   par("hydralazine", "Q", 9.433, "L/h/kg (mean of V1 k12)", "derived", "full_text", RE80),
-  par("hydralazine", "tPeak", 15, "min (clinical experience, S. L. Shafer; Reece's diastolic fall came 15-30 min after a 5-min infusion)", "fixed", "full_text", RE80),
+  par("hydralazine", "tPeak", 15, "min (clinical experience, S. L. Shafer; Reece's diastolic fall came 15-30 min after a 5-min infusion)", "fixed", "clinical", RE80),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "full_text", AR),
   par("nitroglycerin", "V", 50.2, "L", "derived", "full_text", AR)
 )
+
+stopifnot(all(parameters$evidence %in% PAR_EVIDENCE))
 
 utils::write.csv(registry, "inst/extdata/vasoactiveRegistry.csv", row.names = FALSE)
 utils::write.csv(parameters, "inst/extdata/vasoactiveParameters.csv", row.names = FALSE)
