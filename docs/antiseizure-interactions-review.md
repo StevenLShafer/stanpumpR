@@ -283,12 +283,15 @@ is deferred for the adversarial review (no therapeutic band → needs a referenc
 concentration; phenytoin is the saturable victim; a victim-conflict to resolve).
 The label (§7 Drug Interactions, §12.3 Pharmacokinetics) gives the fold-changes.
 When applied:
-- promote those two rows to `applied` with the label's magnitudes and
-  `ec50_basis = "product label (XCOPRI)"`;
-- add phenobarbital (label reports an increase) and, if clobazam is ever added
-  to the library, clobazam / N-desmethylclobazam;
-- cross-check the already-applied cenobamate → carbamazepine (+15%, Vashi 2023)
-  against the label's own number.
+- promote the four recorded cenobamate-as-perpetrator rows (cenobamate →
+  phenytoin, lamotrigine, carbamazepine, phenobarbital) to `applied` with the
+  label's magnitudes and `ec50_basis = "product label (XCOPRI)"`; if clobazam is
+  ever added to the library, add cenobamate → clobazam / N-desmethylclobazam;
+- resolve the victim conflict: the **applied** `carbamazepine → cenobamate` row
+  (cenobamate as victim; +15%, Vashi 2023) is contradicted by the label's
+  dedicated DDI study (carbamazepine not significant on cenobamate; phenytoin
+  lowers cenobamate 27–28%), so replace it with `phenytoin → cenobamate`
+  CL ×1.38 per the label.
 The mechanism is settled (cenobamate inhibits CYP2C19, induces CYP3A4/2B6); only
 the magnitudes are label-sourced.
 
