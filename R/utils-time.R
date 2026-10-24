@@ -124,11 +124,12 @@ validTimeUnit <- function(unit) {
 
 # The format a set of Time strings is written in: c(unit = , mode = ).  Clock
 # mode exists only for CLOCK_TIME_UNITS; any other unit is elapsed.  An
-# unknown unit is the default; an unknown mode is "clock", as the UI starts.
-timeFormat <- function(unit = TIME_UNIT_DEFAULT, mode = "clock") {
+# unknown unit is the default; an unknown mode is TIME_MODE_DEFAULT, as the UI
+# starts.
+timeFormat <- function(unit = TIME_UNIT_DEFAULT, mode = TIME_MODE_DEFAULT) {
   unit <- validTimeUnit(unit)
   if (!(is.character(mode) && length(mode) == 1 && !is.na(mode) && mode %in% TIME_MODES)) {
-    mode <- "clock"
+    mode <- TIME_MODE_DEFAULT
   }
   if (!unit %in% CLOCK_TIME_UNITS) mode <- "relative"
   c(unit = unit, mode = mode)

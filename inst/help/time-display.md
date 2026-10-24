@@ -20,7 +20,7 @@ Use minutes or hours for anaesthesia and the hours around it, and days or weeks 
 
 ### Elapsed time
 
-Everything is counted from zero, in the time unit.
+What the app opens with. Everything is counted from zero, in the time unit.
 
 Type times as numbers of the unit: the dose table takes no colon in elapsed time. An elapsed `H:MM` that reaches the table another way (pasted, or typed in the dialog that opens when you click the plot) is read as hours and minutes in any unit, so `1:30` is an hour and a half and `36:00` a day and a half; it is converted to a number of the unit when you change unit.
 

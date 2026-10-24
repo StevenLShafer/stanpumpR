@@ -655,7 +655,7 @@ Above the dose table:
   (90 minutes becomes 1.5 hours), so the doses stay where they were; it also
   applies any unapplied edits.
 - **Time Display**
-  - **Elapsed time** — everything counted from zero.
+  - **Elapsed time** (the default) — everything counted from zero.
   - **Actual time** (minutes and hours only) — enter a **Procedure start** as
     `HH:MM`; a time with a colon is then a clock time, and a number is counted
     from the procedure start. Switching to elapsed time converts the clock

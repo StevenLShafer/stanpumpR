@@ -519,6 +519,7 @@ app_ui <- function() {
                   "timeMode",
                   "Time Display",
                   timeModeChoices(timeUnit0),
+                  selected = TIME_MODE_DEFAULT,
                   options = list(dropdownParent = "body")
                 ),
                 conditionalPanel(

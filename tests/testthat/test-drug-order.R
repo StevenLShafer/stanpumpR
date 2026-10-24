@@ -34,6 +34,7 @@ test_that("the drug pickers are alphabetical, and a click still finds its drug's
       weight = 70, weightUnit = "1", height = 170, heightUnit = "1", age = 40, ageUnit = "1",
       sex = "male", showThreshold = FALSE, normalization = "none", typical = "Range", logY = FALSE
     )
+    startFormatFromInputs(session)
     doseTable(doseTableInit)
     session$flushReact()
 

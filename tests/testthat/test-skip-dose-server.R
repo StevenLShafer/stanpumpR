@@ -26,6 +26,7 @@ oralSchedule <- function() {
 test_that("the dose dialogs offer Skip next dose only while an oral schedule runs", {
   shiny::testServer(app_server, {
     do.call(session$setInputs, skipAppInputs)
+    startFormatFromInputs(session)
     doseTable(oralSchedule())
     session$flushReact()
     # Minutes on the clock, the app's defaults: the procedure starts at 08:00

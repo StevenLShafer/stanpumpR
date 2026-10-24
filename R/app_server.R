@@ -187,10 +187,10 @@ app_server <- function(input, output, session) {
 
   # The format the selectors ask for.  Days and weeks are always elapsed.
   selectorFormat <- reactive({
-    timeFormat(timeUnit(), if (is.null(input$timeMode)) "clock" else input$timeMode)
+    timeFormat(timeUnit(), if (is.null(input$timeMode)) TIME_MODE_DEFAULT else input$timeMode)
   })
 
-  # Starts as the selectors start: minutes and clock time, as the UI opens, or
+  # Starts as the selectors start: minutes and elapsed time, as the UI opens, or
   # a restored bookmark's settings.  The session starts with an empty table
   # (doseTableBlank), the startup menu's Start writes times that are all "0",
   # the same in every format, and onRestored() converts a restored table itself.
@@ -534,6 +534,9 @@ app_server <- function(input, output, session) {
       # is converted to what they show.  The conversion observer does not run
       # for restored inputs, so it is done here.
       saved <- parseTimeFormat(state$values$doseTableFormat)
+      # A bookmark that saved neither carries the clock time it always fell
+      # back to: it was made while the app opened in clock time, so it is not
+      # read with today's TIME_MODE_DEFAULT
       if (is.null(saved)) {
         saved <- timeFormat(TIME_UNIT_DEFAULT,
                             if (is.null(state$input$timeMode)) "clock" else state$input$timeMode)

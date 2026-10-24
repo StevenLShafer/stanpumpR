@@ -75,6 +75,7 @@ anyErrorShown <- function(sent) {
 # would be initial values, which the conversion observer does not see.
 startApp <- function(session, ...) {
   do.call(session$setInputs, appInputs())
+  startFormatFromInputs(session)
   changes <- list(...)
   if (length(changes)) do.call(session$setInputs, changes)
 }
@@ -658,3 +659,13 @@ test_that("a blank or unreadable Age, Weight or Height is named in the plot area
 })
 
 .sprglobals$config <- oldConfig
+
+test_that("the app opens in elapsed time", {
+  oldConfig <- .sprglobals$config
+  .sprglobals$config <- DEFAULT_CONFIG
+  on.exit(.sprglobals$config <- oldConfig)
+  html <- as.character(app_ui()(NULL))
+  select <- regmatches(html, regexpr('(?s)<select[^>]*id="timeMode"[^>]*>.*?</select>', html, perl = TRUE))
+  expect_match(select, '<option value="relative" selected>', fixed = TRUE)
+  expect_false(grepl('<option value="clock" selected>', select, fixed = TRUE))
+})

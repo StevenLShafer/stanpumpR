@@ -396,6 +396,9 @@ TIME_UNIT_DEFAULT <- "minutes"
 # start, so it is offered for these units only; days and weeks are elapsed.
 CLOCK_TIME_UNITS <- c("minutes", "hours")
 TIME_MODES <- c("clock", "relative")
+# The Time Display the app opens with: elapsed time, counted from zero.  Actual
+# (clock) time is a choice in the Time panel for minutes and hours.
+TIME_MODE_DEFAULT <- "relative"
 # A time converted to another unit is rounded to TIME_SNAP_DIGITS decimal
 # places of a minute (0.001 min) and written with TIME_STRING_DIGITS
 # significant digits.  Ten digits make every conversion, and any chain of them,

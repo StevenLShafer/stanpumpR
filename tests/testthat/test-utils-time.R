@@ -283,8 +283,10 @@ test_that("timeFormat, its string form, and the Time Display choices", {
   expect_equal(timeFormat("hours", "clock"), c(unit = "hours", mode = "clock"))
   expect_equal(timeFormat("days", "clock"), c(unit = "days", mode = "relative"))
   expect_equal(timeFormat("weeks", "relative"), c(unit = "weeks", mode = "relative"))
-  expect_equal(timeFormat(NULL, NULL), c(unit = "minutes", mode = "clock"))
-  expect_equal(timeFormat("fortnights", "sideways"), c(unit = "minutes", mode = "clock"))
+  # unknown: the default unit, and the Time Display the app opens with
+  expect_equal(TIME_MODE_DEFAULT, "relative")
+  expect_equal(timeFormat(NULL, NULL), c(unit = "minutes", mode = "relative"))
+  expect_equal(timeFormat("fortnights", "sideways"), c(unit = "minutes", mode = "relative"))
   expect_equal(timeFormatString(timeFormat("days", "relative")), "days/relative")
   for (unit in names(TIME_UNITS)) for (mode in TIME_MODES) {
     f <- timeFormat(unit, mode)
