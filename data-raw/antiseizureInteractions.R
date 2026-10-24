@@ -295,7 +295,8 @@ registry <- rbind(
            source_short = "Vashi 2023", pmid = "37429218",
            population = "960 subjects, 8700 concentrations",
            evidence_read = "full text and supplement (the library's cenobamate source)"),
-      "CL/F +15% with carbamazepine; clobazam -19% (clobazam is not in the library)."),
+      "CL/F +15% with carbamazepine; clobazam -19% (clobazam is not in the library).",
+      notes = "CONFLICT with the XCOPRI label (read 2026-10-24): the label's dedicated DDI study found carbamazepine did NOT significantly affect cenobamate exposure, while phenytoin LOWERED cenobamate AUC 27-28% (CYP2C19 induction of cenobamate). This Vashi pop-PK covariate (+15% with carbamazepine) is contradicted by the label's dedicated study. REVIEW: replace this row with phenytoin->cenobamate CL x1.38 (exposure -27.5%) and drop the carbamazepine term, per the label (the more authoritative DDI source)."),
 
   # --- Cross-checks ------------------------------------------------------------
   row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
@@ -322,20 +323,44 @@ registry <- rbind(
   # --- Recorded: described but not applied -----------------------------------
   # Quantified only in a product label, a moiety not plotted, or a drug not in
   # the library.  Kept so the reference list is complete; never simulated.
+  # The cenobamate magnitudes are now read from the XCOPRI label (NDA 212839,
+  # section 12.3, cenobamate 200 mg/day). They are kept `recorded` pending a
+  # focused implementation: cenobamate has no therapeutic band, so applying them
+  # needs a defined reference concentration (from the model at 200 mg/day), and
+  # the lamotrigine 21-52% across 100-400 mg/day gives the concentration anchor;
+  # phenytoin is the saturable-engine victim (a Vmax factor). See
+  # docs/antiseizure-interactions-review.md.
   row("cenobamate", "phenytoin", "recorded", "inhibition", "CYP2C19",
-      finding = "Cenobamate inhibits CYP2C19 and raises phenytoin (the XCOPRI label advises lowering the phenytoin dose). The magnitude is in the label, not in this review.",
-      population = "review / consensus",
-      source = "Roberti R, De Caro C, Iannone LF, et al. Pharmacology of cenobamate: mechanism of action, pharmacokinetics, drug-drug interactions and tolerability. CNS Drugs 2021;35:609-618.",
-      source_short = "Roberti 2021", pmid = "33993416", doi = "10.1007/s40263-021-00819-8",
-      evidence_read = "abstract", to_obtain = "no",
-      notes = "The XCOPRI (cenobamate) FDA label is the only source of the phenytoin, lamotrigine and carbamazepine fold-changes; obtain it to quantify these. Cenobamate's own victim-side effects (carbamazepine +15% on cenobamate CL/F) are applied; see the Vashi 2023 row."),
+      finding = "XCOPRI label (12.3): cenobamate 200 mg/day increased phenytoin Cmax +70% and AUC +84%; the label advises decreasing the phenytoin dose by up to 50%. To APPLY on the saturable engine: Vmax x ~0.83 reproduces +84% total at the band midpoint (15 mcg/mL), but the effect is operating-point dependent (larger near saturation) - which is clinically real.",
+      population = "dedicated DDI study (XCOPRI USPI, NDA 212839)",
+      source = "XCOPRI (cenobamate) US prescribing information, NDA 212839, sections 7.1 and 12.3 (revised 8/2025).",
+      source_short = "XCOPRI label", pmid = "33993416", doi = "10.1007/s40263-021-00819-8",
+      evidence_read = "full text (label read 2026-10-24); Roberti 2021 (PMID 33993416) gives the CYP2C19 mechanism",
+      to_obtain = "no",
+      notes = "Not yet applied (see the block comment above). Mechanism CYP2C19 inhibition (immediate). Cenobamate->clobazam and ->N-desmethylclobazam are also raised, but clobazam is not in the library."),
   row("cenobamate", "lamotrigine", "recorded", "induction", "CYP3A4/UGT",
-      finding = "Cenobamate induces CYP3A4 and lowers lamotrigine and carbamazepine; the Smith 2022 consensus advises proactive dose reduction of carbamazepine above 1200 mg/day and lamotrigine above 500 mg/day.",
-      population = "expert consensus (modified Delphi, 7 epileptologists)",
-      source = "Smith MC, Klein P, Krauss GL, et al. Dose adjustment of concomitant antiseizure medications during cenobamate treatment: expert opinion consensus recommendations. Neurol Ther 2022;11:1705-1720.",
-      source_short = "Smith 2022", pmid = "36057761", pmcid = "PMC9588096",
-      doi = "10.1007/s40120-022-00400-5", evidence_read = "abstract; full text in PMC",
-      to_obtain = "no", notes = "Direction and clinical thresholds only; the quantitative fold-changes are in the XCOPRI label."),
+      finding = "XCOPRI label (12.3): lamotrigine exposure expected to decrease 21-52% across the cenobamate 100-400 mg/day dose range (so CL x1.27 to x2.08). At 200 mg/day the mid-range applies. The 100->400 mg/day span is the concentration anchor for a saturable fold.",
+      population = "population PK (XCOPRI USPI, NDA 212839)",
+      source = "XCOPRI (cenobamate) US prescribing information, NDA 212839, sections 7.1 and 12.3 (revised 8/2025).",
+      source_short = "XCOPRI label", pmid = "36057761", pmcid = "PMC9588096",
+      doi = "10.1007/s40120-022-00400-5",
+      evidence_read = "full text (label read 2026-10-24); Smith 2022 (PMID 36057761) gives the clinical thresholds",
+      to_obtain = "no",
+      notes = "Not yet applied. Induction (turnover). The dose-range span (21% at 100, 52% at 400 mg/day) is exactly the two-point anchor the saturable fold(C) needs for a perpetrator that has no therapeutic band."),
+  row("cenobamate", "carbamazepine", "recorded", "induction", "CYP3A4",
+      finding = "XCOPRI label (12.3): cenobamate 200 mg/day decreased carbamazepine Cmax and AUC each 23% (CL x1.30). Dose increase as needed.",
+      population = "dedicated DDI study (XCOPRI USPI, NDA 212839)",
+      source = "XCOPRI (cenobamate) US prescribing information, NDA 212839, sections 7.1 and 12.3 (revised 8/2025).",
+      source_short = "XCOPRI label", pmid = "33993416", doi = "10.1007/s40263-021-00819-8",
+      evidence_read = "full text (label read 2026-10-24)",
+      to_obtain = "no", notes = "Not yet applied (see the block comment above). Induction (turnover)."),
+  row("cenobamate", "phenobarbital", "recorded", "inhibition", "CYP2C19",
+      finding = "XCOPRI label (12.3): cenobamate 200 mg/day increased phenobarbital Cmax +34% and AUC +37% (CL x0.73). Reduce phenobarbital dose as needed.",
+      population = "dedicated DDI study (XCOPRI USPI, NDA 212839)",
+      source = "XCOPRI (cenobamate) US prescribing information, NDA 212839, sections 7.1 and 12.3 (revised 8/2025).",
+      source_short = "XCOPRI label", pmid = "33993416", doi = "10.1007/s40263-021-00819-8",
+      evidence_read = "full text (label read 2026-10-24)",
+      to_obtain = "no", notes = "Not yet applied (see the block comment above). Inhibition (immediate). The label found valproate, lacosamide and levetiracetam NOT significantly changed by cenobamate (consistent with the applied set)."),
   row("valproate", "carbamazepine", "recorded", "epoxide hydrolase inhibition (epoxide); parent CL increase", "epoxide hydrolase",
       finding = "Valproate reduces carbamazepine-10,11-epoxide clearance x 0.693 (Table 5, theta4, 95% CI 0.615-0.771), raising the active epoxide by inhibiting epoxide hydrolase. On PARENT carbamazepine clearance, Jiao found valproate (only at a daily dose >18 mg/kg) x 1.44 (Table 4, theta4, CI 1.28-1.62), an INCREASE; phenytoin x 1.26 (CI 1.11-1.41) and phenobarbital x 1.23 (CI 1.14-1.32) in this Chinese cohort.",
       population = "408 Chinese patients, 459 samples",
@@ -378,7 +403,27 @@ registry <- rbind(
       source = "Moseley BD, Chanteux H, Nicolas JM, et al. A review of the drug-drug interactions of the antiepileptic drug brivaracetam. Epilepsy Res 2020;163:106327.",
       source_short = "Moseley 2020", pmid = "32361205", doi = "10.1016/j.eplepsyres.2020.106327",
       evidence_read = "abstract", to_obtain = "no",
-      notes = "Brivaracetam is not a selectable drug in the library. Listed so the inducer effect on it is recorded.")
+      notes = "Brivaracetam is not a selectable drug in the library. Listed so the inducer effect on it is recorded."),
+
+  # --- Coverage gaps: selectable victims not yet applied ---------------------
+  # Zonisamide and ethosuximide are selectable library drugs that are real
+  # victims of enzyme induction but have no applied interaction yet.
+  row("carbamazepine", "zonisamide", "recorded", "induction", "CYP3A4",
+      finding = "Zonisamide clearance rises with enzyme-inducing antiseizure drugs; half-life 55 h falls to ~30 h (Willmore 2000), i.e. CL roughly doubles. Silva 2025 - the library's OWN zonisamide source - carries an inducer-drug-load (INDDL) covariate that significantly raises CL/F; its magnitude should be read from the full text and APPLIED (zonisamide as victim of carbamazepine, phenytoin, phenobarbital).",
+      population = "64 refractory-epilepsy patients (Silva 2025); review (Willmore 2000)",
+      source = "Silva R, Colom H, Almeida A, et al. A new population pharmacokinetic model for dosing optimization of zonisamide in patients with refractory epilepsy. Eur J Pharm Sci 2025;207:107023; Willmore LJ. Drugs Aging 2000;17:441-452.",
+      source_short = "Silva 2025", pmid = "39848412", doi = "10.1016/j.ejps.2025.107023",
+      evidence_read = "abstract (Silva 2025 confirms an INDDL covariate on CL/F; the factor is in the full text); Willmore 2000 abstract for the t1/2 55->30 h",
+      to_obtain = "yes",
+      notes = "GAP: zonisamide is currently only a perpetrator (on phenytoin), never a victim. Silva 2025 is already the library's zonisamide model source, so the INDDL factor is self-consistent to apply. Read the full text for the number."),
+  row("carbamazepine", "ethosuximide", "recorded", "induction", "CYP3A4",
+      finding = "Ethosuximide is metabolized by CYP3A4; enzyme-inducing antiseizure drugs raise its clearance and valproate inhibits it. Magnitudes are reported in older TDM series (candidate sources below), not yet transcribed.",
+      population = "to be sourced",
+      source = "Candidate sources (PubMed): ethosuximide-inducer interaction series - PMIDs 12102641, 9421101, 7512905, 3146222; Patsalos & Perucca 2003 Lancet Neurol (review).",
+      source_short = "to source", pmid = "12849151", doi = "10.1016/s1474-4422(03)00409-5",
+      evidence_read = "none yet (candidate PMIDs listed)",
+      to_obtain = "yes",
+      notes = "GAP: ethosuximide is a selectable victim with no applied interaction. Needs a quantified inducer (and valproate) factor from one of the candidate sources.")
 )
 
 stopifnot(all(registry$status %in% STATUSES))
