@@ -1934,8 +1934,8 @@ app_server <- function(input, output, session) {
   })
 
   # "Skip next dose" (R/scheduled.R, skipNextOralDose()): offered in both
-  # dose dialogs while the clicked drug has a scheduled oral or sublingual
-  # dose at or after
+  # dose dialogs while the clicked drug has a scheduled oral, sublingual or
+  # intramuscular dose at or after
   # the time clicked.  skipTarget() is the drug and time the dialog is about;
   # the Add a dose dialog's drug selector moves it to another drug.
   skipTarget <- reactiveVal(NULL)
@@ -1963,7 +1963,7 @@ app_server <- function(input, output, session) {
       ),
       tags$p(
         class = "small text-muted mt-1 mb-0",
-        "A missed or vomited tablet: the schedule then carries on as before."
+        "A missed or vomited tablet, or a missed injection: the schedule then carries on as before."
       )
     )
   })

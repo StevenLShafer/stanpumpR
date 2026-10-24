@@ -321,11 +321,31 @@ test_that("skip next dose works on a sublingual schedule", {
                setdiff(seq(0, 3 * MINS_PER_DAY - 1, by = 480), 960))
 })
 
+test_that("skip next dose works on an intramuscular schedule, with a scheduled 0", {
+  # An ordinary 0 does not stop an IM schedule, so the skip writes the
+  # schedule's own unit, even when the drug offers the base unit
+  imUnits <- c("mg", "mg IM", "mg IM qid")
+  dt <- skipTable(0, 1, "mg IM qid", "hydromorphone")
+  skip <- skipNextOralDose(dt, "hydromorphone", 100, 2 * MINS_PER_DAY, minutesFormat, units = imUnits)
+  expect_equal(skip$time, 360)
+  expect_equal(skip$resumes, 720)
+  expect_equal(skip$table$Time[1:3], c("0", "360", "720"))
+  expect_equal(skip$table$Dose[1:3], c("1", "0", "1"))
+  expect_equal(skip$table$Units[1:3], c("mg IM qid", "mg IM qid", "mg IM qid"))
+  expect_equal(simulatedTimes(skip$table, 2 * MINS_PER_DAY),
+               setdiff(seq(0, 2 * MINS_PER_DAY - 1, by = 360), 360))
+  # The first dose: that row becomes the scheduled 0
+  skip <- skipNextOralDose(dt, "hydromorphone", 0, 2 * MINS_PER_DAY, minutesFormat, units = imUnits)
+  expect_equal(skip$table$Units[1:2], c("mg IM qid", "mg IM qid"))
+  expect_equal(skip$table$Dose[1:2], c("0", "1"))
+  expect_equal(simulatedTimes(skip$table, 2 * MINS_PER_DAY), seq(360, 2 * MINS_PER_DAY - 1, by = 360))
+})
+
 test_that("skip next dose is not offered without a running oral schedule", {
   expect_null(skipNextOralDose(skipTable(0, 200, "mg PO"), "carbamazepine", 0, MINS_PER_DAY, minutesFormat))
   expect_null(skipNextOralDose(skipTable(0, 1000, "mg bid", "cefazolin"), "cefazolin", 0, MINS_PER_DAY, minutesFormat))
-  # nor on another extravascular route
-  expect_null(skipNextOralDose(skipTable(0, 4, "mg IM qid", "morphine"), "morphine", 0, MINS_PER_DAY, minutesFormat))
+  # nor on an intranasal one
+  expect_null(skipNextOralDose(skipTable(0, 4, "mcg IN qid", "fentanyl"), "fentanyl", 0, MINS_PER_DAY, minutesFormat))
   expect_null(skipNextOralDose(skipTable(0, 200, "mg PO tid"), "levetiracetam", 0, MINS_PER_DAY, minutesFormat))
   # Stopped before the click, or the next dose past the end of the plot
   expect_null(skipNextOralDose(skipTable(c(0, 600), c(200, 0), c("mg PO tid", "mg PO")),
