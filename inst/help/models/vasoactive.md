@@ -14,7 +14,7 @@ A drug is offered only where a published model could be read and checked. That r
 
 ### Where each drug stands
 
-One row per drug and candidate source, from `inst/extdata/vasoactiveRegistry.csv`. "Needs the paper" means a model exists whose numbers could not be read here; "read; not offered" is a complete model of a drug already offered from another source, kept as the record of an alternative; "no usable model" means none exists that this engine could represent.
+One row per drug and candidate source, from `inst/extdata/vasoactiveRegistry.csv`. "Needs the paper" means a model may exist whose numbers have not been read here, in the source itself or in another document the reading list names, which may not hold them either; "read; not offered" is a complete model of a drug already offered from another source, kept as the record of an alternative; "no usable model" means none exists that this engine could represent.
 
 <!-- generated: vasoactive-registry-table -->
 

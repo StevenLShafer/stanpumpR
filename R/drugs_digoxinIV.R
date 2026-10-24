@@ -50,8 +50,13 @@
 # ke0 0.184 /h (half-time 3.8 h).  With Hornestam's own typical plasma model
 # (CL 9.88 L/h, Vc 27.8 L, Q 71.8 L/h, Vp 444 L) that ke0 puts the peak
 # effect 87 minutes after a bolus, and the effect site here is solved from
-# that time to peak, so it carries over to Cheng's plasma curve.  It is the
-# effect site for RATE CONTROL.  Inotropy is far slower: Weiss M, Kang W,
+# that time to peak, so it carries over to Cheng's plasma curve.  That is a
+# model-derived, cross-model anchor, not a peak observed on Cheng's curve:
+# on Cheng's plasma model (70 kg man, assumed normal creatinine) 87 minutes
+# needs ke0 0.44 /h, 2.4 times Hornestam's, and Hornestam's own 0.184 /h
+# would put the peak at about 138 minutes.  The two structures disagree that
+# much because Cheng's distribution is slower.  It is the effect site for
+# RATE CONTROL.  Inotropy is far slower: Weiss M, Kang W,
 # Pharm Res 2004;21:231-236 (doi 10.1023/b:pham.0000016236.36210.a6), fitting
 # Kramer 1979's 1 mg bolus data in healthy men, found an equilibration
 # half-time of 13 h for shortening of electromechanical systole, attributed
@@ -74,12 +79,21 @@
 # the unbound renal clearance was 272 +/- 45 mL/min in pregnancy against
 # 183 +/- 37 mL/min postpartum (x 1.49), and the unbound net secretion 109
 # against 58 mL/min (x 1.88), so both filtration and renal P-glycoprotein
-# rise.  Digoxin is only 20 to 30% bound, and 25 to 28% of it is cleared by
-# nonrenal routes in healthy adults (Iisalo 1977), so with about 73% renal
-# the total clearance rises by 0.73 x 1.49 + 0.27 = 1.36.  With the Patient
-# Profile's Pregnant field on, the elimination clearance CL1 is multiplied by
-# DIGOXIN_IV_PREGNANCY_CL_FACTOR = 1.35, directly; V1, V2 and Q are
-# unchanged.
+# rise.  The curve is TOTAL serum digoxin, so the ratio that matters is the
+# total renal clearance: 181 +/- 25 against 115 +/- 25 mL/min, x 1.574, with
+# the unbound fraction 67% against 63% (Hebert's Table 2, as quoted by an
+# adversarial review on 2026-10-24, and consistent with the unbound values:
+# 181 / 0.67 = 270 and 115 / 0.63 = 183).  An earlier version took 163
+# against 125 mL/min as the total renal clearance; those are Hebert's
+# CREATININE clearances, and applied the unbound ratio 1.49 to total
+# clearance, giving 1.35.  About 73% of digoxin's clearance is renal in
+# healthy adults (25 to 28% nonrenal, Iisalo 1977) -- an assumption carried
+# over to Cheng's patients, not measured in them -- so the total clearance
+# rises by 0.73 x 1.574 + 0.27 = 1.42.  With the Patient Profile's Pregnant
+# field on, the elimination clearance CL1 is multiplied by
+# DIGOXIN_IV_PREGNANCY_CL_FACTOR = 1.42, directly; V1, V2 and Q are
+# unchanged.  Hebert did not estimate digoxin's systemic clearance (no
+# reliable extrapolation beyond 48 h), so 1.42 is a derived factor.
 #
 # The factor is NOT carried through Cheng's regressions on creatinine
 # clearance, for two reasons.  Cheng's slope gives renal function only about
@@ -124,10 +138,10 @@ DIGOXIN_IV_CRCL_RANGE <- c(0, 140)  # mL/min
 DIGOXIN_IV_TPEAK <- 87              # min
 
 # Elimination clearance in late pregnancy relative to the published value:
-# Hebert 2008's x 1.49 in renal clearance on the 73% of clearance that is
-# renal (Iisalo 1977), 0.73 x 1.49 + 0.27 = 1.36, taken as 1.35 (see the
-# header).
-DIGOXIN_IV_PREGNANCY_CL_FACTOR <- 1.35
+# Hebert 2008's x 1.574 in total renal clearance (181 / 115 mL/min) on the
+# 73% of clearance that is renal (Iisalo 1977), 0.73 x 1.574 + 0.27 = 1.42
+# (see the header).
+DIGOXIN_IV_PREGNANCY_CL_FACTOR <- 1.42
 
 #' Digoxin, intravenous (Cheng 1997; Hornestam 2003's time to peak effect)
 #'

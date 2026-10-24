@@ -59,16 +59,17 @@ test_that("digoxinIV carries the 0.5-2 ng/mL band and reads creatinine", {
   expect_true("creatinine" %in% names(formals(digoxinIV)))
 })
 
-test_that("pregnancy: clearance x 1.35, directly, with the volumes unchanged", {
-  # Hebert 2008's renal x 1.49 on the 73% of clearance that is renal.  A woman
+test_that("pregnancy: clearance x 1.42, directly, with the volumes unchanged", {
+  # Hebert 2008's total renal x 181/115 on the 73% of clearance that is renal.  A woman
   # of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.
   on  <- getDrugPK("digoxinIV", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
   off <- getDrugPK("digoxinIV", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
   expect_identical(off, getDrugPK("digoxinIV", 70, 165, 30, SEX_FEMALE))
   a <- on$PK$default; b <- off$PK$default
   expect_equal(a$cl1 / b$cl1, DIGOXIN_IV_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
-  expect_equal(DIGOXIN_IV_PREGNANCY_CL_FACTOR, 1.35)
-  expect_equal_rounded(0.1207117690, a$cl1)
+  expect_equal(DIGOXIN_IV_PREGNANCY_CL_FACTOR, 1.42)
+  expect_equal(round(0.73 * 181 / 115 + 0.27, 2), 1.42)
+  expect_equal_rounded(0.1207117690 / 1.35 * 1.42, a$cl1)
   # Not through Cheng's regressions: Vss (V2) does not move
   expect_identical(a[c("v1", "v2", "v3", "cl2", "cl3")],
                    b[c("v1", "v2", "v3", "cl2", "cl3")])

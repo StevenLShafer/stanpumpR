@@ -135,14 +135,41 @@ test_that("the parameter audit covers every implemented drug", {
     expect_true(all(nzchar(parameters[[col]]) & !is.na(parameters[[col]])),
                 info = col)
   expect_true(all(parameters$provenance %in% c("estimated", "fixed", "derived")))
-  expect_true(all(parameters$evidence %in% EVIDENCE))
-  # The audit's evidence agrees with the registry's for each drug
+  expect_true(all(parameters$evidence %in% c(EVIDENCE, "clinical")))
+  # A pharmacokinetic number's evidence is the implemented source's; a time to
+  # peak effect has its own source (often another paper, sometimes the
+  # clinician-author's observation, "clinical", which is never estimated)
+  timing <- parameters$parameter == "tPeak"
   for (d in IMPLEMENTED) {
     reg <- registry$evidence_read[registry$stanpumpr_drug %in% d]
-    expect_true(all(parameters$evidence[parameters$drug == d] == reg), info = d)
+    pk <- parameters$drug == d & !timing
+    expect_true(all(parameters$evidence[pk] == reg), info = d)
   }
+  clinical <- parameters$evidence == "clinical"
+  expect_true(all(timing[clinical]), info = "only a timing may be clinical")
+  expect_true(all(parameters$provenance[clinical] == "fixed"))
+  # the timings that rest on an abstract, or on clinical observation, say so
+  ev <- function(d) parameters$evidence[parameters$drug == d & timing]
+  expect_identical(ev("phenylephrine"), "abstract")   # Schwinn 1989
+  expect_identical(ev("propranolol"), "abstract")     # Achong 1976
+  for (d in c("epinephrine", "atropine", "vasopressin", "hydralazine"))
+    expect_identical(ev(d), "clinical", info = d)
 })
 
+test_that("every time to peak effect in the audit is the one the model uses", {
+  timing <- parameters[parameters$parameter == "tPeak", ]
+  withTPeak <- IMPLEMENTED[vapply(IMPLEMENTED, function(d)
+    getDrugPK(d, 70, 170, 50, "male")$tPeak > 0, logical(1))]
+  expect_setequal(timing$drug, withTPeak)
+  for (i in seq_len(nrow(timing)))
+    expect_equal(as.numeric(timing$value[i]),
+                 getDrugPK(timing$drug[i], 70, 170, 50, "male")$tPeak,
+                 tolerance = 1e-3, info = timing$drug[i])
+})
+
+# Not every audit row is compared: source-only numbers (a check such as
+# "Vss (check only)", a coefficient held at its reference such as SAPS II or
+# propofol) are recorded and not applied.
 test_that("the audit's numbers are the ones the models use", {
   value <- function(d, p) as.numeric(parameters$value[parameters$drug == d &
                                                         parameters$parameter == p])
@@ -176,6 +203,29 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("esmolol", "Vc"), ESMOLOL_V1)
   expect_equal(value("dopamine", "k10"), DOPAMINE_K10)
   expect_equal(value("dopamine", "V1"), DOPAMINE_V1)
+  expect_equal(value("dopamine", "k12"), DOPAMINE_K12)
+  expect_equal(value("dopamine", "k21"), DOPAMINE_K21)
+  expect_equal(value("atropine", "k_PT"), ATROPINE_KPT)
+  expect_equal(value("atropine", "k_TP"), ATROPINE_KTP)
+  expect_equal(value("digoxin", "CL/F per weight"), DIGOXIN_CL_WT)
+  expect_equal(value("digoxin", "CL/F per CLcr"), DIGOXIN_CL_CRCL)
+  expect_equal(value("digoxin", "V1/F"), DIGOXIN_V1)
+  expect_equal(value("digoxin", "Q/F"), DIGOXIN_Q)
+  expect_equal(value("digoxin", "V2/F"), DIGOXIN_V2)
+  expect_equal(value("digoxin", "spironolactone on CL"), DIGOXIN_SPI)
+  expect_equal(value("digoxin", "calcium antagonist on CL"), DIGOXIN_CCB)
+  phe <- phenylephrineTypical()
+  expect_equal(round(phe[["v1"]], 1), value("phenylephrine", "V1"))
+  expect_equal(round(phe[["v2"]], 0), value("phenylephrine", "V2"))
+  expect_equal(round(phe[["cl1"]], 3), value("phenylephrine", "CL"))
+  expect_equal(round(phe[["cl2"]], 3), value("phenylephrine", "Q"))
+  ver <- verapamilTypicalPerKg()
+  expect_equal(round(ver[["v1"]], 4), value("verapamil", "V1"))
+  expect_equal(round(ver[["v2"]], 4), value("verapamil", "V2"))
+  expect_equal(round(ver[["v3"]], 4), value("verapamil", "V3"))
+  expect_equal(round(ver[["cl1"]] * 1000, 2), value("verapamil", "CL"))
+  expect_equal(round(ver[["cl2"]], 4), value("verapamil", "Q2"))
+  expect_equal(round(ver[["cl3"]], 5), value("verapamil", "Q3"))
   expect_equal(value("atropine", "V_P"), ATROPINE_VP)
   expect_equal(value("atropine", "CL") / 1000, ATROPINE_CL)
   esm <- twoCompartmentFromCentralVolume(ESMOLOL_CL, ESMOLOL_V1,
@@ -216,6 +266,15 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("metoprolol", "F"), METOPROLOL_F)
   expect_equal(value("metoprolol", "CYP2D6 poor CL factor"),
                METOPROLOL_CYP2D6_CL[["poor"]])
+  expect_equal(value("metoprolol", "CYP2D6 ultrarapid CL factor"),
+               METOPROLOL_CYP2D6_CL[["ultrarapid"]])
+  expect_equal(value("metoprolol", "CYP2D6 poor F factor"),
+               METOPROLOL_CYP2D6_F[["poor"]])
+  expect_equal(value("metoprolol", "CYP2D6 ultrarapid F factor"),
+               METOPROLOL_CYP2D6_F[["ultrarapid"]])
+  expect_equal(value("metoprolol", "Q"), METOPROLOL_Q)
+  expect_equal(value("metoprolol", "V2"), METOPROLOL_V2)
+  expect_equal(value("metoprolol", "ka"), METOPROLOL_KA)
   expect_equal(value("nicardipine", "CL"), NICARDIPINE_CL)
   expect_equal(value("nicardipine", "Q"), NICARDIPINE_Q)
   expect_equal(value("nicardipine", "Vss"), NICARDIPINE_VSS)

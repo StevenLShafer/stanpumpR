@@ -95,7 +95,12 @@
 # clearance and volume rose together.  So the volumes and the distribution
 # clearance take the clearance's factor as well
 # (METOPROLOL_PREGNANCY_V_FACTOR = 1.5), which leaves every rate constant,
-# and so the half-lives, unchanged, as Hogstedt measured.  With the Patient
+# and so the half-lives, unchanged, as Hogstedt measured.  That joint scaling
+# is an ASSUMPTION chosen to keep the half-lives: Hogstedt reports one
+# volume and two half-lives, which do not identify V1, V2 and Q separately,
+# and the clearance/bioavailability split is itself derived from Ryu's CL/F
+# through a well-stirred liver, not measured as such (though Hogstedt's F and
+# systemic clearance agree with it).  With the Patient
 # Profile's Pregnant field on, CL1, V1, V2 and Q take 1.5 and the oral
 # bioavailability 0.5; ka is unchanged.  They
 # are NOT applied to a CYP2D6 poor metaboliser, since pregnancy cannot induce

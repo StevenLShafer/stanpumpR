@@ -10,8 +10,11 @@
 # rebuilt by data-raw/vasoactiveRegistry.R and checked by
 # tests/testthat/test-vasoactive-registry.R.  The implemented drugs are in the
 # startup menu's VASOACTIVE_DRUG_CATEGORY and are concentration models only:
-# no blood pressure, heart rate or rhythm is predicted, and none has an effect
-# site or a band.  Help page: inst/help/models/vasoactive.md.
+# no blood pressure, heart rate or rhythm is predicted.  An effect site is
+# drawn only where a time to peak effect is known (each drug's tPeak, from a
+# source or, where marked, the clinician-author's experience), and the only
+# bands are the published target ranges of digoxin and milrinone.  Help page:
+# inst/help/models/vasoactive.md.
 # -----------------------------------------------------------------------------
 
 #' The vasoactive and resuscitation drug registry
