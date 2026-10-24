@@ -33,12 +33,21 @@ test_that("renal function is clamped to the studied 13-261 mL/min/1.73 m2", {
   expect_equal_rounded(hornikCL(13, 144, 261.3) / 60, hi$cl1)
 })
 
-test_that("from 18 the renal estimate is CKD-EPI 2009", {
-  scr <- adultEquivalentCreatinine(1.0, 40, "male")
-  crcl <- egfrCKDEPI2009(40, "male", scr)
+test_that("the renal estimate is bedside Schwartz at every age, with no step at 18", {
+  # Hornik fitted the covariate on bedside Schwartz; switching equations at 18
+  # made clearance jump 24% on the birthday (adversarial review, 2026-10-24)
+  crcl <- 0.413 * 175 / 1.0
   set <- milrinonePediatric(70, 175, 40, "male", adjustToFFM = FALSE,
                             creatinine = 1.0)$PK$default
   expect_equal_rounded(hornikCL(70, 40 + 52 * 40, crcl) / 60, set$cl1)
+  for (switch in c(FALSE, TRUE)) {
+    before <- milrinonePediatric(70, 175, 17.999, "male", adjustToFFM = switch,
+                                 creatinine = 1.0)$PK$default
+    after  <- milrinonePediatric(70, 175, 18.001, "male", adjustToFFM = switch,
+                                 creatinine = 1.0)$PK$default
+    expect_lt(abs(after$cl1 / before$cl1 - 1), 0.005)
+    expect_lt(abs(after$v1 / before$v1 - 1), 0.005)
+  }
 })
 
 test_that("a blank creatinine is an assumed normal one, and getDrugPK passes it", {

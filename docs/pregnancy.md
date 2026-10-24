@@ -112,7 +112,7 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | hydrochlorothiazide |  |  |  | 1.5 | Ansari 2016 | low |
 | procainamide |  |  |  | 1.5 | Ansari 2016 | low |
 | digoxin |  |  |  | 1.5 | Hebert 2008 | moderate |
-| digoxinIV | 1.350 |  |  |  | Hebert 2008 | low |
+| digoxinIV | 1.420 |  |  |  | Hebert 2008 | low |
 | metoprolol | 1.500 | 1.50 | 0.5 |  | Ryu 2016 | moderate |
 | vasopressin | 5.075 |  |  |  | Davison 1993 | moderate |
 
@@ -334,7 +334,10 @@ paywalled. The first list matters most, since each would check a factor the libr
    betamethasone/dexamethasone pattern (clearance and volume both rise, half-life unchanged).
  - **Hebert MF et al.** *Clin Pharmacol Ther* 2008;84:248-253 (PMID 18288078): the CYP3A/P-gp probe
    study. Midazolam total CL/F 2.1 times (unbound 1.72), half-life unchanged; digoxin total renal
-   clearance 1.30 times, half-life unchanged. Confirms midazolam's x1.28 (IV) and digoxin's GFR terms.
+   clearance 181 vs 115 mL/min, 1.57 times (unbound 1.49; the 163 vs 125 mL/min once recorded here as
+   renal digoxin clearance are the creatinine clearances, 1.30 times; corrected 2026-10-24 after an
+   adversarial review), half-life unchanged. Confirms midazolam's x1.28 (IV) and digoxin's GFR terms;
+   digoxinIV's factor became 1.42.
  - **Allegaert K et al.** *Am J Obstet Gynecol* 2009;200:170.e1-7 (PMID 19006783): cefazolin popPK in
    82 pregnancies, CL 7.44 L/h (about twice healthy young adults), almost exclusively renal, no
    gestational-age trend; supports the renal (GFR) mechanism for cefazolin.

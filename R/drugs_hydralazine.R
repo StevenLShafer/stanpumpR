@@ -89,8 +89,9 @@
 # =========================
 # No study of intravenous hydralazine in pregnancy was found.  Han 2019 (J
 # Clin Pharmacol 59:1678, oral, 12 pregnant women, no nonpregnant comparison)
-# judged its apparent oral clearance comparable to nonpregnant reports; the
-# registry records that, and nothing is applied.
+# judged its apparent oral clearance comparable to nonpregnant reports.  An
+# oral study with no comparator says nothing measured about the intravenous
+# drug, so the registry records pregnancy as unknown, and nothing is applied.
 #
 # EFFECT SITE: tPeak 15 MINUTES (CLINICAL); NO BAND
 # =================================================

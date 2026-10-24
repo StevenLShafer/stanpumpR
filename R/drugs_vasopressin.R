@@ -71,7 +71,12 @@
 # unaltered by tripling the concentration.  The rise is placental
 # vasopressinase (cystine aminopeptidase).  So in late pregnancy the
 # clearance is multiplied by 3.4 / 0.67 = 5.07; the volume was not measured
-# and is unchanged.
+# and is unchanged.  This is an extrapolation in two ways: Davison measured
+# physiological concentrations (2 to 9 pg/mL) by radioimmunoassay, and the
+# ratio is applied here to a bioassay model at pressor doses, ten times
+# higher.  Clearance did not change over Davison's threefold range, but no
+# study has measured it at pressor concentrations in pregnancy; if
+# vasopressinase saturates there, the factor overstates the rise.
 #
 # EFFECT SITE: tPeak 3 MINUTES (PROVISIONAL CLINICAL OBSERVATION); NO BAND
 # =======================================================================
