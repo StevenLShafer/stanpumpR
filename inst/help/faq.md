@@ -4,7 +4,7 @@ Edits to the dose table go into a draft. Press **Apply Changes** to simulate. Th
 
 ## My infusion never stops
 
-An infusion runs until the next row for the same drug changes it. The simplest way to stop it is to click the drug's curve at the stop time and press **Stop**, which adds the right row for you. By hand, add a row for that drug at the stop time with a dose of 0 in the same rate units. A scheduled dose (`mg bid`) is stopped the same way, with a scheduled dose of 0 for the same route; an ordinary dose of 0 does not stop it, except on the oral and sublingual routes, where any new oral or sublingual dose, 0 included, ends the running oral or sublingual schedule. To skip one oral dose, click the curve and press **Skip next dose**.
+An infusion runs until the next row for the same drug changes it. The simplest way to stop it is to click the drug's curve at the stop time and press **Stop**, which adds the right row for you. By hand, add a row for that drug at the stop time with a dose of 0 in the same rate units. A scheduled dose (`mg bid`) is stopped the same way, with a scheduled dose of 0 for the same route; an ordinary dose of 0 does not stop it, except on the oral and sublingual routes, where any later oral or sublingual dose, 0 included, ends the running oral or sublingual schedule. To skip one oral dose, click the curve and press **Skip next dose**.
 
 ## The time I typed turned into something else
 
