@@ -67,7 +67,8 @@ REF <- list(
   carbamazepine = c(c_ref = 8,  ec50 = 4),
   valproate     = c(c_ref = 75, ec50 = 50),
   phenobarbital = c(c_ref = 20, ec50 = 10),
-  zonisamide    = c(c_ref = 20, ec50 = 10)
+  zonisamide    = c(c_ref = 20, ec50 = 10),
+  ethosuximide  = c(c_ref = 70, ec50 = 40)
 )
 LOWER_EDGE <- "assumed: lower edge of the perpetrator's reference range"
 
@@ -132,6 +133,45 @@ FALCAO <- list(source = paste0(
   doi = "10.2165/11596290-000000000-00000",
   population = "641 phase III patients",
   evidence_read = "abstract (the final equation is in it); full text not in PMC")
+SILVA <- list(source = paste0(
+  "Silva R, Colom H, Almeida A, et al. A new population pharmacokinetic model ",
+  "for dosing optimization of zonisamide in patients with refractory epilepsy. ",
+  "Eur J Pharm Sci 2025;207:107023."),
+  source_short = "Silva 2025", pmid = "39848412",
+  doi = "10.1016/j.ejps.2025.107023",
+  population = "64 European adults with refractory epilepsy, 114 levels",
+  evidence_read = "full text (read 2026-10-25): Table 2 gives INDDL_CL 1.63 (RSE 11.9%, bootstrap 1.33-2.27); CL/F = 0.761 x 1.63^INDDL, verified against the paper's +28/108/239% enhancements at INDDL 0.5/1.5/2.5")
+RIVA96 <- list(source = paste0(
+  "Riva R, Albani F, Contin M, Baruzzi A. Pharmacokinetic interactions between ",
+  "antiepileptic drugs. Clinical considerations. Clin Pharmacokinet ",
+  "1996;31:470-493."),
+  source_short = "Riva 1996", pmid = "8968658",
+  doi = "10.2165/00003088-199631060-00005",
+  population = "review of the primary studies (Riva's refs 171-173)",
+  evidence_read = "full text (read 2026-10-25): section 3.8 - inducers accelerate ethosuximide clearance; the ethosuximide dose must be 20-25% higher on carbamazepine/phenytoin/phenobarbital/primidone")
+GIACCONE <- list(source = paste0(
+  "Giaccone M, Bartoli A, Gatti G, et al. Effect of enzyme inducing ",
+  "anticonvulsants on ethosuximide pharmacokinetics in epileptic patients. ",
+  "Br J Clin Pharmacol 1996;41:575-579."),
+  source_short = "Giaccone 1996", pmid = "8799524", pmcid = "PMC2042613",
+  doi = "10.1046/j.1365-2125.1996.03601.x",
+  population = "10 epileptic patients on inducers vs 12 healthy controls",
+  evidence_read = "primary abstract (read 2026-10-26): CL/F 15.3 vs 9.2 ml/kg/h (x1.66), half-life 29 vs 54 h; inducers POOLED (phenobarbital/phenytoin/carbamazepine), so not a per-drug coefficient")
+PISANI <- list(source = paste0(
+  "Pisani F, Narbone MC, Trunfio C, et al. Valproic acid-ethosuximide ",
+  "interaction: a pharmacokinetic study. Epilepsia 1984;25:229-233."),
+  source_short = "Pisani 1984", pmid = "6423377",
+  doi = "10.1111/j.1528-1157.1984.tb04180.x",
+  population = "6 healthy volunteers, single-dose ethosuximide before/during valproate",
+  evidence_read = "primary abstract (read 2026-10-26): total clearance 11.2 -> 9.5 ml/min (x0.85), half-life 44 -> 54 h; 2 of 6 showed no interaction")
+HAGEMANN <- list(source = paste0(
+  "Hagemann A, Herting A, Klimpel D, Bien CG, Polster T. Ethosuximide lowers ",
+  "lamotrigine serum concentrations: evidence for a clinically relevant ",
+  "interaction. Epilepsia 2024;65:e73-e78."),
+  source_short = "Hagemann 2024", pmid = "38606683",
+  doi = "10.1111/epi.17952",
+  population = "523 samples, 209 patients (generalized estimating equations)",
+  evidence_read = "full text (read 2026-10-26): Table 2 - ethosuximide lowers lamotrigine 14% in adults (e1 0.86, CL x1.16) and 37% in children (CL x1.59), via UGT1A4 induction")
 
 app <- function(perpetrator, victim, mechanism, enzyme, parameter, fold,
                 onset, src, finding, ..., to_obtain = "no", notes = NA)
@@ -297,6 +337,50 @@ registry <- rbind(
            evidence_read = "full text and supplement (the library's cenobamate source)"),
       "CL/F +15% with carbamazepine; clobazam -19% (clobazam is not in the library).",
       notes = "CONFLICT with the XCOPRI label (read 2026-10-24): the label's dedicated DDI study found carbamazepine did NOT significantly affect cenobamate exposure, while phenytoin LOWERED cenobamate AUC 27-28% (CYP2C19 induction of cenobamate). This Vashi pop-PK covariate (+15% with carbamazepine) is contradicted by the label's dedicated study. REVIEW: replace this row with phenytoin->cenobamate CL x1.38 (exposure -27.5%) and drop the carbamazepine term, per the label (the more authoritative DDI source)."),
+  # --- Zonisamide (victim) ---------------------------------------------------
+  # Silva 2025 (the library's own zonisamide source) puts the inducer effect on
+  # CL/F as 1.63^INDDL, where INDDL is the summed dose/defined-daily-dose of the
+  # enzyme-inducing drugs.  A single inducer at one defined daily dose is
+  # INDDL 1, so CL x 1.63 at the perpetrator's reference; several inducers
+  # combine by the model's additive-excess rule (milder than Silva's own
+  # multiplicative-in-dose form; see the notes and the review doc).
+  app("carbamazepine", "zonisamide", "induction", "CYP3A4 (reductive cleavage)", "CL",
+      1.63, "turnover", SILVA,
+      "CL/F = 0.761 x 1.63^INDDL (Silva 2025, Table 2); a single inducer at one defined daily dose is INDDL 1, so CL x 1.63 at the perpetrator's reference.",
+      notes = "Silva 2025 is the library's own zonisamide model, so the factor is self-consistent to apply. CROSS-CHECK: Okada 2008 found carbamazepine/phenytoin/phenobarbital raised zonisamide CL/F 24/28/29% (x~1.25), which matches 1.63^INDDL at INDDL ~0.4-0.5 (a typical maintenance dose is below one DDD). COMBINATION: Silva's form is multiplicative in dose (two inducers at one DDD each give 1.63^2 = 2.66), steeper than the model's additive-excess (2.26); and Spina 1996 found phenytoin induces zonisamide more strongly than carbamazepine (zonisamide 40% higher on carbamazepine than phenytoin). The uniform 1.63 per inducer is the self-consistent first approximation; see docs/antiseizure-interactions-review.md."),
+  app("phenytoin", "zonisamide", "induction", "CYP3A4 (reductive cleavage)", "CL",
+      1.63, "turnover", SILVA,
+      "CL/F = 0.761 x 1.63^INDDL (Silva 2025, Table 2); INDDL 1 per inducer at one defined daily dose, so CL x 1.63."),
+  app("phenobarbital", "zonisamide", "induction", "CYP3A4 (reductive cleavage)", "CL",
+      1.63, "turnover", SILVA,
+      "CL/F = 0.761 x 1.63^INDDL (Silva 2025, Table 2); INDDL 1 per inducer at one defined daily dose, so CL x 1.63."),
+  # --- Ethosuximide (victim and perpetrator) ---------------------------------
+  # Inducers raise ethosuximide clearance: Giaccone 1996 measured CL/F 9.2 ->
+  # 15.3 ml/kg/h (x1.66) in a direct controlled comparison.  The factor is
+  # POOLED (phenobarbital/phenytoin/carbamazepine grouped), so applying it to
+  # each inducer row combines by additive-excess and over-predicts a multi-
+  # inducer regimen - the pooled-covariate limitation shared with topiramate
+  # and tiagabine (docs/antiseizure-interactions-review.md).  Valproate inhibits
+  # ethosuximide modestly but variably (Pisani 1984).  Ethosuximide in turn
+  # induces lamotrigine (Hagemann 2024).
+  app("carbamazepine", "ethosuximide", "induction", "CYP3A4", "CL",
+      1.66, "turnover", GIACCONE,
+      "Inducers raised ethosuximide CL/F from 9.2 to 15.3 ml/kg/h (x1.66) in a direct controlled comparison (Giaccone 1996, 10 patients vs 12 controls).",
+      notes = "POOLED FACTOR: Giaccone grouped phenobarbital/phenytoin/carbamazepine, so x1.66 is the any-inducer effect, not a per-drug coefficient; applied to each inducer row the additive-excess combination over-predicts multi-inducer induction (a structural limitation shared with topiramate/tiagabine - see docs/antiseizure-interactions-review.md). Riva 1996 (dose 20-25% higher) is the concordant lower-bound review statement."),
+  app("phenytoin", "ethosuximide", "induction", "CYP3A4", "CL",
+      1.66, "turnover", GIACCONE,
+      "Inducers raised ethosuximide CL/F 9.2 -> 15.3 ml/kg/h (x1.66); pooled inducer factor (Giaccone 1996)."),
+  app("phenobarbital", "ethosuximide", "induction", "CYP3A4", "CL",
+      1.66, "turnover", GIACCONE,
+      "Inducers raised ethosuximide CL/F 9.2 -> 15.3 ml/kg/h (x1.66); pooled inducer factor (Giaccone 1996)."),
+  app("valproate", "ethosuximide", "inhibition", "CYP3A4", "CL",
+      0.85, "immediate", PISANI,
+      "Valproate reduced ethosuximide total clearance 11.2 -> 9.5 ml/min (x0.85) in 6 healthy volunteers (Pisani 1984); half-life 44 -> 54 h.",
+      notes = "VARIABLE in occurrence: 2 of 6 subjects in Pisani showed no change, and Bauer 1982 (6 subjects) found none - so x0.85 is a mean whose magnitude is uncertain (see the Bauer crosscheck row). Mattson & Cramer and the valproic acid label also report inhibition. Replaces the earlier 'no interaction' characterisation (ChatGPT/literature review 2026-10-26)."),
+  app("ethosuximide", "lamotrigine", "induction", "UGT1A4", "CL",
+      1.16, "turnover", HAGEMANN,
+      "Ethosuximide lowered lamotrigine serum concentration 14% in adults (CL x1.16; Hagemann 2024, Table 2, e1 0.86), inducing UGT1A4 as methsuximide does.",
+      notes = "Newly reported (2024); ethosuximide is both a victim of induction and a perpetrator on lamotrigine. AGE-DEPENDENT: the effect is 37% in children/adolescents (CL x1.59) vs 14% in adults; the model's concentration-only interaction form has no age term, so the adult factor (x1.16) is applied (the reference patient is an adult). A review point for the age dependence - docs/antiseizure-interactions-review.md."),
 
   # --- Cross-checks ------------------------------------------------------------
   row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
@@ -319,6 +403,76 @@ registry <- rbind(
       source_short = "Leary 2018", pmid = "29574285", doi = "10.1016/j.seizure.2018.03.003",
       evidence_read = "abstract; full text not in PMC",
       notes = "Checks the immediate onset: the offset is lamotrigine's own slow approach to its uninhibited steady state."),
+  # Consensus reviews and secondary studies that cross-check the applied set
+  # (Steven Shafer supplied the full texts, 2026-10-25).
+  row("valproate", "phenytoin", "crosscheck", "binding displacement + inhibition", "albumin / CYP2C9",
+      finding = "Authoritative AED-AED consensus review. Displacement of phenytoin by valproate lowers TOTAL phenytoin while the unbound does not fall and can rise (metabolic inhibition); total-based monitoring underestimates the active drug. Corroborates the applied Km x0.615 and the free-vs-total caveat.",
+      population = "consensus review (AED-AED interactions, Part I)",
+      source = "Patsalos PN, Perucca E. Clinically important drug interactions in epilepsy: general features and interactions between antiepileptic drugs. Lancet Neurol 2003;2:347-356.",
+      source_short = "Patsalos & Perucca 2003", pmid = "12849151", doi = "10.1016/s1474-4422(03)00409-5",
+      evidence_read = "full text (read 2026-10-25): Table 2 and the displacement/inhibition sections",
+      notes = "Corroborates the applied set broadly: inducers ~2x and valproate ~0.5x on lamotrigine; valproate +30-50% on phenobarbital; carbamazepine->phenytoin inconsistent (left unapplied); valproate->parent carbamazepine negligible (left unapplied); inducers lower zonisamide and ethosuximide."),
+  row("phenytoin", "valproate", "crosscheck", "induction", "UGT, CYP2C9/2C19",
+      finding = "May & Rambeck's primary data (259 inpatients) as quoted by Tanaka: valproate serum concentration is reduced TO 49.5% (phenytoin), 66.2% (carbamazepine), 76.3% (phenobarbital) of monotherapy - CL x2.02, x1.51, x1.31 - matching the applied Teixeira-da-Silva 2022 factors (1.64, 1.52, 1.39) in magnitude and rank order.",
+      population = "259 inpatients (May & Rambeck 1985), via Tanaka 1999",
+      source = "Tanaka E. Clinically significant pharmacokinetic drug interactions between antiepileptic drugs. J Clin Pharm Ther 1999;24:87-92.",
+      source_short = "Tanaka 1999", pmid = "10380060", doi = "10.1046/j.1365-2710.1999.00201.x",
+      evidence_read = "full text (read 2026-10-25): Case 3 and Table 3",
+      notes = "CORRECTION: Patsalos & Perucca 2003 states valproate 'reduced BY 76/49/66%' with phenobarbital/phenytoin/carbamazepine, but those numbers are the May & Rambeck 'reduced TO' percentages (76.3/49.5/66.2% of monotherapy); read correctly they confirm the applied inducer->valproate factors. An earlier review note flagging an inducers->valproate divergence was withdrawn."),
+  row("phenytoin", "valproate", "crosscheck", "induction", "UGT, CYP2C9/2C19",
+      finding = "Primary source: valproate serum concentration reduced to 49.5% (phenytoin), 66.2% (carbamazepine), 76.3% (phenobarbital) of monotherapy.",
+      population = "259 inpatients",
+      source = "May T, Rambeck B. Serum concentrations of valproic acid: influence of dose and comedication. Ther Drug Monit 1985;7:387-390.",
+      source_short = "May & Rambeck 1985", pmid = "3936236",
+      evidence_read = "abstract; the figures are quoted in full by Tanaka 1999 and Patsalos & Perucca 2003"),
+  row("carbamazepine", "lamotrigine", "crosscheck", "induction", "UGT",
+      finding = "Carbamazepine accelerates lamotrigine glucuronidation, reducing its half-life from 24 +/- 6 h to 14 +/- 7 h (CL x1.71), close to the applied 1.595. Also: zonisamide was 40% higher on carbamazepine than phenytoin (phenytoin the stronger zonisamide inducer).",
+      population = "consensus review (carbamazepine interactions)",
+      source = "Spina E, Pisani F, Perucca E. Clinically significant pharmacokinetic drug interactions with carbamazepine. An update. Clin Pharmacokinet 1996;31:198-214.",
+      source_short = "Spina 1996", pmid = "8877250", doi = "10.2165/00003088-199631030-00004",
+      evidence_read = "full text (read 2026-10-25): sections 3.1-3.2"),
+  row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
+      finding = "Lamotrigine concentration-to-dose ratio (164 patients): C/D 0.84 (LTG alone), 0.37 (+inducers, CL ~x2.3), 3.41 (+valproate, CL ~x0.25). The valproate effect is at the strong end of the spread; the applied x0.49 is central across sources.",
+      population = "164 patients (68 children, 96 adults), TDM",
+      source = "Armijo JA, Bravo J, Cuadrado A, Herranz JL. Lamotrigine serum concentration-to-dose ratio: influence of age and concomitant antiepileptic drugs and dosage implications. Ther Drug Monit 1999;21:182-190.",
+      source_short = "Armijo 1999", pmid = "10217338",
+      evidence_read = "full text (read 2026-10-25): Table 1 and the abstract"),
+  row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
+      finding = "Single-dose lamotrigine in 19 children: CL/F 0.04 L/h/kg with valproate vs 0.11 with inducers (t1/2 41.7 vs 8.1 h). The valproate and inducer effects hold in children.",
+      population = "19 children and young adults",
+      source = "Battino D, Croci D, Granata T, et al. Single-dose pharmacokinetics of lamotrigine in children: influence of age and antiepileptic comedication. Ther Drug Monit 2001;23:217-222.",
+      source_short = "Battino 2001", pmid = "11360028",
+      evidence_read = "full text (read 2026-10-25): Table 1 and Figure 1"),
+  row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
+      finding = "Lamotrigine interactions in 31 children: median LTG t1/2 43.3 h (valproate), 14.1 h (carbamazepine/phenobarbital), 28.9 h (both). Inducers ~halve and valproate ~doubles the half-life; the applied x0.49 valproate factor sits at the ~x0.5 end of the LTG evidence spread.",
+      population = "31 children with intractable epilepsy",
+      source = "Eriksson AS, Hoppu K, Nergardh A, Boreus L. Pharmacokinetic interactions between lamotrigine and other antiepileptic drugs in children with intractable epilepsy. Epilepsia 1996;37:769-773.",
+      source_short = "Eriksson 1996", pmid = "8764817",
+      evidence_read = "full text (read 2026-10-25)"),
+  row("carbamazepine", "zonisamide", "crosscheck", "induction", "CYP3A4",
+      finding = "Carbamazepine, phenytoin and phenobarbital raised zonisamide CL/F by 24%, 28% and 29% (x~1.25) in a Japanese population model - the lower per-drug end against Silva 2025's 1.63 per defined daily dose, reconciled because a typical maintenance dose is below one DDD (INDDL ~0.4-0.5).",
+      population = "Japanese epilepsy patients, population PK",
+      source = "Okada Y, Seo T, Ishitsu T, et al. Population estimation regarding the effects of cytochrome P450 2C19 and 3A5 polymorphisms on zonisamide clearance. Ther Drug Monit 2008;30:540-543.",
+      source_short = "Okada 2008", pmid = "18641551",
+      evidence_read = "cited by Silva 2025 (read 2026-10-25); abstract",
+      notes = "Cross-checks the applied inducers->zonisamide magnitude."),
+  row("phenytoin", "valproate", "crosscheck", "binding (negative)", "albumin",
+      finding = "Valproate protein binding is saturable (Langmuir Bm 130, Kd 7.8 mcg/mL). Phenytoin, carbamazepine and zonisamide do NOT alter VALPROATE protein binding (valproate is the victim here); only ethosuximide and polytherapy (enzyme induction raising the 2-en-valproate metabolite) shifted it. Negative cross-check: no phenytoin/carbamazepine/zonisamide -> valproate binding displacement to add.",
+      population = "108 Japanese children, 342 total/unbound valproate pairs",
+      source = "Ueshima S, Aiba T, Makita T, et al. Characterization of non-linear relationship between total and unbound serum concentrations of valproic acid in epileptic children. J Clin Pharm Ther 2008;33:31-38.",
+      source_short = "Ueshima 2008", pmid = "18211614",
+      evidence_read = "full text (read 2026-10-25): Tables 2 and 3",
+      notes = "Supports the free-drug refinement material (valproate side) and confirms no binding interaction onto valproate from the inducers."),
+  row("valproate", "ethosuximide", "crosscheck", "inhibition (discordant null)", "CYP3A4",
+      finding = "Bauer 1982 (6 healthy adults): adding valproate to steady-state ethosuximide did NOT change total or nonrenal clearance (11.1 -> 11.2 and 8.3 -> 8.3 ml/h/kg; phases 2 and 3 superimposed). A null that, with Pisani's 2-of-6 non-responders, shows the valproate->ethosuximide inhibition is real but variable in occurrence.",
+      population = "6 healthy adults",
+      source = "Bauer LA, Harris C, Wilensky AJ, Raisys VA, Levy RH. Ethosuximide kinetics: possible interaction with valproic acid. Clin Pharmacol Ther 1982;31:741-745.",
+      source_short = "Bauer 1982", pmid = "6804151",
+      evidence_read = "full text (read 2026-10-25): Table I and Fig. 1",
+      notes = "Discordant with the applied Pisani 1984 row; records the interindividual variability (the applied x0.85 is a mean)."),
+  do.call(row, c(list("carbamazepine", "ethosuximide", "crosscheck", "induction", "CYP3A4",
+      finding = "Consensus review: inducers accelerate ethosuximide clearance; the ethosuximide dose must be 20-25% higher on carbamazepine/phenytoin/phenobarbital/primidone (section 3.8). Concordant with, and a lower bound to, Giaccone 1996's measured x1.66."),
+      RIVA96)),
 
   # --- Recorded: described but not applied -----------------------------------
   # Quantified only in a product label, a moiety not plotted, or a drug not in
@@ -403,27 +557,7 @@ registry <- rbind(
       source = "Moseley BD, Chanteux H, Nicolas JM, et al. A review of the drug-drug interactions of the antiepileptic drug brivaracetam. Epilepsy Res 2020;163:106327.",
       source_short = "Moseley 2020", pmid = "32361205", doi = "10.1016/j.eplepsyres.2020.106327",
       evidence_read = "abstract", to_obtain = "no",
-      notes = "Brivaracetam is not a selectable drug in the library. Listed so the inducer effect on it is recorded."),
-
-  # --- Coverage gaps: selectable victims not yet applied ---------------------
-  # Zonisamide and ethosuximide are selectable library drugs that are real
-  # victims of enzyme induction but have no applied interaction yet.
-  row("carbamazepine", "zonisamide", "recorded", "induction", "CYP3A4",
-      finding = "Zonisamide clearance rises with enzyme-inducing antiseizure drugs; half-life 55 h falls to ~30 h (Willmore 2000), i.e. CL roughly doubles. Silva 2025 - the library's OWN zonisamide source - carries an inducer-drug-load (INDDL) covariate that significantly raises CL/F; its magnitude should be read from the full text and APPLIED (zonisamide as victim of carbamazepine, phenytoin, phenobarbital).",
-      population = "64 refractory-epilepsy patients (Silva 2025); review (Willmore 2000)",
-      source = "Silva R, Colom H, Almeida A, et al. A new population pharmacokinetic model for dosing optimization of zonisamide in patients with refractory epilepsy. Eur J Pharm Sci 2025;207:107023; Willmore LJ. Drugs Aging 2000;17:441-452.",
-      source_short = "Silva 2025", pmid = "39848412", doi = "10.1016/j.ejps.2025.107023",
-      evidence_read = "abstract (Silva 2025 confirms an INDDL covariate on CL/F; the factor is in the full text); Willmore 2000 abstract for the t1/2 55->30 h",
-      to_obtain = "yes",
-      notes = "GAP: zonisamide is currently only a perpetrator (on phenytoin), never a victim. Silva 2025 is already the library's zonisamide model source, so the INDDL factor is self-consistent to apply. Read the full text for the number."),
-  row("carbamazepine", "ethosuximide", "recorded", "induction", "CYP3A4",
-      finding = "Ethosuximide is metabolized by CYP3A4; enzyme-inducing antiseizure drugs raise its clearance and valproate inhibits it. Magnitudes are reported in older TDM series (candidate sources below), not yet transcribed.",
-      population = "to be sourced",
-      source = "Candidate sources (PubMed): ethosuximide-inducer interaction series - PMIDs 12102641, 9421101, 7512905, 3146222; Patsalos & Perucca 2003 Lancet Neurol (review).",
-      source_short = "to source", pmid = "12849151", doi = "10.1016/s1474-4422(03)00409-5",
-      evidence_read = "none yet (candidate PMIDs listed)",
-      to_obtain = "yes",
-      notes = "GAP: ethosuximide is a selectable victim with no applied interaction. Needs a quantified inducer (and valproate) factor from one of the candidate sources.")
+      notes = "Brivaracetam is not a selectable drug in the library. Listed so the inducer effect on it is recorded.")
 )
 
 stopifnot(all(registry$status %in% STATUSES))
