@@ -316,6 +316,10 @@ SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60)
 # scheduled.R reads ALL_SCHEDULE_INTERVALS.
 WEEKLY_SCHEDULE_INTERVAL <- c(qwk = 7 * 24 * 60)
 ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)
+# A scheduled repeat this close (minutes) to the row that ends its schedule
+# is replaced by that row (scheduled.R): the 0.001-minute snap of a time
+# written in hours or days (TIME_SNAP_DIGITS).
+SCHEDULE_TIME_TOLERANCE <- 1e-3
 scheduledUnits <- c(
   as.vector(t(outer(
     c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
