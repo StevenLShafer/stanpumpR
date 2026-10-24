@@ -203,6 +203,25 @@ test_that("valproate inhibits ethosuximide; ethosuximide induces lamotrigine", {
   expect_true(!is.null(b2$lamotrigine$interaction$CL))
 })
 
+test_that("all three enzyme inducers induce lacosamide (phenytoin included)", {
+  r <- asmAppliedInteractions()
+  lcm <- r[r$victim == "lacosamide", ]
+  # carbamazepine (Yu 2026), phenobarbital (Wu 2025), phenytoin (Contin 2013)
+  expect_setequal(lcm$perpetrator, c("carbamazepine", "phenobarbital", "phenytoin"))
+  phtLcm <- lcm[lcm$perpetrator == "phenytoin", ]
+  expect_equal(nrow(phtLcm), 1)
+  expect_equal(phtLcm$fold, round(1.35 / 0.94, 3), tolerance = 1e-9)  # Contin 2013
+
+  # phenytoin induces lacosamide clearance, so lacosamide FALLS
+  dose <- data.frame(Drug = c("lacosamide", "phenytoin"),
+                     Time = c(0, 21 * DAY), Dose = c(200, 300),
+                     Units = c("mg PO bid", "mg PO ER qd"))
+  a <- runASM(dose, 56 * DAY, FALSE)
+  b <- runASM(dose, 56 * DAY, TRUE)
+  expect_lt(atTime(b$lacosamide, 45 * DAY), atTime(a$lacosamide, 45 * DAY))
+  expect_true(!is.null(b$lacosamide$interaction$CL))
+})
+
 test_that("two inducers add in excess, not multiplicatively", {
   # phenytoin and phenobarbital on carbamazepine: Graves measured the pair at
   # x 1.62; additive excess of 1.42 and 1.17 gives 1.59, multiplicative 1.66
