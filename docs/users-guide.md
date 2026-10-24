@@ -180,7 +180,8 @@ and you can edit it (see *Drug Library*).
 |---|---|
 | Show typical | The shaded band, above |
 | Normalize to | Rescale every curve to its own peak plasma or peak effect-site value, so drugs on wildly different scales can be compared in shape |
-| Max time | How far the simulation runs. The choices follow the Time units: 1–24 hours (minutes, hours), 2–365 days, 4–52 weeks |
+| Max time | How far the simulation runs: a slider in the Time units, up to 24 hours (minutes, hours), 365 days or 52 weeks |
+| Min time | Where the time axis starts: a slider, 0 unless moved, for a close look at a window late in a long plot. Everything is still simulated from 0 |
 | Plasma line / Effect site line | Line style, including none |
 | Y axis height | Plot height in pixels |
 | Time until threshold | Draws, for each drug, how long until it falls to its recovery threshold (`endCe` in the library). Only available when normalization is off |
@@ -649,8 +650,8 @@ Consequences worth knowing when comparing the two side by side:
 Above the dose table:
 
 - **Time units** — minutes, hours, days or weeks. A number typed as a time is
-  in this unit, the time axis is labelled in it, and it sets the **Max time**
-  choices. Changing it rewrites every time in the dose table in the new unit
+  in this unit, the time axis is labelled in it, and it sets the range and
+  step of the **Max time** and **Min time** sliders. Changing it rewrites every time in the dose table in the new unit
   (90 minutes becomes 1.5 hours), so the doses stay where they were; it also
   applies any unapplied edits.
 - **Time Display**
@@ -665,7 +666,7 @@ works in minutes.
 
 Target-controlled infusions and inhaled agents are simulated only on plots of
 7 days or less; Suggest Dosing is offered in minutes and hours. A dose beyond
-the unit's longest Max time (24 hours, 365 days, 52 weeks) brings a
+the end of the Max time slider (24 hours, 365 days, 52 weeks) brings a
 notification rather than a longer plot.
 
 ---

@@ -80,6 +80,11 @@
 #' longer than \code{maximum / GRID_UNIFORM_POINTS}.  See the header of
 #' \code{R/simulationTimeGrid.R}.
 #'
+#' Inside \code{withGridWindow()}, with a window starting after 0, the line is
+#' that one up to the window and, from the window's start to \code{maximum},
+#' the line a plot as long as the window would have: a window from 15 to 16
+#' weeks is drawn as finely as a one-week plot.
+#'
 #' @param knots times that must be points of the line: the doses, the instant
 #'   before each, the instant a lagged dose was given, events.  0 and
 #'   \code{maximum} are always added, and anything below 0 is dropped.
@@ -90,8 +95,30 @@
 #' @keywords internal
 simulationTimeGrid <- function(knots, maximum, start = 1)
 {
-  knots <- sort(unique(c(0, knots, maximum)))
-  knots <- knots[knots >= 0]
+  whole <- gridFill(knots, maximum, maximum, start)
+  minimum <- gridMinimum(maximum)
+  if (minimum == 0) return(withGridOutputTimes(whole, maximum))
+
+  # The window is filled as a plot of its own length would be, from its start
+  # as an extra knot.  An extra point is safe: the input is constant between
+  # neighbouring knots whatever lies between them, so the engines stay exact.
+  # Before the window the line is the one the whole plot gets, which is all
+  # that part needs: it is simulated, and read for nothing that is drawn.
+  window <- gridFill(c(minimum, knots[knots > minimum]), maximum, maximum - minimum,
+                     start, origin = minimum)
+  withGridOutputTimes(sort(unique(c(whole[whole < minimum], window))), maximum)
+}
+
+
+# The fill of simulationTimeGrid(), from `origin` (0 for a whole plot, the
+# window's start for a window), for a plot of length `scale`: the legacy fill
+# up to GRID_LEGACY_MAXIMUM, the scaled fill beyond it.  With origin 0 and
+# scale `maximum` this is, line for line, the time line every engine has
+# always had.
+gridFill <- function(knots, maximum, scale, start, origin = 0)
+{
+  knots <- sort(unique(c(origin, knots, maximum)))
+  knots <- knots[knots >= origin]
   if (length(knots) < 2) return(knots)
 
   gapStart <- knots[-length(knots)]
@@ -99,7 +126,7 @@ simulationTimeGrid <- function(knots, maximum, start = 1)
   # so the legacy fill below reproduces their line bit for bit.
   distance <- diff(knots)
 
-  if (maximum <= GRID_LEGACY_MAXIMUM)
+  if (scale <= GRID_LEGACY_MAXIMUM)
   {
     # The fill the engines always used, vectorised: every gap's offsets at
     # once rather than one gap at a time, which grew the vector once per knot.
@@ -110,11 +137,11 @@ simulationTimeGrid <- function(knots, maximum, start = 1)
     gap <- rep(seq_along(distance), each = length(newTimes))
     tau <- rep(newTimes, times = length(distance))
     keep <- tau <= distance[gap]
-    return(withGridOutputTimes(sort(unique(c(knots, gapStart[gap[keep]] + tau[keep]))), maximum))
+    return(sort(unique(c(knots, gapStart[gap[keep]] + tau[keep]))))
   }
 
-  h    <- maximum / GRID_UNIFORM_POINTS
-  tau0 <- max(start, maximum / GRID_FINE_POINTS)
+  h    <- scale / GRID_UNIFORM_POINTS
+  tau0 <- max(start, scale / GRID_FINE_POINTS)
   r    <- (MINS_PER_DAY / start)^(1 / GRID_LOG_POINTS)
 
   # The geometric offsets every gap shares: tau0 r^k for as long as the step
@@ -145,7 +172,47 @@ simulationTimeGrid <- function(knots, maximum, start = 1)
     fill <- c(fill, gapStart[long][g] + tauK + j * (span / n)[g])
   }
 
-  withGridOutputTimes(sort(unique(c(knots, fill))), maximum)
+  sort(unique(c(knots, fill)))
+}
+
+
+# The start of the window drawn (minutes), as set by withGridWindow(): 0
+# outside it, and 0 for a window that does not start inside (0, maximum).
+gridMinimum <- function(maximum)
+{
+  minimum <- .sprglobals$gridMinimum
+  if (is.null(minimum) || !is_valid_number(minimum, 0) || minimum >= maximum) 0 else minimum
+}
+
+#' Evaluate code with every simulation time line refined inside a window
+#'
+#' The app draws a window from Min time to Max time.  Everything is simulated
+#' from 0, but a window far from 0 -- 15 to 16 weeks -- would get only the
+#' share of the whole plot's points that falls inside it.  Inside this call
+#' \code{simulationTimeGrid()} fills the window as a plot of the window's
+#' length, and \code{equispaceTimes()} adds an equispaced grid across it.
+#'
+#' @param minimum start of the window drawn, minutes; 0 changes nothing
+#' @param code the code to run
+#' @returns the value of \code{code}
+#' @keywords internal
+withGridWindow <- function(minimum, code)
+{
+  old <- .sprglobals$gridMinimum
+  .sprglobals$gridMinimum <- minimum
+  on.exit(.sprglobals$gridMinimum <- old, add = TRUE)
+  force(code)
+}
+
+# The equispaced times a drug's series is also kept on (finishDrugSeries())
+# and the derived panels read (derivedSeriesTimes()): RESOLUTION points from 0
+# to `maximum`, and inside withGridWindow() RESOLUTION more across the window.
+equispaceTimes <- function(maximum)
+{
+  times <- seq(from = 0, to = maximum, length.out = RESOLUTION)
+  minimum <- gridMinimum(maximum)
+  if (minimum == 0) return(times)
+  sort(unique(c(times, seq(from = minimum, to = maximum, length.out = RESOLUTION))))
 }
 
 

@@ -49,7 +49,7 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   results$CeNormCe <- if (maxCe > 0) results$"Effect Site" / maxCe * 100 else 0
 
   # Calculate equispaced output
-  xout <- seq(from = 0, to = maximum, length.out = RESOLUTION)
+  xout <- equispaceTimes(maximum)
   equiSpaceCe <- if (ceAllNA) {
     # Zero, not NA.  A prodrug has no effect of its own and its MEAC is zero,
     # and both the hover readout and the total-opioid MEAC sum read equiSpace.

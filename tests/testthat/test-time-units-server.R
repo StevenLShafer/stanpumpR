@@ -118,8 +118,10 @@ test_that("a change of unit converts the table, keeps the minutes and starts a f
     # The engine sees the same minutes, so nothing is re-simulated
     expect_identical(doseTableClean(), before)
     expect_match(notified(sent, "timeConverted")$message$html, "converted to hours")
-    # minutes and hours share their Max times: 1 hour is kept
-    expect_equal(lastSent(sent, "maximum")$value, "60")
+    # minutes and hours share their range: 1 hour is kept, in the hours
+    # slider's 15-minute steps
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), 60)
+    expect_equal(as.numeric(lastSent(sent, "maximum")$step), 15)
     echo(session, sent)
     expect_equal(plotInfo()$plotMaximum, 120)   # lengthened past the dose at 90
     expect_equal(plotInfo()$steps, 15)
@@ -163,13 +165,16 @@ test_that("clock times become elapsed times; days and weeks force elapsed", {
     expect_equal(mode$value, "relative")
     expect_false(grepl("clock", paste(unlist(mode$options), collapse = " ")))
     expect_equal(doseTable()$Time[1:2], c("0.0625", "0.08333333333"))
-    # Max time: 1 hour is not a choice in days; the shortest is
-    expect_equal(lastSent(sent, "maximum")$value, maxTimeValue(2 * MINS_PER_DAY))
+    # Max time: 1 hour is less than the days slider's step; a day is its
+    # first.  The plot waits for the browser to report it.
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), MINS_PER_DAY)
+    expect_equal(as.numeric(lastSent(sent, "maximum")$step), MINS_PER_DAY)
+    expect_error(plotInfo(), class = "shiny.silent.error")
     n <- length(sent$inputs)
     echo(session, sent)
     expect_equal(doseTable()$Time[1:2], c("0.0625", "0.08333333333"))  # the echo converts nothing
-    expect_equal(plotInfo()$plotMaximum, 2 * MINS_PER_DAY)
-    expect_equal(plotInfo()$steps, MINS_PER_DAY / 2)
+    expect_equal(plotInfo()$plotMaximum, MINS_PER_DAY)
+    expect_equal(plotInfo()$steps, MINS_PER_DAY / 4)
     # back to hours: both choices again
     session$setInputs(timeUnits = "hours")
     expect_true(grepl("clock", paste(unlist(lastSent(sent, "timeMode")$options), collapse = " ")))
@@ -256,7 +261,7 @@ test_that("a scenario in days loads without conversion, once the browser catches
     # the selectors still say minutes: the plot waits, silently
     expect_error(plotInfo(), class = "shiny.silent.error")
     expect_equal(lastSent(sent, "timeUnits")$value, "days")
-    expect_equal(lastSent(sent, "maximum")$value, maxTimeValue(28 * MINS_PER_DAY))
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), 28 * MINS_PER_DAY)
     # the browser reports the unit before the Max time: still waiting
     session$setInputs(timeUnits = "days")
     expect_error(plotInfo(), class = "shiny.silent.error")
@@ -409,7 +414,7 @@ test_that("a long-term drug on a short plot offers a year", {
     expect_length(notifications(sent, "longTermPrompt"), 1)
     session$setInputs(showLongTermTime = 1)
     expect_equal(lastSent(sent, "timeUnits")$value, "days")
-    expect_equal(lastSent(sent, "maximum")$value, maxTimeValue(MINS_PER_YEAR))
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), MINS_PER_YEAR)
     echo(session, sent)
     expect_equal(doseTableFormat(), timeFormat("days", "relative"))
     expect_equal(plotInfo()$plotMaximum, MINS_PER_YEAR)

@@ -226,26 +226,65 @@ app_server <- function(input, output, session) {
     doseTableHistory()$do(dt)$clear()
   }
 
-  # Which unit the Max time and Time Display choices were last sent for.
-  # Plain variables, not reactive values: they record what the browser was
-  # told.  The initial inputs (a restored bookmark's too) are in place before
-  # the server function runs, and the UI built both lists for them.
-  maxChoicesUnit <- isolate(timeUnit())
+  # Which unit the Max time and Min time sliders and the Time Display choices
+  # were last set up for.  Plain variables, not reactive values: they record
+  # what the browser was told.  The initial inputs (a restored bookmark's too)
+  # are in place before the server function runs, and the UI built them for
+  # that unit.
+  sliderUnit <- isolate(timeUnit())
   modeChoicesUnit <- isolate(timeUnit())
+  # TRUE from when syncTimeSliders() sends the sliders new values until the
+  # browser reports them
+  sliderPending <- reactiveVal(FALSE)
+  observeEvent(list(input$maximum, input$minimum), ignoreInit = TRUE, {
+    sliderPending(FALSE)
+  })
 
-  # Offer the unit's Max time choices.  The choices and the selection are
-  # always sent together: selectize ignores a selection that is not among the
-  # options it has, and will not send an empty value.  Without `selected` the
-  # current Max time is kept if the unit offers it, else snapped to the
-  # nearest longer choice.
-  syncMaxTimeChoices <- function(unit, selected = NULL) {
-    if (identical(unit, maxChoicesUnit) && is.null(selected)) return(invisible())
-    if (is.null(selected)) selected <- snapMaximum(isolate(input$maximum), unit)
-    updateSelectInput(session, "maximum", choices = maxTimeChoices(unit),
-                      selected = maxTimeValue(snapMaximum(selected, unit)))
-    maxChoicesUnit <<- unit
+  # Give the Max time and Min time sliders the unit's range and step
+  # (timeSliderRange()), with their values snapped to it.  Without `maximum`
+  # or `minimum` the current value is kept, snapped.  The values are minutes
+  # in every unit, so a change of unit leaves them meaning what they meant;
+  # only the step, and so the snapping, changes.
+  syncTimeSliders <- function(unit, maximum = NULL, minimum = NULL) {
+    if (identical(unit, sliderUnit) && is.null(maximum) && is.null(minimum)) return(invisible())
+    if (is.null(maximum)) maximum <- isolate(input$maximum)
+    if (is.null(minimum)) minimum <- isolate(input$minimum)
+    maximum <- snapMaximum(maximum, unit)
+    minimum <- snapMinimum(minimum, maximum, unit)
+    # New values make the plot wait until the browser reports them, rather
+    # than simulate first with the old ones (plotInfo())
+    shownMaximum <- suppressWarnings(as.numeric(isolate(input$maximum)))
+    shownMinimum <- suppressWarnings(as.numeric(isolate(input$minimum)))
+    if (length(shownMinimum) != 1) shownMinimum <- 0
+    if (!isTRUE(maximum == shownMaximum && minimum == shownMinimum)) sliderPending(TRUE)
+    r <- timeSliderRange(unit)
+    updateSliderInput(session, "maximum", value = maximum, min = r$step, max = r$max, step = r$step)
+    updateSliderInput(session, "minimum", value = minimum, min = r$min, max = r$max, step = r$step)
+    sliderUnit <<- unit
     invisible()
   }
+
+  # The window must have a length: Min time is kept a step below Max time.
+  # Dragging Max time down to Min time pulls Min time down with it; dragging
+  # Min time up to Max time pushes Max time up, or, at the end of the
+  # slider, stops a step short.
+  observeEvent(input$maximum, ignoreInit = TRUE, {
+    maximum <- suppressWarnings(as.numeric(input$maximum))
+    minimum <- suppressWarnings(as.numeric(input$minimum))
+    if (!is_valid_number(maximum) || !is_valid_number(minimum) || minimum < maximum) return()
+    updateSliderInput(session, "minimum", value = snapMinimum(minimum, maximum, timeUnit()))
+  })
+  observeEvent(input$minimum, ignoreInit = TRUE, {
+    maximum <- suppressWarnings(as.numeric(input$maximum))
+    minimum <- suppressWarnings(as.numeric(input$minimum))
+    if (!is_valid_number(maximum) || !is_valid_number(minimum) || minimum < maximum) return()
+    r <- timeSliderRange(timeUnit())
+    if (minimum + r$step <= r$max) {
+      updateSliderInput(session, "maximum", value = snapMaximum(minimum + r$step, timeUnit()))
+    } else {
+      updateSliderInput(session, "minimum", value = r$max - r$step)
+    }
+  })
 
   syncTimeModeChoices <- function(unit, selected) {
     updateSelectizeInput(session, "timeMode", choices = timeModeChoices(unit), selected = selected)
@@ -259,11 +298,11 @@ app_server <- function(input, output, session) {
   # they will report means their echo finds nothing to convert.
   timeApi <- list(
     setDoseTable = setDoseTable,
-    showTimeSettings = function(unit, mode, maximum) {
+    showTimeSettings = function(unit, mode, maximum, minimum = 0) {
       format <- timeFormat(unit, mode)
       updateSelectInput(session, "timeUnits", selected = format[["unit"]])
       syncTimeModeChoices(format[["unit"]], format[["mode"]])
-      syncMaxTimeChoices(format[["unit"]], selected = maximum)
+      syncTimeSliders(format[["unit"]], maximum = maximum, minimum = minimum)
     }
   )
 
@@ -285,7 +324,7 @@ app_server <- function(input, output, session) {
     if (identical(from, target)) {
       # The echo of a change the server made (a scenario, a restored bookmark,
       # the long-term prompt, a refused switch): the table is already in it.
-      syncMaxTimeChoices(unit)
+      syncTimeSliders(unit)
       return()
     }
 
@@ -306,7 +345,7 @@ app_server <- function(input, output, session) {
     }
 
     setDoseTable(res$table, target)
-    syncMaxTimeChoices(unit)
+    syncTimeSliders(unit)
     note <- if (unit != from[["unit"]]) {
       paste0("Dose times converted to ", unit, ".")
     } else if (!identicalTable(res$table, draft)) {
@@ -503,20 +542,22 @@ app_server <- function(input, output, session) {
       DT <- as.data.frame(state$values$DT)
       target <- selectorFormat()
       restoredMaximum <- suppressWarnings(as.numeric(state$input$maximum))
+      restoredMinimum <- suppressWarnings(as.numeric(state$input$minimum))
+      if (length(restoredMinimum) != 1) restoredMinimum <- 0
       res <- rebaseDoseTimes(DT, saved, target, input$referenceTime)
       if (res$ok) {
         setDoseTable(res$table, target)
-        if (!isTRUE(restoredMaximum %in% MAX_TIMES[[target[["unit"]]]]$times)) {
-          # A Max time the unit does not offer (an old bookmark's 16 weeks):
-          # the browser fell back to the first choice; take the nearest
-          # longer one instead.
-          syncMaxTimeChoices(target[["unit"]], selected = snapMaximum(restoredMaximum, target[["unit"]]))
+        if (!isTRUE(restoredMaximum == snapMaximum(restoredMaximum, target[["unit"]]))) {
+          # A Max time the unit's slider cannot show (an old bookmark's 16
+          # weeks in days, 100 minutes from before the slider in hours): put
+          # it on the slider's steps.
+          syncTimeSliders(target[["unit"]], maximum = restoredMaximum, minimum = restoredMinimum)
         }
       } else {
         # Clock times and no readable procedure start: keep the table as
         # saved, and show the selectors that match it.
         setDoseTable(DT, saved)
-        timeApi$showTimeSettings(saved[["unit"]], saved[["mode"]], restoredMaximum)
+        timeApi$showTimeSettings(saved[["unit"]], saved[["mode"]], restoredMaximum, restoredMinimum)
         showNotification("The dose table's clock times need a procedure start (HH:MM).",
                          type = "warning", duration = 10)
       }
@@ -959,7 +1000,8 @@ app_server <- function(input, output, session) {
         newDrugs,
         plotMaximum(),
         plotRecovery(),
-        cache = ivSimulationCache
+        cache = ivSimulationCache,
+        plotMinimum = plotMinimum()
       ) |> profileCode("processdoseTable() in drugs()")
       ivSimulationCache <<- newDrugs
 
@@ -1037,16 +1079,31 @@ app_server <- function(input, output, session) {
       req(identical(doseTableFormat(), selectorFormat()))
 
       requestedMaximum <- suppressWarnings(as.numeric(input$maximum))
-      if (!is_valid_number(requestedMaximum) || !requestedMaximum %in% MAX_TIME_VALUES) {
+      # Not checked against a list of lengths any more, the slider being
+      # continuous, but still bounded: from the shortest step to the longest
+      # length any unit offers
+      if (!is_valid_number(requestedMaximum, min(TIME_SLIDER_STEPS), max(MAX_TIME_VALUES))) {
         stop(safeError("Invalid maximum simulation time."))
       }
-      # A Max time of another unit: the choices for this one are on their way.
       unit <- timeUnit()
+      slider <- timeSliderRange(unit)
+      # A Max time past this unit's slider: the browser has not yet caught up
+      # with a change of unit (syncTimeSliders()).
+      req(requestedMaximum <= slider$max)
+      # Min time, where the axis starts.  Everything is still simulated from
+      # 0; only the window drawn, and the resolution inside it
+      # (simulationTimeGrid()), move.  A Min time at or past Max time is a
+      # moment before the observers above pull them apart.
+      plotMinimum <- suppressWarnings(as.numeric(input$minimum))
+      if (!is_valid_number(plotMinimum, 0)) plotMinimum <- 0
+      req(plotMinimum < requestedMaximum)
+      # The server has just set the sliders (a change of unit, a scenario, a
+      # restored bookmark): wait for the browser to report the new values.
+      req(!sliderPending())
       maxTimes <- MAX_TIMES[[unit]]
-      req(requestedMaximum %in% maxTimes$times)
 
       plotMaximum <- requestedMaximum
-      steps <- maxTimes$steps[maxTimes$times == plotMaximum]
+      steps <- axisTimeStep(plotMinimum, plotMaximum, unit)
       maxTime <- max(as.numeric(doseTableClean()$Time),
                      as.numeric(eventTableClean()$Time),
                      na.rm = TRUE)
@@ -1056,7 +1113,7 @@ app_server <- function(input, output, session) {
       # and hours: 30 minutes, as always).  Never past the unit's longest Max
       # time: a longer plot is a matter of choosing a larger unit.
       margin <- TIME_EXTEND_MARGIN[[unit]]
-      longest <- max(maxTimes$times)
+      longest <- slider$max
       if ((maxTime + margin - 1) >= plotMaximum) {
         steps <- maxTimes$steps[maxTimes$times >= (maxTime + margin)][1]
         if (is.na(steps)) steps <- utils::tail(maxTimes$steps, 1)
@@ -1065,6 +1122,8 @@ app_server <- function(input, output, session) {
           plotMaximum <- longest
           steps <- utils::tail(maxTimes$steps, 1)
         }
+        # A window that does not start at 0 is ticked for its own width
+        if (plotMinimum > 0) steps <- axisTimeStep(plotMinimum, plotMaximum, unit)
       }
 
       # Doses and events the plot cannot reach (see the observer below)
@@ -1072,11 +1131,13 @@ app_server <- function(input, output, session) {
         doses = sum(doseTableClean()$Time >= plotMaximum),
         events = sum(as.numeric(eventTableClean()$Time) >= plotMaximum)
       )
-      list(plotMaximum = plotMaximum, steps = steps, beyond = beyond)
+      list(plotMinimum = plotMinimum, plotMaximum = plotMaximum, steps = steps, beyond = beyond)
     }, name = "plotInfo() reactive")
   })
 
   plotMaximum <- reactive(plotInfo()$plotMaximum)
+  # Where the axis starts: Min time, 0 unless the slider is moved
+  plotMinimum <- reactive(plotInfo()$plotMinimum)
   # Tick spacing, in minutes, for the current time unit
   steps       <- reactive(plotInfo()$steps)
 
@@ -1228,8 +1289,9 @@ app_server <- function(input, output, session) {
 
       # The breaks are minutes, like the data; only the labels and the title
       # are in the display unit, or clock time (utils-time-display.R).  The
-      # axis runs to plotMaximum() even when the tick step does not divide it.
-      xBreaks <- seq(0, plotMaximum(), by = steps())
+      # axis runs from plotMinimum() to plotMaximum() even when the tick step
+      # divides neither.
+      xBreaks <- axisTimeBreaks(plotMinimum(), plotMaximum(), steps())
       xLabels <- axisTimeLabels(xBreaks, timeUnit(), referenceTime())
       xAxisLabel <- timeAxisTitle(timeUnit(), referenceTime())
       if (referenceTime() != REFERENCE_TIME_NONE) {
@@ -1262,6 +1324,7 @@ app_server <- function(input, output, session) {
         xBreaks = xBreaks,
         xLabels = xLabels,
         xAxisLabel = xAxisLabel,
+        xMinimum = plotMinimum(),
         xMaximum = plotMaximum(),
         plasmaLinetype = plasmaLinetype,
         effectsiteLinetype = effectsiteLinetype,
@@ -1625,7 +1688,7 @@ app_server <- function(input, output, session) {
     # coarse on a 52-week plot.  Kept on the plot, and rounded: to 0.1 minute
     # in minutes, as always, otherwise to a quarter of the unit.
     unit <- doseTableFormat()[["unit"]]
-    time <- min(max(as.numeric(e$x), 0), plotMaximum())
+    time <- min(max(as.numeric(e$x), plotMinimum()), plotMaximum())
     time <- if (unit == "minutes") {
       round(time, 1)
     } else {
@@ -1763,6 +1826,7 @@ app_server <- function(input, output, session) {
           "Cancel"
         ),
         uiOutput("skipNextDoseUI"),
+        uiOutput("stopAdministrationUI"),
         footer = NULL,
         easyClose = TRUE,
         size = "s"
@@ -1898,6 +1962,52 @@ app_server <- function(input, output, session) {
     }, name = "input$skipNextDoseBtn observer")
   })
 
+  # "Stop" (R/stop-administration.R): offered in both dose dialogs while the
+  # clicked drug has an infusion, a TCI target, a repeating dose or an inhaled
+  # agent's setting running at the time clicked.  It writes the 0 row the
+  # dose table's own rules read as a stop, at that time.
+  stopTarget <- function(target = skipTarget()) {
+    if (is.null(target) || !nzchar(target$drug)) return(NULL)
+    format <- doseTableFormat()
+    stopAdministration(doseTable(), target$drug, target$time, plotMaximum(), format,
+                       referenceFor(format))
+  }
+
+  output$stopAdministrationUI <- renderUI({
+    ended <- tryCatch(stopTarget(), error = function(e) NULL)
+    if (is.null(ended)) return(NULL)
+    format <- doseTableFormat()
+    target <- skipTarget()
+    tags$div(
+      class = "mt-3",
+      actionButton(
+        "stopAdministrationBtn",
+        paste0("Stop ", target$drug, " at ", minutesToEntryTime(target$time, format, referenceFor(format))),
+        icon = icon("stop"),
+        class = "btn-outline-danger w-100"
+      ),
+      tags$p(
+        class = "small text-muted mt-1 mb-0",
+        paste0("Ends ", stoppedText(ended$stopped$label), ", by adding a dose of 0 to the dose table.")
+      )
+    )
+  })
+
+  observeEvent(input$stopAdministrationBtn, {
+    profileCode({
+      target <- skipTarget()
+      ended <- stopTarget(target)
+      removeModal()
+      if (is.null(ended)) return()
+      doseTable(ended$table)
+      format <- doseTableFormat()
+      showNotification(paste0(
+        "Stopped ", stoppedText(ended$stopped$label), " of ", target$drug, " at ",
+        minutesToEntryTime(target$time, format, referenceFor(format)), "."
+      ), type = "message")
+    }, name = "input$stopAdministrationBtn observer")
+  })
+
   showEditDrugModal <- function(drug) {
     skipTarget(list(drug = drug, time = DrugTimeUnits()$time))
     showModal(
@@ -1916,6 +2026,7 @@ app_server <- function(input, output, session) {
           "Cancel"
         ),
         uiOutput("skipNextDoseUI"),
+        uiOutput("stopAdministrationUI"),
         footer = NULL,
         easyClose = TRUE,
         size = "s"

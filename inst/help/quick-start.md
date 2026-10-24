@@ -56,7 +56,7 @@ Each drug gets its own panel. The solid line is the **effect-site** concentratio
 </figure>
 
 - **Hover** for the exact concentration at any time.
-- **Click** to add a dose at that time (applied immediately). While an oral schedule (`mg PO bid`) is running, the dialog also offers **Skip next dose**.
+- **Click** to add a dose at that time (applied immediately). While an infusion, a TCI, a schedule or an inhaled agent is running, the dialog also offers **Stop**, which ends it at that time; while an oral schedule (`mg PO bid`) is running, **Skip next dose**.
 - **Add new drug** (the button at the lower left of the plot) to add a drug that is not yet plotted, without going to the dose table.
 - **Double-click** a drug's curve to edit or delete its doses.
 
@@ -64,7 +64,7 @@ See [Reading the plot](help:reading-the-plot).
 
 ## 5. Refine
 
-The **Time** panel sets the time units and how far the simulation runs (*Max time*, whose choices follow the units). **Graph Options** sets line styles, normalization, a log axis, the *Time until threshold* lines, and the *Minto / Schnider* switch that draws those propofol and remifentanil models beside the library's own.
+The **Time** panel sets the time units, how far the simulation runs (the *Max time* slider) and where the axis starts (the *Min time* slider, for a close look late in a long plot). **Graph Options** sets line styles, normalization, a log axis, the *Time until threshold* lines, and the *Minto / Schnider* switch that draws those propofol and remifentanil models beside the library's own.
 
 <figure class="help-figure help-figure-narrow">
 <img src="stanpumpr-assets/help/quick-start-graph-options.png" alt="The Graph Options panel: Show typical, Normalize to, plasma and effect-site line styles, Y axis height, Time until threshold, the opioid-MAC interaction checkbox and the Minto / Schnider switch">

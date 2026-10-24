@@ -444,6 +444,21 @@ MAX_TIME_LABEL_UNITS <- c(minutes = "hour", hours = "hour", days = "day", weeks 
 # inside it but not in the current unit's list is a moment when the browser has
 # not yet caught up with a change of unit.
 MAX_TIME_VALUES <- sort(unique(unlist(lapply(MAX_TIMES, `[[`, "times"))))
+# The Max time and Min time sliders (timeSliderRange() in R/utils-time.R):
+# minutes from 0 to the unit's longest Max time, in these steps.  The values
+# stay in minutes whatever the unit, as input$maximum always has; app.js shows
+# them in the unit.
+TIME_SLIDER_STEPS <- c(minutes = 5, hours = 15, days = MINS_PER_DAY, weeks = MINS_PER_WEEK)
+# Tick spacings (minutes) for a plot that is not one of the MAX_TIMES lengths
+# from 0, such as a window from 15 to 16 weeks: the smallest that leaves at
+# most AXIS_MAX_TICK_INTERVALS intervals across the window (axisTimeStep()).
+AXIS_TICK_STEPS <- list(
+  minutes = c(1, 2, 5, 10, 15, 20, 30, 60, 120, 180, 240, 360),
+  hours   = MINS_PER_HOUR * c(0.25, 0.5, 1, 2, 3, 4, 6),
+  days    = MINS_PER_DAY * c(0.25, 0.5, 1, 2, 7, 14, 30, 60),
+  weeks   = MINS_PER_WEEK * c(0.25, 0.5, 1, 2, 4, 8)
+)
+AXIS_MAX_TICK_INTERVALS <- 8
 # How close (minutes) the last dose or event may come to the end of the plot
 # before the plot is lengthened to show what follows it.  30 minutes is the
 # original rule, kept so that the minute and hour plots are unchanged.

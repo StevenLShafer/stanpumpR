@@ -59,7 +59,7 @@ See [Additional plots](help:additional-plots).
 
 ## Axes
 
-The y axis of each panel is linear by default; **Log Y axis** switches to logarithmic where that is meaningful. The x axis runs to **Max time** and is labelled in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), or with times of day under **Actual time**; see [Time display](help:time-display). The unit changes only the labels: the simulation itself is always computed in minutes. Panel height is set by the **Y axis height** slider.
+The y axis of each panel is linear by default; **Log Y axis** switches to logarithmic where that is meaningful. The x axis runs from **Min time** (0 unless moved) to **Max time** and is labelled in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), or with times of day under **Actual time**; see [Time display](help:time-display). The unit changes only the labels: the simulation itself is always computed in minutes. Panel height is set by the **Y axis height** slider.
 
 ## Resolution
 
