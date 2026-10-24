@@ -15,7 +15,8 @@
 # A companion entry (an alternative model of a library drug, with
 # $companionOf naming the drug; R/alternativeModels.R) takes its parent's dose
 # rows and is cached under its own name, like any other drug.
-processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = NULL)
+processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = NULL,
+                              antiseizureInteractions = FALSE)
 {
   for (drug in names(drugs))
   {
@@ -42,37 +43,19 @@ processdoseTable <- function (DT, ET, drugs, plotMaximum, plotRecovery, cache = 
         plotMaximum,
         recovery
         )
-      sim <- list(
-        DT                = tempDT,
-        ET                = tempET,
-        results           = X$results,
-        equiSpace         = X$equiSpace,
-        max               = X$max,
-        # wideOwn is this drug's own simulation and nothing else.  wide is what
-        # gets plotted, and may additionally carry metabolite formed from
-        # another drug.  Keeping them apart is what makes folding idempotent.
-        wideOwn           = X$wide,
-        wide              = X$wide,
-        metaboliteSeries  = X$metaboliteSeries,
-        # The effect-site states behind Recovery, which foldMetabolites() needs
-        # to solve the combined time until threshold.  Own and formed are kept
-        # apart for the same reason wideOwn and wide are.
-        recoveryStatesOwn        = X$recoveryStates,
-        metaboliteRecoveryStates = X$metaboliteRecoveryStates,
-        tci               = X$tci,
-        scheduled         = X$scheduled,
-        # The peripheral concentrations and the depot (R/compartments.R), own
-        # and as plotted, kept apart as wideOwn and wide are, and the formed
-        # metabolite's, which foldMetabolites() adds to the metabolite drug's.
-        compartmentsOwn        = X$compartments,
-        compartments           = X$compartments,
-        metaboliteCompartments = X$metaboliteCompartments
-      )
+      sim <- simulationFields(X, tempDT, tempET)
     }
     for (field in names(sim)) drugs[[drug]][[field]] <- sim[[field]]
     drugs[[drug]]$sim    <- sim
     drugs[[drug]]$simKey <- key
   }
+
+  # The pharmacokinetic interactions among the antiseizure drugs (Graph
+  # Options), which re-simulate the drugs they change on top of their own
+  # simulations; see R/antiseizureInteractions.R.
+  if (isTRUE(antiseizureInteractions))
+    drugs <- applyAntiseizureInteractions(drugs, DT, ET, plotMaximum,
+                                          plotRecovery, cache = cache)
 
   foldMetabolites(drugs, plotMaximum, plotRecovery)
 }
@@ -106,7 +89,8 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           vkorc1 = VKORC1_DEFAULT,
                           cyp2b6 = CYP2B6_DEFAULT,
                           pregnant = FALSE,
-                          alternativeModels = FALSE) {
+                          alternativeModels = FALSE,
+                          antiseizureInteractions = FALSE) {
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
   resolve <- function(drugs, drug) {
@@ -188,6 +172,12 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
     outputComments("Getting PK for", entry$drug)
     drugs[[entry$drug]] <- entry
   }
+
+  # With the antiseizure interactions on, each drug they change is drawn
+  # beside its own curve without them, as a companion entry
+  # (R/antiseizureInteractions.R).
+  if (isTRUE(antiseizureInteractions))
+    drugs <- addAntiseizureReferenceEntries(drugs, dosed)
 
   drugs
 }

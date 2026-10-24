@@ -496,5 +496,7 @@ HELP_GENERATED_BLOCKS <- list(
   "james-lbm-figure" = helpJamesLBMFigure,
   "vasoactive-registry-table" = helpVasoactiveRegistryMarkdown,
   "vasoactive-to-obtain" = helpVasoactiveToObtainMarkdown,
-  "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown
+  "antibiotic-mbc-table" = helpAntibioticMbcBandMarkdown,
+  "antiseizure-interaction-table" = helpAntiseizureInteractionTableMarkdown,
+  "antiseizure-interaction-sources" = helpAntiseizureInteractionSourcesMarkdown
 )

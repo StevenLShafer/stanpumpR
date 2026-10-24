@@ -1208,6 +1208,10 @@ getDrugPK <- function(
   # covariates simCpCe() needs to rebuild the PK for each dose size
   # (doseSizePK()).
   out$scDoseBioavailability <- validateDoseBioavailability(X$scDoseBioavailability, drug)
+  # A drug whose clearance an antiseizure interaction can change keeps its
+  # covariates too, so that applyAntiseizureInteractions() can rebuild its PK
+  # sets segment by segment (asmSegmentPK(), R/antiseizureInteractions.R).
+  if (drug %in% asmInteractionVictims()) out$covariates <- covariates
   if (isTRUE(X$doseDependent))
   {
     if (!"dose" %in% names(formals(get(drug, mode = "function"))))

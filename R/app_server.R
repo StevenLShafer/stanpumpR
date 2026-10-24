@@ -741,6 +741,8 @@ app_server <- function(input, output, session) {
   # model beside the library's (Xue), a second INR line.  FALSE until the box
   # reports, and for bookmarks made before it existed.
   hamberg <- reactive(isTRUE(input$hamberg))
+  # The antiseizure drug interactions (R/antiseizureInteractions.R)
+  antiseizureInteractions <- reactive(isTRUE(input[[ASM_INTERACTIONS_INPUT]]))
   # The companion groups the user has turned on, as group keys for
   # recalculatePK() and the problem notices.
   companionGroupsOn <- reactive(c(
@@ -756,8 +758,11 @@ app_server <- function(input, output, session) {
   companionGroupsShown <- reactive({
     entries <- tryCatch(Filter(isAlternativeModelEntry, drugs()),
                         error = function(e) list())
-    unique(vapply(entries, function(e) companionModelGroup(e$companionOf),
-                  character(1)))
+    unique(vapply(entries, function(e) {
+      # A companion that names its own group (the antiseizure interactions'
+      # "no interactions" line) is not one of the alternative models.
+      if (!is.null(e$companionGroup)) e$companionGroup else companionModelGroup(e$companionOf)
+    }, character(1)))
   })
 
   # The companion entries of a drug in the current simulation (none unless
@@ -776,6 +781,18 @@ app_server <- function(input, output, session) {
         condition = !is.null(DT) && any(DT$Drug %in% companionGroupDrugs(group))
       )
     }
+  })
+
+  # The antiseizure interactions box is usable while the dose table holds an
+  # interaction the model applies (a dosed victim with a dosed perpetrator, or
+  # carbamazepine, which induces itself).
+  observe({
+    DT <- tryCatch(doseTableClean(), error = function(e) NULL)
+    shinyjs::toggleState(
+      ASM_INTERACTIONS_INPUT,
+      condition = !is.null(DT) &&
+        nrow(activeAntiseizureInteractions(unique(DT$Drug))) > 0
+    )
   })
 
   # Vaporisers that together exceed 100% are a fresh gas that cannot exist.
@@ -954,7 +971,8 @@ app_server <- function(input, output, session) {
         creatinine = creatinine(),
         pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
-        alternativeModels = companionGroupsOn()
+        alternativeModels = companionGroupsOn(),
+        antiseizureInteractions = antiseizureInteractions()
       ) |> profileCode("recalculatePK() in drugs()")
 
       newDrugs <- processdoseTable(
@@ -963,7 +981,8 @@ app_server <- function(input, output, session) {
         newDrugs,
         plotMaximum(),
         plotRecovery(),
-        cache = ivSimulationCache
+        cache = ivSimulationCache,
+        antiseizureInteractions = antiseizureInteractions()
       ) |> profileCode("processdoseTable() in drugs()")
       ivSimulationCache <<- newDrugs
 
@@ -1356,6 +1375,8 @@ app_server <- function(input, output, session) {
         # ticked (companionGroupsShown()).
         mintoSchnider = "mintoSchnider" %in% companionGroupsShown(),
         hamberg = "hamberg" %in% companionGroupsShown(),
+        # Whether an antiseizure interaction actually changed a drug
+        antiseizureInteractions = ASM_INTERACTIONS_INPUT %in% companionGroupsShown(),
         # The workbook's times stay in minutes; these add the display unit
         # beside them and say what the plot showed (sendSlide.R).
         timeUnit = timeUnit(),
