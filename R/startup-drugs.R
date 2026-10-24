@@ -6,10 +6,12 @@
 # The drug library has grown well beyond anaesthesia, so the app no longer
 # presumes which drugs to show.  A fresh session opens with an empty dose table
 # and a menu of the drugs, one group of checkboxes per category (the Category
-# column of drugDefaults_global.csv, in DRUG_CATEGORIES order).  The four drugs
-# the app used to open with are ticked, and can be unticked.  Each chosen drug
-# gets a zero-dose row at time 0, so pressing Start with the defaults gives the
-# same dose table the app used to open with (doseTableInit).
+# column of drugDefaults_global.csv, in DRUG_CATEGORIES order).  The library is
+# too large to show at once, so each category is a collapsed <details> section
+# that opens to its drugs, and nothing is ticked.  Each chosen drug gets a
+# zero-dose row at time 0, so ticking the four drugs the app used to open with
+# (STARTUP_DRUGS_DEFAULT) gives the dose table it used to open with
+# (doseTableInit).
 #
 # The menu is not shown when the URL restores a bookmark whose dose table has
 # drugs in it.  It is shown from the server as the session starts, without
@@ -128,22 +130,35 @@ welcomeText <- function() {
 
 #' The startup menu
 #'
+#' One collapsed section per category, its summary giving the category and how
+#' many drugs it holds; app.js adds how many are ticked
+#' (startupDrugTickedCount()), which the menu does without.
+#'
 #' @param choices startupDrugChoices()
-#' @param selected the drugs ticked when it opens
+#' @param selected the drugs ticked when it opens: none, unless a caller says
 #' @returns a modalDialog().  It has no close button and ignores Escape and
 #'   clicks outside: Start is how it closes.  `output$startup_welcome` is a
 #'   placeholder, filled with the welcome text when that is due.
 #' @noRd
-startupDrugModal <- function(choices, selected = STARTUP_DRUGS_DEFAULT) {
+startupDrugModal <- function(choices, selected = character(0)) {
   groups <- lapply(names(choices), function(category) {
     drugs <- choices[[category]]
-    div(
+    ticked <- intersect(selected, drugs)
+    tags$details(
       class = "startup-drug-group",
+      # A category with a drug ticked opens, so the tick is not hidden
+      open = if (length(ticked) > 0) NA,
+      tags$summary(
+        tags$span(class = "startup-drug-category", category),
+        tags$span(class = "startup-drug-count", length(drugs)),
+        tags$span(class = "startup-drug-ticked",
+                  if (length(ticked) > 0) paste(length(ticked), "ticked"))
+      ),
       checkboxGroupInput(
         inputId = startupDrugInputId(category),
-        label = category,
+        label = NULL,
         choices = stats::setNames(drugs, helpDrugTitle(drugs)),
-        selected = intersect(selected, drugs)
+        selected = ticked
       )
     )
   })
@@ -154,13 +169,14 @@ startupDrugModal <- function(choices, selected = STARTUP_DRUGS_DEFAULT) {
     p(
       class = "startup-drug-lead",
       tags$strong("Choose the drugs to display."),
-      "Each starts with a dose of 0 at time 0, ready to edit. Any drug can be
-      added to the dose table later."
+      "Open a category to tick its drugs. Each starts with a dose of 0 at time
+      0, ready to edit. Any drug can be added to the dose table later, and
+      Start with nothing ticked gives an empty dose table."
     ),
     div(class = "startup-drug-groups", groups),
     footer = actionButton("startup_ok", "Start", class = "btn-primary"),
     easyClose = FALSE,
-    size = "xl"
+    size = "l"
   )
 }
 

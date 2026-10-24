@@ -20,8 +20,10 @@ entered, and real patients vary substantially around those predictions.
 
 ## The 60-second tour
 
-1. Open the app. Tick the drugs you want to display (propofol, fentanyl,
-   remifentanil and rocuronium are ticked to begin with) and press **Start**.
+1. Open the app. Open a drug category (anesthesia drugs are under
+   *Hypnotics and sedatives*, *Opioids* and *Neuromuscular blockade*), tick
+   the drugs you want to display, and press **Start**. Nothing is ticked to
+   begin with.
    A default patient and a dose table holding a zero dose of each are waiting.
 2. In the **Doses** table, edit a row, or type another drug name — the cell
    autocompletes from the drug library.

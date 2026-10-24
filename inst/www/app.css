@@ -477,7 +477,9 @@ a.investigator-link:hover {
   color: #4a5764;
 }
 
-/* the startup drug menu (R/startup-drugs.R): categories flow into columns */
+/* the startup drug menu (R/startup-drugs.R): one collapsed section per
+   category, in a grid; an open one spans the grid and its drugs flow into
+   columns */
 .startup-welcome {
   border-left: 3px solid #2c3e50;
   background: #f4f6f8;
@@ -486,17 +488,59 @@ a.investigator-link:hover {
   border-radius: 4px;
 }
 .startup-drug-groups {
-  column-width: 13rem;
-  column-gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.4rem 1rem;
+  align-items: start;
 }
 .startup-drug-group {
-  break-inside: avoid;
-  margin-bottom: 0.75rem;
+  border: 1px solid #d5dbe1;
+  border-radius: 4px;
 }
-.startup-drug-group .control-label {
+.startup-drug-group[open] {
+  grid-column: 1 / -1;
+}
+.startup-drug-group > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  list-style: none;
   font-weight: 600;
   color: #2c3e50;
 }
+.startup-drug-group > summary::before {
+  content: "\25B8";
+  font-size: 0.8em;
+}
+.startup-drug-group[open] > summary::before {
+  content: "\25BE";
+}
+.startup-drug-group > summary::-webkit-details-marker {
+  display: none;
+}
+.startup-drug-count {
+  font-weight: 400;
+  color: #6c7a89;
+  font-size: 0.85em;
+}
+.startup-drug-ticked {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 0.85em;
+  color: #18794e;
+}
 .startup-drug-group .shiny-input-container {
-  margin-bottom: 0;
+  margin: 0;
+  padding: 0.2rem 0.8rem 0.5rem;
+  width: auto;
+}
+.startup-drug-group .shiny-options-group {
+  column-width: 11rem;
+  column-gap: 1.5rem;
+}
+.startup-drug-group .checkbox {
+  break-inside: avoid;
+  margin-top: 0;
 }

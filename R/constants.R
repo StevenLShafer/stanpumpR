@@ -367,8 +367,9 @@ VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # (R/illicit-drugs.R).  Hidden unless the user turns on input$showIllicitDrugs,
 # and never offered in the startup menu.
 ILLICIT_DRUG_CATEGORY <- "Illicit drugs"
-# Ticked when the menu opens: the four drugs the app opened with before it
-# had a menu.
+# The four drugs the app opened with before it had a menu.  The menu opens
+# with nothing ticked; these are the drugs behind a ?help= link
+# (R/deep-links.R), and ticking them gives doseTableInit.
 STARTUP_DRUGS_DEFAULT <- c("propofol", "fentanyl", "remifentanil", "rocuronium")
 # A chosen drug starts with one zero-dose row in its Default.Units, except
 # these, which start with a bolus row and an infusion row, as they always have.
