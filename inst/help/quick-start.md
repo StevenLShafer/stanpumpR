@@ -56,7 +56,7 @@ Each drug gets its own panel. The solid line is the **effect-site** concentratio
 </figure>
 
 - **Hover** for the exact concentration at any time.
-- **Click** to add a dose at that time (applied immediately). While an infusion, a TCI, a schedule or an inhaled agent is running, the dialog also offers **Stop**, which ends it at that time; while an oral schedule (`mg PO bid`) is running, **Skip next dose**.
+- **Click** to add a dose at that time (applied immediately). While an infusion, a TCI, a schedule or an inhaled agent is running, the dialog also offers **Stop**, which ends it at that time; while an oral or sublingual schedule (`mg PO bid`, `mg SL tid`) is running, **Skip next dose**.
 - **Add new drug** (the button at the lower left of the plot) to add a drug that is not yet plotted, without going to the dose table.
 - **Double-click** a drug's curve to edit or delete its doses.
 

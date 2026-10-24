@@ -177,7 +177,8 @@ exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
 }
 
 # "Skip next dose": the patient misses (or vomits) the next tablet of a
-# running oral schedule, and the schedule then carries on as before.
+# running oral or sublingual schedule, and the schedule then carries on as
+# before.
 #
 # Requested by Steven L. Shafer, 2026-10-24, for the plot's dose dialogs:
 # a patient on an antiseizure drug who misses a dose wants to know whether to
@@ -185,8 +186,8 @@ exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
 # tests/testthat/test-scheduled.R.
 #
 # Nothing new reaches the engine: the skip is written into the dose table by
-# the rules above, where the user can see it and undo it -- a 0 oral dose at
-# the skipped time, which ends the schedule, and the scheduled row entered
+# the rules above, where the user can see it and undo it -- a 0 dose of the
+# schedule's route at the skipped time, which ends the schedule, and the scheduled row entered
 # again one interval later, which restarts it.  When the skipped dose is the
 # row's own first dose, that row becomes the 0 dose.  No restart is written
 # when the schedule would have ended before it.
@@ -195,14 +196,15 @@ exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
 #            blank rows allowed)
 # drug:      the drug clicked
 # time:      the time clicked (minutes); the dose skipped is the drug's first
-#            scheduled oral dose at or after it
+#            scheduled oral or sublingual dose at or after it (the two
+#            routes never run schedules at once: each ends the other's)
 # maximum:   the end of the plot (minutes); a dose at or after it is not
 #            offered
 # format, reference: the dose table's time format and the procedure start
 #            (minutesToEntryTime())
 # units:     the units the drug offers; the 0 dose is written in the
-#            schedule's base unit ("mg PO") when the drug offers it, else in
-#            the scheduled unit
+#            schedule's base unit ("mg PO", "mg SL") when the drug offers it,
+#            else in the scheduled unit
 #
 # Returns NULL when there is no such dose, else list(table, time, resumes,
 # dose, units): the new table, the time of the dose skipped, the time the
@@ -219,7 +221,7 @@ skipNextOralDose <- function(dt, drug, time, maximum, format,
   ok <- !is.na(d$Time) & !is.na(d$Dose) & !is.na(d$Units) & nzchar(d$Units)
   rows <- rows[ok]; d <- d[ok, , drop = FALSE]
   sequences <- scheduledSequences(d)$sequences
-  sequences <- sequences[sequences$route == ROUTE_PO, , drop = FALSE]
+  sequences <- sequences[sequences$route %in% c(ROUTE_PO, ROUTE_SL), , drop = FALSE]
   if (nrow(sequences) == 0) return(NULL)
 
   # The first dose of each schedule at or after the click

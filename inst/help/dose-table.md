@@ -68,7 +68,7 @@ The first dose is given at the time in the row, and the same dose is then repeat
 
 ### Skip next dose
 
-A patient who misses a tablet, or vomits it, wants to know whether to wait for the next dose or take two. Click a drug's curve, or double-click it, while it has an oral schedule running: the dialog then offers **Skip next dose**, naming the time of the first scheduled oral dose after the time clicked. It writes the skip into the dose table by the rules above, where it can be seen and changed: a `0 mg PO` row at the skipped time, which ends the schedule, and the scheduled row again one interval later, which restarts it. To compare the patient's options, change that restart row, for instance to a double dose taken now and the schedule resumed at its usual time.
+A patient who misses a tablet, or vomits it, wants to know whether to wait for the next dose or take two. Click a drug's curve, or double-click it, while it has an oral or sublingual schedule running: the dialog then offers **Skip next dose**, naming the time of the first scheduled dose after the time clicked. It writes the skip into the dose table by the rules above, where it can be seen and changed: a `0 mg PO` (or `0 mg SL`) row at the skipped time, which ends the schedule, and the scheduled row again one interval later, which restarts it. To compare the patient's options, change that restart row, for instance to a double dose taken now and the schedule resumed at its usual time.
 
 ### Stop
 

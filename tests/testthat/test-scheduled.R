@@ -308,9 +308,24 @@ test_that("no restart is written when the next row would end the schedule first"
   expect_equal(simulatedTimes(skip$table, 3 * MINS_PER_DAY), c(0, 480))
 })
 
+test_that("skip next dose works on a sublingual schedule", {
+  bupUnits <- c("mg SL", "mcg SL", "mg SL bid", "mg SL tid", "mg SL qid")
+  dt <- skipTable(0, 2, "mg SL tid", "buprenorphine")
+  skip <- skipNextOralDose(dt, "buprenorphine", 500, 3 * MINS_PER_DAY, minutesFormat, units = bupUnits)
+  expect_equal(skip$time, 960)
+  expect_equal(skip$resumes, 1440)
+  expect_equal(skip$table$Time[1:3], c("0", "960", "1440"))
+  expect_equal(skip$table$Dose[1:3], c("2", "0", "2"))
+  expect_equal(skip$table$Units[1:3], c("mg SL tid", "mg SL", "mg SL tid"))
+  expect_equal(simulatedTimes(skip$table, 3 * MINS_PER_DAY),
+               setdiff(seq(0, 3 * MINS_PER_DAY - 1, by = 480), 960))
+})
+
 test_that("skip next dose is not offered without a running oral schedule", {
   expect_null(skipNextOralDose(skipTable(0, 200, "mg PO"), "carbamazepine", 0, MINS_PER_DAY, minutesFormat))
   expect_null(skipNextOralDose(skipTable(0, 1000, "mg bid", "cefazolin"), "cefazolin", 0, MINS_PER_DAY, minutesFormat))
+  # nor on another extravascular route
+  expect_null(skipNextOralDose(skipTable(0, 4, "mg IM qid", "morphine"), "morphine", 0, MINS_PER_DAY, minutesFormat))
   expect_null(skipNextOralDose(skipTable(0, 200, "mg PO tid"), "levetiracetam", 0, MINS_PER_DAY, minutesFormat))
   # Stopped before the click, or the next dose past the end of the plot
   expect_null(skipNextOralDose(skipTable(c(0, 600), c(200, 0), c("mg PO tid", "mg PO")),
