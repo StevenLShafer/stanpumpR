@@ -421,6 +421,54 @@ Review questions:
   (recorded, Yukawa 1990): phenytoin levels rise or fall with carbamazepine, and
   the pooled co-medication term is not cleanly per-perpetrator.
 
+## Gemini adversarial review (2026-10-24) — disposition
+
+The third adversarial pass (Gemini, after CodeRabbit and ChatGPT). Verified
+against the repository and PubMed before acting; most of it did not survive that
+check.
+
+**Fabricated (do not act on).** Gemini's central claim — that 13 cited PMIDs are
+"hallucinated" and point to unrelated papers (colon-cancer photodynamic therapy,
+*Drosophila* mutagenesis, etc.) — is false. Every PMID in the registry is correct
+and matches the PMID Gemini itself lists as the "true" one (Rivas 2008 18641550,
+Giaccone 1996 8799524, Pisani 1984 6423377, Gidal 2003 15013050, Hagemann 2024
+38606683, Perucca 1980 6777108, Falcao 2012 22171585, Wu 2025 40960184, …). Its
+"cited PMID" column was invented wholesale. Also false: that inhibition starts at
+E=1 (immediate interactions return fold(C) directly); that a scenario
+`lamotrigine-valproate-loading.md` exists (it does not); and the exact baseline
+CL values and line numbers it quotes (unverifiable, and wrong where checkable).
+Its "Problem 1" autoinduction "bug" mischaracterises the mechanism: the
+at-reference multiplier is x1.42 exactly (verified), and the concentration
+dependence away from 8 mcg/mL is the intended Kudriakova dose-proportional
+autoinduction, the same structural class as Assumption 2.
+
+**Already documented (no new action).** Additive-excess over-prediction for 3+
+inducers (Assumption 2), the EC50-default saturation (Assumption 1), the
+phenytoin total/free trap (Assumption 3, free output deferred), the
+carbamazepine-epoxide omission ("not modelled"), and cenobamate-as-perpetrator
+(recorded, deferred). The one useful primary-source corroboration Gemini supplied
+that is real: Samara 1998's explicit statement that the tiagabine inducer effects
+are **not additive** — already captured in that row's notes and in Assumption 2.
+
+**Acted on (one genuine catch).** The lacosamide victim rows applied
+carbamazepine (Yu 2026, x1.48) and phenobarbital (Wu 2025, x1.42) but **not
+phenytoin**, although phenytoin is as strong an inducer. Fixed by adding
+`phenytoin -> lacosamide CL x1.44` from **Contin 2013** (PMID 23942540, *Ther
+Drug Monit* 35:849-852, full text read): LCM concentration/dose ratio 0.94 with
+strong inducers (carbamazepine, phenobarbital, phenytoin) vs 1.35 without,
+P<0.001; the three inducer subgroups were analysed separately, found comparable,
+and pooled (n=11 phenytoin). The US Vimpat label's 15-20% (x1.18-1.25) is a lower
+cross-check; EU/NZ 25% (x1.33). The factor sits between the carbamazepine and
+phenobarbital rows, so the asymmetry is removed. Registry now 35 applied.
+
+**Carried to the engine-level round (not this change).** Gemini's saturating
+nuclear-receptor combination formula is a concrete candidate for the Assumption 2
+fix. Its vmax_multiplier suggestion for phenytoin induction on the
+Michaelis-Menten engine is a minor API note. Its benzodiazepine-victim
+interactions (carbamazepine/phenytoin/phenobarbital on clonazepam/midazolam/
+diazepam, valproate on lorazepam) are real but a **scope decision** — the model
+deliberately targets the core epilepsy ASMs; raise with the maintainer.
+
 ## Questions for the clinical reviewer
 
 To be assembled after the full-text re-derivation and the adversarial reviews.
