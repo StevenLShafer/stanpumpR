@@ -15,9 +15,8 @@
 #   <app>/?scenario=<id>       load that teaching scenario (R/help-scenarios.R)
 #                              into the simulator, skipping the startup drug
 #                              menu; the plot opens on the scenario
-#   <app>/?help=<page-id>      open the Help tab on that page, with the default
-#                              drugs in the simulator behind it (as "Take the
-#                              tour" does); ?help=scenarios/<id> is a
+#   <app>/?help=<page-id>      open the Help tab on that page, with an empty
+#                              simulator behind it; ?help=scenarios/<id> is a
 #                              scenario's own page, with its Load button
 #   both together              load the scenario and open on the page
 #

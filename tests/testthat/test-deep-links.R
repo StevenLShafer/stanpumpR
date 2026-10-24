@@ -95,12 +95,12 @@ test_that("a ?scenario= link loads the scenario instead of opening the drug menu
   })
 })
 
-test_that("a ?help= link opens the help on the page, with the default drugs behind it", {
+test_that("a ?help= link opens the help on the page, with an empty simulator behind it", {
   local_mocked_bindings(deepLinkFromQuery = function(...) list(scenario = NULL, help = "tci", problems = character(0)))
   shiny::testServer(app_server, {
     expect_false(startupMenuOpen)
     expect_identical(helpPage(), "tci")
-    expect_identical(doseTable(), doseTableInit)
+    expect_identical(doseTable(), doseTableBlank)
   })
 })
 

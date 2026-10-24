@@ -564,16 +564,12 @@ app_server <- function(input, output, session) {
 
   # Open on what a ?scenario= or ?help= link asks for (R/deep-links.R).  Done
   # here rather than at Startup because setDoseTable() writes the history
-  # above.  A ?help= link alone starts with the default drugs behind the help,
-  # as the tour does; a bookmark keeps its own table (onRestored()).
-  if (!startupMenuOpen && deepLinkOpens(deepLink) && !isBookmarkRestore(restoreValues)) {
+  # above.  A ?help= link alone leaves the simulator behind the help empty,
+  # as the session started; a bookmark keeps its own table (onRestored()).
+  if (!startupMenuOpen && !is.null(deepLink$scenario) && !isBookmarkRestore(restoreValues)) {
     isolate({
-      if (!is.null(deepLink$scenario)) {
-        outputComments("Opening on scenario", deepLink$scenario$id, "from the URL")
-        helpApi$loadScenario(deepLink$scenario)
-      } else {
-        setDoseTable(startupDoseTable(STARTUP_DRUGS_DEFAULT, drugDefaults()), doseTableFormat())
-      }
+      outputComments("Opening on scenario", deepLink$scenario$id, "from the URL")
+      helpApi$loadScenario(deepLink$scenario)
     })
   }
   if (!is.null(deepLink$help)) {
