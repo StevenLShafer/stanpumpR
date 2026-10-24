@@ -317,7 +317,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- mg_Conv * 1000
         ng_Conv  <- mg_Conv * 1000000
       },
-      mcU = {                  # Insulin: amounts in mU, Cp in mU/L = mcU/mL
+      mcU = {                  # Insulin, vasopressin: amounts in mU, Cp in mU/L = mcU/mL
         # Dosed in units (U) of the preparation, never by mass; the U rows are
         # converted below.
         if (any(grepl("^(g|mg|mcg|ng)( |/|$)", dose$Units)))
@@ -350,7 +350,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       },
       stop("Unsupported Concentration.Units: ", PK$Concentration.Units)
     )
-    # Insulin units: U to mU, so that dividing by litres gives mU/L, which is
+    # Units (insulin, vasopressin): U to mU, so that dividing by litres gives mU/L, which is
     # mcU/mL.  A U dose of a drug reported by mass would have no conversion.
     use <- grep("^U( |/|$)", dose$Units)
     if (length(use) > 0)

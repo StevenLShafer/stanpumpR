@@ -14,7 +14,8 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "nitroglycerin", "norepinephrine", "procainamide", "esmolol",
                  "dopamine", "atropine", "propranolol", "digoxin",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
-                 "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric")
+                 "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
+                 "vasopressin")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -77,7 +78,8 @@ test_that("the category holds exactly the implemented drugs, concentration only"
                        verapamil = VERAPAMIL_TPEAK,
                        propranolol = PROPRANOLOL_TPEAK,
                        phenylephrine = PHENYLEPHRINE_TPEAK,
-                       epinephrine = EPINEPHRINE_TPEAK, 0)
+                       epinephrine = EPINEPHRINE_TPEAK,
+                       vasopressin = VASOPRESSIN_TPEAK, 0)
     expect_equal(PK$tPeak, expected, info = d)
   }
   # Clevidipine was already in the library, in the Antihypertensives category,
@@ -114,7 +116,7 @@ test_that("a drug with no suitable model gives the reason", {
                       registry$drug[registry$readiness %in%
                                       c("implemented", "needs_full_text",
                                         "complete_not_implemented")])
-  expect_setequal(hopeless, c("sodium nitroprusside", "vasopressin", "ephedrine",
+  expect_setequal(hopeless, c("sodium nitroprusside", "ephedrine",
                               "hydralazine", "adenosine", "sodium bicarbonate"))
 })
 
@@ -145,6 +147,9 @@ test_that("the audit's numbers are the ones the models use", {
                                                         parameters$parameter == p])
   expect_equal(value("epinephrine", "CL"), EPINEPHRINE_CL)
   expect_equal(value("epinephrine", "V"), EPINEPHRINE_V)
+  expect_equal(value("vasopressin", "V"), VASOPRESSIN_V)
+  expect_equal(value("vasopressin", "CL"), VASOPRESSIN_CL)
+  expect_equal(value("vasopressin", "tPeak"), VASOPRESSIN_TPEAK)
   expect_equal(value("magnesiumSulfate", "CL"), MAGNESIUM_CL)
   expect_equal(value("magnesiumSulfate", "Vc"), MAGNESIUM_VC)
   expect_equal(value("magnesiumSulfate", "Q"), MAGNESIUM_Q)

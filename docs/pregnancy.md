@@ -114,6 +114,7 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | digoxin |  |  |  | 1.5 | Hebert 2008 | moderate |
 | digoxinIV | 1.350 |  |  |  | Hebert 2008 | low |
 | metoprolol | 1.500 | 1.50 | 0.5 |  | Ryu 2016 | moderate |
+| vasopressin | 5.075 |  |  |  | Davison 1993 | moderate |
 
 Not adjusted: 16 `unquantified`, 19 `unchanged`, 87 `unknown` (mostly drugs contraindicated or
 rarely used in pregnancy: the DOACs and vitamin K antagonists, the GLP-1, SGLT2 and DPP-4

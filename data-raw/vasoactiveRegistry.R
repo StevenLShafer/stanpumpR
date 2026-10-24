@@ -233,6 +233,13 @@ registry <- rbind(
       NA,
       "Hengstmann JH, Goronzy J. Pharmacokinetics of 3H-phenylephrine in man. Eur J Clin Pharmacol 1982;21:335-341. PMID 7056280.",
       doi("10.1007/BF00637623")),
+  reg("vasopressin__healthy__fabian1969", "vasopressin",
+      "6 volunteers aged 20-22 (5 men), arginine vasopressin 120 mU/min IV for 20 min", "arginine vasopressin (exogenous, bioassay)", "plasma",
+      "implemented", "vasopressin", "full_text",
+      "Read from the supplied article.  One compartment, the medians of Table 1: V 8.5 L, CL 1.0 L/min, t1/2 5.6 min (5.9 from V and CL, inside its limits 3.9-9.5); the fall after the infusion was monoexponential over the 10 min sampled.  Concentrations by rat antidiuretic bioassay against the infused preparation, so in the dose's own units (mcU/mL); no mass conversion.  Corroborated by the label's 9-25 mL/min/kg in shock, Davison 1993's 0.67 L/min in nonpregnant women, and Landry 1997's ~30 pg/mL on 0.01 U/min.  Pregnancy x5.07 from Davison 1993 (paired).  tPeak 3 min is a provisional clinical observation (S. L. Shafer), no published bolus time to peak pressor effect being found.",
+      NA,
+      "Fabian M, Forsling ML, Jones JJ, Pryor JS. The clearance and antidiuretic potency of neurohypophysial hormones in man, and their plasma binding and stability. J Physiol 1969;204:653-668. PMID 5824107, PMC1351579.",
+      doi("10.1113/jphysiol.1969.sp008937")),
   reg("dopamine__healthy__macgregor2000", "dopamine",
       "9 healthy men, 10 then 3 mcg/kg/min", "dopamine", "plasma (radial arterial)",
       "implemented", "dopamine", "full_text",
@@ -602,7 +609,7 @@ registry <- rbind(
   reg("vasopressin__healthy__baumann1976", "vasopressin",
       "hydrated normal subjects (tracer)", "arginine vasopressin", "plasma",
       "no_suitable_model", NA, "abstract",
-      "No compartmental population model of IV vasopressin in humans was found: a metabolic clearance (4.1 mL/min/kg) and half-life (24 min) in volunteers, and the label's 9-25 mL/min/kg in vasodilatory shock.  Dosed in units, endogenous, and with no reachable units-to-mass conversion.",
+      "A radioiodinated-tracer study: metabolic clearance 4.1 mL/min/kg (about 0.29 L/min) and half-life 24 min, a quarter of the clearance of the hormone itself by bioassay (Fabian 1969, implemented) and by radioimmunoassay (Davison 1993, 0.67 L/min), and below the label's 9-25 mL/min/kg in vasodilatory shock.  The tracer is not the hormone; superseded by Fabian 1969.",
       NA,
       "Baumann G, Dingman JF. Distribution, blood transport, and degradation of antidiuretic hormone in man. J Clin Invest 1976;57:1109-1116. PMID 1262458, PMC436762.",
       doi("10.1172/JCI108377")),
@@ -658,6 +665,7 @@ FA  <- doi("10.1111/j.1365-2125.1982.tb01424.x")
 YU  <- doi("10.2165/00003088-200140100-00005")
 KA81 <- doi("10.1038/clpt.1981.125")
 HE  <- doi("10.1007/BF00637623")
+FB69 <- doi("10.1113/jphysiol.1969.sp008937")
 BA94 <- doi("10.1097/00000542-199409000-00014")
 BU95 <- doi("10.1097/00000539-199510000-00022")
 HK19 <- doi("10.1002/jcph.1499")
@@ -815,6 +823,10 @@ parameters <- rbind(
   par("milrinonePediatric", "TM50", 67.7, "weeks PMA", "estimated", "full_text", HK19),
   par("milrinonePediatric", "Hill", 1.12, "dimensionless", "estimated", "full_text", HK19),
   par("milrinonePediatric", "CrCl exponent", 0.522, "on (CrCl/117 mL/min/1.73 m2)", "estimated", "full_text", HK19),
+
+  par("vasopressin", "V", 8.5, "L (Table 1 median, 95% limits 5.2-11.0)", "estimated", "full_text", FB69),
+  par("vasopressin", "CL", 1.0, "L/min (Table 1 median, 95% limits 0.4-1.1)", "estimated", "full_text", FB69),
+  par("vasopressin", "tPeak", 3, "min (provisional clinical observation, S. L. Shafer: the pressor response to a bolus is not immediate; no published time found)", "fixed", "full_text", FB69),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "time constant", 8.1, "min (V/CL)", "estimated", "full_text", AR),
