@@ -30,7 +30,7 @@ The URL above carries a whole simulation. Two shorter links open the app on some
 | Link | Opens |
 |---|---|
 | `https://stanpumpr.io/?scenario=propofol-bolus` | the simulator with that [teaching scenario](help:scenarios/index) loaded, as its **Load** button does; the startup drug menu is skipped |
-| `https://stanpumpr.io/?help=models/effect-site` | the Help tab on that page, with the default drugs in the simulator behind it |
+| `https://stanpumpr.io/?help=models/effect-site` | the Help tab on that page, with propofol, fentanyl, remifentanil and rocuronium in the simulator behind it |
 | `https://stanpumpr.io/?help=scenarios/propofol-bolus` | a scenario's help page, with its Load button |
 | `https://stanpumpr.io/?scenario=propofol-bolus&help=scenarios/propofol-bolus` | both: the scenario loaded, and the help open on its page |
 

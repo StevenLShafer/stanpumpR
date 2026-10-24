@@ -28,6 +28,16 @@ $(document).on('shiny:sessioninitialized', function(event) {
   ro.observe(plotBox);
 });
 
+// The startup drug menu (R/startup-drugs.R): each category's summary says how
+// many of its drugs are ticked, so a tick is not lost when it is collapsed.
+function startupDrugTickedCount(group) {
+  var n = $(group).find('input[type=checkbox]:checked').length;
+  $(group).find('.startup-drug-ticked').text(n > 0 ? n + ' ticked' : '');
+}
+$(document).on('change', '.startup-drug-group input[type=checkbox]', function() {
+  startupDrugTickedCount($(this).closest('.startup-drug-group'));
+});
+
 // Track mouse position so hover tooltip can be positioned correctly when scrolled
 let lastMouseX = 0, lastMouseY = 0;
 // Where the hover tip was last placed, and how far the pointer may move

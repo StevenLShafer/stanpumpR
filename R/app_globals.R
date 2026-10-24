@@ -1,6 +1,6 @@
 blanks <- rep("", 6)
 # The dose table the app opened with before the startup drug menu, and what
-# the menu still gives when Start is pressed with its defaults ticked
+# the menu gives when Start is pressed with those four drugs ticked
 # (startupDoseTable(STARTUP_DRUGS_DEFAULT); test-startup-drugs.R holds them
 # equal).
 doseTableInit <- data.frame(
