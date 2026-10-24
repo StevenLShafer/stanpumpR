@@ -8,7 +8,7 @@ Carbamazepine induces its own metabolism, so clearance roughly doubles over the 
 
 ### Formulations and what is not plotted
 
-Suspension and immediate-release and chewable tablets share these parameters; the extended-release tablet (`mg PO ER`) is given slower absorption and 0.89 relative availability (the Tegretol-XR label). The active 10,11-epoxide (about 10 to 15 per cent of the parent) is not plotted, and co-medication (phenytoin raises clearance about 40 per cent) is not applied. There is no effect site. Carbamazepine is no longer available intravenously in the US (Carnexiv withdrawn 2026).
+Suspension and immediate-release and chewable tablets share these parameters; the extended-release tablet (`mg PO ER`) is given slower absorption and 0.89 relative availability (the Tegretol-XR label). The active 10,11-epoxide (about 10 to 15 per cent of the parent) is not plotted, and co-medication is applied only when the **Include antiseizure drug interactions** box is ticked, which also runs carbamazepine's autoinduction from the uninduced state (see [Antiseizure drug interactions](help:models/antiseizure-interactions)); otherwise the curve is the induced maintenance state without co-medication. There is no effect site. Carbamazepine is no longer available intravenously in the US (Carnexiv withdrawn 2026).
 
 ### Band
 

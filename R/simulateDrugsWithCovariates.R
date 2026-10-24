@@ -34,6 +34,12 @@
 #'   requires \code{sex = "female"}.  Only the models that name it apply the
 #'   changes of late pregnancy measured for that drug
 #'   (inst/extdata/pregnancyRegistry.csv); see \code{getDrugPK()}.
+#' @param antiseizureInteractions apply the pharmacokinetic interactions among
+#'   the antiseizure drugs (\code{R/antiseizureInteractions.R},
+#'   \code{antiseizureInteractionRegistry()})?  FALSE (the default) simulates
+#'   every drug on its own.  A changed drug's entry carries
+#'   \code{interaction}, the segments of its multipliers and the rows that
+#'   produced them.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -54,7 +60,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          # Appended last so a positional call
                                          # that passed cyp2b6/pregnant keeps its
                                          # binding (this function is exported).
-                                         vkorc1 = VKORC1_DEFAULT)
+                                         vkorc1 = VKORC1_DEFAULT,
+                                         antiseizureInteractions = FALSE)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -66,6 +73,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   # getDrugPK() and simCpCe() cannot handle them.
   drugList <- drugList[!isGasDrug(drugList)]
   output <- c()
+  pks <- list()
 
   attach <- function(output, drug, PK, drugDefaults) {
     output[[drug]]$Drug                <- drugDefaults$Drug
@@ -88,6 +96,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                     cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
                     pregnant = pregnant, adjustToFFM = adjustToFFM)
+    pks[[drug]] <- PK
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
 
@@ -112,6 +121,22 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output[[drug]]$compartmentsOwn        <- X$compartments
     output[[drug]]$compartments           <- X$compartments
     output[[drug]]$metaboliteCompartments <- X$metaboliteCompartments
+  }
+
+  # The antiseizure interactions re-simulate the drugs they change, which
+  # needs each drug's resolved PK beside its simulation.
+  if (isTRUE(antiseizureInteractions) && length(pks) > 0)
+  {
+    full <- lapply(stats::setNames(names(pks), names(pks)),
+                   function(d) utils::modifyList(pks[[d]], output[[d]]))
+    full <- applyAntiseizureInteractions(full, dose, events, maximum, plotRecovery)
+    keep <- c("results", "equiSpace", "max", "wideOwn", "wide",
+              "metaboliteSeries", "recoveryStatesOwn", "metaboliteRecoveryStates",
+              "tci", "scheduled", "compartmentsOwn", "compartments",
+              "metaboliteCompartments", "interaction")
+    for (d in names(full))
+      if (!is.null(full[[d]]$interaction))
+        for (field in keep) output[[d]][[field]] <- full[[d]][[field]]
   }
 
   # A metabolite that was never given directly still needs a row to appear in.

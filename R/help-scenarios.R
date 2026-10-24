@@ -61,7 +61,11 @@ helpScenarioDefaultOptions <- function() {
     mintoSchnider = FALSE,
     # Run the Hamberg warfarin genotype model beside the library's (Xue);
     # needs warfarin dosed
-    hamberg = FALSE
+    hamberg = FALSE,
+    # Apply the pharmacokinetic interactions among the antiseizure drugs
+    # (R/antiseizureInteractions.R); needs an interacting pair, or
+    # carbamazepine, dosed
+    antiseizureInteractions = FALSE
   )
 }
 
@@ -520,6 +524,76 @@ helpScenarioDefinitions <- function() {
       ),
       maximum = 60, addedPlots = PLOT_ID_MEAC, opioidMacInteraction = TRUE
     ),
+    # The pharmacokinetic interactions among the antiseizure drugs
+    # (R/antiseizureInteractions.R), each with the Graph Options box ticked so
+    # that the changed drug is drawn beside its own curve without the
+    # interaction.  Plasma only: these drugs have no effect site.
+    # (Claude Code, 2026-10-24, at the request of Steven L. Shafer.)
+    helpScenario(
+      "valproate-lamotrigine-inhibition",
+      "Antiseizure interactions: valproate doubles lamotrigine",
+      "Interactions",
+      "Valproate added on day 21 to lamotrigine 100 mg twice daily: glucuronidation is inhibited at once, and lamotrigine climbs over the next two weeks to about twice its level, which is why lamotrigine is started at half the dose beside valproate.",
+      doses = helpDoses(
+        c("lamotrigine", 0, 100, "mg PO bid"),
+        c("valproate", 21 * MINS_PER_DAY, 500, "mg PO DR bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-lamotrigine-deinduction",
+      "Antiseizure interactions: stopping carbamazepine raises lamotrigine",
+      "Interactions",
+      "Lamotrigine with carbamazepine, which induces lamotrigine's glucuronidation; carbamazepine is stopped on day 28 and lamotrigine rises over the next two weeks as the induced enzymes turn over (half-life 3.6 days).",
+      doses = helpDoses(
+        c("lamotrigine",   0, 200, "mg PO bid"),
+        c("carbamazepine", 0, 400, "mg PO bid"),
+        c("carbamazepine", 28 * MINS_PER_DAY, 0, "mg PO bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-autoinduction",
+      "Carbamazepine induces its own metabolism",
+      "Interactions",
+      "Carbamazepine 400 mg twice daily from the first dose: the level rises toward the uninduced steady state, then falls over the next two weeks as carbamazepine doubles its own clearance.",
+      doses = helpDoses(
+        c("carbamazepine", 0, 400, "mg PO bid")
+      ),
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "phenytoin-valproate-displacement",
+      "Antiseizure interactions: phenytoin and valproate change each other",
+      "Interactions",
+      "Valproate added on day 21 to phenytoin 300 mg a day: valproate displaces phenytoin from albumin, so TOTAL phenytoin falls while the unbound, active phenytoin does not, and phenytoin induces valproate's clearance, so valproate runs below its range.",
+      doses = helpDoses(
+        c("phenytoin", 0, 300, "mg PO ER qd"),
+        c("valproate", 21 * MINS_PER_DAY, 500, "mg PO DR bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-phenytoin-induction",
+      "Antiseizure interactions: phenytoin lowers carbamazepine",
+      "Interactions",
+      "Phenytoin added on day 21 to carbamazepine 400 mg twice daily: carbamazepine's clearance, already doubled by its own induction, rises by another 42% (Graves 1998) over about two weeks.",
+      doses = helpDoses(
+        c("carbamazepine", 0, 400, "mg PO bid"),
+        c("phenytoin", 21 * MINS_PER_DAY, 300, "mg PO ER qd")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
 
     # --- Special populations -------------------------------------------------
     helpScenario(
@@ -976,7 +1050,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (o$logY && (o$showThreshold || o$showMEAC || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
     say("logY is unavailable with the threshold, % MEAC, events or interaction panels")
   }
-  for (name in c("showThreshold", "showMEAC", "showCompartments", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg")) {
+  for (name in c("showThreshold", "showMEAC", "showCompartments", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg", "antiseizureInteractions")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
 
@@ -1009,6 +1083,9 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
       opioids <- drugDefaults$Drug[!is.na(drugDefaults$MEAC) & drugDefaults$MEAC > 0]
       if (!"propofol" %in% d$Drug || !any(d$Drug %in% opioids)) say("the interaction panel needs propofol and an opioid")
     }
+    if (isTRUE(o$antiseizureInteractions) &&
+        nrow(activeAntiseizureInteractions(unique(d$Drug))) == 0)
+      say("antiseizureInteractions needs an interacting pair of antiseizure drugs, or carbamazepine")
     # Each companion box is enabled only while a drug in its group is dosed
     for (group in names(COMPANION_MODEL_GROUPS)) {
       if (!isTRUE(o[[group]])) next
@@ -1136,6 +1213,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
   updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
   updateCheckboxInput(session, "hamberg", value = o$hamberg)
+  updateCheckboxInput(session, ASM_INTERACTIONS_INPUT, value = o$antiseizureInteractions)
 
   eventTable(helpScenarioEventTable(s))
   if (is.null(timeApi)) {
@@ -1222,7 +1300,8 @@ helpScenarioPageHTML <- function(id) {
     "Log Y axis" = if (o$logY) "on" else "off",
     "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off",
     "Minto / Schnider" = if (o$mintoSchnider) "on" else "off",
-    "Hamberg" = if (o$hamberg) "on" else "off"
+    "Hamberg" = if (o$hamberg) "on" else "off",
+    "Antiseizure drug interactions" = if (o$antiseizureInteractions) "on" else "off"
   )
   optionsTable <- data.frame(Option = names(optionRows), Setting = unname(optionRows),
                              stringsAsFactors = FALSE)

@@ -24,6 +24,8 @@ With **Pregnant** ticked, the Michaelis constant on the total scale is multiplie
 
 **The plotted curve is total phenytoin, and the 10 to 20 mg/L band is a band for the total.** In late pregnancy the total falls well below the band while the unbound, active concentration stays near its baseline, so a low total is not by itself a reason to raise the dose: measure the free phenytoin. The factors are tied to that operating point, since elimination saturates; the trimesters before the third are not represented. See [Pregnancy](help:models/pregnancy).
 
+Valproate (which displaces phenytoin from albumin and lowers the plotted total) and zonisamide (which raises Km) change phenytoin when the **Include antiseizure drug interactions** box is ticked. See [Antiseizure drug interactions](help:models/antiseizure-interactions).
+
 ### Band
 
 10 to 20 mg/L total (ILAE; Patsalos and colleagues, *Epilepsia* 2008;49:1239-1276), the same range as 1 to 2 mg/L unbound at normal binding.

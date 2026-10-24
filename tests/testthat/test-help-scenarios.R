@@ -164,7 +164,8 @@ test_that("every scenario runs through the simulation engine", {
                                          cyp2d6 = p$cyp2d6, cyp2c19 = p$cyp2c19,
                                          cyp2c9 = p$cyp2c9, cyp2b6 = p$cyp2b6,
                                          adjustToFFM = p$adjustToFFM,
-                                         pregnant = p$pregnant)
+                                         pregnant = p$pregnant,
+                                         antiseizureInteractions = s$options$antiseizureInteractions)
       # every dosed drug has a row; a drug that forms an active metabolite adds
       # the metabolite's row too
       expect_true(all(unique(iv$Drug) %in% names(out)), info = s$id)

@@ -16,6 +16,8 @@ With **Pregnant** ticked, the clearance of total valproate is multiplied by 1.6 
 
 **The plotted curve is total valproate, and the 50 to 100 mg/L band is a band for the total.** In late pregnancy the total falls, often below the band, while the unbound, active concentration does not fall, so a low total is not by itself a reason to raise the dose: measure the free valproate. The free fraction is higher still in labour. See [Pregnancy](help:models/pregnancy).
 
+The co-medication multipliers the source gives (phenytoin, phenobarbital and carbamazepine each raise clearance about 40 to 65 per cent) are applied when the **Include antiseizure drug interactions** box is ticked. See [Antiseizure drug interactions](help:models/antiseizure-interactions).
+
 ### Band
 
 50 to 100 mg/L total (ILAE; Patsalos and colleagues, 2008).

@@ -434,6 +434,30 @@ app_ui <- function() {
                   ),
                   placement = "right"
                 ),
+                # The pharmacokinetic interactions among the antiseizure drugs
+                # (R/antiseizureInteractions.R): induction, inhibition and
+                # carbamazepine's autoinduction.  The server enables the box
+                # while the dose table holds an interacting pair, or
+                # carbamazepine.
+                bslib::tooltip(
+                  checkboxInput(
+                    inputId = ASM_INTERACTIONS_INPUT,
+                    label = "Include antiseizure drug interactions",
+                    value = FALSE
+                  ) |>
+                    shinyjs::disabled(),
+                  paste(
+                    "Apply the pharmacokinetic interactions among the",
+                    "antiseizure drugs: enzyme induction by carbamazepine,",
+                    "phenytoin and phenobarbital (which builds and fades over",
+                    "about two weeks), inhibition by valproate, carbamazepine's",
+                    "induction of its own metabolism, and valproate's",
+                    "displacement of phenytoin. Each drug changed is drawn",
+                    "beside its own curve without interactions. Available when",
+                    "the dose table holds an interacting pair, or carbamazepine."
+                  ),
+                  placement = "right"
+                ),
               ),
 
               bslib::accordion_panel(
