@@ -98,7 +98,7 @@ test_that("an oral dose at the schedule's first dose does not end it", {
   expect_equal(x$scheduled$Time, c(720, 1440, 2160))
 })
 
-test_that("a sublingual dose ends an oral schedule, and an oral dose a sublingual one", {
+test_that("oral and sublingual doses end each other's schedules, and their own", {
   # No drug offers both today (buprenorphine is the only SL drug): the rule
   # reads the units, so a made-up drug carries it.
   x <- expandScheduledDoses(
@@ -124,10 +124,22 @@ test_that("a sublingual dose ends an oral schedule, and an oral dose a sublingua
   )
   expect_equal(x$scheduled$Time[x$scheduled$Units == "mg SL"], 360)
   expect_equal(x$scheduled$Time[x$scheduled$Units == "mg PO"], c(1420, 2140, 2860))
-  # Between sublingual rows the old rules hold: an ordinary sublingual dose
-  # adds to a sublingual schedule (buprenorphine is unchanged)
+  # An ordinary sublingual dose ends a sublingual schedule too: 0 stops it,
+  # and an extra dose is given once with no schedule after it
   x <- expandScheduledDoses(
-    doses(c(0, 300), c(2, 0), c("mg SL qid", "mg SL"), "buprenorphine"),
+    doses(c(0, 700), c(2, 0), c("mg SL qid", "mg SL"), "buprenorphine"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, 360)
+  x <- expandScheduledDoses(
+    doses(c(0, 700), c(2, 4), c("mg SL qid", "mg SL"), "buprenorphine"),
+    MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time, 360)
+  expect_equal(sort(x$dose$Time), c(0, 360, 700))
+  # ...but not one taken with the schedule's first dose
+  x <- expandScheduledDoses(
+    doses(c(0, 0), c(4, 2), c("mg SL", "mg SL qid"), "buprenorphine"),
     MINS_PER_DAY
   )
   expect_equal(x$scheduled$Time, c(360, 720, 1080))
