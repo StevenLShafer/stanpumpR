@@ -469,6 +469,33 @@ interactions (carbamazepine/phenytoin/phenobarbital on clonazepam/midazolam/
 diazepam, valproate on lorazepam) are real but a **scope decision** — the model
 deliberately targets the core epilepsy ASMs; raise with the maintainer.
 
+**Baseline-model contamination (verified against the drug files 2026-10-26;
+Gemini's one substantive finding beyond lacosamide).** The claim is factually
+correct and already documented in both drug headers, but it is a design choice,
+not a bug. The monotherapy-anchored interaction factors are multiplied onto base
+clearances that are not drug-free monotherapy:
+
+- `drugs_lamotrigine.R` base CL/F is Milosheska 2016's 2.32 L/h, a MIXED
+  co-medication cohort (header line 34, "none applied"), whereas Rivas 2008's
+  folds are anchored to monotherapy 0.028 L/h/kg (1.96 L/h). With the box on,
+  `phenytoin -> lamotrigine` gives 2.32 x 1.94 = 4.50 L/h against Rivas's own
+  induced 3.80 L/h, ~18% high; the uninteracted companion (2.32) is itself above
+  true monotherapy.
+- `drugs_phenobarbital.R` base CL is the Munich 2025 ICU status-epilepticus model
+  (0.38 L/h, half-life 62.6 h), while the PHT/VPA inhibition factors come from
+  Teixeira-da-Silva 2020 outpatients (monotherapy 0.236 L/h). So valproate's
+  0.711 on 0.38 L/h = 0.270 L/h still exceeds uninhibited outpatient 0.236 L/h:
+  the inhibition never bites below a real outpatient baseline (header lines
+  42-48 already flag the ICU-vs-outpatient gap).
+
+The engine-level option is to re-base a victim to monotherapy clearance when the
+interaction box is on, so a monotherapy-anchored factor is not applied to a
+mixed/ICU base; against that, the base models were chosen deliberately (complete,
+single validated source) and changing the drug-free default is a decision beyond
+the interaction model. Zonisamide (Silva intercept), cenobamate (Vashi pooled
+adjunctive) and eslicarbazepine (2.43 vs 2.36 L/h) are the same class, less
+pronounced. For the maintainer / clinical reviewer.
+
 ## Questions for the clinical reviewer
 
 To be assembled after the full-text re-derivation and the adversarial reviews.
