@@ -148,6 +148,52 @@ test_that("valproate lowers TOTAL phenytoin (displacement) on the saturable engi
   expect_true(!is.null(b$phenytoin$interaction$Km))
 })
 
+test_that("inducers raise zonisamide and ethosuximide clearance (new victims)", {
+  # zonisamide, induced by carbamazepine (Silva 2025, CL x 1.63 per inducer)
+  dose <- data.frame(Drug = c("zonisamide", "carbamazepine"),
+                     Time = c(0, 21 * DAY), Dose = c(100, 200),
+                     Units = c("mg PO bid", "mg PO bid"))
+  a <- runASM(dose, 56 * DAY, FALSE)
+  b <- runASM(dose, 56 * DAY, TRUE)
+  # before carbamazepine the two agree (to within the re-simulation grid
+  # artifact: the interaction run adds segment-boundary time points, so the
+  # interpolated value differs by ~2e-4, not a real pre-perpetrator change)
+  expect_equal(atTime(a$zonisamide, 20 * DAY), atTime(b$zonisamide, 20 * DAY),
+               tolerance = 1e-3)
+  # with carbamazepine on, zonisamide is lower (induced over ~2 weeks)
+  expect_lt(atTime(b$zonisamide, 45 * DAY), atTime(a$zonisamide, 45 * DAY))
+  ratio <- atTime(b$zonisamide, 45 * DAY) / atTime(a$zonisamide, 45 * DAY)
+  expect_true(ratio > 0.55 && ratio < 0.8)   # roughly 1/1.5 to 1/1.25
+  expect_true(!is.null(b$zonisamide$interaction$CL))
+
+  # ethosuximide, induced by phenytoin, modestly (Riva 1996, CL x 1.225)
+  dose2 <- data.frame(Drug = c("ethosuximide", "phenytoin"),
+                      Time = c(0, 21 * DAY), Dose = c(500, 300),
+                      Units = c("mg PO bid", "mg PO ER qd"))
+  a2 <- runASM(dose2, 56 * DAY, FALSE)
+  b2 <- runASM(dose2, 56 * DAY, TRUE)
+  expect_lt(atTime(b2$ethosuximide, 45 * DAY), atTime(a2$ethosuximide, 45 * DAY))
+  ratio2 <- atTime(b2$ethosuximide, 45 * DAY) / atTime(a2$ethosuximide, 45 * DAY)
+  expect_true(ratio2 > 0.78 && ratio2 < 0.92)   # modest, ~ 1/1.225
+  expect_true(!is.null(b2$ethosuximide$interaction$CL))
+})
+
+test_that("valproate does not interact with ethosuximide (recorded negative)", {
+  r <- antiseizureInteractionRegistry()
+  vpaEth <- r[r$perpetrator == "valproate" & r$victim == "ethosuximide", ]
+  expect_equal(nrow(vpaEth), 1)
+  expect_equal(vpaEth$status, "recorded")   # Bauer 1982: no direct interaction
+  # ethosuximide + valproate alone: no applied interaction either way
+  dose <- data.frame(Drug = c("ethosuximide", "valproate"),
+                     Time = c(0, 21 * DAY), Dose = c(500, 500),
+                     Units = c("mg PO bid", "mg PO DR bid"))
+  a <- runASM(dose, 56 * DAY, FALSE)
+  b <- runASM(dose, 56 * DAY, TRUE)
+  expect_equal(atTime(a$ethosuximide, 45 * DAY), atTime(b$ethosuximide, 45 * DAY),
+               tolerance = 1e-6)
+  expect_null(b$ethosuximide$interaction)
+})
+
 test_that("two inducers add in excess, not multiplicatively", {
   # phenytoin and phenobarbital on carbamazepine: Graves measured the pair at
   # x 1.62; additive excess of 1.42 and 1.17 gives 1.59, multiplicative 1.66

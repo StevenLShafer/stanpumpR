@@ -13,16 +13,19 @@ change in clearance.** *Status: met.* `applyAntiseizureInteractions()` multiplie
 each victim's elimination clearance (`cl1`) by the time-varying fold and
 re-simulates through the exact event engine; phenytoin, on the saturable
 engine, takes Vmax/Km multipliers. All 24 linear-victim interactions are
-clearance multipliers; the 2 phenytoin interactions act on Km. Verified in
+clearance multipliers; the 6 phenytoin/zonisamide/ethosuximide additions landed
+2026-10-26 are clearance multipliers too (zonisamide, ethosuximide), and the
+2 phenytoin interactions act on Vmax/Km. Verified in
 `test-antiseizure-interactions.R`.
 
 **R2. If the model tracks FREE drug and the interaction is protein binding, it
-reflects the change in free fraction.** *Status: not yet needed, but the
-architecture should be made explicit — see "The free-fraction question" below.*
-No antiseizure drug in the library is plotted as free drug today (all are
-total), so the literal condition is never triggered. But the one protein-binding
-interaction we have (valproate→phenytoin) deserves the principled treatment R2
-describes, and Perucca 1980's full text now lets us give it.
+reflects the change in free fraction.** *Status: condition not triggered; the
+one protein-binding interaction is correctly encoded on the total scale; the
+free-phenytoin refinement is deferred (see the decision under "The free-fraction
+question" below).* No antiseizure drug in the library is plotted as free drug
+today (all are total), so the literal condition is never triggered. The one
+protein-binding interaction (valproate→phenytoin) is encoded as Km × 0.615,
+which is the correct expression of a free-fraction rise on the total scale.
 
 ## The free-fraction question (R2) — analysis and recommendation
 
@@ -67,25 +70,46 @@ Fan's sharpest concern. It is a deliberate, bounded piece of work (a free-drug
 output for phenytoin plus a protein-binding model), not a quick edit, so it is
 proposed here rather than slipped in.
 
-## Coverage audit (2026-10-25)
+**Decision (2026-10-26): deferred.** Steven Shafer chose to hold the
+free-phenytoin build for the adversarial review rather than land it now, because
+it adds a plotted output with an axis/display choice and flips the direction the
+`phenytoin-valproate-displacement` scenario teaches. The numbers are in hand
+(Perucca 1980 free intrinsic CL −18% → Vmax × ~0.82; Ueshima 2008 for the
+valproate binding side), so it can be built quickly once the display is settled.
+The current model keeps only the displacement (Km × 0.615), which is correct for
+the plotted total.
+
+## Coverage audit (2026-10-25; gaps closed 2026-10-26)
 
 Checked every selectable antiseizure drug as victim and perpetrator:
 
 - **Covered as victim:** phenytoin, valproate, lamotrigine, carbamazepine,
   phenobarbital, topiramate, tiagabine, lacosamide, eslicarbazepine, cenobamate
-  (pending), zonisamide-on-phenytoin only.
-- **Gaps (selectable victims with no applied interaction):**
-  - **Zonisamide as victim of inducers** — real (t½ 55→30 h with inducers;
-    Willmore 2000). Silva 2025 (PMID 39848412), which is *already the library's
-    zonisamide model source*, carries an inducer-drug-load covariate on CL/F.
-    Read its full text and apply — self-consistent with the model. **Fillable now.**
-  - **Ethosuximide as victim of inducers and valproate** — real (CYP3A4
-    substrate). Needs a quantified factor; candidate PMIDs 12102641, 9421101,
-    7512905, 3146222, and the Patsalos & Perucca 2003 review.
+  (pending), **zonisamide** and **ethosuximide**.
+- **Gaps closed (2026-10-26):**
+  - **Zonisamide as victim of inducers — APPLIED.** Silva 2025 (PMID 39848412,
+    the library's own zonisamide source) gives the inducer effect on CL/F as
+    `0.761 × 1.63^INDDL`, INDDL the summed dose/DDD of the enzyme inducers
+    (verified against the paper's +28/108/239% at INDDL 0.5/1.5/2.5). Applied as
+    **CL × 1.63** per inducer at its band reference (one DDD). Cross-check: Okada
+    2008 (PMID 18641551) found carbamazepine/phenytoin/phenobarbital raised CL/F
+    24/28/29% (×~1.25), which matches `1.63^INDDL` at INDDL ≈ 0.4–0.5 (a typical
+    maintenance dose is below one DDD). See the combination-rule note below.
+  - **Ethosuximide as victim of inducers — APPLIED.** Riva 1996 (PMID 8968658,
+    §3.8): the ethosuximide dose must be 20–25% higher on inducers to hold the
+    concentration, so **CL × 1.225** (the midpoint) for carbamazepine, phenytoin
+    and phenobarbital. Modest, since ethosuximide is only partly CYP3A4-cleared.
+    Corroborated by Spina 1996 and Tanaka 1999 (Table 3).
+  - **Ethosuximide as victim of valproate — RECORDED, NOT APPLIED (negative).**
+    Bauer 1982 (PMID 6804151, 6 healthy adults): adding valproate to
+    steady-state ethosuximide changed neither total nor nonrenal clearance
+    (11.1→11.2, 8.3→8.3 ml/h/kg). The 53% rise Mattson & Cramer saw was in
+    patients also on other AEDs — an indirect chain, not a direct valproate
+    effect. Riva 1996 and Tanaka 1999 concur.
   - Pentobarbital, levetiracetam: correctly left out (levetiracetam is renally
     cleared and interaction-free; pentobarbital is an acute IV agent).
 - **Cenobamate as perpetrator** — now quantified from the XCOPRI label, pending
-  implementation (below).
+  implementation (below); deliberately deferred for the adversarial review.
 - **Cenobamate as victim — a conflict to resolve.** The applied row uses Vashi
   2023's pop-PK covariate (carbamazepine ×1.15 on cenobamate CL/F). The XCOPRI
   label's *dedicated* DDI study found carbamazepine **not** significant on
@@ -162,26 +186,82 @@ explicitly **not additive** (a third combination data point; assumption 2).
 **Cenobamate XCOPRI label** (NDA 212839) — obtained and read 2026-10-25; the
 perpetrator magnitudes are now in the registry (pending application).
 
-## Additional papers needed (verified against PubMed, 2026-10-25)
+## Cross-check against the consensus reviews and secondary studies (2026-10-26)
+
+Steven Shafer supplied the full texts below; each is now a `crosscheck` row in
+the registry. The applied set is corroborated throughout, with **one correction
+and one de-escalation** (both in our favour).
+
+**Consensus reviews (all mutually consistent):**
+- **Patsalos & Perucca 2003, Part I** (PMID 12849151) and **Part II** (PMID
+  12878435, AED–non-AED, out of scope). Part I corroborates: inducers ~2× and
+  valproate ~0.5× on lamotrigine; valproate +30–50% on phenobarbital;
+  carbamazepine→phenytoin inconsistent (left unapplied); valproate→parent
+  carbamazepine negligible (left unapplied, the epoxide is the affected moiety);
+  inducers lower zonisamide and ethosuximide. It also states the free-vs-total
+  phenytoin story verbatim (total falls, free unchanged or rises).
+- **Riva, Albani, Contin & Baruzzi 1996** (PMID 8968658). Source of the applied
+  **inducers→ethosuximide ×1.225**. Also corroborates CBZ→lamotrigine (t½
+  24→14 h, CL ×1.71 — applied 1.595) and valproate→carbamazepine (parent
+  unchanged).
+- **Spina, Pisani & Perucca 1996** (PMID 8877250). CBZ→lamotrigine CL ×1.71;
+  the zonisamide inducer asymmetry (see below); CBZ→phenytoin inconsistent.
+- **Tanaka 1999** (PMID 10380060). Source of the inducers→valproate correction.
+
+**CORRECTION — inducers→valproate was never a divergence.** An earlier note
+flagged the applied inducers→valproate factors (Teixeira-da-Silva 2022: PHT
+1.64, CBZ 1.52, PB 1.39) as diverging from Patsalos & Perucca Part I, which
+reads "valproate reduced **by** 76%, 49%, 66%" with PB/PHT/CBZ (implying CL
+×4.2/2.0/2.9 and an inverted rank order). Tanaka 1999 quotes the same primary
+data (May & Rambeck 1985, PMID 3936236) correctly: valproate is reduced **to**
+76.3/49.5/66.2% of monotherapy — i.e. CL **×1.31 (PB), ×2.02 (PHT), ×1.51
+(CBZ)**. Part I had written "to" as "by". Read correctly the primary data
+**matches the applied factors** in magnitude and rank order (PHT > CBZ > PB):
+carbamazepine 1.52 vs 1.51 (near-identical), phenobarbital 1.39 vs 1.31, and
+phenytoin 1.64 vs 2.02 (the applied value is, if anything, slightly
+conservative). **The divergence note is withdrawn.**
+
+**DE-ESCALATION — valproate→lamotrigine ×0.49 is central, not weak.** Five
+sources on the valproate effect: Armijo 1999 (PMID 10217338, C/D ratio) ~×0.25;
+Gidal 2003 (Emax) ~×0.35; **Rivas 2008 (applied) ×0.49**; Eriksson 1996 (PMID
+8764817) and Riva "doubles t½" ~×0.5; Battino 2001 (PMID 11360028) confirms the
+effect in children. The applied ×0.49 sits in the middle of a wide (×0.25–0.5)
+spread, so it is defensible as-is; the earlier "likely too weak" note is
+downgraded to "central within a wide spread."
+
+**Valproate protein binding (Ueshima 2008, PMID 18211614).** A negative
+cross-check: zonisamide, phenytoin and carbamazepine do **not** alter valproate
+protein binding, so there is no binding-displacement interaction onto valproate
+to add. Supplies the Langmuir Bm/Kd (130 / 7.8 µg/mL) for the free-valproate
+side of the deferred free-drug refinement.
+
+**Zonisamide combination rule (open for the adversarial review).** The applied
+rows use ×1.63 per inducer and combine inducers by the model's additive-excess
+rule. Silva 2025's own structure is `1.63^INDDL`, i.e. **multiplicative in
+dose** (two inducers at one DDD each → 2.66, against additive-excess 2.26), and
+Spina 1996 found **phenytoin induces zonisamide more strongly than
+carbamazepine** (zonisamide 40% higher on carbamazepine than phenytoin). The
+uniform ×1.63-per-inducer with additive-excess combination is the
+self-consistent first approximation; whether to adopt Silva's dose-multiplicative
+form, or per-inducer asymmetry, is a review question (see Assumption 2).
+
+## Additional papers needed (verified against PubMed, 2026-10-25; mostly obtained 2026-10-26)
 
 Ranked by what each unblocks:
 
-1. **Falcao 2012** (PMID 22171585, eslicarbazepine, CNS Drugs) — confirms the
-   three applied eslicarbazepine inducer factors. Not accessible to the author;
-   being requested via Stanford DocXpress. Until then those rows stay
-   abstract-sourced.
-2. **Silva 2025** (PMID 39848412, Eur J Pharm Sci, zonisamide) — the inducer
-   drug-load factor to apply inducers→zonisamide. It is already the library's
-   zonisamide model source, so the full text is likely in hand; read the INDDL
-   coefficient. [doi 10.1016/j.ejps.2025.107023]
-3. **An ethosuximide inducer/valproate source** — to apply inducers→ethosuximide
-   and valproate→ethosuximide. Candidates to screen: PMIDs 12102641, 9421101,
-   7512905, 3146222.
-4. **Patsalos & Perucca 2003, Lancet Neurol, Part I** (PMID 12849151, AED–AED
-   interactions) — the authoritative consensus review to **cross-check every
-   applied magnitude** against before the model is finalized. [doi
-   10.1016/s1474-4422(03)00409-5]. (Part II, PMID 12878435, covers AED–other
-   drugs and is less relevant here.)
+1. **Falcao 2012** (PMID 22171585, eslicarbazepine, CNS Drugs) — **STILL
+   OUTSTANDING.** Would confirm the three applied eslicarbazepine inducer
+   factors (they stay abstract-sourced until then). Being requested via Stanford
+   DocXpress.
+2. ~~**Silva 2025** (PMID 39848412, zonisamide)~~ — **OBTAINED 2026-10-26.**
+   `CL/F = 0.761 × 1.63^INDDL`; inducers→zonisamide applied at ×1.63 per inducer.
+3. ~~**An ethosuximide inducer/valproate source**~~ — **OBTAINED 2026-10-26.**
+   Riva 1996 (PMID 8968658) gives inducers→ethosuximide (dose +20–25% → CL
+   ×1.225, applied); Bauer 1982 (PMID 6804151) establishes valproate→ethosuximide
+   as a negative (recorded, not applied). The old candidate PMIDs were not needed.
+4. ~~**Patsalos & Perucca 2003, Part I**~~ (PMID 12849151) — **OBTAINED, both
+   parts read 2026-10-25.** Cross-check done (see the section above); corroborates
+   the applied set and surfaced the inducers→valproate "by/to" correction.
 5. **Willmore 2000** (PMID 11200305, Drugs Aging) — a secondary cross-check for
    zonisamide's t½ 55→30 h with inducers. [doi 10.2165/00002512-200017060-00002]
 
@@ -195,11 +275,14 @@ For the free-phenytoin extension (R2), if pursued: a phenytoin albumin-binding
 model (Winter–Tozer / Sheiner–Tozer) and valproate's concentration-dependent
 (saturable) binding, to drive `fu` for both the displacement and a free output.
 
-## Cenobamate (XCOPRI label, pending upload)
+## Cenobamate (XCOPRI label — read 2026-10-25; application deferred)
 
-Currently two `recorded` (not applied) rows: cenobamate → phenytoin and
-→ lamotrigine. The label (§7 Drug Interactions, §12.3 Pharmacokinetics) gives
-the fold-changes. On upload:
+The label is read; four `recorded` (not applied) rows now carry its magnitudes
+(cenobamate → phenytoin, lamotrigine, carbamazepine, phenobarbital). Application
+is deferred for the adversarial review (no therapeutic band → needs a reference
+concentration; phenytoin is the saturable victim; a victim-conflict to resolve).
+The label (§7 Drug Interactions, §12.3 Pharmacokinetics) gives the fold-changes.
+When applied:
 - promote those two rows to `applied` with the label's magnitudes and
   `ec50_basis = "product label (XCOPRI)"`;
 - add phenobarbital (label reports an increase) and, if clobazam is ever added
