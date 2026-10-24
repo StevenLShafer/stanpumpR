@@ -1725,6 +1725,7 @@ app_server <- function(input, output, session) {
   # `time` is in minutes (imgDrugTime()); the dialog shows it, and the dose
   # table stores what is typed, in the dose table's format.
   showAddDrugModal <- function(drug, time) {
+    skipTarget(list(drug = drug, time = time))
     thisDrug     <- which(drug == drugDefaults()$Drug)
     initialUnits <- unlist(drugDefaults()$Units[thisDrug])
     selectedUnit <- drugDefaults()$Default.Units[thisDrug]
@@ -1765,6 +1766,7 @@ app_server <- function(input, output, session) {
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
+        uiOutput("skipNextDoseUI"),
         footer = NULL,
         easyClose = TRUE,
         size = "s"
@@ -1790,6 +1792,8 @@ app_server <- function(input, output, session) {
 
   observeEvent(input$addDoseDrug, {
     req(input$addDoseDrug)
+    target <- isolate(skipTarget())
+    if (!is.null(target)) skipTarget(list(drug = input$addDoseDrug, time = target$time))
     thisDrug     <- which(input$addDoseDrug == drugDefaults()$Drug)
     units        <- unlist(drugDefaults()$Units[thisDrug])
     selectedUnit <- drugDefaults()$Default.Units[thisDrug]
@@ -1845,7 +1849,61 @@ app_server <- function(input, output, session) {
     }, name = "input$addDoseBtn observer")
   })
 
+  # "Skip next dose" (R/scheduled.R, skipNextOralDose()): offered in both
+  # dose dialogs while the clicked drug has a scheduled oral dose at or after
+  # the time clicked.  skipTarget() is the drug and time the dialog is about;
+  # the Add a dose dialog's drug selector moves it to another drug.
+  skipTarget <- reactiveVal(NULL)
+
+  skipNextDose <- function(target = skipTarget()) {
+    if (is.null(target) || !nzchar(target$drug)) return(NULL)
+    format <- doseTableFormat()
+    skipNextOralDose(
+      doseTable(), target$drug, target$time, plotMaximum(), format,
+      referenceFor(format),
+      units = unlist(drugDefaults()$Units[drugDefaults()$Drug == target$drug])
+    )
+  }
+
+  output$skipNextDoseUI <- renderUI({
+    skip <- tryCatch(skipNextDose(), error = function(e) NULL)
+    if (is.null(skip)) return(NULL)
+    format <- doseTableFormat()
+    tags$div(
+      class = "mt-3",
+      actionButton(
+        "skipNextDoseBtn",
+        paste0("Skip next dose (", minutesToEntryTime(skip$time, format, referenceFor(format)), ")"),
+        class = "btn-outline-secondary w-100"
+      ),
+      tags$p(
+        class = "small text-muted mt-1 mb-0",
+        "A missed or vomited tablet: the schedule then carries on as before."
+      )
+    )
+  })
+
+  observeEvent(input$skipNextDoseBtn, {
+    profileCode({
+      target <- skipTarget()
+      skip <- skipNextDose(target)
+      removeModal()
+      if (is.null(skip)) return()
+      dt <- skip$table
+      if (dt$Drug[nrow(dt)] != "") dt <- rbind(dt, doseTableNewRow)
+      doseTable(dt)
+      format <- doseTableFormat()
+      at <- function(m) minutesToEntryTime(m, format, referenceFor(format))
+      showNotification(paste0(
+        "Skipped the ", target$drug, " dose at ", at(skip$time), ". ",
+        if (is.na(skip$resumes)) "The next oral dose in the table follows at its own time." else
+          paste0("The schedule (", skip$dose, " ", skip$units, ") resumes at ", at(skip$resumes), ".")
+      ), type = "message")
+    }, name = "input$skipNextDoseBtn observer")
+  })
+
   showEditDrugModal <- function(drug) {
+    skipTarget(list(drug = drug, time = DrugTimeUnits()$time))
     showModal(
       modalDialog(
         title = paste("Edit", drug, "doses"),
@@ -1861,6 +1919,7 @@ app_server <- function(input, output, session) {
           `data-bs-dismiss` = "modal",
           "Cancel"
         ),
+        uiOutput("skipNextDoseUI"),
         footer = NULL,
         easyClose = TRUE,
         size = "s"

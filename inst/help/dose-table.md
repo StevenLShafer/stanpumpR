@@ -61,9 +61,14 @@ For drugs given on a schedule (the analgesic opioids, the oral analgesics and be
 
 The first dose is given at the time in the row, and the same dose is then repeated at that interval until the end of the X axis, so lengthening the axis extends the schedule. The repeats are not added to the dose table, which would fill with rows, but they are merged back in when a slide is emailed, so the exported dose table lists the full dose sequence.
 
-- To **stop** a schedule, enter a scheduled dose of **0** for the same drug and route at the stop time, at any frequency. `0 mg PO bid` stops an oral schedule of that drug; an intravenous schedule carries on. An ordinary dose of 0 does not stop it.
+- To **stop** a schedule, enter a scheduled dose of **0** for the same drug and route at the stop time, at any frequency. `0 mg PO bid` stops an oral schedule of that drug; an intravenous schedule carries on.
 - To **change** the dose or the frequency, enter a new scheduled row for the same route: it replaces the running schedule from its own time.
-- Ordinary doses can be given alongside a schedule; they add.
+- **Oral schedules** end at the next oral dose of any kind. A new oral row for that drug, scheduled or not, in any oral form, ends the running oral schedule from its own time: a `bid` row entered during a `tid` schedule replaces it, and an ordinary `0 mg PO` stops it, since a new oral dose is a new instruction to the patient. An oral dose entered at the same time as a schedule's first dose (a loading dose taken with it) does not end it.
+- On the other routes an ordinary dose given alongside a schedule adds to it, and an ordinary dose of 0 does not stop it.
+
+### Skip next dose
+
+A patient who misses a tablet, or vomits it, wants to know whether to wait for the next dose or take two. Click a drug's curve, or double-click it, while it has an oral schedule running: the dialog then offers **Skip next dose**, naming the time of the first scheduled oral dose after the time clicked. It writes the skip into the dose table by the rules above, where it can be seen and changed: a `0 mg PO` row at the skipped time, which ends the schedule, and the scheduled row again one interval later, which restarts it. To compare the patient's options, change that restart row, for instance to a double dose taken now and the schedule resumed at its usual time.
 
 ## Applying changes
 
