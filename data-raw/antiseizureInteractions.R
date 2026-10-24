@@ -1,0 +1,376 @@
+# -----------------------------------------------------------------------------
+# Build inst/extdata/antiseizureInteractions.csv
+# -----------------------------------------------------------------------------
+# Drafted by Claude Code, 2026-10-24, at the request of Steven L. Shafer, who
+# asked for the literature on the PHARMACOKINETIC interactions among the
+# epilepsy drugs, a model of them that can be switched on and off, and the
+# list of papers to obtain.  The model is R/antiseizureInteractions.R; the
+# help page inst/help/models/antiseizure-interactions.md.
+#
+# The search was run on 2026-10-24 against PubMed (abstracts) and PubMed
+# Central (full text).  Every PMID below was checked against PubMed in this
+# session.  `evidence_read` says what was read: "abstract", "full text", or
+# "abstract; full text not in PMC".  `to_obtain` is "yes" where the full text
+# would firm up a number or supply one the abstract omits; those papers are the
+# reading list on the help page.
+#
+# status
+#   applied     the simulation applies this row when the box is ticked and
+#               both drugs are dosed
+#   crosscheck  a second source for an applied row, or the source of its
+#               shape or time course; never applied itself
+#   recorded    an interaction the literature describes that the simulation
+#               does not apply: unquantified, a victim or perpetrator outside
+#               the library, a moiety not plotted (an epoxide, the unbound
+#               drug), or a magnitude only the product label gives
+#
+# The numeric columns of an applied row:
+#   parameter   CL (the elimination clearance, cl1, or CL/F), or for
+#               phenytoin, Vmax or Km (total)
+#   fold        the published factor on that parameter in patients on an
+#               ordinary maintenance dose of the perpetrator
+#   c_ref       the perpetrator concentration, mcg/mL, at which `fold` holds:
+#               the typical value of the perpetrator's band
+#   ec50        the perpetrator concentration of half the maximal effect,
+#               mcg/mL; `ec50_basis` says whether a source gave it or it is
+#               the lower edge of the perpetrator's band (the default; see
+#               the header of R/antiseizureInteractions.R)
+#   onset       "turnover" (induction, through the enzyme turnover model) or
+#               "immediate" (inhibition, binding displacement)
+#   turnover_half_life_h  the induced enzymes' degradation half-life, 86.1 h
+#               (Punyawudho 2009, PMID 19566114), for every turnover row
+#
+# Run with: LC_ALL=C.UTF-8 Rscript data-raw/antiseizureInteractions.R
+# Checked by tests/testthat/test-antiseizure-interactions.R.
+# -----------------------------------------------------------------------------
+
+STATUSES <- c("applied", "crosscheck", "recorded")
+TURNOVER_HALF_LIFE_H <- 86.1
+
+row <- function(perpetrator, victim, status, mechanism, enzyme,
+                parameter = NA, fold = NA, c_ref = NA, ec50 = NA,
+                ec50_basis = NA, onset = NA, finding, population = NA,
+                source, source_short, pmid, pmcid = NA, doi = NA,
+                evidence_read, to_obtain = "no", notes = NA)
+  data.frame(
+    perpetrator, victim, status, mechanism, enzyme, parameter, fold, c_ref,
+    ec50, ec50_basis, onset,
+    turnover_half_life_h = if (identical(onset, "turnover")) TURNOVER_HALF_LIFE_H else NA,
+    finding, population, source, source_short, pmid, pmcid, doi,
+    evidence_read, to_obtain, notes, stringsAsFactors = FALSE
+  )
+
+# The perpetrators' reference concentrations and the default EC50 (the lower
+# edge of the band), from the library's drug models.
+REF <- list(
+  phenytoin     = c(c_ref = 15, ec50 = 10),
+  carbamazepine = c(c_ref = 8,  ec50 = 4),
+  valproate     = c(c_ref = 75, ec50 = 50),
+  phenobarbital = c(c_ref = 20, ec50 = 10),
+  zonisamide    = c(c_ref = 20, ec50 = 10)
+)
+LOWER_EDGE <- "assumed: lower edge of the perpetrator's reference range"
+
+applied <- function(perpetrator, victim, mechanism, enzyme, parameter, fold,
+                    onset, ..., ec50 = REF[[perpetrator]][["ec50"]],
+                    ec50_basis = LOWER_EDGE)
+  row(perpetrator, victim, "applied", mechanism, enzyme, parameter, fold,
+      c_ref = REF[[perpetrator]][["c_ref"]], ec50 = ec50,
+      ec50_basis = ec50_basis, onset = onset, ...)
+
+RIVAS <- list(source = paste0(
+  "Rivas N, Buelga DS, Elger CE, et al. Population pharmacokinetics of ",
+  "lamotrigine with data from therapeutic drug monitoring in German and ",
+  "Spanish patients with epilepsy. Ther Drug Monit 2008;30:483-489."),
+  source_short = "Rivas 2008", pmid = "18641550",
+  doi = "10.1097/FTD.0b013e31817fd4d4",
+  population = "600 adults with epilepsy, 1699 steady-state levels (TDM, Germany and Spain)",
+  evidence_read = "abstract (the full clearance equation is in it); full text not in PMC")
+TDS22 <- list(source = paste0(
+  "Teixeira-da-Silva P, Perez-Blanco JS, Santos-Buelga D, Otero MJ, Garcia ",
+  "MJ. Population pharmacokinetics of valproic acid in pediatric and adult ",
+  "Caucasian patients. Pharmaceutics 2022;14:811."),
+  source_short = "Teixeira-da-Silva 2022", pmid = "35456645",
+  pmcid = "PMC9031051", doi = "10.3390/pharmaceutics14040811",
+  population = "836 patients 0.1-93 y, 1751 levels; external set 368 patients",
+  evidence_read = "full text")
+GRAVES <- list(source = paste0(
+  "Graves NM, Brundage RC, Wen Y, et al. Population pharmacokinetics of ",
+  "carbamazepine in adults with epilepsy. Pharmacotherapy 1998;18:273-281."),
+  source_short = "Graves 1998", pmid = "9545146",
+  population = "829 adults on maintenance carbamazepine; validation set 50",
+  evidence_read = "abstract (the final equations are in it); full text not in PMC")
+TDS20 <- list(source = paste0(
+  "Teixeira-da-Silva P, Santos-Buelga D, Otero MJ, Garcia MJ. Population ",
+  "pharmacokinetics of phenobarbital in Caucasian patients with epilepsy. ",
+  "Eur J Pharm Sci 2020;153:105484."),
+  source_short = "Teixeira-da-Silva 2020", pmid = "32707172",
+  doi = "10.1016/j.ejps.2020.105484",
+  population = "395 patients over 15 y, 855 trough levels; external set 107",
+  evidence_read = "abstract (the final equation is in it); full text not in PMC")
+BAMGBOYE <- list(source = paste0(
+  "Bamgboye et al. Topiramate pharmacokinetics after a stable-isotope-labelled ",
+  "intravenous dose in adults. J Clin Pharmacol 2026."),
+  source_short = "Bamgboye 2026", pmid = "41987705", pmcid = "PMC13084296",
+  doi = "10.1002/jcph.70191",
+  population = "20 adults with epilepsy or migraine, 246 samples",
+  evidence_read = "full text (the library's topiramate source; read when the model was built)")
+SAMARA <- list(source = paste0(
+  "Samara EE, Gustavson LE, El-Shourbagy T, et al. Population analysis of ",
+  "the pharmacokinetics of tiagabine in patients with epilepsy. Epilepsia ",
+  "1998;39:868-873."),
+  source_short = "Samara 1998", pmid = "9701378",
+  doi = "10.1111/j.1528-1157.1998.tb01182.x",
+  population = "511 patients, 2147 samples",
+  evidence_read = "abstract; full text not in PMC")
+FALCAO <- list(source = paste0(
+  "Falcao A, Fuseau E, Nunes T, Almeida L, Soares-da-Silva P. ",
+  "Pharmacokinetics, drug interactions and exposure-response relationship of ",
+  "eslicarbazepine acetate in adult patients with partial-onset seizures. ",
+  "CNS Drugs 2012;26:79-91."),
+  source_short = "Falcao 2012", pmid = "22171585",
+  doi = "10.2165/11596290-000000000-00000",
+  population = "641 phase III patients",
+  evidence_read = "abstract (the final equation is in it); full text not in PMC")
+
+app <- function(perpetrator, victim, mechanism, enzyme, parameter, fold,
+                onset, src, finding, ..., to_obtain = "no", notes = NA)
+  do.call(applied, c(list(perpetrator, victim, mechanism, enzyme, parameter,
+                          fold, onset, finding = finding, to_obtain = to_obtain,
+                          notes = notes), src, list(...)))
+
+registry <- rbind(
+  # --- Lamotrigine (victim) --------------------------------------------------
+  app("phenytoin", "lamotrigine", "induction", "UGT1A4/UGT2B7", "CL",
+      round(exp(0.663), 3), "turnover", RIVAS,
+      "CL x e^0.663 = 1.94 with phenytoin (0.045-0.070 against 0.028 L/h/kg in monotherapy).",
+      to_obtain = "yes",
+      notes = "Full text for the standard errors. Lamotrigine half-life falls from 23-37 h to 13.5-15 h with an inducer (Rambeck 1993, PMID 8119045)."),
+  app("phenobarbital", "lamotrigine", "induction", "UGT1A4/UGT2B7", "CL",
+      round(exp(0.588), 3), "turnover", RIVAS,
+      "CL x e^0.588 = 1.80 with phenobarbital or primidone.", to_obtain = "yes"),
+  app("carbamazepine", "lamotrigine", "induction", "UGT1A4/UGT2B7", "CL",
+      round(exp(0.467), 3), "turnover", RIVAS,
+      "CL x e^0.467 = 1.60 with carbamazepine; two or more inducers x e^0.864 = 2.37.",
+      to_obtain = "yes",
+      notes = "The two-inducer factor is what fixes the additive combination of inductions (header of R/antiseizureInteractions.R)."),
+  app("valproate", "lamotrigine", "inhibition", "UGT1A4/UGT2B7", "CL",
+      round(exp(-0.713), 3), "immediate", RIVAS,
+      "CL x e^-0.713 = 0.49 with valproate (0.014 against 0.028 L/h/kg).",
+      ec50 = 5.6,
+      ec50_basis = "Gidal 2003 (PMID 15013050): EC50 5.6 mcg/mL of valproate, fitted to four valproate doses",
+      to_obtain = "yes",
+      notes = "Magnitude from Rivas (n = 600), shape from Gidal 2003: with EC50 5.6 the maximal inhibition is 55%, against Gidal's own 65% in 8 volunteers."),
+  # --- Valproate (victim) ----------------------------------------------------
+  app("carbamazepine", "valproate", "induction", "UGT, CYP2C9/2C19 (beta-oxidation unaffected)", "CL",
+      1.521, "turnover", TDS22,
+      "CL/F x 1.521 with carbamazepine; confirmed by back-calculation from the paper's worked examples."),
+  app("phenytoin", "valproate", "induction", "UGT, CYP2C9/2C19", "CL",
+      1.640, "turnover", TDS22, "CL/F x 1.640 with phenytoin."),
+  app("phenobarbital", "valproate", "induction", "UGT, CYP2C9/2C19", "CL",
+      1.386, "turnover", TDS22, "CL/F x 1.386 with phenobarbital."),
+  # --- Carbamazepine (victim) ------------------------------------------------
+  row("carbamazepine", "carbamazepine", "applied", "autoinduction", "CYP3A4 (epoxide-diol pathway)",
+      "CL", 2.0, c_ref = 8, ec50 = 4, ec50_basis = LOWER_EDGE, onset = "turnover",
+      finding = paste0(
+        "Clearance of tetradeuterium-labelled carbamazepine doubled after 17-32 ",
+        "days of treatment in three children, with no further rise over four ",
+        "months; in two adults the half-life of a single dose a week after the ",
+        "last maintenance dose (45 and 46 h) was twice the steady-state half-life ",
+        "(23 h in both)."),
+      population = "3 children on long-term treatment; 2 adults",
+      source = paste0("Bertilsson L, Tomson T, Tybring G. Pharmacokinetics: ",
+                      "time-dependent changes--autoinduction of carbamazepine ",
+                      "epoxidation. J Clin Pharmacol 1986;26:459-462."),
+      source_short = "Bertilsson 1986", pmid = "3734137",
+      doi = "10.1002/j.1552-4604.1986.tb03558.x",
+      evidence_read = "abstract; full text not in PMC", to_obtain = "yes",
+      notes = "The library's Graves model is the induced state, so the uninduced clearance is Graves's / 2: half-life 42 h in the reference man, inside the 25-65 h single-dose range."),
+  app("phenytoin", "carbamazepine", "induction", "CYP3A4", "CL", 1.42,
+      "turnover", GRAVES,
+      "CL/F x 1.42 with phenytoin alone; x 1.62 with phenytoin and phenobarbital or felbamate.",
+      to_obtain = "yes",
+      notes = "The library's own carbamazepine source. Additive excess (3) gives phenytoin plus phenobarbital 1.59, against Graves's 1.62."),
+  app("phenobarbital", "carbamazepine", "induction", "CYP3A4", "CL", 1.17,
+      "turnover", GRAVES, "CL/F x 1.17 with phenobarbital or felbamate.",
+      to_obtain = "yes"),
+  # --- Phenytoin (victim) ----------------------------------------------------
+  row("valproate", "phenytoin", "applied", "binding displacement", "albumin",
+      "Km", round(9.6 / 15.6, 3), c_ref = 75, ec50 = 50, ec50_basis = LOWER_EDGE,
+      onset = "immediate",
+      finding = paste0(
+        "Valproate 400 mg three times daily raised the unbound fraction of ",
+        "phenytoin from 9.6 +/- 0.9% to 15.6 +/- 1.4% and raised the clearance ",
+        "and volume of TOTAL phenytoin; free phenytoin rose, so the clearance ",
+        "of FREE phenytoin fell (metabolic inhibition, not quantified in the abstract)."),
+      population = "7 healthy men, intravenous phenytoin 250 mg",
+      source = paste0("Perucca E, Hebdige S, Frigo GM, et al. Interaction ",
+                      "between phenytoin and valproic acid: plasma protein ",
+                      "binding and metabolic effects. Clin Pharmacol Ther ",
+                      "1980;28:779-789."),
+      source_short = "Perucca 1980", pmid = "6777108",
+      doi = "10.1038/clpt.1980.235",
+      evidence_read = "abstract; full text not in PMC", to_obtain = "yes",
+      notes = "Km on the total scale is Km(unbound)/fu: x 9.6/15.6 = 0.615. Only the displacement is applied, so the PLOTTED TOTAL falls; the unbound phenytoin, which the library does not plot, does not fall and rises with the inhibition recorded below. c_ref 75 mcg/mL stands for 1200 mg/day (the abstract gives no valproate level)."),
+  row("zonisamide", "phenytoin", "applied", "inhibition", "CYP2C9/2C19 (presumed)",
+      "Km", 1.16, c_ref = 20, ec50 = 10, ec50_basis = LOWER_EDGE,
+      onset = "immediate",
+      finding = "Km of phenytoin 16% higher in patients taking zonisamide.",
+      population = "116 Japanese patients with epilepsy, 531 steady-state levels",
+      source = paste0("Odani A, Hashimoto Y, Takayanagi K, et al. Population ",
+                      "pharmacokinetics of phenytoin in Japanese patients with ",
+                      "epilepsy: analysis with a dose-dependent clearance model. ",
+                      "Biol Pharm Bull 1996;19:444-448."),
+      source_short = "Odani 1996", pmid = "8924916", doi = "10.1248/bpb.19.444",
+      evidence_read = "abstract; full text not in PMC", to_obtain = "yes",
+      notes = "The library's own phenytoin source."),
+  # --- Phenobarbital (victim) ------------------------------------------------
+  app("phenytoin", "phenobarbital", "inhibition", "CYP2C9/2C19", "CL", 0.822,
+      "immediate", TDS20, "CL/F x 0.822 with phenytoin.", to_obtain = "yes",
+      notes = "A different source from the library's phenobarbital model (the Munich status epilepticus cohort); the factor is applied to it as a relative change."),
+  app("valproate", "phenobarbital", "inhibition", "CYP2C9/2C19, N-glucosidation", "CL",
+      0.711, "immediate", TDS20, "CL/F x 0.711 with valproate.", to_obtain = "yes"),
+  # --- Topiramate, tiagabine, lacosamide, eslicarbazepine, cenobamate --------
+  app("carbamazepine", "topiramate", "induction", "CYP3A4", "CL", 1.63,
+      "turnover", BAMGBOYE, "CL x 1.63 with enzyme-inducing co-medication."),
+  app("phenytoin", "topiramate", "induction", "CYP3A4", "CL", 1.63,
+      "turnover", BAMGBOYE, "CL x 1.63 with enzyme-inducing co-medication."),
+  app("phenobarbital", "topiramate", "induction", "CYP3A4", "CL", 1.63,
+      "turnover", BAMGBOYE, "CL x 1.63 with enzyme-inducing co-medication."),
+  app("carbamazepine", "tiagabine", "induction", "CYP3A4", "CL", round(21.4 / 12.8, 3),
+      "turnover", SAMARA, "Clearance 21.4 L/h with enzyme-inducing drugs against 12.8 L/h without (+67%).",
+      to_obtain = "yes"),
+  app("phenytoin", "tiagabine", "induction", "CYP3A4", "CL", round(21.4 / 12.8, 3),
+      "turnover", SAMARA, "Clearance 21.4 L/h with enzyme-inducing drugs against 12.8 L/h without (+67%).",
+      to_obtain = "yes"),
+  app("phenobarbital", "tiagabine", "induction", "CYP3A4", "CL", round(21.4 / 12.8, 3),
+      "turnover", SAMARA, "Clearance 21.4 L/h with enzyme-inducing drugs against 12.8 L/h without (+67%).",
+      to_obtain = "yes"),
+  app("carbamazepine", "lacosamide", "induction", "CYP3A4/2C9/2C19", "CL", 1.48,
+      "turnover",
+      list(source = paste0("Yu L, Mao F, Chen S, et al. Development and validation ",
+                           "of a population pharmacokinetic model for lacosamide in ",
+                           "adult patients with epilepsy. BMC Pharmacol Toxicol 2026;27."),
+           source_short = "Yu 2026", pmid = "41776608", pmcid = "PMC13067655",
+           doi = "10.1186/s40360-026-01114-2",
+           population = "180 Chinese adults, 294 troughs",
+           evidence_read = "full text (the library's lacosamide source)"),
+      "CL/F x 1.48^CBZ."),
+  app("phenobarbital", "lacosamide", "induction", "CYP3A4/2C9/2C19", "CL", 1.42,
+      "turnover",
+      list(source = paste0("Wu R, Liu S, Zhao Z, Mei S. Population pharmacokinetic ",
+                           "model of lacosamide in Chinese children and adults with ",
+                           "epilepsy. Ther Drug Monit 2026;48:358-365."),
+           source_short = "Wu 2025", pmid = "40960184",
+           doi = "10.1097/FTD.0000000000001385",
+           population = "391 Chinese children and adults, 482 samples",
+           evidence_read = "abstract; full text not in PMC"),
+      "CL x 1.42 with phenobarbital or carbamazepine (one indicator).",
+      to_obtain = "yes",
+      notes = "Applied for phenobarbital only: carbamazepine takes Yu 2026's own 1.48, the library's source."),
+  app("carbamazepine", "eslicarbazepine", "induction", "UGT", "CL",
+      round((2.36 + 0.00149 * 800) / 2.36, 3), "turnover", FALCAO,
+      "CL/F = (2.36 + 0.00149 D_CBZ + 1.41 AED_PB) (WT/70)^0.75 L/h; at 800 mg/day of carbamazepine, x 1.505.",
+      to_obtain = "yes",
+      notes = "Falcao's term is in the carbamazepine DOSE; 800 mg/day is taken as the dose that gives carbamazepine's reference 8 mcg/mL, and the concentration form (1) carries it from there."),
+  app("phenytoin", "eslicarbazepine", "induction", "UGT", "CL",
+      round((2.36 + 1.41) / 2.36, 3), "turnover", FALCAO,
+      "Barbiturates or phenytoin add 1.41 L/h to 2.36 L/h: x 1.597.", to_obtain = "yes"),
+  app("phenobarbital", "eslicarbazepine", "induction", "UGT", "CL",
+      round((2.36 + 1.41) / 2.36, 3), "turnover", FALCAO,
+      "Barbiturates or phenytoin add 1.41 L/h to 2.36 L/h: x 1.597.", to_obtain = "yes"),
+  app("carbamazepine", "cenobamate", "induction", "CYP3A4/UGT", "CL", 1.15,
+      "turnover",
+      list(source = paste0("Vashi V et al. Population pharmacokinetics of cenobamate ",
+                           "(sponsor model SK16007). Epilepsy Res 2023;195:107185."),
+           source_short = "Vashi 2023", pmid = "37429218",
+           population = "960 subjects, 8700 concentrations",
+           evidence_read = "full text and supplement (the library's cenobamate source)"),
+      "CL/F +15% with carbamazepine; clobazam -19% (clobazam is not in the library)."),
+
+  # --- Cross-checks ------------------------------------------------------------
+  row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
+      finding = "Maximal inhibition of lamotrigine CL/F about 65%, EC50 about 5.6 mcg/mL of valproate; inhibition 30.8, 51.5, 52.8 and 50.3% at 125, 250, 375 and 500 mg/day (troughs 6.5, 13.9, 16.1, 31.9 mcg/mL).",
+      population = "healthy volunteers, single 25 mg lamotrigine doses",
+      source = "Gidal BE, Sheth R, Parnell J, Maloney K, Sale M. Evaluation of VPA dose and concentration effects on lamotrigine pharmacokinetics. Epilepsy Res 2003;57:85-93.",
+      source_short = "Gidal 2003", pmid = "15013050", doi = "10.1016/j.eplepsyres.2003.09.008",
+      evidence_read = "abstract; full text not in PMC", to_obtain = "yes",
+      notes = "Supplies the EC50 of the applied valproate-lamotrigine row."),
+  row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
+      finding = "Lamotrigine CL/F 0.69 (monotherapy), 1.60 (with inducers) and 0.20 (with valproate) mL/kg/min; valproate inhibition maximal within the usual therapeutic range, and valproate concentration did not improve the fit.",
+      population = "62 developmentally disabled adults with epilepsy",
+      source = "Gidal BE, Anderson GD, Rutecki PR, Shaw R, Lanning A. Lack of an effect of valproate concentration on lamotrigine pharmacokinetics in developmentally disabled patients with epilepsy. Epilepsy Res 2000;42:23-31.",
+      source_short = "Gidal 2000", pmid = "10996503", doi = "10.1016/s0920-1211(00)00160-1",
+      evidence_read = "abstract; full text not in PMC"),
+  row("valproate", "lamotrigine", "crosscheck", "inhibition (offset)", "UGT",
+      finding = "After valproate is stopped, lamotrigine troughs fall from day 5 and the interaction is fully reversed 10-14 days later.",
+      population = "10 healthy adults",
+      source = "Leary E, Sheth RD, Gidal BE. Time course of reversal of valproate-mediated inhibition of lamotrigine. Seizure 2018;57:76-79.",
+      source_short = "Leary 2018", pmid = "29574285", doi = "10.1016/j.seizure.2018.03.003",
+      evidence_read = "abstract; full text not in PMC",
+      notes = "Checks the immediate onset: the offset is lamotrigine's own slow approach to its uninhibited steady state."),
+
+  # --- Recorded: described but not applied -----------------------------------
+  # Quantified only in a product label, a moiety not plotted, or a drug not in
+  # the library.  Kept so the reference list is complete; never simulated.
+  row("cenobamate", "phenytoin", "recorded", "inhibition", "CYP2C19",
+      finding = "Cenobamate inhibits CYP2C19 and raises phenytoin (the XCOPRI label advises lowering the phenytoin dose). The magnitude is in the label, not in this review.",
+      population = "review / consensus",
+      source = "Roberti R, De Caro C, Iannone LF, et al. Pharmacology of cenobamate: mechanism of action, pharmacokinetics, drug-drug interactions and tolerability. CNS Drugs 2021;35:609-618.",
+      source_short = "Roberti 2021", pmid = "33993416", doi = "10.1007/s40263-021-00819-8",
+      evidence_read = "abstract", to_obtain = "no",
+      notes = "The XCOPRI (cenobamate) FDA label is the only source of the phenytoin, lamotrigine and carbamazepine fold-changes; obtain it to quantify these. Cenobamate's own victim-side effects (carbamazepine +15% on cenobamate CL/F) are applied; see the Vashi 2023 row."),
+  row("cenobamate", "lamotrigine", "recorded", "induction", "CYP3A4/UGT",
+      finding = "Cenobamate induces CYP3A4 and lowers lamotrigine and carbamazepine; the Smith 2022 consensus advises proactive dose reduction of carbamazepine above 1200 mg/day and lamotrigine above 500 mg/day.",
+      population = "expert consensus (modified Delphi, 7 epileptologists)",
+      source = "Smith MC, Klein P, Krauss GL, et al. Dose adjustment of concomitant antiseizure medications during cenobamate treatment: expert opinion consensus recommendations. Neurol Ther 2022;11:1705-1720.",
+      source_short = "Smith 2022", pmid = "36057761", pmcid = "PMC9588096",
+      doi = "10.1007/s40120-022-00400-5", evidence_read = "abstract; full text in PMC",
+      to_obtain = "no", notes = "Direction and clinical thresholds only; the quantitative fold-changes are in the XCOPRI label."),
+  row("valproate", "carbamazepine", "recorded", "inhibition", "epoxide hydrolase, glucuronidation",
+      finding = "Valproate inhibits epoxide hydrolase, raising carbamazepine-10,11-epoxide, and inhibits carbamazepine glucuronidation (its effect on carbamazepine clearance is gated at a valproate dose above 18 mg/kg in Jiao 2004). The epoxide is active and accumulates.",
+      population = "408 Chinese patients, 459 samples",
+      source = "Jiao Z, Shi XJ, Zhao ZG, Zhong MK. Population pharmacokinetic modeling of steady state clearance of carbamazepine and its epoxide metabolite from sparse routine clinical data. J Clin Pharm Ther 2004;29:247-256.",
+      source_short = "Jiao 2004", pmid = "15153086", doi = "10.1111/j.1365-2710.2004.00557.x",
+      evidence_read = "abstract (the equations are in the full text only)", to_obtain = "yes",
+      notes = "Not applied: the library does not plot carbamazepine-10,11-epoxide, and the valproate-on-carbamazepine coefficient is omitted from the abstract. The only pop-PK giving an epoxide clearance term."),
+  row("felbamate", "phenytoin", "recorded", "inhibition", "CYP2C19",
+      finding = "Felbamate inhibits CYP2C19 and raises phenytoin; mechanism established, not quantified as a population factor.",
+      population = "mechanistic review",
+      source = "Levy RH. Cytochrome P450 isozymes and antiepileptic drug interactions. Epilepsia 1995;36 Suppl 5:S8-13.",
+      source_short = "Levy 1995", pmid = "8806399", doi = "10.1111/j.1528-1157.1995.tb06007.x",
+      evidence_read = "abstract", to_obtain = "no",
+      notes = "Felbamate is not in the library. Topiramate, oxcarbazepine and eslicarbazepine raise phenytoin by the same CYP2C19 route at high doses; no clean population factor was found."),
+  row("valproate", "rufinamide", "recorded", "inhibition", "unspecified",
+      finding = "Valproate lowers rufinamide clearance; the recommended maximum daily rufinamide dose is 600 against 1000 mg/day in children under 30 kg also taking valproate.",
+      population = "pooled Lennox-Gastaut population PK",
+      source = "Marchand M, Fuseau E, Critchley DJ. Supporting the recommended paediatric dosing regimen for rufinamide in Lennox-Gastaut syndrome using clinical trial simulation. J Pharmacokinet Pharmacodyn 2010;37:99-118.",
+      source_short = "Marchand 2010", pmid = "20084538", doi = "10.1007/s10928-009-9146-4",
+      evidence_read = "abstract (percentage in the full text)", to_obtain = "yes",
+      notes = "Rufinamide is not in the library."),
+  row("stiripentol", "clobazam", "recorded", "inhibition", "CYP3A4, CYP2C19",
+      finding = "Stiripentol inhibits CYP3A4 (Ki 1.59 uM) and CYP2C19 (Ki 0.52 uM for clobazam N-demethylation, 0.14 uM for N-desmethylclobazam 4'-hydroxylation), raising clobazam and N-desmethylclobazam.",
+      population = "in vitro (cDNA-expressed P450) plus in vivo children",
+      source = "Giraud C, Treluyer JM, Rey E, et al. In vitro and in vivo inhibitory effect of stiripentol on clobazam metabolism. Drug Metab Dispos 2006;34:608-611.",
+      source_short = "Giraud 2006", pmid = "16415114", doi = "10.1124/dmd.105.007237",
+      evidence_read = "abstract (Ki/IC50 values)", to_obtain = "yes",
+      notes = "Neither stiripentol nor clobazam is in the library. The Ki/IC50 set would parameterise the inhibition if they are added."),
+  row("carbamazepine", "phenytoin", "recorded", "induction", "CYP2C9/2C19 (Vmax)",
+      finding = "Co-administered antiepileptics raised phenytoin's Vmax from 325 to 351 mg/day and Km from 2.41 to 3.18 mcg/mL at 60 kg (the group pooled valproate, carbamazepine and phenobarbital); Rui 1995 found Vmax +8.4 mg/day with phenobarbital or a benzodiazepine.",
+      population = "334 Japanese outpatients, 756 levels",
+      source = "Yukawa E, Higuchi S, Aoyama T. Population pharmacokinetics of phenytoin from routine clinical data in Japan: an update. Chem Pharm Bull 1990;38:1973-1976.",
+      source_short = "Yukawa 1990", pmid = "2268899", doi = "10.1248/cpb.38.1973",
+      evidence_read = "abstract", to_obtain = "no",
+      notes = "Not applied: the induction of phenytoin by carbamazepine or phenobarbital is small and was fitted to a pooled co-medication indicator, not to a single perpetrator, and phenytoin levels are reported to rise or fall with carbamazepine. Phenytoin's displacement by valproate (Km, applied) and zonisamide (Km, applied) are the quantified single-perpetrator effects. Rui 1995 (PMID 7639079) is the phenobarbital/benzodiazepine Vmax estimate."),
+  row("brivaracetam", "brivaracetam", "recorded", "induction (victim)", "CYP2C19",
+      finding = "The strong inducers carbamazepine, phenytoin and phenobarbital/primidone moderately lower brivaracetam plasma concentrations (about 26%), with no dose change advised.",
+      population = "review",
+      source = "Moseley BD, Chanteux H, Nicolas JM, et al. A review of the drug-drug interactions of the antiepileptic drug brivaracetam. Epilepsy Res 2020;163:106327.",
+      source_short = "Moseley 2020", pmid = "32361205", doi = "10.1016/j.eplepsyres.2020.106327",
+      evidence_read = "abstract", to_obtain = "no",
+      notes = "Brivaracetam is not a selectable drug in the library. Listed so the inducer effect on it is recorded.")
+)
+
+stopifnot(all(registry$status %in% STATUSES))
+utils::write.csv(registry, "inst/extdata/antiseizureInteractions.csv",
+                 row.names = FALSE, na = "")

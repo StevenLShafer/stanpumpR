@@ -525,6 +525,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     }
 
     events <- events[,c(1,2)]
+    # An antiseizure interaction (R/antiseizureInteractions.R) gives the drug
+    # one PK set per segment of its clearance multiplier, and the event table
+    # that switches between them, in place of any clinical event: no drug an
+    # interaction can change has a clinical-event PK set of its own.
+    if (!is.null(PK$interactionEvents)) events <- PK$interactionEvents
 
     pkSets <- PK$PK
     pkEvents <- PK$pkEvents
