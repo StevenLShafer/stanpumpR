@@ -15,7 +15,7 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "dopamine", "atropine", "propranolol", "digoxin",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
                  "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
-                 "vasopressin")
+                 "vasopressin", "hydralazine")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -79,7 +79,8 @@ test_that("the category holds exactly the implemented drugs, concentration only"
                        propranolol = PROPRANOLOL_TPEAK,
                        phenylephrine = PHENYLEPHRINE_TPEAK,
                        epinephrine = EPINEPHRINE_TPEAK,
-                       vasopressin = VASOPRESSIN_TPEAK, 0)
+                       vasopressin = VASOPRESSIN_TPEAK,
+                       hydralazine = HYDRALAZINE_TPEAK, 0)
     expect_equal(PK$tPeak, expected, info = d)
   }
   # Clevidipine was already in the library, in the Antihypertensives category,
@@ -117,7 +118,7 @@ test_that("a drug with no suitable model gives the reason", {
                                       c("implemented", "needs_full_text",
                                         "complete_not_implemented")])
   expect_setequal(hopeless, c("sodium nitroprusside", "ephedrine",
-                              "hydralazine", "adenosine", "sodium bicarbonate"))
+                              "adenosine", "sodium bicarbonate"))
 })
 
 test_that("cross-references to the antihypertensive registry resolve", {
@@ -150,6 +151,12 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("vasopressin", "V"), VASOPRESSIN_V)
   expect_equal(value("vasopressin", "CL"), VASOPRESSIN_CL)
   expect_equal(value("vasopressin", "tPeak"), VASOPRESSIN_TPEAK)
+  hyd <- hydralazineTypical()
+  expect_equal(round(hyd[["v1"]], 3), value("hydralazine", "V1"))
+  expect_equal(round(hyd[["v2"]], 3), value("hydralazine", "V2"))
+  expect_equal(round(hyd[["cl1"]] * 60, 3), value("hydralazine", "CL"))
+  expect_equal(round(hyd[["cl2"]] * 60, 3), value("hydralazine", "Q"))
+  expect_equal(value("hydralazine", "tPeak"), HYDRALAZINE_TPEAK)
   expect_equal(value("magnesiumSulfate", "CL"), MAGNESIUM_CL)
   expect_equal(value("magnesiumSulfate", "Vc"), MAGNESIUM_VC)
   expect_equal(value("magnesiumSulfate", "Q"), MAGNESIUM_Q)
