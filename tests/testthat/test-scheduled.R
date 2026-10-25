@@ -378,6 +378,19 @@ test_that("skip next dose is not offered without a running schedule", {
   expect_null(skipNextScheduledDose(skipTable(c(0, 600), c(200, 0), c("mg PO tid", "mg PO")),
                                "carbamazepine", 700, MINS_PER_DAY, minutesFormat))
   expect_null(skipNextScheduledDose(skipTable(0, 200, "mg PO bid"), "carbamazepine", 1500, 1800, minutesFormat))
+  # Infusions and TCI are delivered continuously: there is no next dose to
+  # skip, on any route, whether or not a schedule's unit is also offered
+  for (u in c("mcg/kg/min", "mg/hr", "mg/day PO", "U/hr SC", "Plasma target", "Effect site target")) {
+    expect_false(u %in% scheduledUnits)
+    expect_null(skipNextScheduledDose(skipTable(0, 1, u, "propofol"), "propofol", 5, MINS_PER_DAY, minutesFormat))
+  }
+  # ...nor beside a schedule of another drug, or alongside the drug's own
+  # infusion: only the schedule is skipped, and the infusion row is untouched
+  dt <- skipTable(c(0, 0), c(1000, 1), c("mg bid", "mg/hr"), "cefazolin")
+  skip <- skipNextScheduledDose(dt, "cefazolin", 100, 2 * MINS_PER_DAY, minutesFormat)
+  expect_equal(skip$time, 720)
+  expect_equal(sum(skip$table$Units == "mg/hr"), 1)
+  expect_equal(skip$table$Dose[skip$table$Units == "mg/hr"], "1")
 })
 
 test_that("the 0 dose falls back to the scheduled unit when the base unit is not offered", {
