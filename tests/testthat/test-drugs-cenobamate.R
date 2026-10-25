@@ -120,14 +120,17 @@ test_that("the concentration per dose matches two clinic TDM series", {
   expect_equal(perDose / (0.384 * 267.67 / 1000), 0.76, tolerance = 0.02)
 })
 
-test_that("the band holds the steady-state troughs from 100 to 400 mg/day", {
+test_that("the band is the AGNP 2026 range, and the troughs match the trials", {
   row <- getDrugDefaults("cenobamate")   # the defaults row draws the band
-  expect_equal(c(row$Lower, row$Typical, row$Upper), c(5, 15, 35))
+  # Hart 2026, Table 5: 10-25 mg/L, typical its midpoint
+  expect_equal(c(row$Lower, row$Typical, row$Upper), c(10, 18, 25))
   x <- cenobamate(70, 170, 35, "male")
-  expect_equal(c(x$lowerTypical, x$typical, x$upperTypical), c(5, 15, 35))
-  # linear model: troughs scale with dose from the 200 mg steady state
+  expect_equal(c(x$lowerTypical, x$typical, x$upperTypical), c(10, 18, 25))
+  # linear model: troughs scale with dose from the 200 mg steady state; the
+  # usual 200 mg/day trough is inside the consensus range, 100 and 400 are not
   troughs <- 13.68 * c(100, 200, 400) / 200
-  expect_true(all(troughs > row$Lower & troughs < row$Upper))
+  expect_true(troughs[2] > row$Lower && troughs[2] < row$Upper)
+  expect_true(troughs[1] < row$Lower && troughs[3] > row$Upper)
   # Greene and Kamin, AAN 2021: central 90% of the maintenance troughs in
   # the 50% responders and in the seizure-free, at 100, 200, 400 mg/day
   responders  <- rbind(c(4.6, 9.3), c(11.3, 18.7), c(20.8, 35.2))

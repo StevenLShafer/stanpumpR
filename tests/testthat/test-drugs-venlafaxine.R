@@ -112,9 +112,10 @@ test_that("steady-state exposure follows from the clearances", {
   odv <- D * 263.38 / 277.40 / clm * 1000
   expect_equal(ven, 192.0, tolerance = 0.005)
   expect_equal(odv, 268.5, tolerance = 0.005)
-  # ODV : venlafaxine 1.4 in patients (3.7 in healthy volunteers), and the
-  # sum, 460 ng/mL, sits above the 100-400 ng/mL AGNP range at 150 mg/day,
-  # as the patients' low venlafaxine clearance implies
+  # ODV : venlafaxine 1.4 in patients (3.7 in healthy volunteers).  At
+  # 150 mg/day the sum, 460 ng/mL, is inside Lense 2023's 140-600 ng/mL range
+  # for the active moiety (above AGNP 2017's 100-400, as the patients' low
+  # venlafaxine clearance implies), and ODV inside its own 85-380 band
   expect_equal(odv / ven, 1.40, tolerance = 0.01)
   expect_equal(odv + ven, 460.5, tolerance = 0.005)
 })

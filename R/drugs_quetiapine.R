@@ -41,8 +41,10 @@
 # No effect site.  Nord 2011 related striatal D2 occupancy directly to PLASMA
 # quetiapine in 11 healthy men: Emax 100% fixed, 50% occupancy at 1369 nmol/L
 # (525 ng/mL).  That is a receptor biomarker, not a therapeutic target, and is
-# carried in antipsychoticProfiles() (R/antipsychotics.R), not in the MEAC or the
-# band, which are zero.  Norquetiapine is not modelled.
+# carried in antipsychoticProfiles() (R/antipsychotics.R), not in the MEAC,
+# which is zero.  The band is the AGNP therapeutic reference range, 100 to
+# 500 ng/mL at trough (inst/extdata/therapeuticRanges.csv says how far that was
+# verified).  Norquetiapine is not modelled.
 #
 # PREGNANCY
 # =========
@@ -141,9 +143,9 @@ quetiapine <- function(weight, height, age, sex, adjustToFFM = TRUE,
     PK = PK,
     tPeak = 0,           # occupancy is a direct function of plasma
     MEAC = 0,
-    typical = 0,         # no validated target: no band
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 300,       # AGNP range, ng/mL; mirrors the CSV
+    upperTypical = 500,
+    lowerTypical = 100,
     reference = reference
   )
 }

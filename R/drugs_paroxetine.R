@@ -101,9 +101,11 @@
 #
 # BAND
 # ====
-# 20-65 ng/mL, typical 40: the AGNP 2018 consensus therapeutic reference
-# range (Hiemke 2018).  Yuan 2025 (observational) reported an association of
-# response with 20-65 ng/mL.  Orientation only.
+# 30-80 ng/mL, typical 40: the therapeutic reference range of the AGNP
+# update 2026 (Hart et al., Pharmacopsychiatry 2026;59:166-295, Table 5;
+# trough 24 h after a dose), revised from the 2017 update's 20-65 on Liao
+# 2024's 921-patient cohort (32-80 ng/mL).  Yuan 2025 (observational)
+# reported an association of response with 20-65 ng/mL.  Orientation only.
 #
 # ALTERNATIVES NOT IMPLEMENTED
 # ============================
@@ -234,8 +236,8 @@ paroxetine <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   # Band, ng/mL: AGNP 2018 therapeutic reference range.  Orientation only.
   typical      <- 40
-  upperTypical <- 65
-  lowerTypical <- 20
+  upperTypical <- 80
+  lowerTypical <- 30
 
   reference <- paste0(
     "Kim JR et al., Drug Des Devel Ther 2015;9:5247-5254. One compartment, ",

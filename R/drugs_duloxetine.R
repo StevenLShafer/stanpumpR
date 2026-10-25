@@ -65,10 +65,12 @@
 # that no study measured.  Yuen 2013's pharmacodynamic model was for
 # diabetic neuropathic pain and does not predict response in depression.
 #
-# The band in inst/extdata/drugDefaults_global.csv is the AGNP 2018 consensus
-# therapeutic reference range (Hiemke et al., Pharmacopsychiatry
-# 2018;51:9-62), 30 to 120 ng/mL, with 60 as the typical value; typical,
-# upperTypical and lowerTypical below mirror it.  endCe is 0.
+# The band in inst/extdata/drugDefaults_global.csv is the therapeutic
+# reference range of the AGNP TDM task force's systematic review (Amann et
+# al., Neurosci Appl 2024;3:104077), 20 to 120 ng/mL, with 60 as the typical
+# value; it replaced the AGNP 2017 consensus range of 30 to 120 ng/mL (Hiemke
+# et al., Pharmacopsychiatry 2018;51:9-62).  typical, upperTypical and
+# lowerTypical below mirror it.  endCe is 0.
 #
 # COVARIATES AND BODY SIZE (docs/weight-adjustment.md)
 # ====================================================
@@ -155,11 +157,11 @@ duloxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL plasma: AGNP 2018 therapeutic reference range.  The plot reads
+  # Band, ng/mL plasma: Amann 2024 therapeutic reference range.  The plot reads
   # the CSV; these mirror it.
   typical      <- 60
   upperTypical <- 120
-  lowerTypical <- 30
+  lowerTypical <- 20
 
   reference <- paste0(
     "Zhong et al., Chin J Clin Pharmacol 2026. One compartment, apparent oral ",

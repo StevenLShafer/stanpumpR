@@ -40,9 +40,11 @@
 # BODY SIZE: the model carries its own weight covariate (allometric total
 # weight), evaluated at the pharmacokinetic weight with the switch on.
 #
-# BAND: 20-40 mcg/mL, the concentrations reported during barbiturate coma for
-# refractory status epilepticus (orientation: titration is to the EEG, not to
-# a level), typical 30.
+# BAND: none.  20-40 mcg/mL is often quoted for barbiturate coma in
+# refractory status epilepticus, but no primary source for it has been read,
+# pentobarbital is not in the AGNP 2026 table, and titration is to the EEG,
+# not to a level; inst/extdata/therapeuticRanges.csv holds it as
+# pending_verification, which is not drawn.
 #
 # References
 # ----------
@@ -76,7 +78,7 @@ pentobarbital <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 30, upperTypical = 40, lowerTypical = 20,
+    typical = 0, upperTypical = 0, lowerTypical = 0,
     reference = paste0(
       "J Clin Pharmacol 2026 (critically ill children): two compartments, ",
       "allometric on weight, CL 5.21 L/h, V1 37.4 L, Q 18.1 L/h, V2 63.9 L at ",

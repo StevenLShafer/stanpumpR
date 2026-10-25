@@ -494,6 +494,13 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     ),
     stringsAsFactors = FALSE
   )
+  # The therapeutic reference range and its source (R/therapeuticRanges.R),
+  # for the drugs the registry covers
+  range <- therapeuticRange(drug)
+  if (!is.null(range))
+    glance <- rbind(glance, data.frame(Property = esc("Therapeutic reference range"),
+                                       Value = esc(therapeuticRangeSummary(range)),
+                                       stringsAsFactors = FALSE))
   glanceHTML <- helpRawTableHTML(glance)
 
   # --- Model source ----------------------------------------------------------

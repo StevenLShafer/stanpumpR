@@ -23,7 +23,7 @@ test_that("the reference man receives Zhong's published values, either switch po
     expected <- list(
       PK = ZHONG_REFERENCE_PK,
       tPeak = 0, MEAC = 0,
-      typical = 60, upperTypical = 120, lowerTypical = 30,
+      typical = 60, upperTypical = 120, lowerTypical = 20,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)
@@ -65,7 +65,7 @@ test_that("duloxetine is offered by mouth only, in Antidepressants", {
   expect_equal(units, c("mg PO", "mg PO qd", "mg PO bid"))
   expect_true(all(doseRoute(units) == ROUTE_PO))
   expect_equal(row$Category, "Antidepressants")
-  # The CSV band (AGNP 2018) and the model agree
+  # The CSV band (Amann 2024) and the model agree
   x <- duloxetine(70, 170, 35, "male")
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC, row$endCe),
                c(x$lowerTypical, x$upperTypical, x$typical, 0, 0))

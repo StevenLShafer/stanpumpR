@@ -44,8 +44,11 @@
 # BODY SIZE: the model's own allometric weight, at the pharmacokinetic weight
 # with the switch on.
 #
-# BAND: 3-26 mcg/mL (the eslicarbazepine-specific range, Patsalos 2018),
-# typical 15.
+# BAND: 3-35 mcg/mL, typical 15: the AGNP update 2026 (Hart et al.,
+# Pharmacopsychiatry 2026;59:166-295, Table 5; trough 24 h after a dose),
+# based on Jacob 2016's expert guideline and oxcarbazepine's MHD range.
+# Norway's eslicarbazepine-specific 3-26 (Svendsen 2017, Reimers 2018) is
+# narrower, on the ground that eslicarbazepine is 80% of racemic MHD.
 #
 # PREGNANCY
 # =========
@@ -151,7 +154,7 @@ eslicarbazepine <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 15, upperTypical = 26, lowerTypical = 3,
+    typical = 15, upperTypical = 35, lowerTypical = 3,
     reference = reference
   )
 }

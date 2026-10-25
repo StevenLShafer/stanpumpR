@@ -46,8 +46,11 @@
 # PHARMACODYNAMICS NOT PLOTTED: the FDA review's 12-hour-AUC Emax model for
 # focal seizures was not retrievable with its coefficients.
 #
-# BAND: 10-20 mcg/mL, the commonly quoted range (ILAE gives no formal range
-# for lacosamide; Patsalos 2018, 10-20 mg/L), typical 15.
+# BAND: 1-12 mcg/mL, typical 6 (its midpoint), the trough range of the AGNP
+# update 2026 (Hart et al., Pharmacopsychiatry 2026;59:166-295, Table 5;
+# 12 h after a dose), whose upper limit rests on Otero Torres 2023's adverse
+# reactions.  It replaces Patsalos 2018's 10-20 mg/L, which was drawn from
+# samples 0-3 h after a dose.
 #
 # PREGNANCY
 # =========
@@ -150,7 +153,7 @@ lacosamide <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 15, upperTypical = 20, lowerTypical = 10,
+    typical = 6, upperTypical = 12, lowerTypical = 1,
     reference = reference
   )
 }

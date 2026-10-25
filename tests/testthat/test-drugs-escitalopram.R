@@ -23,15 +23,15 @@ test_that("returns the published parameters at the reference patient", {
     )),
     tPeak = 0,
     MEAC = 0,
-    typical = 40,
-    upperTypical = 80,
-    lowerTypical = 15,
+    typical = 30,
+    upperTypical = 40,
+    lowerTypical = 20,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)
   expect_match(actual$reference, "Liu", fixed = TRUE)
   expect_match(actual$reference, "10.3389/fphar.2022.964758", fixed = TRUE)
-  expect_match(actual$reference, "Hiemke", fixed = TRUE)
+  expect_match(actual$reference, "Eichentopf", fixed = TRUE)
 })
 
 test_that("the switch off ignores weight, height, age and sex", {
@@ -82,7 +82,7 @@ test_that("escitalopram is offered orally only, because the parameters are appar
   expect_true(all(doseRoute(units) == ROUTE_PO))
   expect_false(any(grepl("min|hr", units)))
   expect_equal(escitalopram(70, 171, 50, "male")$PK$default$bioavailability_PO, 1)
-  # The band mirrors the CSV (AGNP 2018); no MEAC, no threshold
+  # The band mirrors the CSV (Eichentopf 2022); no MEAC, no threshold
   X <- escitalopram(70, 171, 50, "male")
   expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC),
                c(X$lowerTypical, X$upperTypical, X$typical, X$MEAC))

@@ -107,9 +107,12 @@
 #
 # BAND
 # ====
-# 10-150 ng/mL, typical 50: the AGNP 2018 consensus therapeutic reference
-# range (Hiemke 2018).  Orientation only; it describes troughs at steady
-# state on chronic treatment.
+# 10-50 ng/mL, typical 30 (its midpoint): the therapeutic reference range of
+# the AGNP update 2026 (Hart et al., Pharmacopsychiatry 2026;59:166-295,
+# Table 5; trough 24 h after a dose), which narrowed the 2017 update's 10-150:
+# 80% of serotonin transporters are occupied at 10 ng/mL, and above 50 ng/mL
+# efficacy may fall and adverse reactions rise.  Orientation only; it
+# describes troughs at steady state on chronic treatment.
 #
 # ALTERNATIVES NOT IMPLEMENTED
 # ============================
@@ -223,8 +226,8 @@ sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE,
   PK <- sapply(events, function(x) list(get0(x)))
 
   # Band, ng/mL: AGNP 2018 therapeutic reference range.  Orientation only.
-  typical      <- 50
-  upperTypical <- 150
+  typical      <- 30
+  upperTypical <- 50
   lowerTypical <- 10
 
   reference <- paste0(

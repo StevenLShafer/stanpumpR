@@ -27,11 +27,13 @@ test_that("each profile's parameter basis matches the routes it offers", {
     units <- dd$Units[dd$Drug == p$drug][[1]]
     expect_true(all(doseRoute(units) == basisRoute[[p$parameterBasis]]), info = p$drug)
     expect_identical(p$route, basisRoute[[p$parameterBasis]], info = p$drug)
-    # No TCI: there is no validated target for any of these
+    # No TCI: a trough range at steady state is not a target to infuse to
     expect_false(any(units %in% c("Plasma target", "Effect site target")), info = p$drug)
+    # The band, where there is one, is a serum therapeutic reference range
+    # (test-therapeutic-ranges.R), never an occupancy target: MEAC and the
+    # time-until-threshold level stay zero
     row <- dd[dd$Drug == p$drug, ]
-    expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC, row$endCe), rep(0, 5),
-                 info = p$drug)
+    expect_equal(c(row$MEAC, row$endCe), rep(0, 2), info = p$drug)
   }
 })
 
