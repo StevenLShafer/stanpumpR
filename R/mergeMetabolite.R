@@ -244,6 +244,13 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
     }
 
     drugs[[target]]$wide <- merged
+    # The peripheral concentrations superpose as the plasma does; the depot
+    # stays the drug's own (R/compartments.R).
+    drugs[[target]]$compartments <- mergeCompartmentSeries(
+      drugs[[target]]$compartmentsOwn,
+      lapply(parents, function(p) drugs[[p]]$metaboliteCompartments),
+      merged$Time
+    )
 
     X <- finishDrugSeries(merged, drugs[[target]], maximum, plotRecovery)
     drugs[[target]]$results   <- X$results

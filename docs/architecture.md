@@ -142,8 +142,16 @@ and display only (`R/utils-time.R`, the "Time units" block of `app_server()`).
   conversion observer does not run for restored inputs.
 - The grid is stamped with its format (`createHOT(..., timeFormat)`); an edit from a grid drawn
   before a switch is converted on arrival.
-- Max time choices are per unit (`MAX_TIMES` in `constants.R`); the plot is lengthened past the
-  last dose only up to the unit's longest choice. TCI rows and inhaled agents are simulated only
+- Max time and Min time are sliders whose values are minutes in every unit (`input$maximum`,
+  `input$minimum`); `app.js` shows them in the unit. Their range and step are per unit
+  (`timeSliderRange()`: 0 to the unit's longest `MAX_TIMES` length, in `TIME_SLIDER_STEPS`), and
+  `syncTimeSliders()` resets them on a change of unit, snapping the values (`snapMaximum()`,
+  `snapMinimum()`); `plotInfo()` waits (`sliderPending()`) until the browser reports the snapped
+  values. The plot is lengthened past the last dose only up to the end of the slider. The axis
+  runs from `plotMinimum()` to `plotMaximum()`, ticked by `axisTimeStep()` (a `MAX_TIMES` length
+  from 0 keeps its own ticks). Everything is simulated from 0; `processdoseTable(plotMinimum =)`
+  refines the time lines inside the window (`withGridWindow()`), and `simulationPlot(xMinimum =)`
+  draws each series from the window's start (`seriesFromMinimum()`) so the panels scale to it. TCI rows and inhaled agents are simulated only
   on plots of `ACUTE_MAX_PLOT_MINUTES` (a week) or less (`timeUnitViolation()`).
 
 ## The computational core
@@ -180,7 +188,12 @@ time point as a sum of exponentials.
    across event boundaries.
 5. Interpolate to an even grid (`equiSpace`), normalize to peak Cp/Ce, and scale against MEAC.
 
-Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `equiSpace` and `max`.
+Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `equiSpace` and `max`,
+and `compartments`: the concentrations in V2 and V3 and the amount still in the absorption depots,
+by time, for the compartments the drug has (`R/compartments.R`). Every engine returns them as
+columns `C2`, `C3` and `Depot`; the peripheral concentrations are read off the plasma states
+exactly (`k21 * sum(s / (k21 - mu))` over the modes), so they cost a few vector operations and
+are computed on every run. The plot draws them only under **Peripheral compartments**.
 
 **The time line.** The closed-form engines are exact at any time, so the points they are asked
 about decide only how the curve is drawn and what a run costs. `simulationTimeGrid()`
@@ -193,7 +206,9 @@ fill starts at `maximum / GRID_FINE_POINTS` after each knot and no step is longe
 `maximum / GRID_UNIFORM_POINTS`, so a washout on a 52-week plot is drawn as a curve, not a
 straight chord, and the cost is bounded by the number of doses rather than growing with the
 plot (`R/constants.R` records how the two counts were chosen). `doseLines()` lays the doses
-on the line. The line depends only on `maximum` in minutes. A drug timed on its plasma looks
+on the line. The line depends only on `maximum` in minutes, and on the start of the window drawn
+(Min time): inside `withGridWindow()` the window gets the fill a plot of its own length would,
+so a window from 15 to 16 weeks is drawn as finely as a one-week plot. A drug timed on its plasma looks
 for its threshold a week ahead, or as far as the plot runs if that is longer
 (`recoveryHorizonPlasma()`).
 
@@ -253,9 +268,10 @@ Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally
 models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
 adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `pregnancy.R` holds the
-Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, the review's findings per drug in
-`pregnancyFindings()`), which `getDrugPK()` passes only to the eight models that name `pregnant`, each applying
-the factor its header documents from Ansari 2016; `recoveryCalc()` computes
+Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, `pregnancyGfrFactor()`, and the
+literature review's finding for every drug in `pregnancyFindings()`, read from `inst/extdata/pregnancyRegistry.csv`),
+which `getDrugPK()` passes only to the models that name `pregnant`, each applying the factor its header
+documents from its own source (`docs/pregnancy.md`); `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 

@@ -21,6 +21,10 @@ The time to peak effect, 1.6 minutes, is from Schnider and colleagues' 1999 stud
 
 The Schnider 1998 pharmacokinetic model (*Anesthesiology* 1998;88:1170-1182), the basis of most commercial propofol TCI pumps, is written out in the drug file but overwritten by Eleveld's before it is returned. It is computed on request: tick **Minto / Schnider** under Graph Options and the Schnider model is run beside this one on the same doses, drawn as a second line in the propofol panel (and, under a target-controlled infusion, as a second pump in the rate panel). The time until threshold stays on the Eleveld model. See [The Minto and Schnider models](help:models/minto-schnider) and [the comparison scenario](scenario:eleveld-vs-minto-schnider).
 
+### Pregnancy
+
+With **Pregnant** ticked, the elimination clearance is multiplied by 1.28, on this model and on the Schnider companion; the volumes are unchanged. Gin and colleagues gave 2 mg/kg to women at caesarean section and compared them with nonpregnant women (*Br J Anaesth* 1990;64:148-153: 2.55 against 1.57 L/min) and with women 2 to 3 days after delivery, who kept the higher clearance (*Br J Anaesth* 1991;67:49-53), so the rise is pregnancy's and not the operation's. This model reproduces their nonpregnant women (1.55 against 1.57 L/min), and the caesarean groups, each set against it at their own age and weight, cleared 1.39 and 1.15 times as fast: 1.28 weighted by group size. See [Pregnancy](help:models/pregnancy).
+
 ### Typical concentrations
 
 The shaded band is 2.5 to 4 mcg/mL, a typical range for maintenance of anesthesia with an opioid. Loss of consciousness in most adults occurs between 2 and 3 mcg/mL without opioid; the concentration at which patients wake is about 1 mcg/mL, which is the default recovery threshold.

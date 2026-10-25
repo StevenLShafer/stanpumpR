@@ -128,8 +128,71 @@
 # Albumin and the unbound fraction (the curve is total; in hypoalbuminaemia or
 # renal failure a total of 10 mg/L may carry a therapeutic unbound level),
 # valproate displacement, enzyme induction or inhibition by co-medication,
-# zonisamide (Km x 1.16 in Odani), pregnancy, saturable absorption of large
-# oral doses, and the time until threshold (the engine does not compute it).
+# zonisamide (Km x 1.16 in Odani), saturable absorption of large oral doses,
+# and the time until threshold (the engine does not compute it).  Pregnancy is
+# below.
+#
+# PREGNANCY
+# =========
+# Tomson and colleagues (Epilepsia 1994;35:122-130) followed 93 pregnancies
+# prospectively, 70 of them on carbamazepine or phenytoin alone, with the dose
+# held constant unless seizures forced a rise and a baseline at least 10
+# weeks after delivery in the same women: in the third trimester TOTAL
+# phenytoin was 39% of baseline and UNBOUND phenytoin 82%.  Their companion
+# paper (Epilepsia 1994;35:131-135) found that total clearance rose from the
+# first trimester while unbound clearance rose less, significantly only in
+# the third.  Lander 1977 (n = 10) and Dam 1979 (n = 14) found the same
+# direction, and Yerby 1990 a significant rise in the free fraction with a
+# non-significant fall in the free concentration.  Most of the fall in the
+# total is therefore a fall in binding, not in the elimination of the active,
+# unbound drug.
+#
+# A single clearance factor cannot say that, since this model's elimination
+# saturates.  With the Patient Profile's Pregnant field on, the model applies
+# two factors to the michaelisMenten block, and so to every route it serves
+# (intravenous, oral, and fosphenytoin's mg PE and IM routes):
+#
+#   Km x PHENYTOIN_PREGNANCY_KM_FACTOR = 0.48.  Elimination saturates in the
+#     unbound concentration, so Km on the total scale is Km(unbound) / fu.
+#     The unbound fraction rises 0.82 / 0.39 = 2.10-fold, and Km(total) falls
+#     to 1 / 2.10 = 0.476 of its value; 0.48.
+#   Vmax x PHENYTOIN_PREGNANCY_VMAX_FACTOR = 1.1, chosen so that the unbound
+#     steady state falls to 82% at a typical operating point.  At the band's
+#     typical 15 mg/L, r = R / Vmax = 15 / (15 + 9.19) = 0.620, and the
+#     unbound steady state is proportional to r / (1 - r) = 1.632; 82% of
+#     that is 1.338, so r' = 0.572 and Vmax' = Vmax x 0.620 / 0.572 = 1.084
+#     (at r = 0.5 the same rule gives 1.11): 1.1.
+#
+# Check: at the dose that gives 15 mg/L outside pregnancy, the total steady
+# state becomes 9.19 x 0.48 x r' / (1 - r'), with r' = 0.620 / 1.1 = 0.564,
+# = 5.7 mg/L, 38% of 15 (Tomson: 39%), and the unbound steady state 79% of
+# its value (Tomson: 82%).  The volume is unchanged (no data).  The factors
+# are tied to that operating point because the model saturates: nearer Vmax
+# the same factors give a larger relative fall.  The help tables' cl1, the
+# low-concentration limit Vmax / Km, rises 1.1 / 0.48 = 2.3-fold, which is a
+# consequence of the two factors and not a measured clearance.
+#
+# INDEPENDENT CHECK (Dam 1979, read in full, 2026-10-19): Dam, Christiansen,
+# Munck and Mygind (Clin Pharmacokinet 1979;4:53-62, Table II) give each
+# woman's apparent phenytoin clearance, the daily dose over the trough level,
+# through pregnancy and after delivery, with the doses ADJUSTED to keep the
+# level in the therapeutic range.  Because the level was held, the ratio of
+# dose over level in late pregnancy to the same after delivery is the ratio
+# of the elimination rate at about the same total concentration, which the
+# two factors predict without any further assumption: at 15 mg/L,
+# 1.1 x (9.19 + 15) / (9.19 x 0.48 + 15) = 1.37.  In Dam's seven women with
+# data at both times (weeks 37-40 against the latest postpartum values,
+# weeks 8-20 where measured), the ratios were 1.08, 1.14, 3.33, 2.02, 1.61,
+# 1.37 and 1.22: median 1.37, geometric mean 1.56.  The factors were fitted
+# to Tomson's constant-dose data and reproduce Dam's dose-adjusted median.
+#
+# WHAT THIS MEANS FOR THE CURVE: the library plots TOTAL phenytoin, and the
+# 10-20 mg/L band is a total-concentration band.  In late pregnancy the
+# plotted total falls below the band while the unbound, active concentration
+# stays near its baseline; a free phenytoin level, not the total, is the guide
+# to the dose.  The fall of albumin itself is not modelled otherwise, the
+# source population (Odani) was not pregnant, and the trimesters before the
+# third are not represented.  See R/pregnancy.R.  (Claude Code, 2026-10-19.)
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -162,6 +225,16 @@
 #   https://doi.org/10.1111/j.1528-1167.2008.01561.x
 # Dilantin, Dilantin-125, Dilantin Infatabs, phenytoin sodium injection and
 # Cerebyx (fosphenytoin) US prescribing information, section 12.3.
+# Tomson T, Lindbom U, Ekqvist B, Sundqvist A.  Epilepsia 1994;35:122-130.
+#   https://doi.org/10.1111/j.1528-1157.1994.tb02921.x (pregnancy)
+# Tomson T, Lindbom U, Ekqvist B, Sundqvist A.  Epilepsia 1994;35:131-135.
+#   https://doi.org/10.1111/j.1528-1157.1994.tb02922.x (pregnancy)
+# Yerby MS, Friel PN, McCormick K, et al.  Epilepsy Res 1990;5:223-228.
+#   https://doi.org/10.1016/0920-1211(90)90042-t (pregnancy)
+# Lander CM, Edwards VE, Eadie MJ, Tyrer JH.  Neurology 1977;27:128-131.
+#   https://doi.org/10.1212/wnl.27.2.128 (pregnancy)
+# Dam M, Christiansen J, Munck O, Mygind KI.  Clin Pharmacokinet 1979;4:53-62.
+#   https://doi.org/10.2165/00003088-197904010-00005 (pregnancy)
 # -----------------------------------------------------------------------------
 
 #' Mass of phenytoin acid in a unit mass of phenytoin sodium
@@ -173,6 +246,13 @@ PHENYTOIN_CYP2C9_VMAX <- c(
   "*2/*2" = 0.67, "*2/*3" = 0.5, "*3/*3" = 0.5
 )
 
+# Pregnancy (see the header): Km on the total scale falls with the 2.1-fold
+# rise in the unbound fraction (Tomson 1994: total 39%, unbound 82% of
+# baseline; 0.39 / 0.82 = 0.476), and Vmax rises so that the unbound steady
+# state at 15 mg/L total falls to 82% (0.620 / 0.572 = 1.084).
+PHENYTOIN_PREGNANCY_KM_FACTOR <- 0.48
+PHENYTOIN_PREGNANCY_VMAX_FACTOR <- 1.1
+
 #' Phenytoin pharmacokinetics (intravenous, oral and as fosphenytoin)
 #'
 #' Odani et al. (1996): one compartment with Michaelis-Menten elimination, on
@@ -181,11 +261,14 @@ PHENYTOIN_CYP2C9_VMAX <- c(
 #'
 #' @inheritParams cefazolin
 #' @param cyp2c9 CYP2C9 diplotype, one of \code{CYP2C9_VALUES}
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies Km (total)
+#'   by \code{PHENYTOIN_PREGNANCY_KM_FACTOR} and Vmax by
+#'   \code{PHENYTOIN_PREGNANCY_VMAX_FACTOR} (Tomson 1994; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects, with a
 #'   \code{michaelisMenten} block
 #' @export
 phenytoin <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                      cyp2c9 = CYP2C9_DEFAULT)
+                      cyp2c9 = CYP2C9_DEFAULT, pregnant = FALSE)
 {
   if (length(cyp2c9) != 1 || !cyp2c9 %in% CYP2C9_VALUES)
     stop("Invalid cyp2c9 for phenytoin: ", paste(cyp2c9, collapse = ", "))
@@ -197,6 +280,12 @@ phenytoin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   V    <- 1.23 * scale                                    # L
   vmax <- 9.80 * scale * PHENYTOIN_CYP2C9_VMAX[[cyp2c9]] / MINS_PER_DAY   # mg/min
   km   <- 9.19                                            # mg/L, total
+  # Pregnancy (see the header): Km (total) and Vmax, in the one block every
+  # route uses; the volume and the absorption are unchanged.
+  if (isTRUE(pregnant)) {
+    km   <- km * PHENYTOIN_PREGNANCY_KM_FACTOR
+    vmax <- vmax * PHENYTOIN_PREGNANCY_VMAX_FACTOR
+  }
 
   default <- list(
     v1 = V, v2 = 1, v3 = 1,
@@ -213,6 +302,21 @@ phenytoin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # Suspension and chewable tablet: label-anchored ka (see the header)
   fast <- list(ka_PO = 2.0 / 60, bioavailability_PO = 1, tlag_PO = 0)
 
+  reference <- paste0(
+    "Odani A et al., Biol Pharm Bull 1996;19:444-448 (one compartment, ",
+    "Michaelis-Menten elimination of total phenytoin, Japanese patients); ",
+    "CYP2C9 from Odani 1997 and CPIC 2021; fosphenytoin conversion from the ",
+    "Cerebyx label and Boucher 1989. https://doi.org/10.1248/bpb.19.444"
+  )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("Km (total) x ", PHENYTOIN_PREGNANCY_KM_FACTOR, " and Vmax x ",
+             PHENYTOIN_PREGNANCY_VMAX_FACTOR,
+             ": the plotted total falls, the unbound stays near baseline"),
+      paste0("Tomson T et al., Epilepsia 1994;35:122-130. ",
+             "https://doi.org/10.1111/j.1528-1157.1994.tb02921.x")))
+  }
+
   list(
     PK = PK,
     tPeak = 0,
@@ -220,12 +324,7 @@ phenytoin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     typical = 15,
     upperTypical = 20,
     lowerTypical = 10,
-    reference = paste0(
-      "Odani A et al., Biol Pharm Bull 1996;19:444-448 (one compartment, ",
-      "Michaelis-Menten elimination of total phenytoin, Japanese patients); ",
-      "CYP2C9 from Odani 1997 and CPIC 2021; fosphenytoin conversion from the ",
-      "Cerebyx label and Boucher 1989. https://doi.org/10.1248/bpb.19.444"
-    ),
+    reference = reference,
     oralFormulations = list(liquid = fast, tablet = fast),
     michaelisMenten = list(
       vmax = vmax,

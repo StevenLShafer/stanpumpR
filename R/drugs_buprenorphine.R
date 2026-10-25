@@ -161,6 +161,34 @@
 # with it off it sees total body weight and the other parameters are the
 # published fixed values, which is the published model exactly.
 #
+# PREGNANCY
+# =========
+# Dose-normalised exposure to sublingual buprenorphine is consistently lower
+# in pregnancy.  Bastian 2017 (Caritis group; 13-14 women on maintenance,
+# each studied in pregnancy and again after delivery) found the AUC about 50%
+# lower in pregnancy, with the time to peak and the salivary pH unchanged.
+# Zhu 2025 (22 women, 33 studies, the same group) found the dose-normalised
+# AUC 155 in pregnancy against 218 after delivery (a ratio of 1.41 over the
+# whole of pregnancy) and 119 +/- 34 against 218 +/- 113 in the second half of
+# pregnancy (p = 0.014).  Liu 2020 attributes the change to faster CYP3A
+# N-dealkylation and UGT glucuronidation, not to absorption, and Zhang
+# 2018's physiologically based model reproduces the lower exposure.  The
+# pregnancy data are apparent sublingual clearances; because the mechanism
+# is metabolic and the absorption was unchanged, the ratio is carried to the
+# ELIMINATION clearance of Bjornsson's absolute disposition.  With the
+# Patient Profile's Pregnant field on, CL1 is multiplied by
+# BUPRENORPHINE_PREGNANCY_CL_FACTOR = 218 / 119 = 1.83 (the second half of
+# pregnancy, the library's reference state of late pregnancy); the volumes,
+# the distribution clearances and the sublingual and intranasal absorption
+# (ka, F and its dose dependence, lag) are unchanged, so an intravenous dose
+# is changed exactly as a sublingual one.  The plotted concentration is total
+# plasma buprenorphine; norbuprenorphine, whose formation rises with the
+# clearance, is not modelled.  The 61.2 min time to peak effect is held, as
+# it is for every covariate, so getDrugPK() solves a ke0 about 24% smaller
+# on the faster-clearing disposition.  Ansari 2016 gives the direction only.
+# (Claude Code, 2026-10-19, at the request of Steven L. Shafer; see
+# R/pregnancy.R and inst/extdata/pregnancyRegistry.csv.)
+#
 # References
 # ----------
 # Bjornsson M et al., Clin Pharmacokinet 2023;62:1427-1443.
@@ -175,6 +203,14 @@
 #   https://doi.org/10.1093/jat/20.6.369
 # Escher M et al., Clin Ther 2007;29:1620-1631.
 #   https://doi.org/10.1016/j.clinthera.2007.08.007
+# Bastian JR, Chen H, Zhang H et al.  Am J Obstet Gynecol 2017;216:64.e1-
+#   64.e7.  https://doi.org/10.1016/j.ajog.2016.09.095 (pregnancy)
+# Zhu Y, Bastian JR, Caritis SN et al.  J Addict Med 2025;19:129-134.
+#   https://doi.org/10.1097/ADM.0000000000001380 (pregnancy: the factor)
+# Liu Y et al.  Ther Drug Monit 2020;42:264-270.
+#   https://doi.org/10.1097/FTD.0000000000000724 (pregnancy: mechanism)
+# Zhang H, Kalluri HV, Bastian JR et al.  Br J Clin Pharmacol
+#   2018;84:2075-2087.  https://doi.org/10.1111/bcp.13642 (pregnancy, PBPK)
 # Drafted by Claude Code, 2026-10-10, at the request of Steven L. Shafer.
 # -----------------------------------------------------------------------------
 
@@ -191,6 +227,10 @@ BUPRENORPHINE_F_IN      <- 0.482          # Eriksen 1989
 BUPRENORPHINE_KA_IN     <- 0.0227053660   # /min; plasma peak at 30.6 min
 BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; band floor and endCe
 BUPRENORPHINE_MIN_AGE   <- 18             # years; youngest age the CL term sees
+# Elimination clearance in pregnancy relative to Bjornsson's value: Zhu 2025,
+# dose-normalised AUC 218 after delivery against 119 in the second half of
+# pregnancy, 218 / 119 = 1.83 (see the header).
+BUPRENORPHINE_PREGNANCY_CL_FACTOR <- 1.83
 
 #' Buprenorphine sublingual bioavailability at a given dose (Bjornsson 2023)
 #'
@@ -211,9 +251,12 @@ buprenorphineSublingualF <- function(doseMg) 0.14 * (doseMg / 16)^-0.371
 #'   \code{FALSE}, evaluate clearance at total body weight and use the
 #'   published fixed volumes. Clearance always takes the model's own age
 #'   covariate.
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   elimination clearance by 1.83 (Zhu 2025; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
+buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                          pregnant = FALSE)
 {
   size  <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW   <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
@@ -222,6 +265,8 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   ageCL <- max(age, BUPRENORPHINE_MIN_AGE)   # see AGE in the header
   cl1 <- 52.1 * (ageCL / 35)^-0.233 * (pkW / 72.4)^0.413 / 60  # L/min
+  # Pregnancy (see the header): elimination clearance only; absorption as is.
+  if (isTRUE(pregnant)) cl1 <- cl1 * BUPRENORPHINE_PREGNANCY_CL_FACTOR
   v1  <- 64.3 * fixV
   v2  <- 130  * fixV
   v3  <- 1580 * fixV
@@ -255,6 +300,14 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "(ke0 carried as a 61.2 min time to peak). ",
     "https://doi.org/10.1007/s40262-023-01288-6"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", BUPRENORPHINE_PREGNANCY_CL_FACTOR),
+      paste0("Zhu Y et al., J Addict Med 2025;19:129-134. ",
+             "https://doi.org/10.1097/ADM.0000000000001380; Bastian JR et al., ",
+             "Am J Obstet Gynecol 2017;216:64.e1-64.e7. ",
+             "https://doi.org/10.1016/j.ajog.2016.09.095")))
+  }
 
   return(
     list(

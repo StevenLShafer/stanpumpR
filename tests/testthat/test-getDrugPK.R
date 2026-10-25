@@ -353,3 +353,19 @@ test_that("an intravenous tPeak is solved exactly, including past 100 minutes", 
                                   c(m$lambda_1, m$lambda_2, m$lambda_3), m$ke0),
                93.8, tolerance = 1e-5)
 })
+
+test_that("a fast one-compartment curve's effect site peak is found, not its flat tail", {
+  # With no slow phase the curve is exactly zero long before 4000 min; the
+  # search used to wander into that tail (epinephrine in a 7 kg infant).
+  k <- 0.667
+  for (ke0 in c(0.1, 0.5, 1, 1.2, 5, 50)) {
+    exact <- log(ke0 / k) / (ke0 - k)
+    expect_lt(abs(effectSitePeakTime(1, k, ke0) - exact), 1e-3,
+              label = paste("ke0", ke0))
+  }
+  pk <- getDrugPK("epinephrine", 7, 65, 0.5, "male")
+  expect_equal(pk$tPeak, 1)
+  set <- pk$PK$default
+  expect_equal(effectSitePeakTime(set$p_coef_bolus_l1, set$lambda_1, set$ke0), 1,
+               tolerance = 1e-4)
+})

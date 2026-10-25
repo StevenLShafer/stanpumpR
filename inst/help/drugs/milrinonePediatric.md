@@ -4,7 +4,7 @@ Hornik and colleagues for the Pediatric Trials Network (*J Clin Pharmacol* 2019;
 
 ### What is plotted
 
-Plasma milrinone in ng/mL, with the 100-300 ng/mL target range the authors simulated against. Postmenstrual age is taken as 40 weeks plus the age (a term birth). Creatinine clearance is the updated bedside Schwartz estimate from the child's own serum creatinine, as in the paper, and from 18 years CKD-EPI 2009; a blank creatinine is an assumed normal value for age and sex, and the estimate is held to the 13-261 mL/min/1.73 m2 the study covered. No time of peak effect was measured in children, so no effect site is drawn.
+Plasma milrinone in ng/mL, with the 100-300 ng/mL target range the authors simulated against. Postmenstrual age is taken as 40 weeks plus the age (a term birth). Creatinine clearance is the updated bedside Schwartz estimate from the patient's own serum creatinine, as in the paper, at every age (the model is a child's; for an adult, use [milrinone](help:drugs/milrinone)); a blank creatinine is an assumed normal value for age and sex, and the estimate is held to the 13-261 mL/min/1.73 m2 the study covered. No time of peak effect was measured in children, so no effect site is drawn.
 
 ### Where to be careful
 

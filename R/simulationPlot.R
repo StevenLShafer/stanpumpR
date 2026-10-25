@@ -7,6 +7,7 @@ simulationPlot <- function(
   xBreaks = c(0:6*10),
   xLabels = c(0:6*10),
   xAxisLabel = "Time (Minutes)",
+  xMinimum = NULL,
   xMaximum = NULL,
   plasmaLinetype = "solid",
   effectsiteLinetype = "dashed",
@@ -17,6 +18,7 @@ simulationPlot <- function(
   plotEvents = FALSE,
   plotRecovery = FALSE,
   plotMEACOverlay = FALSE,
+  plotCompartments = FALSE,
   typical = c("Mid"),
   logY = FALSE,
   yAxisHeight = 150,
@@ -140,6 +142,7 @@ simulationPlot <- function(
       plotMEAC <- FALSE
       plotMEACOverlay <- FALSE
       plotInteraction <- FALSE
+      plotCompartments <- FALSE
     },
     "Peak effect site" = {
       allResults <- allResults[allResults$Site == "CpNormCe" | allResults$Site == "CeNormCe",]
@@ -149,6 +152,7 @@ simulationPlot <- function(
       plotMEAC <- FALSE
       plotMEACOverlay <- FALSE
       plotInteraction <- FALSE
+      plotCompartments <- FALSE
     }
   )
 
@@ -235,8 +239,9 @@ simulationPlot <- function(
   # The axis runs to xMaximum, the length of the simulation, rather than to
   # the last break: a tick step need not divide Max time, and 365 days ticked
   # every 30 days would otherwise stop at day 360.  Without xMaximum the last
-  # break is the end, as it always was.
-  minimum <- min(xBreaks)
+  # break is the end, as it always was.  Likewise it starts at xMinimum (Min
+  # time), which need not be a break, and without it at the first break.
+  minimum <- if (is.null(xMinimum)) min(xBreaks) else xMinimum
   maximum <- if (is.null(xMaximum)) max(xBreaks) else xMaximum
   plotTable$xmin <- minimum
   plotTable$xmax <- maximum
@@ -250,6 +255,8 @@ simulationPlot <- function(
   # changes through the case while MAC itself does not, so the panel says so.
   panelName <- plotTable$Drug
   panelName[panelName == "MAC"] <- "MAC equivalents"
+  # Each drug panel's concentration unit, for the compartment panels below
+  panelUnits <- NULL
 
   switch(
     normalization,
@@ -268,6 +275,10 @@ simulationPlot <- function(
       # Warfarin is plotted as the INR it produces, which has no unit
       # (R/inr.R).
       unitText[plotTable$Concentration.Units == "INR"] <- "INR"
+      # Heparin on bypass is plotted as the activated clotting time it produces,
+      # in seconds (R/act.R).
+      unitText[plotTable$Concentration.Units == "ACT"] <- "ACT (s)"
+      panelUnits <- stats::setNames(unitText, plotTable$Drug)
       plotTable$Wrap <- paste0(panelName, "\n(", unitText, ")")
       plotTable$ymin <- plotTable$lowerTypical
       plotTable$ymax <- plotTable$upperTypical
@@ -579,6 +590,57 @@ simulationPlot <- function(
     }
   }
 
+  # Step B4c and D7c: add the compartment panels
+
+  # With "Peripheral compartments" ticked (R/compartments.R), one panel per
+  # compartment directly under the drug's own panel, which is V1: V2 and V3
+  # (or an inhaled agent's muscle and fat groups, MRG and FG) in the drug's
+  # concentration unit, then the depot of an absorbed dose as an amount.
+  # Each series is named "<drug> <compartment>" so that it takes the drug's
+  # colour without joining its legend entry, as the TCI rate series do.
+  # Not under normalization, which has no peak to scale a compartment by
+  # (Step C2 turns it off).
+  if (plotCompartments && !is.null(panelUnits))
+  {
+    for (drug in as.character(plotTable$Drug[plotTable$Drug %in% names(panelUnits)]))
+    {
+      entry <- purrr::detect(drugs, \(x) identical(x$drug, drug))
+      cm <- entry$compartments
+      if (is.null(cm) || nrow(cm) == 0) next
+      for (comp in intersect(COMPARTMENT_PANELS, names(cm)))
+      {
+        units <- if (comp == "Depot") {
+          depotUnits(entry$Concentration.Units)$units
+        } else {
+          panelUnits[[drug]]
+        }
+        if (is.null(units)) next
+        name <- paste(drug, comp)
+        wrap <- paste0(name, "\n(", units, ")")
+        keep <- cm$Time <= maximum
+        plotResults <- rbind(plotResults, data.frame(
+          Drug = name, Time = cm$Time[keep], Y = pmax(cm[[comp]][keep], 0),
+          Site = "Compartment", Wrap = wrap, Label = ""
+        ))
+
+        newplotTable <- plotTable[plotTable$Drug == drug, ][1, ]
+        newplotTable$Drug <- name
+        newplotTable$Concentration.Units <- units
+        newplotTable$typical <- 0
+        newplotTable$lowerTypical <- 0
+        newplotTable$upperTypical <- 0
+        newplotTable$y <- 0
+        newplotTable$ymin <- 0
+        newplotTable$ymax <- 0
+        newplotTable$MEAC <- 0
+        newplotTable$Wrap <- wrap
+        newplotTable$endCe <- 0
+        newplotTable$MaxRecovery <- 0
+        plotTable <- rbind(plotTable, newplotTable)
+      }
+    }
+  }
+
   # The companions' rate series take their colours and legend order from the
   # companion table too, under the parent's rate series
   if (nrow(companions) > 0)
@@ -594,15 +656,19 @@ simulationPlot <- function(
 
   ##################################################
 
-  plotResults$Site <- factor(plotResults$Site,levels=c("Plasma", "Effect Site", PLOT_ID_EVENTS, "Recovery", "Rate"), ordered=TRUE)
+  plotResults$Site <- factor(plotResults$Site,levels=c("Plasma", "Effect Site", PLOT_ID_EVENTS, "Recovery", "Rate", "Compartment"), ordered=TRUE)
   plotResults <- plotResults[!is.na(plotResults$Y),]
 
   # Convert $Drug and $Wrap to factors to preserve order from plotTable
 
   # Each drug's TCI rate panel directly under its own concentration panel
   # (propofol, propofol TCI, remifentanil, ...), not after every drug's: a
-  # drug added below once pushed the pump away from the curve it ran.
-  drugFactors <- c(rbind(drugDefaults$Drug, paste(drugDefaults$Drug, "TCI")),
+  # drug added below once pushed the pump away from the curve it ran.  The
+  # compartment panels go between the two, directly under the drug's own
+  # (propofol, propofol V2, propofol V3, propofol TCI).
+  drugFactors <- c(do.call(rbind, c(list(drugDefaults$Drug),
+                                    lapply(COMPARTMENT_PANELS, \(comp) paste(drugDefaults$Drug, comp)),
+                                    list(paste(drugDefaults$Drug, "TCI")))),
                    "total opioid", PLOT_NAME_INTERACTION, "Recovery", PLOT_NAME_EVENTS)
   plotTable$Factor <- factor(plotTable$Drug, levels = drugFactors, ordered = TRUE)
   plotTable <- plotTable[order(plotTable$Factor),]
@@ -630,11 +696,11 @@ simulationPlot <- function(
   # Begin plotting                                                                 #
   ##################################################################################
 
-  linetypes <- c(plasmaLinetype, effectsiteLinetype, "blank", "dotted", "solid")
+  linetypes <- c(plasmaLinetype, effectsiteLinetype, "blank", "dotted", "solid", "solid")
   names(linetypes) <- c(
     if (!is.null(plasmaLinetype)) "Plasma",
     if (!is.null(effectsiteLinetype)) "Effect Site",
-    PLOT_ID_EVENTS, "Recovery", "Rate"
+    PLOT_ID_EVENTS, "Recovery", "Rate", "Compartment"
   )
 
   # Step A1: create plotObject with lines from `plotResults`
@@ -649,6 +715,10 @@ simulationPlot <- function(
   # allEquispace.
   data <- subset(plotResults, Wrap != PLOT_NAME_EVENTS & Site != "Rate" & Site != "Recovery")
   rateData <- subset(plotResults, Site == "Rate")
+  # A window that starts after 0 (Min time) is drawn from its start: see
+  # seriesFromMinimum().  plotResults itself keeps the whole run.
+  data <- seriesFromMinimum(data, minimum, by = c("Drug", "Site", "Wrap"))
+  rateData <- seriesFromMinimum(rateData, minimum, by = c("Drug", "Wrap"), step = TRUE)
 
   if (logY) {
     data <- data[data$Y>0,]
@@ -679,7 +749,8 @@ simulationPlot <- function(
         show.legend = FALSE
       )
   }
-  if (!is.null(tciLabels))
+  if (!is.null(tciLabels)) tciLabels <- tciLabels[tciLabels$Time >= minimum, , drop = FALSE]
+  if (!is.null(tciLabels) && nrow(tciLabels) > 0)
   {
     tciLabels$Wrap <- factor(tciLabels$Wrap, levels = wrapFactors, ordered = TRUE)
     tciLabels$Drug <- factor(tciLabels$Drug, levels = drugFactors, ordered = TRUE)
@@ -709,7 +780,11 @@ simulationPlot <- function(
   plotObject <- plotObject +
     ggplot2::coord_cartesian(xlim = c(minimum, maximum), clip="off") +
     ggplot2::scale_x_continuous(expand = c(0,0), breaks = xBreaks, labels = xLabels) +
-    ggplot2::scale_color_manual(values=drugColors, breaks = drugFactors[!grepl(" TCI$", drugFactors)]) +
+    ggplot2::scale_color_manual(
+      values = drugColors,
+      breaks = drugFactors[!grepl(" TCI$", drugFactors) &
+                           is.na(compartmentSeries(drugFactors)$drug)]
+    ) +
     ggplot2::scale_fill_manual(values=drugColors)  +
     ggplot2::scale_alpha_manual(values = c(plotTable$alpha, 0.5)) +
     ggplot2::scale_linetype_manual(values=linetypes, breaks = c("Plasma", "Effect Site"))
@@ -804,7 +879,7 @@ simulationPlot <- function(
       ggplot2::geom_rect(
         data = subset(plotResults, Wrap == PLOT_NAME_EVENTS),
         ggplot2::aes(
-          xmin = 0, # xmin,
+          xmin = minimum, # xmin,
           xmax = maximum, # xmax,
           ymin = 0, # ymin,
           ymax = 1 # ymax
@@ -816,7 +891,7 @@ simulationPlot <- function(
         show.legend = FALSE
       )
 
-    plotLabels <- subset(plotResults, Label != "")
+    plotLabels <- subset(plotResults, Label != "" & Time >= minimum)
     crows <- match(plotLabels$Label, eventDefaults$Event)
     plotLabels$Color <- eventDefaults$Color[crows]
 
@@ -854,6 +929,8 @@ simulationPlot <- function(
 #      ncol = 1,
       scales="free_y",
       switch = "y",
+      # A compartment panel's strip names only its compartment (R/compartments.R)
+      labeller = ggplot2::labeller(Wrap = compartmentPanelLabel),
 #      strip.position = "left",
       shrink=FALSE
 #      scales = list(y = scales_y)
@@ -952,6 +1029,7 @@ simulationPlot <- function(
     # relying on how the geom happens to treat a missing value.  With nothing
     # missing the group is constant and the line is exactly the one drawn
     # before.
+    recovery <- seriesFromMinimum(recovery, minimum, by = c("Drug", "Wrap"), y = "Recovery")
     recovery$Segment <- cumsum(is.na(recovery$Recovery))
     recovery <- recovery[!is.na(recovery$Recovery), , drop = FALSE]
 
@@ -1019,11 +1097,45 @@ simulationPlot <- function(
 
   if (plotMEACOverlay)
   {
-    plotObject <- addMEACOverlay(plotObject, resultsMEAC, plotTable, wrapFactors,
+    plotObject <- addMEACOverlay(plotObject,
+                                 seriesFromMinimum(resultsMEAC, minimum, by = "Drug"),
+                                 plotTable, wrapFactors,
                                  minimum, maximum)
   }
 
 #  plotObject
   outputComments("Exiting simulationPlot", level = DEBUG_LEVEL_VERBOSE)
   return(list(plotObject = plotObject, allResults = allResults, plotResults = plotResults, plotHeight = height))
+}
+
+
+# The rows of a long series inside a window that starts at `minimum` (Min
+# time): each series, as grouped by the columns `by`, cut at `minimum`, with a
+# point added there so that its line starts at the axis rather than at its
+# first point inside.  The added point is interpolated, or for a step series
+# (the TCI pump rate) is the value in force.  Needed because the plot's clip
+# is off, for the labels at the right-hand edge: a line left running before
+# the window would be drawn across the y axis, and its values there would set
+# the panel's height.  A window from 0 changes nothing.
+seriesFromMinimum <- function(df, minimum, by, y = "Y", step = FALSE)
+{
+  if (is.null(df) || nrow(df) == 0 || !isTRUE(minimum > 0)) return(df)
+  groups <- split(df, interaction(df[by], drop = TRUE), drop = TRUE)
+  pieces <- lapply(groups, function(g) {
+    g <- g[order(g$Time), , drop = FALSE]
+    inside <- g[g$Time >= minimum, , drop = FALSE]
+    before <- g[g$Time < minimum, , drop = FALSE]
+    if (nrow(before) == 0 || (nrow(inside) > 0 && inside$Time[1] == minimum)) return(inside)
+    edge <- before[nrow(before), , drop = FALSE]
+    if (!step && nrow(inside) > 0) {
+      t0 <- edge$Time
+      t1 <- inside$Time[1]
+      edge[[y]] <- edge[[y]] + (inside[[y]][1] - edge[[y]]) * (minimum - t0) / (t1 - t0)
+    }
+    edge$Time <- minimum
+    rbind(edge, inside)
+  })
+  out <- do.call(rbind, pieces)
+  rownames(out) <- NULL
+  out
 }

@@ -31,3 +31,10 @@ The INR is a delayed, non-linear turnover endpoint, so it is computed from the S
 ### Where to be careful
 
 The model was fitted to a single dose in healthy volunteers; the steady-state INR shown here comes from repeated dosing of that single-dose model, not from a maintenance-therapy fit. Acenocoumarol clears quickly, so its daily-dose INR swings through the day and its simulated steady-state peak is more sensitive to the dosing schedule than fluindione's; the paper does not state the maintenance dose or the definition behind its steady-state table, so the simulated value here is within roughly 20–30% of the paper's Table IV INRmax rather than an exact match. The model is not a dosing algorithm and does not represent vitamin K, drug interactions, or the between-patient variability that makes vitamin-K-antagonist dosing individual.
+
+### Further reading
+
+Not implemented here, but relevant to populations the single-dose adult source does not cover:
+
+- Maagdenberg HM et al., *J Thromb Haemost* 2018;16(9):1732-1742 ([doi:10.1111/jth.14211](https://doi.org/10.1111/jth.14211)): the pediatric dosing algorithm from the Children Anticoagulation and Pharmacogenetics Study (175 Dutch children), where body surface area plus VKORC1, CYP2C9 and CYP2C18 explain about 62% of the dose requirement — the only substantial pediatric acenocoumarol evidence, and a pointer to body-size scaling.
+- Delavenne X et al., *Fundam Clin Pharmacol* 2009;23(1):127-135 ([doi:10.1111/j.1472-8206.2008.00642.x](https://doi.org/10.1111/j.1472-8206.2008.00642.x)): an independent two-compartment, indirect-response model (with a body-weight covariate) that corroborates the structure used here.

@@ -52,6 +52,33 @@
 # reactions.  It replaces Patsalos 2018's 10-20 mg/L, which was drawn from
 # samples 0-3 h after a dose.
 #
+# PREGNANCY
+# =========
+# MONEAD (Pennell and colleagues, JAMA Neurol 2022;79:370-379; prospective,
+# pregnant women against the same women postpartum) found the dose-normalized
+# lacosamide concentration fell by up to 39.9% (26.14 to 15.71 ug/L/mg, p <
+# .001), declining with gestational week.  A pregnancy PBPK model evaluated
+# against the MONEAD lacosamide data (Barry and colleagues, Epilepsia
+# 2025;66:346-355; 16 pregnant and 11 nonpregnant women) predicts clearance
+# 48.2% higher at 40 weeks.  A Chinese multicentre cohort (Duan 2026) found
+# only a 10.8% fall, in the second trimester, and a six-patient Dutch series
+# (Ter Horst 2025) concentration/dose ratios of 48-146% of baseline.
+#
+# With the Patient Profile's Pregnant field on, the whole CL/F (cl1) is
+# multiplied by LACOSAMIDE_PREGNANCY_CL_FACTOR = 1.5: the PBPK estimate at
+# term is 1.482 and MONEAD's maximal 26.14 / 15.71 = 1.66, and 1.5 sits
+# between them, nearer the estimate at term.  The factor is applied to the
+# clearance directly, NOT through the creatinine-clearance term: the 50% rise
+# in filtration carried by that term would give only 1.5^0.311 = 1.13, and
+# only about 40% of lacosamide is excreted unchanged, the rest demethylated
+# by CYP2C19, 3A4 and 2C9.  The Cockcroft-Gault term reads the creatinine as
+# entered; a pregnant woman's measured creatinine, lower than the assumed
+# nonpregnant value used when the field is blank, raises it a little on top of
+# the factor (at most 1.13-fold).  The volume and the absorption are
+# unchanged.  Lacosamide is under 15% bound, so total and unbound change
+# alike.  The source population (Chinese adults) was not pregnant.  See
+# R/pregnancy.R.  (Claude Code, 2026-10-19.)
+#
 # References
 # ----------
 # BMC Pharmacol Toxicol 2026, lacosamide in Chinese adults.
@@ -60,7 +87,20 @@
 #   https://doi.org/10.1007/s40262-015-0276-0
 # Patsalos PN et al., Ther Drug Monit 2018;40:526-548.
 #   https://doi.org/10.1097/FTD.0000000000000546
+# Pennell PB, Karanam A, Meador KJ, et al.  JAMA Neurol 2022;79:370-379.
+#   https://doi.org/10.1001/jamaneurol.2021.5487 (pregnancy, MONEAD)
+# Barry JM, et al.  Epilepsia 2025;66:346-355.
+#   https://doi.org/10.1111/epi.18184 (pregnancy, PBPK)
+# Duan et al.  Neurology 2026;107:e218456.
+#   https://doi.org/10.1212/WNL.0000000000218456 (pregnancy)
+# Ter Horst PGJ, Truong T, Mian P, Wegner I.  Eur J Clin Pharmacol 2025;82:10.
+#   https://doi.org/10.1007/s00228-025-03924-5 (pregnancy)
 # -----------------------------------------------------------------------------
+
+# Whole CL/F at term relative to the published value: between the PBPK
+# estimate at 40 weeks (1.482, Barry 2025) and MONEAD's maximal fall in the
+# dose-normalized concentration (26.14 / 15.71 = 1.66); see the header.
+LACOSAMIDE_PREGNANCY_CL_FACTOR <- 1.5
 
 #' Lacosamide pharmacokinetics (oral and intravenous)
 #'
@@ -68,20 +108,26 @@
 #' 2026); see the header of the file.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the whole
+#'   CL/F by \code{LACOSAMIDE_PREGNANCY_CL_FACTOR}, not through the renal term
+#'   (MONEAD 2022, Barry 2025; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 lacosamide <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                       creatinine = NULL)
+                       creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
   crcl <- creatinineClearanceCG(pkW, age, sex,
                                 adultEquivalentCreatinine(creatinine, age, sex))
   female <- sex == SEX_FEMALE
+  # Pregnancy (see the header): the whole clearance, not the renal term.
+  clPregnancy <- if (isTRUE(pregnant)) LACOSAMIDE_PREGNANCY_CL_FACTOR else 1
 
   default <- list(
     v1  = 0.6 * pkW, v2 = 1, v3 = 1,
-    cl1 = 1.86 * (if (female) 0.875 else 1) * (crcl / 119)^0.311 / 60,
+    cl1 = 1.86 * (if (female) 0.875 else 1) * (crcl / 119)^0.311 / 60 *
+      clPregnancy,
     cl2 = 0, cl3 = 0,
     ka_PO = 6.47 / 60,
     bioavailability_PO = 1,
@@ -90,15 +136,24 @@ lacosamide <- function(weight, height, age, sex, adjustToFFM = TRUE,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
+  reference <- paste0(
+    "BMC Pharmacol Toxicol 2026 (180 Chinese adults): one compartment, ",
+    "CL/F 1.86 L/h x 0.875 (women) x (Cockcroft-Gault/119)^0.311 from the ",
+    "entered or an assumed normal creatinine, V 0.6 L/kg and ka 6.47/h ",
+    "fixed; intravenous on the label's 1:1 conversion. ",
+    "https://doi.org/10.1186/s40360-026-01114-2"
+  )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", LACOSAMIDE_PREGNANCY_CL_FACTOR),
+      paste0("Pennell PB et al. (MONEAD), JAMA Neurol 2022;79:370-379. ",
+             "https://doi.org/10.1001/jamaneurol.2021.5487; Barry JM et al., ",
+             "Epilepsia 2025;66:346-355. https://doi.org/10.1111/epi.18184")))
+  }
+
   list(
     PK = PK, tPeak = 0, MEAC = 0,
     typical = 6, upperTypical = 12, lowerTypical = 1,
-    reference = paste0(
-      "BMC Pharmacol Toxicol 2026 (180 Chinese adults): one compartment, ",
-      "CL/F 1.86 L/h x 0.875 (women) x (Cockcroft-Gault/119)^0.311 from the ",
-      "entered or an assumed normal creatinine, V 0.6 L/kg and ka 6.47/h ",
-      "fixed; intravenous on the label's 1:1 conversion. ",
-      "https://doi.org/10.1186/s40360-026-01114-2"
-    )
+    reference = reference
   )
 }

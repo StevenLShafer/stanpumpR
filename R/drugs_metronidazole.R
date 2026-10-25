@@ -181,11 +181,12 @@ metronidazole <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, total mg/L: the surgical model's MIC scenario of 4 mg/L up to the
-  # peak a 500 mg dose produces.  Orientation only.
-  typical      <- 8
-  upperTypical <- 25
-  lowerTypical <- 4
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("metronidazole")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "da Silva Neto MJJ, MacKay G, Agaram R, MacLeod M, Watson DG, Thomson AH. ",

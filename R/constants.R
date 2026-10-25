@@ -272,6 +272,15 @@ calciumUnits <- as.vector(outer(calciumBaseUnits, CALCIUM_SALTS, paste))
 # Shafer.)
 iuUnits <- c("IU", "IU/kg", "IU/hr", "IU/kg/hr")
 
+# Intravenous doses in units (U) of a potency-defined peptide: vasopressin
+# (R/drugs_vasopressin.R), labelled and given in units, a bolus or a rate per
+# minute or hour.  The same unit as the insulins (insulinUnits), so the same
+# rules hold: the drug's Concentration.Units is "mcU", simCpCe() turns U into
+# mU, and refuses a mass unit for it and a U unit for any other drug.  No
+# route word: they are intravenous.  (Claude Code, 2026-10-22, at the request
+# of Steven L. Shafer.)
+ivPotencyUnits <- c("U", "U/min", "U/hr", "U/kg/min", "U/kg/hr")
+
 # Subcutaneous activity units (ROUTE_SC) for a drug plotted as anti-Xa
 # activity (enoxaparin, "IU SC"); the mass units are scUnits, above.  They
 # start with "IU" so simCpCe()'s international-unit check reads them, and
@@ -290,7 +299,8 @@ ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
 
 allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
-              iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits)
+              iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
+              ivPotencyUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
 # concentration, in the drug's concentration units per ml.
@@ -316,6 +326,10 @@ SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60)
 # scheduled.R reads ALL_SCHEDULE_INTERVALS.
 WEEKLY_SCHEDULE_INTERVAL <- c(qwk = 7 * 24 * 60)
 ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)
+# A scheduled repeat this close (minutes) to the row that ends its schedule
+# is replaced by that row (scheduled.R): the 0.001-minute snap of a time
+# written in hours or days (TIME_SNAP_DIGITS).
+SCHEDULE_TIME_TOLERANCE <- 1e-3
 scheduledUnits <- c(
   as.vector(t(outer(
     c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
@@ -378,8 +392,9 @@ THERAPEUTIC_RANGE_STATUSES <- c(
 # (R/illicit-drugs.R).  Hidden unless the user turns on input$showIllicitDrugs,
 # and never offered in the startup menu.
 ILLICIT_DRUG_CATEGORY <- "Illicit drugs"
-# Ticked when the menu opens: the four drugs the app opened with before it
-# had a menu.
+# The four drugs the app opened with before it had a menu.  The menu opens
+# with nothing ticked; ticking these gives doseTableInit, the dose table the
+# tests start from (test-startup-drugs.R holds them equal).
 STARTUP_DRUGS_DEFAULT <- c("propofol", "fentanyl", "remifentanil", "rocuronium")
 # A chosen drug starts with one zero-dose row in its Default.Units, except
 # these, which start with a bolus row and an infusion row, as they always have.
@@ -406,6 +421,9 @@ TIME_UNIT_DEFAULT <- "minutes"
 # start, so it is offered for these units only; days and weeks are elapsed.
 CLOCK_TIME_UNITS <- c("minutes", "hours")
 TIME_MODES <- c("clock", "relative")
+# The Time Display the app opens with: elapsed time, counted from zero.  Actual
+# (clock) time is a choice in the Time panel for minutes and hours.
+TIME_MODE_DEFAULT <- "relative"
 # A time converted to another unit is rounded to TIME_SNAP_DIGITS decimal
 # places of a minute (0.001 min) and written with TIME_STRING_DIGITS
 # significant digits.  Ten digits make every conversion, and any chain of them,
@@ -454,6 +472,21 @@ MAX_TIME_LABEL_UNITS <- c(minutes = "hour", hours = "hour", days = "day", weeks 
 # inside it but not in the current unit's list is a moment when the browser has
 # not yet caught up with a change of unit.
 MAX_TIME_VALUES <- sort(unique(unlist(lapply(MAX_TIMES, `[[`, "times"))))
+# The Max time and Min time sliders (timeSliderRange() in R/utils-time.R):
+# minutes from 0 to the unit's longest Max time, in these steps.  The values
+# stay in minutes whatever the unit, as input$maximum always has; app.js shows
+# them in the unit.
+TIME_SLIDER_STEPS <- c(minutes = 5, hours = 15, days = MINS_PER_DAY, weeks = MINS_PER_WEEK)
+# Tick spacings (minutes) for a plot that is not one of the MAX_TIMES lengths
+# from 0, such as a window from 15 to 16 weeks: the smallest that leaves at
+# most AXIS_MAX_TICK_INTERVALS intervals across the window (axisTimeStep()).
+AXIS_TICK_STEPS <- list(
+  minutes = c(1, 2, 5, 10, 15, 20, 30, 60, 120, 180, 240, 360),
+  hours   = MINS_PER_HOUR * c(0.25, 0.5, 1, 2, 3, 4, 6),
+  days    = MINS_PER_DAY * c(0.25, 0.5, 1, 2, 7, 14, 30, 60),
+  weeks   = MINS_PER_WEEK * c(0.25, 0.5, 1, 2, 4, 8)
+)
+AXIS_MAX_TICK_INTERVALS <- 8
 # How close (minutes) the last dose or event may come to the end of the plot
 # before the plot is lengthened to show what follows it.  30 minutes is the
 # original rule, kept so that the minute and hour plots are unchanged.
@@ -573,15 +606,17 @@ TCI_API_TIME_PATTERN <- paste0(
 # help's Cautions page says which).  The field is offered for a woman from
 # PREGNANCY_MIN_AGE up to but not including PREGNANCY_MAX_AGE years; outside
 # that, or for a man, the flag is FALSE whatever the control last said.
-# The factors each model applies are from the review the library follows for
-# pregnancy, Ansari, Carvalho, Shafer and Flood, Anesth Analg 2016;122:786-804
-# (PREGNANCY_REFERENCE in R/pregnancy.R), and describe late pregnancy, where
-# nearly all of its data were collected.
+# The factors each model applies are from that drug's own pregnancy sources
+# (inst/extdata/pregnancyRegistry.csv; the first eight from the review of
+# Ansari, Carvalho, Shafer and Flood, Anesth Analg 2016;122:786-804,
+# PREGNANCY_REFERENCE in R/pregnancy.R), and describe late pregnancy, the
+# third trimester and term, where most of the data were collected.
 PREGNANCY_MIN_AGE <- 12
 PREGNANCY_MAX_AGE <- 60
 # Renal blood flow and the glomerular filtration rate "are increased 50% by
 # the second trimester and remain increased until 3 months postpartum"
-# (Ansari 2016, Clearance).  The renally cleared antibiotics the review lists
-# with an increased clearance (cefazolin, gentamicin, vancomycin) apply it to
-# the renal function their published clearance terms read.
+# (Ansari 2016, Clearance).  The models of drugs cleared mostly by filtration
+# apply it to the renal function their published clearance terms read, and
+# only when the serum creatinine is blank (pregnancyGfrFactor()): a measured
+# pregnant creatinine already carries the rise.
 PREGNANCY_GFR_FACTOR <- 1.5

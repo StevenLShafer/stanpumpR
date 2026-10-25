@@ -14,10 +14,14 @@
 #' The Tham 2017 one-compartment model for lispro mix 75/25: 75% lispro protamine and 25% lispro; see R/insulinTham.R.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant when \code{TRUE}, apply the rise in insulin clearance of
+#'   late pregnancy, CL/F x 1.19 (see R/insulinTham.R)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-insulinLisproMix75 <- function(weight, height, age, sex, adjustToFFM = TRUE)
+insulinLisproMix75 <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                               pregnant = FALSE)
 {
   thamInsulin(weight, height, age, sex, adjustToFFM, insulin = "lispro",
-              components = c(lisproProtamine = 0.75, lispro = 0.25), product = "lispro Mix 75/25 (75% lispro protamine)")
+              components = c(lisproProtamine = 0.75, lispro = 0.25), product = "lispro Mix 75/25 (75% lispro protamine)",
+              pregnant = pregnant)
 }

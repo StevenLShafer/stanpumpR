@@ -17,3 +17,7 @@ This is the main limitation of simulating the two side by side: giving sugammade
 ### Where to be careful
 
 Doses are sugammadex equivalents as the label states them. Nothing here predicts the time to a train-of-four ratio of 0.9, recurarisation, or the dose needed for a given depth of block.
+
+### Pregnancy
+
+With **Pregnant** ticked and the serum creatinine left blank, the creatinine clearance that the clearance term reads is multiplied by 1.5, the rise in glomerular filtration of pregnancy given by the review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804); sugammadex is cleared almost entirely by filtration. Because the renal term levels off, the clearance rises by less than 1.5 (by about 1.3 in a 30-year-old woman). The peripheral volume, which falls as creatinine clearance rises in Kleijn's model, keeps the unadjusted value. For a 78 kg woman at term this gives 7.4 L/h, within 8% of the 8.0 L/h Hodge and colleagues (*Int J Obstet Anesth* 2026;66:104874) found in 10 women at caesarean delivery; their larger volume is not applied. A measured creatinine already carries the rise in filtration, so with one entered nothing is multiplied. See [Pregnancy](help:models/pregnancy).

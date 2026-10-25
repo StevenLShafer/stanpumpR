@@ -10,6 +10,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
   # and ventilation, which the gas rules add themselves
   notOffered <- c("desmetramadol", "desethylamiodarone", "hydroxybupropion", "norfluoxetine",
                   "desvenlafaxine", "salicylate", "hydroxyrisperidone", "dehydroaripiprazole",
+                  "enalaprilat",
                   "air", "oxygen", "ventilation")
   dosed <- setdiff(dd$Drug, notOffered)
   expect_true(all(lengths(dd$Units[match(dosed, dd$Drug)]) > 0))
@@ -50,7 +51,7 @@ test_that("the menu lists the categories in order, each sorted by name", {
   expect_identical(startupDrugChoices(dd[, names(dd) != "Category"]), list())
 })
 
-test_that("Start with the defaults gives the dose table the app used to open with", {
+test_that("ticking the four old defaults gives the dose table the app used to open with", {
   expect_identical(startupDoseTable(STARTUP_DRUGS_DEFAULT, dd), doseTableInit)
   # in whatever order the boxes were ticked
   expect_identical(startupDoseTable(rev(STARTUP_DRUGS_DEFAULT), dd), doseTableInit)
@@ -148,17 +149,32 @@ test_that("the menu's inputs are kept out of the bookmark URL", {
   expect_true(all(c("startup_ok", "startup_tour", "show_intro_modal") %in% bookmarksToExclude))
 })
 
-test_that("the menu ticks the defaults and has no way out but Start", {
-  html <- as.character(startupDrugModal(startupDrugChoices(dd)))
+test_that("the menu opens collapsed, with nothing ticked, and has no way out but Start", {
+  choices <- startupDrugChoices(dd)
+  html <- as.character(startupDrugModal(choices))
   # Every offered category is in the menu; the opt-in illicit category is not
-  for (category in names(startupDrugChoices(dd))) {
+  for (category in names(choices)) {
     expect_match(html, sprintf('id="%s"', startupDrugInputId(category)), fixed = TRUE)
   }
   expect_false(grepl(sprintf('id="%s"', startupDrugInputId(ILLICIT_DRUG_CATEGORY)),
                      html, fixed = TRUE))
-  ticked <- regmatches(html, gregexpr('value="[^"]+" checked', html))[[1]]
-  expect_setequal(sub('value="([^"]+)" checked', "\\1", ticked), STARTUP_DRUGS_DEFAULT)
+  # One collapsed section per category, its summary naming it and its drug count
+  expect_identical(lengths(regmatches(html, gregexpr("<details", html, fixed = TRUE))),
+                   length(choices))
+  expect_false(grepl("<details[^>]* open", html))
+  expect_match(html, sprintf('class="startup-drug-count">%d<', length(choices[["Opioids"]])),
+               fixed = TRUE)
+  expect_false(grepl("checked", html, fixed = TRUE))
   expect_match(html, 'id="startup_ok"', fixed = TRUE)
   expect_match(html, 'data-bs-backdrop="static"', fixed = TRUE)
   expect_false(grepl("data-bs-dismiss", html, fixed = TRUE))
+})
+
+test_that("a category with a drug ticked opens and says so", {
+  html <- as.character(startupDrugModal(startupDrugChoices(dd), selected = STARTUP_DRUGS_DEFAULT))
+  ticked <- regmatches(html, gregexpr('value="[^"]+" checked', html))[[1]]
+  expect_setequal(sub('value="([^"]+)" checked', "\\1", ticked), STARTUP_DRUGS_DEFAULT)
+  # propofol; fentanyl and remifentanil; rocuronium
+  expect_identical(lengths(regmatches(html, gregexpr("<details[^>]* open", html))), 3L)
+  expect_match(html, 'class="startup-drug-ticked">2 ticked<', fixed = TRUE)
 })

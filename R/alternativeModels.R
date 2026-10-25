@@ -124,6 +124,9 @@ companionGroupDrugs <- function(group) {
 #' The help page a companion entry's "About this model" link opens
 #' @noRd
 companionHelpPage <- function(entry) {
+  # A companion that carries its own page (the antiseizure interactions'
+  # "no interactions" line, R/antiseizureInteractions.R)
+  if (!is.null(entry$helpPage)) return(entry$helpPage)
   group <- companionModelGroup(entry$companionOf)
   if (is.na(group)) ALTERNATIVE_MODELS_HELP_PAGE else COMPANION_MODEL_GROUPS[[group]]$helpPage
 }
@@ -145,6 +148,10 @@ alternativeModelName <- function(drug) {
 #' own drug.
 #' @noRd
 alternativeModelParent <- function(name) {
+  # The antiseizure interactions' "<drug> (no interactions)" line
+  # (R/antiseizureInteractions.R)
+  name <- sub(paste0(" \\(", ASM_INTERACTIONS_REFERENCE_LABEL, "\\)( TCI)?$"),
+              "\\1", name)
   for (d in ALTERNATIVE_MODEL_DRUGS) {
     companion <- alternativeModelName(d)
     name[name == companion] <- d
@@ -188,24 +195,37 @@ alternativeModelColor <- function(color, amount = 0.45) {
 #' `adjustToFFM` is accepted for the uniform signature and ignored: the model
 #' carries its own lean-body-mass covariate, James's, kept deliberately (see
 #' above).  The same arithmetic is written out, and then overwritten, at the top of R/drugs_propofol.R.
+#'
+#' `pregnant` applies the same factor as the library's propofol model:
+#' clearance x PROPOFOL_PREGNANCY_CL_FACTOR (Gin 1990 and 1991; see
+#' R/drugs_propofol.R), so that the two lines of the propofol panel move
+#' together for a parturient.
 #' @noRd
-propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE)
+propofolSchnider <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                             pregnant = FALSE)
 {
   lbm <- lbmJames(weight, height, sex)
+  clPregnancy <- if (isTRUE(pregnant)) PROPOFOL_PREGNANCY_CL_FACTOR else 1
   default <- list(
     v1  = 4.27,
     v2  = 18.9 - 0.391 * (age - 53),
     v3  = 238,
-    cl1 = 1.89 + 0.0456 * (weight - 77) - 0.0681 * (lbm - 59) + 0.0264 * (height - 177),
+    cl1 = (1.89 + 0.0456 * (weight - 77) - 0.0681 * (lbm - 59) + 0.0264 * (height - 177)) *
+      clPregnancy,
     cl2 = 1.29 - 0.024 * (age - 53),
     cl3 = 0.836
   )
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
+  reference <- "Schnider TW et al., Anesthesiology 1998;88(5):1170-1182. https://pubmed.ncbi.nlm.nih.gov/9605675/"
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", PROPOFOL_PREGNANCY_CL_FACTOR), PROPOFOL_PREGNANCY_SOURCE))
+  }
   list(
     PK = PK,
     tPeak = 1.6,
-    reference = "Schnider TW et al., Anesthesiology 1998;88(5):1170-1182. https://pubmed.ncbi.nlm.nih.gov/9605675/"
+    reference = reference
   )
 }
 

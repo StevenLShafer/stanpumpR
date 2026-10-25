@@ -28,6 +28,45 @@ $(document).on('shiny:sessioninitialized', function(event) {
   ro.observe(plotBox);
 });
 
+// The Max time and Min time sliders (R/app_ui.R) hold minutes, as the
+// server, bookmarks and scenarios read them; they are shown in the Time
+// units.  Shiny gives each update from the server (a new range and step
+// when the unit changes) its own number formatter, so the slider's onUpdate,
+// which Shiny's updates leave in place, puts this one back.  Without it the
+// slider still works, in minutes.
+var TIME_UNIT_MINUTES = {minutes: 1, hours: 60, days: 1440, weeks: 10080};
+var TIME_UNIT_SHORT = {minutes: 'min', hours: 'h', days: 'd', weeks: 'wk'};
+function formatSliderMinutes(minutes) {
+  var unit = $('#timeUnits').val();
+  if (!TIME_UNIT_MINUTES[unit]) unit = 'minutes';
+  var x = Math.round(minutes / TIME_UNIT_MINUTES[unit] * 100) / 100;
+  return x + ' ' + TIME_UNIT_SHORT[unit];
+}
+function formatTimeSlider(el) {
+  var slider = $(el).data('ionRangeSlider');
+  if (!slider || slider.options.prettify === formatSliderMinutes) return;
+  slider.update({
+    prettify_enabled: true,
+    prettify: formatSliderMinutes,
+    onUpdate: function() { formatTimeSlider(el); }
+  });
+}
+$(document).on('shiny:bound', '#maximum, #minimum', function() { formatTimeSlider(this); });
+$(document).on('shiny:sessioninitialized', function() {
+  formatTimeSlider('#maximum');
+  formatTimeSlider('#minimum');
+});
+
+// The startup drug menu (R/startup-drugs.R): each category's summary says how
+// many of its drugs are ticked, so a tick is not lost when it is collapsed.
+function startupDrugTickedCount(group) {
+  var n = $(group).find('input[type=checkbox]:checked').length;
+  $(group).find('.startup-drug-ticked').text(n > 0 ? n + ' ticked' : '');
+}
+$(document).on('change', '.startup-drug-group input[type=checkbox]', function() {
+  startupDrugTickedCount($(this).closest('.startup-drug-group'));
+});
+
 // Track mouse position so hover tooltip can be positioned correctly when scrolled
 let lastMouseX = 0, lastMouseY = 0;
 // Where the hover tip was last placed, and how far the pointer may move

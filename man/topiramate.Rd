@@ -4,7 +4,7 @@
 \alias{topiramate}
 \title{Topiramate pharmacokinetics (oral)}
 \usage{
-topiramate(weight, height, age, sex, adjustToFFM = TRUE)
+topiramate(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,10 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+elimination clearance by \code{TOPIRAMATE_PREGNANCY_CL_FACTOR} (Ohman
+2009, Westin 2009; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

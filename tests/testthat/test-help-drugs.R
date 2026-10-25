@@ -40,6 +40,9 @@ plasmaOnly <- c(
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
+  # Antihypertensives: no drug in the library plots a blood pressure
+  "lisinopril", "olmesartan", "valsartan", "benazepril",
+  "enalapril", "enalaprilat",
   # The antidepressants: response lags weeks, no ke0 exists
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
   "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
@@ -86,8 +89,8 @@ plasmaOnly <- c(
   "semaglutideOral", "cetagliptin",
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
-  "heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
-  "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
+  "heparin", "heparinCPB", "bivalirudin", "apixaban", "apixabanVTE", "rivaroxaban", "warfarin",
+  "edoxaban", "dabigatran", "dabigatranHip", "argatroban", "enoxaparin", "fondaparinux",
   "fluindione", "acenocoumarol",
   # The antihypertensives (2026-10-17): concentration only.  Neither source
   # publishes an equilibration rate constant, and no blood pressure is
@@ -95,10 +98,10 @@ plasmaOnly <- c(
   "clevidipine", "fenoldopamPediatric", "carvedilol",
     "azilsartan", "chlorthalidone", "hydrochlorothiazide",
     # vasoactive and resuscitation drugs (2026-10-18): plasma only
-    "epinephrine", "magnesiumSulfate", "labetalol", "diltiazem", "nitroglycerin",
-    "norepinephrine", "procainamide", "esmolol", "dopamine",
-    "propranolol", "digoxin", "verapamil", "phenylephrine",
-    "milrinonePediatric", "metoprolol", "nicardipine",
+    "magnesiumSulfate", "labetalol", "nitroglycerin",
+    "procainamide", "dopamine",
+    "digoxin",
+    "milrinonePediatric",
     "digoxinIVPediatric"
 )
 

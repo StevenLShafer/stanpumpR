@@ -10,7 +10,8 @@ hydrochlorothiazide(
   age,
   sex,
   adjustToFFM = TRUE,
-  creatinine = NULL
+  creatinine = NULL,
+  pregnant = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,10 @@ fat-free mass}
 
 \item{creatinine}{serum creatinine in mg/dL, or NULL for the assumed normal
 value for age and sex, which represents NO renal impairment}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE}, with the creatinine
+left blank, multiplies the renal clearance by 1.5, the rise in glomerular
+filtration of pregnancy (see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

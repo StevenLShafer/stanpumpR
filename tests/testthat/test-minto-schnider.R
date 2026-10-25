@@ -431,6 +431,7 @@ test_that("in the app the switch adds the companions and the hover reports both 
       sex = "male", showThreshold = TRUE, normalization = "none", typical = "Range", logY = FALSE,
       mintoSchnider = FALSE
     )
+    startFormatFromInputs(session)
     dt <- data.frame(
       Drug = c("propofol", "propofol", "remifentanil", ""), Time = c("0", "0", "0", ""),
       Dose = c("2", "100", "0.2", ""), Units = c("mg/kg", "mcg/kg/min", "mcg/kg/min", ""),
@@ -480,6 +481,7 @@ test_that("under TCI in the app the hover on the rate panel reports both pumps",
       sex = "male", showThreshold = FALSE, normalization = "none", typical = "Range", logY = FALSE,
       mintoSchnider = TRUE
     )
+    startFormatFromInputs(session)
     dt <- data.frame(
       Drug = c("propofol", "propofol", ""), Time = c("0", "60", ""),
       Dose = c("3", "0", ""), Units = c(TCI_UNIT_EFFECT, TCI_UNIT_EFFECT, ""),

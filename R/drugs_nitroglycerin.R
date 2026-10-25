@@ -40,6 +40,18 @@
 # So the model reaches its plateau at the measured pace but falls after a
 # stop too slowly; the true offset is a few minutes.
 #
+# A BOLUS IS BEYOND THE MODEL.  Two studies of 0.25 and 0.5 mg IV boluses
+# for uterine relaxation at caesarean delivery measured venous plasma 1 and 5
+# minutes after the dose: David M et al., Obstet Gynecol 1998;91:119-124 (doi
+# 10.1016/s0029-7844(97)00594-2; medians 38.1 and 80.3 ng/mL at 1 min, a
+# third of that at 5 min, a half-life of 2-2.5 min) and David M et al., Am J
+# Obstet Gynecol 2000;182:955-961 (0.5 mg: 80 at 1 min, 3.2 at 5 min).
+# After 0.25 mg this model gives 4.4 ng/mL at 1 min, a ninth of the
+# measured, and falls only 1.6-fold by 5 min.  The 1-minute samples came
+# from the arm of the injection and are probably inflated, and the two
+# papers disagree on the fall, so they give no model; but the drug's early
+# volume after a bolus is far smaller, and its fall far faster, than drawn.
+#
 # WHY THIS SOURCE, AND HOW FAR TO TRUST IT
 # ========================================
 # Nitroglycerin's plasma kinetics are notoriously erratic.  McNiff 1981 (J

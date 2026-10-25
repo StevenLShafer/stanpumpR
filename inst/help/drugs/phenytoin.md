@@ -18,6 +18,14 @@ The maximal elimination rate is 33 per cent lower in CYP2C9 intermediate metabol
 
 Albumin binding and the unbound fraction (the curve is total phenytoin, so in hypoalbuminaemia or renal failure a total of 10 mg/L may carry a therapeutic unbound level), valproate displacement, enzyme induction or inhibition by co-medication, and the early albumin displacement by fosphenytoin. There is no effect site and no time until threshold.
 
+### Pregnancy
+
+With **Pregnant** ticked, the Michaelis constant on the total scale is multiplied by 0.48 and the maximal elimination rate by 1.1, on every route, fosphenytoin's included. In the third trimester **total** phenytoin falls to 39 per cent of its value after delivery, at an unchanged dose, while **unbound** phenytoin falls only to 82 per cent (Tomson and colleagues, *Epilepsia* 1994;35:122-130): most of the fall is a fall in binding, the unbound fraction rising about 2.1-fold. Elimination saturates in the unbound concentration, so the constant on the total scale falls by the same factor (1 / 2.1 = 0.48), and the small rise in the maximal rate makes the unbound steady state fall to about 80 per cent at a total of 15 mg/L. At the dose that holds 15 mg/L outside pregnancy, the plotted total falls to about 5.7 mg/L.
+
+**The plotted curve is total phenytoin, and the 10 to 20 mg/L band is a band for the total.** In late pregnancy the total falls well below the band while the unbound, active concentration stays near its baseline, so a low total is not by itself a reason to raise the dose: measure the free phenytoin. The factors are tied to that operating point, since elimination saturates; the trimesters before the third are not represented. See [Pregnancy](help:models/pregnancy).
+
+Valproate (which displaces phenytoin from albumin and lowers the plotted total) and zonisamide (which raises Km) change phenytoin when the **Include antiseizure drug interactions** box is ticked. See [Antiseizure drug interactions](help:models/antiseizure-interactions).
+
 ### Band
 
 10 to 20 mg/L total (ILAE; Patsalos and colleagues, *Epilepsia* 2008;49:1239-1276), the same range as 1 to 2 mg/L unbound at normal binding.

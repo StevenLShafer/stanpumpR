@@ -204,20 +204,70 @@ test_that("maxTimeChoices: values in minutes, labels in the unit", {
   expect_true(is.na(maxTimeLabel(MINS_PER_YEAR, "weeks")))
 })
 
-test_that("snapMaximum keeps a choice, else takes the next longer, else the longest", {
+test_that("snapMaximum puts a Max time on the unit's slider steps", {
   expect_equal(snapMaximum(60, "minutes"), 60)
   expect_equal(snapMaximum("1440", "minutes"), 1440)
-  expect_equal(snapMaximum(100, "minutes"), 120)
+  # minutes step by 5, hours by 15 minutes, days by a day, weeks by a week,
+  # always rounding up
+  expect_equal(snapMaximum(100, "minutes"), 100)
+  expect_equal(snapMaximum(101, "minutes"), 105)
+  expect_equal(snapMaximum(100, "hours"), 105)
+  expect_equal(snapMaximum(60, "days"), MINS_PER_DAY)
+  expect_equal(snapMaximum(16 * MINS_PER_WEEK, "days"), 112 * MINS_PER_DAY)
+  expect_equal(snapMaximum(1440, "weeks"), MINS_PER_WEEK)
+  # never past the unit's longest Max time, which the slider ends at
   expect_equal(snapMaximum(10080, "minutes"), 1440)
-  expect_equal(snapMaximum(60, "days"), 2 * MINS_PER_DAY)
-  expect_equal(snapMaximum(16 * MINS_PER_WEEK, "days"), 182 * MINS_PER_DAY)
   expect_equal(snapMaximum(MINS_PER_YEAR, "days"), MINS_PER_YEAR)
   expect_equal(snapMaximum(MINS_PER_YEAR, "weeks"), 52 * MINS_PER_WEEK)
-  expect_equal(snapMaximum(1440, "weeks"), 4 * MINS_PER_WEEK)
-  # missing or unreadable: the unit's first choice
+  # at least one step
+  expect_equal(snapMaximum(0, "weeks"), MINS_PER_WEEK)
+  # missing or unreadable: the unit's first Max time, as before the slider
   expect_equal(snapMaximum(NA, "minutes"), 60)
   expect_equal(snapMaximum(NULL, "days"), 2 * MINS_PER_DAY)
   expect_equal(snapMaximum("abc", "weeks"), 4 * MINS_PER_WEEK)
+})
+
+test_that("the sliders end at each unit's longest Max time", {
+  for (unit in names(TIME_UNITS)) {
+    r <- timeSliderRange(unit)
+    expect_equal(r$max, max(MAX_TIMES[[unit]]$times), info = unit)
+    expect_equal(r$min, 0)
+    # the steps divide the range, so the browser's slider lands on them
+    expect_equal(r$max %% r$step, 0, info = unit)
+  }
+  expect_identical(timeSliderRange("fortnights"), timeSliderRange("minutes"))
+})
+
+test_that("snapMinimum rounds down and stays a step below Max time", {
+  expect_equal(snapMinimum(103, 1440, "minutes"), 100)
+  expect_equal(snapMinimum(15.5 * MINS_PER_WEEK, 16 * MINS_PER_WEEK, "weeks"), 15 * MINS_PER_WEEK)
+  expect_equal(snapMinimum(16 * MINS_PER_WEEK, 16 * MINS_PER_WEEK, "weeks"), 15 * MINS_PER_WEEK)
+  expect_equal(snapMinimum(-5, 60, "minutes"), 0)
+  expect_equal(snapMinimum(NA, 60, "minutes"), 0)
+  expect_equal(snapMinimum(NULL, 60, "minutes"), 0)
+})
+
+test_that("axis ticks: a Max time's own from 0, a fitting step for a window", {
+  # every Max time from 0 keeps the ticks it always had
+  for (unit in names(MAX_TIMES)) {
+    m <- MAX_TIMES[[unit]]
+    for (i in seq_along(m$times)) {
+      expect_equal(axisTimeStep(0, m$times[i], unit), m$steps[i], info = paste(unit, m$times[i]))
+    }
+  }
+  # 15 to 16 weeks: quarter weeks, ticked at 15, 15.25, ..., 16
+  step <- axisTimeStep(15 * MINS_PER_WEEK, 16 * MINS_PER_WEEK, "weeks")
+  expect_equal(step, MINS_PER_WEEK / 4)
+  expect_equal(axisTimeBreaks(15 * MINS_PER_WEEK, 16 * MINS_PER_WEEK, step) / MINS_PER_WEEK,
+               c(15, 15.25, 15.5, 15.75, 16))
+  # 100 to 205 minutes: 15-minute ticks at their multiples, not from 100
+  step <- axisTimeStep(100, 205, "minutes")
+  expect_equal(step, 15)
+  expect_equal(axisTimeBreaks(100, 205, step), seq(105, 195, by = 15))
+  # never more than AXIS_MAX_TICK_INTERVALS intervals while a step fits
+  expect_lte((300 - 0) / axisTimeStep(0, 300, "minutes"), AXIS_MAX_TICK_INTERVALS)
+  # a window narrower than any step still has its start as a break
+  expect_equal(axisTimeBreaks(101, 102, 5), 101)
 })
 
 test_that("legacyTimeUnit: old bookmarks longer than a day open in days", {
@@ -233,8 +283,10 @@ test_that("timeFormat, its string form, and the Time Display choices", {
   expect_equal(timeFormat("hours", "clock"), c(unit = "hours", mode = "clock"))
   expect_equal(timeFormat("days", "clock"), c(unit = "days", mode = "relative"))
   expect_equal(timeFormat("weeks", "relative"), c(unit = "weeks", mode = "relative"))
-  expect_equal(timeFormat(NULL, NULL), c(unit = "minutes", mode = "clock"))
-  expect_equal(timeFormat("fortnights", "sideways"), c(unit = "minutes", mode = "clock"))
+  # unknown: the default unit, and the Time Display the app opens with
+  expect_equal(TIME_MODE_DEFAULT, "relative")
+  expect_equal(timeFormat(NULL, NULL), c(unit = "minutes", mode = "relative"))
+  expect_equal(timeFormat("fortnights", "sideways"), c(unit = "minutes", mode = "relative"))
   expect_equal(timeFormatString(timeFormat("days", "relative")), "days/relative")
   for (unit in names(TIME_UNITS)) for (mode in TIME_MODES) {
     f <- timeFormat(unit, mode)

@@ -36,3 +36,14 @@ rookRequest <- function(method, path, body = NULL, query = "",
   )
   req
 }
+
+
+# shiny::testServer() starts the server before any input exists, where a
+# browser reports its inputs first, so the dose table's format starts from the
+# server's fallback (elapsed time, TIME_MODE_DEFAULT) whatever Time Display the
+# test then sets.  Call after setting the opening inputs, to start the format
+# as a browser opening with those inputs would.
+startFormatFromInputs <- function(session) {
+  env <- session$env
+  shiny::isolate(env$doseTableFormat(env$selectorFormat()))
+}

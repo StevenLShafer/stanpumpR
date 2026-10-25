@@ -9,8 +9,10 @@ antibioticMicTable()
 \value{
 a data frame of \code{Drug}, \code{Organism}, \code{MIC},
 \code{Plotted} ("unbound" or "total"), \code{FreeFraction} (1 when the
-curve is unbound), \code{Saturable}, \code{Threshold}, \code{MicSource}
-and \code{BindingSource}
+curve is unbound), \code{Saturable}, \code{BindingKd} and
+\code{BindingCapacity} (mg/L, the one-site fit of a saturable binding,
+NA otherwise), \code{Threshold}, \code{MicSource} and
+\code{BindingSource}
 }
 \description{
 One row per antibiotic: the organism, the MIC (free drug, mg/L), what the

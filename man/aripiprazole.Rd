@@ -10,7 +10,8 @@ aripiprazole(
   age,
   sex,
   cyp2d6 = CYP2D6_DEFAULT,
-  adjustToFFM = TRUE
+  adjustToFFM = TRUE,
+  pregnant = FALSE
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+parent's apparent clearance by 2.1 (Westin 2017; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

@@ -49,12 +49,12 @@ celecoxib,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#AD7A00,0,0,0,0,242,IV,Oral anal
 aspirin,mcg,,,mg PO,"mg PO,mg PO qd",#8D6E63,0,0,0,0,0,IV,Other
 salicylate,mcg,,,,,#3949AB,0,0,0,0,0,IV,
 cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#2E8B57,0.5,2,1,0,2,IV,Antibiotics
-clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#3CB371,1,4,2,0,5.2,IV,Antibiotics
-cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#66CDAA,1,4,2,0,4.7,IV,Antibiotics
-ceftriaxone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#20B2AA,10,50,20,0,15,IV,Antibiotics
-vancomycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#008B8B,10,20,15,0,1.4,IV,Antibiotics
-metronidazole,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#5F9EA0,4,25,8,0,4.2,IV,Antibiotics
-gentamicin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#6B8E23,1,10,8,0,2,IV,Antibiotics
+clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#3CB371,3.1,9.9,3.1,0,5.2,IV,Antibiotics
+cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#66CDAA,2.4,4.7,4.7,0,4.7,IV,Antibiotics
+ceftriaxone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#20B2AA,7.8,30,30,0,15,IV,Antibiotics
+vancomycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#008B8B,2.9,11,11,0,1.4,IV,Antibiotics
+metronidazole,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#5F9EA0,1,4.2,4.2,0,4.2,IV,Antibiotics
+gentamicin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid",#6B8E23,0.5,2,2,0,2,IV,Antibiotics
 hydrocortisone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#D2691E,0.2,1,0.5,0,0,IV,Corticosteroids
 methylprednisolone,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid",#CD853F,0.2,1.5,0.5,0,0,IV,Corticosteroids
 dexamethasone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg IM,mg/kg IM,mg qd,mg bid,mg tid,mg qid,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg IM qd,mg IM bid,mg IM tid,mg IM qid,mg/kg IM qd,mg/kg IM bid,mg/kg IM tid,mg/kg IM qid",#B8860B,20,100,50,0,0,IV,Corticosteroids
@@ -149,14 +149,17 @@ vildagliptin,ng,,,mg PO bid,"mg PO,mg PO qd,mg PO bid",#7D6B2E,0,0,0,0,0,IV,Anti
 semaglutideOral,ng,,,mg PO qd,"mg PO,mg PO qd",#3F8F5F,0,0,0,0,0,IV,Antidiabetic
 cetagliptin,ng,,,mg PO qd,"mg PO,mg PO qd",#6A7F2A,0,0,0,0,0,IV,Antidiabetic
 heparin,IU,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#B71C1C,0,0,0,0,0,IV,Anticoagulants
+heparinCPB,ACT,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#455A64,0,0,0,0,0,IV,Anticoagulants
 bivalirudin,mcg,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg/min,mg/kg/min",#AD1457,0,0,0,0,0,IV,Anticoagulants
 argatroban,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min,mcg/hr,mcg/kg/hr",#E65100,0,0,0,0,0,IV,Anticoagulants
 enoxaparin,IU,IU SC,,IU SC,"IU SC,IU/kg SC",#00695C,0,0,0,0,0,IV,Anticoagulants
 fondaparinux,mcg,mg SC,,mg SC,"mg SC,mg/kg SC",#5D4037,0,0,0,0,0,IV,Anticoagulants
 apixaban,ng,,,mg PO,"mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Anticoagulants
+apixabanVTE,ng,,,mg PO,"mg PO,mg PO bid",#0288D1,0,0,0,0,0,IV,Anticoagulants
 rivaroxaban,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
 edoxaban,ng,,,mg PO qd,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Anticoagulants
 dabigatran,ng,,,mg PO bid,"mg PO,mg PO bid",#558B2F,0,0,0,0,0,IV,Anticoagulants
+dabigatranHip,ng,,,mg PO bid,"mg PO,mg PO bid,mg PO qd",#7CB342,0,0,0,0,0,IV,Anticoagulants
 warfarin,INR,,,mg PO qd,"mg PO,mg PO qd",#283593,0,0,0,0,0,IV,Anticoagulants
 fluindione,INR,,,mg PO qd,"mg PO,mg PO qd",#6A1B9A,0,0,0,0,0,IV,Anticoagulants
 acenocoumarol,INR,,,mg PO qd,"mg PO,mg PO qd",#AD1457,0,0,0,0,0,IV,Anticoagulants
@@ -169,7 +172,13 @@ clevidipine,ng,mg,mg/hr,mg/hr,"mg,mcg/kg/min,mg/hr",#B71C1C,0,0,0,0,0,IV,Antihyp
 fenoldopamPediatric,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min",#311B92,15.7,23.5,19.6,0,0,IV,Antihypertensives
 carvedilol,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#01579B,0,0,0,0,0,IV,Antihypertensives
 azilsartan,ng,,,mg PO,"mg PO,mg PO qd",#E65100,0,0,0,0,0,IV,Antihypertensives
+benazepril,ng,,,mg PO,"mg PO,mg PO qd",#00838F,0,0,0,0,0,IV,Antihypertensives
+enalapril,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid",#0D47A1,0,0,0,0,0,IV,Antihypertensives
+enalaprilat,ng,,,,,#64B5F6,0,0,0,0,0,IV,
 chlorthalidone,ng,,,mg PO,"mg PO,mg PO qd",#33691E,0,0,0,0,0,IV,Antihypertensives
+lisinopril,ng,,,mg PO,"mg PO,mg PO qd",#00695C,0,0,0,0,0,IV,Antihypertensives
+olmesartan,ng,,,mg PO,"mg PO,mg PO qd",#AD1457,0,0,0,0,0,IV,Antihypertensives
+valsartan,ng,,,mg PO,"mg PO,mg PO qd",#827717,0,0,0,0,0,IV,Antihypertensives
 hydrochlorothiazide,ng,,,mg PO,"mg PO,mg PO qd",#3E2723,0,0,0,0,0,IV,Antihypertensives
 epinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#C62828,0,0,0,0,0,IV,Vasoactive and resuscitation
 magnesiumSulfate,mmol,g,g/hr,g,"g,mg,mg/kg,g/hr,mg/min,mg/kg/hr",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
@@ -191,4 +200,6 @@ milrinone,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#0277B
 milrinonePediatric,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#4FC3F7,100,300,167,0,0,IV,Vasoactive and resuscitation
 metoprolol,ng,mg,mg/min,mg,"mg,mg/min,mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Vasoactive and resuscitation
 nicardipine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mcg/kg/min",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
+vasopressin,mcU,U,U/min,U/min,"U,U/min,U/hr,U/kg/min,U/kg/hr",#4A148C,0,0,0,0,0,IV,Vasoactive and resuscitation
+hydralazine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E7D32,0,0,0,0,0,IV,Vasoactive and resuscitation
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs

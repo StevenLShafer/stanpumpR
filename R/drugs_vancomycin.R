@@ -49,9 +49,10 @@
 # The 2020 ASHP/IDSA/PIDS/SIDP consensus (Rybak 2020) recommends a total
 # AUC over 24 h of 400-600 mg.h/L, assuming an MIC of 1 mg/L, for serious
 # MRSA infection, in place of the older trough of 15-20 mg/L.  At steady
-# state AUC24 = daily dose / CL.  The band below is the traditional trough
-# range because that is what is read off a concentration plot; the AUC is
-# the better target and can be computed from the curve.
+# state AUC24 = daily dose / CL.  The shaded band is not that target: it is
+# free vancomycin at the MBC of S. aureus (MBC50 2, MBC90 8 mg/L, Honda 2011),
+# on the total curve (R/antibioticMbc.R).  A trough of 10 mg/L total sits
+# near the band's top; the AUC is computed from the curve.
 #
 # TIME UNTIL THRESHOLD: FREE DRUG AT THE MIC
 # ==========================================
@@ -85,7 +86,11 @@
 # (1 - 0.0154 x 66), so CL rises by slightly more than 1.5 (1.51 at a
 # creatinine clearance of 100 mL/min).
 # The larger volume is NOT applied, as the review gives no figure, so the
-# simulated peak in a parturient is too high.  See R/pregnancy.R.
+# simulated peak in a parturient is too high.
+# The factor is applied only when the serum creatinine is left blank
+# (pregnancyGfrFactor()): a pregnant woman's measured creatinine is already
+# low, and the renal estimate made from it already carries the rise.
+# See R/pregnancy.R.
 #
 # References
 # ----------
@@ -126,7 +131,8 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   scr  <- max(adultEquivalentCreatinine(creatinine, age, sex), 60 / 88.42)
   crcl <- creatinineClearanceCG(pkW, age, sex, scr)   # mL/min
   # Pregnancy (see the header): the renal term alone.
-  if (isTRUE(pregnant)) crcl <- crcl * PREGNANCY_GFR_FACTOR
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  crcl <- crcl * gfrPregnancy
 
   cl1 <- 2.99 * (1 + 0.0154 * (crcl - 66)) / 60      # L/min
   if (cl1 <= 0)
@@ -153,11 +159,12 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, total mg/L: the traditional trough range of 10-20 mg/L.  The
-  # consensus target is an AUC24 of 400-600 mg.h/L, see the header.
-  typical      <- 15
-  upperTypical <- 20
-  lowerTypical <- 10
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("vancomycin")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Thomson AH et al., J Antimicrob Chemother 2009;63:1050-1057. ",
@@ -165,7 +172,7 @@ vancomycin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "clearance, from the entered creatinine or an assumed normal one. ",
     "https://doi.org/10.1093/jac/dkp085"
   )
-  if (isTRUE(pregnant)) {
+  if (gfrPregnancy != 1) {
     reference <- paste0(reference, "; ", pregnancyReference(
       paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR)))
   }

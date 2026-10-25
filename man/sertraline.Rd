@@ -4,7 +4,7 @@
 \alias{sertraline}
 \title{Sertraline pharmacokinetics (oral)}
 \usage{
-sertraline(weight, height, age, sex, adjustToFFM = TRUE)
+sertraline(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -18,6 +18,10 @@ sertraline(weight, height, age, sex, adjustToFFM = TRUE)
 \item{adjustToFFM}{\code{TRUE} (the default) scales the volumes and
 clearances to the patient's fat-free mass; \code{FALSE} uses the
 published values for everyone.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+elimination clearance by 0.60, a fall (Westin 2017; see the file's
+header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

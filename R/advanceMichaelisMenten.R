@@ -374,8 +374,17 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   ivRate <- rate & !pe & route == ROUTE_IV
   peRate <- rate & pe & route == ROUTE_IV
 
+  # Antiseizure interactions (R/antiseizureInteractions.R): piecewise-constant
+  # multipliers of Vmax and Km, each segment starting at interactionMM$time.
+  # Their switching times join the time line, so a step never straddles one.
+  ddi <- PK$interactionMM
+  ddiAt <- function(field, t) {
+    if (is.null(ddi)) return(1)
+    ddi[[field]][max(1L, findInterval(t, ddi$time))]
+  }
+
   # The time line: every dose time and arrival, and the instant before each.
-  knots <- unique(c(t0, jumps$time))
+  knots <- unique(c(t0, jumps$time, if (!is.null(ddi)) ddi$time[ddi$time > 0]))
   timeLine <- simulationTimeGrid(c(knots, knots - PRE_DOSE_OFFSET), maximum,
                                  gridStart(0))
   timeLine <- timeLine[timeLine >= 0]
@@ -413,7 +422,7 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
   # binding to the target (k2, saturable in the free target, Rmax - DR),
   # dissociation (koff) and hydrolysis of the complex (kdeg, which frees the
   # target) are states of their own (Landersdorfer 2012, vildagliptin).
-  deriv <- function(x, rIV, rPE) {
+  deriv <- function(x, rIV, rPE, vmax, km) {
     Cu <- unboundC(x[iC])
     Cpu <- unboundP(x[iP])
     dx <- numeric(length(x))
@@ -441,6 +450,13 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
 
   x <- numeric(iDRP)
   Cp <- numeric(L)
+  # The peripheral concentration (on the same footing as Cp: the amount in the
+  # compartment over its volume) and the amount still to be absorbed, in the
+  # oral depots, the transit compartment before them, the intramuscular depot
+  # of the prodrug and the saturable subcutaneous depot; see R/compartments.R.
+  C2 <- numeric(L)
+  depot <- numeric(L)
+  depotStates <- c(seq_len(iIM), iT, iS)
   for (i in seq_len(L)) {
     if (i > 1) {
       dt <- timeLine[i] - timeLine[i - 1]
@@ -448,11 +464,13 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
       h <- dt / n
       rIV <- ivRateLine[i - 1] + scRateLine[i - 1]
       rPE <- peRateLine[i - 1]
+      vmaxStep <- vmax * ddiAt("vmax", timeLine[i - 1])
+      kmStep <- km * ddiAt("km", timeLine[i - 1])
       for (k in seq_len(n)) {
-        k1 <- deriv(x, rIV, rPE)
-        k2 <- deriv(x + h / 2 * k1, rIV, rPE)
-        k3 <- deriv(x + h / 2 * k2, rIV, rPE)
-        k4 <- deriv(x + h * k3, rIV, rPE)
+        k1 <- deriv(x, rIV, rPE, vmaxStep, kmStep)
+        k2 <- deriv(x + h / 2 * k1, rIV, rPE, vmaxStep, kmStep)
+        k3 <- deriv(x + h / 2 * k2, rIV, rPE, vmaxStep, kmStep)
+        k4 <- deriv(x + h * k3, rIV, rPE, vmaxStep, kmStep)
         x <- x + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
       }
       # The central amount cannot fall below zero; RK4 can overshoot by
@@ -462,12 +480,17 @@ advanceMichaelisMenten <- function(dose, PK, maximum, plotRecovery = FALSE,
     arriving <- which(jumpAt == i)
     for (j in arriving) x[jumps$state[j]] <- x[jumps$state[j]] + jumps$amount[j]
     Cp[i] <- x[iC] / V
+    if (q > 0) C2[i] <- x[iP] / V2
+    depot[i] <- sum(x[depotStates])
   }
 
   data.frame(
     Time = timeLine,
     Cp = Cp,
     Ce = rep(NA_real_, L),
-    Recovery = rep(NA_real_, L)
+    Recovery = rep(NA_real_, L),
+    C2 = C2,
+    C3 = rep(0, L),
+    Depot = depot
   )
 }

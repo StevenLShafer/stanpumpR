@@ -119,7 +119,11 @@
 #     clearance was tested in SK16007 and not retained, so the model reads
 #     no creatinine; the label caps renal impairment at 300 mg/day.
 #   - hepatic impairment: AUC 1.9 times normal (mild) and 2.3 times
-#     (moderate) after 200 mg; not modelled (no hepatic field).
+#     (moderate) after 200 mg; not modelled (no hepatic field).  The FDA
+#     label of August 2025 adds the post-marketing study in severe (Child-
+#     Pugh C) impairment: 4.2 times normal after a single 100 mg dose, so
+#     use there is not recommended (both agencies cap Child-Pugh A and B at
+#     200 mg/day).
 #   - "multiple late peaks were observed suggesting enterohepatic
 #     recirculation" (p 52); not modelled.
 #
@@ -136,12 +140,80 @@
 # linear weight and body-surface-area terms; with the switch off, the
 # published values for everyone (legacyVolume = 1).
 #
-# BAND: 10-25 mcg/mL, typical 18 (its midpoint): the AGNP update 2026 (Hart
-# et al., Pharmacopsychiatry 2026;59:166-295, Table 5; trough 24 h after a
-# dose; level of recommendation 4), the mean +/- SD in 36 seizure-free
-# patients at a median 200 mg/day.  Steinhoff 2024 found that no general
-# range separated responders, and responders at <= 100 mg/day had 0.5-17.6
-# mg/L (Operto 2025).  Plasma only, no effect site.
+# PATIENTS IN CLINICS (independent of the fit)
+# ============================================
+# Two therapeutic drug monitoring series, in adults with refractory epilepsy
+# on other antiseizure drugs, give the concentration per mg/day of dose.  The
+# model's steady-state average is 1 / (0.533 L/h x 24 h) = 0.078 mg/L per
+# mg/day at every dose:
+#   - Kork, Germany (Steinhoff 2024; 101 patients, 100-400 mg/day, morning
+#     samples, which the authors measured to be within 10% of the day's
+#     other levels): seizure-free patients 17.8 mg/L at a mean 240.3 mg/day
+#     (0.074), non-responders 20.9 mg/L at 260.8 mg/day (0.080);
+#     concentration linear in dose (r 0.70).
+#   - Oslo, Norway (Johannessen Landmark 2026, read in full; 258 patients,
+#     drug-fasting morning samples at steady state): 53.7 umol/L at a mean
+#     164 mg/day, which is 14.4 mg/L at 267.67 g/mol (0.088 as a ratio of
+#     means).  The paper's Figure 1D gives the mean of the patients' own
+#     ratios, in umol/L per mg, by co-medication: 0.339 with neither a
+#     strong inducer nor an inhibitor (n 129; 0.091 mg/L per mg/day), 0.311
+#     with carbamazepine, phenytoin or phenobarbital (n 33; 0.083) and 0.384
+#     with valproate or cannabidiol (n 96; 0.103).  Within-patient
+#     coefficient of variation 18%; between-patient range 34-fold.
+# The Kork figures are ratios of means.  The model is within 12% of the
+# Kork figures and of Oslo's ratio of means, 14% below Oslo's patients on
+# neither an inducer nor an inhibitor (a mean of ratios, which a skewed
+# distribution pulls up) and 6% below those on an inducer; the 24% gap
+# for valproate or cannabidiol is an inhibition the model has no term for.
+#
+# BAND: 10-25 mg/L, typical 18 (its midpoint): the therapeutic reference
+# range newly introduced by the AGNP update 2026 (Hart et al.,
+# Pharmacopsychiatry 2026;59:166-295, Table 5; trough 24 h after a dose;
+# laboratory alert level 50 mg/L; level of recommendation 4), the mean
+# +/- SD in 36 patients seizure-free at a median 200 mg/day.  It replaces
+# the 5-35 mg/L responder range below, which this file drew until the
+# consensus table was read (docs/therapeutic-ranges.md: the class
+# consensus guideline comes first).  The model's troughs at 100 and
+# 400 mg/day (6.8, 27.4) fall outside the narrower range, and the trials'
+# seizure-free patients on 100 mg/day (central 90% 5.1-9.7) lie wholly
+# below it: the consensus range describes the usual 200 mg/day.
+#
+# The sponsor's analysis of steady-state
+# troughs in the maintenance phase of the two controlled trials (C013 and
+# C017; Greene and Kamin, AAN 2021 abstract 1377, read in full): 95% of the
+# patients with a 50% or greater seizure reduction, or seizure freedom, lay
+# between 5 and 35 mg/L, which the authors propose as "a trough plasma
+# concentration reference range (not a target therapeutic range)"; no toxic
+# range was established.  The central 90% of the 50% responders were 4.6-9.3
+# mg/L at 100 mg/day (n 42), 11.3-18.7 at 200 (n 95) and 20.8-35.2 at 400
+# (n 50), and of the seizure-free 5.1-9.7, 10.8-19.8 and 21.9-35.8.  The
+# model's steady-state troughs, 6.8, 13.7 and 27.4 mg/L, lie inside every
+# one of those ranges, at 0.89-0.98 of their midpoints.  The phase 3 safety
+# study (C021; post hoc, 10 US sites, AAN 2022 abstract S13.004, read in
+# full) agrees: mean trough at the first maintenance visit on 200 mg/day
+# 15.1 mg/L in the 177 patients still taking cenobamate, 15.2 in the 158
+# 50% responders and 14.5 in the 60 seizure-free for 12 months or more,
+# against the model's 13.7 (0.90-0.94).  It is a reference range in the
+# sense of the ILAE (the concentrations at which patients respond), not a
+# therapeutic range: in the Kork series seizure-free patients (3.8-33.7
+# mg/L, mean 17.8) and non-responders (3.9-54.6, mean 20.9) did not differ,
+# adverse effects did not track the concentration, and the authors
+# concluded that no general therapeutic range can be defined and
+# recommended individual reference concentrations instead.  Patients responding at 100 mg/day or
+# less in an Italian cohort had 0.5-17.6 mg/L, median about 5-6 (Operto
+# 2025).  The Oslo laboratory uses 15-130 umol/L, which is 4.0-34.8 mg/L
+# (the paper prints "10-40 mg/L", which does not match its own umol/L), on
+# the strength of the Kork series, and 85% of its measurements fell inside
+# it.
+#
+# EFFECT SITE: none, deliberately.  The one study that timed an effect
+# (photoparoxysmal EEG response, 6 evaluable patients, single doses of
+# 100-400 mg; Kasteleijn-Nolst Trenite 2019) found the response already
+# reduced 1 h after 250 and 400 mg, before the plasma peak, and still
+# reduced more than 24 h later.  No hysteresis is visible on that time
+# scale and no ke0 can be estimated, and with a 65 h half-life an
+# equilibration of minutes would not change any curve a daily-dosed drug
+# draws.  Plasma only.
 #
 # References
 # ----------
@@ -164,6 +236,18 @@
 #   https://doi.org/10.1002/jcph.2439
 # Operto FF et al., Front Pharmacol 2025;16:1668382.
 #   https://doi.org/10.3389/fphar.2025.1668382
+# Greene S, Kamin M, AAN 2021 abstract 1377, Neurology 2021;96(15 Suppl).
+#   https://doi.org/10.1212/WNL.96.15_supplement.1377
+# AAN 2022 abstract S13.004 (C021 post hoc troughs), Neurology 2022;98(18
+#   Suppl).  https://doi.org/10.1212/WNL.98.18_supplement.537
+# FDA, Xcopri prescribing information, revised 8/2025 (Reference ID 5644857).
+#   https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/212839s013lbl.pdf
+# Steinhoff BJ et al., J Clin Med 2024;13:2757.
+#   https://doi.org/10.3390/jcm13102757
+# Johannessen Landmark C et al., Epilepsia 2026;67:2820-2835.
+#   https://doi.org/10.1002/epi.70184
+# Kasteleijn-Nolst Trenite DGA et al., Neurology 2019;93:e559-e567.
+#   https://doi.org/10.1212/WNL.0000000000007894
 # -----------------------------------------------------------------------------
 
 #' Cenobamate pharmacokinetics (oral)

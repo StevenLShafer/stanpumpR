@@ -128,6 +128,32 @@
 # population PK model and a MADRS PK/PD module that needs the measured
 # week-1 MADRS score as an input; not implemented.
 #
+# PREGNANCY
+# =========
+# Of the antidepressants, paroxetine falls furthest in pregnancy.  Westin
+# 2017 followed 20 paroxetine pregnancies through routine therapeutic drug
+# monitoring, each against the same woman's own baseline outside
+# pregnancy: dose-adjusted serum paroxetine was 51% lower in the middle of
+# the third trimester (95% CI -66% to -30%, p < 0.001), and the authors
+# suggest a dose about 100% higher in the third trimester.  With the Patient Profile's Pregnant field on, the
+# apparent clearance CL/F (cl1, the 25 mg/day value) is multiplied by
+# PAROXETINE_PREGNANCY_CL_FACTOR = 2.0 (1 / 0.49 = 2.04, rounded as the
+# registry gives it); V/F, ka and the daily-dose exposure scale are
+# unchanged, so a once-daily regimen's mean steady-state concentration is
+# halved at every dose.  The plotted concentration is total serum
+# paroxetine, which is what Westin measured.
+# POPULATION-TYPICAL, NOT INDIVIDUAL: the fall is CYP2D6 induction.  Ververs
+# 2009 (74 pregnancies, CYP2D6 genotyped) found the concentration falling
+# through pregnancy in extensive and ultrarapid metabolisers but RISING in
+# intermediate and poor metabolisers.  This model has no CYP2D6 term (Kim's
+# Korean outpatients, like Westin's Norwegian cohort, were presumably mostly
+# extensive metabolisers), so the factor 2.0 is applied to every patient; in
+# a known CYP2D6 poor or intermediate metaboliser the direction is wrong.
+# The Schoretsanitis 2020 meta-analysis (four patients) gives a ratio of 0.82.
+# Late pregnancy (the third trimester) is the state described.  (Claude
+# Code, 2026-10-19, at the request of Steven L. Shafer; see R/pregnancy.R and
+# inst/extdata/pregnancyRegistry.csv.)
+#
 # References
 # ----------
 # Kim JR et al., Drug Des Devel Ther 2015;9:5247-5254.
@@ -140,10 +166,24 @@
 #   (not used).  https://doi.org/10.1002/psp4.70032
 # Catafau AM et al., Psychopharmacology 2006;189:145-153 (SERT occupancy).
 #   https://doi.org/10.1007/s00213-006-0540-y
+# Westin AA, Brekke M, Molden E, Skogvoll E, Spigset O.  PLoS One
+#   2017;12:e0181082.  https://doi.org/10.1371/journal.pone.0181082
+#   (pregnancy)
+# Ververs FFT, Voorbij HAM, Zwarts P et al.  Clin Pharmacokinet
+#   2009;48:677-683.  https://doi.org/10.2165/11318050-000000000-00000
+#   (pregnancy and CYP2D6)
+# Schoretsanitis G et al.  Expert Opin Drug Metab Toxicol 2020;16:431-440.
+#   https://doi.org/10.1080/17425255.2020.1750598 (pregnancy)
 # -----------------------------------------------------------------------------
 
 PAROXETINE_DREF     <- 25       # mg/day, Kim's reference daily dose
 PAROXETINE_DOSE_EXP <- 0.363    # minus Kim's exponent of daily dose on CL/F
+
+# Apparent clearance in pregnancy relative to Kim's value: Westin 2017,
+# paroxetine 51% lower in the third trimester, 1 / 0.49 = 2.0 (see the
+# header).  Population-typical: in CYP2D6 poor and intermediate metabolisers
+# paroxetine rises instead.
+PAROXETINE_PREGNANCY_CL_FACTOR <- 2.0
 
 #' Paroxetine pharmacokinetics (oral)
 #'
@@ -156,9 +196,12 @@ PAROXETINE_DOSE_EXP <- 0.363    # minus Kim's exponent of daily dose on CL/F
 #' @param adjustToFFM \code{TRUE} (the default) scales the volume and
 #'   clearance to the patient's fat-free mass; \code{FALSE} uses the
 #'   published values for everyone.
+#' @param pregnant is the patient pregnant?  \code{TRUE} doubles the apparent
+#'   clearance (Westin 2017; population-typical, see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-paroxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
+paroxetine <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                       pregnant = FALSE)
 {
   # Size scaling (see the header): fixed published values for the reference man
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
@@ -169,6 +212,8 @@ paroxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # The age term is a negative power, infinite at age 0 and fitted in adults:
   # it sees the age floored at ADULT_AGE_TERM_FLOOR (18), as for every such term.
   cl1 <- 13.1 * (max(age, ADULT_AGE_TERM_FLOOR) / 71)^-0.702 / 60 * size$clearance   # L/min
+  # Pregnancy (see the header): apparent clearance only.
+  if (isTRUE(pregnant)) cl1 <- cl1 * PAROXETINE_PREGNANCY_CL_FACTOR
   v2  <- 1                                                 # one compartment
   v3  <- 1
   cl2 <- 0
@@ -200,6 +245,14 @@ paroxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "clearance carried as (D/25)^0.363 on each dose, exact at steady state ",
     "for once-daily dosing; oral only. https://doi.org/10.2147/DDDT.S84718"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("apparent clearance x ", PAROXETINE_PREGNANCY_CL_FACTOR,
+             ", population-typical; in CYP2D6 poor and intermediate ",
+             "metabolisers paroxetine rises instead"),
+      paste0("Westin AA et al., PLoS One 2017;12:e0181082. ",
+             "https://doi.org/10.1371/journal.pone.0181082")))
+  }
 
   return(
     list(

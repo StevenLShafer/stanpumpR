@@ -4,7 +4,7 @@
 \alias{cefalexin}
 \title{Cefalexin pharmacokinetics (oral, apparent)}
 \usage{
-cefalexin(weight, height, age, sex, adjustToFFM = TRUE)
+cefalexin(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -19,6 +19,10 @@ cefalexin(weight, height, age, sex, adjustToFFM = TRUE)
 clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
 published allometry on total body weight (volumes linear, clearances to the
 0.75 power). No renal-function estimate.}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
+apparent clearance by 1.5, by analogy with cephradine (Philipson 1987;
+see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

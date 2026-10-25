@@ -36,3 +36,22 @@ test_that("it is oral only and has no effect site", {
   pk <- getDrugPK("quetiapine", 70, 170, 35, "male", getDrugDefaults("quetiapine"))
   expect_equal(pk$PK$default$ke0, 0)
 })
+
+test_that("pregnancy: apparent clearance x 4.2 (Westin 2017)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.
+  on  <- getDrugPK("quetiapine", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("quetiapine", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_equal(off, getDrugPK("quetiapine", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default
+  b <- off$PK$default
+  expect_equal(QUETIAPINE_PREGNANCY_CL_FACTOR, 4.2)
+  expect_equal(a$cl1 / b$cl1, QUETIAPINE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO", "ke0")) {
+    expect_identical(a[[p]], b[[p]], info = p)
+  }
+  expect_equal_rounded(4.531817256, a$cl1)
+  expect_equal_rounded(427.2303782, a$v1)
+  expect_match(on$reference, "Westin", fixed = TRUE)
+  expect_match(on$reference, "pregnancy:", fixed = TRUE)
+  expect_no_match(off$reference, "Westin")
+})

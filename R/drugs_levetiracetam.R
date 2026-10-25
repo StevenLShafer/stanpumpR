@@ -64,6 +64,37 @@
 # Pharmacopsychiatry 2026;59:166-295, Table 5; 12 h after a dose), which
 # lowered ILAE's (Patsalos 2008) lower limit of 12.
 #
+# PREGNANCY
+# =========
+# Clearance rises early, often to its maximum by the first or second
+# trimester, and stays raised to term.  In the third trimester: Tomson and
+# colleagues (Epilepsia 2007;48:1111-1116; prospective, n = 7) found
+# concentrations 40% of baseline outside pregnancy; Westin and colleagues
+# (Seizure 2008;17:192-198; 21 pregnancies, n = 11 in the third trimester)
+# a concentration/dose ratio 50% of baseline; Lopez-Fraile 2009 (n = 5) 62%
+# of late postpartum levels; Duan 2026 (China, prospective) a ratio 31.0%
+# lower (40.1% in the second trimester); MONEAD (Pennell 2022) a dose-
+# normalized concentration lower by up to 36.8% (11.33 to 7.16 ug/L/mg).
+# Voinescu 2018 reports a maximal 1.71-fold clearance in the first trimester
+# (n = 18), Reisinger 2013 a mean PEAK clearance 207% higher (n = 15).
+#
+# With the Patient Profile's Pregnant field on, the TOTAL clearance (cl1,
+# renal and non-renal together) is multiplied by
+# LEVETIRACETAM_PREGNANCY_CL_FACTOR = 1.6.  The third-trimester ratios are
+# Duan 1 / (1 - 0.310) = 1.45, MONEAD 11.33 / 7.16 = 1.58, Lopez-Fraile 1 /
+# 0.62 = 1.61, Westin 1 / 0.50 = 2.0 and Tomson 1 / 0.40 = 2.5: the two large
+# prospective cohorts give 1.45-1.58, the three small series 1.6-2.5
+# (geometric mean of all five 1.79), and 1.6 is weighted toward the large
+# cohorts.  The factor is applied to the clearance directly, NOT through the
+# renal split: the 50% rise in filtration would give only 0.66 x 1.5 + 0.34 =
+# 1.33, which undershoots every study.  The Cockcroft-Gault term reads the
+# creatinine as entered; a pregnant woman's measured creatinine, lower than
+# the assumed nonpregnant value used when the field is blank, raises the
+# renal part a little on top of the factor.  The volume and the absorption
+# are unchanged.  Levetiracetam is under 10% bound, so total and unbound are
+# the same.  Clearance returns to baseline within weeks of delivery (Westin),
+# which is not represented.  See R/pregnancy.R.  (Claude Code, 2026-10-19.)
+#
 # References
 # ----------
 # Rhee SJ et al., Epilepsy Res 2017;132:8-15.
@@ -76,6 +107,21 @@
 #   https://doi.org/10.1111/j.1528-1167.2008.01561.x
 # Keppra (levetiracetam) US prescribing information, UCB: volume of
 #   distribution 0.5-0.7 L/kg, half-life 7 +/- 1 h, 66% renal unchanged.
+# Tomson T, Palm R, Kallen K, et al.  Epilepsia 2007;48:1111-1116.
+#   https://doi.org/10.1111/j.1528-1167.2007.01032.x (pregnancy)
+# Westin AA, Reimers A, Helde G, Nakken KO, Brodtkorb E.  Seizure
+#   2008;17:192-198.  https://doi.org/10.1016/j.seizure.2007.11.027
+#   (pregnancy)
+# Lopez-Fraile IP, Cid AO, Juste AO, Modrego PJ.  Epilepsy Behav
+#   2009;15:372-375.  https://doi.org/10.1016/j.yebeh.2009.04.006 (pregnancy)
+# Duan et al.  Neurology 2026;107:e218456.
+#   https://doi.org/10.1212/WNL.0000000000218456 (pregnancy)
+# Pennell PB, Karanam A, Meador KJ, et al.  JAMA Neurol 2022;79:370-379.
+#   https://doi.org/10.1001/jamaneurol.2021.5487 (pregnancy, MONEAD)
+# Voinescu PE, Park S, Chen LQ, et al.  Neurology 2018;91:e1228-e1236.
+#   https://doi.org/10.1212/WNL.0000000000006240 (pregnancy)
+# Reisinger TL, Newman M, Loring DW, Pennell PB, Meador KJ.  Epilepsy Behav
+#   2013;29:13-18.  https://doi.org/10.1016/j.yebeh.2013.06.026 (pregnancy)
 # -----------------------------------------------------------------------------
 
 #' Fraction of levetiracetam clearance that is renal
@@ -86,16 +132,24 @@ LEVETIRACETAM_RENAL_FRACTION <- 0.66
 #' @keywords internal
 LEVETIRACETAM_V_PER_KG <- 0.6
 
+# Total clearance in the third trimester relative to the model: Duan 2026
+# 1.45, MONEAD 1.58, Lopez-Fraile 1.61, Westin 2.0, Tomson 2.5, weighted
+# toward the two large cohorts (see the header).
+LEVETIRACETAM_PREGNANCY_CL_FACTOR <- 1.6
+
 #' Levetiracetam pharmacokinetics (oral and intravenous)
 #'
 #' One compartment, clearance split renal (proportional to creatinine
 #' clearance) and non-renal; see the header of the file.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the total
+#'   clearance by \code{LEVETIRACETAM_PREGNANCY_CL_FACTOR}, not through the
+#'   renal split (see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 levetiracetam <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                          creatinine = NULL)
+                          creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
@@ -105,6 +159,8 @@ levetiracetam <- function(weight, height, age, sex, adjustToFFM = TRUE,
   crclRef <- creatinineClearanceCG(70, 40, SEX_MALE, adultCreatinine(SEX_MALE))
   f <- LEVETIRACETAM_RENAL_FRACTION
   clTotal <- 3.9 * (f * (crcl / crclRef) + (1 - f))     # L/h
+  # Pregnancy (see the header): the total clearance, not the renal split.
+  if (isTRUE(pregnant)) clTotal <- clTotal * LEVETIRACETAM_PREGNANCY_CL_FACTOR
 
   default <- list(
     v1  = LEVETIRACETAM_V_PER_KG * pkW, v2 = 1, v3 = 1,
@@ -116,15 +172,25 @@ levetiracetam <- function(weight, height, age, sex, adjustToFFM = TRUE,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
+  reference <- paste0(
+    "Rhee SJ et al., Epilepsy Res 2017;132:8-15 (one compartment, ka 2.44/h ",
+    "fixed, CL/F 3.9 L/h), the volume 0.6 L/kg and the 66% renal / 34% ",
+    "non-renal clearance split (renal proportional to Cockcroft-Gault) from ",
+    "the Keppra label, which gives a half-life of 7.5 h; intravenous on the ",
+    "label's 1:1 conversion. https://doi.org/10.1016/j.eplepsyres.2017.02.011"
+  )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("total clearance x ", LEVETIRACETAM_PREGNANCY_CL_FACTOR),
+      paste0("Tomson T et al., Epilepsia 2007;48:1111-1116. ",
+             "https://doi.org/10.1111/j.1528-1167.2007.01032.x; Westin AA et ",
+             "al., Seizure 2008;17:192-198; Pennell PB et al. (MONEAD), JAMA ",
+             "Neurol 2022;79:370-379")))
+  }
+
   list(
     PK = PK, tPeak = 0, MEAC = 0,
     typical = 30, upperTypical = 46, lowerTypical = 6,
-    reference = paste0(
-      "Rhee SJ et al., Epilepsy Res 2017;132:8-15 (one compartment, ka 2.44/h ",
-      "fixed, CL/F 3.9 L/h), the volume 0.6 L/kg and the 66% renal / 34% ",
-      "non-renal clearance split (renal proportional to Cockcroft-Gault) from ",
-      "the Keppra label, which gives a half-life of 7.5 h; intravenous on the ",
-      "label's 1:1 conversion. https://doi.org/10.1016/j.eplepsyres.2017.02.011"
-    )
+    reference = reference
   )
 }

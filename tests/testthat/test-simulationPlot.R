@@ -310,3 +310,46 @@ test_that("the time until threshold does not set a concentration panel's height"
   expect_lt(ranges[1], 1.2 * ceMax)
   expect_lt(ranges[2], 1.2 * cpMax)
 })
+
+test_that("seriesFromMinimum cuts each series at the window's start, with a point there", {
+  df <- data.frame(Drug = rep(c("a", "b"), each = 4), Site = "Plasma",
+                   Time = rep(c(0, 10, 20, 30), 2), Y = c(0, 10, 20, 30, 5, 5, 0, 0))
+  out <- seriesFromMinimum(df, 15, by = c("Drug", "Site"))
+  expect_equal(out$Time[out$Drug == "a"], c(15, 20, 30))
+  expect_equal(out$Y[out$Drug == "a"], c(15, 20, 30))      # interpolated
+  expect_equal(out$Y[out$Drug == "b"], c(2.5, 0, 0))
+  # a step series holds the value in force
+  step <- seriesFromMinimum(df, 15, by = "Drug", step = TRUE)
+  expect_equal(step$Y[step$Drug == "a"], c(10, 20, 30))
+  # a point at the start is kept as it is; a window from 0 changes nothing
+  expect_equal(seriesFromMinimum(df, 10, by = "Drug")$Time[1:3], c(10, 20, 30))
+  expect_identical(seriesFromMinimum(df, 0, by = "Drug"), df)
+  # another column for Y
+  rec <- data.frame(Drug = "a", Time = c(0, 10), Recovery = c(4, 8))
+  expect_equal(seriesFromMinimum(rec, 5, by = "Drug", y = "Recovery")$Recovery, c(6, 8))
+})
+
+test_that("a plot from Min time draws only the window and scales to it", {
+  local_mocked_bindings(outputComments = function(...) {})
+  dd <- getDrugDefaultsGlobal(FALSE)
+  # A large bolus early, a small one in the window: the window's panel must
+  # be scaled to the small one, not to the peak before the window
+  doseTable <- data.frame(Drug = "fentanyl", Time = c(0, 400), Dose = c(500, 10), Units = "mcg")
+  events <- data.frame(Time = double(), Event = character())
+  drugs <- processdoseTable(doseTable, events,
+                            recalculatePK(NULL, dd, doseTable, 50, 70, 170, "male"),
+                            480, FALSE, plotMinimum = 360)
+  p <- simulationPlot(drugs = drugs, events = events, drugDefaults = dd,
+                      eventDefaults = getEventDefaults(),
+                      xBreaks = axisTimeBreaks(360, 480, 15), xLabels = axisTimeBreaks(360, 480, 15),
+                      xMinimum = 360, xMaximum = 480, plasmaLinetype = "solid",
+                      effectsiteLinetype = "solid", typical = "none")
+  built <- ggplot2::ggplot_build(p$plotObject)
+  lines <- built$data[[1]]
+  expect_equal(min(lines$x), 360)
+  expect_equal(built$layout$panel_params[[1]]$x.range, c(360, 480))
+  inWindow <- p$allResults[p$allResults$Time >= 360 & p$allResults$Site %in% c("Plasma", "Effect Site"), ]
+  expect_lte(max(lines$y), max(inWindow$Y) + 1e-9)
+  # the whole run is still returned
+  expect_equal(min(p$plotResults$Time), 0)
+})

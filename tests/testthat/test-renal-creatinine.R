@@ -8,7 +8,10 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # Anticoagulants with a renal clearance term (R/drugs_apixaban.R,
                 # R/drugs_rivaroxaban.R, R/drugs_edoxaban.R, R/drugs_dabigatran.R,
                 # R/drugs_enoxaparin.R and R/drugs_fondaparinux.R, which use MDRD)
-                "apixaban", "rivaroxaban", "edoxaban", "dabigatran",
+                "apixaban", "apixabanVTE", "rivaroxaban", "edoxaban", "dabigatran",
+                # dabigatranHip (Trocóniz 2007): Cockcroft-Gault CrCl and serum
+                # creatinine both act on the day-2-to-10 phase (R/drugs_dabigatranHip.R)
+                "dabigatranHip",
                 "enoxaparin", "fondaparinux",
                 # Renal function is hydrochlorothiazide's ONLY covariate
                 # (R/drugs_hydrochlorothiazide.R, Van Wart 2013): the source
@@ -18,11 +21,19 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 # Serum creatinine itself, not an estimate of its clearance,
                 # is magnesium's covariate (R/drugs_magnesiumSulfate.R, Du 2019)
                 "magnesiumSulfate",
+                # The renin-angiotensin drugs whose sources put a power of the
+                # serum creatinine CONCENTRATION, in umol/L, on clearance:
+                # lisinopril (Thomson 1989, ^-0.887 over 70) and olmesartan
+                # (Yoshihara 2005, ^-0.344 over 80, its strongest covariate).
+                # Valsartan is deliberately NOT here: Heo 2016 screened serum
+                # creatinine and rejected it, so its signature does not name
+                # the covariate and this test asserts that it ignores it.
+                "lisinopril", "olmesartan",
                 # Grasela and Sheiner's Equation 7 (R/drugs_procainamide.R)
                 "procainamide",
                 # Cockcroft-Gault on clearance (R/drugs_digoxin.R, Yukawa 2001)
                 "digoxin",
-                # Bedside Schwartz, CKD-EPI from 18, on clearance
+                # Bedside Schwartz at every age, on clearance
                 # (R/drugs_milrinonePediatric.R, Hornik 2019)
                 "milrinonePediatric",
                 # Cheng 1997's regressions on Cockcroft-Gault (R/drugs_digoxinIV.R)
@@ -32,10 +43,13 @@ renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex
                 "digoxinIVPediatric")
 
 # The elimination clearance of each of a drug's systems: its own and those of
-# its parallel systems (meloxicam's renal term is on its intravenous system).
+# its parallel systems (meloxicam's renal term is on its intravenous system),
+# and the later-phase set of a dose-phase drug (dabigatranHip's renal term is on
+# its day-2-to-10 phase, not the day-0-1 default set).
 systemClearances <- function(pk)
   c(pk$PK$default$cl1,
-    vapply(pk$parallelSystems, function(s) s$PK$default$cl1, numeric(1)))
+    vapply(pk$parallelSystems, function(s) s$PK$default$cl1, numeric(1)),
+    if (!is.null(pk$dosePhase)) pk$PK[[pk$dosePhase$late]]$cl1)
 
 test_that("a blank creatinine is the assumed normal value for age and sex", {
   expect_equal(patientCreatinine(NULL, 40, "male"), SCR_ASSUMED_MALE)

@@ -16,12 +16,14 @@
 #' @inheritParams cefazolin
 #' @param dose units of one injection, for Tham's dose covariates (CL/F
 #'   and regular insulin's ka); NULL is the 10 U reference dose
+#' @param pregnant when \code{TRUE}, apply the rise in insulin clearance of
+#'   late pregnancy, CL/F x 1.19 (see R/insulinTham.R)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 insulinNPH <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                       dose = NULL)
+                       dose = NULL, pregnant = FALSE)
 {
   thamInsulin(weight, height, age, sex, adjustToFFM, insulin = "human",
               components = c(nph = 1), product = "NPH",
-              dose = dose)
+              dose = dose, pregnant = pregnant)
 }

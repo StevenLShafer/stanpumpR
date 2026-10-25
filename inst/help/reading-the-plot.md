@@ -31,10 +31,14 @@ Each panel's labels are in whichever unit suits the longest time on that panel, 
 
 With **Graph Options → % MEAC on opioid panels** ticked, each opioid's panel carries a thin black line instead: that opioid's effect-site concentration as a percentage of its MEAC, read against the labels at the right-hand edge. The scale is shared by every opioid panel. Its top is the highest % MEAC any opioid on the plot reaches, rounded up, and the top label says so (`150% MEAC`), so the same percentage is the same height on every panel, and the highest line is the opioid carrying the most analgesia. The labels sit on short ticks of their own rather than on the left axis's gridlines. The line and *Time until threshold* share the right-hand edge, so ticking one unticks the other. See [MEAC: comparing opioids](help:models/meac).
 
+## The compartment panels
+
+With **Graph Options → Peripheral compartments** ticked, each drug's panel, which is the plasma (V1), is followed directly by a panel for each further compartment of its model: **V2** and **V3** in the drug's concentration units, or an inhaled agent's muscle (**MRG**) and fat (**FG**) groups, and the **depot**, the amount of an oral, sublingual, intramuscular, intranasal, subcutaneous or tissue dose still to be absorbed. Each is drawn in the drug's colour and labelled with the compartment alone, and a drug's TCI rate panel comes after them. See [Peripheral compartments and the depot](help:models/compartments).
+
 ## Interacting with the plot
 
-- **Hover** over any curve for the time and concentration at that point. The time is in the **Time units** chosen in the Time panel ("3.5 days"), or the time of day under **Actual time**. The concentration is read at exactly that time from the full simulation: the effect-site concentration (`Ce`) for a drug with an effect site, and the plasma concentration (`Cp`) for one without, such as an antibiotic or a prodrug. With **Minto / Schnider** ticked, the hover adds the second model's concentration on the propofol and remifentanil panels, and both pumps' rates on a TCI rate panel. With the time-until-threshold line on, the hover adds that time too, in the same unit as the panel's labels; with the % MEAC line on, it adds the opioid's % MEAC. On the MEAC and interaction panels the hover shows the summed value or the probability, also read at the hovered time.
-- **Click** anywhere on a drug's panel to add a dose of that drug at that time. A small dialog asks for the amount and unit, and the dose is applied immediately, bypassing the draft.
+- **Hover** over any curve for the time and concentration at that point. The time is in the **Time units** chosen in the Time panel ("3.5 days"), or the time of day under **Actual time**. The concentration is read at exactly that time from the full simulation: the effect-site concentration (`Ce`) for a drug with an effect site, and the plasma concentration (`Cp`) for one without, such as an antibiotic or a prodrug. With **Minto / Schnider** ticked, the hover adds the second model's concentration on the propofol and remifentanil panels, and both pumps' rates on a TCI rate panel. With the time-until-threshold line on, the hover adds that time too, in the same unit as the panel's labels; with the % MEAC line on, it adds the opioid's % MEAC. On the MEAC and interaction panels the hover shows the summed value or the probability, also read at the hovered time, and on a compartment panel the concentration in that compartment or the amount in the depot.
+- **Click** anywhere on a drug's panel (or one of its compartment panels) to add a dose of that drug at that time. A small dialog asks for the amount and unit, and the dose is applied immediately, bypassing the draft.
 - **Add new drug**, the button at the lower left of the plot, opens the same dialog for a drug that is not yet on the plot, at the start of the plot: pick the drug, change the time if you like, and enter the dose. It saves a trip to the dose table.
 - **Double-click** a drug's panel to edit or delete that drug's doses in a compact table.
 - On the **Events** panel, click to add an event and double-click to edit the event list.
@@ -49,12 +53,13 @@ With **Graph Options → % MEAC on opioid panels** ticked, each opioid's panel c
 | MAC equivalents | Any potent inhaled agent is running | Alveolar concentration as a multiple of the age-adjusted MAC, summed over agents |
 | Oxygen | Any gas flow is running | Inspired and alveolar oxygen |
 | *drug* TCI | The drug has a *Plasma target* or *Effect site target* row | The pump rate the TCI controller ran; see [Target-controlled infusion](help:tci) |
+| V2, V3, MRG, FG, depot | *Peripheral compartments*, under the drug's panel | The concentration in each further compartment of the drug's model, and the amount still to be absorbed; see [Peripheral compartments and the depot](help:models/compartments) |
 
 See [Additional plots](help:additional-plots).
 
 ## Axes
 
-The y axis of each panel is linear by default; **Log Y axis** switches to logarithmic where that is meaningful. The x axis runs to **Max time** and is labelled in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), or with times of day under **Actual time**; see [Time display](help:time-display). The unit changes only the labels: the simulation itself is always computed in minutes. Panel height is set by the **Y axis height** slider.
+The y axis of each panel is linear by default; **Log Y axis** switches to logarithmic where that is meaningful. The x axis runs from **Min time** (0 unless moved) to **Max time** and is labelled in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), or with times of day under **Actual time**; see [Time display](help:time-display). The unit changes only the labels: the simulation itself is always computed in minutes. Panel height is set by the **Y axis height** slider.
 
 ## Resolution
 

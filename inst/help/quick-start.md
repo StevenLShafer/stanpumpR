@@ -5,11 +5,11 @@ Five steps produce a simulation. Everything else in this help is refinement.
 <figcaption>The simulator. Patient and graph settings on the left, the plot in the middle, the dose table on the right.</figcaption>
 </figure>
 
-When the app opens it asks which drugs to display, with a box for each drug, grouped by category: hypnotics and sedatives, opioids, oral analgesics, neuromuscular blockade, inhaled anesthetics, antibiotics, corticosteroids, antidepressants, stimulants, local anesthetics, antiemetics, antiseizure drugs, antipsychotics, antidiabetic drugs and others. The illicit-drug research models are never offered here. Propofol, fentanyl, remifentanil and rocuronium start ticked; untick them to start with something else. **Start** puts each ticked drug in the dose table with a dose of 0 at time 0, ready to edit. Any drug can be added to the dose table later.
+When the app opens it asks which drugs to display. The drugs are grouped by category: hypnotics and sedatives, opioids, oral analgesics, neuromuscular blockade, inhaled anesthetics, antibiotics, corticosteroids, antidepressants, stimulants, local anesthetics, antiemetics, antiseizure drugs, antipsychotics, antidiabetic drugs, anticoagulants, antihypertensives, vasoactive and resuscitation drugs, and others. Each category starts collapsed, showing only its name and how many drugs it holds; click it to open its list and tick the drugs you want. A category with drugs ticked says how many, even when collapsed again. Nothing is ticked to begin with. The illicit-drug research models are never offered here. **Start** puts each ticked drug in the dose table with a dose of 0 at time 0, ready to edit; with nothing ticked, the dose table starts empty. Any drug can be added to the dose table later.
 
 <figure class="help-figure help-figure-medium">
-<img src="stanpumpr-assets/help/quick-start-welcome.png" alt="The opening dialog: the statement of what stanpumpR is, a Take the tour button, and the drugs to display as checkboxes in fourteen groups, with propofol, fentanyl, remifentanil and rocuronium ticked and a Start button at the bottom">
-<figcaption>The opening dialog, as on a first visit: the statement of what stanpumpR is, then the drugs to display, grouped by category.</figcaption>
+<img src="stanpumpr-assets/help/quick-start-welcome.png" alt="The opening dialog: the statement of what stanpumpR is, a Take the tour button, and the drug categories as eighteen collapsed sections, each with the number of drugs it holds, and a Start button at the bottom">
+<figcaption>The opening dialog, as on a first visit: the statement of what stanpumpR is, then the drug categories, each collapsed until clicked.</figcaption>
 </figure>
 
 On a first visit, and once a week after that, the dialog also states what stanpumpR is and is not, and **Take the tour** starts with your ticked drugs and brings you to this page.
@@ -56,7 +56,7 @@ Each drug gets its own panel. The solid line is the **effect-site** concentratio
 </figure>
 
 - **Hover** for the exact concentration at any time.
-- **Click** to add a dose at that time (applied immediately).
+- **Click** to add a dose at that time (applied immediately). While an infusion, a TCI, a schedule or an inhaled agent is running, the dialog also offers **Stop**, which ends it at that time; while a scheduled dose (`mg PO bid`, `mg IM qid`, `mg SC qwk`) is running, **Skip next dose**.
 - **Add new drug** (the button at the lower left of the plot) to add a drug that is not yet plotted, without going to the dose table.
 - **Double-click** a drug's curve to edit or delete its doses.
 
@@ -64,10 +64,10 @@ See [Reading the plot](help:reading-the-plot).
 
 ## 5. Refine
 
-**Graph Options** sets how far the simulation runs (*Max time*, whose choices follow the time units), line styles, normalization, a log axis, the *Time until threshold* lines, and the *Minto / Schnider* switch that draws those propofol and remifentanil models beside the library's own.
+The **Time** panel sets the time units, how far the simulation runs (the *Max time* slider) and where the axis starts (the *Min time* slider, for a close look late in a long plot). **Graph Options** sets line styles, normalization, a log axis, the *Time until threshold* lines, and the *Minto / Schnider* switch that draws those propofol and remifentanil models beside the library's own.
 
 <figure class="help-figure help-figure-narrow">
-<img src="stanpumpr-assets/help/quick-start-graph-options.png" alt="The Graph Options panel: Show typical, Normalize to, Max time, plasma and effect-site line styles, Y axis height, Time until threshold, the opioid-MAC interaction checkbox and the Minto / Schnider switch">
+<img src="stanpumpr-assets/help/quick-start-graph-options.png" alt="The Graph Options panel: Show typical, Normalize to, plasma and effect-site line styles, Y axis height, Time until threshold, the opioid-MAC interaction checkbox and the Minto / Schnider switch">
 <figcaption>The Graph Options panel.</figcaption>
 </figure>
 

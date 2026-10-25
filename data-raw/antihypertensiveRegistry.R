@@ -117,7 +117,7 @@ catalog <- rbind(
   rec("fosinopril__tablet__oral__catalog__none__label", "fosinopril",
       "fosinoprilat", "oral", "tablet",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=0a66f606-5e6f-473d-8a1e-9ef316adb2e2",
-      limitations = "Prodrug identity only; parent and active-moiety PK and BP are missing."),
+      limitations = "Prodrug identity only; parent and active-moiety PK and BP are missing. NOT PURSUED, by the maintainer\'s decision on 2026-10-20: fosinopril is no longer in clinical use. Hui 1991 and Gehr 1993 were obtained for it and the identifiability check of section 4 was applied before they were read: Gehr reports clearance, steady-state volume, mean residence time and a terminal half-life, but MRT is Vss over CL, so that is three independent numbers and not four, and two compartments need four. The same arithmetic that rules out esmolol\'s abstract rules out this one."),
   rec("perindopril__tablet__oral__catalog__none__label", "perindopril",
       "perindoprilat", "oral", "tablet",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=87768fbf-7c63-47da-8925-0316f343d6ef",
@@ -152,7 +152,7 @@ catalog <- rbind(
       "captopril", "oral", "immediate-release tablet",
       analyte = "captopril (specific assay required)", matrix = "plasma",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=607687f4-63cf-411c-a20b-21d238a6b7a7",
-      limitations = "Label unchanged-parent half-life under 2 h and a BP peak at 60-90 min. No fitted concentration-BP coefficients; disulfide metabolites must not be assumed ACE-active."),
+      limitations = "Label unchanged-parent half-life under 2 h and a BP peak at 60-90 min. No fitted concentration-BP coefficients; disulfide metabolites must not be assumed ACE-active. NOT PURSUED, by the maintainer\'s decision on 2026-10-20: captopril is no longer in clinical use. It was also the worst candidate in the class on the evidence -- 58 unscreened candidate sources, and saturable binding to converting enzyme strong enough that a linear fit is the wrong structure rather than an approximation of the right one."),
   rec("enalapril__ir_tablet__oral__catalog__none__label", "enalapril",
       "enalaprilat (from enalapril)", "oral", "immediate-release tablet",
       analyte = "enalapril and enalaprilat", matrix = "plasma",
@@ -981,6 +981,49 @@ sources <- rbind(sources,
       source_type = "primary_fitted",
       source_url = "https://pubmed.ncbi.nlm.nih.gov/24123104/",
       limitations = "Two compartments, apparent throughout (the supplementary NONMEM control stream has no bioavailability term), with renal clearance as a power of Cockcroft-Gault creatinine clearance -- 18.3 L/h at 120 mL/min falling to 10.5, 5.47 and 2.70 at 80, 50 and 30 -- over a non-renal floor of 2.44 L/h that carries no covariate. No body-size covariate was fitted. The oral input is a WEIBULL function (shape 2.84), which no constant ka can represent: it is DISCRETISED into eight lagged fractions of the default oral form absorbed at 1.0 /h, the Weibull\'s own asymptotic rate constant, fitted MINIMAX against a numerical integration of the exact system over the paper\'s four renal functions and reproducing it to 0.34% of the peak over the whole curve and 0.006% at the peak at every one of them, against the 0.53% and 0.01% MDMA\'s zero-order depot met. Chronic blood-pressure coefficients do not exist in this source; no pharmacodynamic model of any kind was fitted."),
+  rec("lisinopril__tablet__oral__elderly_and_renal__concentration__thomson1989",
+      "lisinopril", "lisinopril", "oral", "tablet",
+      population = "60 hypertensive patients, 40 elderly (over 65) and 20 with renal disease, pooled from two multicentre trials; 381 steady-state concentrations after at least two weeks on 2.5-40 mg daily",
+      endpoint = "concentration", analyte = "lisinopril",
+      matrix = "plasma", pk_evidence = FULL, pd_evidence = PRO,
+      execution_status = READY, stanpumpr_drug = "lisinopril",
+      source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1111/j.1365-2125.1989.tb05335.x",
+      limitations = "One compartment, apparent throughout (oral data only; the paper puts bioavailability at about 29% from earlier work). CL/F = 0.251 x weight x (creatinine/70 umol/L)^-0.887 x (age/65)^-0.451; V/F 36.7 L with NO covariate (weight and body surface area were both tested on it and neither helped, against an interindividual variability in volume above 100%); ka 0.104 /h. ABSORPTION IS SLOWER THAN ELIMINATION by more than fourfold, so the model is FLIP-FLOP and the plotted terminal slope is the absorption rate constant: an apparent half-life read off the curve is an absorption half-life and does not lengthen with renal impairment, although the whole curve rises. Sandra 2023 fitted ka 0.075 /h in 13 hypertensive children, independently confirming that order. The fitted cardiac-failure factor of 0.645 is NOT applied: the Patient Profile has no cardiac failure field, and the authors note the covariate is confounded with cardiac glycoside use. Steady-state design, so the absorption phase is the least well determined part; saturable binding to converting enzyme gives a prolonged low-concentration terminal phase in other studies that this one-compartment linear model does not reach. No pharmacodynamic model was fitted."),
+  rec("valsartan__fdc_tablet__oral__healthy_adults__concentration__heo2016",
+      "valsartan", "valsartan", "oral", "fixed-dose combination tablet",
+      population = "48 healthy Korean subjects (age 29 +/- 6 y, weight 68.7 +/- 7.6 kg) given a single fixed-dose combination tablet of valsartan 160 mg with amlodipine 10 mg in a two-formulation crossover with a 14-day washout; 624 concentrations to 48 h",
+      endpoint = "concentration", analyte = "valsartan",
+      matrix = "plasma", pk_evidence = FULL, pd_evidence = PART,
+      execution_status = READY, stanpumpr_drug = "valsartan",
+      source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1111/bcp.13069",
+      limitations = "Two compartments with first-order elimination and a ZERO-ORDER input of duration D1, apparent throughout (oral data only): CL/F 6.18 L/h, V1/F 25.9 L, Q/F 2.01 L/h, V2/F 17.4 L at a 70 kg standard, D1 4.39 h. The zero-order absorption was CHOSEN ON THE DATA, not by convention -- the objective function was 7712.434 against 7874.858 for first order on the same number of parameters -- so it is run through the oralZeroOrder release mode built for carvedilol, whose source rejected first-order absorption for the same kind of reason. The peak is therefore at the END of the release, at exactly 4.39 h, against the label\'s 2-4 h, and the authors state that the model somewhat underpredicts the median peak concentration: the curve is a fair description of exposure and a blunt one of the peak. Size is theory-based allometry at 70 kg (weight^0.75 on CL/F and Q/F, weight on V1/F and V2/F, the paper\'s Equations 1 and 2), which is the library\'s own scaling, so the switch off reproduces the published model exactly; D1 is NOT scaled, the size equations naming clearance and volume only. BODY WEIGHT WAS THE ONLY SIGNIFICANT COVARIATE: age, serum creatinine, smoking and drinking status were screened by stepwise covariate modelling and rejected (P > 0.001), so THERE IS NO RENAL TERM and the signature does not name creatinine. That is a real limitation rather than a modelling choice -- the population was 48 healthy young adults with a mean creatinine of 0.81 mg/dL and contains no information about renal impairment. Single dose, so nothing here constrains accumulation on chronic daily dosing. The paper also fitted a blood-pressure model (effect compartment, Imax 0.164) and an amlodipine interaction term, which is recorded separately as valsartan__fdc_tablet__oral__healthy_adults__resting_sbp_and_dbp__heo2016, gated and NOT evaluable: only the Imax was transcribed, so it is not one of the four relations antihypertensiveEndpointsAvailable() returns."),
+  rec("valsartan__fdc_tablet__oral__healthy_adults__resting_sbp_and_dbp__heo2016",
+      "valsartan", "valsartan", "oral", "fixed-dose combination tablet",
+      population = "the same 48 healthy Korean subjects as the concentration record, with 336 sitting systolic and diastolic measurements to 24 h, plus naively pooled mean blood pressures from two published monotherapy studies",
+      endpoint = "resting_sbp_and_dbp", analyte = "valsartan",
+      matrix = "plasma", pk_evidence = FULL, pd_evidence = PART,
+      execution_status = EXTR, source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1111/bcp.13069",
+      limitations = "The blood-pressure half of the paper behind the valsartan concentration record, kept so that the concentration record\'s cross-reference to it can be checked. An effect compartment driving an Emax model on sitting systolic and diastolic pressure, with the valsartan Imax estimated at 0.164 (which the authors then FIXED as amlodipine\'s Imax, assuming the two monotherapies are equally efficacious -- an assumption, not a measurement), plus an empirical additive-and-proportional interaction term for the combination. IT IS NOT EVALUABLE and is deliberately NOT one of the four relations antihypertensiveEndpointsAvailable() returns: only the Imax was transcribed, and the equilibration rate constant, the baseline and the interaction coefficient alpha were not, so the relation cannot be evaluated against a concentration. Extracting them is what would change this status. Even then it would not plot a pressure: the monotherapy arm of the fit is a NAIVELY POOLED analysis of mean blood pressures read from two other papers, because this study gave both drugs together and has no valsartan-alone arm, so the valsartan response is identified from other people\'s published means rather than from these subjects. bp_simulation_enabled stays FALSE, as it is on every record."),
+  rec("valsartan__sacubitril_valsartan__oral__healthy_chinese__concentration__yang2022",
+      "valsartan", "valsartan", "oral", "sacubitril/valsartan tablet",
+      population = "healthy Chinese subjects given sacubitril/valsartan",
+      endpoint = "concentration", analyte = "valsartan",
+      matrix = "plasma", pk_evidence = PART, pd_evidence = PRO,
+      execution_status = FITP, source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1002/cpdd.1181",
+      limitations = "READ IN FULL with its supplement on 2026-10-20 and REJECTED, which is recorded here so it is not re-derived: the printed parameters do not reproduce the paper\'s own figures. Simulating the published model gives tmax 7.49 h and Cmax 0.99 mcg/mL against roughly 2-2.5 h and 2.8 mcg/mL in its own Figure 1 visual predictive check; AUC 20.3 does match the figure\'s ~20, so the clearance is sound and the SHAPE is not. Checked twice, with the closed-form solution and with an independent Runge-Kutta integration. Moving the decimal point in Ka (1.9 for the printed 0.19) fixes tmax exactly, at 1.96 h, and still leaves Cmax 1.6-fold low, so AT LEAST TWO printed parameters are irreconcilable and nothing in the paper identifies which -- a single transcription error could have been repaired, two cannot be guessed. Additionally: V2/F is printed as 0.51 L with a 26-fold confidence interval on CL2/F; the Methods describe a BMI allometry that Table 3 does not contain; and the drug studied was sacubitril/valsartan rather than conventional valsartan. Heo 2016 is used instead, which is older and smaller but internally consistent. To settle this record, individual-level data or an author correction would be needed, not another reading of the same tables."),
+  rec("olmesartan__medoxomil_tablet__oral__pooled_12_trials__concentration__yoshihara2005",
+      "olmesartan medoxomil", "olmesartan", "oral", "medoxomil tablet",
+      population = "629 participants in 12 trials -- healthy volunteers and hypertensive patients, 355 Westerners (338 Caucasian, 17 Hispanic) and the remainder Japanese; 5119 concentrations after single and multiple oral doses of olmesartan medoxomil 2.5-80 mg",
+      endpoint = "concentration", analyte = "olmesartan",
+      matrix = "plasma", pk_evidence = FULL, pd_evidence = PRO,
+      execution_status = READY, stanpumpr_drug = "olmesartan",
+      source_type = "primary_fitted",
+      source_url = "https://doi.org/10.2165/00003088-200544120-00011",
+      limitations = "Two compartments with first-order absorption and a 0.427 h lag (ADVAN4/TRANS1), apparent throughout (no intravenous arm). THE DOSE BASIS IS THE PRODRUG and the paper says so: it normalised its data to a dose of olmesartan medoxomil 20 mg, so the apparent parameters carry the 20 percent molecular-weight difference and a dose is entered as prescribed, unconverted. The source parameterised in CL/F with the four rate constants, so V1/F is CL/F over ke and every covariate sits on CL/F: a covariate is therefore a PURE MULTIPLIER on concentration and no covariate changes the shape of the curve, either half-life or the time to peak. CL/F = 7.32 x (age/50)^-0.117 x (weight/70)^0.310 x (creatinine/80 umol/L)^-0.344 x exp(0.145 if male) x exp(-0.239 if hypertensive) x exp(-0.030 if Japanese). The patient-status term is APPLIED as hypertensive, as ertugliflozin applies type 2 diabetes: a patient given an angiotensin receptor blocker is a hypertensive patient, and that choice is what makes the clearance match the paper\'s own quoted typical values of 6.66 L/h (male) and 5.76 L/h (female). The race term is NOT APPLIED: there is no race field, the term was not statistically significant (131 percent CV, bootstrap interval spanning zero) and the difference is 3.0 percent -- the paper\'s purpose was to look for a race effect and report that there is none, which is the finding rather than the coefficient. All six sensitivity percentages the paper quotes for its own model are reproduced exactly by the implementation and pinned in the test. The absorption rate constant had an interindividual variance of 1.64 against 0.116 for clearance, so the first two hours of any individual curve are the least well determined part. No pharmacodynamic model of any kind was fitted."),
   rec("furosemide__tablet_and_injection__oral__pooled_adults__concentration_and_urine__popPK",
       "furosemide", "furosemide", "oral", "tablet and injection",
       population = "pooled population analysis of plasma and urine",
@@ -1006,6 +1049,36 @@ sources <- rbind(sources,
       execution_status = EXTR, source_type = "primary_fitted",
       source_url = "https://pubmed.ncbi.nlm.nih.gov/8739018/",
       limitations = "The day-7 blood-pressure effect exceeded day 1 with little change in pharmacokinetics, which is direct evidence that no instantaneous concentration-effect model can describe this drug: a slow response state would have to be estimated in its own right, and no coefficients for one are published. Two active moieties."),
+  rec("benazepril__ir_tablet__oral__healthy_men__concentration__kaiser1989",
+      "benazepril", "benazeprilat (from benazepril)", "oral",
+      "immediate-release tablet",
+      population = "62 healthy men after a single oral 10 mg dose of benazepril hydrochloride, with steady state in a further 15 on 5, 10 or 20 mg once daily",
+      endpoint = "concentration", analyte = "benazeprilat",
+      matrix = "plasma and urine", pk_evidence = FULL, pd_evidence = PRO,
+      execution_status = READY, stanpumpr_drug = "benazepril",
+      source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1002/bdd.2510100404",
+      limitations = "FULL TEXT READ 2026-10-20 and IMPLEMENTED. THE PLOTTED MOIETY IS BENAZEPRILAT, the active diacid: the source states that unchanged benazepril has virtually no converting-enzyme activity at plasma concentrations and that the parent\'s kinetics are of minor importance, so the parent is not plotted and a dose is entered as benazepril hydrochloride as prescribed. THE VECTOR IS DERIVED, as clevidipine\'s is, because Kaiser analysed by model independent methods and fitted no compartmental model anywhere. It closes where esmolol, fosinopril and losartan do not, and for one specific reason: Table 2 prints FOUR numbers rather than the usual three -- both half-lives (2.7 h alpha, 22.3 h beta) AND BOTH AREAS, AUC(0-24h) 2649 and AUC(0-inf) 3185 (pmol/g).h. The difference of the two areas is the area under the terminal phase alone, so beta times it recovers C(24h) = 16.66 pmol/g and with it the beta intercept, which is the fourth number. All three derived rate constants are positive (k10 0.17666, k12 0.06598, k21 0.04517 /h) and two independent checks hold: the implied apparent clearance equals dose/AUC exactly, and the implied renal fraction is 20.0 percent, which is the paper\'s own separate statement that about 20 percent of the dose is excreted as benazeprilat -- a number the derivation was not given. CONDITIONING, by section 3.3\'s test: a 10 percent perturbation of the tail area moves V1 4.5, V2 9 and Q 13.5 percent, almost exactly clevidipine\'s sensitivity; but the INPUT is noisier, the tail being a difference of two measured areas whose standard errors give it about 25 percent, so V1 carries 13, V2 22 and Q 37 percent. The apparent CLEARANCE is untouched by the split, so the AREA is firm and the distribution shape is the soft part. APPARENT IN THE FORMATION FRACTION fm, which this paper cannot supply: the 16.8 percent urinary recovery is arithmetically CLr x AUC/dose and therefore carries no independent information about fm (it reproduces to 16.6 percent), and Waldmeier 1991 bounds fm only between about 25 percent and the 37 percent absorbed. That does not affect the plotted curve, because an apparent parameterisation gives the correct concentration -- the same fm divides volume and dose -- and the three rate constants are absolute. Volumes and clearances are multiplied by 460.96/396.44 = 1.16275 to convert the molar basis Kaiser measured into benazeprilat ng/mL per mg benazepril hydrochloride, as azilsartan carries its own such factor. THE ABSORPTION RATE IS EFFECTIVE, not measured: the true input is benazepril\'s absorption convolved with its conversion, which no paper fits, so it is set to the value putting the peak at the measured 1.5 h, 1.433 /h -- which lands within 24 percent of benazepril\'s own 1.155 /h elimination rate constant, the thing that should rate-limit formation, and the fit was not told it. KNOWN SHORTFALL: the model underpredicts the reported peak by 20 percent (156 against 195 ng/mL at 10 mg) while reproducing AUC(0-inf) exactly and AUC(0-24h) to 0.7 percent. Kaiser\'s Cmax is a MEAN OF INDIVIDUAL PEAKS over 60 subjects whose tmax ranged 1 to 6 h, and that statistic is upward biased relative to the peak of the mean curve by about this much; it cannot be verified from the printed data, so it is stated rather than corrected. EXTERNAL CHECK: Sun 1994 (PMID 7867683) measured the same dose at Cmax 257 ng/mL and AUC(0-24h) 1410 ng.h/mL against Kaiser\'s 195 and 1050 -- ratios of 1.32 and 1.34, THE SAME FACTOR ON BOTH, so two independent studies agree on the shape and disagree on the scale by a third. Recorded, not reconciled. The 22.3 h terminal phase is saturable converting-enzyme binding linearised at low concentration (17 percent of the area, 1 to 3 percent of peak), the same reduction lisinopril documents; Kaiser\'s accumulation ratios FALL with dose (1.30, 1.25, 1.12 at 5, 10, 20 mg), weak evidence that the binding is already saturating, which the model does not represent and must not be read as dose proportionality past 20 mg. NO COVARIATE OF ANY KIND was fitted -- 62 healthy young men at one dose level -- so there is no renal term although benazeprilat is substantially renally cleared, and the signature does not name creatinine. No pharmacodynamic model was fitted."),
+  rec("losartan__iv_and_oral__oral__healthy_men__concentration__lo1995",
+      "losartan", "losartan and EXP3174", "oral",
+      "intravenous solution and immediate-release tablet",
+      population = "18 healthy men given intravenous losartan, intravenous EXP3174 and oral losartan in a crossover",
+      endpoint = "concentration", analyte = "losartan and EXP3174",
+      matrix = "plasma", pk_evidence = PART, pd_evidence = PRO,
+      execution_status = EXTR, source_type = "primary_fitted",
+      source_url = "https://doi.org/10.1016/0009-9236(95)90020-9",
+      limitations = "FULL TEXT READ 2026-10-20 and the answer is NEGATIVE, which is recorded here so the work is not repeated. The design is everything a two-moiety model needs -- 18 healthy men given intravenous losartan, intravenous EXP3174 AND oral losartan, so both moieties have ABSOLUTE clearances and volumes and the 14.3 percent systemic conversion fraction (Table IV) closes the parent-to-metabolite link no oral-only study can. Study 1 (n=12): losartan IV CL 636 mL/min, Vss 28.4 L, terminal half-life 1.8 h; oral Cmax 296 ng/mL at 1.0 h, AUC 476 ng.h/mL, F 32.6 percent geometric. Study 2 (n=6): losartan IV CL 558.7 mL/min, Vss 46.6 L, half-life 3.2 h; EXP3174 IV CL 46.9 mL/min, Vss 10.3 L, half-life 6.3 h, 55.1 percent of dose in urine. WHY IT STILL CANNOT BE BUILT. The analysis is ENTIRELY NON-COMPARTMENTAL (trapezoidal areas, terminal lambda by log-linear regression, Vss by Perrier and Mayersohn, harmonic-mean half-lives by Lam); no compartmental model is fitted anywhere. One compartment is REFUTED for both moieties: CL over Vss gives a half-life 3.5x, 3.3x and 2.5x shorter than the reported terminal values for the three records, equivalently Vz/Vss is 3.49, 3.32 and 2.48, so there is a real deep compartment. Two compartments are NOT IDENTIFIED, and the reason is a single missing print: Lo gives ONE area column per moiety, so there is no partial-area-against-total whose difference would recover the terminal intercept -- which is exactly what Kaiser 1989 does print for benazeprilat, and the only reason that record closes. Worse than underdetermined, the structure is REFUTED against the oral data: sweeping the whole admissible one-parameter family (V1 from 6 to 27.5 L, each with the Q that reproduces the measured beta, each with the ka that reproduces the measured oral tmax of 1.0 h) predicts an oral Cmax of 29 to 147 ng/mL against the measured 296 -- the best member is 2x low and most are 4 to 10x low, because the beta of 0.385 /h with a Vss of only 28.4 L forces an alpha of 1.4 to 8.4 /h, and a distribution phase that fast cannot hold a 1 h peak up. Two further warnings against patching it: the paper\'s two studies disagree 1.6-fold on Vss (28.4 against 46.6 L) and 1.8-fold on the terminal half-life (1.8 against 3.2 h), which are precisely the numbers a two-compartment fit would lean on hardest; and the per-subject oral bioavailability ranges 12.1 to 66.6 percent. WHAT WOULD UNBLOCK IT is now narrow and specific: a published compartmental fit for losartan or EXP3174 giving either a distribution half-life or the exponential intercepts. Everything else -- both clearances, both volumes, the conversion fraction, bioavailability and the presystemic/systemic split -- is pinned absolutely by this paper."),
+  rec("enalapril__ir_tablet__oral__healthy_adults__concentration_and_urine__faisal2019",
+      "enalapril", "enalapril and enalaprilat", "oral",
+      "immediate-release tablet",
+      population = "24 healthy adults (mean age 28 y, mean weight 69.8 kg) given a single 10 mg oral dose of enalapril maleate as the reference tablet (Renitec) and as orodispersible mini-tablets in a crossover; 2208 serum and urine concentrations of both moieties to 48 h",
+      endpoint = "concentration", analyte = "enalapril and enalaprilat",
+      matrix = "plasma and urine", pk_evidence = FULL, pd_evidence = PRO,
+      execution_status = READY, source_type = "primary_fitted",
+      external_validation_status = "external_population",
+      stanpumpr_drug = "enalapril",
+      source_url = "https://doi.org/10.3389/fped.2019.00281",
+      limitations = "FULL TEXT READ 2026-10-20 (PubMed Central PMC6629781) and IMPLEMENTED, on an engine built for it. NOTE THE CITATION CORRECTION: this record previously carried Front Pharmacol 10:973 and doi 10.3389/fphar.2019.00973, which is not this paper. The paper is Faisal M, Cawello W, Burckhardt BB, de Hoon J, Laer S, FRONT PEDIATR 2019;7:281, doi 10.3389/fped.2019.00281, PMID 31338356 -- part of the LENA project. Every Table 1 number recorded earlier verified against the full text: KA 6.010 /h (15.0 percent RSE), VC 51.10 L (4.00), F1 0.606 (3.00), MTT1 0.558 h (9.00), KREN 0.305 /h (4.00), KM 0.688 /h (4.00), VM 46.10 L (4.00), KQ1 0.060 /h (4.00), KQ2 0.054 /h (10.0), KME 0.184 /h (4.00), MTT2 0.910 h (8.00), THETA(X) 0.730 (12.0). Fitting serum WITH urine for both moieties closes the mass balance -- the authors assume, and justify from urinary recovery, that both are cleared renally with no further metabolism -- so F1 is separately estimated and VC, VM and every clearance are ABSOLUTE, not apparent. THE TRANSIT PARAMETERISATION IS NOT AMBIGUOUS, and the earlier note recording it as such was reading less than the text says. The Model Structure section is explicit on both rates: KTR is 'the rate transfer through these transits', obtained from 'MTT1 = N+1/KTR', and 'the rate constant of absorption (KA) was the transfer rate of the drug from the LAST transit into enalapril central compartment'; the Results add that 'Eight transits (transits = 8) were added for reference and pooled data analysis' (six for the ODMT modelled alone, a formulation not offered). So the implemented structure is eight chain compartments, the first seven emptying at KTR = 9/0.558 = 16.129 /h and the eighth at KA = 6.010 /h, with both printed parameters used exactly as defined. The ONE casualty is a derived summary the source's own two statements cannot both satisfy: its formula presumes nine steps at KTR, the structure it describes has seven at KTR and one at KA, so the true mean input time is 7/KTR + 1/KA = 0.600 h against the printed MTT1 of 0.558 h. That is an inconsistency in the shorthand, not in the parameters. Three other readings were integrated anyway (nine compartments at 9/MTT1 then KA; eight all at 8/MTT1; KTR solved so the true mean input time equals MTT1) and ALL FOUR reproduce the paper's own reported observations -- parent tmax 0.82 to 0.95 h against its 'almost 1 h', metabolite tmax 3.20 to 3.32 h against its 'around 3 to 4 h', peak concentrations varying under 6 percent -- and the reading the text states is NOT the closest of the four to the reported parent peak -- reading 1 (nine compartments, a depot emptying at KA) is nearer at 0.95 h against the implemented reading's 0.88 h. Recorded because it means agreement with a reported summary was never what chose the reading, the text was; an earlier draft of this limitation claimed the opposite, which the drug's own test disproves. (An earlier note gave the metabolite range as 3.26-3.68 h from a run using a different metabolite KTR; 3.20-3.32 h is the re-measured range with KTR2 = 3/MTT2 as the paper's own formula gives it.) THE ENGINE, which is the whole reason this record waited: a chain of N IDENTICAL compartments has one eigenvalue repeated N times, and the library's closed-form coefficients all divide by differences of rate constants, kept apart by separateEigenvalues() with a relative nudge of 1e-8. For N = 8 the partial-fraction coefficients would scale as 1/nudge^7, the catastrophic cancellation section 3.3 rejected esmolol's decomposition for, so the nudge is numerically fatal here rather than merely inelegant. The system IS linear throughout, so by the library's own test it needs no numerical solver -- only exact handling of a repeated eigenvalue, which is a MATRIX EXPONENTIAL over the 13-state system. R/advanceTransitChain.R does that, augmenting the matrix with a state held at 1 so that ONE exponential per step length gives both the homogeneous propagator and the unit-rate response (linear in the rate, so it is scaled rather than recomputed), memoised on the step length -- which the library's non-uniform time line repeats in dozens where its points number in thousands. Exact to rounding, not to a step size. Discretising the parent's input as hydrochlorothiazide's Weibull was is closed off, and that is the new boundary of the old rule: convolution commutes, so it would be exact in the limit for the parent, but the metabolite's own 2-transit delay means the two moieties would need DIFFERENT input kernels from one dose table. THE COVARIATE IS RESOLVED and is weight to the first power on the PARENT's central volume alone, normalised to the study's MEAN weight of 69.76 kg (Table 2), by Equation 6 with the exponent tested fixed at 1 for a volume and 0.75 for a clearance; it dropped the objective function 18.2 and backward elimination put it back up. NOTHING was retained on any clearance or on the metabolite, so there is NO RENAL TERM although both moieties are cleared renally and by nothing else -- the sharpest form of that gap in this class, and the source cannot close it, its population being 24 healthy young adults. The rate constants are therefore weight-invariant and the parent's clearance scales with weight because it is a rate constant times a volume; the models are written that way so the published constants stay exactly invariant. THETA(X) 0.730 IS NOT AMBIGUOUS EITHER, which the earlier note also had wrong: by Equation 7 it multiplies MTT1 when FORM = 1, the orodispersible mini-tablet, and the reference tablet is FORM = 0, so the factor is 1 and the printed MTT1 already is the reference formulation's. (Read against the ODMT it gives absorption 9 min earlier where the separate per-formulation fits found 5 min by Wilcoxon test; both numbers are in the paper, from different analyses, which is what the earlier note mistook for an ambiguous target.) The authors call both covariates clinically unimportant, base and full models differing by under 25 percent. TWO INTERNAL DISCREPANCIES, Table 1 taken in both cases as the parameter table carrying the RSEs and both confidence intervals: the Discussion quotes the metabolite elimination rate constant as 0.175 /h where Table 1 estimates 0.184, and quotes the parent's total elimination rate constant as 0.93 /h where KREN + KM = 0.993. Neither is material; both are recorded so a reader checking the numbers against the prose knows which was taken. DOSE BASIS: the source gave 'two 5 mg strength of enalapril maleate' tablets, so its doses are the labelled strength of the salt, which is what a prescription says; F1 is a fitted scalar on that strength, so whether it also absorbs the maleate-to-base mass fraction 0.764 is not resolvable from the text and need not be, the model being used on the basis it was fitted on. No molar block, no salt factor. NO MOLECULAR-WEIGHT RATIO between the moieties either: KM moves AMOUNT into the metabolite's chain and VM was fitted against measured enalaprilat concentrations driven by that same flux, so the 376.45-to-348.4 ratio is already inside VM and applying it again would count it twice. The metabolite is implemented as the drug `enalaprilat`, metabolite-only (no Units, no Category) as salicylate and norfluoxetine are, reading its parameters from the one place that defines them so its help page and the plotted curve cannot drift apart; intravenous enalaprilat is NOT offered although the product exists and these parameters are absolute, because they were fitted to metabolite formed from an oral dose -- see the separate enalaprilat injection record, and its warning that the label's about-11-hour accumulation half-life comes from repeated ORAL enalapril and must not be read as an intravenous elimination half-life. EXTERNAL VALIDATION, and it settles the dose basis the source could not. Arafat T, Awad R, Hamad M, Azzam R, Al-Nasan A, Jehanli A, Matalka K, J Clin Pharm Ther 2005;30:319-328 (PMID 15985045, doi 10.1111/j.1365-2710.2005.00646.x, abstract read) gave two brands of 10 mg enalapril maleate to healthy volunteers and measured BOTH moieties with specific enzyme immunoassays rather than the ACE-inhibition assay most earlier studies used. Its metabolite peaks were 54.8 +/- 29.5 and 57.2 +/- 29.0 ng/mL; this model predicts 55.9, which is 2.0 percent above one brand and 2.3 percent below the other -- in a study that was no input to Faisal's fit. THAT IS WHAT PINS THE DOSE BASIS: Faisal's text never says whether F1 = 0.606 also absorbs the maleate-to-base mass fraction 0.764, and getting it wrong in either direction would move the whole curve by 1.308, which puts BOTH alternatives outside Arafat's measured range. An ambiguity the source cannot settle is therefore settled by a study that never entered it, and test-drugs-enalapril.R pins all three numbers. The same study DISAGREES about the terminal phase: its metabolite AUC(0-inf) was 266.9 and 255.9 ng.h/mL against this model's 494.5, a factor of 1.9, and Arafat report as a finding of their own that 'enalaprilat concentrations at 12-24 h following a single oral dose of enalapril in healthy volunteers were LOWER than those reported in the literature' -- so it is their tail that departs from the literature, not Faisal's. Recorded, not reconciled, for the reason benazepril keeps Kaiser's scale against Sun 1994: rescaling a primary fit to another study's number is fitting to a result. The PARENT cannot be compared at all, and the authors are the ones who say so -- 'Cmax values for enalapril are about 10 times those published in the literature' -- so their 313.5 ng/mL against this model's 75.8 is an assay-method disagreement they identify themselves, not a target. No pharmacodynamic model was fitted and neither moiety plots a pressure."),
   rec("clonidine__ir_tablet__oral__normotensive_adults__bp_nonmonotone__davies1977",
       "clonidine", "clonidine", "oral", "immediate-release tablet",
       population = "normotensive adults, intravenous and oral",
@@ -1886,6 +1959,238 @@ parameters <- rbind(parameters,
       verification = "handoff_unverified",
       notes = "From a SECONDARY extraction, with 25 ng/mL in women and a maximum reduction of about 18%. The enantiomer and concentration basis must be settled first, and exercise systolic pressure is not resting pressure."))
 
+
+LIS_ID  <- "lisinopril__tablet__oral__elderly_and_renal__concentration__thomson1989"
+LIS_URL <- "https://doi.org/10.1111/j.1365-2125.1989.tb05335.x"
+LIS_POP <- "60 hypertensive patients, elderly and renal disease"
+
+parameters <- rbind(parameters,
+  # -- lisinopril, Thomson 1989 Table 3: read from the full text ------------
+  par(LIS_ID, "CL/F coefficient on weight", 0.251, "L/h/kg", "fitted",
+      uncertainty = 0.029, uncertainty_type = "standard error",
+      matrix = "plasma", population = LIS_POP, endpoint = "concentration",
+      source_url = LIS_URL, source_table_or_page = "Table 3, theta1",
+      verification = "primary_full_text",
+      notes = "Equation 5 of the paper prints this rounded to 0.25; Table 3 carries the precision and is what the drug uses."),
+  par(LIS_ID, "V/F", 36.7, "L", "fitted",
+      uncertainty = 3.9, uncertainty_type = "standard error",
+      matrix = "plasma", population = LIS_POP, endpoint = "concentration",
+      source_url = LIS_URL, source_table_or_page = "Table 3, theta2",
+      verification = "primary_full_text",
+      notes = "No covariate reached significance on volume; the interindividual variability was 127 percent CV, which the authors give as the reason."),
+  par(LIS_ID, "ka", 0.104, "1/h", "fitted",
+      uncertainty = 0.006, uncertainty_type = "standard error",
+      matrix = "plasma", population = LIS_POP, endpoint = "concentration",
+      source_url = LIS_URL, source_table_or_page = "Table 3, theta3",
+      verification = "primary_full_text",
+      notes = "SLOWER than the elimination rate constant of 0.479 /h at the reference patient, so the model is flip-flop and the plotted terminal slope is this number. Sandra 2023 (PMID 37864281) fitted 0.075 /h in children, independently."),
+  par(LIS_ID, "exponent on serum creatinine", -0.887, "dimensionless", "fitted",
+      uncertainty = 0.108, uncertainty_type = "standard error",
+      matrix = "plasma", population = LIS_POP, endpoint = "concentration",
+      source_url = LIS_URL, source_table_or_page = "Table 3, theta4",
+      verification = "primary_full_text",
+      notes = "On creatinine CONCENTRATION in umol/L over a reference of 70, not on a creatinine clearance. The Patient Profile holds mg/dL and is converted; 70 umol/L is 0.79 mg/dL."),
+  par(LIS_ID, "exponent on age", -0.451, "dimensionless", "fitted",
+      uncertainty = 0.172, uncertainty_type = "standard error",
+      matrix = "plasma", population = LIS_POP, endpoint = "concentration",
+      source_url = LIS_URL, source_table_or_page = "Table 3, theta5",
+      verification = "primary_full_text",
+      notes = "A negative power, infinite at age 0, so the age entering it is floored at ADULT_AGE_TERM_FLOOR (18) as every such term in the library is. An adult model: the youngest patient was 21."),
+  par(LIS_ID, "cardiac failure factor on CL/F", 0.645, "dimensionless", "fitted",
+      uncertainty = 0.112, uncertainty_type = "standard error",
+      matrix = "plasma", population = LIS_POP, endpoint = "concentration",
+      source_url = LIS_URL, source_table_or_page = "Table 3, theta6",
+      verification = "primary_full_text",
+      notes = "NOT APPLIED by the drug: the Patient Profile has no cardiac failure field, and inventing one from another covariate would be a guess. Recorded so that whoever adds such a field has the number. The authors note every patient with cardiac failure was also on a cardiac glycoside, and that the glycoside alone gave a smaller likelihood difference, which they read as the disease being responsible."))
+
+OLM_ID  <- "olmesartan__medoxomil_tablet__oral__pooled_12_trials__concentration__yoshihara2005"
+OLM_URL <- "https://doi.org/10.2165/00003088-200544120-00011"
+OLM_POP <- "629 participants in 12 trials, healthy volunteers and hypertensive patients, Japanese and Western"
+
+olmPar <- function(name, value, units, uncertainty, table, notes)
+  par(OLM_ID, name, value, units, "fitted",
+      uncertainty = uncertainty, uncertainty_type = "standard error",
+      matrix = "plasma", population = OLM_POP, endpoint = "concentration",
+      source_url = OLM_URL, source_table_or_page = table,
+      verification = "primary_full_text", notes = notes)
+
+parameters <- rbind(parameters,
+  # -- olmesartan, Yoshihara 2005 Table IV: read from the full text ---------
+  olmPar("CL/F", 7.320, "L/h", 0.409, "Table IV, fixed effects",
+         "The typical value BEFORE any covariate. With the sex and patient-status terms applied it is 6.663 L/h in a man and 5.764 L/h in a woman, which are the 6.66 and 5.76 the paper quotes. The paper's sentence says 60 kg; that is a slip, since the weight covariate is centred on the 70 kg median of Equation 3 and only 70 kg reproduces its own numbers."),
+  olmPar("ke", 0.193, "1/h", 0.004, "Table IV, fixed effects",
+         "The elimination rate constant is a FITTED PARAMETER and the central volume is not: V1/F is CL/F divided by this. So ke is the same for every patient and the covariates move V1 with CL."),
+  olmPar("k12", 0.061, "1/h", 0.002, "Table IV, fixed effects",
+         "Central to peripheral. Q/F is this times V1/F, so it too moves with CL/F."),
+  olmPar("k21", 0.079, "1/h", 0.002, "Table IV, fixed effects",
+         "Peripheral to central. V2/F is Q/F divided by this."),
+  olmPar("ka", 1.460, "1/h", 0.092, "Table IV, fixed effects",
+         "Interindividual variance 1.64, by far the largest in the model (clearance's was 0.116), so the absorption phase of an individual curve is the least well determined part of it."),
+  olmPar("ALAG", 0.427, "h", 0.010, "Table IV, fixed effects",
+         "Absorption lag, 25.6 minutes."),
+  olmPar("exponent on age", -0.117, "dimensionless", 0.061,
+         "Table IV, effect of covariates on CL/F",
+         "On age over a reference of 50 years. A negative power, infinite at age 0, so the age entering it is floored at ADULT_AGE_TERM_FLOOR (18) as every such term in the library is; an adult model, participants 18 to 87. The weakest term in the model: a 75-year-old clears 4.6 percent less than a 50-year-old, which the implementation reproduces."),
+  olmPar("exponent on bodyweight", 0.310, "dimensionless", 0.102,
+         "Table IV, effect of covariates on CL/F",
+         "On total bodyweight over a reference of 70 kg, and the model's ONLY size term; since V1/F is CL/F over ke, every volume carries it too. With the fat-free-mass switch on it is evaluated at the pharmacokinetic weight and the library's own factors are not applied on top of it, which would scale size twice (docs/weight-adjustment.md). A 50 kg patient clears 9.9 percent less than a 70 kg patient, which the implementation reproduces."),
+  olmPar("exponent on serum creatinine", -0.344, "dimensionless", 0.050,
+         "Table IV, effect of covariates on CL/F",
+         "On creatinine CONCENTRATION in umol/L over a reference of 80, not on a creatinine clearance. The Patient Profile holds mg/dL and is converted; 80 umol/L is 0.9 mg/dL. The strongest term in the model: clearance 33.8 to 44.8 percent lower across a creatinine of 265 to 450 umol/L, both of which the implementation reproduces."),
+  olmPar("sex factor coefficient on CL/F", 0.145, "dimensionless", 0.038,
+         "Table IV, effect of covariates on CL/F",
+         "exp(0.145 x sex) with male 1 and female 0, so women clear 13.5 percent less, which the implementation reproduces."),
+  olmPar("patient status coefficient on CL/F", -0.239, "dimensionless", 0.055,
+         "Table IV, effect of covariates on CL/F",
+         "exp(-0.239 x pv) with hypertensive 1 and healthy volunteer 0. APPLIED as hypertensive, there being no patient-status field and no need of one: a patient given an angiotensin receptor blocker is a hypertensive patient. Healthy volunteers clear olmesartan 21.3 percent faster, so taking the healthy reference instead would draw every curve 21 percent too low."),
+  olmPar("race coefficient on CL/F", -0.030, "dimensionless", 0.040,
+         "Table IV, effect of covariates on CL/F",
+         "exp(-0.030 x race) with Japanese 1 and Westerner 0. NOT APPLIED by the drug: there is no race field in the Patient Profile. Not statistically significant (p > 0.05, 131 percent CV, bootstrap interval -0.103 to 0.049), and the difference is 3.0 percent. The authors retained it only because the paper's declared purpose was to evaluate the effect of race and conclude there is none; that absence is the finding and leaving the coefficient out preserves it."))
+
+VAL_ID  <- "valsartan__fdc_tablet__oral__healthy_adults__concentration__heo2016"
+VAL_URL <- "https://doi.org/10.1111/bcp.13069"
+VAL_POP <- "48 healthy Korean subjects, single 160 mg valsartan with 10 mg amlodipine"
+
+valPar <- function(name, value, units, rse, notes)
+  par(VAL_ID, name, value, units, "fitted",
+      uncertainty = rse, uncertainty_type = "relative standard error, %",
+      matrix = "plasma", population = VAL_POP, endpoint = "concentration",
+      source_url = VAL_URL,
+      source_table_or_page = "Supplementary Table S4, valsartan column",
+      verification = "primary_full_text", notes = notes)
+
+parameters <- rbind(parameters,
+  # -- valsartan, Heo 2016 Supplementary Table S4: read from the supplement --
+  valPar("CL/F", 6.18, "L/h per 70 kg", 5.76,
+         "At the paper's 70 kg standard individual, scaled by weight^0.75 (its Equation 1). Quoted in the full text as well as the supplement, which is the one cross-check the table gets."),
+  valPar("V1/F", 25.9, "L per 70 kg", 9.73,
+         "Scaled by weight^1 (Equation 2). Its between-subject variance was 0.519, the largest in the valsartan model."),
+  valPar("Q/F", 2.01, "L/h per 70 kg", 14.5,
+         "Apparent intercompartmental clearance, scaled by weight^0.75."),
+  valPar("V2/F", 17.4, "L per 70 kg", 16.0,
+         "Apparent peripheral volume, scaled by weight^1."),
+  valPar("D1", 4.39, "h", 5.83,
+         "Duration of the ZERO-ORDER absorption, and the single most consequential number in the model: the peak falls at exactly the end of the release, so this is the predicted tmax. The supplement's column header prints the unit as /h/70kg, which is a typo on two counts -- D1 is a duration, and the paper's size equations scale clearance and volume only -- so it is used as 4.39 h, unscaled. Zero-order absorption beat first-order on an objective function 162 lower (7712.434 against 7874.858), which is why it is used rather than approximated by a ka. Its between-subject variability was FIXED at zero in the valsartan model (it was estimated for amlodipine), so the 4.39 h is the whole population's."))
+
+parameters <- rbind(parameters,
+  # -- valsartan, Heo 2016's blood-pressure model: the one number transcribed -
+  par("valsartan__fdc_tablet__oral__healthy_adults__resting_sbp_and_dbp__heo2016",
+      "Imax", 0.164, "fraction of baseline", "fitted",
+      uncertainty = NA, uncertainty_type = "not_reported",
+      matrix = "plasma", population = VAL_POP,
+      endpoint = "resting_sbp_and_dbp", source_url = VAL_URL,
+      source_table_or_page = "Results, Pharmacodynamic model",
+      verification = "primary_full_text",
+      notes = "The maximum fractional fall in sitting blood pressure from baseline, estimated from the valsartan monotherapy arm. The paper then FIXED this value as amlodipine's Imax too, 'assuming that the amlodipine and valsartan monotherapy show similar efficacy' -- an assumption rather than a measurement, and worth knowing before anyone reads the amlodipine half. The relation's other coefficients (the equilibration rate constant, the baseline, and the interaction coefficient alpha) are NOT transcribed, which is why the record is gated and the relation is not evaluable. No relative standard error is printed for this estimate in the text."))
+
+BEN_ID  <- "benazepril__ir_tablet__oral__healthy_men__concentration__kaiser1989"
+BEN_URL <- "https://doi.org/10.1002/bdd.2510100404"
+BEN_POP <- "62 healthy men, single oral 10 mg benazepril hydrochloride"
+
+benPar <- function(name, value, units, status, uncertainty, utype, table, notes)
+  par(BEN_ID, name, value, units, status,
+      uncertainty = uncertainty, uncertainty_type = utype,
+      matrix = "plasma", population = BEN_POP, endpoint = "concentration",
+      source_url = BEN_URL, source_table_or_page = table,
+      verification = "primary_full_text", notes = notes)
+
+SDBS <- "standard deviation between subjects"
+
+parameters <- rbind(parameters,
+  # -- benazepril/benazeprilat, Kaiser 1989 Table 1 and 2, read in full -----
+  benPar("benazeprilat t1/2 alpha", 2.7, "h", "fitted", 0.5, SDBS,
+         "Table 2 (n = 45)",
+         "By the method of residuals on the 4 to 12 h levels. One of the FOUR printed numbers that close the two-compartment system; alpha = 0.25672 /h."),
+  benPar("benazeprilat t1/2 beta", 22.3, "h", "fitted", 9.2, SDBS,
+         "Table 2 (n = 45)",
+         "From the levels at 24 h and beyond; beta = 0.03108 /h. Physically this phase is saturable converting-enzyme binding rather than tissue distribution. It carries 17 percent of the area at 1 to 3 percent of peak concentrations, and a linear peripheral compartment is its linearisation at low concentration, the same reduction lisinopril documents."),
+  benPar("benazeprilat AUC(0-24h)", 2649, "(pmol/g).h", "observed", 641, SDBS,
+         "Table 2 (n = 60)",
+         "The PARTIAL area, and the number that makes this source usable where Lo 1995's losartan is not: printed beside the total, the difference of the two ESTIMATES the area under the terminal phase alone, so beta times it recovers C(24h) = 16.66 pmol/g and with it the beta intercept -- the fourth number a two-compartment decomposition needs. ESTIMATES, not measures: this area is n = 60 and the total is n = 45 (15 subjects had no 48 or 72 h sample), so the two are NOT paired subject-level summaries and their difference carries a selection component on top of the sampling error. The 25 percent figure quoted against the total area is therefore a FLOOR on the uncertainty of the tail, not a bound."),
+  benPar("benazeprilat AUC(0-inf)", 3185, "(pmol/g).h", "observed", 687, SDBS,
+         "Table 2 (n = 45)",
+         "The total area, which fixes the apparent clearance as dose/AUC independently of how the area splits between the phases. That is why the AREA under the plotted curve is firm while its distribution shape is not. The tail is this minus the partial area, and the two have different subject counts (45 here against 60), so treating their standard errors as independent gives about 25 percent and that is a FLOOR: the unequal, nested samples add a selection component nothing printed quantifies."),
+  benPar("benazeprilat Cmax", 492, "pmol/g", "observed", 136, SDBS,
+         "Table 2 (n = 60)",
+         "NOT an input to the derivation, and therefore the check on it: the implemented model gives 0.80x this. It is a MEAN OF INDIVIDUAL PEAKS over subjects whose tmax ranged 1 to 6 h, a statistic biased upward relative to the peak of the mean curve by roughly this much, which is the probable explanation and cannot be verified from the printed data."),
+  benPar("benazeprilat tmax", 1.5, "h", "observed", NA, "not_reported",
+         "Table 2 (median, range 1 to 6; n = 60)",
+         "Sets the EFFECTIVE absorption-plus-conversion rate at 1.433 /h. The true input is benazepril's absorption convolved with its conversion, which no paper fits, so this rate is effective rather than measured."),
+  benPar("benazeprilat renal clearance", 22.7, "mL/min", "observed", 6.4, SDBS,
+         "Table 2 (n = 60)",
+         "The derivation's second independent check: divided by the derived apparent clearance on the molar basis it is 20.0 percent, which is the paper's own separate statement that about 20 percent of the dose is excreted as benazeprilat."),
+  benPar("benazeprilat urinary recovery", 16.8, "percent of dose", "observed",
+         5.3, SDBS, "Table 2, TUE(0-24h) (n = 62)",
+         "DOES NOT pin the formation fraction, which is the trap: it is arithmetically CLr x AUC(0-24h)/dose and so already implied by the clearance and the area, reproducing to 16.6 percent. The formation fraction stays unknown, bounded by Waldmeier 1991 only between about 25 percent and the 37 percent of the dose absorbed, and every volume and clearance here is apparent in it."),
+  benPar("benazepril t1/2", 0.6, "h", "fitted", 0.2, SDBS, "Table 1 (n = 48)",
+         "The PARENT's half-life, an elimination rate constant of 1.155 /h. Not used to build the model; it is what corroborates it, the effective input rate fitted from the metabolite's tmax landing within 24 percent of the rate that should limit formation."),
+  benPar("benazepril AUC(0-inf)", 319, "(pmol/g).h", "fitted", 109, SDBS,
+         "Table 1 (n = 60)",
+         "The parent is NOT plotted: the source states it has virtually no converting-enzyme activity at plasma concentrations and that its kinetics are of minor importance for characterising the drug. Recorded for completeness; it implies an apparent clearance near 68 L/h and an apparent volume near 59 L, both in bioavailability."),
+  benPar("benazepril urinary recovery", 0.7, "percent of dose", "observed",
+         0.2, SDBS, "Table 1 (n = 3)",
+         "Only trace amounts of the prodrug leave unchanged, which is why the metabolite carries the whole of the renal route."))
+
+
+ENA_ID  <- "enalapril__ir_tablet__oral__healthy_adults__concentration_and_urine__faisal2019"
+ENA_URL <- "https://doi.org/10.3389/fped.2019.00281"
+ENA_POP <- "24 healthy adults, single oral 10 mg enalapril maleate, serum and urine"
+RSE <- "relative standard error, %"
+
+# Faisal 2019 Table 1, read in full from PubMed Central PMC6629781.  Every
+# fixed-effect parameter of the final (full) model, with the per cent relative
+# standard error the table prints beside it.  The interindividual variances and
+# the residual error terms are not transcribed: this library simulates the
+# typical individual, so they would be numbers nothing reads.
+enaPar <- function(name, value, units, rse, notes,
+                   status = "fitted", table = "Table 1")
+  par(ENA_ID, name, value, units, status,
+      uncertainty = rse, uncertainty_type = RSE,
+      matrix = "plasma and urine", population = ENA_POP,
+      endpoint = "concentration", source_url = ENA_URL,
+      source_table_or_page = table, verification = "primary_full_text",
+      notes = notes)
+
+parameters <- rbind(parameters,
+  enaPar("KA", 6.010, "1/h", 15.0,
+         "The transfer rate out of the LAST transit compartment into enalapril's central compartment, which is what the Model Structure section defines it as -- NOT the rate through the chain, which is KTR. The least precisely estimated of the disposition parameters."),
+  enaPar("VC", 51.10, "L", 4.00,
+         "ABSOLUTE, not apparent: fitting serum with urine for both moieties closes the mass balance and makes F1 a separately estimated parameter. The one parameter carrying a covariate, weight to the first power normalised to the study's mean 69.76 kg."),
+  enaPar("F1", 0.606, "dimensionless", 3.00,
+         "Estimated rather than fixed, which oral-only data cannot do. It matched the literature's long-reported 60 percent, a number the fit was not given. A scalar on the LABELLED strength of enalapril maleate, so whether it also absorbs the maleate-to-base mass fraction 0.764 is not resolvable from the text and does not matter, the model being used on the basis it was fitted on."),
+  enaPar("MTT1", 0.558, "h", 9.00,
+         "The mean transit time of enalapril absorption, from which the paper computes the through-rate as KTR = (N+1)/MTT1 = 16.129 /h with N = 8. Note that the model's TRUE mean input time is 7/KTR + 1/KA = 0.600 h, because the last step runs at KA rather than KTR: the paper's formula presumes nine steps at one rate and its own structure has eight steps at two rates. An inconsistency in the shorthand, not in the parameters."),
+  enaPar("number of transit compartments", 8, "count", NA,
+         "Not an estimate: chosen by adding one transit at a time until the objective function stopped dropping by 3.8 or more, and reported in the Results as 'Eight transits (transits = 8) were added for reference and pooled data analysis'. Six were needed for the orodispersible mini-tablet modelled alone, a formulation this library does not offer.",
+         status = "fixed"),
+  enaPar("KREN", 0.305, "1/h", 4.00,
+         "Enalapril's RENAL elimination -- the share that leaves unchanged rather than becoming enalaprilat. With KM it sums to 0.993 /h, which the Discussion quotes as 0.93; Table 1 is taken."),
+  enaPar("KM", 0.688, "1/h", 4.00,
+         "Enalapril's elimination BY CONVERSION to enalaprilat. KM/(KREN+KM) = 69.3 percent of what is absorbed becomes the active moiety. Getting this round the wrong way against KREN leaves the parent curve identical and the metabolite wrong by the ratio, so test-drugs-enalapril.R pins both sides."),
+  enaPar("VM", 46.10, "L", 4.00,
+         "Enalaprilat's central volume, absolute. It carries NO weight term: the source tested weight stepwise and retained it on the parent's VC alone. There is deliberately no molecular-weight ratio between the moieties either -- KM moves amount, and this volume was fitted against measured enalaprilat concentrations driven by that same flux, so the 376.45-to-348.4 ratio is already inside it."),
+  enaPar("KQ1", 0.060, "1/h", 4.00,
+         "Enalaprilat's distribution out of the central compartment. Its peripheral volume is not fitted and is implied, VM x KQ1/KQ2 = 51.2 L, the same relation advanceMichaelisMenten() uses for GHB's k23/k32."),
+  enaPar("KQ2", 0.054, "1/h", 10.0,
+         "Enalaprilat's distribution back from the peripheral compartment. The least precisely estimated parameter of the metabolite, and the bootstrap interval printed for it (0.048-0.620) is almost certainly a typesetting error for 0.062, the SIR interval being 0.046-0.063."),
+  enaPar("KME", 0.184, "1/h", 4.00,
+         "Enalaprilat's elimination, giving CL = 8.48 L/h and, with the distribution constants, half-lives of 2.7 and 18.1 h -- the bi-phasic decay the source reports and the one-compartment model it rejected could not produce. The Discussion quotes 0.175 /h; Table 1 is taken, being the parameter table with the RSE and both confidence intervals."),
+  enaPar("MTT2", 0.910, "h", 8.00,
+         "The mean transit time of enalaprilat FORMATION, over two transit compartments, giving KTR2 = 3/MTT2 = 3.297 /h by the paper's own formula. Unlike the parent's chain there is no separately named rate out of the last compartment, so every step of this chain runs at KTR2."),
+  enaPar("number of formation transit compartments", 2, "count", NA,
+         "Reported in the Results: 'two-transit compartments were added using erlang distribution method to incorporate a delay in metabolite formation', after a lag-time parameter failed to describe the skewed formation phase.",
+         status = "fixed"),
+  enaPar("THETA(X), formulation effect on MTT1", 0.730, "dimensionless", 12.0,
+         "NOT APPLIED, and not because its target is unclear -- an earlier note in this registry had that wrong. By Equation 7 it multiplies MTT1 when FORM = 1, the orodispersible mini-tablet; the reference tablet is FORM = 0, so the factor is 1 and the printed MTT1 already is the reference formulation's, which is the product this library models. Read against the ODMT it gives absorption 9 min earlier where the separate per-formulation fits found 5 min by Wilcoxon test; both numbers are in the paper, from different analyses, and that is what the earlier note mistook for an ambiguous target."),
+  enaPar("exponent on weight for a volume", 1, "dimensionless", NA,
+         "FIXED, not estimated: Equation 6's exponent was 'tested with a fixed value of 1 for the volume of distribution and 0.75 for clearance', and only the volume term survived -- on enalapril's VC, dropping the objective function 18.2, with backward elimination putting it back up. Nothing was retained on any clearance, which is why the rate constants here are weight-invariant and the parent's clearance scales with weight only because it is a rate constant times a volume.",
+         status = "fixed"),
+  enaPar("reference weight", 69.76, "kg", NA,
+         "The study's MEAN body weight (Table 2), which Equation 6 normalises to -- not the library's 70 kg standard. Median 67.60, range 51.80 to 95.60 kg.",
+         status = "observed", table = "Table 2"))
+
+
+
 # -----------------------------------------------------------------------------
 # Assemble, check and write
 # -----------------------------------------------------------------------------
@@ -1921,8 +2226,16 @@ stopifnot(
   !any(registry$bp_simulation_enabled),
   # Every parameter belongs to a registry record.
   all(parameters$model_id %in% registry$model_id),
+  # "observed" is a MEASURED SUMMARY STATISTIC rather than any kind of
+  # estimate of a model parameter -- a Cmax, a median tmax, a urinary
+  # recovery.  Added 2026-10-20 for Kaiser 1989's benazepril table, where
+  # such numbers are what CHECK a derived vector rather than feed it, so
+  # calling them "fitted" would misstate where they came from and hide the
+  # fact that the derivation was not given them.  The same reason
+  # execution_status needed "complete_not_implemented".
   all(parameters$estimate_status %in%
-        c("fitted", "fixed", "derived", "label_descriptive", "proposed")),
+        c("fitted", "fixed", "derived", "observed",
+          "label_descriptive", "proposed")),
   all(parameters$reported_or_derived %in% c("reported", "derived")),
   all(parameters$verification %in% c("primary_full_text", "primary_abstract",
                                      "derived_here", "handoff_unverified")),
@@ -1940,7 +2253,12 @@ utils::write.csv(parameters, "inst/extdata/antihypertensiveParameters.csv",
 cat("antihypertensiveRegistry.csv:", nrow(registry), "model records (",
     sum(registry$execution_status == READY), "executable,",
     sum(registry$bp_simulation_enabled), "with blood pressure enabled )\n")
+# The breakdown rather than one "verified" total, because that total counts
+# three different provenances and inviting it to be read as "checked against a
+# primary full text" has already produced one wrong sentence in
+# docs/antihypertensives.md (2026-10-20).  Print what the number is made of.
 cat("antihypertensiveParameters.csv:", nrow(parameters), "parameters (",
-    sum(parameters$verification %in% c("primary_full_text", "primary_abstract",
-                                       "derived_here")), "verified,",
+    sum(parameters$verification == "primary_full_text"), "primary full text,",
+    sum(parameters$verification == "primary_abstract"), "primary abstract,",
+    sum(parameters$verification == "derived_here"), "derived here,",
     sum(parameters$verification == "handoff_unverified"), "unverified )\n")

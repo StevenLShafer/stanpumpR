@@ -4,7 +4,7 @@
 \alias{ketorolac}
 \title{Ketorolac pharmacokinetics (S + R enantiomers)}
 \usage{
-ketorolac(weight, height, age, sex, adjustToFFM = TRUE)
+ketorolac(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -21,6 +21,10 @@ patient's fat-free mass as described in the
 \code{FALSE} reproduces the published size scaling exactly.  Each drug
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
+
+\item{pregnant}{when \code{TRUE}, apply the changes of late pregnancy:
+every clearance and volume of both enantiomers x 1.5 (see the file's
+header)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, with the R

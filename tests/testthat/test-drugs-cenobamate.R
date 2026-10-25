@@ -99,3 +99,48 @@ test_that("the size scaling gives the weight effect the EMA report describes", {
   expect_equal(auc(50) / ref, 1.16, tolerance = 0.02)
   expect_equal(auc(110) / ref, 0.84, tolerance = 0.02)
 })
+
+test_that("the concentration per dose matches two clinic TDM series", {
+  # Kork (Steinhoff 2024) and Oslo (Johannessen Landmark 2026), adults with
+  # refractory epilepsy, not in the fit: mean concentration / mean dose,
+  # mg/L per mg/day.  The model's steady-state average is 1 / (CL/F x 24 h).
+  perDose <- 1 / (cenobamate(70, 170, 35, "male")$PK$default$cl1 * 1440)
+  expect_equal(perDose, 0.0782, tolerance = 1e-3)
+  observed <- c(
+    korkSeizureFree  = 17.8 / 240.3,
+    korkNonResponder = 20.9 / 260.8,
+    oslo             = 53.7 * 267.67 / 1000 / 164   # umol/L to mg/L
+  )
+  expect_true(all(abs(perDose / observed - 1) < 0.12))
+  # Oslo, Figure 1D: means of the patients' own ratios, umol/L per mg/day,
+  # without a strong inducer or inhibitor, and with an inducer
+  osloGroups <- c(neutral = 0.339, inducer = 0.311) * 267.67 / 1000
+  expect_true(all(perDose / osloGroups > 0.85 & perDose / osloGroups < 1))
+  # with valproate or cannabidiol (0.384) the inhibition is not modelled
+  expect_equal(perDose / (0.384 * 267.67 / 1000), 0.76, tolerance = 0.02)
+})
+
+test_that("the band is the AGNP 2026 range, and the troughs match the trials", {
+  row <- getDrugDefaults("cenobamate")   # the defaults row draws the band
+  # Hart 2026, Table 5: 10-25 mg/L, typical its midpoint
+  expect_equal(c(row$Lower, row$Typical, row$Upper), c(10, 18, 25))
+  x <- cenobamate(70, 170, 35, "male")
+  expect_equal(c(x$lowerTypical, x$typical, x$upperTypical), c(10, 18, 25))
+  # linear model: troughs scale with dose from the 200 mg steady state; the
+  # usual 200 mg/day trough is inside the consensus range, 100 and 400 are not
+  troughs <- 13.68 * c(100, 200, 400) / 200
+  expect_true(troughs[2] > row$Lower && troughs[2] < row$Upper)
+  expect_true(troughs[1] < row$Lower && troughs[3] > row$Upper)
+  # Greene and Kamin, AAN 2021: central 90% of the maintenance troughs in
+  # the 50% responders and in the seizure-free, at 100, 200, 400 mg/day
+  responders  <- rbind(c(4.6, 9.3), c(11.3, 18.7), c(20.8, 35.2))
+  seizureFree <- rbind(c(5.1, 9.7), c(10.8, 19.8), c(21.9, 35.8))
+  for (r in list(responders, seizureFree)) {
+    expect_true(all(troughs > r[, 1] & troughs < r[, 2]))
+    expect_true(all(troughs / rowMeans(r) > 0.88 & troughs / rowMeans(r) < 1))
+  }
+  # C021 (AAN 2022): mean troughs on 200 mg/day, all patients, 50%
+  # responders, seizure-free for 12 months or more
+  expect_true(all(troughs[2] / c(15.1, 15.2, 14.5) > 0.88 &
+                  troughs[2] / c(15.1, 15.2, 14.5) < 0.96))
+})

@@ -4,7 +4,15 @@
 \alias{levetiracetam}
 \title{Levetiracetam pharmacokinetics (oral and intravenous)}
 \usage{
-levetiracetam(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+levetiracetam(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,10 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
 assumed normal value for the patient's age and sex (R/renalFunction.R)}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the total
+clearance by \code{LEVETIRACETAM_PREGNANCY_CL_FACTOR}, not through the
+renal split (see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

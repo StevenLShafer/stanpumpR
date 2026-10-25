@@ -155,6 +155,40 @@
 # tPeak = 0, so only the plasma concentration is drawn.  There is no
 # equilibration constant in the source, no therapeutic plasma range for a
 # thiazide, and no concentration-to-pressure relation anywhere in the paper.
+#
+# PREGNANCY
+# =========
+# No study of hydrochlorothiazide's pharmacokinetics in pregnancy was found
+# (PubMed, searched 2026-10-19).  The drug is cleared mostly unchanged in the
+# urine, by filtration and tubular secretion, and Van Wart's clearance is
+# that renal clearance plus a small non-renal one.  With the Patient
+# Profile's Pregnant field on and the serum creatinine left blank, the RENAL
+# CLEARANCE itself, CL_R, is multiplied by PREGNANCY_GFR_FACTOR = 1.5
+# (pregnancyGfrFactor(), R/pregnancy.R), the rise in glomerular filtration of
+# pregnancy; the non-renal clearance, the volumes, Q and the absorption are
+# unchanged.  At the reference creatinine clearance of 120 mL/min the total
+# clearance rises by (18.3 x 1.5 + 2.44) / (18.3 + 2.44) = 1.44.  The factor
+# multiplies CL_R and not the creatinine clearance it reads, because the
+# power 1.38 describes the loss of renal function in renal disease, not the
+# rise in filtration of pregnancy: 1.5 on the creatinine clearance would
+# multiply CL_R by 1.5^1.38 = 1.75.  A measured creatinine is not multiplied:
+# a pregnant woman's creatinine is already low, and the Cockcroft-Gault
+# estimate made from it already carries the rise.  This is a physiological
+# extrapolation with no hydrochlorothiazide data behind it.  The absorption
+# pulses were fitted at creatinine clearances of 30 to 120 mL/min; at the
+# faster clearance of a pregnant woman of 30 years and 70 kg (renal CL/F
+# 25.5 L/h) they still meet the documented standard against the exact
+# Weibull system, 0.40% over the curve and 0.008% at the peak, which the
+# test file checks.  Late pregnancy is the reference state.  (Claude Code,
+# 2026-10-19.)
+#
+# References
+# ----------
+# Van Wart SA, Shoaf SE, Mallikaarjun S, Mager DE.  Biopharm Drug Dispos
+#   2013;34:527-539.  https://doi.org/10.1002/bdd.1863
+# Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy: the rise in
+#   glomerular filtration)
 # -----------------------------------------------------------------------------
 
 # Van Wart 2013, Table 2, as published.  Apparent (/F) throughout.
@@ -218,10 +252,13 @@ HCTZ_PULSE_DELAY    <- c(12.4524, 23.7416, 31.7669, 35.8427,
 #'   fat-free mass
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
 #'   value for age and sex, which represents NO renal impairment
+#' @param pregnant is the patient pregnant?  \code{TRUE}, with the creatinine
+#'   left blank, multiplies the renal clearance by 1.5, the rise in glomerular
+#'   filtration of pregnancy (see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 hydrochlorothiazide <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                                creatinine = NULL)
+                                creatinine = NULL, pregnant = FALSE)
 {
   # No body-size covariate was fitted, so the published values stand with the
   # switch off and the package's own scaling applies with it on.
@@ -233,7 +270,11 @@ hydrochlorothiazide <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # weight, so the renal term carries no further size factor.
   crcl <- creatinineClearanceCG(pkW, age, sex,                      # mL/min
                                 adultEquivalentCreatinine(creatinine, age, sex))
-  clR <- HCTZ_CL_R * (crcl / HCTZ_CRCL_REF)^HCTZ_CL_R_EXP           # L/h
+  # Pregnancy (see the header): the renal clearance itself, not the
+  # creatinine clearance it reads.
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  clR <- HCTZ_CL_R * (crcl / HCTZ_CRCL_REF)^HCTZ_CL_R_EXP *         # L/h
+    gfrPregnancy
   cl  <- clR + HCTZ_CL_NR * size$clearance                          # L/h
 
   default <- list(
@@ -280,6 +321,11 @@ hydrochlorothiazide <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "tabulates. Plasma. No blood pressure, no diuresis and no therapeutic ",
     "range are predicted. https://doi.org/10.1002/bdd.1863"
   )
+  if (gfrPregnancy != 1) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("renal clearance x ", PREGNANCY_GFR_FACTOR,
+             ", the rise in glomerular filtration; no hydrochlorothiazide data")))
+  }
 
   return(
     list(

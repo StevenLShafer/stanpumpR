@@ -71,8 +71,8 @@ passed only to models that name it (methadone).}
 
 \item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default).
 Passed only to the models that name it (R/pregnancy.R lists them), which
-apply the changes of late pregnancy described by Ansari, Carvalho, Shafer
-and Flood (Anesth Analg 2016;122:786-804); every other model ignores it.
+apply the changes of late pregnancy measured for that drug
+(inst/extdata/pregnancyRegistry.csv); every other model ignores it.
 TRUE requires \code{sex = "female"}.}
 
 \item{vkorc1}{VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};

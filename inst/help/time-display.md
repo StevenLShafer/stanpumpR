@@ -1,4 +1,4 @@
-The **Time** panel of the left sidebar chooses how times are entered and displayed. Like the sidebar's other panels it opens when its header is clicked, and the header reads the settings out while it is closed, for example *Time (hours, Actual time)*. The simulation is identical whatever you choose: the calculation itself always works in minutes.
+The **Time** panel of the left sidebar chooses how times are entered and displayed, how long the simulation runs (**Max time**) and where the time axis starts (**Min time**). Like the sidebar's other panels it opens when its header is clicked, and the header reads the settings out while it is closed, for example *Time (hours, Actual time)*. The simulation is identical whatever you choose: the calculation itself always works in minutes.
 
 ## Time units
 
@@ -6,7 +6,7 @@ The **Time** panel of the left sidebar chooses how times are entered and display
 
 - a number typed in the dose table, or in any dialog that asks for a time, is in this unit: `1.5` is one and a half hours when the unit is hours, a day and a half when it is days;
 - the plot's time axis is labelled in it;
-- it decides which **Max time** choices are offered (see below).
+- it sets the range and the step of the **Max time** and **Min time** sliders, which are shown in it (see below).
 
 The Doses card says which unit its times are in, for example *Doses (times in days)*, and so does every dialog that asks for a time.
 
@@ -20,7 +20,7 @@ Use minutes or hours for anaesthesia and the hours around it, and days or weeks 
 
 ### Elapsed time
 
-Everything is counted from zero, in the time unit.
+What the app opens with. Everything is counted from zero, in the time unit.
 
 Type times as numbers of the unit: the dose table takes no colon in elapsed time. An elapsed `H:MM` that reaches the table another way (pasted, or typed in the dialog that opens when you click the plot) is read as hours and minutes in any unit, so `1:30` is an hour and a half and `36:00` a day and a half; it is converted to a number of the unit when you change unit.
 
@@ -36,17 +36,26 @@ The procedure start defaults to the time on your computer when the app opened.
 
 ## Max time
 
-The length of the simulation is set under **Graph Options → Max time**. Its choices follow the time unit:
+The length of the simulation is set by the **Max time** slider, in the Time panel below **Time units**. It reads in the time unit, and its range and step follow it:
 
-| Time units | Max time choices |
-|---|---|
-| Minutes, hours | 1, 2, 4, 6, 8, 12, 18 or 24 hours |
-| Days | 2, 3, 4, 7, 14, 28, 56, 91, 182 or 365 days |
-| Weeks | 4, 8, 13, 26, 39 or 52 weeks |
+| Time units | Max time | Step |
+|---|---|---|
+| Minutes | 5 minutes to 24 hours | 5 minutes |
+| Hours | 15 minutes to 24 hours | 15 minutes |
+| Days | 1 to 365 days | 1 day |
+| Weeks | 1 to 52 weeks | 1 week |
 
-Minutes and hours offer the same lengths, so switching between them keeps Max time. Changing to another unit keeps it if the new unit offers it, otherwise takes the next longer choice, or the unit's longest when there is none longer: going from days or weeks to minutes or hours gives 24 hours, and 365 days becomes 52 weeks (364 days).
+Drag the handle, or click it and use the arrow keys to move one step at a time. Changing the unit keeps Max time, rounded up to the new unit's step and kept within its range: 24 hours becomes 1 day, and 365 days becomes 52 weeks (364 days).
 
-If a dose or an event falls near or after the end of the plot, the plot is lengthened to show it, but never past the unit's longest choice (24 hours, 365 days or 52 weeks). A dose beyond that brings a notification: choose a longer Max time or a larger time unit.
+If a dose or an event falls near or after the end of the plot (within half an hour, for minutes and hours), the plot is lengthened to show it, in steps matching the axis, but never past the end of the slider (24 hours, 365 days or 52 weeks). A dose beyond that brings a notification: choose a longer Max time or a larger time unit.
+
+## Min time
+
+The **Min time** slider, below Max time, sets where the time axis starts, so that a stretch late in a long plot can be looked at on its own: weekly doses over 16 weeks, say, seen from week 15 to week 16. Everything is still simulated from time 0, so every earlier dose counts; only the window drawn moves. Each panel's height is scaled to what is inside the window, and a click on the plot adds a dose inside it.
+
+Min time is always at least one step below Max time. Dragging Max time down to it pulls it down too; dragging it up to Max time pushes Max time up. Loading a teaching scenario sets it back to 0.
+
+**Max time, Min time and detail.** The simulation is evaluated at every dose and event time and at points that start close together after each dose and spread out after it. On plots of a day or less that spacing does not depend on Max time; on longer plots it is scaled to the length of the window drawn (from Min time to Max time), with no step in the window longer than 1/500 of it (about 17 hours on a year-long plot from 0, 20 minutes in a one-week window). So a window from week 15 to week 16 is drawn as finely as a one-week plot, and narrowing the window is the way to see the fine structure after each dose on a long plot.
 
 ## Restrictions
 

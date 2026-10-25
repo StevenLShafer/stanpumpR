@@ -4,7 +4,7 @@
 \alias{glycopyrrolate}
 \title{Glycopyrrolate pharmacokinetics}
 \usage{
-glycopyrrolate(weight, height, age, sex, adjustToFFM = TRUE)
+glycopyrrolate(weight, height, age, sex, adjustToFFM = TRUE, pregnant = FALSE)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -18,6 +18,10 @@ glycopyrrolate(weight, height, age, sex, adjustToFFM = TRUE)
 \item{adjustToFFM}{scale volumes to the patient's fat-free mass and
 clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
 published fixed parameters unscaled.}
+
+\item{pregnant}{when \code{TRUE}, multiply the clearance by
+\code{GLYCOPYRROLATE_PREGNANCY_CL_FACTOR} (Ali-Melkkila 1990; see the
+header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

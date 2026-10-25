@@ -209,3 +209,37 @@ test_that("half-lives and steady state agree with the published parameters", {
   expect_lt(utils::tail(w$Plasma, 1), css)
   expect_gt(max(w$Plasma[w$Time > 55 * 1440]), css)
 })
+
+test_that("pregnancy: both enantiomers' clearances x 1.32 before the reduction (Westin 2017)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  Every rate
+  # constant of both enantiomers rises by the factor, so the reduced V1 and V2
+  # are unchanged and the reduced CL1 and CL2 both rise by exactly 1.32.
+  on  <- getDrugPK("citalopram", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("citalopram", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_equal(off, getDrugPK("citalopram", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default
+  b <- off$PK$default
+  expect_equal(CITALOPRAM_PREGNANCY_CL_FACTOR, 1.32)
+  expect_equal(a$cl1 / b$cl1, CITALOPRAM_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(a$cl2 / b$cl2, CITALOPRAM_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  for (p in c("v1", "v3", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO")) {
+    expect_identical(a[[p]], b[[p]], info = p)
+  }
+  expect_equal(a$v2, b$v2, tolerance = 1e-12)   # unchanged but for rounding
+  expect_equal_rounded(1273.580116, a$v1)
+  expect_equal_rounded(616.9730331, a$v2)
+  expect_equal_rounded(0.4649808069, a$cl1)
+  expect_equal_rounded(0.3183473012, a$cl2)
+  # The reduction of the scaled enantiomers, by hand
+  size <- pkSizeFactors(70, 165, 30, SEX_FEMALE, TRUE, legacyVolume = 1)
+  r <- reduceByHand(9.05 * 0.5^-0.822 * size$clearance * 1.32, 1830 * size$volume,
+                    22.1 * 0.5^-1.33 * (size$pkWeight / 70)^0.75 * 1.32, 1390 * size$volume)
+  expect_equal_rounded(r$cl1 / 60, a$cl1)
+  expect_equal_rounded(r$v2, a$v2)
+  # and the direct call agrees
+  expect_equal(citalopram(70, 165, 30, SEX_FEMALE, pregnant = TRUE)$PK$default$cl1,
+               citalopram(70, 165, 30, SEX_FEMALE)$PK$default$cl1 * 1.32, tolerance = 1e-12)
+  expect_match(on$reference, "Westin", fixed = TRUE)
+  expect_match(on$reference, "pregnancy:", fixed = TRUE)
+  expect_no_match(off$reference, "Westin")
+})

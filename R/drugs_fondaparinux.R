@@ -61,6 +61,36 @@
 # and no time until threshold: a simulated concentration is not an anti-Xa
 # activity, a bleeding or clotting risk, or a procedure-safe time.
 #
+# PREGNANCY
+# =========
+# No population model with a pregnancy covariate, and no pregnant-against-
+# nonpregnant ratio of fondaparinux exposure, was found.  Fondaparinux is
+# eliminated almost entirely by renal excretion of unchanged drug, unlike the
+# low-molecular-weight heparins, so the rise in glomerular filtration of
+# pregnancy is the expected mechanism of any rise in its clearance.  The Wu
+# 2025 review notes that it crosses the placenta and that renal insufficiency
+# raises its accumulation, and the Zarek 2025 review found the apparent
+# clearance of the heparins it grouped about 1.5 times higher in pregnancy.
+#
+# With the Patient Profile's Pregnant field on and the serum creatinine left
+# blank, the simplified-MDRD creatinine clearance in the renal term of CL/F
+# is multiplied by PREGNANCY_GFR_FACTOR, 1.5, the library's rise in
+# filtration in late pregnancy (pregnancyGfrFactor(), R/pregnancy.R), so CL/F
+# is multiplied by 1.5^0.532 = 1.241.  This is physiological, not measured
+# for fondaparinux.  With a creatinine entered, the estimate made from a
+# pregnant woman's (low) creatinine already carries the rise and nothing more
+# is applied.  The volumes, Q and absorption are unchanged.  Claude Code,
+# 2026-10-19.
+#
+# References
+# ----------
+# Delavenne X, Zufferey P, Baylot D, et al.  Thromb Haemost 2010;104:252-260.
+#   https://doi.org/10.1160/TH10-02-0127
+# Wu Y, Ji Y, Wang S, Hu Y, Shan D.  Arch Gynecol Obstet 2025;312:1461-1471.
+#   https://doi.org/10.1007/s00404-025-08181-6 (pregnancy)
+# Zarek J, Brydon A, Spitzer K, Laskin C, Ito S.  EULAR Rheumatol Open
+#   2025;1:11-22.  https://doi.org/10.1016/j.ero.2025.03.001 (pregnancy)
+#
 # (Claude Code, 2026-10-17, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
 
@@ -73,15 +103,22 @@ FONDAPARINUX_AGE_REF  <- 74   # y, reference age
 #' Delavenne 2010; see the header of \code{R/drugs_fondaparinux.R}.
 #'
 #' @inheritParams apixaban
+#' @param pregnant when \code{TRUE} and \code{creatinine} is blank, apply the
+#'   rise in filtration of late pregnancy to the renal term (see the file's
+#'   header)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 fondaparinux <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                         creatinine = NULL)
+                         creatinine = NULL, pregnant = FALSE)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
   pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
 
   crcl <- egfrMDRD(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
+  # Pregnancy (see the header): the renal term alone, and only when the
+  # creatinine is blank.
+  gfrPregnancy <- pregnancyGfrFactor(pregnant, creatinine)
+  crcl <- crcl * gfrPregnancy
 
   cl <- 0.278 * (pkW / FONDAPARINUX_WT_REF)^0.534 *
     (crcl / FONDAPARINUX_CLCR_REF)^0.532 *
@@ -104,6 +141,21 @@ fondaparinux <- function(weight, height, age, sex, adjustToFFM = TRUE,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
+  reference <- paste0(
+    "Delavenne X et al., Thromb Haemost 2010;104:252-260 (subcutaneous ",
+    "two-compartment model after major orthopaedic surgery; clearance on ",
+    "weight, simplified-MDRD creatinine clearance and age, central volume on ",
+    "weight; apparent parameters, from the entered creatinine or an assumed ",
+    "normal value for age and sex). https://doi.org/10.1160/TH10-02-0127"
+  )
+  if (gfrPregnancy != 1) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("creatinine clearance x ", PREGNANCY_GFR_FACTOR,
+             " (physiological; no fondaparinux data)"),
+      paste0("Wu Y et al., Arch Gynecol Obstet 2025;312:1461-1471. ",
+             "https://doi.org/10.1007/s00404-025-08181-6")))
+  }
+
   list(
     PK = PK,
     tPeak = 0,
@@ -111,12 +163,6 @@ fondaparinux <- function(weight, height, age, sex, adjustToFFM = TRUE,
     typical = 0,
     upperTypical = 0,
     lowerTypical = 0,
-    reference = paste0(
-      "Delavenne X et al., Thromb Haemost 2010;104:252-260 (subcutaneous ",
-      "two-compartment model after major orthopaedic surgery; clearance on ",
-      "weight, simplified-MDRD creatinine clearance and age, central volume on ",
-      "weight; apparent parameters, from the entered creatinine or an assumed ",
-      "normal value for age and sex). https://doi.org/10.1160/TH10-02-0127"
-    )
+    reference = reference
   )
 }
