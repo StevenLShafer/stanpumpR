@@ -40,8 +40,8 @@
 # It is therefore offered with no dosing unit; it appears only when bupropion
 # is given.  The same argument as R/drugs_desethylamiodarone.R.
 #
-# NO EFFECT SITE; THE BAND IS FOR THE SUM
-# =======================================
+# NO EFFECT SITE; THE BAND IS HYDROXYBUPROPION'S OWN
+# ==================================================
 # No validated concentration-response relation exists for the antidepressant
 # effect, so tPeak is zero and the row plots plasma concentrations.  The band
 # in inst/extdata/drugDefaults_global.csv, 850 to 1500 ng/mL with 1200 as
@@ -107,7 +107,7 @@ hydroxybupropion <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # AGNP 2018 range for bupropion + hydroxybupropion, ng/mL; mirrors the CSV.
+  # AGNP 2026 range for hydroxybupropion itself, ng/mL; mirrors the CSV.
   typical      <- 1200
   upperTypical <- 1500
   lowerTypical <- 850

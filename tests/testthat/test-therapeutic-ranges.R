@@ -35,6 +35,9 @@ test_that("each row is well formed", {
     }
     # An alert level, where the guideline gives one, is at or above the range
     if (!is.na(r$alert_level)) expect_gte(r$alert_level, r$upper, label = r$drug)
+    # A drawn band was read in a source: never one marked unverified
+    if (r$band_status %in% c("drawn", "drawn_on_metabolite"))
+      expect_false(grepl("^unverified", r$verification), info = r$drug)
     # A range that is not drawn says why
     if (!r$band_status %in% c("drawn", "drawn_on_metabolite"))
       expect_true(nzchar(r$notes) || nzchar(r$source), info = r$drug)

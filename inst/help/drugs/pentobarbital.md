@@ -8,4 +8,4 @@ Intravenous only (`mg`, `mg/kg`, `mg/hr`, `mg/kg/hr`), as pentobarbital is used 
 
 ### Band
 
-20 to 40 mg/L, the concentrations reported during barbiturate coma — orientation only, since titration is to the electroencephalogram, not to a level. There is no effect site.
+None. Concentrations of 20 to 40 mg/L are often quoted for barbiturate coma, but no primary source for them has been read and pentobarbital is not in the AGNP consensus guidelines' 2026 table, so no band is drawn until one is; titration is to the electroencephalogram, not to a level in any case. There is no effect site.

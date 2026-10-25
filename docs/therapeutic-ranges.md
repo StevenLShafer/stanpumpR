@@ -36,10 +36,10 @@ band is the ILAE position paper's (Patsalos 2008), as quoted in Reimers 2018.
 | carbamazepine | 4–12 mg/L | 20 | Hart 2026 | Unchanged (4–10 for mania) |
 | valproate | 50–100 mg/L total | 120 | Hart 2026 | Unchanged. Depakote label: 50–100 mcg/mL |
 | phenobarbital | 10–40 mg/L | — | ILAE 2008 | Not its own row; Hart 2026's primidone row gives phenobarbital 10–30 |
-| pentobarbital | 20–40 mg/L | — | **no source read** | Barbiturate coma, titrated to EEG; orientation only |
+| pentobarbital | **none** (pending) | — | **no source read** | 20–40 mg/L is the candidate for barbiturate coma; not drawn until a primary source is read |
 | ethosuximide | 40–100 mg/L | — | ILAE 2008 | Not in Table 5. Zarontin label: 40–100 mcg/mL |
 | topiramate | 5–20 mg/L | 30 | Hart 2026 | Unchanged |
-| lacosamide | **1–12 mg/L** | 24 | Hart 2026 | Was 10–20 (Patsalos 2018), which was peak-based |
+| lacosamide | **1–12 mg/L** | 24 | Hart 2026 | Was 10–20 (Patsalos 2018), drawn from samples 0–3 h after a dose |
 | lamotrigine | 3–15 mg/L | 20 | Hart 2026 | Unchanged |
 | zonisamide | 10–40 mg/L | 80 | Hart 2026 | Unchanged |
 | tiagabine | 20–200 ng/mL | 400 | Hart 2026 | Unchanged |
@@ -92,7 +92,7 @@ in this review and are recorded as "Not checked".
 
 ## Open items
 
-1. Find a primary source for pentobarbital's 20–40 mg/L, or remove the band.
+1. Find a primary source for pentobarbital's candidate 20–40 mg/L; it is not drawn until one is read.
 2. Read the labels marked "Not checked".
 3. A summed parent-plus-metabolite line would let the active-moiety ranges (risperidone,
    aripiprazole, venlafaxine, fluoxetine) be drawn.
