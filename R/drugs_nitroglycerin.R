@@ -40,7 +40,9 @@
 # So the model reaches its plateau at the measured pace but falls after a
 # stop too slowly; the true offset is a few minutes.
 #
-# A BOLUS IS BEYOND THE MODEL.  Two studies of 0.25 and 0.5 mg IV boluses
+# A BOLUS IS BEYOND THE MODEL, SO NONE IS OFFERED: the drug's units are
+# infusion rates only (mcg/min, mcg/kg/min; the bolus unit was withdrawn
+# 2026-10-24 on Dr. Shafer's decision after the adversarial review).  Two studies of 0.25 and 0.5 mg IV boluses
 # for uterine relaxation at caesarean delivery measured venous plasma 1 and 5
 # minutes after the dose: David M et al., Obstet Gynecol 1998;91:119-124 (doi
 # 10.1016/s0029-7844(97)00594-2; medians 38.1 and 80.3 ng/mL at 1 min, a
