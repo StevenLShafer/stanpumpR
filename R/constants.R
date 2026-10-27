@@ -318,8 +318,10 @@ TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 
 # Scheduled (repeating) doses (scheduled.R).  A bolus, PO, SL, IM or IN unit with
 # one of these suffixes, e.g. "mg PO bid", gives the dose at the entered time
-# and then again every interval (minutes) until the end of the plot.
-SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60)
+# and then again every interval (minutes) until the end of the plot.  Every
+# drug that offers qid also offers q4h (drugDefaults_global.csv).
+SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60,
+                        q4h = 4 * 60)
 # Once weekly ("qwk"), offered only on the subcutaneous units: semaglutide,
 # dulaglutide and tirzepatide are injected once a week.  Kept out of
 # SCHEDULE_INTERVALS, the daily frequencies every other scheduled drug offers;

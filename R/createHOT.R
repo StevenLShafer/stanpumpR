@@ -68,8 +68,18 @@ createHOT <- function(doseTable, drugDefaults, timeFormat = NULL, drugChoices = 
       strict = TRUE,
       halign = "htLeft",
       valign = "vtMiddle",
-      allowInvalid = FALSE
-    )
+      allowInvalid = FALSE,
+      # A long unit wraps after its route ("mg/kg PO" over "liquid q4h");
+      # renderUnitCell() in inst/www/hot_funs.js, the CSS in app.css
+      renderer = htmlwidgets::JS("renderUnitCell")
+    ) %>%
+    # Left to Handsontable, the columns were sized to their contents and ran
+    # past the sidebar, cutting off Units.  These fit the 450 px sidebar
+    # (app_ui()) with a vertical scrollbar, at the grid's 14 px font
+    # (app.css): "methylprednisolone", a clock time, the "Dose/Target"
+    # header, and the longest unbreakable unit, "mcg/kg/min", each beside its
+    # dropdown arrow.  stretchH = "all" scales them up to fill the sidebar.
+    rhandsontable::hot_cols(colWidths = c(152, 45, 90, 100))
 
   # The header shown for the Dose column (DOSE_COLUMN_HEADER); set after
   # hot_col(), which finds columns by header, and apart from rColHeaders,
@@ -97,7 +107,8 @@ createHOT <- function(doseTable, drugDefaults, timeFormat = NULL, drugChoices = 
   HOT <- addHotHooks(
     HOT, filterKeys = TRUE, sanitize = TRUE,
     afterChange = "hookDoseTableUpdate",
-    afterBeginEditing = "hookSelectAllDrugText",  # pressing Enter in a drug cell
+    # pressing Enter in a drug cell; opening a Units list
+    afterBeginEditing = c("hookSelectAllDrugText", "hookWrapUnitList"),
     afterSelectionEnd = "hookSelectAllDrugText"   # clicking into a drug cell with mouse
   )
 

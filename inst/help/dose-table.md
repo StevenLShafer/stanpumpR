@@ -31,7 +31,7 @@ A regimen written in days goes in most easily with the Time units set to days. D
 | `mg/hr RA` | **perineural infusion** into the tissue depot, from that time | bupivacaine, ropivacaine, lidocaine |
 | `mg PE` and its rate and IM forms | **fosphenytoin**, in phenytoin sodium equivalents | `mg PE`, `mg PE/min`, `mg PE IM` (phenytoin) |
 | `Plasma target`, `Effect site target` | **target-controlled infusion**: the dose is the target concentration | see [Target-controlled infusion](help:tci) |
-| a bolus, oral, sublingual, intramuscular or intranasal dose followed by `qd`, `bid`, `tid` or `qid` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
+| a bolus, oral, sublingual, intramuscular or intranasal dose followed by `qd`, `bid`, `tid`, `qid` or `q4h` | **scheduled dose**, repeated | `mg bid`, `mg PO tid` |
 | `L/min` | fresh gas flow or ventilation setting | inhaled agents |
 | `%` | vaporizer setting | inhaled agents |
 
@@ -57,6 +57,7 @@ For drugs given on a schedule (the analgesic opioids, the oral analgesics and be
 | `bid` | twice a day | 12 hours |
 | `tid` | three times a day | 8 hours |
 | `qid` | four times a day | 6 hours |
+| `q4h` | every 4 hours (offered wherever `qid` is) | 4 hours |
 | `qwk` | once a week (subcutaneous units only: semaglutide, dulaglutide, tirzepatide) | 7 days |
 
 The first dose is given at the time in the row, and the same dose is then repeated at that interval until the end of the X axis, so lengthening the axis extends the schedule. The repeats are not added to the dose table, which would fill with rows, but they are merged back in when a slide is emailed, so the exported dose table lists the full dose sequence.
@@ -68,7 +69,7 @@ The first dose is given at the time in the row, and the same dose is then repeat
 
 ### Skip next dose
 
-A patient who misses a tablet, or vomits it, wants to know whether to wait for the next dose or take two. So does a patient who misses an injection, a spray or a scheduled intravenous dose (`mg bid`). Click a drug's curve, or double-click it, while it has a schedule (`qd`, `bid`, `tid`, `qid` or `qwk`) running on any route: the dialog then offers **Skip next dose**, naming the time of the first scheduled dose at or after the time clicked. It writes the skip into the dose table by the rules above, where it can be seen and changed: a `0 mg PO` (or `0 mg SL`) row at the skipped time, or on every other route a scheduled 0 in the schedule's own unit, such as `0 mg IM qid` or `0 mg SC qwk` (an ordinary 0 does not stop those schedules), which ends the schedule, and the scheduled row again one interval later, which restarts it, unless the schedule would have ended before then. To compare the patient's options, change that restart row, for instance to a double dose taken now and the schedule resumed at its usual time. An infusion or a TCI target has no next dose to skip: it is delivered continuously, so the button is never offered for one; to end it, use **Stop**.
+A patient who misses a tablet, or vomits it, wants to know whether to wait for the next dose or take two. So does a patient who misses an injection, a spray or a scheduled intravenous dose (`mg bid`). Click a drug's curve, or double-click it, while it has a schedule (`qd`, `bid`, `tid`, `qid`, `q4h` or `qwk`) running on any route: the dialog then offers **Skip next dose**, naming the time of the first scheduled dose at or after the time clicked. It writes the skip into the dose table by the rules above, where it can be seen and changed: a `0 mg PO` (or `0 mg SL`) row at the skipped time, or on every other route a scheduled 0 in the schedule's own unit, such as `0 mg IM qid` or `0 mg SC qwk` (an ordinary 0 does not stop those schedules), which ends the schedule, and the scheduled row again one interval later, which restarts it, unless the schedule would have ended before then. To compare the patient's options, change that restart row, for instance to a double dose taken now and the schedule resumed at its usual time. An infusion or a TCI target has no next dose to skip: it is delivered continuously, so the button is never offered for one; to end it, use **Stop**.
 
 ### Stop
 

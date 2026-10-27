@@ -38,7 +38,7 @@ The **Doses** table is in the panel to the right of the plot (the arrow at its t
 
 - A mass unit (`mg`, `mcg/kg`) makes the row a **bolus**.
 - A rate unit (`mcg/kg/min`, `mg/hr`) makes the row an **infusion** that runs until the next row for that drug changes it. To stop an infusion, add a row at the stop time with a dose of 0.
-- A unit with a route (`mg PO`, `mg IM`, `mg RA`) gives the dose by that route, and one ending in `qd`, `bid`, `tid` or `qid` (`mg PO bid`) repeats it on that schedule to the end of the plot.
+- A unit with a route (`mg PO`, `mg IM`, `mg RA`) gives the dose by that route, and one ending in `qd`, `bid`, `tid`, `qid` or `q4h` (`mg PO bid`) repeats it on that schedule to the end of the plot.
 
 Right-click a row to insert or remove rows. See [The dose table](help:dose-table).
 

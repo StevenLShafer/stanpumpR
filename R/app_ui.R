@@ -592,6 +592,7 @@ app_ui <- function() {
             padding = 0,
             sidebar = bslib::sidebar(
               position = "right",
+              # The column widths createHOT() sets are fitted to it
               width = 450,
               open = "desktop",
               class = "dose-sidebar",

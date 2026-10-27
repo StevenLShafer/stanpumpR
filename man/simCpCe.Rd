@@ -32,7 +32,7 @@ for.  A drug that forms an active metabolite additionally carries
 \code{metaboliteRecoveryStates}; \code{foldMetabolites()} adds that
 contribution, and its recovery, to the metabolite drug's own row.
 \code{tci} holds the TCI schedule, if any, and \code{scheduled} the
-repeats of any qd/bid/tid/qid dose (Drug, Time, Dose, Units), or NULL.
+repeats of any qd/bid/tid/qid/q4h dose (Drug, Time, Dose, Units), or NULL.
 \code{compartments} holds the concentrations in the peripheral volumes
 (\code{V2}, \code{V3}) and the amount still in the absorption depots
 (\code{Depot}), by \code{Time}, for the compartments the drug has, or

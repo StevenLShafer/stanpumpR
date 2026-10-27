@@ -1,4 +1,4 @@
-# Scheduled (repeating) doses: qd, bid, tid and qid, and qwk (once weekly) on
+# Scheduled (repeating) doses: qd, bid, tid, qid and q4h, and qwk (once weekly) on
 # the subcutaneous units
 #
 # Drafted by Claude Code, 2026-10-07, at the request of Steven L. Shafer;
@@ -6,7 +6,7 @@
 #
 # A dose-table row whose unit ends in a frequency ("mg PO bid", "g qd",
 # "mg/kg IM qid") gives the dose at the entered time and then repeats it every
-# interval -- qd 24 h, bid 12 h, tid 8 h, qid 6 h; see SCHEDULE_INTERVALS --
+# interval -- qd 24 h, bid 12 h, tid 8 h, qid 6 h, q4h 4 h; see SCHEDULE_INTERVALS --
 # until the end of the X axis.  As with TCI, the repeats are kept out of the
 # dose table the user edits, which would otherwise fill with rows that move
 # whenever the X axis is lengthened; they are returned as a table of their own

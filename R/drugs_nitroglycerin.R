@@ -112,12 +112,57 @@
 # coefficients, and no pressure is predicted here.  Tolerance develops within
 # a day of continuous infusion.
 #
-# THE ADMINISTRATION SET
-# ======================
-# The curve assumes the whole dose reaches the vein.  Nitroglycerin is sorbed
-# by PVC and polyurethane tubing (Kim 2018: peak concentrations a fifth to a
-# third of those through polyolefin; more with longer sets and lower flows),
-# so through such a set the patient receives, and the plasma holds, less.
+# NOONAN 1985: THE HALF-LIFE AGREES; CLEARANCE DEPENDS ON DOSE AND HISTORY
+# =========================================================================
+# Noonan PK, Williams RL, Benet LZ, J Pharmacokinet Biopharm 1985;13:143-157
+# (PMID 3932639, read in full): six healthy volunteers, 10, 20, 40 and again
+# 10 mcg/min for 40 min each through a set adsorbing < 1% (rates checked by
+# HPLC), venous plasma.  Half-life after the last stop 1.4-3.2 min, mean 2.3
+# (Table II), which agrees with the 1.9 min used.  Clearance (Table III)
+# fell from 31 L/min at the first 10 mcg/min to about 11 L/min at 40 and at
+# the second 10, where it stayed: dose- and time-dependent, which one linear
+# compartment cannot show.  Armstrong's patients, already on the drug, are
+# nearer the later, lower value.
+#
+# THE INFUSION SET: BENCH LOSSES
+# ==============================
+# Curry SH, Aburawi SM, Biopharm Drug Dispos 1985;6:235-280 (PMID 3929851,
+# read in full) reviews them: up to about 85% lost through plastic sets,
+# flow-dependent (Cossum); about 10% through a glass syringe and 80 cm of
+# high-density polyethylene; filters up to 55%, bags and giving sets > 50%,
+# up to 80% together (Baaske); none from glass.
+#
+# SAMPLING SITE
+# =============
+# The curve is ARTERIAL plasma.  Armstrong PW, Moffat JA, Marks GS,
+# Circulation 1982;66:1273-1276 (PMID 6814785, abstract; also quoted by Chiou,
+# Clin Pharmacokinet 1989;17:175-199, PMID 2680213): during infusion in 20
+# patients with heart failure, 25.1 ng/mL radial arterial, 29.8 pulmonary
+# arterial, 7.3 peripheral venous; 17% extraction across the lung, 61% across
+# the arm.  A peripheral venous sample reads about a third of the curve.
+#
+# CURRY 1993: CORROBORATES THE FAST KINETICS, NOT USED
+# ====================================================
+# Curry SH et al., Biopharm Drug Dispos 1993;14:107-118 (PMID 8453021, read
+# in full): 0.1 mg IV in six men with coronary disease at catheterisation,
+# femoral venous plasma for 15 min, two compartments (Table 2: alpha
+# half-life 0.41 min, beta 7.37 min, k12 0.30, k21 0.13, k10 1.58 /min).
+# Those rate constants put an infusion at 84% of its plateau in 2 min and at
+# 10% of it 5 min after a stop, as fast as this model's 1.9 min or faster.
+# The printed V1 (2.0 L) and CL (2.08 L/min) are means of individual values
+# that disagree with each other (V1 x k10 = 3.2 L/min) and with the dose over
+# the mean AUC (100 mcg / 224.6 ng.min/mL = 0.45 L/min), and the injection
+# site is not stated, so no number is taken from it.
+#
+# THE ADMINISTRATION SET CHANGES THE DOSE
+# =======================================
+# The curve assumes the whole dose reaches the vein.  It often does not:
+# nitroglycerin is sorbed by PVC and polyurethane tubing.  Kim 2018 (each man
+# through all three 100 cm sets): peak concentration through PVC 0.33, through
+# polyurethane 0.21, of that through polyolefin; AUC 0.31 and 0.14; more with
+# longer sets and lower flows.  So through such a set the patient receives,
+# and the plasma holds, a third to a seventh of what is drawn.  The help page
+# leads with this, and the reference string (the References panel) says it.
 # -----------------------------------------------------------------------------
 
 # Armstrong 1983
@@ -159,7 +204,10 @@ nitroglycerin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "failure given 21 mcg/min: CL 6.2 L/min; arterial plasma.  V 17.0 L from the ",
     "1.9-min half-life after a stop (Armstrong 1980), as Sun 1995 and Kim 2018 ",
     "measured; the 8.1-min rise is the delivery's.  Healthy volunteers' clearance was ",
-    "3-10 times higher (McNiff 1981). https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"
+    "3-10 times higher (McNiff 1981).  THE INFUSION SET CHANGES THE DOSE: the curve ",
+    "assumes the whole dose reaches the vein; through PVC or polyurethane sets Kim 2018 ",
+    "measured a third to a seventh of the exposure through polyolefin. ",
+    "https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"
   )
 
   list(

@@ -381,6 +381,68 @@ function validateUnit(unit, drug) {
   return default_unit[0]['Default.Units'];
 }
 
+// A unit as the dose table shows it.  The Units column is narrow, so a long
+// unit wraps (app.css), and it may wrap only after its route: the spaces in
+// "mg/kg PO" and in "liquid q4h" become non-breaking, so "mg/kg PO liquid q4h"
+// wraps as "mg/kg PO" over "liquid q4h", in the cell and in its dropdown list
+// alike.  A unit with no route, or nothing after it, wraps where it must.
+// Display only: the cell's value keeps its ordinary spaces.
+var UNIT_ROUTES = ['PO', 'SL', 'IM', 'IN', 'RA', 'SC'];
+
+function unitWrapText(unit) {
+  var words = String(unit).split(' ');
+  var route = -1;
+  for (var i = 0; i < words.length; i++) {
+    if (UNIT_ROUTES.indexOf(words[i]) >= 0) { route = i; break; }
+  }
+  if (route < 0 || route === words.length - 1) return String(unit);
+  return words.slice(0, route + 1).join(' ') + ' ' +
+    words.slice(route + 1).join(' ');
+}
+
+// Rewrites the unit's text in a rendered cell, leaving its markup alone (the
+// dropdown arrow; the list's bold match while typing).
+function wrapUnitText(td, value) {
+  if (typeof value !== 'string' || value.indexOf(' ') < 0) return;
+  var text = unitWrapText(value);
+  if (text === value) return;
+  var walker = document.createTreeWalker(td, NodeFilter.SHOW_TEXT);
+  var offset = 0;
+  var node;
+  while ((node = walker.nextNode())) {
+    var parent = node.parentNode;
+    if (parent.classList && parent.classList.contains('htAutocompleteArrow')) continue;
+    var n = node.nodeValue.length;
+    if (value.substr(offset, n) !== node.nodeValue) return;
+    node.nodeValue = text.substr(offset, n);
+    offset += n;
+  }
+}
+
+// The renderer of the dose table's Units cells (createHOT()).
+function renderUnitCell(instance, td, row, col, prop, value, cellProperties) {
+  Handsontable.renderers.DropdownRenderer.apply(this, arguments);
+  wrapUnitText(td, value);
+  return td;
+}
+
+function wrapUnitListItem(td, row, col, prop, value) {
+  wrapUnitText(td, value);
+}
+
+// The Units dropdown list is a Handsontable of its own, which the editor
+// fills in an afterRenderer hook when it opens, before this hook runs; adding
+// wrapUnitListItem() after it lets it rewrite what that hook wrote.
+function hookWrapUnitList(row, col) {
+  var hot = this;
+  if (col !== findColByHeader(hot, "Units")) return;
+  var list = hot.getActiveEditor().htEditor;
+  if (!list) return;
+  list.removeHook('afterRenderer', wrapUnitListItem);
+  list.addHook('afterRenderer', wrapUnitListItem);
+  list.render();
+}
+
 // When clicking on a drug cell, select all the text so that it's easier to replace
 function hookSelectAllDrugText(row, col) {
   let hot = this;
