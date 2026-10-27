@@ -209,6 +209,9 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | morphine | Mitchell 2003, *Drug Alcohol Depend* 72:85 | 14563546 | The opioid use disorder range |
 | oxycodone, many | Schulz 2020, *Crit Care* 24:195 | 32375836 | The compilation behind oxycodone's range (open access) |
 | ketamine | Mion 2013, *CNS Neurosci Ther* 19:370 | 23575437 | Read in full: the source of the band ("Moen" in the old code), citing Clements 1982 |
+| ketamine | Clements 1982, *J Pharm Sci* 71:539 | 7097501 | Mion's source; its abstract says pain threshold rose above 160 ng/mL, the band's top, not 100 |
+| diazepam | Ku 2018, *CPT Pharmacometrics Syst Pharmacol* 7:718 | 30267478 | The band's 200–600 ng/mL target in status epilepticus (open access) |
+| diazepam | Mould 1995, *Clin Pharmacol Ther* 58:35 | 7628181 | The band's floor, DSST EC50 |
 | diazepam | Friedman 1992, *Clin Pharmacol Ther* 52:139 | 1505149 | Concentration and effect of oral diazepam |
 | diazepam | Chevassus 2004, *BMC Clin Pharmacol* 4:3 | 15102335 | The kept band's 300 ng/mL, which this insulin-secretion study cites only in passing (open access) |
 | temazepam | van Steveninck 1994, *Clin Pharmacol Ther* 55:546 | 8181199 | The former band's top |
