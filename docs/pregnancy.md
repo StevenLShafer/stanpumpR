@@ -336,7 +336,7 @@ paywalled. The first list matters most, since each would check a factor the libr
    study. Midazolam total CL/F 2.1 times (unbound 1.72), half-life unchanged; digoxin total renal
    clearance 181 vs 115 mL/min, 1.57 times (unbound 1.49; the 163 vs 125 mL/min once recorded here as
    renal digoxin clearance are the creatinine clearances, 1.30 times; corrected 2026-10-24 after an
-   adversarial review), half-life unchanged. Confirms midazolam's x1.28 (IV) and digoxin's GFR terms;
+   adversarial review and confirmed against Table 2 of the paper 2026-10-27), half-life unchanged. Confirms midazolam's x1.28 (IV) and digoxin's GFR terms;
    digoxinIV's factor became 1.42.
  - **Allegaert K et al.** *Am J Obstet Gynecol* 2009;200:170.e1-7 (PMID 19006783): cefazolin popPK in
    82 pregnancies, CL 7.44 L/h (about twice healthy young adults), almost exclusively renal, no

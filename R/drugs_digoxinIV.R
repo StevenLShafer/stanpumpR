@@ -81,15 +81,17 @@
 # against 58 mL/min (x 1.88), so both filtration and renal P-glycoprotein
 # rise.  The curve is TOTAL serum digoxin, so the ratio that matters is the
 # total renal clearance: 181 +/- 25 against 115 +/- 25 mL/min, x 1.574, with
-# the unbound fraction 67% against 63% (Hebert's Table 2, as quoted by an
-# adversarial review on 2026-10-24, and consistent with the unbound values:
-# 181 / 0.67 = 270 and 115 / 0.63 = 183).  An earlier version took 163
+# the unbound fraction 67% against 63% (Hebert's Table 2, read from the
+# supplied paper on 2026-10-27; the creatinine clearances, 163 +/- 23
+# against 125 +/- 22 mL/min, are in the Results text).  An earlier version took 163
 # against 125 mL/min as the total renal clearance; those are Hebert's
 # CREATININE clearances, and applied the unbound ratio 1.49 to total
 # clearance, giving 1.35.  About 73% of digoxin's clearance is renal in
 # healthy adults (25 to 28% nonrenal, Iisalo 1977) -- an assumption carried
 # over to Cheng's patients, not measured in them -- so the total clearance
-# rises by 0.73 x 1.574 + 0.27 = 1.42.  With the Patient Profile's Pregnant
+# rises by 0.73 x 1.574 + 0.27 = 1.42.  Hebert's Discussion puts the renal
+# share at 80 to 85%, uncited, which would give 1.46 to 1.49; Iisalo's
+# measured fraction is kept.  With the Patient Profile's Pregnant
 # field on, the elimination clearance CL1 is multiplied by
 # DIGOXIN_IV_PREGNANCY_CL_FACTOR = 1.42, directly; V1, V2 and Q are
 # unchanged.  Hebert did not estimate digoxin's systemic clearance (no
@@ -153,7 +155,7 @@ DIGOXIN_IV_PREGNANCY_CL_FACTOR <- 1.42
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
 #'   value
 #' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
-#'   elimination clearance by 1.35 (Hebert 2008; see the file's header).
+#'   elimination clearance by 1.42 (Hebert 2008; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 digoxinIV <- function(weight, height, age, sex, adjustToFFM = TRUE,
