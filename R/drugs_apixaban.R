@@ -17,7 +17,7 @@
 # clearance 12-320 mL/min.  Table 3, "Stage 2 final model" column, read from
 # the full text on 2026-10-17:
 #
-#     CL_R/F  = 1.57 x (CrCL / 80)                        L/h  (power 1 FIXED)
+#     CL_R/F  = 1.57 x (min(CrCL, 150) / 80)              L/h  (power 1 FIXED)
 #     CL_NR/F = 2.02 x (age / 65)^-0.429 x (1 - 0.216 FEMALE)   L/h
 #     CL/F    = (CL_R/F + CL_NR/F) x (1 - 0.119 ASIAN) x (1 - 0.139 NVAF)
 #               x (1 - 0.215 ACS) x (1 - 0.146 CYP3A4/P-gp INHIBITOR)
@@ -52,14 +52,23 @@
 # Patient Profile's serum creatinine, put on the adult scale by
 # adultEquivalentCreatinine(); with the field blank it is the ASSUMED NORMAL
 # creatinine for age and sex, so renal impairment is then not represented.
-# The renal term is CL_R/F = 1.57 x (cCrCL / 80)^1, with the exponent fixed
-# at 1 and NO cap: the supplement's equations (Cirincione 2018 Supplementary
-# Material, Eq. 1b and Table S1/S2) show a single cCrCL exponent of 1 FIXED
-# with no FLAG or truncation term, so clearance is linear and unbounded in
-# creatinine clearance.  (An earlier version capped it at 150 mL/min on the
-# strength of the handoff specification; the published model has no such cap,
-# confirmed against the supplement on 2026-10-17.)  The model was fitted over
-# cCrCL 12-320 mL/min; above that range it extrapolates linearly.
+# The renal term is CL_R/F = 1.57 x (min(cCrCL, 150) / 80)^1, the exponent
+# fixed at 1 and creatinine clearance held at 150 mL/min above it.  Every
+# NONMEM control stream the paper published (Supplemental Files S1-S2, stage 1
+# and stage 2 final models) caps it before it enters the renal term:
+#
+#     FLG=0
+#     IF(D_CCRCLB.GE.150) FLG=1
+#     CRCL=(1-FLG)*D_CCRCLB+FLG*150
+#     TVCLR=CLR*((CRCL/80)**THETA(7))     ; THETA(7) 1.0 FIX
+#
+# and the main text's Eq. 1 writes the same FLAG at 150 mL/min.  The
+# supplement's equation table (Table S2, Eq. 1b) prints the renal term without
+# the cap: it is silent on it, it does not say there is none.  A version of
+# this model (2026-10-17 to 2026-10-27) read that silence as "no cap" and let
+# renal clearance rise without limit; the control streams, which are the
+# model as fitted, settle it.  The fit spans cCrCL 12-320 mL/min, so the cap
+# acts inside the data: above 150 the fitted renal clearance is 2.94 L/h.
 #
 # DOSE-DEPENDENT RELATIVE BIOAVAILABILITY
 # =======================================
@@ -101,6 +110,7 @@
 
 APIXABAN_NVAF_CL  <- 1 - 0.139    # NVAF on total CL/F
 APIXABAN_NVAF_VC  <- 1 - 0.0405   # NVAF on Vc/F
+APIXABAN_CRCL_CAP <- 150          # mL/min, the control streams' FLAG
 
 #' Apixaban pharmacokinetics (apparent oral, nonvalvular atrial fibrillation)
 #'
@@ -125,7 +135,8 @@ apixaban <- function(weight, height, age, sex, adjustToFFM = TRUE,
   crcl <- creatinineClearanceCG(pkW, age, sex,                 # mL/min
                                 adultEquivalentCreatinine(creatinine, age, sex))
 
-  clR  <- 1.57 * (crcl / 80)                                   # L/h
+  # Creatinine clearance is held at 150 mL/min above it, as the fitted model did.
+  clR  <- 1.57 * (min(crcl, APIXABAN_CRCL_CAP) / 80)           # L/h
   # The age term is a negative power, infinite at age 0 and fitted in adults:
   # it sees the age floored at ADULT_AGE_TERM_FLOOR (18), as for every such term.
   ageTerm <- max(age, ADULT_AGE_TERM_FLOOR)
@@ -164,8 +175,8 @@ apixaban <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "(stage 2 apparent oral two-compartment model; a non-Asian patient with ",
       "nonvalvular atrial fibrillation on no CYP3A4/P-gp inhibitor, morning ",
       "dosing; Cockcroft-Gault creatinine clearance from the entered creatinine ",
-      "or an assumed normal value for age and sex; renal term fixed exponent 1, ",
-      "no cap). ",
+      "or an assumed normal value for age and sex, held at 150 mL/min above it, ",
+      "as in the published control streams; renal term fixed exponent 1). ",
       "https://doi.org/10.1002/psp4.12347"
     )
   )

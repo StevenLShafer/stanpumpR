@@ -53,7 +53,7 @@ registry <- rbind(
   reg("apix_cirincione_2018_nvaf", "factor Xa inhibitor",
       "oral, nonvalvular atrial fibrillation", "apixaban plasma (ng/mL)", "none plotted",
       "PO", "research_ready", "apixaban",
-      "Indication/race/comedication/clock-time fixed to the NVAF morning-dose patient; renal term and F(dose) equation confirmed against the published supplement (no CrCl cap, fixed exponent 1).",
+      "Indication/race/comedication/clock-time fixed to the NVAF morning-dose patient; renal term and F(dose) equation confirmed against the published supplement and control streams (CrCl held at 150 mL/min above it, as every control stream does; fixed exponent 1).",
       "https://doi.org/10.1002/psp4.12347"),
   reg("riva_willmann_2018", "factor Xa inhibitor",
       "oral, pooled indications (AF here)", "rivaroxaban plasma (ng/mL)", "none plotted",
@@ -211,7 +211,7 @@ parameters <- rbind(
   par("bivalirudin", "Q", 0.0957, "L/h/kg", "estimated", ZH, "https://doi.org/10.1038/aps.2012.37"),
   par("bivalirudin", "V2", 0.0554, "L/kg", "estimated", ZH, "https://doi.org/10.1038/aps.2012.37"),
 
-  par("apixaban", "CL_R/F", 1.57, "L/h (x CrCl/80)", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
+  par("apixaban", "CL_R/F", 1.57, "L/h (x min(CrCl,150)/80)", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "CL_NR/F", 2.02, "L/h (x (age/65)^-0.429, x0.784 female)", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "NVAF factor on CL", 0.861, "fraction", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
   par("apixaban", "Vc/F", 30.0, "L (x (WT/70)^0.790, x0.960 NVAF)", "estimated", CIR, "https://doi.org/10.1002/psp4.12347"),
