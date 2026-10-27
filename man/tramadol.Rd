@@ -11,7 +11,8 @@ tramadol(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE)
 
 \item{height}{height in cm (fat-free mass only)}
 
-\item{age}{age in years (fat-free mass only)}
+\item{age}{age in years: the maturation of each clearance pathway, and
+fat-free mass}
 
 \item{sex}{sex as a string (fat-free mass only)}
 

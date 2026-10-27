@@ -33,9 +33,9 @@ test_that("returns the re-anchored Tran parameters with the fat-free-mass switch
     tPeak = 0,
     tPeakRoute = ROUTE_PO,
     MEAC = 0,
-    typical = 6,
-    upperTypical = 9.4,
-    lowerTypical = 4.1,
+    typical = 11,
+    upperTypical = 20,
+    lowerTypical = 2,
     reference = actual$reference,
     oralSaturation = list(Imax = 0.906, ID50 = 571)
   )

@@ -6,7 +6,7 @@ After the last bolus the effect site falls out of the band again within a minute
 
 ## Try next
 
-- Replace the three boluses with midazolam 2 mg, 1 mg and 1 mg at the same times (midazolam's band is 0.04 to 0.12 mcg/mL) and compare the tails.
+- Replace the three boluses with midazolam 2 mg, 1 mg and 1 mg at the same times (midazolam's band is 0.101 to 0.304 mcg/mL) and compare the tails.
 - Add a fourth and fifth dose at 15 and 20 minutes. The staircase keeps rising: each dose arrives before the last has worn off.
 - Change the patient to an 80-year-old woman. Remimazolam's clearance is higher in women and its V3 larger with age; see what changes.
 

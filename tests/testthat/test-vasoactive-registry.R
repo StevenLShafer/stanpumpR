@@ -238,7 +238,9 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(round(prop$v1, 2), value("propranolol", "V1"))
   expect_equal(round(prop$cl1, 3), value("propranolol", "CL"))
   expect_equal(value("nitroglycerin", "CL"), NITROGLYCERIN_CL)
-  expect_equal(value("nitroglycerin", "time constant"), NITROGLYCERIN_TAU)
+  expect_equal(value("nitroglycerin", "half-life after a stop"), NITROGLYCERIN_HALF_LIFE)
+  expect_equal(value("nitroglycerin", "time constant of the rise (not applied)"),
+               NITROGLYCERIN_TAU_RISE)
   # The derived values, to their printed precision
   lab <- twoCompartmentFromCentralVolume(LABETALOL_CL, LABETALOL_V1,
                                          LABETALOL_THALF_DISTRIBUTION,
@@ -250,7 +252,7 @@ test_that("the audit's numbers are the ones the models use", {
                                          DILTIAZEM_THALF_BETA)
   expect_equal(round(dil$v2, 1), value("diltiazem", "V2"))
   expect_equal(round(dil$cl2, 3), value("diltiazem", "Q"))
-  expect_equal(round(NITROGLYCERIN_CL * NITROGLYCERIN_TAU, 1),
+  expect_equal(round(NITROGLYCERIN_CL * NITROGLYCERIN_HALF_LIFE / log(2), 1),
                value("nitroglycerin", "V"))
   expect_equal(value("milrinone", "V1"), MILRINONE_V1)
   expect_equal(value("milrinone", "V3"), MILRINONE_V3)

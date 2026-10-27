@@ -26,7 +26,8 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-One compartment from the clearance and time constant reported for ten
-patients in congestive cardiac failure; see the header of
+One compartment from the clearance reported for ten patients in
+congestive cardiac failure and the 1.9-minute half-life after an infusion
+stops; see the header of
 \code{R/drugs_nitroglycerin.R} for how far to trust it.
 }

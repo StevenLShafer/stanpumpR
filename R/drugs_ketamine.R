@@ -25,9 +25,13 @@ ketamine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   k21 <- 0.4417174
   k31 <- 0.01373109   # V3 / V1 = 1.51 / 0.063
   
-  typical <- 0.12  # Moen 2013 review
-  lowerTypical <- 0.1 # mcg/ml - Moen 2013 review
-  upperTypical <- 0.16 # mcg/ml - Moen 2013 review
+  # Band, mcg/mL: "The ketamine analgesic effect persists for steady-state
+  # plasma concentrations superior to 100-160 ng/ml" (Mion G, Villevieille T,
+  # CNS Neurosci Ther 2013;19:370-380, citing Clements JA et al., J Pharm Sci
+  # 1982;71:539-542), an analgesic threshold, not a window.
+  typical <- 0.12
+  lowerTypical <- 0.1
+  upperTypical <- 0.16
   tPeak <- 3 # Assumed, not from Domino (who measured no effect): see the help
   MEAC <- 0
   reference <- "Domino EF et al., Clin Pharmacol Ther 1984;36(5):645-653. https://pubmed.ncbi.nlm.nih.gov/6488686/"

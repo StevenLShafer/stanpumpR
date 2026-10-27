@@ -30,9 +30,9 @@ test_that("returns the correct calculations", {
     )),
     tPeak = 0,
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 100,
+    upperTypical = 160,
+    lowerTypical = 44,
     reference = actual$reference
   )
 
@@ -92,12 +92,13 @@ test_that("the model is checked against Boellner 2010, and its shortfall is reco
 })
 
 
-test_that("lisdexamfetamine is offered orally only, with no claimed effect or band", {
+test_that("lisdexamfetamine is offered orally only, with no claimed effect and Hart 2026's band", {
   dd <- getDrugDefaultsGlobal(FALSE)
   row <- dd[dd$Drug == "lisdexamfetamine", ]
   units <- strsplit(row$Units, ",")[[1]]
   expect_equal(units, c("mg PO", "mg PO qd"))
   expect_true(all(doseRoute(units) == "PO"))
   expect_equal(row$Category, "Stimulants")
-  expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC, row$endCe), rep(0, 5))
+  expect_equal(c(row$Lower, row$Upper, row$Typical), c(44, 160, 100))
+  expect_equal(c(row$MEAC, row$endCe), c(0, 0))
 })

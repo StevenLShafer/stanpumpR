@@ -86,7 +86,7 @@ test_that("a shared surname links only with a given name or initials", {
   expect_match(link("Kim TK et al., Anesthesiology 2017"), 'data-investigator="kim-t">Kim TK</a>', fixed = TRUE)
   expect_match(link("Hyun Chul Kim"), 'data-investigator="kim-h">Hyun Chul Kim</a>', fixed = TRUE)
   expect_match(link("Holford NHG"), 'data-investigator="holford-n">Holford NHG</a>', fixed = TRUE)
-  expect_match(link("Sophie Holford"), 'data-investigator="holford-s">Sophie Holford</a>', fixed = TRUE)
+  expect_match(link("Sam Holford"), 'data-investigator="holford-s">Sam Holford</a>', fixed = TRUE)
   plain <- link("the Kim remifentanil model; Anderson and Holford (2008); Dr. Kim")
   expect_false(grepl('data-investigator="kim', plain))
   expect_false(grepl('data-investigator="holford', plain))
