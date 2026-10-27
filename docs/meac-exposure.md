@@ -62,7 +62,7 @@ regimens) rather than population thresholds, for the reasons in §6.
 | % MEAC per drug | `simCpCe()` writes `equiSpace$MEAC` | Effect-site based |
 | Total opioid U(t) | `totalOpioidMEAC()` in `R/opioidMacInteraction.R` (exported) | Additive sum on a common grid |
 | Metabolite scoring | `R/mergeMetabolite.R`, `foldMetabolites()` | Codeine → morphine, tramadol → desmetramadol, oxycodone → oxymorphone; the parent's own MEAC is 0 where its effect is the metabolite's |
-| Repeated dosing | `R/scheduled.R` (`qd`/`bid`/`tid`/`qid`) | Repeats to the end of the plot |
+| Repeated dosing | `R/scheduled.R` (`qd`/`bid`/`tid`/`qid`/`q4h`) | Repeats to the end of the plot |
 | Extravascular routes | `advanceClosedFormPO_IM_IN.R`; `ka_*`, `bioavailability_*`, `tlag_*` in drug functions | PO for oxycodone, hydromorphone, codeine, tramadol, oxymorphone; IM/IN for hydromorphone |
 | Covariates | drug functions, `pkSizeFactors()`, `R/renalFunction.R` | Size scaling is mandatory; renal terms only where the source has them |
 | Shiny-free driver | `simulateDrugsWithCovariates()` | Entry point for the API in §5 |

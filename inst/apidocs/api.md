@@ -244,7 +244,7 @@ be an object of equal-length columns:
   - **Extravascular doses** carry their route: oral (`mg PO`), sublingual
     (`mg SL`), intramuscular (`mg IM`), intranasal (`mcg IN`) and regional
     anesthesia (`mg RA`).
-- **Scheduled doses.** A unit ending in `qd`, `bid`, `tid` or `qid`
+- **Scheduled doses.** A unit ending in `qd`, `bid`, `tid`, `qid` or `q4h`
   (`mg PO bid`) repeats the dose until the end of the simulation. A scheduled
   dose of 0 stops the sequence.
 - **Target-controlled infusion.** The units `Plasma target` and

@@ -2057,7 +2057,9 @@ app_server <- function(input, output, session) {
         uiOutput("stopAdministrationUI"),
         footer = NULL,
         easyClose = TRUE,
-        size = "s"
+        # "m", not "s": the grid's Units column needs the room for a unit
+        # with a frequency ("mg PO liquid qid")
+        size = "m"
       )
     )
   }
@@ -2142,7 +2144,7 @@ app_server <- function(input, output, session) {
         ) %>%
         rhandsontable::hot_table(contextMenu = FALSE) %>%
         rhandsontable::hot_rows(rowHeights = 10) %>%
-        rhandsontable::hot_cols(colWidths = c(50,55,55,90)) %>%
+        rhandsontable::hot_cols(colWidths = c(55, 60, 100, 190)) %>%
         addHotHooks(filterKeys = TRUE, sanitize = TRUE)
       # "Dose or Target" for a drug with TCI units (as the Add a dose dialog);
       # the data column stays "Dose", which hot_to_r() names it by

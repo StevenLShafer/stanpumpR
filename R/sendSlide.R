@@ -207,7 +207,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
   openxlsx::addWorksheet(wb, "Covariates")
   openxlsx::writeData(wb, sheet = 1, covariates)
 
-  # The TCI infusion rows and the repeats of scheduled (qd/bid/tid/qid) doses
+  # The TCI infusion rows and the repeats of scheduled (qd/bid/tid/qid/q4h) doses
   # live outside the dose table in the app so that the table stays usable;
   # they are merged in for the export (tci.R, scheduled.R).
   outputComments("Writing dose table")

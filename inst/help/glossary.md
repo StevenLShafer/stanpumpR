@@ -80,7 +80,7 @@
 
 **Response surface.** A model of the combined effect of two drugs as a function of both concentrations. See [Propofol-opioid interaction](help:models/interaction).
 
-**Scheduled dose.** A dose whose unit ends in `qd`, `bid`, `tid` or `qid`, repeated every 24, 12, 8 or 6 hours to the end of the plot. See [The dose table](help:dose-table).
+**Scheduled dose.** A dose whose unit ends in `qd`, `bid`, `tid`, `qid` or `q4h`, repeated every 24, 12, 8, 6 or 4 hours to the end of the plot. See [The dose table](help:dose-table).
 
 **Second gas effect.** The faster rise of a second inhaled agent in the presence of nitrous oxide, because nitrous oxide's bulk uptake concentrates it.
 

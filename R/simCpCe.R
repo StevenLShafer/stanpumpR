@@ -233,7 +233,7 @@ superposeEngineResults <- function(parts, plotRecovery, emerge)
 #'   \code{metaboliteRecoveryStates}; \code{foldMetabolites()} adds that
 #'   contribution, and its recovery, to the metabolite drug's own row.
 #'   \code{tci} holds the TCI schedule, if any, and \code{scheduled} the
-#'   repeats of any qd/bid/tid/qid dose (Drug, Time, Dose, Units), or NULL.
+#'   repeats of any qd/bid/tid/qid/q4h dose (Drug, Time, Dose, Units), or NULL.
 #'   \code{compartments} holds the concentrations in the peripheral volumes
 #'   (\code{V2}, \code{V3}) and the amount still in the absorption depots
 #'   (\code{Depot}), by \code{Time}, for the compartments the drug has, or
@@ -263,7 +263,7 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     late[is.na(late)] <- FALSE
     if (any(late)) dose <- dose[!late, , drop = FALSE]
 
-    # Scheduled doses (qd, bid, tid, qid): expand each into its repeats out to
+    # Scheduled doses (qd, bid, tid, qid, q4h): expand each into its repeats out to
     # the end of the plot, while the dose is still in the user's units.  The
     # repeats are also returned on their own, for export; see scheduled.R.
     expanded <- expandScheduledDoses(dose, maximum)

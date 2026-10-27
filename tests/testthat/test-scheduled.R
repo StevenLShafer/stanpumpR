@@ -1,4 +1,4 @@
-# Scheduled (repeating) doses: qd, bid, tid, qid (scheduled.R).  Drafted by
+# Scheduled (repeating) doses: qd, bid, tid, qid, q4h (scheduled.R).  Drafted by
 # Claude Code, 2026-10-07, at the request of Steven L. Shafer.
 
 local_mocked_bindings(outputComments = function(...) {})
@@ -19,7 +19,7 @@ test_that("each frequency repeats at its interval out to the end of the plot", {
     expect_equal(sort(x$dose$Time), seq(0, 2 * MINS_PER_DAY - 1, by = h))
     expect_true(all(x$dose$Units == "mg"))
   }
-  expect_equal(unname(SCHEDULE_INTERVALS), c(24, 12, 8, 6) * 60)
+  expect_equal(unname(SCHEDULE_INTERVALS), c(24, 12, 8, 6, 4) * 60)
 })
 
 test_that("the sequence starts at the entered time, not at zero", {
@@ -249,7 +249,7 @@ test_that("the repeats are merged into the exported dose table", {
 
 test_that("the scheduled units are offered and validated", {
   units <- unlist(getDrugDefaultsGlobal()$Units)
-  offered <- units[grepl(" (qd|bid|tid|qid)$", units)]
+  offered <- units[grepl(" (qd|bid|tid|qid|q4h)$", units)]
   expect_gt(length(offered), 0)
   expect_true(all(offered %in% scheduledUnits))
   expect_true(all(nchar(scheduledUnits) <= MAX_UNIT_STRING_LENGTH))
@@ -258,6 +258,17 @@ test_that("the scheduled units are offered and validated", {
   expect_true(validateDoseTableInput(doses("0", "1", "g qid")))
   expect_equal(doseRoute(c("mg bid", "mg/kg PO qd", "mg IM tid", "mcg IN qid")),
                c("IV", "PO", "IM", "IN"))
+})
+
+test_that("every unit offered qid is also offered q4h", {
+  for (u in getDrugDefaultsGlobal()$Units) {
+    qid <- u[grepl(" qid$", u)]
+    expect_setequal(sub(" qid$", " q4h", qid), u[grepl(" q4h$", u)])
+  }
+  expect_true("mg PO liquid q4h" %in% getDrugDefaults("morphine")$Units[[1]])
+  expect_equal(doseRoute("mg/kg PO liquid q4h"), "PO")
+  x <- expandScheduledDoses(doses(0, 5, "mg PO q4h", "oxycodone"), MINS_PER_DAY)
+  expect_equal(x$scheduled$Time, c(4, 8, 12, 16, 20) * 60)
 })
 
 # Skip next dose (skipNextScheduledDose()): the dialog's button, as a dose table

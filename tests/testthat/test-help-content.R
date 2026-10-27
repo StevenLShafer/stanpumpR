@@ -328,7 +328,7 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
   for (i in seq_len(nrow(dd))) {
     units <- dd$Units[[i]]
     units <- units[!is.na(units) & nzchar(units)]
-    units <- unique(sub(" (qd|bid|tid|qid|qwk)$", "", units))
+    units <- unique(sub(" (qd|bid|tid|qid|q4h|qwk)$", "", units))
     route <- doseRoute(units)
     if (!any(route %in% names(column))) next
     title <- helpDrugTitle(dd$Drug[i])
