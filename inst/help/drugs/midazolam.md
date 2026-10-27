@@ -12,7 +12,7 @@ The time to peak effect is 3.0 minutes, from the same volunteers as the kinetics
 
 ### Typical concentrations
 
-The shaded band, 0.04 to 0.12 mcg/mL, is a sedation range. Concentrations needed for hypnosis as a sole agent are several times higher. The default recovery threshold is 0.04 mcg/mL.
+The shaded band, 0.05 to 0.15 mcg/mL (50 to 150 ng/mL), is the sedation range of the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, doi [10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)), which 10 mg by mouth reaches after 1 to 2 hours; the laboratory alert level is 1 mcg/mL, and the guideline's level of recommendation is its lowest, 4. It attributes the range to Matsuda and colleagues (*Acta Anaesthesiol Scand* 2022;66:818-822), but in that study of oral premedication in children the serum concentration was the same, about 48 ng/mL, whether or not the child was sedated, so the study does not itself establish the range. It replaced 0.04 to 0.12 mcg/mL, whose source the library did not record. Reaction time slows above 0.02 mcg/mL. Concentrations needed for hypnosis as a sole agent are several times higher. The default recovery threshold is 0.04 mcg/mL.
 
 ### Where to be careful
 

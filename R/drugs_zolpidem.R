@@ -93,9 +93,11 @@
 #
 # BAND AND THRESHOLD
 # ==================
-# Band 80-200 ng/mL, the therapeutic range Cha 2024 quotes from a toxicology
-# compilation (the compilation itself was not checked); typical 120, the
-# label's mean peak after 10 mg.  The time-until-threshold level (endCe in the CSV, which for a
+# Band 80-200 ng/mL, the therapeutic reference range for sleep disorders of
+# Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861), 1-3 h after a
+# dose, alert level 400 ng/mL (Cha 2024 quotes the same range from a
+# toxicology compilation); typical 120, the label's mean peak after 10 mg.  The time-until-threshold level (endCe in the CSV, which for a
 # drug without an effect site is read against plasma) is 50 ng/mL: "Zolpidem
 # blood levels above approximately 50 ng/mL appear capable of impairing
 # driving to a degree that increases the risk of a motor vehicle accident"
@@ -179,7 +181,7 @@ zolpidem <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL plasma: therapeutic range 80-200 (Cha 2024), typical the
+  # Band, ng/mL: therapeutic reference range 80-200 (Hart 2026), typical the
   # label's mean peak after 10 mg.  The 50 ng/mL driving threshold is endCe
   # in the CSV.
   typical      <- 120

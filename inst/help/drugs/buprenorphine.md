@@ -30,11 +30,10 @@ That ke0 was estimated with Yassen's own disposition, not Björnsson's. So it is
 
 ### Typical concentrations
 
-There is no established MEAC for buprenorphine. As a high-affinity partial agonist it does not add to full agonists the way the MEAC panel assumes, so it is not on that panel. The shaded band is the **opioid use disorder** range:
+There is no established MEAC for buprenorphine. As a high-affinity partial agonist it does not add to full agonists the way the MEAC panel assumes, so it is not on that panel. The shaded band, 0.5 to 2.5 ng/mL, is the therapeutic reference range for **opioid use disorder** of the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, doi [10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)), sampled 24 hours after a dose, with a laboratory alert level of 4 ng/mL. The guideline quotes Laffont and colleagues' 2 to 3 ng/mL, at least 70% μ-receptor occupancy, as optimal. It replaced 1.25 to 3 ng/mL.
 
-- 1.25 ng/mL: withdrawal suppression. This is also the recovery threshold.
-- 2.2 ng/mL: 70% μ-receptor occupancy, by Nasser 2014's model (occupancy = 91.4% × C/(0.67 + C)).
-- 3 ng/mL: the upper end of the 2 to 3 ng/mL quoted for blocking opioid reinforcement.
+- 1.25 ng/mL: withdrawal suppression. This is the recovery threshold.
+- 2.2 ng/mL, the typical value: 70% μ-receptor occupancy, by Nasser 2014's model (occupancy = 91.4% × C/(0.67 + C)).
 
 These are plasma concentrations from maintenance treatment. They are not analgesic targets.
 

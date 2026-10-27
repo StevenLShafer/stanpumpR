@@ -22,9 +22,9 @@ test_that("the reference patient receives DeVane's typical values", {
       tPeak = 0,
       ke0 = log(2) / 4.8,
       MEAC = 0,
-      typical = 30,
-      upperTypical = 40,
-      lowerTypical = 20,
+      typical = 25,
+      upperTypical = 44,
+      lowerTypical = 5,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)

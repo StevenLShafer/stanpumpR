@@ -20,7 +20,7 @@ The time to peak effect is 93.8 minutes, the slowest in the library by far. It i
 
 ### MEAC and typical concentrations
 
-MEAC is 8 ng/mL (0.008 mcg/mL in the plotted units) and the shaded band 6.4 to 16 ng/mL. These are the library's values, not Lötsch's. For comparison, Dahlström and colleagues (*Clin Pharmacokinet* 1982;7:266-279) measured a mean minimum effective concentration of 16 ± 9 ng/mL in patients using morphine patient-controlled analgesia after abdominal surgery, which is the top of the band. Oxycodone's, hydrocodone's and oxymorphone's MEACs are set relative to morphine's, so the four move together.
+MEAC is 8 ng/mL (0.008 mcg/mL in the plotted units) and the shaded band 6.4 to 16 ng/mL. These are the library's values, not Lötsch's. For comparison, Dahlström and colleagues (*Clin Pharmacokinet* 1982;7:266-279) measured a mean minimum effective concentration of 16 ± 9 ng/mL in patients using morphine patient-controlled analgesia after abdominal surgery, which is the top of the band. Oxycodone's, hydrocodone's and oxymorphone's MEACs are set relative to morphine's, so the four move together. The AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5) gives 5 to 400 ng/mL for chronic pain and 50 to 520 ng/mL for opioid use disorder, spreads that depend on tolerance; they are not drawn.
 
 ### Active metabolite
 

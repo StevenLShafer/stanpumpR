@@ -31,4 +31,4 @@ The fit explained 43 per cent of the variance in measured concentrations. As a c
 
 ### Effect site and typical range
 
-None. No calibrated concentration-effect model exists for a classroom measure (SKAMP, PERMP) or for weekly symptom scores (ADHD-RS-IV), and no concentration is an established therapeutic threshold, so no band is drawn. Nothing on this plot is a dose recommendation.
+None. No calibrated concentration-effect model exists for a classroom measure (SKAMP, PERMP) or for weekly symptom scores (ADHD-RS-IV), and no concentration is an established therapeutic threshold, so no band is drawn. The AGNP consensus guidelines' 2026 update gives two ranges for responders to OROS methylphenidate at 1.0 mg/kg a day, 3.8 to 7.7 ng/mL 1 hour and 6.6 to 13 ng/mL 6 hours after the dose (Cherma and colleagues, 2017), which no single band can show. Nothing on this plot is a dose recommendation.

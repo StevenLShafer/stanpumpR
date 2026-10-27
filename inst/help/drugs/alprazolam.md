@@ -21,7 +21,7 @@ The effect-site rate constant is 0.144/min, an equilibration half-life of 4.8 mi
 
 ### Typical concentrations
 
-The shaded band, 20 to 40 ng/mL, is the steady-state range at which anxiety in panic disorder is best reduced (Greenblatt and Wright); higher concentrations may be needed to suppress the panic attacks themselves. For comparison, half-maximal impairment of card sorting and digit-symbol substitution occurred at 37 to 40 ng/mL in young men and 25 ng/mL in the elderly (Bertz and colleagues, *J Pharmacol Exp Ther* 1997;281:1317-1329). No time-until-threshold level is set.
+The shaded band, 5 to 44 ng/mL, is the therapeutic reference range for anxiety and panic disorders of the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, doi [10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)): the concentrations expected on 1 to 4 mg a day, sampled 10 hours after the last dose, with a laboratory alert level of 100 ng/mL. The typical value, 25 ng/mL, is its midpoint. It replaced 20 to 40 ng/mL, which lies inside it: the steady-state range at which anxiety in panic disorder is best reduced (Greenblatt and Wright); higher concentrations may be needed to suppress the panic attacks themselves. For comparison, half-maximal impairment of card sorting and digit-symbol substitution occurred at 37 to 40 ng/mL in young men and 25 ng/mL in the elderly (Bertz and colleagues, *J Pharmacol Exp Ther* 1997;281:1317-1329). No time-until-threshold level is set.
 
 ### Where to be careful
 

@@ -58,6 +58,7 @@ therapeuticRangeSummary <- function(r)
     sum_not_drawn = sprintf("%s for %s, so not drawn on either row; %s", limits, what, r$source),
     pending_verification = sprintf("Not drawn: not yet verified in a primary source (%s)", r$source),
     not_applicable = sprintf("Not drawn: %s", r$notes),
+    band_differs = sprintf("%s (%s; %s), not the band drawn: %s", limits, what, r$source, r$notes),
     none_established = sprintf("None established (%s)", r$source)
   )
 }

@@ -110,13 +110,19 @@
 # patient.  Children 6-12 only: adolescents and adults are extrapolations of
 # the borrowed weight equations, and the label gives longer half-lives in both.
 #
-# NO EFFECT SITE, NO THERAPEUTIC BAND
-# ===================================
+# NO EFFECT SITE; THE BAND
+# ========================
 # McGough found no clear relationship between concentration and behavioural
 # response, and no calibrated concentration-effect model exists for a
-# classroom or weekly endpoint.  tPeak, MEAC and the band are zero.  A UK
-# regulatory summary mentions a d-amphetamine EC50 of 24-28 ng/mL from an
-# incomplete sponsor model; it is not used.
+# classroom or weekly endpoint.  tPeak and MEAC are zero.  A UK regulatory
+# summary mentions a d-amphetamine EC50 of 24-28 ng/mL from an incomplete
+# sponsor model; it is not used.  The band, 23-45 ng/mL of d-amphetamine 3.3
+# h after a dose, is the therapeutic reference range of
+# Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861), alert level 120
+# ng/mL: the mean +/- SD in McGough's 51 children at steady state on 10 mg of
+# the 3:1 mixture, so the concentrations that dose produced rather than a
+# window of efficacy, with no data in adults.  Typical 34, its midpoint.
 # -----------------------------------------------------------------------------
 
 # Formula weights (g/mol) of the four salts and of amphetamine base.
@@ -210,9 +216,9 @@ mixedAmphetamineSalts <- function(weight, height, age, sex, adjustToFFM = TRUE)
       PK = PK,
       tPeak = 0,     # no calibrated effect model (header)
       MEAC = 0,
-      typical = 0,   # no therapeutic band (header)
-      upperTypical = 0,
-      lowerTypical = 0,
+      typical = 34,  # Hart 2026's range (header)
+      upperTypical = 45,
+      lowerTypical = 23,
       reference = reference,
       # Adderall XR: half at once, half 4 h later, each absorbed as the tablet
       oralPulses = list(XR = list(fraction = c(0.5, 0.5),

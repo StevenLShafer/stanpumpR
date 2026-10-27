@@ -12,7 +12,7 @@ The time to peak effect is 3 minutes. It is an assumption: Domino measured no ef
 
 ### Typical concentrations
 
-The shaded band, 0.1 to 0.16 mcg/mL, is an **analgesic** range for sub-anesthetic ketamine, from a 2013 review cited in the code. Anesthetic concentrations are an order of magnitude higher, around 1 to 2 mcg/mL. The default recovery threshold is 0.1 mcg/mL. See [the ketamine infusion scenario](scenario:ketamine-infusion).
+The shaded band, 0.1 to 0.16 mcg/mL, is an **analgesic** range for sub-anesthetic ketamine, from a 2013 review cited in the code. Anesthetic concentrations are an order of magnitude higher, around 1 to 2 mcg/mL. The default recovery threshold is 0.1 mcg/mL. See [the ketamine infusion scenario](scenario:ketamine-infusion). The AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5) gives 0.06 to 0.41 mcg/mL immediately after an infusion of 0.5 mg/kg over 40 minutes, for depression; it is not drawn, since this band is for analgesia.
 
 ### Where to be careful
 

@@ -50,9 +50,9 @@ test_that("the reference patient receives Chan's typical parameters", {
       tPeak = 283,
       tPeakRoute = ROUTE_PO,
       MEAC = 0,
-      typical = 2.7,
-      upperTypical = 5.4,
-      lowerTypical = 1.3,
+      typical = 4.75,
+      upperTypical = 8,
+      lowerTypical = 1.5,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)

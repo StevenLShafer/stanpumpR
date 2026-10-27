@@ -34,7 +34,7 @@ Henthorn's study measured no effect. The time to peak effect is 10 minutes after
 
 ### MEAC and typical concentrations
 
-MEAC is 60 ng/mL of racemic methadone (0.06 mcg/mL in the plotted units); the shaded band is 48 to 120 ng/mL. It is Gourlay's postoperative value, as quoted by Inturrisi; Inturrisi's own concentration for half-maximal analgesia, in opioid-tolerant cancer patients, was 290 ng/mL.
+MEAC is 60 ng/mL of racemic methadone (0.06 mcg/mL in the plotted units); the shaded band is 48 to 120 ng/mL. It is Gourlay's postoperative value, as quoted by Inturrisi; Inturrisi's own concentration for half-maximal analgesia, in opioid-tolerant cancer patients, was 290 ng/mL. The AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5) gives 90 to 620 ng/mL, 24 hours after a dose, for maintenance treatment of opioid use disorder in tolerant patients, and notes that effective or toxic concentrations are markedly lower, about 100 ng/mL, in people who do not use opioids; it is not drawn.
 
 ### Where to be careful
 

@@ -161,9 +161,14 @@ midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE,
              "Pharmacometrics Syst Pharmacol 2012;1:e2. ",
              "https://doi.org/10.1038/psp.2012.5")))
   }
-  typical <- .100 
-  lowerTypical <- .040
-  upperTypical <- .120
+  # Band, mcg/mL: the sedation range of Hart 2026 (AGNP consensus, update
+  # 2026, Pharmacopsychiatry 59:166-295, Table 5), 50-150 ng/mL, level 4; it
+  # replaced 0.04-0.12, whose source was not recorded.  The guideline cites
+  # Matsuda 2022, whose children had the same serum concentration, about 48
+  # ng/mL, sedated or not, so that study does not itself establish the range.
+  typical <- .100
+  lowerTypical <- .050
+  upperTypical <- .150
   MEAC <- 0
   tPeak <- 3.0
   return(

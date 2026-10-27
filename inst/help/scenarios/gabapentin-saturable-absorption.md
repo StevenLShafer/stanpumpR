@@ -6,7 +6,7 @@ The reason is the carrier that absorbs gabapentin from the small intestine, whic
 
 Both peaks fall about 2.8 hours after their dose. Saturation changes how much is absorbed, not how fast. The flat start to each curve is the absorption lag of about 19 minutes.
 
-The shaded band, 4.1 to 9.4 mcg/mL, is the average concentration at the doses that work in chronic postherpetic neuralgia. A single 600 mg dose, the usual preoperative dose, peaks at its lower edge, and doubling the dose does not double the concentration.
+The shaded band, 2 to 20 mcg/mL, is the therapeutic reference range for epilepsy and neuropathic pain of the AGNP consensus guidelines' 2026 update, 12 hours after a dose. A single 600 mg dose, the usual preoperative dose, peaks at about 3.9 mcg/mL, below the 4.1 to 9.4 mcg/mL average at the doses that work in chronic postherpetic neuralgia, and doubling the dose does not double the concentration.
 
 ## Try next
 

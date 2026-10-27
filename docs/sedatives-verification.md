@@ -114,7 +114,8 @@ it. **Kept as is** by Dr Shafer's decision (2026-10-09).
   venous thrombosis (Halliday 1987). Bioavailability 0.92 (label);
   absorption t½ 0.38 h (Müller 1987, morning soft gelatin).
 - No effect site: van Steveninck found proteresis, not hysteresis.
-- Band 250-600 ng/mL; threshold 250 ng/mL, where psychometric deterioration
+- Band 250-600 ng/mL (since 2026-10-27, 200-750 ng/mL, the AGNP 2026 range;
+  docs/therapeutic-ranges.md); threshold 250 ng/mL, where psychometric deterioration
   began (Saletu 1986).
 - Validation: 20 mg peaks at 545 ng/mL at 55 min (Müller: 510 at 1.0 h; range
   362-708). 30 mg peaks at 818 (label 865). 30 mg nightly on day 7 gives 217

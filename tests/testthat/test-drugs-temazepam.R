@@ -46,9 +46,9 @@ test_that("the reference patient receives the fitted per-kilogram values", {
       tPeak = 0,
       tPeakRoute = ROUTE_PO,
       MEAC = 0,
-      typical = 400,
-      upperTypical = 600,
-      lowerTypical = 250,
+      typical = 475,
+      upperTypical = 750,
+      lowerTypical = 200,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)
