@@ -155,7 +155,20 @@
 # 2.6 L/kg (182 L), matches Allegaert's Vss of 185 L; hence the shorter
 # half-life and the larger shortfall at steady state.  Holford's adult fit
 # (28.9 L/h) had the same 4.3 h half-life and the same M1 shortfall, so the
-# switch to Allegaert did not introduce it.  The shortfall is RECORDED, NOT
+# switch to Allegaert did not introduce it.
+#
+# Clearance is the one parameter here that measures a physiological process,
+# so it is where a disagreement between sources means something; the volumes
+# depend on how a study was done (see AGENTS.md, "Comparing sources").  Two
+# observations bear on the gap.  First, it is not an assay artifact: an
+# older, less sensitive assay truncates the terminal phase and SHORTENS the
+# half-life, yet the 1990s label has the longer one.  Second, Allegaert
+# reports that adding the children to Holford's adult data raised the adult
+# clearance by other pathways by 23% under the maturation model (Results),
+# which is about the size of the gap (32.1 against 26.9 L/h, 19%); Holford's
+# adult-only 28.9 L/h is nearer the label.  Part of the shortfall may
+# therefore come from fitting adults and children together rather than from
+# the drug.  The shortfall is RECORDED, NOT
 # CORRECTED: Allegaert's clearances are a fit to 295 people, the label's a
 # table from a few healthy volunteers, and tuning one to the other would
 # make the model neither.  test-drugs-tramadol.R pins the comparison so a
