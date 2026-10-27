@@ -17,6 +17,9 @@
 # is NOT independently dosable: its CSV row carries no Units and no Category,
 # so it never appears in the dose table's autocomplete, the Add a dose dialog
 # or the startup menu, and its whole curve comes from foldMetabolites().
+# (visibleDrugNames() drops every drug with no dose units, and a click on its
+# panel opens the dose dialogs on enalapril, formedMetaboliteParent(); before
+# 2026-10-27 neither was so and enalaprilat was offered with no unit.)
 #
 # WHY THERE IS NO INTRAVENOUS ENALAPRILAT HERE
 # ============================================

@@ -10,10 +10,17 @@
 #
 # WHAT THE SOURCE IS
 # ==================
-# A NONMEM analysis of 5119 plasma concentrations from 629 participants in 12
-# trials -- 355 Westerners (338 Caucasian, 17 Hispanic) and the remainder
-# Japanese, healthy volunteers and hypertensive patients, single and multiple
-# oral doses of olmesartan medoxomil 2.5 to 80 mg.  Two compartments with
+# A NONMEM analysis of 7911 plasma concentrations from 472 people in 12
+# trials: 89 healthy volunteers and 383 hypertensive patients (337 with
+# hypertension only, 34 with renal and 12 with hepatic impairment), 355
+# Westerners (338 Caucasian, 17 Hispanic) and 117 Japanese, single and
+# multiple oral doses of olmesartan medoxomil 2.5 to 80 mg.  Table II counts
+# 592 individuals (209 healthy, 475 Western) because the 30 Western men of a
+# five-way crossover (trial 5) were "treated as separate individuals" in each
+# period (its footnote b): 30 x 4 = 120 more.  (Until 2026-10-27 this header
+# said 5119 concentrations from 629 participants; an adversarial review
+# caught it, and the counts were settled from the full text.)  Two
+# compartments with
 # first-order absorption and an absorption lag (ADVAN4/TRANS1), parameterised
 # in CL/F, ka, ke, k12, k21 and ALAG.  Table IV is transcribed into
 # inst/extdata/antihypertensiveParameters.csv with its standard errors.
@@ -68,8 +75,8 @@
 # one: a patient receiving an angiotensin receptor blocker is a hypertensive
 # patient, and the source's own headline typical values are the hypertensive
 # ones (6.66 L/h male, 5.76 L/h female).  This is the same choice
-# ertugliflozin makes with its type 2 diabetes term.  It matters: healthy
-# volunteers clear olmesartan 21.3% faster, so taking the healthy reference
+# ertugliflozin makes with its type 2 diabetes term.  It matters: CL/F is
+# 21.3% lower in hypertensive patients, so taking the healthy reference
 # would draw every curve 21% too low.
 #
 # RACE IS NOT APPLIED, AND IT IS THE SMALLEST TERM IN THE MODEL
@@ -78,7 +85,7 @@
 # Patient Profile and this library will not invent one.  The cost is bounded
 # and tiny: the term was NOT statistically significant (p > 0.05, %CV 131, a
 # bootstrap interval spanning zero), and Japanese participants cleared
-# olmesartan 3.0% faster.  The authors kept it only because the paper's purpose
+# olmesartan 3.0% more slowly (exp(-0.030) = 0.970).  The authors kept it only because the paper's purpose
 # was to look for a race effect and report that there is none -- which is the
 # finding, not the coefficient.
 #
@@ -218,7 +225,7 @@ olmesartan <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "prodrug, olmesartan medoxomil: in healthy volunteers and hypertensive ",
     "patients. Clin Pharmacokinet 2005;44:1329-42. Two compartments with ",
     "first-order absorption and a 0.427 h lag, apparent in bioavailability, ",
-    "from 5119 concentrations in 629 participants in 12 trials: ",
+    "from 7911 concentrations in 472 people in 12 trials: ",
     "CL/F = 7.32 x (age/50)^-0.117 x (weight/70)^0.310 x (creatinine/80)",
     "^-0.344 x exp(0.145 if male) x exp(-0.239 if hypertensive) with ",
     "creatinine in umol/L, ke 0.193 /h, k12 0.061 /h, k21 0.079 /h, ",
@@ -227,7 +234,7 @@ olmesartan <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "A dose is entered as olmesartan medoxomil, as prescribed: the source ",
     "normalised its data to a 20 mg medoxomil dose, so the apparent ",
     "parameters already carry the prodrug's molecular weight. The patient ",
-    "status term is applied as hypertensive; the race term (3.0% faster in ",
+    "status term is applied as hypertensive; the race term (3.0% lower in ",
     "Japanese, not statistically significant) is not applied, there being no ",
     "such field. A blank serum creatinine means the assumed normal value for ",
     "the patient's age and sex. ",

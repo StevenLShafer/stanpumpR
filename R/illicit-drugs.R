@@ -60,11 +60,28 @@ illicitRouteRegistry <- function() {
 #'
 #' @param showIllicit is the illicit-drug opt-in on?
 #' @param drugDefaults the drug library
-#' @returns the drug names to offer: every drug when the opt-in is on, every
-#'   non-illicit drug when it is off, in library order
+#' @returns the drug names to offer: every dosable drug when the opt-in is on,
+#'   every dosable non-illicit drug when it is off, in library order.  A drug
+#'   with no dose units is a metabolite that is only ever formed (enalaprilat,
+#'   salicylate, norfluoxetine, ...) and is never offered for dosing.
 #' @noRd
 visibleDrugNames <- function(showIllicit, drugDefaults = getDrugDefaultsGlobal()) {
-  drugs <- drugDefaults$Drug
+  drugs <- drugDefaults$Drug[isDosableDrug(drugDefaults$Drug, drugDefaults)]
   if (isTRUE(showIllicit)) return(drugs)
   drugs[!isIllicitDrug(drugs, drugDefaults)]
+}
+
+#' Can the drug be dosed, that is, does it offer any dose unit?
+#'
+#' A metabolite-only row (blank Units, no Category) has none: it is drawn when
+#' a parent forms it, and has no unit a dose of it could be entered in.
+#'
+#' @param drugs drug names
+#' @param drugDefaults the drug library
+#' @returns a logical vector, FALSE for a drug not in the library
+#' @noRd
+isDosableDrug <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
+  units <- drugDefaults$Units[match(drugs, drugDefaults$Drug)]
+  vapply(units, function(u) any(!is.na(u) & nzchar(u)), logical(1),
+         USE.NAMES = FALSE)
 }

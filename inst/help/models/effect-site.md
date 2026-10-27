@@ -16,6 +16,8 @@ Because the effect site adds one more first-order process, the effect-site conce
 
 The plasma concentration is what a blood sample measures; the effect-site concentration is what the patient responds to. Clinical correlates, the concentration for loss of consciousness, for adequate analgesia, for return of neuromuscular function, are effect-site concentrations. This is why stanpumpR draws the effect site solid and hides the plasma by default, and why the shaded therapeutic band and the recovery thresholds apply to the effect site.
 
+Two cautions. The effect site is only as good as its time to peak effect: for the anaesthetic drugs it was fitted to a measured effect, usually the EEG, but for some others (several vasoactive drugs among them) it is carried from another study or is a clinical estimate, and a solved ke0 says nothing about whether a pressure, a heart rate or a rhythm follows it; each drug's page gives the source. And a band that is a laboratory range (digoxin, the antiseizure, antidepressant and antipsychotic drugs) was measured in sampled serum at a stated time, usually a trough or six or more hours after a dose, so it is read against the curve at that time, not at an early peak.
+
 ## Time to peak effect, and how ke0 is found
 
 ke0 cannot be measured directly. It is estimated from the time course of a measured effect, usually the processed EEG, during a bolus or a rapid infusion. A model-independent way to report the result is the **time to peak effect** after a bolus, tPeak: the moment at which the rising effect-site concentration meets the falling plasma concentration.

@@ -120,12 +120,14 @@
 # -----------------------------------------------------------------------------
 # TO BE SUPPLIED
 # -----------------------------------------------------------------------------
-# No human concentration-effect vector for hydrocodone was found.  Until these
-# two numbers are set, hydrocodone is plotted as plasma only and contributes
-# nothing to the opioid MEAC total, with whatever effect it has appearing on
-# the hydromorphone row.
+# No human concentration-effect vector for hydrocodone was found.  Both
+# numbers below were set provisionally (tPeak 2026-10-06, MEAC 2026-10-12),
+# so hydrocodone now has an effect site and contributes to the opioid MEAC
+# total alongside the hydromorphone it forms.  Before they were set, it was
+# plotted as plasma only.
 #
-# That UNDERSTATES hydrocodone.  Unlike codeine it is not a pure prodrug:
+# Whether that is the right share is open.  Unlike codeine it is not a pure
+# prodrug:
 # Otton 1993 found poor metabolisers still reported opioid effects, so some of
 # the effect is the parent's.  Boswell 2013 found postoperative pain relief
 # tracking hydromorphone rather than hydrocodone concentrations, which points
@@ -173,18 +175,21 @@ HYDROCODONE_TPEAK <- 90  # minutes after an ORAL dose; provisional, see above
 # ---------------------------------------------------------------------------
 # Set to oxycodone's 12 ng/mL by decision of Steven L. Shafer, 2026-10-12, in
 # the opioid MEAC and tPeak audit, as a working value pending a
-# hydrocodone-specific one.  By mouth hydrocodone and oxycodone are about
-# equipotent milligram for milligram (Kapil 2015 cites both at about twice
-# oral morphine), and their apparent clearances are similar, so equianalgesic
-# doses reach similar concentrations: 30 mg of hydrocodone and 20 mg of
-# oxycodone by mouth both peak near 37 ng/mL here.  The value first set
+# hydrocodone-specific one.  The comparison is between EQUIANALGESIC doses,
+# not equal milligrams: 30 mg of hydrocodone and 20 mg of oxycodone by mouth
+# (the CDC's oral morphine milligram equivalent factors are 1 and 1.5, which
+# the CDC says are not dose-conversion factors) both peak near 37 ng/mL here,
+# so equianalgesic doses reach similar concentrations and a shared MEAC is
+# consistent.  Until 2026-10-27 this note called the two "about equipotent
+# milligram for milligram", which the 30:20 comparison itself contradicts
+# (opioid potency audit, docs/opioid-review-2026-10-27.md).  The value first set
 # (2026-10-06) was morphine's 8 ng/mL, which left 30 mg by mouth above MEAC
 # for about 20 hours at 4.6 MEAC, against 8 hours at 3.1 MEAC for 20 mg of
 # oxycodone: the clearest outlier in the audit.
 #
 # What would validate or replace it:
 #   - A human concentration-effect study for hydrocodone.  None was found;
-#     this remains the gap that keeps HYDROCODONE_TPEAK at zero.
+#     HYDROCODONE_TPEAK is provisional for the same reason.
 #   - Equipotency with oxycodone is the assumption being made, and it is an
 #     assumption about ORAL analgesic equivalence carried over to a plasma
 #     concentration, which is not the same thing.
@@ -192,9 +197,6 @@ HYDROCODONE_TPEAK <- 90  # minutes after an ORAL dose; provisional, see above
 #     package already plots that contribution on the hydromorphone row.  A
 #     parent MEAC fitted in the presence of that metabolite would double count
 #     unless the two are partitioned together.
-#
-# This value does nothing until HYDROCODONE_TPEAK is also set: with no effect
-# site there is no effect-site concentration to compare against it.
 HYDROCODONE_MEAC  <- 12  # ng/mL; provisional, equal to oxycodone's, see above
 # -----------------------------------------------------------------------------
 

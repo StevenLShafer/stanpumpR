@@ -1,5 +1,5 @@
 # Buprenorphine: Bjornsson 2023 disposition, one first-order sublingual input
-# fitted to the published two-pathway one, intranasal from Eriksen 1989, ke0
+# fitted to the published two-pathway one (intranasal withdrawn 2026-10-27), ke0
 # from Yassen 2006 carried as a tPeak.  See the header of R/drugs_buprenorphine.R.  Pins were
 # worked out from the published numbers by hand (Python), not from the code
 # under test.  (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
@@ -20,10 +20,7 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         cl3 = 1.005,
         ka_SL = 0.0171905401,
         bioavailability_SL = 0.422692,
-        tlag_SL = 17.587178,
-        ka_IN = 0.0227053660,
-        bioavailability_IN = 0.482,
-        tlag_IN = 0
+        tlag_SL = 17.587178
       )
     ),
     tPeak = 61.2,
@@ -105,7 +102,7 @@ test_that("the CSV row matches the model's band and offers no MEAC", {
   expect_equal(row$endCe, BUPRENORPHINE_WITHDRAWAL)
   expect_equal(row$Category, "Opioids")
   routes <- unique(doseRoute(row$Units[[1]]))
-  expect_setequal(routes, c(ROUTE_IV, ROUTE_SL, ROUTE_IN))
+  expect_setequal(routes, c(ROUTE_IV, ROUTE_SL))
   # 70% receptor occupancy by Nasser 2014's Emax model is the typical value
   expect_equal(round(91.4 * 2.2 / (0.67 + 2.2), 1), 70.1)
 })
@@ -147,12 +144,15 @@ test_that("the time until threshold is blank during the sublingual lag only", {
   expect_false(anyNA(rec$Y[rec$Time > 18]))
 })
 
-test_that("0.3 mg intranasal peaks at Eriksen's 30.6 minutes", {
-  r <- simBup("mg IN", 0.3, 240)
-  cp <- r[r$Site == "Plasma", ]
-  i <- which.max(cp$Y)
-  expect_true(abs(cp$Time[i] - 30.6) < 2)
-  expect_equal(cp$Y[i], 0.4471, tolerance = 0.005)
+test_that("the intranasal route is withdrawn", {
+  # Eriksen 1989 measured a 1.77 ng/mL peak after 0.3 mg; the route this
+  # disposition gave peaked at 0.447, and F would have had to be 1.91 to
+  # close it.  Withdrawn 2026-10-27 (docs/opioid-review-2026-10-27.md).
+  dd <- getDrugDefaultsGlobal()
+  units <- dd$Units[[which(dd$Drug == "buprenorphine")]]
+  expect_false(any(grepl(" IN\\b", units)))
+  expect_null(buprenorphine(70, 170, 40, "male")$PK$default$ka_IN)
+  expect_equal(round(0.482 * 1.77 / 0.4471, 2), 1.91)
 })
 
 test_that("the effect site peaks 61.2 minutes after an intravenous bolus", {
@@ -214,8 +214,7 @@ test_that("pregnancy: elimination clearance x 1.83, absorption unchanged (Zhu 20
   a <- on$PK$default
   b <- off$PK$default
   expect_equal(a$cl1 / b$cl1, BUPRENORPHINE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
-  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_SL", "bioavailability_SL", "tlag_SL",
-              "ka_IN", "bioavailability_IN", "tlag_IN")) {
+  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_SL", "bioavailability_SL", "tlag_SL")) {
     expect_identical(a[[p]], b[[p]], info = p)
   }
   expect_identical(on$sublingualSaturation, off$sublingualSaturation)

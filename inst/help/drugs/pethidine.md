@@ -12,7 +12,7 @@ The time to peak effect is 10 minutes.
 
 ### MEAC and typical concentrations
 
-MEAC is 0.25 mcg/mL, with the shaded band at 0.2 to 0.5 mcg/mL. Austin, Stapleton and Mather's 1980 study of pethidine was the origin of the MEAC concept; they found a steep concentration-analgesia relationship in each patient with a several-fold range of MEAC between patients.
+MEAC is 0.46 mcg/mL, with the shaded band at 0.8 to 2 MEAC, 0.37 to 0.92 mcg/mL. It is the mean minimum effective analgesic concentration Austin, Stapleton and Mather measured in nine patients given intramuscular pethidine after surgery (*Anesthesiology* 1980;53:460-466): 0.46 mcg/mL (SD 0.18), against 0.41 mcg/mL for the highest concentration still associated with severe pain. Their study was the origin of the MEAC concept; they found a steep concentration-analgesia relationship in each patient, with a 39 per cent coefficient of variation in MEAC between patients. Austin measured **whole blood**, and the library uses the number as an effect-site value without any conversion. Until October 2026 the MEAC was 0.25 mcg/mL, which was attributed to Austin but is not in the paper; its origin was not recorded.
 
 ### Where to be careful
 

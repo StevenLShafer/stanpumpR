@@ -1,7 +1,7 @@
 oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
-  # Time: Hours
+  # Time: Minutes (Dahan's clearances are L/h, divided by 60 below)
   # Volume: Liters
 
   # Size scaling (see docs/weight-adjustment.md): the published parameters
@@ -20,10 +20,12 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
 # The concentrations below are returned but not used: those in the drug
 # library (drugDefaults_global.csv) are.  There, MEAC 27.9 ng/mL is Dahan's
-# ANALGESIC potency (the effect-site concentration for a 50% rise in cold
-# pressor hand-withdrawal latency), and the band's typical value 27.4 ng/mL
+# ANALGESIC potency in healthy male volunteers (the effect-site concentration
+# at which the probability of a 50% rise in cold-pressor hand-withdrawal
+# latency is one half), and the band's typical value and endCe, 27.4 ng/mL,
 # is the RESPIRATORY potency (a 25% fall in the hypercapnic ventilatory
-# response); the two happen to coincide.
+# response); the two happen to coincide.  Neither is a postoperative MEAC,
+# and 27.4 is not a concentration at which spontaneous breathing returns.
 
   typical <- NA
   upperTypical <- NA
@@ -32,7 +34,8 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- "Dahan A et al., Anesthesiology 2020;133(3):559-568. https://pubmed.ncbi.nlm.nih.gov/32788558/"
 
   # Effect site.  Dahan 2020's library MEAC (27.9 ng/mL, drugDefaults) is the
-  # concentration that doubled cold-pressor tolerance, an analgesic end point,
+  # concentration for a 50% rise in cold-pressor tolerance (not a doubling,
+  # as this note said until 2026-10-27), an analgesic end point,
   # and for that end point the paper found oliceridine's equilibration too fast
   # to estimate.  Its 0.25 h is the t1/2 ke0 of the ventilatory response, not
   # a time to peak; read as one until 2026-10-12 it gave tPeak 15 min (as a

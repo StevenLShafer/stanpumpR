@@ -12,10 +12,12 @@
 # noncompartmental or per-subject polyexponential summaries, and the model
 # below is assembled from them as follows.
 #
-#   Poyhia 1991   9 young surgical adults (27 y, 71 kg), 0.05 mg/kg base IV:
+#   Poyhia 1991   9 young surgical adults (27 y, 71 kg), 0.07 mg/kg oxycodone
+#                 chloride IV (0.0627 mg/kg base):
 #                 CL 0.78 L/min (11.0 mL/min/kg), Vss 2.60 L/kg, t1/2 3.7 h.
 #   Kirvela 1996  10 ASA I controls (36 y, 66 kg) and 10 uraemic patients
-#                 (36 y, 67 kg) given 0.05 mg/kg base IV.  Medians: controls
+#                 (36 y, 67 kg) given 0.07 mg/kg oxycodone chloride IV
+#                 (0.0627 mg/kg base).  Medians: controls
 #                 CL 1.10 L/min (16.7 mL/min/kg), Vc 0.22 and Vss 2.39 L/kg,
 #                 t1/2 2.3 h; uraemic CL 0.84 L/min, Vss 3.99 L/kg, t1/2 3.9 h.
 #                 Per-subject biexponential results in its Table 2.
@@ -42,10 +44,18 @@
 #     Vss = (9 x 2.60 + 10 x 2.39 + 11 x 3.7)  / 30 = 2.93 L/kg
 #
 # Their mean age is 30 years, which is where the age effect below starts.
-# Two of the three studies used free-base doses; Liukas gave "5 mg" of the
-# hydrochloride and may have computed clearance on it, which would make its
-# clearance about 10% high.  That is inside the spread between studies and is
-# not corrected.
+# All three studies dosed the HYDROCHLORIDE: Poyhia and Kirvela 0.07 mg/kg
+# "oxycodone chloride" (both abstracts; 0.0627 mg/kg of base at 315.36 /
+# 351.82), Liukas "5 mg".  Until 2026-10-27 this note said Poyhia and Kirvela
+# gave 0.05 mg/kg of base, which neither abstract supports (opioid potency
+# audit, docs/opioid-review-2026-10-27.md).  Whether each paper computed
+# clearance and volume on the hydrochloride or the base dose is not in the
+# abstracts and the full texts were not reached.  If, as the reported doses
+# suggest, all three used the hydrochloride, the pooled parameters are on one
+# scale and a hydrochloride dose entered as prescribed gives base
+# concentrations, as intended; if they used the base, CL and V are about 10%
+# low for a hydrochloride dose.  Nothing is corrected until the methods are
+# read.
 #
 # None of the papers reports a two-compartment model as such.  Kirvela gives
 # Vc, Vss, CL and the terminal half-life for each subject, from which each
@@ -170,7 +180,7 @@
 #     consistent with morphine's 8 is 8 x 1.4 x (1.0 to 1.3) = 11 to 15.
 #   - Direct measurement.  Kokki 2012 titrated intravenous oxycodone after
 #     laparoscopic cholecystectomy and measured total venous plasma oxycodone
-#     at the onset of pain (MEC, mean 21 ng/mL, range 16-31) and 10 min after
+#     at the onset of pain (MEC, mean 21 ng/mL, 95% CI 13-29) and 10 min after
 #     the dose that relieved it (MEAC, 55 and 47 ng/mL; authors' summary
 #     45-50).  Kokki cites Pesonen's cardiac-surgery values of 6-12 (MEC) and
 #     15-25 ng/mL (MEAC).  Kokki's MEC uses the same definition as Gourlay's

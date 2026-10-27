@@ -431,7 +431,7 @@ registry <- rbind(
       notes = "Oxymorphone formation from oxycodone is set in R/drugs_oxycodone.R and left unchanged by the oxycodone pregnancy factor; that is consistent with leaving oxymorphone's own disposition unchanged. Total plasma plotted."),
   row("buprenorphine", "Opioids", "applied",
       finding = "Strong, consistent new evidence that dose-normalized buprenorphine exposure is substantially lower in pregnancy, i.e. apparent clearance is higher. Bastian/Caritis 2016 (n=13-14 sublingual, within-woman pregnancy vs postpartum) found dose-normalized AUC ~50% lower during pregnancy than postpartum (AUC p<0.003, Cmax p<0.018). Zhu/Caritis 2024 (n=22, 33 studies) found dose-normalized AUC 155 vs 218 ng*min/mL (pregnancy vs postpartum, ratio 1.41 overall) and 119 vs 218 in the second half of pregnancy (ratio 1.83). Mechanism (PMID 31929398): pregnancy increases CYP3A N-demethylation and UGT glucuronidation of buprenorphine. A validated PBPK (Zhu 2018) reproduces the lower exposure. The library row is currently 'unquantified' (direction only).",
-      applied = "Elimination clearance × 218/119 = 1.83 (Zhu 2024, second half of pregnancy against postpartum); volumes and the sublingual and intranasal absorption unchanged.",
+      applied = "Elimination clearance × 218/119 = 1.83 (Zhu 2024, second half of pregnancy against postpartum); volumes and the sublingual absorption unchanged.",
       cl_factor = 1.83, v_factor = NA, f_factor = NA, gfr_factor = NA,
       trimester = "third", comparator = "postpartum (same women)",
       design = "paired NCA / popPK (sublingual) + mechanistic metabolism + PBPK", n = 22L, confidence = "moderate",

@@ -159,7 +159,7 @@ valsartan <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "no renal term and its population of 48 healthy young adults contains no ",
     "information about renal impairment. The authors report that the model ",
     "somewhat underpredicts the median peak concentration. ",
-    "https://doi.org/10.1111/bcp.13069"
+    "https://doi.org/10.1111/bcp.13082"
   )
 
   return(

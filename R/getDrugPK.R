@@ -1068,8 +1068,16 @@ getDrugPK <- function(
 
     firstPass <- X$metabolite$firstPassFraction
     if (is.null(firstPass)) firstPass <- 0
+    # The molar mass ratio has no safe default: a link that omits it would
+    # silently hand over the parent's mass unchanged.  Every link states it,
+    # 1 included where the source's amounts are already on the metabolite's
+    # scale (opioid potency audit, 2026-10-27).
     mwRatio <- X$metabolite$mwRatio
-    if (is.null(mwRatio)) mwRatio <- 1
+    if (!is.numeric(mwRatio) || length(mwRatio) != 1 || !is.finite(mwRatio) ||
+        mwRatio <= 0)
+      stop(drug, ": metabolite '", metaboliteName, "' needs mwRatio, the ",
+           "metabolite's molar mass over the parent's (1 if the source's ",
+           "amounts are already on the metabolite's scale)")
 
     for (event in events)
     {

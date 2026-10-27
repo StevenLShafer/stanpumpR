@@ -149,13 +149,15 @@ test_that("the clevidipine derivation recovers an independently measured V1", {
   # Physically admissible, which is the condition the derivation needs
   expect_true(V1 > 0 && Vss - V1 > 0 && k21 > l2 && k21 < l1)
 
-  # And the implemented record's OWN derived V1, from its own study's
-  # numbers, lands near the other study's measurement: 0.369 against 0.36
+  # And the implemented record's own V1 is now its source's fitted value
+  # (read in the full text 2026-10-27), which equals the other study's
+  # measurement; the derivation applied to its own study gave 0.369
   impl <- parameters[parameters$model_id ==
     "clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999" &
       parameters$parameter == "V1", ]
-  expect_identical(impl$estimate_status, "derived")
-  expect_lt(abs(impl$value - reported("V1")) / reported("V1"), 0.05)
+  expect_identical(impl$estimate_status, "fitted")
+  expect_identical(impl$verification, "primary_full_text")
+  expect_equal(impl$value, reported("V1"))
 })
 
 test_that("formulation and route are separate records where the specification demands it", {
@@ -605,4 +607,22 @@ test_that("the two kinds of catalog row are counted, so the gap stays visible", 
   # A row that opened a document records descriptors, whichever document it
   # was: that is the whole difference between the two kinds
   expect_true(all(withDocument$pk_evidence == "official_label_descriptive"))
+})
+
+test_that("the antihypertensives help page names every drug in the category", {
+  # Adversarial review, 2026-10-27: the page said six drugs, and named six,
+  # after five more had joined the category.  Counted from the library so a
+  # new drug cannot leave the prose behind.
+  dd <- getDrugDefaultsGlobal()
+  drugs <- dd$Drug[!is.na(dd$Category) & dd$Category == "Antihypertensives"]
+  page <- paste(readLines(system.file("help", "models", "antihypertensives.md",
+                                      package = "stanpumpR")), collapse = "\n")
+  for (drug in drugs)
+    expect_true(grepl(paste0("(help:drugs/", drug, ")"), page, fixed = TRUE),
+                info = drug)
+  words <- c("Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve",
+             "Thirteen", "Fourteen", "Fifteen")
+  expect_true(grepl(paste(words[length(drugs) - 5],
+                          "antihypertensives are in the drug library"),
+                    page, fixed = TRUE))
 })

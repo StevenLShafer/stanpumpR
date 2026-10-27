@@ -120,26 +120,32 @@ DESMETRAMADOL_KE0 <- 0.0287536942  # 1/min; solved, see above
 # above is against a curve tPeak cannot name.
 DESMETRAMADOL_TPEAK_ORAL_PARENT <- 150  # minutes after an oral tramadol dose
 
-# MEAC: a cited value, but a SECONDARY citation needing primary verification
-# ---------------------------------------------------------------------------
+# MEAC: A MIXED-EXPOSURE OBSERVATION, NOT A MEASURED M1 MEAC
+# ----------------------------------------------------------
 # 84 ng/mL.  Lee 2019's introduction states that "the minimum effective
-# concentration of M1 is 84 ug/L", citing earlier work.  That is the right
-# quantity in the right units for this column: a minimum effective analgesic
-# concentration of total M1 in ng/mL, not an in-vitro affinity and not an
-# equianalgesic dose ratio, which is better than the basis for most of the
-# provisional potencies in this package.
+# concentration of M1 is 84 ug/L", citing earlier work.  The number matches
+# Grond 1999 (Br J Clin Pharmacol 48:254-257, PMID 10417506, abstract read
+# 2026-10-27): in postoperative patient-controlled analgesia with RACEMIC
+# tramadol, the mean serum concentration of total M1 sampled immediately
+# before each demand was 84 +/- 34 ng/mL, while tramadol itself was at
+# 590 +/- 410 ng/mL.  So it is a pre-demand (minimum effective concentration
+# type) mean taken during combined parent and metabolite exposure, of total
+# racemic M1.  It is NOT an isolated M1 minimum effective analgesic
+# concentration: some of the analgesia at that moment was the parent's, and
+# the mu activity is the (+) enantiomer's (Grond's group given (+)-tramadol,
+# the more potent enantiomer, demanded at a lower M1, 57 ng/mL).  Until
+# 2026-10-27 this note
+# and the help called it the right quantity for the column; the opioid
+# potency audit of that date (docs/opioid-review-2026-10-27.md) corrected
+# that.  The full text of Grond 1999 was not reached.
 #
-# What still needs doing:
-#   - Read the primary source.  This value is taken from another paper's
-#     introduction and the original was not retrieved.
-#   - Check the analyte.  M1 is formed and eliminated stereoselectively and
-#     the (+) enantiomer carries the mu activity, so a figure for total
-#     racemic M1 and one for the active enantiomer differ by a factor that
-#     is not two.
-#   - Sanity check the scale.  At this value a 100 mg oral dose in a normal
-#     metaboliser reaches roughly a quarter of the MEAC, which is consistent
-#     with tramadol being a weak opioid but is worth confirming against
-#     clinical experience.
+# It stays as the divisor, as a working value, because nothing better
+# exists: no study has measured analgesia against M1 alone.  At this value a
+# 100 mg oral dose of the hydrochloride in a normal metaboliser peaks at
+# 42% of it in the effect site (35 ng/mL; computed 2026-10-27), which is
+# consistent with tramadol being a weak opioid.  (The note this replaced
+# said "roughly a quarter"; on the base dose it was 48%.)  The band (20 to 80 ng/mL) is a display range of formed M1, not an
+# analgesic range.
 DESMETRAMADOL_MEAC  <- 84  # ng/mL; provisional, see above
 # -----------------------------------------------------------------------------
 
