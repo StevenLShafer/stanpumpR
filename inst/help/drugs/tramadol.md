@@ -4,7 +4,7 @@ Tramadol's disposition is from Holford and colleagues (*J Pharmacol Clin Toxicol
 
 ### Dose basis
 
-Doses are entered as **tramadol hydrochloride**, as the drug is labelled and prescribed, and the plotted concentrations are tramadol base. Holford's group converted every hydrochloride dose to base before fitting, multiplying by 0.8784 (263.38/299.84); their pooled analysis says so (Allegaert and colleagues, *Clin Pharmacokinet* 2015;54:167-178), and it began from Holford's adult estimates. The library applies the same factor, so 100 mg of tramadol hydrochloride intravenously gives an initial concentration of 976 ng/mL at 70 kg (87.84 mg of base in 90 L), not 1111. Until October 2026 the hydrochloride dose was fed to the base-scale model unconverted, which put every tramadol and desmetramadol concentration 14 per cent high.
+Doses are entered as **tramadol hydrochloride**, as the drug is labelled and prescribed, and the plotted concentrations are tramadol base. Holford and colleagues converted every hydrochloride dose to base before fitting, multiplying by 0.8784 (263.38/299.84), so all their parameters are on the base scale; the group's later pooled analysis (Allegaert and colleagues, *Clin Pharmacokinet* 2015;54:167-178) used the same convention. The library applies the same factor, so 100 mg of tramadol hydrochloride intravenously gives an initial concentration of 976 ng/mL at 70 kg (87.84 mg of base in 90 L), not 1111. Until October 2026 the hydrochloride dose was fed to the base-scale model unconverted, which put every tramadol and desmetramadol concentration 14 per cent high.
 
 ### Modelled as a prodrug
 

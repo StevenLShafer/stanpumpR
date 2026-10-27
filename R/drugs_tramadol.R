@@ -36,16 +36,16 @@
 # DOSE BASIS: HYDROCHLORIDE AS LABELLED, BASE CONCENTRATIONS
 # ===========================================================
 # Tramadol is prescribed and labelled as the hydrochloride (50 mg tramadol
-# HCl = 43.9 mg tramadol).  The same group's pooled analysis of these data,
-# Allegaert 2015 (Clin Pharmacokinet 54:167-178, Methods; read in full,
-# 2026-10-27), states the convention: "Reported tramadol hydrochloride doses
-# were converted to base tramadol, where 1 mg tramadol hydrochloride is equal
-# to 0.8784 mg of tramadol", with M1 converted to tramadol equivalents by the
-# molar ratio 249.38/263.38.  Holford 2014 itself was not read (the journal
-# is not indexed and its site was unreachable); its parameters are taken to
-# be on the same base scale because Allegaert's analysis began from
-# Holford 2014's adult estimates (its reference 26) and re-estimated them
-# with the children added, on the same pooled data.  Until 2026-10-27 the library fed a labelled hydrochloride dose to
+# HCl = 43.9 mg tramadol).  Holford 2014 (read in full, 2026-10-27) says in
+# its Methods: "Reported tramadol hydrochloride doses were converted to base
+# tramadol, where 1 mg tramadol hydrochloride is equal to 0.8784 mg of
+# tramadol", with M1 converted to tramadol milligram equivalents by the
+# molar ratio.  Its Table 2 is the source of every parameter here (VP1 90,
+# VP2 79 L/70 kg; CLPO 18.4, QP 105, CLPM 10.5, CLMO 84.2, QM 274 L/h/70 kg;
+# VM1 78.9, fixed from dogs, and VM2 131 L/70 kg), so all of them are on the
+# base scale.  The group's later pooled analysis with children, Allegaert
+# 2015 (Clin Pharmacokinet 54:167-178), states the same convention.  Until
+# 2026-10-27 the library fed a labelled hydrochloride dose to these
 # base-scale parameters, which overstated every tramadol and desmetramadol
 # concentration by 1/0.8784 = 1.138 (opioid potency audit of 2026-10-27,
 # docs/opioid-review-2026-10-27.md).
@@ -139,7 +139,7 @@
 
 
 # Tramadol base per milligram of tramadol hydrochloride: 263.38 / 299.84 =
-# 0.8784, Allegaert 2015's factor.  See DOSE BASIS in the header.
+# 0.8784, Holford 2014's own factor.  See DOSE BASIS in the header.
 TRAMADOL_BASE_FRACTION <- 263.38 / 299.84
 
 # Relative CYP2D6 formation activity, normal metaboliser = 1.  Stamer 2007
@@ -230,10 +230,9 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
 
   reference <- paste0(
     "Holford S et al., J Pharmacol Clin Toxicol 2014;2(1):1023 ",
-    "(joint intravenous parent and metabolite disposition, on tramadol base; ",
-    "doses are the hydrochloride, x 0.8784, the convention of Allegaert K ",
-    "et al., Clin Pharmacokinet 2015;54:167-178, ",
-    "https://pubmed.ncbi.nlm.nih.gov/25258277/); ",
+    "(joint intravenous parent and metabolite disposition, Table 2, on ",
+    "tramadol base; doses are the hydrochloride, x 0.8784, as Holford ",
+    "converted them); ",
     "Brvar N et al., Int J Pharm 2014;473:170-178. ",
     "https://pubmed.ncbi.nlm.nih.gov/25014367/ (oral input timing); ",
     "Stamer UM et al., Clin Pharmacol Ther 2007;82:41-47. ",
