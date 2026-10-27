@@ -176,7 +176,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008 and Mion 2013, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008, Mion 2013 and Drover 2004, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -189,7 +189,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | alprazolam | Wincor 1991, *J Clin Psychopharmacol* 11:48 | 2040715 | The same |
 | alprazolam | Greenblatt and Wright 1993, *Clin Pharmacokinet* 24:453 | 8513649 | The former 20–40 ng/mL |
 | temazepam | Hosie and Nimmo 1991, *Br J Anaesth* 66:20 | 1997054 | Read in full: 211 ng/mL awake, 785–940 sedated; above 200 for sedation |
-| zolpidem | Drover 2004, *Clin Pharmacokinet* 43:227 | 15005637 | Source of 80–200 ng/mL |
+| zolpidem | Drover 2004, *Clin Pharmacokinet* 43:227 | 15005637 | Read in full: states no range, only the kinetics (10 mg peaks at 120 µg/L at 1.4 h) |
 | zolpidem | Greenblatt 1998, *Clin Pharmacol Ther* 64:553 | 9834048 | The same |
 | buprenorphine | Laffont 2022, *Front Pharmacol* 13:1052113 | 36467036 | Read in full: 2–3 ng/mL sustained for use and craving (68–75% occupancy); withdrawal controlled from 1 ng/mL; sublingual troughs 0.7–1.4 |
 | buprenorphine | Nasser 2014, *Clin Pharmacokinet* 53:813 | 25015174 | The occupancy model behind the typical 2.2 ng/mL |
