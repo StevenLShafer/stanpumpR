@@ -144,12 +144,17 @@
 # No minimum effective analgesic concentration is established for
 # buprenorphine, and as a high-affinity partial agonist it does not add to
 # full agonists the way the MEAC total assumes, so MEAC is 0 and it is not on
-# the MEAC panel.  The band is the opioid-use-disorder range: 1.25 ng/mL for
-# withdrawal suppression (also the time-until-threshold level), 2.2 ng/mL for
+# the MEAC panel.  The band is the therapeutic reference range for opioid use
+# disorder of Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861):
+# 0.5-2.5 ng/mL, 24 h after a dose, alert level 4 ng/mL.  Typical 2.2 ng/mL,
 # 70% mu-receptor occupancy by Nasser 2014's Emax model
-# (91.4 x C / (0.67 + C)), and 3 ng/mL, the upper end of the 2-3 ng/mL quoted
-# for blockade of opioid reinforcement.  These are plasma targets from
-# maintenance treatment; they are not analgesic targets.
+# (91.4 x C / (0.67 + C)), inside the 2-3 ng/mL Laffont 2022 suggests for at
+# least 70% occupancy, which the guideline quotes.  The time-until-threshold
+# level is 1.25 ng/mL, withdrawal suppression.  It replaced 1.25-3 ng/mL
+# (withdrawal suppression to the 2-3 ng/mL quoted for blockade of opioid
+# reinforcement).  These are plasma concentrations from maintenance
+# treatment; they are not analgesic targets.
 #
 # AGE
 # ===
@@ -230,7 +235,7 @@ BUPRENORPHINE_F_SL      <- 0.422692       # small-dose limit
 BUPRENORPHINE_SL_SATURATION <- list(Imax = 0.816527, ID50 = 3.42670)  # ID50 mg
 BUPRENORPHINE_KA_SL     <- 0.0171905401   # /min; fitted with the lag, see the header
 BUPRENORPHINE_TLAG_SL   <- 17.587178      # min; fitted with ka, see the header
-BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; band floor and endCe
+BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; endCe
 BUPRENORPHINE_MIN_AGE   <- 18             # years; youngest age the CL term sees
 # Elimination clearance in pregnancy relative to Bjornsson's value: Zhu 2025,
 # dose-normalised AUC 218 after delivery against 119 in the second half of
@@ -316,9 +321,10 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
       # Yassen's ke0 as a time to peak; getDrugPK() solves ke0.  See the header.
       tPeak = BUPRENORPHINE_TPEAK,
       MEAC = 0,
+      # Band: Hart 2026's range for opioid use disorder; see the header.
       typical = 2.2,
-      upperTypical = 3,
-      lowerTypical = BUPRENORPHINE_WITHDRAWAL,
+      upperTypical = 2.5,
+      lowerTypical = 0.5,
       # Each sublingual dose is scaled by its own fraction absorbed; see the header.
       sublingualSaturation = BUPRENORPHINE_SL_SATURATION,
       reference = reference

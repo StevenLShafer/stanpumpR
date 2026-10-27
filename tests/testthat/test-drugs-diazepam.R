@@ -44,9 +44,9 @@ test_that("the reference patient receives Hung's Table I means", {
       )),
       tPeak = 2.63,
       MEAC = 0,
-      typical = 300,
-      upperTypical = 600,
-      lowerTypical = 150,
+      typical = 1248,
+      upperTypical = 1824,
+      lowerTypical = 606,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)
@@ -132,7 +132,8 @@ test_that("the CSV row agrees with the drug function", {
   expect_equal(row$Lower, x$lowerTypical)
   expect_equal(row$Upper, x$upperTypical)
   expect_equal(row$Typical, x$typical)
-  expect_equal(row$endCe, 150)
+  # Moderate sedation: midazolam's band and threshold (Barr 2001) times 6
+  expect_equal(c(row$Lower, row$Typical, row$Upper, row$endCe), 6 * c(101, 208, 304, 101))
   expect_equal(row$MEAC, 0)
   expect_equal(row$Concentration.Units, "ng")
 })

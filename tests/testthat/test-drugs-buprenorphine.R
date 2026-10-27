@@ -26,8 +26,8 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
     tPeak = 61.2,
     MEAC = 0,
     typical = 2.2,
-    upperTypical = 3,
-    lowerTypical = 1.25,
+    upperTypical = 2.5,
+    lowerTypical = 0.5,
     sublingualSaturation = list(Imax = 0.816527, ID50 = 3.42670),
     reference = actual$reference
   )

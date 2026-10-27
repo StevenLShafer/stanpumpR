@@ -30,7 +30,7 @@ test_that("each row is well formed", {
     r <- tr[i, ]
     unit <- dd$Concentration.Units[dd$Drug == r$drug]
     expect_identical(r$units, unname(rangeUnits[unit]), info = r$drug)
-    if (r$band_status %in% c("drawn", "drawn_on_metabolite", "sum_not_drawn")) {
+    if (r$band_status %in% c("drawn", "drawn_on_metabolite", "sum_not_drawn", "band_differs")) {
       expect_true(r$lower > 0 && r$upper > r$lower, info = r$drug)
     }
     # An alert level, where the guideline gives one, is at or above the range
@@ -42,7 +42,7 @@ test_that("each row is well formed", {
     # its notes, which therapeuticRangeSummary() prints
     if (!r$band_status %in% c("drawn", "drawn_on_metabolite"))
       expect_true(nzchar(r$notes) || nzchar(r$source), info = r$drug)
-    if (r$band_status == "not_applicable")
+    if (r$band_status %in% c("not_applicable", "band_differs"))
       expect_true(!is.na(r$notes) && nzchar(r$notes), info = r$drug)
   }
 })
@@ -56,6 +56,11 @@ test_that("the band columns are the registry's range, or zero when it is not dra
       expect_equal(band, c(r$lower, r$upper), info = r$drug)
       expect_equal(row$Typical, r$typical, info = r$drug)
       expect_true(row$Typical >= row$Lower && row$Typical <= row$Upper, info = r$drug)
+    } else if (r$band_status == "band_differs") {
+      # The band is the library's own, for another use or analyte than the
+      # registry's range: never that range itself, which would be drawn
+      expect_true(all(band > 0), info = r$drug)
+      expect_false(isTRUE(all.equal(band, c(r$lower, r$upper))), info = r$drug)
     } else if (r$band_status == "drawn_on_metabolite") {
       expect_equal(band, c(0, 0), info = r$drug)
       target <- tr[tr$drug == r$band_drug, ]
@@ -75,4 +80,6 @@ test_that("the drug's help page states the range and its source", {
   expect_match(page, "laboratory alert level 540 ng/mL", fixed = TRUE)
   expect_match(helpDrugPageHTML("risperidone"), "so not drawn on either row", fixed = TRUE)
   expect_match(helpDrugPageHTML("droperidol"), "None established", fixed = TRUE)
+  expect_match(helpDrugPageHTML("ketamine"), "not the band drawn: the range is for depression",
+               fixed = TRUE)
 })

@@ -105,12 +105,17 @@
 #
 # BAND
 # ====
-# 1.3-5.4 mcg/mL: the median steady-state average concentration in adults
-# with focal seizures taking 150 and 600 mg/day (Chan 2021, Table 4), the
-# labelled range there and for neuropathic pain (the label); typical 2.7,
-# for 300 mg/day, by linearity (2 x 1.34), not tabulated.
-# Orientation only: a chronic exposure, not a perioperative target, and a
-# single preoperative dose of 150 or 300 mg peaks above it.
+# 1.5-8 mcg/mL, the therapeutic reference range for epilepsy of
+# Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861), 10 h after an
+# immediate-release dose, alert level 10 mcg/mL, from routine TDM data
+# (Johannessen Landmark 2015); typical 4.75, its midpoint.  Its range for
+# neuropathic pain, 1.4-2.1 mcg/mL 22 h after an extended-release dose, is the
+# trough of a formulation this model does not offer, and the guideline calls
+# the evidence for a concentration-pain relationship low.  It replaced
+# 1.3-5.4 mcg/mL, the median steady-state average concentration in adults
+# with focal seizures taking 150 and 600 mg/day (Chan 2021, Table 4).
+# Orientation only: a chronic exposure, not a perioperative target.
 #
 # NOT MODELLED
 # ============
@@ -234,11 +239,11 @@ pregabalin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, mcg/mL: median steady-state average at 150-600 mg/day, see the
-  # header.  Orientation only.
-  typical      <- 2.7
-  upperTypical <- 5.4
-  lowerTypical <- 1.3
+  # Band, mcg/mL: the therapeutic reference range for epilepsy of Hart 2026,
+  # Table 5, see the header.  Orientation only.
+  typical      <- 4.75
+  upperTypical <- 8
+  lowerTypical <- 1.5
 
   reference <- paste0(
     "Chan PLS et al., Clin Pharmacol Ther 2021;110:132-140. ",

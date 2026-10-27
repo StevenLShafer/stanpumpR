@@ -82,13 +82,19 @@
 #
 # BAND AND THRESHOLD
 # ==================
-# Band 150-600 ng/mL, typical 300.  The bottom is a little above the
-# effect-site concentration that halved DSST performance, 116-132 ng/mL
-# (Mould 1995); 300 is cited as the effective therapeutic concentration
-# (Chevassus 2004); 200-600 is the target in status epilepticus (Ku 2018).
-# The time-until-threshold level (endCe in the CSV) is 150, the bottom of the
-# band.  The EEG EC50s are higher: 269 (Greenblatt 1989), 958 at steady state
-# (Buhrer 1990).
+# Moderate sedation (Ramsay 3 or 4), the end point the library draws for the
+# sedatives (Steven L. Shafer, 2026-10-27).  No study relates diazepam to a
+# sedation score, so the band is midazolam's (Barr 2001: 101-304 ng/mL,
+# typical 208, threshold 101) times 6, the diazepam:midazolam potency ratio
+# (Steven L. Shafer's decision): 606-1824 ng/mL, typical 1248, and the
+# time-until-threshold level (endCe in the CSV) 606.  The ratio is 6.4 for
+# the DSST (Mould 1995, effect-site EC50 116 vs 18.1 ng/mL, pooled doses) and
+# 6.3 for the EEG (Buhrer 1990, 958 vs 152 ng/mL), both in total plasma, both
+# in volunteers; Barr's C50s are from ICU patients mostly on fentanyl.  It
+# replaced 150-600 ng/mL, typical 300, threshold 150, from the DSST EC50 and
+# the 200-600 status epilepticus target (Ku 2018, a literature surrogate).
+# Diazepam alone: nordiazepam, which adds effect on repeated dosing, is not
+# modelled (below).
 #
 # NOT MODELLED
 # ============
@@ -175,10 +181,10 @@ diazepam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL: seizure-rescue and status epilepticus targets (see header)
-  typical      <- 300
-  upperTypical <- 600
-  lowerTypical <- 150
+  # Band, ng/mL: midazolam's moderate-sedation band times 6 (see header)
+  typical      <- 1248
+  upperTypical <- 1824
+  lowerTypical <- 606
 
   reference <- paste0(
     "Hung OR et al., Can J Anaesth 1996;43:450-455 (three-compartment ",

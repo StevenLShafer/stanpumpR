@@ -54,9 +54,9 @@ test_that("returns the correct calculations", {
     )),
     tPeak = 0,
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 34,
+    upperTypical = 45,
+    lowerTypical = 23,
     reference = actual$reference,
     oralPulses = list(XR = list(fraction = c(0.5, 0.5), delay = c(0, 240)))
   )
@@ -122,7 +122,7 @@ test_that("the half-life is the label's 9 h in children", {
 })
 
 
-test_that("offered orally only, with no claimed effect or band", {
+test_that("offered orally only, with no claimed effect and Hart 2026's band", {
   dd <- getDrugDefaultsGlobal(FALSE)
   row <- dd[dd$Drug == "mixedAmphetamineSalts", ]
   units <- strsplit(row$Units, ",")[[1]]
@@ -130,5 +130,6 @@ test_that("offered orally only, with no claimed effect or band", {
   expect_true(all(doseRoute(units) == "PO"))
   expect_equal(row$Default.Units, "mg PO XR")
   expect_equal(row$Category, "Stimulants")
-  expect_equal(c(row$Lower, row$Upper, row$Typical, row$MEAC, row$endCe), rep(0, 5))
+  expect_equal(c(row$Lower, row$Upper, row$Typical), c(23, 45, 34))
+  expect_equal(c(row$MEAC, row$endCe), c(0, 0))
 })
