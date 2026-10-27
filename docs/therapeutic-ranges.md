@@ -176,7 +176,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008, Mion 2013, Drover 2004, Clements 1982 and Ku 2018, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008, Mion 2013, Drover 2004, Clements 1982, Ku 2018 and Gourlay 1984, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -202,7 +202,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | lisdexamfetamine | Boellner 2010, *Clin Ther* 32:252 | 20206783 | Source of 44–160 ng/mL |
 | methylphenidate | Chermá 2017, *Eur J Drug Metab Pharmacokinet* 42:295 | 27220743 | Read in full: interquartile ranges in 50 patients on Concerta, in whole blood |
 | methylphenidate | Stevens 2010, *J Child Adolesc Psychopharmacol* 20:49 | 20166796 | The alert level |
-| methadone | Gourlay 1984, *Anesthesiology* 61:19 | 6742480 | The kept analgesic band |
+| methadone | Gourlay 1984, *Anesthesiology* 61:19 | 6742480 | Read in full: MEC 57.9 ± 15.2 ng/mL in whole blood, 16 surgical patients; the MEAC of 60 |
 | methadone | Inturrisi 1987, *Clin Pharmacol Ther* 41:392 | 3829576 | Quotes Gourlay; 290 ng/mL in tolerant patients |
 | morphine | Dahlström 1982, *Clin Pharmacokinet* 7:266 | 7094501 | Minimum effective concentration, 16 ng/mL |
 | morphine, oxycodone | Thaulow 2023, *Ther Drug Monit* 45:777 | 37296504 | Dose-specific chronic pain ranges behind Table 5 |
