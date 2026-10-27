@@ -36,10 +36,12 @@ test_that("each row is well formed", {
     r <- tr[i, ]
     unit <- dd$Concentration.Units[dd$Drug == r$drug]
     expect_identical(r$units, unname(rangeUnits[unit]), info = r$drug)
-    if (r$band_status %in% c("drawn", "drawn_on_metabolite", "sum_not_drawn", "band_differs",
-                             "withheld")) {
+    if (r$band_status %in% c("drawn", "drawn_on_metabolite", "sum_not_drawn", "band_differs")) {
       expect_true(r$lower > 0 && r$upper > r$lower, info = r$drug)
     }
+    # A withheld target may be a threshold, with no upper limit
+    if (r$band_status == "withheld")
+      expect_true(r$lower > 0 && (is.na(r$upper) || r$upper > r$lower), info = r$drug)
     # An alert level, where the guideline gives one, is at or above the range
     if (!is.na(r$alert_level)) expect_gte(r$alert_level, r$upper, label = r$drug)
     # A drawn band was read in a source: never one marked unverified

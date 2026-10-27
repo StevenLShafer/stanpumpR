@@ -46,7 +46,12 @@ therapeuticRange <- function(drug)
 #' @keywords internal
 therapeuticRangeSummary <- function(r)
 {
-  limits <- sprintf("%s to %s %s", helpFormatNumber(r$lower), helpFormatNumber(r$upper), r$units)
+  # A target with no upper limit (the activated clotting time on bypass) is a
+  # threshold
+  limits <- if (!is.na(r$lower) && is.na(r$upper))
+    sprintf("above %s %s", helpFormatNumber(r$lower), r$units)
+  else
+    sprintf("%s to %s %s", helpFormatNumber(r$lower), helpFormatNumber(r$upper), r$units)
   what <- paste0(r$analyte, if (nzchar(r$sampling)) paste0(", ", r$sampling) else "",
                  if (!is.na(r$alert_level))
                    sprintf("; laboratory alert level %s %s", helpFormatNumber(r$alert_level), r$units)
