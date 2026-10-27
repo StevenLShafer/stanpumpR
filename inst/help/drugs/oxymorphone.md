@@ -12,7 +12,7 @@ Oxymorphone is offered by mouth (**mg PO**) and intravenously. Oral bioavailabil
 
 ### Effect site and MEAC
 
-The time to peak effect, 20 minutes, is **provisional** and carries no citation yet. The MEAC, 0.8 ng/mL, is also **provisional**, set to one tenth of morphine's on the received view that oxymorphone is about ten times as potent; the drug file explains at length why an equianalgesic dose ratio is not a concentration ratio and should be read with caution. Both are flagged in the code as values to replace.
+The time to peak effect, 20 minutes, is **provisional** and carries no citation yet. The MEAC, 0.8 ng/mL, is also **provisional**, set to one tenth of morphine's on the received view that oxymorphone is about ten times as potent. That view rests on dose comparisons, not concentrations: Beaver and colleagues (*J Clin Pharmacol* 1977;17:186-198) found intramuscular oxymorphone 8.7 times as potent as intramuscular morphine for total analgesic effect and 13 times for peak effect, and measured no plasma concentrations. The drug file explains at length why an equianalgesic dose ratio is not a concentration ratio and should be read with caution. Both are flagged in the code as values to replace.
 
 ### Covariates
 

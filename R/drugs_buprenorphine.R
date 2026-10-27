@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 # Buprenorphine: Bjornsson 2023 three-compartment disposition (absolute scale),
-# first-order sublingual and intranasal routes, ke0 from Yassen 2006
+# a first-order sublingual route, ke0 from Yassen 2006
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL, total plasma buprenorphine (norbuprenorphine is not
@@ -86,15 +86,21 @@
 # lie outside the fitted range and remain an extrapolation.  As for
 # gabapentin, two rows entered at the same time are scaled separately.
 #
-# INTRANASAL: RESEARCH ROUTE
-# ==========================
-# Eriksen 1989, nine volunteers, 0.3 mg by nasal spray against 0.3 mg
-# intravenously: bioavailability 48.2% (s.e.m. 8.4%), mean time to peak
-# 30.6 min.  ka is set so the plasma peak falls at 30.6 min on this
-# disposition.  The predicted peak after 0.3 mg is 0.45 ng/mL against the
-# 1.77 ng/mL Eriksen reported by radioimmunoassay; that gap belongs to the
-# early volume of distribution (and the assay), not to the absorption
-# constant, and is unresolved.  No intranasal product is approved.
+# INTRANASAL: WITHDRAWN 2026-10-27
+# =================================
+# Until 2026-10-27 an intranasal research route followed Eriksen 1989: nine
+# volunteers, 0.3 mg by nasal spray against 0.3 mg intravenously,
+# bioavailability 48.2% (s.e.m. 8.4%), mean time to peak 30.6 min, carried as
+# F 0.482 and a ka (0.0227 /min) that put the plasma peak at 30.6 min on this
+# disposition.  The predicted peak after 0.3 mg was 0.447 ng/mL against the
+# 1.77 ng/mL Eriksen reported (by radioimmunoassay; a mean of individual
+# maxima).  No bioavailability closes that: it would need F = 0.482 x 1.77 /
+# 0.447 = 1.91.  The gap lies in the disposition or the assay, not the
+# absorption, intranasal data were never part of Bjornsson's fit, and no
+# intranasal product is approved, so the route was withdrawn by decision of
+# Steven L. Shafer on the 2026-10-27 opioid potency audit
+# (docs/opioid-review-2026-10-27.md).  Restoring it needs a fit of a full
+# intranasal concentration-time profile, not a ka chosen to hit a tmax.
 #
 # INTRAMUSCULAR AND SWALLOWED ORAL ARE NOT OFFERED
 # ================================================
@@ -179,7 +185,7 @@
 # Patient Profile's Pregnant field on, CL1 is multiplied by
 # BUPRENORPHINE_PREGNANCY_CL_FACTOR = 218 / 119 = 1.83 (the second half of
 # pregnancy, the library's reference state of late pregnancy); the volumes,
-# the distribution clearances and the sublingual and intranasal absorption
+# the distribution clearances and the sublingual absorption
 # (ka, F and its dose dependence, lag) are unchanged, so an intravenous dose
 # is changed exactly as a sublingual one.  The plotted concentration is total
 # plasma buprenorphine; norbuprenorphine, whose formation rises with the
@@ -196,7 +202,8 @@
 # Yassen A et al., Anesthesiology 2006;104:1232-1242.
 #   https://doi.org/10.1097/00000542-200606000-00019
 # Eriksen J et al., J Pharm Pharmacol 1989;41:803-805.
-#   https://doi.org/10.1111/j.2042-7158.1989.tb06374.x
+#   https://doi.org/10.1111/j.2042-7158.1989.tb06374.x (the withdrawn
+#   intranasal route)
 # Nasser AF et al., Clin Pharmacokinet 2014;53:813-824.
 #   https://doi.org/10.1007/s40262-014-0155-0
 # Kuhlman JJ et al., J Anal Toxicol 1996;20:369-378.
@@ -223,8 +230,6 @@ BUPRENORPHINE_F_SL      <- 0.422692       # small-dose limit
 BUPRENORPHINE_SL_SATURATION <- list(Imax = 0.816527, ID50 = 3.42670)  # ID50 mg
 BUPRENORPHINE_KA_SL     <- 0.0171905401   # /min; fitted with the lag, see the header
 BUPRENORPHINE_TLAG_SL   <- 17.587178      # min; fitted with ka, see the header
-BUPRENORPHINE_F_IN      <- 0.482          # Eriksen 1989
-BUPRENORPHINE_KA_IN     <- 0.0227053660   # /min; plasma peak at 30.6 min
 BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; band floor and endCe
 BUPRENORPHINE_MIN_AGE   <- 18             # years; youngest age the CL term sees
 # Elimination clearance in pregnancy relative to Bjornsson's value: Zhu 2025,
@@ -282,10 +287,7 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
     cl3 = cl3,
     ka_SL = BUPRENORPHINE_KA_SL,
     bioavailability_SL = BUPRENORPHINE_F_SL,
-    tlag_SL = BUPRENORPHINE_TLAG_SL,
-    ka_IN = BUPRENORPHINE_KA_IN,
-    bioavailability_IN = BUPRENORPHINE_F_IN,
-    tlag_IN = 0
+    tlag_SL = BUPRENORPHINE_TLAG_SL
   )
 
   events <- c(PK_EVENT_DEFAULT)
@@ -295,7 +297,6 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "Bjornsson M et al., Clin Pharmacokinet 2023;62:1427-1443 (intravenous ",
     "three-compartment disposition, healthy-volunteer Vc; sublingual reduced ",
     "to one first-order input with dose-dependent F, 0.14 at 16 mg); ",
-    "intranasal from Eriksen J et al., J Pharm Pharmacol 1989;41:803-805; ",
     "effect site from Yassen A et al., Anesthesiology 2006;104:1232-1242 ",
     "(ke0 carried as a 61.2 min time to peak). ",
     "https://doi.org/10.1007/s40262-023-01288-6"

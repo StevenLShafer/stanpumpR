@@ -33,6 +33,34 @@
 # 10.5 L/h at 70 kg, so total clearance is 28.9 L/h.  Clearances scale as
 # (W/70)^0.75 and volumes as W/70.
 #
+# DOSE BASIS: HYDROCHLORIDE AS LABELLED, BASE CONCENTRATIONS
+# ===========================================================
+# Tramadol is prescribed and labelled as the hydrochloride (50 mg tramadol
+# HCl = 43.9 mg tramadol).  The same group's pooled analysis of these data,
+# Allegaert 2015 (Clin Pharmacokinet 54:167-178, Methods; read in full,
+# 2026-10-27), states the convention: "Reported tramadol hydrochloride doses
+# were converted to base tramadol, where 1 mg tramadol hydrochloride is equal
+# to 0.8784 mg of tramadol", with M1 converted to tramadol equivalents by the
+# molar ratio 249.38/263.38.  Holford 2014 itself was not read (the journal
+# is not indexed and its site was unreachable); its parameters are taken to
+# be on the same base scale because Allegaert's analysis began from
+# Holford 2014's adult estimates (its reference 26) and re-estimated them
+# with the children added, on the same pooled data.  Until 2026-10-27 the library fed a labelled hydrochloride dose to
+# base-scale parameters, which overstated every tramadol and desmetramadol
+# concentration by 1/0.8784 = 1.138 (opioid potency audit of 2026-10-27,
+# docs/opioid-review-2026-10-27.md).
+#
+# A dose is now entered as the HYDROCHLORIDE, as dispensed, and the plotted
+# concentrations are tramadol base, as Holford's were.  As for methadone, the
+# volumes and clearances are divided by TRAMADOL_BASE_FRACTION (263.38 /
+# 299.84), so the central amount is in hydrochloride milligrams.  Formation
+# is a ratio of a clearance to a volume, which the division leaves alone; the
+# mass that formation hands to desmetramadol is converted by mwRatio
+# 249.38 / 299.84, M1 per milligram of the hydrochloride, which is the base
+# molar ratio 249.38 / 263.38 times 0.8784.  Desmetramadol's own parameters
+# are unchanged.  Oral bioavailability is a ratio of exposures to the same
+# salt, so 0.70 is unchanged.
+#
 # Holford rather than Brvar for the disposition, because Holford is
 # intravenous, physical and jointly fitted with the metabolite this model
 # exists to produce.  Brvar's oral vector is apparent, divided by an
@@ -110,6 +138,10 @@
 # -----------------------------------------------------------------------------
 
 
+# Tramadol base per milligram of tramadol hydrochloride: 263.38 / 299.84 =
+# 0.8784, Allegaert 2015's factor.  See DOSE BASIS in the header.
+TRAMADOL_BASE_FRACTION <- 263.38 / 299.84
+
 # Relative CYP2D6 formation activity, normal metaboliser = 1.  Stamer 2007
 # early (+)-M1 AUC medians normalised to the two-active-gene group, with the
 # poor value lifted off its literal zero; see the header.
@@ -167,11 +199,13 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   clFormation  <- CL_FORMATION * activity * perKg75   # L/h
   clTotal      <- CL_RESIDUAL * perKg75 + clFormation # L/h
 
-  v1  <- 90 * perKg
-  v2  <- 79 * perKg
+  # Hydrochloride doses, base concentrations (see DOSE BASIS in the header).
+  f   <- TRAMADOL_BASE_FRACTION
+  v1  <- 90 * perKg / f
+  v2  <- 79 * perKg / f
   v3  <- 1                          # unused third compartment
-  cl1 <- clTotal / 60               # L/min
-  cl2 <- 105 * perKg75 / 60         # L/min
+  cl1 <- clTotal / 60 / f           # L/min
+  cl2 <- 105 * perKg75 / 60 / f     # L/min
   cl3 <- 0
 
   # --- Absorption: oral plasma peak at 0.99 h (see header) ---
@@ -184,7 +218,7 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   # is the formation clearance over the central volume.  Clearance scales as
   # W^0.75 and volume as W, so this falls slowly with weight rather than being
   # constant.
-  kFormation <- (clFormation / 60) / v1   # per minute
+  kFormation <- (clFormation / 60 / f) / v1   # per minute
 
   tPeak <- 0   # see the header: the parent's own activity is out of scope
   MEAC  <- 0
@@ -196,7 +230,10 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
 
   reference <- paste0(
     "Holford S et al., J Pharmacol Clin Toxicol 2014;2(1):1023 ",
-    "(joint intravenous parent and metabolite disposition); ",
+    "(joint intravenous parent and metabolite disposition, on tramadol base; ",
+    "doses are the hydrochloride, x 0.8784, the convention of Allegaert K ",
+    "et al., Clin Pharmacokinet 2015;54:167-178, ",
+    "https://pubmed.ncbi.nlm.nih.gov/25258277/); ",
     "Brvar N et al., Int J Pharm 2014;473:170-178. ",
     "https://pubmed.ncbi.nlm.nih.gov/25014367/ (oral input timing); ",
     "Stamer UM et al., Clin Pharmacol Ther 2007;82:41-47. ",
@@ -243,8 +280,10 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
         #     pass.  Holford puts CYP2D6 at 10.5 of 28.9 L/h, a 36% share of
         #     tramadol clearance.  If presystemic extraction splits in the
         #     same proportion, first-pass M1 is 0.073 to 0.109.
-        #   - At 0.10 a 100 mg oral dose gives a metabolite peak of 42 ng/mL,
-        #     which sits in the range oral tramadol studies report.
+        #   - At 0.10 a 100 mg oral dose gave a metabolite peak of 42 ng/mL,
+        #     which sits in the range oral tramadol studies report (on the
+        #     base dose; 100 mg of the hydrochloride, as now entered, gives
+        #     37 ng/mL).
         #   - It brings the metabolite peak to 93 min, which makes the
         #     observed 2.5 h peak analgesia reachable with a 24 min
         #     equilibration half-time rather than an implausible one.
@@ -261,8 +300,9 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
         # metaboliser then received full first-pass metabolite and reached
         # 71% of a normal metaboliser's peak instead of about a tenth.
         firstPassFraction = 0.10 * activity,
-        # O-desmethyltramadol 249.38, tramadol base 263.38 g/mol
-        mwRatio           = 249.38 / 263.38
+        # O-desmethyltramadol 249.38, tramadol hydrochloride 299.84 g/mol:
+        # the central amount is in hydrochloride milligrams (see the header)
+        mwRatio           = 249.38 / 299.84
       )
     )
   )
