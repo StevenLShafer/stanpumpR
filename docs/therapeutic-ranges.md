@@ -132,7 +132,7 @@ These keep their own band, because Table 5's range is for another use or analyte
 | oxycodone | 5–100 ng/mL at 12 h, chronic pain | 10–20 ng/mL, around the MEAC |
 | lorazepam | 5–100 ng/mL at 12 h, anxiety, oral | **51–152 ng/mL**, typical 104, moderate sedation (Barr 2001, read in full); was 34–104 |
 | midazolam | 50–150 ng/mL at 1–2 h, sedation after oral premedication (level 4) | **101–304 ng/mL**, typical 208, moderate sedation (Barr 2001); was 40–120, source not recorded. See below |
-| diazepam | 100–1,500 ng/mL of diazepam plus nordiazepam | 150–600 ng/mL of diazepam; nordiazepam is not modelled |
+| diazepam | 100–1,500 ng/mL of diazepam plus nordiazepam | **606–1,824 ng/mL** of diazepam, typical 1,248: midazolam's moderate-sedation band × 6; was 150–600. Nordiazepam is not modelled |
 
 Diamorphine is an illicit drug and so has no band; its row records Table 5's 70–350 ng/mL for
 heroin-assisted treatment.
@@ -156,7 +156,18 @@ The end point for the sedatives is **moderate sedation** (Steven L. Shafer, 2026
 Ramsay score of 3 or 4, as Barr defined it. Both bands therefore run from the concentration
 with an even chance of at least 3 to that with an even chance of at least 5, where the median
 patient scores 3 or 4, with the even chance of at least 4 as the typical value: midazolam
-101–304 ng/mL (typical 208) and lorazepam 51–152 ng/mL (typical 104).
+101–304 ng/mL (typical 208) and lorazepam 51–152 ng/mL (typical 104). Their time-until-threshold
+levels are the band's lower edge (101 and 51). No study relates diazepam to a sedation score, so
+its band is midazolam's times 6, the potency ratio from both the DSST (Mould 1995, 6.4) and the
+EEG (Bührer 1990, 6.3): 606–1,824 ng/mL, typical 1,248, threshold 606. Both ratios are from
+volunteers and total plasma; Barr's C50s are from ICU patients mostly on fentanyl. A ratio of
+unbound concentrations would be sounder, since both drugs are highly and differently bound to
+plasma proteins, but no study gives both drugs' unbound sedation concentrations. In rats, the
+in vivo affinity of nine GABA-A modulators estimated from unbound plasma concentrations
+correlated with in vitro receptor affinity (r = 0.93), and their intrinsic efficacy, which
+differs between benzodiazepines, with the in vitro GABA shift (r = 0.95; Visser 2003, PMID
+12490579); a potency ratio from total concentrations carries both drugs' binding in it, and
+affinity alone would not give the level of sedation a drug can reach.
 
 ## Product monographs (FDA, EMA)
 

@@ -29,15 +29,11 @@ The time to peak effect is 2.6 minutes. Bührer and colleagues (*Clin Pharmacol 
 
 ### Typical concentrations
 
-The shaded band runs from 150 to 600 ng/mL, with a typical value of 300:
-
-- The bottom is a little above the effect-site concentration that halved DSST performance, 116 to 132 ng/mL (Mould and colleagues, *Clin Pharmacol Ther* 1995;58:35-43: 132 ng/mL after 0.2 mg/kg, 98 after 0.1 mg/kg, 116 pooled, with individual values from 0.1 to 522 ng/mL).
-- 300 ng/mL has been cited as the effective therapeutic concentration (Chevassus and colleagues, *BMC Clin Pharmacol* 2004;4:3).
-- 200 to 600 ng/mL is the target in status epilepticus (Ku and colleagues, *CPT Pharmacometrics Syst Pharmacol* 2018;7:718-727). Ku adopted it from the literature as a surrogate (a review and three small studies) and says it has not been tested prospectively in children; in their 87 children with status epilepticus, diazepam exposure was related to neither efficacy nor safety. 
+The shaded band is moderate sedation (a Ramsay score of 3 or 4), the end point the library draws for the sedatives. No study relates diazepam concentrations to a sedation score, so the band is [midazolam](help:drugs/midazolam)'s, from Barr and colleagues (*Anesthesiology* 2001;95:286-298), multiplied by 6, diazepam being about a sixth as potent: 606 to 1,824 ng/mL, with a typical value of 1,248. The ratio is 6.4 for the digit symbol substitution test (Mould and colleagues, *Clin Pharmacol Ther* 1995;58:35-43: effect-site concentrations halving performance of 116 ng/mL for diazepam and 18.1 for midazolam, with individual diazepam values from 0.1 to 522) and 6.3 for the EEG (Bührer and colleagues, 1990: 958 against 152 ng/mL). Both ratios come from volunteers and total plasma concentrations, while Barr's patients were in intensive care, most of them on fentanyl, so the band is a scaled estimate, not a measurement. It replaced 150 to 600 ng/mL, built from the DSST concentration and a status epilepticus target of 200 to 600 ng/mL that Ku and colleagues (*CPT Pharmacometrics Syst Pharmacol* 2018;7:718-727) adopted from the literature without testing it. The band is for diazepam alone: nordiazepam, which accumulates and adds effect on repeated dosing, is not plotted.
 
 The AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5) gives 100 to 1,500 ng/mL for diazepam plus nordiazepam in anxiety disorders. This model does not plot nordiazepam, so that range is not drawn.
 
-The default time-until-threshold level is 150 ng/mL. Diazepam is about a sixth as potent as midazolam (Mould and colleagues).
+The default time-until-threshold level is 606 ng/mL, six times midazolam's 101, the concentration at which a patient has an even chance of a Ramsay score of at least 3.
 
 ### Where to be careful
 
