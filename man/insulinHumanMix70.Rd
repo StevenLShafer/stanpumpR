@@ -34,7 +34,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 and regular insulin's ka); NULL is the 10 U reference dose}
 
 \item{pregnant}{when \code{TRUE}, apply the rise in insulin clearance of
-late pregnancy, CL/F x 1.19 (see R/insulinTham.R)}
+late pregnancy, CL/F x 1.25 (see R/insulinTham.R)}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
