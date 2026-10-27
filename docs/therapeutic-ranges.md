@@ -174,7 +174,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010 and Laffont 2022, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022 and Lesser 1992, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -183,7 +183,7 @@ Barr 2001, McGough 2003, Boellner 2010 and Laffont 2022, read in full.
 | midazolam | Crevoisier 1983, *Br J Clin Pharmacol* 16 Suppl 1:51S | 6138082 | Concentration and effect, oral and IV |
 | midazolam | Link 2008, *Br J Clin Pharmacol* 66:473 | 18537963 | Concentrations after 10 mg by mouth |
 | alprazolam | Ciraulo 1990, *J Clin Psychopharmacol* 10:27 | 2407754 | Dose to steady state; response above 20 ng/mL |
-| alprazolam | Lesser 1992, *Am J Psychiatry* 149:1556 | 1415824 | Concentration and response in panic disorder |
+| alprazolam | Lesser 1992, *Am J Psychiatry* 149:1556 | 1415824 | Read in full: 50% major panic response at 15 ng/mL, 75% at 48; sedation 40, ataxia 70, slurred speech 100 |
 | alprazolam | Wincor 1991, *J Clin Psychopharmacol* 11:48 | 2040715 | The same |
 | alprazolam | Greenblatt and Wright 1993, *Clin Pharmacokinet* 24:453 | 8513649 | The former 20–40 ng/mL |
 | temazepam | Hosie and Nimmo 1991, *Br J Anaesth* 66:20 | 1997054 | Above 200 ng/mL for sedation |
