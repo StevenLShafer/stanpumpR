@@ -898,6 +898,12 @@ app_server <- function(input, output, session) {
     if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
   })
 
+  # NULL when the field is blank: the neonatal models then assume a term birth.
+  gestationalAge <- reactive({
+    x <- input$gestationalAge
+    if (is.null(x) || length(x) != 1 || (is.na(x) && !is.nan(x))) NULL else x
+  })
+
   # The message for the plot area when Age, Weight or Height is not a number.
   # A blank field, or an unfinished entry such as a lone ".", reaches the
   # server as NULL or NA, and req() in age() etc. then stops everything
@@ -923,7 +929,8 @@ app_server <- function(input, output, session) {
       errorFxn <- function(msg) showModal(modalDialog(title = NULL, msg))
       checkNumericCovariates(age(), weight(), height(), errorFxn,
                              osmolality = osmolality(),
-                             creatinine = creatinine())
+                             creatinine = creatinine(),
+                             gestationalAge = gestationalAge())
     }, name = "testCovariates() reactive")
   })
 
@@ -1009,6 +1016,7 @@ app_server <- function(input, output, session) {
         cyp2b6 = if (is.null(input$cyp2b6)) CYP2B6_DEFAULT else input$cyp2b6,
         osmolality = osmolality(),
         creatinine = creatinine(),
+        gestationalAge = gestationalAge(),
         pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
         alternativeModels = companionGroupsOn(),
@@ -1428,6 +1436,7 @@ app_server <- function(input, output, session) {
         adjustToFFM = adjustToFFM(),
         osmolality = osmolality(),
         creatinine = creatinine(),
+        gestationalAge = gestationalAge(),
         cyp2d6 = input$cyp2d6,
         cyp2c19 = input$cyp2c19,
         cyp2c9 = input$cyp2c9,

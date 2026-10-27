@@ -15,7 +15,7 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "dopamine", "atropine", "propranolol", "digoxin",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
                  "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
-                 "vasopressin", "hydralazine")
+                 "vasopressin", "hydralazine", "dobutamineNeonatal")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -25,7 +25,9 @@ REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
                "magnesium sulfate", "procainamide", "verapamil", "diltiazem",
                "propranolol", "metoprolol", "esmolol", "labetalol",
                # asked for on 2026-10-19
-               "digoxin", "milrinone")
+               "digoxin", "milrinone",
+               # asked for on 2026-10-27
+               "dobutamine")
 
 test_that("every row is fully classified with a clickable source", {
   for (col in c("model_id", "drug", "route", "population", "analyte", "matrix",
@@ -80,7 +82,9 @@ test_that("the category holds exactly the implemented drugs, concentration only"
                        phenylephrine = PHENYLEPHRINE_TPEAK,
                        epinephrine = EPINEPHRINE_TPEAK,
                        vasopressin = VASOPRESSIN_TPEAK,
-                       hydralazine = HYDRALAZINE_TPEAK, 0)
+                       hydralazine = HYDRALAZINE_TPEAK,
+                       # supplies ke0, so its tPeak is solved per patient
+                       dobutamineNeonatal = PK$tPeak, 0)
     expect_equal(PK$tPeak, expected, info = d)
   }
   # Clevidipine was already in the library, in the Antihypertensives category,
@@ -158,8 +162,16 @@ test_that("the parameter audit covers every implemented drug", {
 
 test_that("every time to peak effect in the audit is the one the model uses", {
   timing <- parameters[parameters$parameter == "tPeak", ]
-  withTPeak <- IMPLEMENTED[vapply(IMPLEMENTED, function(d)
-    getDrugPK(d, 70, 170, 50, "male")$tPeak > 0, logical(1))]
+  # A drug whose source measured ke0 records ke0 instead, and the model
+  # supplies it directly (getDrugPK() solves the tPeak for each patient)
+  withKe0 <- unique(parameters$drug[parameters$parameter == "ke0"])
+  expect_identical(withKe0, "dobutamineNeonatal")
+  expect_equal(getDrugPK("dobutamineNeonatal", 1.6, 42, 0, "male")$PK$default$ke0,
+               as.numeric(parameters$value[parameters$drug == "dobutamineNeonatal" &
+                                             parameters$parameter == "ke0"]) / 60,
+               tolerance = 1e-6)
+  withTPeak <- setdiff(IMPLEMENTED[vapply(IMPLEMENTED, function(d)
+    getDrugPK(d, 70, 170, 50, "male")$tPeak > 0, logical(1))], withKe0)
   expect_setequal(timing$drug, withTPeak)
   for (i in seq_len(nrow(timing)))
     expect_equal(as.numeric(timing$value[i]),
@@ -259,6 +271,11 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("milrinone", "CL") / 1000, MILRINONE_CL1)
   expect_equal(value("milrinone", "Q2") / 1000, MILRINONE_CL2)
   expect_equal(value("milrinone", "tPeak"), MILRINONE_TPEAK)
+  expect_equal(value("dobutamineNeonatal", "CL"), DOBUTAMINE_NEO_CL)
+  expect_equal(value("dobutamineNeonatal", "V"), DOBUTAMINE_NEO_V)
+  expect_equal(value("dobutamineNeonatal", "TM50"), DOBUTAMINE_NEO_TM50)
+  expect_equal(value("dobutamineNeonatal", "Hill"), DOBUTAMINE_NEO_HILL)
+  expect_equal(value("dobutamineNeonatal", "ke0"), DOBUTAMINE_NEO_KE0)
   expect_equal(value("milrinonePediatric", "CL"), MILRINONE_PED_CL)
   expect_equal(value("milrinonePediatric", "V"), MILRINONE_PED_V)
   expect_equal(value("milrinonePediatric", "CrCl exponent"),

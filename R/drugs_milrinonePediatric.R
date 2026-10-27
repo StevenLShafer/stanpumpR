@@ -28,8 +28,9 @@
 # COVARIATES HERE
 # ===============
 # PMA is 40 + 52 x age in years (a term birth, the source's imputation when
-# gestational age was missing), so a premature infant's own gestational age
-# cannot be entered.  Renal function is the bedside Schwartz estimate from
+# gestational age was missing); this model does not read the Patient
+# Profile's gestational age at birth (added for dobutamineNeonatal), so a
+# premature infant's maturation is overstated.  Renal function is the bedside Schwartz estimate from
 # the patient's own creatinine (patientCreatinine()) at EVERY age, the
 # definition the covariate was fitted on.  Until 2026-10-24 it switched to
 # CKD-EPI 2009 at 18, which made clearance jump 24% on the 18th birthday (a

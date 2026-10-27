@@ -22,7 +22,8 @@ getDrugPK(
   cyp2b6 = CYP2B6_DEFAULT,
   pregnant = FALSE,
   vkorc1 = VKORC1_DEFAULT,
-  model = NULL
+  model = NULL,
+  gestationalAge = NULL
 )
 }
 \arguments{
@@ -72,8 +73,7 @@ passed only to models that name it (methadone).}
 \item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default).
 Passed only to the models that name it (R/pregnancy.R lists them), which
 apply the changes of late pregnancy measured for that drug
-(inst/extdata/pregnancyRegistry.csv); every other model ignores it.
-TRUE requires \code{sex = "female"}.}
+(inst/extdata/pregnancyRegistry.csv); every other model ignores it.}
 
 \item{vkorc1}{VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};
 passed only to models that name it (warfarin).}
@@ -81,6 +81,12 @@ passed only to models that name it (warfarin).}
 \item{model}{internal: a model's output to use in place of calling the
 drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.}
+
+\item{gestationalAge}{gestational age at birth in weeks, or NULL (the
+default) for a term birth.  Passed only to the neonatal models that
+declare it (dobutamineNeonatal), whose clearance matures with
+postmenstrual age (\code{postmenstrualAge()}).
+TRUE requires \code{sex = "female"}.}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

@@ -18,8 +18,10 @@ a list of \code{v1}, \code{v2}, \code{cl1} and \code{cl2}, in the
 units of \code{CL} and \code{Vss}
 }
 \description{
-The unique mammillary decomposition derived in the header of
-R/drugs_clevidipine.R.  Exported for the unit test, which re-derives the
-same vector from the published numbers by a different route.
+The unique mammillary decomposition when a source reports clearance,
+steady-state volume and both half-lives but no central volume.  Clevidipine
+used it until its source's fitted V1 was read (see the header of
+R/drugs_clevidipine.R); it is kept for the companion study's check and the
+labetalol test.
 }
 \keyword{internal}

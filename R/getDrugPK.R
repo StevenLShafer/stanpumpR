@@ -38,6 +38,10 @@
 #'   Passed only to the models that name it (R/pregnancy.R lists them), which
 #'   apply the changes of late pregnancy measured for that drug
 #'   (inst/extdata/pregnancyRegistry.csv); every other model ignores it.
+#' @param gestationalAge gestational age at birth in weeks, or NULL (the
+#'   default) for a term birth.  Passed only to the neonatal models that
+#'   declare it (dobutamineNeonatal), whose clearance matures with
+#'   postmenstrual age (\code{postmenstrualAge()}).
 #'   TRUE requires \code{sex = "female"}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
@@ -79,7 +83,8 @@ getDrugPK <- function(
   # Appended after the pre-existing arguments so a positional call that passed
   # cyp2b6 or pregnant keeps its binding (getDrugPK() is exported).
   vkorc1 = VKORC1_DEFAULT,
-  model = NULL
+  model = NULL,
+  gestationalAge = NULL
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -125,6 +130,18 @@ getDrugPK <- function(
     stop("Invalid creatinine: ", paste(creatinine, collapse = ", "),
          ". Must be a number between ", MIN_CREATININE, " and ",
          MAX_CREATININE, " mg/dL, or NULL for the assumed normal value")
+  }
+  # The gestational age at birth is optional in the same way: blank (NA) is
+  # NULL, a term birth; NaN is rejected.
+  if (!is.null(gestationalAge) && length(gestationalAge) == 1 &&
+      is.na(gestationalAge) &&
+      !(is.numeric(gestationalAge) && is.nan(gestationalAge)))
+    gestationalAge <- NULL
+  if (!is.null(gestationalAge) &&
+      !is_valid_number(gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE)) {
+    stop("Invalid gestationalAge: ", paste(gestationalAge, collapse = ", "),
+         ". Must be a number of weeks between ", MIN_GESTATIONAL_AGE, " and ",
+         MAX_GESTATIONAL_AGE, ", or NULL for a term birth")
   }
 
   # Every model takes the four patient covariates.  A pharmacogenetic
@@ -176,6 +193,10 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "creatinine" %in% names(formals(get(drug, mode = "function"))))
     covariates["creatinine"] <- list(creatinine)
+  # And the gestational age at birth, which only the neonatal models read.
+  if (exists(drug, mode = "function") &&
+      "gestationalAge" %in% names(formals(get(drug, mode = "function"))))
+    covariates["gestationalAge"] <- list(gestationalAge)
   # And the pregnancy flag, which only the models with a measured change in
   # pregnancy read (R/pregnancy.R, inst/extdata/pregnancyRegistry.csv).
   if (exists(drug, mode = "function") &&
@@ -1054,7 +1075,8 @@ getDrugPK <- function(
       creatinine = creatinine,
       pregnant = pregnant,
       adjustToFFM = adjustToFFM,
-      resolveMetabolite = FALSE
+      resolveMetabolite = FALSE,
+      gestationalAge = gestationalAge
     )
     metaboliteSet <- metabolitePK$PK[[PK_EVENT_DEFAULT]]
 

@@ -265,8 +265,9 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
     expect_true(setequal(names(s$patient),
                          c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9",
                            "vkorc1", "cyp2b6", "adjustToFFM", "creatinine", "osmolality",
-                           "pregnant")), info = s$id)
+                           "pregnant", "gestationalAge")), info = s$id)
     expect_null(s$patient$creatinine, info = s$id)
+    expect_null(s$patient$gestationalAge, info = s$id)
     expect_true(is.logical(s$patient$pregnant) && length(s$patient$pregnant) == 1, info = s$id)
     expect_equal(s$patient$osmolality, OSMOLALITY_DEFAULT, info = s$id)
   }
@@ -307,6 +308,8 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   expect_true(all(c("creatinine", "osmolality") %in% names(session$messages)))
   expect_identical(session$messages$creatinine$value, "")
   expect_equal(as.numeric(session$messages$osmolality$value), OSMOLALITY_DEFAULT)
+  # a previous patient's gestational age does not survive either
+  expect_identical(session$messages$gestationalAge$value, "")
   # and the rest of the profile goes too, the Pregnant control included (off
   # for this patient, so a parturient loaded earlier does not linger)
   expect_true(all(c("age", "weight", "height", "sex", "cyp2d6", "cyp2c19", "cyp2c9", "vkorc1",
@@ -324,6 +327,15 @@ test_that("loading a scenario resets the creatinine and osmolality fields", {
   applyHelpScenario(session, s, doseTable, eventTable)
   expect_equal(as.numeric(session$messages$creatinine$value), 2.5)
   expect_equal(as.numeric(session$messages$osmolality$value), 300)
+
+  s <- helpScenario("x-z", "T", HELP_SCENARIO_GROUPS[1], "S",
+                    age = 0, weight = 1.2, height = 38,
+                    doses = helpDoses(c("dobutamineNeonatal", 0, 5, "mcg/kg/min")),
+                    gestationalAge = 29)
+  expect_length(helpScenarioCheck(s), 0)
+  session <- recordingSession()
+  applyHelpScenario(session, s, doseTable, eventTable)
+  expect_equal(as.numeric(session$messages$gestationalAge$value), 29)
 })
 
 test_that("the scenario page shows the creatinine and osmolality the load will set", {

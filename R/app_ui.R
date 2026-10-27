@@ -308,6 +308,23 @@ app_ui <- function() {
                   ),
                   patientFieldTooltip("creatinine"),
                   placement = "right"
+                ),
+
+                # Read only by the neonatal models that name `gestationalAge`
+                # (dobutamineNeonatal), whose clearance matures with
+                # postmenstrual age, the gestational age at birth plus the
+                # postnatal age.  Blank means a term birth (40 weeks).
+                bslib::tooltip(
+                  numericInput(
+                    inputId = "gestationalAge",
+                    label = "Gestational age at birth (weeks)",
+                    value = NA,
+                    min = MIN_GESTATIONAL_AGE,
+                    max = MAX_GESTATIONAL_AGE,
+                    step = 0.5
+                  ),
+                  patientFieldTooltip("gestationalAge"),
+                  placement = "right"
                 )
               ),
 

@@ -95,7 +95,7 @@ The response (JSON):
   "patient": {
     "weight": 70, "weightUnit": "kg", "height": 170, "heightUnit": "cm",
     "age": 50, "ageUnit": "years", "sex": "male", "pregnant": false, "adjustToFFM": true,
-    "osmolality": 280, "creatinine": null,
+    "osmolality": 280, "creatinine": null, "gestationalAge": null,
     "cyp2d6": "normal", "cyp2c19": "normal", "cyp2c9": "*1/*1", "cyp2b6": "normal"
   },
   "drugs": [
@@ -179,6 +179,7 @@ A request is a JSON object. Field names ignore case and any `_`, space or
     "ageUnit": "years",      // "years" (default) | "months"
     "adjustToFFM": true,     // scale each model to fat-free mass (default) rather than total weight
     "creatinine": null,      // serum creatinine, mg/dL; omit or null for the normal value for age and sex
+    "gestationalAge": null,  // gestational age at birth, weeks; omit or null for a term birth (neonatal models)
     "osmolality": 280,       // baseline serum osmolality, mOsm/kg (read only by mannitol)
     "cyp2d6": "normal",      // poor | intermediate | normal | ultrarapid
     "cyp2c19": "normal",     // poor | intermediate | normal | rapid | ultrarapid
@@ -225,6 +226,7 @@ A request is a JSON object. Field names ignore case and any `_`, space or
 | `sex` | yes | `male`, `female` |
 | `pregnant` | no | `false` (default) or `true`, which needs `sex` `female`. Only the drugs with a late-pregnancy model read it. |
 | `creatinine` | no | 0.2–15 mg/dL. If it is omitted, each renally cleared model assumes the normal value for the patient's age and sex. |
+| `gestationalAge` | no | 22–44 weeks, the gestational age at birth. If it is omitted, the birth is taken as at term (40 weeks). Only the neonatal models (`dobutamineNeonatal`) read it, with the age, as the postmenstrual age. |
 | `osmolality` | no | 200–400 mOsm/kg. The default is 280. |
 | `cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
 | `adjustToFFM` | no | `true` (default) or `false` |

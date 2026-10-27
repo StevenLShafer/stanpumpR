@@ -22,7 +22,8 @@ simulateDrugsWithCovariates(
   cyp2b6 = CYP2B6_DEFAULT,
   pregnant = FALSE,
   vkorc1 = VKORC1_DEFAULT,
-  antiseizureInteractions = FALSE
+  antiseizureInteractions = FALSE,
+  gestationalAge = NULL
 )
 }
 \arguments{
@@ -81,6 +82,10 @@ the antiseizure drugs (\code{R/antiseizureInteractions.R},
 every drug on its own.  A changed drug's entry carries
 \code{interaction}, the segments of its multipliers and the rows that
 produced them.}
+
+\item{gestationalAge}{gestational age at birth in weeks, or NULL for a term
+birth.  Only the neonatal models that declare it (dobutamineNeonatal)
+are affected.}
 }
 \value{
 a list of data frames with the output of the a single drug
