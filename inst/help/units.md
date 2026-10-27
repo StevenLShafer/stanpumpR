@@ -39,7 +39,7 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses
 | Insulin pump | U/hr SC | A rate into the subcutaneous depot, from that time until the drug's next U/hr SC row (insulin lispro only); see [absorption](help:models/absorption) |
 | Phenytoin equivalents | mg PE, mg PE IM, mg PE/min; and per kg | Fosphenytoin, prescribed in phenytoin sodium equivalents (see [phenytoin](help:drugs/phenytoin)) |
 | Target | Plasma target, Effect site target | A target concentration in the plotted unit; see [Target-controlled infusion](help:tci) |
-| Scheduled | a bolus, PO (including the oral forms), SL, IM, IN or SC unit followed by qd, bid, tid or qid, or an SC unit followed by qwk | Repeated every 24, 12, 8 or 6 hours, or every week; see [The dose table](help:dose-table) |
+| Scheduled | a bolus, PO (including the oral forms), SL, IM, IN or SC unit followed by qd, bid, tid, qid or q4h, or an SC unit followed by qwk | Repeated every 24, 12, 8, 6 or 4 hours, or every week; see [The dose table](help:dose-table) |
 | Gas flow | L/min | A flowmeter or ventilation setting |
 | Vaporizer | % | A vaporizer setting |
 

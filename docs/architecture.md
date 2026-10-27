@@ -355,7 +355,7 @@ All files are flat in `R/`.
   `Suggests` dependency guarded by `requireNamespace()`, and the router shares nothing with
   `run_app()`. `inst/api/entrypoint.R` (for `rsconnect::deployAPI()`) and the hand-written
   `inst/api/openapi.json` go with it.
-- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` dose row into its
+- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` / `q4h` dose row into its
   repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
   `exportDoseTable()`, which merges the TCI rows and the repeats into the exported dose table.
 - `alternativeModels.R` — the Minto / Schnider switch: Schnider's propofol and Minto's
@@ -427,8 +427,8 @@ All files are flat in `R/`.
   does not host Plumber): `run_tci_api()` or `rsconnect::deployAPI()` serve it. The normative
   reference is `docs/tci-api.md`.
 - **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM or IN unit with a frequency suffix
-  (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 h (qd / bid /
-  tid / qid) until the end of the X axis. A scheduled dose of 0 for the same route stops the
+  (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 / 4 h (qd /
+  bid / tid / qid / q4h) until the end of the X axis. A scheduled dose of 0 for the same route stops the
   sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
   table: `simCpCe()` returns them as `$scheduled` and `sendSlide()` merges them into the export.
   The frequencies are offered per drug in `drugDefaults_global.csv`.

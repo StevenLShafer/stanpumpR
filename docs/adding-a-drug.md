@@ -518,7 +518,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   TCI API's drug list, which `docs/tci-api.md` publishes, `TCI_DRUGS` in `test-tci-api.R`
   pins and [FauxTCI](https://github.com/StevenLShafer/FauxTCI) is built against: adding
   them means updating that roster and the API documentation, and it is a change to a
-  published contract rather than a local one. A `qd`/`bid`/`tid`/`qid`/`qwk` suffix opts
+  published contract rather than a local one. A `qd`/`bid`/`tid`/`qid`/`q4h`/`qwk` suffix opts
   into `scheduled.R`'s repeats, an `SC` suffix into the tissue depot, and a unit naming a
   salt or product into `doseProduct()`. Offer only what the drug's evidence supports: an
   investigational or research model usually wants a bare mass unit and nothing else.

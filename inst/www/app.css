@@ -76,6 +76,25 @@ always was. */
   overflow-y: auto;
 }
 
+/* The dose table fits the Doses sidebar at 14 px, with the column widths
+createHOT() sets.  A unit too long for its column wraps after its route,
+"mg/kg PO" over "liquid q4h" (unitWrapText() in hot_funs.js), in the cell as
+in the dropdown list, whose Handsontable stylesheet would otherwise cut it
+short with an ellipsis. */
+#doseTableHTML .handsontable {
+  font-size: 14px;
+}
+#doseTableHTML .htAutocompleteArrow {
+  width: 12px;
+}
+#doseTableHTML .handsontable.listbox td {
+  white-space: pre-line;
+  text-overflow: clip;
+}
+#doseTableHTML .handsontable.listbox .wtHolder {
+  overflow-x: hidden;
+}
+
 /* The dose table's sidebar (bslib::sidebar at the right of the plot): the
 grid fills the height left under the title and scrolls inside itself, so the
 Apply, Undo and Redo buttons under it stay in view. */
