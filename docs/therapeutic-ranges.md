@@ -126,7 +126,7 @@ These keep their own band, because Table 5's range is for another use or analyte
 
 | Drug | Table 5 | Band kept |
 |---|---|---|
-| ketamine | 60–410 ng/mL after 0.5 mg/kg over 40 min, depression | 0.1–0.16 mg/L, analgesia |
+| ketamine | 60–410 ng/mL after 0.5 mg/kg over 40 min, depression | 0.1–0.16 mg/L, the analgesic threshold (Mion 2013, citing Clements 1982) |
 | methadone | 90–620 ng/mL at 24 h, opioid use disorder | 48–120 ng/mL, postoperative analgesia (Gourlay 1984) |
 | morphine | 5–400 ng/mL chronic pain; 50–520 opioid use disorder | 6.4–16 ng/mL, around the MEAC |
 | oxycodone | 5–100 ng/mL at 12 h, chronic pain | 10–20 ng/mL, around the MEAC |
@@ -176,7 +176,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017 and Patsalos 2008, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008 and Mion 2013, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -208,7 +208,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | morphine, oxycodone | Thaulow 2023, *Ther Drug Monit* 45:777 | 37296504 | Dose-specific chronic pain ranges behind Table 5 |
 | morphine | Mitchell 2003, *Drug Alcohol Depend* 72:85 | 14563546 | The opioid use disorder range |
 | oxycodone, many | Schulz 2020, *Crit Care* 24:195 | 32375836 | The compilation behind oxycodone's range (open access) |
-| ketamine | Mion 2013, *CNS Neurosci Ther* 19:370 | 23575437 | Probably the "Moen 2013 review" the ketamine model cites for its band; to confirm |
+| ketamine | Mion 2013, *CNS Neurosci Ther* 19:370 | 23575437 | Read in full: the source of the band ("Moen" in the old code), citing Clements 1982 |
 | diazepam | Friedman 1992, *Clin Pharmacol Ther* 52:139 | 1505149 | Concentration and effect of oral diazepam |
 | diazepam | Chevassus 2004, *BMC Clin Pharmacol* 4:3 | 15102335 | The kept band's 300 ng/mL, which this insulin-secretion study cites only in passing (open access) |
 | temazepam | van Steveninck 1994, *Clin Pharmacol Ther* 55:546 | 8181199 | The former band's top |
