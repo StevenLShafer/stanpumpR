@@ -174,7 +174,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022 and Lesser 1992, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992 and Hosie and Nimmo 1991, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -186,7 +186,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022 and Lesser 1992, read in fu
 | alprazolam | Lesser 1992, *Am J Psychiatry* 149:1556 | 1415824 | Read in full: 50% major panic response at 15 ng/mL, 75% at 48; sedation 40, ataxia 70, slurred speech 100 |
 | alprazolam | Wincor 1991, *J Clin Psychopharmacol* 11:48 | 2040715 | The same |
 | alprazolam | Greenblatt and Wright 1993, *Clin Pharmacokinet* 24:453 | 8513649 | The former 20–40 ng/mL |
-| temazepam | Hosie and Nimmo 1991, *Br J Anaesth* 66:20 | 1997054 | Above 200 ng/mL for sedation |
+| temazepam | Hosie and Nimmo 1991, *Br J Anaesth* 66:20 | 1997054 | Read in full: 211 ng/mL awake, 785–940 sedated; above 200 for sedation |
 | zolpidem | Drover 2004, *Clin Pharmacokinet* 43:227 | 15005637 | Source of 80–200 ng/mL |
 | zolpidem | Greenblatt 1998, *Clin Pharmacol Ther* 64:553 | 9834048 | The same |
 | buprenorphine | Laffont 2022, *Front Pharmacol* 13:1052113 | 36467036 | Read in full: 2–3 ng/mL sustained for use and craving (68–75% occupancy); withdrawal controlled from 1 ng/mL; sublingual troughs 0.7–1.4 |
