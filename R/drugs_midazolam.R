@@ -166,7 +166,9 @@ midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # Anesthesiology 2001;95:286-298 (full text read), the basis of lorazepam's
   # band: plasma midazolam with an even chance of a Ramsay score of at least 3,
   # 4 and 5 (Model H) is 101, 208 and 304 ng/mL, so the median patient scores 3
-  # or 4 from 101 to 304.  It replaced 0.04-0.12, whose source was not recorded.  The AGNP 2026 range (Hart 2026, Table 5), 50-150 ng/mL,
+  # or 4 from 101 to 304.  It replaced 0.04-0.12, whose source was not recorded.
+  # The time-until-threshold level (endCe in the CSV) is 0.101, the even chance
+  # of a Ramsay score of at least 3, as lorazepam's is (it was 0.04, unsourced).  The AGNP 2026 range (Hart 2026, Table 5), 50-150 ng/mL,
   # is for oral premedication and is recorded in therapeuticRanges.csv, not
   # drawn: the guideline cites Matsuda 2022, who quote it from a textbook
   # (Cote, Lerman and Anderson 2013, p. 141), and whose own children had
