@@ -130,8 +130,8 @@ These keep their own band, because Table 5's range is for another use or analyte
 | methadone | 90–620 ng/mL at 24 h, opioid use disorder | 48–120 ng/mL, postoperative analgesia (Gourlay 1984) |
 | morphine | 5–400 ng/mL chronic pain; 50–520 opioid use disorder | 6.4–16 ng/mL, around the MEAC |
 | oxycodone | 5–100 ng/mL at 12 h, chronic pain | 10–20 ng/mL, around the MEAC |
-| lorazepam | 5–100 ng/mL at 12 h, anxiety, oral | 34–104 ng/mL, ICU sedation (Barr 2001, read in full) |
-| midazolam | 50–150 ng/mL at 1–2 h, sedation after oral premedication (level 4) | **68–208 ng/mL**, typical 101, ICU sedation (Barr 2001); was 40–120, source not recorded. See below |
+| lorazepam | 5–100 ng/mL at 12 h, anxiety, oral | **51–152 ng/mL**, typical 104, moderate sedation (Barr 2001, read in full); was 34–104 |
+| midazolam | 50–150 ng/mL at 1–2 h, sedation after oral premedication (level 4) | **101–304 ng/mL**, typical 208, moderate sedation (Barr 2001); was 40–120, source not recorded. See below |
 | diazepam | 100–1,500 ng/mL of diazepam plus nordiazepam | 150–600 ng/mL of diazepam; nordiazepam is not modelled |
 
 Diamorphine is an illicit drug and so has no band; its row records Table 5's 70–350 ng/mL for
@@ -148,9 +148,15 @@ required for sedation". The guideline rates the range level 4. The library's mid
 intravenous, so its band comes from the study that gives lorazepam's: Barr 2001 (PMID 11506097,
 read in full), target-controlled midazolam and lorazepam infusions after surgery in 24 ICU
 patients. Its Model H gives plasma midazolam with an even chance of a Ramsay score of at least
-2, 3 and 4 as 68, 101 and 208 ng/mL (lorazepam 34, 51 and 104), 18% lower for each decade of
-age and with fentanyl; the observed median midazolam concentrations at scores of 3 and 4 were
-79 and 119 ng/mL.
+2, 3, 4, 5 and 6 as 68, 101, 208, 304 and 375 ng/mL (lorazepam 34, 51, 104, 152 and 188), 18%
+lower for each decade of age and with fentanyl; the observed median midazolam concentrations at
+scores of 3 and 4 were 79 and 119 ng/mL.
+
+The end point for the sedatives is **moderate sedation** (Steven L. Shafer, 2026-10-27): a
+Ramsay score of 3 or 4, as Barr defined it. Both bands therefore run from the concentration
+with an even chance of at least 3 to that with an even chance of at least 5, where the median
+patient scores 3 or 4, with the even chance of at least 4 as the typical value: midazolam
+101–304 ng/mL (typical 208) and lorazepam 51–152 ng/mL (typical 104).
 
 ## Product monographs (FDA, EMA)
 
