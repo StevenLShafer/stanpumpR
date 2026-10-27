@@ -33,7 +33,7 @@ The shaded band runs from 150 to 600 ng/mL, with a typical value of 300:
 
 - The bottom is a little above the effect-site concentration that halved DSST performance, 116 to 132 ng/mL (Mould and colleagues).
 - 300 ng/mL has been cited as the effective therapeutic concentration (Chevassus and colleagues, *BMC Clin Pharmacol* 2004;4:3).
-- 200 to 600 ng/mL is the target in status epilepticus (Ku and colleagues, *CPT Pharmacometrics Syst Pharmacol* 2018;7:718-727). 
+- 200 to 600 ng/mL is the target in status epilepticus (Ku and colleagues, *CPT Pharmacometrics Syst Pharmacol* 2018;7:718-727). Ku adopted it from the literature as a surrogate (a review and three small studies) and says it has not been tested prospectively in children; in their 87 children with status epilepticus, diazepam exposure was related to neither efficacy nor safety. 
 
 The AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5) gives 100 to 1,500 ng/mL for diazepam plus nordiazepam in anxiety disorders. This model does not plot nordiazepam, so that range is not drawn.
 
