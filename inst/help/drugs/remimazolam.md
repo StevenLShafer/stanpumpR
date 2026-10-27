@@ -14,7 +14,7 @@ Two covariates in the published model are deliberately ignored in the code. One 
 
 ### Effect site
 
-The time to peak effect is 2.5 minutes.
+The effect site is the model's sedation (MOAA/S) effect compartment, with the published equilibration rate constant ke0 = 0.298 /min, read from the NONMEM code in the paper's supplement. Because the pharmacokinetics and the ke0 come from the same fit, the ke0 is used as published and the time to peak effect after a bolus follows from it: about 2.4 minutes for a 70 kg, 35-year-old man, and a little shorter in a woman, whose clearance is higher. (The same model's BIS effect site is slower, ke0 0.145 /min, and is not used.)
 
 ### Typical concentrations
 

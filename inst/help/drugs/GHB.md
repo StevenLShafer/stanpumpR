@@ -51,7 +51,7 @@ The model reproduces its own source's simulated adult peak after 4.5 g twice nig
 
 The source fitted its own allometry, so stanpumpR carries that rather than the package's: the central volume with an exponent of 0.650 on weight and the maximum rate with 0.633. The source does **not** print the weight it normalised to; 70 kg is assumed, which is the library's own reference and the usual convention. The dataset's median weight was 72.1 kg, and using that instead would move predictions by under 3% — well inside the uncertainty of the maximum rate alone, which spans about ±11%.
 
-The age effect is **categorical**, on the central volume, and is carried as published: a 7 to 17 year old gets a 22% larger central volume and a 7 to 11 year old a 12% smaller one than an adult. Being categorical, it steps at the twelfth and eighteenth birthdays rather than varying smoothly, so the curve will jump as you change the age across those boundaries. Below 7 years nothing was fitted and the adult value is used.
+The age effect is **categorical**, on the central volume, and is carried as published: a 7 to 17 year old gets a 22% larger central volume and a 7 to 11 year old a 12% smaller one than an adult. Being categorical, it steps at the twelfth and eighteenth birthdays rather than varying smoothly, so the curve will jump as you change the age across those boundaries. The youngest child in the data was 8, so nothing below 8 was fitted; below 7, the category's published lower edge, the adult value is used.
 
 ### Where to be careful
 

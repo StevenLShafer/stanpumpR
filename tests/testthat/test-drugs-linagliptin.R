@@ -43,7 +43,8 @@ test_that("5 mg once daily reaches the paper's steady state", {
   last <- w$Time >= 20 * MINS_PER_DAY
   peak <- max(w$Plasma[last]) / nM
   trough <- approx(w$Time, w$Plasma, 21 * MINS_PER_DAY - 1)$y / nM
-  # paper: median steady-state trough 5.29 nmol/L; predictive-check median
+  # paper: median 24 h after a regular steady-state dose 5.58 nmol/L (5.29 is
+  # the trough after a missed dose); predictive-check median
   # peak about 9 nmol/L
   expect_equal(trough, 5.0, tolerance = 0.02)
   expect_equal(peak, 9.0, tolerance = 0.02)

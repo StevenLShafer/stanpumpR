@@ -12,9 +12,9 @@
 #
 # SOURCE
 # ======
-# Retlich S, Duval V, Graefe-Mody U, Jaehde U, Staab A.  Population
-# pharmacokinetics and pharmacodynamics of linagliptin in patients with type 2
-# diabetes mellitus.  Clin Pharmacokinet 2015;54:737-750.  462 patients with
+# Retlich S, Duval V, Graefe-Mody U, Friedrich C, Patel S, Jaehde U, Staab A.
+# Population pharmacokinetics and pharmacodynamics of linagliptin in patients
+# with type 2 diabetes mellitus.  Clin Pharmacokinet 2015;54:737-750.  462 patients with
 # type 2 diabetes in two phase 1 and two phase 2b studies, 0.5 to 10 mg once
 # daily.  Two compartments; linagliptin binds DPP-4, at equilibrium, in both
 # (Fig. 1), and CL is "the clearance of the unbound concentration".  Table 4:
@@ -53,8 +53,10 @@
 # CHECKS
 # ======
 # 5 mg once daily, 60-year-old man, 88 kg, at steady state: trough about
-# 5 nmol/L (paper: median steady-state trough 5.29 nmol/L, Fig. 3 of the
-# supplement about 5.1 simulated and 5.6 observed) and peak about 9 nmol/L
+# 5 nmol/L (paper: median concentration 24 h after a regular steady-state
+# dose 5.58 nmol/L, 90% PI 3.55-9.69, p9; Fig. 3 of the supplement about 5.1
+# simulated and 5.6 observed; the paper's 5.29 is the trough after the dose
+# that follows a MISSED one) and peak about 9 nmol/L
 # (the visual predictive check's median).  See
 # tests/testthat/test-drugs-linagliptin.R.
 #

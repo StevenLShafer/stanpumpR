@@ -6,7 +6,7 @@ Every parameter is **apparent**, divided by the oral bioavailability, because th
 
 ### Absorption is zero order, and the authors tested that
 
-The input is a constant rate over 4.39 hours rather than a first-order absorption, and that was a finding rather than a convention: the objective function was 7712 for the zero-order model against 7875 for the first-order one, on the same number of parameters. The library has had a [zero-order oral release](help:models/antihypertensives) since carvedilol, whose source rejected first-order absorption for the same kind of reason, so each oral dose here is rewritten into the constant-rate rows that deliver it over those 4.39 hours. There is no absorption rate constant and no separate bioavailability — both are inside the apparent scale.
+The input is a constant rate over 4.39 hours rather than a first-order absorption, and that was a finding rather than a convention: the objective function was 7712 for the zero-order model against 7875 for the first-order one. The library has had a [zero-order oral release](help:models/antihypertensives) since carvedilol, whose source rejected first-order absorption for the same kind of reason, so each oral dose here is rewritten into the constant-rate rows that deliver it over those 4.39 hours. There is no absorption rate constant and no separate bioavailability — both are inside the apparent scale.
 
 One consequence is worth knowing before reading the curve. **The peak is at the end of the release**, at exactly 4.39 hours, because a constant-rate input into a linear system peaks when the input stops. The label puts the peak at 2 to 4 hours, a little earlier, and the authors say themselves that the model "somewhat underpredicted" the median peak concentration. So this curve is a fair description of valsartan's exposure and a slightly blunt one of its peak.
 
@@ -30,6 +30,6 @@ The source *did* fit a blood-pressure model for valsartan — an effect compartm
 
 ### Where to be careful
 
-This is a **single-dose study in healthy young volunteers**, so nothing in it constrains the accumulation on chronic daily dosing, and the between-subject variability on the central volume was large (a variance of 0.519, against 0.373 for clearance).
+This is a **single-dose study in healthy young volunteers**, so nothing in it constrains the accumulation on chronic daily dosing, and the between-subject variability on the central volume was large (0.519 on the scale the paper reports, the square root of the variance, against 0.373 for clearance).
 
 Valsartan is also a **pregnancy contraindication**, not merely an unstudied drug: the angiotensin receptor blockers carry a boxed warning for fetal toxicity. The registry records that there are no pregnancy pharmacokinetic studies and none should be expected.
