@@ -76,3 +76,26 @@ test_that("it is plasma only, with the 100-300 ng/mL target range", {
   row <- dd[dd$Drug == "milrinonePediatric", ]
   expect_equal(c(row$Lower, row$Upper), c(100, 300))
 })
+
+test_that("a loading dose and an infusion simulate to the one-compartment solution", {
+  # End to end through simulateDrugsWithCovariates() (adversarial review,
+  # 2026-10-27).  Hornik's simulated regimen, 50 mcg/kg then 0.5 mcg/kg/min,
+  # in a 2-year-old of 13 kg; ng/mL = mcg/L.
+  set <- getDrugPK("milrinonePediatric", 13, 88, 2, "male", adjustToFFM = FALSE,
+                   creatinine = 0.3)$PK$default
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "milrinonePediatric", Time = c(0, 0),
+               Dose = c(50, 0.5), Units = c("mcg/kg", "mcg/kg/min")),
+    data.frame(Time = double(), Event = character()),
+    13, 88, 2, "male", 720, FALSE, creatinine = 0.3,
+    adjustToFFM = FALSE)$milrinonePediatric$wide
+  # Every point of the simulated time line after the dose
+  times <- wide$Time[wide$Time > 0]
+  got <- wide$Plasma[wide$Time > 0]
+  expect_gt(length(times), 20)
+  k <- set$cl1 / set$v1
+  ref <- 50 * 13 / set$v1 * exp(-k * times) +
+    0.5 * 13 / set$cl1 * (1 - exp(-k * times))
+  expect_lt(max(abs(got / ref - 1)), 1e-6)
+  expect_equal(ref, mammillaryReference(set, times, 50 * 13, 0.5 * 13))
+})

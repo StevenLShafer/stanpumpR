@@ -47,3 +47,31 @@ startFormatFromInputs <- function(session) {
   env <- session$env
   shiny::isolate(env$doseTableFormat(env$selectorFormat()))
 }
+
+# Plasma (central) concentration of a mammillary model after a bolus at time
+# 0 and a constant-rate infusion from 0 to tStop, by eigendecomposition of the
+# compartmental rate matrix: independent of the package's closed-form
+# coefficients.  `set` holds v1..v3 (L) and cl1..cl3 (L/min); a compartment
+# with zero intercompartmental clearance is absent.  Returns amount per litre
+# of v1 in the dose's amount unit.
+mammillaryReference <- function(set, times, bolus = 0, rate = 0, tStop = Inf) {
+  peripheral <- Filter(function(i) set[[paste0("cl", i)]] > 0, 2:3)
+  n <- 1 + length(peripheral)
+  K <- matrix(0, n, n)
+  K[1, 1] <- -set$cl1 / set$v1
+  for (j in seq_along(peripheral)) {
+    i <- peripheral[j]
+    q <- set[[paste0("cl", i)]]
+    K[1, 1] <- K[1, 1] - q / set$v1
+    K[1, j + 1] <- q / set[[paste0("v", i)]]
+    K[j + 1, 1] <- q / set$v1
+    K[j + 1, j + 1] <- -q / set[[paste0("v", i)]]
+  }
+  e <- eigen(K)
+  mu <- Re(e$values); V <- Re(e$vectors); w <- solve(V)[, 1]
+  vapply(times, function(t) {
+    tau <- min(t, tStop)
+    g <- bolus * exp(mu * t) + rate * (exp(mu * t) - exp(mu * (t - tau))) / mu
+    sum(V[1, ] * g * w) / set$v1
+  }, numeric(1))
+}

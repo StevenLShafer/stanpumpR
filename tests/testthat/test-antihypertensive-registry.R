@@ -606,3 +606,21 @@ test_that("the two kinds of catalog row are counted, so the gap stays visible", 
   # was: that is the whole difference between the two kinds
   expect_true(all(withDocument$pk_evidence == "official_label_descriptive"))
 })
+
+test_that("the antihypertensives help page names every drug in the category", {
+  # Adversarial review, 2026-10-27: the page said six drugs, and named six,
+  # after five more had joined the category.  Counted from the library so a
+  # new drug cannot leave the prose behind.
+  dd <- getDrugDefaultsGlobal()
+  drugs <- dd$Drug[!is.na(dd$Category) & dd$Category == "Antihypertensives"]
+  page <- paste(readLines(system.file("help", "models", "antihypertensives.md",
+                                      package = "stanpumpR")), collapse = "\n")
+  for (drug in drugs)
+    expect_true(grepl(paste0("(help:drugs/", drug, ")"), page, fixed = TRUE),
+                info = drug)
+  words <- c("Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve",
+             "Thirteen", "Fourteen", "Fifteen")
+  expect_true(grepl(paste(words[length(drugs) - 5],
+                          "antihypertensives are in the drug library"),
+                    page, fixed = TRUE))
+})

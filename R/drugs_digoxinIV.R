@@ -188,11 +188,14 @@ digoxinIV <- function(weight, height, age, sex, adjustToFFM = TRUE,
   else
     paste0("serum creatinine ", format(creatinine), " mg/dL")
   reference <- paste0(
-    "Cheng JW, Charland SL, Shaw LM, et al., Pharmacotherapy 1997;17:584-590: ",
+    "Cheng JW, Charland SL, Shaw LM, et al., Pharmacotherapy 1997;17:584-590 ",
+    "(https://pubmed.ncbi.nlm.nih.gov/9165563/): ",
     "two compartments, CL 0.0676 + 0.0003 x CLcr L/h/kg, Vss 5.289 + 0.0115 x ",
     "CLcr L/kg, Vc 0.6 L/kg (Cockcroft-Gault CLcr ", round(crcl), " mL/min from ",
-    creatinineNote, ").  Time to peak effect 87 min from Hornestam B et al., ",
-    "Eur J Clin Pharmacol 2003;58:747-755. https://pubmed.ncbi.nlm.nih.gov/9165563/"
+    creatinineNote, ").  Time to peak effect 87 min, for the fall in ",
+    "ventricular rate in acute atrial fibrillation (not inotropy), from ",
+    "Hornestam B et al., Eur J Clin Pharmacol 2003;58:747-755 ",
+    "(https://doi.org/10.1007/s00228-002-0553-3)."
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(

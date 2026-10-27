@@ -1,6 +1,6 @@
 ### The model
 
-Olmesartan's parameters come from Yoshihara, Gao, Shiga, Wada and Hisaoka (*Clin Pharmacokinet* 2005;44:1329–42), a NONMEM analysis of 5119 plasma concentrations from 629 participants across twelve trials — healthy volunteers and hypertensive patients, Japanese and Western, given single and multiple oral doses of olmesartan medoxomil from 2.5 to 80 mg. Two compartments with first-order absorption and a 26-minute absorption lag.
+Olmesartan's parameters come from Yoshihara, Gao, Shiga, Wada and Hisaoka (*Clin Pharmacokinet* 2005;44:1329–42), a NONMEM analysis of 7911 plasma concentrations from 472 participants across twelve trials — 89 healthy volunteers and 383 hypertensive patients, Japanese and Western, given single and multiple oral doses of olmesartan medoxomil from 2.5 to 80 mg. Two compartments with first-order absorption and a 26-minute absorption lag.
 
 Every parameter is **apparent**, divided by the oral bioavailability, because the analysis had no intravenous arm. So no intravenous unit is offered, and the dose enters without being multiplied by a bioavailability.
 
@@ -30,11 +30,11 @@ with creatinine in micromoles per litre. The [Patient Profile's](help:patient-pr
 
 ### Patient status is applied, as hypertensive
 
-Healthy volunteers clear olmesartan **21.3% faster** than hypertensive patients, and the source fitted that as a covariate. There is no patient-status field in the Patient Profile and there does not need to be one: a patient receiving an angiotensin receptor blocker is a hypertensive patient. So the term is applied as hypertensive, which is also what makes the clearance here match the paper's own headline typical values of 6.66 L/h in a man and 5.76 L/h in a woman.
+Hypertensive patients clear olmesartan **21.3% more slowly** than healthy volunteers, and the source fitted that as a covariate. There is no patient-status field in the Patient Profile and there does not need to be one: a patient receiving an angiotensin receptor blocker is a hypertensive patient. So the term is applied as hypertensive, which is also what makes the clearance here match the paper's own headline typical values of 6.66 L/h in a man and 5.76 L/h in a woman.
 
 ### Race is not applied, and that is the paper's own finding
 
-The source also fitted a race term, Japanese against Western, and it is **not applied here**: there is no race field in this library and none will be invented. The cost is bounded and very small. The term was not statistically significant, its coefficient had a 131% coefficient of variation and a bootstrap confidence interval straddling zero, and the difference it describes is 3.0%.
+The source also fitted a race term, Japanese against Western, and it is **not applied here**: there is no race field in this library and none will be invented. The cost is bounded and very small. The term was not statistically significant, its coefficient had a 131% coefficient of variation and a bootstrap confidence interval straddling zero, and the difference it describes is 3.0%, Japanese clearance being the lower.
 
 It is worth being clear about why the authors kept a non-significant term in their final model: the paper's declared purpose was to look for a race effect in olmesartan's disposition, and the answer was that there is none. **That absence is the finding**, not the coefficient, and leaving the coefficient out preserves it.
 
@@ -48,6 +48,6 @@ Neither is modelled. The source fitted no pharmacodynamic model of any kind, and
 
 ### Where to be careful
 
-The absorption rate constant had by far the largest interindividual variability in the model — a variance of 1.64, against 0.116 for clearance — so the first two hours after a dose are the least reliable part of any individual curve, even though the typical shape is well determined by 5119 observations.
+The absorption rate constant had by far the largest interindividual variability in the model — a variance of 1.64, against 0.116 for clearance — so the first two hours after a dose are the least reliable part of any individual curve, even though the typical shape is well determined by 7911 observations.
 
 Olmesartan is also a **pregnancy contraindication**, not merely an unstudied drug: the angiotensin receptor blockers carry a boxed warning for fetal toxicity. The registry records that there are no pregnancy pharmacokinetic studies and none should be expected, and the physiological rise in filtration of pregnancy is deliberately not applied to the creatinine term here, because it would draw a faster, healthier-looking curve for a patient who should not be taking the drug.

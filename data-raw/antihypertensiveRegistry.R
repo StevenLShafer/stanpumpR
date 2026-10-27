@@ -997,7 +997,7 @@ sources <- rbind(sources,
       matrix = "plasma", pk_evidence = FULL, pd_evidence = PART,
       execution_status = READY, stanpumpr_drug = "valsartan",
       source_type = "primary_fitted",
-      source_url = "https://doi.org/10.1111/bcp.13069",
+      source_url = "https://doi.org/10.1111/bcp.13082",
       limitations = "Two compartments with first-order elimination and a ZERO-ORDER input of duration D1, apparent throughout (oral data only): CL/F 6.18 L/h, V1/F 25.9 L, Q/F 2.01 L/h, V2/F 17.4 L at a 70 kg standard, D1 4.39 h. The zero-order absorption was CHOSEN ON THE DATA, not by convention -- the objective function was 7712.434 against 7874.858 for first order on the same number of parameters -- so it is run through the oralZeroOrder release mode built for carvedilol, whose source rejected first-order absorption for the same kind of reason. The peak is therefore at the END of the release, at exactly 4.39 h, against the label\'s 2-4 h, and the authors state that the model somewhat underpredicts the median peak concentration: the curve is a fair description of exposure and a blunt one of the peak. Size is theory-based allometry at 70 kg (weight^0.75 on CL/F and Q/F, weight on V1/F and V2/F, the paper\'s Equations 1 and 2), which is the library\'s own scaling, so the switch off reproduces the published model exactly; D1 is NOT scaled, the size equations naming clearance and volume only. BODY WEIGHT WAS THE ONLY SIGNIFICANT COVARIATE: age, serum creatinine, smoking and drinking status were screened by stepwise covariate modelling and rejected (P > 0.001), so THERE IS NO RENAL TERM and the signature does not name creatinine. That is a real limitation rather than a modelling choice -- the population was 48 healthy young adults with a mean creatinine of 0.81 mg/dL and contains no information about renal impairment. Single dose, so nothing here constrains accumulation on chronic daily dosing. The paper also fitted a blood-pressure model (effect compartment, Imax 0.164) and an amlodipine interaction term, which is recorded separately as valsartan__fdc_tablet__oral__healthy_adults__resting_sbp_and_dbp__heo2016, gated and NOT evaluable: only the Imax was transcribed, so it is not one of the four relations antihypertensiveEndpointsAvailable() returns."),
   rec("valsartan__fdc_tablet__oral__healthy_adults__resting_sbp_and_dbp__heo2016",
       "valsartan", "valsartan", "oral", "fixed-dose combination tablet",
@@ -1005,7 +1005,7 @@ sources <- rbind(sources,
       endpoint = "resting_sbp_and_dbp", analyte = "valsartan",
       matrix = "plasma", pk_evidence = FULL, pd_evidence = PART,
       execution_status = EXTR, source_type = "primary_fitted",
-      source_url = "https://doi.org/10.1111/bcp.13069",
+      source_url = "https://doi.org/10.1111/bcp.13082",
       limitations = "The blood-pressure half of the paper behind the valsartan concentration record, kept so that the concentration record\'s cross-reference to it can be checked. An effect compartment driving an Emax model on sitting systolic and diastolic pressure, with the valsartan Imax estimated at 0.164 (which the authors then FIXED as amlodipine\'s Imax, assuming the two monotherapies are equally efficacious -- an assumption, not a measurement), plus an empirical additive-and-proportional interaction term for the combination. IT IS NOT EVALUABLE and is deliberately NOT one of the four relations antihypertensiveEndpointsAvailable() returns: only the Imax was transcribed, and the equilibration rate constant, the baseline and the interaction coefficient alpha were not, so the relation cannot be evaluated against a concentration. Extracting them is what would change this status. Even then it would not plot a pressure: the monotherapy arm of the fit is a NAIVELY POOLED analysis of mean blood pressures read from two other papers, because this study gave both drugs together and has no valsartan-alone arm, so the valsartan response is identified from other people\'s published means rather than from these subjects. bp_simulation_enabled stays FALSE, as it is on every record."),
   rec("valsartan__sacubitril_valsartan__oral__healthy_chinese__concentration__yang2022",
       "valsartan", "valsartan", "oral", "sacubitril/valsartan tablet",
@@ -1017,7 +1017,7 @@ sources <- rbind(sources,
       limitations = "READ IN FULL with its supplement on 2026-10-20 and REJECTED, which is recorded here so it is not re-derived: the printed parameters do not reproduce the paper\'s own figures. Simulating the published model gives tmax 7.49 h and Cmax 0.99 mcg/mL against roughly 2-2.5 h and 2.8 mcg/mL in its own Figure 1 visual predictive check; AUC 20.3 does match the figure\'s ~20, so the clearance is sound and the SHAPE is not. Checked twice, with the closed-form solution and with an independent Runge-Kutta integration. Moving the decimal point in Ka (1.9 for the printed 0.19) fixes tmax exactly, at 1.96 h, and still leaves Cmax 1.6-fold low, so AT LEAST TWO printed parameters are irreconcilable and nothing in the paper identifies which -- a single transcription error could have been repaired, two cannot be guessed. Additionally: V2/F is printed as 0.51 L with a 26-fold confidence interval on CL2/F; the Methods describe a BMI allometry that Table 3 does not contain; and the drug studied was sacubitril/valsartan rather than conventional valsartan. Heo 2016 is used instead, which is older and smaller but internally consistent. To settle this record, individual-level data or an author correction would be needed, not another reading of the same tables."),
   rec("olmesartan__medoxomil_tablet__oral__pooled_12_trials__concentration__yoshihara2005",
       "olmesartan medoxomil", "olmesartan", "oral", "medoxomil tablet",
-      population = "629 participants in 12 trials -- healthy volunteers and hypertensive patients, 355 Westerners (338 Caucasian, 17 Hispanic) and the remainder Japanese; 5119 concentrations after single and multiple oral doses of olmesartan medoxomil 2.5-80 mg",
+      population = "472 participants in 12 trials -- 89 healthy volunteers and 383 hypertensive patients, 355 Westerners (338 Caucasian, 17 Hispanic) and the remainder Japanese; 7911 concentrations after single and multiple oral doses of olmesartan medoxomil 2.5-80 mg",
       endpoint = "concentration", analyte = "olmesartan",
       matrix = "plasma", pk_evidence = FULL, pd_evidence = PRO,
       execution_status = READY, stanpumpr_drug = "olmesartan",
@@ -1176,7 +1176,7 @@ parameters <- rbind(
       matrix = "whole blood", population = "25 healthy men",
       endpoint = "concentration", source_url = CLEV_URL,
       verification = "derived_here",
-      notes = "V1 = CL / (l1 + l2 - l1 l2 Vss / CL). Unique, given CL, Vss and both half-lives; see R/drugs_clevidipine.R."),
+      notes = "V1 = CL / (l1 + l2 - l1 l2 Vss / CL). Unique, given CL, Vss and both half-lives; see R/drugs_clevidipine.R. An adversarial review of 2026-10-27 states that this paper's full text prints a fitted V1 of 0.36 L/kg; the full text (a scanned PDF in PubMed Central) has not been read here, and 0.36 L/kg is exactly the V1 the companion Eur J Clin Pharmacol 1999 study reports, so the claim may conflate the two papers. If it is confirmed, the derived 0.3689 is 2.5% above it."),
   par(CLEV_ID, "V2", 0.191111, "L/kg", "derived", "derived",
       matrix = "whole blood", population = "25 healthy men",
       endpoint = "concentration", source_url = CLEV_URL,
@@ -1254,12 +1254,12 @@ parameters <- rbind(
       matrix = "whole blood", population = "25 healthy men",
       endpoint = "svr_proxy_map_over_hr", source_url = CLEV_URL,
       verification = "handoff_unverified",
-      notes = "NOT VERIFIED and treated as suspect: this value appears in no reachable copy of the paper, and other clevidipine reports give 42% with EC50 40 nmol/L and about -50% with EC50 about 25 nmol/L in hypertensive patients. Not used anywhere."),
+      notes = "NOT VERIFIED: the paper's abstract, the only part read here, gives no coefficients. An adversarial review of 2026-10-27 states that the full text's Results give Emax 45.4% and EC50 12.1 nmol/L, the figures the handoff carried; that is agreement between two unverified sources, not a reading of the paper. Other clevidipine reports give 42% with EC50 40 nmol/L and about -50% with EC50 about 25 nmol/L in hypertensive patients. Not used anywhere."),
   par("clevidipine__emulsion__iv__healthy_men__svr_proxy__ericsson1999",
       "EC50", 12.1, "nmol/L", "fitted", matrix = "whole blood",
       population = "25 healthy men", endpoint = "svr_proxy_map_over_hr",
       source_url = CLEV_URL, verification = "handoff_unverified",
-      notes = "NOT VERIFIED, as the Emax above. The endpoint is the MAP/HR ratio, so this is not a blood-pressure EC50 even if the number is right."),
+      notes = "NOT VERIFIED, as the Emax above (same 2026-10-27 review statement). The endpoint is the MAP/HR ratio, so this is not a blood-pressure EC50 even if the number is right."),
   par("clevidipine__emulsion__iv__postoperative_cardiac__map_threshold__bailey2002",
       "C50, MAP fall of 10% or more", 9.7, "mcg/L", "fitted",
       matrix = "plasma", population = "postoperative adult cardiac surgery",
@@ -2005,7 +2005,7 @@ parameters <- rbind(parameters,
 
 OLM_ID  <- "olmesartan__medoxomil_tablet__oral__pooled_12_trials__concentration__yoshihara2005"
 OLM_URL <- "https://doi.org/10.2165/00003088-200544120-00011"
-OLM_POP <- "629 participants in 12 trials, healthy volunteers and hypertensive patients, Japanese and Western"
+OLM_POP <- "472 participants in 12 trials, 89 healthy volunteers and 383 hypertensive patients, Japanese and Western"
 
 olmPar <- function(name, value, units, uncertainty, table, notes)
   par(OLM_ID, name, value, units, "fitted",
@@ -2042,13 +2042,13 @@ parameters <- rbind(parameters,
          "exp(0.145 x sex) with male 1 and female 0, so women clear 13.5 percent less, which the implementation reproduces."),
   olmPar("patient status coefficient on CL/F", -0.239, "dimensionless", 0.055,
          "Table IV, effect of covariates on CL/F",
-         "exp(-0.239 x pv) with hypertensive 1 and healthy volunteer 0. APPLIED as hypertensive, there being no patient-status field and no need of one: a patient given an angiotensin receptor blocker is a hypertensive patient. Healthy volunteers clear olmesartan 21.3 percent faster, so taking the healthy reference instead would draw every curve 21 percent too low."),
+         "exp(-0.239 x pv) with hypertensive 1 and healthy volunteer 0. APPLIED as hypertensive, there being no patient-status field and no need of one: a patient given an angiotensin receptor blocker is a hypertensive patient. CL/F is 21.3 percent lower in hypertensive patients than in healthy volunteers, so taking the healthy reference instead would draw every curve 21 percent too low."),
   olmPar("race coefficient on CL/F", -0.030, "dimensionless", 0.040,
          "Table IV, effect of covariates on CL/F",
-         "exp(-0.030 x race) with Japanese 1 and Westerner 0. NOT APPLIED by the drug: there is no race field in the Patient Profile. Not statistically significant (p > 0.05, 131 percent CV, bootstrap interval -0.103 to 0.049), and the difference is 3.0 percent. The authors retained it only because the paper's declared purpose was to evaluate the effect of race and conclude there is none; that absence is the finding and leaving the coefficient out preserves it."))
+         "exp(-0.030 x race) with Japanese 1 and Westerner 0. NOT APPLIED by the drug: there is no race field in the Patient Profile. Not statistically significant (p > 0.05, 131 percent CV, bootstrap interval -0.103 to 0.049), and the difference is 3.0 percent, Japanese clearance being the lower. The authors retained it only because the paper's declared purpose was to evaluate the effect of race and conclude there is none; that absence is the finding and leaving the coefficient out preserves it."))
 
 VAL_ID  <- "valsartan__fdc_tablet__oral__healthy_adults__concentration__heo2016"
-VAL_URL <- "https://doi.org/10.1111/bcp.13069"
+VAL_URL <- "https://doi.org/10.1111/bcp.13082"
 VAL_POP <- "48 healthy Korean subjects, single 160 mg valsartan with 10 mg amlodipine"
 
 valPar <- function(name, value, units, rse, notes)

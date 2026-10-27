@@ -49,10 +49,15 @@
 #
 # THE DERIVATION, AND WHY IT IS UNIQUE
 # ====================================
-# The paper does not print V1, V2 and Q.  It does not need to: a
-# two-compartment model has exactly four free parameters, and the four
-# reported quantities fix them.  Writing l1 and l2 for the two exponential
-# rates (log(2)/1.8 and log(2)/9.5 per minute), the standard relations are
+# The abstract does not print V1, V2 and Q, and the full text (a scanned PDF
+# in PubMed Central) has not been read here.  The abstract does not need to:
+# a two-compartment model has exactly four free parameters, and the four
+# reported quantities fix them.  (An adversarial review of 2026-10-27 states
+# that the full text prints a fitted V1 of 0.36 L/kg.  Unverified, and 0.36
+# L/kg is exactly the companion Eur J Clin Pharmacol 1999 study's V1, below,
+# so the claim may conflate the two papers.  If confirmed, it is a second
+# check: the derived 0.3689 is 2.5% above it.)  Writing l1 and l2 for the
+# two exponential rates (log(2)/1.8 and log(2)/9.5 per minute), the standard relations are
 #
 #     l1 + l2 = k10 + k12 + k21,      l1 l2 = k10 k21,
 #     CL      = V1 k10,               Vss   = V1 (1 + k12/k21).
@@ -119,12 +124,15 @@
 # tPeak = 0, so getDrugPK() leaves ke0 at zero and only the blood
 # concentration is plotted.  The source fitted an Emax model to the ratio of
 # mean arterial pressure to heart rate -- a surrogate for vascular resistance,
-# not a blood pressure -- and the numeric coefficients of that fit could not
-# be verified against the full text; reachable secondary sources disagree with
-# each other about them.  They are recorded as unverified in the parameter
-# audit and are not used.  MEAC = 0 and the band is zero: there is no
-# therapeutic whole-blood range to draw, and Bailey's plasma thresholds are a
-# different matrix.
+# not a blood pressure -- and the numeric coefficients of that fit have not
+# been read in the full text; reachable secondary sources disagree with each
+# other about them.  The 2026-10-27 review states that the Results give Emax
+# 45.4% and EC50 12.1 nmol/L, the handoff specification's figures, which is
+# agreement between two unverified sources.  They are recorded as unverified
+# in the parameter audit and are not used: even if confirmed, the endpoint is
+# MAP/HR in healthy men with compensatory tachycardia, not a pressure.
+# MEAC = 0 and the band is zero: there is no therapeutic whole-blood range
+# to draw, and Bailey's plasma thresholds are a different matrix.
 # -----------------------------------------------------------------------------
 
 # Ericsson 1999, as published
