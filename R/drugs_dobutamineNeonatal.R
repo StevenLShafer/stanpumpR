@@ -40,7 +40,7 @@
 # "5.29 L/1618 g or 3.27 L/kg", which is linear in weight (5.29 / 1.618 =
 # 3.27).  41.2 is the MATURE clearance at the median weight: with the
 # maturation applied, the study's median infant (PMA 30.4 weeks, maturation
-# 0.365) clears 15.1 L/h, 155 mL/min/kg, against the 90 (38) mL/min/kg of the
+# 0.365) clears 15.0 L/h, 155 mL/min/kg, against the 90 (38) mL/min/kg of the
 # only earlier neonatal study the authors cite; read as the clearance of that
 # median infant, it would be 424 mL/min/kg.
 #
@@ -77,7 +77,7 @@
 # disposition unchanged, the source's own model, rather than carried as a
 # time to peak effect, because ke0 was a fixed effect with no between-subject
 # variability and the time to peak in one compartment moves with each
-# infant's clearance (13.4 min at the study median).  No heart rate is
+# infant's clearance (13.5 min at the study median).  No heart rate is
 # plotted; the Emax model (baseline 138, maximum 172 beats/min, EC50 39.2
 # mcg/L, gamma 3.36) is recorded in the vasoactive parameter audit.
 #
