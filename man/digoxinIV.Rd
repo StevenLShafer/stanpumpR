@@ -34,7 +34,7 @@ it also sets the weight the creatinine-clearance estimate uses.}
 value}
 
 \item{pregnant}{is the patient pregnant?  \code{TRUE} multiplies the
-elimination clearance by 1.35 (Hebert 2008; see the file's header).}
+elimination clearance by 1.42 (Hebert 2008; see the file's header).}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

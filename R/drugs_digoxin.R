@@ -85,8 +85,12 @@
 # The unbound renal clearance of digoxin was 272 +/- 45 mL/min in pregnancy
 # against 183 +/- 37 mL/min postpartum (x 1.49), and its unbound net
 # secretion 109 against 58 mL/min (x 1.88): filtration and renal
-# P-glycoprotein both rise.  Digoxin is only 20 to 30% bound (Iisalo 1977), so
-# the total renal clearance changes almost as the unbound one does.  Luxford
+# P-glycoprotein both rise.  The curve is total serum digoxin, so the ratio
+# that matters is the TOTAL renal clearance, 181 +/- 25 against 115 +/- 25
+# mL/min (x 1.57; Table 2, read from the supplied paper on 2026-10-27): more
+# than the unbound ratio because the unbound fraction rose too, 67% against
+# 63%.  The creatinine clearance rose less, 163 against 125 mL/min (x 1.30),
+# because secretion rose more than filtration.  Luxford
 # and Kellaway (15 women, third trimester against 6 to 12 weeks postpartum)
 # found digoxin renal clearance and creatinine clearance both higher in
 # pregnancy, but the serum digoxin higher too, which they put down to greater
@@ -94,8 +98,9 @@
 #
 # With the Patient Profile's Pregnant field on and the serum creatinine left
 # blank, the creatinine clearance in Yukawa's renal term is multiplied by
-# PREGNANCY_GFR_FACTOR = 1.5 (pregnancyGfrFactor(), R/pregnancy.R), which
-# reproduces Hebert's x 1.49 in renal clearance; the weight (nonrenal) term,
+# PREGNANCY_GFR_FACTOR = 1.5 (pregnancyGfrFactor(), R/pregnancy.R), the
+# library's rule for every renal term, which puts the renal term 5% below
+# Hebert's x 1.57 in total renal clearance; the weight (nonrenal) term,
 # the volumes and Q are unchanged.  At 60 kg and a creatinine clearance of
 # 100 mL/min, CL/F = 2.16 + 11.2 = 13.4 L/h becomes 2.16 + 16.8 = 19.0 L/h,
 # x 1.42.  A measured creatinine is not multiplied: a pregnant woman's
