@@ -48,8 +48,15 @@
 # =====================
 # Drafted by Claude Code, 2026-10-10, at the request of Steven L. Shafer.
 # Concerta (OROS methylphenidate) is entered as "mg PO XR".  No published
-# model gives its input numerically (Gomeni 2017 fitted a double Weibull to
-# mean curves without printing a usable parameter set), so its input is
+# model gives its input for d-MPH.  Gomeni R et al., Clin Pharmacol Ther
+# 2017;102:951-960 fitted a double Weibull to digitised mean curves, and its
+# supplement does print a complete Concerta set: kel 0.18 /h and V/F 1520 L
+# (Supplementary Table 3) with the release parameters of Table 1 (ff 19%,
+# td 0.76 h, ss 3.18, td1 6.33 h, ss1 3.40; the text and Supplementary
+# Table 3 swap td1 and ss1, and Supplementary Figure 2's release curve
+# matches Table 1).  But the curves it was fitted to mix racemic MPH and
+# d-MPH sources (Supplementary Table 1), so it does not describe the d-MPH
+# plotted here on Lyauk's disposition.  The input is therefore
 # FITTED HERE, to the shape of the mean curve in Childress AC et al., Clin
 # Pharmacol Drug Dev 2025;14:829-835 (doi 10.1002/cpdd.1577), the OROS
 # reference arms of two bioequivalence trials: healthy adults, fasted, 54 mg
