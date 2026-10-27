@@ -327,7 +327,7 @@ category:
 
 | Drug | Matrix | Source | What it needed |
 |---|---|---|---|
-| `clevidipine` | whole blood | Ericsson 1999 (BJCP) | V1, V2 and Q derived from four reported quantities (section 4); externally validated in section 11 |
+| `clevidipine` | whole blood | Ericsson 1999 (BJCP) | V1, V2 and Q derived from four reported quantities (section 4); externally validated in section 11; since 2026-10-27, Table 1's fitted V1 (section 17) |
 | `fenoldopamPediatric` | plasma | Hammer 2008 | nothing; named for its population |
 | `carvedilol` | plasma | Hwang 2023 | the zero-order oral release mode of section 8 |
 | `azilsartan` | plasma | Tsai 2016 | the full text, and a dose basis the paper never states (section 10.2) |
@@ -649,7 +649,7 @@ injection route is the nearer of its two to being portable.
   1.1%. That makes the remaining gap sharper, not smaller. The derivation is
   now validated while its four INPUTS are still abstract-only, which leaves
   clevidipine the one live curve in this library whose own parameters have
-  never been read in a full text. The other two gains stand: the five PK
+  never been read in a full text. (Read on 2026-10-27: section 17.) The other two gains stand: the five PK
   numbers rise from `primary_abstract` to `primary_full_text`, and the Emax
   and EC50 of the MAP-over-HR resistance proxy become available.
 - **Bailey 2002** (PMID 11981147, Anesthesiology 2002;96:1086-94, doi
@@ -1892,3 +1892,58 @@ checked against a primary full text**, 25 against an abstract, 8 derived here,
 and 36 still carrying the handoff specification's numbers unverified.
 `bp_simulation_enabled` is `FALSE` on every record, and **no drug in stanpumpR
 plots a blood pressure.**
+
+## 17. Clevidipine's own full text, and its fitted V1 (2026-10-27)
+
+Section 11.1 kept Ericsson's *Br J Clin Pharmacol* 1999 paper (PMID
+10336577) at the top of the reading list, its full text unread. An
+adversarial review by ChatGPT on 2026-10-27 said that its Table 1 prints a
+fitted V1 of 0.36 L/kg and that its Results give the MAP/HR Emax and EC50 the
+handoff carried. Because 0.36 L/kg is also exactly the companion EJCP study's
+V1, the claim was first recorded as a possible conflation of the two papers.
+Dr. Shafer then supplied the publisher's PDF, and the review was right on
+both counts.
+
+The Methods say CL, V1, k12 and k21 were "obtained directly from the fitting
+function" (P-PHARMA) and that every other parameter was "calculated from the
+estimated population mean values". Table 1:
+
+| Fitted | Derived by the authors |
+|---|---|
+| CL 0.121 L/min/kg | Vss 0.56 L/kg |
+| V1 0.36 L/kg | half-lives 1.8 and 9.5 min |
+| k12, k21 (not printed) | C1 95.9%, C2 4.1%, AUC share of the initial phase 81.6% |
+
+So section 4's premise, that the record reports four quantities from which
+the vector must be derived, was an artefact of having only the abstract. The
+model now uses the fitted CL and V1. The two rate constants are not printed,
+so they are chosen by least squares, with CL and V1 held, to reproduce the six
+derived quantities in units of half their last printed digit: k12 0.04645 and
+k21 0.08629 /min, so V2 0.1938 L/kg and Q 0.01672 L/min/kg. That reproduces
+Vss 0.554, half-lives 1.75 and 9.45 min, C1 95.98% and an AUC share of
+81.56%, each within about 1.5 units of its last digit. Table 1's rounded
+numbers are not exactly consistent: freed, the best fit puts V1 at 0.366,
+outside 0.36's rounding. The old derived vector (V1 0.3689) reproduced Vss
+and both half-lives exactly but missed the printed V1 by 2.5% and the AUC
+share by 0.12 points. The change to the fitted V1 was Dr. Shafer's decision.
+
+Section 11's validation is unaffected: it tested the derivation *method*
+against the EJCP study's measurements, and it still passes. The implemented
+V1 now simply equals the EJCP measurement.
+
+The Results also give the resistance-proxy model as "the maximum reduction
+in MAP/HR (Emax) was 45.4%" with an EC50 of 12.1 nmol/L: a simple Emax, no
+effect compartment, fitted to the pooled percentage falls in MAP/HR during
+the last ten minutes of infusion, with a sigmoidal model not favoured. Both
+numbers are now `primary_full_text` in the parameter audit, and the record's
+`pd_evidence` is `primary_fitted_full`. They are still not evaluated by
+`antihypertensiveEndpoint()`: mean arterial pressure fell only about 10% at
+the highest rate because the heart rate rose to compensate, so a resistance
+surrogate in healthy men with intact reflexes says nothing about a pressure
+in the patients clevidipine is given to.
+
+The lesson is section 14's again, from the other side: **an abstract that does
+not print a parameter is not a paper that does not print it.** The derivation
+was sound and validated, and it was still the wrong thing to implement once
+the fitted value was in hand.
+

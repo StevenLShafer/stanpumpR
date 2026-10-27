@@ -149,13 +149,15 @@ test_that("the clevidipine derivation recovers an independently measured V1", {
   # Physically admissible, which is the condition the derivation needs
   expect_true(V1 > 0 && Vss - V1 > 0 && k21 > l2 && k21 < l1)
 
-  # And the implemented record's OWN derived V1, from its own study's
-  # numbers, lands near the other study's measurement: 0.369 against 0.36
+  # And the implemented record's own V1 is now its source's fitted value
+  # (read in the full text 2026-10-27), which equals the other study's
+  # measurement; the derivation applied to its own study gave 0.369
   impl <- parameters[parameters$model_id ==
     "clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999" &
       parameters$parameter == "V1", ]
-  expect_identical(impl$estimate_status, "derived")
-  expect_lt(abs(impl$value - reported("V1")) / reported("V1"), 0.05)
+  expect_identical(impl$estimate_status, "fitted")
+  expect_identical(impl$verification, "primary_full_text")
+  expect_equal(impl$value, reported("V1"))
 })
 
 test_that("formulation and route are separate records where the specification demands it", {

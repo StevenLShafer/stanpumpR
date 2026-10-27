@@ -1,19 +1,18 @@
 # Clevidipine (R/drugs_clevidipine.R): Ericsson 1999's two-compartment
-# whole-blood model, with V1, V2 and Q derived from the four quantities the
-# paper reports.  Drafted by Claude Code, 2026-10-17.
+# whole-blood model, with Table 1's fitted CL and V1 and the unprinted k12
+# and k21 chosen to reproduce its derived quantities.  Drafted by Claude
+# Code, 2026-10-17; revised 2026-10-27 from the full text.
 #
-# The expectations here are built from the published numbers INDEPENDENTLY of
-# the drug file: the two-compartment relations are re-solved below from the
-# half-lives, clearance and steady-state volume, and the simulated curve is
-# checked against the paper's own statements.
+# The expectations here are Table 1's printed numbers: the derived quantities
+# are recomputed below from the implemented vector, independently of the
+# drug file, and the simulated curve is checked against them.
 
-# Ericsson H et al., Br J Clin Pharmacol 1999;47:531-538
-CL   <- 0.121   # L/min/kg
-VSS  <- 0.56    # L/kg
-TH1  <- 1.8     # min, initial
-TH2  <- 9.5     # min, terminal
-l1 <- log(2) / TH1
-l2 <- log(2) / TH2
+# Ericsson H et al., Br J Clin Pharmacol 1999;47:531-538, Table 1
+CL   <- 0.121   # L/min/kg, fitted
+V1   <- 0.36    # L/kg, fitted
+VSS  <- 0.56    # L/kg, derived by the authors
+TH1  <- 1.8     # min, initial, derived by the authors
+TH2  <- 9.5     # min, terminal, derived by the authors
 
 events <- data.frame(Time = double(), Event = character())
 
@@ -24,35 +23,52 @@ simulateClevidipine <- function(dose, maximum = 120, adjustToFFM = FALSE,
                               FALSE, adjustToFFM = adjustToFFM)$clevidipine$wide
 }
 
-test_that("the derived two-compartment vector satisfies the published relations", {
-  p <- twoCompartmentFromHalfLives(CL, VSS, TH1, TH2)
-  k10 <- p$cl1 / p$v1
-  k12 <- p$cl2 / p$v1
-  k21 <- p$cl2 / p$v2
-  # The two defining relations between micro constants and eigenvalues
-  expect_equal_rounded(l1 + l2, k10 + k12 + k21)
-  expect_equal_rounded(l1 * l2, k10 * k21)
-  # Clearance and steady-state volume are reproduced exactly
+# Table 1's derived quantities, from a per-kilogram two-compartment set
+derivedQuantities <- function(set) {
+  k10 <- set$cl1 / set$v1; k12 <- set$cl2 / set$v1; k21 <- set$cl2 / set$v2
+  s <- k10 + k12 + k21; p <- k10 * k21
+  l1 <- (s + sqrt(s^2 - 4 * p)) / 2; l2 <- (s - sqrt(s^2 - 4 * p)) / 2
+  C1 <- (l1 - k21) / (l1 - l2)
+  c(Vss = set$v1 + set$v2, t1 = log(2) / l1, t2 = log(2) / l2,
+    C1 = 100 * C1, AUC1 = 100 * (C1 / l1) / (C1 / l1 + (1 - C1) / l2))
+}
+
+perKg <- function() {
+  set <- getDrugPK("clevidipine", 70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
+  lapply(set[c("v1", "v2", "cl1", "cl2")], function(x) x / 70)
+}
+
+test_that("CL and V1 are Table 1's fitted values", {
+  p <- perKg()
   expect_equal_rounded(CL, p$cl1)
-  expect_equal_rounded(VSS, p$v1 + p$v2)
-  # A physically admissible mammillary model: everything positive, and k21
-  # between the two eigenvalues
-  expect_true(p$v1 > 0 && p$v2 > 0 && p$cl2 > 0)
-  expect_true(k21 > l2 && k21 < l1)
+  expect_equal_rounded(V1, p$v1)
 })
 
-test_that("the derivation reproduces the paper's own AUC statement, which it does not use", {
+test_that("the vector reproduces Table 1's derived quantities to their rounding", {
+  # Each within one and a half units of its last printed digit; Table 1's
+  # rounded numbers are not exactly consistent, so no vector hits all six
+  d <- derivedQuantities(perKg())
+  printed  <- c(Vss = VSS, t1 = TH1, t2 = TH2, C1 = 95.9, AUC1 = 81.6)
+  halfUnit <- c(Vss = 0.005, t1 = 0.05, t2 = 0.05, C1 = 0.05, AUC1 = 0.05)
+  expect_true(all(abs(d - printed) / halfUnit < 1.6), info = paste(round(d, 4)))
+  expect_equal_rounded(c(0.5538, 1.7525, 9.4527, 95.9771, 81.5603),
+                       unname(round(d, 4)))
+  # Total AUC per unit dose is 1/CL, as for any linear model, and the paper's
+  # abstract says the initial phase carries "more than 80%" of it
+  expect_gt(d[["AUC1"]], 80)
+})
+
+test_that("the derivation it replaced puts V1 2.5% above the fitted value", {
+  # Until 2026-10-27 V1 was derived from CL, Vss and the half-lives alone
   p <- twoCompartmentFromHalfLives(CL, VSS, TH1, TH2)
-  k21 <- p$cl2 / p$v2
-  # Coefficients of the unit-bolus biexponential
-  A <- (l1 - k21) / (p$v1 * (l1 - l2))
-  B <- (k21 - l2) / (p$v1 * (l1 - l2))
-  # Total AUC per unit dose is 1/CL, as it must be for any linear model
-  expect_equal_rounded(1 / CL, A / l1 + B / l2)
-  # The paper: the initial half-life contributes "more than 80%" of the AUC
-  fast <- (A / l1) / (A / l1 + B / l2)
-  expect_gt(fast, 0.80)
-  expect_equal_rounded(0.8171, round(fast, 4))
+  expect_equal_rounded(0.3689, round(p$v1, 4))
+  expect_equal(round(100 * (p$v1 / V1 - 1), 1), 2.5)
+  # and it is still a valid decomposition: CL and Vss exactly, both half-lives
+  k10 <- p$cl1 / p$v1; k12 <- p$cl2 / p$v1; k21 <- p$cl2 / p$v2
+  l1 <- log(2) / TH1; l2 <- log(2) / TH2
+  expect_equal_rounded(l1 + l2, k10 + k12 + k21)
+  expect_equal_rounded(l1 * l2, k10 * k21)
+  expect_equal_rounded(VSS, p$v1 + p$v2)
 })
 
 test_that("the solver refuses a set of numbers with no admissible decomposition", {
@@ -66,12 +82,12 @@ test_that("getDrugPK gives the published parameters at the reference man, plasma
   PK <- getDrugPK("clevidipine", 70, 170, 35, "male", adjustToFFM = FALSE)
   set <- PK$PK$default
   expect_equal_rounded(CL * 70, set$cl1)
-  expect_equal_rounded(VSS * 70, set$v1 + set$v2)
+  expect_equal_rounded(V1 * 70, set$v1)
   # Two compartments: the third is the library's placeholder
   expect_equal(set$cl3, 0)
-  # Eigenvalue half-lives are the paper's
-  expect_equal_rounded(TH1, log(2) / set$lambda_1)
-  expect_equal_rounded(TH2, log(2) / set$lambda_2)
+  # Eigenvalue half-lives are the paper's, to its rounding
+  expect_lt(abs(log(2) / set$lambda_1 - TH1), 0.06)
+  expect_lt(abs(log(2) / set$lambda_2 - TH2), 0.06)
   # Whole blood in ng/mL, no effect site, no band, not an opioid
   expect_identical(PK$Concentration.Units, "ng")
   expect_equal(PK$tPeak, 0)
@@ -95,19 +111,18 @@ test_that("the fat-free-mass switch scales the per-kilogram model and leaves the
                         adjustToFFM = TRUE)$PK$default
   expect_lt(obeseFFM$cl1, obese$cl1)
   # The half-lives are weight-free: a per-kilogram model keeps its rates
-  expect_equal_rounded(TH1, log(2) / obeseFFM$lambda_1)
-  expect_equal_rounded(TH2, log(2) / obeseFFM$lambda_2)
+  expect_equal_rounded(off$lambda_1, obeseFFM$lambda_1)
+  expect_equal_rounded(off$lambda_2, obeseFFM$lambda_2)
 })
 
 test_that("a bolus starts at dose over the central volume", {
   # The analytic fixture the specification asks for: C(0+) = D / V1.  One
-  # milligram into a reference man's 0.3689 x 70 = 25.82 L gives 38.7 ng/mL.
-  p <- twoCompartmentFromHalfLives(CL, VSS, TH1, TH2)
-  expected <- 1 / (p$v1 * 70) * 1000      # mg into L, reported as ng/mL
+  # milligram into a reference man's 0.36 x 70 = 25.2 L gives 39.7 ng/mL.
+  expected <- 1 / (V1 * 70) * 1000        # mg into L, reported as ng/mL
   wide <- simulateClevidipine(
     data.frame(Drug = "clevidipine", Time = 0, Dose = 1, Units = "mg"))
   expect_equal_rounded(expected, wide$Plasma[wide$Time == 0], tolerance = 1e-4)
-  expect_equal_rounded(38.73, round(wide$Plasma[wide$Time == 0], 2))
+  expect_equal_rounded(39.68, round(wide$Plasma[wide$Time == 0], 2))
 })
 
 test_that("an infusion approaches the steady state its clearance implies", {

@@ -38,6 +38,6 @@ For a drug to get a pressure, one source would have to supply the whole chain: d
 
 That is the honest state of this field: the pharmacokinetic obstacles yield to work, and the pharmacodynamic one has not moved at all.
 
-One record has since acquired an **external validation**, the registry's first. Clevidipine's individual volumes are not printed in its source's abstract and were derived from the four quantities that are; a second study, in a different journal and different subjects, turned out to report the derived quantities as measurements, and the derivation recovers its measured central volume to about a percent. The source tree records that in full.
+One record has since acquired an **external validation**, the registry's first. Clevidipine's individual volumes are not printed in its source's abstract and were at first derived from the four quantities that are; a second study, in a different journal and different subjects, turned out to report the derived quantities as measurements, and the derivation recovers its measured central volume to about a percent. When clevidipine's own full text was read it turned out to print its fitted central volume, 0.36 L/kg, the same as the second study's, and the model now uses it. The source tree records both in full.
 
 See also [the drug pages](help:drugs/index) for the eleven implemented models, and `docs/antihypertensives.md` in the source tree for the full audit, including where the specification this work came from had to be corrected.
