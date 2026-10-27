@@ -85,10 +85,12 @@
 # after a dose, is the therapeutic reference range of
 # Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
 # 59:166-295, Table 5, doi 10.1055/a-2860-7861): the mean +/- SD
-# in 18 children aged 6-12 after single doses of 30, 50 and 70 mg (Boellner
-# 2010; 44-63, 75-112 and 108-160 ng/mL), so the concentrations those doses
-# produce rather than a window of efficacy, with no data in adults.  Typical
-# 100, about its midpoint.  The table's d-amphetamine alert level, 120 ng/mL,
+# of the peak in 18 children aged 6-12 after single doses of 30, 50 and 70 mg
+# (Boellner 2010, Table I: 53.2, 93.3 and 134 ng/mL at about 3.5 h; full text
+# read), so the concentrations those doses produce rather than a window of
+# efficacy, with no data in adults.  This model, not fitted to Boellner's
+# children, peaks 16-22% lower (45, 75, 105 ng/mL at 36 kg) and an hour
+# later.  Typical 100, about its midpoint.  The table's d-amphetamine alert level, 120 ng/mL,
 # lies below this range's top.
 # -----------------------------------------------------------------------------
 

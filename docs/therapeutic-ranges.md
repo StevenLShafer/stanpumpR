@@ -90,25 +90,30 @@ epilepsy range is drawn and the neuropathic one recorded.
 
 | Drug | Band | Alert | Source | Change |
 |---|---|---|---|---|
-| mixedAmphetamineSalts | **23–45 ng/mL d-amphetamine**, 3.3 h | 120 | Hart 2026 (McGough 2003) | New. The concentrations 10 mg produced in 51 children at steady state |
-| lisdexamfetamine | **44–160 ng/mL d-amphetamine**, 3.5 h | — | Hart 2026 (Boellner 2010) | New. Single doses of 30, 50 and 70 mg in 18 children |
+| mixedAmphetamineSalts | **23–45 ng/mL d-amphetamine**, peak at 3.3 h | 120 | Hart 2026 (McGough 2003) | New. Steady-state peak of Adderall IR 10 mg once daily, 9 children |
+| lisdexamfetamine | **44–160 ng/mL d-amphetamine**, peak at 3.5 h | — | Hart 2026 (Boellner 2010) | New. Single doses of 30, 50 and 70 mg in 18 children |
 | methylphenidate, methylphenidatePediatric | none: two time-specific ranges for OROS | | Hart 2026 (Chermá 2017) | 3.8–7.7 ng/mL at 1 h and 6.6–13 at 6 h; no one band |
 
 Both amphetamine ranges are the concentrations the studied doses produced in children, not
 windows of efficacy, and Table 5 has no adult data. The table prints 30–59 ng/mL "for d + l
 amphetamine" in the lisdexamfetamine row, but it is the sum of the mixture's two ranges
 (23 + 7, 45 + 14); and its d-amphetamine alert level, 120 ng/mL, is below lisdexamfetamine's
-upper limit, so no alert level is recorded for lisdexamfetamine. Checked against the models in
-a child: lisdexamfetamine at 30, 50 and 70 mg gives 44, 73 and 102 ng/mL at 3.5 h (34.1 kg),
-the lower part of each dose group; 10 mg of Adderall XR once a day gives 23.5 ng/mL 3.3 h
-after the seventh dose (30 kg).
+upper limit, so no alert level is recorded for lisdexamfetamine.
+
+Both sources were read in full (2026-10-27). The mixture's range is McGough's Table 3: the
+steady-state Cmax of immediate-release Adderall 10 mg once daily, 33.8 ng/mL (SEM 3.7, n = 9) at
+3.3 h, with the SEM turned into an SD (3.7 × 3 = 11.1), so 22.7–44.9; Table 5 describes it as
+51 children, the number enrolled. The model, fitted to McGough, gives 34.0 ng/mL at 3.3 h after
+the seventh daily dose (37.8 kg). Lisdexamfetamine's range is Boellner's Table I, the mean ± SD
+of the single-dose peak: 53.2 (9.62), 93.3 (18.2) and 134 (26.1) ng/mL at about 3.5 h. Boellner's
+children are not in the model's data (Tsuda 2020), and it underpredicts them: 45, 75 and 105
+ng/mL at 4.5 h for a 36 kg child, 16–22% low and an hour late.
 
 ## Benzodiazepines, hypnotics, opioids and ketamine
 
 | Drug | Band | Alert | Source | Change |
 |---|---|---|---|---|
 | alprazolam | **5–44 ng/mL**, 10 h | 100 | Hart 2026 | Was 20–40 (Greenblatt and Wright 1993), which lies inside it |
-| midazolam | **0.05–0.15 mg/L** (sedation) | 1 | Hart 2026 (level 4) | Was 0.04–0.12, source not recorded. See below |
 | temazepam | **200–750 ng/mL**, 1–2 h | 1,500 | Hart 2026 | Was 250–600 (Saletu 1986, van Steveninck 1994) |
 | zolpidem | 80–200 ng/mL, 1–3 h | 400 | Hart 2026 | Unchanged; was attributed to Cha 2024 |
 | buprenorphine | **0.5–2.5 ng/mL**, 24 h (opioid use disorder) | 4 | Hart 2026 | Was 1.25–3 |
@@ -123,20 +128,27 @@ These keep their own band, because Table 5's range is for another use or analyte
 | methadone | 90–620 ng/mL at 24 h, opioid use disorder | 48–120 ng/mL, postoperative analgesia (Gourlay 1984) |
 | morphine | 5–400 ng/mL chronic pain; 50–520 opioid use disorder | 6.4–16 ng/mL, around the MEAC |
 | oxycodone | 5–100 ng/mL at 12 h, chronic pain | 10–20 ng/mL, around the MEAC |
-| lorazepam | 5–100 ng/mL at 12 h, anxiety, oral | 34–104 ng/mL, ICU sedation (Barr 2001) |
+| lorazepam | 5–100 ng/mL at 12 h, anxiety, oral | 34–104 ng/mL, ICU sedation (Barr 2001, read in full) |
+| midazolam | 50–150 ng/mL at 1–2 h, sedation after oral premedication (level 4) | **68–208 ng/mL**, typical 101, ICU sedation (Barr 2001); was 40–120, source not recorded. See below |
 | diazepam | 100–1,500 ng/mL of diazepam plus nordiazepam | 150–600 ng/mL of diazepam; nordiazepam is not modelled |
 
 Diamorphine is an illicit drug and so has no band; its row records Table 5's 70–350 ng/mL for
 heroin-assisted treatment.
 
-**Midazolam.** Table 5 attributes 50–150 ng/mL to Matsuda 2022 (PMID 35488482). That study
-gave 0.5 mg/kg by mouth to children of 6 months to 8 years before surgery, and its abstract
-reports the same serum concentration, about 48 ng/mL, whether or not the child was sedated, so
-the study does not itself establish the range; the guideline rates it level 4. The band follows
-the guideline because the old one had no recorded source. An alternative with a source for
-intravenous sedation is Barr 2001 (PMID 11506097), the source of lorazepam's band: plasma
-midazolam with an even chance of a Ramsay score of at least 2, 3 and 4 was 68, 101 and 208
-ng/mL.
+**Midazolam.** Table 5 attributes 50–150 ng/mL to Matsuda 2022 (PMID 35488482, full text read
+2026-10-27). Matsuda does not measure it: the Discussion quotes it ("the serum concentration of
+midazolam required for sedation is 50–150 ng/ml") from a textbook, Coté, Lerman and Anderson,
+*A Practice of Anesthesia for Infants and Children* (Elsevier Saunders 2013), p. 141. Matsuda's
+own children (0.5 mg/kg by mouth before surgery, 6 months to 8 years, 98 analysed) had median
+serum concentrations of 47.6 ng/mL (IQR 35.5–61.3) when sedated and 49.8 (44.6–63.5) when not,
+and 73.5% were sedated at concentrations the authors call "slightly lower than the level
+required for sedation". The guideline rates the range level 4. The library's midazolam is
+intravenous, so its band comes from the study that gives lorazepam's: Barr 2001 (PMID 11506097,
+read in full), target-controlled midazolam and lorazepam infusions after surgery in 24 ICU
+patients. Its Model H gives plasma midazolam with an even chance of a Ramsay score of at least
+2, 3 and 4 as 68, 101 and 208 ng/mL (lorazepam 34, 51 and 104), 18% lower for each decade of
+age and with fentanyl; the observed median midazolam concentrations at scores of 3 and 4 were
+79 and 119 ng/mL.
 
 ## Product monographs (FDA, EMA)
 
@@ -157,16 +169,17 @@ in this review and are recorded as "Not checked".
    Every library drug Table 5 covers has a row, but the hypnotics and the opioids are not in it
    yet, because their anaesthetic drugs (propofol, remimazolam, dexmedetomidine, etomidate,
    the fentanyls) have no Table 5 range, and their bands need a source of their own.
-5. Read the primary papers behind the new bands (below), above all for midazolam.
+5. Read the primary papers behind the new bands (below).
 
 ## Papers that would complete the verification
 
-Each was identified in PubMed (2026-10-27); only abstracts have been read.
+Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
+Barr 2001, McGough 2003, Boellner 2010 and Laffont 2022, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
-| midazolam | Matsuda 2022, *Acta Anaesthesiol Scand* 66:818 | 35488482 | The source Table 5 cites for 50–150 ng/mL |
-| midazolam, lorazepam | Barr 2001, *Anesthesiology* 95:286 | 11506097 | ICU sedation concentrations for both |
+| midazolam | Coté, Lerman, Anderson, *A Practice of Anesthesia for Infants and Children*, 2013, p. 141 | (book) | Where the 50–150 ng/mL Table 5 takes from Matsuda 2022 (read in full) comes from |
+| midazolam, lorazepam | Barr 2001, *Anesthesiology* 95:286 | 11506097 | Read in full: the source of both bands |
 | midazolam | Crevoisier 1983, *Br J Clin Pharmacol* 16 Suppl 1:51S | 6138082 | Concentration and effect, oral and IV |
 | midazolam | Link 2008, *Br J Clin Pharmacol* 66:473 | 18537963 | Concentrations after 10 mg by mouth |
 | alprazolam | Ciraulo 1990, *J Clin Psychopharmacol* 10:27 | 2407754 | Dose to steady state; response above 20 ng/mL |
@@ -176,7 +189,7 @@ Each was identified in PubMed (2026-10-27); only abstracts have been read.
 | temazepam | Hosie and Nimmo 1991, *Br J Anaesth* 66:20 | 1997054 | Above 200 ng/mL for sedation |
 | zolpidem | Drover 2004, *Clin Pharmacokinet* 43:227 | 15005637 | Source of 80–200 ng/mL |
 | zolpidem | Greenblatt 1998, *Clin Pharmacol Ther* 64:553 | 9834048 | The same |
-| buprenorphine | Laffont 2022, *Front Pharmacol* 13:1052113 | 36467036 | 2–3 ng/mL, at least 70% occupancy (open access) |
+| buprenorphine | Laffont 2022, *Front Pharmacol* 13:1052113 | 36467036 | Read in full: 2–3 ng/mL sustained for use and craving (68–75% occupancy); withdrawal controlled from 1 ng/mL; sublingual troughs 0.7–1.4 |
 | buprenorphine | Nasser 2014, *Clin Pharmacokinet* 53:813 | 25015174 | The occupancy model behind the typical 2.2 ng/mL |
 | buprenorphine | Elarabi 2022, *Psychopharmacology* 239:3213 | 35953563 | One of the pharmacokinetic studies behind 0.5–2.5 |
 | gabapentin, pregabalin | Johannessen Landmark 2015, *Seizure* 28:88 | 25758302 | Routine TDM data behind both ranges |

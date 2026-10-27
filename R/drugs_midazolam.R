@@ -161,14 +161,18 @@ midazolam <- function(weight, height, age, sex, adjustToFFM = TRUE,
              "Pharmacometrics Syst Pharmacol 2012;1:e2. ",
              "https://doi.org/10.1038/psp.2012.5")))
   }
-  # Band, mcg/mL: the sedation range of Hart 2026 (AGNP consensus, update
-  # 2026, Pharmacopsychiatry 59:166-295, Table 5), 50-150 ng/mL, level 4; it
-  # replaced 0.04-0.12, whose source was not recorded.  The guideline cites
-  # Matsuda 2022, whose children had the same serum concentration, about 48
-  # ng/mL, sedated or not, so that study does not itself establish the range.
-  typical <- .100
-  lowerTypical <- .050
-  upperTypical <- .150
+  # Band, mcg/mL: intravenous ICU sedation, Barr J et al., Anesthesiology
+  # 2001;95:286-298 (full text read), the basis of lorazepam's band: plasma
+  # midazolam with an even chance of a Ramsay score of at least 2, 3 and 4
+  # (Model H) is 68, 101 and 208 ng/mL.  It replaced 0.04-0.12, whose source
+  # was not recorded.  The AGNP 2026 range (Hart 2026, Table 5), 50-150 ng/mL,
+  # is for oral premedication and is recorded in therapeuticRanges.csv, not
+  # drawn: the guideline cites Matsuda 2022, who quote it from a textbook
+  # (Cote, Lerman and Anderson 2013, p. 141), and whose own children had
+  # median concentrations of 47.6 ng/mL sedated and 49.8 not sedated.
+  typical <- .101
+  lowerTypical <- .068
+  upperTypical <- .208
   MEAC <- 0
   tPeak <- 3.0
   return(

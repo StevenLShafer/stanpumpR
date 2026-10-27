@@ -120,9 +120,11 @@
 # h after a dose, is the therapeutic reference range of
 # Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
 # 59:166-295, Table 5, doi 10.1055/a-2860-7861), alert level 120
-# ng/mL: the mean +/- SD in McGough's 51 children at steady state on 10 mg of
-# the 3:1 mixture, so the concentrations that dose produced rather than a
-# window of efficacy, with no data in adults.  Typical 34, its midpoint.
+# ng/mL: the steady-state peak of immediate-release Adderall 10 mg once daily
+# in 9 of McGough's children (Table 3: 33.8 ng/mL, SEM 3.7, at 3.3 h) as mean
+# +/- SD, so the concentrations that dose produced rather than a window of
+# efficacy, with no data in adults (full text read).  This model gives 34.0
+# ng/mL 3.3 h after the seventh dose at 37.8 kg.  Typical 34, its midpoint.
 # -----------------------------------------------------------------------------
 
 # Formula weights (g/mol) of the four salts and of amphetamine base.
