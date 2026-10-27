@@ -174,7 +174,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992 and Hosie and Nimmo 1991, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991 and Johannessen Landmark 2015, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -192,7 +192,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992 and Hosie and 
 | buprenorphine | Laffont 2022, *Front Pharmacol* 13:1052113 | 36467036 | Read in full: 2–3 ng/mL sustained for use and craving (68–75% occupancy); withdrawal controlled from 1 ng/mL; sublingual troughs 0.7–1.4 |
 | buprenorphine | Nasser 2014, *Clin Pharmacokinet* 53:813 | 25015174 | The occupancy model behind the typical 2.2 ng/mL |
 | buprenorphine | Elarabi 2022, *Psychopharmacology* 239:3213 | 35953563 | One of the pharmacokinetic studies behind 0.5–2.5 |
-| gabapentin, pregabalin | Johannessen Landmark 2015, *Seizure* 28:88 | 25758302 | Routine TDM data behind both ranges |
+| gabapentin, pregabalin | Johannessen Landmark 2015, *Seizure* 28:88 | 25758302 | Read in full: laboratory ranges (gabapentin 70–120 µmol/L, some labs from 10–20; pregabalin 10–30), no effect data |
 | gabapentin | Larsen Burns 2019, *Acta Neurol Scand* 139:446 | 30710348 | TDM of gabapentin by indication |
 | gabapentin | Healy 2023, *Pharmacol Res Perspect* 11:e01138 | 37803937 | The former band (open access) |
 | pregabalin | Chan 2021, *Clin Pharmacol Ther* 110:132 | 33280106 | The former band |
