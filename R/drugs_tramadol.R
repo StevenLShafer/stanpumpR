@@ -99,7 +99,7 @@
 # M1 per milligram of the hydrochloride, which is the base molar ratio
 # 249.38 / 263.38 times 0.8784.  Desmetramadol's own parameters are
 # unchanged.  Oral bioavailability is a ratio of exposures to the same salt,
-# so 0.70 is unchanged.
+# so the salt does not enter it.
 #
 # Allegaert rather than Brvar for the disposition, because Allegaert is
 # intravenous, physical and jointly fitted with the metabolite this model
@@ -121,11 +121,45 @@
 # the predicted observable rather than the other model's parameter is what
 # keeps the two sources from being silently merged.
 #
-# Bioavailability is 0.70, the regulatory figure for capsules.  A 100 mg
-# immediate-release tablet is quoted at 0.75, and a 24-hour extended-release
-# product at 85 to 90 per cent of its immediate-release comparator; those are
-# different products and are not represented.  Only an immediate-release oral
-# unit is offered, alongside intravenous.
+# Bioavailability is 0.75, the absolute bioavailability of a 100 mg dose of
+# the US immediate-release tablet (ULTRAM label, Clinical Pharmacology,
+# Absorption: "approximately 75%"; 73% in men and 79% in women under Gender).
+# Until 2026-10-27 it was 0.70, the regulatory figure for the European
+# capsules, which are not the US product; changed by decision of Steven L.
+# Shafer, with the label comparison below.  A 24-hour extended-release
+# product reaches 85 to 90 per cent of its immediate-release comparator and
+# is not represented.  Only an immediate-release oral unit is offered,
+# alongside intravenous.
+#
+# EXTERNAL CHECK: THE ULTRAM LABEL
+# ================================
+# ULTRAM (tramadol hydrochloride) tablets, NDA 020281, Ortho-McNeil, revised
+# March 2008 (supplied by the author and read in full, 2026-10-27), Table 1,
+# healthy adults, means.  Neither Allegaert nor Holford fitted these data,
+# so they are an independent check.  This model (70 kg, 175 cm, 35-year-old
+# man, normal metaboliser, F 0.75) against the label:
+#
+#                                       label            this model
+#     100 mg single dose  tramadol      308 ng/mL, 1.6 h  257 ng/mL, 1.0 h
+#                         M1            55.0 ng/mL, 3.0 h 38.0 ng/mL, 2.3 h
+#                         t1/2          5.6 h (6.3 +/- 1.4 terminal)  4.3 h
+#                         M1 t1/2       6.7 h (7.4 +/- 1.4 terminal)  4.5 h
+#     100 mg qid, steady  tramadol      592 ng/mL         444 ng/mL
+#                         M1            110 ng/mL         76 ng/mL
+#
+# So the model is about 17% low for the single-dose tramadol peak and 25%
+# low at steady state, and about 30% low for M1 throughout (with F 0.70 it
+# was 22%, 30% and 33%).  The cause is
+# clearance, not volume: the label's intravenous clearance in men, 6.4
+# mL/min/kg, is 26.9 L/h at 70 kg against Allegaert's 32.1, while its volume,
+# 2.6 L/kg (182 L), matches Allegaert's Vss of 185 L; hence the shorter
+# half-life and the larger shortfall at steady state.  Holford's adult fit
+# (28.9 L/h) had the same 4.3 h half-life and the same M1 shortfall, so the
+# switch to Allegaert did not introduce it.  The shortfall is RECORDED, NOT
+# CORRECTED: Allegaert's clearances are a fit to 295 people, the label's a
+# table from a few healthy volunteers, and tuning one to the other would
+# make the model neither.  test-drugs-tramadol.R pins the comparison so a
+# change in either direction is seen.
 #
 # CYP2D6 AND METABOLITE FORMATION
 # ===============================
@@ -290,7 +324,7 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
 
   # --- Absorption: oral plasma peak at 0.99 h (see header) ---
   ka_PO              <- 0.0205398742   # 1/min, = 1.232 /h
-  bioavailability_PO <- 0.70
+  bioavailability_PO <- 0.75   # ULTRAM label, 100 mg tablet; see the header
   tlag_PO            <- 0
 
   # --- Formation to desmetramadol ---
@@ -360,17 +394,19 @@ tramadol <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
         #     pass.  Allegaert puts CYP2D6 at 10.5 of 32.1 L/h, a 33% share
         #     of tramadol clearance (Holford 36%).  If presystemic extraction
         #     splits in the same proportion, first-pass M1 is 0.065 to
-        #     0.098.
+        #     0.098.  With F 0.75 (2026-10-27) the presystemic loss is 25%,
+        #     of which 0.10 is 40%, above that share; it is kept, because
+        #     M1 already runs about 30% below the ULTRAM label (see the
+        #     header) and lowering it would widen that gap.
         #   - At 0.10, 100 mg of the hydrochloride by mouth gives a
-        #     metabolite peak of 37 ng/mL, which sits in the range oral
-        #     tramadol studies report.
-        #   - It brings the metabolite peak to 134 min (93 on Holford's
+        #     metabolite peak of 39 ng/mL, against the label's 55.
+        #   - It brings the metabolite peak to 138 min (93 on Holford's
         #     disposition), which makes the observed 2.5 h peak analgesia
-        #     reachable, with a 9.8 min equilibration half-time.
+        #     reachable, with a 7.5 min equilibration half-time.
         #
         # It raises total metabolite exposure by about 1.4 fold against
-        # formation alone, taking the dose fraction converted from 0.23 to
-        # 0.33 (0.25 to 0.35 on Holford's).  That is a consequence of the change, not an independent
+        # formation alone, taking the dose fraction converted from 0.25 to
+        # 0.35.  That is a consequence of the change, not an independent
         # check, and is the thing to revisit if measured oral M1 exposure
         # turns out lower.
         #

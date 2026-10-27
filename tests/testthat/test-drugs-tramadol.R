@@ -29,7 +29,7 @@ test_that("tramadol returns the correct calculations", {
       v1 = 51 / f, v2 = 134 / f, v3 = 1,
       cl1 = (21.6 + 10.5) / 60 / f, cl2 = 227 / 60 / f, cl3 = 0,
       ka_PO = 0.0205398742,
-      bioavailability_PO = 0.70,
+      bioavailability_PO = 0.75,
       tlag_PO = 0
     )),
     tPeak = 0,
@@ -63,7 +63,7 @@ test_that("desmetramadol returns the correct calculations", {
     # observed against the metabolite curve after an ORAL PARENT dose, which
     # getDrugPK cannot build.  See the drug file.
     tPeak = 0,
-    ke0 = 0.0708247343,
+    ke0 = 0.0930286574,
     MEAC = 84,
     typical = 40,
     upperTypical = 80,
@@ -159,11 +159,12 @@ test_that("the oral peak falls where Brvar's own model puts it", {
   w <- o$tramadol$wide
   expect_equal(w$Time[which.max(w$Plasma)], 59, tolerance = 6)
   # 100 mg of the hydrochloride by mouth gives a few hundred ng/mL of base:
-  # 244 on Allegaert's disposition (298 on Holford's, which the library used
-  # until 2026-10-27; 339 with the dose read as base, before that)
+  # 262 on Allegaert's disposition with F 0.75 (298 on Holford's with F
+  # 0.70, which the library used until 2026-10-27; 339 with the dose read
+  # as base, before that)
   expect_gt(max(w$Plasma), 200)
   expect_lt(max(w$Plasma), 450)
-  expect_equal(max(w$Plasma), 244.35, tolerance = 0.01)
+  expect_equal(max(w$Plasma), 261.80, tolerance = 0.01)
 })
 
 
@@ -474,4 +475,33 @@ test_that("each clearance matures with postmenstrual age (Allegaert 2015 Table 8
   expect_equal(neo$PK$default$cl1 * 60 * TRAMADOL_BASE_FRACTION / (3.5 / 70)^0.75,
                32.1 * (21.6 * m0[["other"]] + 10.5 * m0[["formation"]]) / 32.1,
                tolerance = 1e-6)
+})
+
+
+test_that("the ULTRAM label comparison is what the header records", {
+  # ULTRAM (tramadol hydrochloride) tablets, NDA 020281, revised March 2008,
+  # Table 1, healthy adults: 100 mg single dose, tramadol 308 ng/mL and M1
+  # 55.0 ng/mL; 100 mg qid at steady state, 592 and 110 ng/mL.  Neither
+  # Allegaert nor Holford fitted these, and the model is known to run low
+  # (clearance 32.1 L/h against the label's 6.4 mL/min/kg = 26.9 L/h).  The
+  # shortfall is recorded, not corrected; this pins it so that a change in
+  # either direction is seen.  Oral F is the label's own 0.75.
+  expect_equal(tramadol(70, 175, 35, "male")$PK$default$bioavailability_PO, 0.75)
+  sim <- function(times, maximum) {
+    o <- simulateDrugsWithCovariates(
+      data.frame(Drug = "tramadol", Time = times, Dose = 100, Units = "mg PO"),
+      noEvents, 70, 175, 35, "male", maximum, FALSE)
+    list(t = o$tramadol$wide, m = o$desmetramadol$wide)
+  }
+  sd <- sim(0, 2880)
+  expect_equal(max(sd$t$Plasma) / 308,  0.83, tolerance = 0.03)
+  expect_equal(max(sd$m$Plasma) / 55.0, 0.69, tolerance = 0.03)
+  md <- sim((0:28) * 360, 29 * 360)
+  last <- function(w) max(w$Plasma[w$Time >= 28 * 360])
+  expect_equal(last(md$t) / 592, 0.75, tolerance = 0.03)
+  expect_equal(last(md$m) / 110, 0.69, tolerance = 0.03)
+  # The label's intravenous clearance in men against the model's
+  expect_equal(6.4 * 70 * 60 / 1000, 26.88)
+  expect_equal(tramadol(70, 175, 35, "male", adjustToFFM = FALSE)$PK$default$cl1 *
+                 60 * TRAMADOL_BASE_FRACTION, 32.1, tolerance = 1e-6)
 })

@@ -106,15 +106,17 @@
 # metabolite's own PK is needed before the parent's coefficients exist.  So
 # the solve is done once, here, and the answer recorded.
 #
-#     ke0 = 0.0708247343 /min, an equilibration half-time of 9.8 min,
+#     ke0 = 0.0930286574 /min, an equilibration half-time of 7.5 min,
 #     giving an effect-site peak at 150.0 min after 100 mg oral tramadol
 #     in a normal metaboliser (70 kg, 171 cm, 50-year-old man).
 #
 # Re-solved 2026-10-27 when the disposition moved from Holford 2014 to
-# Allegaert 2015: the formed metabolite now peaks at 134 min rather than
-# 93 (Allegaert's M1 clearance is 71.4 against Holford's 84.2 L/h, and the
-# re-fitted absorption is slower), so the same 150 min needs a faster
-# equilibration than Holford's 24.1 min half-time.
+# Allegaert 2015 and oral F from 0.70 to 0.75: the formed metabolite now
+# peaks at 138 min rather than 93 (Allegaert's M1 clearance is 71.4 against
+# Holford's 84.2 L/h, the re-fitted absorption is slower, and a larger F
+# gives the slower systemic formation more weight against the first pass),
+# so the same 150 min needs a faster equilibration than Holford's 24.1 min
+# half-time.
 #
 # What it depends on, and when it stops being right.  The driving curve is
 # the metabolite profile, so this number is only valid for tramadol's
@@ -131,7 +133,7 @@
 # an effect site cannot peak before the curve driving it, so 2.5 h was not
 # merely unfitted but impossible.  See the first-pass note in
 # R/drugs_tramadol.R.
-DESMETRAMADOL_KE0 <- 0.0708247343  # 1/min; solved, see above
+DESMETRAMADOL_KE0 <- 0.0930286574  # 1/min; solved, see above
 
 # Recorded for documentation; the engine does not use it, because the solve
 # above is against a curve tPeak cannot name.
@@ -159,8 +161,10 @@ DESMETRAMADOL_TPEAK_ORAL_PARENT <- 150  # minutes after an oral tramadol dose
 # It stays as the divisor, as a working value, because nothing better
 # exists: no study has measured analgesia against M1 alone.  At this value a
 # 100 mg oral dose of the hydrochloride in a normal metaboliser peaks at
-# 44% of it in the effect site (37 ng/mL; computed 2026-10-27 on Allegaert's
-# disposition), which is consistent with tramadol being a weak opioid.  The band (20 to 80 ng/mL) is a display range of formed M1, not an
+# 46% of it in the effect site (39 ng/mL; computed 2026-10-27 on Allegaert's
+# disposition with F 0.75), which is consistent with tramadol being a weak
+# opioid.  The plasma M1 behind it is about 30% below the ULTRAM label's
+# (R/drugs_tramadol.R), so the percentage is, if anything, low.  The band (20 to 80 ng/mL) is a display range of formed M1, not an
 # analgesic range.
 DESMETRAMADOL_MEAC  <- 84  # ng/mL; provisional, see above
 # -----------------------------------------------------------------------------
