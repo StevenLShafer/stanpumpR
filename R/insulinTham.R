@@ -94,9 +94,12 @@
 # resistance, a pharmacodynamic change that is not plotted.  The clearance
 # of insulin rises too.  Catalano 1998 measured the metabolic clearance rate
 # of infused insulin by hyperinsulinaemic-euglycaemic clamp in 16 women
-# before conception, at 12-14 weeks and at 34-36 weeks: 442, 514 and 526
+# before conception, at 12-14 weeks and at 34-36 weeks: 422, 514 and 526
 # mL/m2/min (p = 0.0005), the same in women with normal and abnormal glucose
-# tolerance; late against before conception, 526 / 442 = 1.19.  For
+# tolerance; late against before conception, 526 / 422 = 1.25.  422 is the
+# paper's own figure (abstract and Discussion), and the Results' group means
+# agree (440 in 7 women with normal, 410 in 9 with abnormal tolerance; pooled
+# 423); PubMed's copy of the abstract misprints it as 442.  For
 # absorption, Goudie 2015 (Bayesian population model of insulin aspart by
 # pump in 22 women with type 1 diabetes at 12-33 weeks) found the time to
 # peak lengthening by 1.7% per week of gestation and the clearance per kg
