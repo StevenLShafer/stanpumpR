@@ -18,7 +18,7 @@ The time to peak effect is 5 minutes.
 
 ### Typical concentrations
 
-The shaded band, 0.5 to 1.5 mcg/mL, is the range used for systemic analgesia (the lidocaine infusions of enhanced-recovery protocols) and for the treatment of ventricular arrhythmias. Central nervous system toxicity, beginning with perioral numbness and tinnitus, appears above about 5 mcg/mL in most patients; seizures and cardiovascular collapse follow at higher concentrations. The window between effect and toxicity is narrower than for the anesthetic drugs. See [the lidocaine infusion scenario](scenario:lidocaine-infusion).
+The shaded band, 0.5 to 1.5 mcg/mL, is the range used for systemic analgesia (the lidocaine infusions of enhanced-recovery protocols). It is the library's own: no therapeutic range is established, and the intravenous antiarrhythmic label gives none. Central nervous system toxicity, beginning with perioral numbness and tinnitus, becomes apparent as venous plasma concentrations rise above 6 mcg/mL (the label); seizures and cardiovascular collapse follow at higher concentrations. The window between effect and toxicity is narrower than for the anesthetic drugs. See [the lidocaine infusion scenario](scenario:lidocaine-infusion).
 
 ### Where to be careful
 

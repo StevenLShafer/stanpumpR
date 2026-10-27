@@ -593,22 +593,24 @@ when that share is stable (bupropion on hydroxybupropion); otherwise neither row
 Set `Typical` inside the band (its midpoint unless the source names a target), and say on the
 help page that it is not a target.
 
-For a drug in `THERAPEUTIC_RANGE_CATEGORIES` (`R/constants.R`: antiseizure, antidepressant,
-antipsychotic, stimulant), for any other drug Table 5 of the AGNP update covers, and for any
-metabolite of one, add a row to
-`inst/extdata/therapeuticRanges.csv` (`R/therapeuticRanges.R`): the analyte, matrix,
-sampling time, limits in the plotted units (`mg/L` for a `mcg` drug, `ng/mL` for `ng`), the
+Every drug with a `Category`, and every metabolite of one, has a row in
+`inst/extdata/therapeuticRanges.csv` (`R/therapeuticRanges.R`; `THERAPEUTIC_RANGE_CATEGORIES`
+in `R/constants.R` is every category): the analyte, matrix,
+sampling time, limits in the plotted units (`mg/L` for a `mcg` drug, `ng/mL` for `ng`,
+`IU/mL`, `INR`, `s` for an ACT, and so on), the
 laboratory alert level and level of recommendation where the guideline gives them, the
-source and DOI, **how far the source was read** (`verification`: full text, abstract, or a
-secondary quotation — never a number from memory), the range it replaced, what the FDA or EMA
-product information says, and a `band_status` from `THERAPEUTIC_RANGE_STATUSES`: `drawn`,
+source and DOI, **how far the source was read** (`verification`: full text, label, abstract,
+or a secondary quotation — never a number from memory), the range it replaced, what the FDA or
+EMA product information says, and a `band_status` from `THERAPEUTIC_RANGE_STATUSES`: `drawn`,
 `drawn_on_metabolite`, `sum_not_drawn`, `pending_verification`, `not_applicable`,
 `band_differs` (the guideline's range is for another use or analyte, and the band is the
-library's own for what the row plots, which the notes name) or `none_established`.
+library's own for what the row plots, which the notes name), `library_band` (no range is
+established, and the band is the library's own: an effect-site target, an MBC band, what
+ordinary doses reach, which the notes name), `withheld` (a range is established for what the
+row plots, but the row draws no band: the anticoagulants, whose `upper` may be `NA` for a
+threshold such as an ACT) or `none_established`.
 `test-therapeutic-ranges.R` fails until every such drug has a row and the
-band columns agree with it, and the drug's help page prints the row. Recording a range in
-the registry for a drug of any other category is encouraged; add the category to
-`THERAPEUTIC_RANGE_CATEGORIES` once all its drugs have rows.
+band columns agree with it, and the drug's help page prints the row.
 
 Example row (remifentanil):
 

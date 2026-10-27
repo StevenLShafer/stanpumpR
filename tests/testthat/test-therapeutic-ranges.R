@@ -95,4 +95,8 @@ test_that("the drug's help page states the range and its source", {
   expect_match(helpDrugPageHTML("droperidol"), "None established", fixed = TRUE)
   expect_match(helpDrugPageHTML("ketamine"), "not the band drawn: the range is for depression",
                fixed = TRUE)
+  expect_match(helpDrugPageHTML("propofol"), "the band drawn is the library's own",
+               fixed = TRUE)
+  expect_match(helpDrugPageHTML("heparinCPB"), "above 480 s", fixed = TRUE)
+  expect_match(helpDrugPageHTML("warfarin"), "2 to 3 INR", fixed = TRUE)
 })

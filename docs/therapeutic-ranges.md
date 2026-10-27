@@ -5,7 +5,7 @@ established for the analyte, matrix and use the row plots. This page is the revi
 bands of the antiseizure, antidepressant and antipsychotic drugs (2026-10-19, revised
 2026-10-20 against the AGNP update 2026), and of the other library drugs Table 5 covers:
 the stimulants, benzodiazepines and hypnotics, opioids, ketamine, gabapentin and pregabalin
-(2026-10-27). The data are in `inst/extdata/therapeuticRanges.csv`,
+(2026-10-27), and of every other category the same day. The data are in `inst/extdata/therapeuticRanges.csv`,
 read by `R/therapeuticRanges.R`, printed on each drug's help page, and held to the band columns
 of `drugDefaults_global.csv` by `tests/testthat/test-therapeutic-ranges.R`. The rule for new
 drugs is in [adding-a-drug.md](adding-a-drug.md), *The therapeutic range*.
@@ -169,6 +169,72 @@ differs between benzodiazepines, with the in vitro GABA shift (r = 0.95; Visser 
 12490579); a potency ratio from total concentrations carries both drugs' binding in it, and
 affinity alone would not give the level of sedation a drug can reach.
 
+## Every other category (2026-10-27)
+
+Since 2026-10-27 `THERAPEUTIC_RANGE_CATEGORIES` is every category, so every drug a user can
+dose, and every metabolite it forms, has a row. None of these drugs is in Hart 2026 Table 5.
+The sources were FDA labels from accessdata.fda.gov, PubMed Central full texts and PubMed
+abstracts. They were read by research agents, and each quoted sentence was checked against
+the saved text before it was recorded. DailyMed, the EMA, Health Canada and most publishers
+could not be reached from the session; the CSV's `verification` column says how far each
+source was read. Two statuses were added:
+
+- `library_band`: no therapeutic range is established for what the row plots, and the band is
+  the library's own. That covers an anaesthetic's effect-site target, an opioid's MEAC
+  multiple, an antibiotic's MBC band and the orientation bands of what ordinary doses reach.
+  The help page says so and names what the band is.
+- `withheld`: a range is established for what the row plots, but the row draws no band. The
+  anticoagulants are research models with no band.
+
+### Drawn
+
+| Drug | Band | Source |
+|---|---|---|
+| digoxin, digoxinIV, digoxinIVPediatric | 0.5–2 ng/mL serum, before the next dose or ≥ 6 h after | LANOXIN label (2019) §2.5: below 0.5 less effective, above 2 more toxic without benefit. Heart failure: 0.5–0.8 (Rathore 2003, abstract). AF guideline: below 1.2 (Joglar 2024, full text) |
+| milrinone, milrinonePediatric | 100–300 ng/mL, typical 167 | PRIMACOR label (2003); Hornik 2019 (full text) |
+| amiodarone | 1.0–2.5 mg/L, typical 1.5 | CORDARONE label (2018) §12.2: "much below 1 mg/L are often ineffective… above 2.5 mg/L are generally not needed". The Health Canada monograph the model cited was not reachable |
+
+All three were already drawn; only their sources were checked.
+
+### Recorded, not drawn
+
+| Drug | Range | Why not drawn |
+|---|---|---|
+| warfarin, fluindione, acenocoumarol | INR 2.0–3.0 (2.5) | `withheld` (research models). Coumadin label §2.2 and Holbrook 2012 (abstract); the Previscan and Sintrom product information is still to be read |
+| heparinCPB | ACT above 480 s on bypass | `withheld`. EACTS/EACTAIC/EBCP 2024 §9.3.1 (full text); STS/SCA/AmSECT 2018 abstract only |
+| heparin | anti-Xa 0.3–0.7 U/mL | `not_applicable`: the model plots anti-IIa activity (Jia 2015). Smythe 2016 (full text): "widely accepted… despite limited data" |
+| salicylate | 150–300 mg/L | `not_applicable`: anti-inflammatory doses (FDA OTC monograph M013), where this low-dose linear model does not apply |
+| magnesiumSulfate | 2.5–7.5 mEq/L (label); 2–3.5 mmol/L (Okusanya 2016, full text) | `not_applicable`: the curve is the rise above baseline |
+| calcium | ionized calcium reference range | `not_applicable`: the curve is the rise above baseline |
+| diltiazem | "minimum therapeutic plasma levels… 50 to 200 ng/mL" | `not_applicable`: CARDIZEM tablets label, chronic oral; the model is intravenous rate control |
+| amiodaroneIV | 1.0–2.5 mg/L | `not_applicable`: a chronic oral window, not intravenous loading |
+| procainamide | 4–10 mg/L (candidate) | `pending_verification`: no source stating it was reachable (injection label; Koch-Weser 1971 has no abstract) |
+
+### No range established
+
+- **Library bands, now labelled as such.** These are the hypnotics without a Table 5 row
+  (propofol, dexmedetomidine, etomidate, remimazolam), the MEAC-based opioids, and the display
+  bands of hydrocodone, oxymorphone, codeine, tramadol and desmetramadol. Also: the
+  neuromuscular blockers and their reversal drugs, the corticosteroids, ondansetron,
+  aprepitant, fosaprepitant, fenoldopamPediatric, naloxone, oxytocin, acetaminophen,
+  ibuprofen, lidocaine and mannitol.
+- **Antibiotics.** The bands are MBC bands. Abdul-Aziz 2020 (full text) states beta-lactam
+  targets only relative to the MIC. Vancomycin's 2020 target is an AUC24/MIC of 400–600, an
+  exposure rather than a concentration; trough monitoring was the 2009 surrogate (Rybak 2020,
+  abstract; the full text could not be reached). Gentamicin's label expects adult peaks of
+  4–6 mcg/mL and says to avoid peaks above 12 and troughs above 2; it is not a range.
+- **Lidocaine.** The intravenous antiarrhythmic label states no range, only CNS reactions above
+  6 mcg/mL. The help page no longer says the band is used for ventricular arrhythmias.
+- **Mannitol.** Cook 2020 (full text) calls 320 mOsm/kg common practice, says it does not
+  predict kidney injury, and suggests the osmolar gap instead.
+- **No band at all.** These are the DOACs and fondaparinux (their labels advise against
+  monitoring; Smythe 2016: fondaparinux targets "not established"), enoxaparin (targets "not
+  clinically validated"), bivalirudin and argatroban (clotting-time targets only), the
+  antidiabetics (metformin: Kajbaf 2016 found 65 different "therapeutic" values), the
+  antihypertensives, the vasoactive drugs (each label read: none), the other NSAIDs, the
+  regional local anaesthetics (toxic thresholds only), the inhaled agents (MAC) and the illicit
+  drugs.
+
 ## Product monographs (FDA, EMA)
 
 Only the older antiseizure drugs' labels state a range: Dilantin (10–20 mcg/mL total,
@@ -184,10 +250,13 @@ in this review and are recorded as "Not checked".
 2. Read the labels marked "Not checked".
 3. A summed parent-plus-metabolite line would let the active-moiety ranges (risperidone,
    aripiprazole, venlafaxine, fluoxetine) be drawn.
-4. Extend `THERAPEUTIC_RANGE_CATEGORIES` to the other classes. The stimulants are now in it.
-   Every library drug Table 5 covers has a row, but the hypnotics and the opioids are not in it
-   yet, because their anaesthetic drugs (propofol, remimazolam, dexmedetomidine, etomidate,
-   the fentanyls) have no Table 5 range, and their bands need a source of their own.
+4. `THERAPEUTIC_RANGE_CATEGORIES` is every category (done 2026-10-27). Still to read: the
+   procainamide injection label (its candidate 4–10 mg/L and NAPA's range); the full text of
+   Rybak 2020 (AJHP 77:835-864) and of the STS/SCA/AmSECT 2018 bypass guideline; the Previscan
+   and Sintrom product information; the Health Canada amiodarone monograph; and the sources,
+   not recorded in the models, of the propofol, remimazolam, rocuronium and oxytocin bands.
+   Whether the anticoagulants should draw their INR and ACT targets is a decision for Steven
+   L. Shafer; they are `withheld` until then.
 5. Read the primary papers behind the new bands (below).
 
 ## Papers that would complete the verification
