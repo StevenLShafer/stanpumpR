@@ -92,7 +92,7 @@ epilepsy range is drawn and the neuropathic one recorded.
 |---|---|---|---|---|
 | mixedAmphetamineSalts | **23–45 ng/mL d-amphetamine**, peak at 3.3 h | 120 | Hart 2026 (McGough 2003) | New. Steady-state peak of Adderall IR 10 mg once daily, 9 children |
 | lisdexamfetamine | **44–160 ng/mL d-amphetamine**, peak at 3.5 h | — | Hart 2026 (Boellner 2010) | New. Single doses of 30, 50 and 70 mg in 18 children |
-| methylphenidate, methylphenidatePediatric | none: two time-specific ranges for OROS | | Hart 2026 (Chermá 2017) | 3.8–7.7 ng/mL at 1 h and 6.6–13 at 6 h; no one band |
+| methylphenidate, methylphenidatePediatric | none: two time-specific ranges for OROS, in whole blood | | Hart 2026 (Chermá 2017) | 3.8–7.7 ng/mL at 1 h and 6.6–13 at 6 h; no one band |
 
 Both amphetamine ranges are the concentrations the studied doses produced in children, not
 windows of efficacy, and Table 5 has no adult data. The table prints 30–59 ng/mL "for d + l
@@ -174,7 +174,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991 and Johannessen Landmark 2015, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015 and Chermá 2017, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -198,7 +198,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | pregabalin | Chan 2021, *Clin Pharmacol Ther* 110:132 | 33280106 | The former band |
 | mixedAmphetamineSalts | McGough 2003, *J Am Acad Child Adolesc Psychiatry* 42:684 | 12921476 | Source of 23–45 ng/mL, and the model's fit |
 | lisdexamfetamine | Boellner 2010, *Clin Ther* 32:252 | 20206783 | Source of 44–160 ng/mL |
-| methylphenidate | Chermá 2017, *Eur J Drug Metab Pharmacokinet* 42:295 | 27220743 | The two OROS ranges (open access) |
+| methylphenidate | Chermá 2017, *Eur J Drug Metab Pharmacokinet* 42:295 | 27220743 | Read in full: interquartile ranges in 50 patients on Concerta, in whole blood |
 | methylphenidate | Stevens 2010, *J Child Adolesc Psychopharmacol* 20:49 | 20166796 | The alert level |
 | methadone | Gourlay 1984, *Anesthesiology* 61:19 | 6742480 | The kept analgesic band |
 | methadone | Inturrisi 1987, *Clin Pharmacol Ther* 41:392 | 3829576 | Quotes Gourlay; 290 ng/mL in tolerant patients |
