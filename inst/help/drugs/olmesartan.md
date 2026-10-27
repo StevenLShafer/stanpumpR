@@ -1,6 +1,6 @@
 ### The model
 
-Olmesartan's parameters come from Yoshihara, Gao, Shiga, Wada and Hisaoka (*Clin Pharmacokinet* 2005;44:1329–42), a NONMEM analysis of 7911 plasma concentrations from 472 participants across twelve trials — 89 healthy volunteers and 383 hypertensive patients, Japanese and Western, given single and multiple oral doses of olmesartan medoxomil from 2.5 to 80 mg. Two compartments with first-order absorption and a 26-minute absorption lag.
+Olmesartan's parameters come from Yoshihara, Gao, Shiga, Wada and Hisaoka (*Clin Pharmacokinet* 2005;44:1329–42), a NONMEM analysis of 7911 plasma concentrations from 472 people across twelve trials — 89 healthy volunteers and 383 hypertensive patients, 355 Western and 117 Japanese, given single and multiple oral doses of olmesartan medoxomil from 2.5 to 80 mg. Two compartments with first-order absorption and a 26-minute absorption lag.
 
 Every parameter is **apparent**, divided by the oral bioavailability, because the analysis had no intravenous arm. So no intravenous unit is offered, and the dose enters without being multiplied by a bioavailability.
 

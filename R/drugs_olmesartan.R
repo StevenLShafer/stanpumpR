@@ -10,12 +10,17 @@
 #
 # WHAT THE SOURCE IS
 # ==================
-# A NONMEM analysis of 7911 plasma concentrations from 472 participants (89
-# healthy volunteers and 383 hypertensive patients) in 12 trials -- 355
-# Westerners (338 Caucasian, 17 Hispanic) and the remainder Japanese, single
-# and multiple oral doses of olmesartan medoxomil 2.5 to 80 mg.  (Until
-# 2026-10-27 this header said 5119 concentrations from 629 participants; the
-# abstract's counts are the ones above, and an adversarial review caught it.)  Two compartments with
+# A NONMEM analysis of 7911 plasma concentrations from 472 people in 12
+# trials: 89 healthy volunteers and 383 hypertensive patients (337 with
+# hypertension only, 34 with renal and 12 with hepatic impairment), 355
+# Westerners (338 Caucasian, 17 Hispanic) and 117 Japanese, single and
+# multiple oral doses of olmesartan medoxomil 2.5 to 80 mg.  Table II counts
+# 592 individuals (209 healthy, 475 Western) because the 30 Western men of a
+# five-way crossover (trial 5) were "treated as separate individuals" in each
+# period (its footnote b): 30 x 4 = 120 more.  (Until 2026-10-27 this header
+# said 5119 concentrations from 629 participants; an adversarial review
+# caught it, and the counts were settled from the full text.)  Two
+# compartments with
 # first-order absorption and an absorption lag (ADVAN4/TRANS1), parameterised
 # in CL/F, ka, ke, k12, k21 and ALAG.  Table IV is transcribed into
 # inst/extdata/antihypertensiveParameters.csv with its standard errors.
@@ -220,7 +225,7 @@ olmesartan <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "prodrug, olmesartan medoxomil: in healthy volunteers and hypertensive ",
     "patients. Clin Pharmacokinet 2005;44:1329-42. Two compartments with ",
     "first-order absorption and a 0.427 h lag, apparent in bioavailability, ",
-    "from 7911 concentrations in 472 participants in 12 trials: ",
+    "from 7911 concentrations in 472 people in 12 trials: ",
     "CL/F = 7.32 x (age/50)^-0.117 x (weight/70)^0.310 x (creatinine/80)",
     "^-0.344 x exp(0.145 if male) x exp(-0.239 if hypertensive) with ",
     "creatinine in umol/L, ke 0.193 /h, k12 0.061 /h, k21 0.079 /h, ",

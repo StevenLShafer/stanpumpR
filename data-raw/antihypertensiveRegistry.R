@@ -1017,7 +1017,7 @@ sources <- rbind(sources,
       limitations = "READ IN FULL with its supplement on 2026-10-20 and REJECTED, which is recorded here so it is not re-derived: the printed parameters do not reproduce the paper\'s own figures. Simulating the published model gives tmax 7.49 h and Cmax 0.99 mcg/mL against roughly 2-2.5 h and 2.8 mcg/mL in its own Figure 1 visual predictive check; AUC 20.3 does match the figure\'s ~20, so the clearance is sound and the SHAPE is not. Checked twice, with the closed-form solution and with an independent Runge-Kutta integration. Moving the decimal point in Ka (1.9 for the printed 0.19) fixes tmax exactly, at 1.96 h, and still leaves Cmax 1.6-fold low, so AT LEAST TWO printed parameters are irreconcilable and nothing in the paper identifies which -- a single transcription error could have been repaired, two cannot be guessed. Additionally: V2/F is printed as 0.51 L with a 26-fold confidence interval on CL2/F; the Methods describe a BMI allometry that Table 3 does not contain; and the drug studied was sacubitril/valsartan rather than conventional valsartan. Heo 2016 is used instead, which is older and smaller but internally consistent. To settle this record, individual-level data or an author correction would be needed, not another reading of the same tables."),
   rec("olmesartan__medoxomil_tablet__oral__pooled_12_trials__concentration__yoshihara2005",
       "olmesartan medoxomil", "olmesartan", "oral", "medoxomil tablet",
-      population = "472 participants in 12 trials -- 89 healthy volunteers and 383 hypertensive patients, 355 Westerners (338 Caucasian, 17 Hispanic) and the remainder Japanese; 7911 concentrations after single and multiple oral doses of olmesartan medoxomil 2.5-80 mg",
+      population = "472 people in 12 trials -- 89 healthy volunteers and 383 hypertensive patients (34 with renal and 12 with hepatic impairment), 355 Westerners (338 Caucasian, 17 Hispanic) and 117 Japanese, modelled as 592 individuals because the 30 men of a five-way crossover were treated as separate individuals in each period (Table II, footnote b); 7911 concentrations after single and multiple oral doses of olmesartan medoxomil 2.5-80 mg",
       endpoint = "concentration", analyte = "olmesartan",
       matrix = "plasma", pk_evidence = FULL, pd_evidence = PRO,
       execution_status = READY, stanpumpr_drug = "olmesartan",
@@ -2019,7 +2019,7 @@ parameters <- rbind(parameters,
 
 OLM_ID  <- "olmesartan__medoxomil_tablet__oral__pooled_12_trials__concentration__yoshihara2005"
 OLM_URL <- "https://doi.org/10.2165/00003088-200544120-00011"
-OLM_POP <- "472 participants in 12 trials, 89 healthy volunteers and 383 hypertensive patients, Japanese and Western"
+OLM_POP <- "472 people in 12 trials, 89 healthy volunteers and 383 hypertensive patients, 355 Western and 117 Japanese"
 
 olmPar <- function(name, value, units, uncertainty, table, notes)
   par(OLM_ID, name, value, units, "fitted",
