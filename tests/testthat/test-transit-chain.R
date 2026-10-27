@@ -328,7 +328,7 @@ test_that("getDrugPK refuses a transit chain beside an incompatible mode", {
                     list(oralPulses = list(default = list(
                       fraction = c(0.5, 0.5), delay = c(0, 60)))),
                     list(metabolite = list(name = "enalaprilat",
-                                           kFormation = 0.01))))
+                                           kFormation = 0.01, mwRatio = 1))))
     expect_error(getDrugPK("enalapril", 70, 175, 40, "male",
                            model = withMode(mode)),
                  "Invalid transitChain")

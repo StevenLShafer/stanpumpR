@@ -12,7 +12,7 @@ Weight, height, age and sex all enter through fat-free mass, the allometric term
 
 ### Effect site
 
-The time to peak effect is 1.6 minutes, from the opioid simulation spreadsheet that accompanied the original comparisons; Minto's own ke0 of 0.595/min at age 40 corresponds to a similar peak. The resulting equilibration half-time of about a minute is among the fastest in the library.
+The time to peak effect is 1.6 minutes, from the opioid simulation spreadsheet that accompanied the original comparisons; Minto's own ke0 of 0.595/min at age 40 corresponds to a similar peak. The resulting equilibration half-time of about a minute is among the fastest in the library. It is **not** Eleveld's: Eleveld and colleagues fitted their own effect site to the EEG, with ke0 1.09/min at 35 years, falling with age, which on the reference disposition peaks a bolus at 1.1 minutes and gives an effect-site peak about a third higher than the library's 1.6 minutes does. So the model is Eleveld's (or Kim's) kinetics with the library's time to peak effect, at every age.
 
 ### MEAC and typical concentrations
 

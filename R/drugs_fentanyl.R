@@ -36,6 +36,12 @@ fentanyl <- function(weight, height, age, sex, adjustToFFM = TRUE)
   PK <- sapply(events, function(x) list(get0(x)))
 
   tPeak <- 3.6		# Shafer & Varvel 1991, Fig 2 (EEG); 3.694 until 2026-10-12, changed by decision of Steven L. Shafer
+  # MEAC 0.6 ng/mL is the library's value.  It is near Gourlay 1988's 0.63
+  # +/- 0.25 ng/mL (Anesth Analg 67:329-337), which is a MINIMUM EFFECTIVE
+  # CONCENTRATION in blood, sampled immediately before each patient-controlled
+  # demand, not a post-titration MEAC.  Bae 2020 (Br J Anaesth 125:976-985)
+  # measured both after open abdominal surgery: median MEC 0.72 and MEAC
+  # 0.99 ng/mL.  Not changed: see docs/opioid-review-2026-10-27.md.
   MEAC <- 0.6
   typical <- MEAC * 1.2
   lowerTypical <- MEAC * 0.8

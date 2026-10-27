@@ -120,7 +120,7 @@ Values from the current library for a 70 kg, 170 cm, 40-year-old male
 | oxycodone | 0.62 | 12 ng/mL | 10.8 | 0.5 | 21.5 |
 | oxymorphone | 2.00 | 0.8 ng/mL | 2.3 | 0.1 | 23.0 |
 | methadone | 0.10 | 60 ng/mL | 8.8 | *none* | (≈ 11 with an assumed F of 0.8) |
-| pethidine | 0.76 | 250 ng/mL | 275 | *none* | — |
+| pethidine | 0.76 | 460 ng/mL (250 until 2026-10-27) | 503 (was 275) | *none* | — |
 | fentanyl | 0.63 | 0.6 ng/mL | 0.55 (23 mcg/h) | — | — |
 | alfentanil | 0.20 | 39 ng/mL | 11.2 | — | — |
 | sufentanil | 0.92 | 0.056 ng/mL | 0.074 | — | — |

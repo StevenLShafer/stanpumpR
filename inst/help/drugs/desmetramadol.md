@@ -12,7 +12,7 @@ ke0 is **supplied directly** rather than solved from a tPeak. The engine solves 
 
 ### MEAC
 
-The MEAC, 84 ng/mL, is cited but needs primary verification: Lee 2019's introduction gives it, citing earlier work that was not retrieved. It is the right quantity in the right units, a minimum effective concentration of total M1, which is a firmer basis than most of the provisional potencies in the library, but the analyte (total racemic M1 against the active enantiomer) should be checked.
+The MEAC, 84 ng/mL, is a **working value**, not a measured minimum effective concentration of M1. Lee 2019's introduction calls it one, citing earlier work, and the number matches Grond and colleagues (*Br J Clin Pharmacol* 1999;48:254-257): in patients using racemic tramadol for patient-controlled analgesia after surgery, the mean serum concentration of total M1 sampled just before each demand was 84 ± 34 ng/mL. At those moments tramadol itself was at 590 ng/mL, and part of the analgesia was the parent's, so the figure describes a mixture, not M1 alone. It is also total racemic M1, whereas the μ activity belongs to the (+) enantiomer. No study has measured analgesia against M1 alone, so the value is kept as the divisor for the MEAC panel; read percentages of it as rough. The shaded band, 20 to 80 ng/mL, is a range of formed concentrations, not an analgesic range.
 
 ### Covariates
 

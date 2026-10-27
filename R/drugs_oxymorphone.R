@@ -125,8 +125,13 @@ OXYMORPHONE_TPEAK <- 20  # minutes; provisional, see above
 #
 # What would evaluate or replace it:
 #   - A human concentration-effect study for oxymorphone.  None was found.
-#   - Tenfold potency relative to morphine is a received equianalgesic ratio,
-#     and an equianalgesic DOSE ratio is not a concentration ratio: it folds
+#   - Tenfold potency relative to morphine is a received equianalgesic ratio.
+#     Its usual source, Beaver 1977 (J Clin Pharmacol 17:186-198, PMID
+#     66240), compared INTRAMUSCULAR doses in cancer pain and found 8.7-fold
+#     for total effect and 13-fold for peak effect (and oral oxymorphone a
+#     sixth as potent as intramuscular for total effect, a fourteenth for
+#     peak).  It measured no concentrations.  An equianalgesic DOSE ratio is
+#     not a concentration ratio: it folds
 #     in bioavailability, clearance and distribution, all of which differ
 #     between the two drugs.  Oxymorphone's receptor affinity relative to
 #     oxycodone is reported as 8 to 44 fold, which is a different comparison

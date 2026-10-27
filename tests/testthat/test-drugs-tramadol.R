@@ -18,11 +18,14 @@ trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) 
 
 test_that("tramadol returns the correct calculations", {
   actual <- tramadol(70, 171, 50, "male", adjustToFFM = FALSE)
+  # Holford's base-scale parameters divided by 263.38 / 299.84 = 0.8784, so
+  # that a hydrochloride dose, as labelled, gives base concentrations
+  f <- 263.38 / 299.84
 
   expected <- list(
     PK = list(default = list(
-      v1 = 90, v2 = 79, v3 = 1,
-      cl1 = 28.9 / 60, cl2 = 105 / 60, cl3 = 0,
+      v1 = 90 / f, v2 = 79 / f, v3 = 1,
+      cl1 = 28.9 / 60 / f, cl2 = 105 / 60 / f, cl3 = 0,
       ka_PO = 0.0254568712,
       bioavailability_PO = 0.70,
       tlag_PO = 0
@@ -37,7 +40,7 @@ test_that("tramadol returns the correct calculations", {
       name              = "desmetramadol",
       kFormation        = (10.5 / 60) / 90,
       firstPassFraction = 0.10,
-      mwRatio           = 249.38 / 263.38
+      mwRatio           = 249.38 / 299.84
     )
   )
 
@@ -127,8 +130,9 @@ test_that("phenotype moves the parent's own clearance too", {
   cl <- vapply(CYP2D6_VALUES,
                function(g) tramadol(70, 171, 50, "male", g, adjustToFFM = FALSE)$PK$default$cl1 * 60,
                numeric(1))
-  expect_equal(unname(cl[["normal"]]), 28.9, tolerance = 1e-6)
-  expect_equal(unname(cl[["poor"]]), 18.4 + 10.5 * 0.10, tolerance = 1e-6)
+  f <- TRAMADOL_BASE_FRACTION
+  expect_equal(unname(cl[["normal"]]) * f, 28.9, tolerance = 1e-6)
+  expect_equal(unname(cl[["poor"]]) * f, 18.4 + 10.5 * 0.10, tolerance = 1e-6)
   expect_true(all(diff(cl) > 0))
 
   peaks <- vapply(CYP2D6_VALUES,
@@ -161,9 +165,26 @@ test_that("an intravenous dose gives dose over the central volume", {
   o <- simulateDrugsWithCovariates(
     data.frame(Drug = "tramadol", Time = 0, Dose = 100, Units = "mg"),
     noEvents, 70, 171, 50, "male", 1440, FALSE, adjustToFFM = FALSE)
-  # 90 L is the published 70 kg central volume, hence the legacy switch
-  expect_equal(max(o$tramadol$wide$Plasma), 100e6 / 90 / 1000, tolerance = 1e-6)
+  # 90 L is the published 70 kg central volume, hence the legacy switch.
+  # 100 mg of the hydrochloride is 87.84 mg of base (Allegaert 2015's
+  # 0.8784), so C0 is 976 ng/mL, not the 1111 the base dose would give.
+  expect_equal(max(o$tramadol$wide$Plasma), 87.84e6 / 90 / 1000, tolerance = 1e-4)
+  expect_equal(round(87.84e3 / 90), 976)
   expect_gt(max(o$desmetramadol$wide$Plasma), 0)
+})
+
+
+test_that("a hydrochloride dose forms M1 on the base molar ratio", {
+  # The formed amount per milligram of the hydrochloride is the base molar
+  # ratio times 0.8784: a 10% one-to-one conversion of 100 mg tramadol HCl is
+  # 87.84 x 0.10 x 249.38/263.38 = 8.3171 mg of M1, not the 9.4685 mg a base
+  # dose would give.
+  m <- tramadol(70, 171, 50, "male")$metabolite
+  expect_equal(100 * 0.10 * m$mwRatio, 87.84 * 0.10 * 249.38 / 263.38, tolerance = 1e-4)
+  expect_equal(round(100 * 0.10 * m$mwRatio, 4), 8.3171)
+  # Formation as a rate constant is untouched by the salt
+  a <- tramadol(70, 171, 50, "male", adjustToFFM = FALSE)
+  expect_equal(a$metabolite$kFormation, (10.5 / 60) / 90, tolerance = 1e-9)
 })
 
 
@@ -186,7 +207,8 @@ test_that("the provisional potency is consistent with the drug table", {
   dd <- getDrugDefaultsGlobal(FALSE)
   expect_equal(dd$MEAC[dd$Drug == "desmetramadol"], DESMETRAMADOL_MEAC)
   expect_equal(dd$endCe[dd$Drug == "desmetramadol"], DESMETRAMADOL_MEAC)
-  # Lee 2019 cites 84 ug/L as the minimum effective concentration of M1
+  # 84 ng/mL is Grond 1999's mean serum total M1 before PCA demands during
+  # racemic tramadol, a mixed-exposure observation, not an isolated M1 MEC
   expect_equal(DESMETRAMADOL_MEAC, 84)
 })
 
@@ -385,10 +407,11 @@ test_that("the pair scales to fat-free mass identically for a 120 kg man", {
   # both members of the jointly fitted pair.
   t <- tramadol(120, 170, 50, "male")$PK$default
   d <- desmetramadol(120, 170, 50, "male")$PK$default
-  expect_equal_rounded(t$v1,  117.4416)
-  expect_equal_rounded(t$v2,  103.08763)
-  expect_equal_rounded(t$cl1, 0.58807291)
-  expect_equal_rounded(t$cl2, 2.1365971)
+  f <- 263.38 / 299.84   # hydrochloride doses (see R/drugs_tramadol.R)
+  expect_equal_rounded(t$v1,  117.4416 / f)
+  expect_equal_rounded(t$v2,  103.08763 / f)
+  expect_equal_rounded(t$cl1, 0.58807291 / f)
+  expect_equal_rounded(t$cl2, 2.1365971 / f)
   expect_equal_rounded(d$v1,  102.95713)
   expect_equal_rounded(d$v2,  170.94277)
   expect_equal_rounded(d$cl1, 1.7133474)

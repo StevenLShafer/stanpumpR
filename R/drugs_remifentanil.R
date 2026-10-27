@@ -111,7 +111,16 @@ default <- list(
   infusate_concentration <- 50
   awake_concentration <- 1	# Desired Cp on emergence
   weightAdjust <- TRUE
-  tPeak = 1.6 # Opioid simulation spreadsheet
+  # tPeak 1.6 min is the library's value, from the opioid simulation
+  # spreadsheet, NOT Eleveld's.  Eleveld 2017 fitted its own effect site to
+  # the EEG spectral edge: ke0 1.09 /min at the reference 35-year-old,
+  # falling with age (abstract), which peaks a bolus at 1.13 min on the
+  # reference disposition here.  1.6 min solves to ke0 0.577 /min, 47% lower,
+  # and gives a 26% lower peak effect-site concentration after a bolus (both
+  # computed 2026-10-27 on the 70 kg, 170 cm, 35-year-old man; opioid potency
+  # audit, docs/opioid-review-2026-10-27.md).  So the model is Eleveld (or
+  # Kim) kinetics with the library's time to peak effect.
+  tPeak = 1.6
   MEAC <- 1
   typical <- MEAC * 1.2
   lowerTypical <- MEAC * 0.8
