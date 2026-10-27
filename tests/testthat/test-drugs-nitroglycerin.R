@@ -56,3 +56,11 @@ test_that("nitroglycerin is a vasoactive and resuscitation drug with no band", {
   expect_equal(row$MEAC, 0)
   expect_equal(row$Lower, 0)
 })
+
+test_that("a bolus is beyond the model, so only infusion rates are offered", {
+  defaults <- getDrugDefaultsGlobal()
+  row <- defaults[defaults$Drug == "nitroglycerin", ]
+  units <- row$Units[[1]]
+  expect_setequal(units, c("mcg/min", "mcg/kg/min"))
+  expect_true(is.na(row$Bolus.Units) || row$Bolus.Units == "")
+})
