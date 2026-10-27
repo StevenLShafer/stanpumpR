@@ -1739,6 +1739,9 @@ app_server <- function(input, output, session) {
       compartment <- compartmentSeries(drug)
       if (!is.na(compartment$drug)) drug <- compartment$drug
       drug <- alternativeModelParent(drug)
+      # And a click on a metabolite that is only ever formed (no dose units)
+      # on the drug that forms it
+      drug <- formedMetaboliteParent(drug, drugs(), drugDefaults())
     }
     outputComments("drug from panelvar1", drug)
 

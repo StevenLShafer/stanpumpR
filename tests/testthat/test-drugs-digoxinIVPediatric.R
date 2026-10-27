@@ -34,3 +34,21 @@ test_that("it is plasma only, with the 0.5-2 ng/mL band", {
   row <- dd[dd$Drug == "digoxinIVPediatric", ]
   expect_equal(c(row$Lower, row$Upper), c(0.5, 2))
 })
+
+test_that("an intravenous dose simulates to the eigen-solution of the model", {
+  # End to end through simulateDrugsWithCovariates() (adversarial review,
+  # 2026-10-27).  The study's 10 mcg/kg in a 16 kg child; ng/mL = mcg/L.
+  set <- getDrugPK("digoxinIVPediatric", 16, 100, 4, "male", adjustToFFM = FALSE,
+                   creatinine = 0.5)$PK$default
+  wide <- simulateDrugsWithCovariates(
+    data.frame(Drug = "digoxinIVPediatric", Time = 0, Dose = 10, Units = "mcg/kg"),
+    data.frame(Time = double(), Event = character()),
+    16, 100, 4, "male", 2880, FALSE, creatinine = 0.5,
+    adjustToFFM = FALSE)$digoxinIVPediatric$wide
+  # Every point of the simulated time line after the dose
+  times <- wide$Time[wide$Time > 0]
+  got <- wide$Plasma[wide$Time > 0]
+  expect_gt(length(times), 20)
+  ref <- mammillaryReference(set, times, bolus = 10 * 16)
+  expect_lt(max(abs(got / ref - 1)), 1e-6)
+})

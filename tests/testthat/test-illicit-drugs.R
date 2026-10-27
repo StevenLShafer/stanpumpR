@@ -41,6 +41,41 @@ test_that("the dose-table autocomplete source honours the opt-in", {
   expect_true(grepl("_illicitDrugSet", off$x$columns[[drugCol]]$renderer))
 })
 
+test_that("a metabolite that is only formed is never offered for dosing", {
+  # Adversarial review, 2026-10-27: enalaprilat (no dose units) was offered in
+  # the dose-table autocomplete and the Add a dose dialog, which then had no
+  # unit to give it.  Every metabolite-only row is the same case.
+  formedOnly <- dd$Drug[!isDosableDrug(dd$Drug, dd)]
+  expect_true(all(c("enalaprilat", "salicylate", "norfluoxetine") %in% formedOnly))
+  expect_true(all(is.na(dd$Category[dd$Drug %in% formedOnly])))
+  for (showIllicit in c(FALSE, TRUE)) {
+    offered <- visibleDrugNames(showIllicit, dd)
+    expect_false(any(formedOnly %in% offered))
+    drugCol <- which(names(doseTableInit) == "Drug")
+    source <- createHOT(doseTableInit, dd, drugChoices = offered)$x$columns[[drugCol]]$source
+    expect_false("enalaprilat" %in% source)
+  }
+  # The startup menu never listed them (no Category)
+  expect_false(any(formedOnly %in% unlist(startupDrugChoices(dd))))
+  # The unexpanded library (Units as one string) gives the same answer
+  ddRaw <- getDrugDefaultsGlobal(FALSE)
+  expect_identical(isDosableDrug(ddRaw$Drug, ddRaw), isDosableDrug(dd$Drug, dd))
+  expect_false(isDosableDrug("notADrug", dd))
+})
+
+test_that("a click on a formed metabolite's panel goes to the drug forming it", {
+  drugs <- list(enalapril = list(metaboliteName = "enalaprilat"),
+                propofol  = list())
+  expect_identical(formedMetaboliteParent("enalaprilat", drugs, dd), "enalapril")
+  # A dosable drug is never redirected, even when something forms it
+  expect_identical(formedMetaboliteParent("propofol", drugs, dd), "propofol")
+  # Nothing forms it: unchanged
+  expect_identical(formedMetaboliteParent("salicylate", drugs, dd), "salicylate")
+  # And the real parent names its metabolite
+  pk <- getDrugPK("enalapril", 70, 175, 40, "male")
+  expect_identical(pk$metaboliteName, "enalaprilat")
+})
+
 # -----------------------------------------------------------------------------
 # The generated pharmacokinetic table on inst/help/models/illicit-drugs.md.
 # These seven models differ more from one another than the rest of the library
