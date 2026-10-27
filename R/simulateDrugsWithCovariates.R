@@ -20,6 +20,8 @@
 #'   Only drugs whose model declares it (phenytoin) are affected.
 #' @param vkorc1 VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES}.
 #'   Only drugs whose model declares it (warfarin) are affected.
+#' @param cyp4f2 CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES}.
+#'   Only drugs whose model declares it (warfarin) are affected.
 #' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
 #'   Only drugs whose model declares it (methadone) are affected.
 #' @param osmolality baseline serum osmolality in mOsm/kg.  Only an osmotic
@@ -61,7 +63,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          # that passed cyp2b6/pregnant keeps its
                                          # binding (this function is exported).
                                          vkorc1 = VKORC1_DEFAULT,
-                                         antiseizureInteractions = FALSE)
+                                         antiseizureInteractions = FALSE,
+                                         cyp4f2 = CYP4F2_DEFAULT)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -93,6 +96,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
                     cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, vkorc1 = vkorc1,
+                    cyp4f2 = cyp4f2,
                     cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
                     pregnant = pregnant, adjustToFFM = adjustToFFM)
@@ -148,7 +152,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     targetDefaults <- getDrugDefaults(target)
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
                           cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                          vkorc1 = vkorc1,
+                          vkorc1 = vkorc1, cyp4f2 = cyp4f2,
                           cyp2b6 = cyp2b6, osmolality = osmolality,
                           creatinine = creatinine, pregnant = pregnant,
                           adjustToFFM = adjustToFFM)

@@ -17,6 +17,8 @@
 #'   passed only to models that name it (phenytoin).
 #' @param vkorc1 VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};
 #'   passed only to models that name it (warfarin).
+#' @param cyp4f2 CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES};
+#'   passed only to models that name it (warfarin).
 #' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
 #'   passed only to models that name it (methadone).
 #' @param resolveMetabolite should a drug that names an active metabolite have
@@ -79,7 +81,8 @@ getDrugPK <- function(
   # Appended after the pre-existing arguments so a positional call that passed
   # cyp2b6 or pregnant keeps its binding (getDrugPK() is exported).
   vkorc1 = VKORC1_DEFAULT,
-  model = NULL
+  model = NULL,
+  cyp4f2 = CYP4F2_DEFAULT
 )
 {
   drugList <- getDrugDefaultsGlobal()$Drug
@@ -103,6 +106,10 @@ getDrugPK <- function(
   if (length(vkorc1) != 1 || !vkorc1 %in% VKORC1_VALUES) {
     stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "),
          ". Must be one of: ", paste(VKORC1_VALUES, collapse = ", "))
+  }
+  if (length(cyp4f2) != 1 || !cyp4f2 %in% CYP4F2_VALUES) {
+    stop("Invalid cyp4f2: ", paste(cyp4f2, collapse = ", "),
+         ". Must be one of: ", paste(CYP4F2_VALUES, collapse = ", "))
   }
   if (length(cyp2b6) != 1 || !cyp2b6 %in% CYP2B6_VALUES) {
     stop("Invalid cyp2b6: ", paste(cyp2b6, collapse = ", "),
@@ -160,6 +167,9 @@ getDrugPK <- function(
   if (exists(drug, mode = "function") &&
       "vkorc1" %in% names(formals(get(drug, mode = "function"))))
     covariates$vkorc1 <- vkorc1
+  if (exists(drug, mode = "function") &&
+      "cyp4f2" %in% names(formals(get(drug, mode = "function"))))
+    covariates$cyp4f2 <- cyp4f2
   if (exists(drug, mode = "function") &&
       "cyp2b6" %in% names(formals(get(drug, mode = "function"))))
     covariates$cyp2b6 <- cyp2b6

@@ -48,10 +48,11 @@
 #     female              x1.33 V_S, x1.22 V_R
 #     VKORC1 AA           x0.725 C50_S  (vs GA/GG)
 #     CYP4F2 CC or CT     x0.770 C50_S  (vs TT)
-# The Patient Profile has none of these inputs except sex, so in the app the
-# patient is a CYP2C9 *1/*1, VKORC1 non-AA, CYP4F2 TT patient on neither
-# interacting drug and with a mechanical valve, with the female volume terms
-# applied by sex.  The other covariates are function arguments for scripts.
+# The Patient Profile sets sex, CYP2C9, VKORC1 and CYP4F2; the patient is on
+# neither interacting drug and has a mechanical valve, and those covariates are
+# function arguments for scripts.  CYP4F2 defaults to CC, the most sensitive
+# genotype, so that an unentered genotype predicts the larger INR rise (see
+# CYP4F2_DEFAULT in R/constants.R for why).
 #
 # THE R-WARFARIN ANTAGONISM, AND THE ERRATUM
 # ==========================================
@@ -96,8 +97,8 @@
 # -----------------------------------------------------------------------------
 
 # VKORC1 genotypes are the shared VKORC1_VALUES (R/constants.R), read from the
-# Patient Profile; CYP4F2 is warfarin's own (no Patient Profile field yet).
-WARFARIN_CYP4F2_VALUES <- c("TT", "CT", "CC")
+# Patient Profile, as are the CYP4F2 genotypes (CYP4F2_VALUES), which only this
+# model reads.
 # Janmahasatian fat-free mass of the paper's standard subject (70 kg, 176 cm
 # male): 9270 x 70 / (6680 + 216 x 22.60) = 56.1 kg.
 WARFARIN_FFM_STD <- 9270 * 70 / (6680 + 216 * 70 / 1.76^2)
@@ -129,15 +130,16 @@ warfarinFFM <- function(weight, height, sex)
 #'   the \code{"*1/*1"} reference clearance (the app passes this field).
 #' @param vkorc1 VKORC1 -1639 genotype, one of \code{"GG"}, \code{"GA"},
 #'   \code{"AA"}; \code{"AA"} lowers the S-warfarin C50
-#' @param cyp4f2 CYP4F2 genotype, one of \code{"TT"}, \code{"CT"}, \code{"CC"};
-#'   \code{"CT"} or \code{"CC"} lowers the S-warfarin C50
+#' @param cyp4f2 CYP4F2 genotype, one of \code{CYP4F2_VALUES}; \code{"CT"} or
+#'   \code{"CC"} lowers the S-warfarin C50.  The default, \code{"CC"}, is the
+#'   most sensitive genotype (the app passes the Patient Profile field)
 #' @param amiodarone,fluconazole is the patient taking it? (enzyme inhibition)
 #' @param bioprosthetic does the patient have a bioprosthetic valve?
 #' @returns a list in the shape \code{getDrugPK()} expects, with R-warfarin as
 #'   a parallel system and an \code{inr} block
 #' @export
 warfarin <- function(weight, height, age, sex, adjustToFFM = TRUE,
-                     cyp2c9 = "*1/*1", vkorc1 = VKORC1_DEFAULT, cyp4f2 = "TT",
+                     cyp2c9 = "*1/*1", vkorc1 = VKORC1_DEFAULT, cyp4f2 = CYP4F2_DEFAULT,
                      amiodarone = FALSE, fluconazole = FALSE,
                      bioprosthetic = FALSE)
 {
@@ -147,9 +149,9 @@ warfarin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   if (length(vkorc1) != 1 || !vkorc1 %in% VKORC1_VALUES)
     stop("Invalid vkorc1: ", paste(vkorc1, collapse = ", "), ". Must be one of: ",
          paste(VKORC1_VALUES, collapse = ", "))
-  if (length(cyp4f2) != 1 || !cyp4f2 %in% WARFARIN_CYP4F2_VALUES)
+  if (length(cyp4f2) != 1 || !cyp4f2 %in% CYP4F2_VALUES)
     stop("Invalid cyp4f2: ", paste(cyp4f2, collapse = ", "), ". Must be one of: ",
-         paste(WARFARIN_CYP4F2_VALUES, collapse = ", "))
+         paste(CYP4F2_VALUES, collapse = ", "))
 
   female <- sex == SEX_FEMALE
   sizeCL <- (warfarinFFM(weight, height, sex) / WARFARIN_FFM_STD)^0.75
@@ -201,7 +203,7 @@ warfarin <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "Xue L et al., Br J Clin Pharmacol 2017;83:823-835, with the erratum ",
       "(2017;83:1602) (S- and R-warfarin one-compartment PK and a prothrombin ",
       "complex turnover model giving the INR; 264 cardiac-surgery patients; ",
-      "CYP2C9 *1/*1, VKORC1 non-AA, CYP4F2 TT, no interacting drug and a ",
+      "CYP2C9 *1/*1, VKORC1 non-AA, CYP4F2 CC, no interacting drug and a ",
       "mechanical valve unless set). https://doi.org/10.1111/bcp.13157"
     )
   )
