@@ -112,6 +112,28 @@
 # coefficients, and no pressure is predicted here.  Tolerance develops within
 # a day of continuous infusion.
 #
+# SAMPLING SITE
+# =============
+# The curve is ARTERIAL plasma.  Armstrong PW, Moffat JA, Marks GS,
+# Circulation 1982;66:1273-1276 (PMID 6814785, abstract; also quoted by Chiou,
+# Clin Pharmacokinet 1989;17:175-199, PMID 2680213): during infusion in 20
+# patients with heart failure, 25.1 ng/mL radial arterial, 29.8 pulmonary
+# arterial, 7.3 peripheral venous; 17% extraction across the lung, 61% across
+# the arm.  A peripheral venous sample reads about a third of the curve.
+#
+# CURRY 1993: CORROBORATES THE FAST KINETICS, NOT USED
+# ====================================================
+# Curry SH et al., Biopharm Drug Dispos 1993;14:107-118 (PMID 8453021, read
+# in full): 0.1 mg IV in six men with coronary disease at catheterisation,
+# femoral venous plasma for 15 min, two compartments (Table 2: alpha
+# half-life 0.41 min, beta 7.37 min, k12 0.30, k21 0.13, k10 1.58 /min).
+# Those rate constants put an infusion at 84% of its plateau in 2 min and at
+# 10% of it 5 min after a stop, as fast as this model's 1.9 min or faster.
+# The printed V1 (2.0 L) and CL (2.08 L/min) are means of individual values
+# that disagree with each other (V1 x k10 = 3.2 L/min) and with the dose over
+# the mean AUC (100 mcg / 224.6 ng.min/mL = 0.45 L/min), and the injection
+# site is not stated, so no number is taken from it.
+#
 # THE ADMINISTRATION SET CHANGES THE DOSE
 # =======================================
 # The curve assumes the whole dose reaches the vein.  It often does not:
