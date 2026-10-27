@@ -23,22 +23,49 @@
 #     time constant of the approach to steady state   8.1 min (SE 1.9)
 #     clearance                                       6.2 L/min (SD 2.7)
 #
-# A one-compartment model has two parameters, and these are they: the time
-# constant is V / CL, so V = 6.2 x 8.1 = 50.2 L, a half-life of 5.6 min.  The
+# The clearance is used; the time constant is not (see THE VOLUME, below).  The
 # 6.2 L/min is the paper's clearance from each patient's average concentration
 # at 30, 60 and 120 min; the fitted steady state, 3.65 ng/mL, gives 5.75 L/min
 # instead.  The plateau the model predicts at the study's rate, 3.4 ng/mL, lies
 # between the fitted 3.65 and Table 1's measured 3.0-4.1 ng/mL.
 #
 # The full text settles two questions the abstract left open.  The infusion
-# ran through Teflon tubing, which does not adsorb nitroglycerin (so the slow
-# rise is not adsorption), and the samples were ARTERIAL (radial); the same
-# group found a 60% arteriovenous extraction, so venous concentrations are
-# far lower.  It also shows the limit of one compartment: after an infusion
-# stops the authors measured half-lives of 1.1 to 2.8 minutes (1.9 in their
-# earlier work), faster than the 5.6 minutes implied by the 8.1-minute rise.
-# So the model reaches its plateau at the measured pace but falls after a
-# stop too slowly; the true offset is a few minutes.
+# ran through Teflon tubing, which does not adsorb nitroglycerin, and the
+# samples were ARTERIAL (radial); the same group found a 60% arteriovenous
+# extraction, so venous concentrations are far lower.  It also shows that the
+# slow rise is not the drug's: after an infusion stops the authors measured
+# half-lives of 2.8 and 1.1 minutes, "consistent with our previously reported
+# value of 1.9 min" (Armstrong PW, Armstrong JA, Marks GS, Circulation
+# 1980;62:160-166, PMID 6769608), and they had expected a plateau within 10
+# to 15 minutes, as their haemodynamics had reached one.
+#
+# THE VOLUME: FROM THE 1.9-MINUTE HALF-LIFE, NOT THE 8.1-MINUTE RISE
+# ==================================================================
+# In any linear model the fall after a long infusion mirrors the rise, so an
+# 8.1-minute time constant (a 5.6-minute half-life) on the way up and a
+# 1-3 minute half-life on the way down cannot both be the drug's.  Two later
+# studies with specific assays side with the fall:
+#
+#   Sun JX et al., J Clin Pharmacol 1995;35:390-397 (PMID 7650229): 18
+#   healthy men given 15N-labelled nitroglycerin at 0.25 mg/h IV for 14 h.
+#   Figure 1: plasma is at its plateau (about 400-500 pg/mL) at the first
+#   sample, 15 minutes, and falls from about 370 to about 70 pg/mL in the 5
+#   minutes after the infusion stops, a half-life near 2 minutes.
+#
+#   Kim CO et al., Medicine 2018;97:e9829 (PMID 29489681): 9 healthy men
+#   given 20 mcg/min for 30 min through 100 cm sets of three materials,
+#   LC-MS/MS.  Plasma "reached steady state after approximately 5 minutes",
+#   and most samples 3, 6 and 10 minutes after the stop were below 0.1
+#   ng/mL.  Through polyurethane or PVC the peak was 0.21 and 0.33 of that
+#   through polyolefin: the administration set changes what reaches the vein.
+#
+# So the slow rise in Armstrong 1983 belongs to the delivery, not to the
+# drug (its Teflon tubing did not adsorb, but a low-flow delivery path can
+# still lag), and the volume is taken from the half-life after a stop:
+# V = CL x 1.9 / ln 2 = 6.2 x 2.741 = 17.0 L.  With it the plateau is the
+# same (it depends on CL alone), 90% of it is reached in 6.3 minutes, and 5
+# minutes after a stop 16% remains, matching Sun's figure.  Until 2026-10-27
+# the volume was 50.2 L, from the rise, which drew the offset too slowly.
 #
 # A BOLUS IS BEYOND THE MODEL, SO NONE IS OFFERED: the drug's units are
 # infusion rates only (mcg/min, mcg/kg/min; the bolus unit was withdrawn
@@ -48,11 +75,12 @@
 # 10.1016/s0029-7844(97)00594-2; medians 38.1 and 80.3 ng/mL at 1 min, a
 # third of that at 5 min, a half-life of 2-2.5 min) and David M et al., Am J
 # Obstet Gynecol 2000;182:955-961 (0.5 mg: 80 at 1 min, 3.2 at 5 min).
-# After 0.25 mg this model gives 4.4 ng/mL at 1 min, a ninth of the
-# measured, and falls only 1.6-fold by 5 min.  The 1-minute samples came
-# from the arm of the injection and are probably inflated, and the two
-# papers disagree on the fall, so they give no model; but the drug's early
-# volume after a bolus is far smaller, and its fall far faster, than drawn.
+# After 0.25 mg this model gives 10.2 ng/mL at 1 min, a quarter of the
+# measured, and falls 4.3-fold by 5 min (with the 50.2 L volume used until
+# 2026-10-27, 4.4 ng/mL and 1.6-fold).  The 1-minute samples came from the
+# arm of the injection and are probably inflated, and the two papers
+# disagree on the fall, so they give no model; but the drug's early volume
+# after a bolus is smaller than drawn, and one compartment cannot show it.
 #
 # WHY THIS SOURCE, AND HOW FAR TO TRUST IT
 # ========================================
@@ -78,20 +106,32 @@
 # NO EFFECT SITE, NO BAND
 # =======================
 # The haemodynamic responses (pulmonary artery, wedge and right atrial
-# pressures) followed the concentration with time constants of 8.1 to 9.7
-# minutes, the same as the drug's, so there is no measurable delay to model;
-# but the abstract gives no concentration-effect coefficients, and no pressure
-# is predicted here.  Tolerance develops within a day of continuous infusion.
+# pressures) followed the measured concentration with time constants of 8.1
+# to 9.7 minutes, the same as its rise, so on the same delivery there is no
+# measurable delay to model; the paper gives no concentration-effect
+# coefficients, and no pressure is predicted here.  Tolerance develops within
+# a day of continuous infusion.
+#
+# THE ADMINISTRATION SET
+# ======================
+# The curve assumes the whole dose reaches the vein.  Nitroglycerin is sorbed
+# by PVC and polyurethane tubing (Kim 2018: peak concentrations a fifth to a
+# third of those through polyolefin; more with longer sets and lower flows),
+# so through such a set the patient receives, and the plasma holds, less.
 # -----------------------------------------------------------------------------
 
-# Armstrong 1983, abstract
+# Armstrong 1983
 NITROGLYCERIN_CL  <- 6.2     # L/min
-NITROGLYCERIN_TAU <- 8.1     # min, the time constant V / CL
+# Armstrong 1980, quoted by Armstrong 1983: the half-life after a stop
+NITROGLYCERIN_HALF_LIFE <- 1.9   # min
+# Armstrong 1983's time constant of the rise, not used (see the header)
+NITROGLYCERIN_TAU_RISE  <- 8.1   # min
 
 #' Nitroglycerin, intravenous (Armstrong 1983)
 #'
-#' One compartment from the clearance and time constant reported for ten
-#' patients in congestive cardiac failure; see the header of
+#' One compartment from the clearance reported for ten patients in
+#' congestive cardiac failure and the 1.9-minute half-life after an infusion
+#' stops; see the header of
 #' \code{R/drugs_nitroglycerin.R} for how far to trust it.
 #'
 #' @inheritParams cefazolin
@@ -102,7 +142,7 @@ nitroglycerin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
 
   default <- list(
-    v1  = NITROGLYCERIN_CL * NITROGLYCERIN_TAU * size$volume,
+    v1  = NITROGLYCERIN_CL * NITROGLYCERIN_HALF_LIFE / log(2) * size$volume,
     v2  = 1,                        # one compartment
     v3  = 1,
     cl1 = NITROGLYCERIN_CL * size$clearance,
@@ -116,9 +156,10 @@ nitroglycerin <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Armstrong PW, Watts DG, Moffat JA, Br J Clin Pharmacol 1983;16:385-390 ",
     "One compartment in 10 patients with congestive cardiac ",
-    "failure given 21 mcg/min: CL 6.2 L/min and a time constant of 8.1 min, ",
-    "so V 50.2 L; arterial plasma.  Healthy volunteers' clearance was 3-10 times higher ",
-    "(McNiff 1981). https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"
+    "failure given 21 mcg/min: CL 6.2 L/min; arterial plasma.  V 17.0 L from the ",
+    "1.9-min half-life after a stop (Armstrong 1980), as Sun 1995 and Kim 2018 ",
+    "measured; the 8.1-min rise is the delivery's.  Healthy volunteers' clearance was ",
+    "3-10 times higher (McNiff 1981). https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"
   )
 
   list(
