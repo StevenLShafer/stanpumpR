@@ -112,12 +112,15 @@
 # coefficients, and no pressure is predicted here.  Tolerance develops within
 # a day of continuous infusion.
 #
-# THE ADMINISTRATION SET
-# ======================
-# The curve assumes the whole dose reaches the vein.  Nitroglycerin is sorbed
-# by PVC and polyurethane tubing (Kim 2018: peak concentrations a fifth to a
-# third of those through polyolefin; more with longer sets and lower flows),
-# so through such a set the patient receives, and the plasma holds, less.
+# THE ADMINISTRATION SET CHANGES THE DOSE
+# =======================================
+# The curve assumes the whole dose reaches the vein.  It often does not:
+# nitroglycerin is sorbed by PVC and polyurethane tubing.  Kim 2018 (each man
+# through all three 100 cm sets): peak concentration through PVC 0.33, through
+# polyurethane 0.21, of that through polyolefin; AUC 0.31 and 0.14; more with
+# longer sets and lower flows.  So through such a set the patient receives,
+# and the plasma holds, a third to a seventh of what is drawn.  The help page
+# leads with this, and the reference string (the References panel) says it.
 # -----------------------------------------------------------------------------
 
 # Armstrong 1983
@@ -159,7 +162,10 @@ nitroglycerin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "failure given 21 mcg/min: CL 6.2 L/min; arterial plasma.  V 17.0 L from the ",
     "1.9-min half-life after a stop (Armstrong 1980), as Sun 1995 and Kim 2018 ",
     "measured; the 8.1-min rise is the delivery's.  Healthy volunteers' clearance was ",
-    "3-10 times higher (McNiff 1981). https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"
+    "3-10 times higher (McNiff 1981).  THE INFUSION SET CHANGES THE DOSE: the curve ",
+    "assumes the whole dose reaches the vein; through PVC or polyurethane sets Kim 2018 ",
+    "measured a third to a seventh of the exposure through polyolefin. ",
+    "https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"
   )
 
   list(

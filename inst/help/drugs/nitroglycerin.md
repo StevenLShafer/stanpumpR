@@ -1,3 +1,19 @@
+### The infusion set changes the dose
+
+**What reaches the patient depends on the infusion set, and the difference is large.** Nitroglycerin is taken up by the plastic of many intravenous administration sets, so part of what the pump delivers never reaches the vein. **This curve assumes the whole dose arrives**, as it does through a set that does not take up the drug. Through one that does, the patient receives, and the plasma holds, much less than drawn.
+
+How much less was measured by Kim and colleagues (*Medicine* 2018;97:e9829). They gave nine healthy men 20 mcg/min for 30 minutes through 100 cm sets of three materials, each man through all three:
+
+| Set material | Peak plasma concentration, against polyolefin | Area under the curve, against polyolefin |
+|---|---|---|
+| Polyolefin | 1 | 1 |
+| PVC | 0.33 | 0.31 |
+| Polyurethane | 0.21 | 0.14 |
+
+The fall in arterial pressure was smaller to match: one man fainted, and one had a headache, both with the polyolefin set only. The authors cite studies in which longer sets and slower flows took up proportionately more. So through a PVC or polyurethane set, expect a third to a seventh of the exposure drawn here, and less still at low rates through long tubing. When a dose seems to do too little, or a change of set changes the response, look at the tubing.
+
+The delivery path can also slow the drug's arrival even when the plastic takes none up. Armstrong's patients were infused through Teflon tubing, which does not take up nitroglycerin, yet their plasma rose far more slowly than the drug's own 2-minute half-life allows (see below).
+
 ### The model
 
 Intravenous nitroglycerin's clearance comes from Armstrong, Watts and Moffat (*Br J Clin Pharmacol* 1983;16:385-390), who infused 21 mcg/min into ten patients with congestive cardiac failure: **6.2 L/min**, in arterial plasma. The plateau it predicts at the study's rate, 3.4 ng/mL, matches the one observed.
@@ -5,10 +21,6 @@ Intravenous nitroglycerin's clearance comes from Armstrong, Watts and Moffat (*B
 The volume comes from how fast the drug leaves. After an infusion stops, Armstrong's group measured half-lives of 1.1 to 2.8 minutes, consistent with the 1.9 minutes of their earlier study (*Circulation* 1980;62:160-166). One compartment with that half-life has a volume of 6.2 × 1.9 / ln 2 = **17.0 L**: it reaches 90% of its plateau in about 6 minutes, and 5 minutes after a stop 16% of the plateau remains.
 
 The same 1983 paper also reported a slow rise, a time constant of 8.1 minutes, and the model used it until 2026. In any linear model the fall after a long infusion mirrors the rise, so a slow rise and a fast fall cannot both belong to the drug. Two later studies with specific assays side with the fall. Sun and colleagues (*J Clin Pharmacol* 1995;35:390-397) infused isotope-labelled nitroglycerin into 18 healthy men: the plasma was at its plateau at the first sample, 15 minutes, and fell to about a fifth of it in the 5 minutes after the infusion stopped. Kim and colleagues (*Medicine* 2018;97:e9829) infused 20 mcg/min into 9 healthy men: the plasma reached steady state in about 5 minutes, and most samples 3 to 10 minutes after the stop were below the assay's limit. The slow rise belongs to the delivery, not the drug.
-
-### The administration set
-
-The curve assumes that the whole dose reaches the vein. Nitroglycerin is taken up by the plastic of many infusion sets. In Kim's study, through 100 cm of polyurethane or PVC tubing the peak plasma concentration was a fifth to a third of that through polyolefin, and the fall in arterial pressure was smaller to match; longer sets and slower flows take up more. Through such a set the patient receives, and the plasma holds, less than drawn.
 
 ### Covariates
 
