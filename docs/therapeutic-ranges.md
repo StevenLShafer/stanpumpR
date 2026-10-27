@@ -28,7 +28,9 @@ marks a range revised or new since the 2017 update. It supersedes the 2017 updat
 full on 2026-10-20, and every row of the CSV that cites it says so.
 
 For an antiseizure drug Table 5 omits (phenobarbital as a drug of its own, ethosuximide), the
-band is the ILAE position paper's (Patsalos 2008), as quoted in Reimers 2018.
+band is the ILAE position paper's (Patsalos 2008, Table 1, read in full 2026-10-27; also quoted
+in Reimers 2018). Its Table 1 also gives gabapentin 2–20 mg/L, the range Table 5 carries, and
+calls pregabalin's not established.
 
 ## Antiseizure drugs
 
@@ -174,7 +176,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015 and Chermá 2017, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017 and Patsalos 2008, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -211,7 +213,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | diazepam | Chevassus 2004, *BMC Clin Pharmacol* 4:3 | 15102335 | The kept band's 300 ng/mL, which this insulin-secretion study cites only in passing (open access) |
 | temazepam | van Steveninck 1994, *Clin Pharmacol Ther* 55:546 | 8181199 | The former band's top |
 | temazepam | Saletu 1986, *Acta Psychiatr Scand Suppl* 332:67 | 2883830 | The former band's floor |
-| phenobarbital, ethosuximide, gabapentin | Patsalos 2008, *Epilepsia* 49:1239 | 18397299 | The ILAE ranges read only as quoted |
+| phenobarbital, ethosuximide, gabapentin | Patsalos 2008, *Epilepsia* 49:1239 | 18397299 | Read in full: Table 1 gives phenobarbital 10–40, ethosuximide 40–100, gabapentin 2–20 mg/L |
 | antiseizure drugs | Patsalos 2018, *Ther Drug Monit* 40:526 | 29957667 | The 2018 update |
 
 ## References
