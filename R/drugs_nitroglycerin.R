@@ -112,6 +112,26 @@
 # coefficients, and no pressure is predicted here.  Tolerance develops within
 # a day of continuous infusion.
 #
+# NOONAN 1985: THE HALF-LIFE AGREES; CLEARANCE DEPENDS ON DOSE AND HISTORY
+# =========================================================================
+# Noonan PK, Williams RL, Benet LZ, J Pharmacokinet Biopharm 1985;13:143-157
+# (PMID 3932639, read in full): six healthy volunteers, 10, 20, 40 and again
+# 10 mcg/min for 40 min each through a set adsorbing < 1% (rates checked by
+# HPLC), venous plasma.  Half-life after the last stop 1.4-3.2 min, mean 2.3
+# (Table II), which agrees with the 1.9 min used.  Clearance (Table III)
+# fell from 31 L/min at the first 10 mcg/min to about 11 L/min at 40 and at
+# the second 10, where it stayed: dose- and time-dependent, which one linear
+# compartment cannot show.  Armstrong's patients, already on the drug, are
+# nearer the later, lower value.
+#
+# THE INFUSION SET: BENCH LOSSES
+# ==============================
+# Curry SH, Aburawi SM, Biopharm Drug Dispos 1985;6:235-280 (PMID 3929851,
+# read in full) reviews them: up to about 85% lost through plastic sets,
+# flow-dependent (Cossum); about 10% through a glass syringe and 80 cm of
+# high-density polyethylene; filters up to 55%, bags and giving sets > 50%,
+# up to 80% together (Baaske); none from glass.
+#
 # SAMPLING SITE
 # =============
 # The curve is ARTERIAL plasma.  Armstrong PW, Moffat JA, Marks GS,
