@@ -1,19 +1,25 @@
 # The therapeutic reference range registry (R/therapeuticRanges.R): every
-# antiseizure, antidepressant and antipsychotic drug, and every metabolite of
-# one, says what its range is and whether the band draws it, and the band
-# columns of drugDefaults_global.csv agree with it.
+# drug in a category, and every metabolite of one, says what its range is and
+# whether the band draws it, and the band columns of drugDefaults_global.csv
+# agree with it.
 
 dd <- getDrugDefaultsGlobal()
 tr <- therapeuticRanges()
 
 # The concentration unit each row's limits must be in
-rangeUnits <- c(mcg = "mg/L", ng = "ng/mL")
+rangeUnits <- c(mcg = "mg/L", ng = "ng/mL", pg = "pg/mL", IU = "IU/mL", mcU = "mcU/mL",
+                mmol = "mmol/L", mOsm = "mOsm/kg", INR = "INR", ACT = "s", "%" = "%")
 
 test_that("every drug in the covered categories, and its metabolites, has a row", {
   covered <- dd$Drug[!is.na(dd$Category) & dd$Category %in% THERAPEUTIC_RANGE_CATEGORIES]
+  expect_setequal(unique(dd$Category[!is.na(dd$Category) & nzchar(dd$Category)]),
+                  THERAPEUTIC_RANGE_CATEGORIES)
+  # An inhaled agent has no model function: the gas engine runs it
   metabolites <- unlist(lapply(covered, function(d) {
+    if (!exists(d, envir = asNamespace("stanpumpR"), inherits = FALSE)) return(NULL)
     model <- get(d, envir = asNamespace("stanpumpR"))
-    model(weight = 70, height = 170, age = 40, sex = "male")$metabolite$name
+    X <- model(weight = 70, height = 170, age = 40, sex = "male")
+    c(X$metabolite$name, X$transitChain$metabolite$name)
   }))
   expect_true(length(metabolites) > 0)
   missing <- setdiff(c(covered, metabolites), tr$drug)
@@ -30,7 +36,8 @@ test_that("each row is well formed", {
     r <- tr[i, ]
     unit <- dd$Concentration.Units[dd$Drug == r$drug]
     expect_identical(r$units, unname(rangeUnits[unit]), info = r$drug)
-    if (r$band_status %in% c("drawn", "drawn_on_metabolite", "sum_not_drawn", "band_differs")) {
+    if (r$band_status %in% c("drawn", "drawn_on_metabolite", "sum_not_drawn", "band_differs",
+                             "withheld")) {
       expect_true(r$lower > 0 && r$upper > r$lower, info = r$drug)
     }
     # An alert level, where the guideline gives one, is at or above the range
@@ -42,7 +49,7 @@ test_that("each row is well formed", {
     # its notes, which therapeuticRangeSummary() prints
     if (!r$band_status %in% c("drawn", "drawn_on_metabolite"))
       expect_true(nzchar(r$notes) || nzchar(r$source), info = r$drug)
-    if (r$band_status %in% c("not_applicable", "band_differs"))
+    if (r$band_status %in% c("not_applicable", "band_differs", "library_band", "withheld"))
       expect_true(!is.na(r$notes) && nzchar(r$notes), info = r$drug)
   }
 })
@@ -61,6 +68,10 @@ test_that("the band columns are the registry's range, or zero when it is not dra
       # registry's range: never that range itself, which would be drawn
       expect_true(all(band > 0), info = r$drug)
       expect_false(isTRUE(all.equal(band, c(r$lower, r$upper))), info = r$drug)
+    } else if (r$band_status == "library_band") {
+      # No range is established, so the band is the library's own
+      expect_true(all(band > 0) && row$Typical >= row$Lower && row$Typical <= row$Upper,
+                  info = r$drug)
     } else if (r$band_status == "drawn_on_metabolite") {
       expect_equal(band, c(0, 0), info = r$drug)
       target <- tr[tr$drug == r$band_drug, ]
