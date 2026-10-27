@@ -14,7 +14,7 @@
 "bivalirudin","V1","0.086","L/kg","estimated","36 young healthy Chinese volunteers, Zhang 2012","https://doi.org/10.1038/aps.2012.37"
 "bivalirudin","Q","0.0957","L/h/kg","estimated","36 young healthy Chinese volunteers, Zhang 2012","https://doi.org/10.1038/aps.2012.37"
 "bivalirudin","V2","0.0554","L/kg","estimated","36 young healthy Chinese volunteers, Zhang 2012","https://doi.org/10.1038/aps.2012.37"
-"apixaban","CL_R/F","1.57","L/h (x CrCl/80)","estimated","4385 subjects (phase I-III), Cirincione 2018 NVAF reference","https://doi.org/10.1002/psp4.12347"
+"apixaban","CL_R/F","1.57","L/h (x min(CrCl,150)/80)","estimated","4385 subjects (phase I-III), Cirincione 2018 NVAF reference","https://doi.org/10.1002/psp4.12347"
 "apixaban","CL_NR/F","2.02","L/h (x (age/65)^-0.429, x0.784 female)","estimated","4385 subjects (phase I-III), Cirincione 2018 NVAF reference","https://doi.org/10.1002/psp4.12347"
 "apixaban","NVAF factor on CL","0.861","fraction","estimated","4385 subjects (phase I-III), Cirincione 2018 NVAF reference","https://doi.org/10.1002/psp4.12347"
 "apixaban","Vc/F","30","L (x (WT/70)^0.790, x0.960 NVAF)","estimated","4385 subjects (phase I-III), Cirincione 2018 NVAF reference","https://doi.org/10.1002/psp4.12347"
