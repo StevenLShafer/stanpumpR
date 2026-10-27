@@ -86,11 +86,15 @@
 #
 # THRESHOLDS
 # ==========
-# No effect site, no MEAC, no band and no time until threshold: the plotted
-# INR is a turnover endpoint, not an effect-site concentration, and it falls
-# after warfarin is stopped at the pace of clotting-factor synthesis.  A
-# simulated INR is not a dosing instruction or a procedure-safe time; see
+# No effect site, no MEAC and no time until threshold: the plotted INR is a
+# turnover endpoint, not an effect-site concentration, and it falls after
+# warfarin is stopped at the pace of clotting-factor synthesis.  A simulated
+# INR is not a dosing instruction or a procedure-safe time; see
 # inst/help/drugs/warfarin.md.
+# The band is the INR target, 2.0 to 3.0 with 2.5 typical (Coumadin label,
+# section 2.2; Holbrook 2012; inst/extdata/therapeuticRanges.csv), drawn on
+# Steven L. Shafer's decision of 2026-10-27 as a reference, not a dosing
+# instruction.
 #
 # (Claude Code, 2026-10-17, at the request of Steven L. Shafer.)
 # -----------------------------------------------------------------------------
@@ -194,9 +198,9 @@ warfarin <- function(weight, height, age, sex, adjustToFFM = TRUE,
                halfLife = 11.4 * 60),
     tPeak = 0,
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 2.5,      # INR target band (header)
+    upperTypical = 3,
+    lowerTypical = 2,
     reference = paste0(
       "Xue L et al., Br J Clin Pharmacol 2017;83:823-835, with the erratum ",
       "(2017;83:1602) (S- and R-warfarin one-compartment PK and a prothrombin ",

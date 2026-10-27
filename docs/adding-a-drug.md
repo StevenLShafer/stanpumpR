@@ -606,9 +606,7 @@ EMA product information says, and a `band_status` from `THERAPEUTIC_RANGE_STATUS
 `band_differs` (the guideline's range is for another use or analyte, and the band is the
 library's own for what the row plots, which the notes name), `library_band` (no range is
 established, and the band is the library's own: an effect-site target, an MBC band, what
-ordinary doses reach, which the notes name), `withheld` (a range is established for what the
-row plots, but the row draws no band: the anticoagulants, whose `upper` may be `NA` for a
-threshold such as an ACT) or `none_established`.
+ordinary doses reach, which the notes name) or `none_established`.
 `test-therapeutic-ranges.R` fails until every such drug has a row and the
 band columns agree with it, and the drug's help page prints the row.
 

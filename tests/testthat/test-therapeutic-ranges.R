@@ -39,9 +39,6 @@ test_that("each row is well formed", {
     if (r$band_status %in% c("drawn", "drawn_on_metabolite", "sum_not_drawn", "band_differs")) {
       expect_true(r$lower > 0 && r$upper > r$lower, info = r$drug)
     }
-    # A withheld target may be a threshold, with no upper limit
-    if (r$band_status == "withheld")
-      expect_true(r$lower > 0 && (is.na(r$upper) || r$upper > r$lower), info = r$drug)
     # An alert level, where the guideline gives one, is at or above the range
     if (!is.na(r$alert_level)) expect_gte(r$alert_level, r$upper, label = r$drug)
     # A drawn band was read in a source: never one marked unverified
@@ -51,7 +48,7 @@ test_that("each row is well formed", {
     # its notes, which therapeuticRangeSummary() prints
     if (!r$band_status %in% c("drawn", "drawn_on_metabolite"))
       expect_true(nzchar(r$notes) || nzchar(r$source), info = r$drug)
-    if (r$band_status %in% c("not_applicable", "band_differs", "library_band", "withheld"))
+    if (r$band_status %in% c("not_applicable", "band_differs", "library_band"))
       expect_true(!is.na(r$notes) && nzchar(r$notes), info = r$drug)
   }
 })
@@ -97,6 +94,6 @@ test_that("the drug's help page states the range and its source", {
                fixed = TRUE)
   expect_match(helpDrugPageHTML("propofol"), "the band drawn is the library's own",
                fixed = TRUE)
-  expect_match(helpDrugPageHTML("heparinCPB"), "above 480 s", fixed = TRUE)
+  expect_match(helpDrugPageHTML("heparinCPB"), "480 to 600 s", fixed = TRUE)
   expect_match(helpDrugPageHTML("warfarin"), "2 to 3 INR", fixed = TRUE)
 })

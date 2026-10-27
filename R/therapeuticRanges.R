@@ -46,12 +46,7 @@ therapeuticRange <- function(drug)
 #' @keywords internal
 therapeuticRangeSummary <- function(r)
 {
-  # A target with no upper limit (the activated clotting time on bypass) is a
-  # threshold
-  limits <- if (!is.na(r$lower) && is.na(r$upper))
-    sprintf("above %s %s", helpFormatNumber(r$lower), r$units)
-  else
-    sprintf("%s to %s %s", helpFormatNumber(r$lower), helpFormatNumber(r$upper), r$units)
+  limits <- sprintf("%s to %s %s", helpFormatNumber(r$lower), helpFormatNumber(r$upper), r$units)
   what <- paste0(r$analyte, if (nzchar(r$sampling)) paste0(", ", r$sampling) else "",
                  if (!is.na(r$alert_level))
                    sprintf("; laboratory alert level %s %s", helpFormatNumber(r$alert_level), r$units)
@@ -66,7 +61,6 @@ therapeuticRangeSummary <- function(r)
     band_differs = sprintf("%s (%s; %s), not the band drawn: %s", limits, what, r$source, r$notes),
     library_band = sprintf("None established (%s); the band drawn is the library's own: %s",
                            r$source, r$notes),
-    withheld = sprintf("%s (%s; %s), not drawn: %s", limits, what, r$source, r$notes),
     none_established = sprintf("None established (%s)", r$source)
   )
 }

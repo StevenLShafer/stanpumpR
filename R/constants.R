@@ -391,9 +391,6 @@ THERAPEUTIC_RANGE_STATUSES <- c(
   "library_band",         # no range is established for what the row plots;
                           # the band is the library's own (an effect-site
                           # target, an MBC band, what ordinary doses reach)
-  "withheld",             # a range is established for what the row plots,
-                          # but the row draws no band (the anticoagulants,
-                          # research models that draw none)
   "none_established"      # no range has been established
 )
 # The category of the opt-in research models of drugs of abuse

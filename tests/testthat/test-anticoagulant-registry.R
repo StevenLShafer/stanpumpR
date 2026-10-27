@@ -83,12 +83,20 @@ test_that("each implemented model's clearance and volume appear in the audit", {
 })
 
 test_that("no anticoagulant carries a clinical threshold: plasma/activity/INR only", {
+  # The only bands are the vitamin K antagonists' INR target and the bypass
+  # ACT target, drawn as references (inst/extdata/therapeuticRanges.csv)
+  banded <- c(warfarin = 2, fluindione = 2, acenocoumarol = 2, heparinCPB = 480)
   defaults <- getDrugDefaultsGlobal()
   for (d in IMPLEMENTED) {
     row <- defaults[defaults$Drug == d, ]
     expect_equal(row$MEAC, 0, info = d)
     expect_equal(row$endCe, 0, info = d)
-    expect_equal(row$Lower, 0, info = d)
-    expect_equal(row$Upper, 0, info = d)
+    if (d %in% names(banded)) {
+      expect_equal(row$Lower, unname(banded[d]), info = d)
+      expect_identical(therapeuticRange(d)$band_status, "drawn", info = d)
+    } else {
+      expect_equal(row$Lower, 0, info = d)
+      expect_equal(row$Upper, 0, info = d)
+    }
   }
 })

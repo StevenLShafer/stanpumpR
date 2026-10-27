@@ -177,14 +177,10 @@ The sources were FDA labels from accessdata.fda.gov, PubMed Central full texts a
 abstracts. They were read by research agents, and each quoted sentence was checked against
 the saved text before it was recorded. DailyMed, the EMA, Health Canada and most publishers
 could not be reached from the session; the CSV's `verification` column says how far each
-source was read. Two statuses were added:
-
-- `library_band`: no therapeutic range is established for what the row plots, and the band is
-  the library's own. That covers an anaesthetic's effect-site target, an opioid's MEAC
-  multiple, an antibiotic's MBC band and the orientation bands of what ordinary doses reach.
-  The help page says so and names what the band is.
-- `withheld`: a range is established for what the row plots, but the row draws no band. The
-  anticoagulants are research models with no band.
+source was read. A status was added, `library_band`: no therapeutic range is established for
+what the row plots, and the band is the library's own. That covers an anaesthetic's effect-site
+target, an opioid's MEAC multiple, an antibiotic's MBC band and the orientation bands of what
+ordinary doses reach. The help page says so and names what the band is.
 
 ### Drawn
 
@@ -194,14 +190,17 @@ source was read. Two statuses were added:
 | milrinone, milrinonePediatric | 100–300 ng/mL, typical 167 | PRIMACOR label (2003); Hornik 2019 (full text) |
 | amiodarone | 1.0–2.5 mg/L, typical 1.5 | CORDARONE label (2018) §12.2: "much below 1 mg/L are often ineffective… above 2.5 mg/L are generally not needed". The Health Canada monograph the model cited was not reachable |
 
-All three were already drawn; only their sources were checked.
+| warfarin, fluindione, acenocoumarol | INR 2.0–3.0, typical 2.5 | Coumadin label §2.2 and Holbrook 2012 (abstract). Fluindione and acenocoumarol take the vitamin K antagonist class target; the Previscan and Sintrom product information is still to be read |
+| heparinCPB | ACT 480–600 s, typical 480 | EACTS/EACTAIC/EBCP 2024 §9.3.1 (full text): an ACT above 480 s on bypass. No source gives an upper limit; 600 s is Steven L. Shafer's choice. STS/SCA/AmSECT 2018 abstract only |
+
+Digoxin, milrinone and amiodarone were already drawn; only their sources were checked. The
+anticoagulant bands are new, drawn on Steven L. Shafer's decision of 2026-10-27 as references
+for reading the curve. The anticoagulants remain research models, not dosing guidance.
 
 ### Recorded, not drawn
 
 | Drug | Range | Why not drawn |
 |---|---|---|
-| warfarin, fluindione, acenocoumarol | INR 2.0–3.0 (2.5) | `withheld` (research models). Coumadin label §2.2 and Holbrook 2012 (abstract); the Previscan and Sintrom product information is still to be read |
-| heparinCPB | ACT above 480 s on bypass | `withheld`. EACTS/EACTAIC/EBCP 2024 §9.3.1 (full text); STS/SCA/AmSECT 2018 abstract only |
 | heparin | anti-Xa 0.3–0.7 U/mL | `not_applicable`: the model plots anti-IIa activity (Jia 2015). Smythe 2016 (full text): "widely accepted… despite limited data" |
 | salicylate | 150–300 mg/L | `not_applicable`: anti-inflammatory doses (FDA OTC monograph M013), where this low-dose linear model does not apply |
 | magnesiumSulfate | 2.5–7.5 mEq/L (label); 2–3.5 mmol/L (Okusanya 2016, full text) | `not_applicable`: the curve is the rise above baseline |
@@ -255,8 +254,6 @@ in this review and are recorded as "Not checked".
    Rybak 2020 (AJHP 77:835-864) and of the STS/SCA/AmSECT 2018 bypass guideline; the Previscan
    and Sintrom product information; the Health Canada amiodarone monograph; and the sources,
    not recorded in the models, of the propofol, remimazolam, rocuronium and oxytocin bands.
-   Whether the anticoagulants should draw their INR and ACT targets is a decision for Steven
-   L. Shafer; they are `withheld` until then.
 5. Read the primary papers behind the new bands (below).
 
 ## Papers that would complete the verification
