@@ -176,7 +176,7 @@ in this review and are recorded as "Not checked".
 ## Papers that would complete the verification
 
 Each was identified in PubMed (2026-10-27); only abstracts have been read, except Matsuda 2022,
-Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008, Mion 2013, Drover 2004, Clements 1982, Ku 2018, Gourlay 1984 and Dahlström 1982, read in full.
+Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nimmo 1991, Johannessen Landmark 2015, Chermá 2017, Patsalos 2008, Mion 2013, Drover 2004, Clements 1982, Ku 2018, Gourlay 1984, Dahlström 1982 and Nasser 2014, read in full.
 
 | Drug | Paper | PMID | Why |
 |---|---|---|---|
@@ -192,7 +192,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | zolpidem | Drover 2004, *Clin Pharmacokinet* 43:227 | 15005637 | Read in full: states no range, only the kinetics (10 mg peaks at 120 µg/L at 1.4 h) |
 | zolpidem | Greenblatt 1998, *Clin Pharmacol Ther* 64:553 | 9834048 | The same |
 | buprenorphine | Laffont 2022, *Front Pharmacol* 13:1052113 | 36467036 | Read in full: 2–3 ng/mL sustained for use and craving (68–75% occupancy); withdrawal controlled from 1 ng/mL; sublingual troughs 0.7–1.4 |
-| buprenorphine | Nasser 2014, *Clin Pharmacokinet* 53:813 | 25015174 | The occupancy model behind the typical 2.2 ng/mL |
+| buprenorphine | Nasser 2014, *Clin Pharmacokinet* 53:813 | 25015174 | Read in full: Emax 91.4%, EC50 0.67 ng/mL, as the library uses; 70% occupancy at about 2 ng/mL |
 | buprenorphine | Elarabi 2022, *Psychopharmacology* 239:3213 | 35953563 | One of the pharmacokinetic studies behind 0.5–2.5 |
 | gabapentin, pregabalin | Johannessen Landmark 2015, *Seizure* 28:88 | 25758302 | Read in full: laboratory ranges (gabapentin 70–120 µmol/L, some labs from 10–20; pregabalin 10–30), no effect data |
 | gabapentin | Larsen Burns 2019, *Acta Neurol Scand* 139:446 | 30710348 | TDM of gabapentin by indication |
