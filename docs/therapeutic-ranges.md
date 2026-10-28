@@ -42,7 +42,7 @@ as primidone's, so that is drawn.
 | carbamazepine | 4–12 mg/L | 20 | Hart 2026 | Marked + in Table 5 (revised or new since 2017; what changed is not stated); 4–10 for mania |
 | valproate | 50–100 mg/L total | 120 | Hart 2026 | Unchanged. Depakote label: 50–100 mcg/mL |
 | phenobarbital | **10–30 mg/L**, 12 h | 50 | Hart 2026 ("Primidone and phenobarbital" row, from the SPC) | Was 10–40 (ILAE 2008); changed 2026-10-27 by decision of Steven L. Shafer |
-| pentobarbital | **none** (pending) | — | **no source read** | 20–40 mg/L is the candidate for barbiturate coma; not drawn until a primary source is read |
+| pentobarbital | **4–21 mg/L**, steady state, **treatment of status epilepticus** only | — | Helfer 2026 (full text), citing Lowenstein 1988 (not read) | Was none (20–40 mg/L candidate, unsourced); drawn 2026-10-28 by decision of Steven L. Shafer. Concentrations observed during burst-suppression coma; not for sedation (Helfer: 1–5 peak, 5–15 deep); above 45 mg/L potentially toxic |
 | ethosuximide | 40–100 mg/L | — | ILAE 2008 | Not in Table 5. Zarontin label: 40–100 mcg/mL |
 | topiramate | 5–20 mg/L | 30 | Hart 2026 | Marked + in Table 5 (revised or new since 2017; what changed is not stated) |
 | lacosamide | **1–12 mg/L** | 24 | Hart 2026 | Was 10–20 (Patsalos 2018), drawn from samples 0–3 h after a dose |
@@ -248,7 +248,7 @@ in this review and are recorded as "Not checked".
 
 ## Open items
 
-1. Find a primary source for pentobarbital's candidate 20–40 mg/L; it is not drawn until one is read.
+1. Read Lowenstein 1988 (Neurology 38:395-400), Helfer 2026's source for pentobarbital's 4–21 mg/L; not available through Lane Library.
 2. Read the labels marked "Not checked".
 3. A summed parent-plus-metabolite line would let the active-moiety ranges (risperidone,
    aripiprazole, venlafaxine, fluoxetine) be drawn.
