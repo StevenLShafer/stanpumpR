@@ -154,7 +154,7 @@
 "ephedrine","CL/F","0.34","L/min, apparent total clearance (Csajka 2005, Table 3, CL_RE/F_E = CL/F)","estimated","full_text","https://doi.org/10.1111/j.1365-2125.2005.02254.x"
 "ephedrine","V","181","L at an assumed 70 kg (V/F with F taken as 1)","derived","full_text","https://doi.org/10.1111/j.1365-2125.2005.02254.x"
 "ephedrine","CL","0.34","L/min at 70 kg (CL/F with F taken as 1)","derived","full_text","https://doi.org/10.1111/j.1365-2125.2005.02254.x"
-"ephedrine","half-life","6.1","h (V/CL)","derived","full_text","https://doi.org/10.1111/j.1365-2125.2005.02254.x"
+"ephedrine","half-life","6.1","h (ln 2 x V/CL; CL in L/h)","derived","full_text","https://doi.org/10.1111/j.1365-2125.2005.02254.x"
 "nitroglycerin","CL","6.2","L/min","estimated","full_text","https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"
 "nitroglycerin","half-life after a stop","1.9","min (Armstrong 1980, quoted by Armstrong 1983)","estimated","full_text","https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"
 "nitroglycerin","time constant of the rise (not applied)","8.1","min (the delivery's, not the drug's; see the registry row)","estimated","full_text","https://doi.org/10.1111/j.1365-2125.1983.tb02182.x"

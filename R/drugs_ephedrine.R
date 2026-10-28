@@ -29,7 +29,7 @@
 #     CL_R ("CLRE/FE")         0.34 L/min
 #     F_E,pharm  0.59;  F_E,herbal  0.78   ("apparent bioavailabilities")
 #
-# with half-life 6.1 h (181/0.34, the conversion being minor).
+# with half-life 6.1 h (ln 2 x V/CL, CL in L/h; the conversion being minor).
 #
 # THE DERIVATION
 # ==============
@@ -53,8 +53,8 @@
 # An earlier draft divided both by the herbal F_E = 0.78 (V 232 L, CL 0.436
 # L/min), which double-counts F_E and makes concentrations about 22% too low;
 # CodeRabbit caught it on PR #605 and the user chose this reading (2026-10-28).
-# The half-life is 181/0.34 either way, since both were scaled alike; only the
-# absolute scale moves.
+# The half-life (ln 2 x V/CL) is unchanged either way, since V and CL were
+# scaled alike; only the absolute scale moves.
 #
 # THE CHECK: GURLEY 1998 (NOT FITTED)
 # ===================================

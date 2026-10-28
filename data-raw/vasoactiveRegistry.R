@@ -961,7 +961,7 @@ parameters <- rbind(
   par("ephedrine", "CL/F", 0.34, "L/min, apparent total clearance (Csajka 2005, Table 3, CL_RE/F_E = CL/F)", "estimated", "full_text", EPH),
   par("ephedrine", "V", 181, "L at an assumed 70 kg (V/F with F taken as 1)", "derived", "full_text", EPH),
   par("ephedrine", "CL", 0.34, "L/min at 70 kg (CL/F with F taken as 1)", "derived", "full_text", EPH),
-  par("ephedrine", "half-life", 6.1, "h (V/CL)", "derived", "full_text", EPH),
+  par("ephedrine", "half-life", 6.1, "h (ln 2 x V/CL; CL in L/h)", "derived", "full_text", EPH),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "half-life after a stop", 1.9, "min (Armstrong 1980, quoted by Armstrong 1983)", "estimated", "full_text", AR),
