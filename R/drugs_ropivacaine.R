@@ -76,7 +76,7 @@
 #
 # References
 # ----------
-# Simon MJ et al., Anesth Analg 2006;102:276-282.
+# Simon MJG et al., Anesth Analg 2006;102:276-282.
 #   https://doi.org/10.1213/01.ane.0000185038.86939.74
 # Hartog Y, thesis, Erasmus University Rotterdam, chapter 8.
 #   https://repub.eur.nl/pub/93139/y-hartog-2.pdf
@@ -117,7 +117,7 @@ ropivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   PK <- sapply(events, function(x) list(get0(x)))
 
   reference <- paste0(
-    "Simon MJ et al., Anesth Analg 2006;102:276-282 (intravenous tracer ",
+    "Simon MJG et al., Anesth Analg 2006;102:276-282 (intravenous tracer ",
     "disposition, patients 61 years and over, as completed by Hartog). ",
     "Regional anesthesia (RA) absorption is first-order with a provisional ",
     "rate matched to the mean peak after axillary block (Vainionpaa 1995), ",

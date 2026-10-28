@@ -67,6 +67,17 @@ test_that("VKORC1 sets the EC50 only", {
   }
 })
 
+test_that("the VKORC1 default gives the companion its lowest EC50", {
+  # The app's default, AA (VKORC1_DEFAULT), is the most sensitive genotype in
+  # this model as in the library's: Shafer, 2026-10-28.
+  expect_identical(VKORC1_DEFAULT, "AA")
+  m <- warfarinHamberg(70, 176, 71, "male", adjustToFFM = FALSE, cyp2c9 = "*1/*1")
+  expect_equal(m$inr$c50, 2.20)
+  expect_equal(m$inr$c50, min(vapply(VKORC1_VALUES, function(v)
+    warfarinHamberg(70, 176, 71, "male", adjustToFFM = FALSE,
+                    cyp2c9 = "*1/*1", vkorc1 = v)$inr$c50, numeric(1))))
+})
+
 test_that("invalid genotypes are rejected", {
   expect_error(warfarinHamberg(70, 176, 71, "male", adjustToFFM = FALSE, cyp2c9 = "*9/*9"), "cyp2c9")
   expect_error(warfarinHamberg(70, 176, 71, "male", vkorc1 = "ZZ"), "vkorc1")

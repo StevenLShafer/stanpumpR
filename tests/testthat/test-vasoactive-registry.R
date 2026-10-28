@@ -15,7 +15,8 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "dopamine", "atropine", "propranolol", "digoxin",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
                  "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
-                 "vasopressin", "hydralazine", "dobutamineNeonatal")
+                 "vasopressin", "hydralazine", "dobutamineNeonatal",
+                 "methyleneBlue")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -155,8 +156,8 @@ test_that("the parameter audit covers every implemented drug", {
   # the timings that rest on an abstract, or on clinical observation, say so
   ev <- function(d) parameters$evidence[parameters$drug == d & timing]
   expect_identical(ev("phenylephrine"), "abstract")   # Schwinn 1989
-  expect_identical(ev("propranolol"), "abstract")     # Achong 1976
-  for (d in c("epinephrine", "atropine", "vasopressin", "hydralazine"))
+  for (d in c("epinephrine", "atropine", "vasopressin", "hydralazine",
+              "propranolol"))
     expect_identical(ev(d), "clinical", info = d)
 })
 
@@ -196,6 +197,15 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(round(hyd[["cl1"]] * 60, 3), value("hydralazine", "CL"))
   expect_equal(round(hyd[["cl2"]] * 60, 3), value("hydralazine", "Q"))
   expect_equal(value("hydralazine", "tPeak"), HYDRALAZINE_TPEAK)
+  mb <- methyleneBlueFromLabel()
+  expect_equal(value("methyleneBlue", "Cmax"), METHYLENE_BLUE_CMAX)
+  expect_equal(value("methyleneBlue", "AUC"), METHYLENE_BLUE_AUC)
+  expect_equal(value("methyleneBlue", "Vss"), METHYLENE_BLUE_VSS)
+  expect_equal(value("methyleneBlue", "terminal half-life"), METHYLENE_BLUE_THALF)
+  expect_equal(round(mb$v1, 2), value("methyleneBlue", "V1"))
+  expect_equal(round(mb$v2, 2), value("methyleneBlue", "V2"))
+  expect_equal(round(mb$cl1 * 60, 3), value("methyleneBlue", "CL"))
+  expect_equal(round(mb$cl2 * 60, 2), value("methyleneBlue", "Q"))
   expect_equal(value("magnesiumSulfate", "CL"), MAGNESIUM_CL)
   expect_equal(value("magnesiumSulfate", "Vc"), MAGNESIUM_VC)
   expect_equal(value("magnesiumSulfate", "Q"), MAGNESIUM_Q)

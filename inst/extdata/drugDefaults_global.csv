@@ -202,5 +202,6 @@ metoprolol,ng,mg,mg/min,mg,"mg,mg/min,mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Vaso
 nicardipine,ng,mg,mg/hr,mg/hr,"mg,mg/hr,mcg/kg/min",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
 vasopressin,mcU,U,U/min,U/min,"U,U/min,U/hr,U/kg/min,U/kg/hr",#4A148C,0,0,0,0,0,IV,Vasoactive and resuscitation
 hydralazine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E7D32,0,0,0,0,0,IV,Vasoactive and resuscitation
+methyleneBlue,ng,mg/kg,mg/kg/hr,mg/kg,"mg/kg,mg,mg/kg/hr,mg/hr",#1976D2,0,0,0,0,0,IV,Vasoactive and resuscitation
 dobutamineNeonatal,ng,,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#D81B60,0,0,0,0,0,IV,Vasoactive and resuscitation
 GHB,mcg,,,g PO oxybate,"g PO oxybate,mg PO oxybate",#006064,0,0,0,0,0,IV,Illicit drugs

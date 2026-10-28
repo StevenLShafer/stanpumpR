@@ -110,11 +110,18 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "values."
     ),
     vkorc1 = paste(
-      "VKORC1 -1639G>A genotype (GG is the wild-type reference).",
+      "VKORC1 -1639G>A genotype (GG is the wild-type reference, AA the",
+      "sensitive one).",
       "It sets sensitivity to the vitamin-K antagonists: the A allele lowers",
       "the C50, so the INR rises on less drug. Read by the library warfarin",
       "(Xue) model, the Hamberg companion model (with CYP2C9 and age), and",
-      "fluindione and acenocoumarol."
+      "fluindione and acenocoumarol.",
+      "AA, the most sensitive genotype, is assumed until a genotype is",
+      "entered, so that the curve errs toward the larger INR. It is also the",
+      "commonest genotype in the Asian patients of the source cohort, which",
+      "excluded South Indians, while GG is commonest in Black patients and",
+      "GA in White ones. These are group frequencies, not findings about a",
+      "patient; the Patient Profile help page gives them with their source."
     ),
     cyp4f2 = paste(
       "CYP4F2 rs2108622 (1297C>T) genotype. A C allele lowers the warfarin",

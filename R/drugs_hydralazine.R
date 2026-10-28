@@ -67,8 +67,12 @@
 # Reece's, with Vss 1.83 L/kg and a 54-min terminal half-life, and no
 # distribution phase, so it does not fix a model.  Ludden's 1982 review sets
 # the two side by side and suggests the difference may be due to the subjects
-# or to the methods (assay, infusion length, sampling, weighting).  The model is
-# of young healthy volunteers.
+# or to the methods (assay, infusion length, sampling, weighting).  Ludden
+# 1983 (Clin Pharmacol Ther 34:148, read in full), six hypertensive men aged
+# 47-57 given four doses each by 100-s infusion, reports blood clearance 55.9
+# mL/min/kg at 0.3 mg/kg: 5.5 L/h/kg in plasma terms (blood/plasma ratio
+# 1.65), two-thirds of Reece's, with no consistent dose dependence up to 0.45
+# mg/kg.  The model is of young healthy volunteers.
 #
 # DOSE BASIS
 # ==========

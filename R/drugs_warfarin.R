@@ -50,9 +50,11 @@
 #     CYP4F2 CC or CT     x0.770 C50_S  (vs TT)
 # The Patient Profile sets sex, CYP2C9, VKORC1 and CYP4F2; the patient is on
 # neither interacting drug and has a mechanical valve, and those covariates are
-# function arguments for scripts.  CYP4F2 defaults to CC, the most sensitive
-# genotype, so that an unentered genotype predicts the larger INR rise (see
-# CYP4F2_DEFAULT in R/constants.R for why).
+# function arguments for scripts.  VKORC1 defaults to AA and CYP4F2 to CC, each
+# the most sensitive genotype, so that an unentered genotype predicts the
+# larger INR rise (see VKORC1_DEFAULT and CYP4F2_DEFAULT in R/constants.R for
+# why, and for the ancestry distribution of the VKORC1 genotypes).  The
+# source's own reference patient is VKORC1 GA or GG with CYP4F2 TT.
 #
 # THE R-WARFARIN ANTAGONISM, AND THE ERRATUM
 # ==========================================
@@ -133,7 +135,9 @@ warfarinFFM <- function(weight, height, sex)
 #'   \code{"*1/*3"} was estimated in the source; every other diplotype takes
 #'   the \code{"*1/*1"} reference clearance (the app passes this field).
 #' @param vkorc1 VKORC1 -1639 genotype, one of \code{"GG"}, \code{"GA"},
-#'   \code{"AA"}; \code{"AA"} lowers the S-warfarin C50
+#'   \code{"AA"}; \code{"AA"} lowers the S-warfarin C50.  The default,
+#'   \code{"AA"}, is the most sensitive genotype (the app passes the Patient
+#'   Profile field)
 #' @param cyp4f2 CYP4F2 genotype, one of \code{CYP4F2_VALUES}; \code{"CT"} or
 #'   \code{"CC"} lowers the S-warfarin C50.  The default, \code{"CC"}, is the
 #'   most sensitive genotype (the app passes the Patient Profile field)
@@ -207,7 +211,7 @@ warfarin <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "Xue L et al., Br J Clin Pharmacol 2017;83:823-835, with the erratum ",
       "(2017;83:1602) (S- and R-warfarin one-compartment PK and a prothrombin ",
       "complex turnover model giving the INR; 264 cardiac-surgery patients; ",
-      "CYP2C9 *1/*1, VKORC1 non-AA, CYP4F2 CC, no interacting drug and a ",
+      "CYP2C9 *1/*1, VKORC1 AA, CYP4F2 CC, no interacting drug and a ",
       "mechanical valve unless set). https://doi.org/10.1111/bcp.13157"
     )
   )
