@@ -273,6 +273,20 @@ app_ui <- function() {
                   placement = "right"
                 ),
 
+                # Read by the library warfarin: a C allele of rs2108622 lowers
+                # the S-warfarin C50.  CC, the most sensitive genotype, is the
+                # default (see CYP4F2_DEFAULT in R/constants.R for why).
+                bslib::tooltip(
+                  selectInput(
+                    inputId = "cyp4f2",
+                    label = "CYP4F2",
+                    CYP4F2_VALUES,
+                    selected = CYP4F2_DEFAULT
+                  ),
+                  patientFieldTooltip("cyp4f2"),
+                  placement = "right"
+                ),
+
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
                 bslib::tooltip(

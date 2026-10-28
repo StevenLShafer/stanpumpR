@@ -102,6 +102,20 @@ CYP2C9_DEFAULT <- "*1/*1"
 VKORC1_VALUES  <- c("GG", "GA", "AA")
 VKORC1_DEFAULT <- "GG"
 
+# CYP4F2 rs2108622 (1297C>T, V433M) GENOTYPE, read only by the library warfarin
+# (Xue 2017), where a C allele (CC or CT) lowers the S-warfarin C50 x0.770
+# against TT: the T allele's enzyme oxidises less vitamin K1, so a T/T patient
+# needs more warfarin.  Its own Patient Profile field.
+# The default is CC, the most sensitive genotype, by Steven L. Shafer's
+# decision (2026-10-27): when the genotype is not entered, the model should
+# predict the LARGER INR rise, so that a dose chosen from the curve errs toward
+# underdosing.  An underdose at the start of therapy is corrected by raising
+# the dose; an overdose risks bleeding, warfarin's primary toxicity, and may
+# need reversal with vitamin K.  (Xue's Table S6 offers x0.783 for an unknown
+# CYP4F2, nearly the same C50; CC gives x0.770.)
+CYP4F2_VALUES  <- c("CC", "CT", "TT")
+CYP4F2_DEFAULT <- "CC"
+
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
 # their own contribution on top of it.  The default, 280, is within the normal

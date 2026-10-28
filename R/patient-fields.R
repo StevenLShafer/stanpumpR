@@ -16,6 +16,7 @@ PATIENT_FIELD_LABELS <- c(
   cyp2c9     = "CYP 2C9",
   cyp2b6     = "CYP 2B6",
   vkorc1     = "VKORC1",
+  cyp4f2     = "CYP4F2",
   creatinine = "Serum creatinine"
 )
 
@@ -112,6 +113,12 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "the C50, so the INR rises on less drug. Read by the library warfarin",
       "(Xue) model, the Hamberg companion model (with CYP2C9 and age), and",
       "fluindione and acenocoumarol."
+    ),
+    cyp4f2 = paste(
+      "CYP4F2 rs2108622 (1297C>T) genotype. A C allele lowers the warfarin",
+      "C50, so the INR rises on less drug; T/T needs the most warfarin.",
+      "CC, the most sensitive genotype, is assumed until a genotype is",
+      "entered, so that the curve errs toward the larger INR."
     ),
     creatinine = paste(
       "The patient's serum creatinine, from which the renally cleared",

@@ -22,7 +22,8 @@ getDrugPK(
   cyp2b6 = CYP2B6_DEFAULT,
   pregnant = FALSE,
   vkorc1 = VKORC1_DEFAULT,
-  model = NULL
+  model = NULL,
+  cyp4f2 = CYP4F2_DEFAULT
 )
 }
 \arguments{
@@ -81,6 +82,9 @@ passed only to models that name it (warfarin).}
 \item{model}{internal: a model's output to use in place of calling the
 drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.}
+
+\item{cyp4f2}{CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES};
+passed only to models that name it (warfarin).}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

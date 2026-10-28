@@ -12,6 +12,8 @@ The first panel in the left sidebar. These covariates are passed to every drug's
 | CYP 2C19 | phenotype | | Changes the clearance of escitalopram and citalopram. |
 | CYP 2C9 | diplotype | | Changes the clearance of meloxicam and the maximal elimination rate of phenytoin. |
 | CYP 2B6 | phenotype | | Changes the clearance of methadone. |
+| VKORC1 | genotype (-1639G>A) | GG by default | Sets the sensitivity of warfarin, fluindione and acenocoumarol: the A allele lowers the C50, so the INR rises on less drug. |
+| CYP4F2 | genotype (rs2108622) | CC by default | Sets warfarin's sensitivity: a C allele lowers the C50. CC, the most sensitive genotype, is assumed until a genotype is entered, so that the curve errs toward the larger INR. |
 | Adjust weight to fat-free mass | checkbox | | On by default; scales most models to fat-free mass. |
 | Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by canagliflozin, cefazolin, dapagliflozin, empagliflozin, ertugliflozin, exenatide, gabapentin, gentamicin, lacosamide, levetiracetam, lixisenatide, mannitol, intravenous meloxicam, metformin, oxycodone, pregabalin, sugammadex and vancomycin. Blank means an assumed normal creatinine for the patient's age and sex: 0.9 in men and 0.8 in women, and in a child the normal for age (about 0.25 in infancy, 0.35 at five, 0.5 at ten). See [Renal function](help:models/covariates). |
 | Baseline serum osmolality | mOsm/kg | 200 to 400 | The patient's starting value, 280 by default. Read only by [mannitol](help:drugs/mannitol), which is plotted as the serum osmolality it produces on top of this value. |
@@ -20,7 +22,7 @@ If Age, Weight or Height is blank or not a number (a lone `.`, say), the plot ar
 
 Changing a covariate re-simulates every drug at once; there is no Apply step for the patient.
 
-Hovering over the four CYP fields or the Serum creatinine field shows a tip naming the drugs that read it; every other drug ignores the field. The tips are built from the models themselves, so a drug added later that reads a field appears in its tip.
+Hovering over the genotype fields or the Serum creatinine field shows a tip naming the drugs that read it; every other drug ignores the field. The tips are built from the models themselves, so a drug added later that reads a field appears in its tip.
 
 **Adjust weight to fat-free mass** scales most of the models to the patient's fat-free mass rather than total body weight; it is on by default. **CYP 2D6**, with the phenotypes the genotyping laboratories report (poor, intermediate, normal, ultrarapid), scales the formation of the active metabolites, and the clearance of three antipsychotics. **CYP 2C19** (poor, intermediate, normal, rapid, ultrarapid) changes the clearance of escitalopram and citalopram. **CYP 2C9**, entered as the diplotype of the common \*1, \*2 and \*3 alleles (\*1/\*1 by default), changes the clearance of [meloxicam](help:drugs/meloxicam) and the maximal elimination rate of [phenytoin](help:drugs/phenytoin). **CYP 2B6** (the same five phenotypes as CYP 2C19) changes the clearance of [methadone](help:drugs/methadone); [the methadone genotype scenario](scenario:methadone-cyp2b6) is a worked example. See [Antidepressant models and their limits](help:models/antidepressants), [Scaling to fat-free mass](help:models/fat-free-mass) and [Active metabolites](help:models/metabolites).
 

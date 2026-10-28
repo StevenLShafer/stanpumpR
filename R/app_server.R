@@ -1006,6 +1006,7 @@ app_server <- function(input, output, session) {
         cyp2c19 = if (is.null(input$cyp2c19)) CYP2C19_DEFAULT else input$cyp2c19,
         cyp2c9 = if (is.null(input$cyp2c9)) CYP2C9_DEFAULT else input$cyp2c9,
         vkorc1 = if (is.null(input$vkorc1)) VKORC1_DEFAULT else input$vkorc1,
+        cyp4f2 = if (is.null(input$cyp4f2)) CYP4F2_DEFAULT else input$cyp4f2,
         cyp2b6 = if (is.null(input$cyp2b6)) CYP2B6_DEFAULT else input$cyp2b6,
         osmolality = osmolality(),
         creatinine = creatinine(),
@@ -1432,6 +1433,7 @@ app_server <- function(input, output, session) {
         cyp2c19 = input$cyp2c19,
         cyp2c9 = input$cyp2c9,
         vkorc1 = input$vkorc1,
+        cyp4f2 = input$cyp4f2,
         cyp2b6 = input$cyp2b6,
         # Whether each companion model was actually drawn, not just its box
         # ticked (companionGroupsShown()).

@@ -174,6 +174,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       "CYP2C9",
       "CYP2B6",
       "VKORC1",
+      "CYP4F2",
       "Minto / Schnider models shown",
       "Hamberg model shown",
       "Antiseizure drug interactions applied"
@@ -198,6 +199,7 @@ generateEmail <- function(values, recipient, plotObject, allResults, plotResults
       if (is.null(values$cyp2c9)) CYP2C9_DEFAULT else values$cyp2c9,
       if (is.null(values$cyp2b6)) CYP2B6_DEFAULT else values$cyp2b6,
       if (is.null(values$vkorc1)) VKORC1_DEFAULT else values$vkorc1,
+      if (is.null(values$cyp4f2)) CYP4F2_DEFAULT else values$cyp4f2,
       if (isTRUE(values$mintoSchnider)) "yes" else "no",
       if (isTRUE(values$hamberg)) "yes" else "no",
       if (isTRUE(values$antiseizureInteractions)) "yes" else "no"
