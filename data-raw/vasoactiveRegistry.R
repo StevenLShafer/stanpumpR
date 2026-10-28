@@ -680,12 +680,19 @@ registry <- rbind(
       NA,
       "Baumann G, Dingman JF. Distribution, blood transport, and degradation of antidiuretic hormone in man. J Clin Invest 1976;57:1109-1116. PMID 1262458, PMC436762.",
       doi("10.1172/JCI108377")),
-  reg("ephedrine__oral__csajka2005", "ephedrine",
-      "24 healthy adults, oral ephedrine (25 mg sulphate or herbal)", "ephedrine (LC-MS/MS)", "plasma",
-      "implemented", "ephedrine", "full_text",
-      "Read in full and used as the basis for an IV model, on the user's decision (2026-10-28): no human IV pharmacokinetics exists (the FDA review for the IV product NDA 208289 itself extrapolates from oral data).  Csajka 2005 is a population model fitting plasma with urine: ephedrine is one compartment (a second did not improve the fit) with first-order absorption, plus a minor saturable conversion to norephedrine.  Table 3 reports V/F 181 L and CL_RE/F_E 0.34 L/min; because the fitted CL_RE is the absolute renal clearance, CL_RE/F_E equals CL/F, the apparent total clearance, so taking F = 1 uses both directly: V 181 L, CL 0.34 L/min, half-life 6.1 h.  Dividing again by F_E (an earlier PR #605 draft: V 232 L, CL 0.436) double-counts bioavailability and reads a fifth low; CodeRabbit caught it and the user chose this reading.  No distribution phase (oral data cannot show one), so the first minutes after a bolus are higher than drawn.  Gurley 1998 (not fitted) is the same order: base-dose V 2.6 L/kg and CL 0.29 L/h/kg, about a fifth below its Vss/F 2.98-3.49 and CL/F 0.37-0.48.",
-      "FDA review of the first IV product (NDA 208289, Akovaz) if a population model was fitted; a direct IV pharmacokinetic study, if one is ever done.",
-      "Csajka C, Haller CA, Benowitz NL, Verotta D. Mechanistic pharmacokinetic modelling of ephedrine, norephedrine and caffeine in healthy subjects. Br J Clin Pharmacol 2005;59:335-345. PMID 15752380, PMC1884794.",
+  # Ephedrine carries NO MODEL, by Steven L. Shafer's decision (2026-10-28):
+  # there is no model of the intravenous form, and the oral form is not of
+  # interest.  PR #605 briefly shipped an ephedrine drug built from the oral
+  # model below with F taken as 1; it was removed.  The row stays, because the
+  # registry's job is to say what became of every drug that was asked for, and
+  # Csajka's numbers are kept so that nobody has to find them again to reach
+  # the same conclusion.  Do not promote this to a model.
+  reg("ephedrine__no_iv_model", "ephedrine",
+      "no human intravenous pharmacokinetics exists; the only human model is oral", "ephedrine", "none (no intravenous data)",
+      "no_suitable_model", NA, "full_text",
+      "There is no usable intravenous model, and the oral one is not of interest (Steven L. Shafer, 2026-10-28).  No human intravenous pharmacokinetics of ephedrine was found: the FDA review for the IV product (NDA 208289) itself extrapolates from oral data, and a PubMed search on 2026-10-28 returned only oral studies, 11C-hydroxyephedrine tracer work (a different molecule) and animal data.  Csajka 2005, read in full, is an ORAL population model fitting plasma with urine: one compartment with first-order absorption (a second did not improve the fit), plus a minor saturable conversion to norephedrine; Table 3 gives V/F 181 L and CL_RE/F_E 0.34 L/min, and because the fitted CL_RE is the absolute renal clearance, CL_RE/F_E is the apparent total clearance CL/F.  Taking F = 1 turns those into V 181 L and CL 0.34 L/min, which is what PR #605 briefly shipped as an intravenous drug and what was then removed: oral data cannot show a distribution phase, so such a model is wrong in exactly the first minutes after a bolus that an intravenous vasopressor is given for.  Gurley 1998 (not fitted) is the same order, base-dose V 2.6 L/kg and CL 0.29 L/h/kg.",
+      "A direct intravenous pharmacokinetic study, if one is ever done; the FDA review of NDA 208289 (Akovaz) if a population model was fitted.",
+      "Csajka C, Haller CA, Benowitz NL, Verotta D. Mechanistic pharmacokinetic modelling of ephedrine, norephedrine and caffeine in healthy subjects. Br J Clin Pharmacol 2005;59:335-345. PMID 15752380, PMC1884794 (ORAL; assessed and rejected, not a candidate).",
       doi("10.1111/j.1365-2125.2005.02254.x")),
   reg("hydralazine__hypertensive__ludden1980", "hydralazine",
       "8 hypertensive patients, 0.3 mg/kg, specific assay", "hydralazine", "plasma",
@@ -957,11 +964,6 @@ parameters <- rbind(
   par("methyleneBlue", "CL", 10.016, "L/h at 70 kg (2 mg/kg x 70 / AUC)", "derived", "full_text", MBL),
   par("methyleneBlue", "Q", 17.77, "L/h at 70 kg (derived)", "derived", "full_text", MBL),
 
-  par("ephedrine", "V/F", 181, "L (Csajka 2005, Table 3)", "estimated", "full_text", EPH),
-  par("ephedrine", "CL/F", 0.34, "L/min, apparent total clearance (Csajka 2005, Table 3, CL_RE/F_E = CL/F)", "estimated", "full_text", EPH),
-  par("ephedrine", "V", 181, "L at an assumed 70 kg (V/F with F taken as 1)", "derived", "full_text", EPH),
-  par("ephedrine", "CL", 0.34, "L/min at 70 kg (CL/F with F taken as 1)", "derived", "full_text", EPH),
-  par("ephedrine", "half-life", 6.1, "h (ln 2 x V/CL; CL in L/h)", "derived", "full_text", EPH),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "half-life after a stop", 1.9, "min (Armstrong 1980, quoted by Armstrong 1983)", "estimated", "full_text", AR),
