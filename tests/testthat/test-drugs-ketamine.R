@@ -3,20 +3,19 @@ test_that("returns the published parameters with total-body-weight scaling", {
   height <- 171
   age <- 50
   sex <- "male"
-  # The switch off gives Domino's values at 70 kg: V1 0.063 L/kg, CL 0.848
-  # L/kg/h (0.989 L/min), V3 1.51 L/kg; V2 and the intercompartmental
-  # clearances follow from the three half-lives (see the drug file).
+  # The switch off gives the refit to Domino's Table I at 70 kg: V1 0.0583
+  # L/kg with fixed rate constants (see the drug file).
   actual <- ketamine(weight, height, age, sex, adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(
       default = list(
-        v1 = 4.41,
-        v2 = 8.68798875,
-        v3 = 105.7000153,
-        cl1 = 0.989333226,
-        cl2 = 3.837635802,
-        cl3 = 1.451376423
+        v1 = 4.081,
+        v2 = 39.662973,
+        v3 = 171.91943,
+        cl1 = 0.922306,
+        cl2 = 2.681217,
+        cl3 = 0.840686
       )
     ),
     tPeak = 3,
@@ -35,27 +34,40 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # from the Al-Sallami formula by hand, not from the code under test).
   actual <- ketamine(120, 170, 50, "male")
   expected <- list(
-        v1 = 5.7546383,
-        v2 = 11.337014,
-        v3 = 137.92865,
-        cl1 = 1.2078894,
-        cl2 = 4.685418,
-        cl3 = 1.7720038
+        v1 = 5.325324,
+        v2 = 51.75648,
+        v3 = 224.33881,
+        cl1 = 1.126055,
+        cl2 = 3.273532,
+        cl3 = 1.026404
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
 
-test_that("the rate constants reproduce Domino's clearance, volumes and half-lives at once", {
-  # Domino 1984, placebo arm: V1 0.063 L/kg, CL 0.848 L/kg/h, V3 about 1.51
-  # L/kg, half-lives 24.1 s, 4.68 min, 2.17 h.  Until 2026-10-14 the means
-  # of the individual rate constants gave a clearance of 1.66 L/kg/h.
+test_that("the model reproduces Domino's Table I concentrations", {
+  # Domino 1984, Table I, placebo (n = 8): mean plasma ketamine, ng/mL, after
+  # 2.2 mg/kg over 1 min.  The parameters are a fit to these points (refit by
+  # decision of Steven L. Shafer, 2026-10-12); the two earlier parameter sets
+  # had root-mean-square log errors of 1.54 and 0.96 against them.
+  obs <- data.frame(
+    t = c(1, 2, 3, 4, 5, 10, 20, 30, 60, 120, 240, 300, 360, 480, 720, 1440),
+    c = c(27600, 6370, 3600, 2280, 1910, 1270, 826, 610, 372, 288, 158, 116,
+          86.2, 45.9, 30.4, 8.14))
   s <- ketamine(70, 170, 40, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal(s$v1 / 70, 0.063)
-  expect_equal(s$cl1 * 60 / 70, 0.848, tolerance = 1e-6)
-  expect_equal(s$v3 / 70, 1.51, tolerance = 1e-6)
   K <- matrix(c(-(s$cl1 + s$cl2 + s$cl3) / s$v1, s$cl2 / s$v2, s$cl3 / s$v3,
                 s$cl2 / s$v1, -s$cl2 / s$v2, 0,
                 s$cl3 / s$v1, 0, -s$cl3 / s$v3), 3, 3, byrow = TRUE)
-  lambda <- sort(-Re(eigen(K)$values), decreasing = TRUE)
-  expect_equal(log(2) / lambda * c(60, 1, 1 / 60), c(24.1, 4.68, 2.17), tolerance = 1e-4)
+  e <- eigen(K)
+  a <- Re(e$vectors[1, ] * solve(e$vectors)[, 1]) / s$v1   # unit-bolus, 1/L
+  l <- -Re(e$values)
+  rate <- 2.2 * 70 * 1000   # ug/min for 1 min; ug/L = ng/mL
+  pred <- sapply(obs$t, function(t)
+    sum(rate * a / l * (1 - exp(-l * min(t, 1))) * exp(-l * max(t - 1, 0))))
+  err <- log(pred / obs$c)
+  expect_lt(sqrt(mean(err^2)), 0.22)
+  expect_true(all(abs(pred / obs$c - 1) < 0.5))
+  # Clearance close to Domino's measured 0.848 L/kg/h
+  expect_equal(s$cl1 * 60 / 70, 0.79, tolerance = 0.01)
+  # Half-lives about 0.61, 25 and 288 min
+  expect_equal(sort(log(2) / l), c(0.61, 25.3, 288), tolerance = 0.02)
 })

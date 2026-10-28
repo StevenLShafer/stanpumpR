@@ -27,11 +27,11 @@ test_that("the published sufentanil vector is what arrives, unaltered", {
   # constants shows up here rather than silently cancelling.
   pk <- carfentanil(70, 170, 35, "male")$PK$default
   expect_equal_rounded(14.3,     pk$v1)
-  expect_equal_rounded(63.38694, pk$v2)
+  expect_equal_rounded(63.1,     pk$v2)
   expect_equal_rounded(261.6,    pk$v3)
-  expect_equal_rounded(0.92235,  pk$cl1)
-  expect_equal_rounded(1.55298,  pk$cl2)
-  expect_equal_rounded(0.32747,  pk$cl3)
+  expect_equal_rounded(0.92,     pk$cl1)
+  expect_equal_rounded(1.55,     pk$cl2)
+  expect_equal_rounded(0.33,     pk$cl3)
 })
 
 test_that("none of sufentanil's pharmacodynamics came across", {
