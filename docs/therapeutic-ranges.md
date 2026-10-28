@@ -195,6 +195,8 @@ ordinary doses reach. The help page says so and names what the band is.
 | warfarin, fluindione, acenocoumarol | INR 2.0–3.0, typical 2.5 | Coumadin label §2.2 and Holbrook 2012 (abstract). Fluindione and acenocoumarol take the vitamin K antagonist class target; the Previscan and Sintrom product information is still to be read |
 | heparinCPB | ACT 480–600 s, typical 480 | EACTS/EACTAIC/EBCP 2024 §9.3.1 (full text): an ACT above 480 s on bypass. No source gives an upper limit; 600 s is Steven L. Shafer's choice. STS/SCA/AmSECT 2018 abstract only |
 
+| procainamide | 3–10 mg/L, typical 6.5 | Hospira injection label (read in full, 2026-10-28): therapeutic plasma levels "reported to be 3 to 10 mcg/mL"; 6.5 mcg/mL at 50 mcg/kg/min and a 3 h half-life, where the model gives 7.4 at its 3.8 h. Drawn 2026-10-28; the 4–10 mg/L the help page had quoted was never sourced |
+
 Digoxin, milrinone and amiodarone were already drawn; only their sources were checked. The
 anticoagulant bands are new, drawn on Steven L. Shafer's decision of 2026-10-27 as references
 for reading the curve. The anticoagulants remain research models, not dosing guidance.
@@ -209,7 +211,6 @@ for reading the curve. The anticoagulants remain research models, not dosing gui
 | calcium | ionized calcium reference range | `not_applicable`: the curve is the rise above baseline |
 | diltiazem | "minimum therapeutic plasma levels… 50 to 200 ng/mL" | `not_applicable`: CARDIZEM tablets label, chronic oral; the model is intravenous rate control |
 | amiodaroneIV | 1.0–2.5 mg/L | `not_applicable`: a chronic oral window, not intravenous loading |
-| procainamide | 4–10 mg/L (candidate) | `pending_verification`: no source stating it was reachable (injection label; Koch-Weser 1971 has no abstract) |
 
 ### No range established
 
@@ -252,7 +253,7 @@ in this review and are recorded as "Not checked".
 3. A summed parent-plus-metabolite line would let the active-moiety ranges (risperidone,
    aripiprazole, venlafaxine, fluoxetine) be drawn.
 4. `THERAPEUTIC_RANGE_CATEGORIES` is every category (done 2026-10-27). Still to read: the
-   procainamide injection label (its candidate 4–10 mg/L and NAPA's range); the full text of
+   source of a NAPA range (the procainamide label gives none); the full text of
    Rybak 2020 (AJHP 77:835-864) and of the STS/SCA/AmSECT 2018 bypass guideline; the Previscan
    and Sintrom product information; the Health Canada amiodarone monograph; and the sources,
    not recorded in the models, of the propofol, remimazolam, rocuronium and oxytocin bands.

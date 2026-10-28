@@ -187,7 +187,7 @@ labetalol,ng,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#6A1B9A,0,0,0,0,0,IV,Vasoactiv
 diltiazem,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E7D32,0,0,0,0,0,IV,Vasoactive and resuscitation
 nitroglycerin,ng,,mcg/min,mcg/min,"mcg/min,mcg/kg/min",#F9A825,0,0,0,0,0,IV,Vasoactive and resuscitation
 norepinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#AD1457,0,0,0,0,0,IV,Vasoactive and resuscitation
-procainamide,mcg,mg,mg/min,mg/min,"mg,mg/kg,mg/min,mg/kg/hr",#4E342E,0,0,0,0,0,IV,Vasoactive and resuscitation
+procainamide,mcg,mg,mg/min,mg/min,"mg,mg/kg,mg/min,mg/kg/hr",#4E342E,3,10,6.5,0,0,IV,Vasoactive and resuscitation
 esmolol,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mcg/kg/min",#283593,0,0,0,0,0,IV,Vasoactive and resuscitation
 dopamine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#EF6C00,0,0,0,0,0,IV,Vasoactive and resuscitation
 atropine,ng,mg,mg/hr,mg,"mg,mcg/kg",#558B2F,0,0,0,0,0,IV,Vasoactive and resuscitation
