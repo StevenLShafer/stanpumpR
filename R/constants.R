@@ -123,15 +123,17 @@ CYP2C9_DEFAULT <- "*1/*1"
 # Asian, 37.8% in 681 White and 10.1% in 368 Black patients (the paper's own
 # group labels).  The Asian group EXCLUDES South Indians: its 91 Indian
 # subjects had substantially different VKORC1 allele frequencies and were left
-# out of every analysis, so that figure is not a South Asian one.  Within each
-# group the paper found the haplotype distribution consistent across
+# out of every analysis, so the Asian figure does not describe them and the
+# cohort gives none for a South Indian or other South Asian patient.  Within
+# each group the paper found the haplotype distribution consistent across
 # geographically separated populations.  Under Hardy-Weinberg those give an
 # AA/GA/GG distribution of about 83/16/1% in Asian, 14/47/39% in White and
 # 1/18/81% in Black patients.  So the AA default is also the commonest
 # genotype in that Asian group -- Xue 2017's own 264 Chinese patients were
 # 82.6% AA, 17.0% GA and 0.4% GG, within a point of that expectation -- while
 # the most likely single genotype is GG in a Black patient and GA in a White
-# one.  These are group frequencies, not predictions about a person.
+# one.  These are group frequencies -- population context for an unmeasured
+# genotype, never a finding about a patient.
 VKORC1_VALUES  <- c("GG", "GA", "AA")
 VKORC1_DEFAULT <- "AA"
 

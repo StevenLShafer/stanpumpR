@@ -118,9 +118,10 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "fluindione and acenocoumarol.",
       "AA, the most sensitive genotype, is assumed until a genotype is",
       "entered, so that the curve errs toward the larger INR. It is also the",
-      "commonest genotype in Asian patients other than South Asians, while",
-      "GG is commonest in Black patients and GA in White ones; the Patient",
-      "Profile help page gives the frequencies and their source."
+      "commonest genotype in the Asian patients of the source cohort, which",
+      "excluded South Indians, while GG is commonest in Black patients and",
+      "GA in White ones. These are group frequencies, not findings about a",
+      "patient; the Patient Profile help page gives them with their source."
     ),
     cyp4f2 = paste(
       "CYP4F2 rs2108622 (1297C>T) genotype. A C allele lowers the warfarin",
