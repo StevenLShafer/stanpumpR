@@ -52,9 +52,9 @@ PRO <- "proposed_unestimated"
 registry <- rbind(
   reg("Acetazolamide", "oral IR, IV (ER off-label)", L, PRO,
       "acetazolamide base", "acetazolamide (total plasma)",
-      "renal linear 1C (unestimated for epilepsy)", "pk_only", NA,
+      "3C, saturable binding, elimination of unbound drug (Yue 2013; total-plasma clearance not derived)", "pk_only", NA,
       "https://pubmed.ncbi.nlm.nih.gov/23683608/",
-      "Two candidates: Yano 1998 (Eur J Clin Pharmacol 54:63-68, PMID 9591933), oral population PK with intraocular-pressure PD, and Yue 2013 (PMID 23683608, the source_url), IV, three compartments with saturable binding and elimination of unbound drug, in healthy volunteers and CAPD patients; epilepsy constants unestimated."),
+      "Yue 2013 (PMID 23683608): IV, three compartments with saturable binding and elimination of unbound drug, in healthy volunteers and CAPD patients; its renal and nonrenal clearances act on unbound drug, so a total-plasma clearance would have to be derived before a curve. Yano 1998 (oral, PMID 9591933) assumed one compartment and is not used (decision of Steven L. Shafer, 2026-10-28). Epilepsy constants unestimated."),
   reg("Brivaracetam", "oral tablet/solution, IV", L, PRO,
       "brivaracetam base", "brivaracetam (apparent, oral)",
       "1C first-order, LBW allometric", "pd_source_incomplete", NA,
