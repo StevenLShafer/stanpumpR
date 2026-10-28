@@ -77,13 +77,18 @@
 # measured; only l-propranolol is a beta blocker.  No heart rate is
 # predicted.
 #
-# EFFECT SITE: tPeak 5 MINUTES, FOR HEART RATE
-# ============================================
-# Set at 5 minutes on Steven L. Shafer's instruction (2026-10-20), pending
-# the full texts.  Achong MR, Piafsky KM, Ogilvie RI, Clin Pharmacol Ther
-# 1976;19:148-152 (doi 10.1002/cpt1976192148; abstract) gave 10 mg
-# intravenously to six healthy men and found the reduction in exercise
-# tachycardia maximal 5 minutes after the infusion; Riva E et al., J
+# EFFECT SITE: tPeak 5 MINUTES, FOR HEART RATE (CLINICAL)
+# =======================================================
+# Set at 5 minutes on Steven L. Shafer's instruction (2026-10-20), and kept
+# as his clinical choice (2026-10-28) once the full text of Achong MR,
+# Piafsky KM, Ogilvie RI, Clin Pharmacol Ther 1976;19:148-152 (doi
+# 10.1002/cpt1976192148) was read.  It gave 10 mg over 10 minutes (10 mL at
+# 1 mL/min) to six healthy men and applied the beta-stimulus 5 min, 90 min, 4,
+# 9 and 24 h after the END of the infusion.  The reduction in exercise
+# tachycardia was "maximal 5 min after" only because 5 min was the first
+# measurement: nothing was measured earlier or between 5 and 90 min, so the
+# paper places the peak within 5-9 min of a 10-min infusion and measures no
+# bolus time to peak.  It is consistent with 5 minutes, not its source.  Riva E et al., J
 # Cardiovasc Pharmacol 1980;2:707-714 (doi 10.1097/00005344-198011000-00001;
 # abstract) saw the effects on heart rate and AV-nodal refractoriness 5-8
 # minutes after 0.1 mg/kg intravenously.  Heart rate is the endpoint, as for
@@ -94,7 +99,7 @@
 PROPRANOLOL_DOSE  <- 3.8                        # mg
 PROPRANOLOL_COEF  <- c(317, 17.2, 9.3)          # ng/mL, bolus-equivalent
 PROPRANOLOL_EXP   <- c(0.856, 0.0548, 0.203 / 60)   # /min
-PROPRANOLOL_TPEAK <- 5                          # min, heart rate (Achong 1976)
+PROPRANOLOL_TPEAK <- 5                          # min, heart rate (clinical, S. L. Shafer)
 
 #' Propranolol, intravenous (Fagan 1982)
 #'
@@ -129,8 +134,8 @@ propranolol <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Three compartments from the mean triexponential of 6 healthy men given ",
     "0.05 mg/kg: V1 11.1 L, CL 1.11 L/min, Vss 264 L; checked against ",
     "Cheymol 1987's controls (CL 1.27 L/min, Vss 319 L).  Time to peak ",
-    "heart-rate effect 5 min (Achong MR et al., Clin Pharmacol Ther ",
-    "1976;19:148-152). ",
+    "heart-rate effect 5 min (clinical, S. L. Shafer; consistent with Achong ",
+    "MR et al., Clin Pharmacol Ther 1976;19:148-152). ",
     "https://doi.org/10.1111/j.1365-2125.1982.tb01424.x"
   )
 
