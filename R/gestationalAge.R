@@ -19,7 +19,13 @@
 #'   52 weeks per year of postnatal age
 #' @keywords internal
 postmenstrualAge <- function(age, gestationalAge = NULL) {
-  if (is.null(gestationalAge) || (length(gestationalAge) == 1 && is.na(gestationalAge)))
+  # NA (an empty field) is blank, as in getDrugPK(); NaN is not
+  if (is.null(gestationalAge) ||
+      (length(gestationalAge) == 1 && is.na(gestationalAge) && !is.nan(gestationalAge)))
     gestationalAge <- GESTATIONAL_AGE_TERM
+  if (!is_valid_number(gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE))
+    stop("Invalid gestationalAge: ", paste(gestationalAge, collapse = ", "),
+         ". It must be a number from ", MIN_GESTATIONAL_AGE, " to ",
+         MAX_GESTATIONAL_AGE, " weeks, or blank for a term birth.")
   gestationalAge + 52 * age
 }

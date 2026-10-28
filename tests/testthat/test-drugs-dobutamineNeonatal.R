@@ -64,6 +64,12 @@ test_that("getDrugPK passes the gestational age, and only to models that name it
                getDrugPK("milrinonePediatric", 3, 50, 0, "male")$PK$default$cl1)
   expect_equal(postmenstrualAge(0.5), 66)
   expect_equal(postmenstrualAge(0, 28), 28)
+  # NaN is not blank, on the direct path either
+  expect_error(postmenstrualAge(0, NaN), "gestationalAge")
+  expect_error(dobutamineNeonatal(1.618, 42, 0, "male", gestationalAge = NaN),
+               "gestationalAge")
+  expect_error(getDrugPK("dobutamineNeonatal", 1.618, 42, 0, "male",
+                         gestationalAge = NaN), "gestationalAge")
 })
 
 test_that("the effect site is the heart-rate model's ke0", {

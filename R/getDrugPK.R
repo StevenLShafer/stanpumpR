@@ -38,11 +38,11 @@
 #'   Passed only to the models that name it (R/pregnancy.R lists them), which
 #'   apply the changes of late pregnancy measured for that drug
 #'   (inst/extdata/pregnancyRegistry.csv); every other model ignores it.
+#'   TRUE requires \code{sex = "female"}.
 #' @param gestationalAge gestational age at birth in weeks, or NULL (the
 #'   default) for a term birth.  Passed only to the neonatal models that
 #'   declare it (dobutamineNeonatal), whose clearance matures with
 #'   postmenstrual age (\code{postmenstrualAge()}).
-#'   TRUE requires \code{sex = "female"}.
 #' @param model internal: a model's output to use in place of calling the
 #'   drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 #'   drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.
