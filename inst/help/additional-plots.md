@@ -1,4 +1,4 @@
-The third sidebar panel adds panels beneath the concentration plot. Each is a checkbox.
+The **Additional plots** choices, at the foot of the Graph Options panel, add panels beneath the concentration plot. Each is a checkbox. MEAC is offered only while an opioid is in the dose table, and Interaction only while propofol and an opioid are; Events is always offered.
 
 ## MEAC
 

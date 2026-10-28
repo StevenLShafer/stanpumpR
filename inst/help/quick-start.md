@@ -71,7 +71,7 @@ The **Time** panel sets the time units, how far the simulation runs (the *Max ti
 <figcaption>The Graph Options panel.</figcaption>
 </figure>
 
-- **Additional Plots** adds the MEAC panel for comparing opioids, the propofol-opioid interaction panel, and the clinical events timeline.
+- **Additional plots**, under Graph Options, adds the MEAC panel for comparing opioids, the propofol-opioid interaction panel, and the clinical events timeline.
 - **Suggest Dosing** (in the *Dose table* panel of the left sidebar) works backwards from a target effect-site concentration.
 - The URL in your browser's address bar encodes the whole simulation; copy it to share or save your work. See [Sharing a simulation by URL](help:sharing).
 
