@@ -42,6 +42,17 @@ test_that("VKORC1 raises the C50 for GG or GA; AA is the sensitive reference", {
                0.0023 * (1 + 1.29))
 })
 
+test_that("VKORC1 defaults to AA, the sensitive reference", {
+  # Shafer, 2026-10-28: an unentered genotype should predict the LARGER INR
+  # rise, so a dose read from the curve errs toward underdosing (see
+  # VKORC1_DEFAULT in R/constants.R).  Here that is the source's own
+  # sensitive reference, the base C50.
+  expect_identical(VKORC1_DEFAULT, "AA")
+  expect_equal(acenocoumarol(69, 170, 40, "male")$inr$c50, 0.0023)
+  expect_lt(acenocoumarol(69, 170, 40, "male")$inr$c50,
+            acenocoumarol(69, 170, 40, "male", vkorc1 = "GG")$inr$c50)
+})
+
 test_that("the switch off scales V1 by total body weight; CL, Q, V2 published", {
   m <- acenocoumarol(90, 180, 40, "male", adjustToFFM = FALSE)
   expect_equal(m$PK$default$v1, 24.7 * (90 / 69), tolerance = 1e-9)
