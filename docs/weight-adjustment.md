@@ -164,7 +164,23 @@ The switch exists for three reasons: to show, live, how far per-kilogram dosing
 departs from fat-free-mass dosing in an obese or female patient; to regenerate
 simulations and figures made before the change; and to reproduce a source
 study exactly where it scaled on total weight. Simulation links saved before
+<<<<<<< HEAD
 the switch existed restore with it off, so their output is unchanged.
+=======
+the switch existed restore with it off, so their output is unchanged, except
+for a drug whose model has itself changed since the link was saved: the
+switch restores the old scaling, not the old model.  Known cases:
+hydrocodone, whose source's covariates were added in October 2026 and apply
+in both switch positions; lidocaine, moved from Schnider 1996's interim to
+its final parameter set on 28 October 2026; and neostigmine, moved from
+Calvey 1979's single patient to Heier 2002's population model the same day;
+ketamine, refitted to Domino 1984's concentrations on 28 October 2026
+(#602); sufentanil, whose volumes and clearances became Gepts 1995's
+printed values in October 2026 (under 0.5%); adult dexmedetomidine, whose
+time to peak effect became 14.9 min; and intranasal hydromorphone, whose
+bioavailability became 0.37 (both #611).  A simulation of any of these
+saved before the change does not reproduce with the switch off.
+>>>>>>> c2e55096 (weight-adjustment.md: a changed model breaks saved-link reproduction)
 
 ### Per-kilogram doses
 
