@@ -509,6 +509,34 @@ test_that("the Add new drug button opens the add-dose dialog empty at time 0", {
   })
 })
 
+# A table with no blank row (a restored bookmark, or its blank row deleted)
+# still takes the dose, and is left with a blank row for the next one
+test_that("the Add a dose dialog adds to a table with no blank row", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    doseTable(withTimes("0"))
+    session$flushReact()
+    full <- doseTable()[nzchar(as.character(doseTable()$Drug)), ]
+    rownames(full) <- NULL
+    doseTable(full)
+    session$flushReact()
+    expect_false(any(doseTable()$Drug == ""))
+    drug <- setdiff(drugChoices(), full$Drug)[1]
+
+    session$setInputs(addNewDrug = 1)
+    session$setInputs(addDoseDrug = drug, addDoseTime = "0", addDoseAmount = "2",
+                      addDoseUnits = unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])[1],
+                      addDoseBtn = 1)
+    dt <- doseTable()
+    expect_equal(nrow(dt), nrow(full) + 2)
+    expect_equal(dt[seq_len(nrow(full)), ], full, ignore_attr = TRUE)
+    expect_equal(dt$Drug[nrow(full) + 1], drug)
+    expect_equal(dt$Dose[nrow(full) + 1], "2")
+    expect_equal(dt$Drug[nrow(dt)], "")
+  })
+})
+
 # A drug with TCI target units enters a concentration in the dose field when
 # a target unit is chosen, so its dialogs say "Dose or Target"; the table's
 # column is headed "Dose/Target" for every drug, over the data column "Dose"
