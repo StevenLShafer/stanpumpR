@@ -6,11 +6,11 @@ An older study (Peter 2000, whole blood) fitted three exponentials with much fas
 
 ### The check
 
-Walter-Sack and colleagues (*Eur J Clin Pharmacol* 2009;65:179-189) gave 50 mg over 9.5 minutes to 16 healthy volunteers (mean 67 kg) and measured plasma methylene blue by LC-MS/MS for 24 hours. Their study did not enter the derivation. The model predicts their plasma AUC **a third low** (5208 against 7639 ng·h/mL). In clearance terms that is 0.143 against 0.098 L/h per kg. The gap cannot come from their shorter sampling, which would have pushed their clearance up, not down. The two studies used different doses (2 mg/kg against about 0.75 mg/kg), and whether clearance depends on dose is not known. The model follows the label, which studied the clinical dose. Concentrations may be about a third higher than drawn.
+Walter-Sack and colleagues (*Eur J Clin Pharmacol* 2009;65:179-189) gave 50 mg over 9.5 minutes to 16 healthy volunteers (mean 67 kg) and measured plasma methylene blue by LC-MS/MS for 24 hours. Their study did not enter the derivation. The model predicts their plasma AUC **a third low** (5208 against 7639 ng·h/mL). In clearance terms that is 0.143 against 0.098 L/h per kg. The gap cannot come from their shorter sampling, which would have pushed their clearance up, not down. The two studies used different doses (2 mg/kg against about 0.75 mg/kg), and whether clearance depends on dose is not known. The model follows the label, which studied the clinical dose. Concentrations may be about a third higher than drawn. A second study points the other way. American Regent's NCT02478281 (12 volunteers, 1 mg/kg, sampled for 72 hours, results posted on ClinicalTrials.gov) found a clearance of 0.25 L/h per kg, nearly twice the label's. Its peak per milligram was less than half any other source's, which suggests a difference in assay or sample handling rather than in the drug: methylene blue binds to plastic. The label's clearance lies between the two studies.
 
 ### What is plotted
 
-Total plasma methylene blue in ng/mL; leucomethylene blue and the metabolite azure B are not plotted. Doses are methylene blue (methylthioninium chloride) as labelled, in mg/kg or mg, as a bolus or an infusion.
+Total plasma methylene blue in ng/mL; leucomethylene blue and the metabolite azure B are not plotted. The label does not name the matrix of its peak and AUC. A search excerpt of an FDA review, not yet read here, describes them as whole-blood values with an extrapolated AUC of 15 668 ng·h/mL. If that is confirmed, the curve will be relabelled as whole blood and rederived. Doses are methylene blue (methylthioninium chloride) as labelled, in mg/kg or mg, as a bolus or an infusion.
 
 ### Covariates
 

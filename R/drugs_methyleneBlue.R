@@ -65,6 +65,15 @@
 # dose is unknown.  The model therefore follows the label, the clinical dose
 # (1-2 mg/kg), and may underpredict concentrations by about a third.
 #
+# A second check points the other way: NCT02478281 (American Regent, results
+# posted on ClinicalTrials.gov; 12 volunteers, mean 76.1 kg, 1 mg/kg over
+# about 5 min, samples to 72 h) reports geometric means of CL 19.0 L/h (0.25
+# L/h/kg), t1/2 15.9 h, Cmax 457 ng/mL and AUC(0-inf) 2967 ng h/mL.  Its
+# Cmax per mg is less than half any other source's, which points to the
+# assay or to adsorptive loss (methylene blue binds to plastic) rather than
+# the drug; the record names no assay.  The label's clearance lies between
+# the two studies.
+#
 # THE FIRST HALF HOUR
 # ===================
 # In Walter-Sack's subjects whole blood peaked 10 minutes after the injection
