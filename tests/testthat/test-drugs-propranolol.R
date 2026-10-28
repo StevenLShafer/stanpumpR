@@ -71,7 +71,7 @@ test_that("propranolol is a vasoactive and resuscitation drug with no band", {
   expect_equal(row$MEAC, 0)
 })
 
-test_that("the effect site peaks 5 min after a bolus (heart rate, Achong 1976)", {
+test_that("the effect site peaks 5 min after a bolus (heart rate, clinical)", {
   PK <- getDrugPK("propranolol", 70, 170, 60, "male")
   expect_equal(PK$tPeak, 5)
   pk <- PK$PK$default
