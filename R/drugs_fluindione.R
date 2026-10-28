@@ -108,7 +108,7 @@
 #'   clearance (the app passes this field).
 #' @param vkorc1 VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};
 #'   \code{"GG"} or \code{"GA"} raises the C50 (less sensitive), \code{"AA"} is
-#'   the sensitive reference (the app passes this field)
+#'   the sensitive reference and the default (the app passes this field)
 #' @returns a list in the shape \code{getDrugPK()} expects, with an indirect
 #'   \code{inr} block
 #' @export

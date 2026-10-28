@@ -25,7 +25,7 @@ The INR is a delayed, non-linear turnover endpoint, so it is computed from the S
 ### Covariates
 
 - **CYP2C9**: a **\*3** allele carrier (any of \*1/\*3, \*2/\*3, \*3/\*3) has clearance × 0.7, so a \*3 carrier reaches a higher INR. \*1/\*2 and \*2/\*2 were not predictors in the source and behave as the wild type.
-- **VKORC1**: the Patient Profile's −1639G>A field drives the C50 through its linkage with the source's 1173C>T genotype. **AA** is the sensitive reference (base C50, higher INR); **GG** or **GA** raises the C50 × 2.29 (less sensitive, lower INR).
+- **VKORC1**: the Patient Profile's −1639G>A field drives the C50 through its linkage with the source's 1173C>T genotype. **AA** is the sensitive reference (base C50, higher INR) and the field's default, so that an unentered genotype shows the larger INR rise; **GG** or **GA** raises the C50 × 2.29 (less sensitive, lower INR). See [VKORC1 and ancestry](help:patient-profile) for the reasoning and for the genotype to expect in a patient who has not been genotyped.
 - **Body weight** scales central volume — the model's own covariate, used in both positions of the [fat-free-mass switch](help:models/fat-free-mass).
 
 ### Where to be careful

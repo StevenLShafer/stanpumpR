@@ -24,7 +24,7 @@ with the maximum INR rise fixed at 20 (the data could not estimate it) and the e
 
 ## VKORC1 — warfarin sensitivity
 
-**VKORC1** genotype sets the sensitivity, through the half-maximal S-warfarin concentration: 4.61 mg/L for the GG genotype, 3.02 for GA and 2.20 for AA. The AA patient is about twice as sensitive as the GG patient. Set the VKORC1 genotype in the [Patient Profile](help:patient-profile). The library's Xue model reads the same field, but only for the AA genotype, where it lowers the S-warfarin C50 (GG and GA are the same to it); so the AA setting moves both INR lines, while GA moves only the Hamberg line.
+**VKORC1** genotype sets the sensitivity, through the half-maximal S-warfarin concentration: 4.61 mg/L for the GG genotype, 3.02 for GA and 2.20 for AA. The AA patient is about twice as sensitive as the GG patient. Set the VKORC1 genotype in the [Patient Profile](help:patient-profile). The library's Xue model reads the same field, but only for the AA genotype, where it lowers the S-warfarin C50 (GG and GA are the same to it); so the AA setting moves both INR lines, while GA moves only the Hamberg line. **AA** is the field's default, the most sensitive genotype in both models, so that an unentered genotype shows the larger INR rise; see [VKORC1 and ancestry](help:patient-profile) for why, and for which genotype to expect in which patient.
 
 ## Research model — not for dosing
 
