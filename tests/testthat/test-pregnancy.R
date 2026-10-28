@@ -206,7 +206,8 @@ test_that("the References panel names the pregnancy source only while the flag i
     expect_no_match(pkOf(drug, FALSE)$reference, "pregnancy:", info = drug)
   }
   # the drugs whose factor is the review's still name it
-  for (drug in c("morphine", "remifentanil", "oxycodone", "methadone", "dexamethasone")) {
+  # (oxycodone's 3.8/2.6 was dropped on 2026-10-28: Kokki 2012 against this model)
+  for (drug in c("morphine", "remifentanil", "methadone", "dexamethasone")) {
     expect_match(pkOf(drug, TRUE)$reference, "Ansari J, Carvalho B, Shafer SL, Flood P",
                  fixed = TRUE, info = drug)
   }
