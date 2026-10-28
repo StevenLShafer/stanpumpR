@@ -42,6 +42,9 @@
 
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
+# Hydromorphone probes use 3 mg intranasal: since its bioavailability became
+# 0.37 (2026-10-28), 2 mg no longer brings the effect site above the 1.5
+# ng/mL threshold, and these tests need a time to count down.
 lagPK <- function(drug, ..., height = 171) {
   dd <- getDrugDefaultsGlobal()
   PK <- getDrugPK(drug, 70, height, 50, "male", dd[dd$Drug == drug, ])
@@ -231,7 +234,7 @@ test_that("combinedRecovery blanks when any one contribution has a dose pending"
 
 test_that("an engine reports NA across a lag and a real time once it starts", {
   PK <- lagPK("hydromorphone", tlag_IN = 180)
-  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 2, Units = "mg IN")
+  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 3, Units = "mg IN")
   X <- simCpCe(DT, noEvents, PK, 1440, TRUE)
   w <- X$wide
 
@@ -251,7 +254,7 @@ test_that("without a lag nothing is masked and nothing is missing", {
   # The guard must be invisible on every drug as the library stands.
   PK <- lagPK("hydromorphone")
   expect_equal(PK$PK$default$tlag_IN, 0)
-  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 2, Units = "mg IN")
+  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 3, Units = "mg IN")
   X <- simCpCe(DT, noEvents, PK, 1440, TRUE)
 
   expect_null(X$recoveryStates$pending)
@@ -280,7 +283,7 @@ test_that("a pending dose blanks even when another dose would give a number", {
 
 test_that("a zero dose does not blank anything", {
   PK <- lagPK("hydromorphone", tlag_IN = 180)
-  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 300), Dose = c(2, 0),
+  DT <- data.frame(Drug = "hydromorphone", Time = c(0, 300), Dose = c(3, 0),
                    Units = "mg IN")
   w <- simCpCe(DT, noEvents, PK, 1440, TRUE)$wide
 
@@ -294,7 +297,7 @@ test_that("the equispaced series keeps the gap instead of interpolating it", {
   # approx() would happily draw a straight line across the one stretch that has
   # no answer, which is the number this whole thing exists to not report.
   PK <- lagPK("hydromorphone", tlag_IN = 180)
-  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 2, Units = "mg IN")
+  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 3, Units = "mg IN")
   X <- simCpCe(DT, noEvents, PK, 1440, TRUE)
 
   es <- X$equiSpace
@@ -314,7 +317,7 @@ test_that("a plot window shorter than the lag does not break the interpolator", 
   # there is at most one known value to interpolate between -- and approx()
   # refuses fewer than two.  It used to throw here.
   PK <- lagPK("hydromorphone", tlag_IN = 180)
-  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 2, Units = "mg IN")
+  DT <- data.frame(Drug = "hydromorphone", Time = 0, Dose = 3, Units = "mg IN")
   X <- simCpCe(DT, noEvents, PK, 120, TRUE)
 
   expect_true(all(is.na(X$equiSpace$Recovery)))
