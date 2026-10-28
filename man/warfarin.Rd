@@ -37,7 +37,9 @@ in both positions of the switch, as meloxicam's lean-body-mass volume is}
 the \code{"*1/*1"} reference clearance (the app passes this field).}
 
 \item{vkorc1}{VKORC1 -1639 genotype, one of \code{"GG"}, \code{"GA"},
-\code{"AA"}; \code{"AA"} lowers the S-warfarin C50}
+\code{"AA"}; \code{"AA"} lowers the S-warfarin C50.  The default,
+\code{"AA"}, is the most sensitive genotype (the app passes the Patient
+Profile field)}
 
 \item{cyp4f2}{CYP4F2 genotype, one of \code{CYP4F2_VALUES}; \code{"CT"} or
 \code{"CC"} lowers the S-warfarin C50.  The default, \code{"CC"}, is the

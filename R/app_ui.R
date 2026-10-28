@@ -259,9 +259,11 @@ app_ui <- function() {
                   placement = "right"
                 ),
 
-                # Read by warfarin: the -1639G>A genotype sets the sensitivity
-                # (the S-warfarin C50 / EC50).  GG is the wild-type reference
-                # (see VKORC1_VALUES in R/constants.R).
+                # Read by the vitamin-K antagonists: the -1639G>A genotype sets
+                # the sensitivity (the S-warfarin C50 / EC50).  GG is the
+                # wild-type reference, but the field DEFAULTS to AA, the most
+                # sensitive genotype (see VKORC1_DEFAULT in R/constants.R for
+                # why, and for the ancestry distribution).
                 bslib::tooltip(
                   selectInput(
                     inputId = "vkorc1",

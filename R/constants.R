@@ -94,13 +94,41 @@ CYP2B6_DEFAULT <- CYP2B6_NORMAL
 CYP2C9_VALUES  <- c("*1/*1", "*1/*2", "*1/*3", "*2/*2", "*2/*3", "*3/*3")
 CYP2C9_DEFAULT <- "*1/*1"
 
-# VKORC1 -1639G>A GENOTYPE, read by the models that name it: warfarin, where
-# the A allele lowers the S-warfarin C50 (the Xue 2017 library model) and sets
-# the EC50 of the Hamberg 2007 companion model (R/alternativeModels.R).  Three
-# genotypes; GG (two wild-type alleles, the least sensitive) is the reference.
-# Its own Patient Profile field, kept apart from the CYP phenotypes.
+# VKORC1 -1639G>A GENOTYPE (rs9923231), read by the models that name it: the
+# library warfarin model, where AA lowers the S-warfarin C50 x0.725 against GA
+# or GG (Xue 2017); the Hamberg 2007 companion, where the genotype sets the
+# EC50 outright (GG 4.61, GA 3.02, AA 2.20 mg/L; R/alternativeModels.R); and
+# fluindione and acenocoumarol, where AA is the source's sensitive reference
+# and a G allele RAISES the C50, x1.30 and x2.29 (R/drugs_fluindione.R).  Three
+# genotypes.  Its own Patient Profile field, kept apart from the CYP phenotypes.
+#
+# The default is AA, which is the most sensitive genotype in all four models,
+# by Steven L. Shafer's decision (2026-10-28): the rule CYP4F2_DEFAULT already
+# follows, that an unentered genotype should predict the LARGER INR rise, so a
+# dose chosen from the curve errs toward underdosing.  An underdose at the
+# start of therapy is corrected by raising the dose; an overdose risks
+# bleeding, the vitamin-K antagonists' primary toxicity, and may need reversal
+# with vitamin K.  Warfarin is uniquely dangerous, which makes the conservative
+# choice doubly justified here.  (This differs from CYP2C9_DEFAULT, where one
+# field is shared with phenytoin and meloxicam and the default is the most
+# likely genotype, *1/*1.  VKORC1 is read by vitamin-K antagonists only.)
+#
+# ANCESTRY.  The -1639A allele frequency differs greatly between populations,
+# from a tenth of alleles to nine tenths in the cohort below, so the genotype
+# is worth setting from the patient's ancestry when it has not been measured
+# (the measured genotype is always better than either).  In the International
+# Warfarin Pharmacogenetics Consortium cohort of 4886 chronic warfarin users
+# (Limdi NA, Wadelius M, Cavallari L et al., Blood 2010;115:3827-3834, Table 3,
+# doi 10.1182/blood-2009-12-255992) the A allele frequency was 91.0% in 641
+# Asian, 37.8% in 681 White and 10.1% in 368 Black patients (the paper's own
+# group labels).  Under Hardy-Weinberg those give an AA/GA/GG distribution of
+# about 83/16/1% in Asian, 14/47/39% in White and 1/18/81% in Black patients.
+# So the AA default is also the commonest genotype in Asian patients -- Xue
+# 2017's own 264 Chinese patients were 82.6% AA, 17.0% GA and 0.4% GG, within
+# a point of that expectation -- while GG is the genotype to expect in a Black
+# patient and GA in a White one.
 VKORC1_VALUES  <- c("GG", "GA", "AA")
-VKORC1_DEFAULT <- "GG"
+VKORC1_DEFAULT <- "AA"
 
 # CYP4F2 rs2108622 (1297C>T, V433M) GENOTYPE, read only by the library warfarin
 # (Xue 2017), where a C allele (CC or CT) lowers the S-warfarin C50 x0.770

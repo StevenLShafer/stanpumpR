@@ -12,7 +12,7 @@ The first panel in the left sidebar. These covariates are passed to every drug's
 | CYP 2C19 | phenotype | | Changes the clearance of escitalopram and citalopram. |
 | CYP 2C9 | diplotype | | Changes the clearance of meloxicam and the maximal elimination rate of phenytoin. |
 | CYP 2B6 | phenotype | | Changes the clearance of methadone. |
-| VKORC1 | genotype (-1639G>A) | GG by default | Sets the sensitivity of warfarin, fluindione and acenocoumarol: the A allele lowers the C50, so the INR rises on less drug. |
+| VKORC1 | genotype (-1639G>A) | AA by default | Sets the sensitivity of warfarin, fluindione and acenocoumarol: the A allele lowers the C50, so the INR rises on less drug. AA, the most sensitive genotype, is assumed until a genotype is entered, so that the curve errs toward the larger INR; see **VKORC1 and ancestry** below. |
 | CYP4F2 | genotype (rs2108622) | CC by default | Sets warfarin's sensitivity: a C allele lowers the C50. CC, the most sensitive genotype, is assumed until a genotype is entered, so that the curve errs toward the larger INR. |
 | Adjust weight to fat-free mass | checkbox | | On by default; scales most models to fat-free mass. |
 | Serum creatinine | mg/dL | 0.2 to 15, or blank | Optional. Used by canagliflozin, cefazolin, dapagliflozin, empagliflozin, ertugliflozin, exenatide, gabapentin, gentamicin, lacosamide, levetiracetam, lixisenatide, mannitol, intravenous meloxicam, metformin, oxycodone, pregabalin, sugammadex and vancomycin. Blank means an assumed normal creatinine for the patient's age and sex: 0.9 in men and 0.8 in women, and in a child the normal for age (about 0.25 in infancy, 0.35 at five, 0.5 at ten). See [Renal function](help:models/covariates). |
@@ -25,6 +25,20 @@ Changing a covariate re-simulates every drug at once; there is no Apply step for
 Hovering over the genotype fields or the Serum creatinine field shows a tip naming the drugs that read it; every other drug ignores the field. The tips are built from the models themselves, so a drug added later that reads a field appears in its tip.
 
 **Adjust weight to fat-free mass** scales most of the models to the patient's fat-free mass rather than total body weight; it is on by default. **CYP 2D6**, with the phenotypes the genotyping laboratories report (poor, intermediate, normal, ultrarapid), scales the formation of the active metabolites, and the clearance of three antipsychotics. **CYP 2C19** (poor, intermediate, normal, rapid, ultrarapid) changes the clearance of escitalopram and citalopram. **CYP 2C9**, entered as the diplotype of the common \*1, \*2 and \*3 alleles (\*1/\*1 by default), changes the clearance of [meloxicam](help:drugs/meloxicam) and the maximal elimination rate of [phenytoin](help:drugs/phenytoin). **CYP 2B6** (the same five phenotypes as CYP 2C19) changes the clearance of [methadone](help:drugs/methadone); [the methadone genotype scenario](scenario:methadone-cyp2b6) is a worked example. See [Antidepressant models and their limits](help:models/antidepressants), [Scaling to fat-free mass](help:models/fat-free-mass) and [Active metabolites](help:models/metabolites).
+
+## VKORC1 and ancestry
+
+**VKORC1**'s default is chosen for safety, not for how common the genotype is — in two of the three groups in the table below it is *not* the commonest genotype. The −1639A allele lowers the half-maximal concentration of every vitamin-K antagonist in the library, so the AA patient reaches a given INR on the least drug: ×0.725 on the S-warfarin C50 of the [library warfarin model](help:drugs/warfarin), the lowest EC50 of the three in the [Hamberg companion](help:models/hamberg) (2.20 against 4.61 mg/L for GG), and the sources' own sensitive reference for [fluindione](help:drugs/fluindione) and [acenocoumarol](help:drugs/acenocoumarol), where a G allele raises the C50 ×1.30 and ×2.29. **AA is therefore assumed until a genotype is entered**, by the same rule the CYP4F2 field follows: with the genotype unknown the curve should show the larger INR rise, so a dose read off it errs toward underdosing. An underdose at the start of therapy is corrected by raising the dose; an overdose risks bleeding, which is these drugs' primary toxicity and may need reversal with vitamin K.
+
+So the genotype is worth entering from the patient when it is known — and from their ancestry when it is not, because this allele's frequency runs from a tenth of alleles to nine tenths between populations. In the International Warfarin Pharmacogenetics Consortium cohort of 4886 chronic warfarin users the −1639A allele frequency was 91.0% in 641 Asian patients, 37.8% in 681 White patients and 10.1% in 368 Black patients (Limdi and colleagues, *Blood* 2010;115:3827-3834, Table 3, [DOI 10.1182/blood-2009-12-255992](https://doi.org/10.1182/blood-2009-12-255992); the paper's own group labels). The genotype proportions those frequencies imply under Hardy-Weinberg are:
+
+| Group | −1639A allele | AA | GA | GG |
+|---|---|---|---|---|
+| Asian | 91.0% | 83% | 16% | 1% |
+| White | 37.8% | 14% | 47% | 39% |
+| Black | 10.1% | 1% | 18% | 81% |
+
+The AA default is therefore also the commonest genotype in Asian patients — the 264 Chinese patients the library's warfarin model was fitted in were 82.6% AA, 17.0% GA and 0.4% GG, within a point of the expectation above — while in a Black patient **GG** is the genotype to expect, and in a White patient **GA**. Entering the patient's own genotype is always better than either: VKORC1 explains more of the warfarin dose requirement than any other single variant, and the same genotype predicts a similar dose requirement in every group — what differs between populations is how common each genotype is.
 
 ## What the models do with them
 
