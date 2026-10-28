@@ -98,16 +98,22 @@
 # 110 min.  Shah 1990 observed 88 ng/mL and 2.7 ng/mL after 60 mg of codeine
 # phosphate, about 45 mg of base.
 #
-# The morphine:codeine AUC ratio comes to 0.014 over the first six hours,
-# against 0.027 observed by Shah 1990 and 0.020 by Yue 1991.  The model
-# therefore runs roughly 30-50% below observed morphine.  Matching the observed
-# ratio exactly would need a formation fraction near 0.038 rather than the
-# 0.029 that Ashraf implies once rescaled.  That is a 32% disagreement between
-# two independent routes to the same quantity, which is unremarkable for this
-# kind of cross-study reconciliation, and it is left standing rather than tuned
-# away: the Ashraf value is traceable and phenotype-resolved, and the
-# observations it disagrees with are two studies of eight and ten subjects
-# whose AUCs are truncated at six hours.
+# The morphine:codeine AUC ratio depends on the interval, because morphine
+# is formed late and cleared more slowly than codeine: the model gives 0.014
+# over the first six hours and 0.019 by mass (0.020 molar) over 48 hours.
+#   - Shah 1990 sampled only to six hours: 0.027 over 0-6 h, from the eight
+#     of ten subjects with detectable morphine.  On the same interval the
+#     model runs about half of that.
+#   - Yue 1991 sampled to 24 hours and extrapolated the codeine AUC to
+#     infinity: 0.020 (molar, the eight extensive metabolisers).  The model's
+#     full-length ratio agrees to within about 5%.
+# (Corrected 2026-10-28: this comment used to say both studies were
+# truncated at six hours and that the model ran 30-50% below both; that
+# compared the model's six-hour ratio with Yue's full-length one.)  The
+# formation fraction is the 0.029 Ashraf implies once rescaled, not tuned to
+# either study: it is traceable and phenotype-resolved, it reproduces Yue,
+# and the gap to Shah is no larger than Shah's short sampling and excluded
+# subjects could produce.
 #
 # A separate caution for anyone comparing with urinary recovery: Chen 1991
 # recovered 7.1% of an oral dose as total morphine, far above the ~1.5% of the
