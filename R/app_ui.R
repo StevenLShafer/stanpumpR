@@ -474,7 +474,12 @@ app_ui <- function() {
                   checkboxInput(
                     inputId = ASM_INTERACTIONS_INPUT,
                     label = "Include antiseizure drug interactions",
-                    value = FALSE
+                    # Checked by default (Steven L. Shafer, 2026-10-28): the box
+                    # starts disabled and has no effect until the dose table
+                    # holds an interacting pair, at which point the server
+                    # enables it and the interactions apply without the user
+                    # having to find and tick this option.
+                    value = TRUE
                   ) |>
                     shinyjs::disabled(),
                   paste(
