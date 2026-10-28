@@ -674,10 +674,10 @@ registry <- rbind(
       "Baumann G, Dingman JF. Distribution, blood transport, and degradation of antidiuretic hormone in man. J Clin Invest 1976;57:1109-1116. PMID 1262458, PMC436762.",
       doi("10.1172/JCI108377")),
   reg("ephedrine__oral__csajka2005", "ephedrine",
-      "oral only", "ephedrine", "plasma",
-      "no_suitable_model", NA, "abstract",
-      "No human intravenous pharmacokinetics was found; the FDA review for the IV product (NDA 208289) itself extrapolates from oral data.  Csajka 2005 is oral, a four-compartment ephedrine-norephedrine model with saturable conversion (ephedrine CL 0.34 L/min, V 181 L).",
-      NA,
+      "24 healthy adults, oral ephedrine (25 mg sulphate or herbal)", "ephedrine (LC-MS/MS)", "plasma",
+      "implemented", "ephedrine", "full_text",
+      "Read in full and used as the basis for an IV model, on the user's decision (2026-10-28): no human IV pharmacokinetics exists (the FDA review for the IV product NDA 208289 itself extrapolates from oral data).  Csajka 2005 is a population model fitting plasma with urine: ephedrine is one compartment (a second did not improve the fit) with first-order absorption, renal clearance CL_R 0.34 L/min and apparent volume V/F 181 L, plus a minor saturable conversion to norephedrine.  Because urine fixes the absolute renal clearance and the loaded fraction F_E (0.78 herbal, assayed as base; 0.59 pharmaceutical) is F x fe, taking F = 1 gives V 232 L, CL 0.436 L/min, half-life 6.1 h.  No distribution phase (oral data cannot show one), so the first minutes after a bolus are higher than drawn.  Gurley 1998 (not fitted) checks it: base-dose V 3.3 L/kg (men 2.98, women 3.49) and CL 0.37 L/h/kg (men 0.37).",
+      "FDA review of the first IV product (NDA 208289, Akovaz) if a population model was fitted; a direct IV pharmacokinetic study, if one is ever done.",
       "Csajka C, Haller CA, Benowitz NL, Verotta D. Mechanistic pharmacokinetic modelling of ephedrine, norephedrine and caffeine in healthy subjects. Br J Clin Pharmacol 2005;59:335-345. PMID 15752380, PMC1884794.",
       doi("10.1111/j.1365-2125.2005.02254.x")),
   reg("hydralazine__hypertensive__ludden1980", "hydralazine",
@@ -776,6 +776,7 @@ JO24 <- doi("10.1111/bcp.16180")
 SA89 <- doi("10.1016/0002-9149(89)90076-3")
 HA20 <- doi("10.1111/bcp.14146")
 MBL  <- "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=204630"
+EPH  <- doi("10.1111/j.1365-2125.2005.02254.x")
 LA17 <- doi("10.1007/s40262-017-0515-7")
 MO93 <- doi("10.1002/jps.2600820707")
 CH97 <- pubmed(9165563)
@@ -948,6 +949,13 @@ parameters <- rbind(
   par("methyleneBlue", "V2", 208.17, "L at 70 kg (derived)", "derived", "full_text", MBL),
   par("methyleneBlue", "CL", 10.016, "L/h at 70 kg (2 mg/kg x 70 / AUC)", "derived", "full_text", MBL),
   par("methyleneBlue", "Q", 17.77, "L/h at 70 kg (derived)", "derived", "full_text", MBL),
+
+  par("ephedrine", "V/F", 181, "L (Csajka 2005, Table 3)", "estimated", "full_text", EPH),
+  par("ephedrine", "CL_R", 0.34, "L/min, absolute renal clearance (Csajka 2005, Table 3)", "estimated", "full_text", EPH),
+  par("ephedrine", "F_E", 0.78, "fraction of the base dose loaded, herbal (Csajka 2005, Table 3)", "estimated", "full_text", EPH),
+  par("ephedrine", "V", 232.1, "L at an assumed 70 kg (V/F with F taken as 1)", "derived", "full_text", EPH),
+  par("ephedrine", "CL", 0.436, "L/min at 70 kg (CL_R with F taken as 1)", "derived", "full_text", EPH),
+  par("ephedrine", "half-life", 6.1, "h (V/CL, independent of F)", "derived", "full_text", EPH),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "half-life after a stop", 1.9, "min (Armstrong 1980, quoted by Armstrong 1983)", "estimated", "full_text", AR),
