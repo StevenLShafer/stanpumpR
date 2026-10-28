@@ -80,7 +80,8 @@
 #   results (doseDependent), which reproduces Tham's single doses exactly and
 #   superposes repeated ones.  With no dose given, the model is at the
 #   reference dose (10 U), which is what the help tables show.
-# * The endogenous-insulin baseline Tham estimated (regular and NPH) and the
+# * The endogenous-insulin baseline Tham estimated (one baseline, 79.7 pmol/L x
+#   (BW/80)^0.739, shared by every insulin in the supplement's equations) and the
 #   C-peptide correction of the glargine data are not added: the curve is
 #   the exogenous insulin alone.  The glargine row was fitted to Basaglar
 #   (LY IGlar) on an immunoreactive assay; it is not the active metabolite M1

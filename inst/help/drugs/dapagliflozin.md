@@ -1,6 +1,6 @@
 ### The model
 
-Melin and colleagues' population analysis of 2744 people given dapagliflozin (*Br J Clin Pharmacol* 2024). The data came from 1869 patients with heart failure with reduced ejection fraction (the DAPA-HF trial, one trough each), 1269 adults with type 2 diabetes from four studies with serial sampling, 24 adolescents with type 2 diabetes, and 30 healthy volunteers, at doses of 1 to 100 mg. It refits the sponsor's model, the one behind the drug's approval, and its NONMEM code is in the supplement.
+Melin and colleagues' population analysis of 2744 people given dapagliflozin (*Br J Clin Pharmacol* 2024). The data came from 1497 patients with heart failure with reduced ejection fraction (the DAPA-HF trial, one trough each; 1869 before exclusions), 1193 adults with type 2 diabetes from four studies with serial sampling (1269 before exclusions), 24 adolescents with type 2 diabetes, and 30 healthy volunteers, at doses of 1 to 100 mg. It refits the sponsor's model, the one behind the drug's approval, and its NONMEM code is in the supplement.
 
 - **Disposition:** two compartments. Apparent clearance 23.0 L/h, central volume 73.9 L, intercompartmental clearance 8.92 L/h, peripheral volume 143 L.
 - **Absorption:** first order at 2.39/h after a lag of 0.248 hours.

@@ -9,13 +9,14 @@
 #
 # SOURCE
 # ======
-# Melin J, Tang W, Rekic D, et al.  Dapagliflozin pharmacokinetics is similar
-# between patients with heart failure with reduced ejection fraction and
+# Melin J, Parkinson J, Hamren B, et al.  Dapagliflozin pharmacokinetics is
+# similar between patients with heart failure with reduced ejection fraction and
 # patients with type 2 diabetes mellitus.  Br J Clin Pharmacol 2024;90:
-# 606-612 (online 2023).  2744 people: 1869 with heart failure with reduced
-# ejection fraction (DAPA-HF, troughs), 1269 adults with type 2 diabetes from
-# four studies with serial sampling, 24 adolescents with type 2 diabetes and
-# 30 healthy volunteers; 1 to 100 mg.  The sponsor's two-compartment model
+# 606-612 (online 2023).  2744 people analysed (Table 1): 1497 with heart
+# failure with reduced ejection fraction (DAPA-HF, troughs; 1869 had PK
+# samples before exclusions), 1193 adults with type 2 diabetes from four
+# studies with serial sampling (1269 before exclusions), 24 adolescents with
+# type 2 diabetes and 30 healthy volunteers; 1 to 100 mg.  The sponsor's two-compartment model
 # with first-order absorption and a fixed lag, refitted.  Supplementary
 # Table 4 and the NONMEM control stream (Supporting Information 3, supplied
 # by Steven L. Shafer):

@@ -1,6 +1,6 @@
 ## What to look for
 
-Three boluses, 5 mg then 2.5 mg at five-minute intervals, as remimazolam is titrated for procedural sedation. Each bolus adds a plasma spike; the effect site (tPeak 2.5 minutes) smooths them into a rising staircase that only just reaches the lower edge of the band, 0.3 mcg/mL, after the third dose.
+Three boluses, 5 mg then 2.5 mg at five-minute intervals, as remimazolam is titrated for procedural sedation. Each bolus adds a plasma spike; the effect site (ke0 0.298 /min, a time to peak of about 2.4 minutes) smooths them into a rising staircase that only just reaches the lower edge of the band, 0.3 mcg/mL, after the third dose.
 
 After the last bolus the effect site falls out of the band again within a minute or two of its peak, and is down to half the lower edge by about 20 minutes. Remimazolam is hydrolysed by tissue esterases, so its clearance is high and its offset short; compare midazolam, whose offset from the same concentration takes several times longer.
 
