@@ -74,7 +74,8 @@ test_that("a bolus is beyond the model, so only infusion rates are offered", {
 })
 
 test_that("the offset after a stop: 16% of the plateau remains at 5 min, as in Sun 1995", {
-  # Sun 1995 Figure 1: about 370 to about 70 pg/mL in the 5 min after a
+  # Sun 1995 Figure 1: from about 370 (the arms' mean) to about 70 pg/mL (the
+  # highest arm; the others about 20-40) in the 5 min after a
   # 14-h infusion stopped (0.19); Kim 2018: mostly below 0.1 ng/mL by 3-10 min
   wide <- simulateGTN(data.frame(Drug = "nitroglycerin", Time = c(0, 60),
                                  Dose = c(21, 0), Units = "mcg/min"))
