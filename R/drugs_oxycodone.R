@@ -13,11 +13,12 @@
 # below is assembled from them as follows.
 #
 #   Poyhia 1991   9 young surgical adults (27 y, 71 kg), 0.07 mg/kg oxycodone
-#                 chloride IV (0.0627 mg/kg base):
-#                 CL 0.78 L/min (11.0 mL/min/kg), Vss 2.60 L/kg, t1/2 3.7 h.
+#                 chloride IV, which the paper calls "0.05 mg/kg free base":
+#                 CL 0.78 L/min (11.0 mL/min/kg), Vss 2.60 L/kg, t1/2 3.7 h,
+#                 computed on the free-base dose (see DOSE BASIS below).
 #   Kirvela 1996  10 ASA I controls (36 y, 66 kg) and 10 uraemic patients
 #                 (36 y, 67 kg) given 0.07 mg/kg oxycodone chloride IV
-#                 (0.0627 mg/kg base).  Medians: controls
+#                 ("0.05 mg/kg free base").  Medians: controls
 #                 CL 1.10 L/min (16.7 mL/min/kg), Vc 0.22 and Vss 2.39 L/kg,
 #                 t1/2 2.3 h; uraemic CL 0.84 L/min, Vss 3.99 L/kg, t1/2 3.9 h.
 #                 Per-subject biexponential results in its Table 2.
@@ -37,25 +38,61 @@
 # REFERENCE DISPOSITION (healthy adult, 70 kg, 30 years)
 # ======================================================
 # Clearance and Vss are the means of the three intravenous studies' young
-# groups, each paper's own summary statistic (Kirvela reports medians)
-# weighted by its number of subjects:
+# groups, each paper's own summary statistic (Kirvela reports medians), put
+# on the hydrochloride dose basis (DOSE BASIS, below) and weighted by its
+# number of subjects:
 #
-#     CL  = (9 x 11.0 + 10 x 16.7 + 11 x 11.9) / 30 = 13.2 mL/min/kg
-#     Vss = (9 x 2.60 + 10 x 2.39 + 11 x 3.7)  / 30 = 2.93 L/kg
+#     CL  = (9 x 14.5 + 10 x 23.4 + 11 x 11.9) / 30 = 16.5 mL/min/kg
+#     Vss = (9 x 3.46 + 10 x 3.35 + 11 x 3.7)  / 30 = 3.51 L/kg
 #
 # Their mean age is 30 years, which is where the age effect below starts.
-# All three studies dosed the HYDROCHLORIDE: Poyhia and Kirvela 0.07 mg/kg
-# "oxycodone chloride" (both abstracts; 0.0627 mg/kg of base at 315.36 /
-# 351.82), Liukas "5 mg".  Until 2026-10-27 this note said Poyhia and Kirvela
-# gave 0.05 mg/kg of base, which neither abstract supports (opioid potency
-# audit, docs/opioid-review-2026-10-27.md).  Whether each paper computed
-# clearance and volume on the hydrochloride or the base dose is not in the
-# abstracts and the full texts were not reached.  If, as the reported doses
-# suggest, all three used the hydrochloride, the pooled parameters are on one
-# scale and a hydrochloride dose entered as prescribed gives base
-# concentrations, as intended; if they used the base, CL and V are about 10%
-# low for a hydrochloride dose.  Nothing is corrected until the methods are
-# read.
+#
+# DOSE BASIS
+# ==========
+# A dose is entered as the hydrochloride, as labelled, and the curve is
+# oxycodone base, so CL and V must be the hydrochloride dose over the base
+# concentrations.  All three studies gave the hydrochloride, but Poyhia and
+# Kirvela did not compute on it.  Both full texts (read 2026-10-27, supplied
+# by Steven L. Shafer) say the same: "Oxycodone chloride (Oxanest, 10 mg/ml,
+# Leiras) was given in a dose of 0.07 mg/kg (= 0.05 mg/kg free base)"
+# (Poyhia), "0.07 mg/kg (0.05 mg/kg free base)" (Kirvela).  Poyhia's Table 1
+# lists each patient's dose in mg beside CL and Vss, and those doses are the
+# free base: 3.1 mg at 57-62 kg, 4.7 mg at 90 kg, a mean of 0.0529 mg/kg, not
+# 0.07.  So its CL (dose / AUC) and Vss were computed on the free base.
+# Kirvela, the same group with the same product and wording, lists no dose
+# and says only that the parameters "were calculated according to the
+# standard formulae"; it is taken to follow the same convention (inferred,
+# not stated).  Liukas gave "5 mg of intravenous oxycodone (OxyNorm)", the
+# hydrochloride as labelled, with no conversion, so its CL is on the
+# hydrochloride.
+#
+# The papers' free base is not oxycodone hydrochloride's: base over
+# hydrochloride is 315.36 / 351.82 = 0.896, so 0.07 mg/kg of the
+# hydrochloride holds 0.0627 mg/kg of base, where the papers state 0.05
+# (0.714) and Poyhia's doses average 0.0529 (0.755).  Neither ratio matches
+# any oxycodone salt checked (the trihydrate would be 0.777).  The rescaling
+# therefore undoes each paper's own conversion rather than applying 0.896:
+#
+#   Poyhia   each patient's CL and Vss x 0.07 x weight / tabulated dose
+#            (mean factor 1.33): CL 1.03 L/min (14.5 mL/min/kg), Vss 3.46 L/kg
+#   Kirvela  x 0.07 / 0.05 = 1.4: CL 23.4 mL/min/kg, Vss 3.35 L/kg
+#
+# Until 2026-10-27 the published values were pooled unconverted (CL 13.2
+# mL/min/kg, Vss 2.93 L/kg), and the note before that said the two papers
+# gave 0.05 mg/kg of base as though that were the dose; both were wrong
+# (opioid potency audit, docs/opioid-review-2026-10-27.md).  Rescaled, the
+# pooled CL is 25% higher and Vss 20% higher, which lowers intravenous
+# concentrations by about a fifth.  Oral exposure barely moves, because F is
+# the pooled CL over Lalovic's CL/F (ORAL ABSORPTION, below).  Rescaled by decision of Steven L. Shafer,
+# 2026-10-27.
+#
+# The three clearances now disagree more than they did: Liukas's 11.9
+# against Poyhia's 14.5 and Kirvela's 23.4 mL/min/kg.  Clearance is the
+# parameter to compare (AGENTS.md), and Liukas's is on the stated
+# hydrochloride dose with a 2011 assay, so the model is 15-35% above
+# Liukas's own four age groups (test-drugs-oxycodone.R pins the offset).
+# Lalovic's oral CL/F, 19.7 mL/min/kg, gives F 0.84 at the pooled CL (ORAL
+# ABSORPTION, below), against 0.60 at Liukas's.
 #
 # None of the papers reports a two-compartment model as such.  Kirvela gives
 # Vc, Vss, CL and the terminal half-life for each subject, from which each
@@ -66,10 +103,11 @@
 # medians are Vc/Vss = 0.131 and Q/CL = 2.33, and those ratios are carried
 # onto the pooled CL and Vss:
 #
-#     V1 = 0.131 x 2.93 = 0.385 L/kg      V2 = 2.93 - 0.385 = 2.55 L/kg
-#     Q  = 2.33 x 13.2  = 30.8 mL/min/kg
+#     V1 = 0.131 x 3.51 = 0.460 L/kg      V2 = 3.51 - 0.460 = 3.05 L/kg
+#     Q  = 2.33 x 16.5  = 38.4 mL/min/kg
 #
-# The terminal half-life is then 3.4 h, against Kirvela's 2.3 h, Poyhia's
+# The ratios are each subject's own and so do not depend on the dose basis.
+# The terminal half-life is then 3.3 h, against Kirvela's 2.3 h, Poyhia's
 # 3.7 h, Liukas's 4.0 h and Lalovic's 3.5 h after oral dosing.  The central volume is the least certain number
 # here: early intravenous concentrations in these studies imply anything from
 # 15 to over 100 L, depending on sampling site and time.
@@ -111,7 +149,7 @@
 # That is not carried: they were volume loaded to a central venous pressure
 # of 4 mmHg before sampling, and across the eGFR range of Liukas's
 # non-dialysis patients Vss moved the other way, rising with eGFR.  The
-# clearance effect alone takes the terminal half-life from 3.5 to 4.4 hours
+# clearance effect alone takes the terminal half-life from 3.4 to 4.2 hours
 # for Kirvela's patients (Kirvela: 2.3 to 3.9 h).
 #
 # BODY SIZE (docs/weight-adjustment.md)
@@ -133,9 +171,12 @@
 # ORAL ABSORPTION (Lalovic 2006)
 # ==============================
 # Bioavailability is the reference clearance over Lalovic's per-kilogram
-# CL/F: 13.2 / 19.7 = 0.67, inside the 60-80% Lalovic quotes from the
-# literature.  The model's AUC after 15 mg in Lalovic's subjects is
-# 10.1 ug.min/mL against the 10.8 observed.
+# CL/F: 16.5 / 19.7 = 0.84, above the 60-80% Lalovic quotes from the
+# literature (it was 13.2 / 19.7 = 0.67 before the dose basis was corrected
+# on 2026-10-27; see DOSE BASIS).  Taking F from the ratio keeps the oral
+# exposure where Lalovic measured it whatever the intravenous clearance:
+# the model's AUC after 15 mg is 10.5 ug.min/mL in a man of Lalovic's size
+# (73 kg, 175 cm, 25 y) and 12.1 in a woman, against the 10.8 observed.
 #
 # ka (0.01 /min, no lag) puts the peak of the plasma curve at 30 ng/mL after
 # 15 mg, the peak of the MEAN concentration curve in Lalovic's Figure 2, as
@@ -143,8 +184,10 @@
 # peak kept so by decision of Steven L. Shafer, 2026-10-10).  The mean
 # of the individual peaks, 38 ng/mL, is necessarily higher than the peak of
 # the mean curve and is not the target.  The model then peaks at 35 min,
-# earlier than Lalovic's mean tmax of 65 min, and gives 21.7, 12.4 and 3.7
-# ng/mL at 3, 6 and 12 h, close to the mean curve.  Lalovic fitted most
+# earlier than Lalovic's mean tmax of 65 min, and gives 22.0, 12.5 and 3.6
+# ng/mL at 3, 6 and 12 h, close to the mean curve.  (Re-solved for the
+# 2026-10-27 disposition, ka is 0.0099 /min; 0.01 is kept, a mean peak of
+# 30.3 ng/mL.)  Lalovic fitted most
 # individual profiles with an absorption lag but did not report it; a lag
 # that put the peak at 65 min could not also reach 30 ng/mL (it peaked at
 # 28 with a 30-min lag), and during a lag the time until threshold cannot
@@ -178,6 +221,8 @@
 #     1.23 L/min for the 70 kg reference), and intravenous oxycodone is 1.0 to
 #     1.3 times as many mg as morphine for the same analgesia, so a MEAC
 #     consistent with morphine's 8 is 8 x 1.4 x (1.0 to 1.3) = 11 to 15.
+#     (With the 2026-10-27 dose basis, CL is 25% higher, so the ratio is
+#     1.4 / 1.25 = 1.1 and the range 9 to 12; the MEAC of 12 is unchanged.)
 #   - Direct measurement.  Kokki 2012 titrated intravenous oxycodone after
 #     laparoscopic cholecystectomy and measured total venous plasma oxycodone
 #     at the onset of pain (MEC, mean 21 ng/mL, 95% CI 13-29) and 10 min after
@@ -313,8 +358,8 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   cypActivity <- unname(OXYCODONE_CYP2D6_WEIGHT[[cyp2d6]])
 
   # --- Reference disposition, 70 kg adult of 30 years (see header) ---
-  CL_PER_KG  <- 0.0132          # L/min/kg, pooled
-  VSS_PER_KG <- 2.93            # L/kg, pooled
+  CL_PER_KG  <- 0.0165          # L/min/kg, pooled, hydrochloride dose basis
+  VSS_PER_KG <- 3.51            # L/kg, pooled, hydrochloride dose basis
   VC_FRACTION <- 0.131          # Vc/Vss, Kirvela per-subject median
   Q_OVER_CL   <- 2.33           # Q/CL, Kirvela per-subject median
 
@@ -344,7 +389,7 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   cl3 <- 0
 
   # --- Oral absorption, Lalovic 2006 (see header) ---
-  bioavailability_PO <- 0.67
+  bioavailability_PO <- 0.84
   ka_PO   <- 0.01               # 1/min, absorption half-time 69 min
   tlag_PO <- 0                  # no lag (see header)
   #
@@ -361,7 +406,7 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   # request of Steven L. Shafer.)
 
   # --- Effect site, Lalovic 2006: t1/2 ke0 11 min ---
-  tPeak <- 12.35                # min after an IV bolus, reference patient
+  tPeak <- 12.09                # min after an IV bolus, reference patient
 
   MEAC <- 12
   typical      <- MEAC * 1.2
@@ -371,7 +416,8 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   reference <- paste0(
     "Poyhia R et al., Br J Clin Pharmacol 1991;32:516-518; ",
     "Kirvela M et al., J Clin Anesth 1996;8:13-18; ",
-    "Liukas A et al., Drugs Aging 2011;28:41-50 (pooled IV disposition; ",
+    "Liukas A et al., Drugs Aging 2011;28:41-50 (pooled IV disposition, ",
+    "rescaled to the hydrochloride dose; ",
     "age and renal function on clearance, from the entered creatinine or an ",
     "assumed normal one); Lalovic B et al., Clin Pharmacol Ther ",
     "2006;79:461-479 (oral absorption, ke0); Balyan R et al., ",
@@ -404,7 +450,8 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   MW_RATIO <- 301.34 / 315.36   # oxymorphone over oxycodone, g/mol
   RATIO_IV <- 0.01              # normal metaboliser, intravenous
   # Oral ratio 0.0335: (0.0335 - 0.01) x F x CL_oxymorphone / (mwRatio x CL),
-  # at the reference patient: 0.0235 x 0.67 x 2.0 / (0.9555 x 0.924)
+  # at the reference patient: 0.0235 x 0.84 x 2.0 / (0.9555 x 1.155); F / CL
+  # is Lalovic's F / CL, so this did not move with the dose basis
   FIRST_PASS_NORMAL <- 0.0357
   clOxymorphone <- oxymorphone(weight, height, age, sex,
                                adjustToFFM = adjustToFFM)$PK$default$cl1
