@@ -27,15 +27,21 @@ test_that("the half-life is Csajka's 6.1 h and does not depend on the salt", {
   expect_equal_rounded(set$v1 / set$cl1, V_F / CL_F)
 })
 
-test_that("Gurley 1998 (not fitted) is the same order as the base-dose model", {
+test_that("Gurley 1998 (not fitted) brackets the base-dose model", {
   # In base-dose terms the model is Csajka's apparent V/F and CL/F at 70 kg.
   set <- getDrugPK("ephedrine", 70, 175, 40, "male", adjustToFFM = FALSE)$PK$default
   vBasePerKg  <- set$v1  * BASE / 70
   clBasePerKg <- set$cl1 * BASE * 60 / 70
-  # 2.59 L/kg and 0.29 L/h/kg: the same order as Gurley's Vss/F 2.98-3.49 and
-  # CL/F 0.37-0.48 (men-women), running about a fifth below
-  expect_equal(round(vBasePerKg, 2), 2.59)
-  expect_equal(round(clBasePerKg, 2), 0.29)
+  # Gurley reported Vss/F 2.98 (men) to 3.49 (women) L/kg and CL/F 0.37 to
+  # 0.48 L/h/kg.  The model is checked against those published numbers (not
+  # against model-derived pins): it sits just below both ranges, within a
+  # fifth.  Gurley cannot by itself settle the apparent/absolute convention
+  # -- the old /F_E double-count (+28%) would also land inside these bounds --
+  # so the algebra (CL/F used directly at F = 1) is what the test above pins;
+  # this one just keeps the model in a physiologically plausible band.
+  GURLEY_V  <- c(2.98, 3.49); GURLEY_CL <- c(0.37, 0.48)
+  expect_gt(vBasePerKg,  0.75 * GURLEY_V[1]);  expect_lt(vBasePerKg,  GURLEY_V[2])
+  expect_gt(clBasePerKg, 0.75 * GURLEY_CL[1]); expect_lt(clBasePerKg, GURLEY_CL[2])
 })
 
 test_that("a 10 mg sulfate bolus starts at the base over the central volume", {

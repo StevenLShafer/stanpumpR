@@ -4,7 +4,7 @@ No pharmacokinetic study of **intravenous** ephedrine in humans has been publish
 
 Csajka and colleagues (*Br J Clin Pharmacol* 2005;59:335-345) fitted a population model to ephedrine, its metabolite norephedrine, and caffeine in 24 healthy adults given single oral doses. Ephedrine is one compartment with first-order absorption, cleared mostly by the kidney, with a minor saturable conversion to norephedrine. Their reported apparent volume of distribution was 181 L and their apparent clearance 0.34 L/min — both already divided by bioavailability (V/F and CL/F).
 
-Because those are apparent oral values, taking bioavailability as complete — what the FDA review assumed — makes them the absolute volume and total clearance directly: a central volume of 181 L and a clearance of 0.34 L/min (20 L/h) at 70 kg, with a half-life of 6.1 hours. (An earlier draft of this page divided both again by the urinary-recovery fraction and gave 232 L and 0.44 L/min; that double-counted bioavailability and read about a fifth low.)
+Because those are apparent oral values (CL/F already folds in bioavailability), taking bioavailability as complete — Steven L. Shafer's decision — makes them the absolute volume and total clearance directly: a central volume of 181 L and a clearance of 0.34 L/min (20 L/h) at 70 kg, with a half-life of 6.1 hours. (An earlier draft of this page divided both again by the urinary-recovery fraction and gave 232 L and 0.44 L/min; that double-counted bioavailability and read about a fifth low.)
 
 ### The check
 

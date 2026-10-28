@@ -44,9 +44,9 @@
 #     CL_RE / F_E = (fe CL) / (F fe) = CL / F
 #
 # so the reported 0.34 is the APPARENT TOTAL (oral) clearance CL/F, not the
-# renal clearance, and 181 is V/F.  Taking F = 1 (the user's decision, and
-# what the FDA review assumed) gives the absolute values directly, with no
-# further division:
+# renal clearance, and 181 is V/F.  Taking F = 1 (the user's decision;
+# CL/F already folds the bioavailability in) gives the absolute values
+# directly, with no further division:
 #
 #     V 181 L,  CL 0.34 L/min (20.4 L/h),  half-life 6.1 h
 #
