@@ -57,11 +57,29 @@ test_that("every hideable control is wrapped where the server can find it", {
   # The Additional plots are in Graph Options, no longer a panel of their own
   expect_match(html, "Additional plots", fixed = TRUE)
   expect_no_match(html, "Additional Plots", fixed = TRUE)
+  # every sidebar tooltip is on a question-mark icon, none on a whole control
+  count <- function(pattern) lengths(regmatches(html, gregexpr(pattern, html, fixed = TRUE)))
+  expect_gt(count('class="field-help"'), 0)
+  expect_equal(count("<bslib-tooltip"), count('class="field-help"'))
 })
 
 test_that("the tooltips show on hover only, so a click does not pin them", {
   tip <- hoverTooltip(shiny::span("x"), "tip")
   expect_match(as.character(tip), "&quot;trigger&quot;:&quot;hover&quot;", fixed = TRUE)
+})
+
+test_that("a control's tip sits on a question-mark icon beside its label", {
+  # a checkbox: the icon follows the label, so clicking it does not tick the box
+  box <- htmltools::tagQuery(fieldHelp(shiny::checkboxInput("a", "A"), "tip"))
+  expect_equal(box$find(".checkbox > bslib-tooltip > .field-help")$length(), 1)
+  expect_equal(box$resetSelected()$find("label .field-help")$length(), 0)
+  # any other control: the icon is inside its label
+  sel <- htmltools::tagQuery(fieldHelp(shiny::selectInput("b", "B", "x"), "tip"))
+  expect_equal(sel$find(".control-label bslib-tooltip > .field-help")$length(), 1)
+  expect_match(as.character(sel$allTags()), "&quot;trigger&quot;:&quot;hover&quot;", fixed = TRUE)
+  # the control itself is not inside the tooltip
+  expect_equal(sel$resetSelected()$find("bslib-tooltip select")$length(), 0)
+  expect_error(fieldHelp(shiny::span("no label"), "tip"), "no label")
 })
 
 test_that("opioid tolerance multiplies every opioid's MEAC, band and threshold by its factor", {
