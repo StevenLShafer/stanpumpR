@@ -862,7 +862,7 @@ parameters <- rbind(
   par("atropine", "V2", 192.0, "L", "derived", "full_text", HI),
   par("atropine", "base per sulfate", 0.8329, "2 x 289.37/694.83", "derived", "full_text", HI),
 
-  par("propranolol", "tPeak", 5, "min (clinical, S. L. Shafer; the user's pick within the early window Riva 1980 reports after 0.1 mg/kg IV - effects first seen 5-8 min, maximal 5-45 min - and consistent with Achong 1976's first measurement at 5 min after a 10-min infusion)", "fixed", "clinical", doi("10.1002/cpt1976192148")),
+  par("propranolol", "tPeak", 5, "min (clinical, S. L. Shafer; the user's pick within the early window Riva 1980 reports after 0.1 mg/kg IV - effects first seen 5-8 min, observed over 5-45 min - and consistent with Achong 1976's first measurement at 5 min after a 10-min infusion)", "fixed", "clinical", doi("10.1002/cpt1976192148")),
   par("propranolol", "P", 317, "ng/mL per 3.8 mg (bolus-equivalent)", "estimated", "full_text", FA),
   par("propranolol", "A", 17.2, "ng/mL per 3.8 mg", "estimated", "full_text", FA),
   par("propranolol", "B", 9.3, "ng/mL per 3.8 mg", "estimated", "full_text", FA),
