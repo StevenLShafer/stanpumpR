@@ -4,12 +4,15 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # Time: Minutes
   # Volume: Liters
   
-  v1Ref <- 0.088 * 70   # 0.088 L/kg at the 70 kg reference
-  k10 <- 0.227273
-  k12 <- 0.636364
-  k13 <- 0.0
-  k21 <- 0.14
-  k31 <- 0.0
+  # Schnider 1996, Table 1, parameter set C: the final estimates from all 13
+  # patients (the abstract's), per kg of total body weight, taken at the 70 kg
+  # reference.  Until 2026-10-28 the library used set B (V1 0.088, V2 0.4,
+  # Cl1 0.02, Cl2 0.056), the interim set fitted to the first 8 patients and
+  # tested prospectively on the last 5.
+  v1Ref  <- 0.101  * 70   # L
+  v2Ref  <- 0.452  * 70   # L
+  cl1Ref <- 0.0215 * 70   # L/min
+  cl2Ref <- 0.0589 * 70   # L/min
   
   typical <- 1
   upperTypical <- 1.5
@@ -26,10 +29,10 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # constants, so volumes and clearances both scaled with weight/70.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   v1 <- v1Ref * size$volume
-  v2 <- v1Ref * k12 / k21 * size$volume
+  v2 <- v2Ref * size$volume
   v3 <- 1
-  cl1 <- v1Ref * k10 * size$clearance
-  cl2 <- v1Ref * k12 * size$clearance
+  cl1 <- cl1Ref * size$clearance
+  cl2 <- cl2Ref * size$clearance
   cl3 <- 0
   
   default <- list(
@@ -42,14 +45,17 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     # Regional anesthesia (RA): a dose injected into tissue, absorbed
     # first-order into the central compartment.  ka_RA is the single rate
     # that best reproduces, with this disposition and F = 1, the arterial
-    # plasma curve after 600 mg of 1.5% lidocaine with epinephrine 5 mcg/mL
-    # for axillary block (Simon et al. 2002: mean peak 2.87 mcg/mL at 25.8
-    # min), as a two-rate input fitted to the published means (24% at
-    # 0.0903/min, 76% at 0.0088/min, on the Burm 1987 intravenous tracer
-    # disposition) describes it from 5 to 180 min: weighted least squares,
-    # each residual divided by the concentration + 0.3 mcg/mL.  0.0111/min is
-    # an absorption half-time of 62 min, and predicts a peak of 2.76 mcg/mL
-    # at 42 min.  Simon's own one-rate half-time, 8.4 min, does not transfer
+    # plasma means after 600 mg of 1.5% lidocaine with epinephrine 5 mcg/mL
+    # for axillary block (Simon et al. 2002, Table 2: 17 means from 5 to 180
+    # min, largest 2.94 mcg/mL at 40 min; Table 3's mean of individual peaks
+    # is 2.87 at 25.8 min): weighted least squares, each residual divided by
+    # the concentration + 0.3 mcg/mL.  0.0124/min is an absorption half-time
+    # of 56 min, and predicts a peak of 2.73 mcg/mL at 41 min.  (Refitted
+    # 2026-10-28 for set C.  The set B rate, 0.0111/min, came from a two-rate
+    # input fitted on the Burm 1987 intravenous tracer disposition; fitting
+    # the means directly on set B gives 0.0113, so the methods agree.  On set
+    # C, 0.0111 would predict a peak of 2.53.)
+    # Simon's own one-rate half-time, 8.4 min, does not transfer
     # to an independent intravenous model: it predicts a peak of 6.9
     # mcg/mL.  Axillary block with epinephrine only; other sites and plain
     # solutions absorb differently, and F = 1 is an assumption (the label
@@ -58,9 +64,10 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     # second depot (ka_RA_slow, as mepivacaine has) does not help here: fitted
     # to the same curve on this disposition, the fast share falls to 3% and
     # the fit barely improves, because this model's clearance (1.4 L/min) and
-    # Vss (34 L) cannot give the curve's long tail whatever the input.
+    # Vss (34 L) cannot give the curve's long tail whatever the input.  (That
+    # test was on set B; set C's 1.5 L/min and 39 L are no different in kind.)
     # (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
-    ka_RA = 0.0111,
+    ka_RA = 0.0124,
     bioavailability_RA = 1,
     tlag_RA = 0
   )
