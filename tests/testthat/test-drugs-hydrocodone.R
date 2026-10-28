@@ -93,6 +93,11 @@ test_that("the switch moves the covariates to the pharmacokinetic weight", {
   off <- hydrocodone(pkW, 170, 50, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(on$v1, off$v1)
   expect_equal(on$cl1, off$cl1)
+  # The central volume grows less with weight with the switch on than off:
+  # 7% and 14% from 70 to 120 kg at 170 cm, as the help page says.
+  v1 <- function(w, ffm) hydrocodone(w, 170, 50, "male", adjustToFFM = ffm)$PK$default$v1
+  expect_equal(v1(120, TRUE) / v1(70, TRUE), 1.07, tolerance = 0.005)
+  expect_equal(v1(120, FALSE) / v1(70, FALSE), 1.14, tolerance = 0.005)
 })
 
 
@@ -293,4 +298,11 @@ test_that("with fat-free mass scaling the covariates see the pharmacokinetic wei
   expect_equal_rounded(x$PK$default$cl1 * 60, 64.4 * (clcr / 91.48)^0.223)
   expect_equal_rounded(x$metabolite$kFormation,
                        3.18574e-07 * 70 * 1.2209126 * 714 / v1)
+  # Vp/F and Q/F carry no covariate and take the library factors
+  expect_equal_rounded(x$PK$default$v2, 151 * 1.3049067)
+  expect_equal_rounded(x$PK$default$cl2 * 60, 0.910 * 1.2209126)
+  # and are the published values with the switch off, at any size
+  off <- hydrocodone(120, 170, 50, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(off$v2, 151)
+  expect_equal(off$cl2 * 60, 0.910)
 })

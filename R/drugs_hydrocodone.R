@@ -41,10 +41,12 @@
 # (adultEquivalentCreatinine()), or with the field blank an assumed normal
 # one, so renal impairment is represented only when it is entered.  Severe
 # impairment (CLCR 15 against 100) raises exposure by about half, the 53% the
-# paper reports.  Both covariates see the pharmacokinetic weight with the
-# fat-free-mass switch on (size$pkWeight) and total body weight with it off,
-# as for the other models that carry their own size terms; the switch has
-# no other effect on the disposition.  Melhem's subjects were adults, so a
+# paper reports.  As for the other models that carry their own size terms
+# (docs/adding-a-drug.md), both covariates see the pharmacokinetic weight with
+# the fat-free-mass switch on (size$pkWeight) and total body weight with it
+# off, and the size-free Vp/F and Q/F are scaled by the library's
+# fat-free-mass factors with the switch on and fixed at the published values
+# with it off.  Melhem's subjects were adults, so a
 # child's values are extrapolation.  The 70 kg, 170 cm, 35-year-old reference
 # man (BSA 1.83 m2, CLCR 107 mL/min/1.73 m2 at the assumed creatinine of
 # 0.9 mg/dL) gets Vc/F 707 L and CL/F 66.7 L/h.
@@ -255,17 +257,20 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
 
   # --- Apparent disposition, Melhem 2013, with its covariates (header) ---
   # Its own covariates in both switch positions, at the pharmacokinetic weight
-  # with the switch on and total body weight with it off.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
-  pkW  <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
+  # with the switch on and total body weight with it off.  Vp/F and Q/F, which
+  # have none, take the fat-free-mass factors with the switch on and are fixed
+  # with it off (legacy factors 1).
+  dispo <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
+                         legacyVolume = 1, legacyClearance = 1)
+  pkW  <- if (isTRUE(adjustToFFM)) dispo$pkWeight else weight
   bsa  <- bsaGehanGeorge(pkW, height)
   scr  <- adultEquivalentCreatinine(creatinine, age, sex)
   clcr <- creatinineClearanceCG(pkW, age, sex, scr) * 1.73 / bsa  # mL/min/1.73 m2
   v1  <- 714 * (bsa / 1.87)^0.486                  # L,   Vc/F (Eq 12)
-  v2  <- 151                                       # L,   Vp/F
+  v2  <- 151 * dispo$volume                        # L,   Vp/F
   v3  <- 1                                         # unused third compartment
   cl1 <- 64.4 / 60 * (clcr / 91.48)^0.223          # L/min, CL/F (Eq 11)
-  cl2 <- 0.910 / 60                                # L/min, Q/F
+  cl2 <- 0.910 / 60 * dispo$clearance              # L/min, Q/F
   cl3 <- 0
 
   # --- Absorption: plasma peak at 1.3 h ---
@@ -286,6 +291,8 @@ hydrocodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   # kFormation is divided by Vc/F's covariate factor (714 / v1): a larger
   # central volume does not form more hydromorphone.
   KFORMATION_PER_KG <- 3.18574e-07     # 1/min per kg, normal metaboliser
+  # Hydromorphone's own factors: linear in weight with the switch off.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
   kFormation <- KFORMATION_PER_KG * 70 * size$clearance * activity * 714 / v1
 
   reference <- paste0(
