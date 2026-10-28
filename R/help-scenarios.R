@@ -808,7 +808,7 @@ helpScenarioDefinitions <- function() {
         # tissue ("mg RA"); the narrative switches it back.
         c("lidocaine", 0, 400, "mg")
       ),
-      # A log axis keeps the first-minute plasma (65 mcg/mL) from flattening
+      # A log axis keeps the first-minute plasma (57 mcg/mL) from flattening
       # the effect site, which carries the point.
       maximum = 60, plasmaLinetype = "dashed", effectsiteLinetype = "solid",
       logY = TRUE

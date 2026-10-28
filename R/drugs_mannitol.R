@@ -69,23 +69,40 @@ mannitol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # 1 g/kg study (Rudehill 1993; 0.68 vs 0.58 mg/mL observed, against 1.23 with
   # 0.04), and lies closer to the clearances and half-lives reported elsewhere
   # (Cloyd 1986, Rudehill 1993) and to GFR, which is how mannitol is cleared.
-  # With 0.04 the terminal half-life would be 7.3 hours.
+  # With 0.04 the terminal half-life would be 7.3 hours (7.4 with V2
+  # re-anchored, below).
   v1Ref  <- 2.80
-  v2Ref  <- 8.86
+  v2Ref  <- 8.86   # Kaneda's typical patient's, 87 kg; re-anchored below
   v3Ref  <- 12.0
   cl1Ref <- 0.07
   cl2Ref <- 2.07
   cl3Ref <- 0.16
 
-  # Size scaling (see docs/weight-adjustment.md): Kaneda's full paper puts
-  # weight on V2 as 8.86 x exp(0.0136 x (WT - 87)), so its 8.86 L is an 87 kg
-  # patient's, and dose on CL1 as a factor of (1 - 0.344) at 0.5 g/kg.  Those
-  # equations are not applied: the means are taken to describe the 70 kg
-  # reference adult and scaled to fat-free mass in the usual way.  That is
-  # consistent with the study's own finding that weight-based dosing gave
-  # higher than expected concentrations in obese patients.  adjustToFFM = FALSE gives the published volumes and
+  # Size scaling (see docs/weight-adjustment.md): the means are taken to
+  # describe the 70 kg reference adult and scaled to fat-free mass in the
+  # usual way.  That is consistent with the study's own finding that
+  # weight-based dosing gave higher than expected concentrations in obese
+  # patients.  adjustToFFM = FALSE gives the published volumes and
   # distribution clearances unscaled.
+  #
+  # V2 is the exception.  Kaneda's full paper puts weight on it as
+  # 8.86 x exp(0.0136 x (WT - 87)), so its 8.86 L belongs to an 87 kg patient,
+  # not to the reference man.  At Steven L. Shafer's direction (2026-10-28) it
+  # is re-anchored by fat-free mass: x FFM_REFERENCE / the fat-free mass of
+  # Kaneda's typical patient, 87 kg at the cohort's mean height (167.5 cm)
+  # and age (56 y), weighted 6 men to 16 women as the cohort was (Table I):
+  # 52.69 kg, against the reference man's 54.48.  Because most of the cohort
+  # were women, that patient had LESS fat-free mass than the 70 kg reference
+  # man, so the re-anchored V2 is 9.16 L, 3.4% above the published value, not
+  # below it as a weight ratio would suggest.  With the switch off V2 is the
+  # published 8.86 L, unscaled.  Kaneda's exponential weight term itself, and
+  # the dose term on CL1 (x (1 - 0.344) at 0.5 g/kg), are not applied.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  if (isTRUE(adjustToFFM)) {
+    ffmKaneda <- (6 * ffmAlSallami(87, 167.5, 56, SEX_MALE) +
+                  16 * ffmAlSallami(87, 167.5, 56, SEX_FEMALE)) / 22
+    v2Ref <- v2Ref * FFM_REFERENCE / ffmKaneda     # 9.16 L
+  }
 
   # Renal function.  Mannitol is filtered at the glomerulus and not
   # reabsorbed; nearly all of a dose is excreted unchanged in the urine, so its

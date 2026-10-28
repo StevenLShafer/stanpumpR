@@ -10,11 +10,11 @@ test_that("returns the published parameters with total-body-weight scaling", {
     PK = list(
       default = list(
         v1 = 14.3,
-        v2 = 63.38694,
+        v2 = 63.1,
         v3 = 261.6,
-        cl1 = 0.92235,
-        cl2 = 1.55298,
-        cl3 = 0.32747
+        cl1 = 0.92,
+        cl2 = 1.55,
+        cl3 = 0.33
       )
     ),
     tPeak = 5.6,
@@ -35,11 +35,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
   actual <- sufentanil(120, 170, 50, "male")
   expected <- list(
         v1 = 18.660165,
-        v2 = 82.71404,
+        v2 = 82.339613,
         v3 = 341.36359,
-        cl1 = 1.1261088,
-        cl2 = 1.8960529,
-        cl3 = 0.39981226
+        cl1 = 1.1232396,
+        cl2 = 1.8924145,
+        cl3 = 0.4029012
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })

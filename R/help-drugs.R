@@ -1044,7 +1044,7 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     ev <- setdiff(ev, PK_EVENT_DEFAULT)
     eventsHTML <- paste0(
       helpH2("Events that change the kinetics"),
-      sprintf("<p>For %s, the parameters change when these clinical events are entered (Additional Plots \u2192 Events): <strong>%s</strong>. See %s.</p>",
+      sprintf("<p>For %s, the parameters change when these clinical events are entered (Graph Options \u2192 Additional plots \u2192 Events): <strong>%s</strong>. See %s.</p>",
               paste(unique(withEvents$Patient), collapse = " and "),
               htmltools::htmlEscape(paste(ev, collapse = ", ")),
               helpPageLink("models/pk-events"))

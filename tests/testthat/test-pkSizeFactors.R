@@ -99,6 +99,6 @@ test_that("recalculatePK passes the switch through", {
   off <- recalculatePK(NULL, getDrugDefaultsGlobal(FALSE), DT,
                        age = 50, weight = 120, height = 170, sex = "male",
                        adjustToFFM = FALSE)
-  expect_equal_rounded(on$ketamine$PK$default$v1,  .063 * 70 * 1.304907)
-  expect_equal_rounded(off$ketamine$PK$default$v1, .063 * 120)
+  expect_equal_rounded(on$ketamine$PK$default$v1,  .0583 * 70 * 1.304907)
+  expect_equal_rounded(off$ketamine$PK$default$v1, .0583 * 120)
 })
