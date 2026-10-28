@@ -160,8 +160,15 @@ $(document).on('shiny:value', function(event) {
   }
 });
 
-// When a modal opens, auto-focus on the first element that wants focus
+// When a modal opens, auto-focus on the first element that wants focus.  The
+// Add a dose dialog opened empty (the Add new drug button) focuses its drug
+// box instead, so the user can start typing a name at once.
 $(document).on('shown.bs.modal', function() {
+  var drug = document.getElementById('addDoseDrug');
+  if (drug && drug.selectize && !drug.selectize.getValue()) {
+    drug.selectize.focus();
+    return;
+  }
   $('.modal-body .modal-focusme:eq(0)').focus();
 });
 

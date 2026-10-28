@@ -323,3 +323,19 @@ inputWithInlineLabel <- function(tag) {
   )
   htmltools::attachDependencies(tag, dep)
 }
+
+# A bslib tooltip shown only while the pointer is over its control.  The
+# default trigger is "hover focus", so ticking a box focused it and pinned
+# the tip until something else was clicked (Steven L. Shafer, 2026-10-28:
+# it should go as soon as the cursor moves away).
+hoverTooltip <- function(trigger, ..., placement = "auto") {
+  bslib::tooltip(trigger, ..., placement = placement,
+                 options = list(trigger = "hover"))
+}
+
+# A Patient Profile field or Graph Options control that the server shows only
+# while a drug it applies to is in the dose table (relevantFields() in
+# R/patient-fields.R); its id is "field_<name>".
+relevantField <- function(name, ...) {
+  div(id = paste0("field_", name), class = "relevant-field", ...)
+}

@@ -48,6 +48,11 @@ they change the predictions.
 | Sex | male / female | |
 | Adjust weight to fat-free mass | checkbox | On by default. See below. |
 | Baseline serum osmolality | mOsm/kg | Before mannitol; 280 by default. Read only by mannitol, which is plotted as the serum osmolality it produces. See [docs/mannitol.md](mannitol.md). |
+| Opioid tolerance | none / mild / somewhat / highly tolerant | Multiplies every opioid's MEAC by 1, 1.5, 2 or 3 (`OPIOID_TOLERANCE_FACTORS`, applied in `recalculatePK()`). |
+
+Only age, weight, height, sex and the fat-free-mass box are always shown; every
+other field appears only while a drug that reads it is in the dose table
+(`relevantFields()` in `R/patient-fields.R`).
 
 **Adjust weight to fat-free mass.** Most of the drug models were reported for a
 typical 70 kg adult and, if they scaled at all, scaled with total body weight.
@@ -186,13 +191,15 @@ and you can edit it (see *Drug Library*).
 | Y axis height | Plot height in pixels |
 | Time until threshold | Draws, for each drug, how long until it falls to its recovery threshold (`endCe` in the library). Only available when normalization is off |
 | Log Y axis | Log-scale the concentration axis. Unavailable when Time until threshold, Events, or Interaction are showing, because those panels do not have a meaningful log form |
-| Minto / Schnider | Also run the Schnider (1998) propofol and Minto (1997) remifentanil models, the models most TCI pumps use, beside the library's Eleveld models: a second line in each drug's panel, and under TCI a second pump in the rate panel. Time until threshold stays on the Eleveld model. Enabled only while propofol or remifentanil is in the dose table |
+| Minto / Schnider | Also run the Schnider (1998) propofol and Minto (1997) remifentanil models, the models most TCI pumps use, beside the library's Eleveld models: a second line in each drug's panel, and under TCI a second pump in the rate panel. Time until threshold stays on the Eleveld model. Shown only while propofol or remifentanil is in the dose table |
 
 ---
 
-## Additional Plots
+## Additional plots
 
-Checkboxes that add panels beneath the concentration plot.
+Checkboxes at the foot of Graph Options that add panels beneath the
+concentration plot. MEAC is offered only while an opioid is in the dose table,
+Interaction only while propofol and an opioid are.
 
 ### MEAC
 

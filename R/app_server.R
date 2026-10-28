@@ -767,6 +767,14 @@ app_server <- function(input, output, session) {
     input$sex
   })
 
+  # The Opioid tolerance field: each opioid's MEAC times its factor
+  # (OPIOID_TOLERANCE_FACTORS).  "none" until the field reports, and for
+  # bookmarks made before it existed.
+  opioidTolerance <- reactive({
+    x <- input$opioidTolerance
+    if (is.null(x) || !x %in% OPIOID_TOLERANCE_VALUES) OPIOID_TOLERANCE_DEFAULT else x
+  })
+
   adjustToFFM <- reactive({
     # TRUE until the checkbox reports, so the first simulation uses the default.
     if (is.null(input$adjustToFFM)) TRUE else isTRUE(input$adjustToFFM)
@@ -833,6 +841,22 @@ app_server <- function(input, output, session) {
       condition = !is.null(DT) &&
         nrow(activeAntiseizureInteractions(unique(DT$Drug))) > 0
     )
+  })
+
+  # Show only the Patient Profile fields and Graph Options controls that apply
+  # to a drug in the dose table, committed or still being edited
+  # (relevantFields() in R/patient-fields.R).  A hidden control keeps its
+  # value, which does nothing while no drug reads it.
+  observe({
+    drugs <- c(doseTable()$Drug,
+               tryCatch(doseTableDraft()$Drug, error = function(e) NULL))
+    shown <- relevantFields(drugs, drugDefaults())
+    for (field in setdiff(names(shown), c("plotMEAC", "plotInteraction")))
+      shinyjs::toggle(id = paste0("field_", field), condition = shown[[field]])
+    # The two optional Additional plots, inside their checkbox group
+    choice <- function(value) sprintf("#addedPlots .checkbox:has(input[value='%s'])", value)
+    shinyjs::toggle(selector = choice(PLOT_ID_MEAC), condition = shown[["plotMEAC"]])
+    shinyjs::toggle(selector = choice(PLOT_ID_INTERACTION), condition = shown[["plotInteraction"]])
   })
 
   # Vaporisers that together exceed 100% are a fresh gas that cannot exist.
@@ -1020,6 +1044,7 @@ app_server <- function(input, output, session) {
         gestationalAge = gestationalAge(),
         pregnant = pregnant(),
         adjustToFFM = adjustToFFM(),
+        opioidTolerance = opioidTolerance(),
         alternativeModels = companionGroupsOn(),
         antiseizureInteractions = antiseizureInteractions()
       ) |> profileCode("recalculatePK() in drugs()")
@@ -1820,7 +1845,10 @@ app_server <- function(input, output, session) {
   }
 
   # `time` is in minutes (imgDrugTime()); the dialog shows it, and the dose
-  # table stores what is typed, in the dose table's format.
+  # table stores what is typed, in the dose table's format.  `drug` is ""
+  # for the Add new drug button: the drug box then opens empty, so typing
+  # the first letters of a name finds it (a preselected drug would have to
+  # be deleted first).
   showAddDrugModal <- function(drug, time) {
     skipTarget(list(drug = drug, time = time))
     thisDrug     <- which(drug == drugDefaults()$Drug)
@@ -1832,13 +1860,15 @@ app_server <- function(input, output, session) {
       modalDialog(
         `data-submit-btn` = "addDoseBtn",
         title = "Add a dose",
-        selectInput(
+        selectizeInput(
           inputId = "addDoseDrug",
           label = "Drug",
           # The visible drugs, honouring the illicit-drug opt-in; the clicked
-          # drug is always included (it is already in the table).
-          choices = union(drug, drugChoices()),
-          selected = drug
+          # drug is always included (it is already in the table).  "" first,
+          # so that an empty box can be selected.
+          choices = c("", union(drug[nzchar(drug)], drugChoices())),
+          selected = drug,
+          options = list(placeholder = "Type a drug name")
         ),
         textInput(
           inputId = "addDoseTime",
@@ -1873,18 +1903,11 @@ app_server <- function(input, output, session) {
   }
 
   # The Add new drug button under the plot: the same dialog as a click on
-  # the plot, offered on the first drug (alphabetically) not yet in the dose
-  # table, or the first drug when every one is, at the start of the plot.
-  # The drug and time are the dialog's suggestions; both can be changed.
-  newDrugSuggestion <- function() {
-    choices <- drugChoices()
-    unused <- setdiff(choices, doseTable()$Drug)
-    if (length(unused)) unused[1] else choices[1]
-  }
-
+  # the plot, with the drug box empty (Steven L. Shafer, 2026-10-28: a
+  # suggested drug defeated typing a name), at the start of the plot.
   observeEvent(input$addNewDrug, {
     profileCode({
-      showAddDrugModal(newDrugSuggestion(), 0)
+      showAddDrugModal("", 0)
     }, name = "input$addNewDrug observer")
   })
 
@@ -1928,6 +1951,10 @@ app_server <- function(input, output, session) {
       if (!nzchar(addDoseAmount)) {
         showNotification("That dose could not be read: enter it as a number, such as 2.5.",
                          type = "error")
+        return()
+      }
+      if (!isTRUE(input$addDoseDrug %in% drugDefaults()$Drug)) {
+        showNotification("Choose a drug.", type = "error")
         return()
       }
       removeModal()

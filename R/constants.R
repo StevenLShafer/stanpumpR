@@ -84,6 +84,15 @@ CYP2B6_VALUES  <- c(CYP2B6_POOR, CYP2B6_INTERMEDIATE, CYP2B6_NORMAL,
                     CYP2B6_RAPID, CYP2B6_ULTRARAPID)
 CYP2B6_DEFAULT <- CYP2B6_NORMAL
 
+# OPIOID TOLERANCE, the Patient Profile's Opioid tolerance field: each
+# opioid's MEAC is multiplied by the factor (Steven L. Shafer, 2026-10-28), so
+# the % MEAC panel and overlay, the MEAC sum, the propofol-opioid interaction
+# and the opioid-MAC interaction all see a tolerant patient's opioid as less
+# effective.  The band and the time-until-threshold value are unchanged.
+OPIOID_TOLERANCE_FACTORS <- c(none = 1, mild = 1.5, somewhat = 2, high = 3)
+OPIOID_TOLERANCE_VALUES  <- names(OPIOID_TOLERANCE_FACTORS)
+OPIOID_TOLERANCE_DEFAULT <- "none"
+
 # CYP2C9 DIPLOTYPE, read by the models that name it: meloxicam, whose genotype
 # effect on clearance is estimated per allele (Aoyama 2017), and phenytoin,
 # which maps the diplotype to a maximal-elimination-rate multiplier through the

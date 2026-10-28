@@ -47,9 +47,9 @@ With **Graph Options → Peripheral compartments** ticked, each drug's panel, wh
 
 | Panel | Shown when | What it plots |
 |---|---|---|
-| % MEAC | *Additional Plots → MEAC* | Each opioid's effect-site concentration as a percentage of its minimum effective analgesic concentration, and their sum |
-| p response | *Additional Plots → Interaction* | Probability of response to laryngoscopy from the propofol-opioid interaction surface |
-| Events | *Additional Plots → Events* | Clinical events on the time axis |
+| % MEAC | *Graph Options → Additional plots → MEAC* | Each opioid's effect-site concentration as a percentage of its minimum effective analgesic concentration, and their sum |
+| p response | *Graph Options → Additional plots → Interaction* | Probability of response to laryngoscopy from the propofol-opioid interaction surface |
+| Events | *Graph Options → Additional plots → Events* | Clinical events on the time axis |
 | MAC equivalents | Any potent inhaled agent is running | Alveolar concentration as a multiple of the age-adjusted MAC, summed over agents |
 | Oxygen | Any gas flow is running | Inspired and alveolar oxygen |
 | *drug* TCI | The drug has a *Plasma target* or *Effect site target* row | The pump rate the TCI controller ran; see [Target-controlled infusion](help:tci) |
