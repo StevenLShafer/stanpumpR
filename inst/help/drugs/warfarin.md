@@ -14,7 +14,7 @@ The enantiomer concentrations are not plotted or added. They drive the synthesis
 
 ### Why the INR, not a concentration
 
-The INR is a delayed, non-linear function of two concentrations, so it is computed from the two enantiomer curves after the engines have run rather than as an effect site. There is no MEAC, no band and no "time until threshold": the INR falls after warfarin is stopped at the pace of clotting-factor synthesis, which the effect-site recovery calculation does not describe.
+The INR is a delayed, non-linear function of two concentrations, so it is computed from the two enantiomer curves after the engines have run rather than as an effect site. There is no MEAC and no "time until threshold": the INR falls after warfarin is stopped at the pace of clotting-factor synthesis, which the effect-site recovery calculation does not describe. The shaded band is the INR target, 2.0 to 3.0 with 2.5 typical, the Coumadin label's target for venous thromboembolism and atrial fibrillation (section 2.2; 2.5 to 3.5 for some mechanical valves) and the CHEST guideline's (Holbrook and colleagues, *Chest* 2012;141(2 Suppl):e152S-e184S, https://doi.org/10.1378/chest.11-2295); it is a reference for reading the curve, not a dose recommendation.
 
 ### Covariates
 

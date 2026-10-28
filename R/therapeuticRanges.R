@@ -13,7 +13,7 @@
 # how far it was read, the range it replaced, what the FDA or EMA product
 # information says, and a band_status (THERAPEUTIC_RANGE_STATUSES) saying
 # whether the band draws it and, if not, why.  Every drug in
-# THERAPEUTIC_RANGE_CATEGORIES has a row; test-therapeutic-ranges.R holds the
+# THERAPEUTIC_RANGE_CATEGORIES (every category) has a row; test-therapeutic-ranges.R holds the
 # band columns to the registry.  The CSV is edited by hand.
 # -----------------------------------------------------------------------------
 
@@ -59,6 +59,8 @@ therapeuticRangeSummary <- function(r)
     pending_verification = sprintf("Not drawn: not yet verified in a primary source (%s)", r$source),
     not_applicable = sprintf("Not drawn: %s", r$notes),
     band_differs = sprintf("%s (%s; %s), not the band drawn: %s", limits, what, r$source, r$notes),
+    library_band = sprintf("None established (%s); the band drawn is the library's own: %s",
+                           r$source, r$notes),
     none_established = sprintf("None established (%s)", r$source)
   )
 }

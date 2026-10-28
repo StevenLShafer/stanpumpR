@@ -377,9 +377,9 @@ DRUG_CATEGORIES <- c(
 VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
-# range the band draws, or why there is none.  Checked by
-# test-therapeutic-ranges.R.
-THERAPEUTIC_RANGE_CATEGORIES <- c("Antiseizure", "Antidepressants", "Antipsychotics", "Stimulants")
+# range the band draws, or why there is none.  Every category since
+# 2026-10-27.  Checked by test-therapeutic-ranges.R.
+THERAPEUTIC_RANGE_CATEGORIES <- DRUG_CATEGORIES
 # What a therapeutic-range row may say about the band (R/therapeuticRanges.R).
 THERAPEUTIC_RANGE_STATUSES <- c(
   "drawn",                # the band is this range, on this drug's row
@@ -390,6 +390,9 @@ THERAPEUTIC_RANGE_STATUSES <- c(
   "not_applicable",       # a range exists, but not for the use this model plots
   "band_differs",         # the range is for another use or analyte, and the
                           # band is the library's own for what the row plots
+  "library_band",         # no range is established for what the row plots;
+                          # the band is the library's own (an effect-site
+                          # target, an MBC band, what ordinary doses reach)
   "none_established"      # no range has been established
 )
 # The category of the opt-in research models of drugs of abuse
