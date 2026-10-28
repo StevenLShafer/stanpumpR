@@ -328,7 +328,7 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
   for (i in seq_len(nrow(dd))) {
     units <- dd$Units[[i]]
     units <- units[!is.na(units) & nzchar(units)]
-    units <- unique(sub(" (qd|bid|tid|qid|q4h|qwk)$", "", units))
+    units <- unique(sub(" (qd|bid|tid|qid|q4h|qam|qpm|qwk)$", "", units))
     route <- doseRoute(units)
     if (!any(route %in% names(column))) next
     title <- helpDrugTitle(dd$Drug[i])
@@ -359,7 +359,7 @@ test_that("the cautions page names every model that reads a patient field", {
     paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"), warn = FALSE),
           collapse = "\n"))))
   for (arg in c("creatinine", "osmolality", "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6",
-                "pregnant")) {
+                "pregnant", "gestationalAge")) {
     readers <- Filter(function(drug) helpDrugDeclares(drug, arg), getDrugDefaultsGlobal()$Drug)
     expect_gt(length(readers), 0, label = arg)
     for (drug in readers) {

@@ -102,6 +102,20 @@ CYP2C9_DEFAULT <- "*1/*1"
 VKORC1_VALUES  <- c("GG", "GA", "AA")
 VKORC1_DEFAULT <- "GG"
 
+# CYP4F2 rs2108622 (1297C>T, V433M) GENOTYPE, read only by the library warfarin
+# (Xue 2017), where a C allele (CC or CT) lowers the S-warfarin C50 x0.770
+# against TT: the T allele's enzyme oxidises less vitamin K1, so a T/T patient
+# needs more warfarin.  Its own Patient Profile field.
+# The default is CC, the most sensitive genotype, by Steven L. Shafer's
+# decision (2026-10-27): when the genotype is not entered, the model should
+# predict the LARGER INR rise, so that a dose chosen from the curve errs toward
+# underdosing.  An underdose at the start of therapy is corrected by raising
+# the dose; an overdose risks bleeding, warfarin's primary toxicity, and may
+# need reversal with vitamin K.  (Xue's Table S6 offers x0.783 for an unknown
+# CYP4F2, nearly the same C50; CC gives x0.770.)
+CYP4F2_VALUES  <- c("CC", "CT", "TT")
+CYP4F2_DEFAULT <- "CC"
+
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
 # their own contribution on top of it.  The default, 280, is within the normal
@@ -120,6 +134,15 @@ MAX_OSMOLALITY <- 400
 # the assumed normal value for the patient's age and sex (R/renalFunction.R).
 MIN_CREATININE <- 0.2
 MAX_CREATININE <- 15
+
+# Gestational age at birth, weeks, for the neonatal models whose clearance
+# matures with postmenstrual age (dobutamineNeonatal).  Optional: when it is
+# not entered (NULL, or NA from an empty field) the birth is taken as at term,
+# GESTATIONAL_AGE_TERM.  Postmenstrual age is this plus the postnatal age
+# (postmenstrualAge()).  Read only by models that name `gestationalAge`.
+GESTATIONAL_AGE_TERM <- 40
+MIN_GESTATIONAL_AGE <- 22
+MAX_GESTATIONAL_AGE <- 44
 
 MIN_AGE <- 0
 MAX_AGE <- 90
@@ -322,12 +345,20 @@ TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 # drug that offers qid also offers q4h (drugDefaults_global.csv).
 SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60,
                         q4h = 4 * 60)
+# Separate morning ("qam") and evening ("qpm") once-daily slots, oral and
+# sublingual only, offered only on the antiseizure drugs.  Unlike the whole-day
+# frequencies above, a qam and a qpm schedule DO NOT replace each other, so a
+# split regimen with a different morning and evening dose can be entered (the
+# antiseizure drugs are sedating and affect memory, so the morning dose is
+# often smaller than the evening one).  See scheduled.R for the rules.
+SLOT_SCHEDULE_INTERVALS <- c(qam = 24 * 60, qpm = 24 * 60)
 # Once weekly ("qwk"), offered only on the subcutaneous units: semaglutide,
 # dulaglutide and tirzepatide are injected once a week.  Kept out of
 # SCHEDULE_INTERVALS, the daily frequencies every other scheduled drug offers;
 # scheduled.R reads ALL_SCHEDULE_INTERVALS.
 WEEKLY_SCHEDULE_INTERVAL <- c(qwk = 7 * 24 * 60)
-ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)
+ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, SLOT_SCHEDULE_INTERVALS,
+                            WEEKLY_SCHEDULE_INTERVAL)
 # A scheduled repeat this close (minutes) to the row that ends its schedule
 # is replaced by that row (scheduled.R): the 0.001-minute snap of a time
 # written in hours or days (TIME_SNAP_DIGITS).
@@ -337,7 +368,14 @@ scheduledUnits <- c(
     c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
     names(SCHEDULE_INTERVALS), paste
   ))),
-  as.vector(t(outer(c(scUnits, insulinUnits), names(ALL_SCHEDULE_INTERVALS), paste)))
+  # qam/qpm: the oral and sublingual forms only (the antiseizure drugs).
+  as.vector(t(outer(
+    c(poUnits, poFormulationUnits, slUnits),
+    names(SLOT_SCHEDULE_INTERVALS), paste
+  ))),
+  # The subcutaneous units take the daily frequencies and qwk, not qam/qpm.
+  as.vector(t(outer(c(scUnits, insulinUnits),
+                    names(c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)), paste)))
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier

@@ -97,10 +97,12 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
                           cyp2c19 = CYP2C19_DEFAULT,
                           cyp2c9 = CYP2C9_DEFAULT,
                           vkorc1 = VKORC1_DEFAULT,
+                          cyp4f2 = CYP4F2_DEFAULT,
                           cyp2b6 = CYP2B6_DEFAULT,
                           pregnant = FALSE,
                           alternativeModels = FALSE,
-                          antiseizureInteractions = FALSE) {
+                          antiseizureInteractions = FALSE,
+                          gestationalAge = NULL) {
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
   resolve <- function(drugs, drug) {
@@ -123,11 +125,13 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
         cyp2c19 = cyp2c19,
         cyp2c9 = cyp2c9,
         vkorc1 = vkorc1,
+        cyp4f2 = cyp4f2,
         cyp2b6 = cyp2b6,
         osmolality = osmolality,
         creatinine = creatinine,
         pregnant = pregnant,
-        adjustToFFM = adjustToFFM
+        adjustToFFM = adjustToFFM,
+        gestationalAge = gestationalAge
       )
     )
     drugs

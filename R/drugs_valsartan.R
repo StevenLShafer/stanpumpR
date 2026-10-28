@@ -24,7 +24,7 @@
 # Two compartments with first-order elimination and a ZERO-ORDER input of
 # duration D1, which the authors chose on the data rather than by habit: the
 # objective function was 7712.434 for zero-order absorption against 7874.858
-# for first-order, a difference of 162 on the same number of parameters.  So
+# for first-order, a difference of 162.  So
 # the absorption is declared as an `oralZeroOrder` release (R/oral-zero-order.R,
 # built for carvedilol, whose source rejected first-order absorption for the
 # same kind of reason) and each oral dose is rewritten into the constant-rate

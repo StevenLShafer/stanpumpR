@@ -3,7 +3,8 @@
 # covariate only to the models that name it in their signature, so the
 # signatures are what the tips must agree with.
 
-patientFieldArgs <- c("cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "creatinine")
+patientFieldArgs <- c("cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6", "creatinine",
+                      "gestationalAge")
 
 test_that("the readers of each field are exactly the models that name it", {
   dd <- getDrugDefaultsGlobal()
@@ -73,15 +74,22 @@ test_that("the creatinine tooltip quotes the assumed adult values from R/renalFu
   expect_match(tip, "Leave blank", fixed = TRUE)
   expect_match(tip, "Renal impairment is then not represented", fixed = TRUE)
   # The pharmacogenetic tips say nothing about a blank field
-  for (arg in setdiff(patientFieldArgs, "creatinine"))
+  for (arg in setdiff(patientFieldArgs, c("creatinine", "gestationalAge")))
     expect_false(grepl("Leave blank", patientFieldTooltip(arg), fixed = TRUE))
+})
+
+test_that("the gestational-age tooltip says a blank field is a term birth", {
+  tip <- patientFieldTooltip("gestationalAge")
+  expect_match(tip, "dobutamineNeonatal", fixed = TRUE)
+  expect_match(tip, sprintf("Leave blank for a term birth (%s weeks)", GESTATIONAL_AGE_TERM),
+               fixed = TRUE)
 })
 
 test_that("an unknown field is refused", {
   expect_error(patientFieldTooltip("weight"))
 })
 
-test_that("the Patient Profile carries the five hover tips", {
+test_that("the Patient Profile carries the six hover tips", {
   skip_if_not_installed("bslib")
   # app_ui() uses numericInput(updateOn = ), which needs shiny 1.10
   skip_if_not_installed("shiny", "1.10.0")

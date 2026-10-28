@@ -34,7 +34,7 @@ Minto, Schnider, Gregg, Henthorn and Shafer showed in 2003 (*Anesthesiology* 99:
 | morphine | 93.8 | |
 | methadone | 10 | Kharasch 2004 peak miosis 10-15 min, within Inturrisi 1987's range |
 | hydromorphone | 19.6 | |
-| oxycodone | 12.35 | Lalovic 2006 (pupil) t½ke0 11 min |
+| oxycodone | 12.09 | Lalovic 2006 (pupil) t½ke0 11 min |
 | oliceridine | 4.4 | Dahan 2020: analgesia too fast to measure, taken as t½ke0 1 min |
 | buprenorphine | 61.2 | Yassen 2006 ke0, carried as tPeak |
 | naloxone | 3.58 | Yassen 2007 ke0, carried as tPeak |

@@ -25,9 +25,9 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
     ),
     tPeak = 61.2,
     MEAC = 0,
-    typical = 2.2,
-    upperTypical = 2.5,
-    lowerTypical = 0.5,
+    typical = 0.4,
+    upperTypical = 1,
+    lowerTypical = 0.2,
     sublingualSaturation = list(Imax = 0.816527, ID50 = 3.42670),
     reference = actual$reference
   )
@@ -99,11 +99,14 @@ test_that("the CSV row matches the model's band and offers no MEAC", {
   expect_equal(row$Lower, out$lowerTypical)
   expect_equal(row$Upper, out$upperTypical)
   expect_equal(row$Typical, out$typical)
-  expect_equal(row$endCe, BUPRENORPHINE_WITHDRAWAL)
+  # The library's analgesic band, not Hart 2026's range for opioid use
+  # disorder (see the header)
+  expect_equal(c(row$Lower, row$Upper, row$Typical), c(0.2, 1, 0.4))
+  expect_equal(row$endCe, BUPRENORPHINE_ANALGESIA_END)
   expect_equal(row$Category, "Opioids")
   routes <- unique(doseRoute(row$Units[[1]]))
   expect_setequal(routes, c(ROUTE_IV, ROUTE_SL))
-  # 70% receptor occupancy by Nasser 2014's Emax model is the typical value
+  # 70% receptor occupancy by Nasser 2014's Emax model is 2.2 ng/mL
   expect_equal(round(91.4 * 2.2 / (0.67 + 2.2), 1), 70.1)
 })
 
@@ -226,4 +229,17 @@ test_that("pregnancy: elimination clearance x 1.83, absorption unchanged (Zhu 20
   expect_match(on$reference, "Zhu Y", fixed = TRUE)
   expect_match(on$reference, "pregnancy:", fixed = TRUE)
   expect_no_match(off$reference, "Zhu Y")
+})
+
+test_that("the band reproduces its derivation from McQuay 1980's demand analgesia", {
+  # 0.3 mg IV at induction and 0.3 mg 3 h later; analgesia ended a median
+  # 480 min after the second dose.  The study's average patient: 65 y, 66 kg.
+  d <- data.frame(Drug = "buprenorphine", Time = c(0, 180), Dose = 0.3, Units = "mg")
+  w <- simulateDrugsWithCovariates(d, noEvents, 66, 170, 65, "male", 900,
+                                   FALSE)$buprenorphine$wide
+  ce <- w[["Effect Site"]]
+  # The lower edge and threshold: the effect site when demands resumed
+  expect_equal(round(approx(w$Time, ce, 180 + 480)$y, 2), BUPRENORPHINE_ANALGESIA_END)
+  # The upper edge: the peak after the second dose
+  expect_equal(round(max(ce[w$Time > 180]), 1), 1)
 })

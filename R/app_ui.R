@@ -273,6 +273,20 @@ app_ui <- function() {
                   placement = "right"
                 ),
 
+                # Read by the library warfarin: a C allele of rs2108622 lowers
+                # the S-warfarin C50.  CC, the most sensitive genotype, is the
+                # default (see CYP4F2_DEFAULT in R/constants.R for why).
+                bslib::tooltip(
+                  selectInput(
+                    inputId = "cyp4f2",
+                    label = "CYP4F2",
+                    CYP4F2_VALUES,
+                    selected = CYP4F2_DEFAULT
+                  ),
+                  patientFieldTooltip("cyp4f2"),
+                  placement = "right"
+                ),
+
                 # Read only by the osmotic agents (mannitol), which plot the
                 # serum osmolality they produce on top of this baseline.
                 bslib::tooltip(
@@ -307,6 +321,23 @@ app_ui <- function() {
                     step = 0.1
                   ),
                   patientFieldTooltip("creatinine"),
+                  placement = "right"
+                ),
+
+                # Read only by the neonatal models that name `gestationalAge`
+                # (dobutamineNeonatal), whose clearance matures with
+                # postmenstrual age, the gestational age at birth plus the
+                # postnatal age.  Blank means a term birth (40 weeks).
+                bslib::tooltip(
+                  numericInput(
+                    inputId = "gestationalAge",
+                    label = "Gestational age at birth (weeks)",
+                    value = NA,
+                    min = MIN_GESTATIONAL_AGE,
+                    max = MAX_GESTATIONAL_AGE,
+                    step = 0.5
+                  ),
+                  patientFieldTooltip("gestationalAge"),
                   placement = "right"
                 )
               ),
@@ -443,7 +474,12 @@ app_ui <- function() {
                   checkboxInput(
                     inputId = ASM_INTERACTIONS_INPUT,
                     label = "Include antiseizure drug interactions",
-                    value = FALSE
+                    # Checked by default (Steven L. Shafer, 2026-10-28): the box
+                    # starts disabled and has no effect until the dose table
+                    # holds an interacting pair, at which point the server
+                    # enables it and the interactions apply without the user
+                    # having to find and tick this option.
+                    value = TRUE
                   ) |>
                     shinyjs::disabled(),
                   paste(

@@ -19,7 +19,7 @@ do well outside it, and the band says nothing about a single dose.
 **Hart XM, Gründer G, Hiemke C, et al. Consensus guidelines for therapeutic drug monitoring in
 neuropsychopharmacology: update 2026.** *Pharmacopsychiatry* 2026;59:166-295, doi
 [10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861). Open access. Its Table 5 (pp.
-184-217 of the journal) gives, for 160 drugs, the time between the last dose and sampling, the
+185-217 of the journal) gives, for 160 drugs, the time between the last dose and sampling, the
 therapeutic reference range and the indication it is valid for, the laboratory alert level, the
 level of recommendation to use TDM (1 strongly recommended, 2 recommended, 3 useful, 4
 potentially useful) and a comment on where the range comes from; a `+` after a drug's name
@@ -27,22 +27,24 @@ marks a range revised or new since the 2017 update. It supersedes the 2017 updat
 2018) and covers the antiseizure drugs as well as the psychiatric ones. Table 5 was read in
 full on 2026-10-20, and every row of the CSV that cites it says so.
 
-For an antiseizure drug Table 5 omits (phenobarbital as a drug of its own, ethosuximide), the
-band is the ILAE position paper's (Patsalos 2008, Table 1, read in full 2026-10-27; also quoted
-in Reimers 2018). Its Table 1 also gives gabapentin 2–20 mg/L, the range Table 5 carries, and
-calls pregabalin's not established.
+For an antiseizure drug Table 5 omits (ethosuximide), the band is the ILAE position paper's
+(Patsalos 2008, Table 1, read in full 2026-10-27; also quoted in Reimers 2018). Its Table 1 also
+gives phenobarbital 10–40 mg/L, the band until 2026-10-27, and gabapentin 2–20 mg/L, the range
+Table 5 carries, and calls pregabalin's not established. Phenobarbital has no row of its own in
+Table 5, but its "Primidone and phenobarbital" row (p. 210) gives phenobarbital's range as well
+as primidone's, so that is drawn.
 
 ## Antiseizure drugs
 
 | Drug | Band | Alert | Source | Change |
 |---|---|---|---|---|
 | phenytoin | 10–20 mg/L total | 50 | Hart 2026 | Unchanged. Dilantin label: 10–20 mcg/mL |
-| carbamazepine | 4–12 mg/L | 20 | Hart 2026 | Unchanged (4–10 for mania) |
+| carbamazepine | 4–12 mg/L | 20 | Hart 2026 | Marked + in Table 5 (revised or new since 2017; what changed is not stated); 4–10 for mania |
 | valproate | 50–100 mg/L total | 120 | Hart 2026 | Unchanged. Depakote label: 50–100 mcg/mL |
-| phenobarbital | 10–40 mg/L | — | ILAE 2008 | Not its own row; Hart 2026's primidone row gives phenobarbital 10–30 |
+| phenobarbital | **10–30 mg/L**, 12 h | 50 | Hart 2026 ("Primidone and phenobarbital" row, from the SPC) | Was 10–40 (ILAE 2008); changed 2026-10-27 by decision of Steven L. Shafer |
 | pentobarbital | **none** (pending) | — | **no source read** | 20–40 mg/L is the candidate for barbiturate coma; not drawn until a primary source is read |
 | ethosuximide | 40–100 mg/L | — | ILAE 2008 | Not in Table 5. Zarontin label: 40–100 mcg/mL |
-| topiramate | 5–20 mg/L | 30 | Hart 2026 | Unchanged |
+| topiramate | 5–20 mg/L | 30 | Hart 2026 | Marked + in Table 5 (revised or new since 2017; what changed is not stated) |
 | lacosamide | **1–12 mg/L** | 24 | Hart 2026 | Was 10–20 (Patsalos 2018), drawn from samples 0–3 h after a dose |
 | lamotrigine | 3–15 mg/L | 20 | Hart 2026 | Unchanged |
 | zonisamide | 10–40 mg/L | 80 | Hart 2026 | Unchanged |
@@ -72,8 +74,8 @@ epilepsy range is drawn and the neuropathic one recorded.
 | mirtazapine | 30–80 ng/mL | 160 | Hart 2026 | Unchanged |
 | bupropion | 850–1500 ng/mL **of hydroxybupropion**, drawn on that row | 1500 | Hart 2026 | Was described as a range for the sum |
 | fluoxetine, norfluoxetine | not drawn: **150–300 ng/mL** is for the sum | 1000 | Hart 2026 | Was 120–500 (2017) |
-| venlafaxine | not drawn: 140–600 ng/mL is for the active moiety | 1200 | Hart 2026 (from Lense 2023) | Was 100–400 (2017) |
-| desvenlafaxine (ODV) | 85–380 ng/mL | 450 | Hart 2026 (from Lense 2023) | New |
+| venlafaxine | not drawn: 140–600 ng/mL is for the active moiety | 1200 | Hart 2026 (from Lense 2024) | Was 100–400 (2017) |
+| desvenlafaxine (ODV) | 85–380 ng/mL | 450 | Hart 2026 (from Lense 2024) | New |
 
 ## Antipsychotics
 
@@ -117,8 +119,7 @@ ng/mL at 4.5 h for a 36 kg child, 16–22% low and an hour late.
 |---|---|---|---|---|
 | alprazolam | **5–44 ng/mL**, 10 h | 100 | Hart 2026 | Was 20–40 (Greenblatt and Wright 1993), which lies inside it |
 | temazepam | **200–750 ng/mL**, 1–2 h | 1,500 | Hart 2026 | Was 250–600 (Saletu 1986, van Steveninck 1994) |
-| zolpidem | 80–200 ng/mL, 1–3 h | 400 | Hart 2026 | Unchanged; was attributed to Cha 2024 |
-| buprenorphine | **0.5–2.5 ng/mL**, 24 h (opioid use disorder) | 4 | Hart 2026 | Was 1.25–3 |
+| zolpidem | 80–200 ng/mL, 1–3 h | 400 | Hart 2026 | Same range, marked + in Table 5 (revised or new since 2017; what changed is not stated); was attributed to Cha 2024 |
 | clonazepam | see the antiseizure table | | | |
 
 These keep their own band, because Table 5's range is for another use or analyte. Each is a
@@ -128,8 +129,9 @@ These keep their own band, because Table 5's range is for another use or analyte
 |---|---|---|
 | ketamine | 60–410 ng/mL after 0.5 mg/kg over 40 min, depression | 0.1–0.16 mg/L, the analgesic threshold (Mion 2013, citing Clements 1982) |
 | methadone | 90–620 ng/mL at 24 h, opioid use disorder | 48–120 ng/mL, postoperative analgesia (Gourlay 1984) |
-| morphine | 5–400 ng/mL chronic pain; 50–520 opioid use disorder | 6.4–16 ng/mL, around the MEAC |
-| oxycodone | 5–100 ng/mL at 12 h, chronic pain | 10–20 ng/mL, around the MEAC |
+| morphine | 5–400 ng/mL pain; 50–520 opioid use disorder | 6.4–16 ng/mL, around the MEAC |
+| oxycodone | 5–100 ng/mL at 12 h, pain | 10–20 ng/mL, around the MEAC |
+| buprenorphine | 0.5–2.5 ng/mL at 24 h, opioid use disorder (alert 4) | **0.2–1 ng/mL**, typical 0.4, at the effect site: simulated analgesic exposure, its lower edge the concentration simulated for the average patient at the median end of analgesia in McQuay 1980 (read in full), an illustrative estimate rather than a measured threshold. Was Table 5's range, drawn 2026-10-20 to 2026-10-27, which had replaced 1.25–3 |
 | lorazepam | 5–100 ng/mL at 12 h, anxiety, oral | **51–152 ng/mL**, typical 104, moderate sedation (Barr 2001, read in full); was 34–104 |
 | midazolam | 50–150 ng/mL at 1–2 h, sedation after oral premedication (level 4) | **101–304 ng/mL**, typical 208, moderate sedation (Barr 2001); was 40–120, source not recorded. See below |
 | diazepam | 100–1,500 ng/mL of diazepam plus nordiazepam | **606–1,824 ng/mL** of diazepam, typical 1,248: midazolam's moderate-sedation band × 6; was 150–600. Nordiazepam is not modelled |
@@ -284,7 +286,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | pregabalin | Chan 2021, *Clin Pharmacol Ther* 110:132 | 33280106 | The former band |
 | mixedAmphetamineSalts | McGough 2003, *J Am Acad Child Adolesc Psychiatry* 42:684 | 12921476 | Source of 23–45 ng/mL, and the model's fit |
 | lisdexamfetamine | Boellner 2010, *Clin Ther* 32:252 | 20206783 | Source of 44–160 ng/mL |
-| methylphenidate | Chermá 2017, *Eur J Drug Metab Pharmacokinet* 42:295 | 27220743 | Read in full: interquartile ranges in 50 patients on Concerta, in whole blood |
+| methylphenidate | Chermá 2017, *Eur J Drug Metab Pharmacokinet* 42:295 | 27220743 | Read in full: medians and interquartile ranges, in whole blood, of the 36 of its 50 Concerta patients on the three doses taken by more than five (Table 4); Table 3's medians for all 50 are 5.8 and 10 ng/mL |
 | methylphenidate | Stevens 2010, *J Child Adolesc Psychopharmacol* 20:49 | 20166796 | The alert level |
 | methadone | Gourlay 1984, *Anesthesiology* 61:19 | 6742480 | Read in full: MEC 57.9 ± 15.2 ng/mL in whole blood, 16 surgical patients; the MEAC of 60 |
 | methadone | Inturrisi 1987, *Clin Pharmacol Ther* 41:392 | 3829576 | Quotes Gourlay; 290 ng/mL in tolerant patients |
@@ -300,7 +302,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | diazepam | Chevassus 2004, *BMC Clin Pharmacol* 4:3 | 15102335 | The kept band's 300 ng/mL, which this insulin-secretion study cites only in passing (open access) |
 | temazepam | van Steveninck 1994, *Clin Pharmacol Ther* 55:546 | 8181199 | The former band's top |
 | temazepam | Saletu 1986, *Acta Psychiatr Scand Suppl* 332:67 | 2883830 | The former band's floor |
-| phenobarbital, ethosuximide, gabapentin | Patsalos 2008, *Epilepsia* 49:1239 | 18397299 | Read in full: Table 1 gives phenobarbital 10–40, ethosuximide 40–100, gabapentin 2–20 mg/L |
+| phenobarbital, ethosuximide, gabapentin | Patsalos 2008, *Epilepsia* 49:1239 | 18397299 | Read in full: Table 1 gives phenobarbital 10–40 (drawn until 2026-10-27), ethosuximide 40–100, gabapentin 2–20 mg/L |
 | antiseizure drugs | Patsalos 2018, *Ther Drug Monit* 40:526 | 29957667 | The 2018 update |
 
 ## References

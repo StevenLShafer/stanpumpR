@@ -64,7 +64,9 @@
 # A population model fitted in NONMEM to 3,775 plasma observations from 174
 # people pooled across five studies: 132 healthy adults, 13 adults with
 # narcolepsy and 29 children and adolescents with narcolepsy, given 1 to 4.5 g
-# of sodium oxybate as an oral solution, mostly twice nightly four hours apart.
+# of sodium oxybate as an oral solution: 119 of the 174 (the two healthy-adult
+# studies) by day, the rest at night, some twice nightly four hours apart
+# (supplement Tables S2-S3).
 # Table S4 of its supplement, on the sodium oxybate basis:
 #
 #     Vmax 1508 mg/h    (bootstrap 1357-1699)     Km   22.0 mg/L (17.7-26.8)
@@ -141,8 +143,9 @@
 # a percentage the authors wrote out.)
 #
 # Being categorical, the age effect steps at the twelfth and eighteenth
-# birthdays rather than varying smoothly.  Below 7 years nothing was fitted
-# and the adult value is used.
+# birthdays rather than varying smoothly.  The youngest participant was 8.00
+# years (Table S3), so nothing below 8 was fitted; below 7, the category's
+# published lower edge, the adult value is used.
 #
 # References
 # ----------

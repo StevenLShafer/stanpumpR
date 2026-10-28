@@ -225,7 +225,8 @@ sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL: AGNP 2018 therapeutic reference range.  Orientation only.
+  # Band, ng/mL: AGNP 2026 (Hart 2026, Table 5) therapeutic reference range.
+  # Orientation only.
   typical      <- 30
   upperTypical <- 50
   lowerTypical <- 10

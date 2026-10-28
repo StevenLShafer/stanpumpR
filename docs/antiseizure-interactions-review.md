@@ -213,10 +213,11 @@ and one de-escalation** (both in our favour).
   carbamazepine negligible (left unapplied, the epoxide is the affected moiety);
   inducers lower zonisamide and ethosuximide. It also states the free-vs-total
   phenytoin story verbatim (total falls, free unchanged or rises).
-- **Riva, Albani, Contin & Baruzzi 1996** (PMID 8968658). Source of the applied
-  **inducers→ethosuximide ×1.225**. Also corroborates CBZ→lamotrigine (t½
-  24→14 h, CL ×1.71 — applied 1.595) and valproate→carbamazepine (parent
-  unchanged).
+- **Riva, Albani, Contin & Baruzzi 1996** (PMID 8968658). A crosscheck: its
+  inducers→ethosuximide (dose at least 20-25% higher) was once applied as ×1.225,
+  but the applied factor is now Giaccone's ×1.66 (rows 32-34). Also corroborates
+  CBZ→lamotrigine (its own t½ 30→15 h, about ×2.0; the 24→14 h, ×1.71 is Spina's,
+  below; applied 1.595) and valproate→carbamazepine (parent unchanged).
 - **Spina, Pisani & Perucca 1996** (PMID 8877250). CBZ→lamotrigine CL ×1.71;
   the zonisamide inducer asymmetry (see below); CBZ→phenytoin inconsistent.
 - **Tanaka 1999** (PMID 10380060). Source of the inducers→valproate correction.
@@ -270,8 +271,10 @@ Ranked by what each unblocks:
    `CL/F = 0.761 × 1.63^INDDL`; inducers→zonisamide applied at ×1.63 per inducer.
 3. ~~**An ethosuximide inducer/valproate source**~~ — **OBTAINED 2026-10-26.**
    Riva 1996 (PMID 8968658) gives inducers→ethosuximide (dose +20–25% → CL
-   ×1.225, applied); Bauer 1982 (PMID 6804151) establishes valproate→ethosuximide
-   as a negative (recorded, not applied). The old candidate PMIDs were not needed.
+   ×1.225; since superseded as the applied factor by Giaccone's ×1.66, Riva
+   now a crosscheck); Bauer 1982 (PMID 6804151) reports valproate→ethosuximide
+   as a negative (now a crosscheck beside Pisani 1984's applied ×0.85). The old
+   candidate PMIDs were not needed.
 4. ~~**Patsalos & Perucca 2003, Part I**~~ (PMID 12849151) — **OBTAINED, both
    parts read 2026-10-25.** Cross-check done (see the section above); corroborates
    the applied set and surfaced the inducers→valproate "by/to" correction.

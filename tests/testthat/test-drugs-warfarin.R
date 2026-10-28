@@ -7,8 +7,9 @@ noEvents <- data.frame(Time = numeric(0), Event = character(0))
 test_that("returns the published enantiomer parameters at the standard subject", {
   # The standard subject (70 kg, 176 cm male) has Janmahasatian FFM equal to
   # the model's reference, so the size factors are 1 and the pins are the
-  # published Table 3 / Table 5 values.
-  actual <- warfarin(70, 176, 50, "male")
+  # published Table 3 / Table 5 values.  CYP4F2 TT is the source's reference
+  # genotype (the app's default is CC; see the test below).
+  actual <- warfarin(70, 176, 50, "male", cyp4f2 = "TT")
   ka <- log(2) / 0.385 / 60
   expect_equal_rounded(actual$PK$default, list(
     v1 = 24.0, v2 = 1, v3 = 1,
@@ -53,10 +54,23 @@ test_that("covariates act on the named parameter only", {
   expect_equal(fem$PK$default$v1 / warfarinFFM(70, 176, "female"),
                24.0 * 1.33 / WARFARIN_FFM_STD, tolerance = 1e-8)
 
-  vk <- warfarin(70, 176, 50, "male", vkorc1 = "AA")
+  vk <- warfarin(70, 176, 50, "male", vkorc1 = "AA", cyp4f2 = "TT")
   expect_equal(vk$inr$c50, 0.378 * 0.725)
   c4 <- warfarin(70, 176, 50, "male", cyp4f2 = "CC")
   expect_equal(c4$inr$c50, 0.378 * 0.770)
+  expect_equal(warfarin(70, 176, 50, "male", cyp4f2 = "CT")$inr$c50, 0.378 * 0.770)
+})
+
+test_that("CYP4F2 defaults to CC, the most sensitive genotype", {
+  # Shafer, 2026-10-27: an unentered genotype should predict the LARGER INR
+  # rise, so a dose read from the curve errs toward underdosing.
+  expect_identical(CYP4F2_DEFAULT, "CC")
+  expect_equal(warfarin(70, 176, 50, "male")$inr$c50, 0.378 * 0.770)
+  expect_lt(warfarin(70, 176, 50, "male")$inr$c50,
+            warfarin(70, 176, 50, "male", cyp4f2 = "TT")$inr$c50)
+  # and it reaches the model through getDrugPK(), which validates it
+  expect_equal(getDrugPK("warfarin", 70, 176, 50, "male", cyp4f2 = "TT")$inr$c50, 0.378)
+  expect_error(getDrugPK("warfarin", 70, 176, 50, "male", cyp4f2 = "XX"), "Invalid cyp4f2")
 })
 
 test_that("clearance scales with fat-free mass as FFM^0.75, volume as FFM", {
@@ -81,7 +95,8 @@ test_that("the INR starts at 1/PCA0 and rises on daily dosing", {
 })
 
 test_that("R-warfarin raises the apparent C50, lowering inhibition", {
-  inr <- warfarin(70, 176, 50, "male")$inr
+  # The worked example is at the source's reference genotype, CYP4F2 TT.
+  inr <- warfarin(70, 176, 50, "male", cyp4f2 = "TT")$inr
   # At a fixed S concentration, more R competes and reduces inhibition.
   i0 <- inrInhibition(0.5, 0,   inr)
   iR <- inrInhibition(0.5, 2.0, inr)

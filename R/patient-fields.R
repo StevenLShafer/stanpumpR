@@ -2,7 +2,8 @@
 # the serum creatinine reach.
 #
 # getDrugPK() passes a covariate only to the models that name it in their
-# signature (`cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6`, `creatinine`), so the
+# signature (`cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6`, `creatinine`,
+# `gestationalAge`), so the
 # signatures are the one authoritative list of what a field affects.  The
 # tooltips read them, as the Cautions page's test does, so a new model that
 # names a covariate joins its tooltip by itself, and a tooltip can never
@@ -16,7 +17,9 @@ PATIENT_FIELD_LABELS <- c(
   cyp2c9     = "CYP 2C9",
   cyp2b6     = "CYP 2B6",
   vkorc1     = "VKORC1",
-  creatinine = "Serum creatinine"
+  cyp4f2     = "CYP4F2",
+  creatinine = "Serum creatinine",
+  gestationalAge = "Gestational age at birth"
 )
 
 # A qualification printed after a drug's name in its tooltip, where a model
@@ -113,9 +116,20 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "(Xue) model, the Hamberg companion model (with CYP2C9 and age), and",
       "fluindione and acenocoumarol."
     ),
+    cyp4f2 = paste(
+      "CYP4F2 rs2108622 (1297C>T) genotype. A C allele lowers the warfarin",
+      "C50, so the INR rises on less drug; T/T needs the most warfarin.",
+      "CC, the most sensitive genotype, is assumed until a genotype is",
+      "entered, so that the curve errs toward the larger INR."
+    ),
     creatinine = paste(
       "The patient's serum creatinine, from which the renally cleared",
       "drugs estimate renal function."
+    ),
+    gestationalAge = paste(
+      "The gestational age at birth, in weeks. With the age it gives the",
+      "postmenstrual age, on which the clearance of the neonatal models",
+      "that read it matures."
     )
   )
   trail <- if (arg == "creatinine") sprintf(
@@ -125,6 +139,9 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "child. Renal impairment is then not represented."
     ),
     SCR_ASSUMED_MALE, SCR_ASSUMED_FEMALE
+  ) else if (arg == "gestationalAge") sprintf(
+    "Leave blank for a term birth (%s weeks): a premature infant's clearance is then overstated.",
+    GESTATIONAL_AGE_TERM
   ) else NULL
   paste(c(lead, readers, trail), collapse = " ")
 }

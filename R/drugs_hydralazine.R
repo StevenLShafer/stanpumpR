@@ -40,7 +40,7 @@
 # Each subject's alpha, beta, CL and V1 fix his two-compartment model (k10 =
 # CL/V1, k21 = alpha beta / k10, k12 = alpha + beta - k10 - k21), and from
 # them his printed half-lives and Varea follow to rounding and his Vss to
-# within 2-5%, which the test checks.  The two acetylator groups did not
+# within 0.6-4.7% (each below the printed value), which the test checks.  The two acetylator groups did not
 # differ in any intravenous parameter (the phenotype acts on oral first-pass
 # acetylation only), so all ten are pooled.
 #
@@ -66,8 +66,8 @@
 # patients, the same kind of assay: clearance 4.4 L/h/kg, about half of
 # Reece's, with Vss 1.83 L/kg and a 54-min terminal half-life, and no
 # distribution phase, so it does not fix a model.  Ludden's 1982 review sets
-# the two side by side and attributes the difference to the subjects or to
-# the methods (assay, infusion length, sampling, weighting).  The model is
+# the two side by side and suggests the difference may be due to the subjects
+# or to the methods (assay, infusion length, sampling, weighting).  The model is
 # of young healthy volunteers.
 #
 # DOSE BASIS

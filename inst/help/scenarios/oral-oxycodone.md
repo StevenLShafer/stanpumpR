@@ -4,7 +4,7 @@ Oxycodone 10 mg by mouth at time zero and again at six hours. The plasma line (d
 
 An **oxymorphone** row appears although none was given: it is the oxymorphone formed from the oxycodone, which stays below 1 ng/mL, peaking a little under two hours after each dose; see [Active metabolites](help:models/metabolites).
 
-Two thirds of the dose reaches the circulation (bioavailability 0.67). Compare the plasma peak with what 10 mg intravenously (`mg`) gives.
+Most of the dose reaches the circulation (bioavailability 0.84). Compare the plasma peak with what 10 mg intravenously (`mg`) gives.
 
 The second dose at six hours arrives when the first has fallen to about half its peak, so the second peak is higher than the first. With regular dosing the troughs rise until input and elimination balance.
 

@@ -49,8 +49,10 @@
 #   Sun JX et al., J Clin Pharmacol 1995;35:390-397 (PMID 7650229): 18
 #   healthy men given 15N-labelled nitroglycerin at 0.25 mg/h IV for 14 h.
 #   Figure 1: plasma is at its plateau (about 400-500 pg/mL) at the first
-#   sample, 15 minutes, and falls from about 370 to about 70 pg/mL in the 5
-#   minutes after the infusion stops, a half-life near 2 minutes.
+#   sample, 15 minutes, and in the 5 minutes after the infusion stops falls
+#   from about 370 pg/mL (the mean of the three arms) to about 20-70 (70 in
+#   the highest arm), a half-life near 2 minutes.  Sun prints no half-life
+#   or clearance; these are read from the figure.
 #
 #   Kim CO et al., Medicine 2018;97:e9829 (PMID 29489681): 9 healthy men
 #   given 20 mcg/min for 30 min through 100 cm sets of three materials,
@@ -90,7 +92,8 @@
 # 70 L/min in a 70 kg adult), a volume of about 3 L/kg and a half-life of
 # about 3 minutes -- but reported them as ranges, not a fitted set, with
 # concentrations in two subjects oscillating too much to analyse at all.
-# Clearance is extrahepatic, falls with cardiac output, and depends on where
+# Clearance is extrahepatic, fell with cardiac output in rats (Fung 1987;
+# not shown in people), and depends on where
 # the blood is drawn.  So a healthy volunteer's clearance can be three to ten
 # times the one plotted here, and this model, from patients in heart failure
 # whose cardiac output is low, is the one fitted, consistent set of numbers
@@ -157,11 +160,13 @@
 # THE ADMINISTRATION SET CHANGES THE DOSE
 # =======================================
 # The curve assumes the whole dose reaches the vein.  It often does not:
-# nitroglycerin is sorbed by PVC and polyurethane tubing.  Kim 2018 (each man
-# through all three 100 cm sets): peak concentration through PVC 0.33, through
-# polyurethane 0.21, of that through polyolefin; AUC 0.31 and 0.14; more with
-# longer sets and lower flows.  So through such a set the patient receives,
-# and the plasma holds, a third to a seventh of what is drawn.  The help page
+# nitroglycerin is sorbed by PVC and polyurethane tubing.  Kim 2018 (crossover
+# through three 100 cm sets; 8 men analysed): peak concentration through PVC
+# 0.33, through polyurethane 0.21, of that through polyolefin; AUC 0.31 and
+# 0.14 by the paper's text, 0.26 and 0.09 by its Table 3 (unresolved); more
+# with longer sets and lower flows in other drugs' studies.  So through such a
+# set the patient receives, and the plasma holds, a third to a seventh of what
+# is drawn (a quarter to an eleventh by Table 3).  The help page
 # leads with this, and the reference string (the References panel) says it.
 # -----------------------------------------------------------------------------
 
@@ -202,8 +207,8 @@ nitroglycerin <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "Armstrong PW, Watts DG, Moffat JA, Br J Clin Pharmacol 1983;16:385-390 ",
     "One compartment in 10 patients with congestive cardiac ",
     "failure given 21 mcg/min: CL 6.2 L/min; arterial plasma.  V 17.0 L from the ",
-    "1.9-min half-life after a stop (Armstrong 1980), as Sun 1995 and Kim 2018 ",
-    "measured; the 8.1-min rise is the delivery's.  Healthy volunteers' clearance was ",
+    "1.9-min half-life after a stop (Armstrong 1980), consistent with the fast fall ",
+    "Sun 1995 and Kim 2018 saw; the 8.1-min rise is the delivery's.  Healthy volunteers' clearance was ",
     "3-10 times higher (McNiff 1981).  THE INFUSION SET CHANGES THE DOSE: the curve ",
     "assumes the whole dose reaches the vein; through PVC or polyurethane sets Kim 2018 ",
     "measured a third to a seventh of the exposure through polyolefin. ",

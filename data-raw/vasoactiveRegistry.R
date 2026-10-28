@@ -153,7 +153,7 @@ registry <- rbind(
   reg("nitroglycerin__healthy__kim2018", "nitroglycerin",
       "9 healthy men, 20 mcg/min for 30 min through 100 cm administration sets of polyolefin, polyurethane and PVC (crossover)", "nitroglycerin", "plasma (venous)",
       "no_suitable_model", NA, "full_text",
-      "Read from the supplied article: non-compartmental, no model (the elimination half-life and clearance could not be calculated because most post-infusion samples were below the 0.1 ng/mL limit).  Plasma reached steady state in about 5 min and was mostly unmeasurable 3-10 min after the stop, which supports the fast volume.  Through polyurethane and PVC the geometric mean ratio of Cmax to polyolefin was 0.21 and 0.33 (AUC 0.14 and 0.31), with a smaller fall in arterial pressure: the administration set changes the delivered dose, which the model does not represent.  The paper prints mg for mcg in its text; the abstract on PubMed says 100 mcg/mL at 12 mL/h.",
+      "Read from the supplied article: non-compartmental, no model (the elimination half-life and clearance could not be calculated because most post-infusion samples were below the 0.1 ng/mL limit).  Plasma reached steady state in about 5 min and was mostly unmeasurable 3-10 min after the stop, which supports the fast volume.  Through polyurethane and PVC the geometric mean ratio of Cmax to polyolefin was 0.21 and 0.33 (AUC 0.14 and 0.31), with a smaller fall in arterial pressure: the administration set changes the delivered dose, which the model does not represent.  The paper's text layer drops the micro sign (the PDF prints ug/mL and ug/min); the abstract on PubMed says 100 mcg/mL at 12 mL/h.",
       NA,
       "Kim CO, Song J, Min JY, Park SJ, Lee HM, Byon HJ. A comparison of the pharmacokinetic and pharmacodynamic properties of nitroglycerin according to the composition of the administration set: a preliminary study. Medicine (Baltimore) 2018;97:e9829. PMID 29489681.",
       doi("10.1097/MD.0000000000009829")),
@@ -541,7 +541,7 @@ registry <- rbind(
   reg("verapamil__healthy__dominic1981", "verapamil",
       "8 healthy men", "racemic verapamil", "plasma",
       "needs_full_text", NA, "abstract",
-      "Superseded by Kates 1981.  Two compartments, but the abstract's V (178 L) exceeds CL/beta and so cannot be Vss: three usable numbers for four parameters, and no central volume.  Three supplied papers, Fuenmayor 1992 (Drugs 44 Suppl 1:1-11), Saseen 2013 (J Clin Pharmacol) and Kang 2003 (Clin Pharmacol Ther 73:31-40, a population model of oral sustained-release verapamil that estimates only an apparent steady-state clearance, 23.8 mL/min/kg in women and 18.6 in men), give no intravenous model.  Kang's references include Schwartz 1990, \"Aging alters verapamil elimination and dynamics: single dose and steady-state responses\" (J Pharmacol Exp Ther 255:364-373).",
+      "Superseded by Kates 1981.  Two compartments, but the abstract's V (178 L) exceeds CL/beta and so cannot be Vss: three usable numbers for four parameters, and no central volume.  Three supplied papers, Fuenmayor 1992 (Drugs 44 Suppl 1:1-11, PMID 1283570), Saseen 1997 (J Clin Pharmacol 37:526, PMID 9208360; the publisher's file is dated 2013, its online posting) and Kang 2003 (Clin Pharmacol Ther 73:31-40, PMID 12545141, a population model of oral sustained-release verapamil that estimates only an apparent steady-state clearance, 23.8 mL/min/kg in women and 18.6 in men), give no intravenous model.  Kang's references include Schwartz 1990, \"Aging alters verapamil elimination and dynamics: single dose and steady-state responses\" (J Pharmacol Exp Ther 255:364-373).",
       "Schomerus M, Spiegelhalder B, Stieren B, Eichelbaum M. Physiological disposition of verapamil in man. Cardiovasc Res 1976;10:605-612; Dominic JA et al. The pharmacology of verapamil. III. Pharmacokinetics in normal subjects after intravenous and oral dosing. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352, doi 10.1097/00005344-198101000-00003 (no longer needed: Kates 1981 is implemented).",
       "Dominic JA et al. J Cardiovasc Pharmacol 1981;3:25-38. PMID 6160352.",
       doi("10.1097/00005344-198101000-00003")),
@@ -697,14 +697,14 @@ registry <- rbind(
   reg("hydralazine__acetylators__reece1980", "hydralazine",
       "10 healthy volunteers (5 slow, 5 fast acetylators; 9 men), 0.375 mg/kg IV over 5 min", "hydralazine (specific HPLC-fluorescence assay)", "plasma",
       "implemented", "hydralazine", "full_text",
-      "Read from the supplied article.  Two compartments fitted to each subject; Table II gives each one's alpha, beta, CL and V1, from which his printed half-lives and Varea follow to rounding and his Vss to 2-5%.  The model is the mean of the ten (no acetylator difference intravenously): V1 2.77, V2 3.13 L/kg, CL 8.3, Q 9.4 L/h/kg, reproducing the mean CL and V1 exactly and Vss to 2%.  Clearance is twice Ludden 1980's in older hypertensive patients.  Dose as labelled (Apresoline, the hydrochloride); 23% if the paper's milligrams were the base.  The fall in diastolic pressure came 15-30 min after the infusion; tPeak 15 min is the user's clinical experience.",
+      "Read from the supplied article.  Two compartments fitted to each subject; Table II gives each one's alpha, beta, CL and V1, from which his printed half-lives and Varea follow to rounding and his Vss to 0.6-4.7% (each below the printed value).  The model is the mean of the ten (no acetylator difference intravenously): V1 2.77, V2 3.13 L/kg, CL 8.3, Q 9.4 L/h/kg, reproducing the mean CL and V1 exactly and Vss to 2%.  Clearance is twice Ludden 1980's in older hypertensive patients.  Dose as labelled (Apresoline, the hydrochloride); 23% if the paper's milligrams were the base.  The fall in diastolic pressure came 15-30 min after the infusion; tPeak 15 min is the user's clinical experience.",
       NA,
       "Reece PA, Cozamanis I, Zacest R. Kinetics of hydralazine and its main metabolites in slow and fast acetylators. Clin Pharmacol Ther 1980;28:769-778. PMID 7438692.",
       doi("10.1038/clpt.1980.234")),
   reg("hydralazine__review__ludden1982", "hydralazine",
       "review", "hydralazine", "plasma",
       "no_suitable_model", NA, "full_text",
-      "Read from the supplied article: Table I collects the five intravenous studies (Reidenberg 1973, Talseth 1976, Shen 1980, Reece 1980, Ludden 1980) as Varea, plasma clearance and terminal half-life only, the first two with nonselective assays that understate the volume.  It prints no distribution phase or biexponential coefficients, and sets Reece's clearance (8.3 L/h/kg, young volunteers) beside Ludden's (4.4, older hypertensive men) without resolving the difference (subjects, or assay, infusion length, sampling and weighting).  Blood clearance 2.6 L/h/kg (Ludden 1980).",
+      "Read from the supplied article: Table I collects the five intravenous studies (Reidenberg 1973, Talseth 1976, Shen 1980, Reece 1980, Ludden 1980) as Varea, plasma clearance and terminal half-life only, three of them (Reidenberg, Shen, Talseth) with nonselective assays that understate the volume.  It prints no distribution phase or biexponential coefficients, and sets Reece's clearance (8.3 L/h/kg, young volunteers) beside Ludden's (4.4, older hypertensive men) without resolving the difference (subjects, or assay, infusion length, sampling and weighting).  Blood clearance 2.6 L/h/kg (Ludden 1980).",
       NA,
       "Ludden TM, McNay JL Jr, Shepherd AM, Lin MS. Clinical pharmacokinetics of hydralazine. Clin Pharmacokinet 1982;7:185-205. PMID 7047041.",
       doi("10.2165/00003088-198207030-00001")),
@@ -721,7 +721,16 @@ registry <- rbind(
       "No clearance-and-volume model exists: the apparent bicarbonate space itself changes with the baseline bicarbonate and PCO2, and elimination is buffering, CO2 exhalation and renal handling.",
       NA,
       "Adrogue HJ, Brensilver J, Cohen JJ, Madias NE. Influence of steady-state alterations in acid-base equilibrium on the fate of administered bicarbonate in the dog. J Clin Invest 1983;71:867-883. PMID 6300190; and Am J Nephrol 2020 (PMID 32069452).",
-      doi("10.1172/jci110841"))
+      doi("10.1172/jci110841")),
+  # dobutamine, asked for on 2026-10-27 (an adversarial review noted its
+  # absence): the neonatal model is the only population model found
+  reg("dobutamine__neonates__hallik2020", "dobutamine",
+      "28 critically ill neonates on the first days of life, gestational age 22.7-41 weeks, birth weight 0.47-4.4 kg, 5-20 mcg/kg/min", "dobutamine", "plasma (arterial)",
+      "implemented", "dobutamineNeonatal", "full_text",
+      "Read in full from PubMed Central (the equations were stripped; their form is fixed by the text and Table 2).  One compartment: CL 41.2 L/h x (BW/1.618)^0.75 x PMA^2.67/(37.4^2.67 + PMA^2.67), V 5.29 L x BW/1.618; ke0 6.59 /h from the heart-rate PKPD model (Table 5).  Offered as dobutamineNeonatal, with PMA from the Patient Profile's gestational age at birth (blank = term) plus the age.  A neonatal model only: the study covered the first days of life, and no adult population model was found (Kates & Leier 1978, adults in heart failure, is a non-population report not read here).",
+      NA,
+      "Hallik M, Ilmoja ML, Standing JF, et al. Population pharmacokinetics and pharmacodynamics of dobutamine in neonates on the first days of life. Br J Clin Pharmacol 2020;86:318-328. PMID 31657867, PMC7015735.",
+      doi("10.1111/bcp.14146"))
 )
 
 stopifnot(all(registry$readiness %in% READINESS),
@@ -758,6 +767,7 @@ BU95 <- doi("10.1097/00000539-199510000-00022")
 HK19 <- doi("10.1002/jcph.1499")
 JO24 <- doi("10.1111/bcp.16180")
 SA89 <- doi("10.1016/0002-9149(89)90076-3")
+HA20 <- doi("10.1111/bcp.14146")
 LA17 <- doi("10.1007/s40262-017-0515-7")
 MO93 <- doi("10.1002/jps.2600820707")
 CH97 <- pubmed(9165563)
@@ -926,7 +936,14 @@ parameters <- rbind(
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "half-life after a stop", 1.9, "min (Armstrong 1980, quoted by Armstrong 1983)", "estimated", "full_text", AR),
   par("nitroglycerin", "time constant of the rise (not applied)", 8.1, "min (the delivery's, not the drug's; see the registry row)", "estimated", "full_text", AR),
-  par("nitroglycerin", "V", 17.0, "L (CL x half-life / ln 2)", "derived", "full_text", AR)
+  par("nitroglycerin", "V", 17.0, "L (CL x half-life / ln 2)", "derived", "full_text", AR),
+
+  par("dobutamineNeonatal", "CL", 41.2, "L/h at 1.618 kg birth weight, mature", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "V", 5.29, "L at 1.618 kg birth weight", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "TM50", 37.4, "weeks PMA", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "Hill", 2.67, "dimensionless", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "ke0", 6.59, "/h (heart-rate PKPD model, Table 5; mean effect time 9 min)", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "heart rate EC50 (not applied)", 39.2, "mcg/L (Emax model: baseline 138, maximum 172 beats/min, gamma 3.36)", "estimated", "full_text", HA20)
 )
 
 stopifnot(all(parameters$evidence %in% PAR_EVIDENCE))

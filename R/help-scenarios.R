@@ -80,6 +80,8 @@ helpScenarioDefaultOptions <- function() {
 #' @param creatinine serum creatinine in mg/dL, or NULL for a blank field (the
 #'   renal models then assume a normal value for the patient's age and sex)
 #' @param osmolality baseline serum osmolality in mOsm/kg (mannitol)
+#' @param gestationalAge gestational age at birth in weeks, or NULL for a
+#'   blank field (the neonatal models then assume a term birth)
 #' @param pregnant is the patient pregnant?  Only for a woman of child-bearing
 #'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
@@ -91,9 +93,10 @@ helpScenario <- function(id, title, group, summary,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
                          cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
-                         cyp2b6 = CYP2B6_DEFAULT,
+                         cyp4f2 = CYP4F2_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
                          creatinine = NULL,
-                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE, ...) {
+                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
+                         gestationalAge = NULL, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -114,9 +117,9 @@ helpScenario <- function(id, title, group, summary,
     # and osmolality of the previous patient surviving a load).
     patient = list(age = age, weight = weight, height = height, sex = sex,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                   vkorc1 = vkorc1, cyp2b6 = cyp2b6, adjustToFFM = adjustToFFM,
-                   creatinine = creatinine, osmolality = osmolality,
-                   pregnant = pregnant),
+                   vkorc1 = vkorc1, cyp4f2 = cyp4f2, cyp2b6 = cyp2b6,
+                   adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
+                   pregnant = pregnant, gestationalAge = gestationalAge),
     doses = doses, events = events, options = options
   )
 }
@@ -923,6 +926,25 @@ helpScenarioDefinitions <- function() {
       timeUnits = "days", maximum = 91 * MINS_PER_DAY,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    # Cenobamate split morning/evening, the use the qam/qpm slots were built for:
+    # the antiseizure drugs are sedating, so the morning dose is kept small and
+    # the larger dose given at night.  50 mg qam and 200 mg qpm are two
+    # independent daily slots entered as two rows (a plain qd/bid would replace
+    # them both).  Cenobamate is plasma only (the plasma line carries the curve)
+    # and its ~60 h half-life takes two weeks to reach steady state.
+    # (Claude Code, 2026-10-28, at the request of Steven L. Shafer.)
+    helpScenario(
+      "cenobamate-split-dosing",
+      "Cenobamate: a smaller morning dose and a larger evening dose",
+      "Long-term therapy",
+      "A split cenobamate regimen entered with the qam and qpm slots: 50 mg every morning and 200 mg every evening, the morning dose kept small because these drugs are sedating and can affect memory while awake. The two slots are independent, so they are two rows; a plain qd/bid would have replaced them both. The long half-life means the daily rhythm rides on a level that climbs for about two weeks.",
+      doses = helpDoses(
+        c("cenobamate",   0,  50, "mg PO qam"),
+        c("cenobamate", 720, 200, "mg PO qpm")
+      ),
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # Warfarin's INR drawn by the library's Xue model and the Hamberg genotype
     # model together, on a CYP2C9- and VKORC1-sensitive elderly patient, to show
     # why a fixed 5 mg/day start overshoots and how the genotype fields move the
@@ -1019,6 +1041,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
   if (!p$vkorc1 %in% VKORC1_VALUES) say("invalid vkorc1: ", p$vkorc1)
+  if (!p$cyp4f2 %in% CYP4F2_VALUES) say("invalid cyp4f2: ", p$cyp4f2)
   if (!p$cyp2b6 %in% CYP2B6_VALUES) say("invalid cyp2b6: ", p$cyp2b6)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
   if (!is.logical(p$pregnant) || length(p$pregnant) != 1 || is.na(p$pregnant)) {
@@ -1030,6 +1053,9 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
     say("creatinine out of range: ", p$creatinine)
   }
   if (!is_valid_number(p$osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) say("osmolality out of range: ", p$osmolality)
+  if (!is.null(p$gestationalAge) &&
+      !is_valid_number(p$gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE))
+    say("gestational age out of range: ", p$gestationalAge)
 
   o <- s$options
   if (!identical(validTimeUnit(o$timeUnits), o$timeUnits)) say("invalid timeUnits: ", o$timeUnits)
@@ -1185,6 +1211,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
   updateSelectInput(session, "vkorc1", selected = p$vkorc1)
+  updateSelectInput(session, "cyp4f2", selected = p$cyp4f2)
   updateSelectInput(session, "cyp2b6", selected = p$cyp2b6)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
   # A blank field is the state the renal models read as "assume a normal
@@ -1196,6 +1223,13 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
     updateNumericInput(session, "creatinine", value = p$creatinine)
   }
   updateNumericInput(session, "osmolality", value = p$osmolality)
+  # Blank, a term birth, unless the scenario names a gestational age: sent
+  # explicitly, as the creatinine is, so a previous patient's does not survive
+  if (is.null(p$gestationalAge)) {
+    session$sendInputMessage("gestationalAge", list(value = ""))
+  } else {
+    updateNumericInput(session, "gestationalAge", value = p$gestationalAge)
+  }
 
   if (is.null(timeApi)) {
     updateSliderInput(session, "maximum", value = o$maximum)
@@ -1265,6 +1299,7 @@ helpScenarioPageHTML <- function(id) {
     `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
     `CYP 2B6` = tools::toTitleCase(p$cyp2b6),
     VKORC1 = p$vkorc1,
+    CYP4F2 = p$cyp4f2,
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     `Serum creatinine` = if (is.null(p$creatinine)) "blank (normal for age and sex assumed)" else sprintf("%s mg/dL", helpFormatNumber(p$creatinine)),
     `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),
@@ -1272,6 +1307,9 @@ helpScenarioPageHTML <- function(id) {
   )
   # Shown only when set: "Pregnant: no" beside a man's age would be noise.
   if (isTRUE(p$pregnant)) patient$Pregnant <- "yes"
+  # Likewise a gestational age, only when the scenario names one
+  if (!is.null(p$gestationalAge))
+    patient$`Gestational age at birth` <- sprintf("%s weeks", helpFormatNumber(p$gestationalAge))
   # Times as the dose table will show them: in the scenario's time unit, in
   # full (helpFormatNumber()'s three significant figures would print 30240
   # minutes as 30,200)
