@@ -79,15 +79,26 @@
 #
 # EFFECT SITE: tPeak 5 MINUTES, FOR HEART RATE
 # ============================================
-# Set at 5 minutes on Steven L. Shafer's instruction (2026-10-20), pending
-# the full texts.  Achong MR, Piafsky KM, Ogilvie RI, Clin Pharmacol Ther
-# 1976;19:148-152 (doi 10.1002/cpt1976192148; abstract) gave 10 mg
-# intravenously to six healthy men and found the reduction in exercise
-# tachycardia maximal 5 minutes after the infusion; Riva E et al., J
-# Cardiovasc Pharmacol 1980;2:707-714 (doi 10.1097/00005344-198011000-00001;
-# abstract) saw the effects on heart rate and AV-nodal refractoriness 5-8
-# minutes after 0.1 mg/kg intravenously.  Heart rate is the endpoint, as for
-# esmolol, metoprolol and verapamil.
+# Set at 5 minutes on Steven L. Shafer's instruction (2026-10-20) and kept
+# there on 2026-10-28 when the full text was read.  Achong MR, Piafsky KM,
+# Ogilvie RI, Clin Pharmacol Ther 1976;19:148-152 (doi 10.1002/cpt1976192148)
+# gave 10 mg of propranolol hydrochloride to six healthy men and found the
+# reduction in maximal exercise tachycardia greatest 5 minutes after the
+# infusion; Riva E et al., J Cardiovasc Pharmacol 1980;2:707-714
+# (doi 10.1097/00005344-198011000-00001; abstract) saw the effects on heart
+# rate and AV-nodal refractoriness 5-8 minutes after 0.1 mg/kg intravenously.
+# Heart rate is the endpoint, as for esmolol, metoprolol and verapamil.
+#
+# What the full text adds, and why the number is nonetheless unconverted: the
+# 10 mg went in over 10 MINUTES (10 mL at 1 mL/min by pump), not as a bolus,
+# and the 5 minutes is measured from the END of that infusion and is the
+# FIRST of five observations (5 min, 90 min, 4, 9 and 24 hours), which Fig. 1
+# plots at the origin of an hours axis.  The study therefore bounds the time
+# of maximal effect from above rather than locating it, and a bolus-equivalent
+# conversion -- as diltiazem's 3.1 minutes is of Salerno 1989's 4.3 after a
+# 2-minute infusion -- would give a SHORTER tPeak.  Steven L. Shafer decided
+# on 2026-10-28 to keep 5 minutes and make no conversion, so this is a choice,
+# not an unexamined transcription.  The paper measures no concentrations.
 # -----------------------------------------------------------------------------
 
 # Fagan 1982, Table 1 means

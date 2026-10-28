@@ -156,7 +156,9 @@ test_that("the parameter audit covers every implemented drug", {
   # the timings that rest on an abstract, or on clinical observation, say so
   ev <- function(d) parameters$evidence[parameters$drug == d & timing]
   expect_identical(ev("phenylephrine"), "abstract")   # Schwinn 1989
-  expect_identical(ev("propranolol"), "abstract")     # Achong 1976
+  # Achong 1976 was read in full on 2026-10-28; the 5 min is kept unconverted
+  # although it follows a 10-min infusion (R/drugs_propranolol.R says why)
+  expect_identical(ev("propranolol"), "full_text")
   for (d in c("epinephrine", "atropine", "vasopressin", "hydralazine"))
     expect_identical(ev(d), "clinical", info = d)
 })
