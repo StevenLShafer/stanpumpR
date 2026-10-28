@@ -47,10 +47,12 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # hand).  CL1 is renal: Cockcroft-Gault at the pharmacokinetic weight
   # 70 x 1.3049067 = 91.343 kg, (140 - 50) x 91.343 / (72 x 0.9) = 126.87
   # mL/min, over the reference man's 113.43, so CL1 = 0.07 x 1.118491.
+  # V2 is first re-anchored from Kaneda's 87 kg typical patient to the
+  # reference man: 8.86 x 54.475206 / 52.692510 (R/drugs_mannitol.R).
   actual <- mannitol(120, 170, 50, "male")
   expected <- list(
     v1 = 3.6537388,
-    v2 = 11.561473,
+    v2 = 8.86 * 54.475206 / 52.692510 * 1.3049067,
     v3 = 15.658880,
     cl1 = 0.078294402,
     cl2 = 2.5272891,
@@ -59,17 +61,21 @@ test_that("scales to fat-free mass for a 120 kg man", {
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
 
-test_that("the reference man receives the published parameters", {
+test_that("the reference man receives the published parameters, V2 re-anchored", {
   # Kaneda's means, unscaled: his fat-free mass is the reference, and his
   # Cockcroft-Gault clearance at the assumed creatinine of 0.9 mg/dL is the
-  # reference 113.43 mL/min.
+  # reference 113.43 mL/min.  V2 alone is re-anchored from Kaneda's 87 kg
+  # typical patient (167.5 cm, 56 y, 6 men to 16 women) by fat-free mass,
+  # worked by hand from the Al-Sallami formula: men 60.284918, women
+  # 49.845357, weighted 52.692510 kg, against the reference man's 54.475206.
   published <- list(v1 = 2.80, v2 = 8.86, v3 = 12.0, cl1 = 0.07, cl2 = 2.07, cl3 = 0.16)
   actual <- mannitol(70, 170, 35, "male")
-  expect_equal_rounded(actual$PK$default, published)
+  expect_equal_rounded(actual$PK$default,
+                       modifyList(published, list(v2 = 8.86 * 54.475206 / 52.692510)))
+  expect_equal(actual$PK$default$v2, 9.16, tolerance = 0.001)
+  # With the switch off, every value is Kaneda's as published, V2 included.
   expect_equal_rounded(
-    actual$PK$default,
-    mannitol(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
-  )
+    mannitol(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default, published)
 })
 
 test_that("carries the baseline osmolality it is given", {
@@ -92,7 +98,8 @@ test_that("the CSV row matches the model's units and band", {
 events <- data.frame(Time = double(), Event = character())
 
 simulateMannitol <- function(dose, osmolality = OSMOLALITY_DEFAULT, maximum = 480) {
-  # The reference man, so the published parameters apply unscaled.
+  # The reference man, so the published parameters apply unscaled, except
+  # V2, re-anchored to him from Kaneda's 87 kg typical patient (9.159752 L).
   simulateDrugsWithCovariates(dose, events, 70, 170, 35, "male", maximum, FALSE,
                               osmolality = osmolality)$mannitol$wide
 }
@@ -101,15 +108,17 @@ at <- function(wide, time) wide$Plasma[wide$Time == time]
 
 test_that("predicts serum osmolality after 1 g/kg over 30 minutes", {
   # 70 g over 30 minutes is 384.26 mOsm.  Plasma mannitol at 30 and 480
-  # minutes, 26.622358 and 3.7288398 mOsm/L, from an independent matrix
-  # exponential solution of the three-compartment model (not this code).
+  # minutes, 26.190811 and 3.7472890 mOsm/L, from an independent matrix
+  # exponential solution of the three-compartment model (not this code), with
+  # V2 9.159752 L.  (With the published 8.86 L it gave 26.622358 and
+  # 3.7288398.)
   dose <- data.frame(Drug = "mannitol", Time = c(0, 30), Dose = c(140, 0), Units = "g/hr")
   wide <- simulateMannitol(dose)
 
   # The default baseline, 280 mOsm/kg
   expect_equal(at(wide, 0), 280)
-  expect_equal_rounded(at(wide, 30),  280 + 0.55483249 * 26.622358)  # 294.77
-  expect_equal_rounded(at(wide, 480), 280 + 0.55483249 * 3.7288398)  # 282.07
+  expect_equal_rounded(at(wide, 30),  280 + 0.55483249 * 26.190811)  # 294.53
+  expect_equal_rounded(at(wide, 480), 280 + 0.55483249 * 3.7472890)  # 282.08
   # No effect site: the drug is plotted as plasma only.
   expect_true(all(is.na(wide$"Effect Site")))
 })
@@ -127,11 +136,11 @@ test_that("per-hour and per-kilogram-per-hour units agree", {
   expect_equal(perKgHr$Plasma, perHour$Plasma)
 
   # 70 g over 30 minutes is 384.26 mOsm.  The osmolality peaks when the
-  # infusion stops, 0.55483249 times the 26.622358 mOsm/L above (not at the
+  # infusion stops, 0.55483249 times the 26.190811 mOsm/L above (not at the
   # 137 mOsm/L a bolus of the same amount would give in the 2.8 L central
   # volume: mannitol is never pushed, and the library offers no bolus unit).
   expect_equal(which.max(perHour$Plasma), which(perHour$Time == 30))
-  expect_equal_rounded(max(perHour$Plasma), 280 + 0.55483249 * 26.622358)
+  expect_equal_rounded(max(perHour$Plasma), 280 + 0.55483249 * 26.190811)
 })
 
 test_that("an invalid baseline osmolality is rejected", {
@@ -226,9 +235,9 @@ test_that("a high creatinine prolongs the osmolality rise", {
   # The reference man with a creatinine of 3.6 mg/dL, four times the assumed
   # 0.9, has a quarter of the reference creatinine clearance, so CL1 = 0.0175
   # L/min.  Eight hours after 1 g/kg over 30 minutes his plasma mannitol is
-  # 10.954746 mOsm/L, from an independent matrix-exponential solution (not
-  # this code), against 3.7288398 with normal kidneys.
-  expect_equal_rounded(run(4 * SCR_ASSUMED_MALE), 280 + 0.55483249 * 10.954746)  # 286.08
+  # 10.874983 mOsm/L, from an independent matrix-exponential solution (not
+  # this code, V2 9.159752 L), against 3.7472890 with normal kidneys.
+  expect_equal_rounded(run(4 * SCR_ASSUMED_MALE), 280 + 0.55483249 * 10.874983)  # 286.03
   expect_gt(run(4 * SCR_ASSUMED_MALE), run(NULL))
 })
 
@@ -263,7 +272,8 @@ test_that("pregnancy: creatinine clearance x 1.5 when the creatinine is blank", 
   # The values the model gives with the flag on
   actual <- mannitol(70, 165, 30, "female", pregnant = TRUE)$PK$default
   expect_equal_rounded(2.257066149, actual$v1)
-  expect_equal_rounded(7.142002171, actual$v2)
+  # V2 re-anchored from Kaneda's 87 kg patient: x 54.475206 / 52.692510
+  expect_equal_rounded(7.142002171 * 54.475206 / 52.692510, actual$v2)
   expect_equal_rounded(9.673140638, actual$v3)
   expect_equal_rounded(0.0847911234, actual$cl1)
   expect_equal_rounded(1.761002763, actual$cl2)

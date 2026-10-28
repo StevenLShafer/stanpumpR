@@ -3,19 +3,21 @@ test_that("returns the published parameters with total-body-weight scaling", {
   height <- 171
   age <- 50
   sex <- "male"
-  # The switch off reproduces the pre-fat-free-mass output exactly.
+  # The switch off reproduces the pre-fat-free-mass output exactly: at 70 kg,
+  # Schnider 1996 Table 1 set C x 70 (V1 0.101, V2 0.452 L/kg; Cl1 0.0215,
+  # Cl2 0.0589 L/kg/min).
   actual <- lidocaine(weight, height, age, sex, adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(
       default = list(
-        v1 = 6.16,
-        v2 = 28.00002,
+        v1 = 7.07,
+        v2 = 31.64,
         v3 = 1,
-        cl1 = 1.400002,
-        cl2 = 3.920002,
+        cl1 = 1.505,
+        cl2 = 4.123,
         cl3 = 0,
-        ka_RA = 0.0111,
+        ka_RA = 0.0124,
         bioavailability_RA = 1,
         tlag_RA = 0
       )
@@ -38,11 +40,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # left alone.
   actual <- lidocaine(120, 170, 50, "male")
   expected <- list(
-        v1 = 8.038225,
-        v2 = 36.537412,
+        v1 = 9.225690,
+        v2 = 41.287248,
         v3 = 1,
-        cl1 = 1.7092801,
-        cl2 = 4.7859799,
+        cl1 = 1.8374735,
+        cl2 = 5.0338227,
         cl3 = 0
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
