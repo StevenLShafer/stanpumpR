@@ -23,6 +23,7 @@ simulateDrugsWithCovariates(
   pregnant = FALSE,
   vkorc1 = VKORC1_DEFAULT,
   antiseizureInteractions = FALSE,
+  cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL
 )
 }
@@ -82,6 +83,9 @@ the antiseizure drugs (\code{R/antiseizureInteractions.R},
 every drug on its own.  A changed drug's entry carries
 \code{interaction}, the segments of its multipliers and the rows that
 produced them.}
+
+\item{cyp4f2}{CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES}.
+Only drugs whose model declares it (warfarin) are affected.}
 
 \item{gestationalAge}{gestational age at birth in weeks, or NULL for a term
 birth.  Only the neonatal models that declare it (dobutamineNeonatal)

@@ -16,7 +16,7 @@ test_that("returns the published parameters and ACT block with the switch off", 
     )),
     act = list(act0 = 116, emax = 720, c50 = 3.49),
     tPeak = 0, MEAC = 0,
-    typical = 0, upperTypical = 0, lowerTypical = 0,
+    typical = 480, upperTypical = 600, lowerTypical = 480,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)

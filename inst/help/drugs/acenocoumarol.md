@@ -20,7 +20,7 @@ The concentration is not plotted. It drives an **indirect-response model** of th
 
 ### Why the INR, not a concentration
 
-The INR is a delayed, non-linear turnover endpoint, so it is computed from the S-acenocoumarol curve after the engine has run rather than as an effect site. There is no MEAC, no band and no "time until threshold": the INR falls after acenocoumarol is stopped at the pace of clotting-factor turnover, which the effect-site recovery calculation does not describe.
+The INR is a delayed, non-linear turnover endpoint, so it is computed from the S-acenocoumarol curve after the engine has run rather than as an effect site. There is no MEAC and no "time until threshold": the INR falls after acenocoumarol is stopped at the pace of clotting-factor turnover, which the effect-site recovery calculation does not describe. The shaded band is the INR target, 2.0 to 3.0 with 2.5 typical, the CHEST guideline's target for every vitamin K antagonist (Holbrook and colleagues, *Chest* 2012;141(2 Suppl):e152S-e184S, https://doi.org/10.1378/chest.11-2295); its own product information has not been read; it is a reference for reading the curve, not a dose recommendation.
 
 ### Covariates
 

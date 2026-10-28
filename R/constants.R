@@ -102,6 +102,20 @@ CYP2C9_DEFAULT <- "*1/*1"
 VKORC1_VALUES  <- c("GG", "GA", "AA")
 VKORC1_DEFAULT <- "GG"
 
+# CYP4F2 rs2108622 (1297C>T, V433M) GENOTYPE, read only by the library warfarin
+# (Xue 2017), where a C allele (CC or CT) lowers the S-warfarin C50 x0.770
+# against TT: the T allele's enzyme oxidises less vitamin K1, so a T/T patient
+# needs more warfarin.  Its own Patient Profile field.
+# The default is CC, the most sensitive genotype, by Steven L. Shafer's
+# decision (2026-10-27): when the genotype is not entered, the model should
+# predict the LARGER INR rise, so that a dose chosen from the curve errs toward
+# underdosing.  An underdose at the start of therapy is corrected by raising
+# the dose; an overdose risks bleeding, warfarin's primary toxicity, and may
+# need reversal with vitamin K.  (Xue's Table S6 offers x0.783 for an unknown
+# CYP4F2, nearly the same C50; CC gives x0.770.)
+CYP4F2_VALUES  <- c("CC", "CT", "TT")
+CYP4F2_DEFAULT <- "CC"
+
 # Baseline serum osmolality, mOsm/kg, before any osmotic agent is given.  Read
 # only by models that declare an `osmolality` argument (mannitol), which add
 # their own contribution on top of it.  The default, 280, is within the normal
@@ -386,9 +400,9 @@ DRUG_CATEGORIES <- c(
 VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
-# range the band draws, or why there is none.  Checked by
-# test-therapeutic-ranges.R.
-THERAPEUTIC_RANGE_CATEGORIES <- c("Antiseizure", "Antidepressants", "Antipsychotics", "Stimulants")
+# range the band draws, or why there is none.  Every category since
+# 2026-10-27.  Checked by test-therapeutic-ranges.R.
+THERAPEUTIC_RANGE_CATEGORIES <- DRUG_CATEGORIES
 # What a therapeutic-range row may say about the band (R/therapeuticRanges.R).
 THERAPEUTIC_RANGE_STATUSES <- c(
   "drawn",                # the band is this range, on this drug's row
@@ -399,6 +413,9 @@ THERAPEUTIC_RANGE_STATUSES <- c(
   "not_applicable",       # a range exists, but not for the use this model plots
   "band_differs",         # the range is for another use or analyte, and the
                           # band is the library's own for what the row plots
+  "library_band",         # no range is established for what the row plots;
+                          # the band is the library's own (an effect-site
+                          # target, an MBC band, what ordinary doses reach)
   "none_established"      # no range has been established
 )
 # The category of the opt-in research models of drugs of abuse

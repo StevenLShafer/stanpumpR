@@ -93,7 +93,7 @@ helpScenario <- function(id, title, group, summary,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
                          cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
-                         cyp2b6 = CYP2B6_DEFAULT,
+                         cyp4f2 = CYP4F2_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
                          creatinine = NULL,
                          osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
                          gestationalAge = NULL, ...) {
@@ -117,8 +117,8 @@ helpScenario <- function(id, title, group, summary,
     # and osmolality of the previous patient surviving a load).
     patient = list(age = age, weight = weight, height = height, sex = sex,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                   vkorc1 = vkorc1, cyp2b6 = cyp2b6, adjustToFFM = adjustToFFM,
-                   creatinine = creatinine, osmolality = osmolality,
+                   vkorc1 = vkorc1, cyp4f2 = cyp4f2, cyp2b6 = cyp2b6,
+                   adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
                    pregnant = pregnant, gestationalAge = gestationalAge),
     doses = doses, events = events, options = options
   )
@@ -1022,6 +1022,7 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
   if (!p$vkorc1 %in% VKORC1_VALUES) say("invalid vkorc1: ", p$vkorc1)
+  if (!p$cyp4f2 %in% CYP4F2_VALUES) say("invalid cyp4f2: ", p$cyp4f2)
   if (!p$cyp2b6 %in% CYP2B6_VALUES) say("invalid cyp2b6: ", p$cyp2b6)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
   if (!is.logical(p$pregnant) || length(p$pregnant) != 1 || is.na(p$pregnant)) {
@@ -1191,6 +1192,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
   updateSelectInput(session, "vkorc1", selected = p$vkorc1)
+  updateSelectInput(session, "cyp4f2", selected = p$cyp4f2)
   updateSelectInput(session, "cyp2b6", selected = p$cyp2b6)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
   # A blank field is the state the renal models read as "assume a normal
@@ -1278,6 +1280,7 @@ helpScenarioPageHTML <- function(id) {
     `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
     `CYP 2B6` = tools::toTitleCase(p$cyp2b6),
     VKORC1 = p$vkorc1,
+    CYP4F2 = p$cyp4f2,
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
     `Serum creatinine` = if (is.null(p$creatinine)) "blank (normal for age and sex assumed)" else sprintf("%s mg/dL", helpFormatNumber(p$creatinine)),
     `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),

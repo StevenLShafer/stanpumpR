@@ -23,6 +23,7 @@ getDrugPK(
   pregnant = FALSE,
   vkorc1 = VKORC1_DEFAULT,
   model = NULL,
+  cyp4f2 = CYP4F2_DEFAULT,
   gestationalAge = NULL
 )
 }
@@ -82,6 +83,9 @@ passed only to models that name it (warfarin).}
 \item{model}{internal: a model's output to use in place of calling the
 drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.}
+
+\item{cyp4f2}{CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES};
+passed only to models that name it (warfarin).}
 
 \item{gestationalAge}{gestational age at birth in weeks, or NULL (the
 default) for a term birth.  Passed only to the neonatal models that

@@ -55,7 +55,11 @@
 # target: the ACT measured by different devices is not directly comparable (the
 # authors fitted a Hemochron Junior2 ACT), the model is small (50 patients), and
 # clinical use and enforcement of its limits are outside it.  See
-# inst/help/drugs/heparinCPB.md.  No band, no MEAC, no time until threshold.
+# inst/help/drugs/heparinCPB.md.  No MEAC and no time until threshold.  The band
+# is 480 to 600 s, typical 480: an ACT above 480 s is the EACTS/EACTAIC/EBCP
+# 2024 threshold on bypass (section 9.3.1), and the upper edge, which no
+# source gives, is Steven L. Shafer's choice (2026-10-27;
+# inst/extdata/therapeuticRanges.csv).
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -108,9 +112,9 @@ heparinCPB <- function(weight, height, age, sex, adjustToFFM = TRUE)
     act = list(act0 = 116, emax = 720, c50 = 3.49),   # ACT = ACT0 + Emax C/(C50+C)
     tPeak = 0,
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 480,      # ACT band, s (header)
+    upperTypical = 600,
+    lowerTypical = 480,
     reference = paste0(
       "Delavenne X et al., Br J Anaesth 2017;118:705-712 (two-compartment ",
       "anti-factor Xa model with a direct Emax link to the activated clotting ",
