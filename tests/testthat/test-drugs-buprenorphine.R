@@ -236,8 +236,9 @@ test_that("pregnancy: elimination clearance x 1.83, absorption unchanged (Zhu 20
 
 test_that("the band reproduces its derivation from McQuay 1980's demand analgesia", {
   # 0.3 mg IV at induction and 0.3 mg 3 h later, IV in group V and IM in group
-  # M; analgesia ended a median 480 min after the second dose, the same in both
-  # groups.  The study's average patient: 65 y, 66 kg.
+  # M; analgesia ended a median 480 min after the second dose, pooled over both
+  # groups, which did not differ significantly.  The study's average patient:
+  # 65 y, 66 kg.
   for (second in c("mg", "mg IM")) {
     d <- data.frame(Drug = "buprenorphine", Time = c(0, 180), Dose = 0.3,
                     Units = c("mg", second))
@@ -269,4 +270,21 @@ test_that("the intramuscular route reproduces Bullingham 1980's IM/IV plasma rat
   expect_true(all(abs(log(ratio / measured)) < 0.12))
   expect_equal(BUPRENORPHINE_F_IM, 0.947096)
   expect_equal(BUPRENORPHINE_KA_IM, 0.140710)
+})
+
+test_that("the absolute gap to Bullingham 1980 is the disposition's, by both routes", {
+  # The ratio removes a difference of scale, not of shape (see the header):
+  # this model is below Bullingham's arterial means by both routes, most at
+  # 2 min (central volume 64 L here, about 14 L from their early samples).
+  # Pinned so the gap is visible, not to claim agreement.
+  plasma <- function(units) {
+    d <- data.frame(Drug = "buprenorphine", Time = 0, Dose = 0.3, Units = units)
+    w <- simulateDrugsWithCovariates(d, noEvents, 66.5, 170, 62.1, "male", 200,
+                                     FALSE)$buprenorphine$wide
+    approx(w$Time, w[["Plasma"]], c(2, 10, 60, 180))$y
+  }
+  iv <- plasma("mg") / c(14.62, 3.15, 0.77, 0.38)
+  im <- plasma("mg IM") / c(3.56, 3.31, 0.79, 0.36)
+  expect_equal(round(iv, 2), c(0.28, 0.76, 0.84, 0.78))
+  expect_equal(round(im, 2), c(0.29, 0.68, 0.84, 0.81))
 })

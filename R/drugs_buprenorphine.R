@@ -112,8 +112,8 @@
 # intravenous ones from 10 min; seven of eleven patients had over 90%
 # availability, four 40-60%.  One first-order input on this disposition was
 # fitted to the IM/IV ratio of the paper's Table II group means at 2, 10, 60
-# and 180 min (the ratio cancels any difference between their patients'
-# disposition and this one):
+# and 180 min.  The ratio removes a difference of SCALE between their
+# patients' disposition and this one, not one of shape:
 #
 #     ka_IM = 0.1407 /min (absorption half-life 4.9 min), F_IM = 0.947, no lag
 #
@@ -121,7 +121,15 @@
 # and 0.95; the fit is the same at 40 or 65 y.  This input peaks in plasma at
 # 10 min where the patients peaked at 2-5 min: a single first-order input on
 # a disposition with a 7-min fast phase cannot rise faster without
-# overshooting the later ratios.  Added 2026-10-28, when Steven L. Shafer
+# overshooting the later ratios.  In absolute terms this model, at their IM
+# group's 62 y and 66.5 kg, is below their arterial means by both routes:
+# IV 4.1 against 14.6 ng/mL at 2 min (this disposition's central volume is
+# 64 L; theirs, back-extrapolated from early arterial samples, about 14 L),
+# 2.4 against 3.2 at 10, 0.64 against 0.77 at 60 and 0.30 against 0.38 at
+# 180; IM 1.0 against 3.6, 2.3 against 3.3, 0.66 against 0.79 and 0.29
+# against 0.36.  So the IM route carries the intravenous disposition's
+# agreement with these patients, no better and no worse; the ratios are what
+# was fitted.  Added 2026-10-28, when Steven L. Shafer
 # asked that McQuay 1980's intramuscular second dose be simulated as given
 # (see MEAC AND THE BAND).
 #
@@ -173,15 +181,16 @@
 #   replacement (45-75 y, under 80 kg; mean about 65 y and 66 kg) given 0.3 mg
 #   IV at induction and 0.3 mg IV or IM 3 h later, then diamorphine on demand
 #   from 6 h.  Analgesia lasted a median 480 min after the second dose (time
-#   to the fifth demand; the second to fourth gave similar medians), with no
-#   difference between the IV and IM groups.  This model at 65 y, 66 kg,
+#   to the fifth demand; the second to fourth gave similar medians), pooled
+#   over both groups, which did not differ significantly (the groups' own
+#   medians are not given).  This model at 65 y, 66 kg,
 #   170 cm, male: effect site 0.20 ng/mL at that time in both groups (0.201
 #   after an IV second dose, 0.198 after an IM one, through the IM route
 #   above; plasma 0.15), peak 1.0 ng/mL after the second dose (1.02 IV at
-#   41 min, 0.96 IM at 50 min).  So the pharmacokinetics agree with the
-#   equal durations, and the IM input was fitted to Bullingham's ratios,
-#   not to McQuay: a check of the two routes the band was not built to pass,
-#   not a validation of 0.2.  The IM dose is simulated as given, and the reference
+#   41 min, 0.96 IM at 50 min).  So the pharmacokinetics are consistent
+#   with the routes' nonsignificant difference in duration; the IM input was
+#   fitted to Bullingham's ratios, not to McQuay, so this is a consistency
+#   check the band was not built to pass, not a validation of 0.2.  The IM dose is simulated as given, and the reference
 #   patient stays male since sex rarely matters, by decision of Steven L.
 #   Shafer, 2026-10-28.  The lower
 #   edge and the threshold are that estimate: a minimum effective
