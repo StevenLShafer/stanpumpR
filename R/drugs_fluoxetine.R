@@ -111,8 +111,9 @@ FLUOXETINE_KA  <- 0.3           # 1/h, fixed in the source
 FLUOXETINE_REFERENCE <- paste0(
   "Han B, et al. Bridging literature and real-world evidence: external ",
   "evaluation and development of fluoxetine population pharmacokinetics ",
-  "model. Pharmaceutics 2025;17:1516 (steady-state troughs only; band: ",
-  "Hiemke et al., Pharmacopsychiatry 2018;51:9-62). ",
+  "model. Pharmaceutics 2025;17:1516 (steady-state troughs only; therapeutic ",
+  "range for fluoxetine plus norfluoxetine, not drawn: Hart et al., ",
+  "Pharmacopsychiatry 2026;59:166-295, Table 5). ",
   "https://doi.org/10.3390/pharmaceutics17121516"
 )
 
