@@ -88,7 +88,21 @@
 # about 10 minutes in children, Singh 1982) is not in it, so a fast bolus
 # overstates the late concentration and understates the early one.  Give the
 # loading dose as an infusion over 25-30 minutes, as labelled.  No effect
-# site and no band; the usual therapeutic range of 4-10 mg/L is not drawn.
+# site.
+#
+# THE BAND
+# ========
+# 3 to 10 mg/L of procainamide, the therapeutic plasma levels the Hospira
+# injection label (LAB-1321-4.0, read in full from the supplied PDF on
+# 2026-10-28) says "have been reported", with 6.5 mg/L typical, the level it
+# gives for 50 mcg/kg/min at a normal renal half-life of 3 h.  The label adds
+# that sustained ventricular tachycardia may need more (a mean of 13.6 mg/L
+# under programmed stimulation), and that toxicity appears above 10 mg/L and
+# is common above 15.  The 4-10 mg/L once quoted here was never read in a
+# source.  NAPA has no range in the label and is not plotted.  As a check,
+# this model gives 7.4 mg/L at steady state on 50 mcg/kg/min in a 70 kg
+# man of 30 with an assumed normal creatinine, whose half-life is 3.8 h (the
+# label: 3 to 4 h), against the label's 6.5 at 3 h.
 #
 # PREGNANCY
 # =========
@@ -216,9 +230,9 @@ procainamide <- function(weight, height, age, sex, adjustToFFM = TRUE,
     PK = PK,
     tPeak = 0,
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 6.5,      # mg/L; the label's range, 3 to 10 (header)
+    upperTypical = 10,
+    lowerTypical = 3,
     reference = reference
   )
 }

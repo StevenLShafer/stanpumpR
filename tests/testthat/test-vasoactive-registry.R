@@ -60,10 +60,10 @@ test_that("the category holds exactly the implemented drugs, concentration only"
     row <- dd[dd$Drug == d, ]
     expect_equal(row$MEAC, 0, info = d)
     expect_equal(row$endCe, 0, info = d)
-    # No band, except the published therapeutic ranges of digoxin and
-    # milrinone
+    # No band, except the published therapeutic ranges of digoxin,
+    # milrinone and procainamide
     if (!d %in% c("digoxin", "digoxinIV", "digoxinIVPediatric", "milrinone",
-                   "milrinonePediatric")) {
+                   "milrinonePediatric", "procainamide")) {
       expect_equal(row$Lower, 0, info = d)
       expect_equal(row$Upper, 0, info = d)
     }
