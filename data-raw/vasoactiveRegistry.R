@@ -721,7 +721,16 @@ registry <- rbind(
       "No clearance-and-volume model exists: the apparent bicarbonate space itself changes with the baseline bicarbonate and PCO2, and elimination is buffering, CO2 exhalation and renal handling.",
       NA,
       "Adrogue HJ, Brensilver J, Cohen JJ, Madias NE. Influence of steady-state alterations in acid-base equilibrium on the fate of administered bicarbonate in the dog. J Clin Invest 1983;71:867-883. PMID 6300190; and Am J Nephrol 2020 (PMID 32069452).",
-      doi("10.1172/jci110841"))
+      doi("10.1172/jci110841")),
+  # dobutamine, asked for on 2026-10-27 (an adversarial review noted its
+  # absence): the neonatal model is the only population model found
+  reg("dobutamine__neonates__hallik2020", "dobutamine",
+      "28 critically ill neonates on the first days of life, gestational age 22.7-41 weeks, birth weight 0.47-4.4 kg, 5-20 mcg/kg/min", "dobutamine", "plasma (arterial)",
+      "implemented", "dobutamineNeonatal", "full_text",
+      "Read in full from PubMed Central (the equations were stripped; their form is fixed by the text and Table 2).  One compartment: CL 41.2 L/h x (BW/1.618)^0.75 x PMA^2.67/(37.4^2.67 + PMA^2.67), V 5.29 L x BW/1.618; ke0 6.59 /h from the heart-rate PKPD model (Table 5).  Offered as dobutamineNeonatal, with PMA from the Patient Profile's gestational age at birth (blank = term) plus the age.  A neonatal model only: the study covered the first days of life, and no adult population model was found (Kates & Leier 1978, adults in heart failure, is a non-population report not read here).",
+      NA,
+      "Hallik M, Ilmoja ML, Standing JF, et al. Population pharmacokinetics and pharmacodynamics of dobutamine in neonates on the first days of life. Br J Clin Pharmacol 2020;86:318-328. PMID 31657867, PMC7015735.",
+      doi("10.1111/bcp.14146"))
 )
 
 stopifnot(all(registry$readiness %in% READINESS),
@@ -758,6 +767,7 @@ BU95 <- doi("10.1097/00000539-199510000-00022")
 HK19 <- doi("10.1002/jcph.1499")
 JO24 <- doi("10.1111/bcp.16180")
 SA89 <- doi("10.1016/0002-9149(89)90076-3")
+HA20 <- doi("10.1111/bcp.14146")
 LA17 <- doi("10.1007/s40262-017-0515-7")
 MO93 <- doi("10.1002/jps.2600820707")
 CH97 <- pubmed(9165563)
@@ -926,7 +936,14 @@ parameters <- rbind(
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "half-life after a stop", 1.9, "min (Armstrong 1980, quoted by Armstrong 1983)", "estimated", "full_text", AR),
   par("nitroglycerin", "time constant of the rise (not applied)", 8.1, "min (the delivery's, not the drug's; see the registry row)", "estimated", "full_text", AR),
-  par("nitroglycerin", "V", 17.0, "L (CL x half-life / ln 2)", "derived", "full_text", AR)
+  par("nitroglycerin", "V", 17.0, "L (CL x half-life / ln 2)", "derived", "full_text", AR),
+
+  par("dobutamineNeonatal", "CL", 41.2, "L/h at 1.618 kg birth weight, mature", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "V", 5.29, "L at 1.618 kg birth weight", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "TM50", 37.4, "weeks PMA", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "Hill", 2.67, "dimensionless", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "ke0", 6.59, "/h (heart-rate PKPD model, Table 5; mean effect time 9 min)", "estimated", "full_text", HA20),
+  par("dobutamineNeonatal", "heart rate EC50 (not applied)", 39.2, "mcg/L (Emax model: baseline 138, maximum 172 beats/min, gamma 3.36)", "estimated", "full_text", HA20)
 )
 
 stopifnot(all(parameters$evidence %in% PAR_EVIDENCE))

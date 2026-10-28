@@ -333,3 +333,22 @@ test_that("patient.pregnant reaches the models that read it and is echoed back",
   expect_equal(apiSimulate(apiRequest(patient = c(patient, pregnant = TRUE), doses = fent))$timeseries,
                apiSimulate(apiRequest(patient = patient, doses = fent))$timeseries)
 })
+
+
+test_that("patient.gestationalAge reaches the neonatal models, and a blank is a term birth", {
+  neonate <- function(...) apiRequest(
+    patient = c(list(weight = 1.618, height = 42, age = 0, sex = "male",
+                     adjustToFFM = FALSE), list(...)),
+    duration = 120,
+    doses = data.frame(Drug = "dobutamineNeonatal", Time = 0, Dose = 10,
+                       Units = "mcg/kg/min"),
+    output = list(times = 120))
+  preterm <- apiSimulate(neonate(gestationalAge = 30.4))
+  term    <- apiSimulate(neonate())
+  expect_equal(preterm$patient$gestationalAge, 30.4)
+  expect_true(is.na(term$patient$gestationalAge))
+  # The 30-week infant clears less, so its plateau is higher
+  expect_gt(preterm$timeseries$Plasma, term$timeseries$Plasma)
+  expect_equal(round(preterm$timeseries$Plasma, 0), 64)
+  expectApiError(apiSimulate(neonate(gestationalAge = 50)), "gestationalAge")
+})

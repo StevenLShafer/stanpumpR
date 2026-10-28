@@ -80,6 +80,8 @@ helpScenarioDefaultOptions <- function() {
 #' @param creatinine serum creatinine in mg/dL, or NULL for a blank field (the
 #'   renal models then assume a normal value for the patient's age and sex)
 #' @param osmolality baseline serum osmolality in mOsm/kg (mannitol)
+#' @param gestationalAge gestational age at birth in weeks, or NULL for a
+#'   blank field (the neonatal models then assume a term birth)
 #' @param pregnant is the patient pregnant?  Only for a woman of child-bearing
 #'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
@@ -93,7 +95,8 @@ helpScenario <- function(id, title, group, summary,
                          cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
                          cyp4f2 = CYP4F2_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
                          creatinine = NULL,
-                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE, ...) {
+                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
+                         gestationalAge = NULL, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -116,7 +119,7 @@ helpScenario <- function(id, title, group, summary,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
                    vkorc1 = vkorc1, cyp4f2 = cyp4f2, cyp2b6 = cyp2b6,
                    adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
-                   pregnant = pregnant),
+                   pregnant = pregnant, gestationalAge = gestationalAge),
     doses = doses, events = events, options = options
   )
 }
@@ -1031,6 +1034,9 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
     say("creatinine out of range: ", p$creatinine)
   }
   if (!is_valid_number(p$osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) say("osmolality out of range: ", p$osmolality)
+  if (!is.null(p$gestationalAge) &&
+      !is_valid_number(p$gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE))
+    say("gestational age out of range: ", p$gestationalAge)
 
   o <- s$options
   if (!identical(validTimeUnit(o$timeUnits), o$timeUnits)) say("invalid timeUnits: ", o$timeUnits)
@@ -1198,6 +1204,13 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
     updateNumericInput(session, "creatinine", value = p$creatinine)
   }
   updateNumericInput(session, "osmolality", value = p$osmolality)
+  # Blank, a term birth, unless the scenario names a gestational age: sent
+  # explicitly, as the creatinine is, so a previous patient's does not survive
+  if (is.null(p$gestationalAge)) {
+    session$sendInputMessage("gestationalAge", list(value = ""))
+  } else {
+    updateNumericInput(session, "gestationalAge", value = p$gestationalAge)
+  }
 
   if (is.null(timeApi)) {
     updateSliderInput(session, "maximum", value = o$maximum)
@@ -1275,6 +1288,9 @@ helpScenarioPageHTML <- function(id) {
   )
   # Shown only when set: "Pregnant: no" beside a man's age would be noise.
   if (isTRUE(p$pregnant)) patient$Pregnant <- "yes"
+  # Likewise a gestational age, only when the scenario names one
+  if (!is.null(p$gestationalAge))
+    patient$`Gestational age at birth` <- sprintf("%s weeks", helpFormatNumber(p$gestationalAge))
   # Times as the dose table will show them: in the scenario's time unit, in
   # full (helpFormatNumber()'s three significant figures would print 30240
   # minutes as 30,200)

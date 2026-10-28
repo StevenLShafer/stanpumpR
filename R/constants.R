@@ -135,6 +135,15 @@ MAX_OSMOLALITY <- 400
 MIN_CREATININE <- 0.2
 MAX_CREATININE <- 15
 
+# Gestational age at birth, weeks, for the neonatal models whose clearance
+# matures with postmenstrual age (dobutamineNeonatal).  Optional: when it is
+# not entered (NULL, or NA from an empty field) the birth is taken as at term,
+# GESTATIONAL_AGE_TERM.  Postmenstrual age is this plus the postnatal age
+# (postmenstrualAge()).  Read only by models that name `gestationalAge`.
+GESTATIONAL_AGE_TERM <- 40
+MIN_GESTATIONAL_AGE <- 22
+MAX_GESTATIONAL_AGE <- 44
+
 MIN_AGE <- 0
 MAX_AGE <- 90
 # The youngest age the adult-fitted covariate terms see.  Several models carry

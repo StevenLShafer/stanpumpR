@@ -36,6 +36,9 @@
 #'   requires \code{sex = "female"}.  Only the models that name it apply the
 #'   changes of late pregnancy measured for that drug
 #'   (inst/extdata/pregnancyRegistry.csv); see \code{getDrugPK()}.
+#' @param gestationalAge gestational age at birth in weeks, or NULL for a term
+#'   birth.  Only the neonatal models that declare it (dobutamineNeonatal)
+#'   are affected.
 #' @param antiseizureInteractions apply the pharmacokinetic interactions among
 #'   the antiseizure drugs (\code{R/antiseizureInteractions.R},
 #'   \code{antiseizureInteractionRegistry()})?  FALSE (the default) simulates
@@ -64,7 +67,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          # binding (this function is exported).
                                          vkorc1 = VKORC1_DEFAULT,
                                          antiseizureInteractions = FALSE,
-                                         cyp4f2 = CYP4F2_DEFAULT)
+                                         cyp4f2 = CYP4F2_DEFAULT,
+                                         gestationalAge = NULL)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -99,7 +103,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                     cyp4f2 = cyp4f2,
                     cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
-                    pregnant = pregnant, adjustToFFM = adjustToFFM)
+                    pregnant = pregnant, adjustToFFM = adjustToFFM,
+                    gestationalAge = gestationalAge)
     pks[[drug]] <- PK
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
@@ -155,7 +160,8 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                           vkorc1 = vkorc1, cyp4f2 = cyp4f2,
                           cyp2b6 = cyp2b6, osmolality = osmolality,
                           creatinine = creatinine, pregnant = pregnant,
-                          adjustToFFM = adjustToFFM)
+                          adjustToFFM = adjustToFFM,
+                          gestationalAge = gestationalAge)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 
