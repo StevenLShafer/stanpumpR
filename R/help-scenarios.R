@@ -926,6 +926,25 @@ helpScenarioDefinitions <- function() {
       timeUnits = "days", maximum = 91 * MINS_PER_DAY,
       plasmaLinetype = "solid", effectsiteLinetype = "blank"
     ),
+    # Cenobamate split morning/evening, the use the qam/qpm slots were built for:
+    # the antiseizure drugs are sedating, so the morning dose is kept small and
+    # the larger dose given at night.  50 mg qam and 200 mg qpm are two
+    # independent daily slots entered as two rows (a plain qd/bid would replace
+    # them both).  Cenobamate is plasma only (the plasma line carries the curve)
+    # and its ~60 h half-life takes two weeks to reach steady state.
+    # (Claude Code, 2026-10-28, at the request of Steven L. Shafer.)
+    helpScenario(
+      "cenobamate-split-dosing",
+      "Cenobamate: a smaller morning dose and a larger evening dose",
+      "Long-term therapy",
+      "A split cenobamate regimen entered with the qam and qpm slots: 50 mg every morning and 200 mg every evening, the morning dose kept small because these drugs are sedating and can affect memory while awake. The two slots are independent, so they are two rows; a plain qd/bid would have replaced them both. The long half-life means the daily rhythm rides on a level that climbs for about two weeks.",
+      doses = helpDoses(
+        c("cenobamate",   0,  50, "mg PO qam"),
+        c("cenobamate", 720, 200, "mg PO qpm")
+      ),
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
     # Warfarin's INR drawn by the library's Xue model and the Hamberg genotype
     # model together, on a CYP2C9- and VKORC1-sensitive elderly patient, to show
     # why a fixed 5 mg/day start overshoots and how the genotype fields move the

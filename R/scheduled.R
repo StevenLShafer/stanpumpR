@@ -1,5 +1,6 @@
-# Scheduled (repeating) doses: qd, bid, tid, qid and q4h, and qwk (once weekly) on
-# the subcutaneous units
+# Scheduled (repeating) doses: qd, bid, tid, qid and q4h; qam and qpm (separate
+# morning/evening slots, oral and sublingual, the antiseizure drugs); and qwk
+# (once weekly) on the subcutaneous units
 #
 # Drafted by Claude Code, 2026-10-07, at the request of Steven L. Shafer;
 # tests/testthat/test-scheduled.R.
@@ -12,34 +13,38 @@
 # whenever the X axis is lengthened; they are returned as a table of their own
 # and merged back into the exported dose table.
 #
-# Rules from the specification (Shafer, 2026-10-07):
+# Rules (Shafer, 2026-10-07; oral rules revised 2026-10-28):
 #   - The first dose is given at the time entered.
-#   - A scheduled dose of 0 for the same route (IV, PO, SL, IM or IN), at any
-#     frequency, stops the repeating sequence.  An ordinary (unscheduled) dose
-#     does not.
-#   - A later non-zero scheduled dose for the same route replaces the running
-#     sequence from its own time, so a change of dose or frequency is entered
-#     as one new row.  Two scheduled rows for one route at the same time: the
-#     last one entered wins, as for TCI targets.
-#   - Oral doses (Shafer, 2026-10-24): ANY later oral dose -- scheduled or not,
-#     of any oral form, of any size, 0 included -- ends a running oral
-#     schedule from its own time.  So a bid row entered while a tid schedule
-#     runs replaces it, and an ordinary "0 mg PO" stops it: on oral dosing a
-#     new dose is a new instruction to the patient.  An oral dose at the same
-#     time as a schedule's first dose (a loading dose taken with it) does not
-#     end it.  The other routes keep the rules above.
-#   - Sublingual doses (Shafer, 2026-10-24) follow the same rule, and the two
-#     routes are one for it: ANY later oral or sublingual dose ends a running
-#     oral or sublingual schedule.  A tablet swallowed or under the tongue is
-#     a new instruction about the tablets, so an ordinary "0 mg SL" stops a
-#     sublingual schedule and an extra sublingual dose ends it.
+#   - qd/bid/tid/qid/q4h are WHOLE-DAY schedules.  A later whole-day scheduled
+#     dose for the same route replaces the running one from its own time, so a
+#     change of dose or frequency is one new row; on the oral and sublingual
+#     routes (counted as one) a whole-day dose is a regimen change that ends
+#     EVERY running oral schedule, the qam/qpm slots included.  A scheduled 0
+#     ("0 mg PO bid", "0 mg IM qid") stops the schedule.
+#   - qam and qpm are two independent once-daily slots, oral and sublingual
+#     only, that DO NOT replace each other: a split regimen such as cenobamate
+#     200 qpm + 50 qam is entered as two rows (the antiseizure drugs are
+#     sedating and affect memory, so the morning dose is often the smaller).
+#     A later qam replaces only the running qam, a later qpm only the running
+#     qpm; "0 mg PO qam" stops the qam slot alone.
+#   - Ordinary (unscheduled) oral and sublingual doses (Shafer, 2026-10-28):
+#     an ordinary dose of 0 ("0 mg PO", "0 mg SL") stops EVERY running oral
+#     schedule from its time; an ordinary dose ABOVE 0 is an extra one-off
+#     dose and leaves the schedule running -- a catch-up or breakthrough dose,
+#     not a new instruction.  An oral rate unit ("mg/day PO") is not a dose.
+#   - On the other routes (IV bolus, IM, IN, SC) an ordinary dose beside a
+#     schedule adds to it and an ordinary 0 does not stop it; only a scheduled
+#     0 for that route stops it, and a later scheduled dose for that route
+#     replaces it.  Two scheduled rows in one lane at the same time: the last
+#     entered wins, as for TCI targets.
 #   - A repeat within SCHEDULE_TIME_TOLERANCE of the row that ends its
 #     schedule is not given: that row replaces it.  A time written in hours or
 #     days is read back from the dose table rounded to 0.001 minute, so a row
 #     written at a repeat's time can read a hair after it.
 #   - "Skip next dose" (the plot's dose dialogs; skipNextScheduledDose() below)
-#     writes those rules into the table, on any route: a 0 dose that stops
-#     the schedule at the skipped time and the schedule entered again one
+#     writes those rules into the table: a scheduled 0 in the schedule's own
+#     unit, which stops that one schedule (the qam slot, the oral regimen, or
+#     the route) at the skipped time, and the schedule entered again one
 #     interval later.
 
 isScheduledUnit <- function(units) as.character(units) %in% scheduledUnits
@@ -53,6 +58,9 @@ scheduleBaseUnit <- function(units) {
 scheduleInterval <- function(units) {
   unname(ALL_SCHEDULE_INTERVALS[sub("^.* ", "", units)])
 }
+
+# "mg PO qam" -> "qam"
+scheduleFrequency <- function(units) sub("^.* ", "", as.character(units))
 
 # The running schedules in one drug's rows: one row per non-zero scheduled
 # row not overridden at its own time, with the time its schedule ends.
@@ -71,26 +79,50 @@ scheduledSequences <- function(dose) {
   rows <- which(isSched)
   route <- doseRoute(dose$Units[rows])
   time <- as.numeric(dose$Time[rows])
+  freq <- scheduleFrequency(dose$Units[rows])
+  slots <- names(SLOT_SCHEDULE_INTERVALS)             # c("qam", "qpm")
+  oral <- route %in% c(ROUTE_PO, ROUTE_SL)
 
-  # Same route, same time: the last one entered wins; the others are dropped
-  # entirely, first dose included.
-  loser <- duplicated(data.frame(route, time), fromLast = TRUE)
+  # The "lane" a scheduled row occupies, for same-time replacement.  On the
+  # oral and sublingual routes (counted as one) each slot (qam, qpm) is its
+  # own lane and every whole-day frequency shares the lane "PO:regimen"; the
+  # other routes keep the route as the lane.  Same lane, same time: the last
+  # entered wins; the losers are dropped entirely, first dose included -- so a
+  # qam and a qpm at the same time both stand.
+  lane <- ifelse(oral,
+                 ifelse(freq %in% slots, paste0("PO:", freq), "PO:regimen"),
+                 route)
+  loser <- duplicated(data.frame(lane, time), fromLast = TRUE)
   dropped <- rows[loser]
   rows <- rows[!loser]; route <- route[!loser]; time <- time[!loser]
+  freq <- freq[!loser]; oral <- oral[!loser]
 
-  # What ends a schedule: the next scheduled row for its route or, on the
-  # oral and sublingual routes, the next oral or sublingual dose of any kind.
-  # An oral rate unit (digoxin's and amiodarone's constant-rate "mg/day PO")
-  # is not a dose, and nor is a row whose time cannot be read (simCpCe()
-  # keeps one).
+  # What ends an oral or sublingual schedule, from its own time onward:
+  #   - any later whole-day scheduled oral/SL dose (a regimen change ends every
+  #     oral schedule, the qam/qpm slots included);
+  #   - any later ordinary oral/SL dose of 0 (a "0 mg PO" stops the regimen);
+  #     an ordinary dose ABOVE 0 is an extra one-off and does NOT end it;
+  #   - for a slot schedule, a later scheduled dose in the same slot.
+  # An oral rate unit ("mg/day PO") is not a dose, and nor is a row whose time
+  # cannot be read (simCpCe() keeps one).  Non-oral schedules keep the old
+  # rule: the next scheduled dose for the same route ends them.
   allTimes <- suppressWarnings(as.numeric(dose$Time))
-  tablets <- setdiff(which(doseRoute(dose$Units) %in% c(ROUTE_PO, ROUTE_SL) &
-                            !isRateUnit(dose$Units) & !is.na(allTimes)), dropped)
+  allDose  <- suppressWarnings(as.numeric(dose$Dose))
+  oralStop <- setdiff(which(doseRoute(dose$Units) %in% c(ROUTE_PO, ROUTE_SL) &
+                            !isRateUnit(dose$Units) & !isScheduledUnit(dose$Units) &
+                            !is.na(allTimes) & !is.na(allDose) & allDose <= 0), dropped)
+  oralStopTimes <- allTimes[oralStop]
+  oralWholeDayTimes <- time[oral & !(freq %in% slots)]
 
   out <- lapply(seq_along(rows), function(i) {
     row <- rows[i]
     if (dose$Dose[row] <= 0) return(NULL)
-    enders <- if (route[i] %in% c(ROUTE_PO, ROUTE_SL)) allTimes[tablets] else time[route == route[i]]
+    if (oral[i]) {
+      enders <- c(oralWholeDayTimes, oralStopTimes,
+                  if (freq[i] %in% slots) time[oral & freq == freq[i]])
+    } else {
+      enders <- time[route == route[i]]
+    }
     later <- enders[enders > time[i]]
     data.frame(row = row, route = route[i], start = time[i],
                stop = if (length(later)) min(later) else Inf,
@@ -206,10 +238,10 @@ exportDoseTable <- function(DT, drugs, timeUnit = "minutes") {
 #            offered
 # format, reference: the dose table's time format and the procedure start
 #            (minutesToEntryTime())
-# units:     the units the drug offers; on the oral and sublingual routes
-#            the 0 dose is written in the schedule's base unit ("mg PO",
-#            "mg SL") when the drug offers it, else in the scheduled unit, as
-#            it always is on the other routes ("0 mg IM qid", "0 mg SC qwk")
+# units:     the units the drug offers (kept for the caller's signature; the
+#            stop is now always written in the schedule's own scheduled unit,
+#            "0 mg PO qam", "0 mg PO bid", "0 mg IM qid", so it stops only the
+#            one schedule's lane)
 #
 # Returns NULL when there is no such dose, else list(table, time, resumes,
 # dose, units): the new table, the time of the dose skipped, the time the
@@ -241,11 +273,12 @@ skipNextScheduledDose <- function(dt, drug, time, maximum, format,
   skipped <- nextDose[i]
   r <- rows[s$row]
 
+  # Stop this schedule in its own lane with a scheduled 0 in its own unit.  An
+  # ordinary "0 mg PO" would now stop EVERY oral schedule, but a skip must stop
+  # only the one being skipped (e.g. the qam slot), so the scheduled unit is
+  # used on every route ("0 mg PO qam", "0 mg PO bid", "0 mg IM qid").
   scheduledUnit <- as.character(dt$Units[r])
-  stopUnit <- scheduleBaseUnit(scheduledUnit)
-  if (!s$route %in% c(ROUTE_PO, ROUTE_SL) || (!is.null(units) && !stopUnit %in% units)) {
-    stopUnit <- scheduledUnit
-  }
+  stopUnit <- scheduledUnit
   resumes <- skipped + s$interval
   if (resumes >= s$stop - SCHEDULE_TIME_TOLERANCE) resumes <- NA_real_
 

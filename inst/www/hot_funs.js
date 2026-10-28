@@ -38,6 +38,31 @@ function isUserEditSource(source) {
   return source === 'edit' || source === 'CopyPaste.paste' || source === 'Autofill.fill';
 }
 
+// A hover tip on the Time column header (afterGetColHeader), so a reader knows
+// what the Time column means -- which unit, and whether it is elapsed or clock
+// time -- and where to change it (Dr. Fan's review, 2026-10-28).  The header
+// text must stay "Time" (the hooks find columns by it), so the explanation is a
+// title attribute rather than a longer header.
+function hookTimeHeaderTip(col, TH) {
+  try {
+    var hot = this;
+    if (col !== findColByHeader(hot, "Time")) return;
+    var unit = $("#timeUnits").val() || "minutes";
+    var tip;
+    if (getTimeMode() === "clock") {
+      tip = "Clock time (hh:mm) of each dose. Switch to elapsed time, or change " +
+            "the unit, with the Time Display and Time units controls under the plot.";
+    } else {
+      tip = "Time of each dose, elapsed from the start, in " + unit + ". Change " +
+            "the unit (minutes, hours, days, weeks) or switch to clock time with " +
+            "the Time units and Time Display controls under the plot.";
+    }
+    var span = TH.querySelector(".colHeader");
+    if (span) span.setAttribute("title", tip);
+    TH.setAttribute("title", tip);
+  } catch (e) {}
+}
+
 // Don't allow user to type illegal characters into the Time or Dose columns
 function hookFilterKeys(event) {
   let hot = this;
