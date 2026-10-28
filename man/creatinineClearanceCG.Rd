@@ -26,7 +26,8 @@ creatinine clearance in mL/min
 This is the estimator the vancomycin (Thomson 2009), cefazolin (Komatsu
 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017), pregabalin
 (Chan 2021, from 13 years of age; Schwartz below), apixaban (Cirincione
-2018), rivaroxaban (Willmann 2018), edoxaban (Niebecker 2015) and
-dabigatran (Liesenfeld 2011) models were fitted with.
+2018), rivaroxaban (Willmann 2018), edoxaban (Niebecker 2015),
+dabigatran (Liesenfeld 2011) and hydrocodone (Melhem 2013, indexed to
+1.73 m^2) models were fitted with.
 }
 \keyword{internal}

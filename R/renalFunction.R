@@ -3,7 +3,8 @@
 # Several models carry a renal covariate (Cockcroft-Gault creatinine
 # clearance, a CKD-EPI eGFR, or the simplified MDRD eGFR): mannitol,
 # vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin,
-# oxycodone, (intravenous only) meloxicam, lacosamide, levetiracetam, and the
+# oxycodone, hydrocodone, (intravenous only) meloxicam, lacosamide,
+# levetiracetam, and the
 # anticoagulants apixaban, rivaroxaban, edoxaban, dabigatran, enoxaparin and
 # fondaparinux.  Each takes an optional
 # `creatinine` argument, the patient's serum creatinine from the Patient
@@ -182,8 +183,9 @@ adultEquivalentCreatinine <- function(creatinine, age, sex)
 #' This is the estimator the vancomycin (Thomson 2009), cefazolin (Komatsu
 #' 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017), pregabalin
 #' (Chan 2021, from 13 years of age; Schwartz below), apixaban (Cirincione
-#' 2018), rivaroxaban (Willmann 2018), edoxaban (Niebecker 2015) and
-#' dabigatran (Liesenfeld 2011) models were fitted with.
+#' 2018), rivaroxaban (Willmann 2018), edoxaban (Niebecker 2015),
+#' dabigatran (Liesenfeld 2011) and hydrocodone (Melhem 2013, indexed to
+#' 1.73 m^2) models were fitted with.
 #'
 #' @param weight the weight the calling model scales on, kg
 #' @param age age in years
@@ -243,6 +245,20 @@ egfrBedsideSchwartz <- function(height, scr)
 bsaDuBois <- function(weight, height)
 {
   0.007184 * weight^0.425 * height^0.725
+}
+
+#' Gehan and George body surface area
+#'
+#' Gehan EA, George SL, Cancer Chemother Rep 1970;54:225-235.  The formula the
+#' hydrocodone model's source (Melhem 2013) used for its covariate.
+#'
+#' @param weight weight in kg
+#' @param height height in cm
+#' @return body surface area in m^2
+#' @keywords internal
+bsaGehanGeorge <- function(weight, height)
+{
+  0.0235 * weight^0.51456 * height^0.42246
 }
 
 #' CKD-EPI 2009 estimated glomerular filtration rate

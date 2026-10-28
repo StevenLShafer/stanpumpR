@@ -18,13 +18,22 @@ oralHydrocodone <- function(mg = 20, cyp2d6 = CYP2D6_DEFAULT, maximum = 10080) {
 trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) / 2)
 
 
+# Melhem's covariates worked by hand for the 70 kg, 171 cm, 50-year-old man at
+# the assumed creatinine of 0.9 mg/dL, total body weight (switch off):
+# Gehan-George BSA 0.0235 x 70^0.51456 x 171^0.42246, Cockcroft-Gault
+# (140 - 50) x 70 / (72 x 0.9) = 97.222 mL/min, indexed x 1.73 / BSA.
+handBsa  <- 0.0235 * 70^0.51456 * 171^0.42246
+handClcr <- (140 - 50) * 70 / (72 * 0.9) * 1.73 / handBsa
+handV1   <- 714 * (handBsa / 1.87)^0.486
+handCl1  <- 64.4 / 60 * (handClcr / 91.48)^0.223
+
 test_that("returns the correct calculations", {
   actual <- hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)
 
   expected <- list(
     PK = list(default = list(
-      v1 = 714, v2 = 151, v3 = 1,
-      cl1 = 64.4 / 60, cl2 = 0.910 / 60, cl3 = 0,
+      v1 = handV1, v2 = 151, v3 = 1,
+      cl1 = handCl1, cl2 = 0.910 / 60, cl3 = 0,
       ka_PO = 0.0448919972,
       bioavailability_PO = 1,
       tlag_PO = 0
@@ -38,7 +47,7 @@ test_that("returns the correct calculations", {
     reference = actual$reference,
     metabolite = list(
       name              = "hydromorphone",
-      kFormation        = 3.18574e-07 * 70,
+      kFormation        = 3.18574e-07 * 70 * 714 / handV1,
       firstPassFraction = 0,
       mwRatio           = 285.34 / 299.36
     )
@@ -48,19 +57,50 @@ test_that("returns the correct calculations", {
 })
 
 
-test_that("the apparent disposition is the published one", {
+test_that("the apparent disposition is the published one, with Melhem's covariates", {
   x <- hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
-  # Melhem 2013 / FDA review: CL/F 64.4 L/h, Vc/F 714 L, Q/F 0.910 L/h, Vp/F 151 L
-  expect_equal(x$cl1 * 60, 64.4)
+  # Melhem 2013 / FDA review: Q/F 0.910 L/h and Vp/F 151 L carry no covariate
   expect_equal(x$cl2 * 60, 0.910)      # 0.910, not 91.0
-  expect_equal(x$v1, 714)
   expect_equal(x$v2, 151)
 
-  # It carries no weight term: the source's creatinine-clearance and BSA
-  # covariates (Melhem Eqs 11-12) are not applied.  Unusual for this package.
-  y <- hydrocodone(35, 171, 50, "male", adjustToFFM = FALSE)$PK$default
-  expect_equal(y$v1, x$v1)
-  expect_equal(y$cl1, x$cl1)
+  # At the paper's reference values the published typical values come back.
+  # Find the weight whose Gehan-George BSA is 1.87 m2 at 171 cm, and the
+  # creatinine that puts its indexed Cockcroft-Gault clearance at 91.48.
+  w <- (1.87 / (0.0235 * 171^0.42246))^(1 / 0.51456)
+  scr <- (140 - 50) * w / (72 * 91.48 * 1.87 / 1.73)
+  ref <- hydrocodone(w, 171, 50, "male", adjustToFFM = FALSE, creatinine = scr)$PK$default
+  expect_equal(ref$v1, 714)
+  expect_equal(ref$cl1 * 60, 64.4)
+
+  # Eq 11: CL/F goes with the 0.223 power of creatinine clearance, which is
+  # inverse in the creatinine; Eq 12: Vc/F with the 0.486 power of BSA.
+  impaired <- hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE, creatinine = 3.6)$PK$default
+  expect_equal(impaired$cl1 / x$cl1, (0.9 / 3.6)^0.223)
+  expect_equal(impaired$v1, x$v1)
+  big <- hydrocodone(120, 171, 50, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(big$v1 / x$v1,
+               (bsaGehanGeorge(120, 171) / bsaGehanGeorge(70, 171))^0.486)
+
+  # Severe against normal renal function (CLCR 15 against 100 mL/min/1.73 m2):
+  # exposure 53% higher, as Melhem reports.
+  expect_equal((100 / 15)^0.223, 1.53, tolerance = 0.01)
+})
+
+
+test_that("the switch moves the covariates to the pharmacokinetic weight", {
+  on  <- hydrocodone(120, 170, 50, "male")$PK$default
+  pkW <- pkSizeFactors(120, 170, 50, "male")$pkWeight
+  off <- hydrocodone(pkW, 170, 50, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(on$v1, off$v1)
+  expect_equal(on$cl1, off$cl1)
+})
+
+
+test_that("hydrocodone reads the serum creatinine", {
+  pk <- function(cr) getDrugPK("hydrocodone", 70, 170, 50, "male",
+                               getDrugDefaults("hydrocodone"), creatinine = cr)$PK$default
+  expect_lt(pk(3)$cl1, pk(0.9)$cl1)
+  expect_equal(pk(NULL)$cl1, pk(0.9)$cl1)
 })
 
 
@@ -68,12 +108,18 @@ test_that("the model is nearly mono-exponential, matching the observed half-life
   x <- hydrocodone(70, 171, 50, "male", adjustToFFM = FALSE)$PK$default
   r <- cube(x$cl1 / x$v1, x$cl2 / x$v1, 0, x$cl2 / x$v2, 0)
   r <- sort(r[r > 0], decreasing = TRUE) * 60      # per hour
-  expect_equal(unname(r), c(0.0915604, 0.00593669), tolerance = 1e-5)
+  # The two-compartment eigenvalues worked by hand from the covariate values
+  # above (handV1, handCl1): the roots of l^2 - (k10 + k12 + k21) l + k10 k21.
+  k10 <- handCl1 / handV1; k12 <- 0.910 / 60 / handV1; k21 <- 0.910 / 60 / 151
+  s <- k10 + k12 + k21
+  hand <- c(s + sqrt(s^2 - 4 * k10 * k21), s - sqrt(s^2 - 4 * k10 * k21)) / 2 * 60
+  expect_equal(unname(r), hand, tolerance = 1e-6)
+  expect_equal(unname(r), c(0.0924142, 0.00593678), tolerance = 1e-5)
 
-  # The fast half-time is close to the 8.4 h Kapil 2015 observed; the slow one
-  # is a 117 h model tail carrying under 2% of the area, and is not a clinical
-  # elimination half-life.
-  expect_equal(unname(log(2) / r[1]), 7.57, tolerance = 0.01)
+  # The fast half-time, 7.5 h, is close to the 8.4 h Kapil 2015 observed; the
+  # slow one is a 117 h model tail carrying under 2% of the area, and is not a
+  # clinical elimination half-life.
+  expect_equal(unname(log(2) / r[1]), 7.50, tolerance = 0.01)
   expect_gt(log(2) / r[2], 100)
 })
 
@@ -230,13 +276,21 @@ test_that("the effect site is live now that tPeak is set", {
   expect_gt(max(o$hydrocodone$equiSpace$MEAC), 0)
 })
 
-test_that("fat-free mass scaling leaves the apparent disposition alone and moves only formation", {
-  # 120 kg, 170 cm, 50 y male.  Disposition is apparent and carries no size
-  # term; kFormation follows hydromorphone's clearance factor, 1.2209126
-  # (worked out from the Al-Sallami formula by hand), so the Kapil AUC ratio
-  # is preserved against the scaled hydromorphone model.
+test_that("with fat-free mass scaling the covariates see the pharmacokinetic weight", {
+  # 120 kg, 170 cm, 50 y male.  The fat-free-mass ratio is 1.3049067 and its
+  # 0.75 power 1.2209126 (worked out from the Al-Sallami formula by hand), so
+  # the pharmacokinetic weight is 70 x 1.3049067 = 91.343469 kg.  Melhem's
+  # covariates at that weight, by hand: Gehan-George BSA, Cockcroft-Gault at
+  # the assumed 0.9 mg/dL indexed to 1.73 m2.  kFormation follows
+  # hydromorphone's clearance factor and is divided by Vc/F's covariate
+  # factor, so the Kapil AUC ratio is preserved.
+  pkW  <- 70 * 1.3049067
+  bsa  <- 0.0235 * pkW^0.51456 * 170^0.42246
+  clcr <- (140 - 50) * pkW / (72 * 0.9) * 1.73 / bsa
+  v1   <- 714 * (bsa / 1.87)^0.486
   x <- hydrocodone(120, 170, 50, "male")
-  expect_equal(x$PK$default$v1, 714)
-  expect_equal(x$PK$default$cl1 * 60, 64.4)
-  expect_equal_rounded(x$metabolite$kFormation, 2.7226571e-05)
+  expect_equal_rounded(x$PK$default$v1, v1)
+  expect_equal_rounded(x$PK$default$cl1 * 60, 64.4 * (clcr / 91.48)^0.223)
+  expect_equal_rounded(x$metabolite$kFormation,
+                       3.18574e-07 * 70 * 1.2209126 * 714 / v1)
 })

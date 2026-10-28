@@ -152,7 +152,10 @@ test_that("a supplied ke0 is explained by the parent only for a drug never dosed
 test_that("the fat-free-mass switch is reported from the code", {
   expect_true(helpDrugRespondsToFFM("morphine"))
   expect_false(helpDrugRespondsToFFM("propofol"))
-  expect_false(helpDrugRespondsToFFM("hydrocodone"))
+  # Hydrocodone's own covariates (Melhem's BSA and creatinine clearance) see
+  # the pharmacokinetic weight with the switch on, so it now responds.
+  expect_true(helpDrugRespondsToFFM("hydrocodone"))
+  expect_false(helpDrugRespondsToFFM("oxytocin"))
   html <- helpDrugPageHTML("morphine")
   expect_match(html, "Adjust weight to fat-free mass", fixed = TRUE)
   expect_match(html, 'data-help-page="models/fat-free-mass"', fixed = TRUE)

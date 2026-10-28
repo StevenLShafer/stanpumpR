@@ -23,7 +23,7 @@ Each drug's page says whether the switch changes it, under *Parameters at refere
 
 - **Scaled to fat-free mass** (the default): every other drug model in the library, including both dexmedetomidine models (the adult and the infant) and the models of metabolites that are never dosed directly. A model with a weight covariate of its own (citalopram's S-citalopram clearance, for example) evaluates it at the pharmacokinetic weight, 70 kg times the patient's fat-free mass over the reference man's, with the switch on, and at total body weight with it off. So do the renal models' Cockcroft-Gault creatinine clearance and gentamicin's de-indexed eGFR, so the switch changes their renal function too (see [Covariates and body size](help:models/covariates)).
 - **Not scaled, because they carry their own body-size covariate**: propofol and remifentanil already contain fat-free mass inside their Eleveld and Kim models.
-- **Not scaled, deliberately**: oxytocin was fitted in parturients, a population the reference man does not describe; hydrocodone's disposition is apparent (divided by an unmeasured bioavailability) and carries no size term that could be scaled.
+- **Not scaled, deliberately**: oxytocin was fitted in parturients, a population the reference man does not describe. Hydrocodone carries its source's own covariates, body surface area on the central volume and creatinine clearance on clearance; the switch moves them to the pharmacokinetic weight.
 
 ## Turning it off
 

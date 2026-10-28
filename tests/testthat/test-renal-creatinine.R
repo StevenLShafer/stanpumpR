@@ -2,7 +2,7 @@
 # See R/renalFunction.R.
 
 renalDrugs <- c("mannitol", "vancomycin", "gentamicin", "cefazolin", "sugammadex",
-                "gabapentin", "pregabalin", "oxycodone", "meloxicam",
+                "gabapentin", "pregabalin", "oxycodone", "hydrocodone", "meloxicam",
                 "lacosamide", "levetiracetam", "metformin", "ertugliflozin", "empagliflozin",
                 "exenatide", "dapagliflozin", "canagliflozin", "lixisenatide",
                 # Anticoagulants with a renal clearance term (R/drugs_apixaban.R,
