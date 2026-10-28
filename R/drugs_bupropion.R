@@ -134,6 +134,14 @@
 # Learned-Coughlin SM et al. In vivo activity of bupropion at the human
 #   dopamine transporter as measured by positron emission tomography. Biol
 #   Psychiatry 2003;54:800-805.
+# Zhang F, Li Y, Hu J, Zhong J, Li H. Population pharmacokinetics, safety
+#   and tolerability of extended-release bupropion and its three metabolites
+#   in Chinese healthy volunteers. Eur J Drug Metab Pharmacokinet
+#   2019;44:339-352. https://doi.org/10.1007/s13318-018-0537-z
+# Connarn JN et al. Pharmacokinetics and pharmacogenomics of bupropion in
+#   three different formulations with different release kinetics in healthy
+#   human volunteers. AAPS J 2017;19:1513-1522.
+#   https://doi.org/10.1208/s12248-017-0102-8
 # -----------------------------------------------------------------------------
 
 # Ghimire 2026.  Apparent parameters (divided by F), litres, litres per hour
