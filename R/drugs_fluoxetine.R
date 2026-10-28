@@ -78,9 +78,10 @@
 # No concentration-effect relation for antidepressant response exists, and
 # no plasma EC50 for transporter occupancy could be verified, so tPeak is
 # zero and both rows plot plasma.  prodrug = FALSE marks an active parent.
-# The AGNP 2018 range, 120 to 500 ng/mL, is for fluoxetine PLUS
-# norfluoxetine, which split about evenly, so neither row carries a band
-# (the CSV has zeros); the help page gives the range.
+# The AGNP 2026 range (Hart 2026, Table 5), 150 to 300 ng/mL (120 to 500 in
+# AGNP 2018), is for fluoxetine PLUS norfluoxetine, which split about
+# evenly, so neither row carries a band (the CSV has zeros); the help page
+# gives the range.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -110,8 +111,9 @@ FLUOXETINE_KA  <- 0.3           # 1/h, fixed in the source
 FLUOXETINE_REFERENCE <- paste0(
   "Han B, et al. Bridging literature and real-world evidence: external ",
   "evaluation and development of fluoxetine population pharmacokinetics ",
-  "model. Pharmaceutics 2025;17:1516 (steady-state troughs only; band: ",
-  "Hiemke et al., Pharmacopsychiatry 2018;51:9-62). ",
+  "model. Pharmaceutics 2025;17:1516 (steady-state troughs only; therapeutic ",
+  "range for fluoxetine plus norfluoxetine, not drawn: Hart et al., ",
+  "Pharmacopsychiatry 2026;59:166-295, Table 5). ",
   "https://doi.org/10.3390/pharmaceutics17121516"
 )
 

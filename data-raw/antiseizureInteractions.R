@@ -449,7 +449,7 @@ registry <- rbind(
       population = "164 patients (68 children, 96 adults), TDM",
       source = "Armijo JA, Bravo J, Cuadrado A, Herranz JL. Lamotrigine serum concentration-to-dose ratio: influence of age and concomitant antiepileptic drugs and dosage implications. Ther Drug Monit 1999;21:182-190.",
       source_short = "Armijo 1999", pmid = "10217338",
-      evidence_read = "full text (read 2026-10-25): Table 1 and the abstract"),
+      evidence_read = "full text (read 2026-10-25): Table 2 and the abstract"),
   row("valproate", "lamotrigine", "crosscheck", "inhibition", "UGT",
       finding = "Single-dose lamotrigine in 19 children: CL/F 0.04 L/h/kg with valproate vs 0.11 with inducers (t1/2 41.7 vs 8.1 h). The valproate and inducer effects hold in children.",
       population = "19 children and young adults",
