@@ -1,98 +1,86 @@
 # -----------------------------------------------------------------------------
-# Neostigmine: a single historical individual fit (Calvey 1979, patient 1)
+# Neostigmine: Heier 2002, three-compartment population model
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL, total plasma, nominal methylsulfate dose.
 #
-# THERE IS NO VERIFIED ADULT POPULATION MODEL
-# ===========================================
-# The literature review behind this file found individual two-compartment
-# fits in six female surgical patients (Calvey 1979: 15-second injection
-# during tubocurarine reversal under halothane, atropine given, first sample
-# at two minutes) and a later volunteer study (Heier 2002: 70 mcg/kg over
-# two minutes, sampled to four hours) whose abstract reports a clearance of
-# 696 mL/min and a 38% fall in central volume with hypothermia but whose
-# full parameter table was not recovered.  Neither is a population typical
-# vector with covariates.
+# SOURCE
+# ======
+# Heier and colleagues (Anesthesiology 2002;97:90-95) gave 70 mcg/kg of
+# neostigmine over two minutes, after glycopyrrolate 14 mcg/kg, to seven
+# anesthetized volunteers (6 men, 1 woman, 23-39 yr, 58-79 kg), each studied
+# at normothermia and at mild hypothermia, with venous samples at 1, 2, 4,
+# 8, 16, 30, 60, 90, 120 and 240 min (HPLC, LOQ 10 ng/mL).  NONMEM
+# selected three compartments, NOT weight-normalised (Table 2: the
+# weight-related three-compartment model fitted no better), with
+# temperature on V1 only.  Table 3, normothermia (SE):
 #
-# This file uses CALVEY'S PATIENT 1, as a complete, internally consistent
-# row, scaled per kilogram to the reference adult:
+#     Cl 696 (175)   Q2 1480 (175)   Q3 556 (47) mL/min
+#     V1 5.59 (0.926)   V2 15.0 (3.54)   V3 110 (73.9) L
 #
-#     Vc 10.86 mL/kg   k10 0.527 /min   k12 0.398 /min   k21 0.039 /min
+# Vss 130.6 L; half-lives 1.3, 16.5 and 256 min (derived).  Hypothermia
+# lowers V1 by 38% (SE 14%); not applied, since the Patient Profile has no
+# temperature.  Interindividual variances did not improve the fit and are
+# not reported.  The authors distrust V1 (venous, no sample before 1 min),
+# and V3 is poorly estimated (SE 67%) because sampling stopped at 4 h: the
+# terminal phase after a few hours is an extrapolation.
 #
-# giving, at 70 kg, Vc 0.76 L, Vp 7.76 L, CL 0.40 L/min (400 mL/min against
-# Heier's 696), Q 0.30 L/min, half-times 0.74 and 31.8 min (Calvey's
-# patients ranged 15-32 min).  Averaging the six rows was rejected by the
-# review because patient 5's fitted central volume (0.11 mL/kg) is not a
-# physiological space.
+# Until 2026-10-28 the library used Calvey 1979's patient 1 (one of six
+# individual two-compartment fits in women reversing tubocurarine; Br J
+# Clin Pharmacol 1979;7:149-155), because Heier's table had not been read.
+# That fit had a central volume of 0.76 L and a clearance of 400 mL/min, so
+# its first minutes after a bolus were far higher than these.
 #
-# WHAT THIS MEANS FOR THE CURVE
-# =============================
-# The first two minutes after a bolus were never observed and are not
-# credible here: the tiny central volume puts the instantaneous
-# concentration of a 3 mg dose near 4000 ng/mL before a sub-minute
-# distribution phase removes most of it.  From a few minutes on, the curve
-# reproduces the fitted decline.  Treat the model as the best available
-# shape, not as a validated prediction, and replace it when an adult
-# individual-data population model with early sampling appears.
-#
-# The historical assay was calibrated against bromide standards while the
-# drug given was the methylsulfate; the exact harmonisation was not
-# established, so the dose is the nominal labelled milligrams and no molar
-# correction is applied.
+# The historical assay question (bromide standards against methylsulfate
+# dosing) applies to Calvey, not to Heier's HPLC; the dose is still the
+# nominal labelled milligrams, with no molar correction.
 #
 # EFFECT SITE
 # ===========
-# Heier 2002 measured the time to maximum antagonism of a vecuronium block
-# at 4.6 min after the START of a two-minute infusion.  That is used as
-# tPeak, which slightly understates ke0 relative to a true bolus value.
-# Calvey saw maximal electromyographic facilitation at 7-15 min against a
-# different blocker and endpoint.  No concentration-effect model is
-# attached: the plotted effect site is a delayed concentration, not a
-# train-of-four prediction.
+# Heier measured the time to maximum antagonism of a vecuronium block at
+# 4.6 min (median, normothermia), from injection of the two-minute
+# infusion.  It is used as a bolus tPeak on Heier's own PK, which slightly
+# understates ke0.  No concentration-effect model is attached: the plotted
+# effect site is a delayed concentration, not a train-of-four prediction.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source is per-kilogram with fixed rate constants.  With the switch on,
-# volumes scale with fat-free mass relative to the reference male and
-# clearances with that ratio ^ 0.75; with it off, everything scales with
-# weight/70, which is the per-kilogram source exactly.
+# The published parameters are fixed values for these adults (median
+# weight near 70 kg); weight was tested and not retained.  With the switch
+# on, volumes scale with fat-free mass relative to the 70 kg, 170 cm
+# reference male and clearances with that ratio ^ 0.75; with it off, the
+# published values are used unscaled.
 #
 # References
 # ----------
-# Calvey TN et al., Br J Clin Pharmacol 1979;7:149-155.
-#   https://doi.org/10.1111/j.1365-2125.1979.tb00915.x
-# Heier T et al., Anesthesiology 2002;97:90-95.
+# Heier T, Clough D, Wright PMC, Sharma ML, Sessler DI, Caldwell JE.
+#   Anesthesiology 2002;97:90-95.
 #   https://doi.org/10.1097/00000542-200207000-00013
+# Calvey TN et al., Br J Clin Pharmacol 1979;7:149-155 (the previous model).
+#   https://doi.org/10.1111/j.1365-2125.1979.tb00915.x
 # -----------------------------------------------------------------------------
 
-#' Neostigmine pharmacokinetics (single historical fit)
+#' Neostigmine pharmacokinetics (Heier 2002)
 #'
 #' @inheritParams cefazolin
 #' @param adjustToFFM scale volumes to the patient's fat-free mass and
-#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, scale every
-#'   volume and clearance linearly with total body weight, as the per-kilogram
-#'   source does.
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published values unscaled, as the source (not weight-normalised) does.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 neostigmine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
-  # Size scaling (see the header): per-kilogram source, so the default
-  # legacy factors (weight/70 on everything) reproduce it exactly.
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # Size scaling (see the header): the source is not weight-normalised, so
+  # with the switch off the published values are used unscaled.
+  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
 
-  # Calvey 1979, patient 1
-  v1Ref <- 0.01086 * 70   # L at the 70 kg reference
-  k10 <- 0.527            # /min
-  k12 <- 0.398
-  k21 <- 0.039
-
-  v1  <- v1Ref * size$volume
-  v2  <- v1Ref * k12 / k21 * size$volume
-  v3  <- 1                                  # no third compartment
-  cl1 <- v1Ref * k10 * size$clearance
-  cl2 <- v1Ref * k12 * size$clearance
-  cl3 <- 0
+  # Heier 2002, Table 3, normothermia
+  v1  <- 5.59  * size$volume       # L
+  v2  <- 15.0  * size$volume
+  v3  <- 110   * size$volume
+  cl1 <- 0.696 * size$clearance    # L/min
+  cl2 <- 1.480 * size$clearance
+  cl3 <- 0.556 * size$clearance
 
   default <- list(
     v1 = v1,
@@ -109,16 +97,17 @@ neostigmine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 4.6   # Heier 2002, time to maximum effect; see the header
   MEAC  <- 0
 
-  # Band, ng/mL: the concentrations a few minutes to an hour after 2.5-5 mg.
+  # Band, ng/mL: the library's own, set on the earlier Calvey model.  With
+  # Heier's PK, 2.5-5 mg peaks at 75-150 ng/mL in the effect site, and the
+  # plasma is 8-16 ng/mL at an hour.
   typical      <- 100
   upperTypical <- 300
   lowerTypical <- 30
 
   reference <- paste0(
-    "Calvey TN et al., Br J Clin Pharmacol 1979;7:149-155 (patient 1 of six ",
-    "individual two-compartment fits; no population model exists); time to ",
-    "peak effect from Heier T et al., Anesthesiology 2002;97:90-95. ",
-    "https://doi.org/10.1111/j.1365-2125.1979.tb00915.x"
+    "Heier T et al., Anesthesiology 2002;97:90-95 (Table 3, three-compartment ",
+    "population model at normothermia; time to peak effect 4.6 min). ",
+    "https://doi.org/10.1097/00000542-200207000-00013"
   )
 
   return(
