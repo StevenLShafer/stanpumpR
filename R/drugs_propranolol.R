@@ -90,9 +90,10 @@
 # paper places the peak within 5-9 min of a 10-min infusion and measures no
 # bolus time to peak.  It is consistent with 5 minutes, not its source.  Riva E et al., J
 # Cardiovasc Pharmacol 1980;2:707-714 (doi 10.1097/00005344-198011000-00001;
-# abstract) saw the effects on heart rate and AV-nodal refractoriness 5-8
-# minutes after 0.1 mg/kg intravenously.  Heart rate is the endpoint, as for
-# esmolol, metoprolol and verapamil.
+# read in full) measured plasma propranolol and the effects on heart rate and
+# AV-nodal refractoriness, first seen 5-8 minutes after 0.1 mg/kg intravenously
+# and observed over 5-45 minutes; like Achong it bounds rather than pins the
+# peak.  Heart rate is the endpoint, as for esmolol, metoprolol and verapamil.
 # -----------------------------------------------------------------------------
 
 # Fagan 1982, Table 1 means
