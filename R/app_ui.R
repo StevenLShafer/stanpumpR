@@ -205,7 +205,8 @@ app_ui <- function() {
                     "2 (somewhat) or 3 (highly tolerant), so the % MEAC panel",
                     "and overlay, the propofol-opioid interaction and the",
                     "opioid-MAC interaction treat the opioid as less effective.",
-                    "The band and the time until threshold are unchanged."
+                    "The opioid's shaded band and its time until threshold",
+                    "rise by the same factor."
                   ),
                   placement = "right"
                 )),

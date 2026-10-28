@@ -107,16 +107,22 @@ recalculatePK <- function(drugs, drugDefaults, doseTable,
   # The Patient Profile's Opioid tolerance raises every opioid's MEAC by its
   # factor (OPIOID_TOLERANCE_FACTORS), here, where each drug's MEAC enters
   # its entry, so everything that reads it downstream sees the tolerant MEAC.
-  # The session's drugDefaults keeps the naive values, which the
-  # propofol-opioid interaction uses to convert a % MEAC to
-  # remifentanil-equivalents, so tolerance lowers that interaction too.
+  # For an opioid with a MEAC, the shaded band (multiples of the MEAC) and
+  # the time-until-threshold value (the MEAC itself, for most) rise with it
+  # (Steven L. Shafer, 2026-10-28); an opioid without one (codeine, whose
+  # band is only what ordinary doses reach) is left alone.  The session's
+  # drugDefaults keeps the naive values, which the propofol-opioid
+  # interaction uses to convert a % MEAC to remifentanil-equivalents, so
+  # tolerance lowers that interaction too.
   toleranceFactor <- OPIOID_TOLERANCE_FACTORS[[match.arg(opioidTolerance, OPIOID_TOLERANCE_VALUES)]]
   #  for (idx in seq(nrow(drugDefaults))) {
   #    drug <- drugDefaults$Drug[idx]
   resolve <- function(drugs, drug) {
     idx <- which(drugDefaults$Drug==drug)
     row <- drugDefaults[idx, ]
-    row$MEAC <- row$MEAC * toleranceFactor
+    if (isTRUE(row$MEAC > 0))
+      for (column in c("MEAC", "Lower", "Typical", "Upper", "endCe"))
+        row[[column]] <- row[[column]] * toleranceFactor
     drugs[[drug]]$Color <- drugDefaults$Color[idx]
     # endCe, the time-until-threshold concentration, comes with the PK:
     # getDrugPK() reads it from this session's drugDefaults row, with any

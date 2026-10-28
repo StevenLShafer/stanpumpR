@@ -88,7 +88,8 @@ CYP2B6_DEFAULT <- CYP2B6_NORMAL
 # opioid's MEAC is multiplied by the factor (Steven L. Shafer, 2026-10-28), so
 # the % MEAC panel and overlay, the MEAC sum, the propofol-opioid interaction
 # and the opioid-MAC interaction all see a tolerant patient's opioid as less
-# effective.  The band and the time-until-threshold value are unchanged.
+# effective, and so are its shaded band and its time-until-threshold value
+# (recalculatePK(); an opioid without a MEAC is left alone).
 OPIOID_TOLERANCE_FACTORS <- c(none = 1, mild = 1.5, somewhat = 2, high = 3)
 OPIOID_TOLERANCE_VALUES  <- names(OPIOID_TOLERANCE_FACTORS)
 OPIOID_TOLERANCE_DEFAULT <- "none"

@@ -62,7 +62,7 @@ test_that("the tooltips show on hover only, so a click does not pin them", {
   expect_match(as.character(tip), "&quot;trigger&quot;:&quot;hover&quot;", fixed = TRUE)
 })
 
-test_that("opioid tolerance multiplies every opioid's MEAC by its factor", {
+test_that("opioid tolerance multiplies every opioid's MEAC, band and threshold by its factor", {
   dd <- getDrugDefaultsGlobal()
   DT <- data.frame(Drug = c("fentanyl", "propofol"), Time = 0, Dose = 1,
                    Units = c("mcg", "mg"))
@@ -78,5 +78,19 @@ test_that("opioid tolerance multiplies every opioid's MEAC by its factor", {
   expect_equal(meac("high"), c(fentanyl = 3 * base, propofol = 0))
   # the default is no tolerance
   expect_equal(recalculatePK(NULL, dd, DT, 40, 70, 170, "male")$fentanyl$MEAC, base)
+  # the band and the time-until-threshold value rise with the MEAC; a drug
+  # without a MEAC (propofol here) keeps its own
+  row <- dd[dd$Drug == "fentanyl", ]
+  high <- recalculatePK(NULL, dd, DT, 40, 70, 170, "male", opioidTolerance = "high")
+  expect_equal(c(high$fentanyl$lowerTypical, high$fentanyl$typical,
+                 high$fentanyl$upperTypical, high$fentanyl$endCe),
+               3 * c(row$Lower, row$Typical, row$Upper, row$endCe))
+  prop <- dd[dd$Drug == "propofol", ]
+  expect_equal(c(high$propofol$lowerTypical, high$propofol$endCe), c(prop$Lower, prop$endCe))
+  # codeine, an opioid without a MEAC, keeps its display band
+  cod <- recalculatePK(NULL, dd, data.frame(Drug = "codeine", Time = 0, Dose = 30,
+                                            Units = "mg PO"),
+                       40, 70, 170, "male", opioidTolerance = "high")$codeine
+  expect_equal(cod$upperTypical, dd$Upper[dd$Drug == "codeine"])
   expect_error(meac("extreme"))
 })
