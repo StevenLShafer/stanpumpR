@@ -115,7 +115,8 @@ test_that("hydroxybupropion returns Ghimire's estimates with the fat-free-mass s
         cl3 = 0
       )
     ),
-    # AGNP 2018 range for bupropion + hydroxybupropion, mirrored from the CSV
+    # AGNP 2026 (Hart 2026, Table 5) range for hydroxybupropion alone,
+    # mirrored from the CSV
     tPeak = 0, MEAC = 0, typical = 1200, upperTypical = 1500, lowerTypical = 850,
     reference = GHIMIRE_REFERENCE
   )
@@ -208,10 +209,11 @@ test_that("the formed exposure ratio is fm x CL / CL_met", {
                tolerance = 0.01)
 })
 
-test_that("150 mg SR bid at steady state sits in the AGNP range for the sum", {
+test_that("150 mg SR bid at steady state sits in the AGNP hydroxybupropion range", {
   # Average steady state: 300 mg/day over CL/F (148.4 L/h x 24) = 84.23 ng/mL
   # of bupropion, and 16.49 times that, 1388.9 ng/mL, of hydroxybupropion:
-  # a sum of 1473 ng/mL, inside 850 to 1500.
+  # a sum of 1473 ng/mL.  Both are inside 850 to 1500, which Hart 2026
+  # (Table 5) gives for hydroxybupropion alone, not for the sum.
   avgParent <- 300 / (148.4 * 24) * 1000
   expect_equal(avgParent, 84.23180593, tolerance = 1e-9)
   expect_equal(avgParent * 0.1 * 148.4 / 0.9, 1388.888889, tolerance = 1e-9)
