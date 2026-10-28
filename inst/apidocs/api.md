@@ -232,7 +232,7 @@ A request is a JSON object. Field names ignore case and any `_`, space or
 | `gestationalAge` | no | 22–44 weeks, the gestational age at birth. If it is omitted, the birth is taken as at term (40 weeks). Only the neonatal models (`dobutamineNeonatal`) read it, with the age, as the postmenstrual age. |
 | `osmolality` | no | 200–400 mOsm/kg. The default is 280. |
 | `cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
-| `vkorc1`, `cyp4f2` | no | The warfarin-sensitivity genotypes, read only by the vitamin-K antagonists (warfarin, fluindione, acenocoumarol). Unlike the phenotypes above, their defaults are **not** the commonest genotype but the most sensitive one, `AA` and `CC`, so that an unentered genotype predicts the larger INR rise; pass the patient's own genotype when it is known. |
+| `vkorc1`, `cyp4f2` | no | The warfarin-sensitivity genotypes, read only by the vitamin-K antagonists (warfarin, fluindione, acenocoumarol). Unlike the phenotypes above, their defaults are chosen for sensitivity rather than for frequency: `AA` and `CC` are the genotypes that give the **largest** INR rise, so that an unentered genotype errs toward underdosing. Pass the patient's own genotype when it is known. |
 | `adjustToFFM` | no | `true` (default) or `false` |
 
 ### The dose table
