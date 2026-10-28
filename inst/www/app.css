@@ -563,3 +563,21 @@ a.investigator-link:hover {
   break-inside: avoid;
   margin-top: 0;
 }
+
+/* The question-mark icon that carries a sidebar control's explanation
+   (fieldHelp() in R/utils-shiny-ui.R). */
+.field-help {
+  margin-left: 0.35em;
+  color: var(--bs-secondary-color, #6c757d);
+  cursor: help;
+  font-size: 0.9em;
+}
+.field-help:hover {
+  color: var(--bs-primary, #0d6efd);
+}
+bslib-tooltip:has(> .field-help) {
+  display: inline;
+}
+.checkbox:has(> bslib-tooltip > .field-help) > label {
+  display: inline-block;
+}
