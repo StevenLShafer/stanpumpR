@@ -73,13 +73,16 @@ test_that("an ordinary oral dose of 0 stops an oral schedule", {
   expect_equal(x$scheduled$Time, c(480, 960))
 })
 
-test_that("an ordinary non-zero oral dose ends an oral schedule too", {
+test_that("an ordinary non-zero oral dose is an extra dose and leaves the schedule running", {
+  # Revised 2026-10-28: a >0 ordinary oral dose is a catch-up / breakthrough
+  # dose; the schedule continues through it (only a 0 mg PO stops it).
   x <- expandScheduledDoses(
     doses(c(0, 1000), c(200, 600), c("mg PO tid", "mg PO"), "carbamazepine"),
     3 * MINS_PER_DAY
   )
-  expect_equal(x$scheduled$Time, c(480, 960))
-  expect_equal(sort(x$dose$Time), c(0, 480, 960, 1000))
+  expect_equal(x$scheduled$Time, seq(480, 3 * MINS_PER_DAY - 1, by = 480))
+  expect_true(1000 %in% x$dose$Time)                       # the extra dose is given
+  expect_true(all(c(0, 480, 960, 1440) %in% x$dose$Time))  # schedule keeps running
 })
 
 test_that("any oral form ends an oral schedule of another form", {
@@ -98,7 +101,7 @@ test_that("an oral dose at the schedule's first dose does not end it", {
   expect_equal(x$scheduled$Time, c(720, 1440, 2160))
 })
 
-test_that("oral and sublingual doses end each other's schedules, and their own", {
+test_that("a 0 or whole-day oral/sublingual dose ends the other route's schedule", {
   # No drug offers both today (buprenorphine is the only SL drug): the rule
   # reads the units, so a made-up drug carries it.
   x <- expandScheduledDoses(
@@ -112,7 +115,7 @@ test_that("oral and sublingual doses end each other's schedules, and their own",
   )
   expect_equal(x$scheduled$Time[x$scheduled$Units == "mg PO"], c(480, 960))
   expect_equal(x$scheduled$Time[x$scheduled$Units == "mg SL"], c(1720, 2440))
-  # An oral dose, 0 or not, ends a sublingual schedule
+  # A 0 oral dose or a whole-day oral schedule ends a sublingual schedule
   x <- expandScheduledDoses(
     doses(c(0, 700), c(2, 0), c("mg SL qid", "mg PO"), "made-up"),
     MINS_PER_DAY
@@ -124,8 +127,8 @@ test_that("oral and sublingual doses end each other's schedules, and their own",
   )
   expect_equal(x$scheduled$Time[x$scheduled$Units == "mg SL"], 360)
   expect_equal(x$scheduled$Time[x$scheduled$Units == "mg PO"], c(1420, 2140, 2860))
-  # An ordinary sublingual dose ends a sublingual schedule too: 0 stops it,
-  # and an extra dose is given once with no schedule after it
+  # An ordinary sublingual dose of 0 stops a sublingual schedule; a >0 one is
+  # an extra dose and leaves it running.
   x <- expandScheduledDoses(
     doses(c(0, 700), c(2, 0), c("mg SL qid", "mg SL"), "buprenorphine"),
     MINS_PER_DAY
@@ -135,14 +138,56 @@ test_that("oral and sublingual doses end each other's schedules, and their own",
     doses(c(0, 700), c(2, 4), c("mg SL qid", "mg SL"), "buprenorphine"),
     MINS_PER_DAY
   )
-  expect_equal(x$scheduled$Time, 360)
-  expect_equal(sort(x$dose$Time), c(0, 360, 700))
+  expect_equal(x$scheduled$Time, c(360, 720, 1080))
+  expect_true(700 %in% x$dose$Time)
   # ...but not one taken with the schedule's first dose
   x <- expandScheduledDoses(
     doses(c(0, 0), c(4, 2), c("mg SL", "mg SL qid"), "buprenorphine"),
     MINS_PER_DAY
   )
   expect_equal(x$scheduled$Time, c(360, 720, 1080))
+})
+
+test_that("qam and qpm are independent slots that do not replace each other", {
+  # Cenobamate split dosing: 50 mg every morning, 200 mg every evening, each a
+  # daily slot the other does not end (Shafer, 2026-10-28).
+  x <- expandScheduledDoses(
+    doses(c(0, 720), c(50, 200), c("mg PO qam", "mg PO qpm"), "cenobamate"),
+    3 * MINS_PER_DAY
+  )
+  expect_equal(x$scheduled$Time[x$scheduled$Dose == 50],  c(1440, 2880)) # q24h from 0
+  expect_equal(x$scheduled$Time[x$scheduled$Dose == 200], c(2160, 3600)) # q24h from 720
+  expect_true(all(x$scheduled$Units == "mg PO"))
+})
+
+test_that("a whole-day oral dose wipes the qam and qpm slots", {
+  x <- expandScheduledDoses(
+    doses(c(0, 0, 1440), c(50, 200, 300),
+          c("mg PO qam", "mg PO qpm", "mg PO bid"), "cenobamate"),
+    3 * MINS_PER_DAY
+  )
+  expect_false(any(x$scheduled$Time[x$scheduled$Dose %in% c(50, 200)] >= 1440))
+  expect_true(all(c(2160, 2880) %in% x$scheduled$Time[x$scheduled$Dose == 300]))
+})
+
+test_that("an ordinary 0 mg PO stops every oral schedule, slots included", {
+  x <- expandScheduledDoses(
+    doses(c(0, 0, 1500), c(50, 200, 0),
+          c("mg PO qam", "mg PO qpm", "mg PO"), "cenobamate"),
+    3 * MINS_PER_DAY
+  )
+  expect_false(any(x$scheduled$Time >= 1500))
+})
+
+test_that("a later qam replaces only the qam slot, not qpm", {
+  x <- expandScheduledDoses(
+    doses(c(0, 0, 1440), c(50, 200, 75),
+          c("mg PO qam", "mg PO qpm", "mg PO qam"), "cenobamate"),
+    3 * MINS_PER_DAY
+  )
+  expect_true(2880 %in% x$scheduled$Time[x$scheduled$Dose == 200])   # qpm untouched
+  expect_false(any(x$scheduled$Time[x$scheduled$Dose == 50] >= 1440)) # old qam ended
+  expect_true(2880 %in% x$scheduled$Time[x$scheduled$Dose == 75])     # new qam runs
 })
 
 test_that("an oral or sublingual row with no readable time ends no schedule", {
@@ -249,7 +294,7 @@ test_that("the repeats are merged into the exported dose table", {
 
 test_that("the scheduled units are offered and validated", {
   units <- unlist(getDrugDefaultsGlobal()$Units)
-  offered <- units[grepl(" (qd|bid|tid|qid|q4h)$", units)]
+  offered <- units[grepl(" (qd|bid|tid|qid|q4h|qam|qpm)$", units)]
   expect_gt(length(offered), 0)
   expect_true(all(offered %in% scheduledUnits))
   expect_true(all(nchar(scheduledUnits) <= MAX_UNIT_STRING_LENGTH))
@@ -296,7 +341,7 @@ test_that("skip next dose drops exactly the next oral dose and resumes the sched
   expect_equal(skip$resumes, 1440)
   expect_equal(skip$table$Time[1:3], c("0", "960", "1440"))
   expect_equal(skip$table$Dose[1:3], c("200", "0", "200"))
-  expect_equal(skip$table$Units[1:3], c("mg PO tid", "mg PO", "mg PO tid"))
+  expect_equal(skip$table$Units[1:3], c("mg PO tid", "mg PO tid", "mg PO tid"))
   expect_equal(skip$table$Drug[4], "")
   expect_equal(simulatedTimes(skip$table, 3 * MINS_PER_DAY),
                setdiff(seq(0, 3 * MINS_PER_DAY - 1, by = 480), 960))
@@ -327,7 +372,7 @@ test_that("skip next dose works on a sublingual schedule", {
   expect_equal(skip$resumes, 1440)
   expect_equal(skip$table$Time[1:3], c("0", "960", "1440"))
   expect_equal(skip$table$Dose[1:3], c("2", "0", "2"))
-  expect_equal(skip$table$Units[1:3], c("mg SL tid", "mg SL", "mg SL tid"))
+  expect_equal(skip$table$Units[1:3], c("mg SL tid", "mg SL tid", "mg SL tid"))
   expect_equal(simulatedTimes(skip$table, 3 * MINS_PER_DAY),
                setdiff(seq(0, 3 * MINS_PER_DAY - 1, by = 480), 960))
 })

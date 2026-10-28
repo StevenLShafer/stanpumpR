@@ -47,7 +47,7 @@ test_that("the dose dialogs offer Skip next dose only while an oral schedule run
     filled <- dt[nzchar(dt$Drug), ]
     expect_equal(filled$Time, c("0", "16:00", "00:00"))
     expect_equal(filled$Dose, c("200", "0", "200"))
-    expect_equal(filled$Units, c("mg PO tid", "mg PO", "mg PO tid"))
+    expect_equal(filled$Units, c("mg PO tid", "mg PO tid", "mg PO tid"))
     expect_equal(dt$Drug[nrow(dt)], "")
     # The simulation gives every tid dose but the one at 8 h
     session$flushReact()

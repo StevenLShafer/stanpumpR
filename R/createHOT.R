@@ -109,7 +109,10 @@ createHOT <- function(doseTable, drugDefaults, timeFormat = NULL, drugChoices = 
     afterChange = "hookDoseTableUpdate",
     # pressing Enter in a drug cell; opening a Units list
     afterBeginEditing = c("hookSelectAllDrugText", "hookWrapUnitList"),
-    afterSelectionEnd = "hookSelectAllDrugText"   # clicking into a drug cell with mouse
+    afterSelectionEnd = "hookSelectAllDrugText",   # clicking into a drug cell with mouse
+    # a hover tip on the Time header saying what the unit is and how to change
+    # it (Dr. Fan's review, 2026-10-28)
+    afterGetColHeader = "hookTimeHeaderTip"
   )
 
   return(HOT)

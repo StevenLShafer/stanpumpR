@@ -345,12 +345,20 @@ TCI_MAX_RATE <- Inf            # pump ceiling in base mass units per minute
 # drug that offers qid also offers q4h (drugDefaults_global.csv).
 SCHEDULE_INTERVALS <- c(qd = 24 * 60, bid = 12 * 60, tid = 8 * 60, qid = 6 * 60,
                         q4h = 4 * 60)
+# Separate morning ("qam") and evening ("qpm") once-daily slots, oral and
+# sublingual only, offered only on the antiseizure drugs.  Unlike the whole-day
+# frequencies above, a qam and a qpm schedule DO NOT replace each other, so a
+# split regimen with a different morning and evening dose can be entered (the
+# antiseizure drugs are sedating and affect memory, so the morning dose is
+# often smaller than the evening one).  See scheduled.R for the rules.
+SLOT_SCHEDULE_INTERVALS <- c(qam = 24 * 60, qpm = 24 * 60)
 # Once weekly ("qwk"), offered only on the subcutaneous units: semaglutide,
 # dulaglutide and tirzepatide are injected once a week.  Kept out of
 # SCHEDULE_INTERVALS, the daily frequencies every other scheduled drug offers;
 # scheduled.R reads ALL_SCHEDULE_INTERVALS.
 WEEKLY_SCHEDULE_INTERVAL <- c(qwk = 7 * 24 * 60)
-ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)
+ALL_SCHEDULE_INTERVALS <- c(SCHEDULE_INTERVALS, SLOT_SCHEDULE_INTERVALS,
+                            WEEKLY_SCHEDULE_INTERVAL)
 # A scheduled repeat this close (minutes) to the row that ends its schedule
 # is replaced by that row (scheduled.R): the 0.001-minute snap of a time
 # written in hours or days (TIME_SNAP_DIGITS).
@@ -360,7 +368,14 @@ scheduledUnits <- c(
     c(bolusUnits, poUnits, poFormulationUnits, slUnits, imUnits, inUnits),
     names(SCHEDULE_INTERVALS), paste
   ))),
-  as.vector(t(outer(c(scUnits, insulinUnits), names(ALL_SCHEDULE_INTERVALS), paste)))
+  # qam/qpm: the oral and sublingual forms only (the antiseizure drugs).
+  as.vector(t(outer(
+    c(poUnits, poFormulationUnits, slUnits),
+    names(SLOT_SCHEDULE_INTERVALS), paste
+  ))),
+  # The subcutaneous units take the daily frequencies and qwk, not qam/qpm.
+  as.vector(t(outer(c(scUnits, insulinUnits),
+                    names(c(SCHEDULE_INTERVALS, WEEKLY_SCHEDULE_INTERVAL)), paste)))
 )
 
 # Units for the inhaled gases (Class "gas" in drugDefaults_global.csv): carrier
