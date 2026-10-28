@@ -6,7 +6,7 @@ When the infusion stops at 120 minutes, the concentration falls out of the band 
 
 ## Try next
 
-- Double the infusion to 0.24 mg/kg/hr and see the effect site never come down into the band after the bolus: it settles at about 0.2 mcg/mL, towards concentrations at which psychotomimetic effects appear.
+- Double the infusion to 0.24 mg/kg/hr and see the effect site stay above the band for as long as the infusion runs: it settles at about 0.2 mcg/mL, towards concentrations at which psychotomimetic effects appear.
 - Remove the bolus. How long does the infusion alone take to reach the band? (It does not get there in the two hours; continued, it takes about three and a half hours. The bolus is what gets there quickly.)
 - Change the bolus to 2 mg/kg, an induction dose, delete the two infusion rows and set *Max time* to 4 hours: the effect-site peak is about 2.3 mcg/mL, falling to 1 at 30 minutes and 0.5 at an hour, and the effect site is back in the analgesic band only after nearly three hours. The height of that peak rests on the assumed 3-minute time to peak effect.
 
