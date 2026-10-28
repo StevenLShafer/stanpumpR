@@ -1,6 +1,6 @@
 ### The model
 
-Hydrocodone's disposition is from Melhem and colleagues (*Clin Pharmacokinet* 2013;52:907-917), a population analysis in 220 subjects on an extended-release capsule, reproduced in the FDA clinical pharmacology review. The parameters are **apparent**: clearance and volumes divided by an unmeasured oral bioavailability. At 70 kg the model gives V1 714 L, V2 151 L, clearance 1.07 L/min and a slow intercompartmental clearance of 0.015 L/min.
+Hydrocodone's disposition is from Melhem and colleagues (*Clin Pharmacokinet* 2013;52:907-917), a population analysis in 220 subjects on an extended-release capsule, reproduced in the FDA clinical pharmacology review. The parameters are **apparent**: clearance and volumes divided by an unmeasured oral bioavailability. The published typical values are V1 714 L, V2 151 L, clearance 64.4 L/h (1.07 L/min) and a slow intercompartmental clearance of 0.015 L/min; for the 70 kg, 170 cm, 35-year-old reference man at a normal creatinine the covariates below give V1 707 L and clearance 66.7 L/h.
 
 ### Oral only
 
@@ -16,7 +16,7 @@ Hydrocodone forms **hydromorphone** by CYP2D6. The formation constant is calibra
 
 ### Covariates
 
-The apparent disposition carries no weight term: the source fitted creatinine clearance on clearance (reference 91.48 mL/min/1.73 m², power 0.223) and body surface area on the central volume (reference 1.87 m², power 0.486), and neither is applied. Weight enters only through the formation constant, which is scaled to track the weight-scaled hydromorphone model it feeds. The [fat-free-mass switch](help:models/fat-free-mass) therefore does not change hydrocodone's own curve.
+Melhem found two covariates, and both are applied. Clearance goes with the 0.223 power of creatinine clearance relative to 91.48 mL/min/1.73 m², the Cockcroft-Gault value indexed to body surface area. The central volume goes with the 0.486 power of body surface area (Gehan and George's formula, the one Melhem used) relative to 1.87 m². The other volume and the intercompartmental clearance have none. Both effects are modest: severe renal impairment (15 against 100 mL/min/1.73 m²) raises exposure by about half, and a 120 kg man has a central volume about 7% larger than a 70 kg man of the same height with the fat-free-mass switch on (14% with it off). Enter the **Serum creatinine** in the Patient Profile: left blank, it is assumed normal for the patient's age and sex, and renal impairment is then not represented. With the [fat-free-mass switch](help:models/fat-free-mass) on, both covariates see the pharmacokinetic weight (70 kg times the patient's fat-free mass over the reference man's), and the peripheral volume and intercompartmental clearance, which have no covariate, are scaled to fat-free mass; with it off, the covariates see total body weight and those two are used as published. Melhem's subjects were adults, so a child's values are extrapolation. The formation constant follows the weight-scaled hydromorphone model it feeds and is divided by the central volume's covariate factor, so that the hydromorphone-to-hydrocodone exposure ratio stays at Kapil's 0.012 whatever the patient's size.
 
 ### Where to be careful
 
