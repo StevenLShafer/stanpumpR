@@ -43,7 +43,7 @@
 # =======================================
 # Half-life 62.6 h; a 20 mg/kg intravenous load (1400 mg) gives about 42
 # mg/L at once and 31 mg/L a day later.  100 mg/day orally reaches about 11
-# mg/L at steady state, inside the 10-40 mg/L reference range.  The critically
+# mg/L at steady state, inside the 10-30 mg/L reference range.  The critically
 # ill clear phenobarbital faster than healthy adults (80-100 h half-life in
 # the older literature), so outpatient accumulation may be underpredicted.
 #
@@ -72,10 +72,17 @@
 # little.  Yerby 1990 (free fraction by trimester) is still to be read.  See
 # R/pregnancy.R.  (Claude Code, 2026-10-19.)
 #
-# BAND: 10-40 mcg/mL (ILAE, Patsalos 2008), typical 20.
+# BAND: 10-30 mcg/mL, typical 20 (the midpoint, not a target): Hart 2026
+# (AGNP consensus guidelines, update 2026, Pharmacopsychiatry 59:166-295,
+# Table 5, doi 10.1055/a-2860-7861), the phenobarbital range of its
+# "Primidone and phenobarbital" row (printed p. 210), 12 h after a dose,
+# alert level 50 mcg/mL, level 3, taken from the SPC.  It replaced ILAE's
+# 10-40 (Patsalos 2008) by decision of Steven L. Shafer, 2026-10-27.
 #
 # References
 # ----------
+# Hart XM et al., Pharmacopsychiatry 2026;59:166-295.
+#   https://doi.org/10.1055/a-2860-7861
 # Epilepsia 2025, phenobarbital in refractory status epilepticus.
 #   https://doi.org/10.1111/epi.18517
 # Teixeira-da-Silva P et al., Eur J Pharm Sci 2020;153:105484.
@@ -139,7 +146,7 @@ phenobarbital <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 20, upperTypical = 40, lowerTypical = 10,
+    typical = 20, upperTypical = 30, lowerTypical = 10,
     reference = reference
   )
 }
