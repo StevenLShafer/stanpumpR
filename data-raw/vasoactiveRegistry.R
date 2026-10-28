@@ -673,12 +673,19 @@ registry <- rbind(
       NA,
       "Baumann G, Dingman JF. Distribution, blood transport, and degradation of antidiuretic hormone in man. J Clin Invest 1976;57:1109-1116. PMID 1262458, PMC436762.",
       doi("10.1172/JCI108377")),
-  reg("ephedrine__oral__csajka2005", "ephedrine",
-      "oral only", "ephedrine", "plasma",
+  # Ephedrine carries NO MODEL, by Steven L. Shafer's decision (2026-10-28):
+  # "oral ephedrine isn't interesting".  The row stays, because the registry's
+  # job is to say what became of every drug that was asked for, and this one's
+  # answer -- that no usable intravenous model exists -- is worth stating.  What
+  # was removed is the oral candidate: Csajka 2005's four-compartment oral
+  # ephedrine-norephedrine model is named below as the paper that was assessed
+  # and rejected, not as a model this registry offers.  Do not promote it.
+  reg("ephedrine__no_iv_model", "ephedrine",
+      "no human intravenous pharmacokinetics exists", "ephedrine", "none (no intravenous data)",
       "no_suitable_model", NA, "abstract",
-      "No human intravenous pharmacokinetics was found; the FDA review for the IV product (NDA 208289) itself extrapolates from oral data.  Csajka 2005 is oral, a four-compartment ephedrine-norephedrine model with saturable conversion (ephedrine CL 0.34 L/min, V 181 L).",
+      "There is no usable intravenous model.  No human intravenous pharmacokinetics of ephedrine was found: the FDA review for the IV product (NDA 208289) itself extrapolates from oral data, and a PubMed search on 2026-10-28 returned only oral studies, 11C-hydroxyephedrine tracer work (a different molecule) and animal data.  The one human model, Csajka 2005, is ORAL -- four compartments for ephedrine and norephedrine with saturable conversion, CL 0.34 L/min and V 181 L, apparent and oral -- and an apparent oral set cannot serve an intravenous drug, so it is recorded here as assessed and rejected rather than offered (Steven L. Shafer, 2026-10-28).",
       NA,
-      "Csajka C, Haller CA, Benowitz NL, Verotta D. Mechanistic pharmacokinetic modelling of ephedrine, norephedrine and caffeine in healthy subjects. Br J Clin Pharmacol 2005;59:335-345. PMID 15752380, PMC1884794.",
+      "Csajka C, Haller CA, Benowitz NL, Verotta D. Mechanistic pharmacokinetic modelling of ephedrine, norephedrine and caffeine in healthy subjects. Br J Clin Pharmacol 2005;59:335-345. PMID 15752380, PMC1884794 (ORAL; assessed and rejected, not a candidate).",
       doi("10.1111/j.1365-2125.2005.02254.x")),
   reg("hydralazine__hypertensive__ludden1980", "hydralazine",
       "8 hypertensive patients, 0.3 mg/kg, specific assay", "hydralazine", "plasma",

@@ -122,6 +122,14 @@ test_that("a drug with no suitable model gives the reason", {
                       registry$drug[registry$readiness %in%
                                       c("implemented", "needs_full_text",
                                         "complete_not_implemented")])
+  # Ephedrine's row carries no model at all (Shafer, 2026-10-28): its only
+  # human pharmacokinetics is oral, which cannot serve an intravenous drug, so
+  # the row records the absence rather than offering a candidate.
+  eph <- registry[registry$drug == "ephedrine", ]
+  expect_equal(nrow(eph), 1)
+  expect_identical(eph$readiness, "no_suitable_model")
+  expect_true(is.na(eph$stanpumpr_drug))
+  expect_match(eph$blocking_issue, "no usable intravenous model", ignore.case = TRUE)
   expect_setequal(hopeless, c("sodium nitroprusside", "ephedrine",
                               "adenosine", "sodium bicarbonate"))
 })
