@@ -390,7 +390,7 @@ what the literature offers.
 | Oliceridine | Dahan A et al., *Anesthesiology* 2020;133(3):559–568. [PMID 32788558](https://pubmed.ncbi.nlm.nih.gov/32788558/) |
 | Remimazolam | Eleveld DJ et al., *Br J Anaesth* 2025;135(1):206–217. [PMID 40312166](https://pubmed.ncbi.nlm.nih.gov/40312166/) |
 | Sugammadex | Kleijn HJ et al., *Br J Clin Pharmacol* 2011;72:415–433. [DOI 10.1111/j.1365-2125.2011.04000.x](https://doi.org/10.1111/j.1365-2125.2011.04000.x) (total sugammadex; rocuronium binding not modelled) |
-| Neostigmine | Calvey TN et al., *Br J Clin Pharmacol* 1979;7:149–155. [DOI 10.1111/j.1365-2125.1979.tb00915.x](https://doi.org/10.1111/j.1365-2125.1979.tb00915.x) — **patient 1 of six individual fits; no population model exists**. Time to peak effect from Heier T et al., *Anesthesiology* 2002;97:90–95 |
+| Neostigmine | Heier T et al., *Anesthesiology* 2002;97:90–95. [DOI 10.1097/00000542-200207000-00013](https://doi.org/10.1097/00000542-200207000-00013) — three-compartment population model (Table 3) and time to peak effect. Calvey 1979's patient 1 until October 2026 |
 | Glycopyrrolate | Bartels C et al., *Br J Clin Pharmacol* 2013;76:868–879. [DOI 10.1111/bcp.12118](https://doi.org/10.1111/bcp.12118) (active cation; bromide-labelled dose) |
 | Cefazolin | Komatsu T et al., *Antimicrob Agents Chemother* 2024;68:e00267-24. [DOI 10.1128/aac.00267-24](https://doi.org/10.1128/aac.00267-24) (**unbound** cefazolin) |
 | Clindamycin | Bouazza N et al., *Br J Clin Pharmacol* 2012;74:971–977. [DOI 10.1111/j.1365-2125.2012.04292.x](https://doi.org/10.1111/j.1365-2125.2012.04292.x) (final table; IV and oral) |

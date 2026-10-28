@@ -1,21 +1,21 @@
 ### The model
 
-Neostigmine has **no verified adult population model**. The literature review behind this drug found individual two-compartment fits in six female surgical patients (Calvey and colleagues, *Br J Clin Pharmacol* 1979;7:149-155: a 15-second injection during tubocurarine reversal under halothane, atropine given, first sample at two minutes) and a volunteer study (Heier and colleagues, *Anesthesiology* 2002;97:90-95) whose abstract reports a clearance of 696 mL/min but whose parameter table was not recovered.
+Neostigmine's parameters are from Heier and colleagues (*Anesthesiology* 2002;97:90-95), who gave 70 mcg/kg over two minutes to seven healthy anaesthetised volunteers during a steady vecuronium block and fitted a **three-compartment** population model (NONMEM) to venous samples from 1 minute to 4 hours. At normal body temperature: central volume 5.59 L, peripheral volumes 15.0 and 110 L, clearance 0.696 L/min and intercompartmental clearances 1.48 and 0.556 L/min, giving half-lives of 1.3, 16.5 and 256 minutes. The model is not weight-related; Heier tested weight and did not keep it. Interindividual variability was not reported, the slowest volume is poorly estimated, and the authors distrust the central volume because no sample was taken before one minute. Mild hypothermia (below 34.5 °C) lowered the central volume by 38% and changed nothing else; that is not represented.
 
-The row uses **Calvey's patient 1** as a complete, internally consistent row, scaled per kilogram to the reference adult: central volume 10.9 mL/kg (0.76 L at 70 kg), rate constants k10 0.527, k12 0.398 and k21 0.039 per minute, giving a peripheral volume of 7.8 L, clearance 0.40 L/min and half-times of 0.74 and 32 minutes. Averaging the six patients was rejected because one of them has a fitted central volume (0.11 mL/kg) that is not a physiological space.
-
-### What this means for the curve
-
-The first two minutes after a bolus were never observed and are not credible here: the tiny central volume puts the instantaneous concentration of a 3 mg dose near 4000 ng/mL before a sub-minute distribution phase removes most of it. From a few minutes on the curve reproduces the fitted decline, and the clearance (400 mL/min) sits below Heier's contemporary 696 mL/min. Treat the model as the best available shape, not a validated prediction, and replace it when an adult population model with early sampling appears.
+Until October 2026 the library used one patient's two-compartment fit from Calvey and colleagues (*Br J Clin Pharmacol* 1979;7:149-155), because only Heier's abstract had been read and no population model was thought to exist. Calvey's tiny central volume put the concentration just after a 3 mg bolus near 4000 ng/mL; Heier's model gives about 540.
 
 ### Effect site
 
-The time to peak effect, 4.6 minutes, is Heier's measured time to maximum antagonism of a vecuronium block, counted from the start of a two-minute infusion; used as a bolus tPeak it slightly understates ke0. No concentration-effect model is attached: the effect-site curve is a delayed concentration, not a train-of-four prediction, and nothing here accounts for the depth of block being reversed. The recovery threshold is 30 ng/mL, the bottom of the shaded band (30 to 300 ng/mL).
+Heier measured the time to maximum antagonism of the block (twitch height at the adductor pollicis) at a median of 4.6 minutes after the two-minute infusion began. With Heier's kinetics, an equilibration rate of 0.20/min puts the effect-site peak of that infusion at 4.6 minutes, and the same rate peaks 3.5 minutes after a bolus, which is the time to peak effect used here. No concentration-effect model is attached: the effect-site curve is a delayed concentration, not a train-of-four prediction, and nothing here accounts for the depth of block being reversed.
+
+### Band
+
+30 to 300 ng/mL is the library's own orientation band, not a therapeutic range, and the recovery threshold is 30 ng/mL. After 2.5 to 5 mg the effect site peaks at about 100 to 200 ng/mL and falls below 30 ng/mL after roughly 20 to 40 minutes.
 
 ### Covariates
 
-Weight only, per kilogram with fixed rate constants in the source; under the default [fat-free-mass scaling](help:models/fat-free-mass) the volumes follow fat-free mass and the clearances its 0.75 power.
+None in the source. Under the default [fat-free-mass scaling](help:models/fat-free-mass) the volumes follow fat-free mass relative to the 70 kg reference man and the clearances its 0.75 power; with the switch off, Heier's values are used as published for every patient.
 
 ### Where to be careful
 
-Six patients from 1979, with an assay calibrated against the bromide while the methylsulfate was given, so the dose is nominal labelled milligrams with no molar correction. Renal failure roughly doubles neostigmine's half-life and is not represented. Give [glycopyrrolate](help:drugs/glycopyrrolate) alongside to see the two curves together; their interaction is not modelled.
+Seven young volunteers. Renal failure roughly doubles neostigmine's half-life and is not represented. Give [glycopyrrolate](help:drugs/glycopyrrolate) alongside to see the two curves together; their interaction is not modelled.
