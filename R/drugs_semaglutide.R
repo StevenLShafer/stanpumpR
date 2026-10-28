@@ -12,9 +12,10 @@
 # Carlsson Petri KC, Ingwersen SH, Flint A, Zacho J, Overgaard RV.
 # Semaglutide s.c. once-weekly in type 2 diabetes: a population
 # pharmacokinetic analysis.  Diabetes Ther 2018;9:1533-1547 (PMC6064581).
-# The phase 3 (SUSTAIN 1-5) analysis in people with type 2 diabetes, 0.5 and
-# 1.0 mg once weekly.  One compartment, first-order absorption; the full
-# model, ESM Table S3, read from the supplement:
+# The phase 3 (SUSTAIN 1, 2, 3, 6 and SUSTAIN-Japan; ESM Table S1) analysis in
+# people with type 2 diabetes, 0.5 and 1.0 mg once weekly.  One compartment,
+# first-order absorption; the full model, ESM Table S3, read from the
+# supplement:
 #
 #     ka   = 0.0286 /h, FIXED from richly sampled clinical pharmacology data
 #     CL/F = 0.0478 L/h   for the reference subject

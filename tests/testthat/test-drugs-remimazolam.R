@@ -16,7 +16,14 @@ test_that("returns the published parameters with total-body-weight scaling", {
     cl3 = 0.3235427
   )
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
-  expect_equal(actual$tPeak, 2.5)
+  # The MOAA/S ke0 is carried as published (supplement $THETA 32,
+  # "keoref=0.2983"), with no tPeak: getDrugPK() solves the time to peak.
+  expect_null(actual$tPeak)
+  expect_equal(actual$ke0, exp(-1.20976))
+  expect_equal(round(actual$ke0, 3), 0.298)
+  # getDrugPK() solves the time to peak from it: about 2.4 min here.
+  pk <- getDrugPK("remimazolam", weight, height, age, sex, adjustToFFM = FALSE)
+  expect_equal(pk$tPeak, 2.38, tolerance = 0.01)
   expect_equal(actual$reference, "Eleveld DJ et al., Br J Anaesth 2025;135(1):206-217. https://pubmed.ncbi.nlm.nih.gov/40312166/")
 })
 

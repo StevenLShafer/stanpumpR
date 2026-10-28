@@ -20,7 +20,7 @@ The paper's dose terms (absorption 6.5% slower and binding sites 3.4% more plent
 
 ### Product and doses
 
-Tradjenta, `mg PO` and `mg PO qd`. On 5 mg daily, a 60-year-old 88 kg man reaches a steady-state trough of 5.0 nmol/L (2.37 ng/mL) and a peak of 9.0 nmol/L (4.27 ng/mL). The paper's median trough is 5.29 nmol/L, and its predictive check shows a median peak near 9.
+Tradjenta, `mg PO` and `mg PO qd`. On 5 mg daily, a 60-year-old 88 kg man reaches a steady-state trough of 5.0 nmol/L (2.37 ng/mL) and a peak of 9.0 nmol/L (4.27 ng/mL). The paper's median concentration 24 hours after a regular steady-state dose is 5.58 nmol/L (90% prediction interval 3.55-9.69), so the model's trough is about 10% below it, within the interval; its predictive check shows a median peak near 9.
 
 ### Renal impairment
 

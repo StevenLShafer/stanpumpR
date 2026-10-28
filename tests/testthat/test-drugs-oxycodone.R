@@ -6,27 +6,52 @@
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 trapz <- function(x, y) sum(diff(x) * (utils::head(y, -1) + utils::tail(y, -1)) / 2)
 
+test_that("the pooled disposition is on the hydrochloride dose basis", {
+  # Poyhia 1991 Table 1: weight (kg), the tabulated free-base dose (mg), CL
+  # (L/min) and Vss (L/kg).  Each patient was given 0.07 mg/kg of the
+  # hydrochloride, so each CL and Vss is scaled by 0.07 x weight / dose.
+  w   <- c(75, 78, 90, 80, 76, 61, 62, 61, 57)
+  d   <- c(4.1, 4.3, 4.7, 4.3, 4.1, 3.1, 3.1, 3.1, 3.1)
+  cl  <- c(0.59, 1.33, 1.22, 0.66, 0.38, 0.82, 0.92, 0.64, 0.45)
+  vss <- c(2.12, 2.44, 2.83, 2.40, 3.65, 2.74, 2.84, 2.56, 1.83)
+  # The table's doses are the paper's 0.05 mg/kg free base, not the 0.07 given
+  expect_equal(mean(d / w), 0.053, tolerance = 0.01)
+  f <- 0.07 * w / d
+  poyhiaCL  <- 1000 * mean(cl * f) / mean(w)      # mL/min/kg
+  poyhiaVss <- mean(vss * f)
+  expect_equal(poyhiaCL, 14.5, tolerance = 0.005)
+  expect_equal(poyhiaVss, 3.46, tolerance = 0.005)
+  # Kirvela 1996 control medians, x 0.07 / 0.05; Liukas 2011 unchanged
+  pooledCL  <- (9 * poyhiaCL  + 10 * 16.7 * 1.4 + 11 * 11.9) / 30
+  pooledVss <- (9 * poyhiaVss + 10 * 2.39 * 1.4 + 11 * 3.7) / 30
+  p <- oxycodone(70, 170, 30, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal(1000 * p$cl1 / 70, pooledCL, tolerance = 0.005)
+  expect_equal((p$v1 + p$v2) / 70, pooledVss, tolerance = 0.005)
+  # Bioavailability is the pooled clearance over Lalovic's CL/F
+  expect_equal(p$bioavailability_PO, pooledCL / 19.7, tolerance = 0.005)
+})
+
 test_that("returns the pooled per-kilogram parameters with weight scaling", {
   # Switch off: per-kilogram values linear in total weight.  70 kg, 30 y, so
   # the age factor is 1; a blank creatinine at 30 y gives CKD-EPI eGFR above
   # 100, so the renal factor is 1.
   actual <- oxycodone(70, 170, 30, "male", adjustToFFM = FALSE)
-  vss <- 2.93 * 70
+  vss <- 3.51 * 70
   expected <- list(
     PK = list(
       default = list(
         v1 = 0.131 * vss,
         v2 = (1 - 0.131) * vss,
         v3 = 1,
-        cl1 = 0.0132 * 70,
-        cl2 = 2.33 * 0.0132 * 70,
+        cl1 = 0.0165 * 70,
+        cl2 = 2.33 * 0.0165 * 70,
         cl3 = 0,
         ka_PO = 0.01,
-        bioavailability_PO = 0.67,
+        bioavailability_PO = 0.84,
         tlag_PO = 0
       )
     ),
-    tPeak = 12.35,
+    tPeak = 12.09,
     MEAC = 12,
     typical = 14.4,
     upperTypical = 24,
@@ -47,11 +72,11 @@ test_that("scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm male.  FFM ratio 1.3049067 (Al-Sallami), so volumes
   # x 1.3049067 and the reference clearance x 1.3049067^0.75 = 1.2209126.
   actual <- oxycodone(120, 170, 30, "male")$PK$default
-  vss <- 2.93 * 70 * 1.3049067
+  vss <- 3.51 * 70 * 1.3049067
   expect_equal(actual$v1, 0.131 * vss, tolerance = 1e-5)
   expect_equal(actual$v2, (1 - 0.131) * vss, tolerance = 1e-5)
-  expect_equal(actual$cl1, 0.0132 * 70 * 1.2209126, tolerance = 1e-5)
-  expect_equal(actual$cl2, 2.33 * 0.0132 * 70 * 1.2209126, tolerance = 1e-5)
+  expect_equal(actual$cl1, 0.0165 * 70 * 1.2209126, tolerance = 1e-5)
+  expect_equal(actual$cl2, 2.33 * 0.0165 * 70 * 1.2209126, tolerance = 1e-5)
 })
 
 test_that("clearance falls with age above 30 years (Liukas 2011)", {
@@ -81,25 +106,31 @@ test_that("renal failure reduces clearance by a quarter (Kirvela 1996)", {
   expect_equal(esrd$v1 + esrd$v2, ref$v1 + ref$v2)
 })
 
-test_that("reproduces Liukas's clearance by age group to within 15%", {
+test_that("follows Liukas's age effect, above Liukas's own level", {
   # Table I and II of Liukas 2011, mean weight, height, age; three groups
-  # mostly men, the oldest mostly women.  Observed mL/min/kg.
+  # mostly men, the oldest mostly women.  Observed mL/min/kg.  Liukas's
+  # clearances are on the hydrochloride as given; the pooled level is 39%
+  # above its young group's once Poyhia and Kirvela are put on that basis
+  # (see DOSE BASIS in the drug file), so the model runs 15-35% above every
+  # group, and the age effect, relative to the youngest group, is within 15%.
   groups <- list(
     list(w = 81, h = 177, a = 27.1, s = "male",   cl = 11.9),
     list(w = 83, h = 169, a = 66.3, s = "male",   cl = 8.6),
     list(w = 82, h = 169, a = 76.5, s = "male",   cl = 8.6),
     list(w = 68, h = 160, a = 83.5, s = "female", cl = 7.9)
   )
-  for (g in groups) {
+  ratio <- vapply(groups, function(g) {
     p <- oxycodone(g$w, g$h, g$a, g$s)$PK$default
-    expect_equal(1000 * p$cl1 / g$w / g$cl, 1, tolerance = 0.15)
-  }
+    1000 * p$cl1 / g$w / g$cl
+  }, numeric(1))
+  expect_equal(ratio, c(1.308, 1.353, 1.250, 1.152), tolerance = 0.002)
+  expect_equal(ratio / ratio[1], rep(1, 4), tolerance = 0.15)
 })
 
-test_that("the terminal half-life is 3.4 h in the reference adult", {
+test_that("the terminal half-life is 3.3 h in the reference adult", {
   p <- getDrugPK("oxycodone", 70, 170, 30, "male",
                  getDrugDefaults("oxycodone"))$PK$default
-  expect_equal(log(2) / p$lambda_2 / 60, 3.43, tolerance = 0.01)
+  expect_equal(log(2) / p$lambda_2 / 60, 3.28, tolerance = 0.01)
   # And ke0 is Lalovic's t1/2 ke0 of 11 min
   expect_equal(p$ke0, log(2) / 11, tolerance = 0.001)
 })
@@ -161,11 +192,11 @@ test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
   # The values are those the model gives with the flag on; test-pregnancy.R
   # checks the ratio against the flag off and that nothing else moves.
   actual <- oxycodone(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  expect_equal_rounded(21.6582425, actual$v1)
-  expect_equal_rounded(143.6718529, actual$v2)
+  expect_equal_rounded(25.9455396, actual$v1)
+  expect_equal_rounded(172.1120149, actual$v2)
   expect_equal_rounded(1, actual$v3)
-  expect_equal_rounded(1.14555649, actual$cl1)
-  expect_equal_rounded(1.831544961, actual$cl2)
+  expect_equal_rounded(1.43194561, actual$cl1)
+  expect_equal_rounded(2.289431201, actual$cl2)
   expect_equal_rounded(0, actual$cl3)
   expect_equal(oxycodone(70, 165, 30, "female")$PK$default,
                oxycodone(70, 165, 30, "female", pregnant = FALSE)$PK$default)

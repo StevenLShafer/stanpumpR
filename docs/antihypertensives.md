@@ -1353,7 +1353,7 @@ explicitly, and the test pins that the eigenvalues are patient-independent.
 
 **Valsartan's absorption shape is a finding, and so is its missing renal term.**
 Heo 2016 fitted first-order absorption too and it lost by 162 objective-function
-units on the same number of parameters, so the zero-order release mode built for
+units, so the zero-order release mode built for
 carvedilol (section 8) is used — **its second confirmation, and the second time
 a source has rejected first-order absorption outright rather than merely
 preferring something else.** The consequence is pinned rather than smoothed
