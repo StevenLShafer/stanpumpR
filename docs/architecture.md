@@ -36,7 +36,7 @@ is covered in [The dose table lifecycle](#the-dose-table-lifecycle), and the tim
 [Time units](#time-units).
 
 **Events** are not a permanently visible table — they're edited by clicking on the Events plot
-(which only appears when "Events" is chosen in the "Additional Plots" section). Events are stored
+(which only appears when "Events" is chosen in the "Additional plots" choices under Graph Options). Events are stored
 in a single reactive called `eventTable()`. Unlike the dose table, there's no draft/undo/redo
 layer for events.
 

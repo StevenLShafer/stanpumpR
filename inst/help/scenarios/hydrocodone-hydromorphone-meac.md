@@ -11,7 +11,7 @@ Hover over either panel to read its % MEAC at that moment.
 ## Try next
 
 - Replace the hydrocodone with oxycodone 10 mg PO. The metabolite is now oxymorphone, and its black line rises to about 90% of MEAC at two hours against oxycodone's 155% at 70 minutes. By six hours oxymorphone is about a third of the total opioid effect.
-- Tick *Additional Plots → MEAC* as well: the % MEAC panel draws the same lines together, with their sum, on an axis of its own.
+- Tick *Graph Options → Additional plots → MEAC* as well: the % MEAC panel draws the same lines together, with their sum, on an axis of its own.
 - Tick *Time until threshold*. It shares the right-hand edge with the % MEAC line, so the % MEAC line goes off.
 
 ## Background

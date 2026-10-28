@@ -152,3 +152,72 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
   ) else NULL
   paste(c(lead, readers, trail), collapse = " ")
 }
+
+# The Patient Profile fields and Graph Options controls shown only while a drug
+# they apply to is in the dose table (Steven L. Shafer, 2026-10-28: as the
+# library grew, the panels filled with fields that do nothing for the drugs
+# plotted).  Each name is the control's `relevantField()` id without its
+# "field_" prefix, except the two Additional plots choices, which the server
+# hides inside their checkbox group.
+RELEVANT_FIELDS <- unname(c(
+  "pregnant", "opioidTolerance", names(PATIENT_FIELD_LABELS), "osmolality",
+  "showMEAC", "opioidMacInteraction",
+  vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
+  ASM_INTERACTIONS_INPUT,
+  "plotMEAC", "plotInteraction"
+))
+
+# The drugs whose model reads each covariate: the model signatures, read once
+# per drug table, since a session asks on every change of the dose table.
+patientFieldReaderCache <- new.env(parent = emptyenv())
+patientFieldReaderSets <- function(drugDefaults = getDrugDefaultsGlobal()) {
+  key <- paste(drugDefaults$Drug, collapse = ",")
+  if (!identical(patientFieldReaderCache$key, key)) {
+    args <- c(names(PATIENT_FIELD_LABELS), "pregnant")
+    patientFieldReaderCache$sets <- stats::setNames(
+      lapply(args, patientFieldReaders, drugDefaults = drugDefaults), args)
+    patientFieldReaderCache$key <- key
+  }
+  patientFieldReaderCache$sets
+}
+
+#' Which of the optional controls apply to the drugs in the dose table
+#'
+#' A covariate field is relevant when a drug in the table names it in its
+#' model's signature (as getDrugPK() passes it), the baseline osmolality when
+#' an osmotic agent is, and the opioid controls (Opioid tolerance, % MEAC, the
+#' MEAC plot) when an opioid is: a drug of the Opioids category or with a
+#' MEAC.  The opioid-MAC interaction needs an inhaled agent as well, and the
+#' Interaction plot propofol.  A companion model's box is relevant when a
+#' drug of its group is dosed, and the antiseizure interactions box when the
+#' table holds an interaction the model applies.
+#'
+#' @param drugs the drug names in the dose table (blanks are ignored).
+#' @param drugDefaults the session's drug table.
+#' @return a logical vector named by `RELEVANT_FIELDS`.
+#' @noRd
+relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
+  drugs <- unique(drugs[!is.na(drugs) & nzchar(drugs)])
+  rows <- drugDefaults[drugDefaults$Drug %in% drugs, , drop = FALSE]
+  readers <- patientFieldReaderSets(drugDefaults)
+  reads <- function(arg) any(drugs %in% readers[[arg]])
+  opioid <- any(rows$Category %in% "Opioids" |
+                (!is.na(rows$MEAC) & rows$MEAC > 0))
+  gas <- any(isGasDrug(drugs))
+  out <- c(
+    pregnant        = reads("pregnant"),
+    opioidTolerance = opioid,
+    vapply(names(PATIENT_FIELD_LABELS), reads, logical(1)),
+    osmolality      = any(rows$Concentration.Units %in% "mOsm"),
+    showMEAC        = opioid,
+    opioidMacInteraction = opioid && gas,
+    vapply(names(COMPANION_MODEL_GROUPS), function(group)
+      any(drugs %in% companionGroupDrugs(group)), logical(1)) |>
+      stats::setNames(vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input")),
+    stats::setNames(nrow(activeAntiseizureInteractions(drugs)) > 0,
+                    ASM_INTERACTIONS_INPUT),
+    plotMEAC        = opioid,
+    plotInteraction = opioid && "propofol" %in% drugs
+  )
+  out[RELEVANT_FIELDS]
+}
