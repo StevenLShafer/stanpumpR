@@ -117,7 +117,7 @@ zonisamide,mcg,,,mg PO qd,"mg PO,mg PO liquid,mg PO qd,mg PO bid",#4527A0,10,40,
 tiagabine,ng,,,mg PO tid,"mg PO,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#00838F,20,200,50,0,0,IV,Antiseizure
 levetiracetam,mcg,mg,mg/hr,mg PO bid,"mg,mg/hr,mg PO,mg PO bid",#2E7D32,6,46,30,0,0,IV,Antiseizure
 eslicarbazepine,mcg,,,mg PO qd,"mg PO,mg PO qd",#D84315,3,35,15,0,0,IV,Antiseizure
-cenobamate,mcg,,,mg PO qd,"mg PO,mg PO qd",#00796B,10,25,18,0,0,IV,Antiseizure
+cenobamate,mcg,,,mg PO qd,"mg PO,mg PO qd,mg PO bid,mg PO tid",#00796B,10,25,18,0,0,IV,Antiseizure
 diamorphine,ng,,,mg IN,"mg IN,mcg IN,mg IM,mcg IM",#8B0000,0,0,0,0,0,IV,Illicit drugs
 carfentanil,ng,mcg,,mcg,"mcg,mcg/kg",#3E2723,0,0,0,0,0,IV,Illicit drugs
 semaglutide,ng,,,mg SC qwk,"mg SC,mg SC qwk",#2E7D5B,0,0,0,0,0,IV,Antidiabetic
