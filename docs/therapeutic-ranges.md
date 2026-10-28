@@ -27,10 +27,12 @@ marks a range revised or new since the 2017 update. It supersedes the 2017 updat
 2018) and covers the antiseizure drugs as well as the psychiatric ones. Table 5 was read in
 full on 2026-10-20, and every row of the CSV that cites it says so.
 
-For an antiseizure drug Table 5 omits (phenobarbital as a drug of its own, ethosuximide), the
-band is the ILAE position paper's (Patsalos 2008, Table 1, read in full 2026-10-27; also quoted
-in Reimers 2018). Its Table 1 also gives gabapentin 2–20 mg/L, the range Table 5 carries, and
-calls pregabalin's not established.
+For an antiseizure drug Table 5 omits (ethosuximide), the band is the ILAE position paper's
+(Patsalos 2008, Table 1, read in full 2026-10-27; also quoted in Reimers 2018). Its Table 1 also
+gives phenobarbital 10–40 mg/L, the band until 2026-10-27, and gabapentin 2–20 mg/L, the range
+Table 5 carries, and calls pregabalin's not established. Phenobarbital has no row of its own in
+Table 5, but its "Primidone and phenobarbital" row (p. 210) gives phenobarbital's range as well
+as primidone's, so that is drawn.
 
 ## Antiseizure drugs
 
@@ -39,7 +41,7 @@ calls pregabalin's not established.
 | phenytoin | 10–20 mg/L total | 50 | Hart 2026 | Unchanged. Dilantin label: 10–20 mcg/mL |
 | carbamazepine | 4–12 mg/L | 20 | Hart 2026 | Marked + in Table 5 (revised or new since 2017; what changed is not stated); 4–10 for mania |
 | valproate | 50–100 mg/L total | 120 | Hart 2026 | Unchanged. Depakote label: 50–100 mcg/mL |
-| phenobarbital | 10–40 mg/L | — | ILAE 2008 | Not its own row; Hart 2026's primidone row gives phenobarbital 10–30 |
+| phenobarbital | **10–30 mg/L**, 12 h | 50 | Hart 2026 ("Primidone and phenobarbital" row, from the SPC) | Was 10–40 (ILAE 2008); changed 2026-10-27 by decision of Steven L. Shafer |
 | pentobarbital | **none** (pending) | — | **no source read** | 20–40 mg/L is the candidate for barbiturate coma; not drawn until a primary source is read |
 | ethosuximide | 40–100 mg/L | — | ILAE 2008 | Not in Table 5. Zarontin label: 40–100 mcg/mL |
 | topiramate | 5–20 mg/L | 30 | Hart 2026 | Marked + in Table 5 (revised or new since 2017; what changed is not stated) |
@@ -299,7 +301,7 @@ Barr 2001, McGough 2003, Boellner 2010, Laffont 2022, Lesser 1992, Hosie and Nim
 | diazepam | Chevassus 2004, *BMC Clin Pharmacol* 4:3 | 15102335 | The kept band's 300 ng/mL, which this insulin-secretion study cites only in passing (open access) |
 | temazepam | van Steveninck 1994, *Clin Pharmacol Ther* 55:546 | 8181199 | The former band's top |
 | temazepam | Saletu 1986, *Acta Psychiatr Scand Suppl* 332:67 | 2883830 | The former band's floor |
-| phenobarbital, ethosuximide, gabapentin | Patsalos 2008, *Epilepsia* 49:1239 | 18397299 | Read in full: Table 1 gives phenobarbital 10–40, ethosuximide 40–100, gabapentin 2–20 mg/L |
+| phenobarbital, ethosuximide, gabapentin | Patsalos 2008, *Epilepsia* 49:1239 | 18397299 | Read in full: Table 1 gives phenobarbital 10–40 (drawn until 2026-10-27), ethosuximide 40–100, gabapentin 2–20 mg/L |
 | antiseizure drugs | Patsalos 2018, *Ther Drug Monit* 40:526 | 29957667 | The 2018 update |
 
 ## References
