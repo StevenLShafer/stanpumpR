@@ -203,7 +203,8 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal()) {
   reads <- function(arg) any(drugs %in% readers[[arg]])
   opioid <- any(rows$Category %in% "Opioids" |
                 (!is.na(rows$MEAC) & rows$MEAC > 0))
-  gas <- any(isGasDrug(drugs))
+  # a potent agent, not a carrier gas: only an agent has a MAC to interact with
+  gas <- any(drugs %in% potentAgents())
   out <- c(
     pregnant        = reads("pregnant"),
     opioidTolerance = opioid,

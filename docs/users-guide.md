@@ -48,7 +48,7 @@ they change the predictions.
 | Sex | male / female | |
 | Adjust weight to fat-free mass | checkbox | On by default. See below. |
 | Baseline serum osmolality | mOsm/kg | Before mannitol; 280 by default. Read only by mannitol, which is plotted as the serum osmolality it produces. See [docs/mannitol.md](mannitol.md). |
-| Opioid tolerance | none / mild / somewhat / highly tolerant | Multiplies every opioid's MEAC, shaded band and time-until-threshold level by 1, 1.5, 2 or 3 (`OPIOID_TOLERANCE_FACTORS`, applied in `recalculatePK()`). |
+| Opioid tolerance | none / mild / somewhat / highly tolerant | Multiplies the MEAC, shaded band and time-until-threshold level of every opioid with a MEAC (including a metabolite formed from codeine or tramadol) by 1, 1.5, 2 or 3 (`OPIOID_TOLERANCE_FACTORS`, applied in `recalculatePK()`); an opioid without a MEAC is unchanged. |
 
 Only age, weight, height, sex and the fat-free-mass box are always shown; every
 other field appears only while a drug that reads it is in the dose table

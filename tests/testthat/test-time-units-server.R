@@ -487,10 +487,10 @@ test_that("the Add new drug button opens the add-dose dialog empty at time 0", {
     expect_match(html, 'id="addDoseTime"[^>]*value="0"')
 
     # without a drug the dialog refuses to add
-    rows <- nrow(doseTable())
+    before <- doseTable()
     session$setInputs(addDoseDrug = "", addDoseTime = "0", addDoseAmount = "2",
                       addDoseBtn = 1)
-    expect_equal(nrow(doseTable()), rows)
+    expect_identical(doseTable(), before)
 
     # with one chosen, it adds the dose as a click on the plot would
     session$setInputs(addDoseDrug = drug, addDoseTime = "0", addDoseAmount = "2",

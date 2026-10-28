@@ -26,6 +26,8 @@ test_that("each control follows the drugs it applies to", {
   expect_true(relevantFields("mannitol")[["osmolality"]])
   expect_true(relevantFields(c("sevoflurane", "fentanyl"))[["opioidMacInteraction"]])
   expect_false(relevantFields("sevoflurane")[["opioidMacInteraction"]])
+  # a carrier gas has no MAC for the opioid to interact with
+  expect_false(relevantFields(c("oxygen", "air", "fentanyl"))[["opioidMacInteraction"]])
   expect_true(all(relevantFields("warfarin")[c("vkorc1", "cyp4f2", "hamberg")]))
   expect_true(relevantFields("carbamazepine")[[ASM_INTERACTIONS_INPUT]])
   expect_true(relevantFields("methadone")[["cyp2b6"]])
@@ -92,5 +94,10 @@ test_that("opioid tolerance multiplies every opioid's MEAC, band and threshold b
                                             Units = "mg PO"),
                        40, 70, 170, "male", opioidTolerance = "high")$codeine
   expect_equal(cod$upperTypical, dd$Upper[dd$Drug == "codeine"])
+  # but the morphine it forms is scaled, like any opioid with a MEAC
+  morph <- recalculatePK(NULL, dd, data.frame(Drug = "codeine", Time = 0, Dose = 30,
+                                              Units = "mg PO"),
+                         40, 70, 170, "male", opioidTolerance = "high")$morphine
+  expect_equal(morph$MEAC, 3 * dd$MEAC[dd$Drug == "morphine"])
   expect_error(meac("extreme"))
 })

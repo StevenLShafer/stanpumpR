@@ -201,12 +201,14 @@ app_ui <- function() {
                     selected = OPIOID_TOLERANCE_DEFAULT
                   ),
                   paste(
-                    "Multiplies every opioid's MEAC by 1 (none), 1.5 (mild),",
+                    "Multiplies each opioid's MEAC by 1 (none), 1.5 (mild),",
                     "2 (somewhat) or 3 (highly tolerant), so the % MEAC panel",
                     "and overlay, the propofol-opioid interaction and the",
                     "opioid-MAC interaction treat the opioid as less effective.",
-                    "The opioid's shaded band and its time until threshold",
-                    "rise by the same factor."
+                    "For an opioid with a MEAC, its shaded band and its time",
+                    "until threshold rise by the same factor; one without a",
+                    "MEAC (codeine, tramadol, buprenorphine) is unchanged, its",
+                    "active metabolite is scaled."
                   ),
                   placement = "right"
                 )),

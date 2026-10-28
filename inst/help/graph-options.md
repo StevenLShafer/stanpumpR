@@ -19,7 +19,7 @@ The second panel in the left sidebar. These settings change how the simulation i
 
 ## Only the options that apply
 
-An option that applies to particular drugs is shown only while one of them is in the dose table: *% MEAC on opioid panels* and the MEAC plot while an opioid is, *Include opioid - MAC interaction* while an opioid and an inhaled agent are, the Interaction plot while propofol and an opioid are, *Minto / Schnider* while propofol or remifentanil is, the Hamberg warfarin model while warfarin is, and *Include antiseizure drug interactions* while the table holds an interacting pair or carbamazepine. A hidden option keeps its setting for when it returns.
+An option that applies to particular drugs is shown only while one of them is in the dose table: *% MEAC on opioid panels* and the MEAC plot while an opioid is, *Include opioid - MAC interaction* while an opioid and a potent inhaled agent (oxygen or air alone does not count) are, the Interaction plot while propofol and an opioid are, *Minto / Schnider* while propofol or remifentanil is, the Hamberg warfarin model while warfarin is, and *Include antiseizure drug interactions* while the table holds an interacting pair or carbamazepine. A hidden option keeps its setting for when it returns.
 
 ## Notes
 
