@@ -154,9 +154,11 @@
 #   to the fifth demand; the second to fourth gave similar medians).  This
 #   model at 65 y, 66 kg, 170 cm, male: effect site 0.20 ng/mL at that time
 #   (plasma 0.15), peak 1.0 ng/mL 41 min after the second dose.  The lower
-#   edge and the threshold are therefore the concentration at which those
-#   patients asked for more analgesia: a minimum effective concentration by
-#   the demand-analgesia method, simulated rather than measured.
+#   edge and the threshold are that estimate: a minimum effective
+#   concentration by the demand-analgesia method, but simulated for one
+#   reference patient at the group's median time, not measured at any
+#   patient's demand, and each earlier demand had already delivered 0.25 mg
+#   of diamorphine.  It is illustrative, not a validated threshold.
 #   The upper edge is that peak; it is also about the top of 0.3 mg IV every
 #   6 h at steady state (0.46-1.08), and the group's sublingual patients had
 #   excellent analgesia at plasma levels that never exceeded 1 ng/mL (McQuay
@@ -333,12 +335,12 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
   reference <- paste0(
     "Bjornsson M et al., Clin Pharmacokinet 2023;62:1427-1443 (intravenous ",
     "three-compartment disposition, healthy-volunteer Vc; sublingual reduced ",
-    "to one first-order input with dose-dependent F, 0.14 at 16 mg); ",
+    "to one first-order input with dose-dependent F, 0.14 at 16 mg), ",
+    "https://doi.org/10.1007/s40262-023-01288-6; ",
     "effect site from Yassen A et al., Anesthesiology 2006;104:1232-1242 ",
     "(ke0 carried as a 61.2 min time to peak); band simulated from the ",
     "postoperative demand analgesia of McQuay HJ et al., Br J Anaesth ",
-    "1980;52:1013-1019. ",
-    "https://doi.org/10.1007/s40262-023-01288-6"
+    "1980;52:1013-1019."
   )
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
