@@ -29,12 +29,20 @@
 # lag.  No published study of bupivacaine nerve block or infiltration
 # identifies the absorption rate against an intravenous reference, so ka_RA is
 # PROVISIONAL: it is the single first-order rate that, with the disposition
-# above and F = 1, reproduces the mean peak of 1.66 mcg/mL after 168.75 mg of
-# plain bupivacaine for combined femoral and sciatic block (Robison et al.,
-# Br J Anaesth 1991;66:228-231).  It is calibrated to that peak by
-# construction; the predicted time of peak, 50 min, is a model output.  The
-# same study's epinephrine group peaked at 0.98 mcg/mL (ka 0.0076/min by the
-# same method), and plain infiltration of the lower abdominal wall at 2.23
+# above and F = 1, reproduces the peak of the mean concentration curve, 1.48
+# mcg/mL at 45 min, after 168.75 mg of plain bupivacaine for combined femoral
+# and sciatic block (Robison et al., Br J Anaesth 1991;66:228-231, Table II).
+# Changed by decision of Steven L. Shafer, 2026-10-28: until then it was
+# 0.0187/min, matched to the 1.66 mcg/mL MEAN OF INDIVIDUAL PEAKS, which
+# always exceeds the peak of the mean curve, so a typical-patient curve
+# calibrated to it ran 10-14% above Robison's means from 45 to 60 min (the
+# rule the oral hydromorphone fit follows).  At 0.0151/min the model peaks at
+# 1.48 mcg/mL at 56 min; the observed curve peaks earlier, near 30-45 min,
+# and is higher early (1.07 against 0.63 mcg/mL at 10 min), which no single
+# first-order rate on this disposition reproduces.  The same study's
+# epinephrine group's mean curve was still rising at 120 min (0.94 mcg/mL;
+# mean of individual peaks 0.98), which needs ka 0.0071/min by the same
+# method (0.0076 matched to the mean of peaks), and plain infiltration of the lower abdominal wall at 2.23
 # mcg/mL after 200 mg (ka 0.024/min; Martin and Neill 1987): absorption
 # depends on the site and the formulation, and one rate cannot describe them
 # all.  Epinephrine is not a covariate.
@@ -113,7 +121,7 @@ bupivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl1 = cl * size$clearance,
     cl2 = q * size$clearance,
     cl3 = 0,
-    ka_RA = 0.0187,            # 1/min, provisional, peak-matched (header)
+    ka_RA = 0.0151,            # 1/min, provisional, mean-curve peak (header)
     bioavailability_RA = 1,
     tlag_RA = 0
   )
@@ -124,7 +132,7 @@ bupivacaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   reference <- paste0(
     "Burm AG et al., Clin Pharmacokinet 1987;13:191-203 (intravenous tracer ",
     "disposition). Regional anesthesia (RA) absorption is first-order with a ",
-    "provisional rate matched to the mean peak after femoral and sciatic ",
+    "provisional rate matched to the peak of the mean curve after femoral and sciatic ",
     "block (Robison 1991), F = 1 assumed. https://doi.org/10.2165/00003088-198713030-00004"
   )
 
