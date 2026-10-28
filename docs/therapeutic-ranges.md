@@ -118,7 +118,6 @@ ng/mL at 4.5 h for a 36 kg child, 16–22% low and an hour late.
 | alprazolam | **5–44 ng/mL**, 10 h | 100 | Hart 2026 | Was 20–40 (Greenblatt and Wright 1993), which lies inside it |
 | temazepam | **200–750 ng/mL**, 1–2 h | 1,500 | Hart 2026 | Was 250–600 (Saletu 1986, van Steveninck 1994) |
 | zolpidem | 80–200 ng/mL, 1–3 h | 400 | Hart 2026 | Same range, marked + in Table 5 (revised or new since 2017; what changed is not stated); was attributed to Cha 2024 |
-| buprenorphine | **0.5–2.5 ng/mL**, 24 h (opioid use disorder) | 4 | Hart 2026 | Was 1.25–3 |
 | clonazepam | see the antiseizure table | | | |
 
 These keep their own band, because Table 5's range is for another use or analyte. Each is a
@@ -130,6 +129,7 @@ These keep their own band, because Table 5's range is for another use or analyte
 | methadone | 90–620 ng/mL at 24 h, opioid use disorder | 48–120 ng/mL, postoperative analgesia (Gourlay 1984) |
 | morphine | 5–400 ng/mL pain; 50–520 opioid use disorder | 6.4–16 ng/mL, around the MEAC |
 | oxycodone | 5–100 ng/mL at 12 h, pain | 10–20 ng/mL, around the MEAC |
+| buprenorphine | 0.5–2.5 ng/mL at 24 h, opioid use disorder (alert 4) | **0.2–1 ng/mL**, typical 0.4, at the effect site: simulated analgesic exposure, its lower edge the concentration at the median end of analgesia in McQuay 1980 (read in full). Was Table 5's range, drawn 2026-10-20 to 2026-10-27, which had replaced 1.25–3 |
 | lorazepam | 5–100 ng/mL at 12 h, anxiety, oral | **51–152 ng/mL**, typical 104, moderate sedation (Barr 2001, read in full); was 34–104 |
 | midazolam | 50–150 ng/mL at 1–2 h, sedation after oral premedication (level 4) | **101–304 ng/mL**, typical 208, moderate sedation (Barr 2001); was 40–120, source not recorded. See below |
 | diazepam | 100–1,500 ng/mL of diazepam plus nordiazepam | **606–1,824 ng/mL** of diazepam, typical 1,248: midazolam's moderate-sedation band × 6; was 150–600. Nordiazepam is not modelled |

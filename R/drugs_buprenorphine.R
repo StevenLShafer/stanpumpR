@@ -141,20 +141,45 @@
 #
 # MEAC AND THE BAND
 # =================
-# No minimum effective analgesic concentration is established for
-# buprenorphine, and as a high-affinity partial agonist it does not add to
-# full agonists the way the MEAC total assumes, so MEAC is 0 and it is not on
-# the MEAC panel.  The band is the therapeutic reference range for opioid use
-# disorder of Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
-# 59:166-295, Table 5, doi 10.1055/a-2860-7861):
-# 0.5-2.5 ng/mL, 24 h after a dose, alert level 4 ng/mL.  Typical 2.2 ng/mL,
-# 70% mu-receptor occupancy by Nasser 2014's Emax model
-# (91.4 x C / (0.67 + C)), inside the 2-3 ng/mL Laffont 2022 suggests for at
-# least 70% occupancy, which the guideline quotes.  The time-until-threshold
-# level is 1.25 ng/mL, withdrawal suppression.  It replaced 1.25-3 ng/mL
-# (withdrawal suppression to the 2-3 ng/mL quoted for blockade of opioid
-# reinforcement).  These are plasma concentrations from maintenance
-# treatment; they are not analgesic targets.
+# As a high-affinity partial agonist buprenorphine does not add to full
+# agonists the way the MEAC total assumes, so MEAC is 0 and it is not on the
+# MEAC panel.  The band (0.2-1 ng/mL, typical 0.4) and the time-until-
+# threshold level (0.2 ng/mL) are the library's own, from simulating the
+# analgesic regimens of the Oxford postoperative studies with this model at
+# the effect site, by decision of Steven L. Shafer, 2026-10-27:
+#   McQuay 1980 (Br J Anaesth 52:1013, full text read): 20 patients after hip
+#   replacement (45-75 y, under 80 kg; mean about 65 y and 66 kg) given 0.3 mg
+#   IV at induction and 0.3 mg IV or IM 3 h later, then diamorphine on demand
+#   from 6 h.  Analgesia lasted a median 480 min after the second dose (time
+#   to the fifth demand; the second to fourth gave similar medians).  This
+#   model at 65 y, 66 kg, 170 cm, male: effect site 0.20 ng/mL at that time
+#   (plasma 0.15), peak 1.0 ng/mL 41 min after the second dose.  The lower
+#   edge and the threshold are therefore the concentration at which those
+#   patients asked for more analgesia: a minimum effective concentration by
+#   the demand-analgesia method, simulated rather than measured.
+#   The upper edge is that peak; it is also about the top of 0.3 mg IV every
+#   6 h at steady state (0.46-1.08), and the group's sublingual patients had
+#   excellent analgesia at plasma levels that never exceeded 1 ng/mL (McQuay
+#   1980, unpublished observations).  The typical value is the steady-state
+#   peak of 0.4 mg sublingual every 8 h (0.17-0.42; Bullingham 1981's dose,
+#   about 9 h of analgesia, abstract) and of a 20 mcg/h patch delivered as an
+#   infusion (0.39; Reidenberg 2001's measured patch peaks, quoted by Johnson
+#   2005, were 0.18, 0.19 and 0.47 ng/mL at 5, 10 and 20 mcg/h).
+# The band is read on the effect site: the Oxford group found the effect far
+# outlasts the plasma level, with no correlation between peak plasma
+# concentration and duration of analgesia (Bullingham 1980, Clin Pharmacol
+# Ther 28:667; McQuay 1980; both full text read), and Adriaensen 1985 found
+# no correlation between level and analgesia in chronic pain (quoted by
+# Johnson 2005, J Pain Symptom Manage 29:297, full text read).  Yassen's slow
+# equilibration (time to peak 61 min) carries much of that lag.  The band
+# replaced Hart 2026's range for opioid use disorder (AGNP consensus
+# guidelines, update 2026, Pharmacopsychiatry 59:166-295, Table 5, doi
+# 10.1055/a-2860-7861: 0.5-2.5 ng/mL, 24 h after a dose, alert level 4
+# ng/mL), which is for substitution treatment, not analgesia, the use that
+# keeps methadone's and morphine's ranges off their panels; it is recorded in
+# therapeuticRanges.csv (band_differs).  That range had replaced 1.25-3 ng/mL
+# (withdrawal suppression to blockade of opioid reinforcement), and the
+# threshold was 1.25 ng/mL, withdrawal suppression.
 #
 # AGE
 # ===
@@ -215,6 +240,12 @@
 #   https://doi.org/10.1093/jat/20.6.369
 # Escher M et al., Clin Ther 2007;29:1620-1631.
 #   https://doi.org/10.1016/j.clinthera.2007.08.007
+# McQuay HJ, Bullingham RES, Paterson GMC, Moore RA.  Br J Anaesth
+#   1980;52:1013-1019.  https://doi.org/10.1093/bja/52.10.1013 (the band)
+# Bullingham RES, McQuay HJ, Moore A, Bennett MR.  Clin Pharmacol Ther
+#   1980;28:667-672.  https://doi.org/10.1038/clpt.1980.219 (the band)
+# Johnson RE, Fudala PJ, Payne R.  J Pain Symptom Manage 2005;29:297-326.
+#   https://doi.org/10.1016/j.jpainsymman.2004.07.005 (the band)
 # Bastian JR, Chen H, Zhang H et al.  Am J Obstet Gynecol 2017;216:64.e1-
 #   64.e7.  https://doi.org/10.1016/j.ajog.2016.09.095 (pregnancy)
 # Zhu Y, Bastian JR, Caritis SN et al.  J Addict Med 2025;19:129-134.
@@ -235,7 +266,8 @@ BUPRENORPHINE_F_SL      <- 0.422692       # small-dose limit
 BUPRENORPHINE_SL_SATURATION <- list(Imax = 0.816527, ID50 = 3.42670)  # ID50 mg
 BUPRENORPHINE_KA_SL     <- 0.0171905401   # /min; fitted with the lag, see the header
 BUPRENORPHINE_TLAG_SL   <- 17.587178      # min; fitted with ka, see the header
-BUPRENORPHINE_WITHDRAWAL <- 1.25          # ng/mL; endCe
+# Effect site at the median end of analgesia in McQuay 1980; see the header.
+BUPRENORPHINE_ANALGESIA_END <- 0.2       # ng/mL; endCe and lower band edge
 BUPRENORPHINE_MIN_AGE   <- 18             # years; youngest age the CL term sees
 # Elimination clearance in pregnancy relative to Bjornsson's value: Zhu 2025,
 # dose-normalised AUC 218 after delivery against 119 in the second half of
@@ -303,7 +335,9 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "three-compartment disposition, healthy-volunteer Vc; sublingual reduced ",
     "to one first-order input with dose-dependent F, 0.14 at 16 mg); ",
     "effect site from Yassen A et al., Anesthesiology 2006;104:1232-1242 ",
-    "(ke0 carried as a 61.2 min time to peak). ",
+    "(ke0 carried as a 61.2 min time to peak); band simulated from the ",
+    "postoperative demand analgesia of McQuay HJ et al., Br J Anaesth ",
+    "1980;52:1013-1019. ",
     "https://doi.org/10.1007/s40262-023-01288-6"
   )
   if (isTRUE(pregnant)) {
@@ -321,10 +355,10 @@ buprenorphine <- function(weight, height, age, sex, adjustToFFM = TRUE,
       # Yassen's ke0 as a time to peak; getDrugPK() solves ke0.  See the header.
       tPeak = BUPRENORPHINE_TPEAK,
       MEAC = 0,
-      # Band: Hart 2026's range for opioid use disorder; see the header.
-      typical = 2.2,
-      upperTypical = 2.5,
-      lowerTypical = 0.5,
+      # Band: simulated analgesic exposure (McQuay 1980); see the header.
+      typical = 0.4,
+      upperTypical = 1,
+      lowerTypical = BUPRENORPHINE_ANALGESIA_END,
       # Each sublingual dose is scaled by its own fraction absorbed; see the header.
       sublingualSaturation = BUPRENORPHINE_SL_SATURATION,
       reference = reference
