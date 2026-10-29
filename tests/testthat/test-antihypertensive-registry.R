@@ -636,4 +636,27 @@ test_that("the antihypertensives help page names every drug in the category", {
   expect_true(grepl(paste(words[length(drugs) - 5],
                           "antihypertensives are in the drug library"),
                     page, fixed = TRUE))
+  # The page states the same count THREE more times, and counting only the
+  # first sentence is what let the others drift: on 2026-10-29 fosinopril made
+  # line 3 say twelve while two other sentences still said nine and eleven
+  # (CodeRabbit on PR #621 caught two of the three; the external-check
+  # sentence had been stale since enalapril).  So count all of them.
+  # Indexed by the number itself rather than by an offset, so a count that
+  # falls below six (the externally checked records) cannot index backwards.
+  Word <- c("One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight",
+            "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen")
+  word <- tolower(Word)
+  expect_true(grepl(paste(word[length(drugs)], "implemented models"),
+                    page, fixed = TRUE))
+  # Every drug but the two the page counts as already present when it was
+  # written has "joined this page since", in a sentence that says so twice.
+  joined <- length(drugs) - 2
+  expect_true(grepl(paste0(Word[joined], " drugs have joined this page"),
+                    page, fixed = TRUE))
+  expect_true(grepl(paste("All", word[joined], "now plot a concentration"),
+                    page, fixed = TRUE))
+  # And the count of externally checked records, from the registry itself
+  checked <- sum(registry$external_validation_status != "none")
+  expect_true(grepl(paste(Word[checked], "records have since acquired"),
+                    page, fixed = TRUE))
 })
