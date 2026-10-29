@@ -13,7 +13,7 @@ The parameters are apparent: absolute bioavailability was not identified.
 
 **mg PO** is the enteric-coated **tablet**. The capsule studied in the source, which is absorbed faster, is not offered. The engine absorbs through at most two first-order depots, so each absorption path, together with the pre-systemic step, is approximated by one depot with a lag:
 
-- The **slow path's** depot matches the mean and spread of its delay.
+- The **slow path's** depot matches the mean and spread of its delay: it absorbs at 0.053 per hour after a lag of about 0.34 hours. That lag is not the source's 2.8-hour lag, which this path does not have; it stands in for the time spent in the pre-systemic compartment.
 - The **constant-rate path's** depot was fitted to the ASA curve of Koh's exact structure.
 
 Against that exact structure, the ASA peak for 100 mg is 0.48 mg/L against 0.49, but at 3.8 hours against 4.4. The salicylate peak is 13% low. Both areas under the curve are exact. The ASA-to-SA conversion and the pre-systemic split are carried exactly.
