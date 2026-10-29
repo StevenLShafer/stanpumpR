@@ -1,0 +1,21 @@
+### The model
+
+Clevidipine's parameters come from Ericsson and colleagues (*Br J Clin Pharmacol* 1999;47:531-538), a study of 25 healthy men given 20-minute infusions at dose rates from 0.12 to 48 nmol/min/kg, 21 of them twice. A population analysis of sparse whole-blood samples found two compartments best. Its Table 1 gives the fitted clearance, 0.121 L/min/kg, and central volume, 0.36 L/kg, and quantities the authors derived from the fitted values: steady-state volume 0.56 L/kg, initial and terminal half-lives of 1.8 and 9.5 minutes, and 81.6% of the area under the curve in the initial phase. The concentration rose linearly with dose rate across that whole range.
+
+The model uses the fitted clearance and central volume as printed. The two intercompartmental rate constants were fitted too but are not printed, so they are chosen here to reproduce the paper's derived quantities as closely as their rounding allows: that gives a peripheral volume of 0.194 L/kg and an intercompartmental clearance of 0.0167 L/min/kg, and reproduces a steady-state volume of 0.554 L/kg, half-lives of 1.75 and 9.45 minutes and an initial-phase share of 81.56%. The printed numbers are rounded and not exactly consistent with one another, so no set of parameters matches all of them to the last digit. Until October 2026, when only the abstract had been read, the central volume was instead derived from the clearance, steady-state volume and half-lives, which gave 0.369 L/kg, 2.5% above the published value.
+
+### What is plotted
+
+**Whole blood**, in ng/mL, which is the matrix this study assayed. Clevidipine is cleared by blood and tissue esterases and is reported in whole blood rather than plasma. The postoperative cardiac-surgery study (Bailey and colleagues, *Anesthesiology* 2002;96:1086-1094) measured **plasma** instead, and reported threshold concentrations of 9.7 and 26.3 mcg/L for a 10% and a 20% fall in mean arterial pressure. Those numbers must not be read against this curve: the matrix is different with no measured blood-to-plasma ratio, and a threshold concentration from a logistic fit is the point of 50% *probability* of crossing a threshold, not the concentration giving half of a continuous effect.
+
+### Covariates
+
+None in the source. Every published parameter is per kilogram, which is this model's own size term, linear in weight; it is applied to the fat-free-mass weight when [the scaling switch](help:models/fat-free-mass) is on and to total body weight when it is off, so unticking the box reproduces the published per-kilogram values exactly.
+
+### Effect site and blood pressure
+
+Neither is modelled. No equilibration rate constant is published, so ke0 is zero and only the blood concentration is drawn. The source did fit a maximum-effect model, but to the **ratio of mean arterial pressure to heart rate** -- a surrogate for vascular resistance, not a blood pressure: a maximum fall of 45.4% with half of it at 12.1 nmol/L of whole blood, with no effect compartment. Mean arterial pressure itself fell only about 10% at the highest dose rate, because the heart rate rose to compensate, so the relation describes healthy men with intact reflexes and is recorded in the antihypertensive parameter audit, not used here. No shaded band is drawn: there is no therapeutic whole-blood range, and the postoperative thresholds are a different matrix.
+
+### Where to be careful
+
+This is a **healthy-volunteer** disposition model. The paper notes that the blood-pressure effect was marginal in these subjects, "probably due to a compensatory baroreflex activation", so the population is one whose haemodynamic reflexes were deliberately intact -- the opposite of the anaesthetised or postoperative patient in whom clevidipine is actually titrated. Clearance in postoperative cardiac-surgery patients was reported as 4.3 L/min for a three-compartment model, and in a 72-hour hypertension study as roughly 26 to 33 L/min by cohort; those are different populations and, in the postoperative case, a structure this vector cannot represent, since three compartments need six parameters and that paper reports three numbers. Simulate the curve as a disposition study, not as a blood-pressure prediction.

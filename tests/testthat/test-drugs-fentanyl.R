@@ -17,12 +17,22 @@ test_that("returns the published parameters with total-body-weight scaling", {
         cl3 = 1.55
       )
     ),
-    tPeak = 3.694,
+    tPeak = 3.6,
     MEAC = 0.6,
     typical = 0.72,
-    upperTypical = 0.48,
-    lowerTypical = 1.2,
-    reference = "Scott JC, Stanski DR. J Pharmacol Exp Ther 1987;240(1):159-166. https://pubmed.ncbi.nlm.nih.gov/3100765/"
+    upperTypical = 1.2,
+    lowerTypical = 0.48,
+    reference = paste0(
+      "Pooled parameter set from five fentanyl studies; the values are printed ",
+      "in none of them. McClain DA, Hug CC. Clin Pharmacol Ther 1980;28:106-114. ",
+      "https://pubmed.ncbi.nlm.nih.gov/7389247/ Scott JC, Stanski DR. ",
+      "J Pharmacol Exp Ther 1987;240:159-166. ",
+      "https://pubmed.ncbi.nlm.nih.gov/3100765/ Hudson RJ et al. ",
+      "Anesthesiology 1986;64:334-338. https://pubmed.ncbi.nlm.nih.gov/3954128/ ",
+      "Varvel JR et al. Anesthesiology 1989;70:928-934. ",
+      "https://pubmed.ncbi.nlm.nih.gov/2729633/ Shafer SL et al. ",
+      "Anesthesiology 1990;73:1091-1102. https://pubmed.ncbi.nlm.nih.gov/2248388/"
+    )
   )
   expect_equal_rounded(actual, expected)
 })

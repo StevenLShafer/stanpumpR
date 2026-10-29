@@ -1,14 +1,14 @@
 ### The model
 
-Sufentanil's parameters are from Gepts and colleagues (*Anesthesiology* 1995;83:1194-1204), who gave sufentanil by infusion to surgical patients and fitted a three-compartment model. The volumes are 14.3, 63.4 and 252 L and the clearances 0.922, 1.55 and 0.327 L/min.
+Sufentanil's parameters are from Gepts and colleagues (*Anesthesiology* 1995;83:1194-1204), who gave sufentanil by infusion to surgical patients and fitted a three-compartment model. The volumes are 14.3, 63.1 and 261.6 L and the clearances 0.92, 1.55 and 0.33 L/min, as printed in the paper.
 
 ### Covariates
 
-None. The parameters are for a typical adult. Gepts found no significant covariates in the population studied.
+None. The parameters are for a typical adult. Gepts found no significant covariates in the population studied. They are taken to be the 70 kg reference man's and scaled to the patient's [fat-free mass](help:models/fat-free-mass) with the switch on, as it is by default; with it off everyone receives the published values.
 
 ### Effect site
 
-The time to peak effect is 5.8 minutes, from the Shafer and Varvel analysis: the slowest of the four anesthetic opioids in the library, so a sufentanil bolus produces a smoother and later effect-site peak than a fentanyl bolus of equivalent potency.
+The time to peak effect is 5.6 minutes, from Shafer and Varvel (*Anesthesiology* 1991;74:53-63, Figure 2, EEG): the slowest of the four anesthetic opioids in the library, so a sufentanil bolus produces a smoother and later effect-site peak than a fentanyl bolus of equivalent potency.
 
 ### MEAC and typical concentrations
 

@@ -25,9 +25,15 @@ helpNavPanel <- function() {
       sidebar = bslib::sidebar(
         width = 320,
         class = "help-sidebar",
+        # No visible label, to keep the sidebar compact; the aria-label gives the
+        # field a name that stays once the placeholder has gone.
         textInput("help_search", NULL, "", placeholder = "Search the help") |>
-          addInputAttributes(maxlength = 100, autocomplete = "off"),
-        uiOutput("help_search_results"),
+          addInputAttributes(maxlength = 100, autocomplete = "off",
+                             `aria-label` = "Search the help"),
+        # A polite live region, so a screen reader announces the result ("18
+        # pages match", "Nothing found") when a search finishes.
+        tagAppendAttributes(uiOutput("help_search_results"),
+                            role = "status", `aria-live` = "polite"),
         uiOutput("help_nav")
       ),
       div(class = "help-main", uiOutput("help_content"))

@@ -47,10 +47,10 @@ Not plotted. It is about a quarter of the base, its concentrations tracked d-amp
 
 - **Food:** a high-fat meal delays the XR peak by about 2.5 hours without changing the amount absorbed (label).
 - **Urine pH:** acid urine speeds and alkaline urine slows the renal elimination of amphetamine.
-- **CYP2D6:** not modelled.
+- **CYP2D6:** not modelled; the Patient Profile's **CYP 2D6** field does not change this model.
 - **Adolescents and adults:** extrapolations. The label gives longer half-lives in both (11 and 10 hours).
 - **Other products:** Mydayis, Evekeo and dextroamphetamine products are different products, and entering them here would use the wrong dose basis or release.
 
 ### Effect site and typical range
 
-None. McGough found no clear relationship between concentration and behavioural response, and no calibrated concentration-effect model exists for a classroom measure or for weekly symptom scores. No band is drawn, and nothing on this plot is a dose recommendation.
+No effect site. McGough found no clear relationship between concentration and behavioural response, and no calibrated concentration-effect model exists for a classroom measure or for weekly symptom scores. The shaded band, 23 to 45 ng/mL of d-amphetamine, is the therapeutic reference range of the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, doi [10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)), with a laboratory alert level of 120 ng/mL. It is the steady-state peak of immediate-release Adderall 10 mg once a day in 9 of McGough's children (their Table 3: 33.8 ng/mL, standard error 3.7, 3.3 hours after the dose), as the mean ± SD, so the concentrations that dose produced rather than a window of efficacy, with no data in adults; the guideline describes it as coming from all 51 children enrolled. The guideline gives l-amphetamine 7 to 14 ng/mL. This model, fitted to the same study, gives a 37.8 kg child 34.0 ng/mL 3.3 hours after the seventh daily dose. The typical value, 34 ng/mL, is the midpoint. Nothing on this plot is a dose recommendation.

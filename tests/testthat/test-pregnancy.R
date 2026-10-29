@@ -1,0 +1,311 @@
+# The Patient Profile's Pregnant field (R/pregnancy.R): which models read it,
+# what each applies, that the flag off changes nothing, and that it reaches
+# every surface the other covariates reach.  What each model applies, and
+# from which source, is inst/extdata/pregnancyRegistry.csv (one row per drug,
+# built by data-raw/pregnancyRegistry.R), and each drug's header documents it.
+
+registry <- pregnancyFindings()
+pregnancyModels <- registry$drug[registry$group == "applied"]
+woman <- list(weight = 70, height = 165, age = 30, sex = SEX_FEMALE)
+pkOf <- function(drug, pregnant = FALSE, ...) {
+  getDrugPK(drug, woman$weight, woman$height, woman$age, woman$sex,
+            pregnant = pregnant, ...)
+}
+setOf <- function(pk) pk$PK[[PK_EVENT_DEFAULT]]
+libraryDrugs <- function() {
+  drugs <- getDrugDefaultsGlobal()$Drug
+  drugs[!isGasDrug(drugs)]
+}
+readsFlag <- function(drug) {
+  exists(drug, mode = "function") &&
+    "pregnant" %in% names(formals(get(drug, mode = "function")))
+}
+
+test_that("every drug of the library has exactly one row in the pregnancy registry", {
+  # The rule for every model, present and future (AGENTS.md): its
+  # pharmacokinetics in pregnancy are reviewed and recorded here.
+  expect_setequal(registry$drug, pregnancyCoveredDrugs())
+  expect_false(any(duplicated(registry$drug)))
+  expect_true(all(registry$group %in% PREGNANCY_GROUPS))
+  expect_true(all(nzchar(registry$finding)))
+  expect_true(all(nzchar(registry$applied) == (registry$group == "applied")))
+  expect_true(all(nzchar(registry$source[registry$group == "applied"])))
+  expect_true(all(registry$evidence_read %in% c("full_text", "abstract", "memory", "none")))
+  # factors belong to applied rows only, and are positive
+  factors <- registry[, c("cl_factor", "v_factor", "f_factor", "gfr_factor")]
+  expect_true(all(is.na(factors[registry$group != "applied", ])))
+  expect_true(all(unlist(factors) > 0, na.rm = TRUE))
+  expect_true(all(registry$gfr_factor == PREGNANCY_GFR_FACTOR, na.rm = TRUE))
+  # each category is the drug table's
+  dd <- getDrugDefaultsGlobal()
+  expect_equal(registry$category, dd$Category[match(registry$drug, dd$Drug)])
+})
+
+test_that("exactly the applied models read the flag", {
+  expect_setequal(pregnancyDrugs(), pregnancyModels)
+  for (drug in libraryDrugs()) {
+    expect_identical(readsFlag(drug), drug %in% pregnancyModels, info = drug)
+  }
+})
+
+test_that("the flag off is the default, and changes nothing in any model", {
+  for (drug in libraryDrugs()) {
+    expect_equal(getDrugPK(drug, 70, 165, 30, SEX_FEMALE, pregnant = FALSE),
+                 getDrugPK(drug, 70, 165, 30, SEX_FEMALE), info = drug)
+  }
+  # NULL (a control that has not reported, a caller that predates the field)
+  # is off too
+  expect_equal(pkOf("morphine", NULL), pkOf("morphine"))
+})
+
+test_that("a model that does not read the flag is untouched by it", {
+  # (Codeine is not in this list: its own disposition ignores the flag, but
+  # the morphine it forms is resolved with it, so its metabolite coefficients
+  # move.  That path is checked below through the simulation.)
+  for (drug in c("fentanyl", "ketamine", "lorazepam", "labetalol", "bupivacaine", "ondansetron")) {
+    expect_equal(pkOf(drug, TRUE)$PK, pkOf(drug, FALSE)$PK, info = drug)
+    expect_no_match(pkOf(drug, TRUE)$reference, "pregnancy:", info = drug)
+  }
+  on  <- pkOf("codeine", TRUE)
+  off <- pkOf("codeine", FALSE)
+  for (p in c("v1", "v2", "v3", "cl1", "cl2", "cl3", "ka_PO", "bioavailability_PO")) {
+    expect_equal(setOf(on)[[p]], setOf(off)[[p]], info = p)
+  }
+  expect_equal(on$metabolite, off$metabolite)
+})
+
+test_that("the flag is validated, and refused for a man", {
+  expect_error(getDrugPK("morphine", 70, 170, 30, SEX_MALE, pregnant = TRUE), "requires sex")
+  expect_error(pkOf("morphine", NA), "Invalid pregnant")
+  expect_error(pkOf("morphine", "yes"), "Invalid pregnant")
+  expect_error(pkOf("morphine", 1), "Invalid pregnant")
+  expect_error(pkOf("morphine", c(TRUE, FALSE)), "Invalid pregnant")
+  # the rule is enforced before any model runs, so a drug that ignores the
+  # flag is refused too
+  expect_error(getDrugPK("fentanyl", 70, 170, 30, SEX_MALE, pregnant = TRUE), "requires sex")
+  expect_error(simulateDrugsWithCovariates(
+    data.frame(Drug = "fentanyl", Time = 0, Dose = 100, Units = "mcg"),
+    data.frame(Time = numeric(0), Event = character(0)),
+    70, 170, 30, SEX_MALE, 60, FALSE, pregnant = TRUE), "requires sex")
+})
+
+test_that("pregnancyPossible() is the rule that shows the control", {
+  expect_true(pregnancyPossible(PREGNANCY_MIN_AGE, SEX_FEMALE))
+  expect_true(pregnancyPossible(30, SEX_FEMALE))
+  expect_true(pregnancyPossible(PREGNANCY_MAX_AGE - 1, SEX_FEMALE))
+  expect_false(pregnancyPossible(PREGNANCY_MAX_AGE, SEX_FEMALE))
+  expect_false(pregnancyPossible(PREGNANCY_MIN_AGE - 0.5, SEX_FEMALE))
+  expect_false(pregnancyPossible(30, SEX_MALE))
+  expect_false(pregnancyPossible(NA, SEX_FEMALE))
+  expect_false(pregnancyPossible(NULL, SEX_FEMALE))
+})
+
+test_that("each applied model applies the registry's clearance, volume and bioavailability factors", {
+  # At the reference woman with a blank creatinine.  Phenytoin is saturable:
+  # its factors are on Km and Vmax (test-drugs-phenytoin.R).
+  for (i in which(registry$group == "applied")) {
+    r <- registry[i, ]
+    on  <- setOf(pkOf(r$drug, TRUE))
+    off <- setOf(pkOf(r$drug, FALSE))
+    if (!is.na(r$cl_factor)) {
+      expect_equal(on$cl1 / off$cl1, r$cl_factor, tolerance = 1e-6, info = r$drug)
+    }
+    if (!is.na(r$v_factor)) {
+      expect_equal(on$v1 / off$v1, r$v_factor, tolerance = 1e-6, info = r$drug)
+    }
+    if (!is.na(r$f_factor)) {
+      expect_equal(on$bioavailability_PO / off$bioavailability_PO, r$f_factor,
+                   tolerance = 1e-6, info = r$drug)
+    }
+    # and every applied model changes something
+    expect_false(isTRUE(all.equal(pkOf(r$drug, TRUE), pkOf(r$drug, FALSE))), info = r$drug)
+  }
+})
+
+test_that("the rise in filtration reaches a renal term only when the creatinine is blank", {
+  expect_equal(pregnancyGfrFactor(TRUE, NULL), PREGNANCY_GFR_FACTOR)
+  expect_equal(pregnancyGfrFactor(TRUE, 0.6), 1)
+  expect_equal(pregnancyGfrFactor(FALSE, NULL), 1)
+  expect_equal(PREGNANCY_GFR_FACTOR, 1.5)
+  for (drug in registry$drug[!is.na(registry$gfr_factor)]) {
+    expect_gt(setOf(pkOf(drug, TRUE))$cl1, setOf(pkOf(drug, FALSE))$cl1)
+    # a measured creatinine already carries the rise
+    expect_equal(pkOf(drug, TRUE, creatinine = 0.6)$PK, pkOf(drug, FALSE, creatinine = 0.6)$PK,
+                 info = drug)
+    expect_no_match(pkOf(drug, TRUE, creatinine = 0.6)$reference, "pregnancy:", info = drug)
+  }
+  # The three antibiotics the review names: gentamicin linear in its eGFR,
+  # cefazolin a power of 0.586, vancomycin linear with an intercept
+  expect_equal(setOf(pkOf("gentamicin", TRUE))$cl1 / setOf(pkOf("gentamicin", FALSE))$cl1,
+               PREGNANCY_GFR_FACTOR, tolerance = 1e-6)
+  expect_equal(setOf(pkOf("cefazolin", TRUE))$cl1 / setOf(pkOf("cefazolin", FALSE))$cl1,
+               PREGNANCY_GFR_FACTOR^0.586, tolerance = 1e-6)
+  # Vancomycin: Thomson's term at 1.5 x the creatinine clearance it reads
+  size <- pkSizeFactors(woman$weight, woman$height, woman$age, woman$sex, TRUE,
+                        legacyVolume = woman$weight / 70, legacyClearance = 1)
+  scr  <- max(adultEquivalentCreatinine(NULL, woman$age, woman$sex), 60 / 88.42)
+  crcl <- creatinineClearanceCG(70 * size$volume, woman$age, woman$sex, scr)
+  expect_equal(setOf(pkOf("vancomycin", TRUE))$cl1,
+               2.99 * (1 + 0.0154 * (PREGNANCY_GFR_FACTOR * crcl - 66)) / 60)
+  # Thomson's intercept is slightly negative (1 - 0.0154 x 66), so the ratio
+  # is a little MORE than the GFR factor
+  ratio <- setOf(pkOf("vancomycin", TRUE))$cl1 / setOf(pkOf("vancomycin", FALSE))$cl1
+  expect_gt(ratio, PREGNANCY_GFR_FACTOR)
+  expect_lt(ratio, 1.55)
+})
+
+test_that("a model with a clearance factor alone moves nothing else", {
+  # Methadone's racemic reduction is fitted again at the new clearances
+  # (checked next), so its reduced volumes shift a little; citalopram scales
+  # both enantiomers before its exact R+S reduction, whose cl2 is a term of
+  # the reduction and rises with them (checked below).
+  only <- registry$drug[registry$group == "applied" & is.na(registry$v_factor) &
+                          is.na(registry$f_factor) &
+                          !registry$drug %in% c("methadone", "citalopram")]
+  for (drug in only) {
+    on  <- setOf(pkOf(drug, TRUE))
+    off <- setOf(pkOf(drug, FALSE))
+    for (p in c("v1", "v2", "v3", "cl2", "cl3")) {
+      expect_equal(on[[p]], off[[p]], info = paste(drug, p))
+    }
+    for (p in grep("^(ka|bioavailability|tlag)_", names(off), value = TRUE)) {
+      expect_equal(on[[p]], off[[p]], info = paste(drug, p))
+    }
+  }
+  # oxycodone's oxymorphone formation is left as it is
+  expect_equal(pkOf("oxycodone", TRUE)$metabolite, pkOf("oxycodone", FALSE)$metabolite)
+  # citalopram: volumes unchanged, the reduction's cl2 scaled with cl1
+  on  <- setOf(pkOf("citalopram", TRUE))
+  off <- setOf(pkOf("citalopram", FALSE))
+  expect_equal(c(on$v1, on$v2), c(off$v1, off$v2))
+  expect_equal(on$cl2 / off$cl2, CITALOPRAM_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+})
+
+test_that("methadone's reduction keeps the racemic clearance exact and the volumes close", {
+  on  <- setOf(pkOf("methadone", TRUE))
+  off <- setOf(pkOf("methadone", FALSE))
+  expect_equal(on$cl1 / off$cl1, METHADONE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  # the volumes are fitted, not scaled: within a few per cent of the unchanged ones
+  expect_equal(on$v1, off$v1, tolerance = 0.05)
+  expect_equal(on$v1 + on$v2 + on$v3, off$v1 + off$v2 + off$v3, tolerance = 0.05)
+  # the enantiomers themselves are scaled exactly
+  e1 <- methadoneEnantiomers(70, METHADONE_PREGNANCY_CL_FACTOR)
+  e0 <- methadoneEnantiomers(70)
+  for (s in c("R", "S")) {
+    expect_equal(sum(e0[[s]]$coef / e0[[s]]$lambda) / sum(e1[[s]]$coef / e1[[s]]$lambda),
+                 METHADONE_PREGNANCY_CL_FACTOR, tolerance = 1e-8, info = s)
+  }
+  # the two states are cached apart
+  expect_false(identical(methadoneRacemicPK(70, 1), methadoneRacemicPK(70, METHADONE_PREGNANCY_CL_FACTOR)))
+  expect_identical(methadoneRacemicPK(70, 1), methadoneRacemicPK(70))
+})
+
+test_that("the References panel names the pregnancy source only while the flag is on", {
+  for (drug in pregnancyModels) {
+    expect_match(pkOf(drug, TRUE)$reference, "pregnancy:", fixed = TRUE, info = drug)
+    expect_no_match(pkOf(drug, FALSE)$reference, "pregnancy:", info = drug)
+  }
+  # the drugs whose factor is the review's still name it
+  # (oxycodone's 3.8/2.6 was dropped on 2026-10-28: Kokki 2012 against this model)
+  for (drug in c("morphine", "remifentanil", "methadone", "dexamethasone")) {
+    expect_match(pkOf(drug, TRUE)$reference, "Ansari J, Carvalho B, Shafer SL, Flood P",
+                 fixed = TRUE, info = drug)
+  }
+  expect_match(pregnancyReference("clearance x 2"), "^pregnancy: clearance x 2 \\(Ansari")
+  expect_equal(pregnancyReference("CL/F x 2.3", "Karanam 2025"), "pregnancy: CL/F x 2.3 (Karanam 2025)")
+})
+
+test_that("the Minto companion doubles its clearance with the library model", {
+  row <- getDrugDefaults("remifentanil")
+  on  <- alternativeModelEntry("remifentanil", 70, 165, 30, SEX_FEMALE, row, pregnant = TRUE)
+  off <- alternativeModelEntry("remifentanil", 70, 165, 30, SEX_FEMALE, row)
+  expect_equal(setOf(on)$cl1 / setOf(off)$cl1, REMIFENTANIL_PREGNANCY_CL_FACTOR)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ke0")) expect_equal(setOf(on)[[p]], setOf(off)[[p]], info = p)
+  expect_match(on$reference, "Ansari", fixed = TRUE)
+  expect_no_match(off$reference, "Ansari")
+  # Schnider's propofol takes the library propofol's factor (Gin 1990, 1991)
+  rowP <- getDrugDefaults("propofol")
+  onP  <- alternativeModelEntry("propofol", 70, 165, 30, SEX_FEMALE, rowP, pregnant = TRUE)
+  offP <- alternativeModelEntry("propofol", 70, 165, 30, SEX_FEMALE, rowP)
+  expect_equal(setOf(onP)$cl1 / setOf(offP)$cl1, PROPOFOL_PREGNANCY_CL_FACTOR)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3")) expect_equal(setOf(onP)[[p]], setOf(offP)[[p]], info = p)
+  expect_match(onP$reference, "Gin T", fixed = TRUE)
+  expect_no_match(offP$reference, "Gin T")
+  expect_length(alternativeModelProblems(c("propofol", "remifentanil"), 70, 165, 30, SEX_FEMALE, pregnant = TRUE), 0)
+})
+
+test_that("recalculatePK() passes the flag to the library model and the companion", {
+  drugDefaults <- getDrugDefaultsGlobal()
+  DT <- data.frame(Drug = c("remifentanil", "fentanyl"), Time = 0, Dose = 100, Units = "mcg",
+                   stringsAsFactors = FALSE)
+  on  <- recalculatePK(NULL, drugDefaults, DT, 30, 70, 165, SEX_FEMALE, pregnant = TRUE, alternativeModels = TRUE)
+  off <- recalculatePK(NULL, drugDefaults, DT, 30, 70, 165, SEX_FEMALE, alternativeModels = TRUE)
+  expect_equal(setOf(on$remifentanil)$cl1 / setOf(off$remifentanil)$cl1, REMIFENTANIL_PREGNANCY_CL_FACTOR)
+  minto <- alternativeModelName("remifentanil")
+  expect_equal(setOf(on[[minto]])$cl1 / setOf(off[[minto]])$cl1, REMIFENTANIL_PREGNANCY_CL_FACTOR)
+  expect_equal(setOf(on$fentanyl), setOf(off$fentanyl))
+})
+
+test_that("simulateDrugsWithCovariates() passes the flag, and the parent's flag reaches its metabolite", {
+  ET <- data.frame(Time = numeric(0), Event = character(0))
+  DT <- data.frame(Drug = "morphine", Time = 0, Dose = 10, Units = "mg", stringsAsFactors = FALSE)
+  on  <- simulateDrugsWithCovariates(DT, ET, 70, 165, 30, SEX_FEMALE, 240, FALSE, pregnant = TRUE)
+  off <- simulateDrugsWithCovariates(DT, ET, 70, 165, 30, SEX_FEMALE, 240, FALSE)
+  # same volume, so the same first point; faster clearance, so lower later
+  expect_equal(on$morphine$wide$Plasma[1], off$morphine$wide$Plasma[1])
+  expect_lt(tail(on$morphine$wide$Plasma, 1), 0.9 * tail(off$morphine$wide$Plasma, 1))
+  # Codeine does not read the flag, but the morphine it forms is morphine's
+  # model, resolved inside getDrugPK() with the parent's flag
+  DT <- data.frame(Drug = "codeine", Time = 0, Dose = 60, Units = "mg PO", stringsAsFactors = FALSE)
+  on  <- simulateDrugsWithCovariates(DT, ET, 70, 165, 30, SEX_FEMALE, 480, FALSE, pregnant = TRUE)
+  off <- simulateDrugsWithCovariates(DT, ET, 70, 165, 30, SEX_FEMALE, 480, FALSE)
+  expect_equal(on$codeine$wide$Plasma, off$codeine$wide$Plasma)
+  expect_lt(tail(on$morphine$wide$Plasma, 1), tail(off$morphine$wide$Plasma, 1))
+})
+
+test_that("the help's pregnancy table is built from the models", {
+  md <- helpPregnancyTableMarkdown()
+  f <- pregnancyFindings()
+  for (drug in f$drug) {
+    expect_match(md, sprintf("[%s](help:drugs/%s)", helpDrugTitle(drug), drug), fixed = TRUE, info = drug)
+  }
+  # the applied rows carry the measured ratios: morphine 1.7 and V1 1
+  rowOf <- function(drug) grep(sprintf("help:drugs/%s)", drug), strsplit(md, "\n")[[1]],
+                               value = TRUE, fixed = TRUE)[1]
+  expect_match(rowOf("morphine"), "\\| 1\\.7 \\| 1 \\|")
+  expect_match(rowOf("gentamicin"), "\\| 1\\.5 \\| 1 \\|")
+  expect_match(rowOf("lamotrigine"), "\\| 2\\.3 \\| 1 \\|")
+  expect_match(rowOf("lamotrigine"), "](https://doi.org/", fixed = TRUE)
+  expect_match(md, "**Adjusted when Pregnant is ticked**", fixed = TRUE)
+  expect_match(md, "**No human pharmacokinetic data in pregnancy: not adjusted**", fixed = TRUE)
+  expect_match(md, "**Fitted in pregnant women: not adjusted**", fixed = TRUE)
+  # a literal asterisk (an allele) is escaped
+  expect_no_match(md, "[^\\\\]\\*1/", perl = TRUE)
+  # and the page renders through the marker
+  html <- helpPageHTML("models/pregnancy")
+  expect_match(html, "data-help-page=\"drugs/vancomycin\"", fixed = TRUE)
+  expect_match(html, "data-help-scenario=\"remifentanil-labour\"", fixed = TRUE)
+  expect_no_match(html, "generated: pregnancy-table", fixed = TRUE)
+})
+
+test_that("every drug's page carries its row of the registry", {
+  html <- helpDrugPageHTML("lamotrigine")
+  expect_match(html, "<h2>Pregnancy</h2>", fixed = TRUE)
+  expect_match(html, "Adjusted when Pregnant is ticked.", fixed = TRUE)
+  expect_match(html, "What the model applies:", fixed = TRUE)
+  html <- helpDrugPageHTML("ketamine")
+  expect_match(html, "<h2>Pregnancy</h2>", fixed = TRUE)
+  expect_no_match(html, "What the model applies:", fixed = TRUE)
+  expect_match(helpDrugPageHTML("sevoflurane"), "<h2>Pregnancy</h2>", fixed = TRUE)
+  expect_equal(helpDrugPregnancyHTML("no such drug"), "")
+  expect_equal(helpPregnancySourceShort("Karanam A, Pennell PB. Pharmacotherapy 2025;45:1. PMID 1"),
+               "Karanam 2025")
+})
+
+test_that("the slide workbook's covariates say whether the patient was pregnant", {
+  # generateEmail() builds the sheet inline; the row it writes is pinned
+  # here by name so a reordering of the sheet is caught.
+  src <- paste(deparse(generateEmail), collapse = "\n")
+  expect_match(src, "\"Pregnant\"", fixed = TRUE)
+  expect_match(src, "isTRUE(values$pregnant)", fixed = TRUE)
+})

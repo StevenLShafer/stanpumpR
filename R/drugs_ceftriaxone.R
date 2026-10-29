@@ -61,6 +61,8 @@
 #   https://doi.org/10.1093/jac/dkac400
 # Stoeckel K et al., Clin Pharmacol Ther 1981;29:650-657 (free fraction 0.04
 #   to 0.17, rising with concentration).  https://doi.org/10.1038/clpt.1981.90
+# Heffernan AJ et al., Antimicrob Agents Chemother 2022;66(6):e02189-21
+#   (critically ill; not used).  https://doi.org/10.1128/aac.02189-21
 # CLSI M100, 36th ed., 2026; EUCAST Clinical Breakpoint Tables v16.1, 2026:
 #   ceftriaxone, Enterobacterales, S <= 1 mg/L.
 # -----------------------------------------------------------------------------
@@ -102,11 +104,12 @@ ceftriaxone <- function(weight, height, age, sex, adjustToFFM = TRUE)
   tPeak <- 0     # no effect site: exposure against the MIC is the effect
   MEAC  <- 0
 
-  # Band, TOTAL mg/L.  With 85-95% binding, a free concentration above a
-  # 1-2 mg/L MIC needs a total of roughly 10-40 mg/L.  Orientation only.
-  typical      <- 20
-  upperTypical <- 50
-  lowerTypical <- 10
+  # Band: free drug at the expected MBC of the common pathogens, placed on
+  # the plotted curve (R/antibioticMbc.R).
+  band         <- antibioticMbcBand("ceftriaxone")$plotted
+  typical      <- band[["typical"]]
+  upperTypical <- band[["upper"]]
+  lowerTypical <- band[["lower"]]
 
   reference <- paste0(
     "Sanz-Codina M et al., J Antimicrob Chemother 2023;78:380-388. ",

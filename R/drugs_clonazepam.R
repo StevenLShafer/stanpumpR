@@ -90,8 +90,10 @@
 #
 # BAND
 # ====
-# 20-70 ng/mL, the reference range for epilepsy (ILAE, Patsalos 2008, as
-# quoted by Kacirova 2016); typical 40, its midpoint, not a target.  For
+# 15-80 ng/mL, the reference range for epilepsy of the AGNP update 2026
+# (Hart et al., Pharmacopsychiatry 2026;59:166-295, Table 5; 10 h after a
+# dose), revised from ILAE's 20-70 (Patsalos 2008, as quoted by Kacirova
+# 2016); typical 40, not a target.  For
 # panic disorder and anxiety lower concentrations suffice: the AGNP
 # reference range for anxiolytic use is 4-80 ng/mL (quoted by Kacirova 2016),
 # and dos Santos's EC50 for psychomotor impairment in healthy men, before
@@ -183,8 +185,8 @@ clonazepam <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   # Band, ng/mL plasma: the epilepsy reference range, typical its midpoint.
   typical      <- 40
-  upperTypical <- 70
-  lowerTypical <- 20
+  upperTypical <- 80
+  lowerTypical <- 15
 
   reference <- paste0(
     "dos Santos FM et al., Ther Drug Monit 2009;31:566-574. ",

@@ -71,7 +71,7 @@
 # parameters are reproducible from the table, the figure and the script, and
 # the test file checks that they are the fit's least-squares minimum.  Kept
 # as is by decision of Steven L. Shafer, 2026-10-09.  The
-# research formulations (polyethylene glycol, salicylate) are not products,
+# research formulations (propylene glycol, salicylate) are not products,
 # and both of Halliday's caused "an unacceptably high incidence of venous
 # thrombosis", so the route offered is oral; the intravenous data set the
 # systemic disposition under it.
@@ -115,10 +115,14 @@
 #
 # BAND AND THRESHOLD
 # ==================
-# Band 250-600 ng/mL.  Psychometric performance deteriorated above about 250
-# ng/mL (Saletu 1986, 10-40 mg); 597 +/- 123 ng/mL was the target van
+# Band 200-750 ng/mL, the therapeutic reference range for sleep disorders of
+# Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861), 1-2 h after a
+# dose, alert level 1500 ng/mL; typical 475, its midpoint.  It replaced
+# 250-600 ng/mL: psychometric performance deteriorated above about 250 ng/mL
+# (Saletu 1986, 10-40 mg), and 597 +/- 123 ng/mL was the target van
 # Steveninck chose for clear sedation short of sleep in awake volunteers (60%
-# of the maximal fall in saccadic velocity).  Typical 400, between the two.
+# of the maximal fall in saccadic velocity).
 # The time-until-threshold level (endCe in the CSV, read against plasma since
 # there is no effect site) is 250 ng/mL, the level above which psychometric
 # performance deteriorated: after 20 mg the reference man falls below it 3.4
@@ -199,11 +203,10 @@ temazepam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL plasma: from the psychometric threshold (Saletu 1986) to the
-  # sedation target of van Steveninck 1994.
-  typical      <- 400
-  upperTypical <- 600
-  lowerTypical <- 250
+  # Band, ng/mL: the therapeutic reference range of Hart 2026, Table 5.
+  typical      <- 475
+  upperTypical <- 750
+  lowerTypical <- 200
 
   reference <- paste0(
     "van Steveninck AL et al., Clin Pharmacol Ther 1994;55:546-555, and ",

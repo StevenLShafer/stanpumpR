@@ -2,7 +2,9 @@
 
 Oxycodone 10 mg by mouth at time zero and again at six hours. The plasma line (dashed) rises to a peak at about 35 minutes rather than peaking at once: the rise is set by absorption from the gut, not by distribution. The effect site (solid) peaks later, at about an hour. Oxycodone's own effect site equilibrates quickly (half-time 11 minutes), so much of that delay is absorption still going on.
 
-Two thirds of the dose reaches the circulation (bioavailability 0.67). Compare the plasma peak with what 10 mg intravenously (`mg`) gives.
+An **oxymorphone** row appears although none was given: it is the oxymorphone formed from the oxycodone, which stays below 1 ng/mL, peaking a little under two hours after each dose; see [Active metabolites](help:models/metabolites).
+
+Most of the dose reaches the circulation (bioavailability 0.84). Compare the plasma peak with what 10 mg intravenously (`mg`) gives.
 
 The second dose at six hours arrives when the first has fallen to about half its peak, so the second peak is higher than the first. With regular dosing the troughs rise until input and elimination balance.
 
@@ -14,4 +16,4 @@ The second dose at six hours arrives when the first has fallen to about half its
 
 ## Background
 
-[Oral, intramuscular and intranasal doses](help:models/absorption) explains the first-order absorption model and flip-flop kinetics. [Oxycodone](help:drugs/oxycodone) records where the absorption rate, lag and bioavailability came from.
+[Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption) explains the first-order absorption model and flip-flop kinetics. [Oxycodone](help:drugs/oxycodone) records where the absorption rate, lag and bioavailability came from.

@@ -27,13 +27,16 @@ The sidebar groups inputs into a few categories — patient covariates, graph/di
 options, optional extra plot facets, and the email-slide form.
 
 The **dose table** is a `rhandsontable` editable table, with `Apply` / `Undo` / `Redo`
-controls, and above it a *Time units* selector (minutes, hours, days, weeks) and a display toggle
-for elapsed vs. clock time (clock for minutes and hours only). Its full edit → apply lifecycle
+controls, in a collapsible right-hand `bslib::sidebar` (open on a desktop) that holds nothing else.
+The left sidebar's *Time* panel (its header showing the current settings through `output$timeSummary`)
+holds a *Time units* selector (minutes, hours, days, weeks) and a display toggle for elapsed vs. clock
+time (clock for minutes and hours only); its *Dose table* panel holds the illicit-drug opt-in and
+*Suggest Dosing*. Its full edit → apply lifecycle
 is covered in [The dose table lifecycle](#the-dose-table-lifecycle), and the time units in
 [Time units](#time-units).
 
 **Events** are not a permanently visible table — they're edited by clicking on the Events plot
-(which only appears when "Events" is chosen in the "Additional Plots" section). Events are stored
+(which only appears when "Events" is chosen in the "Additional plots" choices under Graph Options). Events are stored
 in a single reactive called `eventTable()`. Unlike the dose table, there's no draft/undo/redo
 layer for events.
 
@@ -139,8 +142,16 @@ and display only (`R/utils-time.R`, the "Time units" block of `app_server()`).
   conversion observer does not run for restored inputs.
 - The grid is stamped with its format (`createHOT(..., timeFormat)`); an edit from a grid drawn
   before a switch is converted on arrival.
-- Max time choices are per unit (`MAX_TIMES` in `constants.R`); the plot is lengthened past the
-  last dose only up to the unit's longest choice. TCI rows and inhaled agents are simulated only
+- Max time and Min time are sliders whose values are minutes in every unit (`input$maximum`,
+  `input$minimum`); `app.js` shows them in the unit. Their range and step are per unit
+  (`timeSliderRange()`: 0 to the unit's longest `MAX_TIMES` length, in `TIME_SLIDER_STEPS`), and
+  `syncTimeSliders()` resets them on a change of unit, snapping the values (`snapMaximum()`,
+  `snapMinimum()`); `plotInfo()` waits (`sliderPending()`) until the browser reports the snapped
+  values. The plot is lengthened past the last dose only up to the end of the slider. The axis
+  runs from `plotMinimum()` to `plotMaximum()`, ticked by `axisTimeStep()` (a `MAX_TIMES` length
+  from 0 keeps its own ticks). Everything is simulated from 0; `processdoseTable(plotMinimum =)`
+  refines the time lines inside the window (`withGridWindow()`), and `simulationPlot(xMinimum =)`
+  draws each series from the window's start (`seriesFromMinimum()`) so the panels scale to it. TCI rows and inhaled agents are simulated only
   on plots of `ACUTE_MAX_PLOT_MINUTES` (a week) or less (`timeUnitViolation()`).
 
 ## The computational core
@@ -157,8 +168,8 @@ time point as a sum of exponentials.
    `tPeak`, `MEAC`.
 2. Volumes & clearances → micro rate constants `k10, k12, k13, k21, k31`.
 3. `cube()` solves the characteristic cubic → eigenvalues `lambda_1, lambda_2, lambda_3`.
-4. `tPeakError()` + `CE()` + `optimize()` back-solve the effect-site rate `ke0` from
-   time-to-peak-effect.
+4. `ke0FromTPeakBolus()` (or `ke0FromTPeak()` for an oral `tPeak`) back-solves the effect-site
+   rate `ke0` from time-to-peak-effect with `uniroot()`.
 5. Precompute per-route (bolus / infusion / PO / SL / IM / IN) exponential coefficients `p_coef_*`,
    `e_coef_*`.
 
@@ -177,7 +188,12 @@ time point as a sum of exponentials.
    across event boundaries.
 5. Interpolate to an even grid (`equiSpace`), normalize to peak Cp/Ce, and scale against MEAC.
 
-Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `equiSpace` and `max`.
+Output per drug: a tidy `Time · Plasma · Effect Site · Recovery` table plus `equiSpace` and `max`,
+and `compartments`: the concentrations in V2 and V3 and the amount still in the absorption depots,
+by time, for the compartments the drug has (`R/compartments.R`). Every engine returns them as
+columns `C2`, `C3` and `Depot`; the peripheral concentrations are read off the plasma states
+exactly (`k21 * sum(s / (k21 - mu))` over the modes), so they cost a few vector operations and
+are computed on every run. The plot draws them only under **Peripheral compartments**.
 
 **The time line.** The closed-form engines are exact at any time, so the points they are asked
 about decide only how the curve is drawn and what a run costs. `simulationTimeGrid()`
@@ -190,7 +206,9 @@ fill starts at `maximum / GRID_FINE_POINTS` after each knot and no step is longe
 `maximum / GRID_UNIFORM_POINTS`, so a washout on a 52-week plot is drawn as a curve, not a
 straight chord, and the cost is bounded by the number of doses rather than growing with the
 plot (`R/constants.R` records how the two counts were chosen). `doseLines()` lays the doses
-on the line. The line depends only on `maximum` in minutes. A drug timed on its plasma looks
+on the line. The line depends only on `maximum` in minutes, and on the start of the window drawn
+(Min time): inside `withGridWindow()` the window gets the fill a plot of its own length would,
+so a window from 15 to 16 weeks is drawn as finely as a one-week plot. A drug timed on its plasma looks
 for its threshold a week ahead, or as far as the plot runs if that is longer
 (`recoveryHorizonPlasma()`).
 
@@ -241,11 +259,19 @@ optional interaction facet (`modelInteraction.R`, `calculateCe.R`).
 **Covariate helpers.** `pkSizeFactors()` (`pkSizeFactors.R`) turns weight, height, age and sex
 into the fat-free-mass multipliers that most drug models apply to their volumes and clearances
 (`ffmAlSallami()` is the Al-Sallami 2015 fat-free mass; see `docs/weight-adjustment.md`);
-`lbmJames()` computes the older James lean body mass; `renalFunction.R` supplies
+it is also the lean-body-mass covariate of Aoyama's meloxicam model, in place of the James
+equation it was published with. `lbmJames()` computes the James lean body mass, a parabola in
+weight that falls past a BMI of 43 (men) or 36 (women), kept deliberately for the Schnider and
+Minto companions so that they fail at the extremes of weight as the pumps do (scenario
+`james-lean-body-mass`); `renalFunction.R` supplies
 Cockcroft-Gault creatinine clearance and de-indexed CKD-EPI eGFR for the renally cleared
 models (mannitol, the antibiotics, sugammadex, gabapentin, pregabalin), at the patient's serum creatinine or an
 assumed normal one for age and sex when none is entered, with a child's creatinine put on the
-adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `recoveryCalc()` computes
+adult scale for the equations fitted in adults (`adultEquivalentCreatinine()`); `pregnancy.R` holds the
+Patient Profile's Pregnant flag (`checkPregnant()`, `pregnancyPossible()`, `pregnancyGfrFactor()`, and the
+literature review's finding for every drug in `pregnancyFindings()`, read from `inst/extdata/pregnancyRegistry.csv`),
+which `getDrugPK()` passes only to the models that name `pregnant`, each applying the factor its header
+documents from its own source (`docs/pregnancy.md`); `recoveryCalc()` computes
 time-to-threshold; `setLinetypes()` maps normalization + user choices to plasma/effect-site
 linetypes.
 
@@ -303,7 +329,7 @@ All files are flat in `R/`.
   `antibioticThresholds.R`).
 - `calculateCe.R` — effect-site concentration approximated from a plasma curve; used only by
   the event-driven solver. The `ke0` fit itself
-  (`tPeakError()`, `CE()`) lives inside `getDrugPK.R`.
+  (`ke0FromTPeakBolus()`, `ke0FromTPeak()`) lives inside `getDrugPK.R`.
 - `modelInteraction.R`, `recoveryCalc.R`, `lbmJames.R` — interaction surface, recovery
   thresholds, body-size scaling.
 - `simulateDrugsWithCovariates.R` — exported multi-drug convenience API (no Shiny).
@@ -329,7 +355,7 @@ All files are flat in `R/`.
   `Suggests` dependency guarded by `requireNamespace()`, and the router shares nothing with
   `run_app()`. `inst/api/entrypoint.R` (for `rsconnect::deployAPI()`) and the hand-written
   `inst/api/openapi.json` go with it.
-- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` dose row into its
+- `scheduled.R` — scheduled doses: expands a `qd` / `bid` / `tid` / `qid` / `q4h` dose row into its
   repeats out to the end of the plot (`expandScheduledDoses()`, called first in `simCpCe()`), and
   `exportDoseTable()`, which merges the TCI rows and the repeats into the exported dose table.
 - `alternativeModels.R` — the Minto / Schnider switch: Schnider's propofol and Minto's
@@ -337,12 +363,16 @@ All files are flat in `R/`.
   calls, the companion's colour and name-to-parent mapping, and `alternativeModelProblems()`,
   which says when a model is not defined for the patient.
 - `suggest.R` — "Suggest Dosing", optimizes a regimen to hit a target effect-site concentration.
-- `sendSlide.R` — renders an `officer` PowerPoint slide from `Template.pptx` and emails it via
-  `emayili`.
+- `sendSlide.R` — renders an `officer` PowerPoint deck from `Template.pptx` (the whole plot on
+  the first slide, then one slide per panel from `panelPlots()`, which cuts every layer of the
+  ggplot down to one facet) and emails it via `emayili`.
 
 **Help — the Help tab**
 - `help-content.R` — page registry (`helpStaticPages()`), Markdown rendering via `shiny::markdown()`,
   `help:`/`scenario:` link rewriting, heading ids and table of contents, full-text search.
+- `help-investigators.R` — the investigators named in bold on `inst/help/investigators.md`: the registry,
+  the links to them in every page and citation (`helpLinkInvestigators()`), and the pop-up about each
+  (`helpInvestigatorModal()`, shown on `input$investigator_show`).
 - `help-drugs.R` — pages generated from the drug library: each drug model run at six reference
   patients, with its citation, units and thresholds; the drug index; the bibliography.
 - `help-scenarios.R` — the teaching-scenario registry (`helpScenarios()`), its validator, the
@@ -382,10 +412,10 @@ All files are flat in `R/`.
   is not a second opioid); the hover reports both models and a click goes to the parent. Minto's
   ke0 is the paper's function of age, so `getDrugPK()` accepts a model with `ke0` and no `tPeak`
   and solves the time to peak effect from it. A model whose covariate terms give a non-positive
-  volume or clearance for the patient (James lean body mass at extremes; a small child on
-  Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
+  volume or clearance for the patient (a James lean body mass far enough below zero to take
+  Minto's V1 negative, about -16 kg at age 40; a small child on Schnider) is not built, and the app says so (`alternativeModelProblems()`). Help:
   `inst/help/models/minto-schnider.md`, with a generated parameter table; scenarios
-  `eleveld-vs-minto-schnider` and `tci-eleveld-vs-minto-schnider`; tests `test-minto-schnider.R`.
+  `eleveld-vs-minto-schnider`, `tci-eleveld-vs-minto-schnider` and `james-lean-body-mass`; tests `test-minto-schnider.R`.
 - **The TCI API** (`tci-api.R`, `tci-api-server.R`, `inst/api/`) — a stateless HTTP API under
   `/tci/v1` that returns the next infusion rate for one TCI drug in one patient from the
   controller's record of what the pump has delivered (the STANPUMP principle: the model state is
@@ -397,8 +427,8 @@ All files are flat in `R/`.
   does not host Plumber): `run_tci_api()` or `rsconnect::deployAPI()` serve it. The normative
   reference is `docs/tci-api.md`.
 - **Scheduled doses** (`scheduled.R`) — a bolus, PO, SL, IM or IN unit with a frequency suffix
-  (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 h (qd / bid /
-  tid / qid) until the end of the X axis. A scheduled dose of 0 for the same route stops the
+  (`mg PO bid`) gives the dose at the entered time and then every 24 / 12 / 8 / 6 / 4 h (qd /
+  bid / tid / qid / q4h) until the end of the X axis. A scheduled dose of 0 for the same route stops the
   sequence; a later non-zero one replaces it. Like the TCI rows, the repeats never enter the dose
   table: `simCpCe()` returns them as `$scheduled` and `sendSlide()` merges them into the export.
   The frequencies are offered per drug in `drugDefaults_global.csv`.
@@ -416,11 +446,15 @@ All files are flat in `R/`.
   time. The dialog offers only `suggestDrugChoices()`: an effect site and IV bolus and infusion
   units.
 - **Email a slide** (`sendSlide.R`, `Template.pptx`) — builds a branded PPTX from the current
-  simulation and mails it: plot, dose table, and a URL that reconstructs the exact state.
+  simulation and mails it: the plot on the first slide and each panel on a slide of its own,
+  the dose table, and a URL that reconstructs the exact state.
 - **Editors & modals** (`app_server.R`) — in-app Drug Library and Drug Thresholds editors, plus
   click-to-add-dose / double-click-to-edit driven from plot coordinates.
 - **URL bookmarking** (`app_globals.R`) — `enableBookmarking = "url"` encodes inputs into a
   shareable link; `bookmarksToExclude` keeps transient UI state out.
+- **Deep links** (`deep-links.R`) — `?scenario=<id>` loads a teaching scenario and
+  `?help=<page-id>` opens the Help tab on a page, both read once at startup and both skipping
+  the startup drug menu; see `inst/help/sharing.md`.
 - **Debug & profiler** (`app_globals.R`, `app_server.R`) — `?debug=1` reveals a live log
   (`outputComments()`) and a per-reactive profiler (`profileCode()`).
 - **Front-end assets** (`inst/www/`) — `app.css`, `app.js`, `hot_funs.js` (Handsontable
@@ -432,4 +466,7 @@ All files are flat in `R/`.
 - **Reproducibility** (`renv.lock`, `DESCRIPTION`) — `renv.lock` pins exact package versions so
   production matches local; deps declared in `DESCRIPTION`.
 - **Tests / CI** (`tests/testthat/`, `.github/`) — one test file per drug and per R file;
-  R-CMD-check and shinyapps.io deploy run via GitHub Actions.
+  R-CMD-check and shinyapps.io deploy run via GitHub Actions. The production deploy starts
+  only when R-CMD-check has passed on the pushed commit and installs that commit by SHA;
+  the deploy writes that SHA into `config.yml` as `commit`, and the app reports the version and
+  commit (`stanpumpRBuild()`) in the debug log and the Source link's tooltip.

@@ -5,8 +5,10 @@
 # ----------
 # Drafted by Claude Code, 2026-10-09, at the request of Steven L. Shafer, from
 # the antipsychotic implementation brief.  Every Table 3 value used here was
-# checked against the full text of Sun 2021.  Not checked: whether age enters
-# Vc/F as a power, as written below; the equation images were not readable.
+# checked against the full text of Sun 2021, and so is the power form of the
+# age term on Vc/F: the Methods write every continuous covariate as
+# ln(TVP) = ln(theta) + theta_cov x ln(cov / reference), and the reference
+# subject is 36 years old (also the median age).
 #
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL.  The source reports L/h, 1/h and h.
@@ -45,7 +47,11 @@
 # No effect site.  The brief pairs this with Kapur 1998's plasma D2 occupancy
 # hyperbola (Emax 100%, EC50 10.3 ng/mL), but the Kapur abstract reports
 # occupancy by dose only, and the EC50 has NOT been checked against the full
-# text.  It is carried in antipsychoticProfiles() as unverified.
+# text.  It is carried in antipsychoticProfiles() as unverified.  The band is
+# the serum therapeutic reference range of the AGNP TDM task force's systematic
+# review, 20 to 40 ng/mL 12 h after a dose (Wesner et al., J Clin Psychiatry
+# 2023;84:22r14626; inst/extdata/therapeuticRanges.csv), which replaced AGNP
+# 2017's 20 to 80 ng/mL.
 # -----------------------------------------------------------------------------
 
 OLANZAPINE_CL     <- 15.5    # L/h, apparent, 70 kg nonsmoking man
@@ -104,9 +110,9 @@ olanzapine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     PK = PK,
     tPeak = 0,
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 30,        # Wesner 2023, ng/mL 12 h after a dose; mirrors the CSV
+    upperTypical = 40,
+    lowerTypical = 20,
     reference = reference
   )
 }

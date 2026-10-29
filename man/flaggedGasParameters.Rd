@@ -10,7 +10,7 @@ flaggedGasParameters()
 a data frame of the flagged gases and the reason
 }
 \description{
-Gas Man's values are used as they stand so that validation compares like with
+GasMan's values are used as they stand so that validation compares like with
 like, but the ones known to be wrong are flagged rather than silently
 corrected.  An empty result does not mean the table has been verified; it
 means nothing further has been checked yet.

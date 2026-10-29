@@ -2,7 +2,7 @@ remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Eleveld British Journal of Anaesthesia, 135 (1): 206e217 (2025)
   # Units **************
-  # Time: Hours
+  # Time: Minutes
   # Volume: Liters
 
   # Size scaling (see docs/weight-adjustment.md): the published parameters
@@ -21,7 +21,7 @@ remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # Ignored for now.  Kv3_Pugh is not a clearance term: in the published model
   # Pugh-Child > 8 increases V3 by exp(0.824) (and so Q3, through the V3
   # ratio ^ 0.75).  Normal hepatic function is assumed.
-  Kcl1_opiates <- 13.9
+  Kcl1_opiates <- -13.934   # $THETA "opiates~cl": opioids LOWER clearance
   Kv3_Pugh  <- 82.4
 
   Fv3_age <- exp(Kv3_age/1000 * (age-35))
@@ -43,7 +43,7 @@ remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   cl2 <- 1.45 * (v2 / 12.3) ** 0.75
   cl3 <- 0.298 * (v3 /18.6) ** 0.75
 
-# these are returned but not used except tPeak
+# these are returned but not used except ke0
 # those from the drugDefaults table are
 
   typical <- NA
@@ -52,7 +52,16 @@ remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC <- NA
   reference <- "Eleveld DJ et al., Br J Anaesth 2025;135(1):206-217. https://pubmed.ncbi.nlm.nih.gov/40312166/"
 
-  tPeak <- 2.5
+  # The effect site is the published MOAA/S equilibration (sedation), from the
+  # NONMEM code in the paper's supplement (mmc1): MKE0 = EXP(THETA(32)), with
+  # THETA(32) = -1.20976 ("keoref=0.2983"), per minute, and no covariate.  PK
+  # and PD come from the same fit, so the ke0 is carried as published, and
+  # getDrugPK() solves the time to peak effect from it for each patient
+  # (about 2.4 min for the reference adult).  It was a tPeak of 2.5 min,
+  # which gave ke0 0.274 /min, 8% below the published value.  The BIS
+  # effect site of the same model is slower, keoref 0.145 /min with an age
+  # term, and is not used.
+  ke0 <- exp(-1.20976)                                   # 0.2983 /min
 
   default <- list(
     v1 = v1,
@@ -69,7 +78,7 @@ remimazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   return(
     list(
       PK = PK,
-      tPeak = tPeak,
+      ke0 = ke0,
       MEAC = MEAC,
       typical = typical,
       upperTypical = upperTypical,

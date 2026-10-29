@@ -10,18 +10,26 @@
 #
 # DISPOSITION
 # ===========
-# Holford 2014, which fitted parent and metabolite jointly to intravenous
-# tramadol in 57 healthy and 56 postoperative adults.  Two compartments:
-# clearance 84.2 L/h, central volume 78.9 L, peripheral volume 131 L,
-# intercompartmental clearance 274 L/h at 70 kg.  Clearances scale as
-# (W/70)^0.75 and volumes as W/70, which is the source's own allometry.
+# Allegaert 2015 (Clin Pharmacokinet 54:167-178, Table 3), which fitted
+# parent and metabolite jointly to intravenous tramadol in 295 people from
+# 25 weeks postmenstrual age to 84.8 years.  Two compartments: clearance
+# 71.4 L/h, central volume 78.9 L (fixed from dogs), peripheral volume
+# 133 L, intercompartmental clearance 562 L/h at 70 kg.  Clearances scale as
+# (W/70)^0.75 and volumes as W/70, which is the source's own allometry.  The
+# clearance matures with postmenstrual age as glomerular filtration does
+# (TM50 47.7 weeks, Hill 3.4, fixed by the authors, who found M1's
+# elimination indistinguishable from it): 0.36 of the adult value at term,
+# 0.90 at one year (tramadolMaturation() in R/drugs_tramadol.R).  Until
+# 2026-10-27 this was Holford 2014's adult fit (84.2 L/h, 131 L, 274 L/h,
+# no maturation); see R/drugs_tramadol.R for why it changed.
 #
 # WHY THIS DRUG CANNOT BE GIVEN DIRECTLY HERE
 # ===========================================
 # Desmetramadol is a real drug and has been given to humans on its own
 # (Zebala 2019), but this parameter set cannot predict what happens when it
-# is.  Holford had no human intravenous metabolite data and fixed the human
-# M1 central volume using direct intravenous measurements in three dogs.
+# is.  Neither Allegaert nor Holford before it had human intravenous
+# metabolite data; both fixed the human M1 central volume using direct
+# intravenous measurements in dogs.
 #
 # The consequence is specific rather than general.  Multiplying the
 # metabolite's clearances, its volumes AND the formation clearance feeding it
@@ -43,6 +51,8 @@
 #
 # References
 # ----------
+# Allegaert K et al., Clin Pharmacokinet 2015;54:167-178.
+#   https://doi.org/10.1007/s40262-014-0191-9
 # Holford S et al., J Pharmacol Clin Toxicol 2014;2(1):1023.
 #   https://www.jscimedcentral.com/public/assets/articles/pharmacology-spidpharmacokinetics-1023.pdf
 # Zebala JA et al., J Pain 2019;20:1218-1235.
@@ -57,9 +67,9 @@
 # -----------------------------------------------------------------------------
 # TO BE SUPPLIED
 # -----------------------------------------------------------------------------
-# Until these are set, desmetramadol is plotted as plasma only and contributes
-# nothing to the opioid MEAC total, which means a tramadol dose currently
-# shows concentrations but no effect.
+# Provisional values are set below (DESMETRAMADOL_KE0, DESMETRAMADOL_MEAC),
+# so desmetramadol has an effect site and counts toward the opioid MEAC
+# total; both still need a primary source.
 #
 # There IS a published human analgesia model, and it still cannot be used
 # here unchanged.  Chun 2025 fitted chronic neuropathic pain against UNBOUND
@@ -96,9 +106,17 @@
 # metabolite's own PK is needed before the parent's coefficients exist.  So
 # the solve is done once, here, and the answer recorded.
 #
-#     ke0 = 0.0287536942 /min, an equilibration half-time of 24.1 min,
+#     ke0 = 0.0930286574 /min, an equilibration half-time of 7.5 min,
 #     giving an effect-site peak at 150.0 min after 100 mg oral tramadol
-#     in a normal metaboliser.
+#     in a normal metaboliser (70 kg, 171 cm, 50-year-old man).
+#
+# Re-solved 2026-10-27 when the disposition moved from Holford 2014 to
+# Allegaert 2015 and oral F from 0.70 to 0.75: the formed metabolite now
+# peaks at 138 min rather than 93 (Allegaert's M1 clearance is 71.4 against
+# Holford's 84.2 L/h, the re-fitted absorption is slower, and a larger F
+# gives the slower systemic formation more weight against the first pass),
+# so the same 150 min needs a faster equilibration than Holford's 24.1 min
+# half-time.
 #
 # What it depends on, and when it stops being right.  The driving curve is
 # the metabolite profile, so this number is only valid for tramadol's
@@ -110,36 +128,44 @@
 # reshape the metabolite curve.  The solve is at 70 kg, normal metaboliser.
 #
 # Note this was reachable only after first-pass formation was added to
-# tramadol.  With systemic formation alone the metabolite peaked at 4 h, and
+# tramadol.  With systemic formation alone the metabolite peaks at 4.6 h
+# (4 h on Holford's disposition), and
 # an effect site cannot peak before the curve driving it, so 2.5 h was not
 # merely unfitted but impossible.  See the first-pass note in
 # R/drugs_tramadol.R.
-DESMETRAMADOL_KE0 <- 0.0287536942  # 1/min; solved, see above
+DESMETRAMADOL_KE0 <- 0.0930286574  # 1/min; solved, see above
 
 # Recorded for documentation; the engine does not use it, because the solve
 # above is against a curve tPeak cannot name.
 DESMETRAMADOL_TPEAK_ORAL_PARENT <- 150  # minutes after an oral tramadol dose
 
-# MEAC: a cited value, but a SECONDARY citation needing primary verification
-# ---------------------------------------------------------------------------
+# MEAC: A MIXED-EXPOSURE OBSERVATION, NOT A MEASURED M1 MEAC
+# ----------------------------------------------------------
 # 84 ng/mL.  Lee 2019's introduction states that "the minimum effective
-# concentration of M1 is 84 ug/L", citing earlier work.  That is the right
-# quantity in the right units for this column: a minimum effective analgesic
-# concentration of total M1 in ng/mL, not an in-vitro affinity and not an
-# equianalgesic dose ratio, which is better than the basis for most of the
-# provisional potencies in this package.
+# concentration of M1 is 84 ug/L", citing earlier work.  The number matches
+# Grond 1999 (Br J Clin Pharmacol 48:254-257, PMID 10417506, abstract read
+# 2026-10-27): in postoperative patient-controlled analgesia with RACEMIC
+# tramadol, the mean serum concentration of total M1 sampled immediately
+# before each demand was 84 +/- 34 ng/mL, while tramadol itself was at
+# 590 +/- 410 ng/mL.  So it is a pre-demand (minimum effective concentration
+# type) mean taken during combined parent and metabolite exposure, of total
+# racemic M1.  It is NOT an isolated M1 minimum effective analgesic
+# concentration: some of the analgesia at that moment was the parent's, and
+# the mu activity is the (+) enantiomer's (Grond's group given (+)-tramadol,
+# the more potent enantiomer, demanded at a lower M1, 57 ng/mL).  Until
+# 2026-10-27 this note
+# and the help called it the right quantity for the column; the opioid
+# potency audit of that date (docs/opioid-review-2026-10-27.md) corrected
+# that.  The full text of Grond 1999 was not reached.
 #
-# What still needs doing:
-#   - Read the primary source.  This value is taken from another paper's
-#     introduction and the original was not retrieved.
-#   - Check the analyte.  M1 is formed and eliminated stereoselectively and
-#     the (+) enantiomer carries the mu activity, so a figure for total
-#     racemic M1 and one for the active enantiomer differ by a factor that
-#     is not two.
-#   - Sanity check the scale.  At this value a 100 mg oral dose in a normal
-#     metaboliser reaches roughly a quarter of the MEAC, which is consistent
-#     with tramadol being a weak opioid but is worth confirming against
-#     clinical experience.
+# It stays as the divisor, as a working value, because nothing better
+# exists: no study has measured analgesia against M1 alone.  At this value a
+# 100 mg oral dose of the hydrochloride in a normal metaboliser peaks at
+# 46% of it in the effect site (39 ng/mL; computed 2026-10-27 on Allegaert's
+# disposition with F 0.75), which is consistent with tramadol being a weak
+# opioid.  The plasma M1 behind it is about 30% below the ULTRAM label's
+# (R/drugs_tramadol.R), so the percentage is, if anything, low.  The band (20 to 80 ng/mL) is a display range of formed M1, not an
+# analgesic range.
 DESMETRAMADOL_MEAC  <- 84  # ng/mL; provisional, see above
 # -----------------------------------------------------------------------------
 
@@ -151,9 +177,13 @@ DESMETRAMADOL_MEAC  <- 84  # ng/mL; provisional, see above
 #' directly administered dose is not identified by this parameter set.
 #'
 #' @param weight weight in kg
-#' @param height height in cm (not used)
-#' @param age age in years (not used)
-#' @param sex sex as a string (not used)
+#' @param height height in cm (fat-free mass only)
+#' @param age age in years: the maturation of the clearance, and fat-free
+#'   mass
+#' @param sex sex as a string (fat-free mass only)
+#' @param adjustToFFM scale volumes to the patient's fat-free mass and
+#'   clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
+#'   published fixed parameters unscaled.
 #'
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
@@ -169,16 +199,19 @@ desmetramadol <- function(weight, height, age, sex, adjustToFFM = TRUE)
   perKg   <- size$volume
   perKg75 <- size$clearance
 
+  # Allegaert 2015 Table 3; clearance matures as glomerular filtration does.
   v1  <- 78.9 * perKg
-  v2  <- 131  * perKg
+  v2  <- 133  * perKg
   v3  <- 1                       # unused third compartment
-  cl1 <- 84.2 * perKg75 / 60     # L/min
-  cl2 <- 274  * perKg75 / 60     # L/min
+  cl1 <- 71.4 * perKg75 * tramadolMaturation(age)[["m1"]] / 60   # L/min
+  cl2 <- 562  * perKg75 / 60     # L/min
   cl3 <- 0
 
   reference <- paste0(
-    "Holford S et al., J Pharmacol Clin Toxicol 2014;2(1):1023. ",
-    "Joint intravenous tramadol and O-desmethyltramadol model; the ",
+    "Allegaert K et al., Clin Pharmacokinet 2015;54:167-178. ",
+    "https://pubmed.ncbi.nlm.nih.gov/25258277/ ",
+    "Joint intravenous tramadol and O-desmethyltramadol model with ",
+    "maturation of each clearance; the ",
     "metabolite central volume was fixed using dog data, so formed ",
     "concentrations are identified but the absolute scale is not."
   )

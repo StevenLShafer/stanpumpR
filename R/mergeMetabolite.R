@@ -244,6 +244,13 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
     }
 
     drugs[[target]]$wide <- merged
+    # The peripheral concentrations superpose as the plasma does; the depot
+    # stays the drug's own (R/compartments.R).
+    drugs[[target]]$compartments <- mergeCompartmentSeries(
+      drugs[[target]]$compartmentsOwn,
+      lapply(parents, function(p) drugs[[p]]$metaboliteCompartments),
+      merged$Time
+    )
 
     X <- finishDrugSeries(merged, drugs[[target]], maximum, plotRecovery)
     drugs[[target]]$results   <- X$results
@@ -300,4 +307,25 @@ foldedRecovery <- function(times, drugs, target, parents)
   if (length(sets) == 0) return(NULL)
 
   combinedRecovery(times, sets, drugs[[target]]$endCe)
+}
+
+#' The dosed drug that forms a metabolite, for a click on the metabolite
+#'
+#' A metabolite that is only ever formed (no dose units: enalaprilat,
+#' salicylate, ...) cannot take a dose, so a click on its panel opens the dose
+#' dialogs on the drug that forms it.  Any other drug is returned unchanged.
+#'
+#' @param drug the drug clicked
+#' @param drugs the drug list (each parent names its metabolite in
+#'   \code{$metaboliteName})
+#' @param drugDefaults the drug library
+#' @returns the first drug in \code{drugs} that forms \code{drug}, or
+#'   \code{drug} itself when it can be dosed or nothing in the list forms it
+#' @noRd
+formedMetaboliteParent <- function(drug, drugs, drugDefaults = getDrugDefaultsGlobal())
+{
+  if (isDosableDrug(drug, drugDefaults)) return(drug)
+  for (parent in names(drugs))
+    if (identical(drugs[[parent]]$metaboliteName, drug)) return(parent)
+  drug
 }

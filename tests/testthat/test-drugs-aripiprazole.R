@@ -14,7 +14,7 @@ test_that("a normal metaboliser receives the published values", {
         ka_PO = 1.06 / 60, bioavailability_PO = 1, tlag_PO = 0
       )),
       tPeak = 0, ke0 = 0.725 / 60, MEAC = 0,
-      typical = 0, upperTypical = 0, lowerTypical = 0,
+      typical = 195, upperTypical = 270, lowerTypical = 120,
       reference = actual$reference,
       metabolite = list(
         name = "dehydroaripiprazole", kFormation = 3.15 / 60 / 192,
@@ -67,4 +67,45 @@ test_that("the metabolite ratio is CL/F over CLm/fm, near the 0.20-0.34 observed
     # Metabolite exposure per dose does not depend on genotype (Kim's abstract)
     expect_equal(trapz(m$Time, m$Plasma) / 60, 10000 / 8.02, tolerance = 0.01)
   }
+})
+
+test_that("pregnancy: parent clearance x 2.1, the metabolite's own clearance unchanged (Westin 2017)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  The whole
+  # parent clearance forms the metabolite, so kFormation = cl1 / v1 rises with
+  # it; dehydroaripiprazole's CLm/fm and Vm/fm do not move.
+  on  <- getDrugPK("aripiprazole", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("aripiprazole", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_equal(off, getDrugPK("aripiprazole", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default
+  b <- off$PK$default
+  expect_equal(ARIPIPRAZOLE_PREGNANCY_CL_FACTOR, 2.1)
+  expect_equal(a$cl1 / b$cl1, ARIPIPRAZOLE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3", "ka_PO", "bioavailability_PO", "tlag_PO", "ke0")) {
+    expect_identical(a[[p]], b[[p]], info = p)
+  }
+  expect_equal_rounded(0.09379253848, a$cl1)
+  expect_equal_rounded(154.7702502, a$v1)
+  # the formation rate constant follows the parent clearance
+  xOn  <- aripiprazole(70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  xOff <- aripiprazole(70, 165, 30, SEX_FEMALE)
+  expect_equal(xOn$metabolite$kFormation / xOff$metabolite$kFormation,
+               ARIPIPRAZOLE_PREGNANCY_CL_FACTOR, tolerance = 1e-12)
+  # the metabolite's own disposition is untouched: its eigenvalue is the same,
+  # and it does not read the flag
+  expect_false("pregnant" %in% names(formals(dehydroaripiprazole)))
+  expect_identical(a$metabolite$coefs$lambda[2], b$metabolite$coefs$lambda[2])
+  expect_equal(a$metabolite$coefs$lambda[2],
+               dehydroaripiprazole(70, 165, 30, SEX_FEMALE)$PK$default$cl1 /
+                 dehydroaripiprazole(70, 165, 30, SEX_FEMALE)$PK$default$v1,
+               tolerance = 1e-6)
+  # so at steady state the parent falls by 1 - 1/2.1 = 52% and the metabolite,
+  # dose rate / (CLm/fm), does not move (infusion steady state = sum of the
+  # infusion coefficients)
+  expect_equal(sum(a$p_coef_infusion_l1) / sum(b$p_coef_infusion_l1),
+               1 / ARIPIPRAZOLE_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  expect_equal(sum(a$metabolite$coefs$infusion), sum(b$metabolite$coefs$infusion),
+               tolerance = 1e-6)
+  expect_match(on$reference, "Westin", fixed = TRUE)
+  expect_match(on$reference, "pregnancy:", fixed = TRUE)
+  expect_no_match(off$reference, "Westin")
 })

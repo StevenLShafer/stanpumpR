@@ -48,21 +48,21 @@ test_that("it returns the same value", {
         lambda_1 = 0.6280493,
         lambda_2 = 0.04305881,
         lambda_3 = 0.003349251,
-        ke0 = 0.6871175,
+        ke0 = 0.6870963,
         p_coef_bolus_l1 = 0.1500541,
         p_coef_bolus_l2 = 0.008398034,
         p_coef_bolus_l3 = 0.0007054883,
-        e_coef_bolus_l1 = 1.745523,
-        e_coef_bolus_l2 = 0.008959488,
-        e_coef_bolus_l3 = 0.0007089439,
-        e_coef_bolus_ke0 = -1.755191,
+        e_coef_bolus_l1 = 1.746095,
+        e_coef_bolus_l2 = 0.008959506,
+        e_coef_bolus_l3 = 0.000708944,
+        e_coef_bolus_ke0 = -1.755763,
         p_coef_infusion_l1 = 0.2389209,
         p_coef_infusion_l2 = 0.1950364,
         p_coef_infusion_l3 = 0.2106406,
-        e_coef_infusion_l1 = 2.779276,
-        e_coef_infusion_l2 = 0.2080756,
+        e_coef_infusion_l1 = 2.780187,
+        e_coef_infusion_l2 = 0.208076,
         e_coef_infusion_l3 = 0.2116724,
-        e_coef_infusion_ke0 = -2.554426,
+        e_coef_infusion_ke0 = -2.555338,
         p_coef_PO_l1 = 0,
         p_coef_PO_l2 = 0,
         p_coef_PO_l3 = 0,
@@ -147,7 +147,10 @@ test_that("it returns the same value", {
     Infusion.Units      = drugDefaults$Infusion.Units,
     Units               = drugDefaults$Units,
     Default.Units       = drugDefaults$Default.Units,
-    endCe               = drugDefaults$endCe
+    endCe               = drugDefaults$endCe,
+    # The tissue depot's route (R/subcutaneous.R): regional anesthesia for
+    # every drug that is not subcutaneous
+    tissueRoute         = ROUTE_RA
   )
 
   expect_equal_rounded(actual, expected)
@@ -186,6 +189,21 @@ test_that("every drug in the library supplies a reference", {
   missing <- names(references)[!nzchar(references) | references == "Not Available"]
 
   expect_equal(missing, character(0))
+})
+
+test_that("no drug function returns its typical band upside down", {
+  # getDrugPK() overwrites the band from drugDefaults_global.csv, so a model's
+  # own lowerTypical / upperTypical are read only by a direct call; 14 of them
+  # once had the two swapped (issue #312).
+  ivDrugs <- getDrugDefaultsGlobal()$Drug
+  ivDrugs <- ivDrugs[!isGasDrug(ivDrugs)]
+  swapped <- Filter(function(drug) {
+    X <- get(drug, envir = asNamespace("stanpumpR"))(70, 170, 50, "male")
+    lower <- suppressWarnings(as.numeric(X$lowerTypical))
+    upper <- suppressWarnings(as.numeric(X$upperTypical))
+    length(lower) == 1 && length(upper) == 1 && isTRUE(lower > upper)
+  }, ivDrugs)
+  expect_equal(swapped, character(0))
 })
 
 test_that("getDrugPK accepts both documented sex values", {
@@ -290,6 +308,15 @@ test_that("getDrugPK() carries the library's endCe, so direct recovery works", {
 })
 
 test_that("the CYP2C19 phenotype is validated and reaches only the models that name it", {
+  expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = "fast"),
+               "Invalid cyp2b6")
+  expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = CYP2B6_VALUES),
+               "Invalid cyp2b6")
+  # A drug that does not name it is unaffected; methadone, which does, is not
+  expect_equal(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2b6 = "poor")$PK,
+               getDrugPK("remifentanil", 70, 170, 50, "male")$PK)
+  expect_lt(getDrugPK("methadone", 70, 170, 50, "male", cyp2b6 = "poor")$PK$default$cl1,
+            getDrugPK("methadone", 70, 170, 50, "male")$PK$default$cl1)
   expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = "extensive"),
                "Invalid cyp2c19")
   expect_error(getDrugPK("remifentanil", 70, 170, 50, "male", cyp2c19 = CYP2C19_VALUES),
@@ -307,4 +334,38 @@ test_that("parallel-system routes must be dose routes", {
   expect_equal(parallelRoutes(c("PO", "PO"), "x"), "PO")
   expect_error(parallelRoutes("oral", "x"), "Invalid routes for x")
   expect_error(parallelRoutes(character(0), "x"), "Invalid routes for x")
+})
+
+test_that("an intravenous tPeak is solved exactly, including past 100 minutes", {
+  # ke0FromTPeakBolus() replaced a nested optimize() whose inner peak search
+  # stopped at 100 min, so a later tPeak returned a wrong ke0 without an
+  # error, and whose squared error left morphine's 93.8 min at 93.83.
+  pk <- getDrugPK("fentanyl", 70, 170, 40, "male")$PK$default
+  coef <- c(pk$p_coef_bolus_l1, pk$p_coef_bolus_l2, pk$p_coef_bolus_l3)
+  lambda <- c(pk$lambda_1, pk$lambda_2, pk$lambda_3)
+  for (tPeak in c(1, 3.694, 93.8, 150)) {
+    ke0 <- ke0FromTPeakBolus(tPeak, coef, lambda)
+    expect_equal(effectSitePeakTime(coef, lambda, ke0), tPeak, tolerance = 1e-5,
+                 info = paste("tPeak", tPeak))
+  }
+  m <- getDrugPK("morphine", 70, 170, 40, "male")$PK$default
+  expect_equal(effectSitePeakTime(c(m$p_coef_bolus_l1, m$p_coef_bolus_l2, m$p_coef_bolus_l3),
+                                  c(m$lambda_1, m$lambda_2, m$lambda_3), m$ke0),
+               93.8, tolerance = 1e-5)
+})
+
+test_that("a fast one-compartment curve's effect site peak is found, not its flat tail", {
+  # With no slow phase the curve is exactly zero long before 4000 min; the
+  # search used to wander into that tail (epinephrine in a 7 kg infant).
+  k <- 0.667
+  for (ke0 in c(0.1, 0.5, 1, 1.2, 5, 50)) {
+    exact <- log(ke0 / k) / (ke0 - k)
+    expect_lt(abs(effectSitePeakTime(1, k, ke0) - exact), 1e-3,
+              label = paste("ke0", ke0))
+  }
+  pk <- getDrugPK("epinephrine", 7, 65, 0.5, "male")
+  expect_equal(pk$tPeak, 1)
+  set <- pk$PK$default
+  expect_equal(effectSitePeakTime(set$p_coef_bolus_l1, set$lambda_1, set$ke0), 1,
+               tolerance = 1e-4)
 })

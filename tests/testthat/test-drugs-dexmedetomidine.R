@@ -84,8 +84,8 @@ test_that("returns the published parameters with total-body-weight scaling for a
     tPeak = 2,
     MEAC = 0,
     typical = 0.6,
-    upperTypical = 0.4,
-    lowerTypical = 0.8,
+    upperTypical = 0.8,
+    lowerTypical = 0.4,
     reference = "Zuppa AF et al., Br J Anaesth 2019;123(6):839-852. https://pubmed.ncbi.nlm.nih.gov/31623840/"
   )
 
@@ -114,8 +114,8 @@ test_that("returns the published parameters with total-body-weight scaling for a
     tPeak = 10,
     MEAC = 0,
     typical = 0.6,
-    upperTypical = 0.4,
-    lowerTypical = 0.8,
+    upperTypical = 0.8,
+    lowerTypical = 0.4,
     reference = "Dyck JB et al., Anesthesiology 1993;78(5):821-828. https://pubmed.ncbi.nlm.nih.gov/8098191/"
   )
 
@@ -150,4 +150,41 @@ test_that("the infant (Zuppa) model scales to fat-free mass across its bypass ev
   # the placeholders for the missing third compartment are untouched
   expect_equal(actual$PK$CPBStart$v3, 1)
   expect_equal(actual$PK$CPBStart$cl3, 0)
+})
+
+test_that("a newborn entered as age 0 keeps a clearance after bypass", {
+  # Zuppa's clearance after bypass matures with postnatal age in days,
+  # PNA / (1.77 + PNA), which is zero at birth; postnatal age is floored at
+  # one day so that it is not (issue #310).
+  newborn <- dexmedetomidine(3.5, 50, 0, "male")
+  oneDay  <- dexmedetomidine(3.5, 50, 1 / 365, "male")
+  expect_gt(newborn$PK$CPBEnd$cl1, 0)
+  expect_equal(newborn$PK$CPBEnd$cl1, oneDay$PK$CPBEnd$cl1)
+  expect_equal(newborn$PK$CPBEnd$cl1 / newborn$PK$default$cl1,
+               0.623 * (1 / 2.77) / 1.240, tolerance = 1e-8)
+  # and the drug is simulated through getDrugPK() at age 0
+  pk <- getDrugPK("dexmedetomidine", 3.5, 50, 0, "male")$PK$CPBEnd
+  expect_gt(pk$k10, 0)
+  expect_true(all(is.finite(c(pk$lambda_1, pk$lambda_2, pk$lambda_3))))
+})
+
+# The boundary between Zuppa's infant model (age <= 1) and the Dyck adult
+# model (age > 1) is a step, and a large one: the help page says so, with the
+# numbers pinned here.  This test documents the step so that a change to
+# either side is deliberate (an audit of 2026-10-12 asked for it); the model
+# choice itself is Steven L. Shafer's decision of 2026-10-09.
+test_that("the step at one year is the one the help page describes", {
+  infant <- dexmedetomidine(9, 75, 1,     "male")
+  child  <- dexmedetomidine(9, 75, 1.001, "male")
+  expect_equal_rounded(infant$PK$default$v1, 17.55146)
+  expect_equal_rounded(child$PK$default$v1,  1.071357)
+  # "about 16 times higher" immediately after a bolus, with fat-free-mass scaling
+  expect_equal(infant$PK$default$v1 / child$PK$default$v1, 16.38, tolerance = 0.01)
+
+  infantLegacy <- dexmedetomidine(9, 75, 1,     "male", adjustToFFM = FALSE)
+  childLegacy  <- dexmedetomidine(9, 75, 1.001, "male", adjustToFFM = FALSE)
+  expect_equal_rounded(infantLegacy$PK$default$v1, 16.97143)
+  expect_equal_rounded(childLegacy$PK$default$v1,  8.0574)
+  # "about twice as high" with the published scaling
+  expect_equal(infantLegacy$PK$default$v1 / childLegacy$PK$default$v1, 2.11, tolerance = 0.01)
 })

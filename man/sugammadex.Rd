@@ -4,7 +4,15 @@
 \alias{sugammadex}
 \title{Sugammadex pharmacokinetics (total)}
 \usage{
-sugammadex(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
+sugammadex(
+  weight,
+  height,
+  age,
+  sex,
+  adjustToFFM = TRUE,
+  creatinine = NULL,
+  pregnant = FALSE
+)
 }
 \arguments{
 \item{weight}{weight in kg}
@@ -24,6 +32,11 @@ it also sets the weight the creatinine-clearance estimate uses.}
 
 \item{creatinine}{the patient's serum creatinine in mg/dL, or NULL for the
 assumed normal value for the patient's age and sex (R/renalFunction.R)}
+
+\item{pregnant}{is the patient pregnant?  \code{TRUE}, with the serum
+creatinine blank, multiplies the creatinine clearance the clearance term
+reads by 1.5, the rise in filtration of pregnancy (see the file's
+header); the peripheral-volume term keeps the unadjusted value.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

@@ -7,7 +7,7 @@
 # reference below is deliberately written from the equations in the header
 # comment rather than by reusing any engine code.
 #
-# These tests establish internal correctness only.  Fidelity to Gas Man 4.2 is a
+# These tests establish internal correctness only.  Fidelity to GasMan 4.2 is a
 # separate question and needs the exported fixture grid.
 
 test_that("expmPade reproduces analytic matrix exponentials", {
@@ -244,7 +244,7 @@ test_that("MAC sums the potent agents and adjusts for age", {
   alv <- sim$results[sim$results$Drug == "sevoflurane" & sim$results$Site == "Alveolar", "Y"]
   mac <- sim$results[sim$results$Drug == "MAC", "Y"]
 
-  # MAC is Minimum ALVEOLAR Concentration, and Gas Man's own CSV writes
+  # MAC is Minimum ALVEOLAR Concentration, and GasMan's own CSV writes
   # GetALV / m_fMAC, so it comes from the alveolar series, not the brain.
   MACsevo <- macForAge(props$MAC40[props$gas == "sevoflurane"], 40)
   expect_equal(mac, alv / MACsevo, tolerance = 1e-9)
@@ -288,8 +288,8 @@ test_that("settings persist until changed and take effect at the change point", 
 })
 
 
-test_that("the uptake coupling is on by default, as in Gas Man", {
-  # Gas Man's m_bUptEnb defaults true, so the concentration and second gas
+test_that("the uptake coupling is on by default, as in GasMan", {
+  # GasMan's m_bUptEnb defaults true, so the concentration and second gas
   # effect are present unless deliberately switched off.  This test previously
   # asserted the opposite -- that asking for the effect was an error -- which
   # was correct while it was unimplemented and is now wrong.
@@ -307,7 +307,7 @@ test_that("the uptake coupling is on by default, as in Gas Man", {
 })
 
 
-test_that("cardiac output defaults to Gas Man's 5 L/min, scaled allometrically, and changes uptake when overridden", {
+test_that("cardiac output defaults to GasMan's 5 L/min, scaled allometrically, and changes uptake when overridden", {
   # gasman.ini [Defaults] CO=5 at 70 kg; GasDoc.cpp scales by (weight/70)^0.75.
   expect_equal(getGasBody(70)$Q_cardiac, 5, tolerance = 1e-12)
   expect_equal(getGasBody(140)$Q_cardiac, 5 * 2^0.75, tolerance = 1e-12)
@@ -328,13 +328,13 @@ test_that("cardiac output defaults to Gas Man's 5 L/min, scaled allometrically, 
                           high$results$Site == "Alveolar", "Y"]
 
   # Higher cardiac output removes more agent from the alveolus, so the
-  # alveolar tension rises more slowly -- the classic Gas Man demonstration.
+  # alveolar tension rises more slowly -- the classic GasMan demonstration.
   expect_lt(aHigh[length(aHigh)], aLow[length(aLow)])
 })
 
 
-test_that("agent parameters are Gas Man's own, not literature substitutes", {
-  # Read from gasman.ini in the Gas Man source (GPL-3.0,
+test_that("agent parameters are GasMan's own, not literature substitutes", {
+  # Read from gasman.ini in the GasMan source (GPL-3.0,
   # github.com/rasman/gasmanonline).  Pinned because several differ from the
   # conventional published values this file previously carried.
   p <- getGasProperties()
@@ -399,25 +399,25 @@ test_that("desflurane simulates and washes in fastest of the volatiles", {
 })
 
 
-test_that("Gas Man's numbers are used as they stand, with bad provenance flagged", {
-  # Policy: use Gas Man's values so validation compares like with like, but flag
+test_that("GasMan's numbers are used as they stand, with bad provenance flagged", {
+  # Policy: use GasMan's values so validation compares like with like, but flag
   # the ones known to be wrong rather than silently correcting them.
   props <- getGasProperties()
 
-  # Nitrogen's MAC is recorded as Gas Man states it...
+  # Nitrogen's MAC is recorded as GasMan states it...
   expect_equal(props$MAC40[props$gas == "nitrogen"], 200)
 
   # ...and flagged, because Eger put the MAC of nitrogen at 110 ATMOSPHERES,
-  # i.e. 11000% of one atmosphere.  Gas Man's 200 is low by about 55-fold.
+  # i.e. 11000% of one atmosphere.  GasMan's 200 is low by about 55-fold.
   flagged <- flaggedGasParameters()
   expect_true("nitrogen" %in% flagged$gas)
   expect_match(flagged$flagNote[flagged$gas == "nitrogen"], "110 atm")
 
   # The arithmetic that makes it matter: room air is 0.79 atm nitrogen, so at
-  # Eger's value it contributes a negligible fraction of a MAC, whereas at Gas
-  # Man's it would contribute a large one.
+  # Eger's value it contributes a negligible fraction of a MAC, whereas at
+  # GasMan's it would contribute a large one.
   expect_lt(0.79 / 110, 0.01)     # Eger: about 0.007 MAC
-  expect_gt(0.79 / 2, 0.3)        # Gas Man: about 0.4 MAC
+  expect_gt(0.79 / 2, 0.3)        # GasMan: about 0.4 MAC
 
   # Which is why nitrogen stays out of the summed MAC while that figure stands
   expect_false("nitrogen" %in% potentAgents())
@@ -443,7 +443,7 @@ test_that("oxygen never goes negative, even with no ventilation", {
   expect_gt(min(sim$results$Y[sim$results$Drug == "oxygen"]), 10)
 })
 
-test_that("default ventilation is a minute ventilation whose alveolar part is Gas Man's 4 L/min", {
+test_that("default ventilation is a minute ventilation whose alveolar part is GasMan's 4 L/min", {
   # gasman.ini [Defaults] VA=4; GasDoc.cpp: m_fVA = m_fDfltVA * (weight/70)^0.75.
   # That is ALVEOLAR ventilation.  The dose table takes MINUTE ventilation, with
   # a dead space of 30%, so the default is 4 / 0.7.
@@ -452,7 +452,7 @@ test_that("default ventilation is a minute ventilation whose alveolar part is Ga
   expect_equal(defaultGasVentilation(70) * (1 - GAS_DEAD_SPACE_FRACTION), 4, tolerance = 0.02)
   expect_equal(defaultGasVentilation(60), round(4 * (60 / 70)^0.75 / 0.7, 1))   # 5.1
   expect_equal(defaultGasVentilation(140), round(4 * 2^0.75 / 0.7, 1))          # 9.6
-  # With no dead space it is Gas Man's own number.
+  # With no dead space it is GasMan's own number.
   expect_equal(defaultGasVentilation(70, deadSpace = 0), 4)
   # Missing or invalid weight falls back to the 70 kg standard.
   expect_equal(defaultGasVentilation(NA), 5.7)
@@ -470,7 +470,7 @@ test_that("the ideal circuit is the default", {
 })
 
 test_that("ideal circuit: the fresh-gas fraction, with and without dead space", {
-  # No dead space: Gas Man's ideal circuit, threshold at alveolar ventilation.
+  # No dead space: GasMan's ideal circuit, threshold at alveolar ventilation.
   expect_equal(gasFreshFraction(4, 4), 1)
   expect_equal(gasFreshFraction(10, 4), 1)
   expect_equal(gasFreshFraction(1, 4), 0.25)
@@ -526,7 +526,7 @@ test_that("ideal circuit: no rebreathing once fresh gas flow covers what is insp
   expect_equal(y[, 1], f * 2 + (1 - f) * y[, 2])
   expect_lt(final(at1, 2), final(at3, 2))
 
-  # With no dead space as well, the blend is Gas Man's f = Q / VA.
+  # With no dead space as well, the blend is GasMan's f = Q / VA.
   gm1 <- advanceClosedFormGas(mk(1), maximum = 30, deadSpace = 0, uptakeEffect = FALSE)
   y <- gm1$state$sevoflurane[-1, ]
   expect_equal(y[, 1], 0.25 * 2 + 0.75 * y[, 2])
@@ -685,4 +685,46 @@ test_that("oxygen: pure oxygen at low flow, the old formula when switched off, a
     weight = 70, maximum = 600)
   expect_lt(utils::tail(starved$state$oxygen[, 2], 1), 1)
   expect_gte(min(starved$state$oxygen), 0)
+})
+
+# Vaporisers that together exceed 100% are a fresh gas that cannot exist.
+# Until 2026-10-12 the carrier fraction was clipped to zero and the volatile
+# fractions kept, so the fresh gas summed past 100% (an audit finding).
+test_that("vaporiser settings that together exceed 100% are reported and refused", {
+  ok <- data.frame(
+    Drug  = c("oxygen", "sevoflurane", "isoflurane", "ventilation"),
+    Time  = c(0, 0, 0, 0),
+    Dose  = c(2, 60, 40, 4),
+    Units = c("L/min", "%", "%", "L/min"),
+    stringsAsFactors = FALSE
+  )
+  expect_length(gasVaporiserProblems(ok), 0)
+  s <- gasSettingsAt(split(ok[ok$Drug != "ventilation", ], ok$Drug[ok$Drug != "ventilation"]), 0)
+  expect_equal(sum(s$Ffgf), 100)
+
+  # 60 + 40 + 5: the third agent, started later, pushes the sum past 100
+  bad <- rbind(ok, data.frame(Drug = "desflurane", Time = 10, Dose = 5, Units = "%"))
+  problems <- gasVaporiserProblems(bad)
+  expect_length(problems, 1)
+  expect_match(problems, "At 10 min")
+  expect_match(problems, "105%", fixed = TRUE)
+  expect_error(simulateGases(bad, maximum = 30), "105%", fixed = TRUE)
+
+  # lowering sevoflurane at the same time makes it possible again
+  fixed <- rbind(bad, data.frame(Drug = "sevoflurane", Time = 10, Dose = 50, Units = "%"))
+  expect_length(gasVaporiserProblems(fixed), 0)
+  sim <- simulateGases(fixed, maximum = 30)
+  expect_false(is.null(sim))
+
+  # non-gas rows, blank rows and character times are ignored or read
+  mixed <- data.frame(
+    Drug  = c("propofol", "sevoflurane", "isoflurane", ""),
+    Time  = c("0", "5", "5", ""),
+    Dose  = c("100", "70", "40", ""),
+    Units = c("mg", "%", "%", ""),
+    stringsAsFactors = FALSE
+  )
+  expect_match(gasVaporiserProblems(mixed), "At 5 min")
+  expect_length(gasVaporiserProblems(NULL), 0)
+  expect_length(gasVaporiserProblems(mixed[1, ]), 0)
 })

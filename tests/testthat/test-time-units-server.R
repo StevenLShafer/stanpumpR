@@ -75,6 +75,7 @@ anyErrorShown <- function(sent) {
 # would be initial values, which the conversion observer does not see.
 startApp <- function(session, ...) {
   do.call(session$setInputs, appInputs())
+  startFormatFromInputs(session)
   changes <- list(...)
   if (length(changes)) do.call(session$setInputs, changes)
 }
@@ -85,6 +86,22 @@ withTimes <- function(...) {
   dt$Time[seq_along(times)] <- times
   dt
 }
+
+test_that("the Time panel's header follows the selectors", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session)
+    expect_equal(output$timeSummary, "(minutes, Actual time)")
+    # the procedure start is not part of the header
+    session$setInputs(referenceTime = "09:30")
+    expect_equal(output$timeSummary, "(minutes, Actual time)")
+    session$setInputs(timeMode = "relative")
+    expect_equal(output$timeSummary, "(minutes, Elapsed time)")
+    session$setInputs(timeUnits = "days")
+    echo(session, sent)
+    expect_equal(output$timeSummary, "(days, Elapsed time)")
+  })
+})
 
 test_that("a change of unit converts the table, keeps the minutes and starts a fresh history", {
   shiny::testServer(app_server, {
@@ -102,8 +119,10 @@ test_that("a change of unit converts the table, keeps the minutes and starts a f
     # The engine sees the same minutes, so nothing is re-simulated
     expect_identical(doseTableClean(), before)
     expect_match(notified(sent, "timeConverted")$message$html, "converted to hours")
-    # minutes and hours share their Max times: 1 hour is kept
-    expect_equal(lastSent(sent, "maximum")$value, "60")
+    # minutes and hours share their range: 1 hour is kept, in the hours
+    # slider's 15-minute steps
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), 60)
+    expect_equal(as.numeric(lastSent(sent, "maximum")$step), 15)
     echo(session, sent)
     expect_equal(plotInfo()$plotMaximum, 120)   # lengthened past the dose at 90
     expect_equal(plotInfo()$steps, 15)
@@ -147,13 +166,16 @@ test_that("clock times become elapsed times; days and weeks force elapsed", {
     expect_equal(mode$value, "relative")
     expect_false(grepl("clock", paste(unlist(mode$options), collapse = " ")))
     expect_equal(doseTable()$Time[1:2], c("0.0625", "0.08333333333"))
-    # Max time: 1 hour is not a choice in days; the shortest is
-    expect_equal(lastSent(sent, "maximum")$value, maxTimeValue(2 * MINS_PER_DAY))
+    # Max time: 1 hour is less than the days slider's step; a day is its
+    # first.  The plot waits for the browser to report it.
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), MINS_PER_DAY)
+    expect_equal(as.numeric(lastSent(sent, "maximum")$step), MINS_PER_DAY)
+    expect_error(plotInfo(), class = "shiny.silent.error")
     n <- length(sent$inputs)
     echo(session, sent)
     expect_equal(doseTable()$Time[1:2], c("0.0625", "0.08333333333"))  # the echo converts nothing
-    expect_equal(plotInfo()$plotMaximum, 2 * MINS_PER_DAY)
-    expect_equal(plotInfo()$steps, MINS_PER_DAY / 2)
+    expect_equal(plotInfo()$plotMaximum, MINS_PER_DAY)
+    expect_equal(plotInfo()$steps, MINS_PER_DAY / 4)
     # back to hours: both choices again
     session$setInputs(timeUnits = "hours")
     expect_true(grepl("clock", paste(unlist(lastSent(sent, "timeMode")$options), collapse = " ")))
@@ -185,7 +207,7 @@ test_that("a change that leaves every string as it was still clears the history"
   shiny::testServer(app_server, {
     sent <- recordMessages(session)
     startApp(session, timeMode = "relative")
-    # The table the startup menu gives with its defaults: times of 0
+    # The table the startup menu gives with the four old defaults ticked: times of 0
     setDoseTable(doseTableInit, doseTableFormat())
     session$flushReact()
     doseTableHistory()$do(withTimes("30"))
@@ -240,7 +262,7 @@ test_that("a scenario in days loads without conversion, once the browser catches
     # the selectors still say minutes: the plot waits, silently
     expect_error(plotInfo(), class = "shiny.silent.error")
     expect_equal(lastSent(sent, "timeUnits")$value, "days")
-    expect_equal(lastSent(sent, "maximum")$value, maxTimeValue(28 * MINS_PER_DAY))
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), 28 * MINS_PER_DAY)
     # the browser reports the unit before the Max time: still waiting
     session$setInputs(timeUnits = "days")
     expect_error(plotInfo(), class = "shiny.silent.error")
@@ -393,7 +415,7 @@ test_that("a long-term drug on a short plot offers a year", {
     expect_length(notifications(sent, "longTermPrompt"), 1)
     session$setInputs(showLongTermTime = 1)
     expect_equal(lastSent(sent, "timeUnits")$value, "days")
-    expect_equal(lastSent(sent, "maximum")$value, maxTimeValue(MINS_PER_YEAR))
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), MINS_PER_YEAR)
     echo(session, sent)
     expect_equal(doseTableFormat(), timeFormat("days", "relative"))
     expect_equal(plotInfo()$plotMaximum, MINS_PER_YEAR)
@@ -440,6 +462,126 @@ test_that("the long-term prompt is not offered again while the table is unreadab
     doseTable(dt)
     session$flushReact()
     expect_length(notifications(sent, "longTermPrompt"), 2)
+  })
+})
+
+# The Add new drug button under the plot opens the Add a dose dialog with the
+# drug box empty (so a name can be typed at once), at the start of the plot,
+# in the table's format
+test_that("the Add new drug button opens the add-dose dialog empty at time 0", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    doseTable(withTimes("0"))
+    session$flushReact()
+    inTable <- unique(doseTable()$Drug[nzchar(doseTable()$Drug)])
+    drug <- setdiff(drugChoices(), inTable)[1]
+
+    session$setInputs(addNewDrug = 1)
+    modal <- sent$modals[[length(sent$modals)]]
+    expect_equal(modal$type, "show")
+    html <- as.character(modal$message$html)
+    expect_match(html, "Add a dose")
+    # no drug is selected
+    expect_no_match(html, '<option value="[^"]+" selected>')
+    expect_match(html, 'id="addDoseTime"[^>]*value="0"')
+
+    # without a drug the dialog refuses to add
+    before <- doseTable()
+    session$setInputs(addDoseDrug = "", addDoseTime = "0", addDoseAmount = "2",
+                      addDoseBtn = 1)
+    expect_identical(doseTable(), before)
+
+    # with one chosen, it adds the dose as a click on the plot would
+    session$setInputs(addDoseDrug = drug, addDoseTime = "0", addDoseAmount = "2",
+                      addDoseUnits = unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])[1],
+                      addDoseBtn = 2)
+    added <- doseTable()[doseTable()$Drug == drug & doseTable()$Time == "0", ]
+    expect_equal(nrow(added), 1)
+    expect_equal(added$Dose, "2")
+
+    # in clock mode the time is the procedure start
+    session$setInputs(timeMode = "clock")
+    echo(session, sent)
+    session$setInputs(addNewDrug = 2)
+    modal <- sent$modals[[length(sent$modals)]]
+    expect_match(as.character(modal$message$html), 'id="addDoseTime"[^>]*value="08:00"')
+  })
+})
+
+# A table with no blank row (a restored bookmark, or its blank row deleted)
+# still takes the dose, and is left with a blank row for the next one
+test_that("the Add a dose dialog adds to a table with no blank row", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    doseTable(withTimes("0"))
+    session$flushReact()
+    full <- doseTable()[nzchar(as.character(doseTable()$Drug)), ]
+    rownames(full) <- NULL
+    doseTable(full)
+    session$flushReact()
+    expect_false(any(doseTable()$Drug == ""))
+    drug <- setdiff(drugChoices(), full$Drug)[1]
+
+    session$setInputs(addNewDrug = 1)
+    session$setInputs(addDoseDrug = drug, addDoseTime = "0", addDoseAmount = "2",
+                      addDoseUnits = unlist(drugDefaults()$Units[drugDefaults()$Drug == drug])[1],
+                      addDoseBtn = 1)
+    dt <- doseTable()
+    expect_equal(nrow(dt), nrow(full) + 2)
+    expect_equal(dt[seq_len(nrow(full)), ], full, ignore_attr = TRUE)
+    expect_equal(dt$Drug[nrow(full) + 1], drug)
+    expect_equal(dt$Dose[nrow(full) + 1], "2")
+    expect_equal(dt$Drug[nrow(dt)], "")
+  })
+})
+
+# A drug with TCI target units enters a concentration in the dose field when
+# a target unit is chosen, so its dialogs say "Dose or Target"; the table's
+# column is headed "Dose/Target" for every drug, over the data column "Dose"
+test_that("the dose field is labelled Dose or Target for a drug with TCI units", {
+  shiny::testServer(app_server, {
+    sent <- recordMessages(session)
+    startApp(session, timeMode = "relative")
+    doseTable(withTimes("0"))
+    session$flushReact()
+    expect_equal(doseFieldLabel("propofol"), "Dose or Target")
+    expect_equal(doseFieldLabel("rocuronium"), "Dose")
+
+    showAddDrugModal("propofol", 0)
+    html <- as.character(sent$modals[[length(sent$modals)]]$message$html)
+    expect_match(html, "Dose or Target")
+    showAddDrugModal("rocuronium", 0)
+    html <- as.character(sent$modals[[length(sent$modals)]]$message$html)
+    expect_false(grepl("Dose or Target", html, fixed = TRUE))
+    # changing the drug in the dialog relabels the field (a newer shiny sends
+    # the label as rendered HTML, an older one as the string)
+    sentLabel <- function() {
+      label <- lastSent(sent, "addDoseAmount")$label
+      if (is.list(label)) label <- label$html
+      as.character(label)
+    }
+    session$setInputs(addDoseDrug = "propofol")
+    expect_equal(sentLabel(), "Dose or Target")
+    session$setInputs(addDoseDrug = "rocuronium")
+    expect_equal(sentLabel(), "Dose")
+
+    # the dose table's grid: display header over the unchanged data column
+    hot <- createHOT(doseTable(), drugDefaults(), doseTableFormat())
+    expect_equal(hot$x$colHeaders, c("Drug", "Time", DOSE_COLUMN_HEADER, "Units"))
+    expect_equal(unlist(hot$x$rColHeaders), c("Drug", "Time", "Dose", "Units"))
+
+    # the Edit doses dialog's grid (an output is computed at a flush, and is
+    # the widget's JSON here)
+    editHeaders <- function() {
+      session$flushReact()
+      jsonlite::fromJSON(output$editPriorDosesTable)$x$colHeaders
+    }
+    DrugTimeUnits(list(drug = "propofol"))
+    expect_equal(editHeaders(), c("Delete", "Time", "Dose or Target", "Units"))
+    DrugTimeUnits(list(drug = "rocuronium"))
+    expect_equal(editHeaders(), c("Delete", "Time", "Dose", "Units"))
   })
 })
 
@@ -540,3 +682,13 @@ test_that("a blank or unreadable Age, Weight or Height is named in the plot area
 })
 
 .sprglobals$config <- oldConfig
+
+test_that("the app opens in elapsed time", {
+  oldConfig <- .sprglobals$config
+  .sprglobals$config <- DEFAULT_CONFIG
+  on.exit(.sprglobals$config <- oldConfig)
+  html <- as.character(app_ui()(NULL))
+  select <- regmatches(html, regexpr('(?s)<select[^>]*id="timeMode"[^>]*>.*?</select>', html, perl = TRUE))
+  expect_match(select, '<option value="relative" selected>', fixed = TRUE)
+  expect_false(grepl('<option value="clock" selected>', select, fixed = TRUE))
+})

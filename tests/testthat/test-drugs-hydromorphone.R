@@ -32,8 +32,8 @@ test_that("returns the published parameters with total-body-weight scaling", {
     tPeak = 19.6,
     MEAC = 0.0015,
     typical = 0.0018,
-    upperTypical = 0.0012,
-    lowerTypical = 0.003,
+    upperTypical = 0.003,
+    lowerTypical = 0.0012,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)
@@ -161,9 +161,12 @@ test_that("hydrocodone's formed hydromorphone does not use hydromorphone's oral 
   # hydromorphone's own oral bioavailability (0.6 -> 0.225, 2026-10-10) must
   # leave it unchanged.  Pinned before that change: 10 mg oral hydrocodone,
   # 70 kg reference man, peak formed hydromorphone 0.07444011 (ng/mL scale).
+  # Re-pinned 2026-10-28 to 0.07465074 when Melhem's creatinine-clearance and
+  # body-surface-area covariates were applied to hydrocodone's disposition
+  # (its Vc/F and CL/F moved; formation clearance was held).
   PK <- getDrugPK("hydrocodone", 70, 170, 40, "male")
   sim <- simCpCe(
     data.frame(Drug = "hydrocodone", Time = 0, Dose = 10, Units = "mg PO"),
     data.frame(Time = numeric(0), Event = character(0)), PK, 720, FALSE)
-  expect_equal(max(sim$metaboliteSeries$Cp), 0.07444011, tolerance = 1e-6)
+  expect_equal(max(sim$metaboliteSeries$Cp), 0.07465074, tolerance = 1e-6)
 })

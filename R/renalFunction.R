@@ -1,9 +1,12 @@
 # Renal function for the drug models that need it.
 #
 # Several models carry a renal covariate (Cockcroft-Gault creatinine
-# clearance, or a CKD-EPI eGFR): mannitol, vancomycin, gentamicin, cefazolin,
-# sugammadex, gabapentin, pregabalin, oxycodone and (intravenous only)
-# meloxicam.  Each takes an optional
+# clearance, a CKD-EPI eGFR, or the simplified MDRD eGFR): mannitol,
+# vancomycin, gentamicin, cefazolin, sugammadex, gabapentin, pregabalin,
+# oxycodone, hydrocodone, (intravenous only) meloxicam, lacosamide,
+# levetiracetam, and the
+# anticoagulants apixaban, rivaroxaban, edoxaban, dabigatran, enoxaparin and
+# fondaparinux.  Each takes an optional
 # `creatinine` argument, the patient's serum creatinine from the Patient
 # Profile.
 #
@@ -19,8 +22,8 @@
 # follows muscle mass: about 0.25 mg/dL through most of infancy, 0.35 at five
 # years, 0.5 at ten, and 0.8 in boys and 0.7 in girls at seventeen
 # (normalCreatinineChild()).  Under 18 that is the assumed value; at 18 it
-# steps up to the adult value below, which sits above the adolescents' medians
-# (0.82 and 0.68 just under 18).  But Cockcroft-Gault and CKD-EPI were
+# steps up to the adult value below, which sits just above the adolescents'
+# medians (0.82 and 0.68 just under 18).  But Cockcroft-Gault and CKD-EPI were
 # developed in adults, and given a child's own creatinine they overestimate
 # renal function badly: a five-year-old boy of 20 kg and 110 cm at his normal
 # 0.35 mg/dL has a Cockcroft-Gault clearance of 106 mL/min, against a normal
@@ -31,12 +34,12 @@
 # divided by the normal value for the child's age and multiplied by the adult
 # assumed value, after the age-adjusted creatinine of Bjork et al. (Kidney Int
 # 2021;99:940-947).  A child at the normal creatinine for age then gets the
-# adult assumed value (Cockcroft-Gault 38 mL/min for the boy above), and a
+# adult assumed value (Cockcroft-Gault 42 mL/min for the boy above), and a
 # child at twice the normal for age gets half that clearance; the CKD-EPI eGFR
 # (gentamicin) falls to about 0.43 of its value instead, 2^-1.209, since both
 # creatinines are above its kappa.  At a blank field the step at 18 cancels
 # for these models (both sides get the adult value), but an entered
-# creatinine reads 18-22% higher on the adult scale just under 18 than just
+# creatinine reads 10-18% higher on the adult scale just under 18 than just
 # over it.  Only the pregabalin model, whose source estimated children's renal
 # function from their own creatinine (Schwartz under 13, Cockcroft-Gault from
 # 13), takes the unscaled value.
@@ -49,10 +52,12 @@
 # and lean weight is the usual correction, so this is consistent with the
 # switch rather than a separate decision.
 
-# Assumed serum creatinine of an adult when the app has none, mg/dL.
-# Population medians for adults with normal kidneys: about 0.9-1.0 in men and
-# 0.7-0.8 in women.
-SCR_ASSUMED_MALE   <- 1.0
+# Assumed serum creatinine of an adult when the app has none, mg/dL: 0.9 in
+# men and 0.8 in women, the population medians for adults with normal kidneys
+# (about 0.9-1.0 in men and 0.7-0.8 in women).  These are what the Patient
+# Profile's tooltip quotes (R/patient-fields.R), so the tooltip reads them
+# from here.
+SCR_ASSUMED_MALE   <- 0.9
 SCR_ASSUMED_FEMALE <- 0.8
 
 # Under this age the assumed creatinine is the normal value for the child's
@@ -176,8 +181,11 @@ adultEquivalentCreatinine <- function(creatinine, age, sex)
 #'
 #' `(140 - age) x weight / (72 x SCr)`, times 0.85 for a woman, in mL/min.
 #' This is the estimator the vancomycin (Thomson 2009), cefazolin (Komatsu
-#' 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017) and pregabalin
-#' (Chan 2021, from 13 years of age; Schwartz below) models were fitted with.
+#' 2024), sugammadex (Kleijn 2011), gabapentin (Tran 2017), pregabalin
+#' (Chan 2021, from 13 years of age; Schwartz below), apixaban (Cirincione
+#' 2018), rivaroxaban (Willmann 2018), edoxaban (Niebecker 2015),
+#' dabigatran (Liesenfeld 2011) and hydrocodone (Melhem 2013, indexed to
+#' 1.73 m^2) models were fitted with.
 #'
 #' @param weight the weight the calling model scales on, kg
 #' @param age age in years
@@ -213,6 +221,21 @@ egfrSchwartz <- function(height, age, scr)
   k * height / scr
 }
 
+#' Bedside Schwartz estimated glomerular filtration rate in children
+#'
+#' `0.413 x height / SCr` (Schwartz et al., J Am Soc Nephrol 2009;20:629),
+#' in mL/min/1.73 m^2, for an enzymatic (IDMS-traceable) creatinine.  The
+#' estimator the dapagliflozin model (Melin 2023) used for its adolescents.
+#'
+#' @param height height in cm
+#' @param scr serum creatinine in mg/dL
+#' @return eGFR in mL/min/1.73 m^2
+#' @keywords internal
+egfrBedsideSchwartz <- function(height, scr)
+{
+  0.413 * height / scr
+}
+
 #' Du Bois body surface area
 #'
 #' @param weight weight in kg
@@ -222,6 +245,20 @@ egfrSchwartz <- function(height, age, scr)
 bsaDuBois <- function(weight, height)
 {
   0.007184 * weight^0.425 * height^0.725
+}
+
+#' Gehan and George body surface area
+#'
+#' Gehan EA, George SL, Cancer Chemother Rep 1970;54:225-235.  The formula the
+#' hydrocodone model's source (Melhem 2013) used for its covariate.
+#'
+#' @param weight weight in kg
+#' @param height height in cm
+#' @return body surface area in m^2
+#' @keywords internal
+bsaGehanGeorge <- function(weight, height)
+{
+  0.0235 * weight^0.51456 * height^0.42246
 }
 
 #' CKD-EPI 2009 estimated glomerular filtration rate
@@ -257,4 +294,29 @@ egfrCKDEPI2009 <- function(age, sex, scr = adultCreatinine(sex))
 egfrDeindexed <- function(weight, height, age, sex, scr = adultCreatinine(sex))
 {
   egfrCKDEPI2009(age, sex, scr) * bsaDuBois(weight, height) / 1.73
+}
+
+#' Simplified (four-variable) MDRD estimated glomerular filtration rate
+#'
+#' The IDMS-traceable form (Levey et al., Clin Chem 2007;53:766-772):
+#' eGFR = 175 x Scr^-1.154 x age^-0.203 x 0.742 (female).  The race term
+#' (x 1.212 for a Black patient) is omitted: race is not a Patient Profile
+#' field.  Indexed to 1.73 m^2 and used as given, not de-indexed.  Read by
+#' the low-molecular-weight heparin and fondaparinux anti-Xa models, which
+#' used it as their "creatinine clearance" (Berges 2007; Delavenne 2010), and
+#' by ertugliflozin (Fediuk 2021, capped there at 120), canagliflozin,
+#' empagliflozin and exenatide among the antidiabetics.
+#'
+#' The age term is a negative power, infinite at an age of 0 and steep in
+#' infancy, and the equation was fitted in adults, so the age it sees is
+#' floored at `ADULT_AGE_TERM_FLOOR` (18): a child gets the value of an
+#' 18-year-old at the same (adult-scale) creatinine.
+#'
+#' @inheritParams creatinineClearanceCG
+#' @return eGFR in mL/min/1.73 m^2
+#' @keywords internal
+egfrMDRD <- function(age, sex, scr = adultCreatinine(sex))
+{
+  age <- max(age, ADULT_AGE_TERM_FLOOR)
+  175 * scr^(-1.154) * age^(-0.203) * (if (sex == SEX_FEMALE) 0.742 else 1)
 }

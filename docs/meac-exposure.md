@@ -62,7 +62,7 @@ regimens) rather than population thresholds, for the reasons in §6.
 | % MEAC per drug | `simCpCe()` writes `equiSpace$MEAC` | Effect-site based |
 | Total opioid U(t) | `totalOpioidMEAC()` in `R/opioidMacInteraction.R` (exported) | Additive sum on a common grid |
 | Metabolite scoring | `R/mergeMetabolite.R`, `foldMetabolites()` | Codeine → morphine, tramadol → desmetramadol, oxycodone → oxymorphone; the parent's own MEAC is 0 where its effect is the metabolite's |
-| Repeated dosing | `R/scheduled.R` (`qd`/`bid`/`tid`/`qid`) | Repeats to the end of the plot |
+| Repeated dosing | `R/scheduled.R` (`qd`/`bid`/`tid`/`qid`/`q4h`) | Repeats to the end of the plot |
 | Extravascular routes | `advanceClosedFormPO_IM_IN.R`; `ka_*`, `bioavailability_*`, `tlag_*` in drug functions | PO for oxycodone, hydromorphone, codeine, tramadol, oxymorphone; IM/IN for hydromorphone |
 | Covariates | drug functions, `pkSizeFactors()`, `R/renalFunction.R` | Size scaling is mandatory; renal terms only where the source has them |
 | Shiny-free driver | `simulateDrugsWithCovariates()` | Entry point for the API in §5 |
@@ -120,7 +120,7 @@ Values from the current library for a 70 kg, 170 cm, 40-year-old male
 | oxycodone | 0.62 | 12 ng/mL | 10.8 | 0.5 | 21.5 |
 | oxymorphone | 2.00 | 0.8 ng/mL | 2.3 | 0.1 | 23.0 |
 | methadone | 0.10 | 60 ng/mL | 8.8 | *none* | (≈ 11 with an assumed F of 0.8) |
-| pethidine | 0.76 | 250 ng/mL | 275 | *none* | — |
+| pethidine | 0.76 | 460 ng/mL (250 until 2026-10-27) | 503 (was 275) | *none* | — |
 | fentanyl | 0.63 | 0.6 ng/mL | 0.55 (23 mcg/h) | — | — |
 | alfentanil | 0.20 | 39 ng/mL | 11.2 | — | — |
 | sufentanil | 0.92 | 0.056 ng/mL | 0.074 | — | — |
@@ -290,7 +290,7 @@ drug would be a new CSV or a new column.
 
 MEAC is an analgesic potency. Respiratory depression has its own potency, and
 the ratio of the two is not the same across opioids (it is the premise of
-oliceridine, whose library MEAC was itself chosen from a respiratory end point).
+oliceridine, whose library MEAC is Dahan's analgesic potency, 27.9 ng/mL, while its typical concentration, 27.4 ng/mL, is his respiratory potency).
 Using U for safety makes both mistakes at once.
 
 Proposal:

@@ -59,8 +59,9 @@
 # and "mg PO bid", but the curve they draw is the SR tablet's.  The
 # immediate-release tablet (faster absorption, higher peak) and the
 # extended-release XL tablet are NOT modelled: Zhang and colleagues (2019)
-# found CL/F 221 L/h at 60.9 kg with an absorption lag for XL, and their 2017
-# IR/SR/ER crossover found relative bioavailabilities of 1, 0.955 and 0.68,
+# found CL/F 221 L/h at 60.9 kg with an absorption lag for XL, and Connarn
+# and colleagues' 2017 IR/SR/ER crossover (AAPS J 2017;19:1513-1522) found
+# relative bioavailabilities of 1, 0.955 and 0.68,
 # so XL doses entered here would be overpredicted by about a third.  Daily
 # exposure on a steady regimen depends only on dose over CL/F, so the
 # average concentrations at steady state are less formulation-sensitive than
@@ -106,11 +107,11 @@
 #
 # THE BAND
 # ========
-# The AGNP 2018 consensus therapeutic reference range (Hiemke et al.,
-# Pharmacopsychiatry 2018;51:9-62) is 850 to 1500 ng/mL for bupropion PLUS
-# hydroxybupropion.  inst/extdata/drugDefaults_global.csv puts it on the
-# hydroxybupropion row, because the metabolite dominates the sum, and draws no
-# band on the bupropion row (0/0/0).  The model mirrors that here.  MEAC and
+# The AGNP therapeutic reference range (update 2026, Hart et al.,
+# Pharmacopsychiatry 2026;59:166-295, Table 5) is 850 to 1500 ng/mL of
+# HYDROXYBUPROPION, the major active compound; bupropion itself is unstable
+# in collected blood.  inst/extdata/drugDefaults_global.csv puts it on the
+# hydroxybupropion row and draws no band on the bupropion row (0/0/0).  The model mirrors that here.  MEAC and
 # endCe are zero: not an opioid, and no threshold.
 #
 # COVARIATES AND BODY SIZE (docs/weight-adjustment.md)
@@ -133,6 +134,14 @@
 # Learned-Coughlin SM et al. In vivo activity of bupropion at the human
 #   dopamine transporter as measured by positron emission tomography. Biol
 #   Psychiatry 2003;54:800-805.
+# Zhang F, Li Y, Hu J, Zhong J, Li H. Population pharmacokinetics, safety
+#   and tolerability of extended-release bupropion and its three metabolites
+#   in Chinese healthy volunteers. Eur J Drug Metab Pharmacokinet
+#   2019;44:339-352. https://doi.org/10.1007/s13318-018-0537-z
+# Connarn JN et al. Pharmacokinetics and pharmacogenomics of bupropion in
+#   three different formulations with different release kinetics in healthy
+#   human volunteers. AAPS J 2017;19:1513-1522.
+#   https://doi.org/10.1208/s12248-017-0102-8
 # -----------------------------------------------------------------------------
 
 # Ghimire 2026.  Apparent parameters (divided by F), litres, litres per hour
@@ -206,8 +215,8 @@ bupropion <- function(weight, height, age, sex, adjustToFFM = TRUE)
       PK = PK,
       tPeak = 0,        # no effect-site model; see the header
       MEAC = 0,         # not an opioid
-      # No band on the parent: the AGNP range is for the sum and is drawn on
-      # the hydroxybupropion row.  The CSV carries the same zeros.
+      # No band on the parent: the AGNP range is hydroxybupropion's and is
+      # drawn on its row.  The CSV carries the same zeros.
       typical = 0,
       upperTypical = 0,
       lowerTypical = 0,

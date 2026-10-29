@@ -4,7 +4,7 @@ Lorazepam's disposition is a two-compartment model built from the means reported
 
 Building a model from mean half-lives is an approximation. It is checked against the labels: in the reference man, 4 mg intravenously gives 74 ng/mL at 15 minutes (label: about 70 initially), 2 mg by mouth peaks at 19.7 ng/mL (label: about 20) and 4 mg intramuscularly at 53 ng/mL (label: about 48).
 
-Two other models were checked and set aside. Gonzalez and colleagues' model (*Clin Pharmacokinet* 2017;56:941-951) was fitted in children. Swart and colleagues' model of critically ill adults (*Br J Clin Pharmacol* 2004;57:135-145) has a central volume of 0.74 L, which long infusions cannot identify; it would put a 2 mg bolus at 2700 ng/mL. Barr and colleagues' ICU model (*Anesthesiology* 2001;95:286-298) would be the natural replacement, once its full parameters are in hand.
+Two other models were checked and set aside. Gonzalez and colleagues' model (*Clin Pharmacokinet* 2017;56:941-951) was fitted in children. Swart and colleagues' model of critically ill adults (*Br J Clin Pharmacol* 2004;57:135-145) has a central volume of 0.74 L, which long infusions cannot identify; it would put a 2 mg bolus at 2700 ng/mL. Barr and colleagues' ICU model (*Anesthesiology* 2001;95:286-298: central volume 40.8 L, peripheral volume 102 L, clearance 0.107 L/min, intercompartmental clearance 1.86 L/min, no covariates) would be the natural replacement; it has not yet been substituted.
 
 ### Routes
 
@@ -23,7 +23,7 @@ The time to peak effect is 26 minutes. It comes from the EEG beta response in 9 
 
 ### Typical concentrations
 
-The shaded band and threshold come from Barr and colleagues. They estimated the steady-state plasma concentrations at which a postoperative ICU patient has an even chance of a Ramsay score of at least 2, 3 and 4: 34, 51 and 104 ng/mL. The band runs from 34 to 104 ng/mL, with the typical value at 51, the edge of the moderate sedation (Ramsay 3 to 4) Barr targeted. The default **time-until-threshold** level is also **51 ng/mL**, the concentration below which a typical patient is more likely than not to emerge from light sedation. Anticonvulsant and anxiolytic concentrations are lower, about 20 to 30 ng/mL. Barr's patients received fentanyl or epidural morphine, and age and opioids both changed the sedation.
+The shaded band and threshold come from Barr and colleagues. They estimated the steady-state plasma concentrations at which a postoperative ICU patient has an even chance of a Ramsay score of at least 2, 3, 4, 5 and 6: 34, 51, 104, 152 and 188 ng/mL. The band is moderate sedation, a Ramsay score of 3 or 4, which Barr targeted and the library draws for the sedatives: it runs from 51 to 152 ng/mL, where the median patient scores 3 or 4, with the typical value at 104, an even chance of a score of at least 4. It was 34 to 104 ng/mL. The default **time-until-threshold** level is also **51 ng/mL**, the concentration below which a typical patient is more likely than not to emerge from light sedation. Anticonvulsant and anxiolytic concentrations are lower, about 20 to 30 ng/mL. Barr's patients received fentanyl or epidural morphine, and age and opioids both changed the sedation. The AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5) gives 5 to 100 ng/mL, 12 hours after a dose, for anxiety disorders on oral doses; it is not drawn.
 
 ### Where to be careful
 

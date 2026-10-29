@@ -18,6 +18,12 @@
 #'   Only drugs whose model declares it are affected.
 #' @param cyp2c9 CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES}.
 #'   Only drugs whose model declares it (phenytoin) are affected.
+#' @param vkorc1 VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES}.
+#'   Only drugs whose model declares it (warfarin) are affected.
+#' @param cyp4f2 CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES}.
+#'   Only drugs whose model declares it (warfarin) are affected.
+#' @param cyp2b6 CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
+#'   Only drugs whose model declares it (methadone) are affected.
 #' @param osmolality baseline serum osmolality in mOsm/kg.  Only an osmotic
 #'   agent (mannitol), which is reported as serum osmolality, is affected.
 #' @param creatinine serum creatinine in mg/dL, or NULL for the assumed normal
@@ -26,6 +32,19 @@
 #' @param adjustToFFM scale each model's volumes and clearances to the patient's
 #'   fat-free mass (the default) rather than total body weight; see
 #'   `docs/weight-adjustment.md`.
+#' @param pregnant is the patient pregnant?  TRUE or FALSE (the default); TRUE
+#'   requires \code{sex = "female"}.  Only the models that name it apply the
+#'   changes of late pregnancy measured for that drug
+#'   (inst/extdata/pregnancyRegistry.csv); see \code{getDrugPK()}.
+#' @param gestationalAge gestational age at birth in weeks, or NULL for a term
+#'   birth.  Only the neonatal models that declare it (dobutamineNeonatal)
+#'   are affected.
+#' @param antiseizureInteractions apply the pharmacokinetic interactions among
+#'   the antiseizure drugs (\code{R/antiseizureInteractions.R},
+#'   \code{antiseizureInteractionRegistry()})?  FALSE (the default) simulates
+#'   every drug on its own.  A changed drug's entry carries
+#'   \code{interaction}, the segments of its multipliers and the rows that
+#'   produced them.
 #'
 #' @returns a list of data frames with the output of the a single drug
 #'   simulation.  A drug that forms an active metabolite adds its contribution
@@ -40,7 +59,16 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
                                          osmolality = OSMOLALITY_DEFAULT,
                                          creatinine = NULL,
                                          cyp2c19 = CYP2C19_DEFAULT,
-                                         cyp2c9 = CYP2C9_DEFAULT)
+                                         cyp2c9 = CYP2C9_DEFAULT,
+                                         cyp2b6 = CYP2B6_DEFAULT,
+                                         pregnant = FALSE,
+                                         # Appended last so a positional call
+                                         # that passed cyp2b6/pregnant keeps its
+                                         # binding (this function is exported).
+                                         vkorc1 = VKORC1_DEFAULT,
+                                         antiseizureInteractions = FALSE,
+                                         cyp4f2 = CYP4F2_DEFAULT,
+                                         gestationalAge = NULL)
 {
   if (length(sex) != 1 || !sex %in% SEX_VALUES) {
     stop("Invalid sex: ", paste(sex, collapse = ", "),
@@ -52,6 +80,7 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   # getDrugPK() and simCpCe() cannot handle them.
   drugList <- drugList[!isGasDrug(drugList)]
   output <- c()
+  pks <- list()
 
   attach <- function(output, drug, PK, drugDefaults) {
     output[[drug]]$Drug                <- drugDefaults$Drug
@@ -70,9 +99,13 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
   {
     drugDefaults <- getDrugDefaults(drug)
     PK <- getDrugPK(drug, weight, height, age, sex, drugDefaults, cyp2d6 = cyp2d6,
-                    cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
+                    cyp2c19 = cyp2c19, cyp2c9 = cyp2c9, vkorc1 = vkorc1,
+                    cyp4f2 = cyp4f2,
+                    cyp2b6 = cyp2b6,
                     osmolality = osmolality, creatinine = creatinine,
-                    adjustToFFM = adjustToFFM)
+                    pregnant = pregnant, adjustToFFM = adjustToFFM,
+                    gestationalAge = gestationalAge)
+    pks[[drug]] <- PK
     currentDT <- dose[dose$Drug == drug,]
     X <- simCpCe(currentDT, events, PK, maximum, plotRecovery)
 
@@ -93,6 +126,26 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     output[[drug]]$metaboliteRecoveryStates <- X$metaboliteRecoveryStates
     output[[drug]]$tci                 <- X$tci
     output[[drug]]$scheduled           <- X$scheduled
+    # The peripheral concentrations and the depot; see R/compartments.R.
+    output[[drug]]$compartmentsOwn        <- X$compartments
+    output[[drug]]$compartments           <- X$compartments
+    output[[drug]]$metaboliteCompartments <- X$metaboliteCompartments
+  }
+
+  # The antiseizure interactions re-simulate the drugs they change, which
+  # needs each drug's resolved PK beside its simulation.
+  if (isTRUE(antiseizureInteractions) && length(pks) > 0)
+  {
+    full <- lapply(stats::setNames(names(pks), names(pks)),
+                   function(d) utils::modifyList(pks[[d]], output[[d]]))
+    full <- applyAntiseizureInteractions(full, dose, events, maximum, plotRecovery)
+    keep <- c("results", "equiSpace", "max", "wideOwn", "wide",
+              "metaboliteSeries", "recoveryStatesOwn", "metaboliteRecoveryStates",
+              "tci", "scheduled", "compartmentsOwn", "compartments",
+              "metaboliteCompartments", "interaction")
+    for (d in names(full))
+      if (!is.null(full[[d]]$interaction))
+        for (field in keep) output[[d]][[field]] <- full[[d]][[field]]
   }
 
   # A metabolite that was never given directly still needs a row to appear in.
@@ -104,8 +157,11 @@ simulateDrugsWithCovariates <- function (dose, events, weight, height, age, sex,
     targetDefaults <- getDrugDefaults(target)
     targetPK <- getDrugPK(target, weight, height, age, sex, targetDefaults,
                           cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                          osmolality = osmolality,
-                          creatinine = creatinine, adjustToFFM = adjustToFFM)
+                          vkorc1 = vkorc1, cyp4f2 = cyp4f2,
+                          cyp2b6 = cyp2b6, osmolality = osmolality,
+                          creatinine = creatinine, pregnant = pregnant,
+                          adjustToFFM = adjustToFFM,
+                          gestationalAge = gestationalAge)
     output <- attach(output, target, targetPK, targetDefaults)
   }
 

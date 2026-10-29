@@ -1,7 +1,7 @@
 oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Units **************
-  # Time: Hours
+  # Time: Minutes (Dahan's clearances are L/h, divided by 60 below)
   # Volume: Liters
 
   # Size scaling (see docs/weight-adjustment.md): the published parameters
@@ -18,8 +18,14 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   cl2 <- 37.5 / 60 * size$clearance
   cl3 <- 0 #NA
 
-# these are returned but not used except tPeak
-# those from the drugDefaults table are
+# The concentrations below are returned but not used: those in the drug
+# library (drugDefaults_global.csv) are.  There, MEAC 27.9 ng/mL is Dahan's
+# ANALGESIC potency in healthy male volunteers (the effect-site concentration
+# at which the probability of a 50% rise in cold-pressor hand-withdrawal
+# latency is one half), and the band's typical value and endCe, 27.4 ng/mL,
+# is the RESPIRATORY potency (a 25% fall in the hypercapnic ventilatory
+# response); the two happen to coincide.  Neither is a postoperative MEAC,
+# and 27.4 is not a concentration at which spontaneous breathing returns.
 
   typical <- NA
   upperTypical <- NA
@@ -27,7 +33,18 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC <- NA
   reference <- "Dahan A et al., Anesthesiology 2020;133(3):559-568. https://pubmed.ncbi.nlm.nih.gov/32788558/"
 
-  tPeak <- 0.25*60
+  # Effect site.  Dahan 2020's library MEAC (27.9 ng/mL, drugDefaults) is the
+  # concentration for a 50% rise in cold-pressor tolerance (not a doubling,
+  # as this note said until 2026-10-27), an analgesic end point,
+  # and for that end point the paper found oliceridine's equilibration too fast
+  # to estimate.  Its 0.25 h is the t1/2 ke0 of the ventilatory response, not
+  # a time to peak; read as one until 2026-10-12 it gave tPeak 15 min (as a
+  # t1/2 ke0 on this disposition it would give 26 min).  The tPeak now carries
+  # "too fast to measure" as a t1/2 ke0 of 1 min, which peaks a bolus at
+  # 4.4 min on this disposition: a stated assumption, not a measurement.
+  # Set by decision of Steven L. Shafer, 2026-10-12, in the opioid MEAC and
+  # tPeak audit.
+  tPeak <- 4.4
 
   default <- list(
     v1 = v1,

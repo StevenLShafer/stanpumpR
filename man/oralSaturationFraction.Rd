@@ -44,6 +44,19 @@ carried by a linear engine: the steady-state exposure D / CL(D) is the
 same as that of the scaled dose on the reference clearance.  Paroxetine
 (Kim 2015).  The fraction may exceed 1 above Dref; it is an exposure
 scale on apparent parameters, not a physical bioavailability.
+\item \code{form = "reduction"}, \code{list(form, I50, D0, D50, exponent)}: the fraction
+is 1 at and below the anchor dose D0 and falls as a power of the dose
+above it, 1 - I50 x ((D - D0) / (D50 - D0))^exponent, so that it is
+1 - I50 at D50, and is HELD at 1 - I50 above D50: the source fitted
+doses up to D50, and the power would otherwise fall through zero (at
+about 2.7 times D50), so that a large dose simulated as no drug at all.
+The stage 2 relative bioavailability of apixaban (Cirincione 2018:
+anchored at 2.5 mg, I50 the fall at 50 mg).
+\item \code{form = "exponential"}, \code{list(form, Fmin, Fmax, D50)}: the fraction is
+Fmin + (Fmax - Fmin) exp(-ln 2 D / D50), falling from Fmax at a small
+dose towards Fmin, halfway at D50.  Rivaroxaban (Willmann 2018, relative
+to a 10 mg dose, at which it is 0.998).  It may exceed 1: relative, not
+absolute, bioavailability.
 }
 
 Each dose is scaled once, by its own size, and is then an independent input

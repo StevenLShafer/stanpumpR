@@ -2,7 +2,7 @@
 
 Aspirin kinetics are from Koh and colleagues (*Drug Des Devel Ther* 2025;19:7853-7863). They fitted a population model to 669 plasma concentrations of acetylsalicylic acid (ASA) and salicylic acid (SA) from 44 healthy Korean adults taking 100 mg **enteric-coated** aspirin daily, and validated it against 80 and 160 mg.
 
-- **Absorption.** After a 2.8-hour lag, 69% of the dose is absorbed at a constant rate over 1.6 hours. The rest is absorbed first-order, slowly for the tablet (0.053 per hour).
+- **Absorption.** 69% of the dose is absorbed at a constant rate over 1.6 hours, after a 2.8-hour lag. The rest is absorbed first-order from the start, with no lag, slowly for the tablet (0.053 per hour).
 - **Pre-systemic step.** Everything absorbed passes through a pre-systemic compartment, which sends 80% on as ASA and 20% directly to SA.
 - **ASA** has one compartment (V/F 23.5 L). It is converted entirely to SA, with an apparent clearance of 70 L/h at the median weight and a half-time of about 14 minutes.
 - **Salicylate** has its own two-compartment kinetics, and is plotted on its own row (see [salicylate](help:drugs/salicylate)).
@@ -13,14 +13,12 @@ The parameters are apparent: absolute bioavailability was not identified.
 
 **mg PO** is the enteric-coated **tablet**. The capsule studied in the source, which is absorbed faster, is not offered. The engine absorbs through at most two first-order depots, so each absorption path, together with the pre-systemic step, is approximated by one depot with a lag:
 
-- The **slow path's** depot matches the mean and spread of its delay.
+- The **slow path's** depot matches the mean and spread of its delay: it absorbs at 0.053 per hour after a lag of about 0.34 hours. That lag is not the source's 2.8-hour lag, which this path does not have; it stands in for the time spent in the pre-systemic compartment.
 - The **constant-rate path's** depot was fitted to the ASA curve of Koh's exact structure.
 
 Against that exact structure, the ASA peak for 100 mg is 0.48 mg/L against 0.49, but at 3.8 hours against 4.4. The salicylate peak is 13% low. Both areas under the curve are exact. The ASA-to-SA conversion and the pre-systemic split are carried exactly.
 
-Two details could not be checked against the paper's supplement:
-- The median weight that the weight terms are normalised to is taken as 68.35 kg.
-- The lag is assumed to apply to both absorption paths.
+The median weight that the weight terms are normalised to is taken as 68.35 kg; that could not be checked against the paper's supplement. The 2.8-hour lag applies to the constant-rate path only, as the paper's Methods tie it to that fraction (until October 2026 it was applied to both paths).
 
 ### Body size
 

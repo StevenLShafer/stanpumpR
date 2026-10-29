@@ -119,6 +119,13 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
       recovery     = recovery,
       endCe        = if (is.null(recovery)) 0 else endCe
     )
+    # The muscle group (state 4) and the fat group (state 5), the gas's
+    # counterparts of V2 and V3, as tensions in % of an atmosphere, for the
+    # compartment panels (R/compartments.R).  Oxygen has no tissue states.
+    state <- sim$state[[g]]
+    if (!is.null(state) && ncol(state) >= 5 && !is.null(sim$timeLine))
+      out[[g]]$compartments <- data.frame(Time = sim$timeLine,
+                                          MRG = state[, 4], FG = state[, 5])
   }
 
   # MAC gets its own series when any potent agent is running.
@@ -189,7 +196,7 @@ gasTypicalBand <- function(drug, props)
 #' @param alveolar,brain data frames of Time and Y
 #' @param xout equispaced output times
 #' @param drugDefaults drug defaults table
-#' @param unitLabel axis-label units for the facet, e.g. "\%" for a gas or
+#' @param unitLabel axis-label units for the facet, e.g. "%" for a gas or
 #'   "age-adjusted" for the MAC-equivalents series
 #' @param typical named vector of lower, typical, upper for the shaded band
 #' @param color optional colour override
@@ -269,7 +276,7 @@ gasEntry <- function(drug, alveolar, brain, xout, drugDefaults,
 #' Is this plotted series produced by the inhaled-gas engine?
 #'
 #' Covers the gases themselves plus the synthetic MAC series.  Used by
-#' \code{simulationPlot()} to label their facets in \% or MAC rather than
+#' \code{simulationPlot()} to label their facets in % or MAC rather than
 #' appending the "/ml" that an intravenous concentration carries.
 #'
 #' @param drug one or more series names

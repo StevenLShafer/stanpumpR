@@ -7,6 +7,10 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > Every model must handle body size the stanpumpR way — see
 > [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
 
+> Every model must also carry its **therapeutic reference range** as the band, wherever one is
+> established for the analyte it plots, and its help page must say where the range came from —
+> or, when there is none, why. See *The therapeutic range* in step 2. This too is a requirement.
+
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 
@@ -98,6 +102,44 @@ overestimate a child's renal function from the child's own creatinine. Pass
 equation to children's own creatinine, as pregabalin's did. Say so in the model's header
 and in its `reference` string. See `R/drugs_vancomycin.R` and `R/renalFunction.R`.
 
+**Pregnancy (required for every model).** Every drug in the library has a row in
+`inst/extdata/pregnancyRegistry.csv`, built by `data-raw/pregnancyRegistry.R`, and
+`test-pregnancy.R` fails for a drug without one. So a new model comes with a search of the
+literature on its pharmacokinetics in pregnancy (PubMed and PubMed Central: "<drug> pregnancy
+pharmacokinetics", "<drug> postpartum", "<drug> third trimester", "<drug> parturients"),
+preferring, in order, a population model with a pregnancy or gestational-age covariate, a paired
+study of the same women during pregnancy and after it, a comparison with nonpregnant women, a
+therapeutic-drug-monitoring series, and only then a PBPK prediction or a review. Record what was
+found in the row: the `group` (below), the `finding` with its numbers, design, n, trimester and
+comparator, the `source` and `source_url`, what was actually read (`evidence_read`: full text,
+abstract, memory or none) and, in `to_obtain`, any paper whose full text would firm up the number
+(the list `docs/pregnancy.md` collects for the library).
+
+- **applied**: a change MEASURED in women with useful strength, or derived from one by documented
+  arithmetic. The model adds `pregnant = FALSE` as its last argument and applies the factor under
+  `isTRUE(pregnant)`, with a named constant (`LAMOTRIGINE_PREGNANCY_CL_FACTOR`), a `PREGNANCY`
+  section in its header giving the source, the numbers and the arithmetic, and
+  `pregnancyReference(applied, source)` appended to its `reference` only when the flag is on. The
+  row's `cl_factor`, `v_factor` and `f_factor` are the ratios `test-pregnancy.R` measures from the
+  model (cl1, v1, bioavailability_PO) at a 30-year-old 70 kg woman. A drug cleared mostly unchanged
+  by filtration whose model reads renal function applies the 50% rise in glomerular filtration
+  through `pregnancyGfrFactor(pregnant, creatinine)` (`gfr_factor` 1.5), which applies it only
+  when the serum creatinine is blank, because a measured pregnant creatinine already carries the
+  rise. The drug's own test pins the flag-on values.
+- **unquantified**: a direction only, or a measurement too weak to apply (a handful of women, no
+  comparison group, a PBPK prediction alone); the finding says which. Not applied.
+- **unchanged**, **unknown**: studied and unchanged, or no human data found. Not applied.
+- **source_pregnant**: the model was fitted in pregnant women (calcium, magnesium sulfate,
+  oxytocin), so the flag does nothing.
+- **not_applicable**: a pediatric model, a drug contraindicated in pregnancy with nothing to
+  apply, or a gas (whose change, a lower MAC, is pharmacodynamic).
+
+The flag describes late pregnancy (third trimester and term): apply the third-trimester value. The
+library plots total concentration; for a highly bound drug say what the fall in albumin does to
+the total and to the unbound concentration. Each drug's help page renders its row
+(`helpDrugPregnancyHTML()` in `R/help-drugs.R`), so a narrative `### Pregnancy` section in
+`inst/help/drugs/<name>.md` is optional, for what the row cannot say.
+
 **What the engine cannot represent.** The closed-form engine is linear and mammillary, with
 first-order extravascular absorption. A source model with saturable protein binding
 (cefazolin, hydrocortisone), reversible interconversion (prednisone and prednisolone) or an
@@ -113,6 +155,7 @@ dose: the engine applies that itself, dose by dose (see *saturable oral absorpti
 |---|---|
 | `PK` | named list of PK sets, one per event; each has `v1,v2,v3,cl1,cl2,cl3` (liters, L/min). A single-model drug uses one set named `default`. |
 | `tPeak` | time (min) to peak effect site; `getDrugPK()` back-solves `ke0` from it. `0` means no effect-site model. |
+| `ke0` | optional (1/min), for a source that measured the equilibration rate rather than a time to peak effect. Supply it *instead* of `tPeak`, leaving `tPeak` out altogether, and `getDrugPK()` solves the true time to peak effect from this `ke0` and the disposition (`R/drugs_etomidate.R`). |
 | `MEAC` | reference effect concentration used for the MEAC plot / normalization (`0` if not applicable). |
 | `typical`, `upperTypical`, `lowerTypical` | the shaded "typical range" band on the plot. |
 | `reference` | literature citation (string). |
@@ -127,6 +170,17 @@ An RA drug may add a slow second tissue depot absorbing in parallel: `ka_RA_slow
 those doses through `advanceClosedFormPO_IM_IN()`. Omit them for an IV-only drug.
 The route is the suffix of the unit (`mg PO`, `mg SL`, `mg IM`, `mg IN`, `mg RA`; `doseRoute()` in `R/routes.R`),
 so list those units in the drug's `Units` field; the dropdowns group them by route automatically.
+
+**Optional — subcutaneous injection.** An SC drug writes `ka_SC`, `bioavailability_SC` and
+`tlag_SC` (and optionally `ka_SC_slow`, `fraction_SC_slow` and `tlag_SC_slow` for a second,
+slower depot with a lag of its own), and lists `mg SC` / `mg SC qwk`, or for an insulin `U SC`
+and, only if the product's label permits pump use, `U/hr SC`. `getDrugPK()` moves the fields onto
+the RA tissue depot, so a drug may offer SC or RA but not both. An insulin uses `mcU` as its
+`Concentration.Units` (doses in U, concentrations in mcU/mL). A source with zero-order
+absorption returns a `zeroOrderSC` block, `list(fraction, duration, into)`: `into = "central"`
+for a share of each dose entering the circulation at a constant rate beside the depot (Tham's
+insulin lispro and glargine), `into = "depot"` with `fraction = 1` for a sequential release into
+the depot. See `R/subcutaneous.R` and `R/insulinTham.R`.
 
 **Optional — a second oral depot.** A formulation absorbed through two parallel first-order
 paths, each with its own lag, adds `ka_PO2` (1/min), `fraction_PO2` (the share of the
@@ -191,6 +245,12 @@ CPIC terms (`poor`, `intermediate`, `normal`, `rapid`, `ultrarapid`). A source t
 fewer groups says in the drug file which group each of the five is given (escitalopram,
 citalopram). The drug's help page tabulates its clearance by phenotype automatically.
 
+So do `cyp2b6 = CYP2B6_DEFAULT` (`CYP2B6_VALUES`, the same five CPIC terms; read by methadone,
+whose help page gets a generated clearance-by-phenotype table) and `cyp2c9 = CYP2C9_DEFAULT`
+(`CYP2C9_VALUES`, the six common diplotypes rather than phenotypes; read by phenytoin and
+meloxicam). A phenotype a source did not estimate is given the reference group's parameters
+and the drug file says so: never interpolate silently.
+
 **Optional — an osmotic agent.** A drug reported as the serum osmolality it produces, rather
 than as its own concentration, adds `osmolality` to its signature (the patient's baseline,
 mOsm/kg, passed only to models that name it) and returns an `osmotic` block:
@@ -203,6 +263,34 @@ Its CSV row uses `mOsm` as `Concentration.Units`, so doses in g or mg are conver
 with the molecular weight, and `simCpCe()` plots `baseline + fraction * Cp`. The panel is
 labelled mOsm/kg and its y-axis is not anchored at zero. `R/drugs_mannitol.R` is the example,
 and [mannitol.md](mannitol.md) explains where its fraction comes from.
+
+**Optional — a drug reported in millimoles.** A drug whose source reports it in mmol/L
+(intravenous calcium, modelled as the change in ionized calcium) uses `mmol` as its CSV
+`Concentration.Units` and returns a `molar` block:
+
+```r
+molar = list(molecularWeight = 147.01)   # grams of the product as dosed per mole of what is plotted
+```
+
+`simCpCe()` converts a dose in g, mg, mcg or ng to millimoles with it, so dividing by the
+volumes in litres gives mmol/L; the panel is labelled mmol/L and starts at zero as usual.
+The weight is "grams of the product as dosed per mole of what is plotted", which need not be
+a true molecular weight. A drug given as more than one product returns one weight per
+product, named by a word its units carry:
+
+```r
+molar = list(molecularWeight = c(chloride = 147.01, gluconate = 147.01 * 3.11))
+```
+
+Intravenous calcium (`R/drugs_calcium.R`) is one drug for both salts, because both raise the
+same ionized calcium: its units are `g chloride`, `mg/min gluconate` and so on
+(`calciumUnits` in `R/constants.R`, built from `CALCIUM_SALTS`; there is no bare `g`),
+`doseProduct()` in `R/routes.R` reads the word, and `molarWeightOfDoses()` in
+`R/getDrugPK.R` gives `simCpCe()` the weight for each dose row, refusing a unit that names
+no product rather than guessing. Calcium gluconate's weight is calcium chloride's 147.01
+times the fitted dose ratio of 3.11, so a dose of either salt becomes millimoles of calcium
+chloride equivalent and runs through the one model. `validateMolar()` requires the block
+when the units are `mmol` and refuses it otherwise.
 
 **Optional — an active metabolite.** A drug whose effect is carried by a metabolite returns
 a `metabolite` block alongside the usual fields:
@@ -285,6 +373,52 @@ given in split doses; a continuous release (an osmotic pump) is not represented 
 The drug's help page must say how the pulses were chosen. `R/drugs_mixedAmphetamineSalts.R`
 is the example.
 
+**Optional — discretising an input shape the engine lacks.** The same block keyed to
+`ORAL_PULSE_DEFAULT_FORM` (the reserved name `"default"`) instead applies to every plain
+oral row — `mg PO`, `mg/kg PO` and their scheduled repeats — and leaves the unit exactly as
+entered:
+
+```r
+oralPulses = stats::setNames(list(list(fraction = f, delay = d)), ORAL_PULSE_DEFAULT_FORM)
+```
+
+Use this, and only this, when the source's own absorption is a shape no constant `ka` can
+represent and the pulses stand in for it. Hydrochlorothiazide is the case: Van Wart 2013
+fits a Weibull input whose depot rate constant rises with time, so
+`R/drugs_hydrochlorothiazide.R` gives each dose as eight lagged fractions at a rate constant
+of 1.0 /h — the Weibull's own asymptotic value, not a fitted number.
+
+The two uses are not interchangeable, and a reviewer will ask which one a block is. A
+formulation's pulses are a **model of a product**, evidenced by the product; the default
+form's are a **numerical approximation**, evidenced by the published curve they
+approximate. So a drug using the default form owes its header two things that a formulation
+does not: the input shape being stood in for, written out, and the **measured** cost of
+standing in for it — against a numerical integration of the exact system, across the
+covariate range, reported as a number. The standard is the pair MDMA's zero-order depot met:
+**0.53% of the peak concentration over the whole curve, and 0.01% at the peak**. Hold both,
+each against its own limit, or a fit will buy one with the other — minimising curve error
+alone let a seven-pulse hydrochlorothiazide reach 0.34% on the curve while drifting to six
+times MDMA's figure at the peak.
+
+**Measure that error AT THE PULSE TIMES.** Each lagged depot starts abruptly, so the
+approximation kinks at every pulse time and deviates most there, while the exact curve it
+approximates is smooth. `simulationTimeGrid()` puts a point at every dose time, so those
+kinks are what a user actually sees. A uniform grid steps over them and flatters the
+approximation: on hydrochlorothiazide a 0.02 h grid reported 0.45% where the truth was
+0.64%, and the six-pulse set it appeared to validate was outside the standard. If you fit
+the delays, the grid must be rebuilt per candidate, because a grid laid out from the
+starting delays goes stale as they move.
+
+The test must check the curve against that integration, not the fractions, so that a later
+change to either is caught by the thing worth protecting — and **its bounds must be the
+documented standard, not a loose fence around whatever the fit achieved.** A bound three
+times the claim is how the 0.64% above survived into review
+(`tests/testthat/test-drugs-hydrochlorothiazide.R`).
+
+A block may not name the default form and a formulation at once: an `mg PO XR` row is also
+an oral row, so which pulses applied would depend on the order the block was written in.
+`validateOralPulses()` refuses it.
+
 **Optional — saturable oral absorption.** A drug absorbed by a carrier that saturates, so
 that the fraction of an oral dose absorbed falls as the dose rises, returns an
 `oralSaturation` block alongside the usual fields:
@@ -323,6 +457,57 @@ reports the dependence in another form (buprenorphine's power law) is fitted to 
 over the dose range the source covers, and the fit is documented in the drug header
 (`R/drugs_buprenorphine.R`).
 
+### Saturable elimination — the `michaelisMenten` block
+
+A drug whose elimination saturates at the concentrations it is used at cannot use any
+closed-form engine, because superposition fails: the second dose is cleared more slowly
+because the first is still there. Such a drug returns a `michaelisMenten` block and is
+dispatched to `R/advanceMichaelisMenten.R`, which integrates the whole dose table at once.
+
+```r
+michaelisMenten = list(
+  vmax = vmax,                 # mass per minute, at this patient's size
+  km = km,                     # concentration at half vmax, plot units
+  k23 = ..., k32 = ...,        # optional: ONE peripheral compartment, both or neither
+  saltFactor = list(default = ...)   # mass of the modelled moiety per unit dosed
+)
+```
+
+`k23`/`k32` add one linear peripheral compartment; elimination still saturates on the
+**central** concentration only, and a drug that declares neither is bit-for-bit unchanged.
+Set `v2`, `v3` to 1 and `cl2`, `cl3` to 0 in the PK list, and `cl1` to `vmax / km`, the
+low-concentration limit, which the generated help tables read. Two compartments plus
+saturable elimination is GHB (`R/drugs_GHB.R`); one compartment is phenytoin.
+
+Because superposition fails, nothing upstream may split such a drug's dose table into
+parts that are simulated separately and added: `simCpCe()` dispatches here *before* it
+splits oral formulations, and `getDrugPK()` refuses `parallelSystems` alongside it.
+
+### When the dose basis is not the plotted analyte
+
+A model's parameters are fitted on a particular mass, which is not always the one the
+plot reports. Three patterns, in increasing order of how loudly they must be said:
+
+- The factor is **stoichiometry and the gap is unavoidable**: psilocybin is swallowed and
+  psilocin is measured, so both apparent parameters are rescaled by the molecular weight
+  ratio and the header derives it (`R/drugs_psilocybin.R`).
+- The source uses **one basis throughout and the other is plausible**: MDMA's source doses
+  the hydrochloride, so the header, help page and registry all say the dose is the salt
+  (`R/drugs_MDMA.R`).
+- **Both bases are in common use and the gap is large**: then the *unit itself* names the
+  basis. GHB is dosed in `g PO oxybate` rather than a bare `g PO`, because its source
+  doses and reports sodium oxybate while the independent literature reports the free acid,
+  21% apart. Add the units to `allUnits` in `R/constants.R` — a unit missing from it
+  simulates correctly in every scripted test and then fails in the app with "Dose table
+  contains unknown dose units", since `simulateDrugsWithCovariates()` does not go through
+  `validateDoseTableInput()`. A product word is safe in an oral unit as long as it is not
+  in `ORAL_FORMULATIONS`, which `doseFormulation()` matches against.
+
+Rescaling `vmax` and `km` by the same factor as the dose is exact, not an approximation,
+and should be pinned as such. Where independent human data exist, validate against a study
+the model was **not** fitted to: that is what catches a basis error, which otherwise makes
+a model wrong by a constant factor while every internal check still passes.
+
 ## 2. The metadata — `inst/extdata/drugDefaults_global.csv`
 
 Add one row. Columns:
@@ -333,9 +518,18 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
 - `Concentration.Units` — `mcg` or `ng` per mL (sets the internal unit scaling in `simCpCe`),
-  or `mOsm` for an osmotic agent (see above).
+  `mOsm` for an osmotic agent, or `mmol` for a drug reported in mmol/L (see above).
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
 - `Units` — quoted comma-separated list of all selectable units, e.g. `"mcg,mcg/kg,mcg/kg/min"`.
+  **Some unit strings enrol the drug in machinery elsewhere, so this column reaches
+  further than the dose grid.** `Plasma target` / `Effect site target` put the drug in the
+  TCI API's drug list, which `docs/tci-api.md` publishes, `TCI_DRUGS` in `test-tci-api.R`
+  pins and [FauxTCI](https://github.com/StevenLShafer/FauxTCI) is built against: adding
+  them means updating that roster and the API documentation, and it is a change to a
+  published contract rather than a local one. A `qd`/`bid`/`tid`/`qid`/`q4h`/`qwk` suffix opts
+  into `scheduled.R`'s repeats, an `SC` suffix into the tissue depot, and a unit naming a
+  salt or product into `doseProduct()`. Offer only what the drug's evidence supports: an
+  investigational or research model usually wants a bare mass unit and nothing else.
 - `Color` — hex color for this drug's curves (e.g. `#0000C0`).
 - `Lower,Upper,Typical,MEAC,endCe` — plot band bounds, MEAC, and the "time until threshold"
   level: the effect-site concentration for a drug with an effect site, the plasma concentration
@@ -347,7 +541,11 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   divided by the free fraction if it plots total drug. Add the antibiotic to
   `antibioticMicTable()` in `R/antibioticThresholds.R`, which records the organism, MIC, free
   fraction and sources, feeds the drug's help page, and is checked against this column by
-  `test-antibiotic-thresholds.R`.
+  `test-antibiotic-thresholds.R`. An antibiotic's band (`Lower`, `Typical`, `Upper`) is free drug at the
+  expected MBC of the common pathogens, placed on the plotted curve: add its pathogens to
+  `antibioticMbcTable()` in `R/antibioticMbc.R` (one `principal`, the `core` pathogens it kills,
+  and `excluded` ones with a reason), have the model function read `antibioticMbcBand()`, and
+  copy the band into this row; `test-antibiotic-mbc.R` checks them against each other.
 - `Class` — `IV` for an injected or swallowed drug, `gas` for an inhaled agent. The gases
   take a separate simulation path and have no `drugs_*.R` covariate function, so a new drug
   added by this procedure is `IV`.
@@ -363,6 +561,62 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
   unless the user turns on **Show illicit drugs** (off by default), are shown in red in
   the dose table, and are never offered in the startup menu. Give a drug this category
   only if it is such a research model; diamorphine is the first (`R/drugs_diamorphine.R`).
+  Such a drug needs one more file than any other: a row in
+  `inst/extdata/illicitRouteRegistry.csv` for **every** route the literature describes,
+  offered or not, carrying its analyte, matrix, input and parameter dose bases, population,
+  `route_status` (calibrated / anchored / observed / unsupported), `parameter_status`
+  (published fit / measured summary / derived approximation / not identified) and source.
+  `test-illicit-registry.R` then holds the line: a route may carry dose units only if its
+  row says `offered` with an identified input model, and a route the engine cannot
+  represent (anything pulmonary) must be recorded and refused rather than aliased to `IN`.
+  These models are plasma only: `tPeak` 0, `MEAC` 0 and no band, as the sources support no
+  effect site. See `inst/help/models/illicit-drugs.md`.
+
+### The therapeutic range (required where one exists)
+
+The band is how a user compares a curve with the concentrations that work, so **a drug model is
+not finished until its band is either set or its absence is explained**. Before writing the
+row, look for a therapeutic reference range, in this order:
+
+1. **A consensus guideline for the drug's class**: for psychiatric and antiseizure drugs,
+   Table 5 of the AGNP-TDM consensus guideline's update 2026 (Hart 2026, *Pharmacopsychiatry*
+   59:166-295, doi 10.1055/a-2860-7861; open access, 160 drugs, each with its sampling time,
+   laboratory alert level and level of recommendation; it supersedes the update 2017, Hiemke
+   2018, and builds on the AGNP task force's drug-by-drug systematic reviews); for an
+   antiseizure drug it omits, the ILAE position paper (Patsalos 2008, *Epilepsia*
+   49:1239-1276) and its 2018 update (Patsalos 2018, *Ther Drug Monit* 40:526-548), with
+   national harmonizations such as Reimers 2018 (*Drug Des Devel Ther* 12:271-280);
+   for antibiotics the MIC (`antibioticMicTable()`, above); for anaesthetics and analgesics
+   the effect-site concentrations of the clinical literature.
+2. **The product monograph**: the FDA label (Drugs@FDA, DailyMed) and the EMA SmPC. Older
+   drugs often state a range (phenytoin, carbamazepine, valproate, ethosuximide, digoxin);
+   most newer ones say none is established, which is itself worth recording.
+3. **Exposure-response analyses** of the source or the regulatory review, as for gabapentin.
+
+Then check that the range describes **what the row plots**: the same analyte (a parent, not a
+parent plus metabolite; total or unbound), the same matrix (serum, plasma, whole blood) and the
+same use (a chronic trough window does not describe intravenous loading). Draw it only when it
+does. A range for a parent plus a metabolite is drawn on the row carrying most of the sum only
+when that share is stable (bupropion on hydroxybupropion); otherwise neither row carries it.
+Set `Typical` inside the band (its midpoint unless the source names a target), and say on the
+help page that it is not a target.
+
+Every drug with a `Category`, and every metabolite of one, has a row in
+`inst/extdata/therapeuticRanges.csv` (`R/therapeuticRanges.R`; `THERAPEUTIC_RANGE_CATEGORIES`
+in `R/constants.R` is every category): the analyte, matrix,
+sampling time, limits in the plotted units (`mg/L` for a `mcg` drug, `ng/mL` for `ng`,
+`IU/mL`, `INR`, `s` for an ACT, and so on), the
+laboratory alert level and level of recommendation where the guideline gives them, the
+source and DOI, **how far the source was read** (`verification`: full text, label, abstract,
+or a secondary quotation — never a number from memory), the range it replaced, what the FDA or
+EMA product information says, and a `band_status` from `THERAPEUTIC_RANGE_STATUSES`: `drawn`,
+`drawn_on_metabolite`, `sum_not_drawn`, `pending_verification`, `not_applicable`,
+`band_differs` (the guideline's range is for another use or analyte, and the band is the
+library's own for what the row plots, which the notes name), `library_band` (no range is
+established, and the band is the library's own: an effect-site target, an MBC band, what
+ordinary doses reach, which the notes name) or `none_established`.
+`test-therapeutic-ranges.R` fails until every such drug has a row and the
+band columns agree with it, and the drug's help page prints the row.
 
 Example row (remifentanil):
 
@@ -418,7 +672,10 @@ The in-app help (the **Help** tab) generates a page for every drug in the CSV: i
 at six reference patients, its citation, its units and typical range, all computed from the
 files above so they cannot drift. What it cannot generate is the narrative — the population
 the model was fitted in, which covariates it uses and how, where it is extrapolated, who did
-the work. That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
+the work, and **where the band comes from**: the range, its source with a DOI, the analyte and
+sampling time it applies to, and the range it replaced if it was revised — or, when no band is
+drawn, why not (no range established, a range for a parent plus metabolite, a range for a
+different use). That goes in `inst/help/drugs/<name>.md`, starting at `###` headings (it is appended
 under an "About this model" heading). `tests/testthat/test-help-drugs.R` fails if the file is
 missing. See `inst/help/README.md` for the Markdown conventions and `inst/help/drugs/fentanyl.md`
 for a short example.
@@ -428,12 +685,52 @@ Optionally, add a teaching scenario that uses the drug: a `helpScenario()` entry
 
 ## Verify
 
+**Run the whole suite before you push, not a filtered selection.**
+
 ```r
 devtools::load_all(".")
-devtools::test(filter = "drugs-<name>")   # unit test
-devtools::test(filter = "help")           # the help pages, including the new drug's
+devtools::test()                           # all of it
 run_app()                                  # confirm it appears in the dose-grid dropdown and plots
 ```
 
-Also run the broader `test-multi-PK` / `test-single-PK` suites, which exercise the full
-`getDrugPK → simCpCe` path against the library.
+A filter chosen from "which files did I edit" is the wrong shape for this change, because
+a new drug reaches shared state that names neither the drug nor the files you touched.
+Two such misses cost CI cycles on 2026-10-18 alone (PR #534), and neither would have been
+caught by any filter derived from the diff.
+
+### What else a new drug touches
+
+Beyond the four files above, a new drug may need registering in places that enumerate the
+library by hand. These are **deliberately** hardcoded — `test-drugs-tramadol.R` says so:
+"because the count has been got wrong by hand more than once" — so adding yours to them is
+the intended maintenance step, not a weakening of the test.
+
+| If the drug … | Register it in |
+|---|---|
+| has no effect site (`tPeak` 0 / `ke0` 0) | **three** rosters: the `plasmaOnly` vector in `test-help-drugs.R`, and the pinned lists in `test-drugs-tramadol.R` and `test-recovery-engines.R` |
+| offers `Plasma target` / `Effect site target` | `TCI_DRUGS` in `test-tci-api.R`, and `docs/tci-api.md` — a published contract |
+| is in the `Illicit drugs` category | `inst/extdata/illicitRouteRegistry.csv`, one row per route, offered or not |
+| reads a CYP or creatinine covariate | it joins the Patient Profile hover tip by itself, but `PATIENT_FIELD_READER_NOTES` in `R/patient-fields.R` may need a note |
+| is an antibiotic with an `endCe` | `antibioticMicTable()` in `R/antibioticThresholds.R`, and its pathogens in `antibioticMbcTable()` in `R/antibioticMbc.R` |
+| needs a new `Category` | `DRUG_CATEGORIES` in `R/constants.R` **and** `bookmarksToExclude` in `R/app_globals.R` |
+| is a long-acting weekly product | `LONG_TERM_DRUGS` |
+
+A quick way to find any roster you might owe, before CI does: search the suite for a drug
+**already in the same situation as yours** — another plasma-only drug, another TCI drug,
+another illicit one — since every list that names it will need yours too. Substitute that
+drug for `codeine` below, which is plasma-only and in all three of its rosters:
+
+```sh
+grep -rln 'expect_setequal' tests/testthat/ | xargs grep -ln '"codeine"'
+```
+
+That returns the three rosters plus a few files that merely mention the drug, so read the
+hits rather than trusting the count.
+
+### One more trap
+
+**Do not edit test files while a suite is running against them.** testthat reads each file
+as it reaches it, against a package image loaded at the start, so a run spanning your edit
+can report a failure that corresponds to no actual state of the tree. One did exactly that
+on 2026-10-18 and cost an hour of investigation before it turned out not to be
+reproducible. Let the run finish, or stop it, then edit.

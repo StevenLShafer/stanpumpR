@@ -381,7 +381,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "bupivacaine", "ropivacaine", "mepivacaine",
     "phenytoin", "carbamazepine", "valproate", "phenobarbital", "pentobarbital",
     "ethosuximide", "topiramate", "lacosamide", "lamotrigine", "zonisamide",
-    "tiagabine", "levetiracetam", "eslicarbazepine",
+    "tiagabine", "levetiracetam", "eslicarbazepine", "cenobamate",
     "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
     "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
     "ondansetron", "aprepitant", "fosaprepitant",
@@ -392,10 +392,50 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # (R/drugs_diamorphine.R) plots parent plasma only, with 6-MAM and morphine
     # not modelled, so it has no effect site and forms no metabolite here.
     "diamorphine",
+    # The opt-in illicit research models (2026-10-17) are plasma only: see
+    # inst/extdata/illicitRouteRegistry.csv and each drug's header.
+    "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
+    # carfentanil (2026-10-18): sufentanil's DISPOSITION only, so its
+    # tPeak deliberately does not come with it (R/drugs_carfentanil.R)
+    "carfentanil",
     # Antipsychotics (2026-10-09): occupancy is a direct function of plasma,
     # or no effect is established; aripiprazole and haloperidol have PET ke0s.
     "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
-    "olanzapine", "droperidol", "droperidolIM"
+    "olanzapine", "droperidol", "droperidolIM",
+    # The antidiabetic drugs (2026-10-17): concentration only, no ke0, no
+    # metabolite (inst/help/models/antidiabetics.md)
+    "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
+    "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
+    "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
+    "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
+    "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
+    "semaglutideOral", "cetagliptin",
+    # Intravenous calcium joined on 2026-10-13: the ionized calcium itself
+    # is the end point, no ke0, no metabolite.
+    "calcium",
+    # Anticoagulants (2026-10-17): plasma activity or concentration, or the
+    # INR; no effect site (R/drugs_heparin.R and the others).
+    "heparin", "bivalirudin", "apixaban", "rivaroxaban",
+    "edoxaban", "dabigatran", "dabigatranHip", "apixabanVTE", "heparinCPB", "argatroban", "enoxaparin", "fondaparinux",
+    "warfarin", "fluindione", "acenocoumarol",
+    # The antihypertensives joined on 2026-10-17: concentration only, no
+    # published equilibration constant, and no blood pressure is plotted for
+    # any drug in the library (docs/antihypertensives.md).
+    "clevidipine", "fenoldopamPediatric", "carvedilol",
+    "azilsartan", "chlorthalidone", "hydrochlorothiazide",
+    # The renin-angiotensin drugs (2026-10-20): none of their sources fitted
+    # any pharmacodynamic model, and valsartan's fitted one is a blood
+    # pressure, which nothing in this library plots
+    "lisinopril", "olmesartan", "valsartan", "benazepril",
+    "enalapril", "enalaprilat",
+    # vasoactive and resuscitation drugs (2026-10-18): plasma only
+    "magnesiumSulfate", "labetalol", "nitroglycerin",
+    "procainamide", "dopamine",
+    "digoxin",
+    "milrinonePediatric",
+    "digoxinIVPediatric",
+    "methyleneBlue",
+    "ephedrine"
   ))
 })
 

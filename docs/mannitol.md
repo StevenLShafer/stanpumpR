@@ -15,7 +15,9 @@ osmolality(t) = baseline + 0.555 × Cp(t)
 - 0.555 is the net rise in measured osmolality per mOsm/L of plasma mannitol
   (see *The pharmacodynamic link*, below).
 
-Doses are entered in g, g/kg, g/hr or g/kg/hr. The shaded band is 300–320
+Doses are entered as infusions only, in g/hr or g/kg/hr: mannitol is run in
+over 15 to 60 minutes, never pushed, and the library offers no bolus unit for
+it (a dose is a rate, stopped with a rate of zero). The shaded band is 300–320
 mOsm/kg, the usual target range during osmotherapy, with 320 the conventional
 ceiling. Mannitol has no effect site, so only the plasma line is drawn, and the
 panel's y-axis starts just below the baseline instead of at zero.
@@ -56,10 +58,21 @@ below were checked against the abstract and match the prototype:
 |---|---|---|---|---|---|---|
 | Kaneda population mean | 2.80 L | 8.86 L | 12.0 L | 0.04 / 0.07 L/min | 2.07 L/min | 0.16 L/min |
 
-Kaneda found weight to be a covariate on V2 and dose on CL1. Only the abstract
-was available to us, so those covariate equations, the variability and the
-reference weight are not reconstructed. The prototype's documentation says the
-same.
+Kaneda found weight to be a covariate on V2 and dose on CL1. The full paper
+gives V2 = 8.86 × exp(0.0136 × (WT − 87)) L, so its 8.86 L belongs to an
+87 kg patient (7.03 L at 70 kg by Kaneda's own exponential); the dose term
+multiplies CL1 by (1 − 0.344) in the 0.5 g/kg group (0.0448 against
+0.0683 L/min). stanpumpR applies neither equation. It takes the population
+means as the 70 kg reference adult's and scales them to fat-free mass, with
+one correction, made at Dr Shafer's direction on 2026-10-28: V2 is first
+re-anchored from Kaneda's typical patient to the reference man by fat-free
+mass. Kaneda's typical patient, 87 kg at the cohort's mean height (167.5 cm)
+and age (56 years), weighted 6 men to 16 women as the cohort was, has a
+fat-free mass of 52.69 kg, against the reference man's 54.48 kg. So the
+re-anchored V2 is 8.86 × 54.48 / 52.69 = 9.16 L, 3.4% *larger* than
+published: the cohort was heavy but mostly women, and carried less fat-free
+mass than the 70 kg man. With *Adjust weight to fat-free mass* off, V2 is the
+published 8.86 L (see the size-scaling note in `R/drugs_mannitol.R`).
 
 ### 2. Clearance: 0.07 L/min, not 0.04 — changed
 
@@ -70,13 +83,18 @@ example used 0.04.
 
 An independent study settles it. Rudehill et al. gave 1 g/kg over 30 minutes to
 15 neurosurgical patients and measured plasma mannitol for 8 hours.
-Simulating their regimen with the Kaneda model (70 kg):
+Simulating their regimen with the Kaneda model (70 kg, Kaneda's published
+V2 of 8.86 L):
 
 | | End of infusion | 8 hours | Terminal half-life |
 |---|---|---|---|
 | Rudehill, observed | 5.91 mg/mL | 0.58 mg/mL | 2.4 h |
 | Kaneda, CL 0.07 L/min | 4.85 mg/mL | 0.68 mg/mL | 4.4 h |
 | Kaneda, CL 0.04 L/min | 5.06 mg/mL | 1.23 mg/mL | 7.3 h |
+
+With V2 re-anchored to the reference man (9.16 L, section 1) the 0.07 L/min
+row becomes 4.77 mg/mL, 0.68 mg/mL and 4.5 h, and the 0.04 L/min row
+4.97 mg/mL, 1.23 mg/mL and 7.4 h; none of the conclusions below changes.
 
 With 0.04 the eight-hour concentration is twice the observed value. 0.07 L/min
 is also closer to the clearances others report (Rudehill, 87 mL/min) and to
@@ -140,14 +158,14 @@ clearance, and it has not been validated in children.
 Mannitol is filtered at the glomerulus and not reabsorbed, and nearly all of a
 dose is excreted unchanged, so its clearance tracks GFR. stanpumpR scales CL1 by
 the patient's Cockcroft-Gault creatinine clearance over the reference patient's
-(70 kg, 35 years, male, creatinine 1.0 mg/dL: 102 mL/min):
+(70 kg, 35 years, male, creatinine 0.9 mg/dL: 113 mL/min):
 
 ```
 CL1 = 0.07 L/min × CrCl / 102
 ```
 
 CrCl is computed from the **Serum creatinine** field in the Patient Profile, or
-from an assumed normal creatinine (1.0 mg/dL in men, 0.8 in women) when the field
+from an assumed normal creatinine (0.9 mg/dL in men, 0.8 in women) when the field
 is blank. A child's creatinine, entered or assumed, is read against the normal for
 age and put on the adult scale (`R/renalFunction.R`), so a blank field gives a child
 the adult value. Cockcroft-Gault carries body size, so this factor replaces the

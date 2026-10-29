@@ -18,7 +18,13 @@ getDrugPK(
   osmolality = OSMOLALITY_DEFAULT,
   creatinine = NULL,
   cyp2c19 = CYP2C19_DEFAULT,
-  model = NULL
+  cyp2c9 = CYP2C9_DEFAULT,
+  cyp2b6 = CYP2B6_DEFAULT,
+  pregnant = FALSE,
+  vkorc1 = VKORC1_DEFAULT,
+  model = NULL,
+  cyp4f2 = CYP4F2_DEFAULT,
+  gestationalAge = NULL
 )
 }
 \arguments{
@@ -59,9 +65,32 @@ sugammadex, gabapentin, pregabalin, oxycodone, meloxicam intravenous); see
 \item{cyp2c19}{CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
 Passed only to drug models that declare it (escitalopram, citalopram).}
 
+\item{cyp2c9}{CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES};
+passed only to models that name it (phenytoin).}
+
+\item{cyp2b6}{CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES};
+passed only to models that name it (methadone).}
+
+\item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default).
+Passed only to the models that name it (R/pregnancy.R lists them), which
+apply the changes of late pregnancy measured for that drug
+(inst/extdata/pregnancyRegistry.csv); every other model ignores it.
+TRUE requires \code{sex = "female"}.}
+
+\item{vkorc1}{VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES};
+passed only to models that name it (warfarin).}
+
 \item{model}{internal: a model's output to use in place of calling the
 drug's own function.  \code{getDrugPK()} sets it to build the PK sets of a
 drug's parallel systems (see \code{parallelSystemSets()}); leave NULL.}
+
+\item{cyp4f2}{CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES};
+passed only to models that name it (warfarin).}
+
+\item{gestationalAge}{gestational age at birth in weeks, or NULL (the
+default) for a term birth.  Passed only to the neonatal models that
+declare it (dobutamineNeonatal), whose clearance matures with
+postmenstrual age (\code{postmenstrualAge()}).}
 }
 \value{
 a list: the drug's PK sets (\code{PK}, one per PK event), its

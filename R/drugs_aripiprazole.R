@@ -61,12 +61,61 @@
 # 100 x Ce / (8.63 + Ce) -- of parent only.  Adding dehydroaripiprazole to the
 # 8.63 ng/mL denominator would be wrong.  The PK and PD come from different
 # populations, which antipsychoticProfiles() records.  Occupancy is a receptor
-# biomarker, not a target: MEAC and the band are zero.
+# biomarker, not a target: MEAC is zero.  The band is the serum therapeutic
+# reference range of parent aripiprazole, 120 to 270 ng/mL (Hart et al.,
+# Psychopharmacology 2022;239:3377-3391; inst/extdata/therapeuticRanges.csv),
+# a trough concentration at steady state to read against the plasma curve.
+#
+# PREGNANCY
+# =========
+# Westin 2017 (Clin Pharmacol Ther) followed 14 aripiprazole pregnancies
+# through routine therapeutic drug monitoring, each against the same woman's
+# own baseline outside pregnancy: the dose-adjusted active moiety
+# (aripiprazole + dehydroaripiprazole) was 52% lower in the middle of the
+# third trimester (95% CI -62% to -39%, p < 0.001), aripiprazole alone fell
+# similarly, and the parent-to-metabolite ratio fell 31% (p < 0.001).  Zheng
+# 2020's physiologically based model predicts a 61% lower active-moiety AUC
+# in the third trimester.  CYP2D6, which forms dehydroaripiprazole, is
+# induced in pregnancy.  With the Patient Profile's Pregnant field on, the
+# PARENT's apparent clearance CL/F is multiplied by
+# ARIPIPRAZOLE_PREGNANCY_CL_FACTOR = 2.1 (1 / 0.48 = 2.08, rounded as the
+# registry gives it), on top of the CYP2D6 phenotype's value; V/F, ka and
+# ke0 are unchanged.  Because the whole of the parent's clearance forms the
+# metabolite (FORMATION above), kFormation = cl1 / v1 rises with it, and
+# the metabolite's own parameters (CLm/fm, Vm/fm, in R/drugs_dehydroaripiprazole.R)
+# are NOT changed.  So aripiprazole falls by 52% at steady state, as
+# Westin's parent did, and D2 occupancy, which is driven by the parent, falls
+# with it; but the metabolite's steady state, dose rate / (CLm/fm), does not
+# move, so the plotted active moiety falls by less than the measured 52%
+# (38% in a normal metaboliser), and the parent-to-metabolite ratio by 52%
+# rather than 31%.  Westin's ratio implies the metabolite itself fell by
+# about 30%, which would need its own clearance raised; no factor for it was
+# measured, and none is applied.  Late pregnancy (the third trimester) is the
+# state described.  (Claude Code, 2026-10-19, at the request of Steven L.
+# Shafer; see R/pregnancy.R and inst/extdata/pregnancyRegistry.csv.)
+#
+# References
+# ----------
+# Kim JR et al., Br J Clin Pharmacol 2008;66:802-810.
+#   https://doi.org/10.1111/j.1365-2125.2008.03223.x
+# Kim E et al., J Cereb Blood Flow Metab 2012;32:759-768.
+#   https://doi.org/10.1038/jcbfm.2011.180 (effect site)
+# Westin AA, Brekke M, Molden E, Skogvoll E, Castberg I, Spigset O.  Clin
+#   Pharmacol Ther 2018;103:477-484.  https://doi.org/10.1002/cpt.770
+#   (pregnancy)
+# Zheng L, Tang S, Tang R, Xu M, Jiang X, Wang L.  Clin Pharmacokinet
+#   2021;60:623-635.  https://doi.org/10.1007/s40262-020-00962-3
+#   (pregnancy, physiologically based model)
 # -----------------------------------------------------------------------------
 
 ARIPIPRAZOLE_V   <- 192     # L, apparent (abstract; the brief says 193)
 ARIPIPRAZOLE_KA  <- 1.06    # 1/h, fixed in the source
 ARIPIPRAZOLE_KE0 <- 0.725   # 1/h, Kim 2012
+
+# Parent apparent clearance in pregnancy relative to Kim's value: Westin
+# 2017, active moiety 52% lower in the third trimester, 1 / 0.48 = 2.1 (see
+# the header).  Not applied to the metabolite.
+ARIPIPRAZOLE_PREGNANCY_CL_FACTOR <- 2.1
 
 ARIPIPRAZOLE_CL_CYP2D6 <- c(   # L/h, apparent; see the header
   poor         = 1.83,
@@ -83,10 +132,12 @@ ARIPIPRAZOLE_CL_CYP2D6 <- c(   # L/h, apparent; see the header
 #'
 #' @inheritParams cefazolin
 #' @param cyp2d6 CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   parent's apparent clearance by 2.1 (Westin 2017; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 aripiprazole <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
-                         adjustToFFM = TRUE)
+                         adjustToFFM = TRUE, pregnant = FALSE)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
@@ -97,6 +148,9 @@ aripiprazole <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
 
   v1  <- ARIPIPRAZOLE_V * size$volume
   cl1 <- unname(ARIPIPRAZOLE_CL_CYP2D6[[cyp2d6]]) / 60 * size$clearance   # L/min
+  # Pregnancy (see the header): the parent's apparent clearance, and with it
+  # kFormation below; the metabolite's own clearance is not touched.
+  if (isTRUE(pregnant)) cl1 <- cl1 * ARIPIPRAZOLE_PREGNANCY_CL_FACTOR
 
   default <- list(
     v1 = v1,
@@ -119,15 +173,22 @@ aripiprazole <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
     "parameters); effect site: Kim E et al., J Cereb Blood Flow Metab ",
     "2012;32:759-768. https://doi.org/10.1038/jcbfm.2011.180"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("parent apparent clearance x ", ARIPIPRAZOLE_PREGNANCY_CL_FACTOR,
+             ", metabolite unchanged"),
+      paste0("Westin AA et al., Clin Pharmacol Ther 2018;103:477-484. ",
+             "https://doi.org/10.1002/cpt.770")))
+  }
 
   list(
     PK = PK,
     tPeak = 0,                        # ke0 is supplied, not solved
     ke0 = ARIPIPRAZOLE_KE0 / 60,      # 1/min
     MEAC = 0,
-    typical = 0,
-    upperTypical = 0,
-    lowerTypical = 0,
+    typical = 195,                    # Hart 2022, ng/mL; mirrors the CSV
+    upperTypical = 270,
+    lowerTypical = 120,
     reference = reference,
     metabolite = list(
       name              = "dehydroaripiprazole",

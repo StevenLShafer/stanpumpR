@@ -27,12 +27,13 @@ test_that("doseRoute() agrees with every unit the app offers", {
   dd <- getDrugDefaultsGlobal()
   units <- unique(unlist(dd$Units))
   # The substring tests simCpCe() used before doseRoute(), with RA (regional
-  # anesthesia, 2026-10-10) added
+  # anesthesia, 2026-10-10) and SC (subcutaneous, 2026-10-17) added
   old <- ifelse(grepl("PO", units), "PO",
                 ifelse(grepl("IM", units), "IM",
                        ifelse(grepl("IN", units), "IN",
                               ifelse(grepl("SL", units), "SL",
-                                     ifelse(grepl("RA", units), "RA", "IV")))))
+                                     ifelse(grepl("RA", units), "RA",
+                                            ifelse(grepl("SC", units), "SC", "IV"))))))
   expect_equal(doseRoute(units), old)
 })
 
@@ -56,10 +57,11 @@ test_that("every unit offered before the oral rate keeps its exact classificatio
   # "mg/day PO" can be a rate; for every other unit the answer must be the
   # one it always was.
   # The rate units that arrived later (the oral daily rate, the continuous
-  # RA infusion) are rates by design and are left out.
-  units <- unique(c(setdiff(allUnits, c(poRateUnits, raRateUnits)), gasUnits, tciUnits, scheduledUnits,
+  # RA infusion, the insulin pump) are rates by design and are left out.
+  later <- c(poRateUnits, raRateUnits, insulinRateUnits)
+  units <- unique(c(setdiff(allUnits, later), gasUnits, tciUnits, scheduledUnits,
                     unlist(getDrugDefaultsGlobal()$Units)))
-  units <- setdiff(units, c(poRateUnits, raRateUnits))
+  units <- setdiff(units, later)
   route <- doseRoute(units)
   oldBolus <- route == ROUTE_IV & !(grepl("min", units) | grepl("hr", units))
   newBolus <- route == ROUTE_IV & !isRateUnit(units)
@@ -92,9 +94,10 @@ test_that("the drug defaults list each drug's units grouped by route, with none 
   unscheduled <- hydromorphone[!isScheduledUnit(hydromorphone)]
   expect_equal(unscheduled[doseRoute(unscheduled) != ROUTE_IV],
                c("mg PO", "mg PO liquid", "mg/kg PO liquid", "mg IM", "mg IN"))
-  # Every route but sublingual and regional anesthesia, which hydromorphone
-  # does not offer
-  expect_equal(unique(doseRoute(hydromorphone)), setdiff(DOSE_ROUTES, c(ROUTE_SL, ROUTE_RA)))
+  # Every route but sublingual, regional anesthesia and subcutaneous, which
+  # hydromorphone does not offer
+  expect_equal(unique(doseRoute(hydromorphone)),
+               setdiff(DOSE_ROUTES, c(ROUTE_SL, ROUTE_RA, ROUTE_SC)))
   lidocaine <- dd$Units[[which(dd$Drug == "lidocaine")]]
   expect_equal(unique(doseRoute(lidocaine)), c(ROUTE_IV, ROUTE_RA))
   expect_true(all(c("Plasma target", "Effect site target") %in%
@@ -194,4 +197,48 @@ test_that("a further oral formulation must be valid and share the default lag", 
                "ka_PO > 0")
   expect_error(oralFormulationSet(set, list(ka_PO = 0.02, tlag_PO = set$tlag_PO), "x", "syrup"),
                "not one of")
+})
+
+test_that("every unit any drug offers is one the dose table will accept", {
+  # A drug whose CSV Units name a unit missing from allUnits simulates
+  # correctly in every scripted test and then fails in the app with "Dose
+  # table contains unknown dose units", because simulateDrugsWithCovariates()
+  # does not go through validateDoseTableInput().  GHB's salt-named units
+  # ("g PO oxybate") were added with exactly that gap, so this closes it for
+  # every drug at once.  Claude Code, 2026-10-17.
+  dd <- getDrugDefaultsGlobal(FALSE)
+  accepted <- c(allUnits, gasUnits, tciUnits, scheduledUnits)
+  tested <- 0L
+  for (i in seq_len(nrow(dd))) {
+    # A metabolite (desmetramadol, salicylate, norfluoxetine and the rest) is
+    # never dosed directly, so its Units are NA and it offers nothing to check.
+    if (is.na(dd$Units[i])) next
+    units <- trimws(strsplit(dd$Units[i], ",")[[1]])
+    units <- units[nzchar(units)]
+    expect_true(all(units %in% accepted), info = dd$Drug[i])
+    # the default unit must be one the drug actually offers
+    if (!is.na(dd$Default.Units[i]) && nzchar(dd$Default.Units[i]))
+      expect_true(dd$Default.Units[i] %in% units, info = dd$Drug[i])
+    tested <- tested + 1L
+  }
+  # guard against the loop silently testing nothing
+  expect_gt(tested, 100)
+})
+
+test_that("the reduction and exponential forms, and the hold above D50", {
+  # Apixaban's stage 2 relative F (Cirincione 2018): 1 at and below 2.5 mg,
+  # 1 - I50 at 50 mg, held there above it rather than falling through zero.
+  reduction <- list(form = "reduction", I50 = 0.42, D0 = 2.5, D50 = 50, exponent = 0.857)
+  expect_equal(oralSaturationFraction(c(0, 2.5), reduction), c(1, 1))
+  expect_equal(oralSaturationFraction(50, reduction), 0.58)
+  expect_equal(oralSaturationFraction(10, reduction),
+               1 - 0.42 * (7.5 / 47.5)^0.857)
+  expect_equal(oralSaturationFraction(c(100, 200, 1e6), reduction), rep(0.58, 3))
+  # Rivaroxaban's exponential form (Willmann 2018): Fmax at a small dose,
+  # halfway to Fmin at D50, Fmin in the limit; may exceed 1.
+  expo <- list(form = "exponential", Fmin = 0.59, Fmax = 1.25, D50 = 14.4)
+  expect_equal(oralSaturationFraction(0, expo), 1.25)
+  expect_equal(oralSaturationFraction(14.4, expo), 0.59 + 0.66 / 2)
+  expect_equal(oralSaturationFraction(1e6, expo), 0.59)
+  expect_equal(oralSaturationFraction(10, expo), 0.998, tolerance = 1e-3)
 })

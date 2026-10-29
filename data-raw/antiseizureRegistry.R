@@ -52,9 +52,9 @@ PRO <- "proposed_unestimated"
 registry <- rbind(
   reg("Acetazolamide", "oral IR, IV (ER off-label)", L, PRO,
       "acetazolamide base", "acetazolamide (total plasma)",
-      "renal linear 1C (unestimated for epilepsy)", "pk_only", NA,
+      "3C, saturable binding, elimination of unbound drug (Yue 2013; total-plasma clearance not derived)", "pk_only", NA,
       "https://pubmed.ncbi.nlm.nih.gov/23683608/",
-      "Yano 1998 oral popPK (intraocular-pressure PD) a candidate; epilepsy constants unestimated."),
+      "Yue 2013 (PMID 23683608): IV, three compartments with saturable binding and elimination of unbound drug, in healthy volunteers and CAPD patients; its renal and nonrenal clearances act on unbound drug, so a total-plasma clearance would have to be derived before a curve. Yano 1998 (oral, PMID 9591933) assumed one compartment and is not used (decision of Steven L. Shafer, 2026-10-28). Epilepsy constants unestimated."),
   reg("Brivaracetam", "oral tablet/solution, IV", L, PRO,
       "brivaracetam base", "brivaracetam (apparent, oral)",
       "1C first-order, LBW allometric", "pd_source_incomplete", NA,
@@ -70,11 +70,11 @@ registry <- rbind(
       "1C first-order, chronic autoinduced state", "pk_only", "carbamazepine",
       "https://pubmed.ncbi.nlm.nih.gov/9545146/",
       "Graves 1998 maintenance model implemented; epoxide and single-dose naive state not modelled; Carnexiv IV withdrawn 2026."),
-  reg("Cenobamate", "oral tablet", L, PRO,
+  reg("Cenobamate", "oral tablet", L, FIT,
       "cenobamate base", "cenobamate (apparent, oral)",
-      "2C first-order with lag; dose-dependent (nonlinear) CL", "pk_only", NA,
-      "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=565c2126-57ae-4e29-b443-723bbe7e2072",
-      "Nonlinear CL (1.4 to 0.4 L/h with dose); handoff poster values unconfirmed; a single linear CL is only locally valid."),
+      "2C first-order with lag", "pk_only", "cenobamate",
+      "https://doi.org/10.1016/j.eplepsyres.2023.107185",
+      "Vashi 2023 sponsor model (960 subjects; Supplemental Table 2, identical to the FDA NDA 212839 review Table 2); dose, BSA, weight, bilirubin, ethnicity and co-medication terms not applied (linear about medians neither the paper nor the FDA or EMA reports print); single-dose nonlinearity not reproduced; Vernillet 2020 healthy volunteers: first day matched, steady state ~20% above the model; AES 2025 model (CL/F 0.282 L/h) not used, incomplete; renal (1.4-1.5x) and hepatic (1.9-2.3x; 4.2x Child-Pugh C, FDA label 2025) impairment not modelled; Kork (Steinhoff 2024) and Oslo (Johannessen Landmark 2026) TDM concentration per dose within 14% of the model without interacting co-medication (24% above it with valproate or cannabidiol, not modelled); band 10-25 mg/L (AGNP 2026, Hart 2026 Table 5); the sponsor's 5-35 mg/L holds the troughs of >95% of pivotal-trial responders (Greene and Kamin, AAN 2021; model troughs inside every per-dose 90% range), a reference range, not a therapeutic range; no effect site (photoparoxysmal response reduced at 1 h, Kasteleijn-Nolst Trenite 2019)."),
   reg("Clobazam", "oral tablet/suspension/film", L, PRO,
       "clobazam + N-desmethylclobazam", "clobazam and N-desmethylclobazam",
       "tandem 1C parent + metabolite; CYP2C19 on metabolite", "pk_only", NA,
@@ -114,7 +114,7 @@ registry <- rbind(
       "everolimus base", "everolimus (whole blood)",
       "2C first-order (Combes 2018)", "pd_source_incomplete", NA,
       "https://doi.org/10.1007/s10928-018-9600-2",
-      "531-patient TSC model typical values not retrievable; whole-blood trough target 5-15 ng/mL; Kim 2023 is an implementable alternative."),
+      "531-patient TSC model typical values not retrievable; whole-blood trough target 5-15 ng/mL; Park 2023 (Front Pharmacol 14:1197549, PMID 38074125; one compartment, 22 mostly paediatric patients with focal cortical dysplasia) is an implementable alternative (accepted 2026-10-28)."),
   reg("Felbamate", "oral tablet/suspension", L, PRO,
       "felbamate base", "felbamate (apparent, oral)",
       "1C first-order", "pk_only", NA,
@@ -155,7 +155,7 @@ registry <- rbind(
       "levetiracetam base", "levetiracetam (oral ~absolute; IV 1:1)",
       "1C first-order, renal/non-renal clearance split", "pk_only", "levetiracetam",
       "https://doi.org/10.1016/j.eplepsyres.2017.02.011",
-      "Rhee 2017 structure with a 66/34 renal split (reduction); ER not offered."),
+      "Rhee 2017 clearance and absorption, the label's volume (0.6 L/kg) and a 66/34 renal split (reduction); ER not offered."),
   reg("Lorazepam", "IV (status); oral off-label", L, FIT,
       "lorazepam base", "lorazepam (plasma)",
       "see library model", "pk_only", "lorazepam",
@@ -221,7 +221,7 @@ registry <- rbind(
       "tiagabine base", "tiagabine (apparent, oral)",
       "1C first-order", "pk_only", "tiagabine",
       "https://doi.org/10.1016/s0928-0987(00)00109-3",
-      "Ingwersen 2000 monotherapy implemented; height covariate replaced by FFM scaling."),
+      "Ingwersen 2000 monotherapy implemented with its height covariates on CL/F and V/F; V/F 52 L (the abstract's 62 L is a misprint)."),
   reg("Topiramate", "oral IR/sprinkle; ER capsules", L, FIT,
       "topiramate base", "topiramate (absolute; oral F 1)",
       "3C linear, allometric", "pk_only", "topiramate",
@@ -255,11 +255,12 @@ E <- "estimated"; FX <- "fixed"; LD <- "label-derived"; GD <- "guideline-derived
 CA <- "calibration"; DR <- "derived"
 
 odani <- "https://doi.org/10.1248/bpb.19.444"
+cenoVashi <- "https://doi.org/10.1016/j.eplepsyres.2023.107185"
 parameters <- rbind(
   par("phenytoin", "V", "1.23", "L/kg (x weight^0.463)", E, "Odani 1996, 116 Japanese epilepsy patients", odani),
   par("phenytoin", "Vmax", "9.80", "mg/day/kg (x weight^0.463)", E, "Odani 1996", odani),
   par("phenytoin", "Km", "9.19", "mg/L total", E, "Odani 1996", odani),
-  par("phenytoin", "ka (ER capsule)", "0.225", "1/h", FX, "Cheng 2020, 37 adults", "https://doi.org/10.1007/s40268-020-00323-2"),
+  par("phenytoin", "ka (ER capsule)", "0.225", "1/h", FX, "Jun 2020, 37 adults", "https://doi.org/10.1007/s40268-020-00323-2"),
   par("phenytoin", "ka (suspension/chewable)", "2.0", "1/h", CA, "label Tmax 1.5-3 h", "https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=db8c69b0-4697-433e-98c7-b0b2d2c52a83"),
   par("phenytoin", "salt factor (sodium)", "0.9199", "unitless (252.27/274.25)", LD, "molecular weights", odani),
   par("phenytoin", "conversion half-life (fosphenytoin)", "15", "min", LD, "Cerebyx label; Boucher 1989 8.0 min", "https://doi.org/10.1002/jps.2600781110"),
@@ -311,13 +312,13 @@ parameters <- rbind(
   par("zonisamide", "V/F", "48.10", "L", E, "Silva 2025", "https://doi.org/10.1016/j.ejps.2025.107023"),
   par("zonisamide", "ka", "0.671", "1/h", E, "Silva 2025", "https://doi.org/10.1016/j.ejps.2025.107023"),
 
-  par("tiagabine", "CL/F", "6.10", "L/h at 170 cm", E, "Ingwersen 2000, 130 patients", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
-  par("tiagabine", "V/F", "62.0", "L at 170 cm", E, "Ingwersen 2000", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
+  par("tiagabine", "CL/F", "6.10 x (height/170)^2.13", "L/h", E, "Ingwersen 2000, 130 patients, final model", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
+  par("tiagabine", "V/F", "52.0 x (height/170)^3.44", "L", E, "Ingwersen 2000, final model (Table 4; the abstract's 62 L is a misprint)", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
   par("tiagabine", "ka", "1.25", "1/h", E, "Ingwersen 2000", "https://doi.org/10.1016/s0928-0987(00)00109-3"),
 
   par("levetiracetam", "CL (total, reference)", "3.9", "L/h", E, "Rhee 2017, 425 adults", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
   par("levetiracetam", "renal fraction of CL", "0.66", "unitless", LD, "label/mass balance (66% unchanged)", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
-  par("levetiracetam", "V/F", "65.3", "L at 70 kg", E, "Rhee 2017", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
+  par("levetiracetam", "V", "42", "L at 70 kg (0.6 L/kg)", LD, "Keppra label: 0.5-0.7 L/kg, half-life 7 +/- 1 h (Rhee's sparse-data V/F 65.3 L gave 11.6 h)", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
   par("levetiracetam", "ka", "2.44", "1/h", FX, "Rhee 2017", "https://doi.org/10.1016/j.eplepsyres.2017.02.011"),
 
   par("eslicarbazepine", "CL/F", "2.43", "L/h at 70 kg (x ^0.75)", E, "Falcao 2012 / poster, 641 patients", "https://doi.org/10.2165/11596290-000000000-00000"),
@@ -330,7 +331,14 @@ parameters <- rbind(
   par("carbamazepine", "V/F", "1.97", "L/kg", E, "Graves 1998", "https://pubmed.ncbi.nlm.nih.gov/9545146/"),
   par("carbamazepine", "ka", "0.441", "1/h", E, "Graves 1998", "https://pubmed.ncbi.nlm.nih.gov/9545146/"),
   par("carbamazepine", "age>=70 CL factor", "0.749", "x CL/F", E, "Graves 1998", "https://pubmed.ncbi.nlm.nih.gov/9545146/"),
-  par("carbamazepine", "relative F (ER)", "0.89", "unitless", LD, "Tegretol-XR label", "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2a8c7366-ce89-47ce-8123-96f26812fca0")
+  par("carbamazepine", "relative F (ER)", "0.89", "unitless", LD, "Tegretol-XR label", "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=2a8c7366-ce89-47ce-8123-96f26812fca0"),
+
+  par("cenobamate", "CL/F", "0.533", "L/h", E, "Vashi 2023 Supplemental Table 2 (= FDA NDA 212839 review Table 2), 960 subjects", cenoVashi),
+  par("cenobamate", "V1/F", "42.4", "L", E, "Vashi 2023 / SK16007", cenoVashi),
+  par("cenobamate", "Q/F", "1.84", "L/h", E, "Vashi 2023 / SK16007", cenoVashi),
+  par("cenobamate", "V2/F", "7.27", "L", E, "Vashi 2023 / SK16007", cenoVashi),
+  par("cenobamate", "ka", "2.74", "1/h", E, "Vashi 2023 / SK16007", cenoVashi),
+  par("cenobamate", "lag time", "0.240", "h", E, "Vashi 2023 / SK16007", cenoVashi)
 )
 
 utils::write.csv(parameters, file.path(outdir, "antiseizureParameters.csv"),

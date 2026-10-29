@@ -78,7 +78,9 @@ jobs:
               long_title = TRUE,
               email_username = "${{ secrets.SHINY_CONFIG_EMAIL_USERNAME }}",
               email_password = "${{ secrets.SHINY_CONFIG_EMAIL_PASSWORD }}",
-              debug = 1
+              debug = 1,
+              # The deployed commit, shown by the app (stanpumpRBuild())
+              commit = "${{ github.event.pull_request.head.sha }}"
             )
           )
           yaml::write_yaml(shinyConfig, "config.yml", fileEncoding = "UTF-8")

@@ -20,7 +20,7 @@ None; only the plasma concentration is plotted, and it is the concentration that
 
 ### Typical concentrations
 
-The shaded band, 20 to 70 ng/mL, is the reference range for epilepsy (Patsalos and colleagues, *Epilepsia* 2008;49:1239-1276); the typical value, 40 ng/mL, is its midpoint, not a target. Lower concentrations suffice for panic disorder and anxiety: 0.5 mg twice daily averages about 14 ng/mL at steady state, below the band but above the concentration at which dos Santos's volunteers were half-maximally impaired. No time-until-threshold level is set.
+The shaded band, 15 to 80 ng/mL, 10 hours after a dose, is the reference range for epilepsy of the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; laboratory alert level 100 ng/mL), revised from the ILAE's 20 to 70 ng/mL (Patsalos and colleagues, *Epilepsia* 2008;49:1239-1276); its upper limit is the calculated peak at 4 to 8 mg a day in four doses. The typical value, 40 ng/mL, is not a target. Lower concentrations suffice for panic disorder and anxiety: 0.5 mg twice daily averages about 14 ng/mL at steady state, below the band but above the concentration at which dos Santos's volunteers were half-maximally impaired. No time-until-threshold level is set.
 
 ### Where to be careful
 

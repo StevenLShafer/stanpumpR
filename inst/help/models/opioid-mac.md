@@ -30,7 +30,7 @@ The published studies of opioid MAC reduction do not agree well with one another
 
 | Study | Opioid, plasma concentration | U (MEAC) | Observed reduction (%) | This model (%) |
 |---|---|---|---|---|
-| Brunner 1994 | fentanyl 1.67 ng/mL | 2.8 | 50 | 55 |
+| McEwan 1993, cited by Brunner 1994 | fentanyl 1.67 ng/mL | 2.8 | 50 | 55 |
 | Katoh 1999 | fentanyl 3 ng/mL | 5.0 | 61 | 67 |
 | Katoh 1999 | fentanyl 6 ng/mL | 10 | 74 | 77 |
 | Brunner 1994 | sufentanil 0.145 ng/mL | 2.6 | 50 | 54 |

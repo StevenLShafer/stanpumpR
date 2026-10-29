@@ -4,7 +4,7 @@ Paroxetine's parameters are from Kim and colleagues (*Drug Des Devel Ther* 2015;
 
 ### The dose term
 
-A clearance that depends on the dose cannot be used directly by the simulator, whose parameters are fixed before the doses are seen. Instead, clearance is Kim's value at 25 mg a day, and each oral dose D is scaled by (D / 25)<sup>0.363</sup>. At steady state on D mg once a day the exposure over a day is then D &times; (D / 25)<sup>0.363</sup> / CL<sub>25</sub>, which is exactly Kim's D / CL(D). So for once-daily dosing the average steady-state concentration is Kim's at every dose: at age 50, 46 ng/mL on 20 mg and 160 ng/mL on 50 mg. The scale exceeds 1 above 25 mg because it is an exposure scale on apparent parameters, not a bioavailability. See [Oral, intramuscular and intranasal doses](help:models/absorption).
+A clearance that depends on the dose cannot be used directly by the simulator, whose parameters are fixed before the doses are seen. Instead, clearance is Kim's value at 25 mg a day, and each oral dose D is scaled by (D / 25)<sup>0.363</sup>. At steady state on D mg once a day the exposure over a day is then D &times; (D / 25)<sup>0.363</sup> / CL<sub>25</sub>, which is exactly Kim's D / CL(D). So for once-daily dosing the average steady-state concentration is Kim's at every dose: at age 50, 46 ng/mL on 20 mg and 160 ng/mL on 50 mg. The scale exceeds 1 above 25 mg because it is an exposure scale on apparent parameters, not a bioavailability. See [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption).
 
 What this does not reproduce:
 
@@ -18,7 +18,7 @@ The label's half-life is about 21 hours; this model's is 54 hours at 71. Kim's d
 
 ### Covariates
 
-Age, as published, with 71 years as the reference: at 20, clearance is 2.4 times the reference value. The power of age has no lower bound, and children are far outside Kim's data; the model should not be used for them. Kim retained no size covariate, so the parameters are taken to be the 70 kg reference man's and scaled to the patient's [fat-free mass](help:models/fat-free-mass) with the switch on; with it off everyone receives the published values. CYP2D6 genotype and interacting drugs are not represented.
+Age, as published, with 71 years as the reference: at 20, clearance is 2.4 times the reference value. The power of age has no lower bound, and children are far outside Kim's data; the model should not be used for them. Kim retained no size covariate, so the parameters are taken to be the 70 kg reference man's and scaled to the patient's [fat-free mass](help:models/fat-free-mass) with the switch on; with it off everyone receives the published values. CYP2D6 genotype and interacting drugs are not represented: the Patient Profile's **CYP 2D6** field does not change this model.
 
 ### Effect site
 
@@ -26,9 +26,12 @@ None; only the plasma concentration is plotted. The antidepressant effect develo
 
 ### Typical concentrations
 
-The shaded band, 20 to 65 ng/mL, is the therapeutic reference range of the AGNP consensus guidelines for therapeutic drug monitoring (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62); an observational study (Yuan 2025) also associated response with this range. It describes trough concentrations at steady state and is for orientation only.
+The shaded band, 30 to 80 ng/mL, is the therapeutic reference range of the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861), for troughs 24 hours after a dose; the laboratory alert level is 120 ng/mL. It replaces the 2017 update's 20 to 65 ng/mL (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62), on the strength of a prospective cohort of 921 patients in which 32 to 80 ng/mL carried a high probability of response with good tolerability (Liao and colleagues, 2024); an observational study (Yuan 2025) had associated response with 20 to 65 ng/mL. The typical value, 40 ng/mL, is not a target. It is for orientation only.
 
 ### Other models
 
 Feng and colleagues (*Br J Clin Pharmacol* 2006;61:558-569) fitted 1970 concentrations from 171 depressed patients aged 69 to 95 with two compartments and saturable (Michaelis-Menten) elimination depending on CYP2D6 genotype. It is not used, a decision made after reading the full paper (Steven L. Shafer, 2026-10-11). Its maximal elimination rate in extensive metabolisers, about 450 &micro;g/h, is about 11 mg a day, less than the doses of up to 40 mg a day the patients took, yet its own predicted concentrations stay below about 300 ng/mL for nearly three years. The paper prints no bioavailability or dose-scaling term, and no other reading of its units gives typical concentrations; see [Antidepressant models and their limits](help:models/antidepressants). Shigetome and colleagues (*CPT Pharmacometrics Syst Pharmacol* 2025;14:1119-1127) fitted 179 Japanese patients with major depression and linked the first week's exposure to the depression rating over six weeks; that model needs the patient's measured rating after one week, and is not implemented.
 
+### Pregnancy
+
+With **Pregnant** ticked, the apparent clearance is doubled; the volume, the absorption and the dose term are unchanged, so a once-daily regimen's mean concentration is halved. Westin and colleagues (*PLoS One* 2017;12:e0181082) followed 20 paroxetine pregnancies through routine drug monitoring and found the dose-adjusted serum concentration 51% lower in the third trimester than the same women's own baseline (95% CI 30 to 66%), suggesting a dose about 100% higher. The factor is **population-typical**: the fall comes from induction of CYP2D6, and Ververs and colleagues (*Clin Pharmacokinet* 2009;48:677-683) found that in CYP2D6 intermediate and poor metabolisers paroxetine **rises** through pregnancy instead. This model has no CYP2D6 term, so in such a patient the direction shown is wrong. See [Pregnancy](help:models/pregnancy).

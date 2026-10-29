@@ -12,6 +12,9 @@
 #   input$help_goto           a page id; clicked on any [data-help-page] link
 #   input$help_scenario_load  a scenario id; clicked on any [data-help-scenario]
 #   input$help_search         the search box
+#   input$investigator_show   an investigator key; clicked on any
+#                             [data-investigator] link, in the help or in the
+#                             References panel (R/help-investigators.R)
 #
 # The page ids come from the browser, so they are checked against the
 # registry before anything is read from disk.
@@ -28,6 +31,9 @@
 #' @param timeApi the app_server()'s time-units functions (setDoseTable,
 #'   showTimeSettings), through which a scenario sets its time unit and writes
 #'   its dose table; NULL writes the tables directly
+#' @returns a list: `page`, the reactiveVal() holding the current page id, and
+#'   `loadScenario(s)`, which loads a scenario into the simulator (used for a
+#'   ?scenario= link, R/deep-links.R)
 #' @noRd
 helpServer <- function(input, output, session, doseTable, eventTable, drugDefaults,
                        navId = "mainNav", timeApi = NULL) {
@@ -63,11 +69,13 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
     helpSearchResultsUI(trimws(term), helpSearch(trimws(term)))
   })
 
-  observeEvent(input$help_scenario_load, {
-    s <- helpScenarioById(input$help_scenario_load)
+  # Load a scenario into the simulator: from the Load buttons, and from a
+  # ?scenario= link as the session starts (R/deep-links.R).  Returns TRUE when
+  # the scenario was loaded.
+  loadScenario <- function(s) {
     if (is.null(s)) {
       showNotification("That scenario does not exist.", type = "error")
-      return()
+      return(FALSE)
     }
     problems <- helpScenarioCheck(s, drugDefaults())
     if (length(problems) > 0) {
@@ -79,7 +87,7 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
               problems[1]),
         type = "error", duration = 10
       )
-      return()
+      return(FALSE)
     }
     outputComments("Loading help scenario", s$id)
     applyHelpScenario(session, s, doseTable, eventTable, timeApi)
@@ -89,7 +97,19 @@ helpServer <- function(input, output, session, doseTable, eventTable, drugDefaul
               tags$span(class = "small", "Press Apply Changes after editing the dose table to see your own variations.")),
       type = "message", duration = 8
     )
+    TRUE
+  }
+
+  observeEvent(input$help_scenario_load, {
+    loadScenario(helpScenarioById(input$help_scenario_load))
   })
 
-  invisible(helpPage)
+  observeEvent(input$investigator_show, {
+    modal <- helpInvestigatorModal(input$investigator_show)
+    if (is.null(modal)) return()
+    outputComments("Showing investigator", input$investigator_show, level = DEBUG_LEVEL_VERBOSE)
+    showModal(modal)
+  })
+
+  invisible(list(page = helpPage, loadScenario = loadScenario))
 }

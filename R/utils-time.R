@@ -124,11 +124,12 @@ validTimeUnit <- function(unit) {
 
 # The format a set of Time strings is written in: c(unit = , mode = ).  Clock
 # mode exists only for CLOCK_TIME_UNITS; any other unit is elapsed.  An
-# unknown unit is the default; an unknown mode is "clock", as the UI starts.
-timeFormat <- function(unit = TIME_UNIT_DEFAULT, mode = "clock") {
+# unknown unit is the default; an unknown mode is TIME_MODE_DEFAULT, as the UI
+# starts.
+timeFormat <- function(unit = TIME_UNIT_DEFAULT, mode = TIME_MODE_DEFAULT) {
   unit <- validTimeUnit(unit)
   if (!(is.character(mode) && length(mode) == 1 && !is.na(mode) && mode %in% TIME_MODES)) {
-    mode <- "clock"
+    mode <- TIME_MODE_DEFAULT
   }
   if (!unit %in% CLOCK_TIME_UNITS) mode <- "relative"
   c(unit = unit, mode = mode)
@@ -172,6 +173,18 @@ timeEntryUnitText <- function(format) {
   }
 }
 
+# The time settings in a few words, for the header of the collapsed Time
+# panel: "(days, Elapsed time)", "(hours, Actual time)".  The display is
+# named as the Time Display selector names it (timeModeChoices()); the
+# procedure start is not repeated here, to keep the header to one line in
+# the sidebar.
+timeSettingsText <- function(format) {
+  choices <- timeModeChoices(format[["unit"]])
+  display <- names(choices)[match(format[["mode"]], choices)]
+  if (is.na(display)) display <- names(choices)[1]
+  paste0("(", format[["unit"]], ", ", display, ")")
+}
+
 # The label of a time field in a dialog: "Time (days)"
 timeEntryLabel <- function(format) {
   paste0("Time (", timeEntryUnitText(format), ")")
@@ -200,16 +213,60 @@ maxTimeLabel <- function(maximum, unit) {
   names(choices)[match(maxTimeValue(maximum), choices)]
 }
 
-# A Max time (minutes) that the unit offers: x itself when it is a choice,
-# else the shortest choice at least as long, else the longest.  NA or a
-# non-number is the unit's first (default) choice.
+# The Max time and Min time sliders' range for a unit, in minutes: 0 to the
+# unit's longest Max time, in the unit's step (TIME_SLIDER_STEPS).  The Max
+# time slider starts one step up, so that a plot always has a length.
+timeSliderRange <- function(unit) {
+  unit <- validTimeUnit(unit)
+  list(min = 0, max = max(MAX_TIMES[[unit]]$times), step = TIME_SLIDER_STEPS[[unit]])
+}
+
+# A Max time (minutes) the unit's slider can show: x rounded up to a whole
+# step, at least one step and at most the unit's longest.  NA or a non-number
+# is the unit's first (default) Max time.
 snapMaximum <- function(x, unit) {
-  times <- MAX_TIMES[[validTimeUnit(unit)]]$times
+  r <- timeSliderRange(unit)
   x <- suppressWarnings(as.numeric(x))
-  if (length(x) != 1 || !is.finite(x)) return(times[1])
-  if (x %in% times) return(x)
-  above <- times[times >= x]
-  if (length(above) > 0) above[1] else max(times)
+  if (length(x) != 1 || !is.finite(x)) return(MAX_TIMES[[validTimeUnit(unit)]]$times[1])
+  # The tolerance keeps a whole number of steps, read back from a string,
+  # from being rounded up to the next one
+  min(max(ceiling(x / r$step - 1e-9) * r$step, r$step), r$max)
+}
+
+# A Min time (minutes) the unit's slider can show, below `maximum`: x rounded
+# down to a whole step, from 0 to one step short of `maximum`.  NA or a
+# non-number is 0.
+snapMinimum <- function(x, maximum, unit) {
+  r <- timeSliderRange(unit)
+  x <- suppressWarnings(as.numeric(x))
+  if (length(x) != 1 || !is.finite(x)) return(0)
+  x <- floor(x / r$step + 1e-9) * r$step
+  max(0, min(x, maximum - r$step))
+}
+
+# The tick spacing (minutes) of a plot from `minimum` to `maximum`: a Max
+# time's own (MAX_TIMES) on a plot from 0 of that length, so those plots keep
+# the ticks they always had; otherwise the smallest of the unit's
+# AXIS_TICK_STEPS that leaves at most AXIS_MAX_TICK_INTERVALS intervals.
+axisTimeStep <- function(minimum, maximum, unit) {
+  unit <- validTimeUnit(unit)
+  standard <- MAX_TIMES[[unit]]
+  if (minimum == 0 && maximum %in% standard$times) {
+    return(standard$steps[standard$times == maximum])
+  }
+  steps <- AXIS_TICK_STEPS[[unit]]
+  fits <- steps[(maximum - minimum) / steps <= AXIS_MAX_TICK_INTERVALS]
+  if (length(fits) > 0) fits[1] else max(steps)
+}
+
+# The axis breaks (minutes) of a plot from `minimum` to `maximum`: the
+# multiples of `step` inside it.  As multiples, not as minimum + k step, so
+# that a window from 15 weeks ticks at whole weeks whatever its start.
+axisTimeBreaks <- function(minimum, maximum, step) {
+  first <- ceiling(minimum / step - 1e-9)
+  last  <- floor(maximum / step + 1e-9)
+  if (last < first) return(minimum)
+  (first:last) * step
 }
 
 # The unit for a bookmark made before there were time units: minutes, unless

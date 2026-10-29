@@ -14,15 +14,15 @@ The **Antidepressants** in the startup menu are a library of named, source-speci
 | [venlafaxine](help:drugs/venlafaxine) | Wang and colleagues, 2022 | 24 healthy volunteers (rich profiles) and 127 psychiatric patients (troughs) | One compartment, apparent oral, with [desvenlafaxine](help:drugs/desvenlafaxine) formed from it and by first pass; the patients' clearance |
 | [bupropion](help:drugs/bupropion) | Ghimire and colleagues, 2026 | 19 adults, one 150 mg sustained-release dose | Two compartments for bupropion and two for [hydroxybupropion](help:drugs/hydroxybupropion), formed from it |
 
-All are given by mouth only (`mg PO`, with once- and twice-daily schedules). Most are **apparent** models, fitted to oral data alone, which predict oral concentrations correctly and intravenous ones not at all. See [Oral, intramuscular and intranasal doses](help:models/absorption).
+All are given by mouth only (`mg PO`, with once-daily schedules, twice-daily ones for all but fluoxetine, and three times daily for venlafaxine). Most are **apparent** models, fitted to oral data alone, which predict oral concentrations correctly and intravenous ones not at all. See [Oral, intramuscular, intranasal and regional anesthesia doses](help:models/absorption).
 
 ## What a curve can and cannot tell you
 
-**Population, not patient.** Every curve is the typical patient of its source population. No model is offered as transferable beyond that population without calibration. When ten published escitalopram models were tested against an independent cohort, none gave reliable population predictions without it (Liu and colleagues, 2025).
+**Population, not patient.** Every curve is the typical patient of its source population. No model is offered as transferable beyond that population without calibration. When ten published escitalopram models were tested against an independent cohort, none gave reliable population predictions without it (Yan and colleagues, 2025).
 
 **Trough data shape the half-lives.** Most of these models were fitted to one or two concentrations per patient, drawn just before a dose at steady state. Such data pin down the average steady-state concentration (dose rate divided by clearance) well and the shape within a dosing interval poorly. Several apparent half-lives therefore differ from the product label's: mirtazapine's is about 7 hours against the label's 20 to 40, paroxetine's about 54 hours at 71 years against the label's 21, and fluoxetine's about 6 hours against the label's 4 to 6 days, with norfluoxetine's 20 minutes against 4 to 16 days. Fluoxetine's model was held back until its units were checked: its source's own simulated troughs confirm that the printed parameters are what the authors used, so the troughs are right and the time course is not. Each drug's page says where this applies.
 
-**The shaded band** is the therapeutic reference range of the AGNP consensus guideline (Hiemke and colleagues, 2018) for trough concentrations at steady state. For bupropion the guideline's range is for bupropion plus hydroxybupropion, and is drawn on the hydroxybupropion row, which carries most of the sum.
+**The shaded band** is the therapeutic reference range for trough concentrations at steady state of the AGNP consensus guideline's 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5), which revised 88 ranges. Against the 2017 update (Hiemke and colleagues, 2018) it narrows sertraline to 10 to 50 ng/mL (from 10 to 150), moves paroxetine to 30 to 80 (from 20 to 65), and adopts the task force's systematic reviews for escitalopram, 20 to 40 (Eichentopf and colleagues, 2022), duloxetine, 20 to 120 (Amann and colleagues, 2024), and venlafaxine, 140 to 600 for the active moiety with 85 to 380 for ODV alone (Lense and colleagues, 2024); citalopram (50 to 110) and mirtazapine (30 to 80) are unchanged. Bupropion's range, 850 to 1500 ng/mL, is hydroxybupropion's and is drawn on its row. Fluoxetine's, 150 to 300 ng/mL (120 to 500 in 2017), and venlafaxine's are for a parent plus its metabolite, which share the sum too evenly for either row to carry it, so no band is drawn and the drug's page gives the range. Every range, its alert level, its source and how far the source was read are in `inst/extdata/therapeuticRanges.csv`.
 
 **No effect site.** Antidepressant response develops over weeks and does not follow plasma concentration with a delay that a ke0 can describe. There is no effect-site curve, and *Time until threshold* is not computed.
 
@@ -41,7 +41,15 @@ These were assessed and left out. They are not forgotten:
 
 Hiemke C, Bergemann N, Clement HW, et al. Consensus guidelines for therapeutic drug monitoring in neuropsychopharmacology: update 2017. *Pharmacopsychiatry* 2018;51:9-62. https://doi.org/10.1055/s-0043-116492
 
-Liu and colleagues, external evaluation of ten escitalopram population models, *Drug Des Devel Ther* 2025, https://doi.org/10.2147/DDDT.S546904.
+Hart XM, Gründer G, Hiemke C, et al. Consensus guidelines for therapeutic drug monitoring in neuropsychopharmacology: update 2026. *Pharmacopsychiatry* 2026;59:166-295. https://doi.org/10.1055/a-2860-7861
+
+Eichentopf L, Hiemke C, Conca A, et al. Systematic review and meta-analysis on the therapeutic reference range for escitalopram. *Front Psychiatry* 2022;13:972141. https://doi.org/10.3389/fpsyt.2022.972141
+
+Amann F, Kochtyrew M, Zernig G, Gründer G, Hart XM. Therapeutic reference range for duloxetine in the treatment of depression revised. *Neurosci Appl* 2024;3:104077. https://doi.org/10.1016/j.nsa.2024.104077
+
+Lense XM, Hiemke C, Funk CSM, et al. Venlafaxine's therapeutic reference range in the treatment of depression revised. *Psychopharmacology* 2024;241:275-289. https://doi.org/10.1007/s00213-023-06484-7
+
+Yan K, Xie X, Shao Q, Wang N, Yang M. A step toward precision dosing of escitalopram in Chinese patients: an external evaluation of published population pharmacokinetic models. *Drug Des Devel Ther* 2025;19:10937-10951. https://doi.org/10.2147/DDDT.S546904.
 
 Meyer JH, Wilson AA, Sagrati S, et al. Serotonin transporter occupancy of five selective serotonin reuptake inhibitors at different doses: an [11C]DASB positron emission tomography study. *Am J Psychiatry* 2004;161:826-835. https://doi.org/10.1176/appi.ajp.161.5.826
 

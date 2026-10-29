@@ -16,4 +16,4 @@ A one-compartment model fitted to samples hours apart does not describe the minu
 
 ### Effect site
 
-The D2-occupancy effect site of Lim and colleagues (*Pharm Res* 2013;30:683-693) is supplied here as on [oral haloperidol](help:drugs/haloperidol): ke0 0.213 per hour, half-maximal putamen occupancy at 0.791 ng/mL. It was fitted after oral doses in healthy men, and its use after an intravenous bolus in critically ill patients is a transfer. Occupancy is a receptor biomarker, not a target, so there is no band.
+The D2-occupancy effect site of Lim and colleagues (*Pharm Res* 2013;30:683-693) is supplied here as on [oral haloperidol](help:drugs/haloperidol): ke0 0.213 per hour, half-maximal putamen occupancy at 0.791 ng/mL. It was fitted after oral doses in healthy men, and its use after an intravenous bolus in critically ill patients is a transfer. Occupancy is a receptor biomarker, not a target. There is no band: the AGNP therapeutic reference range describes oral maintenance treatment of psychosis at steady state, not intravenous doses for delirium, just as [amiodaroneIV](help:drugs/amiodaroneIV) takes no chronic trough window.

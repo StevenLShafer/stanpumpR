@@ -179,3 +179,18 @@ test_that("advanceClosedForm0 also survives a drug with no tPeak", {
   expect_true(all(is.na(r$Ce)))
   expect_false(any(is.nan(r$Ce)))
 })
+
+test_that("a metabolite link without mwRatio is refused, not defaulted to 1", {
+  # A missing molar mass ratio once meant 1, which silently hands the
+  # parent's mass over unchanged (opioid potency audit, 2026-10-27).  Every
+  # link in the library states its ratio.
+  orig <- tramadol
+  local_mocked_bindings(tramadol = function(...) {
+    x <- orig(...)
+    x$metabolite$mwRatio <- NULL
+    x
+  })
+  expect_error(getDrugPK("tramadol", 70, 171, 50, "male",
+                         getDrugDefaults("tramadol")),
+               "needs mwRatio")
+})

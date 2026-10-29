@@ -95,11 +95,18 @@ advanceClosedForm0 <- function(dose, pkSet, maximum, plotRecovery, emerge)
       )
 
       recovery <- if (plotRecovery) recoveryFromStates(recoveryStates, emerge) else rep(0, L)
+      # The peripheral concentrations, read off the plasma states; see
+      # R/compartments.R.  No depot: every dose here is intravenous.
+      plasmaStates <- list(p_state_l1, p_state_l2, p_state_l3)
+      lambdas <- c(lambda_1, lambda_2, lambda_3)
       results <- data.frame(
         Time = timeLine,
         Cp = Cp,
         Ce = Ce,
-        Recovery = recovery
+        Recovery = recovery,
+        C2 = peripheralConcentration(plasmaStates, lambdas, k21),
+        C3 = peripheralConcentration(plasmaStates, lambdas, k31),
+        Depot = rep(0, L)
       )
       attr(results, "recoveryStates") <- if (plotRecovery) recoveryStates else NULL
       return(results)

@@ -1,4 +1,49 @@
-propofol <- function(weight, height, age, sex, adjustToFFM = TRUE)
+# PREGNANCY
+# =========
+# Gin and colleagues, read in full (2026-10-19):
+#   Gin T, Gregory MA, Chan K, Buckley T, Oh TE.  Br J Anaesth 1990;64:148-153:
+#     10 women at elective caesarean section (65.3 kg) against 6 nonpregnant
+#     women at laparoscopic sterilisation (52.8 kg), 2 mg/kg, whole blood to
+#     480 min, non-compartmental: clearance 2.55 (0.49) against 1.57 (0.56)
+#     L/min (P < 0.01), 39.3 against 29.4 mL/kg/min; Vss 2.66 against 3.36
+#     L/kg (not significant).
+#   Gin T, Yau G, Jong W, Tan P, Leung RKW, Chan K.  Br J Anaesth
+#     1991;67:49-53: 8 women at caesarean section (72.5 kg) against 8 women
+#     2-3 days postpartum (62.0 kg), whole blood to 600 min: clearance 31.5
+#     against 33.8 mL/kg/min (medians).  The postpartum women were chosen
+#     because they keep the physiology of pregnancy without the blood loss
+#     and the loss of the fetus and placenta, and the two groups were alike:
+#     the rise at caesarean is not from the operation.
+# This model reproduces the 1990 nonpregnant group: 1.55 L/min for a woman of
+# 33.3 years and 52.8 kg against 1.57 measured, so it is the reference.
+# Against it, at each group's age and weight, clearance was 1.391 times the
+# model's at caesarean in 1990, 1.145 times at caesarean in 1991 (whose longer
+# sampling lowers the estimate, as the authors say) and 1.193 times 2-3 days
+# postpartum.  The two caesarean groups, weighted by their size (10 and 8),
+# give a geometric mean of 1.276, which is PROPOFOL_PREGNANCY_CL_FACTOR = 1.28
+# on the elimination clearance with the Patient Profile's Pregnant field on.
+# The volumes and distribution clearances are unchanged (Vss did not differ);
+# the time to peak effect (1.6 min) is kept, so ke0 is solved again for the
+# faster disposition, as for morphine.  The ratio is height-independent.  Whole blood
+# was assayed and this model is of plasma; a ratio carries across.  The
+# Schnider companion (R/alternativeModels.R) applies the same factor.  See
+# R/pregnancy.R.  (Claude Code, 2026-10-19.)
+#
+# References: Gin 1990 https://doi.org/10.1093/bja/64.2.148 ; Gin 1991
+# https://doi.org/10.1093/bja/67.1.49
+
+# Propofol clearance in late pregnancy relative to the published value
+# (Gin 1990 and 1991 against this model; see above).
+PROPOFOL_PREGNANCY_CL_FACTOR <- 1.28
+
+# The citation the pregnancy factor is appended with (both models)
+PROPOFOL_PREGNANCY_SOURCE <- paste0(
+  "Gin T et al., Br J Anaesth 1990;64:148-153 and 1991;67:49-53. ",
+  "https://doi.org/10.1093/bja/64.2.148"
+)
+
+propofol <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                     pregnant = FALSE)
 {
   # Units **************
   # Time: Minutes
@@ -7,7 +52,10 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # adjustToFFM is accepted for a uniform signature but not used: the Eleveld
   # model below carries its own Al-Sallami fat-free-mass covariate.
 
-  # Schnider
+  # Schnider (1998), as STANPUMP ran it.  Not used: `default` is overwritten
+  # by the Eleveld model below.  Kept for reference; the Schnider model the
+  # app draws is propofolSchnider() in R/alternativeModels.R, behind the
+  # Minto / Schnider box under Graph Options.
 
   default <- list(
     v1 = 4.27,
@@ -198,6 +246,9 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE)
   M6   <- (V3 / RV3)^0.75 * KQ3 * DQ3
   CL3   <- exp(THETA[6]) * M6
 
+  # Pregnancy (see the header): the elimination clearance only.
+  if (isTRUE(pregnant)) CL1 <- CL1 * PROPOFOL_PREGNANCY_CL_FACTOR
+
   default <- list(
     v1 = V1,
     v2 = V2,
@@ -216,6 +267,10 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # lowerTypical <- 2.5
   # MEAC <- 0
   reference <- "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/"
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", PROPOFOL_PREGNANCY_CL_FACTOR), PROPOFOL_PREGNANCY_SOURCE))
+  }
 
   return(
     list(

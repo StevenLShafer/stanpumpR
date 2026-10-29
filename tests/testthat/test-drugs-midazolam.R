@@ -19,9 +19,9 @@ test_that("returns the published parameters with total-body-weight scaling", {
     ),
     tPeak = 3.0,
     MEAC = 0,
-    typical = 0.1,
-    upperTypical = 0.04,
-    lowerTypical = 0.12,
+    typical = 0.208,
+    upperTypical = 0.304,
+    lowerTypical = 0.101,
     reference = paste0(
       "Zomorodi K et al., Anesthesiology 1998;89(6):1418-1429, Table 3: ",
       "kinetics fitted to the data of Buhrer M et al., Clin Pharmacol Ther ",
@@ -109,4 +109,39 @@ test_that("tPeak is Buhrer's parametric equilibration half-time", {
   # rounding of tPeak to one decimal (5.70 min).
   PK <- getDrugPK("midazolam", 70, 170, 50, "male")$PK$default
   expect_equal(log(2) / PK$ke0, 5.6, tolerance = 0.02)
+})
+
+test_that("pregnancy: clearance x 1.28 (Wilson 1987), corroborated by Hebert's oral data", {
+  # The factor (see the header): Wilson 1987's women awaiting caesarean
+  # section (9.0 mL/min/kg, 73 kg, 25 y) and its two gynaecological groups
+  # (8.7 and 7.0 mL/min/kg, 60 kg, 30 and 31 y), each against this model's
+  # clearance for a nonpregnant woman of the same age and weight
+  cl <- function(w, a) getDrugPK("midazolam", w, 163, a, SEX_FEMALE)$PK$default$cl1
+  awaiting <- 9.0 * 73 / 1000 / cl(73, 25)
+  gyn <- mean(c(8.7 * 60 / 1000 / cl(60, 30), 7.0 * 60 / 1000 / cl(60, 31)))
+  expect_equal(awaiting / gyn, MIDAZOLAM_PREGNANCY_CL_FACTOR, tolerance = 0.005)
+  # and labour is below the gynaecological women, which the flag does not carry
+  expect_lt(6.5 * 71 / 1000 / cl(71, 25) / gyn, 1)
+  # The corroboration: Quinney 2012's hepatic CYP3A x 1.6 and unbound fraction
+  # x 1.2 on a well-stirred liver at 1.5 L/min, from CL1 at the 70 kg reference
+  cl70 <- 0.5351973; qh <- 1.5
+  fuClint <- cl70 * qh / (qh - cl70)
+  clPreg  <- qh * fuClint * 1.6 * 1.2 / (qh + fuClint * 1.6 * 1.2)
+  expect_equal(clPreg / cl70, 1.4455, tolerance = 1e-4)
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.
+  on  <- getDrugPK("midazolam", 70, 165, 30, SEX_FEMALE, pregnant = TRUE)
+  off <- getDrugPK("midazolam", 70, 165, 30, SEX_FEMALE, pregnant = FALSE)
+  expect_equal(off, getDrugPK("midazolam", 70, 165, 30, SEX_FEMALE))
+  a <- on$PK$default
+  b <- off$PK$default
+  expect_equal(a$cl1 / b$cl1, MIDAZOLAM_PREGNANCY_CL_FACTOR, tolerance = 1e-6)
+  for (p in c("v1", "v2", "v3", "cl2", "cl3")) expect_identical(a[[p]], b[[p]], info = p)
+  # the time to peak effect is held, so ke0 is solved again on the new
+  # disposition
+  expect_equal(on$tPeak, off$tPeak)
+  expect_lt(a$ke0, b$ke0)
+  expect_match(on$reference, "Wilson CM", fixed = TRUE)
+  expect_match(on$reference, "Hebert", fixed = TRUE)
+  expect_match(on$reference, "pregnancy:", fixed = TRUE)
+  expect_no_match(off$reference, "Hebert")
 })

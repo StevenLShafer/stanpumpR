@@ -4,7 +4,7 @@ Midazolam's parameters were fitted to the data of Bührer and colleagues (*Clin 
 
 ### Covariates
 
-None. The parameters are for a typical adult. Midazolam's clearance is known to fall with age and with CYP3A4 inhibition, and its volume to rise with obesity; none of this is in the model.
+None in the source. The parameters are for a typical adult; they take the default [fat-free-mass scaling](help:models/fat-free-mass) and are used as published with the switch off. Midazolam's clearance is known to fall with age and with CYP3A4 inhibition, and its volume to rise with obesity; none of this is in the model.
 
 ### Effect site
 
@@ -12,8 +12,12 @@ The time to peak effect is 3.0 minutes, from the same volunteers as the kinetics
 
 ### Typical concentrations
 
-The shaded band, 0.04 to 0.12 mcg/mL, is a sedation range. Concentrations needed for hypnosis as a sole agent are several times higher. The default recovery threshold is 0.04 mcg/mL.
+The shaded band, 0.101 to 0.304 mcg/mL, with 0.208 as the typical value, is moderate sedation, a Ramsay score of 3 or 4, the end point the library draws for the sedatives. It comes from Barr and colleagues (*Anesthesiology* 2001;95:286-298), who infused midazolam and lorazepam by target-controlled infusion after surgery in the intensive care unit: the plasma midazolam concentrations with an even chance of a Ramsay score of at least 2, 3, 4, 5 and 6 were 68, 101, 208, 304 and 375 ng/mL, 18% lower for each decade of age and with fentanyl, so the median patient scores 3 or 4 from 101 to 304 ng/mL. The same study gives [lorazepam](help:drugs/lorazepam) its band. It replaced 0.04 to 0.12 mcg/mL, whose source the library did not record. The AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5) gives 50 to 150 ng/mL for sedation 1 to 2 hours after an oral dose, at its lowest level of recommendation, and it is not drawn: the guideline takes it from Matsuda and colleagues (*Acta Anaesthesiol Scand* 2022;66:818-822), who quote it from a pediatric anesthesia textbook (Coté, Lerman and Anderson, 2013), and whose own children, given 0.5 mg/kg by mouth before surgery, had a median serum concentration of 47.6 ng/mL when sedated and 49.8 ng/mL when not. Reaction time slows above 0.02 mcg/mL. Concentrations needed for hypnosis as a sole agent are several times higher. The default recovery threshold is 0.101 mcg/mL, the lower edge of the band: below it a patient is more likely than not to have emerged from moderate sedation, as for lorazepam. It was 0.04 mcg/mL, whose source was not recorded.
 
 ### Where to be careful
 
 The active metabolite α-hydroxymidazolam, which matters mainly in renal failure and during prolonged infusion, is not modelled. Midazolam's context-sensitive half-time grows markedly with long infusions because of its large slow compartment; the model will show this, but the model's typical adult is not the intensive care patient in whom it is most often seen.
+
+### Pregnancy
+
+With **Pregnant** ticked, the elimination clearance is multiplied by 1.28; the volumes and the distribution clearances are unchanged. The factor is from the one intravenous comparison, Wilson and colleagues (*Anaesthesia* 1987;42:1057-1062): 5 mg intravenously, sampled for 2 hours, in women in active labour, women awaiting caesarean section, women at the start of caesarean section, and two groups of nonpregnant gynaecological women. The women awaiting caesarean section, pregnant but neither labouring nor anaesthetised, cleared midazolam 1.28 times as fast as the gynaecological women once each group is set against this model at its own age and weight. The paired oral data of Hebert and colleagues (*Clin Pharmacol Ther* 2008;84:248-253; apparent oral clearance 1.7 to 1.8 times higher at 28 to 32 weeks), carried to an intravenous dose through the mechanism Quinney and colleagues fitted (hepatic CYP3A 1.6 times, unbound fraction 1.2 times, a well-stirred liver at 1.5 L/min), give 1.45, the same direction. In **active labour** Wilson found the clearance lower (0.91 times) and the volume smaller; the field does not represent labour. The time to peak effect is held, so the effect site equilibrates a little more slowly. See [Pregnancy](help:models/pregnancy).

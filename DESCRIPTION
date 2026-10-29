@@ -13,9 +13,10 @@ Description: Open-source software for pharmacokinetic and pharmacodynamic
     simulation, intended to make pharmacokinetics accessible to facilitate
     perioperative patient care, teaching, and research. Calculates and plots
     predicted plasma and effect-site concentrations for intravenous and
-    extravascular anesthetics using analytical closed-form three-compartment
-    solutions. May be freely downloaded and used without restriction for
-    non-commercial purposes.
+    extravascular drugs using analytical closed-form three-compartment
+    solutions, with a numerical engine for saturable (Michaelis-Menten)
+    elimination and a multi-compartment uptake model for the inhaled
+    anesthetics; simulates target-controlled infusion.
 License: MIT + file LICENSE
 Imports:
     bslib,
@@ -54,7 +55,7 @@ Suggests:
     remotes,
     rmarkdown,
     rsconnect,
-    testthat (>= 3.0.0), 
+    testthat (>= 3.1.7), 
     xml2,
     yaml
 Depends:

@@ -13,12 +13,13 @@ test_that("returns the parameters at the median weight with the switch off", {
   expect_equal(d$cl1 * 60, 2.97 * 23.51)              # 69.8 L/h, all to SA
   expect_equal(d$bioavailability_PO, 2.32 / 2.89)
   expect_equal(d$fraction_PO2, 0.31)
-  expect_equal(d$ka_PO * 60, 1.032)
-  expect_equal(d$tlag_PO / 60, 3.269)
+  expect_equal(d$ka_PO * 60, 1.036)
+  expect_equal(d$tlag_PO / 60, 3.271)
   # the first-order path: mean and variance of depot + pre-systemic delay
   kp <- 2.89
   expect_equal(1 / (d$ka_PO2 * 60), sqrt(1 / 0.053^2 + 1 / kp^2))
-  expect_equal(d$tlag_PO2 / 60, 2.81 + 1 / 0.053 + 1 / kp - sqrt(1 / 0.053^2 + 1 / kp^2))
+  # Lag0 is on the zero-order path only, so none here
+  expect_equal(d$tlag_PO2 / 60, 1 / 0.053 + 1 / kp - sqrt(1 / 0.053^2 + 1 / kp^2))
   expect_identical(a$metabolite$name, "salicylate")
   expect_equal(a$metabolite$kFormation * 60, 2.97)
   expect_equal(a$metabolite$firstPassFraction, 0.57 / 2.89)
@@ -88,17 +89,19 @@ test_that("100 mg matches an independent integration of the implemented model", 
 
 test_that("the approximation stays close to Koh's exact structure", {
   # Koh's structure solved numerically (Euler, 0.0005 h), 100 mg at 68.35 kg:
-  # ASA peak 0.492 mg/L at 4.41 h, AUC 1.14; SA peak 4.645 mg/L at 5.05 h,
-  # AUC 27.42 mg.h/L (computed by Claude Code, 2026-10-10)
+  # Lag0 on the zero-order input only.  ASA peak 0.491 mg/L at 4.41 h, AUC
+  # 1.142; SA peak 4.766 mg/L at 5.03 h, AUC 27.47 mg.h/L (computed by Claude
+  # Code, 2026-10-28; with Lag0 on both paths the same code gave the earlier
+  # 0.492, 1.14, 4.645 and 27.42)
   x <- simulateDrugsWithCovariates(
     data.frame(Drug = "aspirin", Time = 0, Dose = 100, Units = "mg PO"),
     noEvents, 68.35, 171, 30, "male", 72 * 60, FALSE, adjustToFFM = FALSE)
   auc <- function(w) sum(diff(w$Time) * (head(w$Plasma, -1) + tail(w$Plasma, -1)) / 2) / 60
   a <- x$aspirin$wide; s <- x$salicylate$wide
-  expect_equal(max(a$Plasma), 0.492, tolerance = 0.05)
-  expect_equal(auc(a), 1.14, tolerance = 0.02)
-  expect_equal(max(s$Plasma), 4.645, tolerance = 0.15)   # 13% low; see header
-  expect_equal(auc(s), 27.42, tolerance = 0.02)
+  expect_equal(max(a$Plasma), 0.491, tolerance = 0.05)
+  expect_equal(auc(a), 1.142, tolerance = 0.02)
+  expect_equal(max(s$Plasma), 4.766, tolerance = 0.15)   # 13% low; see header
+  expect_equal(auc(s), 27.47, tolerance = 0.02)
 })
 
 test_that("the metabolite engine carries the second oral depot", {

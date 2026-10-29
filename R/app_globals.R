@@ -1,6 +1,6 @@
 blanks <- rep("", 6)
 # The dose table the app opened with before the startup drug menu, and what
-# the menu still gives when Start is pressed with its defaults ticked
+# the menu gives when Start is pressed with those four drugs ticked
 # (startupDoseTable(STARTUP_DRUGS_DEFAULT); test-startup-drugs.R holds them
 # equal).
 doseTableInit <- data.frame(
@@ -48,6 +48,7 @@ bookmarksToExclude <- c(
   "clickEvent",
   "clickEvent-selectized",
   "addDoseBtn",
+  "addNewDrug",
   "addEventBtn",
   "addDoseTime",
   "clickTimeEvent",
@@ -59,6 +60,8 @@ bookmarksToExclude <- c(
   "confirmRemoveMEAC",
   "confirmRemoveInteraction",
   "editDosesOK",
+  "skipNextDoseBtn",
+  "stopAdministrationBtn",
   "editEvents",
   "editEventsOK",
   "sendSlide",
@@ -81,7 +84,8 @@ bookmarksToExclude <- c(
   "startupDrugs_1", "startupDrugs_2", "startupDrugs_3", "startupDrugs_4",
   "startupDrugs_5", "startupDrugs_6", "startupDrugs_7", "startupDrugs_8",
   "startupDrugs_9", "startupDrugs_10", "startupDrugs_11", "startupDrugs_12",
-  "startupDrugs_13", "startupDrugs_14", "startupDrugs_15",
+  "startupDrugs_13", "startupDrugs_14", "startupDrugs_15", "startupDrugs_16",
+  "startupDrugs_17", "startupDrugs_18", "startupDrugs_19",
   "client_time",
   "dosetable_apply",
   "dosetable_undo",
@@ -94,8 +98,31 @@ bookmarksToExclude <- c(
   "mainNav",
   "help_goto",
   "help_search",
-  "help_scenario_load"
+  "help_scenario_load",
+  "investigator_show"
 )
+
+# The installed build: the package version and the commit it was built from.
+# The commit is the `commit` setting of config.yml, which the deploy workflows
+# write with the SHA they check out and install, or, failing that, the
+# RemoteSha that remotes::install_github() records in the DESCRIPTION (which
+# shinyapps.io, installing from the manifest, does not carry).  Shown in the
+# debug log at the start of every session and as the tooltip of the Source
+# link, so that a browser session can be matched to a commit: a successful
+# deploy run is not by itself the revision that is live.  (Claude Code,
+# 2026-10-14, at the request of Steven L. Shafer.)
+stanpumpRBuild <- function(description = utils::packageDescription("stanpumpR"),
+                           config = .sprglobals$config) {
+  version <- if (is.list(description) && !is.null(description$Version)) as.character(description$Version) else NA_character_
+  commit <- if (is.list(config) && is.character(config$commit) && nzchar(config$commit[1])) {
+    config$commit[1]
+  } else if (is.list(description) && !is.null(description$RemoteSha)) {
+    as.character(description$RemoteSha)
+  } else NA_character_
+  label <- paste0("stanpumpR ", version,
+                  if (!is.na(commit)) paste0(", commit ", substr(commit, 1, 7)) else ", commit not recorded")
+  list(version = version, commit = commit, label = label)
+}
 
 outputComments <- function(
     ...,

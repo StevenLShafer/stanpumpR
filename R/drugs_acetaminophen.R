@@ -83,16 +83,82 @@
 # modelled: the glucuronide, sulfate and NAPQI metabolites, hepatotoxicity,
 # hepatic impairment, food, and rectal administration.
 #
+# PREGNANCY
+# =========
+# Late pregnancy raises paracetamol clearance, through glucuronidation.  At
+# cesarean delivery, after a single 2 g intravenous dose, Beleyn 2014 found a
+# median clearance of 11.9 L/h/m2 against 8.4 in nonpregnant women (11.9 /
+# 8.4 = 1.42) and 6.42 early postpartum.  Allegaert 2015 pooled 69 young
+# women in one population model (read in full): clearance to the glucuronide
+# at delivery was 2.03 times that of healthy female volunteers (14.9 against
+# 7.33 L/h), sulfation unchanged, so the net total clearance (adding the
+# unchanged oxidation and renal pathways) is about 1.6 times the nonpregnant.
+# Orally in the third trimester (Miners 1986, against nonpregnant controls)
+# the apparent clearance was 58% higher and the half-life 28% shorter.  The
+# three cross-sectional nonpregnant comparisons are 1.42 (Beleyn), 1.58
+# (Miners) and ~1.6 (Allegaert): median ~1.58, tempered to
+# ACETAMINOPHEN_PREGNANCY_CL_FACTOR = 1.5 for the surgery mixed into the
+# intravenous delivery data and for Miners' two women at 38 weeks, whose
+# clearance was only 1.22 times.  Paired ratios against the same women early
+# postpartum (Kulo 2012, 2013 and 2014, about 1.8 to 2.0) are NOT used:
+# early-postpartum glucuronidation is itself low (Allegaert: x 0.55 of
+# nonpregnant women), so they overstate the change from the nonpregnant
+# state that Morse's healthy adults represent.
+#
+# Volume: kept at 1.14 (Miners' clearance x half-life, 1.58 x 0.72 = 1.14, on
+# V1 and V2).  Allegaert's CENTRAL volume V1 was 1.86 times higher at delivery
+# (34.4 against 18.5 L, weight-standardised), but that is the central
+# compartment of a different model, inflated by the plasma-volume expansion
+# and the fetal-amniotic sink, whereas Kulo 2014's steady-state volume per
+# kilogram was unchanged (0.69 against 0.74 L/kg).  The two reconcile as a
+# larger central volume with an unchanged volume per body weight, so the
+# library keeps the modest 1.14 rather than the central-compartment 1.86.
+# The distribution clearance Q, the oral bioavailability, ka and the lag are
+# unchanged (Rayburn found absorption unchanged).  The effect site
+# (Anderson 2001) is not changed.
+#
+# With the Patient Profile's Pregnant field on, CL1 x 1.5 and V1 and V2 x
+# 1.14.  The intravenous data were taken within hours of a cesarean delivery,
+# so surgery is mixed in with the end of pregnancy.  This replaces the
+# "unchanged" of Ansari 2016, which rests on Rayburn's six women studied
+# orally; the intravenous studies and Miners' are larger and agree with each
+# other.  Paracetamol is little bound, so total and unbound move together.
+# Claude Code, 2026-10-19.  See R/pregnancy.R.
+#
 # References
 # ----------
 # Morse JD et al., Eur J Drug Metab Pharmacokinet 2022;47:497-507.
 #   https://doi.org/10.1007/s13318-022-00766-9
 # Anderson BJ et al., Eur J Clin Pharmacol 2001;57:559-569.
 #   https://doi.org/10.1007/s002280100367
+# Allegaert K et al.  Paracetamol pharmacokinetics and
+#   metabolism in young women.  BMC Anesthesiol 2015;15:163.
+#   https://doi.org/10.1186/s12871-015-0144-3 (pregnancy)
+# Beleyn B et al.  Estradiol and weight are covariates of paracetamol
+#   clearance in young women.  Gynecol Obstet Invest 2014.
+#   https://doi.org/10.1159/000358394 (pregnancy)
+# Miners JO, Robson RA, Birkett DJ.  Paracetamol metabolism in pregnancy.
+#   Br J Clin Pharmacol 1986;22:359-362.
+#   https://doi.org/10.1111/j.1365-2125.1986.tb02901.x (pregnancy)
+# Kulo A et al.  The impact of caesarean delivery on paracetamol and
+#   ketorolac pharmacokinetics: a paired analysis.  J Biomed Biotechnol
+#   2012;2012:437639.  https://doi.org/10.1155/2012/437639 (pregnancy)
+# Rayburn W et al.  Acetaminophen pharmacokinetics: comparison between
+#   pregnant and nonpregnant women.  Am J Obstet Gynecol 1986;155:1353-1356.
+#   https://doi.org/10.1016/0002-9378(86)90173-0 (pregnancy)
 # -----------------------------------------------------------------------------
 
 ACETAMINOPHEN_KE0 <- log(2) / 53            # /min; Anderson 2001, t1/2 53 min
 ACETAMINOPHEN_FFAT_CL <- 0.816              # Morse 2022, fat fraction in NFM
+
+# Pregnancy (see the header).  Clearance: the cross-sectional nonpregnant
+# comparisons are Beleyn 2014 (1.42), Miners 1986 (1.58) and Allegaert 2015
+# (net ~1.6); the median ~1.58 is tempered to 1.5 for the surgery in the
+# intravenous delivery data and Miners' 1.22 at 38 weeks.  Volumes: Miners'
+# clearance x half-life, 1.58 x 0.72 = 1.14, on V1 and V2 (not Allegaert's
+# central-volume 1.86; see the header).
+ACETAMINOPHEN_PREGNANCY_CL_FACTOR <- 1.5
+ACETAMINOPHEN_PREGNANCY_V_FACTOR  <- 1.14
 
 #' Acetaminophen pharmacokinetics
 #'
@@ -101,9 +167,12 @@ ACETAMINOPHEN_FFAT_CL <- 0.816              # Morse 2022, fat fraction in NFM
 #'   terms on volume and intercompartmental clearance at the pharmacokinetic
 #'   weight; when \code{FALSE}, at total body weight. Clearance follows its own
 #'   normal-fat-mass covariate either way.
+#' @param pregnant when \code{TRUE}, apply the changes of late pregnancy:
+#'   clearance x 1.5 and both volumes x 1.14 (see the file's header)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE)
+acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                          pregnant = FALSE)
 {
   # Size scaling (see the header)
   size  <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
@@ -115,9 +184,13 @@ acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE)
   nfmStd <- ffmStd + ACETAMINOPHEN_FFAT_CL * (70 - ffmStd)       # 67.45 kg
   nfm    <- size$ffm + ACETAMINOPHEN_FFAT_CL * (weight - size$ffm)
 
-  cl1 <- 24.0 * (nfm / nfmStd)^0.75 / 60     # L/min, the model's own covariate
-  v1  <- 43.7 * pkW / 70
-  v2  <- 29.7 * pkW / 70
+  # Pregnancy (see the header): CL1, V1 and V2; Q and absorption unchanged.
+  clPregnancy <- if (isTRUE(pregnant)) ACETAMINOPHEN_PREGNANCY_CL_FACTOR else 1
+  vPregnancy  <- if (isTRUE(pregnant)) ACETAMINOPHEN_PREGNANCY_V_FACTOR else 1
+
+  cl1 <- 24.0 * (nfm / nfmStd)^0.75 / 60 * clPregnancy  # L/min, own covariate
+  v1  <- 43.7 * pkW / 70 * vPregnancy
+  v2  <- 29.7 * pkW / 70 * vPregnancy
   cl2 <- 43.5 * size$clearance / 60
   v3  <- 1                                   # two compartments
   cl3 <- 0
@@ -162,6 +235,15 @@ acetaminophen <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "normal fat mass); ke0 from Anderson BJ et al., Eur J Clin Pharmacol ",
     "2001;57:559-569. https://doi.org/10.1007/s13318-022-00766-9"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", ACETAMINOPHEN_PREGNANCY_CL_FACTOR,
+             ", V1 and V2 x ", ACETAMINOPHEN_PREGNANCY_V_FACTOR),
+      paste0("Allegaert K et al., BMC Anesthesiol 2015;15:163; Beleyn B et ",
+             "al., Gynecol Obstet Invest 2014; Miners JO et al., Br J Clin ",
+             "Pharmacol 1986;22:359-362. ",
+             "https://doi.org/10.1186/s12871-015-0144-3")))
+  }
 
   return(
     list(

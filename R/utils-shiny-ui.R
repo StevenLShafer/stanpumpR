@@ -2,32 +2,76 @@ attachClass <- function(tag, class) {
   htmltools::tagAppendAttributes(tag, class = class)
 }
 
-citationItemHTML <- function(drug, reference, color) {
-  text <- reference
-  url <- NULL
-  label <- NULL
-  link <- NULL
+# The links in a citation: every https URL on one of the CITATION_WEBSITES
+# hosts, wherever it stands in the string, not only at its end.  Punctuation
+# that closes the sentence or a parenthesis around the URL is left to the
+# text: a DOI's own parentheses ("S0140-6736(99)01234-5") are balanced and
+# are kept, a closing one with no opening one inside the URL is not part of
+# it.  Returns a data frame of url (as written), link (trimmed), label and
+# the character positions, or NULL.  (Claude Code, 2026-10-14, at the request
+# of Steven L. Shafer: a trailing ")" once made a DOI link return 404, and a
+# URL followed by any text was not linked at all.)
+citationLinks <- function(reference) {
+  hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
+  pattern <- paste0("https://(", hosts, ")/[^[:space:]]+")
+  m <- gregexpr(pattern, reference, perl = TRUE)[[1]]
+  if (m[1] == -1) return(NULL)
+  urls <- regmatches(reference, list(m))[[1]]
+  trimmed <- vapply(urls, citationTrimURL, character(1), USE.NAMES = FALSE)
+  host <- sub("^https://([^/]+)/.*$", "\\1", trimmed)
+  data.frame(
+    url   = urls,
+    link  = trimmed,
+    label = names(CITATION_WEBSITES)[match(host, CITATION_WEBSITES)],
+    start = as.integer(m),
+    end   = as.integer(m) + nchar(trimmed) - 1L,
+    stringsAsFactors = FALSE
+  )
+}
 
-  if (is.null(reference) || !nzchar(reference)) {
-    text <- "Not Available"
-  } else {
-    hosts <- paste(gsub(".", "\\.", CITATION_WEBSITES, fixed = TRUE), collapse = "|")
-    pattern <- paste0("\\s+https://(", hosts, ")/\\S+$")
-    res <- regmatches(reference, regexec(pattern, reference))[[1]]
-    if (length(res) > 0) {
-      text <- sub(pattern, "", reference)
-      url <- trimws(res[1])
-      label <- names(CITATION_WEBSITES)[match(res[2], CITATION_WEBSITES)]
-    }
+citationTrimURL <- function(url) {
+  repeat {
+    before <- url
+    url <- sub("[.,;:]+$", "", url)
+    unbalanced <- function(open, close)
+      lengths(regmatches(url, gregexpr(close, url, fixed = TRUE))) >
+      lengths(regmatches(url, gregexpr(open, url, fixed = TRUE)))
+    if (endsWith(url, ")") && unbalanced("(", ")")) url <- sub("\\)$", "", url)
+    if (endsWith(url, "]") && unbalanced("[", "]")) url <- sub("\\]$", "", url)
+    if (identical(url, before)) return(url)
   }
+}
 
-  if (!is.null(url)) {
-    link <- tagList(" ", tags$a(
-      label,
-      href = url,
+# A citation as HTML: the text escaped, each recognised URL replaced by a
+# link labelled with its site (citationLinks()), the investigators named in
+# it linked to their pop-ups.
+citationHTML <- function(reference) {
+  links <- citationLinks(reference)
+  if (is.null(links)) return(htmltools::htmlEscape(reference))
+  pieces <- character(0)
+  pos <- 1L
+  for (i in seq_len(nrow(links))) {
+    pieces <- c(pieces, htmltools::htmlEscape(substr(reference, pos, links$start[i] - 1L)))
+    pieces <- c(pieces, as.character(tags$a(
+      links$label[i],
+      href = links$link[i],
       target = "_blank",
       rel = "noreferrer"
-    ))
+    )))
+    pos <- links$end[i] + 1L
+  }
+  pieces <- c(pieces, htmltools::htmlEscape(substr(reference, pos, nchar(reference))))
+  paste(pieces, collapse = "")
+}
+
+citationItemHTML <- function(drug, reference, color) {
+  text <- if (is.null(reference) || !nzchar(reference)) {
+    "Not Available"
+  } else {
+    # The investigators named in the citation link to their pop-ups
+    # (R/help-investigators.R); a citation is where the program's own
+    # author is linked too.  Text inside the site links is left alone.
+    HTML(helpLinkInvestigators(citationHTML(reference), "citation"))
   }
 
   tags$div(
@@ -35,7 +79,7 @@ citationItemHTML <- function(drug, reference, color) {
       style = paste0("color:", if (is.null(color)) "inherit" else color, ";"),
       helpDrugTitle(drug)
     ),
-    ": ", text, link
+    ": ", text
   )
 }
 
@@ -278,4 +322,42 @@ inputWithInlineLabel <- function(tag) {
     div(tag, class = "main-inline-input")
   )
   htmltools::attachDependencies(tag, dep)
+}
+
+# A bslib tooltip shown only while the pointer is over its control.  The
+# default trigger is "hover focus", so ticking a box focused it and pinned
+# the tip until something else was clicked (Steven L. Shafer, 2026-10-28:
+# it should go as soon as the cursor moves away).
+hoverTooltip <- function(trigger, ..., placement = "auto") {
+  bslib::tooltip(trigger, ..., placement = placement,
+                 options = list(trigger = "hover"))
+}
+
+# A sidebar control with its explanation on a small question-mark icon
+# beside its label, shown while the pointer is over the icon (Steven L.
+# Shafer, 2026-10-28), so a tip appears only when asked for and never while
+# the pointer merely crosses the control or the control is used.  The icon
+# goes after a checkbox's label (inside it, a click on the icon would tick
+# the box) and inside any other control's label.
+fieldHelp <- function(control, ..., placement = "right") {
+  help <- hoverTooltip(
+    tags$span(class = "field-help", `aria-label` = "More information",
+              icon("circle-question")),
+    ..., placement = placement
+  )
+  tq <- htmltools::tagQuery(control)
+  checkbox <- tq$find(".checkbox > label")
+  if (checkbox$length() > 0)
+    return(checkbox$after(help)$allTags())
+  label <- tq$resetSelected()$find(".control-label")
+  if (label$length() == 0)
+    stop("fieldHelp(): the control has no label to carry the icon")
+  label$filter(function(x, i) i == 1)$append(help)$allTags()
+}
+
+# A Patient Profile field or Graph Options control that the server shows only
+# while a drug it applies to is in the dose table (relevantFields() in
+# R/patient-fields.R); its id is "field_<name>".
+relevantField <- function(name, ...) {
+  div(id = paste0("field_", name), class = "relevant-field", ...)
 }

@@ -65,10 +65,12 @@
 # that no study measured.  Yuen 2013's pharmacodynamic model was for
 # diabetic neuropathic pain and does not predict response in depression.
 #
-# The band in inst/extdata/drugDefaults_global.csv is the AGNP 2018 consensus
-# therapeutic reference range (Hiemke et al., Pharmacopsychiatry
-# 2018;51:9-62), 30 to 120 ng/mL, with 60 as the typical value; typical,
-# upperTypical and lowerTypical below mirror it.  endCe is 0.
+# The band in inst/extdata/drugDefaults_global.csv is the therapeutic
+# reference range of the AGNP TDM task force's systematic review (Amann et
+# al., Neurosci Appl 2024;3:104077), 20 to 120 ng/mL, with 60 as the typical
+# value; it replaced the AGNP 2017 consensus range of 30 to 120 ng/mL (Hiemke
+# et al., Pharmacopsychiatry 2018;51:9-62).  typical, upperTypical and
+# lowerTypical below mirror it.  endCe is 0.
 #
 # COVARIATES AND BODY SIZE (docs/weight-adjustment.md)
 # ====================================================
@@ -89,8 +91,10 @@
 #
 # NOT IMPLEMENTED
 # ===============
-# Lobo et al. 2009 pooled adult model (sex, smoking, age and dose effects):
-# its fixed-effect table could not be verified, so it is not used.  Shibata
+# Lobo et al. 2009 pooled adult model (sex and smoking on F, age and dose on
+# CL/F, Hispanic ethnicity on V/F): its Table II is legible in the full text
+# (CL/F 45.1 L/h, V/F 814 L, ka 0.168 /h for a 49-year-old female nonsmoker
+# on 40 mg), but it is a different model and is not used.  Shibata
 # et al. 2023, Japanese children and adolescents with major depressive
 # disorder (CL/F 81.4 L/h, V/F 1170 L, ka 0.168 /h): a separate population.
 # Neither is mixed with Zhong's estimates.
@@ -106,7 +110,7 @@
 # Moriguchi S et al. 2017 (NET occupancy, healthy men); Moriguchi S et al.
 #   2025 (NET occupancy, major depressive disorder).
 # Lobo ED et al. Clin Pharmacokinet 2009 (pooled adult model; not used).
-# Shibata M et al. 2023 (pediatric MDD; not used).
+# Shibata RY et al. 2023 (pediatric MDD; not used).
 # Yuen E et al. 2013 (neuropathic pain PD; not used).
 # -----------------------------------------------------------------------------
 
@@ -153,11 +157,11 @@ duloxetine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL plasma: AGNP 2018 therapeutic reference range.  The plot reads
+  # Band, ng/mL plasma: Amann 2024 therapeutic reference range.  The plot reads
   # the CSV; these mirror it.
   typical      <- 60
   upperTypical <- 120
-  lowerTypical <- 30
+  lowerTypical <- 20
 
   reference <- paste0(
     "Zhong et al., Chin J Clin Pharmacol 2026. One compartment, apparent oral ",

@@ -15,12 +15,12 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         v1 = 47.25,
         v2 = 51.24,
         v3 = 1,
-        cl1 = 0.06633315,
+        cl1 = 0.07379431,
         cl2 = 0.038,
         cl3 = 0
       )
     ),
-    tPeak = 0, MEAC = 0, typical = 15, upperTypical = 20, lowerTypical = 10,
+    tPeak = 0, MEAC = 0, typical = 11, upperTypical = 11, lowerTypical = 2.9,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)
@@ -35,7 +35,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
     v1 = 61.656839,
     v2 = 66.863417,
     v3 = 1,
-    cl1 = 0.086807758,
+    cl1 = 0.096543872,
     cl2 = 0.04639468,
     cl3 = 0
   )
@@ -49,9 +49,43 @@ test_that("Thomson's covariate equations are reproduced, Q as a clearance", {
   expect_equal(x$v1, 0.675 * 70); expect_equal(x$v2, 0.732 * 70)
   expect_equal(x$cl2 * 60, 2.28)
   # The source's own reference point: CrCL 66 gives CL 2.99 L/h.  That is a
-  # 70 kg man of 72.1 years at the assumed creatinine.
-  y <- vancomycin(70, 171, 140 - 66 * 72 / 70, "male", adjustToFFM = FALSE)$PK$default
+  # 70 kg man of 78.9 years at the assumed creatinine of 0.9 mg/dL.
+  y <- vancomycin(70, 171, 140 - 66 * 72 * SCR_ASSUMED_MALE / 70, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(y$cl1 * 60, 2.99, tolerance = 1e-9)
   # Refuses rather than clamps where the equation is not defined
   expect_error(vancomycin(70, 171, 139.5, "male", adjustToFFM = FALSE), "not defined")
+})
+
+test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
+  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  Creatinine clearance x 1.5 in Thomson's term.
+  # The values are those the model gives with the flag on; test-pregnancy.R
+  # checks the ratio against the flag off and that nothing else moves.
+  actual <- vancomycin(70, 165, 30, "female", pregnant = TRUE)$PK$default
+  expect_equal_rounded(38.08799126, actual$v1)
+  expect_equal_rounded(41.30431052, actual$v2)
+  expect_equal_rounded(1, actual$v3)
+  expect_equal_rounded(0.1046227197, actual$cl1)
+  expect_equal_rounded(0.03232758696, actual$cl2)
+  expect_equal_rounded(0, actual$cl3)
+  expect_equal(vancomycin(70, 165, 30, "female")$PK$default,
+               vancomycin(70, 165, 30, "female", pregnant = FALSE)$PK$default)
+  expect_match(vancomycin(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
+  expect_no_match(vancomycin(70, 165, 30, "female")$reference, "Ansari")
+})
+
+test_that("pregnancy: a measured creatinine gives no pregnancy change", {
+  # The rise in filtration is applied only when the creatinine is blank
+  # (pregnancyGfrFactor()): a pregnant woman's measured creatinine is already
+  # low, and the renal estimate made from it already carries the rise.
+  m1 <- vancomycin(70, 165, 30, "female", creatinine = 0.6, pregnant = TRUE)
+  m0 <- vancomycin(70, 165, 30, "female", creatinine = 0.6, pregnant = FALSE)
+  expect_identical(m1, m0)
+  expect_no_match(m1$reference, "Ansari")
+  # and through getDrugPK(), as the app calls it
+  expect_identical(
+    getDrugPK("vancomycin", 70, 165, 30, SEX_FEMALE, creatinine = 0.6, pregnant = TRUE),
+    getDrugPK("vancomycin", 70, 165, 30, SEX_FEMALE, creatinine = 0.6))
+  # with the creatinine blank the factor is applied
+  expect_gt(vancomycin(70, 165, 30, "female", pregnant = TRUE)$PK$default$cl1,
+            vancomycin(70, 165, 30, "female")$PK$default$cl1)
 })

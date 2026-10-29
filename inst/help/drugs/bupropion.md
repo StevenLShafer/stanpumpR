@@ -16,7 +16,7 @@ These give half-lives of 0.86 hours and 38.5 hours. The terminal half-life is lo
 
 No subject received intravenous bupropion (there is no intravenous product), so every parameter is **apparent**, divided by the unmeasured oral bioavailability. Apparent parameters predict oral concentrations correctly, because the unknown bioavailability cancels, and only oral units are offered: **mg PO** for a single dose, and **mg PO qd** or **mg PO bid** for a dose repeated daily or twice daily until the end of the plot. Enter the dose as labelled (mg of bupropion hydrochloride); no salt conversion is applied.
 
-The absorption rate, 0.29 per hour, is the SR tablet's, and includes its release from the tablet. The units are generic, but **the curve they draw is that of the sustained-release tablet**. The immediate-release tablet absorbs faster and peaks higher, and the extended-release (XL) tablet is different again: Zhang and colleagues (2019) found an apparent clearance of 221 L/h at 60.9 kg and an absorption lag for XL, and their 2017 crossover of the IR, SR and XL tablets found relative bioavailabilities of 1, 0.955 and 0.68, so an XL dose entered here would be overpredicted by about a third. Neither is modelled. Average concentrations on a steady regimen depend only on the daily dose over the clearance, so they are less sensitive to the formulation than the peaks and troughs are.
+The absorption rate, 0.29 per hour, is the SR tablet's, and includes its release from the tablet. The units are generic, but **the curve they draw is that of the sustained-release tablet**. The immediate-release tablet absorbs faster and peaks higher, and the extended-release (XL) tablet is different again: Zhang and colleagues (*Eur J Drug Metab Pharmacokinet* 2019;44:339-352) found an apparent clearance of 221 L/h at 60.9 kg and an absorption lag for XL, and Connarn and colleagues' 2017 crossover of the IR, SR and XL tablets (*AAPS J* 2017;19:1513-1522) found relative bioavailabilities of 1, 0.955 and 0.68, so an XL dose entered here would be overpredicted by about a third. Neither is modelled. Average concentrations on a steady regimen depend only on the daily dose over the clearance, so they are less sensitive to the formulation than the peaks and troughs are.
 
 In this model a single 150 mg SR tablet gives a bupropion peak of about 61 ng/mL at 2.2 hours, and hydroxybupropion peaks at about 263 ng/mL at 3.9 hours.
 
@@ -32,13 +32,13 @@ None. Kidney disease and vitamin D were examined in the source and not retained,
 
 ### Typical concentrations and regimens
 
-No band is drawn on this row. The AGNP 2018 consensus therapeutic reference range (Hiemke and colleagues, *Pharmacopsychiatry* 2018;51:9-62), 850 to 1500 ng/mL, is for **bupropion plus hydroxybupropion**, and is drawn on the hydroxybupropion row because the metabolite makes up most of the sum.
+No band is drawn on this row. The AGNP consensus therapeutic reference range, 850 to 1500 ng/mL (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861), is a range of **hydroxybupropion**, the major active compound (bupropion itself is unstable in collected blood), and is drawn on the hydroxybupropion row. Earlier versions of this page described it as a range for the sum.
 
-On **150 mg PO bid** the average steady state is 300 mg/day over 148.4 L/h, 84 ng/mL of bupropion, and 16.5 times that, 1389 ng/mL, of hydroxybupropion: a sum of about 1470 ng/mL, near the top of the range. At four weeks the model gives bupropion from 58 to 115 ng/mL over a dosing interval and hydroxybupropion from 1281 to 1480 ng/mL, about 95% of the way there by the end of the first week.
+On **150 mg PO bid** the average steady state is 300 mg/day over 148.4 L/h, 84 ng/mL of bupropion, and 16.5 times that, 1389 ng/mL, of hydroxybupropion, near the top of the range. At four weeks the model gives bupropion from 58 to 115 ng/mL over a dosing interval and hydroxybupropion from 1281 to 1480 ng/mL, about 95% of the way there by the end of the first week.
 
 ### Where to be careful
 
 - **The curve is the SR tablet's.** IR and XL doses are not modelled, and XL doses would be overpredicted.
 - **The source is small and single-dose**, weighted towards chronic kidney disease, and its interindividual variability was incomplete; the curve is a typical patient's only.
-- **No concentration-response relation** exists for the antidepressant effect, and the therapeutic range is for the sum of the parent and the metabolite.
+- **No concentration-response relation** exists for the antidepressant effect, and the therapeutic range is the metabolite's.
 - **The metabolite's parameters are conditional** on the fixed forming fraction; see its page.

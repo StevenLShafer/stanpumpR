@@ -36,7 +36,7 @@
 # the supplement.
 #
 # The library's reference patient (70 kg, 170 cm, 35 y man, assumed creatinine
-# 1.0 mg/dL) has NCLcr 97.6, above the breakpoint, so he receives Chan's
+# 0.9 mg/dL) has NCLcr 108.4, above the breakpoint, so he receives Chan's
 # typical values exactly: CL/F 4.96 L/h, V/F 39.8 L, half-life 5.6 h.
 #
 # ABSORPTION: ka READ AS PUBLISHED
@@ -105,12 +105,17 @@
 #
 # BAND
 # ====
-# 1.3-5.4 mcg/mL: the median steady-state average concentration in adults
-# with focal seizures taking 150 and 600 mg/day (Chan 2021, Table 4), the
-# labelled range there and for neuropathic pain (the label); typical 2.7,
-# for 300 mg/day, by linearity (2 x 1.34), not tabulated.
-# Orientation only: a chronic exposure, not a perioperative target, and a
-# single preoperative dose of 150 or 300 mg peaks above it.
+# 1.5-8 mcg/mL, the therapeutic reference range for epilepsy of
+# Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861), 10 h after an
+# immediate-release dose, alert level 10 mcg/mL, from routine TDM data
+# (Johannessen Landmark 2015); typical 4.75, its midpoint.  Its range for
+# neuropathic pain, 1.4-2.1 mcg/mL 22 h after an extended-release dose, is the
+# trough of a formulation this model does not offer, and the guideline calls
+# the evidence for a concentration-pain relationship low.  It replaced
+# 1.3-5.4 mcg/mL, the median steady-state average concentration in adults
+# with focal seizures taking 150 and 600 mg/day (Chan 2021, Table 4).
+# Orientation only: a chronic exposure, not a perioperative target.
 #
 # NOT MODELLED
 # ============
@@ -151,11 +156,12 @@
 # mg/L).  When the drug stimulates the production of the response in
 # proportion to the concentration, a turnover model IS an effect site: the
 # response is baseline x (1 + slope x Ce), with dCe/dt = kout (Cp - Ce), so
-# ke0 = kout exactly.  When the drug instead slows the loss of the response,
-# the equivalence is approximate.  The paper's equations are in a figure and a
-# supplement that could not be retrieved, so which applies is not known; the
-# delay, a half-time of 1.8 h, is the same order either way.  The electrical
-# stimulation threshold gave a similar kout, 0.49 /h.  These are the only
+# ke0 = kout exactly.  (Were the drug instead to slow the loss of the
+# response, the equivalence would be approximate.)  The paper's main text
+# (p. 576) puts the linear drug effect on kin, so here ke0 = kout exactly, a
+# half-time of 1.8 h.  Its model also carries a slow placebo drift in the
+# baseline (-0.07 s/h), which an effect site does not represent.  The
+# electrical stimulation threshold gave a similar kout, 0.49 /h.  These are the only
 # estimated human delays for pregabalin.
 #
 # Pregabalin in CSF peaks about 8 h after a 300 mg dose and reaches about a
@@ -233,11 +239,11 @@ pregabalin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, mcg/mL: median steady-state average at 150-600 mg/day, see the
-  # header.  Orientation only.
-  typical      <- 2.7
-  upperTypical <- 5.4
-  lowerTypical <- 1.3
+  # Band, mcg/mL: the therapeutic reference range for epilepsy of Hart 2026,
+  # Table 5, see the header.  Orientation only.
+  typical      <- 4.75
+  upperTypical <- 8
+  lowerTypical <- 1.5
 
   reference <- paste0(
     "Chan PLS et al., Clin Pharmacol Ther 2021;110:132-140. ",

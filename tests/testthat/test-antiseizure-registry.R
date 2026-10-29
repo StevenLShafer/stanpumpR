@@ -70,7 +70,8 @@ test_that("the parameter audit is complete for every implemented drug", {
   # pregabalin and the benzodiazepines -- are audited by their own tests)
   newlyImplemented <- c("phenytoin", "valproate", "phenobarbital",
     "pentobarbital", "ethosuximide", "topiramate", "lacosamide", "lamotrigine",
-    "zonisamide", "tiagabine", "levetiracetam", "eslicarbazepine", "carbamazepine")
+    "zonisamide", "tiagabine", "levetiracetam", "eslicarbazepine", "carbamazepine",
+    "cenobamate")
   expect_true(all(newlyImplemented %in% implemented))
   expect_true(all(newlyImplemented %in% parameters$drug))
 })
@@ -90,7 +91,7 @@ test_that("each implemented model's clearance and volume appear in the audit", {
   for (d in c("phenytoin", "valproate", "phenobarbital", "pentobarbital",
               "ethosuximide", "topiramate", "lacosamide", "lamotrigine",
               "zonisamide", "tiagabine", "levetiracetam", "eslicarbazepine",
-              "carbamazepine")) {
+              "carbamazepine", "cenobamate")) {
     rows <- parameters[parameters$drug == d, ]
     expect_gt(nrow(rows), 1, label = d)
     joined <- tolower(paste(rows$parameter, collapse = " "))

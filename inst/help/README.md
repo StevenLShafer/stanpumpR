@@ -9,9 +9,10 @@ other half is generated from the code at run time (see `R/help-content.R`,
 | Path | What it is |
 |---|---|
 | `<page>.md` | A page. Its id is the file name without `.md`; `models/effect-site.md` is the page `models/effect-site`. |
-| `drugs/<drug>.md` | The narrative appended to the generated page of that drug. One file per row of `inst/extdata/drugDefaults_global.csv`; the tests require it. |
+| `drugs/<drug>.md` | The narrative appended to the generated page of that drug. One file per row of `inst/extdata/drugDefaults_global.csv`; the tests require it. It must say where the shaded band (the therapeutic reference range) comes from, with the source and the analyte and sampling time it applies to, or why there is no band (`docs/adding-a-drug.md`, *The therapeutic range*). |
 | `scenarios/<id>.md` | The narrative appended to the generated page of that teaching scenario, defined in `R/help-scenarios.R`. The tests require it. |
 | `references.md` | The methods bibliography, appended to the generated list of drug-model citations. |
+| `investigators.md` | The investigators whose work the program uses. Every **bold** name on it is an investigator: the name becomes a link, wherever it appears in the help or in the References panel, to a pop-up of what this page says about them (`R/help-investigators.R`). |
 
 ## Writing a page
 
@@ -21,8 +22,19 @@ other half is generated from the code at run time (see `R/help-content.R`,
   `shiny::markdown()` (commonmark); no pandoc, no MathJax. Write equations as
   text or in a code block.
 * Link to another page as `[text](help:page-id)`.
+* From outside the app, `<app>/?help=page-id` opens the Help tab on a page and
+  `<app>/?scenario=id` loads a scenario (`R/deep-links.R`; `sharing.md` lists the forms).
 * Add a button that loads a scenario as `[text](scenario:scenario-id)`.
 * External links open in a new tab automatically.
+* Investigators need no markup: a name on `investigators.md` is linked
+  wherever it is written with its given names or initials ("Douglas J.
+  Eleveld", "Eleveld DJ", "Jim Philip"), and by surname alone when nobody
+  else on that page shares the surname. Two people with one surname are told
+  apart by their first initial, so a bare "Kim" links to no one. Shafer is
+  linked only in citations. "GasMan" links to the GasMan website.
+* To add an investigator, write their name in **bold** on
+  `investigators.md`, in a paragraph, list item or table row that says what
+  of theirs is used; that text is their pop-up.
 * A page with three or more `##` headings gets a table of contents.
 * A fact the code owns can be built from the code instead of copied: a line
   that is nothing but `<!-- generated: NAME -->` is replaced, when the page
@@ -41,4 +53,5 @@ other half is generated from the code at run time (see `R/help-content.R`,
 `tests/testthat/test-help-content.R` renders every page and resolves every
 `help:` and `scenario:` link; `test-help-drugs.R` requires a narrative for
 every drug; `test-help-scenarios.R` checks each scenario against the drug
-library and runs it through the engine.
+library and runs it through the engine; `test-help-investigators.R` checks
+that every bold name on `investigators.md` parses, has an entry, and links.

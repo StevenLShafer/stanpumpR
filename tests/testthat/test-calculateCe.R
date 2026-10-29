@@ -13,3 +13,32 @@ test_that("it returns the correct array", {
 
   expect_equal_rounded(actual, expectedCe)
 })
+
+test_that("plasma falling at exactly the ke0 rate gives the limiting value, not NaN", {
+  # Cp = exp(-ke0 t) from Ce = 0 has the closed form Ce = ke0 t exp(-ke0 t).
+  # Here the falling-plasma branch's log slope k equals -ke0, and the
+  # expression y0 ke0 / (k + ke0) (exp(k dt) - exp(-ke0 dt)) is 0/0.
+  ke0 <- 0.25
+  L <- 11
+  dt <- rep(0.5, L)
+  t <- cumsum(dt) - dt[1]
+  Cp <- exp(-ke0 * t)
+
+  actual <- calculateCe(Cp, rep(ke0, L), dt, L)
+
+  expect_false(anyNA(actual))
+  expect_equal(actual, ke0 * t * exp(-ke0 * t), tolerance = 1e-10)
+})
+
+test_that("the limiting form joins the exact one continuously", {
+  # Just outside the switch the exact expression is used; just inside, the
+  # limit.  The two must agree to well under the plotting precision.
+  ke0 <- 0.25
+  dt <- 0.5
+  y0 <- 2
+  ce <- function(k) calculateCe(c(y0, y0 * exp(k * dt)), rep(ke0, 2), c(0, dt), 2)[2]
+  inside  <- ce(-ke0 * (1 + 1e-9))
+  outside <- ce(-ke0 * (1 + 1e-7))
+  expect_equal(inside, outside, tolerance = 1e-6)
+  expect_equal(inside, y0 * ke0 * dt * exp(-ke0 * dt), tolerance = 1e-7)
+})

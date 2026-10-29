@@ -269,12 +269,20 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
 
   # Wrap up, calculate Ce
   Cp <- p_state_l1 + p_state_l2 + p_state_l3
-  if (sum(is.na(Cp)) + sum(is.nan(Cp)) > 0)
+  # A bounded record of a failed calculation: how many points, the first and
+  # its time and PK set.  The whole Cp vector (thousands of points on a long
+  # plot) went to the log before 2026-10-14; it is still there at the
+  # verbose debug level.
+  bad <- which(is.na(Cp))   # is.na() is TRUE for NaN too
+  if (length(bad) > 0)
   {
-    message("Problem with calculation of Cp")
-    print(Cp)
-    message("pkLine:")
-    print(pkLine)
+    first <- bad[1]
+    message("Problem with calculation of Cp for ", dose$Drug[1], ": ",
+            length(bad), " of ", length(Cp), " points are NA or NaN; the first at ",
+            "step ", first, ", time ", signif(timeLine[first], 6),
+            ", PK set \"", pkLine[first], "\"")
+    outputComments("Cp:", paste(signif(Cp, 4), collapse = " "), level = DEBUG_LEVEL_VERBOSE)
+    outputComments("pkLine:", paste(pkLine, collapse = " "), level = DEBUG_LEVEL_VERBOSE)
   }
   # ke0 is a per-step vector here, because the PK set can change on an event.
   # A drug with no tPeak carries zero throughout, and calculateCe() divides by
@@ -344,6 +352,10 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     }
     if (hasCe)
     {
+      # getDrugPK() already keeps ke0 off its own set's eigenvalues; this is
+      # the same guard for a parameter table built by other means.
+      tie <- abs(lam - ke0) < 1e-10 * pmax(abs(lam), ke0)
+      ke0 <- ifelse(apply(tie, 1, any), ke0 * (1 + 1e-8), ke0)
       a <- P * ke0 / (ke0 - lam)
       recoveryStates <- recoveryStateSet(timeLine, cbind(a, Ce - rowSums(a)), cbind(lam, ke0),
                                          pendingDoseTimes(givenAt, dose$Time, dose$Dose, timeLine))
@@ -358,11 +370,22 @@ advanceClosedForm1 <- function(dose, events, pkSets, maximum, plotRecovery, emer
     recovery <- rep(0, L)
   }
 
+  # The peripheral concentrations, read off the disposition states with the
+  # PK set in force at each point (the states are in its coordinates; the
+  # depots' input is carried in them as an infusion is), and the amount still
+  # in the depots; see R/compartments.R.
+  plasmaStates <- cbind(p_state_l1, p_state_l2, p_state_l3)
+  lambdas <- cbind(lambda_1, lambda_2, lambda_3)
+  depotTotal <- if (length(depot) > 0) Reduce(`+`, depot) else rep(0, L)
+
   results <- data.frame(
     Time = timeLine,
     Cp = Cp,
     Ce = Ce,
-    Recovery = recovery
+    Recovery = recovery,
+    C2 = peripheralConcentration(plasmaStates, lambdas, k21),
+    C3 = peripheralConcentration(plasmaStates, lambdas, k31),
+    Depot = depotTotal
   )
   attr(results, "recoveryStates") <- recoveryStates
   return(results)

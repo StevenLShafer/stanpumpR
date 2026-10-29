@@ -12,11 +12,26 @@ pethidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   k31 <- 0.010774228
   
   tPeak <- 10
-  MEAC <- 250/1000
+  # MEAC 0.46 mcg/mL: Austin, Stapleton and Mather 1980 (Anesthesiology
+  # 53:460-466), the mean blood meperidine concentration at the minimum
+  # effective analgesic concentration in nine postoperative patients given
+  # intramuscular doses (0.46, SD 0.18, n = 19; the maximum concentration still
+  # associated with severe pain was 0.41).  Until 2026-10-27 the value was
+  # 0.25, which the help attributed to Austin but which is not in the paper;
+  # its origin was not recorded.  Changed by decision of Steven L. Shafer on
+  # the 2026-10-27 opioid potency audit (docs/opioid-review-2026-10-27.md).
+  # Austin measured WHOLE BLOOD and the library treats the value as an
+  # effect-site divisor: no blood-to-effect-site bridge is applied.
+  MEAC <- 460/1000
   typical <- MEAC * 1.2
-  upperTypical <- MEAC * 0.8
-  lowerTypical <- MEAC * 2.0
-  reference <- "Bjorkman S, J Pharmacokinet Pharmacodyn 2003;30(4):285-307. https://pubmed.ncbi.nlm.nih.gov/14650375/"
+  lowerTypical <- MEAC * 0.8
+  upperTypical <- MEAC * 2.0
+  reference <- paste0(
+    "Bjorkman S, J Pharmacokinet Pharmacodyn 2003;30(4):285-307. ",
+    "https://pubmed.ncbi.nlm.nih.gov/14650375/ (kinetics); ",
+    "Austin KL, Stapleton JV, Mather LE, Anesthesiology 1980;53:460-466. ",
+    "https://pubmed.ncbi.nlm.nih.gov/7457961/ (MEAC)"
+  )
   
   # Size scaling (see docs/weight-adjustment.md): the published parameters
   # describe a 70 kg adult.  Volumes scale with fat-free mass relative to the

@@ -15,7 +15,7 @@
 # every simulated time of the drugs in `entries` (each an element of drugs()).
 derivedSeriesTimes <- function(entries, maximum)
 {
-  times <- seq(from = 0, to = maximum, length.out = RESOLUTION)
+  times <- equispaceTimes(maximum)
   for (entry in entries) {
     t <- unique(entry$results$Time)
     times <- c(times, t[t >= 0 & t <= maximum])

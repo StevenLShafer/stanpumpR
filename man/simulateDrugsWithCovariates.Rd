@@ -17,7 +17,14 @@ simulateDrugsWithCovariates(
   adjustToFFM = TRUE,
   osmolality = OSMOLALITY_DEFAULT,
   creatinine = NULL,
-  cyp2c19 = CYP2C19_DEFAULT
+  cyp2c19 = CYP2C19_DEFAULT,
+  cyp2c9 = CYP2C9_DEFAULT,
+  cyp2b6 = CYP2B6_DEFAULT,
+  pregnant = FALSE,
+  vkorc1 = VKORC1_DEFAULT,
+  antiseizureInteractions = FALSE,
+  cyp4f2 = CYP4F2_DEFAULT,
+  gestationalAge = NULL
 )
 }
 \arguments{
@@ -55,6 +62,34 @@ affected.}
 
 \item{cyp2c19}{CYP2C19 metaboliser phenotype, one of \code{CYP2C19_VALUES}.
 Only drugs whose model declares it are affected.}
+
+\item{cyp2c9}{CYP2C9 metaboliser phenotype, one of \code{CYP2C9_VALUES}.
+Only drugs whose model declares it (phenytoin) are affected.}
+
+\item{cyp2b6}{CYP2B6 metaboliser phenotype, one of \code{CYP2B6_VALUES}.
+Only drugs whose model declares it (methadone) are affected.}
+
+\item{pregnant}{is the patient pregnant?  TRUE or FALSE (the default); TRUE
+requires \code{sex = "female"}.  Only the models that name it apply the
+changes of late pregnancy measured for that drug
+(inst/extdata/pregnancyRegistry.csv); see \code{getDrugPK()}.}
+
+\item{vkorc1}{VKORC1 -1639G>A genotype, one of \code{VKORC1_VALUES}.
+Only drugs whose model declares it (warfarin) are affected.}
+
+\item{antiseizureInteractions}{apply the pharmacokinetic interactions among
+the antiseizure drugs (\code{R/antiseizureInteractions.R},
+\code{antiseizureInteractionRegistry()})?  FALSE (the default) simulates
+every drug on its own.  A changed drug's entry carries
+\code{interaction}, the segments of its multipliers and the rows that
+produced them.}
+
+\item{cyp4f2}{CYP4F2 rs2108622 genotype, one of \code{CYP4F2_VALUES}.
+Only drugs whose model declares it (warfarin) are affected.}
+
+\item{gestationalAge}{gestational age at birth in weeks, or NULL for a term
+birth.  Only the neonatal models that declare it (dobutamineNeonatal)
+are affected.}
 }
 \value{
 a list of data frames with the output of the a single drug

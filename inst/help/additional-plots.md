@@ -1,14 +1,14 @@
-The third sidebar panel adds panels beneath the concentration plot. Each is a checkbox.
+The **Additional plots** choices, at the foot of the Graph Options panel, add panels beneath the concentration plot. Each is a checkbox. MEAC is offered only while an opioid is in the dose table, and Interaction only while propofol and an opioid are; Events is always offered.
 
 ## MEAC
 
 Plots each opioid's effect-site concentration as a percentage of its **minimum effective analgesic concentration**, and the sum over all opioids present. Several opioids can then be compared on one axis of clinical effect rather than of mass: 100 per cent is the concentration at which a typical patient has adequate analgesia, whichever opioid supplies it.
 
-The MEAC values are in the drug library and on each drug's page. Drugs with a MEAC of zero (the non-opioids) do not appear on this panel. See [MEAC: comparing opioids](help:models/meac).
+The MEAC values are in the drug library and on each drug's page. Drugs with a MEAC of zero do not appear on this panel: the non-opioids, and the opioids the library gives no MEAC (buprenorphine, codeine, tramadol, diamorphine and carfentanil). See [MEAC: comparing opioids](help:models/meac).
 
 ## Interaction
 
-Models the synergy between propofol and an opioid using the Bouillon response surface for laryngoscopy, and plots the **probability of response** over time. Opioids are converted to remifentanil equivalents through their MEAC first, so any opioid in the library can be used. Three curves are drawn: the probability with both drugs, with propofol alone, and (always one) with opioid alone. The panel needs propofol and at least one opioid in the dose table. See [Propofol-opioid interaction](help:models/interaction).
+Models the synergy between propofol and an opioid using the Bouillon response surface for laryngoscopy, and plots the **probability of response** over time. Opioids are converted to remifentanil equivalents through their MEAC first, so any opioid in the library with a MEAC can be used. Three curves are drawn: the probability with both drugs, with propofol alone, and (always one) with opioid alone. The panel needs propofol and at least one opioid in the dose table. See [Propofol-opioid interaction](help:models/interaction).
 
 ## Events
 
@@ -24,8 +24,8 @@ Draws clinical events on the time axis and lets you enter them. Click the panel 
 
 Most events are annotations. The cardiopulmonary-bypass events (CPB Start, the temperature steps, CPB End) also **change the pharmacokinetics** of any drug whose model has parameters for them; at present that is the infant dexmedetomidine model. See [Events that change the kinetics](help:models/pk-events).
 
-Removing the Events panel while events are entered asks for confirmation, because the events would be lost.
+Unticking Events hides the panel but keeps the events, which still apply to the kinetics. Clicking the MEAC or Interaction panel asks whether to remove that panel.
 
 ## Panels that appear on their own
 
-Two panels are not checkboxes. The **MAC equivalents** panel appears whenever a potent inhaled agent (sevoflurane, isoflurane, desflurane or nitrous oxide) is running, and the **oxygen** panel whenever any gas flow is running. See [Inhaled anesthetics](help:inhaled-agents).
+Three kinds of panel are not checkboxes. The **MAC equivalents** panel appears whenever a potent inhaled agent (sevoflurane, isoflurane, desflurane or nitrous oxide) is running, and the **oxygen** panel whenever any gas flow is running; see [Inhaled anesthetics](help:inhaled-agents). A **TCI rate** panel appears for each drug with a *Plasma target* or *Effect site target* row; see [Target-controlled infusion](help:tci).

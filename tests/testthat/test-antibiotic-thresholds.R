@@ -170,7 +170,7 @@ test_that("an osmotic agent's threshold is read on its osmolality axis", {
   # concentration against an osmolality made the line meaningless.)
   dd <- getDrugDefaultsGlobal()
   PK <- getDrugPK("mannitol", 70, 170, 50, "male", dd[dd$Drug == "mannitol", ])
-  DT <- data.frame(Drug = "mannitol", Time = 0, Dose = 70, Units = "g")
+  DT <- data.frame(Drug = "mannitol", Time = c(0, 30), Dose = c(140, 0), Units = "g/hr")
   base <- simCpCe(DT, noEvents, PK, 600, FALSE)$wide
   thr <- (max(base$Plasma) + PK$osmotic$baseline) / 2
   PK$endCe <- thr

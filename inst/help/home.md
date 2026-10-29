@@ -13,15 +13,15 @@ stanpumpR predicts drug concentrations. You describe a patient and a dosing regi
 
 | Region | What it does | Help page |
 |---|---|---|
-| Left sidebar | Patient covariates, graph options, additional plots, email | [Patient profile](help:patient-profile), [Graph options](help:graph-options) |
-| Plot | Predicted concentrations; hover, click and double-click act on it | [Reading the plot](help:reading-the-plot) |
-| Dose table | Where you describe the regimen | [The dose table](help:dose-table) |
-| Time card | Time units (minutes to weeks), elapsed or clock time | [Time display](help:time-display) |
+| Left sidebar | Patient covariates, graph options, additional plots, time settings, dose-table options, email; the arrow at its top collapses it | [Patient profile](help:patient-profile), [Graph options](help:graph-options) |
+| Plot | Predicted concentrations; hover, click and double-click act on it; *Add new drug* below it | [Reading the plot](help:reading-the-plot) |
+| Dose table | Where you describe the regimen, in a panel at the right that its arrow collapses | [The dose table](help:dose-table) |
+| Time panel (left sidebar) | Time units (minutes to weeks), Max time and Min time, elapsed or clock time | [Time display](help:time-display) |
 | References | The citation for every drug being simulated | [Bibliography](help:references) |
 | Settings menu | The editable drug library and recovery thresholds | [Drug Library and Drug Thresholds](help:drug-library) |
 
 ## A note on scope
 
-The library holds anesthetic and analgesic drugs, the inhaled anesthetics, and perioperative antibiotics, corticosteroids and reversal agents; see [All drugs](help:drugs/index). A few features are visible but not yet active; see [In development](help:in-development) for an honest list of what is done and what is not.
+The library holds anesthetic and analgesic drugs, the inhaled anesthetics, local anesthetics, and perioperative antibiotics, corticosteroids, antiemetics and reversal agents, along with drugs taken over days to months: antidepressants, antipsychotics, stimulants, antiseizure drugs, antidiabetic drugs (as concentrations only) and amiodarone. Research models of drugs of abuse (diamorphine, cocaine, methamphetamine, LSD, psilocybin and MDMA) are hidden unless **Show illicit drugs**, in the *Dose table* panel of the left sidebar, is ticked; see [Research models of drugs of abuse](help:models/illicit-drugs). See [All drugs](help:drugs/index). A few features are visible but not yet active; see [In development](help:in-development) for an honest list of what is done and what is not.
 
 stanpumpR is a collaborative research project. If you would like to add a drug, a data set or an algorithm, see [Contributing](help:contributing).

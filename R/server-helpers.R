@@ -30,7 +30,8 @@ showIntroModal <- function() {
 
 checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
                                    osmolality = OSMOLALITY_DEFAULT,
-                                   creatinine = NULL) {
+                                   creatinine = NULL,
+                                   gestationalAge = NULL) {
   msg <- ""
   success <- TRUE
   if (!is_valid_number(age, MIN_AGE, MAX_AGE)) {
@@ -56,6 +57,14 @@ checkNumericCovariates <- function(age, weight, height, errorFx = NULL,
         !(is.numeric(creatinine) && is.nan(creatinine))) &&
       !is_valid_number(creatinine, MIN_CREATININE, MAX_CREATININE)) {
     msg <- glue::glue("Serum creatinine must be between {MIN_CREATININE} and {MAX_CREATININE} mg/dL, or left blank")
+    success <- FALSE
+  }
+  # Optional in the same way: blank means a term birth.
+  if (!is.null(gestationalAge) &&
+      !(length(gestationalAge) == 1 && is.na(gestationalAge) &&
+        !(is.numeric(gestationalAge) && is.nan(gestationalAge))) &&
+      !is_valid_number(gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE)) {
+    msg <- glue::glue("Gestational age at birth must be between {MIN_GESTATIONAL_AGE} and {MAX_GESTATIONAL_AGE} weeks, or left blank")
     success <- FALSE
   }
 

@@ -4,15 +4,15 @@ Edits to the dose table go into a draft. Press **Apply Changes** to simulate. Th
 
 ## My infusion never stops
 
-An infusion runs until the next row for the same drug changes it. Add a row for that drug at the stop time with a dose of 0 in the same rate units.
+An infusion runs until the next row for the same drug changes it. The simplest way to stop it is to click the drug's curve at the stop time and press **Stop**, which adds the right row for you. By hand, add a row for that drug at the stop time with a dose of 0 in the same rate units. A scheduled dose (`mg bid`) is stopped the same way, with a scheduled dose of 0 for the same route; an ordinary dose of 0 does not stop it, except on the oral and sublingual routes, where any later oral or sublingual dose, 0 included, ends the running oral or sublingual schedule. To skip one dose of any schedule, click the curve and press **Skip next dose**.
 
 ## The time I typed turned into something else
 
-The *Time* field accepts a number of the **Time units** (`12`, `1.5`), and with the *Actual time* display a clock time with a colon (`09:30`); `130` is 130 of the unit, not 1:30. Minutes above 59 roll over, so `0:80` becomes `01:20`. Anything it cannot read becomes zero. If the time display is set to *Actual time*, a time with a colon is a clock time and a number is counted from the procedure start. Changing the Time units rewrites every time in the table in the new unit, so `90` minutes becomes `1.5` hours: the doses have not moved. See [Time display](help:time-display).
+The *Time* field accepts a number of the **Time units** (`12`, `1.5`), and with the *Actual time* display a clock time with a colon (`09:30`); `130` is 130 of the unit, not 1:30. Minutes above 59 roll over, so `0:80` becomes `01:20`. Anything it cannot read (`-5`, `5 mg`, `1,5`) is refused with a message, and the cell keeps the value it had; see [The dose table](help:dose-table). If the time display is set to *Actual time*, a time with a colon is a clock time and a number is counted from the procedure start. Changing the Time units rewrites every time in the table in the new unit, so `90` minutes becomes `1.5` hours: the doses have not moved. See [Time display](help:time-display).
 
 ## Why can I not pick the unit I want?
 
-The *Units* list depends on the drug in that row and comes from the drug library. Propofol offers `mg`, `mg/kg`, `mcg/kg/min` and `mg/kg/hr`; oxycodone offers only `mg PO`. Each drug's page under [Drug library](help:drugs/index) lists its units, and the library can be edited under Settings.
+The *Units* list depends on the drug in that row and comes from the drug library. Propofol offers `mg`, `mg/kg`, `mcg/kg/min`, `mg/kg/hr` and the two TCI targets; amiodarone offers only `mg/day PO`. Each drug's page under [Drug library](help:drugs/index) lists its units, and the library can be edited under Settings.
 
 ## Where is the plasma concentration?
 
@@ -32,7 +32,7 @@ Because they are. Propofol is in micrograms per millilitre and remifentanil in n
 
 ## Why can I not turn on the log axis?
 
-It is unavailable while *Time until threshold*, the Events panel or the Interaction panel is showing, because those panels have no meaningful log form.
+It is unavailable while *Time until threshold*, the *% MEAC* line, the Events panel or the Interaction panel is showing, because those panels have no meaningful log form.
 
 ## Why does the plot say "MAC equivalents" rather than MAC?
 
@@ -52,7 +52,7 @@ Copy the URL. It encodes the patient, the doses, the events, the options and any
 
 ## Can I use the engine from R without the app?
 
-Yes. `simulateDrugsWithCovariates()` and `getDrugPK()` with `simCpCe()` are exported, and two vignettes show how. See [Driving the engine from R](help:scripting).
+Yes. `simulateDrugsWithCovariates()` and `getDrugPK()` with `simCpCe()` are exported, and two vignettes show how. See [Driving the engine from R](help:scripting). The same engine is offered as a web service, `run_api()` for a dose table and `run_tci_api()` for a pump; see [The TCI API](help:tci-api).
 
 ## The Email Slide panel says email is not configured
 

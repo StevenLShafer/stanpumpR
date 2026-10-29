@@ -11,8 +11,7 @@
 # and only those.  9-Hydroxyrisperidone is paliperidone, but paliperidone
 # given as itself has its own absolute disposition, which these are not; so
 # this entry has no units of its own and appears only as risperidone's
-# metabolite.  The V and CL values are the brief's, not yet checked against
-# Storset's Table 2; the age term was checked against the text.
+# metabolite.  The V and CL values and the age term match Storset's Table 2.
 #
 # Units: time in minutes, volumes in litres, clearances in L/min,
 # concentrations in ng/mL (serum).  Body size: no weight covariate, scaled to

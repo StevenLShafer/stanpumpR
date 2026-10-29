@@ -110,12 +110,17 @@
 #
 # BAND
 # ====
-# 4.1-9.4 mcg/mL: the steady-state average concentration corresponding to the
-# 1200-3600 mg/day doses effective in postherpetic neuralgia, from the
-# exposure-response analysis of 690 patients in the Neurontin NDA (AUC over an
-# 8-hour interval 32.8-75.1 mg.h/L, Healy 2023).  Orientation only: it is a
-# chronic neuropathic pain exposure, not a perioperative target, and a single
-# preoperative dose sits below it.  The GAP trial (Baos 2025, 1196 patients,
+# 2-20 mcg/mL, the therapeutic reference range for epilepsy and neuropathic
+# pain of Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861), 12 h
+# after a dose, alert level 25 mcg/mL, taken from the ILAE guideline
+# (Patsalos 2008, 2018); typical 11, its midpoint.  It replaced 4.1-9.4
+# mcg/mL, which lies inside it: the steady-state average concentration
+# corresponding to the 1200-3600 mg/day doses effective in postherpetic
+# neuralgia, from the exposure-response analysis of 690 patients in the
+# Neurontin NDA (AUC over an 8-hour interval 32.8-75.1 mg.h/L, Healy 2023).
+# Orientation only: a chronic exposure, not a perioperative target, and a
+# single preoperative dose of 600 mg peaks inside it.  The GAP trial (Baos 2025, 1196 patients,
 # 600 mg before surgery and 300 mg twice daily for two days) found no
 # clinically important effect on length of stay, opioid use or acute pain.
 #
@@ -136,6 +141,8 @@
 #   https://doi.org/10.1016/s0920-1211(01)00311-4
 # Urban TJ et al., Clin Pharmacol Ther 2008;83:416-421.
 #   https://doi.org/10.1038/sj.clpt.6100271
+# Gidal BE et al., Epilepsy Res 1996;23:71-76 (high-protein meal).
+#   https://doi.org/10.1016/0920-1211(95)00051-8
 # Gidal BE et al., Epilepsy Res 2000;40:123-127.
 #   https://doi.org/10.1016/s0920-1211(00)00117-0
 # Healy P et al., Pharmacol Res Perspect 2023;11:e01138.
@@ -235,11 +242,11 @@ gabapentin <- function(weight, height, age, sex, adjustToFFM = TRUE,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, mcg/mL: steady-state average for the postherpetic neuralgia doses,
-  # see the header.  Orientation only.
-  typical      <- 6
-  upperTypical <- 9.4
-  lowerTypical <- 4.1
+  # Band, mcg/mL: the therapeutic reference range of Hart 2026, Table 5, see
+  # the header.  Orientation only.
+  typical      <- 11
+  upperTypical <- 20
+  lowerTypical <- 2
 
   reference <- paste0(
     "Tran P et al., J Pharmacokinet Pharmacodyn 2017;44:567-579. ",

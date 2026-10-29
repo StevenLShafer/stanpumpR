@@ -1,5 +1,5 @@
 # The route of a dose is not stored separately: it is a word in its Units
-# string ("mg PO", "mg/kg IM", "mg IN", "mg RA").  Units with no route word (bolus and
+# string ("mg PO", "mg/kg IM", "mg IN", "mg RA", "mg SC").  Units with no route word (bolus and
 # infusion units, the TCI targets, the gases' L/min and %) are intravenous, or
 # for the gases, treated with them.
 #
@@ -11,7 +11,7 @@
 #'
 #' @param units Character vector of dose units, as in the dose table.
 #' @returns Character vector the same length as `units`: one of `DOSE_ROUTES`
-#'   (`"IV"`, `"PO"`, `"IM"`, `"IN"`, `"RA"`).
+#'   (`"IV"`, `"PO"`, `"SL"`, `"IM"`, `"IN"`, `"RA"`, `"SC"`).
 #' @noRd
 doseRoute <- function(units) {
   units <- as.character(units)
@@ -38,6 +38,33 @@ doseFormulation <- function(units) {
     formulation[grepl(paste0(" ", ROUTE_PO, " ", f, "( |$)"), units)] <- f
   }
   formulation
+}
+
+#' Product named by dose units
+#'
+#' A drug given as more than one product, each with its own conversion to
+#' what is plotted, names the product as a word of the unit after the mass
+#' ("g chloride", "mg/min gluconate": intravenous calcium, `calciumUnits`).
+#' The word is matched as a whole word anywhere after the first, so a route
+#' or frequency may follow it.
+#'
+#' @param units Character vector of dose units, as in the dose table.
+#' @param products Character vector of the product words to look for.
+#' @returns Character vector the same length as `units`: the product each
+#'   unit names, or NA for a unit that names none.  A unit naming two is an
+#'   error.
+#' @noRd
+doseProduct <- function(units, products) {
+  units <- as.character(units)
+  product <- rep(NA_character_, length(units))
+  for (p in products) {
+    hit <- grepl(paste0(" ", p, "( |$)"), units)
+    twice <- hit & !is.na(product)
+    if (any(twice))
+      stop("Dose unit names two products: ", paste(unique(units[twice]), collapse = ", "))
+    product[hit] <- p
+  }
+  product
 }
 
 #' Is a dose unit an input rate rather than an amount?
@@ -97,6 +124,19 @@ groupUnitsByRoute <- function(units) {
 #'   same as that of the scaled dose on the reference clearance.  Paroxetine
 #'   (Kim 2015).  The fraction may exceed 1 above Dref; it is an exposure
 #'   scale on apparent parameters, not a physical bioavailability.
+#' * `form = "reduction"`, `list(form, I50, D0, D50, exponent)`: the fraction
+#'   is 1 at and below the anchor dose D0 and falls as a power of the dose
+#'   above it, 1 - I50 x ((D - D0) / (D50 - D0))^exponent, so that it is
+#'   1 - I50 at D50, and is HELD at 1 - I50 above D50: the source fitted
+#'   doses up to D50, and the power would otherwise fall through zero (at
+#'   about 2.7 times D50), so that a large dose simulated as no drug at all.
+#'   The stage 2 relative bioavailability of apixaban (Cirincione 2018:
+#'   anchored at 2.5 mg, I50 the fall at 50 mg).
+#' * `form = "exponential"`, `list(form, Fmin, Fmax, D50)`: the fraction is
+#'   Fmin + (Fmax - Fmin) exp(-ln 2 D / D50), falling from Fmax at a small
+#'   dose towards Fmin, halfway at D50.  Rivaroxaban (Willmann 2018, relative
+#'   to a 10 mg dose, at which it is 0.998).  It may exceed 1: relative, not
+#'   absolute, bioavailability.
 #'
 #' Each dose is scaled once, by its own size, and is then an independent input
 #' to the linear engines, so superposition still holds.  What this cannot
@@ -114,7 +154,12 @@ oralSaturationFraction <- function(doseMg, saturation)
   switch(oralSaturationForm(saturation),
     saturable = 1 - saturation$Imax * doseMg / (saturation$ID50 + doseMg),
     rising    = doseMg / (saturation$D50 + doseMg),
-    power     = (doseMg / saturation$Dref)^saturation$exponent
+    power     = (doseMg / saturation$Dref)^saturation$exponent,
+    reduction = 1 - saturation$I50 *
+      (pmin(pmax(doseMg - saturation$D0, 0), saturation$D50 - saturation$D0) /
+         (saturation$D50 - saturation$D0))^saturation$exponent,
+    exponential = saturation$Fmin + (saturation$Fmax - saturation$Fmin) *
+      exp(-log(2) * doseMg / saturation$D50)
   )
 }
 
@@ -128,8 +173,11 @@ oralSaturationForm <- function(saturation)
 ORAL_SATURATION_SATURABLE <- "saturable"
 ORAL_SATURATION_RISING    <- "rising"
 ORAL_SATURATION_POWER     <- "power"
+ORAL_SATURATION_REDUCTION <- "reduction"
+ORAL_SATURATION_EXPONENTIAL <- "exponential"
 ORAL_SATURATION_FORMS <- c(ORAL_SATURATION_SATURABLE, ORAL_SATURATION_RISING,
-                           ORAL_SATURATION_POWER)
+                           ORAL_SATURATION_POWER, ORAL_SATURATION_REDUCTION,
+                           ORAL_SATURATION_EXPONENTIAL)
 
 #' Check a drug model's dose-dependent absorption block
 #'
@@ -162,12 +210,27 @@ validateOralSaturation <- function(saturation, drug, block = "oralSaturation")
     if (!(is_valid_number(saturation$D50) && saturation$D50 > 0))
       stop("Invalid ", block, " for ", drug, ": the rising form needs a ",
            "positive D50 in mg.")
-  } else {
+  } else if (form == ORAL_SATURATION_POWER) {
     ok <- is_valid_number(saturation$exponent) &&
       is_valid_number(saturation$Dref) && saturation$Dref > 0
     if (!ok)
       stop("Invalid ", block, " for ", drug, ": the power form needs an ",
            "exponent and a positive reference dose Dref in mg.")
+  } else if (form == ORAL_SATURATION_REDUCTION) {
+    ok <- is_valid_number(saturation$I50, 0, 1) &&
+      is_valid_number(saturation$exponent) && saturation$exponent > 0 &&
+      is_valid_number(saturation$D0, 0, Inf) &&
+      is_valid_number(saturation$D50) && saturation$D50 > saturation$D0
+    if (!ok)
+      stop("Invalid ", block, " for ", drug, ": the reduction form needs I50 ",
+           "between 0 and 1, a positive exponent, and doses D0 >= 0 and D50 > D0 in mg.")
+  } else {
+    ok <- is_valid_number(saturation$Fmin, 0, Inf) &&
+      is_valid_number(saturation$Fmax, 0, Inf) &&
+      is_valid_number(saturation$D50) && saturation$D50 > 0
+    if (!ok)
+      stop("Invalid ", block, " for ", drug, ": the exponential form needs ",
+           "Fmin and Fmax >= 0 and a positive D50 in mg.")
   }
   saturation
 }

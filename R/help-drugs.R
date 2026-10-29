@@ -198,23 +198,96 @@ helpDrugParameterTable <- function(drug, drugDefaults = getDrugDefaultsGlobal(),
 
 helpConcentrationUnits <- function(units) {
   switch(as.character(units),
-         "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL",
+         "mcg" = "mcg/mL", "ng" = "ng/mL", "mg" = "mg/mL", "pg" = "pg/mL",
          "%" = "% of one atmosphere",
          # An osmotic agent is plotted as the serum osmolality it produces.
          "mOsm" = "mOsm/kg (serum osmolality)",
+         # Intravenous calcium is plotted as the change in ionized calcium.
+         "mmol" = "mmol/L (change in ionized calcium)",
+         # The insulins are dosed in units and plotted in microunits per mL.
+         "mcU" = "mcU/mL (microunits per mL, = mU/L)",
+         # Heparin is measured by its activity, warfarin by the INR.
+         "IU" = "IU/mL (activity)",
+         "INR" = "INR (international normalized ratio)",
+         # Heparin on bypass is plotted as the activated clotting time (R/act.R).
+         "ACT" = "ACT (s, activated clotting time)",
          as.character(units))
 }
 
+# The citation as plain text, for the drug index: a URL that ends it is
+# dropped, one inside it is replaced by its site's name, as citationHTML()
+# shows it (R/utils-shiny-ui.R); an unrecognised URL stays as written.
 helpReferenceShort <- function(reference) {
   if (is.null(reference) || is.na(reference) || !nzchar(reference)) return("Not available")
+  links <- citationLinks(reference)
+  if (!is.null(links)) {
+    for (i in rev(seq_len(nrow(links)))) {
+      after <- substr(reference, links$end[i] + 1L, nchar(reference))
+      trailing <- !nzchar(trimws(after))
+      reference <- paste0(substr(reference, 1L, links$start[i] - 1L),
+                          if (trailing) "" else links$label[i], after)
+    }
+  }
   trimws(sub("\\s+https?://\\S+$", "", reference))
 }
 
 helpDrugUnits <- function(row) {
   u <- row$Units
   if (is.list(u)) u <- u[[1]]
+  # getDrugDefaultsGlobal() gives Units as a list column, already split; with
+  # splitUnits = FALSE it is the raw comma-joined string.  Splitting here makes
+  # the helper give the same answer either way: without it doseRoute() reads
+  # "mg IM,mcg IM,mg IN,mcg IN" as one unit and finds only the last route, so a
+  # drug offering two routes silently loses one.
+  u <- unlist(strsplit(as.character(u), ",", fixed = TRUE))
+  u <- trimws(u)
   u <- u[!is.na(u) & nzchar(u)]
   u
+}
+
+#' The terminal half-life a saturable model approaches at low concentration
+#'
+#' Below Km the Michaelis-Menten term Vmax C / (Km + C) becomes (Vmax/Km) C,
+#' an ordinary first-order clearance, so the model is linear in that limit and
+#' has a terminal half-life.  It is NOT the half-life in the parameter table
+#' above: that one is computed from the linear compartments alone, and a drug
+#' whose peripheral compartment is declared inside the saturable block (GHB's
+#' k23/k32) has v2 = 1 there, so the table reports its one-compartment value.
+#' GHB's is 17.9 minutes against a true low-concentration terminal half-life of
+#' 82 minutes, which is why this is computed rather than borrowed.
+#'
+#' @param X a drug model's output, carrying a `michaelisMenten` block
+#' @returns the terminal half-life in minutes, or NA when the block is absent
+#' @noRd
+helpSaturableTerminalHalfLife <- function(X) {
+  mm <- X$michaelisMenten
+  if (is.null(mm)) return(NA_real_)
+  # Saturable binding (linagliptin, vildagliptin) makes even the
+  # low-concentration limit depend on the target's capacity: not computed.
+  if (!is.null(mm$rapidBinding) || !is.null(mm$targetBinding)) return(NA_real_)
+  set <- X$PK[[PK_EVENT_DEFAULT]]
+  v1 <- set$v1
+  if (!isTRUE(v1 > 0) || !isTRUE(mm$km > 0)) return(NA_real_)
+  # CL/V1 in the low-C limit, with any parallel linear clearance (exenatide)
+  clLinear <- if (is.null(mm$clLinear)) 0 else mm$clLinear
+  k10 <- (mm$vmax / mm$km + clLinear) / v1
+  if (!isTRUE(k10 > 0)) return(NA_real_)
+  # The peripheral compartment, declared as k23/k32 (GHB) or as the PK set's
+  # cl2 and v2 (exenatide)
+  if (!is.null(mm$k23)) {
+    k12 <- mm$k23
+    k21 <- mm$k32
+  } else if (isTRUE(set$cl2 > 0) && isTRUE(set$v2 > 0)) {
+    k12 <- set$cl2 / v1
+    k21 <- set$cl2 / set$v2
+  } else {
+    k12 <- k21 <- 0
+  }
+  if (k12 <= 0 || k21 <= 0) return(log(2) / k10)
+  # The slower root of the two-compartment characteristic equation
+  s <- k10 + k12 + k21
+  beta <- (s - sqrt(s^2 - 4 * k10 * k21)) / 2
+  log(2) / beta
 }
 
 #' Section heading as an HTML string
@@ -223,8 +296,8 @@ helpH2 <- function(text) sprintf("<h2>%s</h2>", htmltools::htmlEscape(text))
 
 #' The teaching scenarios that give a drug, as a Markdown-free HTML list
 #' @noRd
-helpScenariosUsingDrugHTML <- function(drug) {
-  scen <- Filter(function(s) drug %in% s$doses$Drug, helpScenarios())
+helpScenariosUsingDrugHTML <- function(drug, scenarios = helpScenarios()) {
+  scen <- Filter(function(s) drug %in% s$doses$Drug, scenarios)
   if (length(scen) == 0) return("")
   items <- vapply(scen, function(s) {
     sprintf('<li><a href="#" data-help-page="scenarios/%s">%s</a> \u2014 %s</li>',
@@ -232,6 +305,68 @@ helpScenariosUsingDrugHTML <- function(drug) {
   }, character(1))
   paste0(helpH2("Teaching scenarios that use this drug"),
          "<ul>", paste(items, collapse = ""), "</ul>")
+}
+
+#' A short label for a pregnancy source: the first author's surname and year
+#'
+#' From the registry's `source` field, a semicolon-separated list of
+#' citations; the first is the one the table links.
+#' @noRd
+helpPregnancySourceShort <- function(source) {
+  first <- trimws(strsplit(source, ";", fixed = TRUE)[[1]][1])
+  if (is.na(first) || !nzchar(first)) return("")
+  author <- regmatches(first, regexpr("^[[:alpha:]'-]+", first))
+  year <- regmatches(first, regexpr("(19|20)[0-9]{2}", first))
+  label <- paste(c(author, year), collapse = " ")
+  if (nzchar(label)) label else substr(first, 1, 40)
+}
+
+#' Registry text made safe for Markdown: a literal asterisk (CYP2C9*1/*1)
+#' must not open an emphasis
+#' @noRd
+helpPregnancyEscape <- function(x) gsub("*", "\\*", x, fixed = TRUE)
+
+#' What each pregnancy group means, as the drug pages and the pregnancy page say it
+#' @noRd
+PREGNANCY_GROUP_LABELS <- c(
+  applied = "Adjusted when Pregnant is ticked.",
+  unquantified = "Changed in pregnancy, but not by an amount the library can apply: not adjusted.",
+  unchanged = "Studied in pregnancy, with no meaningful change: not adjusted.",
+  unknown = "No human pharmacokinetic data in pregnancy were found: not adjusted.",
+  source_pregnant = "The model was fitted in pregnant women, so it already describes them: Pregnant changes nothing.",
+  not_applicable = "Pregnant changes nothing for this drug."
+)
+
+#' The Pregnancy section of a drug's page
+#'
+#' The drug's row of the pregnancy registry (pregnancyFindings(),
+#' R/pregnancy.R): what is known, what the model applies, and the sources,
+#' so every drug's page says what the literature review found for it.
+#'
+#' @param drug the drug's name
+#' @returns HTML, or "" for a drug with no row
+#' @noRd
+helpDrugPregnancyHTML <- function(drug) {
+  f <- pregnancyFindings()
+  r <- f[f$drug == drug, ]
+  if (nrow(r) == 0) return("")
+  r <- r[1, ]
+  evidence <- paste(c(
+    if (nzchar(r$design)) r$design,
+    if (!is.na(r$n)) sprintf("n = %s", r$n),
+    if (nzchar(r$trimester)) sprintf("trimester: %s", r$trimester),
+    if (nzchar(r$comparator)) sprintf("compared with %s", r$comparator),
+    if (nzchar(r$confidence)) sprintf("confidence %s", r$confidence)
+  ), collapse = "; ")
+  md <- c(
+    sprintf("**%s** %s", PREGNANCY_GROUP_LABELS[[r$group]], helpPregnancyEscape(r$finding)),
+    if (nzchar(r$applied)) c("", sprintf("**What the model applies:** %s", helpPregnancyEscape(r$applied))),
+    if (nzchar(evidence)) c("", sprintf("*Evidence:* %s.", helpPregnancyEscape(evidence))),
+    if (nzchar(r$source)) c("", sprintf("*Sources:* %s%s", helpPregnancyEscape(r$source),
+                                        if (nzchar(r$source_url)) sprintf(" (<%s>)", r$source_url) else "")),
+    "", "See [Pregnancy](help:models/pregnancy)."
+  )
+  paste0(helpH2("Pregnancy"), helpMarkdownToHTML(paste(md, collapse = "\n")))
 }
 
 #' The generated page for one drug or gas, as an HTML string
@@ -244,6 +379,27 @@ helpDrugPageHTML <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
   }
   row <- row[1, ]
   if (isGasDrug(drug)) helpGasPageHTML(drug, row) else helpIvDrugPageHTML(drug, row, drugDefaults)
+}
+
+#' The searchable text of a drug's page, without running the model
+#'
+#' The title, the drug's name, its category and units, the citation its model
+#' function returns, its narrative and the scenarios that use it.  What is
+#' left out is numbers: the parameter tables and half-lives.
+#' @noRd
+helpDrugSearchText <- function(drug, drugDefaults = getDrugDefaultsGlobal(),
+                               scenarios = helpScenarios()) {
+  row <- drugDefaults[drugDefaults$Drug == drug, ]
+  if (nrow(row) == 0) return("")
+  row <- row[1, ]
+  modelOut <- helpDrugModelOutput(drug, helpReferencePatients()[1, ])
+  reference <- if (is.character(modelOut$reference)) modelOut$reference else ""
+  narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("drugs/", drug)))
+  helpPlainText(paste(
+    helpDrugTitle(drug), drug, as.character(row$Category),
+    paste(helpDrugUnits(row), collapse = ", "),
+    reference, narrative, helpScenariosUsingDrugHTML(drug, scenarios)
+  ))
 }
 
 helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
@@ -272,8 +428,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   route <- doseRoute(units)
   routes <- c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "sublingual",
               if (ROUTE_IM %in% route) "intramuscular", if (ROUTE_IN %in% route) "intranasal",
+              if (ROUTE_SC %in% route) "subcutaneous",
               if (ROUTE_RA %in% route) "by tissue injection (regional anesthesia)")
-  intravenous <- any(units %in% c(bolusUnits, infusionUnits))
+  intravenous <- any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits))
   tci <- any(units %in% tciUnits)
   given <- if (length(units) == 0) {
     paste0("Not dosed directly: appears only as the active metabolite of ",
@@ -316,6 +473,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       if (length(parents)) paste(vapply(parents, function(p) helpPageLink(paste0("drugs/", p)), character(1)),
                                  collapse = ", ") else esc("Not a modelled metabolite of any drug in the library"),
       esc(if (helpNoBand(row)) "None: no range applies to this model, so no band is drawn"
+          else if (!is.null(mic)) sprintf("%s to %s %s, free drug at the expected MBC of the common pathogens (see below)",
+                                          helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)
           else sprintf("%s to %s %s", helpFormatNumber(row$Lower), helpFormatNumber(row$Upper), concUnits)),
       esc(if (helpNoBand(row)) "None" else sprintf("%s %s", helpFormatNumber(row$Typical), concUnits)),
       esc(meacShown),
@@ -335,6 +494,13 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     ),
     stringsAsFactors = FALSE
   )
+  # The therapeutic reference range and its source (R/therapeuticRanges.R),
+  # for the drugs the registry covers
+  range <- therapeuticRange(drug)
+  if (!is.null(range))
+    glance <- rbind(glance, data.frame(Property = esc("Therapeutic reference range"),
+                                       Value = esc(therapeuticRangeSummary(range)),
+                                       stringsAsFactors = FALSE))
   glanceHTML <- helpRawTableHTML(glance)
 
   # --- Model source ----------------------------------------------------------
@@ -407,8 +573,10 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     }
     ffmNote <- if (isTRUE(ffm)) {
       paste0("These values are with <em>Adjust weight to fat-free mass</em> ticked, as it is by default: ",
-             "the model's volumes are scaled by the patient's fat-free mass relative to a 70 kg, 170 cm man, ",
-             "and its clearances by that ratio to the 0.75 power. The 70 kg reference man is unchanged. ",
+             "the model is scaled to the patient's fat-free mass rather than total weight. For most models ",
+             "that means volumes by the ratio of the patient's fat-free mass to a 70 kg, 170 cm man's, and ",
+             "clearances by that ratio to the 0.75 power; a model with its own size term applies it to the ",
+             "fat-free-mass weight instead, as its notes describe. The 70 kg reference man is unchanged. ",
              "Unticking the box restores the scaling the published model used. See ",
              helpPageLink("models/fat-free-mass"), ".")
     } else if (isFALSE(ffm)) {
@@ -449,6 +617,24 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       "<p class='small text-muted'>The disposition half-lives are ln(2) divided by the ",
       "eigenvalues of the compartment model (\u03b1 fastest, \u03b3 slowest); a dash means the ",
       "compartment is absent, and a half-life of a day or more also gives its length in days (d). ",
+      # A saturable model has no fixed clearance and no fixed half-life, so
+      # the two tables above would be read as saying something they do not.
+      # Say so here rather than leaving it to the section further down.
+      if (!is.null(modelOut$michaelisMenten) &&
+          (!is.null(modelOut$michaelisMenten$rapidBinding) ||
+           !is.null(modelOut$michaelisMenten$targetBinding)))
+        paste0("<strong>This drug's binding to its target saturates</strong>, so the clearance and ",
+               "half-lives above are those of the unbound drug, not of the total concentration ",
+               "plotted; see <em>Saturable binding</em> below. ")
+      else if (!is.null(modelOut$michaelisMenten))
+        paste0("<strong>This drug's elimination saturates</strong>, so neither CL1 nor the half-lives ",
+               "above are fixed properties of it. CL1 is the central clearance approached at ",
+               "concentrations far BELOW Km, and falls from there as the dose rises. The half-lives ",
+               "are computed from the linear compartments alone, so for a drug whose peripheral ",
+               "compartment is declared inside the saturable block they are <strong>not</strong> ",
+               "that drug's terminal half-life even at vanishing concentration: the ",
+               "<em>Saturable elimination</em> section below gives the right one, and the peripheral ",
+               "volume that explains the difference. ") else "",
       effectNote, "</p>"
     )
   }
@@ -558,17 +744,79 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     }
   }
 
+  # --- CYP2D6 (without a metabolite) and CYP2C9 ------------------------------
+  # A model may read a genotype field for its own clearance rather than for a
+  # metabolite's formation (haloperidol and aripiprazole: CYP2D6; meloxicam
+  # and phenytoin: CYP2C9).  Tabulate what moves at the reference adult: the
+  # clearance, or for a Michaelis-Menten model its Vmax.
+  cypSection <- function(arg, values, normal, gene, field) {
+    if (!helpDrugDeclares(drug, arg)) return("")
+    rowsCyp <- lapply(values, function(v) {
+      X <- do.call(helpDrugModelOutput, c(list(drug, adult), stats::setNames(list(v), arg)))
+      if (is.null(X)) return(NULL)
+      data.frame(value = v, cl1 = X$PK[[PK_EVENT_DEFAULT]]$cl1,
+                 vmax = if (is.null(X$michaelisMenten$vmax)) NA_real_ else X$michaelisMenten$vmax,
+                 stringsAsFactors = FALSE)
+    })
+    byValue <- do.call(rbind, rowsCyp[!vapply(rowsCyp, is.null, logical(1))])
+    if (is.null(byValue) || sum(byValue$value == normal) != 1) return("")
+    ref <- byValue[byValue$value == normal, ]
+    varies <- function(x) length(unique(round(x, 9))) > 1
+    useVmax <- !is.na(ref$vmax) && varies(byValue$vmax)
+    moving <- if (useVmax) byValue$vmax else byValue$cl1
+    if (!varies(moving)) return("")
+    tab <- data.frame(
+      byValue$value,
+      helpFormatNumber(moving),
+      helpFormatNumber(moving / (if (useVmax) ref$vmax else ref$cl1)),
+      stringsAsFactors = FALSE
+    )
+    names(tab) <- c(if (arg == "cyp2c9") "CYP2C9 genotype" else paste(gene, "phenotype"),
+                    if (useVmax) "Vmax (mg/min)" else "Clearance CL1 (L/min)",
+                    paste("Relative to", normal))
+    if (arg != "cyp2c9") tab[[1]] <- tools::toTitleCase(tab[[1]])
+    paste0(
+      helpH2(paste(gene, if (arg == "cyp2c9") "genotype" else "phenotype")),
+      "<p>This model's ", if (useVmax) "maximal elimination rate" else "clearance",
+      " depends on ", gene, ", so the <strong>", field, "</strong> field in the Patient Profile changes it. ",
+      "At the reference adult:</p>",
+      helpTableHTML(tab, paste("Effect of", gene, if (arg == "cyp2c9") "genotype" else "phenotype"))
+    )
+  }
+  cypOtherHTML <- paste0(
+    if (is.null(metabolite)) cypSection("cyp2d6", CYP2D6_VALUES, CYP2D6_NORMAL, "CYP2D6", "CYP 2D6") else "",
+    cypSection("cyp2c9", CYP2C9_VALUES, CYP2C9_DEFAULT, "CYP2C9", "CYP 2C9"),
+    cypSection("cyp2b6", CYP2B6_VALUES, CYP2B6_DEFAULT, "CYP2B6", "CYP 2B6")
+  )
+
+  # --- Renal function --------------------------------------------------------
+  # A model that reads the Patient Profile's serum creatinine is tabulated
+  # above with the field blank: at an assumed normal creatinine for the
+  # reference patient's age and sex (R/renalFunction.R).
+  renalHTML <- if (helpDrugDeclares(drug, "creatinine")) paste0(
+    "<p>This model reads the <strong>Serum creatinine</strong> field in the Patient Profile to estimate ",
+    "renal function. The tables on this page leave the field blank, so they are at the normal creatinine ",
+    "assumed for each reference patient's age and sex; a higher creatinine lowers the renal part of the ",
+    "clearance. See ", helpPageLink("patient-profile"), ".</p>") else ""
+
   # --- Absorption routes -----------------------------------------------------
   absorptionHTML <- ""
   if (!is.null(pkRef)) {
     d <- pkRef$PK[[PK_EVENT_DEFAULT]]
     slowRA <- isTRUE(d$ka_RAslow > 0)
     secondPO <- isTRUE(d$ka_PO2 > 0)
+    # A subcutaneous drug's absorption rides on the tissue-depot (RA) fields
+    # (R/subcutaneous.R), so its rows are named for the route it really has.
+    tissue <- if (identical(pkRef$tissueRoute, ROUTE_SC)) "Subcutaneous (SC)" else
+      "Regional anesthesia (RA)"
     routes <- list(PO = if (secondPO) "Oral (PO), first depot" else "Oral (PO)",
                    PO2 = "Oral (PO), second depot", SL = "Sublingual (SL)",
                    IM = "Intramuscular (IM)", IN = "Intranasal (IN)",
-                   RA = if (slowRA) "Regional anesthesia (RA), fast depot" else "Regional anesthesia (RA)",
-                   RAslow = "Regional anesthesia (RA), slow depot")
+                   RA = if (slowRA) paste0(tissue, ", fast depot") else tissue,
+                   RAslow = paste0(tissue, ", slow depot"))
+    # An oral release into the gut rides on the tissue depot (R/subcutaneous.R):
+    # its depot is the oral one, shown once, as oral.
+    if (isTRUE(pkRef$zeroOrderPO)) routes$RA <- routes$RAslow <- NULL
     rows <- lapply(names(routes), function(r) {
       ka <- d[[paste0("ka_", r)]]
       if (is.null(ka) || is.na(ka) || ka <= 0) return(NULL)
@@ -581,23 +829,80 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
         check.names = FALSE, stringsAsFactors = FALSE
       )
     })
+    # Oral forms with absorption of their own (getDrugPK()'s oralFormulations):
+    # a unit naming one ("mg PO liquid") uses its row; plain "mg PO", and a
+    # form the drug offers without listing it, use the default oral row.
+    forms <- names(pkRef$oralFormulations)
+    formRows <- lapply(forms, function(f) {
+      fd <- pkRef$oralFormulations[[f]][[PK_EVENT_DEFAULT]]
+      if (is.null(fd) || !isTRUE(fd$ka_PO > 0)) return(NULL)
+      data.frame(
+        Route = sprintf("Oral, %s (mg PO %s)", f, f),
+        `ka (1/min)` = helpFormatNumber(fd$ka_PO),
+        `Absorption half-time (min)` = helpFormatNumber(log(2) / fd$ka_PO),
+        `Bioavailability` = helpFormatNumber(fd$bioavailability_PO),
+        `Lag time (min)` = helpFormatNumber(fd$tlag_PO),
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+    })
+    formRows <- formRows[!vapply(formRows, is.null, logical(1))]
+    if (length(formRows) && length(rows) && identical(rows[[1]]$Route, routes$PO))
+      rows[[1]]$Route <- "Oral (PO), default form"
+    rows <- c(rows[1], formRows, rows[-1])
     rows <- rows[!vapply(rows, is.null, logical(1))]
+    pulses <- pkRef$oralPulses
+    pulseNote <- if (length(pulses)) paste(vapply(names(pulses), function(f) {
+      p <- pulses[[f]]
+      # The reserved default form is every plain oral dose and names no
+      # formulation, so it is described as the dose rather than as a product.
+      sprintf("%s is released in %d parts (%s of the dose at %s minutes after it is given), each absorbed as the default form. ",
+              if (identical(f, ORAL_PULSE_DEFAULT_FORM))
+                "Each <strong>mg PO</strong> dose"
+              else
+                sprintf("An <strong>mg PO %s</strong> dose", f),
+              length(p$fraction),
+              paste(sprintf("%s%%", helpFormatNumber(100 * p$fraction)), collapse = ", "),
+              paste(helpFormatNumber(p$delay), collapse = ", "))
+    }, character(1)), collapse = "") else ""
+    # Zero-order subcutaneous input (R/subcutaneous.R)
+    zero <- pkRef$zeroOrderSC
+    zeroOrderNote <- if (is.null(zero)) "" else if (isTRUE(pkRef$zeroOrderPO)) sprintf(paste0(
+      "Each oral dose is released into the gut at a constant rate over %s minutes, starting at ",
+      "the lag, and absorbed from it first order (sequential zero- and first-order absorption). "),
+      helpFormatNumber(zero$duration)) else if (zero$into == "central") sprintf(paste0(
+      "Besides the depot%s, %s%% of each SC dose enters the circulation directly at a constant ",
+      "rate over %s minutes from the moment of injection (zero-order absorption); the depot ",
+      "bioavailability shown is the share it absorbs. "),
+      if (slowRA) "s" else "", helpFormatNumber(100 * zero$fraction), helpFormatNumber(zero$duration)) else
+      sprintf(paste0("Each SC dose is released into the depot at a constant rate over %s minutes ",
+                     "(sequential zero- and first-order absorption). "), helpFormatNumber(zero$duration))
     if (length(rows) > 0) {
       absorptionHTML <- paste0(
         helpH2("Extravascular routes"),
-        "<p>Doses with PO, SL, IM, IN or RA units are absorbed by first-order kinetics into the central ",
-        "compartment after a lag, with the fraction shown reaching the circulation. RA is a ",
-        "local anesthetic injected into tissue (a nerve block or an infiltration). ",
+        "<p>Doses with PO, SL, IM, IN, SC or RA units are absorbed by first-order kinetics into the central ",
+        "compartment after a lag, with the fraction shown reaching the circulation. ",
+        if (identical(pkRef$tissueRoute, ROUTE_SC)) paste0(
+          "SC is a subcutaneous injection",
+          if (any(units %in% insulinRateUnits)) ", or a continuous subcutaneous infusion from an insulin pump (U/hr SC), which feeds the same depot" else "",
+          ". ") else if (any(doseRoute(units) == ROUTE_RA)) paste0(
+          "RA is a local anesthetic injected into tissue (a nerve block or an infiltration)",
+          if (any(units %in% raRateUnits)) ", or infused into it through a perineural catheter (mg/hr RA), which feeds the same depot" else "",
+          ". ") else "",
+        zeroOrderNote,
+        if (length(formRows)) paste0("A unit naming an oral form listed in the table uses that form's ",
+                                     "absorption; plain mg PO, and any other form offered, use the default. ") else "",
+        pulseNote,
         if (secondPO) paste0("Each oral dose is absorbed through two depots in parallel, each with ",
                              "its own lag; the bioavailability of each is its share of the dose. ") else "",
-        if (slowRA) paste0("Each RA dose is absorbed through a fast and a slow depot in parallel; ",
+        if (slowRA) paste0("Each ", if (identical(pkRef$tissueRoute, ROUTE_SC)) "SC" else "RA",
+                           " dose is absorbed through a fast and a slow depot in parallel; ",
                            "the bioavailability of each is its share of the dose. ") else "",
         "See ",
         helpPageLink("models/absorption"), ".</p>",
         helpTableHTML(do.call(rbind, rows))
       )
       # Dose-dependent absorption: each oral or sublingual dose is scaled by
-      # its own fraction (oralSaturationFraction()), in one of three forms.
+      # its own fraction (oralSaturationFraction()), in one of five forms.
       saturable <- list(
         list(sat = pkRef$oralSaturation, F = d$bioavailability_PO, route = "Oral",
              doses = c(300, 600, 900, 1200)),
@@ -629,7 +934,20 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
             "</sup> with D the dose in mg. This carries the source's empirical power of the daily dose ",
             "on apparent clearance, and reproduces its steady-state exposure for once-daily dosing; the ",
             "\"fraction\" can exceed 1 above the reference dose, because it is an exposure scale on ",
-            "apparent parameters, not a physical bioavailability. ")
+            "apparent parameters, not a physical bioavailability. "),
+          reduction = paste0(
+            "<p>", s$route, " bioavailability <strong>falls with the dose</strong> above ",
+            helpFormatNumber(sat$D0), " mg, as 1 &minus; ", helpFormatNumber(sat$I50),
+            " &times; ((D &minus; ", helpFormatNumber(sat$D0), ") / ",
+            helpFormatNumber(sat$D50 - sat$D0), ")<sup>", helpFormatNumber(sat$exponent),
+            "</sup> with D the dose in mg, relative to a dose of ", helpFormatNumber(sat$D0),
+            " mg or less. "),
+          exponential = paste0(
+            "<p>", s$route, " bioavailability <strong>falls with the dose</strong>, as ",
+            helpFormatNumber(sat$Fmin), " + ", helpFormatNumber(sat$Fmax - sat$Fmin),
+            " &times; exp(&minus;ln 2 &times; D / ", helpFormatNumber(sat$D50),
+            ") with D the dose in mg. It is relative bioavailability on the apparent scale, ",
+            "and can exceed 1 for a small dose. ")
         )
         absorptionHTML <- paste0(
           absorptionHTML,
@@ -681,6 +999,9 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     )
   }
 
+  # --- Shaded band: free drug at the MBC -------------------------------------
+  mbcHTML <- helpAntibioticMbcHTML(drug, row, concUnits)
+
   # --- Parallel systems ------------------------------------------------------
   # A drug plotted as the sum of independent systems (ketorolac: S and R
   # enantiomers; meloxicam: the oral and intravenous fits, each limited to
@@ -723,11 +1044,109 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
     ev <- setdiff(ev, PK_EVENT_DEFAULT)
     eventsHTML <- paste0(
       helpH2("Events that change the kinetics"),
-      sprintf("<p>For %s, the parameters change when these clinical events are entered (Additional Plots \u2192 Events): <strong>%s</strong>. See %s.</p>",
+      sprintf("<p>For %s, the parameters change when these clinical events are entered (Graph Options \u2192 Additional plots \u2192 Events): <strong>%s</strong>. See %s.</p>",
               paste(unique(withEvents$Patient), collapse = " and "),
               htmltools::htmlEscape(paste(ev, collapse = ", ")),
               helpPageLink("models/pk-events"))
     )
+  }
+
+  # --- Saturable (Michaelis-Menten) elimination ------------------------------
+  # Without this the two tables above describe a saturable drug as a linear
+  # one: its Vmax and Km appear nowhere, and a peripheral compartment declared
+  # through k23/k32 reads as absent.  Phenytoin, GHB and exenatide; the DPP-4
+  # inhibitors' saturation is in their binding, described separately below.
+  michaelisHTML <- ""
+  mmBinding <- !is.null(modelOut$michaelisMenten$rapidBinding) ||
+    !is.null(modelOut$michaelisMenten$targetBinding)
+  if (!is.null(modelOut$michaelisMenten) && mmBinding) {
+    michaelisHTML <- paste0(
+      helpH2("Saturable binding"),
+      "<p>This drug binds its target, dipeptidyl peptidase-4, in the plasma and the tissues, and ",
+      "the target's capacity is small: at low concentrations most of the drug is bound, and as ",
+      "the concentration rises the unbound fraction rises with it. Elimination and distribution ",
+      "act on the unbound drug, so the clearance of the total concentration falls as doses fall ",
+      "and the terminal phase is long. Doses therefore do not add independently, and the drug is ",
+      "simulated by numerical integration of the whole dose table at once. The clearance in the ",
+      "table above is that of the unbound drug, not of the total concentration plotted. See the ",
+      "model description below.</p>")
+  } else if (!is.null(modelOut$michaelisMenten)) {
+    mm <- modelOut$michaelisMenten
+    # Vmax is an amount per minute, in the mass that the concentration unit
+    # holds per litre (mcg/mL is mg/L; exenatide's pg/mL is ng/L)
+    amountUnit <- switch(as.character(row$Concentration.Units),
+                         mcg = "mg", ng = "mcg", pg = "ng", mg = "g", "mg")
+    rowsMM <- lapply(seq_len(nrow(helpReferencePatients())), function(i) {
+      p <- helpReferencePatients()[i, ]
+      X <- helpDrugModelOutput(drug, p)
+      if (is.null(X) || is.null(X$michaelisMenten)) return(NULL)
+      v1 <- X$PK[[PK_EVENT_DEFAULT]]$v1
+      k23 <- X$michaelisMenten$k23; k32 <- X$michaelisMenten$k32
+      set <- X$PK[[PK_EVENT_DEFAULT]]
+      vmaxCol <- sprintf("Vmax (%s/min)", amountUnit)
+      out <- data.frame(
+        Patient = p$label,
+        Vmax = helpFormatNumber(X$michaelisMenten$vmax),
+        Km = helpFormatNumber(X$michaelisMenten$km),
+        `Peripheral volume (L)` =
+          if (!is.null(k23) && !is.null(k32)) helpFormatNumber(k23 / k32 * v1)
+          else if (isTRUE(set$cl2 > 0)) helpFormatNumber(set$v2)
+          else "—",
+        `Terminal t½ below Km (min)` =
+          helpFormatHalfLife(helpSaturableTerminalHalfLife(X)),
+        check.names = FALSE, stringsAsFactors = FALSE)
+      names(out)[names(out) == "Vmax"] <- vmaxCol
+      out
+    })
+    mmTab <- do.call(rbind, rowsMM[!vapply(rowsMM, is.null, logical(1))])
+    linearNote <- if (isTRUE(mm$clLinear > 0)) paste0(
+      "<p>A linear clearance runs in parallel with the saturable one, so the clearance never falls ",
+      "below it; the CL1 above is the sum of the two at low concentrations.</p>") else ""
+    if (!is.null(mmTab)) {
+      mmTab[["Concentration at half maximal rate"]] <- NULL
+      salts <- mm$saltFactor
+      # The block keys a factor by route or oral form; "default" is the form
+      # dosed as plain "mg PO", which means nothing to a reader as it stands.
+      saltLabel <- function(key) switch(key,
+        default = "the default oral form",
+        IV = "intravenous",
+        PE = "doses in drug equivalents (PE)",
+        key)
+      saltNote <- if (length(salts)) paste0(
+        "<p>A dose is multiplied by a <strong>salt factor</strong> before it enters: the mass of the ",
+        "modelled substance in a unit of what was given, so that a dose of a salt or a prodrug is ",
+        "counted as the substance this page plots. Here ",
+        paste(sprintf("<strong>%s</strong>, %s",
+                      vapply(names(salts), saltLabel, character(1)),
+                      vapply(salts, helpFormatNumber, character(1))), collapse = "; "),
+        ".</p>") else ""
+      michaelisHTML <- paste0(
+        helpH2("Saturable elimination"),
+        "<p>This drug is <strong>not</strong> eliminated by a fixed clearance. It is removed at a rate ",
+        "that approaches a ceiling, Vmax, as the concentration rises, and reaches half that ceiling ",
+        "at a concentration Km:</p>",
+        "<p class='text-center'><em>rate = Vmax &times; C / (Km + C)</em></p>",
+        "<p>Two consequences, and they are the reason the drug is modelled this way. Exposure rises ",
+        "<strong>faster than the dose</strong>: doubling a dose more than doubles the area under the ",
+        "curve once concentrations approach Km. And doses do not add independently — a second dose ",
+        "is cleared more slowly because the first is still present — so this drug is simulated by ",
+        "numerical integration of the whole dose table at once rather than by adding exponentials.</p>",
+        "<p>Below Km the rate becomes Vmax &times; C / Km, an ordinary first-order clearance of ",
+        "Vmax/Km, which is the CL1 given in the table above. That is the fastest this drug is ever ",
+        "cleared; at the doses it is given, it is slower.</p>",
+        helpTableHTML(mmTab, "Saturable elimination parameters"),
+        "<p class='small text-muted'>Km is in ", concUnits, ", this drug's own concentration ",
+        "units. A peripheral compartment, where one is declared, is the ratio of the two ",
+        "distribution rate constants times the central volume; elimination saturates on the ",
+        "<strong>central</strong> concentration only, and a dash means the drug has none. The ",
+        "terminal half-life is the one the model approaches at concentrations far below Km, where ",
+        "the saturable term becomes an ordinary clearance of Vmax/Km: it is computed from the ",
+        "central volume AND that peripheral compartment, so it is the half-life the table of ",
+        "half-lives above cannot give. At the doses the drug is given it is longer still.</p>",
+        linearNote,
+        saltNote
+      )
+    }
   }
 
   narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("drugs/", drug)))
@@ -735,15 +1154,25 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
   paste0(
     helpH2("At a glance"), glanceHTML,
     helpH2("Model source"), sourceHTML,
-    helpH2("Parameters at reference patients"), paramsHTML,
+    helpH2("Parameters at reference patients"), paramsHTML, renalHTML,
+    michaelisHTML,
     cyp2c19HTML,
+    cypOtherHTML,
     absorptionHTML,
+    if (any(units %in% poRateUnits)) paste0(
+      if (!nzchar(absorptionHTML)) helpH2("Oral dosing") else "",
+      "<p>An <strong>mg/day PO</strong> dose is a constant oral input from its time until the next ",
+      "mg/day PO row for the drug: it is applied to the model's apparent oral parameters as a steady ",
+      "rate, with no absorption step and no separate bioavailability, which those parameters already ",
+      "contain. See ", helpPageLink("models/absorption"), ".</p>") else "",
     parallelHTML,
     metaboliteHTML,
     formedHTML,
     micHTML,
+    mbcHTML,
     eventsHTML,
     if (nzchar(narrative)) paste0(helpH2("About this model"), narrative) else "",
+    helpDrugPregnancyHTML(drug),
     helpScenariosUsingDrugHTML(drug),
     helpH2("See also"),
     "<ul>",
@@ -807,7 +1236,7 @@ helpGasPageHTML <- function(gas, row) {
     )
     propsHTML <- paste0(
       helpH2("Physical properties"),
-      "<p>These are Gas Man\u00ae's values, carried unchanged so that the engine can be checked against Gas Man; see ",
+      "<p>These are GasMan\u00ae's values, carried unchanged so that the engine can be checked against GasMan; see ",
       helpPageLink("models/gas-engine"), ".</p>",
       helpTableHTML(tab)
     )
@@ -837,6 +1266,7 @@ helpGasPageHTML <- function(gas, row) {
     helpH2("At a glance"), glanceHTML,
     propsHTML,
     if (nzchar(narrative)) paste0(helpH2("Notes"), narrative) else "",
+    helpDrugPregnancyHTML(gas),
     helpScenariosUsingDrugHTML(gas),
     helpH2("See also"),
     "<ul>",
@@ -852,6 +1282,7 @@ helpGasPageHTML <- function(gas, row) {
 #' @noRd
 helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   adult <- helpReferencePatients()[1, ]
+  drugDefaults <- drugDefaults[helpTitleOrder(helpDrugTitle(drugDefaults$Drug)), ]
   iv <- drugDefaults[!isGasDrug(drugDefaults$Drug), ]
   gas <- drugDefaults[isGasDrug(drugDefaults$Drug), ]
 
@@ -861,25 +1292,29 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     conc <- helpConcentrationUnits(row$Concentration.Units)
     units <- helpDrugUnits(row)
     given <- if (length(units) == 0) "metabolite only"
-      else if (any(units %in% c(bolusUnits, infusionUnits))) {
+      else if (any(units %in% c(bolusUnits, infusionUnits, calciumUnits, iuUnits, ivPotencyUnits))) {
         route <- doseRoute(units)
         paste(c("IV", if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM",
                 if (ROUTE_IN %in% route) "IN", if (ROUTE_RA %in% route) "RA",
+                if (ROUTE_SC %in% route) "SC",
                 if (any(units %in% tciUnits)) "TCI"), collapse = ", ")
       } else {
         # No intravenous unit: name the routes it does have
         route <- unique(doseRoute(units))
         paste(c(if (ROUTE_PO %in% route) "oral", if (ROUTE_SL %in% route) "SL",
                 if (ROUTE_IM %in% route) "IM", if (ROUTE_IN %in% route) "IN",
-                if (ROUTE_RA %in% route) "RA"), collapse = ", ")
+                if (ROUTE_RA %in% route) "RA", if (ROUTE_SC %in% route) "SC"),
+              collapse = ", ")
       }
     metabolite <- if (is.null(pk$metaboliteName)) "" else
       sprintf('<a href="#" data-help-page="drugs/%s">%s</a>', pk$metaboliteName, helpDrugTitle(pk$metaboliteName))
     data.frame(
       Drug = sprintf('<a href="#" data-help-page="drugs/%s">%s%s</a>', row$Drug,
                      as.character(helpColorSwatch(row$Color)), helpDrugTitle(row$Drug)),
-      `Model source` = htmltools::htmlEscape(if (is.null(pk)) "Not available" else helpReferenceShort(pk$reference)),
+      `Model source` = helpLinkInvestigators(
+        htmltools::htmlEscape(if (is.null(pk)) "Not available" else helpReferenceShort(pk$reference)),
+        "citation"),
       `Given as` = given,
       `Active metabolite` = metabolite,
       `Default unit` = htmltools::htmlEscape(if (!is.na(row$Default.Units) && nzchar(as.character(row$Default.Units)))
@@ -890,7 +1325,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
       check.names = FALSE, stringsAsFactors = FALSE
     )
   })
-  ivTable <- helpRawTableHTML(do.call(rbind, ivRows), "Intravenous drugs")
+  ivTable <- helpRawTableHTML(do.call(rbind, ivRows), "Drugs, by any route")
 
   gasRows <- lapply(seq_len(nrow(gas)), function(i) {
     row <- gas[i, ]
@@ -915,7 +1350,7 @@ helpDrugIndexHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     "accept target-controlled infusion units (", helpPageLink("tci"), ").</p>",
     "<p>The library can be edited for the current session under ",
     helpPageLink("drug-library", "Settings \u2192 Drug Library"), ".</p>",
-    helpH2("Intravenous drugs"), ivTable,
+    helpH2("Drugs"), ivTable,
     helpH2("Inhaled anesthetics"), gasTable,
     "<p>How to add a drug is described under ", helpPageLink("contributing"), ".</p>"
   )
@@ -945,9 +1380,11 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
   cites <- list()
   for (drug in iv) {
     for (i in seq_len(nrow(patients))) {
-      pk <- helpDrugPK(drug, patients[i, ], drugDefaults)
-      if (is.null(pk)) next
-      ref <- pk$reference
+      # The citation is the model function's own; getDrugPK() passes it
+      # through unchanged, so the model is not fitted just to read it.
+      out <- helpDrugModelOutput(drug, patients[i, ])
+      ref <- out$reference
+      if (!is.character(ref) || length(ref) != 1 || !nzchar(ref)) next
       cites[[ref]] <- unique(c(cites[[ref]], drug))
     }
   }
@@ -966,6 +1403,91 @@ helpReferencesHTML <- function(drugDefaults = getDrugDefaultsGlobal()) {
     "<p>These are the citations the drug model functions return, collected across the reference ",
     "patients, so a drug that switches models with age or size appears under each.</p>",
     "<ul class='help-citations'>", paste(items, collapse = ""), "</ul>",
-    helpMarkdownToHTML(helpReadMarkdown("references"))
+    helpLinkInvestigators(helpMarkdownToHTML(helpReadMarkdown("references")), "citation")
+  )
+}
+
+
+#' The antibiotics' help section on the shaded band: free drug at the MBC
+#'
+#' Generated from \code{antibioticMbcTable()} and \code{antibioticMbcBand()}
+#' (R/antibioticMbc.R), so the page and the band cannot drift apart.
+#'
+#' @param drug a drug name
+#' @param row the drug's row of the drug defaults
+#' @param concUnits the plotted concentration unit, for display
+#' @returns HTML, or "" for a drug with no MBC rows
+#' @noRd
+helpAntibioticMbcHTML <- function(drug, row, concUnits) {
+  band <- antibioticMbcBand(drug)
+  if (is.null(band)) return("")
+  esc <- htmltools::htmlEscape
+  mic <- antibioticMic(drug)
+  x <- antibioticMbcTable()
+  x <- x[x$Drug == drug, ]
+  killed <- x[x$Role != "excluded", ]
+  excluded <- x[x$Role == "excluded", ]
+  unbound <- mic$Plotted == "unbound"
+  role <- c(principal = "Principal", core = "Common")
+
+  pathogens <- data.frame(
+    Pathogen = killed$Pathogen,
+    Role = unname(role[killed$Role]),
+    `MIC50 / MIC90` = paste(helpFormatNumber(killed$MIC50), "/", helpFormatNumber(killed$MIC90)),
+    `MBC50 / MBC90 (free)` = paste(helpFormatNumber(killed$MBC50), "/", helpFormatNumber(killed$MBC90)),
+    `How the MBC was obtained` = killed$Basis,
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  edges <- data.frame(
+    Edge = c("Lower edge", "Typical", "Upper edge"),
+    Meaning = c(
+      paste0("MBC50 of the principal pathogen (", band$principal, ")"),
+      "MBC90 of the principal pathogen",
+      "Highest MBC90 among the pathogens in the table above"),
+    `Free drug` = sprintf("%s mg/L", helpFormatNumber(band$free)),
+    `On the plotted curve` = sprintf("%s %s %s", helpFormatNumber(band$plotted), concUnits, mic$Plotted),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  excludedHTML <- if (nrow(excluded)) {
+    paste0("<p>Not in the band, because the drug does not kill them at concentrations the curve reaches, ",
+           "or because plasma is not the concentration that matters:</p><ul>",
+           paste0("<li><strong>", esc(excluded$Pathogen), "</strong>: ", esc(excluded$Note), "</li>",
+                  collapse = ""), "</ul>")
+  } else ""
+  notes <- killed$Note[nzchar(killed$Note)]
+  notesHTML <- if (length(notes)) {
+    paste0("<ul>", paste0("<li><strong>", esc(killed$Pathogen[nzchar(killed$Note)]), "</strong>: ",
+                          esc(notes), "</li>", collapse = ""), "</ul>")
+  } else ""
+
+  paste0(
+    helpH2("Shaded band: free drug at the MBC"),
+    "<p>The MIC is the concentration at which an organism stops growing; the <strong>MBC</strong>, the ",
+    "minimum bactericidal concentration, is the concentration that kills 99.9 per cent of it in 24 hours. ",
+    "The shaded band marks the expected MBCs, as <strong>free</strong> drug, of the common pathogens ",
+    esc(tolower(helpDrugTitle(drug))), " is given against. Its lower edge is the MBC50 of the principal ",
+    "pathogen, below which the drug no longer kills a typical isolate of it; the typical value is that ",
+    "pathogen's MBC90; the upper edge is the highest MBC90 among the common pathogens, above which free drug ",
+    "kills 90 per cent of the isolates of each of them. MBCs are measured in protein-free broth, so they are ",
+    "free-drug values. ",
+    if (unbound) "This curve is unbound drug, so the band is drawn at the MBCs themselves."
+    else if (isTRUE(mic$Saturable))
+      "This curve is total drug and the binding saturates, so each free MBC is placed on the curve through the binding fit given under <em>Time until threshold</em> above."
+    else sprintf("This curve is total drug, so each free MBC is divided by the free fraction, %s.",
+                 helpFormatNumber(mic$FreeFraction)),
+    "</p>",
+    helpTableHTML(edges),
+    helpTableHTML(pathogens),
+    notesHTML,
+    excludedHTML,
+    "<p>Most of these MBCs are not modern measurements. Where none was found the MBC is the MIC times the ",
+    "MBC/MIC ratio reported for the drug or its class against that organism, as the table says. The MBC is ",
+    "poorly reproducible from laboratory to laboratory, rises with the inoculum, and is far higher in ",
+    "biofilm; an isolate's own MIC, where known, is the better guide. The band is orientation for a ",
+    "susceptible isolate, not a dosing target.</p>",
+    "<p class='small text-muted'>Sources: ",
+    esc(paste(unique(x$Source), collapse = " ")),
+    " The rule, and the literature that would firm these values up: ",
+    helpPageLink("models/antibiotics"), ".</p>"
   )
 }

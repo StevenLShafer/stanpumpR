@@ -47,7 +47,8 @@ test_that("every page renders", {
     expect_true(nchar(html) > 50, info = paste("page", id, "is nearly empty"))
     ui <- helpPageUI(id)
     expect_s3_class(ui, "shiny.tag")
-    rendered <- as.character(ui)
+    # A title may carry an investigator or GasMan link ("Pollak's regimen")
+    rendered <- gsub("<a [^>]*>|</a>", "", as.character(ui))
     expect_true(grepl(reg$title[reg$id == id], rendered, fixed = TRUE),
                 info = paste("title missing from", id))
   }
@@ -146,6 +147,30 @@ test_that("search finds pages and ranks title matches first", {
   expect_true("drugs/remifentanil" %in% helpSearch("Kim", index)$id)
 })
 
+test_that("search finds the drugs and the gas engine without fitting every drug model", {
+  # Fitting every model at the reference patients made the first search take
+  # half a minute, so long that it looked broken; the index reads a drug
+  # page's words (title, units, citation, narrative) without fitting.
+  local({
+    fits <- 0
+    local_mocked_bindings(getDrugPK = function(...) {
+      fits <<- fits + 1
+      stop("the search fitted a model")
+    })
+    text <- helpPageSearchText("drugs/remifentanil")
+    expect_equal(fits, 0)
+    expect_match(text, "Remifentanil", fixed = TRUE)
+    expect_match(text, "mcg/kg/min", fixed = TRUE)
+    expect_match(text, "Kim", fixed = TRUE)
+    expect_match(helpPageSearchText("drugs/index"), "Sevoflurane", fixed = TRUE)
+  })
+
+  index <- helpSearchIndex()
+  expect_equal(helpSearch("sevoflurane", index)$id[1], "drugs/sevoflurane")
+  gasman <- helpSearch("GasMan", index)$id
+  expect_true(all(c("models/gas-differences", "models/gas-engine", "drugs/sevoflurane") %in% gasman))
+})
+
 test_that("search is safe with short, empty and regex-like terms", {
   index <- helpSearchIndex()
   expect_equal(nrow(helpSearch("", index)), 0)
@@ -191,6 +216,36 @@ test_that("the sidebar lists every page once and marks the current one", {
   expect_false(grepl("<details class=\"help-nav-section\" open>\\s*<summary>\\s*Drug library", nav))
 })
 
+test_that("the drug library lists its drugs alphabetically, whatever the CSV order", {
+  dd <- getDrugDefaultsGlobal()
+  sorted <- function(x) identical(x, x[order(tolower(x), x, method = "radix")])
+  titles <- function(reg) reg$title[reg$section == "drugs" & reg$id != "drugs/index"]
+
+  # The sidebar, after the "All drugs" page
+  reg <- helpPageRegistry(dd)
+  drugIds <- reg$id[reg$section == "drugs"]
+  expect_equal(drugIds[1], "drugs/index")
+  expect_true(sorted(titles(reg)))
+  expect_setequal(titles(reg), helpDrugTitle(dd$Drug))
+
+  # Still sorted when the CSV is shuffled or a drug is appended at the end
+  shuffled <- dd[rev(seq_len(nrow(dd))), ]
+  expect_true(sorted(titles(helpPageRegistry(shuffled))))
+  appended <- rbind(dd, transform(dd[dd$Drug == "propofol", ], Drug = "aardvarkine"))
+  expect_equal(titles(helpPageRegistry(appended))[1], "Aardvarkine")
+
+  # Each table on the "All drugs" page
+  html <- helpDrugIndexHTML(shuffled)
+  tables <- regmatches(html, gregexpr("<tbody>.*?</tbody>", html))[[1]]
+  expect_length(tables, 2)
+  for (tb in tables) {
+    linked <- regmatches(tb, gregexpr('<tr><td><a href="#" data-help-page="drugs/[^"]+">', tb))[[1]]
+    drugs <- sub('.*drugs/([^"]+)">$', "\\1", linked)
+    expect_gt(length(drugs), 1)
+    expect_true(sorted(helpDrugTitle(drugs)))
+  }
+})
+
 test_that("the Help panel UI builds", {
   ui <- as.character(helpNavPanel())
   expect_match(ui, "help_search", fixed = TRUE)
@@ -222,6 +277,29 @@ test_that("a generated-block marker is replaced, and an unknown one is an error"
   expect_error(helpExpandGenerated("<!-- generated: no-such-block -->"), "no-such-block")
 })
 
+# The Open TCI page's figure is drawn from lbmJames() and ffmAlSallami(), so
+# its marked peak and zero are the function's, not quoted numbers: the James
+# lean body mass of a woman peaks at a BMI of 36.1 and is zero at 72.3,
+# whatever her height.
+test_that("the Open TCI page draws the James parabola from the model", {
+  html <- helpPageHTML("opentci")
+  expect_false(grepl("<!--", html, fixed = TRUE))
+  expect_match(html, "<figure class=\"help-figure\">\n<svg", fixed = FALSE)
+  expect_match(html, "Peak, 49.5 kg at BMI 36.1", fixed = TRUE)
+  expect_match(html, "Zero at BMI 72.3", fixed = TRUE)
+  expect_match(html, "Above BMI 35", fixed = TRUE)
+  # One HTML block: commonmark wraps nothing inside the figure in a paragraph
+  figure <- regmatches(html, regexpr("(?s)<figure.*?</figure>", html, perl = TRUE))
+  expect_false(grepl("<p>", sub("(?s)<figcaption>.*", "", figure, perl = TRUE), fixed = TRUE))
+  # The investigator pass links the caption's names but not the SVG's labels
+  ui <- as.character(helpPageUI("opentci"))
+  svg <- regmatches(ui, regexpr("(?s)<svg.*?</svg>", ui, perl = TRUE))
+  expect_false(grepl("investigator-link", svg, fixed = TRUE))
+  expect_match(ui, "<figcaption>.*investigator-link.*</figcaption>")
+  # The history page links to it
+  expect_true("opentci" %in% helpLinkTargets(helpReadMarkdown("history"))$pages)
+})
+
 # The absorption page's route table is generated from the drug library.  This
 # checks the rendered page against the library independently of the generator:
 # every drug offering a PO, IM or IN unit has a row, each route's cell lists
@@ -245,12 +323,12 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
     if (cell %in% c("", "—")) character(0) else strsplit(cell, ", ", fixed = TRUE)[[1]]
   }
 
-  column <- c(PO = 2, SL = 3, IM = 4, IN = 5, RA = 6)
+  column <- c(PO = 2, SL = 3, IM = 4, IN = 5, RA = 6, SC = 7)
   expected <- character(0)
   for (i in seq_len(nrow(dd))) {
     units <- dd$Units[[i]]
     units <- units[!is.na(units) & nzchar(units)]
-    units <- unique(sub(" (qd|bid|tid|qid)$", "", units))
+    units <- unique(sub(" (qd|bid|tid|qid|q4h|qam|qpm|qwk)$", "", units))
     route <- doseRoute(units)
     if (!any(route %in% names(column))) next
     title <- helpDrugTitle(dd$Drug[i])
@@ -269,4 +347,27 @@ test_that("the absorption page lists every oral, intramuscular and intranasal un
   expect_match(cellOf("gabapentin", "PO"), "saturable absorption", fixed = TRUE)
   expect_match(cellOf("amiodarone", "PO"), "constant daily rate", fixed = TRUE)
   expect_false(grepl("saturable", cellOf("oxycodone", "PO"), fixed = TRUE))
+  expect_match(cellOf("insulinLispro", "SC"), "insulin pump", fixed = TRUE)
+})
+
+# The Cautions page tells the user which drugs each Patient Profile field
+# reaches.  A model that names the field in its signature must be in the
+# list, or the user is told the field has no effect when it does (an audit of
+# 2026-10-12 found three renal drugs and three CYP2D6 drugs missing).
+test_that("the cautions page names every model that reads a patient field", {
+  text <- tolower(helpPlainText(helpMarkdownToHTML(
+    paste(readLines(system.file("help", "cautions.md", package = "stanpumpR"), warn = FALSE),
+          collapse = "\n"))))
+  for (arg in c("creatinine", "osmolality", "cyp2d6", "cyp2c19", "cyp2c9", "cyp2b6",
+                "pregnant", "gestationalAge")) {
+    readers <- Filter(function(drug) helpDrugDeclares(drug, arg), getDrugDefaultsGlobal()$Drug)
+    expect_gt(length(readers), 0, label = arg)
+    for (drug in readers) {
+      # by its name or, for a camel-case name, the title the help shows
+      # ("magnesiumSulfate" is "Magnesium Sulfate")
+      expect_true(grepl(tolower(drug), text, fixed = TRUE) ||
+                    grepl(tolower(helpDrugTitle(drug)), text, fixed = TRUE),
+                  info = paste(drug, "reads", arg, "but the cautions page does not say so"))
+    }
+  }
 })

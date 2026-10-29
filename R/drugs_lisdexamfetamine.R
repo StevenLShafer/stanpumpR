@@ -75,13 +75,23 @@
 # independent) and the 25.4% proportional residual error are not simulated:
 # stanpumpR plots the typical patient only.
 #
-# NO EFFECT SITE, NO THERAPEUTIC BAND
-# ===================================
+# NO EFFECT SITE; THE BAND
+# ========================
 # Tsuda found no clear exposure-dependent reduction in ADHD-RS-IV, and no
 # calibrated concentration-effect model for lisdexamfetamine exists for a
 # within-day or weekly endpoint.  Group time windows of benefit (Wigal 2009,
-# 1.5-13 h) are trial observations, not a concentration threshold.  tPeak,
-# MEAC and the band are therefore zero.
+# 1.5-13 h) are trial observations, not a concentration threshold.  tPeak and
+# MEAC are therefore zero.  The band, 44-160 ng/mL of d-amphetamine 3.5 h
+# after a dose, is the therapeutic reference range of
+# Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861): the mean +/- SD
+# of the peak in 18 children aged 6-12 after single doses of 30, 50 and 70 mg
+# (Boellner 2010, Table I: 53.2, 93.3 and 134 ng/mL at about 3.5 h; full text
+# read), so the concentrations those doses produce rather than a window of
+# efficacy, with no data in adults.  This model, not fitted to Boellner's
+# children, peaks 16-22% lower (45, 75, 105 ng/mL at 36 kg) and an hour
+# later.  Typical 100, about its midpoint.  The table's d-amphetamine alert level, 120 ng/mL,
+# lies below this range's top.
 # -----------------------------------------------------------------------------
 
 # d-amphetamine base per mg of lisdexamfetamine dimesylate (molar, 1:1).
@@ -141,12 +151,17 @@ lisdexamfetamine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
+  # d-Amphetamine after lisdexamfetamine in pediatric ADHD; non-Japanese
+  # clearance; the dose converted to d-amphetamine base, 0.2968 mg/mg, checked
+  # against Boellner SW et al., Clin Ther 2010;32:252-264.  The second DOI is
+  # not followed by a closing parenthesis: one was once read as part of the
+  # URL and the link returned 404.
   reference <- paste0(
     "Tsuda Y et al., Drug Metab Pharmacokinet 2020;35:548-554. ",
     "https://doi.org/10.1016/j.dmpk.2020.08.005 (d-amphetamine after ",
     "lisdexamfetamine in pediatric ADHD; non-Japanese clearance; dose converted ",
     "to d-amphetamine base, 0.2968 mg/mg, checked against Boellner SW et al., ",
-    "Clin Ther 2010;32:252-264, https://doi.org/10.1016/j.clinthera.2010.02.011)"
+    "Clin Ther 2010;32:252-264). https://doi.org/10.1016/j.clinthera.2010.02.011"
   )
 
   return(
@@ -154,9 +169,9 @@ lisdexamfetamine <- function(weight, height, age, sex, adjustToFFM = TRUE)
       PK = PK,
       tPeak = 0,     # no calibrated effect model (header)
       MEAC = 0,
-      typical = 0,   # no therapeutic band (header)
-      upperTypical = 0,
-      lowerTypical = 0,
+      typical = 100, # Hart 2026's range (header)
+      upperTypical = 160,
+      lowerTypical = 44,
       reference = reference
     )
   )

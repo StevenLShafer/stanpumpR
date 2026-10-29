@@ -20,8 +20,10 @@ entered, and real patients vary substantially around those predictions.
 
 ## The 60-second tour
 
-1. Open the app. Tick the drugs you want to display (propofol, fentanyl,
-   remifentanil and rocuronium are ticked to begin with) and press **Start**.
+1. Open the app. Open a drug category (anesthesia drugs are under
+   *Hypnotics and sedatives*, *Opioids* and *Neuromuscular blockade*), tick
+   the drugs you want to display, and press **Start**. Nothing is ticked to
+   begin with.
    A default patient and a dose table holding a zero dose of each are waiting.
 2. In the **Doses** table, edit a row, or type another drug name — the cell
    autocompletes from the drug library.
@@ -46,6 +48,11 @@ they change the predictions.
 | Sex | male / female | |
 | Adjust weight to fat-free mass | checkbox | On by default. See below. |
 | Baseline serum osmolality | mOsm/kg | Before mannitol; 280 by default. Read only by mannitol, which is plotted as the serum osmolality it produces. See [docs/mannitol.md](mannitol.md). |
+| Opioid tolerance | none / mild / somewhat / highly tolerant | Multiplies the MEAC, shaded band and time-until-threshold level of every opioid with a MEAC (including a metabolite formed from codeine or tramadol) by 1, 1.5, 2 or 3 (`OPIOID_TOLERANCE_FACTORS`, applied in `recalculatePK()`); an opioid without a MEAC is unchanged. |
+
+Only age, weight, height, sex and the fat-free-mass box are always shown; every
+other field appears only while a drug that reads it is in the dose table
+(`relevantFields()` in `R/patient-fields.R`).
 
 **Adjust weight to fat-free mass.** Most of the drug models were reported for a
 typical 70 kg adult and, if they scaled at all, scaled with total body weight.
@@ -64,8 +71,13 @@ full account, with worked examples, is in
 **Serum creatinine** (mg/dL) is optional. The renally cleared drugs (mannitol, vancomycin, gentamicin, cefazolin, sugammadex, gabapentin and pregabalin)
 use it to estimate renal function; left blank, they assume a normal creatinine for
 the patient's age and sex (in a child, the median for age; see
-`R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** appears in the interface but is **currently
-disabled**: no drug in the library yet responds to it.
+`R/renalFunction.R` for how the adult equations read a child's creatinine). **Pregnant** (shown for a woman of 12 to 59 years)
+applies the pharmacokinetic changes of late pregnancy from the review of Ansari, Carvalho, Shafer and Flood
+(*Anesth Analg* 2016;122:786-804) to eight drugs. Five take the figure the review gives: morphine (clearance
+× 1.7), remifentanil (× 2, on the Minto companion too), oxycodone (× 3.8/2.6), methadone (× 24/14), dexamethasone
+(× 2). Cefazolin, gentamicin and vancomycin, for which the review gives no figure, take its 50% rise in glomerular
+filtration (the renal function their clearance terms read × 1.5). No other drug
+responds to it, including those the review describes without a figure; the help's Pregnancy page lists them all.
 
 ---
 
@@ -173,18 +185,21 @@ and you can edit it (see *Drug Library*).
 |---|---|
 | Show typical | The shaded band, above |
 | Normalize to | Rescale every curve to its own peak plasma or peak effect-site value, so drugs on wildly different scales can be compared in shape |
-| Max time | How far the simulation runs. The choices follow the Time units: 1–24 hours (minutes, hours), 2–365 days, 4–52 weeks |
+| Max time | How far the simulation runs: a slider in the Time units, up to 24 hours (minutes, hours), 365 days or 52 weeks |
+| Min time | Where the time axis starts: a slider, 0 unless moved, for a close look at a window late in a long plot. Everything is still simulated from 0 |
 | Plasma line / Effect site line | Line style, including none |
 | Y axis height | Plot height in pixels |
 | Time until threshold | Draws, for each drug, how long until it falls to its recovery threshold (`endCe` in the library). Only available when normalization is off |
 | Log Y axis | Log-scale the concentration axis. Unavailable when Time until threshold, Events, or Interaction are showing, because those panels do not have a meaningful log form |
-| Minto / Schnider | Also run the Schnider (1998) propofol and Minto (1997) remifentanil models, the models most TCI pumps use, beside the library's Eleveld models: a second line in each drug's panel, and under TCI a second pump in the rate panel. Time until threshold stays on the Eleveld model. Enabled only while propofol or remifentanil is in the dose table |
+| Minto / Schnider | Also run the Schnider (1998) propofol and Minto (1997) remifentanil models, the models most TCI pumps use, beside the library's Eleveld models: a second line in each drug's panel, and under TCI a second pump in the rate panel. Time until threshold stays on the Eleveld model. Shown only while propofol or remifentanil is in the dose table |
 
 ---
 
-## Additional Plots
+## Additional plots
 
-Checkboxes that add panels beneath the concentration plot.
+Checkboxes at the foot of Graph Options that add panels beneath the
+concentration plot. MEAC is offered only while an opioid is in the dose table,
+Interaction only while propofol and an opioid are.
 
 ### MEAC
 
@@ -243,7 +258,7 @@ takes over:
   running for that drug, and entering an infusion row stops the TCI infusion:
   the two cannot run together.
 
-A **TCI rate panel** appears below the concentration panels for each drug under
+A **TCI rate panel** appears directly below the drug's own concentration panel for each drug under
 TCI, in mg/kg/min or mcg/kg/min. Hover over it for the rate at any moment. The
 rate changes every 10 seconds, so these rows are kept out of the dose table,
 where they would make it unusable; they are merged back in when a slide is
@@ -326,7 +341,7 @@ Three things to know about the antibiotics and steroids:
   gentamicin, sugammadex), mannitol, gabapentin and pregabalin carry a
   creatinine-clearance or eGFR
   covariate, computed from the **Serum creatinine** field. Left blank, it is an
-  assumed normal creatinine (1.0 mg/dL in men, 0.8 in women, and the normal for
+  assumed normal creatinine (0.9 mg/dL in men, 0.8 in women, and the normal for
   age in children): the decline of
   renal function with age is represented, renal impairment is not, and a patient
   with a raised creatinine will clear these drugs more slowly than the plot
@@ -360,19 +375,21 @@ what the literature offers.
 |---|---|
 | Propofol | Eleveld DJ et al., *Br J Anaesth* 2018;120(5):942–959. [PMID 29661412](https://pubmed.ncbi.nlm.nih.gov/29661412/). With *Minto / Schnider* ticked, also Schnider TW et al., *Anesthesiology* 1998;88(5):1170–1182. [PMID 9605675](https://pubmed.ncbi.nlm.nih.gov/9605675/) |
 | Remifentanil | BMI below 30: Eleveld DJ et al., *Anesthesiology* 2017;126(6):1005–1018. [PMID 28509794](https://pubmed.ncbi.nlm.nih.gov/28509794/); BMI 30 and above: Kim TK et al., *Anesthesiology* 2017;126(6):1019–1032. [PMID 28509796](https://pubmed.ncbi.nlm.nih.gov/28509796/). With *Minto / Schnider* ticked, also Minto CF et al., *Anesthesiology* 1997;86:10–23. [PMID 9009935](https://pubmed.ncbi.nlm.nih.gov/9009935/) |
-| Fentanyl | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
+| Fentanyl | A pooled parameter set from five studies, whose values none of them prints: McClain and Hug 1980, Scott and Stanski 1987 ([PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/)), Hudson 1986, Varvel 1989 and Shafer 1990 ([PMID 2248388](https://pubmed.ncbi.nlm.nih.gov/2248388/)). |
 | Alfentanil | Scott JC, Stanski DR. *J Pharmacol Exp Ther* 1987;240(1):159–166. [PMID 3100765](https://pubmed.ncbi.nlm.nih.gov/3100765/) |
 | Sufentanil | Gepts E et al., *Anesthesiology* 1995;83(6):1194–1204. [PMID 8533912](https://pubmed.ncbi.nlm.nih.gov/8533912/) |
 | Morphine | Lötsch J et al., *Clin Pharmacol Ther* 2002;72(2):151–162. [PMID 12189362](https://pubmed.ncbi.nlm.nih.gov/12189362/) |
 | Pethidine (meperidine) | Björkman S, *J Pharmacokinet Pharmacodyn* 2003;30(4):285–307. [PMID 14650375](https://pubmed.ncbi.nlm.nih.gov/14650375/) |
 | Hydromorphone | Drover DR et al., *Anesthesiology* 2002;97(4):827–836. [PMID 12357147](https://pubmed.ncbi.nlm.nih.gov/12357147/) |
-| Methadone | Henthorn TK, Kharasch ED, *Clin Pharmacol Ther* 2026;119(3):739–750. [doi:10.1002/cpt.70147](https://doi.org/10.1002/cpt.70147) |
+| Methadone | Henthorn TK, Kharasch ED, *Clin Pharmacol Ther* 2026;119(3):739–750. [doi:10.1002/cpt.70147](https://doi.org/10.1002/cpt.70147). The **CYP 2B6** field scales each enantiomer's non-renal clearance, from Kharasch ED et al., *Anesthesiology* 2015;123(5):1142–1153. [PMID 26389554](https://pubmed.ncbi.nlm.nih.gov/26389554/) |
 | Ketamine | Domino EF et al., *Clin Pharmacol Ther* 1984;36(5):645–653. [PMID 6488686](https://pubmed.ncbi.nlm.nih.gov/6488686/) |
 | Dexmedetomidine | Adult: Dyck JB et al., *Anesthesiology* 1993;78(5):821–828. [PMID 8098191](https://pubmed.ncbi.nlm.nih.gov/8098191/)<br>Age ≤ 1 yr: Zuppa AF et al., *Br J Anaesth* 2019;123(6):839–852. [PMID 31623840](https://pubmed.ncbi.nlm.nih.gov/31623840/) |
 | Midazolam | Zomorodi K et al., *Anesthesiology* 1998;89(6):1418–1429, Table 3. [PMID 9856717](https://pubmed.ncbi.nlm.nih.gov/9856717/) Kinetics fitted to the data of Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):544–554. [PMID 2225713](https://pubmed.ncbi.nlm.nih.gov/2225713/) Time to peak effect from Bührer M et al., *Clin Pharmacol Ther* 1990;48(5):555–567. [PMID 2225714](https://pubmed.ncbi.nlm.nih.gov/2225714/) |
 | Etomidate | Arden JR et al., *Anesthesiology* 1986;65(1):19–27. [PMID 3729056](https://pubmed.ncbi.nlm.nih.gov/3729056/) |
 | Lidocaine | Schnider TW et al., *Anesthesiology* 1996;84(5):1043–1050. [PMID 8623997](https://pubmed.ncbi.nlm.nih.gov/8623997/) |
 | Rocuronium | Plaud B et al., *Clin Pharmacol Ther* 1995;58(2):185–191. [PMID 7648768](https://pubmed.ncbi.nlm.nih.gov/7648768/) |
+| Vecuronium | Vega-Villa KR et al., *Br J Anaesth* 2014;112(2):304–310. [PMID 24067332](https://pubmed.ncbi.nlm.nih.gov/24067332/) (non-burn reference); effect site and potency from Rupp SM, Fisher DM et al., *Anesthesiology* 1987;67(1):45–49. [PMID 2886080](https://pubmed.ncbi.nlm.nih.gov/2886080/) |
+| Cisatracurium | Sorooshian SS et al., *Anesthesiology* 1996;84(5):1083–1091. [PMID 8624002](https://pubmed.ncbi.nlm.nih.gov/8624002/) |
 | Acetaminophen | Morse JD et al., *Eur J Drug Metab Pharmacokinet* 2022;47:497–507. [DOI 10.1007/s13318-022-00766-9](https://doi.org/10.1007/s13318-022-00766-9) (intravenous and fasted tablet; clearance on normal fat mass). ke0 from Anderson BJ et al., *Eur J Clin Pharmacol* 2001;57:559–569. [DOI 10.1007/s002280100367](https://doi.org/10.1007/s002280100367) |
 | Naloxone | Dowling J et al., *Ther Drug Monit* 2008;30:490–496. [DOI 10.1097/FTD.0b013e3181816214](https://doi.org/10.1097/FTD.0b013e3181816214) (intravenous; clearance on lean body weight). Nasal spray derived from Laffont CM et al., *Front Psychiatry* 2024;15:1399803; k<sub>e0</sub> from Yassen A et al., *Clin Pharmacokinet* 2007;46:965–980 |
 | Oxytocin | Eisenach, unpublished data<br>Second model: Tanaka et al |
@@ -395,6 +412,7 @@ what the literature offers.
 | Prednisolone | Xu J, Winkler J, Derendorf H. *J Pharmacokinet Pharmacodyn* 2007;34:355–372. [DOI 10.1007/s10928-007-9050-8](https://doi.org/10.1007/s10928-007-9050-8) (reversible pair reduced to its exact mammillary equivalent; **free** prednisolone) |
 | Prednisone | Xu J, Winkler J, Derendorf H, as above (oral prodrug; total prednisone, with prednisolone on the prednisolone row) |
 | Mannitol | Kaneda K et al., *J Clin Pharmacol* 2010;50(5):536–543. [PMID 20051588](https://pubmed.ncbi.nlm.nih.gov/20051588/)<br>Osmolality: Rudehill A et al., *J Neurosurg Anesthesiol* 1993;5(1):4–12. [PMID 8431668](https://pubmed.ncbi.nlm.nih.gov/8431668/). See [docs/mannitol.md](mannitol.md). |
+| Calcium | Ansari JR et al., *Anesthesiology* 2025;142:121–131. [DOI 10.1097/ALN.0000000000005248](https://doi.org/10.1097/ALN.0000000000005248) (parturients at cesarean delivery; plotted as the change in ionized calcium, mmol/L; offered to every patient as an extrapolation; one drug for calcium chloride and calcium gluconate, the units naming the salt, gluconate through the fitted dose ratio of 3.11 g per gram of calcium chloride) |
 | Amiodarone | Pollak PT, Bouillon T, Shafer SL. *Clin Pharmacol Ther* 2000;67:642–652. [PMID 10872646](https://pubmed.ncbi.nlm.nih.gov/10872646/) (long-term oral; apparent parameters, constant daily input) |
 | Desethylamiodarone | Pollak PT, Bouillon T, Shafer SL, as above (formed from all amiodarone cleared, mass basis; not dosed directly) |
 | Amiodarone IV | Korth-Bradley JM et al. *J Clin Pharmacol* 1996;36:715–719. [PMID 8877675](https://pubmed.ncbi.nlm.nih.gov/8877675/) (acute intravenous therapy, first one to three days; no metabolite) |
@@ -436,10 +454,10 @@ effect and its covariate scaling.
 
 ### Inhaled agents
 
-The gas model parameters are Gas Man's, taken from `gasman.ini`, and are recorded
+The gas model parameters are GasMan's, taken from `gasman.ini`, and are recorded
 with their provenance — including which of them have *no* established provenance
 — in `R/gasProperties.R` and `inst/validation/VALIDATION.md`. Nitrogen's MAC in
-particular is carried at Gas Man's value while being known to be wrong by a
+particular is carried at GasMan's value while being known to be wrong by a
 factor of about 55; it is not used in any calculation.
 
 ---
@@ -467,13 +485,13 @@ concentration *as a multiple of that MAC* — the MAC equivalents panel, summed
 over the potent agents present. "1 MAC of sevoflurane" means an alveolar
 concentration of one MAC equivalent.
 
-The engine reproduces the Gas Man model, including the concentration and second
+The engine reproduces the GasMan model, including the concentration and second
 gas effect — nitrous oxide taken up in bulk concentrates whatever else is in the
 alveolus, so sevoflurane rises faster in its presence. It has been validated
-against Gas Man itself across five scenarios; see `inst/validation/VALIDATION.md`
+against GasMan itself across five scenarios; see `inst/validation/VALIDATION.md`
 for the record.
 
-Cardiac output is fixed at Gas Man's default, 5 L/min at 70 kg scaled by
+Cardiac output is fixed at GasMan's default, 5 L/min at 70 kg scaled by
 (weight / 70)^0.75, and is not currently a user input.
 
 Ventilation is **minute ventilation**. Thirty percent of it is taken to be dead
@@ -483,7 +501,7 @@ you enter.
 Ventilation must be greater than zero whenever a gas is being given. If you
 enter a gas without a ventilation row, one is added for you: 5.7 L/min at 70 kg,
 scaled the same way as cardiac output. That is the minute ventilation whose
-alveolar part is Gas Man's default alveolar ventilation of 4 L/min. Entering
+alveolar part is GasMan's default alveolar ventilation of 4 L/min. Entering
 nitrous oxide also adds an oxygen row, starting at 21% of the fresh gas. Gas
 flows and ventilation are rounded to the nearest 0.1 L/min.
 
@@ -560,16 +578,16 @@ One approximation remains, which makes the MAC time a little long: with
 its value at the moment the agents are turned off. In truth the opioid would
 wear off too.
 
-### Where the engine deliberately differs from Gas Man
+### Where the engine deliberately differs from GasMan
 
-The parameters and defaults are Gas Man's, and the intent for now is to give the
-same answers Gas Man gives. The table lists ten differences. Nine are
+The parameters and defaults are GasMan's, and the intent for now is to give the
+same answers GasMan gives. The table lists ten differences. Nine are
 deliberate (confirmed by S. Shafer, 2026-10-05) and will remain; the tenth is a
-Gas Man option, off by default, with no counterpart here:
+GasMan option, off by default, with no counterpart here:
 
-| | Gas Man | stanpumpR | Why |
+| | GasMan | stanpumpR | Why |
 |---|---|---|---|
-| Breathing circuit | Defaults to "Semi-closed": the whole circuit is one well-mixed 8 L volume, so some exhaled gas is rebreathed at any fresh gas flow, however high | The "Ideal" circuit, which Gas Man also offers: no rebreathing once fresh gas flow reaches the minute ventilation plus the gas being taken up (see the carbon dioxide paragraph below); below that, the shortfall is made up with exhaled gas. No circuit volume, so no lag | It is how a circle system behaves. The mixing box has no threshold near fresh gas flow = ventilation and understates the inspired concentration at moderate and high flows |
+| Breathing circuit | Defaults to "Semi-closed": the whole circuit is one well-mixed 8 L volume, so some exhaled gas is rebreathed at any fresh gas flow, however high | The "Ideal" circuit, which GasMan also offers: no rebreathing once fresh gas flow reaches the minute ventilation plus the gas being taken up (see the carbon dioxide paragraph below); below that, the shortfall is made up with exhaled gas. No circuit volume, so no lag | It is how a circle system behaves. The mixing box has no threshold near fresh gas flow = ventilation and understates the inspired concentration at moderate and high flows |
 | Ventilation and dead space | The ventilation setting is alveolar ventilation; there is no dead space | The ventilation setting is minute ventilation, 30% of it dead space. The rebreathing threshold is therefore set by the minute ventilation (plus uptake), not the alveolar ventilation | Minute ventilation is what is set on a ventilator and read from a monitor |
 | Oxygen consumption and gas volume | No oxygen, so no volume is lost to it | Oxygen consumed (3.5 mL/kg/min) shrinks the gas volume, as uptake of an anaesthetic does. Carbon dioxide replaces most of it in the alveoli and is then removed by the absorber from whatever exhaled gas is rebreathed | Without it the gas fractions do not add up at low flows. With 0.3 L/min of oxygen and 1 L/min of nitrous oxide, what leaves the circuit is the 1.3 L/min delivered less the 0.21 L/min consumed: 92% nitrous oxide and 8% oxygen, not the 77% and 23% delivered |
 | MAC and age | One MAC per agent, no age term | MAC adjusted for the patient's age: MAC(age) = MAC40 x 10^(-0.00269 x (age - 40)) (Mapleson) | MAC falls about 6% per decade, and the patient's age is already an input |
@@ -577,8 +595,8 @@ Gas Man option, off by default, with no counterpart here:
 | Oxygen | Not modelled | Modelled in the circuit and alveoli, with metabolic consumption of 3.5 mL/kg/min; cannot go below zero | The inspired and alveolar oxygen matter whatever else is given, and a hypoxic mixture should be visible |
 | Nitrogen | Carried only if nitrogen is added to the run as an agent | Always carried; its washout from the body is part of the summed uptake that couples the gases | The patient starts full of nitrogen whether or not anyone enters it, and it leaves through the same alveoli |
 | Starting nitrogen | 80% (`Ambient=80`) | 78.07%, with oxygen at 20.93%. The remaining 1% of air, mostly argon, is not carried: it is neither added to the nitrogen nor scaled away, so room air's carried gases sum to 99%, and an air flow contributes 99% of its volume to the gas fractions | Room air's own nitrogen and oxygen, so that the oxygen now modelled starts at its true value |
-| Integration | Each time step is split into sequential sub-updates, with the total uptake that couples the gases held at its value at the start of the step | Within each step every gas is advanced exactly, by matrix exponential, with the total uptake likewise held at its value at the start of the step; it is updated from step to step | This removes Gas Man's splitting error. The coupling between steps is still approximate (first order in the step), so the answer depends slightly on the step size: see the Integration section of the in-app help page *The inhaled-gas engine* |
-| Vapour volume | An optional setting, off by default, in which the vapour from a liquid agent's vaporiser adds its own volume to the fresh gas, raising the effective fresh gas flow by 1/(1 - delivered fraction) | Not offered. The total fresh gas flow is the sum of the flowmeters, and the vapour displaces carrier gas within it | Keeps the fresh gas flow at what the flowmeters show, which is also Gas Man's default |
+| Integration | Each time step is split into sequential sub-updates, with the total uptake that couples the gases held at its value at the start of the step | Within each step every gas is advanced exactly, by matrix exponential, with the total uptake likewise held at its value at the start of the step; it is updated from step to step | This removes GasMan's splitting error. The coupling between steps is still approximate (first order in the step), so the answer depends slightly on the step size: see the Integration section of the in-app help page *The inhaled-gas engine* |
+| Vapour volume | An optional setting, off by default, in which the vapour from a liquid agent's vaporiser adds its own volume to the fresh gas, raising the effective fresh gas flow by 1/(1 - delivered fraction) | Not offered. The total fresh gas flow is the sum of the flowmeters, and the vapour displaces carrier gas within it | Keeps the fresh gas flow at what the flowmeters show, which is also GasMan's default |
 
 The breathing circuit follows the rule of thumb that rebreathing stops once
 fresh gas flow reaches minute ventilation (Feldman JM, Lampotang S, Hendrickx J. Is rebreathing prevented when FGF equals MV? APSF, 20 October 2022. <https://www.apsf.org/article/is-rebreathing-prevented-when-fgf-equals-mv/>),
@@ -604,29 +622,29 @@ of nitrous oxide in 6 L/min.
 
 Consequences worth knowing when comparing the two side by side:
 
-- Enter in Gas Man the **alveolar** ventilation, 70% of the minute ventilation
+- Enter in GasMan the **alveolar** ventilation, 70% of the minute ventilation
   used here, and expect a small difference whenever fresh gas flow is below the
-  minute ventilation, where Gas Man's ideal circuit has no dead space to return
+  minute ventilation, where GasMan's ideal circuit has no dead space to return
   unused gas from.
-- At low fresh gas flows expect the concentrations here to run higher than Gas
-  Man's, because the oxygen consumed is no longer there to dilute them.
-- Set Gas Man's circuit to **Ideal**. This is the largest of the differences.
-  With Gas Man left on Semi-closed, 2% sevoflurane at 8 L/min gives an alveolar
+- At low fresh gas flows expect the concentrations here to run higher than
+  GasMan's, because the oxygen consumed is no longer there to dilute them.
+- Set GasMan's circuit to **Ideal**. This is the largest of the differences.
+  With GasMan left on Semi-closed, 2% sevoflurane at 8 L/min gives an alveolar
   concentration of 0.47% at one minute and 1.59% at thirty; with the ideal
-  circuit, here and in Gas Man, it is 1.09% and 1.71%.
+  circuit, here and in GasMan, it is 1.09% and 1.71%.
 
-- To reproduce a Gas Man MAC value, set the age to 40, where the age adjustment
+- To reproduce a GasMan MAC value, set the age to 40, where the age adjustment
   is exactly 1, and compare one agent at a time.
-- Leave Gas Man's vapour-volume option **off**, its default. In the low-flow
+- Leave GasMan's vapour-volume option **off**, its default. In the low-flow
   desflurane validation scenario (8% at 0.5 L/min after ten minutes at 6% and
-  4 L/min) turning it on raises Gas Man's alveolar desflurane at 60 minutes
-  from 4.89%, which the engine here reproduces with Gas Man's settings, to
+  4 L/min) turning it on raises GasMan's alveolar desflurane at 60 minutes
+  from 4.89%, which the engine here reproduces with GasMan's settings, to
   5.05%.
 - The two integrations do not agree digit for digit at any fixed step size, and
   neither is exact at a finite step. They converge to a common answer as the
   step shrinks; `tests/testthat/test-gas-convergence.R` checks this.
-- Add Nitrogen as an agent in Gas Man, delivered at 0% (or at 78% of any air
-  flow), before comparing. Without it Gas Man leaves nitrogen washout out of the
+- Add Nitrogen as an agent in GasMan, delivered at 0% (or at 78% of any air
+  flow), before comparing. Without it GasMan leaves nitrogen washout out of the
   uptake coupling, which by itself moves alveolar sevoflurane by about 0.3-0.5%
   during a wash-in.
 - Nitrogen differs slightly throughout because it starts from a different value.
@@ -639,12 +657,12 @@ Consequences worth knowing when comparing the two side by side:
 Above the dose table:
 
 - **Time units** — minutes, hours, days or weeks. A number typed as a time is
-  in this unit, the time axis is labelled in it, and it sets the **Max time**
-  choices. Changing it rewrites every time in the dose table in the new unit
+  in this unit, the time axis is labelled in it, and it sets the range and
+  step of the **Max time** and **Min time** sliders. Changing it rewrites every time in the dose table in the new unit
   (90 minutes becomes 1.5 hours), so the doses stay where they were; it also
   applies any unapplied edits.
 - **Time Display**
-  - **Elapsed time** — everything counted from zero.
+  - **Elapsed time** (the default) — everything counted from zero.
   - **Actual time** (minutes and hours only) — enter a **Procedure start** as
     `HH:MM`; a time with a colon is then a clock time, and a number is counted
     from the procedure start. Switching to elapsed time converts the clock
@@ -655,7 +673,7 @@ works in minutes.
 
 Target-controlled infusions and inhaled agents are simulated only on plots of
 7 days or less; Suggest Dosing is offered in minutes and hours. A dose beyond
-the unit's longest Max time (24 hours, 365 days, 52 weeks) brings a
+the end of the Max time slider (24 hours, 365 days, 52 weeks) brings a
 notification rather than a longer plot.
 
 ---
@@ -663,8 +681,9 @@ notification rather than a longer plot.
 ## Email Slide
 
 Enter a recipient and optional comments, press **Send**, and the app emails a
-PowerPoint slide of the current simulation, including the dose table and the
-pharmacokinetic parameters used.
+PowerPoint deck of the current simulation (the whole plot on the first slide,
+then one slide per panel), including the dose table and the pharmacokinetic
+parameters used.
 
 Requires the mail settings in `config.yml` to be filled in. A local development
 copy made from `config.yml.sample` will not send mail until you do.
@@ -690,9 +709,10 @@ output. Off by default in production.
   ranges — the very young, the very old, the very large, the critically ill —
   produces numbers, but the numbers deserve less confidence than the plot's
   crispness suggests.
-- **Disabled covariates.** Pregnancy does not yet influence any prediction,
-  even though the field exists. A blank serum creatinine means an assumed normal
-  one, not a measured one.
+- **Fields only some drugs read.** Pregnancy changes eight drugs and no other,
+  and the help's Pregnancy page says which drugs the review it follows describes
+  without a figure. A blank serum creatinine means an assumed normal one, not a
+  measured one.
 - **The interaction panel is one model of one stimulus.** Bouillon's surface
   describes response to laryngoscopy. It is not a general-purpose depth monitor.
 - **The shaded band is orientation, not a target.** It is a published typical
@@ -725,11 +745,7 @@ what was intended. Places worth a second look:
   plot code; someone who uses it should check the wording.
 - No screenshots. The guide would be much better with four or five.
 - The **model source table** was extracted from the `reference` field in each
-  `R/drugs_*.R`. Those fields are correct on the `drug-reference-citations`
-  branch but NOT on `master`, where several are still placeholders -- propofol's
-  reads "Anesthesiology 1998" while the model implemented is Eleveld 2018. That
-  branch should be merged before this guide is published, or the table will
-  describe something the code does not say.
+  `R/drugs_*.R`.
 - Better still, the table should be GENERATED from the drug files rather than
   hand-maintained here, so it cannot drift. It drifted once already.
 - Nothing here covers the vignettes (`stanpumpR-single-PK`, `stanpumpR-multi-PK`)

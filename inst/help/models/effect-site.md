@@ -16,34 +16,42 @@ Because the effect site adds one more first-order process, the effect-site conce
 
 The plasma concentration is what a blood sample measures; the effect-site concentration is what the patient responds to. Clinical correlates, the concentration for loss of consciousness, for adequate analgesia, for return of neuromuscular function, are effect-site concentrations. This is why stanpumpR draws the effect site solid and hides the plasma by default, and why the shaded therapeutic band and the recovery thresholds apply to the effect site.
 
+Two cautions. The effect site is only as good as its time to peak effect: for the anaesthetic drugs it was fitted to a measured effect, usually the EEG, but for some others (several vasoactive drugs among them) it is carried from another study or is a clinical estimate, and a solved ke0 says nothing about whether a pressure, a heart rate or a rhythm follows it; each drug's page gives the source. And a band that is a laboratory range (digoxin, the antiseizure, antidepressant and antipsychotic drugs) was measured in sampled serum at a stated time, usually a trough or six or more hours after a dose, so it is read against the curve at that time, not at an early peak.
+
 ## Time to peak effect, and how ke0 is found
 
 ke0 cannot be measured directly. It is estimated from the time course of a measured effect, usually the processed EEG, during a bolus or a rapid infusion. A model-independent way to report the result is the **time to peak effect** after a bolus, tPeak: the moment at which the rising effect-site concentration meets the falling plasma concentration.
 
-Shafer and Varvel showed in 1991 that tPeak is the right quantity to carry from one pharmacokinetic model to another. ke0 itself depends on which disposition model it was fitted with, so taking a published ke0 and pairing it with a different model gives the wrong time course. tPeak does not have that problem. stanpumpR therefore stores **tPeak** for each drug and solves for the ke0 that, with this drug's disposition parameters for this patient, makes the effect site after a bolus peak at exactly tPeak. The search is a one-dimensional optimisation in `getDrugPK()`, repeated for every patient because the disposition parameters change with the covariates. Each drug's page shows the resulting ke0 and its half-time at six reference patients, and the tPeak it was solved from.
+Minto, Schnider, Gregg, Henthorn and Shafer showed in 2003 (*Anesthesiology* 99:324-333) that tPeak is the right quantity to carry from one pharmacokinetic model to another (Shafer and Varvel had reported the opioids' times to peak effect in 1991, but the use of tPeak in place of ke0 was appreciated only a decade later). ke0 itself depends on which disposition model it was fitted with, so taking a published ke0 and pairing it with a different model gives the wrong time course. tPeak does not have that problem. stanpumpR therefore stores **tPeak** for each drug and solves for the ke0 that, with this drug's disposition parameters for this patient, makes the effect site after a bolus peak at exactly tPeak. The search is a one-dimensional optimisation in `getDrugPK()`, repeated for every patient because the disposition parameters change with the covariates. Each drug's page shows the resulting ke0 and its half-time at six reference patients, and the tPeak it was solved from.
 
 | Drug | tPeak (min) | Source noted in the code |
 |---|---|---|
 | propofol | 1.6 | Schnider 1999 |
 | remifentanil | 1.6 | opioid simulation spreadsheet |
 | alfentanil | 1.4 | Shafer/Varvel t_peaks analysis |
-| fentanyl | 3.7 | Shafer/Varvel t_peaks analysis |
-| sufentanil | 5.8 | Shafer/Varvel t_peaks analysis |
+| fentanyl | 3.6 | Shafer/Varvel 1991 |
+| sufentanil | 5.6 | Shafer/Varvel 1991 |
 | morphine | 93.8 | |
-| methadone | 11.3 | |
+| methadone | 10 | Kharasch 2004 peak miosis 10-15 min, within Inturrisi 1987's range |
 | hydromorphone | 19.6 | |
-| rocuronium | 2.2 | Cortínez 2007 |
+| oxycodone | 12.09 | Lalovic 2006 (pupil) t½ke0 11 min |
+| oliceridine | 4.4 | Dahan 2020: analgesia too fast to measure, taken as t½ke0 1 min |
+| buprenorphine | 61.2 | Yassen 2006 ke0, carried as tPeak |
+| naloxone | 3.58 | Yassen 2007 ke0, carried as tPeak |
+| rocuronium | 4.5 | Cortínez 2007 (population median at the adductor pollicis) |
+| vecuronium | 5.37 (to age 40), 4.80 (from 70) | Rupp 1987 ke0, with its own kinetics |
+| cisatracurium | 12.3 (young), 12.9 (elderly) | Sorooshian 1996 ke0, with its own kinetics |
 | midazolam | 3 | Bührer 1990 |
-| etomidate | 1.6 | |
-| ketamine, dexmedetomidine, oxytocin, naloxone | 3, 10, 5, 1 | described in the code as guesses or clinical observation |
+| etomidate | 1.9 (solved from Arden 1986's t½ke0 of 1.6 min) | Arden 1986 |
+| ketamine, dexmedetomidine, oxytocin | 3, 10, 5 | described in the code as guesses or clinical observation |
 
 The drug pages carry the current values; this table is illustrative. Where the code says a tPeak is a guess, the drug page says so too.
 
 ## A drug with no effect site
 
-A tPeak of zero means no effect site: ke0 is left at zero and the effect-site concentration is not computed. Codeine and tramadol do this: they are modelled as prodrugs, and their effect appears on the row of the metabolite formed from them. See [Active metabolites](help:models/metabolites).
+A tPeak of zero, with no ke0 supplied, means no effect site: ke0 is left at zero and the effect-site concentration is not computed. Codeine, tramadol and prednisone do this: they are modelled as prodrugs, and their effect appears on the row of the metabolite formed from them. See [Active metabolites](help:models/metabolites). So do most of the drugs that are in the library for their concentrations rather than an anesthetic endpoint, such as the antibiotics, corticosteroids, antidepressants and antiseizure drugs, and the local anesthetics other than lidocaine; each drug's page says whether it has an effect site.
 
-For a drug given orally, the time to peak effect is observed after an oral dose, so ke0 is solved against the oral plasma curve rather than an intravenous bolus; hydrocodone and pregabalin are the cases. The time is counted from the dose, so an absorption lag, such as pregabalin's 19 minutes, is part of it. Alprazolam supplies its ke0 directly too: its equilibration half-life was measured after intravenous doses, against an intravenous model, and the drug is modelled by mouth only. Acetaminophen and ibuprofen supply theirs as published equilibration half-times, 53 and 62 minutes, estimated after oral doses in children. Clonazepam, zolpidem and temazepam have no effect site: in their source studies the effects were direct functions of the plasma concentration, peaking with it. Desmetramadol, which is never dosed directly, supplies its ke0 to the engine ready-solved, because the curve its peak was observed against (the metabolite formed from oral tramadol) is not one the effect-site solver can build. The Minto remifentanil model, run beside the library's when *Minto / Schnider* is ticked, supplies its published ke0 as a function of age, and the engine then solves the time to peak effect from it, which the TCI controller needs ([The Minto and Schnider models](help:models/minto-schnider)).
+For a drug given orally, the time to peak effect is observed after an oral dose, so ke0 is solved against the oral plasma curve rather than an intravenous bolus; hydrocodone and pregabalin are the cases. The time is counted from the dose, so an absorption lag, such as pregabalin's 19 minutes, is part of it. Some drugs supply ke0 directly, with no tPeak, because their source estimated an equilibration rate rather than a time of peak effect: naloxone and buprenorphine (Yassen and colleagues), celecoxib, and the antipsychotics aripiprazole and haloperidol (from D2 receptor occupancy). Alprazolam supplies its ke0 directly too: its equilibration half-life was measured after intravenous doses, against an intravenous model, and the drug is modelled by mouth only. Acetaminophen and ibuprofen supply theirs as published equilibration half-times, 53 and 62 minutes, estimated after oral doses in children. Clonazepam, zolpidem and temazepam have no effect site: in their source studies the effects were direct functions of the plasma concentration, peaking with it. Desmetramadol, which is never dosed directly, supplies its ke0 to the engine ready-solved, because the curve its peak was observed against (the metabolite formed from oral tramadol) is not one the effect-site solver can build. The Minto remifentanil model, run beside the library's when *Minto / Schnider* is ticked, supplies its published ke0 as a function of age, and the engine then solves the time to peak effect from it, which the TCI controller needs ([The Minto and Schnider models](help:models/minto-schnider)).
 
 ## What to look for on the plot
 

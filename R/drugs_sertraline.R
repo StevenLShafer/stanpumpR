@@ -107,9 +107,12 @@
 #
 # BAND
 # ====
-# 10-150 ng/mL, typical 50: the AGNP 2018 consensus therapeutic reference
-# range (Hiemke 2018).  Orientation only; it describes troughs at steady
-# state on chronic treatment.
+# 10-50 ng/mL, typical 30 (its midpoint): the therapeutic reference range of
+# the AGNP update 2026 (Hart et al., Pharmacopsychiatry 2026;59:166-295,
+# Table 5; trough 24 h after a dose), which narrowed the 2017 update's 10-150:
+# 80% of serotonin transporters are occupied at 10 ng/mL, and above 50 ng/mL
+# efficacy may fall and adverse reactions rise.  Orientation only; it
+# describes troughs at steady state on chronic treatment.
 #
 # ALTERNATIVES NOT IMPLEMENTED
 # ============================
@@ -122,6 +125,30 @@
 # CYP2D6 genotype), Monfort 2024 (pregnancy) and Gonzalez de la Cruz 2026 are
 # other published models; none is mixed in.
 #
+# PREGNANCY
+# =========
+# Sertraline is the one antidepressant whose dose-adjusted serum
+# concentration RISES in pregnancy.  Westin 2017 followed 37 sertraline
+# pregnancies (34 women) through routine therapeutic drug monitoring, each
+# against the same woman's own baseline outside pregnancy: sertraline was 68%
+# higher in the middle of the third trimester (95% CI +37% to +106%,
+# p < 0.001), and N-desmethylsertraline 120% higher.  The Schoretsanitis 2020
+# meta-analysis (18 patients) gives a combined ratio of 1.38, and Heinonen
+# 2021 the same direction; Freeman 2008 (six to nine women) found large
+# differences between women and no significant mean change.  The mechanism
+# is probably inhibition of CYP2C19 in pregnancy.  With the Patient
+# Profile's Pregnant field on, the elimination clearance CL1 is multiplied by
+# SERTRALINE_PREGNANCY_CL_FACTOR = 0.60 (1 / 1.68 = 0.595, rounded as the
+# registry gives it): the clearance FALLS, unlike every other drug the flag
+# changes.  The volumes, the distribution clearance and the absorption (ka,
+# lag and the dose-dependent F(D)) are unchanged.  Alhadab's parameters are
+# absolute and the plotted concentration is total plasma sertraline, which
+# is what Westin measured.  Late pregnancy (the third trimester) is the state
+# described.  Clinically the change matters mainly as a caution against
+# reducing the dose reflexively.  Monfort 2024's perinatal model (above) is
+# not mixed in.  (Claude Code, 2026-10-19, at the request of Steven L.
+# Shafer; see R/pregnancy.R and inst/extdata/pregnancyRegistry.csv.)
+#
 # References
 # ----------
 # Alhadab AA, Brundage RC, AAPS J 2020;22:73.
@@ -132,10 +159,24 @@
 #   https://doi.org/10.1016/j.biopsych.2005.08.010
 # Zhang Z et al., Heliyon 2024;10:e25231 (not used).
 #   https://doi.org/10.1016/j.heliyon.2024.e25231
+# Westin AA, Brekke M, Molden E, Skogvoll E, Spigset O.  PLoS One
+#   2017;12:e0181082.  https://doi.org/10.1371/journal.pone.0181082
+#   (pregnancy)
+# Schoretsanitis G et al.  Expert Opin Drug Metab Toxicol 2020;16:431-440.
+#   https://doi.org/10.1080/17425255.2020.1750598 (pregnancy)
+# Heinonen E et al.  Eur J Clin Pharmacol 2021;77:1323-1331.
+#   https://doi.org/10.1007/s00228-021-03122-z (pregnancy)
+# Freeman MP et al.  J Clin Psychopharmacol 2008;28:646-653.
+#   https://doi.org/10.1097/JCP.0b013e31818d2048 (pregnancy)
 # -----------------------------------------------------------------------------
 
 SERTRALINE_KA   <- 0.4087317 / 60   # 1/min, first-order fit to ka(t) (reduction 2)
 SERTRALINE_TLAG <- 1.4324891 * 60   # min
+
+# Elimination clearance in pregnancy relative to Alhadab's value: Westin 2017,
+# sertraline 68% HIGHER in the third trimester, 1 / 1.68 = 0.60 (see the
+# header).  Less than 1: the clearance falls.
+SERTRALINE_PREGNANCY_CL_FACTOR <- 0.60
 
 #' Sertraline pharmacokinetics (oral)
 #'
@@ -149,9 +190,13 @@ SERTRALINE_TLAG <- 1.4324891 * 60   # min
 #' @param adjustToFFM \code{TRUE} (the default) scales the volumes and
 #'   clearances to the patient's fat-free mass; \code{FALSE} uses the
 #'   published values for everyone.
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
+#'   elimination clearance by 0.60, a fall (Westin 2017; see the file's
+#'   header).
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE)
+sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE,
+                       pregnant = FALSE)
 {
   # Size scaling (see the header): fixed published values for the reference man
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
@@ -159,7 +204,9 @@ sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE)
   v1  <- 1200 * size$volume
   v2  <- 1350 * size$volume            # multiple-dose value (reduction 1)
   v3  <- 1                             # two compartments
-  cl1 <- 59.7 / 60 * size$clearance    # L/min
+  # Pregnancy (see the header): elimination clearance only, which falls.
+  clPregnancy <- if (isTRUE(pregnant)) SERTRALINE_PREGNANCY_CL_FACTOR else 1
+  cl1 <- 59.7 / 60 * size$clearance * clPregnancy   # L/min
   cl2 <- 161  / 60 * size$clearance
   cl3 <- 0
 
@@ -178,9 +225,10 @@ sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL: AGNP 2018 therapeutic reference range.  Orientation only.
-  typical      <- 50
-  upperTypical <- 150
+  # Band, ng/mL: AGNP 2026 (Hart 2026, Table 5) therapeutic reference range.
+  # Orientation only.
+  typical      <- 30
+  upperTypical <- 50
   lowerTypical <- 10
 
   reference <- paste0(
@@ -190,6 +238,12 @@ sertraline <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "a lag, single-dose bioavailability D/(15.5 + D) applied to each dose; ",
     "oral only. https://doi.org/10.1208/s12248-020-00455-y"
   )
+  if (isTRUE(pregnant)) {
+    reference <- paste0(reference, "; ", pregnancyReference(
+      paste0("clearance x ", SERTRALINE_PREGNANCY_CL_FACTOR, " (a fall)"),
+      paste0("Westin AA et al., PLoS One 2017;12:e0181082. ",
+             "https://doi.org/10.1371/journal.pone.0181082")))
+  }
 
   return(
     list(

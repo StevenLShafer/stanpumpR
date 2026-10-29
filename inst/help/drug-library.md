@@ -7,7 +7,7 @@ Opens the table behind every drug. The columns are:
 | Column | Meaning |
 |---|---|
 | Drug | The name, as it appears in the dose table |
-| Concentration.Units | `mcg` or `ng`: the drug is plotted in these units per mL (`%` for the gases) |
+| Concentration.Units | Usually `mcg` or `ng`: the drug is plotted in these units per mL; also `pg` (exenatide, lixisenatide), `mcU` (the insulins and vasopressin, mcU/mL), and `IU` (heparin and enoxaparin activity, IU/mL). The exceptions are not per mL: `%` for the gases, `mOsm` for mannitol (plotted as mOsm/kg), `mmol` for intravenous calcium and magnesium sulfate (the rise in the serum ion, mmol/L), `INR` for the vitamin-K antagonists (the INR they produce), `ACT` for heparin on bypass (the activated clotting time, s) and `L/min` for ventilation, a setting of the inhaled agents |
 | Bolus.Units, Infusion.Units | The units a bolus and an infusion are expressed in internally; also used by Suggest Dosing |
 | Default.Units | The unit a new row starts with |
 | Units | The comma-separated list offered in the dose table |

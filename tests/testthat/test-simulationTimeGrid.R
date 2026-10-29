@@ -450,3 +450,60 @@ test_that("a year of daily oral doses simulates within a time budget", {
   expect_lt(elapsed, 4)
   expect_true(all(is.finite(o$oxycodone$wide$Recovery)))
 })
+
+
+test_that("a window far from 0 is drawn as finely as a plot of its own length", {
+  # Weekly doses for 16 weeks, drawn from 15 to 16 weeks (Min time)
+  knots <- MINS_PER_WEEK * 0:15
+  maximum <- 16 * MINS_PER_WEEK
+  minimum <- 15 * MINS_PER_WEEK
+  whole  <- simulationTimeGrid(knots, maximum)
+  window <- withGridWindow(minimum, simulationTimeGrid(knots, maximum))
+  oneWeek <- simulationTimeGrid(0, MINS_PER_WEEK)
+  inside <- window[window >= minimum]
+  # as many points across the window as a one-week plot from a dose at its
+  # start, and no step inside it longer than a one-week plot's
+  expect_equal(length(inside), length(oneWeek))
+  expect_equal(inside - minimum, oneWeek, tolerance = 1e-9)
+  expect_lte(max(diff(inside)), MINS_PER_WEEK / GRID_UNIFORM_POINTS + 1e-9)
+  expect_gt(length(inside), 5 * sum(whole >= minimum))
+  # before the window the line is the whole plot's; every knot survives
+  expect_equal(window[window < minimum], whole[whole < minimum])
+  expect_true(all(knots %in% window))
+  expect_true(minimum %in% window)
+  # a window from 0, or one that does not start inside the plot, changes
+  # nothing, and outside withGridWindow() nothing is changed either
+  expect_identical(withGridWindow(0, simulationTimeGrid(knots, maximum)), whole)
+  expect_identical(withGridWindow(maximum, simulationTimeGrid(knots, maximum)), whole)
+  expect_identical(simulationTimeGrid(knots, maximum), whole)
+})
+
+test_that("a window of a day or less gets the legacy fill from its start", {
+  window <- withGridWindow(1380, simulationTimeGrid(c(0, 600), 1440))
+  inside <- window[window >= 1380]
+  expect_equal(inside, gridFill(1380, 1440, 60, 1, origin = 1380))
+  expect_gt(length(inside), sum(simulationTimeGrid(c(0, 600), 1440) >= 1380))
+})
+
+test_that("the equispaced times add a grid across the window", {
+  expect_equal(equispaceTimes(600), seq(0, 600, length.out = RESOLUTION))
+  t <- withGridWindow(500, equispaceTimes(600))
+  expect_true(all(seq(0, 600, length.out = RESOLUTION) %in% t))
+  expect_true(all(seq(500, 600, length.out = RESOLUTION) %in% t))
+  expect_false(is.unsorted(t))
+})
+
+test_that("a drug simulated in a window keeps the same values, more finely", {
+  events <- data.frame(Time = double(), Event = character())
+  pk <- getDrugPK("fentanyl", 70, 170, 40, "male")
+  dose <- data.frame(Drug = "fentanyl", Time = c(0, 300), Dose = c(100, 100), Units = "mcg")
+  whole  <- simCpCe(dose, events, pk, 600, FALSE)
+  window <- withGridWindow(480, simCpCe(dose, events, pk, 600, FALSE))
+  w <- window$results[window$results$Site == "Plasma", ]
+  a <- whole$results[whole$results$Site == "Plasma", ]
+  # the closed form is exact at any time: the window's values lie on the
+  # whole run's curve wherever both have a point
+  both <- intersect(w$Time, a$Time)
+  expect_equal(w$Y[match(both, w$Time)], a$Y[match(both, a$Time)])
+  expect_gt(sum(w$Time >= 480), sum(a$Time >= 480))
+})

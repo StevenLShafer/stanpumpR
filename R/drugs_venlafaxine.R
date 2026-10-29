@@ -83,12 +83,16 @@
 # N,O-didesmethyl venlafaxine.  IIV (the Table 2 "%CV" column holds values
 # such as 0.219 and 1.38, not percentages) and residual error.
 #
-# NO EFFECT SITE, NO BAND
-# =======================
+# NO EFFECT SITE; A BAND ON ODV ONLY
+# ===================================
 # Both are active reuptake inhibitors; no concentration-response relation for
 # antidepressant effect exists, so tPeak is zero and both rows plot plasma.
-# prodrug = FALSE.  The AGNP range, 100 to 400 ng/mL, is for venlafaxine
-# PLUS ODV; neither row carries a band (CSV zeros), and the help page gives it.
+# prodrug = FALSE.  The therapeutic reference range of the active moiety,
+# venlafaxine PLUS ODV, is 140 to 600 ng/mL (Lense et al., Psychopharmacology
+# 2024;241:275-289, replacing AGNP 2017's 100 to 400), which no single row can
+# carry, so venlafaxine's row has no band.  Lense also gives ODV's own range
+# during venlafaxine treatment, 85 to 380 ng/mL, which is the desvenlafaxine
+# row's band (inst/extdata/therapeuticRanges.csv).
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -99,11 +103,14 @@
 #
 # References
 # ----------
-# Wang X, et al. Joint population pharmacokinetic modeling of venlafaxine and
+# Wang Z, et al. Joint population pharmacokinetic modeling of venlafaxine and
 #   O-desmethyl venlafaxine in healthy volunteers and patients to evaluate the
 #   impact of morbidity and concomitant medication. Front Pharmacol
 #   2022;13:978202. https://doi.org/10.3389/fphar.2022.978202
-# Hiemke C, et al. Pharmacopsychiatry 2018;51:9-62 (AGNP range).
+# Hiemke C, et al. Pharmacopsychiatry 2018;51:9-62 (AGNP 2017 range).
+# Lense XM, et al. Venlafaxine's therapeutic reference range in the treatment
+#   of depression revised. Psychopharmacology 2024;241:275-289.
+#   https://doi.org/10.1007/s00213-023-06484-7
 # -----------------------------------------------------------------------------
 
 VENLAFAXINE_CL_HEALTHY <- 80.9     # L/h, CL/F in healthy volunteers
@@ -114,7 +121,7 @@ VENLAFAXINE_FP         <- 0.048    # first-pass fraction to ODV
 VENLAFAXINE_MW_RATIO   <- 263.38 / 277.40   # ODV / venlafaxine, g/mol
 
 VENLAFAXINE_REFERENCE <- paste0(
-  "Wang X, et al. Joint population pharmacokinetic modeling of venlafaxine ",
+  "Wang Z, et al. Joint population pharmacokinetic modeling of venlafaxine ",
   "and O-desmethyl venlafaxine in healthy volunteers and patients to evaluate ",
   "the impact of morbidity and concomitant medication. Front Pharmacol ",
   "2022;13:978202 (psychiatric-patient clearance; K23 = CL/V from Figure 1). ",
@@ -167,7 +174,7 @@ venlafaxine <- function(weight, height, age, sex, adjustToFFM = TRUE)
       PK = PK,
       tPeak = 0,        # no effect-site model; see the header
       MEAC = 0,         # not an opioid
-      typical = 0,      # the AGNP range is for the sum; no band (CSV zeros)
+      typical = 0,      # the active moiety's range is for the sum; no band
       upperTypical = 0,
       lowerTypical = 0,
       reference = VENLAFAXINE_REFERENCE,

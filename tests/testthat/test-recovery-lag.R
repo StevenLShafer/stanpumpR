@@ -78,13 +78,39 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     "diclofenac", "meloxicam",
                     # lagged oral depots (2026-10-10)
                     "celecoxib", "aspirin",
+                    # olmesartan's fitted ALAG of 0.427 h (Yoshihara 2005)
+                    "olmesartan",
+                    # lagged oral absorption (2026-10-17)
+                    "empagliflozin", "ertugliflozin",
+                    # Melin 2023's fixed 0.248 h lag (dapagliflozin)
+                    "dapagliflozin",
+                    # Hoeben 2016's lag before the release into the gut
+                    "canagliflozin",
+                    # the sponsor's 0.24 h lag (cenobamate, 2026-10-18)
+                    "cenobamate",
                     # enteric-coated lag (2026-10-11)
                     "diclofenacEC",
                     # sublingual lag fitted with ka (2026-10-10)
                     "buprenorphine",
                     # Sun 2021's fixed 0.782 h lag; plasma only, so no
                     # effect-site recovery to blank
-                    "olanzapine"))
+                    "olanzapine",
+                    # Holze 2023's fitted 0.30 h oral lag; plasma only
+                    # (2026-10-17)
+                    "psilocybin",
+                    # MDMA (2026-10-17): the source's zero-order depot input,
+                    # discretised as two lagged half doses, so BOTH oral
+                    # depots carry a lag (R/drugs_MDMA.R)
+                    "MDMA",
+                    # fitted oral lags (2026-10-17): edoxaban 0.25 h
+                    # (Niebecker 2015), dabigatran 0.634 h; plasma only
+                    "edoxaban", "dabigatran",
+                    # dabigatran after hip replacement (2026-10-20): 0.4 h lag
+                    # (Trocóniz 2007); plasma only
+                    "dabigatranHip",
+                    # acenocoumarol's 0.269 h lag (Verstuyft 2012); the INR
+                    # is plotted, so no effect-site recovery (2026-10-18)
+                    "acenocoumarol"))
 })
 
 

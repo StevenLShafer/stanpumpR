@@ -85,11 +85,16 @@
 #
 # BAND
 # ====
-# 20-40 ng/mL: "optimal reduction of anxiety associated with panic disorder
-# occurs at steady-state plasma alprazolam concentrations of 20 to 40
-# micrograms/L.  Concentrations higher than this may be needed for
-# suppression of the actual panic attacks" (Greenblatt and Wright 1993);
-# typical 30.  For orientation, the EC50 for impaired card sorting and DSST
+# 5-44 ng/mL, the therapeutic reference range for anxiety and panic
+# disorders of Hart 2026 (AGNP consensus guidelines, update 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, doi 10.1055/a-2860-7861): the
+# concentrations expected on 1-4 mg/day, 10 h after the last dose; alert
+# level 100 ng/mL.  Typical 25, its midpoint.  It replaced 20-40 ng/mL:
+# "optimal reduction of anxiety associated with panic disorder occurs at
+# steady-state plasma alprazolam concentrations of 20 to 40 micrograms/L.
+# Concentrations higher than this may be needed for suppression of the
+# actual panic attacks" (Greenblatt and Wright 1993), which lies inside it.
+# For orientation, the EC50 for impaired card sorting and DSST
 # after intravenous alprazolam was 37-40 ng/mL in young men and 25 in the
 # elderly (Bertz 1997).  No time-until-threshold level (endCe 0).
 #
@@ -171,10 +176,10 @@ alprazolam <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # Band, ng/mL: steady state in panic disorder (Greenblatt and Wright 1993).
-  typical      <- 30
-  upperTypical <- 40
-  lowerTypical <- 20
+  # Band, ng/mL: the therapeutic reference range of Hart 2026, Table 5.
+  typical      <- 25
+  upperTypical <- 44
+  lowerTypical <- 5
 
   reference <- paste0(
     "DeVane CL et al., Clin Pharmacol Ther 1993;53:521-528. ",

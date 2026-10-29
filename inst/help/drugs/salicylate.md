@@ -2,7 +2,7 @@
 
 Salicylic acid (salicylate) is not dosed directly. It is formed from [aspirin](help:drugs/aspirin) and shown on its own row. Its two-compartment kinetics are from Koh and colleagues (*Drug Des Devel Ther* 2025;19:7853-7863), fitted after 100 mg enteric-coated aspirin in healthy Korean adults:
 
-- apparent clearance 2.76 L/h at the median weight, scaled by (W/68.35)^1.42;
+- apparent clearance 2.76 L/h at the median weight, scaled by (W/68.35)^1.42, where W is the pharmacokinetic weight under the default [fat-free-mass scaling](help:models/fat-free-mass) and total body weight with the switch off;
 - central volume 7.5 L;
 - intercompartmental clearance 0.08 L/h and peripheral volume 1.98 L, both fixed from an earlier study.
 

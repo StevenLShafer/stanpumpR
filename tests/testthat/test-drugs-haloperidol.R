@@ -11,7 +11,7 @@ test_that("oral haloperidol receives the published apparent values", {
         ka_PO = 0.236 / 60, bioavailability_PO = 1, tlag_PO = 0
       )),
       tPeak = 0, ke0 = 0.213 / 60, MEAC = 0,
-      typical = 0, upperTypical = 0, lowerTypical = 0,
+      typical = 3, upperTypical = 5, lowerTypical = 1,
       reference = actual$reference
     )
     expect_equal_rounded(actual, expected)

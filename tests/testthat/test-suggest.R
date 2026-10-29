@@ -94,6 +94,20 @@ runSuggest <- function(drug, times, targets, end) {
   )
 }
 
+test_that("a clock target before the start leaves nothing, and the app has a message for it", {
+  # Issue #270.  In clock mode a time earlier than the start is read as the
+  # next day, so it lands after the end time and is dropped; suggest() then
+  # returns NULL, and the app shows SUGGEST_NO_TARGETS_MESSAGE instead of
+  # closing the dialog in silence.
+  local_mocked_bindings(outputComments = function(...) {})
+  before <- displayTimeToMinutes("07:30", "08:00")
+  expect_equal(before, 23.5 * 60)
+  expect_null(runSuggest("propofol", before, 3, 60))
+  expect_null(runSuggest("propofol", c(10, 20), c(0, 0), 60))
+  expect_match(SUGGEST_NO_TARGETS_MESSAGE, "no target")
+  expect_match(SUGGEST_NO_TARGETS_MESSAGE, "next day")
+})
+
 # The infusion rate the engine runs at time t: the rows at the latest infusion
 # time at or before t, added together, as advanceClosedForm0() adds them.
 effectiveRate <- function(regimen, infusionUnits, t) {
@@ -145,7 +159,7 @@ test_that("every rate change is inside its interval and the window", {
   regimen <- suggestRegimen(data.frame(Time = c(0, 0.25), Target = c(3, 3)), 60, PK)
   expect_equal(regimen$Time, c(0, 0.25, 2, 14))
   expect_equal(regimen$Units, c("mg", "mg", "mcg/kg/min", "mcg/kg/min"))
-  # tPeak = 0 (naloxone's model gives ke0 directly): the infusion starts with
+  # tPeak = 0 (a model that gives ke0 directly, as alprazolam's does): the infusion starts with
   # the bolus, and is not duplicated
   regimen <- suggestRegimen(data.frame(Time = 0, Target = 2), 60,
                             list(tPeak = 0, Bolus.Units = "mcg", Infusion.Units = "mcg/min"))
@@ -196,10 +210,12 @@ test_that("of several targets at one time, the last entered is kept", {
 test_that("only drugs with an effect site and intravenous bolus and infusion units are offered", {
   # Audit F23: mannitol and codeine were offered and failed.
   choices <- suggestDrugChoices(getDrugDefaultsGlobal())
-  expect_true(all(c("propofol", "remifentanil", "fentanyl", "ketamine", "naloxone") %in% choices))
+  # oxycodone has had intravenous bolus and infusion units since issue #131
+  expect_true(all(c("propofol", "remifentanil", "fentanyl", "ketamine", "naloxone",
+                    "oxycodone") %in% choices))
   # no effect site, oral only, or inhaled
   expect_false(any(c("mannitol", "codeine", "tramadol", "cefazolin", "vancomycin",
-                     "dexamethasone", "oxycodone", "hydrocodone", "sevoflurane",
+                     "dexamethasone", "hydrocodone", "sevoflurane",
                      "oxygen") %in% choices))
   for (drug in choices) {
     expect_true(suggestSupported(getDrugPK(drug, 70, 170, 50, "male")), info = drug)

@@ -136,24 +136,33 @@ dispositionTerms <- function(pkSet)
 }
 
 
-#' Separate eigenvalues that coincide
+#' Separate rate constants that coincide
 #'
-#' The convolution divides by (mu - lambda), so an exact tie is a division by
-#' zero.  Two independently fitted drugs never share an eigenvalue exactly, and
-#' the degenerate case takes a t*exp(-lambda t) form that is not worth carrying,
-#' so a tie is broken by a relative hair.  The perturbation is far below the
-#' precision of any published parameter set.
+#' Every closed-form coefficient in the library divides by a difference of two
+#' rate constants: (mu - lambda) in the metabolite convolution, (ke0 - lambda)
+#' and (ka - lambda) and (ka - ke0) in getDrugPK()'s effect-site and absorption
+#' coefficients.  An exact tie is a division by zero, and the degenerate case
+#' takes a t*exp(-lambda t) form that is not worth carrying, so a tie is broken
+#' by a relative hair.  The perturbation is far below the precision of any
+#' published parameter set.  getDrugPK() applies it to ke0 and every ka once,
+#' so the PK set it returns already has its rates separate; the helpers that
+#' take a rate from elsewhere (oralCoefficients(), effectSitePeakTime(),
+#' effectSiteCoefficients()) apply it again, cheaply.
 #'
-#' @param lamM eigenvalues to adjust
-#' @param lamP eigenvalues to separate them from
+#' @param lamM rate constants to adjust; a zero (no such route or effect site)
+#'   is left alone
+#' @param lamP rate constants to separate them from; zeros are ignored
 #' @returns \code{lamM}, with any exact tie nudged
 #' @keywords internal
 separateEigenvalues <- function(lamM, lamP)
 {
-  for (j in seq_along(lamM))
+  lamP <- lamP[!is.na(lamP) & lamP > 0]
+  for (j in seq_along(lamM)) {
+    if (is.na(lamM[j]) || lamM[j] <= 0) next
     for (i in seq_along(lamP))
       if (abs(lamM[j] - lamP[i]) < 1e-10 * max(lamM[j], lamP[i]))
         lamM[j] <- lamM[j] * (1 + 1e-8)
+  }
   lamM
 }
 

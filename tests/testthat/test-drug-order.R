@@ -20,7 +20,7 @@ test_that("the dose table's Drug column lists the drugs alphabetically", {
   hot <- createHOT(doseTableInit, dd)
   drugColumn <- hot$x$columns[[which(names(doseTableInit) == "Drug")]]
   expect_identical(drugColumn$source, sortDrugNames(dd$Drug))
-  expect_identical(head(drugColumn$source, 3), c("acetaminophen", "air", "alfentanil"))
+  expect_identical(head(drugColumn$source, 3), c("acenocoumarol", "acetaminophen", "air"))
 })
 
 oldConfig <- .sprglobals$config
@@ -34,6 +34,7 @@ test_that("the drug pickers are alphabetical, and a click still finds its drug's
       weight = 70, weightUnit = "1", height = 170, heightUnit = "1", age = 40, ageUnit = "1",
       sex = "male", showThreshold = FALSE, normalization = "none", typical = "Range", logY = FALSE
     )
+    startFormatFromInputs(session)
     doseTable(doseTableInit)
     session$flushReact()
 

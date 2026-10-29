@@ -29,7 +29,8 @@ HELP_SCENARIO_GROUPS <- c(
   "Recovery and emergence",
   "Inhaled anesthetics",
   "Regional anesthesia",
-  "Long-term therapy"
+  "Long-term therapy",
+  "Perioperative"
 )
 
 #' Default graph options for a scenario
@@ -47,11 +48,24 @@ helpScenarioDefaultOptions <- function() {
     effectsiteLinetype = "solid",
     addedPlots = character(0),
     showThreshold = FALSE,
+    # Each opioid's % MEAC on its own panel (R/meacOverlay.R); not with
+    # showThreshold
+    showMEAC = FALSE,
+    # V2 and V3, or MRG and FG, and the depot, each a panel under its drug's
+    # (R/compartments.R); needs normalization none
+    showCompartments = FALSE,
     logY = FALSE,
     opioidMacInteraction = FALSE,
     # Run the Schnider propofol and Minto remifentanil models beside the
     # library's (R/alternativeModels.R); needs one of those drugs dosed
-    mintoSchnider = FALSE
+    mintoSchnider = FALSE,
+    # Run the Hamberg warfarin genotype model beside the library's (Xue);
+    # needs warfarin dosed
+    hamberg = FALSE,
+    # Apply the pharmacokinetic interactions among the antiseizure drugs
+    # (R/antiseizureInteractions.R); needs an interacting pair, or
+    # carbamazepine, dosed
+    antiseizureInteractions = FALSE
   )
 }
 
@@ -63,6 +77,13 @@ helpScenarioDefaultOptions <- function() {
 #' @param group one of HELP_SCENARIO_GROUPS
 #' @param summary one sentence: the point the scenario makes
 #' @param age,weight,height,sex the patient (years, kg, cm, "male"/"female")
+#' @param creatinine serum creatinine in mg/dL, or NULL for a blank field (the
+#'   renal models then assume a normal value for the patient's age and sex)
+#' @param osmolality baseline serum osmolality in mOsm/kg (mannitol)
+#' @param gestationalAge gestational age at birth in weeks, or NULL for a
+#'   blank field (the neonatal models then assume a term birth)
+#' @param pregnant is the patient pregnant?  Only for a woman of child-bearing
+#'   age (pregnancyPossible()); read by the models R/pregnancy.R lists
 #' @param doses data frame with Drug, Time (minutes), Dose, Units
 #' @param events data frame with Time (minutes) and Event, or NULL
 #' @param ... graph options overriding helpScenarioDefaultOptions()
@@ -71,7 +92,11 @@ helpScenario <- function(id, title, group, summary,
                          age = 40, weight = 70, height = 170, sex = SEX_MALE,
                          cyp2d6 = CYP2D6_DEFAULT, adjustToFFM = TRUE,
                          doses, events = NULL, cyp2c19 = CYP2C19_DEFAULT,
-                         cyp2c9 = CYP2C9_DEFAULT, ...) {
+                         cyp2c9 = CYP2C9_DEFAULT, vkorc1 = VKORC1_DEFAULT,
+                         cyp4f2 = CYP4F2_DEFAULT, cyp2b6 = CYP2B6_DEFAULT,
+                         creatinine = NULL,
+                         osmolality = OSMOLALITY_DEFAULT, pregnant = FALSE,
+                         gestationalAge = NULL, ...) {
   options <- utils::modifyList(helpScenarioDefaultOptions(), list(...))
   doses <- data.frame(
     Drug = as.character(doses$Drug),
@@ -86,9 +111,15 @@ helpScenario <- function(id, title, group, summary,
   }
   list(
     id = id, title = title, group = group, summary = summary,
+    # Every Patient Profile field is here, so that loading a scenario leaves
+    # nothing of the previous patient behind: a field the scenario does not
+    # name is reset to its default (an audit of 2026-10-12 found the creatinine
+    # and osmolality of the previous patient surviving a load).
     patient = list(age = age, weight = weight, height = height, sex = sex,
                    cyp2d6 = cyp2d6, cyp2c19 = cyp2c19, cyp2c9 = cyp2c9,
-                   adjustToFFM = adjustToFFM),
+                   vkorc1 = vkorc1, cyp4f2 = cyp4f2, cyp2b6 = cyp2b6,
+                   adjustToFFM = adjustToFFM, creatinine = creatinine, osmolality = osmolality,
+                   pregnant = pregnant, gestationalAge = gestationalAge),
     doses = doses, events = events, options = options
   )
 }
@@ -116,9 +147,18 @@ helpEvents <- function(...) {
 
 #' The teaching scenarios
 #'
+#' Built once per R session: the list is constant, and the help asks for it
+#' once per page it renders (every drug page lists the scenarios using it).
 #' @returns a list of scenarios, in the order they appear in the help
 #' @noRd
 helpScenarios <- function() {
+  if (is.null(.sprglobals$helpScenarios)) {
+    .sprglobals$helpScenarios <- helpScenarioDefinitions()
+  }
+  .sprglobals$helpScenarios
+}
+
+helpScenarioDefinitions <- function() {
   list(
     # --- Intravenous basics --------------------------------------------------
     helpScenario(
@@ -142,6 +182,20 @@ helpScenarios <- function() {
       ),
       maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE
     ),
+    # The peripheral compartments drawn under the plasma (R/compartments.R).
+    # (Claude Code, 2026-10-19, at the request of Steven L. Shafer.)
+    helpScenario(
+      "propofol-peripheral-compartments",
+      "Propofol: filling and emptying the peripheral compartments",
+      "Intravenous basics",
+      "A propofol bolus and a one-hour infusion with V2 and V3 drawn under the plasma panel: the rapid compartment follows the plasma, the slow one is still filling when the infusion stops and then holds drug above the plasma.",
+      doses = helpDoses(
+        c("propofol", 0, 2, "mg/kg"),
+        c("propofol", 0, 100, "mcg/kg/min"),
+        c("propofol", 60, 0, "mcg/kg/min")
+      ),
+      maximum = 240, plasmaLinetype = "solid", showCompartments = TRUE
+    ),
     helpScenario(
       "methadone-bolus",
       "Methadone: fast onset, very long duration",
@@ -156,8 +210,8 @@ helpScenarios <- function() {
       "Intravenous basics",
       "Holding a sub-anesthetic analgesic concentration with a small bolus and a low-rate infusion.",
       doses = helpDoses(
-        c("ketamine", 0, 0.5, "mg/kg"),
-        c("ketamine", 0, 0.25, "mg/kg/hr"),
+        c("ketamine", 0, 0.25, "mg/kg"),
+        c("ketamine", 0, 0.12, "mg/kg/hr"),
         c("ketamine", 120, 0, "mg/kg/hr")
       ),
       maximum = 240, plasmaLinetype = "dashed"
@@ -202,6 +256,25 @@ helpScenarios <- function() {
       ),
       timeUnits = "hours", maximum = 1440
     ),
+    # The substitution error that prompted Ansari 2025: calcium chloride and
+    # calcium gluconate are one drug whose units name the salt, so the reader
+    # changes "mg/min chloride" to "mg/min gluconate" and watches the same
+    # gram give a third of the rise (Claude Code, 2026-10-13, at the request
+    # of Steven L. Shafer)
+    helpScenario(
+      "calcium-salt-substitution",
+      "Calcium chloride is not calcium gluconate",
+      "Intravenous basics",
+      "1 g of calcium chloride over 10 minutes raises the ionized calcium by 0.4 mmol/L and it halves within half an hour; change the units to gluconate and the same gram gives a third of it.",
+      # A typical parturient of Ansari 2025, with the switch off so that the
+      # published parameters apply and the plot reproduces the paper
+      age = 34, weight = 80, height = 162, sex = SEX_FEMALE, adjustToFFM = FALSE,
+      doses = helpDoses(
+        c("calcium",  0, 100, "mg/min chloride"),
+        c("calcium", 10,   0, "mg/min chloride")
+      ),
+      maximum = 60, plasmaLinetype = "solid"
+    ),
 
     # --- Opioids -------------------------------------------------------------
     helpScenario(
@@ -232,6 +305,21 @@ helpScenarios <- function() {
         c("fentanyl", 0, 100, "mcg")
       ),
       maximum = 240, addedPlots = PLOT_ID_MEAC
+    ),
+    helpScenario(
+      "methadone-cyp2b6",
+      "Methadone and CYP2B6: the same dose, two steady states",
+      "Opioids",
+      "Ten milligrams of oral methadone twice a day for a fortnight in a CYP2B6 poor metaboliser, whose methadone clearance is about a quarter lower than a normal metaboliser's.",
+      cyp2b6 = CYP2B6_POOR,
+      doses = helpDoses(
+        c("methadone", 0, 10, "mg PO bid")
+      ),
+      # Accumulation over days is the point, so the plot is in days and the
+      # plasma line carries it; the effect site lies on top at this scale.
+      timeUnits = "days", maximum = 14 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      addedPlots = PLOT_ID_MEAC
     ),
     helpScenario(
       "tci-propofol",
@@ -309,6 +397,32 @@ helpScenarios <- function() {
         c("tramadol", 0, 100, "mg PO")
       ),
       maximum = 360, plasmaLinetype = "dashed", addedPlots = PLOT_ID_MEAC
+    ),
+    # The % MEAC overlay (R/meacOverlay.R): one scale on both panels, so the
+    # parent's and the metabolite's shares of the analgesia can be compared
+    # at a glance.  (Claude Code, 2026-10-18, at the request of Steven L.
+    # Shafer.)
+    helpScenario(
+      "hydrocodone-hydromorphone-meac",
+      "Hydrocodone and hydromorphone: which carries the analgesia?",
+      "Oral analgesics",
+      "Ten milligrams of oral hydrocodone with each opioid's % MEAC drawn on its own panel, on one scale, so the parent's and the metabolite's shares of the analgesia can be compared directly.",
+      doses = helpDoses(
+        c("hydrocodone", 0, 10, "mg PO")
+      ),
+      maximum = 720, showMEAC = TRUE
+    ),
+    # The amount still in the gut beside the plasma it feeds (R/compartments.R).
+    # (Claude Code, 2026-10-19, at the request of Steven L. Shafer.)
+    helpScenario(
+      "oral-morphine-depot",
+      "Oral morphine: emptying the depot",
+      "Oral analgesics",
+      "Thirty milligrams of oral morphine with its peripheral compartments and its depot drawn under the plasma panel, so the drug still to be absorbed can be read beside the concentration it becomes.",
+      doses = helpDoses(
+        c("morphine", 0, 30, "mg PO tablet")
+      ),
+      maximum = 480, plasmaLinetype = "solid", showCompartments = TRUE
     ),
     helpScenario(
       "gabapentin-saturable-absorption",
@@ -413,6 +527,76 @@ helpScenarios <- function() {
       ),
       maximum = 60, addedPlots = PLOT_ID_MEAC, opioidMacInteraction = TRUE
     ),
+    # The pharmacokinetic interactions among the antiseizure drugs
+    # (R/antiseizureInteractions.R), each with the Graph Options box ticked so
+    # that the changed drug is drawn beside its own curve without the
+    # interaction.  Plasma only: these drugs have no effect site.
+    # (Claude Code, 2026-10-24, at the request of Steven L. Shafer.)
+    helpScenario(
+      "valproate-lamotrigine-inhibition",
+      "Antiseizure interactions: valproate doubles lamotrigine",
+      "Interactions",
+      "Valproate added on day 21 to lamotrigine 100 mg twice daily: glucuronidation is inhibited at once, and lamotrigine climbs over the next two weeks to about twice its level, which is why lamotrigine is started at half the dose beside valproate.",
+      doses = helpDoses(
+        c("lamotrigine", 0, 100, "mg PO bid"),
+        c("valproate", 21 * MINS_PER_DAY, 500, "mg PO DR bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-lamotrigine-deinduction",
+      "Antiseizure interactions: stopping carbamazepine raises lamotrigine",
+      "Interactions",
+      "Lamotrigine with carbamazepine, which induces lamotrigine's glucuronidation; carbamazepine is stopped on day 28 and lamotrigine rises over the next two weeks as the induced enzymes turn over (half-life 3.6 days).",
+      doses = helpDoses(
+        c("lamotrigine",   0, 200, "mg PO bid"),
+        c("carbamazepine", 0, 400, "mg PO bid"),
+        c("carbamazepine", 28 * MINS_PER_DAY, 0, "mg PO bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-autoinduction",
+      "Carbamazepine induces its own metabolism",
+      "Interactions",
+      "Carbamazepine 400 mg twice daily from the first dose: the level rises toward the uninduced steady state, then falls over the next two weeks as carbamazepine doubles its own clearance.",
+      doses = helpDoses(
+        c("carbamazepine", 0, 400, "mg PO bid")
+      ),
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "phenytoin-valproate-displacement",
+      "Antiseizure interactions: phenytoin and valproate change each other",
+      "Interactions",
+      "Valproate added on day 21 to phenytoin 300 mg a day: valproate displaces phenytoin from albumin, so TOTAL phenytoin falls while the unbound, active phenytoin does not, and phenytoin induces valproate's clearance, so valproate runs below its range.",
+      doses = helpDoses(
+        c("phenytoin", 0, 300, "mg PO ER qd"),
+        c("valproate", 21 * MINS_PER_DAY, 500, "mg PO DR bid")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
+    helpScenario(
+      "carbamazepine-phenytoin-induction",
+      "Antiseizure interactions: phenytoin lowers carbamazepine",
+      "Interactions",
+      "Phenytoin added on day 21 to carbamazepine 400 mg twice daily: carbamazepine's clearance, already doubled by its own induction, rises by another 42% (Graves 1998) over about two weeks.",
+      doses = helpDoses(
+        c("carbamazepine", 0, 400, "mg PO bid"),
+        c("phenytoin", 21 * MINS_PER_DAY, 300, "mg PO ER qd")
+      ),
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      antiseizureInteractions = TRUE
+    ),
 
     # --- Special populations -------------------------------------------------
     helpScenario(
@@ -453,6 +637,18 @@ helpScenarios <- function() {
         c("dexmedetomidine", 120, 0, "mcg/kg/hr")
       ),
       maximum = 240, plasmaLinetype = "dashed", showThreshold = TRUE
+    ),
+    helpScenario(
+      "remifentanil-labour",
+      "Remifentanil in labour: the parturient's doubled clearance",
+      "Special populations",
+      "A remifentanil infusion in a woman at term with Pregnant ticked: her clearance is twice the model's, so the plateau is half as high. Untick Pregnant to compare.",
+      age = 30, weight = 80, height = 165, sex = SEX_FEMALE, pregnant = TRUE,
+      doses = helpDoses(
+        c("remifentanil", 0, 0.1, "mcg/kg/min"),
+        c("remifentanil", 60, 0, "mcg/kg/min")
+      ),
+      maximum = 120, plasmaLinetype = "dashed"
     ),
 
     # --- Recovery and emergence ----------------------------------------------
@@ -544,6 +740,21 @@ helpScenarios <- function() {
       maximum = 240, plasmaLinetype = "dashed"
     ),
     helpScenario(
+      "james-lean-body-mass",
+      "Obesity: why the Schnider and Minto models fail at the extremes of weight",
+      "Special populations",
+      "The same effect-site targets in a 150 kg woman on the Eleveld models and on the pumps' Schnider and Minto models, whose James lean body mass is a parabola that falls with weight past a BMI of 36.",
+      age = 40, weight = 150, height = 160, sex = SEX_FEMALE,
+      doses = helpDoses(
+        c("propofol", 0, 3, "Effect site target"),
+        c("propofol", 60, 0, "Effect site target"),
+        c("remifentanil", 0, 4, "Effect site target"),
+        c("remifentanil", 60, 0, "Effect site target")
+      ),
+      maximum = 120, plasmaLinetype = "dashed", showThreshold = TRUE,
+      mintoSchnider = TRUE
+    ),
+    helpScenario(
       "mac-and-age",
       "MAC and age",
       "Inhaled anesthetics",
@@ -597,7 +808,7 @@ helpScenarios <- function() {
         # tissue ("mg RA"); the narrative switches it back.
         c("lidocaine", 0, 400, "mg")
       ),
-      # A log axis keeps the first-minute plasma (65 mcg/mL) from flattening
+      # A log axis keeps the first-minute plasma (57 mcg/mL) from flattening
       # the effect site, which carries the point.
       maximum = 60, plasmaLinetype = "dashed", effectsiteLinetype = "solid",
       logY = TRUE
@@ -699,6 +910,100 @@ helpScenarios <- function() {
       ),
       timeUnits = "days", maximum = 525600,
       showThreshold = TRUE
+    ),
+    helpScenario(
+      "phenytoin-saturable-metabolism",
+      "Phenytoin: three equal dose steps, three unequal steady states",
+      "Long-term therapy",
+      "Saturable elimination: 200, then 300, then 400 mg of phenytoin a day, where each equal increment raises the steady state further than the one before.",
+      doses = helpDoses(
+        c("phenytoin",     0, 200, "mg PO ER qd"),
+        c("phenytoin", 40320, 300, "mg PO ER qd"),
+        c("phenytoin", 80640, 400, "mg PO ER qd")
+      ),
+      # Phenytoin has no effect site (the plasma line carries the curve), and
+      # each dose rate needs weeks to settle: four weeks per step, in days.
+      timeUnits = "days", maximum = 91 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
+    # Cenobamate split morning/evening, the use the qam/qpm slots were built for:
+    # the antiseizure drugs are sedating, so the morning dose is kept small and
+    # the larger dose given at night.  50 mg qam and 200 mg qpm are two
+    # independent daily slots entered as two rows (a plain qd/bid would replace
+    # them both).  Cenobamate is plasma only (the plasma line carries the curve)
+    # and its ~60 h half-life takes two weeks to reach steady state.
+    # (Claude Code, 2026-10-28, at the request of Steven L. Shafer.)
+    helpScenario(
+      "cenobamate-split-dosing",
+      "Cenobamate: a smaller morning dose and a larger evening dose",
+      "Long-term therapy",
+      "A split cenobamate regimen entered with the qam and qpm slots: 50 mg every morning and 200 mg every evening, the morning dose kept small because these drugs are sedating and can affect memory while awake. The two slots are independent, so they are two rows; a plain qd/bid would have replaced them both. The long half-life means the daily rhythm rides on a level that climbs for about two weeks.",
+      doses = helpDoses(
+        c("cenobamate",   0,  50, "mg PO qam"),
+        c("cenobamate", 720, 200, "mg PO qpm")
+      ),
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
+    # Warfarin's INR drawn by the library's Xue model and the Hamberg genotype
+    # model together, on a CYP2C9- and VKORC1-sensitive elderly patient, to show
+    # why a fixed 5 mg/day start overshoots and how the genotype fields move the
+    # Hamberg line.  A research and teaching comparison, not dosing guidance.
+    # (Claude Code, 2026-10-17, at the request of Steven L. Shafer.)
+    helpScenario(
+      "warfarin-hamberg-genotype",
+      "Warfarin: how CYP2C9, VKORC1 and age shape the INR",
+      "Long-term therapy",
+      "A fixed 5 mg/day warfarin start in a 75-year-old who is a slow metaboliser (CYP2C9 *2/*3) and warfarin-sensitive (VKORC1 AA): the library (Xue) and Hamberg (2007) INR lines climb together over eight weeks, and changing the CYP2C9 and VKORC1 fields moves the Hamberg line.",
+      age = 75, weight = 75, height = 172, sex = SEX_MALE,
+      cyp2c9 = "*2/*3", vkorc1 = "AA",
+      doses = helpDoses(
+        c("warfarin", 0, 5, "mg PO qd")
+      ),
+      # The INR is the plotted curve (no effect site); it builds over weeks.
+      timeUnits = "days", maximum = 56 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank",
+      hamberg = TRUE
+    ),
+    # The two European vitamin-K antagonists (Verstuyft 2012) begun together, to
+    # show how different their INR time courses are: fluindione accumulates
+    # slowly to a sustained INR while acenocoumarol, which clears fast, swings
+    # day to day.  Both are indirect-response INR models.  A research and
+    # teaching comparison, not dosing guidance.
+    # (Claude Code, 2026-10-18, at the request of Steven L. Shafer.)
+    helpScenario(
+      "vka-fluindione-acenocoumarol",
+      "Fluindione and acenocoumarol: two INR time courses",
+      "Long-term therapy",
+      "A hypothetical side-by-side comparison of the two 2012 research models (not a treatment plan, and not a combined response): fluindione 20 mg/day and acenocoumarol 4 mg/day, each in its own INR panel, for a CYP2C9 wild-type, VKORC1-sensitive (AA) patient. The slowly cleared fluindione builds to a steady INR near its Table IV value while the fast-clearing acenocoumarol swings between doses. Change the CYP2C9 and VKORC1 fields to see a *3 carrier or a less-sensitive genotype shift both.",
+      age = 60, weight = 69, height = 170, sex = SEX_MALE,
+      cyp2c9 = "*1/*1", vkorc1 = "AA",
+      doses = helpDoses(
+        c("fluindione", 0, 20, "mg PO qd"),
+        c("acenocoumarol", 0, 4, "mg PO qd")
+      ),
+      # The INR is the plotted curve (no effect site); it builds over weeks.
+      timeUnits = "days", maximum = 28 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
+    ),
+    # Dabigatran etexilate 150 mg twice daily begun on the day of hip-replacement
+    # surgery, to show the Trocóniz (2007) post-operative model's defining
+    # feature: the doses given on days 0 and 1 are absorbed and cleared slowly
+    # (reduced gut motility after surgery), and the day-2-onward doses faster, so
+    # the trough-to-peak swings grow once the later, faster absorption takes over.
+    # A research and teaching model, not dosing guidance.
+    # (Claude Code, 2026-10-20, at the request of Steven L. Shafer.)
+    helpScenario(
+      "dabigatran-hip-postop",
+      "Dabigatran after hip replacement: the first days are different",
+      "Perioperative",
+      "Dabigatran etexilate 150 mg twice daily started on the day of total hip replacement, in a 66-year-old. The Trocóniz 2007 model absorbs and clears the day-0 and day-1 doses slowly (post-operative gut), then switches to the faster day-2-to-10 kinetics, so the peaks sharpen and the swings grow after the first day. Raise the serum creatinine to see the later clearance fall.",
+      age = 66, weight = 78, height = 172, sex = SEX_MALE,
+      doses = helpDoses(
+        c("dabigatranHip", 0, 150, "mg PO bid")
+      ),
+      timeUnits = "days", maximum = 7 * MINS_PER_DAY,
+      plasmaLinetype = "solid", effectsiteLinetype = "blank"
     )
   )
 }
@@ -735,7 +1040,22 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (!p$cyp2d6 %in% CYP2D6_VALUES) say("invalid cyp2d6: ", p$cyp2d6)
   if (!p$cyp2c19 %in% CYP2C19_VALUES) say("invalid cyp2c19: ", p$cyp2c19)
   if (!p$cyp2c9 %in% CYP2C9_VALUES) say("invalid cyp2c9: ", p$cyp2c9)
+  if (!p$vkorc1 %in% VKORC1_VALUES) say("invalid vkorc1: ", p$vkorc1)
+  if (!p$cyp4f2 %in% CYP4F2_VALUES) say("invalid cyp4f2: ", p$cyp4f2)
+  if (!p$cyp2b6 %in% CYP2B6_VALUES) say("invalid cyp2b6: ", p$cyp2b6)
   if (!is.logical(p$adjustToFFM) || length(p$adjustToFFM) != 1) say("adjustToFFM is not a single logical")
+  if (!is.logical(p$pregnant) || length(p$pregnant) != 1 || is.na(p$pregnant)) {
+    say("pregnant is not a single logical")
+  } else if (p$pregnant && !pregnancyPossible(p$age, p$sex)) {
+    say("pregnant, but not a woman of ", PREGNANCY_MIN_AGE, " to ", PREGNANCY_MAX_AGE, " years")
+  }
+  if (!is.null(p$creatinine) && !is_valid_number(p$creatinine, MIN_CREATININE, MAX_CREATININE)) {
+    say("creatinine out of range: ", p$creatinine)
+  }
+  if (!is_valid_number(p$osmolality, MIN_OSMOLALITY, MAX_OSMOLALITY)) say("osmolality out of range: ", p$osmolality)
+  if (!is.null(p$gestationalAge) &&
+      !is_valid_number(p$gestationalAge, MIN_GESTATIONAL_AGE, MAX_GESTATIONAL_AGE))
+    say("gestational age out of range: ", p$gestationalAge)
 
   o <- s$options
   if (!identical(validTimeUnit(o$timeUnits), o$timeUnits)) say("invalid timeUnits: ", o$timeUnits)
@@ -750,10 +1070,13 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
   if (o$plasmaLinetype == "blank" && o$effectsiteLinetype == "blank") say("both lines are blank")
   if (!all(o$addedPlots %in% c(PLOT_ID_MEAC, PLOT_ID_INTERACTION, PLOT_ID_EVENTS))) say("invalid addedPlots")
   if (o$showThreshold && o$normalization != NORMALIZE_NONE) say("showThreshold needs normalization none")
-  if (o$logY && (o$showThreshold || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
-    say("logY is unavailable with the threshold, events or interaction panels")
+  if (o$showMEAC && o$normalization != NORMALIZE_NONE) say("showMEAC needs normalization none")
+  if (o$showMEAC && o$showThreshold) say("showMEAC and showThreshold are mutually exclusive")
+  if (o$showCompartments && o$normalization != NORMALIZE_NONE) say("showCompartments needs normalization none")
+  if (o$logY && (o$showThreshold || o$showMEAC || any(c(PLOT_ID_EVENTS, PLOT_ID_INTERACTION) %in% o$addedPlots))) {
+    say("logY is unavailable with the threshold, % MEAC, events or interaction panels")
   }
-  for (name in c("showThreshold", "logY", "opioidMacInteraction", "mintoSchnider")) {
+  for (name in c("showThreshold", "showMEAC", "showCompartments", "logY", "opioidMacInteraction", "mintoSchnider", "hamberg", "antiseizureInteractions")) {
     if (!is.logical(o[[name]]) || length(o[[name]]) != 1) say(name, " is not a single logical")
   }
 
@@ -786,13 +1109,22 @@ helpScenarioCheck <- function(s, drugDefaults = getDrugDefaultsGlobal(),
       opioids <- drugDefaults$Drug[!is.na(drugDefaults$MEAC) & drugDefaults$MEAC > 0]
       if (!"propofol" %in% d$Drug || !any(d$Drug %in% opioids)) say("the interaction panel needs propofol and an opioid")
     }
-    # The Minto / Schnider box is enabled only while one of those drugs is dosed
-    if (isTRUE(o$mintoSchnider) && !any(d$Drug %in% ALTERNATIVE_MODEL_DRUGS)) {
-      say("Minto / Schnider needs ", paste(ALTERNATIVE_MODEL_DRUGS, collapse = " or "))
-    }
-    if (isTRUE(o$mintoSchnider)) {
+    if (isTRUE(o$antiseizureInteractions) &&
+        nrow(activeAntiseizureInteractions(unique(d$Drug))) == 0)
+      say("antiseizureInteractions needs an interacting pair of antiseizure drugs, or carbamazepine")
+    # Each companion box is enabled only while a drug in its group is dosed
+    for (group in names(COMPANION_MODEL_GROUPS)) {
+      if (!isTRUE(o[[group]])) next
+      drugsInGroup <- companionGroupDrugs(group)
+      if (!any(d$Drug %in% drugsInGroup)) {
+        say(COMPANION_MODEL_GROUPS[[group]]$label, " needs ",
+            paste(drugsInGroup, collapse = " or "))
+      }
       p <- s$patient
-      for (problem in alternativeModelProblems(d$Drug, p$weight, p$height, p$age, p$sex)) say(problem)
+      for (problem in alternativeModelProblems(
+        d$Drug[companionModelGroup(d$Drug) %in% group],
+        p$weight, p$height, p$age, p$sex, pregnant = isTRUE(p$pregnant),
+        cyp2c9 = p$cyp2c9, vkorc1 = p$vkorc1)) say(problem)
     }
   }
 
@@ -849,7 +1181,7 @@ helpScenarioEventTable <- function(s) {
 #' restore does.
 #'
 #' With `timeApi` (app_server()'s), the time unit, elapsed time and Max time
-#' are set through it, and the dose table is written together with the format
+#' are set through it, and Min time is put back to 0, and the dose table is written together with the format
 #' its times are in, so that the app has nothing to convert when the browser
 #' reports the new settings.  The order does not matter: it all reaches the
 #' browser in one message.
@@ -871,13 +1203,37 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   updateNumericInput(session, "height", value = p$height)
   updateRadioButtons(session, "heightUnit", selected = as.character(UNIT_CM))
   shinyWidgets::updateRadioGroupButtons(session, "sex", selected = p$sex)
+  # The control holds "TRUE" / "FALSE"; it is sent even when hidden, so a
+  # later patient does not inherit the flag.
+  shinyWidgets::updateRadioGroupButtons(session, "pregnant",
+                                        selected = if (isTRUE(p$pregnant)) "TRUE" else "FALSE")
   updateSelectInput(session, "cyp2d6", selected = p$cyp2d6)
   updateSelectInput(session, "cyp2c19", selected = p$cyp2c19)
   updateSelectInput(session, "cyp2c9", selected = p$cyp2c9)
+  updateSelectInput(session, "vkorc1", selected = p$vkorc1)
+  updateSelectInput(session, "cyp4f2", selected = p$cyp4f2)
+  updateSelectInput(session, "cyp2b6", selected = p$cyp2b6)
   updateCheckboxInput(session, "adjustToFFM", value = p$adjustToFFM)
+  # A blank field is the state the renal models read as "assume a normal
+  # creatinine".  updateNumericInput() would send NA as the string "NA" and
+  # leave the browser to sanitise it, so the blank is sent explicitly.
+  if (is.null(p$creatinine)) {
+    session$sendInputMessage("creatinine", list(value = ""))
+  } else {
+    updateNumericInput(session, "creatinine", value = p$creatinine)
+  }
+  updateNumericInput(session, "osmolality", value = p$osmolality)
+  # Blank, a term birth, unless the scenario names a gestational age: sent
+  # explicitly, as the creatinine is, so a previous patient's does not survive
+  if (is.null(p$gestationalAge)) {
+    session$sendInputMessage("gestationalAge", list(value = ""))
+  } else {
+    updateNumericInput(session, "gestationalAge", value = p$gestationalAge)
+  }
 
   if (is.null(timeApi)) {
-    updateSelectInput(session, "maximum", selected = maxTimeValue(o$maximum))
+    updateSliderInput(session, "maximum", value = o$maximum)
+    updateSliderInput(session, "minimum", value = 0)
   }
   updateSelectInput(session, "typical", selected = o$typical)
   updateSelectInput(session, "normalization", selected = o$normalization)
@@ -885,9 +1241,13 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
   shinyWidgets::updateRadioGroupButtons(session, "effectsiteLinetype", selected = o$effectsiteLinetype)
   updateCheckboxGroupInput(session, "addedPlots", selected = o$addedPlots)
   updateCheckboxInput(session, "showThreshold", value = o$showThreshold)
+  updateCheckboxInput(session, "showMEAC", value = o$showMEAC)
+  updateCheckboxInput(session, "showCompartments", value = o$showCompartments)
   updateCheckboxInput(session, "logY", value = o$logY)
   updateCheckboxInput(session, "opioidMacInteraction", value = o$opioidMacInteraction)
   updateCheckboxInput(session, "mintoSchnider", value = o$mintoSchnider)
+  updateCheckboxInput(session, "hamberg", value = o$hamberg)
+  updateCheckboxInput(session, ASM_INTERACTIONS_INPUT, value = o$antiseizureInteractions)
 
   eventTable(helpScenarioEventTable(s))
   if (is.null(timeApi)) {
@@ -903,10 +1263,19 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL)
 # --- Pages -------------------------------------------------------------------
 
 helpScenarioLoadButton <- function(s) {
-  sprintf(
-    '<p><a href="#" class="btn btn-primary help-scenario-btn" data-help-scenario="%s">%s Load into the simulator</a>
-     <span class="small text-muted help-scenario-hint">Replaces the current patient, doses, events and graph options.</span></p>',
-    s$id, as.character(icon("play"))
+  paste0(
+    sprintf(
+      '<p><a href="#" class="btn btn-primary help-scenario-btn" data-help-scenario="%s">%s Load into the simulator</a>
+     <span class="small text-muted help-scenario-hint">Replaces the current patient (every Patient Profile field), doses, events and graph options.</span></p>',
+      s$id, as.character(icon("play"))
+    ),
+    # A link that opens a fresh session on this scenario (R/deep-links.R), for
+    # a slide or a syllabus.  Relative, so the browser fills in the app's own
+    # address; it opens in a new tab so the session in this one is kept.
+    sprintf(
+      '<p class="small text-muted help-scenario-link">Link to this scenario: <a href="%s" target="_blank" rel="noopener"><code>%s</code></a> added to the app\'s address opens it straight onto this simulation (right-click, copy link, for the full address; see %s).</p>',
+      deepLinkToScenario(s$id), deepLinkToScenario(s$id), helpPageLink("sharing")
+    )
   )
 }
 
@@ -928,9 +1297,19 @@ helpScenarioPageHTML <- function(id) {
     `CYP 2D6` = tools::toTitleCase(p$cyp2d6),
     `CYP 2C19` = tools::toTitleCase(p$cyp2c19),
     `CYP 2C9` = tools::toTitleCase(p$cyp2c9),
+    `CYP 2B6` = tools::toTitleCase(p$cyp2b6),
+    VKORC1 = p$vkorc1,
+    CYP4F2 = p$cyp4f2,
     `Adjust weight to fat-free mass` = if (isTRUE(p$adjustToFFM)) "on" else "off",
+    `Serum creatinine` = if (is.null(p$creatinine)) "blank (normal for age and sex assumed)" else sprintf("%s mg/dL", helpFormatNumber(p$creatinine)),
+    `Baseline osmolality` = sprintf("%s mOsm/kg", helpFormatNumber(p$osmolality)),
     check.names = FALSE, stringsAsFactors = FALSE
   )
+  # Shown only when set: "Pregnant: no" beside a man's age would be noise.
+  if (isTRUE(p$pregnant)) patient$Pregnant <- "yes"
+  # Likewise a gestational age, only when the scenario names one
+  if (!is.null(p$gestationalAge))
+    patient$`Gestational age at birth` <- sprintf("%s weeks", helpFormatNumber(p$gestationalAge))
   # Times as the dose table will show them: in the scenario's time unit, in
   # full (helpFormatNumber()'s three significant figures would print 30240
   # minutes as 30,200)
@@ -954,9 +1333,13 @@ helpScenarioPageHTML <- function(id) {
     "Effect site line" = o$effectsiteLinetype,
     "Additional plots" = if (length(o$addedPlots)) paste(o$addedPlots, collapse = ", ") else "none",
     "Time until threshold" = if (o$showThreshold) "on" else "off",
+    "% MEAC on opioid panels" = if (o$showMEAC) "on" else "off",
+    "Peripheral compartments" = if (o$showCompartments) "on" else "off",
     "Log Y axis" = if (o$logY) "on" else "off",
     "Opioid - MAC interaction" = if (o$opioidMacInteraction) "on" else "off",
-    "Minto / Schnider" = if (o$mintoSchnider) "on" else "off"
+    "Minto / Schnider" = if (o$mintoSchnider) "on" else "off",
+    "Hamberg" = if (o$hamberg) "on" else "off",
+    "Antiseizure drug interactions" = if (o$antiseizureInteractions) "on" else "off"
   )
   optionsTable <- data.frame(Option = names(optionRows), Setting = unname(optionRows),
                              stringsAsFactors = FALSE)

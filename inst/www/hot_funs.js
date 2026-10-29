@@ -11,13 +11,17 @@ function uniq(a) {
   });
 }
 
-// return the index of a column in a HOT based on its name
+// return the index of a column in a HOT based on its name.  A header may
+// carry a qualifier after the name ("Dose/Target" in the dose table, "Dose or
+// Target" in the Edit doses dialog of a drug with TCI units): the name is
+// what comes before a "/" or an "or".
 function findColByHeader(hot, headerName) {
   let headers = hot.getSettings().colHeaders;
 
   if (Array.isArray(headers)) {
     for (let i = 0; i < headers.length; i++) {
-      if (headers[i].trim() === headerName) return i;
+      let name = String(headers[i]).trim().split(/\s*(?:\/|\bor\b)\s*/)[0].trim();
+      if (name === headerName) return i;
     }
     return null;
   }
@@ -32,6 +36,31 @@ function getTimeMode() {
 
 function isUserEditSource(source) {
   return source === 'edit' || source === 'CopyPaste.paste' || source === 'Autofill.fill';
+}
+
+// A hover tip on the Time column header (afterGetColHeader), so a reader knows
+// what the Time column means -- which unit, and whether it is elapsed or clock
+// time -- and where to change it (Dr. Fan's review, 2026-10-28).  The header
+// text must stay "Time" (the hooks find columns by it), so the explanation is a
+// title attribute rather than a longer header.
+function hookTimeHeaderTip(col, TH) {
+  try {
+    var hot = this;
+    if (col !== findColByHeader(hot, "Time")) return;
+    var unit = $("#timeUnits").val() || "minutes";
+    var tip;
+    if (getTimeMode() === "clock") {
+      tip = "Clock time (hh:mm) of each dose. Switch to elapsed time, or change " +
+            "the unit, with the Time Display and Time units controls under the plot.";
+    } else {
+      tip = "Time of each dose, elapsed from the start, in " + unit + ". Change " +
+            "the unit (minutes, hours, days, weeks) or switch to clock time with " +
+            "the Time units and Time Display controls under the plot.";
+    }
+    var span = TH.querySelector(".colHeader");
+    if (span) span.setAttribute("title", tip);
+    TH.setAttribute("title", tip);
+  } catch (e) {}
 }
 
 // Don't allow user to type illegal characters into the Time or Dose columns
@@ -375,6 +404,68 @@ function validateUnit(unit, drug) {
   if (default_unit.length === 0) { return ''; }
 
   return default_unit[0]['Default.Units'];
+}
+
+// A unit as the dose table shows it.  The Units column is narrow, so a long
+// unit wraps (app.css), and it may wrap only after its route: the spaces in
+// "mg/kg PO" and in "liquid q4h" become non-breaking, so "mg/kg PO liquid q4h"
+// wraps as "mg/kg PO" over "liquid q4h", in the cell and in its dropdown list
+// alike.  A unit with no route, or nothing after it, wraps where it must.
+// Display only: the cell's value keeps its ordinary spaces.
+var UNIT_ROUTES = ['PO', 'SL', 'IM', 'IN', 'RA', 'SC'];
+
+function unitWrapText(unit) {
+  var words = String(unit).split(' ');
+  var route = -1;
+  for (var i = 0; i < words.length; i++) {
+    if (UNIT_ROUTES.indexOf(words[i]) >= 0) { route = i; break; }
+  }
+  if (route < 0 || route === words.length - 1) return String(unit);
+  return words.slice(0, route + 1).join(' ') + ' ' +
+    words.slice(route + 1).join(' ');
+}
+
+// Rewrites the unit's text in a rendered cell, leaving its markup alone (the
+// dropdown arrow; the list's bold match while typing).
+function wrapUnitText(td, value) {
+  if (typeof value !== 'string' || value.indexOf(' ') < 0) return;
+  var text = unitWrapText(value);
+  if (text === value) return;
+  var walker = document.createTreeWalker(td, NodeFilter.SHOW_TEXT);
+  var offset = 0;
+  var node;
+  while ((node = walker.nextNode())) {
+    var parent = node.parentNode;
+    if (parent.classList && parent.classList.contains('htAutocompleteArrow')) continue;
+    var n = node.nodeValue.length;
+    if (value.substr(offset, n) !== node.nodeValue) return;
+    node.nodeValue = text.substr(offset, n);
+    offset += n;
+  }
+}
+
+// The renderer of the dose table's Units cells (createHOT()).
+function renderUnitCell(instance, td, row, col, prop, value, cellProperties) {
+  Handsontable.renderers.DropdownRenderer.apply(this, arguments);
+  wrapUnitText(td, value);
+  return td;
+}
+
+function wrapUnitListItem(td, row, col, prop, value) {
+  wrapUnitText(td, value);
+}
+
+// The Units dropdown list is a Handsontable of its own, which the editor
+// fills in an afterRenderer hook when it opens, before this hook runs; adding
+// wrapUnitListItem() after it lets it rewrite what that hook wrote.
+function hookWrapUnitList(row, col) {
+  var hot = this;
+  if (col !== findColByHeader(hot, "Units")) return;
+  var list = hot.getActiveEditor().htEditor;
+  if (!list) return;
+  list.removeHook('afterRenderer', wrapUnitListItem);
+  list.addHook('afterRenderer', wrapUnitListItem);
+  list.render();
 }
 
 // When clicking on a drug cell, select all the text so that it's easier to replace

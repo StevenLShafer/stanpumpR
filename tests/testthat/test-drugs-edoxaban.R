@@ -1,0 +1,100 @@
+# Edoxaban: Niebecker 2015 apparent oral two-compartment model with lag,
+# Hokusai-VTE phase 3 patient.  See the header of R/drugs_edoxaban.R.
+
+noEvents <- data.frame(Time = numeric(0), Event = character(0))
+
+test_that("returns the reference parameters with the switch off (CLcr <= 90)", {
+  # 70 kg (allometric centre), 60 y, non-Asian male; a creatinine giving
+  # Cockcroft-Gault CLcr 80 mL/min (below the piece-wise breakpoint of 90).
+  scr <- (140 - 60) * 70 / (72 * 80)
+  actual <- edoxaban(70, 176, 60, "male", adjustToFFM = FALSE, creatinine = scr)
+  crcl <- creatinineClearanceCG(70, 60, "male",
+                                adultEquivalentCreatinine(scr, 60, "male"))
+  expected <- list(
+    PK = list(default = list(
+      v1 = 209, v2 = 92.3, v3 = 1,
+      cl1 = (15.2 + 0.202 * crcl) / 60, cl2 = 5.91 * 1.646 / 60, cl3 = 0,
+      ka_PO = 3.36 / 60, tlag_PO = 0.250 * 60, bioavailability_PO = 1
+    )),
+    tPeak = 0, MEAC = 0,
+    typical = 0, upperTypical = 0, lowerTypical = 0,
+    reference = actual$reference
+  )
+  expect_equal_rounded(actual, expected)
+})
+
+test_that("renal clearance is piece-wise linear with the phase 3 slope above 90", {
+  # Above CLcr 90 the second slope is the phase 3 value, a +274% increase:
+  # 0.0321 x (1 + 2.74) = 0.120, applied as (slope1 - slope2)*90 + slope2*CLcr.
+  scr <- (140 - 50) * 80 / (72 * 120)
+  crcl <- creatinineClearanceCG(80, 50, "male",
+                                adultEquivalentCreatinine(scr, 50, "male"))
+  expect_gt(crcl, 90)
+  expect_lt(crcl, 150)                                    # below the CLcr cap
+  cl <- edoxaban(80, 176, 50, "male", adjustToFFM = FALSE,
+                 creatinine = scr)$PK$default$cl1 * 60
+  s2 <- 0.0321 * (1 + 2.74)
+  expected <- (15.2 + (0.202 - s2) * 90 + s2 * crcl) * (80 / 70)^0.75
+  expect_equal(cl, expected, tolerance = 1e-8)
+})
+
+test_that("creatinine clearance is truncated at 150 mL/min", {
+  # A very low creatinine gives CLcr well above 150; the renal term is then
+  # held at its CLcr = 150 value, so a yet-lower creatinine does not raise CL.
+  a <- edoxaban(80, 176, 40, "male", adjustToFFM = FALSE, creatinine = 0.3)
+  b <- edoxaban(80, 176, 40, "male", adjustToFFM = FALSE, creatinine = 0.2)
+  crcl03 <- creatinineClearanceCG(80, 40, "male",
+                                  adultEquivalentCreatinine(0.3, 40, "male"))
+  expect_gt(crcl03, 150)                                 # past the cap
+  expect_equal(a$PK$default$cl1, b$PK$default$cl1, tolerance = 1e-10)
+  s2 <- 0.0321 * (1 + 2.74)
+  capped <- (15.2 + (0.202 - s2) * 90 + s2 * 150) * (80 / 70)^0.75
+  expect_equal(a$PK$default$cl1 * 60, capped, tolerance = 1e-8)
+})
+
+test_that("the renal slope is continuous at the breakpoint of 90 mL/min, and steeper above it", {
+  # Through the model itself: a 70 kg, 40 y man (switch off, so Cockcroft-Gault
+  # is on 70 kg) at the creatinines that put CLcr just either side of 90,
+  # then at 60, 90 and 120 mL/min, where the two slopes should show.
+  scrAt <- function(crcl) (140 - 40) * 70 / (72 * crcl)
+  cl1At <- function(crcl) edoxaban(70, 170, 40, "male", adjustToFFM = FALSE,
+                                   creatinine = scrAt(crcl))$PK$default$cl1
+  expect_equal(cl1At(89.99), cl1At(90.01), tolerance = 1e-4)
+  # Below the break the renal slope is 0.202 L/h per mL/min; above it
+  # 0.0321 x (1 + 2.74) = 0.120 (the phase 3 patient's +274%), on an
+  # allometric factor of 1 at 70 kg.
+  expect_equal((cl1At(90) - cl1At(60)) * 60 / 30, 0.202, tolerance = 1e-6)
+  expect_equal((cl1At(120) - cl1At(90)) * 60 / 30, 0.0321 * 3.74, tolerance = 1e-6)
+})
+
+test_that("allometric weight scales CL/F and Vp/F by 0.75, Vc/F and Q/F by 1", {
+  # Two weights at a fixed creatinine; compare the switch-off (published) scaling.
+  scr <- 0.9
+  a <- edoxaban(70, 176, 60, "male", adjustToFFM = FALSE, creatinine = scr)
+  b <- edoxaban(140, 176, 60, "male", adjustToFFM = FALSE, creatinine = scr)
+  expect_equal(b$PK$default$v1 / a$PK$default$v1, 140 / 70, tolerance = 1e-8)
+  expect_equal(b$PK$default$v2 / a$PK$default$v2, (140 / 70)^0.75,
+               tolerance = 1e-8)
+  expect_equal(b$PK$default$cl2 / a$PK$default$cl2, 140 / 70, tolerance = 1e-8)
+})
+
+test_that("the plotted concentration is plasma only, with no effect site", {
+  r <- getDrugPK("edoxaban", 70, 176, 60, "male")
+  expect_equal(r$tPeak, 0)
+  expect_equal(r$MEAC, 0)
+})
+
+test_that("scales to fat-free mass for a 120 kg man", {
+  # 120 kg, 170 cm, 50 y man, switch on: fat-free-mass factors 1.3049067
+  # (volumes) and 1.2209126 (clearances), pharmacokinetic weight 91.343469 kg
+  # (the factors pinned in test-drugs-alfentanil.R).  Worked out by hand from
+  # the published equations, not from the code under test.
+  # Cockcroft-Gault 126.866 mL/min (above the break, below the 150 cap):
+  # CL_R = (0.202 - 0.120054) x 90 + 0.120054 x 126.866 L/h;
+  # CL/F = (15.2 + CL_R) x (91.343469/70)^0.75; Vc/F = 209 x 91.343469/70;
+  # Vp/F = 92.3 x (91.343469/70)^0.75; Q/F = 9.72786 x 91.343469/70.
+  actual <- edoxaban(120, 170, 50, "male")$PK$default
+  expect_equal_rounded(actual[c("v1", "v2", "cl1", "cl2")],
+                       list(v1 = 272.72550, v2 = 112.69024,
+                            cl1 = 0.76929508, cl2 = 0.21156583))
+})

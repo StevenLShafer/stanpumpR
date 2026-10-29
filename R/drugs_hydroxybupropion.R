@@ -40,18 +40,19 @@
 # It is therefore offered with no dosing unit; it appears only when bupropion
 # is given.  The same argument as R/drugs_desethylamiodarone.R.
 #
-# NO EFFECT SITE; THE BAND IS FOR THE SUM
-# =======================================
+# NO EFFECT SITE; THE BAND IS HYDROXYBUPROPION'S OWN
+# ==================================================
 # No validated concentration-response relation exists for the antidepressant
 # effect, so tPeak is zero and the row plots plasma concentrations.  The band
 # in inst/extdata/drugDefaults_global.csv, 850 to 1500 ng/mL with 1200 as
-# typical, is the AGNP 2018 consensus therapeutic reference range (Hiemke et
-# al., Pharmacopsychiatry 2018;51:9-62) for bupropion PLUS hydroxybupropion.
-# It is drawn on this row because the metabolite dominates the sum (about
-# 16.5 times the parent at steady state in this model: fm x CL/F of the parent
-# over the metabolite's CL/F, 14.84 / 0.9); it is not a range for the
-# metabolite alone, and the parent's few tens of ng/mL should be added to
-# compare.  This function mirrors the CSV.  MEAC and endCe are zero.
+# typical, is the therapeutic reference range of HYDROXYBUPROPION itself in
+# the AGNP update 2026 (Hart et al., Pharmacopsychiatry 2026;59:166-295,
+# Table 5; trough 24 h after a dose): bupropion is unstable in collected
+# blood, and hydroxybupropion is the major active compound.  (Until the 2026
+# table was read, the library described it as a range for the sum.)  The
+# metabolite is about 16.5 times the parent at steady state in this model
+# (fm x CL/F of the parent over the metabolite's CL/F, 14.84 / 0.9).  This
+# function mirrors the CSV.  MEAC and endCe are zero.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -106,7 +107,7 @@ hydroxybupropion <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
-  # AGNP 2018 range for bupropion + hydroxybupropion, ng/mL; mirrors the CSV.
+  # AGNP 2026 range for hydroxybupropion itself, ng/mL; mirrors the CSV.
   typical      <- 1200
   upperTypical <- 1500
   lowerTypical <- 850

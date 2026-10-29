@@ -4,6 +4,10 @@ drugDefaults <- getDrugDefaultsGlobal()
 ivDrugs <- drugDefaults$Drug[!isGasDrug(drugDefaults$Drug)]
 gasDrugs <- drugDefaults$Drug[isGasDrug(drugDefaults$Drug)]
 
+# The investigators named in a citation are links (R/help-investigators.R);
+# a citation is compared with the links taken off.
+withoutLinks <- function(html) gsub("<a [^>]*>|</a>", "", html)
+
 test_that("every drug in the library has a narrative", {
   for (drug in drugDefaults$Drug) {
     expect_true(helpHasMarkdown(paste0("drugs/", drug)),
@@ -36,6 +40,9 @@ plasmaOnly <- c(
   "hydrocortisone", "methylprednisolone", "dexamethasone", "prednisolone",
   "sugammadex", "glycopyrrolate", "mannitol", "gabapentin",
   "amiodarone", "desethylamiodarone", "amiodaroneIV",
+  # Antihypertensives: no drug in the library plots a blood pressure
+  "lisinopril", "olmesartan", "valsartan", "benazepril",
+  "enalapril", "enalaprilat",
   # The antidepressants: response lags weeks, no ke0 exists
   "escitalopram", "citalopram", "sertraline", "paroxetine", "duloxetine",
   "mirtazapine", "bupropion", "hydroxybupropion", "fluoxetine", "norfluoxetine", "venlafaxine", "desvenlafaxine",
@@ -55,13 +62,49 @@ plasmaOnly <- c(
   # linked effect site (2026-10-10)
   "phenytoin", "valproate", "phenobarbital", "pentobarbital", "ethosuximide",
   "topiramate", "lacosamide", "lamotrigine", "zonisamide", "tiagabine",
-  "levetiracetam", "eslicarbazepine", "carbamazepine",
+  "levetiracetam", "eslicarbazepine", "carbamazepine", "cenobamate",
   # diamorphine (2026-10-10): opt-in illicit research model, parent plasma only
   "diamorphine",
+  # The opt-in illicit research models (2026-10-17) are plasma only: see
+  # inst/extdata/illicitRouteRegistry.csv and each drug's header.
+  "cocaine", "methamphetamine", "LSD", "psilocybin", "MDMA", "GHB",
+  # carfentanil (2026-10-18) borrows sufentanil's DISPOSITION only, so
+  # sufentanil's tPeak deliberately does not come with it: R/drugs_carfentanil.R
+  "carfentanil",
   # Antipsychotics: occupancy is a direct function of plasma, or no effect is
   # established.  Aripiprazole and haloperidol, with PET ke0s, are the exceptions.
   "quetiapine", "risperidone", "hydroxyrisperidone", "dehydroaripiprazole",
-  "olanzapine", "droperidol", "droperidolIM"
+  "olanzapine", "droperidol", "droperidolIM",
+  # Intravenous calcium (2026-10-13): plotted as the change in ionized
+  # calcium, which is the end point itself; no ke0.
+  "calcium",
+  # The antidiabetic drugs (2026-10-17): concentration only; glucose,
+  # HbA1c, UGE and DPP-4 inhibition are endpoints of their own, with no ke0
+  # (inst/help/models/antidiabetics.md)
+  "semaglutide", "tirzepatide", "liraglutide", "insulinRegular",
+  "insulinRegularU500", "insulinNPH", "insulinHumanMix70", "insulinLispro",
+  "insulinLisproMix75", "insulinLisproMix50", "insulinGlargine", "metformin",
+  "empagliflozin", "ertugliflozin", "glyburide", "dulaglutide", "dapagliflozin",
+  "pioglitazone", "pramlintideIV", "exenatide", "linagliptin", "vildagliptin", "liraglutideWatson", "dapagliflozinKobuchi", "canagliflozin", "lixisenatide",
+  "semaglutideOral", "cetagliptin",
+  # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
+  # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
+  "heparin", "heparinCPB", "bivalirudin", "apixaban", "apixabanVTE", "rivaroxaban", "warfarin",
+  "edoxaban", "dabigatran", "dabigatranHip", "argatroban", "enoxaparin", "fondaparinux",
+  "fluindione", "acenocoumarol",
+  # The antihypertensives (2026-10-17): concentration only.  Neither source
+  # publishes an equilibration rate constant, and no blood pressure is
+  # plotted for any drug in the library (docs/antihypertensives.md).
+  "clevidipine", "fenoldopamPediatric", "carvedilol",
+    "azilsartan", "chlorthalidone", "hydrochlorothiazide",
+    # vasoactive and resuscitation drugs (2026-10-18): plasma only
+    "magnesiumSulfate", "labetalol", "nitroglycerin",
+    "procainamide", "dopamine",
+    "digoxin",
+    "milrinonePediatric",
+    "digoxinIVPediatric",
+    "methyleneBlue",
+    "ephedrine"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {
@@ -111,7 +154,10 @@ test_that("a supplied ke0 is explained by the parent only for a drug never dosed
 test_that("the fat-free-mass switch is reported from the code", {
   expect_true(helpDrugRespondsToFFM("morphine"))
   expect_false(helpDrugRespondsToFFM("propofol"))
-  expect_false(helpDrugRespondsToFFM("hydrocodone"))
+  # Hydrocodone's own covariates (Melhem's BSA and creatinine clearance) see
+  # the pharmacokinetic weight with the switch on, so it now responds.
+  expect_true(helpDrugRespondsToFFM("hydrocodone"))
+  expect_false(helpDrugRespondsToFFM("oxytocin"))
   html <- helpDrugPageHTML("morphine")
   expect_match(html, "Adjust weight to fat-free mass", fixed = TRUE)
   expect_match(html, 'data-help-page="models/fat-free-mass"', fixed = TRUE)
@@ -222,7 +268,8 @@ test_that("every intravenous drug page carries its citation, units and tables", 
     html <- helpDrugPageHTML(drug, drugDefaults)
     row <- drugDefaults[drugDefaults$Drug == drug, ]
     pk <- helpDrugPK(drug, helpReferencePatients()[1, ], drugDefaults)
-    expect_match(html, htmltools::htmlEscape(helpReferenceShort(pk$reference)), fixed = TRUE, info = drug)
+    # The investigators in the citation are links (R/help-investigators.R)
+    expect_match(withoutLinks(html), htmltools::htmlEscape(helpReferenceShort(pk$reference)), fixed = TRUE, info = drug)
     # desmetramadol has no dosing unit at all (it appears only as a metabolite)
     if (!is.na(row$Default.Units) && nzchar(row$Default.Units)) {
       expect_match(html, row$Default.Units, fixed = TRUE, info = drug)
@@ -235,7 +282,7 @@ test_that("every intravenous drug page carries its citation, units and tables", 
 
 test_that("the propofol page reads from the code, not from a hand-written table", {
   html <- helpDrugPageHTML("propofol")
-  expect_match(html, "Eleveld DJ et al., Br J Anaesth 2018", fixed = TRUE)
+  expect_match(html, 'data-investigator="eleveld-d">Eleveld DJ</a> et al., Br J Anaesth 2018', fixed = TRUE)
   expect_match(html, "pubmed.ncbi.nlm.nih.gov/29661412", fixed = TRUE)
   expect_match(html, "mcg/mL", fixed = TRUE)
   expect_match(html, "this model has covariates", fixed = TRUE)
@@ -258,7 +305,7 @@ test_that("extravascular routes and events are described where the model has the
   expect_false(grepl("Events that change the kinetics", prop, fixed = TRUE))
 })
 
-test_that("gas pages carry Gas Man's parameters and the MAC table", {
+test_that("gas pages carry GasMan's parameters and the MAC table", {
   for (gas in gasDrugs) {
     html <- helpDrugPageHTML(gas, drugDefaults)
     expect_match(html, "At a glance", fixed = TRUE, info = gas)
@@ -279,7 +326,7 @@ test_that("the drug index links every drug", {
   for (drug in drugDefaults$Drug) {
     expect_match(html, sprintf('data-help-page="drugs/%s"', drug), fixed = TRUE, info = drug)
   }
-  expect_match(html, "Eleveld DJ et al.", fixed = TRUE)
+  expect_match(withoutLinks(html), "Eleveld DJ et al.", fixed = TRUE)
   expect_match(html, "Anesthetic agent", fixed = TRUE)
   expect_match(html, "Ventilator setting", fixed = TRUE)
   expect_match(html, "metabolite only", fixed = TRUE)
@@ -288,10 +335,11 @@ test_that("the drug index links every drug", {
 
 test_that("the bibliography lists every model citation once, with its drugs", {
   html <- helpReferencesHTML(drugDefaults)
+  cites <- withoutLinks(html)
   refs <- unique(unlist(lapply(ivDrugs, function(d) helpDrugParameterTable(d, drugDefaults)$reference)))
   for (r in refs) {
     short <- htmltools::htmlEscape(helpReferenceShort(r))
-    expect_equal(lengths(regmatches(html, gregexpr(short, html, fixed = TRUE))), 1, info = r)
+    expect_equal(lengths(regmatches(cites, gregexpr(short, cites, fixed = TRUE))), 1, info = r)
   }
   expect_match(html, 'data-help-page="drugs/fentanyl"', fixed = TRUE)
   expect_match(html, 'data-help-page="drugs/alfentanil"', fixed = TRUE)
@@ -304,4 +352,122 @@ test_that("drug pages reflect a library edited in the session", {
   edited$Upper[edited$Drug == "propofol"] <- 9
   html <- helpDrugPageHTML("propofol", edited)
   expect_match(html, "1.25 to 9 mcg/mL", fixed = TRUE)
+})
+
+# A model that declares cyp2b6 (methadone) gets a generated clearance-by-
+# phenotype table from cypSection(), as the cyp2c9 and cyp2d6 drugs do.
+test_that("the methadone page tabulates clearance by CYP2B6 phenotype", {
+  html <- helpDrugPageHTML("methadone")
+  expect_match(html, "Effect of CYP2B6 phenotype", fixed = TRUE)
+  expect_match(html, "Clearance CL1 (L/min)", fixed = TRUE)
+  expect_match(html, "Relative to normal", fixed = TRUE)
+  for (label in c("Poor", "Intermediate", "Normal", "Rapid", "Ultrarapid")) {
+    expect_match(html, label, fixed = TRUE, info = label)
+  }
+  # the narrative says where the multipliers come from and what the field is not
+  expect_match(html, "Anesthesiology", fixed = TRUE)
+  expect_match(html, "not a dosing rule", fixed = TRUE)
+  # a drug that does not declare it gets no such table
+  expect_false(grepl("Effect of CYP2B6 phenotype", helpDrugPageHTML("fentanyl"), fixed = TRUE))
+})
+
+# -----------------------------------------------------------------------------
+# Saturable elimination on a generated drug page.  Without this section the
+# two parameter tables describe a Michaelis-Menten drug as a linear one: its
+# Vmax and Km appear nowhere, and a peripheral compartment declared through
+# k23/k32 reads as absent because it is not V2.
+# Claude Code, 2026-10-17, at the request of Steven L. Shafer.
+# -----------------------------------------------------------------------------
+
+test_that("a saturable drug's page gives its Vmax, Km and peripheral volume", {
+  for (drug in c("GHB", "phenytoin")) {
+    html <- helpDrugPageHTML(drug)
+    expect_true(grepl("Saturable elimination", html, fixed = TRUE), info = drug)
+    expect_true(grepl("Vmax", html, fixed = TRUE), info = drug)
+    expect_true(grepl("Km", html, fixed = TRUE), info = drug)
+    # and the reader is warned that CL1 and the half-lives above are limits
+    expect_true(grepl("elimination saturates", html, fixed = TRUE), info = drug)
+  }
+  # GHB carries a peripheral compartment through k23/k32, which Chen's own
+  # Table S4 footnote derives as 5.33 L; phenytoin has none.
+  expect_true(grepl("5.33", helpDrugPageHTML("GHB"), fixed = TRUE))
+  # The salt factor is named by what it applies to, not by its key
+  expect_true(grepl("the default oral form", helpDrugPageHTML("GHB"), fixed = TRUE))
+})
+
+test_that("a linear drug's page has no saturable section", {
+  for (drug in c("propofol", "MDMA", "LSD"))
+    expect_false(grepl("Saturable elimination", helpDrugPageHTML(drug), fixed = TRUE),
+                 info = drug)
+})
+
+test_that("helpDrugUnits gives the same units whichever drug library it is handed", {
+  # getDrugDefaultsGlobal() returns Units as a list column, already split;
+  # with splitUnits = FALSE it is the raw comma-joined string.  Read without
+  # splitting, doseRoute() sees one long unit and finds only the LAST route,
+  # so a drug offering two routes silently loses one.  Caught when the
+  # generated illicit-drug table showed diamorphine with no intranasal route.
+  split <- getDrugDefaultsGlobal()
+  joined <- getDrugDefaultsGlobal(FALSE)
+  for (drug in c("diamorphine", "phenytoin", "GHB", "propofol", "calcium")) {
+    a <- helpDrugUnits(split[split$Drug == drug, ][1, ])
+    b <- helpDrugUnits(joined[joined$Drug == drug, ][1, ])
+    expect_setequal(a, b)
+    expect_setequal(doseRoute(a), doseRoute(b))
+    expect_gt(length(a), 0)
+  }
+})
+
+test_that("a saturable drug's terminal half-life is its own, not the linear tables'", {
+  # The parameter table's half-lives come from the linear compartments alone,
+  # so a drug whose peripheral compartment lives in the saturable block's
+  # k23/k32 (GHB) is reported there as one-compartment.  GHB's displayed
+  # t-half is 17.9 min; its true low-concentration terminal half-life is 82,
+  # because the peripheral compartment the table cannot see slows the tail.
+  # Caught by CodeRabbit on #528, after this page's own warning claimed the
+  # displayed value WAS the below-Km limit.
+  ghb <- helpDrugModelOutput("GHB", helpReferencePatients()[1, ])
+  expect_equal(helpSaturableTerminalHalfLife(ghb), 81.7, tolerance = 0.01)
+  shown <- helpDrugParameterTable("GHB")$halfLife1[1]
+  expect_equal(shown, 17.9, tolerance = 0.01)
+  expect_gt(helpSaturableTerminalHalfLife(ghb) / shown, 4)
+
+  # With no peripheral compartment the two agree, since the linear limit is
+  # then genuinely one-compartment (phenytoin).
+  phen <- helpDrugModelOutput("phenytoin", helpReferencePatients()[1, ])
+  expect_equal(helpSaturableTerminalHalfLife(phen),
+               helpDrugParameterTable("phenytoin")$halfLife1[1], tolerance = 1e-6)
+
+  # and the page states it rather than only disclaiming the other one
+  html <- helpDrugPageHTML("GHB")
+  expect_true(grepl("Terminal", html, fixed = TRUE))
+  expect_true(grepl("81.7", html, fixed = TRUE))
+})
+
+test_that("the saturable section reads the antidiabetics' engine fields", {
+  # Exenatide's low-concentration limit includes its parallel linear clearance
+  # and its peripheral compartment, declared as the PK set's cl2 and v2: the
+  # slower root of the linear two-compartment system, as its parameter table
+  # computes it.
+  ex <- helpDrugModelOutput("exenatide", helpReferencePatients()[1, ])
+  set <- ex$PK[[PK_EVENT_DEFAULT]]
+  expect_equal(helpSaturableTerminalHalfLife(ex),
+               helpDrugParameterTable("exenatide")$halfLife2[1], tolerance = 1e-3)
+  html <- helpDrugPageHTML("exenatide")
+  expect_true(grepl("Vmax (ng/min)", html, fixed = TRUE))
+  # Saturable binding (the DPP-4 inhibitors) has no Vmax/Km limit and is
+  # described as binding, not elimination.
+  lin <- helpDrugModelOutput("linagliptin", helpReferencePatients()[1, ])
+  expect_true(is.na(helpSaturableTerminalHalfLife(lin)))
+  expect_true(grepl("Saturable binding", helpDrugPageHTML("linagliptin"), fixed = TRUE))
+  expect_false(grepl("Saturable elimination", helpDrugPageHTML("vildagliptin"), fixed = TRUE))
+})
+
+test_that("Km is shown with the drug's own concentration units, not a fixed one", {
+  # Hardcoding mg/L would be right for GHB and phenytoin and wrong for any
+  # drug reported in ng/mL.
+  expect_true(grepl("Km is in mcg/mL", helpDrugPageHTML("GHB"), fixed = TRUE))
+  md <- helpIllicitPKTableMarkdown(getDrugDefaultsGlobal(FALSE))
+  ghb <- grep("GHB", strsplit(md, "\n", fixed = TRUE)[[1]], value = TRUE)
+  expect_true(grepl("Km 18.2 mcg/mL", ghb, fixed = TRUE))
 })

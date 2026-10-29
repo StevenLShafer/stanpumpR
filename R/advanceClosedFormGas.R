@@ -2,14 +2,14 @@
 # Provenance
 # ----------
 # Drafted by Claude Code (Claude Opus 5), 2026-09-02, at the request of
-# Steven L. Shafer.  Implements the Gas Man(R)-style inhaled-gas model described
-# in R/gasProperties.R.  Gas Man is closed source; this is written from the
+# Steven L. Shafer.  Implements the GasMan(R)-style inhaled-gas model described
+# in R/gasProperties.R.  GasMan is closed source; this is written from the
 # published model structure, not from its code.
 #
 # STATUS: run and verified on R 4.6.1 by tests/testthat/test-gas-engine.R --
 # the closed-form advance agrees with an independent RK4 integration of the same
 # ODEs, single-compartment analytic limits are reproduced, and steady states
-# match hand calculation.  NOT YET validated against Gas Man 4.2 output; that
+# match hand calculation.  NOT YET validated against GasMan 4.2 output; that
 # requires the fixture grid (see the TODO(fixture) markers in gasProperties.R).
 # -----------------------------------------------------------------------------
 #
@@ -46,7 +46,7 @@
 # in full in Q but puts only 99% of itself into the carried fractions, and the
 # initial state (room air) is 78.07% nitrogen and 20.93% oxygen, summing to 99.
 #
-# The vapour displaces carrier gas within Q; it does not add to Q.  Gas Man has
+# The vapour displaces carrier gas within Q; it does not add to Q.  GasMan has
 # an option (off by default) that instead adds the vapour's own volume, raising
 # the effective fresh gas flow by 1 / (1 - F_vap/100).  That option has no
 # counterpart here.  (Both notes: Claude Code, 2026-10-09,
@@ -78,13 +78,13 @@
 #     Eliminating F_exhaled gives the line above; f rises from 0 at Q = 0 to
 #     exactly 1 at Q = MV.
 #
-#     With d = 0 this is Gas Man's "Ideal" circuit (GasDoc.cpp, IDEAL_CKT),
-#     whose threshold is at Q = VA because Gas Man has no dead space: its
+#     With d = 0 this is GasMan's "Ideal" circuit (GasDoc.cpp, IDEAL_CKT),
+#     whose threshold is at Q = VA because GasMan has no dead space: its
 #     ventilation IS alveolar ventilation.  The dead space, and with it the
 #     threshold at minute ventilation, is stanpumpR's (Shafer, 2026-10-05: "the
 #     user sets minute ventilation, not alveolar ventilation ... set dead space
-#     at 30% of minute ventilation").  Pass deadSpace = 0 to compare with Gas
-#     Man.
+#     at 30% of minute ventilation").  Pass deadSpace = 0 to compare with
+#     GasMan.
 #
 #     Reference supplied by Shafer: Feldman JM, Lampotang S, Hendrickx J.  Is
 #     rebreathing prevented when FGF equals MV?  APSF, 20 October 2022.
@@ -101,7 +101,7 @@
 #     four-state system per gas; the circuit entry of the state vector is filled
 #     in afterwards so that everything downstream still finds it.
 #
-#     "semi-closed" -- Gas Man's own default, and this engine's until that date.
+#     "semi-closed" -- GasMan's own default, and this engine's until that date.
 #     The whole circuit is ONE WELL-MIXED VOLUME: fresh gas enters at the
 #     flowmeter/vaporiser composition and leaves through the pop-off at circuit
 #     composition; exhaled gas returns at alveolar composition.
@@ -113,7 +113,7 @@
 #     gas are stirred together before any is vented, some fresh gas is always
 #     thrown away and some exhaled gas always rebreathed, at any flow.  With
 #     Q = VA the patient still inspires half exhaled gas.  The two models agree
-#     as Q -> 0 and differ most at Q = VA.  Kept for comparison with Gas Man.
+#     as Q -> 0 and differ most at Q = VA.  Kept for comparison with GasMan.
 #
 # (2) ALVEOLAR, soluble gases.  Ventilation exchanges with the circuit; blood
 #     removes gas in proportion to the alveolar-to-mixed-venous gradient.
@@ -173,7 +173,7 @@
 #     consumed: with 0.3 + 1.0 L/min in and 0.21 L/min consumed, 1.09 L/min
 #     leaves as 92% nitrous oxide and 8% oxygen (dry, carbon dioxide aside).
 #
-#     Gas Man does none of this: it has no oxygen.  Pass oxygenUptake = FALSE to
+#     GasMan does none of this: it has no oxygen.  Pass oxygenUptake = FALSE to
 #     compare with it.
 #
 # (5) MAC, summed over the potent agents, using the BRAIN (vessel-rich group)
@@ -235,8 +235,8 @@
 # See the Integration section of inst/help/models/gas-engine.md.
 #
 # CORRECTION (2026-09-03): an earlier version of this comment said it was
-# unresolved whether Gas Man models it, and a later one said Gas Man does not.
-# Both were wrong.  Gas Man does model it, in GasDoc.cpp::Calc, under the names
+# unresolved whether GasMan models it, and a later one said GasMan does not.
+# Both were wrong.  GasMan does model it, in GasDoc.cpp::Calc, under the names
 # "uptake effect" and "Correct for constant lung capacity" rather than
 # "concentration effect" -- which is why a grep for the usual term found
 # nothing and produced the wrong conclusion:
@@ -251,7 +251,7 @@
 # nitrous oxide's uptake augments a volatile's alveolar tension.  That is the
 # second gas effect, and it is on by default (m_bRtnEnb = m_bUptEnb = true).
 #
-# It must therefore be implemented for the Gas Man baseline to be a baseline.
+# It must therefore be implemented for the GasMan baseline to be a baseline.
 # -----------------------------------------------------------------------------
 
 
@@ -301,7 +301,7 @@ expmPade <- function(A)
 # that deficit draws replacement gas in from the circuit, concentrating whatever
 # else is there; on emergence the flow reverses.  Because the deficit is summed
 # over ALL gases, nitrous oxide's uptake augments a volatile's alveolar tension.
-# That is the second gas effect, and Gas Man models it (m_bUptEnb, defaulting
+# That is the second gas effect, and GasMan models it (m_bUptEnb, defaulting
 # true) -- see the note at the head of this file.
 #
 # Uptake of gas i into tissue t, in L/min, is the volume the tissue gains:
@@ -319,7 +319,7 @@ expmPade <- function(A)
 #
 # NOTE ON OXYGEN.  Oxygen is carried here as a two-state gas with no tissue
 # compartments, so it contributes nothing to the sum, and it does not RECEIVE
-# the term either.  Gas Man does not model oxygen at all, so there is no
+# the term either.  GasMan does not model oxygen at all, so there is no
 # reference for what it should do, and applying the correction to it would be an
 # untestable deviation.  Physically the volume loss must concentrate alveolar
 # oxygen as well, so this is a known simplification rather than a settled
@@ -338,7 +338,7 @@ gasMixedVenous <- function(y, body)
 
 #' Total uptake summed over every soluble gas
 #'
-#' Gas Man's \code{fTotUptake}: positive while gas is being taken up, negative
+#' GasMan's \code{fTotUptake}: positive while gas is being taken up, negative
 #' during washout.  Oxygen is excluded -- see the note above.
 #'
 #' @param state named list of per-gas state vectors
@@ -365,7 +365,7 @@ gasTotalUptake <- function(state, props, body, Qco)
 #' One when fresh gas flow meets or exceeds MINUTE ventilation -- no rebreathing
 #' -- and \code{Q / (VA + Q d)} below that, with \code{d = 1 - VA / MV} the
 #' dead-space fraction; see the file header for the derivation.  With no dead
-#' space this is \code{Q / VA}, Gas Man's ideal circuit.  Always one for an open
+#' space this is \code{Q / VA}, GasMan's ideal circuit.  Always one for an open
 #' circuit.
 #'
 #' @param Q total fresh gas flow, L/min
@@ -462,7 +462,7 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   A <- matrix(0, 5, 5)
 
   # (1) circuit.  On EMERGENCE (totUptake < 0) alveolar gas is displaced back
-  # into the circuit, which Gas Man models by subtracting the term from the
+  # into the circuit, which GasMan models by subtracting the term from the
   # circuit numerator:  if (tot_uptake < 0) f <- f - tot_uptake * ALV.  There is
   # no matching term on induction, when make-up gas flows the other way.
   A[1, 1] <- -(Q + VA) / Vc
@@ -482,7 +482,7 @@ gasSystemSoluble <- function(props, body, Q, VA, Qco, Ffgf, totUptake = 0,
   A[4, 2] <-  km;  A[4, 4] <- -km
   A[5, 2] <-  kf;  A[5, 5] <- -kf
 
-  # The uptake coupling.  Gas Man's Calc adds this to the alveolar numerator:
+  # The uptake coupling.  GasMan's Calc adds this to the alveolar numerator:
   #
   #     if (fTotUptake > 0) f += fResults[CKT] * fTotUptake;   // inducing
   #     else                f += fResults[ALV] * fTotUptake;   // emerging
@@ -658,7 +658,7 @@ settingAt <- function(doseRows, t)
 #' @param deadSpace dead space as a fraction of minute ventilation.  The
 #'   "ventilation" row of the dose table is MINUTE ventilation, and alveolar
 #'   ventilation is \code{MV * (1 - deadSpace)}.  Zero makes the row alveolar
-#'   ventilation, as it is in Gas Man.
+#'   ventilation, as it is in GasMan.
 #' @returns a list with total fresh gas flow \code{Q}, minute ventilation
 #'   \code{MV}, alveolar ventilation \code{VA}, and the fresh-gas fractions
 #' @keywords internal
@@ -682,6 +682,15 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 
   # Vapour displaces carrier gas.  At 2% sevoflurane this is a 2% correction;
   # small, but free to include and it keeps the fractions summing to 100.
+  # Vaporisers that together exceed 100% have no physical fresh gas: the
+  # carrier would be negative, and clipping it to zero (as this did until
+  # 2026-10-12) left the fractions summing past 100.  The dose table is
+  # checked by gasVaporiserProblems() before it gets here; this is the
+  # engine's own refusal.
+  if (sum(F_vap) > 100 + 1e-9) {
+    stop(sprintf("the vaporisers together are set to %s%% at %s min; the fresh gas cannot be more than 100%% vapour",
+                 format(sum(F_vap)), format(t)))
+  }
   carrier <- 1 - sum(F_vap) / 100
   if (carrier < 0) carrier <- 0
 
@@ -701,9 +710,54 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 }
 
 
+#' Vaporiser settings that together exceed 100%
+#'
+#' At every time a vaporiser setting changes, the settings then in force for
+#' all the volatile agents are summed; a sum above 100% is a fresh gas that
+#' cannot exist (there would be no carrier left), and the engine refuses it.
+#' The app shows these as a notification, so that the gas curves do not simply
+#' vanish.  Rows for a single agent at one time keep the last one, as the
+#' engine does.
+#'
+#' @param doseTable a dose table with \code{Drug}, \code{Time} (minutes, or
+#'   anything \code{as.numeric()} reads) and \code{Dose}; non-gas rows and
+#'   blank rows are ignored
+#' @returns a character vector of messages, one per offending time, empty when
+#'   the settings are possible
+#' @export
+gasVaporiserProblems <- function(doseTable)
+{
+  if (is.null(doseTable) || nrow(doseTable) == 0) return(character(0))
+  volatiles <- setdiff(potentAgents(), "nitrousOxide")
+  drug <- as.character(doseTable$Drug)
+  rows <- doseTable[drug %in% volatiles, , drop = FALSE]
+  if (nrow(rows) == 0) return(character(0))
+  rows <- data.frame(
+    Time = suppressWarnings(as.numeric(as.character(rows$Time))),
+    Drug = as.character(rows$Drug),
+    Dose = suppressWarnings(as.numeric(as.character(rows$Dose))),
+    stringsAsFactors = FALSE
+  )
+  rows <- rows[!is.na(rows$Time) & !is.na(rows$Dose), , drop = FALSE]
+  if (nrow(rows) == 0) return(character(0))
+  rows <- rows[order(rows$Time), , drop = FALSE]
+  split <- split(rows, rows$Drug)
+  problems <- character(0)
+  for (t in sort(unique(rows$Time))) {
+    total <- sum(vapply(split, function(d) settingAt(d, t), numeric(1)))
+    if (total > 100 + 1e-9) {
+      problems <- c(problems, sprintf(
+        "At %s min the vaporisers together are set to %s%%; the fresh gas cannot be more than 100%% vapour, so the gases are not simulated until one of them is lowered.",
+        format(t), format(total)))
+    }
+  }
+  problems
+}
+
+
 #' Simulate the inhaled gases in a circle breathing system
 #'
-#' Closed-form solution of the Gas Man(R)-style model documented at the top of
+#' Closed-form solution of the GasMan(R)-style model documented at the top of
 #' this file.  All the gases are simulated together, because they share one
 #' breathing circuit and one alveolar ventilation: the total fresh gas flow is
 #' the sum of the air, oxygen and nitrous oxide rows, so changing any one of
@@ -720,7 +774,7 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 #' @param body geometry and flows, from \code{getGasBody()}.  Defaults to the
 #'   weight-scaled standard.
 #' @param cardiacOutput cardiac output in L/min.  Defaults to the covariate
-#'   value in \code{body} (Gas Man's 5 L/min at 70 kg, allometric).  Accepted per call so that a
+#'   value in \code{body} (GasMan's 5 L/min at 70 kg, allometric).  Accepted per call so that a
 #'   time-varying cardiac output can be added later without changing the
 #'   engine; note that letting it vary would logically require the intravenous
 #'   pharmacokinetics to respond to it as well, which stanpumpR does not model.
@@ -728,29 +782,29 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION)
 #'   over which the uptake coupling is held fixed, and so, when
 #'   \code{uptakeEffect} is TRUE, the accuracy: the error is first order in the
 #'   sub-step, about \code{maximum / resolution} (see the file header).
-#' @param uptakeEffect if TRUE (the default, as in Gas Man, whose m_bUptEnb
+#' @param uptakeEffect if TRUE (the default, as in GasMan, whose m_bUptEnb
 #'   defaults true), couple the gases through their summed uptake, giving the
 #'   concentration and second gas effect.  Set FALSE to isolate that term: with
 #'   it off the gases do not influence one another at all, which is what makes
 #'   the effect measurable as a difference rather than asserted.
 #' @param circuit "ideal", the default: no rebreathing once fresh gas flow
-#'   reaches minute ventilation, and no circuit volume.  "semi-closed": Gas
-#'   Man's default, the circuit as one well-mixed volume.  See the file header.
+#'   reaches minute ventilation, and no circuit volume.  "semi-closed":
+#'   GasMan's default, the circuit as one well-mixed volume.  See the file header.
 #' @param oxygenUptake if TRUE (the default), oxygen consumed shrinks the gas
 #'   volume: its net volume, after the carbon dioxide that replaces it in the
 #'   alveoli, joins the summed uptake that couples the gases, oxygen itself
 #'   takes that coupling, and the absorber removes carbon dioxide from
 #'   rebreathed gas.  See (4a) in the file header.  FALSE restores the earlier
-#'   behaviour, in which oxygen was a sink with no effect on volume; Gas Man has
+#'   behaviour, in which oxygen was a sink with no effect on volume; GasMan has
 #'   no oxygen, so comparisons with it pass FALSE.  Has no effect when
 #'   \code{uptakeEffect} is FALSE, and is switched off for the semi-closed
 #'   circuit, whose well-mixed-box model has no carbon dioxide absorber to put
-#'   the volume balance in: that circuit exists only for comparison with Gas
-#'   Man, which has no oxygen.
+#'   the volume balance in: that circuit exists only for comparison with
+#'   GasMan, which has no oxygen.
 #' @param deadSpace dead space as a fraction of minute ventilation, 0.3 by
 #'   default.  The "ventilation" rows are minute ventilation; alveolar
 #'   ventilation is that times \code{1 - deadSpace}.  Pass 0 to treat the rows
-#'   as alveolar ventilation, as Gas Man does.
+#'   as alveolar ventilation, as GasMan does.
 #'
 #' @returns a list with \code{results}, a tidy data frame of
 #'   \code{Drug, Time, Site, Y} matching the shape returned by
@@ -774,7 +828,7 @@ advanceClosedFormGas <- function(
 )
 {
   circuit <- match.arg(circuit)
-  # The semi-closed circuit is Gas Man's mixing box, kept for comparison with a
+  # The semi-closed circuit is GasMan's mixing box, kept for comparison with a
   # program that has no oxygen.  It has no absorber in its volume balance, so
   # the oxygen volume model is not applied to it rather than applied wrongly.
   if (circuit == "semi-closed") oxygenUptake <- FALSE
@@ -848,9 +902,9 @@ advanceClosedFormGas <- function(
     # the system is no longer linear over the interval and the propagators are
     # rebuilt every sub-step from the state at the START of that step.
     #
-    # That is Gas Man's own treatment -- it freezes fTotUptake per tick too --
-    # but the propagation WITHIN each step stays exact here where Gas Man
-    # splits.  This removes Gas Man's splitting error but not the error of
+    # That is GasMan's own treatment -- it freezes fTotUptake per tick too --
+    # but the propagation WITHIN each step stays exact here where GasMan
+    # splits.  This removes GasMan's splitting error but not the error of
     # freezing the coupling, which is first order in dt: the sub-step is exact
     # for the frozen coefficients, not for the coupled equations.  (An earlier
     # version of this comment called the result "strictly more accurate" and
@@ -960,15 +1014,15 @@ advanceClosedFormGas <- function(
   # (5) MAC, from the ALVEOLAR tension -- state 2, not the brain state 3.
   #
   # Minimum Alveolar Concentration is alveolar by definition, it is what is
-  # clinically titrated to, and it is what Gas Man itself reports: its CSV
+  # clinically titrated to, and it is what GasMan itself reports: its CSV
   # export writes GetALV(fMin, ng) / m_fMAC.  An earlier version of this file
   # used the brain tension, which lags alveolar and is not what MAC means.
   #
-  # Two things here are stanpumpR's, with no Gas Man counterpart to be faithful
-  # to.  Gas Man emits ONE ROW PER AGENT, each with its own MAC column, and
-  # never sums them; additive MAC across agents is ours.  And Gas Man uses
+  # Two things here are stanpumpR's, with no GasMan counterpart to be faithful
+  # to.  GasMan emits ONE ROW PER AGENT, each with its own MAC column, and
+  # never sums them; additive MAC across agents is ours.  And GasMan uses
   # m_fMAC raw, with no age term, so macForAge() is ours too -- a validation run
-  # against Gas Man output must use the reference age.
+  # against GasMan output must use the reference age.
   macTotal <- rep(0, nT)
   for (g in props$gas[props$potent])
   {
@@ -1002,7 +1056,7 @@ advanceClosedFormGas <- function(
 #' @param weight patient weight in kg
 #' @param age patient age in years
 #' @param maximum simulation length in minutes
-#' @param cardiacOutput optional override in L/min; defaults to Gas Man's 5 L/min at 70 kg, scaled by (weight/70)^0.75
+#' @param cardiacOutput optional override in L/min; defaults to GasMan's 5 L/min at 70 kg, scaled by (weight/70)^0.75
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
