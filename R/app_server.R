@@ -1961,7 +1961,15 @@ app_server <- function(input, output, session) {
       thisDrug <- which(drugDefaults()$Drug == input$addDoseDrug)
 
       dt <- doseTable()
-      idx <- which(dt$Drug == "")[1]
+      # The dose goes into the first blank row; a table with none (a
+      # restored bookmark, or its blank row deleted) gets one, as
+      # stopAdministration() does, or the dose would be silently dropped.
+      blank <- which(as.character(dt$Drug) == "")
+      if (length(blank) == 0) {
+        dt <- rbind(dt, doseTableNewRow)
+        blank <- nrow(dt)
+      }
+      idx <- blank[1]
       dt$Drug[idx]  <- input$addDoseDrug
       dt$Time[idx]  <- addDoseTime
       dt$Dose[idx]  <- addDoseAmount
