@@ -283,8 +283,12 @@ test_that("the scenario's Try next values are the model's", {
     cp <- function(t) kbConcentration(case$S, LABEL_TIMES, LABEL_RATES, t)
     got <- c(cp(10), stats::optimize(cp, c(380, 700))$objective, cp(1440))
     expect_equal(round(got, c(1, 2, 2)), case$want, label = paste("ffm", case$ffm))
-    expect_equal(engineAt(labelRegimen, 1440, weight = 120, adjustToFFM = case$ffm), cp(1440),
-                 tolerance = 1e-6, label = paste("engine, ffm", case$ffm))
+    # The engine against the independent integration along the whole curve:
+    # the peak, the distribution phase, the 1 mg/min and 0.5 mg/min phases,
+    # the dip and 24 h
+    for (t in c(10, 60, 370, 450, 720, 1440))
+      expect_equal(engineAt(labelRegimen, t, weight = 120, adjustToFFM = case$ffm), cp(t),
+                   tolerance = 1e-6, label = paste("engine, ffm", case$ffm, "at", t))
   }
 })
 
