@@ -11,6 +11,47 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > established for the analyte it plots, and its help page must say where the range came from —
 > or, when there is none, why. See *The therapeutic range* in step 2. This too is a requirement.
 
+> **Step zero: look for the drug before you start, in the open PRs' CHANGED FILES.** Several
+> Claude sessions run at once on different threads, and they collide. Before ANY edit for the
+> drug — the model, the CSV row, the test, the help page, the pregnancy or therapeutic-range
+> row, a registry row — check master's recent commits and every open pull request:
+>
+> ```bash
+> name=<name>
+> git fetch origin master -q || { echo "PREFLIGHT FAILED: cannot fetch master"; exit 1; }
+> git log --oneline -i -G "$name" origin/master -15                 # merged recently
+> prs=$(gh pr list --state open --json number --jq '.[].number') ||
+>   { echo "PREFLIGHT FAILED: cannot list open PRs"; exit 1; }
+> for n in $prs; do                                                 # in flight
+>   d=$(gh pr diff "$n") || { echo "PR $n: COULD NOT READ -- check by hand"; continue; }
+>   printf '%s' "$d" | grep -qi "$name" && echo "PR $n mentions $name"
+> done
+> ```
+>
+> Every step fails LOUDLY on purpose. `gh pr diff` writing nothing because it errored looks
+> exactly like a PR that does not mention the drug, and a `gh pr list` that fails gives an
+> empty loop that looks exactly like "no open PRs" — so an unchecked PR would read as a clean
+> result. A safety check that passes silently when it could not run is worse than no check,
+> because it manufactures confidence. Chain the fetch too: a stale `origin/master` searched
+> successfully is the same trap.
+>
+> Search the **diff content**, and search master as well as the open PRs. Titles and branch
+> names are no good: a branch may be called anything, and the PR that added ephedrine was
+> `claude/magical-faraday-0ol951`. Changed *paths* are not enough either — of the 18 files
+> that PR touched, only four had "ephedrine" in the path, while `drugDefaults_global.csv`,
+> `therapeuticRanges.csv`, `pregnancyRegistry.csv` and the vasoactive registry each carried a
+> row for it under a name that matches nothing. A drug that is only a row in shared files is
+> invisible to a path search. And master matters as much as the open PRs: the ephedrine drug
+> was *merged* while the PR removing it was open.
+>
+> Use `-G`, not the `-S` pickaxe: `-S` reports only commits that change the NUMBER of
+> occurrences, so a commit that edits an existing row leaves no trace in it. On this repository
+> `-G 'ephedrine'` returns 12 commits and `-S` returns 7, and the five it misses include two
+> that corrected an existing ephedrine line — exactly the "someone is working on this right
+> now" signal the check exists to catch. Twice in October 2026 two sessions did the same work in parallel and one PR
+> had to be closed as superseded; once, two sessions added and removed the same drug on the
+> same day. See the concurrency rules in `AGENTS.md`.
+
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 

@@ -103,8 +103,7 @@ plasmaOnly <- c(
     "digoxin",
     "milrinonePediatric",
     "digoxinIVPediatric",
-    "methyleneBlue",
-    "ephedrine"
+    "methyleneBlue"
 )
 
 test_that("the parameter table evaluates every intravenous model at the reference patients", {

@@ -61,7 +61,7 @@ dexamethasone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg IM,mg/kg
 prednisolone,ng,mg,mg/hr,mg PO,"mg,mg/kg,mg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#DAA520,10,100,40,0,0,IV,Corticosteroids
 prednisone,ng,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#C9A227,10,80,30,0,0,IV,Corticosteroids
 sugammadex,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#7B68EE,5,30,10,0,0,IV,Neuromuscular blockade
-neostigmine,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#9370DB,30,300,100,0,30,IV,Neuromuscular blockade
+neostigmine,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#9370DB,100,250,175,0,30,IV,Neuromuscular blockade
 glycopyrrolate,ng,mg,mg/hr,mg,"mg,mcg,mg/kg,mcg/kg,mg/hr",#8A2BE2,1,10,3,0,0,IV,Neuromuscular blockade
 mannitol,mOsm,,g/hr,g/hr,"g/hr,g/kg/hr",#00A3AD,300,320,310,0,0,IV,Other
 calcium,mmol,g chloride,mg/min chloride,g chloride,"g chloride,mg chloride,mg/kg chloride,mg/min chloride,mg/hr chloride,mg/kg/hr chloride,g/hr chloride,g gluconate,mg gluconate,mg/kg gluconate,mg/min gluconate,mg/hr gluconate,mg/kg/hr gluconate,g/hr gluconate",#C77C2B,0,0,0,0,0,IV,Other
@@ -182,7 +182,6 @@ olmesartan,ng,,,mg PO,"mg PO,mg PO qd",#AD1457,0,0,0,0,0,IV,Antihypertensives
 valsartan,ng,,,mg PO,"mg PO,mg PO qd",#827717,0,0,0,0,0,IV,Antihypertensives
 hydrochlorothiazide,ng,,,mg PO,"mg PO,mg PO qd",#3E2723,0,0,0,0,0,IV,Antihypertensives
 epinephrine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min",#C62828,0,0,0,0,0,IV,Vasoactive and resuscitation
-ephedrine,ng,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/kg/hr",#E91E63,0,0,0,0,0,IV,Vasoactive and resuscitation
 magnesiumSulfate,mmol,g,g/hr,g,"g,mg,mg/kg,g/hr,mg/min,mg/kg/hr",#00838F,0,0,0,0,0,IV,Vasoactive and resuscitation
 labetalol,ng,mg,mg/min,mg,"mg,mg/kg,mg/min,mg/hr",#6A1B9A,0,0,0,0,0,IV,Vasoactive and resuscitation
 diltiazem,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E7D32,0,0,0,0,0,IV,Vasoactive and resuscitation

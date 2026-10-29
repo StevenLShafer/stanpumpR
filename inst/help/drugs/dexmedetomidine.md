@@ -6,7 +6,7 @@
 
 ### Effect site
 
-The adult time to peak effect is 10 minutes and the infant's 2 minutes; both are described in the code as guesses. Dexmedetomidine's sedative effect does lag its plasma concentration substantially, which is why a loading dose is given over ten minutes and why the effect-site line is so much smoother than the plasma line. See [the dexmedetomidine scenario](scenario:dexmedetomidine-loading).
+The adult time to peak effect is 14.9 minutes. It comes from Colin and colleagues (*Br J Anaesth* 2017;119:200-210), who estimated the equilibration of sedation (MOAA/S) at 0.0428/min on Hannivoort's kinetics; because those kinetics are not the ones used here, the equilibration is carried over as the time to peak effect it gives with Hannivoort's model, and the library then solves its own equilibration (about 0.033/min) on Dyck's. Colin's equilibration for the bispectral index is much faster (a time to peak of 1.6 minutes) but rests on a model of arousal, and the band here is for sedation. Until October 2026 the adult value was 10 minutes, a guess. The infant's 2 minutes is still described in the code as a guess. Dexmedetomidine's sedative effect does lag its plasma concentration substantially, which is why a loading dose is given over ten minutes and why the effect-site line is so much smoother than the plasma line. See [the dexmedetomidine scenario](scenario:dexmedetomidine-loading).
 
 ### Typical concentrations
 

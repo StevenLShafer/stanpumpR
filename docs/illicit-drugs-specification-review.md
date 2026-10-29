@@ -41,8 +41,10 @@ is sound, and it is what the implementation is built around.
 
 **Its description of the repository is from an older commit.** It quotes ketamine's
 micro-constants as `k10 0.438, k12 0.592, k13 0.590, k21 0.247, k31 0.0146`. Those were
-replaced on master on 2026-10-14; the current values are `k10 0.2243386, k12 0.8702122,
-k13 0.3291103, k21 0.4417174, k31 0.01373109`. It also quotes ketamine's `tPeak` comment
+replaced on master on 2026-10-14 (`k10 0.2243386, k12 0.8702122, k13 0.3291103,
+k21 0.4417174, k31 0.01373109`), and again on 2026-10-28 by a fit to Domino's measured
+concentrations (`V1 0.0583 L/kg; k10 0.226, k12 0.657, k13 0.206, k21 0.0676, k31 0.00489`;
+PR #602). It also quotes ketamine's `tPeak` comment
 as "Just a guess", which now reads "Assumed, not from Domino (who measured no effect)".
 The fentanyl parameters it quotes are current and correct.
 

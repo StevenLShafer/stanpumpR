@@ -859,6 +859,22 @@ app_server <- function(input, output, session) {
     shinyjs::toggle(selector = choice(PLOT_ID_INTERACTION), condition = shown[["plotInteraction"]])
   })
 
+  # The Serum creatinine field is optional, and a blank box says nothing about
+  # what a blank MEANS: each renal model substitutes the normal creatinine for
+  # the patient's age and sex (assumedCreatinine(), R/renalFunction.R).  The
+  # placeholder shows that value in grey while the field is empty, and follows
+  # age and sex, so the assumption is visible without hovering for the tip.
+  # It is only a hint: it vanishes as soon as anything is typed, and the
+  # engine still receives NULL for an empty field.
+  observe({
+    a <- tryCatch(age(), error = function(e) NULL)
+    x <- tryCatch(sex(), error = function(e) NULL)
+    req(a, x)
+    shinyjs::runjs(sprintf(
+      "var e = document.getElementById('creatinine'); if (e) e.placeholder = '%s';",
+      creatininePlaceholder(a, x)))
+  })
+
   # Vaporisers that together exceed 100% are a fresh gas that cannot exist.
   # The engine refuses them (gasSettingsAt()), which drugs() logs and
   # swallows, so the gas curves would simply vanish: say why instead.

@@ -19,7 +19,20 @@ dexmedetomidine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     k21 <- 0.163
     k31 <- 0.0112
 
-    tPeak <- 10 # Just a guess
+    # Time to peak effect, sedation: Colin PJ et al., Br J Anaesth
+    # 2017;119:200-210 (https://pubmed.ncbi.nlm.nih.gov/28854538/), MOAA/S
+    # ke0 0.0428 /min, estimated on the Hannivoort 2015 kinetics (V1 1.78,
+    # V2 30.3, V3 52.0 L; CL 0.686, Q2 2.98, Q3 0.602 L/min at 70 kg).  The PD
+    # and the PK come from different papers, so the ke0 is carried as a tPeak
+    # (Minto 2003): on Hannivoort's kinetics a bolus peaks at the effect site
+    # at 14.9 min, and getDrugPK() solves ke0 again on Dyck's (about 0.033
+    # /min).  MOAA/S, not BIS (ke0 0.120 /min, tPeak 1.6 min): the band is a
+    # sedation band, matching Colin's MOAA/S C50 of 0.43 ng/mL, and the BIS
+    # ke0 rests on Colin's arousal sub-model (0.99 /min without it).  Colin's
+    # text gives the MOAA/S equilibration half-time as 14 min where the table's
+    # ke0 implies 16.2; 14 min would give a tPeak of 11.3.  Was 10 min, a
+    # guess, until 2026-10-28; changed by decision of Steven L. Shafer.
+    tPeak <- 14.9
     typical <- 0.6 # midpoint of the 0.4-0.8 ng/mL sedation range (the app reads drugDefaults_global.csv)
     lowerTypical <- 0.4
     upperTypical <- 0.8

@@ -2103,7 +2103,10 @@ runs here: Hui *precedes* the label and underlies it, so what settles this case
 is the narrow rule rather than the general one. The general rule is why the
 label's other statements — dialysis, hepatic impairment, the paediatric
 equivalence — are *recorded* rather than treated as authority, and why a
-post-1991 fosinopril study, if one is ever found, outranks all of it.
+post-1991 fosinopril study **that addressed the same question** would outrank
+any of them, if one is ever found. The qualifier matters: the rule is about a
+label's standing as current science, not a comparison of dates, so a later paper
+that does not speak to the claim does not displace it.
 
 So the help page says plainly that a reader comparing this curve with the label
 should expect the label to predict no change down to a creatinine clearance of

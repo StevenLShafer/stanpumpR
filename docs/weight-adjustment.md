@@ -23,7 +23,8 @@ model added to the library must follow.
   per-kilogram dose for him is unchanged too.
 - The switch is the checkbox **Adjust weight to fat-free mass** in the Patient
   Profile panel. It is on by default. Turning it off restores the scaling each
-  model used before, exactly.
+  model used before, exactly, except for the few models that have themselves
+  changed since (see [What the switch does](#what-the-switch-does)).
 - Doses typed in per-kilogram units (mg/kg, mcg/kg/min, ...) are **always**
   converted using total body weight, because that is what the clinician
   actually gives. The switch changes only the pharmacokinetics.
@@ -146,13 +147,15 @@ what it did before and what it does now.
 ### What the switch does
 
 The checkbox **Adjust weight to fat-free mass** in the Patient Profile panel is
-on by default. With it off, every model reverts to exactly the scaling it used
-before fat-free mass was introduced:
+on by default. With it off, each model uses its published scaling, which for
+every model whose parameters have not changed since is exactly the scaling it
+used before fat-free mass was introduced (the exceptions are listed below the
+table):
 
 | Model type | Behaviour with the switch off |
 |---|---|
-| Fixed published parameters (alfentanil, sufentanil, midazolam, vecuronium, cisatracurium, oliceridine, oxycodone, mannitol, calcium, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone, zolpidem, clonazepam, diazepam, escitalopram, sertraline, paroxetine, duloxetine, mirtazapine, bupropion, hydroxybupropion, fluoxetine, norfluoxetine, venlafaxine, desvenlafaxine) | no scaling at all |
-| V1 per kilogram with fixed rate constants (ketamine, etomidate, hydromorphone, pethidine, lidocaine, rocuronium, neostigmine, amiodaroneIV, lorazepam, temazepam) | volumes and clearances both × weight / 70 |
+| Fixed published parameters (alfentanil, sufentanil, midazolam, neostigmine, vecuronium, cisatracurium, oliceridine, oxycodone, mannitol, calcium, adult dexmedetomidine, ceftriaxone, methylprednisolone, dexamethasone, prednisolone, prednisone, glycopyrrolate, amiodarone, desethylamiodarone, zolpidem, clonazepam, diazepam, escitalopram, sertraline, paroxetine, duloxetine, mirtazapine, bupropion, hydroxybupropion, fluoxetine, norfluoxetine, venlafaxine, desvenlafaxine) | no scaling at all |
+| V1 per kilogram with fixed rate constants (ketamine, etomidate, hydromorphone, pethidine, lidocaine, rocuronium, amiodaroneIV, lorazepam, temazepam) | volumes and clearances both × weight / 70 |
 | Morphine (Lötsch 2002, Model A) | the published absolute values; Q3 = 19.5 L/h × (BSA / 1.83)<sup>4</sup>, the paper's own covariate, at the body surface area bounded to 1.5 to 2.2 m², in both switch positions |
 | Allometric on total weight (fentanyl, remimazolam, infant dexmedetomidine, cefalexin, hydrocortisone, clindamycin with its published 0.497 exponent, naproxen about its source's median child) | volumes × weight / 70, clearances × (weight / 70)<sup>0.75</sup> (or the published exponent) |
 | Metronidazole (da Silva Neto 2021) | volume 0.556 L/kg × the patient's adjusted body weight on Devine ideal weight (total body weight under 18 years, or where the ideal weight is not positive), clearance × (weight / 70)<sup>0.75</sup> on total weight, as published |
@@ -164,10 +167,20 @@ The switch exists for three reasons: to show, live, how far per-kilogram dosing
 departs from fat-free-mass dosing in an obese or female patient; to regenerate
 simulations and figures made before the change; and to reproduce a source
 study exactly where it scaled on total weight. Simulation links saved before
-the switch existed restore with it off, so their output is unchanged, with
-one exception: hydrocodone, whose source's covariates were added in October
-2026 and apply in both switch positions, so a hydrocodone simulation saved
-before then does not reproduce with the switch off.
+the switch existed restore with it off, so their output is unchanged, except
+for a drug whose model has itself changed since the link was saved: the switch
+selects the current model's switch-off behaviour, which is neither the old
+model nor, always, the old scaling. Known cases, all from October 2026:
+hydrocodone, whose source's covariates were added and apply in both switch
+positions; lidocaine, moved from Schnider 1996's interim to its final
+parameter set (#610); neostigmine, moved from Calvey 1979's single patient to
+Heier 2002's population model, whose published values are fixed, so with the
+switch off it no longer scales with weight / 70; ketamine, refitted to Domino
+1984's concentrations (#602); sufentanil, whose volumes and clearances became
+Gepts 1995's printed values (under 0.5%); adult dexmedetomidine, whose time to
+peak effect became 14.9 min; and intranasal hydromorphone, whose
+bioavailability became 0.37 (#611). A simulation of any of these saved before
+the change does not reproduce with the switch off.
 
 ### Per-kilogram doses
 
