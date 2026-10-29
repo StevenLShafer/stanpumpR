@@ -89,7 +89,11 @@ You should know this before trusting the renal covariate. The US label says, in 
 
 and that only below a creatinine clearance of 10 is total clearance "approximately one-half of that in patients with normal renal function". Hui is the study that sentence rests on.
 
-The two can be reconciled, and the label's own arithmetic is what does it: it puts healthy body clearance at "between 26 and 39 mL/min", and half of that is about Hui's 15.5. Read the sentence as flatness *across* 10 to 80 rather than equality *with* normal, and the label and Hui agree — which is also how the label's two statements become consistent with each other. That reading is not certain. It is recorded as an open question, and if you compare this curve with the label you should expect the label to predict no change down to a creatinine clearance of 10.
+The two can be reconciled, and the label's own arithmetic is what does it: it puts healthy body clearance at "between 26 and 39 mL/min", and half of that is about Hui's 15.5. Read the sentence as flatness *across* 10 to 80 rather than equality *with* normal, and the label and Hui agree — which is also how the label's two statements become consistent with each other. That reading is an inference, and neither document states it. Steven L. Shafer settled the question on 2026-10-29: **keep Hui's halving**, which is what this model does. Where a label's prose and the study it rests on disagree, the study's *numbers* are what a simulation can be built on, and the prose is what you have to be warned about — "does not differ appreciably from normal" is a clinical judgment written to guide dosing, where Hui's 42% at p < 0.001 is a measurement.
+
+There is a more general reason too. A label is published on the best science available when the drug is approved, and after that the science advances and the label does not: asking to change one invites fresh regulatory scrutiny of matters a company believed settled, so there is a standing disincentive to revise. **A revision date is not a review date.** This label reads "Revised: 10/2021", and its renal-impairment paragraph is still the 1991-era summary of the very paper this model is built from.
+
+So if you compare this curve with the label, expect the label to predict no change down to a creatinine clearance of 10, and expect this curve to follow the measurements instead.
 
 ### A blank serum creatinine is not a normal clearance
 

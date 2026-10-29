@@ -2072,9 +2072,42 @@ The two reconcile only if that sentence means flatness *across* 10 to 80 rather
 than equality *with* normal — which the label's own arithmetic supports, since it
 puts healthy body clearance at 26 to 39 mL/min and half of that is about 15.5,
 and which is also the only reading on which the label's two sentences agree with
-each other. That reading is not certain. It is recorded as an open question in
-the paper archive's review queue rather than resolved, and it is the one thing a
-user should know before trusting the renal covariate.
+each other. That reading is an inference, and neither document states it.
+
+**Settled by Steven L. Shafer on 2026-10-29: keep Hui's halving**, which is what
+the model does. The conflict stays on the record rather than being written out of
+it, because two rules it illustrates are worth having.
+
+The narrow one: **where a label's prose and the study it rests on disagree, the
+study's numbers are what a simulation can be built on, and the prose is what the
+user has to be warned about.** A label sentence is a regulatory summary across
+studies, written to guide dosing, so "does not differ appreciably" is a clinical
+judgment; Hui's 42% at p < 0.001 is a measurement.
+
+The general one, which Shafer stated the same day and which is now a rule in
+`AGENTS.md`: **a label is frozen at approval, so a finding published after its
+date outranks it.** Labels are written on the best science of their day, and
+afterwards the science advances and the label does not — not because anyone
+thinks it still right, but because asking the FDA to change a label exposes a
+company to fresh scrutiny of matters it believed settled. There is a standing
+disincentive to revise.
+
+Fosinopril shows the sharp edge of that, and it is the reason to state it here
+rather than only in the abstract. The archived label reads **"Revised:
+10/2021"** — thirty years after Hui — and its renal-impairment paragraph is
+still the 1991-era summary of Hui itself. **A revision date is not a review
+date.** The date on the front of a label tells you when some part of it changed,
+not which parts were revisited, so it must never be read as evidence that a
+particular paragraph reflects current science. Note which way the chronology
+runs here: Hui *precedes* the label and underlies it, so what settles this case
+is the narrow rule rather than the general one. The general rule is why the
+label's other statements — dialysis, hepatic impairment, the paediatric
+equivalence — are *recorded* rather than treated as authority, and why a
+post-1991 fosinopril study, if one is ever found, outranks all of it.
+
+So the help page says plainly that a reader comparing this curve with the label
+should expect the label to predict no change down to a creatinine clearance of
+10, and this curve to follow the measurements instead.
 
 ### 18.5 What holding the structure fixed buys
 

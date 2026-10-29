@@ -191,9 +191,29 @@
 # rather than equality WITH normal -- which the label's own arithmetic supports,
 # since it puts healthy body clearance at "between 26 and 39 mL/min" and half of
 # that is about Hui's 15.5.  On that reading the label and Hui agree and the
-# ramp is right.  The reading is not certain, it is recorded as an open question
-# in the paper archive's review queue, and a user should know that the label
-# would have them expect no change down to a creatinine clearance of 10.
+# ramp is right.  SETTLED BY STEVEN L. SHAFER, 2026-10-29: keep Hui's halving,
+# which is what this model does.  Two reasons, and the second is general.
+#
+# Where a label's PROSE and the study it rests on disagree, the study's NUMBERS
+# are what a simulation can be built on and the prose is what the user must be
+# warned about.  A label sentence is a regulatory summary written to guide
+# dosing: "does not differ appreciably from normal" is a clinical judgment,
+# where Hui's 42% at p < 0.001 is a measurement.
+#
+# And a label is frozen at approval (AGENTS.md): it is published on the best
+# science of its day, after which the science advances and the label does not,
+# because asking to change one invites fresh regulatory scrutiny of settled
+# matters.  So a finding published after a label outranks it.  This drug shows
+# the sharp edge of that: the archived label reads "Revised: 10/2021", yet its
+# renal-impairment paragraph is the 1991-era summary of this very paper.  A
+# REVISION DATE IS NOT A REVIEW DATE, and the date on the front of a label says
+# nothing about which paragraphs were revisited.
+#
+# The conflict itself stays on the record, because the reconciling reading is an
+# inference neither document states: a user comparing this curve with the label
+# should know that the label would have them expect no change down to a
+# creatinine clearance of 10, and that this model follows the measurements
+# instead.
 #
 # A blank Serum creatinine field means the assumed normal value for the
 # patient's age and sex (0.9 mg/dL for a man, 0.8 for a woman from 18 years;
