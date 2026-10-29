@@ -80,6 +80,25 @@ patientFieldReadersSentence <- function(arg, drugDefaults = getDrugDefaultsGloba
 #' @inheritParams patientFieldReaders
 #' @return a single string for `bslib::tooltip()`.
 #' @noRd
+#' The grey hint shown in an empty Serum creatinine box
+#'
+#' The field is optional, and an empty box says nothing about what empty
+#' MEANS: each renal model substitutes the normal creatinine for the patient's
+#' age and sex (`assumedCreatinine()`, R/renalFunction.R).  The placeholder
+#' shows that value, so the assumption is visible without hovering for the tip,
+#' which states the same thing in words.  It is only a hint: it disappears as
+#' soon as anything is typed, and an empty field still reaches the models as
+#' NULL.
+#'
+#' @param age age in years
+#' @param sex `"male"` or `"female"`
+#' @return the placeholder string, e.g. `"0.9 assumed"`
+#' @keywords internal
+creatininePlaceholder <- function(age, sex) {
+  sprintf("%s assumed",
+          format(round(assumedCreatinine(age, sex), 2), nsmall = 1, trim = TRUE))
+}
+
 patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
   arg <- match.arg(arg, names(PATIENT_FIELD_LABELS))
   readers <- patientFieldReadersSentence(arg, drugDefaults)
