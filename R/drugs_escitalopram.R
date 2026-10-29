@@ -72,10 +72,11 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source carries no size covariate, so the published values are taken
-# as the 70 kg reference man's and inherit the library's fat-free-mass
-# scaling: volume x size$volume, clearance x size$clearance, and with the
-# switch off the published values unscaled (legacyVolume = 1).
+# The source carries no size covariate.  Its published values belong to the
+# cohort's typical patient; re-anchored to the 70 kg reference man (below),
+# they inherit the library's fat-free-mass scaling: volume x size$volume,
+# clearance x size$clearance, and with the switch off the published values
+# unscaled (legacyVolume = 1).
 #
 # RE-ANCHORED TO LIU'S COHORT (Steven L. Shafer, 2026-10-29).  Liu's
 # published values belong to the cohort's typical patient, not to the 70 kg
@@ -84,9 +85,10 @@
 # weighted 59 men to 47 women, is 45.15 kg against the reference man's 54.48,
 # so with the switch on V/F is multiplied by 54.48 / 45.15 = 1.207 and CL/F
 # by 1.207^0.75 = 1.151 for the reference man, before the usual fat-free-mass
-# scaling.  A patient with the cohort's typical fat-free mass therefore
-# receives Liu's published values.  With the switch off the published values are used
-# unscaled, as before.
+# scaling: about 983 L and 18.8 L/h for him.  A patient with the cohort's
+# typical fat-free mass therefore receives Liu's published values, 815 L and
+# 16.3 L/h.  With the switch off the published values are used unscaled, as
+# before.
 #
 # NOT IMPLEMENTED (alternatives, documented in the help)
 # ======================================================

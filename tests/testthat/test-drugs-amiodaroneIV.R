@@ -383,6 +383,9 @@ test_that("the teaching scenario is the label regimen, in hours, over 24 hours",
   expect_equal(s$options$timeUnits, "hours")
   expect_equal(s$options$maximum, 1440)
   expect_equal(s$doses, labelRegimen)
+  # Opened with the fat-free-mass switch off, so the page's numbers are the
+  # published per-kilogram model's, not the re-anchored one's
+  expect_false(s$patient$adjustToFFM)
   expect_length(helpScenarioCheck(s), 0)
 })
 

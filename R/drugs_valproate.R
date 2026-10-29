@@ -14,9 +14,11 @@
 # absorption, NONMEM.  Read from the full text:
 #
 #     CL/F = 0.646 L/h x (WT/70)^0.75 x 1.640 (phenytoin) x 1.386
-#            (phenobarbital) x 1.512 (carbamazepine) x (AGE/15)^-0.0154
-#            (Equation 1 and Table 2; the worked examples back-calculate
-#            carbamazepine to 1.521)
+#            (phenobarbital) x 1.521 (carbamazepine) x (AGE/15)^-0.0154
+#            (Equation 1, which the worked examples confirm for carbamazepine;
+#            Table 2 gives the carbamazepine coefficient as 0.512, i.e. 1.512,
+#            a disagreement within the paper.  Not applied here: the app has
+#            no co-medication field.)
 #     V/F  = 14 L x (WT/70), FIXED
 #     ka   = 2.64 /h syrup, 0.78 /h gastro-resistant (delayed-release)
 #            tablet, 0.38 /h prolonged-release tablet, all FIXED from earlier
@@ -138,7 +140,9 @@ VALPROATE_MIN_AGE      <- 0.1   # years
 
 #' Valproate pharmacokinetics (oral delayed release, syrup, extended release, IV)
 #'
-#' Teixeira-da-Silva et al. (2022), weight only; see the header of the file.
+#' Teixeira-da-Silva et al. (2022): clearance on weight and age (Equation 1's
+#' \eqn{(AGE/15)^{-0.0154}}, age floored at 0.1 years), volume on weight; see
+#' the header of the file.
 #'
 #' @inheritParams cefazolin
 #' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the total
