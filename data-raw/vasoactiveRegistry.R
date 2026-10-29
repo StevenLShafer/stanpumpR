@@ -576,10 +576,17 @@ registry <- rbind(
   reg("propranolol__healthy__achong1976", "propranolol",
       "6 healthy men, 10 mg IV (with timolol 1 mg)", "propranolol", "none (heart rate and systolic time intervals)",
       "no_suitable_model", NA, "full_text",
-      "Read in full (supplied PDF): 10 mg over 10 min (1 mL/min); the beta-stimulus (4 min of exercise, later an isoproterenol infusion) applied 5 min, 90 min, 4, 9 and 24 h after the END of the infusion.  The reduction in exercise tachycardia was 'maximal 5 min after' because 5 min was the first measurement, with none earlier and none until 90 min, so the paper bounds the peak to within 5-9 min of a 10-min infusion and measures no bolus time to peak; no concentrations.  The propranolol tPeak of 5 min stays as the user's clinical choice (2026-10-28), consistent with it.",
-      "Riva E et al. J Cardiovasc Pharmacol 1980;2:707-714, PMID 6160321 (heart rate 5-8 min after 0.1 mg/kg IV; the remaining candidate for a measured time to peak).",
+      "Read in full (supplied PDF): 10 mg over 10 min (1 mL/min); the beta-stimulus (4 min of exercise, later an isoproterenol infusion) applied 5 min, 90 min, 4, 9 and 24 h after the END of the infusion.  The reduction in exercise tachycardia was 'maximal 5 min after' because 5 min was the first measurement, with none earlier and none until 90 min, so the paper bounds the peak to within 5-9 min of a 10-min infusion and measures no bolus time to peak; no concentrations.  The propranolol tPeak of 5 min stays as the user's clinical choice (2026-10-28), consistent with it, and with Riva 1980 (its own row).",
+      NA,
       "Achong MR, Piafsky KM, Ogilvie RI. Duration of cardiac effects of timolol and propranolol. Clin Pharmacol Ther 1976;19:148-152. PMID 4254.",
       doi("10.1002/cpt1976192148")),
+  reg("propranolol__arrhythmia__riva1980", "propranolol",
+      "10 patients, 0.1 mg/kg IV over 2-3 min (8 also 40 mg PO q12h)", "propranolol (gas chromatography)", "plasma",
+      "no_suitable_model", NA, "full_text",
+      "Read in full (supplied PDF, 2026-10-28).  Plasma propranolol was measured and a biphasic disposition reported: Clp 968 ml/min, Vd(area) 223 L, terminal half-life 184 min, an alpha phase of about 60 min, AUC 152.6 ng/ml h after 6.5 mg (Table 2).  Only the terminal half-life and an approximate alpha duration are given, no biexponential coefficients, so it is not implementable, and the library's propranolol (Fagan 1982) stands; its clearance, 968 ml/min, is within 13% of that model's 1107 ml/min near 65 kg, a cross-check.  Its value here is the time to peak effect: ERPA, ERPAVN and heart rate changed 5-45 min after the injection, the effects first SEEN at 5-8 min (first sample at 5 min, next at 15), so like Achong 1976 it shows a rapid onset and bounds rather than pins the bolus peak.  The 5 min tPeak kept is the user's clinical pick within that early window.",
+      NA,
+      "Riva E, Latini R, Cremonesi A, Zacà F, Pagliarani P. Time course of plasma levels and electrophysiologic effects of propranolol in man. J Cardiovasc Pharmacol 1980;2:707-714. PMID 6160321.",
+      doi("10.1097/00005344-198011000-00001")),
   reg("propranolol__obese_controls__cheymol1987", "propranolol",
       "12 obese and 12 normal-weight volunteers, 8 mg over 10 min", "propranolol (racemic)", "plasma",
       "no_suitable_model", NA, "full_text",
@@ -674,10 +681,10 @@ registry <- rbind(
       "Baumann G, Dingman JF. Distribution, blood transport, and degradation of antidiuretic hormone in man. J Clin Invest 1976;57:1109-1116. PMID 1262458, PMC436762.",
       doi("10.1172/JCI108377")),
   reg("ephedrine__oral__csajka2005", "ephedrine",
-      "oral only", "ephedrine", "plasma",
-      "no_suitable_model", NA, "abstract",
-      "No human intravenous pharmacokinetics was found; the FDA review for the IV product (NDA 208289) itself extrapolates from oral data.  Csajka 2005 is oral, a four-compartment ephedrine-norephedrine model with saturable conversion (ephedrine CL 0.34 L/min, V 181 L).",
-      NA,
+      "24 healthy adults, oral ephedrine (25 mg sulphate or herbal)", "ephedrine (LC-MS/MS)", "plasma",
+      "implemented", "ephedrine", "full_text",
+      "Read in full and used as the basis for an IV model, on the user's decision (2026-10-28): no human IV pharmacokinetics exists (the FDA review for the IV product NDA 208289 itself extrapolates from oral data).  Csajka 2005 is a population model fitting plasma with urine: ephedrine is one compartment (a second did not improve the fit) with first-order absorption, plus a minor saturable conversion to norephedrine.  Table 3 reports V/F 181 L and CL_RE/F_E 0.34 L/min; because the fitted CL_RE is the absolute renal clearance, CL_RE/F_E equals CL/F, the apparent total clearance, so taking F = 1 uses both directly: V 181 L, CL 0.34 L/min, half-life 6.1 h.  Dividing again by F_E (an earlier PR #605 draft: V 232 L, CL 0.436) double-counts bioavailability and reads a fifth low; CodeRabbit caught it and the user chose this reading.  No distribution phase (oral data cannot show one), so the first minutes after a bolus are higher than drawn.  Gurley 1998 (not fitted) is the same order: base-dose V 2.6 L/kg and CL 0.29 L/h/kg, about a fifth below its Vss/F 2.98-3.49 and CL/F 0.37-0.48.",
+      "FDA review of the first IV product (NDA 208289, Akovaz) if a population model was fitted; a direct IV pharmacokinetic study, if one is ever done.",
       "Csajka C, Haller CA, Benowitz NL, Verotta D. Mechanistic pharmacokinetic modelling of ephedrine, norephedrine and caffeine in healthy subjects. Br J Clin Pharmacol 2005;59:335-345. PMID 15752380, PMC1884794.",
       doi("10.1111/j.1365-2125.2005.02254.x")),
   reg("hydralazine__hypertensive__ludden1980", "hydralazine",
@@ -776,6 +783,7 @@ JO24 <- doi("10.1111/bcp.16180")
 SA89 <- doi("10.1016/0002-9149(89)90076-3")
 HA20 <- doi("10.1111/bcp.14146")
 MBL  <- "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=204630"
+EPH  <- doi("10.1111/j.1365-2125.2005.02254.x")
 LA17 <- doi("10.1007/s40262-017-0515-7")
 MO93 <- doi("10.1002/jps.2600820707")
 CH97 <- pubmed(9165563)
@@ -854,7 +862,7 @@ parameters <- rbind(
   par("atropine", "V2", 192.0, "L", "derived", "full_text", HI),
   par("atropine", "base per sulfate", 0.8329, "2 x 289.37/694.83", "derived", "full_text", HI),
 
-  par("propranolol", "tPeak", 5, "min (clinical, S. L. Shafer; Achong 1976, read in full, found the largest fall in exercise tachycardia at its first measurement, 5 min after a 10-min infusion, consistent with it)", "fixed", "clinical", doi("10.1002/cpt1976192148")),
+  par("propranolol", "tPeak", 5, "min (clinical, S. L. Shafer; the user's pick within the early window Riva 1980 reports after 0.1 mg/kg IV - effects first seen 5-8 min, observed over 5-45 min - and consistent with Achong 1976's first measurement at 5 min after a 10-min infusion)", "fixed", "clinical", doi("10.1002/cpt1976192148")),
   par("propranolol", "P", 317, "ng/mL per 3.8 mg (bolus-equivalent)", "estimated", "full_text", FA),
   par("propranolol", "A", 17.2, "ng/mL per 3.8 mg", "estimated", "full_text", FA),
   par("propranolol", "B", 9.3, "ng/mL per 3.8 mg", "estimated", "full_text", FA),
@@ -948,6 +956,12 @@ parameters <- rbind(
   par("methyleneBlue", "V2", 208.17, "L at 70 kg (derived)", "derived", "full_text", MBL),
   par("methyleneBlue", "CL", 10.016, "L/h at 70 kg (2 mg/kg x 70 / AUC)", "derived", "full_text", MBL),
   par("methyleneBlue", "Q", 17.77, "L/h at 70 kg (derived)", "derived", "full_text", MBL),
+
+  par("ephedrine", "V/F", 181, "L (Csajka 2005, Table 3)", "estimated", "full_text", EPH),
+  par("ephedrine", "CL/F", 0.34, "L/min, apparent total clearance (Csajka 2005, Table 3, CL_RE/F_E = CL/F)", "estimated", "full_text", EPH),
+  par("ephedrine", "V", 181, "L at an assumed 70 kg (V/F with F taken as 1)", "derived", "full_text", EPH),
+  par("ephedrine", "CL", 0.34, "L/min at 70 kg (CL/F with F taken as 1)", "derived", "full_text", EPH),
+  par("ephedrine", "half-life", 6.1, "h (ln 2 x V/CL; CL in L/h)", "derived", "full_text", EPH),
 
   par("nitroglycerin", "CL", 6.2, "L/min", "estimated", "full_text", AR),
   par("nitroglycerin", "half-life after a stop", 1.9, "min (Armstrong 1980, quoted by Armstrong 1983)", "estimated", "full_text", AR),

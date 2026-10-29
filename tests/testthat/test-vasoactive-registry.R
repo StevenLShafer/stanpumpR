@@ -16,7 +16,7 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
                  "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
                  "vasopressin", "hydralazine", "dobutamineNeonatal",
-                 "methyleneBlue")
+                 "methyleneBlue", "ephedrine")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -122,7 +122,7 @@ test_that("a drug with no suitable model gives the reason", {
                       registry$drug[registry$readiness %in%
                                       c("implemented", "needs_full_text",
                                         "complete_not_implemented")])
-  expect_setequal(hopeless, c("sodium nitroprusside", "ephedrine",
+  expect_setequal(hopeless, c("sodium nitroprusside",
                               "adenosine", "sodium bicarbonate"))
 })
 

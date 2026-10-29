@@ -62,7 +62,7 @@ series; a PBPK prediction; a review.
 
 The registry is authoritative; this table was generated from it on 2026-10-19 (factors on the
 elimination clearance or CL/F, the volume(s) the drug's `applied` text names, oral
-bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax).
+bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax). Oxycodone's 1.462 was removed on 2026-10-28: Kokki 2012's measured clearance in labour equals this model's non-pregnant value.
 
 | Drug | CL | V | F | GFR term | First source | Confidence |
 |---|---|---|---|---|---|---|
@@ -71,7 +71,6 @@ bioavailability, and the renal-function estimate; phenytoin's are on Km and Vmax
 | morphine | 1.700 |  |  |  | Gerdin 1990 | high |
 | methadone | 1.714 |  |  |  | Bogen 2012 | high |
 | midazolam | 1.280 |  |  |  | Hebert 2008 | moderate |
-| oxycodone | 1.462 |  |  |  | Kokki 2012 | moderate |
 | buprenorphine | 1.830 |  |  |  | Bastian 2017 | moderate |
 | acetaminophen | 1.400 | 1.14 |  |  | Allegaert 2015 | moderate |
 | ketorolac | 1.500 | 1.50 |  |  | Kulo 2012 | moderate |

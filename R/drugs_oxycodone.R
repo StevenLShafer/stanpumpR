@@ -277,20 +277,22 @@
 #
 # PREGNANCY
 # =========
-# Ansari, Carvalho, Shafer and Flood (Anesth Analg 2016;122:786-804, Table 3,
-# from Kokki 2012, intravenous oxycodone in the first stage of labour):
-# "Increased clearance via increased GFR as well as induction of CYP3A4 and
-# CYP2D6 ... Shorter elimination half-time in laboring women (decreased from
-# 3.8 to 2.6 h)".  The review's only figure is the pair of half-times, so
-# with the Patient Profile's Pregnant field on the elimination clearance CL1
-# is multiplied by OXYCODONE_PREGNANCY_CL_FACTOR = 3.8 / 2.6 = 1.46, which
-# reproduces that ratio of half-times if the volumes are unchanged, as
-# nothing in the review says otherwise.  The renal factor above is not
-# touched: it is capped at an eGFR of 100, so the higher filtration of
-# pregnancy would not move it, and the half-time ratio already contains
-# whatever the kidney contributed.  Oxymorphone formation is left as it is;
-# the review attributes part of the faster clearance to CYP2D6 induction but
-# gives no figure for the metabolite.  See R/pregnancy.R.
+# Nothing is applied: the Pregnant field does not change this model.  Until
+# 2026-10-28 it multiplied the elimination clearance by 3.8/2.6 = 1.46, the
+# ratio of half-times in Ansari, Carvalho, Shafer and Flood (Anesth Analg
+# 2016;122:786-804, Table 3), who took them from Kokki 2012.  Kokki 2012
+# (Basic Clin Pharmacol Toxicol 111:182-188, full text read) fitted a
+# population model to 15 nulliparous women given 1 mg IV boluses in
+# first-stage labour: CL 0.92 L/min, central V 95 L, peripheral V 100 L
+# (Table 3), at a median 82 kg and 29 years.  Its "clearance was higher" and
+# 3.8 h are against Gronlund 2011's healthy volunteers (Clin Drug Investig
+# 31:143-153), not against this model: this model's non-pregnant clearance
+# for an 82 kg, 161 cm, 29-year-old woman is 1.03 L/min (Vss 213 L), so
+# Kokki's labouring women have about the same clearance (0.89x) and a
+# slightly smaller volume (0.92x).  The factor gave them 1.51 L/min, 64% more
+# than Kokki measured, and was dropped by Steven L. Shafer's decision of
+# 2026-10-28 (the unattended digest of Kinnunen 2019 raised it).  See
+# R/pregnancy.R.
 #
 # References
 # ----------
@@ -310,13 +312,13 @@
 # Samer CF et al. Br J Pharmacol 2010;160:919-930 (the companion
 #   pharmacodynamic paper).  https://doi.org/10.1111/j.1476-5381.2010.00709.x
 # Ansari J, Carvalho B, Shafer SL, Flood P.  Anesth Analg 2016;122:786-804.
-#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy)
+#   https://doi.org/10.1213/ANE.0000000000001143 (pregnancy: the factor
+#   dropped 2026-10-28)
+# Kokki M, Franco MG, Raatikainen K, et al.  Basic Clin Pharmacol Toxicol
+#   2012;111:182-188.  https://doi.org/10.1111/j.1742-7843.2012.00884.x
+#   (pregnancy: clearance in labour)
 # -----------------------------------------------------------------------------
 
-# Elimination clearance in pregnancy relative to the pooled value: the
-# nonpregnant over the labouring elimination half-time in Ansari 2016 (see
-# the header).
-OXYCODONE_PREGNANCY_CL_FACTOR <- 3.8 / 2.6
 
 # Relative CYP2D6 activity for oxymorphone formation, normal = 1 (see header)
 OXYCODONE_CYP2D6_WEIGHT <- c(
@@ -343,13 +345,11 @@ OXYCODONE_CYP2D6_WEIGHT <- c(
 #'   0.75 power; when \code{FALSE}, scale both linearly with total weight
 #' @param creatinine serum creatinine in mg/dL, or NULL for an assumed normal
 #'   value for age and sex
-#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the
-#'   elimination clearance by 3.8/2.6 (Ansari 2016; see the file's header).
 #' @returns a list in the shape \code{getDrugPK()} expects, naming
 #'   oxymorphone as the formed active metabolite
 #' @export
 oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
-                      adjustToFFM = TRUE, creatinine = NULL, pregnant = FALSE)
+                      adjustToFFM = TRUE, creatinine = NULL)
 {
   if (length(cyp2d6) != 1 || !cyp2d6 %in% CYP2D6_VALUES) {
     stop("Invalid cyp2d6: ", paste(cyp2d6, collapse = ", "),
@@ -372,8 +372,6 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   ageFactor <- 1 - AGE_SLOPE * max(0, age - AGE_REF)
   eGFR <- egfrCKDEPI2009(age, sex, adultEquivalentCreatinine(creatinine, age, sex))
   renalFactor <- 1 - RENAL_FRACTION * (1 - min(eGFR, EGFR_NORMAL) / EGFR_NORMAL)
-  # Pregnancy (see the header): elimination clearance only.
-  clPregnancy <- if (isTRUE(pregnant)) OXYCODONE_PREGNANCY_CL_FACTOR else 1
 
   # Size scaling (see docs/weight-adjustment.md).  The published values are
   # per kilogram, so with the switch off both scale with total weight / 70.
@@ -384,7 +382,7 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
   v2  <- vss - v1
   v3  <- 1                      # no third compartment
   clRef <- CL_PER_KG * 70 * size$clearance
-  cl1 <- clRef * ageFactor * renalFactor * clPregnancy
+  cl1 <- clRef * ageFactor * renalFactor
   cl2 <- Q_OVER_CL * clRef      # distribution is not adjusted for age or renal function
   cl3 <- 0
 
@@ -424,10 +422,6 @@ oxycodone <- function(weight, height, age, sex, cyp2d6 = CYP2D6_DEFAULT,
     "Pharmacogenomics 2017;18:337-348 (CYP2D6). ",
     "https://doi.org/10.1016/j.clpt.2006.01.009"
   )
-  if (isTRUE(pregnant)) {
-    reference <- paste0(reference, "; ", pregnancyReference(
-      "clearance x 3.8/2.6 (elimination half-time 3.8 to 2.6 h in labour)"))
-  }
 
   default <- list(
     v1 = v1,

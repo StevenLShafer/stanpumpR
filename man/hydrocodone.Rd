@@ -10,24 +10,28 @@ hydrocodone(
   age,
   sex,
   cyp2d6 = CYP2D6_DEFAULT,
-  adjustToFFM = TRUE
+  adjustToFFM = TRUE,
+  creatinine = NULL
 )
 }
 \arguments{
-\item{weight}{weight in kg (used only to scale metabolite formation, since
-the apparent disposition carries no weight term)}
+\item{weight}{weight in kg (body surface area, Cockcroft-Gault and
+metabolite formation)}
 
-\item{height}{height in cm (fat-free mass only)}
+\item{height}{height in cm (body surface area and fat-free mass)}
 
-\item{age}{age in years (fat-free mass only)}
+\item{age}{age in years (Cockcroft-Gault and fat-free mass)}
 
-\item{sex}{sex as a string (fat-free mass only)}
+\item{sex}{sex as a string (Cockcroft-Gault and fat-free mass)}
 
 \item{cyp2d6}{CYP2D6 metaboliser phenotype, one of \code{CYP2D6_VALUES}}
 
-\item{adjustToFFM}{scale volumes to the patient's fat-free mass and
-clearances to that ratio to the 0.75 power; when \code{FALSE}, use the
-published fixed parameters unscaled.}
+\item{adjustToFFM}{when \code{TRUE}, the covariates see the pharmacokinetic
+weight (70 kg x the patient's fat-free mass over the reference man's);
+when \code{FALSE}, total body weight.}
+
+\item{creatinine}{serum creatinine, mg/dL, or \code{NULL} for an assumed
+normal value (see \code{R/renalFunction.R})}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects, naming
