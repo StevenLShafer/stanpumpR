@@ -16,7 +16,7 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
                  "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
                  "vasopressin", "hydralazine", "dobutamineNeonatal",
-                 "methyleneBlue", "ephedrine")
+                 "methyleneBlue")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -122,8 +122,20 @@ test_that("a drug with no suitable model gives the reason", {
                       registry$drug[registry$readiness %in%
                                       c("implemented", "needs_full_text",
                                         "complete_not_implemented")])
-  expect_setequal(hopeless, c("sodium nitroprusside",
+  expect_setequal(hopeless, c("sodium nitroprusside", "ephedrine",
                               "adenosine", "sodium bicarbonate"))
+  # Ephedrine's row carries no model at all (Shafer, 2026-10-28): there is no
+  # model of the intravenous form, and the oral one is not of interest.  PR
+  # #605 briefly shipped a drug built from Csajka's oral model with F taken as
+  # 1; it was removed.  The row records the absence and keeps Csajka's numbers
+  # so nobody has to find them again to reach the same conclusion.
+  eph <- registry[registry$drug == "ephedrine", ]
+  expect_equal(nrow(eph), 1)
+  expect_identical(eph$readiness, "no_suitable_model")
+  expect_true(is.na(eph$stanpumpr_drug))
+  expect_match(eph$blocking_issue, "no usable intravenous model", ignore.case = TRUE)
+  expect_false("ephedrine" %in% getDrugDefaultsGlobal()$Drug)
+  expect_false(exists("ephedrine", mode = "function"))
 })
 
 test_that("cross-references to the antihypertensive registry resolve", {
