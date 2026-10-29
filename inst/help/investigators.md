@@ -102,7 +102,7 @@ Struys and colleagues reviewed this history in *The History of Target-Controlled
 | methylprednisolone, dexamethasone | **Y. Hong** and colleagues (2007) | Intravenous kinetics |
 | prednisolone, prednisone | **J. Xu**, **J. Winkler** and **H. Derendorf** (2007) | The reversible prednisone-prednisolone pair |
 | sugammadex | **H. J. Kleijn** and colleagues (2011) | Two-compartment kinetics of total sugammadex with creatinine clearance |
-| neostigmine | **T. N. Calvey** and colleagues (1979); **T. Heier** and colleagues (2002) | One patient's two-compartment fit; the time to peak effect |
+| neostigmine | **T. Heier** and colleagues (2002) | Three-compartment population model in volunteers, and the time to peak effect |
 | glycopyrrolate | **C. Bartels** and colleagues (2013) | Three-compartment kinetics of the active cation |
 | mannitol | **K. Kaneda** and colleagues (2010); **A. Rudehill** and colleagues (1993) | Three-compartment kinetics; the conversion to serum osmolality (Rudehill); clearance scaled by creatinine clearance, a stanpumpR assumption |
 | calcium chloride, calcium gluconate | **J. R. Ansari** and colleagues (2025) | Two-compartment kinetics of the rise in ionized calcium above baseline, fitted in parturients at cesarean delivery; one model for both salts, with gluconate's dose scaled by the fitted bioequivalence ratio |

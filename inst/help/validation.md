@@ -26,7 +26,7 @@ The running record, including what has *not* been checked, is `inst/validation/V
 ## What has not been validated
 
 - The models themselves are only as good as their papers. stanpumpR checks that it computes what the paper says, not that the paper is right for your patient.
-- Several times to peak effect are described in the code as guesses (ketamine, dexmedetomidine, oxytocin). Their drug pages say so.
+- Several times to peak effect are described in the code as guesses (ketamine, infant dexmedetomidine, oxytocin). Their drug pages say so.
 - The opioid-MAC interaction is an approximate placeholder fitted to nine points.
 - The intramuscular parameters for hydromorphone have no direct citation and are provisional.
 - The regional anesthesia (RA) absorption of each local anesthetic is fitted to, or matched to the peak of, a single published block; bupivacaine's and ropivacaine's rates are labelled provisional in the code.
