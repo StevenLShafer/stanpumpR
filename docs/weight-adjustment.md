@@ -165,19 +165,19 @@ departs from fat-free-mass dosing in an obese or female patient; to regenerate
 simulations and figures made before the change; and to reproduce a source
 study exactly where it scaled on total weight. Simulation links saved before
 the switch existed restore with it off, so their output is unchanged, except
-for a drug whose model has itself changed since the link was saved: the
-switch selects the current model's switch-off behaviour, which is neither
-the old model nor, always, the old scaling.  Known cases, all from
-October 2026: hydrocodone, whose source's covariates were added and apply in
-both switch positions; lidocaine, moved from Schnider 1996's interim to its
-final parameter set (#610); neostigmine, moved from Calvey 1979's single
-patient to Heier 2002's population model, whose published values are fixed,
-so with the switch off it no longer scales with weight / 70; ketamine, refitted to Domino
-1984's concentrations (#602); sufentanil, whose volumes and clearances
-became Gepts 1995's printed values (under 0.5%); adult dexmedetomidine,
-whose time to peak effect became 14.9 min; and intranasal hydromorphone,
-whose bioavailability became 0.37 (#611).  A simulation of any of these
-saved before the change does not reproduce with the switch off.
+for a drug whose model has itself changed since the link was saved: the switch
+selects the current model's switch-off behaviour, which is neither the old
+model nor, always, the old scaling. Known cases, all from October 2026:
+hydrocodone, whose source's covariates were added and apply in both switch
+positions; lidocaine, moved from Schnider 1996's interim to its final
+parameter set (#610); neostigmine, moved from Calvey 1979's single patient to
+Heier 2002's population model, whose published values are fixed, so with the
+switch off it no longer scales with weight / 70; ketamine, refitted to Domino
+1984's concentrations (#602); sufentanil, whose volumes and clearances became
+Gepts 1995's printed values (under 0.5%); adult dexmedetomidine, whose time to
+peak effect became 14.9 min; and intranasal hydromorphone, whose
+bioavailability became 0.37 (#611). A simulation of any of these saved before
+the change does not reproduce with the switch off.
 
 ### Per-kilogram doses
 
