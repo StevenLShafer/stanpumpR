@@ -164,9 +164,6 @@ The switch exists for three reasons: to show, live, how far per-kilogram dosing
 departs from fat-free-mass dosing in an obese or female patient; to regenerate
 simulations and figures made before the change; and to reproduce a source
 study exactly where it scaled on total weight. Simulation links saved before
-<<<<<<< HEAD
-the switch existed restore with it off, so their output is unchanged.
-=======
 the switch existed restore with it off, so their output is unchanged, except
 for a drug whose model has itself changed since the link was saved: the
 switch restores the old scaling, not the old model.  Known cases:
@@ -180,7 +177,6 @@ printed values in October 2026 (under 0.5%); adult dexmedetomidine, whose
 time to peak effect became 14.9 min; and intranasal hydromorphone, whose
 bioavailability became 0.37 (both #611).  A simulation of any of these
 saved before the change does not reproduce with the switch off.
->>>>>>> c2e55096 (weight-adjustment.md: a changed model breaks saved-link reproduction)
 
 ### Per-kilogram doses
 
