@@ -42,10 +42,24 @@ test_that("the switch off ignores weight, height, age and sex", {
   expect_equal_rounded(a$cl1, 16.3 / 60)
 })
 
+# Re-anchoring (R/drugs_escitalopram.R): Liu's typical patient, 61 kg, 165 cm,
+# 45 y, 59 men to 47 women, has a fat-free mass of (59 x 49.087345 + 47 x
+# 40.196655) / 106 (Al-Sallami, by hand), against the reference man's
+# 54.475206.  With the switch on, V/F x that ratio and CL/F x its 0.75 power.
+liuAnchor <- 54.475206 / ((59 * 49.087345 + 47 * 40.196655) / 106)   # 1.2066
+
+test_that("re-anchors Liu's values to the reference man with the switch on", {
+  ref <- escitalopram(70, 170, 35, "male")$PK$default
+  expect_equal_rounded(ref$v1, 815 * liuAnchor)
+  expect_equal_rounded(ref$cl1, 16.3 / 60 * liuAnchor^0.75)
+  expect_equal(liuAnchor, 1.2066, tolerance = 1e-4)
+})
+
 test_that("scales to fat-free mass for a 120 kg man", {
-  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
+  # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126,
+  # after re-anchoring
   actual <- escitalopram(120, 170, 50, "male")
-  expected <- list(v1 = 1063.49896, cl1 = 0.331681256)
+  expected <- list(v1 = 1063.49896 * liuAnchor, cl1 = 0.331681256 * liuAnchor^0.75)
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
   # placeholders unscaled
   expect_equal(actual$PK$default$v2, 1)

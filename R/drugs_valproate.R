@@ -14,8 +14,11 @@
 # absorption, NONMEM.  Read from the full text:
 #
 #     CL/F = 0.646 L/h x (WT/70)^0.75 x 1.640 (phenytoin) x 1.386
-#            (phenobarbital) x 1.521 (carbamazepine), with an age term centred
-#            on 15 years
+#            (phenobarbital) x 1.521 (carbamazepine) x (AGE/15)^-0.0154
+#            (Equation 1, which the worked examples confirm for carbamazepine;
+#            Table 2 gives the carbamazepine coefficient as 0.512, i.e. 1.512,
+#            a disagreement within the paper.  Not applied here: the app has
+#            no co-medication field.)
 #     V/F  = 14 L x (WT/70), FIXED
 #     ka   = 2.64 /h syrup, 0.78 /h gastro-resistant (delayed-release)
 #            tablet, 0.38 /h prolonged-release tablet, all FIXED from earlier
@@ -24,15 +27,18 @@
 # Daily dose was deliberately NOT a covariate (the authors treat it as a
 # confounder of saturable protein binding).
 #
+# THE AGE TERM (applied from 2026-10-29, Steven L. Shafer)
+# =============
+# Equation 1 and Table 2 print it as (AGE/15)^-0.0154 (RSE 64%), and it is
+# applied as printed: CL/F = 0.646 x (WT/70)^0.75 x (AGE/15)^-0.0154.  It
+# moves clearance by under 5% between 5 and 80 years.  The paper's own worked
+# examples do not reproduce it (1.484 L/h at 35 y and 73.5 kg in monotherapy,
+# where the equation gives 0.66), which the paper does not explain; the
+# printed equation is the authority.  Age is floored at 0.1 years, the
+# youngest patient studied, because the power goes to infinity at birth.
+#
 # WHAT IS LEFT OUT, AND WHY
 # =========================
-# The AGE term.  Equation 1 and Table 2 print it as (AGE/15)^-0.0154 (RSE
-# 64%), as the handoff gave, but the paper's own worked examples do not
-# reproduce it (1.484 L/h at 35 y and 73.5 kg in monotherapy, where -0.0154
-# gives 0.66).  The age term is omitted: the model is
-# CL/F = 0.646 x (WT/70)^0.75.  The omission changes clearance by under 5%
-# between 5 and 80 years.
-#
 # CO-MEDICATION.  The app has no co-medication field, so the inducer
 # multipliers (confirmed by back-calculation from the worked examples) are
 # not applied: the curve is valproate WITHOUT phenytoin, phenobarbital or
@@ -127,9 +133,16 @@
 # Krauer 1986) leaves the total at 0.625 of baseline; 1 / 0.625 = 1.6.
 VALPROATE_PREGNANCY_CL_FACTOR <- 1.6
 
+# The age term on CL/F, (AGE/15)^-0.0154 (Equation 1), and the youngest age it
+# sees: 0.1 years, the youngest patient studied (see the header).
+VALPROATE_AGE_EXPONENT <- -0.0154
+VALPROATE_MIN_AGE      <- 0.1   # years
+
 #' Valproate pharmacokinetics (oral delayed release, syrup, extended release, IV)
 #'
-#' Teixeira-da-Silva et al. (2022), weight only; see the header of the file.
+#' Teixeira-da-Silva et al. (2022): clearance on weight and age (Equation 1's
+#' \eqn{(AGE/15)^{-0.0154}}, age floored at 0.1 years), volume on weight; see
+#' the header of the file.
 #'
 #' @inheritParams cefazolin
 #' @param pregnant is the patient pregnant?  \code{TRUE} multiplies the total
@@ -148,7 +161,8 @@ valproate <- function(weight, height, age, sex, adjustToFFM = TRUE,
   default <- list(
     v1  = 14 * (pkW / 70),
     v2  = 1, v3 = 1,
-    cl1 = 0.646 * (pkW / 70)^0.75 / 60 * clPregnancy,
+    cl1 = 0.646 * (pkW / 70)^0.75 * (max(age, VALPROATE_MIN_AGE) / 15)^VALPROATE_AGE_EXPONENT /
+    60 * clPregnancy,
     cl2 = 0, cl3 = 0,
     ka_PO = 0.78 / 60,                 # delayed-release (enteric) tablet
     bioavailability_PO = 1,
@@ -159,7 +173,7 @@ valproate <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   reference <- paste0(
     "Teixeira-da-Silva P et al., Pharmaceutics 2022;14:811. One compartment, ",
-    "apparent oral, weight only (age term and co-medication not applied); ",
+    "apparent oral, weight and age (co-medication not applied); ",
     "delayed-release, syrup and extended-release inputs; intravenous on the ",
     "label's 1:1 conversion. https://doi.org/10.3390/pharmaceutics14040811"
   )
