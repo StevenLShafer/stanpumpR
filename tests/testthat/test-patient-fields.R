@@ -103,3 +103,24 @@ test_that("the Patient Profile carries the six hover tips", {
                 info = paste("the", arg, "tooltip is not in the UI"))
   }
 })
+
+
+test_that("the Serum creatinine placeholder shows the value a blank field assumes", {
+  # The field is hidden until a dosed drug reads it, and then shows an empty
+  # box; the placeholder is what says that empty means an assumed normal for
+  # the patient's age and sex (Shafer, 2026-10-29: it looked as though there
+  # were no default at all).
+  expect_identical(creatininePlaceholder(50, "male"),
+                   paste(SCR_ASSUMED_MALE, "assumed"))
+  expect_identical(creatininePlaceholder(50, "female"),
+                   paste(SCR_ASSUMED_FEMALE, "assumed"))
+  # a child's assumed creatinine is its own, and is rounded for display: the
+  # raw value has seven decimals
+  expect_identical(creatininePlaceholder(5, "female"), "0.36 assumed")
+  expect_identical(creatininePlaceholder(1, "male"), "0.24 assumed")
+  expect_match(creatininePlaceholder(12, "male"), "^0[.]6[0-9] assumed$")
+  # it is the value the models actually use
+  for (a in c(1, 5, 12, 50)) for (s in c("male", "female"))
+    expect_equal(as.numeric(sub(" assumed$", "", creatininePlaceholder(a, s))),
+                 round(assumedCreatinine(a, s), 2), info = paste(a, s))
+})
