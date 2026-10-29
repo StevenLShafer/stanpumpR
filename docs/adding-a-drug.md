@@ -18,7 +18,7 @@ A new drug touches **four** files, including a help page. None of the engine cod
 >
 > ```bash
 > git fetch origin master -q
-> git log --oneline -S '<name>' origin/master -10          # merged recently
+> git log --oneline -i -G '<name>' origin/master -15       # merged recently
 > for n in $(gh pr list --state open --json number --jq '.[].number'); do
 >   gh pr diff "$n" | grep -qi '<name>' && echo "PR $n mentions <name>"   # open
 > done
@@ -31,7 +31,13 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > `therapeuticRanges.csv`, `pregnancyRegistry.csv` and the vasoactive registry each carried a
 > row for it under a name that matches nothing. A drug that is only a row in shared files is
 > invisible to a path search. And master matters as much as the open PRs: the ephedrine drug
-> was *merged* while the PR removing it was open. Twice in October 2026 two sessions did the same work in parallel and one PR
+> was *merged* while the PR removing it was open.
+>
+> Use `-G`, not the `-S` pickaxe: `-S` reports only commits that change the NUMBER of
+> occurrences, so a commit that edits an existing row leaves no trace in it. On this repository
+> `-G 'ephedrine'` returns 12 commits and `-S` returns 7, and the five it misses include two
+> that corrected an existing ephedrine line — exactly the "someone is working on this right
+> now" signal the check exists to catch. Twice in October 2026 two sessions did the same work in parallel and one PR
 > had to be closed as superseded; once, two sessions added and removed the same drug on the
 > same day. See the concurrency rules in `AGENTS.md`.
 
