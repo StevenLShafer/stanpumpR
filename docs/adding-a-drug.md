@@ -17,12 +17,23 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > row, a registry row — check master's recent commits and every open pull request:
 >
 > ```bash
-> git fetch origin master -q
-> git log --oneline -i -G '<name>' origin/master -15       # merged recently
-> for n in $(gh pr list --state open --json number --jq '.[].number'); do
->   gh pr diff "$n" | grep -qi '<name>' && echo "PR $n mentions <name>"   # open
+> name=<name>
+> git fetch origin master -q || { echo "PREFLIGHT FAILED: cannot fetch master"; exit 1; }
+> git log --oneline -i -G "$name" origin/master -15                 # merged recently
+> prs=$(gh pr list --state open --json number --jq '.[].number') ||
+>   { echo "PREFLIGHT FAILED: cannot list open PRs"; exit 1; }
+> for n in $prs; do                                                 # in flight
+>   d=$(gh pr diff "$n") || { echo "PR $n: COULD NOT READ -- check by hand"; continue; }
+>   printf '%s' "$d" | grep -qi "$name" && echo "PR $n mentions $name"
 > done
 > ```
+>
+> Every step fails LOUDLY on purpose. `gh pr diff` writing nothing because it errored looks
+> exactly like a PR that does not mention the drug, and a `gh pr list` that fails gives an
+> empty loop that looks exactly like "no open PRs" — so an unchecked PR would read as a clean
+> result. A safety check that passes silently when it could not run is worse than no check,
+> because it manufactures confidence. Chain the fetch too: a stale `origin/master` searched
+> successfully is the same trap.
 >
 > Search the **diff content**, and search master as well as the open PRs. Titles and branch
 > names are no good: a branch may be called anything, and the PR that added ephedrine was
