@@ -20,7 +20,10 @@ test_that("returns the published parameters with the fat-free-mass switch off", 
         cl3 = 1.005,
         ka_SL = 0.0171905401,
         bioavailability_SL = 0.422692,
-        tlag_SL = 17.587178
+        tlag_SL = 17.587178,
+        ka_IM = 0.140710,
+        bioavailability_IM = 0.947096,
+        tlag_IM = 0
       )
     ),
     tPeak = 61.2,
@@ -105,7 +108,7 @@ test_that("the CSV row matches the model's band and offers no MEAC", {
   expect_equal(row$endCe, BUPRENORPHINE_ANALGESIA_END)
   expect_equal(row$Category, "Opioids")
   routes <- unique(doseRoute(row$Units[[1]]))
-  expect_setequal(routes, c(ROUTE_IV, ROUTE_SL))
+  expect_setequal(routes, c(ROUTE_IV, ROUTE_SL, ROUTE_IM))
   # 70% receptor occupancy by Nasser 2014's Emax model is 2.2 ng/mL
   expect_equal(round(91.4 * 2.2 / (0.67 + 2.2), 1), 70.1)
 })
@@ -232,14 +235,56 @@ test_that("pregnancy: elimination clearance x 1.83, absorption unchanged (Zhu 20
 })
 
 test_that("the band reproduces its derivation from McQuay 1980's demand analgesia", {
-  # 0.3 mg IV at induction and 0.3 mg 3 h later; analgesia ended a median
-  # 480 min after the second dose.  The study's average patient: 65 y, 66 kg.
-  d <- data.frame(Drug = "buprenorphine", Time = c(0, 180), Dose = 0.3, Units = "mg")
-  w <- simulateDrugsWithCovariates(d, noEvents, 66, 170, 65, "male", 900,
-                                   FALSE)$buprenorphine$wide
-  ce <- w[["Effect Site"]]
-  # The lower edge and threshold: the effect site when demands resumed
-  expect_equal(round(approx(w$Time, ce, 180 + 480)$y, 2), BUPRENORPHINE_ANALGESIA_END)
-  # The upper edge: the peak after the second dose
-  expect_equal(round(max(ce[w$Time > 180]), 1), 1)
+  # 0.3 mg IV at induction and 0.3 mg 3 h later, IV in group V and IM in group
+  # M; analgesia ended a median 480 min after the second dose, pooled over both
+  # groups, which did not differ significantly.  The study's average patient:
+  # 65 y, 66 kg.
+  for (second in c("mg", "mg IM")) {
+    d <- data.frame(Drug = "buprenorphine", Time = c(0, 180), Dose = 0.3,
+                    Units = c("mg", second))
+    w <- simulateDrugsWithCovariates(d, noEvents, 66, 170, 65, "male", 900,
+                                     FALSE)$buprenorphine$wide
+    ce <- w[["Effect Site"]]
+    # The lower edge and threshold: the effect site when demands resumed
+    expect_equal(round(approx(w$Time, ce, 180 + 480)$y, 2),
+                 BUPRENORPHINE_ANALGESIA_END, info = second)
+    # The upper edge: the peak after the second dose
+    expect_equal(round(max(ce[w$Time > 180]), 1), 1, info = second)
+  }
+})
+
+test_that("the intramuscular route reproduces Bullingham 1980's IM/IV plasma ratios", {
+  # Phase II of Bullingham 1980, Table II: 0.3 mg IM or IV to the same
+  # patients (62 y, 66.5 kg on average); the group means' ratio at each time.
+  plasma <- function(units) {
+    d <- data.frame(Drug = "buprenorphine", Time = 0, Dose = 0.3, Units = units)
+    w <- simulateDrugsWithCovariates(d, noEvents, 66.5, 170, 62.1, "male", 200,
+                                     FALSE)$buprenorphine$wide
+    approx(w$Time, w[["Plasma"]], c(2, 10, 60, 180))$y
+  }
+  ratio <- plasma("mg IM") / plasma("mg")
+  measured <- c(3.56 / 14.62, 3.31 / 3.15, 0.79 / 0.77, 0.36 / 0.38)
+  expect_equal(round(ratio, 2), c(0.25, 0.94, 1.03, 0.99))
+  # within 12% of every measured ratio; the largest miss is at 10 min, where
+  # a single first-order input still rises too slowly (see the header)
+  expect_true(all(abs(log(ratio / measured)) < 0.12))
+  expect_equal(BUPRENORPHINE_F_IM, 0.947096)
+  expect_equal(BUPRENORPHINE_KA_IM, 0.140710)
+})
+
+test_that("the absolute gap to Bullingham 1980 is the disposition's, by both routes", {
+  # The ratio removes a difference of scale, not of shape (see the header):
+  # this model is below Bullingham's arterial means by both routes, most at
+  # 2 min (central volume 64 L here, about 14 L from their early samples).
+  # Pinned so the gap is visible, not to claim agreement.
+  plasma <- function(units) {
+    d <- data.frame(Drug = "buprenorphine", Time = 0, Dose = 0.3, Units = units)
+    w <- simulateDrugsWithCovariates(d, noEvents, 66.5, 170, 62.1, "male", 200,
+                                     FALSE)$buprenorphine$wide
+    approx(w$Time, w[["Plasma"]], c(2, 10, 60, 180))$y
+  }
+  iv <- plasma("mg") / c(14.62, 3.15, 0.77, 0.38)
+  im <- plasma("mg IM") / c(3.56, 3.31, 0.79, 0.36)
+  expect_equal(round(iv, 2), c(0.28, 0.76, 0.84, 0.78))
+  expect_equal(round(im, 2), c(0.29, 0.68, 0.84, 0.81))
 })
