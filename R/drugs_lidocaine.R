@@ -55,17 +55,19 @@ lidocaine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     # input fitted on the Burm 1987 intravenous tracer disposition; fitting
     # the means directly on set B gives 0.0113, so the methods agree.  On set
     # C, 0.0111 would predict a peak of 2.53.)
-    # Simon's own one-rate half-time, 8.4 min, does not transfer
-    # to an independent intravenous model: it predicts a peak of 6.9
-    # mcg/mL.  Axillary block with epinephrine only; other sites and plain
-    # solutions absorb differently, and F = 1 is an assumption (the label
-    # describes complete absorption after parenteral injection; no
+    # Simon's own one-rate half-time, 8.4 min, does not transfer to an
+    # independent intravenous model: it predicts a peak of 6.8 mcg/mL on set
+    # C (6.9 on set B).  Axillary block with epinephrine only; other sites
+    # and plain solutions absorb differently, and F = 1 is an assumption (the
+    # label describes complete absorption after parenteral injection; no
     # site-specific absolute bioavailability has been measured).  A slow
     # second depot (ka_RA_slow, as mepivacaine has) does not help here: fitted
-    # to the same curve on this disposition, the fast share falls to 3% and
-    # the fit barely improves, because this model's clearance (1.4 L/min) and
-    # Vss (34 L) cannot give the curve's long tail whatever the input.  (That
-    # test was on set B; set C's 1.5 L/min and 39 L are no different in kind.)
+    # to the same means on set C, the two rates collapse to one (both about
+    # 0.0125 /min, the unrounded one-rate fit) and the fit does not improve
+    # (on set B the fast share fell to 3%), because this model's clearance
+    # (1.5 L/min) and Vss (39 L) cannot give the curve's long tail whatever
+    # the input: at 180 min it predicts about 0.79 mcg/mL against 1.44
+    # observed.  (Re-checked on set C 2026-10-28.)
     # (Claude Code, 2026-10-10, at the request of Steven L. Shafer.)
     ka_RA = 0.0124,
     bioavailability_RA = 1,

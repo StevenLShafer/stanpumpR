@@ -111,7 +111,7 @@ test_that("returns the published parameters with total-body-weight scaling for a
         cl3 = 1.990178
       )
     ),
-    tPeak = 10,
+    tPeak = 14.9,   # Colin 2017 MOAA/S ke0 on Hannivoort's kinetics (2026-10-28)
     MEAC = 0,
     typical = 0.6,
     upperTypical = 0.8,

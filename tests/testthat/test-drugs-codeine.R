@@ -178,16 +178,30 @@ test_that("formed morphine appears on the morphine row, peaking 1-2 h", {
 
 
 test_that("the morphine to codeine AUC ratio sits near the observed range", {
-  # Shah 1990 reports 0.027 and Yue 1991 reports 0.020, both truncated.  The
-  # model runs 30-50% below those, which is the documented residual
-  # disagreement between Ashraf's rescaled fraction and the direct
-  # observations; this test pins it rather than hiding it.
+  # Over 0-6 h, Shah 1990's interval: Shah reports 0.027 (eight of ten
+  # subjects with detectable morphine) and the model about half of that, the
+  # documented residual disagreement; this test pins it rather than hiding
+  # it.  (Yue 1991 is not a six-hour ratio; see the next test.)
   o <- oralCodeine(60, maximum = 360)
   cod <- o$codeine$wide
   mor <- o$morphine$wide
   ratio <- trapz(mor$Time, mor$Plasma * 1000) / trapz(cod$Time, cod$Plasma)
   expect_gt(ratio, 0.010)
   expect_lt(ratio, 0.020)
+})
+
+
+test_that("over the full course the ratio matches Yue 1991", {
+  # Yue sampled to 24 h and extrapolated codeine to infinity: 0.020 molar in
+  # extensive metabolisers (morphine 20, codeine 1010 nmol.h/L).  The model's
+  # 48 h ratio, converted to molar (codeine 299.36, morphine 285.34 g/mol).
+  o <- oralCodeine(60, maximum = 2880)
+  cod <- o$codeine$wide
+  mor <- o$morphine$wide
+  molar <- trapz(mor$Time, mor$Plasma * 1000) / trapz(cod$Time, cod$Plasma) *
+    299.36 / 285.34
+  expect_gt(molar, 0.018)
+  expect_lt(molar, 0.022)
 })
 
 
