@@ -11,6 +11,14 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > established for the analyte it plots, and its help page must say where the range came from —
 > or, when there is none, why. See *The therapeutic range* in step 2. This too is a requirement.
 
+> **Step zero: look for the drug by name before you start.** Several Claude sessions run at
+> once on different threads, and they collide. Check master's recent commits and the open pull
+> requests for the drug (`gh pr list --state open`, grepping the titles and branches for its
+> name) before touching `R/drugs_<name>.R`, `drugDefaults_global.csv` or any registry row.
+> Twice in October 2026 two sessions did the same work in parallel and one PR had to be closed
+> as superseded; once, two sessions added and removed the same drug on the same day. See the
+> concurrency rules in `AGENTS.md`.
+
 > Prerequisite: read the [architecture map](architecture.md) first if you haven't. You only
 > need to understand the *drug library* pattern, not the closed-form solver.
 
