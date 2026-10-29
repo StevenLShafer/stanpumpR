@@ -298,6 +298,8 @@ getDrugPK <- function(
     cl1 <- X$PK[[event]]$cl1
     cl2 <- X$PK[[event]]$cl2
     cl3 <- X$PK[[event]]$cl3
+    checkDispositionFinite(drug, event,
+                           list(v1 = v1, v2 = v2, v3 = v3, cl1 = cl1, cl2 = cl2, cl3 = cl3))
 
     # Note on Oral, IM, and IN route PK #
     # Oral is (for now) state 4 for plasma and state 5 for effect site #
@@ -1741,4 +1743,37 @@ molarWeightOfDoses <- function(molar, units, drug = "")
          paste(names(mw), collapse = ", "), ": ",
          paste(unique(as.character(units)[missing]), collapse = ", "))
   unname(mw[product])
+}
+
+#' Stop on a disposition the engines cannot use
+#'
+#' Every rate constant is a clearance over a volume, so a volume of zero
+#' divides by zero, and an infinite or NaN covariate term (a negative power of
+#' an age of 0, say) would otherwise run on into the eigenvalue solver and the
+#' plot as NaN.  stanpumpR cannot anticipate every patient it is given, so the
+#' guard sits here, once, for every model: volumes must be finite and
+#' positive, clearances finite and not negative (a missing compartment is
+#' v = 1, cl = 0).  It names the drug, the parameter and its value.
+#'
+#' @param drug the drug name
+#' @param event the PK event
+#' @param pk a named list of v1, v2, v3, cl1, cl2, cl3
+#' @return invisibly NULL; stops if any value is unusable
+#' @keywords internal
+checkDispositionFinite <- function(drug, event, pk)
+{
+  for (name in names(pk)) {
+    value <- pk[[name]]
+    isVolume <- startsWith(name, "v")
+    ok <- is.numeric(value) && length(value) == 1 && is.finite(value) &&
+      (if (isVolume) value > 0 else value >= 0)
+    if (!ok)
+      stop("Unusable pharmacokinetic parameter for ", drug,
+           if (!identical(event, PK_EVENT_DEFAULT)) paste0(" (", event, ")"), ": ",
+           name, " = ", paste(format(value), collapse = ", "),
+           if (isVolume) " (a volume must be finite and positive)"
+           else " (a clearance must be finite and not negative)",
+           call. = FALSE)
+  }
+  invisible(NULL)
 }
