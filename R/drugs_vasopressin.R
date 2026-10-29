@@ -38,8 +38,11 @@
 # postpartum, by radioimmunoassay at physiological concentrations.  Landry
 # 1997 (Circulation 95:1122) found about 30 pg/mL in septic shock on 0.01
 # U/min, against an endogenous 3.1 pg/mL: this model gives 10 mcU/mL above
-# baseline, 25 pg/mL at the 400 U/mg of pure vasopressin (Davison's
-# standard), 28 pg/mL with the baseline.  Baumann 1976 (J Clin Invest
+# baseline, 18.9 pg/mL at the label's 530 U/mg, 22 pg/mL with the baseline,
+# 27% under Landry, whose value Davison's 0.67 L/min would reproduce (31
+# pg/mL).  At Davison's 400 U/mg standard it was 25 and 28 pg/mL: the
+# conversion, the label's since 2026-10-28 on Steven L. Shafer's decision,
+# moves this comparison, not the curve.  Baumann 1976 (J Clin Invest
 # 57:1109), with an iodinated tracer, found a quarter of this clearance (4.1
 # mL/min/kg) and a 24-minute half-life; it is the outlier, and the tracer
 # is not the hormone.
@@ -48,9 +51,12 @@
 # ===============
 # Exogenous vasopressin, above the patient's own, in mcU/mL (microunits per
 # mL, = mU/L): the unit the source measured and the unit the drug is dosed
-# in, so no conversion to mass is involved.  At 400 U/mg, 1 mcU/mL is 2.5
-# pg/mL.  About 30% of vasopressin is bound in plasma (Fabian); the curve is
-# total.  The endogenous concentration is about 1-10 pg/mL (inappropriately
+# in, so no conversion to mass is involved.  At the label's 530 U/mg
+# (VASOSTRICT, NDA 204485, section 11; Davison used a 400 U/mg standard), 1
+# mcU/mL is 1.89 pg/mL.  Vasopressin does not appear to bind plasma protein
+# (the label, section 12.3; Fabian's estimate of about 30% bound is not
+# carried, by Steven L. Shafer's decision of 2026-10-28), so the total
+# plotted is the unbound concentration.  The endogenous concentration is about 1-10 pg/mL (inappropriately
 # low, about 3 pg/mL, in septic shock; Landry 1997) and is not modelled.
 #
 # BODY SIZE (docs/weight-adjustment.md)
@@ -127,7 +133,7 @@ vasopressin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "Fabian M, Forsling ML, Jones JJ, Pryor JS, J Physiol 1969;204:653-668. ",
     "One compartment, the medians of 6 young adults given arginine ",
     "vasopressin by infusion: V 8.5 L, CL 1.0 L/min. Exogenous vasopressin ",
-    "above the patient's own, in mcU/mL (1 mcU/mL is 2.5 pg/mL at 400 U/mg). ",
+    "above the patient's own, in mcU/mL (1 mcU/mL is 1.89 pg/mL at the label's 530 U/mg). ",
     "Time to peak effect 3 min: provisional clinical observation (S. L. ",
     "Shafer), pending published data. ",
     "https://doi.org/10.1113/jphysiol.1969.sp008937"

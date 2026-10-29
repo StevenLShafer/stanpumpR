@@ -187,21 +187,16 @@ test_that("oral liquid is the tablet's absorption, entered as prescribed", {
                     "mg/kg PO liquid qid") %in% units))
 })
 
-test_that("the Pregnant field applies the review's factor (R/pregnancy.R)", {
-  # A woman of 30 years, 70 kg, 165 cm, fat-free-mass scaling on.  CL1 x 3.8/2.6.
-  # The values are those the model gives with the flag on; test-pregnancy.R
-  # checks the ratio against the flag off and that nothing else moves.
-  actual <- oxycodone(70, 165, 30, "female", pregnant = TRUE)$PK$default
-  expect_equal_rounded(25.9455396, actual$v1)
-  expect_equal_rounded(172.1120149, actual$v2)
-  expect_equal_rounded(1, actual$v3)
-  expect_equal_rounded(1.43194561, actual$cl1)
-  expect_equal_rounded(2.289431201, actual$cl2)
-  expect_equal_rounded(0, actual$cl3)
-  expect_equal(oxycodone(70, 165, 30, "female")$PK$default,
-               oxycodone(70, 165, 30, "female", pregnant = FALSE)$PK$default)
-  expect_match(oxycodone(70, 165, 30, "female", pregnant = TRUE)$reference, "Ansari", fixed = TRUE)
-  expect_no_match(oxycodone(70, 165, 30, "female")$reference, "Ansari")
+test_that("the Pregnant field changes nothing: Kokki 2012 against this model (R/pregnancy.R)", {
+  # The factor 3.8/2.6 was dropped on 2026-10-28 (see the header): the model
+  # does not name `pregnant`, so getDrugPK() never passes it.
+  expect_false("pregnant" %in% names(formals(oxycodone)))
+  # Kokki 2012's labouring women, median 82 kg, 161 cm, 29 y: CL 0.92 L/min,
+  # Vss 95 + 100 L.  This model's non-pregnant values for that woman:
+  pk <- oxycodone(82, 161, 29, "female")$PK$default
+  expect_equal(round(pk$cl1, 2), 1.03)
+  expect_equal(round(0.92 / pk$cl1, 2), 0.89)
+  expect_equal(round(195 / (pk$v1 + pk$v2), 2), 0.92)
 })
 
 test_that("intravenous infusion and target-controlled infusion are offered (issue #131)", {

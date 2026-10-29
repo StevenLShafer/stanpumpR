@@ -28,15 +28,19 @@ test_that("Fabian's infusion reaches the 120 mcU/mL measured at equilibrium", {
   expect_gt(end / 120, 0.9)
 })
 
-test_that("0.01 U/min gives Landry 1997's concentration in septic shock", {
+test_that("0.01 U/min against Landry 1997's concentration in septic shock", {
   # Landry: about 30 pg/mL on 0.01 U/min, the patients' own 3.1 pg/mL
-  # included; 1 mcU/mL is 2.5 pg/mL at 400 U/mg
+  # included.  At the label's 530 U/mg, 1 mcU/mL is 1.89 pg/mL: this model
+  # gives 22 pg/mL with the baseline, 27% under Landry, whose value
+  # Davison's 0.67 L/min clearance reproduces (31 pg/mL)
   wide <- simulateDrugsWithCovariates(
     data.frame(Drug = "vasopressin", Time = 0, Dose = 0.01, Units = "U/min"),
     noEvents, 70, 175, 60, "male", 120, FALSE, adjustToFFM = FALSE)$vasopressin$wide
   plateau <- tail(wide$Plasma, 1)
   expect_equal(plateau, 10, tolerance = 1e-3)
-  expect_lt(abs((plateau * 2.5 + 3.1) / 30 - 1), 0.1)
+  pgPerMcU <- 1000 / 530
+  expect_equal(round(plateau * pgPerMcU + 3.1, 1), 22.0)
+  expect_lt(abs((plateau * 1.0 / 0.67 * pgPerMcU + 3.1) / 30 - 1), 0.1)
 })
 
 test_that("units and hours and per kg are the same input", {
