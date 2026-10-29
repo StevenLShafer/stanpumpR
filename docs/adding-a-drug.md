@@ -17,14 +17,21 @@ A new drug touches **four** files, including a help page. None of the engine cod
 > row, a registry row — check master's recent commits and every open pull request:
 >
 > ```bash
+> git fetch origin master -q
+> git log --oneline -S '<name>' origin/master -10          # merged recently
 > for n in $(gh pr list --state open --json number --jq '.[].number'); do
->   gh pr diff "$n" --name-only | grep -qi '<name>' && echo "PR $n touches <name>"
+>   gh pr diff "$n" | grep -qi '<name>' && echo "PR $n mentions <name>"   # open
 > done
 > ```
 >
-> Search the changed paths, not the titles and branch names: a branch may be called anything
-> (the PR that added ephedrine was `claude/magical-faraday-0ol951`), so name-matching alone
-> will miss it. Twice in October 2026 two sessions did the same work in parallel and one PR
+> Search the **diff content**, and search master as well as the open PRs. Titles and branch
+> names are no good: a branch may be called anything, and the PR that added ephedrine was
+> `claude/magical-faraday-0ol951`. Changed *paths* are not enough either — of the 18 files
+> that PR touched, only four had "ephedrine" in the path, while `drugDefaults_global.csv`,
+> `therapeuticRanges.csv`, `pregnancyRegistry.csv` and the vasoactive registry each carried a
+> row for it under a name that matches nothing. A drug that is only a row in shared files is
+> invisible to a path search. And master matters as much as the open PRs: the ephedrine drug
+> was *merged* while the PR removing it was open. Twice in October 2026 two sessions did the same work in parallel and one PR
 > had to be closed as superseded; once, two sessions added and removed the same drug on the
 > same day. See the concurrency rules in `AGENTS.md`.
 
