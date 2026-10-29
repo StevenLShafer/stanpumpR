@@ -198,6 +198,10 @@ MAX_AGE <- 90
 # already does (BUPRENORPHINE_MIN_AGE).  Read by apixaban, rivaroxaban,
 # fondaparinux, paroxetine and citalopram, and by egfrMDRD() in
 # R/renalFunction.R.
+# The rule (AGENTS.md): every age term floors here unless the PK study
+# explicitly permits a lower floor, which is then the youngest age the source
+# studied; valproate's, fitted from 0.1 years, is the example
+# (VALPROATE_MIN_AGE).
 ADULT_AGE_TERM_FLOOR <- 18
 MIN_WEIGHT <- 0.1
 MAX_WEIGHT <- 500

@@ -3,7 +3,8 @@
 test_that("reference patient, switch off", {
   a <- valproate(70, 170, 40, "male", adjustToFFM = FALSE)
   expect_equal(a$PK$default$v1, 14)
-  expect_equal(a$PK$default$cl1, 0.646 / 60)
+  # Equation 1's age term, (AGE/15)^-0.0154
+  expect_equal(a$PK$default$cl1, 0.646 * (40 / 15)^-0.0154 / 60)
   expect_equal(a$PK$default$ka_PO, 0.78 / 60)
   expect_equal(a$oralFormulations$liquid$ka_PO, 2.64 / 60)
   expect_equal(a$oralFormulations$ER$ka_PO, 0.38 / 60)
@@ -14,7 +15,17 @@ test_that("weight scaling, switch on", {
   a <- valproate(120, 170, 50, "male", adjustToFFM = TRUE)
   w <- pkSizeFactors(120, 170, 50, "male", TRUE)$pkWeight
   expect_equal(a$PK$default$v1, 14 * (w / 70))
-  expect_equal(a$PK$default$cl1, 0.646 * (w / 70)^0.75 / 60)
+  expect_equal(a$PK$default$cl1, 0.646 * (w / 70)^0.75 * (50 / 15)^-0.0154 / 60)
+})
+
+test_that("the age term is Equation 1's, floored at 0.1 years", {
+  cl <- function(age) valproate(70, 170, age, "male", adjustToFFM = FALSE)$PK$default$cl1 * 60
+  expect_equal(cl(15), 0.646)                       # the centring age
+  expect_equal(cl(80), 0.646 * (80 / 15)^-0.0154)
+  expect_equal(cl(0), cl(0.1))                      # floored, not infinite
+  expect_true(is.finite(cl(0)))
+  # Under 5% between 5 and 80 years
+  expect_lt(cl(5) / cl(80), 1.05)
 })
 
 test_that("pregnancy: total CL/F x 1.6, nothing else", {
@@ -33,7 +44,8 @@ test_that("pregnancy: total CL/F x 1.6, nothing else", {
       expect_identical(on$oralFormulations[[form]]$default[[k]],
                        off$oralFormulations[[form]]$default[[k]], info = paste(form, k))
   expect_equal_rounded(11.28533074, on$PK$default$v1)
-  expect_equal_rounded(0.01465517275, on$PK$default$cl1)
+  # Age 30: x (30/15)^-0.0154 on the pre-age-term value 0.01465517275
+  expect_equal_rounded(0.01465517275 * (30 / 15)^-0.0154, on$PK$default$cl1)
   expect_match(on$reference, "Nau H")
   expect_no_match(off$reference, "Nau H")
 })

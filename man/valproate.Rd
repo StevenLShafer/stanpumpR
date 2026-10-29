@@ -30,5 +30,7 @@ CL/F by \code{VALPROATE_PREGNANCY_CL_FACTOR} (Nau and Krauer 1986, Yerby
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-Teixeira-da-Silva et al. (2022), weight only; see the header of the file.
+Teixeira-da-Silva et al. (2022): clearance on weight and age (Equation 1's
+\eqn{(AGE/15)^{-0.0154}}, age floored at 0.1 years), volume on weight; see
+the header of the file.
 }

@@ -72,15 +72,23 @@
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
-# The source carries no size covariate, so the published values are taken
-# as the 70 kg reference man's and inherit the library's fat-free-mass
-# scaling: volume x size$volume, clearance x size$clearance, and with the
-# switch off the published values unscaled (legacyVolume = 1).  Liu's Table 1
-# gives the cohort's median weight as 61 kg (37-97) and height as 165 cm
-# (150-180), lighter than the 70 kg reference man.  The reference has not
-# been re-anchored to that cohort: a patient of the cohort's median size
-# receives the published values scaled down by the fat-free-mass ratio of
-# 61 kg, 165 cm to the 70 kg, 170 cm reference.
+# The source carries no size covariate.  Its published values belong to the
+# cohort's typical patient; re-anchored to the 70 kg reference man (below),
+# they inherit the library's fat-free-mass scaling: volume x size$volume,
+# clearance x size$clearance, and with the switch off the published values
+# unscaled (legacyVolume = 1).
+#
+# RE-ANCHORED TO LIU'S COHORT (Steven L. Shafer, 2026-10-29).  Liu's
+# published values belong to the cohort's typical patient, not to the 70 kg
+# reference man.  Table 1 gives the median as 61 kg (37-97), 165 cm (150-180)
+# and 45 years, with 59 men among 106 patients.  That patient's fat-free mass,
+# weighted 59 men to 47 women, is 45.15 kg against the reference man's 54.48,
+# so with the switch on V/F is multiplied by 54.48 / 45.15 = 1.207 and CL/F
+# by 1.207^0.75 = 1.151 for the reference man, before the usual fat-free-mass
+# scaling: about 983 L and 18.8 L/h for him.  A patient with the cohort's
+# typical fat-free mass therefore receives Liu's published values, 815 L and
+# 16.3 L/h.  With the switch off the published values are used unscaled, as
+# before.
 #
 # NOT IMPLEMENTED (alternatives, documented in the help)
 # ======================================================
@@ -144,9 +152,17 @@ escitalopram <- function(weight, height, age, sex, cyp2c19 = CYP2C19_DEFAULT,
 
   # Fixed published parameters (see the header): legacy factors 1.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM, legacyVolume = 1)
+  # Re-anchored from Liu's typical patient to the reference man (header).
+  anchor <- 1
+  if (isTRUE(adjustToFFM)) {
+    ffmLiu <- (59 * ffmAlSallami(61, 165, 45, SEX_MALE) +
+               47 * ffmAlSallami(61, 165, 45, SEX_FEMALE)) / 106    # 45.15 kg
+    anchor <- FFM_REFERENCE / ffmLiu                                 # 1.207
+  }
 
-  v1  <- ESCITALOPRAM_V * size$volume
-  cl1 <- ESCITALOPRAM_CL / 60 * ESCITALOPRAM_CYP2C19[[cyp2c19]] * size$clearance
+  v1  <- ESCITALOPRAM_V * anchor * size$volume
+  cl1 <- ESCITALOPRAM_CL / 60 * anchor^0.75 *
+    ESCITALOPRAM_CYP2C19[[cyp2c19]] * size$clearance
   v2  <- 1     # one compartment: placeholders, unscaled
   cl2 <- 0
   v3  <- 1

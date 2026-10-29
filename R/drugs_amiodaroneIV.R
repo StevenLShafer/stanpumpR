@@ -120,9 +120,18 @@
 # the fat-free-mass ratio and clearances by that ratio ^ 0.75 by default, and
 # with the switch off volumes and clearances both scale by weight / 70
 # (pkSizeFactors()'s default legacy factors), which reproduces the published
-# per-kilogram model exactly.  The full text gives the cohort as 78 +/- 17 kg,
-# 172 +/- 9 cm and 64 +/- 11 years (73% men), so the 70 kg reference man is
-# somewhat lighter than the mean patient.
+# per-kilogram model exactly.
+#
+# RE-ANCHORED TO THE COHORT (Steven L. Shafer, 2026-10-29).  The full text
+# gives the cohort as 78 +/- 17 kg, 172 +/- 9 cm and 64 +/- 11 years, 73% men.
+# The typical patient's parameters are the per-kilogram values x 78 kg, and
+# his fat-free mass, weighted 73 men to 27 women, is 55.60 kg against the
+# reference man's 54.48.  With the switch on the reference man therefore gets
+# the per-kilogram values x 78 kg x (54.48 / 55.60) for the volumes and
+# x 78 kg x (54.48 / 55.60)^0.75 for the clearances, about 9% above the
+# per-kilogram values x 70 kg, so that a patient with the cohort's typical
+# fat-free mass receives the published model.  With the switch off the published
+# per-kilogram model is used exactly, as before.
 # The help page's child and infant are extrapolation, evaluated only because
 # every model in the library is tabulated at them.
 #
@@ -178,12 +187,22 @@ amiodaroneIV <- function(weight, height, age, sex, adjustToFFM = TRUE)
   # Per-kilogram parameters with fixed rate constants (see the header): the
   # default legacy factors, weight / 70 for volumes and clearances alike.
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
+  # With the switch on, re-anchored to the cohort's 78 kg typical patient
+  # (header); with it off, the published per-kilogram model (x weight / 70).
+  wRef <- 70; vAnchor <- 1; clAnchor <- 1
+  if (isTRUE(adjustToFFM)) {
+    ffmCohort <- 0.73 * ffmAlSallami(78, 172, 64, SEX_MALE) +
+                 0.27 * ffmAlSallami(78, 172, 64, SEX_FEMALE)       # 55.60 kg
+    wRef     <- 78
+    vAnchor  <- FFM_REFERENCE / ffmCohort
+    clAnchor <- vAnchor^0.75
+  }
 
-  v1  <- AMIODARONE_IV_V1 * 70 * size$volume                          # 21 L
-  v2  <- AMIODARONE_IV_V2 * 70 * size$volume                          # 700 L
-  v3  <- 1                                                            # no third compartment
-  cl1 <- AMIODARONE_IV_CL * 70 / MINS_PER_HOUR * size$clearance       # 15.4 L/h
-  cl2 <- AMIODARONE_IV_Q  * 70 / MINS_PER_HOUR * size$clearance       # 49.7 L/h
+  v1  <- AMIODARONE_IV_V1 * wRef * vAnchor * size$volume                    # 22.9 L
+  v2  <- AMIODARONE_IV_V2 * wRef * vAnchor * size$volume                    # 764 L
+  v3  <- 1                                                                  # no third compartment
+  cl1 <- AMIODARONE_IV_CL * wRef * clAnchor / MINS_PER_HOUR * size$clearance # 16.9 L/h
+  cl2 <- AMIODARONE_IV_Q  * wRef * clAnchor / MINS_PER_HOUR * size$clearance # 54.5 L/h
   cl3 <- 0
 
   default <- list(

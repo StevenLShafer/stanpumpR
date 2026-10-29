@@ -248,7 +248,10 @@ helpScenarioDefinitions <- function() {
       "Amiodarone IV: the label's 24-hour loading infusion",
       "Intravenous basics",
       "A rapid load, a slow load and a maintenance rate: why the concentration dips when the rate is halved.",
-      age = 60, weight = 70, height = 170, sex = SEX_MALE,
+      # The switch off, so that the published per-kilogram model applies and
+      # the numbers on the page are Korth-Bradley's; with it on the model is
+      # re-anchored to the cohort's 78 kg patient (R/drugs_amiodaroneIV.R).
+      age = 60, weight = 70, height = 170, sex = SEX_MALE, adjustToFFM = FALSE,
       doses = helpDoses(
         c("amiodaroneIV",   0,  15, "mg/min"),
         c("amiodaroneIV",  10,   1, "mg/min"),

@@ -99,7 +99,10 @@ test_that("valproate inhibits lamotrigine, building over about two weeks", {
   ratioEarly <- atTime(b$lamotrigine, 23 * DAY) / atTime(a$lamotrigine, 23 * DAY)
   ratioLate  <- atTime(b$lamotrigine, 42 * DAY) / atTime(a$lamotrigine, 42 * DAY)
   expect_true(ratioEarly > 1.2 && ratioEarly < ratioLate)
-  expect_true(ratioLate > 1.8 && ratioLate < 2.2)
+  # 2.197 until 2026-10-29, when valproate's age term ((AGE/15)^-0.0154)
+  # raised a 40-year-old's valproate by 1.5% and the inhibition with it:
+  # 2.200.  The band is a sanity check on "roughly doubles", not a source.
+  expect_true(ratioLate > 1.8 && ratioLate < 2.25)
   # the interaction segments are recorded on the changed drug
   expect_true(!is.null(b$lamotrigine$interaction$CL))
 })
