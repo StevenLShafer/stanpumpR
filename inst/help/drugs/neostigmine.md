@@ -10,7 +10,7 @@ Heier measured the time to maximum antagonism of the block (twitch height at the
 
 ### Band
 
-30 to 300 ng/mL is the library's own orientation band, not a therapeutic range, and the recovery threshold is 30 ng/mL. After 2.5 to 5 mg the effect site peaks at about 100 to 200 ng/mL and falls below 30 ng/mL after roughly 20 to 40 minutes.
+100 to 250 ng/mL, with 175 as the typical line, is the library's own orientation band, not a therapeutic range. It was set from simulated bolus doses of 0.03 mg/kg to 5 mg in a 70 kg patient: with Heier's kinetics the effect site peaks about 4 minutes after the dose, at 87 ng/mL after 0.03 mg/kg (2.1 mg) and 207 ng/mL after 5 mg. The recovery threshold is 30 ng/mL, which the effect site reaches about 20 to 45 minutes after those doses. Until October 2026 the band was 30 to 300 ng/mL.
 
 ### Covariates
 

@@ -18,7 +18,7 @@ test_that("returns Heier's published parameters with the fat-free-mass switch of
         cl3 = 0.556
       )
     ),
-    tPeak = 3.5, MEAC = 0, typical = 100, upperTypical = 300, lowerTypical = 30,
+    tPeak = 3.5, MEAC = 0, typical = 175, upperTypical = 250, lowerTypical = 100,
     reference = actual$reference
   )
   expect_equal_rounded(actual, expected)

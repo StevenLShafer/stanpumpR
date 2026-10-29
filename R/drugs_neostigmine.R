@@ -55,10 +55,15 @@
 #
 # BAND
 # ====
-# 30-300 ng/mL, the library's own orientation band (not a therapeutic range;
-# see inst/extdata/therapeuticRanges.csv), kept unchanged.  With Heier's
-# kinetics 2.5-5 mg puts the effect site at 104-207 ng/mL at its peak, and
-# it falls below 30 ng/mL at about 20-40 min.
+# 100-250 ng/mL, typical 175 (the midpoint), the library's own orientation
+# band, not a therapeutic range (see inst/extdata/therapeuticRanges.csv):
+# set by decision of Steven L. Shafer, 2026-10-29, from simulated bolus
+# doses of 0.03 mg/kg to 5 mg in a 70 kg patient, whose effect-site peaks
+# with Heier's kinetics run from 87 ng/mL (2.1 mg) through 103 (2.5 mg) to
+# 207 ng/mL (5 mg), 3.7 min after the dose.  Was 30-300 ng/mL, typical 100,
+# set for Calvey's model.  The recovery threshold (endCe in
+# drugDefaults_global.csv) stays 30 ng/mL, which the effect site reaches
+# about 20 to 45 min after 2.1-5 mg.
 #
 # References
 # ----------
@@ -99,9 +104,9 @@ neostigmine <- function(weight, height, age, sex, adjustToFFM = TRUE)
   MEAC  <- 0
 
   # Band, ng/mL: the library's orientation band (see the header).
-  typical      <- 100
-  upperTypical <- 300
-  lowerTypical <- 30
+  typical      <- 175
+  upperTypical <- 250
+  lowerTypical <- 100
 
   reference <- paste0(
     "Heier T et al., Anesthesiology 2002;97:90-95 (three-compartment ",
