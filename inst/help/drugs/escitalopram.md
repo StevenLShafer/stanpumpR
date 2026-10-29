@@ -21,7 +21,7 @@ The **CYP 2C19** field in the Patient Profile scales clearance by the multiplier
 ### What is gated
 
 - **Age.** Liu reports an age coefficient (0.0077) on clearance, but the exact form of the equation was not recovered, so **no age effect is applied**: the same parameters are used at every age. A guessed form could move an older patient's clearance by tens of percent in either direction.
-- **Body size.** The source has no size covariate, so its values are taken as the 70 kg reference man's and scaled to [fat-free mass](help:models/fat-free-mass) (volume by the fat-free-mass ratio, clearance by that ratio to the 0.75 power); with the switch off they are used exactly as published at any size. Liu's cohort was lighter than that (median 61 kg and 165 cm), and the reference has not been re-anchored to it: a patient of the cohort's median size receives the published values scaled down by the fat-free-mass ratio of that size to the reference.
+- **Body size.** The source has no size covariate, so its values are taken as the 70 kg reference man's and scaled to [fat-free mass](help:models/fat-free-mass) (volume by the fat-free-mass ratio, clearance by that ratio to the 0.75 power); with the switch off they are used exactly as published at any size. Liu's values belong to the typical patient of a lighter cohort (median 61 kg, 165 cm and 45 years, 56% men), whose fat-free mass, 45.2 kg, is well below the reference man's 54.5 kg. With the switch on they are therefore re-anchored to the reference man first, volume × 1.207 and clearance × 1.151, so that a patient with the cohort's typical fat-free mass receives Liu's published values.
 - **The desmethyl metabolite** is not modelled.
 
 ### No effect site

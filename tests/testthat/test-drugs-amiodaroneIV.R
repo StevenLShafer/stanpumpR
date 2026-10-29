@@ -114,20 +114,33 @@ test_that("amiodaroneIV returns the published per-kilogram model with the switch
                        list(v1 = 36, v2 = 1200, v3 = 1, cl1 = 0.44, cl2 = 1.42, cl3 = 0))
 })
 
-test_that("the reference man receives the published values with the switch on", {
+# Re-anchoring (R/drugs_amiodaroneIV.R): the cohort's typical patient, 78 kg,
+# 172 cm, 64 y, 73% men, has a fat-free mass of 0.73 x 58.429231 + 0.27 x
+# 47.955893 = 55.601430 kg (Al-Sallami, by hand), against the reference man's
+# 54.475206.  With the switch on, the per-kilogram values are taken at 78 kg,
+# volumes x 54.475206 / 55.601430 and clearances x that ratio ^ 0.75.
+kbAnchor <- 54.475206 / (0.73 * 58.429231 + 0.27 * 47.955893)    # 0.9797447
+kbVolume    <- 78 / 70 * kbAnchor            # on the 70 kg values
+kbClearance <- 78 / 70 * kbAnchor^0.75
+
+test_that("the reference man receives the re-anchored values with the switch on", {
   # 70 kg, 170 cm, 35 y male: fat-free-mass factors exactly 1
   expect_equal_rounded(amiodaroneIV(70, 170, 35, "male")$PK$default, list(
-    v1 = 21, v2 = 700, v3 = 1, cl1 = 0.2566666667, cl2 = 0.8283333333, cl3 = 0
+    v1 = 21 * kbVolume, v2 = 700 * kbVolume, v3 = 1,
+    cl1 = 0.2566666667 * kbClearance, cl2 = 0.8283333333 * kbClearance, cl3 = 0
   ))
+  # about 9% and 10% above the per-kilogram values at 70 kg
+  expect_equal(kbVolume, 1.0917, tolerance = 1e-4)
+  expect_equal(kbClearance, 1.0973, tolerance = 1e-4)
 })
 
 test_that("amiodaroneIV scales to fat-free mass for a 120 kg man", {
   # 120 kg, 170 cm, 50 y male: volumes x 1.3049067, clearances x 1.2209126
-  # (worked out from the Al-Sallami formula by hand)
+  # (worked out from the Al-Sallami formula by hand), after re-anchoring
   actual <- amiodaroneIV(120, 170, 50, "male")
   expect_equal_rounded(actual$PK$default, list(
-    v1 = 27.4030407, v2 = 913.43469, v3 = 1,
-    cl1 = 0.3133675673, cl2 = 1.011322604, cl3 = 0
+    v1 = 27.4030407 * kbVolume, v2 = 913.43469 * kbVolume, v3 = 1,
+    cl1 = 0.3133675673 * kbClearance, cl2 = 1.011322604 * kbClearance, cl3 = 0
   ))
 })
 
@@ -256,7 +269,7 @@ test_that("the scenario's Try next values are the model's", {
   expect_equal(w$Plasma[w$Time == 720], afterBolus, tolerance = 1e-8)
 
   # A 120 kg man: peak, dip and 24 h, with fat-free-mass scaling (factors
-  # 1.3049067 and 1.2209126) and per kilogram
+  # 1.3049067 and 1.2209126, after re-anchoring) and per kilogram
   heavy <- function(volume, clearance) {
     v1 <- 21 * volume; v2 <- 700 * volume
     cl <- 15.4 / 60 * clearance; q <- 49.7 / 60 * clearance
@@ -264,7 +277,8 @@ test_that("the scenario's Try next values are the model's", {
     e <- eigen(K)
     list(K = K, V = e$vectors, Vi = solve(e$vectors), lambda = e$values, v1 = v1)
   }
-  for (case in list(list(S = heavy(1.3049067, 1.2209126), ffm = TRUE, want = c(4.3, 0.69, 0.89)),
+  for (case in list(list(S = heavy(1.3049067 * kbVolume, 1.2209126 * kbClearance), ffm = TRUE,
+                         want = c(4.0, 0.63, 0.81)),
                     list(S = heavy(120 / 70, 120 / 70),   ffm = FALSE, want = c(3.3, 0.51, 0.66)))) {
     cp <- function(t) kbConcentration(case$S, LABEL_TIMES, LABEL_RATES, t)
     got <- c(cp(10), stats::optimize(cp, c(380, 700))$objective, cp(1440))
