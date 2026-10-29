@@ -23,7 +23,8 @@ model added to the library must follow.
   per-kilogram dose for him is unchanged too.
 - The switch is the checkbox **Adjust weight to fat-free mass** in the Patient
   Profile panel. It is on by default. Turning it off restores the scaling each
-  model used before, exactly.
+  model used before, exactly, except for the few models that have themselves
+  changed since (see [What the switch does](#what-the-switch-does)).
 - Doses typed in per-kilogram units (mg/kg, mcg/kg/min, ...) are **always**
   converted using total body weight, because that is what the clinician
   actually gives. The switch changes only the pharmacokinetics.
@@ -146,8 +147,10 @@ what it did before and what it does now.
 ### What the switch does
 
 The checkbox **Adjust weight to fat-free mass** in the Patient Profile panel is
-on by default. With it off, every model reverts to exactly the scaling it used
-before fat-free mass was introduced:
+on by default. With it off, each model uses its published scaling, which for
+every model whose parameters have not changed since is exactly the scaling it
+used before fat-free mass was introduced (the exceptions are listed below the
+table):
 
 | Model type | Behaviour with the switch off |
 |---|---|
