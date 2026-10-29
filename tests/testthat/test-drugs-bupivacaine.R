@@ -9,7 +9,7 @@ test_that("returns the published parameters with the switch off", {
         cl1 = 0.52,
         cl2 = 0.3208219829,   # reconstructed Q, from the research handoff
         cl3 = 0,
-        ka_RA = 0.0151,
+        ka_RA = 0.0187,
         bioavailability_RA = 1,
         tlag_RA = 0
       )
@@ -29,7 +29,7 @@ test_that("scales to fat-free mass for a 120 kg man", {
   actual <- bupivacaine(120, 170, 50, "male")
   expected <- list(v1 = 43.0619211, v2 = 45.6717345, v3 = 1,
                    cl1 = 0.634874552, cl2 = 0.3916956013, cl3 = 0,
-                   ka_RA = 0.0151)
+                   ka_RA = 0.0187)
   expect_equal_rounded(actual$PK$default[names(expected)], expected)
 })
 

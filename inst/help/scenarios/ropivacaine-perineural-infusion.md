@@ -14,7 +14,7 @@ The model is from older patients (61 and over) and has no age term, so it overpr
 
 - Delete the 150 mg RA row: the infusion alone is still below half its plateau at 4 hours, and reaches 92 per cent of it at 12 hours. That is why the block is given first.
 - Halve the infusion to 8 mg/hr (0.2% at 4 mL/hr): the plateau halves, to about 0.44 mcg/mL.
-- Change the drug in all three rows to [bupivacaine](help:drugs/bupivacaine). It is absorbed faster and cleared faster in its model, so the same doses peak higher and earlier (about 1.4 mcg/mL at an hour) but settle lower (about 0.51 mcg/mL). In practice bupivacaine is infused at lower rates than ropivacaine; see [the bupivacaine infusion scenario](help:scenarios/bupivacaine-perineural-infusion).
+- Change the drug in all three rows to [bupivacaine](help:drugs/bupivacaine). It is absorbed faster and cleared faster in its model, so the same doses peak higher and earlier (about 1.6 mcg/mL at an hour) but settle lower (about 0.51 mcg/mL). In practice bupivacaine is infused at lower rates than ropivacaine; see [the bupivacaine infusion scenario](help:scenarios/bupivacaine-perineural-infusion).
 
 ## Background
 
