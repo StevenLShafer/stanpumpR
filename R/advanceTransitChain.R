@@ -49,10 +49,15 @@
 #   ..          the metabolite's central compartment, volume v
 #   ..          the metabolite's peripheral compartment, where it has one
 #
-# and one further state, held at 1, which carries an intravenous rate; see
+#   ..          the effect site, where the drug has a ke0 (a concentration,
+#               not an amount: dCe/dt = ke0 (Cp - Ce))
+#
+# and two further states, each held at 1, which carry a rate: one into the
+# central compartment (an intravenous infusion) and one into the head of the
+# chain (an oral or enteral infusion, multiplied by bioavailability_PO); see
 # below.  An oral dose enters chain compartment 1, multiplied by
-# bioavailability_PO, at its time plus tlag_PO.  An intravenous bolus enters
-# the central compartment.
+# bioavailability_PO, at its time plus tlag_PO, and an oral rate takes the same
+# lag.  An intravenous bolus enters the central compartment.
 #
 # The two chains differ in their last step, and that asymmetry is the source's
 # rather than this engine's: Faisal 2019 names a separate rate constant of
@@ -89,13 +94,14 @@
 #
 #     x(t + dt) = E(dt) x(t) + R g(dt),      E = exp(A dt),
 #
-# with g(dt) the integral of exp(A s) over the step applied to a unit input
-# into the central compartment, and R the intravenous rate holding over it.
-# Both come from ONE matrix exponential: augmenting A with a state held at 1
-# that feeds the central compartment at a unit rate makes E the leading block
-# of exp(Ahat dt) and g its last column.  Because the system is linear in R,
-# the same g serves every rate -- it is scaled, not recomputed -- so the
-# propagator depends on dt alone and is memoised on it.
+# with g(dt) the integral of exp(A s) over the step applied to a unit input,
+# and R the rate holding over it -- one such pair for the intravenous rate
+# into the central compartment and one for the oral rate into the head of the
+# chain.  All of it comes from ONE matrix exponential: augmenting A with a
+# state held at 1 for each that feeds its compartment at a unit rate makes E
+# the leading block of exp(Ahat dt) and the g's its last two columns.  Because
+# the system is linear in R, the same g serves every rate -- it is scaled, not
+# recomputed -- so the propagator depends on dt alone and is memoised on it.
 #
 # That matters because the library's time line is not uniform
 # (simulationTimeGrid()): it fills every gap between dose times with the same
@@ -111,17 +117,31 @@
 # one a hair below zero, and those are clipped rather than carried into an
 # amount.
 #
-# NO EFFECT SITE, NO TIME UNTIL THRESHOLD
-# =======================================
-# Ce is NA and the Recovery column is NA, for both moieties, as for any drug
-# the library plots as plasma only -- which enalapril and enalaprilat are, as
-# is every antihypertensive here.  The reason it is not merely "not yet" is
-# structural: a time until threshold is solved from the exponential amplitudes
-# the closed-form engines leave in hand (R/recoveryStates.R), and a defective
-# system has no such amplitudes to leave.  foldMetabolites() is written for
-# that case already -- a NULL set of metabolite recovery states makes
+# THE EFFECT SITE; NO TIME UNTIL THRESHOLD
+# ========================================
+# A parent with a ke0 (the PK set's, as getDrugPK() resolved it) gets an
+# effect-site state, which is one more linear equation and so exact like the
+# rest; Ce is NA for a drug without one, and always for the metabolite.  Added
+# 2026-10-30 so that the Parkinson disease drugs of PR #548 (levodopa, with
+# Mao 2013's motor effect site, behind one transit compartment) can run here
+# instead of on the 1e-5 two-depot approximation of R/transit.R.
+#
+# The Recovery column is NA.  A time until threshold is solved from the
+# exponential amplitudes the closed-form engines leave in hand
+# (R/recoveryStates.R), and a defective system has no such amplitudes to leave;
+# what it would take instead is a root-find of c' exp(A s) x(t) against the
+# threshold at every plotted point.  foldMetabolites() is written for the
+# missing case already -- a NULL set of metabolite recovery states makes
 # foldedRecovery() return NULL rather than report a time for part of the
 # picture.
+#
+# open_questions:
+#   - [decision] (asked of Steven L. Shafer 2026-10-30, coalescing R/transit.R
+#     into this engine) levodopa has a threshold (endCe 0.81 mcg/mL, Mao
+#     2013's EC50), and on #548's two-depot approximation its time until
+#     threshold works.  Moving it here loses that readout unless this engine
+#     gains the root-find above.  Build the root-find, accept the loss, or
+#     keep levodopa on the approximation?
 # -----------------------------------------------------------------------------
 
 #' Largest entry of a scaled matrix before the Taylor series is summed
@@ -242,7 +262,8 @@ validateTransitChain <- function(tc, pkSet, drug)
 #' @param maximum the end of the plot, minutes
 #' @param plotRecovery unused: this engine reports no time until threshold
 #' @param emerge unused, for the same reason
-#' @returns a data frame of `Time`, `Cp`, `Ce` (NA), `Recovery` (NA), `C2`,
+#' @returns a data frame of `Time`, `Cp`, `Ce` (NA without a ke0),
+#'   `Recovery` (NA), `C2`,
 #'   `C3` and `Depot`, and, for a drug that forms an active metabolite,
 #'   `CpMetabolite`, `CeMetabolite` (NA), `C2Metabolite` and `C3Metabolite`,
 #'   as the closed-form engines return
@@ -281,7 +302,11 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   iMP  <- iMC + 1L
   nS   <- if (is.null(met)) nParent else
     if (orZero(met$k12) > 0) iMP else iMC
+  ke0  <- orZero(pkSet$ke0)
+  iE   <- if (ke0 > 0) nS + 1L else NA_integer_
+  if (ke0 > 0) nS <- nS + 1L
   iOne <- nS + 1L                 # held at 1; carries the intravenous rate
+  iOneOral <- nS + 2L             # held at 1; carries the oral rate
 
   mKel <- if (is.null(met)) 0 else met$kel
   mK12 <- if (is.null(met)) 0 else orZero(met$k12)
@@ -294,7 +319,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   mScale <- if (is.null(met)) 1 else orZero(met$unitScale, 1)
 
   # ---- The system matrix ----
-  A <- matrix(0, iOne, iOne)
+  A <- matrix(0, iOneOral, iOneOral)
   # The chain: each compartment empties into the next, the last into the
   # central one.  All but the last at ktr; the last at ka_PO.
   chain <- c(rep(ktr, max(0L, n - 1L)), ka)
@@ -309,6 +334,9 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   # A unit intravenous rate into the central compartment, scaled by the rate
   # in force when the propagator is applied.
   A[iC, iOne] <- 1
+  # And a unit oral rate into the head of the chain, bioavailability included.
+  A[1L, iOneOral] <- orZero(pkSet$bioavailability_PO, 1)
+  if (ke0 > 0) { A[iE, iC] <- ke0 / V; A[iE, iE] <- -ke0 }
   if (!is.null(met))
   {
     # The parent's metabolic loss enters the formation chain, or the
@@ -345,8 +373,12 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   ivBolus <- route == ROUTE_IV & !isRate
   addJump(ivBolus, t0, rep(iC, length(t0)), D)
   ivRate <- route == ROUTE_IV & isRate
+  # An oral or enteral infusion (levodopa intestinal gel) runs through the
+  # whole chain, lagged as an oral dose is.
+  oralRate <- route == ROUTE_PO & isRate
+  tOralRate <- t0 + orZero(pkSet$tlag_PO)
 
-  other <- !(isOral | ivBolus | ivRate)
+  other <- !(isOral | ivBolus | ivRate | oralRate)
   if (any(other & D != 0))
     stop("The transit-chain engine cannot simulate units: ",
          paste(unique(units[other & D != 0]), collapse = ", "))
@@ -354,7 +386,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   # ---- The time line ----
   # Every dose time and every arrival, and the instant before each, so that a
   # jump never lands inside a step.  Plasma only, so the grid starts at 0.
-  knots <- unique(c(t0, jumps$time))
+  knots <- unique(c(t0, jumps$time, tOralRate[oralRate]))
   timeLine <- simulationTimeGrid(c(knots, knots - PRE_DOSE_OFFSET), maximum,
                                  gridStart(0))
   timeLine <- timeLine[timeLine >= 0]
@@ -362,12 +394,15 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
 
   # The intravenous rate in force at each point: the last such row at or
   # before it, zero before the first.
-  rateLine <- rep(0, L)
-  if (any(ivRate))
-  {
-    o <- order(t0[ivRate])
-    rateLine <- c(0, D[ivRate][o])[findInterval(timeLine, t0[ivRate][o]) + 1]
+  rateIn <- function(use, at) {
+    if (!any(use)) return(rep(0, L))
+    o <- order(at[use])
+    c(0, D[use][o])[findInterval(timeLine, at[use][o]) + 1]
   }
+  rateLine <- rateIn(ivRate, t0)
+  oralRateLine <- rateIn(oralRate, tOralRate)
+  if (any(oralRate & tOralRate <= maximum & is.na(match(tOralRate, timeLine))))
+    stop("Internal error: an oral rate change is missing from the time line.")
 
   jumpAt <- match(jumps$time, timeLine)
   if (anyNA(jumpAt[jumps$time <= maximum]))
@@ -385,7 +420,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
       E <- expmScaleSquare(A * dt)
       E[E < 0] <- 0     # exact for a generator; rounding can dip below zero
       got <- list(E = E[seq_len(nS), seq_len(nS), drop = FALSE],
-                  g = E[seq_len(nS), iOne])
+                  g = E[seq_len(nS), iOne], gOral = E[seq_len(nS), iOneOral])
       cache[[key]] <<- got
     }
     got
@@ -394,6 +429,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   x <- numeric(nS)
   Cp <- C2 <- C3 <- depot <- numeric(L)
   Cm <- C2m <- numeric(L)
+  Ce <- rep(NA_real_, L)
   # The amount still to be absorbed is the whole chain; the metabolite's
   # formation transits are not a depot -- that drug is already absorbed.
   depotStates <- seq_len(n)
@@ -402,12 +438,14 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
     if (i > 1)
     {
       p <- propagator(timeLine[i] - timeLine[i - 1])
-      x <- as.vector(p$E %*% x) + p$g * rateLine[i - 1]
+      x <- as.vector(p$E %*% x) + p$g * rateLine[i - 1] +
+        p$gOral * oralRateLine[i - 1]
     }
     for (j in which(jumpAt == i)) x[jumps$state[j]] <- x[jumps$state[j]] + jumps$amount[j]
     Cp[i] <- x[iC] / V
     if (k12 > 0) C2[i] <- x[i2] / V2
     if (k13 > 0) C3[i] <- x[i3] / V3
+    if (ke0 > 0) Ce[i] <- x[iE]
     depot[i] <- sum(x[depotStates])
     if (!is.null(met))
     {
@@ -419,7 +457,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   out <- data.frame(
     Time = timeLine,
     Cp = Cp,
-    Ce = rep(NA_real_, L),
+    Ce = Ce,
     Recovery = rep(NA_real_, L),
     C2 = C2,
     C3 = C3,

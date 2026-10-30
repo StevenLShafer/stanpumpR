@@ -324,7 +324,6 @@ test_that("getDrugPK refuses a transit chain beside an incompatible mode", {
   }
   # Modes this guard is the first to reject.
   for (mode in list(list(michaelisMenten = list(vmax = 1, km = 1)),
-                    list(oralSaturation = list(Imax = 0.906, ID50 = 571)),
                     list(oralPulses = list(default = list(
                       fraction = c(0.5, 0.5), delay = c(0, 60)))),
                     list(metabolite = list(name = "enalaprilat",
@@ -339,4 +338,119 @@ test_that("getDrugPK refuses a transit chain beside an incompatible mode", {
                          model = withMode(list(
                            oralZeroOrder = list(duration = 60, lag = 0)))),
                "Invalid oralZeroOrder|Invalid transitChain")
+})
+
+
+# ---------------------------------------------------------------------------
+# One transit compartment before the depot, both at one rate (Erlang-2), with
+# an effect site and an oral rate: what PR #548's R/transit.R carried on two
+# parallel depots 1e-5 apart (levodopa, levodopa intestinal gel, opicapone),
+# here exact.  Added 2026-10-30.
+# ---------------------------------------------------------------------------
+
+# A one-compartment drug absorbed through a two-deep chain at one rate, built
+# through getDrugPK() so that ke0, F and the lag are resolved as for a drug.
+erlang2PK <- function(ke0 = 0.03, F = 0.8, tlag = 0, extra = list())
+{
+  X <- c(list(
+    PK = list(default = list(v1 = 60, v2 = 1, v3 = 1, cl1 = 0.4, cl2 = 0,
+                             cl3 = 0, ka_PO = 0.04, bioavailability_PO = F,
+                             tlag_PO = tlag)),
+    ke0 = ke0, MEAC = 0, typical = 0, upperTypical = 0, lowerTypical = 0,
+    reference = "test",
+    transitChain = list(n = 2L, ktr = 0.04, kMetabolic = 0)), extra)
+  getDrugPK("enalapril", 70, 175, 40, "male", model = X)
+}
+
+# Fourth-order Runge-Kutta of the same five states, at a 0.005 min step.
+erlang2RK4 <- function(times, PK, bolus = list(), rates = list())
+{
+  s <- PK$PK[[PK_EVENT_DEFAULT]]
+  ka <- s$ka_PO; k <- s$k10; V <- s$v1; F <- s$bioavailability_PO
+  ke0 <- s$ke0; lag <- s$tlag_PO
+  f <- function(y, R) c(-0.04 * y[1] + R * F, 0.04 * y[1] - ka * y[2],
+                        ka * y[2] - k * y[3], ke0 * (y[3] / V - y[4]))
+  rate <- function(t) sum(vapply(rates, function(r)
+    if (t >= r[1] + lag && t < r[2] + lag) r[3] else 0, 0))
+  y <- numeric(4); t <- 0; h <- 0.005
+  cp <- ce <- numeric(length(times))
+  for (i in seq_along(times))
+  {
+    while (t < times[i] - 1e-12)
+    {
+      for (d in bolus) if (abs(t - d[1] - lag) < 1e-9) y[1] <- y[1] + d[2] * F
+      hh <- min(h, times[i] - t, {
+        nxt <- c(vapply(rates, function(r) r[1:2] + lag, numeric(2)),
+                 vapply(bolus, function(d) d[1] + lag, 0))
+        nxt <- nxt[nxt > t + 1e-12]; if (length(nxt)) min(nxt) - t else Inf })
+      R <- rate(t + hh / 2)
+      k1 <- f(y, R); k2 <- f(y + hh / 2 * k1, R); k3 <- f(y + hh / 2 * k2, R)
+      k4 <- f(y + hh * k3, R)
+      y <- y + hh / 6 * (k1 + 2 * k2 + 2 * k3 + k4); t <- t + hh
+    }
+    cp[i] <- y[3] / V; ce[i] <- y[4]
+  }
+  list(cp = cp, ce = ce)
+}
+
+test_that("a two-deep chain at one rate is the Erlang-2 input, exactly", {
+  PK <- erlang2PK()
+  s <- PK$PK[[PK_EVENT_DEFAULT]]
+  got <- advanceTransitChain(classifyDoses(0, 1000, "mcg PO"), PK, 1440)
+  # The two rates tie exactly (getDrugPK() does not separate ka_PO from the
+  # chain's ktr, and this engine never needs it to), so the reference is the
+  # Erlang-2 form itself, with its t exp(-ka t) term.
+  ka <- 0.04; k <- s$k10; t <- got$Time
+  expect_identical(s$ka_PO, ka)
+  amt <- 1000 * s$bioavailability_PO * ka^2 *
+    ((exp(-k * t) - exp(-ka * t)) / (ka - k)^2 - t * exp(-ka * t) / (ka - k))
+  expect_true(all(is.finite(amt)))
+  expect_lt(relErr(got$Cp, amt / s$v1, floor = 1e-6), 1e-12)
+})
+
+test_that("the effect site is exact, and absent without a ke0", {
+  PK <- erlang2PK()
+  got <- advanceTransitChain(classifyDoses(c(0, 300), c(1000, 500),
+                                           c("mcg PO", "mcg PO")), PK, 900)
+  ref <- erlang2RK4(got$Time, PK, bolus = list(c(0, 1000), c(300, 500)))
+  expect_lt(max(abs(got$Cp - ref$cp)) / max(ref$cp), 1e-9)
+  expect_lt(max(abs(got$Ce - ref$ce)) / max(ref$ce), 1e-9)
+  expect_true(all(is.na(got$Recovery)))
+  # The effect site lags the plasma and peaks below it
+  expect_gt(got$Time[which.max(got$Ce)], got$Time[which.max(got$Cp)])
+  # No ke0, no effect site
+  none <- erlang2PK(ke0 = NULL, extra = list(tPeak = 0))
+  expect_true(all(is.na(advanceTransitChain(classifyDoses(0, 1000, "mcg PO"),
+                                            none, 900)$Ce)))
+})
+
+test_that("an oral rate runs through the whole chain, lagged and scaled by F", {
+  # Levodopa intestinal gel's morning dose then continuous rate, as PR #548
+  # enters it, on a lagged drug so that the lag is tested too.
+  PK <- erlang2PK(tlag = 12)
+  d <- classifyDoses(c(0, 15, 600), c(40, 2, 0),
+                     c("mcg/min PO", "mcg/min PO", "mcg/min PO"))
+  got <- advanceTransitChain(d, PK, 1200)
+  ref <- erlang2RK4(got$Time, PK, rates = list(c(0, 15, 40), c(15, 600, 2)))
+  expect_lt(max(abs(got$Cp - ref$cp)) / max(ref$cp), 1e-9)
+  expect_lt(max(abs(got$Ce - ref$ce)) / max(ref$ce), 1e-9)
+  # Every rate change lands on the time line, at its lagged time
+  expect_true(all(c(12, 27, 612) %in% got$Time))
+  # Mass: what has gone in is F times the rates' integral
+  expect_equal(max(got$Cp[got$Time <= 12]), 0)
+  # A rate and the same amount as boluses superpose: rate + bolus = both
+  b <- classifyDoses(100, 300, "mcg PO")
+  both <- advanceTransitChain(rbind(d, b), PK, 1200)
+  one <- advanceTransitChain(b, PK, 1200)
+  common <- intersect(both$Time, intersect(one$Time, got$Time))
+  pick <- function(r) r$Cp[match(common, r$Time)]
+  expect_lt(max(abs(pick(both) - pick(got) - pick(one))) / max(pick(both)), 1e-11)
+})
+
+test_that("a dose-dependent oral bioavailability is allowed beside a chain", {
+  # simCpCe() scales each oral dose before it dispatches (opicapone, PR #548).
+  PK <- erlang2PK(extra = list(oralSaturation = list(
+    form = ORAL_SATURATION_POWER, Dref = 50, exponent = -0.2)))
+  expect_false(is.null(PK$transitChain))
+  expect_false(is.null(PK$oralSaturation))
 })
