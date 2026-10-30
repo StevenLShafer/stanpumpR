@@ -253,14 +253,13 @@ test_that("doses superpose, because the system is linear", {
   expect_lt(relErr(both$CpMetabolite, one$CpMetabolite + two$CpMetabolite), 1e-11)
 })
 
-test_that("the engine reports no effect site and no time until threshold", {
-  # Structural, not pending: a defective system leaves no exponential
-  # amplitudes for recoveryStates() to solve a threshold from.
+test_that("the metabolite reports no effect site and no time until threshold", {
+  # The parent is timed (see the time-until-threshold tests below); the
+  # metabolite's threshold is not the parent's, so its own stays NA.
   PK <- tcPK()
   got <- advanceTransitChain(classifyDoses(0, 10000, "mcg PO"), PK, 1440,
                              plotRecovery = TRUE, emerge = 1)
   expect_true(all(is.na(got$Ce)))
-  expect_true(all(is.na(got$Recovery)))
   expect_true(all(is.na(got$CeMetabolite)))
   expect_null(attr(got, "recoveryStates"))
   expect_null(attr(got, "metaboliteRecoveryStates"))
@@ -415,7 +414,7 @@ test_that("the effect site is exact, and absent without a ke0", {
   ref <- erlang2RK4(got$Time, PK, bolus = list(c(0, 1000), c(300, 500)))
   expect_lt(max(abs(got$Cp - ref$cp)) / max(ref$cp), 1e-9)
   expect_lt(max(abs(got$Ce - ref$ce)) / max(ref$ce), 1e-9)
-  expect_true(all(is.na(got$Recovery)))
+  expect_equal(got$Recovery, rep(0, nrow(got)))   # not asked for
   # The effect site lags the plasma and peaks below it
   expect_gt(got$Time[which.max(got$Ce)], got$Time[which.max(got$Cp)])
   # No ke0, no effect site
@@ -453,4 +452,145 @@ test_that("a dose-dependent oral bioavailability is allowed beside a chain", {
     form = ORAL_SATURATION_POWER, Dref = 50, exponent = -0.2)))
   expect_false(is.null(PK$transitChain))
   expect_false(is.null(PK$oralSaturation))
+})
+
+
+# ---------------------------------------------------------------------------
+# Time until threshold (2026-10-30).  The engine has no exponential amplitudes
+# to hand R/recoveryCalc.R, so it root-finds c' exp(A s) x directly; these
+# check it against the closed-form engine where the chain degenerates, against
+# an independent dense evaluation where it does not, and on the brief
+# excursion a grid search would miss.
+# ---------------------------------------------------------------------------
+
+# A drug with a peripheral compartment and an effect site, as a chain of n
+# (n = 0: no chain block, so the closed-form oral engine runs it).
+recoveryPK <- function(n, ke0 = 0.03, tlag = 0)
+{
+  X <- list(
+    PK = list(default = list(v1 = 60, v2 = 70, v3 = 1, cl1 = 0.4, cl2 = 0.11,
+                             cl3 = 0, ka_PO = 0.04, bioavailability_PO = 0.8,
+                             tlag_PO = tlag)),
+    ke0 = ke0, MEAC = 0, typical = 0, upperTypical = 0, lowerTypical = 0,
+    reference = "test")
+  if (ke0 == 0) X$tPeak <- 0
+  if (n > 0) X$transitChain <- list(n = as.integer(n), ktr = 0.04, kMetabolic = 0)
+  getDrugPK("enalapril", 70, 175, 40, "male", model = X)
+}
+
+test_that("with one compartment the time until threshold is the closed form's", {
+  # The degenerate chain has no repeated eigenvalue, so the closed-form oral
+  # engine's amplitude solution (R/recoveryCalc.R) is exact for it, and an
+  # independent algorithm.  Both locate each crossing to RECOVERY_TOL.
+  d <- classifyDoses(c(0, 300, 600), c(1000, 500, 800), rep("mcg PO", 3))
+  for (ke0 in c(0.03, 0))
+  {
+    chain <- advanceTransitChain(d, recoveryPK(1, ke0), 1440, TRUE, 3)
+    closed <- advanceClosedFormPO_IM_IN(d, recoveryPK(0, ke0)$PK[[PK_EVENT_DEFAULT]],
+                                        1440, TRUE, 3)
+    m <- match(chain$Time, closed$Time)
+    expect_gt(sum(!is.na(m)), 50)
+    expect_gt(max(closed$Recovery), 100)
+    expect_lt(max(abs(chain$Recovery[!is.na(m)] - closed$Recovery[m[!is.na(m)]])),
+              2 * RECOVERY_TOL)
+  }
+})
+
+# The homogeneous matrix of an Erlang-2 drug with an effect site, and a dense,
+# independent search for the last crossing of c' exp(A s) x: every point of a
+# fine grid evaluated by its own matrix exponential, the last bracket refined
+# by uniroot().
+erlang2A <- function(ka = 0.04, k10 = 0.4 / 60, k12 = 0.11 / 60, k21 = 0.11 / 70,
+                     ke0 = 0.03, V = 60)
+{
+  A <- matrix(0, 5, 5)
+  A[1, 1] <- -ka; A[2, 1] <- ka; A[2, 2] <- -ka; A[3, 2] <- ka
+  A[3, 3] <- -(k10 + k12); A[3, 4] <- k21; A[4, 3] <- k12; A[4, 4] <- -k21
+  A[5, 3] <- ke0 / V; A[5, 5] <- -ke0
+  A
+}
+denseLastCrossing <- function(A, cvec, x, target, horizon, step = 0.25)
+{
+  y <- function(s) sum(cvec * (expmScaleSquare(A * s) %*% x)) - target
+  s <- seq(0, horizon, by = step)
+  v <- vapply(s, y, 0)
+  if (v[length(v)] > 0) return(horizon)
+  up <- which(v[-length(v)] > 0 & v[-1] <= 0)
+  if (length(up) == 0) return(0)
+  j <- max(up)
+  uniroot(y, c(s[j], s[j + 1]), tol = 1e-10)$root
+}
+
+test_that("the root-find matches an independent dense search on a two-deep chain", {
+  A <- erlang2A(); cvec <- c(0, 0, 0, 0, 1)
+  states <- rbind(c(800, 0, 0, 0, 0),          # just dosed
+                  c(300, 250, 400, 100, 4),    # absorbing, effect site rising
+                  c(0, 20, 300, 400, 5),       # declining
+                  c(0, 0, 0, 0, 0))            # nothing given
+  got <- transitChainRecovery(states, A, cvec, 3, RECOVERY_HORIZON_EFFECT)
+  for (i in seq_len(nrow(states)))
+    expect_lt(abs(got[i] - denseLastCrossing(A, cvec, states[i, ], 3,
+                                             RECOVERY_HORIZON_EFFECT)), 1e-5)
+  expect_gt(got[1], 100)
+  expect_equal(got[4], 0)
+  # Still above the threshold at the horizon reads the horizon
+  expect_equal(transitChainRecovery(states[1, , drop = FALSE] * 1000, A, cvec, 3,
+                                    RECOVERY_HORIZON_EFFECT),
+               RECOVERY_HORIZON_EFFECT)
+  # No threshold is no time
+  expect_equal(transitChainRecovery(states, A, cvec, 0, 1440), rep(0, 4))
+})
+
+test_that("a brief excursion above the threshold is found, not stepped over", {
+  # Finding F09's shape: the effect site peaks a hair above the threshold, for
+  # far less time than the screening grid's step.  The bound, not the grid,
+  # decides.
+  A <- erlang2A(); cvec <- c(0, 0, 0, 0, 1); x <- c(800, 0, 0, 0, 0)
+  y <- function(s) sum(cvec * (expmScaleSquare(A * s) %*% x))
+  peak <- optimize(y, c(1, 600), maximum = TRUE, tol = 1e-10)
+  target <- peak$objective * (1 - 1e-9)
+  got <- transitChainRecovery(matrix(x, 1), A, cvec, target, RECOVERY_HORIZON_EFFECT)
+  expect_gt(got, peak$maximum)
+  expect_lt(got - peak$maximum, 0.1)
+  expect_lt(abs(y(got) - target) / target, 1e-9)
+  # Just above the peak: never reached
+  expect_equal(transitChainRecovery(matrix(x, 1), A, cvec,
+                                    peak$objective * (1 + 1e-9),
+                                    RECOVERY_HORIZON_EFFECT), 0)
+})
+
+test_that("the engine reports the time until threshold, NA through a lag", {
+  PK <- recoveryPK(2, tlag = 20)
+  d <- classifyDoses(c(0, 120), c(1000, 1000), c("mcg PO", "mcg PO"))
+  got <- advanceTransitChain(d, PK, 720, plotRecovery = TRUE, emerge = 3)
+  lagged <- (got$Time >= 0 & got$Time < 20) | (got$Time >= 120 & got$Time < 140)
+  expect_true(all(is.na(got$Recovery[lagged])))
+  expect_true(all(!is.na(got$Recovery[!lagged])))
+  expect_gt(max(got$Recovery, na.rm = TRUE), 100)
+  # Off, it is zero, as the closed-form engines give
+  expect_equal(advanceTransitChain(d, PK, 720)$Recovery, rep(0, nrow(got)))
+  # An oral rate is pending through its lag too, and timed once it runs
+  r <- classifyDoses(c(0, 60), c(20, 0), c("mcg/min PO", "mcg/min PO"))
+  withRate <- advanceTransitChain(r, PK, 720, TRUE, 3)
+  early <- withRate$Time < 20
+  expect_true(all(is.na(withRate$Recovery[early])))
+  expect_true(all(!is.na(withRate$Recovery[!early])))
+  expect_gt(max(withRate$Recovery, na.rm = TRUE), 100)
+})
+
+test_that("enalapril's eight-deep chain is timed on its plasma", {
+  # No effect site: timed on the parent's plasma, with the plasma horizon.
+  PK <- tcPK()
+  got <- advanceTransitChain(classifyDoses(0, 10000, "mcg PO"), PK, 1440,
+                             plotRecovery = TRUE, emerge = 1)
+  expect_true(all(is.finite(got$Recovery)))
+  above <- which(got$Cp > 1)
+  expect_gt(length(above), 0)
+  # At the last point above the threshold, the time reported reaches past the
+  # next point, and from every later point it is zero
+  i <- max(above)
+  expect_gt(got$Time[i] + got$Recovery[i], got$Time[i])
+  expect_equal(got$Recovery[seq_len(nrow(got)) > i & got$Time > got$Time[i] +
+                              got$Recovery[i]], rep(0, sum(seq_len(nrow(got)) > i &
+                              got$Time > got$Time[i] + got$Recovery[i])))
 })

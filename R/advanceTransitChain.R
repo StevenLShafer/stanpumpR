@@ -117,8 +117,8 @@
 # one a hair below zero, and those are clipped rather than carried into an
 # amount.
 #
-# THE EFFECT SITE; NO TIME UNTIL THRESHOLD
-# ========================================
+# THE EFFECT SITE
+# ===============
 # A parent with a ke0 (the PK set's, as getDrugPK() resolved it) gets an
 # effect-site state, which is one more linear equation and so exact like the
 # rest; Ce is NA for a drug without one, and always for the metabolite.  Added
@@ -126,22 +126,69 @@
 # Mao 2013's motor effect site, behind one transit compartment) can run here
 # instead of on the 1e-5 two-depot approximation of R/transit.R.
 #
-# The Recovery column is NA.  A time until threshold is solved from the
-# exponential amplitudes the closed-form engines leave in hand
-# (R/recoveryStates.R), and a defective system has no such amplitudes to leave;
-# what it would take instead is a root-find of c' exp(A s) x(t) against the
-# threshold at every plotted point.  foldMetabolites() is written for the
-# missing case already -- a NULL set of metabolite recovery states makes
-# foldedRecovery() return NULL rather than report a time for part of the
-# picture.
+# TIME UNTIL THRESHOLD, BY A ROOT-FIND ON THE PROPAGATOR
+# ======================================================
+# Built 2026-10-30 on Steven L. Shafer's decision (asked when R/transit.R was
+# coalesced into this engine: levodopa has a threshold, endCe 0.81 mcg/mL,
+# Mao 2013's EC50, and its time until threshold had to survive the move).
 #
-# open_questions:
-#   - [decision] (asked of Steven L. Shafer 2026-10-30, coalescing R/transit.R
-#     into this engine) levodopa has a threshold (endCe 0.81 mcg/mL, Mao
-#     2013's EC50), and on #548's two-depot approximation its time until
-#     threshold works.  Moving it here loses that readout unless this engine
-#     gains the root-find above.  Build the root-find, accept the loss, or
-#     keep levodopa on the approximation?
+# The definition is the closed-form engines' (R/recoveryCalc.R): stop all
+# delivery at time t -- every rate, intravenous or oral -- give nothing more,
+# and find the LAST time the timed concentration comes down through the
+# threshold within the horizon; the horizon itself if it is still above there,
+# zero if it never rises above.  The effect site is timed where there is one,
+# else the plasma, with the same horizons (a day; a week or the plot), and a
+# dose given but still inside its lag reads NA, as pendingDoseTimes() makes it
+# elsewhere.  Drug still in the chain is drug given, so it counts.
+#
+# The closed-form engines solve this from exponential amplitudes, which a
+# defective system does not have.  What it does have is linearity: after
+# delivery stops the timed concentration s minutes on is
+#
+#     y(s) = c' exp(A s) x(t) = r(s)' x(t),     r(s)' = c' exp(A s),
+#
+# and r(s) does not depend on t.  So r is computed ONCE, on a uniform grid of
+# the horizon, by repeated multiplication by one propagator, and every plotted
+# point's future curve on that grid is one matrix product, X R'.
+#
+# A grid alone would miss an excursion between two of its points (the defect
+# finding F09 found in the old closed-form search), so the grid only screens,
+# with a bound that is RIGOROUS.  A is a generator: its off-diagonal entries
+# are non-negative, so with delta the largest |A_ii|, N = A + delta I is
+# non-negative and exp(A h) = exp(-delta h) exp(N h).  Every entry of
+# exp(N h) is convex in h (its second derivative is N^2 exp(N h) >= 0), so on
+# an interval of width w it lies under its chord, and with c and x
+# non-negative -- amounts and an effect-site concentration -- that gives, for
+# u = h / w in [0, 1],
+#
+#     y(a + u w) <= exp(-beta u) ((1 - u) y(a) + u exp(beta) y(b)),
+#     beta = delta w,
+#
+# whose maximum over u has a closed form (chordBound()).  It is tight to
+# second order in beta, so near a crossing it closes in as fast as the
+# interval shrinks.  An interval whose bound is at or below the threshold
+# cannot contain a point above it.  The intervals left are searched from the
+# right, each split in two by the same bound with the row's own covector
+# r(a)' carried along by the memoised exp(A w / 2^k), until the last point
+# above the threshold is pinned to RECOVERY_TOL (a crossing) or an interval
+# with no point found above is narrower than RECOVERY_TOL_PEAK (an excursion,
+# if any, smaller than the bound's slack there -- about delta^2 1e-18 of the
+# threshold).  The same two tolerances as R/recoveryCalc.R.
+#
+# Cost.  The grid's step makes delta times it TRANSIT_RECOVERY_GRID_BETA (0.1),
+# so the bound's slack between grid points is about beta^2 / 8 of the output,
+# and the screen leaves each row one or two open intervals at its last
+# crossing.  Rows whose crossing is clean -- at every split the right half
+# either starts above the threshold or is cleared -- are bisected together,
+# one matrix product per level for all of them; the rest take the full search.
+# Measured 2026-10-30: two weeks of six-hourly oral doses (2016 points)
+# 0.16 s, a three-day enteral infusion at ka 9.2 /h (645 points) 0.17 s,
+# against about 0.2 s for the closed-form engines' own search on a run that
+# size.  A coarser grid costs refinement, never accuracy.
+#
+# The metabolite's own time until threshold stays NA: its threshold is not
+# this drug's, and foldMetabolites() already treats a missing set of
+# metabolite recovery states as "not reported" rather than a partial answer.
 # -----------------------------------------------------------------------------
 
 #' Largest entry of a scaled matrix before the Taylor series is summed
@@ -260,10 +307,12 @@ validateTransitChain <- function(tc, pkSet, drug)
 #'   amount unit
 #' @param PK the whole resolved PK, for `PK$transitChain` and the default set
 #' @param maximum the end of the plot, minutes
-#' @param plotRecovery unused: this engine reports no time until threshold
-#' @param emerge unused, for the same reason
+#' @param plotRecovery should the time until threshold be computed?  Zeros
+#'   otherwise, as the closed-form engines give
+#' @param emerge the threshold: on the effect site, or on the plasma for a
+#'   drug without one
 #' @returns a data frame of `Time`, `Cp`, `Ce` (NA without a ke0),
-#'   `Recovery` (NA), `C2`,
+#'   `Recovery` (minutes; NA while a dose is inside its lag), `C2`,
 #'   `C3` and `Depot`, and, for a drug that forms an active metabolite,
 #'   `CpMetabolite`, `CeMetabolite` (NA), `C2Metabolite` and `C3Metabolite`,
 #'   as the closed-form engines return
@@ -427,6 +476,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   }
 
   x <- numeric(nS)
+  X <- matrix(0, L, nS)     # every point's state, for the time until threshold
   Cp <- C2 <- C3 <- depot <- numeric(L)
   Cm <- C2m <- numeric(L)
   Ce <- rep(NA_real_, L)
@@ -442,6 +492,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
         p$gOral * oralRateLine[i - 1]
     }
     for (j in which(jumpAt == i)) x[jumps$state[j]] <- x[jumps$state[j]] + jumps$amount[j]
+    X[i, ] <- x
     Cp[i] <- x[iC] / V
     if (k12 > 0) C2[i] <- x[i2] / V2
     if (k13 > 0) C3[i] <- x[i3] / V3
@@ -454,11 +505,30 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
     }
   }
 
+  # ---- Time until threshold ----
+  # Timed on the effect site where there is one, else on the plasma; see the
+  # header.  Everything after delivery stops is the homogeneous system, the
+  # leading block of A without the two unit-rate states.
+  recovery <- rep(0, L)
+  if (plotRecovery)
+  {
+    cvec <- numeric(nS)
+    if (ke0 > 0) cvec[iE] <- 1 else cvec[iC] <- 1 / V
+    horizon <- if (ke0 > 0) RECOVERY_HORIZON_EFFECT else
+      recoveryHorizonPlasma(maximum)
+    recovery <- transitChainRecovery(X, A[seq_len(nS), seq_len(nS), drop = FALSE],
+                                     cvec, emerge, horizon)
+    oralIn <- isOral | oralRate
+    pending <- pendingDoseTimes(t0[oralIn], t0[oralIn] + orZero(pkSet$tlag_PO),
+                                D[oralIn], timeLine)
+    if (!is.null(pending)) recovery[pending] <- NA_real_
+  }
+
   out <- data.frame(
     Time = timeLine,
     Cp = Cp,
     Ce = Ce,
-    Recovery = rep(NA_real_, L),
+    Recovery = recovery,
     C2 = C2,
     C3 = C3,
     Depot = depot
@@ -469,6 +539,239 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
     out$CeMetabolite <- rep(NA_real_, L)
     out$C2Metabolite <- C2m
     out$C3Metabolite <- rep(0, L)
+  }
+  out
+}
+
+
+#' Steps of the uniform screening grid, at most
+#'
+#' The grid's step is set so that `delta` times it is
+#' `TRANSIT_RECOVERY_GRID_BETA`, but never finer than the horizon over this
+#' many steps; a coarser grid costs more refinement, never accuracy.
+#' @keywords internal
+TRANSIT_RECOVERY_MAX_STEPS <- 20000L
+
+#' The screening grid's step, as a multiple of the fastest rate's time constant
+#' @keywords internal
+TRANSIT_RECOVERY_GRID_BETA <- 0.1
+
+#' Rows of the screening product computed at once, as a number of cells
+#' @keywords internal
+TRANSIT_RECOVERY_CHUNK_CELLS <- 2e6
+
+
+#' A rigorous upper bound on a generator system's output over an interval
+#'
+#' For `y(a + u w) = c' exp(A u w) z`, with `A` a generator, `c` and `z`
+#' non-negative and `beta = delta w` (`delta` the largest |A_ii|), the
+#' chord bound on the convex `exp(N h)` gives
+#' `y <= exp(-beta u) ((1 - u) ya + u exp(beta) yb)`; this is its maximum over
+#' `u` in `[0, 1]`.  See the header of R/advanceTransitChain.R.
+#'
+#' @param ya,yb the output at the two ends (vectors or matrices alike)
+#' @param beta delta times the width
+#' @returns the bound, the shape of `ya`
+#' @keywords internal
+chordBound <- function(ya, yb, beta)
+{
+  q <- exp(beta) * yb - ya
+  out <- pmax(ya, yb)
+  # The interior stationary point, a maximum where q > 0: u* = 1/beta - ya/q,
+  # at which ya + q u* = q / beta.
+  u <- 1 / beta - ya / q
+  inside <- q > 0 & u > 0 & u < 1
+  inside[is.na(inside)] <- FALSE
+  out[inside] <- pmax(out[inside], exp(-beta * u[inside]) * q[inside] / beta)
+  out
+}
+
+
+#' chordBound() for one interval, without the vector overhead
+#' @inheritParams chordBound
+#' @keywords internal
+chordBoundScalar <- function(ya, yb, beta)
+{
+  q <- exp(beta) * yb - ya
+  out <- if (ya > yb) ya else yb
+  if (q > 0)
+  {
+    u <- 1 / beta - ya / q
+    if (u > 0 && u < 1)
+    {
+      v <- exp(-beta * u) * q / beta
+      if (v > out) out <- v
+    }
+  }
+  out
+}
+
+
+#' Time until threshold for a transit-chain drug, exactly
+#'
+#' @param X the state at every point of the time line, one row each
+#' @param A the homogeneous system matrix, a generator
+#' @param cvec the timed output: `y = cvec' x`
+#' @param target the threshold
+#' @param horizon how far ahead to look, minutes
+#' @returns minutes, one per row of `X`: zeros when there is no threshold or
+#'   the output never rises above it, the horizon when it is still above it
+#'   there
+#' @keywords internal
+transitChainRecovery <- function(X, A, cvec, target, horizon)
+{
+  L <- nrow(X)
+  if (is.null(target) || length(target) != 1 || is.na(target) || target <= 0)
+    return(rep(0, L))
+  X[X < 0] <- 0               # rounding only; the bound needs x >= 0
+  delta <- max(-diag(A))
+  nF <- as.integer(min(TRANSIT_RECOVERY_MAX_STEPS,
+                       max(1, ceiling(horizon * delta / TRANSIT_RECOVERY_GRID_BETA))))
+  dt <- horizon / nF
+  beta <- delta * dt
+
+  # E(dt / 2^k), memoised by k: the grid step and every bisection of it.
+  halves <- list()
+  stepE <- function(k) {
+    got <- if (k + 1 <= length(halves)) halves[[k + 1]]
+    if (is.null(got))
+    {
+      got <- expmScaleSquare(A * (dt / 2^k))
+      got[got < 0] <- 0
+      halves[[k + 1]] <<- got
+    }
+    got
+  }
+
+  # r(s)' = c' exp(A s) on the grid, one row per grid point.
+  R <- matrix(0, nF + 1L, length(cvec))
+  r <- cvec
+  E1 <- stepE(0)
+  for (k in seq_len(nF + 1L)) { R[k, ] <- r; r <- as.vector(r %*% E1) }
+
+  # The last point above the threshold in one grid interval, to tolerance, or
+  # NULL if none is found: a right-first search in which a piece is kept only
+  # while its chord bound exceeds the threshold.  Each piece carries the
+  # covectors r' at both its ends and the outputs there, so splitting one costs
+  # a single vector-matrix product.  The stack is preallocated: a depth-first
+  # search holds at most two pieces per level.
+  maxLevel <- ceiling(log2(dt / RECOVERY_TOL_PEAK)) + 2L
+  size <- 2L * maxLevel + 2L
+  nS <- length(cvec)
+  refine <- function(k, x)
+  {
+    sOff <- numeric(size); sLev <- integer(size)
+    sYl <- numeric(size); sYr <- numeric(size)
+    sRl <- matrix(0, size, nS); sRr <- matrix(0, size, nS)
+    top <- 1L
+    sRl[1, ] <- R[k, ];     sYl[1] <- sum(R[k, ] * x)
+    sRr[1, ] <- R[k + 1, ]; sYr[1] <- sum(R[k + 1, ] * x)
+    while (top > 0L)
+    {
+      off <- sOff[top]; lev <- sLev[top]; yl <- sYl[top]; yr <- sYr[top]
+      rl <- sRl[top, ]; rr <- sRr[top, ]
+      top <- top - 1L
+      w <- dt / 2^lev
+      if (chordBoundScalar(yl, yr, delta * w) <= target) next
+      confirmed <- yl > target
+      if (confirmed && w <= RECOVERY_TOL) return((k - 1) * dt + off + w / 2)
+      if (!confirmed && w <= RECOVERY_TOL_PEAK) next
+      rm <- as.vector(rl %*% stepE(lev + 1L))
+      ym <- sum(rm * x)
+      # Left half pushed first, so the right half is searched first.
+      top <- top + 1L
+      sOff[top] <- off; sLev[top] <- lev + 1L
+      sRl[top, ] <- rl; sYl[top] <- yl; sRr[top, ] <- rm; sYr[top] <- ym
+      top <- top + 1L
+      sOff[top] <- off + w / 2; sLev[top] <- lev + 1L
+      sRl[top, ] <- rm; sYl[top] <- ym; sRr[top, ] <- rr; sYr[top] <- yr
+    }
+    NULL
+  }
+
+  # Most rows have a clean crossing: the last interval the screen leaves open
+  # starts above the threshold, and at every split the right half either
+  # starts above it too or is cleared by its bound.  Those rows are bisected
+  # together, one matrix product per level for all of them; a row where a
+  # right half is neither (it may hide a brief excursion) drops out to the
+  # full search, refine(), which also takes every row whose last open interval
+  # does not start above the threshold.
+  lockstep <- function(rows, k, Xs)
+  {
+    m <- length(rows)
+    res <- rep(NA_real_, m)
+    Rl <- R[k, , drop = FALSE];     yl <- rowSums(Rl * Xs)
+    Rr <- R[k + 1, , drop = FALSE]; yr <- rowSums(Rr * Xs)
+    off <- numeric(m)
+    live <- seq_len(m)
+    lev <- 0L
+    while (length(live))
+    {
+      w <- dt / 2^lev
+      if (w <= RECOVERY_TOL)
+      {
+        res[live] <- (k[live] - 1) * dt + off[live] + w / 2
+        break
+      }
+      Rm <- Rl[live, , drop = FALSE] %*% stepE(lev + 1L)
+      ym <- rowSums(Rm * Xs[live, , drop = FALSE])
+      right <- ym > target
+      left <- !right & chordBound(ym, yr[live], delta * w / 2) <= target
+      goR <- live[right]; goL <- live[left]
+      Rl[goR, ] <- Rm[right, ]; yl[goR] <- ym[right]
+      off[goR] <- off[goR] + w / 2
+      Rr[goL, ] <- Rm[left, ]; yr[goL] <- ym[left]
+      live <- live[right | left]     # the rest fall back to refine()
+      lev <- lev + 1L
+    }
+    res
+  }
+
+  out <- numeric(L)
+  chunk <- max(1L, floor(TRANSIT_RECOVERY_CHUNK_CELLS / (nF + 1)))
+  for (rows in split(seq_len(L), (seq_len(L) - 1L) %/% chunk))
+  {
+    Y <- X[rows, , drop = FALSE] %*% t(R)
+    above <- Y[, nF + 1L] > target
+    out[rows[above]] <- horizon
+    # Each row's last open interval.  The chord bound is at most
+    # max(ya, exp(beta) yb), so no interval after the last grid point above
+    # threshold / exp(beta) can be open: the search starts at that point and
+    # walks left, with the exact bound, only until an interval stays open.
+    nR <- length(rows)
+    hi <- Y > target * exp(-beta)
+    lastHi <- max.col(hi, ties.method = "last")
+    lastHi[!hi[cbind(seq_len(nR), lastHi)]] <- 0L
+    last <- integer(nR)
+    for (j in which(!above & lastHi > 0L))
+    {
+      for (k in min(lastHi[j], nF):1)
+      {
+        if (chordBoundScalar(Y[j, k], Y[j, k + 1L], beta) > target) { last[j] <- k; break }
+      }
+    }
+    has <- last > 0L
+    clean <- has
+    clean[has] <- Y[cbind(which(has), last[has])] > target
+    done <- rep(FALSE, length(rows))
+    if (any(clean))
+    {
+      j <- which(clean)
+      got <- lockstep(rows[j], last[j], X[rows[j], , drop = FALSE])
+      out[rows[j]] <- ifelse(is.na(got), 0, got)
+      done[j] <- !is.na(got)
+    }
+    for (j in which(has & !done))
+    {
+      i <- rows[j]
+      out[i] <- 0
+      for (k in last[j]:1)
+      {
+        if (chordBoundScalar(Y[j, k], Y[j, k + 1L], beta) <= target) next
+        t <- refine(k, X[i, ])
+        if (!is.null(t)) { out[i] <- t; break }
+      }
+    }
   }
   out
 }
