@@ -226,56 +226,91 @@
 # ABSORPTION: FROM A SECOND STUDY, BECAUSE HUI'S NORMAL GROUP GOT NO ORAL DOSE
 # ============================================================================
 # Hui gave the oral dose only to his impaired patients, so the absorption of a
-# patient with normal renal function has to come from elsewhere.  Murdoch's
-# section 2.1 quotes Singhvi 1988, single oral fosinopril 10 mg in healthy
-# volunteers: about one third of the drug absorbed (32 to 36%), Cmax 99 to
-# 140 mcg/L, tmax 2.8 to 3.1 h, AUC(0-24h) 1035 to 1132 mcg/L.h, and
-# "fosinoprilat bioavailability from 25 to 29%".  Over 10 to 640 mg, tmax ran
-# 2.4 to 4.2 h; the label says tmax is dose-independent at "approximately 3
-# hours".  Food slows the rate and not the extent.  No lag was fitted anywhere
-# and none is used.
+# patient with normal renal function has to come from elsewhere: Singhvi SM,
+# Duchin KL, Morrison RA, Willard DA, Everett DW, Frantz M, Br J Clin Pharmacol
+# 1988;25:9-15 (PMID 2967089, obtained 2026-10-29 -- see the correction below).
+# Nine healthy men, 20 to 34 years, in a THREE-WAY CROSSOVER: intravenous
+# 7.5 mg of 14C-fosinoprilat and two oral 10 mg doses of 14C-fosinopril sodium,
+# one a capsule and one a solution.  Oral absorption averaged 32% (solution) and
+# 36% (capsule); the oral BIOAVAILABILITY OF FOSINOPRILAT averaged 25% and 29%.
+# Over 10 to 640 mg, tmax ran 2.4 to 4.2 h, and the label says tmax is
+# dose-independent at "approximately 3 hours".  Food slows the rate and not the
+# extent.  No lag was fitted anywhere and none is used.
 #
-# ka = 0.2987 /h puts the model's peak at 2.95 h, the midpoint of Singhvi's
-# 2.8 to 3.1 h, on Hui's disposition.
+# ka = 0.2987 /h puts the model's peak at 2.95 h, the midpoint of the 2.8 to
+# 3.1 h for a 10 mg dose.  That figure is not in Singhvi's abstract and is
+# taken from Murdoch D, McTavish D, Drugs 1992;43:123-40 section 2.1, which
+# quotes his tables; the label's dose-independent "approximately 3 hours" is the
+# independent corroboration, and the rate is robust to the analyte question
+# below because the diacid is 75% of the radioactivity and the two peak
+# together.
 #
-# F = 0.26 is DERIVED against Singhvi's two measurements rather than read,
-# because the two routes to it disagree slightly and a measurement is the better
-# anchor: reproducing his Cmax (midpoint 119.5 ng/mL) needs 0.264 and
-# reproducing his AUC(0-24h) (midpoint 1083.5 ng.h/mL) needs 0.250.  At 0.26 the
-# model gives Cmax 117.8 and AUC(0-24h) 1126.9, both inside the reported ranges,
-# and the value falls inside the reported "25 to 29%" as well.  Two independent
-# corroborations, and one honest caution:
+# F = 0.29, the CAPSULE's bioavailability, READ.  The capsule rather than the
+# solution because the marketed product is a tablet, a solid dosage form, and
+# because Hui dosed a capsule too, so his corroborating figures are on the same
+# formulation.  At 0.29 the model gives, for a patient with HUI's clearance,
+# Cmax 131.4 ng/mL at 2.95 h and AUC(0-24h) 1257 ng.h/mL.
 #
-#   * Hui's own crossover gives fosinoprilat bioavailability as 22.5, 22.0 and
-#     27.9% in his three impaired groups, mean 24.1% -- 8% below the value used,
-#     from the same patients, assay and analysis as the disposition.  That it
-#     brackets Singhvi's healthy 25 to 29% is the evidence for Shafer's point
-#     that renal impairment leaves the EXTENT of absorption alone, and it is why
-#     one absorption model serves every patient here.
-#   * The agreement with the reported percentage is partly a coincidence of two
-#     offsetting discrepancies, and saying so is more useful than claiming a
-#     match.  Singhvi's own intravenous and oral areas (3166 and 1035-1132
-#     mcg/L.h over 0-24 h for equimolar doses) imply an availability of 33 to
-#     36% against HIS clearance, not 25 to 29%; his clearance was about 40%
-#     above Hui's, which is why 0.26 against Hui's clearance lands where it
-#     does.  See the next section.
+# THE FIRST DRAFT DERIVED F INSTEAD, AND THAT WAS WRONG TWICE OVER.  It is worth
+# recording, because both errors are easy to make again and the second is the
+# instructive one.  It set F = 0.26 by making the model reproduce two numbers
+# quoted in Murdoch's review for a 10 mg dose, Cmax 99 to 140 mcg/L and
+# AUC(0-24h) 1035 to 1132 mcg/L.h.
+#
+#   1. THOSE TWO ARE TOTAL RADIOACTIVITY, not fosinoprilat, although the review
+#      labels them as "plasma fosinoprilat".  An external review raised it and
+#      Singhvi's own abstract settles it arithmetically: only about 75% of the
+#      plasma radioactivity after an oral dose is fosinoprilat (the rest is the
+#      inactive beta-glucuronide, 15 to 20%, and the monohydroxy analogue, about
+#      5%), and 0.75 x 1035-1132 = 776-849 ng.h/mL is exactly the fosinoprilat
+#      area that Singhvi's OWN bioavailability (25 to 29%) and his OWN clearance
+#      (39 mL/min) imply, 737-855.  Three numbers from one abstract triangulate
+#      it.  A SECONDARY SOURCE CAN RELABEL AN ANALYTE, and for a radiolabel
+#      study that is the error to expect, because the paper reports both.
+#   2. Even with the right analyte, DERIVING F THAT WAY IS A CATEGORY ERROR.
+#      Bioavailability is clearance-INDEPENDENT by construction: Singhvi's is a
+#      within-subject crossover, F = (AUC_po/D_po)/(AUC_iv/D_iv), and the
+#      subject's clearance cancels.  Forcing the model to reproduce SINGHVI's
+#      oral exposure while it runs on HUI's clearance therefore double-counts
+#      the difference between the two populations -- his oral area is small
+#      because he cleared the drug fast, and attributing that to a smaller F
+#      makes every other patient's curve wrong.  The quantity to read is F; the
+#      quantity to let the model compute is the exposure.
+#
+# Hui's own crossover gives fosinoprilat bioavailability as 22.5, 22.0 and 27.9%
+# in the mild, moderate and severe groups (mean 24.1%), measured against the
+# same patients' own intravenous doses with the same assay as the disposition.
+# Those sit below Singhvi's healthy capsule 29% -- the mild group by 2.4 of its
+# own standard errors -- and Hui reports no relationship between bioavailability
+# and renal function, so the honest reading is that impairment leaves the EXTENT
+# of absorption broadly alone, which is what Shafer's design rests on, while the
+# impaired patients may run somewhat lower than the healthy capsule value this
+# model uses.
 #
 # WHAT HUI'S "NORMAL RENAL FUNCTION" IS, AND WHY THE CURVE RUNS HIGH
 # ==================================================================
 # Hui's normal group were hypertensive patients averaging 61 years, and their
 # clearance of 26.5 mL/min sits at the BOTTOM of the label's healthy range of
-# 26 to 39 mL/min.  Singhvi's young healthy volunteers were at the top: his
-# intravenous AUC(0-24h) of 3166 ng.h/mL for 7.5 mg implies about 37 mL/min
-# (derived here, extrapolating his truncated area with this model's own 0-24 h
-# share of the total, 94%), and this model gives 4417 for the same dose -- 40% higher
-# exposure, and a 5-minute concentration of 2064 ng/mL against his measured
-# 1556.  Both are inside the label's quoted healthy range, so neither is wrong;
-# the model is the older patient.  By the rule in AGENTS.md only the clearances
-# are compared here, and they differ by exactly the factor the exposures do.
-# A user comparing this curve with a healthy-volunteer concentration should
-# expect it to sit high after an intravenous dose -- which no one can give,
-# since only the prodrug is marketed -- and to be about right orally, where the
-# derived F absorbs the difference.
+# 26 to 39 mL/min.  Singhvi's nine young healthy men were at the TOP of it: his
+# abstract reports clearance 39 mL/min, renal clearance 17, Vss 10 L and protein
+# binding about 95%.  So the two sources differ by 1.47-fold on the one
+# parameter that measures a physiological process, and agree on the volume.
+#
+# That factor is the whole of the difference between them, and it propagates
+# where it should.  This model, built on Hui, predicts 1.47 times Singhvi's
+# fosinoprilat exposure for the same dose in either route: orally, AUC(0-inf)
+# 1368 ng.h/mL against the 929 that Singhvi's own F and clearance give for his
+# capsule.  Neither is wrong -- both clearances are inside the range the label
+# itself quotes for healthy subjects -- and the model is deliberately the older
+# patient, because an oral antihypertensive is prescribed to people more like
+# Hui's hypertensive 61-year-olds than like Singhvi's volunteers.
+#
+# A user comparing this curve with a published healthy-volunteer concentration
+# should therefore expect it to sit about 1.5-fold high, and should NOT read
+# that as an error in either study.  The earlier draft of this header claimed
+# the oral curve was "about right" because a derived F absorbed the difference;
+# that was the category error described above, and the difference is real and
+# now visible rather than hidden inside F.
 #
 # The terminal half-life, 12.4 h, needs no such caveat: the label gives
 # approximately 12 h in healthy subjects and an effective 11.5 h for
@@ -283,21 +318,78 @@
 #
 # AN INDEPENDENT CHECK ON THE VOLUME
 # ==================================
-# Murdoch reports Singhvi's steady-state volume of distribution as 9.8 to
-# 10.6 L after the same 7.5 mg intravenous dose.  Hui's 10.2 L -- the number
-# this model's Vss reproduces exactly, being an input -- sits in the middle of
-# it.  A different laboratory and population agree on the volume while
-# disagreeing on the clearance, which is the pattern AGENTS.md predicts in
-# reverse and worth noting: here it is the construct that agrees.
+# Singhvi's abstract gives a steady-state volume of 10 L after the same 7.5 mg
+# intravenous dose (Murdoch quotes it as 9.8 to 10.6).  Hui's 10.2 L -- the
+# number this model's Vss reproduces exactly, being an input -- is the same.
+# A different laboratory and population agree on the volume while disagreeing
+# 1.47-fold on the clearance, which is the reverse of the pattern AGENTS.md
+# predicts and worth noting: here it is the CONSTRUCT that agrees and the
+# physiological parameter that does not.
 #
 # WHAT IS NOT MODELLED
 # ====================
-# * The absorption RATE in renal impairment.  Hui's impaired patients had tmax
-#   4.0 to 4.2 h and mean absorption times of 7.1, 11.1 and 12.3 h, against
-#   Singhvi's healthy 2.8 to 3.1 h.  Shafer's design is one absorption model for
-#   every patient; the extent is what Hui shows unchanged, and the rate is not
-#   the same claim.  MAT is also confounded, since the mean residence time after
-#   the intravenous dose rose in the same patients.  Recorded, not applied.
+# * The absorption RATE in renal impairment -- for which, on examination, Hui
+#   contains NO EVIDENCE, and this bullet used to claim he did.  Steven L.
+#   Shafer, 2026-10-29: "Slower clearance, as will be seen in renal failure,
+#   will also delay the peak.  It isn't clear that the later peak is related to
+#   absorption per se.  What is the evidence for a slower absorption rate in
+#   Hui's paper?  And, of course, slower than what?"  Both halves land.
+#
+#   HIS tmax IS NO EVIDENCE.  Hold ka at the healthy 0.2987 /h, lower only the
+#   clearance to the impaired plateau, and this model PREDICTS a peak at 3.7 to
+#   3.9 h against his observed 4.0, 4.0 and 4.2 h.  The slower clearance
+#   accounts for essentially the whole shift; closing the last 0.2 to 0.4 h
+#   would need ka at 85 to 92% of the healthy value, an 8 to 15% change, well
+#   inside the scatter of a tmax reported as 4.0 +/- 0.0 to 4.2 +/- 0.5 h in
+#   groups of four to six.  A LATER PEAK IS NOT A SLOWER INPUT: tmax is a
+#   property of the whole system, and anything that lowers elimination moves it
+#   right.
+#
+#   AND "SLOWER THAN WHAT?" -- the comparator was Singhvi's healthy volunteers,
+#   a DIFFERENT STUDY.  Hui's normal-renal-function group got the intravenous
+#   dose only, so his paper contains no healthy oral arm to compare against.
+#   The comparison was cross-study, across a 1.47-fold clearance difference, a
+#   different population and a different laboratory, which is exactly what
+#   AGENTS.md warns against.
+#
+#   THE ONE QUANTITY THAT WOULD BE EVIDENCE CONTRADICTS HIS OWN tmax.  Mean
+#   absorption time is MRT_po - MRT_iv, taken within each group from its own
+#   intravenous arm, so it IS clearance-independent -- for a first-order input
+#   MAT = 1/ka exactly, at any clearance.  His MATs of 7.1, 11.1 and 12.3 h
+#   imply ka of 0.141, 0.090 and 0.081 /h, which would put the peak at 5.7 to
+#   7.6 h.  He observed 4.0 to 4.2.  So the paper's two absorption descriptors
+#   disagree with each other by nearly two-fold under any single first-order
+#   input, and MAT is the weaker of the two, for the reason Shafer gave when he
+#   saw this (2026-10-29): "a difference between two numbers is a fraught
+#   measurement.  The variance of the difference is the sum of the variances of
+#   the individual numbers, so the difference between two means can be easily
+#   dwarfed by the variance."  Worked through on these numbers it finishes the
+#   question off.
+#
+#   First, Hui did it RIGHT: his printed MAT standard errors (1.3, 3.0, 4.4 h)
+#   are SMALLER than the 3.05, 3.59 and 7.32 that independence would give, which
+#   is the signature of pairing -- same patients in both arms, implied
+#   correlations 0.83, 0.70 and 0.93 -- so he computed MAT per subject and his
+#   standard errors are honest.  Comparing a printed SEM of a difference with
+#   the independent sum is how to tell.
+#
+#   Second, even so, THE TREND HIS TEXT CLAIMS IS NOT IN HIS NUMBERS.  "Mean
+#   absorption times were longer in patients with moderate or severe
+#   impairment" tests out at t = 1.22 (mild to moderate), 0.23 (moderate to
+#   severe) and 1.13 (mild to severe).  None reaches 1.3 standard errors.
+#
+#   Third, the model's own MAT is not a measurement to compare against: 1/ka is
+#   3.35 h, and ka was set to a time-to-peak MIDPOINT quoted in a review, so it
+#   carries no standard error and belongs in no significance test.
+#
+#   So there is no supported absorption-rate finding in this paper at all --
+#   not from tmax, not from MAT against healthy, and not from MAT across
+#   impairment.
+#
+#   So one absorption rate serves every patient here not as a simplification
+#   but because nothing measured contradicts it.  The EXTENT is the claim Hui
+#   supports (his bioavailability does not track renal function), and the rate
+#   was never in evidence.
 # * p-hydroxyfosinoprilat.  The label puts active fosinoprilat at 75% of plasma
 #   radioactivity after an oral dose, its glucuronide at 20 to 30% and the
 #   p-hydroxy metabolite at 1 to 5%.  The glucuronide is inactive, but "in rats,
@@ -343,9 +435,9 @@ FOSINOPRIL_CL_IMPAIRED  <- 15.5   # unweighted mean of his 14.6, 13.7, 18.2
 FOSINOPRIL_CRCL_NORMAL  <- 80     # the US label's boundary for normal function
 FOSINOPRIL_CRCL_IMPAIRED <- 59.6  # Hui's mild group's own creatinine clearance
 
-# Absorption, from Singhvi 1988 via Murdoch & McTavish 1992 section 2.1
+# Absorption, from Singhvi 1988 (PMID 2967089) itself
 FOSINOPRIL_KA <- 0.2987           # /h, set to put the peak at 2.95 h
-FOSINOPRIL_F  <- 0.26             # fraction of the fosinoprilat-equivalent dose
+FOSINOPRIL_F  <- 0.29             # Singhvi 1988's CAPSULE bioavailability, read
 
 # Hui's Methods: 7.5 mg fosinoprilat is equimolar to 10 mg fosinopril sodium
 FOSINOPRILAT_PER_FOSINOPRIL <- 0.75    # mg fosinoprilat per mg fosinopril sodium
@@ -497,20 +589,37 @@ fosinopril <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "can be read as flatness across that range rather than equality with ",
     "normal. With the volumes held fixed the model predicts a terminal ",
     "half-life of 14.7 h in impairment against Hui's measured 14.0, 14.1 and ",
-    "16.9 h, which it was not told. Absorption comes from Singhvi 1988 in ",
-    "healthy volunteers through Murdoch D, McTavish D, Drugs 1992;43:123-40: ",
-    "ka 0.2987 /h puts the peak at 2.95 h, the midpoint of its 2.8 to 3.1 h, ",
-    "and a bioavailability of 0.26 of the fosinoprilat-equivalent dose ",
-    "reproduces its peak of 99 to 140 ng/mL and its 0-24 h area of 1035 to ",
-    "1132 ng.h/mL; the same review's reported availability is 25 to 29% and ",
-    "Hui's own impaired patients gave 22.5, 22.0 and 27.9%, which is the ",
-    "evidence that renal impairment leaves the extent of absorption alone. Its ",
-    "RATE is not modelled: Hui's impaired patients peaked at 4.0 to 4.2 h. ",
-    "Murdoch reports Singhvi's steady-state volume as 9.8 to 10.6 L, an ",
-    "independent check on the 10.2 L used. Hui's normal group were ",
-    "hypertensive patients averaging 61 years whose clearance sits at the ",
-    "bottom of the label's healthy range of 26 to 39 mL/min, so the curve runs ",
-    "high against young healthy volunteers. Table IV's parameters are means of ",
+    "16.9 h, which it was not told. ABSORPTION comes from Singhvi SM, Duchin ",
+    "KL, Morrison RA, Willard DA, Everett DW, Frantz M. Disposition of ",
+    "fosinopril sodium in healthy subjects. Br J Clin Pharmacol 1988;25:9-15 ",
+    "(PMID 2967089), nine healthy men in a three-way crossover of intravenous ",
+    "fosinoprilat 7.5 mg and oral fosinopril sodium 10 mg as a capsule and as ",
+    "a solution: ka 0.2987 /h puts the peak at 2.95 h, the midpoint of the 2.8 ",
+    "to 3.1 h that Murdoch D, McTavish D, Drugs 1992;43:123-40 section 2.1 ",
+    "quotes for that dose, and the bioavailability is its CAPSULE ",
+    "value of 0.29 READ (the solution's is 0.25), the capsule because the ",
+    "product is a tablet and because Hui dosed one too. Bioavailability is ",
+    "clearance-independent in a within-subject crossover, so it is read rather ",
+    "than fitted: an earlier draft derived 0.26 by making the model reproduce ",
+    "Singhvi's own oral exposure on Hui's clearance, which double-counts the ",
+    "1.47-fold difference between the two populations' clearances, and did so ",
+    "against two numbers that are TOTAL RADIOACTIVITY rather than fosinoprilat ",
+    "(only about 75% of plasma radioactivity after an oral dose is the diacid). ",
+    "Hui's own impaired patients gave 22.5, 22.0 and 27.9%, somewhat below the ",
+    "healthy capsule value but with no relationship to renal function, which ",
+    "is the evidence that impairment leaves the extent of absorption broadly ",
+    "alone. Its RATE is not modelled either, and nothing in Hui is evidence ",
+    "that it changes: lowering the clearance alone moves the predicted peak ",
+    "from 2.95 h to 3.7-3.9 h, which covers his observed 4.0-4.2 h, his normal ",
+    "group had no oral dose to compare against, and his one ",
+    "clearance-independent descriptor (mean absorption time) implies peaks of ",
+    "5.7-7.6 h and so contradicts his own. Singhvi gives clearance 39 mL/min and a steady-state volume of ",
+    "10 L, so the two sources agree on the volume and differ 1.47-fold on the ",
+    "clearance; this curve is therefore about 1.5-fold above a healthy ",
+    "volunteer's for the same dose, which is the older patient and not an ",
+    "error: Hui's normal group were hypertensive patients averaging 61 years ",
+    "and their clearance sits at the bottom of that healthy range, where ",
+    "Singhvi's volunteers sit at the top. Table IV's parameters are means of ",
     "individual fits and do not form one exactly consistent model: the derived ",
     "area is 4717 ng.h/mL against its own 4971. The equipotent minor ",
     "metabolite p-hydroxyfosinoprilat, hepatic impairment and dialysis are not ",

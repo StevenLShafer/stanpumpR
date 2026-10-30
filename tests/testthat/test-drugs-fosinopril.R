@@ -25,12 +25,23 @@ CRCL_GROUPS <- c(98.8, 59.6, 31.8, 16.3)   # mL/min/1.73 m^2
 CL_GROUPS   <- c(26.5, 14.6, 13.7, 18.2)   # mL/min, model-dependent
 T3_GROUPS   <- c(12.4, 14.0, 14.1, 16.9)   # h, terminal half-life
 
-# --- Singhvi 1988, healthy volunteers, oral fosinopril 10 mg (Murdoch 2.1) ---
+# --- Singhvi 1988 (PMID 2967089), nine healthy men, three-way crossover ---
+# Intravenous fosinoprilat 7.5 mg and oral fosinopril sodium 10 mg as a capsule
+# and as a solution.  F is READ from here, not derived: bioavailability is
+# clearance-independent in a within-subject crossover, so forcing the model to
+# reproduce THIS study's exposure while it runs on HUI's clearance would
+# double-count the 1.47-fold difference between the two populations.
 ORAL_DOSE <- 10       # mg fosinopril sodium
-TMAX_RANGE <- c(2.8, 3.1)          # h
-CMAX_RANGE <- c(99, 140)           # ng/mL
-AUC24_RANGE <- c(1035, 1132)       # ng.h/mL
-VSS_SINGHVI <- c(9.8, 10.6)        # L, the independent check on Hui's 10.2
+TMAX_RANGE <- c(2.8, 3.1)          # h, for a 10 mg dose
+F_CAPSULE  <- 0.29    # fosinoprilat bioavailability, capsule (solution 0.25)
+CL_SINGHVI <- 39      # mL/min, his abstract
+VSS_SINGHVI <- 10     # L, his abstract (Murdoch quotes 9.8 to 10.6)
+# NOT fosinoprilat: the Cmax 99-140 mcg/L and AUC(0-24h) 1035-1132 mcg/L.h that
+# Murdoch's review labels "plasma fosinoprilat" are TOTAL RADIOACTIVITY, of
+# which only about 75% is the diacid.  The first draft of this model derived
+# F = 0.26 against them; both the analyte and the method were wrong.
+TOTAL_RADIO_AUC24 <- c(1035, 1132)  # mcg/L.h, total radioactivity
+FOSINOPRILAT_SHARE <- 0.75          # of plasma radioactivity after an oral dose
 
 # Hui's Methods: 7.5 mg fosinoprilat was equimolar to 10 mg fosinopril sodium
 PRILAT_PER_FOSINOPRIL <- 0.75
@@ -183,7 +194,7 @@ test_that("the dose conversion is the source's own 0.75, inside bioavailability"
   set <- at()$PK$default
   # bioavailability_PO carries BOTH the molar conversion of the prodrug and the
   # bioavailability of the diacid, so nothing applies either again.
-  expect_equal_rounded(PRILAT_PER_FOSINOPRIL * 0.26, set$bioavailability_PO,
+  expect_equal_rounded(PRILAT_PER_FOSINOPRIL * F_CAPSULE, set$bioavailability_PO,
                        tolerance = 1e-9)
   # The 0.75 read from Hui agrees with molar arithmetic to under 1%: the label
   # gives fosinopril sodium 585.65 g/mol, and the diacid is near 436.4.
@@ -271,7 +282,23 @@ test_that("the serum creatinine field reaches the model, and a blank is assumed 
   expect_equal_rounded(22.34092, older, tolerance = 1e-5)
 })
 
-test_that("the absorption reproduces Singhvi's healthy measurements", {
+test_that("the quoted oral area is total radioactivity, not fosinoprilat", {
+  # The arithmetic that settles it, from three numbers in Singhvi's abstract.
+  # His own bioavailability and his own clearance give the fosinoprilat area
+  # directly, and it matches the quoted figure only after the 75% share.
+  dEq <- ORAL_DOSE * 1000 * PRILAT_PER_FOSINOPRIL            # mcg fosinoprilat
+  clS <- CL_SINGHVI / 1000 * 60                              # L/h
+  implied <- c(0.25, F_CAPSULE) * dEq / clS                  # ng.h/mL, 0-inf
+  expect_equal_rounded(c(801.3, 929.5), implied, tolerance = 1e-3)
+  # the quoted area scaled to the diacid brackets what his own numbers imply
+  diacid <- FOSINOPRILAT_SHARE * TOTAL_RADIO_AUC24
+  expect_equal_rounded(c(776.25, 849.0), diacid, tolerance = 1e-4)
+  expect_lt(abs(mean(diacid) / mean(0.92 * implied) - 1), 0.03)
+  # whereas taking the quoted figure AS fosinoprilat overstates it by a third
+  expect_gt(mean(TOTAL_RADIO_AUC24) / mean(0.92 * implied), 1.25)
+})
+
+test_that("the oral curve is Singhvi's F on Hui's clearance, 1.47-fold his", {
   # An independent closed-form oral solution, written here: the unit-impulse
   # response convolved with a first-order input,
   #   Cp(t) = F D ka sum_i c_i (exp(-lambda_i t) - exp(-ka t)) / (ka - lambda_i)
@@ -284,39 +311,50 @@ test_that("the absorption reproduces Singhvi's healthy measurements", {
   auc <- function(tt) dose * ka *
     sum(cu * ((1 - exp(-lam * tt)) / lam - (1 - exp(-ka * tt)) / ka) / (ka - lam))
 
+  # The RATE is still set from the reported time to peak, which is robust to
+  # the analyte question: the diacid is 75% of the radioactivity, so the two
+  # peak together, and the label independently says "approximately 3 hours".
   tmax <- optimize(function(t) -cp(t), c(1, 2000))$minimum / 60
   expect_gt(tmax, TMAX_RANGE[1])
   expect_lt(tmax, TMAX_RANGE[2])
   expect_equal_rounded(2.95, tmax, tolerance = 2e-3)   # the midpoint it was set to
 
-  cmax <- cp(tmax * 60)
-  expect_gt(cmax, CMAX_RANGE[1])
-  expect_lt(cmax, CMAX_RANGE[2])
-  expect_equal_rounded(117.83, cmax, tolerance = 1e-3)
+  # The EXTENT is read, so the exposure is a prediction rather than a fit, and
+  # it must come out 1.47-fold Singhvi's because that is the clearance ratio.
+  expect_equal_rounded(131.36, cp(tmax * 60), tolerance = 1e-3)
+  expect_equal_rounded(1256.9, auc(24 * 60) / 60, tolerance = 1e-4)
 
-  auc24 <- auc(24 * 60) / 60
-  expect_gt(auc24, AUC24_RANGE[1])
-  expect_lt(auc24, AUC24_RANGE[2])
-  expect_equal_rounded(1126.9, auc24, tolerance = 1e-4)
+  dEq <- ORAL_DOSE * 1000 * PRILAT_PER_FOSINOPRIL
+  aucInf <- F_CAPSULE * dEq / (CL_OBS / 1000 * 60)          # on Hui's clearance
+  expect_equal_rounded(1367.9, aucInf, tolerance = 1e-3)
+  singhvi <- F_CAPSULE * dEq / (CL_SINGHVI / 1000 * 60)     # on his own
+  expect_equal_rounded(929.5, singhvi, tolerance = 1e-3)
+  expect_equal_rounded(CL_SINGHVI / CL_OBS, aucInf / singhvi, tolerance = 1e-6)
+  expect_equal_rounded(1.4717, aucInf / singhvi, tolerance = 1e-4)
 })
 
-test_that("Hui's own crossover bioavailability brackets the value used", {
-  # 22.5, 22.0 and 27.9% of the dose in his mild, moderate and severe groups
-  # (Table V) -- the evidence that renal impairment leaves the EXTENT of
-  # absorption alone, and the reason one absorption model serves everyone.
+test_that("the bioavailability used is the capsule's, read, and Hui's is lower", {
+  used <- at()$PK$default$bioavailability_PO / PRILAT_PER_FOSINOPRIL
+  expect_equal_rounded(F_CAPSULE, used, tolerance = 1e-9)
+  # Hui's own crossover: 22.5, 22.0 and 27.9% in the mild, moderate and severe
+  # groups (Table V), against the same patients' own intravenous doses.  They
+  # sit BELOW the healthy capsule value, which the help page says rather than
+  # glossing: the mild group by 2.4 of its own standard errors.
   huiF <- mean(c(22.5, 22.0, 27.9)) / 100
   expect_equal_rounded(0.24133, huiF, tolerance = 1e-4)
-  used <- at()$PK$default$bioavailability_PO / PRILAT_PER_FOSINOPRIL
-  expect_lt(abs(used / huiF - 1), 0.09)
-  # and it sits inside the reported healthy range of 25 to 29%
-  expect_gt(used, 0.25 - 1e-9)
-  expect_lt(used, 0.29)
+  expect_lt(huiF, used)
+  expect_lt(abs(used / huiF - 1), 0.21)
+  expect_gt((F_CAPSULE * 100 - 22.5) / 2.7, 2.3)   # SEM of the mild group
+  # Hui reports no relationship between bioavailability and renal function,
+  # which is why one absorption model serves every patient.
 })
 
-test_that("Singhvi's steady-state volume is an independent check on Hui's", {
+test_that("the two sources agree on the volume and differ on the clearance", {
+  # The reverse of the pattern AGENTS.md predicts: the CONSTRUCT agrees and the
+  # physiological parameter does not.
   vss <- sum(unlist(at()$PK$default[c("v1", "v2", "v3")]))
-  expect_gt(vss, VSS_SINGHVI[1])
-  expect_lt(vss, VSS_SINGHVI[2])
+  expect_lt(abs(vss / VSS_SINGHVI - 1), 0.03)
+  expect_equal_rounded(1.4717, CL_SINGHVI / CL_OBS, tolerance = 1e-4)
 })
 
 test_that("both positions of the fat-free-mass switch behave as documented", {
@@ -373,7 +411,9 @@ test_that("the reference string names the source, the moiety and the dose basis"
   expect_match(r, "Clin Pharmacol Ther 1991;49:457-67")
   expect_match(r, "FOSINOPRILAT")
   expect_match(r, "0\\.75 mg fosinoprilat per mg fosinopril sodium")
-  expect_match(r, "Murdoch")
+  expect_match(r, "Singhvi SM")
+  expect_match(r, "2967089")
+  expect_match(r, "TOTAL RADIOACTIVITY")
   expect_match(r, "BLANK SERUM")
   expect_match(r, "10.1038/clpt.1991.54", fixed = TRUE)
 })

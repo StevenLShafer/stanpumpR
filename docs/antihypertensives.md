@@ -2142,57 +2142,153 @@ opposite of what Table IV shows. The first draft did exactly that, and the test
 written for the header's claim is what caught it. **A header that states a
 consequence the code does not produce is a test waiting to be written.**
 
-### 18.6 Absorption, and a coincidence not claimed as a match
+### 18.6 Absorption: the correction, and two ways to get a bioavailability wrong
 
 Hui gave the oral dose only to his *impaired* patients, so the absorption of a
-patient with normal renal function comes from Singhvi 1988 in healthy
-volunteers, through the Murdoch & McTavish review (*Drugs* 1992;43:123–40,
-§2.1; the review's full text was read, Singhvi itself not obtained).
+patient with normal renal function comes from **Singhvi 1988** (*Br J Clin
+Pharmacol* 25:9-15, PMID 2967089): nine healthy men, 20 to 34, in a three-way
+crossover of intravenous fosinoprilat 7.5 mg and two oral 10 mg doses of
+fosinopril sodium, capsule and solution. Oral absorption 32% and 36%;
+**bioavailability of fosinoprilat 25% and 29%**.
 
-`ka` 0.2987 /h puts the peak at 2.95 h, the midpoint of the reported 2.8 to
-3.1 h and consistent with the label's dose-independent "approximately 3 hours".
-Bioavailability is **derived**, not read: 0.26 of the fosinoprilat-equivalent
-dose is what reproduces Singhvi's peak (which needs 0.264) and his 24-hour area
-(which needs 0.250) on Hui's disposition — two independent measurements agreeing
-to 6%, giving 117.8 ng/mL and 1126.9 ng·h/mL, both inside the reported ranges.
+`ka` 0.2987 /h puts the peak at 2.95 h, the midpoint of the 2.8 to 3.1 h the
+Murdoch review quotes for a 10 mg dose, corroborated by the label's
+dose-independent "approximately 3 hours". Bioavailability is the capsule's
+**0.29, read** - the capsule because the product is a tablet and because Hui
+dosed one too. On Hui's clearance that gives a peak of 131 ng/mL and a 24-hour
+area of 1257 ng·h/mL.
 
-It also falls inside the reported "25 to 29%", and **that agreement is partly a
-coincidence of two offsetting discrepancies, which is more useful to say than to
-claim a match.** Singhvi's own intravenous and oral areas imply an availability
-of 33 to 36% against *his* clearance; his clearance was about 40% above Hui's;
-0.72 × 0.34 ≈ 0.25. Two errors cancelling is not a validation.
+**The first draft derived 0.26 instead, and it was wrong twice over.** An
+external review (CodeRabbit, on PR #621) raised the first error; running it down
+exposed the second, which is the one worth carrying forward. The draft set F by
+making the model reproduce two figures the review quotes for Singhvi's oral
+dose, a peak of 99 to 140 mcg/L and a 24-hour area of 1035 to 1132 mcg/L·h.
 
-The honest corroboration is a different one. **Hui's own crossover** gives
-fosinoprilat bioavailability as 22.5, 22.0 and 27.9% in the three impaired
-groups — same patients, same assay, same analysis as the disposition, and 8%
-below the value used. It is not used, because the reference patient has normal
-renal function. What it does is settle the *design*: that those three bracket the
-healthy 25 to 29% is the evidence for Shafer's point that renal impairment leaves
-the **extent** of absorption alone, as it should if the ester is hydrolysed in the
-gut before absorption begins, and therefore for one absorption model serving every
-patient. The **rate** is a separate claim and is not modelled: Hui's impaired
-patients peaked at 4.0 to 4.2 h with mean absorption times of 7.1, 11.1 and
-12.3 h, and the mean absorption time is confounded anyway by their longer
-intravenous residence times.
+**1. Those are total radioactivity, not fosinoprilat**, although the review
+labels them "plasma fosinoprilat". Only about 75% of plasma radioactivity after
+an oral dose is the diacid; the rest is an inactive beta-glucuronide (15 to 20%)
+and a monohydroxy analogue (about 5%). Singhvi's own abstract settles it
+arithmetically, and this is checkable without his tables: 0.75 × 1035-1132 =
+776-849 ng·h/mL, which is exactly the diacid area his own bioavailability (25 to
+29%) and his own clearance (39 mL/min) imply, 737-855. Three numbers from one
+abstract triangulate it. **A secondary source can relabel an analyte**, and for
+a radiolabel study that is the error to expect, because the paper reports both
+quantities and a reviewer has to pick one.
+
+**2. Even with the right analyte, deriving F that way is a category error** -
+and this is the general lesson. **Bioavailability is clearance-independent by
+construction.** Singhvi's is a within-subject crossover, F =
+(AUC_po/D_po)/(AUC_iv/D_iv), so the subject's clearance cancels out of it.
+Forcing a model to reproduce *one* study's oral exposure while it runs on
+*another's* clearance therefore counts the difference between the populations
+twice: Singhvi's oral area is small because he cleared the drug 1.47-fold
+faster, and charging that to a smaller F makes every patient's curve wrong by
+that factor. **The quantity to read is F; the quantity to let the model compute
+is the exposure.** The same trap waits for any drug whose disposition and
+absorption come from different studies, which in this library is most oral
+drugs with an intravenous source.
+
+Note what this does to the "coincidence of two offsetting discrepancies" the
+previous version of this section was rather pleased with. The coincidence was an
+artifact of the error, not an insight: 0.72 × 0.34 ≈ 0.25 only because the
+clearance ratio had been applied twice, once by mistake and once by arithmetic.
+**A coincidence that needs an error to exist is a symptom, not a curiosity** -
+and a reason to re-derive rather than to admire it.
+
+**Hui's own crossover is the corroboration, and it runs a little lower.** He
+gives 22.5, 22.0 and 27.9% in the three impaired groups, against the same
+patients' own intravenous doses with the same assay as the disposition. Those sit
+below the healthy capsule's 29% - the mild group by 2.4 of its own standard
+errors - and he reports no relationship between bioavailability and renal
+function. So the fair reading is that impairment leaves the **extent** of
+absorption broadly alone, which is what Shafer's design rests on and what the
+gut hydrolysis predicts, while impaired patients may run somewhat below the
+value used.
+
+The **rate** is not modelled either, and the reason is better than the one this
+section first gave. It said Hui's impaired patients absorbed more slowly, citing
+a peak at 4.0 to 4.2 h. Shafer asked the obvious question - *slower clearance
+also delays the peak; what is the evidence, and slower than what?* - and the
+answer is that there is none.
+
+**A later peak is not a slower input.** Hold ka at the healthy value, lower only
+the clearance to the impaired plateau, and the model *predicts* a peak at 3.7 to
+3.9 h against the observed 4.0, 4.0 and 4.2 - essentially the whole shift, from
+clearance alone. The residual would need ka at 85 to 92% of healthy, inside the
+scatter of 4.0 +/- 0.0 to 4.2 +/- 0.5 h in groups of four to six. And the
+comparator was *Singhvi's* healthy volunteers: Hui's normal group had no oral
+dose, so the comparison was cross-study across a 1.47-fold clearance difference.
+
+**The quantity that would be evidence contradicts his own tmax.** Mean
+absorption time is MRT_po - MRT_iv within each group, hence clearance-independent
+- for a first-order input MAT = 1/ka exactly. His 7.1, 11.1 and 12.3 h imply
+peaks at 5.7 to 7.6 h; he observed 4.0 to 4.2. The paper's two absorption
+descriptors disagree by nearly two-fold.
+
+**And MAT is the weaker of them, for a reason worth stating as a rule.** Shafer,
+on seeing this: *"a difference between two numbers is a fraught measurement. The
+variance of the difference is the sum of the variances of the individual numbers,
+so the difference between two means can be easily dwarfed by the variance."*
+
+| | mild | moderate | severe |
+|---|---|---|---|
+| MRT after the oral dose | 18.2 ± 2.3 | 22.7 ± 3.5 | 26.2 ± 6.8 |
+| MRT after the intravenous dose | 11.1 ± 2.0 | 11.6 ± 0.8 | 13.8 ± 2.7 |
+| MAT, as printed | 7.1 ± 1.3 | 11.1 ± 3.0 | 12.3 ± 4.4 |
+| SEM if the two were independent | 3.05 | 3.59 | 7.32 |
+
+Two things fall out. **Hui did it correctly**: his printed standard errors are
+*smaller* than the independent sum, which is the signature of pairing - the same
+patients in both arms, implied correlations 0.83, 0.70 and 0.93 - so he computed
+MAT per subject and his numbers are honest. Comparing a printed SEM of a
+difference against `sqrt(se1^2 + se2^2)` is the diagnostic for which case you
+have, and it is worth running on any difference a paper prints as a result.
+
+**But even so, the trend his text claims is not in his numbers.** "Mean
+absorption times were longer in patients with moderate or severe impairment"
+tests out at t = 1.22 (mild to moderate), 0.23 (moderate to severe) and 1.13
+(mild to severe). None reaches 1.3 standard errors. And the model's own MAT is
+not a measurement to test against: 1/ka = 3.35 h, where ka was set to a
+time-to-peak *midpoint* quoted in a review, so it carries no standard error at
+all.
+
+So there is **no supported absorption-rate finding in this paper**: not from
+tmax, not from MAT against healthy, and not from MAT across impairment. The same
+caution applies elsewhere in this document with the opposite sign - benazepril's
+entire two-compartment derivation rests on `AUC(0-inf) - AUC(0-24h)`, whose two
+areas come from n = 45 and n = 60 and so are *not* paired, which is exactly why
+§15 calls its 25% uncertainty a floor rather than a bound.
+
+**The general point is worth keeping**, because it will recur for every oral
+drug whose renal covariate is on clearance: **tmax is a property of the whole
+system, not of the input.** Before attributing a shifted peak to absorption,
+hold the input fixed and move only what the covariate moves - the model will
+tell you how much of the shift it already explains.
 
 ### 18.7 Only clearance is real, and this is what that looks like
 
 Hui's "normal renal function" group were hypertensive patients averaging 61
 years, and their 26.5 mL/min sits at the **bottom** of the label's healthy range
-of 26 to 39. Singhvi's young volunteers were at the top: his intravenous area
-implies about 37 (derived here, extrapolating his truncated 24-hour area with
-this model's own 94% share of the total). So for the same intravenous dose the model gives about 40% more
-exposure than Singhvi measured — 2064 ng/mL at five minutes against his 1556, and
-4417 against his 3166 ng·h/mL over 24 hours. **The same factor on both**, which is
-the signature of a clearance difference and not a structural one, and by
-`AGENTS.md`'s rule the clearances are what get compared. Recorded, not
-reconciled; nobody can give that intravenous dose clinically, since only the
-prodrug is marketed, and orally the derived bioavailability absorbs it.
+of 26 to 39. Singhvi's nine young men were at the **top**: his abstract reports
+clearance 39 mL/min, renal clearance 17, Vss 10 L and protein binding about 95%.
 
-The construct, meanwhile, agrees across the two studies where the physiological
-parameter does not: Murdoch reports Singhvi's steady-state volume as 9.8 to
-10.6 L and Hui's is 10.2 — which is the reverse of the pattern `AGENTS.md`
-predicts, and a reminder that it is a tendency and not a law.
+So the two sources differ **1.47-fold on the clearance and agree on the volume**
+- the reverse of the pattern `AGENTS.md` predicts, and a reminder that it is a
+tendency and not a law. That factor is the whole of the difference between them,
+and now that F is read rather than fitted it propagates where it should instead
+of hiding inside F: the model predicts an oral AUC(0-inf) of 1368 ng·h/mL
+against the 929 that Singhvi's own F and clearance give for his capsule, a ratio
+of exactly 39/26.5.
+
+Neither is wrong. Both clearances are inside the range the label itself quotes
+for healthy subjects, and the model is deliberately the older patient, because
+an oral antihypertensive is prescribed to people more like Hui's hypertensive
+61-year-olds than like Singhvi's volunteers. A user comparing this curve with a
+published healthy-volunteer concentration should expect it to sit about 1.5-fold
+high, and should not read that as an error in either study. The earlier draft of
+this section claimed the oral curve was "about right" because a derived F
+absorbed the difference; that was the category error of §18.6, and the
+difference is real.
 
 ### 18.8 One drug, and why not the enalapril pattern
 
