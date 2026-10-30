@@ -2313,6 +2313,23 @@ a peak.
 because a derived F absorbed the difference; that was the category error of
 §18.6, and the difference is real.)
 
+### 18.9 Three judgement calls, named and approved
+
+Placed last because they are the ones a future reader should be able to
+reopen. None is forced by the sources, each moves the curve, and each was put
+to Steven L. Shafer explicitly; he accepted all three on 2026-10-29.
+
+| Choice | The alternative, and what it would cost |
+|---|---|
+| **F = 0.29**, Singhvi's capsule | His solution's 0.25, or Hui's impaired mean of 24.1% - both read; the solution lowers the whole curve 14% |
+| **Ramp anchored at CrCl 80**, the label's boundary for normal renal function | Hui's normal-group mean of 98.8, which would put a 50-year-old man at an indexed 92.9 - on the ramp, 6% below the published parameters |
+| **A 70-year-old with a blank creatinine sits ~16% below normal**, from Cockcroft-Gault's age term alone | Nothing, except not carrying the age term - but the label reports no pharmacokinetic difference in men 65 to 74, so this is the consequence most likely to surprise a user |
+
+The third is not a modelling choice so much as a consequence worth stating: a
+blank Serum creatinine means the assumed normal creatinine **for the patient's
+age**, not an assumed normal clearance, and on this drug's plateau-and-ramp that
+difference is visible. The help page says so in those words.
+
 ### 18.8 One drug, and why not the enalapril pattern
 
 Fosinopril is an ester prodrug and fosinoprilat is the active diacid, so the

@@ -430,6 +430,27 @@
 # * Blood pressure, ACE inhibition and renin: nothing in this library plots a
 #   pressure (docs/antihypertensives.md).  tPeak, MEAC and the band are zero.
 #
+# THREE JUDGEMENT CALLS, PUT TO SHAFER AND APPROVED (2026-10-29)
+# ==============================================================
+# None of these is forced by the sources, each changes the curve, and each was
+# put to him explicitly rather than buried.  He accepted all three.
+#
+#   1. F is the CAPSULE's 0.29 and not the solution's 0.25 (nor Hui's own
+#      impaired mean of 24.1%).  Both are read; the capsule because the
+#      marketed product is a tablet and Hui dosed a capsule too.  The solution
+#      would lower the whole curve by 14%.
+#   2. The renal ramp's upper anchor is the LABEL's boundary of 80 and not
+#      Hui's normal-group mean of 98.8.  That is what keeps a patient with an
+#      assumed-normal creatinine on the published normal-function parameters;
+#      anchoring at 98.8 would put a 50-year-old man at an indexed 92.9, on the
+#      ramp, and 6% below them.
+#   3. The consequence that follows from Cockcroft-Gault's age term: a
+#      70-year-old with a BLANK creatinine lands near an indexed 72 and so
+#      about 16% below the normal-function clearance, on a drug whose label
+#      reports no pharmacokinetic difference in men aged 65 to 74.  Kept,
+#      because a blank field means the assumed normal creatinine for the age
+#      and not an assumed normal clearance; the help page says so.
+#
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # Hui fitted no size covariate: absolute litres and mL/min in patients
