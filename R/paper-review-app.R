@@ -305,7 +305,8 @@ paperReviewServer <- function(input, output, session)
         is_valid_number(p$age, MIN_AGE, MAX_AGE), "Enter a weight, height and age in range."))
     d <- dosesNow()
     shiny::validate(shiny::need(nrow(d) > 0 && any(d$Dose > 0), "Enter a dose."))
-    drug <- paperReviewDrug(r$extraction, p, r$identifiability$closed)
+    drug <- paperReviewDrug(r$extraction, p, r$identifiability$closed,
+                            absorption = simAbsorption(), absorptions = r$absorptions)
     shiny::validate(shiny::need(drug$ok, paste(drug$problems, collapse = " ")))
     maximum <- max(input$maximum %or% 240, max(d$Time) + 1)
     # Run on far enough to cover an overlaid figure's points.
@@ -317,13 +318,36 @@ paperReviewServer <- function(input, output, session)
     list(drug = drug, sim = sim)
   })
 
+  # The absorption extravascular doses take: the selected regimen's when it
+  # has one (each formulation its own), else the first regimen that does.
+  simAbsorption <- shiny::reactive({
+    r <- review()
+    if (is.null(r)) return(NULL)
+    usable <- Filter(function(a) isTRUE(a$ok), r$absorptions %or% list())
+    if (length(usable) == 0) return(NULL)
+    own <- usable[[input$regimen %or% ""]]
+    if (is.null(own)) usable[[1]] else own
+  })
+
   output$simulatorNote <- shiny::renderUI({
     r <- review()
     if (is.null(r)) return(NULL)
+    a <- simAbsorption()
+    absorptionText <- if (is.null(a)) NULL else {
+      regimen <- paperReviewRegimen(r$extraction, a$regimen)
+      htmltools::p(style = "margin: 6px 0 0 0;", paste0(
+        "Extravascular doses use the absorption of ",
+        if (is.null(regimen)) gsub("_", " ", a$route) else paste0(a$regimen, " (", regimen$description, ")"),
+        ": ka ", prFmt(a$ka * 60), " /h from ", a$sources[["ka"]] %or% "printed",
+        "; F ", prFmt(a$F), if (!is.null(a$sources[["F"]])) paste0(" from ", a$sources[["F"]]) else "",
+        if (a$fraction != 1) paste0("; each dosed mg is ", prFmt(a$fraction), " mg of the analyte") else "",
+        ". Choose another regimen above to use its absorption."))
+    }
     htmltools::div(class = "alert alert-secondary", style = "font-size: 0.9em;",
       htmltools::strong(r$drug$defaults$Drug), ": the paper's model, built in this session's ",
       "memory for the patient entered. It is not a stanpumpR library drug and was not reviewed ",
-      "by anyone. Covariates the simulator does not take are held at their reference values.")
+      "by anyone. Covariates the simulator does not take are held at their reference values.",
+      absorptionText)
   })
 
   output$simPlot <- shiny::renderPlot({

@@ -102,8 +102,12 @@ test_that("an extravascular paper offers its route with ka, F and lag", {
          units = "percent", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2"),
     list(name_in_paper = "tlag", role = "tlag", route = "oral", value = 0.25, value_text = "0.25",
          units = "h", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2")))
-  ref <- paperReviewReferencePatient(ex)
-  drug <- paperReviewDrug(ex, ref)
+  review <- paperReviewRun(ex)
+  ref <- review$reference
+  drug <- review$drug
+  # No oral regimen: the route's printed ka, F and lag make one absorption.
+  expect_true(review$absorptions$route$ok)
+  expect_equal(review$absorptions$route$sources[["ka"]], "printed")
   set <- drug$model$PK$default
   expect_equal(set$ka_PO, 1.2 / 60)
   expect_equal(set$bioavailability_PO, 0.6)

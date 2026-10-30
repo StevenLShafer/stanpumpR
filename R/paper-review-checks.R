@@ -128,6 +128,7 @@ PAPER_REVIEW_DERIVED_KIND <- c(
   coefficient_1 = "coefficient", coefficient_2 = "coefficient", coefficient_3 = "coefficient",
   k10 = "rate", k12 = "rate", k21 = "rate", k13 = "rate", k31 = "rate",
   V1 = "volume", Vss = "volume", Varea = "volume", CL = "clearance", MRT = "time",
+  MAT = "time", F = "fraction",
   AUC_inf = "auc", AUC_0_t = "auc", Cmax = "concentration", tmax = "time",
   tPeak = "time", ke0 = "rate")
 
@@ -184,7 +185,9 @@ twoCompartmentFromBiexponential <- function(coefficients, exponents)
 # minutes, with their locations and SEs in minutes.
 paperReviewHalfLives <- function(extraction, n, weight)
 {
-  out <- list()
+  # One slot per exponential, NULL where none is printed (assigning NULL to
+  # out[[i]] would not create it, and the list came back short).
+  out <- vector("list", n)
   for (i in seq_len(n)) {
     q <- if (i == n) c(paste0("t_half_", i), "t_half_terminal") else paste0("t_half_", i)
     found <- NULL
@@ -197,7 +200,7 @@ paperReviewHalfLives <- function(extraction, n, weight)
       if (!is.na(d$value)) found <- list(value = log(2) / d$value, location = d$location,
                                          entry = d$entry, fromRate = TRUE)
     }
-    out[[i]] <- found
+    if (!is.null(found)) out[[i]] <- found
   }
   out
 }
@@ -300,6 +303,20 @@ paperReviewIdentifiability <- function(extraction)
                  if (length(printed)) paste(printed, collapse = ", ") else "none",
                  ". ", if (n == 2) "For two compartments, CL with V1 or Vss and BOTH half-lives closes it; CL, Vss and the terminal half-life alone do not." else ""),
           c(structureLoc, CL$location, V1$location, Vss$location))
+      # The displayed curve can close what the print does not: fit the
+      # model's number of exponentials to a digitised intravenous series and
+      # turn them into volumes and clearances with the existing helpers.
+      fromCurve <- paperReviewCloseFromCurve(extraction, reference, n)
+      if (!is.null(fromCurve)) {
+        closed <- fromCurve$closed
+        verdict <- "derived_from_curve"
+        route <- fromCurve$route
+        add("concern", paste("Closed instead from", fromCurve$route),
+            paste0("A sum of ", n, " exponentials fitted to the digitised points, scaled by the ",
+                   "dose, gives V1 ", prFmt(closed$v1), " L and CL ", prFmt(closed$cl1 * 60),
+                   " L/h. Only as good as Claude's reading of the figure: an approximation to ",
+                   "check, not a measurement."), fromCurve$locations)
+      }
     } else {
       x0 <- lapply(attempt$inputs, function(i) i$value)
       base <- tryCatch(attempt$solve(x0), error = function(e) NULL)
@@ -325,22 +342,7 @@ paperReviewIdentifiability <- function(extraction)
     }
   }
 
-  # Absorption and effect site.
-  evRoute <- paperReviewExtravascularRoute(extraction)
-  if (!is.na(evRoute)) {
-    ka <- param("ka"); F <- param("F"); lag <- param("tlag")
-    apparent <- identical(extraction$structure$apparent_oral, "yes")
-    if (is.na(ka$value))
-      add("concern", "No absorption rate constant is printed",
-          "The extravascular route cannot be simulated; the disposition model still can.",
-          structureLoc)
-    if (is.na(F$value) && !apparent)
-      add("concern", "No bioavailability is printed and the parameters are not marked apparent",
-          "The simulator takes F = 1, which is right only if the volumes and clearances are CL/F and V/F.",
-          structureLoc)
-    if (identical(extraction$structure$absorption_lag, "yes") && is.na(lag$value))
-      add("concern", "The model has a lag time but none is printed", "", structureLoc)
-  }
+  # Effect site.  (Absorption is derived per regimen in paperReviewRun().)
   effect <- extraction$structure$effect_site %or% "none"
   if (effect == "ke0" && is.na(param("ke0")$value))
     add("error", "The paper describes an effect site but prints no ke0", "", structureLoc)
@@ -438,6 +440,9 @@ paperReviewConsistency <- function(extraction, drug, reference)
   vss <- pk$v1 + (if (n >= 2) pk$v2 else 0) + (if (n >= 3) pk$v3 else 0)
   ke0 <- if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA_real_
   tPeak <- if (is.finite(ke0)) effectSitePeakTime(coef, lambda, ke0) else NA_real_
+  # Derived quantities an absorption was built from (R/paper-review-absorption.R).
+  usedKeys <- unlist(lapply(Filter(function(a) isTRUE(a$ok), drug$absorptions %or% list()),
+                            function(a) a$used))
 
   recomputed <- function(dq) {
     q <- dq$quantity
@@ -483,13 +488,20 @@ paperReviewConsistency <- function(extraction, drug, reference)
       regimen <- paperReviewRegimen(extraction, dq$regimen_id)
       routable <- if (is.null(regimen)) list(ok = FALSE, why = "The regimen is not identified.")
                   else paperReviewRegimenRoutable(regimen, drug)
-      if (!routable$ok) {
+      key <- paste(q, dq$regimen_id, sep = "|")
+      if (key %in% usedKeys) {
+        incomparable <- TRUE
+        routable$ok <- FALSE
+        note <- "This regimen's absorption was derived from it, so it cannot also check it."
+      } else if (!routable$ok) {
         incomparable <- TRUE
         note <- routable$why
       } else if (q == "MRT") {
-        model <- paperReviewRegimenMRT(regimen, drug, vss / pk$cl1)
+        model <- paperReviewRegimenMRT(regimen, paperReviewDrugFor(drug, extraction, regimen, reference),
+                                       vss / pk$cl1)
       } else {
-        res <- paperReviewRegimenExposure(extraction, drug, reference, dq$regimen_id)
+        res <- paperReviewRegimenExposure(extraction, paperReviewDrugFor(drug, extraction, regimen, reference),
+                                          reference, dq$regimen_id)
         model <- res[[q]]
         note <- res$note
       }
@@ -508,7 +520,8 @@ paperReviewConsistency <- function(extraction, drug, reference)
     withinRounding <- is.finite(model) && is.finite(printedInternal) &&
       isTRUE(abs(model - printedInternal) <= roundingInternal * 1.0001)
     loose <- q %in% c("Cmax", "tmax") && !identical(dq$statistic, "typical_value")
-    status <- if (incomparable) "not comparable"
+    status <- if (incomparable && grepl("derived from it", note)) "used to build the model"
+      else if (incomparable) "not comparable"
       else if (!kindOk && nzchar(note)) "not recomputed"
       else if (!kindOk) "units not convertible"
       else if (!is.finite(model)) "not recomputed"
@@ -595,10 +608,16 @@ paperReviewRegimenRoutable <- function(regimen, drug)
   routes <- unique(vapply(regimen$doses %or% list(), function(d) d$route %or% "other", character(1)))
   extravascular <- setdiff(routes, c("iv_bolus", "iv_infusion"))
   if (length(extravascular) == 0) return(list(ok = TRUE, why = ""))
-  missing <- setdiff(extravascular, if (is.na(drug$route)) character(0) else drug$route)
-  if (length(missing) == 0) return(list(ok = TRUE, why = ""))
-  list(ok = FALSE, why = paste0("The model has no ", paste(gsub("_", " ", missing), collapse = ", "),
-                                " route: the paper prints no absorption constant for it."))
+  if (!all(extravascular %in% names(PAPER_REVIEW_ROUTE_SUFFIX)))
+    return(list(ok = FALSE, why = paste0("The ", paste(gsub("_", " ", extravascular), collapse = ", "),
+                                         " route is not one the simulator offers.")))
+  a <- drug$absorptions[[regimen$id %or% ""]] %or% drug$absorptions[["route"]]
+  if (!is.null(a) && isTRUE(a$ok)) return(list(ok = TRUE, why = ""))
+  missing <- c(if (is.null(a) || !is.finite(a$ka)) "an absorption constant",
+               if (is.null(a) || !is.finite(a$F)) "a bioavailability")
+  list(ok = FALSE, why = paste0("The model has no ", gsub("_", " ", extravascular[1]),
+                                " route for this regimen: nothing in the paper gives ",
+                                paste(missing, collapse = " or "), "."))
 }
 
 # The mean residence time of a regimen: the disposition's Vss/CL, plus the
@@ -927,13 +946,20 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
         setAside <- c(setAside, paste0(labels, " (", rid, "): ", routable$why))
         next
       }
+      a <- drug$absorptions[[rid]]
+      if (!is.null(a) && id %in% a$fittedFigures) {
+        setAside <- c(setAside, paste0(labels, " (", rid, "): its absorption was fitted to these ",
+                                       "points, so they cannot also check it"))
+        next
+      }
       doses <- paperReviewRegimenDoses(regimen)
       if (nrow(doses$doses) == 0) {
         setAside <- c(setAside, paste0(labels, " (", rid, "): its doses could not be converted"))
         next
       }
       maximum <- max(c(points$time[these], doses$doses$Time), na.rm = TRUE) * 1.05 + 1
-      sim <- tryCatch(paperReviewSimulate(drug, reference, doses$doses, maximum),
+      sim <- tryCatch(paperReviewSimulate(paperReviewDrugFor(drug, extraction, regimen, reference),
+                                          reference, doses$doses, maximum),
                       error = function(e) e)
       if (inherits(sim, "error")) {
         setAside <- c(setAside, paste0(labels, " (", rid, "): could not be simulated: ",
@@ -997,16 +1023,115 @@ paperReviewRun <- function(extraction)
 {
   reference <- paperReviewReferencePatient(extraction)
   ident <- paperReviewIdentifiability(extraction)
-  drug <- paperReviewDrug(extraction, reference, ident$closed)
+  # Absorption is derived per extravascular regimen against the disposition,
+  # then the drug carries the first regimen that has one (the simulator can
+  # switch), and every check builds the drug for the regimen it checks.
+  base <- paperReviewDrug(extraction, reference, ident$closed)
+  absorptions <- if (base$ok) paperReviewAbsorptions(extraction, base, reference) else list()
+  usable <- Filter(function(a) isTRUE(a$ok), absorptions)
+  drug <- paperReviewDrug(extraction, reference, ident$closed,
+                          absorption = if (length(usable)) usable[[1]] else NULL,
+                          absorptions = absorptions)
   consistency <- paperReviewConsistency(extraction, drug, reference)
   figures <- paperReviewFigureChecks(extraction, drug, reference)
   modelFindings <- lapply(drug$problems, function(p)
     paperReviewFinding("Model", "concern", p))
-  findings <- c(ident$findings, modelFindings, consistency$findings,
+  findings <- c(ident$findings, paperReviewAbsorptionFindings(extraction, absorptions),
+                paperReviewExponentialFindings(extraction, reference, drug),
+                modelFindings, consistency$findings,
                 paperReviewCovariateChecks(extraction),
                 paperReviewAssumptionChecks(extraction),
                 figures$findings, paperReviewClaudeNotes(extraction))
   list(extraction = extraction, reference = reference, identifiability = ident,
-       drug = drug, consistency = consistency$table, figures = figures$figures,
-       findings = findings)
+       drug = drug, absorptions = absorptions, consistency = consistency$table,
+       figures = figures$figures, findings = findings)
+}
+
+#' One finding per extravascular regimen: where its absorption came from
+#' @keywords internal
+paperReviewAbsorptionFindings <- function(extraction, absorptions)
+{
+  lapply(names(absorptions), function(id) {
+    a <- absorptions[[id]]
+    regimen <- paperReviewRegimen(extraction, if (id == "route") NULL else id)
+    label <- if (is.null(regimen)) gsub("_", " ", a$route)
+             else paste0(id, " (", regimen$description %or% gsub("_", " ", a$route), ")")
+    if (!isTRUE(a$ok)) {
+      missing <- c(if (!is.finite(a$ka)) "an absorption constant", if (!is.finite(a$F)) "a bioavailability")
+      return(paperReviewFinding("Identifiability", "concern",
+        paste("No absorption can be derived for", label),
+        paste0("Nothing printed or plotted gives ", paste(missing, collapse = " or "),
+               ". The disposition model is unaffected; this regimen cannot be simulated."),
+        c(regimen$location, a$locations)))
+    }
+    src <- function(what) a$sources[[what]] %or% "printed"
+    detail <- paste0(
+      "ka ", prFmt(a$ka * 60), " /h (", src("ka"), "); F ", prFmt(a$F),
+      " (", if (is.null(a$sources[["F"]])) "printed" else a$sources[["F"]], ")",
+      if (a$tlag > 0) paste0("; lag ", prFmt(a$tlag), " min") else "",
+      if (a$fraction != 1) paste0("; dose basis ", prFmt(a$fraction), ", from ", a$sources[["dose"]]) else "",
+      ". First-order absorption assumed.",
+      if (!is.null(a$crossCheck)) paste0(" ", a$crossCheck) else "")
+    curve <- grepl("digitised", paste(unlist(a$sources), collapse = " "))
+    paperReviewFinding("Identifiability", if (curve) "info" else "ok",
+                       paste("Absorption for", label), detail,
+                       c(regimen$location, a$locations))
+  })
+}
+
+#' How many exponentials do the digitised intravenous points support?
+#'
+#' Sums of one, two and three exponentials are fitted (on log
+#' concentrations) to each intravenous series; the lowest AIC is the number
+#' the points support, set against the model's compartments.
+#'
+#' @keywords internal
+paperReviewExponentialFindings <- function(extraction, reference, drug)
+{
+  n <- paperReviewNum(extraction$structure$compartments)
+  concUnits <- drug$defaults$Concentration.Units
+  lapply(paperReviewIntravenousSeries(extraction, reference, concUnits), function(s) {
+    fits <- lapply(1:3, function(k) paperReviewFitExponentials(s$points$time, s$points$observed, k))
+    ok <- !vapply(fits, is.null, logical(1))
+    if (sum(ok) < 2) return(paperReviewFinding("Identifiability", "info",
+      paste0(s$figure, ": too few intravenous points to compare exponentials")))
+    aic <- vapply(fits, function(f) if (is.null(f)) NA_real_ else f$aic, numeric(1))
+    best <- which.min(aic)
+    detail <- paste0(
+      nrow(s$points), " digitised points of ", s$label, ". Residual sum of squares (log scale) for ",
+      paste(paste0(which(ok), " exponential", ifelse(which(ok) > 1, "s", ""), " ",
+                   prFmt(vapply(fits[ok], function(f) f$rss, 0))), collapse = ", "),
+      "; AIC prefers ", best, ". The model has ", n, ". Digitised points are approximate, so a ",
+      "difference this test finds is a lead to look for in the paper, not a finding by itself.")
+    severity <- if (!is.finite(n)) "info" else if (best > n) "concern" else if (best == n) "ok" else "info"
+    paperReviewFinding("Identifiability", severity,
+      paste0(s$figure, ": the digitised intravenous curve supports ", best, " exponential",
+             if (best > 1) "s" else "", if (is.finite(n) && best != n) paste0(", the model ", n) else ""),
+      detail, c(s$location, s$regimenLocation))
+  })
+}
+
+#' Close the disposition from a digitised intravenous curve
+#'
+#' @returns NULL, or a list: \code{closed}, \code{route}, \code{locations}
+#' @keywords internal
+paperReviewCloseFromCurve <- function(extraction, reference, n)
+{
+  mapped <- PAPER_REVIEW_CONCENTRATION_MAP[[extraction$drug$concentration_units %or% "other"]]
+  concUnits <- if (is.null(mapped)) "ng" else mapped$units
+  for (s in paperReviewIntravenousSeries(extraction, reference, concUnits)) {
+    fit <- paperReviewFitExponentials(s$points$time, s$points$observed, n)
+    if (is.null(fit)) next
+    coef <- fit$A / s$amount            # per unit dose, 1/L
+    closed <- tryCatch(switch(n,
+      list(v1 = 1 / coef, cl1 = fit$lambda / coef),
+      twoCompartmentFromBiexponential(coef, fit$lambda),
+      threeCompartmentFromTriexponential(coef, fit$lambda)), error = function(e) NULL)
+    if (is.null(closed)) next
+    closed$perKg <- FALSE
+    return(list(closed = closed,
+                route = paste0("the digitised intravenous curve of ", s$figure, " (approximate)"),
+                locations = c(s$location, s$regimenLocation)))
+  }
+  NULL
 }

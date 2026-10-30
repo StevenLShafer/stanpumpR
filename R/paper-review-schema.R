@@ -57,7 +57,7 @@ PAPER_REVIEW_DERIVED <- c(
   "lambda_1", "lambda_2", "lambda_3",
   "coefficient_1", "coefficient_2", "coefficient_3",
   "k10", "k12", "k21", "k13", "k31",
-  "V1", "Vss", "Varea", "CL", "MRT",
+  "V1", "Vss", "Varea", "CL", "MRT", "MAT", "F",
   "AUC_inf", "AUC_0_t", "Cmax", "tmax", "tPeak", "ke0", "other")
 
 # Units a derived quantity may carry: the parameter units, the concentration
@@ -99,7 +99,7 @@ PAPER_REVIEW_NUMERIC_FIELDS <- c(
   "year", "molecular_weight", "value", "lower", "upper", "central", "min", "max",
   "n", "n_female", "n_male", "coefficient", "reference_value", "duration",
   "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
-  "group2_se", "difference", "difference_se", "p_value")
+  "group2_se", "difference", "difference_se", "p_value", "analyte_fraction")
 # Optional strings: NULL when empty.
 PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
                                    "pd_model", "regimen_id")
@@ -239,6 +239,8 @@ paperReviewSchema <- function()
       role          = schemaChoice(PAPER_REVIEW_ROLES,
                                  "Q2/V2 is the faster peripheral compartment when the paper says which; ka/F/tlag take the route field."),
       route         = schemaNullable(schemaEnum(PAPER_REVIEW_ROUTES)),
+      regimen_id    = schemaNullable(schemaString(
+        "For ka, F or tlag of one formulation (a solution and a capsule, say): its regimen.")),
       value         = schemaNullable(schemaNumber("The typical value, at the reference covariates.")),
       value_text    = schemaString("The value exactly as printed, digits included."),
       units         = schemaChoice(PAPER_REVIEW_PARAMETER_UNITS),
@@ -274,7 +276,13 @@ paperReviewSchema <- function()
       doses = schemaArray(schemaObject(list(
         route        = schemaEnum(PAPER_REVIEW_ROUTES),
         time         = schemaNumber("Start time."),
-        amount       = schemaNumber("The amount, or the rate for an infusion."),
+        amount       = schemaNumber("The amount, or the rate for an infusion, as the paper doses it."),
+        analyte_fraction = schemaNullable(schemaNumber(paste(
+          "When the dose is not the measured analyte itself (a prodrug, a salt, a",
+          "different moiety): the fraction of the dosed amount that becomes the",
+          "analyte on a molar basis, e.g. 0.75 when the paper states that 10 mg of",
+          "the prodrug salt is equimolar to 7.5 mg of the drug measured. Only from",
+          "what the paper states or prints; empty when the dose is the analyte."))),
         mass_unit    = schemaEnum(c("g", "mg", "mcg", "ng", "other")),
         per_kg       = schemaEnum(c("yes", "no")),
         per_time     = schemaEnum(c("none", "per_min", "per_h"), "Rate units for an infusion."),
@@ -384,6 +392,11 @@ paperReviewSystemPrompt <- function()
     "  regimen it shows, and say in digitization_note how approximate they are.",
     "  On a log axis read the values, not the distances. Skip pure model",
     "  prediction lines unless no observations are drawn.",
+    "- For every extravascular route and formulation, record whatever the paper",
+    "  reports about absorption even if it fitted no absorption model: ka, an",
+    "  absorption half-life, the mean absorption time (MAT), F, tlag, and that",
+    "  regimen's Cmax, tmax, MRT and AUC, each tied to its regimen_id. Record a",
+    "  prodrug or salt dose's molar relation to the analyte as analyte_fraction.",
     "- Describe every dosing regimen as dose rows: an infusion is one row with",
     "  its rate, start time and duration.",
     "- reported_differences: any comparison of two groups' means that the paper",

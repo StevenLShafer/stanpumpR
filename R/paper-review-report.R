@@ -156,6 +156,8 @@ paperReviewReportTags <- function(review, plots = TRUE)
   verdictText <- c(printed = "The printed parameters close the model.",
                    derived = paste("The model is closed through", ident$route, "and is stable."),
                    ill_conditioned = paste("Formally closed through", ident$route, "but ill-conditioned."),
+                   derived_from_curve = paste("The printed numbers do not close the model; it is closed",
+                                              "from", ident$route, "."),
                    underdetermined = "The paper does not print enough to close the model.")[[ident$verdict]]
   bySection <- lapply(PAPER_REVIEW_SECTIONS, function(s) {
     fs <- Filter(function(f) identical(f$section, s), findings)

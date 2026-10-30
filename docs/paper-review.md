@@ -119,9 +119,48 @@ fields (this schema had 42), and once those were removed it still refused
 the schema because "the compiled grammar is too large". The reply is
 checked on return instead (`paperReviewValidate()`).
 
+### Extravascular routes, and parameters from the curves
+
+Asked for by Shafer on 2026-10-30, after the first real paper (Singhvi 1988,
+fosinopril) printed F, the mean absorption time and tmax for two oral
+formulations of a prodrug, but no ka: "Other routes should be captured and
+simulated as well", and "the app should consider deriving parameters from
+displayed curves when possible". `R/paper-review-absorption.R`:
+
+- **Every extravascular regimen gets its own absorption**
+  (`paperReviewAbsorptions()`), so a solution and a capsule each keep their
+  own F and ka, and the simulator uses the selected regimen's. First order is
+  assumed throughout, and the report says so.
+  - **ka**, in this order: printed; ln 2 / a printed absorption half-life;
+    1 / (MAT − tlag); 1 / (the oral MRT − the model's Vss/CL − tlag); fitted
+    to the regimen's digitised points; solved so that the model's tmax equals
+    the printed one.
+  - **F**: printed; else the paper's own dose-normalised oral AUC over its
+    intravenous one (a crossover ratio from the same study, which satisfies
+    "bioavailability is read, never fitted to another study's exposure");
+    else 1 for apparent parameters; else fitted with ka to the points.
+  - **The dose basis** is `analyte_fraction` on the dose, taken only from the
+    paper's own statement (fosinopril: 10 mg of the prodrug sodium salt is
+    equimolar to 7.5 mg of the diacid, so 0.75). It rides on the
+    bioavailability, so a dose is entered as the paper doses it.
+- **No double counting.** A printed quantity an absorption was derived from
+  (the AUC behind F, the tmax or MRT behind ka) is marked "used to build the
+  model" in the consistency table, not "checked". A figure series the
+  absorption was fitted to is set aside in the figure check. When ka is
+  printed and the regimen also has points, the fit is reported as a
+  cross-check.
+- **Exponentials from an intravenous curve** (`paperReviewFitExponentials()`):
+  1, 2 and 3 exponentials are fitted, on log concentrations, to each
+  intravenous series (a bolus, or a short infusion with its infusion points
+  dropped). The report says which the lowest AIC prefers against the model's
+  compartments, as a lead rather than a finding, since the points are read
+  by eye. When the printed numbers do not close the model, the fitted
+  exponentials close it through the same helpers (verdict
+  `derived_from_curve`, reported as an approximation).
+
 ### What the in-memory simulator does not do (yet)
 
-It is linear and first-order: no Michaelis-Menten elimination, zero-order or
+It is linear, with first-order absorption: no Michaelis-Menten elimination, zero-order or
 transit absorption, metabolite, or PD beyond an effect site (each is flagged
 in the report when the paper has it). Renal and other covariates are held at
 their reference. It is a small simulator of its own, not the full stanpumpR
@@ -144,7 +183,7 @@ Everything else is in new files. These are the seams in shared code:
    plumber). It is already in the renv library as a dependency of other
    packages, so `renv.lock` is unchanged.
 
-New files: `R/paper-review-{schema,api,model,checks,report,app}.R`,
+New files: `R/paper-review-{schema,api,model,absorption,checks,report,app}.R`,
 `inst/paper-review/{example-extraction.json,help.md}`,
 `tests/testthat/test-paper-review-*.R`, `tests/testthat/fixtures/`,
 `docs/paper-review.md`, `docs/paper-review-privacy.md`. The help page is in

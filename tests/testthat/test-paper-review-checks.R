@@ -192,33 +192,121 @@ derivedRow <- function(q, value, units, regimen, statistic = "mean_of_individual
        regimen_id = regimen, statistic = statistic, uncertainty = list(type = "SE", value = 1),
        location = "Table 1")
 
-test_that("a regimen the model cannot give is not compared, and is not called a disagreement", {
+# Exampleol's disposition, from the fixture script's eigen() calculation, and
+# an independent closed form for a first-order oral dose on it (mg in, ng/mL
+# out), so the absorption derivations are checked against something
+# stanpumpR did not compute.
+exLambda <- c(0.533393937932, 0.043363495467, 0.003242566601)
+exA <- c(0.1101863309487, 0.0138143541574, 0.0009993148939)
+oralNgPerMl <- function(t, dose, F, ka)
+  1000 * dose * F * colSums(exA * ka / (ka - exLambda) *
+                              (exp(-outer(exLambda, t)) - matrix(exp(-ka * t), 3, length(t), byrow = TRUE)))
+
+test_that("a regimen whose absorption cannot be derived is not compared, and is not called a disagreement", {
   ex <- paperReviewExample()
   ex$structure$routes <- list("iv_bolus", "iv_infusion", "oral")
   ex$regimens[[3]] <- oralRegimen()
+  # An AUC gives F, but nothing gives ka: no ka, MAT, MRT, tmax or figure.
   ex$derived_quantities <- c(ex$derived_quantities, list(
-    derivedRow("AUC_inf", 250, "ng*h/mL", "R3"), derivedRow("Cmax", 99, "ng/mL", "R3"),
-    derivedRow("tmax", 2.8, "h", "R3"), derivedRow("MRT", 7.4, "h", "R3")))
+    derivedRow("AUC_inf", 250, "ng*h/mL", "R3"), derivedRow("Cmax", 99, "ng/mL", "R3")))
   review <- paperReviewRun(ex)
+  expect_false(review$absorptions$R3$ok)
   t <- review$consistency
-  oral <- t[t$quantity %in% c("AUC_inf", "Cmax", "tmax", "MRT") & grepl("^(250|99|2.8|7.4)$", t$printed), ]
-  expect_equal(nrow(oral), 4)
+  oral <- t[grepl("^(250|99)$", t$printed), ]
+  expect_equal(nrow(oral), 2)
   expect_true(all(oral$status == "not comparable"))
-  expect_true(all(grepl("no oral route", oral$note)))
+  expect_true(all(grepl("nothing in the paper gives an absorption constant", oral$note)))
   titles <- vapply(review$findings, `[[`, "", "title")
-  expect_false(any(grepl("^(AUC_inf|Cmax|tmax|MRT) as printed", titles)))
-  expect_true(any(grepl("compared agree", titles)))
+  expect_false(any(grepl("^(AUC_inf|Cmax) as printed", titles)))
+  expect_true(any(grepl("No absorption can be derived for R3", titles)))
+})
+
+test_that("ka comes from the mean absorption time, F from the paper's AUCs, and the dose basis from its statement", {
+  # The fosinopril pattern: no ka, but F (or the AUCs), MAT and an equimolar
+  # prodrug dose.  100 mg of which 0.8 is the analyte, true F 0.5, ka 1/50 min.
+  ex <- paperReviewExample()
+  ex$structure$routes <- list("iv_bolus", "iv_infusion", "oral")
+  ex$regimens[[3]] <- oralRegimen()
+  ex$regimens[[3]]$doses[[1]]$analyte_fraction <- 0.8
+  aucPO <- 0.5 * 0.8 * 100 / 1.2 * 1000 / 60            # ng.h/mL
+  grid <- seq(0.5, 600, by = 0.5)
+  cmax <- max(oralNgPerMl(grid, 100, 0.4, 0.02))
+  ex$derived_quantities <- c(ex$derived_quantities, list(
+    derivedRow("MAT", 50, "min", "R3", "typical_value"),
+    derivedRow("AUC_inf", round(aucPO, 1), "ng*h/mL", "R3", "typical_value"),
+    derivedRow("Cmax", signif(cmax, 4), "ng/mL", "R3", "typical_value")))
+  review <- paperReviewRun(ex)
+  a <- review$absorptions$R3
+  expect_true(a$ok)
+  expect_equal(a$ka, 1 / 50)
+  expect_equal(a$fraction, 0.8)
+  expect_equal(a$F, 0.5, tolerance = 1e-3)               # the IV AUC is printed rounded, 972
+  expect_match(a$sources[["F"]], "dose-normalised AUCs")
+  t <- review$consistency
+  # The AUC built F, so it cannot also check it; Cmax is a genuine check.
+  expect_equal(t$status[t$quantity == "AUC_inf" & t$printed == as.character(round(aucPO, 1))],
+               "used to build the model")
+  expect_true(t$status[t$quantity == "Cmax"] %in% c("matches", "close"))
+  drug <- paperReviewDrugFor(review$drug, ex, ex$regimens[[3]], review$reference)
+  expect_equal(drug$model$PK$default$bioavailability_PO, 0.4, tolerance = 1e-3)
+})
+
+test_that("ka is solved from tmax when nothing else gives it", {
+  ex <- paperReviewExample()
+  ex$structure$routes <- list("iv_bolus", "oral")
+  ex$regimens[[3]] <- oralRegimen()
+  ex$parameters <- c(ex$parameters, list(list(
+    name_in_paper = "F", role = "F", route = "oral", regimen_id = "R3", value = 50, value_text = "50",
+    units = "percent", uncertainty = list(type = "not_reported"), status = "estimated", location = "T4")))
+  grid <- seq(0.05, 400, by = 0.05)
+  tmax <- grid[which.max(oralNgPerMl(grid, 100, 0.5, 0.02))]
+  ex$derived_quantities <- c(ex$derived_quantities, list(derivedRow("tmax", tmax, "min", "R3")))
+  a <- paperReviewRun(ex)$absorptions$R3
+  expect_true(a$ok)
+  expect_equal(a$ka, 0.02, tolerance = 5e-3)
+  expect_match(a$sources[["ka"]], "tmax")
+})
+
+test_that("ka and F are fitted to a regimen's digitised curve, which then does not check itself", {
+  ex <- paperReviewExample()
+  ex$structure$routes <- list("iv_bolus", "iv_infusion", "oral")
+  ex$regimens[[3]] <- oralRegimen()
+  times <- c(15, 30, 60, 120, 240, 480)
+  y <- oralNgPerMl(times, 100, 0.5, 0.02)
+  ex$figures[[3]] <- list(figure_id = "Figure 4", caption = "oral", regimen_id = "R3",
+    y_quantity = "concentration", y_units = "ng/mL", time_units = "min", log_y = "no",
+    data_kind = "mean", error_bars = "none",
+    series = list(list(label = "Oral", points = lapply(seq_along(times), function(i)
+      list(time = times[i], value = signif(y[i], 6))))),
+    digitization_note = "exact", location = "Figure 4, p. 8")
+  review <- paperReviewRun(ex)
+  a <- review$absorptions$R3
+  expect_true(a$ok)
+  expect_equal(a$ka, 0.02, tolerance = 1e-3)
+  expect_equal(a$F, 0.5, tolerance = 1e-3)
+  expect_match(a$sources[["ka"]], "Figure 4's digitised points")
+  expect_true("Figure 4" %in% a$fittedFigures)
+  f <- Filter(function(x) identical(x$section, "Figures") && grepl("Figure 4", x$title), review$findings)
+  expect_length(f, 1)
+  expect_match(f[[1]]$detail, "fitted to these points")
+  # A printed ka is cross-checked against the same fit instead.
+  ex$parameters <- c(ex$parameters, list(list(
+    name_in_paper = "ka", role = "ka", route = "oral", value = 0.03, value_text = "0.03",
+    units = "1/min", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2")))
+  a <- paperReviewRun(ex)$absorptions$R3
+  expect_equal(a$ka, 0.03)
+  expect_match(a$crossCheck, "A fit to Figure 4's digitised points gives ka 1.2 /h against 1.8 /h")
 })
 
 test_that("an oral MRT is the disposition's Vss/CL plus 1/ka plus the lag", {
   ex <- paperReviewExample()
   ex$structure$routes <- list("iv_bolus", "oral")
   ex$regimens[[3]] <- oralRegimen()
-  ex$parameters <- c(ex$parameters, list(
-    list(name_in_paper = "ka", role = "ka", route = "oral", value = 0.02, value_text = "0.02",
-         units = "1/min", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2"),
-    list(name_in_paper = "tlag", role = "tlag", route = "oral", value = 15, value_text = "15",
-         units = "min", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2")))
+  route <- function(role, value, units)
+    list(name_in_paper = role, role = role, route = "oral", value = value, value_text = as.character(value),
+         units = units, uncertainty = list(type = "not_reported"), status = "estimated", location = "T2")
+  ex$parameters <- c(ex$parameters, list(route("ka", 0.02, "1/min"), route("tlag", 15, "min"),
+                                         route("F", 60, "percent")))
   expected <- 148 / 1.2 + 1 / 0.02 + 15                 # min
   ex$derived_quantities <- c(ex$derived_quantities,
                              list(derivedRow("MRT", round(expected), "min", "R3", "typical_value")))
@@ -234,7 +322,7 @@ test_that("a short intravenous infusion scales the printed coefficients, as the 
   ex$regimens[[1]]$doses[[1]] <- list(route = "iv_infusion", time = 0, amount = 1, mass_unit = "mg",
                                       per_kg = "yes", per_time = "none", duration = 0.1,
                                       time_units = "min")
-  A1 <- 0.1101863309487 * 70 * 1000                     # ng/mL for 70 mg
+  A1 <- exA[1] * 70 * 1000                               # ng/mL for 70 mg
   ex$derived_quantities <- c(ex$derived_quantities, list(
     list(quantity = "coefficient_1", value = round(A1), value_text = as.character(round(A1)),
          units = "ng/mL", regimen_id = "R1", statistic = "typical_value",
@@ -250,22 +338,64 @@ test_that("a short intravenous infusion scales the printed coefficients, as the 
   expect_equal(row$status, "not recomputed")
 })
 
-test_that("each figure series is simulated with its own regimen, and one the model cannot give is set aside", {
+test_that("each figure series is simulated with its own regimen", {
   ex <- paperReviewExample()
   ex$structure$routes <- list("iv_bolus", "iv_infusion", "oral")
   ex$regimens[[3]] <- oralRegimen()
-  fig <- ex$figures[[1]]
-  fig$series[[2]] <- list(label = "Oral", regimen_id = "R3",
-                          points = list(list(time = 60, value = 50), list(time = 120, value = 80)))
-  ex$figures[[1]] <- fig
+  ex$parameters <- c(ex$parameters, list(
+    list(name_in_paper = "ka", role = "ka", route = "oral", value = 0.02, value_text = "0.02",
+         units = "1/min", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2"),
+    list(name_in_paper = "F", role = "F", route = "oral", value = 50, value_text = "50",
+         units = "percent", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2")))
+  times <- c(30, 60, 120, 240)
+  y <- oralNgPerMl(times, 100, 0.5, 0.02)
+  ex$figures[[1]]$series[[2]] <- list(label = "Oral", regimen_id = "R3",
+    points = lapply(seq_along(times), function(i) list(time = times[i], value = signif(y[i], 6))))
   review <- paperReviewRun(ex)
   f <- Filter(function(x) identical(x$section, "Figures"), review$findings)[[1]]
   expect_equal(f$severity, "ok")
-  expect_match(f$detail, "^9 points compared")
-  expect_match(f$detail, "Oral \\(R3\\): The model has no oral route")
+  expect_match(f$detail, "^13 points compared")
   pts <- review$figures[[1]]$points
-  expect_true(all(is.na(pts$predicted[pts$series == "Oral"])))
-  expect_true(all(is.finite(pts$predicted[pts$series == "Mean"])))
+  oral <- pts[pts$series == "Oral", ]
+  # Interpolated on the simulated time line, so to about 1%.
+  expect_equal(oral$predicted, oral$observed, tolerance = 0.02)
+  expect_equal(length(unique(review$figures[[1]]$curve$regimen)), 2)
+})
+
+test_that("the number of exponentials a digitised intravenous curve supports is reported", {
+  times <- c(1, 2, 4, 8, 15, 30, 60, 90, 120, 240, 360, 480)
+  wiggle <- rep(c(1.02, 0.98, 1.01, 0.99), 3)
+  tri <- 70 * 1000 * colSums(exA * exp(-outer(exLambda, times))) * wiggle
+  fits <- lapply(1:3, function(k) paperReviewFitExponentials(times, tri, k))
+  aic <- vapply(fits, `[[`, 0, "aic")
+  expect_equal(which.min(aic), 3)
+  expect_equal(fits[[3]]$lambda, exLambda, tolerance = 0.05)
+  bi <- 1000 * (5 * exp(-0.1 * times) + 1 * exp(-0.005 * times)) * wiggle
+  aic <- vapply(1:3, function(k) paperReviewFitExponentials(times, bi, k)$aic, 0)
+  expect_equal(which.min(aic), 2)
+
+  # Through the review: the model has 3, Figure 2's points (9, with 5% noise)
+  # are reported against it, with the caveat.
+  f <- Filter(function(x) grepl("supports", x$title), paperReviewRun(paperReviewExample())$findings)
+  expect_length(f, 1)
+  expect_match(f[[1]]$detail, "AIC prefers")
+  expect_match(f[[1]]$detail, "approximate")
+})
+
+test_that("a model the print does not close is closed from a digitised intravenous curve", {
+  ex <- paperReviewExample()
+  ex$parameters <- Filter(function(p) p$role == "tPeak", ex$parameters)
+  ex$derived_quantities <- list()
+  times <- c(1, 2, 4, 8, 15, 30, 60, 90, 120, 240, 360, 480)
+  y <- 70 * 1000 * colSums(exA * exp(-outer(exLambda, times)))
+  ex$figures[[1]]$series[[1]]$points <- lapply(seq_along(times), function(i)
+    list(time = times[i], value = signif(y[i], 6)))
+  review <- paperReviewRun(ex)
+  expect_equal(review$identifiability$verdict, "derived_from_curve")
+  expect_match(review$identifiability$route, "Figure 2")
+  expect_equal(review$identifiability$closed$v1, 8, tolerance = 0.01)
+  expect_equal(review$identifiability$closed$cl1, 1.2, tolerance = 0.01)
+  expect_true(review$drug$ok)
 })
 
 test_that("printed rounding is read from the printed digits", {

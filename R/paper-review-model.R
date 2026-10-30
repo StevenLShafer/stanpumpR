@@ -312,11 +312,17 @@ paperReviewDisposition <- function(extraction, patient, closed = NULL)
 #' @param extraction the extraction
 #' @param patient a list of weight, height, age, sex
 #' @param closed a closure from paperReviewIdentifiability(), or NULL
+#' @param absorption the extravascular absorption to give it, one entry of
+#'   paperReviewAbsorptions() (R/paper-review-absorption.R), or NULL for none
+#' @param absorptions all of them, kept on the drug so that a check can build
+#'   the drug for another regimen (paperReviewDrugFor())
 #' @returns a list: \code{model} (what a drug function returns),
 #'   \code{defaults} (a one-row drugDefaults frame), \code{units} (the dose
-#'   units offered), \code{ok}, \code{problems}
+#'   units offered), \code{route}, \code{absorption}, \code{ok},
+#'   \code{problems}
 #' @keywords internal
-paperReviewDrug <- function(extraction, patient, closed = NULL)
+paperReviewDrug <- function(extraction, patient, closed = NULL, absorption = NULL,
+                            absorptions = NULL)
 {
   disposition <- paperReviewDisposition(extraction, patient, closed)
   problems <- disposition$problems
@@ -326,26 +332,20 @@ paperReviewDrug <- function(extraction, patient, closed = NULL)
   if (!ok) problems <- c(problems,
     "The printed parameters do not give a complete, positive disposition model for this patient.")
 
-  route <- paperReviewExtravascularRoute(extraction)
+  # Extravascular absorption, derived per regimen (R/paper-review-absorption.R):
+  # ka and F at the reference patient, scaled by any printed covariate effect
+  # on them; the dose's analyte fraction rides on the bioavailability, so a
+  # dose is entered as the paper doses it.
   reference <- paperReviewReferencePatient(extraction)
-  apparent <- identical(extraction$structure$apparent_oral, "yes")
-  if (!is.na(route)) {
-    ka <- paperReviewParameterValue(extraction, "ka", patient$weight)$value *
+  route <- NA_character_
+  if (!is.null(absorption) && isTRUE(absorption$ok)) {
+    route <- absorption$route
+    field <- if (route == "sc") "SC" else PAPER_REVIEW_ROUTE_SUFFIX[[route]]
+    set[[paste0("ka_", field)]] <- absorption$ka *
       paperReviewRoleMultiplier(extraction, "ka", patient, reference)
-    F <- paperReviewParameterValue(extraction, "F", patient$weight)$value
-    if (is.na(F) || apparent) F <- 1
-    F <- F * paperReviewRoleMultiplier(extraction, "F", patient, reference)
-    lag <- paperReviewParameterValue(extraction, "tlag", patient$weight)$value
-    if (is.na(lag)) lag <- 0
-    if (is.finite(ka) && ka > 0) {
-      field <- if (route == "sc") "SC" else PAPER_REVIEW_ROUTE_SUFFIX[[route]]
-      set[[paste0("ka_", field)]] <- ka
-      set[[paste0("bioavailability_", field)]] <- F
-      set[[paste0("tlag_", field)]] <- lag
-    } else {
-      problems <- c(problems, "No absorption rate constant was printed, so the extravascular route is not offered.")
-      route <- NA_character_
-    }
+    set[[paste0("bioavailability_", field)]] <- absorption$F * absorption$fraction *
+      paperReviewRoleMultiplier(extraction, "F", patient, reference)
+    set[[paste0("tlag_", field)]] <- absorption$tlag
   }
 
   model <- list(PK = list(default = set), reference = "Single Paper Review (in memory)")
@@ -382,7 +382,29 @@ paperReviewDrug <- function(extraction, patient, closed = NULL)
     stringsAsFactors = FALSE)
   defaults$Units <- I(list(units))
   list(model = model, defaults = defaults, units = units, route = route,
+       absorption = absorption, absorptions = absorptions, closed = closed,
        ok = ok, problems = unique(problems))
+}
+
+#' The drug as built for one regimen's absorption
+#'
+#' An intravenous regimen uses the drug as it is; an extravascular one, the
+#' absorption derived for that regimen (each formulation its own).
+#'
+#' @param drug a paperReviewDrug() result carrying its \code{absorptions}
+#' @param extraction the extraction
+#' @param regimen the regimen
+#' @param patient the patient
+#' @returns the drug, or NULL when the regimen's absorption is not known
+#' @keywords internal
+paperReviewDrugFor <- function(drug, extraction, regimen, patient)
+{
+  routes <- vapply(regimen$doses %or% list(), function(d) d$route %or% "other", "")
+  if (!any(routes %in% names(PAPER_REVIEW_ROUTE_SUFFIX))) return(drug)
+  a <- drug$absorptions[[regimen$id %or% ""]] %or% drug$absorptions[["route"]]
+  if (is.null(a) || !isTRUE(a$ok)) return(NULL)
+  if (identical(drug$absorption, a)) return(drug)
+  paperReviewDrug(extraction, patient, drug$closed, absorption = a, absorptions = drug$absorptions)
 }
 
 #' The drug's display name, never a library drug's name
