@@ -225,7 +225,6 @@ test_that("drug pages list the scenarios that use the drug", {
 })
 
 test_that("loading a scenario sets the tables and sends the input updates", {
-  skip_if_not(exists("MockShinySession", asNamespace("shiny")), "MockShinySession not available")
   session <- shiny::MockShinySession$new()
   doseTable <- shiny::reactiveVal(doseTableInit)
   eventTable <- shiny::reactiveVal(eventTableInit)
@@ -238,7 +237,6 @@ test_that("loading a scenario sets the tables and sends the input updates", {
 })
 
 test_that("with the app's timeApi, a scenario sets its time settings and the table's format", {
-  skip_if_not(exists("MockShinySession", asNamespace("shiny")), "MockShinySession not available")
   session <- shiny::MockShinySession$new()
   doseTable <- shiny::reactiveVal(doseTableInit)
   eventTable <- shiny::reactiveVal(eventTableInit)
@@ -290,7 +288,6 @@ test_that("a scenario names every patient field, with creatinine blank by defaul
 })
 
 test_that("loading a scenario resets the creatinine and osmolality fields", {
-  skip_if_not(exists("MockShinySession", asNamespace("shiny")), "MockShinySession not available")
   # MockShinySession discards input messages; record them on the instance.
   recordingSession <- function() {
     session <- shiny::MockShinySession$new()

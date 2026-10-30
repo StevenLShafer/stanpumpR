@@ -217,10 +217,6 @@ the options' arrow comes later in the page, so it stays on top and clickable. */
   margin-bottom: 1rem;
 }
 
-.navbar .dropdown-menu .action-icon {
-  margin-right: 0.4rem;
-}
-
 /* ---- Help tab (R/help-ui.R, R/help-content.R) ---------------------------- */
 .help-main {
   max-width: 980px;
