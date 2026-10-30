@@ -90,9 +90,12 @@
 # ===========
 # Used as published, centred on 60 years.  The cohort was older (CitAD
 # enrolled adults with Alzheimer's disease); the power functions of age are
-# extrapolated to younger adults, and become meaningless in children: in a
-# newborn they raise S-clearance about 100,000-fold.  The values
-# stay finite and positive, which is all the library's pediatric check asks.
+# extrapolated to younger adults, and become meaningless in children: at
+# age 1 they raised clearance about 30-fold, and at age 0 they were infinite,
+# which stopped the simulation.  Since 2026-10-29 the age terms see
+# max(age, ADULT_AGE_TERM_FLOOR), 18 years, the library's rule for age terms
+# whose source studied only adults (AGENTS.md); a child gets the
+# 18-year-old's clearances, scaled by size.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -253,8 +256,10 @@ citalopram <- function(weight, height, age, sex, cyp2c19 = CYP2C19_DEFAULT,
   # Enantiomer parameters, L and L/h
   vR  <- CITALOPRAM_V_R * size$volume
   vS  <- CITALOPRAM_V_S * size$volume
-  clR <- CITALOPRAM_CL_R[[sex]] * (age / 60)^CITALOPRAM_CL_R_AGE * size$clearance
-  clS <- CITALOPRAM_CL_S[[cyp2c19]] * (age / 60)^CITALOPRAM_CL_S_AGE * (pkW / 70)^0.75
+  # The age terms see 18 years at least (header, AGE AND SEX)
+  ageTerm <- max(age, ADULT_AGE_TERM_FLOOR) / 60
+  clR <- CITALOPRAM_CL_R[[sex]] * ageTerm^CITALOPRAM_CL_R_AGE * size$clearance
+  clS <- CITALOPRAM_CL_S[[cyp2c19]] * ageTerm^CITALOPRAM_CL_S_AGE * (pkW / 70)^0.75
   # Pregnancy (see the header): both enantiomers' clearances, before the
   # reduction, so the reduced CL1 rises by exactly the factor.
   if (isTRUE(pregnant)) {
