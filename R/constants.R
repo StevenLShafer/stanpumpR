@@ -267,6 +267,16 @@ raRateUnits <- c("mg/hr RA")
 # 2026-10-07, at the request of Steven L. Shafer.)
 poRateUnits <- c("mg/day PO")
 
+# A continuous enteral infusion: levodopa-carbidopa intestinal gel pumped into
+# the jejunum through a PEG-J tube, absorbed from the gut as an oral dose is,
+# so through the drug's oral absorption (its transit compartment included)
+# rather than straight into the central compartment as "mg/day PO" is.
+# Offered only by a drug that declares enteralInfusion (R/transit.R), whose
+# gut absorption the engines carry on the tissue depot; simCpCe() refuses it
+# for any other drug.  (Claude Code, 2026-10-19, at the request of Steven L.
+# Shafer.)
+enteralRateUnits <- c("mg/hr PO")
+
 # Subcutaneous injection (ROUTE_SC): the whole dose into the SC depot.  The
 # peptides are dosed by mass; the insulins in units (U), which are a potency
 # unit of each preparation, not a mass, so a drug offering them carries
@@ -370,7 +380,7 @@ iuScUnits <- c("IU SC", "IU/kg SC")
 GHB_SALT <- "oxybate"
 ghbUnits <- paste(c("g PO", "mg PO"), GHB_SALT)
 
-allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, poFormulationUnits,
+allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits, poFormulationUnits,
               slUnits, inUnits, imUnits, raUnits, raRateUnits, peUnits, calciumUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
               ivPotencyUnits)
@@ -456,6 +466,7 @@ DRUG_CATEGORIES <- c(
   "Anticoagulants",
   "Antihypertensives",
   "Vasoactive and resuscitation",
+  "Parkinson disease",
   "Other",
   "Illicit drugs"
 )
@@ -463,6 +474,10 @@ DRUG_CATEGORIES <- c(
 # drugs of intensive care (inst/help/models/vasoactive.md): concentration
 # only, every one catalogued in inst/extdata/vasoactiveRegistry.csv.
 VASOACTIVE_DRUG_CATEGORY <- "Vasoactive and resuscitation"
+# The category of the drugs used to treat Parkinson's disease and its
+# complications (inst/help/models/parkinsons.md): every candidate catalogued in
+# inst/extdata/parkinsonsRegistry.csv, implemented or not.
+PARKINSONS_DRUG_CATEGORY <- "Parkinson disease"
 # The categories whose every drug, and every metabolite of one, must have a
 # row in inst/extdata/therapeuticRanges.csv (R/therapeuticRanges.R): the
 # range the band draws, or why there is none.  Every category since

@@ -426,6 +426,22 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # RA in one table stopped with an error, or, when the lengths happened to
     # divide, had its rows mislabelled.  (Claude Code, 2026-10-10.)
     dose$Bolus <- route == ROUTE_IV & !rate
+    # A drug infused into the gut (levodopa intestinal gel; R/transit.R): its
+    # gut absorption rides on the tissue depot, so its oral doses are tissue
+    # doses and its "mg/hr PO" rows a rate into that depot, which
+    # advanceClosedFormPO_IM_IN() carries exactly.  Moved before the slow
+    # depot's rows are copied below, because its transit compartment is
+    # carried as that depot.  No other drug may take the rate.
+    enteralRate <- dose$Units %in% enteralRateUnits
+    if (any(enteralRate) && !isTRUE(PK$enteralInfusion))
+      stop(PK$drug, " is not given by enteral infusion (",
+           paste(enteralRateUnits, collapse = ", "), ").")
+    if (isTRUE(PK$enteralInfusion))
+    {
+      dose$RA <- dose$RA | dose$PO
+      dose$RArate <- dose$RArate | enteralRate
+      dose$PO <- FALSE
+    }
     # Saturable oral absorption (gabapentin): each oral dose is scaled by the
     # fraction absorbed at its own size, in mg per administration.  The dose is
     # in the base unit here, and the base unit times mg_Conv is mg for every

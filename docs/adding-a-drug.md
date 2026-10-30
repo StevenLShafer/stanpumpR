@@ -227,6 +227,23 @@ metabolite engine carries both depots, splitting the first-pass fraction between
 proportion to their bioavailabilities (aspirin, `R/drugs_aspirin.R`). Not available with several
 oral formulations, or a `tPeak` measured after an oral dose.
 
+**Optional — one transit compartment.** A source whose dose passes through one transit
+compartment before the central compartment, both emptied at the same rate (NONMEM's "depot
+and one transit compartment", levodopa and opicapone), sets `transit_PO = TRUE` beside
+`ka_PO` (or `transit_RA = TRUE` beside `ka_RA`/`ka_SC`). `getDrugPK()` carries the two equal
+steps exactly as two parallel depots, the second with a negative share, so the PK set may not
+declare its own second depot (`R/transit.R`; `R/drugs_levodopa.R`). A drug infused into the gut
+(levodopa intestinal gel) adds `enteralInfusion = TRUE` and offers `mg/hr PO`
+(`enteralRateUnits`): its gut absorption is carried on the tissue depot and the rate runs
+through it (`R/drugs_levodopaIntestinalGel.R`).
+
+**Optional — a zero-order share of an oral dose.** `zeroOrderPO = list(duration, into =
+"central", fraction)` gives that fraction of each oral dose into the circulation at a constant
+rate over the duration, beside the first-order depot that takes the rest (NONMEM's F1 into the
+depot and a modelled duration D2 into the central compartment: extended-release amantadine,
+`R/drugs_amantadineER.R`). Without `into`, the whole dose is released into the gut
+(canagliflozin).
+
 **Optional — parallel systems.** A drug whose plotted concentration is the sum of independent
 linear systems sharing its doses (ketorolac: the S and R enantiomers, fitted separately)
 returns `parallelSystems`, a list of `list(name, doseFraction, PK)` entries whose `PK` has the
