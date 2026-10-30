@@ -1,6 +1,6 @@
 # AGENTS.md — AI Agent Orientation
 
-**stanpumpR** is an R package + Shiny app for PK/PD simulation. It calculates and plots predicted plasma ($C_p$) and effect-site ($C_e$) concentrations for IV and extravascular anesthetics using **analytical closed-form 3-compartment solutions** for every linear model (an exact matrix exponential for the transit chain), with two exceptions that step: the Michaelis-Menten engine (fourth-order Runge-Kutta, for saturable elimination) and the inhaled agents (`advanceClosedFormGas()`, a matrix exponential in short steps with the uptake that couples the gases held at its value at the start of each step, so a small error remains that shrinks with the step). `advanceGasManBaseline()`, GasMan's own stepping scheme restated in R, is a validation reference the tests call, not an engine the app runs. Stack/version details: `DESCRIPTION`. Entry point: `app.R` → `stanpumpR::run_app()`.
+**stanpumpR** is an R package + Shiny app for PK/PD simulation. It calculates and plots predicted plasma ($C_p$) and effect-site ($C_e$) concentrations for IV and extravascular anesthetics using **analytical closed-form 3-compartment solutions** for every linear model (an exact matrix exponential for the transit chain), with two exceptions that step: the Michaelis-Menten engine (fourth-order Runge-Kutta, for nonlinear disposition or input: saturable elimination, target-mediated binding (linagliptin, vildagliptin) and exenatide's saturable subcutaneous input) and the inhaled agents (`advanceClosedFormGas()`, a matrix exponential in short steps with the uptake that couples the gases held at its value at the start of each step, so a small error remains that shrinks with the step). `advanceGasManBaseline()`, GasMan's own stepping scheme restated in R, is a validation reference the tests call, not an engine the app runs. Stack/version details: `DESCRIPTION`. Entry point: `app.R` → `stanpumpR::run_app()`.
 
 ---
 
@@ -69,7 +69,7 @@ First-time local setup: copy `config.yml.sample` → `config.yml`
 
 ## Key Rules
 
-- **Adding a drug** requires all six (full procedure: `docs/adding-a-drug.md`):
+- **Adding a drug** requires all six (full procedure: `docs/adding-a-drug.md`). Items 5 and 6 apply to a drug a user can dose (a `drugDefaults_global.csv` row with a `Category`); a metabolite-only entry needs only item 6, and the carrier gases and ventilation, with no `Category`, need neither:
   1. `R/drugs_<name>.R` (covariate model function)
   2. `inst/extdata/drugDefaults_global.csv` (row with colors, units, MEAC, and the `Category` that lists it in the startup menu)
   3. `tests/testthat/test-drugs-<name>.R` (unit test — pin values with `expect_equal_rounded()` from `tests/testthat/helpers.R`)
