@@ -420,12 +420,14 @@ Review questions:
 - Interactions with drugs outside the antiseizure group (oral contraceptives,
   rifampicin, azoles).
 - Any pharmacodynamic interaction (the drugs are plasma-only in the library).
-- The sign-reversing induction **of** phenytoin by carbamazepine/phenobarbital
-  (recorded, Yukawa 1990, read in full 2026-10-29): raising Vmax 8% and Km 32%
-  pulls opposite ways, so on an unchanged dose phenytoin falls 6.5-24% across
-  the therapeutic range but **rises** below about 7 mcg/mL, and the pooled
-  co-medication term — one indicator across ten co-medications — is not
-  per-perpetrator at all.
+- The **pooled co-anticonvulsant effect on phenytoin** (recorded, Yukawa 1990,
+  read in full 2026-10-29). It cannot be attributed to carbamazepine or to
+  phenobarbital: the covariate is a single phenytoin-alone-against-any-
+  co-anticonvulsant indicator spanning ten co-medications. It also reverses
+  sign with concentration — raising Vmax 8% and Km 32% pulls opposite ways, so
+  on an unchanged dose phenytoin falls 6.5-24% across the therapeutic range
+  but **rises** below about 7 mcg/mL. Either reason alone would keep it out of
+  the model.
 
 ## Gemini adversarial review (2026-10-24) — disposition
 
