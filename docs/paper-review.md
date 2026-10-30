@@ -165,7 +165,10 @@ be another seam.
 
 ## Setting up the API key
 
-For Shafer to do; no session handles the key itself.
+For Shafer to do; no session handles the key itself. During development the
+app deliberately shares IntegrityAnalysis's `ANTHROPIC_API_KEY` (Open
+decision 1), which needs none of these steps; they are for when a separate
+key is wanted, before wider use.
 `paperReviewApiKey()` looks in this order: a key held in the session (the
 bring-your-own-key seam, unused today), then the environment variables
 `STANPUMPR_ANTHROPIC_API_KEY` and `ANTHROPIC_API_KEY`, in that order, then
@@ -229,9 +232,9 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
 1. `[decided]` **An API key: yes.** Shafer, 2026-10-30, relayed by the parent
    session: "Yes. It is used by IntegrityAnalysis. Not sure where it is." He
    has an Anthropic Console account, the one his IntegrityAnalysis app
-   already bills to. The recommendation is a **separate key for this app**,
-   named for it, so that its spend can be seen and it can be revoked on its
-   own; the steps are in "Setting up the API key" below. No session looks for
+   already bills to. A **separate key for this app**, named for it, would let
+   its spend be seen and the key be revoked on its own; the steps are in
+   "Setting up the API key" below. No session looks for
    the IntegrityAnalysis key or reads it from that app's files or
    environment.
    **Current setup (2026-10-30):** Shafer: "C:\Users\steve\OneDrive\Documents\.Renviron
@@ -239,8 +242,11 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    on his machine (R's HOME), so R loads `ANTHROPIC_API_KEY` at startup and
    the app needs nothing more for local testing. It is **the same key
    IntegrityAnalysis uses**, so the two apps' usage shows together in the
-   Console. A separate key for this app is still recommended before it is
-   deployed. Sessions never open, print, copy or edit that file, and never
+   Console. **Sharing it is Shafer's deliberate choice during development**:
+   "That's fine for now. Both are in development, with low usage."
+   (2026-10-30, relayed by the parent session.) A separate key is something
+   to revisit before wider use, not a blocker. Sessions never open, print,
+   copy or edit that file, and never
    write the key into the worktree, `config.yml`, a test, a fixture, a log
    or a commit; to confirm it loaded they check only
    `nzchar(Sys.getenv("ANTHROPIC_API_KEY"))`.
