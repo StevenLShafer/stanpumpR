@@ -4,9 +4,10 @@ stanpumpR is designed so that adding a drug is a small, self-contained change â€
 let outside investigators contribute and maintain the pharmacokinetics for individual drugs.
 A new drug touches **six** files: the model, its row in the defaults CSV, its test, its help page, its
 pregnancy registry row and its therapeutic-range row. For every drug in the CSV, the tests fail
-without its help page (`test-help-drugs.R`), its pregnancy row (`test-pregnancy.R`) and its
-therapeutic-range row (`test-therapeutic-ranges.R`); nothing detects a missing test file, so that
-one is on you. None of the engine code needs to change.
+without its help page (`test-help-drugs.R`); a drug with a `Category` also needs its pregnancy row
+(`test-pregnancy.R`) and its therapeutic-range row (`test-therapeutic-ranges.R`), as does a
+metabolite of one (a therapeutic-range row only), while the carrier gases and ventilation, with no
+`Category`, need neither. Nothing detects a missing test file, so that one is on you. None of the engine code needs to change.
 
 > Every model must handle body size the stanpumpR way â€” see
 > [weight-adjustment.md](weight-adjustment.md) and step 1 below. This is a requirement, not an option.
