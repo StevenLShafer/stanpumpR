@@ -52,7 +52,7 @@ Internally every model receives age in years, weight in kilograms, height in cen
 A few models switch between parameter sets on a covariate:
 
 - **Dexmedetomidine** uses an infant model (with cardiopulmonary-bypass events) at age ≤ 1 year and an adult model above it.
-- **Remifentanil** uses Eleveld's model, and Kim's in an adult (18 or over) with a BMI of 30 or more.
+- **Remifentanil** uses Eleveld's model, and Kim's in an adult (18 or over) with a BMI of 30 or more, unless one of Kim's volumes or clearances comes out zero or negative for the patient, when it stays on Eleveld's.
 - **Oxytocin** switches to a rat model if the weight is 1 kg or less; this is a research setting, not a clinical one.
 
 ## Age 90 and above

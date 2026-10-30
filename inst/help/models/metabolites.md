@@ -20,7 +20,7 @@ Several opioids, and a number of other drugs (amiodarone, aspirin, prednisone, t
 
 ## How it is computed
 
-The parent's plasma curve is convolved through the metabolite's own disposition, which leaves a sum of exponentials over the two drugs' combined eigenvalues, so the metabolite advances through the same closed-form machinery as everything else, with no numerical solver. An oral dose of the parent adds a second branch for metabolite formed during first pass, before the parent reaches the circulation.
+Apart from enalapril, whose pair has its own engine (above), the parent's plasma curve is convolved through the metabolite's own disposition, which leaves a sum of exponentials over the two drugs' combined eigenvalues, so the metabolite advances through the same closed-form machinery as everything else, with no numerical solver. An oral dose of the parent adds a second branch for metabolite formed during first pass, before the parent reaches the circulation.
 
 Forming the metabolite does **not** change the parent's own plasma or effect-site curve: formation is modelled as an independent transfer, and the parent's fitted clearance already includes it. What it changes is the metabolite's row. A metabolite that was never given directly still gets a row created for it, so giving codeine alone shows the morphine it produces.
 

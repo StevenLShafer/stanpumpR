@@ -39,7 +39,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 **Target-controlled infusion.** `tci.R` is the controller behind the *Plasma target* and *Effect site target* rows; `tci-api.R` is [the TCI API](help:tci-api)'s computation (`tciNextRate()`: the next rate for a real pump from its delivery history, pure R); `tci-api-server.R` wraps it in a `plumber` router (`tciApiRouter()`, `run_tci_api()`).
 
-**The Simulation API.** `api.R` is [the Simulation API](help:simulation-api): `apiSimulate()` validates a request and runs it, `apiFormatResult()` writes the result as JSON, CSV, Excel or XML, and `run_api()` serves `inst/plumber/plumber.R`. `api-docs.R` renders its documentation, `inst/apidocs/api.md`, as the page the app serves at [stanpumpr.io/api](https://stanpumpr.io/api). `plumber`, which both web services use, is an optional dependency.
+**The Simulation API.** `api.R` is [the Simulation API](help:simulation-api): `apiSimulate()` validates a request and runs it, `apiFormatResult()` serialises the result as JSON, CSV, Excel or XML (`apiWriteResult()` writes it to a file), and `run_api()` serves `inst/plumber/plumber.R`. `api-docs.R` renders its documentation, `inst/apidocs/api.md`, as the page the app serves at [stanpumpr.io/api](https://stanpumpr.io/api). `plumber`, which both web services use, is an optional dependency.
 
 **The help.** `help-content.R` (page registry, Markdown rendering, search), `help-generated.R` (blocks of hand-written pages built from the code), `help-drugs.R` (the generated drug pages), `help-scenarios.R` (the teaching scenarios and their loader), `help-ui.R` and `help-server.R`.
 
@@ -53,7 +53,7 @@ stanpumpR is an R package that contains a Shiny application. The source is at [g
 
 ## Deployment
 
-Pull requests are deployed automatically to a test copy of the app on shinyapps.io when labelled `DEPLOY`; merges to `master` deploy to production once R-CMD-check passes on them. The R-CMD-check workflow runs the test suite on Linux, macOS and Windows.
+Pull requests are deployed automatically to a test copy of the app on shinyapps.io when labelled `DEPLOY`; merges to `master` deploy to production once R-CMD-check passes on them (a manual run of the production workflow deploys the commit it is run on without that check). The R-CMD-check workflow runs the test suite on Linux, macOS and Windows.
 
 ## Running it yourself
 

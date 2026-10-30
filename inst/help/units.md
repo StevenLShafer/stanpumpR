@@ -33,7 +33,7 @@ Internally, doses of a drug plotted in mcg/mL are converted to milligrams, doses
 | Oral | g PO, mg PO, mcg PO; and each per kg | An oral dose at that time |
 | Oral form | mg PO tablet, liquid, ER, DR or XR; and per kg | An oral dose of that product, with its own absorption where the drug's forms differ; see [absorption](help:models/absorption) |
 | Oral rate | mg/day PO | A daily oral dose spread evenly over each day, from that time until the drug's next rate row (amiodarone; see [its page](help:drugs/amiodarone)) |
-| Enteral infusion | mg/hr PO | A rate into the gut, absorbed first-order, from that time until the drug's next mg/hr PO row (the levodopa intestinal gels) |
+| Enteral infusion | mg/hr PO | A rate into the gut, absorbed by the drug's oral absorption model, from that time until the drug's next mg/hr PO row (the levodopa intestinal gels) |
 | Sublingual | mg SL, mcg SL; and each per kg | A dose under the tongue at that time (buprenorphine) |
 | Intramuscular | the same with IM | |
 | Intranasal | the same with IN | |
@@ -59,7 +59,7 @@ Some conversions that come up:
 
 ## Time
 
-The calculation works in minutes. Times are entered and displayed in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), and the dose table also accepts `HH:MM`. Max time runs from five minutes to a year (365 days, or 52 weeks), with choices that follow the unit. Infusion rates stay per minute or per hour whatever the time unit. See [Time display](help:time-display).
+The calculation works in minutes. Times are entered and displayed in the **Time units** chosen in the Time panel (minutes, hours, days or weeks), and the dose table also accepts `HH:MM`. Max time runs from five minutes up to 24 hours in minutes or hours, 365 days in days, and 52 weeks in weeks. Infusion rates stay per minute or per hour whatever the time unit. See [Time display](help:time-display).
 
 ## Rate constants and half-lives
 

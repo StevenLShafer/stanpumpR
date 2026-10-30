@@ -28,7 +28,7 @@ A regimen written in days goes in most easily with the Time units set to days. D
 | mass per minute or hour, with or without per kg | **infusion** from that time | `mcg/kg/min`, `mg/hr` |
 | mass with `PO`, `SL`, `IM`, `IN`, `SC` (subcutaneous; also `IU SC` and `U SC`) or `RA` (regional anesthesia), the oral ones sometimes naming a form (`tablet`, `liquid`, `ER`, `DR`, `XR`) | **extravascular dose** at that time; see [absorption](help:models/absorption) | `mg PO`, `mg IN`, `mg RA`, `mg PO liquid` |
 | mass per day with `PO` | **oral rate**: the daily dose spread evenly over each day, from that time | `mg/day PO` (amiodarone) |
-| `mg/hr PO` | **enteral infusion** into the gut, absorbed first-order, from that time | levodopa intestinal gels |
+| `mg/hr PO` | **enteral infusion** into the gut, absorbed by the drug's oral absorption model, from that time | levodopa intestinal gels |
 | `mg/hr RA` | **perineural infusion** into the tissue depot, from that time | bupivacaine, ropivacaine, lidocaine |
 | `mg PE` and its rate and IM forms | **fosphenytoin**, in phenytoin sodium equivalents | `mg PE`, `mg PE/min`, `mg PE IM` (phenytoin) |
 | `Plasma target`, `Effect site target` | **target-controlled infusion**: the dose is the target concentration | see [Target-controlled infusion](help:tci) |
