@@ -114,7 +114,7 @@ To simulate a dose table from a script, call `apiSimulate()`, or start the HTTP 
 
 ### Environments
 
-When code is merged into the default branch, it is deployed to production automatically once the R-CMD-check workflow has passed on it. Pull Requests are automatically deployed to a test environment for testing.
+When code is merged into the default branch, it is deployed to production automatically once the R-CMD-check workflow has passed on it. Pull Requests carrying the `DEPLOY` label are deployed to a test environment for testing; the label is added automatically to a pull request from this repository, and by a maintainer to one from a fork.
 
 ### Dependency management (renv)
 

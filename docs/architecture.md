@@ -162,7 +162,8 @@ solved analytically once per patient, then evaluated at every time point as a su
 exponentials. A transit-chain absorption (enalapril) is still exact, by matrix exponential
 (`advanceTransitChain.R`). Two engines step: `advanceMichaelisMenten.R`, fourth-order Runge-Kutta
 for saturable elimination (phenytoin, GHB, exenatide, cetagliptin, linagliptin, vildagliptin), and
-the inhaled agents' `advanceClosedFormGas.R`, a matrix exponential in short steps with the uptake
+the inhaled agents' `advanceClosedFormGas.R` (reached through `simulateGases()` from `app_server()`, not
+through `simCpCe()`, which never sees a gas row), a matrix exponential in short steps with the uptake
 that couples the gases held at its value at the start of each step, so a small error remains that
 shrinks with the step.
 `advanceGasManBaseline.R`, GasMan's own stepping scheme restated in R, is a validation reference
@@ -196,8 +197,6 @@ the tests call, not an engine the app runs.
    - `advanceMichaelisMenten.R` — saturable (Michaelis-Menten) elimination, numerically (RK4);
      dispatched before the oral formulations are split, as it integrates the whole dose table
    - `advanceTransitChain.R` — an Erlang transit-chain absorption, exactly, by matrix exponential
-   - `advanceClosedFormGas.R` — the inhaled agents (`advanceGasManBaseline.R`, used only by the
-     tests, is its GasMan reference)
 4. Sum each dose's contribution over the exponential basis; `convertState.R` carries state
    across event boundaries.
 5. Interpolate to an even grid (`equiSpace`), normalize to peak Cp/Ce, and scale against MEAC.

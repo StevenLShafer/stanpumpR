@@ -574,7 +574,7 @@ Drug,Concentration.Units,Bolus.Units,Infusion.Units,Default.Units,Units,Color,Lo
 - `Drug` — must exactly match the R function name (this CSV is the source of the drug list).
 - `Concentration.Units` — `mcg`, `ng` or `pg` per mL (sets the internal unit scaling in `simCpCe`),
   `mOsm` for an osmotic agent, `mmol` for a drug reported in mmol/L (see above), `IU` for an activity
-  in IU/mL (the heparins), `mcU` for insulin and vasopressin (mcU/mL), `INR` or `ACT` for a drug
+  in IU/mL (heparin and enoxaparin; `heparinCPB` is plotted as `ACT`), `mcU` for insulin and vasopressin (mcU/mL), `INR` or `ACT` for a drug
   plotted as a clotting output (`R/inr.R`, `R/act.R`), and `%` or `L/min` for the inhaled agents and
   ventilation. AGENTS.md describes each.
 - `Bolus.Units` / `Infusion.Units` / `Default.Units` — units offered in the dose grid.
