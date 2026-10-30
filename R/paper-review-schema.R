@@ -2,11 +2,12 @@
 #
 # The extraction is the only thing that leaves the Anthropic API call, and
 # every check in R/paper-review-checks.R reads it, so its shape is fixed here
-# as a JSON schema and sent with the request as a structured output
-# (output_config.format).  Units, roles and covariate forms are closed lists,
-# so that R converts and evaluates them deterministically: nothing Claude
-# writes is ever evaluated as code.  A value the paper does not print is
-# null, never a guess.  Every item carries the place in the paper it came
+# as a JSON schema, sent in the request's instructions and checked on return
+# (paperReviewParseResponse(), paperReviewValidate()); the API refused it as a
+# structured output, its grammar being too large.  Units, roles and
+# covariate forms are closed lists, so that R converts and evaluates them
+# deterministically: nothing Claude writes is ever evaluated as code.  A
+# value the paper does not print is empty, never a guess.  Every item carries the place in the paper it came
 # from, which is what every finding in the report cites.
 #
 # See docs/paper-review.md.  (Claude Code, 2026-10-30, at the request of
@@ -70,7 +71,74 @@ PAPER_REVIEW_DERIVED_UNITS <- unique(c(
 
 # --- JSON schema helpers ----------------------------------------------------
 
-schemaNullable <- function(x) list(anyOf = list(x, list(type = "null")))
+# A value the paper may not print.  Not a union with null: the API refuses a
+# schema with more than 16 union-typed parameters ("exponential compilation
+# cost"), and this one has dozens.  So a missing number or string is the empty
+# string, and a missing enum is "none"; paperReviewNormalize() turns them back
+# into numbers and NULLs after parsing.
+schemaNullable <- function(x)
+{
+  absent <- "Empty string when the paper does not print it."
+  if (!is.null(x$enum)) {
+    x$enum <- c(x$enum, list("none"))
+    x$description <- paste(c(x$description, "'none' when the paper does not say."), collapse = " ")
+    return(x)
+  }
+  if (identical(x$type, "number")) {
+    x$type <- "string"
+    x$description <- paste(c(x$description, "A plain decimal number (no units).", absent),
+                           collapse = " ")
+    return(x)
+  }
+  x$description <- paste(c(x$description, absent), collapse = " ")
+  x
+}
+
+# Fields that schemaNullable() sent as strings: numbers when parsed back.
+PAPER_REVIEW_NUMERIC_FIELDS <- c(
+  "year", "molecular_weight", "value", "lower", "upper", "central", "min", "max",
+  "n", "n_female", "n_male", "coefficient", "reference_value", "duration",
+  "error_lower", "error_upper", "group1_value", "group1_se", "group2_value",
+  "group2_se", "difference", "difference_se", "p_value")
+# Optional strings: NULL when empty.
+PAPER_REVIEW_OPTIONAL_STRINGS <- c("title", "first_author", "journal", "doi",
+                                   "pd_model", "regimen_id")
+# Optional enums: NULL when "none".
+PAPER_REVIEW_OPTIONAL_ENUMS <- c("route")
+
+#' Turn a parsed extraction back into numbers and NULLs
+#'
+#' Undoes schemaNullable(): an empty optional string or a "none" optional
+#' enum becomes NULL (the element is dropped), and a numeric field sent as a
+#' string becomes a number, or NULL when it is empty or not a number.
+#' Idempotent, so an extraction already in that form (the fixtures) is
+#' unchanged.
+#'
+#' @param x the parsed extraction, or any part of it
+#' @returns \code{x}, normalised
+#' @keywords internal
+paperReviewNormalize <- function(x)
+{
+  if (!is.list(x)) return(x)
+  nms <- names(x)
+  out <- lapply(seq_along(x), function(i) {
+    v <- x[[i]]
+    name <- if (is.null(nms)) "" else nms[i]
+    if (is.list(v)) return(paperReviewNormalize(v))
+    if (name %in% PAPER_REVIEW_NUMERIC_FIELDS && is.character(v)) {
+      n <- suppressWarnings(as.numeric(trimws(v)))
+      return(if (length(n) == 1 && is.finite(n)) n else NULL)
+    }
+    if (name %in% PAPER_REVIEW_OPTIONAL_STRINGS && is.character(v) && !nzchar(trimws(v)))
+      return(NULL)
+    if (name %in% PAPER_REVIEW_OPTIONAL_ENUMS && identical(v, "none")) return(NULL)
+    v
+  })
+  names(out) <- nms
+  # Drop the elements that became NULL, as fromJSON() leaves no slot for them.
+  keep <- !vapply(out, is.null, logical(1)) | vapply(x, is.null, logical(1))
+  out[keep]
+}
 schemaString <- function(description = NULL) {
   out <- list(type = "string")
   if (!is.null(description)) out$description <- description
@@ -86,6 +154,13 @@ schemaEnum <- function(values, description = NULL) {
   if (!is.null(description)) out$description <- description
   out
 }
+# A closed list sent as a string whose description lists the values, not as
+# an enum: long enums repeated across the schema made the API's compiled
+# grammar "too large".  R checks the value against the list itself (an
+# unknown unit is not convertible and is flagged), so nothing is lost.
+schemaChoice <- function(values, description = NULL)
+  schemaString(paste(c(description, paste0("Exactly one of: ", paste(values, collapse = ", "), ".")),
+                     collapse = " "))
 schemaObject <- function(properties, description = NULL) {
   out <- list(type = "object", properties = properties,
               required = as.list(names(properties)),
@@ -123,7 +198,7 @@ schemaCovariateSummary <- function()
 #' The JSON schema of a Single Paper Review extraction
 #'
 #' @returns a list that serialises (with \code{auto_unbox = TRUE}) to the
-#'   schema sent as \code{output_config.format.schema}
+#'   schema sent in the request's instructions
 #' @keywords internal
 paperReviewSchema <- function()
 {
@@ -161,19 +236,19 @@ paperReviewSchema <- function()
     )),
     parameters = schemaArray(schemaObject(list(
       name_in_paper = schemaString(),
-      role          = schemaEnum(PAPER_REVIEW_ROLES,
+      role          = schemaChoice(PAPER_REVIEW_ROLES,
                                  "Q2/V2 is the faster peripheral compartment when the paper says which; ka/F/tlag take the route field."),
       route         = schemaNullable(schemaEnum(PAPER_REVIEW_ROUTES)),
       value         = schemaNullable(schemaNumber("The typical value, at the reference covariates.")),
       value_text    = schemaString("The value exactly as printed, digits included."),
-      units         = schemaEnum(PAPER_REVIEW_PARAMETER_UNITS),
+      units         = schemaChoice(PAPER_REVIEW_PARAMETER_UNITS),
       uncertainty   = schemaUncertainty(),
       status        = schemaEnum(c("estimated", "fixed", "derived", "unclear")),
       location      = schemaLocation()
     ))),
     covariate_effects = schemaArray(schemaObject(list(
-      parameter_role      = schemaEnum(PAPER_REVIEW_ROLES),
-      covariate           = schemaEnum(PAPER_REVIEW_COVARIATES),
+      parameter_role      = schemaChoice(PAPER_REVIEW_ROLES),
+      covariate           = schemaChoice(PAPER_REVIEW_COVARIATES),
       form                = schemaEnum(PAPER_REVIEW_COVARIATE_FORMS,
                                        "power: (cov/ref)^coef; linear: 1 + coef (cov - ref); exponential: exp(coef (cov - ref)); category_multiplier: coef multiplies the parameter in the category named by covariate."),
       coefficient         = schemaNullable(schemaNumber()),
@@ -209,11 +284,11 @@ paperReviewSchema <- function()
       location = schemaLocation()
     ))),
     derived_quantities = schemaArray(schemaObject(list(
-      quantity    = schemaEnum(PAPER_REVIEW_DERIVED,
+      quantity    = schemaChoice(PAPER_REVIEW_DERIVED,
                                "t_half_1 and lambda_1 are the fastest; coefficient_i pairs with lambda_i."),
       value       = schemaNullable(schemaNumber()),
       value_text  = schemaString("Exactly as printed."),
-      units       = schemaEnum(PAPER_REVIEW_DERIVED_UNITS),
+      units       = schemaChoice(PAPER_REVIEW_DERIVED_UNITS),
       regimen_id  = schemaNullable(schemaString("For AUC, Cmax, tmax and coefficients: the regimen it belongs to.")),
       statistic   = schemaEnum(c("typical_value", "mean_of_individuals", "median_of_individuals", "unstated")),
       uncertainty = schemaUncertainty(),

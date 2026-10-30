@@ -26,7 +26,7 @@ help: `inst/paper-review/help.md`, shown in the app's "Privacy and help" tab.
 | Step | Code | What it does |
 |---|---|---|
 | Upload | `paperReviewReadUpload()` | Reads the PDF into the session's memory and deletes Shiny's temporary file |
-| Extract | `paperReviewExtract()`, `R/paper-review-api.R` | One streamed call to the Anthropic Messages API, `claude-opus-5-5`, adaptive thinking at effort `high`, the PDF inline as base64, a JSON-schema structured output (`paperReviewSchema()`, `R/paper-review-schema.R`). No Files API, no caching, server-side refusal fallback on |
+| Extract | `paperReviewExtract()`, `R/paper-review-api.R` | One streamed call to the Anthropic Messages API, `claude-opus-5-5`, adaptive thinking at effort `high`, the PDF inline as base64, the JSON schema (`paperReviewSchema()`, `R/paper-review-schema.R`) in the instructions and the reply checked on return (`paperReviewValidate()`). No Files API, no caching, server-side refusal fallback on |
 | Review | `paperReviewRun()`, `R/paper-review-checks.R` | The checks below, all in R |
 | Report | `paperReviewReportTags()`, `R/paper-review-report.R` | HTML; every finding cites where in the paper it comes from and says whether it was computed or is Claude's reading |
 | Simulate | `paperReviewDrug()`, `paperReviewSimulate()`, `R/paper-review-model.R` | Builds the paper's drug in memory (a model list and a one-row defaults frame, never a `drugs_*.R` file or CSV row) and runs it through `getDrugPK(model = ...)` and `simCpCe()` |
@@ -98,6 +98,27 @@ The **reference patient** is each covariate's printed reference value, else
 the population's central value, else stanpumpR's default (70 kg, 170 cm, 40
 years, male); the report says which for each.
 
+### Testing
+
+`devtools::test()` never touches the network: `test-paper-review-{api,checks,model,privacy}.R`
+run against fixtures whose answers come from an independent `eigen()`
+calculation (`tests/testthat/fixtures/make-paper-review-fixtures.R`).
+
+`test-paper-review-live.R` calls the real API and is **opt-in**: it is
+skipped unless a key is set and `STANPUMPR_LIVE_API=1`. It sends no real
+manuscript. It draws a one-page PDF of the fictional exampleol paper and
+checks that Claude's extraction reaches the review intact, catching the
+misprinted half-life. First run, 2026-10-30: passed, 1.3 minutes, 9,743
+input and 9,095 output tokens (about $0.22 at list price). A real paper is
+sent only after Shafer has chosen it (Open decision 6).
+
+The first two live attempts were refused, which is why the schema is sent
+in the instructions rather than as a structured output
+(`output_config.format`): the API allows at most 16 nullable or union-typed
+fields (this schema had 42), and once those were removed it still refused
+the schema because "the compiled grammar is too large". The reply is
+checked on return instead (`paperReviewValidate()`).
+
 ### What the in-memory simulator does not do (yet)
 
 It is linear and first-order: no Michaelis-Menten elimination, zero-order or
@@ -146,8 +167,9 @@ be another seam.
 
 For Shafer to do; no session handles the key itself.
 `paperReviewApiKey()` looks in this order: a key held in the session (the
-bring-your-own-key seam, unused today), then the `ANTHROPIC_API_KEY`
-environment variable, then `anthropic_api_key` in `config.yml`.
+bring-your-own-key seam, unused today), then the environment variables
+`STANPUMPR_ANTHROPIC_API_KEY` and `ANTHROPIC_API_KEY`, in that order, then
+`anthropic_api_key` in `config.yml`.
 
 **1. Create a key for this app only.**
 1. Sign in to the Anthropic Console with the account IntegrityAnalysis bills
@@ -165,11 +187,16 @@ environment variable, then `anthropic_api_key` in `config.yml`.
    depends on it (`docs/paper-review-privacy.md` section 1a).
 
 **2. Use it locally.** Put it in your user-level R environment file, not in
-the project (this repository does not git-ignore a project `.Renviron`):
+the project (this repository does not git-ignore a project `.Renviron`),
+under its own name so that it sits beside IntegrityAnalysis's
+`ANTHROPIC_API_KEY` without replacing it. The app takes
+`STANPUMPR_ANTHROPIC_API_KEY` first and falls back to `ANTHROPIC_API_KEY`,
+which is what it uses today.
 1. In R, `file.edit("~/.Renviron")`.
-2. Add the line `ANTHROPIC_API_KEY=<the key>` and save.
+2. Add the line `STANPUMPR_ANTHROPIC_API_KEY=<the key>` and save. Leave the
+   existing `ANTHROPIC_API_KEY` line alone.
 3. Restart R. Check it is set without printing it:
-   `nzchar(Sys.getenv("ANTHROPIC_API_KEY"))` should be `TRUE`.
+   `nzchar(Sys.getenv("STANPUMPR_ANTHROPIC_API_KEY"))` should be `TRUE`.
 4. Run the app as in "Run it locally" above. (Alternatively put
    `anthropic_api_key: "<the key>"` in the worktree's `config.yml`, which is
    git-ignored.)
@@ -206,8 +233,17 @@ allowed to learn from my models. Claude is allowed to see coarse metadata."
    named for it, so that its spend can be seen and it can be revoked on its
    own; the steps are in "Setting up the API key" below. No session looks for
    the IntegrityAnalysis key or reads it from that app's files or
-   environment. Until the new key exists, development uses the fixtures and
-   "Try the example" only.
+   environment.
+   **Current setup (2026-10-30):** Shafer: "C:\Users\steve\OneDrive\Documents\.Renviron
+   is where you will find my API key". That file is R's user environment file
+   on his machine (R's HOME), so R loads `ANTHROPIC_API_KEY` at startup and
+   the app needs nothing more for local testing. It is **the same key
+   IntegrityAnalysis uses**, so the two apps' usage shows together in the
+   Console. A separate key for this app is still recommended before it is
+   deployed. Sessions never open, print, copy or edit that file, and never
+   write the key into the worktree, `config.yml`, a test, a fixture, a log
+   or a commit; to confirm it loaded they check only
+   `nzchar(Sys.getenv("ANTHROPIC_API_KEY"))`.
    At list price a review costs roughly the manuscript's tokens at $4 per
    million in and the extraction and thinking at $20 per million out: a
    20-page paper is perhaps 40-80 thousand input tokens and 10-30 thousand

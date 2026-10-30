@@ -22,7 +22,9 @@ PAPER_REVIEW_MODEL        <- "claude-opus-5-5"
 PAPER_REVIEW_EFFORT       <- "high"
 PAPER_REVIEW_MAX_TOKENS   <- 64000
 PAPER_REVIEW_TIMEOUT_SEC  <- 1200
-PAPER_REVIEW_KEY_ENV      <- "ANTHROPIC_API_KEY"
+# This app's own key first, so it can sit beside another app's
+# ANTHROPIC_API_KEY in the same ~/.Renviron; then the standard name.
+PAPER_REVIEW_KEY_ENV      <- c("STANPUMPR_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY")
 # Server-side refusal fallback: on a policy decline the API re-runs the same
 # request on another Anthropic model inside the same call.
 PAPER_REVIEW_FALLBACK_BETA <- "server-side-fallback-2026-07-01"
@@ -42,8 +44,10 @@ paperReviewApiKey <- function(sessionKey = NULL, config = .sprglobals$config)
 {
   if (is.character(sessionKey) && length(sessionKey) == 1 && nzchar(sessionKey))
     return(sessionKey)
-  key <- Sys.getenv(PAPER_REVIEW_KEY_ENV, "")
-  if (nzchar(key)) return(key)
+  for (name in PAPER_REVIEW_KEY_ENV) {
+    key <- Sys.getenv(name, "")
+    if (nzchar(key)) return(key)
+  }
   key <- if (is.list(config)) config$anthropic_api_key else NULL
   if (is.character(key) && length(key) == 1 && nzchar(key) &&
       !grepl("^<", key)) return(key)
@@ -78,18 +82,20 @@ paperReviewRequestBody <- function(pdf, supplement = NULL,
     type = "text",
     text = paste("Extract the pharmacokinetic model from this manuscript",
                  if (length(content) > 1) "and its supplement" else "",
-                 "as the schema defines."))
+                 "as the schema defines. Reply with the JSON object only."))
 
+  # The schema travels in the instructions, not as output_config.format: as a
+  # structured output it was refused, first for its 42 nullable fields and
+  # then, with those removed, because "the compiled grammar is too large".
+  # paperReviewParseResponse() checks the reply instead.
   body <- list(
     model = model,
     max_tokens = PAPER_REVIEW_MAX_TOKENS,
     stream = TRUE,
-    system = paperReviewSystemPrompt(),
+    system = paste0(paperReviewSystemPrompt(), "\n\nThe JSON schema:\n",
+                    jsonlite::toJSON(paperReviewSchema(), auto_unbox = TRUE)),
     thinking = list(type = "adaptive"),
-    output_config = list(
-      effort = effort,
-      format = list(type = "json_schema", schema = paperReviewSchema())
-    ),
+    output_config = list(effort = effort),
     messages = list(list(role = "user", content = content))
   )
   if (isTRUE(fallbacks)) body$fallbacks <- "default"
@@ -142,6 +148,24 @@ paperReviewError <- function(code, message)
   structure(class = c("paper_review_error", "error", "condition"),
             list(message = message, call = NULL, code = code))
 
+#' The API's own explanation of a refused request
+#'
+#' The error body's type and message (which describe the request's shape,
+#' not its content), cut to 300 characters.  It goes into the condition the
+#' user sees, never into a log.
+#'
+#' @param resp the httr2 response
+#' @returns a string, empty when the body cannot be read
+#' @keywords internal
+paperReviewApiErrorText <- function(resp)
+{
+  body <- tryCatch(jsonlite::fromJSON(httr2::resp_body_string(resp), simplifyVector = FALSE),
+                   error = function(e) NULL)
+  e <- body$error
+  if (is.null(e)) return("")
+  substr(paste0("API says (", e$type %or% "error", "): ", e$message %or% ""), 1, 300)
+}
+
 #' Parse the extraction out of an accumulated response
 #'
 #' @param accumulated the output of \code{paperReviewAccumulateEvents()}
@@ -159,11 +183,56 @@ paperReviewParseResponse <- function(accumulated)
   if (identical(accumulated$stopReason, "max_tokens"))
     stop(paperReviewError("max_tokens",
                           "The extraction ran past the output limit and is incomplete."))
-  extraction <- tryCatch(jsonlite::fromJSON(accumulated$text, simplifyVector = FALSE),
+  # The reply should be the object alone; take it from the first "{" to the
+  # last "}" in case it came wrapped in a code fence or a sentence.
+  text <- accumulated$text %or% ""
+  open <- regexpr("{", text, fixed = TRUE)
+  close <- max(gregexpr("}", text, fixed = TRUE)[[1]])
+  json <- if (open > 0 && close > open) substr(text, open, close) else ""
+  extraction <- tryCatch(jsonlite::fromJSON(json, simplifyVector = FALSE),
                          error = function(e) NULL)
-  if (!is.list(extraction))
+  if (!is.list(extraction) || is.null(names(extraction)))
     stop(paperReviewError("unparseable", "The extraction was not valid JSON."))
-  extraction
+  paperReviewValidate(paperReviewNormalize(extraction))
+}
+
+#' Give an extraction the shape the checks expect
+#'
+#' The schema is sent as instructions, not enforced, so a section the reply
+#' leaves out is filled with an empty value of the right kind (a list, an
+#' empty object, an empty string) and named in \code{extraction_limitations},
+#' which the report prints.  Sections the schema does not define are dropped.
+#'
+#' @param x the normalised extraction
+#' @returns the extraction, every top-level section present
+#' @keywords internal
+paperReviewValidate <- function(x)
+{
+  schema <- paperReviewSchema()
+  missing <- character(0)
+  out <- list()
+  for (name in unlist(schema$required)) {
+    spec <- schema$properties[[name]]
+    value <- x[[name]]
+    ok <- switch(spec$type,
+      array = is.list(value) && is.null(names(value)),
+      object = is.list(value) && !is.null(names(value)),
+      string = is.character(value) && length(value) == 1,
+      TRUE)
+    if (!ok) {
+      missing <- c(missing, name)
+      value <- switch(spec$type, array = list(), object = stats::setNames(list(), character(0)),
+                      string = "")
+    }
+    out[[name]] <- value
+  }
+  if (length(missing))
+    out$extraction_limitations <- paste0(
+      out$extraction_limitations,
+      if (nzchar(out$extraction_limitations)) " " else "",
+      "The reply had no usable ", paste(missing, collapse = ", "),
+      "; the review treats them as empty.")
+  out
 }
 
 #' Send one manuscript to the Anthropic API and return the extraction
@@ -210,15 +279,16 @@ paperReviewExtract <- function(pdf, supplement = NULL, key, progress = NULL, ...
   on.exit(close(resp), add = TRUE)
   status <- httr2::resp_status(resp)
   if (status >= 400)
-    stop(paperReviewError(paste0("http_", status), switch(
+    stop(paperReviewError(paste0("http_", status), paste(switch(
       as.character(status),
-      "400" = "The API rejected the request (400). The PDF may be too long or unreadable.",
+      "400" = "The API rejected the request (400).",
       "401" = "The API key was not accepted (401).",
       "403" = "The API key may not use this model (403).",
       "413" = "The request was too large for the API (413).",
       "429" = "The API's rate limit was reached (429). Try again in a minute.",
       "529" = "The API is overloaded (529). Try again shortly.",
-      paste0("The API returned an error (", status, ")."))))
+      paste0("The API returned an error (", status, ").")),
+      paperReviewApiErrorText(resp))))
 
   events <- list()
   while (!httr2::resp_stream_is_complete(resp)) {
