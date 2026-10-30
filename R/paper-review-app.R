@@ -367,7 +367,7 @@ paperReviewServer <- function(input, output, session)
       Value = signif(c(c(pk$v1, pk$v2, pk$v3)[has], pk$cl1, c(pk$cl2, pk$cl3)[has[2:3]],
                        log(2) / lambda, if (isTRUE(pk$ke0 > 0)) pk$ke0 else NA), 4))
     t[!is.na(t$Value), ]
-  }, caption = "The model for this patient")
+  }, caption = "The model for this patient", digits = 4)
 }
 
 # A setting of the review app's configuration.

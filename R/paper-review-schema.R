@@ -289,7 +289,7 @@ paperReviewSchema <- function()
       value       = schemaNullable(schemaNumber()),
       value_text  = schemaString("Exactly as printed."),
       units       = schemaChoice(PAPER_REVIEW_DERIVED_UNITS),
-      regimen_id  = schemaNullable(schemaString("For AUC, Cmax, tmax and coefficients: the regimen it belongs to.")),
+      regimen_id  = schemaNullable(schemaString("For AUC, Cmax, tmax, MRT and coefficients: the regimen it belongs to.")),
       statistic   = schemaEnum(c("typical_value", "mean_of_individuals", "median_of_individuals", "unstated")),
       uncertainty = schemaUncertainty(),
       location    = schemaLocation()
@@ -306,6 +306,8 @@ paperReviewSchema <- function()
       error_bars  = schemaEnum(c("none", "SD", "SE", "CI95", "range", "percentile", "unstated")),
       series = schemaArray(schemaObject(list(
         label  = schemaString(),
+        regimen_id = schemaNullable(schemaString(
+          "The regimen this series shows, when a figure shows several; empty to use the figure's.")),
         points = schemaArray(schemaObject(list(
           time        = schemaNumber(),
           value       = schemaNumber(),

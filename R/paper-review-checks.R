@@ -461,23 +461,42 @@ paperReviewConsistency <- function(extraction, drug, reference)
     expected <- PAPER_REVIEW_DERIVED_KIND[[q]]
     model <- NA_real_
     note <- ""
+    incomparable <- FALSE
     if (expected == "coefficient") {
       i <- as.integer(sub("^.*_", "", q))
       if (i > n) next
       if (identical(dq$units, "1/L")) {
         model <- coef[i]; conv$kind <- "coefficient"
       } else if (identical(conv$kind, "concentration")) {
-        bolus <- paperReviewBolusAmount(extraction, dq$regimen_id, concUnits, reference)
-        if (!is.na(bolus)) { model <- coef[i] * bolus; conv$kind <- "coefficient" }
-        else note <- "No single intravenous bolus to scale the coefficient by."
+        bolus <- paperReviewBolusAmount(extraction, dq$regimen_id, concUnits, reference,
+                                        log(2) / lambda[1])
+        if (!is.na(bolus$amount)) {
+          model <- coef[i] * bolus$amount; conv$kind <- "coefficient"; note <- bolus$note
+        } else {
+          note <- "No single intravenous dose to scale the coefficient by."
+        }
       }
-    } else if (q %in% c("AUC_inf", "Cmax", "tmax")) {
-      res <- paperReviewRegimenExposure(extraction, drug, reference, dq$regimen_id)
-      model <- res[[q]]
-      note <- res$note
-      if (q != "AUC_inf" && !identical(dq$statistic, "typical_value"))
-        note <- paste(note, "The paper's value is a", sub("_", " ", dq$statistic %or% "unstated statistic"),
-                      "; the model's is the typical subject's curve, which need not equal it.")
+    } else if (q %in% c("AUC_inf", "Cmax", "tmax", "MRT") && !is.null(dq$regimen_id)) {
+      # A quantity of one regimen is compared only if the model can give that
+      # regimen: an oral AUC against a model with no oral route is not a
+      # disagreement (the first real paper reported both).
+      regimen <- paperReviewRegimen(extraction, dq$regimen_id)
+      routable <- if (is.null(regimen)) list(ok = FALSE, why = "The regimen is not identified.")
+                  else paperReviewRegimenRoutable(regimen, drug)
+      if (!routable$ok) {
+        incomparable <- TRUE
+        note <- routable$why
+      } else if (q == "MRT") {
+        model <- paperReviewRegimenMRT(regimen, drug, vss / pk$cl1)
+      } else {
+        res <- paperReviewRegimenExposure(extraction, drug, reference, dq$regimen_id)
+        model <- res[[q]]
+        note <- res$note
+      }
+      if (q %in% c("Cmax", "tmax") && !identical(dq$statistic, "typical_value") && routable$ok)
+        note <- paste0(note, " The paper's value is a ",
+                       gsub("_", " ", dq$statistic %or% "unstated statistic"),
+                       "; the model's is the typical subject's curve, which need not equal it.")
     } else {
       model <- recomputed(dq)
     }
@@ -489,7 +508,9 @@ paperReviewConsistency <- function(extraction, drug, reference)
     withinRounding <- is.finite(model) && is.finite(printedInternal) &&
       isTRUE(abs(model - printedInternal) <= roundingInternal * 1.0001)
     loose <- q %in% c("Cmax", "tmax") && !identical(dq$statistic, "typical_value")
-    status <- if (!kindOk) "units not convertible"
+    status <- if (incomparable) "not comparable"
+      else if (!kindOk && nzchar(note)) "not recomputed"
+      else if (!kindOk) "units not convertible"
       else if (!is.finite(model)) "not recomputed"
       else if (withinRounding || abs(relative) <= 0.01) "matches"
       else if (abs(relative) <= PAPER_REVIEW_CLOSE) "close"
@@ -513,11 +534,15 @@ paperReviewConsistency <- function(extraction, drug, reference)
   }
   table <- if (length(rows)) do.call(rbind, rows) else NULL
   if (!is.null(table)) {
+    compared <- table$status %in% c("matches", "close", "differs", "disagrees")
     nMatch <- sum(table$status %in% c("matches", "close"))
     findings <- c(list(paperReviewFinding(section,
-      if (nMatch == nrow(table)) "ok" else "info",
-      paste0(nMatch, " of ", nrow(table), " printed derived quantities agree with the model within 5%"),
-      "Each was recomputed from the printed parameters through stanpumpR (getDrugPK(), cube(), effectSitePeakTime(), simCpCe()).")),
+      if (nMatch == sum(compared)) "ok" else "info",
+      paste0(nMatch, " of ", sum(compared), " printed derived quantities compared agree with the model within 5%"),
+      paste0("Each was recomputed from the printed parameters through stanpumpR (getDrugPK(), cube(), ",
+             "effectSitePeakTime(), simCpCe()).",
+             if (any(!compared)) paste0(" ", sum(!compared), " more could not be compared; the table says why.")
+             else ""))),
       findings)
   } else {
     findings <- list(paperReviewFinding(section, "info",
@@ -526,19 +551,65 @@ paperReviewConsistency <- function(extraction, drug, reference)
   list(table = table, findings = findings)
 }
 
-# The amount of a regimen's single intravenous bolus, in the model's amount
-# units (so that coef * amount is a concentration in its units), or NA.
-paperReviewBolusAmount <- function(extraction, regimenId, concUnits, reference)
+# The amount of a regimen's single intravenous dose, in the model's amount
+# units (so that coef * amount is a concentration in its units), with a note;
+# NA when there is none.  A single infusion shorter than a tenth of the
+# fastest half-life counts as a bolus, as a paper that fits a sum of
+# exponentials to it does (the first real paper: 3 min against 33 min).
+paperReviewBolusAmount <- function(extraction, regimenId, concUnits, reference,
+                                   fastestHalfLife = Inf)
 {
+  none <- list(amount = NA_real_, note = "")
   regimen <- paperReviewRegimen(extraction, regimenId)
-  if (is.null(regimen) || length(regimen$doses) != 1) return(NA_real_)
+  if (is.null(regimen) || length(regimen$doses) != 1) return(none)
   d <- regimen$doses[[1]]
-  if (!identical(d$route, "iv_bolus")) return(NA_real_)
   mg <- c(g = 1000, mg = 1, mcg = 1e-3, ng = 1e-6)[d$mass_unit %or% "other"]
-  if (is.na(mg)) return(NA_real_)
+  if (is.na(mg)) return(none)
   amountMg <- d$amount * mg * if (identical(d$per_kg, "yes")) reference$weight else 1
+  note <- ""
+  if (identical(d$route, "iv_infusion")) {
+    minutes <- paperReviewMinutes(d$time_units %or% "min")
+    duration <- paperReviewNum(d$duration) * minutes
+    if (!is.finite(duration) || duration > 0.1 * fastestHalfLife) return(none)
+    perTime <- d$per_time %or% "none"
+    if (perTime == "per_min") amountMg <- amountMg * duration
+    if (perTime == "per_h") amountMg <- amountMg * duration / 60
+    note <- paste0("The ", prFmt(duration, 2), "-min infusion is treated as a bolus, as a ",
+                   "sum-of-exponentials fit to it does.")
+  } else if (!identical(d$route, "iv_bolus")) {
+    return(none)
+  }
   # mg/L is mcg/mL; express in concUnits/mL.
-  amountMg * c(pg = 1e6, ng = 1e3, mcg = 1)[[concUnits]]
+  list(amount = amountMg * c(pg = 1e6, ng = 1e3, mcg = 1)[[concUnits]], note = note)
+}
+
+#' Can the model give this regimen?
+#'
+#' An intravenous regimen always; an extravascular one only through the route
+#' the model has an absorption constant for.
+#'
+#' @returns a list: \code{ok}, \code{why}
+#' @keywords internal
+paperReviewRegimenRoutable <- function(regimen, drug)
+{
+  routes <- unique(vapply(regimen$doses %or% list(), function(d) d$route %or% "other", character(1)))
+  extravascular <- setdiff(routes, c("iv_bolus", "iv_infusion"))
+  if (length(extravascular) == 0) return(list(ok = TRUE, why = ""))
+  missing <- setdiff(extravascular, if (is.na(drug$route)) character(0) else drug$route)
+  if (length(missing) == 0) return(list(ok = TRUE, why = ""))
+  list(ok = FALSE, why = paste0("The model has no ", paste(gsub("_", " ", missing), collapse = ", "),
+                                " route: the paper prints no absorption constant for it."))
+}
+
+# The mean residence time of a regimen: the disposition's Vss/CL, plus the
+# mean absorption time 1/ka and the lag for an extravascular dose.
+paperReviewRegimenMRT <- function(regimen, drug, mrtIV)
+{
+  routes <- vapply(regimen$doses %or% list(), function(d) d$route %or% "other", character(1))
+  if (all(routes %in% c("iv_bolus", "iv_infusion"))) return(mrtIV)
+  field <- if (drug$route == "sc") "SC" else PAPER_REVIEW_ROUTE_SUFFIX[[drug$route]]
+  set <- drug$model$PK$default
+  mrtIV + 1 / set[[paste0("ka_", field)]] + (set[[paste0("tlag_", field)]] %or% 0)
 }
 
 paperReviewRegimen <- function(extraction, id)
@@ -814,40 +885,72 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
       next
     }
     if (!drug$ok) { add("info", paste(id, "not compared"), "There is no complete model.", f$location); next }
-    regimen <- paperReviewRegimen(extraction, f$regimen_id)
-    if (is.null(regimen)) {
-      add("concern", paste(id, "names no regimen"), "Its points cannot be simulated.", f$location)
-      next
-    }
-    doses <- paperReviewRegimenDoses(regimen)
     factor <- paperReviewConcentrationFactor(f$y_units %or% "other", concUnits, extraction$drug$molecular_weight)
     minutes <- paperReviewMinutes(f$time_units %or% "min")
-    if (nrow(doses$doses) == 0 || !is.finite(factor) || is.na(minutes)) {
-      add("concern", paste(id, "could not be compared"),
-          "Its regimen or its units could not be converted.", c(f$location, regimen$location))
+    if (!is.finite(factor) || is.na(minutes)) {
+      add("concern", paste(id, "could not be compared"), "Its units could not be converted.", f$location)
       next
     }
+    # Each series may show its own regimen (a figure of an intravenous and two
+    # oral curves); a series without one takes the figure's.  The first real
+    # paper's figure had three regimens and only one slot for them.
     points <- do.call(rbind, lapply(f$series %or% list(), function(s) {
       p <- s$points %or% list()
       if (length(p) == 0) return(NULL)
       data.frame(series = s$label %or% "",
+                 regimen = s$regimen_id %or% f$regimen_id %or% NA_character_,
                  time = vapply(p, function(x) paperReviewNum(x$time), numeric(1)) * minutes,
                  observed = vapply(p, function(x) paperReviewNum(x$value), numeric(1)) * factor,
                  lower = vapply(p, function(x) paperReviewNum(x$error_lower), numeric(1)) * factor,
-                 upper = vapply(p, function(x) paperReviewNum(x$error_upper), numeric(1)) * factor)
+                 upper = vapply(p, function(x) paperReviewNum(x$error_upper), numeric(1)) * factor,
+                 stringsAsFactors = FALSE)
     }))
     if (is.null(points) || nrow(points) == 0) {
       add("info", paste(id, "has no digitised points"), f$digitization_note %or% "", f$location)
       next
     }
-    maximum <- max(c(points$time, doses$doses$Time), na.rm = TRUE) * 1.05 + 1
-    sim <- tryCatch(paperReviewSimulate(drug, reference, doses$doses, maximum),
-                    error = function(e) e)
-    if (inherits(sim, "error")) {
-      add("error", paste(id, "could not be simulated"), conditionMessage(sim), f$location)
+    points$predicted <- NA_real_
+    curves <- list()
+    setAside <- character(0)
+    regimenLocations <- character(0)
+    for (rid in unique(points$regimen)) {
+      these <- which(points$regimen %in% rid)
+      labels <- paste(unique(points$series[these]), collapse = ", ")
+      regimen <- paperReviewRegimen(extraction, if (is.na(rid)) NULL else rid)
+      if (is.null(regimen)) {
+        setAside <- c(setAside, paste0(labels, ": names no regimen"))
+        next
+      }
+      regimenLocations <- c(regimenLocations, regimen$location)
+      routable <- paperReviewRegimenRoutable(regimen, drug)
+      if (!routable$ok) {
+        setAside <- c(setAside, paste0(labels, " (", rid, "): ", routable$why))
+        next
+      }
+      doses <- paperReviewRegimenDoses(regimen)
+      if (nrow(doses$doses) == 0) {
+        setAside <- c(setAside, paste0(labels, " (", rid, "): its doses could not be converted"))
+        next
+      }
+      maximum <- max(c(points$time[these], doses$doses$Time), na.rm = TRUE) * 1.05 + 1
+      sim <- tryCatch(paperReviewSimulate(drug, reference, doses$doses, maximum),
+                      error = function(e) e)
+      if (inherits(sim, "error")) {
+        setAside <- c(setAside, paste0(labels, " (", rid, "): could not be simulated: ",
+                                       conditionMessage(sim)))
+        next
+      }
+      points$predicted[these] <- stats::approx(sim$curve$Time, sim$curve$Cp, points$time[these],
+                                               rule = 2)$y
+      curves[[length(curves) + 1]] <- data.frame(Time = sim$curve$Time, Cp = sim$curve$Cp,
+                                                 regimen = rid, stringsAsFactors = FALSE)
+    }
+    note <- if (length(setAside))
+      paste0(" Not compared: ", paste(setAside, collapse = "; "), ".") else ""
+    if (length(curves) == 0) {
+      add("concern", paste(id, "could not be compared"), trimws(note), f$location)
       next
     }
-    points$predicted <- stats::approx(sim$curve$Time, sim$curve$Cp, points$time, rule = 2)$y
     use <- is.finite(points$observed) & points$observed > 0 & is.finite(points$predicted) &
       points$predicted > 0
     pe <- (points$observed[use] - points$predicted[use]) / points$predicted[use]
@@ -856,18 +959,18 @@ paperReviewFigureChecks <- function(extraction, drug, reference)
                 else if (mdape <= 0.5) "concern" else "error"
     add(severity, paste0(id, ": the model ", if (severity == "ok") "reproduces" else "does not closely reproduce",
                          " the digitised points"),
-        paste0(sum(use), " points. Median prediction error (observed - predicted) / predicted ",
+        paste0(sum(use), " points compared. Median prediction error (observed - predicted) / predicted ",
                sprintf("%+.0f%%", 100 * mdpe), ", median absolute ", sprintf("%.0f%%", 100 * mdape),
-               ". The points were digitised approximately by Claude (", f$digitization_note %or% "",
+               ".", note, " The points were digitised approximately by Claude (",
+               f$digitization_note %or% "",
                "); errors under about 10-20% are within that approximation.",
                if (f$data_kind %in% c("mean", "median"))
                  " The figure shows a mean or median of individuals; the model's curve is the typical subject's, which need not equal it."
                else ""),
-        c(f$location, regimen$location))
+        c(f$location, regimenLocations))
     figures[[length(figures) + 1]] <- list(
-      id = id, caption = f$caption %or% "", regimen = regimen$description %or% "",
-      logY = identical(f$log_y, "yes"), curve = sim$curve, points = points,
-      mdpe = mdpe, mdape = mdape, problems = doses$problems)
+      id = id, caption = f$caption %or% "", logY = identical(f$log_y, "yes"),
+      curve = do.call(rbind, curves), points = points, mdpe = mdpe, mdape = mdape)
   }
   if (length(extraction$figures %or% list()) == 0)
     add("info", "No concentration figures were extracted")

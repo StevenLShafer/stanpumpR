@@ -101,10 +101,10 @@ paperReviewExtractionTables <- function(extraction)
 paperReviewFigurePlot <- function(figure, concUnits)
 {
   # Columns, named for R CMD check; the data mask takes precedence.
-  Time <- Cp <- time <- observed <- series <- lower <- upper <- NULL
+  Time <- Cp <- time <- observed <- series <- lower <- upper <- regimen <- NULL
   curve <- figure$curve[figure$curve$Cp > 0 | !figure$logY, ]
   p <- ggplot2::ggplot() +
-    ggplot2::geom_line(data = curve, ggplot2::aes(x = Time, y = Cp),
+    ggplot2::geom_line(data = curve, ggplot2::aes(x = Time, y = Cp, group = regimen),
                        colour = "#1f4e9c", linewidth = 1) +
     ggplot2::geom_point(data = figure$points,
                         ggplot2::aes(x = time, y = observed, shape = series),

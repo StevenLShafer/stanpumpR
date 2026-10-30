@@ -177,6 +177,97 @@ test_that("the figure check reproduces the fixture's points and flags a figure t
   expect_equal(severities(f)[1], "error")
 })
 
+# The first real paper (an intravenous active drug and two oral doses of its
+# prodrug, with no absorption constant) produced false alarms that these pin
+# down: oral exposures compared against an intravenous-only model, a figure's
+# oral series scored against the intravenous curve, and coefficients left
+# unchecked because the intravenous dose was a short infusion.
+oralRegimen <- function(id = "R3")
+  list(id = id, description = "100 mg orally",
+       doses = list(list(route = "oral", time = 0, amount = 100, mass_unit = "mg", per_kg = "no",
+                         per_time = "none", duration = NULL, time_units = "min")),
+       location = "Methods, p. 3")
+derivedRow <- function(q, value, units, regimen, statistic = "mean_of_individuals")
+  list(quantity = q, value = value, value_text = as.character(value), units = units,
+       regimen_id = regimen, statistic = statistic, uncertainty = list(type = "SE", value = 1),
+       location = "Table 1")
+
+test_that("a regimen the model cannot give is not compared, and is not called a disagreement", {
+  ex <- paperReviewExample()
+  ex$structure$routes <- list("iv_bolus", "iv_infusion", "oral")
+  ex$regimens[[3]] <- oralRegimen()
+  ex$derived_quantities <- c(ex$derived_quantities, list(
+    derivedRow("AUC_inf", 250, "ng*h/mL", "R3"), derivedRow("Cmax", 99, "ng/mL", "R3"),
+    derivedRow("tmax", 2.8, "h", "R3"), derivedRow("MRT", 7.4, "h", "R3")))
+  review <- paperReviewRun(ex)
+  t <- review$consistency
+  oral <- t[t$quantity %in% c("AUC_inf", "Cmax", "tmax", "MRT") & grepl("^(250|99|2.8|7.4)$", t$printed), ]
+  expect_equal(nrow(oral), 4)
+  expect_true(all(oral$status == "not comparable"))
+  expect_true(all(grepl("no oral route", oral$note)))
+  titles <- vapply(review$findings, `[[`, "", "title")
+  expect_false(any(grepl("^(AUC_inf|Cmax|tmax|MRT) as printed", titles)))
+  expect_true(any(grepl("compared agree", titles)))
+})
+
+test_that("an oral MRT is the disposition's Vss/CL plus 1/ka plus the lag", {
+  ex <- paperReviewExample()
+  ex$structure$routes <- list("iv_bolus", "oral")
+  ex$regimens[[3]] <- oralRegimen()
+  ex$parameters <- c(ex$parameters, list(
+    list(name_in_paper = "ka", role = "ka", route = "oral", value = 0.02, value_text = "0.02",
+         units = "1/min", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2"),
+    list(name_in_paper = "tlag", role = "tlag", route = "oral", value = 15, value_text = "15",
+         units = "min", uncertainty = list(type = "not_reported"), status = "estimated", location = "T2")))
+  expected <- 148 / 1.2 + 1 / 0.02 + 15                 # min
+  ex$derived_quantities <- c(ex$derived_quantities,
+                             list(derivedRow("MRT", round(expected), "min", "R3", "typical_value")))
+  t <- paperReviewRun(ex)$consistency
+  row <- t[t$quantity == "MRT", ]
+  expect_equal(row$status, "matches")
+  expect_equal(as.numeric(row$model), round(expected, 1), tolerance = 1e-3)
+})
+
+test_that("a short intravenous infusion scales the printed coefficients, as the paper's own fit does", {
+  ex <- paperReviewExample()
+  # 1 mg/kg over 0.1 min: a tenth of the fastest half-life (1.30 min) or less.
+  ex$regimens[[1]]$doses[[1]] <- list(route = "iv_infusion", time = 0, amount = 1, mass_unit = "mg",
+                                      per_kg = "yes", per_time = "none", duration = 0.1,
+                                      time_units = "min")
+  A1 <- 0.1101863309487 * 70 * 1000                     # ng/mL for 70 mg
+  ex$derived_quantities <- c(ex$derived_quantities, list(
+    list(quantity = "coefficient_1", value = round(A1), value_text = as.character(round(A1)),
+         units = "ng/mL", regimen_id = "R1", statistic = "typical_value",
+         uncertainty = list(type = "not_reported"), location = "Table 3")))
+  t <- paperReviewRun(ex)$consistency
+  row <- t[t$quantity == "coefficient_1" & t$units == "ng/mL", ]
+  expect_equal(row$status, "matches")
+  expect_match(row$note, "treated as a bolus")
+  # A longer infusion is not a bolus: not recomputed, and not called a units problem.
+  ex$regimens[[1]]$doses[[1]]$duration <- 1
+  t <- paperReviewRun(ex)$consistency
+  row <- t[t$quantity == "coefficient_1" & t$units == "ng/mL", ]
+  expect_equal(row$status, "not recomputed")
+})
+
+test_that("each figure series is simulated with its own regimen, and one the model cannot give is set aside", {
+  ex <- paperReviewExample()
+  ex$structure$routes <- list("iv_bolus", "iv_infusion", "oral")
+  ex$regimens[[3]] <- oralRegimen()
+  fig <- ex$figures[[1]]
+  fig$series[[2]] <- list(label = "Oral", regimen_id = "R3",
+                          points = list(list(time = 60, value = 50), list(time = 120, value = 80)))
+  ex$figures[[1]] <- fig
+  review <- paperReviewRun(ex)
+  f <- Filter(function(x) identical(x$section, "Figures"), review$findings)[[1]]
+  expect_equal(f$severity, "ok")
+  expect_match(f$detail, "^9 points compared")
+  expect_match(f$detail, "Oral \\(R3\\): The model has no oral route")
+  pts <- review$figures[[1]]$points
+  expect_true(all(is.na(pts$predicted[pts$series == "Oral"])))
+  expect_true(all(is.finite(pts$predicted[pts$series == "Mean"])))
+})
+
 test_that("printed rounding is read from the printed digits", {
   expect_equal(paperReviewRounding("1.30"), 0.005)
   expect_equal(paperReviewRounding("148"), 0.5)
