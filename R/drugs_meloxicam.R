@@ -104,11 +104,12 @@
 #
 # CYP2C9
 # ======
-# The function takes the genotype as `cyp2c9` (default "*1/*1").  The app has
-# no CYP2C9 input, so it always simulates *1/*1; the argument serves scripts
-# calling meloxicam() directly.  Diplotypes rare in the source (*2/*2,
-# *2/*3, *3/*3) are extrapolated from the per-allele model.  No CYP2D6
-# adjustment: the model fitted none.
+# The function takes the genotype as `cyp2c9` (default "*1/*1").  The app
+# passes the Patient Profile's CYP 2C9 field (default *1/*1) through
+# getDrugPK(), as it does to every model whose signature names `cyp2c9`;
+# scripts may also call meloxicam() directly.  Diplotypes rare in the
+# source (*2/*2, *2/*3, *3/*3) are extrapolated from the per-allele model.
+# No CYP2D6 adjustment: the model fitted none.
 #
 # References
 # ----------

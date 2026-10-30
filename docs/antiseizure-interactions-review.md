@@ -12,10 +12,11 @@ the evidence gaps that a reviewer should press on. Drafted 2026-10-24.
 change in clearance.** *Status: met.* `applyAntiseizureInteractions()` multiplies
 each victim's elimination clearance (`cl1`) by the time-varying fold and
 re-simulates through the exact event engine; phenytoin, on the saturable
-engine, takes Vmax/Km multipliers. All 24 linear-victim interactions are
-clearance multipliers; the 6 phenytoin/zonisamide/ethosuximide additions landed
-2026-10-26 are clearance multipliers too (zonisamide, ethosuximide), and the
-2 phenytoin interactions act on Vmax/Km. Verified in
+engine, takes Vmax/Km multipliers. Of the 35 `applied` rows of
+`inst/extdata/antiseizureInteractions.csv` (2026-10-30), the 33 on linear victims
+are clearance multipliers, the 8 added 2026-10-26 among them (the three inducers
+on zonisamide, the three inducers and valproate on ethosuximide, ethosuximide on
+lamotrigine), and the 2 on phenytoin (valproate, zonisamide) act on Km. Verified in
 `test-antiseizure-interactions.R`.
 
 **R2. If the model tracks FREE drug and the interaction is protein binding, it
