@@ -98,9 +98,9 @@ test_that("the category holds exactly the implemented drugs; only levodopa and a
       expect_equal(PK$tPeak, 0, info = d)
       expect_equal(row$endCe, 0, info = d)
     }
-    # A band only where a range is published (levodopa, amantadine and
-    # tolcapone, AGNP; apomorphine, van Laar)
-    if (!grepl("^levodopa", d) && !d %in% c("amantadineER", "tolcapone", "apomorphine")) {
+    # A band only where a range is published (levodopa and amantadine, AGNP
+    # update 2026; apomorphine, van Laar)
+    if (!grepl("^levodopa", d) && !d %in% c("amantadineER", "apomorphine")) {
       expect_equal(row$Lower, 0, info = d)
       expect_equal(row$Upper, 0, info = d)
     }

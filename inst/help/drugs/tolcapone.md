@@ -26,10 +26,10 @@ Healthy young men (Jorga 1998) have a clearance of 7.3 L/h, a total volume of 9 
 - **The volumes' dose dependence.** In the fluctuators the total volume rose with the regimen, from 15 L at 50 mg to 39 L at 400 mg three times a day. The nonfluctuators did not show this, so the volumes are held at their 200 mg values. Clearance did not change with dose, so the exposure is unaffected.
 - **Food.** The curve is drawn fasting. Taken with food, tolcapone's exposure is 10 to 20% lower, which the label considers clinically irrelevant.
 
-### Effect and band
+### Effect, and why there is no band
 
 Red-cell COMT inhibition follows the plasma concentration without delay: the EC50 was 1.2 mcg/mL in volunteers (Jorga 1998). Tolcapone roughly doubles levodopa's AUC.
 
-The band is the AGNP reference range, 3 to 6 mcg/mL two hours after a dose, although monitoring is not recommended. On 200 mg three times a day the model is at about 5 mcg/mL two hours after a dose.
+No band is drawn. The AGNP consensus guideline's 2017 update gave 3 to 6 mcg/mL two hours after a dose (as Müller 2024 quotes it), but its update 2026 (Hart 2026, [doi 10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)), which supersedes it, no longer lists tolcapone, and monitoring is not recommended. On 200 mg three times a day the model is at about 5 mcg/mL two hours after a dose.
 
 Age, sex and treatment duration had no effect. The label states that "polymorphic metabolism is unlikely" (glucuronidation by UGT1A9), so no genotype term exists. Tolcapone carries a boxed warning for fulminant hepatic failure; hepatic impairment is outside the model.

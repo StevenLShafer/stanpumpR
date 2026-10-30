@@ -8,7 +8,7 @@ Enter the morning dose and any extra doses as **mg PO** (or the morning dose as 
 
 ### Threshold and band
 
-As for the tablets: the threshold is the half-maximal motor concentration, 0.81 mcg/mL, and the band 0.9 to 2.0 mcg/mL. On the gel, levels usually sit at 1.5 to 4 mcg/mL.
+As for the tablets: the threshold is the half-maximal motor concentration, 0.81 mcg/mL, and the band the AGNP update 2026's reference range, 1.0 to 3.5 mcg/mL (Hart 2026, [doi 10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)), which was measured after tablets. On the gel, levels usually sit at 1.5 to 4 mcg/mL.
 
 ### What is not in the model
 

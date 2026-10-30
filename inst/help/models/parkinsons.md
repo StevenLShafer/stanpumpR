@@ -20,12 +20,12 @@ Rasagiline and selegiline inhibit MAO-B **irreversibly**: the inhibition lasts u
 
 Few drugs here have one. Those that are published are drawn as the band:
 
-- **Levodopa**: 0.9 to 2.0 mcg/mL one hour after 250/25 mg carbidopa-levodopa, the reference range of the AGNP consensus guideline (Hiemke 2018), an expected peak rather than an efficacy window. Mao's half-maximal motor concentration is 0.81 mcg/mL, and on intestinal gel the plateau is typically 1.5 to 4 mcg/mL.
-- **Amantadine**: 300 to 600 ng/mL at trough (AGNP). Confusion and hallucinations rise with the concentration, most in the elderly and in renal impairment.
-- **Tolcapone**: 3 to 6 mcg/mL two hours after a dose (AGNP), drawn as its band, although monitoring is not recommended; on 200 mg three times a day the model sits at about 5 mcg/mL two hours after a dose. **Entacapone** 0.4 to 1.0 mcg/mL one hour after 200 mg (AGNP). **Biperiden**, not marketed in the US, 1 to 6.5 ng/mL.
+- **Levodopa**: 1.0 to 3.5 mcg/mL 0.5 to 1 hour after a dose, laboratory alert level 5 mcg/mL, the reference range of the AGNP consensus guideline's update 2026 (Hart 2026), the concentration expected after 100/25 mg rather than an efficacy window (the 2017 update gave 0.9 to 2.0 mcg/mL). Mao's half-maximal motor concentration is 0.81 mcg/mL, and on intestinal gel the plateau is typically 1.5 to 4 mcg/mL.
+- **Amantadine**: 600 to 1,700 ng/mL 2 hours after the second dose of the day of immediate-release tablets, laboratory alert level 3,000 ng/mL (Hart 2026; the 2017 update gave 300 to 600 ng/mL at trough). Confusion and hallucinations rise with the concentration, most in the elderly and in renal impairment.
+- **Tolcapone** 3 to 6 mcg/mL two hours after a dose and **entacapone** 0.4 to 1.0 mcg/mL one hour after 200 mg were the 2017 update's ranges (quoted by Müller 2024); the update 2026 lists neither, so tolcapone is drawn without a band. It removed biperiden, bromocriptine, cabergoline, pramipexole, ropinirole and rotigotine from the guideline altogether. **Pimavanserin**'s 40 to 85 ng/mL is for schizophrenia, and the guideline warns it may not apply in Parkinson's disease, so it is not drawn.
 - **Apomorphine**: 3.9 to 15.2 ng/mL, the minimum effective and minimum toxic concentrations of van Laar's infusion study as the FDA review quotes them (the abstract gives 4.7 and 8.5 ng/mL), drawn as its band; half the maximal motor improvement at 10.7 ng/mL.
 
-The AGNP values are quoted from Müller and colleagues' review of therapeutic drug monitoring in Parkinson's disease (*J Neural Transm* 2024), which was read in full; the guideline itself could not be read here. No range is established for pramipexole, ropinirole, rotigotine, the MAO-B inhibitors, opicapone, istradefylline or pimavanserin.
+The AGNP values are from Table 5 of the guideline's update 2026 (Hart 2026, *Pharmacopsychiatry* 59:166-295, [doi 10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)), read in full; the 2017 values are quoted from Müller and colleagues' review of therapeutic drug monitoring in Parkinson's disease (*J Neural Transm* 2024). No range is established for pramipexole, ropinirole, rotigotine, the MAO-B inhibitors, opicapone, istradefylline or pimavanserin.
 
 ### Covariates and genotype
 

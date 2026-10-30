@@ -20,7 +20,7 @@ Load the [wearing-off scenario](scenario:levodopa-wearing-off) and add levodopaS
 ### Threshold and band
 
 - **Threshold.** The time until threshold is measured to the motor EC50, 1.41 mcg/mL. After that point the effect site is below the concentration for half the maximal improvement in the UPDRS Part III score, which here was 72% of a baseline score of 31.4.
-- **Band.** The AGNP reference range, 0.9 to 2.0 mcg/mL, the same as for levodopa.
+- **Band.** The AGNP update 2026's reference range, 1.0 to 3.5 mcg/mL 0.5 to 1 hour after a dose (Hart 2026, [doi 10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861)), the same as for levodopa.
 
 ### What is not in the model
 

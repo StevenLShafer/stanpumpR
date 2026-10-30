@@ -72,7 +72,7 @@
 # 2013's motor effect site (UPDRS III ke0 1.80/h, EC50 0.81 mcg/mL, fitted to
 # measured plasma levodopa in advanced disease, so independent of the plasma
 # model and of entacapone, which acts on levodopa's elimination, not on its
-# action) and the AGNP band, 0.9 to 2.0 mcg/mL.
+# action) and the AGNP band, 1.0 to 3.5 mcg/mL (Hart 2026), as for levodopa.
 #
 # References
 # ----------
@@ -116,7 +116,7 @@ levodopaEntacaponeIntestinalGel <- function(weight, height, age, sex, adjustToFF
 
   list(
     PK = PK, ke0 = LEVODOPA_KE0 / 60, MEAC = 0,
-    typical = 1.4, upperTypical = 2.0, lowerTypical = 0.9,
+    typical = 2.25, upperTypical = 3.5, lowerTypical = 1.0,
     enteralInfusion = TRUE,
     reference = paste0(
       "Senek M et al., Sci Rep 2020;10:18057 (11 patients, levodopa-carbidopa and ",

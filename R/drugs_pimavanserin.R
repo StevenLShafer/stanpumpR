@@ -62,7 +62,9 @@
 # 200 h), whose parameters are not printed; CYP3A4 inhibitors (AUC x3, label
 # dose 10 mg) and inducers (rifampin, -91%); QT prolongation, which rises with
 # concentration (5-8 ms at 34 mg).  No effect site and no band: no
-# concentration-response for psychosis is published.
+# concentration-response for psychosis is published, and the AGNP update
+# 2026's range, 40 to 85 ng/mL (Hart 2026, Table 5), is for schizophrenia and
+# "might not be applicable to patients with Parkinson's disease".
 #
 # References
 # ----------

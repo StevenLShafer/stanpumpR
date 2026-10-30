@@ -31,11 +31,12 @@ test_that("steady state on 200 mg three times a day: AUC, half-life, the band", 
   expect_equal(pdAUC(res, 37 * 360, 38 * 360), 200 * 0.6 / cl, tolerance = 0.01)
   expect_equal_rounded(4.88, pdTerminalHalfLife("tolcapone", 70, 170, 65, "male",
                                                 adjustToFFM = FALSE), tolerance = 0.01)
-  # two hours after a dose, inside the AGNP 3-6 mcg/mL
+  # two hours after a dose, inside the AGNP 2017 update's 3-6 mcg/mL (quoted by
+  # Muller 2024), which the update 2026 no longer lists, so no band is drawn
   s <- pdSite(res)
   c2 <- s$Y[which.min(abs(s$Time - (37 * 360 + 120)))]
   expect_gt(c2, 3); expect_lt(c2, 6)
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "tolcapone", ]
-  expect_equal(c(row$Lower, row$Upper), c(3, 6))
+  expect_equal(c(row$Lower, row$Upper, row$Typical), c(0, 0, 0))
 })

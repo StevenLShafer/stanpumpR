@@ -36,8 +36,8 @@ test_that("the study's normal and severe groups (Table 8) are reproduced", {
   expect_equal(pdAUC(severe, 0, 648 * 60), 39031, tolerance = 0.08)
 })
 
-test_that("the band is the AGNP range", {
+test_that("the band is the AGNP update 2026 range (Hart 2026, Table 5)", {
   dd <- getDrugDefaultsGlobal()
   expect_equal(unlist(dd[dd$Drug == "amantadineER", c("Lower", "Upper", "Typical")]),
-               c(Lower = 300, Upper = 600, Typical = 450))
+               c(Lower = 600, Upper = 1700, Typical = 1150))
 })

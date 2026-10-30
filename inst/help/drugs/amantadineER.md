@@ -8,7 +8,7 @@ Osmolex ER tablets are labelled in mg of amantadine base (129 mg is 160 mg of th
 
 ### The band
 
-300 to 600 ng/mL at trough, the AGNP consensus guideline's reference range. Confusion, hallucinations and falls rise with the concentration, especially in the elderly and in renal impairment, where amantadine accumulates over weeks.
+600 to 1,700 ng/mL, the reference range of the AGNP consensus guideline's update 2026 (Hart 2026, *Pharmacopsychiatry* 59:166-295, [doi 10.1055/a-2860-7861](https://doi.org/10.1055/a-2860-7861), Table 5), which replaces the 2017 update's 300 to 600 ng/mL at trough. It is the concentration expected 2 hours after the second dose of the day on 200 to 600 mg/day of immediate-release tablets, so for this extended-release tablet it is a guide rather than a trough window: Table 5 gives 536 ng/mL at the peak after 137 mg of extended-release amantadine once a day. The laboratory alert level is 3,000 ng/mL, above which myoclonus, delirium and hallucinations are reported. The middle of the band is not a target. Confusion, hallucinations and falls rise with the concentration, especially in the elderly and in renal impairment, where amantadine accumulates over weeks.
 
 ### What is not in the model
 

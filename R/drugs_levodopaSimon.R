@@ -72,8 +72,8 @@
 #
 # THRESHOLD AND BAND: endCe in drugDefaults_global.csv is the UPDRS EC50,
 # 1.41 mcg/mL, so "time until threshold" measures when the motor effect falls
-# below half its maximum; the band is the AGNP reference range, 0.9 to 2.0
-# mcg/mL, as for levodopa.
+# below half its maximum; the band is the AGNP reference range, 1.0 to 3.5
+# mcg/mL 0.5 to 1 h after a dose (Hart 2026), as for levodopa.
 #
 # References
 # ----------
@@ -117,13 +117,13 @@ levodopaSimon <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK, ke0 = LEVODOPA_SIMON_KE0 / 60, MEAC = 0,
-    typical = 1.4, upperTypical = 2.0, lowerTypical = 0.9,
+    typical = 2.25, upperTypical = 3.5, lowerTypical = 1.0,
     reference = paste0(
       "Simon N et al., Eur J Clin Pharmacol 2016;72:423-430 (30 patients, Hoehn ",
       "and Yahr 3-4, with peak-dose dyskinesia): one compartment, ka 1.86/h, ",
       "CL/F 36.6 L/h x (weight/70)^0.75, V/F 42.9 L x weight/70; effect site ",
       "ke0 1.37/h, UPDRS III EC50 1.41 mcg/mL (Hill 4.26), dyskinesia EC50 ",
-      "6.28 mcg/mL. Band 0.9-2.0 mcg/mL (AGNP). https://doi.org/10.1007/s00228-016-2034-0"
+      "6.28 mcg/mL. Band 1.0-3.5 mcg/mL (AGNP update 2026). https://doi.org/10.1007/s00228-016-2034-0"
     )
   )
 }

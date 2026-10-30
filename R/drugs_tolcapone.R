@@ -69,10 +69,12 @@
 # (as for istradefylline); the size-free Q and Vp are scaled by the library's
 # factors, which are 1 with the switch off.
 #
-# BAND: the AGNP reference range, 3 to 6 mcg/mL two hours after a dose (quoted
-# by Muller 2024), although therapeutic drug monitoring of tolcapone is not
-# recommended.  The effect, COMT inhibition, follows the plasma concentration
-# without a measurable delay and is not plotted.
+# NO BAND: the AGNP consensus guideline's update 2017 (Hiemke 2018, as Muller
+# 2024 quotes it) gave 3 to 6 mcg/mL two hours after a dose, but the update
+# 2026 that supersedes it (Hart 2026, Table 5, read in full) no longer lists
+# tolcapone, and therapeutic drug monitoring of tolcapone is not recommended,
+# so no band is drawn.  The effect, COMT inhibition, follows the plasma
+# concentration without a measurable delay and is not plotted.
 #
 # References
 # ----------
@@ -130,13 +132,13 @@ tolcapone <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 4.5, upperTypical = 6, lowerTypical = 3,
+    typical = 0, upperTypical = 0, lowerTypical = 0,
     reference = paste0(
       "Jorga K et al., Br J Clin Pharmacol 2000;49:39-48, fluctuator model (215 ",
       "patients): two compartments, CL 4.8 L/h x (LBW/55)^0.73, Vc 16 L x ",
       "(LBW/55)^0.65, Q 5.2 L/h, Vp 12 L, ka 1.7/h, bioavailability 0.6 fasted ",
       "(fixed); James lean body weight; serum protein, albumin and the volumes' ",
-      "dose factor held at the reference (200 mg). Band 3-6 mcg/mL (AGNP). ",
+      "dose factor held at the reference (200 mg); concentration only. ",
       "https://doi.org/10.1046/j.1365-2125.2000.00113.x"
     )
   )

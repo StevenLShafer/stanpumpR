@@ -32,17 +32,17 @@ test_that("the plasma peaks at about 80 minutes and the motor effect about 40 la
   expect_gt(cp[["t"]] * 60, 70); expect_lt(cp[["t"]] * 60, 90)
   expect_gt(ce[["t"]] * 60 - cp[["t"]] * 60, 25)
   expect_lt(ce[["t"]] * 60 - cp[["t"]] * 60, 50)
-  # a 200 mg tablet's peak sits inside the AGNP band (0.9-2.0 mcg/mL)
-  expect_gt(cp[["C"]], 0.9); expect_lt(cp[["C"]], 2.0)
+  # a 200 mg tablet's peak sits inside the AGNP band (1.0-3.5 mcg/mL, Hart 2026)
+  expect_gt(cp[["C"]], 1.0); expect_lt(cp[["C"]], 3.5)
   # the time to peak effect after a bolus is solved from ke0
   expect_equal_rounded(57.69885, getDrugPK("levodopa", 70, 170, 64, "male", adjustToFFM = FALSE)$tPeak,
                        tolerance = 1e-5)
 })
 
-test_that("the threshold and band are Mao's EC50 and the AGNP range", {
+test_that("the threshold and band are Mao's EC50 and the AGNP update 2026 range", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "levodopa", ]
   expect_equal(row$endCe, round(LEVODOPA_UPDRS_EC50, 2))
-  expect_equal(c(row$Lower, row$Upper), c(0.9, 2))
+  expect_equal(c(row$Lower, row$Upper, row$Typical), c(1, 3.5, 2.25))
   expect_identical(row$Concentration.Units, "mcg")
 })

@@ -70,7 +70,7 @@ levodopaIntestinalGel <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK, ke0 = LEVODOPA_KE0 / 60, MEAC = 0,
-    typical = 1.4, upperTypical = 2.0, lowerTypical = 0.9,
+    typical = 2.25, upperTypical = 3.5, lowerTypical = 1.0,
     enteralInfusion = TRUE,
     reference = paste0(
       "Othman & Dutta, Br J Clin Pharmacol 2014;78:94-105: the levodopa ",

@@ -68,9 +68,16 @@
 # subjects); Vc is scaled by the library's fat-free-mass volume factor and
 # the clearance k x Vc by its clearance factor, both 1 with the switch off.
 #
-# THE BAND: 300 to 600 ng/mL, the AGNP consensus guideline's reference range
-# for amantadine (Hiemke 2018), quoted from Muller 2024 (J Neural Transm
-# 131:1247, PMC11489222, read in full); typical 450.  Confusion and
+# THE BAND: 600 to 1700 ng/mL, the reference range of the AGNP consensus
+# guideline's update 2026 (Hart 2026, Pharmacopsychiatry 59:166-295, Table 5,
+# read in full; marked + as revised: the 2017 update, Hiemke 2018, gave 300 to
+# 600 ng/mL at trough).  It is the expected concentration 2 h after the second
+# dose of the day on 200 to 600 mg/day of immediate-release tablets, so for
+# this extended-release tablet it is a guide rather than a trough window
+# (Table 5: 536 ng/mL at the peak after 137 mg of extended-release amantadine
+# once a day); laboratory alert level 3000 ng/mL, where myoclonus, delirium
+# and hallucinations are reported, level of recommendation 3.  Typical 1150,
+# the midpoint, not a target.  Confusion and
 # hallucinations rise with concentration, especially in the elderly and in
 # renal impairment; an exploratory threshold of 1776 ng/mL for CNS adverse
 # events is in Nagai 2026 (abstract).
@@ -150,7 +157,7 @@ amantadineER <- function(weight, height, age, sex, adjustToFFM = TRUE,
 
   list(
     PK = PK, tPeak = 0, MEAC = 0,
-    typical = 450, upperTypical = 600, lowerTypical = 300,
+    typical = 1150, upperTypical = 1700, lowerTypical = 600,
     zeroOrderPO = list(duration = AMANTADINE_ER_D2 * 60, into = "central",
                        fraction = 1 - AMANTADINE_ER_F1),
     reference = paste0(
@@ -158,8 +165,8 @@ amantadineER <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "209410, Table 6: one compartment, Vc/F 437 L, k 0.02/h x MDRD eGFR/42 from ",
       "the entered or an assumed normal creatinine; 79.9% of each dose absorbed ",
       "at 0.344/h and 20.1% at a constant rate over 8.79 h (the structure inferred); ",
-      "per mg of hydrochloride, so a dose of base is converted. Band 300-600 ng/mL ",
-      "(AGNP). https://www.accessdata.fda.gov/drugsatfda_docs/nda/2018/209410Orig1s000ClinPharmR.pdf",
+      "per mg of hydrochloride, so a dose of base is converted. Band 600-1700 ng/mL ",
+      "(AGNP update 2026, 2 h after a dose of IR tablets). https://www.accessdata.fda.gov/drugsatfda_docs/nda/2018/209410Orig1s000ClinPharmR.pdf",
       if (gfrPregnancy != 1) paste0("; ", pregnancyReference(paste0(
         "eGFR x ", PREGNANCY_GFR_FACTOR,
         ", the rise in glomerular filtration; no amantadine data"))) else ""

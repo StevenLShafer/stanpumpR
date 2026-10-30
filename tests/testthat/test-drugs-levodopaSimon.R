@@ -45,7 +45,7 @@ test_that("the threshold is the UPDRS EC50, the band the AGNP range", {
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "levodopaSimon", ]
   expect_equal(row$endCe, round(LEVODOPA_SIMON_UPDRS_EC50, 2))
-  expect_equal(c(row$Lower, row$Upper, row$Typical), c(0.9, 2, 1.4))
+  expect_equal(c(row$Lower, row$Upper, row$Typical), c(1, 3.5, 2.25))
   expect_identical(row$Concentration.Units, "mcg")
   # the dyskinesia concentration is 4.45 times the motor one, as the paper says
   expect_equal(LEVODOPA_SIMON_DYSK_EC50 / LEVODOPA_SIMON_UPDRS_EC50, 4.45, tolerance = 0.001)

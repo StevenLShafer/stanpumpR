@@ -75,10 +75,14 @@
 # site falls below the concentration that gives half the maximal improvement,
 # the model's estimate of when the dose wears off.
 #
-# THE BAND: 0.9 to 2.0 mcg/mL, the AGNP consensus guideline's reference range
-# for levodopa (Hiemke 2018), measured 1 h after a 250/25 mg dose, quoted from
-# Muller 2024 (J Neural Transm 131:1247, PMC11489222, read in full); the
-# guideline itself could not be read here.  Typical 1.4, the midpoint.
+# THE BAND: 1.0 to 3.5 mcg/mL, 0.5 to 1 h after a dose, the reference range of
+# the AGNP consensus guideline's update 2026 (Hart 2026, Pharmacopsychiatry
+# 59:166-295, Table 5, read in full; marked + as revised: the 2017 update,
+# Hiemke 2018, gave 0.9 to 2.0 mcg/mL 1 h after 250/25 mg).  It is the
+# expected concentration after 100 mg of standard levodopa with 25 mg of a
+# decarboxylase inhibitor, not an efficacy window; laboratory alert level
+# 5 mcg/mL (Fabbrini 1987), level of recommendation 2.  Typical 2.25, the
+# midpoint, not a target.
 #
 # WHAT IS NOT IN THE MODEL
 # ========================
@@ -168,14 +172,14 @@ levodopa <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   list(
     PK = PK, ke0 = LEVODOPA_KE0 / 60, MEAC = 0,
-    typical = 1.4, upperTypical = 2.0, lowerTypical = 0.9,
+    typical = 2.25, upperTypical = 3.5, lowerTypical = 1.0,
     reference = paste0(
       "Othman & Dutta, Br J Clin Pharmacol 2014;78:94-105 (advanced Parkinson's ",
       "disease, carbidopa 4:1): two compartments, CL/F 24.8 L/h, Vc/F 58.5 L x ",
       "weight/70, Q/F 6.8 L/h, Vp/F 72.9 L, absorbed through one transit ",
       "compartment at 2.4/h; motor (UPDRS III) effect site ke0 1.80/h, EC50 ",
-      "0.81 mcg/mL (Mao 2013, J Clin Pharmacol 53:523). Band 0.9-2.0 mcg/mL ",
-      "(AGNP, 1 h after 250/25 mg). https://doi.org/10.1111/bcp.12324"
+      "0.81 mcg/mL (Mao 2013, J Clin Pharmacol 53:523). Band 1.0-3.5 mcg/mL ",
+      "(AGNP update 2026, 0.5-1 h after a dose). https://doi.org/10.1111/bcp.12324"
     )
   )
 }
