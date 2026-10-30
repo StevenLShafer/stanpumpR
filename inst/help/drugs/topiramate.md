@@ -8,12 +8,8 @@ Oral (`mg PO`, with schedules). Absolute oral bioavailability is complete (109 p
 
 ### What is not modelled
 
-Enzyme-inducing co-medication (which raises clearance about 1.6-fold), and the empirical dependence of apparent clearance on daily dose that an earlier oral model carried, which a linear engine cannot hold.
-
-### Pregnancy
-
-With **Pregnant** ticked, the elimination clearance is multiplied by 1.6; the volumes, the distribution clearances and the absorption are unchanged. In the third trimester the dose/concentration ratio was 67.4 against 38.8 L/day outside pregnancy in the same women (Ohman and colleagues, *Epilepsy Res* 2009;87:124-129; 1.74-fold), and the concentration/dose ratio 34 per cent lower (Westin and colleagues, *Epilepsia* 2009;50:480-485; 1.52-fold); 1.6 is their geometric mean. Topiramate is little bound, so total and unbound change alike. See [Pregnancy](help:models/pregnancy).
+The empirical dependence of apparent clearance on daily dose that an earlier oral model carried, which a linear engine cannot hold. Enzyme-inducing co-medication (carbamazepine, phenytoin or phenobarbital, which raise clearance about 1.6-fold) is applied only when the **Include antiseizure drug interactions** box in Graph Options is ticked (see [Antiseizure drug interactions](help:models/antiseizure-interactions)).
 
 ### Band
 
-5 to 20 mg/L (ILAE; Patsalos and colleagues, 2008).
+5 to 20 mg/L, 12 hours after a dose: the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; laboratory alert level 30 mg/L), the same range as the ILAE's (Patsalos and colleagues, 2008).

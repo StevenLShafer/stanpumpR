@@ -22,6 +22,8 @@ Oxycodone can be given as **mg** (intravenous bolus), **mg/hr** (intravenous inf
 
 In children the model is less certain. Balyan and colleagues' 30 children aged 2 to 17 cleared oral oxycodone about a third faster than this model predicts for their size.
 
+**Pregnant** changes nothing for oxycodone, because the population model of oxycodone in labour (Kokki and colleagues, *Basic Clin Pharmacol Toxicol* 2012;111:182-188; 15 women given intravenous oxycodone in the first stage of labour), put on this library's hydrochloride basis, gives a clearance 0.87 times and a steady-state volume 0.86 times what this model gives a non-pregnant woman of the same size: a comparison with a model rather than a control group, so nothing is applied.
+
 ### Effect site
 
 Lalovic measured pupil constriction after oral oxycodone and found that the parent drug alone explained it, with an effect-site equilibration half-time of 11 minutes. Its metabolites contributed nothing. The model's tPeak of 12.36 minutes after an intravenous bolus reproduces that ke0 in a 70 kg adult. So oxycodone's effect follows its plasma concentration closely, and an oral dose's effect peaks about an hour after the dose.
@@ -33,7 +35,3 @@ MEAC is 12 ng/mL, set for consistency with morphine's 8 ng/mL. None of the five 
 ### Active metabolite
 
 Oxycodone forms **oxymorphone** by CYP2D6, so a dose of oxycodone adds an [oxymorphone](help:drugs/oxymorphone) row. Oxymorphone was undetectable or barely detectable after intravenous oxycodone in the Finnish studies. The model sets its AUC at 1 per cent of oxycodone's after an intravenous dose. After an oral dose, more forms on the first pass through the liver. The model puts that AUC at 3.35 per cent, between Balyan's 2.7 per cent in genotyped normal metabolisers and Lalovic's 4 per cent. The **CYP 2D6** field scales both. Balyan found intermediate metabolisers at about 0.63 of normal, and the model uses 0.65. See [Active metabolites](help:models/metabolites).
-
-### Pregnancy
-
-**Pregnant** changes nothing for oxycodone. Kokki and colleagues (*Basic Clin Pharmacol Toxicol* 2012;111:182-188) fitted a population model to 15 women given intravenous oxycodone in the first stage of labour: clearance 0.92 L/min and a steady-state volume of 195 L, at a median 82 kg. The women were given Oxanest, the hydrochloride trihydrate, and the fit is taken to be on that dose, so on this library's hydrochloride basis it is 0.80 L/min and 169 L. This model gives a non-pregnant woman of that size 0.92 L/min and 197 L, so the labouring women's clearance is 0.87 of it and their volume 0.86. That is a comparison with a model rather than a control group, so nothing is applied. Kokki's shorter half-time in labour (2.6 hours against 3.8) is against another study's healthy volunteers, whose clearance was lower than this model's. Until October 2026 the library multiplied the clearance by that ratio of half-times (3.8/2.6 = 1.46, through Ansari and colleagues' review, *Anesth Analg* 2016;122:786-804), which would give these women 69% more clearance than Kokki measured; it was dropped. See [Pregnancy](help:models/pregnancy).

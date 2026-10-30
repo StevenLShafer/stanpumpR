@@ -8,7 +8,7 @@ Oral (`mg PO`, with daily schedules) and intravenous (`mg`, `mg/kg`, `mg/hr`). I
 
 ### What is not modelled
 
-Co-medication (valproate inhibits, rifampicin induces), phenobarbital derived from primidone, renal replacement, and urinary alkalinisation. The critically ill clear phenobarbital faster than healthy adults (80 to 100 hour half-life classically), so outpatient accumulation may be underpredicted.
+Induction by rifampicin, phenobarbital derived from primidone, renal replacement, and urinary alkalinisation. The critically ill clear phenobarbital faster than healthy adults (80 to 100 hour half-life classically), so outpatient accumulation may be underpredicted. Valproate and phenytoin, which both slow phenobarbital's clearance, are applied when the **Include antiseizure drug interactions** box in Graph Options is ticked (see [Antiseizure drug interactions](help:models/antiseizure-interactions)).
 
 ### Band
 

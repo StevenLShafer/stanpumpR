@@ -62,8 +62,6 @@ Worth being explicit about, because the paper invites the opposite conclusion. I
 
 So the child and infant rows of the table above are the library's own allometric extrapolation from a population of 51.8 to 95.6 kg, not anything this source measured. Enalapril's conversion to enalaprilat is by carboxylesterase 1, whose activity changes with age, and nothing here represents that. Treat the paediatric columns as arithmetic rather than as evidence.
 
-### Effect site, blood pressure and pregnancy
+### Effect site and blood pressure
 
 Neither moiety has an effect site, and [no antihypertensive in this library plots a blood pressure](help:models/antihypertensives). No band is drawn: there is no established therapeutic plasma range for either. A **time until threshold** is not offered either, and that is structural rather than pending — the library solves it from the exponential amplitudes its closed-form engines leave behind, and a transit chain leaves none.
-
-Enalapril is a **pregnancy contraindication** rather than an unstudied drug: the ACE inhibitors carry a boxed warning for fetal toxicity, so no pregnancy pharmacokinetic study exists and none should be expected.

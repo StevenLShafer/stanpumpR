@@ -54,5 +54,3 @@ Kaiser fitted none: 62 healthy young men at a single dose level. In particular *
 ### Effect site and blood pressure
 
 Neither is modelled, and [no antihypertensive in this library plots a blood pressure](help:models/antihypertensives). No band is drawn: there is no established therapeutic plasma range for benazeprilat.
-
-Benazepril is also a **pregnancy contraindication** rather than merely an unstudied drug — the ACE inhibitors carry a boxed warning for fetal toxicity — so no pregnancy pharmacokinetic study exists and none should be expected.

@@ -1,8 +1,8 @@
 ### The model
 
-Phenytoin is the one drug in the library with **saturable (Michaelis-Menten) elimination**: its clearance falls as the concentration rises, so a modest dose increase can raise the steady-state level out of proportion. It is simulated by a numerical engine (see the model notes), not by the closed-form solver the other drugs use.
+Phenytoin is one of the few drugs in the library with **saturable (Michaelis-Menten) elimination** (the others are GHB, exenatide and cetagliptin): its clearance falls as the concentration rises, so a modest dose increase can raise the steady-state level out of proportion. It is simulated by a numerical engine (see the model notes), not by the closed-form solver most drugs use.
 
-The parameters are from Odani and colleagues (*Biol Pharm Bull* 1996;19:444-448), who fitted 531 steady-state levels from 116 Japanese patients with epilepsy, children and adults: one compartment, total phenytoin, with a volume of 1.23 L/kg and a maximal elimination rate of 9.80 mg/day/kg, both per kilogram at Odani's typical 42 kg and scaled by weight to the power 0.463, and a Michaelis constant of 9.19 mg/L that does not change with weight. Odani assumed oral bioavailability was complete. At 300 mg/day a typical 70 kg adult reaches about 12 mg/L; at 400 mg/day, about 30.
+The parameters are from Odani and colleagues (*Biol Pharm Bull* 1996;19:444-448), who fitted 531 steady-state levels from 116 Japanese patients with epilepsy, children and adults: one compartment, total phenytoin, with a volume of 1.23 L/kg and a maximal elimination rate of 9.80 mg/day/kg, both per kilogram at Odani's typical 42 kg and scaled by weight to the power 0.463, and a Michaelis constant of 9.19 mg/L that does not change with weight. Odani assumed oral bioavailability was complete. At 300 mg/day of phenytoin acid (the suspension or chewable tablet) a typical 70 kg adult averages about 12 mg/L at steady state; at 400 mg/day, about 30. The same doses as the sodium capsule, which carries 0.92 as much phenytoin, average about 10 and 22 mg/L.
 
 ### Dose basis and routes
 
@@ -16,16 +16,12 @@ The maximal elimination rate is 33 per cent lower in CYP2C9 intermediate metabol
 
 ### What is not modelled
 
-Albumin binding and the unbound fraction (the curve is total phenytoin, so in hypoalbuminaemia or renal failure a total of 10 mg/L may carry a therapeutic unbound level), valproate displacement, enzyme induction or inhibition by co-medication, and the early albumin displacement by fosphenytoin. There is no effect site and no time until threshold.
-
-### Pregnancy
-
-With **Pregnant** ticked, the Michaelis constant on the total scale is multiplied by 0.48 and the maximal elimination rate by 1.1, on every route, fosphenytoin's included. In the third trimester **total** phenytoin falls to 39 per cent of its value after delivery, at an unchanged dose, while **unbound** phenytoin falls only to 82 per cent (Tomson and colleagues, *Epilepsia* 1994;35:122-130): most of the fall is a fall in binding, the unbound fraction rising about 2.1-fold. Elimination saturates in the unbound concentration, so the constant on the total scale falls by the same factor (1 / 2.1 = 0.48), and the small rise in the maximal rate makes the unbound steady state fall to about 80 per cent at a total of 15 mg/L. At the dose that holds 15 mg/L outside pregnancy, the plotted total falls to about 5.7 mg/L.
-
-**The plotted curve is total phenytoin, and the 10 to 20 mg/L band is a band for the total.** In late pregnancy the total falls well below the band while the unbound, active concentration stays near its baseline, so a low total is not by itself a reason to raise the dose: measure the free phenytoin. The factors are tied to that operating point, since elimination saturates; the trimesters before the third are not represented. See [Pregnancy](help:models/pregnancy).
+Albumin binding and the unbound fraction (the curve is total phenytoin, so in hypoalbuminaemia or renal failure a total of 10 mg/L may carry a therapeutic unbound level), induction or inhibition by co-medication other than the two interactions below, and the early albumin displacement by fosphenytoin. There is no effect site and no time until threshold.
 
 Valproate (which displaces phenytoin from albumin and lowers the plotted total) and zonisamide (which raises Km) change phenytoin when the **Include antiseizure drug interactions** box is ticked. See [Antiseizure drug interactions](help:models/antiseizure-interactions).
 
 ### Band
 
-10 to 20 mg/L total (ILAE; Patsalos and colleagues, *Epilepsia* 2008;49:1239-1276), the same range as 1 to 2 mg/L unbound at normal binding.
+10 to 20 mg/L total, 8 to 12 hours after a dose: the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; laboratory alert level 50 mg/L), the same range as the ILAE's (Patsalos and colleagues, *Epilepsia* 2008;49:1239-1276) and as 1 to 2 mg/L unbound at normal binding.
+
+**The plotted curve is total phenytoin, and the 10 to 20 mg/L band is a band for the total.** In late pregnancy the total falls well below the band while the unbound, active concentration stays near its baseline, so a low total is not by itself a reason to raise the dose: measure the free phenytoin. The pregnancy factors were set at a typical total of 15 mg/L and are tied to that operating point, since elimination saturates; the trimesters before the third are not represented.

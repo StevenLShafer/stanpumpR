@@ -21,7 +21,3 @@ The MEAC of 1 ng/mL is the unit in which the other opioids are expressed on the 
 ### Where to be careful
 
 Remifentanil's metabolism by non-specific esterases makes its kinetics unusually independent of organ function, and its offset barely depends on infusion duration. That is the model's great teaching value; see [the context-sensitive decrement scenario](scenario:context-sensitive-opioids). The pharmacokinetics are the easy part. The hyperalgesia, the chest-wall rigidity after a fast bolus and the abrupt loss of analgesia at the end of a case are pharmacodynamic and are not in the model.
-
-### Pregnancy
-
-With **Pregnant** ticked, the elimination clearance of whichever model is in use is doubled, and so is the Minto companion model's, so the two lines of the panel move together. The review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) reports that remifentanil clearance more than doubles in pregnancy, attributed to the larger plasma volume, cardiac output and renal blood flow; "more than" is not carried, because the review gives no further figure. The volumes are unchanged. See [Pregnancy](help:models/pregnancy) and [the labour scenario](scenario:remifentanil-labour).

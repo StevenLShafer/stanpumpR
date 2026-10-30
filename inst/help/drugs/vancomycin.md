@@ -17,7 +17,3 @@ The shaded band (2.9 to 11 mcg/mL total) marks free vancomycin at the measured *
 ### Where to be careful
 
 The clearance equation is linear in creatinine clearance and reaches zero at 1.06 mL/min; it is not a model of anuria or dialysis, and the code refuses rather than clamps if driven there. Loading doses by weight, nephrotoxicity and the vancomycin infusion reaction are outside the model.
-
-### Pregnancy
-
-With **Pregnant** ticked and the **Serum creatinine** left blank, the creatinine clearance Thomson's clearance term reads is multiplied by 1.5, the rise in glomerular filtration the review the library follows (Ansari, Carvalho, Shafer and Flood, *Anesth Analg* 2016;122:786-804) gives for pregnancy; the term is linear with a small negative intercept, so the clearance rises by slightly more than 1.5. The review reports a larger volume of distribution and a higher clearance in pregnancy, with the change in half-life unknown; it prints no factor for vancomycin itself. The larger volume is not applied, so the simulated peak in a parturient is too high. A blank field means a normal creatinine for a woman who is not pregnant, which cannot show the rise; a pregnant woman's own measured creatinine is already low, and the renal estimate made from it already carries the rise, so with a creatinine entered nothing is multiplied. See [Pregnancy](help:models/pregnancy).

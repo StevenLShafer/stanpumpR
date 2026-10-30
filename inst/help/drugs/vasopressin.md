@@ -10,7 +10,7 @@ Plasma vasopressin in **mcU/mL** (microunits per mL, the same as mU/L), **above 
 
 ### Covariates
 
-None was estimated: the six subjects' weights were not reported, so the volume and clearance are fixed values, scaled to fat-free mass with [the scaling switch](help:models/fat-free-mass) on. In **pregnancy** the clearance is multiplied by 5.07: Davison and colleagues (*Am J Physiol* 1993;264:F348-F353) measured it in the same six women in late pregnancy and 10 to 12 weeks after delivery, 3.4 against 0.67 L/min, from the placenta's vasopressinase. They measured physiological concentrations, though, about a tenth of those of a pressor infusion, so applying the ratio at pressor doses is an extrapolation: if the enzyme saturates, pregnancy raises the clearance less than this.
+None was estimated: the six subjects' weights were not reported, so the volume and clearance are fixed values, scaled to fat-free mass with [the scaling switch](help:models/fat-free-mass) on. The pregnancy factor (below) was measured at physiological concentrations, about a tenth of those of a pressor infusion, so applying it at pressor doses is an extrapolation: if the placenta's vasopressinase saturates, pregnancy raises the clearance less than this.
 
 ### Where to be careful
 

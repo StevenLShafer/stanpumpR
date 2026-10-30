@@ -8,16 +8,12 @@ One disposition, a product-specific input: the delayed-release (enteric divalpro
 
 ### What is not modelled
 
-The published age term, (age/15)<sup>−0.0154</sup>, is applied as printed in the paper's Equation 1, with age floored at 0.1 years, the youngest patient studied. It changes clearance by under 5% between 5 and 80 years. The paper's own worked examples do not reproduce it. Co-medication is not applied, so the curve is valproate **without** phenytoin, phenobarbital or carbamazepine, each of which raises clearance by 40 to 65 per cent. Valproate's binding to albumin saturates in the therapeutic range, so the unbound concentration rises faster than the total; only total valproate is plotted.
-
-### Pregnancy
-
-With **Pregnant** ticked, the clearance of total valproate is multiplied by 1.6 and nothing else moves. The free fraction doubles in pregnancy, from 10 per cent early on to 20 per cent at term (Nau and Krauer, *J Clin Pharmacol* 1986;26:215-221), while the free concentration does not fall (Yerby and colleagues found it 25 per cent higher by delivery; Tomson, unchanged): a total of 1.25 / 2.0 = 0.625 of baseline at the same dose, a clearance 1.6 times higher. The factor is derived from binding studies, not a measured clearance, and is of low confidence.
-
-**The plotted curve is total valproate, and the 50 to 100 mg/L band is a band for the total.** In late pregnancy the total falls, often below the band, while the unbound, active concentration does not fall, so a low total is not by itself a reason to raise the dose: measure the free valproate. The free fraction is higher still in labour. See [Pregnancy](help:models/pregnancy).
+The published age term, (age/15)<sup>−0.0154</sup>, is applied as printed in the paper's Equation 1, with age floored at 0.1 years, the youngest patient studied. It changes clearance by under 5% between 5 and 80 years. The paper's own worked examples do not reproduce it. Co-medication is not applied unless the **Include antiseizure drug interactions** box is ticked (below), so by default the curve is valproate **without** phenytoin, phenobarbital or carbamazepine, each of which raises clearance by 40 to 65 per cent. Valproate's binding to albumin saturates in the therapeutic range, so the unbound concentration rises faster than the total; only total valproate is plotted.
 
 The co-medication multipliers the source gives (phenytoin, phenobarbital and carbamazepine each raise clearance about 40 to 65 per cent) are applied when the **Include antiseizure drug interactions** box is ticked. See [Antiseizure drug interactions](help:models/antiseizure-interactions).
 
 ### Band
 
-50 to 100 mg/L total (ILAE; Patsalos and colleagues, 2008).
+50 to 100 mg/L total, 12 hours after a dose: the AGNP consensus guidelines' 2026 update (Hart and colleagues, *Pharmacopsychiatry* 2026;59:166-295, Table 5, https://doi.org/10.1055/a-2860-7861; laboratory alert level 120 mg/L), the same range as the ILAE's (Patsalos and colleagues, 2008).
+
+**The plotted curve is total valproate, and the 50 to 100 mg/L band is a band for the total.** In late pregnancy the total falls, often below the band, while the unbound, active concentration does not fall, so a low total is not by itself a reason to raise the dose: measure the free valproate. The free fraction is higher still in labour.
