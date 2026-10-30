@@ -196,7 +196,8 @@ MAX_AGE <- 90
 # of 0 (a legal entry) and steep in infancy, where none of them was fitted; a
 # child below this age receives the term's value at this age, as buprenorphine
 # already does (BUPRENORPHINE_MIN_AGE).  Read by apixaban, rivaroxaban,
-# fondaparinux and paroxetine, and by egfrMDRD() in R/renalFunction.R.
+# fondaparinux, paroxetine and citalopram, and by egfrMDRD() in
+# R/renalFunction.R.
 # The rule (AGENTS.md): every age term floors here unless the PK study
 # explicitly permits a lower floor, which is then the youngest age the source
 # studied; valproate's, fitted from 0.1 years, is the example
